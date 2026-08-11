@@ -153,6 +153,11 @@ concise path/value/expectation message. Their existing `latest.log` and
 `technical_details`; catalog-authoring and internal failures remain developer
 errors and keep their existing presentation.
 
+`na228 worker --ephemeral work/<task>/build/<name>.iso` runs the full worker
+composition and image verification through a sparse virtual overlay. It records
+the logical ISO size and SHA-256 without creating `.building` or destination ISO
+files. Ordinary worker and user builds keep physical staging.
+
 Preflight fingerprints both canonical source ISOs, ISO-composing builder code, the exact selected configuration resources, product/path configuration, and active Python/Zlib/Zopfli versions. `scripts/module_pipeline.py` prepares internal invocations and shared payload contributions; `scripts/build_configuration.py` composes them; `scripts/composer.py` closes typed image operations; and `image_assembler/` alone stages and verifies the ISO.
 
 The development injector reads the feature files under `catalog/` with

@@ -262,7 +262,7 @@ Write-Output '[fake] permanent tests'
         -Condition ($helpText -match '(?m)^\s*na228 \[-f\]\s+Build and run Latest; -f ignores auxiliary failures$') `
         -Message 'Root help did not present default and force build-and-launch in one row.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 worker work/') `
+        -Condition ($helpText -match '(?m)^\s*na228 worker \[--ephemeral\] work/') `
         -Message 'Root help omitted the explicit worker-build command.'
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 validate\s') `
@@ -346,6 +346,9 @@ foreach ($game in $canonical) {
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'workshop.ps1') -Content @'
 $tokens = @($args)
+if ([IO.Path]::GetFullPath((Get-Location).Path) -cne [IO.Path]::GetFullPath($PSScriptRoot)) {
+    throw 'Workshop was not invoked from its project context.'
+}
 Write-Output "[fake] workshop args=$($tokens -join '|')"
 $games = [Collections.Generic.List[string]]::new()
 $play = ''
@@ -418,6 +421,7 @@ param(
     [switch]$DryRun,
     [switch]$ManualTestOnly,
     [string]$WorkerOutputIso,
+    [switch]$WorkerEphemeral,
     [switch]$Force
 )
 if ($env:NA228_TEST_CONFIG_ERROR -ceq '1') {
@@ -436,8 +440,23 @@ if ($DryRun) {
     Write-Host '[na228] Validated development composition; no ISO staged.'
 }
 elseif ($WorkerOutputIso) {
-    Write-Host '[na228] ISO result: worker; rotation: no; PCSX2 left running.'
-    [pscustomobject]@{ Status = 'worker'; ChangedRoles = [string[]]@() }
+    if ($WorkerEphemeral) {
+        $outputBytes = [Text.Encoding]::UTF8.GetBytes('synthetic ephemeral ISO')
+        $outputHash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($outputBytes))
+        Write-Host "[na228] Ephemeral worker ISO: $($outputBytes.Length) bytes; SHA-256 $outputHash; not written to disk."
+        Write-Host '[na228] ISO result: worker (ephemeral); virtual output only; rotation: no; PCSX2 left running.'
+        [pscustomobject]@{
+            Status = 'worker'
+            OutputRetained = $false
+            OutputSizeBytes = $outputBytes.Length
+            OutputSha256 = $outputHash
+            ChangedRoles = [string[]]@()
+        }
+    }
+    else {
+        Write-Host '[na228] ISO result: worker; rotation: no; PCSX2 left running.'
+        [pscustomobject]@{ Status = 'worker'; ChangedRoles = [string[]]@() }
+    }
 }
 elseif ($ManualTestOnly) {
     Write-Host '[na228] ISO result: manual-test; rotation: no; PCSX2 left running.'
@@ -597,12 +616,16 @@ Add-Content `
     else {
         0
     }
+    $callerLocation = [IO.Path]::GetFullPath((Get-Location).Path)
     $multiGameLaunch = (
         & (Join-Path $fakeRepository 'na228.ps1') na2 nun5
     ) -join "`n"
     Assert-Na2Test `
         -Condition ($multiGameLaunch -match '\[fake\] multi-game launch na2,nun5') `
         -Message 'Unified multi-game launch did not preserve ordered selectors.'
+    Assert-Na2Test `
+        -Condition ([IO.Path]::GetFullPath((Get-Location).Path) -ceq $callerLocation) `
+        -Message 'Root game launch did not restore the caller working directory.'
     $pairedPlayback = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
@@ -717,6 +740,19 @@ Add-Content `
         ) `
         -Message 'Manual Test selector alias did not resolve through game launch.'
     & (Join-Path $fakeRepository 'na228.ps1') worker 'work\General\build\agent.iso'
+    $ephemeralRelativePath = 'work\Equivalence\build\candidate.iso'
+    $ephemeralDispatch = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            worker `
+            --ephemeral `
+            $ephemeralRelativePath *>&1
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $ephemeralDispatch -match 'Ephemeral worker ISO: \d+ bytes; SHA-256 [0-9A-F]{64}; not written to disk' -and
+            -not (Test-Path -LiteralPath (Join-Path $fakeRepository $ephemeralRelativePath))
+        ) `
+        -Message 'Root ephemeral worker command did not forward the switch or avoid output creation.'
     & (Join-Path $fakeRepository 'na228.ps1') build l
     & (Join-Path $fakeRepository 'na228.ps1') build mt
     $dryRun = (& (Join-Path $fakeRepository 'na228.ps1') build -d *>&1) -join "`n"
@@ -861,6 +897,13 @@ Add-Content `
     Assert-Na2Test `
         -Condition ($workerLatest -match 'ISO result: worker') `
         -Message 'Explicit worker build did not dispatch to worker-output mode.'
+    $ephemeralLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'work\Equivalence\logs\latest.log'))
+    Assert-Na2Test `
+        -Condition (
+            $ephemeralLatest -match '(?m)^mode: worker-build$' -and
+            $ephemeralLatest -match 'Ephemeral worker ISO: \d+ bytes; SHA-256 [0-9A-F]{64}; not written to disk'
+        ) `
+        -Message 'Ephemeral worker evidence was not retained in its task run log.'
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, 'ISO result: updated').Count -eq 5) `
         -Message 'Build-only and build-and-launch did not use the standard build pipeline.'

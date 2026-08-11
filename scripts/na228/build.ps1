@@ -4,6 +4,7 @@ param(
     [switch]$ManualTestOnly,
     [ValidateSet('normal', 'shifted')][string]$E2eVariant,
     [string]$WorkerOutputIso,
+    [switch]$WorkerEphemeral,
     [switch]$Force
 )
 
@@ -37,6 +38,9 @@ if ($Force -and (
 )) {
     throw '-Force is valid only for the normal Latest build.'
 }
+if ($WorkerEphemeral -and [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
+    throw '-WorkerEphemeral requires -WorkerOutputIso.'
+}
 $workerBuild = if (-not [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
     Get-Na2WorkerBuildContext `
         -OutputPath $WorkerOutputIso `
@@ -44,6 +48,12 @@ $workerBuild = if (-not [string]::IsNullOrWhiteSpace($WorkerOutputIso)) {
 }
 else {
     $null
+}
+if ($WorkerEphemeral -and (Test-Path -LiteralPath $workerBuild.OutputIso)) {
+    throw "Ephemeral worker output already exists; refusing to replace it: $($workerBuild.OutputIso)"
+}
+if ($WorkerEphemeral -and (Test-Path -LiteralPath "$($workerBuild.OutputIso).building")) {
+    throw "Ephemeral worker staging output already exists; refusing to replace it: $($workerBuild.OutputIso).building"
 }
 
 function Test-FileContentEqual {
@@ -380,6 +390,9 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         '--configuration-log-directory', $isolatedConfigurationLogDirectory
         '--payload-shift', [string]$payloadShift
     )
+    if ($WorkerEphemeral) {
+        $isolatedArguments += '--digest-only'
+    }
 
     $isolatedLabel = switch ($isolatedKind) {
         'worker' { 'Worker-output mode' }
@@ -402,6 +415,14 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
             status = 'miss'
             reason = 'preflight-command-error'
             detail = $_.Exception.Message
+        }
+    }
+    if ($WorkerEphemeral -and $isolatedPreflight.status -eq 'hit') {
+        $isolatedPreflight = [pscustomobject]@{
+            status = 'miss'
+            reason = 'ephemeral-build-required'
+            detail = 'ephemeral mode always computes a fresh verified virtual ISO'
+            fingerprint = $isolatedPreflight.fingerprint
         }
     }
     if ($isolatedPreflight.status -eq 'hit') {
@@ -482,6 +503,7 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         $null
     }
     $isolatedCompleted = $false
+    $ephemeralOutputOwned = $false
     try {
         if ($null -ne $activeBuildMarker) {
             [void](New-Item -ItemType Directory -Path $buildLogRoot -Force)
@@ -509,17 +531,73 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         if (-not (Test-Path -LiteralPath $isolatedConfigurationLog -PathType Container)) {
             throw "$isolatedLabel completed without creating its structured build record."
         }
-        if (-not (Test-Path -LiteralPath $isolatedBuildingIso -PathType Leaf)) {
+        if (-not $WorkerEphemeral -and
+            -not (Test-Path -LiteralPath $isolatedBuildingIso -PathType Leaf)) {
             throw "Verified $isolatedKind ISO does not exist: $isolatedBuildingIso"
         }
 
-        $isolatedChanged = -not (
-            (Test-Path -LiteralPath $isolatedOutputIso -PathType Leaf) -and
-            (Test-FileContentEqual `
-                -LeftPath $isolatedBuildingIso `
-                -RightPath $isolatedOutputIso)
-        )
-        $isolatedState = if ($isolatedChanged) { 'updated' } else { 'unchanged' }
+        if ($WorkerEphemeral) {
+            $digestMatches = @(
+                $isolatedOutput |
+                    ForEach-Object {
+                        [regex]::Match(
+                            $_,
+                            '^Verified virtual ISO: (?<size>[0-9]+) bytes; SHA-256 (?<hash>[0-9A-F]{64})$'
+                        )
+                    } |
+                    Where-Object Success
+            )
+            if ($digestMatches.Count -ne 1) {
+                throw 'Ephemeral worker build did not report exactly one verified virtual ISO digest.'
+            }
+            $isolatedOutputSizeBytes = [long]$digestMatches[0].Groups['size'].Value
+            $isolatedOutputSha256 = $digestMatches[0].Groups['hash'].Value
+            if (
+                (Test-Path -LiteralPath $isolatedOutputIso) -or
+                (Test-Path -LiteralPath $isolatedBuildingIso)
+            ) {
+                $ephemeralOutputOwned = Test-Path -LiteralPath $isolatedOutputIso -PathType Leaf
+                throw 'Ephemeral worker build wrote an ISO instead of using virtual assembly.'
+            }
+        }
+
+        $isolatedChanged = if ($WorkerEphemeral) {
+            $true
+        }
+        else {
+            -not (
+                (Test-Path -LiteralPath $isolatedOutputIso -PathType Leaf) -and
+                (Test-FileContentEqual `
+                    -LeftPath $isolatedBuildingIso `
+                    -RightPath $isolatedOutputIso)
+            )
+        }
+        $isolatedState = if ($WorkerEphemeral) {
+            'ephemeral'
+        }
+        elseif ($isolatedChanged) {
+            'updated'
+        }
+        else {
+            'unchanged'
+        }
+
+        if (-not $WorkerEphemeral) {
+            if ($isolatedChanged) {
+                [IO.File]::Move($isolatedBuildingIso, $isolatedOutputIso, $true)
+            }
+            else {
+                Remove-Item -LiteralPath $isolatedBuildingIso -Force
+            }
+        }
+
+        if (-not $WorkerEphemeral) {
+            $isolatedOutputItem = Get-Item -LiteralPath $isolatedOutputIso
+            $isolatedOutputSizeBytes = [long]$isolatedOutputItem.Length
+            $isolatedOutputSha256 = (
+                Get-FileHash -LiteralPath $isolatedOutputItem.FullName -Algorithm SHA256
+            ).Hash
+        }
 
         if ($isolatedKind -ne 'e2e-test') {
             $configurationPortable = ConvertTo-Na2PortableText `
@@ -531,11 +609,13 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
             $recordPortable = ConvertTo-Na2PortableText `
                 -Text $isolatedConfigurationLog `
                 -Paths $paths
+            $outputRetained = if ($WorkerEphemeral) { 'no' } else { 'yes' }
             $resultContent = @(
-                "timestamp_utc`tresult`toutput_state`trotation`tpcsx2_closed`tconfiguration`toutput_iso`tbuild_record"
+                "timestamp_utc`tresult`toutput_state`trotation`tpcsx2_closed`tconfiguration`toutput_iso`toutput_size_bytes`toutput_sha256`toutput_retained`tbuild_record"
                 (
                     (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" +
-                    "$isolatedKind`t$isolatedState`tno`tno`t$configurationPortable`t$outputPortable`t$recordPortable"
+                    "$isolatedKind`t$isolatedState`tno`tno`t$configurationPortable`t$outputPortable`t" +
+                    "$isolatedOutputSizeBytes`t$isolatedOutputSha256`t$outputRetained`t$recordPortable"
                 )
             ) -join "`n"
             $resultContent += "`n"
@@ -545,13 +625,6 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
             Set-Na2Utf8FileAtomic `
                 -Path (Join-Path $isolatedConfigurationLog $resultFilename) `
                 -Content $resultContent
-        }
-
-        if ($isolatedChanged) {
-            [IO.File]::Move($isolatedBuildingIso, $isolatedOutputIso, $true)
-        }
-        else {
-            Remove-Item -LiteralPath $isolatedBuildingIso -Force
         }
 
         if ($isolatedKind -eq 'e2e-test') {
@@ -579,7 +652,10 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
                 Select-Object -Skip 19 |
                 Remove-Item -Recurse -Force
         }
-        if (-not [string]::IsNullOrWhiteSpace($isolatedPreflightFingerprint)) {
+        if ($WorkerEphemeral) {
+            Write-Host '[na228] Preflight receipt: skipped for virtual ephemeral output.' -ForegroundColor Cyan
+        }
+        elseif (-not [string]::IsNullOrWhiteSpace($isolatedPreflightFingerprint)) {
             try {
                 $isolatedReceiptResult = Invoke-Na2BuildPreflight `
                     -Command record `
@@ -620,10 +696,22 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         $isolatedRecord = ConvertTo-Na2ProjectPath `
             -Path $isolatedConfigurationLog `
             -Paths $paths
-        Write-Host (
-            "[na228] ISO result: $isolatedKind ($isolatedState); Latest/Previous unchanged; " +
-            'rotation: no; PCSX2 left running.'
-        ) -ForegroundColor Cyan
+        if ($WorkerEphemeral) {
+            Write-Host (
+                "[na228] Ephemeral worker ISO: $isolatedOutputSizeBytes bytes; " +
+                "SHA-256 $isolatedOutputSha256; not written to disk."
+            ) -ForegroundColor Cyan
+            Write-Host (
+                '[na228] ISO result: worker (ephemeral); virtual output only; ' +
+                'Latest/Previous unchanged; rotation: no; PCSX2 left running.'
+            ) -ForegroundColor Cyan
+        }
+        else {
+            Write-Host (
+                "[na228] ISO result: $isolatedKind ($isolatedState); Latest/Previous unchanged; " +
+                'rotation: no; PCSX2 left running.'
+            ) -ForegroundColor Cyan
+        }
         Write-Host (
             "[na228] $isolatedLabel record: retained " +
             $isolatedConfigurationLog
@@ -634,6 +722,9 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
             E2eTestState = if ($isolatedKind -eq 'e2e-test') { $isolatedState } else { $null }
             OutputState = $isolatedState
             OutputIso = $isolatedOutputIso
+            OutputSizeBytes = $isolatedOutputSizeBytes
+            OutputSha256 = $isolatedOutputSha256
+            OutputRetained = -not $WorkerEphemeral
             ManualTestIso = if ($isolatedKind -eq 'manual-test') { $isolatedOutputIso } else { $null }
             E2eTestIso = if ($isolatedKind -eq 'e2e-test') { $isolatedOutputIso } else { $null }
             E2eVariant = if ($isolatedKind -eq 'e2e-test') { $E2eVariant } else { $null }
@@ -654,6 +745,9 @@ if ($ManualTestOnly -or $null -ne $e2eBuild -or $null -ne $workerBuild) {
         }
     }
     finally {
+        if ($ephemeralOutputOwned -and (Test-Path -LiteralPath $isolatedOutputIso -PathType Leaf)) {
+            [IO.File]::Delete($isolatedOutputIso)
+        }
         if (Test-Path -LiteralPath $isolatedBuildingIso) {
             Remove-Item -LiteralPath $isolatedBuildingIso -Force
         }

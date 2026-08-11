@@ -5,14 +5,19 @@ import binascii
 import csv
 import gzip
 import hashlib
+import importlib.metadata
 import json
+import marshal
 import os
 import re
 import struct
+import sys
+import uuid
 import zlib
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
 from scripts.lib.paths import load_paths, resolve_alias
@@ -20,8 +25,10 @@ from ...scripts.source_media import IsoFileView, cvm_members
 
 try:
     import zopfli.gzip as zopfli_gzip
+    import zopfli.zopfli as zopfli_core
 except ImportError:
     zopfli_gzip = None
+    zopfli_core = None
 
 
 CONTAINER_FIELDS = [
@@ -47,6 +54,8 @@ STRATEGY_FIELDS = [
     "reason",
 ]
 MAX_DERIVATION_WORKERS = 16
+CACHE_SCHEMA_VERSION = 1
+CACHE_MAGIC = b"NA228-TEXTURE-CACHE\0"
 SECTION_TOC = 0xCCCC0002
 SECTION_TEXTURE = 0xCCCC0300
 SECTION_PALETTE = 0xCCCC0400
@@ -93,6 +102,50 @@ KNOWN_SECTION_TYPES = {
 
 def sha256(data: bytes | bytearray) -> str:
     return hashlib.sha256(data).hexdigest().upper()
+
+
+@lru_cache(maxsize=1)
+def derivation_implementation_sha256() -> str:
+    loader = globals().get("__loader__")
+    get_code = getattr(loader, "get_code", None)
+    if get_code is not None:
+        try:
+            code = get_code(__name__)
+            if code is not None:
+                return sha256(marshal.dumps(code))
+        except Exception:
+            pass
+    try:
+        return sha256(Path(__file__).read_bytes())
+    except OSError:
+        return sha256(f"{os.getpid()}:{uuid.uuid4().hex}".encode("ascii"))
+
+
+def module_file_sha256(module: object | None) -> str | None:
+    path = getattr(module, "__file__", None)
+    if not isinstance(path, str):
+        return None
+    try:
+        return sha256(Path(path).read_bytes())
+    except OSError:
+        return None
+
+
+@lru_cache(maxsize=1)
+def derivation_runtime_identity() -> dict[str, str | None]:
+    try:
+        zopfli_version = importlib.metadata.version("zopfli")
+    except Exception:
+        zopfli_version = None
+    return {
+        "python": sys.version,
+        "python_cache_tag": sys.implementation.cache_tag,
+        "zlib_compile": zlib.ZLIB_VERSION,
+        "zlib_runtime": zlib.ZLIB_RUNTIME_VERSION,
+        "zopfli": zopfli_version,
+        "zopfli_wrapper_sha256": module_file_sha256(zopfli_gzip),
+        "zopfli_binary_sha256": module_file_sha256(zopfli_core),
+    }
 
 
 def read_u32(data: bytes | bytearray, offset: int) -> int:
@@ -200,6 +253,7 @@ class ContainerResult:
     padding_size: int
     outer_cvm_offset: int
     mapping_ids: tuple[str, ...]
+    cache_reused: bool = False
 
 
 @dataclass(frozen=True)
@@ -226,6 +280,157 @@ class TexturePatchPlan:
     @property
     def mapping_count(self) -> int:
         return sum(len(result.mapping_ids) for result in self.containers)
+
+    @property
+    def cache_reused_count(self) -> int:
+        return sum(result.cache_reused for result in self.containers)
+
+    @property
+    def cache_derived_count(self) -> int:
+        return len(self.containers) - self.cache_reused_count
+
+
+@dataclass(frozen=True)
+class CachedDerivation:
+    replacement: bytes
+    payload_sha256: str
+    compressed_stream_size: int
+    padding_size: int
+
+
+def texture_cache_key(
+    original: bytes,
+    donor: bytes,
+    strategy: Strategy,
+    mappings: list[Mapping],
+) -> str:
+    descriptor = {
+        "schema_version": CACHE_SCHEMA_VERSION,
+        "implementation_sha256": derivation_implementation_sha256(),
+        "runtime": derivation_runtime_identity(),
+        "target_sha256": sha256(original),
+        "donor_sha256": sha256(donor),
+        "strategy": strategy.strategy,
+        "mappings": [
+            {
+                "target_texture": mapping.target_texture,
+                "donor_texture": mapping.donor_texture,
+                "transform": mapping.transform,
+            }
+            for mapping in mappings
+        ],
+    }
+    return sha256(
+        json.dumps(
+            descriptor,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    )
+
+
+def cache_file(cache_root: Path, key: str) -> Path:
+    return cache_root / f"{key}.bin"
+
+
+def read_cached_derivation(
+    cache_root: Path,
+    key: str,
+    original_size: int,
+) -> CachedDerivation | None:
+    try:
+        data = cache_file(cache_root, key).read_bytes()
+        if not data.startswith(CACHE_MAGIC):
+            return None
+        metadata_size_offset = len(CACHE_MAGIC)
+        metadata_offset = metadata_size_offset + 4
+        if len(data) < metadata_offset:
+            return None
+        metadata_size = struct.unpack_from("<I", data, metadata_size_offset)[0]
+        replacement_offset = metadata_offset + metadata_size
+        if metadata_size > 0x10000 or replacement_offset > len(data):
+            return None
+        metadata = json.loads(
+            data[metadata_offset:replacement_offset].decode("utf-8")
+        )
+        replacement = data[replacement_offset:]
+        if (
+            not isinstance(metadata, dict)
+            or metadata.get("schema_version") != CACHE_SCHEMA_VERSION
+            or metadata.get("cache_key") != key
+            or metadata.get("replacement_size") != original_size
+            or len(replacement) != original_size
+            or metadata.get("replacement_sha256") != sha256(replacement)
+        ):
+            return None
+        payload_hash = metadata.get("payload_sha256")
+        stream_size = metadata.get("compressed_stream_size")
+        padding_size = metadata.get("padding_size")
+        if (
+            not isinstance(payload_hash, str)
+            or len(payload_hash) != 64
+            or any(char not in "0123456789ABCDEF" for char in payload_hash)
+            or isinstance(stream_size, bool)
+            or not isinstance(stream_size, int)
+            or stream_size < 1
+            or isinstance(padding_size, bool)
+            or not isinstance(padding_size, int)
+            or padding_size < 0
+            or stream_size + padding_size != original_size
+            or replacement[stream_size:] != b"\0" * padding_size
+        ):
+            return None
+        return CachedDerivation(
+            replacement,
+            payload_hash,
+            stream_size,
+            padding_size,
+        )
+    except Exception:
+        return None
+
+
+def write_cached_derivation(
+    cache_root: Path,
+    key: str,
+    result: CachedDerivation,
+) -> None:
+    temporary: Path | None = None
+    try:
+        cache_root.mkdir(parents=True, exist_ok=True)
+        metadata = json.dumps(
+            {
+                "schema_version": CACHE_SCHEMA_VERSION,
+                "cache_key": key,
+                "replacement_size": len(result.replacement),
+                "replacement_sha256": sha256(result.replacement),
+                "payload_sha256": result.payload_sha256,
+                "compressed_stream_size": result.compressed_stream_size,
+                "padding_size": result.padding_size,
+            },
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+        payload = (
+            CACHE_MAGIC
+            + struct.pack("<I", len(metadata))
+            + metadata
+            + result.replacement
+        )
+        destination = cache_file(cache_root, key)
+        temporary = destination.with_name(
+            f".{destination.name}.{os.getpid()}.{uuid.uuid4().hex}.tmp"
+        )
+        temporary.write_bytes(payload)
+        os.replace(temporary, destination)
+    except Exception:
+        if temporary is not None:
+            try:
+                temporary.unlink(missing_ok=True)
+            except OSError:
+                pass
 
 
 def load_package(directory: Path) -> Package:
@@ -1023,6 +1228,7 @@ def derive_container(
     donor_iso: IsoFileView,
     target_header_size: int,
     mappings_by_container: dict[str, list[Mapping]],
+    cache_root: Path | None = None,
 ) -> ContainerResult:
     spec = package.containers[container_id]
     strategy = package.strategies[container_id]
@@ -1035,11 +1241,31 @@ def derive_container(
         raise FileNotFoundError(f"NUN5 DATA.CVM has no file {spec.path}")
     original = target_iso.read_file(target_record)
     donor = donor_iso.read_file(donor_record)
+    mappings = mappings_by_container[container_id]
+    key = texture_cache_key(original, donor, strategy, mappings)
+    cached = (
+        read_cached_derivation(cache_root, key, len(original))
+        if cache_root is not None
+        else None
+    )
+    if cached is not None:
+        return ContainerResult(
+            spec=spec,
+            strategy=strategy,
+            original=original,
+            donor=donor,
+            replacement=cached.replacement,
+            payload_sha256=cached.payload_sha256,
+            compressed_stream_size=cached.compressed_stream_size,
+            padding_size=cached.padding_size,
+            outer_cvm_offset=target_header_size + target_record.byte_offset,
+            mapping_ids=tuple(mapping.mapping_id for mapping in mappings),
+            cache_reused=True,
+        )
     target_payload = gzip.decompress(original)
     donor_payload = gzip.decompress(donor)
     target_entries = parse_ccs(target_payload)
     donor_entries = parse_ccs(donor_payload)
-    mappings = mappings_by_container[container_id]
     for mapping in mappings:
         validate_mapping(
             mapping,
@@ -1067,6 +1293,17 @@ def derive_container(
             for mapping in mappings
         ),
     )
+    if cache_root is not None:
+        write_cached_derivation(
+            cache_root,
+            key,
+            CachedDerivation(
+                replacement,
+                payload_hash,
+                stream_size,
+                padding,
+            ),
+        )
     return ContainerResult(
         spec=spec,
         strategy=strategy,
@@ -1098,6 +1335,7 @@ def build_plan(
     data_root: Path,
     selection: tuple[str, ...] = (),
     workers: int | None = None,
+    cache_root: Path | None = None,
 ) -> TexturePatchPlan:
     package = load_package(data_root)
     target_iso, donor_iso, target_header = source_members(na2_root, nun5_root)
@@ -1116,6 +1354,7 @@ def build_plan(
             donor_iso=donor_iso,
             target_header_size=len(target_header),
             mappings_by_container=mappings_by_container,
+            cache_root=cache_root,
         )
 
     if worker_count == 1:
@@ -1136,6 +1375,7 @@ def build_texture_patch_plan(
     data_root: Path,
     selection: tuple[str, ...] = (),
     workers: int | None = None,
+    cache_root: Path | None = None,
 ) -> TexturePatchPlan:
     return build_plan(
         na2_root=na2_root,
@@ -1143,6 +1383,7 @@ def build_texture_patch_plan(
         data_root=data_root,
         selection=selection,
         workers=workers,
+        cache_root=cache_root,
     )
 
 
@@ -1161,6 +1402,7 @@ def result_rows(plan: TexturePatchPlan) -> list[dict[str, object]]:
             "replacement_sha256": sha256(result.replacement),
             "payload_sha256": result.payload_sha256,
             "outer_cvm_offset": f"0x{result.outer_cvm_offset:X}",
+            "cache_result": "reused" if result.cache_reused else "derived",
         }
         for result in plan.containers
     ]
@@ -1204,7 +1446,7 @@ def default_roots() -> tuple[Path, Path]:
 def print_results(plan: TexturePatchPlan) -> None:
     print(
         "container_id\tstrategy\tfixed_size\tcompressed_stream_size\tzero_padding\t"
-        "replacement_sha256\tpayload_sha256"
+        "replacement_sha256\tpayload_sha256\tcache_result"
     )
     for row in result_rows(plan):
         print(
@@ -1218,6 +1460,7 @@ def print_results(plan: TexturePatchPlan) -> None:
                     "zero_padding",
                     "replacement_sha256",
                     "payload_sha256",
+                    "cache_result",
                 )
             )
         )
@@ -1255,6 +1498,7 @@ def main() -> int:
         data_root=data_root,
         selection=selection,
         workers=args.workers,
+        cache_root=repository / "work" / "cache" / "texture_patcher",
     )
     if args.command == "preview":
         output = Path(args.output)

@@ -13,6 +13,35 @@ from na228_builder.scripts import build_configuration
 
 
 class BuildConfigurationCliTests(unittest.TestCase):
+    def test_texture_summary_reports_cache_reuse(self) -> None:
+        plan = build_configuration.texture_patcher_module.TexturePatchPlan(
+            package=SimpleNamespace(),
+            containers=(
+                SimpleNamespace(mapping_ids=("a",), cache_reused=True),
+                SimpleNamespace(mapping_ids=("b", "c"), cache_reused=False),
+            ),
+            target_header=b"",
+        )
+        module = build_configuration.ModuleInvocation(
+            module_id="localization.texture_patcher",
+            order=5,
+            module="texture_patcher",
+            input_path=Path("texture_patcher"),
+            input_sha256="A" * 64,
+            feature_id="localization",
+        )
+        output = io.StringIO()
+        with redirect_stdout(output):
+            build_configuration.print_configuration_summary(
+                SimpleNamespace(configuration_id="test"),
+                [{"module": module, "texture_patch_plan": plan, "paths": []}],
+                None,
+            )
+        self.assertIn(
+            "texture cache 1 reused/1 derived",
+            output.getvalue(),
+        )
+
     def test_compose_only_skips_output_staging_and_configuration_logs(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory).resolve()
@@ -158,11 +187,81 @@ class BuildConfigurationCliTests(unittest.TestCase):
                 configuration_log_directory,
             )
             self.assertFalse(kwargs["best_effort_metadata"])
+            self.assertFalse(kwargs["digest_only"])
             self.assertIn("payload_builder (0 symbols, 7 bytes)", output.getvalue())
             self.assertIn("identity (1 edits)", output.getvalue())
             self.assertIn(
                 "Verified staged ISO: NA2.28 - Latest.iso.building",
                 output.getvalue(),
+            )
+
+    def test_digest_cli_reports_virtual_iso_without_staging(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory).resolve()
+            source_iso = workspace / "source.iso"
+            source_iso.write_bytes(b"source")
+            output_iso = workspace / "build" / "candidate.iso"
+            configuration_path = workspace / "configurations" / "test.json"
+            configuration_log_directory = workspace / "logs" / "configuration"
+            configuration = SimpleNamespace(
+                configuration_id="test", features=(), modules=()
+            )
+            result = build_configuration.ConfigurationBuildResult(
+                (),
+                None,
+                (),
+                None,
+                1928429568,
+                "A" * 64,
+            )
+            arguments = [
+                "build_configuration",
+                "--source",
+                str(source_iso),
+                "--output",
+                str(output_iso),
+                "--configuration",
+                str(configuration_path),
+                "--configuration-log-directory",
+                "logs/configuration",
+                "--digest-only",
+            ]
+
+            output = io.StringIO()
+            with (
+                patch.object(sys, "argv", arguments),
+                patch.object(
+                    build_configuration,
+                    "PATHS",
+                    new=SimpleNamespace(repository=workspace),
+                ),
+                patch.object(
+                    build_configuration,
+                    "load_configuration",
+                    return_value=configuration,
+                ),
+                patch.object(
+                    build_configuration.binary_patcher_module,
+                    "command_relative_path",
+                    return_value=configuration_log_directory,
+                ),
+                patch.object(
+                    build_configuration,
+                    "build_configuration_candidate",
+                    return_value=result,
+                ) as build,
+                redirect_stdout(output),
+            ):
+                self.assertEqual(build_configuration.main(), 0)
+
+            self.assertTrue(build.call_args.kwargs["digest_only"])
+            self.assertIn(
+                "Verified virtual ISO: 1928429568 bytes; SHA-256 " + "A" * 64,
+                output.getvalue(),
+            )
+            self.assertFalse(output_iso.exists())
+            self.assertFalse(
+                build_configuration.building_image_path(output_iso).exists()
             )
 
     def test_best_effort_metadata_keeps_verified_staging_on_log_failure(self) -> None:

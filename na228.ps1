@@ -82,7 +82,7 @@ if ($mode -eq 'help') {
         '  na228 e2e rename <suite> <new-suite>  Rename a suite and its capture history'
         '  na228 e2e delete <suite>               Delete a suite and its capture history'
         '  na228 e2e commit [-s]                  Commit captures; -s consolidates and compacts history'
-        '  na228 worker work/<worker>/build/<name>.iso  Build an isolated worker ISO'
+        '  na228 worker [--ephemeral] work/<worker>/build/<name>.iso  Build a worker ISO; ephemeral verifies its hash without writing it'
         '  na228 release [version]     Publish a GitHub release'
         '  na228 help                  Show this help'
         "  games: $($paths.games.Names -join ', ')"
@@ -211,17 +211,27 @@ if ($mode -eq 'build') {
 }
 
 if ($mode -eq 'worker') {
-    if ($arguments.Count -ne 1) {
-        throw 'na228 worker requires exactly one worker ISO output path.'
+    $workerEphemeral = $false
+    $workerOutputArgument = $null
+    if ($arguments.Count -eq 1) {
+        $workerOutputArgument = $arguments[0]
+    }
+    elseif ($arguments.Count -eq 2 -and $arguments[0] -ieq '--ephemeral') {
+        $workerEphemeral = $true
+        $workerOutputArgument = $arguments[1]
+    }
+    else {
+        throw 'Usage: na228 worker [--ephemeral] work/<worker>/build/<name>.iso'
     }
     $workerBuild = Get-Na2WorkerBuildContext `
-        -OutputPath $arguments[0] `
+        -OutputPath $workerOutputArgument `
         -Paths $paths `
         -RequireRelative
     & (Join-Path $paths.scripts 'na228\run.ps1') `
         -Action worker-build `
         -WorkerOutputIso $workerBuild.OutputIso `
-        -WorkerLogDirectory $workerBuild.Logs
+        -WorkerLogDirectory $workerBuild.Logs `
+        -WorkerEphemeral:$workerEphemeral
     return
 }
 
@@ -322,9 +332,15 @@ foreach ($buildAction in @($buildActions | Select-Object -Unique)) {
 }
 
 $workshopArguments = @($games) + $forwardedLaunchArguments
-$launchResults = @(
-    & $paths.files.workshop_command @workshopArguments
-)
+Push-Location $paths.repository
+try {
+    $launchResults = @(
+        & $paths.files.workshop_command @workshopArguments
+    )
+}
+finally {
+    Pop-Location
+}
 $launchResults
 
 if ($null -ne $watchIndex) {

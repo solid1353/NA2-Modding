@@ -79,12 +79,14 @@ running.
 
 ## Worker build and runtime logs
 
-`na228 worker work/<task title>/build/<name>.iso` keeps its operational
-`latest.log`/`rolling.log` and structured `builds/<build-id>/` records under
-that task's `work/<task title>/logs/`. Worker records never participate in or
-prune shared Test/Latest/Previous records. Completed structured worker
-records are capped at 20 per task; task cleanup may delete them sooner after
-promoting reusable findings.
+`na228 worker [--ephemeral] work/<task title>/build/<name>.iso` keeps its
+operational `latest.log`/`rolling.log` and structured `builds/<build-id>/`
+records under that task's `work/<task title>/logs/`. Ephemeral worker records
+include the verified virtual output size and SHA-256 and mark the output as not
+retained; no ISO is written. Worker records never participate in or prune shared
+Test/Latest/Previous records. Completed structured worker records are capped at
+20 per task; task cleanup may delete them sooner after promoting reusable
+findings.
 
 Persistent command logs must be normalized after transcript capture. They omit
 PowerShell transcript boilerplate, replace configured roots with aliases, and

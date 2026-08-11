@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import os
 import re
 from dataclasses import dataclass
@@ -13,6 +14,15 @@ from .udf import Udf, UdfPlan
 SECTOR = 2048
 _ZERO_SECTOR = b"\0" * SECTOR
 _ISO_FILE_NAME = re.compile(r"[A-Z0-9_]+(?:\.[A-Z0-9_]+)?")
+
+
+def _flush_image(handle: object) -> None:
+    handle.flush()
+    try:
+        descriptor = handle.fileno()
+    except (AttributeError, OSError, io.UnsupportedOperation):
+        return
+    os.fsync(descriptor)
 
 
 @dataclass(frozen=True)
@@ -741,8 +751,7 @@ def compose_filesystems(
         for write in ordered_writes:
             output.seek(write.offset)
             output.write(write.replacement)
-        output.flush()
-        os.fsync(output.fileno())
+        _flush_image(output)
 
     if image.stat().st_size != original_size:
         raise RuntimeError("ISO composition changed the image size")

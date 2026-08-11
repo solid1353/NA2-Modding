@@ -11,6 +11,7 @@ param(
 
     [string]$WorkerOutputIso,
     [string]$WorkerLogDirectory,
+    [switch]$WorkerEphemeral,
     [switch]$Force
 )
 
@@ -34,7 +35,7 @@ if ($Action -eq 'worker-build') {
         throw 'Worker build action requires its output ISO and log directory.'
     }
 }
-elseif ($WorkerOutputIso -or $WorkerLogDirectory) {
+elseif ($WorkerOutputIso -or $WorkerLogDirectory -or $WorkerEphemeral) {
     throw 'Worker output arguments are valid only for worker-build.'
 }
 if ($Force -and $Action -ne 'latest-build-and-launch') {
@@ -70,9 +71,11 @@ try {
             $portableOutput = ConvertTo-Na2ProjectPath `
                 -Path $WorkerOutputIso `
                 -Paths $paths
-            Write-Na2Stage "Build isolated worker ISO $portableOutput"
+            $workerKind = if ($WorkerEphemeral) { 'ephemeral worker' } else { 'isolated worker' }
+            Write-Na2Stage "Build $workerKind ISO $portableOutput"
             $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') `
-                -WorkerOutputIso $WorkerOutputIso
+                -WorkerOutputIso $WorkerOutputIso `
+                -WorkerEphemeral:$WorkerEphemeral
             if (-not $buildResult -or $buildResult.Status -ne 'worker') {
                 throw 'Worker build did not return a valid result.'
             }

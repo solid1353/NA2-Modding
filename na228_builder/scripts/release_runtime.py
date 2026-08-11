@@ -115,6 +115,9 @@ def build_release_iso(
         configuration=configuration,
         workspace=workspace,
         configuration_log_directory=None,
+        texture_cache_root=(
+            application_directory() / "work" / "cache" / "texture_patcher"
+        ),
     )
     if build.staged_iso != building_iso.resolve():
         raise RuntimeError("Build engine produced an unexpected staging path")

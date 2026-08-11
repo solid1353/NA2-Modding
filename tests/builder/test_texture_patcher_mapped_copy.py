@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import struct
+import tempfile
 import unittest
+from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from na228_builder.modules.texture_patcher import engine
@@ -438,6 +441,131 @@ class MappedCopyTests(unittest.TestCase):
         self.assertEqual(engine.derivation_worker_count(1, 34), 1)
         with self.assertRaisesRegex(ValueError, "positive integer"):
             engine.derivation_worker_count(0, 34)
+
+    def test_texture_cache_round_trip_and_corruption_falls_back_to_miss(self) -> None:
+        stream = engine.gzip.compress(b"cached payload", mtime=0)
+        replacement = stream + b"\0" * 7
+        cached = engine.CachedDerivation(
+            replacement=replacement,
+            payload_sha256=engine.sha256(b"cached payload"),
+            compressed_stream_size=len(stream),
+            padding_size=7,
+        )
+        key = "A" * 64
+        with tempfile.TemporaryDirectory() as directory:
+            cache_root = Path(directory)
+            engine.write_cached_derivation(cache_root, key, cached)
+            self.assertEqual(
+                engine.read_cached_derivation(cache_root, key, len(replacement)),
+                cached,
+            )
+            engine.cache_file(cache_root, key).write_bytes(b"corrupt")
+            self.assertIsNone(
+                engine.read_cached_derivation(cache_root, key, len(replacement))
+            )
+
+    def test_texture_cache_key_covers_bytes_and_derivation_inputs(self) -> None:
+        base = engine.texture_cache_key(
+            b"target",
+            b"donor",
+            strategy("mapped"),
+            [self.mappings[0]],
+        )
+        changed_mapping = engine.Mapping(
+            mapping_id=self.mappings[0].mapping_id,
+            container_id=self.mappings[0].container_id,
+            target_texture=self.mappings[0].target_texture,
+            donor_texture=self.mappings[0].donor_texture,
+            transform="split_left",
+            reason=self.mappings[0].reason,
+        )
+        self.assertNotEqual(
+            base,
+            engine.texture_cache_key(
+                b"changed target",
+                b"donor",
+                strategy("mapped"),
+                [self.mappings[0]],
+            ),
+        )
+        self.assertNotEqual(
+            base,
+            engine.texture_cache_key(
+                b"target",
+                b"changed donor",
+                strategy("mapped"),
+                [self.mappings[0]],
+            ),
+        )
+        self.assertNotEqual(
+            base,
+            engine.texture_cache_key(
+                b"target",
+                b"donor",
+                strategy("mapped"),
+                [changed_mapping],
+            ),
+        )
+
+    def test_texture_cache_io_failure_does_not_fail_derivation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            cache_root = Path(directory) / "not-a-directory"
+            cache_root.write_bytes(b"occupied")
+            cached = engine.CachedDerivation(
+                replacement=b"replacement",
+                payload_sha256="A" * 64,
+                compressed_stream_size=11,
+                padding_size=0,
+            )
+            engine.write_cached_derivation(cache_root, "B" * 64, cached)
+            self.assertIsNone(
+                engine.read_cached_derivation(cache_root, "B" * 64, 11)
+            )
+
+    def test_texture_cache_hit_skips_container_derivation(self) -> None:
+        spec = engine.ContainerSpec("mapped", "file.ccs", "A" * 64, "B" * 64)
+        package = engine.Package(
+            Path("."),
+            {"mapped": spec},
+            (self.mappings[0],),
+            {"mapped": strategy("mapped")},
+        )
+        record = SimpleNamespace(is_dir=False, byte_offset=0x200)
+        target = SimpleNamespace(
+            by_path={"FILE.CCS": record},
+            read_file=lambda _record: b"targetbytes",
+        )
+        donor = SimpleNamespace(
+            by_path={"FILE.CCS": record},
+            read_file=lambda _record: b"donor bytes",
+        )
+        cached = engine.CachedDerivation(
+            replacement=b"replacement",
+            payload_sha256="C" * 64,
+            compressed_stream_size=11,
+            padding_size=0,
+        )
+        with (
+            patch.object(engine, "read_cached_derivation", return_value=cached),
+            patch.object(
+                engine.gzip,
+                "decompress",
+                side_effect=AssertionError("cache hit derived again"),
+            ),
+        ):
+            result = engine.derive_container(
+                "mapped",
+                package=package,
+                target_iso=target,
+                donor_iso=donor,
+                target_header_size=0x40,
+                mappings_by_container={"mapped": [self.mappings[0]]},
+                cache_root=Path("cache"),
+            )
+        self.assertEqual(result.replacement, cached.replacement)
+        self.assertEqual(result.outer_cvm_offset, 0x240)
+        self.assertEqual(result.mapping_ids, (self.mappings[0].mapping_id,))
+        self.assertTrue(result.cache_reused)
 
 
 if __name__ == "__main__":

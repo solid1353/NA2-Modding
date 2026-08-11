@@ -18,6 +18,16 @@ feature-owned tables as provenance and diagnostics, but they do not gate
 derivation or ISO builds. Indexed-region translations use the pinned Zopfli
 encoder so their replacement bytes do not vary with the host zlib version.
 
+Every build route uses the shared optional derivation cache at
+`work/cache/texture_patcher/` relative to the active project or release
+application directory. Entries are keyed by the actual target and donor
+container bytes, applicable strategy and mappings, texture-patcher
+implementation, and compression runtime. A hit still verifies the replacement
+size and hash; a missing, corrupt, or unwritable cache regenerates normally.
+The cache is disposable, is not a build input, and is never packaged into or
+required by a release. Build output reports reused and newly derived container
+counts, and texture-patcher logs record the result for each container.
+
 ## Invokes
 
 None. The configuration orchestrator applies its fixed-size texture results directly.

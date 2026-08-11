@@ -82,24 +82,27 @@ that behavior.
   only when the agreed validation plan explicitly includes `na228 build -d`; it
   is not an automatic additional check.
 - The only ordinary full-ISO build route for an agent is
-  `na228 worker work/<task>/build/<name>.iso`. Build a task-owned worker ISO only
-  when the selected validation requires image assembly. It is an internal agent
-  artifact, never a user testing ground or deliverable. Agents do not launch or
-  runtime-execute it. Maintained E2E is a separate explicitly selected route.
+  `na228 worker [--ephemeral] work/<task>/build/<name>.iso`. Build a task-owned
+  worker ISO only when the selected validation requires image assembly. It is
+  an internal agent artifact, never a user testing ground or deliverable. Agents
+  do not launch or runtime-execute it. Maintained E2E is a separate explicitly
+  selected route.
 - Agent-authorized builds are final validation steps except for the pre-change
   baseline required by an approved hash-equivalence comparison. Build that
-  baseline before implementation with the agreed inputs and configuration, and
-  retain the baseline ISO through comparison and until the user verifies the
-  equivalence result. Before building the candidate, review the final diff and
-  confirm that all in-scope implementation changes are complete and all earlier
-  selected checks passed. Do not use repeated builds to discover missing work.
-  If the candidate build exposes a failure, fix it, re-review the completed
-  candidate, and then rerun the candidate build. Any subsequent implementation
-  change invalidates the prior candidate result.
-- Delete a worker ISO after the selected validation and evidence extraction,
-  whether validation passes or fails, except for a pre-change equivalence
-  baseline retained under the rule above. Do not build an ISO merely to prepare
-  user verification; the user uses their normal build and run workflow.
+  baseline before implementation with the agreed inputs and configuration.
+  Before building the candidate, review the final diff and confirm that all
+  in-scope implementation changes are complete and all earlier selected checks
+  passed. Do not use repeated builds to discover missing work. If the candidate
+  build exposes a failure, fix it, re-review the completed candidate, and then
+  rerun the candidate build. Any subsequent implementation change invalidates
+  the prior candidate result.
+- Use `--ephemeral` for every hash-equivalence baseline and candidate. The
+  command verifies the complete ISO through a streamed virtual overlay and
+  records and prints its size and SHA-256 without writing an ISO; compare the
+  retained records. For other worker builds, delete the ISO after the selected
+  validation and evidence extraction, whether validation passes or fails,
+  unless the user explicitly requested retention. Do not build an ISO merely to
+  prepare user verification; the user uses their normal build and run workflow.
 
 ### Visual game changes
 

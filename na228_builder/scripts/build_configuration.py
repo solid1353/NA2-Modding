@@ -11,6 +11,7 @@ from . import catalog as catalog_module
 from .composer import CompositionResult, compose_assembly_plan
 from ..image_assembler.assembler import (
     assemble_image,
+    assemble_image_digest,
     building_image_path,
 )
 from ..image_assembler.iso9660 import Iso9660, IsoInsertion, normalize_iso_path
@@ -40,7 +41,9 @@ class ConfigurationBuildResult:
     results: tuple[dict[str, object], ...]
     payload_result: dict[str, object] | None
     identity_edits: tuple[dict[str, object], ...]
-    staged_iso: Path
+    staged_iso: Path | None
+    output_size_bytes: int | None = None
+    output_sha256: str | None = None
 
 
 @dataclass(frozen=True)
@@ -147,6 +150,7 @@ def apply_texture_patch_package(
     source: Iso9660,
     payloads: dict[str, bytearray],
     owners: dict[str, str],
+    cache_root: Path | None,
 ) -> tuple[texture_patcher_module.TexturePatchPlan, str]:
     if "na2" not in roots or "nun5" not in roots:
         raise ValueError("Texture-patcher module requires na2 and nun5 configuration roots")
@@ -163,6 +167,7 @@ def apply_texture_patch_package(
         nun5_root=roots["nun5"],
         data_root=package_directory,
         selection=(),
+        cache_root=cache_root,
     )
     path = "DATA/DATA.CVM"
     record = source.by_path.get(path)
@@ -302,6 +307,7 @@ def write_texture_patch_log(
             "donor_sha256",
             "replacement_sha256",
             "payload_sha256",
+            "cache_result",
         ],
         [
             {
@@ -316,6 +322,7 @@ def write_texture_patch_log(
                     "donor_sha256",
                     "replacement_sha256",
                     "payload_sha256",
+                    "cache_result",
                 )
             }
             for row in texture_patcher_module.result_rows(plan)
@@ -323,7 +330,14 @@ def write_texture_patch_log(
     )
     binary_patcher_module.write_tsv(
         log_directory / "run_summary.tsv",
-        ["container_count", "mapping_count", "fixed_bytes", "worker_count"],
+        [
+            "container_count",
+            "mapping_count",
+            "fixed_bytes",
+            "worker_count",
+            "cache_reused",
+            "cache_derived",
+        ],
         [
             {
                 "container_count": len(plan.containers),
@@ -332,6 +346,8 @@ def write_texture_patch_log(
                     len(result.replacement) for result in plan.containers
                 ),
                 "worker_count": plan.worker_count,
+                "cache_reused": plan.cache_reused_count,
+                "cache_derived": plan.cache_derived_count,
             }
         ],
     )
@@ -441,6 +457,7 @@ def apply_configuration_modules(
     insertions: dict[str, bytes],
     insertion_owners: dict[str, str],
     payload_shift: int = 0,
+    texture_cache_root: Path | None = None,
 ) -> tuple[list[dict[str, object]], dict[str, object] | None]:
     pipeline = prepare_module_pipeline(configuration, payload_shift=payload_shift)
     ordered_modules = pipeline.ordered_modules
@@ -565,6 +582,7 @@ def apply_configuration_modules(
                 source=source,
                 payloads=payloads,
                 owners=owners,
+                cache_root=texture_cache_root,
             )
             results.append(
                 {
@@ -776,11 +794,17 @@ def compose_configuration_candidate(
     source_iso: Path,
     configuration: BuildConfiguration,
     payload_shift: int = 0,
+    texture_cache_root: Path | None = None,
 ) -> ConfigurationCompositionResult:
     """Compose and conflict-check one configuration without staging an image."""
     source_iso = source_iso.resolve()
     if not source_iso.is_file():
         raise FileNotFoundError(source_iso)
+    if texture_cache_root is None:
+        project_paths = PATHS or load_paths(Path(__file__).resolve(), allow_missing=True)
+        texture_cache_root = (
+            project_paths.repository / "work" / "cache" / "texture_patcher"
+        )
 
     source = Iso9660(source_iso)
     payloads: dict[str, bytearray] = {}
@@ -795,6 +819,7 @@ def compose_configuration_candidate(
         insertions=insertions,
         insertion_owners=insertion_owners,
         payload_shift=payload_shift,
+        texture_cache_root=texture_cache_root,
     )
     composition = compose_assembly_plan(
         source=source,
@@ -821,8 +846,10 @@ def build_configuration_candidate(
     configuration_log_directory: Path | None,
     payload_shift: int = 0,
     best_effort_metadata: bool = False,
+    texture_cache_root: Path | None = None,
+    digest_only: bool = False,
 ) -> ConfigurationBuildResult:
-    """Compose and verify one staged configuration image without promoting it."""
+    """Compose and verify one physical or virtual configuration image."""
     source_iso = source_iso.resolve()
     output_iso = output_iso.resolve()
     workspace = workspace.resolve()
@@ -856,11 +883,21 @@ def build_configuration_candidate(
         source_iso=source_iso,
         configuration=configuration,
         payload_shift=payload_shift,
+        texture_cache_root=(
+            texture_cache_root
+            if texture_cache_root is not None
+            else workspace / "work" / "cache" / "texture_patcher"
+        ),
     )
     configuration_results = list(composed.results)
     payload_result = composed.payload_result
     composition = composed.composition
-    assembly = assemble_image(source_iso, output_iso, composition.plan)
+    if digest_only:
+        digest_result = assemble_image_digest(source_iso, composition.plan)
+        assembly = digest_result.assembly
+    else:
+        digest_result = None
+        assembly = assemble_image(source_iso, output_iso, composition.plan)
     results_by_owner: dict[str, list[IsoInsertion]] = {}
     for insertion in assembly.insertions:
         owner = composed.insertion_owners[insertion.path]
@@ -912,16 +949,19 @@ def build_configuration_candidate(
                 file=sys.stderr,
             )
         else:
-            staged = building_image_path(output_iso)
-            if staged.exists() or staged.is_symlink():
-                staged.unlink()
+            if not digest_only:
+                staged = building_image_path(output_iso)
+                if staged.exists() or staged.is_symlink():
+                    staged.unlink()
             raise
 
     return ConfigurationBuildResult(
         results=tuple(configuration_results),
         payload_result=payload_result,
         identity_edits=tuple(identity_edits),
-        staged_iso=building_image_path(output_iso),
+        staged_iso=None if digest_only else building_image_path(output_iso),
+        output_size_bytes=(digest_result.size_bytes if digest_result else None),
+        output_sha256=(digest_result.sha256 if digest_result else None),
     )
 
 
@@ -944,7 +984,11 @@ def print_configuration_summary(
         elif "texture_patch_plan" in item:
             plan = item["texture_patch_plan"]
             assert isinstance(plan, texture_patcher_module.TexturePatchPlan)
-            detail = f", {len(plan.containers)} containers, {plan.mapping_count} mappings"
+            detail = (
+                f", {len(plan.containers)} containers, {plan.mapping_count} mappings, "
+                f"texture cache {plan.cache_reused_count} reused/"
+                f"{plan.cache_derived_count} derived"
+            )
         if "derived_string_patch_result" in item:
             detail += (
                 f", {len(item['derived_string_patch_result']['edits'])} "
@@ -984,11 +1028,18 @@ def main() -> int:
         help="Compose and conflict-check the configuration without staging an ISO.",
     )
     parser.add_argument(
+        "--digest-only",
+        action="store_true",
+        help="Verify and hash the virtual ISO without staging an ISO.",
+    )
+    parser.add_argument(
         "--best-effort-metadata",
         action="store_true",
         help="Keep a verified staged ISO when writing auxiliary build metadata fails.",
     )
     args = parser.parse_args()
+    if args.compose_only and args.digest_only:
+        parser.error("--compose-only and --digest-only are mutually exclusive")
 
     paths = PATHS or load_paths(Path(__file__).resolve(), allow_missing=True)
     workspace = paths.repository
@@ -1048,13 +1099,23 @@ def main() -> int:
         configuration_log_directory=configuration_log_directory,
         payload_shift=args.payload_shift,
         best_effort_metadata=args.best_effort_metadata,
+        digest_only=args.digest_only,
     )
     configuration_results = build.results
     payload_result = build.payload_result
 
     print_configuration_summary(configuration, configuration_results, payload_result)
     print(f"  identity ({len(build.identity_edits)} edits)")
-    print(f"Verified staged ISO: {build.staged_iso.name}")
+    if args.digest_only:
+        assert build.output_size_bytes is not None
+        assert build.output_sha256 is not None
+        print(
+            f"Verified virtual ISO: {build.output_size_bytes} bytes; "
+            f"SHA-256 {build.output_sha256}"
+        )
+    else:
+        assert build.staged_iso is not None
+        print(f"Verified staged ISO: {build.staged_iso.name}")
     return 0
 
 

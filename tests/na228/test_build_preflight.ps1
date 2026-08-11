@@ -146,14 +146,19 @@ exit $LASTEXITCODE
             else {
                 $arguments[$sourceIndex]
             }
-            New-Item -ItemType Directory -Force `
-                -Path ([IO.Path]::GetDirectoryName($arguments[$outputIndex])) | Out-Null
-            [IO.File]::Copy($fixtureSource, "$($arguments[$outputIndex]).building", $true)
             if (-not $global:Na2PreflightTestSkipConfigurationLog) {
                 New-Item -ItemType Directory -Force `
                     -Path (Join-Path $global:Na2PreflightTestRepository $arguments[$configurationLogIndex]) | Out-Null
             }
             $global:LASTEXITCODE = 0
+            if ($arguments -contains '--digest-only') {
+                $fixtureItem = Get-Item -LiteralPath $fixtureSource
+                $fixtureHash = (Get-FileHash -LiteralPath $fixtureSource -Algorithm SHA256).Hash
+                return "Verified virtual ISO: $($fixtureItem.Length) bytes; SHA-256 $fixtureHash"
+            }
+            New-Item -ItemType Directory -Force `
+                -Path ([IO.Path]::GetDirectoryName($arguments[$outputIndex])) | Out-Null
+            [IO.File]::Copy($fixtureSource, "$($arguments[$outputIndex]).building", $true)
             return 'synthetic verified build'
         }
         throw "Unexpected python invocation: $($arguments -join ' ')"
@@ -445,6 +450,89 @@ exit $LASTEXITCODE
         -Message 'Repeated worker build was not marked as a preflight hit.'
     Assert-Na2PreflightTest -Condition ($global:Na2PreflightTestCalls.Count -eq 1) `
         -Message 'Worker cache hit invoked composition or receipt recording.'
+
+    $global:Na2PreflightTestMode = 'hit'
+    $global:Na2PreflightTestCalls = @()
+    $ephemeralOutput = 'work\Equivalence\build\candidate.iso'
+    $ephemeralItems = @(
+        & (Join-Path $scriptRoot 'build.ps1') `
+            -WorkerOutputIso $ephemeralOutput `
+            -WorkerEphemeral *>&1
+    )
+    $ephemeral = @(
+        $ephemeralItems |
+            Where-Object { $null -ne $_.PSObject.Properties['Status'] }
+    )[-1]
+    $ephemeralText = ($ephemeralItems | ForEach-Object { [string]$_ }) -join "`n"
+    $ephemeralOutputPath = Join-Path $repository $ephemeralOutput
+    $expectedEphemeralItem = Get-Item -LiteralPath (Join-Path $repository 'source\NA2.iso')
+    $expectedEphemeralHash = (
+        Get-FileHash -LiteralPath $expectedEphemeralItem.FullName -Algorithm SHA256
+    ).Hash
+    Assert-Na2PreflightTest `
+        -Condition (
+            $ephemeral.Status -eq 'worker' -and
+            $ephemeral.OutputState -eq 'ephemeral' -and
+            -not $ephemeral.OutputRetained -and
+            $ephemeral.OutputSizeBytes -eq $expectedEphemeralItem.Length -and
+            $ephemeral.OutputSha256 -ceq $expectedEphemeralHash
+        ) `
+        -Message 'Ephemeral worker build did not return its retained size/hash evidence.'
+    Assert-Na2PreflightTest `
+        -Condition ($global:Na2PreflightTestCalls.Count -eq 2) `
+        -Message 'Ephemeral worker build did not check preflight and build exactly once while skipping receipt recording.'
+    Assert-Na2PreflightTest `
+        -Condition (
+            -not (Test-Path -LiteralPath $ephemeralOutputPath) -and
+            -not (Test-Path -LiteralPath "$ephemeralOutputPath.building") -and
+            -not (Test-Path -LiteralPath ([IO.Path]::GetDirectoryName($ephemeralOutputPath)) -PathType Container)
+        ) `
+        -Message 'Ephemeral worker build created an output ISO, staging file, or build directory.'
+    Assert-Na2PreflightTest `
+        -Condition (
+            $ephemeralText -match 'cache miss \(ephemeral-build-required' -and
+            $ephemeralText -match "Ephemeral worker ISO: $($expectedEphemeralItem.Length) bytes" -and
+            $ephemeralText -match "SHA-256 $expectedEphemeralHash; not written to disk"
+        ) `
+        -Message 'Ephemeral worker build did not force a full build or print its virtual size/hash result.'
+    $ephemeralRecord = Join-Path $repository (
+        $ephemeral.ConfigurationLogDirectory.Replace('@work/', 'work/')
+    )
+    $ephemeralRow = Import-Csv `
+        -LiteralPath (Join-Path $ephemeralRecord 'build_result.tsv') `
+        -Delimiter "`t"
+    Assert-Na2PreflightTest `
+        -Condition (
+            $ephemeralRow.output_state -ceq 'ephemeral' -and
+            $ephemeralRow.output_size_bytes -ceq [string]$expectedEphemeralItem.Length -and
+            $ephemeralRow.output_sha256 -ceq $expectedEphemeralHash -and
+            $ephemeralRow.output_retained -ceq 'no'
+        ) `
+        -Message 'Ephemeral worker build record did not preserve size/hash/non-retention evidence.'
+
+    New-Item -ItemType Directory -Force `
+        -Path ([IO.Path]::GetDirectoryName($ephemeralOutputPath)) | Out-Null
+    [IO.File]::WriteAllText($ephemeralOutputPath, 'preserve existing output')
+    $global:Na2PreflightTestCalls = @()
+    $existingEphemeralRejected = $false
+    try {
+        & (Join-Path $scriptRoot 'build.ps1') `
+            -WorkerOutputIso $ephemeralOutput `
+            -WorkerEphemeral | Out-Null
+    }
+    catch {
+        $existingEphemeralRejected = (
+            $_.Exception.Message -match 'refusing to replace it'
+        )
+    }
+    Assert-Na2PreflightTest `
+        -Condition (
+            $existingEphemeralRejected -and
+            [IO.File]::ReadAllText($ephemeralOutputPath) -ceq 'preserve existing output' -and
+            $global:Na2PreflightTestCalls.Count -eq 0
+        ) `
+        -Message 'Ephemeral worker mode did not reject and preserve a pre-existing destination before build work.'
+    Remove-Item -LiteralPath $ephemeralOutputPath -Force
 
     $global:Na2PreflightTestMode = 'miss'
     $global:Na2PreflightTestCalls = @()

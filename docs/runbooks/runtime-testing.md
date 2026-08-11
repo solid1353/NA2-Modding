@@ -62,11 +62,16 @@ Create the runtime only with:
 Use only:
 
 ```powershell
-na228 worker work/<exact task title>/build/<name>.iso
+na228 worker [--ephemeral] work/<exact task title>/build/<name>.iso
 ```
 
 - Worker builds stage beside the requested output and keep operational and
   structured records under `work/<task>/logs/`.
+- `--ephemeral` requires a destination that does not already exist, performs the
+  same preflight and full verified build against a streamed virtual overlay,
+  and records and prints the ISO size and SHA-256 without creating `.building`
+  or destination ISO files. Use it when the evidence is the build identity
+  rather than the image itself.
 - They do not touch Latest/Previous, Manual/E2E Test outputs, shared preflight,
   promotion, shared records, PNACH, GameSettings, or PCSX2 state.
 

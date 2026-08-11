@@ -81,7 +81,7 @@ if ($mode -eq 'help') {
         '  na228 e2e create <suite> [game]       Create or replace a suite from its matching shared recording; optionally capture a reference game'
         '  na228 e2e rename <suite> <new-suite>  Rename a suite and its capture history'
         '  na228 e2e delete <suite>               Delete a suite and its capture history'
-        '  na228 e2e squash [-c]                  Optionally commit current captures, then squash and compact history'
+        '  na228 e2e commit [-s]                  Commit captures; -s consolidates and compacts history'
         '  na228 worker work/<worker>/build/<name>.iso  Build an isolated worker ISO'
         '  na228 release [version]     Publish a GitHub release'
         '  na228 help                  Show this help'
@@ -110,8 +110,8 @@ if ($mode -eq 'e2e') {
     $visualCreate = Join-Path $visualScripts 'create_suite.ps1'
     $visualRename = Join-Path $visualScripts 'rename_suite.ps1'
     $visualDelete = Join-Path $visualScripts 'delete_suite.ps1'
-    $visualSquash = Join-Path $visualScripts 'squash_captures.ps1'
-    foreach ($required in $visualRun, $visualCreate, $visualRename, $visualDelete, $visualSquash) {
+    $visualCommit = Join-Path $visualScripts 'commit_captures.ps1'
+    foreach ($required in $visualRun, $visualCreate, $visualRename, $visualDelete, $visualCommit) {
         if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
             throw "The E2E infrastructure is unavailable: $required"
         }
@@ -121,19 +121,17 @@ if ($mode -eq 'e2e') {
         & $visualRun
         return
     }
-    $shiftFlags = @($arguments | Where-Object { $_ -ceq '-s' })
-    if ($shiftFlags.Count -gt 1) {
-        throw 'na228 e2e accepts -s at most once.'
-    }
-    if ($shiftFlags.Count -eq 1) {
-        $positional = @($arguments | Where-Object { $_ -cne '-s' })
-        if ($positional.Count -eq 0) {
-            & $visualRun -Shifted
-            return
-        }
-        throw 'Usage: na228 e2e [-s]'
+    if ($arguments.Count -eq 1 -and $arguments[0] -ceq '-s') {
+        & $visualRun -Shifted
+        return
     }
     $testCommand = $arguments[0].ToLowerInvariant()
+    if (
+        $testCommand -cne 'commit' -and
+        @($arguments | Where-Object { $_ -ceq '-s' }).Count -gt 0
+    ) {
+        throw 'Usage: na228 e2e [-s]'
+    }
     if ($testCommand -ceq 'create') {
         if ($arguments.Count -notin 2, 3) {
             throw 'Usage: na228 e2e create <suite> [game]'
@@ -161,17 +159,17 @@ if ($mode -eq 'e2e') {
         & $visualDelete -Suite $arguments[1]
         return
     }
-    if ($testCommand -ceq 'squash') {
+    if ($testCommand -ceq 'commit') {
         if (
             $arguments.Count -notin 1, 2 -or
-            ($arguments.Count -eq 2 -and $arguments[1] -cne '-c')
+            ($arguments.Count -eq 2 -and $arguments[1] -cne '-s')
         ) {
-            throw 'Usage: na228 e2e squash [-c]'
+            throw 'Usage: na228 e2e commit [-s]'
         }
-        & $visualSquash -Commit:($arguments.Count -eq 2)
+        & $visualCommit -Squash:($arguments.Count -eq 2)
         return
     }
-    throw 'Usage: na228 e2e [-s] | na228 e2e create <suite> [game] | na228 e2e rename <suite> <new-suite> | na228 e2e delete <suite> | na228 e2e squash [-c]'
+    throw 'Usage: na228 e2e [-s] | na228 e2e create <suite> [game] | na228 e2e rename <suite> <new-suite> | na228 e2e delete <suite> | na228 e2e commit [-s]'
 }
 
 if ($mode -eq 'release') {

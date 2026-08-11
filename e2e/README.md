@@ -11,7 +11,7 @@ na228 e2e [-s]
 na228 e2e create <suite> [game]
 na228 e2e rename <suite> <new-suite>
 na228 e2e delete <suite>
-na228 e2e squash [-c]
+na228 e2e commit [-s]
 ```
 
 `na228 e2e` owns E2E execution and suite lifecycle. Permanent/unit tests are an
@@ -28,11 +28,12 @@ Normal and shifted non-ignored captures must match.
 `e2e create` creates or replaces a suite from the matching Workshop recording,
 resets `ignore.txt`, optionally captures a reference game, and runs repeatability
 capture. `e2e rename` moves the suite definition and capture history together;
-`e2e delete` removes both. `e2e squash` rewrites the nested capture repository
-to one commit named `Initial commit`, expires its reflogs, immediately prunes
-unreachable objects, and aggressively repacks the repository. With `-c`, it
-first stages and commits all current capture changes; without `-c`, staged and
-unstaged changes retain Git's normal reset/amend behavior.
+`e2e delete` removes both. `e2e commit` stages and commits all current capture
+changes as `Update captures`. With `-s`, it instead consolidates the staged
+state into `Initial commit`: a one-commit repository is amended, while a
+multi-commit repository is reset softly to its root and squashed. The squash
+path then expires reflogs, immediately prunes unreachable objects, and
+aggressively repacks the repository.
 
 ## Execution and publication
 

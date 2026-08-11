@@ -289,8 +289,8 @@ Write-Output '[fake] permanent tests'
         -Condition ($helpText -match '(?m)^\s*na228 e2e delete <suite>\s+Delete a suite and its capture history$') `
         -Message 'Root help omitted suite deletion.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 e2e squash \[-c\]\s+Optionally commit current captures, then squash and compact history$') `
-        -Message 'Root help omitted capture-history squash.'
+        -Condition ($helpText -match '(?m)^\s*na228 e2e commit \[-s\]\s+Commit captures; -s consolidates and compacts history$') `
+        -Message 'Root help omitted capture-history commit.'
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 test new\b') `
         -Message 'Root help still exposes the retired test new command.'
@@ -492,11 +492,11 @@ Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
     -Value "delete suite=$Suite"
 '@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'squash_captures.ps1') -Content @'
-param([switch]$Commit)
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'commit_captures.ps1') -Content @'
+param([switch]$Squash)
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
-    -Value "squash commit=$($Commit.IsPresent)"
+    -Value "commit squash=$($Squash.IsPresent)"
 '@
     $permanentCalls = Join-Path $fakeRepository 'tests\calls.txt'
     $visualCalls = Join-Path $fakeVisualScripts 'calls.txt'
@@ -524,8 +524,8 @@ Add-Content `
     & (Join-Path $fakeRepository 'na228.ps1') e2e create font/with_reference nun5
     & (Join-Path $fakeRepository 'na228.ps1') e2e rename font/character_select font/characters
     & (Join-Path $fakeRepository 'na228.ps1') e2e delete font/characters
-    & (Join-Path $fakeRepository 'na228.ps1') e2e squash
-    & (Join-Path $fakeRepository 'na228.ps1') e2e squash -c
+    & (Join-Path $fakeRepository 'na228.ps1') e2e commit
+    & (Join-Path $fakeRepository 'na228.ps1') e2e commit -s
     $calls = @(Get-Content -LiteralPath $visualCalls)
     Assert-Na2Test `
         -Condition ($calls.Count -eq 8 -and
@@ -535,8 +535,8 @@ Add-Content `
             $calls[3] -ceq 'create suite=font/with_reference game=nun5' -and
             $calls[4] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
             $calls[5] -ceq 'delete suite=font/characters' -and
-            $calls[6] -ceq 'squash commit=False' -and
-            $calls[7] -ceq 'squash commit=True') `
+            $calls[6] -ceq 'commit squash=False' -and
+            $calls[7] -ceq 'commit squash=True') `
         -Message 'Global E2E or lifecycle-command dispatch was incorrect.'
     $suiteSelectionRejected = $false
     try {

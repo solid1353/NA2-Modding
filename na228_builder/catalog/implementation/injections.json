@@ -1412,8 +1412,16 @@
         "symbol": "character",
         "encoding": "jal26"
       },
+      "route_character_form_progress_read_through_reference_value": {
+        "description": "Replace only the Character Select R1-form progression read with the fully unlocked reference value.",
+        "target_id": "na2_elf",
+        "offset": "0xF80D4",
+        "expected_hex": "508F070C",
+        "symbol": "character_form_progress",
+        "encoding": "jal26"
+      },
       "route_grouped_unlock_read_through_reference_values": {
-        "description": "Replace only the bounded grouped-availability byte read with the fully unlocked reference values.",
+        "description": "Replace only the bounded grouped-availability byte read with unlocked values, including the native stable state for Collection figures.",
         "target_id": "na2_elf",
         "offset": "0xF71D0",
         "expected_hex": "448E070C",
@@ -1458,6 +1466,12 @@
             "abi": "unused_save_data_character_id",
             "description": "Return available for one of the 94 character-status entries enabled by the fully unlocked reference save."
           },
+          "character_form_progress": {
+            "order": 105,
+            "object": "qol.content.unlock.all.text.qol.unlock.all.character.form.progress",
+            "abi": "unused_save_data_unused_index",
+            "description": "Return the fully unlocked saved-progress value used by Character Select's R1-form gate."
+          },
           "secondary": {
             "order": 101,
             "object": "qol.content.unlock.all.text.qol.unlock.all.secondary",
@@ -1474,7 +1488,7 @@
             "order": 103,
             "object": "qol.content.unlock.all.text.qol.unlock.all.grouped",
             "abi": "unused_save_data_group_id_content_id",
-            "description": "Return the fully unlocked reference value for one bounded grouped content ID."
+            "description": "Return an unlocked value for one bounded grouped content ID, using the native stable value for Collection figures."
           },
           "jutsu": {
             "order": 104,

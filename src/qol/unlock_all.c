@@ -17,6 +17,18 @@ u32 qol_unlock_all_character(void *unused_save_data, u32 character_id)
     return character_id < 94u;
 }
 
+/* Character Select permits R1 forms only after saved progress reaches 0x66. */
+UNLOCK_ALL_SECTION(".text.qol_unlock_all_character_form_progress")
+u32 qol_unlock_all_character_form_progress(
+    void *unused_save_data,
+    u32 unused_index
+)
+{
+    (void)unused_save_data;
+    (void)unused_index;
+    return 0x66u;
+}
+
 UNLOCK_ALL_SECTION(".text.qol_unlock_all_secondary")
 u32 qol_unlock_all_secondary(void *unused_save_data, u32 content_id)
 {
@@ -59,7 +71,12 @@ u32 qol_unlock_all_grouped(
     if (content_id >= count) {
         return 0u;
     }
-    if (content_id == 0u && (group_id == 0u || group_id == 4u)) {
+
+    /* Figure entries use 3 as their stable viewed-and-unlocked state. */
+    if (group_id == 0u) {
+        return 3u;
+    }
+    if (content_id == 0u && group_id == 4u) {
         return 3u;
     }
     return 0xFFu;

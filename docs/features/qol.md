@@ -7,17 +7,18 @@ binary edits, runtime hooks, and payload declarations are selected by
 ## Unlock all content without loading a save
 
 `qol.content.unlock_all` selects the resident injection
-`i__qol__content__unlock_all__availability`. Five guarded hooks replace only
-the save-backed availability reads for characters, secondary content, the
-32-entry small table, the six grouped tables, and metadata-valid jutsu. The
-injected helpers reproduce the bounded values observed in a fully unlocked
-reference save; native wrappers, metadata checks, and callers remain intact.
+`i__qol__content__unlock_all__availability`. Six guarded hooks replace only the
+save-backed reads for characters, the Character Select R1-form gate, secondary
+content, the 32-entry small table, the six grouped tables, and metadata-valid
+jutsu. The injected helpers reproduce bounded fully unlocked values and the
+native stable state for Collection figures; native wrappers, metadata checks,
+and callers remain intact.
 
-The feature performs no save-data writes. It therefore exposes characters,
-supports, stages, jutsu, Shop items, and Collection entries without importing
-the reference save's settings, progress, currency, inventory, statistics, or
-availability bytes. Disabling the setting restores the native save-dependent
-readers.
+The feature performs no save-data writes. It therefore exposes characters and
+their R1 forms, supports, stages, jutsu, Shop items, and Collection entries
+without importing the reference save's settings, progress, currency,
+inventory, statistics, or availability bytes. Disabling the setting restores
+the native save-dependent readers.
 
 The first character candidate used an invalid mask derived through the wrong
 global and produced an incorrect, displaced roster. The corrected helper makes
@@ -26,6 +27,12 @@ the existing callers. User runtime testing on 2026-08-10 confirmed the
 correction. The reader contracts, stored values, hook seams, evidence, and
 rejected-mask failure are recorded in
 [`../knowledge/game/content_availability.md`](../knowledge/game/content_availability.md).
+
+User runtime testing on 2026-08-11 confirmed that R1 forms remain accessible
+without a loaded save and that Collection figure pedestals render when
+`unlock_all` is enabled. The R1 hook supplies only the gate's fully unlocked
+progress value `0x66`; grouped Collection reads return their native stable
+viewed-and-unlocked state `3`.
 
 ## ELF-Q010: Use only first save
 

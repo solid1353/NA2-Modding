@@ -128,3 +128,75 @@ user observed as an inadequate and displaced character roster. The corrected
 helper returns available for every bounded ID `0..93`, matching bit 0 of all 94
 SS1 status bytes while retaining native roster filtering. On 2026-08-10, the
 user confirmed in-game that this correction works.
+
+## Character Select R1 form gate
+
+On 2026-08-11, two user-supplied savestates captured the same Character Select
+cell with R1 held under the `SLOP-NA228` / `7E5D178F` build:
+
+- loaded-save SS1 (`BCBF29E676B3C2D81D75570F4BC1F5E5EB56A0C605594F335977D98640E44268`)
+  displayed Naruto's linked form;
+- no-save SS3 (`34C9DEC1A69DC2517A89E9FA45D1602EAA892959DB36B0C69DAE0ADC92121D16`)
+  remained on ordinary Naruto even though `unlock_all` exposed the roster.
+
+Their extracted `PAD.bin` members are byte-identical. In
+`FUN_003b5df0` (`0x003B5DF0`), held-input mask `0x08` sets the Character
+Select object's form-selection field at `+0x18`. The sole call to
+`FUN_001f7fb0` at `0x003B5E3C` immediately clears that field when the function
+returns false. `FUN_003b4a90` later consumes the field and maps eligible base
+characters to their linked form through `FUN_001f7c80`.
+
+`FUN_001f7fb0` (`0x001F7FB0`) reads saved integer index 0 through
+`FUN_001e3d40(profile + 0xDFC, 0)`, which resolves to `profile + 0x1C5C`, and
+returns true only when the value exceeds `0x65`. The loaded save contains
+`0x66`; the no-save profile contains `0`. The wider meaning of this progression
+field remains unresolved, but its role as the R1-form gate and the compared
+values are high-confidence facts from the matching input and static call path.
+
+The existing character-unlocked override cannot satisfy this independent
+gate: it replaces the bit-0 character-status read inside `FUN_001f54c0`, while
+the R1 path reads `profile + 0x1C5C`. The accepted implementation adds one
+guarded JAL at ELF offset `0xF80D4` (runtime `0x001F7FD4`, clean bytes
+`508F070C`) so only `FUN_001f7fb0` receives the fully unlocked reference value
+`0x66`. It does not write the live profile or change other saved progression
+reads. On 2026-08-11, the user confirmed in-game that R1 forms are accessible
+without a loaded save.
+
+## Collection figure lifecycle state
+
+On 2026-08-11, three user-supplied Collection Figure savestates captured the
+same Sakura viewer frame with byte-identical `PAD.bin` members:
+
+- loaded-save SS2 with `unlock_all` enabled
+  (`FD2D49C722D8ECBE5F9E39B795A0C9D3380D7FB14F9BE0E16BE6B4480DE0B7DA`)
+  omitted the pedestal;
+- no-save SS4 with `unlock_all` enabled
+  (`5164F206FAAFD04378C4ED2E32D7AF832DD5A77369D563F7DA6E6C69D0BABD16`)
+  produced the same screenshot and omitted the pedestal;
+- loaded-save SS5 with `unlock_all` disabled
+  (`7D7ADA1C34B951AB9072DCBED7B1E2AA1C1AB62657091D7BF45D05730F5D893A`)
+  rendered the pedestal.
+
+SS2 and SS5 contain the same fully unlocked availability arrays. In both, the
+current group 0/index 3 entry is `03`; SS4's initially empty profile also
+contains `03` at that entry after the viewer opens. Static ETC analysis explains
+the transition: the Collection figure records at `0x006DADE0` use their record
+index as the group 0 content ID, and the Sakura record is index 3.
+`FUN_006ba590` reads the current entry through `FUN_001f70c0`; when its value is
+greater than 1, it calls grouped setter `FUN_001f7090(..., 0, content_id, 3)`
+and changes the cached list-node byte to `3`. Thus `3` is the native stable
+viewed-and-unlocked figure state, not merely another arbitrary reference value.
+
+The previously accepted `unlock_all` implementation returned `FF` for group 0
+entries other than index 0. That masked the native setter on every subsequent
+read and fed the figure loader a state the normal viewer immediately replaces
+with `3`.
+This is the only functional availability difference between the matching SS2
+and SS5 loaded-save captures for the selected entry.
+
+The accepted implementation therefore returns `3` for every bounded group 0
+ID while retaining the existing values for groups 1 through 5. It continues to
+expose all 93 figure entries, but represents each one in the native stable
+unlocked state and no longer masks the viewer's `3` with `FF`. On 2026-08-11,
+the user confirmed in-game that Collection figure pedestals render with
+`unlock_all` enabled.

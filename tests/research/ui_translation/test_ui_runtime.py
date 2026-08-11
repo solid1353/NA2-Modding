@@ -1,3 +1,5 @@
+"""Unit coverage for the maintained UI-translation research tools."""
+
 from __future__ import annotations
 
 import argparse

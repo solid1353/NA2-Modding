@@ -14,10 +14,15 @@ from na228_builder.payload_builder.operations import (
     PayloadRelocation,
     SymbolicPatch,
 )
+from tests.builder._fixtures import (
+    resident_payload_config,
+    write_resident_payload_config,
+)
 
 
 class PayloadBuilderTests(unittest.TestCase):
     def test_links_fragments_deterministically_and_resolves_relocations(self) -> None:
+        config = resident_payload_config()
         fragments = (
             PayloadFragment("feature.data", "shared.data", "data", 16, b"DATA"),
             PayloadFragment(
@@ -29,8 +34,8 @@ class PayloadBuilderTests(unittest.TestCase):
                 (PayloadRelocation(0, "abs32", "shared.data"),),
             ),
         )
-        first = build_resident_payload(fragments)
-        second = build_resident_payload(tuple(reversed(fragments)))
+        first = build_resident_payload(fragments, config=config)
+        second = build_resident_payload(tuple(reversed(fragments)), config=config)
         self.assertEqual(first.payload, second.payload)
         code = first.symbols["shared.code"]
         data = first.symbols["shared.data"]
@@ -41,8 +46,10 @@ class PayloadBuilderTests(unittest.TestCase):
         )
 
     def test_composer_resolves_external_symbolic_patch(self) -> None:
+        config = resident_payload_config()
         build = build_resident_payload(
-            (PayloadFragment("feature.data", "shared.text", "rodata", 4, b"Text\0"),)
+            (PayloadFragment("feature.data", "shared.text", "rodata", 4, b"Text\0"),),
+            config=config,
         )
         patch = SymbolicPatch(
             owner="feature.data",
@@ -62,8 +69,10 @@ class PayloadBuilderTests(unittest.TestCase):
         )
 
     def test_resolves_jump_template_without_losing_delay_slot(self) -> None:
+        config = resident_payload_config()
         build = build_resident_payload(
-            (PayloadFragment("feature.code", "shared.helper", "code", 4, b"\0" * 4),)
+            (PayloadFragment("feature.code", "shared.helper", "code", 4, b"\0" * 4),),
+            config=config,
         )
         patch = SymbolicPatch(
             owner="feature.code",
@@ -84,9 +93,13 @@ class PayloadBuilderTests(unittest.TestCase):
         self.assertEqual(resolved.replacement, expected_jump + b"\0" * 4)
 
     def test_rejects_duplicate_and_unresolved_symbols(self) -> None:
+        config = resident_payload_config()
         duplicate = PayloadFragment("a", "same", "data", 4, b"a")
         with self.assertRaisesRegex(ValueError, "duplicate symbols"):
-            build_resident_payload((duplicate, dataclasses.replace(duplicate, owner="b")))
+            build_resident_payload(
+                (duplicate, dataclasses.replace(duplicate, owner="b")),
+                config=config,
+            )
         unresolved = PayloadFragment(
             "a",
             "code",
@@ -96,10 +109,10 @@ class PayloadBuilderTests(unittest.TestCase):
             (PayloadRelocation(0, "abs32", "missing"),),
         )
         with self.assertRaisesRegex(ValueError, "unresolved symbol"):
-            build_resident_payload((unresolved,))
+            build_resident_payload((unresolved,), config=config)
 
     def test_rejects_payload_beyond_the_proven_envelope(self) -> None:
-        config = load_config()
+        config = resident_payload_config()
         constrained = dataclasses.replace(
             config,
             maximum_end=config.load_base + config.minimum_data_offset + 8,
@@ -112,7 +125,7 @@ class PayloadBuilderTests(unittest.TestCase):
             )
 
     def test_integration_boundary_is_independent_of_payload_size(self) -> None:
-        config = load_config()
+        config = resident_payload_config()
         small = build_resident_payload(
             (PayloadFragment("a", "small", "data", 4, b"x" * 16),),
             config=config,
@@ -179,6 +192,7 @@ class PayloadBuilderTests(unittest.TestCase):
         )
 
     def test_layout_shift_moves_real_fragments_inside_the_fixed_envelope(self) -> None:
+        config = resident_payload_config()
         fragments = (
             PayloadFragment(
                 "feature.code",
@@ -190,8 +204,8 @@ class PayloadBuilderTests(unittest.TestCase):
             ),
             PayloadFragment("feature.data", "shared.data", "data", 16, b"DATA"),
         )
-        normal = build_resident_payload(fragments)
-        shifted = build_resident_payload(fragments, layout_shift=32)
+        normal = build_resident_payload(fragments, config=config)
+        shifted = build_resident_payload(fragments, config=config, layout_shift=32)
 
         self.assertEqual(len(normal.payload), len(shifted.payload))
         self.assertEqual(normal.memory_end, shifted.memory_end)
@@ -212,26 +226,27 @@ class PayloadBuilderTests(unittest.TestCase):
             shifted_data.runtime_address.to_bytes(4, "little"),
         )
 
-    def test_development_injection_range_is_reserved_before_payload(self) -> None:
-        config = load_config()
-        self.assertEqual(config.development_injection_base, 0x008F0000)
+    def test_payload_starts_after_the_development_injection_range(self) -> None:
+        config = resident_payload_config()
+        build = build_resident_payload(
+            (PayloadFragment("a", "data", "data", 4, b"data"),),
+            config=config,
+        )
         self.assertEqual(config.development_injection_end, config.load_base)
-        self.assertEqual(
-            config.development_injection_end - config.development_injection_base,
-            0x3D00,
+        self.assertGreaterEqual(
+            build.symbols["data"].runtime_address,
+            config.development_injection_end + config.minimum_data_offset,
         )
 
     def test_rejects_development_injection_range_outside_protected_gap(self) -> None:
-        source = Path("na228_builder/payload_builder/config.tsv").read_text(
-            encoding="utf-8"
-        )
-        invalid = source.replace(
-            "development_injection_end\t0x008F3D00",
-            "development_injection_end\t0x008F3D10",
-        )
+        config = resident_payload_config()
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "config.tsv"
-            path.write_text(invalid, encoding="utf-8")
+            write_resident_payload_config(
+                path,
+                config,
+                development_injection_end=config.load_base + 0x10,
+            )
             with self.assertRaisesRegex(ValueError, "pre-payload gap"):
                 load_config(path)
 

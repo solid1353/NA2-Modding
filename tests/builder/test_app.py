@@ -36,7 +36,7 @@ class ReleaseAppTests(unittest.TestCase):
             product_version="v-test",
             executable_name="Narutimate Accel v2.28_test.exe",
             output_name="Narutimate Accel v2.28.iso",
-            configuration="na228_builder/configurations/release.json",
+            configuration="builder/configurations/synthetic.json",
             configuration_name="config.json",
             images=(
                 self.image("na2", "original NA2 ISO", na2),
@@ -48,28 +48,6 @@ class ReleaseAppTests(unittest.TestCase):
         path = root / "config.json"
         path.write_text(json.dumps({} if value is None else value), encoding="utf-8")
         return path
-
-    def test_release_toolchain_references_live_inputs(self) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        toolchain = json.loads(
-            (repository / "scripts" / "release" / "toolchain.json").read_text(
-                encoding="utf-8"
-            )
-        )
-        for field in (
-            "requirements",
-            "entry_point",
-            "release_manifest",
-            "icon",
-            "instructions",
-        ):
-            with self.subTest(field=field):
-                self.assertTrue((repository / toolchain[field]).is_file())
-
-        manifest = json.loads(
-            (repository / toolchain["release_manifest"]).read_text(encoding="utf-8")
-        )
-        self.assertTrue((repository / manifest["configuration"]).is_file())
 
     def test_application_directory_uses_explicit_executable_parent(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -83,7 +61,7 @@ class ReleaseAppTests(unittest.TestCase):
         data = {
             "schema_version": 1,
             "product_version": "1.0.0",
-            "configuration": "na228_builder/configurations/release.json",
+            "configuration": "builder/configurations/synthetic.json",
             "configuration_name": "config.json",
             "images": [
                 {
@@ -121,7 +99,7 @@ class ReleaseAppTests(unittest.TestCase):
         data = {
             "schema_version": 1,
             "product_version": "1.0.0",
-            "configuration": "na228_builder/configurations/release.json",
+            "configuration": "builder/configurations/synthetic.json",
             "configuration_name": "config.json",
             "images": [
                 {

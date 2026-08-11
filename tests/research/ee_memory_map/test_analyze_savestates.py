@@ -7,9 +7,6 @@ from pathlib import Path
 
 
 from scripts.research.ee_memory_map.analyze_savestates import (
-    HEAP_GLOBALS,
-    MWO3_MAGIC,
-    OVERLAY_BASE,
     MemoryMapError,
     _variant_for,
     observe_region,
@@ -17,6 +14,22 @@ from scripts.research.ee_memory_map.analyze_savestates import (
     parse_overlay,
     parse_state_identity,
 )
+
+
+DOCUMENTED_HEAP_GLOBALS = {
+    "user_base": 0x00607380,
+    "heap_end": 0x00607384,
+    "tracked_bytes": 0x00607388,
+    "peak_tracked_bytes": 0x0060738C,
+    "allocation_count": 0x00607390,
+    "unresolved_607394": 0x00607394,
+    "base_sentinel": 0x00607398,
+    "end_sentinel": 0x0060739C,
+    "cached_largest_predecessor": 0x006073A0,
+    "cached_largest_gap": 0x006073A4,
+}
+DOCUMENTED_OVERLAY_BASE = 0x006B3F00
+DOCUMENTED_MWO3_MAGIC = 0x336F574D
 
 
 class IdentityTests(unittest.TestCase):
@@ -65,7 +78,7 @@ class AllocatorTests(unittest.TestCase):
             "cached_largest_predecessor": first,
             "cached_largest_gap": end - (first + 0x30),
         }
-        for name, address in HEAP_GLOBALS.items():
+        for name, address in DOCUMENTED_HEAP_GLOBALS.items():
             struct.pack_into("<I", memory, address, values[name])
 
         struct.pack_into("<IIII", memory, base, 0, first, 0x10, 0)
@@ -98,10 +111,10 @@ class OverlayTests(unittest.TestCase):
         struct.pack_into(
             "<8I",
             memory,
-            OVERLAY_BASE,
-            MWO3_MAGIC,
+            DOCUMENTED_OVERLAY_BASE,
+            DOCUMENTED_MWO3_MAGIC,
             2,
-            OVERLAY_BASE,
+            DOCUMENTED_OVERLAY_BASE,
             0x0014E0C0,
             0x000C4E00,
             0x00000400,

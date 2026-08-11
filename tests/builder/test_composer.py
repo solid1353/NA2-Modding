@@ -7,7 +7,6 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from na228_builder.scripts.composer import (
-    MODULE_ARTIFACT_CONTRACTS,
     compose_assembly_plan,
     resolve_module_order,
     resolve_source_ref,
@@ -37,13 +36,9 @@ class ComposerTests(unittest.TestCase):
             [importer.module_id, string_patcher.module_id, binary.module_id],
         )
 
-    def test_allows_importer_with_derived_string_consumer(self) -> None:
+    def test_allows_importer_without_a_direct_consumer(self) -> None:
         importer = module("localization.translation_importer", 1, "translation_importer")
         self.assertEqual(resolve_module_order((importer,)), (importer,))
-        self.assertEqual(
-            MODULE_ARTIFACT_CONTRACTS["translation_importer"].derived_consumers,
-            ("string_patcher",),
-        )
 
     def test_source_refs_support_whole_files_and_guarded_ranges(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

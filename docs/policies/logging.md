@@ -91,7 +91,7 @@ findings.
 Persistent command logs must be normalized after transcript capture. They omit
 PowerShell transcript boilerplate, replace configured roots with aliases, and
 record command mode, start/end time, duration, outcome, ISO result/rotation and
-configuration record when applicable. `act` records source-input synchronization.
+configuration record when applicable.
 Configuration validation failures are concise in the development console; the
 complete captured Python traceback is retained under `technical_details` in the
 same bounded run-log section. Other failures retain their existing transcript

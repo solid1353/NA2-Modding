@@ -11,6 +11,7 @@ from na228_builder.scripts.composer import resolve_symbolic_patches
 from na228_builder.modules.binary_patcher import engine as binary_engine
 from na228_builder.modules.runtime_injector import engine
 from na228_builder.payload_builder.builder import build_resident_payload
+from tests.builder._fixtures import resident_payload_config
 
 
 def write_tsv(
@@ -217,7 +218,10 @@ class RuntimeInjectorTests(unittest.TestCase):
                 directory, owner="feature.runtime_injector"
             )
             self.assertEqual(set(declaration.targets), {"boot"})
-            build = build_resident_payload(declaration.fragments)
+            build = build_resident_payload(
+                declaration.fragments,
+                config=resident_payload_config(),
+            )
             resolved = resolve_symbolic_patches(
                 build, declaration.symbolic_patches
             )

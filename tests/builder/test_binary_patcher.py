@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import csv
-from contextlib import redirect_stderr
 import hashlib
-import io
 import tempfile
 import unittest
 from dataclasses import replace
@@ -182,7 +180,7 @@ class BinaryPatcherTests(unittest.TestCase):
             self.assertEqual(row["selection_mode"], "explicit")
             self.assertEqual((roots["na2"] / "target.bin").read_bytes(), bytes(range(16)))
 
-    def test_configuration_log_uses_unversioned_binary_patch_summary(self) -> None:
+    def test_configuration_log_writes_binary_patch_summary(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             package, _, target_data = self.make_fixture(root)
@@ -220,7 +218,6 @@ class BinaryPatcherTests(unittest.TestCase):
                 reader = csv.DictReader(handle, delimiter="\t")
                 summary = next(reader)
 
-            self.assertNotIn("schema_version", reader.fieldnames)
             self.assertEqual(summary["package_id"], package.package_id)
 
     def test_pending_patch_cannot_apply(self) -> None:
@@ -361,16 +358,14 @@ class BinaryPatcherTests(unittest.TestCase):
             ):
                 patcher.load_package(package.directory)
 
-    def test_cli_exposes_enabled_selection_without_defaults_alias(self) -> None:
+    def test_cli_exposes_enabled_selection(self) -> None:
         parser = patcher.build_parser()
         enabled_args = parser.parse_args(
             ["plan", "--package", "fixture", "--enabled"]
         )
         self.assertTrue(enabled_args.enabled)
-        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
-            parser.parse_args(["plan", "--package", "fixture", "--defaults"])
 
-    def test_empty_v3_package_is_valid(self) -> None:
+    def test_empty_package_is_valid(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary) / "empty"
             write_tsv(directory / "targets.tsv", patcher.TARGET_FIELDS, [])

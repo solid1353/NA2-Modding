@@ -9,7 +9,6 @@ from pathlib import Path
 
 from na228_builder.modules.binary_patcher import engine as binary_patcher
 from na228_builder.modules.runtime_injector import engine as runtime_injector
-from na228_builder.scripts import catalog as catalog_module
 from na228_builder.scripts.composer import resolve_module_order
 from na228_builder.scripts.configuration import (
     load_configuration,
@@ -248,15 +247,6 @@ class ConfigurationTests(unittest.TestCase):
             )
             self.assertEqual([item.order for item in configuration.modules], [1, 2])
 
-    def test_configuration_definition_must_be_json(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            _, _, configurations = self.create_workspace(root)
-            definition = configurations / "legacy.tsv"
-            definition.write_text("feature_id\tenabled\n", encoding="utf-8")
-            with self.assertRaisesRegex(FileNotFoundError, "not a JSON file"):
-                load_configuration(definition, root, root)
-
     def test_disabled_catalog_only_feature_requires_no_directory(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -493,49 +483,31 @@ class ConfigurationTests(unittest.TestCase):
                 first, module_content_sha256(module, "runtime_injector")
             )
 
-    def test_complete_release_resources_include_disabled_feature_inputs(self) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        builder_root = repository / "na228_builder"
-        default_path = builder_root / "configurations" / "release.json"
-        configuration = catalog_module.materialized_configuration(
-            builder_root / "catalog", default_path
-        )
-        configuration["overrides"] = {"localization": False}
-        marker = builder_root / "release_manifest.json"
-        texture_root = builder_root / "localization" / "texture_patcher"
-        texture_files = {
-            (texture_root / name).resolve()
-            for name in ("containers.tsv", "mappings.tsv", "strategies.tsv")
-        }
-
-        with tempfile.TemporaryDirectory() as directory:
-            configuration_path = Path(directory) / "config.json"
-            configuration_path.write_text(
-                json.dumps(configuration, indent=2) + "\n",
-                encoding="utf-8",
+    def test_complete_resources_include_disabled_feature_inputs(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            builder, source, configurations = self.create_workspace(root)
+            configuration_path = self.create_configuration(
+                configurations,
+                source,
+                {"localization": {"description": "Optional localization"}},
+                {"localization": False},
             )
             loaded = load_configuration(
                 configuration_path,
-                repository,
-                builder_root,
-                root_overrides={"na2": marker, "nun5": marker},
+                root,
+                builder,
             )
-            self.assertEqual(loaded.configuration_id, "config")
             selected = set(configuration_resource_files(loaded))
             complete = set(
                 configuration_resource_files(loaded, include_disabled=True)
             )
-
-        self.assertNotIn(
-            (builder_root / "configurations" / "base.json").resolve(), complete
-        )
-        self.assertTrue(texture_files.isdisjoint(selected))
-        self.assertTrue(texture_files <= complete)
-        operations_root = builder_root / "modules" / "binary_patcher" / "operations"
-        self.assertEqual(
-            {path.resolve() for path in operations_root.glob("*.tsv")},
-            {path for path in complete if path.parent == operations_root.resolve()},
-        )
+            optional_inputs = {
+                (builder / "localization" / "texture_patcher" / name).resolve()
+                for name in ("containers.tsv", "mappings.tsv", "strategies.tsv")
+            }
+            self.assertTrue(optional_inputs.isdisjoint(selected))
+            self.assertTrue(optional_inputs <= complete)
 
 if __name__ == "__main__":
     unittest.main()

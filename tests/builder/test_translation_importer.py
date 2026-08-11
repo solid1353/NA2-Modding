@@ -11,7 +11,7 @@ from na228_builder.modules.translation_importer import engine
 
 
 class TranslationImporterTests(unittest.TestCase):
-    def test_iso_source_delegates_to_the_shared_iso_reader(self) -> None:
+    def test_iso_source_resolves_exact_and_unique_basename_members(self) -> None:
         exact = SimpleNamespace(path="PRG/BTL.BIN", is_dir=False)
         basename = SimpleNamespace(path="OTHER/ETC.BIN", is_dir=False)
         image = SimpleNamespace(
@@ -20,9 +20,8 @@ class TranslationImporterTests(unittest.TestCase):
                 side_effect=lambda record: record.path.encode("ascii")
             ),
         )
-        with mock.patch.object(engine, "Iso9660", return_value=image) as iso_type:
+        with mock.patch.object(engine, "Iso9660", return_value=image):
             source = engine.IsoSource(Path("source.iso"))
-        iso_type.assert_called_once()
         self.assertEqual(
             source.read(("PRG/BTL.BIN",), "BTL"),
             b"PRG/BTL.BIN",
@@ -214,6 +213,12 @@ class TranslationImporterTests(unittest.TestCase):
                 {"NUN5_TEXTENG@0x10": "Ｃｏｌｌｅｃｔｉｏｎ"},
             ),
             "Quit Collection?",
+        )
+
+    def test_positional_donor_placeholder_adopts_target_printf_token(self) -> None:
+        self.assertEqual(
+            engine.adapt_source_markup("Score %1", "Score %04d", "M1"),
+            "Score %04d",
         )
 
     def test_declared_source_must_match_clean_target_text(self) -> None:

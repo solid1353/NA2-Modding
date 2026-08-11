@@ -1,1 +1,0 @@
-"""UI translation regression tests."""

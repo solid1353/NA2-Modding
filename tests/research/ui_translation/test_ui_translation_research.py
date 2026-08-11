@@ -1,3 +1,5 @@
+"""Parsing coverage for the UI-translation research tools."""
+
 from __future__ import annotations
 
 import tempfile

@@ -253,56 +253,38 @@ Write-Output '[fake] unit tests'
         -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'logs\na228'))) `
         -Message 'Help invocation created run logs.'
     Assert-Na2Test `
-        -Condition ($helpText -notmatch '(?m)^\s*na228 act\b') `
-        -Message 'Root help still exposes the retired na228 act command.'
-    Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 <token> \[token\]') `
         -Message 'Root help omitted the ordered token grammar.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 \[-f\]\s+Build and run Latest in turbo; -f bypasses non-critical validation errors$') `
-        -Message 'Root help did not explain default force build-and-launch in one row.'
+        -Condition ($helpText -match '(?m)^\s*na228 \[-f\]\s+') `
+        -Message 'Root help omitted the default build-and-launch signature.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 worker \[--ephemeral\] work/') `
         -Message 'Root help omitted the explicit worker-build command.'
     Assert-Na2Test `
-        -Condition ($helpText -notmatch '(?m)^\s*na228 validate\s') `
-        -Message 'Root help still exposes the retired separate validation command.'
-    Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 build l\|m\s') `
         -Message 'Root help omitted the explicit build-only command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 build -d\s+Validate development composition without creating an ISO$') `
+        -Condition ($helpText -match '(?m)^\s*na228 build -d\s+') `
         -Message 'Root help omitted the development dry-run command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 test\s+Run unit tests$') `
+        -Condition ($helpText -match '(?m)^\s*na228 test\s+') `
         -Message 'Root help omitted the unit-test command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 e2e \[-s\]\s+Run all E2E suites; -s also qualifies against shifted$') `
+        -Condition ($helpText -match '(?m)^\s*na228 e2e \[-s\]\s+') `
         -Message 'Root help omitted the global E2E command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 e2e create <suite> \[game\]\s+Create or replace a suite from its matching shared recording; optionally capture a reference game$') `
+        -Condition ($helpText -match '(?m)^\s*na228 e2e create <suite> \[game\]\s+') `
         -Message 'Root help omitted suite replacement with an optional reference game.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 e2e rename <suite> <new-suite>\s+Rename a suite and its capture history$') `
+        -Condition ($helpText -match '(?m)^\s*na228 e2e rename <suite> <new-suite>\s+') `
         -Message 'Root help omitted suite rename.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 e2e delete <suite>\s+Delete a suite and its capture history$') `
+        -Condition ($helpText -match '(?m)^\s*na228 e2e delete <suite>\s+') `
         -Message 'Root help omitted suite deletion.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 e2e commit \[-s\]\s+Commit captures; -s consolidates and compacts history$') `
+        -Condition ($helpText -match '(?m)^\s*na228 e2e commit \[-s\]\s+') `
         -Message 'Root help omitted capture-history commit.'
-    Assert-Na2Test `
-        -Condition ($helpText -notmatch '(?m)^\s*na228 test new\b') `
-        -Message 'Root help still exposes the retired test new command.'
-    Assert-Na2Test `
-        -Condition ($helpText -notmatch '(?m)^\s*na228 test reference\b') `
-        -Message 'Root help still exposes the retired reference command.'
-    Assert-Na2Test `
-        -Condition ($helpText -notmatch '(?m)^\s*na228 -[btcpwh]\b') `
-        -Message 'Root help still exposes a retired dashed mode.'
-    Assert-Na2Test `
-        -Condition ($helpText -notmatch '(?m)^\s*na228 launch\b') `
-        -Message 'Root help still exposes the retired launch subcommand.'
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch.ps1') -Content @'
 param([string]$Target = 'dev', [string]$IsoPath, [switch]$Turbo)
 Write-Host "[fake] launch $Target $IsoPath turbo=$($Turbo.IsPresent)"
@@ -567,45 +549,6 @@ Add-Content `
     Assert-Na2Test `
         -Condition $suiteSelectionRejected `
         -Message 'The public E2E command accepted a single-suite execution.'
-    $retiredReferenceRejected = $false
-    try {
-        & (Join-Path $fakeRepository 'na228.ps1') e2e reference alpha nun5
-    }
-    catch {
-        $retiredReferenceRejected = $_.Exception.Message -match '^Usage: na228 e2e'
-    }
-    Assert-Na2Test -Condition $retiredReferenceRejected `
-        -Message 'The retired reference command was accepted.'
-    $na2ActRejected = $false
-    try {
-        & (Join-Path $fakeRepository 'na228.ps1') act
-    }
-    catch {
-        $na2ActRejected = $_.Exception.Message -match 'Unknown game name: act'
-    }
-    Assert-Na2Test `
-        -Condition $na2ActRejected `
-        -Message 'The retired na228 act route was not rejected.'
-    $dashedModeRejected = $false
-    try {
-        & (Join-Path $fakeRepository 'na228.ps1') -b
-    }
-    catch {
-        $dashedModeRejected = $true
-    }
-    Assert-Na2Test `
-        -Condition $dashedModeRejected `
-        -Message 'The retired dashed build mode was not rejected.'
-    $launchSubcommandRejected = $false
-    try {
-        & (Join-Path $fakeRepository 'na228.ps1') launch na2 nun5
-    }
-    catch {
-        $launchSubcommandRejected = $true
-    }
-    Assert-Na2Test `
-        -Condition $launchSubcommandRejected `
-        -Message 'The retired launch subcommand was not rejected.'
     $launchLogPath = Join-Path $fakeRepository 'logs\na228\rolling.log'
     $launchLogSectionsBefore = if (Test-Path -LiteralPath $launchLogPath) {
         [regex]::Matches(

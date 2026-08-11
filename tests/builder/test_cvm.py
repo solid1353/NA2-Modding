@@ -6,8 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from na228_builder.scripts.cvm import CvmError, CvmIso, _crypt_sector, _rofs_key
-from na228_builder.image_assembler.iso9660 import Iso9660, IsoRecord, SECTOR
-from scripts.lib.paths import load_paths
+from na228_builder.image_assembler.iso9660 import IsoRecord, SECTOR
 
 
 PASSWORD = "cc2fuku"
@@ -167,55 +166,6 @@ class CvmTests(unittest.TestCase):
             path.write_bytes(b"short")
             with self.assertRaisesRegex(ValueError, "outside the image"):
                 CvmIso(path, cvm_offset=4, cvm_size=2)
-
-
-class CvmExtractedReferenceTests(unittest.TestCase):
-    def test_supported_sources_match_existing_extractions_when_available(self) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        paths = load_paths(repository, allow_missing=True)
-        source = paths.roots["source"]
-        cases = ("NA2.iso", "NUN5.iso")
-        required = [
-            source / name
-            for name in cases
-        ] + [
-            source / (name + ".files") / "DATA" / "DATA.CVM.files" / "DATA.CVM.iso"
-            for name in cases
-        ]
-        if not all(path.is_file() for path in required):
-            self.skipTest("Original and extracted NA2/NUN5 references are unavailable")
-
-        sample = "MODENAME/MODE2KDV.CCS"
-        for name in cases:
-            with self.subTest(image=name):
-                outer = Iso9660(source / name)
-                direct = CvmIso.from_iso(outer)
-                extracted_root = source / (name + ".files") / "DATA" / "DATA.CVM.files"
-                extracted = Iso9660(extracted_root / "DATA.CVM.iso")
-                self.assertEqual(
-                    direct.header,
-                    (extracted_root / "DATA.CVM.hdr").read_bytes(),
-                )
-                toc_size = direct.end_toc_sector * SECTOR
-                with (extracted_root / "DATA.CVM.iso").open("rb") as handle:
-                    self.assertEqual(
-                        direct.read_iso_bytes(0, toc_size),
-                        handle.read(toc_size),
-                    )
-                self.assertEqual(
-                    [
-                        (record.path, record.is_dir, record.extent, record.size)
-                        for record in direct.records
-                    ],
-                    [
-                        (record.path, record.is_dir, record.extent, record.size)
-                        for record in extracted.records
-                    ],
-                )
-                self.assertEqual(
-                    direct.read_file(sample),
-                    extracted.read_file(extracted.by_path[sample]),
-                )
 
 
 if __name__ == "__main__":

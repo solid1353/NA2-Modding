@@ -49,8 +49,47 @@ exit $LASTEXITCODE
         $fakePythonRunner
     )
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'e2e\scripts\config.ps1') -Destination $e2eScripts
-    Copy-Item -LiteralPath (Join-Path $sourceRepository 'e2e\config.json') -Destination (Join-Path $repository 'e2e')
-    Copy-Item -LiteralPath (Join-Path $sourceRepository 'product.json') -Destination $repository
+    [IO.File]::WriteAllText(
+        (Join-Path $repository 'e2e\config.json'),
+        @'
+{
+  "schema_version": 1,
+  "build_variants": [
+    {
+      "name": "normal",
+      "build": "e2e_test",
+      "payload_shift_bytes": 0,
+      "publish": true
+    },
+    {
+      "name": "shifted",
+      "build": "e2e_test_shifted",
+      "payload_shift_bytes": 48,
+      "ignored": false,
+      "compare_against": "normal"
+    }
+  ]
+}
+'@
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $repository 'product.json'),
+        @'
+{
+  "schema_version": 1,
+  "title": "Synthetic Product",
+  "serial": "TEST-00000",
+  "output_boot_path": "TEST_000.00",
+  "builds": {
+    "latest": { "aliases": ["l"] },
+    "previous": { "aliases": ["p"] },
+    "manual": { "aliases": ["m"] },
+    "e2e_test": {},
+    "e2e_test_shifted": {}
+  }
+}
+'@
+    )
 
     $manifest = @'
 {
@@ -71,11 +110,11 @@ exit $LASTEXITCODE
     "pcsx2_stable_exe": "@pcsx2_stable/pcsx2-qt.exe",
     "na2_iso": "@source/NA2.iso",
     "nun5_iso": "@source/NUN5.iso",
-    "latest_iso": "@build/NA2.28 - Latest.iso",
-    "previous_iso": "@build/NA2.28 - Previous.iso",
-    "manual_iso": "@build/NA2.28 - Manual.iso",
-    "e2e_test_iso": "@build/NA2.28 - E2E Test.iso",
-    "e2e_test_shifted_iso": "@build/NA2.28 - E2E Test Shifted.iso"
+    "latest_iso": "@build/Synthetic Product - Latest.iso",
+    "previous_iso": "@build/Synthetic Product - Previous.iso",
+    "manual_iso": "@build/Synthetic Product - Manual.iso",
+    "e2e_test_iso": "@build/Synthetic Product - E2E Test.iso",
+    "e2e_test_shifted_iso": "@build/Synthetic Product - E2E Test Shifted.iso"
   }
 }
 '@
@@ -96,7 +135,7 @@ exit $LASTEXITCODE
     . (Join-Path $libRoot 'paths.ps1')
     . (Join-Path $libRoot 'build_log.ps1')
     $testPaths = Get-Na2Paths
-    $latestIso = Join-Path $repository 'build\NA2.28 - Latest.iso'
+    $latestIso = Join-Path $repository 'build\Synthetic Product - Latest.iso'
     [IO.File]::WriteAllText($latestIso, 'verified latest')
 
     $logDirectory = Join-Path $repository 'logs\na228'
@@ -204,8 +243,8 @@ exit $LASTEXITCODE
     $migratedBuildMap = [IO.File]::ReadAllText((Join-Path $logDirectory 'builds.tsv'))
     Assert-Na2PreflightTest `
         -Condition (
-            $migratedBuildMap.Contains("@build/NA2.28 - Latest.iso`t@logs/na228/builds/existing") -and
-            $migratedBuildMap.Contains("@build/NA2.28 - Previous.iso`t") -and
+            $migratedBuildMap.Contains("@build/Synthetic Product - Latest.iso`t@logs/na228/builds/existing") -and
+            $migratedBuildMap.Contains("@build/Synthetic Product - Previous.iso`t") -and
             -not $migratedBuildMap.Contains('@build/Legacy Product')
         ) `
         -Message 'Product-title change did not migrate builds.tsv to the configured ISO names.'
@@ -305,7 +344,7 @@ exit $LASTEXITCODE
     $global:Na2PreflightTestMode = 'miss'
     $global:Na2PreflightTestCalls = @()
     $test = & (Join-Path $scriptRoot 'build.ps1') -ManualOnly
-    $testIso = Join-Path $repository 'build\NA2.28 - Manual.iso'
+    $testIso = Join-Path $repository 'build\Synthetic Product - Manual.iso'
     Assert-Na2PreflightTest -Condition ($test.Status -eq 'manual') `
         -Message 'Manual-only build did not return manual status.'
     Assert-Na2PreflightTest `
@@ -387,7 +426,7 @@ exit $LASTEXITCODE
     $global:Na2PreflightTestMode = 'miss'
     $global:Na2PreflightTestCalls = @()
     $e2eNormal = & (Join-Path $scriptRoot 'build.ps1') -E2eVariant normal
-    $e2eNormalIso = Join-Path $repository 'build\NA2.28 - E2E Test.iso'
+    $e2eNormalIso = Join-Path $repository 'build\Synthetic Product - E2E Test.iso'
     Assert-Na2PreflightTest -Condition ($e2eNormal.Status -eq 'e2e-test') `
         -Message 'Normal E2E Test build did not return e2e-test status.'
     Assert-Na2PreflightTest `
@@ -416,7 +455,7 @@ exit $LASTEXITCODE
     [void](New-Item -ItemType Directory -Path $newerStandardRecord -Force)
     [IO.File]::WriteAllText(
         (Join-Path $newerStandardRecord 'build_result.tsv'),
-        "timestamp_utc`tresult`tlatest_iso`n2026-08-03T00:00:00Z`tupdated`t@build/NA2.28 - Latest.iso`n"
+        "timestamp_utc`tresult`tlatest_iso`n2026-08-03T00:00:00Z`tupdated`t@build/Synthetic Product - Latest.iso`n"
     )
 
     $global:Na2PreflightTestMode = 'hit'
@@ -430,7 +469,7 @@ exit $LASTEXITCODE
     $global:Na2PreflightTestMode = 'miss'
     $global:Na2PreflightTestCalls = @()
     $e2eShifted = & (Join-Path $scriptRoot 'build.ps1') -E2eVariant shifted
-    $e2eShiftedIso = Join-Path $repository 'build\NA2.28 - E2E Test Shifted.iso'
+    $e2eShiftedIso = Join-Path $repository 'build\Synthetic Product - E2E Test Shifted.iso'
     Assert-Na2PreflightTest -Condition ($e2eShifted.Status -eq 'e2e-test') `
         -Message 'Shifted E2E Test build did not return e2e-test status.'
     Assert-Na2PreflightTest `
@@ -447,8 +486,8 @@ exit $LASTEXITCODE
     $shiftedBuildCall = $shiftedBuildCalls[0]
     $shiftIndex = [Array]::IndexOf($shiftedBuildCall, '--payload-shift') + 1
     Assert-Na2PreflightTest `
-        -Condition ($shiftedBuildCall[$shiftIndex] -ceq '32') `
-        -Message 'Shifted E2E Test build did not use the configured 32-byte shift.'
+        -Condition ($shiftedBuildCall[$shiftIndex] -ceq '48') `
+        -Message 'Shifted E2E Test build did not use the configured synthetic shift.'
     $e2eMap = Read-Na2BuildMap -LogDirectory $logDirectory -Paths $testPaths
     Assert-Na2PreflightTest `
         -Condition (-not [string]::IsNullOrWhiteSpace($e2eMap.E2eTestNormalBuildId)) `
@@ -596,9 +635,9 @@ exit $LASTEXITCODE
         'work\General\agent.iso',
         'work\General\build\agent.bin',
         'work\General\nested\build\agent.iso',
-        'build\NA2.28 - Manual.iso',
-        'build\NA2.28 - E2E Test.iso',
-        'build\NA2.28 - E2E Test Shifted.iso'
+        'build\Synthetic Product - Manual.iso',
+        'build\Synthetic Product - E2E Test.iso',
+        'build\Synthetic Product - E2E Test Shifted.iso'
     )) {
         $failed = $false
         try {

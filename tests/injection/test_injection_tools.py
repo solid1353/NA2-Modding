@@ -171,32 +171,57 @@ class InjectionApplyTests(unittest.TestCase):
 
 class InjectionBuildTests(unittest.TestCase):
     def test_direct_source_scope_selects_registered_root_and_file(self) -> None:
-        root, root_sources = build_injection.source_ids_for_path(Path("src"))
-        numeric, numeric_sources = build_injection.source_ids_for_path(
-            Path("src/localization/font/font_numeric.c")
-        )
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary)
+            source_root = repository / "src"
+            nested = source_root / "nested"
+            nested.mkdir(parents=True)
+            hot_reload = source_root / "hot_reload_message.c"
+            first = source_root / "first.c"
+            second = nested / "second.c"
+            for path in (hot_reload, first, second):
+                path.write_text("void entry(void) {}\n", encoding="ascii")
+            sources = {
+                "first": {
+                    "path": "src/first.c",
+                    "namespace": "test.first",
+                    "imports": {},
+                    "fragments": {
+                        "first_code": {"order": 1, "object": "test.first.text"}
+                    },
+                },
+                "second": {
+                    "path": "src/nested/second.c",
+                    "namespace": "test.second",
+                    "imports": {},
+                    "fragments": {
+                        "second_code": {"order": 2, "object": "test.second.text"}
+                    },
+                },
+            }
+            with mock.patch.object(
+                build_injection, "REPOSITORY", repository
+            ), mock.patch.object(
+                build_injection, "production_sources", return_value=sources
+            ):
+                root, root_sources = build_injection.source_ids_for_path(Path("src"))
+                selected, selected_sources = build_injection.source_ids_for_path(
+                    Path("src/nested/second.c")
+                )
 
-        self.assertEqual(root, build_injection.REPOSITORY / "src")
-        self.assertEqual(
-            root_sources,
-            [
-                "hot_reload_message",
-                "v2_core",
-                "font_numeric",
-                "glyph_metrics",
-                "startup_loading",
-                "unlock_all",
-            ],
-        )
-        self.assertEqual(
-            numeric,
-            build_injection.REPOSITORY
-            / "src"
-            / "localization"
-            / "font"
-            / "font_numeric.c",
-        )
-        self.assertEqual(numeric_sources, ["font_numeric"])
+                self.assertEqual(root, source_root)
+                self.assertEqual(
+                    root_sources,
+                    [build_injection.HOT_RELOAD_SOURCE, "first", "second"],
+                )
+                self.assertEqual(selected, second)
+                self.assertEqual(selected_sources, ["second"])
+
+                (nested / "unregistered.c").write_text(
+                    "void other(void) {}\n", encoding="ascii"
+                )
+                with self.assertRaisesRegex(ValueError, "unregistered C files"):
+                    build_injection.source_ids_for_path(Path("src/nested"))
 
     def test_overlay_plan_accepts_resident_symbol_overrides(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

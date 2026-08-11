@@ -6,9 +6,9 @@ Tests live here and are grouped by the responsibility they verify:
 - `builder/`: builder, compositor, module, profile, and image tests.
 - `injection/`: direct-PINE build/apply pipeline tests.
 - `na228/`: PowerShell build and command workflow tests.
-- `regression/`: accepted feature regressions and E2E infrastructure safety
-  contracts.
-- `research/`: maintained research-tool tests.
+- `regression/`: accepted feature and canonical runtime-contract regressions,
+  plus E2E infrastructure safety contracts.
+- `research/`: maintained research-tool tests, including UI-translation tooling.
 
 The internal unit-test runner is:
 

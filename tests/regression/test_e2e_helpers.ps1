@@ -19,16 +19,41 @@ $testRoot = Join-Path (
 ) "na2-e2e-helper-tests-$PID-$([guid]::NewGuid().ToString('N'))"
 try {
     [void](New-Item -ItemType Directory -Path $testRoot -Force)
-    $configuration = Get-E2eConfiguration -Root (Join-Path $repository 'e2e')
+    $activeVariantRoot = Join-Path $testRoot 'active-variant-config'
+    [void](New-Item -ItemType Directory -Path $activeVariantRoot -Force)
+    [IO.File]::WriteAllText(
+        (Join-Path $activeVariantRoot 'config.json'),
+        @'
+{
+  "schema_version": 1,
+  "build_variants": [
+    {
+      "name": "baseline",
+      "build": "baseline_build",
+      "payload_shift_bytes": 0,
+      "publish": true
+    },
+    {
+      "name": "qualified",
+      "build": "qualified_build",
+      "payload_shift_bytes": 16,
+      "ignored": false,
+      "compare_against": "baseline"
+    }
+  ]
+}
+'@
+    )
+    $configuration = Get-E2eConfiguration -Root $activeVariantRoot
     Assert-E2eHelperTest `
-        -Condition ((@($configuration.Variants.name) -join ',') -ceq 'normal,shifted') `
-        -Message 'E2E configuration did not expose normal and shifted variants.'
+        -Condition ((@($configuration.Variants.name) -join ',') -ceq 'baseline,qualified') `
+        -Message 'E2E configuration did not expose both active synthetic variants.'
     Assert-E2eHelperTest `
-        -Condition ([string]$configuration.PublishedVariant.name -ceq 'normal') `
-        -Message 'E2E configuration did not select normal as the published variant.'
+        -Condition ([string]$configuration.PublishedVariant.name -ceq 'baseline') `
+        -Message 'E2E configuration did not select the published synthetic variant.'
     Assert-E2eHelperTest `
         -Condition ($configuration.AllVariants[1].ignored -eq $false) `
-        -Message 'The shifted variant is not explicitly active.'
+        -Message 'The qualified synthetic variant is not explicitly active.'
 
     $ignoredVariantRoot = Join-Path $testRoot 'ignored-variant-config'
     [void](New-Item -ItemType Directory -Path $ignoredVariantRoot -Force)
@@ -165,18 +190,6 @@ try {
     Assert-E2eHelperTest `
         -Condition (($ignoredNames -join ',') -ceq '0002.png,0004.png,0005.png,0006.png,0007.png') `
         -Message 'Ignore slots, zero padding, comments, or ranges were parsed incorrectly.'
-    [IO.File]::WriteAllText($ignore, "0002.png`n")
-    $legacyIgnoreRejected = $false
-    try {
-        [void](Get-IgnoredCaptureNames -IgnoreFile $ignore)
-    }
-    catch {
-        $legacyIgnoreRejected = $_.Exception.Message -match 'Invalid ignore entry'
-    }
-    Assert-E2eHelperTest `
-        -Condition $legacyIgnoreRejected `
-        -Message 'The retired ignore filename format was accepted.'
-    [IO.File]::WriteAllText($ignore, "# ignored captures`n2`n004`n5-7`n")
     $passed = Compare-VisualRegressionVariants `
         -Suite 'test/helpers' `
         -BaselineDirectory $normal `

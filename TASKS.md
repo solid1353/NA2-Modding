@@ -4,8 +4,6 @@
 
 ### General
 - Create notifications.
-- Restructure pcsx2 stuff.
-- [Make startup load the first save automatically](docs/handoffs/2026-08-07-auto-load-first-save-resume.md).
 
 ### Font
 - Layout/autofit.
@@ -15,7 +13,6 @@
 ### Project
 - Investigate cross-platform development/deployment possibilities.
 - Global cleanup - preserve/promote what is needed, delete the rest.
-- Rename workstream-log terminology and configured paths to task logs.
 
 ### Bugs
 - **UI Translation:** long character names.
@@ -35,7 +32,6 @@
 - Replace selected character with no support on character select screen.
 - Replace support selector with Team J/UJ selector.
 - Move support bar upwards.
-- Integrate save into the game, simplify the entry menu and replace old slps references in the ELF.
 
 ### Visuals
 - Create a proper widescreen patch.

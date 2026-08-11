@@ -28,6 +28,7 @@
 - Fix extra hit floating animation (or maybe not?).
 
 ### QoL
+- [Finish NUN5 startup parity and repair the test loading override](docs/handoffs/2026-08-11-nun5-startup-test-loading-resume.md).
 - Disable UJ overlay and inputs.
 - Replace selected character with no support on character select screen.
 - Replace support selector with Team J/UJ selector.

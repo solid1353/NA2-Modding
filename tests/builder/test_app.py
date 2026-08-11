@@ -82,10 +82,7 @@ class ReleaseAppTests(unittest.TestCase):
     def test_manifest_parser_normalizes_and_validates_image_identities(self) -> None:
         data = {
             "schema_version": 1,
-            "product_name": "Narutimate Accel v2.28",
             "product_version": "1.0.0",
-            "executable_name": "Narutimate Accel v2.28.exe",
-            "output_name": "Narutimate Accel v2.28.iso",
             "configuration": "na228_builder/configurations/release.json",
             "configuration_name": "config.json",
             "images": [
@@ -104,23 +101,26 @@ class ReleaseAppTests(unittest.TestCase):
             ],
         }
 
-        manifest = parse_release_manifest(json.dumps(data))
+        manifest = parse_release_manifest(
+            json.dumps(data), product_name="Narutimate Accel v2.28"
+        )
 
         self.assertEqual(manifest.images[0].image_id, "na2")
         self.assertEqual(manifest.images[0].sha256, "AB" * 32)
         self.assertEqual(manifest.output_name, "Narutimate Accel v2.28.iso")
         self.assertEqual(
+            manifest.executable_name,
+            "Narutimate Accel v2.28_1.0.0.exe",
+        )
+        self.assertEqual(
             manifest.configuration_name,
             "config.json",
         )
 
-    def test_manifest_parser_rejects_unsafe_output_name(self) -> None:
+    def test_manifest_parser_rejects_unsafe_product_name(self) -> None:
         data = {
             "schema_version": 1,
-            "product_name": "Narutimate Accel v2.28",
             "product_version": "1.0.0",
-            "executable_name": "Narutimate Accel v2.28.exe",
-            "output_name": "build/Narutimate Accel v2.28.iso",
             "configuration": "na228_builder/configurations/release.json",
             "configuration_name": "config.json",
             "images": [
@@ -138,8 +138,8 @@ class ReleaseAppTests(unittest.TestCase):
                 },
             ],
         }
-        with self.assertRaisesRegex(ReleaseError, "one filename"):
-            parse_release_manifest(json.dumps(data))
+        with self.assertRaisesRegex(ReleaseError, "executable_name"):
+            parse_release_manifest(json.dumps(data), product_name="build/Product")
 
     def test_discovery_is_nonrecursive_case_insensitive_and_hash_pinned(self) -> None:
         na2 = b"clean-na2"

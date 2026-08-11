@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from scripts.lib.paths import Paths, load_paths, resolve_alias
+from scripts.lib.paths import Paths, load_paths
 
 if TYPE_CHECKING:
     from .catalog import CatalogSelection
@@ -18,6 +18,10 @@ if TYPE_CHECKING:
 BUILDER_TARGETS_FILE = Path("catalog") / "implementation" / "targets.tsv"
 SOURCE_BOOT_PATH = "SLPS_258.37"
 SYSTEM_CNF_PATH = "SYSTEM.CNF"
+PRODUCT_ROOT_ALIASES = {
+    "na2": "source_na2",
+    "nun5": "source_nun5",
+}
 MODULE_TYPE_ORDER = (
     "translation_importer",
     "string_patcher",
@@ -102,7 +106,7 @@ def _product_text(value: object, label: str) -> str:
     return value
 
 
-def _read_product(path: Path) -> tuple[str, dict[str, str], str]:
+def _read_product(path: Path) -> tuple[str, str]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
@@ -114,7 +118,6 @@ def _read_product(path: Path) -> tuple[str, dict[str, str], str]:
             "title",
             "serial",
             "output_boot_path",
-            "inputs",
             "builds",
         },
         "product",
@@ -125,49 +128,7 @@ def _read_product(path: Path) -> tuple[str, dict[str, str], str]:
     output_boot_path = _product_text(
         product["output_boot_path"], "output_boot_path"
     )
-    inputs = product["inputs"]
-    if not isinstance(inputs, dict) or not inputs:
-        raise ValueError("Product inputs must be a non-empty object")
-    normalized_inputs: dict[str, str] = {}
-    for root_id, value in inputs.items():
-        if (
-            not isinstance(root_id, str)
-            or not re.fullmatch(r"[a-z][a-z0-9_]*", root_id)
-            or root_id in normalized_inputs
-            or not isinstance(value, str)
-            or not value
-        ):
-            raise ValueError(f"Invalid product input: {root_id!r}")
-        normalized_inputs[root_id] = value
-    return output_boot_path, normalized_inputs, product_title
-
-
-def _workspace_path(value: str, label: str, workspace: Path) -> Path:
-    candidate = Path(value)
-    if not value or candidate.is_absolute() or ".." in candidate.parts:
-        raise ValueError(f"{label} must be a repository-relative path: {value!r}")
-    resolved = (workspace / candidate).resolve()
-    try:
-        resolved.relative_to(workspace)
-    except ValueError as exc:
-        raise ValueError(f"{label} escapes the repository: {value!r}") from exc
-    return resolved
-
-
-def _product_input_path(
-    value: str, label: str, workspace: Path, paths: Paths
-) -> Path:
-    if value.startswith("@"):
-        try:
-            resolved = resolve_alias(value, paths)
-        except (KeyError, ValueError) as exc:
-            raise ValueError(
-                f"{label} has an invalid project-root alias: {value!r}"
-            ) from exc
-        if not resolved.exists():
-            raise FileNotFoundError(resolved)
-        return resolved
-    return _workspace_path(value, label, workspace)
+    return output_boot_path, product_title
 
 
 def _tree_digest(
@@ -377,8 +338,8 @@ def module_content_sha256(path: Path, module_type: str) -> str:
 
 def _validated_product(
     product_path: Path,
-) -> tuple[str, dict[str, str], str]:
-    output_boot_path, product_inputs, product_title = _read_product(product_path)
+) -> tuple[str, str]:
+    output_boot_path, product_title = _read_product(product_path)
     from ..image_assembler.iso9660 import normalize_iso_path
 
     if normalize_iso_path(output_boot_path) != output_boot_path:
@@ -397,12 +358,10 @@ def _validated_product(
         product_title.encode("cp1252")
     except UnicodeEncodeError as exc:
         raise ValueError("Product title must be CP1252") from exc
-    return output_boot_path, product_inputs, product_title
+    return output_boot_path, product_title
 
 
 def _resolved_roots(
-    product_inputs: dict[str, str],
-    workspace: Path,
     paths: Paths,
     root_overrides: Mapping[str, Path] | None,
 ) -> dict[str, Path]:
@@ -410,12 +369,10 @@ def _resolved_roots(
         key: Path(value).resolve() for key, value in (root_overrides or {}).items()
     }
     roots: dict[str, Path] = {}
-    for root_id, value in product_inputs.items():
+    for root_id, alias in PRODUCT_ROOT_ALIASES.items():
         root = overrides.get(root_id)
         if root is None:
-            root = _product_input_path(
-                value, f"product input {root_id}", workspace, paths
-            )
+            root = paths.path(alias)
         if not root.exists():
             raise FileNotFoundError(root)
         roots[root_id] = root
@@ -540,8 +497,8 @@ def _load_configuration(
     selection = catalog_module.load_selection(catalog_path, definition_path)
     paths = project_paths or load_paths(workspace, allow_missing=True)
     product_path = paths.file("product_config").resolve()
-    output_boot_path, product_inputs, product_title = _validated_product(product_path)
-    roots = _resolved_roots(product_inputs, workspace, paths, root_overrides)
+    output_boot_path, product_title = _validated_product(product_path)
+    roots = _resolved_roots(paths, root_overrides)
     targets_path = builder_root / BUILDER_TARGETS_FILE
     if not targets_path.is_file():
         raise FileNotFoundError(targets_path)

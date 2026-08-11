@@ -18,8 +18,8 @@ source media, PNACH, donor data, or encoded game text.
   self-contained external configuration. Feature-named JSON files under
   `na228_builder/catalog/` own selectable definitions; files under
   `na228_builder/catalog/implementation/` own guarded binary edits, runtime
-  hooks and payload declarations, and targets. Root `product.json` owns
-  canonical inputs and output identity.
+  hooks and payload declarations, and targets. Root `product.json` owns output
+  identity.
 - JSON files under `na228_builder/configurations/` are the only repository build
   definitions. Feature enablement and nested selection live only there; there
   is no separate profile or feature-pin table.

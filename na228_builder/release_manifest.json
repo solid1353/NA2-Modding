@@ -1,9 +1,6 @@
 {
   "schema_version": 1,
-  "product_name": "Narutimate Accel v2.28",
   "product_version": "0.1.1",
-  "executable_name": "Narutimate Accel v2.28_0.1.1.exe",
-  "output_name": "Narutimate Accel v2.28.iso",
   "configuration": "na228_builder/configurations/release.json",
   "configuration_name": "config.json",
   "images": [

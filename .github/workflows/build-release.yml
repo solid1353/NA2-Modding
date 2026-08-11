@@ -48,9 +48,11 @@ jobs:
         shell: pwsh
         run: |
           $manifest = Get-Content -Raw na228_builder/release_manifest.json | ConvertFrom-Json
+          $product = Get-Content -Raw product.json | ConvertFrom-Json
           . ./scripts/lib/paths.ps1
           $paths = Get-Na2LocalPaths -AllowMissing
-          $packageName = [IO.Path]::ChangeExtension([string]$manifest.executable_name, '.zip')
+          $executableName = "$([string]$product.title)_$([string]$manifest.product_version).exe"
+          $packageName = [IO.Path]::ChangeExtension($executableName, '.zip')
           $candidate = Join-Path $paths.release_candidates $packageName
           if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
               throw "Release candidate is missing: $candidate"

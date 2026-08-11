@@ -42,6 +42,8 @@ class ConfigurationTests(unittest.TestCase):
         self.create_module(localization, "translation_importer")
         self.create_module(localization, "texture_patcher")
         source.mkdir()
+        (source / "NA2.iso.files").mkdir()
+        (source / "NUN5.iso.files").mkdir()
         configurations.mkdir()
         build.mkdir()
         for directory in (
@@ -81,7 +83,11 @@ class ConfigurationTests(unittest.TestCase):
                         "NA2": {
                             "serial": "SLPS-25837",
                             "crc": "C0659AD1",
-                        }
+                        },
+                        "NUN5": {
+                            "serial": "SLES-55605",
+                            "crc": "C071D4C1",
+                        },
                     },
                 }
             ),
@@ -203,7 +209,6 @@ class ConfigurationTests(unittest.TestCase):
                     "title": "Test Product",
                     "serial": "TEST-00000",
                     "output_boot_path": "SLOP_NA2.28",
-                    "inputs": {"na2": "source"},
                     "builds": {"latest": {}},
                 },
                 indent=2,

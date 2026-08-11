@@ -8,8 +8,7 @@ project. The path system has four layers with separate technical owners:
 2. NA2 root `paths.json` imports Workshop and adds only NA2-local paths.
 3. Workshop root `games.json` owns shared source-game selectors, aliases,
    serials, and CRCs.
-4. NA2 root `product.json` owns NA2.28 source inputs, output identity, and build
-   variants.
+4. NA2 root `product.json` owns NA2.28 output identity and build variants.
 
 The PowerShell and Python loaders merge both catalogs. Canonical files store
 only repository-relative paths or `@root/child` references. Resolved absolute
@@ -85,8 +84,8 @@ Workshop source games use a direct map:
 }
 ```
 
-The NA2 product configuration is deliberately flat apart from its explicit
-inputs and builds sections:
+The NA2 product configuration is deliberately flat apart from its builds
+section:
 
 ```json
 {
@@ -94,7 +93,6 @@ inputs and builds sections:
   "title": "Narutimate Accel v2.28",
   "serial": "SLOP-NA228",
   "output_boot_path": "SLOP_NA2.28",
-  "inputs": { "na2": "@source_na2", "nun5": "@source_nun5" },
   "builds": {
     "latest": { "aliases": ["l"] },
     "e2e_test": {}

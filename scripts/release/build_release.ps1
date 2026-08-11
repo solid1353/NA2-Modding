@@ -13,6 +13,10 @@ $toolchainPath = Join-Path $PSScriptRoot 'toolchain.json'
 $toolchain = Get-Content -Raw -LiteralPath $toolchainPath | ConvertFrom-Json
 $manifestPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.release_manifest))
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
+$productPath = [IO.Path]::GetFullPath($paths.product_config)
+$product = Get-Content -Raw -LiteralPath $productPath | ConvertFrom-Json
+$productName = [string]$product.title
+$executableName = "${productName}_$([string]$manifest.product_version).exe"
 $requirementsPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.requirements))
 $entryPoint = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.entry_point))
 $iconPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.icon))
@@ -23,10 +27,9 @@ $releaseTemp = Resolve-Na2ProjectPathAlias -Alias $toolchain.temporary_root -Pat
 if ([int]$toolchain.schema_version -ne 1 -or [int]$manifest.schema_version -ne 1) {
     throw 'Unsupported release schema.'
 }
-if ([string]::IsNullOrWhiteSpace([string]$manifest.executable_name) -or
-    [IO.Path]::GetFileName([string]$manifest.executable_name) -cne [string]$manifest.executable_name -or
-    -not ([string]$manifest.executable_name).EndsWith('.exe', [StringComparison]::OrdinalIgnoreCase)) {
-    throw 'Release executable_name must be one .exe filename.'
+if ([string]::IsNullOrWhiteSpace($productName) -or
+    [IO.Path]::GetFileName($executableName) -cne $executableName) {
+    throw 'Product title must produce one release executable filename.'
 }
 if ([string]::IsNullOrWhiteSpace([string]$manifest.configuration_name) -or
     [IO.Path]::GetFileName([string]$manifest.configuration_name) -cne [string]$manifest.configuration_name -or
@@ -38,6 +41,7 @@ foreach ($required in @(
     $entryPoint,
     $iconPath,
     $manifestPath,
+    $productPath,
     $instructionsPath,
     $configurationPath
 )) {
@@ -80,7 +84,7 @@ $distRoot = Join-Path $workRoot 'dist'
 $specRoot = Join-Path $workRoot 'spec'
 $cacheRoot = Join-Path $workRoot 'cache'
 $bootstrap = Join-Path $runRoot 'release_bootstrap.py'
-$packageName = [IO.Path]::ChangeExtension([string]$manifest.executable_name, '.zip')
+$packageName = [IO.Path]::ChangeExtension($executableName, '.zip')
 $candidate = Join-Path $candidateRoot $packageName
 $oldPyInstallerConfig = $env:PYINSTALLER_CONFIG_DIR
 
@@ -186,12 +190,12 @@ raise SystemExit(main())
     [IO.File]::WriteAllText($bootstrap, $bootstrapText, [Text.UTF8Encoding]::new($false))
 
     $env:PYINSTALLER_CONFIG_DIR = $cacheRoot
-    $baseName = [IO.Path]::GetFileNameWithoutExtension([string]$manifest.executable_name)
+    $baseName = [IO.Path]::GetFileNameWithoutExtension($executableName)
     $addData = "${resourceRoot}:."
     & $python -B -m PyInstaller --noconfirm --clean --onefile --console --noupx --name $baseName --icon $iconPath --paths $repository --add-data $addData --collect-all zopfli --hidden-import na228_builder.scripts.release_runtime --distpath $distRoot --workpath (Join-Path $workRoot 'work') --specpath $specRoot $bootstrap
     if ($LASTEXITCODE -ne 0) { throw 'PyInstaller failed.' }
 
-    $built = Join-Path $distRoot ([string]$manifest.executable_name)
+    $built = Join-Path $distRoot $executableName
     if (-not (Test-Path -LiteralPath $built -PathType Leaf)) {
         throw "PyInstaller output is missing: $built"
     }

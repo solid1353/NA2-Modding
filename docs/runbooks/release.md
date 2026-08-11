@@ -74,17 +74,15 @@ workflow from a tagged commit.
 
 ## Release manifest
 
-`na228_builder/release_manifest.json` is authoritative for the product name,
-version, executable name, output name, canonical default configuration, external
-configuration filename, and supported source identities. The pinned source
-identities are:
+`product.json` owns the product name. The release manifest owns the version,
+canonical default configuration, external configuration filename, and supported
+source identities. The executable name is `<product>_<version>.exe`, and the
+output image is `<product>.iso`. The pinned source identities are:
 
 - NA2: 1,928,429,568 bytes,
   SHA-256 `CA105F7BDBEEAA3275F871C9702B9C77ED985CE140FAE8EAC28CB153E263D0C3`
 - NUN5: 1,926,234,112 bytes,
   SHA-256 `2E1B9A885F4E94E6B8C4204F139C53ABD568FE49D6521D4D8921FE9460C07BFF`
-
-Root `product.json` title must equal the manifest product name.
 
 The maintained publication command performs the version update and complete
 Git/tag sequence:

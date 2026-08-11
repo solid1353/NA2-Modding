@@ -15,6 +15,7 @@ $toolchain = Get-Content -Raw -LiteralPath $toolchainPath | ConvertFrom-Json
 $manifestRelative = [string]$toolchain.release_manifest
 $manifestPath = [IO.Path]::GetFullPath((Join-Path $repository $manifestRelative))
 $builderPath = Join-Path $PSScriptRoot 'build_release.ps1'
+$productPath = [IO.Path]::GetFullPath($paths.product_config)
 
 function Invoke-ReleaseGit {
     param(
@@ -45,6 +46,8 @@ if (-not (Test-Path -LiteralPath $builderPath -PathType Leaf)) {
 }
 
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
+$product = Get-Content -Raw -LiteralPath $productPath | ConvertFrom-Json
+$productName = [string]$product.title
 $targetVersion = if ([string]::IsNullOrWhiteSpace($Version)) {
     [string]$manifest.product_version
 }
@@ -55,15 +58,6 @@ if ($targetVersion -notmatch '^\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)
     throw "Release version must be SemVer-like text such as 0.1.0 or 0.1.0-dev: $targetVersion"
 }
 
-$executableMatch = [regex]::Match(
-    [string]$manifest.executable_name,
-    '^(?<stem>.+)_[^/\\]+\.exe$',
-    [Text.RegularExpressions.RegexOptions]::IgnoreCase
-)
-if (-not $executableMatch.Success) {
-    throw 'Release executable_name must follow <product>_<version>.exe.'
-}
-$targetExecutable = "$($executableMatch.Groups['stem'].Value)_$targetVersion.exe"
 $tag = "v$targetVersion"
 
 $status = @(Invoke-ReleaseGit -GitArguments @(
@@ -84,12 +78,9 @@ if ($remoteTagExit -ne 2) {
     throw "Could not check origin for $tag.`n$details"
 }
 
-$manifestChanged =
-    [string]$manifest.product_version -cne $targetVersion -or
-    [string]$manifest.executable_name -cne $targetExecutable
+$manifestChanged = [string]$manifest.product_version -cne $targetVersion
 if ($manifestChanged) {
     $manifest.product_version = $targetVersion
-    $manifest.executable_name = $targetExecutable
     $temporaryManifest = "$manifestPath.publish.tmp"
     if (Test-Path -LiteralPath $temporaryManifest) {
         throw "Reserved manifest staging file already exists: $temporaryManifest"
@@ -111,7 +102,7 @@ if ($manifestChanged) {
 
     Invoke-ReleaseGit -GitArguments @('add', '--', $manifestRelative)
     Invoke-ReleaseGit -GitArguments @(
-        'commit', '-m', "Prepare $($manifest.product_name) $tag"
+        'commit', '-m', "Prepare $productName $tag"
     )
     Write-Host "[release] Prepared $tag in the release manifest." -ForegroundColor Cyan
 }
@@ -160,7 +151,7 @@ if ($localTagExit -eq 0) {
 }
 else {
     Invoke-ReleaseGit -GitArguments @(
-        'tag', '-a', $tag, '-m', "$($manifest.product_name) $targetVersion"
+        'tag', '-a', $tag, '-m', "$productName $targetVersion"
     )
 }
 

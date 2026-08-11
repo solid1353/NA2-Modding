@@ -13,14 +13,26 @@
         "e__qol__startup__skip_opening__skip_opening",
       ],
     },
-    save_loading: setting<"manual"> {
-      description: "Skip the four splash screens and opening, preserve required startup loading, bypass the title, and enter the native Continue path; the retained confirmation loads the first save on Yes or enters the main menu without loading on No.",
-      patches: [
-        "e__qol__startup__save_loading__manual__enter_title_input_state_immediately",
-        "e__qol__startup__save_loading__manual__return_native_start_accepted_result",
-        "e__qol__startup__save_loading__manual__treat_no_load_completion_as_menu_success",
-      ],
-    },
+    save_loading:
+      setting<"manual"> {
+        description: "Enter the native Continue path and retain its visible Save/Load flow; no-load completion proceeds to the main menu.",
+        patches: [
+          "e__qol__startup__save_loading__enter_title_input_state_immediately",
+          "e__qol__startup__save_loading__return_native_continue_result",
+          "e__qol__startup__save_loading__treat_no_load_completion_as_menu_success",
+        ],
+      }
+      |
+      setting<"automatic"> {
+        description: "Enter the native Continue path, silently load record zero when it exists, and otherwise proceed to the main menu without showing Save/Load UI or requiring input.",
+        patches: [
+          "e__qol__startup__save_loading__enter_title_input_state_immediately",
+          "e__qol__startup__save_loading__return_native_continue_result",
+          "e__qol__startup__save_loading__treat_no_load_completion_as_menu_success",
+          "e__qol__startup__save_loading__automatic__suppress_save_load_draw",
+          "i__qol__startup__save_loading__automatic__first_save",
+        ],
+      },
     loading_screen: setting {
       description: "Replace the boot splashes with a large primitive percentage and progress bar paced across the measured 25-second load while the original startup loaders run.",
       patches: [

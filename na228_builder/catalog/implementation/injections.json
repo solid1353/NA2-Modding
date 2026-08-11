@@ -1574,5 +1574,32 @@
         "value": "0000000000000000"
       }
     }
+  },
+  "i__qol__startup__save_loading__automatic__first_save": {
+    "description": "Silently drive the native asynchronous memory-card worker through port-zero scan, record-zero selection, confirmation, and verified load completion before the normal main-menu loader.",
+    "hooks": {
+      "replace_visible_save_load_controller_update": {
+        "description": "Replace only Continue's visible Save/Load controller update with the silent first-record state machine while retaining native allocation, cleanup, result handling, and post-load setup.",
+        "target_id": "na2_elf",
+        "offset": "0xEA084",
+        "expected_hex": "C08F070C",
+        "symbol": "update",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "automatic_save_loading": {
+        "kind": "c",
+        "path": "src/qol/startup_automatic_save_loading.c",
+        "namespace": "qol.startup.save.loading.automatic",
+        "imports": {},
+        "fragments": {
+          "update": {
+            "order": 110,
+            "object": "qol.startup.save.loading.automatic.text.startup.automatic.save.loading"
+          }
+        }
+      }
+    }
   }
 }

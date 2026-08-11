@@ -5076,7 +5076,17 @@
     "expected_hex": "0200412A",
     "replacement_hex": "0000412A"
   },
-  "e__qol__startup__save_loading__manual__enter_title_input_state_immediately": {
+  "e__qol__startup__save_loading__automatic__suppress_save_load_draw": {
+    "description": "Suppress the Save/Load child draw while the automatic startup branch drives the native memory-card worker.",
+    "operation": "replace",
+    "destination_target_id": "na2_elf",
+    "destination_offsets": [
+      "0xEA0D0"
+    ],
+    "expected_hex": "C095070C",
+    "replacement_hex": "00000000"
+  },
+  "e__qol__startup__save_loading__enter_title_input_state_immediately": {
     "description": "Enter the title-input state immediately after required startup loading and splash cleanup, bypassing the post-splash sequence.",
     "operation": "replace",
     "destination_target_id": "na2_elf",
@@ -5086,8 +5096,8 @@
     "expected_hex": "02000324",
     "replacement_hex": "03000324"
   },
-  "e__qol__startup__save_loading__manual__return_native_start_accepted_result": {
-    "description": "Return the native Continue result without constructing or displaying the title screen, selecting main-menu state 4 substate 2 and its first-save load path through the existing caller.",
+  "e__qol__startup__save_loading__return_native_continue_result": {
+    "description": "Return the native Continue result without constructing or displaying the title screen, selecting main-menu state 4 substate 2 through the existing caller.",
     "operation": "replace",
     "destination_target_id": "na2_elf",
     "destination_offsets": [
@@ -5096,7 +5106,7 @@
     "expected_hex": "107A070C",
     "replacement_hex": "02000224"
   },
-  "e__qol__startup__save_loading__manual__treat_no_load_completion_as_menu_success": {
+  "e__qol__startup__save_loading__treat_no_load_completion_as_menu_success": {
     "description": "Treat the no-load completion as a successful Continue result so startup enters the main menu without loaded save data.",
     "operation": "replace",
     "destination_target_id": "na2_elf",

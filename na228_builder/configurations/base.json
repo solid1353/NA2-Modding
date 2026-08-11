@@ -18,7 +18,7 @@
       "startup": {
         "skip_cc2_intro": true,
         "skip_opening": true,
-        "save_loading": "manual",
+        "save_loading": "automatic",
         "loading_screen": true
       },
       "practice": {

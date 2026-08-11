@@ -70,45 +70,64 @@ verified, and user runtime validation confirmed the integrated behavior.
 
 ## ELF-Q009: Loading screen then first-save load
 
-`ELF-Q009` replaces the four splash screens with the game's existing main-menu
+`ELF-Q009` replaces the four splash screens with a boot-safe loading
 presentation while preserving the two native startup-loader checks. The QoL
 runtime-injector hook replaces the splash update call at boot-ELF virtual
-address `0x001E11A0` (file offset `0xE11A0`). It initializes the existing
+address `0x001E10A0` (file offset `0xE11A0`). It initializes the existing
 boot-safe splash controller, holds its first draw slot active, and returns
 splash completion to the unchanged startup loop.
 
-A second guarded hook replaces the splash sprite draw call at boot-ELF file
-offset `0xE11E0`. It suppresses the original logo sprite and uses the same
-boot-safe solid-primitive renderer to draw a large two-digit percentage, percent
-sign, and progress bar. Each rectangle is submitted as an independent primitive
-so separate digit segments cannot be joined by the renderer's triangle strip.
-At the game's 30 FPS startup rate, the counter maps 750 frames to the measured
-25-second load and caps at `99%`; the real loader flags, not the displayed
-estimate, determine when startup may continue.
+A second guarded hook replaces the splash sprite draw call at virtual address
+`0x001E10E0` (file offset `0xE11E0`). It suppresses the original logo sprite
+and uses the same boot-safe solid-primitive renderer to draw a large two-digit
+percentage, percent sign, and progress bar. Each rectangle is submitted as an
+independent primitive so separate digit segments cannot be joined by the
+renderer's triangle strip. At the game's 30 FPS startup rate, the counter maps
+750 frames to the measured 25-second load and caps at `99%`; the real loader
+flags, not the displayed estimate, determine when startup may continue.
 
-After the required startup loaders complete, the file-backed binary patch
-writes state `3` instead of state `2` at `0x001E12CC`, bypassing the opening
-sequence. The patch at `0x001E1340` returns native title result `2`
-(`Continue`), so the unchanged caller enters main state `4`, substate `2`.
-That substate constructs the shared Save/Load controller in mode `1`; the
-`ELF-Q010` first-record dispatch retains the native Yes/No load confirmation.
-Yes performs the native load before the normal main-menu loader continues; No
-enters the main menu without loading. `Skip opening` remains enabled as a
-second guard on the opening path.
+After the required startup loaders complete, the common file-backed edits write
+state `3` instead of state `2` at virtual address `0x001E11CC` (file offset
+`0xE12CC`) and return native title result `2` (`Continue`) at virtual address
+`0x001E1240` (file offset `0xE1340`). The unchanged caller enters main state
+`4`, substate `2` and constructs the shared Save/Load controller in load mode.
+`Skip opening` remains enabled as a second guard on the opening path.
 
-The sequence bypasses the notice, Bandai Namco, Bandai, CRIWARE,
-opening, interactive title, and Load-list screens. The source ELF and file size
-remain unchanged. Static, supplied-savestate, and rejected-candidate evidence
-is recorded in `docs/knowledge/game/startup.md`; user runtime validation
-confirmed the integrated behavior.
+The catalog exposes two disjoint literal branches at
+`qol.startup.save_loading`:
 
-The catalog exposes this confirmed flow as
-`qol.startup.save_loading: setting<"manual">`; the base configuration selects
-`"manual"`, with no separate default. Automatic background first-save loading
-is not implemented. A future implementation can add a disjoint branch without
-changing the catalog model. `qol.save_load.display_only_first_save` remains an
-independent setting because it controls Save/Load presentation rather than
-startup behavior.
+- `"manual"` retains the full Save/Load controller. With
+  `qol.save_load.display_only_first_save`, it shows the native record-zero
+  confirmation; Yes loads the save and No enters the menu without loading.
+- `"automatic"` replaces only Continue's per-frame visible-controller update
+  with a silent generated-C driver for the same asynchronous memory-card
+  worker. It scans port zero, requests record zero when present, internally
+  resolves the native load confirmation as Yes, waits through checksum-verified
+  load completion, and then lets Continue perform its unchanged cleanup,
+  save-dependent setup, and main-menu loading. Its separate guarded no-op at
+  file offset `0xEA0D0` prevents the Save/Load child from drawing.
+
+The automatic branch treats no card, a wrong card type, an unformatted card, no
+game directory, an empty first record, read/checksum failure, a card change, and
+every other non-success terminal worker result as no-load completion. In all of
+those cases the existing guarded result mapping enters the main menu without
+loaded data. It does not synthesize a timeout while the native worker reports a
+busy state.
+
+The base configuration selects `"automatic"`; `"manual"` remains available as
+the confirmed visible fallback. The sequence bypasses the notice, Bandai Namco,
+Bandai, CRIWARE, opening, interactive title, Load list, card-status messages,
+and load confirmation before the main-menu loading screen. Full development
+build `20260811_054948_801_pid12700` succeeded, and user runtime validation on
+2026-08-11 confirmed the integrated automatic behavior. The manual branch also
+remains user-confirmed.
+The complete disassembly findings, worker layout, outcome matrix, and state
+machine are recorded in
+[`../knowledge/game/startup.md`](../knowledge/game/startup.md).
+
+`qol.save_load.display_only_first_save` remains an independent setting because
+it controls the visible Save/Load interface and is not used by the automatic
+startup driver.
 
 ## ELF-Q004: Remove Adventure mode
 

@@ -81,6 +81,7 @@ if ($mode -eq 'help') {
         '  na228 e2e create <suite> [game]       Create or replace a suite from its matching shared recording; optionally capture a reference game'
         '  na228 e2e rename <suite> <new-suite>  Rename a suite and its capture history'
         '  na228 e2e delete <suite>               Delete a suite and its capture history'
+        '  na228 e2e squash [-c]                  Optionally commit current captures, then squash and compact history'
         '  na228 worker work/<worker>/build/<name>.iso  Build an isolated worker ISO'
         '  na228 release [version]     Publish a GitHub release'
         '  na228 help                  Show this help'
@@ -109,7 +110,8 @@ if ($mode -eq 'e2e') {
     $visualCreate = Join-Path $visualScripts 'create_suite.ps1'
     $visualRename = Join-Path $visualScripts 'rename_suite.ps1'
     $visualDelete = Join-Path $visualScripts 'delete_suite.ps1'
-    foreach ($required in $visualRun, $visualCreate, $visualRename, $visualDelete) {
+    $visualSquash = Join-Path $visualScripts 'squash_captures.ps1'
+    foreach ($required in $visualRun, $visualCreate, $visualRename, $visualDelete, $visualSquash) {
         if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
             throw "The E2E infrastructure is unavailable: $required"
         }
@@ -159,7 +161,17 @@ if ($mode -eq 'e2e') {
         & $visualDelete -Suite $arguments[1]
         return
     }
-    throw 'Usage: na228 e2e [-s] | na228 e2e create <suite> [game] | na228 e2e rename <suite> <new-suite> | na228 e2e delete <suite>'
+    if ($testCommand -ceq 'squash') {
+        if (
+            $arguments.Count -notin 1, 2 -or
+            ($arguments.Count -eq 2 -and $arguments[1] -cne '-c')
+        ) {
+            throw 'Usage: na228 e2e squash [-c]'
+        }
+        & $visualSquash -Commit:($arguments.Count -eq 2)
+        return
+    }
+    throw 'Usage: na228 e2e [-s] | na228 e2e create <suite> [game] | na228 e2e rename <suite> <new-suite> | na228 e2e delete <suite> | na228 e2e squash [-c]'
 }
 
 if ($mode -eq 'release') {

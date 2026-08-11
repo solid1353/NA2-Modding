@@ -46,6 +46,7 @@ those.
   [discussion-summary rule](AGENTS.md#discussion-and-action) to the current
   discussion topic. The boundary resets only when the discussion explicitly
   moves on.
+- `ex`: explain the current subject.
 - `eff`: report the currently recommended effort without changing it.
 - `sw`: resume after the user changed the chat to the recommended effort;
   preserve prior approval.

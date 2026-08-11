@@ -816,16 +816,6 @@ def _validate_operation(
         elif not isinstance(value, str):
             raise ValueError(f"{field_label} must be text")
     if operation == "replace":
-        destinations = [
-            field
-            for field in ("destination_offset", "destination_offsets")
-            if field in edit
-        ]
-        if len(destinations) != 1:
-            raise ValueError(
-                f"{label} requires exactly one of destination_offset "
-                "or destination_offsets"
-            )
         replacements = [
             field for field in ("replacement_hex", "adapter") if field in edit
         ]
@@ -921,18 +911,9 @@ def load_binary_package(
                 expected_hex = _hex(raw_edit["expected_hex"], f"{label}.expected_hex")
             if "expected_sha256" in raw_edit:
                 expected_sha256 = _sha256(raw_edit["expected_sha256"], f"{label}.expected_sha256")
-            destination_offsets = (
-                _parse_int_list(
-                    raw_edit["destination_offsets"],
-                    f"{label}.destination_offsets",
-                )
-                if "destination_offsets" in raw_edit
-                else (
-                    _parse_int(
-                        raw_edit["destination_offset"],
-                        f"{label}.destination_offset",
-                    ),
-                )
+            destination_offsets = _parse_int_list(
+                raw_edit["destination_offsets"],
+                f"{label}.destination_offsets",
             )
             replacement_hex = ""
             source_id = ""

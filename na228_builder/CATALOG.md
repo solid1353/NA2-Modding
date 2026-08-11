@@ -270,11 +270,11 @@ replaces that text with root `product.title` before choosing inline or linked
 external placement. Disabling its catalog setting leaves the imported text
 unchanged.
 
-A `replace` definition may use `destination_offsets` instead of
-`destination_offset` when the same guarded replacement applies at multiple
-known locations in one target. The list must be nonempty and unique. The loader
-expands it into independently guarded and logged concrete edits; it never
-searches the target or derives an occurrence count.
+Every binary edit definition uses a nonempty unique `destination_offsets` list.
+When the same guarded operation applies at multiple known locations in one
+target, one definition lists all of them. The loader expands the list into
+independently guarded and logged concrete edits; it never searches the target
+or derives an occurrence count.
 
 The examples in this document are illustrative authoring fragments. A real
 catalog must provide implementation definitions for every shown patch ID.

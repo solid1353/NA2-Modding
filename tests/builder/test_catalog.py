@@ -583,7 +583,7 @@ class CatalogTests(unittest.TestCase):
                 (),
             )
 
-    def test_destination_offset_list_requires_nonempty_unique_offsets(self) -> None:
+    def test_destination_offsets_require_nonempty_unique_values(self) -> None:
         self.assertEqual(
             catalog._parse_int_list(["0x10", "0x20"], "offsets"),
             (0x10, 0x20),

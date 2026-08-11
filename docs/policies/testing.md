@@ -25,6 +25,11 @@ command behavior and artifact layout are in
   validation. Do not invent an additional validation campaign.
 - Permanent/unit tests and E2E are independently selectable. Choosing one does
   not authorize the other.
+- Do not add permanent tests whose only purpose is rejecting a retired field,
+  interface, or migration input when the canonical schema already excludes it.
+  Verify removal during the refactor with searches, one-off scripts, or
+  temporary tests removed before completion. Retain tests only for supported
+  behavior that must continue working.
 
 ## Repository defaults
 
@@ -59,6 +64,9 @@ that behavior.
 
 ### Build validation
 
+- Build only when the change can affect built bytes. For a refactor claiming
+  unchanged output, build before and after with identical inputs and
+  configuration, then compare hashes. Otherwise, do not build.
 - Agents do not run the default/no-argument `na228` or `na228.ps1` workflow or
   any other normal user build route. They do not create, replace, promote,
   retain, or launch a user-facing build such as `Latest`, `Previous`, or Manual
@@ -78,16 +86,19 @@ that behavior.
   when the selected validation requires image assembly. It is an internal agent
   artifact, never a user testing ground or deliverable. Agents do not launch or
   runtime-execute it. Maintained E2E is a separate explicitly selected route.
-- Agent-authorized builds are final validation steps, not development or
-  diagnostic tools. Before building, review the final diff and confirm that all
-  in-scope implementation changes are complete and all earlier selected checks
-  passed. Do not build while implementation remains incomplete or use repeated
-  builds to discover missing work. If a final build exposes a failure, fix that
-  failure, re-review the completed candidate, and only then rerun the selected
-  build validation. Any subsequent implementation change invalidates the prior
-  build result.
+- Agent-authorized builds are final validation steps except for the pre-change
+  baseline required by an approved hash-equivalence comparison. Build that
+  baseline before implementation with the agreed inputs and configuration, and
+  retain the baseline ISO through comparison and until the user verifies the
+  equivalence result. Before building the candidate, review the final diff and
+  confirm that all in-scope implementation changes are complete and all earlier
+  selected checks passed. Do not use repeated builds to discover missing work.
+  If the candidate build exposes a failure, fix it, re-review the completed
+  candidate, and then rerun the candidate build. Any subsequent implementation
+  change invalidates the prior candidate result.
 - Delete a worker ISO after the selected validation and evidence extraction,
-  whether validation passes or fails. Do not build an ISO merely to prepare
+  whether validation passes or fails, except for a pre-change equivalence
+  baseline retained under the rule above. Do not build an ISO merely to prepare
   user verification; the user uses their normal build and run workflow.
 
 ### Visual game changes

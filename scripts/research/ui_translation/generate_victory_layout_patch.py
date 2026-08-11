@@ -39,6 +39,18 @@ NUN5_ENGLISH_WIDTH_TABLE_OFFSET = 0x004DE6D0
 NUN5_TEMPLATE_OFFSETS = (0x0021B9C0, 0x0021B9E0)
 DESCRIPTOR_SIZE = 24
 WIDTH_OFFSET = 4
+MERGED_DEFINITIONS = {
+    frozenset(
+        {
+            "e__localization__ui_layout__victory_names_na2_btl_at_00216610",
+            "e__localization__ui_layout__victory_names_na2_btl_at_00216c30",
+        }
+    ): (
+        "e__localization__ui_layout__victory_names_width_154_frame_0_na2_btl",
+        "Use the NUN5 frame-0 template with atlas width 156 and renderer "
+        "width 154 for all matching Victory name descriptors.",
+    ),
+}
 
 
 def read_verified(
@@ -241,17 +253,40 @@ def main() -> int:
         ui_layout = fields["ui_layout"].node
         if not isinstance(ui_layout, catalog_format.SettingNode):
             raise ValueError("localization.ui_layout must be one setting")
-        generated = {
-            edit["edit_id"]: {
-                "description": edit["reason"],
-                "operation": edit["operation"],
-                "destination_target_id": edit["destination_target_id"],
-                "destination_offset": edit["destination_offset"],
-                "expected_hex": edit["expected_hex"],
-                "replacement_hex": edit["replacement_hex"],
+        grouped: dict[tuple[str, ...], list[dict[str, str]]] = defaultdict(list)
+        for edit in sorted(generated_edits, key=lambda item: int(item["order"])):
+            signature = (
+                edit["operation"],
+                edit["destination_target_id"],
+                edit["expected_hex"],
+                edit["replacement_hex"],
+            )
+            grouped[signature].append(edit)
+        generated: dict[str, dict[str, object]] = {}
+        for group in grouped.values():
+            source_ids = frozenset(edit["edit_id"] for edit in group)
+            if len(group) == 1:
+                edit_id = group[0]["edit_id"]
+                description = group[0]["reason"]
+            else:
+                merged = MERGED_DEFINITIONS.get(source_ids)
+                if merged is None:
+                    raise ValueError(
+                        "Equivalent generated Victory edits need one declared "
+                        f"multi-offset identity: {sorted(source_ids)}"
+                    )
+                edit_id, description = merged
+            first = group[0]
+            generated[edit_id] = {
+                "description": description,
+                "operation": first["operation"],
+                "destination_target_id": first["destination_target_id"],
+                "destination_offsets": [
+                    edit["destination_offset"] for edit in group
+                ],
+                "expected_hex": first["expected_hex"],
+                "replacement_hex": first["replacement_hex"],
             }
-            for edit in sorted(generated_edits, key=lambda item: int(item["order"]))
-        }
         old_ids = [
             edit_id
             for edit_id in ui_layout.patches

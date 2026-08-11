@@ -25,9 +25,9 @@ guarded file edits.
 - All persisted paths are relative.
 - Every input target is checked by size and SHA-256.
 - Every destination range is checked by exact bytes or a range SHA-256.
-- A `replace` edit uses one `destination_offset` or a nonempty unique
-  `destination_offsets` list. Multiple offsets expand into independently
-  guarded and logged concrete edits with otherwise identical behavior.
+- Every catalog edit uses a nonempty unique `destination_offsets` list.
+  Multiple offsets expand into independently guarded and logged concrete edits
+  with otherwise identical behavior.
 - A `replace` edit declares exactly one of a static `replacement_hex` or an
   adapter. Adapters in `adapters.py` either convert a validated typed catalog
   value or encode fixed readable values selected by a bare setting. Fixed-value

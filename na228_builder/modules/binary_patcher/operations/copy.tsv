@@ -2,7 +2,7 @@ field	required	type
 description	0	text
 operation	1	text
 destination_target_id	1	text
-destination_offset	1	integer
+destination_offsets	1	integer_list
 length	1	integer
 expected_hex	0	hex
 expected_sha256	0	sha256

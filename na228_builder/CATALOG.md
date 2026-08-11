@@ -105,7 +105,7 @@ object types are invalid.
 and every other unlisted construct are unsupported. The grammar is extended
 only for an actual catalog requirement.
 
-## Unions
+## Unions and object intersections
 
 Catalog-node expressions compose with `|`. There is no separate `choice`
 construct. Named alternatives are closed-object branches:
@@ -202,6 +202,53 @@ Every type union and catalog-node union must be pairwise disjoint. Catalog
 loading rejects overlapping branches; declaration order never supplies
 precedence. Scalar setting branches and named object branches use the same
 internal selection model.
+
+Catalog structural objects compose with `&` when several union alternatives
+share the same fields:
+
+```text
+startup:
+  {
+    faster_loading: setting {
+      description: "Defer voice indexes until first use.",
+      patches: ["i__example__faster_loading"],
+    },
+  }
+  &
+  (
+    {
+      skip_opening: setting {
+        description: "Skip the opening.",
+        patches: ["e__example__skip_opening"],
+      },
+    }
+    |
+    {
+      savedata_loading: setting<"automatic"> {
+        description: "Load saved data automatically.",
+        patches: ["i__example__savedata_loading"],
+      },
+    }
+  ),
+```
+
+This is equivalent for matching to the union of both complete merged object
+shapes, but keeps `faster_loading` declared once and leaves the JSON flat:
+
+```json
+{
+  "startup": {
+    "faster_loading": true,
+    "savedata_loading": "automatic"
+  }
+}
+```
+
+`&` binds more tightly than `|`; parentheses make the intended distribution
+explicit. Every operand must resolve to a structural object or a union of
+structural objects. Intersected objects must have disjoint selectable field
+names, and no two operands may both declare `description`. The resulting union
+remains atomic in configuration overrides.
 
 ## Release projection
 

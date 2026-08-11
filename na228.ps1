@@ -65,10 +65,10 @@ if ($mode -eq 'help') {
     @(
         'NA2.28'
         ''
-        '  na228 [-f]                 Build and run Latest; -f ignores auxiliary failures'
+        '  na228 [-f]                 Build and run Latest in turbo; -f ignores auxiliary failures'
         '  na228 w [C path|plan]      Watch all registered C by default'
         '  na228 w injection_test     Watch only the reload-message smoke test'
-        '  na228 <token> [token]      Run one or two games in window order'
+        '  na228 <token> [token]      Run one or two games in turbo/window order'
         '  l | p | mt                 Latest | Previous | Manual Test'
         '  bl | bmt                   Build and run Latest | Manual Test'
         '  <token>w [C path|plan]     Watch that game; selection follows its token'

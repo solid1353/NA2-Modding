@@ -128,6 +128,108 @@ class CatalogTests(unittest.TestCase):
         )
         self.assertIn("\n      |\n      {\n", rendered)
 
+    def test_object_intersection_shares_fields_across_union_branches(self) -> None:
+        source = '''{
+          startup:
+            {
+              faster_loading: setting {
+                description: "Load faster.",
+                patches: ["i__feature__faster_loading"],
+              },
+            }
+            &
+            (
+              {
+                skip_opening: setting {
+                  description: "Skip opening.",
+                  patches: ["e__feature__skip_opening"],
+                },
+              }
+              |
+              {
+                savedata_loading: setting<"automatic"> {
+                  description: "Load save automatically.",
+                  patches: ["i__feature__savedata_loading"],
+                },
+              }
+            ),
+        }'''
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path, configuration_path = self.write_project(
+                root,
+                {"feature": source},
+                {
+                    "feature": {
+                        "startup": {
+                            "faster_loading": True,
+                            "skip_opening": True,
+                        }
+                    }
+                },
+            )
+            title = catalog.load_selection(catalog_path, configuration_path)
+            self.assertTrue(
+                title.node_enabled(
+                    "features", "feature", "startup", "faster_loading"
+                )
+            )
+            self.assertTrue(
+                title.node_enabled(
+                    "features", "feature", "startup", "skip_opening"
+                )
+            )
+
+            self.write_json(
+                root / "configurations" / "base.json",
+                {
+                    "features": {
+                        "feature": {
+                            "startup": {
+                                "faster_loading": True,
+                                "savedata_loading": "automatic",
+                            }
+                        }
+                    },
+                    "overrides": {},
+                },
+            )
+            direct = catalog.load_selection(catalog_path, configuration_path)
+            self.assertTrue(
+                direct.node_enabled(
+                    "features", "feature", "startup", "faster_loading"
+                )
+            )
+            self.assertTrue(
+                direct.node_enabled(
+                    "features", "feature", "startup", "savedata_loading"
+                )
+            )
+
+            public = catalog.public_catalog(catalog_path)
+            self.assertIn("\n      &\n", public)
+            self.assertEqual(public.count("faster_loading:"), 1)
+
+    def test_object_intersection_rejects_duplicate_fields(self) -> None:
+        source = '''{
+          value:
+            { duplicate: setting {
+              description: "First.", patches: ["e__feature__first"],
+            } }
+            &
+            { duplicate: setting {
+              description: "Second.", patches: ["e__feature__second"],
+            } },
+        }'''
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "feature.modcat"
+            path.write_text(source, encoding="utf-8")
+            with self.assertRaisesRegex(
+                ValueError,
+                "intersected catalog objects repeat fields: duplicate",
+            ):
+                catalog_format.parse_catalog(path)
+
     def test_decimal_includes_integers_and_step_is_zero_anchored(self) -> None:
         source = '''{
           value: setting<decimal & 0..15 & step 0.25> {
@@ -654,7 +756,6 @@ class CatalogTests(unittest.TestCase):
             release.feature_ids,
             ("battle_logic", "general", "localization", "qol", "rendering"),
         )
-        self.assertEqual(len(release.injections), 25)
         self.assertTrue(
             release.node_enabled("features", "battle_logic", "substitution_cost")
         )

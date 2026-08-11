@@ -187,9 +187,15 @@ def _container_fields(
 def _feature_root(
     features: dict[str, catalog_format.ContainerNode],
 ) -> catalog_format.ContainerNode:
+    expanded: dict[str, catalog_format.ContainerNode] = {}
+    for feature_id, feature in features.items():
+        node = catalog_format.expand_node(feature, feature_id)
+        if not isinstance(node, catalog_format.ContainerNode):
+            raise TypeError(type(node))
+        expanded[feature_id] = node
     return catalog_format.ContainerNode(
         tuple(
-            catalog_format.ContainerField(feature_id, features[feature_id])
+            catalog_format.ContainerField(feature_id, expanded[feature_id])
             for feature_id in sorted(features)
         )
     )
@@ -211,6 +217,12 @@ def _catalog_patches(
             patch
             for branch in node.branches
             for patch in _catalog_patches(branch)
+        )
+    if isinstance(node, catalog_format.IntersectionNode):
+        return tuple(
+            patch
+            for operand in node.operands
+            for patch in _catalog_patches(operand)
         )
     raise TypeError(type(node))
 

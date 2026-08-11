@@ -1,50 +1,61 @@
 {
   startup:
     {
-      description: "Retain the native title path with independent optional skips for its preceding sequences.",
-      skip_cc2_intro: setting {
-        description: "Skip the CyberConnect2 intro.",
+      faster_loading: setting {
+        description: "Shorten startup by loading RPG and player voice-bank indexes only when each bank is first played.",
         patches: [
-          "e__qol__startup__skip_cc2_intro__skip_cc2_intro",
-        ],
-      },
-      skip_opening: setting {
-        description: "Skip the opening sequence.",
-        patches: [
-          "e__qol__startup__skip_opening__skip_opening",
+          "i__qol__startup__faster_loading__lazy_voice_indexes",
         ],
       },
     }
-    |
-    {
-      description: "Replace the boot presentation and route directly through the startup Save/Load path.",
-      savedata_loading:
-        setting<"manual"> {
-          description: "Retain the native visible Save/Load flow; no-load completion proceeds to the main menu.",
+    &
+    (
+      {
+        description: "Retain the native title path with independent optional skips for its preceding sequences.",
+        skip_cc2_intro: setting {
+          description: "Skip the CyberConnect2 intro.",
           patches: [
-            "e__qol__startup__save_loading__enter_title_input_state_immediately",
-            "e__qol__startup__save_loading__return_native_continue_result",
-            "e__qol__startup__save_loading__treat_no_load_completion_as_menu_success",
-          ],
-        }
-        |
-        setting<"automatic"> {
-          description: "Silently load record zero when it exists, and otherwise proceed to the main menu without showing Save/Load UI or requiring input.",
-          patches: [
-            "e__qol__startup__save_loading__enter_title_input_state_immediately",
-            "e__qol__startup__save_loading__return_native_continue_result",
-            "e__qol__startup__save_loading__treat_no_load_completion_as_menu_success",
-            "e__qol__startup__save_loading__automatic__suppress_save_load_draw",
-            "i__qol__startup__save_loading__automatic__first_save",
+            "e__qol__startup__skip_cc2_intro__skip_cc2_intro",
           ],
         },
-      loading_screen: setting {
-        description: "Replace the boot splashes with a large primitive percentage and progress bar paced across the measured 25-second load while the original startup loaders run.",
-        patches: [
-          "i__qol__startup__loading_screen__runtime",
-        ],
-      },
-    },
+        skip_opening: setting {
+          description: "Skip the opening sequence.",
+          patches: [
+            "e__qol__startup__skip_opening__skip_opening",
+          ],
+        },
+      }
+      |
+      {
+        description: "Replace the boot presentation and route directly through the startup Save/Load path.",
+        savedata_loading:
+          setting<"manual"> {
+            description: "Retain the native visible Save/Load flow; no-load completion proceeds to the main menu.",
+            patches: [
+              "e__qol__startup__save_loading__enter_title_input_state_immediately",
+              "e__qol__startup__save_loading__return_native_continue_result",
+              "e__qol__startup__save_loading__treat_no_load_completion_as_menu_success",
+            ],
+          }
+          |
+          setting<"automatic"> {
+            description: "Silently load record zero when it exists, and otherwise proceed to the main menu without showing Save/Load UI or requiring input.",
+            patches: [
+              "e__qol__startup__save_loading__enter_title_input_state_immediately",
+              "e__qol__startup__save_loading__return_native_continue_result",
+              "e__qol__startup__save_loading__treat_no_load_completion_as_menu_success",
+              "e__qol__startup__save_loading__automatic__suppress_save_load_draw",
+              "i__qol__startup__save_loading__automatic__first_save",
+            ],
+          },
+        loading_screen: setting {
+          description: "Replace the boot splashes with a large primitive percentage and progress bar paced across a 6.5-second elapsed-time estimate while the original startup loaders run.",
+          patches: [
+            "i__qol__startup__loading_screen__runtime",
+          ],
+        },
+      }
+    ),
   practice: {
     description: "Independent Practice-mode default settings.",
     voice_off_by_default: setting {

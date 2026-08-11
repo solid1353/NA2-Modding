@@ -58,11 +58,15 @@ validation. Structural parents otherwise require explicit objects; `true`
 does not expand a parent. Plain containers merge recursively through
 configuration overrides, while settings and node unions replace atomically.
 Union branches must be provably disjoint and are never selected by order.
+Structural catalog objects may use `&` to declare fields shared by several
+object-union branches once; intersected fields must be disjoint, and the
+resulting union remains atomic in overrides.
 
 The grammar supports `bool`, `int`, `decimal`, and `string`, literal types,
-closed object types with optional fields, disjoint `|` unions, numeric `&`
-comparisons, ranges, and steps, parentheses, `//` comments, and trailing
-commas. It rejects every unlisted construct, including `null`.
+closed object types with optional fields, disjoint `|` unions, structural
+object intersections, numeric `&` comparisons, ranges, and steps,
+parentheses, `//` comments, and trailing commas. It rejects every unlisted
+construct, including `null`.
 
 Binary edit definitions always contain an explicit `operation`. Runtime target
 changes live under an injection unit's `hooks` and therefore have no operation

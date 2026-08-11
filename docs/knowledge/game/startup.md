@@ -305,14 +305,184 @@ submitted every rectangle before one final flush. User ss1 showed that primitive
 type `5` joined the separate rectangles into one triangle strip, creating large
 diagonal wedges. The corrected renderer mirrors the known solid-rectangle
 function `0x0019FD20`: every segment and bar rectangle performs its own setup,
-color, four-vertex submission, and flush. At 30 FPS, the displayed value maps
-750 frames to the user's measured 25-second full load and caps at `99%`; it is
-only an estimate and never substitutes for real loader completion. This draw
-hook is also the presentation boundary where a custom loading-screen background
-can be added later without changing loader control flow.
+color, four-vertex submission, and flush. The displayed value reads the EE
+Count register at the 147.456 MHz bus-clock rate and maps 9,584,640 ticks to
+each percentage point, producing a 6.5-second estimate. It caps at `99%` and
+never substitutes for real loader completion. This draw hook is also the
+presentation boundary where a custom loading-screen background can be added
+later without changing loader control flow.
+
+The preceding 195-hook calibration exposed a cadence error. User runtime
+observation showed the first visible value near `30%`, followed by visible
+updates in four- or five-point steps. The guarded draw call at `0x001E10E0`
+runs inside the startup polling loop beginning at `0x001E1064`; the loop then
+calls `FUN_001d0340(1)` at `0x001E1124`. That function suspends the current
+task through the game's scheduler and is not a VBlank wait. Incrementing the
+old counter at the draw hook therefore counted several polling iterations
+between presented frames. The Count-register implementation stores the first
+tick and derives every later value from elapsed time, so repeated hook calls no
+longer accelerate the estimate.
 
 Together with the enabled opening skip, the intended sequence is the timed
 loading counter during the boot wait, native menu transition, then main menu.
 Confidence is high for the control flow, clean instruction guards, triangle-strip
-failure localization, and corrected independent-rectangle sequence. Its final
-appearance and pacing remain pending integrated user runtime validation.
+failure localization, and corrected independent-rectangle sequence. User
+runtime validation on 2026-08-11 confirmed the 6.5-second counter itself. Frame
+delivery drops during the later portion of the loading screen, approximately
+from `30%` through `99%`, but the time-derived percentage remains correct; the
+user accepted that loading-screen presentation characteristic.
+
+## Startup loading-time bottleneck
+
+The enabled startup patches are treated as fixed for this analysis. In
+particular, the early loading-screen draw and silent first-save load remain in
+place; neither one causes the long startup wait.
+
+The startup-resource task `FUN_001d2570` does not set its completion byte at
+object offset `+0x1C` until `FUN_001d9650` returns. That function constructs the
+sound manager through `FUN_001d7a30` and then performs eager archive/index
+initialization through `FUN_001d6550`. The latter operation is the startup
+bottleneck:
+
+1. `FUN_001d6b60` opens, in order, `sound.afs`, `stream.afs`, `rpgvoice.afs`,
+   and `plvoice.afs`.
+2. `FUN_001d6c70` then loads 13 `sound.afs` index entries, 82 `rpgvoice.afs`
+   index entries, and 93 `plvoice.afs` index entries. `stream.afs` has no
+   corresponding per-entry loop here.
+3. Every helper starts one ADXF operation and yields one scheduler tick at a
+   time until that operation reaches state `3`; only then does the caller begin
+   the next operation. The ADXF path uses one global current-operation record,
+   including the current ID and state at `0x003D3BC4` and `0x003D3BC8`, so
+   simply issuing several requests at once is not a safe parallelization.
+
+The eager phase therefore performs 188 serialized index loads after opening
+the four archive roots. The archive-specific index-ID ranges are `0..` for
+`sound.afs`, `20..149` for `rpgvoice.afs`, and `150..242` for `plvoice.afs`.
+The sound-manager constructor allocates the destination buffers for all of
+these entries before `FUN_001d6550` starts loading them, which makes later
+selective initialization structurally possible without changing the existing
+buffer layout.
+
+Read-only inspection of user-supplied savestates confirms the static trace:
+
+| CRC and state | ROFS ready `0x006074A0` | Audio ready `[*0x0060755C + 0x1C]` | ADXF ID/state | Loading draw state |
+| --- | ---: | ---: | --- | --- |
+| `FDAFF23A ss1` | `0` | `0` | `6 / 2` | not sampled |
+| `0F5E7D97 ss1` | `1` | `0` | `28 / 2` | not sampled |
+| `D5AA8F48 ss1` | `1` | `0` | `51 / 2` | frame `344`, displayed `5` |
+| `D5AA8F48 ss2` | `1` | `0` | `88 / 2` | frame `488`, displayed `8` |
+| `FDAFF23A ss2` | `1` | `0` | `160 / 2` | not sampled |
+| `D5AA89FC ss1` | `1` | `0` | `236 / 2` | not sampled |
+| `FDAFF23A ss3` | `1` | `0` | `239 / 2` | not sampled |
+| `FDAFF23A ss4` | `1` | `1` | `242 / 3` | not sampled |
+| `D5AA8B06 ss2` | `1` | `1` | `242 / 3` | not sampled |
+
+The ROFS task has already completed in every intermediate sample after the
+earliest one, while the audio task advances through both voice ranges and does
+not report ready until the final player-voice entry completes. Consequently:
+
+- the 60-tick yield in the independent ROFS task is not on the critical tail;
+- changing the loading-counter pacing cannot shorten startup because that
+  counter never supplies either readiness value;
+- removing the one-tick yields from the ADXF polling loops would not shorten
+  the underlying I/O and could starve the asynchronous worker;
+- forcing the audio-ready byte early is invalid because later consumers would
+  observe uninitialized archive/index buffers.
+
+NUN5 and NUN6 use the same 60-tick ROFS delay and the same serialized audio
+initialization shape. They do not provide a donor implementation that already
+solves this bottleneck.
+
+### Voice consumer boundary
+
+`FUN_001d6010` is the resident `rpgvoice.afs` playback wrapper: it forwards to
+`FUN_001d97d0` with archive category `2`. An exhaustive direct-call search of
+the three exported overlays finds 24 call sites in `ADV.BIN`, no call site in
+`ETC.BIN`, and one call site in `BTL.BIN`. The battle call requests bank
+`0x4E`; therefore the enabled removal of Adventure mode does **not** make the
+entire RPG-voice archive dead. It does make the other 81 eagerly initialized
+RPG-voice banks the strongest proven omission candidates, subject to runtime
+validation against any unresolved indirect consumer.
+
+Player/battle voice uses archive category `3` through the resident four-slot
+voice queue in `FUN_001d2c20`. Its 93-entry table matches the game's
+`1..0x5D` character-ID span, which suggests one bank per character identity,
+but that exact mapping remains an inference until the queue producer is fully
+traced or sampled at runtime. The table cannot be globally omitted because
+battle voices remain an enabled, reachable feature.
+
+### Reduction candidates
+
+The evidence supports the following order of work:
+
+1. **Prune unused RPG-voice banks.** Keep the `rpgvoice.afs` root and bank
+   `0x4E`, but skip the other 81 index loads while Adventure mode is removed.
+   This removes 81 of the 188 serialized index operations (`43.1%`) rather
+   than moving them to a later screen. The percentage describes operation
+   count, not elapsed time; entry sizes and device latency differ.
+2. **Initialize player voices on demand.** Leave their buffers allocated, but
+   defer the `plvoice.afs` root and its 93 index loads until a transition before
+   the first player-voice consumer. A stronger form would load and cache only
+   the banks needed by the selected fighters and supports. Combined with the
+   first candidate, this removes or defers 174 of 188 eager boot index loads
+   (`92.6%`), leaving the 13 sound entries and the retained RPG battle bank at
+   boot. This is the largest plausible startup reduction, but it needs a proven
+   safe transition and the exact character-to-bank mapping; otherwise it merely
+   moves the same wait to the first battle.
+3. **Overlap memory-card work only after the audio dependency is separated.**
+   The global memory-card worker exists before the startup loop, so scanning
+   port zero could in principle overlap audio initialization. The current
+   automatic-load state machine cannot simply be called early because its
+   native preparation includes `FUN_001d9600`, which operates on the sound
+   manager initialized by the bottlenecking task. A boot-specific sequence
+   would have to defer or prove that preparation call. This can save only the
+   subsequent card/load wait; it does not address the 188 audio-index loads.
+
+Reducing primitive submissions in the enabled loading-screen renderer may save
+minor CPU/GS work per frame, but the renderer is not a completion dependency
+and is not a meaningful first loading-time target.
+
+The most conservative implementation experiment was candidate 1 alone. The
+implemented design instead uses selective, cached initialization for both voice
+archives. User timing established the startup reduction; exact per-bank
+first-use latency remains unmeasured.
+
+### Selective voice-index implementation seam
+
+The clean resident ELF exposes three guarded call sites used by the full-lazy
+implementation:
+
+| Role | Runtime address | ELF offset | Clean instruction |
+| --- | ---: | ---: | --- |
+| Call eager archive/index initialization from `FUN_001d9650` | `0x001D9660` | `0xD9760` | `54 59 07 0C` (`jal FUN_001d6550`) |
+| Play a queued player-voice clip from `FUN_001d2c20` | `0x001D2CA0` | `0xD2DA0` | `F4 65 07 0C` (`jal FUN_001d97d0`) |
+| Play an RPG-voice clip from `FUN_001d6010` | `0x001D601C` | `0xD611C` | `F4 65 07 0C` (`jal FUN_001d97d0`) |
+
+The audio-manager pointer is stored at `0x00607558`. Its RPG and player bank
+counts are at offsets `+0x704` and `+0x708`; the corresponding index-buffer
+pointer arrays begin at `+0x17C` and `+0x40C`, with eight bytes per bank. The
+RPG table begins at `0x003FDD50` and its archive handle is the halfword at
+`0x00602C4C`; the player table begins at `0x003FDFF0` and uses the halfword at
+`0x00602C4E`. Each table record is eight bytes and starts with the ADXF index
+ID consumed by `FUN_001d6c70(manager, index_id, archive_handle, bank, buffer)`.
+
+The implemented patch temporarily sets both voice counts to zero,
+calls the unchanged `FUN_001d6550`, and then restores the counts. This preserves
+all four opened archive roots and the 13 eagerly initialized general-sound
+indexes while deferring all 175 voice indexes (`93.1%` of the original 188 boot
+index operations). The two playback hooks load the requested bank once, cache
+its bit, and then call the unchanged `FUN_001d97d0` with category `2` or `3`.
+
+Because the ADXF initialization path is not safe for concurrent requests, the
+patch serializes first-use loads with one process-lifetime EE semaphore.
+The resident syscall wrappers are `CreateSema` at `0x0015DCE0`, `SignalSema` at
+`0x0015DD00`, and `WaitSema` at `0x0015DD20`; the local PS2SDK `ee_sema_t`
+layout is six 32-bit fields (`count`, `max_count`, `init_count`, `wait_threads`,
+`attr`, and `option`). If semaphore creation fails, the startup wrapper retains
+the complete eager initializer instead of enabling lazy loading. User runtime
+timing on 2026-08-11 measured the integrated startup load at about 15 seconds,
+10 seconds shorter than the prior 25-second baseline. A subsequent observation
+in the current launch setup measured the visible loading screen at about 6-7
+seconds. The user accepted the integrated patch on 2026-08-11. That acceptance
+did not separately isolate repeated or concurrent first-use voice playback or
+measure whether a first-use bank load causes an objectionable hitch.

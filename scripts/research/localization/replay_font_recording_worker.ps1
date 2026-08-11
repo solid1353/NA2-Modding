@@ -412,7 +412,7 @@ $provenance | Export-Csv `
     -NoTypeInformation
 
 $arguments = @(
-    '-unlimited',
+    '-turbo',
     '-input-recording',
     "`"$recordingName`"",
     '-input-recording-capture-directory',

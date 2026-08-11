@@ -117,7 +117,8 @@ try {
             }
             Write-Na2Stage "2/2 Launch $([IO.Path]::GetFileName($launchIso))"
             & $paths.files.pcsx2_launch_command `
-                -IsoPath $launchIso
+                -IsoPath $launchIso `
+                -Turbo
         }
     }
     $runOutcome = 'succeeded'

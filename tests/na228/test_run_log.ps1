@@ -259,7 +259,7 @@ Write-Output '[fake] permanent tests'
         -Condition ($helpText -match '(?m)^\s*na228 <token> \[token\]') `
         -Message 'Root help omitted the ordered token grammar.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 \[-f\]\s+Build and run Latest; -f ignores auxiliary failures$') `
+        -Condition ($helpText -match '(?m)^\s*na228 \[-f\]\s+Build and run Latest in turbo; -f ignores auxiliary failures$') `
         -Message 'Root help did not present default and force build-and-launch in one row.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 worker \[--ephemeral\] work/') `
@@ -304,8 +304,8 @@ Write-Output '[fake] permanent tests'
         -Condition ($helpText -notmatch '(?m)^\s*na228 launch\b') `
         -Message 'Root help still exposes the retired launch subcommand.'
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch.ps1') -Content @'
-param([string]$Target = 'dev', [string]$IsoPath)
-Write-Host "[fake] launch $Target $IsoPath"
+param([string]$Target = 'dev', [string]$IsoPath, [switch]$Turbo)
+Write-Host "[fake] launch $Target $IsoPath turbo=$($Turbo.IsPresent)"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch_games.ps1') -Content @'
 param(
@@ -852,10 +852,10 @@ Add-Content `
     Assert-Na2Test `
         -Condition (
             $forceLaunch -match 'force=True' -and
-            $forceLaunch -match '\[fake\] launch dev force-output\.iso' -and
+            $forceLaunch -match '\[fake\] launch dev force-output\.iso turbo=True' -and
             $forceLaunch -notmatch '\[fake\] workshop args=.*-f'
         ) `
-        -Message 'Force mode was not consumed by na228 and routed through build-and-launch.'
+        -Message 'Force mode and turbo were not routed through build-and-launch.'
     & (Join-Path $fakeRepository 'na228.ps1')
     $fakeLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\latest.log'))
     $fakeRolling = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\rolling.log'))

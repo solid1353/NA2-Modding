@@ -10,7 +10,9 @@ typedef unsigned int u32;
 #define COLOR_SETUP_ADDRESS 0x00182A20u
 #define VERTEX_SUBMIT_ADDRESS 0x001822B0u
 #define PRIMITIVE_FLUSH_ADDRESS 0x00182F50u
-#define TOTAL_LOAD_FRAMES 750u
+#define EE_COUNT_TICKS_PER_SECOND 147456000u
+#define LOAD_TICKS_PER_PERCENT \
+    ((EE_COUNT_TICKS_PER_SECOND / 200u) * 13u)
 #define MAX_DISPLAY_PERCENT 99u
 
 #define CONTEXT_COLOR_OFFSET 0x100u
@@ -26,7 +28,7 @@ typedef unsigned int u32;
     __attribute__((section(name), noinline))
 
 typedef struct StartupLoadingState {
-    volatile u32 frames;
+    volatile u32 start_ticks;
     volatile u32 percent;
 } StartupLoadingState;
 
@@ -168,17 +170,30 @@ static void startup_loading_percent_sign(
 STARTUP_LOADING_SECTION(".text.startup_loading_draw")
 void startup_loading_draw(void *unused_sprite)
 {
-    u32 frames;
+    u32 now;
+    u32 start_ticks;
+    u32 elapsed_ticks;
     u32 percent;
 
     (void)unused_sprite;
-    frames = startup_loading_state.frames + 1u;
-    startup_loading_state.frames = frames;
-    percent = (frames * 100u) / TOTAL_LOAD_FRAMES;
-    if (percent > MAX_DISPLAY_PERCENT) {
-        percent = MAX_DISPLAY_PERCENT;
+    percent = startup_loading_state.percent;
+    if (percent < MAX_DISPLAY_PERCENT) {
+        __asm__ volatile("mfc0\t%0, $9\n" : "=r"(now));
+        start_ticks = startup_loading_state.start_ticks;
+        if (start_ticks == 0u) {
+            start_ticks = now == 0u ? 1u : now;
+            startup_loading_state.start_ticks = start_ticks;
+            elapsed_ticks = 0u;
+        } else {
+            elapsed_ticks = now - start_ticks;
+        }
+
+        percent = elapsed_ticks / LOAD_TICKS_PER_PERCENT;
+        if (percent > MAX_DISPLAY_PERCENT) {
+            percent = MAX_DISPLAY_PERCENT;
+        }
+        startup_loading_state.percent = percent;
     }
-    startup_loading_state.percent = percent;
 
     startup_loading_digit(196.0f, 142.0f, percent / 10u);
     startup_loading_digit(246.0f, 142.0f, percent % 10u);

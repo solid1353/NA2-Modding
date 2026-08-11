@@ -95,7 +95,14 @@ class UnionNode:
     branches: tuple[CatalogNodeExpression, ...]
 
 
-CatalogNodeExpression: TypeAlias = SettingNode | ContainerNode | UnionNode
+@dataclass(frozen=True)
+class IntersectionNode:
+    operands: tuple[CatalogNodeExpression, ...]
+
+
+CatalogNodeExpression: TypeAlias = (
+    SettingNode | ContainerNode | UnionNode | IntersectionNode
+)
 
 
 def _syntax(path: Path, token: Token, message: str) -> CatalogSyntaxError:
@@ -259,9 +266,9 @@ class _Parser:
         return node
 
     def node_expression(self) -> CatalogNodeExpression:
-        branches = [self.node_primary()]
+        branches = [self.node_intersection()]
         while self.accept("|") is not None:
-            branches.append(self.node_primary())
+            branches.append(self.node_intersection())
         if len(branches) == 1:
             return branches[0]
         flattened: list[CatalogNodeExpression] = []
@@ -271,6 +278,20 @@ class _Parser:
             else:
                 flattened.append(branch)
         return UnionNode(tuple(flattened))
+
+    def node_intersection(self) -> CatalogNodeExpression:
+        operands = [self.node_primary()]
+        while self.accept("&") is not None:
+            operands.append(self.node_primary())
+        if len(operands) == 1:
+            return operands[0]
+        flattened: list[CatalogNodeExpression] = []
+        for operand in operands:
+            if isinstance(operand, IntersectionNode):
+                flattened.extend(operand.operands)
+            else:
+                flattened.append(operand)
+        return IntersectionNode(tuple(flattened))
 
     def node_primary(self) -> CatalogNodeExpression:
         if self.current.kind == "IDENT" and self.current.value == "setting":
@@ -741,6 +762,91 @@ def _accepts_top_level_boolean(value_type: TypeExpression) -> bool:
     return types_overlap(value_type, PrimitiveType("bool"))
 
 
+def _merge_intersected_containers(
+    left: ContainerNode,
+    right: ContainerNode,
+    label: str,
+) -> ContainerNode:
+    left_names = {field.name for field in left.fields}
+    duplicate_names = sorted(
+        left_names.intersection(field.name for field in right.fields)
+    )
+    if duplicate_names:
+        raise ValueError(
+            f"{label}: intersected catalog objects repeat fields: "
+            + ", ".join(duplicate_names)
+        )
+    if left.description and right.description:
+        raise ValueError(
+            f"{label}: intersected catalog objects both define description"
+        )
+    return ContainerNode(
+        (*left.fields, *right.fields),
+        left.description or right.description,
+    )
+
+
+def expand_node(
+    node: CatalogNodeExpression,
+    label: str = "catalog node",
+) -> CatalogNodeExpression:
+    """Expand object intersections into their operational union shape."""
+
+    if isinstance(node, SettingNode):
+        return node
+    if isinstance(node, ContainerNode):
+        return ContainerNode(
+            tuple(
+                ContainerField(
+                    field.name,
+                    expand_node(field.node, f"{label}.{field.name}"),
+                )
+                for field in node.fields
+            ),
+            node.description,
+        )
+    if isinstance(node, UnionNode):
+        branches: list[CatalogNodeExpression] = []
+        for index, branch in enumerate(node.branches):
+            expanded = expand_node(branch, f"{label} branch {index + 1}")
+            if isinstance(expanded, UnionNode):
+                branches.extend(expanded.branches)
+            else:
+                branches.append(expanded)
+        return UnionNode(tuple(branches))
+    if isinstance(node, IntersectionNode):
+        products: list[ContainerNode] | None = None
+        for index, operand in enumerate(node.operands):
+            expanded = expand_node(operand, f"{label} operand {index + 1}")
+            if isinstance(expanded, ContainerNode):
+                branches = [expanded]
+            elif isinstance(expanded, UnionNode) and all(
+                isinstance(branch, ContainerNode) for branch in expanded.branches
+            ):
+                branches = [
+                    branch
+                    for branch in expanded.branches
+                    if isinstance(branch, ContainerNode)
+                ]
+            else:
+                raise ValueError(
+                    f"{label}: catalog intersections require object operands"
+                )
+            if products is None:
+                products = branches
+                continue
+            products = [
+                _merge_intersected_containers(left, right, label)
+                for left in products
+                for right in branches
+            ]
+        assert products
+        if len(products) == 1:
+            return products[0]
+        return UnionNode(tuple(products))
+    raise TypeError(type(node))
+
+
 def active_type(node: CatalogNodeExpression) -> TypeExpression:
     if isinstance(node, SettingNode):
         return LiteralType(True) if node.value_type is None else node.value_type
@@ -757,6 +863,8 @@ def active_type(node: CatalogNodeExpression) -> TypeExpression:
         )
     if isinstance(node, UnionNode):
         return UnionType(tuple(active_type(branch) for branch in node.branches))
+    if isinstance(node, IntersectionNode):
+        return active_type(expand_node(node))
     raise TypeError(type(node))
 
 
@@ -790,6 +898,9 @@ def validate_node(node: CatalogNodeExpression, label: str) -> None:
                         f"{label}: catalog union branches {left_index + 1} and "
                         f"{right_index + 1} overlap"
                     )
+        return
+    if isinstance(node, IntersectionNode):
+        validate_node(expand_node(node, label), label)
         return
     raise TypeError(type(node))
 
@@ -893,6 +1004,33 @@ def _node_lines(
                 lines.extend(branch_lines[1:])
             else:
                 lines.extend(branch_lines)
+        return lines
+    if isinstance(node, IntersectionNode):
+        lines: list[str] = []
+        for index, operand in enumerate(node.operands):
+            if index:
+                lines.append(prefix + "&")
+            if isinstance(operand, UnionNode):
+                lines.append("(" if not lines else prefix + "(")
+                operand_lines = _node_lines(
+                    operand,
+                    indent + 2,
+                    include_patches=include_patches,
+                )
+                lines.append(" " * (indent + 2) + operand_lines[0])
+                lines.extend(operand_lines[1:])
+                lines.append(prefix + ")")
+                continue
+            operand_lines = _node_lines(
+                operand,
+                indent,
+                include_patches=include_patches,
+            )
+            if index:
+                lines.append(prefix + operand_lines[0])
+                lines.extend(operand_lines[1:])
+            else:
+                lines.extend(operand_lines)
         return lines
     raise TypeError(type(node))
 

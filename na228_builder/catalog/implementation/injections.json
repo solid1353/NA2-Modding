@@ -1500,8 +1500,71 @@
       }
     }
   },
+  "i__qol__startup__faster_loading__lazy_voice_indexes": {
+    "description": "Keep sound and stream initialization at boot while loading each RPG or player voice-bank index on its first playback.",
+    "hooks": {
+      "initialize_audio_without_voice_indexes": {
+        "description": "Open every native audio archive and initialize sound indexes while preserving the allocated RPG and player voice tables for lazy loading.",
+        "target_id": "na2_elf",
+        "offset": "0xD9760",
+        "expected_hex": "5459070C",
+        "symbol": "initialize",
+        "encoding": "jal26"
+      },
+      "load_player_voice_index_before_playback": {
+        "description": "Load and cache the requested player voice-bank index before the resident voice queue starts its clip.",
+        "target_id": "na2_elf",
+        "offset": "0xD2DA0",
+        "expected_hex": "F465070C",
+        "symbol": "player",
+        "encoding": "jal26"
+      },
+      "load_rpg_voice_index_before_playback": {
+        "description": "Load and cache the requested RPG voice-bank index before the resident wrapper starts its clip.",
+        "target_id": "na2_elf",
+        "offset": "0xD611C",
+        "expected_hex": "F465070C",
+        "symbol": "rpg",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "startup_voice_loading": {
+        "kind": "c",
+        "path": "src/qol/startup_faster_loading.c",
+        "namespace": "qol.startup.faster.loading",
+        "imports": {
+          "startup_voice_loading_state": "voice_state"
+        },
+        "fragments": {
+          "ensure": {
+            "order": 130,
+            "object": "qol.startup.faster.loading.text.startup.voice.loading.ensure"
+          },
+          "initialize": {
+            "order": 120,
+            "object": "qol.startup.faster.loading.text.startup.voice.loading.initialize"
+          },
+          "player": {
+            "order": 150,
+            "object": "qol.startup.faster.loading.text.startup.voice.loading.player"
+          },
+          "rpg": {
+            "order": 140,
+            "object": "qol.startup.faster.loading.text.startup.voice.loading.rpg"
+          }
+        }
+      },
+      "voice_state": {
+        "kind": "data",
+        "order": 2,
+        "alignment": 4,
+        "value": "FFFFFFFF000000000000000000000000000000000000000000000000"
+      }
+    }
+  },
   "i__qol__startup__loading_screen__runtime": {
-    "description": "Replace the boot splashes with a large primitive percentage and progress bar paced across the measured 25-second load while the original startup loaders run.",
+    "description": "Replace the boot splashes with a large primitive percentage and progress bar paced across a 6.5-second elapsed-time estimate while the original startup loaders run.",
     "hooks": {
       "initialize_hold_splash_controller_s_first": {
         "description": "Initialize and hold the splash controller's first boot-safe draw slot while preserving the startup loop's real loader checks.",
@@ -1512,7 +1575,7 @@
         "encoding": "jal26"
       },
       "replace_visible_splash_sprite_draw_independent": {
-        "description": "Replace the visible splash sprite draw with independent boot-safe primitives for a percentage and progress bar paced across the measured 25-second load.",
+        "description": "Replace the visible splash sprite draw with independent boot-safe primitives for a percentage and progress bar paced across a 6.5-second elapsed-time estimate.",
         "target_id": "na2_elf",
         "offset": "0xE11E0",
         "expected_hex": "3880070C",

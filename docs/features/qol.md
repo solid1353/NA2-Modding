@@ -82,9 +82,11 @@ A second guarded hook replaces the splash sprite draw call at virtual address
 and uses the same boot-safe solid-primitive renderer to draw a large two-digit
 percentage, percent sign, and progress bar. Each rectangle is submitted as an
 independent primitive so separate digit segments cannot be joined by the
-renderer's triangle strip. At the game's 30 FPS startup rate, the counter maps
-750 frames to the measured 25-second load and caps at `99%`; the real loader
-flags, not the displayed estimate, determine when startup may continue.
+renderer's triangle strip. The counter reads the EE Count register and maps
+elapsed emulated time across the observed 6-7-second visible interval, rather
+than treating repeated startup-poll iterations as displayed frames. It caps at
+`99%`; the real loader flags, not the displayed estimate, determine when
+startup may continue.
 
 After the required startup loaders complete, the common file-backed edits write
 state `3` instead of state `2` at virtual address `0x001E11CC` (file offset
@@ -94,11 +96,13 @@ state `3` instead of state `2` at virtual address `0x001E11CC` (file offset
 This route bypasses the CyberConnect2 intro and opening itself, so neither
 independent skip edit is selected with a save-loading branch.
 
-The `qol.startup` catalog node is a union of two closed object shapes. The title
+The `qol.startup` catalog node intersects a shared object containing
+`faster_loading` with a union of two closed startup-flow shapes. The title
 branch contains `skip_cc2_intro` and `skip_opening`; they remain independent and
 may both be enabled. The direct-loading branch instead contains
 `savedata_loading` and `loading_screen`, so neither skip can be selected when
-either direct-loading control is present.
+either direct-loading control is present. `faster_loading` is declared once and
+is available with either flow.
 
 Within the direct-loading branch, `savedata_loading: "manual"` retains the full
 Save/Load controller. With
@@ -120,13 +124,25 @@ loaded data. It does not synthesize a timeout while the native worker reports a
 busy state.
 
 The base configuration selects `savedata_loading: "automatic"` and enables
-`loading_screen`; `savedata_loading: "manual"` remains available as the
-confirmed visible fallback. The sequence bypasses the notice, Bandai Namco,
-Bandai, CRIWARE, opening, interactive title, Load list, card-status messages,
-and load confirmation before the main-menu loading screen. Full development
-build `20260811_065428_218_pid37624` succeeded, and user runtime validation on
-2026-08-11 confirmed the integrated automatic behavior with the exclusive
-startup union. The manual branch also remains user-confirmed.
+`loading_screen` and `faster_loading`;
+`savedata_loading: "manual"` remains available as the confirmed visible
+fallback. The sequence bypasses the notice, Bandai Namco, Bandai, CRIWARE,
+opening, interactive title, Load list, card-status messages, and load
+confirmation before the main-menu loading screen. Full development build
+`20260811_065428_218_pid37624` succeeded, and user runtime validation on
+2026-08-11 confirmed the integrated automatic behavior before the loading-time
+loading-time patch was added. The manual branch also remains user-confirmed.
+
+The `faster_loading` setting keeps the four audio archives open and the 13
+general sound indexes initialized at boot, but defers all 82 RPG-voice and 93
+player-voice indexes. Its two playback hooks load and cache the exact requested
+bank under one semaphore before calling the unchanged native playback routine.
+User runtime timing on 2026-08-11 measured the integrated startup load at about
+15 seconds, 10 seconds shorter than the prior 25-second baseline. A subsequent
+observation in the current launch setup measured the visible loading screen at
+about 6-7 seconds. The user accepted the integrated patch and elapsed-time
+counter on 2026-08-11; first-use voice delay and repeated or concurrent
+first-use playback were not separately isolated during acceptance.
 The complete disassembly findings, worker layout, outcome matrix, and state
 machine are recorded in
 [`../knowledge/game/startup.md`](../knowledge/game/startup.md).

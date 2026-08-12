@@ -9,7 +9,7 @@ $pythonRunner = Join-Path $repository 'scripts\lib\run_python.ps1'
 $powershell = (Get-Process -Id $PID).Path
 $usesSharedTestRoot = [string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)
 $workspaceRoot = if ($usesSharedTestRoot) {
-    Join-Path $repository 'build'
+    Join-Path $repository 'work'
 }
 else {
     [IO.Path]::GetFullPath($env:NA228_TASK_WORK_ROOT)

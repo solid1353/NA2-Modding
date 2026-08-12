@@ -62,9 +62,10 @@
   `work/<exact chat title>/` before maintained commands that create temporary
   files.
 - When `NA228_TASK_WORK_ROOT` is unset, the unit-test runner uses the ignored
-  `build/temp/tests/` technical root instead of impersonating a chat.
-- Keep inputs, experiments, intermediates, outputs, builds, runtime artifacts,
-  and logs in clearly named subdirectories. Do not use top-level `work/temp/`.
+  `work/temp/tests/` technical root instead of impersonating a chat.
+- Reserve top-level `work/temp/` for unit-test scratch. Keep inputs,
+  experiments, intermediates, outputs, builds, runtime artifacts, and logs in
+  clearly named subdirectories outside that technical root.
 - Copy changing external inputs such as selected savestates or screenshots into
   `work/<chat title>/inputs/` with provenance before relying on them. Keep baselines,
   modified copies, analysis outputs, and builds separate.

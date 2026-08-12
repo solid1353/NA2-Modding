@@ -123,7 +123,12 @@ if ($null -ne $workerBuild) {
 elseif ($null -ne $e2eBuild) {
     $kind = 'e2e-test'
     $role = "e2e_test_$E2eVariant"
-    $outputIso = [IO.Path]::GetFullPath([string]$e2eBuild.iso)
+    $outputProperty = "$([string]$e2eBuild.build)_iso"
+    $configuredOutput = $paths.files.PSObject.Properties[$outputProperty]
+    if ($null -eq $configuredOutput) {
+        throw "E2E build output is not configured: $outputProperty"
+    }
+    $outputIso = [IO.Path]::GetFullPath([string]$configuredOutput.Value)
     $recordRoot = Join-Path $sharedLogDirectory 'builds'
     $recordAliasRoot = '@logs/na228/builds'
 }

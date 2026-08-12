@@ -17,7 +17,9 @@ try {
     $repository = Join-Path $testRoot 'repository'
     $scriptRoot = Join-Path $repository 'scripts\na228'
     $libRoot = Join-Path $repository 'scripts\lib'
-    New-Item -ItemType Directory -Force -Path $scriptRoot, $libRoot | Out-Null
+    $e2eScriptRoot = Join-Path $repository 'e2e\scripts'
+    New-Item -ItemType Directory -Force `
+        -Path $scriptRoot, $libRoot, $e2eScriptRoot | Out-Null
     foreach ($name in 'build.ps1', 'build_registry.ps1', 'worker_paths.ps1') {
         Copy-Item -LiteralPath (Join-Path $sourceRepository "scripts\na228\$name") `
             -Destination $scriptRoot
@@ -27,11 +29,26 @@ try {
         Copy-Item -LiteralPath (Join-Path $sourceRepository "scripts\lib\$name") `
             -Destination $libRoot
     }
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'e2e\scripts\config.ps1') `
+        -Destination $e2eScriptRoot
     [IO.File]::WriteAllText((Join-Path $libRoot 'run_python.ps1'), @'
 [CmdletBinding()]
 param([string]$PackageSet, [string]$Module, [string[]]$ArgumentList, [switch]$NoBytecode)
 & python '-B' '-m' $Module @ArgumentList
 exit $LASTEXITCODE
+'@)
+    [IO.File]::WriteAllText((Join-Path $repository 'e2e\config.json'), @'
+{
+  "schema_version": 1,
+  "build_variants": [
+    {
+      "name": "normal",
+      "build": "e2e_test",
+      "payload_shift_bytes": 0,
+      "publish": true
+    }
+  ]
+}
 '@)
     [IO.File]::WriteAllText((Join-Path $repository 'paths.json'), @'
 {
@@ -237,6 +254,13 @@ iso`tbuild_record
     Assert-Na2PreflightTest (Test-Path -LiteralPath (Join-Path $repository $workerOutput) -PathType Leaf) 'Worker reuse did not materialize its output.'
     Assert-Na2PreflightTest ((Get-Item -LiteralPath (Join-Path $repository $workerOutput)).LinkType -eq 'HardLink') 'Worker output was not published as a hardlink.'
     Assert-Na2PreflightTest ($global:Na2BuilderCalls.Count -eq 1) 'Worker reuse rebuilt the image.'
+
+    $e2e = & (Join-Path $scriptRoot 'build.ps1') -E2eVariant normal
+    $e2eIso = Join-Path $repository 'build\Synthetic Product - E2E Test.iso'
+    Assert-Na2PreflightTest ($e2e.Status -eq 'e2e-test') 'E2E build did not return e2e-test status.'
+    Assert-Na2PreflightTest ($e2e.E2eVariant -ceq 'normal') 'E2E build did not retain its variant.'
+    Assert-Na2PreflightTest ($e2e.OutputIso -ceq $e2eIso) 'E2E build did not resolve the configured build selector to its ISO.'
+    Assert-Na2PreflightTest (Test-Path -LiteralPath $e2eIso -PathType Leaf) 'E2E build did not publish its configured ISO.'
 
     Assert-Na2PreflightTest (@(Get-ChildItem -LiteralPath $repository -Recurse -Filter '*.building' -File).Count -eq 0) 'Build workflow created a .building ISO.'
 

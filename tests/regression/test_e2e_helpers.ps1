@@ -224,33 +224,18 @@ try {
     [IO.File]::WriteAllBytes((Join-Path $shifted '0001.png'), [byte[]](1, 2, 3))
     [IO.File]::WriteAllBytes((Join-Path $normal '0002.png'), [byte[]](4))
     [IO.File]::WriteAllBytes((Join-Path $shifted '0002.png'), [byte[]](5))
-    $ignore = Join-Path $testRoot 'ignore.txt'
-    [IO.File]::WriteAllText($ignore, "# ignored captures`n2`n004`n5-7`n")
-    $ignoredNames = @(Get-IgnoredCaptureNames -IgnoreFile $ignore)
-    Assert-E2eHelperTest `
-        -Condition (($ignoredNames -join ',') -ceq '0002.png,0004.png,0005.png,0006.png,0007.png') `
-        -Message 'Ignore slots, zero padding, comments, or ranges were parsed incorrectly.'
-    $passed = Compare-VisualRegressionVariants `
-        -Suite 'test/helpers' `
-        -BaselineDirectory $normal `
-        -CandidateDirectory $shifted `
-        -CandidateName 'shifted' `
-        -OutputRoot $comparison `
-        -IgnoreFile $ignore
-    Assert-E2eHelperTest -Condition ($passed.status -ceq 'passed') `
-        -Message 'Ignored variant differences incorrectly failed stability comparison.'
-
-    Remove-Item -LiteralPath $comparison -Recurse -Force
-    [IO.File]::WriteAllText($ignore, '')
     $failed = Compare-VisualRegressionVariants `
         -Suite 'test/helpers' `
         -BaselineDirectory $normal `
         -CandidateDirectory $shifted `
         -CandidateName 'shifted' `
-        -OutputRoot $comparison `
-        -IgnoreFile $ignore
-    Assert-E2eHelperTest -Condition ($failed.status -ceq 'failed') `
-        -Message 'A real normal/shifted screenshot difference was not detected.'
+        -OutputRoot $comparison
+    Assert-E2eHelperTest `
+        -Condition (
+            $failed.status -ceq 'failed' -and
+            $failed.PSObject.Properties.Name -notcontains 'ignored'
+        ) `
+        -Message 'A normal/shifted difference was not mandatory or still exposed ignore state.'
     Assert-E2eHelperTest `
         -Condition (Test-Path -LiteralPath (Join-Path $comparison 'differences\normal\0002.png')) `
         -Message 'Normal evidence for a failed variant comparison was not retained.'
@@ -274,8 +259,7 @@ try {
         -BaselineDirectory $normal `
         -CandidateDirectory $shifted `
         -CandidateName 'normal-repeat' `
-        -OutputRoot $repeatComparison `
-        -IgnoreFile $ignore)
+        -OutputRoot $repeatComparison)
     foreach ($variant in @('normal', 'normal-repeat', 'shifted')) {
         $states = Join-Path `
             $qualification `
@@ -351,6 +335,45 @@ try {
             (Test-Path -LiteralPath (Join-Path $stateSource '0001.p2s') -PathType Leaf)
         ) `
         -Message 'Savestates were not synchronized without moving their staged directory.'
+
+    $fakeCommitRoot = Join-Path $testRoot 'g'
+    $fakeCommitScripts = Join-Path $fakeCommitRoot 'scripts'
+    $fakeCaptureRepository = Join-Path $fakeCommitRoot 'captures'
+    [void](New-Item -ItemType Directory -Path $fakeCommitScripts, $fakeCaptureRepository -Force)
+    Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\commit_captures.ps1') `
+        -Destination (Join-Path $fakeCommitScripts 'commit_captures.ps1')
+    & git -C $fakeCaptureRepository init --initial-branch=main | Out-Null
+    [IO.File]::WriteAllText((Join-Path $fakeCaptureRepository 'capture.txt'), 'capture')
+    & git -C $fakeCaptureRepository add --all
+    $previousGitIdentity = @{
+        AuthorName = $env:GIT_AUTHOR_NAME
+        AuthorEmail = $env:GIT_AUTHOR_EMAIL
+        CommitterName = $env:GIT_COMMITTER_NAME
+        CommitterEmail = $env:GIT_COMMITTER_EMAIL
+    }
+    try {
+        $env:GIT_AUTHOR_NAME = 'E2E Helper Test'
+        $env:GIT_AUTHOR_EMAIL = 'e2e-helper-test@agent.invalid'
+        $env:GIT_COMMITTER_NAME = 'E2E Helper Test'
+        $env:GIT_COMMITTER_EMAIL = 'e2e-helper-test@agent.invalid'
+        & git -C $fakeCaptureRepository commit -m 'Initial commit' | Out-Null
+        Remove-Item -LiteralPath (Join-Path $fakeCaptureRepository 'capture.txt') -Force
+        & (Join-Path $fakeCommitScripts 'commit_captures.ps1')
+    }
+    finally {
+        $env:GIT_AUTHOR_NAME = $previousGitIdentity.AuthorName
+        $env:GIT_AUTHOR_EMAIL = $previousGitIdentity.AuthorEmail
+        $env:GIT_COMMITTER_NAME = $previousGitIdentity.CommitterName
+        $env:GIT_COMMITTER_EMAIL = $previousGitIdentity.CommitterEmail
+    }
+    Assert-E2eHelperTest `
+        -Condition (
+            [int](& git -C $fakeCaptureRepository rev-list --count HEAD) -eq 1 -and
+            @(& git -C $fakeCaptureRepository ls-tree -r --name-only HEAD).Count -eq 0 -and
+            @(& git -C $fakeCaptureRepository status --porcelain).Count -eq 0 -and
+            [string](& git -C $fakeCaptureRepository log -1 --format='%s') -ceq 'Initial commit'
+        ) `
+        -Message 'Capture-history consolidation did not support an intentionally empty repository.'
 
     $fakeRepository = Join-Path $testRoot 'suite-lifecycle-repository'
     $fakeScripts = Join-Path $fakeRepository 'e2e\scripts'
@@ -449,17 +472,18 @@ if ($Suite -ceq 'test/with_reference') {
     [IO.File]::WriteAllText($noReferenceRecording, 'first')
     & (Join-Path $fakeScripts 'create_suite.ps1') `
         -Suite 'test/no_reference'
-    $firstIgnore = Join-Path $fakeRepository 'e2e\suites\test\no_reference\ignore.txt'
+    $firstSuitePath = Join-Path $fakeRepository 'e2e\suites\test\no_reference.p2m2'
     Assert-E2eHelperTest `
         -Condition (
-            (Test-Path -LiteralPath $firstIgnore -PathType Leaf) -and
-            (Get-Item -LiteralPath $firstIgnore).Length -eq 0
+            [IO.File]::ReadAllText($firstSuitePath) -ceq 'first' -and
+            @(Get-ChildItem `
+                -LiteralPath (Join-Path $fakeRepository 'e2e\suites') `
+                -Filter 'ignore.txt' `
+                -File `
+                -Recurse).Count -eq 0
         ) `
-        -Message 'Suite creation did not generate an empty ignore.txt.'
-    $firstSuiteRoot = Split-Path $firstIgnore
+        -Message 'Suite creation did not produce one flat .p2m2 definition without ignores.'
     $firstCaptureRoot = Join-Path $fakeRepository 'e2e\captures\test\no_reference'
-    [IO.File]::WriteAllText($firstIgnore, "1`n")
-    [IO.File]::WriteAllText((Join-Path $firstSuiteRoot 'stale.txt'), 'stale suite data')
     [void](New-Item -ItemType Directory -Path (
         Join-Path $firstCaptureRoot 'screenshots'
     ) -Force)
@@ -472,9 +496,7 @@ if ($Suite -ceq 'test/with_reference') {
         -Suite 'test/no_reference'
     Assert-E2eHelperTest `
         -Condition (
-            [IO.File]::ReadAllText((Join-Path $firstSuiteRoot 'input.p2m2')) -ceq 'second' -and
-            (Get-Item -LiteralPath $firstIgnore).Length -eq 0 -and
-            -not (Test-Path -LiteralPath (Join-Path $firstSuiteRoot 'stale.txt')) -and
+            [IO.File]::ReadAllText($firstSuitePath) -ceq 'second' -and
             (Test-Path -LiteralPath $firstCaptureRoot -PathType Container) -and
             [IO.File]::ReadAllText((Join-Path $firstCaptureRoot 'current.txt')) -ceq 'current' -and
             -not (Test-Path -LiteralPath (
@@ -497,6 +519,13 @@ if ($Suite -ceq 'test/with_reference') {
             $newSuiteCalls[4] -ceq 'reference-publish suite=test/with_reference'
         ) `
         -Message 'Suite creation did not overlap reference capture with the mandatory run before publication.'
+    $suiteNames = @(
+        Get-VisualRegressionSuiteNames `
+            -SuiteRepository (Join-Path $fakeRepository 'e2e\suites')
+    )
+    Assert-E2eHelperTest `
+        -Condition (($suiteNames -join ',') -ceq 'test/no_reference,test/with_reference') `
+        -Message 'Flat .p2m2 suite discovery did not return canonical extensionless names.'
 
     $sourceCaptureRoot = Join-Path $fakeRepository 'e2e\captures\test\with_reference'
     [IO.File]::WriteAllText((Join-Path $sourceCaptureRoot 'accepted.txt'), 'accepted history')
@@ -514,43 +543,55 @@ if ($Suite -ceq 'test/with_reference') {
     Assert-E2eHelperTest `
         -Condition (
             $replacementFailed -and
-            [IO.File]::ReadAllText((Join-Path $fakeRepository 'e2e\suites\test\with_reference\input.p2m2')) -ceq 'second' -and
+            [IO.File]::ReadAllText((Join-Path $fakeRepository 'e2e\suites\test\with_reference.p2m2')) -ceq 'second' -and
             [IO.File]::ReadAllText((Join-Path $sourceCaptureRoot 'accepted.txt')) -ceq 'accepted history'
         ) `
         -Message 'Failed suite replacement did not restore its previous definition and capture history.'
     [IO.File]::WriteAllText((Join-Path $sourceCaptureRoot 'capture.txt'), 'capture history')
+    $sourceChildSuitePath = Join-Path `
+        $fakeRepository `
+        'e2e\suites\test\with_reference\child.p2m2'
+    $sourceChildCaptureRoot = Join-Path $sourceCaptureRoot 'child'
+    [void](New-Item -ItemType Directory -Path `
+        ([IO.Path]::GetDirectoryName($sourceChildSuitePath)), `
+        $sourceChildCaptureRoot `
+        -Force)
+    [IO.File]::WriteAllText($sourceChildSuitePath, 'child recording')
+    [IO.File]::WriteAllText(
+        (Join-Path $sourceChildCaptureRoot 'capture.txt'),
+        'child history'
+    )
     & (Join-Path $fakeScripts 'rename_suite.ps1') `
         -Suite 'test/with_reference' `
         -NewSuite 'renamed/with_reference'
-    $renamedSuiteRoot = Join-Path $fakeRepository 'e2e\suites\renamed\with_reference'
+    $renamedSuitePath = Join-Path $fakeRepository 'e2e\suites\renamed\with_reference.p2m2'
     $renamedCaptureRoot = Join-Path $fakeRepository 'e2e\captures\renamed\with_reference'
+    $childSuitePath = Join-Path $fakeRepository 'e2e\suites\renamed\with_reference\child.p2m2'
+    $childCaptureRoot = Join-Path $renamedCaptureRoot 'child'
     Assert-E2eHelperTest `
         -Condition (
-            -not (Test-Path -LiteralPath (Join-Path $fakeRepository 'e2e\suites\test\with_reference')) -and
+            -not (Test-Path -LiteralPath (Join-Path $fakeRepository 'e2e\suites\test\with_reference.p2m2')) -and
+            -not (Test-Path -LiteralPath $sourceChildSuitePath) -and
             -not (Test-Path -LiteralPath $sourceCaptureRoot) -and
-            (Test-Path -LiteralPath (Join-Path $renamedSuiteRoot 'input.p2m2') -PathType Leaf) -and
-            [IO.File]::ReadAllText((Join-Path $renamedCaptureRoot 'capture.txt')) -ceq 'capture history'
+            (Test-Path -LiteralPath $renamedSuitePath -PathType Leaf) -and
+            (Test-Path -LiteralPath $childSuitePath -PathType Leaf) -and
+            [IO.File]::ReadAllText((Join-Path $renamedCaptureRoot 'capture.txt')) -ceq 'capture history' -and
+            [IO.File]::ReadAllText((Join-Path $childCaptureRoot 'capture.txt')) -ceq 'child history'
         ) `
-        -Message 'Suite rename did not move both the definition and capture history.'
-    $childSuiteRoot = Join-Path $renamedSuiteRoot 'child'
-    $childCaptureRoot = Join-Path $renamedCaptureRoot 'child'
-    [void](New-Item -ItemType Directory -Path $childSuiteRoot, $childCaptureRoot -Force)
-    [IO.File]::WriteAllText((Join-Path $childSuiteRoot 'input.p2m2'), 'child recording')
-    [IO.File]::WriteAllText((Join-Path $childSuiteRoot 'ignore.txt'), '')
-    [IO.File]::WriteAllText((Join-Path $childCaptureRoot 'capture.txt'), 'child history')
+        -Message 'Suite rename did not move the definition, descendants, and capture history.'
     & (Join-Path $fakeScripts 'delete_suite.ps1') -Suite 'renamed/with_reference'
     Assert-E2eHelperTest `
         -Condition (
-            -not (Test-Path -LiteralPath (Join-Path $renamedSuiteRoot 'input.p2m2')) -and
+            -not (Test-Path -LiteralPath $renamedSuitePath) -and
             -not (Test-Path -LiteralPath (Join-Path $renamedCaptureRoot 'capture.txt')) -and
-            (Test-Path -LiteralPath (Join-Path $childSuiteRoot 'input.p2m2') -PathType Leaf) -and
+            (Test-Path -LiteralPath $childSuitePath -PathType Leaf) -and
             [IO.File]::ReadAllText((Join-Path $childCaptureRoot 'capture.txt')) -ceq 'child history'
         ) `
         -Message 'Suite deletion removed a descendant suite or retained parent artifacts.'
     & (Join-Path $fakeScripts 'delete_suite.ps1') -Suite 'renamed/with_reference/child'
     Assert-E2eHelperTest `
         -Condition (
-            -not (Test-Path -LiteralPath $renamedSuiteRoot) -and
+            -not (Test-Path -LiteralPath $renamedSuitePath) -and
             -not (Test-Path -LiteralPath $renamedCaptureRoot) -and
             -not (Test-Path -LiteralPath (Join-Path $fakeRepository 'e2e\suites\renamed')) -and
             -not (Test-Path -LiteralPath (Join-Path $fakeRepository 'e2e\captures\renamed'))

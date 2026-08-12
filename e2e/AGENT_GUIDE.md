@@ -51,8 +51,8 @@ spacing, baselines, and alignment.
    difference as unrelated or volatile without evidence.
 8. Iterate until the intended result is achieved or a concrete blocker remains.
 
-Do not manually edit generated current images, reports, recordings, references,
-or `ignore.txt` unless the user explicitly requests that exact change. Do not
+Do not manually edit generated current images, reports, recordings, or
+references unless the user explicitly requests that exact change. Do not
 regenerate references without explicit authorization.
 
 ## Acceptance and delivery

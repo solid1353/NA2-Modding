@@ -418,12 +418,10 @@ else {
     $fakeVisualScripts = Join-Path $fakeVisualRoot 'scripts'
     New-Item -ItemType Directory -Force -Path `
         $fakeVisualScripts, `
-        (Join-Path $fakeVisualRoot 'suites\alpha'), `
-        (Join-Path $fakeVisualRoot 'suites\beta'), `
-        (Join-Path $fakeVisualRoot 'suites\font\load_save') | Out-Null
+        (Join-Path $fakeVisualRoot 'suites\font') | Out-Null
     foreach ($suiteDefinition in 'alpha', 'beta', 'font\load_save') {
         Set-Na2Utf8FileAtomic `
-            -Path (Join-Path $fakeVisualRoot "suites\$suiteDefinition\input.p2m2") `
+            -Path (Join-Path $fakeVisualRoot "suites\$suiteDefinition.p2m2") `
             -Content 'recording'
     }
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'run.ps1') -Content @'

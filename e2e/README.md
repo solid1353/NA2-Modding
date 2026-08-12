@@ -23,18 +23,20 @@ boundary. The E2E runner retains internal single-suite execution only for suite
 creation and its repeatability transaction.
 
 `-s` adds the shifted E2E Test build and replays the same suites against it.
-Normal and shifted non-ignored captures must match.
+Every normal and shifted capture must match.
 
 `e2e create` creates or replaces a suite from the matching Workshop recording,
-resets `ignore.txt`, optionally captures a reference game, and runs repeatability
-capture. `e2e rename` moves the suite definition and capture history together;
-`e2e delete` removes both for only the named suite while preserving descendant
-suites. `e2e update` stages all current capture changes and
+stores it as the single file `suites/<suite>.p2m2`, optionally captures a
+reference game, and runs repeatability capture. `e2e rename` moves the suite
+definition and capture history together; `e2e delete` removes both for only the
+named suite while preserving descendant suites. `e2e update` stages all current
+capture changes and
 consolidates them into `Initial commit`: a one-commit repository is amended,
 while a multi-commit repository is reset softly to its root and squashed. It
 then expires reflogs and runs normal Git garbage collection with immediate
-pruning. With `-p`, it instead preserves the existing commits and adds an
-`Update captures` commit.
+pruning. An empty accepted capture set remains represented by one empty
+`Initial commit`. With `-p`, it instead preserves the existing commits and adds
+an `Update captures` commit.
 
 ## Execution and publication
 
@@ -49,9 +51,8 @@ the owning PID/start time. Failed comparisons retain only the evidence needed to
 review the failure; later runs clean inactive retained transactions.
 
 The optional shifted variant moves resident-payload layout internally while
-preserving the fixed reservation envelope and compares its captures with normal.
-Suite `ignore.txt` entries apply to active comparisons and preserve previously
-accepted current evidence for ignored slots.
+preserving the fixed reservation envelope and compares every capture with
+normal.
 
 ## Review and acceptance
 
@@ -68,9 +69,7 @@ main-repository implementation as one coherent delivery.
 ```text
 e2e/
 ├── config.json
-├── suites/<suite>/
-│   ├── input.p2m2
-│   └── ignore.txt
+├── suites/<suite>.p2m2
 ├── captures/<suite>/              # nested Git repository
 │   ├── screenshots/
 │   ├── grids/

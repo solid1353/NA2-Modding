@@ -4,40 +4,34 @@ param([Parameter(Mandatory)][string]$Suite)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'suite.ps1')
 $context = Get-VisualRegressionContext -Suite $Suite
-$definition = Join-Path $context.SuiteRoot 'input.p2m2'
 
-if (-not (Test-Path -LiteralPath $definition -PathType Leaf)) {
+if (-not (Test-Path -LiteralPath $context.SuitePath -PathType Leaf)) {
     throw "E2E suite does not exist: $($context.Suite)"
 }
 
 $descendantBranches = [Collections.Generic.HashSet[string]]::new(
     [StringComparer]::OrdinalIgnoreCase
 )
-Get-ChildItem `
-    -LiteralPath $context.SuiteRoot `
-    -Filter 'input.p2m2' `
-    -File `
-    -Recurse |
-    Where-Object { $_.FullName -cne $definition } |
-    ForEach-Object {
-        $relative = [IO.Path]::GetRelativePath(
-            $context.SuiteRoot,
-            $_.DirectoryName
-        )
-        [void]$descendantBranches.Add(
-            $relative.Split([IO.Path]::DirectorySeparatorChar)[0]
-        )
-    }
+if (Test-Path -LiteralPath $context.DescendantSuiteRoot -PathType Container) {
+    Get-ChildItem `
+        -LiteralPath $context.DescendantSuiteRoot `
+        -Filter '*.p2m2' `
+        -File `
+        -Recurse |
+        ForEach-Object {
+            $relative = [IO.Path]::GetRelativePath(
+                $context.DescendantSuiteRoot,
+                $_.FullName
+            )
+            $branch = $relative.Split([IO.Path]::DirectorySeparatorChar)[0]
+            if ($branch.EndsWith('.p2m2', [StringComparison]::OrdinalIgnoreCase)) {
+                $branch = [IO.Path]::GetFileNameWithoutExtension($branch)
+            }
+            [void]$descendantBranches.Add($branch)
+        }
+}
 
-foreach ($item in Get-ChildItem -LiteralPath $context.SuiteRoot -Force) {
-    if ($item.PSIsContainer -and $descendantBranches.Contains($item.Name)) {
-        continue
-    }
-    Remove-Item -LiteralPath $item.FullName -Recurse -Force
-}
-if (@(Get-ChildItem -LiteralPath $context.SuiteRoot -Force).Count -eq 0) {
-    Remove-Item -LiteralPath $context.SuiteRoot -Force
-}
+Remove-Item -LiteralPath $context.SuitePath -Force
 if (Test-Path -LiteralPath $context.CaptureRoot -PathType Container) {
     foreach ($item in Get-ChildItem -LiteralPath $context.CaptureRoot -Force) {
         if ($item.PSIsContainer -and $descendantBranches.Contains($item.Name)) {
@@ -50,8 +44,8 @@ if (Test-Path -LiteralPath $context.CaptureRoot -PathType Container) {
     }
 }
 Remove-VisualRegressionEmptyParents `
-    -Path $context.SuiteRoot `
-    -Boundary (Join-Path $context.Root 'suites')
+    -Path $context.SuitePath `
+    -Boundary $context.SuiteRepository
 Remove-VisualRegressionEmptyParents `
     -Path $context.CaptureRoot `
     -Boundary $context.CaptureRepository

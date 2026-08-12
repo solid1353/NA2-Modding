@@ -24,16 +24,11 @@ if (
 $suiteRoot = Join-Path $root 'suites'
 $suites = @(
     if ([string]::IsNullOrWhiteSpace($Suite)) {
-        Get-ChildItem -LiteralPath $suiteRoot -Filter 'input.p2m2' -File -Recurse |
-            ForEach-Object {
-                [IO.Path]::GetRelativePath($suiteRoot, $_.DirectoryName).Replace('\', '/')
-            } |
-            Sort-Object -Unique
+        Get-VisualRegressionSuiteNames -SuiteRepository $suiteRoot
     }
     else {
         $requestedContext = Get-VisualRegressionContext -Suite $Suite
-        $recording = Join-Path $requestedContext.SuiteRoot 'input.p2m2'
-        if (-not (Test-Path -LiteralPath $recording -PathType Leaf)) {
+        if (-not (Test-Path -LiteralPath $requestedContext.SuitePath -PathType Leaf)) {
             throw "E2E suite does not exist: $($requestedContext.Suite)"
         }
         $requestedContext.Suite
@@ -77,7 +72,7 @@ $replayJobs = [Collections.Generic.List[object]]::new()
 try {
     foreach ($suite in $suites) {
         $context = Get-VisualRegressionContext -Suite $suite
-        $recordingPath = Join-Path $context.SuiteRoot 'input.p2m2'
+        $recordingPath = $context.SuitePath
         $replayNames = @($Variant)
         if ($Repeat.IsPresent) {
             $replayNames += "$Variant-repeat"

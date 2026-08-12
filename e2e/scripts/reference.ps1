@@ -23,13 +23,10 @@ else {
 $captureRootExists = Test-Path -LiteralPath $context.CaptureRoot -PathType Container
 $captureRootEmpty = $captureRootExists -and
     @(Get-ChildItem -LiteralPath $context.CaptureRoot -Force).Count -eq 0
-if (-not (Test-Path -LiteralPath $context.SuiteRoot -PathType Container)) {
+if (-not (Test-Path -LiteralPath $context.SuitePath -PathType Leaf)) {
     throw "Visual-regression suite does not exist: $Suite"
 }
-$recordingPath = Join-Path $context.SuiteRoot 'input.p2m2'
-if (-not (Test-Path -LiteralPath $recordingPath -PathType Leaf)) {
-    throw "Suite recording does not exist: $recordingPath"
-}
+$recordingPath = $context.SuitePath
 
 . (Join-Path $context.Repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths

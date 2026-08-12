@@ -46,7 +46,7 @@ if ([int]$commitCount -gt 1) {
     }
 }
 
-& git -C $captureRepository commit --amend -m 'Initial commit'
+& git -C $captureRepository commit --amend --allow-empty -m 'Initial commit'
 if ($LASTEXITCODE -ne 0) {
     throw 'Could not consolidate the E2E capture repository history.'
 }

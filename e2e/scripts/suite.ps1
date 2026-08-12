@@ -96,6 +96,9 @@ function Get-VisualRegressionContext {
         throw 'Suite must be a relative path.'
     }
     $normalizedSuite = $Suite.Replace('\', '/')
+    if ($normalizedSuite.EndsWith('.p2m2', [StringComparison]::OrdinalIgnoreCase)) {
+        $normalizedSuite = $normalizedSuite.Substring(0, $normalizedSuite.Length - 5)
+    }
     $segments = @($normalizedSuite.Split('/'))
     if ($segments.Count -eq 0 -or @(
         $segments | Where-Object {
@@ -110,7 +113,8 @@ function Get-VisualRegressionContext {
     $suiteRelativePath = $segments -join [IO.Path]::DirectorySeparatorChar
     $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
     $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
-    $caseRoot = Join-Path (Join-Path $root 'suites') $suiteRelativePath
+    $suiteRepository = Join-Path $root 'suites'
+    $suitePath = Join-Path $suiteRepository ($suiteRelativePath + '.p2m2')
     $captureRoot = if ([string]::IsNullOrWhiteSpace($CaptureRoot)) {
         Join-Path (Join-Path $root 'captures') $suiteRelativePath
     }
@@ -121,9 +125,11 @@ function Get-VisualRegressionContext {
     [pscustomobject]@{
         Root = $root
         CaptureRepository = Join-Path $root 'captures'
+        SuiteRepository = $suiteRepository
         Suite = $suiteName
         SuiteRelativePath = $suiteRelativePath
-        SuiteRoot = $caseRoot
+        SuitePath = $suitePath
+        DescendantSuiteRoot = Join-Path $suiteRepository $suiteRelativePath
         CaptureRoot = $captureRoot
         Capture = [pscustomobject]@{
             Screenshots = Join-Path $captureRoot $script:E2eScreenshotDirectory
@@ -136,6 +142,22 @@ function Get-VisualRegressionContext {
         Comparator = Join-Path $repository 'scripts\research\localization\compare_font_capture_sets.ps1'
         PythonRunner = Join-Path $repository 'scripts\lib\run_python.ps1'
     }
+}
+
+function Get-VisualRegressionSuiteNames {
+    param([Parameter(Mandatory)][string]$SuiteRepository)
+
+    if (-not (Test-Path -LiteralPath $SuiteRepository -PathType Container)) {
+        return [string[]]@()
+    }
+    [string[]]@(
+        Get-ChildItem -LiteralPath $SuiteRepository -Filter '*.p2m2' -File -Recurse |
+            ForEach-Object {
+                $relative = [IO.Path]::GetRelativePath($SuiteRepository, $_.FullName)
+                $relative.Substring(0, $relative.Length - 5).Replace('\', '/')
+            } |
+            Sort-Object -Unique
+    )
 }
 
 function Remove-VisualRegressionEmptyParents {
@@ -425,8 +447,7 @@ function New-VisualRegressionStateStage {
         [Parameter(Mandatory)][string]$ExistingScreenshotDirectory,
         [Parameter(Mandatory)][string]$ExistingScreenshotKind,
         [Parameter(Mandatory)][string]$CapturedScreenshotDirectory,
-        [Parameter(Mandatory)][string]$PythonRunner,
-        [string]$IgnoreFile
+        [Parameter(Mandatory)][string]$PythonRunner
     )
 
     if ($Tier -cnotin $script:E2eCaptureTiers.Values) {
@@ -482,18 +503,8 @@ function New-VisualRegressionStateStage {
         }
     }
 
-    $ignoredScreenshots = [Collections.Generic.HashSet[string]]::new(
-        [StringComparer]::OrdinalIgnoreCase
-    )
-    $ignoredNames = @(Get-IgnoredCaptureNames -IgnoreFile $IgnoreFile)
-    if ($ignoredNames.Count -gt 0) {
-        $ignoredScreenshots.UnionWith([string[]]$ignoredNames)
-    }
     foreach ($capturedState in Get-ChildItem -LiteralPath $CapturedDirectory -Filter '*.p2s' -File) {
         $screenshotName = $capturedState.BaseName + '.png'
-        if ($ignoredScreenshots.Contains($screenshotName)) {
-            continue
-        }
         $existingState = Join-Path $committedStates $capturedState.Name
         $sourceState = if (
             $identicalScreenshots.Contains($screenshotName) -and
@@ -505,13 +516,6 @@ function New-VisualRegressionStateStage {
             $capturedState.FullName
         }
         Copy-Item -LiteralPath $sourceState -Destination $destination
-    }
-    foreach ($screenshotName in $ignoredScreenshots) {
-        $stateName = [IO.Path]::ChangeExtension($screenshotName, '.p2s')
-        $existingState = Join-Path $existingStates $stateName
-        if (Test-Path -LiteralPath $existingState -PathType Leaf) {
-            Copy-Item -LiteralPath $existingState -Destination $destination
-        }
     }
     Remove-Item -LiteralPath $committedStates -Recurse -Force
 }
@@ -532,66 +536,6 @@ function Get-NumericPngSlots {
             } |
             Sort-Object -Unique
     )
-}
-
-function Get-IgnoredCaptureNames {
-    param([string]$IgnoreFile)
-
-    if (-not (Test-Path -LiteralPath $IgnoreFile -PathType Leaf)) {
-        return [string[]]@()
-    }
-
-    $slots = [Collections.Generic.SortedSet[int]]::new()
-    $lineNumber = 0
-    foreach ($line in Get-Content -LiteralPath $IgnoreFile) {
-        $lineNumber++
-        $entry = $line.Trim()
-        if ($entry.Length -eq 0 -or $entry.StartsWith('#')) {
-            continue
-        }
-        $first = 0
-        $last = 0
-        if ($entry -match '^\d+$') {
-            $first = [int]$entry
-            $last = $first
-        }
-        elseif ($entry -match '^(\d+)\s*-\s*(\d+)$') {
-            $first = [int]$Matches[1]
-            $last = [int]$Matches[2]
-        }
-        else {
-            throw "Invalid ignore entry at ${IgnoreFile}:${lineNumber}: $entry"
-        }
-        if ($first -lt 1 -or $last -gt 999 -or $first -gt $last) {
-            throw "Invalid ignore slot range at ${IgnoreFile}:${lineNumber}: $entry"
-        }
-        foreach ($slot in $first..$last) {
-            [void]$slots.Add($slot)
-        }
-    }
-    [string[]]@($slots | ForEach-Object { '{0:D4}.png' -f $_ })
-}
-
-function Restore-IgnoredCurrentScreenshots {
-    param(
-        [Parameter(Mandatory)][string]$CurrentDirectory,
-        [Parameter(Mandatory)][string]$ExistingDirectory,
-        [Parameter(Mandatory)][string]$IgnoreFile
-    )
-
-    $restored = 0
-    foreach ($name in Get-IgnoredCaptureNames -IgnoreFile $IgnoreFile) {
-        $current = Join-Path $CurrentDirectory $name
-        $existing = Join-Path $ExistingDirectory $name
-        if (Test-Path -LiteralPath $existing -PathType Leaf) {
-            Copy-Item -LiteralPath $existing -Destination $current -Force
-            $restored++
-        }
-        elseif (Test-Path -LiteralPath $current -PathType Leaf) {
-            Remove-Item -LiteralPath $current -Force
-        }
-    }
-    return $restored
 }
 
 function Get-CommonSlots {
@@ -648,24 +592,16 @@ function Compare-VisualRegressionVariants {
         [Parameter(Mandatory)][string]$BaselineDirectory,
         [Parameter(Mandatory)][string]$CandidateDirectory,
         [Parameter(Mandatory)][string]$CandidateName,
-        [Parameter(Mandatory)][string]$OutputRoot,
-        [string]$IgnoreFile
+        [Parameter(Mandatory)][string]$OutputRoot
     )
 
-    $ignored = [Collections.Generic.HashSet[string]]::new(
-        [StringComparer]::OrdinalIgnoreCase
-    )
-    $ignoredNames = @(Get-IgnoredCaptureNames -IgnoreFile $IgnoreFile)
-    if ($ignoredNames.Count -gt 0) {
-        $ignored.UnionWith([string[]]$ignoredNames)
-    }
     $baseline = @{}
     $candidate = @{}
     foreach ($file in Get-ChildItem -LiteralPath $BaselineDirectory -Filter '*.png' -File) {
-        if (-not $ignored.Contains($file.Name)) { $baseline[$file.Name] = $file.FullName }
+        $baseline[$file.Name] = $file.FullName
     }
     foreach ($file in Get-ChildItem -LiteralPath $CandidateDirectory -Filter '*.png' -File) {
-        if (-not $ignored.Contains($file.Name)) { $candidate[$file.Name] = $file.FullName }
+        $candidate[$file.Name] = $file.FullName
     }
     $names = @($baseline.Keys + $candidate.Keys | Sort-Object -Unique)
     $mismatches = [Collections.Generic.List[object]]::new()
@@ -704,7 +640,6 @@ function Compare-VisualRegressionVariants {
         suite = $Suite
         status = if ($mismatches.Count -eq 0) { 'passed' } else { 'failed' }
         compared = $names.Count
-        ignored = $ignored.Count
         mismatches = @($mismatches)
     }
     $resultPath = Join-Path $OutputRoot 'result.json'

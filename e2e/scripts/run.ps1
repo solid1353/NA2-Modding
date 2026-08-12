@@ -28,11 +28,7 @@ function Get-E2eRunContext {
     return Get-VisualRegressionContext -Suite $Name -CaptureRoot $CaptureRoot
 }
 $availableSuites = @(
-    Get-ChildItem -LiteralPath $suiteRoot -Filter 'input.p2m2' -File -Recurse |
-        ForEach-Object {
-            [IO.Path]::GetRelativePath($suiteRoot, $_.DirectoryName).Replace('\', '/')
-        } |
-        Sort-Object -Unique
+    Get-VisualRegressionSuiteNames -SuiteRepository $suiteRoot
 )
 $suites = @(
     if ([string]::IsNullOrWhiteSpace($Suite)) {
@@ -40,8 +36,7 @@ $suites = @(
     }
     else {
         $requestedContext = Get-E2eRunContext -Name $Suite
-        $recording = Join-Path $requestedContext.SuiteRoot 'input.p2m2'
-        if (-not (Test-Path -LiteralPath $recording -PathType Leaf)) {
+        if (-not (Test-Path -LiteralPath $requestedContext.SuitePath -PathType Leaf)) {
             throw "E2E suite does not exist: $($requestedContext.Suite)"
         }
         $requestedContext.Suite
@@ -117,8 +112,7 @@ $compareReadyVariants = {
                 -BaselineDirectory (Join-Path $normalSuite 'capture\screenshots') `
                 -CandidateDirectory (Join-Path $candidateSuite 'capture\screenshots') `
                 -CandidateName $candidateName `
-                -OutputRoot $comparisonRoot `
-                -IgnoreFile (Join-Path $context.SuiteRoot 'ignore.txt')
+                -OutputRoot $comparisonRoot
             [void]$compared.Add($comparisonKey)
             if ($comparison.status -cne 'passed') {
                 $failure = "$candidateName/$suite"
@@ -203,23 +197,14 @@ try {
         $capturedScreenshots = Join-Path $suiteJob 'capture\screenshots'
         $suiteStage = Join-Path (Join-Path $transaction 'stages') $context.SuiteRelativePath
         $referenceStage = Join-Path $suiteStage $script:E2eCaptureTiers.Reference
-        $existingCurrentStage = Join-Path $suiteStage 'existing-current'
         $currentStage = Join-Path $suiteStage $script:E2eCaptureTiers.Current
         New-VisualRegressionTierStage `
             -ScreenshotDirectory $context.Capture.Screenshots `
             -StageDirectory $referenceStage `
             -Kind Reference
-        New-VisualRegressionTierStage `
-            -ScreenshotDirectory $context.Capture.Screenshots `
-            -StageDirectory $existingCurrentStage `
-            -Kind Current
         [void](New-Item -ItemType Directory -Path $currentStage -Force)
         Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File |
             Copy-Item -Destination $currentStage
-        [void](Restore-IgnoredCurrentScreenshots `
-            -CurrentDirectory $currentStage `
-            -ExistingDirectory $existingCurrentStage `
-            -IgnoreFile (Join-Path $context.SuiteRoot 'ignore.txt'))
 
         $statesStage = $null
         $capturedStates = Join-Path $suiteJob 'capture\sstates'
@@ -236,8 +221,7 @@ try {
                 -ExistingScreenshotDirectory $context.Capture.Screenshots `
                 -ExistingScreenshotKind Current `
                 -CapturedScreenshotDirectory $capturedScreenshots `
-                -PythonRunner $context.PythonRunner `
-                -IgnoreFile (Join-Path $context.SuiteRoot 'ignore.txt')
+                -PythonRunner $context.PythonRunner
         }
         $reportStage = Join-Path $suiteStage 'report'
         $hasReference = @(Get-NumericPngSlots -Directory $referenceStage).Count -gt 0

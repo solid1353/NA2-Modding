@@ -12,18 +12,27 @@ $destination = Get-VisualRegressionContext -Suite $NewSuite
 if ($source.Suite -ceq $destination.Suite) {
     throw 'The source and destination suite names are identical.'
 }
-if (-not (Test-Path -LiteralPath $source.SuiteRoot -PathType Container)) {
+if (-not (Test-Path -LiteralPath $source.SuitePath -PathType Leaf)) {
     throw "E2E suite does not exist: $($source.Suite)"
 }
-if ((Test-Path -LiteralPath $destination.SuiteRoot) -or
+if ((Test-Path -LiteralPath $destination.SuitePath) -or
+    (Test-Path -LiteralPath $destination.DescendantSuiteRoot) -or
     (Test-Path -LiteralPath $destination.CaptureRoot)) {
     throw "E2E suite destination already exists: $($destination.Suite)"
 }
 
 [void](New-Item -ItemType Directory -Path (
-    [IO.Path]::GetDirectoryName($destination.SuiteRoot)
+    [IO.Path]::GetDirectoryName($destination.SuitePath)
 ) -Force)
-Move-Item -LiteralPath $source.SuiteRoot -Destination $destination.SuiteRoot
+Move-Item -LiteralPath $source.SuitePath -Destination $destination.SuitePath
+if (Test-Path -LiteralPath $source.DescendantSuiteRoot -PathType Container) {
+    [void](New-Item -ItemType Directory -Path (
+        [IO.Path]::GetDirectoryName($destination.DescendantSuiteRoot)
+    ) -Force)
+    Move-Item `
+        -LiteralPath $source.DescendantSuiteRoot `
+        -Destination $destination.DescendantSuiteRoot
+}
 if (Test-Path -LiteralPath $source.CaptureRoot -PathType Container) {
     [void](New-Item -ItemType Directory -Path (
         [IO.Path]::GetDirectoryName($destination.CaptureRoot)
@@ -31,8 +40,8 @@ if (Test-Path -LiteralPath $source.CaptureRoot -PathType Container) {
     Move-Item -LiteralPath $source.CaptureRoot -Destination $destination.CaptureRoot
 }
 Remove-VisualRegressionEmptyParents `
-    -Path $source.SuiteRoot `
-    -Boundary (Join-Path $source.Root 'suites')
+    -Path $source.SuitePath `
+    -Boundary $source.SuiteRepository
 Remove-VisualRegressionEmptyParents `
     -Path $source.CaptureRoot `
     -Boundary $source.CaptureRepository

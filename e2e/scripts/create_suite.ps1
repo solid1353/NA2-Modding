@@ -19,32 +19,27 @@ if (-not (Test-Path -LiteralPath $recordingPath -PathType Leaf)) {
 }
 
 $transaction = New-VisualRegressionTransaction -Root $context.Root -Prefix 'create'
-$suiteStage = Join-Path $transaction 'suite-definition'
+$suiteStage = Join-Path $transaction 'suite-definition.p2m2'
 $captureStage = Join-Path $transaction 'capture-history'
-$suiteBackup = Join-Path $transaction 'previous-suite-definition'
+$suiteBackup = Join-Path $transaction 'previous-suite-definition.p2m2'
 $referenceCapture = Join-Path $transaction 'reference-capture'
 $referenceJob = $null
 $suiteInstalled = $false
-$hadSuite = Test-Path -LiteralPath $context.SuiteRoot -PathType Container
+$hadSuite = Test-Path -LiteralPath $context.SuitePath -PathType Leaf
 $suiteBackedUp = $false
 $completed = $false
 try {
-    [void](New-Item -ItemType Directory -Path $suiteStage, $captureStage -Force)
-    Copy-Item -LiteralPath $recordingPath -Destination (Join-Path $suiteStage 'input.p2m2')
-    [IO.File]::WriteAllText(
-        (Join-Path $suiteStage 'ignore.txt'),
-        '',
-        [Text.UTF8Encoding]::new($false)
-    )
+    [void](New-Item -ItemType Directory -Path $captureStage -Force)
+    Copy-Item -LiteralPath $recordingPath -Destination $suiteStage
     [void](New-Item -ItemType Directory -Path @(
-        [IO.Path]::GetDirectoryName($context.SuiteRoot)
+        [IO.Path]::GetDirectoryName($context.SuitePath)
         [IO.Path]::GetDirectoryName($context.CaptureRoot)
     ) -Force)
     if ($hadSuite) {
-        [IO.Directory]::Move($context.SuiteRoot, $suiteBackup)
+        [IO.File]::Move($context.SuitePath, $suiteBackup)
         $suiteBackedUp = $true
     }
-    [IO.Directory]::Move($suiteStage, $context.SuiteRoot)
+    [IO.File]::Move($suiteStage, $context.SuitePath)
     $suiteInstalled = $true
 
     if (-not [string]::IsNullOrWhiteSpace($Game)) {
@@ -98,18 +93,18 @@ finally {
         Remove-Job -Job $referenceJob -Force -ErrorAction SilentlyContinue
     }
     if (-not $completed) {
-        if ($suiteInstalled -and (Test-Path -LiteralPath $context.SuiteRoot -PathType Container)) {
-            Remove-Item -LiteralPath $context.SuiteRoot -Recurse -Force
+        if ($suiteInstalled -and (Test-Path -LiteralPath $context.SuitePath -PathType Leaf)) {
+            Remove-Item -LiteralPath $context.SuitePath -Force
         }
-        if ($suiteBackedUp -and (Test-Path -LiteralPath $suiteBackup -PathType Container)) {
+        if ($suiteBackedUp -and (Test-Path -LiteralPath $suiteBackup -PathType Leaf)) {
             [void](New-Item -ItemType Directory -Path (
-                [IO.Path]::GetDirectoryName($context.SuiteRoot)
+                [IO.Path]::GetDirectoryName($context.SuitePath)
             ) -Force)
-            [IO.Directory]::Move($suiteBackup, $context.SuiteRoot)
+            [IO.File]::Move($suiteBackup, $context.SuitePath)
         }
         Remove-VisualRegressionEmptyParents `
-            -Path $context.SuiteRoot `
-            -Boundary (Join-Path $context.Root 'suites')
+            -Path $context.SuitePath `
+            -Boundary $context.SuiteRepository
     }
     Remove-VisualRegressionTransaction -Transaction $transaction -Root $context.Root
 }

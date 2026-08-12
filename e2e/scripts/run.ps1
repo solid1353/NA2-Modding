@@ -168,7 +168,7 @@ try {
     ) -ForegroundColor Cyan
 
     $nextProgress = [DateTime]::UtcNow
-    while (@($jobs | Where-Object State -in @('NotStarted', 'Running')).Count -gt 0) {
+    $pollJobs = {
         if ([DateTime]::UtcNow -ge $nextProgress) {
             $jobState = @(
                 $jobs | ForEach-Object { "$($_.Name)=$($_.State)" }
@@ -177,24 +177,11 @@ try {
             $nextProgress = [DateTime]::UtcNow.AddSeconds(10)
         }
         & $compareReadyVariants $false
-        if (@($jobs | Where-Object State -in @('NotStarted', 'Running')).Count -gt 0) {
-            Start-Sleep -Milliseconds 200
-        }
     }
-
-    foreach ($job in $jobs) {
-        $jobOutput = @(Receive-Job -Job $job -Keep)
-        $jobOutput | ForEach-Object { Write-Output $_ }
-        if ($job.State -cne 'Completed') {
-            $reason = if ($null -ne $job.ChildJobs[0].JobStateInfo.Reason) {
-                $job.ChildJobs[0].JobStateInfo.Reason.Message
-            }
-            else {
-                'unknown failure'
-            }
-            throw "E2E pipeline job $($job.Name) failed: $reason"
-        }
-    }
+    Wait-VisualRegressionJobs `
+        -Job ([object[]]$jobs) `
+        -FailurePrefix 'E2E pipeline job' `
+        -OnPoll $pollJobs
 
     & $compareReadyVariants $true
     if ($comparisonFailures.Count -gt 0) {

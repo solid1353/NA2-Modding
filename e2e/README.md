@@ -28,7 +28,8 @@ Normal and shifted non-ignored captures must match.
 `e2e create` creates or replaces a suite from the matching Workshop recording,
 resets `ignore.txt`, optionally captures a reference game, and runs repeatability
 capture. `e2e rename` moves the suite definition and capture history together;
-`e2e delete` removes both. `e2e update` stages all current capture changes and
+`e2e delete` removes both for only the named suite while preserving descendant
+suites. `e2e update` stages all current capture changes and
 consolidates them into `Initial commit`: a one-commit repository is amended,
 while a multi-commit repository is reset softly to its root and squashed. It
 then expires reflogs and runs normal Git garbage collection with immediate

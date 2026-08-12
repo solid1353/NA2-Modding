@@ -19,6 +19,46 @@ $testRoot = Join-Path (
 ) "na2-e2e-helper-tests-$PID-$([guid]::NewGuid().ToString('N'))"
 try {
     [void](New-Item -ItemType Directory -Path $testRoot -Force)
+
+    foreach ($jobKind in @('thread', 'process')) {
+        $jobCommand = if ($jobKind -ceq 'thread') { 'Start-ThreadJob' } else { 'Start-Job' }
+        $failedJob = & $jobCommand -Name "$jobKind-synthetic-failure" -ScriptBlock {
+            Start-Sleep -Milliseconds 100
+            throw 'synthetic replay failure'
+        }
+        $blockedJob = & $jobCommand -Name "$jobKind-synthetic-blocked-sibling" -ScriptBlock {
+            Start-Sleep -Seconds 30
+        }
+        $failureStopwatch = [Diagnostics.Stopwatch]::StartNew()
+        $failureMessage = $null
+        try {
+            Wait-VisualRegressionJobs `
+                -Job @($failedJob, $blockedJob) `
+                -FailurePrefix 'Synthetic E2E job' 2>$null
+        }
+        catch {
+            $failureMessage = $_.Exception.Message
+        }
+        finally {
+            $failureStopwatch.Stop()
+            foreach ($job in @($failedJob, $blockedJob)) {
+                if ($job.State -in @('NotStarted', 'Running')) {
+                    Stop-Job -Job $job -ErrorAction SilentlyContinue
+                }
+                Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+            }
+        }
+        Assert-E2eHelperTest `
+            -Condition (
+                $failureMessage -match 'synthetic-failure.*synthetic replay failure' -and
+                $failureStopwatch.Elapsed.TotalSeconds -lt 5
+            ) `
+            -Message "$jobKind E2E job supervision did not report a failed child immediately."
+        Assert-E2eHelperTest `
+            -Condition ($blockedJob.State -eq 'Stopped') `
+            -Message "$jobKind E2E job supervision did not stop a running sibling after failure."
+    }
+
     $activeVariantRoot = Join-Path $testRoot 'active-variant-config'
     [void](New-Item -ItemType Directory -Path $activeVariantRoot -Force)
     [IO.File]::WriteAllText(
@@ -492,7 +532,22 @@ if ($Suite -ceq 'test/with_reference') {
             [IO.File]::ReadAllText((Join-Path $renamedCaptureRoot 'capture.txt')) -ceq 'capture history'
         ) `
         -Message 'Suite rename did not move both the definition and capture history.'
+    $childSuiteRoot = Join-Path $renamedSuiteRoot 'child'
+    $childCaptureRoot = Join-Path $renamedCaptureRoot 'child'
+    [void](New-Item -ItemType Directory -Path $childSuiteRoot, $childCaptureRoot -Force)
+    [IO.File]::WriteAllText((Join-Path $childSuiteRoot 'input.p2m2'), 'child recording')
+    [IO.File]::WriteAllText((Join-Path $childSuiteRoot 'ignore.txt'), '')
+    [IO.File]::WriteAllText((Join-Path $childCaptureRoot 'capture.txt'), 'child history')
     & (Join-Path $fakeScripts 'delete_suite.ps1') -Suite 'renamed/with_reference'
+    Assert-E2eHelperTest `
+        -Condition (
+            -not (Test-Path -LiteralPath (Join-Path $renamedSuiteRoot 'input.p2m2')) -and
+            -not (Test-Path -LiteralPath (Join-Path $renamedCaptureRoot 'capture.txt')) -and
+            (Test-Path -LiteralPath (Join-Path $childSuiteRoot 'input.p2m2') -PathType Leaf) -and
+            [IO.File]::ReadAllText((Join-Path $childCaptureRoot 'capture.txt')) -ceq 'child history'
+        ) `
+        -Message 'Suite deletion removed a descendant suite or retained parent artifacts.'
+    & (Join-Path $fakeScripts 'delete_suite.ps1') -Suite 'renamed/with_reference/child'
     Assert-E2eHelperTest `
         -Condition (
             -not (Test-Path -LiteralPath $renamedSuiteRoot) -and
@@ -500,7 +555,7 @@ if ($Suite -ceq 'test/with_reference') {
             -not (Test-Path -LiteralPath (Join-Path $fakeRepository 'e2e\suites\renamed')) -and
             -not (Test-Path -LiteralPath (Join-Path $fakeRepository 'e2e\captures\renamed'))
         ) `
-        -Message 'Suite deletion did not remove both roots and their empty parents.'
+        -Message 'Leaf suite deletion did not remove both roots and their empty parents.'
 
     Remove-VisualRegressionTransaction -Transaction $transaction -Root $testRoot
     Write-Host 'E2E helper tests passed.' -ForegroundColor Green

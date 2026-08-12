@@ -18,6 +18,74 @@ $script:E2eStableCaptureDirectories = @(
     'sstates'
 )
 
+function Wait-VisualRegressionJobs {
+    param(
+        [Parameter(Mandatory)][object[]]$Job,
+        [Parameter(Mandatory)][string]$FailurePrefix,
+        [scriptblock]$OnPoll
+    )
+
+    $activeStates = @('NotStarted', 'Running')
+    $receivedFailure = @{}
+    $receiveOutput = {
+        param([Parameter(Mandatory)][object]$CurrentJob)
+
+        $receivedErrors = @()
+        Receive-Job `
+            -Job $CurrentJob `
+            -ErrorAction SilentlyContinue `
+            -ErrorVariable +receivedErrors |
+            ForEach-Object { Write-Output $_ }
+        foreach ($receivedError in $receivedErrors) {
+            $receivedFailure[$CurrentJob.Id] = [string]$receivedError
+            Write-Error -ErrorRecord $receivedError -ErrorAction Continue
+        }
+    }
+    while ($true) {
+        foreach ($currentJob in $Job) {
+            . $receiveOutput -CurrentJob $currentJob
+        }
+
+        $failedJob = @(
+            $Job | Where-Object State -NotIn @(
+                'NotStarted',
+                'Running',
+                'Completed'
+            )
+        ) | Select-Object -First 1
+        if ($null -ne $failedJob) {
+            foreach ($activeJob in $Job | Where-Object State -In $activeStates) {
+                Stop-Job -Job $activeJob -ErrorAction SilentlyContinue
+            }
+            foreach ($currentJob in $Job) {
+                . $receiveOutput -CurrentJob $currentJob
+            }
+            $reasonMessage = if ($receivedFailure.ContainsKey($failedJob.Id)) {
+                $receivedFailure[$failedJob.Id]
+            }
+            elseif ($null -ne $failedJob.JobStateInfo.Reason) {
+                $failedJob.JobStateInfo.Reason.Message
+            }
+            else {
+                'unknown failure'
+            }
+            throw "$FailurePrefix $($failedJob.Name) failed: $reasonMessage"
+        }
+
+        if (@($Job | Where-Object State -In $activeStates).Count -eq 0) {
+            break
+        }
+        if ($null -ne $OnPoll) {
+            . $OnPoll
+        }
+        Start-Sleep -Milliseconds 200
+    }
+
+    foreach ($currentJob in $Job) {
+        . $receiveOutput -CurrentJob $currentJob
+    }
+}
+
 function Get-VisualRegressionContext {
     param(
         [Parameter(Mandatory)][string]$Suite,

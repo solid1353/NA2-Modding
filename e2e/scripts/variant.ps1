@@ -144,19 +144,9 @@ try {
         }
     }
 
-    [void](Wait-Job -Job $replayJobs)
-    foreach ($replayJob in $replayJobs) {
-        Receive-Job -Job $replayJob | ForEach-Object { Write-Output $_ }
-        if ($replayJob.State -cne 'Completed') {
-            $reason = if ($null -ne $replayJob.ChildJobs[0].JobStateInfo.Reason) {
-                $replayJob.ChildJobs[0].JobStateInfo.Reason.Message
-            }
-            else {
-                'unknown failure'
-            }
-            throw "E2E suite replay job $($replayJob.Name) failed: $reason"
-        }
-    }
+    Wait-VisualRegressionJobs `
+        -Job ([object[]]$replayJobs) `
+        -FailurePrefix 'E2E suite replay job'
 }
 finally {
     foreach ($replayJob in $replayJobs) {

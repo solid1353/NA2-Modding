@@ -7,8 +7,8 @@ knowledge.
 ## General rules
 
 - Write bounded shared workflow logs below `@logs/`, generated task records
-  below `@task_logs/<exact task title>/`, and worker build/runtime logs below
-  `work/<task title>/logs/`. Do not write files directly in `@logs/` or
+  below `@task_logs/<exact chat title>/`, and worker build/runtime logs below
+  `work/<chat title>/logs/`. Do not write files directly in `@logs/` or
   `@task_logs/`.
 - Persist only repository-relative paths or configured `@root/...` aliases.
   Machine-specific absolute paths are forbidden.
@@ -16,26 +16,33 @@ knowledge.
   configuration or selected catalog nodes, result, binary edits, validation, and failure state.
 - Generated logs are ignored by Git and may be deleted. Git is not their
   recovery mechanism.
-- Before deleting logs, inspect them for confirmed reusable findings and useful
-  negative results. Promote those findings into `docs/knowledge/` or canonical
-  module-local TSV/README data first.
+
+## Retention
+
+Task-owned logs may remain while they support active work or immediate review.
+Before reporting completion, clean task-owned records:
+
+1. Identify exact generated copies of canonical mappings, patch sets, or build
+   plans.
+2. Promote reusable conclusions—including confirmed roles, mappings, runtime
+   observations, media layouts, and useful negative results—into tracked
+   knowledge or canonical module data.
+3. Verify that every required binary edit is represented by canonical patch data
+   with its original bytes, replacement bytes, offset, and reason.
+4. Delete disposable records and resulting empty directories.
+5. Retain a record only when canonical documentation names a concrete future use
+   and regeneration is expensive or impractical.
+
+Large inventories may remain when their structure avoids expensive rediscovery;
+size alone does not justify splitting or deleting them.
 
 ## Shared task logs
 
-`@task_logs/<exact task title>/` contains non-canonical generated evidence that
-agents may share while working on that task. Examples include expensive media
-inventories and reproducible analyzer reports. The exact task-title directory
+`@task_logs/<exact chat title>/` contains non-canonical generated evidence that
+agents may share while working in that chat. Examples include expensive media
+inventories and reproducible analyzer reports. The exact chat-title directory
 makes ownership explicit; producers must not create anonymous folders directly
 below `@task_logs/`.
-
-A task cleans the records it produced or consumed before reporting completion.
-It first promotes every reusable conclusion and useful negative result into
-tracked knowledge or canonical module data, then deletes redundant reports and
-removes empty directories. A generated record may survive task completion only
-when canonical documentation names its concrete future use and it remains
-expensive or impractical to regenerate. Retention is never a substitute for
-knowledge promotion, and another task's concurrently active records are left
-untouched.
 
 ## Routine `na228` logs
 
@@ -79,14 +86,13 @@ running.
 
 ## Worker build and runtime logs
 
-`na228 worker [--ephemeral] work/<task title>/build/<name>.iso` keeps its
+`na228 worker [--ephemeral] work/<chat title>/build/<name>.iso` keeps its
 operational `latest.log`/`rolling.log` and structured `builds/<build-id>/`
-records under that task's `work/<task title>/logs/`. Ephemeral worker records
+records under that chat's `work/<chat title>/logs/`. Ephemeral worker records
 include the verified virtual output size and SHA-256 and mark the output as not
 retained; no ISO is written. Worker records never participate in or prune shared
 Test/Latest/Previous records. Completed structured worker records are capped at
-20 per task; task cleanup may delete them sooner after promoting reusable
-findings.
+20 per chat; task cleanup may delete them sooner under the retention rules.
 
 Persistent command logs must be normalized after transcript capture. They omit
 PowerShell transcript boilerplate, replace configured roots with aliases, and
@@ -97,26 +103,6 @@ complete captured Python traceback is retained under `technical_details` in the
 same bounded run-log section. Other failures retain their existing transcript
 behavior.
 
-## Other task logs
-
-Task-specific analysis, extraction, and patch logs may remain while they support
-active work or immediate review. Before reporting task completion:
-
-1. Identify records that are exact generated copies of canonical mappings,
-   patch sets, or build plans.
-2. Promote confirmed function roles, caller/callee relationships, state-machine
-   behavior, address/file-offset mappings, runtime observations, media layouts,
-   and important negative tests into tracked knowledge.
-3. Verify that every required binary edit is represented by canonical patch data
-   with its original bytes, replacement bytes, offset, and reason.
-4. Delete every disposable generated log directly and remove resulting empty
-   directories.
-5. Retain a log only for a named concrete future use recorded in canonical
-   documentation; never retain it merely as history.
-
-Large inventories are allowed when their structured contents avoid expensive
-rediscovery. Size alone is not a reason to split or delete a useful record.
-
 ## Knowledge routing
 
 - Confirmed cross-cutting findings:
@@ -125,8 +111,6 @@ rediscovery. Size alone is not a reason to split or delete a useful record.
   knowledge index.
 - Durable supporting inventories or visual evidence:
   `docs/knowledge/<domain>/<topic>/`.
-- Unconfirmed interpretations and future experiments: explicitly labelled
-  sections in the relevant domain-owned knowledge document.
 
 When evidence changes a conclusion, update the durable knowledge entry and its
 canonical data together. Do not expect a future agent to reconstruct the result

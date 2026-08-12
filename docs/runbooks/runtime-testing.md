@@ -19,21 +19,21 @@ acceptance remain canonical in
 - Build commands and single-ISO launch commands do not probe or close existing
   PCSX2 processes.
 
-## Task-owned PCSX2 runtime
+## Chat-owned PCSX2 runtime
 
 Create the runtime only with:
 
 ```powershell
-@pcsx2_scripts/copy_worker.ps1 -WorkerRoot work/<exact task title>
+@pcsx2_scripts/copy_worker.ps1 -WorkerRoot work/<exact chat title>
 ```
 
 - The command copies the immutable `@pcsx2_clean` template and required shared
-  BIOS into `work/<task>/pcsx2/`. Do not assemble the base runtime manually or
+  BIOS into `work/<chat title>/pcsx2/`. Do not assemble the base runtime manually or
   modify/populate the clean template.
 - Copy additional shared assets only when the task/test concretely requires
   them. Assign a PINE port unique among live agent instances and operate only
-  this task-owned copy.
-- If an old task-owned runtime exists, its owning task audits it before reuse.
+  this chat-owned copy.
+- If an old chat-owned runtime exists, its owning chat audits it before reuse.
   Promote needed inputs, evidence, configuration, or generated results, delete
   the obsolete runtime, recreate it with the maintained copy command, and add
   only needed assets. Never replace another task's runtime.
@@ -49,7 +49,7 @@ Create the runtime only with:
 
 - Worker processes never open shared Latest, Previous, Manual, or E2E Test
   ISO paths. Use an independent full copy under
-  `work/<task>/inputs/isos/`; symlinks and hardlinks are forbidden.
+  `work/<chat title>/inputs/isos/`; symlinks and hardlinks are forbidden.
 - Preserve the independent ISO's SHA-256, serial, CRC, applicable build record,
   payload hashes, and symbol map before relying on it for runtime evidence.
 - Do not substitute the newest shared ISO when the required identity or linking
@@ -62,11 +62,11 @@ Create the runtime only with:
 Use only:
 
 ```powershell
-na228 worker [--ephemeral] work/<exact task title>/build/<name>.iso
+na228 worker [--ephemeral] work/<exact chat title>/build/<name>.iso
 ```
 
 - Worker builds stage beside the requested output and keep operational and
-  structured records under `work/<task>/logs/`.
+  structured records under `work/<chat title>/logs/`.
 - `--ephemeral` requires a destination that does not already exist, performs the
   same preflight and full verified build against a streamed virtual overlay,
   and records and prints the ISO size and SHA-256 without creating `.building`

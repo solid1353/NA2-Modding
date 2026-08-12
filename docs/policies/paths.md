@@ -1,8 +1,6 @@
 # Path configuration
 
-The maintained modding project may span NA2, Workshop, maintained
-subrepositories such as the PCSX2 fork, and future repositories added to the
-project. The path system has four layers with separate technical owners:
+The path system has four layers with separate technical owners:
 
 1. Workshop root `paths.json` owns every shared root and named file.
 2. NA2 root `paths.json` imports Workshop and adds only NA2-local paths.
@@ -130,5 +128,3 @@ Python unit tests with:
   -NoBytecode `
   -ArgumentList @('discover', '-s', 'tests/builder', '-p', 'test_paths.py')
 ```
-
-Never persist resolved machine-specific paths in project files.

@@ -46,6 +46,5 @@ Operational logs remain disposable after their durable findings are promoted. Gi
   draw paths, character-facing assets, and font research.
 
 Keep this index shallow. Add a subdirectory when a technical domain has several
-related records; do not organize records by the workstream that happened to
-discover them. Workstream landing pages may link here, but the knowledge remains
-canonical and topic-owned.
+related records; organize them by technical domain rather than the task or chat
+that discovered them. The knowledge remains canonical and topic-owned.

@@ -1,8 +1,5 @@
 # Modding and source policy
 
-**Applies when:** changing configurations, catalog features, builder engines, binary data,
-source media, PNACH, donor data, or encoded game text.
-
 ## Canonical builder contract
 
 - Before modifying builder composition, read the relevant sections of

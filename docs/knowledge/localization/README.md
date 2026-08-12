@@ -1,7 +1,7 @@
 # Localization knowledge
 
-Cross-workstream localization decisions and status that apply beyond one
-specialized area belong here.
+Localization decisions and status that apply beyond one specialized area belong
+here.
 
 Historical unresolved leads in the linked domain documents identify concrete
 ranges or tables but have no verified visible context or accepted executable

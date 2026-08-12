@@ -1,16 +1,13 @@
 # Repository and workspace policy
 
-**Applies when:** changing files, paths, Git state, scripts, dependencies, logs,
-work directories, or documentation layout.
-
 ## Paths and repository boundaries
 
 - Canonical path ownership, configured-root syntax, maintained loaders, and
   migration validation are defined in [`paths.md`](paths.md).
 - For a requested `from <source> to <destination>` link, preserve the source and
   create the link at the destination. Do not redesign ownership unless asked.
-- Treat `@source/`, `@pcsx2_dev`, `@pcsx2_stable`, and the clean PCSX2 worker
-  template as protected. Runtime-specific handling is in
+- Treat `@pcsx2_dev`, `@pcsx2_stable`, and the clean PCSX2 worker template as
+  protected. Runtime-specific handling is in
   [`../runbooks/runtime-testing.md`](../runbooks/runtime-testing.md).
 
 ## Git and concurrent work
@@ -19,30 +16,17 @@ work directories, or documentation layout.
   repository-wide Git operation, including identity configuration, status
   checks, commits, and completion reporting, even though it is local-only and
   has no remote.
-- User edits and commits are expected. Refresh status/history before Git
-  operations, preserve unrelated work, and stage only task-owned paths or hunks.
+- Refresh Git status and history before operations, and stage only task-owned
+  paths or hunks.
 - When the active workflow calls for staging, use
   `D:\Games\Modding\codex-utils\codex\staging\stage_task_changes.ps1 -Changes`
-  for every participating repository. Include only current-task changes. If a
-  staged contribution needs revision, release it through the helper before
-  editing, then validate and stage its replacement once.
+  for every participating repository. If a staged contribution needs revision,
+  release it through the helper before editing, then validate and stage its
+  replacement once.
 - Commit helper-managed staging only through the helper's owner-only `-Commit`
-  operation; never use raw `git commit` for it. The active workflow and the
-  rules below still determine whether and when to commit or push.
-- Independent changes may proceed concurrently. Pause only for overlapping or
-  logically conflicting changes or exclusive mutable resources.
-- Completed refactors and other completed non-patch changes follow the active
-  workflow's commit behavior after their selected validation. In Normal mode,
-  this is controlled by its
-  [chat-local commit setting](../workflows/normal_mode.md#commit-setting).
-  Game/runtime patches follow the proof and commit boundary in
-  [`testing.md`](testing.md).
-- A one-time override commits the specified task-owned changes and announces the
-  override before acting.
-- Ordinary pauses, questions, reviews, and requests for user input do not require
-  a clean working tree. If work is blocked or incomplete, do not create a WIP
-  commit merely to clean the tree; report the exact task-owned dirty state.
-  `zxc` is the explicit recoverable graceful-stop exception.
+  operation; never use raw `git commit` for it.
+- Do not commit incomplete work merely to clean the working tree. Report its
+  task-owned dirty state.
 - When a remote exists, immediately push each task-owned commit unless it
   belongs to a coherent multi-repository delivery. For such a delivery, create
   every intended commit before pushing any repository; if any commit fails,
@@ -77,36 +61,34 @@ work directories, or documentation layout.
 
 ## Work ownership and external inputs
 
-- A file-working task owns `work/<exact task title>/` and may manage that tree
-  without separate destructive-action approval. It may read another task's tree
+- A file-working chat owns `work/<exact chat title>/` and may manage that tree
+  without separate destructive-action approval. It may read another chat's tree
   but copies anything it needs into its own tree before changing it.
 - Agents do not use the operating-system `TEMP`/`TMP` directory as a workspace
-  or artifact root. Set `NA228_TASK_WORK_ROOT` to the acting task's
-  `work/<exact task title>/` before maintained commands that create temporary
+  or artifact root. Set `NA228_TASK_WORK_ROOT` to the acting chat's
+  `work/<exact chat title>/` before maintained commands that create temporary
   files.
 - The unit-test runner uses `work/General/` as its technical default when
   `NA228_TASK_WORK_ROOT` is unset. This path has no special chat-role meaning.
 - Keep inputs, experiments, intermediates, outputs, builds, runtime artifacts,
   and logs in clearly named subdirectories. Do not use top-level `work/temp/`.
 - Copy changing external inputs such as selected savestates or screenshots into
-  `work/<task>/inputs/` with provenance before relying on them. Keep baselines,
+  `work/<chat title>/inputs/` with provenance before relying on them. Keep baselines,
   modified copies, analysis outputs, and builds separate.
-- After moving or deleting files, enumerate every affected parent directory on
-  disk with hidden and ignored entries included. Remove an unintended empty
-  parent, then inspect it again. Do not report cleanup or completion from Git
-  status alone because Git does not represent empty directories.
-- A task that moves or deletes files is incomplete until its affected parent
-  directories have been inspected on disk and every unintended empty directory
-  has been removed.
+- After moving or deleting files, inspect every affected parent directory on
+  disk with hidden and ignored entries included. Remove unintended empty
+  parents and inspect them again; the task remains incomplete until this is
+  done. Git status cannot prove directory cleanup.
 - `docs/designs/` is an intentionally retained directory and is never removed,
   including when it contains no active design document.
 - Do not create or preserve a directory containing only one file unless it has a
   clear structural, ownership, namespace, tooling, or future-extension purpose.
   Otherwise move the file to the nearest appropriate existing directory and
   remove the unnecessary folder.
-- Before completion, remove disposable task artifacts and promote reusable
-  findings or tools to their canonical owner. Document every intentionally
-  retained task artifact and its future use.
+- Before completion, apply the applicable
+  [logging](logging.md#retention) and [research](research.md) retention rules,
+  remove other disposable task artifacts, and document every retained artifact
+  and its future use.
 
 ## Scripts, dependencies, and logs
 
@@ -146,16 +128,9 @@ work directories, or documentation layout.
 
 Give each document one job and canonical authority:
 
-- root `AGENTS.md` owns universal rules, shared interaction and task rules, and
-  scoped-document routing;
-- routed policies own other scoped normative rules;
 - workflow documents under `docs/workflows/` own complete interaction modes;
 - procedure documents under `docs/procedures/` own non-mode agent procedures;
-- active design documents live under the always-retained `docs/designs/` directory;
-- temporary resume handoffs live under `docs/handoffs/` and are linked from
-  their `TASKS.md` entries;
 - runbooks own exact operational procedures;
-- root `AGENT_COMMANDS.md` owns commands interpreted by agents;
 - the implementing repository or component owns user-facing CLI help;
 - component docs own current architecture, contracts, inputs, and outputs;
 - knowledge/research docs own evidence, findings, hypotheses, and negative

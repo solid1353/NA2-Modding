@@ -1,9 +1,5 @@
 # Validation and patch-completion policy
 
-**Applies when:** selecting or running validation, changing game/runtime
-behavior, using E2E, requesting user runtime verification, or deciding when a
-patch may be documented, tested, committed, and pushed.
-
 Exact PCSX2, savestate, worker-ISO, injection, and screenshot procedures are in
 [`../runbooks/runtime-testing.md`](../runbooks/runtime-testing.md). Current E2E
 command behavior and artifact layout are in
@@ -49,8 +45,7 @@ Refactors, documentation, and internal tooling are not patches unless they alter
 that behavior.
 
 - A patch remains uncommitted until the user accepts its result.
-- In Normal mode, only `ver` constitutes acceptance for this commit boundary
-  and acts as a one-time override.
+- In Normal mode, only `ver` constitutes acceptance at this boundary.
 - For nonvisual patches, use the route specified or agreed during the task. If
   none is specified, default to runtime testing by the user.
 - The agent must not claim runtime success until the user confirms it.
@@ -84,7 +79,7 @@ that behavior.
   only when the agreed validation plan explicitly includes `na228 build -d`; it
   is not an automatic additional check.
 - The only ordinary full-ISO build route for an agent is
-  `na228 worker [--ephemeral] work/<task>/build/<name>.iso`. Build a task-owned
+  `na228 worker [--ephemeral] work/<chat title>/build/<name>.iso`. Build a chat-owned
   worker ISO only when the selected validation requires image assembly. It is
   an internal agent artifact, never a user testing ground or deliverable. Agents
   do not launch or runtime-execute it. Maintained E2E is a separate explicitly
@@ -103,8 +98,7 @@ that behavior.
   records and prints its size and SHA-256 without writing an ISO; compare the
   retained records. For other worker builds, delete the ISO after the selected
   validation and evidence extraction, whether validation passes or fails,
-  unless the user explicitly requested retention. Do not build an ISO merely to
-  prepare user verification; the user uses their normal build and run workflow.
+  unless the user explicitly requested retention.
 
 ### Visual game changes
 
@@ -128,11 +122,10 @@ UI elements, and similar visible game behavior.
 
 ## Hard and soft validation
 
-- A validation is a hard gate only when failure means the primary result is
-  invalid, unsafe, or unusable.
-- Auxiliary consistency, regeneration, synchronization, or maintenance failures
-  are soft warnings when the primary operation succeeded.
-- An auxiliary failure must not fail or discard a valid, usable primary result.
+- A validation is a hard gate only when failure makes the primary result
+  invalid, unsafe, or unusable. Other consistency, regeneration,
+  synchronization, or maintenance failures are soft warnings and must not fail
+  or discard a valid primary result.
 - Do not promote a soft validation into a hard gate without explicit user
   approval.
 - A failed validation does not authorize wrappers, fallback systems,
@@ -140,8 +133,6 @@ UI elements, and similar visible game behavior.
 
 ## Proof, tests, documentation, and Git
 
-- Automated checks, E2E evidence, screenshots, compilation, and plan approval do
-  not replace user acceptance of a patch.
 - Provisional candidate checks or new E2E coverage may remain with the
   uncommitted candidate while validation is in progress.
 - Before user acceptance, do not document the patch behavior as established fact
@@ -158,8 +149,3 @@ UI elements, and similar visible game behavior.
   Real-source, production-scale, or full-pipeline tests require explicit user
   approval and must detect a specific regression that the normal build cannot
   detect.
-- Disassembly findings and other reusable general knowledge must be promoted on
-  the schedule required by the research policy even while patch acceptance is
-  pending. This records research evidence, not established candidate behavior,
-  and does not claim or imply that the patch works. Keep facts, inferences,
-  hypotheses, and confidence distinct.

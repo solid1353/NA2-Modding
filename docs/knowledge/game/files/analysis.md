@@ -193,7 +193,7 @@ component separately.
 6. **Create working material outside the source root.** Keep maintained shared
    analysis under `@analysis/disassembly/<target>/`. Put baseline copies and
    experiments in `@work/<target>/base/`, `@work/<target>/mod/`, or a
-   task-specific `work/<task>/temp/` folder. Never let Ghidra locks, caches, exports,
+   chat-specific `work/<chat title>/temp/` folder. Never let Ghidra locks, caches, exports,
    probes, or scripts write under `@source/`.
 7. **Preserve the minimum evidence.** Record tool/version, import settings,
    function or range boundaries, callers/callees or references used, byte and

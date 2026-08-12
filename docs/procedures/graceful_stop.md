@@ -1,18 +1,15 @@
 # Graceful stop
 
-**Run with:** `zxc`.
-
 `zxc` pauses unfinished work safely:
 
-1. Stop at the next safe boundary.
+1. Pause implementation at the next safe boundary.
 2. Create a named stash containing only the current task-owned uncommitted work;
-   include the workstream and task in the stash name.
+   include the exact chat title in the stash name.
 3. Write a temporary resume handoff under
    `docs/handoffs/<date>-<task>-resume.md`.
 4. Create or update the corresponding `TASKS.md` entry and link it to the
    handoff.
-5. Commit only the handoff and `TASKS.md` update. Never commit the
-   unfinished implementation.
+5. Commit only the handoff and `TASKS.md` update.
 6. Stop.
 
 The handoff records the exact stash name/reference, what it contains, current

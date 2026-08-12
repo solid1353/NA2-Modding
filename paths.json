@@ -12,6 +12,7 @@
     "builder": "na228_builder",
     "scripts": "scripts",
     "work": "work",
+    "cache": "@work/cache",
     "release": "release"
   },
   "files": {

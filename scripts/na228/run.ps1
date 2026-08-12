@@ -11,7 +11,7 @@ param(
 
     [string]$WorkerOutputIso,
     [string]$WorkerLogDirectory,
-    [switch]$WorkerEphemeral,
+    [string]$WorkerConfiguration = 'test',
     [switch]$Force,
     [switch]$Turbo,
     [switch]$Unlimited
@@ -37,7 +37,7 @@ if ($Action -eq 'worker-build') {
         throw 'Worker build action requires its output ISO and log directory.'
     }
 }
-elseif ($WorkerOutputIso -or $WorkerLogDirectory -or $WorkerEphemeral) {
+elseif ($WorkerOutputIso -or $WorkerLogDirectory) {
     throw 'Worker output arguments are valid only for worker-build.'
 }
 if ($Force -and $Action -notin @(
@@ -83,11 +83,10 @@ try {
             $portableOutput = ConvertTo-Na2ProjectPath `
                 -Path $WorkerOutputIso `
                 -Paths $paths
-            $workerKind = if ($WorkerEphemeral) { 'ephemeral worker' } else { 'isolated worker' }
-            Write-Na2Stage "Build $workerKind ISO $portableOutput"
+            Write-Na2Stage "Build isolated worker ISO $portableOutput"
             $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') `
                 -WorkerOutputIso $WorkerOutputIso `
-                -WorkerEphemeral:$WorkerEphemeral
+                -WorkerConfiguration $WorkerConfiguration
             if (-not $buildResult -or $buildResult.Status -ne 'worker') {
                 throw 'Worker build did not return a valid result.'
             }
@@ -106,7 +105,7 @@ try {
             $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') -Force:$Force
             if (
                 -not $buildResult -or
-                $buildResult.Status -notin @('unchanged', 'updated')
+                $buildResult.Status -notin @('unchanged', 'updated', 'pending')
             ) {
                 throw 'Configuration build did not return a valid promotion result.'
             }
@@ -116,7 +115,7 @@ try {
             $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') -Force:$Force
             if (
                 -not $buildResult -or
-                $buildResult.Status -notin @('unchanged', 'updated', 'forced-staged')
+                $buildResult.Status -notin @('unchanged', 'updated', 'pending')
             ) {
                 throw 'Configuration build did not return a valid promotion result.'
             }

@@ -1,153 +1,42 @@
 from __future__ import annotations
 
-import hashlib
-import io
 import os
 import shutil
 from contextlib import contextmanager
 from pathlib import Path
-from types import SimpleNamespace
 
 from .iso9660 import Iso9660, compose_filesystems, normalize_iso_path
 from .operations import (
-    AssemblyDigestResult,
     AssemblyPlan,
     AssemblyResult,
     FileRename,
 )
 
-
-class _VirtualImage:
-    """Seekable source image plus sparse in-memory writes."""
-
-    def __init__(self, source: Path) -> None:
-        self.source = source.resolve()
-        self.file_size = self.source.stat().st_size
-        self.writes: list[tuple[int, bytes]] = []
-
-    def resolve(self) -> _VirtualImage:
-        return self
-
-    def stat(self) -> SimpleNamespace:
-        return SimpleNamespace(st_size=self.file_size)
-
-    def open(self, mode: str = "rb") -> _VirtualImageHandle:
-        if mode not in {"rb", "r+b", "rb+"}:
-            raise ValueError(f"Unsupported virtual-image mode: {mode}")
-        return _VirtualImageHandle(self, writable="+" in mode)
-
-    def write(self, offset: int, data: bytes) -> None:
-        if offset < 0 or offset + len(data) > self.file_size:
-            raise ValueError("Virtual-image write is outside the source image")
-        if data:
-            self.writes.append((offset, bytes(data)))
-
-    def __str__(self) -> str:
-        return f"<virtual ISO over {self.source}>"
-
-
-class _VirtualImageHandle:
-    def __init__(self, image: _VirtualImage, *, writable: bool) -> None:
-        self.image = image
-        self.writable = writable
-        self.position = 0
-        self.base = image.source.open("rb")
-
-    def __enter__(self) -> _VirtualImageHandle:
-        return self
-
-    def __exit__(self, *_args: object) -> None:
-        self.close()
-
-    def close(self) -> None:
-        self.base.close()
-
-    def flush(self) -> None:
-        return None
-
-    def fileno(self) -> int:
-        raise io.UnsupportedOperation("virtual image has no file descriptor")
-
-    def tell(self) -> int:
-        return self.position
-
-    def seek(self, offset: int, whence: int = os.SEEK_SET) -> int:
-        if whence == os.SEEK_SET:
-            position = offset
-        elif whence == os.SEEK_CUR:
-            position = self.position + offset
-        elif whence == os.SEEK_END:
-            position = self.image.file_size + offset
-        else:
-            raise ValueError(f"Unsupported seek origin: {whence}")
-        if position < 0:
-            raise ValueError("Negative virtual-image seek position")
-        self.position = position
-        return position
-
-    def read(self, size: int = -1) -> bytes:
-        if size < 0:
-            size = max(0, self.image.file_size - self.position)
-        else:
-            size = min(size, max(0, self.image.file_size - self.position))
-        start = self.position
-        end = start + size
-        self.base.seek(start)
-        data = bytearray(self.base.read(size))
-        actual_end = start + len(data)
-        for write_offset, replacement in self.image.writes:
-            write_end = write_offset + len(replacement)
-            overlap_start = max(start, write_offset)
-            overlap_end = min(actual_end, write_end)
-            if overlap_start >= overlap_end:
-                continue
-            data[overlap_start - start:overlap_end - start] = replacement[
-                overlap_start - write_offset:overlap_end - write_offset
-            ]
-        self.position = actual_end
-        return bytes(data)
-
-    def write(self, data: bytes | bytearray | memoryview) -> int:
-        if not self.writable:
-            raise io.UnsupportedOperation("virtual image is read-only")
-        payload = bytes(data)
-        self.image.write(self.position, payload)
-        self.position += len(payload)
-        return len(payload)
-
-
 def _flush_image(handle: object) -> None:
     handle.flush()
     try:
         descriptor = handle.fileno()
-    except (AttributeError, OSError, io.UnsupportedOperation):
+    except (AttributeError, OSError):
         return
     os.fsync(descriptor)
 
 
-def building_image_path(output_image: Path) -> Path:
-    return output_image.with_name(output_image.name + ".building")
-
-
 @contextmanager
-def staged_output_image(source_image: Path, output_image: Path):
-    """Copy a source image beside its destination and clean failed candidates."""
+def output_image_candidate(source_image: Path, output_image: Path):
+    """Initialize a unique output candidate and remove it if assembly fails."""
     output_image.parent.mkdir(parents=True, exist_ok=True)
-    building_image = building_image_path(output_image)
-    if source_image == building_image:
-        raise ValueError("Source image cannot use the reserved .building output path")
-    if building_image.exists() or building_image.is_symlink():
-        if not building_image.is_file() and not building_image.is_symlink():
-            raise RuntimeError(f"Temporary build path is not a file: {building_image}")
-        building_image.unlink()
+    if source_image == output_image:
+        raise ValueError("Source and output image paths must differ")
+    if output_image.exists() or output_image.is_symlink():
+        raise FileExistsError(output_image)
 
-    print(f"Initializing temporary output: {building_image.name}")
+    print(f"Initializing output candidate: {output_image.name}")
     try:
-        shutil.copyfile(source_image, building_image)
-        yield building_image
+        shutil.copyfile(source_image, output_image)
+        yield output_image
     except BaseException:
-        if building_image.exists() or building_image.is_symlink():
-            building_image.unlink()
+        if output_image.exists() or output_image.is_symlink():
+            output_image.unlink()
         raise
 
 
@@ -384,7 +273,7 @@ def assemble_image(
         raise ValueError("Source and output image paths must differ")
     source, replacements, insertions, renames = _prepare_assembly(source_image, plan)
 
-    with staged_output_image(source_image, output_image) as working_image:
+    with output_image_candidate(source_image, output_image) as working_image:
         return _apply_and_verify_assembly(
             working_image,
             source,
@@ -392,29 +281,3 @@ def assemble_image(
             insertions,
             renames,
         )
-
-
-def assemble_image_digest(
-    source_image: Path,
-    plan: AssemblyPlan,
-) -> AssemblyDigestResult:
-    """Verify an assembly in a sparse virtual image and stream its digest."""
-    source_image = source_image.resolve()
-    source, replacements, insertions, renames = _prepare_assembly(source_image, plan)
-    working_image = _VirtualImage(source_image)
-    assembly = _apply_and_verify_assembly(
-        working_image,
-        source,
-        replacements,
-        insertions,
-        renames,
-    )
-    digest = hashlib.sha256()
-    with working_image.open("rb") as handle:
-        while chunk := handle.read(8 * 1024 * 1024):
-            digest.update(chunk)
-    return AssemblyDigestResult(
-        assembly=assembly,
-        size_bytes=working_image.file_size,
-        sha256=digest.hexdigest().upper(),
-    )

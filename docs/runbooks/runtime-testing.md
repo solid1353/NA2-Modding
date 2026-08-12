@@ -62,18 +62,18 @@ Create the runtime only with:
 Use only:
 
 ```powershell
-na228 worker [--ephemeral] work/<exact chat title>/build/<name>.iso
+na228 worker [--configuration <id>] work/<exact chat title>/build/<name>.iso
 ```
 
-- Worker builds stage beside the requested output and keep operational and
-  structured records under `work/<chat title>/logs/`.
-- `--ephemeral` requires a destination that does not already exist, performs the
-  same preflight and full verified build against a streamed virtual overlay,
-  and records and prints the ISO size and SHA-256 without creating `.building`
-  or destination ISO files. Use it when the evidence is the build identity
-  rather than the image itself.
-- They do not touch Latest/Previous, Manual/E2E Test outputs, shared preflight,
-  promotion, shared records, PNACH, GameSettings, or PCSX2 state.
+- Worker builds use `test` unless `--configuration <id>` is supplied. They keep
+  operational and structured records under `work/<chat title>/logs/` and share
+  exact verified identities with all other build roles through the central
+  registry.
+- Worker output paths are hardlinks to canonical hash-named cache images. Delete
+  the task-owned output link after evidence extraction unless retention was
+  explicitly requested; do not delete the bounded shared cache image.
+- They do not touch Latest/Previous, Manual/E2E Test outputs or their role
+  records, promotion, PNACH, GameSettings, or PCSX2 state.
 
 Current shared-build and user-facing command behavior is documented by
 `na228 help`, [`../../scripts/README.md`](../../scripts/README.md), and

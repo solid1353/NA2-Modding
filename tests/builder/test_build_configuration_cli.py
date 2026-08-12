@@ -123,7 +123,6 @@ class BuildConfigurationCliTests(unittest.TestCase):
             configuration = SimpleNamespace(
                 configuration_id="default", features=(), modules=()
             )
-            staged_iso = build_configuration.building_image_path(output_iso)
             payload_build = build_configuration.ResidentPayloadBuild(
                 output_path="PRG/228.BIN",
                 payload=b"payload",
@@ -139,7 +138,7 @@ class BuildConfigurationCliTests(unittest.TestCase):
                 (),
                 {"build": payload_build, "paths": ["PRG/228.BIN"]},
                 ({"target": "SYSTEM.CNF"},),
-                staged_iso,
+                output_iso,
             )
             arguments = [
                 "build_configuration",
@@ -187,90 +186,19 @@ class BuildConfigurationCliTests(unittest.TestCase):
                 configuration_log_directory,
             )
             self.assertFalse(kwargs["best_effort_metadata"])
-            self.assertFalse(kwargs["digest_only"])
             self.assertIn("payload_builder (0 symbols, 7 bytes)", output.getvalue())
             self.assertIn("identity (1 edits)", output.getvalue())
             self.assertIn(
-                "Verified staged ISO: NA2.28 - Latest.iso.building",
+                "Verified ISO candidate: NA2.28 - Latest.iso",
                 output.getvalue(),
             )
 
-    def test_digest_cli_reports_virtual_iso_without_staging(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            workspace = Path(directory).resolve()
-            source_iso = workspace / "source.iso"
-            source_iso.write_bytes(b"source")
-            output_iso = workspace / "build" / "candidate.iso"
-            configuration_path = workspace / "configurations" / "test.json"
-            configuration_log_directory = workspace / "logs" / "configuration"
-            configuration = SimpleNamespace(
-                configuration_id="test", features=(), modules=()
-            )
-            result = build_configuration.ConfigurationBuildResult(
-                (),
-                None,
-                (),
-                None,
-                1928429568,
-                "A" * 64,
-            )
-            arguments = [
-                "build_configuration",
-                "--source",
-                str(source_iso),
-                "--output",
-                str(output_iso),
-                "--configuration",
-                str(configuration_path),
-                "--configuration-log-directory",
-                "logs/configuration",
-                "--digest-only",
-            ]
-
-            output = io.StringIO()
-            with (
-                patch.object(sys, "argv", arguments),
-                patch.object(
-                    build_configuration,
-                    "PATHS",
-                    new=SimpleNamespace(repository=workspace),
-                ),
-                patch.object(
-                    build_configuration,
-                    "load_configuration",
-                    return_value=configuration,
-                ),
-                patch.object(
-                    build_configuration.binary_patcher_module,
-                    "command_relative_path",
-                    return_value=configuration_log_directory,
-                ),
-                patch.object(
-                    build_configuration,
-                    "build_configuration_candidate",
-                    return_value=result,
-                ) as build,
-                redirect_stdout(output),
-            ):
-                self.assertEqual(build_configuration.main(), 0)
-
-            self.assertTrue(build.call_args.kwargs["digest_only"])
-            self.assertIn(
-                "Verified virtual ISO: 1928429568 bytes; SHA-256 " + "A" * 64,
-                output.getvalue(),
-            )
-            self.assertFalse(output_iso.exists())
-            self.assertFalse(
-                build_configuration.building_image_path(output_iso).exists()
-            )
-
-    def test_best_effort_metadata_keeps_verified_staging_on_log_failure(self) -> None:
+    def test_best_effort_metadata_keeps_verified_candidate_on_log_failure(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory).resolve()
             source_iso = workspace / "source.iso"
             source_iso.write_bytes(b"source")
             output_iso = workspace / "build" / "Latest.iso"
-            staged_iso = build_configuration.building_image_path(output_iso)
             log_directory = workspace / "logs" / "configuration"
             configuration = SimpleNamespace(identity=SimpleNamespace())
             composed = build_configuration.ConfigurationCompositionResult(
@@ -281,8 +209,8 @@ class BuildConfigurationCliTests(unittest.TestCase):
             )
 
             def assemble(*_args: object) -> SimpleNamespace:
-                staged_iso.parent.mkdir(parents=True, exist_ok=True)
-                staged_iso.write_bytes(b"verified")
+                output_iso.parent.mkdir(parents=True, exist_ok=True)
+                output_iso.write_bytes(b"verified")
                 return SimpleNamespace(
                     insertions=(), iso9660_renames=(), udf_renames=()
                 )
@@ -313,8 +241,8 @@ class BuildConfigurationCliTests(unittest.TestCase):
                     best_effort_metadata=True,
                 )
 
-            self.assertEqual(result.staged_iso, staged_iso)
-            self.assertEqual(staged_iso.read_bytes(), b"verified")
+            self.assertEqual(result.output_iso, output_iso)
+            self.assertEqual(output_iso.read_bytes(), b"verified")
             self.assertIn(
                 "WARNING: Configuration build record was not written: metadata unavailable",
                 errors.getvalue(),
@@ -326,7 +254,6 @@ class BuildConfigurationCliTests(unittest.TestCase):
             source_iso = workspace / "source.iso"
             source_iso.write_bytes(b"source")
             output_iso = workspace / "build" / "Latest.iso"
-            staged_iso = build_configuration.building_image_path(output_iso)
             configuration = SimpleNamespace(identity=SimpleNamespace())
             composed = build_configuration.ConfigurationCompositionResult(
                 results=(),
@@ -336,8 +263,8 @@ class BuildConfigurationCliTests(unittest.TestCase):
             )
 
             def assemble(*_args: object) -> SimpleNamespace:
-                staged_iso.parent.mkdir(parents=True, exist_ok=True)
-                staged_iso.write_bytes(b"verified")
+                output_iso.parent.mkdir(parents=True, exist_ok=True)
+                output_iso.write_bytes(b"verified")
                 return SimpleNamespace(
                     insertions=(), iso9660_renames=(), udf_renames=()
                 )
@@ -366,7 +293,7 @@ class BuildConfigurationCliTests(unittest.TestCase):
                     configuration_log_directory=workspace / "logs" / "configuration",
                 )
 
-            self.assertFalse(staged_iso.exists())
+            self.assertFalse(output_iso.exists())
 
 
 if __name__ == "__main__":

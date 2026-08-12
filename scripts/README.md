@@ -9,8 +9,8 @@ exact agent procedures belong in the linked runbooks.
 - `../na228.ps1`: short user-facing NA2 parser/router.
 - `na228/run.ps1`: substantive build, launch, watch, test, worker, release, and
   help dispatch.
-- `na228/build.ps1`: shared and worker-output build execution, promotion,
-  provenance, and receipts.
+- `na228/build.ps1`: shared and worker-output build execution, verified-build
+  registry reuse, promotion, and provenance.
 - `release/build_release.ps1` and `release/publish_release.ps1`: release
   candidate construction and publication; see
   [`../docs/runbooks/release.md`](../docs/runbooks/release.md).

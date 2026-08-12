@@ -62,10 +62,3 @@ class AssemblyResult:
     insertions: tuple[IsoInsertion, ...]
     iso9660_renames: tuple[dict[str, object], ...]
     udf_renames: tuple[IsoUdfRename, ...]
-
-
-@dataclass(frozen=True)
-class AssemblyDigestResult:
-    assembly: AssemblyResult
-    size_bytes: int
-    sha256: str

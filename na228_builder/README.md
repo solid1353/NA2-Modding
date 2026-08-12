@@ -139,31 +139,21 @@ than showing them in the user-facing window. Successful runs create no log.
 
 `scripts/na228/build.ps1` resolves the `builder` package set from
 `packages.json` and uses `configurations/development.json` for normal builds or
-`configurations/test.json` for test, worker, and E2E outputs. The public
-development dry run uses:
-
-```powershell
-na228 build -d
-```
-
-It exposes the builder's existing `--compose-only` path: configuration loading,
-patch guards, compilation and linking, derived changes, and full composition
-conflict checks run against the source ISO, while no ISO or build record is
-created. Temporary compiler artifacts are removed by the builder. This does not
-validate final image assembly, boot, or runtime behavior.
+`configurations/test.json` for Manual and E2E outputs. Worker builds default to
+`test` and accept `--configuration <id>`.
 
 The public `-f` option applies to ordinary Latest and Manual build routes,
 including build-only and build-and-run commands. It keeps building when a
 non-critical validation or bookkeeping step fails: preflight and retained-record
-lookup, configuration/build-record metadata, receipt updates, and obsolete
+lookup, configuration/build-record metadata, registry updates, and obsolete
 Manual-record pruning. The default Latest build-and-run route may also launch a
-fully verified `.building` image when only promotion to the retained Latest path
-fails. Every bypassed failure remains visible as a warning.
+fully verified hash-named cached image when only promotion to the retained
+Latest path fails. Every bypassed failure remains visible as a warning.
 
 Force mode never bypasses checks required to construct a valid image. Catalog
 and configuration structure, compilation and linking, source and patch guards,
 edit conflicts, resident-payload layout, image layout, and final image-content
-verification remain fatal. `-f` is not valid for a pure launch, `build -d`, a
+verification remain fatal. `-f` is not valid for a pure launch, a
 worker build, E2E, unit tests, or release packaging.
 
 The public `na228` development commands present configuration failures as one
@@ -172,12 +162,31 @@ concise path/value/expectation message. Their existing `latest.log` and
 `technical_details`; catalog-authoring and internal failures remain developer
 errors and keep their existing presentation.
 
-`na228 worker --ephemeral work/<task>/build/<name>.iso` runs the full worker
-composition and image verification through a sparse virtual overlay. It records
-the logical ISO size and SHA-256 without creating `.building` or destination ISO
-files. Ordinary worker and user builds keep physical staging.
+`na228 worker [--configuration <id>] work/<task>/build/<name>.iso` reuses an
+exact verified registry identity or runs full composition and physical image
+verification, then publishes a hardlink to the canonical hash-named image.
 
-Preflight fingerprints both canonical source ISOs, ISO-composing builder code, the exact selected configuration resources, product/path configuration, and active Python/Zlib/Zopfli versions. `scripts/module_pipeline.py` prepares internal invocations and shared payload contributions; `scripts/build_configuration.py` composes them; `scripts/composer.py` closes typed image operations; and `image_assembler/` alone stages and verifies the ISO.
+Latest, Manual, E2E, and worker builds share one byte-affecting
+fingerprint registry under `@logs/na228/preflight/`. A physical miss is assembled
+to a unique incoming path, verified, atomically registered as
+`@work/cache/isos/<SHA-256>.iso`, and then promoted to its requested role.
+The hash-named image remains canonical; physical Latest, Previous, Manual, E2E,
+and worker outputs are ordinary hardlinks to it. Distinct fingerprints that
+produce the same SHA-256 share that image identity and all verified locations.
+Latest rotation hardlinks the outgoing Latest identity to Previous and updates
+both image-location records. If a destination is locked, the invocation reports
+pending and retains the verified cached image; the next matching request retries
+promotion without rebuilding. Physical candidates hold exclusive activity
+locks, so a later build can reclaim crash-orphaned incoming ISOs without
+touching live parallel builds.
+
+Preflight fingerprints both canonical source ISOs, ISO-composing Python code,
+the exact selected configuration resources, product/path configuration, active
+Python/Zlib/Zopfli versions, and the EE compiler components whenever selected C
+sources require them. `scripts/module_pipeline.py` prepares internal invocations
+and shared payload contributions; `scripts/build_configuration.py` composes
+them; `scripts/composer.py` closes typed image operations; and
+`image_assembler/` alone stages and verifies the ISO.
 
 The development injector reads the feature files under `catalog/` with
 `configurations/development.json`. It no longer has a separate runtime TSV

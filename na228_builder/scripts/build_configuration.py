@@ -9,11 +9,7 @@ from pathlib import Path
 
 from . import catalog as catalog_module
 from .composer import CompositionResult, compose_assembly_plan
-from ..image_assembler.assembler import (
-    assemble_image,
-    assemble_image_digest,
-    building_image_path,
-)
+from ..image_assembler.assembler import assemble_image
 from ..image_assembler.iso9660 import Iso9660, IsoInsertion, normalize_iso_path
 from .module_pipeline import prepare_module_pipeline
 from ..modules import translation_importer as translation_importer_module
@@ -41,9 +37,7 @@ class ConfigurationBuildResult:
     results: tuple[dict[str, object], ...]
     payload_result: dict[str, object] | None
     identity_edits: tuple[dict[str, object], ...]
-    staged_iso: Path | None
-    output_size_bytes: int | None = None
-    output_sha256: str | None = None
+    output_iso: Path
 
 
 @dataclass(frozen=True)
@@ -847,9 +841,8 @@ def build_configuration_candidate(
     payload_shift: int = 0,
     best_effort_metadata: bool = False,
     texture_cache_root: Path | None = None,
-    digest_only: bool = False,
 ) -> ConfigurationBuildResult:
-    """Compose and verify one physical or virtual configuration image."""
+    """Compose and verify one physical configuration image."""
     source_iso = source_iso.resolve()
     output_iso = output_iso.resolve()
     workspace = workspace.resolve()
@@ -892,12 +885,7 @@ def build_configuration_candidate(
     configuration_results = list(composed.results)
     payload_result = composed.payload_result
     composition = composed.composition
-    if digest_only:
-        digest_result = assemble_image_digest(source_iso, composition.plan)
-        assembly = digest_result.assembly
-    else:
-        digest_result = None
-        assembly = assemble_image(source_iso, output_iso, composition.plan)
+    assembly = assemble_image(source_iso, output_iso, composition.plan)
     results_by_owner: dict[str, list[IsoInsertion]] = {}
     for insertion in assembly.insertions:
         owner = composed.insertion_owners[insertion.path]
@@ -949,19 +937,15 @@ def build_configuration_candidate(
                 file=sys.stderr,
             )
         else:
-            if not digest_only:
-                staged = building_image_path(output_iso)
-                if staged.exists() or staged.is_symlink():
-                    staged.unlink()
+            if output_iso.exists() or output_iso.is_symlink():
+                output_iso.unlink()
             raise
 
     return ConfigurationBuildResult(
         results=tuple(configuration_results),
         payload_result=payload_result,
         identity_edits=tuple(identity_edits),
-        staged_iso=None if digest_only else building_image_path(output_iso),
-        output_size_bytes=(digest_result.size_bytes if digest_result else None),
-        output_sha256=(digest_result.sha256 if digest_result else None),
+        output_iso=output_iso,
     )
 
 
@@ -1028,19 +1012,11 @@ def main() -> int:
         help="Compose and conflict-check the configuration without staging an ISO.",
     )
     parser.add_argument(
-        "--digest-only",
-        action="store_true",
-        help="Verify and hash the virtual ISO without staging an ISO.",
-    )
-    parser.add_argument(
         "--best-effort-metadata",
         action="store_true",
         help="Keep a verified staged ISO when writing auxiliary build metadata fails.",
     )
     args = parser.parse_args()
-    if args.compose_only and args.digest_only:
-        parser.error("--compose-only and --digest-only are mutually exclusive")
-
     paths = PATHS or load_paths(Path(__file__).resolve(), allow_missing=True)
     workspace = paths.repository
     source_iso = args.source.resolve()
@@ -1099,23 +1075,13 @@ def main() -> int:
         configuration_log_directory=configuration_log_directory,
         payload_shift=args.payload_shift,
         best_effort_metadata=args.best_effort_metadata,
-        digest_only=args.digest_only,
     )
     configuration_results = build.results
     payload_result = build.payload_result
 
     print_configuration_summary(configuration, configuration_results, payload_result)
     print(f"  identity ({len(build.identity_edits)} edits)")
-    if args.digest_only:
-        assert build.output_size_bytes is not None
-        assert build.output_sha256 is not None
-        print(
-            f"Verified virtual ISO: {build.output_size_bytes} bytes; "
-            f"SHA-256 {build.output_sha256}"
-        )
-    else:
-        assert build.staged_iso is not None
-        print(f"Verified staged ISO: {build.staged_iso.name}")
+    print(f"Verified ISO candidate: {build.output_iso.name}")
     return 0
 
 

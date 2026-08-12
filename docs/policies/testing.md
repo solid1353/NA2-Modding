@@ -71,19 +71,18 @@ that behavior.
   belong to the user.
 - Internal PowerShell or Python entrypoints do not bypass these build
   boundaries.
-- `na228 build -d` validates the development configuration against the real
-  source ISO through the builder's compose-only path. It checks configuration,
-  catalog and patch guards, compilation and linking, derived changes, and
-  composition conflicts without staging or retaining an ISO or build record.
-- A dry run does not prove image assembly, boot, or runtime behavior. Run it
-  only when the agreed validation plan explicitly includes `na228 build -d`; it
-  is not an automatic additional check.
 - The only ordinary full-ISO build route for an agent is
-  `na228 worker [--ephemeral] work/<chat title>/build/<name>.iso`. Build a chat-owned
-  worker ISO only when the selected validation requires image assembly. It is
-  an internal agent artifact, never a user testing ground or deliverable. Agents
-  do not launch or runtime-execute it. Maintained E2E is a separate explicitly
-  selected route.
+  `na228 worker [--configuration <id>]
+  work/<chat title>/build/<name>.iso`. The configuration defaults to `test`.
+  Build a chat-owned worker ISO only when the selected validation requires
+  image assembly. It is an internal agent artifact, never a user testing ground
+  or deliverable. Agents do not launch or runtime-execute it. Maintained E2E is
+  a separate explicitly selected route.
+- An exact shared verified-build registry hit is reusable build evidence: it
+  proves the same byte-affecting fingerprint was already fully assembled and
+  verified. Do not rebuild merely to repeat that proof. A worker request
+  requires a verified matching physical ISO and creates its output as a
+  hardlink to the canonical hash-named cache image.
 - Agent-authorized builds are final validation steps except for the pre-change
   baseline required by an approved hash-equivalence comparison. Build that
   baseline before implementation with the agreed inputs and configuration.
@@ -93,12 +92,13 @@ that behavior.
   build exposes a failure, fix it, re-review the completed candidate, and then
   rerun the candidate build. Any subsequent implementation change invalidates
   the prior candidate result.
-- Use `--ephemeral` for every hash-equivalence baseline and candidate. The
-  command verifies the complete ISO through a streamed virtual overlay and
-  records and prints its size and SHA-256 without writing an ISO; compare the
-  retained records. For other worker builds, delete the ISO after the selected
-  validation and evidence extraction, whether validation passes or fails,
-  unless the user explicitly requested retention.
+- For hash-equivalence validation, build the baseline and candidate through
+  `na228 worker --configuration <id>` with identical configuration and source
+  inputs, then compare the SHA-256 values in their retained structured records.
+  Delete task-owned worker output links after the selected validation and
+  evidence extraction, whether validation passes or fails, unless the user
+  explicitly requested retention. The bounded canonical hash-cache image is
+  shared build evidence and is not a task-owned disposable copy.
 
 ### Visual game changes
 

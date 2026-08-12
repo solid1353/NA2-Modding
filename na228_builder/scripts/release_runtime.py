@@ -99,9 +99,6 @@ def build_release_iso(
     """Apply the packaged release configuration without writing runtime logs."""
     if not building_iso.name.endswith(".building"):
         raise ValueError("Release staging path must end in .building")
-    output_iso = building_iso.with_name(
-        building_iso.name[: -len(".building")]
-    )
     emit("Loading and verifying the selected configuration...")
     workspace, configuration = load_release_configuration(
         configuration_path,
@@ -111,7 +108,7 @@ def build_release_iso(
     emit("Applying modules and assembling the output image...")
     build = build_configuration_candidate(
         source_iso=na2_iso,
-        output_iso=output_iso,
+        output_iso=building_iso,
         configuration=configuration,
         workspace=workspace,
         configuration_log_directory=None,
@@ -119,7 +116,7 @@ def build_release_iso(
             application_directory() / "work" / "cache" / "texture_patcher"
         ),
     )
-    if build.staged_iso != building_iso.resolve():
+    if build.output_iso != building_iso.resolve():
         raise RuntimeError("Build engine produced an unexpected staging path")
     emit(
         f"Verified {len(build.results)} module invocations in {building_iso.name}."

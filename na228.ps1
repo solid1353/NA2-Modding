@@ -104,14 +104,13 @@ if ($mode -eq 'help') {
         '  additional launch arguments  See workshop help'
         ''
         '  na228 build l|m [-f]        Build Latest or Manual without running it'
-        '  na228 build -d              Validate development composition without creating an ISO'
         '  na228 test                  Run unit tests'
         '  na228 e2e [-s]              Run all E2E suites; -s also qualifies against shifted'
         '  na228 e2e create <suite> [game]       Create or replace suites/<suite>.p2m2 from its matching shared recording; optionally capture a reference game'
         '  na228 e2e rename <suite> <new-suite>  Rename the .p2m2 suite and its capture history'
         '  na228 e2e delete <suite>               Delete the .p2m2 suite and its capture history'
         '  na228 e2e update [-p]                  Update captures; -p preserves existing commits'
-        '  na228 worker [--ephemeral] work/<worker>/build/<name>.iso  Build a worker ISO; ephemeral verifies its hash without writing it'
+        '  na228 worker [--configuration <id>] work/<worker>/build/<name>.iso  Build or reuse a worker ISO'
         '  na228 release [version]     Publish a GitHub release'
         '  na228 help                  Show this help'
         "  games: $($paths.games.Names -join ', ')"
@@ -230,7 +229,7 @@ if ($mode -eq 'release') {
 
 if ($mode -eq 'build') {
     if ($arguments.Count -ne 1) {
-        throw 'na228 build requires exactly one target: l, m, or -d.'
+        throw 'na228 build requires exactly one target: l or m.'
     }
     $target = $arguments[0].ToLowerInvariant()
     switch ($target) {
@@ -246,15 +245,8 @@ if ($mode -eq 'build') {
                 -Force:$forceBuild
             return
         }
-        '-d' {
-            if ($forceBuild) {
-                throw '-f cannot be used with build -d.'
-            }
-            & (Join-Path $paths.scripts 'na228\build.ps1') -DryRun
-            return
-        }
         default {
-            throw "na228 build target must be l, m, or -d: $target"
+            throw "na228 build target must be l or m: $target"
         }
     }
 }
@@ -263,17 +255,31 @@ if ($mode -eq 'worker') {
     if ($forceBuild) {
         throw '-f is valid only for ordinary Latest or Manual builds.'
     }
-    $workerEphemeral = $false
+    $workerConfiguration = 'test'
+    $workerConfigurationSpecified = $false
     $workerOutputArgument = $null
-    if ($arguments.Count -eq 1) {
-        $workerOutputArgument = $arguments[0]
+    for ($index = 0; $index -lt $arguments.Count; $index++) {
+        $token = $arguments[$index]
+        if ($token -ieq '--configuration') {
+            if ($workerConfigurationSpecified) {
+                throw '--configuration may be specified only once.'
+            }
+            if ($index + 1 -ge $arguments.Count) {
+                throw '--configuration requires an ID.'
+            }
+            $index++
+            $workerConfiguration = $arguments[$index]
+            $workerConfigurationSpecified = $true
+        }
+        elseif ($null -eq $workerOutputArgument) {
+            $workerOutputArgument = $token
+        }
+        else {
+            throw 'Usage: na228 worker [--configuration <id>] work/<worker>/build/<name>.iso'
+        }
     }
-    elseif ($arguments.Count -eq 2 -and $arguments[0] -ieq '--ephemeral') {
-        $workerEphemeral = $true
-        $workerOutputArgument = $arguments[1]
-    }
-    else {
-        throw 'Usage: na228 worker [--ephemeral] work/<worker>/build/<name>.iso'
+    if ([string]::IsNullOrWhiteSpace($workerOutputArgument)) {
+        throw 'Usage: na228 worker [--configuration <id>] work/<worker>/build/<name>.iso'
     }
     $workerBuild = Get-Na2WorkerBuildContext `
         -OutputPath $workerOutputArgument `
@@ -283,7 +289,7 @@ if ($mode -eq 'worker') {
         -Action worker-build `
         -WorkerOutputIso $workerBuild.OutputIso `
         -WorkerLogDirectory $workerBuild.Logs `
-        -WorkerEphemeral:$workerEphemeral
+        -WorkerConfiguration $workerConfiguration
     return
 }
 

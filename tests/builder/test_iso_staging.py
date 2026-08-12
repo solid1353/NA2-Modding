@@ -4,47 +4,49 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.image_assembler.assembler import (
-    building_image_path,
-    staged_output_image,
-)
+from na228_builder.image_assembler.assembler import output_image_candidate
 
 
-class IsoStagingTests(unittest.TestCase):
-    def test_failure_removes_temporary_iso_and_preserves_current(self) -> None:
+class IsoCandidateTests(unittest.TestCase):
+    def test_failure_removes_unique_output_candidate(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / "source.iso"
-            output = root / "build" / "NA2.28 - Latest.iso"
+            output = root / "cache" / ".incoming" / "build-id.iso"
             source.write_bytes(b"new source")
-            output.parent.mkdir()
-            output.write_bytes(b"known good")
 
             with self.assertRaisesRegex(RuntimeError, "synthetic failure"):
-                with staged_output_image(source, output) as temporary:
-                    self.assertEqual(temporary, output.parent / "NA2.28 - Latest.iso.building")
-                    self.assertEqual(temporary.read_bytes(), b"new source")
-                    self.assertEqual(output.read_bytes(), b"known good")
+                with output_image_candidate(source, output) as candidate:
+                    self.assertEqual(candidate, output)
+                    self.assertEqual(candidate.read_bytes(), b"new source")
                     raise RuntimeError("synthetic failure")
 
-            self.assertEqual(output.read_bytes(), b"known good")
-            self.assertFalse(building_image_path(output).exists())
+            self.assertFalse(output.exists())
 
-    def test_success_leaves_verified_candidate_for_promotion(self) -> None:
+    def test_success_leaves_exact_candidate_for_registration(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / "source.iso"
-            output = root / "build" / "NA2.28 - Latest.iso"
+            output = root / "cache" / ".incoming" / "build-id.iso"
             source.write_bytes(b"new source")
-            output.parent.mkdir()
-            output.write_bytes(b"known good")
 
-            with staged_output_image(source, output) as temporary:
-                temporary.write_bytes(b"verified build")
-                self.assertEqual(output.read_bytes(), b"known good")
+            with output_image_candidate(source, output) as candidate:
+                candidate.write_bytes(b"verified build")
 
-            self.assertEqual(output.read_bytes(), b"known good")
-            self.assertEqual(building_image_path(output).read_bytes(), b"verified build")
+            self.assertEqual(output.read_bytes(), b"verified build")
+
+    def test_existing_candidate_is_never_replaced(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.iso"
+            output = root / "candidate.iso"
+            source.write_bytes(b"source")
+            output.write_bytes(b"preserve")
+
+            with self.assertRaises(FileExistsError):
+                with output_image_candidate(source, output):
+                    pass
+            self.assertEqual(output.read_bytes(), b"preserve")
 
 
 if __name__ == "__main__":

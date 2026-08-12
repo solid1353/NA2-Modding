@@ -61,16 +61,16 @@ uncommitted release work:
 
 The toolchain is pinned by `scripts/release/toolchain.json` and
 `scripts/release/requirements.txt`. The builder creates an isolated virtual
-environment under `@release/temp/`, runs the complete
+environment under `@work/release/temp/`, runs the complete
 builder test suite, inventories the full definition resource closure, builds a
 precompiled object for each injection-owned runtime C source, builds a PyInstaller
 one-file console EXE, self-tests the packaged data with the derived default
 configuration, and atomically updates the configured ZIP
 candidate. Temporary packaging state is removed afterward.
 
-Development ZIPs are placed under `@release/development/`; clean production
-packages use `@release/`. Published packages are created by the GitHub release
-workflow from a tagged commit.
+Development ZIPs are placed under `@work/release/development/`; clean
+production packages use `@release/`. Published packages are created by the
+GitHub release workflow from a tagged commit.
 
 ## Release manifest
 

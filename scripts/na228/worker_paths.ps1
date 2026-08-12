@@ -90,7 +90,6 @@ function Get-Na2WorkerBuildContext {
     }
 
     $worker | Add-Member -NotePropertyName OutputIso -NotePropertyValue $resolvedOutput
-    $worker | Add-Member -NotePropertyName BuildingIso -NotePropertyValue "$resolvedOutput.building"
     return $worker
 }
 

@@ -6,11 +6,12 @@ import unittest
 from pathlib import Path
 
 from na228_builder.scripts.build_preflight import (
-    check_preflight,
-    collect_build_state,
     builder_tree_entry,
+    collect_build_state,
+    lookup_registry,
+    record_locations,
+    record_registry,
     state_fingerprint,
-    write_receipt,
 )
 from na228_builder.modules.binary_patcher import engine as binary_patcher
 
@@ -158,7 +159,8 @@ class BuildPreflightTests(unittest.TestCase):
             "na2_iso": na2_iso,
             "nun5_iso": nun5_iso,
             "latest_iso": latest_iso,
-            "receipt": workspace / "logs" / "na228" / "preflight" / "latest.json",
+            "registry": workspace / "logs" / "na228" / "preflight" / "registry.json",
+            "cache": workspace / "work" / "cache" / "isos",
         }
 
     def state(self, paths: dict[str, Path], **overrides: object) -> dict[str, object]:
@@ -173,14 +175,11 @@ class BuildPreflightTests(unittest.TestCase):
         return collect_build_state(**arguments)  # type: ignore[arg-type]
 
     def check(self, paths: dict[str, Path]) -> dict[str, object]:
-        return check_preflight(
+        return lookup_registry(
             workspace=paths["workspace"],
-            na2_iso=paths["na2_iso"],
-            nun5_iso=paths["nun5_iso"],
-            output_iso=paths["latest_iso"],
-            configuration_path=paths["configuration"],
-            receipt_path=paths["receipt"],
-            dependencies=DEPENDENCIES,
+            registry_path=paths["registry"],
+            cache_root=paths["cache"],
+            state=self.state(paths),
         )
 
     def record(
@@ -188,15 +187,20 @@ class BuildPreflightTests(unittest.TestCase):
         paths: dict[str, Path],
         expected_fingerprint: str,
     ) -> dict[str, object]:
-        return write_receipt(
+        incoming = paths["cache"] / ".incoming" / "candidate.iso"
+        incoming.parent.mkdir(parents=True, exist_ok=True)
+        incoming.write_bytes(paths["latest_iso"].read_bytes())
+        provenance = paths["workspace"] / "provenance"
+        provenance.mkdir(exist_ok=True)
+        (provenance / "configuration.tsv").write_text("test\n", encoding="utf-8")
+        return record_registry(
             workspace=paths["workspace"],
-            na2_iso=paths["na2_iso"],
-            nun5_iso=paths["nun5_iso"],
-            output_iso=paths["latest_iso"],
-            configuration_path=paths["configuration"],
-            receipt_path=paths["receipt"],
+            registry_path=paths["registry"],
+            cache_root=paths["cache"],
+            state=self.state(paths),
             expected_fingerprint=expected_fingerprint,
-            dependencies=DEPENDENCIES,
+            image=incoming,
+            provenance=provenance,
         )
 
     def test_fingerprint_is_deterministic_and_invalidates_every_declared_input(self) -> None:
@@ -244,6 +248,14 @@ class BuildPreflightTests(unittest.TestCase):
 
             (paths["builder"] / "scripts" / "release_runtime.py").write_text(
                 "RELEASE_ONLY = True\n", encoding="utf-8"
+            )
+            self.assertEqual(
+                with_documentation["sha256"],
+                builder_tree_entry(paths["builder"])["sha256"],
+            )
+
+            (paths["builder"] / "configurations" / "unused.json").write_text(
+                "{}\n", encoding="utf-8"
             )
             self.assertEqual(
                 with_documentation["sha256"],
@@ -323,44 +335,90 @@ class BuildPreflightTests(unittest.TestCase):
             settings.write_text(json.dumps(document), encoding="utf-8")
             self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
 
-    def test_receipt_hit_requires_matching_fingerprint_and_output_hash(self) -> None:
+    def test_registry_hit_reuses_a_verified_physical_image(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             fingerprint = state_fingerprint(self.state(paths))
-            self.assertEqual(self.check(paths)["reason"], "receipt-missing")
+            self.assertEqual(self.check(paths)["reason"], "fingerprint-missing")
             written = self.record(paths, fingerprint)
-            self.assertEqual(written["status"], "written")
+            self.assertEqual(written["status"], "recorded")
             self.assertEqual(self.check(paths)["status"], "hit")
 
-            original = paths["latest_iso"].read_bytes()
-            paths["latest_iso"].write_bytes(b"X" * len(original))
-            self.assertEqual(self.check(paths)["reason"], "output-iso-hash-mismatch")
-            paths["latest_iso"].write_bytes(original)
+            cached = Path(str(written["image"]))
+            cached.write_bytes(b"X" * cached.stat().st_size)
+            self.assertEqual(self.check(paths)["reason"], "physical-image-missing")
 
             paths["builder"].joinpath("scripts", "engine.py").write_text(
                 "ENGINE = 3\n", encoding="utf-8"
             )
-            self.assertEqual(self.check(paths)["reason"], "fingerprint-mismatch")
+            self.assertEqual(self.check(paths)["reason"], "fingerprint-missing")
 
-    def test_missing_corrupt_and_tampered_receipts_are_safe_misses(self) -> None:
+    def test_missing_corrupt_and_tampered_registry_is_a_safe_miss(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             fingerprint = state_fingerprint(self.state(paths))
             self.record(paths, fingerprint)
 
-            paths["receipt"].write_text("not json\n", encoding="utf-8")
-            self.assertEqual(self.check(paths)["reason"], "receipt-invalid")
+            paths["registry"].write_text("not json\n", encoding="utf-8")
+            self.assertEqual(self.check(paths)["reason"], "registry-invalid")
 
+            paths["registry"].unlink()
             self.record(paths, fingerprint)
-            receipt = json.loads(paths["receipt"].read_text(encoding="utf-8"))
-            receipt["state"]["configuration"] = "configurations/tampered.json"
-            paths["receipt"].write_text(json.dumps(receipt), encoding="utf-8")
-            self.assertEqual(self.check(paths)["reason"], "receipt-invalid")
+            registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
+            registry["entries"][fingerprint]["state"]["configuration"] = "tampered.json"
+            paths["registry"].write_text(json.dumps(registry), encoding="utf-8")
+            self.assertEqual(self.check(paths)["reason"], "fingerprint-missing")
 
-            paths["receipt"].unlink()
-            self.assertEqual(self.check(paths)["reason"], "receipt-missing")
+            paths["registry"].unlink()
+            self.assertEqual(self.check(paths)["reason"], "fingerprint-missing")
 
-    def test_receipt_is_not_written_if_inputs_change_during_build(self) -> None:
+    def test_version_one_registry_migrates_without_losing_physical_locations(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self.create_workspace(Path(directory))
+            state = self.state(paths)
+            fingerprint = state_fingerprint(state)
+            recorded = self.record(paths, fingerprint)
+            registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
+            sha256 = registry["entries"][fingerprint]["sha256"]
+            size = registry["images"][sha256]["size"]
+            Path(str(recorded["image"])).unlink()
+            legacy = {
+                "schema_version": 1,
+                "entries": {
+                    fingerprint: {
+                        "state": state,
+                        "size": size,
+                        "sha256": sha256,
+                        "verified_utc": registry["entries"][fingerprint][
+                            "verified_utc"
+                        ],
+                        "locations": ["build/NA2.28 - Latest.iso"],
+                    }
+                },
+                "pending": {},
+            }
+            paths["registry"].write_text(json.dumps(legacy), encoding="utf-8")
+
+            migrated_hit = self.check(paths)
+            self.assertEqual(migrated_hit["status"], "hit")
+            self.assertEqual(
+                Path(str(migrated_hit["image"])), paths["latest_iso"].resolve()
+            )
+            record_locations(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                fingerprint=fingerprint,
+                locations=[paths["latest_iso"]],
+            )
+            migrated = json.loads(paths["registry"].read_text(encoding="utf-8"))
+            self.assertEqual(migrated["schema_version"], 2)
+            self.assertEqual(
+                migrated["images"][sha256]["locations"],
+                ["build/NA2.28 - Latest.iso"],
+            )
+
+    def test_registry_is_not_written_if_inputs_change_during_build(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             fingerprint = state_fingerprint(self.state(paths))
@@ -369,17 +427,198 @@ class BuildPreflightTests(unittest.TestCase):
             )
             result = self.record(paths, fingerprint)
             self.assertEqual(result["reason"], "inputs-changed-during-build")
-            self.assertFalse(paths["receipt"].exists())
+            self.assertFalse(paths["registry"].exists())
 
-    def test_receipt_contains_no_machine_specific_absolute_paths(self) -> None:
+    def test_registry_contains_only_portable_locations(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             fingerprint = state_fingerprint(self.state(paths))
             self.record(paths, fingerprint)
-            text = paths["receipt"].read_text(encoding="utf-8")
+            record_locations(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                fingerprint=fingerprint,
+                locations=[paths["latest_iso"]],
+            )
+            text = paths["registry"].read_text(encoding="utf-8")
             self.assertNotIn(str(paths["workspace"]), text)
             self.assertIn('"configuration": "configurations/release.json"', text)
+            self.assertIn('"locations": [', text)
 
+            cached = paths["cache"] / f"{self.check(paths)['output_sha256']}.iso"
+            self.assertTrue(cached.exists())
+            record_locations(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                fingerprint=fingerprint,
+                locations=[paths["latest_iso"]],
+            )
+            self.assertEqual(cached.read_bytes(), paths["latest_iso"].read_bytes())
+
+    def test_identical_outputs_share_physical_locations_across_fingerprints(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self.create_workspace(Path(directory))
+            first_state = self.state(paths)
+            first_fingerprint = state_fingerprint(first_state)
+            recorded = self.record(paths, first_fingerprint)
+            record_locations(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                fingerprint=first_fingerprint,
+                locations=[paths["latest_iso"]],
+            )
+
+            second_state = self.state(
+                paths,
+                dependencies=dict(DEPENDENCIES, python_version="other-inputs"),
+            )
+            second_fingerprint = state_fingerprint(second_state)
+            second_image = paths["cache"] / ".incoming" / "same-output.iso"
+            second_image.parent.mkdir(parents=True, exist_ok=True)
+            second_image.write_bytes(paths["latest_iso"].read_bytes())
+            record_registry(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                state=second_state,
+                expected_fingerprint=second_fingerprint,
+                image=second_image,
+                provenance=None,
+            )
+            Path(str(recorded["image"])).unlink()
+
+            reused = lookup_registry(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                state=second_state,
+            )
+            self.assertEqual(reused["status"], "hit")
+            self.assertEqual(Path(str(reused["image"])), paths["latest_iso"].resolve())
+            registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
+            self.assertEqual(len(registry["entries"]), 2)
+            self.assertEqual(len(registry["images"]), 1)
+
+    def test_location_completion_tracks_latest_to_previous_rotation_by_image_hash(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self.create_workspace(Path(directory))
+            old_state = self.state(paths)
+            old_fingerprint = state_fingerprint(old_state)
+            old_record = self.record(paths, old_fingerprint)
+            record_locations(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                fingerprint=old_fingerprint,
+                locations=[paths["latest_iso"]],
+            )
+            Path(str(old_record["image"])).unlink()
+
+            new_state = self.state(
+                paths,
+                dependencies=dict(DEPENDENCIES, python_version="new-inputs"),
+            )
+            new_fingerprint = state_fingerprint(new_state)
+            incoming = paths["cache"] / ".incoming" / "new.iso"
+            incoming.parent.mkdir(parents=True, exist_ok=True)
+            incoming.write_bytes(b"new verified image")
+            new_record = record_registry(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                state=new_state,
+                expected_fingerprint=new_fingerprint,
+                image=incoming,
+                provenance=None,
+            )
+
+            previous_iso = paths["latest_iso"].with_name("NA2.28 - Previous.iso")
+            paths["latest_iso"].replace(previous_iso)
+            paths["latest_iso"].hardlink_to(Path(str(new_record["image"])))
+            record_locations(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                fingerprint=new_fingerprint,
+                locations=[paths["latest_iso"], previous_iso],
+            )
+
+            old_reuse = lookup_registry(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                state=old_state,
+            )
+            self.assertEqual(Path(str(old_reuse["image"])), previous_iso.resolve())
+            registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
+            old_sha256 = registry["entries"][old_fingerprint]["sha256"]
+            new_sha256 = registry["entries"][new_fingerprint]["sha256"]
+            self.assertEqual(
+                registry["images"][old_sha256]["locations"],
+                ["build/NA2.28 - Previous.iso"],
+            )
+            self.assertIn(
+                "build/NA2.28 - Latest.iso",
+                registry["images"][new_sha256]["locations"],
+            )
+
+    def test_registry_bounds_entries_and_locations(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self.create_workspace(Path(directory))
+            first_state = self.state(paths)
+            first_fingerprint = state_fingerprint(first_state)
+            self.record(paths, first_fingerprint)
+            for index in range(15):
+                state = self.state(
+                    paths,
+                    dependencies=dict(
+                        DEPENDENCIES,
+                        python_version=f"1.{index + 1}",
+                    ),
+                )
+                fingerprint = state_fingerprint(state)
+                image = paths["cache"] / ".incoming" / f"bounded-{index}.iso"
+                image.parent.mkdir(parents=True, exist_ok=True)
+                if index == 14:
+                    image.write_bytes(b"verified latest")
+                else:
+                    image.write_bytes(f"bounded-{index:02d}".encode("ascii"))
+                record_registry(
+                    workspace=paths["workspace"],
+                    registry_path=paths["registry"],
+                    cache_root=paths["cache"],
+                    state=state,
+                    expected_fingerprint=fingerprint,
+                    image=image,
+                    provenance=None,
+                )
+
+            registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
+            self.assertEqual(len(registry["entries"]), 15)
+            self.assertNotIn(first_fingerprint, registry["entries"])
+
+            newest_fingerprint = fingerprint
+            for index in range(21):
+                location = paths["workspace"] / "build" / f"copy-{index}.iso"
+                location.write_bytes(b"verified latest")
+                record_locations(
+                    workspace=paths["workspace"],
+                    registry_path=paths["registry"],
+                    cache_root=paths["cache"],
+                    fingerprint=newest_fingerprint,
+                    locations=[location],
+                )
+
+            registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
+            newest_sha256 = registry["entries"][newest_fingerprint]["sha256"]
+            locations = registry["images"][newest_sha256]["locations"]
+            self.assertEqual(len(locations), 20)
+            self.assertNotIn("build/copy-0.iso", locations)
 
 if __name__ == "__main__":
     unittest.main()

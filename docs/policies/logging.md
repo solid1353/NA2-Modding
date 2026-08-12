@@ -59,40 +59,47 @@ below `@task_logs/`.
   corresponding retained build record is available. Parallel build completion
   serializes map replacement through `@logs/na228/.builds.lock` and preserves
   active, not-yet-mapped build records.
-- `preflight/latest.json`: the atomically replaced successful-build receipt
-  used for no-op detection. It records only portable logical labels, the
-  deterministic input fingerprint, and the Latest ISO size and SHA-256.
-- `preflight/e2e_test_normal.json` and `preflight/e2e_test_shifted.json`: the
-  output-specific receipts for the normal and shifted E2E Test variants. Their
-  fingerprints include both the resident-payload layout shift and the build role's
-  boot-ELF CRC discriminator.
+- `preflight/registry.json`: the atomically replaced shared verified-build
+  registry used by Latest, Manual, E2E, and worker builds. Each
+  fingerprint entry records its deterministic byte-affecting state, ISO
+  SHA-256, and verification time. Image records keyed by SHA-256 own verified
+  size and portable physical locations, so distinct fingerprints with identical
+  output reuse the same image.
+- `preflight/records/<fingerprint>/`: reusable structured provenance for each
+  registry entry. Registry entries, provenance records, and cached images are
+  capped at 15; retained locations per image are independently capped at 20.
 - `manual/<build-id>/`: the latest Manual-only configuration record, including
-  `manual_result.tsv`. It is independent of `builds.tsv` and the Latest
-  receipt; a successful Manual build replaces the previous Manual record.
+  `build_result.tsv`. It is independent of `builds.tsv`; a successful Manual
+  build replaces the previous Manual record.
 
-Help output is not logged. A preflight cache hit reuses the Latest ISO's
-structured record. A full verified build always retains its new structured
-record as the Latest ISO's latest provenance, even when the staged image is
-identical and records `ISO result: unchanged`; the superseded record is then
-pruned, so this does not increase retained history. A changed staged image records
-`ISO result: updated`; its structured record becomes latest and the previous
-latest record rotates with the outgoing ISO. Unreferenced structured records
-are deleted only after the complete four-role mapping has been replaced.
-Deleting or corrupting the preflight receipt is safe: the next invocation runs
-the complete verified build and recreates the receipt only after success.
-Manual-only builds always perform complete composition, report whether the
-Manual ISO changed, and record that rotation is disabled and PCSX2 is left
-running.
+Help output is not logged. An exact registry hit clones the matching structured
+provenance into the invocation's role-specific build record without repeating
+assembly. A full verified physical build first moves its unique candidate into
+`@work/cache/isos/<SHA-256>.iso` and registers it. Promotion then updates the
+requested role by creating or atomically replacing a hardlink to the canonical
+hash-named image. Latest rotation similarly replaces Previous with a hardlink
+to the outgoing Latest image and synchronizes both locations in the registry.
+If a destination is locked, the invocation reports pending and the hash-named
+ISO remains available for launch. The next request with the same fingerprint
+retries promotion naturally through the cache hit.
+Physical incoming candidates use exclusive activity locks; the next physical
+build removes unlocked crash leftovers before creating its own candidate.
+Deleting or corrupting the registry is safe: the next invocation runs the
+complete verified build and recreates it only after success.
+Manual-only builds require an exact fully verified composition, which may be
+reused from the shared registry. They report whether the Manual ISO changed and
+record that rotation is disabled and PCSX2 is left running.
 
 ## Worker build and runtime logs
 
-`na228 worker [--ephemeral] work/<chat title>/build/<name>.iso` keeps its
+`na228 worker [--configuration <id>]
+work/<chat title>/build/<name>.iso` keeps its
 operational `latest.log`/`rolling.log` and structured `builds/<build-id>/`
-records under that chat's `work/<chat title>/logs/`. Ephemeral worker records
-include the verified virtual output size and SHA-256 and mark the output as not
-retained; no ISO is written. Worker records never participate in or prune shared
-Test/Latest/Previous records. Completed structured worker records are capped at
-20 per chat; task cleanup may delete them sooner under the retention rules.
+records under that chat's `work/<chat title>/logs/`. Worker builds participate
+in the shared verified-build registry but never participate in or prune shared
+Test/Latest/Previous role records. Completed structured worker records are
+capped at 20 per chat; task cleanup may delete them sooner under the retention
+rules.
 
 Persistent command logs must be normalized after transcript capture. They omit
 PowerShell transcript boilerplate, replace configured roots with aliases, and

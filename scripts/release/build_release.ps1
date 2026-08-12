@@ -70,9 +70,11 @@ foreach ($field in @('platform', 'architecture', 'python_version')) {
     }
 }
 
-$releaseRoot = $paths.release
-if ($Development) {
-    $releaseRoot = Join-Path $releaseRoot 'development'
+$releaseRoot = if ($Development) {
+    Join-Path $paths.work 'release\development'
+}
+else {
+    $paths.release
 }
 New-Item -ItemType Directory -Force -Path $releaseRoot | Out-Null
 New-Item -ItemType Directory -Force -Path $releaseTemp | Out-Null

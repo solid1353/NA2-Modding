@@ -6,17 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.image_assembler.assembler import (
-    assemble_image,
-    assemble_image_digest,
-    building_image_path,
-)
 from na228_builder.image_assembler.iso9660 import SECTOR, Iso9660, insert_files
-from na228_builder.image_assembler.operations import (
-    AssemblyPlan,
-    FileInsertion,
-    FileReplacement,
-)
 
 
 RECORDED_AT = bytes((126, 7, 19, 12, 0, 0, 12))
@@ -132,43 +122,6 @@ def make_iso(
 
 
 class IsoInsertionTests(unittest.TestCase):
-    def test_virtual_digest_matches_verified_staged_assembly_without_output(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            source_path = root / "source.iso"
-            output_path = root / "retained.iso"
-            source_data = make_iso(source_path)
-            plan = AssemblyPlan(
-                replacements=(
-                    FileReplacement(
-                        "PRG/BTL.BIN",
-                        b"BTL!",
-                        b"NEW!",
-                        "test",
-                        "replace fixture file",
-                    ),
-                ),
-                insertions=(
-                    FileInsertion(
-                        "PRG/MOD.BIN",
-                        b"M" * 3000,
-                        "test",
-                        "insert fixture file",
-                    ),
-                ),
-            )
-
-            retained = assemble_image(source_path, output_path, plan)
-            staged_path = building_image_path(output_path)
-            expected_hash = hashlib.sha256(staged_path.read_bytes()).hexdigest().upper()
-            virtual = assemble_image_digest(source_path, plan)
-
-            self.assertEqual(virtual.assembly, retained)
-            self.assertEqual(virtual.size_bytes, len(source_data))
-            self.assertEqual(virtual.sha256, expected_hash)
-            self.assertEqual(source_path.read_bytes(), source_data)
-            self.assertFalse(output_path.exists())
-
     def test_inserts_deterministically_without_resizing_or_touching_source(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

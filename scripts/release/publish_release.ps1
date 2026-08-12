@@ -15,7 +15,7 @@ $toolchain = Get-Content -Raw -LiteralPath $toolchainPath | ConvertFrom-Json
 $manifestRelative = [string]$toolchain.release_manifest
 $manifestPath = [IO.Path]::GetFullPath((Join-Path $repository $manifestRelative))
 $builderPath = Join-Path $PSScriptRoot 'build_release.ps1'
-$productPath = [IO.Path]::GetFullPath($paths.product_config)
+$settingsPath = [IO.Path]::GetFullPath($paths.files.settings)
 
 function Invoke-ReleaseGit {
     param(
@@ -46,8 +46,8 @@ if (-not (Test-Path -LiteralPath $builderPath -PathType Leaf)) {
 }
 
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
-$product = Get-Content -Raw -LiteralPath $productPath | ConvertFrom-Json
-$productName = [string]$product.title
+$settings = Get-Content -Raw -LiteralPath $settingsPath | ConvertFrom-Json
+$productName = [string]$settings.title
 $targetVersion = if ([string]::IsNullOrWhiteSpace($Version)) {
     [string]$manifest.product_version
 }

@@ -435,7 +435,7 @@ negative performance result; it does not contradict the static dependency
 findings below.
 
 Read-only Ghidra 12.1.2 exports under
-`@analysis/disassembly/NA2/exports/SLPS_258.37/` establish the dependency
+`@disassembly/NA2/exports/SLPS_258.37/` establish the dependency
 boundary. `FUN_001e0ee0` allocates both the `0x60`-byte memory-card worker at
 global `0x006075F4` and the `0x2400`-byte live save object at global
 `0x006075F8` before it starts the audio and ROFS tasks. The worker's record-load

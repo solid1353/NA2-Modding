@@ -14,7 +14,7 @@ from typing import Callable, Iterable
 
 
 RELEASE_MANIFEST_NAME = "release_manifest.json"
-PRODUCT_CONFIG_NAME = "product.json"
+SETTINGS_NAME = "settings.json"
 REQUIRED_IMAGE_IDS = ("na2", "nun5")
 HASH_CHUNK_SIZE = 8 * 1024 * 1024
 ERROR_LOG_NAME = "builder-error.log"
@@ -217,16 +217,16 @@ def load_release_manifest() -> ReleaseManifest:
         raise ReleaseError(
             f"Packaged release data is missing: {RELEASE_MANIFEST_NAME}"
         ) from exc
-    product_path = Path(__file__).resolve().parents[2] / PRODUCT_CONFIG_NAME
+    settings_path = Path(__file__).resolve().parents[2] / SETTINGS_NAME
     try:
-        product = json.loads(product_path.read_text(encoding="utf-8"))
+        settings = json.loads(settings_path.read_text(encoding="utf-8"))
     except (FileNotFoundError, OSError, json.JSONDecodeError) as exc:
         raise ReleaseError(
-            f"Packaged release data is missing or invalid: {PRODUCT_CONFIG_NAME}"
+            f"Packaged release data is missing or invalid: {SETTINGS_NAME}"
         ) from exc
-    if not isinstance(product, dict):
-        raise ReleaseError("Product config root must be an object")
-    return parse_release_manifest(text, product_name=product.get("title"))
+    if not isinstance(settings, dict):
+        raise ReleaseError("Settings root must be an object")
+    return parse_release_manifest(text, product_name=settings.get("title"))
 
 
 def iso_candidates(

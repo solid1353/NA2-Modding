@@ -15,8 +15,8 @@
   Feature-named JSON files under
   `na228_builder/catalog/` own selectable definitions; files under
   `na228_builder/catalog/implementation/` own guarded binary edits, runtime
-  hooks and payload declarations, and targets. Root `product.json` owns output
-  identity.
+  hooks and payload declarations, and targets. Root `settings.json` owns output
+  identity, build variants, and project launch settings.
 - JSON files under `na228_builder/configurations/` are the only repository build
   definitions. Feature enablement and nested selection live only there; there
   is no separate profile or feature-pin table.

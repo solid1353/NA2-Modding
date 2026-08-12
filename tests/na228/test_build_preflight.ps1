@@ -72,25 +72,6 @@ exit $LASTEXITCODE
 }
 '@
     )
-    [IO.File]::WriteAllText(
-        (Join-Path $repository 'product.json'),
-        @'
-{
-  "schema_version": 1,
-  "title": "Synthetic Product",
-  "serial": "TEST-00000",
-  "output_boot_path": "TEST_000.00",
-  "builds": {
-    "latest": { "aliases": ["l"] },
-    "previous": { "aliases": ["p"] },
-    "manual": { "aliases": ["m"] },
-    "e2e_test": {},
-    "e2e_test_shifted": {}
-  }
-}
-'@
-    )
-
     $manifest = @'
 {
   "schema_version": 1,

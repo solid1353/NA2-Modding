@@ -60,7 +60,7 @@ class ProjectPathTests(unittest.TestCase):
                 "schema_version": 1,
                 "imports": {"workshop": "../missing/paths.json"},
                 "roots": {"repository": ".", "build": "build"},
-                "files": {"product_config": "product.json"},
+                "files": {"settings": "settings.json"},
             }
             (root / "paths.json").write_text(
                 json.dumps(manifest), encoding="utf-8"
@@ -246,7 +246,7 @@ class ProjectPathTests(unittest.TestCase):
                 },
                 "files": {
                     "game_catalog": "@repository/games.json",
-                    "product_config": "@repository/product.json",
+                    "settings": "@repository/settings.json",
                 },
             }
             source_catalog = {
@@ -262,10 +262,12 @@ class ProjectPathTests(unittest.TestCase):
                     },
                 },
             }
-            product_config = {
+            settings = {
                 "schema_version": 1,
                 "title": "Narutimate Accel v2.28",
                 "serial": "SLOP-NA228",
+                "output_boot_path": "SLOP_NA2.28",
+                "startup_fast_forward_frames": 321,
                 "builds": {
                     "latest": {
                         "aliases": ["l"],
@@ -278,8 +280,8 @@ class ProjectPathTests(unittest.TestCase):
             (root / "games.json").write_text(
                 json.dumps(source_catalog), encoding="utf-8"
             )
-            (root / "product.json").write_text(
-                json.dumps(product_config), encoding="utf-8"
+            (root / "settings.json").write_text(
+                json.dumps(settings), encoding="utf-8"
             )
             (root / "pcsx2/game_settings/SLOP-NA228.ini").write_text(
                 "[MemoryCards]\nSlot1_Filename = NA v2.28.ps2\n",
@@ -324,9 +326,9 @@ class ProjectPathTests(unittest.TestCase):
             catalog = {
                 "schema_version": 1,
                 "sources": source_catalog["sources"],
-                "title": product_config["title"],
-                "serial": product_config["serial"],
-                "builds": product_config["builds"],
+                "title": settings["title"],
+                "serial": settings["serial"],
+                "builds": settings["builds"],
             }
             na2_paths = derive_game_paths(
                 "NA2",

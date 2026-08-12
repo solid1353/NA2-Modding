@@ -12,7 +12,7 @@ $paths = Get-Na2Paths
 . $paths.files.ghidra_runtime
 
 $analysisDirectory = if ($Target -eq 'shared') { 'shared' } else { $Target }
-$analysisRoot = Join-Path $paths.analysis "disassembly\$analysisDirectory"
+$analysisRoot = Join-Path $paths.disassembly $analysisDirectory
 $projectRoot = Join-Path $analysisRoot 'ghidra'
 $runtimeRoot = Join-Path $paths.work "temp\ghidra_export\$Target"
 $ghidra = Initialize-GhidraRuntime `

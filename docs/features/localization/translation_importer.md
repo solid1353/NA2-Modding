@@ -21,7 +21,7 @@ history and the builder's configuration-resource fingerprint own content identit
 `mappings.tsv` owns the canonical executable donor translations, overrides,
 and optional pointer inventory. Normal builds import only `mappings.tsv`. Root
 `catalog/implementation/string_patches.json` owns the guarded imported-title
-declaration, while root `product.title` supplies its replacement;
+declaration, while root `settings.title` supplies its replacement;
 `string_patcher` applies that selected operation to the normal translation path.
 
 ## Source and target scope

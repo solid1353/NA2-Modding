@@ -323,7 +323,7 @@ weakening their exact byte guard.
 The currently supported semantic string operation is
 `replace_imported_game_title`. Its definition guards the imported text plus
 the expected mapping and occurrence counts; when selected, the string patcher
-replaces that text with root `product.title` before choosing inline or linked
+replaces that text with root `settings.title` before choosing inline or linked
 external placement. Disabling its catalog setting leaves the imported text
 unchanged.
 

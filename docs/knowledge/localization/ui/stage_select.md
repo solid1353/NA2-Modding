@@ -19,8 +19,8 @@ font behavior are outside this patch.
 
 Evidence was obtained from the clean extracted files under `@source_na2` and
 `@source_nun5`, the preserved Ghidra C/TXT exports under
-`@analysis/disassembly/NA2/exports/BTL.BIN/` and
-`@analysis/disassembly/NUN5/exports/BTL.BIN/`, Capstone 5 disassembly of ranges
+`@disassembly/NA2/exports/BTL.BIN/` and
+`@disassembly/NUN5/exports/BTL.BIN/`, Capstone 5 disassembly of ranges
 omitted by Ghidra, and the paired archived Slot 3 memory/screenshots under
 `@work/UI translation/runtime_cases/remaining_03_stage_select_total_mismatch/`.
 

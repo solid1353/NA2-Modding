@@ -111,7 +111,7 @@ class BuildPreflightTests(unittest.TestCase):
                         "pcsx2_memory_cards": "shared/memory_cards",
                     },
                     "files": {
-                        "product_config": "@repository/product.json",
+                        "settings": "@repository/settings.json",
                         "game_catalog": "@repository/games.json",
                     },
                 }
@@ -130,13 +130,14 @@ class BuildPreflightTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        (workspace / "product.json").write_text(
+        (workspace / "settings.json").write_text(
             json.dumps(
                 {
                     "schema_version": 1,
                     "title": "Test Product",
                     "serial": "TEST-00000",
                     "output_boot_path": "SLOP_NA2.28",
+                    "startup_fast_forward_frames": 321,
                     "builds": {"latest": {}},
                 }
             ),
@@ -312,14 +313,14 @@ class BuildPreflightTests(unittest.TestCase):
             )
             self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
 
-    def test_product_configuration_invalidates_fingerprint(self) -> None:
+    def test_project_settings_invalidate_fingerprint(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             initial = state_fingerprint(self.state(paths))
-            product = paths["workspace"] / "product.json"
-            document = json.loads(product.read_text(encoding="utf-8"))
+            settings = paths["workspace"] / "settings.json"
+            document = json.loads(settings.read_text(encoding="utf-8"))
             document["title"] = "Changed Product"
-            product.write_text(json.dumps(document), encoding="utf-8")
+            settings.write_text(json.dumps(document), encoding="utf-8")
             self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
 
     def test_receipt_hit_requires_matching_fingerprint_and_output_hash(self) -> None:

@@ -5,7 +5,7 @@
 - Read the relevant topic/component knowledge before repeating research. For
   game-file investigations, begin with
   [`../knowledge/game/files/README.md`](../knowledge/game/files/README.md).
-- Treat the entire `@analysis/disassembly/` tree as a read-only evidence
+- Treat the entire `@disassembly/` tree as a read-only evidence
   archive. Inspect its existing projects and exports without modifying their
   contents or metadata. Never open a Ghidra project there in write mode,
   reanalyze it, rename its symbols, regenerate or replace its exports, change

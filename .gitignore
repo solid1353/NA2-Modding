@@ -5,6 +5,7 @@ Desktop.ini
 # Heavy/generated workspace folders
 /build
 /logs
+/release/
 /work
 /e2e/captures/
 /e2e/.transactions/

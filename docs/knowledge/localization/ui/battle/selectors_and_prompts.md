@@ -73,8 +73,8 @@ containers. No stored texture blobs, whole-container replacement, executable
 layout patch, or `MODE1CMN.CCS` replacement is required.
 
 Evidence: the exact boot-ELF identities above, the preserved C/TXT exports at
-`@analysis/disassembly/NA2/exports/SLPS_258.37/` and
-`@analysis/disassembly/NUN5/exports/SLES_556.05/`, a complete canonical CVM
+`@disassembly/NA2/exports/SLPS_258.37/` and
+`@disassembly/NUN5/exports/SLES_556.05/`, a complete canonical CVM
 inventory, decoded RGBA equality for all 72 mappings, component-range diff
 containment, and exact fixed-size recompression of all 61 targets. The
 compositor interpretation and donor coverage have **high confidence**;

@@ -19,7 +19,7 @@ though the boot ELF warrants a full-program analysis project.
 ## Decision
 
 - `SLPS_258.37` is the only current full-program disassembly candidate. Create
-  or restore its maintained analysis under `@analysis/disassembly/NA2/`; source trees
+  or restore its maintained analysis under `@disassembly/NA2/`; source trees
   contain original binaries only and must never contain Ghidra projects.
 - `PRG/BTL.BIN`, `PRG/ETC.BIN`, and `PRG/ADV.BIN` are members of the same
   `MWo3` EE overlay family. They contain code and data but load on demand, so
@@ -68,7 +68,7 @@ game; it does not include resource files merely because they use `.BIN` names.
 
 All current paths above were confirmed after the 2026-07-18 recursive source
 extraction. Keep shared Ghidra projects and exports under each target's
-`@analysis/disassembly/<target>/` tree; the inputs remain read-only.
+`@disassembly/<target>/` tree; the inputs remain read-only.
 
 ## Signature evidence
 
@@ -131,7 +131,7 @@ useful:
 - the resulting project will be reused and maintained rather than discarded.
 
 For NA2 this applies only to `SLPS_258.37`. Reuse the maintained project under
-`@analysis/disassembly/NA2/`. Historical decompiler exports and
+`@disassembly/NA2/`. Historical decompiler exports and
 listings are supporting views available through Git history, not canonical
 source material. Prior work established that exporting all undefined data
 produces an oversized, low-value artifact.
@@ -177,7 +177,7 @@ component separately.
    Do not begin with an instruction to disassemble everything.
 2. **Reuse existing knowledge.** Check `docs/knowledge/`, module-local evidence,
    topic-local unresolved sections, current patch definitions, preserved
-   exports, and `@analysis/disassembly/<target>/` before creating another
+   exports, and `@disassembly/<target>/` before creating another
    analysis workspace.
 3. **Identify the exact input.** Record the configured-root path, size, content
    hash, signature/format, and whether the file is an original, extraction,
@@ -191,7 +191,7 @@ component separately.
    question, and a full maintained project only when the escalation criteria
    above are satisfied.
 6. **Create working material outside the source root.** Keep maintained shared
-   analysis under `@analysis/disassembly/<target>/`. Put baseline copies and
+   analysis under `@disassembly/<target>/`. Put baseline copies and
    experiments in `@work/<target>/base/`, `@work/<target>/mod/`, or a
    chat-specific `work/<chat title>/temp/` folder. Never let Ghidra locks, caches, exports,
    probes, or scripts write under `@source/`.
@@ -215,16 +215,16 @@ component separately.
 ## Existing reusable analysis
 
 - Maintained Ghidra 12.1.2 projects now exist under
-  `@analysis/disassembly/NA2/`, `@analysis/disassembly/NUN3/`,
-  `@analysis/disassembly/NUN5/`, `@analysis/disassembly/NUN6/`, and
-  `@analysis/disassembly/shared/`. Shared IOP artifacts are separated into the
+  `@disassembly/NA2/`, `@disassembly/NUN3/`,
+  `@disassembly/NUN5/`, `@disassembly/NUN6/`, and
+  `@disassembly/shared/`. Shared IOP artifacts are separated into the
   exact `NA2_NUN5_NUN6` and `NA2_NUN3_NUN5_NUN6` cohorts while retaining one
   combined Ghidra project. Each target has portable manifests, per-program
   summaries, decompiled C, and ASCII listings. The NUN6 tree also contains the
   initial NUN5 donor-pair comparison record.
 - The maintained boot-ELF export views are
-  `@analysis/disassembly/NA2/exports/SLPS_258.37/` and
-  `@analysis/disassembly/NUN5/exports/SLES_556.05/`. Use the target's exact
+  `@disassembly/NA2/exports/SLPS_258.37/` and
+  `@disassembly/NUN5/exports/SLES_556.05/`. Use the target's exact
   executable name when selecting an export.
 - EE programs use `ghidra-emotionengine-reloaded` and
   `r5900:LE:32:default`. IOP programs use `MIPS:LE:32:default`. MWo3 baseline

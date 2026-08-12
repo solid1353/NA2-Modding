@@ -27,9 +27,9 @@ Create the runtime only with:
 @pcsx2_scripts/copy_worker.ps1 -WorkerRoot work/<exact chat title>
 ```
 
-- The command copies the immutable `@pcsx2_clean` template and required shared
+- The command copies the immutable `@pcsx2_fork` template and required shared
   BIOS into `work/<chat title>/pcsx2/`. Do not assemble the base runtime manually or
-  modify/populate the clean template.
+  modify/populate the fork template.
 - Copy additional shared assets only when the task/test concretely requires
   them. Assign a PINE port unique among live agent instances and operate only
   this chat-owned copy.

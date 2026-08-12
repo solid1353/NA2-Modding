@@ -12,12 +12,10 @@
     "builder": "na228_builder",
     "scripts": "scripts",
     "work": "work",
-    "project_work": "@work/Project",
-    "release_work": "@project_work/release",
-    "release_candidates": "@release_work/candidates"
+    "release": "release"
   },
   "files": {
-    "product_config": "@repository/product.json",
+    "settings": "@repository/settings.json",
     "na228_command": "@repository/na228.ps1",
     "release_publish_command": "@scripts/release/publish_release.ps1"
   }

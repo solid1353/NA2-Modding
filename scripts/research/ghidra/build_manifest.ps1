@@ -14,7 +14,7 @@ function Resolve-SourceAlias([string]$Alias) {
 }
 
 $analysisDirectory = if ($Target -eq 'shared') { 'shared' } else { $Target }
-$analysisRoot = Join-Path $paths.analysis "disassembly\$analysisDirectory"
+$analysisRoot = Join-Path $paths.disassembly $analysisDirectory
 $targets = @(Import-Csv -LiteralPath (Join-Path $PSScriptRoot 'targets.tsv') -Delimiter "`t" |
     Where-Object target -eq $Target)
 if ($targets.Count -eq 0) { throw "No manifest targets found for $Target" }

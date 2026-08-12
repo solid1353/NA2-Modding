@@ -61,21 +61,20 @@ uncommitted release work:
 
 The toolchain is pinned by `scripts/release/toolchain.json` and
 `scripts/release/requirements.txt`. The builder creates an isolated virtual
-environment under the configured Project task temporary root, runs the complete
+environment under `@release/temp/`, runs the complete
 builder test suite, inventories the full definition resource closure, builds a
 precompiled object for each injection-owned runtime C source, builds a PyInstaller
 one-file console EXE, self-tests the packaged data with the derived default
 configuration, and atomically updates the configured ZIP
 candidate. Temporary packaging state is removed afterward.
 
-Development ZIP candidates are placed under
-`@release_candidates/development/`; clean production candidates use
-`@release_candidates/`. Published packages are created by the GitHub release
+Development ZIPs are placed under `@release/development/`; clean production
+packages use `@release/`. Published packages are created by the GitHub release
 workflow from a tagged commit.
 
 ## Release manifest
 
-`product.json` owns the product name. The release manifest owns the version,
+`settings.json` owns the product name. The release manifest owns the version,
 canonical default configuration, external configuration filename, and supported
 source identities. The executable name is `<product>_<version>.exe`, and the
 output image is `<product>.iso`. The pinned source identities are:

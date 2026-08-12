@@ -30,7 +30,7 @@ artifact	format_or_role	size_bytes	default_analysis	trigger_or_reason	existing_e
 @source_na2/SYSTEM.CNF	PS2 boot configuration text	57	data_only	Read as configuration metadata; no disassembly	outer-ISO inventory	high
 @source_na2/OUT1M.BIN	zero-filled 1 MiB placeholder	1048576	data_only	No analysis unless a runtime or format reference establishes a role	direct all-zero-byte inspection	high
 @source_na2/FLIST.DIR	textual media file list	124	data_only	Read as metadata; no disassembly	direct text inspection	high
-@source_na2/SLPS_258.37	resident Emotion Engine ELF	5273256	full_program	Create or restore a maintained project under @analysis/disassembly/NA2; use targeted slices for individual tasks	historical Ghidra project, decompiler export, and listing in Git history	high
+@source_na2/SLPS_258.37	resident Emotion Engine ELF	5273256	full_program	Create or restore a maintained project under @disassembly/NA2; use targeted slices for individual tasks	historical Ghidra project, decompiler export, and listing in Git history	high
 DATA.CVM members: 2310 *.CCS	CCS resource family		data_only	Use CCS-aware parsing and classify a specific embedded section only if execution is proven	DATA.CVM ISO-9660 inventory	high
 DATA.CVM member: ICON.BIN	binary icon/resource member	61440	data_only	Inspect format and references before assigning meaning	DATA.CVM ISO-9660 inventory	medium
 DATA.CVM member: *.TXT	text resource member		data_only	Inspect as text and encoding data	DATA.CVM ISO-9660 inventory	high

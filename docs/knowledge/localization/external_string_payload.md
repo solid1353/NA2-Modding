@@ -72,8 +72,8 @@ The source artifacts remained read-only. The principal artifacts inspected were:
 Methods and tools:
 
 - maintained Ghidra 12.1.2 projects/exports under
-  `@analysis/disassembly/NA2/`, `@analysis/disassembly/NUN5/`, and
-  `@analysis/disassembly/NUN6/`;
+  `@disassembly/NA2/`, `@disassembly/NUN5/`, and
+  `@disassembly/NUN6/`;
 - `scripts/research/menu_input/find_mips_address_refs.py` and
   `scripts/research/menu_input/disassemble_mips32_range.py`;
 - quote-aware parsing of

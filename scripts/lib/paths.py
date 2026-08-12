@@ -292,15 +292,15 @@ def _load_paths(
             )
         files[name] = configured_path
 
-    catalog_path = files.get("product_config") if include_catalog else None
-    if catalog_path is not None:
-        if not catalog_path.is_file():
-            raise FileNotFoundError(f"Game catalog not found: {catalog_path}")
-        project_catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
-        if project_catalog.get("schema_version") != 1:
+    settings_path = files.get("settings") if include_catalog else None
+    if settings_path is not None:
+        if not settings_path.is_file():
+            raise FileNotFoundError(f"Project settings not found: {settings_path}")
+        project_settings = json.loads(settings_path.read_text(encoding="utf-8"))
+        if project_settings.get("schema_version") != 1:
             raise ValueError(
-                "Unsupported game catalog schema: "
-                f"{project_catalog.get('schema_version')!r}"
+                "Unsupported project settings schema: "
+                f"{project_settings.get('schema_version')!r}"
             )
         source_catalog_path = files.get("game_catalog")
         if source_catalog_path is not None:
@@ -319,12 +319,12 @@ def _load_paths(
             catalog = {
                 "schema_version": 1,
                 "sources": source_catalog.get("sources"),
-                "title": project_catalog.get("title"),
-                "serial": project_catalog.get("serial"),
-                "builds": project_catalog.get("builds"),
+                "title": project_settings.get("title"),
+                "serial": project_settings.get("serial"),
+                "builds": project_settings.get("builds"),
             }
         else:
-            catalog = project_catalog
+            catalog = project_settings
 
         def resolve_catalog_value(label: str, raw_value: object) -> object:
             if not isinstance(raw_value, str) or not raw_value:

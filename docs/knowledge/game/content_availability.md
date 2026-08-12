@@ -8,7 +8,7 @@ overrides those reads.
 ## Evidence and identity
 
 Static analysis uses the canonical Ghidra 12.1.2 exports under
-`@analysis/disassembly/NA2/` for clean `@source/NA2.iso.files/SLPS_258.37`:
+`@disassembly/NA2/` for clean `@source/NA2.iso.files/SLPS_258.37`:
 
 - size: `5,273,256` bytes;
 - SHA-256: `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`;

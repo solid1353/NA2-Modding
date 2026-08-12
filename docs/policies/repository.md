@@ -6,7 +6,7 @@
   migration validation are defined in [`paths.md`](paths.md).
 - For a requested `from <source> to <destination>` link, preserve the source and
   create the link at the destination. Do not redesign ownership unless asked.
-- Treat `@pcsx2_dev`, `@pcsx2_stable`, and the clean PCSX2 worker template as
+- Treat `@pcsx2_dev`, `@pcsx2_stable`, and the PCSX2 fork worker template as
   protected. Runtime-specific handling is in
   [`../runbooks/runtime-testing.md`](../runbooks/runtime-testing.md).
 
@@ -50,26 +50,19 @@
 - Git history is the recovery mechanism for tracked files. Preserve
   irreplaceable untracked inputs deliberately before deleting them.
 
-## Access and elevation
-
-- Run every shell, filesystem, script, and Git operation elevated from the first
-  attempt.
-- If an elevated operation still fails, report the exact failure. Do not switch
-  tools, paths, destinations, workspaces, or methods and do not invent a helper
-  workflow to bypass the access problem.
-- Retry only the failed operation; do not repeat work that already succeeded.
-
 ## Work ownership and external inputs
 
-- A file-working chat owns `work/<exact chat title>/` and may manage that tree
-  without separate destructive-action approval. It may read another chat's tree
-  but copies anything it needs into its own tree before changing it.
+- `work/<exact chat title>/` is exclusively the workspace of that chat. Only
+  that chat may create, change, move, or delete content there. Another chat may
+  read it but copies anything it needs into its own tree before changing it.
+  Project-wide, release, build, test, script, and other non-chat workflows use
+  their own configured roots outside every chat directory.
 - Agents do not use the operating-system `TEMP`/`TMP` directory as a workspace
   or artifact root. Set `NA228_TASK_WORK_ROOT` to the acting chat's
   `work/<exact chat title>/` before maintained commands that create temporary
   files.
-- The unit-test runner uses `work/General/` as its technical default when
-  `NA228_TASK_WORK_ROOT` is unset. This path has no special chat-role meaning.
+- When `NA228_TASK_WORK_ROOT` is unset, the unit-test runner uses the ignored
+  `build/temp/tests/` technical root instead of impersonating a chat.
 - Keep inputs, experiments, intermediates, outputs, builds, runtime artifacts,
   and logs in clearly named subdirectories. Do not use top-level `work/temp/`.
 - Copy changing external inputs such as selected savestates or screenshots into

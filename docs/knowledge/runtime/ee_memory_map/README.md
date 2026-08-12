@@ -62,7 +62,7 @@ identity parsing, allocator invariants, overlay interpretation, and region
 reporting.
 
 Static allocator, stack, and overlay analysis uses the maintained Ghidra 12.1.2
-NA2 export under `@analysis/disassembly/NA2/exports/SLPS_258.37/`. The whole-
+NA2 export under `@disassembly/NA2/exports/SLPS_258.37/`. The whole-
 TEXTENG structure and used-string analysis is canonical in
 [`external_string_payload.md`](../../localization/external_string_payload.md), updated by
 commit `afe6ceb`. The compact-pool calculation was independently reproduced from

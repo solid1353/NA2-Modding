@@ -68,7 +68,7 @@ class ConfigurationTests(unittest.TestCase):
                     "files": {
                         "placeholder": "placeholder",
                         "game_catalog": "games.json",
-                        "product_config": "product.json",
+                        "settings": "settings.json",
                     },
                 }
             ),
@@ -200,13 +200,14 @@ class ConfigurationTests(unittest.TestCase):
             json.dumps({"overrides": normalized_selection}, indent=2) + "\n",
             encoding="utf-8",
         )
-        (root / "product.json").write_text(
+        (root / "settings.json").write_text(
             json.dumps(
                 {
                     "schema_version": 1,
                     "title": "Test Product",
                     "serial": "TEST-00000",
                     "output_boot_path": "SLOP_NA2.28",
+                    "startup_fast_forward_frames": 321,
                     "builds": {"latest": {}},
                 },
                 indent=2,
@@ -289,7 +290,7 @@ class ConfigurationTests(unittest.TestCase):
             )
             loaded = load_configuration(configuration, root, root)
             resources = set(configuration_resource_files(loaded))
-            self.assertIn((root / "product.json").resolve(), resources)
+            self.assertIn((root / "settings.json").resolve(), resources)
             self.assertIn((root / "catalog" / "localization.modcat").resolve(), resources)
             self.assertIn(
                 (root / "catalog" / "implementation" / "edits.json").resolve(),
@@ -379,10 +380,12 @@ class ConfigurationTests(unittest.TestCase):
                 {"localization": {"description": "Localization"}},
                 {"localization": True},
             )
-            product_path = root / "product.json"
-            product = json.loads(product_path.read_text(encoding="utf-8"))
-            product["output_boot_path"] = "BOOT.ELF"
-            product_path.write_text(json.dumps(product, indent=2) + "\n", encoding="utf-8")
+            settings_path = root / "settings.json"
+            settings = json.loads(settings_path.read_text(encoding="utf-8"))
+            settings["output_boot_path"] = "BOOT.ELF"
+            settings_path.write_text(
+                json.dumps(settings, indent=2) + "\n", encoding="utf-8"
+            )
             with self.assertRaisesRegex(ValueError, "byte length"):
                 load_configuration(configuration, root, root)
 

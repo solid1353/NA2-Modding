@@ -210,14 +210,23 @@ function Resolve-Na2PathManifest {
 
     $resolvedGames = [ordered]@{}
     $resolvedGameAliases = [ordered]@{}
-    if ($IncludeImports -and $resolvedFiles.Contains('product_config')) {
-        $catalogPath = [string]$resolvedFiles['product_config']
-        if (-not (Test-Path -LiteralPath $catalogPath -PathType Leaf)) {
-            throw "Game catalog not found: $catalogPath"
+    $projectSettings = $null
+    if ($IncludeImports -and $resolvedFiles.Contains('settings')) {
+        $settingsPath = [string]$resolvedFiles['settings']
+        if (-not (Test-Path -LiteralPath $settingsPath -PathType Leaf)) {
+            throw "Project settings not found: $settingsPath"
         }
-        $projectCatalog = Get-Content -Raw -LiteralPath $catalogPath | ConvertFrom-Json
-        if ([int]$projectCatalog.schema_version -ne 1) {
-            throw "Unsupported game catalog schema: $($projectCatalog.schema_version)"
+        $projectSettings = Get-Content -Raw -LiteralPath $settingsPath | ConvertFrom-Json
+        if ([int]$projectSettings.schema_version -ne 1) {
+            throw "Unsupported project settings schema: $($projectSettings.schema_version)"
+        }
+        $startupFrames = $projectSettings.PSObject.Properties[
+            'startup_fast_forward_frames'
+        ]
+        if ($null -eq $startupFrames -or
+            $startupFrames.Value -isnot [long] -or
+            [long]$startupFrames.Value -le 0) {
+            throw 'Project startup_fast_forward_frames must be a positive integer.'
         }
         if ($resolvedFiles.Contains('game_catalog')) {
             $sourceCatalogPath = [string]$resolvedFiles['game_catalog']
@@ -235,13 +244,13 @@ function Resolve-Na2PathManifest {
             $catalog = [pscustomobject][ordered]@{
                 schema_version = 1
                 sources = $sourceCatalog.sources
-                title = $projectCatalog.title
-                serial = $projectCatalog.serial
-                builds = $projectCatalog.builds
+                title = $projectSettings.title
+                serial = $projectSettings.serial
+                builds = $projectSettings.builds
             }
         }
         else {
-            $catalog = $projectCatalog
+            $catalog = $projectSettings
         }
         if (-not $resolvedFiles.Contains('game_resolver')) {
             throw 'Project path imports provide no game resolver.'
@@ -463,6 +472,9 @@ function Resolve-Na2PathManifest {
             }
         }
     }
+    if ($null -ne $projectSettings) {
+        $resolved['settings'] = $projectSettings
+    }
     $resolved['files'] = [pscustomobject]$resolvedFiles
     $resolved['games'] = [pscustomobject]@{
         Entries = [pscustomobject]$resolvedGames
@@ -516,7 +528,9 @@ function ConvertTo-Na2ProjectPath {
     $fullPath = [IO.Path]::GetFullPath($Path)
     $roots = @(
         $Paths.PSObject.Properties |
-            Where-Object { $_.Name -notin @('ManifestPath', 'files', 'games') } |
+            Where-Object {
+                $_.Name -notin @('ManifestPath', 'files', 'games', 'settings')
+            } |
             ForEach-Object {
                 [pscustomobject]@{
                     Name = $_.Name
@@ -562,7 +576,7 @@ function Resolve-Na2ProjectPathAlias {
     $rootName = $aliasMatch.Groups['root'].Value
     $rootProperty = $Paths.PSObject.Properties[$rootName]
     if ($null -eq $rootProperty -or
-        $rootName -in @('ManifestPath', 'files', 'games')) {
+        $rootName -in @('ManifestPath', 'files', 'games', 'settings')) {
         throw "Unknown project root '$rootName': $Alias"
     }
 

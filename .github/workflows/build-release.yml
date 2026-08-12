@@ -48,14 +48,14 @@ jobs:
         shell: pwsh
         run: |
           $manifest = Get-Content -Raw na228_builder/release_manifest.json | ConvertFrom-Json
-          $product = Get-Content -Raw product.json | ConvertFrom-Json
+          $settings = Get-Content -Raw settings.json | ConvertFrom-Json
           . ./scripts/lib/paths.ps1
           $paths = Get-Na2LocalPaths -AllowMissing
-          $executableName = "$([string]$product.title)_$([string]$manifest.product_version).exe"
+          $executableName = "$([string]$settings.title)_$([string]$manifest.product_version).exe"
           $packageName = [IO.Path]::ChangeExtension($executableName, '.zip')
-          $candidate = Join-Path $paths.release_candidates $packageName
-          if (-not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
-              throw "Release candidate is missing: $candidate"
+          $package = Join-Path $paths.release $packageName
+          if (-not (Test-Path -LiteralPath $package -PathType Leaf)) {
+              throw "Release package is missing: $package"
           }
 
           if ($env:GITHUB_REF_TYPE -eq 'tag') {
@@ -69,14 +69,14 @@ jobs:
               }
           }
 
-          $candidate = (Resolve-Path -LiteralPath $candidate).Path
-          $checksum = "$candidate.sha256"
-          $hash = (Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash.ToLowerInvariant()
-          $checksumLine = "$hash  $([IO.Path]::GetFileName($candidate))`n"
+          $package = (Resolve-Path -LiteralPath $package).Path
+          $checksum = "$package.sha256"
+          $hash = (Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash.ToLowerInvariant()
+          $checksumLine = "$hash  $([IO.Path]::GetFileName($package))`n"
           [IO.File]::WriteAllText($checksum, $checksumLine, [Text.UTF8Encoding]::new($false))
-          "package=$candidate" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "package=$package" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "checksum=$checksum" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
-          "artifact_name=$([IO.Path]::GetFileNameWithoutExtension($candidate))" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          "artifact_name=$([IO.Path]::GetFileNameWithoutExtension($package))" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
           "version=$($manifest.product_version)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
 
       - name: Upload workflow artifact

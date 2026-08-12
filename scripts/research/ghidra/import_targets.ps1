@@ -47,7 +47,7 @@ $sharedScriptPath = $ghidra.ScriptPath
 
 foreach ($item in $targets) {
     $analysisDirectory = if ($item.target -eq 'shared') { 'shared' } else { $item.target }
-    $analysisRoot = Join-Path $paths.analysis "disassembly\$analysisDirectory"
+    $analysisRoot = Join-Path $paths.disassembly $analysisDirectory
     $projectRoot = Join-Path $analysisRoot 'ghidra'
     $artifactRoot = if ($item.target -eq 'shared') { Join-Path $analysisRoot $item.shared_scope } else { $analysisRoot }
     $summaryPath = Join-Path $artifactRoot "summaries\$($item.program).tsv"

@@ -26,7 +26,7 @@ fragment.
 
 Catalog-selected semantic string patches are applied after import and before
 this placement decision. `replace_imported_game_title` guards the imported
-title's mapping and occurrence coverage, then substitutes root `product.title`.
+title's mapping and occurrence coverage, then substitutes root `settings.title`.
 When the setting is disabled, the imported strings proceed unchanged.
 
 ## Invokes

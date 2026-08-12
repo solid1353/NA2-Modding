@@ -13,7 +13,8 @@ param(
     [string]$WorkerLogDirectory,
     [switch]$WorkerEphemeral,
     [switch]$Force,
-    [switch]$NormalSpeed
+    [switch]$Turbo,
+    [switch]$Unlimited
 )
 
 $ErrorActionPreference = 'Stop'
@@ -46,8 +47,11 @@ if ($Force -and $Action -notin @(
 )) {
     throw 'Force mode is valid only for ordinary Latest or Manual builds.'
 }
-if ($NormalSpeed -and $Action -ne 'latest-build-and-launch') {
-    throw 'Normal-speed mode is valid only for a build-and-launch action.'
+if (($Turbo -or $Unlimited) -and $Action -ne 'latest-build-and-launch') {
+    throw 'Speed mode is valid only for a build-and-launch action.'
+}
+if ($Turbo -and $Unlimited) {
+    throw 'Use only one of Turbo or Unlimited.'
 }
 
 $runMode = switch ($Action) {
@@ -127,11 +131,16 @@ try {
             }
             Write-Na2Stage "2/2 Launch $([IO.Path]::GetFileName($launchIso))"
             $launchArguments = @{ IsoPath = $launchIso }
-            if ($NormalSpeed) {
-                $launchArguments.Capped = $true
+            if ($Unlimited) {
+                $launchArguments.Unlimited = $true
             }
             else {
-                $launchArguments.Turbo = $true
+                $launchArguments.UnlimitedForFrames = [UInt64](
+                    $paths.settings.startup_fast_forward_frames
+                )
+                if ($Turbo) {
+                    $launchArguments.Turbo = $true
+                }
             }
             & $paths.files.pcsx2_launch_command @launchArguments
         }

@@ -34,8 +34,8 @@ localizing those prompts separately would be superseded by that change.
 | NUN5 SLES-55605 | `@source/NUN5.iso.files/SLES_556.05` | 5,340,912 | `20A43677397731A2A20899336D1165ACE5B436906B9B89BE90FB10F4558DD19D` | `0x00100000` |
 
 The focused exports are under
-`@analysis/disassembly/NA2/exports/BTL.BIN/` and
-`@analysis/disassembly/NUN5/exports/BTL.BIN/`. Those projects omit the
+`@disassembly/NA2/exports/BTL.BIN/` and
+`@disassembly/NUN5/exports/BTL.BIN/`. Those projects omit the
 40-byte BTL file header when mapping code, so a Ghidra address is the archived
 live address minus `0x40`. File offsets below always refer to the complete
 source file. For the boot ELFs, the relevant `PT_LOAD` mappings place NA2 file

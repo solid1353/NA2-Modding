@@ -13,9 +13,9 @@ $toolchainPath = Join-Path $PSScriptRoot 'toolchain.json'
 $toolchain = Get-Content -Raw -LiteralPath $toolchainPath | ConvertFrom-Json
 $manifestPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.release_manifest))
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
-$productPath = [IO.Path]::GetFullPath($paths.product_config)
-$product = Get-Content -Raw -LiteralPath $productPath | ConvertFrom-Json
-$productName = [string]$product.title
+$settingsPath = [IO.Path]::GetFullPath($paths.files.settings)
+$settings = Get-Content -Raw -LiteralPath $settingsPath | ConvertFrom-Json
+$productName = [string]$settings.title
 $executableName = "${productName}_$([string]$manifest.product_version).exe"
 $requirementsPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.requirements))
 $entryPoint = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.entry_point))
@@ -41,7 +41,7 @@ foreach ($required in @(
     $entryPoint,
     $iconPath,
     $manifestPath,
-    $productPath,
+    $settingsPath,
     $instructionsPath,
     $configurationPath
 )) {
@@ -70,11 +70,11 @@ foreach ($field in @('platform', 'architecture', 'python_version')) {
     }
 }
 
-$candidateRoot = $paths.release_candidates
+$releaseRoot = $paths.release
 if ($Development) {
-    $candidateRoot = Join-Path $candidateRoot 'development'
+    $releaseRoot = Join-Path $releaseRoot 'development'
 }
-New-Item -ItemType Directory -Force -Path $candidateRoot | Out-Null
+New-Item -ItemType Directory -Force -Path $releaseRoot | Out-Null
 New-Item -ItemType Directory -Force -Path $releaseTemp | Out-Null
 $runRoot = Join-Path $releaseTemp ('build_' + [Guid]::NewGuid().ToString('N'))
 $resourceRoot = Join-Path $runRoot 'resources'
@@ -85,7 +85,7 @@ $specRoot = Join-Path $workRoot 'spec'
 $cacheRoot = Join-Path $workRoot 'cache'
 $bootstrap = Join-Path $runRoot 'release_bootstrap.py'
 $packageName = [IO.Path]::ChangeExtension($executableName, '.zip')
-$candidate = Join-Path $candidateRoot $packageName
+$packagePath = Join-Path $releaseRoot $packageName
 $oldPyInstallerConfig = $env:PYINSTALLER_CONFIG_DIR
 
 try {
@@ -269,10 +269,10 @@ print(public_catalog(repository / "na228_builder" / "catalog"), end="")
         ) `
         -DestinationPath $packageStaging `
         -CompressionLevel Optimal
-    [IO.File]::Move($packageStaging, $candidate, $true)
-    $hash = (Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash
+    [IO.File]::Move($packageStaging, $packagePath, $true)
+    $hash = (Get-FileHash -LiteralPath $packagePath -Algorithm SHA256).Hash
     Write-Host '[release] Release package built successfully.' -ForegroundColor Green
-    Write-Host "[release] Output: $candidate"
+    Write-Host "[release] Output: $packagePath"
     Write-Host "[release] SHA-256: $hash"
 }
 finally {

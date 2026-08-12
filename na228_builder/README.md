@@ -40,8 +40,8 @@ integrated catalog data.
 - `scripts/` contains every builder Python implementation file. Reusable engines and their code-only contracts remain under `modules/`.
 - Root `release_manifest.json` owns release packaging metadata and remains
   outside the catalog.
-- Root `product.json` owns the product title, explicit output boot path, source
-  inputs, and named build variants.
+- Root `settings.json` owns the product title, explicit output boot path, named
+  build variants, and project launch settings.
 
 JSON configurations are the only build definitions. There is no separate pin or enablement table.
 
@@ -104,7 +104,7 @@ replacements. The binary patcher applies selected edits last.
 ## Resource fingerprinting
 
 The build-resource fingerprint covers the base and selected configurations,
-`.modcat` sources, edits, injections, product and path configuration, shared targets,
+`.modcat` sources, edits, injections, settings and path configuration, shared targets,
 applicable binary operation definitions, referenced assets and sources, and
 selected localization TSV inputs. Release packaging inventories the same
 closure for every selectable catalog node, including disabled nodes.

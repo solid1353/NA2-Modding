@@ -6,7 +6,8 @@ The path system has four layers with separate technical owners:
 2. NA2 root `paths.json` imports Workshop and adds only NA2-local paths.
 3. Workshop root `games.json` owns shared source-game selectors, aliases,
    serials, and CRCs.
-4. NA2 root `product.json` owns NA2.28 output identity and build variants.
+4. NA2 root `settings.json` owns NA2.28 output identity, build variants, and
+   project launch settings.
 
 The PowerShell and Python loaders merge both catalogs. Canonical files store
 only repository-relative paths or `@root/child` references. Resolved absolute
@@ -40,12 +41,13 @@ feature donor, not an official successor or English authority.
 ## Important NA2 roots
 
 - `repository`: this repository; always `.`.
-- `workshop`, `source`, `analysis`, and `tools`: imported Workshop roots.
-- `build`, `logs`, `task_logs`, `builder`, `features`, `scripts`, `work`: NA2
-  roots. `task_logs` resolves to deferred generated records under
-  `@logs/tasks/`.
+- `workshop`, `source`, `disassembly`, and `tools`: imported Workshop roots.
+- `build`, `logs`, `task_logs`, `builder`, `features`, `scripts`, `work`, and
+  `release`: NA2 roots. `task_logs` resolves to deferred generated records
+  under `@logs/tasks/`. `work` contains only chat-owned workspaces; `release`
+  resolves to the ignored repository-root `release/` publication directory.
 - `pcsx2_scripts`: `@workshop/scripts/pcsx2`.
-- `pcsx2_stable`, `pcsx2_dev`, `pcsx2_clean`: protected configured runtimes
+- `pcsx2_stable`, `pcsx2_dev`, `pcsx2_fork`: protected configured runtimes
   and the external clean worker template.
 - `pcsx2_files` and its BIOS, cheats, GameSettings, input-profile,
   input-recording, and memory-card children: shared PCSX2 assets.
@@ -54,7 +56,7 @@ feature donor, not an official successor or English authority.
 ## Important NA2 files
 
 - `game_catalog`: Workshop root `games.json`.
-- `product_config`: root `product.json`.
+- `settings`: root `settings.json`.
 - `game_resolver`: Workshop `scripts/lib/resolve_game.py`.
 - `notification_state` and `git_authors`: shared Workshop settings.
 - `workshop_command`: Workshop `workshop.ps1`.
@@ -82,15 +84,15 @@ Workshop source games use a direct map:
 }
 ```
 
-The NA2 product configuration is deliberately flat apart from its builds
-section:
+The NA2 settings are deliberately flat apart from the builds section:
 
-```json
+```text
 {
   "schema_version": 1,
   "title": "Narutimate Accel v2.28",
   "serial": "SLOP-NA228",
   "output_boot_path": "SLOP_NA2.28",
+  "startup_fast_forward_frames": <positive integer>,
   "builds": {
     "latest": { "aliases": ["l"] },
     "e2e_test": {}

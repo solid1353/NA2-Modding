@@ -15,12 +15,12 @@ exports; no new disassembly was required.
 | NUN5 | `@source_nun5/SLES_556.05` | 5,340,912 | `20A43677397731A2A20899336D1165ACE5B436906B9B89BE90FB10F4558DD19D` | first `PT_LOAD` at `0x00100000` |
 
 The reusable exports are
-`@analysis/disassembly/NA2/exports/ETC.BIN/ETC.BIN.{c,txt}` and
-`@analysis/disassembly/NUN5/exports/ETC.BIN/ETC.BIN.{c,txt}`. Those projects
+`@disassembly/NA2/exports/ETC.BIN/ETC.BIN.{c,txt}` and
+`@disassembly/NUN5/exports/ETC.BIN/ETC.BIN.{c,txt}`. Those projects
 map file offset zero 0x40 below the runtime addresses encoded by the MWo3
 header, so an exported Ghidra function address is runtime address minus
 `0x40`. The NUN5 boot-ELF export is
-`@analysis/disassembly/NUN5/exports/SLES_556.05/SLES_556.05.{c,txt}`. Its
+`@disassembly/NUN5/exports/SLES_556.05/SLES_556.05.{c,txt}`. Its
 first load segment maps file offset `0x180` to runtime `0x00100000`, so the
 localized title and Play records below have runtime address equal to file
 offset plus `0xFFE80`. The canonical binary-patcher edits use file offsets

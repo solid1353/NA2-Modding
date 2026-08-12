@@ -16,7 +16,7 @@ The serial alternatives considered on 2026-07-18 were rejected as follows:
 
 ## Reproducible implementation
 
-Root `product.json` declares the product title and explicit output boot path.
+Root `settings.json` declares the product title and explicit output boot path.
 The builder supports the fixed clean NA2 boot path `SLPS_258.37` and root
 `SYSTEM.CNF` directly. After feature modules have been composed, the product
 composer emits one guarded replacement and one equal-length file rename:
@@ -47,7 +47,7 @@ it; setting it to `false` leaves the original title intact.
 `general.replace_imported_game_title` owns the semantic replacement of
 `Naruto Shippuden: Ultimate Ninja 5` in imported strings. Its catalog definition
 guards the known six mappings and seven occurrences, and the string patcher
-substitutes root `product.title` before inline or linked-external placement. The
+substitutes root `settings.title` before inline or linked-external placement. The
 base configuration enables it; setting it to `false` leaves the imported title
 unchanged. It is independent of both memory-card settings.
 

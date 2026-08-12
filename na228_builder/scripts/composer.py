@@ -265,7 +265,7 @@ def compose_assembly_plan(
         "original_hex": source_boot.hex().upper(),
         "new_hex": output_boot.hex().upper(),
         "reason": boot_reason,
-        "owner": "product.output_boot_path",
+        "owner": "settings.output_boot_path",
     })
 
     replacements = tuple(
@@ -273,7 +273,7 @@ def compose_assembly_plan(
             path=path,
             expected=source.read_file(source.by_path[path]),
             replacement=bytes(composed_payloads[path]),
-            owner=owners.get(path, "product.output_boot_path"),
+            owner=owners.get(path, "settings.output_boot_path"),
             reason=(
                 boot_reason
                 if path == system_path and path not in payloads
@@ -294,7 +294,7 @@ def compose_assembly_plan(
     rename = FileRename(
         source_path=SOURCE_BOOT_PATH,
         replacement_path=output_boot_path,
-        owner="product.output_boot_path",
+        owner="settings.output_boot_path",
         reason=boot_reason,
     )
     return CompositionResult(

@@ -46,8 +46,8 @@ Fresh static comparison uses clean `@source_na2/SLPS_258.37`, SHA-256
 `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`,
 and clean `@source_nun5/SLES_556.05`, SHA-256
 `20A43677397731A2A20899336D1165ACE5B436906B9B89BE90FB10F4558DD19D`.
-The preserved Ghidra exports under `@analysis/disassembly/NA2/` and
-`@analysis/disassembly/NUN5/` were reused; neither binary was disassembled
+The preserved Ghidra exports under `@disassembly/NA2/` and
+`@disassembly/NUN5/` were reused; neither binary was disassembled
 again.
 
 NA2 glyph emitter `FUN_00187cc0`

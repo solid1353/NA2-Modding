@@ -71,7 +71,7 @@ def text_mapping(
 
 
 class StringPatcherPolicyTests(unittest.TestCase):
-    def test_catalog_policy_uses_root_product_title(self) -> None:
+    def test_catalog_policy_uses_settings_product_title(self) -> None:
         patch_id = "s__general__replace_imported_game_title"
         selection = SimpleNamespace(
             nodes=(

@@ -923,7 +923,7 @@ def build_configuration_candidate(
             "original_hex": rename.original_identifier.hex().upper(),
             "new_hex": rename.replacement_identifier.hex().upper(),
             "reason": "Mirror the product boot-path rename in the UDF tree",
-            "owner": "product.output_boot_path",
+            "owner": "settings.output_boot_path",
         }
         for rename in assembly.udf_renames
     )

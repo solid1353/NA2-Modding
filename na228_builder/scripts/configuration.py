@@ -83,7 +83,7 @@ class ModuleInvocation:
 class BuildConfiguration:
     definition_path: Path
     configuration_id: str
-    product_path: Path
+    settings_path: Path
     product_title: str
     output_boot_path: str
     targets_path: Path
@@ -93,40 +93,46 @@ class BuildConfiguration:
     selection: CatalogSelection
 
 
-def _product_object(value: object, keys: set[str], label: str) -> dict[str, object]:
+def _settings_object(value: object, keys: set[str], label: str) -> dict[str, object]:
     if not isinstance(value, dict) or set(value) != keys:
         expected = ", ".join(sorted(keys))
-        raise ValueError(f"Product {label} keys must be: {expected}")
+        raise ValueError(f"Settings {label} keys must be: {expected}")
     return value
 
 
-def _product_text(value: object, label: str) -> str:
+def _settings_text(value: object, label: str) -> str:
     if not isinstance(value, str) or not value:
-        raise ValueError(f"Product {label} must be non-empty text")
+        raise ValueError(f"Settings {label} must be non-empty text")
     return value
 
 
-def _read_product(path: Path) -> tuple[str, str]:
+def _read_settings(path: Path) -> tuple[str, str]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise ValueError(f"Product config is not valid JSON: {path}") from exc
-    product = _product_object(
+        raise ValueError(f"Settings are not valid JSON: {path}") from exc
+    settings = _settings_object(
         data,
         {
             "schema_version",
             "title",
             "serial",
             "output_boot_path",
+            "startup_fast_forward_frames",
             "builds",
         },
-        "product",
+        "root",
     )
-    if product["schema_version"] != 1:
-        raise ValueError("Unsupported product schema_version")
-    product_title = _product_text(product["title"], "title")
-    output_boot_path = _product_text(
-        product["output_boot_path"], "output_boot_path"
+    if settings["schema_version"] != 1:
+        raise ValueError("Unsupported settings schema_version")
+    startup_frames = settings["startup_fast_forward_frames"]
+    if isinstance(startup_frames, bool) or not isinstance(startup_frames, int):
+        raise ValueError("Settings startup_fast_forward_frames must be an integer")
+    if startup_frames <= 0:
+        raise ValueError("Settings startup_fast_forward_frames must be positive")
+    product_title = _settings_text(settings["title"], "title")
+    output_boot_path = _settings_text(
+        settings["output_boot_path"], "output_boot_path"
     )
     return output_boot_path, product_title
 
@@ -336,21 +342,21 @@ def module_content_sha256(path: Path, module_type: str) -> str:
     return _tree_digest(path, files, external_labels=external_labels)
 
 
-def _validated_product(
-    product_path: Path,
+def _validated_settings(
+    settings_path: Path,
 ) -> tuple[str, str]:
-    output_boot_path, product_title = _read_product(product_path)
+    output_boot_path, product_title = _read_settings(settings_path)
     from ..image_assembler.iso9660 import normalize_iso_path
 
     if normalize_iso_path(output_boot_path) != output_boot_path:
         raise ValueError(
-            f"Product output_boot_path must be normalized: {output_boot_path!r}"
+            f"Settings output_boot_path must be normalized: {output_boot_path!r}"
         )
     if output_boot_path == SOURCE_BOOT_PATH:
-        raise ValueError("Product output_boot_path must differ from the source boot path")
+        raise ValueError("Settings output_boot_path must differ from the source boot path")
     if len(SOURCE_BOOT_PATH.encode("ascii")) != len(output_boot_path.encode("ascii")):
         raise ValueError(
-            "Product output_boot_path must have the source boot path's byte length"
+            "Settings output_boot_path must have the source boot path's byte length"
         )
     if "\0" in product_title:
         raise ValueError("Product title contains an embedded NUL")
@@ -496,8 +502,8 @@ def _load_configuration(
     catalog_path = builder_root / "catalog"
     selection = catalog_module.load_selection(catalog_path, definition_path)
     paths = project_paths or load_paths(workspace, allow_missing=True)
-    product_path = paths.file("product_config").resolve()
-    output_boot_path, product_title = _validated_product(product_path)
+    settings_path = paths.file("settings").resolve()
+    output_boot_path, product_title = _validated_settings(settings_path)
     roots = _resolved_roots(paths, root_overrides)
     targets_path = builder_root / BUILDER_TARGETS_FILE
     if not targets_path.is_file():
@@ -586,7 +592,7 @@ def _load_configuration(
     return BuildConfiguration(
         definition_path=definition_path,
         configuration_id=configuration_id,
-        product_path=product_path,
+        settings_path=settings_path,
         product_title=product_title,
         output_boot_path=output_boot_path,
         targets_path=targets_path,
@@ -607,7 +613,7 @@ def configuration_resource_files(
 
     files = [
         configuration.definition_path,
-        configuration.product_path,
+        configuration.settings_path,
         *configuration.selection.catalog_files,
         configuration.selection.edits_path,
         configuration.selection.injections_path,

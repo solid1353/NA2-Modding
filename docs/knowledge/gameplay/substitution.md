@@ -14,7 +14,7 @@ control-flow boundary so they are not investigated again without new evidence.
 - Current serial-wide cheat file: `@pcsx2_cheats/SLOP-NA228.pnach`.
 - Historical CRC alias during the investigation: `@pcsx2_cheats/SLPS-25837_E0F064C5.pnach`. The current workflow no longer generates CRC aliases.
 - Historical NA2 decompiler/Ghidra evidence remains available through Git
-  history. Restore reusable analysis only under `@analysis/disassembly/NA2/`.
+  history. Restore reusable analysis only under `@disassembly/NA2/`.
 - Reproducible substitution-cost setting: catalog node
   `battle_logic.substitution_cost`, backed by patch definition
   `e__battle_logic__substitution_cost` (legacy evidence ID `ELF-S001`).

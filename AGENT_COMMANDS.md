@@ -5,6 +5,13 @@ agents. It does not document the `na228` or Workshop command-line interfaces;
 use `na228 help`, `workshop help`, and the owning component documentation for
 those.
 
+## Workflow modes
+
+- `des mode`, `design mode`: enter
+  [Design mode](docs/workflows/design_mode.md).
+- `int mode`, `interactive mode`: enter
+  [Interactive mode](docs/workflows/interactive_mode.md).
+
 ## Approval and task control
 
 - `snap`: present the current consolidated implementation snapshot.
@@ -12,10 +19,12 @@ those.
   Follow the active workflow's implementation behavior.
 - `ver`: accept the current pending result and follow the active workflow's
   acceptance behavior.
-- `commit`: apply the repository policy's one-time commit override to the current
-  task-owned pending changes. It does not verify the result.
+- `commit`: commit the current task-owned pending changes. It does not verify
+  the result.
 - `exit`: exit Design mode or Interactive mode without accepting the result
   or authorizing a commit. It has no effect in Normal mode.
+- `zxc`: follow the
+  [graceful-stop procedure](docs/procedures/graceful_stop.md).
 - `tasks`: read and present `TASKS.md` under the
   [coordination policy](docs/policies/coordination.md).
 - `task done`: apply the task-completion behavior defined by the
@@ -26,8 +35,6 @@ those.
 - `c`: respond only with `Commit: on` or `Commit: off`, reporting the current
   chat's persistent Normal mode commit setting. It does not change the setting
   or grant authority.
-- `zxc`: follow the
-  [`graceful-stop procedure`](docs/procedures/graceful_stop.md).
 
 ## Conversation and metadata
 
@@ -37,7 +44,9 @@ those.
   mode`, or `Interactive mode`, whichever is active. It does not change the
   mode or grant authority. Do not trigger it from a longer message, quoted
   text, or supplied context.
-- `ag`: reread live root `AGENTS.md` and apply it immediately.
+- `ag`: reread the live global and project `AGENTS.md`, the active workflow,
+  and every routed policy relevant to the current work, then apply them
+  immediately.
 - `q:`: the request was queued earlier and may be stale. Compare it with the
   current state before acting. Perform only the still-relevant portion; do not
   repeat, undo, or conflict with work completed while it waited.
@@ -47,6 +56,9 @@ those.
   [discussion-summary rule](AGENTS.md#discussion-and-action) to the current
   discussion topic. The boundary resets only when the discussion explicitly
   moves on.
+- `diff`: display the complete intended pending changes using the global diff
+  format. Do not apply the changes or grant authority. If no intended changes
+  are pending, state that.
 - `ex`: explain the current subject.
 - `eff`: report the currently recommended effort without changing it.
 - `sw`: resume after the user changed the chat to the recommended effort;
@@ -56,11 +68,8 @@ those.
 
 ## Validation
 
-- `e2e: <request>` or `e2e <suite> <captures>: <request>`: perform E2E
-  validation for the current work under the normal validation policy. Suite and
-  capture identifiers name expected evidence; execution remains global across
-  the tracked suite set. The command authorizes E2E only, not unrelated
-  validation. Follow [`e2e/AGENT_GUIDE.md`](e2e/AGENT_GUIDE.md).
+- `e2e: <request>` or `e2e <suite> <captures>: <request>`: follow
+  [`e2e/AGENT_GUIDE.md`](e2e/AGENT_GUIDE.md).
 
 ## Notifications
 

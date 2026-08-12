@@ -3,15 +3,12 @@
 PS2 modding and reverse-engineering workspace for *Narutimate Accel v2.28*,
 based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 
-## Universal rules
+## Project scope
 
-- Read this file first.
 - `NA2-Modding`, `UN-Workshop`, maintained subrepositories such as the PCSX2
   fork, and future repositories added to this maintained project may be changed
   together when the task requires it. Cross-repository work needs no separate
   approval.
-- Protect original source media and user-owned PCSX2 installations. Binary
-  changes must be reproducible, guarded, and script-owned.
 
 ## Discussion and action
 
@@ -44,8 +41,29 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
   requested scope must actually cover that scope. State a limitation instead of
   presenting a narrower case as the full solution.
 
+## Action boundary
+
+Immediately before any state-changing operation in any workflow, state:
+
+```text
+Changes: <what will be changed>
+Mode: <Normal mode, Design mode, or Interactive mode>
+<workflow-specific settings>
+Will need from you: <later user action or nothing>
+```
+
+Always include `Changes`, `Mode`, and `Will need from you`. Include every setting
+defined by the active workflow.
+
+If user input is required before or during the operation, or would noticeably
+improve its efficiency or quality, request it and do not begin or continue the
+operation. Present the action boundary only when the operation can begin.
+
 ## Evidence and troubleshooting
 
+- When citing file lines, quote the relevant text and attach its clickable
+  citation. Never use bare line numbers or citations without the supporting
+  text.
 - Treat explicit user observations and established evidence as current facts
   unless specific new evidence contradicts them.
 - When the task concerns a state currently visible or running, inspect that
@@ -58,7 +76,7 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 ## Completion reports
 
 Before reporting completion, review the actual final diff and validation
-results. For serious work, report:
+results. Report the applicable items below:
 
 - the achieved outcome and how it matches the approved snapshot;
 - deviations, omitted items, or additional changes;
@@ -76,30 +94,33 @@ Use enough concrete detail that the user can understand the result without
 reviewing the source. Do not add empty template sections or repeat information
 merely to satisfy a format.
 
-## Agent commands
+## Context and command routing
 
 On every new task, read and follow
 [`Normal mode`](docs/workflows/normal_mode.md) and every routed policy triggered
 by the request before stating implementation intent, scope, approach, or
 validation. Any required pre-tool commentary may state only that the applicable
-context is being loaded. Exact mode-entry commands and other directly routed
-commands are listed below. No other wording enters a mode; when a mode exits,
-Normal mode resumes.
+context is being loaded.
+
+### Workflow modes
 
 Exactly one workflow mode is active at a time. Only the active mode's workflow
 document applies; all other mode workflow documents are inactive. Entering a
-mode deactivates the previous mode. When Design mode or Interactive mode exits,
-Normal mode becomes active again. Universal rules and applicable routed
-policies remain active in every mode.
+mode deactivates the previous mode. Global and project-wide rules and applicable
+routed policies remain active in every mode. No wording other than the exact
+commands below enters a mode; when a mode exits, Normal mode resumes.
 
-| Command | Read |
-| --- | --- |
-| `des mode`, `design mode` | [`docs/workflows/design_mode.md`](docs/workflows/design_mode.md) |
-| `int mode`, `interactive mode` | [`docs/workflows/interactive_mode.md`](docs/workflows/interactive_mode.md) |
-| `zxc` | [`docs/procedures/graceful_stop.md`](docs/procedures/graceful_stop.md) |
-| `snap`, `imp`, `ver`, `commit`, `exit`, `tasks`, `task done`, `c`, `c on`, `c off`, `mode`, `n`, `ag`, `q:`, `con`, `e2e`, `sum`, `ex`, `eff`, `sw`, `ss`, `mute`, `unmute` | [`AGENT_COMMANDS.md`](AGENT_COMMANDS.md) |
+### Command index
 
-## Policy routing
+Canonical command definitions and their workflow or procedure routing are in
+[`AGENT_COMMANDS.md`](AGENT_COMMANDS.md).
+
+Command index: `des mode`, `design mode`, `int mode`, `interactive mode`,
+`snap`, `imp`, `ver`, `commit`, `exit`, `zxc`, `tasks`, `task done`, `c`,
+`c on`, `c off`, `mode`, `n`, `ag`, `q:`, `con`, `e2e`, `sum`, `diff`, `ex`,
+`eff`, `sw`, `ss`, `mute`, `unmute`.
+
+### Policy routing
 
 Read only the routed policy whose trigger applies:
 
@@ -109,7 +130,7 @@ Read only the routed policy whose trigger applies:
 | validation, tests, builds, PCSX2, runtime injection, E2E | [`docs/policies/testing.md`](docs/policies/testing.md) |
 | profiles, builder inputs, binaries, donor data, source media, PNACH | [`docs/policies/modding.md`](docs/policies/modding.md) |
 | reverse engineering, disassembly, evidence, knowledge, hypotheses | [`docs/policies/research.md`](docs/policies/research.md) |
-| `TASKS.md`, workstreams, project chats, Notifications | [`docs/policies/coordination.md`](docs/policies/coordination.md) |
+| `TASKS.md`, concurrent work, project chats, Notifications | [`docs/policies/coordination.md`](docs/policies/coordination.md) |
 
 Read component documentation only when working on that component. Read a task's
 directly linked documentation when entering or resuming that task, not before
@@ -120,12 +141,8 @@ sections unless broader context is necessary.
 
 ## Maintaining policy
 
-Refine, consolidate, move, or restructure existing rules instead of layering
-new rules on top of them. Do not duplicate policy; when touching duplicated
-policy, reduce or eliminate the duplication.
-
-Keep this file a small universal entrypoint and router. Add a rule here only
-when it genuinely applies to nearly every task. Put scoped rules in their
-routed policy or component document and link to the canonical owner instead of
-copying it. Materially expanding this file's purpose or scope requires explicit
-user approval.
+- Keep this file a small universal entrypoint and router. Add a rule here only
+  when it genuinely applies to nearly every task. Put scoped rules in their
+  routed policy or component document and link to the canonical owner instead
+  of copying it. Materially expanding this file's purpose or scope requires
+  explicit user approval.

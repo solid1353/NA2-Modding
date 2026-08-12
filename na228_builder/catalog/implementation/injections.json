@@ -129,8 +129,16 @@
     }
   },
   "i__localization__font__layout__collection_lists": {
-    "description": "Route the shared Collection row draw through family boxes and move the three character-header callers through two shared plaque-origin formulas without changing any displayed string.",
+    "description": "Route the shared Collection row draw through family boxes, align the Characters index selected name, and move the three character-header callers through two shared plaque-origin formulas without changing any displayed string.",
     "hooks": {
+      "move_collection_character_index_name": {
+        "description": "Route every Collection Characters selected-name draw through its 190-by-32 NUN5-compatible centered plaque box, preserve the official Granny Chiyo terminal-space advance, and move its raster origin up by 5.6 game units.",
+        "target_id": "na2_etc",
+        "offset": "0x446C",
+        "expected_hex": "90E40D0C00000000",
+        "symbol": "v2_collection_index_name_adapter",
+        "encoding": "jal26"
+      },
       "move_every_character_specific_music_header": {
         "description": "Move every character-specific Music header through the shared Figure/Music origin formula without changing its text, style, scale, or renderer.",
         "target_id": "na2_etc",
@@ -1049,6 +1057,16 @@
             "object": "localization.font.v2.c.text.font.v2.linked.choice.unselected.adapter",
             "abi": "arg0_text_arg2_native_x_native_y",
             "description": "Linked Mode ordinary centered choice"
+          },
+          "v2_collection_index_name_adapter": {
+            "order": 114,
+            "object": "localization.font.v2.c.text.font.v2.collection.index.name.adapter",
+            "abi": "native_x_native_y_text_style",
+            "description": "Collection Characters selected-name boxed layout and official terminal-advance adapter"
+          },
+          "v2_c_collection_index_name_callback": {
+            "order": 115,
+            "object": "localization.font.v2.c.text.font.v2.collection.index.name.callback"
           }
         }
       },

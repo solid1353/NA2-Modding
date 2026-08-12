@@ -13,10 +13,12 @@ $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $configuration = Get-E2eConfiguration -Root $root
 $suiteRoot = Join-Path $root 'suites'
-$requestedSuites = @($Suite | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-if (@($Suite).Count -ne $requestedSuites.Count) {
-    throw 'Suite cannot contain an empty name.'
-}
+$suiteWasSpecified = $PSBoundParameters.ContainsKey('Suite')
+$requestedSuites = @(
+    Get-VisualRegressionRequestedSuiteNames `
+        -Suite $Suite `
+        -WasSpecified $suiteWasSpecified
+)
 if (-not [string]::IsNullOrWhiteSpace($CaptureRoot) -and
     -not [string]::IsNullOrWhiteSpace($CaptureRepository)) {
     throw 'CaptureRoot and CaptureRepository cannot be combined.'
@@ -109,10 +111,10 @@ $compareReadyVariants = {
 
     foreach ($comparisonVariant in $comparisonRuns) {
         $candidateName = [string]$comparisonVariant.name
-        foreach ($suite in $suites) {
-            $comparisonKey = "$candidateName|$suite"
+        foreach ($suiteName in $suites) {
+            $comparisonKey = "$candidateName|$suiteName"
             if ($compared.Contains($comparisonKey)) { continue }
-            $context = Get-E2eRunContext -Name $suite
+            $context = Get-E2eRunContext -Name $suiteName
             $normalSuite = Join-Path `
                 (Join-Path (Join-Path (Join-Path $transaction 'jobs') $publishedVariant) 'suites') `
                 $context.SuiteRelativePath
@@ -135,17 +137,17 @@ $compareReadyVariants = {
                 (Join-Path (Join-Path $transaction 'comparisons') $candidateName) `
                 $context.SuiteRelativePath
             $comparison = Compare-VisualRegressionVariants `
-                -Suite $suite `
+                -Suite $suiteName `
                 -BaselineDirectory (Join-Path $normalSuite 'capture\screenshots') `
                 -CandidateDirectory (Join-Path $candidateSuite 'capture\screenshots') `
                 -CandidateName $candidateName `
                 -OutputRoot $comparisonRoot
             [void]$compared.Add($comparisonKey)
             if ($comparison.status -cne 'passed') {
-                $failure = "$candidateName/$suite"
+                $failure = "$candidateName/$suiteName"
                 $comparisonFailures.Add($failure)
                 Write-Warning (
-                    "$publishedVariant/$candidateName comparison failed for $suite with " +
+                    "$publishedVariant/$candidateName comparison failed for $suiteName with " +
                     "$(@($comparison.mismatches).Count) differing capture(s)."
                 )
             }
@@ -217,8 +219,8 @@ try {
     }
 
     $replacements = [ordered]@{}
-    foreach ($suite in $suites) {
-        $context = Get-E2eRunContext -Name $suite
+    foreach ($suiteName in $suites) {
+        $context = Get-E2eRunContext -Name $suiteName
         $suiteJob = Join-Path `
             (Join-Path (Join-Path (Join-Path $transaction 'jobs') $publishedVariant) 'suites') `
             $context.SuiteRelativePath
@@ -255,7 +257,7 @@ try {
         $hasReference = @(Get-NumericPngSlots -Directory $referenceStage).Count -gt 0
         if ($hasReference) {
             New-VisualRegressionReport `
-                -Suite $suite `
+                -Suite $suiteName `
                 -ReferenceDirectory $referenceStage `
                 -CurrentDirectory $currentStage `
                 -OutputRoot $reportStage

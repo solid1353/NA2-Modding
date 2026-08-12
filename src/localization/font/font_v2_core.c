@@ -308,8 +308,15 @@ typedef signed int s32;
 
 /* === Collection: shared list-family classification === */
 
-/* Fixed native centered Collection character-header draw; do not tune. */
+/* Fixed native centered Collection text draw; do not tune. */
 #define FONT_COLLECTION_HEADER_DRAW_ADDRESS 0x00379240u
+
+/* Collection Characters selected-name origin correction. */
+#define FONT_COLLECTION_INDEX_NAME_Y_OFFSET -5.6f
+
+/* Collection Characters selected-name plaque box. */
+#define FONT_COLLECTION_INDEX_NAME_BOX_WIDTH 190u
+#define FONT_COLLECTION_INDEX_NAME_BOX_HEIGHT 32u
 
 /* Shared Collection list-row raster origin. */
 #define FONT_COLLECTION_X_OFFSET 1.2f
@@ -2747,6 +2754,80 @@ int font_v2_collection_list_callback(
         }
     }
     return 0;
+}
+
+static FONT_V2_SECTION(".text.font_v2_collection_index_name_callback")
+int font_v2_collection_index_name_callback(
+    u32 text,
+    u32 style,
+    u32 unused,
+    FontV2Session *session
+) {
+    FontV2NativeDraw draw = (FontV2NativeDraw)FONT_DRAW_ADDRESS;
+
+    (void)unused;
+    draw(
+        session->draw_x,
+        session->draw_y,
+        (const u8 *)text,
+        style
+    );
+    return 0;
+}
+
+FONT_V2_SECTION(".text.font_v2_collection_index_name_adapter")
+int font_v2_collection_index_name_adapter(
+    float native_x,
+    float native_y,
+    const u8 *text,
+    u32 style
+) {
+    FontV2Session session;
+    u32 measured_width;
+    u32 line_count;
+
+    if (font_v2_measure(text, 0u, &measured_width, &line_count) != 0) {
+        return -1;
+    }
+    if (
+        text[0] == (u8)'G' &&
+        text[1] == (u8)'r' &&
+        text[2] == (u8)'a' &&
+        text[3] == (u8)'n' &&
+        text[4] == (u8)'n' &&
+        text[5] == (u8)'y' &&
+        text[6] == (u8)' ' &&
+        text[7] == (u8)'C' &&
+        text[8] == (u8)'h' &&
+        text[9] == (u8)'i' &&
+        text[10] == (u8)'y' &&
+        text[11] == (u8)'o' &&
+        text[12] == 0
+    ) {
+        /* NUN5's Collection table stores this label with one trailing space. */
+        measured_width += font_v2_ascii_widths[0];
+    }
+
+    session.text = text;
+    session.box_x =
+        native_x - (float)(FONT_COLLECTION_INDEX_NAME_BOX_WIDTH / 2u);
+    session.box_y = native_y + FONT_COLLECTION_INDEX_NAME_Y_OFFSET;
+    session.box_width = FONT_COLLECTION_INDEX_NAME_BOX_WIDTH;
+    session.box_height = FONT_COLLECTION_INDEX_NAME_BOX_HEIGHT;
+    session.horizontal_alignment = FONT_V2_ALIGN_CENTER;
+    session.vertical_alignment = FONT_V2_ALIGN_START;
+    session.flags = FONT_V2_FLAG_SHRINK_X | FONT_V2_FLAG_PREMEASURED;
+    session.line_limit = 1u;
+    session.line_height = (float)FONT_COLLECTION_INDEX_NAME_BOX_HEIGHT;
+    session.callback = (u32)font_v2_collection_index_name_callback;
+    session.callback_arg0 = (u32)text;
+    session.callback_arg1 = style;
+    session.callback_arg2 = 0u;
+    session.callback_arg3 = (u32)&session;
+    session.measured_width = measured_width;
+    session.line_count = line_count;
+
+    return font_v2_adapter_call(&session);
 }
 
 FONT_V2_SECTION(".text.font_v2_collection_figure_music_header_adapter")

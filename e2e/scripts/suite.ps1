@@ -22,6 +22,26 @@ $script:E2eStableCaptureDirectories = @(
     'sstates'
 )
 
+function Get-VisualRegressionRequestedSuiteNames {
+    param(
+        [AllowNull()][string[]]$Suite,
+        [Parameter(Mandatory)][bool]$WasSpecified
+    )
+
+    if (-not $WasSpecified) {
+        return
+    }
+    $providedSuites = @($Suite)
+    $requestedSuites = @(
+        $providedSuites |
+            Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+    )
+    if ($providedSuites.Count -ne $requestedSuites.Count) {
+        throw 'Suite cannot contain an empty name.'
+    }
+    $requestedSuites
+}
+
 function Wait-VisualRegressionJobs {
     param(
         [Parameter(Mandatory)][object[]]$Job,

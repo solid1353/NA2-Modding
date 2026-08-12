@@ -147,7 +147,68 @@ source aliases in `provenance.tsv`:
 
 Matching screenshots are under
 `work/Font/inputs/screenshots/batches/2026-07-31-collection-ss4-8/`. That tree
-also retains `character-index_NA228.png`; the user reported no Font defect on
-the Characters index, so it remains reference-only. Synchronized final-red
-font2 cases 1-7 cover Sakura and legacy-character variants plus Movie without a
-large Font defect; later desynchronized cases are excluded from evidence.
+also retains `character-index_NA228.png`; the earlier single-screen review
+reported no large Font defect on the Characters index, so it remained
+reference-only at that checkpoint. Synchronized final-red font2 cases 1-7
+cover Sakura and legacy-character variants plus Movie without a large Font
+defect; later desynchronized cases are excluded from evidence.
+
+
+## Collection Characters selected-name boxed positioning
+
+Evidence date: 2026-08-12.
+
+The maintained `collection/characters` E2E suite provides 31 paired official
+NUN5/current captures. In every original pair, the selected-name glyphs begin
+at capture Y `394` in NUN5 and Y `402` in current NA2, while the surrounding
+name plaque and portrait remain aligned. The names are also shifted right
+relative to their NUN5 placement, by differing amounts across the complete
+set. The initial candidate corrected only the uniform vertical delta. Matching
+the top Y was insufficient: it retained NA2's incompatible point-centering and
+therefore left every name horizontally misplaced inside the plaque.
+
+The homologous ETC draw functions are NA2 exported `FUN_006B8210` and NUN5
+exported `FUN_006CB310`. NA2's selected-name call is exported address
+`0x006B832C`, runtime `0x006B836C`, file offset `0x446C`; its guarded bytes are
+`90E40D0C00000000` (`jal 0x00379240` plus NOP). It passes the record origin plus
+both half-extents to NA2's point-centered renderer. Live current state records
+the half-extents as `95.0` and `16.0`. NUN5 instead calls its boxed renderer
+`FUN_00385DF0` with the record's X origin, Y origin plus `4.0`, and the doubled
+half-extents: a `190`-by-`32` box. That renderer measures each complete string,
+centers the resulting extent within the plaque, and uses NUN5's tracking and
+ordinary-space behavior.
+
+The first candidate routed only the NA2 call at ETC file `0x446C` through a
+Y-offset adapter. Subtracting `6.4` game units rasterized nine pixels upward and
+one pixel above the reference; the corrected `5.6`-unit value moved it down one
+output pixel and matched all 31 top Ys. It still called `FUN_00379240`, so that
+result was rejected after visual review exposed the uncorrected horizontal
+placement.
+
+The replacement candidate reconstructs the `190`-by-`32` plaque from NA2's
+midpoint arguments and routes the whole family through the existing v2 layout
+session. It uses the shared NUN5-compatible printable-ASCII measurement,
+tracking-zero and ordinary-space behavior, centered horizontal alignment, and
+shrink-only overflow handling, then performs one left-origin draw.
+
+NUN5 first remaps the selected record ID before resolving its localized string.
+For capture `0020`, the live record stores ID `24`; NUN5's remap row at
+`0x006ED190` maps it to localized row `62`. English row `62` stores
+`Granny Chiyo` as its primary pointer and `Granny Chiyo `, with a terminal
+space, as the pointer returned to this caller. The localized NA2 table stores
+the visible text without that padding. The adapter therefore adds one official
+space advance only to this exact label's premeasured extent while drawing the
+unchanged localized text.
+
+The verified `-5.6` vertical correction remains local to this caller. This does
+not port the incompatible NUN5 boxed-renderer ABI, change displayed strings, or
+alter any other Collection text family.
+
+The integrated global replay on 2026-08-13 passed all six Collection suites:
+`characters` 31 captures, `opponents` 19, `misc` 22, `ultimates` 61, `voice`
+31, and `figures` 43, for 207 captures total. In `characters`, the measured
+selected-name glyph bounding boxes match the official reference exactly in X
+and Y for all 31 cases. All eight pair, blend, and amplified-diff grids were
+reviewed; the regenerated 117-file capture-history change is confined to
+`collection/characters`. The user accepted this result with `ver` on
+2026-08-13.

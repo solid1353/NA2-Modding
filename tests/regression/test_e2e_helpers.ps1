@@ -20,6 +20,64 @@ $testRoot = Join-Path (
 try {
     [void](New-Item -ItemType Directory -Path $testRoot -Force)
 
+    $omittedSuites = @(
+        Get-VisualRegressionRequestedSuiteNames `
+            -Suite $null `
+            -WasSpecified $false
+    )
+    $selectedSuites = @(
+        Get-VisualRegressionRequestedSuiteNames `
+            -Suite @('collection/characters', 'collection/figures') `
+            -WasSpecified $true
+    )
+    $blankSuiteRejected = $false
+    try {
+        Get-VisualRegressionRequestedSuiteNames `
+            -Suite @('collection/characters', '') `
+            -WasSpecified $true
+    }
+    catch {
+        $blankSuiteRejected = $_.Exception.Message -ceq (
+            'Suite cannot contain an empty name.'
+        )
+    }
+    Assert-E2eHelperTest `
+        -Condition (
+            $omittedSuites.Count -eq 0 -and
+            ($selectedSuites -join ',') -ceq (
+                'collection/characters,collection/figures'
+            ) -and
+            $blankSuiteRejected
+        ) `
+        -Message 'E2E suite selection did not distinguish omission from an explicitly blank name.'
+
+    foreach ($runnerName in @('run.ps1', 'variant.ps1')) {
+        $tokens = $null
+        $parseErrors = $null
+        $runnerPath = Join-Path $repository "e2e\scripts\$runnerName"
+        $runnerAst = [Management.Automation.Language.Parser]::ParseFile(
+            $runnerPath,
+            [ref]$tokens,
+            [ref]$parseErrors
+        )
+        $suiteIteratorCollisions = @(
+            $runnerAst.FindAll(
+                {
+                    param($node)
+                    $node -is [Management.Automation.Language.ForEachStatementAst] -and
+                    $node.Variable.VariablePath.UserPath -ieq 'Suite'
+                },
+                $true
+            )
+        )
+        Assert-E2eHelperTest `
+            -Condition (
+                $parseErrors.Count -eq 0 -and
+                $suiteIteratorCollisions.Count -eq 0
+            ) `
+            -Message "$runnerName reuses the typed Suite parameter as a foreach iterator."
+    }
+
     foreach ($jobKind in @('thread', 'process')) {
         $jobCommand = if ($jobKind -ceq 'thread') { 'Start-ThreadJob' } else { 'Start-Job' }
         $failedJob = & $jobCommand -Name "$jobKind-synthetic-failure" -ScriptBlock {

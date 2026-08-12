@@ -22,10 +22,12 @@ if (
     throw 'Only the published E2E variant can be repeated.'
 }
 $suiteRoot = Join-Path $root 'suites'
-$requestedSuites = @($Suite | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
-if (@($Suite).Count -ne $requestedSuites.Count) {
-    throw 'Suite cannot contain an empty name.'
-}
+$suiteWasSpecified = $PSBoundParameters.ContainsKey('Suite')
+$requestedSuites = @(
+    Get-VisualRegressionRequestedSuiteNames `
+        -Suite $Suite `
+        -WasSpecified $suiteWasSpecified
+)
 $suites = @(
     if ($requestedSuites.Count -eq 0) {
         Get-VisualRegressionSuiteNames -SuiteRepository $suiteRoot
@@ -82,8 +84,8 @@ $buildResult = [ordered]@{
 
 $replayJobs = [Collections.Generic.List[object]]::new()
 try {
-    foreach ($suite in $suites) {
-        $context = Get-VisualRegressionContext -Suite $suite
+    foreach ($suiteName in $suites) {
+        $context = Get-VisualRegressionContext -Suite $suiteName
         $recordingPath = $context.SuitePath
         $replayNames = @($Variant)
         if ($Repeat.IsPresent) {
@@ -146,7 +148,7 @@ try {
                 Join-Path $PSScriptRoot 'suite.ps1'
             ), $repository, $paths.pcsx2_input_recordings, $recordingPath, (
                 [string]$buildVariant.build
-            ), (Join-Path $suiteOutput 'capture'), $suiteOutput, $suite, $replayName
+            ), (Join-Path $suiteOutput 'capture'), $suiteOutput, $suiteName, $replayName
             $replayJobs.Add($replayJob)
         }
     }

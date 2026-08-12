@@ -158,6 +158,12 @@ V2_JUTSU_DRAW_CALLBACK = f"{V2_PREFIX}.c.jutsu_draw_callback"
 V2_JUTSU_DRAW_ENTRY = f"{V2_PREFIX}.jutsu_draw_entry"
 V2_COLLECTION_LIST_CALLBACK = f"{V2_PREFIX}.c.collection_list_callback"
 V2_COLLECTION_LIST_ENTRY = f"{V2_PREFIX}.collection_list_entry"
+V2_COLLECTION_INDEX_NAME_CALLBACK = (
+    f"{V2_PREFIX}.c.collection_index_name_callback"
+)
+V2_COLLECTION_INDEX_NAME_ADAPTER = (
+    f"{V2_PREFIX}.collection_index_name_adapter"
+)
 V2_COLLECTION_FIGURE_MUSIC_HEADER_ADAPTER = (
     f"{V2_PREFIX}.collection_figure_music_header_adapter"
 )
@@ -548,6 +554,7 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         "font_v2_character_unselected_adapter",
         "font_v2_jutsu_draw_entry",
         "font_v2_collection_list_entry",
+        "font_v2_collection_index_name_adapter",
         "font_v2_collection_figure_music_header_adapter",
         "font_v2_collection_jutsu_header_adapter",
         "font_v2_practice_icon_metric",
@@ -648,6 +655,9 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
             V2_COLLECTION_LIST_ENTRY
         ),
         extracted.symbols[
+            "font_v2_collection_index_name_adapter"
+        ].symbol: V2_COLLECTION_INDEX_NAME_ADAPTER,
+        extracted.symbols[
             "font_v2_collection_figure_music_header_adapter"
         ].symbol: V2_COLLECTION_FIGURE_MUSIC_HEADER_ADAPTER,
         extracted.symbols[
@@ -716,6 +726,9 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         ),
         f"{V2_PREFIX}.c.text.font.v2.collection.list.callback": (
             V2_COLLECTION_LIST_CALLBACK
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.collection.index.name.callback": (
+            V2_COLLECTION_INDEX_NAME_CALLBACK
         ),
         f"{V2_PREFIX}.c.text.font.v2.collection.body.callback": (
             f"{V2_PREFIX}.c.collection_body_callback"
@@ -838,6 +851,8 @@ def build_v2_c_core() -> tuple[Fragment, ...]:
         V2_JUTSU_DRAW_ENTRY,
         V2_COLLECTION_LIST_CALLBACK,
         V2_COLLECTION_LIST_ENTRY,
+        V2_COLLECTION_INDEX_NAME_CALLBACK,
+        V2_COLLECTION_INDEX_NAME_ADAPTER,
         V2_COLLECTION_FIGURE_MUSIC_HEADER_ADAPTER,
         V2_COLLECTION_JUTSU_HEADER_ADAPTER,
         _concise_payload_symbol(f"{V2_PREFIX}.c.collection_body_callback"),

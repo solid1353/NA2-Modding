@@ -25,7 +25,6 @@ class CatalogTests(unittest.TestCase):
         sources: dict[str, str],
         features: dict[str, object],
         *,
-        overrides: dict[str, object] | None = None,
         edits: dict[str, object] | None = None,
         injections: dict[str, object] | None = None,
         string_patches: dict[str, object] | None = None,
@@ -71,7 +70,7 @@ class CatalogTests(unittest.TestCase):
         )
         self.write_json(
             root / "configurations" / "base.json",
-            {"features": features, "overrides": overrides or {}},
+            {"features": features},
         )
         configuration_path = root / "configuration.json"
         self.write_json(configuration_path, {"overrides": {}})
@@ -190,8 +189,7 @@ class CatalogTests(unittest.TestCase):
                                 "savedata_loading": "automatic",
                             }
                         }
-                    },
-                    "overrides": {},
+                    }
                 },
             )
             direct = catalog.load_selection(catalog_path, configuration_path)
@@ -209,6 +207,164 @@ class CatalogTests(unittest.TestCase):
             public = catalog.public_catalog(catalog_path)
             self.assertIn("\n      &\n", public)
             self.assertEqual(public.count("faster_loading:"), 1)
+
+    def test_intersection_shared_overrides_merge_but_branch_overrides_are_atomic(
+        self,
+    ) -> None:
+        source = '''{
+          startup:
+            {
+              faster_loading: setting {
+                description: "Load faster.",
+                patches: ["e__feature__faster_loading"],
+              },
+            }
+            &
+            (
+              {
+                skip_intro: setting {
+                  description: "Skip intro.",
+                  patches: ["e__feature__skip_intro"],
+                },
+                skip_opening: setting {
+                  description: "Skip opening.",
+                  patches: ["e__feature__skip_opening"],
+                },
+              }
+              |
+              {
+                savedata_loading: setting<"automatic"> {
+                  description: "Load save automatically.",
+                  patches: ["e__feature__savedata_loading"],
+                },
+                loading_screen: setting {
+                  description: "Show loading screen.",
+                  patches: ["e__feature__loading_screen"],
+                },
+              }
+            ),
+        }'''
+        base = {
+            "feature": {
+                "startup": {
+                    "faster_loading": True,
+                    "savedata_loading": "automatic",
+                    "loading_screen": True,
+                }
+            }
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path, configuration_path = self.write_project(
+                root, {"feature": source}, base
+            )
+
+            self.write_json(
+                configuration_path,
+                {
+                    "overrides": {
+                        "feature": {"startup": {"faster_loading": False}}
+                    }
+                },
+            )
+            shared_override = catalog.load_selection(
+                catalog_path, configuration_path
+            )
+            self.assertFalse(
+                shared_override.node_enabled(
+                    "features", "feature", "startup", "faster_loading"
+                )
+            )
+            self.assertTrue(
+                shared_override.node_enabled(
+                    "features", "feature", "startup", "savedata_loading"
+                )
+            )
+            self.assertTrue(
+                shared_override.node_enabled(
+                    "features", "feature", "startup", "loading_screen"
+                )
+            )
+
+            self.write_json(
+                configuration_path,
+                {
+                    "overrides": {
+                        "feature": {
+                            "startup": {"savedata_loading": "automatic"}
+                        }
+                    }
+                },
+            )
+            with self.assertRaisesRegex(
+                catalog.ConfigurationError, "expected exactly one of"
+            ):
+                catalog.load_selection(catalog_path, configuration_path)
+
+            self.write_json(
+                configuration_path,
+                {
+                    "overrides": {
+                        "feature": {
+                            "startup": {
+                                "skip_intro": False,
+                                "skip_opening": True,
+                            }
+                        }
+                    }
+                },
+            )
+            branch_override = catalog.load_selection(
+                catalog_path, configuration_path
+            )
+            self.assertTrue(
+                branch_override.node_enabled(
+                    "features", "feature", "startup", "faster_loading"
+                )
+            )
+            self.assertFalse(
+                branch_override.node_enabled(
+                    "features", "feature", "startup", "skip_intro"
+                )
+            )
+            self.assertTrue(
+                branch_override.node_enabled(
+                    "features", "feature", "startup", "skip_opening"
+                )
+            )
+
+    def test_repository_configurations_preserve_test_startup_flow(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        catalog_path = repository / "na228_builder" / "catalog"
+        configurations = repository / "na228_builder" / "configurations"
+
+        selections = {
+            name: catalog.load_selection(
+                catalog_path, configurations / f"{name}.json"
+            )
+            for name in ("development", "test", "release")
+        }
+        test = selections["test"]
+        self.assertFalse(
+            test.node_enabled("features", "qol", "startup", "faster_loading")
+        )
+        self.assertTrue(
+            test.node_enabled(
+                "features", "qol", "startup", "flow", "savedata_loading"
+            )
+        )
+        self.assertTrue(
+            test.node_enabled(
+                "features", "qol", "startup", "flow", "loading_screen"
+            )
+        )
+        for name in ("development", "release"):
+            with self.subTest(configuration=name):
+                self.assertTrue(
+                    selections[name].node_enabled(
+                        "features", "qol", "startup", "faster_loading"
+                    )
+                )
 
     def test_object_intersection_rejects_duplicate_fields(self) -> None:
         source = '''{
@@ -464,7 +620,7 @@ class CatalogTests(unittest.TestCase):
 
             self.write_json(
                 root / "configurations" / "base.json",
-                {"features": False, "overrides": {}},
+                {"features": False},
             )
             self.write_json(configuration_path, {"overrides": {}})
             disabled = catalog.load_selection(catalog_path, configuration_path)
@@ -476,7 +632,7 @@ class CatalogTests(unittest.TestCase):
                 disabled.node_enabled("features", "feature", "integer")
             )
 
-    def test_materialized_configuration_applies_both_override_layers(self) -> None:
+    def test_materialized_configuration_applies_repository_override(self) -> None:
         source = '''{
           first: setting { description: "First.", patches: ["e__f__first"] },
           second: setting { description: "Second.", patches: ["e__f__second"] },
@@ -488,11 +644,10 @@ class CatalogTests(unittest.TestCase):
                 root,
                 {"feature": source},
                 {"feature": {"first": True, "second": True, "third": True}},
-                overrides={"feature": {"second": False}},
             )
             self.write_json(
                 configuration_path,
-                {"overrides": {"feature": {"second": True, "third": False}}},
+                {"overrides": {"feature": {"third": False}}},
             )
             materialized = catalog.materialized_configuration(
                 catalog_path, configuration_path
@@ -506,8 +661,7 @@ class CatalogTests(unittest.TestCase):
                             "second": True,
                             "third": False,
                         }
-                    },
-                    "overrides": {},
+                    }
                 },
             )
             bundled = root / "config.json"

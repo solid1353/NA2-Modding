@@ -26,9 +26,9 @@ output and removes only its temporary `.building` file.
 - A scalar setting uses its value directly, such as `"manual"` or an integer.
 - A named structured alternative is an object containing its selected named
   field. Object shapes and unions must match the catalog exactly.
-- `overrides` may be empty or contain only the branches you want to replace.
-  Container objects merge recursively; scalar settings and unions replace as
-  complete values.
+
+`config.json` contains the complete `features` tree; edit values in that tree
+directly. It has no separate overrides layer.
 
 Invalid keys, values, ranges, or ambiguous union values are rejected before
 the builder modifies an ISO. The error names the invalid configuration path,

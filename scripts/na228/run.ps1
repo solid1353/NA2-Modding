@@ -12,7 +12,8 @@ param(
     [string]$WorkerOutputIso,
     [string]$WorkerLogDirectory,
     [switch]$WorkerEphemeral,
-    [switch]$Force
+    [switch]$Force,
+    [switch]$NormalSpeed
 )
 
 $ErrorActionPreference = 'Stop'
@@ -44,6 +45,9 @@ if ($Force -and $Action -notin @(
     'latest-build-and-launch'
 )) {
     throw 'Force mode is valid only for ordinary Latest or Manual builds.'
+}
+if ($NormalSpeed -and $Action -ne 'latest-build-and-launch') {
+    throw 'Normal-speed mode is valid only for a build-and-launch action.'
 }
 
 $runMode = switch ($Action) {
@@ -122,9 +126,14 @@ try {
                 $paths.files.latest_iso
             }
             Write-Na2Stage "2/2 Launch $([IO.Path]::GetFileName($launchIso))"
-            & $paths.files.pcsx2_launch_command `
-                -IsoPath $launchIso `
-                -Turbo
+            $launchArguments = @{ IsoPath = $launchIso }
+            if ($NormalSpeed) {
+                $launchArguments.Capped = $true
+            }
+            else {
+                $launchArguments.Turbo = $true
+            }
+            & $paths.files.pcsx2_launch_command @launchArguments
         }
     }
     $runOutcome = 'succeeded'

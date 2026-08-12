@@ -6,13 +6,13 @@
   `na228_builder/README.md` and the affected
   [feature documentation](../features/README.md). Do not recreate retired
   schemas or assumptions from historical notes.
-- `na228_builder/configurations/base.json` owns the shared `features` setting
-  and base `overrides`. Normal development builds use `development.json`,
-  test, worker, and E2E builds use `test.json`, and only release packaging uses
-  `release.json`.
-  Loading applies base features, base overrides, then the selected configuration
-  overrides. Release packaging merges base and release into exactly one
-  self-contained external configuration. Feature-named JSON files under
+- `na228_builder/configurations/base.json` owns the complete shared `features`
+  tree. Normal development builds use `development.json`, test, worker, and E2E
+  builds use `test.json`, and only release packaging uses `release.json`.
+  Loading applies the selected configuration's `overrides` directly to the base
+  features. Release packaging materializes base plus release selections into one
+  self-contained external configuration containing only `features`.
+  Feature-named JSON files under
   `na228_builder/catalog/` own selectable definitions; files under
   `na228_builder/catalog/implementation/` own guarded binary edits, runtime
   hooks and payload declarations, and targets. Root `product.json` owns output

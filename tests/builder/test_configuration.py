@@ -183,8 +183,7 @@ class ConfigurationTests(unittest.TestCase):
                     "features": {
                         feature_id: {"enabled": True}
                         for feature_id in catalog
-                    },
-                    "overrides": {},
+                    }
                 },
                 indent=2,
             )

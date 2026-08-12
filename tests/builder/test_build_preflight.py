@@ -76,9 +76,7 @@ class BuildPreflightTests(unittest.TestCase):
             encoding="utf-8",
         )
         (configuration.parent / "base.json").write_text(
-            json.dumps(
-                {"features": {"localization": {"enabled": True}}, "overrides": {}}
-            ),
+            json.dumps({"features": {"localization": {"enabled": True}}}),
             encoding="utf-8",
         )
         configuration.write_text(
@@ -276,8 +274,7 @@ class BuildPreflightTests(unittest.TestCase):
             base_configuration.write_text(
                 json.dumps(
                     {
-                        "features": {"localization": {"enabled": True}},
-                        "overrides": {"localization": False},
+                        "features": {"localization": {"enabled": False}},
                     }
                 ),
                 encoding="utf-8",
@@ -287,7 +284,6 @@ class BuildPreflightTests(unittest.TestCase):
                 json.dumps(
                     {
                         "features": {"localization": {"enabled": True}},
-                        "overrides": {},
                     }
                 ),
                 encoding="utf-8",

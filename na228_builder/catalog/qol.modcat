@@ -1,15 +1,12 @@
 {
-  startup:
-    {
-      faster_loading: setting {
-        description: "Shorten startup by loading RPG and player voice-bank indexes only when each bank is first played.",
-        patches: [
-          "i__qol__startup__faster_loading__lazy_voice_indexes",
-        ],
-      },
-    }
-    &
-    (
+  startup: {
+    faster_loading: setting {
+      description: "Shorten startup by loading RPG and player voice-bank indexes only when each bank is first played.",
+      patches: [
+        "i__qol__startup__faster_loading__lazy_voice_indexes",
+      ],
+    },
+    flow:
       {
         description: "Retain the native title path with independent optional skips for its preceding sequences.",
         skip_cc2_intro: setting {
@@ -54,8 +51,8 @@
             "i__qol__startup__loading_screen__runtime",
           ],
         },
-      }
-    ),
+      },
+  },
   practice: {
     description: "Independent Practice-mode default settings.",
     voice_off_by_default: setting {

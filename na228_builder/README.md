@@ -25,13 +25,13 @@ integrated catalog data.
   injection units. Each unit contains `hooks`, `payload`, or both.
 - `catalog/implementation/string_patches.json` owns semantic transformations
   performed by the string patcher before inline and external string layout.
-- `configurations/base.json` contains the shared `features` setting and its
-  `overrides`. `development.json`, `test.json`, and `release.json` contain
+- `configurations/base.json` contains the complete shared `features` tree.
+  `development.json`, `test.json`, and `release.json` contain
   concrete `overrides`. Each overrides object may be empty or partially mirror
-  the catalog's feature tree directly. The loader applies `base.features`, then
-  `base.overrides`, then the concrete configuration's `overrides`. Normal local
-  builds use `development.json`; Manual, worker, and E2E builds use
-  `test.json`; only release packaging uses `release.json`.
+  the catalog's feature tree directly. The loader applies the concrete
+  configuration's `overrides` to `base.features`. Normal local builds use
+  `development.json`; Manual, worker, and E2E builds use `test.json`; only
+  release packaging uses `release.json`.
 - `catalog/implementation/targets.tsv` is the single target registry used by
   edits and injection hooks.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.
@@ -59,8 +59,9 @@ does not expand a parent. Plain containers merge recursively through
 configuration overrides, while settings and node unions replace atomically.
 Union branches must be provably disjoint and are never selected by order.
 Structural catalog objects may use `&` to declare fields shared by several
-object-union branches once; intersected fields must be disjoint, and the
-resulting union remains atomic in overrides.
+object-union branches once; intersected fields must be disjoint. Unconditional
+object fields remain recursive merge points in overrides, while the
+branch-specific part of an intersected union remains atomic.
 
 The grammar supports `bool`, `int`, `decimal`, and `string`, literal types,
 closed object types with optional fields, disjoint `|` unions, structural
@@ -114,9 +115,9 @@ Documentation is not an executable builder input.
 Feature files are discovered in alphabetical filename order. Module execution
 within each feature remains derived from the stable internal engine order above.
 
-Release packaging applies `base.features`, `base.overrides`, and
-`release.overrides`, then writes one editable JSON configuration named
-`config.json`. It also writes one consolidated, inert `catalog.modcat`
+Release packaging applies `release.overrides` to `base.features`, then writes
+one editable JSON configuration named `config.json` containing only the
+materialized `features` tree. It also writes one consolidated, inert `catalog.modcat`
 reference with the same public hierarchy, types, constraints, unions, and
 descriptions but no patch mappings or implementation details. `README.md`
 explains both files in simple terms.

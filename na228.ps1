@@ -45,6 +45,12 @@ if ($forceTokens.Count -gt 1) {
 }
 $forceBuild = $forceTokens.Count -eq 1
 $commandTokens = @($commandTokens | Where-Object { $_ -ine '-f' })
+$normalSpeedTokens = @($commandTokens | Where-Object { $_ -ieq '-n' })
+if ($normalSpeedTokens.Count -gt 1) {
+    throw '-n may be specified only once.'
+}
+$normalSpeed = $normalSpeedTokens.Count -eq 1
+$commandTokens = @($commandTokens | Where-Object { $_ -ine '-n' })
 $mode = if ($commandTokens.Count -gt 0) {
     $commandTokens[0].ToLowerInvariant()
 }
@@ -57,6 +63,18 @@ $arguments = @(
     }
 )
 
+if ($normalSpeed -and $mode -in @(
+    'help',
+    'test',
+    'e2e',
+    'release',
+    'build',
+    'worker',
+    'w'
+)) {
+    throw '-n is valid only when launching one or two games.'
+}
+
 if ($mode -eq 'help') {
     if ($arguments.Count -gt 0) {
         throw 'na228 help accepts no arguments.'
@@ -64,13 +82,15 @@ if ($mode -eq 'help') {
     @(
         'NA2.28'
         ''
-        '  na228 [-f]                 Build and run Latest in turbo; -f bypasses non-critical validation errors'
+        '  na228 [-f] [-n]            Build and run Latest; turbo by default'
         '  na228 w [C path|plan]      Watch all registered C by default'
         '  na228 w injection_test     Watch only the reload-message smoke test'
-        '  na228 <token> [token]      Run one or two games in turbo/window order'
+        '  na228 <token> [token] [-n]  Run one or two games in window order; turbo by default'
         '  l | p | m                  Latest | Previous | Manual'
         '  bl | bm [-f]               Build and run Latest | Manual'
         '  <token>w [C path|plan]     Watch that game; selection follows its token'
+        '  -n                          Launch at normal speed'
+        '  -f                          Bypass non-critical validation errors during an ordinary build'
         '  additional launch arguments  See workshop help'
         ''
         '  na228 build l|m [-f]        Build Latest or Manual without running it'
@@ -254,7 +274,8 @@ if ($mode -eq 'worker') {
 if (-not $mode) {
     & (Join-Path $paths.scripts 'na228\run.ps1') `
         -Action latest-build-and-launch `
-        -Force:$forceBuild
+        -Force:$forceBuild `
+        -NormalSpeed:$normalSpeed
     return
 }
 
@@ -355,11 +376,43 @@ foreach ($buildAction in @($buildActions | Select-Object -Unique)) {
         -Force:$forceBuild
 }
 
-$workshopArguments = @($games) + $forwardedLaunchArguments
+$workshopParameters = @{
+    Action = if ($games.Count -gt 0) { $games[0] } else { '' }
+    Arguments = @(
+        if ($games.Count -gt 1) {
+            $games[1..($games.Count - 1)]
+        }
+    )
+}
+if ($normalSpeed) {
+    $workshopParameters.n = $true
+}
+$valuedLaunchOptions = @{
+    '-p' = 'p'
+    '-r' = 'r'
+    '-t' = 't'
+    '-mc' = 'mc'
+}
+for ($index = 0; $index -lt $forwardedLaunchArguments.Count; $index++) {
+    $option = $forwardedLaunchArguments[$index].ToLowerInvariant()
+    if ($option -eq '-dw') {
+        $workshopParameters.dw = $true
+        continue
+    }
+    if (-not $valuedLaunchOptions.ContainsKey($option)) {
+        throw "Unknown Workshop launch option: $($forwardedLaunchArguments[$index])"
+    }
+    if ($index + 1 -ge $forwardedLaunchArguments.Count) {
+        throw "$($forwardedLaunchArguments[$index]) requires a value."
+    }
+    $index++
+    $workshopParameters[$valuedLaunchOptions[$option]] = `
+        $forwardedLaunchArguments[$index]
+}
 Push-Location $paths.repository
 try {
     $launchResults = @(
-        & $paths.files.workshop_command @workshopArguments
+        & $paths.files.workshop_command @workshopParameters
     )
 }
 finally {

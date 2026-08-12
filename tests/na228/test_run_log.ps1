@@ -253,10 +253,10 @@ Write-Output '[fake] unit tests'
         -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'logs\na228'))) `
         -Message 'Help invocation created run logs.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 <token> \[token\]') `
+        -Condition ($helpText -match '(?m)^\s*na228 <token> \[token\] \[-n\]') `
         -Message 'Root help omitted the ordered token grammar.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 \[-f\]\s+') `
+        -Condition ($helpText -match '(?m)^\s*na228 \[-f\] \[-n\]\s+') `
         -Message 'Root help omitted the default build-and-launch signature.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 worker \[--ephemeral\] work/') `
@@ -286,8 +286,13 @@ Write-Output '[fake] unit tests'
         -Condition ($helpText -match '(?m)^\s*na228 e2e commit \[-s\]\s+') `
         -Message 'Root help omitted capture-history commit.'
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch.ps1') -Content @'
-param([string]$Target = 'dev', [string]$IsoPath, [switch]$Turbo)
-Write-Host "[fake] launch $Target $IsoPath turbo=$($Turbo.IsPresent)"
+param(
+    [string]$Target = 'dev',
+    [string]$IsoPath,
+    [switch]$Turbo,
+    [switch]$Capped
+)
+Write-Host "[fake] launch $Target $IsoPath turbo=$($Turbo.IsPresent) capped=$($Capped.IsPresent)"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch_games.ps1') -Content @'
 param(
@@ -327,33 +332,28 @@ foreach ($game in $canonical) {
 }
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'workshop.ps1') -Content @'
-$tokens = @($args)
+[CmdletBinding()]
+param(
+    [Parameter(Position = 0)]
+    [string]$Action,
+
+    [Parameter(Position = 1, ValueFromRemainingArguments)]
+    [string[]]$Arguments,
+
+    [string]$p,
+    [string]$r,
+    [string]$t,
+    [string]$mc,
+    [switch]$dw,
+    [switch]$n
+)
 if ([IO.Path]::GetFullPath((Get-Location).Path) -cne [IO.Path]::GetFullPath($PSScriptRoot)) {
     throw 'Workshop was not invoked from its project context.'
 }
-Write-Output "[fake] workshop args=$($tokens -join '|')"
-$games = [Collections.Generic.List[string]]::new()
-$play = ''
-$record = ''
-$test = $false
-for ($index = 0; $index -lt $tokens.Count; $index++) {
-    switch ($tokens[$index]) {
-        '-p' { $play = $tokens[++$index] }
-        '-r' { $record = $tokens[++$index] }
-        '-t' {
-            $play = $tokens[++$index]
-            $test = $true
-        }
-        default {
-            if (-not $tokens[$index].StartsWith('-')) {
-                $games.Add($tokens[$index])
-            }
-            elseif ($index + 1 -lt $tokens.Count) {
-                $index++
-            }
-        }
-    }
-}
+$games = @(
+    $Action
+    $Arguments | Where-Object { -not [string]::IsNullOrEmpty($_) }
+)
 $aliases = @{ l = 'latest'; p = 'previous'; m = 'manual' }
 $canonical = @($games | ForEach-Object {
     if ($aliases.ContainsKey($_)) { $aliases[$_] } else { $_ }
@@ -366,9 +366,12 @@ if (@($canonical | Where-Object { $_ -notin @(
 ) }).Count -gt 0) {
     throw "Unknown game name: $($games -join ',')"
 }
+$regression = -not [string]::IsNullOrWhiteSpace($t)
+$play = if ($regression) { $t } else { $p }
 Write-Output (
     "[fake] multi-game launch $($canonical -join ',') " +
-    "play=$play record=$record test=$test"
+    "play=$play record=$r test=$regression " +
+    "memory=$mc discard=$($dw.IsPresent) normalSpeed=$($n.IsPresent)"
 )
 $port = 28014
 foreach ($game in $canonical) {
@@ -561,11 +564,13 @@ Add-Content `
     }
     $callerLocation = [IO.Path]::GetFullPath((Get-Location).Path)
     $multiGameLaunch = (
-        & (Join-Path $fakeRepository 'na228.ps1') na2 nun5
+        & (Join-Path $fakeRepository 'na228.ps1') na2 nun5 -n
     ) -join "`n"
     Assert-Na2Test `
-        -Condition ($multiGameLaunch -match '\[fake\] multi-game launch na2,nun5') `
-        -Message 'Unified multi-game launch did not preserve ordered selectors.'
+        -Condition (
+            $multiGameLaunch -match '\[fake\] multi-game launch na2,nun5 .*normalSpeed=True'
+        ) `
+        -Message 'Unified multi-game launch did not preserve ordered selectors and normal-speed mode.'
     Assert-Na2Test `
         -Condition ([IO.Path]::GetFullPath((Get-Location).Path) -ceq $callerLocation) `
         -Message 'Root game launch did not restore the caller working directory.'
@@ -613,21 +618,22 @@ Add-Content `
             )
         ) `
         -Message 'Regression playback was not forwarded to the shared launcher.'
-    $futureLaunchArguments = (
+    $memoryCardLaunch = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
             l `
-            -future-option `
-            'future-value'
+            -mc `
+            'Shared.ps2' `
+            -dw
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
-            $futureLaunchArguments -match (
-                '\[fake\] workshop args=nun5\|latest\|' +
-                '-future-option\|future-value'
+            $memoryCardLaunch -match (
+                'multi-game launch nun5,latest .*' +
+                'memory=Shared\.ps2 discard=True'
             )
         ) `
-        -Message 'Unknown trailing launch arguments were not forwarded unchanged to Workshop.'
+        -Message 'Memory-card and discard-write options were not bound for Workshop.'
     $launchLogSectionsAfter = if (Test-Path -LiteralPath $launchLogPath) {
         [regex]::Matches(
             [IO.File]::ReadAllText($launchLogPath),
@@ -795,10 +801,21 @@ Add-Content `
     Assert-Na2Test `
         -Condition (
             $forceLaunch -match 'force=True' -and
-            $forceLaunch -match '\[fake\] launch dev force-output\.iso turbo=True' -and
-            $forceLaunch -notmatch '\[fake\] workshop args=.*-f'
+            $forceLaunch -match '\[fake\] launch dev force-output\.iso turbo=True'
         ) `
         -Message 'Force mode and turbo were not routed through build-and-launch.'
+    $normalSpeedBuildRejected = $false
+    try {
+        & (Join-Path $fakeRepository 'na228.ps1') build l -n
+    }
+    catch {
+        $normalSpeedBuildRejected = (
+            $_.Exception.Message -match '-n is valid only when launching one or two games'
+        )
+    }
+    Assert-Na2Test `
+        -Condition $normalSpeedBuildRejected `
+        -Message 'Normal-speed mode was accepted by a build-only command.'
     $forcedManualBuild = (
         & (Join-Path $fakeRepository 'na228.ps1') build m -f *>&1
     ) -join "`n"
@@ -814,11 +831,17 @@ Add-Content `
     Assert-Na2Test `
         -Condition (
             $forcedManualLaunch -match 'ISO result: manual.*force=True' -and
-            $forcedManualLaunch -match 'multi-game launch manual' -and
-            $forcedManualLaunch -notmatch '\[fake\] workshop args=.*-f'
+            $forcedManualLaunch -match 'multi-game launch manual'
         ) `
         -Message 'Force mode was not consumed by the build-and-run Manual command.'
-    & (Join-Path $fakeRepository 'na228.ps1')
+    $normalSpeedLaunch = (& (Join-Path $fakeRepository 'na228.ps1') -n *>&1) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $normalSpeedLaunch -match (
+                '\[fake\] launch dev .+ turbo=False capped=True'
+            )
+        ) `
+        -Message 'Normal-speed mode was not routed through default build-and-launch.'
     $fakeLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\latest.log'))
     $fakeRolling = [IO.File]::ReadAllText((Join-Path $fakeRepository 'logs\na228\rolling.log'))
     Assert-Na2Test -Condition ($fakeLatest -match '(?m)^mode: build$') -Message 'Root build mode was not logged.'

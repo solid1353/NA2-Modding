@@ -12,9 +12,10 @@ their `patches` mappings. Release packaging consolidates them into an inert
 implementation detail. The packaged executable uses its embedded complete
 catalog and never reads the external reference.
 
-User selections remain JSON with two root fields: `features` contains the
-complete selected tree, while `overrides` contains an optional partial overlay.
-A complete synthetic configuration appears below.
+A complete standalone or released configuration has one JSON root field:
+`features` contains the complete selected tree. Repository build variants use
+an internal `overrides` root to customize `base.features`. A complete synthetic
+configuration appears below.
 
 ## Nodes and configuration values
 
@@ -193,8 +194,7 @@ their JSON configuration values look like this:
       },
       "layout_mode": "compact"
     }
-  },
-  "overrides": {}
+  }
 }
 ```
 
@@ -247,8 +247,10 @@ shapes, but keeps `faster_loading` declared once and leaves the JSON flat:
 `&` binds more tightly than `|`; parentheses make the intended distribution
 explicit. Every operand must resolve to a structural object or a union of
 structural objects. Intersected objects must have disjoint selectable field
-names, and no two operands may both declare `description`. The resulting union
-remains atomic in configuration overrides.
+names, and no two operands may both declare `description`. Fields declared by
+unconditional object operands remain recursive merge points in configuration
+overrides. If an override supplies any field belonging to a union operand, it
+must supply one complete branch of that union-specific portion.
 
 ## Release projection
 
@@ -266,12 +268,20 @@ catalog reference cannot change validation or patching behavior.
 
 ## Overrides
 
-The base configuration contains the complete `features` object. An `overrides`
-object may partially mirror that hierarchy. Overrides merge recursively only
-through plain structural containers. When an override reaches a setting or a
-catalog-node union, it replaces that node's complete configured value at any
-depth. An object-valued setting therefore requires a complete valid object; its
-fields never merge independently with the previous value.
+The base and standalone configurations contain only the complete `features`
+object. Repository development, test, and release variants contain an
+`overrides` object that may partially mirror that hierarchy. Overrides merge
+recursively through plain structural containers and unconditional object fields
+of an intersection. When an override reaches a setting or a catalog-node union,
+it replaces that node's complete configured value at any depth. An object-valued
+setting therefore requires a complete valid object; its fields never merge
+independently with the previous value.
+
+For `shared & (branch_a | branch_b)`, an override may contain only shared
+fields; those fields merge while the selected branch is preserved. Supplying
+any branch-specific field replaces the branch-specific portion atomically and
+therefore requires one complete branch. A shared-only override cannot re-enable
+an intersection whose previous value is `false`, because no branch is selected.
 
 An override value of `false` disables the addressed node. When a disabled
 container is partially re-enabled by a later object override, its unspecified

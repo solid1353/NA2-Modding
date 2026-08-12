@@ -286,6 +286,75 @@ no-load path reaches the main menu without input or visible Save/Load UI. The
 individual physical-card rows above remain the statically established native
 outcome mapping unless separately exercised at runtime.
 
+### NUN5 E2E reference port
+
+The NUN5 reference game is `SLES-55605`, CRC `C071D4C1`. Its clean
+5,340,912-byte boot ELF has SHA-256
+`20A43677397731A2A20899336D1165ACE5B436906B9B89BE90FB10F4558DD19D`.
+The executable load segment maps file offset `0x180` to EE virtual address
+`0x00100000`, so its file offsets use `virtual address - 0x000FFE80`; this is
+different from NA2's `0x100`-based mapping.
+
+NUN5's splash controller `FUN_001e6500` embeds the language selector before its
+logo sequence. Runtime `0x001E65D0` is the only caller of selector update
+`FUN_003d0c60`. Language index `0` is English: `FUN_003d4000(0)` stores it at
+`0x00611C10`, and the caller subsequently runs the unchanged selector cleanup
+`FUN_003d09c0` and `FUN_003d4040`, which loads `TEXTENG.BIN`. The E2E PNACH
+therefore replaces the selector entry with an equivalent direct store of zero
+and return value `1`. The branch at runtime `0x001E6620` is then removed after
+the normal text load and logo construction, so the controller takes its native
+empty-sequence completion path without activating or drawing a logo. Its normal
+destructor still owns the allocated objects.
+
+The post-loader and Continue control flow is structurally homologous to NA2:
+
+| NUN5 role | Symbol/address | Established behavior |
+| --- | --- | --- |
+| Required-loader completion | `0x001E6DB4` | Native state `2` enters the movie path; state `3` enters the title dispatcher. |
+| Title dispatch | `0x001E6E28`, `FUN_001e4480` | Result `2` selects Continue. |
+| Continue controller | `FUN_001efe60` | Allocates the native `0x28`-byte Save/Load parent, consumes results `1`/`2`, performs cleanup, and retains the native post-load setup and main-menu loader. |
+| Save/Load update | `0x001EFEDC`, `FUN_001e9d00(parent, 1)` | Per-frame visible load-mode update replaced by the silent driver. |
+| No-load result | `0x001EFEFC` | Native `-1` abort is changed to zero so result `2` continues to the menu without loaded data. |
+| Save/Load draw | `0x001F0174`, `FUN_001eb500` | No-op while the silent operation is pending. |
+
+The global worker pointer is `0x00617CF4`. NUN5 retains the same `0x60`-byte
+worker layout and relevant status/result contract as NA2. Its matching helper
+functions are `FUN_001e7a00` for the load-mode preamble,
+`FUN_001deef0(0)` for load preparation, `FUN_001e7a20(worker, 0)` for the
+port-zero scan, `FUN_001e7a90(worker, 0)` for record-zero load, and
+`FUN_001e8e60(worker, 1)` for confirmation as Yes. The silent driver therefore
+uses the same four phases and accepted pairs documented above: scan `1/0`,
+confirmation `0x10/3`, read progress `0x11/4` or `0x12/4`, and verified load
+completion `0x13/1`. Every other terminal outcome returns Continue result `2`;
+busy status `4` retains the native unbounded wait.
+
+The language-selector function occupies runtime
+`0x003D0C60..0x003D0FFF` and has no caller other than `0x001E65D0`. Once its
+entry returns immediately, its tail is unreachable. The PNACH places the
+448-byte silent driver at `0x003D0C80..0x003D0E3F`, within that function only.
+The complete 928-byte clean function range has SHA-256
+`9C287ED44C52EA0821AAC95F469E08BEF2C56CC107558E11A39DE5E04317FF6E`;
+the linked driver has SHA-256
+`0701F97F71AE8F021005C722F49C585026D3F353F65F45392F871847FD387468`.
+Every emitted word in the PNACH retains its decoded MIPS instruction as an
+inline comment.
+
+| Runtime | ELF file offset | Clean word | Candidate word/effect |
+| ---: | ---: | ---: | --- |
+| `0x001E6620` | `0xE67A0` | `1440004C` | `00000000`: do not enter logo playback. |
+| `0x001E6DB4` | `0xE6F34` | `24030002` | `24030003`: enter title state after the required loaders. |
+| `0x001E6E28` | `0xE6FA8` | `0C079120` | `24020002`: select Continue without title input. |
+| `0x001EFEDC` | `0xF005C` | `0C07A740` | `0C0F4320`: call the silent driver at `0x003D0C80`. |
+| `0x001EFEFC` | `0xF007C` | `2402FFFF` | `0000102D`: map no-load to normal menu continuation. |
+| `0x001F0174` | `0xF02F4` | `0C07AD40` | `00000000`: suppress the visible Save/Load child. |
+| `0x003D0C60` | `0x2D0DE0` | `27BDFFB0` | Begin the English-selector stub; the driver starts at `0x003D0C80`. |
+
+This E2E-focused port deliberately omits NA228's custom boot progress display,
+savedata notification, and output-specific payload system. The user confirmed
+that the PNACH startup path works at runtime on 2026-08-11. The exact
+memory-card and save-data case exercised during that verification was not
+recorded.
+
 ### Main-menu savedata notification seam
 
 The usable menu is the established controller state/mode `4/1`. The native font

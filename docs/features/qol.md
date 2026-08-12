@@ -96,13 +96,13 @@ state `3` instead of state `2` at virtual address `0x001E11CC` (file offset
 This route bypasses the CyberConnect2 intro and opening itself, so neither
 independent skip edit is selected with a save-loading branch.
 
-The `qol.startup` catalog node intersects a shared object containing
-`faster_loading` with a union of two closed startup-flow shapes. The title
-branch contains `skip_cc2_intro` and `skip_opening`; they remain independent and
-may both be enabled. The direct-loading branch instead contains
-`savedata_loading` and `loading_screen`, so neither skip can be selected when
-either direct-loading control is present. `faster_loading` is declared once and
-is available with either flow.
+The `qol.startup` catalog node is a plain container. Its independent
+`faster_loading` setting is available with either startup flow. The nested
+`flow` node is a union of two closed shapes: the title branch contains
+`skip_cc2_intro` and `skip_opening`, which remain independent and may both be
+enabled; the direct-loading branch instead contains `savedata_loading` and
+`loading_screen`, so neither skip can be selected when either direct-loading
+control is present.
 
 Within the direct-loading branch, `savedata_loading: "manual"` retains the full
 Save/Load controller. With
@@ -123,8 +123,9 @@ those cases the existing guarded result mapping enters the main menu without
 loaded data. It does not synthesize a timeout while the native worker reports a
 busy state.
 
-The base configuration selects `savedata_loading: "automatic"` and enables
-`loading_screen` and `faster_loading`;
+The base configuration enables `qol.startup.faster_loading`, then selects
+`savedata_loading: "automatic"` and enables `loading_screen` inside
+`qol.startup.flow`;
 `savedata_loading: "manual"` remains available as the confirmed visible
 fallback. The sequence bypasses the notice, Bandai Namco, Bandai, CRIWARE,
 opening, interactive title, Load list, card-status messages, and load
@@ -143,6 +144,9 @@ observation in the current launch setup measured the visible loading screen at
 about 6-7 seconds. The user accepted the integrated patch and elapsed-time
 counter on 2026-08-11; first-use voice delay and repeated or concurrent
 first-use playback were not separately isolated during acceptance.
+The test configuration disables `faster_loading`, so Manual, worker, and E2E
+outputs retain native eager voice-index loading; development and release
+outputs keep the faster-loading selection from the base configuration.
 The complete disassembly findings, worker layout, outcome matrix, and state
 machine are recorded in
 [`../knowledge/game/startup.md`](../knowledge/game/startup.md).

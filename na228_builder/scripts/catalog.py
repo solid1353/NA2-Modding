@@ -187,15 +187,9 @@ def _container_fields(
 def _feature_root(
     features: dict[str, catalog_format.ContainerNode],
 ) -> catalog_format.ContainerNode:
-    expanded: dict[str, catalog_format.ContainerNode] = {}
-    for feature_id, feature in features.items():
-        node = catalog_format.expand_node(feature, feature_id)
-        if not isinstance(node, catalog_format.ContainerNode):
-            raise TypeError(type(node))
-        expanded[feature_id] = node
     return catalog_format.ContainerNode(
         tuple(
-            catalog_format.ContainerField(feature_id, expanded[feature_id])
+            catalog_format.ContainerField(feature_id, features[feature_id])
             for feature_id in sorted(features)
         )
     )
@@ -293,6 +287,9 @@ def _validate_configuration_value(
         for key, child in fields.items():
             _validate_configuration_value(child, value[key], (*path, key))
         return
+    if isinstance(node, catalog_format.IntersectionNode):
+        _validate_configuration_value(catalog_format.expand_node(node), value, path)
+        return
     if isinstance(node, catalog_format.UnionNode):
         matches = [
             branch
@@ -313,6 +310,115 @@ def _validate_configuration_value(
     raise TypeError(type(node))
 
 
+def _intersection_merge_parts(
+    node: catalog_format.IntersectionNode,
+) -> tuple[
+    dict[str, catalog_format.CatalogNodeExpression],
+    catalog_format.UnionNode | None,
+]:
+    shared_fields: dict[str, catalog_format.CatalogNodeExpression] = {}
+    branch_operands: list[catalog_format.UnionNode] = []
+    for operand in node.operands:
+        expanded = (
+            operand
+            if isinstance(operand, catalog_format.ContainerNode)
+            else catalog_format.expand_node(operand)
+        )
+        if isinstance(expanded, catalog_format.ContainerNode):
+            for field in expanded.fields:
+                if field.name in shared_fields:
+                    raise TypeError(
+                        f"duplicate validated intersection field {field.name}"
+                    )
+                shared_fields[field.name] = field.node
+            continue
+        if isinstance(expanded, catalog_format.UnionNode):
+            branch_operands.append(expanded)
+            continue
+        raise TypeError(type(expanded))
+
+    if not branch_operands:
+        return shared_fields, None
+    if len(branch_operands) == 1:
+        return shared_fields, branch_operands[0]
+    branch_node = catalog_format.expand_node(
+        catalog_format.IntersectionNode(tuple(branch_operands))
+    )
+    if not isinstance(branch_node, catalog_format.UnionNode):
+        raise TypeError(type(branch_node))
+    return shared_fields, branch_node
+
+
+def _merge_intersection_configuration_value(
+    node: catalog_format.IntersectionNode,
+    base: object,
+    override: object,
+    path: tuple[str, ...],
+) -> object:
+    if not isinstance(override, dict):
+        raise _invalid_configuration_value(
+            path, override, "an object override, or false to disable it"
+        )
+
+    expanded = catalog_format.expand_node(node)
+    shared_fields, branch_node = _intersection_merge_parts(node)
+    if not shared_fields:
+        return _merge_configuration_value(expanded, base, override, path)
+
+    branch_fields: set[str] = set()
+    if branch_node is not None:
+        for branch in branch_node.branches:
+            if not isinstance(branch, catalog_format.ContainerNode):
+                raise TypeError(type(branch))
+            branch_fields.update(_container_fields(branch))
+
+    label = ".".join(path)
+    extra = sorted(set(override) - set(shared_fields) - branch_fields)
+    if extra:
+        raise ConfigurationError(
+            f"Invalid config override at {label}: unknown keys: {', '.join(extra)}"
+        )
+
+    if base is False:
+        merged = {key: False for key in shared_fields}
+        base_branch: dict[str, object] | None = None
+    else:
+        _validate_configuration_value(expanded, base, path)
+        if not isinstance(base, dict):
+            raise TypeError(type(base))
+        merged = {key: base[key] for key in shared_fields}
+        base_branch = {
+            key: value for key, value in base.items() if key not in shared_fields
+        }
+
+    for key in set(override).intersection(shared_fields):
+        merged[key] = _merge_configuration_value(
+            shared_fields[key], merged[key], override[key], (*path, key)
+        )
+
+    if branch_node is None:
+        return merged
+
+    branch_override = {
+        key: value for key, value in override.items() if key in branch_fields
+    }
+    if branch_override:
+        _validate_configuration_value(branch_node, branch_override, path)
+        merged.update(branch_override)
+        return merged
+    if base_branch is None:
+        expected = " ".join(
+            catalog_format.type_text(catalog_format.active_type(branch_node)).split()
+        )
+        raise _invalid_configuration_value(
+            path,
+            override,
+            f"one complete branch of {expected} when re-enabling it",
+        )
+    merged.update(base_branch)
+    return merged
+
+
 def _merge_configuration_value(
     node: catalog_format.CatalogNodeExpression,
     base: object,
@@ -322,6 +428,8 @@ def _merge_configuration_value(
     label = ".".join(path)
     if override is False:
         return False
+    if isinstance(node, catalog_format.IntersectionNode):
+        return _merge_intersection_configuration_value(node, base, override, path)
     if isinstance(node, (catalog_format.SettingNode, catalog_format.UnionNode)):
         _validate_configuration_value(node, override, path)
         return override
@@ -401,6 +509,8 @@ def _selected_nodes(
                 )
             )
             return True
+        if isinstance(node, catalog_format.IntersectionNode):
+            return visit(catalog_format.expand_node(node), configured, path)
         if isinstance(node, catalog_format.UnionNode):
             matches = [
                 branch
@@ -592,7 +702,7 @@ def _effective_configuration(
     catalog_path: Path,
     configuration_path: Path,
     features: dict[str, catalog_format.ContainerNode],
-) -> tuple[Path | None, object, dict[str, object]]:
+) -> tuple[Path | None, object]:
     try:
         configuration = _read_json(configuration_path, "Configuration")
     except ValueError as exc:
@@ -613,40 +723,24 @@ def _effective_configuration(
             base = _read_json(base_path, "Base configuration")
         except ValueError as exc:
             raise ConfigurationError(str(exc)) from exc
-        if set(base) != {"features", "overrides"}:
+        if set(base) != {"features"}:
             raise ConfigurationError(
-                "Base configuration root keys must be features and overrides"
+                "Base configuration root must contain only features"
             )
-        if not isinstance(base["overrides"], dict):
-            raise ConfigurationError("Base configuration overrides must be an object")
         if not isinstance(configuration["overrides"], dict):
             raise _invalid_configuration_value(
                 ("overrides",), configuration["overrides"], "an object"
             )
         _validate_configuration_value(root, base["features"], ("features",))
-        base_effective = _merge_configuration_value(
-            root, base["features"], base["overrides"], ("features",)
-        )
         effective = _merge_configuration_value(
-            root, base_effective, configuration["overrides"], ("features",)
+            root, base["features"], configuration["overrides"], ("features",)
         )
-        overrides = configuration["overrides"]
-    elif set(configuration) == {"features", "overrides"}:
+    elif set(configuration) == {"features"}:
         base_path = None
-        if not isinstance(configuration["overrides"], dict):
-            raise _invalid_configuration_value(
-                ("overrides",), configuration["overrides"], "an object"
-            )
         _validate_configuration_value(root, configuration["features"], ("features",))
-        effective = _merge_configuration_value(
-            root,
-            configuration["features"],
-            configuration["overrides"],
-            ("features",),
-        )
-        overrides = configuration["overrides"]
+        effective = configuration["features"]
     else:
-        expected = {"features", "overrides"}
+        expected = {"features"}
         actual = set(configuration)
         missing = sorted(expected - actual)
         extra = sorted(actual - expected)
@@ -657,8 +751,7 @@ def _effective_configuration(
             problems.append("unknown keys: " + ", ".join(extra))
         raise ConfigurationError(f"Invalid config root: {'; '.join(problems)}")
     _validate_configuration_value(root, effective, ("features",))
-    assert isinstance(overrides, dict)
-    return base_path, effective, overrides
+    return base_path, effective
 
 
 def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelection:
@@ -673,7 +766,7 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
         injections,
         string_patches,
     ) = _load_implementation(catalog_path, features)
-    base_path, effective, _overrides = _effective_configuration(
+    base_path, effective = _effective_configuration(
         catalog_path, configuration_path, features
     )
     nodes = _selected_nodes(_feature_root(features), effective)
@@ -697,14 +790,14 @@ def materialized_configuration(
     catalog_path: Path,
     configuration_path: Path,
 ) -> dict[str, object]:
-    """Return one self-contained JSON configuration with base values applied."""
+    """Return one complete standalone configuration with repository overrides applied."""
     catalog_path = catalog_path.resolve()
     configuration_path = configuration_path.resolve()
     features, _catalog_files = _read_catalog(catalog_path)
-    _base_path, effective, _overrides = _effective_configuration(
+    _base_path, effective = _effective_configuration(
         catalog_path, configuration_path, features
     )
-    return {"features": effective, "overrides": {}}
+    return {"features": effective}
 
 
 def public_catalog(catalog_path: Path) -> str:

@@ -32,8 +32,9 @@ clean NA2 ISO and one exact clean NUN5 ISO.
    and waits for Enter before closing.
 
 The ZIP contains exactly the versioned EXE, `config.json`, `catalog.modcat`,
-and `README.md`. Release packaging derives `config.json` from `base.features`,
-`base.overrides`, and `release.overrides`. It derives the consolidated
+and `README.md`. Release packaging applies `release.overrides` to
+`base.features` and writes the resulting complete `features` tree to
+`config.json`. It derives the consolidated
 `catalog.modcat` from the canonical feature catalogs, strips every patch and
 implementation detail, and distributes it only as a readable reference. The
 executable never reads that external reference. The executable embeds the

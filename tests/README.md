@@ -18,7 +18,7 @@ The internal unit-test runner is:
 
 The runner executes Python test modules in isolated subprocesses, followed by
 PowerShell test scripts in isolated PowerShell processes. Each phase uses up to
-the lesser of 16 workers and the available logical processors. Set
+the lesser of 8 workers and the available logical processors. Set
 `NA228_TEST_WORKERS` to a positive integer to override the worker count; use `1`
 for serial debugging. Output is buffered per module or script and reported in
 deterministic path order.

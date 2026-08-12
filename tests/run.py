@@ -16,7 +16,7 @@ from typing import Sequence
 
 
 REPOSITORY = Path(__file__).resolve().parents[1]
-DEFAULT_MAX_WORKERS = 16
+DEFAULT_MAX_WORKERS = 8
 WORKER_ENVIRONMENT = "NA228_TEST_WORKERS"
 POWERSHELL_ENVIRONMENT = "NA228_TEST_POWERSHELL"
 UNITTEST_COUNT = re.compile(r"Ran (\d+) tests? in [0-9.]+s")

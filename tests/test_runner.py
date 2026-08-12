@@ -9,10 +9,10 @@ from tests import run
 
 
 class ParallelRunnerTests(unittest.TestCase):
-    def test_worker_count_defaults_to_sixteen_and_validates_overrides(self) -> None:
+    def test_worker_count_defaults_to_eight_and_validates_overrides(self) -> None:
         self.assertEqual(run.resolve_worker_count(None, processor_count=8), 8)
-        self.assertEqual(run.resolve_worker_count(None, processor_count=16), 16)
-        self.assertEqual(run.resolve_worker_count(None, processor_count=32), 16)
+        self.assertEqual(run.resolve_worker_count(None, processor_count=16), 8)
+        self.assertEqual(run.resolve_worker_count(None, processor_count=32), 8)
         self.assertEqual(run.resolve_worker_count("1", processor_count=16), 1)
         self.assertEqual(run.resolve_worker_count("24", processor_count=16), 24)
         for value in ("0", "-1", "abc", "1.5"):

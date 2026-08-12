@@ -19,7 +19,7 @@
 - Refresh Git status and history before operations, and stage only task-owned
   paths or hunks.
 - When the active workflow calls for staging, use
-  `D:\Games\Modding\codex-utils\codex\staging\stage_task_changes.ps1 -Changes`
+  `@codex-utils/codex/staging/stage_task_changes.ps1 -Changes`
   for every participating repository. If a staged contribution needs revision,
   release it through the helper before editing, then validate and stage its
   replacement once.
@@ -41,7 +41,7 @@
   still requires explicit instruction.
 - Never modify Git identity configuration at any scope, including system,
   global, local, and worktree configuration. Resolve the matching agent identity
-  from `@workshop/settings/git-authors.tsv`, or use
+  from `@codex-utils/settings/git-authors.tsv`, or use
   `<agent-name>@agent.invalid` when it has no entry, and apply it only to the
   individual commit operation. Do not use or override the user's persistent
   identity. Use the concise task-authored subject

@@ -58,7 +58,6 @@ feature donor, not an official successor or English authority.
 - `game_catalog`: Workshop root `games.json`.
 - `settings`: root `settings.json`.
 - `game_resolver`: Workshop `scripts/lib/resolve_game.py`.
-- `notification_state` and `git_authors`: shared Workshop settings.
 - `workshop_command`: Workshop `workshop.ps1`.
 - `pcsx2_launch_command`, `pcsx2_game_launch_command`, `pcsx2_copy_worker_command`,
   `pcsx2_pine_command`, and `pcsx2_iso_identity`: Workshop utilities.

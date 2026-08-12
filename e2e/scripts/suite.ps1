@@ -336,7 +336,7 @@ function Invoke-VisualRegressionReplay {
         & $paths.files.pcsx2_game_launch_command `
             -Games $Game `
             -Play $stagedName `
-            -Test `
+            -Snapshots `
             -CaptureDirectory $CaptureRoot `
             -ProjectRoot $Repository
     }

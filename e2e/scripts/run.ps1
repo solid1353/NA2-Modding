@@ -1,7 +1,8 @@
 [CmdletBinding()]
 param(
-    [string]$Suite,
+    [string[]]$Suite,
     [string]$CaptureRoot,
+    [string]$CaptureRepository,
     [switch]$Shifted,
     [switch]$RepeatNormal
 )
@@ -12,34 +13,60 @@ $ErrorActionPreference = 'Stop'
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $configuration = Get-E2eConfiguration -Root $root
 $suiteRoot = Join-Path $root 'suites'
+$requestedSuites = @($Suite | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+if (@($Suite).Count -ne $requestedSuites.Count) {
+    throw 'Suite cannot contain an empty name.'
+}
 if (-not [string]::IsNullOrWhiteSpace($CaptureRoot) -and
-    [string]::IsNullOrWhiteSpace($Suite)) {
+    -not [string]::IsNullOrWhiteSpace($CaptureRepository)) {
+    throw 'CaptureRoot and CaptureRepository cannot be combined.'
+}
+if (-not [string]::IsNullOrWhiteSpace($CaptureRoot) -and
+    $requestedSuites.Count -ne 1) {
     throw 'CaptureRoot requires one selected suite.'
 }
-if ($RepeatNormal.IsPresent -and [string]::IsNullOrWhiteSpace($Suite)) {
-    throw 'RepeatNormal requires one selected suite.'
+if (-not [string]::IsNullOrWhiteSpace($CaptureRepository) -and
+    $requestedSuites.Count -eq 0) {
+    throw 'CaptureRepository requires selected suites.'
+}
+if ($RepeatNormal.IsPresent -and $requestedSuites.Count -eq 0) {
+    throw 'RepeatNormal requires selected suites.'
 }
 function Get-E2eRunContext {
     param([Parameter(Mandatory)][string]$Name)
 
-    if ([string]::IsNullOrWhiteSpace($CaptureRoot)) {
-        return Get-VisualRegressionContext -Suite $Name
+    if (-not [string]::IsNullOrWhiteSpace($CaptureRoot)) {
+        return Get-VisualRegressionContext -Suite $Name -CaptureRoot $CaptureRoot
     }
-    return Get-VisualRegressionContext -Suite $Name -CaptureRoot $CaptureRoot
+    if (-not [string]::IsNullOrWhiteSpace($CaptureRepository)) {
+        $defaultContext = Get-VisualRegressionContext -Suite $Name
+        return Get-VisualRegressionContext `
+            -Suite $Name `
+            -CaptureRoot (Join-Path $CaptureRepository $defaultContext.SuiteRelativePath)
+    }
+    return Get-VisualRegressionContext -Suite $Name
 }
 $availableSuites = @(
     Get-VisualRegressionSuiteNames -SuiteRepository $suiteRoot
 )
 $suites = @(
-    if ([string]::IsNullOrWhiteSpace($Suite)) {
+    if ($requestedSuites.Count -eq 0) {
         $availableSuites
     }
     else {
-        $requestedContext = Get-E2eRunContext -Name $Suite
-        if (-not (Test-Path -LiteralPath $requestedContext.SuitePath -PathType Leaf)) {
-            throw "E2E suite does not exist: $($requestedContext.Suite)"
+        $selected = [Collections.Generic.HashSet[string]]::new(
+            [StringComparer]::OrdinalIgnoreCase
+        )
+        foreach ($requestedSuite in $requestedSuites) {
+            $requestedContext = Get-E2eRunContext -Name $requestedSuite
+            if (-not (Test-Path -LiteralPath $requestedContext.SuitePath -PathType Leaf)) {
+                throw "E2E suite does not exist: $($requestedContext.Suite)"
+            }
+            if (-not $selected.Add($requestedContext.Suite)) {
+                throw "Duplicate E2E suite selection: $($requestedContext.Suite)"
+            }
+            $requestedContext.Suite
         }
-        $requestedContext.Suite
     }
 )
 if ($suites.Count -eq 0) {
@@ -127,6 +154,7 @@ $compareReadyVariants = {
 }
 $pipelineCompleted = $false
 try {
+    $suiteSelectionJson = ConvertTo-Json -Compress -InputObject ([string[]]$suites)
     $replayNames = @($runVariants.name)
     if ($RepeatNormal.IsPresent) {
         $replayNames += "$publishedVariant-repeat"
@@ -138,12 +166,12 @@ try {
     foreach ($variant in $runVariants) {
         $variantName = [string]$variant.name
         $variantJob = Start-Job -Name $variantName -ScriptBlock {
-            param($Script, $Variant, $Transaction, $Suite, $Repeat)
+            param($Script, $Variant, $Transaction, $SuiteSelectionJson, $Repeat)
             $ErrorActionPreference = 'Stop'
             $variantArguments = @{
                 Variant = $Variant
                 Transaction = $Transaction
-                Suite = $Suite
+                Suite = [string[]]@($SuiteSelectionJson | ConvertFrom-Json)
             }
             if ($Repeat) {
                 $variantArguments.Repeat = $true
@@ -151,7 +179,7 @@ try {
             & $Script @variantArguments
         } -ArgumentList (
             Join-Path $PSScriptRoot 'variant.ps1'
-        ), $variantName, $transaction, $Suite, (
+        ), $variantName, $transaction, $suiteSelectionJson, (
             $RepeatNormal.IsPresent -and $variantName -ceq $publishedVariant
         )
         $jobs.Add($variantJob)

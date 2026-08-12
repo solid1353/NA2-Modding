@@ -20,11 +20,16 @@ $testTempParent = Join-Path $workspaceTempRoot 'tests'
 $testTemp = Join-Path $testTempParent ("run-$PID-$([Guid]::NewGuid().ToString('N'))")
 $originalTemp = [Environment]::GetEnvironmentVariable('TEMP', 'Process')
 $originalTmp = [Environment]::GetEnvironmentVariable('TMP', 'Process')
+$originalTestPowerShell = [Environment]::GetEnvironmentVariable(
+    'NA228_TEST_POWERSHELL',
+    'Process'
+)
 $workspaceTempExisted = Test-Path -LiteralPath $workspaceTempRoot -PathType Container
 
 [void](New-Item -ItemType Directory -Path $testTemp -Force)
 $env:TEMP = $testTemp
 $env:TMP = $testTemp
+$env:NA228_TEST_POWERSHELL = $powershell
 
 Push-Location $repository
 try {
@@ -33,16 +38,7 @@ try {
         -Script (Join-Path $PSScriptRoot 'run.py') `
         -NoBytecode
     if ($LASTEXITCODE -ne 0) {
-        throw "Python tests failed with exit code $LASTEXITCODE."
-    }
-
-    $powershellTests = @(
-        Get-ChildItem -LiteralPath $PSScriptRoot -Recurse -File -Filter 'test_*.ps1' |
-            Sort-Object FullName
-    )
-    foreach ($test in $powershellTests) {
-        Write-Host "[tests] $([IO.Path]::GetRelativePath($repository, $test.FullName))"
-        & $test.FullName
+        throw "Unit tests failed with exit code $LASTEXITCODE."
     }
 }
 finally {
@@ -58,6 +54,12 @@ finally {
     }
     else {
         $env:TMP = $originalTmp
+    }
+    if ($null -eq $originalTestPowerShell) {
+        Remove-Item Env:NA228_TEST_POWERSHELL -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:NA228_TEST_POWERSHELL = $originalTestPowerShell
     }
 
     Remove-Item -LiteralPath $testTemp -Recurse -Force -ErrorAction SilentlyContinue

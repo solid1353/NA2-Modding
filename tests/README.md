@@ -16,6 +16,13 @@ The internal unit-test runner is:
 .\tests\run.ps1
 ```
 
+The runner executes Python test modules in isolated subprocesses, followed by
+PowerShell test scripts in isolated PowerShell processes. Each phase uses up to
+the lesser of 16 workers and the available logical processors. Set
+`NA228_TEST_WORKERS` to a positive integer to override the worker count; use `1`
+for serial debugging. Output is buffered per module or script and reported in
+deterministic path order.
+
 `na228 test` invokes this unit-test runner only. E2E is an independent
 validation lane invoked globally with `na228 e2e`.
 

@@ -501,15 +501,18 @@ Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "reference
         (Join-Path $fakeScripts 'run.ps1'),
         @'
 param(
-    [string]$Suite,
+    [string[]]$Suite,
     [string]$CaptureRoot,
+    [string]$CaptureRepository,
     [switch]$Shifted,
     [switch]$RepeatNormal
 )
 if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'fail-run')) {
     throw 'synthetic run failure'
 }
-if ($Suite -ceq 'test/with_reference') {
+$suites = [string[]]@($Suite)
+$hasReferenceSuite = $suites -ccontains 'test/with_reference'
+if ($hasReferenceSuite) {
     $sync = Join-Path $PSScriptRoot 'sync'
     $deadline = [DateTime]::UtcNow.AddSeconds(5)
     while (-not (Test-Path -LiteralPath (Join-Path $sync 'reference-started'))) {
@@ -520,14 +523,22 @@ if ($Suite -ceq 'test/with_reference') {
     }
 }
 Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value (
-    "run suite=$Suite shifted=$($Shifted.IsPresent) " +
+    "run suite=$($suites -join ',') shifted=$($Shifted.IsPresent) " +
     "repeatNormal=$($RepeatNormal.IsPresent)"
 )
-if ($Suite -ceq 'test/with_reference') {
+if ($hasReferenceSuite) {
     [IO.File]::WriteAllText((Join-Path $sync 'run-started'), '')
 }
-[void](New-Item -ItemType Directory -Path $CaptureRoot -Force)
-[IO.File]::WriteAllText((Join-Path $CaptureRoot 'current.txt'), 'current')
+foreach ($suiteName in $suites) {
+    $suiteCaptureRoot = if (-not [string]::IsNullOrWhiteSpace($CaptureRoot)) {
+        $CaptureRoot
+    }
+    else {
+        Join-Path $CaptureRepository $suiteName.Replace('/', [IO.Path]::DirectorySeparatorChar)
+    }
+    [void](New-Item -ItemType Directory -Path $suiteCaptureRoot -Force)
+    [IO.File]::WriteAllText((Join-Path $suiteCaptureRoot 'current.txt'), 'current')
+}
 '@
     )
     $noReferenceRecording = Join-Path $fakeRecordings 'test\no_reference.p2m2'
@@ -682,6 +693,8 @@ if ($Suite -ceq 'test/with_reference') {
     Assert-E2eHelperTest `
         -Condition (
             ($bulkSuiteNames -join ',') -ceq 'test/no_reference,test/with_reference' -and
+            (Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt') | Select-Object -Last 1) `
+                -ceq 'run suite=test/no_reference,test/with_reference shifted=False repeatNormal=True' -and
             (Test-Path -LiteralPath (
                 Join-Path $fakeRepository 'e2e\captures\test\no_reference\current.txt'
             ) -PathType Leaf) -and
@@ -689,17 +702,19 @@ if ($Suite -ceq 'test/with_reference') {
                 Join-Path $fakeRepository 'e2e\captures\test\with_reference\current.txt'
             ) -PathType Leaf)
         ) `
-        -Message 'Bulk suite creation did not process public recordings while excluding __ directories.'
+        -Message 'Bulk suite creation did not process public recordings in one concurrent run while excluding __ directories.'
+    $looseCapture = Join-Path $fakeRepository 'e2e\captures\loose.txt'
+    $suiteMetadata = Join-Path $fakeRepository 'e2e\suites\metadata.txt'
+    [IO.File]::WriteAllText($looseCapture, 'loose capture history')
+    [IO.File]::WriteAllText($suiteMetadata, 'suite metadata')
     & (Join-Path $fakeScripts 'delete_suite.ps1') -All
     & (Join-Path $fakeScripts 'delete_suite.ps1') -All
     Assert-E2eHelperTest `
         -Condition (
-            @(Get-VisualRegressionSuiteNames `
-                -SuiteRepository (Join-Path $fakeRepository 'e2e\suites')).Count -eq 0 -and
+            -not (Test-Path -LiteralPath (Join-Path $fakeRepository 'e2e\suites')) -and
             @(
                 Get-ChildItem `
                     -LiteralPath (Join-Path $fakeRepository 'e2e\captures') `
-                    -Directory `
                     -Force |
                     Where-Object Name -cne '.git'
             ).Count -eq 0 -and

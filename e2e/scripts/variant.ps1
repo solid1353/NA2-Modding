@@ -2,7 +2,7 @@
 param(
     [Parameter(Mandatory)][ValidateSet('normal', 'shifted')][string]$Variant,
     [Parameter(Mandatory)][string]$Transaction,
-    [string]$Suite,
+    [string[]]$Suite,
     [switch]$Repeat
 )
 
@@ -22,16 +22,28 @@ if (
     throw 'Only the published E2E variant can be repeated.'
 }
 $suiteRoot = Join-Path $root 'suites'
+$requestedSuites = @($Suite | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+if (@($Suite).Count -ne $requestedSuites.Count) {
+    throw 'Suite cannot contain an empty name.'
+}
 $suites = @(
-    if ([string]::IsNullOrWhiteSpace($Suite)) {
+    if ($requestedSuites.Count -eq 0) {
         Get-VisualRegressionSuiteNames -SuiteRepository $suiteRoot
     }
     else {
-        $requestedContext = Get-VisualRegressionContext -Suite $Suite
-        if (-not (Test-Path -LiteralPath $requestedContext.SuitePath -PathType Leaf)) {
-            throw "E2E suite does not exist: $($requestedContext.Suite)"
+        $selected = [Collections.Generic.HashSet[string]]::new(
+            [StringComparer]::OrdinalIgnoreCase
+        )
+        foreach ($requestedSuite in $requestedSuites) {
+            $requestedContext = Get-VisualRegressionContext -Suite $requestedSuite
+            if (-not (Test-Path -LiteralPath $requestedContext.SuitePath -PathType Leaf)) {
+                throw "E2E suite does not exist: $($requestedContext.Suite)"
+            }
+            if (-not $selected.Add($requestedContext.Suite)) {
+                throw "Duplicate E2E suite selection: $($requestedContext.Suite)"
+            }
+            $requestedContext.Suite
         }
-        $requestedContext.Suite
     }
 )
 if ($suites.Count -eq 0) {

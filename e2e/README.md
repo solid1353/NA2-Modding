@@ -29,11 +29,13 @@ Every normal and shifted capture must match.
 stores it as the single file `suites/<suite>.p2m2`, optionally captures a
 reference game, and runs repeatability capture. The literal selector `all`
 processes every shared `.p2m2` recording except recordings beneath `__*`
-directories such as the internal `__generated` staging area. `e2e rename` moves
-the suite definition and capture history together; `e2e delete` removes both
-for only the named suite while preserving descendant suites, while `e2e delete
-all` removes every suite and capture history but preserves the nested capture
-Git repository. `e2e update` stages all current capture changes and
+directories such as the internal `__generated` staging area. It prepares one
+build and runs every suite's normal/repeat replays concurrently; optional
+reference-game replays also run concurrently. `e2e rename` moves the suite
+definition and capture history together; `e2e delete` removes both for only the
+named suite while preserving descendant suites, while `e2e delete all` directly
+removes the complete suite tree and all capture history but preserves the nested
+capture Git repository. `e2e update` stages all current capture changes and
 consolidates them into `Initial commit`: a one-commit repository is amended,
 while a multi-commit repository is reset softly to its root and squashed. It
 then expires reflogs and runs normal Git garbage collection with immediate

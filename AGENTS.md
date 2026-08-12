@@ -16,8 +16,7 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 ## Discussion and action
 
 - During explicit discussion, design, planning, or brainstorming, later messages
-  refine the proposed result. They do not authorize implementation until the
-  applicable approval boundary is reached.
+  refine the proposed result.
 - A discussion summary contains only the intended changes, integrates accepted
   corrections, excludes rejected or withdrawn changes, and adds no new changes.
 
@@ -55,6 +54,7 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 - If a proven execution path produces no requested observable change, trace
   forward from the last proven point to the first unproven consumer rather than
   restarting earlier layers or reviving rejected theories.
+
 ## Completion reports
 
 Before reporting completion, review the actual final diff and validation
@@ -97,7 +97,7 @@ policies remain active in every mode.
 | `des mode`, `design mode` | [`docs/workflows/design_mode.md`](docs/workflows/design_mode.md) |
 | `int mode`, `interactive mode` | [`docs/workflows/interactive_mode.md`](docs/workflows/interactive_mode.md) |
 | `zxc` | [`docs/procedures/graceful_stop.md`](docs/procedures/graceful_stop.md) |
-| `qwe`, `snap`, `tasks`, `task done`, `c`, `c on`, `c off`, `ver`, `mode`, `n`, `ag`, `q:`, `con`, `e2e`, `sum`, `ex`, `eff`, `sw`, `ss`, `mute`, `unmute` | [`AGENT_COMMANDS.md`](AGENT_COMMANDS.md) |
+| `snap`, `imp`, `ver`, `commit`, `exit`, `tasks`, `task done`, `c`, `c on`, `c off`, `mode`, `n`, `ag`, `q:`, `con`, `e2e`, `sum`, `ex`, `eff`, `sw`, `ss`, `mute`, `unmute` | [`AGENT_COMMANDS.md`](AGENT_COMMANDS.md) |
 
 ## Policy routing
 

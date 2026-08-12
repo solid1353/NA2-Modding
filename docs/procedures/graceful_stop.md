@@ -11,7 +11,7 @@
    `docs/handoffs/<date>-<task>-resume.md`.
 4. Create or update the corresponding `TASKS.md` entry and link it to the
    handoff.
-5. Commit and push only the handoff and `TASKS.md` update. Never commit the
+5. Commit only the handoff and `TASKS.md` update. Never commit the
    unfinished implementation.
 6. Stop.
 
@@ -22,5 +22,5 @@ command.
 On resume, follow the task link, apply the recorded stash, resolve ordinary Git
 conflicts using the stash and handoff, and verify that the paused work was
 recovered correctly before dropping the stash. Then delete the temporary
-handoff, remove its task link, commit and push that cleanup, keep the task entry
+handoff, remove its task link, commit that cleanup, keep the task entry
 until the work itself is complete, and continue normally.

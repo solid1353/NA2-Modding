@@ -147,7 +147,7 @@ UI elements, and similar visible game behavior.
 - Before user acceptance, do not document the patch behavior as established fact
   or encode it into unit tests.
 - After acceptance, finalize useful patch-specific tests and documentation,
-  discard rejected candidate checks, then commit and push the complete feature.
+  discard rejected candidate checks, then commit the complete feature.
 - Unit tests must detect a meaningful regression in accepted behavior or a
   documented safety contract. They must not merely restate fixture, catalog,
   manifest, or table contents; freeze incidental implementation details; or

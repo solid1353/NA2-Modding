@@ -7,11 +7,15 @@ those.
 
 ## Approval and task control
 
-- `qwe`, or the same physical keys under another keyboard layout: follow the
-  active workflow's `qwe` rule; in Normal mode, authorize the current
-  serious-work implementation snapshot.
-- `snap`: present the current consolidated implementation snapshot. It
-  requests the snapshot only and does not authorize implementation.
+- `snap`: present the current consolidated implementation snapshot.
+- `imp`: authorize implementation of the current consolidated proposal.
+  Follow the active workflow's implementation behavior.
+- `ver`: accept the current pending result and follow the active workflow's
+  acceptance behavior.
+- `commit`: apply the repository policy's one-time commit override to the current
+  task-owned pending changes. It does not verify the result.
+- `exit`: exit Design mode or Interactive mode without accepting the result
+  or authorizing a commit. It has no effect in Normal mode.
 - `tasks`: read and present `TASKS.md` under the
   [coordination policy](docs/policies/coordination.md).
 - `task done`: apply the task-completion behavior defined by the
@@ -22,9 +26,6 @@ those.
 - `c`: respond only with `Commit: on` or `Commit: off`, reporting the current
   chat's persistent Normal mode commit setting. It does not change the setting
   or grant authority.
-- `ver`: apply the
-  [one-time override](docs/policies/repository.md#git-and-concurrent-work) to the
-  current task-owned pending Normal mode changes.
 - `zxc`: follow the
   [`graceful-stop procedure`](docs/procedures/graceful_stop.md).
 
@@ -63,4 +64,4 @@ those.
 
 ## Notifications
 
-- `mute`, `unmute`: update, commit, and push the shared Notifications mute state.
+- `mute`, `unmute`: update and commit the shared Notifications mute state.

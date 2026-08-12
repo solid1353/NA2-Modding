@@ -31,8 +31,7 @@ or an explicit cross-chat handoff.
 - Read or modify it only when the user explicitly asks to inspect, present,
   select, take, add, update, complete, or remove tracked tasks, or when an
   invoked `tasks` or `task done` operation requires it.
-- Selecting an entry identifies work; it does not authorize implementation or
-  change the normal small/serious-work rules.
+- Selecting an entry identifies work; it does not authorize implementation.
 - Tasks are added only by the user or on the user's instruction.
 - A workstream subsection appears under exactly one of `In Progress`, `Backlog`,
   or `Archive`. `Bugs` remains under `Backlog`; it is not a workstream. Labeled

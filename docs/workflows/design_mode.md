@@ -37,22 +37,22 @@ serious structural work.
   messages, approvals, corrections, and wording changes are not milestones.
 - Preserve accepted points, integrate corrections, remove rejected content, and
   keep unresolved decisions explicit.
-- Only `qwe` authorizes implementation. Agreement with individual points or any
-  other wording does not authorize it.
+- Only `imp` authorizes implementation. Agreement with individual points or
+  any other wording does not authorize it.
 - Design mode remains active until the user approves the reviewed implementation
-  with `qwe` or explicitly requests to exit the mode. An instruction to stop or
-  switch work does not itself exit Design mode.
+  with `ver` or sends `exit mode`. An instruction to stop or switch work does
+  not itself exit Design mode.
 
 ## Implementation and review
 
-1. On `qwe` before implementation, finalize the design document, set its status to
-   `Ready for implementation`, and commit and push it before implementation
+1. On `imp`, finalize the design document, set its status to
+   `Ready for implementation`, and commit it before implementation
    begins.
 2. Start implementation of the consolidated design without leaving Design mode.
 3. Implement and validate the design.
 4. Add an implementation summary to the design document and set its status to
    `Pending review`.
-5. Commit and push the implementation together with the updated design
+5. Commit the implementation together with the updated design
    document.
 6. Report the result in chat and request user review.
 
@@ -63,17 +63,17 @@ There is no standardized correction workflow after review. If the result is
 wrong or incomplete, the user may ask questions or request further changes.
 Questions do not authorize implementation; explicit change instructions do,
 under the general interaction rules. Further corrections do not require
-another `qwe`. Do not choose or enter a correction workflow automatically.
+another `imp`. Do not choose or enter a correction workflow automatically.
 
-When the user enters `qwe` after reviewing the implementation, treat it as
+When the user enters `ver` after reviewing the implementation, treat it as
 implementation approval. Before deleting the individual design document,
 review it against the implemented result and promote every still-useful
 decision, contract, explanation, example, limitation, and validation finding
 to its canonical current documentation. Verify that no useful content remains
 owned only by the design document. Then delete the individual design document,
-commit and push the promotion and deletion, and exit Design mode. Never delete
+commit the promotion and deletion, and exit Design mode. Never delete
 `docs/designs/`.
 
-If the user explicitly requests to exit Design mode without approving the
-implementation, exit to Normal mode without deleting the individual design
-document. Entering another workflow mode also exits Design mode.
+If the user sends `exit mode` without approving the implementation, exit to
+Normal mode without deleting the individual design document. Entering another
+workflow mode also exits Design mode.

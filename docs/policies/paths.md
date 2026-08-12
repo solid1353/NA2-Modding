@@ -47,7 +47,7 @@ feature donor, not an official successor or English authority.
   under `@logs/tasks/`. `work` contains only chat-owned workspaces; `release`
   resolves to the ignored repository-root `release/` publication directory.
 - `pcsx2_scripts`: `@workshop/scripts/pcsx2`.
-- `pcsx2_stable`, `pcsx2_dev`, `pcsx2_fork`: protected configured runtimes
+- `pcsx2_dev` and `pcsx2_fork`: the protected configured development runtime
   and the external clean worker template.
 - `pcsx2_files` and its BIOS, cheats, GameSettings, input-profile,
   input-recording, and memory-card children: shared PCSX2 assets.
@@ -128,5 +128,5 @@ Python unit tests with:
   -PackageSet builder `
   -Module unittest `
   -NoBytecode `
-  -ArgumentList @('discover', '-s', 'tests/builder', '-p', 'test_paths.py')
+  -ArgumentList @('discover', '-s', 'tests/na228_builder', '-p', 'test_paths.py')
 ```

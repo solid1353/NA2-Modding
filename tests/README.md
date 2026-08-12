@@ -3,12 +3,11 @@
 Production utilities live under `scripts/`; injected C lives under `src/`.
 Tests live here and are grouped by the responsibility they verify:
 
-- `builder/`: builder, compositor, module, profile, and image tests.
-- `injection/`: direct-PINE build/apply pipeline tests.
-- `na228/`: PowerShell build and command workflow tests.
-- `regression/`: accepted feature and canonical runtime-contract regressions,
-  plus E2E infrastructure safety contracts.
-- `research/`: maintained research-tool tests, including UI-translation tooling.
+- `na228_builder/`: builder, compositor, module, profile, and image tests.
+- `scripts/`: tests mirroring project-owned script components, including
+  injection, `na228`, and maintained research tooling.
+- `features/`: accepted feature and canonical runtime-contract regressions.
+- `e2e/`: E2E infrastructure safety contracts.
 
 The internal unit-test runner is:
 
@@ -28,4 +27,4 @@ validation lane invoked globally with `na228 e2e`.
 
 `scripts/injection/inject_candidate.ps1` is an operational agent injection
 command, not a test. It remains under `scripts/` accordingly. Reusable PCSX2 and
-media-tool tests live with their implementations in the Workshop repository.
+media-tool tests mirror their implementations under Workshop `tests/scripts/`.

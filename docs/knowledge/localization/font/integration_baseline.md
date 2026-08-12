@@ -48,7 +48,7 @@ native glyph data, and independent binary patches were unchanged.
 
 The user identified `ss9` as the current broken Save/Load modal. Its protected
 state was copied read-only from
-`@pcsx2_stable/sstates/SLOP-NA228 (D61F4C01).09.p2s` to the Font-owned input
+the user PCSX2 savestate `SLOP-NA228 (D61F4C01).09.p2s` to the Font-owned input
 tree. The state SHA-256 is
 `5EE0E06A4B31EDD2F81F77A10B447C504620864DD1D5D9A8D410A940B65E1335`;
 the embedded screenshot SHA-256 is

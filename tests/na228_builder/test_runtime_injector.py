@@ -11,7 +11,7 @@ from na228_builder.scripts.composer import resolve_symbolic_patches
 from na228_builder.modules.binary_patcher import engine as binary_engine
 from na228_builder.modules.runtime_injector import engine
 from na228_builder.payload_builder.builder import build_resident_payload
-from tests.builder._fixtures import resident_payload_config
+from tests.na228_builder._fixtures import resident_payload_config
 
 
 def write_tsv(

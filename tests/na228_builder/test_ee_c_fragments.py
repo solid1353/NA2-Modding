@@ -9,7 +9,7 @@ from pathlib import Path
 from na228_builder.payload_builder import build_resident_payload
 from na228_builder.payload_builder import ee_c_fragments
 from na228_builder.payload_builder.operations import PayloadFragment
-from tests.builder._fixtures import resident_payload_config
+from tests.na228_builder._fixtures import resident_payload_config
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]

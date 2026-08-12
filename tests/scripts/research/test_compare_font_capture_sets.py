@@ -9,7 +9,7 @@ import unittest
 import zlib
 from pathlib import Path
 
-REPOSITORY = Path(__file__).resolve().parents[2]
+REPOSITORY = Path(__file__).resolve().parents[3]
 COMPARATOR = (
     REPOSITORY
     / "scripts"

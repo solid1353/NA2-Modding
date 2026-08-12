@@ -14,7 +14,7 @@ from na228_builder.payload_builder.operations import (
     PayloadRelocation,
     SymbolicPatch,
 )
-from tests.builder._fixtures import (
+from tests.na228_builder._fixtures import (
     resident_payload_config,
     write_resident_payload_config,
 )

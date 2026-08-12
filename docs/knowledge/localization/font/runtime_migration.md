@@ -14,7 +14,7 @@ Evidence date: 2026-07-25.
 
 The user captured a state after the game froze while entering the Load screen.
 The source was read from
-`@pcsx2_stable/sstates/SLOP-NA228 (682CC5FB).01.p2s`, copied without modifying
+the user PCSX2 savestate `SLOP-NA228 (682CC5FB).01.p2s`, copied without modifying
 the user library to
 `work/Font/inputs/sstates/load_freeze/user/SLOP-NA228 (682CC5FB).01.p2s`,
 and has SHA-256

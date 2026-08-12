@@ -8,7 +8,7 @@ from pathlib import Path
 from na228_builder.payload_builder import build_resident_payload
 from na228_builder.scripts import catalog
 from na228_builder.scripts.composer import resolve_symbolic_patches
-from tests.builder._fixtures import resident_payload_config
+from tests.na228_builder._fixtures import resident_payload_config
 
 
 REPOSITORY = Path(__file__).resolve().parents[3]

@@ -26,9 +26,9 @@ message or commit instead of assuming it is still `stash@{0}`.
 - `na228_builder/catalog/implementation/injections.json`
 - `na228_builder/configurations/base.json`
 - `na228_builder/configurations/development.json`
-- `tests/builder/test_catalog.py`
-- `tests/builder/test_configuration.py`
-- `tests/injection/test_injection_tools.py`
+- `tests/na228_builder/test_catalog.py`
+- `tests/na228_builder/test_configuration.py`
+- `tests/scripts/injection/test_injection_tools.py`
 - `resources/character_data.tsv`
 - `docs/knowledge/gameplay/README.md`
 - `docs/knowledge/gameplay/battle.md`

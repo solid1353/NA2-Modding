@@ -13,7 +13,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$sourceRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+$sourceRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
 . (Join-Path $sourceRepository 'scripts\lib\build_log.ps1')
 
 function Assert-Na2Test {
@@ -41,7 +41,7 @@ try {
         build = $build
         logs = $logs
         builder = Join-Path $repository 'na228_builder'
-        pcsx2_stable = Join-Path $testRoot 'pcsx2_stable'
+        pcsx2_dev = Join-Path $testRoot 'pcsx2_dev'
         scripts = Join-Path $repository 'scripts'
         files = [pscustomobject]@{
             latest_iso = Join-Path $build 'NA2.28 - Latest.iso'
@@ -157,7 +157,7 @@ try {
     "build": "build",
     "logs": "logs",
     "builder": "na228_builder",
-    "pcsx2_stable": "pcsx2_stable",
+    "pcsx2_dev": "pcsx2_dev",
     "pcsx2_files": "pcsx2_files",
     "pcsx2_cheats": "@pcsx2_files/cheats",
     "pcsx2_game_settings": "@pcsx2_files/game_settings",
@@ -253,7 +253,7 @@ else:
 print(json.dumps(result))
 '@
     foreach ($directory in @(
-        'source', 'utils', 'build', 'logs', 'na228_builder', 'pcsx2_stable',
+        'source', 'utils', 'build', 'logs', 'na228_builder', 'pcsx2_dev',
         'pcsx2_files\cheats', 'pcsx2_files\game_settings',
         'pcsx2_files\input_profiles', 'pcsx2_files\memory_cards', 'scripts', 'source\NA2.iso.files',
         'source\NUN5.iso.files', 'tests', 'work'

@@ -1,7 +1,7 @@
 param()
 
 $ErrorActionPreference = 'Stop'
-$sourceRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+$sourceRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
 
 function Assert-Na2PreflightTest {
     param([bool]$Condition, [string]$Message)

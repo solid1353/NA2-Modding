@@ -8,12 +8,11 @@ acceptance remain canonical in
 
 ## User installations and protected inputs
 
-- `@pcsx2_dev` and `@pcsx2_stable` are protected user-owned installations.
-  Agents may read/copy from them but do not create, modify, move, delete, link,
-  launch, or control them unless the user explicitly requests the exact action.
-- An explicit ISO-launch request uses `@pcsx2_dev` by default; use stable only
-  when the user requests it or the approved task is a stable compatibility or
-  release check. That authorization covers the launch only.
+- `@pcsx2_dev` is the protected user-owned installation. Agents may read/copy
+  from it but do not create, modify, move, delete, link, launch, or control it
+  unless the user explicitly requests the exact action.
+- An explicit ISO-launch request uses `@pcsx2_dev`. That authorization covers
+  the launch only.
 - Builds, direct game-selector launches, and `workshop input [profile]` are
   user-facing operations. Agents use the isolated commands described below.
 - Build commands and single-ISO launch commands do not probe or close existing

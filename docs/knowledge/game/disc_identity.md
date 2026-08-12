@@ -90,7 +90,7 @@ inherited automatically by the synthetic serial.
 
 The project will **never install, modify, or maintain a custom PCSX2 GameDB
 entry** to override this title or copy the stock compatibility entry. Directly
-editing `@pcsx2_stable/cache/gamelist.cache` is likewise rejected because it is
+editing `@pcsx2_dev/cache/gamelist.cache` is likewise rejected because it is
 generated, machine-local state.
 
 The stable serial-wide cheat file is `@pcsx2_cheats/SLOP-NA228.pnach`.

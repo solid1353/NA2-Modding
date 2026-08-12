@@ -135,14 +135,14 @@ class ProjectPathTests(unittest.TestCase):
             root = Path(directory)
             manifest = {
                 "schema_version": 1,
-                "existence_deferred_roots": ["pcsx2_stable"],
+                "existence_deferred_roots": ["optional_runtime"],
                 "roots": {
                     "repository": ".",
-                    "pcsx2_stable": "missing-user-pcsx2",
-                    "pcsx2_stable_memcards": "@pcsx2_stable/memcards",
+                    "optional_runtime": "missing-user-runtime",
+                    "optional_runtime_data": "@optional_runtime/data",
                 },
                 "files": {
-                    "pcsx2_stable_exe": "@pcsx2_stable/pcsx2-qt.exe",
+                    "optional_runtime_exe": "@optional_runtime/runtime.exe",
                 },
             }
             manifest_path = root / "paths.json"
@@ -151,8 +151,8 @@ class ProjectPathTests(unittest.TestCase):
             paths = load_paths(manifest_path)
 
             self.assertEqual(
-                paths.path("pcsx2_stable_memcards"),
-                root.resolve() / "missing-user-pcsx2" / "memcards",
+                paths.path("optional_runtime_data"),
+                root.resolve() / "missing-user-runtime" / "data",
             )
 
     def test_rejects_unknown_existence_deferred_root(self) -> None:

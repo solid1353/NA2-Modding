@@ -237,18 +237,35 @@ try {
         New-VisualRegressionScreenshotStage `
             -ReferenceDirectory $referenceStage `
             -CurrentDirectory $currentStage `
-            -ReportDirectory $(if ($hasReference) { $reportStage } else { $null }) `
             -OutputDirectory $screenshotStage
         $replacements[$context.Capture.Screenshots] = $screenshotStage
         if ($hasReference) {
-            $gridStage = Join-Path $suitePublish $script:E2eGridDirectory
-            [void](New-Item -ItemType Directory -Path $gridStage -Force)
-            $generatedGrids = Join-Path $reportStage 'grids'
-            if (Test-Path -LiteralPath $generatedGrids -PathType Container) {
-                Get-ChildItem -LiteralPath $generatedGrids -File |
-                    Copy-Item -Destination $gridStage
+            $pairStage = Join-Path $suitePublish $script:E2ePairDirectory
+            New-VisualRegressionPairStage `
+                -ReportDirectory $reportStage `
+                -OutputDirectory $pairStage
+            $replacements[$context.Capture.Pairs] = $pairStage
+            foreach ($grid in @(
+                [pscustomobject]@{
+                    Name = $script:E2ePairGridDirectory
+                    Destination = $context.Capture.PairGrids
+                },
+                [pscustomobject]@{
+                    Name = $script:E2eBlendGridDirectory
+                    Destination = $context.Capture.BlendGrids
+                },
+                [pscustomobject]@{
+                    Name = $script:E2eDiffGridDirectory
+                    Destination = $context.Capture.DiffGrids
+                }
+            )) {
+                $gridStage = Join-Path $suitePublish $grid.Name
+                New-VisualRegressionGridStage `
+                    -ReportDirectory $reportStage `
+                    -GridDirectory $grid.Name `
+                    -OutputDirectory $gridStage
+                $replacements[$grid.Destination] = $gridStage
             }
-            $replacements[$context.Capture.Grids] = $gridStage
         }
         if ($null -ne $statesStage) {
             $replacements[$context.Capture.States] = $statesStage

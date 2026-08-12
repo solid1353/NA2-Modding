@@ -8,9 +8,9 @@ nested local Git repository at `captures/`.
 
 ```powershell
 na228 e2e [-s]
-na228 e2e create <suite> [game]
+na228 e2e create <all|suite> [game]
 na228 e2e rename <suite> <new-suite>
-na228 e2e delete <suite>
+na228 e2e delete <all|suite>
 na228 e2e update [-p]
 ```
 
@@ -27,10 +27,13 @@ Every normal and shifted capture must match.
 
 `e2e create` creates or replaces a suite from the matching Workshop recording,
 stores it as the single file `suites/<suite>.p2m2`, optionally captures a
-reference game, and runs repeatability capture. `e2e rename` moves the suite
-definition and capture history together; `e2e delete` removes both for only the
-named suite while preserving descendant suites. `e2e update` stages all current
-capture changes and
+reference game, and runs repeatability capture. The literal selector `all`
+processes every shared `.p2m2` recording except recordings beneath `__*`
+directories such as the internal `__generated` staging area. `e2e rename` moves
+the suite definition and capture history together; `e2e delete` removes both
+for only the named suite while preserving descendant suites, while `e2e delete
+all` removes every suite and capture history but preserves the nested capture
+Git repository. `e2e update` stages all current capture changes and
 consolidates them into `Initial commit`: a one-commit repository is amended,
 while a multi-commit repository is reset softly to its root and squashed. It
 then expires reflogs and runs normal Git garbage collection with immediate
@@ -72,7 +75,10 @@ e2e/
 ├── suites/<suite>.p2m2
 ├── captures/<suite>/              # nested Git repository
 │   ├── screenshots/
-│   ├── grids/
+│   ├── pairs/
+│   ├── grid-pairs/
+│   ├── grid-blends/
+│   ├── grid-diffs/
 │   └── sstates/{reference,current}/
 └── .transactions/run-<uuid>/      # transient, ignored
     ├── owner.json
@@ -80,6 +86,12 @@ e2e/
     ├── jobs/
     └── comparisons/
 ```
+
+`screenshots/` contains only the interleaved reference and current captures so
+image-by-image browsing is not interrupted by generated comparisons. Individual
+side-by-side comparisons live in `pairs/`; `grid-pairs/` contains their paged
+contact sheets, while `grid-blends/` and `grid-diffs/` contain the paged blend
+and amplified-difference views respectively.
 
 Build provenance remains under `logs/na228/builds/` and output-specific
 preflight receipts under `logs/na228/preflight/`.

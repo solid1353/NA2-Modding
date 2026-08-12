@@ -40,7 +40,7 @@ def read_png_size(path: Path) -> tuple[int, int]:
 
 
 class ComparisonGridTests(unittest.TestCase):
-    def test_writes_matching_pair_blend_and_diff_grid_pages(self) -> None:
+    def test_separates_pairs_and_each_grid_type(self) -> None:
         powershell = shutil.which("pwsh")
         self.assertIsNotNone(powershell)
         with tempfile.TemporaryDirectory() as temporary:
@@ -50,9 +50,15 @@ class ComparisonGridTests(unittest.TestCase):
             output = root / "output"
             reference.mkdir()
             current.mkdir()
-            stale_grid = output / "grids" / "page_01.png"
-            stale_grid.parent.mkdir(parents=True)
-            stale_grid.write_bytes(b"stale")
+            stale_pair_grid = output / "grid-pairs" / "page_99.png"
+            stale_blend_grid = output / "grid-blends" / "page_99.png"
+            stale_diff_grid = output / "grid-diffs" / "page_99.png"
+            stale_pair_grid.parent.mkdir(parents=True)
+            stale_blend_grid.parent.mkdir(parents=True)
+            stale_diff_grid.parent.mkdir(parents=True)
+            stale_pair_grid.write_bytes(b"stale")
+            stale_blend_grid.write_bytes(b"stale")
+            stale_diff_grid.write_bytes(b"stale")
 
             for slot in range(1, 6):
                 write_rgb_png(reference / f"{slot:03d}.png", (slot, 0, 0))
@@ -77,26 +83,39 @@ class ComparisonGridTests(unittest.TestCase):
             )
 
             self.assertEqual(
-                sorted(path.name for path in (output / "grids").glob("*.png")),
+                sorted(path.name for path in (output / "pairs").glob("*.png")),
                 [
-                    "page_01_c_pair.png",
-                    "page_01_d_blend.png",
-                    "page_01_e_diff.png",
-                    "page_02_c_pair.png",
-                    "page_02_d_blend.png",
-                    "page_02_e_diff.png",
+                    "0001.png",
+                    "0002.png",
+                    "0003.png",
+                    "0004.png",
+                    "0005.png",
                 ],
             )
             self.assertEqual(
-                read_png_size(output / "grids" / "page_02_c_pair.png")[0],
+                sorted(path.name for path in (output / "grid-pairs").glob("*.png")),
+                ["page_01.png", "page_02.png"],
+            )
+            self.assertEqual(
+                sorted(path.name for path in (output / "grid-blends").glob("*.png")),
+                ["page_01.png", "page_02.png"],
+            )
+            self.assertEqual(
+                sorted(path.name for path in (output / "grid-diffs").glob("*.png")),
+                ["page_01.png", "page_02.png"],
+            )
+            self.assertFalse((output / "blends").exists())
+            self.assertFalse((output / "diffs").exists())
+            self.assertEqual(
+                read_png_size(output / "grid-pairs" / "page_02.png")[0],
                 2,
             )
             self.assertEqual(
-                read_png_size(output / "grids" / "page_02_d_blend.png")[0],
+                read_png_size(output / "grid-blends" / "page_02.png")[0],
                 1,
             )
             self.assertEqual(
-                read_png_size(output / "grids" / "page_02_e_diff.png")[0],
+                read_png_size(output / "grid-diffs" / "page_02.png")[0],
                 1,
             )
 

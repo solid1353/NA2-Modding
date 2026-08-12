@@ -1,15 +1,54 @@
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'Suite')]
 param(
-    [Parameter(Mandatory)][string]$Suite,
+    [Parameter(Mandatory, ParameterSetName = 'Suite')][string]$Suite,
+    [Parameter(Mandatory, ParameterSetName = 'All')][switch]$All,
     [string]$Game
 )
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'suite.ps1')
-$context = Get-VisualRegressionContext -Suite $Suite
-
-. (Join-Path $context.Repository 'scripts\lib\paths.ps1')
+$root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
+. (Join-Path $repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
+
+if ($All) {
+    $recordingRoot = [IO.Path]::GetFullPath($paths.pcsx2_input_recordings)
+    if (-not (Test-Path -LiteralPath $recordingRoot -PathType Container)) {
+        throw "Shared recording root does not exist: $recordingRoot"
+    }
+    $recordings = @(
+        Get-ChildItem -LiteralPath $recordingRoot -Filter '*.p2m2' -File -Recurse |
+            Where-Object {
+                $relative = [IO.Path]::GetRelativePath($recordingRoot, $_.FullName)
+                $relativeDirectory = [IO.Path]::GetDirectoryName($relative)
+                [string]::IsNullOrEmpty($relativeDirectory) -or
+                    @(
+                        $relativeDirectory.Split([IO.Path]::DirectorySeparatorChar) |
+                            Where-Object {
+                                $_.StartsWith('__', [StringComparison]::Ordinal)
+                            }
+                    ).Count -eq 0
+            } |
+            Sort-Object FullName
+    )
+    if ($recordings.Count -eq 0) {
+        throw "No shared E2E recordings exist under: $recordingRoot"
+    }
+    foreach ($recording in $recordings) {
+        $relative = [IO.Path]::GetRelativePath($recordingRoot, $recording.FullName)
+        $suiteName = $relative.Substring(0, $relative.Length - 5).Replace('\', '/')
+        $createArguments = @{ Suite = $suiteName }
+        if (-not [string]::IsNullOrWhiteSpace($Game)) {
+            $createArguments.Game = $Game
+        }
+        & $PSCommandPath @createArguments
+    }
+    Write-Host "Created or replaced all E2E suites: $($recordings.Count)" -ForegroundColor Green
+    return
+}
+
+$context = Get-VisualRegressionContext -Suite $Suite
 $recordingPath = [IO.Path]::GetFullPath((Join-Path `
     $paths.pcsx2_input_recordings `
     ($context.SuiteRelativePath + '.p2m2')

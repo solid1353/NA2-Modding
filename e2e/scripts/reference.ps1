@@ -67,12 +67,18 @@ $screenshotStage = if ($initializeCapture) {
 else {
     Join-Path $stageRoot $script:E2eScreenshotDirectory
 }
-$gridStage = if ($initializeCapture) {
-    Join-Path $suiteCaptureStage $script:E2eGridDirectory
-}
-else {
-    Join-Path $stageRoot $script:E2eGridDirectory
-}
+$pairStage = Join-Path `
+    $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
+    $script:E2ePairDirectory
+$pairGridStage = Join-Path `
+    $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
+    $script:E2ePairGridDirectory
+$blendGridStage = Join-Path `
+    $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
+    $script:E2eBlendGridDirectory
+$diffGridStage = Join-Path `
+    $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
+    $script:E2eDiffGridDirectory
 $statesStage = if ($initializeCapture) {
     Join-Path $suiteCaptureStage 'sstates'
 }
@@ -126,15 +132,23 @@ try {
     New-VisualRegressionScreenshotStage `
         -ReferenceDirectory $referenceStage `
         -CurrentDirectory $currentStage `
-        -ReportDirectory $(if ($hasCurrent) { $reportStage } else { $null }) `
         -OutputDirectory $screenshotStage
     if ($hasCurrent) {
-        [void](New-Item -ItemType Directory -Path $gridStage -Force)
-        $generatedGrids = Join-Path $reportStage 'grids'
-        if (Test-Path -LiteralPath $generatedGrids -PathType Container) {
-            Get-ChildItem -LiteralPath $generatedGrids -File |
-                Copy-Item -Destination $gridStage
-        }
+        New-VisualRegressionPairStage `
+            -ReportDirectory $reportStage `
+            -OutputDirectory $pairStage
+        New-VisualRegressionGridStage `
+            -ReportDirectory $reportStage `
+            -GridDirectory $script:E2ePairGridDirectory `
+            -OutputDirectory $pairGridStage
+        New-VisualRegressionGridStage `
+            -ReportDirectory $reportStage `
+            -GridDirectory $script:E2eBlendGridDirectory `
+            -OutputDirectory $blendGridStage
+        New-VisualRegressionGridStage `
+            -ReportDirectory $reportStage `
+            -GridDirectory $script:E2eDiffGridDirectory `
+            -OutputDirectory $diffGridStage
     }
 
     $replacements = if ($initializeCapture) {
@@ -145,7 +159,10 @@ try {
             ($context.Capture.Screenshots) = $screenshotStage
         }
         if ($hasCurrent) {
-            $existingReplacements[$context.Capture.Grids] = $gridStage
+            $existingReplacements[$context.Capture.Pairs] = $pairStage
+            $existingReplacements[$context.Capture.PairGrids] = $pairGridStage
+            $existingReplacements[$context.Capture.BlendGrids] = $blendGridStage
+            $existingReplacements[$context.Capture.DiffGrids] = $diffGridStage
         }
         if (Test-Path -LiteralPath $statesStage -PathType Container) {
             $existingReplacements[$context.Capture.States] = $statesStage

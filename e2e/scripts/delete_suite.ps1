@@ -1,8 +1,33 @@
-[CmdletBinding()]
-param([Parameter(Mandatory)][string]$Suite)
+[CmdletBinding(DefaultParameterSetName = 'Suite')]
+param(
+    [Parameter(Mandatory, ParameterSetName = 'Suite')][string]$Suite,
+    [Parameter(Mandatory, ParameterSetName = 'All')][switch]$All
+)
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'suite.ps1')
+
+if ($All) {
+    $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+    $suiteRepository = Join-Path $root 'suites'
+    $captureRepository = Join-Path $root 'captures'
+    $suites = @(
+        Get-VisualRegressionSuiteNames -SuiteRepository $suiteRepository |
+            Sort-Object { $_.Length } -Descending
+    )
+    foreach ($suiteName in $suites) {
+        & $PSCommandPath -Suite $suiteName
+    }
+    if (Test-Path -LiteralPath $captureRepository -PathType Container) {
+        foreach ($directory in Get-ChildItem -LiteralPath $captureRepository -Directory -Force) {
+            if ($directory.Name -ceq '.git') { continue }
+            Remove-Item -LiteralPath $directory.FullName -Recurse -Force
+        }
+    }
+    Write-Host "Deleted all E2E suites: $($suites.Count)" -ForegroundColor Green
+    return
+}
+
 $context = Get-VisualRegressionContext -Suite $Suite
 
 if (-not (Test-Path -LiteralPath $context.SuitePath -PathType Leaf)) {

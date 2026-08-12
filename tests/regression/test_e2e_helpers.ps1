@@ -167,6 +167,72 @@ try {
         -Condition $invalidIgnoredRejected `
         -Message 'A non-boolean build-variant ignored field was accepted.'
 
+    $layoutRoot = Join-Path $testRoot 'capture-layout'
+    $layoutReference = Join-Path $layoutRoot 'reference'
+    $layoutCurrent = Join-Path $layoutRoot 'current'
+    $layoutReport = Join-Path $layoutRoot 'report'
+    $layoutPublish = Join-Path $layoutRoot 'publish'
+    foreach ($directory in @(
+        $layoutReference,
+        $layoutCurrent,
+        (Join-Path $layoutReport 'pairs'),
+        (Join-Path $layoutReport 'grid-pairs'),
+        (Join-Path $layoutReport 'grid-blends'),
+        (Join-Path $layoutReport 'grid-diffs')
+    )) {
+        [void](New-Item -ItemType Directory -Path $directory -Force)
+    }
+    [IO.File]::WriteAllText((Join-Path $layoutReference '0001.png'), 'reference')
+    [IO.File]::WriteAllText((Join-Path $layoutCurrent '0001.png'), 'current')
+    [IO.File]::WriteAllText((Join-Path $layoutReport 'pairs\0001.png'), 'pair')
+    [IO.File]::WriteAllText((Join-Path $layoutReport 'grid-pairs\page_01.png'), 'pair grid')
+    [IO.File]::WriteAllText(
+        (Join-Path $layoutReport 'grid-blends\page_01.png'),
+        'blend grid'
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $layoutReport 'grid-diffs\page_01.png'),
+        'diff grid'
+    )
+    New-VisualRegressionScreenshotStage `
+        -ReferenceDirectory $layoutReference `
+        -CurrentDirectory $layoutCurrent `
+        -OutputDirectory (Join-Path $layoutPublish 'screenshots')
+    New-VisualRegressionPairStage `
+        -ReportDirectory $layoutReport `
+        -OutputDirectory (Join-Path $layoutPublish 'pairs')
+    New-VisualRegressionGridStage `
+        -ReportDirectory $layoutReport `
+        -GridDirectory 'grid-pairs' `
+        -OutputDirectory (Join-Path $layoutPublish 'grid-pairs')
+    New-VisualRegressionGridStage `
+        -ReportDirectory $layoutReport `
+        -GridDirectory 'grid-blends' `
+        -OutputDirectory (Join-Path $layoutPublish 'grid-blends')
+    New-VisualRegressionGridStage `
+        -ReportDirectory $layoutReport `
+        -GridDirectory 'grid-diffs' `
+        -OutputDirectory (Join-Path $layoutPublish 'grid-diffs')
+    $layoutFiles = @(
+        Get-ChildItem -LiteralPath $layoutPublish -Recurse -File |
+            ForEach-Object {
+                [IO.Path]::GetRelativePath($layoutPublish, $_.FullName).Replace('\', '/')
+            } |
+            Sort-Object
+    )
+    Assert-E2eHelperTest `
+        -Condition (
+            ($layoutFiles -join ',') -ceq (
+                'grid-blends/page_01.png,' +
+                'grid-diffs/page_01.png,' +
+                'grid-pairs/page_01.png,' +
+                'pairs/001_c_pair.png,' +
+                'screenshots/001_a_reference.png,' +
+                'screenshots/001_b_current.png'
+            )
+        ) `
+        -Message 'Capture artifacts were not separated into the flat published layout.'
+
     $transactions = Join-Path $testRoot '.transactions'
     $legacy = Join-Path $transactions 'legacy-without-owner'
     $recent = Join-Path $transactions 'recent-without-owner'
@@ -597,6 +663,49 @@ if ($Suite -ceq 'test/with_reference') {
             -not (Test-Path -LiteralPath (Join-Path $fakeRepository 'e2e\captures\renamed'))
         ) `
         -Message 'Leaf suite deletion did not remove both roots and their empty parents.'
+
+    $fakeCaptureGit = Join-Path $fakeRepository 'e2e\captures\.git'
+    $orphanCapture = Join-Path $fakeRepository 'e2e\captures\orphan'
+    $generatedRecording = Join-Path $fakeRecordings '__generated\transient.p2m2'
+    [void](New-Item -ItemType Directory -Path $fakeCaptureGit, $orphanCapture -Force)
+    [void](New-Item -ItemType Directory -Path (
+        [IO.Path]::GetDirectoryName($generatedRecording)
+    ) -Force)
+    [IO.File]::WriteAllText((Join-Path $fakeCaptureGit 'preserved.txt'), 'git metadata')
+    [IO.File]::WriteAllText((Join-Path $orphanCapture 'stale.txt'), 'orphan history')
+    [IO.File]::WriteAllText($generatedRecording, 'transient recording')
+    & (Join-Path $fakeScripts 'create_suite.ps1') -All
+    $bulkSuiteNames = @(
+        Get-VisualRegressionSuiteNames `
+            -SuiteRepository (Join-Path $fakeRepository 'e2e\suites')
+    )
+    Assert-E2eHelperTest `
+        -Condition (
+            ($bulkSuiteNames -join ',') -ceq 'test/no_reference,test/with_reference' -and
+            (Test-Path -LiteralPath (
+                Join-Path $fakeRepository 'e2e\captures\test\no_reference\current.txt'
+            ) -PathType Leaf) -and
+            (Test-Path -LiteralPath (
+                Join-Path $fakeRepository 'e2e\captures\test\with_reference\current.txt'
+            ) -PathType Leaf)
+        ) `
+        -Message 'Bulk suite creation did not process public recordings while excluding __ directories.'
+    & (Join-Path $fakeScripts 'delete_suite.ps1') -All
+    & (Join-Path $fakeScripts 'delete_suite.ps1') -All
+    Assert-E2eHelperTest `
+        -Condition (
+            @(Get-VisualRegressionSuiteNames `
+                -SuiteRepository (Join-Path $fakeRepository 'e2e\suites')).Count -eq 0 -and
+            @(
+                Get-ChildItem `
+                    -LiteralPath (Join-Path $fakeRepository 'e2e\captures') `
+                    -Directory `
+                    -Force |
+                    Where-Object Name -cne '.git'
+            ).Count -eq 0 -and
+            [IO.File]::ReadAllText((Join-Path $fakeCaptureGit 'preserved.txt')) -ceq 'git metadata'
+        ) `
+        -Message 'Bulk suite deletion did not remove all histories idempotently or preserve capture Git metadata.'
 
     Remove-VisualRegressionTransaction -Transaction $transaction -Root $testRoot
     Write-Host 'E2E helper tests passed.' -ForegroundColor Green

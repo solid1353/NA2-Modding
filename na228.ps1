@@ -106,9 +106,9 @@ if ($mode -eq 'help') {
         '  na228 build l|m [-f]        Build Latest or Manual without running it'
         '  na228 test                  Run unit tests'
         '  na228 e2e [-s]              Run all E2E suites; -s also qualifies against shifted'
-        '  na228 e2e create <suite> [game]       Create or replace suites/<suite>.p2m2 from its matching shared recording; optionally capture a reference game'
+        '  na228 e2e create <all|suite> [game]   Create or replace every suite or one suite from matching shared recordings; optionally capture a reference game'
         '  na228 e2e rename <suite> <new-suite>  Rename the .p2m2 suite and its capture history'
-        '  na228 e2e delete <suite>               Delete the .p2m2 suite and its capture history'
+        '  na228 e2e delete <all|suite>           Delete every .p2m2 suite or one suite and its capture history'
         '  na228 e2e update [-p]                  Update captures; -p preserves existing commits'
         '  na228 worker [--configuration <id>] work/<worker>/build/<name>.iso  Build or reuse a worker ISO'
         '  na228 release [version]     Publish a GitHub release'
@@ -174,10 +174,13 @@ if ($mode -eq 'e2e') {
     }
     if ($testCommand -ceq 'create') {
         if ($arguments.Count -notin 2, 3) {
-            throw 'Usage: na228 e2e create <suite> [game]'
+            throw 'Usage: na228 e2e create <all|suite> [game]'
         }
-        $createArguments = @{
-            Suite = $arguments[1]
+        $createArguments = if ($arguments[1] -ieq 'all') {
+            @{ All = $true }
+        }
+        else {
+            @{ Suite = $arguments[1] }
         }
         if ($arguments.Count -eq 3) {
             $createArguments.Game = $arguments[2]
@@ -194,9 +197,14 @@ if ($mode -eq 'e2e') {
     }
     if ($testCommand -ceq 'delete') {
         if ($arguments.Count -ne 2) {
-            throw 'Usage: na228 e2e delete <suite>'
+            throw 'Usage: na228 e2e delete <all|suite>'
         }
-        & $visualDelete -Suite $arguments[1]
+        if ($arguments[1] -ieq 'all') {
+            & $visualDelete -All
+        }
+        else {
+            & $visualDelete -Suite $arguments[1]
+        }
         return
     }
     if ($testCommand -ceq 'update') {
@@ -209,7 +217,7 @@ if ($mode -eq 'e2e') {
         & $visualUpdate -Preserve:($arguments.Count -eq 2)
         return
     }
-    throw 'Usage: na228 e2e [-s] | na228 e2e create <suite> [game] | na228 e2e rename <suite> <new-suite> | na228 e2e delete <suite> | na228 e2e update [-p]'
+    throw 'Usage: na228 e2e [-s] | na228 e2e create <all|suite> [game] | na228 e2e rename <suite> <new-suite> | na228 e2e delete <all|suite> | na228 e2e update [-p]'
 }
 
 if ($mode -eq 'release') {

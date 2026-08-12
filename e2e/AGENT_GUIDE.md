@@ -29,8 +29,10 @@ nested Git repository under `captures/<suite>/`:
 
 - `screenshots/<slot>_a_reference.png`: optional reference-game image.
 - `screenshots/<slot>_b_current.png`: accepted NA2 image.
-- `_c_pair`, `_d_blend`, and `_e_diff`: generated comparison images.
-- `grids/`: paged pair/blend/diff reports.
+- `pairs/<slot>_c_pair.png`: side-by-side reference/current image.
+- `grid-pairs/`: paged grids of side-by-side pairs.
+- `grid-blends/`: paged 50% blend grids.
+- `grid-diffs/`: paged amplified-difference grids.
 - `sstates/current/<slot>.p2s`: retained state when the capture changed.
 
 For text, inspect relevant images at sufficient zoom to judge glyph pixels,

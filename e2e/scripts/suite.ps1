@@ -7,14 +7,18 @@ $script:E2eScreenshotKinds = [ordered]@{
     Reference = [pscustomobject]@{ Order = 'a'; Label = 'reference' }
     Current = [pscustomobject]@{ Order = 'b'; Label = 'current' }
     Pair = [pscustomobject]@{ Order = 'c'; Label = 'pair' }
-    Blend = [pscustomobject]@{ Order = 'd'; Label = 'blend' }
-    Diff = [pscustomobject]@{ Order = 'e'; Label = 'diff' }
 }
 $script:E2eScreenshotDirectory = 'screenshots'
-$script:E2eGridDirectory = 'grids'
+$script:E2ePairDirectory = 'pairs'
+$script:E2ePairGridDirectory = 'grid-pairs'
+$script:E2eBlendGridDirectory = 'grid-blends'
+$script:E2eDiffGridDirectory = 'grid-diffs'
 $script:E2eStableCaptureDirectories = @(
     $script:E2eScreenshotDirectory,
-    $script:E2eGridDirectory,
+    $script:E2ePairDirectory,
+    $script:E2ePairGridDirectory,
+    $script:E2eBlendGridDirectory,
+    $script:E2eDiffGridDirectory,
     'sstates'
 )
 
@@ -133,7 +137,10 @@ function Get-VisualRegressionContext {
         CaptureRoot = $captureRoot
         Capture = [pscustomobject]@{
             Screenshots = Join-Path $captureRoot $script:E2eScreenshotDirectory
-            Grids = Join-Path $captureRoot $script:E2eGridDirectory
+            Pairs = Join-Path $captureRoot $script:E2ePairDirectory
+            PairGrids = Join-Path $captureRoot $script:E2ePairGridDirectory
+            BlendGrids = Join-Path $captureRoot $script:E2eBlendGridDirectory
+            DiffGrids = Join-Path $captureRoot $script:E2eDiffGridDirectory
             States = $statesRoot
             ReferenceStates = Join-Path $statesRoot $script:E2eCaptureTiers.Reference
             CurrentStates = Join-Path $statesRoot $script:E2eCaptureTiers.Current
@@ -238,8 +245,7 @@ function New-VisualRegressionScreenshotStage {
     param(
         [Parameter(Mandatory)][string]$ReferenceDirectory,
         [Parameter(Mandatory)][string]$CurrentDirectory,
-        [Parameter(Mandatory)][string]$OutputDirectory,
-        [string]$ReportDirectory
+        [Parameter(Mandatory)][string]$OutputDirectory
     )
 
     [void](New-Item -ItemType Directory -Path $OutputDirectory -Force)
@@ -247,13 +253,6 @@ function New-VisualRegressionScreenshotStage {
         [pscustomobject]@{ Kind = 'Reference'; Directory = $ReferenceDirectory },
         [pscustomobject]@{ Kind = 'Current'; Directory = $CurrentDirectory }
     )
-    if (-not [string]::IsNullOrWhiteSpace($ReportDirectory)) {
-        $sources += @(
-            [pscustomobject]@{ Kind = 'Pair'; Directory = (Join-Path $ReportDirectory 'pairs') },
-            [pscustomobject]@{ Kind = 'Blend'; Directory = (Join-Path $ReportDirectory 'blends') },
-            [pscustomobject]@{ Kind = 'Diff'; Directory = (Join-Path $ReportDirectory 'diffs') }
-        )
-    }
     foreach ($source in $sources) {
         if (-not (Test-Path -LiteralPath $source.Directory -PathType Container)) {
             continue
@@ -267,6 +266,43 @@ function New-VisualRegressionScreenshotStage {
                 -Kind $source.Kind
             Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $OutputDirectory $name)
         }
+    }
+}
+
+function New-VisualRegressionPairStage {
+    param(
+        [Parameter(Mandatory)][string]$ReportDirectory,
+        [Parameter(Mandatory)][string]$OutputDirectory
+    )
+
+    [void](New-Item -ItemType Directory -Path $OutputDirectory -Force)
+    $sourceDirectory = Join-Path $ReportDirectory $script:E2ePairDirectory
+    if (-not (Test-Path -LiteralPath $sourceDirectory -PathType Container)) {
+        return
+    }
+    foreach ($file in Get-ChildItem -LiteralPath $sourceDirectory -Filter '*.png' -File) {
+        if ($file.BaseName -notmatch '^\d+$') {
+            throw "Non-numeric pair name: $($file.FullName)"
+        }
+        $name = Get-VisualRegressionScreenshotName `
+            -Slot ([int]$file.BaseName) `
+            -Kind Pair
+        Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $OutputDirectory $name)
+    }
+}
+
+function New-VisualRegressionGridStage {
+    param(
+        [Parameter(Mandatory)][string]$ReportDirectory,
+        [Parameter(Mandatory)][string]$GridDirectory,
+        [Parameter(Mandatory)][string]$OutputDirectory
+    )
+
+    [void](New-Item -ItemType Directory -Path $OutputDirectory -Force)
+    $sourceDirectory = Join-Path $ReportDirectory $GridDirectory
+    if (Test-Path -LiteralPath $sourceDirectory -PathType Container) {
+        Get-ChildItem -LiteralPath $sourceDirectory -Filter '*.png' -File |
+            Copy-Item -Destination $OutputDirectory
     }
 }
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build exact-scale paired, blended, difference, and paged grid evidence."""
+"""Build exact-scale pair images and separate paged pair/blend/diff grids."""
 
 from __future__ import annotations
 
@@ -186,7 +186,6 @@ def write_grid_pages(
     output: Path,
     columns: int,
     items_per_page: int,
-    suffix: str,
 ) -> None:
     output.mkdir(parents=True, exist_ok=True)
     for page_index, start in enumerate(
@@ -204,7 +203,7 @@ def write_grid_pages(
             x = (item_index % columns) * cell_width
             y = (item_index // columns) * cell_height
             grid.paste(image, (x, y))
-        grid.save(output / f"page_{page_index:02d}_{suffix}.png")
+        grid.save(output / f"page_{page_index:02d}.png")
 
 
 def clear_generated_grid_pages(output: Path) -> None:
@@ -223,13 +222,14 @@ def main() -> int:
     captures = [row for row in captures if row.slot in set(slots)]
     args.output.mkdir(parents=True, exist_ok=True)
     pair_dir = args.output / "pairs"
-    blend_dir = args.output / "blends"
-    diff_dir = args.output / "diffs"
+    pair_grid_root = args.output / "grid-pairs"
+    blend_grid_root = args.output / "grid-blends"
+    diff_grid_root = args.output / "grid-diffs"
 
     grid_items: dict[str, list[tuple[CaptureRow, Image.Image]]] = {
-        "c_pair": [],
-        "d_blend": [],
-        "e_diff": [],
+        "pair": [],
+        "blend": [],
+        "diff": [],
     }
     expected_size: tuple[int, int] | None = None
     for row in captures:
@@ -270,25 +270,31 @@ def main() -> int:
             args.reference_label,
             args.current_label,
         )
-        for directory in (pair_dir, blend_dir, diff_dir):
-            directory.mkdir(parents=True, exist_ok=True)
+        pair_dir.mkdir(parents=True, exist_ok=True)
         pair.save(pair_dir / f"{row.slot:04d}.png")
-        blend.save(blend_dir / f"{row.slot:04d}.png")
-        diff.save(diff_dir / f"{row.slot:04d}.png")
-        grid_items["c_pair"].append((row, pair))
-        grid_items["d_blend"].append((row, blend))
-        grid_items["e_diff"].append((row, diff))
+        grid_items["pair"].append((row, pair))
+        grid_items["blend"].append((row, blend))
+        grid_items["diff"].append((row, diff))
 
-    if grid_items["c_pair"]:
-        grid_root = args.output / "grids"
-        clear_generated_grid_pages(grid_root)
-        for suffix, items in grid_items.items():
+    if grid_items["pair"]:
+        clear_generated_grid_pages(pair_grid_root)
+        clear_generated_grid_pages(blend_grid_root)
+        clear_generated_grid_pages(diff_grid_root)
+        write_grid_pages(
+            grid_items["pair"],
+            pair_grid_root,
+            args.grid_columns,
+            args.grid_items_per_page,
+        )
+        for kind, output in (
+            ("blend", blend_grid_root),
+            ("diff", diff_grid_root),
+        ):
             write_grid_pages(
-                items,
-                grid_root,
+                grid_items[kind],
+                output,
                 args.grid_columns,
                 args.grid_items_per_page,
-                suffix,
             )
     print(
         f"Compared {len(captures)} exact-scale pairs; evidence written to {args.output}"

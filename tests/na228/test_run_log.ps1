@@ -285,8 +285,8 @@ Write-Output '[fake] unit tests'
         -Condition ($helpText -match '(?m)^\s*na228 e2e delete <suite>\s+') `
         -Message 'Root help omitted suite deletion.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 e2e commit \[-s\]\s+') `
-        -Message 'Root help omitted capture-history commit.'
+        -Condition ($helpText -match '(?m)^\s*na228 e2e update \[-p\]\s+') `
+        -Message 'Root help omitted capture-history update.'
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch.ps1') -Content @'
 param(
     [string]$Target = 'dev',
@@ -455,10 +455,10 @@ Add-Content `
     -Value "delete suite=$Suite"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'commit_captures.ps1') -Content @'
-param([switch]$Squash)
+param([switch]$Preserve)
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
-    -Value "commit squash=$($Squash.IsPresent)"
+    -Value "update preserve=$($Preserve.IsPresent)"
 '@
     $unitTestCallsPath = Join-Path $fakeRepository 'tests\calls.txt'
     $visualCalls = Join-Path $fakeVisualScripts 'calls.txt'
@@ -486,8 +486,8 @@ Add-Content `
     & (Join-Path $fakeRepository 'na228.ps1') e2e create font/with_reference nun5
     & (Join-Path $fakeRepository 'na228.ps1') e2e rename font/character_select font/characters
     & (Join-Path $fakeRepository 'na228.ps1') e2e delete font/characters
-    & (Join-Path $fakeRepository 'na228.ps1') e2e commit
-    & (Join-Path $fakeRepository 'na228.ps1') e2e commit -s
+    & (Join-Path $fakeRepository 'na228.ps1') e2e update
+    & (Join-Path $fakeRepository 'na228.ps1') e2e update -p
     $calls = @(Get-Content -LiteralPath $visualCalls)
     Assert-Na2Test `
         -Condition ($calls.Count -eq 8 -and
@@ -497,8 +497,8 @@ Add-Content `
             $calls[3] -ceq 'create suite=font/with_reference game=nun5' -and
             $calls[4] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
             $calls[5] -ceq 'delete suite=font/characters' -and
-            $calls[6] -ceq 'commit squash=False' -and
-            $calls[7] -ceq 'commit squash=True') `
+            $calls[6] -ceq 'update preserve=False' -and
+            $calls[7] -ceq 'update preserve=True') `
         -Message 'Global E2E or lifecycle-command dispatch was incorrect.'
     $suiteSelectionRejected = $false
     try {

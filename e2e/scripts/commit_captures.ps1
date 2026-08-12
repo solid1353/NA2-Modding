@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([switch]$Squash)
+param([switch]$Preserve)
 
 $ErrorActionPreference = 'Stop'
 $captureRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\captures'))
@@ -12,7 +12,7 @@ if ($LASTEXITCODE -ne 0) {
     throw 'Could not stage the current E2E capture changes.'
 }
 
-if (-not $Squash) {
+if ($Preserve) {
     & git -C $captureRepository diff --cached --quiet
     if ($LASTEXITCODE -eq 0) {
         Write-Host 'No E2E capture changes to commit.' -ForegroundColor Yellow
@@ -56,7 +56,7 @@ if ($LASTEXITCODE -ne 0) {
     throw 'Could not expire the E2E capture repository reflogs.'
 }
 
-& git -C $captureRepository gc --prune=now --aggressive
+& git -C $captureRepository gc --prune=now
 if ($LASTEXITCODE -ne 0) {
     throw 'Could not compact the E2E capture repository.'
 }

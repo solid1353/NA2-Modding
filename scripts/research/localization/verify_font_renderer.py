@@ -39,6 +39,15 @@ PACKED_METRICS_INPUT = load_paths(REPOSITORY).path(
     "nun5_semantic_14x20_packed_map.bin",
 )
 C_CORE_SOURCE = REPOSITORY / "src" / "localization" / "font" / "font_v2_core.c"
+C_V2_SOURCES = {
+    "core": C_CORE_SOURCE,
+    "menus": C_CORE_SOURCE.with_name("font_v2_menus.c"),
+    "bodies": C_CORE_SOURCE.with_name("font_v2_bodies.c"),
+    "mixed_text": C_CORE_SOURCE.with_name("font_v2_mixed_text.c"),
+    "lists": C_CORE_SOURCE.with_name("font_v2_lists.c"),
+    "settings": C_CORE_SOURCE.with_name("font_v2_settings.c"),
+    "ninja_song": C_CORE_SOURCE.with_name("font_v2_ninja_song.c"),
+}
 C_NUMERIC_SOURCE = C_CORE_SOURCE.with_name("font_numeric.c")
 C_TOOLCHAIN_BIN = ee_c_fragments.default_toolchain_bin(REPOSITORY)
 
@@ -448,86 +457,122 @@ def build_ascii_widths() -> bytes:
 
 
 @lru_cache(maxsize=1)
-def build_v2_c_core() -> tuple[Fragment, ...]:
+def build_v2_c_sources() -> tuple[Fragment, ...]:
+    shared_fragments: dict[str, ee_c_fragments.PayloadFragment] = {}
+    shared_symbols: dict[str, ee_c_fragments.SymbolReference] = {}
+
+    source_symbols = {
+        "font_v2_measure": V2_MEASURE,
+        "font_v2_adapter_call": V2_ADAPTER_CALL,
+        "font_v2_native_measure": V2_NATIVE_MEASURE,
+        "font_v2_wrap_native": V2_WRAP_NATIVE,
+        "font_v2_wrap_retry": V2_WRAP_RETRY,
+        "font_v2_is_mode_select_body": ee_c_fragments.SymbolReference(
+            f"{V2_PREFIX}.c.text", 72
+        ),
+    }
     with tempfile.TemporaryDirectory(prefix="na2-font-v2-c-") as temporary:
-        extracted = ee_c_fragments.compile_and_extract(
-            C_CORE_SOURCE,
-            Path(temporary) / "font_v2_core.o",
-            namespace=f"{V2_PREFIX}.c",
-            toolchain_bin=C_TOOLCHAIN_BIN,
-            external_symbols={
-                "font_v2_ascii_widths": ee_c_fragments.SymbolReference(
-                    V2_ASCII_WIDTHS
-                ),
-                "font_v2_active_session": ee_c_fragments.SymbolReference(
-                    V2_SESSION_POINTER
-                ),
-                "font_v2_controls_callback": ee_c_fragments.SymbolReference(
-                    V2_CONTROLS_CALLBACK
-                ),
-                "font_v2_title_callback": ee_c_fragments.SymbolReference(
-                    V2_TITLE_CALLBACK
-                ),
-                "font_v2_pause_list_callback": (
-                    ee_c_fragments.SymbolReference(V2_PAUSE_LIST_CALLBACK)
-                ),
-                "font_v2_pause_list_selected_callback": (
-                    ee_c_fragments.SymbolReference(
-                        V2_PAUSE_LIST_SELECTED_CALLBACK
+        common_external_symbols = {
+            "font_v2_ascii_widths": ee_c_fragments.SymbolReference(
+                V2_ASCII_WIDTHS
+            ),
+            "font_v2_active_session": ee_c_fragments.SymbolReference(
+                V2_SESSION_POINTER
+            ),
+            "font_v2_controls_callback": ee_c_fragments.SymbolReference(
+                V2_CONTROLS_CALLBACK
+            ),
+            "font_v2_title_callback": ee_c_fragments.SymbolReference(
+                V2_TITLE_CALLBACK
+            ),
+            "font_v2_pause_list_callback": ee_c_fragments.SymbolReference(
+                V2_PAUSE_LIST_CALLBACK
+            ),
+            "font_v2_pause_list_selected_callback": (
+                ee_c_fragments.SymbolReference(
+                    V2_PAUSE_LIST_SELECTED_CALLBACK
+                )
+            ),
+            "font_v2_quit_active": ee_c_fragments.SymbolReference(
+                V2_QUIT_ACTIVE
+            ),
+            "font_v2_quit_unselected_callback": (
+                ee_c_fragments.SymbolReference(V2_QUIT_UNSELECTED_CALLBACK)
+            ),
+            "font_v2_special_choice_selected_callback": (
+                ee_c_fragments.SymbolReference(
+                    V2_SPECIAL_CHOICE_SELECTED_CALLBACK
+                )
+            ),
+            "font_v2_quit_body_callback": ee_c_fragments.SymbolReference(
+                V2_QUIT_BODY_CALLBACK
+            ),
+            "font_v2_special_controls_body_callback": (
+                ee_c_fragments.SymbolReference(
+                    V2_SPECIAL_CONTROLS_BODY_CALLBACK
+                )
+            ),
+            "font_v2_native_measure_callback": (
+                ee_c_fragments.SymbolReference(V2_NATIVE_MEASURE_CALLBACK)
+            ),
+            "font_v2_practice_tokens": ee_c_fragments.SymbolReference(
+                V2_PRACTICE_TOKENS
+            ),
+            "font_v2_practice_icon_map": ee_c_fragments.SymbolReference(
+                V2_PRACTICE_ICON_MAP
+            ),
+            "font_v2_practice_icon_draw_callback": (
+                ee_c_fragments.SymbolReference(
+                    V2_PRACTICE_ICON_DRAW_CALLBACK
+                )
+            ),
+            "font_v2_practice_callback": ee_c_fragments.SymbolReference(
+                V2_PRACTICE_CALLBACK
+            ),
+            "font_ninja_song_ascii_number": ee_c_fragments.SymbolReference(
+                NINJA_SONG_ASCII_NUMBER
+            ),
+        }
+        for source_name, source_path in C_V2_SOURCES.items():
+            external_symbols = dict(common_external_symbols)
+            for c_name, target in source_symbols.items():
+                if isinstance(target, str):
+                    external_symbols[c_name] = ee_c_fragments.SymbolReference(
+                        target
                     )
-                ),
-                "font_v2_quit_active": ee_c_fragments.SymbolReference(
-                    V2_QUIT_ACTIVE
-                ),
-                "font_v2_quit_unselected_callback": (
-                    ee_c_fragments.SymbolReference(
-                        V2_QUIT_UNSELECTED_CALLBACK
+                else:
+                    external_symbols[c_name] = target
+            compiled = ee_c_fragments.compile_and_extract(
+                source_path,
+                Path(temporary) / f"font_v2_{source_name}.o",
+                namespace=f"{V2_PREFIX}.c",
+                toolchain_bin=C_TOOLCHAIN_BIN,
+                external_symbols=external_symbols,
+            )
+            for fragment in compiled.fragments:
+                if fragment.symbol in shared_fragments:
+                    raise ValueError(
+                        "Font v2 C sources export duplicate fragment "
+                        f"{fragment.symbol!r}"
                     )
-                ),
-                "font_v2_special_choice_selected_callback": (
-                    ee_c_fragments.SymbolReference(
-                        V2_SPECIAL_CHOICE_SELECTED_CALLBACK
+                shared_fragments[fragment.symbol] = fragment
+            for name, reference in compiled.symbols.items():
+                if name in shared_symbols:
+                    raise ValueError(
+                        f"Font v2 C sources export duplicate symbol {name!r}"
                     )
-                ),
-                "font_v2_quit_body_callback": (
-                    ee_c_fragments.SymbolReference(V2_QUIT_BODY_CALLBACK)
-                ),
-                "font_v2_special_controls_body_callback": (
-                    ee_c_fragments.SymbolReference(
-                        V2_SPECIAL_CONTROLS_BODY_CALLBACK
-                    )
-                ),
-                "font_v2_native_measure_callback": (
-                    ee_c_fragments.SymbolReference(
-                        V2_NATIVE_MEASURE_CALLBACK
-                    )
-                ),
-                "font_v2_practice_tokens": (
-                    ee_c_fragments.SymbolReference(V2_PRACTICE_TOKENS)
-                ),
-                "font_v2_practice_icon_map": (
-                    ee_c_fragments.SymbolReference(V2_PRACTICE_ICON_MAP)
-                ),
-                "font_v2_practice_icon_draw_callback": (
-                    ee_c_fragments.SymbolReference(
-                        V2_PRACTICE_ICON_DRAW_CALLBACK
-                    )
-                ),
-                "font_v2_practice_callback": (
-                    ee_c_fragments.SymbolReference(V2_PRACTICE_CALLBACK)
-                ),
-                "font_ninja_song_ascii_number": (
-                    ee_c_fragments.SymbolReference(
-                        NINJA_SONG_ASCII_NUMBER
-                    )
-                ),
-            },
-        )
+                shared_symbols[name] = reference
+
+    extracted = ee_c_fragments.ExtractedEeObject(
+        fragments=tuple(shared_fragments.values()),
+        symbols=shared_symbols,
+    )
 
     expected_exports = {
         "font_v2_measure",
         "font_v2_prepare",
         "font_v2_adapter_call",
+        "font_v2_wrap_retry",
         "font_v2_controls_adapter",
         "font_v2_command_title_entry",
         "font_v2_practice_title_entry",
@@ -3258,7 +3303,7 @@ def v2_fragments() -> tuple[Fragment, ...]:
             kind="rodata",
             alignment=1,
         ),
-        *build_v2_c_core(),
+        *build_v2_c_sources(),
         build_v2_controls_callback(),
         build_v2_title_callback(),
         build_v2_pause_list_callback(),

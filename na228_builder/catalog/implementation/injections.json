@@ -735,23 +735,8 @@
         "path": "src/localization/font/font_v2_core.c",
         "namespace": "localization.font.v2.c",
         "imports": {
-          "font_ninja_song_ascii_number": "ninja_song_ascii_number",
           "font_v2_active_session": "v2_session_pointer",
-          "font_v2_ascii_widths": "v2_ascii_widths",
-          "font_v2_controls_callback": "v2_controls_callback",
-          "font_v2_native_measure_callback": "v2_c_native_measure_callback",
-          "font_v2_pause_list_callback": "v2_pause_list_callback",
-          "font_v2_pause_list_selected_callback": "v2_pause_list_selected_callback",
-          "font_v2_practice_callback": "v2_practice_callback",
-          "font_v2_practice_icon_draw_callback": "v2_c_practice_icon_draw_callback",
-          "font_v2_practice_icon_map": "v2_practice_icon_map",
-          "font_v2_practice_tokens": "v2_practice_tokens",
-          "font_v2_quit_active": "v2_quit_active",
-          "font_v2_quit_body_callback": "v2_quit_body_callback",
-          "font_v2_quit_unselected_callback": "v2_c_quit_unselected_callback",
-          "font_v2_special_choice_selected_callback": "v2_special_choice_selected_callback",
-          "font_v2_special_controls_body_callback": "v2_special_controls_body_callback",
-          "font_v2_title_callback": "v2_title_callback"
+          "font_v2_ascii_widths": "v2_ascii_widths"
         },
         "fragments": {
           "v2_c_is_br": {
@@ -769,7 +754,27 @@
           "v2_adapter_call": {
             "order": 9,
             "object": "localization.font.v2.c.text.font.v2.adapter.call"
-          },
+          }
+        }
+      },
+      "v2_menus": {
+        "kind": "c",
+        "path": "src/localization/font/font_v2_menus.c",
+        "namespace": "localization.font.v2.c",
+        "imports": {
+          "font_v2_active_session": "v2_session_pointer",
+          "font_v2_controls_callback": "v2_controls_callback",
+          "font_v2_native_measure_callback": "v2_c_native_measure_callback",
+          "font_v2_pause_list_callback": "v2_pause_list_callback",
+          "font_v2_pause_list_selected_callback": "v2_pause_list_selected_callback",
+          "font_v2_quit_active": "v2_quit_active",
+          "font_v2_quit_unselected_callback": "v2_c_quit_unselected_callback",
+          "font_v2_special_choice_selected_callback": "v2_special_choice_selected_callback",
+          "font_v2_title_callback": "v2_title_callback",
+          "font_v2_measure": "v2_measure",
+          "font_v2_adapter_call": "v2_adapter_call"
+        },
+        "fragments": {
           "v2_controls_adapter": {
             "order": 10,
             "object": "localization.font.v2.c.text.font.v2.controls.adapter",
@@ -832,6 +837,64 @@
             "order": 22,
             "object": "localization.font.v2.c.text.font.v2.wrap.native"
           },
+          "v2_c_special_choice_session_init": {
+            "order": 94,
+            "object": "localization.font.v2.c.text.font.v2.special.choice.session.init"
+          },
+          "v2_c_special_choice_selected_adapter": {
+            "order": 95,
+            "object": "localization.font.v2.c.text.font.v2.special.choice.selected.adapter"
+          },
+          "v2_c_wrap_retry": {
+            "order": 101,
+            "object": "localization.font.v2.c.text.font.v2.wrap.retry"
+          },
+          "v2_c_character_scope_enter": {
+            "order": 104,
+            "object": "localization.font.v2.c.text.font.v2.character.scope.enter"
+          },
+          "v2_c_linked_choice_session_prepare": {
+            "order": 106,
+            "object": "localization.font.v2.c.text.font.v2.linked.choice.session.prepare"
+          },
+          "v2_c_linked_choice_selected_impl": {
+            "order": 107,
+            "object": "localization.font.v2.c.text.font.v2.linked.choice.selected.impl"
+          },
+          "v2_linked_choice_unselected_adapter": {
+            "order": 108,
+            "object": "localization.font.v2.c.text.font.v2.linked.choice.unselected.adapter",
+            "abi": "arg0_text_arg2_native_x_native_y",
+            "description": "Linked Mode ordinary centered choice"
+          },
+          "v2_character_selected_adapter": {
+            "order": 65,
+            "object": "localization.font.v2.c.text.font.v2.character.selected.adapter",
+            "abi": "object_draw_x_draw_y_text",
+            "description": "Character Select selected modal row"
+          },
+          "v2_character_unselected_adapter": {
+            "order": 70,
+            "object": "localization.font.v2.c.text.font.v2.character.unselected.adapter"
+          }
+        }
+      },
+      "v2_bodies": {
+        "kind": "c",
+        "path": "src/localization/font/font_v2_bodies.c",
+        "namespace": "localization.font.v2.c",
+        "imports": {
+          "font_v2_quit_active": "v2_quit_active",
+          "font_v2_quit_body_callback": "v2_quit_body_callback",
+          "font_v2_special_controls_body_callback": "v2_special_controls_body_callback",
+          "font_v2_wrap_native": "v2_wrap_native",
+          "font_v2_adapter_call": "v2_adapter_call",
+          "font_v2_is_mode_select_body": {
+            "symbol": "v2_c_is_br",
+            "addend": 72
+          }
+        },
+        "fragments": {
           "v2_c_wrapped_body_common": {
             "order": 23,
             "object": "localization.font.v2.c.text.font.v2.wrapped.body.common"
@@ -848,6 +911,41 @@
             "abi": "arg0_text_arg2",
             "description": "Special Controls explanatory body"
           },
+          "v2_character_confirmation_body_adapter": {
+            "order": 64,
+            "object": "localization.font.v2.c.text.font.v2.character.confirmation.body.adapter",
+            "abi": "arg0_text_arg2",
+            "description": "Character Select return-confirmation body"
+          },
+          "v2_c_character_confirmation_body_callback": {
+            "order": 66,
+            "object": "localization.font.v2.c.text.font.v2.character.confirmation.body.callback"
+          },
+          "v2_collection_body_adapter": {
+            "order": 69,
+            "object": "localization.font.v2.c.text.font.v2.collection.body.adapter"
+          },
+          "v2_c_collection_body_callback": {
+            "order": 73,
+            "object": "localization.font.v2.c.text.font.v2.collection.body.callback"
+          }
+        }
+      },
+      "v2_mixed_text": {
+        "kind": "c",
+        "path": "src/localization/font/font_v2_mixed_text.c",
+        "namespace": "localization.font.v2.c",
+        "imports": {
+          "font_v2_active_session": "v2_session_pointer",
+          "font_v2_practice_callback": "v2_practice_callback",
+          "font_v2_practice_icon_draw_callback": "v2_c_practice_icon_draw_callback",
+          "font_v2_practice_icon_map": "v2_practice_icon_map",
+          "font_v2_practice_tokens": "v2_practice_tokens",
+          "font_v2_title_callback": "v2_title_callback",
+          "font_v2_wrap_native": "v2_wrap_native",
+          "font_v2_adapter_call": "v2_adapter_call"
+        },
+        "fragments": {
           "v2_practice_append": {
             "order": 26,
             "object": "localization.font.v2.c.text.font.v2.practice.append"
@@ -875,23 +973,20 @@
           "v2_c_command_icon_offset": {
             "order": 61,
             "object": "localization.font.v2.c.text.font.v2.command.icon.offset"
-          },
-          "v2_character_confirmation_body_adapter": {
-            "order": 64,
-            "object": "localization.font.v2.c.text.font.v2.character.confirmation.body.adapter",
-            "abi": "arg0_text_arg2",
-            "description": "Character Select return-confirmation body"
-          },
-          "v2_character_selected_adapter": {
-            "order": 65,
-            "object": "localization.font.v2.c.text.font.v2.character.selected.adapter",
-            "abi": "object_draw_x_draw_y_text",
-            "description": "Character Select selected modal row"
-          },
-          "v2_c_character_confirmation_body_callback": {
-            "order": 66,
-            "object": "localization.font.v2.c.text.font.v2.character.confirmation.body.callback"
-          },
+          }
+        }
+      },
+      "v2_lists": {
+        "kind": "c",
+        "path": "src/localization/font/font_v2_lists.c",
+        "namespace": "localization.font.v2.c",
+        "imports": {
+          "font_v2_ascii_widths": "v2_ascii_widths",
+          "font_v2_measure": "v2_measure",
+          "font_v2_adapter_call": "v2_adapter_call",
+          "font_v2_wrap_retry": "v2_c_wrap_retry"
+        },
+        "fragments": {
           "v2_c_jutsu_draw_callback": {
             "order": 67,
             "object": "localization.font.v2.c.text.font.v2.jutsu.draw.callback"
@@ -899,14 +994,6 @@
           "v2_jutsu_draw_entry": {
             "order": 68,
             "object": "localization.font.v2.c.text.font.v2.jutsu.draw.entry"
-          },
-          "v2_collection_body_adapter": {
-            "order": 69,
-            "object": "localization.font.v2.c.text.font.v2.collection.body.adapter"
-          },
-          "v2_character_unselected_adapter": {
-            "order": 70,
-            "object": "localization.font.v2.c.text.font.v2.character.unselected.adapter"
           },
           "v2_c_collection_list_callback": {
             "order": 71,
@@ -918,10 +1005,39 @@
             "abi": "text_highlight_native_x_native_y",
             "description": "Shared Collection list row classifier"
           },
-          "v2_c_collection_body_callback": {
-            "order": 73,
-            "object": "localization.font.v2.c.text.font.v2.collection.body.callback"
+          "v2_collection_figure_music_header_adapter": {
+            "order": 93,
+            "object": "localization.font.v2.c.text.font.v2.collection.figure.music.header.adapter",
+            "abi": "native_x_native_y_text_style",
+            "description": "Shared Collection Figure and Music header origin formula"
           },
+          "v2_collection_jutsu_header_adapter": {
+            "order": 102,
+            "object": "localization.font.v2.c.text.font.v2.collection.jutsu.header.adapter",
+            "abi": "native_x_native_y_text_style",
+            "description": "Shared Collection Ultimate Jutsu header origin formula"
+          },
+          "v2_collection_index_name_adapter": {
+            "order": 114,
+            "object": "localization.font.v2.c.text.font.v2.collection.index.name.adapter",
+            "abi": "native_x_native_y_text_style",
+            "description": "Collection Characters selected-name boxed layout and official terminal-advance adapter"
+          },
+          "v2_c_collection_index_name_callback": {
+            "order": 115,
+            "object": "localization.font.v2.c.text.font.v2.collection.index.name.callback"
+          }
+        }
+      },
+      "v2_settings": {
+        "kind": "c",
+        "path": "src/localization/font/font_v2_settings.c",
+        "namespace": "localization.font.v2.c",
+        "imports": {
+          "font_v2_adapter_call": "v2_adapter_call",
+          "font_v2_native_measure": "v2_native_measure"
+        },
+        "fragments": {
           "v2_c_settings_label_callback": {
             "order": 74,
             "object": "localization.font.v2.c.text.font.v2.settings.label.callback"
@@ -962,6 +1078,26 @@
             "abi": "text_color_native_x_native_y",
             "description": "Practice Settings section heading"
           },
+          "v2_battle_settings_value_adapter": {
+            "order": 103,
+            "object": "localization.font.v2.c.text.font.v2.battle.settings.value.adapter",
+            "abi": "text_color_native_x_native_y",
+            "description": "Battle Settings centered value with page-local raster phase"
+          }
+        }
+      },
+      "v2_ninja_song": {
+        "kind": "c",
+        "path": "src/localization/font/font_v2_ninja_song.c",
+        "namespace": "localization.font.v2.c",
+        "imports": {
+          "font_ninja_song_ascii_number": "ninja_song_ascii_number",
+          "font_v2_ascii_widths": "v2_ascii_widths",
+          "font_v2_measure": "v2_measure",
+          "font_v2_adapter_call": "v2_adapter_call",
+          "font_v2_wrap_native": "v2_wrap_native"
+        },
+        "fragments": {
           "v2_c_ninja_text_callback": {
             "order": 82,
             "object": "localization.font.v2.c.text.font.v2.ninja.text.callback"
@@ -1009,64 +1145,6 @@
             "object": "localization.font.v2.c.text.font.v2.ninja.objective.row.adapter",
             "abi": "page_row_record_display_index_row_y_bits",
             "description": "Shared Ninja Song visible objective-row renderer preserving the native index, marker, and prose strings"
-          },
-          "v2_collection_figure_music_header_adapter": {
-            "order": 93,
-            "object": "localization.font.v2.c.text.font.v2.collection.figure.music.header.adapter",
-            "abi": "native_x_native_y_text_style",
-            "description": "Shared Collection Figure and Music header origin formula"
-          },
-          "v2_c_special_choice_session_init": {
-            "order": 94,
-            "object": "localization.font.v2.c.text.font.v2.special.choice.session.init"
-          },
-          "v2_c_special_choice_selected_adapter": {
-            "order": 95,
-            "object": "localization.font.v2.c.text.font.v2.special.choice.selected.adapter"
-          },
-          "v2_c_wrap_retry": {
-            "order": 101,
-            "object": "localization.font.v2.c.text.font.v2.wrap.retry"
-          },
-          "v2_collection_jutsu_header_adapter": {
-            "order": 102,
-            "object": "localization.font.v2.c.text.font.v2.collection.jutsu.header.adapter",
-            "abi": "native_x_native_y_text_style",
-            "description": "Shared Collection Ultimate Jutsu header origin formula"
-          },
-          "v2_battle_settings_value_adapter": {
-            "order": 103,
-            "object": "localization.font.v2.c.text.font.v2.battle.settings.value.adapter",
-            "abi": "text_color_native_x_native_y",
-            "description": "Battle Settings centered value with page-local raster phase"
-          },
-          "v2_c_character_scope_enter": {
-            "order": 104,
-            "object": "localization.font.v2.c.text.font.v2.character.scope.enter"
-          },
-          "v2_c_linked_choice_session_prepare": {
-            "order": 106,
-            "object": "localization.font.v2.c.text.font.v2.linked.choice.session.prepare"
-          },
-          "v2_c_linked_choice_selected_impl": {
-            "order": 107,
-            "object": "localization.font.v2.c.text.font.v2.linked.choice.selected.impl"
-          },
-          "v2_linked_choice_unselected_adapter": {
-            "order": 108,
-            "object": "localization.font.v2.c.text.font.v2.linked.choice.unselected.adapter",
-            "abi": "arg0_text_arg2_native_x_native_y",
-            "description": "Linked Mode ordinary centered choice"
-          },
-          "v2_collection_index_name_adapter": {
-            "order": 114,
-            "object": "localization.font.v2.c.text.font.v2.collection.index.name.adapter",
-            "abi": "native_x_native_y_text_style",
-            "description": "Collection Characters selected-name boxed layout and official terminal-advance adapter"
-          },
-          "v2_c_collection_index_name_callback": {
-            "order": 115,
-            "object": "localization.font.v2.c.text.font.v2.collection.index.name.callback"
           }
         }
       },

@@ -60,7 +60,7 @@ def text_mapping(
         "target": "BTL",
         "target_offset": offset,
         "capacity": capacity,
-        "mode": "replace",
+        "mode": "slot",
         "source": source,
         "donor_ref": donor_ref,
         "transform": transform,
@@ -177,6 +177,109 @@ class LinkedStringTests(unittest.TestCase):
         self.assertEqual(draft.external_draft.fragments, ())
         self.assertEqual(draft.external_draft.symbolic_patches, ())
         self.assertEqual(draft.external_draft.excluded_mapping_ids, frozenset())
+
+    def test_pointer_specific_alias_externalizes_even_when_text_fits(self) -> None:
+        clean = bytearray(32)
+        clean[:4] = b"A\0\0\0"
+        clean[16:20] = (0x1000).to_bytes(4, "little")
+        reference = translation_importer.Reference(
+            mapping_id="ALIAS",
+            target="BTL",
+            target_file_offset=0,
+            target_runtime_address=0x1000,
+            resolution="direct",
+            reference_binary="BTL",
+            reference_file_offsets=(16,),
+            parent_mapping_id=None,
+            parent_file_offset=None,
+            parent_runtime_address=None,
+        )
+        draft = string_patcher.build_translation_draft(
+            translation_plan=linked_plan(
+                mappings=(
+                    text_mapping(
+                        "DEFAULT",
+                        offset=0,
+                        capacity=4,
+                        source="A",
+                        donor_ref="default",
+                    ),
+                    text_mapping(
+                        "ALIAS",
+                        offset=0,
+                        capacity=4,
+                        source="A",
+                        donor_ref="alias",
+                    ),
+                ),
+                resolved_texts={"DEFAULT": "OK", "ALIAS": "NO"},
+                references=(reference,),
+                clean=bytes(clean),
+            ),
+            owner="test.string_patcher",
+            title_policy=None,
+        )
+        self.assertEqual(
+            draft.external_draft.excluded_mapping_ids,
+            frozenset({"ALIAS"}),
+        )
+        self.assertEqual(
+            draft.external_draft.fragments[0].payload,
+            b"NO\0",
+        )
+        self.assertEqual(
+            draft.external_draft.symbolic_patches[0].mapping_id,
+            "ALIAS",
+        )
+
+    def test_shared_slot_without_one_pointer_specific_alias_fails(self) -> None:
+        with self.assertRaisesRegex(
+            ValueError,
+            "requires one unreferenced inline mapping",
+        ):
+            string_patcher.build_translation_draft(
+                translation_plan=linked_plan(
+                    mappings=(
+                        text_mapping("FIRST", offset=0, capacity=4, source="A"),
+                        text_mapping("SECOND", offset=0, capacity=4, source="A"),
+                    ),
+                    resolved_texts={"FIRST": "OK", "SECOND": "NO"},
+                    clean=b"A\0\0\0",
+                ),
+                owner="test.string_patcher",
+                title_policy=None,
+            )
+
+    def test_pointer_specific_alias_cannot_redirect_shared_slot(self) -> None:
+        reference = translation_importer.Reference(
+            mapping_id="ALIAS",
+            target="BTL",
+            target_file_offset=0,
+            target_runtime_address=0x1000,
+            resolution="direct",
+            reference_binary="BTL",
+            reference_file_offsets=(0,),
+            parent_mapping_id=None,
+            parent_file_offset=None,
+            parent_runtime_address=None,
+        )
+        with self.assertRaisesRegex(
+            ValueError,
+            "cannot redirect the shared source slot itself",
+        ):
+            string_patcher.build_translation_draft(
+                translation_plan=linked_plan(
+                    mappings=(
+                        text_mapping("DEFAULT", offset=0, capacity=4, source="A"),
+                        text_mapping("ALIAS", offset=0, capacity=4, source="A"),
+                    ),
+                    resolved_texts={"DEFAULT": "OK", "ALIAS": "NO"},
+                    references=(reference,),
+                    clean=(0x1000).to_bytes(4, "little"),
+                ),
+                owner="test.string_patcher",
+                title_policy=None,
+            )
 
     def test_overflow_without_pointer_reference_fails_closed(self) -> None:
         with self.assertRaisesRegex(ValueError, "no pointer reference"):

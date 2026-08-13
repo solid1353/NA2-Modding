@@ -129,42 +129,122 @@
     }
   },
   "i__localization__font__layout__collection_lists": {
-    "description": "Route the shared Collection row draw through family boxes, align the Characters index selected name, and move the three character-header callers through two shared plaque-origin formulas without changing any displayed string.",
+    "description": "Route Collection rows and constrained plaques through NUN5-compatible family boxes, use one shared measured 190-by-32 layout for every character-name plaque including common Figurines, and localize the Diorama viewer prompts.",
     "hooks": {
+      "localize_collection_diorama_prompt_base": {
+        "description": "Replace the Diorama viewer's animation-name prompt draw with NUN5's official localized Controls atlas record and exact top-prompt position.",
+        "target_id": "na2_etc",
+        "offset": "0x9C34",
+        "expected_hex": "D0EE0D0C00000000",
+        "symbol": "v2_collection_diorama_prompt_adapter",
+        "encoding": "jal26"
+      },
+      "localize_collection_diorama_prompt_display": {
+        "description": "Route the controls-hidden Diorama state through NUN5's official localized Display atlas record and exact suffix position.",
+        "target_id": "na2_etc",
+        "offset": "0x9CD4",
+        "expected_hex": "D0EE0D0C00000000",
+        "symbol": "v2_collection_diorama_display_prompt_adapter",
+        "encoding": "jal26"
+      },
+      "localize_collection_diorama_prompt_hide": {
+        "description": "Route the controls-visible Diorama state through NUN5's official localized Hide atlas record and exact suffix position.",
+        "target_id": "na2_etc",
+        "offset": "0x9CAC",
+        "expected_hex": "D0EE0D0C00000000",
+        "symbol": "v2_collection_diorama_prompt_adapter",
+        "encoding": "jal26"
+      },
       "move_collection_character_index_name": {
-        "description": "Route every Collection Characters selected-name draw through its 190-by-32 NUN5-compatible centered plaque box, preserve the official Granny Chiyo terminal-space advance, and move its raster origin up by 5.6 game units.",
+        "description": "Route every Collection Characters selected-name draw through the shared 190-by-32 NUN5-compatible top-plaque layout; exact localized record aliases own any donor-specific spacing.",
         "target_id": "na2_etc",
         "offset": "0x446C",
         "expected_hex": "90E40D0C00000000",
-        "symbol": "v2_collection_index_name_adapter",
+        "symbol": "v2_collection_plaque_adapter",
         "encoding": "jal26"
       },
       "move_every_character_specific_music_header": {
-        "description": "Move every character-specific Music header through the shared Figure/Music origin formula without changing its text, style, scale, or renderer.",
+        "description": "Route every character-specific Music header through the shared 190-by-32 NUN5-compatible top-plaque layout.",
         "target_id": "na2_etc",
         "offset": "0xF2B8",
         "expected_hex": "90E40D0C00000000",
-        "symbol": "v2_collection_figure_music_header_adapter",
+        "symbol": "v2_collection_plaque_adapter",
         "encoding": "jal26"
       },
       "move_every_figure_character_header_shared": {
-        "description": "Move every Figure character header through the shared Figure/Music origin formula without changing its text, style, scale, or renderer.",
+        "description": "Route every common-Figurine character header through the same measured 190-by-32 NUN5-compatible centered plaque layout as Collection Characters.",
         "target_id": "na2_etc",
         "offset": "0x7640",
         "expected_hex": "90E40D0C00000000",
-        "symbol": "v2_collection_figure_music_header_adapter",
+        "symbol": "v2_collection_plaque_adapter",
         "encoding": "jal26"
       },
       "move_every_ordinary_legacy_ultimate_jutsu": {
-        "description": "Move every ordinary or legacy Ultimate Jutsu plaque through the one shared parent-record origin formula; the unrelated child/VCR text call at 0xA31C remains native.",
+        "description": "Route every ordinary or legacy Ultimate Jutsu top plaque through the shared 190-by-32 NUN5-compatible layout.",
         "target_id": "na2_etc",
         "offset": "0xD4B4",
         "expected_hex": "90E40D0C00000000",
-        "symbol": "v2_collection_jutsu_header_adapter",
+        "symbol": "v2_collection_plaque_adapter",
+        "encoding": "jal26"
+      },
+      "route_collection_top_plaque_branch_two": {
+        "description": "Route the second Collection detail branch's character-name plaque through the shared NUN5-compatible layout.",
+        "target_id": "na2_etc",
+        "offset": "0xD61C",
+        "expected_hex": "90E40D0C00000000",
+        "symbol": "v2_collection_plaque_adapter",
+        "encoding": "jal26"
+      },
+      "route_collection_top_plaque_branch_three": {
+        "description": "Route the third Collection detail branch's selected character-name plaque through the shared NUN5-compatible layout.",
+        "target_id": "na2_etc",
+        "offset": "0xD778",
+        "expected_hex": "90E40D0C00000000",
+        "symbol": "v2_collection_plaque_adapter",
+        "encoding": "jal26"
+      },
+      "route_collection_opponent_label_first": {
+        "description": "Route the first fixed Opponent top plaque through the shared NUN5-compatible layout.",
+        "target_id": "na2_etc",
+        "offset": "0xD87C",
+        "expected_hex": "90E40D0C00000000",
+        "symbol": "v2_collection_plaque_adapter",
+        "encoding": "jal26"
+      },
+      "route_collection_top_plaque_branch_four": {
+        "description": "Route the fourth Collection detail branch's character-name plaque through the shared NUN5-compatible layout.",
+        "target_id": "na2_etc",
+        "offset": "0xD9B0",
+        "expected_hex": "90E40D0C00000000",
+        "symbol": "v2_collection_plaque_adapter",
+        "encoding": "jal26"
+      },
+      "route_collection_top_plaque_branch_five": {
+        "description": "Route the fifth Collection detail branch's selected character-name plaque through the shared NUN5-compatible layout.",
+        "target_id": "na2_etc",
+        "offset": "0xDB0C",
+        "expected_hex": "90E40D0C00000000",
+        "symbol": "v2_collection_plaque_adapter",
+        "encoding": "jal26"
+      },
+      "route_collection_opponent_label_second": {
+        "description": "Route the second fixed Opponent top plaque through the shared NUN5-compatible layout.",
+        "target_id": "na2_etc",
+        "offset": "0xDC00",
+        "expected_hex": "90E40D0C00000000",
+        "symbol": "v2_collection_plaque_adapter",
+        "encoding": "jal26"
+      },
+      "route_every_collection_diorama_title": {
+        "description": "Route every Diorama title through NUN5's 190-by-32, two-line centered plaque width and wrapping contract while preserving the accepted non-collapsed vertical glyph layout.",
+        "target_id": "na2_etc",
+        "offset": "0xA31C",
+        "expected_hex": "90E40D0C00000000",
+        "symbol": "v2_collection_diorama_title_adapter",
         "encoding": "jal26"
       },
       "route_shared_collection_row_draw_one": {
-        "description": "Route the shared Collection row draw through one native-X classifier: Figure rows use the retained 152x32 box, every other target list uses the retained 192x32 box, companion lists stay native, and fitting one-line rows retain the native glyph draw at family X +1.2 and Y -4.0.",
+        "description": "Route the shared Collection row draw through one native-X classifier: Figure rows use the retained 152x32 box, right-side target lists and the exact X=30 Opponents index use the retained 192x32 box, companion lists stay native, and fitting one-line rows retain the native glyph draw at family X +1.2 and Y -4.0.",
         "target_id": "na2_etc",
         "offset": "0xFD8",
         "expected_hex": "10E40D0C00000000",
@@ -1005,27 +1085,45 @@
             "abi": "text_highlight_native_x_native_y",
             "description": "Shared Collection list row classifier"
           },
-          "v2_collection_figure_music_header_adapter": {
-            "order": 93,
-            "object": "localization.font.v2.c.text.font.v2.collection.figure.music.header.adapter",
-            "abi": "native_x_native_y_text_style",
-            "description": "Shared Collection Figure and Music header origin formula"
+          "v2_c_collection_plaque_callback": {
+            "order": 100,
+            "object": "localization.font.v2.c.text.font.v2.collection.plaque.callback"
           },
-          "v2_collection_jutsu_header_adapter": {
+          "v2_c_collection_plaque_draw": {
+            "order": 110,
+            "object": "localization.font.v2.c.text.font.v2.collection.plaque.draw"
+          },
+          "v2_collection_plaque_adapter": {
             "order": 102,
-            "object": "localization.font.v2.c.text.font.v2.collection.jutsu.header.adapter",
+            "object": "localization.font.v2.c.text.font.v2.collection.plaque.adapter",
             "abi": "native_x_native_y_text_style",
-            "description": "Shared Collection Ultimate Jutsu header origin formula"
+            "description": "Shared non-Figure Collection top-plaque boxed layout"
           },
-          "v2_collection_index_name_adapter": {
-            "order": 114,
-            "object": "localization.font.v2.c.text.font.v2.collection.index.name.adapter",
+          "v2_collection_diorama_title_adapter": {
+            "order": 116,
+            "object": "localization.font.v2.c.text.font.v2.collection.diorama.title.adapter",
             "abi": "native_x_native_y_text_style",
-            "description": "Collection Characters selected-name boxed layout and official terminal-advance adapter"
+            "description": "Collection Diorama title two-line centered plaque adapter"
           },
-          "v2_c_collection_index_name_callback": {
-            "order": 115,
-            "object": "localization.font.v2.c.text.font.v2.collection.index.name.callback"
+          "v2_c_collection_diorama_title_callback": {
+            "order": 117,
+            "object": "localization.font.v2.c.text.font.v2.collection.diorama.title.callback"
+          },
+          "v2_collection_diorama_prompt_adapter": {
+            "order": 118,
+            "object": "localization.font.v2.c.text.font.v2.collection.diorama.prompt.adapter",
+            "abi": "native_x_native_y_renderer_atlas_record",
+            "description": "Collection Diorama localized Controls and Hide prompt adapter"
+          },
+          "v2_collection_diorama_display_prompt_adapter": {
+            "order": 119,
+            "object": "localization.font.v2.c.text.font.v2.collection.diorama.display.prompt.adapter",
+            "abi": "native_x_native_y_renderer_atlas_record",
+            "description": "Collection Diorama localized Display prompt adapter"
+          },
+          "v2_collection_diorama_prompt_records": {
+            "order": 120,
+            "object": "localization.font.v2.c.rodata.font.v2.collection.diorama.prompt.records"
           }
         }
       },

@@ -5,9 +5,12 @@ validates the clean NA2 targets and the table's folded pointer inventory, and
 produces one in-memory translation artifact. `source_ref` and `donor_ref`
 identify the paired NA2 and NUN5 locations; `source` and `donor` retain their
 decoded text together. Every executable row also declares a concrete
-`display_context` and a `display_basis` beginning with `seen:`, `inferred:`,
-or `character:`. The engine rejects rows without that evidence metadata and
-rejects a declared `source` that differs from the clean target bytes.
+`display_context` and one or more `display_basis` entries beginning with
+`seen:`, `e2e:`, `inferred:`, or `character:`. Multiple entries are separated
+by `|`. `e2e:<suite-name>` records each exact maintained suite that exercised a
+row, including every proven suite for shared strings. The engine rejects rows
+without that evidence metadata and rejects a declared `source` that differs
+from the clean target bytes.
 
 Canonical `mappings.tsv` contains the completed screenshot-confirmed rebuild
 plus the explicit character-family exception. Its cumulative first two passes

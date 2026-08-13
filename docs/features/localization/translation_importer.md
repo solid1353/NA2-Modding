@@ -13,8 +13,8 @@ in [translation importer knowledge](../../knowledge/localization/translation_imp
 
 ## Mapping metadata
 
-- Canonical `mappings.tsv` rows: `2,075`
-- Canonical `mappings.tsv` SHA-256: `EC7472B47A336425CDF538543B9D5E5599230CDC203CF34581DAA6C9724CC8CA`
+- Canonical `mappings.tsv` rows: `2,080`
+- Canonical `mappings.tsv` SHA-256: `FDE2D2C536B0021E2371B4F182E9E54FCEF0E42020AF6026263E16A8E65E2D44`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the builder's configuration-resource fingerprint own content identity.
@@ -137,9 +137,12 @@ There is no `shorten` or `pool` mapping mode. External placement is a
 `NUN5_TEXTENG@0x29430`. `source` and `donor` are adjacent text fields: `source`
 records the exact guarded clean NA2 text, while `donor` records the verified
 official translation and is executable by default. `display_context` names the
-screen and field where the row appears. `display_basis` begins with `seen:`,
-`inferred:`, or `character:` and records why that row is admitted to the
-executable table.
+screen and field where the row appears. `display_basis` contains one or more
+`|`-separated entries beginning with `seen:`, `e2e:`, `inferred:`, or
+`character:` and records why that row is admitted to the executable table.
+`e2e:<suite-name>` identifies each exact maintained E2E suite that exercised
+the row, for example `e2e:collection/voice`. Coverage summaries count every
+entry independently, so a shared row contributes to each proven suite.
 
 `replacement` is a user-editable override field and is normally blank. The
 importer selects nonempty `replacement` or otherwise `donor`, applies the
@@ -152,6 +155,13 @@ transform.
 containing mapping's pointer inventory. Canonical mappings do not carry log
 reasons; generated patch records derive a concrete reason from the mapping ID
 and whether the row used the official donor, an override, or a prefix.
+
+Two or more `slot` rows may share a clean source slot only when exactly one is
+the ordinary inline mapping and every alternate row owns pointer references.
+Those pointer-specific aliases are always linked, even when their text would
+fit inline, so one shared Japanese string can retain distinct official donor
+selections at structurally distinct records. Aliases must declare identical
+source text and capacity, and none may redirect the source slot itself.
 
 ## Output
 

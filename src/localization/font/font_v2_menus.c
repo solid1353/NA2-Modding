@@ -170,11 +170,11 @@
 
 /* Collection-local Yes X; increase to move Yes right. */
 #define FONT_COLLECTION_YES_X \
-    (64.2f + FONT_CONFIRMATION_YES_X_OFFSET)
+    (63.2f + FONT_CONFIRMATION_YES_X_OFFSET)
 
 /* Collection-local Yes Y; increase to move Yes down. */
 #define FONT_COLLECTION_YES_Y \
-    (29.85f + FONT_CONFIRMATION_YES_Y_OFFSET)
+    (28.85f + FONT_CONFIRMATION_YES_Y_OFFSET)
 
 /* Collection-local No X; increase to move No right. */
 #define FONT_COLLECTION_NO_X 68.1f
@@ -668,7 +668,13 @@ u32 font_v2_quit_selected_map(
     FontV2Bits selected_y;
 
     if (font_v2_map_choice(text, source_y, &target_x, &mapped_y)) {
-        if (font_v2_quit_active != FONT_CHARACTER_CHOICE_SCOPE) {
+        if (
+            font_v2_quit_active != FONT_CHARACTER_CHOICE_SCOPE &&
+            !(
+                font_v2_quit_active == FONT_COLLECTION_CHOICE_SCOPE &&
+                source_y == FONT_QUIT_NO_SOURCE_BITS
+            )
+        ) {
             selected_y.u = mapped_y;
             selected_y.f += FONT_CONFIRMATION_SELECTED_Y_OFFSET;
             mapped_y = selected_y.u;

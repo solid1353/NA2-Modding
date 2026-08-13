@@ -327,15 +327,16 @@ records from 108 to 112 pixels and moves Zoom Out's U coordinate from 120 to
 
 The parent character-viewer class aligns as `ccHomeIspDiorama`: NA2 exported
 class-string address `0x006E2FE0`, exported factory/type reference
-`0x00602820`, captured object candidate `0x00C9A1C0`; NUN5 exported
+`0x00602820`, captured object `0x00CE5E40`; NUN5 exported
 class-string address `0x006EF650`, exported reference `0x0060FD40`, and
-candidate `0x00C1C810`. Its main draw pair is NA2
+captured object `0x00C1C810`. Its main draw pair is NA2
 `FUN_006c11e0` and NUN5 `FUN_006d4530`. The lower-control renderer is reached
 indirectly as a child/virtual overlay draw; no direct JAL cross-reference is
 present in the exports. A second pair, NA2 `FUN_006bdaa0` and NUN5
 `FUN_006d0d10`, consumes the same four rectangle records with a different
-caller-provided position array. That second layout is not patched without its
-own screen evidence. Confidence is high for the table/function semantics and
+caller-provided position array. The later maintained Diorama captures provide
+that second consumer's screen evidence, so its complete homologous position
+table is now copied. Confidence is high for the table/function semantics and
 medium for the exact indirect parent edge.
 
 ## Exact paired tables
@@ -350,6 +351,7 @@ medium for the exact indirect parent edge.
 | Play rectangle | `0x2E790` / `0x006E2690` | `(120,24,72,24)` | NUN5 ELF `0x4DDC70` / `0x005DDAF0` | `(144,24,72,24)` |
 | Stop rectangle | `0x2E798` / `0x006E2698` | `(120,48,72,24)` | NUN5 ELF `0x4DDC78` / `0x005DDAF8` | `(144,48,76,24)` |
 | viewer-control positions | `0x2EB40` / `0x006E2A40` | `(344,360)`, `(232,360)`, `(66,360)`, `(148,360)` | `0x283D0` / `0x006EF0D0` | `(206,364)`, `(99,364)`, `(97,339)`, `(207,339)` |
+| Diorama viewer-control positions | `0x2EBD0` / `0x006E2AD0` | `(440,290)`, `(440,266)`, `(469,218)`, `(468,242)` | `0x28460` / `0x006EF160` | `(440,290)`, `(440,266)`, `(440,218)`, `(440,242)` |
 | viewer-control rectangles | `0x30AB0` / `0x006E49B0` | `(1,72,108,24)`, `(1,48,108,24)`, `(1,96,108,24)`, `(120,1,108,23)` | `0x29A90` / `0x006F0790` | `(1,72,108,24)`, `(1,48,108,24)`, `(1,96,112,24)`, `(144,1,112,23)` |
 
 The whole NUN5 `HOME.CCS` donor supplies 144-pixel English page-prompt art,
@@ -360,8 +362,45 @@ without overlap. `ui_layout_collection_submenu` consequently copies both complet
 tables, all three reviewed category-title records, and the reviewed Play
 record. The viewer-control correction copies the complete four-record position
 and rectangle blocks rather than splitting their semantic unit. It contains no
-authored replacement bytes and changes no text or font data. The eight guarded
-copy operations cover 176 bytes; thirty bytes differ in the destination.
+authored replacement bytes and changes no text or font data.
+
+The Diorama viewer supplies the later screen evidence for the second position
+consumer. Its homologous NUN5 table keeps all four records at X `440`; NA2's
+last two X values, `469` and `468`, clip Zoom In and Zoom Out at the right edge.
+The complete 64-byte second table is therefore copied as one semantic block.
+
+NUN5 also stopped using the shared `ANM_home_vcr_ca` animation record for the
+viewer-state prompt. Its localized accessor selects three official English
+HOME-atlas rectangles: Controls `(144,72,112,24)`, Hide `(208,96,48,24)`, and
+Display `(132,96,76,24)`. The Diorama draw adapter ports those exact records
+and NUN5's exact `(374,309)` and `(414,324)` positions into NA2's compatible
+sprite helper. This prevents the imported NUN5 HOME container from resolving
+NA2's substring animation references as the malformed `Cisplay` label.
+
+The viewer-state handler pair is NA2 `FUN_006bd740` and NUN5
+`FUN_006d0980`; both store the visible/hidden flag at object offset `+0xB8`.
+NA2 tests masks `0x40` and `0x10` at ETC file offsets `0x9894` and `0x990C`;
+NUN5 tests `0x10` and `0x80` at `0x9CD4` and `0x9D4C`. Both exact NUN5
+instructions are required: the first changes Back from Cross to Triangle, and
+the second changes the visibility toggle to Square. Removing the first returns
+the replay to the Characters list before Misc capture `020`; removing the
+second leaves controls visible at capture `022`. The retained pre-fix state
+proves the complete pair: its current object has `+0xB8 = 0`, matching NUN5,
+while its image still shows the malformed Display substring. A disposable
+probe around movie frames `6683` through `6695` further observes the Square
+edge as action bit `0x80` and the `+0xB8` transition. The two former
+`unclassified` copies are therefore retained as separately named, documented
+Collection Diorama edits rather than treated as a blind regional family.
+
+Controls/Hide and Display are separate call sites in the handler's draw pair.
+They consequently use separate adapters: the shared visible-state adapter
+selects the official Controls or Hide record from the native call position,
+while the hidden-state adapter selects the official Display record directly.
+Treating all suffix calls as Hide made a correctly hidden state impossible to
+label faithfully.
+
+The nine guarded copy operations cover 240 bytes; thirty-three bytes differ in
+the destination.
 
 The captured sprite renderer corroborates the table trace. After the second
 draw, its width is 118 in NA2 and 144 in NUN5; its derived right-edge value is
@@ -434,20 +473,24 @@ respectively `220 + 118 = 338` and `233 + 144 = 377`.
 - Movie/Music list wording, wrapping, and font spacing differ in the paired
   screenshots, but they are text-rendering behavior rather than HOME texture
   rectangles and remain outside this texture-only correction.
-- The Controls/Display/Hide prompt records were not visible in these captures,
-  so copying them would exceed the screen-by-screen evidence boundary. The
-  later ss10 Music pair separately supplied evidence for Stop.
+- The original submenu captures did not expose the Controls/Display/Hide
+  prompt records. The later maintained Diorama family does: its twelve paired
+  captures establish the official localized records, both viewer states, and
+  their positions without extending the earlier submenu inference.
 - The accepted `Back` prompt is drawn by the common action-prompt family, not
   the four-item viewer-control renderer, and remains untouched.
 - The second four-rectangle consumer `FUN_006bdaa0` / `FUN_006d0d10` uses a
-  different position source. Its positions are deliberately unchanged until a
-  matching screen demonstrates a defect.
+  different position source. The maintained Diorama captures now demonstrate
+  its defect, and the complete homologous NUN5 table is applied as described
+  above.
 
 ## Confidence
 
-**High, static and paired-memory proven; runtime acceptance pending.** The
+**High, static, paired-memory, and E2E proven; batch user acceptance pending.** The
 class factories, state, draw functions, localized accessors, exact
 source/destination ranges, table semantics, and paired visual failures all
-agree across canonical binaries and captured memory. The only uncompleted
-evidence is the user's visual review of a rebuilt NA2 ISO containing
-`ui_layout_collection_submenu`.
+agree across canonical binaries and captured memory. The global Collection E2E
+candidate `20260813_053803_998_pid39812.iso` passed all six suites; the complete
+43-capture Figures and 22-capture Miscellaneous artifact sets were reviewed.
+The only uncompleted evidence is the user's planned batch visual review after
+every Collection section is finished.

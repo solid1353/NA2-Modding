@@ -61,16 +61,24 @@ regenerate references without explicit authorization.
 
 Keep the implementation and generated capture-history changes uncommitted while
 iterating. Agent review and a successful E2E run do not replace user acceptance.
-Present the regenerated evidence and wait for explicit approval.
+Present the regenerated evidence and wait for `ver`, which accepts the pending
+result and authorizes its complete delivery.
 
-After approval:
+When `ver` is received:
 
-- finalize accepted patch-specific tests/documentation;
-- commit accepted capture-history changes in the nested `e2e/captures/`
-  repository and implementation changes in the main repository as one coherent
-  delivery;
-- include regenerated tracked reports;
-- verify and report both repositories' commit, push, and dirty states.
+1. Finalize accepted patch-specific tests and documentation.
+2. Refresh both repositories and confirm every pending change under
+   `e2e/captures/` and `e2e/suites/` belongs to the accepted result. If
+   unaccepted concurrent E2E changes are present, wait until only accepted state
+   would be committed.
+3. Run `na228 e2e commit` before helper-managed main-repository staging. This
+   command exclusively owns delivery of the capture and suite paths; do not
+   substitute manual Git or the staging helper. Use `-p` only when the user
+   explicitly requests preserved capture history.
+4. Stage and commit the accepted implementation changes in the main repository
+   so both repositories form one coherent delivery.
+5. Include regenerated tracked reports, then verify and report both
+   repositories' commit, push, and dirty states.
 
 If the capture repository has no remote, commit it locally before pushing the
 main implementation and report that exact exception.

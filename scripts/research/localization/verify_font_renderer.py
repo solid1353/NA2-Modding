@@ -167,17 +167,27 @@ V2_JUTSU_DRAW_CALLBACK = f"{V2_PREFIX}.c.jutsu_draw_callback"
 V2_JUTSU_DRAW_ENTRY = f"{V2_PREFIX}.jutsu_draw_entry"
 V2_COLLECTION_LIST_CALLBACK = f"{V2_PREFIX}.c.collection_list_callback"
 V2_COLLECTION_LIST_ENTRY = f"{V2_PREFIX}.collection_list_entry"
-V2_COLLECTION_INDEX_NAME_CALLBACK = (
-    f"{V2_PREFIX}.c.collection_index_name_callback"
+V2_COLLECTION_PLAQUE_CALLBACK = (
+    f"{V2_PREFIX}.c.collection_plaque_callback"
 )
-V2_COLLECTION_INDEX_NAME_ADAPTER = (
-    f"{V2_PREFIX}.collection_index_name_adapter"
+V2_COLLECTION_PLAQUE_DRAW = f"{V2_PREFIX}.c.collection_plaque_draw"
+V2_COLLECTION_PLAQUE_ADAPTER = (
+    f"{V2_PREFIX}.collection_plaque_adapter"
 )
-V2_COLLECTION_FIGURE_MUSIC_HEADER_ADAPTER = (
-    f"{V2_PREFIX}.collection_figure_music_header_adapter"
+V2_COLLECTION_DIORAMA_TITLE_CALLBACK = (
+    f"{V2_PREFIX}.c.collection_diorama_title_callback"
 )
-V2_COLLECTION_JUTSU_HEADER_ADAPTER = (
-    f"{V2_PREFIX}.collection_jutsu_header_adapter"
+V2_COLLECTION_DIORAMA_TITLE_ADAPTER = (
+    f"{V2_PREFIX}.collection_diorama_title_adapter"
+)
+V2_COLLECTION_DIORAMA_PROMPT_ADAPTER = (
+    f"{V2_PREFIX}.collection_diorama_prompt_adapter"
+)
+V2_COLLECTION_DIORAMA_DISPLAY_PROMPT_ADAPTER = (
+    f"{V2_PREFIX}.collection_diorama_display_prompt_adapter"
+)
+V2_COLLECTION_DIORAMA_PROMPT_RECORDS = (
+    f"{V2_PREFIX}.collection_diorama_prompt_records"
 )
 V2_CHARACTER_CONFIRMATION_BODY_CALLBACK = (
     f"{V2_PREFIX}.c.character_confirmation_body_callback"
@@ -599,9 +609,10 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         "font_v2_character_unselected_adapter",
         "font_v2_jutsu_draw_entry",
         "font_v2_collection_list_entry",
-        "font_v2_collection_index_name_adapter",
-        "font_v2_collection_figure_music_header_adapter",
-        "font_v2_collection_jutsu_header_adapter",
+        "font_v2_collection_plaque_adapter",
+        "font_v2_collection_diorama_title_adapter",
+        "font_v2_collection_diorama_prompt_adapter",
+        "font_v2_collection_diorama_display_prompt_adapter",
         "font_v2_practice_icon_metric",
         "font_v2_practice_icon_draw",
         "font_v2_practice_adapter_impl",
@@ -699,15 +710,18 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         extracted.symbols["font_v2_collection_list_entry"].symbol: (
             V2_COLLECTION_LIST_ENTRY
         ),
+        extracted.symbols["font_v2_collection_plaque_adapter"].symbol: (
+            V2_COLLECTION_PLAQUE_ADAPTER
+        ),
         extracted.symbols[
-            "font_v2_collection_index_name_adapter"
-        ].symbol: V2_COLLECTION_INDEX_NAME_ADAPTER,
+            "font_v2_collection_diorama_title_adapter"
+        ].symbol: V2_COLLECTION_DIORAMA_TITLE_ADAPTER,
         extracted.symbols[
-            "font_v2_collection_figure_music_header_adapter"
-        ].symbol: V2_COLLECTION_FIGURE_MUSIC_HEADER_ADAPTER,
+            "font_v2_collection_diorama_prompt_adapter"
+        ].symbol: V2_COLLECTION_DIORAMA_PROMPT_ADAPTER,
         extracted.symbols[
-            "font_v2_collection_jutsu_header_adapter"
-        ].symbol: V2_COLLECTION_JUTSU_HEADER_ADAPTER,
+            "font_v2_collection_diorama_display_prompt_adapter"
+        ].symbol: V2_COLLECTION_DIORAMA_DISPLAY_PROMPT_ADAPTER,
         extracted.symbols["font_v2_practice_icon_metric"].symbol: (
             V2_PRACTICE_ICON_METRIC
         ),
@@ -772,8 +786,17 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         f"{V2_PREFIX}.c.text.font.v2.collection.list.callback": (
             V2_COLLECTION_LIST_CALLBACK
         ),
-        f"{V2_PREFIX}.c.text.font.v2.collection.index.name.callback": (
-            V2_COLLECTION_INDEX_NAME_CALLBACK
+        f"{V2_PREFIX}.c.text.font.v2.collection.plaque.callback": (
+            V2_COLLECTION_PLAQUE_CALLBACK
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.collection.plaque.draw": (
+            V2_COLLECTION_PLAQUE_DRAW
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.collection.diorama.title.callback": (
+            V2_COLLECTION_DIORAMA_TITLE_CALLBACK
+        ),
+        f"{V2_PREFIX}.c.rodata.font.v2.collection.diorama.prompt.records": (
+            V2_COLLECTION_DIORAMA_PROMPT_RECORDS
         ),
         f"{V2_PREFIX}.c.text.font.v2.collection.body.callback": (
             f"{V2_PREFIX}.c.collection_body_callback"
@@ -896,10 +919,14 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         V2_JUTSU_DRAW_ENTRY,
         V2_COLLECTION_LIST_CALLBACK,
         V2_COLLECTION_LIST_ENTRY,
-        V2_COLLECTION_INDEX_NAME_CALLBACK,
-        V2_COLLECTION_INDEX_NAME_ADAPTER,
-        V2_COLLECTION_FIGURE_MUSIC_HEADER_ADAPTER,
-        V2_COLLECTION_JUTSU_HEADER_ADAPTER,
+        V2_COLLECTION_PLAQUE_CALLBACK,
+        V2_COLLECTION_PLAQUE_DRAW,
+        V2_COLLECTION_PLAQUE_ADAPTER,
+        V2_COLLECTION_DIORAMA_TITLE_CALLBACK,
+        V2_COLLECTION_DIORAMA_TITLE_ADAPTER,
+        V2_COLLECTION_DIORAMA_PROMPT_ADAPTER,
+        V2_COLLECTION_DIORAMA_DISPLAY_PROMPT_ADAPTER,
+        V2_COLLECTION_DIORAMA_PROMPT_RECORDS,
         _concise_payload_symbol(f"{V2_PREFIX}.c.collection_body_callback"),
         _concise_payload_symbol(f"{V2_PREFIX}.c.icon_record"),
         V2_PRACTICE_ICON_METRIC,

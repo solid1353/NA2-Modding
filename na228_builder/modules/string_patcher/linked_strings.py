@@ -45,7 +45,51 @@ def _external_mapping_ids(
     translation_plan: translation_importer.TranslationImportPlan,
 ) -> frozenset[str]:
     reference_ids = {row.mapping_id for row in translation_plan.references}
-    external: set[str] = set()
+    mappings_by_slot: dict[tuple[str, int], list[dict[str, object]]] = {}
+    for row in translation_plan.text_mappings:
+        key = (str(row["target"]), int(row["target_offset"]))
+        mappings_by_slot.setdefault(key, []).append(row)
+
+    forced_external: set[str] = set()
+    for (target, offset), mappings in mappings_by_slot.items():
+        if len(mappings) == 1:
+            continue
+        label = f"{target} 0x{offset:X} shared source slot"
+        if any(row["mode"] != "slot" for row in mappings):
+            raise ValueError(f"{label}: aliases require slot mappings")
+        capacities = {int(row["capacity"]) for row in mappings}
+        sources = {str(row["source"]) for row in mappings}
+        if len(capacities) != 1 or len(sources) != 1:
+            raise ValueError(
+                f"{label}: aliases must declare the same source and capacity"
+            )
+        inline = [
+            str(row["id"])
+            for row in mappings
+            if str(row["id"]) not in reference_ids
+        ]
+        aliases = [
+            str(row["id"])
+            for row in mappings
+            if str(row["id"]) in reference_ids
+        ]
+        if len(inline) != 1 or len(aliases) != len(mappings) - 1:
+            raise ValueError(
+                f"{label}: requires one unreferenced inline mapping and "
+                "pointer-referenced aliases"
+            )
+        if any(
+            reference.mapping_id in aliases
+            and reference.reference_binary == target
+            and offset in reference.reference_file_offsets
+            for reference in translation_plan.references
+        ):
+            raise ValueError(
+                f"{label}: an alias cannot redirect the shared source slot itself"
+            )
+        forced_external.update(aliases)
+
+    external: set[str] = set(forced_external)
     for row in translation_plan.text_mappings:
         mapping_id = str(row["id"])
         target = str(row["target"])
@@ -101,6 +145,8 @@ def _external_mapping_ids(
             replacement, target_text, label
         )
         encoded_size = len(replacement.encode("cp1252"))
+        if mapping_id in forced_external:
+            continue
         if encoded_size <= capacity - 1:
             continue
         if mapping_id not in reference_ids:

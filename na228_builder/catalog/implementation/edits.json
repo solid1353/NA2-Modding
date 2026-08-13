@@ -1569,7 +1569,8 @@
     "source_target_id": "nun5_etc",
     "source_offset": "0x0000813C"
   },
-  "e__localization__regional_input__unclassified_na2_etc_at_00009894": {
+  "e__localization__regional_input__collection_diorama_back_na2_etc_at_00009894": {
+    "description": "Port the Collection Diorama viewer's Back binding from NA2 Cross to NUN5 Triangle using the exact homologous instruction.",
     "operation": "copy",
     "destination_target_id": "na2_etc",
     "destination_offsets": [
@@ -1580,7 +1581,8 @@
     "source_target_id": "nun5_etc",
     "source_offset": "0x00009CD4"
   },
-  "e__localization__regional_input__unclassified_na2_etc_at_0000990c": {
+  "e__localization__regional_input__collection_diorama_controls_toggle_na2_etc_at_0000990c": {
+    "description": "Port the Collection Diorama viewer's controls-visibility toggle from the NA2 regional action bit to NUN5's Square action bit using the exact homologous instruction.",
     "operation": "copy",
     "destination_target_id": "na2_etc",
     "destination_offsets": [
@@ -2115,6 +2117,18 @@
     "expected_hex": "0000AC430000B4430000000000000000000068430000B4430000000000000000000084420000B4430000000000000000000014430000B4430000000000000000",
     "source_target_id": "nun5_etc",
     "source_offset": "0x283D0"
+  },
+  "e__localization__ui_layout__collection_submenu_na2_etc_at_0002ebd0": {
+    "description": "Copy NUN5's complete second four-record Collection viewer-control position table used by Dioramas, aligning Zoom In and Zoom Out with Move and Rotate instead of clipping the two top-right rows.",
+    "operation": "copy",
+    "destination_target_id": "na2_etc",
+    "destination_offsets": [
+      "0x2EBD0"
+    ],
+    "length": 64,
+    "expected_hex": "0000DC430000914300000000000000000000DC430000854300000000000000000080EA4300005A4300000000000000000000EA43000072430000000000000000",
+    "source_target_id": "nun5_etc",
+    "source_offset": "0x28460"
   },
   "e__localization__ui_layout__collection_submenu_na2_etc_at_00030490": {
     "description": "Copy NUN5's Characters rectangle (0,0,192,28), excluding the Movie-row pixels selected by NA2's 34-pixel source height.",

@@ -123,167 +123,167 @@ T2195	1	Battle Results > Ninja Song objective or bonus	" × "	" * "			seen:ss7-9
 T2196	1	Battle Results > Ninja Song objective or bonus	" ＝ "	" = "			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DA8	NUN5_SLES@0x514304	slot	8				
 T2197	1	Battle Results > Ninja Song objective or bonus	･	·		.	seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DB8	NUN5_SLES@0x51430C	slot	8				
 T2198	1	Battle Results > Ninja Song objective or bonus	％	%			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DC0	NUN5_SLES@0x514320	slot	4				
-T98	1	Character menus > Ultimate Jutsu name	<r朝孔雀|あさくじゃく>	Morning Peacock			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26180	NUN5_TEXTENG@0x33B0	slot	24				
-T99	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r影縫|かげぬ>い	Ninja Art: Shadow Sew			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26210	NUN5_TEXTENG@0x3410	slot	40				
-T100	1	Character menus > Ultimate Jutsu name	<r部分倍化|ぶぶんばいか>の<r術|じゅつ>	Partial Expansion Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x262C0	NUN5_TEXTENG@0x3490	slot	40				
-T101	1	Character menus > Ultimate Jutsu name	<r潜影多蛇手|せんえいたじゃしゅ>	Multiple Hidden Shadow Snake Hands			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26D60	NUN5_TEXTENG@0x3C70	slot	40				
-T102	1	Character menus > Ultimate Jutsu name	<r大玉螺旋丸|おおだまらせんがん>	Great Ball Rasengan			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28440	NUN5_TEXTENG@0x3F00	slot	48				
-T103	1	Character menus > Ultimate Jutsu name	<r漏|も>れ<r出|だ>す<r力|ちから>	Overflowing Power			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28470	NUN5_TEXTENG@0x3F20	slot	48				
-T104	1	Character menus > Ultimate Jutsu name	<r妖狐|ようこ>の<r衣|ころも>	Nine-Tail's Cloak			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x284A0	NUN5_TEXTENG@0x3F40	slot	32				
-T105	1	Character menus > Ultimate Jutsu name	<r変|か>わらない<r関係|かんけい>	Unchanging Relationship			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x284C0	NUN5_TEXTENG@0x3F60	slot	48				
-T106	1	Character menus > Ultimate Jutsu name	<r春|はる>の<r蹴来|しゅうらい>	Coming of Spring Kick 			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x284F0	NUN5_TEXTENG@0x11360	slot	32				
-T107	1	Character menus > Ultimate Jutsu name	キラキラ<r乙女心|おとめごころ>	Twinkling Maiden's Heart			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28510	NUN5_TEXTENG@0x3FA0	slot	32				
-T108	1	Character menus > Ultimate Jutsu name	<r大地割|だいちわ>り	Earth Chop			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28530	NUN5_TEXTENG@0x3FC0	slot	32				
-T109	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r桜舞|サクラマイ>	Puppet: Cherry Blossom Dance			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28550	NUN5_TEXTENG@0x3FD0	slot	48				
-T110	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r白描|はくびょう>	Ninja Art: Beast Scroll Replicas @White Picture@			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28580	NUN5_TEXTENG@0x3FF0	slot	80				
-T111	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r龍|りゅう>	Ninja Art: Beast Scroll Replicas @Dragon@			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x285D0	NUN5_TEXTENG@0x4030	slot	64				
-T112	1	Character menus > Ultimate Jutsu name	<r雷切|らいきり>・<r一尖|いっせん>	Lightning Blade, Single Sharpness 			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28610	NUN5_TEXTENG@0x11520	slot	48				
-T113	1	Character menus > Ultimate Jutsu name	<r土遁|どとん>・<r裂穿牙|れっせんが>	Earth Style: Ripping Drill Fang			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28640	NUN5_TEXTENG@0x4090	slot	48				
-T114	1	Character menus > Ultimate Jutsu name	コピー<r忍術|にんじゅつ>	Ninja Art: Copy Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28670	NUN5_TEXTENG@0x40B0	slot	32				
-T115	1	Character menus > Ultimate Jutsu name	<r八卦四天空掌|はっけしてんくうしょう>	8 Trigrams 4 Sky Palms 			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28690	NUN5_TEXTENG@0x11410	slot	48				
-T116	1	Character menus > Ultimate Jutsu name	<r八卦六十四掌|はっけろくじゅうよんしょう>	8 Trigrams 64 Palms			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x286C0	NUN5_TEXTENG@0x40F0	slot	48				
-T117	1	Character menus > Ultimate Jutsu name	<r八卦破山撃|はっけはざんげき>	8 Trigrams Mountain Break Attack			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x286F0	NUN5_TEXTENG@0x11430	slot	32			NA2_ETC@0x2A07C	
-T118	1	Character menus > Ultimate Jutsu name	<r木|こ>ノ<r葉旋光|はせんこう>	Leaf Spiral Light			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28710	NUN5_TEXTENG@0x4130	slot	32				
-T119	1	Character menus > Ultimate Jutsu name	<r青春|せいしゅん>フルパワー！！	Full Power of Youth!! 			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28730	NUN5_TEXTENG@0x11460	slot	48				
-T120	1	Character menus > Ultimate Jutsu name	あの<r夕日|ゆうひ>に<r向|む>かって	Facing the Sunset			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28760	NUN5_TEXTENG@0x4170	slot	48				
-T121	1	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r廻燕劇|かいえんげき>	Ninja Tool: Spinning Swallow Show			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28790	NUN5_TEXTENG@0x4190	slot	48				
-T122	1	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r大鉄塊|だいてっかい>	Ninja Tool: Giant Iron Lump			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x287C0	NUN5_TEXTENG@0x41C0	slot	48				
-T123	1	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r天鋼災|てんこうさい>	Ninja Tool: Heavenly Metal Disaster			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x287F0	NUN5_TEXTENG@0x41E0	slot	48				
-T124	1	Character menus > Ultimate Jutsu name	<r自分|じぶん>ルール・<r壱|いち>	My Rule: One			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28820	NUN5_TEXTENG@0x4208	slot	48				
-T125	1	Character menus > Ultimate Jutsu name	<r自分|じぶん>ルール・<r弐|に>	My Rule: Two			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28850	NUN5_TEXTENG@0x4218	slot	32				
-T126	1	Character menus > Ultimate Jutsu name	ＩＱ２００	IQ 200			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28870	NUN5_SLES@0x5140E8	slot	16				
-T127	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r影煙幕|かげえんまく>の<r術|じゅつ>	Ninja Art: Shadow Smoke Screen Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28880	NUN5_TEXTENG@0x114A0	slot	64				
-T128	1	Character menus > Ultimate Jutsu name	<r部分超倍化|ぶぶんちょうばいか>の<r術|じゅつ>	Super Expansion Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x288C0	NUN5_TEXTENG@0x4260	slot	48				
-T129	1	Character menus > Ultimate Jutsu name	<r超|ちょう>・<r肉弾戦車|にくだんせんしゃ>	Super Human Boulder			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x288F0	NUN5_TEXTENG@0x4280	slot	48				
-T130	1	Character menus > Ultimate Jutsu name	<r超|ちょう>・<r肉弾戦車|にくだんせんしゃ>２	Super Human Boulder 2			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28920	NUN5_TEXTENG@0x42A0	slot	48				
-T131	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r月下美人|げっかびじん>	Ninja Art: Queen of the Night			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28950	NUN5_TEXTENG@0x42C0	slot	48				
-T132	1	Character menus > Ultimate Jutsu name	<r蝶針火|ちょうしんか>	Butterfly Needle Flame			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28980	NUN5_TEXTENG@0x42E0	slot	24				
-T133	1	Character menus > Ultimate Jutsu name	<r飛燕|ひえん>	Flying Swallow			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28998	NUN5_TEXTENG@0x42F8	slot	24				
-T134	1	Character menus > Ultimate Jutsu name	<r渦旋風火|かせんふうか>の<r術|じゅつ>	Fire Whirlwind Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x289B0	NUN5_TEXTENG@0x4310	slot	48				
-T135	1	Character menus > Ultimate Jutsu name	<r爪迅狼牙|そうじんろうが>	Swift Claw Wolf Fang			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x289E0	NUN5_TEXTENG@0x4330	slot	32				
-T136	1	Character menus > Ultimate Jutsu name	<r天双牙|てんそうが>	Dual Wolf Fangs			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28A00	NUN5_TEXTENG@0x4350	slot	32				
-T137	1	Character menus > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r蝕|しょく>	Parasitic Insects: Digest			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28A20	NUN5_TEXTENG@0x4360	slot	48				
-T138	1	Character menus > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r虚|うつろ>	Parasitic Insects: Deception			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28A50	NUN5_TEXTENG@0x4380	slot	48				
-T139	1	Character menus > Ultimate Jutsu name	<r八卦掌空天|はっけしょうくうてん>	8 Trigrams Sky Palm			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28A80	NUN5_TEXTENG@0x3230	slot	48				
-T140	1	Character menus > Ultimate Jutsu name	<r魔幻|まげん>・<r樹縛殺|じゅばくさつ>	Evil Illusion: Tree Capture Death			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28AB0	NUN5_TEXTENG@0x43A0	slot	48				
-T141	1	Character menus > Ultimate Jutsu name	<r砂縛牢|さばくろう>	Sand Prison			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28AE0	NUN5_TEXTENG@0x43C8	slot	32				
-T142	1	Character menus > Ultimate Jutsu name	<r砂瀑槍葬|さばくそうそう>	Sand Spear Funeral			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28B00	NUN5_TEXTENG@0x43E0	slot	32				
-T143	1	Character menus > Ultimate Jutsu name	<r滅砂瀑葬|めっさばくそう>	Destructive Sand Burial			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28B20	NUN5_TEXTENG@0x4400	slot	32				
-T144	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r骸烏|ムクロガラス>	Puppet: Crow Corpse			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28B40	NUN5_TEXTENG@0x4420	slot	48				
-T145	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r鬼城|きじょう>の<r面|めん>	Puppet: Mask of Demon Castle			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28B70	NUN5_TEXTENG@0x4440	slot	48				
-T146	1	Character menus > Ultimate Jutsu name	<r黒秘技三大狂言|くろひぎさんだいきょうげん>	Secret Black Move: Three Major Plays			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28BA0	NUN5_TEXTENG@0x113B0	slot	48				
-T147	1	Character menus > Ultimate Jutsu name	<r豪風暴壁|ごうふうぼうへき>	Gale Raging Wall			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28BD0	NUN5_TEXTENG@0x4480	slot	32				
-T148	1	Character menus > Ultimate Jutsu name	<r練空踊扇|れんくうようせん>	Air Polish Dancing Fan			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28BF0	NUN5_TEXTENG@0x44A0	slot	32				
-T149	1	Character menus > Ultimate Jutsu name	<r口寄|くちよ>せ・<r扇舞降|せんまいお>ろし	Summoning: Fan Dance Drop			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28C10	NUN5_TEXTENG@0x44C0	slot	48				
-T150	1	Character menus > Ultimate Jutsu name	<r息子|むすこ>の<r仇|かたき>！？	Son's Revenge!?			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28C40	NUN5_TEXTENG@0x115A0	slot	48				
-T151	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r父|ちち>と<r母|はは>	Puppet: Father and Mother			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28C70	NUN5_TEXTENG@0x44F0	slot	48				
-T152	1	Character menus > Ultimate Jutsu name	<r十機近松|じっきちかまつ>の<r集|しゅう>	Ten Puppets of Chikamatsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28CA0	NUN5_TEXTENG@0x4510	slot	48				
-T153	1	Character menus > Ultimate Jutsu name	<r火遁|かとん>・<r豪焔球|ごうえんきゅう>	Fire Style: Blaze Ball 			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28CD0	NUN5_TEXTENG@0x11550	slot	48				
-T154	1	Character menus > Ultimate Jutsu name	<r幻術|げんじゅつ>・<r泡沫|うたかた>	Genjutsu: Bubbles			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28D00	NUN5_TEXTENG@0x4550	slot	48				
-T155	1	Character menus > Ultimate Jutsu name	<r瞳術|どうじゅつ>・<r威凪|いさなぎ>	Visual Jutsu: Powerful Calm			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28D30	NUN5_TEXTENG@0x4570	slot	48				
-T156	1	Character menus > Ultimate Jutsu name	<r最凶|さいきょう>の<r刺客|しかく>	The Baddest Assassins			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28D60	NUN5_TEXTENG@0x4590	slot	48				
-T157	1	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r五食鮫|ごしょくざめ>	Water Style: Five Hungry Sharks			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28D90	NUN5_TEXTENG@0x45B0	slot	48				
-T158	1	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r無限鮫|むげんざめ>	Water Style: Infinite Shark			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28DC0	NUN5_TEXTENG@0x45D0	slot	48				
-T159	1	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r爆水衝波|ばくすいしょうは>	Water Style: Exploding Water Shock Wave			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28DF0	NUN5_TEXTENG@0x45F0	slot	48				
-T160	1	Character menus > Ultimate Jutsu name	<r芸術|げいじゅつ>	Art			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28E20	NUN5_SLES@0x5140F0	slot	32				
-T161	1	Character menus > Ultimate Jutsu name	<r自爆分身|じばくぶんしん>	Exploding Clone			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28E40	NUN5_TEXTENG@0x4620	slot	32				
-T162	1	Character menus > Ultimate Jutsu name	<r十八番|オハコ>・<rＣ３|シースリー>	Sure-Fire: C3			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28E60	NUN5_TEXTENG@0x4630	slot	48				
-T163	1	Character menus > Ultimate Jutsu name	<r合殺芸術|がっさいげいじゅつ>	Combined Killing Art			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28E90	NUN5_TEXTENG@0x4640	slot	32				
-T164	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>の<r術|じゅつ>・<r尾沙悶|びしゃもん>	Puppet Jutsu: Tail Crash Blow			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28EB0	NUN5_TEXTENG@0x4660	slot	64				
-T165	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>の<r術|じゅつ>・<r義手千本|ぎしゅせんぼん>	Puppet Jutsu: 1000 Mechanical Arms 			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28EF0	NUN5_TEXTENG@0x11570	slot	64				
-T166	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>の<r術|じゅつ>・<r重刃庫|じゅうばこ>	Puppet Jutsu: Multiple Blade Box			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28F30	NUN5_TEXTENG@0x46B0	slot	64				
-T167	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r砂鉄獄塊|さてつごっかい>	Puppet: Iron Sand Cluster			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28F70	NUN5_TEXTENG@0x46E0	slot	48				
-T168	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r砂鉄獄塊|さてつごっかい>２	Puppet: Iron Sand Cluster 2			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28FA0	NUN5_TEXTENG@0x4700	slot	48				
-T169	1	Character menus > Ultimate Jutsu name	<r赤秘技|あかひぎ>・<r百機|ひゃっき>の<r操演|そうえん>	Red Secret Technique: Performance of a Hundred Puppets			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x28FD0	NUN5_TEXTENG@0x4720	slot	64				
-T170	1	Character menus > Ultimate Jutsu name	<r火遁|かとん>・<r豪炎螺旋丸|ごうえんらせんがん>	Fire Style: Flame Rasengan			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29010	NUN5_TEXTENG@0x4760	slot	64				
-T171	1	Character menus > Ultimate Jutsu name	<r双迅螺旋丸|そうじんらせんがん>	Double Rapid Rasengan			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29050	NUN5_TEXTENG@0x4780	slot	48				
-T172	1	Character menus > Ultimate Jutsu name	<r火遁|かとん>・<r消|け>し<r幕|まく>が<r原|はら>	Fire Style: Vanishing Attack			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29080	NUN5_TEXTENG@0x47A0	slot	64				
-T173	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r創造再生|そうぞうさいせい>	Ninja Art: Mitotic Regeneration			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x290C0	NUN5_TEXTENG@0x47C0	slot	48				
-T174	1	Character menus > Ultimate Jutsu name	<r火影|ほかげ>の<r力|ちから>	Hokage's Power			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x290F0	NUN5_TEXTENG@0x47E0	slot	32				
-T175	1	Character menus > Ultimate Jutsu name	<r地流|じながれ>	Mudslide			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29110	NUN5_TEXTENG@0x47F0	slot	32				
-T176	1	Character menus > Ultimate Jutsu name	<r大交衝|だいこうしょう>	Great Cross Slash			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29130	NUN5_TEXTENG@0x112B0	slot	32				
-T177	1	Character menus > Ultimate Jutsu name	トントンコンビ	Tonton Duo			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29150	NUN5_TEXTENG@0x4818	slot	16				
-T178	1	Character menus > Ultimate Jutsu name	<r木遁|もくとん>・<r飛乃木|ひのき>	Wood Style: Flying Tree			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29160	NUN5_TEXTENG@0x4830	slot	48				
-T179	1	Character menus > Ultimate Jutsu name	<r木遁|もくとん>・<r梁木|やなぎ>	Wood Style: Tree Columns			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29190	NUN5_TEXTENG@0x4850	slot	48				
-T180	1	Character menus > Ultimate Jutsu name	<r禁術|きんじゅつ>・<r穢土封滅|えどふうめつ>	Forbidden Jutsu: Seal Destruction			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x291C0	NUN5_TEXTENG@0x4870	slot	48				
-T181	1	Character menus > Ultimate Jutsu name	<r蟒蛇|うわばみ>	Uwabami			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x291F0	NUN5_SLES@0x5140F8	slot	32				
-T182	1	Character menus > Ultimate Jutsu name	<r二凪|ふたなぎ>ノ<r草薙|くさなぎ>	Double Kusanagi			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29210	NUN5_TEXTENG@0x48A0	slot	48				
-T183	1	Character menus > Ultimate Jutsu name	<r死魂|しこん>の<r術|じゅつ>	Dead Soul Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29240	NUN5_TEXTENG@0x48B0	slot	32				
-T184	1	Character menus > Ultimate Jutsu name	チャクラ<r解剖刀|メス>・<r壊|かい>	Chakra Dissection Blade: Destroy			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29260	NUN5_TEXTENG@0x48C0	slot	48				
-T185	1	Character menus > Ultimate Jutsu name	<r死術|しじゅつ>・<r帰魂遊戯|きこんゆうぎ>	Death Technique: Soul Return			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29290	NUN5_TEXTENG@0x48F0	slot	48				
-T186	1	Character menus > Ultimate Jutsu name	<r草薙|くさなぎ>の<r舞|まい>	Dance of Kusanagi			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x292C0	NUN5_TEXTENG@0x4910	slot	32				
-T187	1	Character menus > Ultimate Jutsu name	<r翔|か>け<r鳥崩|どりくず>し	Darting Bird Crusher			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x292E0	NUN5_TEXTENG@0x4930	slot	32				
-T188	1	Character menus > Ultimate Jutsu name	<r千鳥|ちどり>・<r雷鳴|らいめい>	Chidori Thunder			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29300	NUN5_TEXTENG@0x4950	slot	48				
-T189	1	Character menus > Ultimate Jutsu name	うずまきナルト<r連弾|れんだん>	Naruto Uzumaki Barrage			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29330	NUN5_TEXTENG@0x4960	slot	32				
-T190	1	Character menus > Ultimate Jutsu name	うずまきナルト<r忍法帳|にんぽうちょう>	Naruto's Ninja Handbook			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29350	NUN5_TEXTENG@0x4980	slot	48				
-T191	1	Character menus > Ultimate Jutsu name	<r九尾螺旋丸|きゅうびらせんがん>	The Nine-Tailed Rasengan			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29380	NUN5_TEXTENG@0x49A0	slot	48				
-T192	1	Character menus > Ultimate Jutsu name	ハヤブサ<r落|お>とし	Falcon Drop			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x293B0	NUN5_TEXTENG@0x49C0	slot	32				
-T193	1	Character menus > Ultimate Jutsu name	<r忌|い>まわしき<r千鳥|ちどり>	Ominous Chidori			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x293D0	NUN5_TEXTENG@0x49D0	slot	32				
-T194	1	Character menus > Ultimate Jutsu name	<r呪|のろ>われし<r力|ちから>	Cursed Power			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x293F0	NUN5_TEXTENG@0x49E0	slot	32				
-T195	1	Character menus > Ultimate Jutsu name	<r負|ま>けるもんですか！	I Won't Lose!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29410	NUN5_TEXTENG@0x49F0	slot	32				
-T196	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r雪桜|ゆきざくら>の<r舞|まい>	Ninja Art: Snow Cherry Blossom Dance			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29430	NUN5_TEXTENG@0x4A00	slot	64				
-T197	1	Character menus > Ultimate Jutsu name	<r八卦三百六十一式|はっけさんびゃくろくじゅういっしき>	8 Trigrams 361 Style			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29470	NUN5_TEXTENG@0x4A30	slot	64				
-T198	1	Character menus > Ultimate Jutsu name	<r絶招八門崩撃|ぜっしょうはちもんほうげき>	Last Resort: Eight Gates Assault			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x294B0	NUN5_TEXTENG@0x4A50	slot	48				
-T199	1	Character menus > Ultimate Jutsu name	すい<r拳|けん>	Loopy Fist			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x294E0	NUN5_TEXTENG@0x4A78	slot	16				
-T200	1	Character menus > Ultimate Jutsu name	<r裏蓮華|うられんげ>	Hidden Lotus			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x294F0	NUN5_TEXTENG@0x4A88	slot	32				
-T201	1	Character menus > Ultimate Jutsu name	<r突|つ>き<r抜|ぬ>ける<r熱|あつ>き<r思|おも>い	Smashing Passion			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29510	NUN5_TEXTENG@0x4AA0	slot	48				
-T202	1	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r死球撃|しきゅうげき>	Ninja Tool: Death Sphere Strike			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29540	NUN5_TEXTENG@0x4AC0	slot	48				
-T203	1	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r襲千刃|しゅうせんじん>	Ninja Tool: Blade of 1000 Strikes			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29570	NUN5_TEXTENG@0x4AE0	slot	48				
-T204	1	Character menus > Ultimate Jutsu name	<r操具|そうぐ>・<r浮刃壁|ふじんへき>	Ninja Tool: Floating Blade Wall			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x295A0	NUN5_TEXTENG@0x4B10	slot	48				
-T205	1	Character menus > Ultimate Jutsu name	<r影真似|かげまね>の<r術|じゅつ>	Shadow Possession Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x295D0	NUN5_TEXTENG@0x4B30	slot	48				
-T206	1	Character menus > Ultimate Jutsu name	<r影圧掌|かげあっしょう>の<r術|じゅつ>	Shadow Crushing Palm Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29600	NUN5_TEXTENG@0x4B50	slot	48				
-T207	1	Character menus > Ultimate Jutsu name	<r影首縛|かげくびしば>りの<r術|じゅつ>	Shadow Strangle Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29630	NUN5_TEXTENG@0x4B70	slot	48				
-T208	1	Character menus > Ultimate Jutsu name	<r部分倍化|ぶぶんばいか>の<r術|じゅつ>２	Partial Expansion Jutsu 2			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29660	NUN5_TEXTENG@0x4B90	slot	48				
-T209	1	Character menus > Ultimate Jutsu name	<r蝶弾爆撃|ちょうだんばくげき>	Butterfly Bomb			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29690	NUN5_TEXTENG@0x4BB0	slot	32				
-T210	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r百花繚乱|ひゃっかりょうらん>	Ninja Art: Covered With Flowers			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x296B0	NUN5_TEXTENG@0x4BC0	slot	64				
-T211	1	Character menus > Ultimate Jutsu name	<r心乱身|しんらんしん>の<r術|じゅつ>	Mind Distraction Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x296F0	NUN5_TEXTENG@0x4BE0	slot	48				
-T212	1	Character menus > Ultimate Jutsu name	<r供花送|くげおく>り	Memorial Flower Sending			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29720	NUN5_TEXTENG@0x4C00	slot	32				
-T213	1	Character menus > Ultimate Jutsu name	<r牙通牙|がつうが>	Fang Over Fang			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29740	NUN5_TEXTENG@0x4C18	slot	32				
-T214	1	Character menus > Ultimate Jutsu name	<r牙狼牙|がろうが>	Wolf Fang Over Fang 			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29760	NUN5_TEXTENG@0x11240	slot	32				
-T215	1	Character menus > Ultimate Jutsu name	<r双頭狼|そうとうろう>	Two-Headed Wolf			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29780	NUN5_TEXTENG@0x4C50	slot	32				
-T216	1	Character menus > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r颶|つむじ>	Parasitic Insects: Typhoon			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x297A0	NUN5_TEXTENG@0x4C60	slot	48				
-T217	1	Character menus > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r簇|やじり>	Parasitic Insects: Swarm			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x297D0	NUN5_TEXTENG@0x4C80	slot	48				
-T218	1	Character menus > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r霰|あられ>	Parasitic Insect: Hailstorm			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29800	NUN5_TEXTENG@0x11260	slot	48				
-T219	1	Character menus > Ultimate Jutsu name	<r白眼|びゃくがん>	Byakugan			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29830	NUN5_TEXTENG@0x4CC0	slot	32				
-T220	1	Character menus > Ultimate Jutsu name	<r百烈掌|ひゃくれつしょう>	Hundred Power Palms			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29850	NUN5_TEXTENG@0x4CD0	slot	32				
-T221	1	Character menus > Ultimate Jutsu name	<r白朧天舞|はくろうてんぶ>	Heaven's Dance of Hazy White			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29870	NUN5_TEXTENG@0x4CF0	slot	32				
-T222	1	Character menus > Ultimate Jutsu name	<r柔拳指南|じゅうけんしなん>	Gentle Fist Instruction			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29890	NUN5_TEXTENG@0x4D10	slot	32				
-T223	1	Character menus > Ultimate Jutsu name	<r突撃|とつげき>！　<r木|こ>ノ<r葉丸|はまる><r軍団|ぐんだん>！	Charge! Konohamaru Ninja Squad!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x298B0	NUN5_TEXTENG@0x4D30	slot	64				
-T224	1	Character menus > Ultimate Jutsu name	<r双蛇相殺|そうじゃそうさい>の<r術|じゅつ>	Twin Snake Sacrifice Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x298F0	NUN5_TEXTENG@0x4D50	slot	48				
-T225	1	Character menus > Ultimate Jutsu name	<r金剛力|こんごうりき>・<r不動|ふどう>	Adamantine Power, Acala			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29920	NUN5_TEXTENG@0x11310	slot	48				
-T226	1	Character menus > Ultimate Jutsu name	<r木遁秘術|もくとんひじゅつ>・<r樹界降誕|じゅかいこうたん>	Secret Wood Style Jutsu: Deep Forest Emergence			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29950	NUN5_TEXTENG@0x4D90	slot	64				
-T227	1	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r硬渦水刃|こうかすいじん>	Water Style: Hardened Water Drill			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29990	NUN5_TEXTENG@0x4DC0	slot	48				
-T228	1	Character menus > Ultimate Jutsu name	<r金剛牢壁|こんごうろうへき>	Adamantine Nyoi Prison			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x299C0	NUN5_TEXTENG@0x4DF0	slot	32				
-T229	1	Character menus > Ultimate Jutsu name	<r封印術|ふういんじゅつ>・<r屍鬼封尽|しきふうじん>	Sealing Jutsu: Reaper Death Seal			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x299E0	NUN5_TEXTENG@0x4E10	slot	64				
-T230	1	Character menus > Ultimate Jutsu name	<r封印術|ふういんじゅつ>・<r三方封印|さんぽうふういん>	Sealing Jutsu: Triangle Seal			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29A20	NUN5_TEXTENG@0x4E40	slot	64				
-T231	1	Character menus > Ultimate Jutsu name	<r飛雷神|ひらいしん>の<r術|じゅつ>	Flying Thunder God Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29A60	NUN5_TEXTENG@0x4E60	slot	48				
-T232	1	Character menus > Ultimate Jutsu name	<r砂瀑大葬|さばくたいそう>	Giant Sand Burial			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29A90	NUN5_TEXTENG@0x4E80	slot	32				
-T233	1	Character menus > Ultimate Jutsu name	<r砂手裏剣|すなしゅりけん>	Sand Shuriken			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29AB0	NUN5_TEXTENG@0x4E98	slot	32				
-T234	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r影役者|かげやくしゃ>	Puppet: Shadow Actor			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29AD0	NUN5_TEXTENG@0x4EB0	slot	48				
-T235	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r廻刃天穿|かいじんてんせん>	Spinning Blade Drill of Underworld			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29B00	NUN5_TEXTENG@0x4ED0	slot	48				
-T236	1	Character menus > Ultimate Jutsu name	<r黒秘技機々一発|くろひぎききいっぱつ>	Secret Black Move: Iron Maiden			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29B30	NUN5_TEXTENG@0x4F00	slot	48				
-T237	1	Character menus > Ultimate Jutsu name	<r乱|みだ>れ<r扇舞|せんぶ>	Mad Fan Dance			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29B60	NUN5_TEXTENG@0x4F20	slot	32				
-T238	1	Character menus > Ultimate Jutsu name	<r大|だい>カマイタチの<r術|じゅつ>	Cyclone Scythe Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29B80	NUN5_TEXTENG@0x4F30	slot	48				
-T239	1	Character menus > Ultimate Jutsu name	<r口寄|くちよ>せ・<r斬|き>り<r斬|き>り<r舞|まい>	Summoning: Blade Dance			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29BB0	NUN5_TEXTENG@0x4F50	slot	64				
-T240	1	Character menus > Ultimate Jutsu name	<r八重葎|やえむぐら>の<r舞|まい>	Galium Spurium Dance			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29BF0	NUN5_TEXTENG@0x4F70	slot	48				
-T241	1	Character menus > Ultimate Jutsu name	<r八重葎|やえむぐら>の<r舞|まい>２	Galium Spurium Dance 2			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29C20	NUN5_TEXTENG@0x4F90	slot	48				
-T242	1	Character menus > Ultimate Jutsu name	<r鉄線花|てっせんか>の<r舞|まい>・<r花|はな>	Clematis Dance: Flower			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29C50	NUN5_TEXTENG@0x4FB0	slot	48				
-T243	1	Character menus > Ultimate Jutsu name	<r口寄|くちよ>せ・<r羅生門|ラショウモン>　<r奈落|ならく>	Summoning: Rashomon, Abyss			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29C80	NUN5_TEXTENG@0x4FD0	slot	64				
-T244	1	Character menus > Ultimate Jutsu name	<r口寄|くちよ>せ・<r羅生門|ラショウモン>　<r奈落|ならく>２	Summoning: Rashomon, Abyss 2			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29CC0	NUN5_TEXTENG@0x4FF0	slot	64				
-T245	1	Character menus > Ultimate Jutsu name	<r左塵掌|さじんしょう>・<r右裂脚|うれつきゃく>	Left Dust Strike, Right Severing Kick			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29D00	NUN5_TEXTENG@0x11330	slot	48				
-T246	1	Character menus > Ultimate Jutsu name	<r毒舌|どくぜつ>コンボ	Tongue-Lash Combo			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29D30	NUN5_TEXTENG@0x5040	slot	32				
-T247	1	Character menus > Ultimate Jutsu name	<r毒舌|どくぜつ>コンボ２	Tongue-Lash Combo 2			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29D50	NUN5_TEXTENG@0x5060	slot	32				
-T248	1	Character menus > Ultimate Jutsu name	<r魔笛|まてき>・<r三従葬曲|さんじゅうそうきょく>	Demon Flute: Trio Requiem			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29D70	NUN5_TEXTENG@0x5080	slot	64				
-T249	1	Character menus > Ultimate Jutsu name	<r雨蜘蛛|あまグモ>	Raining Spider			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29DB0	NUN5_TEXTENG@0x50A0	slot	32				
-T250	1	Character menus > Ultimate Jutsu name	<r雨蜘蛛|あまグモ>２	Raining Spider 2			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29DD0	NUN5_TEXTENG@0x50B0	slot	32				
-T251	1	Character menus > Ultimate Jutsu name	<r蜘蛛戦弓|クモせんきゅう>・<r凄裂|スザク>	Spider Bow: Fierce Rip			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29DF0	NUN5_TEXTENG@0x50D0	slot	48				
-T252	1	Character menus > Ultimate Jutsu name	<r土遁|どとん>・<r土陸返|どろくがえ>し	Earth Style: Terra Shield			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29E20	NUN5_TEXTENG@0x50F0	slot	48				
-T253	1	Character menus > Ultimate Jutsu name	<r土遁|どとん>・<r土陸返|どろくがえ>し２	Earth Style: Terra Shield 2			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29E50	NUN5_TEXTENG@0x5110	slot	48				
-T254	1	Character menus > Ultimate Jutsu name	<r羅漢拳|らかんけん>	Arhat Fist			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29E80	NUN5_TEXTENG@0x5130	slot	32				
-T255	1	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r水龍弾|すいりゅうだん>の<r術|じゅつ>	Water Style: Water Dragon Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29EA0	NUN5_TEXTENG@0x5140	slot	64				
-T256	1	Character menus > Ultimate Jutsu name	<r水遁|すいとん>・<r大瀑布|だいばくふ>の<r術|じゅつ>	Water Style: Giant Vortex Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29EE0	NUN5_TEXTENG@0x5160	slot	64				
-T257	1	Character menus > Ultimate Jutsu name	<r千殺水翔|せんさつすいしょう>	A Thousand Needles of Death			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29F20	NUN5_TEXTENG@0x5180	slot	32				
-T258	1	Character menus > Ultimate Jutsu name	<r魔鏡氷晶|まきょうひょうしょう>	Crystal Ice Mirrors			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x29F40	NUN5_TEXTENG@0x51A0	slot	52				
+T98	1	Collection > Characters > Ultimate Jutsu name	<r朝孔雀|あさくじゃく>	Morning Peacock			e2e:collection/ultimates	NA2_ETC@0x26180	NUN5_TEXTENG@0x33B0	slot	24				
+T99	1	Collection > Characters > Ultimate Jutsu name	<r忍法|にんぽう>・<r影縫|かげぬ>い	Ninja Art: Shadow Sew			e2e:collection/ultimates	NA2_ETC@0x26210	NUN5_TEXTENG@0x3410	slot	40				
+T100	1	Collection > Characters > Ultimate Jutsu name	<r部分倍化|ぶぶんばいか>の<r術|じゅつ>	Partial Expansion Jutsu			e2e:collection/ultimates	NA2_ETC@0x262C0	NUN5_TEXTENG@0x3490	slot	40				
+T101	1	Collection > Characters > Ultimate Jutsu name	<r潜影多蛇手|せんえいたじゃしゅ>	Multiple Hidden Shadow Snake Hands			e2e:collection/ultimates	NA2_ETC@0x26D60	NUN5_TEXTENG@0x3C70	slot	40				
+T102	1	Collection > Characters > Ultimate Jutsu name	<r大玉螺旋丸|おおだまらせんがん>	Great Ball Rasengan			e2e:collection/ultimates	NA2_ETC@0x28440	NUN5_TEXTENG@0x3F00	slot	48				
+T103	1	Collection > Characters > Ultimate Jutsu name	<r漏|も>れ<r出|だ>す<r力|ちから>	Overflowing Power			e2e:collection/ultimates	NA2_ETC@0x28470	NUN5_TEXTENG@0x3F20	slot	48				
+T104	1	Collection > Characters > Ultimate Jutsu name	<r妖狐|ようこ>の<r衣|ころも>	Nine-Tail's Cloak			e2e:collection/ultimates	NA2_ETC@0x284A0	NUN5_TEXTENG@0x3F40	slot	32				
+T105	1	Collection > Characters > Ultimate Jutsu name	<r変|か>わらない<r関係|かんけい>	Unchanging Relationship			e2e:collection/ultimates	NA2_ETC@0x284C0	NUN5_TEXTENG@0x3F60	slot	48				
+T106	1	Collection > Characters > Ultimate Jutsu name	<r春|はる>の<r蹴来|しゅうらい>	Coming of Spring Kick			e2e:collection/ultimates	NA2_ETC@0x284F0	NUN5_TEXTENG@0x3F80	slot	32				
+T107	1	Collection > Characters > Ultimate Jutsu name	キラキラ<r乙女心|おとめごころ>	Twinkling Maiden's Heart			e2e:collection/ultimates	NA2_ETC@0x28510	NUN5_TEXTENG@0x3FA0	slot	32				
+T108	1	Collection > Characters > Ultimate Jutsu name	<r大地割|だいちわ>り	Earth Chop			e2e:collection/ultimates	NA2_ETC@0x28530	NUN5_TEXTENG@0x3FC0	slot	32				
+T109	1	Collection > Characters > Ultimate Jutsu name	<r傀儡|くぐつ>・<r桜舞|サクラマイ>	Puppet: Cherry Blossom Dance			e2e:collection/ultimates	NA2_ETC@0x28550	NUN5_TEXTENG@0x3FD0	slot	48				
+T110	1	Collection > Characters > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r白描|はくびょう>	Ninja Art: Beast Scroll Replicas @White Picture@		Ninja Art: Beast Scroll Replicas "White Picture"	e2e:collection/ultimates	NA2_ETC@0x28580	NUN5_TEXTENG@0x3FF0	slot	80				
+T111	1	Collection > Characters > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r龍|りゅう>	Ninja Art: Beast Scroll Replicas @Dragon@		Ninja Art: Beast Scroll Replicas "Dragon"	e2e:collection/ultimates	NA2_ETC@0x285D0	NUN5_TEXTENG@0x4030	slot	64				
+T112	1	Collection > Characters > Ultimate Jutsu name	<r雷切|らいきり>・<r一尖|いっせん>	Lightning Blade, Single Sharpness			e2e:collection/ultimates	NA2_ETC@0x28610	NUN5_TEXTENG@0x4060	slot	48				
+T113	1	Collection > Characters > Ultimate Jutsu name	<r土遁|どとん>・<r裂穿牙|れっせんが>	Earth Style: Ripping Drill Fang			e2e:collection/ultimates	NA2_ETC@0x28640	NUN5_TEXTENG@0x4090	slot	48				
+T114	1	Collection > Characters > Ultimate Jutsu name	コピー<r忍術|にんじゅつ>	Ninja Art: Copy Jutsu			e2e:collection/ultimates	NA2_ETC@0x28670	NUN5_TEXTENG@0x40B0	slot	32				
+T115	1	Collection > Characters > Ultimate Jutsu name	<r八卦四天空掌|はっけしてんくうしょう>	8 Trigrams 4 Sky Palms			e2e:collection/ultimates	NA2_ETC@0x28690	NUN5_TEXTENG@0x40D0	slot	48				
+T116	1	Collection > Characters > Ultimate Jutsu name	<r八卦六十四掌|はっけろくじゅうよんしょう>	8 Trigrams 64 Palms			e2e:collection/ultimates	NA2_ETC@0x286C0	NUN5_TEXTENG@0x40F0	slot	48				
+T117	1	Collection > Characters > Ultimate Jutsu name	<r八卦破山撃|はっけはざんげき>	8 Trigrams Mountain Break			e2e:collection/ultimates	NA2_ETC@0x286F0	NUN5_TEXTENG@0x4110	slot	32			NA2_ETC@0x2A07C	
+T118	1	Collection > Characters > Ultimate Jutsu name	<r木|こ>ノ<r葉旋光|はせんこう>	Leaf Spiral Light			e2e:collection/ultimates	NA2_ETC@0x28710	NUN5_TEXTENG@0x4130	slot	32				
+T119	1	Collection > Characters > Ultimate Jutsu name	<r青春|せいしゅん>フルパワー！！	Youth at Full Power!!			e2e:collection/ultimates	NA2_ETC@0x28730	NUN5_TEXTENG@0x4150	slot	48				
+T120	1	Collection > Characters > Ultimate Jutsu name	あの<r夕日|ゆうひ>に<r向|む>かって	Facing the Sunset			e2e:collection/ultimates	NA2_ETC@0x28760	NUN5_TEXTENG@0x4170	slot	48				
+T121	1	Collection > Characters > Ultimate Jutsu name	<r操具|そうぐ>・<r廻燕劇|かいえんげき>	Ninja Tool: Spinning Swallow Show			e2e:collection/ultimates	NA2_ETC@0x28790	NUN5_TEXTENG@0x4190	slot	48				
+T122	1	Collection > Characters > Ultimate Jutsu name	<r操具|そうぐ>・<r大鉄塊|だいてっかい>	Ninja Tool: Giant Iron Lump			e2e:collection/ultimates	NA2_ETC@0x287C0	NUN5_TEXTENG@0x41C0	slot	48				
+T123	1	Collection > Characters > Ultimate Jutsu name	<r操具|そうぐ>・<r天鋼災|てんこうさい>	Ninja Tool: Heavenly Metal Disaster			e2e:collection/ultimates	NA2_ETC@0x287F0	NUN5_TEXTENG@0x41E0	slot	48				
+T124	1	Collection > Characters > Ultimate Jutsu name	<r自分|じぶん>ルール・<r壱|いち>	My Rule: One			e2e:collection/ultimates	NA2_ETC@0x28820	NUN5_TEXTENG@0x4208	slot	48				
+T125	1	Collection > Characters > Ultimate Jutsu name	<r自分|じぶん>ルール・<r弐|に>	My Rule: Two			e2e:collection/ultimates	NA2_ETC@0x28850	NUN5_TEXTENG@0x4218	slot	32				
+T126	1	Collection > Characters > Ultimate Jutsu name	ＩＱ２００	IQ 200			e2e:collection/ultimates	NA2_ETC@0x28870	NUN5_SLES@0x5140E8	slot	16				
+T127	1	Collection > Characters > Ultimate Jutsu name	<r忍法|にんぽう>・<r影煙幕|かげえんまく>の<r術|じゅつ>	Ninja Art: Shadow Smokescreen Jutsu			e2e:collection/ultimates	NA2_ETC@0x28880	NUN5_TEXTENG@0x4230	slot	64				
+T128	1	Collection > Characters > Ultimate Jutsu name	<r部分超倍化|ぶぶんちょうばいか>の<r術|じゅつ>	Super Expansion Jutsu			e2e:collection/ultimates	NA2_ETC@0x288C0	NUN5_TEXTENG@0x4260	slot	48				
+T129	1	Collection > Characters > Ultimate Jutsu name	<r超|ちょう>・<r肉弾戦車|にくだんせんしゃ>	Super Human Boulder			e2e:collection/ultimates	NA2_ETC@0x288F0	NUN5_TEXTENG@0x4280	slot	48				
+T130	1	Collection > Characters > Ultimate Jutsu name	<r超|ちょう>・<r肉弾戦車|にくだんせんしゃ>２	Super Human Boulder 2			e2e:collection/ultimates	NA2_ETC@0x28920	NUN5_TEXTENG@0x42A0	slot	48				
+T131	1	Collection > Characters > Ultimate Jutsu name	<r忍法|にんぽう>・<r月下美人|げっかびじん>	Ninja Art: Queen of the Night			e2e:collection/ultimates	NA2_ETC@0x28950	NUN5_TEXTENG@0x42C0	slot	48				
+T132	1	Collection > Characters > Ultimate Jutsu name	<r蝶針火|ちょうしんか>	Butterfly Needle Flame			e2e:collection/ultimates	NA2_ETC@0x28980	NUN5_TEXTENG@0x42E0	slot	24				
+T133	1	Collection > Characters > Ultimate Jutsu name	<r飛燕|ひえん>	Flying Swallow			e2e:collection/ultimates	NA2_ETC@0x28998	NUN5_TEXTENG@0x42F8	slot	24				
+T134	1	Collection > Characters > Ultimate Jutsu name	<r渦旋風火|かせんふうか>の<r術|じゅつ>	Fire Whirlwind Jutsu			e2e:collection/ultimates	NA2_ETC@0x289B0	NUN5_TEXTENG@0x4310	slot	48				
+T135	1	Collection > Characters > Ultimate Jutsu name	<r爪迅狼牙|そうじんろうが>	Swift Claw Wolf Fang			e2e:collection/ultimates	NA2_ETC@0x289E0	NUN5_TEXTENG@0x4330	slot	32				
+T136	1	Collection > Characters > Ultimate Jutsu name	<r天双牙|てんそうが>	Dual Wolf Fangs			e2e:collection/ultimates	NA2_ETC@0x28A00	NUN5_TEXTENG@0x4350	slot	32				
+T137	1	Collection > Characters > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r蝕|しょく>	Parasitic Insects: Digest			e2e:collection/ultimates	NA2_ETC@0x28A20	NUN5_TEXTENG@0x4360	slot	48				
+T138	1	Collection > Characters > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r虚|うつろ>	Parasitic Insects: Deception			e2e:collection/ultimates	NA2_ETC@0x28A50	NUN5_TEXTENG@0x4380	slot	48				
+T139	1	Collection > Characters > Ultimate Jutsu name	<r八卦掌空天|はっけしょうくうてん>	8 Trigrams Sky Palm			e2e:collection/ultimates	NA2_ETC@0x28A80	NUN5_TEXTENG@0x3230	slot	48				
+T140	1	Collection > Characters > Ultimate Jutsu name	<r魔幻|まげん>・<r樹縛殺|じゅばくさつ>	Evil Illusion: Tree Capture Death			e2e:collection/ultimates	NA2_ETC@0x28AB0	NUN5_TEXTENG@0x43A0	slot	48				
+T141	1	Collection > Characters > Ultimate Jutsu name	<r砂縛牢|さばくろう>	Sand Prison			e2e:collection/ultimates	NA2_ETC@0x28AE0	NUN5_TEXTENG@0x43C8	slot	32				
+T142	1	Collection > Characters > Ultimate Jutsu name	<r砂瀑槍葬|さばくそうそう>	Sand Spear Funeral			e2e:collection/ultimates	NA2_ETC@0x28B00	NUN5_TEXTENG@0x43E0	slot	32				
+T143	1	Collection > Characters > Ultimate Jutsu name	<r滅砂瀑葬|めっさばくそう>	Destructive Sand Burial			e2e:collection/ultimates	NA2_ETC@0x28B20	NUN5_TEXTENG@0x4400	slot	32				
+T144	1	Collection > Characters > Ultimate Jutsu name	<r傀儡|くぐつ>・<r骸烏|ムクロガラス>	Puppet: Crow Corpse			e2e:collection/ultimates	NA2_ETC@0x28B40	NUN5_TEXTENG@0x4420	slot	48				
+T145	1	Collection > Characters > Ultimate Jutsu name	<r傀儡|くぐつ>・<r鬼城|きじょう>の<r面|めん>	Puppet: Mask of Demon Castle			e2e:collection/ultimates	NA2_ETC@0x28B70	NUN5_TEXTENG@0x4440	slot	48				
+T146	1	Collection > Characters > Ultimate Jutsu name	<r黒秘技三大狂言|くろひぎさんだいきょうげん>	Secret Black Move: Three Major			e2e:collection/ultimates	NA2_ETC@0x28BA0	NUN5_TEXTENG@0x4460	slot	48				
+T147	1	Collection > Characters > Ultimate Jutsu name	<r豪風暴壁|ごうふうぼうへき>	Gale Raging Wall			e2e:collection/ultimates	NA2_ETC@0x28BD0	NUN5_TEXTENG@0x4480	slot	32				
+T148	1	Collection > Characters > Ultimate Jutsu name	<r練空踊扇|れんくうようせん>	Air Polish Dancing Fan			e2e:collection/ultimates	NA2_ETC@0x28BF0	NUN5_TEXTENG@0x44A0	slot	32				
+T149	1	Collection > Characters > Ultimate Jutsu name	<r口寄|くちよ>せ・<r扇舞降|せんまいお>ろし	Summoning: Fan Dance Drop			e2e:collection/ultimates	NA2_ETC@0x28C10	NUN5_TEXTENG@0x44C0	slot	48				
+T150	1	Collection > Characters > Ultimate Jutsu name	<r息子|むすこ>の<r仇|かたき>！？	Son's Revenge?!			e2e:collection/ultimates	NA2_ETC@0x28C40	NUN5_TEXTENG@0x44E0	slot	48				
+T151	1	Collection > Characters > Ultimate Jutsu name	<r傀儡|くぐつ>・<r父|ちち>と<r母|はは>	Puppet: Father and Mother			e2e:collection/ultimates	NA2_ETC@0x28C70	NUN5_TEXTENG@0x44F0	slot	48				
+T152	1	Collection > Characters > Ultimate Jutsu name	<r十機近松|じっきちかまつ>の<r集|しゅう>	Ten Puppets of Chikamatsu			e2e:collection/ultimates	NA2_ETC@0x28CA0	NUN5_TEXTENG@0x4510	slot	48				
+T153	1	Collection > Characters > Ultimate Jutsu name	<r火遁|かとん>・<r豪焔球|ごうえんきゅう>	Fire Style: Blaze Ball			e2e:collection/ultimates	NA2_ETC@0x28CD0	NUN5_TEXTENG@0x4530	slot	48				
+T154	1	Collection > Characters > Ultimate Jutsu name	<r幻術|げんじゅつ>・<r泡沫|うたかた>	Genjutsu: Bubbles			e2e:collection/ultimates	NA2_ETC@0x28D00	NUN5_TEXTENG@0x4550	slot	48				
+T155	1	Collection > Characters > Ultimate Jutsu name	<r瞳術|どうじゅつ>・<r威凪|いさなぎ>	Visual Jutsu: Powerful Calm			e2e:collection/ultimates	NA2_ETC@0x28D30	NUN5_TEXTENG@0x4570	slot	48				
+T156	1	Collection > Characters > Ultimate Jutsu name	<r最凶|さいきょう>の<r刺客|しかく>	The Baddest Assassins			e2e:collection/ultimates	NA2_ETC@0x28D60	NUN5_TEXTENG@0x4590	slot	48				
+T157	1	Collection > Characters > Ultimate Jutsu name	<r水遁|すいとん>・<r五食鮫|ごしょくざめ>	Water Style: Five Hungry Sharks			e2e:collection/ultimates	NA2_ETC@0x28D90	NUN5_TEXTENG@0x45B0	slot	48				
+T158	1	Collection > Characters > Ultimate Jutsu name	<r水遁|すいとん>・<r無限鮫|むげんざめ>	Water Style: Infinite Shark			e2e:collection/ultimates	NA2_ETC@0x28DC0	NUN5_TEXTENG@0x45D0	slot	48				
+T159	1	Collection > Characters > Ultimate Jutsu name	<r水遁|すいとん>・<r爆水衝波|ばくすいしょうは>	Water Style: Exploding Water Shock Wave			e2e:collection/ultimates	NA2_ETC@0x28DF0	NUN5_TEXTENG@0x45F0	slot	48				
+T160	1	Collection > Characters > Ultimate Jutsu name	<r芸術|げいじゅつ>	Art			e2e:collection/ultimates	NA2_ETC@0x28E20	NUN5_SLES@0x5140F0	slot	32				
+T161	1	Collection > Characters > Ultimate Jutsu name	<r自爆分身|じばくぶんしん>	Exploding Clone			e2e:collection/ultimates	NA2_ETC@0x28E40	NUN5_TEXTENG@0x4620	slot	32				
+T162	1	Collection > Characters > Ultimate Jutsu name	<r十八番|オハコ>・<rＣ３|シースリー>	Sure-Fire: C3			e2e:collection/ultimates	NA2_ETC@0x28E60	NUN5_TEXTENG@0x4630	slot	48				
+T163	1	Collection > Characters > Ultimate Jutsu name	<r合殺芸術|がっさいげいじゅつ>	Combined Killing Art			e2e:collection/ultimates	NA2_ETC@0x28E90	NUN5_TEXTENG@0x4640	slot	32				
+T164	1	Collection > Characters > Ultimate Jutsu name	<r傀儡|くぐつ>の<r術|じゅつ>・<r尾沙悶|びしゃもん>	Puppet Jutsu: Tail Crash Blow			e2e:collection/ultimates	NA2_ETC@0x28EB0	NUN5_TEXTENG@0x4660	slot	64				
+T165	1	Collection > Characters > Ultimate Jutsu name	<r傀儡|くぐつ>の<r術|じゅつ>・<r義手千本|ぎしゅせんぼん>	Puppet Jutsu: 1000 Mechanical Arms			e2e:collection/ultimates	NA2_ETC@0x28EF0	NUN5_TEXTENG@0x4680	slot	64				
+T166	1	Collection > Characters > Ultimate Jutsu name	<r傀儡|くぐつ>の<r術|じゅつ>・<r重刃庫|じゅうばこ>	Puppet Jutsu: Multiple Blade Box			e2e:collection/ultimates	NA2_ETC@0x28F30	NUN5_TEXTENG@0x46B0	slot	64				
+T167	1	Collection > Characters > Ultimate Jutsu name	<r傀儡|くぐつ>・<r砂鉄獄塊|さてつごっかい>	Puppet: Iron Sand Cluster			e2e:collection/ultimates	NA2_ETC@0x28F70	NUN5_TEXTENG@0x46E0	slot	48				
+T168	1	Collection > Characters > Ultimate Jutsu name	<r傀儡|くぐつ>・<r砂鉄獄塊|さてつごっかい>２	Puppet: Iron Sand Cluster 2			e2e:collection/ultimates	NA2_ETC@0x28FA0	NUN5_TEXTENG@0x4700	slot	48				
+T169	1	Collection > Characters > Ultimate Jutsu name	<r赤秘技|あかひぎ>・<r百機|ひゃっき>の<r操演|そうえん>	Red Secret Technique: Performance of a Hundred Puppets			e2e:collection/ultimates	NA2_ETC@0x28FD0	NUN5_TEXTENG@0x4720	slot	64				
+T170	1	Collection > Characters > Ultimate Jutsu name	<r火遁|かとん>・<r豪炎螺旋丸|ごうえんらせんがん>	Fire Style: Flame Rasengan			e2e:collection/ultimates	NA2_ETC@0x29010	NUN5_TEXTENG@0x4760	slot	64				
+T171	1	Collection > Characters > Ultimate Jutsu name	<r双迅螺旋丸|そうじんらせんがん>	Double Rapid Rasengan			e2e:collection/ultimates	NA2_ETC@0x29050	NUN5_TEXTENG@0x4780	slot	48				
+T172	1	Collection > Characters > Ultimate Jutsu name	<r火遁|かとん>・<r消|け>し<r幕|まく>が<r原|はら>	Fire Style: Vanishing Attack			e2e:collection/ultimates	NA2_ETC@0x29080	NUN5_TEXTENG@0x47A0	slot	64				
+T173	1	Collection > Characters > Ultimate Jutsu name	<r忍法|にんぽう>・<r創造再生|そうぞうさいせい>	Ninja Art: Mitotic Regeneration			e2e:collection/ultimates	NA2_ETC@0x290C0	NUN5_TEXTENG@0x47C0	slot	48				
+T174	1	Collection > Characters > Ultimate Jutsu name	<r火影|ほかげ>の<r力|ちから>	Hokage's Power			e2e:collection/ultimates	NA2_ETC@0x290F0	NUN5_TEXTENG@0x47E0	slot	32				
+T175	1	Collection > Characters > Ultimate Jutsu name	<r地流|じながれ>	Mudslide			e2e:collection/ultimates	NA2_ETC@0x29110	NUN5_TEXTENG@0x47F0	slot	32				
+T176	1	Collection > Characters > Ultimate Jutsu name	<r大交衝|だいこうしょう>	Great Cross Clash			e2e:collection/ultimates	NA2_ETC@0x29130	NUN5_TEXTENG@0x4800	slot	32				
+T177	1	Collection > Characters > Ultimate Jutsu name	トントンコンビ	Tonton Duo			e2e:collection/ultimates	NA2_ETC@0x29150	NUN5_TEXTENG@0x4818	slot	16				
+T178	1	Collection > Characters > Ultimate Jutsu name	<r木遁|もくとん>・<r飛乃木|ひのき>	Wood Style: Flying Tree			e2e:collection/ultimates	NA2_ETC@0x29160	NUN5_TEXTENG@0x4830	slot	48				
+T179	1	Collection > Characters > Ultimate Jutsu name	<r木遁|もくとん>・<r梁木|やなぎ>	Wood Style: Tree Columns			e2e:collection/ultimates	NA2_ETC@0x29190	NUN5_TEXTENG@0x4850	slot	48				
+T180	1	Collection > Characters > Ultimate Jutsu name	<r禁術|きんじゅつ>・<r穢土封滅|えどふうめつ>	Forbidden Jutsu: Seal Destruction			e2e:collection/ultimates	NA2_ETC@0x291C0	NUN5_TEXTENG@0x4870	slot	48				
+T181	1	Collection > Characters > Ultimate Jutsu name	<r蟒蛇|うわばみ>	Uwabami			e2e:collection/ultimates	NA2_ETC@0x291F0	NUN5_SLES@0x5140F8	slot	32				
+T182	1	Collection > Characters > Ultimate Jutsu name	<r二凪|ふたなぎ>ノ<r草薙|くさなぎ>	Double Kusanagi			e2e:collection/ultimates	NA2_ETC@0x29210	NUN5_TEXTENG@0x48A0	slot	48				
+T183	1	Collection > Characters > Ultimate Jutsu name	<r死魂|しこん>の<r術|じゅつ>	Dead Soul Jutsu			e2e:collection/ultimates	NA2_ETC@0x29240	NUN5_TEXTENG@0x48B0	slot	32				
+T184	1	Collection > Characters > Ultimate Jutsu name	チャクラ<r解剖刀|メス>・<r壊|かい>	Chakra Dissection Blade: Destroy			e2e:collection/ultimates	NA2_ETC@0x29260	NUN5_TEXTENG@0x48C0	slot	48				
+T185	1	Collection > Characters > Ultimate Jutsu name	<r死術|しじゅつ>・<r帰魂遊戯|きこんゆうぎ>	Death Technique: Soul Return			e2e:collection/ultimates	NA2_ETC@0x29290	NUN5_TEXTENG@0x48F0	slot	48				
+T186	1	Collection > Characters > Ultimate Jutsu name	<r草薙|くさなぎ>の<r舞|まい>	Dance of Kusanagi			e2e:collection/ultimates	NA2_ETC@0x292C0	NUN5_TEXTENG@0x4910	slot	32				
+T187	1	Collection > Characters > Ultimate Jutsu name	<r翔|か>け<r鳥崩|どりくず>し	Darting Bird Crusher			e2e:collection/ultimates	NA2_ETC@0x292E0	NUN5_TEXTENG@0x4930	slot	32				
+T188	1	Collection > Characters > Ultimate Jutsu name	<r千鳥|ちどり>・<r雷鳴|らいめい>	Chidori Thunder			e2e:collection/ultimates	NA2_ETC@0x29300	NUN5_TEXTENG@0x4950	slot	48				
+T189	1	Collection > Characters > Ultimate Jutsu name	うずまきナルト<r連弾|れんだん>	Naruto Uzumaki Barrage			e2e:collection/ultimates	NA2_ETC@0x29330	NUN5_TEXTENG@0x4960	slot	32				
+T190	1	Collection > Characters > Ultimate Jutsu name	うずまきナルト<r忍法帳|にんぽうちょう>	Naruto's Ninja Handbook			e2e:collection/ultimates	NA2_ETC@0x29350	NUN5_TEXTENG@0x4980	slot	48				
+T191	1	Collection > Characters > Ultimate Jutsu name	<r九尾螺旋丸|きゅうびらせんがん>	The Nine-Tailed Rasengan			e2e:collection/ultimates	NA2_ETC@0x29380	NUN5_TEXTENG@0x49A0	slot	48				
+T192	1	Collection > Characters > Ultimate Jutsu name	ハヤブサ<r落|お>とし	Falcon Drop			e2e:collection/ultimates	NA2_ETC@0x293B0	NUN5_TEXTENG@0x49C0	slot	32				
+T193	1	Collection > Characters > Ultimate Jutsu name	<r忌|い>まわしき<r千鳥|ちどり>	Ominous Chidori			e2e:collection/ultimates	NA2_ETC@0x293D0	NUN5_TEXTENG@0x49D0	slot	32				
+T194	1	Collection > Characters > Ultimate Jutsu name	<r呪|のろ>われし<r力|ちから>	Cursed Power			e2e:collection/ultimates	NA2_ETC@0x293F0	NUN5_TEXTENG@0x49E0	slot	32				
+T195	1	Collection > Characters > Ultimate Jutsu name	<r負|ま>けるもんですか！	I Won't Lose!			e2e:collection/ultimates	NA2_ETC@0x29410	NUN5_TEXTENG@0x49F0	slot	32				
+T196	1	Collection > Characters > Ultimate Jutsu name	<r忍法|にんぽう>・<r雪桜|ゆきざくら>の<r舞|まい>	Ninja Art: Snow Cherry Blossom Dance			e2e:collection/ultimates	NA2_ETC@0x29430	NUN5_TEXTENG@0x4A00	slot	64				
+T197	1	Collection > Characters > Ultimate Jutsu name	<r八卦三百六十一式|はっけさんびゃくろくじゅういっしき>	8 Trigrams 361 Style			e2e:collection/ultimates	NA2_ETC@0x29470	NUN5_TEXTENG@0x4A30	slot	64				
+T198	1	Collection > Characters > Ultimate Jutsu name	<r絶招八門崩撃|ぜっしょうはちもんほうげき>	Last Resort: Eight Gates Assault			e2e:collection/ultimates	NA2_ETC@0x294B0	NUN5_TEXTENG@0x4A50	slot	48				
+T199	1	Collection > Characters > Ultimate Jutsu name	すい<r拳|けん>	Loopy Fist			e2e:collection/ultimates	NA2_ETC@0x294E0	NUN5_TEXTENG@0x4A78	slot	16				
+T200	1	Collection > Characters > Ultimate Jutsu name	<r裏蓮華|うられんげ>	Hidden Lotus			e2e:collection/ultimates	NA2_ETC@0x294F0	NUN5_TEXTENG@0x4A88	slot	32				
+T201	1	Collection > Characters > Ultimate Jutsu name	<r突|つ>き<r抜|ぬ>ける<r熱|あつ>き<r思|おも>い	Smashing Passion			e2e:collection/ultimates	NA2_ETC@0x29510	NUN5_TEXTENG@0x4AA0	slot	48				
+T202	1	Collection > Characters > Ultimate Jutsu name	<r操具|そうぐ>・<r死球撃|しきゅうげき>	Ninja Tool: Death Sphere Strike			e2e:collection/ultimates	NA2_ETC@0x29540	NUN5_TEXTENG@0x4AC0	slot	48				
+T203	1	Collection > Characters > Ultimate Jutsu name	<r操具|そうぐ>・<r襲千刃|しゅうせんじん>	Ninja Tool: Blade of 1000 Strikes			e2e:collection/ultimates	NA2_ETC@0x29570	NUN5_TEXTENG@0x4AE0	slot	48				
+T204	1	Collection > Characters > Ultimate Jutsu name	<r操具|そうぐ>・<r浮刃壁|ふじんへき>	Ninja Tool: Floating Blade Wall			e2e:collection/ultimates	NA2_ETC@0x295A0	NUN5_TEXTENG@0x4B10	slot	48				
+T205	1	Collection > Characters > Ultimate Jutsu name	<r影真似|かげまね>の<r術|じゅつ>	Shadow Possession Jutsu			e2e:collection/ultimates	NA2_ETC@0x295D0	NUN5_TEXTENG@0x4B30	slot	48				
+T206	1	Collection > Characters > Ultimate Jutsu name	<r影圧掌|かげあっしょう>の<r術|じゅつ>	Shadow Crushing Palm Jutsu			e2e:collection/ultimates	NA2_ETC@0x29600	NUN5_TEXTENG@0x4B50	slot	48				
+T207	1	Collection > Characters > Ultimate Jutsu name	<r影首縛|かげくびしば>りの<r術|じゅつ>	Shadow Strangle Jutsu			e2e:collection/ultimates	NA2_ETC@0x29630	NUN5_TEXTENG@0x4B70	slot	48				
+T208	1	Collection > Characters > Ultimate Jutsu name	<r部分倍化|ぶぶんばいか>の<r術|じゅつ>２	Partial Expansion Jutsu 2			e2e:collection/ultimates	NA2_ETC@0x29660	NUN5_TEXTENG@0x4B90	slot	48				
+T209	1	Collection > Characters > Ultimate Jutsu name	<r蝶弾爆撃|ちょうだんばくげき>	Butterfly Bomb			e2e:collection/ultimates	NA2_ETC@0x29690	NUN5_TEXTENG@0x4BB0	slot	32				
+T210	1	Collection > Characters > Ultimate Jutsu name	<r忍法|にんぽう>・<r百花繚乱|ひゃっかりょうらん>	Ninja Art: Covered With Flowers			e2e:collection/ultimates	NA2_ETC@0x296B0	NUN5_TEXTENG@0x4BC0	slot	64				
+T211	1	Collection > Characters > Ultimate Jutsu name	<r心乱身|しんらんしん>の<r術|じゅつ>	Mind Distraction Jutsu			e2e:collection/ultimates	NA2_ETC@0x296F0	NUN5_TEXTENG@0x4BE0	slot	48				
+T212	1	Collection > Characters > Ultimate Jutsu name	<r供花送|くげおく>り	Memorial Flower Sending			e2e:collection/ultimates	NA2_ETC@0x29720	NUN5_TEXTENG@0x4C00	slot	32				
+T213	1	Collection > Characters > Ultimate Jutsu name	<r牙通牙|がつうが>	Fang Over Fang			e2e:collection/ultimates	NA2_ETC@0x29740	NUN5_TEXTENG@0x4C18	slot	32				
+T214	1	Collection > Characters > Ultimate Jutsu name	<r牙狼牙|がろうが>	Wolf Fang Over Fang			e2e:collection/ultimates	NA2_ETC@0x29760	NUN5_TEXTENG@0x4C30	slot	32				
+T215	1	Collection > Characters > Ultimate Jutsu name	<r双頭狼|そうとうろう>	Two-Headed Wolf			e2e:collection/ultimates	NA2_ETC@0x29780	NUN5_TEXTENG@0x4C50	slot	32				
+T216	1	Collection > Characters > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r颶|つむじ>	Parasitic Insects: Typhoon			e2e:collection/ultimates	NA2_ETC@0x297A0	NUN5_TEXTENG@0x4C60	slot	48				
+T217	1	Collection > Characters > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r簇|やじり>	Parasitic Insects: Swarm			e2e:collection/ultimates	NA2_ETC@0x297D0	NUN5_TEXTENG@0x4C80	slot	48				
+T218	1	Collection > Characters > Ultimate Jutsu name	<r寄壊蟲|きかいちゅう>・<r霰|あられ>	Parasitic Insects: Hailstorm			e2e:collection/ultimates	NA2_ETC@0x29800	NUN5_TEXTENG@0x4CA0	slot	48				
+T219	1	Collection > Characters > Ultimate Jutsu name	<r白眼|びゃくがん>	Byakugan			e2e:collection/ultimates	NA2_ETC@0x29830	NUN5_TEXTENG@0x4CC0	slot	32				
+T220	1	Collection > Characters > Ultimate Jutsu name	<r百烈掌|ひゃくれつしょう>	Hundred Power Palms			e2e:collection/ultimates	NA2_ETC@0x29850	NUN5_TEXTENG@0x4CD0	slot	32				
+T221	1	Collection > Characters > Ultimate Jutsu name	<r白朧天舞|はくろうてんぶ>	Heaven's Dance of Hazy White			e2e:collection/ultimates	NA2_ETC@0x29870	NUN5_TEXTENG@0x4CF0	slot	32				
+T222	1	Collection > Characters > Ultimate Jutsu name	<r柔拳指南|じゅうけんしなん>	Gentle Fist Instruction			e2e:collection/ultimates	NA2_ETC@0x29890	NUN5_TEXTENG@0x4D10	slot	32				
+T223	1	Collection > Characters > Ultimate Jutsu name	<r突撃|とつげき>！　<r木|こ>ノ<r葉丸|はまる><r軍団|ぐんだん>！	Charge! Konohamaru Ninja Squad!			e2e:collection/ultimates	NA2_ETC@0x298B0	NUN5_TEXTENG@0x4D30	slot	64				
+T224	1	Collection > Characters > Ultimate Jutsu name	<r双蛇相殺|そうじゃそうさい>の<r術|じゅつ>	Twin Snake Sacrifice Jutsu			e2e:collection/ultimates	NA2_ETC@0x298F0	NUN5_TEXTENG@0x4D50	slot	48				
+T225	1	Collection > Characters > Ultimate Jutsu name	<r金剛力|こんごうりき>・<r不動|ふどう>	Adamantine Power: Immobility			e2e:collection/ultimates	NA2_ETC@0x29920	NUN5_TEXTENG@0x4D70	slot	48				
+T226	1	Collection > Characters > Ultimate Jutsu name	<r木遁秘術|もくとんひじゅつ>・<r樹界降誕|じゅかいこうたん>	Secret Wood Style Jutsu: Deep Forest Emergence			e2e:collection/ultimates	NA2_ETC@0x29950	NUN5_TEXTENG@0x4D90	slot	64				
+T227	1	Collection > Characters > Ultimate Jutsu name	<r水遁|すいとん>・<r硬渦水刃|こうかすいじん>	Water Style: Hardened Water Drill			e2e:collection/ultimates	NA2_ETC@0x29990	NUN5_TEXTENG@0x4DC0	slot	48				
+T228	1	Collection > Characters > Ultimate Jutsu name	<r金剛牢壁|こんごうろうへき>	Adamantine Nyoi Prison			e2e:collection/ultimates	NA2_ETC@0x299C0	NUN5_TEXTENG@0x4DF0	slot	32				
+T229	1	Collection > Characters > Ultimate Jutsu name	<r封印術|ふういんじゅつ>・<r屍鬼封尽|しきふうじん>	Sealing Jutsu: Reaper Death Seal			e2e:collection/ultimates	NA2_ETC@0x299E0	NUN5_TEXTENG@0x4E10	slot	64				
+T230	1	Collection > Characters > Ultimate Jutsu name	<r封印術|ふういんじゅつ>・<r三方封印|さんぽうふういん>	Sealing Jutsu: Triangle Seal			e2e:collection/ultimates	NA2_ETC@0x29A20	NUN5_TEXTENG@0x4E40	slot	64				
+T231	1	Collection > Characters > Ultimate Jutsu name	<r飛雷神|ひらいしん>の<r術|じゅつ>	Flying Thunder God Jutsu			e2e:collection/ultimates	NA2_ETC@0x29A60	NUN5_TEXTENG@0x4E60	slot	48				
+T232	1	Collection > Characters > Ultimate Jutsu name	<r砂瀑大葬|さばくたいそう>	Giant Sand Burial			e2e:collection/ultimates	NA2_ETC@0x29A90	NUN5_TEXTENG@0x4E80	slot	32				
+T233	1	Collection > Characters > Ultimate Jutsu name	<r砂手裏剣|すなしゅりけん>	Sand Shuriken			e2e:collection/ultimates	NA2_ETC@0x29AB0	NUN5_TEXTENG@0x4E98	slot	32				
+T234	1	Collection > Characters > Ultimate Jutsu name	<r傀儡|くぐつ>・<r影役者|かげやくしゃ>	Puppet: Shadow Actor			e2e:collection/ultimates	NA2_ETC@0x29AD0	NUN5_TEXTENG@0x4EB0	slot	48				
+T235	1	Collection > Characters > Ultimate Jutsu name	<r傀儡|くぐつ>・<r廻刃天穿|かいじんてんせん>	Spinning Blade Drill of Underworld			e2e:collection/ultimates	NA2_ETC@0x29B00	NUN5_TEXTENG@0x4ED0	slot	48				
+T236	1	Collection > Characters > Ultimate Jutsu name	<r黒秘技機々一発|くろひぎききいっぱつ>	Secret Black Move: Iron Maiden			e2e:collection/ultimates	NA2_ETC@0x29B30	NUN5_TEXTENG@0x4F00	slot	48				
+T237	1	Collection > Characters > Ultimate Jutsu name	<r乱|みだ>れ<r扇舞|せんぶ>	Mad Fan Dance			e2e:collection/ultimates	NA2_ETC@0x29B60	NUN5_TEXTENG@0x4F20	slot	32				
+T238	1	Collection > Characters > Ultimate Jutsu name	<r大|だい>カマイタチの<r術|じゅつ>	Cyclone Scythe Jutsu			e2e:collection/ultimates	NA2_ETC@0x29B80	NUN5_TEXTENG@0x4F30	slot	48				
+T239	1	Collection > Characters > Ultimate Jutsu name	<r口寄|くちよ>せ・<r斬|き>り<r斬|き>り<r舞|まい>	Summoning: Blade Dance			e2e:collection/ultimates	NA2_ETC@0x29BB0	NUN5_TEXTENG@0x4F50	slot	64				
+T240	1	Collection > Characters > Ultimate Jutsu name	<r八重葎|やえむぐら>の<r舞|まい>	Galium Spurium Dance			e2e:collection/ultimates	NA2_ETC@0x29BF0	NUN5_TEXTENG@0x4F70	slot	48				
+T241	1	Collection > Characters > Ultimate Jutsu name	<r八重葎|やえむぐら>の<r舞|まい>２	Galium Spurium Dance 2			e2e:collection/ultimates	NA2_ETC@0x29C20	NUN5_TEXTENG@0x4F90	slot	48				
+T242	1	Collection > Characters > Ultimate Jutsu name	<r鉄線花|てっせんか>の<r舞|まい>・<r花|はな>	Clematis Dance: Flower			e2e:collection/ultimates	NA2_ETC@0x29C50	NUN5_TEXTENG@0x4FB0	slot	48				
+T243	1	Collection > Characters > Ultimate Jutsu name	<r口寄|くちよ>せ・<r羅生門|ラショウモン>　<r奈落|ならく>	Summoning: Rashomon, Abyss			e2e:collection/ultimates	NA2_ETC@0x29C80	NUN5_TEXTENG@0x4FD0	slot	64				
+T244	1	Collection > Characters > Ultimate Jutsu name	<r口寄|くちよ>せ・<r羅生門|ラショウモン>　<r奈落|ならく>２	Summoning: Rashomon, Abyss 2			e2e:collection/ultimates	NA2_ETC@0x29CC0	NUN5_TEXTENG@0x4FF0	slot	64				
+T245	1	Collection > Characters > Ultimate Jutsu name	<r左塵掌|さじんしょう>・<r右裂脚|うれつきゃく>	Left Dust Strike, Right Severing Kick 			e2e:collection/ultimates	NA2_ETC@0x29D00	NUN5_TEXTENG@0x5010	slot	48				
+T246	1	Collection > Characters > Ultimate Jutsu name	<r毒舌|どくぜつ>コンボ	Tongue-Lash Combo			e2e:collection/ultimates	NA2_ETC@0x29D30	NUN5_TEXTENG@0x5040	slot	32				
+T247	1	Collection > Characters > Ultimate Jutsu name	<r毒舌|どくぜつ>コンボ２	Tongue-Lash Combo 2			e2e:collection/ultimates	NA2_ETC@0x29D50	NUN5_TEXTENG@0x5060	slot	32				
+T248	1	Collection > Characters > Ultimate Jutsu name	<r魔笛|まてき>・<r三従葬曲|さんじゅうそうきょく>	Demon Flute: Trio Requiem			e2e:collection/ultimates	NA2_ETC@0x29D70	NUN5_TEXTENG@0x5080	slot	64				
+T249	1	Collection > Characters > Ultimate Jutsu name	<r雨蜘蛛|あまグモ>	Raining Spider			e2e:collection/ultimates	NA2_ETC@0x29DB0	NUN5_TEXTENG@0x50A0	slot	32				
+T250	1	Collection > Characters > Ultimate Jutsu name	<r雨蜘蛛|あまグモ>２	Raining Spider 2			e2e:collection/ultimates	NA2_ETC@0x29DD0	NUN5_TEXTENG@0x50B0	slot	32				
+T251	1	Collection > Characters > Ultimate Jutsu name	<r蜘蛛戦弓|クモせんきゅう>・<r凄裂|スザク>	Spider Bow: Fierce Rip			e2e:collection/ultimates	NA2_ETC@0x29DF0	NUN5_TEXTENG@0x50D0	slot	48				
+T252	1	Collection > Characters > Ultimate Jutsu name	<r土遁|どとん>・<r土陸返|どろくがえ>し	Earth Style: Terra Shield			e2e:collection/ultimates	NA2_ETC@0x29E20	NUN5_TEXTENG@0x50F0	slot	48				
+T253	1	Collection > Characters > Ultimate Jutsu name	<r土遁|どとん>・<r土陸返|どろくがえ>し２	Earth Style: Terra Shield 2			e2e:collection/ultimates	NA2_ETC@0x29E50	NUN5_TEXTENG@0x5110	slot	48				
+T254	1	Collection > Characters > Ultimate Jutsu name	<r羅漢拳|らかんけん>	Arhat Fist			e2e:collection/ultimates	NA2_ETC@0x29E80	NUN5_TEXTENG@0x5130	slot	32				
+T255	1	Collection > Characters > Ultimate Jutsu name	<r水遁|すいとん>・<r水龍弾|すいりゅうだん>の<r術|じゅつ>	Water Style: Water Dragon Jutsu			e2e:collection/ultimates	NA2_ETC@0x29EA0	NUN5_TEXTENG@0x5140	slot	64				
+T256	1	Collection > Characters > Ultimate Jutsu name	<r水遁|すいとん>・<r大瀑布|だいばくふ>の<r術|じゅつ>	Water Style: Giant Vortex Jutsu			e2e:collection/ultimates	NA2_ETC@0x29EE0	NUN5_TEXTENG@0x5160	slot	64				
+T257	1	Collection > Characters > Ultimate Jutsu name	<r千殺水翔|せんさつすいしょう>	A Thousand Needles of Death			e2e:collection/ultimates	NA2_ETC@0x29F20	NUN5_TEXTENG@0x5180	slot	32				
+T258	1	Collection > Characters > Ultimate Jutsu name	<r魔鏡氷晶|まきょうひょうしょう>	Crystal Ice Mirrors			e2e:collection/ultimates	NA2_ETC@0x29F40	NUN5_TEXTENG@0x51A0	slot	52				
 T259	1	Character menus > Ultimate Jutsu name	<r鹿蝶封結|かちょうふうげつ>	Kachofuketsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x49D690	NUN5_TEXTENG@0x78F0	slot	32				
 T260	1	Character menus > Ultimate Jutsu name	<r涅槃精舎|ねはんしょうじゃ>の<r術|じゅつ>	Temple of Nirvana Technique			character:ultimate-jutsu-metadata	NA2_SLPS@0x49DE80	NUN5_TEXTENG@0x7960	slot	48				
 T261	1	Character menus > Ultimate Jutsu name	うずまきナルト<r連弾|れんだん>	Naruto Uzumaki Barrage			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD240	NUN5_TEXTENG@0x4960	slot	32				
@@ -452,75 +452,75 @@ T423	1	Character Select > return confirmation	ゲームモード<r選択|せん�
 T424	1	Character Select > return confirmation	タイトルに<r戻|もど>りますか？	Return to Title Screen?			inferred:character-select-return-table	NA2_SLPS@0x4B4260	NUN5_TEXTENG@0x1C90	slot	32				
 T425	1	Character Select > return confirmation	<r任務|にんむ><r選択|せんたく>に<r戻|もど>りますか？	Return to Mission Select?			inferred:character-select-return-table	NA2_SLPS@0x4B4280	NUN5_TEXTENG@0x1E10	slot	64				
 T426	1	Character Select > return confirmation	<r種目選択|しゅもくせんたく>に<r戻|もど>りますか？	Return to Event Select?			inferred:character-select-return-table	NA2_SLPS@0x4B42C0	NUN5_TEXTENG@0x1E30	slot	64				
-T427	1	Character selectors > character or variant name	うずまきナルト	Naruto Uzumaki			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24F98	NUN5_TEXTENG@0x4D8	slot	24				
-T428	1	Character selectors > character or variant name	<r春野|はるの>サクラ	Sakura Haruno			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24FB0	NUN5_TEXTENG@0x4E8	slot	24				
-T429	1	Character selectors > character or variant name	はたけカカシ	Kakashi Hatake			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24FC8	NUN5_TEXTENG@0x568	slot	24				
-T430	1	Character selectors > character or variant name	<r日向|ひゅうが>ネジ	Neji Hyuga			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24FE0	NUN5_TEXTENG@0x528	slot	24				
-T431	1	Character selectors > character or variant name	ロック・リー	Rock Lee			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24FF8	NUN5_TEXTENG@0x538	slot	16				
-T432	1	Character selectors > character or variant name	テンテン	Tenten			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25008	NUN5_SLES@0x513d60	slot	16				
-T433	1	Character selectors > character or variant name	マイト・ガイ	Might Guy			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25018	NUN5_TEXTENG@0x558	slot	24				
-T434	1	Character selectors > character or variant name	<r奈良|なら>シカマル	Shikamaru Nara			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25030	NUN5_TEXTENG@0x548	slot	32				
-T435	1	Character selectors > character or variant name	<r秋道|あきみち>チョウジ	Choji Akimichi			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25050	NUN5_TEXTENG@0x648	slot	32				
-T436	1	Character selectors > character or variant name	<r山中|やまなか>いの	Ino Yamanaka			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25070	NUN5_TEXTENG@0x658	slot	32				
-T437	1	Character selectors > character or variant name	<r猿飛|さるとび>アスマ	Asuma Sarutobi			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25090	NUN5_TEXTENG@0x668	slot	32				
-T438	1	Character selectors > character or variant name	<r犬塚|いぬづか>キバ	Kiba Inuzuka			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x250B0	NUN5_TEXTENG@0x618	slot	32				
-T439	1	Character selectors > character or variant name	<r油女|あぶらめ>シノ	Shino Aburame			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x250D0	NUN5_TEXTENG@0x628	slot	32				
-T440	1	Character selectors > character or variant name	<r日向|ひゅうが>ヒナタ	Hinata Hyuga			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x250F0	NUN5_TEXTENG@0x638	slot	32				
-T441	1	Character selectors > character or variant name	<r夕日|ゆうひ><r紅|くれない>	Kurenai Yuhi			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25110	NUN5_TEXTENG@0x678	slot	32				
-T442	1	Character selectors > character or variant name	<r風影|かぜかげ>・<r我愛羅|ガアラ>	Kazekage Gaara			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25130	NUN5_TEXTENG@0x4F8	slot	40				
-T443	1	Character selectors > character or variant name	カンクロウ	Kankuro			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25158	NUN5_SLES@0x513D88	slot	24				
-T444	1	Character selectors > character or variant name	チヨバア（<r体術|たいじゅつ>）	Granny Chiyo (Taijutsu)			character:roster-name-table	NA2_ETC@0x25170	NUN5_TEXTENG@0x600	slot	32				
-T445	1	Character selectors > character or variant name	うちはイタチ	Itachi Uchiha			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25190	NUN5_TEXTENG@0x578	slot	16				
-T446	1	Character selectors > character or variant name	<r干柿鬼鮫|ほしがきキサメ>	Kisame Hoshigaki			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x251A0	NUN5_TEXTENG@0x590	slot	32				
-T447	1	Character selectors > character or variant name	デイダラ	Deidara			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x251C0	NUN5_TEXTENG@0x254F8	slot	16				
-T448	1	Character selectors > character or variant name	サソリ・ヒルコ	Sasori (Hiruko)			character:roster-name-table	NA2_ETC@0x251D0	NUN5_TEXTENG@0x5F0	slot	16				
-T449	1	Character selectors > character or variant name	チヨバア	Granny Chiyo			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x251E0	NUN5_TEXTENG@0x508	slot	16				
-T450	1	Character selectors > character or variant name	<r自来也|じらいや>	Jiraiya			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x251f0	NUN5_SLES@0x513df0	slot	24				
-T451	1	Character selectors > character or variant name	<r綱手|ツナデ>	Tsunade			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25208	NUN5_TEXTENG@0x29DE	slot	24				
-T452	1	Character selectors > character or variant name	<r大蛇丸|オロチまる>	Orochimaru			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25220	NUN5_TEXTENG@0x688	slot	32				
-T453	1	Character selectors > character or variant name	<r薬師|やくし>カブト	Kabuto Yakushi			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25240	NUN5_TEXTENG@0x698	slot	24				
-T454	1	Character selectors > character or variant name	うちはサスケ	Sasuke Uchiha			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25258	NUN5_TEXTENG@0x6A8	slot	24				
-T455	1	Character selectors > character or variant name	<r九尾第四覚醒状態|きゅうびだいよんかくせいじょうたい>	Nine-Tailed Fourth Awakened State			character:roster-name-table	NA2_ETC@0x25270	NUN5_TEXTENG@0x5B0	slot	64				
-T456	1	Character selectors > character or variant name	サソリ（<r自分傀儡|じぶんくぐつ>）	Sasori (Puppet)			character:roster-name-table	NA2_ETC@0x252B0	NUN5_TEXTENG@0x5E0	slot	48				
-T457	1	Character selectors > character or variant name	うずまきナルト（<r旧章|きゅうしょう>）	N. Uzumaki (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x252E0	NUN5_TEXTENG@0x100	slot	48				
-T458	1	Character selectors > character or variant name	うちはサスケ（<r旧章|きゅうしょう>）	S. Uchiha (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25310	NUN5_TEXTENG@0x120	slot	48				
-T459	1	Character selectors > character or variant name	<r春野|はるの>サクラ（<r旧章|きゅうしょう>）	S. Haruno (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25340	NUN5_TEXTENG@0x1C0	slot	48				
-T460	1	Character selectors > character or variant name	<r日向|ひゅうが>ネジ（<r旧章|きゅうしょう>）	Neji Hyuga (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25370	NUN5_TEXTENG@0x1A0	slot	48				
-T461	1	Character selectors > character or variant name	ロック・リー（<r旧章|きゅうしょう>）	Rock Lee (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x253A0	NUN5_TEXTENG@0x140	slot	48				
-T462	1	Character selectors > character or variant name	テンテン（<r旧章|きゅうしょう>）	Tenten (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x253D0	NUN5_TEXTENG@0x210	slot	48				
-T463	1	Character selectors > character or variant name	<r奈良|なら>シカマル（<r旧章|きゅうしょう>）	S. Nara (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25400	NUN5_TEXTENG@0x180	slot	48				
-T464	1	Character selectors > character or variant name	<r秋道|あきみち>チョウジ（<r旧章|きゅうしょう>）	C. Akimichi (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25430	NUN5_TEXTENG@0x230	slot	64				
-T465	1	Character selectors > character or variant name	<r山中|やまなか>いの（<r旧章|きゅうしょう>）	I. Yamanaka (Class.)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25470	NUN5_TEXTENG@0x250	slot	48				
-T466	1	Character selectors > character or variant name	<r犬塚|いぬづか>キバ（<r旧章|きゅうしょう>）	K. Inuzuka (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x254A0	NUN5_TEXTENG@0x270	slot	48				
-T467	1	Character selectors > character or variant name	<r油女|あぶらめ>シノ（<r旧章|きゅうしょう>）	S. Aburame (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x254D0	NUN5_TEXTENG@0x290	slot	48				
-T468	1	Character selectors > character or variant name	<r日向|ひゅうが>ヒナタ（<r旧章|きゅうしょう>）	H. Hyuga (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25500	NUN5_TEXTENG@0x1F0	slot	48				
-T469	1	Character selectors > character or variant name	<r日向|ひゅうが>ハナビ	Hanabi Hyuga			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25530	NUN5_TEXTENG@0x358	slot	32				
-T470	1	Character selectors > character or variant name	<r木|こ>ノ<r葉丸|はまる><r軍団|ぐんだん>	Konohamaru NS			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25550	NUN5_TEXTENG@0x348	slot	48				
-T471	1	Character selectors > character or variant name	みたらしアンコ	Anko Mitarashi			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25580	NUN5_TEXTENG@0x3B8	slot	16				
-T472	1	Character selectors > character or variant name	<r初代火影|しょだいほかげ>	The First Hokage			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25590	NUN5_TEXTENG@0x370	slot	32				
-T473	1	Character selectors > character or variant name	<r二代目火影|にだいめほかげ>	The Second Hokage			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x255B0	NUN5_TEXTENG@0x3A0	slot	32				
-T474	1	Character selectors > character or variant name	<r三代目火影|さんだいめほかげ>	The Third Hokage			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x255D0	NUN5_TEXTENG@0x2F0	slot	32				
-T475	1	Character selectors > character or variant name	<r黄色|きいろ>い<r閃光|せんこう>	The Yellow Flash			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x255F0	NUN5_TEXTENG@0x330	slot	48				
-T476	1	Character selectors > character or variant name	<r砂瀑|さばく>の<r我愛羅|ガアラ>（<r旧章|きゅうしょう>）	Gaara (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25620	NUN5_TEXTENG@0x160	slot	64				
-T477	1	Character selectors > character or variant name	カンクロウ（<r旧章|きゅうしょう>）	Kankuro (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25660	NUN5_TEXTENG@0x2B0	slot	48				
-T478	1	Character selectors > character or variant name	テマリ（<r旧章|きゅうしょう>）	Temari (Classic)			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25690	NUN5_TEXTENG@0x2D0	slot	32				
-T479	1	Character selectors > character or variant name	<r君麻呂|キミマロ>	Kimimaro			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x256B0	NUN5_TEXTENG@0x318	slot	24				
-T480	1	Character selectors > character or variant name	<r左近|サコン>	Sakon			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x256C8	NUN5_TEXTENG@0x4AD	slot	24				
-T481	1	Character selectors > character or variant name	<r多由也|タユヤ>	Tayuya			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x256E0	NUN5_TEXTENG@0x48D	slot	32				
-T482	1	Character selectors > character or variant name	<r鬼童丸|キドウマル>	Kidomaru			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25700	NUN5_TEXTENG@0x308	slot	32				
-T483	1	Character selectors > character or variant name	<r次郎坊|ジロウボウ>	Jirobo			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25720	NUN5_TEXTENG@0x44D	slot	32				
-T484	1	Character selectors > character or variant name	<r桃地|ももち><r再不斬|ザブザ>	Zabuza Momochi			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25740	NUN5_TEXTENG@0x1D8	slot	32				
-T485	1	Character selectors > character or variant name	<r白|ハク>	Haku			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25760	NUN5_SLES@0x513d48	slot	16				
-T486	1	Character selectors > character or variant name	うずまきナルト（<r九尾|きゅうび>）	Naruto Uzumaki (Nine-Tailed)			character:roster-name-table	NA2_ETC@0x25770	NUN5_TEXTENG@0x3D0	slot	48				
-T487	1	Character selectors > character or variant name	うちはサスケ<r状態|じょうたい>２	Second Stage Sasuke Uchiha			character:roster-name-table	NA2_ETC@0x257A0	NUN5_TEXTENG@0x3F0	slot	48				
-T488	1	Character selectors > character or variant name	すい<r拳|けん>リー	Loopy Fist Lee			character:roster-name-table	NA2_ETC@0x257D0	NUN5_TEXTENG@0x410	slot	32				
-T489	1	Character selectors > character or variant name	<r憑依体我愛羅|ひょういたいガアラ>	Possessed Gaara			character:roster-name-table	NA2_ETC@0x257F0	NUN5_TEXTENG@0x420	slot	48				
-T490	1	Character selectors > character or variant name	<r超|ちょう>チョウジ	Super Choji			character:roster-name-table	NA2_ETC@0x25820	NUN5_TEXTENG@0x430	slot	32				
-T491	1	Character selectors > character or variant name	<r次郎坊|ジロウボウ><r状態|じょうたい>２	Second Stage Jirobo			character:roster-name-table	NA2_ETC@0x25840	NUN5_TEXTENG@0x440	slot	48				
-T492	1	Character selectors > character or variant name	<r鬼童丸|キドウマル><r状態|じょうたい>２	Second Stage Kidomaru			character:roster-name-table	NA2_ETC@0x25870	NUN5_TEXTENG@0x460	slot	48				
-T493	1	Character selectors > character or variant name	<r多由也|タユヤ><r状態|じょうたい>２	Second Stage Tayuya			character:roster-name-table	NA2_ETC@0x258A0	NUN5_TEXTENG@0x480	slot	48				
-T494	1	Character selectors > character or variant name	<r左近|サコン><r状態|じょうたい>２	Second Stage Sakon			character:roster-name-table	NA2_ETC@0x258D0	NUN5_TEXTENG@0x4A0	slot	48				
-T495	1	Character selectors > character or variant name	<r君麻呂|キミマロ><r状態|じょうたい>２	Second Stage Kimimaro			character:roster-name-table	NA2_ETC@0x25900	NUN5_TEXTENG@0x4C0	slot	40				
+T427	1	Character selectors > character or variant name	うずまきナルト	Naruto Uzumaki			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x24F98	NUN5_TEXTENG@0x4D8	slot	24				
+T428	1	Character selectors > character or variant name	<r春野|はるの>サクラ	Sakura Haruno			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x24FB0	NUN5_TEXTENG@0x4E8	slot	24				
+T429	1	Character selectors > character or variant name	はたけカカシ	Kakashi Hatake			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x24FC8	NUN5_TEXTENG@0x568	slot	24				
+T430	1	Character selectors > character or variant name	<r日向|ひゅうが>ネジ	Neji Hyuga			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x24FE0	NUN5_TEXTENG@0x528	slot	24				
+T431	1	Character selectors > character or variant name	ロック・リー	Rock Lee			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x24FF8	NUN5_TEXTENG@0x538	slot	16				
+T432	1	Character selectors > character or variant name	テンテン	Tenten			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25008	NUN5_SLES@0x513d60	slot	16				
+T433	1	Character selectors > character or variant name	マイト・ガイ	Might Guy			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25018	NUN5_TEXTENG@0x558	slot	24				
+T434	1	Character selectors > character or variant name	<r奈良|なら>シカマル	Shikamaru Nara			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25030	NUN5_TEXTENG@0x548	slot	32				
+T435	1	Character selectors > character or variant name	<r秋道|あきみち>チョウジ	Choji Akimichi			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25050	NUN5_TEXTENG@0x648	slot	32				
+T436	1	Character selectors > character or variant name	<r山中|やまなか>いの	Ino Yamanaka			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25070	NUN5_TEXTENG@0x658	slot	32				
+T437	1	Character selectors > character or variant name	<r猿飛|さるとび>アスマ	Asuma Sarutobi			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25090	NUN5_TEXTENG@0x668	slot	32				
+T438	1	Character selectors > character or variant name	<r犬塚|いぬづか>キバ	Kiba Inuzuka			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x250B0	NUN5_TEXTENG@0x618	slot	32				
+T439	1	Character selectors > character or variant name	<r油女|あぶらめ>シノ	Shino Aburame			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x250D0	NUN5_TEXTENG@0x628	slot	32				
+T440	1	Character selectors > character or variant name	<r日向|ひゅうが>ヒナタ	Hinata Hyuga			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x250F0	NUN5_TEXTENG@0x638	slot	32				
+T441	1	Character selectors > character or variant name	<r夕日|ゆうひ><r紅|くれない>	Kurenai Yuhi			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25110	NUN5_TEXTENG@0x678	slot	32				
+T442	1	Character selectors > character or variant name	<r風影|かぜかげ>・<r我愛羅|ガアラ>	Kazekage Gaara			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25130	NUN5_TEXTENG@0x4F8	slot	40				
+T443	1	Character selectors > character or variant name	カンクロウ	Kankuro			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25158	NUN5_SLES@0x513D88	slot	24				
+T444	1	Character selectors > character or variant name	チヨバア（<r体術|たいじゅつ>）	Granny Chiyo (Taijutsu)			e2e:collection/opponents	NA2_ETC@0x25170	NUN5_TEXTENG@0x600	slot	32				
+T445	1	Character selectors > character or variant name	うちはイタチ	Itachi Uchiha			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25190	NUN5_TEXTENG@0x578	slot	16				
+T446	1	Character selectors > character or variant name	<r干柿鬼鮫|ほしがきキサメ>	Kisame Hoshigaki			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x251A0	NUN5_TEXTENG@0x590	slot	32				
+T447	1	Character selectors > character or variant name	デイダラ	Deidara			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x251C0	NUN5_TEXTENG@0x254F8	slot	16				
+T448	1	Character selectors > character or variant name	サソリ・ヒルコ	Sasori (Hiruko)			e2e:collection/opponents	NA2_ETC@0x251D0	NUN5_TEXTENG@0x5F0	slot	16				
+T449	1	Character selectors > character or variant name	チヨバア	Granny Chiyo			e2e:collection/figures	NA2_ETC@0x251E0	NUN5_TEXTENG@0x508	slot	16				
+T450	1	Character selectors > character or variant name	<r自来也|じらいや>	Jiraiya			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x251f0	NUN5_SLES@0x513df0	slot	24				
+T451	1	Character selectors > character or variant name	<r綱手|ツナデ>	Tsunade			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25208	NUN5_TEXTENG@0x29DE	slot	24				
+T452	1	Character selectors > character or variant name	<r大蛇丸|オロチまる>	Orochimaru			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25220	NUN5_TEXTENG@0x688	slot	32				
+T453	1	Character selectors > character or variant name	<r薬師|やくし>カブト	Kabuto Yakushi			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25240	NUN5_TEXTENG@0x698	slot	24				
+T454	1	Character selectors > character or variant name	うちはサスケ	Sasuke Uchiha			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25258	NUN5_TEXTENG@0x6A8	slot	24				
+T455	1	Character selectors > character or variant name	<r九尾第四覚醒状態|きゅうびだいよんかくせいじょうたい>	Nine-Tailed Fourth Awakened State			e2e:collection/opponents	NA2_ETC@0x25270	NUN5_TEXTENG@0x5B0	slot	64				
+T456	1	Character selectors > character or variant name	サソリ（<r自分傀儡|じぶんくぐつ>）	Sasori (Puppet)			e2e:collection/opponents	NA2_ETC@0x252B0	NUN5_TEXTENG@0x5E0	slot	48				
+T457	1	Character selectors > character or variant name	うずまきナルト（<r旧章|きゅうしょう>）	N. Uzumaki (Classic)			e2e:collection/opponents	NA2_ETC@0x252E0	NUN5_TEXTENG@0x100	slot	48				
+T458	1	Character selectors > character or variant name	うちはサスケ（<r旧章|きゅうしょう>）	S. Uchiha (Classic)			e2e:collection/opponents	NA2_ETC@0x25310	NUN5_TEXTENG@0x120	slot	48				
+T459	1	Character selectors > character or variant name	<r春野|はるの>サクラ（<r旧章|きゅうしょう>）	S. Haruno (Classic)			e2e:collection/opponents	NA2_ETC@0x25340	NUN5_TEXTENG@0x1C0	slot	48				
+T460	1	Character selectors > character or variant name	<r日向|ひゅうが>ネジ（<r旧章|きゅうしょう>）	Neji Hyuga (Classic)			e2e:collection/opponents	NA2_ETC@0x25370	NUN5_TEXTENG@0x1A0	slot	48				
+T461	1	Character selectors > character or variant name	ロック・リー（<r旧章|きゅうしょう>）	Rock Lee (Classic)			e2e:collection/opponents	NA2_ETC@0x253A0	NUN5_TEXTENG@0x140	slot	48				
+T462	1	Character selectors > character or variant name	テンテン（<r旧章|きゅうしょう>）	Tenten (Classic)			e2e:collection/opponents	NA2_ETC@0x253D0	NUN5_TEXTENG@0x210	slot	48				
+T463	1	Character selectors > character or variant name	<r奈良|なら>シカマル（<r旧章|きゅうしょう>）	S. Nara (Classic)			e2e:collection/opponents	NA2_ETC@0x25400	NUN5_TEXTENG@0x180	slot	48				
+T464	1	Character selectors > character or variant name	<r秋道|あきみち>チョウジ（<r旧章|きゅうしょう>）	C. Akimichi (Classic)			e2e:collection/opponents	NA2_ETC@0x25430	NUN5_TEXTENG@0x230	slot	64				
+T465	1	Character selectors > character or variant name	<r山中|やまなか>いの（<r旧章|きゅうしょう>）	I. Yamanaka (Class.)			e2e:collection/opponents	NA2_ETC@0x25470	NUN5_TEXTENG@0x250	slot	48				
+T466	1	Character selectors > character or variant name	<r犬塚|いぬづか>キバ（<r旧章|きゅうしょう>）	K. Inuzuka (Classic)			e2e:collection/opponents	NA2_ETC@0x254A0	NUN5_TEXTENG@0x270	slot	48				
+T467	1	Character selectors > character or variant name	<r油女|あぶらめ>シノ（<r旧章|きゅうしょう>）	S. Aburame (Classic)			e2e:collection/opponents	NA2_ETC@0x254D0	NUN5_TEXTENG@0x290	slot	48				
+T468	1	Character selectors > character or variant name	<r日向|ひゅうが>ヒナタ（<r旧章|きゅうしょう>）	H. Hyuga (Classic)			e2e:collection/opponents	NA2_ETC@0x25500	NUN5_TEXTENG@0x1F0	slot	48				
+T469	1	Character selectors > character or variant name	<r日向|ひゅうが>ハナビ	Hanabi Hyuga			e2e:collection/opponents	NA2_ETC@0x25530	NUN5_TEXTENG@0x358	slot	32				
+T470	1	Character selectors > character or variant name	<r木|こ>ノ<r葉丸|はまる><r軍団|ぐんだん>	Konohamaru NS			e2e:collection/opponents	NA2_ETC@0x25550	NUN5_TEXTENG@0x348	slot	48				
+T471	1	Character selectors > character or variant name	みたらしアンコ	Anko Mitarashi			e2e:collection/opponents	NA2_ETC@0x25580	NUN5_TEXTENG@0x3B8	slot	16				
+T472	1	Character selectors > character or variant name	<r初代火影|しょだいほかげ>	The First Hokage			e2e:collection/opponents	NA2_ETC@0x25590	NUN5_TEXTENG@0x370	slot	32				
+T473	1	Character selectors > character or variant name	<r二代目火影|にだいめほかげ>	The Second Hokage			e2e:collection/opponents	NA2_ETC@0x255B0	NUN5_TEXTENG@0x3A0	slot	32				
+T474	1	Character selectors > character or variant name	<r三代目火影|さんだいめほかげ>	The Third Hokage			e2e:collection/opponents	NA2_ETC@0x255D0	NUN5_TEXTENG@0x2F0	slot	32				
+T475	1	Character selectors > character or variant name	<r黄色|きいろ>い<r閃光|せんこう>	The Yellow Flash			e2e:collection/opponents	NA2_ETC@0x255F0	NUN5_TEXTENG@0x330	slot	48				
+T476	1	Character selectors > character or variant name	<r砂瀑|さばく>の<r我愛羅|ガアラ>（<r旧章|きゅうしょう>）	Gaara (Classic)			e2e:collection/opponents	NA2_ETC@0x25620	NUN5_TEXTENG@0x160	slot	64				
+T477	1	Character selectors > character or variant name	カンクロウ（<r旧章|きゅうしょう>）	Kankuro (Classic)			e2e:collection/opponents	NA2_ETC@0x25660	NUN5_TEXTENG@0x2B0	slot	48				
+T478	1	Character selectors > character or variant name	テマリ（<r旧章|きゅうしょう>）	Temari (Classic)			e2e:collection/opponents	NA2_ETC@0x25690	NUN5_TEXTENG@0x2D0	slot	32				
+T479	1	Character selectors > character or variant name	<r君麻呂|キミマロ>	Kimimaro			e2e:collection/opponents	NA2_ETC@0x256B0	NUN5_TEXTENG@0x318	slot	24				
+T480	1	Character selectors > character or variant name	<r左近|サコン>	Sakon			e2e:collection/opponents	NA2_ETC@0x256C8	NUN5_TEXTENG@0x4AD	slot	24				
+T481	1	Character selectors > character or variant name	<r多由也|タユヤ>	Tayuya			e2e:collection/opponents	NA2_ETC@0x256E0	NUN5_TEXTENG@0x48D	slot	32				
+T482	1	Character selectors > character or variant name	<r鬼童丸|キドウマル>	Kidomaru			e2e:collection/opponents	NA2_ETC@0x25700	NUN5_TEXTENG@0x308	slot	32				
+T483	1	Character selectors > character or variant name	<r次郎坊|ジロウボウ>	Jirobo			e2e:collection/opponents	NA2_ETC@0x25720	NUN5_TEXTENG@0x44D	slot	32				
+T484	1	Character selectors > character or variant name	<r桃地|ももち><r再不斬|ザブザ>	Zabuza Momochi			e2e:collection/opponents	NA2_ETC@0x25740	NUN5_TEXTENG@0x1D8	slot	32				
+T485	1	Character selectors > character or variant name	<r白|ハク>	Haku			e2e:collection/opponents	NA2_ETC@0x25760	NUN5_SLES@0x513d48	slot	16				
+T486	1	Character selectors > character or variant name	うずまきナルト（<r九尾|きゅうび>）	Naruto Uzumaki (Nine-Tailed)			e2e:collection/opponents	NA2_ETC@0x25770	NUN5_TEXTENG@0x3D0	slot	48				
+T487	1	Character selectors > character or variant name	うちはサスケ<r状態|じょうたい>２	Second Stage Sasuke Uchiha			e2e:collection/opponents	NA2_ETC@0x257A0	NUN5_TEXTENG@0x3F0	slot	48				
+T488	1	Character selectors > character or variant name	すい<r拳|けん>リー	Loopy Fist Lee			e2e:collection/opponents	NA2_ETC@0x257D0	NUN5_TEXTENG@0x410	slot	32				
+T489	1	Character selectors > character or variant name	<r憑依体我愛羅|ひょういたいガアラ>	Possessed Gaara			e2e:collection/opponents	NA2_ETC@0x257F0	NUN5_TEXTENG@0x420	slot	48				
+T490	1	Character selectors > character or variant name	<r超|ちょう>チョウジ	Super Choji			e2e:collection/opponents	NA2_ETC@0x25820	NUN5_TEXTENG@0x430	slot	32				
+T491	1	Character selectors > character or variant name	<r次郎坊|ジロウボウ><r状態|じょうたい>２	Second Stage Jirobo			e2e:collection/opponents	NA2_ETC@0x25840	NUN5_TEXTENG@0x440	slot	48				
+T492	1	Character selectors > character or variant name	<r鬼童丸|キドウマル><r状態|じょうたい>２	Second Stage Kidomaru			e2e:collection/opponents	NA2_ETC@0x25870	NUN5_TEXTENG@0x460	slot	48				
+T493	1	Character selectors > character or variant name	<r多由也|タユヤ><r状態|じょうたい>２	Second Stage Tayuya			e2e:collection/opponents	NA2_ETC@0x258A0	NUN5_TEXTENG@0x480	slot	48				
+T494	1	Character selectors > character or variant name	<r左近|サコン><r状態|じょうたい>２	Second Stage Sakon			e2e:collection/opponents	NA2_ETC@0x258D0	NUN5_TEXTENG@0x4A0	slot	48				
+T495	1	Character selectors > character or variant name	<r君麻呂|キミマロ><r状態|じょうたい>２	Second Stage Kimimaro			e2e:collection/opponents	NA2_ETC@0x25900	NUN5_TEXTENG@0x4C0	slot	40				
 T496	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x502DF0	NUN5_SLES@0x513D18	slot	8				
 T497	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x5032F8	NUN5_SLES@0x513D18	slot	8				
 T498	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x505F48	NUN5_SLES@0x513D18	slot	8				
@@ -547,311 +547,316 @@ T518	1	Character selectors > character or variant name	サソリ	Sasori			charac
 T519	1	Character selectors > character or variant name	シズネ	Shizune			character:roster-name-table	NA2_SLPS@0x506668	NUN5_SLES@0x513E00	slot	8				
 T520	1	Character selectors > character or variant name	ヤマト	Yamato			character:roster-name-table	NA2_SLPS@0x506670	NUN5_SLES@0x513E20	slot	8				
 T521	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x506B10	NUN5_SLES@0x513D18	slot	8				
-T522	1	Character selectors > character or variant name	サイ	Sai			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x506fe0	NUN5_SLES@0x513e28	slot	8				
-T523	1	Character selectors > character or variant name	テマリ	Temari			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x506fe8	NUN5_SLES@0x513d90	slot	8				
-T524	1	Character selectors > character or variant name	サソリ	Sasori			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x506ff0	NUN5_SLES@0x513dc0	slot	8				
-T525	1	Character selectors > character or variant name	シズネ	Shizune			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x506ff8	NUN5_SLES@0x513e00	slot	8				
-T526	1	Character selectors > character or variant name	ヤマト	Yamato			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x507000	NUN5_SLES@0x513e20	slot	8				
-T527	1	Collection > category label	シミュレーション	Simulation			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2DDA0	NUN5_TEXTENG@0x3E78	slot	24				
-T528	1	Collection > Characters > selector label	<r対戦相手|たいせんあいて>	Opponent			seen:final-acceptance-slot-001	NA2_ETC@0x2EE50	NUN5_TEXTENG@0x778	slot	32				
-T529	1	Collection > Figures > character animation title	ジオラマ	Diorama			character:figure-animation-identifier	NA2_ETC@0x25928	NUN5_ETC@0x28959	slot	28				
-T530	1	Collection > Figures > character animation title	オッス！	Right!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25CD8	NUN5_SLES@0x513F60	slot	16				
-T531	1	Collection > Figures > character animation title	<r影分身|かげぶんしん>の<r術|じゅつ>	Shadow Clone Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25D00	NUN5_TEXTENG@0x3030	slot	40				
-T532	1	Collection > Figures > character animation title	<r暴走|ぼうそう>	Running Wild			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25D40	NUN5_TEXTENG@0x3058	slot	24				
-T533	1	Collection > Figures > character animation title	<r気|き>を<r引|ひ>き<r締|し>めて…	Steady Myself...			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25D70	NUN5_TEXTENG@0x3080	slot	40				
-T534	1	Collection > Figures > character animation title	<r女|おんな>らしく	Ladylike			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25DB0	NUN5_TEXTENG@0x30A8	slot	24				
-T535	1	Collection > Figures > character animation title	<r拳|こぶし>に<r力|ちから>を！	Power in My Fist!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25DE0	NUN5_TEXTENG@0x30D0	slot	32				
-T536	1	Collection > Figures > character animation title	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>	Ninja Art: Beast Scroll Replicas			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25E10	NUN5_TEXTENG@0x3100	slot	48				
-T537	1	Collection > Figures > character animation title	<r索敵|さくてき>	Searching for the Enemy			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25E50	NUN5_TEXTENG@0x3140	slot	24				
-T538	1	Collection > Figures > character animation title	<r飛翔|ひしょう>	Soaring			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25E80	NUN5_SLES@0x513F78	slot	24				
-T539	1	Collection > Figures > character animation title	<r最新作熟読中|さいしんさくじゅくどくちゅう>	Reading the Latest Release			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25EB0	NUN5_TEXTENG@0x3180	slot	48				
-T540	1	Collection > Figures > character animation title	<r牽制攻撃|けんせいこうげき>	Restraining Attack			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25EF0	NUN5_TEXTENG@0x31B0	slot	32				
-T541	1	Collection > Figures > character animation title	<r忍犬口寄|にんけんくちよ>せ	Ninja Hound Summoning			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25F20	NUN5_TEXTENG@0x31E0	slot	32				
-T542	1	Collection > Figures > character animation title	<r柔拳|じゅうけん>	Gentle Fist			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25F50	NUN5_TEXTENG@0x3208	slot	24				
-T543	1	Collection > Figures > character animation title	<r八卦空掌|はっけくうしょう>	8 Trigrams Sky Palm			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25F80	NUN5_TEXTENG@0x3230	slot	32				
-T544	1	Collection > Figures > character animation title	<r点穴打突|てんけつだとつ>！！	Pressure Point Strike!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25FB0	NUN5_TEXTENG@0x3260	slot	32				
-T545	1	Collection > Figures > character animation title	<r戦闘姿勢|せんとうしせい>	Battle Posture			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x25FE0	NUN5_TEXTENG@0x3288	slot	32				
-T546	1	Collection > Figures > character animation title	<r木|こ>ノ<r葉昇風|はしょうふう>	Leaf Rising Wind			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26010	NUN5_TEXTENG@0x32B0	slot	40				
-T547	1	Collection > Figures > character animation title	<r限界|げんかい>を<r超|こ>えろ！	Surpass Your Limits!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26050	NUN5_TEXTENG@0x32E0	slot	40				
-T548	1	Collection > Figures > character animation title	<r忍具|にんぐ>の<r使|つか>い<r手|て>	Tool User			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26090	NUN5_TEXTENG@0x3316	slot	40				
-T549	1	Collection > Figures > character animation title	<r棒体術|ぼうたいじゅつ>	Staff Taijutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x260D0	NUN5_TEXTENG@0x3330	slot	32				
-T550	1	Collection > Figures > character animation title	<r仕込|しこ>み<r炸裂|さくれつ>！	Device Unleashed!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26100	NUN5_TEXTENG@0x3350	slot	40				
-T551	1	Collection > Figures > character animation title	<r熱血青春|ねっけつせいしゅん>ポーズ！	Hot-Blooded Youth Pose!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26140	NUN5_TEXTENG@0x3380	slot	40				
-T552	1	Collection > Figures > character animation title	<r開門|かいもん>ッ！	Opening Gate!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x261B0	NUN5_TEXTENG@0x33D0	slot	24				
-T553	1	Collection > Figures > character animation title	ホラよっ！	Hey!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x261E8	NUN5_SLES@0x513FB8	slot	16				
-T554	1	Collection > Figures > character animation title	<r変|か>わらぬチョウジ	Same Old Choji			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26250	NUN5_TEXTENG@0x3438	slot	24				
-T555	1	Collection > Figures > character animation title	<r張|は>り<r手|て>の<r構|かま>え	Open-Hand Stance			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26280	NUN5_TEXTENG@0x3460	slot	40				
-T556	1	Collection > Figures > character animation title	おっひさー！	Long Time No See!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x262F8	NUN5_TEXTENG@0x34C0	slot	16			NA2_ETC@0x274A4	
-T557	1	Collection > Figures > character animation title	かわいさアピール	Cuteness Appeal			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26320	NUN5_TEXTENG@0x34F0	slot	24				
-T558	1	Collection > Figures > character animation title	<r綺麗|きれい>な<r花|はな>	Beautiful Flower			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26350	NUN5_TEXTENG@0x3510	slot	32				
-T559	1	Collection > Figures > character animation title	やれやれ	Whatever...			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26380	NUN5_TEXTENG@0x3538	slot	16				
-T560	1	Collection > Figures > character animation title	<r装着|そうちゃく>！	Equip!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x263A0	NUN5_SLES@0x513FD8	slot	24				
-T561	1	Collection > Figures > character animation title	<r一閃|いっせん>！	Flash!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x263D0	NUN5_SLES@0x513FE0	slot	24				
-T562	1	Collection > Figures > character animation title	<r登場|とうじょう>	Appearance			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26400	NUN5_TEXTENG@0x3578	slot	24				
-T563	1	Collection > Figures > character animation title	いつでもいっしょ	Always Together			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26430	NUN5_TEXTENG@0x35A0	slot	24				
-T564	1	Collection > Figures > character animation title	ダイナミック！	Dynamic!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26458	NUN5_TEXTENG@0x35C0	slot	16				
-T565	1	Collection > Figures > character animation title	<r静|しず>かな<r男|おとこ>	Silent Man			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26480	NUN5_TEXTENG@0x35E0	slot	32				
-T566	1	Collection > Figures > character animation title	<r寄壊蟲|きかいちゅう>	Parasitic Insects			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x264B0	NUN5_TEXTENG@0x3600	slot	24				
-T567	1	Collection > Figures > character animation title	<r広|ひろ>がる<r蟲|むし>たち	Spreading Bugs			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x264E0	NUN5_TEXTENG@0x3628	slot	32				
-T568	1	Collection > Figures > character animation title	<r闘|たたか>う<r決意|けつい>！	Determined to Fight!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26510	NUN5_TEXTENG@0x3650	slot	32				
-T569	1	Collection > Figures > character animation title	<r心|こころ>の<r準備|じゅんび>が…	Readying My Heart			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26540	NUN5_TEXTENG@0x3680	slot	40				
-T570	1	Collection > Figures > character animation title	<r掌打|しょうだ>！	Strike!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26580	NUN5_SLES@0x514000	slot	24				
-T571	1	Collection > Figures > character animation title	ベスト<r着用|ちゃくよう>	Put On My Best			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x265B0	NUN5_TEXTENG@0x36B8	slot	32				
-T572	1	Collection > Figures > character animation title	<r幻術発動|げんじゅつはつどう>	Genjutsu Activate			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x265E0	NUN5_TEXTENG@0x36E0	slot	32				
-T573	1	Collection > Figures > character animation title	こんなものね	That's it?			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26610	NUN5_TEXTENG@0x3708	slot	16				
-T574	1	Collection > Figures > character animation title	<r威圧|いあつ>	Pressure			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26630	NUN5_TEXTENG@0x9C36	slot	16				
-T575	1	Collection > Figures > character animation title	<r砂|すな>の<r殻|から>	Sand Shell			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26650	NUN5_TEXTENG@0x3748	slot	24				
-T576	1	Collection > Figures > character animation title	<r逃|に>がさん…	You Won't Escape...			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26680	NUN5_TEXTENG@0x3770	slot	24				
-T577	1	Collection > Figures > character animation title	<r傀儡|くぐつ>の<r巻物|まきもの>	Puppet Scroll			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x266C0	NUN5_TEXTENG@0x37B8	slot	40				
-T578	1	Collection > Figures > character animation title	<r傀儡勢揃|くぐつせいぞろ>い！	Puppets Unite!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26700	NUN5_TEXTENG@0x37D8	slot	32				
-T579	1	Collection > Figures > character animation title	<r巨大扇子|きょだいせんす>	Giant Fan			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26730	NUN5_TEXTENG@0x37F8	slot	32				
-T580	1	Collection > Figures > character animation title	<r団子|だんご>で<r一息|ひといき>	Pause to Eat Dumplings			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26760	NUN5_TEXTENG@0x3820	slot	40				
-T581	1	Collection > Figures > character animation title	カマタリと<r一緒|いっしょ>	With Kamatari			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x267A0	NUN5_TEXTENG@0x3848	slot	32				
-T582	1	Collection > Figures > character animation title	まだまだ<r現役|げんえき>	I'm Still In Charge			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x267D0	NUN5_TEXTENG@0x3870	slot	32				
-T583	1	Collection > Figures > character animation title	<r父|ちち>と<r母|はは>	Father and Mother			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26800	NUN5_TEXTENG@0x38A0	slot	24				
-T584	1	Collection > Figures > character animation title	<r仕込|しこ>み	Device			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26828	NUN5_SLES@0x514038	slot	16				
-T585	1	Collection > Figures > character animation title	<r指一|ゆびひと>つあれば…	With One Finger...			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26850	NUN5_TEXTENG@0x38E0	slot	32				
-T586	1	Collection > Figures > character animation title	<r鋭|するど>い<r蹴|け>り	Sharp Kick			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26880	NUN5_TEXTENG@0x390A	slot	32				
-T587	1	Collection > Figures > character animation title	<r幻術|げんじゅつ>！？	Genjutsu?!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x268B0	NUN5_TEXTENG@0x3928	slot	24				
-T588	1	Collection > Figures > character animation title	<r大刀|だいとう>を<r携|たずさ>えて	Carrying a Giant Sword			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x268E0	NUN5_TEXTENG@0x3950	slot	40				
-T589	1	Collection > Figures > character animation title	<r大刀|だいとう>・<r鮫肌|サメハダ>	Samehada			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26920	NUN5_TEXTENG@0x398D	slot	40				
-T590	1	Collection > Figures > character animation title	<r襲|おそ>い<r来|く>る<r怪人|かいじん>！	A Monster Attacks!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26960	NUN5_TEXTENG@0x39B0	slot	48				
-T591	1	Collection > Figures > character animation title	<r楽|たの>しめそうだな	This Should Be Fun			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x269A0	NUN5_TEXTENG@0x39E0	slot	24				
-T592	1	Collection > Figures > character animation title	<r芸術作品|げいじゅつさくひん>	A Work of Art			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x269D0	NUN5_TEXTENG@0x3A08	slot	32				
-T593	1	Collection > Figures > character animation title	<r空|そら>から<r攻|せ>める！	Attack From the Sky!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26A00	NUN5_TEXTENG@0x3A30	slot	32				
-T594	1	Collection > Figures > character animation title	<r完璧|かんぺき>なる<r攻守|こうしゅ>	Perfect Offense and Defense			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26A30	NUN5_TEXTENG@0x3A60	slot	40				
-T595	1	Collection > Figures > character animation title	<r一番|いちばん>のお<r気|き>に<r入|い>り	Favorite			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26A70	NUN5_TEXTENG@0x3A93	slot	48				
-T596	1	Collection > Figures > character animation title	<r自分自身|じぶんじしん>	Myself			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26AB0	NUN5_TEXTENG@0x217B	slot	32				
-T597	1	Collection > Figures > character animation title	あいや<r自来也|じらいや>！	I'm Jiraiya!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26AE0	NUN5_TEXTENG@0x3AC0	slot	32				
-T598	1	Collection > Figures > character animation title	<r四代目|よんだいめ>が<r遺|のこ>した<r術|じゅつ>	Fourth Hokage's Jutsu			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26B10	NUN5_TEXTENG@0x3AE0	slot	56				
-T599	1	Collection > Figures > character animation title	<r蝦蟇仙人|ガマせんにん>	Toad Sage			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26B60	NUN5_TEXTENG@0x3B08	slot	32				
-T600	1	Collection > Figures > character animation title	コレ<r一本|いっぽん>で<r十分|じゅうぶん>	This One is Enough			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26B90	NUN5_TEXTENG@0x3B30	slot	48				
-T601	1	Collection > Figures > character animation title	<r考|かんが>え<r事|ごと>	Something to Think Over			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26BD0	NUN5_TEXTENG@0x3B60	slot	32				
-T602	1	Collection > Figures > character animation title	<r痛天脚|つうてんきゃく>	Heaven Kick			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26C00	NUN5_TEXTENG@0x60F8	slot	32				
-T603	1	Collection > Figures > character animation title	お<r世話係|せわかか>り	Helper Role			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26C40	NUN5_TEXTENG@0x3BC8	slot	24				
-T604	1	Collection > Figures > character animation title	<r突撃|とつげき>！	Attack!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26C70	NUN5_SLES@0x514098	slot	24				
-T605	1	Collection > Figures > character animation title	うんうん	Uh-huh			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26C98	NUN5_SLES@0x5140A8	slot	16				
-T606	1	Collection > Figures > character animation title	<r跳躍|ちょうやく>！	Jump!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26CC0	NUN5_SLES@0x5140B0	slot	24				
-T607	1	Collection > Figures > character animation title	<r木遁|もくとん>・<r木錠壁|もくじょうへき>	Wood Style: Domed Wall			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26CF0	NUN5_TEXTENG@0x3C20	slot	48				
-T608	1	Collection > Figures > character animation title	<r不敵|ふてき>な<r笑|え>み	Fearless Laugh			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26D30	NUN5_TEXTENG@0x3C48	slot	32				
-T609	1	Collection > Figures > character animation title	<r脅威|きょうい>の<r存在|そんざい>	Menacing Presence			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26DA0	NUN5_TEXTENG@0x3CB0	slot	40				
-T610	1	Collection > Figures > character animation title	<r大蛇丸|オロチまる>への<r忠誠|ちゅうせい>	Loyalty to Orochimaru			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26DE0	NUN5_TEXTENG@0x3CE0	slot	48				
-T611	1	Collection > Figures > character animation title	あーあ…	Aww...			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26E20	NUN5_SLES@0x5140C8	slot	16				
-T612	1	Collection > Figures > character animation title	ストック	Stock			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26E40	NUN5_TEXTENG@0x8C5	slot	16				
-T613	1	Collection > Figures > character animation title	<r冷|つめ>たい<r視線|しせん>	Cold Gaze			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26E60	NUN5_TEXTENG@0x3D28	slot	32				
-T614	1	Collection > Figures > character animation title	<r草薙|くさなぎ>の<r剣|つるぎ>！	Sword of Kusanagi!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26E90	NUN5_TEXTENG@0x3D50	slot	40				
-T615	1	Collection > Figures > character animation title	<r千鳥|ちどり>	Chidori			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x26EC8	NUN5_TEXTENG@0x49D8	slot	28				
-T616	1	Collection > Figures > character animation title	ふー…	Hmph...			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x507058	NUN5_SLES@0x513FB0	slot	8				
-T617	1	Collection > Figures > character animation title	さて…	Now then...			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x5070A8	NUN5_TEXTENG@0x3798	slot	8			NA2_ETC@0x27894	
-T618	1	Collection > Figures > character animation title	エヘヘ	Heh Heh			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x507110	NUN5_SLES@0x514090	slot	8				
-T2200	1	Collection > Movie list > locked title	？？？？？？	???			seen:ss7-paired-locked-Movie-entries	NA2_ETC@0x2E738	NUN5_SLES@0x513E48	slot	24				
-T619	1	Collection > Movie list > scene title	<r紅班勢揃|くれないはんせいぞろ>い	Team Kurenai Unites			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2d950	NUN5_TEXTENG@0x3d80	slot	40				
-T620	1	Collection > Movie list > scene title	いのシカチョウトリオ	The Boar-Deer-Butterfly Trio			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2D9D0	NUN5_TEXTENG@0x3DA0	slot	24			NA2_ETC@0x2E0FC	
-T621	1	Collection > Movie list > scene title	ナルトの<r帰郷|ききょう>	Naruto Returns Home			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2da30	NUN5_TEXTENG@0x3dc0	slot	32				
-T622	1	Collection > Movie list > scene title	<r風影|かぜかげ>の<r闘|たたか>い	Battle of the Kazekage			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2da70	NUN5_TEXTENG@0x3de0	slot	40				
-T623	1	Collection > Movie list > scene title	<r木|こ>ノ<r葉|は>の<r白|しろ>い<r牙|きば>！？	White Fang of the Leaf!?			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2dae0	NUN5_TEXTENG@0x3e00	slot	48				
-T624	1	Collection > Movie list > scene title	“<r暁|あかつき>”の<r目的|もくてき>	Akatsuki's Scheme			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2db80	NUN5_TEXTENG@0x3e20	slot	40				
-T625	1	Collection > Movie list > scene title	<r傀儡師|くぐつし>の<r激闘|げきとう>	Fierce Puppetmaster Battle			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2dc30	NUN5_TEXTENG@0x3e40	slot	40				
-T626	1	Collection > Movie list > scene title	<r突然|とつぜん>の<r襲撃|しゅうげき>！	A Sudden Assault!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2dca0	NUN5_TEXTENG@0x3e60	slot	40				
-T627	1	Collection > Movie list > scene title	<r人外|じんがい>の<r闘|たたか>い	Outcast Battle			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2de70	NUN5_TEXTENG@0x3e88	slot	40				
-T628	1	Collection > Movie list > scene title	<r運命|うんめい>の<r再会|さいかい>	Fateful Reunion			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2df50	NUN5_TEXTENG@0x3ea0	slot	40				
-T629	1	Collection > Movie list > scene title	<r漆黒|しっこく>に<r浮|う>かぶ<r影|かげ>	The Pitch-Black Shadow			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2dff0	NUN5_TEXTENG@0x3eb0	slot	48				
-T630	1	Collection > Movies > movie title	<ruby再会|さいかい>の<ruby時|とき>・<ruby壱|いち>	Reunion Time I			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x2FFBA0	NUN5_TEXTENG@0x28930	slot	64				
-T631	1	Collection > Movies > movie title	<ruby封印術|ふういんじゅつ>・<ruby幻龍九封尽|げんりゅうきゅうふうじん>	Sealing Jutsu: Nine Phantom Dragons			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x2ffbe0	NUN5_TEXTENG@0x28670	slot	80				
-T632	1	Collection > Movies > movie title	<ruby常闇|とこやみ>の<ruby者|もの>たち	People of Endless Darkness			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x2ffc30	NUN5_TEXTENG@0x287d0	slot	48				
-T633	1	Collection > Movies > movie title	<ruby忍法|にんぽう>・<ruby超獣偽画|ちょうじゅうぎが>	Ninja Art: Beast Scroll Replicas			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x2ffc60	NUN5_TEXTENG@0x3100	slot	64				
-T634	1	Collection > Movies > movie title	<ruby第四|だいよん>の<ruby覚醒|かくせい>	Fourth Awakened Mode			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x2ffca0	NUN5_TEXTENG@0x28940	slot	48				
-T635	1	Collection > Movies > movie title	<ruby再会|さいかい>の<ruby時|とき>・<ruby弐|に>	Reunion Time II			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x2ffcd0	NUN5_TEXTENG@0x28960	slot	48				
-T636	1	Collection > Movies > movie title	スタッフロール	Credits			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x2ffd00	NUN5_SLES@0x514928	slot	28				
-T637	1	Collection > Music > track title	<r木|こ>ノ<r葉|は><r隠|がく>れの<r里|さと>	Hidden Leaf Village			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B2E0	NUN5_TEXTENG@0x2C40	slot	48				
-T638	1	Collection > Music > track title	<r木|こ>ノ<r葉|は>の<r門|もん>	Hidden Leaf Gate			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B310	NUN5_TEXTENG@0x2C60	slot	32				
-T639	1	Collection > Music > track title	<r五封結界|ごふうけっかい>の<r崖|がけ>	Five-Seal Barrier Cliff			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B330	NUN5_TEXTENG@0x2C80	slot	48				
-T640	1	Collection > Music > track title	<r暁|あかつき>のアジト	Akatsuki Hideout			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B360	NUN5_TEXTENG@0x2CA0	slot	32				
-T641	1	Collection > Music > track title	<r根|ね>の<r本部|ほんぶ>	Foundation's Hideout			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B380	NUN5_TEXTENG@0x2CC0	slot	32				
-T642	1	Collection > Music > track title	<r天地橋|てんちきょう>	Tenchi Bridge			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B3A0	NUN5_TEXTENG@0x2CD8	slot	32				
-T643	1	Collection > Music > track title	<r大蛇丸|オロチまる>のアジト	Orochimaru's Hideout			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B3C0	NUN5_TEXTENG@0x2CF0	slot	32				
-T644	1	Collection > Music > track title	<r大蛇|だいじゃ>の<r祭壇|さいだん>	Altar of Orochi			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B3E0	NUN5_TEXTENG@0x2D10	slot	48				
-T645	1	Collection > Music > track title	<r賑|にぎ>わいの<r里|さと>	Busy Village			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B410	NUN5_TEXTENG@0x2D20	slot	32				
-T646	1	Collection > Music > track title	<r火影|ほかげ>の<r屋敷|やしき>	The Hokage's Mansion			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B430	NUN5_TEXTENG@0x2D30	slot	32				
-T647	1	Collection > Music > track title	<r世界|せかい>を<r駆|か>ける	Travel the World			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B450	NUN5_TEXTENG@0x2D50	slot	32				
-T648	1	Collection > Music > track title	<r砂隠|すながく>れの<r里|さと>	The Hidden Sand Village			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B470	NUN5_TEXTENG@0x2D70	slot	32				
-T649	1	Collection > Music > track title	<r邪傑|じゃけつ>の<r巣穴|すあな>	Jaketsu's Lair			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B490	NUN5_TEXTENG@0x2D88	slot	48				
-T650	1	Collection > Music > track title	<r赤雲|せきうん>	Red Clouds			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B4C0	NUN5_TEXTENG@0x2D98	slot	32				
-T651	1	Collection > Music > track title	<r激戦|げきせん>を<r越|こ>えて	Surviving a Fierce Battle			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B4E0	NUN5_TEXTENG@0x2DB0	slot	32				
-T652	1	Collection > Music > track title	カカシ<r道場|どうじょう>	Kakashi Dojo			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B500	NUN5_TEXTENG@0x2DD0	slot	32				
-T653	1	Collection > Music > track title	やすらぎと<r再会|さいかい>と	Tranquility and Reunion			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B520	NUN5_TEXTENG@0x2DE0	slot	32				
-T654	1	Collection > Music > track title	<r暗雲|あんうん><r来|きた>る	Dark Clouds on the Horizon			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B540	NUN5_TEXTENG@0x2E00	slot	32				
-T655	1	Collection > Music > track title	<r風影|かぜかげ><r襲撃|しゅうげき>	Kazekage being attacked			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B560	NUN5_TEXTENG@0x2E20	slot	48				
-T656	1	Collection > Music > track title	<r緊急指令|きんきゅうしれい>	Emergency Order			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B590	NUN5_TEXTENG@0x2E40	slot	32				
-T657	1	Collection > Music > track title	<r走|はし>る<r緊迫|きんぱく>	Building Tension			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B5B0	NUN5_TEXTENG@0x2E50	slot	32				
-T658	1	Collection > Music > track title	<r恐|おそ>ろしき<r怪人|かいじん>	Fearsome Demon			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B5D0	NUN5_TEXTENG@0x2E68	slot	48				
-T659	1	Collection > Music > track title	<r真紅|しんく>の<r激闘|げきとう>	Crimson Battle			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B600	NUN5_TEXTENG@0x2E78	slot	48				
-T660	1	Collection > Music > track title	<r闇|やみ>を<r抱|いだ>きし<r者|もの>たち	Those Who Embrace the Darkness			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B630	NUN5_TEXTENG@0x2E90	slot	48				
-T661	1	Collection > Music > track title	<r虚|うつ>ろ<r消|き>えゆく<r世界|せかい>	An Ephemeral World			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B660	NUN5_TEXTENG@0x2EB0	slot	48				
-T662	1	Collection > Music > track title	<r絆|きずな>	Bonds			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B690	NUN5_TEXTENG@0x15D8D	slot	16				
-T663	1	Collection > Music > track title	<r偽|いつわ>りの<r存在|そんざい>	An Impostor			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B6A0	NUN5_TEXTENG@0x2EC8	slot	48				
-T664	1	Collection > Music > track title	<r最凶|さいきょう>の<r傀儡師|くぐつし>	Evil Puppetmaster			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B6D0	NUN5_TEXTENG@0x2EE0	slot	48				
-T665	1	Collection > Music > track title	<r決意|けつい><r固|かた>めて	Strong Determination			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B700	NUN5_TEXTENG@0x2F00	slot	32				
-T666	1	Collection > Music > track title	サクラ<r舞|ま>う	Sakura's Dance			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B720	NUN5_TEXTENG@0x2F18	slot	32				
-T667	1	Collection > Music > track title	<r猛|た>け<r吼|ほ>ゆる<r者|もの>	The Wild 			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B740	NUN5_TEXTENG@0x2F28	slot	48				
-T668	1	Collection > Music > track title	<r願|ねが>い…<r空|そら>に<r舞|ま>いて	Wish... Dance on the Clouds			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B770	NUN5_TEXTENG@0x2F40	slot	48				
-T669	1	Collection > Music > track title	<r新生|しんせい>の<r一斑|いっぱん>	The New Squad 1			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B7A0	NUN5_TEXTENG@0x2F60	slot	48				
-T670	1	Collection > Music > track title	<r碧|あお>き<r背中|せなか>	Blue Silhouette			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B7D0	NUN5_TEXTENG@0x2F70	slot	32				
-T671	1	Collection > Music > track title	<r巨悪現|きょあくあらわ>る	Great Evil Appears			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B7F0	NUN5_TEXTENG@0x2F82	slot	32				
-T672	1	Collection > Music > track title	<r荒|あ>れ<r狂|くる>う<r獣|けもの>	The Crazed Beast			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B810	NUN5_TEXTENG@0x2FA0	slot	48				
-T673	1	Collection > Music > track title	<r切迫|せっぱく>の<r二人|ふたり>	The Imminent Duel			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B840	NUN5_TEXTENG@0x2FC0	slot	48				
-T674	1	Collection > Music > track title	<r帰|かえ>るべき<r場所|ばしょ>へ	A Place to Call Home			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B870	NUN5_TEXTENG@0x2FE0	slot	40				
-T675	1	Collection > Music > track title	オルゴール	Music Box			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2B898	NUN5_TEXTENG@0x2FF8	slot	28				
-T676	1	Collection > quit confirmation	<color080860>コレクション<color000000>を<r終了|しゅうりょう>しますか？	<BLACK>Quit <color080860>%1<BLACK>?			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x24F50	NUN5_TEXTENG@0x750	slot	72	format_literal_arg1	arg1=Collection		
-T677	1	Collection > Voice > character voice title	<r悲|かな>しみと<r怒|いか>り	Sadness and Rage			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BB60	NUN5_TEXTENG@0x1E80	slot	32				
-T678	1	Collection > Voice > character voice title	ナルトの<r決意|けつい>	Naruto's Determination			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BB80	NUN5_TEXTENG@0x1EA0	slot	32				
-T679	1	Collection > Voice > character voice title	<r激情|げきじょう>	Passion			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BBA0	NUN5_TEXTENG@0x4AA9	slot	32				
-T680	1	Collection > Voice > character voice title	<r二人|ふたり>の<r繋|つな>がり	The Bond Between Us			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BBC0	NUN5_TEXTENG@0x1EC0	slot	32				
-T681	1	Collection > Voice > character voice title	<r再会|さいかい>…そして…	Reunion, and then...			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BBE0	NUN5_TEXTENG@0x1EE0	slot	32				
-T682	1	Collection > Voice > character voice title	サクラの<r約束|やくそく>	Sakura's Promise			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BC00	NUN5_TEXTENG@0x1F00	slot	32				
-T683	1	Collection > Voice > character voice title	<r決意|けつい>	Resolve			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BC20	NUN5_TEXTENG@0x28869	slot	16				
-T684	1	Collection > Voice > character voice title	<r負|ま>けん<r気|き>	Never Give Up			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BC30	NUN5_TEXTENG@0x1F28	slot	24				
-T685	1	Collection > Voice > character voice title	ナルトのために	For Naruto			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BC48	NUN5_TEXTENG@0x1F38	slot	24				
-T686	1	Collection > Voice > character voice title	いつも<r通|どお>り	Just Like Always			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BC60	NUN5_TEXTENG@0x1F50	slot	32				
-T687	1	Collection > Voice > character voice title	<r初|はじ>めての<r一言|ひとこと>	The First Word			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BC80	NUN5_TEXTENG@0x1F68	slot	48				
-T688	1	Collection > Voice > character voice title	<r狙|ねら>ったキャラ<r位置|いち>	That's What I'm Going For			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BCB0	NUN5_TEXTENG@0x1F80	slot	48				
-T689	1	Collection > Voice > character voice title	<r冷|つめ>たい<r言葉|ことば>	Cold Words			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BCE0	NUN5_TEXTENG@0x1FA0	slot	32				
-T690	1	Collection > Voice > character voice title	<r感情|かんじょう>	Emotion			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BD00	NUN5_SLES@0x513F28	slot	32				
-T691	1	Collection > Voice > character voice title	<r確|たし>かめたいもの	Something I Want to Know			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BD20	NUN5_TEXTENG@0x1FB0	slot	32				
-T692	1	Collection > Voice > character voice title	カカシの<r本気|ほんき>	Kakashi's Seriousness			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BD40	NUN5_TEXTENG@0x1FD0	slot	32				
-T693	1	Collection > Voice > character voice title	<r成長|せいちょう>への<r喜|よろこ>び	Joy of Growth			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BD60	NUN5_TEXTENG@0x1FF4	slot	48				
-T694	1	Collection > Voice > character voice title	ナルトの<r気持|きも>ち・<r壱|いち>	Naruto's Feelings: 1			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BD90	NUN5_TEXTENG@0x2010	slot	48				
-T695	1	Collection > Voice > character voice title	ナルトの<r気持|きも>ち・<r弐|に>	Naruto's Feelings: 2			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BDC0	NUN5_TEXTENG@0x2030	slot	48				
-T696	1	Collection > Voice > character voice title	<r正|ただ>しき<r道|みち>へ	The Path of Righteousness			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BDF0	NUN5_TEXTENG@0x2050	slot	32				
-T697	1	Collection > Voice > character voice title	“<r暁|あかつき>”を<r前|まえ>に	Before Akatsuki			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BE10	NUN5_TEXTENG@0x2070	slot	48				
-T698	1	Collection > Voice > character voice title	<r偽者|にせもの>との<r遭遇|そうぐう>	Encounter with a Fake			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BE40	NUN5_TEXTENG@0x2080	slot	48				
-T699	1	Collection > Voice > character voice title	<r勝利|しょうり>の<r確信|かくしん>	Belief in Victory			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BE70	NUN5_TEXTENG@0x20A0	slot	48				
-T700	1	Collection > Voice > character voice title	<r近距離戦|きんきょりせん>	Close Combat			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BEA0	NUN5_TEXTENG@0x20B8	slot	32				
-T701	1	Collection > Voice > character voice title	<r揺|ゆ>るぎない<r自信|じしん>	Steady Confidence			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BEC0	NUN5_TEXTENG@0x20D0	slot	32				
-T702	1	Collection > Voice > character voice title	<r修業不足|しゅぎょうぶそく>？	Short on Training?!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BEE0	NUN5_TEXTENG@0x20F0	slot	32				
-T703	1	Collection > Voice > character voice title	<r勝利|しょうり>！	Victory!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BF00	NUN5_TEXTENG@0x2108	slot	32				
-T704	1	Collection > Voice > character voice title	<r真剣勝負|しんけんしょうぶ>！	A Serious Duel!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BF20	NUN5_TEXTENG@0x2120	slot	32				
-T705	1	Collection > Voice > character voice title	<r青春|せいしゅん>とは！	Youth is...!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BF40	NUN5_TEXTENG@0x2130	slot	32				
-T706	1	Collection > Voice > character voice title	<r感激|かんげき>！	Admiration!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BF60	NUN5_TEXTENG@0x2140	slot	32				
-T707	1	Collection > Voice > character voice title	つっこみ<r役|やく>	Punchline			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BF80	NUN5_TEXTENG@0x2150	slot	32				
-T708	1	Collection > Voice > character voice title	テンテンの<r自信|じしん>	Tenten's Confidence			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BFA0	NUN5_TEXTENG@0x2160	slot	32				
-T709	1	Collection > Voice > character voice title	<r勝負開始|しょうぶかいし>	The Match Begins			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BFC0	NUN5_TEXTENG@0x2190	slot	32				
-T710	1	Collection > Voice > character voice title	ちょっと<r感心|かんしん>	A Little Impressed			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2BFE0	NUN5_TEXTENG@0x21B0	slot	32				
-T711	1	Collection > Voice > character voice title	<r川|かわ>の<r国|くに>へ！！	To the Land of Rivers!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C000	NUN5_TEXTENG@0x21D0	slot	32				
-T712	1	Collection > Voice > character voice title	<r獣|けもの>レベル…？	The Level of a Beast...?			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C020	NUN5_TEXTENG@0x21F0	slot	32				
-T713	1	Collection > Voice > character voice title	<r高揚|こうよう>する<r心|こころ>！！	Exhilarated Heart!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C040	NUN5_TEXTENG@0x2230	slot	40				
-T714	1	Collection > Voice > character voice title	さすがオレ！！	I'm Awesome!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C068	NUN5_TEXTENG@0x2248	slot	24				
-T715	1	Collection > Voice > character voice title	<r謎|なぞ>の<r忍現|しのびあらわ>る	Mysterious Ninja			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C080	NUN5_TEXTENG@0x28820	slot	40				
-T716	1	Collection > Voice > character voice title	やはりシカマル	It's Shikamaru			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C0A8	NUN5_TEXTENG@0x2278	slot	24				
-T717	1	Collection > Voice > character voice title	<r面倒|めんどう>くささ<r満点|まんてん>	The Biggest Drag			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C0C0	NUN5_TEXTENG@0x2290	slot	48				
-T718	1	Collection > Voice > character voice title	<r男|おとこ>の<r意地|いじ>	A Man's Pride			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C0F0	NUN5_TEXTENG@0x22A8	slot	32				
-T719	1	Collection > Voice > character voice title	<r明晰|めいせき>な<r頭脳|ずのう>	A Bright Mind			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C110	NUN5_TEXTENG@0x22B8	slot	48				
-T720	1	Collection > Voice > character voice title	ポッチャリ<r系|けい>	Tubby			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C140	NUN5_SLES@0x513F30	slot	32				
-T721	1	Collection > Voice > character voice title	<r強力|ごうりき>チョウジ	Powerful Choji			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C160	NUN5_TEXTENG@0x22C8	slot	32				
-T722	1	Collection > Voice > character voice title	シカマルとの<r連係|れんけい>	Team With Shikamaru			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C180	NUN5_TEXTENG@0x22E0	slot	32				
-T723	1	Collection > Voice > character voice title	<r準備万端|じゅんびばんたん>	Well Prepared			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C1A0	NUN5_TEXTENG@0x22F8	slot	32				
-T724	1	Collection > Voice > character voice title	<r旧知|きゅうち>の<r仲|なか>	An Old Friend			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C1C0	NUN5_TEXTENG@0x2308	slot	32				
-T725	1	Collection > Voice > character voice title	いの<r登場|とうじょう>	Ino Appears			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C1E0	NUN5_TEXTENG@0x2318	slot	32				
-T726	1	Collection > Voice > character voice title	<r久々|ひさびさ>の<r対面|たいめん>	A Rare Meeting			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C200	NUN5_TEXTENG@0x2328	slot	48				
-T727	1	Collection > Voice > character voice title	サクラと<r共闘|きょうとう>？	A Shared Cause With Sakura?			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C230	NUN5_TEXTENG@0x2340	slot	32				
-T728	1	Collection > Voice > character voice title	チョウジと<r連係|れんけい>	Team With Choji			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C250	NUN5_TEXTENG@0x2360	slot	32				
-T729	1	Collection > Voice > character voice title	<r自信満々|じしんまんまん>	Full of Confidence			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C270	NUN5_TEXTENG@0x2370	slot	32				
-T730	1	Collection > Voice > character voice title	<r戦闘|せんとう>へ	Into Battle			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C290	NUN5_TEXTENG@0x2388	slot	32				
-T731	1	Collection > Voice > character voice title	<r優|やさ>しい<r言葉|ことば>	Words of Kindness			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C2B0	NUN5_TEXTENG@0x23A0	slot	32				
-T732	1	Collection > Voice > character voice title	<r感謝|かんしゃ>	Thanks			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C2D0	NUN5_TEXTENG@0x2539	slot	32				
-T733	1	Collection > Voice > character voice title	アスマの<r意地|いじ>	Asuma's Pride			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C2F0	NUN5_TEXTENG@0x23C8	slot	32				
-T734	1	Collection > Voice > character voice title	<r新|あら>たな<r手|て>	A New Choice			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C310	NUN5_TEXTENG@0x23D8	slot	32				
-T735	1	Collection > Voice > character voice title	ナルトとの<r再会|さいかい>	Reunion With Naruto			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C330	NUN5_TEXTENG@0x23F0	slot	32				
-T736	1	Collection > Voice > character voice title	<r大|おお>きくなった？	You've Grown?			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C350	NUN5_TEXTENG@0x2408	slot	32				
-T737	1	Collection > Voice > character voice title	ヒナタが<r倒|たお>れて	Hinata Falls			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C370	NUN5_TEXTENG@0x2418	slot	32				
-T738	1	Collection > Voice > character voice title	ヒナタを<r守|まも>って	Protect Hinata			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C390	NUN5_TEXTENG@0x2428	slot	24				
-T739	1	Collection > Voice > character voice title	キバとシノ	Kiba and Shino			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C3A8	NUN5_TEXTENG@0x2438	slot	16				
-T740	1	Collection > Voice > character voice title	シノとナルト	Shino and Naruto			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C3B8	NUN5_TEXTENG@0x2450	slot	24				
-T741	1	Collection > Voice > character voice title	<r拗|す>ねるシノ・<r壱|いち>	Cynical Shino: 1			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C3D0	NUN5_TEXTENG@0x2470	slot	32				
-T742	1	Collection > Voice > character voice title	<r拗|す>ねるシノ・<r弐|に>	Cynical Shino: 2			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C3F0	NUN5_TEXTENG@0x2490	slot	32				
-T743	1	Collection > Voice > character voice title	<r静|しず>かなる<r自信|じしん>	Silent Confidence			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C410	NUN5_TEXTENG@0x24B0	slot	32				
-T744	1	Collection > Voice > character voice title	<r微|かす>かな<r安心|あんしん>	Faint Unease			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C430	NUN5_TEXTENG@0x24C8	slot	32				
-T745	1	Collection > Voice > character voice title	ナルトを<r見|み>かけて	Naruto Spotting			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C450	NUN5_TEXTENG@0x24E0	slot	32				
-T746	1	Collection > Voice > character voice title	<r戦闘前|せんとうまえ>	Before Battle			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C470	NUN5_TEXTENG@0x24F0	slot	32				
-T747	1	Collection > Voice > character voice title	つのる<r心配|しんぱい>	Growing Worry			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C490	NUN5_TEXTENG@0x2500	slot	32				
-T748	1	Collection > Voice > character voice title	ナルトの<r助太刀|すけだち>	Coming to Naruto's Aid			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C4B0	NUN5_TEXTENG@0x2510	slot	32				
-T749	1	Collection > Voice > character voice title	<r感謝|かんしゃ>の<r言葉|ことば>	Words of Thanks			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C4D0	NUN5_TEXTENG@0x2530	slot	48				
-T750	1	Collection > Voice > character voice title	<r幻術使|げんじゅつつか>い	Genjutsu User			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C500	NUN5_TEXTENG@0x2540	slot	32				
-T751	1	Collection > Voice > character voice title	アスマと<r共闘|きょうとう>	A Shared Cause With Asuma			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C520	NUN5_TEXTENG@0x2550	slot	32				
-T752	1	Collection > Voice > character voice title	<r共|とも>に…！	Together!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C540	NUN5_TEXTENG@0x2570	slot	32				
-T753	1	Collection > Voice > character voice title	<r肩透|かたす>かし	Dodging the Issue			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C560	NUN5_TEXTENG@0x2580	slot	32				
-T754	1	Collection > Voice > character voice title	<r不注意厳禁|ふちゅういげんきん>	Caution Required			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C580	NUN5_TEXTENG@0x25A0	slot	48				
-T755	1	Collection > Voice > character voice title	<r風影|かぜかげ>として	As a Kazekage			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C5B0	NUN5_TEXTENG@0x25B8	slot	32				
-T756	1	Collection > Voice > character voice title	<r空虚|くうきょ>な<r世界|せかい>で	In a World of Emptiness			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C5D0	NUN5_TEXTENG@0x25D0	slot	48				
-T757	1	Collection > Voice > character voice title	<r存在|そんざい>	Existence			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C600	NUN5_TEXTENG@0x25E8	slot	32				
-T758	1	Collection > Voice > character voice title	<r新|あたら>しい<r自分|じぶん>	A New Me			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C620	NUN5_TEXTENG@0x25F8	slot	32				
-T759	1	Collection > Voice > character voice title	<r弟|おとうと>のために	For My Brother			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C640	NUN5_TEXTENG@0x2608	slot	24				
-T760	1	Collection > Voice > character voice title	<r驚|おどろ>き	Surprise			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C658	NUN5_TEXTENG@0x2618	slot	24				
-T761	1	Collection > Voice > character voice title	<r滲|にじ>み<r出|で>る<r悔|くや>しさ	Dripping With Frustration			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C670	NUN5_TEXTENG@0x2630	slot	48				
-T762	1	Collection > Voice > character voice title	<r自慢|じまん>の<r傀儡|くぐつ>	Pride in Puppets			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C6A0	NUN5_TEXTENG@0x2650	slot	32				
-T763	1	Collection > Voice > character voice title	<r姉|あね>と<r共|とも>に	With My Sister			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C6C0	NUN5_TEXTENG@0x2668	slot	32				
-T764	1	Collection > Voice > character voice title	<r風|かぜ>の<r使|つか>い<r手|て>	Wielder of the Wind			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C6E0	NUN5_TEXTENG@0x2680	slot	48				
-T765	1	Collection > Voice > character voice title	<r我愛羅|ガアラ>の<r前|まえ>で	Before Gaara			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C710	NUN5_TEXTENG@0x2698	slot	32				
-T766	1	Collection > Voice > character voice title	<r手加減|てかげん>	Going Easy			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C730	NUN5_TEXTENG@0x26A8	slot	32				
-T767	1	Collection > Voice > character voice title	<r姉|あね>の<r喜|よろこ>び	Silent Confidence			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C750	NUN5_TEXTENG@0x24B0	slot	32				
-T768	1	Collection > Voice > character voice title	<r邂逅|かいこう>	Chance Meeting			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C770	NUN5_TEXTENG@0x26B8	slot	32				
-T769	1	Collection > Voice > character voice title	<r忠告|ちゅうこく>	Warning			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C790	NUN5_SLES@0x513F38	slot	24				
-T770	1	Collection > Voice > character voice title	<r余裕|よゆう>	A Cinch			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C7A8	NUN5_SLES@0x513F40	slot	24				
-T771	1	Collection > Voice > character voice title	<r九尾|きゅうび>の<r人柱力|じんちゅうりき>	Host to Nine Tails			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C7C0	NUN5_TEXTENG@0x26D0	slot	48				
-T772	1	Collection > Voice > character voice title	<r強者|きょうしゃ>の<r男|おとこ>	Strong Man			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C7F0	NUN5_TEXTENG@0x26EA	slot	48				
-T773	1	Collection > Voice > character voice title	<r珍獣|ちんじゅう>との<r再会|さいかい>	Re-encounter with the odd beast			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C820	NUN5_TEXTENG@0x2700	slot	48				
-T774	1	Collection > Voice > character voice title	<r獣|けもの>レベル	Beast Level			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C850	NUN5_TEXTENG@0x2720	slot	32				
-T775	1	Collection > Voice > character voice title	<r襲|おそ>い<r掛|か>かる<r鬼鮫|キサメ>	Attacking Kisame			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C870	NUN5_TEXTENG@0x2730	slot	48				
-T776	1	Collection > Voice > character voice title	<r高揚|こうよう>する<r心|こころ>	Exhilarated Heart			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C8A0	NUN5_TEXTENG@0x2750	slot	48				
-T777	1	Collection > Voice > character voice title	<r苛立|いらだ>ち	Irritation			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C8D0	NUN5_TEXTENG@0x2768	slot	32				
-T778	1	Collection > Voice > character voice title	<r一尾|いちび>の<r人柱力|じんちゅうりき>	Host to One Tail			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C8F0	NUN5_TEXTENG@0x2780	slot	48				
-T779	1	Collection > Voice > character voice title	<r刺激|しげき>を<r求|もと>めて	Looking for Excitement			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C920	NUN5_TEXTENG@0x27A0	slot	32				
-T780	1	Collection > Voice > character voice title	<r変|か>わり<r者|もの>	Peculiar			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C940	NUN5_TEXTENG@0x27B8	slot	32				
-T781	1	Collection > Voice > character voice title	デイダラの<r挑発|ちょうはつ>	Deidara's Challenge			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C960	NUN5_TEXTENG@0x27D0	slot	32				
-T782	1	Collection > Voice > character voice title	<r予告|よこく>	Premonition			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C980	NUN5_TEXTENG@0x27E8	slot	16				
-T783	1	Collection > Voice > character voice title	ギャハギャハギャハ！	Wahahaha!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C990	NUN5_TEXTENG@0x27F8	slot	24				
-T784	1	Collection > Voice > character voice title	できること	What Can Be Done			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C9A8	NUN5_TEXTENG@0x2810	slot	24				
-T785	1	Collection > Voice > character voice title	<r最後|さいご>の<r喜|よろこ>び	Final Happiness			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C9C0	NUN5_TEXTENG@0x2830	slot	32				
-T786	1	Collection > Voice > character voice title	<r砂|すな>と<r木|こ>ノ<r葉|は>	The Sand and the Leaf 			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2C9E0	NUN5_TEXTENG@0x2840	slot	32				
-T787	1	Collection > Voice > character voice title	<r最後|さいご>のお<r願|ねが>い	Last Wish			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CA00	NUN5_TEXTENG@0x2858	slot	32				
-T788	1	Collection > Voice > character voice title	サソリの<r性格|せいかく>	Sasori's Nature			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CA20	NUN5_TEXTENG@0x2880	slot	32				
-T789	1	Collection > Voice > character voice title	<r三代目風影|さんだいめかぜかげ>	Third Kazekage			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CA40	NUN5_TEXTENG@0x2894	slot	48				
-T790	1	Collection > Voice > character voice title	<r自分傀儡|じぶんくぐつ>	Self Puppet			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CA70	NUN5_TEXTENG@0x28A8	slot	32				
-T791	1	Collection > Voice > character voice title	<r止|と>まる<r傀儡|くぐつ>	Still Puppets			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CA90	NUN5_TEXTENG@0x28B8	slot	32				
-T792	1	Collection > Voice > character voice title	<r自来也|じらいや>の<r魅力|みりょく>？	Jiraiya's Appeal?			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CAB0	NUN5_TEXTENG@0x28D0	slot	48				
-T793	1	Collection > Voice > character voice title	<r取材|しゅざい>	Research			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CAE0	NUN5_TEXTENG@0x28E8	slot	32				
-T794	1	Collection > Voice > character voice title	<r因縁|いんねん>のケリ	Fated Duel			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CB00	NUN5_TEXTENG@0x28F8	slot	32				
-T795	1	Collection > Voice > character voice title	<r高笑|たかわら>い	Condescending Laugh			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CB20	NUN5_TEXTENG@0x2910	slot	32				
-T796	1	Collection > Voice > character voice title	<r三忍|さんにん>の<r実力|じつりょく>	The Power of the Sannin			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CB40	NUN5_TEXTENG@0x2930	slot	40				
-T797	1	Collection > Voice > character voice title	<r監視|かんし>	Surveillance			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CB68	NUN5_TEXTENG@0x2958	slot	24				
-T798	1	Collection > Voice > character voice title	<r決着|けっちゃく>の<r時|とき>	Settle the Score			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CB80	NUN5_TEXTENG@0x2970	slot	32				
-T799	1	Collection > Voice > character voice title	<r綱手|ツナデ>の<r性格|せいかく>	Tsunade's Nature			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CBA0	NUN5_TEXTENG@0x2990	slot	48				
-T800	1	Collection > Voice > character voice title	<r五代目火影|ごだいめほかげ>	Fifth Hokage			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CBD0	NUN5_TEXTENG@0x29B4	slot	32				
-T801	1	Collection > Voice > character voice title	<r綱手|ツナデ>と<r組手|くみて>	Sparring with Tsunade			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CBF0	NUN5_TEXTENG@0x29D0	slot	32				
-T802	1	Collection > Voice > character voice title	<r本領発揮|ほんりょうはっき>	Realizing Potential 			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CC10	NUN5_TEXTENG@0x29F0	slot	32				
-T803	1	Collection > Voice > character voice title	<r付|つ>き<r人|びと>シズネ	Attendant Shizune			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CC30	NUN5_TEXTENG@0x2A10	slot	32				
-T804	1	Collection > Voice > character voice title	<r医療忍者|いりょうにんじゃ>として	As a Medical Ninja			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CC50	NUN5_TEXTENG@0x2A30	slot	40				
-T805	1	Collection > Voice > character voice title	おめでとう！	Congratulations!			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CC78	NUN5_TEXTENG@0x2A50	slot	24				
-T806	1	Collection > Voice > character voice title	<r代行|だいこう>の<r男|おとこ>	The Stand-In			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CC90	NUN5_TEXTENG@0x2A68	slot	32				
-T807	1	Collection > Voice > character voice title	チームワーク	Teamwork			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CCB0	NUN5_TEXTENG@0x2A78	slot	16				
-T808	1	Collection > Voice > character voice title	<r共通|きょうつう>の<r目的|もくてき>	A Shared Purpose			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CCC0	NUN5_TEXTENG@0x2A90	slot	48				
-T809	1	Collection > Voice > character voice title	<r軽|かる>い<r挑発|ちょうはつ>	A Light Provocation			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CCF0	NUN5_TEXTENG@0x2AB0	slot	32				
-T810	1	Collection > Voice > character voice title	<r行動|こうどう>あるのみ	No Choice But Action			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CD10	NUN5_TEXTENG@0x2AD0	slot	32				
-T811	1	Collection > Voice > character voice title	<r大蛇丸|オロチまる><r現|あらわ>る	Orochimaru is Coming			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CD30	NUN5_TEXTENG@0x2AF0	slot	48				
-T812	1	Collection > Voice > character voice title	<r挑発|ちょうはつ>	Provocation			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CD60	NUN5_TEXTENG@0x2B18	slot	32				
-T813	1	Collection > Voice > character voice title	<r二人|ふたり>の<r対比|たいひ>	Contrasting Pair			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CD80	NUN5_TEXTENG@0x2B30	slot	32				
-T814	1	Collection > Voice > character voice title	<r五年|ごねん>ぶりの<r再会|さいかい>	A Reunion After Five Years			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CDC0	NUN5_TEXTENG@0x2B50	slot	48				
-T815	1	Collection > Voice > character voice title	<r共感|きょうかん>	Sympathy			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CDF0	NUN5_TEXTENG@0x2B70	slot	32				
-T816	1	Collection > Voice > character voice title	カブトの<r挑発|ちょうはつ>	Kabuto's Challenge			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CE10	NUN5_TEXTENG@0x2B80	slot	32				
-T817	1	Collection > Voice > character voice title	<r感心|かんしん>	Impressed			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CE30	NUN5_TEXTENG@0x21B9	slot	32				
-T818	1	Collection > Voice > character voice title	サスケの<r存在|そんざい>	Sasuke's Presence			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CE50	NUN5_TEXTENG@0x2BB0	slot	32				
-T819	1	Collection > Voice > character voice title	ナルトとサスケ	Naruto and Sasuke			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CE70	NUN5_TEXTENG@0x2BD0	slot	16			NA2_ETC@0x2D610	
-T820	1	Collection > Voice > character voice title	<r気|き>まぐれ	Fickle			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CE80	NUN5_SLES@0x513F48	slot	16				
-T821	1	Collection > Voice > character voice title	<r愚|おろ>かなること	Foolishness			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CE90	NUN5_TEXTENG@0x2BE8	slot	32				
-T822	1	Collection > Voice > character voice title	<r兄|あに>との<r繋|つな>がり	Bond Between Brothers			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CEB0	NUN5_TEXTENG@0x2C00	slot	32				
-T823	1	Collection > Voice > character voice title	<r目障|めざわ>りな<r存在|そんざい>	An Unpleasant Sight			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CED0	NUN5_TEXTENG@0x2C20	slot	52				
-T824	1	Collection > Voice > character voice title	ノルマ	Assignment			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x507160	NUN5_TEXTENG@0x2868	slot	8			NA2_ETC@0x2D46C	
-T2158	1	Collection > Voice > Orochimaru voice title	<r通告|つうこく>	Warning			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x2CDA0	NUN5_SLES@0x513F38	slot	32				
+T522	1	Character selectors > character or variant name	サイ	Sai			e2e:collection/characters|e2e:collection/figures	NA2_SLPS@0x506fe0	NUN5_SLES@0x513e28	slot	8				
+T523	1	Character selectors > character or variant name	テマリ	Temari			e2e:collection/characters|e2e:collection/figures	NA2_SLPS@0x506fe8	NUN5_SLES@0x513d90	slot	8				
+T524	1	Character selectors > character or variant name	サソリ	Sasori			e2e:collection/characters|e2e:collection/figures	NA2_SLPS@0x506ff0	NUN5_SLES@0x513dc0	slot	8				
+T525	1	Character selectors > character or variant name	シズネ	Shizune			e2e:collection/characters|e2e:collection/figures	NA2_SLPS@0x506ff8	NUN5_SLES@0x513e00	slot	8				
+T526	1	Character selectors > character or variant name	ヤマト	Yamato			e2e:collection/characters|e2e:collection/figures	NA2_SLPS@0x507000	NUN5_SLES@0x513e20	slot	8				
+T527	1	Collection > category label	シミュレーション	Simulation			e2e:collection/misc	NA2_ETC@0x2DDA0	NUN5_TEXTENG@0x3E78	slot	24				
+T528	1	Collection > Characters > selector label	<r対戦相手|たいせんあいて>	Opponent			e2e:collection/opponents	NA2_ETC@0x2EE50	NUN5_TEXTENG@0x778	slot	32				
+T529	1	Collection > Figures > character animation title	ジオラマ	Diorama			e2e:collection/figures	NA2_ETC@0x25928	NUN5_ETC@0x28959	slot	28				
+T530	1	Collection > Figures > character animation title	オッス！	Right!			e2e:collection/figures	NA2_ETC@0x25CD8	NUN5_SLES@0x513F60	slot	16				
+T531	1	Collection > Figures > character animation title	<r影分身|かげぶんしん>の<r術|じゅつ>	Shadow Clone Jutsu			e2e:collection/figures	NA2_ETC@0x25D00	NUN5_TEXTENG@0x3030	slot	40				
+T532	1	Collection > Figures > character animation title	<r暴走|ぼうそう>	Running Wild			e2e:collection/figures	NA2_ETC@0x25D40	NUN5_TEXTENG@0x3058	slot	24				
+T533	1	Collection > Figures > character animation title	<r気|き>を<r引|ひ>き<r締|し>めて…	Steady Myself...			e2e:collection/figures	NA2_ETC@0x25D70	NUN5_TEXTENG@0x3080	slot	40				
+T534	1	Collection > Figures > character animation title	<r女|おんな>らしく	Ladylike			e2e:collection/figures	NA2_ETC@0x25DB0	NUN5_TEXTENG@0x30A8	slot	24				
+T535	1	Collection > Figures > character animation title	<r拳|こぶし>に<r力|ちから>を！	Power in My Fist!			e2e:collection/figures	NA2_ETC@0x25DE0	NUN5_TEXTENG@0x30D0	slot	32				
+T536	1	Collection > Figures > character animation title	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>	Ninja Art: Beast Scroll Replicas			e2e:collection/figures	NA2_ETC@0x25E10	NUN5_TEXTENG@0x3100	slot	48				
+T537	1	Collection > Figures > character animation title	<r索敵|さくてき>	Searching for the Enemy			e2e:collection/figures	NA2_ETC@0x25E50	NUN5_TEXTENG@0x3140	slot	24				
+T538	1	Collection > Figures > character animation title	<r飛翔|ひしょう>	Soaring			e2e:collection/figures	NA2_ETC@0x25E80	NUN5_SLES@0x513F78	slot	24				
+T539	1	Collection > Figures > character animation title	<r最新作熟読中|さいしんさくじゅくどくちゅう>	Reading the Latest Release			e2e:collection/figures	NA2_ETC@0x25EB0	NUN5_TEXTENG@0x3180	slot	48				
+T540	1	Collection > Figures > character animation title	<r牽制攻撃|けんせいこうげき>	Restraining Attack			e2e:collection/figures	NA2_ETC@0x25EF0	NUN5_TEXTENG@0x31B0	slot	32				
+T541	1	Collection > Figures > character animation title	<r忍犬口寄|にんけんくちよ>せ	Ninja Hound Summoning			e2e:collection/figures	NA2_ETC@0x25F20	NUN5_TEXTENG@0x31E0	slot	32				
+T542	1	Collection > Figures > character animation title	<r柔拳|じゅうけん>	Gentle Fist			e2e:collection/figures	NA2_ETC@0x25F50	NUN5_TEXTENG@0x3208	slot	24				
+T543	1	Collection > Figures > character animation title	<r八卦空掌|はっけくうしょう>	8 Trigrams Sky Palm			e2e:collection/figures	NA2_ETC@0x25F80	NUN5_TEXTENG@0x3230	slot	32				
+T544	1	Collection > Figures > character animation title	<r点穴打突|てんけつだとつ>！！	Pressure Point Strike!			e2e:collection/figures	NA2_ETC@0x25FB0	NUN5_TEXTENG@0x3260	slot	32				
+T545	1	Collection > Figures > character animation title	<r戦闘姿勢|せんとうしせい>	Battle Posture			e2e:collection/figures	NA2_ETC@0x25FE0	NUN5_TEXTENG@0x3288	slot	32				
+T546	1	Collection > Figures > character animation title	<r木|こ>ノ<r葉昇風|はしょうふう>	Leaf Rising Wind			e2e:collection/figures	NA2_ETC@0x26010	NUN5_TEXTENG@0x32B0	slot	40				
+T547	1	Collection > Figures > character animation title	<r限界|げんかい>を<r超|こ>えろ！	Surpass Your Limits!			e2e:collection/figures	NA2_ETC@0x26050	NUN5_TEXTENG@0x32E0	slot	40				
+T548	1	Collection > Figures > character animation title	<r忍具|にんぐ>の<r使|つか>い<r手|て>	Ninja Tool User			e2e:collection/figures	NA2_ETC@0x26090	NUN5_TEXTENG@0x3310	slot	40				
+T549	1	Collection > Figures > character animation title	<r棒体術|ぼうたいじゅつ>	Staff Taijutsu			e2e:collection/figures	NA2_ETC@0x260D0	NUN5_TEXTENG@0x3330	slot	32				
+T550	1	Collection > Figures > character animation title	<r仕込|しこ>み<r炸裂|さくれつ>！	Device Unleashed!			e2e:collection/figures	NA2_ETC@0x26100	NUN5_TEXTENG@0x3350	slot	40				
+T551	1	Collection > Figures > character animation title	<r熱血青春|ねっけつせいしゅん>ポーズ！	Hot-Blooded Youth Pose!			e2e:collection/figures	NA2_ETC@0x26140	NUN5_TEXTENG@0x3380	slot	40				
+T552	1	Collection > Figures > character animation title	<r開門|かいもん>ッ！	Opening Gate!			e2e:collection/figures	NA2_ETC@0x261B0	NUN5_TEXTENG@0x33D0	slot	24				
+T553	1	Collection > Figures > character animation title	ホラよっ！	Hey!			e2e:collection/figures	NA2_ETC@0x261E8	NUN5_SLES@0x513FB8	slot	16				
+T554	1	Collection > Figures > character animation title	<r変|か>わらぬチョウジ	Same Old Choji			e2e:collection/figures	NA2_ETC@0x26250	NUN5_TEXTENG@0x3438	slot	24				
+T555	1	Collection > Figures > character animation title	<r張|は>り<r手|て>の<r構|かま>え	Open-Hand Stance			e2e:collection/figures	NA2_ETC@0x26280	NUN5_TEXTENG@0x3460	slot	40				
+T556	1	Collection > Figures > character animation title	おっひさー！	Long Time No See!			e2e:collection/figures	NA2_ETC@0x262F8	NUN5_TEXTENG@0x34C0	slot	16			NA2_ETC@0x274A4	
+T557	1	Collection > Figures > character animation title	かわいさアピール	Cuteness Appeal			e2e:collection/figures	NA2_ETC@0x26320	NUN5_TEXTENG@0x34F0	slot	24				
+T558	1	Collection > Figures > character animation title	<r綺麗|きれい>な<r花|はな>	Beautiful Flower			e2e:collection/figures	NA2_ETC@0x26350	NUN5_TEXTENG@0x3510	slot	32				
+T559	1	Collection > Figures > character animation title	やれやれ	Whatever...			e2e:collection/figures	NA2_ETC@0x26380	NUN5_TEXTENG@0x3538	slot	16				
+T560	1	Collection > Figures > character animation title	<r装着|そうちゃく>！	Equip!			e2e:collection/figures	NA2_ETC@0x263A0	NUN5_SLES@0x513FD8	slot	24				
+T561	1	Collection > Figures > character animation title	<r一閃|いっせん>！	Flash!			e2e:collection/figures	NA2_ETC@0x263D0	NUN5_SLES@0x513FE0	slot	24				
+T562	1	Collection > Figures > character animation title	<r登場|とうじょう>	Appearance			e2e:collection/figures	NA2_ETC@0x26400	NUN5_TEXTENG@0x3578	slot	24				
+T563	1	Collection > Figures > character animation title	いつでもいっしょ	Always Together			e2e:collection/figures	NA2_ETC@0x26430	NUN5_TEXTENG@0x35A0	slot	24				
+T564	1	Collection > Figures > character animation title	ダイナミック！	Dynamic!			e2e:collection/figures	NA2_ETC@0x26458	NUN5_TEXTENG@0x35C0	slot	16				
+T565	1	Collection > Figures > character animation title	<r静|しず>かな<r男|おとこ>	Silent Man			e2e:collection/figures	NA2_ETC@0x26480	NUN5_TEXTENG@0x35E0	slot	32				
+T566	1	Collection > Figures > character animation title	<r寄壊蟲|きかいちゅう>	Parasitic Insects			e2e:collection/figures	NA2_ETC@0x264B0	NUN5_TEXTENG@0x3600	slot	24				
+T567	1	Collection > Figures > character animation title	<r広|ひろ>がる<r蟲|むし>たち	Spreading Bugs			e2e:collection/figures	NA2_ETC@0x264E0	NUN5_TEXTENG@0x3628	slot	32				
+T568	1	Collection > Figures > character animation title	<r闘|たたか>う<r決意|けつい>！	Determined to Fight!			e2e:collection/figures	NA2_ETC@0x26510	NUN5_TEXTENG@0x3650	slot	32				
+T569	1	Collection > Figures > character animation title	<r心|こころ>の<r準備|じゅんび>が…	Readying My Heart			e2e:collection/figures	NA2_ETC@0x26540	NUN5_TEXTENG@0x3680	slot	40				
+T570	1	Collection > Figures > character animation title	<r掌打|しょうだ>！	Strike!			e2e:collection/figures	NA2_ETC@0x26580	NUN5_SLES@0x514000	slot	24				
+T571	1	Collection > Figures > character animation title	ベスト<r着用|ちゃくよう>	Put On My Best			e2e:collection/figures	NA2_ETC@0x265B0	NUN5_TEXTENG@0x36B8	slot	32				
+T572	1	Collection > Figures > character animation title	<r幻術発動|げんじゅつはつどう>	Genjutsu Activate			e2e:collection/figures	NA2_ETC@0x265E0	NUN5_TEXTENG@0x36E0	slot	32				
+T573	1	Collection > Figures > character animation title	こんなものね	That's it?			e2e:collection/figures	NA2_ETC@0x26610	NUN5_TEXTENG@0x3708	slot	16				
+T574	1	Collection > Figures > character animation title	<r威圧|いあつ>	Coercion			e2e:collection/figures	NA2_ETC@0x26630	NUN5_TEXTENG@0x3728	slot	16				
+T575	1	Collection > Figures > character animation title	<r砂|すな>の<r殻|から>	Sand Shell			e2e:collection/figures	NA2_ETC@0x26650	NUN5_TEXTENG@0x3748	slot	24				
+T576	1	Collection > Figures > character animation title	<r逃|に>がさん…	You Won't Escape...			e2e:collection/figures	NA2_ETC@0x26680	NUN5_TEXTENG@0x3770	slot	24				
+T577	1	Collection > Figures > character animation title	<r傀儡|くぐつ>の<r巻物|まきもの>	Puppet Scroll			e2e:collection/figures	NA2_ETC@0x266C0	NUN5_TEXTENG@0x37B8	slot	40				
+T578	1	Collection > Figures > character animation title	<r傀儡勢揃|くぐつせいぞろ>い！	Puppets Unite!			e2e:collection/figures	NA2_ETC@0x26700	NUN5_TEXTENG@0x37D8	slot	32				
+T579	1	Collection > Figures > character animation title	<r巨大扇子|きょだいせんす>	Giant Fan			e2e:collection/figures	NA2_ETC@0x26730	NUN5_TEXTENG@0x37F8	slot	32				
+T580	1	Collection > Figures > character animation title	<r団子|だんご>で<r一息|ひといき>	Pause to Eat Dumplings			e2e:collection/figures	NA2_ETC@0x26760	NUN5_TEXTENG@0x3820	slot	40				
+T581	1	Collection > Figures > character animation title	カマタリと<r一緒|いっしょ>	With Kamatari			e2e:collection/figures	NA2_ETC@0x267A0	NUN5_TEXTENG@0x3848	slot	32				
+T582	1	Collection > Figures > character animation title	まだまだ<r現役|げんえき>	I'm Still In Charge			e2e:collection/figures	NA2_ETC@0x267D0	NUN5_TEXTENG@0x3870	slot	32				
+T583	1	Collection > Figures > character animation title	<r父|ちち>と<r母|はは>	Father and Mother			e2e:collection/figures	NA2_ETC@0x26800	NUN5_TEXTENG@0x38A0	slot	24				
+T584	1	Collection > Figures > character animation title	<r仕込|しこ>み	Device			e2e:collection/figures	NA2_ETC@0x26828	NUN5_SLES@0x514038	slot	16				
+T585	1	Collection > Figures > character animation title	<r指一|ゆびひと>つあれば…	With One Finger...			e2e:collection/figures	NA2_ETC@0x26850	NUN5_TEXTENG@0x38E0	slot	32				
+T586	1	Collection > Figures > character animation title	<r鋭|するど>い<r蹴|け>り	A Sharp Kick			e2e:collection/figures	NA2_ETC@0x26880	NUN5_TEXTENG@0x3908	slot	32				
+T587	1	Collection > Figures > character animation title	<r幻術|げんじゅつ>！？	Genjutsu?!			e2e:collection/figures	NA2_ETC@0x268B0	NUN5_TEXTENG@0x3928	slot	24				
+T588	1	Collection > Figures > character animation title	<r大刀|だいとう>を<r携|たずさ>えて	Carrying a Giant Sword			e2e:collection/figures	NA2_ETC@0x268E0	NUN5_TEXTENG@0x3950	slot	40				
+T589	1	Collection > Figures > character animation title	<r大刀|だいとう>・<r鮫肌|サメハダ>	Giant Sword: Samehada			e2e:collection/figures	NA2_ETC@0x26920	NUN5_TEXTENG@0x3980	slot	40				
+T590	1	Collection > Figures > character animation title	<r襲|おそ>い<r来|く>る<r怪人|かいじん>！	A Monster Attacks!			e2e:collection/figures	NA2_ETC@0x26960	NUN5_TEXTENG@0x39B0	slot	48				
+T591	1	Collection > Figures > character animation title	<r楽|たの>しめそうだな	This Should Be Fun			e2e:collection/figures	NA2_ETC@0x269A0	NUN5_TEXTENG@0x39E0	slot	24				
+T592	1	Collection > Figures > character animation title	<r芸術作品|げいじゅつさくひん>	A Work of Art			e2e:collection/figures	NA2_ETC@0x269D0	NUN5_TEXTENG@0x3A08	slot	32				
+T593	1	Collection > Figures > character animation title	<r空|そら>から<r攻|せ>める！	Attack From the Sky!			e2e:collection/figures	NA2_ETC@0x26A00	NUN5_TEXTENG@0x3A30	slot	32				
+T594	1	Collection > Figures > character animation title	<r完璧|かんぺき>なる<r攻守|こうしゅ>	Perfect Offense and Defense			e2e:collection/figures	NA2_ETC@0x26A30	NUN5_TEXTENG@0x3A60	slot	40				
+T595	1	Collection > Figures > character animation title	<r一番|いちばん>のお<r気|き>に<r入|い>り	My Favorite			e2e:collection/figures	NA2_ETC@0x26A70	NUN5_TEXTENG@0x3A90	slot	48				
+T596	1	Collection > Figures > character animation title	<r自分自身|じぶんじしん>	Myself			e2e:collection/figures	NA2_ETC@0x26AB0	NUN5_TEXTENG@0x217B	slot	32				
+T597	1	Collection > Figures > character animation title	あいや<r自来也|じらいや>！	I'm Jiraiya!			e2e:collection/figures	NA2_ETC@0x26AE0	NUN5_TEXTENG@0x3AC0	slot	32				
+T598	1	Collection > Figures > character animation title	<r四代目|よんだいめ>が<r遺|のこ>した<r術|じゅつ>	Fourth Hokage's Jutsu			e2e:collection/figures	NA2_ETC@0x26B10	NUN5_TEXTENG@0x3AE0	slot	56				
+T599	1	Collection > Figures > character animation title	<r蝦蟇仙人|ガマせんにん>	Toad Sage			e2e:collection/figures	NA2_ETC@0x26B60	NUN5_TEXTENG@0x3B08	slot	32				
+T600	1	Collection > Figures > character animation title	コレ<r一本|いっぽん>で<r十分|じゅうぶん>	This One is Enough			e2e:collection/figures	NA2_ETC@0x26B90	NUN5_TEXTENG@0x3B30	slot	48				
+T601	1	Collection > Figures > character animation title	<r考|かんが>え<r事|ごと>	Something to Think Over			e2e:collection/figures	NA2_ETC@0x26BD0	NUN5_TEXTENG@0x3B60	slot	32				
+T602	1	Collection > Figures > character animation title	<r痛天脚|つうてんきゃく>	Heaven Kick of Pain			e2e:collection/figures	NA2_ETC@0x26C00	NUN5_TEXTENG@0x3B90	slot	32				
+T603	1	Collection > Figures > character animation title	お<r世話係|せわかか>り	Helper Role			e2e:collection/figures	NA2_ETC@0x26C40	NUN5_TEXTENG@0x3BC8	slot	24				
+T604	1	Collection > Figures > character animation title	<r突撃|とつげき>！	Attack!			e2e:collection/figures	NA2_ETC@0x26C70	NUN5_SLES@0x514098	slot	24				
+T605	1	Collection > Figures > character animation title	うんうん	Uh-huh			e2e:collection/figures	NA2_ETC@0x26C98	NUN5_SLES@0x5140A8	slot	16				
+T606	1	Collection > Figures > character animation title	<r跳躍|ちょうやく>！	Jump!			e2e:collection/figures	NA2_ETC@0x26CC0	NUN5_SLES@0x5140B0	slot	24				
+T607	1	Collection > Figures > character animation title	<r木遁|もくとん>・<r木錠壁|もくじょうへき>	Wood Style: Domed Wall			e2e:collection/figures	NA2_ETC@0x26CF0	NUN5_TEXTENG@0x3C20	slot	48				
+T608	1	Collection > Figures > character animation title	<r不敵|ふてき>な<r笑|え>み	Fearless Laugh			e2e:collection/figures	NA2_ETC@0x26D30	NUN5_TEXTENG@0x3C48	slot	32				
+T609	1	Collection > Figures > character animation title	<r脅威|きょうい>の<r存在|そんざい>	Menacing Presence			e2e:collection/figures	NA2_ETC@0x26DA0	NUN5_TEXTENG@0x3CB0	slot	40				
+T610	1	Collection > Figures > character animation title	<r大蛇丸|オロチまる>への<r忠誠|ちゅうせい>	Loyalty to Orochimaru			e2e:collection/figures	NA2_ETC@0x26DE0	NUN5_TEXTENG@0x3CE0	slot	48				
+T611	1	Collection > Figures > character animation title	あーあ…	Aww...			e2e:collection/figures	NA2_ETC@0x26E20	NUN5_SLES@0x5140C8	slot	16				
+T612	1	Collection > Figures > character animation title	ストック	Stock			e2e:collection/figures	NA2_ETC@0x26E40	NUN5_TEXTENG@0x8C5	slot	16				
+T613	1	Collection > Figures > character animation title	<r冷|つめ>たい<r視線|しせん>	Cold Gaze			e2e:collection/figures	NA2_ETC@0x26E60	NUN5_TEXTENG@0x3D28	slot	32				
+T614	1	Collection > Figures > character animation title	<r草薙|くさなぎ>の<r剣|つるぎ>！	Sword of Kusanagi!			e2e:collection/figures	NA2_ETC@0x26E90	NUN5_TEXTENG@0x3D50	slot	40				
+T615	1	Collection > Figures > character animation title	<r千鳥|ちどり>	Chidori			e2e:collection/figures	NA2_ETC@0x26EC8	NUN5_TEXTENG@0x49D8	slot	28				
+T616	1	Collection > Figures > character animation title	ふー…	Hmph...			e2e:collection/figures	NA2_SLPS@0x507058	NUN5_SLES@0x513FB0	slot	8				
+T617	1	Collection > Figures > character animation title	さて…	Now then...			e2e:collection/figures	NA2_SLPS@0x5070A8	NUN5_TEXTENG@0x3798	slot	8			NA2_ETC@0x27894	
+T618	1	Collection > Figures > character animation title	エヘヘ	Heh Heh			e2e:collection/figures	NA2_SLPS@0x507110	NUN5_SLES@0x514090	slot	8				
+T2200	1	Collection > Movie list > locked title	？？？？？？	???			e2e:collection/misc	NA2_ETC@0x2E738	NUN5_SLES@0x513E48	slot	24				
+T619	1	Collection > Movie list > scene title	<r紅班勢揃|くれないはんせいぞろ>い	Team Kurenai Unites			e2e:collection/figures	NA2_ETC@0x2d950	NUN5_TEXTENG@0x3d80	slot	40				
+T620	1	Collection > Movie list > scene title	いのシカチョウトリオ	The Boar-Deer-Butterfly Trio			e2e:collection/figures	NA2_ETC@0x2D9D0	NUN5_TEXTENG@0x3DA0	slot	24			NA2_ETC@0x2E0FC	
+T621	1	Collection > Movie list > scene title	ナルトの<r帰郷|ききょう>	Naruto Returns Home			e2e:collection/figures	NA2_ETC@0x2da30	NUN5_TEXTENG@0x3dc0	slot	32				
+T622	1	Collection > Movie list > scene title	<r風影|かぜかげ>の<r闘|たたか>い	Battle of the Kazekage			e2e:collection/figures	NA2_ETC@0x2da70	NUN5_TEXTENG@0x3de0	slot	40				
+T623	1	Collection > Movie list > scene title	<r木|こ>ノ<r葉|は>の<r白|しろ>い<r牙|きば>！？	White Fang of the Leaf!?			e2e:collection/figures	NA2_ETC@0x2dae0	NUN5_TEXTENG@0x3e00	slot	48				
+T624	1	Collection > Movie list > scene title	“<r暁|あかつき>”の<r目的|もくてき>	Akatsuki's Scheme			e2e:collection/figures	NA2_ETC@0x2db80	NUN5_TEXTENG@0x3e20	slot	40				
+T625	1	Collection > Movie list > scene title	<r傀儡師|くぐつし>の<r激闘|げきとう>	Fierce Puppetmaster Battle			e2e:collection/figures	NA2_ETC@0x2dc30	NUN5_TEXTENG@0x3e40	slot	40				
+T626	1	Collection > Movie list > scene title	<r突然|とつぜん>の<r襲撃|しゅうげき>！	A Sudden Assault!			e2e:collection/figures	NA2_ETC@0x2dca0	NUN5_TEXTENG@0x3e60	slot	40				
+T627	1	Collection > Movie list > scene title	<r人外|じんがい>の<r闘|たたか>い	Outcast Battle			e2e:collection/figures	NA2_ETC@0x2de70	NUN5_TEXTENG@0x3e88	slot	40				
+T628	1	Collection > Movie list > scene title	<r運命|うんめい>の<r再会|さいかい>	Fateful Reunion			e2e:collection/figures	NA2_ETC@0x2df50	NUN5_TEXTENG@0x3ea0	slot	40				
+T629	1	Collection > Movie list > scene title	<r漆黒|しっこく>に<r浮|う>かぶ<r影|かげ>	The Pitch-Black Shadow			e2e:collection/figures	NA2_ETC@0x2dff0	NUN5_TEXTENG@0x3eb0	slot	48				
+T630	1	Collection > Movies > movie title	<ruby再会|さいかい>の<ruby時|とき>・<ruby壱|いち>	Reunion Time I			e2e:collection/misc	NA2_SLPS@0x2FFBA0	NUN5_TEXTENG@0x28930	slot	64				
+T631	1	Collection > Movies > movie title	<ruby封印術|ふういんじゅつ>・<ruby幻龍九封尽|げんりゅうきゅうふうじん>	Sealing Jutsu: Nine Phantom Dragons			e2e:collection/misc	NA2_SLPS@0x2ffbe0	NUN5_TEXTENG@0x28670	slot	80				
+T632	1	Collection > Movies > movie title	<ruby常闇|とこやみ>の<ruby者|もの>たち	People of Endless Darkness			e2e:collection/misc	NA2_SLPS@0x2ffc30	NUN5_TEXTENG@0x287d0	slot	48				
+T633	1	Collection > Movies > movie title	<ruby忍法|にんぽう>・<ruby超獣偽画|ちょうじゅうぎが>	Ninja Art: Beast Scroll Replicas			e2e:collection/misc	NA2_SLPS@0x2ffc60	NUN5_TEXTENG@0x3100	slot	64				
+T634	1	Collection > Movies > movie title	<ruby第四|だいよん>の<ruby覚醒|かくせい>	Fourth Awakened Mode			e2e:collection/misc	NA2_SLPS@0x2ffca0	NUN5_TEXTENG@0x28940	slot	48				
+T635	1	Collection > Movies > movie title	<ruby再会|さいかい>の<ruby時|とき>・<ruby弐|に>	Reunion Time II			e2e:collection/misc	NA2_SLPS@0x2ffcd0	NUN5_TEXTENG@0x28960	slot	48				
+T636	1	Collection > Movies > movie title	スタッフロール	Credits			e2e:collection/misc	NA2_SLPS@0x2ffd00	NUN5_SLES@0x514928	slot	28				
+T637	1	Collection > Music > track title	<r木|こ>ノ<r葉|は><r隠|がく>れの<r里|さと>	Hidden Leaf Village			e2e:collection/misc	NA2_ETC@0x2B2E0	NUN5_TEXTENG@0x2C40	slot	48				
+T638	1	Collection > Music > track title	<r木|こ>ノ<r葉|は>の<r門|もん>	Hidden Leaf Gate			e2e:collection/misc	NA2_ETC@0x2B310	NUN5_TEXTENG@0x2C60	slot	32				
+T639	1	Collection > Music > track title	<r五封結界|ごふうけっかい>の<r崖|がけ>	Five-Seal Barrier Cliff			e2e:collection/misc	NA2_ETC@0x2B330	NUN5_TEXTENG@0x2C80	slot	48				
+T640	1	Collection > Music > track title	<r暁|あかつき>のアジト	Akatsuki Hideout			e2e:collection/misc	NA2_ETC@0x2B360	NUN5_TEXTENG@0x2CA0	slot	32				
+T641	1	Collection > Music > track title	<r根|ね>の<r本部|ほんぶ>	Foundation's Hideout			e2e:collection/misc	NA2_ETC@0x2B380	NUN5_TEXTENG@0x2CC0	slot	32				
+T642	1	Collection > Music > track title	<r天地橋|てんちきょう>	Tenchi Bridge			e2e:collection/misc	NA2_ETC@0x2B3A0	NUN5_TEXTENG@0x2CD8	slot	32				
+T643	1	Collection > Music > track title	<r大蛇丸|オロチまる>のアジト	Orochimaru's Hideout			e2e:collection/misc	NA2_ETC@0x2B3C0	NUN5_TEXTENG@0x2CF0	slot	32				
+T644	1	Collection > Music > track title	<r大蛇|だいじゃ>の<r祭壇|さいだん>	Altar of Orochi			e2e:collection/misc	NA2_ETC@0x2B3E0	NUN5_TEXTENG@0x2D10	slot	48				
+T645	1	Collection > Music > track title	<r賑|にぎ>わいの<r里|さと>	Busy Village			e2e:collection/misc	NA2_ETC@0x2B410	NUN5_TEXTENG@0x2D20	slot	32				
+T646	1	Collection > Music > track title	<r火影|ほかげ>の<r屋敷|やしき>	The Hokage's Mansion			e2e:collection/misc	NA2_ETC@0x2B430	NUN5_TEXTENG@0x2D30	slot	32				
+T647	1	Collection > Music > track title	<r世界|せかい>を<r駆|か>ける	Travel the World			e2e:collection/misc	NA2_ETC@0x2B450	NUN5_TEXTENG@0x2D50	slot	32				
+T648	1	Collection > Music > track title	<r砂隠|すながく>れの<r里|さと>	The Hidden Sand Village			e2e:collection/misc	NA2_ETC@0x2B470	NUN5_TEXTENG@0x2D70	slot	32				
+T649	1	Collection > Music > track title	<r邪傑|じゃけつ>の<r巣穴|すあな>	Jaketsu's Lair			e2e:collection/misc	NA2_ETC@0x2B490	NUN5_TEXTENG@0x2D88	slot	48				
+T650	1	Collection > Music > track title	<r赤雲|せきうん>	Red Clouds			e2e:collection/misc	NA2_ETC@0x2B4C0	NUN5_TEXTENG@0x2D98	slot	32				
+T651	1	Collection > Music > track title	<r激戦|げきせん>を<r越|こ>えて	Surviving a Fierce Battle			e2e:collection/misc	NA2_ETC@0x2B4E0	NUN5_TEXTENG@0x2DB0	slot	32				
+T652	1	Collection > Music > track title	カカシ<r道場|どうじょう>	Kakashi Dojo			e2e:collection/misc	NA2_ETC@0x2B500	NUN5_TEXTENG@0x2DD0	slot	32				
+T653	1	Collection > Music > track title	やすらぎと<r再会|さいかい>と	Tranquility and Reunion			e2e:collection/misc	NA2_ETC@0x2B520	NUN5_TEXTENG@0x2DE0	slot	32				
+T654	1	Collection > Music > track title	<r暗雲|あんうん><r来|きた>る	Dark Clouds on the Horizon			e2e:collection/misc	NA2_ETC@0x2B540	NUN5_TEXTENG@0x2E00	slot	32				
+T655	1	Collection > Music > track title	<r風影|かぜかげ><r襲撃|しゅうげき>	Kazekage being attacked			e2e:collection/misc	NA2_ETC@0x2B560	NUN5_TEXTENG@0x2E20	slot	48				
+T656	1	Collection > Music > track title	<r緊急指令|きんきゅうしれい>	Emergency Order			e2e:collection/misc	NA2_ETC@0x2B590	NUN5_TEXTENG@0x2E40	slot	32				
+T657	1	Collection > Music > track title	<r走|はし>る<r緊迫|きんぱく>	Building Tension			e2e:collection/misc	NA2_ETC@0x2B5B0	NUN5_TEXTENG@0x2E50	slot	32				
+T658	1	Collection > Music > track title	<r恐|おそ>ろしき<r怪人|かいじん>	Fearsome Demon			e2e:collection/misc	NA2_ETC@0x2B5D0	NUN5_TEXTENG@0x2E68	slot	48				
+T659	1	Collection > Music > track title	<r真紅|しんく>の<r激闘|げきとう>	Crimson Battle			e2e:collection/misc	NA2_ETC@0x2B600	NUN5_TEXTENG@0x2E78	slot	48				
+T660	1	Collection > Music > track title	<r闇|やみ>を<r抱|いだ>きし<r者|もの>たち	Those Who Embrace the Darkness			e2e:collection/misc	NA2_ETC@0x2B630	NUN5_TEXTENG@0x2E90	slot	48				
+T661	1	Collection > Music > track title	<r虚|うつ>ろ<r消|き>えゆく<r世界|せかい>	An Ephemeral World			e2e:collection/misc	NA2_ETC@0x2B660	NUN5_TEXTENG@0x2EB0	slot	48				
+T662	1	Collection > Music > track title	<r絆|きずな>	Bonds			e2e:collection/misc	NA2_ETC@0x2B690	NUN5_TEXTENG@0x15D8D	slot	16				
+T663	1	Collection > Music > track title	<r偽|いつわ>りの<r存在|そんざい>	An Impostor			e2e:collection/misc	NA2_ETC@0x2B6A0	NUN5_TEXTENG@0x2EC8	slot	48				
+T664	1	Collection > Music > track title	<r最凶|さいきょう>の<r傀儡師|くぐつし>	Evil Puppetmaster			e2e:collection/misc	NA2_ETC@0x2B6D0	NUN5_TEXTENG@0x2EE0	slot	48				
+T665	1	Collection > Music > track title	<r決意|けつい><r固|かた>めて	Strong Determination			e2e:collection/misc	NA2_ETC@0x2B700	NUN5_TEXTENG@0x2F00	slot	32				
+T666	1	Collection > Music > track title	サクラ<r舞|ま>う	Sakura's Dance			e2e:collection/misc	NA2_ETC@0x2B720	NUN5_TEXTENG@0x2F18	slot	32				
+T667	1	Collection > Music > track title	<r猛|た>け<r吼|ほ>ゆる<r者|もの>	The Wild 			e2e:collection/misc	NA2_ETC@0x2B740	NUN5_TEXTENG@0x2F28	slot	48				
+T668	1	Collection > Music > track title	<r願|ねが>い…<r空|そら>に<r舞|ま>いて	Wish... Dance on the Clouds			e2e:collection/misc	NA2_ETC@0x2B770	NUN5_TEXTENG@0x2F40	slot	48				
+T669	1	Collection > Music > track title	<r新生|しんせい>の<r一斑|いっぱん>	The New Squad 1			e2e:collection/misc	NA2_ETC@0x2B7A0	NUN5_TEXTENG@0x2F60	slot	48				
+T670	1	Collection > Music > track title	<r碧|あお>き<r背中|せなか>	Blue Silhouette			e2e:collection/misc	NA2_ETC@0x2B7D0	NUN5_TEXTENG@0x2F70	slot	32				
+T671	1	Collection > Music > track title	<r巨悪現|きょあくあらわ>る	A Great Evil Appears			e2e:collection/misc	NA2_ETC@0x2B7F0	NUN5_TEXTENG@0x2F80	slot	32				
+T672	1	Collection > Music > track title	<r荒|あ>れ<r狂|くる>う<r獣|けもの>	The Crazed Beast			e2e:collection/misc	NA2_ETC@0x2B810	NUN5_TEXTENG@0x2FA0	slot	48				
+T673	1	Collection > Music > track title	<r切迫|せっぱく>の<r二人|ふたり>	The Imminent Duel			e2e:collection/misc	NA2_ETC@0x2B840	NUN5_TEXTENG@0x2FC0	slot	48				
+T674	1	Collection > Music > track title	<r帰|かえ>るべき<r場所|ばしょ>へ	A Place to Call Home			e2e:collection/misc	NA2_ETC@0x2B870	NUN5_TEXTENG@0x2FE0	slot	40				
+T675	1	Collection > Music > track title	オルゴール	Music Box			e2e:collection/misc	NA2_ETC@0x2B898	NUN5_TEXTENG@0x2FF8	slot	28				
+T676	1	Collection > quit confirmation	<color080860>コレクション<color000000>を<r終了|しゅうりょう>しますか？	<BLACK>Quit <color080860>%1<BLACK>?			e2e:collection/misc	NA2_ETC@0x24F50	NUN5_TEXTENG@0x750	slot	72	format_literal_arg1	arg1=Collection		
+T677	1	Collection > Voice > character voice title	<r悲|かな>しみと<r怒|いか>り	Sadness and Rage			e2e:collection/voice	NA2_ETC@0x2BB60	NUN5_TEXTENG@0x1E80	slot	32				
+T678	1	Collection > Voice > character voice title	ナルトの<r決意|けつい>	Naruto's Determination			e2e:collection/voice	NA2_ETC@0x2BB80	NUN5_TEXTENG@0x1EA0	slot	32				
+T679	1	Collection > Voice > character voice title	<r激情|げきじょう>	Passion			e2e:collection/voice	NA2_ETC@0x2BBA0	NUN5_SLES@0x513F20	slot	32				
+T680	1	Collection > Voice > character voice title	<r二人|ふたり>の<r繋|つな>がり	The Bond Between Us			e2e:collection/voice	NA2_ETC@0x2BBC0	NUN5_TEXTENG@0x1EC0	slot	32				
+T681	1	Collection > Voice > character voice title	<r再会|さいかい>…そして…	Reunion, and then...			e2e:collection/voice	NA2_ETC@0x2BBE0	NUN5_TEXTENG@0x1EE0	slot	32				
+T682	1	Collection > Voice > character voice title	サクラの<r約束|やくそく>	Sakura's Promise			e2e:collection/voice	NA2_ETC@0x2BC00	NUN5_TEXTENG@0x1F00	slot	32				
+T683	1	Collection > Voice > character voice title	<r決意|けつい>	Determination			e2e:collection/voice	NA2_ETC@0x2BC20	NUN5_TEXTENG@0x1F18	slot	16				
+T684	1	Collection > Voice > character voice title	<r負|ま>けん<r気|き>	Never Give Up			e2e:collection/voice	NA2_ETC@0x2BC30	NUN5_TEXTENG@0x1F28	slot	24				
+T685	1	Collection > Voice > character voice title	ナルトのために	For Naruto			e2e:collection/voice	NA2_ETC@0x2BC48	NUN5_TEXTENG@0x1F38	slot	24				
+T686	1	Collection > Voice > character voice title	いつも<r通|どお>り	Just Like Always			e2e:collection/voice	NA2_ETC@0x2BC60	NUN5_TEXTENG@0x1F50	slot	32				
+T687	1	Collection > Voice > character voice title	<r初|はじ>めての<r一言|ひとこと>	The First Word			e2e:collection/voice	NA2_ETC@0x2BC80	NUN5_TEXTENG@0x1F68	slot	48				
+T688	1	Collection > Voice > character voice title	<r狙|ねら>ったキャラ<r位置|いち>	That's What I'm Going For			e2e:collection/voice	NA2_ETC@0x2BCB0	NUN5_TEXTENG@0x1F80	slot	48				
+T689	1	Collection > Voice > character voice title	<r冷|つめ>たい<r言葉|ことば>	Cold Words			e2e:collection/voice	NA2_ETC@0x2BCE0	NUN5_TEXTENG@0x1FA0	slot	32				
+T690	1	Collection > Voice > character voice title	<r感情|かんじょう>	Emotion			e2e:collection/voice	NA2_ETC@0x2BD00	NUN5_SLES@0x513F28	slot	32				
+T691	1	Collection > Voice > character voice title	<r確|たし>かめたいもの	Something I Want to Know			e2e:collection/voice	NA2_ETC@0x2BD20	NUN5_TEXTENG@0x1FB0	slot	32				
+T692	1	Collection > Voice > character voice title	カカシの<r本気|ほんき>	Kakashi's Seriousness			e2e:collection/voice	NA2_ETC@0x2BD40	NUN5_TEXTENG@0x1FD0	slot	32				
+T693	1	Collection > Voice > character voice title	<r成長|せいちょう>への<r喜|よろこ>び	The Joy of Growth			e2e:collection/voice	NA2_ETC@0x2BD60	NUN5_TEXTENG@0x1FF0	slot	48				
+T694	1	Collection > Voice > character voice title	ナルトの<r気持|きも>ち・<r壱|いち>	Naruto's Feelings: 1			e2e:collection/voice	NA2_ETC@0x2BD90	NUN5_TEXTENG@0x2010	slot	48				
+T695	1	Collection > Voice > character voice title	ナルトの<r気持|きも>ち・<r弐|に>	Naruto's Feelings: 2			e2e:collection/voice	NA2_ETC@0x2BDC0	NUN5_TEXTENG@0x2030	slot	48				
+T696	1	Collection > Voice > character voice title	<r正|ただ>しき<r道|みち>へ	The Path of Righteousness			e2e:collection/voice	NA2_ETC@0x2BDF0	NUN5_TEXTENG@0x2050	slot	32				
+T697	1	Collection > Voice > character voice title	“<r暁|あかつき>”を<r前|まえ>に	Before Akatsuki			e2e:collection/voice	NA2_ETC@0x2BE10	NUN5_TEXTENG@0x2070	slot	48				
+T698	1	Collection > Voice > character voice title	<r偽者|にせもの>との<r遭遇|そうぐう>	Encounter with a Fake			e2e:collection/voice	NA2_ETC@0x2BE40	NUN5_TEXTENG@0x2080	slot	48				
+T699	1	Collection > Voice > character voice title	<r勝利|しょうり>の<r確信|かくしん>	Belief in Victory			e2e:collection/voice	NA2_ETC@0x2BE70	NUN5_TEXTENG@0x20A0	slot	48				
+T700	1	Collection > Voice > character voice title	<r近距離戦|きんきょりせん>	Close Combat			e2e:collection/voice	NA2_ETC@0x2BEA0	NUN5_TEXTENG@0x20B8	slot	32				
+T701	1	Collection > Voice > character voice title	<r揺|ゆ>るぎない<r自信|じしん>	Steady Confidence			e2e:collection/voice	NA2_ETC@0x2BEC0	NUN5_TEXTENG@0x20D0	slot	32				
+T702	1	Collection > Voice > character voice title	<r修業不足|しゅぎょうぶそく>？	Short on Training?!			e2e:collection/voice	NA2_ETC@0x2BEE0	NUN5_TEXTENG@0x20F0	slot	32				
+T703	1	Collection > Voice > character voice title	<r勝利|しょうり>！	Victory!			e2e:collection/voice	NA2_ETC@0x2BF00	NUN5_TEXTENG@0x2108	slot	32				
+T704	1	Collection > Voice > character voice title	<r真剣勝負|しんけんしょうぶ>！	A Serious Duel!			e2e:collection/voice	NA2_ETC@0x2BF20	NUN5_TEXTENG@0x2120	slot	32				
+T705	1	Collection > Voice > character voice title	<r青春|せいしゅん>とは！	Youth is...!			e2e:collection/voice	NA2_ETC@0x2BF40	NUN5_TEXTENG@0x2130	slot	32				
+T706	1	Collection > Voice > character voice title	<r感激|かんげき>！	Admiration!			e2e:collection/voice	NA2_ETC@0x2BF60	NUN5_TEXTENG@0x2140	slot	32				
+T707	1	Collection > Voice > character voice title	つっこみ<r役|やく>	Punchline			e2e:collection/voice	NA2_ETC@0x2BF80	NUN5_TEXTENG@0x2150	slot	32				
+T708	1	Collection > Voice > character voice title	テンテンの<r自信|じしん>	Tenten's Confidence			e2e:collection/voice	NA2_ETC@0x2BFA0	NUN5_TEXTENG@0x2160	slot	32				
+T709	1	Collection > Voice > character voice title	<r勝負開始|しょうぶかいし>	The Match Begins			e2e:collection/voice	NA2_ETC@0x2BFC0	NUN5_TEXTENG@0x2190	slot	32				
+T710	1	Collection > Voice > character voice title	ちょっと<r感心|かんしん>	A Little Impressed			e2e:collection/voice	NA2_ETC@0x2BFE0	NUN5_TEXTENG@0x21B0	slot	32				
+T711	1	Collection > Voice > character voice title	<r川|かわ>の<r国|くに>へ！！	To the Land of Rivers!			e2e:collection/voice	NA2_ETC@0x2C000	NUN5_TEXTENG@0x21D0	slot	32				
+T712	1	Collection > Voice > character voice title	<r獣|けもの>レベル…？	The Level of a Beast...?			e2e:collection/voice	NA2_ETC@0x2C020	NUN5_TEXTENG@0x21F0	slot	32				
+T713	1	Collection > Voice > character voice title	<r高揚|こうよう>する<r心|こころ>！！	Exhilarated Heart!			e2e:collection/voice	NA2_ETC@0x2C040	NUN5_TEXTENG@0x2230	slot	40				
+T714	1	Collection > Voice > character voice title	さすがオレ！！	I'm Awesome!			e2e:collection/voice	NA2_ETC@0x2C068	NUN5_TEXTENG@0x2248	slot	24				
+T715	1	Collection > Voice > character voice title	<r謎|なぞ>の<r忍現|しのびあらわ>る	The Mystery Ninja			e2e:collection/voice	NA2_ETC@0x2C080	NUN5_TEXTENG@0x2260	slot	40				
+T716	1	Collection > Voice > character voice title	やはりシカマル	It's Shikamaru			e2e:collection/voice	NA2_ETC@0x2C0A8	NUN5_TEXTENG@0x2278	slot	24				
+T717	1	Collection > Voice > character voice title	<r面倒|めんどう>くささ<r満点|まんてん>	The Biggest Drag			e2e:collection/voice	NA2_ETC@0x2C0C0	NUN5_TEXTENG@0x2290	slot	48				
+T718	1	Collection > Voice > character voice title	<r男|おとこ>の<r意地|いじ>	A Man's Pride			e2e:collection/voice	NA2_ETC@0x2C0F0	NUN5_TEXTENG@0x22A8	slot	32				
+T719	1	Collection > Voice > character voice title	<r明晰|めいせき>な<r頭脳|ずのう>	A Bright Mind			e2e:collection/voice	NA2_ETC@0x2C110	NUN5_TEXTENG@0x22B8	slot	48				
+T720	1	Collection > Voice > character voice title	ポッチャリ<r系|けい>	Tubby			e2e:collection/voice	NA2_ETC@0x2C140	NUN5_SLES@0x513F30	slot	32				
+T721	1	Collection > Voice > character voice title	<r強力|ごうりき>チョウジ	Powerful Choji			e2e:collection/voice	NA2_ETC@0x2C160	NUN5_TEXTENG@0x22C8	slot	32				
+T722	1	Collection > Voice > character voice title	シカマルとの<r連係|れんけい>	Team With Shikamaru			e2e:collection/voice	NA2_ETC@0x2C180	NUN5_TEXTENG@0x22E0	slot	32				
+T723	1	Collection > Voice > character voice title	<r準備万端|じゅんびばんたん>	Well Prepared			e2e:collection/voice	NA2_ETC@0x2C1A0	NUN5_TEXTENG@0x22F8	slot	32				
+T724	1	Collection > Voice > character voice title	<r旧知|きゅうち>の<r仲|なか>	An Old Friend			e2e:collection/voice	NA2_ETC@0x2C1C0	NUN5_TEXTENG@0x2308	slot	32				
+T725	1	Collection > Voice > character voice title	いの<r登場|とうじょう>	Ino Appears			e2e:collection/voice	NA2_ETC@0x2C1E0	NUN5_TEXTENG@0x2318	slot	32				
+T726	1	Collection > Voice > character voice title	<r久々|ひさびさ>の<r対面|たいめん>	A Rare Meeting			e2e:collection/voice	NA2_ETC@0x2C200	NUN5_TEXTENG@0x2328	slot	48				
+T727	1	Collection > Voice > character voice title	サクラと<r共闘|きょうとう>？	A Shared Cause With Sakura?			e2e:collection/voice	NA2_ETC@0x2C230	NUN5_TEXTENG@0x2340	slot	32				
+T728	1	Collection > Voice > character voice title	チョウジと<r連係|れんけい>	Team With Choji			e2e:collection/voice	NA2_ETC@0x2C250	NUN5_TEXTENG@0x2360	slot	32				
+T729	1	Collection > Voice > character voice title	<r自信満々|じしんまんまん>	Full of Confidence			e2e:collection/voice	NA2_ETC@0x2C270	NUN5_TEXTENG@0x2370	slot	32				
+T730	1	Collection > Voice > character voice title	<r戦闘|せんとう>へ	Into Battle			e2e:collection/voice	NA2_ETC@0x2C290	NUN5_TEXTENG@0x2388	slot	32				
+T731	1	Collection > Voice > character voice title	<r優|やさ>しい<r言葉|ことば>	Words of Kindness			e2e:collection/voice	NA2_ETC@0x2C2B0	NUN5_TEXTENG@0x23A0	slot	32				
+T732	1	Collection > Voice > character voice title	<r感謝|かんしゃ>	Gratitude			e2e:collection/voice	NA2_ETC@0x2C2D0	NUN5_TEXTENG@0x23B8	slot	32				
+T733	1	Collection > Voice > character voice title	アスマの<r意地|いじ>	Asuma's Pride			e2e:collection/voice	NA2_ETC@0x2C2F0	NUN5_TEXTENG@0x23C8	slot	32				
+T734	1	Collection > Voice > character voice title	<r新|あら>たな<r手|て>	A New Choice			e2e:collection/voice	NA2_ETC@0x2C310	NUN5_TEXTENG@0x23D8	slot	32				
+T735	1	Collection > Voice > character voice title	ナルトとの<r再会|さいかい>	Reunion With Naruto			e2e:collection/voice	NA2_ETC@0x2C330	NUN5_TEXTENG@0x23F0	slot	32				
+T736	1	Collection > Voice > character voice title	<r大|おお>きくなった？	You've Grown?			e2e:collection/voice	NA2_ETC@0x2C350	NUN5_TEXTENG@0x2408	slot	32				
+T737	1	Collection > Voice > character voice title	ヒナタが<r倒|たお>れて	Hinata Falls			e2e:collection/voice	NA2_ETC@0x2C370	NUN5_TEXTENG@0x2418	slot	32				
+T738	1	Collection > Voice > character voice title	ヒナタを<r守|まも>って	Protect Hinata			e2e:collection/voice	NA2_ETC@0x2C390	NUN5_TEXTENG@0x2428	slot	24				
+T739	1	Collection > Voice > character voice title	キバとシノ	Kiba and Shino			e2e:collection/voice	NA2_ETC@0x2C3A8	NUN5_TEXTENG@0x2438	slot	16				
+T740	1	Collection > Voice > character voice title	シノとナルト	Shino and Naruto			e2e:collection/voice	NA2_ETC@0x2C3B8	NUN5_TEXTENG@0x2450	slot	24				
+T741	1	Collection > Voice > character voice title	<r拗|す>ねるシノ・<r壱|いち>	Cynical Shino: 1			e2e:collection/voice	NA2_ETC@0x2C3D0	NUN5_TEXTENG@0x2470	slot	32				
+T742	1	Collection > Voice > character voice title	<r拗|す>ねるシノ・<r弐|に>	Cynical Shino: 2			e2e:collection/voice	NA2_ETC@0x2C3F0	NUN5_TEXTENG@0x2490	slot	32				
+T743	1	Collection > Voice > character voice title	<r静|しず>かなる<r自信|じしん>	Silent Confidence			e2e:collection/voice	NA2_ETC@0x2C410	NUN5_TEXTENG@0x24B0	slot	32				
+T744	1	Collection > Voice > character voice title	<r微|かす>かな<r安心|あんしん>	Faint Unease			e2e:collection/voice	NA2_ETC@0x2C430	NUN5_TEXTENG@0x24C8	slot	32				
+T745	1	Collection > Voice > character voice title	ナルトを<r見|み>かけて	Naruto Spotting			e2e:collection/voice	NA2_ETC@0x2C450	NUN5_TEXTENG@0x24E0	slot	32				
+T746	1	Collection > Voice > character voice title	<r戦闘前|せんとうまえ>	Before Battle			e2e:collection/voice	NA2_ETC@0x2C470	NUN5_TEXTENG@0x24F0	slot	32				
+T747	1	Collection > Voice > character voice title	つのる<r心配|しんぱい>	Growing Worry			e2e:collection/voice	NA2_ETC@0x2C490	NUN5_TEXTENG@0x2500	slot	32				
+T748	1	Collection > Voice > character voice title	ナルトの<r助太刀|すけだち>	Coming to Naruto's Aid			e2e:collection/voice	NA2_ETC@0x2C4B0	NUN5_TEXTENG@0x2510	slot	32				
+T749	1	Collection > Voice > character voice title	<r感謝|かんしゃ>の<r言葉|ことば>	Words of Thanks			e2e:collection/voice	NA2_ETC@0x2C4D0	NUN5_TEXTENG@0x2530	slot	48				
+T750	1	Collection > Voice > character voice title	<r幻術使|げんじゅつつか>い	Genjutsu User			e2e:collection/voice	NA2_ETC@0x2C500	NUN5_TEXTENG@0x2540	slot	32				
+T751	1	Collection > Voice > character voice title	アスマと<r共闘|きょうとう>	A Shared Cause With Asuma			e2e:collection/voice	NA2_ETC@0x2C520	NUN5_TEXTENG@0x2550	slot	32				
+T752	1	Collection > Voice > character voice title	<r共|とも>に…！	Together!			e2e:collection/voice	NA2_ETC@0x2C540	NUN5_TEXTENG@0x2570	slot	32				
+T753	1	Collection > Voice > character voice title	<r肩透|かたす>かし	Dodging the Issue			e2e:collection/voice	NA2_ETC@0x2C560	NUN5_TEXTENG@0x2580	slot	32				
+T754	1	Collection > Voice > character voice title	<r不注意厳禁|ふちゅういげんきん>	Caution Required			e2e:collection/voice	NA2_ETC@0x2C580	NUN5_TEXTENG@0x25A0	slot	48				
+T755	1	Collection > Voice > character voice title	<r風影|かぜかげ>として	As a Kazekage			e2e:collection/voice	NA2_ETC@0x2C5B0	NUN5_TEXTENG@0x25B8	slot	32				
+T756	1	Collection > Voice > character voice title	<r空虚|くうきょ>な<r世界|せかい>で	In a World of Emptiness			e2e:collection/voice	NA2_ETC@0x2C5D0	NUN5_TEXTENG@0x25D0	slot	48				
+T757	1	Collection > Voice > character voice title	<r存在|そんざい>	Existence			e2e:collection/voice	NA2_ETC@0x2C600	NUN5_TEXTENG@0x25E8	slot	32				
+T758	1	Collection > Voice > character voice title	<r新|あたら>しい<r自分|じぶん>	A New Me			e2e:collection/voice	NA2_ETC@0x2C620	NUN5_TEXTENG@0x25F8	slot	32				
+T759	1	Collection > Voice > character voice title	<r弟|おとうと>のために	For My Brother			e2e:collection/voice	NA2_ETC@0x2C640	NUN5_TEXTENG@0x2608	slot	24				
+T760	1	Collection > Voice > character voice title	<r驚|おどろ>き	Surprise			e2e:collection/voice	NA2_ETC@0x2C658	NUN5_TEXTENG@0x2618	slot	24				
+T761	1	Collection > Voice > character voice title	<r滲|にじ>み<r出|で>る<r悔|くや>しさ	Dripping With Frustration			e2e:collection/voice	NA2_ETC@0x2C670	NUN5_TEXTENG@0x2630	slot	48				
+T762	1	Collection > Voice > character voice title	<r自慢|じまん>の<r傀儡|くぐつ>	Pride in Puppets			e2e:collection/voice	NA2_ETC@0x2C6A0	NUN5_TEXTENG@0x2650	slot	32				
+T763	1	Collection > Voice > character voice title	<r姉|あね>と<r共|とも>に	With My Sister			e2e:collection/voice	NA2_ETC@0x2C6C0	NUN5_TEXTENG@0x2668	slot	32				
+T764	1	Collection > Voice > character voice title	<r風|かぜ>の<r使|つか>い<r手|て>	Wielder of the Wind			e2e:collection/voice	NA2_ETC@0x2C6E0	NUN5_TEXTENG@0x2680	slot	48				
+T765	1	Collection > Voice > character voice title	<r我愛羅|ガアラ>の<r前|まえ>で	Before Gaara			e2e:collection/voice	NA2_ETC@0x2C710	NUN5_TEXTENG@0x2698	slot	32				
+T766	1	Collection > Voice > character voice title	<r手加減|てかげん>	Going Easy			e2e:collection/voice	NA2_ETC@0x2C730	NUN5_TEXTENG@0x26A8	slot	32				
+T767	1	Collection > Voice > character voice title	<r姉|あね>の<r喜|よろこ>び	Silent Confidence			e2e:collection/voice	NA2_ETC@0x2C750	NUN5_TEXTENG@0x24B0	slot	32				
+T768	1	Collection > Voice > character voice title	<r邂逅|かいこう>	Chance Meeting			e2e:collection/voice	NA2_ETC@0x2C770	NUN5_TEXTENG@0x26B8	slot	32				
+T769	1	Collection > Voice > character voice title	<r忠告|ちゅうこく>	Warning			e2e:collection/voice	NA2_ETC@0x2C790	NUN5_SLES@0x513F38	slot	24				
+T770	1	Collection > Voice > character voice title	<r余裕|よゆう>	A Cinch			e2e:collection/voice	NA2_ETC@0x2C7A8	NUN5_SLES@0x513F40	slot	24				
+T771	1	Collection > Voice > character voice title	<r九尾|きゅうび>の<r人柱力|じんちゅうりき>	Host to Nine Tails			e2e:collection/voice	NA2_ETC@0x2C7C0	NUN5_TEXTENG@0x26D0	slot	48				
+T772	1	Collection > Voice > character voice title	<r強者|きょうしゃ>の<r男|おとこ>	A Strong Man			e2e:collection/voice	NA2_ETC@0x2C7F0	NUN5_TEXTENG@0x26E8	slot	48				
+T773	1	Collection > Voice > character voice title	<r珍獣|ちんじゅう>との<r再会|さいかい>	Re-encounter with the odd beast			e2e:collection/voice	NA2_ETC@0x2C820	NUN5_TEXTENG@0x2700	slot	48				
+T774	1	Collection > Voice > character voice title	<r獣|けもの>レベル	Beast Level			e2e:collection/voice	NA2_ETC@0x2C850	NUN5_TEXTENG@0x2720	slot	32				
+T775	1	Collection > Voice > character voice title	<r襲|おそ>い<r掛|か>かる<r鬼鮫|キサメ>	Attacking Kisame			e2e:collection/voice	NA2_ETC@0x2C870	NUN5_TEXTENG@0x2730	slot	48				
+T776	1	Collection > Voice > character voice title	<r高揚|こうよう>する<r心|こころ>	Exhilarated Heart			e2e:collection/voice	NA2_ETC@0x2C8A0	NUN5_TEXTENG@0x2750	slot	48				
+T777	1	Collection > Voice > character voice title	<r苛立|いらだ>ち	Irritation			e2e:collection/voice	NA2_ETC@0x2C8D0	NUN5_TEXTENG@0x2768	slot	32				
+T778	1	Collection > Voice > character voice title	<r一尾|いちび>の<r人柱力|じんちゅうりき>	Host to One Tail			e2e:collection/voice	NA2_ETC@0x2C8F0	NUN5_TEXTENG@0x2780	slot	48				
+T779	1	Collection > Voice > character voice title	<r刺激|しげき>を<r求|もと>めて	Looking for Excitement			e2e:collection/voice	NA2_ETC@0x2C920	NUN5_TEXTENG@0x27A0	slot	32				
+T780	1	Collection > Voice > character voice title	<r変|か>わり<r者|もの>	Peculiar			e2e:collection/voice	NA2_ETC@0x2C940	NUN5_TEXTENG@0x27B8	slot	32				
+T781	1	Collection > Voice > character voice title	デイダラの<r挑発|ちょうはつ>	Deidara's Challenge			e2e:collection/voice	NA2_ETC@0x2C960	NUN5_TEXTENG@0x27D0	slot	32				
+T782	1	Collection > Voice > character voice title	<r予告|よこく>	Premonition			e2e:collection/voice	NA2_ETC@0x2C980	NUN5_TEXTENG@0x27E8	slot	16				
+T783	1	Collection > Voice > character voice title	ギャハギャハギャハ！	Wahahaha!			e2e:collection/voice	NA2_ETC@0x2C990	NUN5_TEXTENG@0x27F8	slot	24				
+T784	1	Collection > Voice > character voice title	できること	What Can Be Done			e2e:collection/voice	NA2_ETC@0x2C9A8	NUN5_TEXTENG@0x2810	slot	24				
+T785	1	Collection > Voice > character voice title	<r最後|さいご>の<r喜|よろこ>び	Final Happiness			e2e:collection/voice	NA2_ETC@0x2C9C0	NUN5_TEXTENG@0x2830	slot	32				
+T786	1	Collection > Voice > character voice title	<r砂|すな>と<r木|こ>ノ<r葉|は>	The Sand and the Leaf 			e2e:collection/voice	NA2_ETC@0x2C9E0	NUN5_TEXTENG@0x2840	slot	32				
+T787	1	Collection > Voice > character voice title	<r最後|さいご>のお<r願|ねが>い	Last Wish			e2e:collection/voice	NA2_ETC@0x2CA00	NUN5_TEXTENG@0x2858	slot	32				
+T788	1	Collection > Voice > character voice title	サソリの<r性格|せいかく>	Sasori's Nature			e2e:collection/voice	NA2_ETC@0x2CA20	NUN5_TEXTENG@0x2880	slot	32				
+T789	1	Collection > Voice > character voice title	<r三代目風影|さんだいめかぜかげ>	The Third Kazekage			e2e:collection/voice	NA2_ETC@0x2CA40	NUN5_TEXTENG@0x2890	slot	48				
+T790	1	Collection > Voice > character voice title	<r自分傀儡|じぶんくぐつ>	Self Puppet			e2e:collection/voice	NA2_ETC@0x2CA70	NUN5_TEXTENG@0x28A8	slot	32				
+T791	1	Collection > Voice > character voice title	<r止|と>まる<r傀儡|くぐつ>	Still Puppets			e2e:collection/voice	NA2_ETC@0x2CA90	NUN5_TEXTENG@0x28B8	slot	32				
+T792	1	Collection > Voice > character voice title	<r自来也|じらいや>の<r魅力|みりょく>？	Jiraiya's Appeal?			e2e:collection/voice	NA2_ETC@0x2CAB0	NUN5_TEXTENG@0x28D0	slot	48				
+T793	1	Collection > Voice > character voice title	<r取材|しゅざい>	Research			e2e:collection/voice	NA2_ETC@0x2CAE0	NUN5_TEXTENG@0x28E8	slot	32				
+T794	1	Collection > Voice > character voice title	<r因縁|いんねん>のケリ	Fated Duel			e2e:collection/voice	NA2_ETC@0x2CB00	NUN5_TEXTENG@0x28F8	slot	32				
+T795	1	Collection > Voice > character voice title	<r高笑|たかわら>い	Condescending Laugh			e2e:collection/voice	NA2_ETC@0x2CB20	NUN5_TEXTENG@0x2910	slot	32				
+T796	1	Collection > Voice > character voice title	<r三忍|さんにん>の<r実力|じつりょく>	The Power of the Sannin			e2e:collection/voice	NA2_ETC@0x2CB40	NUN5_TEXTENG@0x2930	slot	40				
+T797	1	Collection > Voice > character voice title	<r監視|かんし>	Surveillance			e2e:collection/voice	NA2_ETC@0x2CB68	NUN5_TEXTENG@0x2958	slot	24				
+T798	1	Collection > Voice > character voice title	<r決着|けっちゃく>の<r時|とき>	Settle the Score			e2e:collection/voice	NA2_ETC@0x2CB80	NUN5_TEXTENG@0x2970	slot	32				
+T799	1	Collection > Voice > character voice title	<r綱手|ツナデ>の<r性格|せいかく>	Tsunade's Nature			e2e:collection/voice	NA2_ETC@0x2CBA0	NUN5_TEXTENG@0x2990	slot	48				
+T800	1	Collection > Voice > character voice title	<r五代目火影|ごだいめほかげ>	The Fifth Hokage			e2e:collection/voice	NA2_ETC@0x2CBD0	NUN5_TEXTENG@0x29B0	slot	32				
+T801	1	Collection > Voice > character voice title	<r綱手|ツナデ>と<r組手|くみて>	Sparring with Tsunade			e2e:collection/voice	NA2_ETC@0x2CBF0	NUN5_TEXTENG@0x29D0	slot	32				
+T802	1	Collection > Voice > character voice title	<r本領発揮|ほんりょうはっき>	Realizing Potential 			e2e:collection/voice	NA2_ETC@0x2CC10	NUN5_TEXTENG@0x29F0	slot	32				
+T803	1	Collection > Voice > character voice title	<r付|つ>き<r人|びと>シズネ	Attendant Shizune			e2e:collection/voice	NA2_ETC@0x2CC30	NUN5_TEXTENG@0x2A10	slot	32				
+T804	1	Collection > Voice > character voice title	<r医療忍者|いりょうにんじゃ>として	As a Medical Ninja			e2e:collection/voice	NA2_ETC@0x2CC50	NUN5_TEXTENG@0x2A30	slot	40				
+T805	1	Collection > Voice > character voice title	おめでとう！	Congratulations!			e2e:collection/voice	NA2_ETC@0x2CC78	NUN5_TEXTENG@0x2A50	slot	24				
+T806	1	Collection > Voice > character voice title	<r代行|だいこう>の<r男|おとこ>	The Stand-In			e2e:collection/voice	NA2_ETC@0x2CC90	NUN5_TEXTENG@0x2A68	slot	32				
+T807	1	Collection > Voice > character voice title	チームワーク	Teamwork			e2e:collection/voice	NA2_ETC@0x2CCB0	NUN5_TEXTENG@0x2A78	slot	16				
+T808	1	Collection > Voice > character voice title	<r共通|きょうつう>の<r目的|もくてき>	A Shared Purpose			e2e:collection/voice	NA2_ETC@0x2CCC0	NUN5_TEXTENG@0x2A90	slot	48				
+T809	1	Collection > Voice > character voice title	<r軽|かる>い<r挑発|ちょうはつ>	A Light Provocation			e2e:collection/voice	NA2_ETC@0x2CCF0	NUN5_TEXTENG@0x2AB0	slot	32				
+T810	1	Collection > Voice > character voice title	<r行動|こうどう>あるのみ	No Choice But Action			e2e:collection/voice	NA2_ETC@0x2CD10	NUN5_TEXTENG@0x2AD0	slot	32				
+T811	1	Collection > Voice > character voice title	<r大蛇丸|オロチまる><r現|あらわ>る	Orochimaru is Coming			e2e:collection/voice	NA2_ETC@0x2CD30	NUN5_TEXTENG@0x2AF0	slot	48				
+T812	1	Collection > Voice > character voice title	<r挑発|ちょうはつ>	Provocation			e2e:collection/voice	NA2_ETC@0x2CD60	NUN5_TEXTENG@0x2B18	slot	32				
+T813	1	Collection > Voice > character voice title	<r二人|ふたり>の<r対比|たいひ>	Contrasting Pair			e2e:collection/voice	NA2_ETC@0x2CD80	NUN5_TEXTENG@0x2B30	slot	32				
+T814	1	Collection > Voice > character voice title	<r五年|ごねん>ぶりの<r再会|さいかい>	A Reunion After Five Years			e2e:collection/voice	NA2_ETC@0x2CDC0	NUN5_TEXTENG@0x2B50	slot	48				
+T815	1	Collection > Voice > character voice title	<r共感|きょうかん>	Sympathy			e2e:collection/voice	NA2_ETC@0x2CDF0	NUN5_TEXTENG@0x2B70	slot	32				
+T816	1	Collection > Voice > character voice title	カブトの<r挑発|ちょうはつ>	Kabuto's Challenge			e2e:collection/voice	NA2_ETC@0x2CE10	NUN5_TEXTENG@0x2B80	slot	32				
+T817	1	Collection > Voice > character voice title	<r感心|かんしん>	Admiration			e2e:collection/voice	NA2_ETC@0x2CE30	NUN5_TEXTENG@0x2B98	slot	32				
+T818	1	Collection > Voice > character voice title	サスケの<r存在|そんざい>	Sasuke's Presence			e2e:collection/voice	NA2_ETC@0x2CE50	NUN5_TEXTENG@0x2BB0	slot	32				
+T819	1	Collection > Voice > character voice title	ナルトとサスケ	Naruto and Sasuke			e2e:collection/voice	NA2_ETC@0x2CE70	NUN5_TEXTENG@0x2BD0	slot	16			NA2_ETC@0x2D610	
+T820	1	Collection > Voice > character voice title	<r気|き>まぐれ	Fickle			e2e:collection/voice	NA2_ETC@0x2CE80	NUN5_SLES@0x513F48	slot	16				
+T821	1	Collection > Voice > character voice title	<r愚|おろ>かなること	Foolishness			e2e:collection/voice	NA2_ETC@0x2CE90	NUN5_TEXTENG@0x2BE8	slot	32				
+T822	1	Collection > Voice > character voice title	<r兄|あに>との<r繋|つな>がり	Bond Between Brothers			e2e:collection/voice	NA2_ETC@0x2CEB0	NUN5_TEXTENG@0x2C00	slot	32				
+T823	1	Collection > Voice > character voice title	<r目障|めざわ>りな<r存在|そんざい>	An Unpleasant Sight			e2e:collection/voice	NA2_ETC@0x2CED0	NUN5_TEXTENG@0x2C20	slot	52				
+T824	1	Collection > Voice > character voice title	ノルマ	Assignment			e2e:collection/voice	NA2_SLPS@0x507160	NUN5_TEXTENG@0x2868	slot	8			NA2_ETC@0x2D46C	
+T2158	1	Collection > Voice > Orochimaru voice title	<r通告|つうこく>	Warning			e2e:collection/voice	NA2_ETC@0x2CDA0	NUN5_SLES@0x513F38	slot	32				
+T2205	1	Collection > Voice > character voice title	<r自分自身|じぶんじしん>	Me Myself			e2e:collection/voice	NA2_ETC@0x26AB0	NUN5_TEXTENG@0x2178	slot	32			NA2_ETC@0x2D088	
+T2206	1	Collection > Voice > character voice title	<r青春|せいしゅん>フルパワー！！	Youth at Full Power!			e2e:collection/voice	NA2_ETC@0x28730	NUN5_TEXTENG@0x2210	slot	48			NA2_ETC@0x2D0C4	
+T2207	1	Collection > Voice > character voice title	<r勝負開始|しょうぶかいし>	Duel Start			e2e:collection/voice	NA2_ETC@0x2BFC0	NUN5_TEXTENG@0x2948	slot	32			NA2_ETC@0x2D4E4	
+T2208	1	Collection > Voice > character voice title	<r余裕|よゆう>	No Worries			e2e:collection/voice	NA2_ETC@0x2C7A8	NUN5_TEXTENG@0x2B08	slot	24			NA2_ETC@0x2D5A4	
+T2209	1	Collection > non-Figurine top-plaque character name	チヨバア	Granny Chiyo 			e2e:collection/characters	NA2_ETC@0x251E0	NUN5_TEXTENG@0x518	slot	16			NA2_ETC@0x25A68	
 T825	1	Command Chart > character move name	<r多重影分身|たじゅうかげぶんしん>の<r術|じゅつ>	Multi Shadow Clone Jutsu			character:command-record-index	NA2_SLPS@0x30CA80	NUN5_TEXTENG@0x51C0	slot	64				
 T826	1	Command Chart > character move name	<r螺旋丸|らせんがん>	Rasengan			character:command-record-index	NA2_SLPS@0x30CAC0	NUN5_TEXTENG@0x51E0	slot	32				
 T827	1	Command Chart > character move name	<r特攻蹴撃|とっこうしゅうげき>	Charging Kick			character:command-record-index	NA2_SLPS@0x30CAE0	NUN5_TEXTENG@0x51F0	slot	32				

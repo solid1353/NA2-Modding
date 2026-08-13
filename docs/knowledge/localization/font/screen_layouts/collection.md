@@ -112,14 +112,23 @@ Collection uses these relevant list families:
 - the Characters index where applicable.
 
 Figure remains the only narrow character-detail list and uses the `152`-unit
-profile. Relationship and Movie rows use the wider `192`-unit profile. One
-shared ETC hook classifies them from native call geometry; no character, row,
-or string whitelist remains. Fitting rows enter the same bounded renderer
-session at family X `+1.2` and one-line Y `-4.0`, with zero tracking and fixed
-horizontal scale `1.0`; they do not publish a glyph-height override, so their
-native vertical glyph size remains unsquished. Only measured overflow enters
-the two-line compositor. Figure/Music character headers share one origin
-formula, and ordinary/legacy Ultimate Jutsu headers share another.
+profile. Relationship and Movie rows use the wider `192`-unit profile. The
+Collection Opponents index uses that same wide profile at its exact native draw
+X origin `30.0`; its child record stores doubled geometry at `60.0`, which is
+not the renderer argument. All other target lists begin to the right of
+`256.0`.
+One shared ETC hook classifies them from native call geometry; no character,
+row, or string whitelist remains. Fitting rows enter the same bounded renderer
+session at the native family X and one-line Y `-4.0`, with zero tracking and
+fixed horizontal scale `1.0`; they do not publish a glyph-height override, so
+their native vertical glyph size remains unsquished. Only measured overflow
+enters the two-line compositor. The complete Collection replay established
+that the former `+1.2` X correction rasterized every target list one output
+pixel too far right. Removing it corrected Figure, Movie, Music, Opponents,
+Ultimate Jutsu, and Voice list rows as one structural family while leaving all
+top-plaque character names on their separate centered adapter. The later
+top-plaque analysis below supersedes the initial assumption that Figure/Music
+and Ultimate Jutsu needed separate origin formulas.
 
 The `font/music` E2E batch exposed why this session boundary must include
 fitting one-line rows: the previous direct native-draw return measured with
@@ -134,6 +143,19 @@ Raw NUN5 ETC records are not safe byte donors: homologous list records assign
 different meanings to fields at `+0x14/+0x18` and shift live resource fields.
 Port NUN5 classification and layout semantics instead of entire records or
 tables.
+
+The Opponents family was added from the maintained 19-capture E2E set on
+2026-08-13. Its unmodified English records prove that wrapping belongs to the
+renderer rather than to stored newline bytes. In paired capture `0017`, the
+NA2 list object at `0x00CE5C40` and NUN5 homolog at `0x00C1C450` both store
+doubled list geometry X `60.0`, while their shared renderer is called at X
+`30.0`. NUN5 stores a `192.0` by `32.0` text box at `+0x14/+0x18`, whereas NA2
+stores live pointers in those fields. The structural port therefore classifies
+only the exact native draw X `30.0` caller and applies the existing wide-list
+layout instead of copying an incompatible donor object or matching individual
+English strings. Official two-line results include `Granny Chiyo` / `(Taijutsu)`,
+`Nine-Tailed Fourth` / `Awakened State`, `Naruto Uzumaki` / `(Nine-Tailed)`,
+and selected Second Stage forms.
 
 The earlier representative paired batch is retained at
 `work/Font/inputs/sstates/batches/2026-07-31-collection-ss4-8/`, with hashes and
@@ -156,7 +178,7 @@ defect; later desynchronized cases are excluded from evidence.
 
 ## Collection Characters selected-name boxed positioning
 
-Evidence date: 2026-08-12.
+Evidence date: 2026-08-13.
 
 The maintained `collection/characters` E2E suite provides 31 paired official
 NUN5/current captures. In every original pair, the selected-name glyphs begin
@@ -185,8 +207,8 @@ output pixel and matched all 31 top Ys. It still called `FUN_00379240`, so that
 result was rejected after visual review exposed the uncorrected horizontal
 placement.
 
-The replacement candidate reconstructs the `190`-by-`32` plaque from NA2's
-midpoint arguments and routes the whole family through the existing v2 layout
+The replacement reconstructs the `190`-by-`32` plaque from NA2's midpoint
+arguments and routes the selected name through the existing v2 layout
 session. It uses the shared NUN5-compatible printable-ASCII measurement,
 tracking-zero and ordinary-space behavior, centered horizontal alignment, and
 shrink-only overflow handling, then performs one left-origin draw.
@@ -195,20 +217,129 @@ NUN5 first remaps the selected record ID before resolving its localized string.
 For capture `0020`, the live record stores ID `24`; NUN5's remap row at
 `0x006ED190` maps it to localized row `62`. English row `62` stores
 `Granny Chiyo` as its primary pointer and `Granny Chiyo `, with a terminal
-space, as the pointer returned to this caller. The localized NA2 table stores
-the visible text without that padding. The adapter therefore adds one official
-space advance only to this exact label's premeasured extent while drawing the
-unchanged localized text.
+space, as the pointer returned to this caller. In NA2, ETC pointer field
+`0x25A68` selects the shared Japanese slot at `0x251E0`; the other references
+to that slot at `0x281DC`, `0x2AADC`, and `0x2D818` belong to different record
+families and must retain the unpadded primary form.
 
-The verified `-5.6` vertical correction remains local to this caller. This does
-not port the incompatible NUN5 boxed-renderer ABI, change displayed strings, or
-alter any other Collection text family.
+The importer therefore keeps the ordinary inline mapping on exact NUN5 donor
+`TEXTENG.BIN` `0x508` and links only ETC pointer field `0x25A68` to alias
+`T2209`, whose exact donor is the secondary Collection string at `0x518`.
+That donor includes the terminal space. Characters now calls the same shared
+top-plaque adapter as the other non-Figurine families; no renderer wrapper
+recognizes `Granny Chiyo`, changes its measured width, or otherwise branches on
+displayed text.
 
 The integrated global replay on 2026-08-13 passed all six Collection suites:
 `characters` 31 captures, `opponents` 19, `misc` 22, `ultimates` 61, `voice`
 31, and `figures` 43, for 207 captures total. In `characters`, the measured
 selected-name glyph bounding boxes match the official reference exactly in X
-and Y for all 31 cases. All eight pair, blend, and amplified-diff grids were
-reviewed; the regenerated 117-file capture-history change is confined to
-`collection/characters`. The user accepted this result with `ver` on
-2026-08-13.
+and Y for all 31 cases. The exact secondary-record alias also makes capture
+`0020` match in the Characters, Ultimate Jutsu, and Voice top plaques without
+changing the other three users of the shared Japanese slot.
+
+## Shared Collection character-name plaques
+
+Evidence date: 2026-08-13.
+
+The later full-family comparison establishes that the Characters result is not
+a caller-specific positioning trick. NA2 uses point draw `FUN_00379240` for all
+seven top-plaque branches in `FUN_006C11E0` and for the Music header in
+`FUN_006C3020`. Their exact exported calls are `0x006C1374`, `0x006C14DC`,
+`0x006C1638`, `0x006C173C`, `0x006C1870`, `0x006C19CC`, `0x006C1AC0`, and
+`0x006C3178`; the injection file offsets are respectively `0xD4B4`, `0xD61C`,
+`0xD778`, `0xD87C`, `0xD9B0`, `0xDB0C`, `0xDC00`, and `0xF2B8`.
+
+NUN5's one-to-one homologs at exported `0x006D46E4`, `0x006D4864`,
+`0x006D49D8`, `0x006D4AF4`, `0x006D4C40`, `0x006D4DB4`, `0x006D4EC0`, and
+`0x006D6464` all call boxed renderer `FUN_00385DF0`. Record-backed branches
+pass record X, record Y plus `4.0`, and twice the stored half-extents. The two
+fixed `Opponent` branches pass X `30.0`, Y `72.0`, and the same doubled
+half-extents. This is the same `190`-by-`32` centered, shrink-only contract as
+the accepted Characters selected-name plaque.
+
+The structural port routes every character-name homolog through one shared
+plaque adapter. The common-Figurine character header at ETC
+file `0x7640` is a ninth homolog and now uses that same adapter; its previous
+fixed `+1.6/-5.0` direct-draw correction left all 31 names two output pixels
+low and produced a string-width-dependent horizontal error. The adapter
+reconstructs the box from NA2's
+midpoint arguments, applies the accepted `-5.6` raster-origin correction,
+measures with the NUN5-compatible zero-tracking metrics, centers the full
+extent, and shrinks only overflow. Exact localized
+record aliases own donor-specific string distinctions before rendering, so
+there are no per-screen, per-character, or per-string layout exceptions in the
+shared adapter.
+
+The final global replay passed all 207 Collection captures. Before the exact
+secondary-record alias, objective glyph-bound comparison found all captured
+Opponent fields and all top-plaque names except `Granny Chiyo` aligned with
+NUN5; after the alias, regenerated capture `0020` matches in Characters,
+Ultimate Jutsu, and Voice as well. The later Figure replay replaces the stale
+common-Figurine direct-origin result with the shared boxed layout above.
+
+That corrective global replay on 2026-08-13 again passed all six suites and
+all 207 captures. A dark-ink bound comparison over Figure captures `001`–`031`
+found exact reference/current equality for left, top, right, and bottom in all
+31 names. The complete 43-pair Figure grid was then reviewed; the shared name
+change left captures `032`–`043` on their existing Diorama layout path.
+
+## Collection Figures Diorama boxed titles
+
+Evidence date: 2026-08-13.
+
+The 12 maintained Diorama captures use NA2 exported draw function
+`FUN_006BDD70` and NUN5 homolog `FUN_006D0F90`. NA2's title call at ETC file
+offset `0xA31C` passes the record origin plus half-extents to the point-centered
+`FUN_00379240`. NUN5 instead passes the record origin, Y plus `4.0`, doubled
+half-extents, a two-line limit, and the selected title to boxed renderer
+`FUN_0038A4F0`. Clean NUN5 boot-ELF data at `gp-0x4470` and `gp-0x446C`
+contains half-width `95.0` and half-height `16.0`; the call doubles them before
+entering the wrapper. The exact NUN5 title box is therefore `190` by `32`
+units, not `200` by `40`.
+
+The NA2 call is therefore routed through a bounded Font v2 adapter that
+reconstructs the official horizontal box from the midpoint arguments, wraps
+to at most two lines, centers the block and every individual line, and uses the
+shared tracking-zero and ordinary-space measurement. The wrapper receives the
+exact `190`-unit NUN5 width for both line breaking and shrink-only overflow;
+its returned post-wrap maximum line width is also the draw scale denominator.
+The family boundary is reproduced from the official titles and exact NUN5
+logical measurements:
+`Team Kurenai Unites`, the longest one-line title, measures `182`, while
+`Naruto Returns Home`, the shortest wrapped title, measures `191`. The adapter
+therefore reproduces NUN5's strict-overflow boundary directly rather than
+selecting an empirical threshold between those strings. Its local vertical
+layout remains `40` units tall, with a `16`-unit line advance and `22`-unit
+layout glyph height. Those values affect placement only; no glyph-height
+override is published, so the intentionally non-collapsed native height is
+preserved instead of squeezing it to NUN5's nominal `32`-unit rectangle. The
+non-collapsed raster requires a family-local Y correction of `-5` units for
+one-line titles and no additional correction for wrapped titles. Every title
+in the family uses the same structural renderer path; no title whitelist,
+literal replacement text, or title-specific scale is involved.
+
+The final global replay passed all 12 maintained Diorama captures. In capture
+`0033`, `The Boar-Deer-Butterfly` and `Trio` now wrap and compact to the same
+horizontal extents as NUN5. The current raster remains intentionally taller,
+as required; the correction changes the official horizontal box and wrapping
+contract rather than collapsing the font height.
+
+## Collection Misc confirmation choices
+
+Evidence date: 2026-08-13.
+
+Maintained Misc captures `002` and `003` exercise both selected states of the
+Collection exit selector. Cross-state differencing separates each glyph raster
+from the translucent dialog and establishes that both Yes states were one
+output pixel right and one output pixel low. The No X origin was already exact;
+its unselected Y was exact, while its selected style was one output pixel high.
+
+The existing confirmation mapper already scopes Collection through the
+body-to-choice interval, so this does not introduce a screen- or string-based
+hook. Collection Yes uses local origin `(63.2, 28.85)` and retains the shared
+selected-style `-0.8` Y residual. Collection No retains `(68.1, 48.2)` and skips
+that residual only while the Collection confirmation scope is active. Other
+quit, return, Character Select, and Special Controls consumers retain their
+existing geometry. The global replay passed both Misc captures with the four
+Yes/No states aligned to the official reference.

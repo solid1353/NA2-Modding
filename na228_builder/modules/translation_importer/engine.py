@@ -38,7 +38,7 @@ EXPECTED_SHA1 = {
     "NA2_SLPS": "bbe206bbf4da0ee815b437226ceb6a533c95833e",
 }
 VALID_MODES = {"slot", "sequence"}
-DISPLAY_BASIS_PREFIXES = ("seen:", "inferred:", "character:")
+DISPLAY_BASIS_PREFIXES = ("seen:", "e2e:", "inferred:", "character:")
 PLACEHOLDER_TEXT = frozenset({"unknown", "placeholder", "dummy", "test", "todo", "temp"})
 IDENTIFIER_TEXT = re.compile(r"[a-z][a-z0-9_./-]{3,}\Z")
 POSITIONAL_FORMAT_TOKEN = re.compile(r"%([1-9][0-9]*)")
@@ -230,6 +230,37 @@ def parse_arguments(value: str, label: str) -> dict[str, str]:
             raise ValueError(f"{label}: duplicate/empty argument key")
         result[key] = val.strip()
     return result
+
+
+def parse_display_basis(value: str, label: str) -> tuple[str, ...]:
+    if not value.strip():
+        raise ValueError(
+            f"{label}: display_basis entries must each begin with "
+            + ", ".join(DISPLAY_BASIS_PREFIXES)
+        )
+    bases = tuple(item.strip() for item in value.split("|"))
+    if any(not item for item in bases):
+        raise ValueError(f"{label}: display_basis contains an empty entry")
+    if any(not item.startswith(DISPLAY_BASIS_PREFIXES) for item in bases):
+        raise ValueError(
+            f"{label}: display_basis entries must each begin with "
+            + ", ".join(DISPLAY_BASIS_PREFIXES)
+        )
+    if len(bases) != len(set(bases)):
+        raise ValueError(f"{label}: display_basis contains duplicate entries")
+    return bases
+
+
+def count_display_bases(
+    mappings: Sequence[dict[str, object]],
+    selected: set[str],
+) -> Counter[str]:
+    return Counter(
+        basis
+        for row in mappings
+        if row["target"] in selected
+        for basis in row["display_basis"]
+    )
 
 
 def parse_ref(
@@ -645,11 +676,7 @@ def parse_mappings(
             raise ValueError(f"{label}: enabled must be 0 or 1")
         if not row["display_context"]:
             raise ValueError(f"{label}: display_context is required")
-        if not row["display_basis"].startswith(DISPLAY_BASIS_PREFIXES):
-            raise ValueError(
-                f"{label}: display_basis must begin with "
-                + ", ".join(DISPLAY_BASIS_PREFIXES)
-            )
+        display_basis = parse_display_basis(row["display_basis"], label)
         mode = row["mode"].lower()
         if mode not in VALID_MODES:
             raise ValueError(f"{label}: unsupported mode {mode!r}")
@@ -739,7 +766,7 @@ def parse_mappings(
         parsed = {
             "id": row["id"],
             "display_context": row["display_context"],
-            "display_basis": row["display_basis"],
+            "display_basis": display_basis,
             "mode": mode,
             "target": target,
             "target_offset": target_offset,
@@ -1130,11 +1157,7 @@ def _build_translation_import_plan(
         for row in mappings["text"]
         if row["target"] in selected
     )
-    active_display_bases = Counter(
-        str(row["display_basis"])
-        for row in mappings["text"]
-        if row["target"] in selected
-    )
+    active_display_bases = count_display_bases(mappings["text"], selected)
     summary: dict[str, object] = {
         "mode": summary_mode,
         f"{mapping_path.stem}_sha256": actual_mapping_hash,

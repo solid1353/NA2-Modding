@@ -461,14 +461,16 @@ try {
         -Message 'Savestates were not synchronized without moving their staged directory.'
 
     $fakeCommitRoot = Join-Path $testRoot 'g'
-    $fakeCommitScripts = Join-Path $fakeCommitRoot 'scripts'
-    $fakeCaptureRepository = Join-Path $fakeCommitRoot 'captures'
-    [void](New-Item -ItemType Directory -Path $fakeCommitScripts, $fakeCaptureRepository -Force)
+    $fakeCommitScripts = Join-Path $fakeCommitRoot 'e2e\scripts'
+    $fakeSuiteRepository = Join-Path $fakeCommitRoot 'e2e\suites'
+    $fakeCaptureRepository = Join-Path $fakeCommitRoot 'e2e\captures'
+    [void](New-Item -ItemType Directory -Path `
+        $fakeCommitScripts, `
+        $fakeSuiteRepository, `
+        $fakeCaptureRepository `
+        -Force)
     Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\commit_captures.ps1') `
         -Destination (Join-Path $fakeCommitScripts 'commit_captures.ps1')
-    & git -C $fakeCaptureRepository init --initial-branch=main | Out-Null
-    [IO.File]::WriteAllText((Join-Path $fakeCaptureRepository 'capture.txt'), 'capture')
-    & git -C $fakeCaptureRepository add --all
     $previousGitIdentity = @{
         AuthorName = $env:GIT_AUTHOR_NAME
         AuthorEmail = $env:GIT_AUTHOR_EMAIL
@@ -480,9 +482,34 @@ try {
         $env:GIT_AUTHOR_EMAIL = 'e2e-helper-test@agent.invalid'
         $env:GIT_COMMITTER_NAME = 'E2E Helper Test'
         $env:GIT_COMMITTER_EMAIL = 'e2e-helper-test@agent.invalid'
+
+        & git -C $fakeCommitRoot init --initial-branch=main | Out-Null
+        [IO.File]::WriteAllText((Join-Path $fakeCommitRoot 'unrelated.txt'), 'original')
+        & git -C $fakeCommitRoot add --all
+        & git -C $fakeCommitRoot commit -m 'Initial main commit' | Out-Null
+
+        & git -C $fakeCaptureRepository init --initial-branch=main | Out-Null
+        [IO.File]::WriteAllText((Join-Path $fakeCaptureRepository 'capture.txt'), 'capture')
+        & git -C $fakeCaptureRepository add --all
         & git -C $fakeCaptureRepository commit -m 'Initial commit' | Out-Null
+
+        [IO.File]::WriteAllText(
+            (Join-Path $fakeSuiteRepository 'test.p2m2'),
+            'suite recording'
+        )
+        [IO.File]::WriteAllText((Join-Path $fakeCommitRoot 'unrelated.txt'), 'staged unrelated')
+        & git -C $fakeCommitRoot add -- 'unrelated.txt'
         Remove-Item -LiteralPath (Join-Path $fakeCaptureRepository 'capture.txt') -Force
         & (Join-Path $fakeCommitScripts 'commit_captures.ps1')
+
+        [IO.File]::WriteAllText(
+            (Join-Path $fakeSuiteRepository 'test.p2m2'),
+            'updated suite recording'
+        )
+        & (Join-Path $fakeCommitScripts 'commit_captures.ps1') -Preserve
+
+        Remove-Item -LiteralPath $fakeSuiteRepository -Recurse -Force
+        & (Join-Path $fakeCommitScripts 'commit_captures.ps1') -Preserve
     }
     finally {
         $env:GIT_AUTHOR_NAME = $previousGitIdentity.AuthorName
@@ -495,9 +522,17 @@ try {
             [int](& git -C $fakeCaptureRepository rev-list --count HEAD) -eq 1 -and
             @(& git -C $fakeCaptureRepository ls-tree -r --name-only HEAD).Count -eq 0 -and
             @(& git -C $fakeCaptureRepository status --porcelain).Count -eq 0 -and
-            [string](& git -C $fakeCaptureRepository log -1 --format='%s') -ceq 'Initial commit'
+            [string](& git -C $fakeCaptureRepository log -1 --format='%s') -ceq 'Initial commit' -and
+            [int](& git -C $fakeCommitRoot rev-list --count HEAD) -eq 4 -and
+            [string](& git -C $fakeCommitRoot log -1 --format='%s') -ceq 'Update E2E suites' -and
+            (@(
+                & git -C $fakeCommitRoot show --format= --name-only HEAD |
+                    Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+            ) -join ',') -ceq 'e2e/suites/test.p2m2' -and
+            (@(& git -C $fakeCommitRoot diff --cached --name-only) -join ',') -ceq 'unrelated.txt' -and
+            @(& git -C $fakeCommitRoot ls-tree -r --name-only HEAD -- 'e2e/suites').Count -eq 0
         ) `
-        -Message 'Capture-history consolidation did not support an intentionally empty repository.'
+        -Message 'E2E update did not commit only suites across capture modes while preserving unrelated staging.'
 
     $fakeRepository = Join-Path $testRoot 'suite-lifecycle-repository'
     $fakeScripts = Join-Path $fakeRepository 'e2e\scripts'
@@ -742,6 +777,8 @@ foreach ($suiteName in $suites) {
     ) -Force)
     [IO.File]::WriteAllText((Join-Path $fakeCaptureGit 'preserved.txt'), 'git metadata')
     [IO.File]::WriteAllText((Join-Path $orphanCapture 'stale.txt'), 'orphan history')
+    $orphanSuite = Join-Path $fakeRepository 'e2e\suites\orphan.p2m2'
+    [IO.File]::WriteAllText($orphanSuite, 'orphan suite')
     [IO.File]::WriteAllText($generatedRecording, 'transient recording')
     & (Join-Path $fakeScripts 'create_suite.ps1') -All
     $bulkSuiteNames = @(
@@ -758,9 +795,34 @@ foreach ($suiteName in $suites) {
             ) -PathType Leaf) -and
             (Test-Path -LiteralPath (
                 Join-Path $fakeRepository 'e2e\captures\test\with_reference\current.txt'
-            ) -PathType Leaf)
+            ) -PathType Leaf) -and
+            -not (Test-Path -LiteralPath $orphanSuite) -and
+            -not (Test-Path -LiteralPath $orphanCapture) -and
+            [IO.File]::ReadAllText((Join-Path $fakeCaptureGit 'preserved.txt')) -ceq 'git metadata'
         ) `
-        -Message 'Bulk suite creation did not process public recordings in one concurrent run while excluding __ directories.'
+        -Message 'Bulk suite creation did not completely rewrite public suites and histories while preserving capture Git metadata.'
+    $acceptedBulkCapture = Join-Path `
+        $fakeRepository `
+        'e2e\captures\test\no_reference\accepted.txt'
+    [IO.File]::WriteAllText($acceptedBulkCapture, 'accepted bulk history')
+    [IO.File]::WriteAllText($noReferenceRecording, 'third')
+    [IO.File]::WriteAllText((Join-Path $fakeScripts 'fail-run'), '')
+    $bulkReplacementFailed = $false
+    try {
+        & (Join-Path $fakeScripts 'create_suite.ps1') -All
+    }
+    catch {
+        $bulkReplacementFailed = $true
+    }
+    Remove-Item -LiteralPath (Join-Path $fakeScripts 'fail-run') -Force
+    Assert-E2eHelperTest `
+        -Condition (
+            $bulkReplacementFailed -and
+            [IO.File]::ReadAllText($firstSuitePath) -ceq 'second' -and
+            [IO.File]::ReadAllText($acceptedBulkCapture) -ceq 'accepted bulk history' -and
+            [IO.File]::ReadAllText((Join-Path $fakeCaptureGit 'preserved.txt')) -ceq 'git metadata'
+        ) `
+        -Message 'Failed bulk suite creation did not restore the complete prior definition and capture trees.'
     $looseCapture = Join-Path $fakeRepository 'e2e\captures\loose.txt'
     $suiteMetadata = Join-Path $fakeRepository 'e2e\suites\metadata.txt'
     [IO.File]::WriteAllText($looseCapture, 'loose capture history')

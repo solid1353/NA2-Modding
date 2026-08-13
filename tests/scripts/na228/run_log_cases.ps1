@@ -303,8 +303,16 @@ Write-Output '[fake] unit tests'
         -Condition ($helpText -match '(?m)^\s*na228 e2e delete <all\|suite>\s+') `
         -Message 'Root help omitted suite deletion.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 e2e update \[-p\]\s+') `
-        -Message 'Root help omitted capture-history update.'
+        -Condition ($helpText -match '(?m)^\s*na228 e2e commit \[-p\]\s+') `
+        -Message 'Root help omitted the coordinated E2E commit command.'
+    Assert-Na2Test `
+        -Condition (
+            $helpText -match '(?m)^\s*na228 build[^\r\n]*\r?\n\s*na228 worker[^\r\n]*\r?\n\s*na228 test' -and
+            $helpText -match '(?m)^\s*na228 test[^\r\n]*\r?\n\r?\n\s*na228 e2e' -and
+            $helpText -match '(?m)^\s*na228 e2e commit[^\r\n]*\r?\n\r?\n\s*na228 release' -and
+            $helpText -match '(?m)^\s*na228 help[^\r\n]*\r?\n\r?\n\s*games:'
+        ) `
+        -Message 'Root help did not group build commands or visually separate the E2E command block.'
     }
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch.ps1') -Content @'
 param(
@@ -458,7 +466,7 @@ Add-Content `
 param([switch]$Preserve)
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
-    -Value "update preserve=$($Preserve.IsPresent)"
+    -Value "commit preserve=$($Preserve.IsPresent)"
 '@
     }
 
@@ -491,8 +499,8 @@ Add-Content `
     & (Join-Path $fakeRepository 'na228.ps1') e2e rename font/character_select font/characters
     & (Join-Path $fakeRepository 'na228.ps1') e2e delete font/characters
     & (Join-Path $fakeRepository 'na228.ps1') e2e delete all
-    & (Join-Path $fakeRepository 'na228.ps1') e2e update
-    & (Join-Path $fakeRepository 'na228.ps1') e2e update -p
+    & (Join-Path $fakeRepository 'na228.ps1') e2e commit
+    & (Join-Path $fakeRepository 'na228.ps1') e2e commit -p
     $calls = @(Get-Content -LiteralPath $visualCalls)
     Assert-Na2Test `
         -Condition ($calls.Count -eq 10 -and
@@ -504,8 +512,8 @@ Add-Content `
             $calls[5] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
             $calls[6] -ceq 'delete suite=font/characters all=False' -and
             $calls[7] -ceq 'delete suite= all=True' -and
-            $calls[8] -ceq 'update preserve=False' -and
-            $calls[9] -ceq 'update preserve=True') `
+            $calls[8] -ceq 'commit preserve=False' -and
+            $calls[9] -ceq 'commit preserve=True') `
         -Message 'Global E2E or lifecycle-command dispatch was incorrect.'
     $suiteSelectionRejected = $false
     try {

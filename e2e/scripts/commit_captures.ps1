@@ -2,9 +2,31 @@
 param([switch]$Preserve)
 
 $ErrorActionPreference = 'Stop'
+$repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+$suiteRepository = Join-Path $repository 'e2e\suites'
 $captureRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\captures'))
 if (-not (Test-Path -LiteralPath $captureRepository -PathType Container)) {
     throw "E2E capture repository is unavailable: $captureRepository"
+}
+
+function Commit-E2eSuites {
+    $suiteStatus = @(& git -C $repository status --porcelain --untracked-files=all -- 'e2e/suites')
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Could not inspect the current E2E suite changes.'
+    }
+    if ($suiteStatus.Count -eq 0) {
+        Write-Host 'No E2E suite changes to commit.' -ForegroundColor Yellow
+        return
+    }
+
+    & git -C $repository add --all -- 'e2e/suites'
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Could not stage the current E2E suite changes.'
+    }
+    & git -C $repository commit -m 'Update E2E suites' -- 'e2e/suites'
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Could not commit the current E2E suite changes.'
+    }
 }
 
 & git -C $captureRepository add --all
@@ -16,16 +38,17 @@ if ($Preserve) {
     & git -C $captureRepository diff --cached --quiet
     if ($LASTEXITCODE -eq 0) {
         Write-Host 'No E2E capture changes to commit.' -ForegroundColor Yellow
-        return
     }
-    if ($LASTEXITCODE -ne 1) {
+    elseif ($LASTEXITCODE -ne 1) {
         throw 'Could not inspect the current E2E capture changes.'
     }
-
-    & git -C $captureRepository commit -m 'Update captures'
-    if ($LASTEXITCODE -ne 0) {
-        throw 'Could not commit the current E2E capture changes.'
+    else {
+        & git -C $captureRepository commit -m 'Update captures'
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Could not commit the current E2E capture changes.'
+        }
     }
+    Commit-E2eSuites
     return
 }
 
@@ -60,3 +83,5 @@ if ($LASTEXITCODE -ne 0) {
 if ($LASTEXITCODE -ne 0) {
     throw 'Could not compact the E2E capture repository.'
 }
+
+Commit-E2eSuites

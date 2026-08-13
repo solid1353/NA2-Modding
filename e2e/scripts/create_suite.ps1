@@ -67,6 +67,9 @@ $referenceCaptureRoot = Join-Path $transaction 'reference-captures'
 $referenceJobs = [Collections.Generic.List[object]]::new()
 $referencePublishJobs = [Collections.Generic.List[object]]::new()
 $installed = [Collections.Generic.List[object]]::new()
+$allDefinitionsBackedUp = $false
+$allDefinitionsInstalled = $false
+$allCapturesPublished = $false
 $completed = $false
 try {
     foreach ($recording in $recordings) {
@@ -81,21 +84,35 @@ try {
         }
         $installed.Add($entry)
 
-        [void](New-Item -ItemType Directory -Path @(
+        [void](New-Item -ItemType Directory -Path (
             [IO.Path]::GetDirectoryName($suiteStage)
-            [IO.Path]::GetDirectoryName($context.SuitePath)
-            [IO.Path]::GetDirectoryName($context.CaptureRoot)
         ) -Force)
         Copy-Item -LiteralPath $recording.Path -Destination $suiteStage
-        if (Test-Path -LiteralPath $context.SuitePath -PathType Leaf) {
-            [void](New-Item -ItemType Directory -Path (
-                [IO.Path]::GetDirectoryName($suiteBackup)
+        if (-not $All) {
+            [void](New-Item -ItemType Directory -Path @(
+                [IO.Path]::GetDirectoryName($context.SuitePath)
+                [IO.Path]::GetDirectoryName($context.CaptureRoot)
             ) -Force)
-            [IO.File]::Move($context.SuitePath, $suiteBackup)
-            $entry.BackedUp = $true
+            if (Test-Path -LiteralPath $context.SuitePath -PathType Leaf) {
+                [void](New-Item -ItemType Directory -Path (
+                    [IO.Path]::GetDirectoryName($suiteBackup)
+                ) -Force)
+                [IO.File]::Move($context.SuitePath, $suiteBackup)
+                $entry.BackedUp = $true
+            }
+            [IO.File]::Move($suiteStage, $context.SuitePath)
+            $entry.Installed = $true
         }
-        [IO.File]::Move($suiteStage, $context.SuitePath)
-        $entry.Installed = $true
+    }
+
+    if ($All) {
+        $suiteRepository = $installed[0].Context.SuiteRepository
+        if (Test-Path -LiteralPath $suiteRepository) {
+            [IO.Directory]::Move($suiteRepository, $definitionBackupRoot)
+            $allDefinitionsBackedUp = $true
+        }
+        [IO.Directory]::Move($definitionStageRoot, $suiteRepository)
+        $allDefinitionsInstalled = $true
     }
 
     if (-not [string]::IsNullOrWhiteSpace($Game)) {
@@ -155,16 +172,56 @@ try {
             -FailurePrefix 'Reference publication job'
     }
 
-    $replacements = [ordered]@{}
-    foreach ($entry in $installed) {
-        $context = $entry.Context
-        $replacements[$context.CaptureRoot] = Join-Path `
-            $captureStageRoot `
-            $context.SuiteRelativePath
+    if ($All) {
+        $captureRepository = $installed[0].Context.CaptureRepository
+        $captureBackupRoot = Join-Path $transaction 'previous-capture-history'
+        [void](New-Item -ItemType Directory -Path `
+            $captureRepository, `
+            $captureBackupRoot `
+            -Force)
+        $oldCaptureMoveCompleted = $false
+        try {
+            foreach ($item in @(Get-ChildItem -LiteralPath $captureRepository -Force)) {
+                if ($item.Name -ceq '.git') { continue }
+                Move-Item `
+                    -LiteralPath $item.FullName `
+                    -Destination (Join-Path $captureBackupRoot $item.Name)
+            }
+            $oldCaptureMoveCompleted = $true
+            foreach ($item in @(Get-ChildItem -LiteralPath $captureStageRoot -Force)) {
+                Move-Item `
+                    -LiteralPath $item.FullName `
+                    -Destination (Join-Path $captureRepository $item.Name)
+            }
+            $allCapturesPublished = $true
+        }
+        catch {
+            if ($oldCaptureMoveCompleted) {
+                foreach ($item in @(Get-ChildItem -LiteralPath $captureRepository -Force)) {
+                    if ($item.Name -ceq '.git') { continue }
+                    Remove-Item -LiteralPath $item.FullName -Recurse -Force
+                }
+            }
+            foreach ($item in @(Get-ChildItem -LiteralPath $captureBackupRoot -Force)) {
+                Move-Item `
+                    -LiteralPath $item.FullName `
+                    -Destination (Join-Path $captureRepository $item.Name)
+            }
+            throw
+        }
     }
-    Publish-VisualRegressionTransaction `
-        -Replacements $replacements `
-        -TransactionRoot $transaction
+    else {
+        $replacements = [ordered]@{}
+        foreach ($entry in $installed) {
+            $context = $entry.Context
+            $replacements[$context.CaptureRoot] = Join-Path `
+                $captureStageRoot `
+                $context.SuiteRelativePath
+        }
+        Publish-VisualRegressionTransaction `
+            -Replacements $replacements `
+            -TransactionRoot $transaction
+    }
     $completed = $true
     if ($All) {
         Write-Host "Created or replaced all E2E suites: $($recordings.Count)" -ForegroundColor Green
@@ -180,7 +237,31 @@ finally {
         }
         Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
     }
-    if (-not $completed) {
+    if (-not $completed -and $All) {
+        if ($allCapturesPublished) {
+            $captureRepository = $installed[0].Context.CaptureRepository
+            foreach ($item in @(Get-ChildItem -LiteralPath $captureRepository -Force)) {
+                if ($item.Name -ceq '.git') { continue }
+                Remove-Item -LiteralPath $item.FullName -Recurse -Force
+            }
+            $captureBackupRoot = Join-Path $transaction 'previous-capture-history'
+            foreach ($item in @(Get-ChildItem -LiteralPath $captureBackupRoot -Force)) {
+                Move-Item `
+                    -LiteralPath $item.FullName `
+                    -Destination (Join-Path $captureRepository $item.Name)
+            }
+        }
+        $suiteRepository = $installed[0].Context.SuiteRepository
+        if ($allDefinitionsInstalled) {
+            if (Test-Path -LiteralPath $suiteRepository) {
+                Remove-Item -LiteralPath $suiteRepository -Recurse -Force
+            }
+        }
+        if ($allDefinitionsBackedUp -and (Test-Path -LiteralPath $definitionBackupRoot)) {
+            [IO.Directory]::Move($definitionBackupRoot, $suiteRepository)
+        }
+    }
+    elseif (-not $completed) {
         for ($index = $installed.Count - 1; $index -ge 0; $index--) {
             $entry = $installed[$index]
             $context = $entry.Context

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build exact-scale pair images and separate paged pair/blend/diff grids."""
+"""Build every individual and paged reference/current comparison view."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFont, ImageOps
 
 
 SLOT_SUFFIX = re.compile(r"(\d+)$")
+SCREENSHOT_NAME = re.compile(r"^(\d+)_(a_reference|b_current)\.png$")
 HEADER_HEIGHT = 32
 LABEL_MARGIN = 8
 
@@ -23,8 +24,9 @@ class CaptureRow:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--reference", required=True, type=Path)
-    parser.add_argument("--current", required=True, type=Path)
+    parser.add_argument("--reference", type=Path)
+    parser.add_argument("--current", type=Path)
+    parser.add_argument("--screenshots", type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--reference-label", default="Reference")
     parser.add_argument("--current-label", default="Current")
@@ -36,6 +38,13 @@ def parse_args() -> argparse.Namespace:
         parser.error("--grid-columns must be positive")
     if args.grid_items_per_page < 1:
         parser.error("--grid-items-per-page must be positive")
+    if args.screenshots is not None:
+        if args.reference is not None or args.current is not None:
+            parser.error("--screenshots cannot be combined with --reference or --current")
+        if args.slots is not None:
+            parser.error("--slots is not supported with --screenshots")
+    elif args.reference is None or args.current is None:
+        parser.error("--reference and --current are required for comparisons")
     return args
 
 
@@ -186,6 +195,7 @@ def write_grid_pages(
     output: Path,
     columns: int,
     items_per_page: int,
+    filename_suffix: str | None = None,
 ) -> None:
     output.mkdir(parents=True, exist_ok=True)
     for page_index, start in enumerate(
@@ -203,7 +213,8 @@ def write_grid_pages(
             x = (item_index % columns) * cell_width
             y = (item_index // columns) * cell_height
             grid.paste(image, (x, y))
-        grid.save(output / f"page_{page_index:02d}.png")
+        suffix = f"_{filename_suffix}" if filename_suffix else ""
+        grid.save(output / f"page_{page_index:02d}{suffix}.png")
 
 
 def clear_generated_grid_pages(output: Path) -> None:
@@ -213,15 +224,59 @@ def clear_generated_grid_pages(output: Path) -> None:
         path.unlink()
 
 
+def write_screenshot_grid_pages(
+    screenshots: Path,
+    output: Path,
+    columns: int,
+    items_per_page: int,
+) -> None:
+    paths = sorted(screenshots.glob("*.png"))
+    if not paths:
+        raise ValueError(f"No PNG screenshots found in {screenshots}")
+    groups: dict[str, list[tuple[CaptureRow, Image.Image]]] = {
+        "a_reference": [],
+        "b_current": [],
+    }
+    for path in paths:
+        match = SCREENSHOT_NAME.fullmatch(path.name)
+        if match is None:
+            raise ValueError(f"Invalid canonical screenshot name: {path}")
+        groups[match.group(2)].append(
+            (CaptureRow(int(match.group(1))), open_rgb(path))
+        )
+    clear_generated_grid_pages(output)
+    for suffix, items in groups.items():
+        if items:
+            write_grid_pages(
+                items,
+                output,
+                columns,
+                items_per_page,
+                filename_suffix=suffix,
+            )
+
+
 def main() -> int:
     args = parse_args()
+    if args.screenshots is not None:
+        write_screenshot_grid_pages(
+            args.screenshots,
+            args.output,
+            args.grid_columns,
+            args.grid_items_per_page,
+        )
+        print(f"Screenshot grids written to {args.output}")
+        return 0
+
     reference_paths = index_pngs(args.reference)
     current_paths = index_pngs(args.current)
     captures = pair_capture_slots(set(reference_paths), set(current_paths))
     slots = parse_slot_selection(args.slots, [row.slot for row in captures])
     captures = [row for row in captures if row.slot in set(slots)]
     args.output.mkdir(parents=True, exist_ok=True)
-    pair_dir = args.output / "pairs"
+    pair_dir = args.output / "base-pairs"
+    blend_dir = args.output / "base-blends"
+    diff_dir = args.output / "base-diffs"
     pair_grid_root = args.output / "grid-pairs"
     blend_grid_root = args.output / "grid-blends"
     diff_grid_root = args.output / "grid-diffs"
@@ -270,23 +325,21 @@ def main() -> int:
             args.reference_label,
             args.current_label,
         )
-        pair_dir.mkdir(parents=True, exist_ok=True)
+        for directory in (pair_dir, blend_dir, diff_dir):
+            directory.mkdir(parents=True, exist_ok=True)
         pair.save(pair_dir / f"{row.slot:04d}.png")
+        blend.save(blend_dir / f"{row.slot:04d}.png")
+        diff.save(diff_dir / f"{row.slot:04d}.png")
         grid_items["pair"].append((row, pair))
         grid_items["blend"].append((row, blend))
         grid_items["diff"].append((row, diff))
 
+    clear_generated_grid_pages(pair_grid_root)
+    clear_generated_grid_pages(blend_grid_root)
+    clear_generated_grid_pages(diff_grid_root)
     if grid_items["pair"]:
-        clear_generated_grid_pages(pair_grid_root)
-        clear_generated_grid_pages(blend_grid_root)
-        clear_generated_grid_pages(diff_grid_root)
-        write_grid_pages(
-            grid_items["pair"],
-            pair_grid_root,
-            args.grid_columns,
-            args.grid_items_per_page,
-        )
         for kind, output in (
+            ("pair", pair_grid_root),
             ("blend", blend_grid_root),
             ("diff", diff_grid_root),
         ):

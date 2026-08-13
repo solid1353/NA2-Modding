@@ -6,16 +6,28 @@ $script:E2eCaptureTiers = [ordered]@{
 $script:E2eScreenshotKinds = [ordered]@{
     Reference = [pscustomobject]@{ Order = 'a'; Label = 'reference' }
     Current = [pscustomobject]@{ Order = 'b'; Label = 'current' }
-    Pair = [pscustomobject]@{ Order = 'c'; Label = 'pair' }
+    Blend = [pscustomobject]@{ Order = 'c'; Label = 'blend' }
+    Diff = [pscustomobject]@{ Order = 'd'; Label = 'diff' }
+    Pair = [pscustomobject]@{ Order = 'e'; Label = 'pair' }
 }
-$script:E2eScreenshotDirectory = 'screenshots'
-$script:E2ePairDirectory = 'pairs'
+$script:E2eIndividualDirectoryPrefix = 'base-'
+$script:E2eScreenshotDirectory = 'base-screenshots'
+$script:E2ePairDirectory = 'base-pairs'
+$script:E2eBlendDirectory = 'base-blends'
+$script:E2eDiffDirectory = 'base-diffs'
+$script:E2eAllDirectory = 'base-all'
+$script:E2eAllGridDirectory = 'grid-all'
+$script:E2eCaptureRepositoryMetadataNames = @('.git', '.gitattributes', '.gitignore')
+$script:E2eScreenshotGridDirectory = 'grid-screenshots'
 $script:E2ePairGridDirectory = 'grid-pairs'
 $script:E2eBlendGridDirectory = 'grid-blends'
 $script:E2eDiffGridDirectory = 'grid-diffs'
 $script:E2eStableCaptureDirectories = @(
     $script:E2eScreenshotDirectory,
     $script:E2ePairDirectory,
+    $script:E2eBlendDirectory,
+    $script:E2eDiffDirectory,
+    $script:E2eScreenshotGridDirectory,
     $script:E2ePairGridDirectory,
     $script:E2eBlendGridDirectory,
     $script:E2eDiffGridDirectory,
@@ -158,6 +170,11 @@ function Get-VisualRegressionContext {
         Capture = [pscustomobject]@{
             Screenshots = Join-Path $captureRoot $script:E2eScreenshotDirectory
             Pairs = Join-Path $captureRoot $script:E2ePairDirectory
+            Blends = Join-Path $captureRoot $script:E2eBlendDirectory
+            Diffs = Join-Path $captureRoot $script:E2eDiffDirectory
+            All = Join-Path $captureRoot $script:E2eAllDirectory
+            AllGrids = Join-Path $captureRoot $script:E2eAllGridDirectory
+            ScreenshotGrids = Join-Path $captureRoot $script:E2eScreenshotGridDirectory
             PairGrids = Join-Path $captureRoot $script:E2ePairGridDirectory
             BlendGrids = Join-Path $captureRoot $script:E2eBlendGridDirectory
             DiffGrids = Join-Path $captureRoot $script:E2eDiffGridDirectory
@@ -289,25 +306,79 @@ function New-VisualRegressionScreenshotStage {
     }
 }
 
-function New-VisualRegressionPairStage {
+function New-VisualRegressionComparisonStage {
     param(
         [Parameter(Mandatory)][string]$ReportDirectory,
-        [Parameter(Mandatory)][string]$OutputDirectory
+        [Parameter(Mandatory)][string]$OutputDirectory,
+        [Parameter(Mandatory)][string]$Kind
     )
 
+    $definition = Get-VisualRegressionScreenshotDefinition -Kind $Kind
     [void](New-Item -ItemType Directory -Path $OutputDirectory -Force)
-    $sourceDirectory = Join-Path $ReportDirectory $script:E2ePairDirectory
+    $sourceDirectory = Join-Path $ReportDirectory (
+        $script:E2eIndividualDirectoryPrefix + $definition.Label + 's'
+    )
     if (-not (Test-Path -LiteralPath $sourceDirectory -PathType Container)) {
         return
     }
     foreach ($file in Get-ChildItem -LiteralPath $sourceDirectory -Filter '*.png' -File) {
         if ($file.BaseName -notmatch '^\d+$') {
-            throw "Non-numeric pair name: $($file.FullName)"
+            throw "Non-numeric $($definition.Label) name: $($file.FullName)"
         }
         $name = Get-VisualRegressionScreenshotName `
             -Slot ([int]$file.BaseName) `
-            -Kind Pair
+            -Kind $Kind
         Copy-Item -LiteralPath $file.FullName -Destination (Join-Path $OutputDirectory $name)
+    }
+}
+
+function New-VisualRegressionAggregateLinkStage {
+    param(
+        [Parameter(Mandatory)][object[]]$Source,
+        [Parameter(Mandatory)][string]$OutputDirectory
+    )
+
+    [void](New-Item -ItemType Directory -Path $OutputDirectory -Force)
+    foreach ($item in $Source) {
+        $sourceDirectory = [string]$item.Directory
+        if (-not (Test-Path -LiteralPath $sourceDirectory -PathType Container)) {
+            continue
+        }
+        foreach ($file in Get-ChildItem -LiteralPath $sourceDirectory -Filter '*.png' -File) {
+            $suffix = [string]$item.Suffix
+            $name = if ([string]::IsNullOrWhiteSpace($suffix)) {
+                $file.Name
+            }
+            else {
+                $file.BaseName + '_' + $suffix + $file.Extension
+            }
+            $target = Join-Path $OutputDirectory $name
+            if (Test-Path -LiteralPath $target) {
+                throw "Duplicate aggregate view name: $name"
+            }
+            $linkPath = [IO.Path]::GetFullPath($target)
+            $sourcePath = [IO.Path]::GetFullPath($file.FullName)
+            if ([IO.Path]::DirectorySeparatorChar -ceq '\') {
+                $linkPath = if ($linkPath.StartsWith('\\')) {
+                    '\\?\UNC\' + $linkPath.Substring(2)
+                }
+                else {
+                    '\\?\' + $linkPath
+                }
+                $sourcePath = if ($sourcePath.StartsWith('\\')) {
+                    '\\?\UNC\' + $sourcePath.Substring(2)
+                }
+                else {
+                    '\\?\' + $sourcePath
+                }
+            }
+            try {
+                [void](New-Item -ItemType HardLink -Path $linkPath -Target $sourcePath)
+            }
+            catch {
+                throw "Cannot hardlink aggregate view '$target' to '$($file.FullName)': $($_.Exception.Message)"
+            }
+        }
     }
 }
 
@@ -324,6 +395,71 @@ function New-VisualRegressionGridStage {
         Get-ChildItem -LiteralPath $sourceDirectory -Filter '*.png' -File |
             Copy-Item -Destination $OutputDirectory
     }
+}
+
+function New-VisualRegressionScreenshotGridStage {
+    param(
+        [Parameter(Mandatory)][string]$Suite,
+        [Parameter(Mandatory)][string]$ScreenshotDirectory,
+        [Parameter(Mandatory)][string]$OutputDirectory
+    )
+
+    $context = Get-VisualRegressionContext -Suite $Suite
+    & $context.Comparator `
+        -ScreenshotDirectory $ScreenshotDirectory `
+        -OutputDirectory $OutputDirectory
+    if ($LASTEXITCODE -ne 0) {
+        throw "Screenshot grid generation failed with exit code $LASTEXITCODE."
+    }
+}
+
+function Publish-VisualRegressionAggregateViews {
+    param(
+        [Parameter(Mandatory)][object[]]$Context,
+        [Parameter(Mandatory)][string]$TransactionRoot
+    )
+
+    $aggregateTransaction = Join-Path $TransactionRoot 'aggregate-views'
+    [void](New-Item -ItemType Directory -Path $aggregateTransaction -Force)
+    $replacements = [ordered]@{}
+    foreach ($currentContext in $Context) {
+        $stageRoot = Join-Path `
+            (Join-Path $aggregateTransaction 'stages') `
+            $currentContext.SuiteRelativePath
+        $allStage = Join-Path $stageRoot $script:E2eAllDirectory
+        $allGridStage = Join-Path $stageRoot $script:E2eAllGridDirectory
+        New-VisualRegressionAggregateLinkStage `
+            -Source @(
+                [pscustomobject]@{
+                    Directory = $currentContext.Capture.Screenshots
+                    Suffix = ''
+                },
+                [pscustomobject]@{ Directory = $currentContext.Capture.Blends; Suffix = '' },
+                [pscustomobject]@{ Directory = $currentContext.Capture.Diffs; Suffix = '' }
+            ) `
+            -OutputDirectory $allStage
+        New-VisualRegressionAggregateLinkStage `
+            -Source @(
+                [pscustomobject]@{
+                    Directory = $currentContext.Capture.ScreenshotGrids
+                    Suffix = ''
+                },
+                [pscustomobject]@{
+                    Directory = $currentContext.Capture.BlendGrids
+                    Suffix = 'c_blend'
+                },
+                [pscustomobject]@{
+                    Directory = $currentContext.Capture.DiffGrids
+                    Suffix = 'd_diff'
+                }
+            ) `
+            -OutputDirectory $allGridStage
+        $replacements[$currentContext.Capture.All] = $allStage
+        $replacements[$currentContext.Capture.AllGrids] = $allGridStage
+    }
+    Publish-VisualRegressionTransaction `
+        -Replacements $replacements `
+        -TransactionRoot $aggregateTransaction
 }
 
 function New-VisualRegressionTransaction {
@@ -798,7 +934,8 @@ function Preserve-VisualRegressionMismatchEvidence {
 function Publish-VisualRegressionTransaction {
     param(
         [Parameter(Mandatory)][Collections.IDictionary]$Replacements,
-        [Parameter(Mandatory)][string]$TransactionRoot
+        [Parameter(Mandatory)][string]$TransactionRoot,
+        [scriptblock]$AfterPublish
     )
 
     function Clear-PublishedFiles {
@@ -937,6 +1074,9 @@ function Publish-VisualRegressionTransaction {
                 }
                 throw
             }
+        }
+        if ($null -ne $AfterPublish) {
+            & $AfterPublish
         }
     }
     catch {

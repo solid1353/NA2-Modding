@@ -70,6 +70,15 @@ else {
 $pairStage = Join-Path `
     $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
     $script:E2ePairDirectory
+$blendStage = Join-Path `
+    $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
+    $script:E2eBlendDirectory
+$diffStage = Join-Path `
+    $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
+    $script:E2eDiffDirectory
+$screenshotGridStage = Join-Path `
+    $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
+    $script:E2eScreenshotGridDirectory
 $pairGridStage = Join-Path `
     $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
     $script:E2ePairGridDirectory
@@ -133,10 +142,21 @@ try {
         -ReferenceDirectory $referenceStage `
         -CurrentDirectory $currentStage `
         -OutputDirectory $screenshotStage
+    New-VisualRegressionScreenshotGridStage `
+        -Suite $Suite `
+        -ScreenshotDirectory $screenshotStage `
+        -OutputDirectory $screenshotGridStage
     if ($hasCurrent) {
-        New-VisualRegressionPairStage `
-            -ReportDirectory $reportStage `
-            -OutputDirectory $pairStage
+        foreach ($comparison in @(
+            [pscustomobject]@{ Kind = 'Pair'; Output = $pairStage },
+            [pscustomobject]@{ Kind = 'Blend'; Output = $blendStage },
+            [pscustomobject]@{ Kind = 'Diff'; Output = $diffStage }
+        )) {
+            New-VisualRegressionComparisonStage `
+                -ReportDirectory $reportStage `
+                -OutputDirectory $comparison.Output `
+                -Kind $comparison.Kind
+        }
         New-VisualRegressionGridStage `
             -ReportDirectory $reportStage `
             -GridDirectory $script:E2ePairGridDirectory `
@@ -150,16 +170,18 @@ try {
             -GridDirectory $script:E2eDiffGridDirectory `
             -OutputDirectory $diffGridStage
     }
-
     $replacements = if ($initializeCapture) {
         [ordered]@{ ($context.CaptureRoot) = $suiteCaptureStage }
     }
     else {
         $existingReplacements = [ordered]@{
             ($context.Capture.Screenshots) = $screenshotStage
+            ($context.Capture.ScreenshotGrids) = $screenshotGridStage
         }
         if ($hasCurrent) {
             $existingReplacements[$context.Capture.Pairs] = $pairStage
+            $existingReplacements[$context.Capture.Blends] = $blendStage
+            $existingReplacements[$context.Capture.Diffs] = $diffStage
             $existingReplacements[$context.Capture.PairGrids] = $pairGridStage
             $existingReplacements[$context.Capture.BlendGrids] = $blendGridStage
             $existingReplacements[$context.Capture.DiffGrids] = $diffGridStage
@@ -171,7 +193,12 @@ try {
     }
     Publish-VisualRegressionTransaction `
         -Replacements $replacements `
-        -TransactionRoot $transaction
+        -TransactionRoot $transaction `
+        -AfterPublish {
+            Publish-VisualRegressionAggregateViews `
+                -Context @($context) `
+                -TransactionRoot $transaction
+        }
     Write-Host 'Reference screenshots, savestates, and comparison artifacts were published atomically.' -ForegroundColor Green
 }
 finally {

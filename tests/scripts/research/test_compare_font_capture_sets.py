@@ -40,29 +40,42 @@ def read_png_size(path: Path) -> tuple[int, int]:
 
 
 class ComparisonGridTests(unittest.TestCase):
-    def test_separates_pairs_and_each_grid_type(self) -> None:
+    def test_emits_every_individual_and_grid_comparison_type(self) -> None:
         powershell = shutil.which("pwsh")
         self.assertIsNotNone(powershell)
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             reference = root / "reference"
             current = root / "current"
+            screenshots = root / "screenshots"
             output = root / "output"
             reference.mkdir()
             current.mkdir()
+            screenshots.mkdir()
+            stale_screenshot_grid = output / "grid-screenshots" / "page_99.png"
             stale_pair_grid = output / "grid-pairs" / "page_99.png"
             stale_blend_grid = output / "grid-blends" / "page_99.png"
             stale_diff_grid = output / "grid-diffs" / "page_99.png"
-            stale_pair_grid.parent.mkdir(parents=True)
-            stale_blend_grid.parent.mkdir(parents=True)
-            stale_diff_grid.parent.mkdir(parents=True)
-            stale_pair_grid.write_bytes(b"stale")
-            stale_blend_grid.write_bytes(b"stale")
-            stale_diff_grid.write_bytes(b"stale")
+            for stale in (
+                stale_screenshot_grid,
+                stale_pair_grid,
+                stale_blend_grid,
+                stale_diff_grid,
+            ):
+                stale.parent.mkdir(parents=True)
+                stale.write_bytes(b"stale")
 
             for slot in range(1, 6):
                 write_rgb_png(reference / f"{slot:03d}.png", (slot, 0, 0))
                 write_rgb_png(current / f"{slot:03d}.png", (slot, 1, 0))
+                write_rgb_png(
+                    screenshots / f"{slot:03d}_a_reference.png",
+                    (slot, 0, 0),
+                )
+                write_rgb_png(
+                    screenshots / f"{slot:03d}_b_current.png",
+                    (slot, 1, 0),
+                )
 
             subprocess.run(
                 [
@@ -81,9 +94,27 @@ class ComparisonGridTests(unittest.TestCase):
                 capture_output=True,
                 text=True,
             )
+            subprocess.run(
+                [
+                    powershell,
+                    "-NoProfile",
+                    "-File",
+                    str(COMPARATOR),
+                    "-ScreenshotDirectory",
+                    str(screenshots),
+                    "-OutputDirectory",
+                    str(output / "grid-screenshots"),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
 
             self.assertEqual(
-                sorted(path.name for path in (output / "pairs").glob("*.png")),
+                sorted(
+                    path.name
+                    for path in (output / "base-pairs").glob("*.png")
+                ),
                 [
                     "0001.png",
                     "0002.png",
@@ -93,7 +124,47 @@ class ComparisonGridTests(unittest.TestCase):
                 ],
             )
             self.assertEqual(
-                sorted(path.name for path in (output / "grid-pairs").glob("*.png")),
+                sorted(
+                    path.name
+                    for path in (output / "base-blends").glob("*.png")
+                ),
+                [
+                    "0001.png",
+                    "0002.png",
+                    "0003.png",
+                    "0004.png",
+                    "0005.png",
+                ],
+            )
+            self.assertEqual(
+                sorted(
+                    path.name
+                    for path in (output / "base-diffs").glob("*.png")
+                ),
+                [
+                    "0001.png",
+                    "0002.png",
+                    "0003.png",
+                    "0004.png",
+                    "0005.png",
+                ],
+            )
+            self.assertEqual(
+                sorted(
+                    path.name
+                    for path in (output / "grid-screenshots").glob("*.png")
+                ),
+                [
+                    "page_01_a_reference.png",
+                    "page_01_b_current.png",
+                    "page_02_a_reference.png",
+                    "page_02_b_current.png",
+                ],
+            )
+            self.assertEqual(
+                sorted(
+                    path.name for path in (output / "grid-pairs").glob("*.png")
+                ),
                 ["page_01.png", "page_02.png"],
             )
             self.assertEqual(
@@ -104,8 +175,12 @@ class ComparisonGridTests(unittest.TestCase):
                 sorted(path.name for path in (output / "grid-diffs").glob("*.png")),
                 ["page_01.png", "page_02.png"],
             )
-            self.assertFalse((output / "blends").exists())
-            self.assertFalse((output / "diffs").exists())
+            self.assertEqual(
+                read_png_size(
+                    output / "grid-screenshots" / "page_02_a_reference.png"
+                )[0],
+                1,
+            )
             self.assertEqual(
                 read_png_size(output / "grid-pairs" / "page_02.png")[0],
                 2,

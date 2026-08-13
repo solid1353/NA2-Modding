@@ -19,7 +19,9 @@ if ($All) {
     }
     if (Test-Path -LiteralPath $captureRepository -PathType Container) {
         foreach ($item in Get-ChildItem -LiteralPath $captureRepository -Force) {
-            if ($item.Name -ceq '.git') { continue }
+            if ($script:E2eCaptureRepositoryMetadataNames -ccontains $item.Name) {
+                continue
+            }
             Remove-Item -LiteralPath $item.FullName -Recurse -Force
         }
     }

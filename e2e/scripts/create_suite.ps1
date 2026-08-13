@@ -2,7 +2,7 @@
 param(
     [Parameter(Mandatory, ParameterSetName = 'Suite')][string]$Suite,
     [Parameter(Mandatory, ParameterSetName = 'All')][switch]$All,
-    [string]$Game
+    [switch]$NoReference
 )
 
 $ErrorActionPreference = 'Stop'
@@ -12,6 +12,7 @@ $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
 . (Join-Path $repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
 $recordingRoot = [IO.Path]::GetFullPath($paths.pcsx2_input_recordings)
+$referenceGame = 'nun5'
 
 if (-not (Test-Path -LiteralPath $recordingRoot -PathType Container)) {
     throw "Shared recording root does not exist: $recordingRoot"
@@ -115,7 +116,7 @@ try {
         $allDefinitionsInstalled = $true
     }
 
-    if (-not [string]::IsNullOrWhiteSpace($Game)) {
+    if (-not $NoReference.IsPresent) {
         foreach ($entry in $installed) {
             $context = $entry.Context
             $referenceCapture = Join-Path $referenceCaptureRoot $context.SuiteRelativePath
@@ -128,7 +129,7 @@ try {
                     -CaptureOutputRoot $CaptureOutputRoot
             } -ArgumentList (
                 Join-Path $PSScriptRoot 'reference.ps1'
-            ), $context.Suite, $Game, $referenceCapture
+            ), $context.Suite, $referenceGame, $referenceCapture
             $referenceJobs.Add($referenceJob)
         }
         Write-Host (
@@ -182,7 +183,9 @@ try {
         $oldCaptureMoveCompleted = $false
         try {
             foreach ($item in @(Get-ChildItem -LiteralPath $captureRepository -Force)) {
-                if ($item.Name -ceq '.git') { continue }
+                if ($script:E2eCaptureRepositoryMetadataNames -ccontains $item.Name) {
+                    continue
+                }
                 Move-Item `
                     -LiteralPath $item.FullName `
                     -Destination (Join-Path $captureBackupRoot $item.Name)
@@ -198,7 +201,9 @@ try {
         catch {
             if ($oldCaptureMoveCompleted) {
                 foreach ($item in @(Get-ChildItem -LiteralPath $captureRepository -Force)) {
-                    if ($item.Name -ceq '.git') { continue }
+                    if ($script:E2eCaptureRepositoryMetadataNames -ccontains $item.Name) {
+                        continue
+                    }
                     Remove-Item -LiteralPath $item.FullName -Recurse -Force
                 }
             }
@@ -241,7 +246,9 @@ finally {
         if ($allCapturesPublished) {
             $captureRepository = $installed[0].Context.CaptureRepository
             foreach ($item in @(Get-ChildItem -LiteralPath $captureRepository -Force)) {
-                if ($item.Name -ceq '.git') { continue }
+                if ($script:E2eCaptureRepositoryMetadataNames -ccontains $item.Name) {
+                    continue
+                }
                 Remove-Item -LiteralPath $item.FullName -Recurse -Force
             }
             $captureBackupRoot = Join-Path $transaction 'previous-capture-history'

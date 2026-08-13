@@ -294,8 +294,8 @@ Write-Output '[fake] unit tests'
         -Condition ($helpText -match '(?m)^\s*na228 e2e \[-s\]\s+') `
         -Message 'Root help omitted the global E2E command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 e2e create <all\|suite> \[game\]\s+') `
-        -Message 'Root help omitted suite replacement with an optional reference game.'
+        -Condition ($helpText -match '(?m)^\s*na228 e2e create <all\|suite> \[-noref\]\s+') `
+        -Message 'Root help omitted default NUN5 reference creation and its opt-out.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 e2e rename <suite> <new-suite>\s+') `
         -Message 'Root help omitted suite rename.'
@@ -444,11 +444,11 @@ Add-Content `
 param(
     [string]$Suite,
     [switch]$All,
-    [string]$Game
+    [switch]$NoReference
 )
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
-    -Value "create suite=$Suite all=$($All.IsPresent) game=$Game"
+    -Value "create suite=$Suite all=$($All.IsPresent) noref=$($NoReference.IsPresent)"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'rename_suite.ps1') -Content @'
 param([string]$Suite, [string]$NewSuite)
@@ -494,7 +494,7 @@ Add-Content `
     & (Join-Path $fakeRepository 'na228.ps1') e2e
     & (Join-Path $fakeRepository 'na228.ps1') e2e -s
     & (Join-Path $fakeRepository 'na228.ps1') e2e create font/character_select
-    & (Join-Path $fakeRepository 'na228.ps1') e2e create font/with_reference nun5
+    & (Join-Path $fakeRepository 'na228.ps1') e2e create font/no_reference -noref
     & (Join-Path $fakeRepository 'na228.ps1') e2e create all
     & (Join-Path $fakeRepository 'na228.ps1') e2e rename font/character_select font/characters
     & (Join-Path $fakeRepository 'na228.ps1') e2e delete font/characters
@@ -506,15 +506,27 @@ Add-Content `
         -Condition ($calls.Count -eq 10 -and
             $calls[0] -ceq 'run suite= shifted=False' -and
             $calls[1] -ceq 'run suite= shifted=True' -and
-            $calls[2] -ceq 'create suite=font/character_select all=False game=' -and
-            $calls[3] -ceq 'create suite=font/with_reference all=False game=nun5' -and
-            $calls[4] -ceq 'create suite= all=True game=' -and
+            $calls[2] -ceq 'create suite=font/character_select all=False noref=False' -and
+            $calls[3] -ceq 'create suite=font/no_reference all=False noref=True' -and
+            $calls[4] -ceq 'create suite= all=True noref=False' -and
             $calls[5] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
             $calls[6] -ceq 'delete suite=font/characters all=False' -and
             $calls[7] -ceq 'delete suite= all=True' -and
             $calls[8] -ceq 'commit preserve=False' -and
             $calls[9] -ceq 'commit preserve=True') `
         -Message 'Global E2E or lifecycle-command dispatch was incorrect.'
+    $customReferenceRejected = $false
+    try {
+        & (Join-Path $fakeRepository 'na228.ps1') e2e create font/with_reference nun6
+    }
+    catch {
+        $customReferenceRejected = $_.Exception.Message -ceq (
+            'Usage: na228 e2e create <all|suite> [-noref]'
+        )
+    }
+    Assert-Na2Test `
+        -Condition $customReferenceRejected `
+        -Message 'The public E2E create command accepted a custom reference game.'
     $suiteSelectionRejected = $false
     try {
         & (Join-Path $fakeRepository 'na228.ps1') e2e alpha

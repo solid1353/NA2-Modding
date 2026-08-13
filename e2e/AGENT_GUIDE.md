@@ -27,12 +27,18 @@ tracked suite set so unintended changes elsewhere can surface.
 For suite `<suite>` and capture `<slot>`, accepted visual history is in the
 nested Git repository under `captures/<suite>/`:
 
-- `screenshots/<slot>_a_reference.png`: optional reference-game image.
-- `screenshots/<slot>_b_current.png`: accepted NA2 image.
-- `pairs/<slot>_c_pair.png`: side-by-side reference/current image.
+- `base-screenshots/<slot>_a_reference.png`: optional reference-game image.
+- `base-screenshots/<slot>_b_current.png`: accepted NA2 image.
+- `base-blends/<slot>_c_blend.png`: 50% reference/current blend.
+- `base-diffs/<slot>_d_diff.png`: amplified reference/current difference.
+- `base-pairs/<slot>_e_pair.png`: side-by-side reference/current image.
+- `grid-screenshots/`: separate `page_<n>_a_reference.png` and
+  `page_<n>_b_current.png` grid series.
 - `grid-pairs/`: paged grids of side-by-side pairs.
 - `grid-blends/`: paged 50% blend grids.
 - `grid-diffs/`: paged amplified-difference grids.
+- `base-all/` and `grid-all/`: ignored regenerated hardlink aggregates that
+  intentionally exclude pairs.
 - `sstates/current/<slot>.p2s`: retained state when the capture changed.
 
 For text, inspect relevant images at sufficient zoom to judge glyph pixels,

@@ -108,7 +108,7 @@ if ($mode -eq 'help') {
         '  na228 test                  Run unit tests'
         ''
         '  na228 e2e [-s]              Run all E2E suites; -s also qualifies against shifted'
-        '  na228 e2e create <all|suite> [game]   Rebuild every suite or replace one suite; optionally capture a reference game'
+        '  na228 e2e create <all|suite> [-noref]  Rebuild suites with NUN5 reference by default'
         '  na228 e2e rename <suite> <new-suite>  Rename the .p2m2 suite and its capture history'
         '  na228 e2e delete <all|suite>           Delete every .p2m2 suite or one suite and its capture history'
         '  na228 e2e commit [-p]                  Commit suites and captures; -p preserves capture commits'
@@ -176,8 +176,11 @@ if ($mode -eq 'e2e') {
         throw 'Usage: na228 e2e commit [-p]'
     }
     if ($testCommand -ceq 'create') {
-        if ($arguments.Count -notin 2, 3) {
-            throw 'Usage: na228 e2e create <all|suite> [game]'
+        if (
+            $arguments.Count -notin 2, 3 -or
+            ($arguments.Count -eq 3 -and $arguments[2] -cne '-noref')
+        ) {
+            throw 'Usage: na228 e2e create <all|suite> [-noref]'
         }
         $createArguments = if ($arguments[1] -ieq 'all') {
             @{ All = $true }
@@ -186,7 +189,7 @@ if ($mode -eq 'e2e') {
             @{ Suite = $arguments[1] }
         }
         if ($arguments.Count -eq 3) {
-            $createArguments.Game = $arguments[2]
+            $createArguments.NoReference = $true
         }
         & $visualCreate @createArguments
         return
@@ -220,7 +223,7 @@ if ($mode -eq 'e2e') {
         & $visualCommit -Preserve:($arguments.Count -eq 2)
         return
     }
-    throw 'Usage: na228 e2e [-s] | na228 e2e create <all|suite> [game] | na228 e2e rename <suite> <new-suite> | na228 e2e delete <all|suite> | na228 e2e commit [-p]'
+    throw 'Usage: na228 e2e [-s] | na228 e2e create <all|suite> [-noref] | na228 e2e rename <suite> <new-suite> | na228 e2e delete <all|suite> | na228 e2e commit [-p]'
 }
 
 if ($mode -eq 'release') {

@@ -8,7 +8,7 @@ nested local Git repository at `captures/`.
 
 ```powershell
 na228 e2e [-s]
-na228 e2e create <all|suite> [game]
+na228 e2e create <all|suite> [-noref]
 na228 e2e rename <suite> <new-suite>
 na228 e2e delete <all|suite>
 na228 e2e commit [-p]
@@ -29,8 +29,9 @@ Every normal and shifted capture must match.
 history except the nested capture repository's `.git` metadata. It processes
 every shared `.p2m2` recording except recordings beneath `__*` directories such
 as the internal `__generated` staging area, prepares one build, and runs every
-suite's normal/repeat replays concurrently. Optional reference-game replays also
-run concurrently. A suite selector instead replaces only that suite from its
+suite's normal/repeat replays concurrently. NUN5 reference replays run
+concurrently by default; use `-noref` to skip reference capture. A suite
+selector instead replaces only that suite from its
 matching Workshop recording. `e2e rename` moves the
 suite definition and capture history together; `e2e delete` removes both for only the
 named suite while preserving descendant suites, while `e2e delete all` directly
@@ -78,11 +79,16 @@ e2e/
 ├── config.json
 ├── suites/<suite>.p2m2
 ├── captures/<suite>/              # nested Git repository
-│   ├── screenshots/
-│   ├── pairs/
-│   ├── grid-pairs/
+│   ├── base-all/                  # ignored hardlink aggregate
+│   ├── base-screenshots/
+│   ├── base-blends/
+│   ├── base-diffs/
+│   ├── base-pairs/
+│   ├── grid-all/                  # ignored hardlink aggregate
+│   ├── grid-screenshots/
 │   ├── grid-blends/
 │   ├── grid-diffs/
+│   ├── grid-pairs/
 │   └── sstates/{reference,current}/
 └── .transactions/run-<uuid>/      # transient, ignored
     ├── owner.json
@@ -91,11 +97,19 @@ e2e/
     └── comparisons/
 ```
 
-`screenshots/` contains only the interleaved reference and current captures so
-image-by-image browsing is not interrupted by generated comparisons. Individual
-side-by-side comparisons live in `pairs/`; `grid-pairs/` contains their paged
-contact sheets, while `grid-blends/` and `grid-diffs/` contain the paged blend
-and amplified-difference views respectively.
+Every one-image-per-slot view uses the `base-` prefix, and every paged
+contact-sheet view uses `grid-`. The typed folders are canonical and tracked.
+`base-all/` and `grid-all/` are ignored, regenerated hardlink views over
+those canonical artifacts, so they consume no duplicate image storage. Pair
+views remain only in `base-pairs/` and `grid-pairs/`; both aggregate views
+exclude them to keep scrolling focused on the less repetitive variants. Within
+the base filenames, the full labels sort as `a_reference`, `b_current`,
+`c_blend`, `d_diff`, and `e_pair`.
+
+`grid-screenshots/` builds reference and current screenshots as separate page
+series named `page_<n>_a_reference.png` and `page_<n>_b_current.png`.
+`grid-all/` reuses those pages alongside `page_<n>_c_blend.png` and
+`page_<n>_d_diff.png`.
 
 Build provenance remains under `logs/na228/builds/` and output-specific
 preflight receipts under `logs/na228/preflight/`.

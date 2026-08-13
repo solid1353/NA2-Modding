@@ -225,7 +225,7 @@ try {
         -Condition $invalidIgnoredRejected `
         -Message 'A non-boolean build-variant ignored field was accepted.'
 
-    $layoutRoot = Join-Path $testRoot 'capture-layout'
+    $layoutRoot = Join-Path $testRoot ('capture-layout-' + ('x' * 128))
     $layoutReference = Join-Path $layoutRoot 'reference'
     $layoutCurrent = Join-Path $layoutRoot 'current'
     $layoutReport = Join-Path $layoutRoot 'report'
@@ -233,7 +233,10 @@ try {
     foreach ($directory in @(
         $layoutReference,
         $layoutCurrent,
-        (Join-Path $layoutReport 'pairs'),
+        (Join-Path $layoutReport 'base-pairs'),
+        (Join-Path $layoutReport 'base-blends'),
+        (Join-Path $layoutReport 'base-diffs'),
+        (Join-Path $layoutReport 'grid-screenshots'),
         (Join-Path $layoutReport 'grid-pairs'),
         (Join-Path $layoutReport 'grid-blends'),
         (Join-Path $layoutReport 'grid-diffs')
@@ -242,7 +245,17 @@ try {
     }
     [IO.File]::WriteAllText((Join-Path $layoutReference '0001.png'), 'reference')
     [IO.File]::WriteAllText((Join-Path $layoutCurrent '0001.png'), 'current')
-    [IO.File]::WriteAllText((Join-Path $layoutReport 'pairs\0001.png'), 'pair')
+    [IO.File]::WriteAllText((Join-Path $layoutReport 'base-pairs\0001.png'), 'pair')
+    [IO.File]::WriteAllText((Join-Path $layoutReport 'base-blends\0001.png'), 'blend')
+    [IO.File]::WriteAllText((Join-Path $layoutReport 'base-diffs\0001.png'), 'diff')
+    [IO.File]::WriteAllText(
+        (Join-Path $layoutReport 'grid-screenshots\page_01_a_reference.png'),
+        'reference grid'
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $layoutReport 'grid-screenshots\page_01_b_current.png'),
+        'current grid'
+    )
     [IO.File]::WriteAllText((Join-Path $layoutReport 'grid-pairs\page_01.png'), 'pair grid')
     [IO.File]::WriteAllText(
         (Join-Path $layoutReport 'grid-blends\page_01.png'),
@@ -255,10 +268,31 @@ try {
     New-VisualRegressionScreenshotStage `
         -ReferenceDirectory $layoutReference `
         -CurrentDirectory $layoutCurrent `
-        -OutputDirectory (Join-Path $layoutPublish 'screenshots')
-    New-VisualRegressionPairStage `
+        -OutputDirectory (Join-Path $layoutPublish 'base-screenshots')
+    foreach ($comparison in @(
+        [pscustomobject]@{ Kind = 'Pair'; Directory = 'base-pairs' },
+        [pscustomobject]@{ Kind = 'Blend'; Directory = 'base-blends' },
+        [pscustomobject]@{ Kind = 'Diff'; Directory = 'base-diffs' }
+    )) {
+        New-VisualRegressionComparisonStage `
+            -ReportDirectory $layoutReport `
+            -OutputDirectory (Join-Path $layoutPublish $comparison.Directory) `
+            -Kind $comparison.Kind
+    }
+    New-VisualRegressionAggregateLinkStage `
+        -Source @(
+            [pscustomobject]@{
+                Directory = (Join-Path $layoutPublish 'base-screenshots')
+                Suffix = ''
+            },
+            [pscustomobject]@{ Directory = (Join-Path $layoutPublish 'base-blends'); Suffix = '' },
+            [pscustomobject]@{ Directory = (Join-Path $layoutPublish 'base-diffs'); Suffix = '' }
+        ) `
+        -OutputDirectory (Join-Path $layoutPublish 'base-all')
+    New-VisualRegressionGridStage `
         -ReportDirectory $layoutReport `
-        -OutputDirectory (Join-Path $layoutPublish 'pairs')
+        -GridDirectory 'grid-screenshots' `
+        -OutputDirectory (Join-Path $layoutPublish 'grid-screenshots')
     New-VisualRegressionGridStage `
         -ReportDirectory $layoutReport `
         -GridDirectory 'grid-pairs' `
@@ -271,6 +305,22 @@ try {
         -ReportDirectory $layoutReport `
         -GridDirectory 'grid-diffs' `
         -OutputDirectory (Join-Path $layoutPublish 'grid-diffs')
+    New-VisualRegressionAggregateLinkStage `
+        -Source @(
+            [pscustomobject]@{
+                Directory = (Join-Path $layoutPublish 'grid-screenshots')
+                Suffix = ''
+            },
+            [pscustomobject]@{
+                Directory = (Join-Path $layoutPublish 'grid-blends')
+                Suffix = 'c_blend'
+            },
+            [pscustomobject]@{
+                Directory = (Join-Path $layoutPublish 'grid-diffs')
+                Suffix = 'd_diff'
+            }
+        ) `
+        -OutputDirectory (Join-Path $layoutPublish 'grid-all')
     $layoutFiles = @(
         Get-ChildItem -LiteralPath $layoutPublish -Recurse -File |
             ForEach-Object {
@@ -281,15 +331,105 @@ try {
     Assert-E2eHelperTest `
         -Condition (
             ($layoutFiles -join ',') -ceq (
+                'base-all/001_a_reference.png,' +
+                'base-all/001_b_current.png,' +
+                'base-all/001_c_blend.png,' +
+                'base-all/001_d_diff.png,' +
+                'base-blends/001_c_blend.png,' +
+                'base-diffs/001_d_diff.png,' +
+                'base-pairs/001_e_pair.png,' +
+                'base-screenshots/001_a_reference.png,' +
+                'base-screenshots/001_b_current.png,' +
+                'grid-all/page_01_a_reference.png,' +
+                'grid-all/page_01_b_current.png,' +
+                'grid-all/page_01_c_blend.png,' +
+                'grid-all/page_01_d_diff.png,' +
                 'grid-blends/page_01.png,' +
                 'grid-diffs/page_01.png,' +
                 'grid-pairs/page_01.png,' +
-                'pairs/001_c_pair.png,' +
-                'screenshots/001_a_reference.png,' +
-                'screenshots/001_b_current.png'
+                'grid-screenshots/page_01_a_reference.png,' +
+                'grid-screenshots/page_01_b_current.png'
             )
         ) `
-        -Message 'Capture artifacts were not separated into the flat published layout.'
+        -Message (
+            'Capture artifacts were not separated into the flat published layout. Actual: ' +
+            ($layoutFiles -join ',')
+        )
+    [IO.File]::WriteAllText(
+        (Join-Path $layoutPublish 'base-blends\001_c_blend.png'),
+        'updated blend'
+    )
+    Assert-E2eHelperTest `
+        -Condition (
+            [IO.File]::ReadAllText(
+                (Join-Path $layoutPublish 'base-all\001_c_blend.png')
+            ) -ceq 'updated blend'
+        ) `
+        -Message 'The all view did not reuse its canonical blend through a hardlink.'
+
+    $aggregateContext = [pscustomobject]@{
+        SuiteRelativePath = 'capture-layout'
+        Capture = [pscustomobject]@{
+            Screenshots = Join-Path $layoutPublish 'base-screenshots'
+            Pairs = Join-Path $layoutPublish 'base-pairs'
+            Blends = Join-Path $layoutPublish 'base-blends'
+            Diffs = Join-Path $layoutPublish 'base-diffs'
+            All = Join-Path $layoutPublish 'base-all'
+            ScreenshotGrids = Join-Path $layoutPublish 'grid-screenshots'
+            PairGrids = Join-Path $layoutPublish 'grid-pairs'
+            BlendGrids = Join-Path $layoutPublish 'grid-blends'
+            DiffGrids = Join-Path $layoutPublish 'grid-diffs'
+            AllGrids = Join-Path $layoutPublish 'grid-all'
+        }
+    }
+    Publish-VisualRegressionAggregateViews `
+        -Context @($aggregateContext) `
+        -TransactionRoot (Join-Path $layoutRoot 'aggregate-transaction')
+    Assert-E2eHelperTest `
+        -Condition (
+            -not (Test-Path -LiteralPath (
+                Join-Path $layoutPublish 'base-all\001_e_pair.png'
+            )) -and
+            -not (Test-Path -LiteralPath (
+                Join-Path $layoutPublish 'grid-all\page_01_e_pair.png'
+            ))
+        ) `
+        -Message 'Aggregate publication included a pair view.'
+    [IO.File]::WriteAllText(
+        (Join-Path $layoutPublish 'grid-diffs\page_01.png'),
+        'updated diff grid'
+    )
+    Assert-E2eHelperTest `
+        -Condition (
+            [IO.File]::ReadAllText(
+                (Join-Path $layoutPublish 'grid-all\page_01_d_diff.png')
+            ) -ceq 'updated diff grid'
+        ) `
+        -Message 'Aggregate publication did not retain hardlinks to canonical grid pages.'
+
+    $callbackRoot = Join-Path $layoutRoot 'callback-rollback'
+    $callbackSource = Join-Path $callbackRoot 'source'
+    $callbackDestination = Join-Path $callbackRoot 'destination'
+    [void](New-Item -ItemType Directory -Path $callbackSource, $callbackDestination -Force)
+    [IO.File]::WriteAllText((Join-Path $callbackSource 'new.txt'), 'new')
+    [IO.File]::WriteAllText((Join-Path $callbackDestination 'old.txt'), 'old')
+    $callbackFailed = $false
+    try {
+        Publish-VisualRegressionTransaction `
+            -Replacements ([ordered]@{ $callbackDestination = $callbackSource }) `
+            -TransactionRoot (Join-Path $callbackRoot 'transaction') `
+            -AfterPublish { throw 'callback failure' }
+    }
+    catch {
+        $callbackFailed = $_.Exception.Message -ceq 'callback failure'
+    }
+    Assert-E2eHelperTest `
+        -Condition (
+            $callbackFailed -and
+            (Test-Path -LiteralPath (Join-Path $callbackDestination 'old.txt')) -and
+            -not (Test-Path -LiteralPath (Join-Path $callbackDestination 'new.txt'))
+        ) `
+        -Message 'A failed post-publication callback did not roll back canonical publication.'
 
     $transactions = Join-Path $testRoot '.transactions'
     $legacy = Join-Path $transactions 'legacy-without-owner'
@@ -641,7 +781,8 @@ foreach ($suiteName in $suites) {
     ) -Force)
     [IO.File]::WriteAllText($noReferenceRecording, 'first')
     & (Join-Path $fakeScripts 'create_suite.ps1') `
-        -Suite 'test/no_reference'
+        -Suite 'test/no_reference' `
+        -NoReference
     $firstSuitePath = Join-Path $fakeRepository 'e2e\suites\test\no_reference.p2m2'
     Assert-E2eHelperTest `
         -Condition (
@@ -655,29 +796,29 @@ foreach ($suiteName in $suites) {
         -Message 'Suite creation did not produce one flat .p2m2 definition without ignores.'
     $firstCaptureRoot = Join-Path $fakeRepository 'e2e\captures\test\no_reference'
     [void](New-Item -ItemType Directory -Path (
-        Join-Path $firstCaptureRoot 'screenshots'
+        Join-Path $firstCaptureRoot 'base-screenshots'
     ) -Force)
     [IO.File]::WriteAllText(
-        (Join-Path $firstCaptureRoot 'screenshots\001_b_current.png'),
+        (Join-Path $firstCaptureRoot 'base-screenshots\001_b_current.png'),
         'stale capture data'
     )
     [IO.File]::WriteAllText($noReferenceRecording, 'second')
     & (Join-Path $fakeScripts 'create_suite.ps1') `
-        -Suite 'test/no_reference'
+        -Suite 'test/no_reference' `
+        -NoReference
     Assert-E2eHelperTest `
         -Condition (
             [IO.File]::ReadAllText($firstSuitePath) -ceq 'second' -and
             (Test-Path -LiteralPath $firstCaptureRoot -PathType Container) -and
             [IO.File]::ReadAllText((Join-Path $firstCaptureRoot 'current.txt')) -ceq 'current' -and
             -not (Test-Path -LiteralPath (
-                Join-Path $firstCaptureRoot 'screenshots\001_b_current.png'
+                Join-Path $firstCaptureRoot 'base-screenshots\001_b_current.png'
             ))
         ) `
         -Message 'Existing suite definition or capture history was not completely replaced.'
     [IO.File]::WriteAllText($withReferenceRecording, 'second')
     & (Join-Path $fakeScripts 'create_suite.ps1') `
-        -Suite 'test/with_reference' `
-        -Game 'nun5'
+        -Suite 'test/with_reference'
     $newSuiteCalls = @(Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt'))
     Assert-E2eHelperTest `
         -Condition (
@@ -704,7 +845,8 @@ foreach ($suiteName in $suites) {
     $replacementFailed = $false
     try {
         & (Join-Path $fakeScripts 'create_suite.ps1') `
-            -Suite 'test/with_reference'
+            -Suite 'test/with_reference' `
+            -NoReference
     }
     catch {
         $replacementFailed = $true
@@ -769,6 +911,8 @@ foreach ($suiteName in $suites) {
         -Message 'Leaf suite deletion did not remove both roots and their empty parents.'
 
     $fakeCaptureGit = Join-Path $fakeRepository 'e2e\captures\.git'
+    $fakeCaptureAttributes = Join-Path $fakeRepository 'e2e\captures\.gitattributes'
+    $fakeCaptureIgnore = Join-Path $fakeRepository 'e2e\captures\.gitignore'
     $orphanCapture = Join-Path $fakeRepository 'e2e\captures\orphan'
     $generatedRecording = Join-Path $fakeRecordings '__generated\transient.p2m2'
     [void](New-Item -ItemType Directory -Path $fakeCaptureGit, $orphanCapture -Force)
@@ -776,11 +920,19 @@ foreach ($suiteName in $suites) {
         [IO.Path]::GetDirectoryName($generatedRecording)
     ) -Force)
     [IO.File]::WriteAllText((Join-Path $fakeCaptureGit 'preserved.txt'), 'git metadata')
+    [IO.File]::WriteAllText(
+        $fakeCaptureAttributes,
+        ".gitattributes text eol=lf`n.gitignore text eol=lf`n"
+    )
+    [IO.File]::WriteAllText(
+        $fakeCaptureIgnore,
+        "**/base-all/`n**/grid-all/`n"
+    )
     [IO.File]::WriteAllText((Join-Path $orphanCapture 'stale.txt'), 'orphan history')
     $orphanSuite = Join-Path $fakeRepository 'e2e\suites\orphan.p2m2'
     [IO.File]::WriteAllText($orphanSuite, 'orphan suite')
     [IO.File]::WriteAllText($generatedRecording, 'transient recording')
-    & (Join-Path $fakeScripts 'create_suite.ps1') -All
+    & (Join-Path $fakeScripts 'create_suite.ps1') -All -NoReference
     $bulkSuiteNames = @(
         Get-VisualRegressionSuiteNames `
             -SuiteRepository (Join-Path $fakeRepository 'e2e\suites')
@@ -798,7 +950,13 @@ foreach ($suiteName in $suites) {
             ) -PathType Leaf) -and
             -not (Test-Path -LiteralPath $orphanSuite) -and
             -not (Test-Path -LiteralPath $orphanCapture) -and
-            [IO.File]::ReadAllText((Join-Path $fakeCaptureGit 'preserved.txt')) -ceq 'git metadata'
+            [IO.File]::ReadAllText((Join-Path $fakeCaptureGit 'preserved.txt')) -ceq 'git metadata' -and
+            [IO.File]::ReadAllText($fakeCaptureAttributes) -ceq (
+                ".gitattributes text eol=lf`n.gitignore text eol=lf`n"
+            ) -and
+            [IO.File]::ReadAllText($fakeCaptureIgnore) -ceq (
+                "**/base-all/`n**/grid-all/`n"
+            )
         ) `
         -Message 'Bulk suite creation did not completely rewrite public suites and histories while preserving capture Git metadata.'
     $acceptedBulkCapture = Join-Path `
@@ -809,7 +967,7 @@ foreach ($suiteName in $suites) {
     [IO.File]::WriteAllText((Join-Path $fakeScripts 'fail-run'), '')
     $bulkReplacementFailed = $false
     try {
-        & (Join-Path $fakeScripts 'create_suite.ps1') -All
+        & (Join-Path $fakeScripts 'create_suite.ps1') -All -NoReference
     }
     catch {
         $bulkReplacementFailed = $true
@@ -820,7 +978,13 @@ foreach ($suiteName in $suites) {
             $bulkReplacementFailed -and
             [IO.File]::ReadAllText($firstSuitePath) -ceq 'second' -and
             [IO.File]::ReadAllText($acceptedBulkCapture) -ceq 'accepted bulk history' -and
-            [IO.File]::ReadAllText((Join-Path $fakeCaptureGit 'preserved.txt')) -ceq 'git metadata'
+            [IO.File]::ReadAllText((Join-Path $fakeCaptureGit 'preserved.txt')) -ceq 'git metadata' -and
+            [IO.File]::ReadAllText($fakeCaptureAttributes) -ceq (
+                ".gitattributes text eol=lf`n.gitignore text eol=lf`n"
+            ) -and
+            [IO.File]::ReadAllText($fakeCaptureIgnore) -ceq (
+                "**/base-all/`n**/grid-all/`n"
+            )
         ) `
         -Message 'Failed bulk suite creation did not restore the complete prior definition and capture trees.'
     $looseCapture = Join-Path $fakeRepository 'e2e\captures\loose.txt'
@@ -836,9 +1000,15 @@ foreach ($suiteName in $suites) {
                 Get-ChildItem `
                     -LiteralPath (Join-Path $fakeRepository 'e2e\captures') `
                     -Force |
-                    Where-Object Name -cne '.git'
+                    Where-Object Name -NotIn @('.git', '.gitattributes', '.gitignore')
             ).Count -eq 0 -and
-            [IO.File]::ReadAllText((Join-Path $fakeCaptureGit 'preserved.txt')) -ceq 'git metadata'
+            [IO.File]::ReadAllText((Join-Path $fakeCaptureGit 'preserved.txt')) -ceq 'git metadata' -and
+            [IO.File]::ReadAllText($fakeCaptureAttributes) -ceq (
+                ".gitattributes text eol=lf`n.gitignore text eol=lf`n"
+            ) -and
+            [IO.File]::ReadAllText($fakeCaptureIgnore) -ceq (
+                "**/base-all/`n**/grid-all/`n"
+            )
         ) `
         -Message 'Bulk suite deletion did not remove all histories idempotently or preserve capture Git metadata.'
 

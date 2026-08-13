@@ -268,13 +268,40 @@ try {
             -ReferenceDirectory $referenceStage `
             -CurrentDirectory $currentStage `
             -OutputDirectory $screenshotStage
+        $screenshotGridStage = Join-Path `
+            $suitePublish `
+            $script:E2eScreenshotGridDirectory
+        New-VisualRegressionScreenshotGridStage `
+            -Suite $suiteName `
+            -ScreenshotDirectory $screenshotStage `
+            -OutputDirectory $screenshotGridStage
         $replacements[$context.Capture.Screenshots] = $screenshotStage
+        $replacements[$context.Capture.ScreenshotGrids] = $screenshotGridStage
         if ($hasReference) {
-            $pairStage = Join-Path $suitePublish $script:E2ePairDirectory
-            New-VisualRegressionPairStage `
-                -ReportDirectory $reportStage `
-                -OutputDirectory $pairStage
-            $replacements[$context.Capture.Pairs] = $pairStage
+            foreach ($comparison in @(
+                [pscustomobject]@{
+                    Name = $script:E2ePairDirectory
+                    Kind = 'Pair'
+                    Destination = $context.Capture.Pairs
+                },
+                [pscustomobject]@{
+                    Name = $script:E2eBlendDirectory
+                    Kind = 'Blend'
+                    Destination = $context.Capture.Blends
+                },
+                [pscustomobject]@{
+                    Name = $script:E2eDiffDirectory
+                    Kind = 'Diff'
+                    Destination = $context.Capture.Diffs
+                }
+            )) {
+                $comparisonStage = Join-Path $suitePublish $comparison.Name
+                New-VisualRegressionComparisonStage `
+                    -ReportDirectory $reportStage `
+                    -OutputDirectory $comparisonStage `
+                    -Kind $comparison.Kind
+                $replacements[$comparison.Destination] = $comparisonStage
+            }
             foreach ($grid in @(
                 [pscustomobject]@{
                     Name = $script:E2ePairGridDirectory
@@ -303,7 +330,15 @@ try {
     }
     Publish-VisualRegressionTransaction `
         -Replacements $replacements `
-        -TransactionRoot $transaction
+        -TransactionRoot $transaction `
+        -AfterPublish {
+            $aggregateContexts = @(
+                $suites | ForEach-Object { Get-E2eRunContext -Name $_ }
+            )
+            Publish-VisualRegressionAggregateViews `
+                -Context $aggregateContexts `
+                -TransactionRoot $transaction
+        }
     Write-Host (
         "E2E pipeline passed: $($suites.Count) suite(s), " +
         "build variant(s) $(@($runVariants.name) -join ', '), " +

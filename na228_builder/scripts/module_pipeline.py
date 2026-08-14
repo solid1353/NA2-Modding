@@ -21,6 +21,7 @@ from ..payload_builder.operations import (
 )
 from .configuration import BuildConfiguration, ModuleInvocation
 from .character_overrides import character_override_fragment
+from .practice_bootstrap import practice_bootstrap_fragment
 
 
 @dataclass(frozen=True)
@@ -149,6 +150,19 @@ def prepare_module_pipeline(
                         *declaration.fragments,
                     ),
                 )
+            if module.feature_id == "qol":
+                bootstrap_fragment = practice_bootstrap_fragment(
+                    configuration.selection,
+                    owner=module.module_id,
+                )
+                if bootstrap_fragment is not None:
+                    declaration = replace(
+                        declaration,
+                        fragments=(
+                            bootstrap_fragment,
+                            *declaration.fragments,
+                        ),
+                    )
         else:
             declaration = runtime_injector_module.load_package(
                 module.input_path,

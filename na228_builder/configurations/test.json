@@ -1,6 +1,13 @@
 {
   "overrides": {
     "qol": {
+      "practice": {
+        "bootstrap": {
+          "p1": 84,
+          "support": 26,
+          "awakening": "none"
+        }
+      },
       "startup": {
         "faster_loading": false
       }

@@ -80,7 +80,7 @@ STATE_NAME_RE = re.compile(
     r"^(?P<serial>[A-Z0-9]{4}-[A-Z0-9]{5}) \((?P<crc>[0-9A-Fa-f]{8})\)\."
     r"(?P<slot>\d{2})\.p2s$"
 )
-E2E_STATE_NAME_RE = re.compile(r"^(?P<slot>\d+)\.p2s$")
+NUMERIC_STATE_NAME_RE = re.compile(r"^(?P<slot>\d+)\.p2s$")
 
 
 class MemoryMapError(RuntimeError):
@@ -175,12 +175,12 @@ def parse_state_identity(path: Path) -> StateIdentity:
             slot=int(match.group("slot")),
         )
 
-    e2e_match = E2E_STATE_NAME_RE.fullmatch(path.name)
-    if e2e_match is not None and _e2e_variant_for(path) is not None:
+    numeric_match = NUMERIC_STATE_NAME_RE.fullmatch(path.name)
+    if numeric_match is not None and _capture_variant_for(path) is not None:
         return StateIdentity(
             serial="SLOP-NA228",
             crc="",
-            slot=int(e2e_match.group("slot")),
+            slot=int(numeric_match.group("slot")),
         )
 
     raise MemoryMapError(f"Unrecognized PCSX2 savestate name: {path.name}")
@@ -203,6 +203,29 @@ def _e2e_variant_for(path: Path) -> str | None:
     ):
         return None
     return variant_directory.name
+
+
+def _recording_variant_for(path: Path) -> str | None:
+    state_directory = path.parent
+    phase_directory = state_directory.parent
+    recording_directory = phase_directory.parent
+    captures_directory = recording_directory.parent
+    task_directory = captures_directory.parent
+    work_directory = task_directory.parent
+    if (
+        state_directory.name.casefold() != "sstates"
+        or captures_directory.name.casefold() != "captures"
+        or work_directory.name.casefold() != "work"
+        or not phase_directory.name
+        or not recording_directory.name
+        or not task_directory.name
+    ):
+        return None
+    return phase_directory.name
+
+
+def _capture_variant_for(path: Path) -> str | None:
+    return _e2e_variant_for(path) or _recording_variant_for(path)
 
 
 def _extract_with_zipfile(path: Path, member: str) -> bytes | None:
@@ -435,9 +458,9 @@ def observe_region(
 
 
 def _variant_for(path: Path, identity: StateIdentity) -> str:
-    e2e_variant = _e2e_variant_for(path)
-    if e2e_variant is not None:
-        return e2e_variant
+    capture_variant = _capture_variant_for(path)
+    if capture_variant is not None:
+        return capture_variant
     parent = path.parent.name.casefold()
     if parent in {"vanilla", "current"}:
         return parent
@@ -448,6 +471,12 @@ def _variant_for(path: Path, identity: StateIdentity) -> str:
     return "unknown"
 
 
+def _screen_for(path: Path, identity: StateIdentity) -> str:
+    if STATE_NAME_RE.fullmatch(path.name) is not None:
+        return SLOT_LABELS.get(identity.slot, f"slot_{identity.slot:02d}")
+    return f"marker_{identity.slot:04d}"
+
+
 def analyze_state(path: Path) -> StateObservation:
     identity = parse_state_identity(path)
     variant = _variant_for(path, identity)
@@ -456,7 +485,7 @@ def analyze_state(path: Path) -> StateObservation:
         observe_region(memory, name, start, end)
         for name, (start, end) in BASE_REGIONS.items()
     ]
-    if variant == "current" or _e2e_variant_for(path) is not None:
+    if variant == "current" or _capture_variant_for(path) is not None:
         regions.extend(
             observe_region(memory, name, start, end)
             for name, (start, end) in CURRENT_FIXED_REGIONS.items()
@@ -474,7 +503,7 @@ def analyze_state(path: Path) -> StateObservation:
     return StateObservation(
         variant=variant,
         identity=identity,
-        screen=SLOT_LABELS.get(identity.slot, f"slot_{identity.slot:02d}"),
+        screen=_screen_for(path, identity),
         source_name=path.name,
         source_size=stat.st_size,
         source_sha256=_hash_file(path),

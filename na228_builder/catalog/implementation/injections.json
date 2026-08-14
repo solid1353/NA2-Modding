@@ -1927,6 +1927,54 @@
       }
     }
   },
+  "i__qol__practice__bootstrap__configured_battle": {
+    "description": "Populate a configured Practice matchup without Character Select, retain the native battle-loading states, and apply one selected awakening through the native effect system after Player 1 exists.",
+    "hooks": {
+      "apply_configured_awakening_after_battle_start": {
+        "description": "Retain the active Practice battle update and apply the configured Player 1 awakening exactly once after the live fighter and its effect container exist.",
+        "target_id": "na2_elf",
+        "offset": "0xECBCC",
+        "expected_hex": "DCB6070C",
+        "symbol": "practice_bootstrap_battle",
+        "encoding": "jal26"
+      },
+      "replace_character_select_with_configured_practice_match": {
+        "description": "Populate both native current and match-start identity fields, fix the opponent and Practice stage, and advance through the native battle-loading transition without constructing Character Select or Practice Settings.",
+        "target_id": "na2_elf",
+        "offset": "0xECB2C",
+        "expected_hex": "14B5070C",
+        "symbol": "practice_bootstrap_select",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "practice_bootstrap": {
+        "kind": "c",
+        "path": "src/qol/practice_bootstrap.c",
+        "namespace": "qol.practice.bootstrap",
+        "imports": {
+          "practice_bootstrap_configuration": "practice_bootstrap_configuration",
+          "practice_bootstrap_state": "practice_bootstrap_state"
+        },
+        "fragments": {
+          "practice_bootstrap_battle": {
+            "order": 152,
+            "object": "qol.practice.bootstrap.text.qol.practice.bootstrap.battle"
+          },
+          "practice_bootstrap_select": {
+            "order": 151,
+            "object": "qol.practice.bootstrap.text.qol.practice.bootstrap.select"
+          }
+        }
+      },
+      "practice_bootstrap_state": {
+        "kind": "data",
+        "order": 153,
+        "alignment": 4,
+        "value": "00000000"
+      }
+    }
+  },
   "i__qol__startup__faster_loading__lazy_voice_indexes": {
     "description": "Keep sound and stream initialization at boot while loading each RPG or player voice-bank index on its first playback.",
     "hooks": {

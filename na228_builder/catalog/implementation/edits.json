@@ -4810,6 +4810,16 @@
     "expected_hex": "05000000",
     "replacement_hex": "FFFFFFFF"
   },
+  "e__qol__practice__bootstrap__enter_practice_after_continue": {
+    "description": "Route successful Continue startup directly into the native Practice controller while retaining the established outer menu state.",
+    "operation": "replace",
+    "destination_target_id": "na2_elf",
+    "destination_offsets": [
+      "0xE9BF8"
+    ],
+    "expected_hex": "04000224080002AE0C0004AE2900001000000000",
+    "replacement_hex": "04000224080002AE03000224290000100C0002AE"
+  },
   "e__qol__practice__command_display_off_by_default__force_preserving_following_settings_field": {
     "description": "Force command display off while preserving the following settings-field reload.",
     "operation": "replace",

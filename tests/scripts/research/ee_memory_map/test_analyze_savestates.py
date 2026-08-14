@@ -8,6 +8,7 @@ from pathlib import Path
 
 from scripts.research.ee_memory_map.analyze_savestates import (
     MemoryMapError,
+    _screen_for,
     _variant_for,
     observe_region,
     parse_allocator,
@@ -59,6 +60,17 @@ class IdentityTests(unittest.TestCase):
         self.assertEqual(identity.crc, "")
         self.assertEqual(identity.slot, 39)
         self.assertEqual(_variant_for(path, identity), "padded")
+
+    def test_parses_user_recording_capture_state(self) -> None:
+        path = Path(
+            "work/E2E/captures/bootstrap/baseline/sstates/0001.p2s"
+        )
+        identity = parse_state_identity(path)
+        self.assertEqual(identity.serial, "SLOP-NA228")
+        self.assertEqual(identity.crc, "")
+        self.assertEqual(identity.slot, 1)
+        self.assertEqual(_variant_for(path, identity), "baseline")
+        self.assertEqual(_screen_for(path, identity), "marker_0001")
 
     def test_rejects_numeric_name_outside_e2e_transaction(self) -> None:
         with self.assertRaises(MemoryMapError):

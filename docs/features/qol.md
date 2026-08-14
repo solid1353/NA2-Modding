@@ -4,6 +4,37 @@ File-backed and resident quality-of-life behavior. Selectable nodes, guarded
 binary edits, runtime hooks, and payload declarations are selected by
 `na228_builder/catalog/qol.modcat`.
 
+## Practice bootstrap
+
+`qol.practice.bootstrap` enters Practice directly after startup with three
+configured inputs: Player 1 character ID `p1`, Player 1 support ID `support`,
+and `awakening`, which is `none` or a character-specific native awakening ID
+from `0` through `137`. Player 2 is fixed to Naruto with Sakura support and the
+Practice stage remains the native fixed stage. Starting HP is deliberately not
+duplicated in this object:
+`qol.practice.starting_hp` continues to select `full`, `half`, or `critical`.
+
+The base, development, and release configurations disable the bootstrap. The
+test configuration enables Tsunade (`84`) with Shizune support (`26`), no
+awakening, and the existing half-HP Practice setting. The builder converts the
+typed bootstrap object into a 16-byte read-only resident configuration. This
+is a scoped generated fragment, not a new general catalog payload schema.
+
+A guarded file edit changes only successful Continue startup from main-menu
+substate `1` to Practice substate `3`. The native Practice controller still
+runs its resource states `1` through `6`. Its state-`7` Character Select call
+is replaced by a resident wrapper that writes both current and match-start
+character/support fields, fixes the stage, and enters the native state-`10`
+battle-loading transition. Character Select and the final Practice Settings
+screen are never constructed. A second wrapper retains the native active-
+battle update and, when requested, applies the configured awakening once after
+Player 1's live fighter exists.
+
+The clean guards are ELF `0xE9BF8` for the post-Continue route, `0xECB2C` for
+the state-`7` Character Select call, and `0xECBCC` for the state-`15` battle
+update call. The reverse-engineering evidence and native field contract are in
+[`../knowledge/gameplay/battle.md`](../knowledge/gameplay/battle.md).
+
 ## Practice starting HP
 
 `qol.practice.starting_hp` selects `full`, `half`, or `critical` as the native

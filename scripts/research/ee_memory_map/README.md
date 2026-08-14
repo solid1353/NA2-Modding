@@ -4,9 +4,10 @@
 NA2's linked-list allocator against its cached globals, identifies the active
 MWo3 overlay, and records the task's fixed reservation and upper-memory regions.
 It accepts either filesystem paths or configured `@root/...` paths.
-It also accepts the numeric savestate names retained below an E2E transaction's
-`jobs/<variant>/suites/<suite>/capture/sstates/` tree and derives the variant
-and marker number from that structure.
+It also accepts numeric savestate names retained below an E2E transaction's
+`jobs/<variant>/suites/<suite>/capture/sstates/` tree or a user-recording
+`work/<chat>/captures/<recording>/<phase>/sstates/` tree, deriving the variant
+or phase and marker number from that structure.
 
 Run the preserved matched capture set and write disposable reports below the
 owning task's shared log root:

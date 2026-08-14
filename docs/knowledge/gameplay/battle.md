@@ -38,6 +38,88 @@ the six copied savestates. State SHA-256 values, in slot order, were
 `7D1379E12316124B64EE83CED270799BFEC846C6D499552E7A0FD48D3C5776E3`,
 and `4B873D93C9591978348717B89296B75926EA682874A16F6EC569228321524A54`.
 
+## Direct Practice bootstrap
+
+The deterministic recording `bootstrap.p2m2`, SHA-256
+`AA4330C0A32381BE52FE135298AED92A526825D93E9BA126E8D9645D62987B87`,
+was replayed against the verified Manual ISO with SHA-256
+`FCF132A7E626A8B85A4767E53569A7A98E3A04EBEC073F4AD412A67CAE4D5A23`.
+Its eight ordered markers establish a baseline menu/battle pair, two distinct
+active awakenings, a different Player 1 menu/battle pair, and a different
+support menu/battle pair. The captured matchups were Tsunade with Shizune
+versus Naruto with Sakura, Jiraiya with Shizune versus the fixed opponent, and
+Tsunade with Yamato versus the fixed opponent.
+
+The global at EE `0x00607600` points to the manager. Comparing the marker
+states confirms the following selection fields:
+
+| Manager field | Meaning |
+| ---: | --- |
+| `+0x4C` | Player 1 current character ID |
+| `+0x68` | Player 1 current support ID |
+| `+0x74` | Player 2 current character ID |
+| `+0x90` | Player 2 current support ID |
+| `+0x98` | stage ID byte; Practice used `6` |
+| `+0xC8` | Player 1 match-start character ID |
+| `+0xE4` | Player 1 match-start support ID |
+| `+0xF0` | Player 2 match-start character ID |
+| `+0x10C` | Player 2 match-start support ID |
+| `+0xDE4` | Player 1 live-fighter pointer |
+| `+0xDE8` | Player 2 live-fighter pointer |
+
+The confirmed IDs are Tsunade `0x54`, Jiraiya `0x53`, Naruto `0x39`, Shizune
+support `0x1A`, Yamato support `0x1F`, and Sakura support `0x01`.
+
+`FUN_001e9980` owns the outer manager state at `+0x08` and mode/substate at
+`+0x0C`. After successful Continue startup, clean runtime `0x001E9AF8`
+(ELF `0xE9BF8`) writes state `4`, substate `1`; substate `3` instead calls
+`FUN_001ea940`, which constructs the Practice controller with
+`FUN_001ec300(2)`. The bootstrap changes only this successful-Continue block
+to store substate `3`.
+
+The Practice controller at global `0x00607620` dispatches through
+`FUN_001ec960`. States `1` through `6` perform native resource preparation.
+State `7` normally calls `FUN_001ed450` to construct Character Select. State
+`9` normally constructs the final VS/Practice Settings screen, then stores the
+stage, calls `FUN_002005b0(1, 0)`, and enters state `10`. The bootstrap hook at
+runtime `0x001ECA2C` (ELF `0xECB2C`) replaces only the state-`7` call: it writes
+the current and match-start identity fields, fixes the opponent and stage,
+sets the native three-frame countdown, calls `FUN_002005b0(1, 0)`, and enters
+state `10`. States `10` through `15` remain native, including both fighters'
+construction and stage loading.
+
+In the baseline battle marker the live fighter's effect container at
+fighter `+0x8C4` was empty and `u16` field `+0x8E8` was `0xFFFF`. The two
+awakening markers contained one effect and changed `+0x8E8` to `0x57` and
+`0x22`, respectively; their visible HUD abbreviations were `Nin.` and `Reg.`.
+These are character-specific native IDs, not two global awakening categories.
+`FUN_003047c0` validates the complete native ID domain `0..0x89`; the bootstrap
+therefore accepts `none` or one numeric ID in that range and passes it through
+unchanged.
+`FUN_00305c30(fighter, effect_id, -1, 1)` is the native high-level effect
+entry: it validates the effect category, resolves the default parameter,
+constructs the effect through `FUN_00305270`, performs native side effects,
+and writes the active effect ID to fighter `+0x8E8`. The hook at runtime
+`0x001ECACC` (ELF `0xECBCC`) retains `FUN_001edb70`, then invokes this entry
+once after the Player 1 fighter exists. It retries until `+0x8E8` confirms the
+requested ID and resets its one-shot state whenever a new bootstrap reaches
+controller state `7`.
+
+The implementation deliberately leaves starting HP to the independently
+verified native Practice enum described above. It uses neither savestates nor
+input recordings at runtime; those artifacts are evidence and regression
+inputs only.
+
+Candidate validation replayed the same eight-marker recording against two
+isolated worker builds. With the test configuration (`p1: 84`, `support: 26`,
+`awakening: none`), every marker was already in the live Practice battle;
+marker `0001` had manager state `4`, substate `3`, both configured current and
+match-start identities, live character `84`, HP `0.5`, and active effect
+`0xFFFF`. A second build with `awakening: 0x22` reached the same state with
+effect `0x22` active at marker `0001`, visibly reported as `Reg.`. Later marker
+effects followed the recording's gameplay inputs rather than being forced back
+to `0x22`, confirming that the bootstrap applies only the initial active state.
+
 ## Character durability and effective base HP
 
 The game does not store a different full-gauge HP value per character. Current

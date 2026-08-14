@@ -53,6 +53,33 @@ Current shared-build and user-facing command behavior is documented by
 `na228 help`, [`../../scripts/README.md`](../../scripts/README.md), and
 [`../../e2e/README.md`](../../e2e/README.md), not redefined here.
 
+## User-provided input recordings
+
+This procedure applies only when the user provides an input recording for the
+task. Use explicit, separate capture paths below the acting chat's workspace;
+never omit the capture path and thereby use Workshop's default.
+
+Before implementation, capture the configured baseline:
+
+```powershell
+ws <game> -s <recording> work/<exact chat title>/captures/<recording>/baseline
+```
+
+If the completed implementation changes game logic, build the selected worker
+ISO after all earlier checks pass, then capture the candidate through the same
+command using the worker ISO path as its target:
+
+```powershell
+ws work/<exact chat title>/build/<name>.iso `
+  -s <recording> `
+  work/<exact chat title>/captures/<recording>/candidate
+```
+
+Use the same explicit `-mc <card>` on both commands when the recording depends
+on a nondefault memory card. Compare the task-relevant baseline and candidate
+savestates and screenshots, report the observed result, and then apply the
+normal worker-ISO and artifact-retention cleanup rules.
+
 ## Screenshots and evidence
 
 - Extract `Screenshot.png` from an existing savestate when that frame is enough;

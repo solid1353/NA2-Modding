@@ -50,14 +50,29 @@ that behavior.
   none is specified, default to runtime testing by the user.
 - The agent must not claim runtime success until the user confirms it.
 
+### User-provided input recordings
+
+- When the user provides an input recording for the task, replay it before
+  implementation through the exact procedure in the runtime-testing runbook.
+  Store every produced savestate and screenshot under an explicit task-owned
+  capture path; agents must not use the command's default capture path.
+- If the implementation changes game logic, build a worker ISO after the other
+  selected checks pass, replay the same recording against it into a separate
+  task-owned capture path, and compare the task-relevant baseline and candidate
+  evidence. If game logic did not change, do not build or replay a candidate
+  merely because a recording was provided.
+- This replay is agent runtime validation, not user acceptance of the patch.
+
 ### Savestates
 
-- Outside maintained E2E, agents may inspect savestates only as immutable
-  diagnostic evidence. They must not create, modify, convert, patch, load,
-  replay, or inject through them for validation.
-- Maintained E2E is the only agent-executed savestate path, and it is available
-  only when E2E has been selected for a visual change.
-- A savestate never validates a nonvisual change.
+- Outside maintained E2E and the user-provided input-recording route, agents may
+  inspect savestates only as immutable diagnostic evidence. They must not
+  create, modify, convert, patch, load, replay, or inject through them for
+  validation.
+- Maintained E2E is available only when E2E has been selected for a visual
+  change. A standalone savestate never validates a nonvisual change; runtime
+  evidence produced by replaying a user-provided recording follows the route
+  above.
 
 ### Build validation
 
@@ -76,8 +91,9 @@ that behavior.
   work/<chat title>/build/<name>.iso`. The configuration defaults to `test`.
   Build a chat-owned worker ISO only when the selected validation requires
   image assembly. It is an internal agent artifact, never a user testing ground
-  or deliverable. Agents do not launch or runtime-execute it. Maintained E2E is
-  a separate explicitly selected route.
+  or deliverable. Agents launch it only for the user-provided input-recording
+  route above; otherwise they do not runtime-execute it. Maintained E2E is a
+  separate explicitly selected route.
 - An exact shared verified-build registry hit is reusable build evidence: it
   proves the same byte-affecting fingerprint was already fully assembled and
   verified. Do not rebuild merely to repeat that proof. A worker request

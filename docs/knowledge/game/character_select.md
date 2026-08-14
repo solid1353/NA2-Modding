@@ -93,6 +93,92 @@ helper, preserving native per-character compatibility behavior.
 User runtime testing then confirmed that OK accepts ID `0x25`. The earlier red
 X was the ordinary incompatibility overlay, not No Support artwork.
 
+## Support identities and whitelist
+
+BTL runtime table `DAT_008d28a0` is stored at file offset `0x21E9A0` in the
+verified NA2 `BTL.BIN` loaded at `0x006B3F00`. Its 34 three-byte rows map each
+native support ID to its corresponding playable-character ID and display
+record. The character and display bytes are identical in all 34 native rows.
+Joining those bytes to the canonical builder character reference establishes
+the support IDs used by the requested directional whitelist:
+
+| Selected fighter | Selectable native supports |
+| --- | --- |
+| Naruto (`0x39`) | Sakura (`0x01`), Sai (`0x20`), Gaara (`0x08`) |
+| Sakura (`0x3A`) | Naruto (`0x00`), Chiyo (`0x1B`) |
+| Chiyo (`0x3E`) | Sakura (`0x01`) |
+| Itachi (`0x47`) | Kisame (`0x0E`) |
+| Kisame (`0x48`) | Itachi (`0x0D`) |
+| Sasori (`0x3F`) | Deidara (`0x0B`) |
+| Deidara (`0x40`) | Sasori (`0x1E`) |
+| Sasuke (`0x5D`) | Orochimaru (`0x1C`), Naruto (`0x00`) |
+| Orochimaru (`0x59`) | Sasuke (`0x21`) |
+| Tsunade (`0x54`) | Jiraiya (`0x18`) |
+| Shikamaru (`0x44`) | Choji (`0x13`) |
+
+The whitelist injection replaces native compatibility results at all six
+already-routed Character Select consumers with this exact table. Declared
+special entries remain globally compatible, so No Support (`0x25`) is the only
+choice for every fighter absent from the table. Compatibility hooks retain the
+same directional table as confirmation protection; rejected entries are absent
+rather than visible with red-X overlays.
+
+### Rejected compact-list candidate
+
+The first compact-list candidate copied `0x24C` bytes from the shared selector
+data into one private buffer per player and redirected each selector's `+0x74`
+data pointer. User runtime testing showed repeated permitted portraits and a
+missing Naruto fighter portrait. Slot 1 from that failed runtime is retained as
+immutable evidence with SHA-256
+`6DDCBCD0B56601B73F63409A240DF742C506C9242942952DDF1DA41124027557`.
+
+The state proves that list construction itself was correct. The Character
+Select root was `0x00CA3760`; player selectors were `0x00CD2CD0` and
+`0x00CD5080`; their redirected data pointers were `0x008FBA48` and
+`0x008FBC94`. Both private lists had count four, IDs
+`25 01 20 08`, and available state `4`: No Support, Sakura, Sai, and Gaara for
+Naruto.
+
+The repeated cells came from the unchanged native renderer
+`FUN_003b84d0`. Its inner loop always visits carousel offsets `-6` through `6`
+and wraps every offset modulo the list count at runtime
+`0x003B85E8`-`0x003B8618`. A compact count therefore made the renderer draw the
+same valid entries repeatedly; it did not indicate corrupt list data.
+
+The missing fighter portrait was a separate truncation error. Native
+`FUN_003b83e0` indexes the selected fighter's portrait object at selector data
+`+0x24C + character_id * 4`. Naruto's shared slot at `0x00CA3AB4` contained
+the valid object pointer `0x00CC6D30`, while the redirected player-zero slot at
+`0x008FBD78` contained `0x0000004F` and player one's corresponding slot at
+`0x008FBFC4` was zero. The Character Select constructor establishes the full
+data extent: character portrait objects occupy root offsets
+`0x270`-`0x3EC`, support portrait objects occupy `0x3F0`-`0x474`, and player
+selector pointers begin at `0x478`. The complete selector-data block therefore
+runs from root `+0x24` through `+0x477`, a size of `0x454` bytes.
+
+### Corrected compact-list implementation
+
+The accepted implementation copies the complete `0x454`-byte selector
+data block for each player before compacting its support roster. This preserves
+both native portrait-object tables while allowing two players to retain
+different lists simultaneously.
+
+The clean support-cell draw at runtime `0x003B87C0` (ELF offset `0x2B88C0`,
+bytes `10 EF 0D 0C`) is routed through the resident injection. The wrapper
+reads the renderer's live selector and carousel-offset registers and calls the
+unchanged native cell renderer only for offsets in
+`[-selected_index, count - selected_index)`. Every compact entry is therefore
+drawn exactly once with the selected entry at the native center position. A
+one-entry roster draws one centered, highlighted Leaf cell; the other carousel
+positions draw nothing, and native navigation continues to wrap to the same
+sole entry.
+
+The implementation remains table-driven: every roster contains No Support
+followed by only the selected fighter's declared native partners. User runtime
+acceptance on 2026-08-15 established the corrected behavior: Naruto retains
+his fighter portrait and shows Leaf, Sakura, Sai, and Gaara once each, while a
+fighter with no declared partner shows one centered Leaf cell.
+
 ## Display resolution and official Leaf artwork
 
 The clean main ELF calls BTL support-to-display helper `0x008859A0` six times.

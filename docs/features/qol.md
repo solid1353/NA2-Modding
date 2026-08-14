@@ -22,22 +22,33 @@ remains pending. The reverse-engineering record is in
 
 ## Select No Support on Character Select
 
-`qol.character_select.no_support` is an accepted runtime patch that
-prepends **No Support** to Character Select's native 33-entry scrollable
-support list. It does not replace or remove any native support. Both native
-population call sites are routed through one C injection, which first retains
-NA2's own IDs and availability states and then inserts the entries declared in
-`ADDITIONAL_SUPPORT_ENTRIES`. The current declaration adds native no-support
-ID `0x25` as an available entry, maps it to display record `0x5F`, and supplies
-the name `NO SUPPORT`, producing the same 34-ID order as NUN6.
+`qol.character_select.no_support` is an accepted runtime patch that builds one
+compact support roster per player. Every roster begins with **No Support**;
+native supports are retained only for the declared directional relationships:
+Naruto-Sakura, Sakura-Chiyo, Itachi-Kisame, Sasori-Deidara, and
+Sasuke-Orochimaru in both directions, plus Naruto to Sai, Naruto to Gaara,
+Sasuke to Naruto, Tsunade to Jiraiya, and Shikamaru to Choji. A fighter with no
+declared relationship therefore receives No Support as the sole selectable
+entry.
+
+Both native population call sites are routed through one C injection. It
+copies the complete `0x454`-byte selector-data block for each player, preserving
+the fighter and support portrait-object tables while allowing simultaneous
+different rosters. It retains each permitted native ID and availability state,
+prepends the entries declared in `ADDITIONAL_SUPPORT_ENTRIES`, and clears the
+unused list slots. The current special declaration adds native no-support ID
+`0x25` as an available entry, maps it to display record `0x5F`, and supplies
+the name `NO SUPPORT`.
 
 The first runtime test proved that the inserted icon rendered and that the
 cursor could reach it, but pressing OK did not accept it. NA2's separate BTL
 compatibility helper rejects every support ID at or above `0x24`; NUN6 extends
 that gate through `0x25`. The implementation routes all six Character
 Select consumers of the helper through a second table-aware C entry point.
-IDs declared in `ADDITIONAL_SUPPORT_ENTRIES` are accepted, while every native
-support ID is delegated to NA2's untouched compatibility logic.
+IDs declared in `ADDITIONAL_SUPPORT_ENTRIES` are accepted globally, while
+native IDs are accepted only for the same directional roster table. This keeps
+confirmation, navigation, and draw eligibility aligned with the compact lists
+instead of showing rejected cells with red-X overlays.
 
 Runtime testing then confirmed that OK accepts the new entry, but established
 that NA2's unextended support-to-display map resolves ID `0x25` to record zero,
@@ -59,15 +70,19 @@ existing Font v2 adapter to fit the measured 112-unit label into the row's
 84-unit maximum width and center its actually scaled glyph geometry in the
 nameplate. There is no manual draw offset. The injection remains table-driven
 so later special entries can supply their own display record, name, and maximum
-label width without editing the executable list. Clean call sites, both native
-list producers, all six compatibility consumers, and the five render hooks are
-statically guarded. The user accepted the fitted-and-centered label in runtime
-on 2026-08-14.
+label width without editing the executable list. The native renderer always
+visits 13 carousel positions and wraps them modulo the roster count; an
+additional guarded draw hook suppresses those wrapped repetitions so every
+compact entry is rendered once at its native position. A one-entry roster thus
+shows one centered, highlighted Leaf cell, and left or right navigation wraps
+to that same entry. Clean call sites, both native list producers, all six
+compatibility consumers, and all six render hooks are statically guarded. The
+user accepted the fitted-and-centered label in runtime on 2026-08-14 and the
+compact per-character roster behavior on 2026-08-15.
 
-This first phase stops at adding the selectable list entry. Preserving the
-selection through battle transition, blocking inputs during Ultimate Jutsu,
-and suppressing corresponding battle UI are outside this patch. The full
-reverse-engineering record is in
+Preserving the selected support through battle transition, blocking inputs
+during Ultimate Jutsu, and suppressing corresponding battle UI are outside this
+patch. The full reverse-engineering record is in
 [`../knowledge/game/character_select.md`](../knowledge/game/character_select.md).
 
 ## Unlock all content without loading a save

@@ -1668,10 +1668,10 @@
     }
   },
   "i__qol__character_select__no_support__support_list": {
-    "description": "Prepend configurable selectable entries to Character Select's native support list and resolve their declared display and name while retaining every native entry, availability state, compatibility result, and renderer.",
+    "description": "Build compact per-player Character Select support lists containing declared special entries plus the directional native pairs declared by the injection, draw each compact entry once, resolve special display and name records, and retain native availability states and rendering.",
     "hooks": {
       "route_default_support_compatibility": {
-        "description": "Allow declared special entries through Character Select's default-support compatibility path while delegating native IDs to the original BTL helper.",
+        "description": "Apply the declared directional support whitelist to Character Select's default-support compatibility path while accepting declared special entries globally.",
         "target_id": "na2_elf",
         "offset": "0x2B5088",
         "expected_hex": "3016220C",
@@ -1679,7 +1679,7 @@
         "encoding": "jal26"
       },
       "route_initial_support_list_population": {
-        "description": "Route initial Character Select support-list population through the additive wrapper.",
+        "description": "Route initial Character Select support-list population through the per-player compact-list wrapper.",
         "target_id": "na2_elf",
         "offset": "0x2BB18C",
         "expected_hex": "84EC0E0C",
@@ -1687,7 +1687,7 @@
         "encoding": "jal26"
       },
       "route_initial_transition_support_compatibility": {
-        "description": "Allow declared special entries through the compatibility check used when Character Select first enters support selection.",
+        "description": "Apply the declared directional support whitelist when Character Select first enters support selection while accepting declared special entries globally.",
         "target_id": "na2_elf",
         "offset": "0x2B56FC",
         "expected_hex": "3016220C",
@@ -1695,7 +1695,7 @@
         "encoding": "jal26"
       },
       "route_primary_confirmation_support_compatibility": {
-        "description": "Allow declared special entries through the primary support-confirmation compatibility check.",
+        "description": "Apply the declared directional support whitelist to the primary support-confirmation check while accepting declared special entries globally.",
         "target_id": "na2_elf",
         "offset": "0x2B6BEC",
         "expected_hex": "3016220C",
@@ -1703,7 +1703,7 @@
         "encoding": "jal26"
       },
       "route_refreshed_support_list_population": {
-        "description": "Route refreshed Character Select support-list population through the same additive wrapper.",
+        "description": "Route refreshed Character Select support-list population through the same per-player compact-list wrapper.",
         "target_id": "na2_elf",
         "offset": "0x2BCBB0",
         "expected_hex": "84EC0E0C",
@@ -1711,7 +1711,7 @@
         "encoding": "jal26"
       },
       "route_repeated_confirmation_support_compatibility": {
-        "description": "Allow declared special entries through the repeated support-confirmation compatibility check.",
+        "description": "Apply the declared directional support whitelist to the repeated support-confirmation check while accepting declared special entries globally.",
         "target_id": "na2_elf",
         "offset": "0x2B6F7C",
         "expected_hex": "3016220C",
@@ -1742,8 +1742,16 @@
         "symbol": "character_select_no_support_display_id",
         "encoding": "jal26"
       },
+      "route_support_cell_draw": {
+        "description": "Draw only the single non-wrapped occurrence of each entry in a compact support carousel.",
+        "target_id": "na2_elf",
+        "offset": "0x2B88C0",
+        "expected_hex": "10EF0D0C",
+        "symbol": "character_select_no_support_draw_support_cell",
+        "encoding": "jal26"
+      },
       "route_support_draw_compatibility": {
-        "description": "Keep declared special entries eligible in Character Select's support draw path while retaining native compatibility for ordinary supports.",
+        "description": "Apply the declared directional support whitelist to Character Select's draw eligibility while keeping declared special entries eligible.",
         "target_id": "na2_elf",
         "offset": "0x2B8A38",
         "expected_hex": "3016220C",
@@ -1751,7 +1759,7 @@
         "encoding": "jal26"
       },
       "route_support_navigation_compatibility": {
-        "description": "Keep declared special entries eligible in Character Select's support navigation path while retaining native compatibility for ordinary supports.",
+        "description": "Apply the declared directional support whitelist to Character Select's navigation eligibility while keeping declared special entries eligible.",
         "target_id": "na2_elf",
         "offset": "0x2B72B0",
         "expected_hex": "3016220C",
@@ -1784,6 +1792,10 @@
           "font_v2_adapter_call": "v2_adapter_call"
         },
         "fragments": {
+          "character_select_no_support_buffers": {
+            "order": 116,
+            "object": "qol.character.select.no.support.bss.qol.character.select.no.support.buffers"
+          },
           "character_select_no_support_entries": {
             "order": 106,
             "object": "qol.character.select.no.support.rodata.qol.character.select.no.support.entries"
@@ -1799,6 +1811,10 @@
           "character_select_no_support_draw_selected_name": {
             "order": 114,
             "object": "qol.character.select.no.support.text.qol.character.select.no.support.draw.selected.name"
+          },
+          "character_select_no_support_draw_support_cell": {
+            "order": 117,
+            "object": "qol.character.select.no.support.text.qol.character.select.no.support.draw.support.cell"
           },
           "character_select_no_support_is_compatible": {
             "order": 108,

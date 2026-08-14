@@ -31,6 +31,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--reference-label", default="Reference")
     parser.add_argument("--current-label", default="Current")
     parser.add_argument("--slots")
+    parser.add_argument(
+        "--kind",
+        choices=("all", "pair", "blend", "diff"),
+        default="all",
+        help="generate all comparison variants or one independent variant",
+    )
     parser.add_argument("--grid-columns", type=int, default=2)
     parser.add_argument("--grid-items-per-page", type=int, default=4)
     args = parser.parse_args()
@@ -173,8 +179,9 @@ def make_diff(
     row: CaptureRow,
     reference_label: str,
     current_label: str,
+    raw: Image.Image | None = None,
 ) -> Image.Image | None:
-    raw = ImageChops.difference(reference, current)
+    raw = raw if raw is not None else ImageChops.difference(reference, current)
     if raw.getbbox() is None:
         return None
     visible = ImageEnhance.Contrast(ImageOps.autocontrast(raw)).enhance(2.0)
@@ -281,10 +288,19 @@ def main() -> int:
     blend_grid_root = args.output / "grid-blends"
     diff_grid_root = args.output / "grid-diffs"
 
+    kinds = ("pair", "blend", "diff") if args.kind == "all" else (args.kind,)
+    base_directories = {
+        "pair": pair_dir,
+        "blend": blend_dir,
+        "diff": diff_dir,
+    }
+    grid_directories = {
+        "pair": pair_grid_root,
+        "blend": blend_grid_root,
+        "diff": diff_grid_root,
+    }
     grid_items: dict[str, list[tuple[CaptureRow, Image.Image]]] = {
-        "pair": [],
-        "blend": [],
-        "diff": [],
+        kind: [] for kind in kinds
     }
     expected_size: tuple[int, int] | None = None
     for row in captures:
@@ -301,48 +317,48 @@ def main() -> int:
                 f"Slot {row.slot:04d} differs from suite size {expected_size}: {reference.size}"
             )
 
-        diff = make_diff(
-            reference,
-            current,
-            row,
-            args.reference_label,
-            args.current_label,
-        )
-        if diff is None:
+        raw_difference = ImageChops.difference(reference, current)
+        if raw_difference.getbbox() is None:
             continue
 
-        pair = make_pair(
-            reference,
-            current,
-            row,
-            args.reference_label,
-            args.current_label,
-        )
-        blend = make_blend(
-            reference,
-            current,
-            row,
-            args.reference_label,
-            args.current_label,
-        )
-        for directory in (pair_dir, blend_dir, diff_dir):
-            directory.mkdir(parents=True, exist_ok=True)
-        pair.save(pair_dir / f"{row.slot:04d}.png")
-        blend.save(blend_dir / f"{row.slot:04d}.png")
-        diff.save(diff_dir / f"{row.slot:04d}.png")
-        grid_items["pair"].append((row, pair))
-        grid_items["blend"].append((row, blend))
-        grid_items["diff"].append((row, diff))
+        images: dict[str, Image.Image] = {}
+        if "pair" in kinds:
+            images["pair"] = make_pair(
+                reference,
+                current,
+                row,
+                args.reference_label,
+                args.current_label,
+            )
+        if "blend" in kinds:
+            images["blend"] = make_blend(
+                reference,
+                current,
+                row,
+                args.reference_label,
+                args.current_label,
+            )
+        if "diff" in kinds:
+            diff = make_diff(
+                reference,
+                current,
+                row,
+                args.reference_label,
+                args.current_label,
+                raw_difference,
+            )
+            if diff is None:
+                raise RuntimeError(f"Changed slot {row.slot:04d} produced no diff")
+            images["diff"] = diff
+        for kind, image in images.items():
+            base_directories[kind].mkdir(parents=True, exist_ok=True)
+            image.save(base_directories[kind] / f"{row.slot:04d}.png")
+            grid_items[kind].append((row, image))
 
-    clear_generated_grid_pages(pair_grid_root)
-    clear_generated_grid_pages(blend_grid_root)
-    clear_generated_grid_pages(diff_grid_root)
-    if grid_items["pair"]:
-        for kind, output in (
-            ("pair", pair_grid_root),
-            ("blend", blend_grid_root),
-            ("diff", diff_grid_root),
-        ):
+    for kind in kinds:
+        output = grid_directories[kind]
+        clear_generated_grid_pages(output)
+        if grid_items[kind]:
             write_grid_pages(
                 grid_items[kind],
                 output,

@@ -117,6 +117,84 @@ try {
             -Message "$jobKind E2E job supervision did not stop a running sibling after failure."
     }
 
+    $graphRoot = Join-Path $testRoot 'task-graph'
+    [void](New-Item -ItemType Directory -Path $graphRoot -Force)
+    $firstMarker = Join-Path $graphRoot 'first.txt'
+    $dependentMarker = Join-Path $graphRoot 'dependent.txt'
+    $firstTask = [pscustomobject]@{
+        Key = 'synthetic/first'
+        DependsOn = @()
+        Ready = $null
+        Start = {
+            Start-ThreadJob -Name 'synthetic/first' -ScriptBlock {
+                param($Marker)
+                [IO.File]::WriteAllText($Marker, 'first')
+            } -ArgumentList $firstMarker
+        }.GetNewClosure()
+    }
+    $dependentTask = [pscustomobject]@{
+        Key = 'synthetic/dependent'
+        DependsOn = @('synthetic/first')
+        Ready = $null
+        Start = {
+            Start-ThreadJob -Name 'synthetic/dependent' -ScriptBlock {
+                param($RequiredMarker, $Marker)
+                if (-not (Test-Path -LiteralPath $RequiredMarker -PathType Leaf)) {
+                    throw 'dependency marker was absent'
+                }
+                [IO.File]::WriteAllText($Marker, 'dependent')
+            } -ArgumentList $firstMarker, $dependentMarker
+        }.GetNewClosure()
+    }
+    Invoke-VisualRegressionTaskGraph `
+        -Task @($dependentTask, $firstTask) `
+        -ThrottleLimit 2
+    Assert-E2eHelperTest `
+        -Condition (Test-Path -LiteralPath $dependentMarker -PathType Leaf) `
+        -Message 'The bounded E2E task graph did not honor a declared dependency.'
+
+    $graphFailure = [pscustomobject]@{
+        Key = 'synthetic/failure'
+        DependsOn = @()
+        Ready = $null
+        Start = {
+            Start-ThreadJob -Name 'synthetic/failure' -ScriptBlock {
+                Start-Sleep -Milliseconds 100
+                throw 'synthetic graph failure'
+            }
+        }
+    }
+    $graphBlocked = [pscustomobject]@{
+        Key = 'synthetic/blocked'
+        DependsOn = @()
+        Ready = $null
+        Start = {
+            Start-ThreadJob -Name 'synthetic/blocked' -ScriptBlock {
+                Start-Sleep -Seconds 30
+            }
+        }
+    }
+    $graphFailureStopwatch = [Diagnostics.Stopwatch]::StartNew()
+    $graphFailureMessage = $null
+    try {
+        Invoke-VisualRegressionTaskGraph `
+            -Task @($graphFailure, $graphBlocked) `
+            -ThrottleLimit 2 `
+            -FailurePrefix 'Synthetic graph task' 2>$null
+    }
+    catch {
+        $graphFailureMessage = $_.Exception.Message
+    }
+    finally {
+        $graphFailureStopwatch.Stop()
+    }
+    Assert-E2eHelperTest `
+        -Condition (
+            $graphFailureMessage -match 'synthetic/failure.*synthetic graph failure' -and
+            $graphFailureStopwatch.Elapsed.TotalSeconds -lt 5
+        ) `
+        -Message 'The bounded E2E task graph did not fail fast with the exact failed task.'
+
     $activeVariantRoot = Join-Path $testRoot 'active-variant-config'
     [void](New-Item -ItemType Directory -Path $activeVariantRoot -Force)
     [IO.File]::WriteAllText(
@@ -600,6 +678,52 @@ try {
         ) `
         -Message 'Savestates were not synchronized without moving their staged directory.'
 
+    $lockedDestination = Join-Path $testRoot 'published\locked\sstates'
+    $lockedSource = Join-Path $testRoot 'sources\locked\sstates'
+    $lockedPath = Join-Path $lockedDestination '0025.p2s'
+    $lockReady = Join-Path $testRoot 'locked-file-ready'
+    [void](New-Item -ItemType Directory -Path $lockedDestination, $lockedSource -Force)
+    [IO.File]::WriteAllText($lockedPath, 'old locked state')
+    [IO.File]::WriteAllText((Join-Path $lockedSource '0025.p2s'), 'new state')
+    $lockJob = Start-ThreadJob -Name 'synthetic-transient-file-reader' -ScriptBlock {
+        param($Path, $Ready)
+        $stream = [IO.File]::Open(
+            $Path,
+            [IO.FileMode]::Open,
+            [IO.FileAccess]::Read,
+            [IO.FileShare]::None
+        )
+        try {
+            [IO.File]::WriteAllText($Ready, '')
+            Start-Sleep -Milliseconds 500
+        }
+        finally {
+            $stream.Dispose()
+        }
+    } -ArgumentList $lockedPath, $lockReady
+    try {
+        $lockDeadline = [DateTime]::UtcNow.AddSeconds(5)
+        while (-not (Test-Path -LiteralPath $lockReady -PathType Leaf)) {
+            if ([DateTime]::UtcNow -ge $lockDeadline) {
+                throw 'Synthetic file reader did not acquire its lock.'
+            }
+            Start-Sleep -Milliseconds 20
+        }
+        Publish-VisualRegressionTransaction `
+            -Replacements ([ordered]@{ $lockedDestination = $lockedSource }) `
+            -TransactionRoot $transaction
+    }
+    finally {
+        Wait-Job -Job $lockJob -Timeout 5 | Out-Null
+        if ($lockJob.State -in @('NotStarted', 'Running')) {
+            Stop-Job -Job $lockJob -ErrorAction SilentlyContinue
+        }
+        Remove-Job -Job $lockJob -Force -ErrorAction SilentlyContinue
+    }
+    Assert-E2eHelperTest `
+        -Condition ([IO.File]::ReadAllText($lockedPath) -ceq 'new state') `
+        -Message 'Atomic E2E publication did not tolerate a transient file reader.'
+
     $fakeCommitRoot = Join-Path $testRoot 'g'
     $fakeCommitScripts = Join-Path $fakeCommitRoot 'e2e\scripts'
     $fakeSuiteRepository = Join-Path $fakeCommitRoot 'e2e\suites'
@@ -731,6 +855,22 @@ Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "reference
 '@
     )
     [IO.File]::WriteAllText(
+        (Join-Path $fakeScripts 'publish_references.ps1'),
+        @'
+param(
+    [string[]]$Suite,
+    [string]$CapturedRepository,
+    [string]$CaptureRepository
+)
+foreach ($suiteName in $Suite) {
+    $captureRoot = Join-Path $CaptureRepository $suiteName.Replace('/', [IO.Path]::DirectorySeparatorChar)
+    [void](New-Item -ItemType Directory -Path $captureRoot -Force)
+    [IO.File]::WriteAllText((Join-Path $captureRoot 'reference.txt'), 'reference')
+    Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "reference-publish suite=$suiteName"
+}
+'@
+    )
+    [IO.File]::WriteAllText(
         (Join-Path $fakeScripts 'run.ps1'),
         @'
 param(
@@ -738,7 +878,8 @@ param(
     [string]$CaptureRoot,
     [string]$CaptureRepository,
     [switch]$Shifted,
-    [switch]$RepeatNormal
+    [switch]$RepeatNormal,
+    [object[]]$SupervisedJob
 )
 if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'fail-run')) {
     throw 'synthetic run failure'

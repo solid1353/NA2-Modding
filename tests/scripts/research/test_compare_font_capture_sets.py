@@ -40,6 +40,46 @@ def read_png_size(path: Path) -> tuple[int, int]:
 
 
 class ComparisonGridTests(unittest.TestCase):
+    def test_can_generate_one_independent_comparison_branch(self) -> None:
+        powershell = shutil.which("pwsh")
+        self.assertIsNotNone(powershell)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            reference = root / "reference"
+            current = root / "current"
+            output = root / "output"
+            reference.mkdir()
+            current.mkdir()
+            write_rgb_png(reference / "001.png", (1, 0, 0))
+            write_rgb_png(current / "001.png", (1, 1, 0))
+
+            subprocess.run(
+                [
+                    powershell,
+                    "-NoProfile",
+                    "-File",
+                    str(COMPARATOR),
+                    "-ReferenceDirectory",
+                    str(reference),
+                    "-CurrentDirectory",
+                    str(current),
+                    "-OutputDirectory",
+                    str(output),
+                    "-Kind",
+                    "Blend",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertTrue((output / "base-blends" / "0001.png").is_file())
+            self.assertTrue((output / "grid-blends" / "page_01.png").is_file())
+            self.assertFalse((output / "base-pairs").exists())
+            self.assertFalse((output / "base-diffs").exists())
+            self.assertFalse((output / "grid-pairs").exists())
+            self.assertFalse((output / "grid-diffs").exists())
+
     def test_emits_every_individual_and_grid_comparison_type(self) -> None:
         powershell = shutil.which("pwsh")
         self.assertIsNotNone(powershell)

@@ -48,11 +48,21 @@ commit. Unrelated main-repository changes are excluded from the suite commit.
 
 ## Execution and publication
 
-Each invocation prepares a build once and runs suite replays concurrently.
-Suite-creation repeatability uses two normal replays from the same discard-write
-memory-card baseline. Capture publication is atomic: normal screenshots,
-changed-screen savestates, and reports are published only after the complete
-current command succeeds.
+Build variants run concurrently. Each variant starts its suite replays as soon
+as that variant's build completes, and suite-creation repeatability runs two
+normal replays from the same discard-write memory-card baseline. Ready
+suite/variant comparisons and independent screenshot-grid, pair, blend, and
+diff branches share a bounded task queue; a failed task cancels its active
+siblings immediately. NUN5 capture overlaps the normal/repeat pipeline and its
+artifact publication uses the same bounded scheduling across suites.
+
+Typed artifacts are generated once and reused when their grids and aggregate
+hardlink views are staged. Aggregate preparation runs concurrently per suite.
+Canonical publication, rollback, and cleanup remain serial so normal
+screenshots, changed-screen savestates, reports, and aggregate views become
+visible atomically only after the complete command succeeds. Publication and
+rollback retry transient file-reader locks instead of leaving a partially
+restored capture directory.
 
 Transactions live under `.transactions/run-<uuid>/`. Active transactions record
 the owning PID/start time. Failed comparisons retain only the evidence needed to

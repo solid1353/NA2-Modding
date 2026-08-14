@@ -21,6 +21,10 @@ param(
     [Parameter(ParameterSetName = 'Comparison')]
     [string]$Slots,
 
+    [Parameter(ParameterSetName = 'Comparison')]
+    [ValidateSet('All', 'Pair', 'Blend', 'Diff')]
+    [string]$Kind = 'All',
+
     [ValidateRange(1, 8)]
     [int]$GridColumns = 2,
 
@@ -45,6 +49,7 @@ else {
         '--current', [IO.Path]::GetFullPath($CurrentDirectory)
         '--reference-label', $ReferenceLabel
         '--current-label', $CurrentLabel
+        '--kind', $Kind.ToLowerInvariant()
     )
     if (-not [string]::IsNullOrWhiteSpace($Slots)) {
         $arguments += @('--slots', $Slots)

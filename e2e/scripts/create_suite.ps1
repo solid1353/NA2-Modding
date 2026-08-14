@@ -66,7 +66,6 @@ $definitionBackupRoot = Join-Path $transaction 'previous-suite-definitions'
 $captureStageRoot = Join-Path $transaction 'capture-history'
 $referenceCaptureRoot = Join-Path $transaction 'reference-captures'
 $referenceJobs = [Collections.Generic.List[object]]::new()
-$referencePublishJobs = [Collections.Generic.List[object]]::new()
 $installed = [Collections.Generic.List[object]]::new()
 $allDefinitionsBackedUp = $false
 $allDefinitionsInstalled = $false
@@ -138,39 +137,24 @@ try {
         ) -ForegroundColor Cyan
     }
 
-    & (Join-Path $PSScriptRoot 'run.ps1') `
-        -Suite ([string[]]@($recordings.Suite)) `
-        -CaptureRepository $captureStageRoot `
-        -RepeatNormal
+    $runArguments = @{
+        Suite = [string[]]@($recordings.Suite)
+        CaptureRepository = $captureStageRoot
+        RepeatNormal = $true
+    }
+    if ($referenceJobs.Count -gt 0) {
+        $runArguments.SupervisedJob = [object[]]$referenceJobs
+    }
+    & (Join-Path $PSScriptRoot 'run.ps1') @runArguments
 
     if ($referenceJobs.Count -gt 0) {
         Wait-VisualRegressionJobs `
             -Job ([object[]]$referenceJobs) `
             -FailurePrefix 'Reference replay job'
-        foreach ($entry in $installed) {
-            $context = $entry.Context
-            $referencePublishJob = Start-ThreadJob `
-                -Name "reference-publish/$($context.Suite)" `
-                -ScriptBlock {
-                    param($Script, $Suite, $CapturedRoot, $CaptureRoot)
-                    $ErrorActionPreference = 'Stop'
-                    & $Script `
-                        -Suite $Suite `
-                        -CapturedRoot $CapturedRoot `
-                        -CaptureRoot $CaptureRoot
-                } `
-                -ArgumentList (
-                    Join-Path $PSScriptRoot 'reference.ps1'
-                ), $context.Suite, (
-                    Join-Path $referenceCaptureRoot $context.SuiteRelativePath
-                ), (
-                    Join-Path $captureStageRoot $context.SuiteRelativePath
-                )
-            $referencePublishJobs.Add($referencePublishJob)
-        }
-        Wait-VisualRegressionJobs `
-            -Job ([object[]]$referencePublishJobs) `
-            -FailurePrefix 'Reference publication job'
+        & (Join-Path $PSScriptRoot 'publish_references.ps1') `
+            -Suite ([string[]]@($installed.Context.Suite)) `
+            -CapturedRepository $referenceCaptureRoot `
+            -CaptureRepository $captureStageRoot
     }
 
     if ($All) {
@@ -236,7 +220,7 @@ try {
     }
 }
 finally {
-    foreach ($job in @($referenceJobs) + @($referencePublishJobs)) {
+    foreach ($job in $referenceJobs) {
         if ($job.State -in @('NotStarted', 'Running')) {
             Stop-Job -Job $job -ErrorAction SilentlyContinue
         }

@@ -122,6 +122,197 @@ function Wait-VisualRegressionJobs {
     }
 }
 
+function Get-VisualRegressionTaskThrottleLimit {
+    $logicalProcessors = [Environment]::ProcessorCount
+    return [Math]::Max(1, [Math]::Min(8, $logicalProcessors))
+}
+
+function Invoke-VisualRegressionFileOperation {
+    param(
+        [Parameter(Mandatory)][scriptblock]$Operation,
+        [Parameter(Mandatory)][string]$Description,
+        [ValidateRange(1, 100)][int]$AttemptCount = 50,
+        [ValidateRange(1, 1000)][int]$RetryDelayMilliseconds = 100
+    )
+
+    for ($attempt = 1; $attempt -le $AttemptCount; $attempt++) {
+        try {
+            & $Operation
+            return
+        }
+        catch [IO.IOException], [UnauthorizedAccessException] {
+            if ($attempt -eq $AttemptCount) {
+                throw "$Description failed after $AttemptCount attempts: $($_.Exception.Message)"
+            }
+            Start-Sleep -Milliseconds $RetryDelayMilliseconds
+        }
+    }
+}
+
+function Invoke-VisualRegressionTaskGraph {
+    param(
+        [Parameter(Mandatory)][object[]]$Task,
+        [object[]]$SupervisedJob = @(),
+        [ValidateRange(1, 64)]
+        [int]$ThrottleLimit = (Get-VisualRegressionTaskThrottleLimit),
+        [string]$FailurePrefix = 'E2E task',
+        [scriptblock]$OnPoll
+    )
+
+    $pending = [ordered]@{}
+    foreach ($currentTask in $Task) {
+        $key = [string]$currentTask.Key
+        if ([string]::IsNullOrWhiteSpace($key)) {
+            throw 'An E2E task has no key.'
+        }
+        if ($pending.Contains($key)) {
+            throw "Duplicate E2E task key: $key"
+        }
+        $pending[$key] = $currentTask
+    }
+
+    $completed = [Collections.Generic.HashSet[string]]::new(
+        [StringComparer]::OrdinalIgnoreCase
+    )
+    $running = [ordered]@{}
+    $taskJobs = [Collections.Generic.List[object]]::new()
+    $receivedFailure = @{}
+    $activeStates = @('NotStarted', 'Running')
+    $receiveOutput = {
+        param([Parameter(Mandatory)][object]$CurrentJob)
+
+        $receivedErrors = @()
+        Receive-Job `
+            -Job $CurrentJob `
+            -ErrorAction SilentlyContinue `
+            -ErrorVariable +receivedErrors |
+            ForEach-Object { Write-Output $_ }
+        foreach ($receivedError in $receivedErrors) {
+            $receivedFailure[$CurrentJob.Id] = [string]$receivedError
+            Write-Error -ErrorRecord $receivedError -ErrorAction Continue
+        }
+    }
+    $stopAll = {
+        foreach ($job in @($SupervisedJob) + @($taskJobs)) {
+            if ($job.State -in $activeStates) {
+                Stop-Job -Job $job -ErrorAction SilentlyContinue
+            }
+        }
+    }
+
+    try {
+        while ($true) {
+            $allJobs = @($SupervisedJob) + @($taskJobs)
+            foreach ($job in $allJobs) {
+                . $receiveOutput -CurrentJob $job
+            }
+
+            $failedJob = @(
+                $allJobs | Where-Object State -NotIn @(
+                    'NotStarted',
+                    'Running',
+                    'Completed'
+                )
+            ) | Select-Object -First 1
+            if ($null -ne $failedJob) {
+                & $stopAll
+                foreach ($job in $allJobs) {
+                    . $receiveOutput -CurrentJob $job
+                }
+                $reasonMessage = if ($receivedFailure.ContainsKey($failedJob.Id)) {
+                    $receivedFailure[$failedJob.Id]
+                }
+                elseif ($null -ne $failedJob.JobStateInfo.Reason) {
+                    $failedJob.JobStateInfo.Reason.Message
+                }
+                else {
+                    'unknown failure'
+                }
+                throw "$FailurePrefix $($failedJob.Name) failed: $reasonMessage"
+            }
+
+            foreach ($key in @($running.Keys)) {
+                if ($running[$key].State -eq 'Completed') {
+                    [void]$completed.Add($key)
+                    $running.Remove($key)
+                }
+            }
+
+            $startedTask = $true
+            while ($running.Count -lt $ThrottleLimit -and $startedTask) {
+                $startedTask = $false
+                foreach ($key in @(
+                    $pending.Keys |
+                        Sort-Object {
+                            $taskToOrder = $pending[$_]
+                            if ($taskToOrder.PSObject.Properties.Name -contains 'Priority') {
+                                [int]$taskToOrder.Priority
+                            }
+                            else {
+                                0
+                            }
+                        } -Descending
+                )) {
+                    $currentTask = $pending[$key]
+                    $dependencies = @($currentTask.DependsOn)
+                    if (@(
+                        $dependencies | Where-Object { -not $completed.Contains([string]$_) }
+                    ).Count -gt 0) {
+                        continue
+                    }
+                    if ($null -ne $currentTask.Ready -and -not (& $currentTask.Ready)) {
+                        continue
+                    }
+                    $job = & $currentTask.Start
+                    if ($null -eq $job -or $job -isnot [Management.Automation.Job]) {
+                        throw "E2E task $key did not start a PowerShell job."
+                    }
+                    $running[$key] = $job
+                    $taskJobs.Add($job)
+                    $pending.Remove($key)
+                    $startedTask = $true
+                    if ($running.Count -ge $ThrottleLimit) { break }
+                }
+            }
+
+            if ($null -ne $OnPoll) {
+                & $OnPoll
+            }
+
+            $supervisedActive = @(
+                $SupervisedJob | Where-Object State -In $activeStates
+            ).Count
+            if ($supervisedActive -eq 0 -and $pending.Count -eq 0 -and $running.Count -eq 0) {
+                break
+            }
+            if (
+                $supervisedActive -eq 0 -and
+                $running.Count -eq 0 -and
+                -not $startedTask -and
+                $pending.Count -gt 0
+            ) {
+                throw (
+                    'E2E task graph has unresolved dependencies or inputs: ' +
+                    (@($pending.Keys) -join ', ')
+                )
+            }
+            Start-Sleep -Milliseconds 200
+        }
+    }
+    catch {
+        & $stopAll
+        throw
+    }
+    finally {
+        foreach ($job in $taskJobs) {
+            if ($job.State -in $activeStates) {
+                Stop-Job -Job $job -ErrorAction SilentlyContinue
+            }
+            Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
 function Get-VisualRegressionContext {
     param(
         [Parameter(Mandatory)][string]$Suite,
@@ -421,45 +612,88 @@ function Publish-VisualRegressionAggregateViews {
 
     $aggregateTransaction = Join-Path $TransactionRoot 'aggregate-views'
     [void](New-Item -ItemType Directory -Path $aggregateTransaction -Force)
+    $suiteScript = Join-Path $PSScriptRoot 'suite.ps1'
+    $tasks = @(
+        foreach ($currentContext in $Context) {
+            $taskContext = $currentContext
+            $stageRoot = Join-Path `
+                (Join-Path $aggregateTransaction 'stages') `
+                $taskContext.SuiteRelativePath
+            $taskName = "aggregate/$($taskContext.SuiteRelativePath.Replace('\', '/'))"
+            [pscustomobject]@{
+                Key = $taskName
+                Priority = 10
+                DependsOn = @()
+                Ready = $null
+                Start = {
+                    Start-ThreadJob `
+                        -Name $taskName `
+                        -ScriptBlock {
+                            param($Script, $CurrentContext, $OutputRoot)
+                            $ErrorActionPreference = 'Stop'
+                            . $Script
+                            New-VisualRegressionAggregateViewStage `
+                                -Context $CurrentContext `
+                                -OutputRoot $OutputRoot
+                        } `
+                        -ArgumentList $suiteScript, $taskContext, $stageRoot
+                }.GetNewClosure()
+            }
+        }
+    )
+    Invoke-VisualRegressionTaskGraph `
+        -Task $tasks `
+        -FailurePrefix 'E2E aggregate preparation task'
+
     $replacements = [ordered]@{}
     foreach ($currentContext in $Context) {
         $stageRoot = Join-Path `
             (Join-Path $aggregateTransaction 'stages') `
             $currentContext.SuiteRelativePath
-        $allStage = Join-Path $stageRoot $script:E2eAllDirectory
-        $allGridStage = Join-Path $stageRoot $script:E2eAllGridDirectory
-        New-VisualRegressionAggregateLinkStage `
-            -Source @(
-                [pscustomobject]@{
-                    Directory = $currentContext.Capture.Screenshots
-                    Suffix = ''
-                },
-                [pscustomobject]@{ Directory = $currentContext.Capture.Blends; Suffix = '' },
-                [pscustomobject]@{ Directory = $currentContext.Capture.Diffs; Suffix = '' }
-            ) `
-            -OutputDirectory $allStage
-        New-VisualRegressionAggregateLinkStage `
-            -Source @(
-                [pscustomobject]@{
-                    Directory = $currentContext.Capture.ScreenshotGrids
-                    Suffix = ''
-                },
-                [pscustomobject]@{
-                    Directory = $currentContext.Capture.BlendGrids
-                    Suffix = 'c_blend'
-                },
-                [pscustomobject]@{
-                    Directory = $currentContext.Capture.DiffGrids
-                    Suffix = 'd_diff'
-                }
-            ) `
-            -OutputDirectory $allGridStage
-        $replacements[$currentContext.Capture.All] = $allStage
-        $replacements[$currentContext.Capture.AllGrids] = $allGridStage
+        $replacements[$currentContext.Capture.All] = Join-Path `
+            $stageRoot `
+            $script:E2eAllDirectory
+        $replacements[$currentContext.Capture.AllGrids] = Join-Path `
+            $stageRoot `
+            $script:E2eAllGridDirectory
     }
     Publish-VisualRegressionTransaction `
         -Replacements $replacements `
         -TransactionRoot $aggregateTransaction
+}
+
+function New-VisualRegressionAggregateViewStage {
+    param(
+        [Parameter(Mandatory)][object]$Context,
+        [Parameter(Mandatory)][string]$OutputRoot
+    )
+
+    New-VisualRegressionAggregateLinkStage `
+        -Source @(
+            [pscustomobject]@{
+                Directory = $Context.Capture.Screenshots
+                Suffix = ''
+            },
+            [pscustomobject]@{ Directory = $Context.Capture.Blends; Suffix = '' },
+            [pscustomobject]@{ Directory = $Context.Capture.Diffs; Suffix = '' }
+        ) `
+        -OutputDirectory (Join-Path $OutputRoot $script:E2eAllDirectory)
+    New-VisualRegressionAggregateLinkStage `
+        -Source @(
+            [pscustomobject]@{
+                Directory = $Context.Capture.ScreenshotGrids
+                Suffix = ''
+            },
+            [pscustomobject]@{
+                Directory = $Context.Capture.BlendGrids
+                Suffix = 'c_blend'
+            },
+            [pscustomobject]@{
+                Directory = $Context.Capture.DiffGrids
+                Suffix = 'd_diff'
+            }
+        ) `
+        -OutputDirectory (Join-Path $OutputRoot $script:E2eAllGridDirectory)
 }
 
 function New-VisualRegressionTransaction {
@@ -758,7 +992,8 @@ function New-VisualRegressionReport {
         [Parameter(Mandatory)][string]$Suite,
         [Parameter(Mandatory)][string]$CurrentDirectory,
         [Parameter(Mandatory)][string]$OutputRoot,
-        [Parameter(Mandatory)][string]$ReferenceDirectory
+        [Parameter(Mandatory)][string]$ReferenceDirectory,
+        [ValidateSet('All', 'Pair', 'Blend', 'Diff')][string]$Kind = 'All'
     )
 
     $context = Get-VisualRegressionContext -Suite $Suite
@@ -772,7 +1007,8 @@ function New-VisualRegressionReport {
         -CurrentDirectory $CurrentDirectory `
         -OutputDirectory $OutputRoot `
         -ReferenceLabel 'Reference' `
-        -CurrentLabel 'Current'
+        -CurrentLabel 'Current' `
+        -Kind $Kind
     if ($LASTEXITCODE -ne 0) {
         throw "Reference/current comparison failed with exit code $LASTEXITCODE."
     }
@@ -942,8 +1178,14 @@ function Publish-VisualRegressionTransaction {
         param([Parameter(Mandatory)][string]$Root)
 
         if (Test-Path -LiteralPath $Root -PathType Container) {
-            Get-ChildItem -LiteralPath $Root -Recurse -File -Force |
-                Remove-Item -Force
+            foreach ($file in Get-ChildItem -LiteralPath $Root -Recurse -File -Force) {
+                $path = $file.FullName
+                Invoke-VisualRegressionFileOperation `
+                    -Description "Removing published file '$path'" `
+                    -Operation {
+                        Remove-Item -LiteralPath $path -Force -ErrorAction Stop
+                    }.GetNewClosure()
+            }
         }
     }
 
@@ -960,12 +1202,25 @@ function Publish-VisualRegressionTransaction {
             [void](New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($target)) -Force)
             $temporary = "$target.publishing-$([guid]::NewGuid().ToString('N'))"
             try {
-                [IO.File]::Copy($file.FullName, $temporary, $true)
-                [IO.File]::Move($temporary, $target, $true)
+                $sourcePath = $file.FullName
+                Invoke-VisualRegressionFileOperation `
+                    -Description "Copying staged file '$sourcePath'" `
+                    -Operation {
+                        [IO.File]::Copy($sourcePath, $temporary, $true)
+                    }.GetNewClosure()
+                Invoke-VisualRegressionFileOperation `
+                    -Description "Publishing file '$target'" `
+                    -Operation {
+                        [IO.File]::Move($temporary, $target, $true)
+                    }.GetNewClosure()
             }
             finally {
                 if (Test-Path -LiteralPath $temporary -PathType Leaf) {
-                    Remove-Item -LiteralPath $temporary -Force
+                    Invoke-VisualRegressionFileOperation `
+                        -Description "Removing temporary publication file '$temporary'" `
+                        -Operation {
+                            Remove-Item -LiteralPath $temporary -Force -ErrorAction Stop
+                        }.GetNewClosure()
                 }
             }
         }
@@ -989,19 +1244,37 @@ function Publish-VisualRegressionTransaction {
             [void](New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($target)) -Force)
             $temporary = "$target.publishing-$([guid]::NewGuid().ToString('N'))"
             try {
-                [IO.File]::Copy($file.FullName, $temporary, $true)
-                [IO.File]::Move($temporary, $target, $true)
+                $sourcePath = $file.FullName
+                Invoke-VisualRegressionFileOperation `
+                    -Description "Copying staged file '$sourcePath'" `
+                    -Operation {
+                        [IO.File]::Copy($sourcePath, $temporary, $true)
+                    }.GetNewClosure()
+                Invoke-VisualRegressionFileOperation `
+                    -Description "Publishing file '$target'" `
+                    -Operation {
+                        [IO.File]::Move($temporary, $target, $true)
+                    }.GetNewClosure()
             }
             finally {
                 if (Test-Path -LiteralPath $temporary -PathType Leaf) {
-                    Remove-Item -LiteralPath $temporary -Force
+                    Invoke-VisualRegressionFileOperation `
+                        -Description "Removing temporary publication file '$temporary'" `
+                        -Operation {
+                            Remove-Item -LiteralPath $temporary -Force -ErrorAction Stop
+                        }.GetNewClosure()
                 }
             }
         }
         foreach ($file in @(Get-ChildItem -LiteralPath $Destination -Recurse -File -Force)) {
             $relative = [IO.Path]::GetRelativePath($Destination, $file.FullName)
             if (-not $relativePaths.Contains($relative)) {
-                Remove-Item -LiteralPath $file.FullName -Force
+                $path = $file.FullName
+                Invoke-VisualRegressionFileOperation `
+                    -Description "Removing stale published file '$path'" `
+                    -Operation {
+                        Remove-Item -LiteralPath $path -Force -ErrorAction Stop
+                    }.GetNewClosure()
             }
         }
     }

@@ -1,16 +1,11 @@
 # Agent E2E validation workflow
 
-Use this runbook after E2E has been selected for the current work under
-[`../docs/policies/testing.md`](../docs/policies/testing.md). The command and
+Use this workflow after E2E has been selected for the current work under
+[`../policies/testing.md`](../policies/testing.md). The command and
 infrastructure own build, replay, capture, transaction retention, and report
 generation; do not reproduce those steps manually.
 
-## Coverage discovery
-
-Before proposing E2E for a visual change, inspect only suite names, definitions,
-and scenario descriptions. Do not scan the screenshot corpus merely to decide
-whether coverage probably exists. When E2E cannot exercise or meaningfully
-prove the behavior, propose user runtime validation instead.
+## Requested evidence
 
 An agent request may identify expected evidence using the existing syntax:
 
@@ -25,7 +20,7 @@ tracked suite set so unintended changes elsewhere can surface.
 ## Evidence
 
 For suite `<suite>` and capture `<slot>`, accepted visual history is in the
-nested Git repository under `captures/<suite>/`:
+nested Git repository under `e2e/captures/<suite>/`:
 
 - `base-screenshots/<slot>_a_reference.png`: optional reference-game image.
 - `base-screenshots/<slot>_b_current.png`: accepted NA2 image.
@@ -49,7 +44,7 @@ spacing, baselines, and alignment.
 1. Inspect any explicitly requested existing evidence.
 2. Make only the implementation/asset changes authorized for the task.
 3. Run the current global E2E entrypoint documented in
-   [`README.md`](README.md).
+   [`e2e/README.md`](../../e2e/README.md).
 4. Inspect the complete Git diff in the nested `e2e/captures/` repository.
 5. Inspect every changed capture or artifact itself. Unchanged artifacts need no
    manual review unless there is a concrete reason.

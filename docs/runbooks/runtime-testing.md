@@ -20,9 +20,10 @@ acceptance remain canonical in
 
 ## Runtime ISO provenance
 
-- For agent PCSX2 operations, do not open shared Latest, Previous, Manual, or
-  E2E Test ISO paths directly. Create a task-owned hardlink under
-  `work/<chat title>/inputs/isos/` to the selected verified hash-cache image.
+- For agent PCSX2 operations against a pre-existing ISO, do not open shared
+  Latest, Previous, Manual, or E2E Test ISO paths directly. Create a task-owned
+  hardlink under `work/<chat title>/inputs/isos/` to the selected verified
+  hash-cache image.
 - Preserve the linked ISO's SHA-256, serial, CRC, applicable build record,
   payload hashes, and symbol map before relying on it for runtime evidence.
 - Do not substitute the newest shared ISO when the required identity or linking
@@ -53,32 +54,20 @@ Current shared-build and user-facing command behavior is documented by
 `na228 help`, [`../../scripts/README.md`](../../scripts/README.md), and
 [`../../e2e/README.md`](../../e2e/README.md), not redefined here.
 
-## User-provided input recordings
+## Input-recording candidate replay
 
-This procedure applies only when the user provides an input recording for the
-task. Use explicit, separate capture paths below the acting chat's workspace;
-never omit the capture path and thereby use Workshop's default.
-
-Before implementation, capture the configured baseline:
-
-```powershell
-ws <game> -s <recording> work/<exact chat title>/captures/<recording>/baseline
-```
-
-If the completed implementation changes game logic, build the selected worker
-ISO after all earlier checks pass, then capture the candidate through the same
-command using the worker ISO path as its target:
+The complete lifecycle is in the
+[input-recording validation workflow](../workflows/input_recording_validation.md).
+When that workflow requires candidate replay, use the task-owned worker ISO and
+an explicit task-owned capture path:
 
 ```powershell
-ws work/<exact chat title>/build/<name>.iso `
-  -s <recording> `
-  work/<exact chat title>/captures/<recording>/candidate
+ws <worker-iso-path> -s <recording> <task-owned-candidate-path>
 ```
 
-Use the same explicit `-mc <card>` on both commands when the recording depends
-on a nondefault memory card. Compare the task-relevant baseline and candidate
-savestates and screenshots, report the observed result, and then apply the
-normal worker-ISO and artifact-retention cleanup rules.
+Do not omit the candidate capture path or use Workshop's default capture path.
+After evidence extraction, apply the normal worker-ISO and artifact-retention
+cleanup rules.
 
 ## Screenshots and evidence
 

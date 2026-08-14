@@ -74,7 +74,8 @@ normal.
 
 ## Review and acceptance
 
-Agent review is canonical in [`AGENT_GUIDE.md`](AGENT_GUIDE.md): inspect the
+Agent review is canonical in the
+[E2E validation workflow](../docs/workflows/e2e_validation.md): inspect the
 complete Git diff in `captures/`, then inspect every changed artifact. Do not
 manually scan unchanged history without a concrete reason.
 

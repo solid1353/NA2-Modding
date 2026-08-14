@@ -5,19 +5,19 @@ agents. It does not document the `na228` or Workshop command-line interfaces;
 use `na228 help`, `workshop help`, and the owning component documentation for
 those.
 
-## Workflow modes
+## Interaction modes
 
 - `des mode`, `design mode`: enter
-  [Design mode](docs/workflows/design_mode.md).
+  [Design mode](docs/interactions/design_mode.md).
 - `int mode`, `interactive mode`: enter
-  [Interactive mode](docs/workflows/interactive_mode.md).
+  [Interactive mode](docs/interactions/interactive_mode.md).
 
 ## Approval and task control
 
 - `snap`: present the current consolidated implementation snapshot.
 - `imp`: authorize implementation of the current consolidated proposal.
-  Follow the active workflow's implementation behavior.
-- `ver`: accept the current pending result and follow the active workflow's
+  Follow the active interaction mode's implementation behavior.
+- `ver`: accept the current pending result and follow the active interaction mode's
   acceptance behavior.
 - `commit`, `com`: commit the current task-owned pending changes. They do not
   verify the result.
@@ -31,7 +31,7 @@ those.
   [coordination policy](docs/policies/coordination.md).
 - `c on`, `c off`: change the current chat's persistent Normal mode
   commit setting as defined in
-  [`normal_mode.md`](docs/workflows/normal_mode.md#commit-setting).
+  [`normal_mode.md`](docs/interactions/normal_mode.md#commit-setting).
 - `c`: respond only with `Commit: on` or `Commit: off`, reporting the current
   chat's persistent Normal mode commit setting. It does not change the setting
   or grant authority.
@@ -44,7 +44,8 @@ those.
   mode`, or `Interactive mode`, whichever is active. It does not change the
   mode or grant authority. Do not trigger it from a longer message, quoted
   text, or supplied context.
-- `ag`: reread the live global and project `AGENTS.md`, the active workflow,
+- `ag`: reread the live global and project `AGENTS.md`, the active interaction
+  mode,
   and every routed policy relevant to the current work, then apply them
   immediately.
 - `q:`: the request was queued earlier and may be stale. Compare it with the
@@ -69,7 +70,7 @@ those.
 ## Validation
 
 - `e2e: <request>` or `e2e <suite> <captures>: <request>`: follow
-  [`e2e/AGENT_GUIDE.md`](e2e/AGENT_GUIDE.md).
+  [the E2E validation workflow](docs/workflows/e2e_validation.md).
 
 ## Notifications
 

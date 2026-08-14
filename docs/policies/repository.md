@@ -130,7 +130,8 @@
 
 Give each document one job and canonical authority:
 
-- workflow documents under `docs/workflows/` own complete interaction modes;
+- interaction documents under `docs/interactions/` own interaction modes;
+- workflow documents under `docs/workflows/` own multi-step task workflows;
 - procedure documents under `docs/procedures/` own non-mode agent procedures;
 - runbooks own exact operational procedures;
 - the implementing repository or component owns user-facing CLI help;

@@ -4,7 +4,7 @@
 
 Each chat has its own Normal mode commit setting and starts with `c off`.
 The setting persists across tasks, messages, context compaction, and temporary
-entry into another workflow mode. It is not shared with other chats or stored
+entry into another interaction mode. It is not shared with other chats or stored
 in the repository.
 
 - `c on` makes completed Normal mode work commit automatically.

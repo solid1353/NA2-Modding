@@ -52,23 +52,17 @@ that behavior.
 
 ### User-provided input recordings
 
-- When the user provides an input recording for the task, replay it before
-  implementation through the exact procedure in the runtime-testing runbook.
-  Store every produced savestate and screenshot under an explicit task-owned
-  capture path; agents must not use the command's default capture path.
-- If the implementation changes game logic, build a worker ISO after the other
-  selected checks pass, replay the same recording against it into a separate
-  task-owned capture path, and compare the task-relevant baseline and candidate
-  evidence. If game logic did not change, do not build or replay a candidate
-  merely because a recording was provided.
-- This replay is agent runtime validation, not user acceptance of the patch.
+- When the user provides an input recording for the task, follow the
+  [input-recording validation workflow](../workflows/input_recording_validation.md).
+  Its agent replay is runtime validation, not user acceptance of the patch.
 
 ### Savestates
 
-- Outside maintained E2E and the user-provided input-recording route, agents may
-  inspect savestates only as immutable diagnostic evidence. They must not
-  create, modify, convert, patch, load, replay, or inject through them for
-  validation.
+- Outside maintained E2E and the
+  [input-recording validation workflow](../workflows/input_recording_validation.md),
+  agents may inspect savestates only as immutable diagnostic evidence. They
+  must not create, modify, convert, patch, load, replay, or inject through them
+  for validation.
 - Maintained E2E is available only when E2E has been selected for a visual
   change. A standalone savestate never validates a nonvisual change; runtime
   evidence produced by replaying a user-provided recording follows the route
@@ -91,9 +85,10 @@ that behavior.
   work/<chat title>/build/<name>.iso`. The configuration defaults to `test`.
   Build a chat-owned worker ISO only when the selected validation requires
   image assembly. It is an internal agent artifact, never a user testing ground
-  or deliverable. Agents launch it only for the user-provided input-recording
-  route above; otherwise they do not runtime-execute it. Maintained E2E is a
-  separate explicitly selected route.
+  or deliverable. Agents launch it only through the
+  [input-recording validation workflow](../workflows/input_recording_validation.md);
+  otherwise they do not runtime-execute it. Maintained E2E is a separate
+  explicitly selected route.
 - An exact shared verified-build registry hit is reusable build evidence: it
   proves the same byte-affecting fingerprint was already fully assembled and
   verified. Do not rebuild merely to repeat that proof. A worker request
@@ -127,14 +122,8 @@ UI elements, and similar visible game behavior.
 2. Propose existing E2E coverage, provisional new E2E coverage, or runtime
    testing by the user. Use runtime testing when E2E cannot exercise or
    meaningfully prove the behavior. The user chooses the route.
-3. When E2E is selected, execution is global across the tracked suite set so
-   unintended changes elsewhere can surface.
-4. Inspect the complete Git diff in the nested `e2e/captures/` repository, then
-   inspect every changed capture or artifact. Unchanged artifacts need no manual
-   review unless there is a concrete reason. An expected visual change with no
-   corresponding diff is evidence that must be noticed.
-5. Iterate until the intended result is achieved, then present the evidence for
-   explicit user acceptance.
+3. When E2E is selected, follow the
+   [E2E validation workflow](../workflows/e2e_validation.md).
 
 ## Hard and soft validation
 

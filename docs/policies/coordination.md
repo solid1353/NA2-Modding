@@ -35,7 +35,8 @@
   `Backlog` only on explicit user instruction.
 - `task done` removes the exact task from its subsection. If the subsection
   becomes empty, move it to `Archive` without deleting it.
-- Requested task-list edits are a one-time override across every workflow mode.
+- Requested task-list edits are a one-time override across every interaction
+  mode.
 - Link a task's temporary handoff or other task-specific document directly from
   its task entry. Keep durable knowledge, component contracts, procedures, and
   policy in their canonical domain documents.

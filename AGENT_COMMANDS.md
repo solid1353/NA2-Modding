@@ -19,8 +19,8 @@ those.
   Follow the active workflow's implementation behavior.
 - `ver`: accept the current pending result and follow the active workflow's
   acceptance behavior.
-- `commit`: commit the current task-owned pending changes. It does not verify
-  the result.
+- `commit`, `com`: commit the current task-owned pending changes. They do not
+  verify the result.
 - `exit`: exit Design mode or Interactive mode without accepting the result
   or authorizing a commit. It has no effect in Normal mode.
 - `zxc`: follow the

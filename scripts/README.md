@@ -49,7 +49,7 @@ Shared infrastructure is not duplicated here:
 - `tests/` owns the current repository-wide unit-test runner. Component
   documentation may expose narrower existing unit-test invocations where they
   are supported.
-- Exact agent runtime and worker-PCSX2 procedures are in
+- Exact agent PCSX2 runtime procedures are in
   [`../docs/runbooks/runtime-testing.md`](../docs/runbooks/runtime-testing.md).
 
 Do not reproduce CLI syntax or workflow procedures in this index. Link to the

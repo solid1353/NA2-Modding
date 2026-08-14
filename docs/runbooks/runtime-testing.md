@@ -1,62 +1,35 @@
 # Runtime testing runbook
 
-This runbook owns exact safety and execution procedures for NA2 builds, worker
-PCSX2, savestate intake, direct-PINE injection, and runtime screenshots. Read it
+This runbook owns exact safety and execution procedures for NA2 builds, PCSX2,
+savestate intake, direct-PINE injection, and runtime screenshots. Read it
 only when those operations are part of the task. Validation selection and patch
 acceptance remain canonical in
 [`../policies/testing.md`](../policies/testing.md).
 
-## User installations and protected inputs
+## PCSX2 installation
 
-- `@pcsx2_dev` is the protected user-owned installation. Agents may read/copy
-  from it but do not create, modify, move, delete, link, launch, or control it
-  unless the user explicitly requests the exact action.
-- An explicit ISO-launch request uses `@pcsx2_dev`. That authorization covers
-  the launch only.
-- Builds, direct game-selector launches, and `workshop input [profile]` are
-  user-facing operations. Agents use the isolated commands described below.
-- Build commands and single-ISO launch commands do not probe or close existing
-  PCSX2 processes.
+- `@pcsx2_dev` is the only PCSX2 installation agents may use. Do not create,
+  copy, select, launch, or control another PCSX2 installation or runtime,
+  including `@pcsx2_fork` or a chat-owned copy.
+- `@pcsx2_dev` remains protected and user-owned. Agents may read it or copy
+  individual evidence from it, but do not create, modify, move, delete, or link
+  anything inside it unless the user explicitly requests the exact action.
+- An explicit PCSX2 operation uses `@pcsx2_dev` and authorizes only the exact
+  requested operation. It does not authorize probing, closing, or otherwise
+  controlling an existing PCSX2 process.
 
-## Chat-owned PCSX2 runtime
+## Runtime ISO provenance
 
-Create the runtime only with:
-
-```powershell
-@pcsx2_scripts/copy_worker.ps1 -WorkerRoot work/<exact chat title>
-```
-
-- The command copies the immutable `@pcsx2_fork` template and required shared
-  BIOS into `work/<chat title>/pcsx2/`. Do not assemble the base runtime manually or
-  modify/populate the fork template.
-- Copy additional shared assets only when the task/test concretely requires
-  them. Assign a PINE port unique among live agent instances and operate only
-  this chat-owned copy.
-- If an old chat-owned runtime exists, its owning chat audits it before reuse.
-  Promote needed inputs, evidence, configuration, or generated results, delete
-  the obsolete runtime, recreate it with the maintained copy command, and add
-  only needed assets. Never replace another task's runtime.
-- Agent PCSX2 stays hidden. Use the maintained worker launcher in no-GUI mode;
-  it must verify that the launched process owns no visible top-level windows.
-  If visibility cannot be suppressed and verified, terminate only that newly
-  launched worker process and fail the launch.
-- Do not use keyboard/window-message automation or PINE to navigate emulator or
-  game menus. A visible runtime is permitted only when the user must personally
-  inspect or interact with it; state the required user action before launch.
-
-## Worker ISOs and runtime provenance
-
-- Worker processes never open shared Latest, Previous, Manual, or E2E Test
-  ISO paths directly. Create a task-owned hardlink under
+- For agent PCSX2 operations, do not open shared Latest, Previous, Manual, or
+  E2E Test ISO paths directly. Create a task-owned hardlink under
   `work/<chat title>/inputs/isos/` to the selected verified hash-cache image.
 - Preserve the linked ISO's SHA-256, serial, CRC, applicable build record,
   payload hashes, and symbol map before relying on it for runtime evidence.
 - Do not substitute the newest shared ISO when the required identity or linking
   metadata is absent. Ask for the smallest exact missing input.
-- Agent-created PCSX2 workers and their ISO hardlinks are disposable task
-  artifacts. Before completing the task, stop the worker and delete its
-  `pcsx2/` copy and ISO hardlink. Retain only required captures and compact
-  provenance outside those disposable paths.
+- The task-owned ISO hardlink is disposable. Delete it after the selected
+  validation and evidence extraction. Retain only required captures and compact
+  provenance outside that disposable path.
 
 ## Agent ISO builds
 
@@ -85,7 +58,8 @@ Current shared-build and user-facing command behavior is documented by
 - Extract `Screenshot.png` from an existing savestate when that frame is enough;
   do not create a complete state solely to obtain a screenshot.
 - For a fresh runtime frame, run
-  `@pcsx2_scripts/pine.py screenshot` against the task-owned PINE port and poll
-  that worker's `snaps/` tree for the new PNG.
+  `@pcsx2_scripts/pine.py screenshot` against the explicitly authorized
+  `@pcsx2_dev` PINE port and poll that installation's `snaps/` tree for the new
+  PNG.
 - Do not use window capture, screenshot hotkeys, window messages, or
   foregrounding as substitutes.

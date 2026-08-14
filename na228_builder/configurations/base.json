@@ -23,6 +23,7 @@
         }
       },
       "practice": {
+        "starting_hp": "half",
         "voice_off_by_default": true,
         "support_off_by_default": true,
         "command_display_off_by_default": true,

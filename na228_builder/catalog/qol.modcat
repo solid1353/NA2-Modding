@@ -55,6 +55,27 @@
   },
   practice: {
     description: "Independent Practice-mode default settings.",
+    starting_hp:
+      setting<"full"> {
+        description: "Start both Practice fighters at full HP.",
+        patches: [
+          "e__qol__practice__starting_hp__full",
+        ],
+      }
+      |
+      setting<"half"> {
+        description: "Start both Practice fighters at half HP.",
+        patches: [
+          "e__qol__practice__starting_hp__half",
+        ],
+      }
+      |
+      setting<"critical"> {
+        description: "Start both Practice fighters at critical HP.",
+        patches: [
+          "e__qol__practice__starting_hp__critical",
+        ],
+      },
     voice_off_by_default: setting {
       description: "Start Practice with voice disabled.",
       patches: [

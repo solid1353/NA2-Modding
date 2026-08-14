@@ -366,6 +366,45 @@ class CatalogTests(unittest.TestCase):
                     )
                 )
 
+    def test_repository_practice_starting_hp_variants_select_exact_guarded_edits(self) -> None:
+        repository = Path(__file__).resolve().parents[2]
+        builder = repository / "na228_builder"
+        catalog_path = builder / "catalog"
+        base = json.loads(
+            (builder / "configurations" / "base.json").read_text(encoding="utf-8")
+        )
+        expected_replacements = {
+            "full": "010080A002000924",
+            "half": "010085A002000924",
+            "critical": "02000924010089A0",
+        }
+
+        with tempfile.TemporaryDirectory() as directory:
+            configuration_path = Path(directory) / "configuration.json"
+            for value, expected_replacement in expected_replacements.items():
+                with self.subTest(value=value):
+                    base["features"]["qol"]["practice"]["starting_hp"] = value
+                    self.write_json(configuration_path, base)
+                    selection = catalog.load_selection(
+                        catalog_path, configuration_path
+                    )
+                    package = catalog.load_binary_package(
+                        selection,
+                        "qol",
+                        catalog_path / "implementation" / "targets.tsv",
+                        repository,
+                        builder / "modules" / "binary_patcher" / "operations",
+                    )
+                    edits = [
+                        edit
+                        for edit in package.edits
+                        if "e__qol__practice__starting_hp__" in edit.edit_id
+                    ]
+                    self.assertEqual(len(edits), 1)
+                    self.assertEqual(edits[0].destination_offset, 0xE7BE8)
+                    self.assertEqual(edits[0].expected_hex, "010080A002000924")
+                    self.assertEqual(edits[0].replacement_hex, expected_replacement)
+
     def test_object_intersection_rejects_duplicate_fields(self) -> None:
         source = '''{
           value:

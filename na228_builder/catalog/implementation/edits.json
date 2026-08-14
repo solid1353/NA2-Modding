@@ -4830,6 +4830,36 @@
     "expected_hex": "25186600",
     "replacement_hex": "00000000"
   },
+  "e__qol__practice__starting_hp__critical": {
+    "description": "Initialize the native Practice HP enum to critical while preserving the following field's value of two.",
+    "operation": "replace",
+    "destination_target_id": "na2_elf",
+    "destination_offsets": [
+      "0xE7BE8"
+    ],
+    "expected_hex": "010080A002000924",
+    "replacement_hex": "02000924010089A0"
+  },
+  "e__qol__practice__starting_hp__full": {
+    "description": "Retain and verify the native full-HP Practice initializer.",
+    "operation": "replace",
+    "destination_target_id": "na2_elf",
+    "destination_offsets": [
+      "0xE7BE8"
+    ],
+    "expected_hex": "010080A002000924",
+    "replacement_hex": "010080A002000924"
+  },
+  "e__qol__practice__starting_hp__half": {
+    "description": "Initialize the native Practice HP enum to half using the function's existing constant one.",
+    "operation": "replace",
+    "destination_target_id": "na2_elf",
+    "destination_offsets": [
+      "0xE7BE8"
+    ],
+    "expected_hex": "010080A002000924",
+    "replacement_hex": "010085A002000924"
+  },
   "e__qol__practice__support_off_by_default__force_instead_leaving_previous_settings": {
     "description": "Force support off instead of leaving the previous settings-block value unchanged.",
     "operation": "replace",

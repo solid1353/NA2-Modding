@@ -77,7 +77,7 @@ SLOT_LABELS = {
 }
 
 STATE_NAME_RE = re.compile(
-    r"^(?P<serial>[A-Z]{4}-\d{5}) \((?P<crc>[0-9A-Fa-f]{8})\)\."
+    r"^(?P<serial>[A-Z0-9]{4}-[A-Z0-9]{5}) \((?P<crc>[0-9A-Fa-f]{8})\)\."
     r"(?P<slot>\d{2})\.p2s$"
 )
 E2E_STATE_NAME_RE = re.compile(r"^(?P<slot>\d+)\.p2s$")

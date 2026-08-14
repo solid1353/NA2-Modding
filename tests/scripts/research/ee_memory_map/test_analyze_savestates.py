@@ -39,6 +39,12 @@ class IdentityTests(unittest.TestCase):
         self.assertEqual(identity.crc, "C0659AD1")
         self.assertEqual(identity.slot, 3)
 
+    def test_parses_project_state_name(self) -> None:
+        identity = parse_state_identity(Path("SLOP-NA228 (7db97f53).06.p2s"))
+        self.assertEqual(identity.serial, "SLOP-NA228")
+        self.assertEqual(identity.crc, "7DB97F53")
+        self.assertEqual(identity.slot, 6)
+
     def test_rejects_unrecognized_name(self) -> None:
         with self.assertRaises(MemoryMapError):
             parse_state_identity(Path("state.p2s"))

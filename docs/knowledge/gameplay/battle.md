@@ -3,6 +3,41 @@
 This document owns unresolved and established leads about battle behavior that
 do not belong to a narrower gameplay subsystem.
 
+## Practice starting-HP selector
+
+Practice Settings stores its native HP selection as an integer enum: `0` is
+Normal/full, `1` is Half, and `2` is Almost/critical. In the immutable menu
+savestates `SLOP-NA228 (7DB97F53).01.p2s` through `.03.p2s`, the only aligned
+32-bit location following that `0/1/2` pattern is EE `0x00EAFC8C`, inside the
+allocator block at `0x00EAFC10` offset `+0x7C`.
+
+The paired post-selection Practice savestates `.04.p2s` through `.06.p2s`
+prove that the enum is consumed by battle setup for both fighters. Their live
+fighter `float32` HP at fighter `+0x6C` is respectively `1.0`, `0.5`, and the
+float32 representation of `0.1`. P1's captured fighter was at `0x00E36DA0`
+and P2's at `0x00E44BF0`; the values were identical for both sides in each
+state.
+
+Clean `SLPS_258.37` function `FUN_001e7a80` initializes three Practice settings
+blocks and is also reused by the native reset paths. At runtime `0x001E7AE8`
+(ELF offset `0xE7BE8`) it executes `sb zero,1(a0)` followed by `li t1,2`; the
+next instruction stores `t1` to settings byte `+2`. Settings byte `+1` is
+therefore the native starting-HP enum. The QoL variants retain those eight
+clean bytes for full HP, store the function's existing constant `a1 == 1` for
+half HP, or reorder the existing `li t1,2` before storing `t1` to byte `+1`
+for critical HP. All variants preserve the next native store of `2` to byte
+`+2` and require the exact clean eight-byte guard.
+
+The evidence source was clean `SLPS_258.37`, SHA-256
+`20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`, plus
+the six copied savestates. State SHA-256 values, in slot order, were
+`7FF50D4BF622BF24CC5FB460544D4B322E17E9A36285A391844D4471441EB460`,
+`0241AD14603EE6E051A2AA7A0A5DFE099323D0FDE2FA2523914A0FB82D524B9E`,
+`749603808FF9CE7ECA8C13CCDC57396B3CE3BF67B9735A2E57A6FA72247FCC40`,
+`AC9FA2A7D922684C1B4517A2048F297CD607B7DC8BAC641949F4EE0DC69AF820`,
+`7D1379E12316124B64EE83CED270799BFEC846C6D499552E7A0FD48D3C5776E3`,
+and `4B873D93C9591978348717B89296B75926EA682874A16F6EC569228321524A54`.
+
 ## Character durability and effective base HP
 
 The game does not store a different full-gauge HP value per character. Current

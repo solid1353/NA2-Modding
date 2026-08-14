@@ -4,6 +4,22 @@ File-backed and resident quality-of-life behavior. Selectable nodes, guarded
 binary edits, runtime hooks, and payload declarations are selected by
 `na228_builder/catalog/qol.modcat`.
 
+## Practice starting HP
+
+`qol.practice.starting_hp` selects `full`, `half`, or `critical` as the native
+Practice starting-HP mode for both fighters. The base configuration selects
+`half`; every value changes only the initializer for the existing Practice
+settings field, with `full` retaining the clean instruction sequence. The game
+then carries that field through its normal battle setup, producing normalized
+live HP of `1.0`, `0.5`, or `0.1`.
+
+The patch is an eight-byte guarded replacement in clean `SLPS_258.37` at ELF
+offset `0xE7BE8` (runtime `0x001E7AE8`). It reuses constants already present in
+the initializer and preserves the immediately following settings field. Static
+binary and savestate comparison are complete; patched-build runtime validation
+remains pending. The reverse-engineering record is in
+[`../knowledge/gameplay/battle.md`](../knowledge/gameplay/battle.md).
+
 ## Select No Support on Character Select
 
 `qol.character_select.no_support` is an accepted runtime patch that

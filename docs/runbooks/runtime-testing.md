@@ -47,14 +47,16 @@ Create the runtime only with:
 ## Worker ISOs and runtime provenance
 
 - Worker processes never open shared Latest, Previous, Manual, or E2E Test
-  ISO paths. Use an independent full copy under
-  `work/<chat title>/inputs/isos/`; symlinks and hardlinks are forbidden.
-- Preserve the independent ISO's SHA-256, serial, CRC, applicable build record,
+  ISO paths directly. Create a task-owned hardlink under
+  `work/<chat title>/inputs/isos/` to the selected verified hash-cache image.
+- Preserve the linked ISO's SHA-256, serial, CRC, applicable build record,
   payload hashes, and symbol map before relying on it for runtime evidence.
 - Do not substitute the newest shared ISO when the required identity or linking
   metadata is absent. Ask for the smallest exact missing input.
-- Retain compact provenance records, but delete disposable ISO copies after the
-  selected validation and evidence extraction.
+- Agent-created PCSX2 workers and their ISO hardlinks are disposable task
+  artifacts. Before completing the task, stop the worker and delete its
+  `pcsx2/` copy and ISO hardlink. Retain only required captures and compact
+  provenance outside those disposable paths.
 
 ## Agent ISO builds
 

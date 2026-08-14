@@ -81,8 +81,8 @@
   disk with hidden and ignored entries included. Remove unintended empty
   parents and inspect them again; the task remains incomplete until this is
   done. Git status cannot prove directory cleanup.
-- `docs/designs/` is an intentionally retained directory and is never removed,
-  including when it contains no active design document.
+- `docs/designs/` is exclusively owned by Design mode. Do not create or modify
+  files there in any other mode.
 - Do not create or preserve a directory containing only one file unless it has a
   clear structural, ownership, namespace, tooling, or future-extension purpose.
   Otherwise move the file to the nearest appropriate existing directory and

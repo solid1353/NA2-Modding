@@ -179,6 +179,37 @@ acceptance on 2026-08-15 established the corrected behavior: Naruto retains
 his fighter portrait and shows Leaf, Sakura, Sai, and Gaara once each, while a
 fighter with no declared partner shows one centered Leaf cell.
 
+## No-Support-only transition bypass
+
+Native fighter confirmation runs through `FUN_003b52e0`. Character Select has
+two confirmation calls at runtime `0x003B5E74` and `0x003B600C` (ELF offsets
+`0x2B5F74` and `0x2B610C`, both clean bytes `B8 D4 0E 0C`). The accepted
+wrapper calls that native function first. When it leaves the player selector in
+state `2` and the active compact roster is exactly one entry containing support
+ID `0x25`, the wrapper fixes the support index and page at zero, clears Linked
+Mode, and uses native state setter `FUN_003b5670` to enter finalized state `12`.
+The selector therefore never renders the support-selection or Linked Mode
+screens for a No-Support-only fighter. Any larger roster retains the native
+state transition.
+
+The finalized-state Back handler begins at runtime `0x003B8050` (ELF offset
+`0x2B8150`, clean prologue `F0 FF BD 27 00 00 BF FF`). Its resident replacement
+retains the native ready check at selector offset `0xA0` and native split for
+ordinary rosters. A No-Support-only roster instead enters fighter-selection
+state `1` directly, so Back also bypasses the otherwise reopened Linked Mode
+states. The native secondary-selection branch continues to return directly to
+fighter selection for ordinary rosters.
+
+The original `supports.p2m2` replay preserved Naruto's marker-1-through-marker-4
+screens and produced player states `1, 5, 9, 12, 1, 12, 12, 12` at markers 1
+through 8: the No-Support-only fighter was already finalized at marker 6 and no
+intermediate menu rendered. A backward diagnostic first reproduced the clean
+marker-8 Back route through states `12, 8, 9, 9`; the accepted candidate
+produced `12, 1, 1, 1`, with fighter selection visible from the first marker
+after Back. The retained captures and provenance under
+`work/QoL/captures/supports/` exist solely as future regression evidence for
+these direct forward and backward transitions.
+
 ## Display resolution and official Leaf artwork
 
 The clean main ELF calls BTL support-to-display helper `0x008859A0` six times.
@@ -251,15 +282,22 @@ native calls to `FUN_003bb210` are redirected to the same wrapper. The wrapper:
 
 1. calls the untouched native function, preserving all 33 IDs and their
    native availability states;
-2. shifts those populated entries right within the existing 40-slot buffer;
-3. prepends each row declared in `ADDITIONAL_SUPPORT_ENTRIES`;
-4. updates the count from 33 to 34;
+2. copies the complete selector-data block for each player so fighter and
+   support portrait objects remain intact;
+3. prepends each row declared in `ADDITIONAL_SUPPORT_ENTRIES`, then retains only
+   native IDs declared for the selected fighter;
+4. clears unused list slots and clamps an out-of-range support cursor to the
+   first compact entry;
 5. accepts declared added IDs at all six Character Select compatibility calls
-   and delegates all other IDs to the original helper;
+   and accepts native IDs only through the same directional roster table;
 6. resolves added IDs through their declared display record at the four
    Character Select rendering consumers;
 7. renders a declared name for an added ID while delegating native selected
-   names and their ancillary icons to the original renderer.
+   names and their ancillary icons to the original renderer;
+8. draws each compact entry once instead of repeating it across the native
+   13-position carousel; and
+9. bypasses both intermediate support menus in both directions when No Support
+   is the roster's only entry.
 
 The initial declaration contains
 `{0x25, 4, 0x5F, "NO SUPPORT", 84}`: No Support with the native available
@@ -268,9 +306,10 @@ width. Adding later special entries is a table edit in
 `src/qol/character_select_no_support.c`; no further executable list surgery is
 required while the total remains within the native 40-slot capacity.
 
-Static confidence is strong: all thirteen guarded call bytes, both population
-xrefs, all six compatibility xrefs, all five display/name xrefs, object
-offsets, capacity, NA2/NUN5 33-ID sequence, NUN6 34-ID sequence, display
-mapping, atlas rectangle, and the NA2/NUN6 compatibility bounds are directly
-verified. Selection, the Leaf, and the `NO SUPPORT` renderer are
-runtime-confirmed, including the adjusted label fit.
+Static confidence is strong: all declared guards, both population xrefs, all
+six compatibility xrefs, all display/name and compact-cell xrefs, both fighter
+confirmation calls, the finalized-state Back handler, object offsets,
+capacity, NA2/NUN5 33-ID sequence, NUN6 34-ID sequence, display mapping, atlas
+rectangle, and the NA2/NUN6 compatibility bounds are directly verified.
+Selection, the Leaf, the fitted `NO SUPPORT` renderer, the compact roster, and
+both No-Support-only transition directions are runtime-confirmed.

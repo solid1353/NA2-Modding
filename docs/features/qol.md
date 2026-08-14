@@ -111,6 +111,18 @@ compatibility consumers, and all six render hooks are statically guarded. The
 user accepted the fitted-and-centered label in runtime on 2026-08-14 and the
 compact per-character roster behavior on 2026-08-15.
 
+For a fighter whose compact roster contains only No Support, both native
+fighter-confirmation calls now retain the native confirmation work and then
+advance directly from fighter selection to the finalized state with support
+index zero and Linked Mode disabled. The support-selection and Linked Mode
+screens are never rendered. Back from that finalized state returns directly to
+fighter selection; rosters with selectable partners retain the complete native
+forward and backward flow. Replay of `pcsx2_files/input_recordings/supports.p2m2`
+confirmed that Naruto's four recorded menu markers remain unchanged while the
+No-Support-only fighter moves directly from marker 5 to marker 8. A derivative
+replay confirmed the reverse marker-8-to-marker-5 transition. The user accepted
+both directions on 2026-08-15.
+
 Preserving the selected support through battle transition, blocking inputs
 during Ultimate Jutsu, and suppressing corresponding battle UI are outside this
 patch. The full reverse-engineering record is in

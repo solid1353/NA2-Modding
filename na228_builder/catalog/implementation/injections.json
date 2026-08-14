@@ -1718,6 +1718,30 @@
         "symbol": "character_select_no_support_is_compatible",
         "encoding": "jal26"
       },
+      "route_primary_fighter_confirmation": {
+        "description": "Finalize a fighter in the confirmation frame when No Support is the compact roster's only entry, while retaining the complete native support flow for larger rosters.",
+        "target_id": "na2_elf",
+        "offset": "0x2B5F74",
+        "expected_hex": "B8D40E0C",
+        "symbol": "character_select_no_support_confirm_fighter",
+        "encoding": "jal26"
+      },
+      "route_repeated_fighter_confirmation": {
+        "description": "Apply the same No-Support-only direct finalization to the repeated fighter-confirmation path.",
+        "target_id": "na2_elf",
+        "offset": "0x2B610C",
+        "expected_hex": "B8D40E0C",
+        "symbol": "character_select_no_support_confirm_fighter",
+        "encoding": "jal26"
+      },
+      "route_no_support_only_return_to_fighter_selection": {
+        "description": "Return a finalized No-Support-only fighter directly to fighter selection instead of reopening the Linked Mode path, while retaining native return routing for larger rosters.",
+        "target_id": "na2_elf",
+        "offset": "0x2B8150",
+        "expected_hex": "F0FFBD270000BFFF",
+        "symbol": "character_select_no_support_return_from_finalized",
+        "encoding": "j26"
+      },
       "route_selected_support_display_id": {
         "description": "Resolve the selected support through the table-defined display record before Character Select reads its name rectangle.",
         "target_id": "na2_elf",
@@ -1815,6 +1839,14 @@
           "character_select_no_support_draw_support_cell": {
             "order": 117,
             "object": "qol.character.select.no.support.text.qol.character.select.no.support.draw.support.cell"
+          },
+          "character_select_no_support_confirm_fighter": {
+            "order": 118,
+            "object": "qol.character.select.no.support.text.qol.character.select.no.support.confirm.fighter"
+          },
+          "character_select_no_support_return_from_finalized": {
+            "order": 119,
+            "object": "qol.character.select.no.support.text.qol.character.select.no.support.return.from.finalized"
           },
           "character_select_no_support_is_compatible": {
             "order": 108,

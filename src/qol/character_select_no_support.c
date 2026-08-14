@@ -17,15 +17,26 @@ typedef unsigned int u32;
 #define CHARACTER_SELECT_PLAYER_SUPPORT_INDEX_OFFSET 0x30u
 #define CHARACTER_SELECT_PLAYER_SUPPORT_PAGE_OFFSET 0x34u
 #define CHARACTER_SELECT_PLAYER_DATA_POINTER_OFFSET 0x74u
+#define CHARACTER_SELECT_PLAYER_LINKED_MODE_OFFSET 0x10u
+#define CHARACTER_SELECT_PLAYER_SECONDARY_SELECTION_OFFSET 0x08u
+#define CHARACTER_SELECT_PLAYER_RETURN_READY_OFFSET 0xA0u
 
 #define SUPPORT_STATE_AVAILABLE 4u
+#define NO_SUPPORT_ID 0x25u
+
+#define CHARACTER_SELECT_STATE_FIGHTER_SELECTION 1u
+#define CHARACTER_SELECT_STATE_ENTERING_SUPPORT_SELECTION 2u
+#define CHARACTER_SELECT_STATE_ENTERING_LINKED_MODE 8u
+#define CHARACTER_SELECT_STATE_FINALIZED 12u
 
 #define NATIVE_POPULATE_SUPPORT_LIST_ADDRESS 0x003BB210u
 #define NATIVE_SELECTED_CHARACTER_ID_ADDRESS 0x003B4A90u
+#define NATIVE_CONFIRM_FIGHTER_ADDRESS 0x003B52E0u
 #define NATIVE_SUPPORT_CELL_DRAW_ADDRESS 0x0037BC40u
 #define NATIVE_SUPPORT_DISPLAY_ID_ADDRESS 0x008859A0u
 #define NATIVE_SELECTED_SUPPORT_ID_ADDRESS 0x003B4D30u
 #define NATIVE_SELECTED_SUPPORT_NAME_DRAW_ADDRESS 0x003B8A90u
+#define NATIVE_SET_CHARACTER_SELECT_STATE_ADDRESS 0x003B5670u
 
 #define FRAME_POINTER_ADDRESS 0x006073FCu
 #define FONT_RENDERER_POINTER_ADDRESS 0x00607470u
@@ -72,6 +83,11 @@ typedef void (*NativeSupportCellDraw)(
 typedef u32 (*NativeSupportDisplayId)(u32 support_id);
 typedef u32 (*NativeSelectedSupportId)(void *character_select);
 typedef void (*NativeSelectedSupportNameDraw)(void *character_select);
+typedef void (*NativeConfirmFighter)(void *player_select);
+typedef void (*NativeSetCharacterSelectState)(
+    void *player_select,
+    u32 state
+);
 typedef void (*NativeFontSetContext)(void *renderer, void *context);
 typedef void (*NativeTextDraw)(float x, float y, const u8 *text, u32 color);
 
@@ -138,7 +154,7 @@ static const AdditionalSupportEntry ADDITIONAL_SUPPORT_ENTRIES[]
         used
     )) = {
         {
-            0x25u,
+            NO_SUPPORT_ID,
             SUPPORT_STATE_AVAILABLE,
             0x5Fu, /* Leaf record in the imported official NUN5 atlas. */
             0u,
@@ -337,6 +353,20 @@ void clamp_support_cursor(void *player_select, u32 support_count)
     }
 }
 
+static __attribute__((always_inline)) inline
+u32 has_only_no_support(void *player_select)
+{
+    u8 *player = (u8 *)player_select;
+    u8 *data = *(u8 **)(
+        player + CHARACTER_SELECT_PLAYER_DATA_POINTER_OFFSET
+    );
+
+    return
+        data != (u8 *)0 &&
+        *(u32 *)(data + CHARACTER_SELECT_DATA_SUPPORT_COUNT_OFFSET) == 1u &&
+        data[CHARACTER_SELECT_DATA_SUPPORT_IDS_OFFSET] == NO_SUPPORT_ID;
+}
+
 CHARACTER_SELECT_NO_SUPPORT_SECTION(
     ".text.qol_character_select_no_support_prepend"
 )
@@ -389,6 +419,77 @@ void qol_character_select_no_support_prepend(void *character_select)
 
     /* Newly constructed selectors use the shared block until the next refresh. */
     populate_compact_support_list(shared_data, 0xFFu);
+}
+
+CHARACTER_SELECT_NO_SUPPORT_SECTION(
+    ".text.qol_character_select_no_support_confirm_fighter"
+)
+void qol_character_select_no_support_confirm_fighter(
+    void *player_select
+)
+{
+    NativeConfirmFighter native_confirm =
+        (NativeConfirmFighter)NATIVE_CONFIRM_FIGHTER_ADDRESS;
+    NativeSetCharacterSelectState set_state =
+        (NativeSetCharacterSelectState)
+            NATIVE_SET_CHARACTER_SELECT_STATE_ADDRESS;
+    u8 *player = (u8 *)player_select;
+
+    native_confirm(player_select);
+
+    if (
+        *(u32 *)player !=
+            CHARACTER_SELECT_STATE_ENTERING_SUPPORT_SELECTION ||
+        !has_only_no_support(player_select)
+    ) {
+        return;
+    }
+
+    *(u32 *)(
+        player + CHARACTER_SELECT_PLAYER_SUPPORT_INDEX_OFFSET
+    ) = 0u;
+    *(u32 *)(
+        player + CHARACTER_SELECT_PLAYER_SUPPORT_PAGE_OFFSET
+    ) = 0u;
+    *(u32 *)(
+        player + CHARACTER_SELECT_PLAYER_LINKED_MODE_OFFSET
+    ) = 0u;
+    set_state(player_select, CHARACTER_SELECT_STATE_FINALIZED);
+}
+
+CHARACTER_SELECT_NO_SUPPORT_SECTION(
+    ".text.qol_character_select_no_support_return_from_finalized"
+)
+void qol_character_select_no_support_return_from_finalized(
+    void *player_select
+)
+{
+    NativeSetCharacterSelectState set_state =
+        (NativeSetCharacterSelectState)
+            NATIVE_SET_CHARACTER_SELECT_STATE_ADDRESS;
+    u8 *player = (u8 *)player_select;
+    u32 next_state;
+
+    if (
+        *(u32 *)(
+            player + CHARACTER_SELECT_PLAYER_RETURN_READY_OFFSET
+        ) == 0u
+    ) {
+        return;
+    }
+
+    if (
+        has_only_no_support(player_select) ||
+        *(u32 *)(
+            player + CHARACTER_SELECT_PLAYER_SECONDARY_SELECTION_OFFSET
+        ) != 0u
+    ) {
+        next_state = CHARACTER_SELECT_STATE_FIGHTER_SELECTION;
+    } else {
+        next_state = CHARACTER_SELECT_STATE_ENTERING_LINKED_MODE;
+    }
+
+    set_state(player_select, next_state);
 }
 
 CHARACTER_SELECT_NO_SUPPORT_SECTION(

@@ -21,6 +21,10 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 
 - The user may add any number of tasks. Keep them in order and work through them
   in that order.
+- Preserve every instruction within a task in its exact arrival order.
+- Complete each instruction before acting on the next one. A correction changes
+  only the item it identifies; do not infer, move, swap, or prepare later items.
+  Only an explicit reordering instruction or `immediately` changes this order.
 - A new task does not interrupt current work unless the user says to do it
   immediately. `Immediately` changes priority, not cancellation; afterward,
   resume the interrupted work automatically.

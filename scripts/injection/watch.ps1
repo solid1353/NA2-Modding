@@ -27,7 +27,7 @@ $injectionsPath = Join-Path $repository (
     'na228_builder\catalog\implementation\injections.json'
 )
 $configurationPath = Join-Path $repository (
-    'na228_builder\configurations\development.json'
+    'na228_builder\configurations\dev.json'
 )
 $buildScript = Join-Path $PSScriptRoot 'build.py'
 $applyScript = Join-Path $PSScriptRoot 'apply.py'

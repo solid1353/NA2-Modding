@@ -226,14 +226,14 @@ class ReleaseAppTests(unittest.TestCase):
             with mock.patch(
                 "na228_builder.scripts.release_runtime.validate_release_configuration",
                 side_effect=ValueError(
-                    "Invalid config value at features.battle_logic.substitution_cost: "
-                    "got 0.1; expected decimal & 0..15 & step 0.25, or false to disable it"
+                    "character_overrides.tsv:2: substitution_cost must be finite "
+                    "and nonnegative"
                 ),
             ):
                 with self.assertRaisesRegex(
                     ReleaseError,
-                    "Invalid config.json: Invalid config value at "
-                    "features.battle_logic.substitution_cost",
+                    "Invalid build configuration: character_overrides.tsv:2: "
+                    "substitution_cost",
                 ):
                     _runtime_configuration_validator(configuration)
 

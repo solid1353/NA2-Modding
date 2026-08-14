@@ -15,9 +15,9 @@ control-flow boundary so they are not investigated again without new evidence.
 - Historical CRC alias during the investigation: `@pcsx2_cheats/SLPS-25837_E0F064C5.pnach`. The current workflow no longer generates CRC aliases.
 - Historical NA2 decompiler/Ghidra evidence remains available through Git
   history. Restore reusable analysis only under `@disassembly/NA2/`.
-- Reproducible substitution-cost setting: catalog node
-  `battle_logic.substitution_cost`, backed by patch definition
-  `e__battle_logic__substitution_cost` (legacy evidence ID `ELF-S001`).
+- Original global substitution-cost site: ELF offset `0x1299BC` (legacy
+  evidence ID `ELF-S001`). The current implementation leaves this instruction clean
+  and sources overrides from the character configuration table.
 
 The retired generic Testing feature preserved the four edits below as
 `ELF-H001`. That executable duplicate was removed after this evidence became
@@ -50,16 +50,45 @@ and destination register.
 | 15 | `0x4170` | `7041023C` |
 
 The historical 16-bit PNACH write changed the immediate bytes from `80 3F` to
-`40 40`, making the decrement cost `3`. That form is runtime-proven. The current
-catalog exposes the mechanism as
-`setting<decimal & 0..15 & step 0.25>` and applies the guarded
-`mips_lui_float32` adapter; use that setting rather than restoring a
-PNACH write. The base configuration selects the clean cost `1`.
+`40 40`, making the decrement cost `3`. That form is runtime-proven. It is no
+longer the maintained configuration mechanism: the clean instruction remains
+unchanged and supplies native cost `1.0` only when neither a character nor base
+table cell supplies an override.
 
 The instruction site, float encoding, and decrement mechanism are confirmed,
-not hypotheses. Cost `3` is runtime-proven; the other configurable costs,
-including zero and fractional values, have not each been runtime-tested.
-Substitution cost is not the substitution-reliability gate.
+not hypotheses. Cost `3` is runtime-proven. Substitution cost is not the
+substitution-reliability gate.
+
+## Per-character implementation
+
+The current implementation leaves the clean `lui` at ELF offset `0x1299BC`
+unchanged. A guarded hook at ELF offset `0x1299C0` replaces only
+`mtc1 v0,f0; nop` (clean bytes `00 00 82 44 00 00 00 00`). Its shim passes the
+live fighter pointer from `s3`, preserves the native float bits from `v0`, and
+tail-calls the resident selector. The resident selector maps the incoming
+fighter pointer to Player 1 or Player 2 through manager `+0xDE4`/`+0xDE8`, then
+uses the corresponding match-start ID at manager `+0xC8`/`+0xF0`. Capture
+comparison confirms that a directly selected form retains ID 73 there, while
+Naruto transformed during the match retains base ID 57 there even though its
+live fighter ID becomes 73. Native subtraction and zero clamping resume
+unchanged at `0x202298C8`.
+
+The table is generated from `base.character_overrides.tsv` and the selected
+profile TSV. The base substitution cell is literal. An unsigned character cell
+is literal, while an explicitly signed character cell is a delta from the
+resolved base cost; empty profile cells inherit both value and mode. The current
+configuration records base cost `2.5` and tier deltas from `+0.0` through
+`+3.5` in `0.5` steps. No IDs or values are compiled into the selector C. The
+configuration also reserves `hp`, damage, and recovery fields for later
+consumers.
+
+The addresses, displaced instructions, and identity field are statically and
+capture-confirmed. The user runtime-confirmed the earlier selective selector in
+Practice: Naruto versus Naruto in save state 1, and Sakura versus Naruto in save
+state 2. The generated-table implementation and its development Character
+Select overlay were accepted through `ver` on 2026-08-14. See
+[Character identity in battle](character_ids.md) for the selector and active
+fighter evidence.
 
 ## Runtime tests that did not improve reliability
 

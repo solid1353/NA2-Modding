@@ -16,7 +16,7 @@ SCRIPT_ROOT = Path(__file__).resolve().parent
 REPOSITORY = SCRIPT_ROOT.parents[1]
 CATALOG_PATH = REPOSITORY / "na228_builder" / "catalog"
 CONFIGURATION_PATH = (
-    REPOSITORY / "na228_builder" / "configurations" / "development.json"
+    REPOSITORY / "na228_builder" / "configurations" / "dev.json"
 )
 sys.path.insert(0, str(REPOSITORY))
 

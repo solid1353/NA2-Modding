@@ -39,16 +39,6 @@
     "expected_hex": "120B40A6",
     "replacement_hex": "78000010"
   },
-  "e__battle_logic__substitution_cost": {
-    "description": "Set the substitution cost from its catalog value.",
-    "operation": "replace",
-    "destination_target_id": "na2_elf",
-    "destination_offsets": [
-      "0x1299BC"
-    ],
-    "expected_hex": "803F023C",
-    "adapter": "mips_lui_float32"
-  },
   "e__general__dedicated_save_namespace__directory_references": {
     "description": "Use the dedicated NA228 save namespace at both memory-card directory references.",
     "operation": "replace",

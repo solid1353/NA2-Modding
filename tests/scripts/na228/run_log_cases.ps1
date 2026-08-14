@@ -696,11 +696,11 @@ Add-Content `
     & (Join-Path $fakeRepository 'na228.ps1') worker 'work\General\build\agent.iso'
     $configuredWorkerDispatch = (
         & (Join-Path $fakeRepository 'na228.ps1') worker `
-            --configuration development `
+            --configuration dev `
             'work\Equivalence\build\candidate.iso' *>&1
     ) -join "`n"
     Assert-Na2Test `
-        -Condition ($configuredWorkerDispatch -match '\[fake\] worker configuration=development') `
+        -Condition ($configuredWorkerDispatch -match '\[fake\] worker configuration=dev') `
         -Message 'Root worker command did not forward the configuration.'
     & (Join-Path $fakeRepository 'na228.ps1') build l
     & (Join-Path $fakeRepository 'na228.ps1') build m
@@ -994,7 +994,7 @@ Add-Content `
         -Rotated $true `
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $paths.files.previous_iso `
-        -Configuration (Join-Path $paths.builder 'configurations\development.json') `
+        -Configuration (Join-Path $paths.builder 'configurations\dev.json') `
         -Paths $paths
     Assert-Na2Test -Condition ($record.BuildId -eq 'new-latest') -Message 'Updated build was not retained.'
     $updatedBuildMap = Read-Na2BuildMap `
@@ -1031,7 +1031,7 @@ Add-Content `
         -Rotated $false `
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $paths.files.previous_iso `
-        -Configuration 'na228_builder/configurations/development.json' `
+        -Configuration 'na228_builder/configurations/dev.json' `
         -Paths $paths
     Assert-Na2Test `
         -Condition ($unchanged.BuildId -eq 'duplicate') `
@@ -1054,7 +1054,7 @@ Add-Content `
         -Rotated $false `
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $null `
-        -Configuration 'na228_builder/configurations/development.json' `
+        -Configuration 'na228_builder/configurations/dev.json' `
         -Paths $paths
     Assert-Na2Test `
         -Condition ($firstUnchanged.BuildId -eq $firstBuildId) `

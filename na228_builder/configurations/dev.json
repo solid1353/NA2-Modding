@@ -1,0 +1,7 @@
+{
+  "overrides": {
+    "battle_logic": {
+      "character_id_overlay": true
+    }
+  }
+}

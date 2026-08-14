@@ -1,4 +1,76 @@
 {
+  "i__battle_logic__character_id_overlay": {
+    "description": "Draw each selected character's tier and resolved substitution cost after its Character Select player panel.",
+    "hooks": {
+      "draw_character_balance_values": {
+        "description": "Replace the first native player-panel draw call with a wrapper that retains it and adds the selected character's tier and resolved substitution cost on its side of the screen.",
+        "target_id": "na2_elf",
+        "offset": "0x2B9B14",
+        "expected_hex": "58E40E0C00000000",
+        "symbol": "character_id_overlay",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "character_id_overlay": {
+        "kind": "c",
+        "path": "src/battle_logic/character_id_overlay.c",
+        "namespace": "battle.logic.character.id.overlay.c",
+        "imports": {
+          "battle_logic_character_overrides": "character_overrides"
+        },
+        "fragments": {
+          "character_id_overlay": {
+            "order": 112,
+            "object": "battle.logic.character.id.overlay.c.text.battle.logic.character.id.overlay"
+          }
+        }
+      }
+    }
+  },
+  "i__battle_logic__character_overrides": {
+    "description": "Select per-character battle values from the generated character-override table.",
+    "hooks": {
+      "select_cost_for_live_fighter": {
+        "description": "Replace the native cost transfer and delay slot with a guarded call that passes the live fighter while preserving the following subtraction and clamp.",
+        "target_id": "na2_elf",
+        "offset": "0x1299C0",
+        "expected_hex": "0000824400000000",
+        "symbol": "substitution_cost_shim",
+        "encoding": "jal26",
+        "replacement_hex": "0000000C2D206002"
+      }
+    },
+    "payload": {
+      "substitution_cost": {
+        "kind": "c",
+        "path": "src/battle_logic/substitution_cost.c",
+        "namespace": "battle.logic.substitution.cost.c",
+        "imports": {
+          "battle_logic_character_overrides": "character_overrides"
+        },
+        "fragments": {
+          "substitution_cost_for_fighter": {
+            "order": 110,
+            "object": "battle.logic.substitution.cost.c.text.battle.logic.substitution.cost"
+          }
+        }
+      },
+      "substitution_cost_shim": {
+        "kind": "code",
+        "order": 111,
+        "alignment": 4,
+        "value": "2D2840000000000800000000",
+        "relocations": {
+          "call_cost_selector": {
+            "offset": "0x4",
+            "encoding": "j26",
+            "symbol": "substitution_cost_for_fighter"
+          }
+        }
+      }
+    }
+  },
   "i__localization__font__glyphs__metrics": {
     "description": "Decode the accepted packed 14x20 metric rows for measurement and drawing from composition-time C in 228.BIN, leaving only guarded register-setup hooks in the fixed boot ELF.",
     "hooks": {

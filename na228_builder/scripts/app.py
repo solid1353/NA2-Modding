@@ -461,9 +461,7 @@ def _runtime_configuration_validator(configuration_path: Path) -> None:
     except ReleaseError:
         raise
     except Exception as exc:
-        raise ReleaseError(
-            f"Invalid {configuration_path.name}: {exc}"
-        ) from exc
+        raise ReleaseError(f"Invalid build configuration: {exc}") from exc
 
 
 def _validate_user_configuration(configuration_path: Path) -> None:

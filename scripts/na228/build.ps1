@@ -105,7 +105,7 @@ $previousIso = [IO.Path]::GetFullPath($paths.files.previous_iso)
 $manualIso = [IO.Path]::GetFullPath($paths.files.manual_iso)
 $payloadShift = if ($null -ne $e2eBuild) { [int]$e2eBuild.payload_shift_bytes } else { 0 }
 $configurationId = if ($null -ne $workerBuild) { $WorkerConfiguration } `
-    elseif ($ManualOnly -or $null -ne $e2eBuild) { 'test' } else { 'development' }
+    elseif ($ManualOnly -or $null -ne $e2eBuild) { 'test' } else { 'dev' }
 $configuration = Join-Path $paths.builder "configurations\$configurationId.json"
 if (-not (Test-Path -LiteralPath $configuration -PathType Leaf)) {
     throw "Worker configuration does not exist: $configurationId"

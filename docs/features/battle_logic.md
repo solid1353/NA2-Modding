@@ -1,25 +1,35 @@
 # Battle logic
 
 The `battle_logic` catalog subtree selects guarded definitions through patch
-IDs. The base and release configurations enable both existing battle-behavior
-nodes and set `substitution_cost` to `1`.
+IDs. Its character-override node loads layered TSV data and emits one resident
+table shared by current and future per-character battle hooks.
 
 ## Substitution cost
 
-`battle_logic.substitution_cost` is
-`setting<decimal & 0..15 & step 0.25>` rather than a set of predefined
-variants. `false` disables its patch; otherwise the setting accepts quarter-step
-costs from `0` through `15`, inclusive.
+`configurations/base.character_overrides.tsv` supplies the shared base and
+character rows. The selected profile's matching TSV layers nonempty cells over
+it. Character IDs and names are validated against
+`resources/character_data.tsv`. `base_id` records form relationships as
+human-readable configuration metadata. `tier` records the balancing tier and
+is also serialized for the development Character Select overlay. Empty cells
+inherit, while zero remains an explicit value.
 
-Its referenced `replace` edit targets the boot ELF at file offset `0x1299BC`
-and guards the complete little-endian `lui v0, 0x3F80` instruction bytes
-`80 3F 02 3C`. The `mips_lui_float32` adapter encodes the validated integer as
-IEEE-754 float32, requires an exact representation whose low 16 bits are zero,
-preserves the instruction's opcode and destination register, and replaces its
-high immediate. Every accepted quarter-step value has an exact single-`lui`
-encoding; for example, `1.25` produces `A0 3F 02 3C` and `3` produces
-`40 40 02 3C`.
+The `base` row's `substitution_cost` is a literal value. In a character row, an
+unsigned value such as `3` is also literal, while an explicitly signed value
+such as `+0.5` or `-0.5` is a delta from the resolved base cost. Profile layers
+inherit both the number and its literal-or-delta mode when the cell is empty.
+Other numeric fields remain nonnegative literal float32 values.
 
-The adapter and guarded selection path are covered by unit tests. The
-historical cost `3` form is runtime-proven; the other configurable costs,
-including zero and fractional values, have not each been runtime-tested.
+The builder serializes four-byte tier labels, presence and delta flags, and
+float32 values into a dense ID-indexed resident table. The
+substitution hook at ELF offset `0x1299C0` maps the incoming fighter to its
+player slot and reads that slot's match-start character ID. A directly selected
+form therefore uses its form row, while a base character transformed during
+the match keeps its base row. The development Character Select overlay reads
+the same table and draws `TIER` and resolved `SUB` values in separate left and
+right top-screen blocks without player labels or numeric IDs. The clean
+instruction at `0x1299BC` is no longer edited. The current TSV selects base cost
+`2.5` and tier deltas from D `+0.0` through S+++ `+3.5` in `0.5` steps.
+
+`hp`, damage, and recovery columns are present for later hooks; only
+`substitution_cost` currently has a runtime consumer.

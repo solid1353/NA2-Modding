@@ -172,7 +172,7 @@ class InjectionApplyTests(unittest.TestCase):
 class InjectionBuildTests(unittest.TestCase):
     def test_direct_source_scope_selects_registered_root_and_file(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
-            repository = Path(temporary)
+            repository = Path(temporary).resolve()
             source_root = repository / "src"
             nested = source_root / "nested"
             nested.mkdir(parents=True)

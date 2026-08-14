@@ -40,9 +40,10 @@
       }
     },
     "battle_logic": {
+      "character_id_overlay": false,
       "disable_shadowblur_extra_hit": true,
       "disable_extra_hit_with_aura_punishment_for_initiator": true,
-      "substitution_cost": 0.5
+      "character_overrides": true
     },
     "rendering": {
       "native_16_9_horizontal_scale": false

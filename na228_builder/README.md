@@ -26,12 +26,18 @@ integrated catalog data.
 - `catalog/implementation/string_patches.json` owns semantic transformations
   performed by the string patcher before inline and external string layout.
 - `configurations/base.json` contains the complete shared `features` tree.
-  `development.json`, `test.json`, and `release.json` contain
+  `dev.json`, `test.json`, and `release.json` contain
   concrete `overrides`. Each overrides object may be empty or partially mirror
   the catalog's feature tree directly. The loader applies the concrete
   configuration's `overrides` to `base.features`. Normal local builds use
-  `development.json`; Manual, worker, and E2E builds use `test.json`; only
+  `dev.json`; Manual, worker, and E2E builds use `test.json`; only
   release packaging uses `release.json`.
+- `configurations/base.character_overrides.tsv` contains the required `base`
+  row and shared per-character overrides. Matching `dev`, `test`, and `release`
+  TSVs layer nonempty cells over it by character ID. Empty cells inherit;
+  numeric zero is an explicit value.
+- `resources/character_data.tsv` is the builder-owned ID/name and native-value
+  reference used to validate character rows. It is not an override file.
 - `catalog/implementation/targets.tsv` is the single target registry used by
   edits and injection hooks.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.
@@ -43,7 +49,46 @@ integrated catalog data.
 - Root `settings.json` owns the product title, explicit output boot path, named
   build variants, and project launch settings.
 
-JSON configurations are the only build definitions. There is no separate pin or enablement table.
+JSON configurations select features. The paired character-override TSVs are
+the separate per-character build inputs for battle values.
+
+## Edit per-character battle values
+
+1. Put shared defaults and agreed character values in
+   `configurations/base.character_overrides.tsv`.
+2. Put temporary local values in `dev.character_overrides.tsv`, test-only
+   values in `test.character_overrides.tsv`, or release-only values in
+   `release.character_overrides.tsv`. Only nonempty cells replace the base
+   layer.
+3. Keep each numeric `id` paired with the exact `character` name from
+   `resources/character_data.tsv`. `base_id` identifies a form's base
+   character, and `tier` records the human-readable balance tier. Tier labels
+   use at most four ASCII characters because the development Character Select
+   overlay reads them from the resident table. Rows retain the order written in
+   the base TSV so forms can stay directly below their base characters.
+4. Write the `base` row's `substitution_cost` as a literal value such as `2.5`.
+   In a character row, write an unsigned value such as `3` for a literal cost,
+   `+0.5` to add to the base cost, or `-0.5` to subtract from it. The explicit
+   sign is what distinguishes a delta from a literal value.
+5. Leave a value cell empty to inherit the lower layer, including its
+   literal-or-delta mode. If neither a character nor the `base` row supplies a
+   substitution cost, the generated table leaves that value to native game
+   behavior. `0` is literal zero; `+0.0` is a zero delta.
+6. Save the file as UTF-8 TSV and run the normal build for that profile.
+
+For example, these rows set the base cost to `2.5`, give Naruto a `+2.0`
+delta, and give Sakura a literal cost of `3`:
+
+```tsv
+id	base_id	character	tier	substitution_cost	hp	damage_multiplier	health_recovery_multiplier	chakra_recovery_multiplier
+base		Base		2.5
+57		Naruto Uzumaki	S	+2.0
+58		Sakura Haruno	A	3
+```
+
+The builder rejects unknown IDs, invalid base IDs, mismatched names, duplicate
+rows, malformed columns, non-finite numbers, and negative literal values before
+composition. Signed substitution-cost deltas may be negative.
 
 ## Catalog nodes
 
@@ -103,9 +148,10 @@ replacements. The binary patcher applies selected edits last.
 
 ## Resource fingerprinting
 
-The build-resource fingerprint covers the base and selected configurations,
+The build-resource fingerprint covers the base and selected JSON and
+character-override configurations,
 `.modcat` sources, edits, injections, settings and path configuration, shared targets,
-applicable binary operation definitions, referenced assets and sources, and
+the character reference, applicable binary operation definitions, referenced assets and sources, and
 selected localization TSV inputs. Release packaging inventories the same
 closure for every selectable catalog node, including disabled nodes.
 Documentation is not an executable builder input.
@@ -117,10 +163,13 @@ within each feature remains derived from the stable internal engine order above.
 
 Release packaging applies `release.overrides` to `base.features`, then writes
 one editable JSON configuration named `config.json` containing only the
-materialized `features` tree. It also writes one consolidated, inert `catalog.modcat`
+materialized `features` tree. It also materializes the layered base and release
+character values as editable `character_overrides.tsv` with every reference
+ID/name row present, and writes one
+consolidated, inert `catalog.modcat`
 reference with the same public hierarchy, types, constraints, unions, and
 descriptions but no patch mappings or implementation details. `README.md`
-explains both files in simple terms.
+explains the editable files in simple terms.
 
 The packaged EXE validates `config.json` against its embedded complete catalog
 and never reads the external catalog reference. It contains resources for every selectable
@@ -138,7 +187,7 @@ than showing them in the user-facing window. Successful runs create no log.
 ```
 
 `scripts/na228/build.ps1` resolves the `builder` package set from
-`packages.json` and uses `configurations/development.json` for normal builds or
+`packages.json` and uses `configurations/dev.json` for normal builds or
 `configurations/test.json` for Manual and E2E outputs. Worker builds default to
 `test` and accept `--configuration <id>`.
 
@@ -189,5 +238,4 @@ them; `scripts/composer.py` closes typed image operations; and
 `image_assembler/` alone stages and verifies the ISO.
 
 The development injector reads the feature files under `catalog/` with
-`configurations/development.json`. It no longer has a separate runtime TSV
-registry.
+`configurations/dev.json` and the layered base/dev character-override TSVs.

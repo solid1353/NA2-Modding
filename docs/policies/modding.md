@@ -7,19 +7,21 @@
   [feature documentation](../features/README.md). Do not recreate retired
   schemas or assumptions from historical notes.
 - `na228_builder/configurations/base.json` owns the complete shared `features`
-  tree. Normal development builds use `development.json`, test, worker, and E2E
+  tree. Normal development builds use `dev.json`, test, worker, and E2E
   builds use `test.json`, and only release packaging uses `release.json`.
   Loading applies the selected configuration's `overrides` directly to the base
-  features. Release packaging materializes base plus release selections into one
-  self-contained external configuration containing only `features`.
+  features. Matching `base`, `dev`, `test`, and `release`
+  `.character_overrides.tsv` files layer nonempty per-character battle values
+  by ID. Release packaging materializes both selected layers into one external
+  JSON configuration and one external character-override TSV.
   Feature-named JSON files under
   `na228_builder/catalog/` own selectable definitions; files under
   `na228_builder/catalog/implementation/` own guarded binary edits, runtime
   hooks and payload declarations, and targets. Root `settings.json` owns output
   identity, build variants, and project launch settings.
-- JSON files under `na228_builder/configurations/` are the only repository build
-  definitions. Feature enablement and nested selection live only there; there
-  is no separate profile or feature-pin table.
+- JSON files under `na228_builder/configurations/` exclusively own feature
+  enablement and nested selection. Paired character-override TSVs exclusively
+  own per-character battle values; there is no feature-pin table.
 - Reusable engines, operation definitions, and tools belong under
   `na228_builder/modules/`; executable definitions belong in
   `catalog/implementation/edits.json` or

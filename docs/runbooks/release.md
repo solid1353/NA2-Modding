@@ -1,9 +1,10 @@
 # Release process
 
 The release process produces one Windows x64 ZIP containing the console EXE,
-an editable default configuration, an inert catalog reference, and end-user
-instructions. End users need no Python installation and supply only one exact
-clean NA2 ISO and one exact clean NUN5 ISO.
+an editable default configuration, editable character overrides, an inert
+catalog reference, and end-user instructions. End users need no Python
+installation and supply only one exact clean NA2 ISO and one exact clean NUN5
+ISO.
 
 ## End-user contract
 
@@ -14,28 +15,37 @@ clean NA2 ISO and one exact clean NUN5 ISO.
    typed setting uses the scalar or object value declared by `catalog.modcat`.
    `false` disables any node. Container objects merge recursively through
    `overrides`, while settings and unions are replaced atomically.
-4. Double-click the EXE. It validates the external configuration against its
-   embedded catalog before hashing either ISO.
-5. The program scans sibling `*.iso` files non-recursively, excluding the
+4. Optionally edit `character_overrides.tsv`: the `base` substitution cost and
+   unsigned character values are literal, explicitly signed character values
+   are deltas from the base, and an empty cell inherits its packaged value and
+   mode. `0` is literal zero and `+0.0` is a zero delta. IDs, base IDs, and names
+   must remain paired as distributed. A directly selected form uses its form
+   row; an in-match transformation retains the selected base character's row.
+5. Double-click the EXE. It validates the external configuration and character
+   overrides against its embedded catalog and character reference before
+   hashing either ISO.
+6. The program scans sibling `*.iso` files non-recursively, excluding the
    reserved output and staging names, then identifies NA2 and NUN5 by size and
    streaming SHA-256.
-6. It refuses missing or duplicate supported source images, modified inputs,
+7. It refuses missing or duplicate supported source images, modified inputs,
    unsupported hashes, or an existing
    `Narutimate Accel v2.28.iso.building`.
-7. It locks both inputs read-only and hashes them again after locking.
-8. It applies the selected configuration, creates
+8. It locks both inputs read-only and hashes them again after locking.
+9. It applies the selected configuration, creates
    `Narutimate Accel v2.28.iso.building`, verifies the complete staged image and
    its size, then atomically creates or replaces
    `Narutimate Accel v2.28.iso`.
-9. It never modifies either input, creates no runtime log files, preserves an
+10. It never modifies either input, creates no runtime log files, preserves an
    existing output when a build fails, removes its staging file after failure,
    and waits for Enter before closing.
 
-The ZIP contains exactly the versioned EXE, `config.json`, `catalog.modcat`,
-and `README.md`. Release packaging applies `release.overrides` to
-`base.features` and writes the resulting complete `features` tree to
-`config.json`. It derives the consolidated
-`catalog.modcat` from the canonical feature catalogs, strips every patch and
+The ZIP contains exactly the versioned EXE, `config.json`,
+`character_overrides.tsv`, `catalog.modcat`, and `README.md`. Release packaging
+applies `release.overrides` to `base.features` and writes the resulting complete
+`features` tree to `config.json`. It materializes the base and release
+character-override layers into `character_overrides.tsv`, including every
+reference ID/name row for direct editing. It derives the
+consolidated `catalog.modcat` from the canonical feature catalogs, strips every patch and
 implementation detail, and distributes it only as a readable reference. The
 executable never reads that external reference. The executable embeds the
 interpreter, builder engines, catalog, resources for the complete selectable
@@ -115,7 +125,7 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
   that same script rather than implementing another packager.
 
 The ordinary `na228`, `na228 b`, and `na228 m` workflows are unchanged.
-Normal development builds use `development.json`; Manual, worker, and E2E
+Normal development builds use `dev.json`; Manual, worker, and E2E
 builds use `test.json`. `release.json` is used only by this release-packaging
 pipeline.
 

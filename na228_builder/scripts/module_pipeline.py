@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from . import catalog as catalog_module
@@ -20,6 +20,7 @@ from ..payload_builder.operations import (
     ResolvedPatch,
 )
 from .configuration import BuildConfiguration, ModuleInvocation
+from .character_overrides import character_override_fragment
 
 
 @dataclass(frozen=True)
@@ -134,6 +135,20 @@ def prepare_module_pipeline(
                 configuration.selection.catalog_path.parent.parent,
                 module.module_id,
             )
+            if (
+                module.feature_id == "battle_logic"
+                and configuration.character_overrides is not None
+            ):
+                declaration = replace(
+                    declaration,
+                    fragments=(
+                        character_override_fragment(
+                            configuration.character_overrides,
+                            owner=module.module_id,
+                        ),
+                        *declaration.fragments,
+                    ),
+                )
         else:
             declaration = runtime_injector_module.load_package(
                 module.input_path,

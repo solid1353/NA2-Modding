@@ -39,9 +39,9 @@ selects a child, or chooses a default branch.
 `setting<T>` accepts one supplied JSON value described by `T`:
 
 ```text
-substitution_cost: setting<decimal & 0..15 & step 0.25> {
-  description: "Substitution cost setting.",
-  patches: ["e__battle_logic__substitution_cost"],
+camera_distance: setting<decimal & 0.5..2 & step 0.25> {
+  description: "Camera distance setting.",
+  patches: ["e__example__camera_distance"],
 },
 ```
 

@@ -100,7 +100,7 @@ try {
 
     Push-Location $repository
     try {
-        & $python -B -m unittest discover -s tests -p 'test_*.py'
+        & $python -B -m unittest discover -s tests -t . -p 'test_*.py'
         if ($LASTEXITCODE -ne 0) { throw 'Patcher tests failed.' }
     }
     finally {
@@ -126,6 +126,13 @@ configuration = load_configuration(
 excluded = {Path(sys.argv[2]).resolve()}
 if configuration.selection.base_configuration_path is not None:
     excluded.add(configuration.selection.base_configuration_path.resolve())
+if configuration.character_overrides is not None:
+    configuration_root = repository / "na228_builder" / "configurations"
+    excluded.update(
+        path.resolve()
+        for path in configuration.character_overrides.resource_files
+        if path.resolve().parent == configuration_root
+    )
 print(json.dumps([
     path.relative_to(repository).as_posix()
     for path in configuration_resource_files(configuration, include_disabled=True)
@@ -202,6 +209,7 @@ raise SystemExit(main())
         throw "PyInstaller output is missing: $built"
     }
     $packagedConfiguration = Join-Path $distRoot ([string]$manifest.configuration_name)
+    $packagedCharacterOverrides = Join-Path $distRoot 'character_overrides.tsv'
     $packagedInstructions = Join-Path $distRoot 'README.md'
     $packagedCatalog = Join-Path $distRoot 'catalog.modcat'
     $configurationProbe = @'
@@ -225,6 +233,32 @@ print(json.dumps(materialized_configuration(
     [IO.File]::WriteAllText(
         $packagedConfiguration,
         ($configurationText -join "`n") + "`n",
+        [Text.UTF8Encoding]::new($false)
+    )
+    $characterOverrideProbe = @'
+import sys
+from pathlib import Path
+
+repository = Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(repository))
+from na228_builder.scripts.character_overrides import (
+    load_character_overrides,
+    render_character_overrides,
+)
+
+configuration = load_character_overrides(
+    Path(sys.argv[2]),
+    repository / "na228_builder",
+)
+print(render_character_overrides(configuration), end="")
+'@
+    $characterOverrideText = @(& $python -B -c $characterOverrideProbe $repository $configurationPath)
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Could not construct the merged release character overrides.'
+    }
+    [IO.File]::WriteAllText(
+        $packagedCharacterOverrides,
+        ($characterOverrideText -join "`n") + "`n",
         [Text.UTF8Encoding]::new($false)
     )
     Copy-Item -LiteralPath $instructionsPath -Destination $packagedInstructions
@@ -266,6 +300,7 @@ print(public_catalog(repository / "na228_builder" / "catalog"), end="")
         -LiteralPath @(
             $built,
             $packagedConfiguration,
+            $packagedCharacterOverrides,
             $packagedCatalog,
             $packagedInstructions
         ) `

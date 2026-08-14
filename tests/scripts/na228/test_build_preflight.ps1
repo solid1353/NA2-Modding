@@ -80,7 +80,7 @@ exit $LASTEXITCODE
     )) {
         New-Item -ItemType Directory -Force -Path (Join-Path $repository $directory) | Out-Null
     }
-    foreach ($name in 'development', 'test', 'release') {
+    foreach ($name in 'dev', 'test', 'release') {
         [IO.File]::WriteAllText(
             (Join-Path $repository "na228_builder\configurations\$name.json"),
             "{}`n"
@@ -118,7 +118,7 @@ iso`tbuild_record
             $configIndex = [Array]::IndexOf($arguments, '--configuration')
             $configuration = if ($configIndex -ge 0) { $arguments[$configIndex + 1] } else { '' }
             $key = "$configuration|0"
-            $fingerprint = if ($configuration -match 'development') { 'A' * 64 } else { 'B' * 64 }
+            $fingerprint = if ($configuration -match 'dev') { 'A' * 64 } else { 'B' * 64 }
             if ($command -eq 'lookup') {
                 if (-not $global:Na2RegistryEntries.ContainsKey($key)) {
                     $global:LASTEXITCODE = 0
@@ -232,7 +232,7 @@ iso`tbuild_record
     Assert-Na2PreflightTest $second.PreflightCacheHit 'Repeated Latest build did not reuse the registry.'
     Assert-Na2PreflightTest ($global:Na2BuilderCalls.Count -eq 1) 'Registry hit rebuilt the image.'
 
-    $developmentEntry = $global:Na2RegistryEntries['na228_builder\configurations\development.json|0']
+    $developmentEntry = $global:Na2RegistryEntries['na228_builder\configurations\dev.json|0']
     $cacheImage = Join-Path $repository "work\cache\isos\$($developmentEntry.Hash).iso"
     Assert-Na2PreflightTest (Test-Path -LiteralPath $cacheImage -PathType Leaf) 'Latest promotion did not retain its canonical cache image.'
     $developmentEntry.Image = $cacheImage
@@ -249,7 +249,7 @@ iso`tbuild_record
     Assert-Na2PreflightTest ($global:Na2BuilderCalls.Count -eq 1) 'Pending promotion retry rebuilt the image.'
 
     $workerOutput = 'work\Project\build\development-worker.iso'
-    $worker = & (Join-Path $scriptRoot 'build.ps1') -WorkerOutputIso $workerOutput -WorkerConfiguration development
+    $worker = & (Join-Path $scriptRoot 'build.ps1') -WorkerOutputIso $workerOutput -WorkerConfiguration dev
     Assert-Na2PreflightTest $worker.PreflightCacheHit 'Development worker did not reuse the Latest verification.'
     Assert-Na2PreflightTest (Test-Path -LiteralPath (Join-Path $repository $workerOutput) -PathType Leaf) 'Worker reuse did not materialize its output.'
     Assert-Na2PreflightTest ((Get-Item -LiteralPath (Join-Path $repository $workerOutput)).LinkType -eq 'HardLink') 'Worker output was not published as a hardlink.'

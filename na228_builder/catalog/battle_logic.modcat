@@ -14,10 +14,16 @@
       "e__battle_logic__disable_extra_hit_with_aura_punishment_for_initiator__retain_aura_punishment",
     ],
   },
-  substitution_cost: setting<decimal & 0..15 & step 0.25> {
-    description: "Substitution cost setting.",
+  character_id_overlay: setting {
+    description: "Show each side's character tier and resolved substitution cost on Character Select.",
     patches: [
-      "e__battle_logic__substitution_cost",
+      "i__battle_logic__character_id_overlay",
+    ],
+  },
+  character_overrides: setting {
+    description: "Load layered per-character battle overrides.",
+    patches: [
+      "i__battle_logic__character_overrides",
     ],
   },
 }

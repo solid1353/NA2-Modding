@@ -3386,7 +3386,7 @@ def numeric_fragments() -> tuple[Fragment, ...]:
 def main() -> None:
     selection = catalog.load_selection(
         REPOSITORY / "na228_builder" / "catalog",
-        REPOSITORY / "na228_builder" / "configurations" / "development.json",
+        REPOSITORY / "na228_builder" / "configurations" / "dev.json",
     )
     declaration = catalog.load_runtime_package(
         selection,

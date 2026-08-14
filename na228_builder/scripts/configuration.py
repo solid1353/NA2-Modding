@@ -13,6 +13,7 @@ from scripts.lib.paths import Paths, load_paths
 
 if TYPE_CHECKING:
     from .catalog import CatalogSelection
+    from .character_overrides import CharacterOverrideConfiguration
 
 
 BUILDER_TARGETS_FILE = Path("catalog") / "implementation" / "targets.tsv"
@@ -91,6 +92,7 @@ class BuildConfiguration:
     features: tuple[SelectedFeature, ...]
     modules: tuple[ModuleInvocation, ...]
     selection: CatalogSelection
+    character_overrides: CharacterOverrideConfiguration | None = None
 
 
 def _settings_object(value: object, keys: set[str], label: str) -> dict[str, object]:
@@ -410,6 +412,7 @@ def _catalog_feature_sha256(
     repository: Path,
     module_inputs: list[tuple[str, Path]],
     targets_path: Path,
+    configuration_files: tuple[Path, ...] = (),
 ) -> str:
     from . import catalog as catalog_module
 
@@ -477,6 +480,12 @@ def _catalog_feature_sha256(
             entries.append((file.relative_to(repository).as_posix(), file.read_bytes()))
     for file in catalog_module.referenced_files(selection, repository, feature_id):
         entries.append((file.relative_to(repository).as_posix(), file.read_bytes()))
+    for file in configuration_files:
+        try:
+            label = file.relative_to(repository).as_posix()
+        except ValueError:
+            label = f"@configuration/{file.name}"
+        entries.append((label, file.read_bytes()))
     digest = hashlib.sha256()
     for label, payload in sorted(entries):
         digest.update(label.encode("utf-8"))
@@ -501,6 +510,14 @@ def _load_configuration(
         raise ValueError(f"Invalid configuration name: {configuration_id!r}")
     catalog_path = builder_root / "catalog"
     selection = catalog_module.load_selection(catalog_path, definition_path)
+    character_overrides = None
+    if any(
+        node.path == ("features", "battle_logic", "character_overrides")
+        for node in selection.feature_nodes("battle_logic")
+    ):
+        from .character_overrides import load_character_overrides
+
+        character_overrides = load_character_overrides(definition_path, builder_root)
     paths = project_paths or load_paths(workspace, allow_missing=True)
     settings_path = paths.file("settings").resolve()
     output_boot_path, product_title = _validated_settings(settings_path)
@@ -518,6 +535,11 @@ def _load_configuration(
             workspace,
             module_inputs,
             targets_path,
+            (
+                character_overrides.resource_files
+                if feature_id == "battle_logic" and character_overrides is not None
+                else ()
+            ),
         )
         available: dict[str, Path] = {}
         for module_type, module_path in module_inputs:
@@ -600,6 +622,7 @@ def _load_configuration(
         features=tuple(features),
         modules=tuple(modules),
         selection=selection,
+        character_overrides=character_overrides,
     )
 
 
@@ -622,6 +645,8 @@ def configuration_resource_files(
     ]
     if configuration.selection.base_configuration_path is not None:
         files.append(configuration.selection.base_configuration_path)
+    if configuration.character_overrides is not None:
+        files.extend(configuration.character_overrides.resource_files)
     if include_disabled or any(
         module.module == "binary_patcher" for module in configuration.modules
     ):

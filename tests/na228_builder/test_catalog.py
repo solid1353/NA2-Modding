@@ -342,7 +342,7 @@ class CatalogTests(unittest.TestCase):
             name: catalog.load_selection(
                 catalog_path, configurations / f"{name}.json"
             )
-            for name in ("development", "test", "release")
+            for name in ("dev", "test", "release")
         }
         test = selections["test"]
         self.assertFalse(
@@ -358,7 +358,7 @@ class CatalogTests(unittest.TestCase):
                 "features", "qol", "startup", "flow", "loading_screen"
             )
         )
-        for name in ("development", "release"):
+        for name in ("dev", "release"):
             with self.subTest(configuration=name):
                 self.assertTrue(
                     selections[name].node_enabled(

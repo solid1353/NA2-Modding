@@ -28,6 +28,9 @@
         "command_display_off_by_default": true,
         "simple_display_off": true
       },
+      "character_select": {
+        "no_support": true
+      },
       "mode_select": {
         "remove_adventure": true,
         "remove_shop": true

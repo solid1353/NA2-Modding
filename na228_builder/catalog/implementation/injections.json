@@ -1667,6 +1667,151 @@
       }
     }
   },
+  "i__qol__character_select__no_support__support_list": {
+    "description": "Prepend configurable selectable entries to Character Select's native support list and resolve their declared display and name while retaining every native entry, availability state, compatibility result, and renderer.",
+    "hooks": {
+      "route_default_support_compatibility": {
+        "description": "Allow declared special entries through Character Select's default-support compatibility path while delegating native IDs to the original BTL helper.",
+        "target_id": "na2_elf",
+        "offset": "0x2B5088",
+        "expected_hex": "3016220C",
+        "symbol": "character_select_no_support_is_compatible",
+        "encoding": "jal26"
+      },
+      "route_initial_support_list_population": {
+        "description": "Route initial Character Select support-list population through the additive wrapper.",
+        "target_id": "na2_elf",
+        "offset": "0x2BB18C",
+        "expected_hex": "84EC0E0C",
+        "symbol": "character_select_no_support_prepend",
+        "encoding": "jal26"
+      },
+      "route_initial_transition_support_compatibility": {
+        "description": "Allow declared special entries through the compatibility check used when Character Select first enters support selection.",
+        "target_id": "na2_elf",
+        "offset": "0x2B56FC",
+        "expected_hex": "3016220C",
+        "symbol": "character_select_no_support_is_compatible",
+        "encoding": "jal26"
+      },
+      "route_primary_confirmation_support_compatibility": {
+        "description": "Allow declared special entries through the primary support-confirmation compatibility check.",
+        "target_id": "na2_elf",
+        "offset": "0x2B6BEC",
+        "expected_hex": "3016220C",
+        "symbol": "character_select_no_support_is_compatible",
+        "encoding": "jal26"
+      },
+      "route_refreshed_support_list_population": {
+        "description": "Route refreshed Character Select support-list population through the same additive wrapper.",
+        "target_id": "na2_elf",
+        "offset": "0x2BCBB0",
+        "expected_hex": "84EC0E0C",
+        "symbol": "character_select_no_support_prepend",
+        "encoding": "jal26"
+      },
+      "route_repeated_confirmation_support_compatibility": {
+        "description": "Allow declared special entries through the repeated support-confirmation compatibility check.",
+        "target_id": "na2_elf",
+        "offset": "0x2B6F7C",
+        "expected_hex": "3016220C",
+        "symbol": "character_select_no_support_is_compatible",
+        "encoding": "jal26"
+      },
+      "route_selected_support_display_id": {
+        "description": "Resolve the selected support through the table-defined display record before Character Select reads its name rectangle.",
+        "target_id": "na2_elf",
+        "offset": "0x2B8C6C",
+        "expected_hex": "6816220C",
+        "symbol": "character_select_no_support_display_id",
+        "encoding": "jal26"
+      },
+      "route_selected_support_name_draw": {
+        "description": "Render the table-defined name for an added support and retain the complete native selected-name path for ordinary supports.",
+        "target_id": "na2_elf",
+        "offset": "0x2B9C74",
+        "expected_hex": "A4E20E0C",
+        "symbol": "character_select_no_support_draw_selected_name",
+        "encoding": "jal26"
+      },
+      "route_selected_support_portrait_display_id": {
+        "description": "Resolve the selected support through the table-defined display record before Character Select reads its large portrait resource.",
+        "target_id": "na2_elf",
+        "offset": "0x2B8ED4",
+        "expected_hex": "6816220C",
+        "symbol": "character_select_no_support_display_id",
+        "encoding": "jal26"
+      },
+      "route_support_draw_compatibility": {
+        "description": "Keep declared special entries eligible in Character Select's support draw path while retaining native compatibility for ordinary supports.",
+        "target_id": "na2_elf",
+        "offset": "0x2B8A38",
+        "expected_hex": "3016220C",
+        "symbol": "character_select_no_support_is_compatible",
+        "encoding": "jal26"
+      },
+      "route_support_navigation_compatibility": {
+        "description": "Keep declared special entries eligible in Character Select's support navigation path while retaining native compatibility for ordinary supports.",
+        "target_id": "na2_elf",
+        "offset": "0x2B72B0",
+        "expected_hex": "3016220C",
+        "symbol": "character_select_no_support_is_compatible",
+        "encoding": "jal26"
+      },
+      "route_support_list_available_display_id": {
+        "description": "Resolve an available scrollable-list entry through its table-defined display record.",
+        "target_id": "na2_elf",
+        "offset": "0x2B8874",
+        "expected_hex": "6816220C",
+        "symbol": "character_select_no_support_display_id",
+        "encoding": "jal26"
+      },
+      "route_support_list_primary_display_id": {
+        "description": "Resolve the primary scrollable-list entry path through its table-defined display record.",
+        "target_id": "na2_elf",
+        "offset": "0x2B8824",
+        "expected_hex": "6816220C",
+        "symbol": "character_select_no_support_display_id",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "character_select_no_support": {
+        "kind": "c",
+        "path": "src/qol/character_select_no_support.c",
+        "namespace": "qol.character.select.no.support",
+        "imports": {
+          "font_v2_adapter_call": "v2_adapter_call"
+        },
+        "fragments": {
+          "character_select_no_support_entries": {
+            "order": 106,
+            "object": "qol.character.select.no.support.rodata.qol.character.select.no.support.entries"
+          },
+          "character_select_no_support_display_id": {
+            "order": 109,
+            "object": "qol.character.select.no.support.text.qol.character.select.no.support.display.id"
+          },
+          "character_select_no_support_draw_name_callback": {
+            "order": 115,
+            "object": "qol.character.select.no.support.text.qol.character.select.no.support.draw.name.callback"
+          },
+          "character_select_no_support_draw_selected_name": {
+            "order": 114,
+            "object": "qol.character.select.no.support.text.qol.character.select.no.support.draw.selected.name"
+          },
+          "character_select_no_support_is_compatible": {
+            "order": 108,
+            "object": "qol.character.select.no.support.text.qol.character.select.no.support.is.compatible"
+          },
+          "character_select_no_support_prepend": {
+            "order": 107,
+            "object": "qol.character.select.no.support.text.qol.character.select.no.support.prepend"
+          }
+        }
+      }
+    }
+  },
   "i__qol__content__unlock_all__availability": {
     "description": "Report the fully unlocked reference save's content availability through bounded read-only helpers without changing the live save structure.",
     "hooks": {

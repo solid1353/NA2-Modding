@@ -6,5 +6,6 @@ structure of the original disc and its contained files.
 - [Disc identity](disc_identity.md)
 - [Startup sequence](startup.md)
 - [Character assets](character_assets.md)
+- [Character Select support list](character_select.md)
 - [Content availability and save-backed unlock state](content_availability.md)
 - [Game files](files/README.md)

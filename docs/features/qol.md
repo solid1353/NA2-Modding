@@ -4,6 +4,56 @@ File-backed and resident quality-of-life behavior. Selectable nodes, guarded
 binary edits, runtime hooks, and payload declarations are selected by
 `na228_builder/catalog/qol.modcat`.
 
+## Select No Support on Character Select
+
+`qol.character_select.no_support` is an accepted runtime patch that
+prepends **No Support** to Character Select's native 33-entry scrollable
+support list. It does not replace or remove any native support. Both native
+population call sites are routed through one C injection, which first retains
+NA2's own IDs and availability states and then inserts the entries declared in
+`ADDITIONAL_SUPPORT_ENTRIES`. The current declaration adds native no-support
+ID `0x25` as an available entry, maps it to display record `0x5F`, and supplies
+the name `NO SUPPORT`, producing the same 34-ID order as NUN6.
+
+The first runtime test proved that the inserted icon rendered and that the
+cursor could reach it, but pressing OK did not accept it. NA2's separate BTL
+compatibility helper rejects every support ID at or above `0x24`; NUN6 extends
+that gate through `0x25`. The implementation routes all six Character
+Select consumers of the helper through a second table-aware C entry point.
+IDs declared in `ADDITIONAL_SUPPORT_ENTRIES` are accepted, while every native
+support ID is delegated to NA2's untouched compatibility logic.
+
+Runtime testing then confirmed that OK accepts the new entry, but established
+that NA2's unextended support-to-display map resolves ID `0x25` to record zero,
+visibly reusing Classic Naruto. The localization pipeline's imported official
+NUN5 `CHARSEL1.CCS` already contains a Leaf sprite at display record `0x5F`;
+the patch routes Character Select's list and selected-portrait lookups
+through the table-defined record. NUN6 artwork is not imported or reused.
+
+The NUN5 character-name atlas has no suitable No Support label. For the added
+entry only, the selected-name path therefore skips the unrelated character
+sprite and draws `NO SUPPORT` with the resident font, centered in the existing
+nameplate. Every native support delegates to the complete original name path.
+Runtime testing confirmed the Leaf and label both render, while the initial
+full-width label intruded beneath the **Linked Character** badge. Two rejected
+candidates wrote `0.80` to the shared scale word without activating Font v2's
+geometry hooks; runtime pixels proved that the label remained full-width and
+offsetting it merely moved the problem. The accepted implementation uses the
+existing Font v2 adapter to fit the measured 112-unit label into the row's
+84-unit maximum width and center its actually scaled glyph geometry in the
+nameplate. There is no manual draw offset. The injection remains table-driven
+so later special entries can supply their own display record, name, and maximum
+label width without editing the executable list. Clean call sites, both native
+list producers, all six compatibility consumers, and the five render hooks are
+statically guarded. The user accepted the fitted-and-centered label in runtime
+on 2026-08-14.
+
+This first phase stops at adding the selectable list entry. Preserving the
+selection through battle transition, blocking inputs during Ultimate Jutsu,
+and suppressing corresponding battle UI are outside this patch. The full
+reverse-engineering record is in
+[`../knowledge/game/character_select.md`](../knowledge/game/character_select.md).
+
 ## Unlock all content without loading a save
 
 `qol.content.unlock_all` selects the resident injection

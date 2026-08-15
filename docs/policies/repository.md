@@ -23,16 +23,6 @@
   task, or attempting a commit, stage the current task-owned contribution.
   This is standing authorization for staging only; it does not authorize a
   commit.
-- Stage every contribution with
-  `@codex-utils/codex/staging/stage_task_changes.ps1 -Changes`
-  for every participating repository. The helper supports multiple task-owned
-  contributions, including non-overlapping hunks in one file; pass task-owned
-  paths directly and do not temporarily remove, stash, or rewrite unrelated
-  working-tree hunks to isolate staging. If a staged contribution needs
-  revision, release it through the helper before editing, then validate and
-  stage its replacement once.
-- Commit helper-managed staging only through the helper's owner-only `-Commit`
-  operation; never use raw `git commit` for it.
 - Do not commit incomplete work merely to clean the working tree. Report its
   task-owned dirty state.
 - When a remote exists, immediately push each task-owned commit unless it

@@ -225,8 +225,8 @@ function Resolve-Na2PathManifest {
         ]
         if ($null -eq $startupFrames -or
             $startupFrames.Value -isnot [long] -or
-            [long]$startupFrames.Value -le 0) {
-            throw 'Project startup_fast_forward_frames must be a positive integer.'
+            [long]$startupFrames.Value -lt 0) {
+            throw 'Project startup_fast_forward_frames must be a non-negative integer.'
         }
         if ($resolvedFiles.Contains('game_catalog')) {
             $sourceCatalogPath = [string]$resolvedFiles['game_catalog']

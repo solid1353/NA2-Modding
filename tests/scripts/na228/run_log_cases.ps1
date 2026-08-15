@@ -140,6 +140,15 @@ try {
     New-Item -ItemType Directory -Force -Path $fakeNa2Scripts | Out-Null
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\run.ps1') `
         -Destination $fakeNa2Scripts
+    Set-Na2Utf8FileAtomic `
+        -Path (Join-Path $fakeNa2Scripts 'launch_settings.ps1') `
+        -Content @'
+function Get-Na2StartupFastForwardFrames {
+    param([string]$Configuration, [psobject]$Paths)
+    if ($Configuration -ceq 'test') { return [UInt64]222 }
+    return [UInt64]321
+}
+'@
     $fakePcsx2Scripts = Join-Path $fakeRepository 'scripts\pcsx2'
     New-Item -ItemType Directory -Force -Path $fakePcsx2Scripts | Out-Null
     $fakeReleaseScripts = Join-Path $fakeRepository 'scripts\release'
@@ -692,9 +701,10 @@ Add-Content `
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
-            $testLaunch -match 'multi-game launch manual'
+            $testLaunch -match 'multi-game launch manual' -and
+            $testLaunch -match 'frames=222'
         ) `
-        -Message 'Manual selector alias did not resolve through game launch.'
+        -Message 'Manual selector did not use the test catalog launch settings.'
     }
 
     if ($Group -ceq 'build-launch') {

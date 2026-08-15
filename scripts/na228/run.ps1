@@ -19,6 +19,7 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\paths.ps1')
 . (Join-Path $PSScriptRoot '..\lib\run_log.ps1')
+. (Join-Path $PSScriptRoot 'launch_settings.ps1')
 $paths = Get-Na2Paths
 $latestIsoName = [IO.Path]::GetFileName($paths.files.latest_iso)
 $manualIsoName = [IO.Path]::GetFileName($paths.files.manual_iso)
@@ -127,9 +128,12 @@ try {
                 $launchArguments.Unlimited = $true
             }
             else {
-                $launchArguments.UnlimitedForFrames = [UInt64](
-                    $paths.settings.startup_fast_forward_frames
-                )
+                $startupFrames = Get-Na2StartupFastForwardFrames `
+                    -Configuration dev `
+                    -Paths $paths
+                if ($startupFrames -gt 0) {
+                    $launchArguments.UnlimitedForFrames = [UInt64]$startupFrames
+                }
                 if ($Turbo) {
                     $launchArguments.Turbo = $true
                 }

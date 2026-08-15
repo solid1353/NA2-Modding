@@ -1,6 +1,7 @@
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'scripts\lib\paths.ps1')
 . (Join-Path $PSScriptRoot 'scripts\na228\task_paths.ps1')
+. (Join-Path $PSScriptRoot 'scripts\na228\launch_settings.ps1')
 $paths = Get-Na2Paths
 
 trap {
@@ -452,9 +453,40 @@ elseif ($unlimited) {
     $launchParameters.Unlimited = $true
 }
 else {
-    $launchParameters.UnlimitedForFrames = [UInt64](
-        $paths.settings.startup_fast_forward_frames
+    $launchConfigurations = @(
+        $games | ForEach-Object {
+            $alias = $paths.games.Aliases.PSObject.Properties[[string]$_]
+            $canonical = if ($null -ne $alias) {
+                [string]$alias.Value
+            }
+            else {
+                [string]$_
+            }
+            if ($canonical -in @('manual', 'e2e_test', 'e2e_test_shifted')) {
+                'test'
+            }
+            elseif ($canonical -in @('latest', 'previous')) {
+                'dev'
+            }
+        } | Select-Object -Unique
     )
+    if ($launchConfigurations.Count -eq 0) {
+        $launchConfigurations = @('dev')
+    }
+    $launchFrameCounts = @(
+        $launchConfigurations | ForEach-Object {
+            Get-Na2StartupFastForwardFrames -Configuration $_ -Paths $paths
+        } | Select-Object -Unique
+    )
+    if ($launchFrameCounts.Count -gt 1) {
+        throw (
+            'Selected games require different startup fast-forward frame counts: ' +
+            ($launchFrameCounts -join ', ')
+        )
+    }
+    if ($launchFrameCounts.Count -eq 1 -and $launchFrameCounts[0] -gt 0) {
+        $launchParameters.UnlimitedForFrames = [UInt64]$launchFrameCounts[0]
+    }
     if ($turbo) {
         $launchParameters.Turbo = $true
     }

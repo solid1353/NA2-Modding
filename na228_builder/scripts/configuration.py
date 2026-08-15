@@ -31,6 +31,7 @@ MODULE_TYPE_ORDER = (
     "binary_patcher",
 )
 MODULE_TYPES = frozenset(MODULE_TYPE_ORDER)
+UINT64_MAX = (1 << 64) - 1
 FEATURE_MODULE_INPUTS = {
     "localization": (
         ("translation_importer", ("localization", "translation_importer")),
@@ -108,7 +109,7 @@ def _settings_text(value: object, label: str) -> str:
     return value
 
 
-def _read_settings(path: Path) -> tuple[str, str]:
+def _read_settings(path: Path) -> tuple[str, str, int]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
@@ -130,13 +131,15 @@ def _read_settings(path: Path) -> tuple[str, str]:
     startup_frames = settings["startup_fast_forward_frames"]
     if isinstance(startup_frames, bool) or not isinstance(startup_frames, int):
         raise ValueError("Settings startup_fast_forward_frames must be an integer")
-    if startup_frames <= 0:
-        raise ValueError("Settings startup_fast_forward_frames must be positive")
+    if startup_frames < 0 or startup_frames > UINT64_MAX:
+        raise ValueError(
+            "Settings startup_fast_forward_frames must be a UInt64 integer"
+        )
     product_title = _settings_text(settings["title"], "title")
     output_boot_path = _settings_text(
         settings["output_boot_path"], "output_boot_path"
     )
-    return output_boot_path, product_title
+    return output_boot_path, product_title, startup_frames
 
 
 def _tree_digest(
@@ -346,8 +349,8 @@ def module_content_sha256(path: Path, module_type: str) -> str:
 
 def _validated_settings(
     settings_path: Path,
-) -> tuple[str, str]:
-    output_boot_path, product_title = _read_settings(settings_path)
+) -> tuple[str, str, int]:
+    output_boot_path, product_title, startup_frames = _read_settings(settings_path)
     from ..image_assembler.iso9660 import normalize_iso_path
 
     if normalize_iso_path(output_boot_path) != output_boot_path:
@@ -366,7 +369,7 @@ def _validated_settings(
         product_title.encode("cp1252")
     except UnicodeEncodeError as exc:
         raise ValueError("Product title must be CP1252") from exc
-    return output_boot_path, product_title
+    return output_boot_path, product_title, startup_frames
 
 
 def _resolved_roots(
@@ -520,7 +523,8 @@ def _load_configuration(
         character_overrides = load_character_overrides(definition_path, builder_root)
     paths = project_paths or load_paths(workspace, allow_missing=True)
     settings_path = paths.file("settings").resolve()
-    output_boot_path, product_title = _validated_settings(settings_path)
+    output_boot_path, product_title, startup_frames = _validated_settings(settings_path)
+    catalog_module.startup_fast_forward_frames(selection, startup_frames)
     roots = _resolved_roots(paths, root_overrides)
     targets_path = builder_root / BUILDER_TARGETS_FILE
     if not targets_path.is_file():

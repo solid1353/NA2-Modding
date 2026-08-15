@@ -2,6 +2,9 @@
   startup: {
     faster_loading: setting {
       description: "Shorten startup by loading RPG and player voice-bank indexes only when each bank is first played.",
+      startup_fast_forward_frames: {
+        additive: -600,
+      },
       patches: [
         "i__qol__startup__faster_loading__lazy_voice_indexes",
       ],
@@ -61,6 +64,9 @@
       awakening: string,
     }> {
       description: "Enter Practice directly after startup with the configured decimal Player 1 character ID, hexadecimal support ID string, and hexadecimal active-awakening ID string or none; Player 2, its support, and the Practice stage remain fixed.",
+      startup_fast_forward_frames: {
+        additive: 780,
+      },
       patches: [
         "e__qol__practice__bootstrap__enter_practice_after_continue",
         "i__qol__practice__bootstrap__configured_battle",

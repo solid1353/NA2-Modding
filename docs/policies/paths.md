@@ -7,7 +7,7 @@ The path system has four layers with separate technical owners:
 3. Workshop root `games.json` owns shared source-game selectors, aliases,
    serials, and CRCs.
 4. NA2 root `settings.json` owns NA2.28 output identity, build variants, and
-   project launch settings.
+   the default startup fast-forward frame count.
 
 The PowerShell and Python loaders merge both catalogs. Canonical files store
 only repository-relative paths or `@root/child` references. Resolved absolute
@@ -91,7 +91,7 @@ The NA2 settings are deliberately flat apart from the builds section:
   "title": "Narutimate Accel v2.28",
   "serial": "SLOP-NA228",
   "output_boot_path": "SLOP_NA2.28",
-  "startup_fast_forward_frames": <positive integer>,
+  "startup_fast_forward_frames": <non-negative integer>,
   "builds": {
     "latest": { "aliases": ["l"] },
     "e2e_test": {}

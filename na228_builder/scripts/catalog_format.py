@@ -11,6 +11,7 @@ from typing import TypeAlias
 
 IDENTIFIER = re.compile(r"[a-z][a-z0-9_]*\Z")
 NUMBER = re.compile(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?")
+UINT64_MAX = (1 << 64) - 1
 
 
 class CatalogSyntaxError(ValueError):
@@ -72,10 +73,17 @@ TypeExpression: TypeAlias = (
 
 
 @dataclass(frozen=True)
+class StartupFastForwardFrames:
+    additive: int | None = None
+    override: int | None = None
+
+
+@dataclass(frozen=True)
 class SettingNode:
     value_type: TypeExpression | None
     description: str
     patches: tuple[str, ...]
+    startup_fast_forward_frames: StartupFastForwardFrames | None = None
 
 
 @dataclass(frozen=True)
@@ -317,6 +325,7 @@ class _Parser:
         self.expect("{", "expected setting body")
         description: str | None = None
         patches: tuple[str, ...] | None = None
+        startup_fast_forward_frames: StartupFastForwardFrames | None = None
         seen: set[str] = set()
         while self.current.kind != "}":
             key_token = self.current
@@ -331,6 +340,8 @@ class _Parser:
                 )
             elif key == "patches":
                 patches = self.string_array()
+            elif key == "startup_fast_forward_frames":
+                startup_fast_forward_frames = self.startup_fast_forward_frames()
             else:
                 raise _syntax(
                     self.path,
@@ -354,7 +365,64 @@ class _Parser:
             )
         if len(patches) != len(set(patches)):
             raise _syntax(self.path, self.current, "setting patches must be unique")
-        return SettingNode(value_type, description, patches)
+        return SettingNode(
+            value_type,
+            description,
+            patches,
+            startup_fast_forward_frames,
+        )
+
+    def startup_fast_forward_frames(self) -> StartupFastForwardFrames:
+        self.expect("{", "startup_fast_forward_frames must be an object")
+        values: dict[str, int] = {}
+        while self.current.kind != "}":
+            key_token = self.current
+            key = self.key()
+            if key not in {"additive", "override"}:
+                raise _syntax(
+                    self.path,
+                    key_token,
+                    f"unsupported startup_fast_forward_frames field {key!r}",
+                )
+            if key in values:
+                raise _syntax(
+                    self.path,
+                    key_token,
+                    f"duplicate startup_fast_forward_frames field {key!r}",
+                )
+            self.expect(":")
+            token = self.expect(
+                "NUMBER",
+                f"startup_fast_forward_frames {key} must be an integer",
+            )
+            if not isinstance(token.value, int):
+                raise _syntax(
+                    self.path,
+                    token,
+                    f"startup_fast_forward_frames {key} must be an integer",
+                )
+            if key == "override" and (
+                token.value <= 0 or token.value > UINT64_MAX
+            ):
+                raise _syntax(
+                    self.path,
+                    token,
+                    "startup_fast_forward_frames override must be a positive UInt64 integer",
+                )
+            values[key] = token.value
+            if self.accept(",") is None and self.current.kind != "}":
+                raise _syntax(self.path, self.current, "expected ',' or '}'")
+        self.expect("}")
+        if not values:
+            raise _syntax(
+                self.path,
+                self.current,
+                "startup_fast_forward_frames must define additive, override, or both",
+            )
+        return StartupFastForwardFrames(
+            additive=values.get("additive"),
+            override=values.get("override"),
+        )
 
     def string_array(self) -> tuple[str, ...]:
         self.expect("[")
@@ -966,6 +1034,20 @@ def _node_lines(
             + ","
         )
         if include_patches:
+            if node.startup_fast_forward_frames is not None:
+                frames = node.startup_fast_forward_frames
+                lines.append(
+                    " " * (indent + 2) + "startup_fast_forward_frames: {"
+                )
+                if frames.additive is not None:
+                    lines.append(
+                        " " * (indent + 4) + f"additive: {frames.additive},"
+                    )
+                if frames.override is not None:
+                    lines.append(
+                        " " * (indent + 4) + f"override: {frames.override},"
+                    )
+                lines.append(" " * (indent + 2) + "},")
             lines.append(" " * (indent + 2) + "patches: [")
             for patch in node.patches:
                 lines.append(

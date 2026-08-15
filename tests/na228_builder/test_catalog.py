@@ -82,6 +82,10 @@ class CatalogTests(unittest.TestCase):
           // Plain switch.
           plain: setting {
             description: "Plain setting.",
+            startup_fast_forward_frames: {
+              additive: 25,
+              override: 100,
+            },
             patches: ["e__feature__plain",],
           },
           supplied_bool: setting<{ value: bool, label?: string, }> {
@@ -112,6 +116,8 @@ class CatalogTests(unittest.TestCase):
             parsed = catalog_format.parse_catalog(path)
 
         fields = {field.name: field.node for field in parsed.fields}
+        self.assertEqual(fields["plain"].startup_fast_forward_frames.additive, 25)
+        self.assertEqual(fields["plain"].startup_fast_forward_frames.override, 100)
         self.assertTrue(catalog_format.matches_type(fields["numeric"].value_type, 5))
         self.assertTrue(catalog_format.matches_type(fields["numeric"].value_type, 0.5))
         self.assertFalse(catalog_format.matches_type(fields["numeric"].value_type, 16))
@@ -126,6 +132,112 @@ class CatalogTests(unittest.TestCase):
             {"feature": parsed}, include_patches=False
         )
         self.assertIn("\n      |\n      {\n", rendered)
+        self.assertNotIn("startup_fast_forward_frames", rendered)
+
+    def test_startup_fast_forward_frames_combine_one_override_and_additives(
+        self,
+    ) -> None:
+        source = '''{
+          baseline: setting {
+            description: "Baseline.",
+            startup_fast_forward_frames: { override: 100, additive: 5 },
+            patches: ["e__feature__baseline"],
+          },
+          extra: setting {
+            description: "Extra.",
+            startup_fast_forward_frames: { additive: -20 },
+            patches: ["e__feature__extra"],
+          },
+          disabled_override: setting {
+            description: "Disabled override.",
+            startup_fast_forward_frames: { override: 999 },
+            patches: ["e__feature__disabled_override"],
+          },
+        }'''
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path, configuration_path = self.write_project(
+                root,
+                {"feature": source},
+                {
+                    "feature": {
+                        "baseline": True,
+                        "extra": True,
+                        "disabled_override": False,
+                    }
+                },
+            )
+            selection = catalog.load_selection(catalog_path, configuration_path)
+            self.assertEqual(
+                catalog.startup_fast_forward_frames(selection, 40),
+                85,
+            )
+            self.assertEqual(
+                catalog.load_startup_fast_forward_frames(
+                    catalog_path, configuration_path, 40
+                ),
+                85,
+            )
+
+            self.write_json(
+                root / "configurations" / "base.json",
+                {
+                    "features": {
+                        "feature": {
+                            "baseline": False,
+                            "extra": True,
+                            "disabled_override": False,
+                        }
+                    }
+                },
+            )
+            negative = catalog.load_selection(catalog_path, configuration_path)
+            with self.assertRaisesRegex(
+                catalog.ConfigurationError,
+                "Resolved startup_fast_forward_frames must be a UInt64 integer; "
+                "got -10",
+            ):
+                catalog.startup_fast_forward_frames(negative, 10)
+
+            self.write_json(
+                root / "configurations" / "base.json",
+                {
+                    "features": {
+                        "feature": {
+                            "baseline": True,
+                            "extra": True,
+                            "disabled_override": True,
+                        }
+                    }
+                },
+            )
+            with self.assertRaisesRegex(
+                catalog.ConfigurationError,
+                "Multiple enabled startup_fast_forward_frames overrides: "
+                "feature.baseline, feature.disabled_override",
+            ):
+                catalog.load_selection(catalog_path, configuration_path)
+
+    def test_startup_fast_forward_override_is_a_positive_uint64_integer(
+        self,
+    ) -> None:
+        invalid_values = ("0", "-1", "1.5", str(1 << 64))
+        for value in invalid_values:
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "feature.modcat"
+                path.write_text(
+                    '''{
+                      leaf: setting {
+                        description: "Leaf.",
+                        startup_fast_forward_frames: { override: %s },
+                        patches: ["e__feature__leaf"],
+                      },
+                    }'''
+                    % value,
+                    encoding="utf-8",
+                )
+                with self.assertRaisesRegex(ValueError, "integer"):
+                    catalog_format.parse_catalog(path)
 
     def test_object_intersection_shares_fields_across_union_branches(self) -> None:
         source = '''{
@@ -364,6 +476,13 @@ class CatalogTests(unittest.TestCase):
                     selections[name].node_enabled(
                         "features", "qol", "startup", "faster_loading"
                     )
+                )
+        expected_frames = {"dev": 1160, "test": 2540, "release": 1160}
+        for name, selection in selections.items():
+            with self.subTest(configuration=name):
+                self.assertEqual(
+                    catalog.startup_fast_forward_frames(selection, 1760),
+                    expected_frames[name],
                 )
 
     def test_repository_practice_starting_hp_variants_select_exact_guarded_edits(self) -> None:
@@ -751,7 +870,9 @@ class CatalogTests(unittest.TestCase):
     def test_public_catalog_keeps_contract_and_strips_implementation(self) -> None:
         source = '''{
           value: setting<decimal & 0..15 & step 0.25> {
-            description: "Bounded value.", patches: ["e__f__value"],
+            description: "Bounded value.",
+            startup_fast_forward_frames: { additive: 12 },
+            patches: ["e__f__value"],
           },
         }'''
         with tempfile.TemporaryDirectory() as directory:
@@ -764,6 +885,7 @@ class CatalogTests(unittest.TestCase):
         self.assertIn("setting<decimal & 0..15 & step 0.25>", public)
         self.assertIn('description: "Bounded value."', public)
         self.assertNotIn("patches", public)
+        self.assertNotIn("startup_fast_forward_frames", public)
         self.assertNotIn("e__f__value", public)
 
     def test_mips_lui_float32_adapter_preserves_instruction_and_rejects_bad_guards(self) -> None:

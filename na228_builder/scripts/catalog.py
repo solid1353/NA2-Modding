@@ -25,6 +25,7 @@ from ..payload_builder.operations import (
 IDENTIFIER = re.compile(r"[a-z][a-z0-9_]*\Z")
 OPERATION_FIELDS = ["field", "required", "type"]
 FIELD_TYPES = {"hex", "integer", "integer_list", "path", "sha256", "text"}
+UINT64_MAX = (1 << 64) - 1
 
 
 class ConfigurationError(ValueError):
@@ -39,6 +40,9 @@ class CatalogNode:
     description: str = ""
     configured_value: object = None
     has_configured_value: bool = False
+    startup_fast_forward_frames: (
+        catalog_format.StartupFastForwardFrames | None
+    ) = None
 
     @property
     def feature_id(self) -> str:
@@ -491,7 +495,20 @@ def _selected_nodes(
                 else ""
             )
             patches = node.patches if isinstance(node, catalog_format.SettingNode) else ()
-            nodes.append(CatalogNode(path, False, patches, description))
+            startup_frames = (
+                node.startup_fast_forward_frames
+                if isinstance(node, catalog_format.SettingNode)
+                else None
+            )
+            nodes.append(
+                CatalogNode(
+                    path,
+                    False,
+                    patches,
+                    description,
+                    startup_fast_forward_frames=startup_frames,
+                )
+            )
             if isinstance(node, catalog_format.ContainerNode):
                 for field in node.fields:
                     visit(field.node, False, (*path, field.name))
@@ -506,6 +523,7 @@ def _selected_nodes(
                     node.description,
                     configured if has_value else None,
                     has_value,
+                    node.startup_fast_forward_frames,
                 )
             )
             return True
@@ -543,6 +561,71 @@ def _selected_nodes(
 
     visit(root, value, ("features",))
     return tuple(nodes)
+
+
+def _startup_fast_forward_override(nodes: tuple[CatalogNode, ...]) -> int | None:
+    enabled = [
+        node
+        for node in nodes
+        if node.enabled and node.startup_fast_forward_frames is not None
+    ]
+    overrides = [
+        node
+        for node in enabled
+        if node.startup_fast_forward_frames is not None
+        and node.startup_fast_forward_frames.override is not None
+    ]
+    if len(overrides) > 1:
+        raise ConfigurationError(
+            "Multiple enabled startup_fast_forward_frames overrides: "
+            + ", ".join(node.node_id for node in overrides)
+        )
+    if not overrides:
+        return None
+    override = overrides[0].startup_fast_forward_frames
+    assert override is not None and override.override is not None
+    return override.override
+
+
+def _startup_fast_forward_frames(
+    nodes: tuple[CatalogNode, ...],
+    default_frames: int,
+) -> int:
+    if (
+        isinstance(default_frames, bool)
+        or not isinstance(default_frames, int)
+        or default_frames < 0
+        or default_frames > UINT64_MAX
+    ):
+        raise ValueError("Default startup fast-forward frames must be a UInt64 integer")
+    override = _startup_fast_forward_override(nodes)
+    enabled = [
+        node
+        for node in nodes
+        if node.enabled and node.startup_fast_forward_frames is not None
+    ]
+    additive = sum(
+        node.startup_fast_forward_frames.additive or 0
+        for node in enabled
+        if node.startup_fast_forward_frames is not None
+    )
+    baseline = override if override is not None else default_frames
+    result = baseline + additive
+    if result < 0 or result > UINT64_MAX:
+        raise ConfigurationError(
+            "Resolved startup_fast_forward_frames must be a UInt64 integer; "
+            f"got {result}"
+        )
+    return result
+
+
+def startup_fast_forward_frames(
+    selection: CatalogSelection,
+    default_frames: int,
+) -> int:
+    """Return the selected startup fast-forward frame count."""
+
+    return _startup_fast_forward_frames(selection.nodes, default_frames)
 
 
 def _load_implementation(
@@ -770,7 +853,7 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
         catalog_path, configuration_path, features
     )
     nodes = _selected_nodes(_feature_root(features), effective)
-    return CatalogSelection(
+    selection = CatalogSelection(
         catalog_path=catalog_path,
         catalog_files=catalog_files,
         edits_path=edits_path,
@@ -784,6 +867,25 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
         string_patches=string_patches,
         nodes=nodes,
     )
+    _startup_fast_forward_override(selection.nodes)
+    return selection
+
+
+def load_startup_fast_forward_frames(
+    catalog_path: Path,
+    configuration_path: Path,
+    default_frames: int,
+) -> int:
+    """Resolve launch metadata without loading binary implementation definitions."""
+
+    catalog_path = catalog_path.resolve()
+    configuration_path = configuration_path.resolve()
+    features, _catalog_files = _read_catalog(catalog_path)
+    _base_path, effective = _effective_configuration(
+        catalog_path, configuration_path, features
+    )
+    nodes = _selected_nodes(_feature_root(features), effective)
+    return _startup_fast_forward_frames(nodes, default_frames)
 
 
 def materialized_configuration(

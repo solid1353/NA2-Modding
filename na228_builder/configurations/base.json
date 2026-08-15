@@ -16,7 +16,6 @@
     },
     "qol": {
       "startup": {
-        "faster_loading": true,
         "flow": {
           "savedata_loading": "automatic",
           "loading_screen": true

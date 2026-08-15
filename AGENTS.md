@@ -121,7 +121,7 @@ Canonical command definitions and their workflow or procedure routing are in
 
 Command index: `des mode`, `design mode`, `int mode`, `interactive mode`,
 `snap`, `imp`, `ver`, `commit`, `com`, `exit`, `zxc`, `tasks`, `task done`, `c`,
-`c on`, `c off`, `mode`, `n`, `ag`, `q:`, `con`, `e2e`, `sum`, `diff`, `ex`,
+`c on`, `c off`, `mode`, `n`, `imm`, `ag`, `q:`, `con`, `e2e`, `sum`, `diff`, `ex`,
 `eff`, `sw`, `ss`, `mute`, `unmute`.
 
 ### Policy routing

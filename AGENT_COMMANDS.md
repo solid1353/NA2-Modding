@@ -39,6 +39,9 @@ those.
 ## Conversation and metadata
 
 - `n`: proceed to the next item.
+- `imm`: apply the `immediately` behavior from
+  [task sequencing](AGENTS.md#task-sequencing) to the most recently added
+  unfinished task.
 - `mode`: only when the entire user message, after trimming surrounding
   whitespace, is exactly `mode`, respond with only `Normal mode`, `Design
   mode`, or `Interactive mode`, whichever is active. It does not change the

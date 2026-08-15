@@ -37,7 +37,18 @@ integrated catalog data.
   TSVs layer nonempty cells over it by character ID. Empty cells inherit;
   numeric zero is an explicit value.
 - `resources/character_data.tsv` is the builder-owned ID/name and native-value
-  reference used to validate character rows. It is not an override file.
+  reference used to validate character rows and Practice bootstrap inputs. Its
+  `support_id` cells contain the native support-roster ID corresponding to each
+  playable character, written in hexadecimal; an empty cell means that the
+  character has no native support entry. Its
+  `awakening_ids` cells contain comma-separated native IDs such as
+  `0x61,0x62`. They are the union of the character's fighter-controller effect
+  associations, nonempty Ultimate-Jutsu post-effects, and hard-coded
+  transformed-form initialization effects, so membership does not imply a
+  particular activation route; an empty cell means none of those native sources
+  supplies an effect. `linked_uj` and `linked_jutsu` contain the native
+  support IDs associated with each character by the corresponding BTL tables;
+  empty cells mean no relationship of that type. It is not an override file.
 - `catalog/implementation/targets.tsv` is the single target registry used by
   edits and injection hooks.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.

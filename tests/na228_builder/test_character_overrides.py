@@ -42,8 +42,15 @@ class CharacterOverrideTests(unittest.TestCase):
             builder / "resources" / "character_data.tsv",
             REFERENCE_FIELDS,
             [
-                {"character": "Alpha", "id": 1},
-                {"character": "Gamma", "id": 3},
+                {
+                    "character": "Alpha",
+                    "id": 1,
+                    "support_id": "0x01",
+                    "awakening_ids": "0x10,0x11",
+                    "linked_uj": "0x01,0x02",
+                    "linked_jutsu": "0x20",
+                },
+                {"character": "Gamma", "id": 3, "awakening_ids": "32"},
             ],
         )
         return builder
@@ -87,6 +94,22 @@ class CharacterOverrideTests(unittest.TestCase):
             configuration = load_character_overrides(definition, builder)
 
             self.assertEqual(configuration.character_count, 4)
+            self.assertEqual(
+                configuration.support_id_by_character(),
+                {1: 0x01, 3: None},
+            )
+            self.assertEqual(
+                configuration.awakening_ids_by_character(),
+                {1: (0x10, 0x11), 3: (0x20,)},
+            )
+            self.assertEqual(
+                configuration.linked_uj_by_character(),
+                {1: (0x01, 0x02), 3: ()},
+            )
+            self.assertEqual(
+                configuration.linked_jutsu_by_character(),
+                {1: (0x20,), 3: ()},
+            )
             self.assertEqual(configuration.base.values[:2], (2.5, 100.0))
             self.assertEqual(configuration.row_by_id()[1].values[:2], (0.5, 80.0))
             self.assertTrue(configuration.row_by_id()[1].substitution_cost_is_delta)
@@ -133,6 +156,157 @@ class CharacterOverrideTests(unittest.TestCase):
                 )[0],
                 b"S+++",
             )
+
+    def test_rejects_invalid_character_awakening_ids(self) -> None:
+        cases = (
+            ("0x10,0x10", "duplicate awakening ID 16"),
+            ("0x8A", "awakening ID must be from 0 through 137"),
+            ("0x10,", "must be comma-separated IDs"),
+            ("invalid", "invalid awakening ID 'invalid'"),
+        )
+        for awakening_ids, expected in cases:
+            with (
+                self.subTest(awakening_ids=awakening_ids),
+                tempfile.TemporaryDirectory() as directory,
+            ):
+                builder = Path(directory) / "na228_builder"
+                self.write_tsv(
+                    builder / "resources" / "character_data.tsv",
+                    REFERENCE_FIELDS,
+                    [
+                        {
+                            "character": "Alpha",
+                            "id": 1,
+                            "awakening_ids": awakening_ids,
+                        }
+                    ],
+                )
+                configurations = builder / "configurations"
+                definition = configurations / "dev.json"
+                definition.parent.mkdir(parents=True, exist_ok=True)
+                definition.write_text("{}\n", encoding="utf-8")
+                self.write_tsv(
+                    configurations / "base.character_overrides.tsv",
+                    OVERRIDE_FIELDS,
+                    [{"id": "base", "character": "Base"}],
+                )
+                self.write_tsv(
+                    configurations / "dev.character_overrides.tsv",
+                    OVERRIDE_FIELDS,
+                    [],
+                )
+
+                with self.assertRaisesRegex(ValueError, expected):
+                    load_character_overrides(definition, builder)
+
+    def test_rejects_invalid_character_support_ids(self) -> None:
+        cases = (
+            ("0x22", "support ID must be from 0 through 33"),
+            ("0x01,0x02", "invalid support ID '0x01,0x02'"),
+            ("invalid", "invalid support ID 'invalid'"),
+        )
+        for support_id, expected in cases:
+            with (
+                self.subTest(support_id=support_id),
+                tempfile.TemporaryDirectory() as directory,
+            ):
+                builder = Path(directory) / "na228_builder"
+                self.write_tsv(
+                    builder / "resources" / "character_data.tsv",
+                    REFERENCE_FIELDS,
+                    [
+                        {
+                            "character": "Alpha",
+                            "id": 1,
+                            "support_id": support_id,
+                        }
+                    ],
+                )
+                configurations = builder / "configurations"
+                definition = configurations / "dev.json"
+                definition.parent.mkdir(parents=True, exist_ok=True)
+                definition.write_text("{}\n", encoding="utf-8")
+                self.write_tsv(
+                    configurations / "base.character_overrides.tsv",
+                    OVERRIDE_FIELDS,
+                    [{"id": "base", "character": "Base"}],
+                )
+                self.write_tsv(
+                    configurations / "dev.character_overrides.tsv",
+                    OVERRIDE_FIELDS,
+                    [],
+                )
+
+                with self.assertRaisesRegex(ValueError, expected):
+                    load_character_overrides(definition, builder)
+
+    def test_rejects_duplicate_character_support_id(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            builder = Path(directory) / "na228_builder"
+            self.write_tsv(
+                builder / "resources" / "character_data.tsv",
+                REFERENCE_FIELDS,
+                [
+                    {"character": "Alpha", "id": 1, "support_id": "0x01"},
+                    {"character": "Gamma", "id": 3, "support_id": "0x01"},
+                ],
+            )
+            configurations = builder / "configurations"
+            definition = configurations / "dev.json"
+            definition.parent.mkdir(parents=True, exist_ok=True)
+            definition.write_text("{}\n", encoding="utf-8")
+            self.write_tsv(
+                configurations / "base.character_overrides.tsv",
+                OVERRIDE_FIELDS,
+                [{"id": "base", "character": "Base"}],
+            )
+            self.write_tsv(
+                configurations / "dev.character_overrides.tsv",
+                OVERRIDE_FIELDS,
+                [],
+            )
+
+            with self.assertRaisesRegex(
+                ValueError,
+                "duplicate support ID 1; already assigned to character ID 1",
+            ):
+                load_character_overrides(definition, builder)
+
+    def test_rejects_invalid_character_linked_support_ids(self) -> None:
+        cases = (
+            ("linked_uj", "0x01,0x01", "duplicate support ID 1"),
+            ("linked_jutsu", "0x22", "support ID must be from 0 through 33"),
+            ("linked_uj", "0x01,", "linked_uj must be comma-separated IDs"),
+            ("linked_jutsu", "invalid", "invalid support ID 'invalid'"),
+        )
+        for field, value, expected in cases:
+            with (
+                self.subTest(field=field, value=value),
+                tempfile.TemporaryDirectory() as directory,
+            ):
+                builder = Path(directory) / "na228_builder"
+                self.write_tsv(
+                    builder / "resources" / "character_data.tsv",
+                    REFERENCE_FIELDS,
+                    [{"character": "Alpha", "id": 1, field: value}],
+                )
+                configurations = builder / "configurations"
+                definition = configurations / "dev.json"
+                definition.parent.mkdir(parents=True, exist_ok=True)
+                definition.write_text("{}\n", encoding="utf-8")
+                self.write_tsv(
+                    configurations / "base.character_overrides.tsv",
+                    OVERRIDE_FIELDS,
+                    [{"id": "base", "character": "Base"}],
+                )
+                self.write_tsv(
+                    configurations / "dev.character_overrides.tsv",
+                    OVERRIDE_FIELDS,
+                    [],
+                )
+
+                with self.assertRaisesRegex(ValueError, expected):
+                    load_character_overrides(definition, builder)
 
     def test_profile_can_replace_delta_with_literal_and_accept_negative_delta(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

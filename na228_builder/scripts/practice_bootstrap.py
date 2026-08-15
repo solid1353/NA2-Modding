@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import struct
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Mapping
 
 from ..payload_builder.operations import PayloadFragment
 
@@ -12,13 +12,35 @@ if TYPE_CHECKING:
 PRACTICE_BOOTSTRAP_PATH = ("features", "qol", "practice", "bootstrap")
 PRACTICE_BOOTSTRAP_VERSION = 1
 PRACTICE_BOOTSTRAP_NO_AWAKENING = 0xFFFFFFFF
-PRACTICE_BOOTSTRAP_MAX_AWAKENING_ID = 0x89
+
+
+def _hexadecimal_id(
+    value: object,
+    *,
+    field: str,
+    label: str,
+    maximum: int,
+) -> int:
+    expectation = (
+        f"Practice bootstrap {field} must be a hexadecimal {label} ID "
+        f"from 0x00 through 0x{maximum:02X}"
+    )
+    if not isinstance(value, str) or not value.startswith(("0x", "0X")):
+        raise ValueError(expectation)
+    try:
+        result = int(value, 16)
+    except ValueError as exc:
+        raise ValueError(expectation) from exc
+    if not 0 <= result <= maximum:
+        raise ValueError(expectation)
+    return result
 
 
 def practice_bootstrap_fragment(
     selection: CatalogSelection,
     *,
     owner: str,
+    awakening_ids_by_character: Mapping[int, tuple[int, ...]],
     symbol: str = "practice_bootstrap_configuration",
 ) -> PayloadFragment | None:
     """Encode the selected Practice bootstrap inputs for the resident hook."""
@@ -45,24 +67,33 @@ def practice_bootstrap_fragment(
     awakening = value["awakening"]
     if isinstance(p1, bool) or not isinstance(p1, int) or not 1 <= p1 <= 93:
         raise ValueError("Practice bootstrap p1 must be a character ID from 1 through 93")
-    if (
-        isinstance(support, bool)
-        or not isinstance(support, int)
-        or not 0 <= support <= 0x25
-    ):
-        raise ValueError("Practice bootstrap support must be a support ID from 0 through 37")
+    valid_awakening_ids = awakening_ids_by_character.get(p1)
+    if valid_awakening_ids is None:
+        raise ValueError(f"Practice bootstrap p1 character ID {p1} is unknown")
+    support_id = _hexadecimal_id(
+        support,
+        field="support",
+        label="support",
+        maximum=0x25,
+    )
     if awakening == "none":
         awakening_id = PRACTICE_BOOTSTRAP_NO_AWAKENING
-    elif (
-        isinstance(awakening, bool)
-        or not isinstance(awakening, int)
-        or not 0 <= awakening <= PRACTICE_BOOTSTRAP_MAX_AWAKENING_ID
-    ):
-        raise ValueError(
-            "Practice bootstrap awakening must be none or an awakening ID from 0 through 137"
-        )
     else:
-        awakening_id = awakening
+        awakening_id = _hexadecimal_id(
+            awakening,
+            field="awakening",
+            label="awakening",
+            maximum=0x89,
+        )
+        if awakening_id not in valid_awakening_ids:
+            valid_text = ", ".join(
+                f"0x{value:02X}" for value in valid_awakening_ids
+            ) or "none"
+            raise ValueError(
+                f"Practice bootstrap awakening ID 0x{awakening_id:02X} "
+                f"is not valid for p1 character ID {p1}; "
+                f"valid awakening IDs: {valid_text}"
+            )
 
     return PayloadFragment(
         owner=owner,
@@ -73,7 +104,7 @@ def practice_bootstrap_fragment(
             "<4I",
             PRACTICE_BOOTSTRAP_VERSION,
             p1,
-            support,
+            support_id,
             awakening_id,
         ),
     )

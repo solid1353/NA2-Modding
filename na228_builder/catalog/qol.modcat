@@ -57,10 +57,10 @@
     description: "Independent Practice-mode default settings.",
     bootstrap: setting<{
       p1: int & 1..93,
-      support: int & 0..37,
-      awakening: "none" | (int & 0..137),
+      support: string,
+      awakening: string,
     }> {
-      description: "Enter Practice directly after startup with the configured Player 1 character, support, and optional active awakening; Player 2, its support, and the Practice stage remain fixed.",
+      description: "Enter Practice directly after startup with the configured decimal Player 1 character ID, hexadecimal support ID string, and hexadecimal active-awakening ID string or none; Player 2, its support, and the Practice stage remain fixed.",
       patches: [
         "e__qol__practice__bootstrap__enter_practice_after_continue",
         "i__qol__practice__bootstrap__configured_battle",

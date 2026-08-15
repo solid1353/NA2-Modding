@@ -2029,6 +2029,7 @@
         "path": "src/qol/practice_bootstrap.c",
         "namespace": "qol.practice.bootstrap",
         "imports": {
+          "character_select_no_support_is_compatible": "character_select_no_support_is_compatible",
           "practice_bootstrap_configuration": "practice_bootstrap_configuration",
           "practice_bootstrap_state": "practice_bootstrap_state"
         },

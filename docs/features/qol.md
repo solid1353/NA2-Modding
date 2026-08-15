@@ -8,17 +8,25 @@ binary edits, runtime hooks, and payload declarations are selected by
 
 `qol.practice.bootstrap` enters Practice directly after startup with three
 configured inputs: Player 1 character ID `p1`, Player 1 support ID `support`,
-and `awakening`, which is `none` or a character-specific native awakening ID
-from `0` through `137`. Player 2 is fixed to Naruto with Sakura support and the
+and `awakening`, which is `none` or one of the selected character's native IDs
+from the `awakening_ids` column in `resources/character_data.tsv`. That column
+unites the native fighter-controller associations, Ultimate-Jutsu post-effects,
+and hard-coded transformed-form initialization effects; it defines attainable
+active states, not their normal entry routes. Configuration JSON keeps `p1` as
+a decimal integer, while `support` and a non-`none` `awakening` are hexadecimal
+strings such as `"0x18"` and `"0x57"`. The builder rejects decimal forms,
+unknown Player 1 IDs, and awakenings that are valid globally but do not belong
+to that character. Player 2 is fixed to Naruto with Sakura support and the
 Practice stage remains the native fixed stage. Starting HP is deliberately not
 duplicated in this object:
 `qol.practice.starting_hp` continues to select `full`, `half`, or `critical`.
 
 The base, development, and release configurations disable the bootstrap. The
-test configuration enables Tsunade (`84`) with Shizune support (`26`), no
-awakening, and the existing half-HP Practice setting. The builder converts the
-typed bootstrap object into a 16-byte read-only resident configuration. This
-is a scoped generated fragment, not a new general catalog payload schema.
+test configuration enables Tsunade (`84`) with Jiraiya support (`"0x18"`),
+awakening `"0x57"`, and the existing half-HP Practice setting. The builder
+converts the typed bootstrap object into a 16-byte read-only resident
+configuration. This is a scoped generated fragment, not a new general catalog
+payload schema.
 
 A guarded file edit changes only successful Continue startup from main-menu
 substate `1` to Practice substate `3`. The native Practice controller still

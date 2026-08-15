@@ -12,10 +12,14 @@ from ..payload_builder.operations import PayloadFragment
 REFERENCE_FIELDS = (
     "character",
     "id",
+    "support_id",
+    "awakening_ids",
+    "linked_uj",
+    "linked_jutsu",
+    "record_address",
     "default_hp",
     "durability_parameter",
     "incoming_damage_multiplier",
-    "record_address",
     "offense_multiplier",
     "health_recovery_multiplier",
     "chakra_recovery_multiplier",
@@ -32,6 +36,8 @@ TABLE_VERSION = 3
 TIER_WIDTH = 4
 SUBSTITUTION_COST_INDEX = VALUE_FIELDS.index("substitution_cost")
 SUBSTITUTION_COST_DELTA_FLAG = 1 << 16
+MAX_AWAKENING_ID = 0x89
+MAX_NATIVE_SUPPORT_ID = 0x21
 
 
 @dataclass(frozen=True)
@@ -49,6 +55,10 @@ class CharacterOverrideConfiguration:
     base: CharacterOverrideRow
     characters: tuple[CharacterOverrideRow, ...]
     reference_characters: tuple[tuple[int, str], ...]
+    reference_support_ids: tuple[tuple[int, int | None], ...]
+    reference_awakening_ids: tuple[tuple[int, tuple[int, ...]], ...]
+    reference_linked_uj: tuple[tuple[int, tuple[int, ...]], ...]
+    reference_linked_jutsu: tuple[tuple[int, tuple[int, ...]], ...]
     character_count: int
     resource_files: tuple[Path, ...]
 
@@ -58,6 +68,18 @@ class CharacterOverrideConfiguration:
             for row in self.characters
             if row.character_id is not None
         }
+
+    def support_id_by_character(self) -> dict[int, int | None]:
+        return dict(self.reference_support_ids)
+
+    def awakening_ids_by_character(self) -> dict[int, tuple[int, ...]]:
+        return dict(self.reference_awakening_ids)
+
+    def linked_uj_by_character(self) -> dict[int, tuple[int, ...]]:
+        return dict(self.reference_linked_uj)
+
+    def linked_jutsu_by_character(self) -> dict[int, tuple[int, ...]]:
+        return dict(self.reference_linked_jutsu)
 
 
 def _read_rows(path: Path, fields: tuple[str, ...]) -> list[dict[str, str]]:
@@ -74,9 +96,102 @@ def _read_rows(path: Path, fields: tuple[str, ...]) -> list[dict[str, str]]:
         ]
 
 
-def _reference_characters(path: Path) -> dict[int, str]:
+def _reference_ids(
+    path: Path,
+    line: int,
+    value: str,
+    *,
+    field: str,
+    label: str,
+    maximum: int,
+) -> tuple[int, ...]:
+    if not value:
+        return ()
+    result: list[int] = []
+    for token in value.split(","):
+        token = token.strip()
+        if not token:
+            raise ValueError(
+                f"{path}:{line}: {field} must be comma-separated IDs"
+            )
+        try:
+            reference_id = int(token, 0)
+        except ValueError as exc:
+            raise ValueError(
+                f"{path}:{line}: invalid {label} ID {token!r}"
+            ) from exc
+        if not 0 <= reference_id <= maximum:
+            raise ValueError(
+                f"{path}:{line}: {label} ID must be from 0 through {maximum}"
+            )
+        if reference_id in result:
+            raise ValueError(
+                f"{path}:{line}: duplicate {label} ID {reference_id}"
+            )
+        result.append(reference_id)
+    return tuple(result)
+
+
+def _awakening_ids(path: Path, line: int, value: str) -> tuple[int, ...]:
+    return _reference_ids(
+        path,
+        line,
+        value,
+        field="awakening_ids",
+        label="awakening",
+        maximum=MAX_AWAKENING_ID,
+    )
+
+
+def _support_id(path: Path, line: int, value: str) -> int | None:
+    if not value:
+        return None
+    try:
+        support_id = int(value, 0)
+    except ValueError as exc:
+        raise ValueError(
+            f"{path}:{line}: invalid support ID {value!r}"
+        ) from exc
+    if not 0 <= support_id <= MAX_NATIVE_SUPPORT_ID:
+        raise ValueError(
+            f"{path}:{line}: support ID must be from 0 through "
+            f"{MAX_NATIVE_SUPPORT_ID}"
+        )
+    return support_id
+
+
+def _linked_support_ids(
+    path: Path,
+    line: int,
+    field: str,
+    value: str,
+) -> tuple[int, ...]:
+    return _reference_ids(
+        path,
+        line,
+        value,
+        field=field,
+        label="support",
+        maximum=MAX_NATIVE_SUPPORT_ID,
+    )
+
+
+def _reference_characters(
+    path: Path,
+) -> tuple[
+    dict[int, str],
+    dict[int, int | None],
+    dict[int, tuple[int, ...]],
+    dict[int, tuple[int, ...]],
+    dict[int, tuple[int, ...]],
+]:
     by_id: dict[int, str] = {}
     by_name: dict[str, int] = {}
+    support_id_by_character: dict[int, int | None] = {}
+    character_by_support_id: dict[int, int] = {}
+    awakening_ids_by_character: dict[int, tuple[int, ...]] = {}
+    linked_uj_by_character: dict[int, tuple[int, ...]] = {}
+    linked_jutsu_by_character: dict[int, tuple[int, ...]] = {}
     for line, row in enumerate(_read_rows(path, REFERENCE_FIELDS), 2):
         try:
             character_id = int(row["id"], 10)
@@ -93,9 +208,42 @@ def _reference_characters(path: Path) -> dict[int, str]:
             raise ValueError(f"{path}:{line}: duplicate character name {character!r}")
         by_id[character_id] = character
         by_name[character] = character_id
+        support_id = _support_id(path, line, row["support_id"])
+        if support_id is not None:
+            existing_character_id = character_by_support_id.get(support_id)
+            if existing_character_id is not None:
+                raise ValueError(
+                    f"{path}:{line}: duplicate support ID {support_id}; "
+                    f"already assigned to character ID {existing_character_id}"
+                )
+            character_by_support_id[support_id] = character_id
+        support_id_by_character[character_id] = support_id
+        awakening_ids_by_character[character_id] = _awakening_ids(
+            path,
+            line,
+            row["awakening_ids"],
+        )
+        linked_uj_by_character[character_id] = _linked_support_ids(
+            path,
+            line,
+            "linked_uj",
+            row["linked_uj"],
+        )
+        linked_jutsu_by_character[character_id] = _linked_support_ids(
+            path,
+            line,
+            "linked_jutsu",
+            row["linked_jutsu"],
+        )
     if not by_id:
         raise ValueError(f"{path}: character reference is empty")
-    return by_id
+    return (
+        by_id,
+        support_id_by_character,
+        awakening_ids_by_character,
+        linked_uj_by_character,
+        linked_jutsu_by_character,
+    )
 
 
 def _number(
@@ -280,7 +428,13 @@ def load_character_overrides(
 ) -> CharacterOverrideConfiguration:
     configuration_root = (builder_root / "configurations").resolve()
     reference_path = (builder_root / "resources" / "character_data.tsv").resolve()
-    reference_by_id = _reference_characters(reference_path)
+    (
+        reference_by_id,
+        support_id_by_character,
+        awakening_ids_by_character,
+        linked_uj_by_character,
+        linked_jutsu_by_character,
+    ) = _reference_characters(reference_path)
     definition_path = definition_path.resolve()
     if definition_path.parent == configuration_root:
         base_path = configuration_root / "base.character_overrides.tsv"
@@ -310,6 +464,22 @@ def load_character_overrides(
         base=base,
         characters=tuple(merged[key] for key in character_order),
         reference_characters=tuple(reference_by_id.items()),
+        reference_support_ids=tuple(
+            (character_id, support_id_by_character[character_id])
+            for character_id in reference_by_id
+        ),
+        reference_awakening_ids=tuple(
+            (character_id, awakening_ids_by_character[character_id])
+            for character_id in reference_by_id
+        ),
+        reference_linked_uj=tuple(
+            (character_id, linked_uj_by_character[character_id])
+            for character_id in reference_by_id
+        ),
+        reference_linked_jutsu=tuple(
+            (character_id, linked_jutsu_by_character[character_id])
+            for character_id in reference_by_id
+        ),
         character_count=max(reference_by_id) + 1,
         resource_files=(reference_path, *paths),
     )

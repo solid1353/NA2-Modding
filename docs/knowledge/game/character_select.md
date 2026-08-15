@@ -97,10 +97,14 @@ X was the ordinary incompatibility overlay, not No Support artwork.
 
 BTL runtime table `DAT_008d28a0` is stored at file offset `0x21E9A0` in the
 verified NA2 `BTL.BIN` loaded at `0x006B3F00`. Its 34 three-byte rows map each
-native support ID to its corresponding playable-character ID and display
-record. The character and display bytes are identical in all 34 native rows.
-Joining those bytes to the canonical builder character reference establishes
-the support IDs used by the requested directional whitelist:
+native support ID to its corresponding character record and display record.
+The character and display bytes are identical in all 34 native rows. Thirty-
+three character records match rows in the canonical playable-character
+reference; their inverse mapping is recorded in its `support_id` column.
+Support ID `0x17` maps to record `0x58`, which has no row in that 74-character
+reference. Joining the other records to the canonical builder character
+reference establishes the support IDs used by the requested directional
+whitelist:
 
 | Selected fighter | Selectable native supports |
 | --- | --- |
@@ -122,6 +126,41 @@ special entries remain globally compatible, so No Support (`0x25`) is the only
 choice for every fighter absent from the table. Compatibility hooks retain the
 same directional table as confirmation protection; rejected entries are absent
 rather than visible with red-X overlays.
+
+### Linked relationship tables
+
+The whitelist is the exact union of two typed BTL relationship tables. The
+ten four-byte rows at Ghidra `DAT_008d2660`, complete-file offset `0x21E760`,
+store `support_id`, selected `character_id`, and a little-endian linked
+Ultimate Jutsu ID. `FUN_00885620` checks all ten rows. Grouped by selected
+character, those rows are:
+
+| Selected character | `linked_uj` support IDs |
+| --- | --- |
+| Naruto (`0x39`) | Sakura (`0x01`) |
+| Sakura (`0x3A`) | Naruto (`0x00`), Chiyo (`0x1B`) |
+| Chiyo (`0x3E`) | Sakura (`0x01`) |
+| Sasori (`0x3F`) | Deidara (`0x0B`) |
+| Deidara (`0x40`) | Sasori (`0x1E`) |
+| Itachi (`0x47`) | Kisame (`0x0E`) |
+| Kisame (`0x48`) | Itachi (`0x0D`) |
+| Orochimaru (`0x59`) | Sasuke (`0x21`) |
+| Sasuke (`0x5D`) | Orochimaru (`0x1C`) |
+
+The five six-byte rows at Ghidra `DAT_008d2880`, complete-file offset
+`0x21E980`, store `support_id`, selected `character_id`, the ordinary Jutsu ID,
+and its little-endian linked replacement ID. `FUN_00885ec0` checks all five:
+
+| Selected character | `linked_jutsu` support IDs |
+| --- | --- |
+| Naruto (`0x39`) | Gaara (`0x08`), Sai (`0x20`) |
+| Shikamaru (`0x44`) | Choji (`0x13`) |
+| Tsunade (`0x54`) | Jiraiya (`0x18`) |
+| Sasuke (`0x5D`) | Naruto (`0x00`) |
+
+The inverse support mapping and these relationship support IDs are canonical in
+`resources/character_data.tsv`; empty relationship cells mean that the selected
+character has no row in the corresponding linked-attack table.
 
 ### Rejected compact-list candidate
 

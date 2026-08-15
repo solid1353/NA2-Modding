@@ -88,14 +88,71 @@ sets the native three-frame countdown, calls `FUN_002005b0(1, 0)`, and enters
 state `10`. States `10` through `15` remain native, including both fighters'
 construction and stage loading.
 
-In the baseline battle marker the live fighter's effect container at
-fighter `+0x8C4` was empty and `u16` field `+0x8E8` was `0xFFFF`. The two
-awakening markers contained one effect and changed `+0x8E8` to `0x57` and
-`0x22`, respectively; their visible HUD abbreviations were `Nin.` and `Reg.`.
-These are character-specific native IDs, not two global awakening categories.
-`FUN_003047c0` validates the complete native ID domain `0..0x89`; the bootstrap
-therefore accepts `none` or one numeric ID in that range and passes it through
+In the baseline battle marker the live fighter's effect container at fighter
+`+0x8C4` was empty and `u16` field `+0x8E8` was `0xFFFF`. The two status markers
+contained one effect and changed `+0x8E8` to `0x57` and `0x22`, respectively;
+their visible HUD abbreviations were `Nin.` and `Reg.`. `0x57` belongs to
+Tsunade's fighter-controller effect set. `0x22` is carried only by her Ultimate
+Jutsu record `191` and is applied as a post-Ultimate-Jutsu regeneration effect.
+When the `0x22` object is destroyed, its dedicated destructor `FUN_003037c0`
+hard-codes a call to `FUN_00305c30` for effect `0x23`. The immutable slot-1
+savestate for CRC `5999E2B0` captured that successor as Tsunade's sole live
+effect: its node ID at `+0x68` and fighter `+0x8E8` were both `0x23`. No other
+effect destructor applies a successor. All three effects are valid starting
+states for the bootstrap, but their native sources express different ownership
+and entry paths rather than three global awakening categories.
+
+### Native effect ownership and entry paths
+
+The fighter-controller association lists are the 94 eight-byte entries at
+runtime `0x005C1D30` in clean `SLPS_258.37`, SHA-256
+`20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`.
+The second word is the count. A zero count means no associated controller
+effect; a count of one stores the ID inline in the first word; larger counts use
+the first word as a pointer to a `u16` ID array. The table's consumers are the
+fighter awakening controller: `FUN_0020cf40` tests associated active effects,
+`FUN_0020d690` validates and applies a selected class-`7` Ultimate-Jutsu effect,
+`FUN_0020d910` chooses a controller effect when a character-specific condition
+fires, and `FUN_0020ddc0` handles associated-effect state and removal. Table
+membership does not establish an activation route. Sai's `0x62` and Naruto's
+`0x72`, for example, are table members but are entered only through Ultimate
+Jutsu paths.
+
+Ultimate Jutsu metadata is independently owned. The per-character record lists
+begin at runtime `0x005ACFB0`; each selected record indexes one of 223
+`0x14`-byte entries at `0x005AEC40`, whose `u16` field `+0x0E` is the requested
+post-move effect ID or `0xFFFF`. `FUN_00372b10` reads that field. For cinematic
+Ultimate Jutsu, `FUN_0035e360` stores the selected record's effect in
+`DAT_00604310`, and `FUN_0024ed40` obtains it through `FUN_0036c1e0` after the
+move and applies it through `FUN_00307690`. Class-`7` records instead feed the
+same field through fighter `+0x18A` to `FUN_0020d690`. Both paths ultimately use
+the shared effect engine.
+
+Comparing the controller and Ultimate-Jutsu sources for all 74 named characters
+yields 42 character/effect pairs found only in the controller table, 34 present
+in both sources, and 22 found only in Ultimate-Jutsu records. Ten characters
+have no controller-table entry but do have Ultimate-Jutsu effects. Hard-coded
+transformed-form initialization is a third source. `FUN_00372d00` maps effects
+`0x68..0x71` to transformed character IDs `0x2F..0x38` and also maps `0x72` to
+`0x49` and `0x73` to `0x4B`; `FUN_0035b3b0` requests the mapped form through
+`FUN_001ec5e0`. During fighter construction, `FUN_00305ff0` applies those same
+12 character/effect mappings directly. Eleven of those pairs duplicate entries
+already found in the other sources. Sasori (Puppet) `0x4B -> 0x73` is the only
+pair supplied solely by this constructor mapping. Thus a base character's
+Ultimate-Jutsu record can own the transition while the transformed character's
+constructor or controller entry owns the resulting active form.
+
+There is no exhaustive native `character -> possible active effects` table.
+The builder's `awakening_ids` column is the union needed by the bootstrap: the
+controller-table IDs, every non-`0xFFFF` effect in that character's
+Ultimate-Jutsu records, hard-coded effects applied when transformed forms are
+constructed directly, and the sole hard-coded successor `0x23`. It declares
+character compatibility, not how an effect is normally entered.
+`FUN_003047c0` classifies the broader native effect domain `0..0x89`, but that
+global range does not establish character compatibility. The bootstrap accepts
+`none` or one ID from the selected Player 1 row and passes that ID through
 unchanged.
+
 `FUN_00305c30(fighter, effect_id, -1, 1)` is the native high-level effect
 entry: it validates the effect category, resolves the default parameter,
 constructs the effect through `FUN_00305270`, performs native side effects,
@@ -104,6 +161,35 @@ and writes the active effect ID to fighter `+0x8E8`. The hook at runtime
 once after the Player 1 fighter exists. It retries until `+0x8E8` confirms the
 requested ID and resets its one-shot state whenever a new bootstrap reaches
 controller state `7`.
+
+An active effect and the fighter controller's awakened state are distinct.
+`FUN_0020d910` applies the effect chosen by the condition-driven controller,
+sets fighter `+0x63` bit `0x20`, and runs the native transition sequence through
+`FUN_00223360`, `FUN_00223140`, and, outside the alternate battle mode,
+`FUN_001d87c0` and `FUN_00334ff0`. Applying Tsunade's `0x57` through
+`FUN_00305c30` alone demonstrated the distinction: the effect container was
+populated, but the base moveset remained and the controller could activate the
+same awakening again.
+
+The per-character trigger descriptor is the four-byte table at runtime
+`0x005C1B50`; its flags are the halfword at `+0x02`. In `FUN_0020e280`, trigger
+bits `1..5` feed `FUN_0020d910`, bit `0` describes an already-active or
+constructor-owned form, and bit `6` instead feeds the exact selected class-`7`
+Ultimate-Jutsu effect through `FUN_0020d690`. Combining bits `1..5` with the
+association lists identifies 38 clean-start character/effect pairs that use
+`FUN_0020d910`. Most select the association list's first ID. Hinata `0x50`,
+Shizune `0x55`, Kurenai `0x57`, and Yamato `0x5B` select the second ID when no
+effect is active. This distinction excludes table members such as Naruto
+`0x72` and Sai `0x62` whose native entry is not the condition-driven path.
+
+Before evaluating any of those controller conditions, `FUN_0020e280` reads the
+controller-gate pointer at `0x00607834`. A zero state byte at gate `+0x10` is
+normalized to `-1`; while the signed state has any other value, an existing
+nonzero `+0x63` bit `0x20` is cleared. The bootstrap therefore identifies the
+configured effect's exact clean-start route from those two native tables. For
+one of the 38 condition-driven pairs it waits until the gate is absent or its
+state is `0`/`0xFF`, then calls `FUN_0020d910`; effects owned by the other native
+routes continue through the raw high-level effect entry.
 
 The implementation deliberately leaves starting HP to the independently
 verified native Practice enum described above. It uses neither savestates nor
@@ -115,10 +201,22 @@ isolated worker builds. With the test configuration (`p1: 84`, `support: 26`,
 `awakening: none`), every marker was already in the live Practice battle;
 marker `0001` had manager state `4`, substate `3`, both configured current and
 match-start identities, live character `84`, HP `0.5`, and active effect
-`0xFFFF`. A second build with `awakening: 0x22` reached the same state with
-effect `0x22` active at marker `0001`, visibly reported as `Reg.`. Later marker
-effects followed the recording's gameplay inputs rather than being forced back
-to `0x22`, confirming that the bootstrap applies only the initial active state.
+`0xFFFF`. A second diagnostic build directly encoded raw effect `0x22` and
+reached the same state with `Reg.` active at marker `0001`. Later marker effects
+followed the recording's gameplay inputs rather than being forced back to
+`0x22`, confirming that the bootstrap applies only the initial active state.
+That diagnostic established the native application path. The character-aware
+configuration accepts Tsunade's `0x22`, chained `0x23`, and controller-owned
+`0x57` from their confirmed native sources.
+
+The generalized controller route was replayed independently with Player 1
+Rock Lee (`67`) and configured effect `0x44`. In retained capture
+`work/QoL/captures/bootstrap/controller-awakening-generalized-v1`, marker
+`0001` was in live Practice manager state/substate `4/3`, the fighter's sole
+effect was `0x44`, fighter `+0x8E8` was `0x44`, and fighter `+0x63` had native
+awakened bit `0x20` set. Later recording inputs removed and reapplied the effect
+without the bootstrap forcing it back, preserving one-shot behavior. This
+confirms the `FUN_0020d910` route on a non-Tsunade condition-driven character.
 
 ## Support field-call and gauge paths
 

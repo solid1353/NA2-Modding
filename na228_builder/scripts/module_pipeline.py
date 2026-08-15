@@ -154,6 +154,11 @@ def prepare_module_pipeline(
                 bootstrap_fragment = practice_bootstrap_fragment(
                     configuration.selection,
                     owner=module.module_id,
+                    awakening_ids_by_character=(
+                        configuration.character_overrides.awakening_ids_by_character()
+                        if configuration.character_overrides is not None
+                        else {}
+                    ),
                 )
                 if bootstrap_fragment is not None:
                     declaration = replace(

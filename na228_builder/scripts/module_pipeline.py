@@ -22,6 +22,7 @@ from ..payload_builder.operations import (
 from .configuration import BuildConfiguration, ModuleInvocation
 from .character_overrides import character_override_fragment
 from .practice_bootstrap import practice_bootstrap_fragment
+from .xdash_chakra_cost import xdash_chakra_cost_fragment
 
 
 @dataclass(frozen=True)
@@ -150,6 +151,19 @@ def prepare_module_pipeline(
                         *declaration.fragments,
                     ),
                 )
+            if module.feature_id == "battle_logic":
+                xdash_cost_fragment = xdash_chakra_cost_fragment(
+                    configuration.selection,
+                    owner=module.module_id,
+                )
+                if xdash_cost_fragment is not None:
+                    declaration = replace(
+                        declaration,
+                        fragments=(
+                            xdash_cost_fragment,
+                            *declaration.fragments,
+                        ),
+                    )
             if module.feature_id == "qol":
                 bootstrap_fragment = practice_bootstrap_fragment(
                     configuration.selection,

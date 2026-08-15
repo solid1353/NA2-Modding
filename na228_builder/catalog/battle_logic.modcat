@@ -26,4 +26,10 @@
       "i__battle_logic__character_overrides",
     ],
   },
+  xdash_chakra_cost: setting<decimal & 0..15> {
+    description: "Chakra spent when X-dash enters its committed dash phase.",
+    patches: [
+      "i__battle_logic__xdash_chakra_cost",
+    ],
+  },
 }

@@ -11,3 +11,4 @@ from current disassembly or runtime evidence before implementation.
 - [Battle behavior](battle.md)
 - [Character identity in battle](character_ids.md)
 - [Substitution knowledge](substitution.md)
+- [X-dash knowledge](xdash.md)

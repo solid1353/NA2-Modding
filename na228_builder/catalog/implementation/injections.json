@@ -71,6 +71,55 @@
       }
     }
   },
+  "i__battle_logic__xdash_chakra_cost": {
+    "description": "Spend the configured chakra cost on the first fighter update after X-dash becomes non-cancellable.",
+    "hooks": {
+      "charge_noncancellable_xdash_before_interrupts": {
+        "description": "Charge a persisted X-dash movement state before native hit and state-interruption handling, then preserve that handling.",
+        "target_id": "na2_elf",
+        "offset": "0x14DB80",
+        "expected_hex": "A038080C",
+        "symbol": "xdash_pre_update_shim",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "xdash_chakra_cost": {
+        "kind": "c",
+        "path": "src/battle_logic/xdash_chakra_cost.c",
+        "namespace": "battle.logic.xdash.chakra.cost.c",
+        "imports": {
+          "battle_logic_xdash_chakra_cost": "battle_logic_xdash_chakra_cost",
+          "battle_logic_xdash_charge_state": "battle_logic_xdash_charge_state"
+        },
+        "fragments": {
+          "battle_logic_xdash_pre_fighter_update": {
+            "order": 113,
+            "object": "battle.logic.xdash.chakra.cost.c.text.battle.logic.xdash.pre.fighter.update"
+          }
+        }
+      },
+      "xdash_pre_update_shim": {
+        "kind": "code",
+        "order": 114,
+        "alignment": 4,
+        "value": "F0FFBD270000BFAF0400A4AF0000000C000000000400A48FA038080C000000000000BF8F1000BD270800E00300000000",
+        "relocations": {
+          "call_pre_fighter_update": {
+            "offset": "0xC",
+            "encoding": "jal26",
+            "symbol": "battle_logic_xdash_pre_fighter_update"
+          }
+        }
+      },
+      "battle_logic_xdash_charge_state": {
+        "kind": "data",
+        "order": 115,
+        "alignment": 4,
+        "value": "0000000000000000"
+      }
+    }
+  },
   "i__localization__font__glyphs__metrics": {
     "description": "Decode the accepted packed 14x20 metric rows for measurement and drawing from composition-time C in 228.BIN, leaving only guarded register-setup hooks in the fixed boot ELF.",
     "hooks": {

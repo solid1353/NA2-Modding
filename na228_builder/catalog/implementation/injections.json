@@ -1668,8 +1668,16 @@
     }
   },
   "i__qol__character_select__no_support__support_list": {
-    "description": "Build compact per-player Character Select support lists containing declared special entries plus the directional native pairs declared by the injection, draw each compact entry once, resolve special display and name records, and retain native availability states and rendering.",
+    "description": "Build compact per-player Character Select support lists containing declared special entries plus the directional native pairs declared by the injection, retain selected supports for linked Jutsu, disable their free-field calls and gauge, draw each compact entry once, resolve special display and name records, and retain native availability states and rendering.",
     "hooks": {
+      "suppress_free_field_support_call": {
+        "description": "Replace the sole per-fighter support-button acceptance call with a no-op, preventing its linked-fighter signal without changing selected support data or linked Jutsu.",
+        "target_id": "na2_elf",
+        "offset": "0x14DDA4",
+        "expected_hex": "D0E0080C",
+        "symbol": "qol_battle_support_suppress_field_call",
+        "encoding": "jal26"
+      },
       "route_default_support_compatibility": {
         "description": "Apply the declared directional support whitelist to Character Select's default-support compatibility path while accepting declared special entries globally.",
         "target_id": "na2_elf",
@@ -1813,9 +1821,33 @@
         "expected_hex": "6816220C",
         "symbol": "character_select_no_support_display_id",
         "encoding": "jal26"
+      },
+      "suppress_support_gauge_draw": {
+        "description": "Replace only the dedicated TEX_xgauge draw call with a no-op for both players while leaving the rest of the battle HUD native.",
+        "target_id": "na2_btl",
+        "offset": "0x69398",
+        "expected_hex": "BC721C0C",
+        "symbol": "qol_battle_support_hide_gauge",
+        "encoding": "jal26"
       }
     },
     "payload": {
+      "battle_support": {
+        "kind": "c",
+        "path": "src/qol/battle_support.c",
+        "namespace": "qol.battle.support",
+        "imports": {},
+        "fragments": {
+          "qol_battle_support_suppress_field_call": {
+            "order": 122,
+            "object": "qol.battle.support.text.qol.battle.support.suppress.field.call"
+          },
+          "qol_battle_support_hide_gauge": {
+            "order": 123,
+            "object": "qol.battle.support.text.qol.battle.support.hide.gauge"
+          }
+        }
+      },
       "character_select_no_support": {
         "kind": "c",
         "path": "src/qol/character_select_no_support.c",

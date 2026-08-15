@@ -123,10 +123,17 @@ No-Support-only fighter moves directly from marker 5 to marker 8. A derivative
 replay confirmed the reverse marker-8-to-marker-5 transition. The user accepted
 both directions on 2026-08-15.
 
-Preserving the selected support through battle transition, blocking inputs
-during Ultimate Jutsu, and suppressing corresponding battle UI are outside this
-patch. The full reverse-engineering record is in
-[`../knowledge/game/character_select.md`](../knowledge/game/character_select.md).
+The No Support battle hooks keep the selected native support intact through
+battle transition and linked Jutsu. A guarded main-ELF hook replaces the sole
+per-fighter support-button acceptance call with a no-op, preventing its
+linked-fighter field-call signal without changing selected support data. A
+second guarded hook replaces only the dedicated BTL `TEX_xgauge` draw call
+with a no-op, keeping the support gauge hidden for both players while leaving
+the rest of the battle HUD native. Blocking unrelated fighter inputs during
+Ultimate Jutsu remains outside this patch. The Character Select record is in
+[`../knowledge/game/character_select.md`](../knowledge/game/character_select.md),
+and the battle-path evidence is in
+[`../knowledge/gameplay/battle.md`](../knowledge/gameplay/battle.md).
 
 ## Unlock all content without loading a save
 

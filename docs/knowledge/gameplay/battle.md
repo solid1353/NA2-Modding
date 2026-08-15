@@ -120,6 +120,48 @@ effect `0x22` active at marker `0001`, visibly reported as `Reg.`. Later marker
 effects followed the recording's gameplay inputs rather than being forced back
 to `0x22`, confirming that the bootstrap applies only the initial active state.
 
+## Support field-call and gauge paths
+
+NUN5 and NUN6 expose one exact difference at exported BTL text address
+`0x00791858`: NUN5 calls a candidate helper with instruction bytes `54491E0C`,
+while NUN6 replaces that call with a NOP. NA2's structural homolog is BTL file
+offset `0xC5A5C`, guarded by clean bytes `54E91D0C` and exported at
+`0x0077991C`. A first candidate routed that NA2 call to a zero-returning helper.
+The `supports2.p2m2` replay still showed Sai in the field at marker `0004`,
+proving that this seam does not consume the recorded manual support call.
+
+A second candidate intercepted the adjacent BTL call at file offset `0xC5E64`,
+guarded by clean instruction bytes `20E81D0C` and exported at `0x00779D24`.
+Static inspection had incorrectly classified its combat-object flags as live
+pad masks. The replay again showed Sai in the field at marker `0004`, proving
+that this call is also outside the recorded manual support path.
+
+The main executable's `FUN_00238340` is the per-fighter support-button handler.
+It checks the native side/mode-dependent `0x20000000` or `0x40000000` input bit,
+requires at least half of the support gauge in the normal support mode, and,
+when the native battle-state checks accept the request, clears linked-fighter
+state byte `+0xB58`. Its only caller is the fighter update's direct call at
+runtime `0x0024DCA4`, ELF file offset `0x14DDA4`, guarded by clean instruction
+bytes `D0E0080C`. The accepted hook replaces that sole call with a no-op,
+leaving selected support data and the separate linked-Jutsu path untouched.
+
+The lower horizontal support bar is drawn by NA2's dedicated `TEX_xgauge`
+routine at BTL file offset `0x68BF0`. Its side-dependent X positions are `120.0`
+and `392.0`, with Y based at `340.0`. Its caller first updates the gauge
+controller, reads state byte `+0x0A`, and makes one direct draw call when that
+state is nonzero. The call is at BTL file offset `0x69398`, guarded by clean
+instruction bytes `BC721C0C`; the exported Ghidra text address is `0x0071D258`.
+Replacing that call with a no-op suppresses the gauge for both players without
+altering any other HUD draw.
+
+The `supports2.p2m2` clean baseline records both paths: marker `0001` shows the
+gauge for Player 1's selected support while Player 2's No Support side has none;
+markers `0002` and `0003` use the selected support in a linked Jutsu; marker
+`0004` calls the support into the field. In the third isolated worker replay,
+marker `0001` had no support gauge, markers `0002` and `0003` retained Sai in
+the linked Jutsu, and marker `0004` contained only Naruto and Kakashi. The user
+accepted this runtime behavior on 2026-08-15.
+
 ## Character durability and effective base HP
 
 The game does not store a different full-gauge HP value per character. Current

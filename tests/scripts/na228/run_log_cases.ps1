@@ -14,6 +14,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $sourceRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
+$originalTaskWorkRoot = $env:NA228_TASK_WORK_ROOT
 . (Join-Path $sourceRepository 'scripts\lib\build_log.ps1')
 
 function Assert-Na2Test {
@@ -145,7 +146,7 @@ try {
     New-Item -ItemType Directory -Force -Path $fakeReleaseScripts | Out-Null
     $fakeInjectionScripts = Join-Path $fakeRepository 'scripts\injection'
     New-Item -ItemType Directory -Force -Path $fakeInjectionScripts | Out-Null
-    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\worker_paths.ps1') `
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\task_paths.ps1') `
         -Destination $fakeNa2Scripts
     $manifest = @'
 {
@@ -279,8 +280,8 @@ Write-Output '[fake] unit tests'
         -Condition ($helpText -match '(?m)^\s*na228 \[-f\] \[-t\|-u\]\s+') `
         -Message 'Root help omitted the default build-and-launch signature.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 worker \[--configuration <id>\] work/') `
-        -Message 'Root help omitted the explicit worker-build command.'
+        -Condition ($helpText -match '(?m)^\s*na228 build -c <configuration>\s+') `
+        -Message 'Root help omitted the canonical cache-build command.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 build l\|m\s') `
         -Message 'Root help omitted the explicit build-only command.'
@@ -307,7 +308,7 @@ Write-Output '[fake] unit tests'
         -Message 'Root help omitted the coordinated E2E commit command.'
     Assert-Na2Test `
         -Condition (
-            $helpText -match '(?m)^\s*na228 build[^\r\n]*\r?\n\s*na228 worker[^\r\n]*\r?\n\s*na228 test' -and
+            $helpText -match '(?m)^\s*na228 build l\|m[^\r\n]*\r?\n\s*na228 build -c[^\r\n]*\r?\n\s*na228 test' -and
             $helpText -match '(?m)^\s*na228 test[^\r\n]*\r?\n\r?\n\s*na228 e2e' -and
             $helpText -match '(?m)^\s*na228 e2e commit[^\r\n]*\r?\n\r?\n\s*na228 release' -and
             $helpText -match '(?m)^\s*na228 help[^\r\n]*\r?\n\r?\n\s*games:'
@@ -389,8 +390,8 @@ Write-Output "[fake] release $Version"
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeNa2Scripts 'build.ps1') -Content @'
 param(
     [switch]$ManualOnly,
-    [string]$WorkerOutputIso,
-    [string]$WorkerConfiguration = 'test',
+    [string]$CacheConfiguration,
+    [string]$CacheLogDirectory,
     [switch]$Force
 )
 if ($env:NA228_TEST_CONFIG_ERROR -ceq '1') {
@@ -405,10 +406,14 @@ if ($env:NA228_TEST_CONFIG_ERROR -ceq '1') {
     )
     throw $exception
 }
-if ($WorkerOutputIso) {
-    Write-Host "[fake] worker configuration=$WorkerConfiguration"
-    Write-Host '[na228] ISO result: worker; rotation: no; PCSX2 left running.'
-    [pscustomobject]@{ Status = 'worker'; ChangedRoles = [string[]]@() }
+if ($CacheConfiguration) {
+    Write-Host "[fake] cache configuration=$CacheConfiguration"
+    Write-Host '[na228] ISO result: cache (reused); rotation: no; PCSX2 left running.'
+    [pscustomobject]@{
+        Status = 'cache'
+        OutputIso = 'work\cache\isos\FAKE.iso'
+        ChangedRoles = [string[]]@()
+    }
 }
 elseif ($ManualOnly) {
     Write-Host "[na228] ISO result: manual; rotation: no; PCSX2 left running; force=$($Force.IsPresent)."
@@ -693,15 +698,20 @@ Add-Content `
     }
 
     if ($Group -ceq 'build-launch') {
-    & (Join-Path $fakeRepository 'na228.ps1') worker 'work\General\build\agent.iso'
-    $configuredWorkerDispatch = (
-        & (Join-Path $fakeRepository 'na228.ps1') worker `
-            --configuration dev `
-            'work\Equivalence\build\candidate.iso' *>&1
+    $env:NA228_TASK_WORK_ROOT = 'work\General'
+    $cacheDispatch = (
+        & (Join-Path $fakeRepository 'na228.ps1') build -c test *>&1
+    ) -join "`n"
+    $env:NA228_TASK_WORK_ROOT = 'work\Equivalence'
+    $configuredCacheDispatch = (
+        & (Join-Path $fakeRepository 'na228.ps1') build -c dev *>&1
     ) -join "`n"
     Assert-Na2Test `
-        -Condition ($configuredWorkerDispatch -match '\[fake\] worker configuration=dev') `
-        -Message 'Root worker command did not forward the configuration.'
+        -Condition (
+            $configuredCacheDispatch -match '\[fake\] cache configuration=dev' -and
+            $configuredCacheDispatch -match 'work\\cache\\isos\\FAKE\.iso'
+        ) `
+        -Message 'Root cache-build command did not return the selected configuration cache path.'
     & (Join-Path $fakeRepository 'na228.ps1') build l
     & (Join-Path $fakeRepository 'na228.ps1') build m
     $composedRecipe = (
@@ -815,20 +825,20 @@ Add-Content `
     Assert-Na2Test `
         -Condition ([regex]::Matches($fakeRolling, 'ISO result: manual').Count -eq 3) `
         -Message 'Manual build/watch recipes did not dispatch exactly three times.'
-    $workerLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'work\General\logs\latest.log'))
+    $cacheLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'work\General\logs\latest.log'))
     Assert-Na2Test `
-        -Condition ($workerLatest -match '(?m)^mode: worker-build$') `
-        -Message 'Explicit worker build was not logged under the worker root.'
+        -Condition ($cacheLatest -match '(?m)^mode: cache-build$') `
+        -Message 'Cache build was not logged under the task root.'
     Assert-Na2Test `
-        -Condition ($workerLatest -match 'ISO result: worker') `
-        -Message 'Explicit worker build did not dispatch to worker-output mode.'
-    $configuredWorkerLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'work\Equivalence\logs\latest.log'))
+        -Condition ($cacheLatest -match 'ISO result: cache') `
+        -Message 'Cache build did not dispatch to cache mode.'
+    $configuredCacheLatest = [IO.File]::ReadAllText((Join-Path $fakeRepository 'work\Equivalence\logs\latest.log'))
     Assert-Na2Test `
         -Condition (
-            $configuredWorkerLatest -match '(?m)^mode: worker-build$' -and
-            $configuredWorkerLatest -match 'ISO result: worker'
+            $configuredCacheLatest -match '(?m)^mode: cache-build$' -and
+            $configuredCacheLatest -match 'ISO result: cache'
         ) `
-        -Message 'Configured worker evidence was not retained in its task run log.'
+        -Message 'Configured cache-build evidence was not retained in its task run log.'
     }
 
     if ($Group -ceq 'build-options') {
@@ -1083,6 +1093,12 @@ Add-Content `
     Write-Host "NA2 $Group tests passed." -ForegroundColor Green
 }
 finally {
+    if ($null -eq $originalTaskWorkRoot) {
+        Remove-Item Env:NA228_TASK_WORK_ROOT -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:NA228_TASK_WORK_ROOT = $originalTaskWorkRoot
+    }
     try {
         Stop-Transcript | Out-Null
     }

@@ -16,13 +16,9 @@
   repository-wide Git operation, including identity configuration, status
   checks, commits, and completion reporting, even though it is local-only and
   has no remote.
-- Refresh Git status and history before operations, and stage only task-owned
-  paths or hunks.
-- Staging is independent of the active commit setting and of game-patch runtime
-  acceptance. Before yielding changed work for user input, switching to another
-  task, or attempting a commit, stage the current task-owned contribution.
-  This is standing authorization for staging only; it does not authorize a
-  commit.
+- Refresh Git status and history before operations.
+- If the user requests further changes to a task whose changes are staged,
+  unstage only that task's changes before editing.
 - Do not commit incomplete work merely to clean the working tree. Report its
   task-owned dirty state.
 - When a remote exists, immediately push each task-owned commit unless it

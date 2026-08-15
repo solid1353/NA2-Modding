@@ -125,9 +125,9 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
   that same script rather than implementing another packager.
 
 The ordinary `na228`, `na228 b`, and `na228 m` workflows are unchanged.
-Normal development builds use `dev.json`; Manual, worker, and E2E
-builds use `test.json`. `release.json` is used only by this release-packaging
-pipeline.
+Normal development builds use `dev.json`; Manual and E2E builds use `test.json`;
+cache builds use their explicitly selected configuration. `release.json` is
+used only by this release-packaging pipeline.
 
 ## GitHub releases
 

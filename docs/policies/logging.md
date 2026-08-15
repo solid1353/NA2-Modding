@@ -7,7 +7,7 @@ knowledge.
 ## General rules
 
 - Write bounded shared workflow logs below `@logs/`, generated task records
-  below `@task_logs/<exact chat title>/`, and worker build/runtime logs below
+  below `@task_logs/<exact chat title>/`, and cache-build/runtime logs below
   `work/<chat title>/logs/`. Do not write files directly in `@logs/` or
   `@task_logs/`.
 - Persist only repository-relative paths or configured `@root/...` aliases.
@@ -60,14 +60,14 @@ below `@task_logs/`.
   serializes map replacement through `@logs/na228/.builds.lock` and preserves
   active, not-yet-mapped build records.
 - `preflight/registry.json`: the atomically replaced shared verified-build
-  registry used by Latest, Manual, E2E, and worker builds. Each
+  registry used by Latest, Manual, E2E, and cache builds. Each
   fingerprint entry records its deterministic byte-affecting state, ISO
   SHA-256, and verification time. Image records keyed by SHA-256 own verified
   size and portable physical locations, so distinct fingerprints with identical
   output reuse the same image.
 - `preflight/records/<fingerprint>/`: reusable structured provenance for each
   registry entry. Registry entries, provenance records, and cached images are
-  capped at 15; retained locations per image are independently capped at 20.
+  capped at 20; retained locations per image are independently capped at 20.
 - `manual/<build-id>/`: the latest Manual-only configuration record, including
   `build_result.tsv`. It is independent of `builds.tsv`; a successful Manual
   build replaces the previous Manual record.
@@ -75,10 +75,12 @@ below `@task_logs/`.
 Help output is not logged. An exact registry hit clones the matching structured
 provenance into the invocation's role-specific build record without repeating
 assembly. A full verified physical build first moves its unique candidate into
-`@work/cache/isos/<SHA-256>.iso` and registers it. Promotion then updates the
-requested role by creating or atomically replacing a hardlink to the canonical
-hash-named image. Latest rotation similarly replaces Previous with a hardlink
-to the outgoing Latest image and synchronizes both locations in the registry.
+`@work/cache/isos/<SHA-256>.iso` and registers it. Promotion then updates a
+user-facing build role by creating or atomically replacing a hardlink to the
+canonical hash-named image. Cache validation uses the canonical cache image
+directly and creates no task-owned ISO or hardlink. Latest rotation similarly
+replaces Previous with a hardlink to the outgoing Latest image and synchronizes
+both locations in the registry.
 If a destination is locked, the invocation reports pending and the hash-named
 ISO remains available for launch. The next request with the same fingerprint
 retries promotion naturally through the cache hit.
@@ -90,16 +92,16 @@ Manual-only builds require an exact fully verified composition, which may be
 reused from the shared registry. They report whether the Manual ISO changed and
 record that rotation is disabled and PCSX2 is left running.
 
-## Worker build and runtime logs
+## Cache build and runtime logs
 
-`na228 worker [--configuration <id>]
-work/<chat title>/build/<name>.iso` keeps its
-operational `latest.log`/`rolling.log` and structured `builds/<build-id>/`
-records under that chat's `work/<chat title>/logs/`. Worker builds participate
-in the shared verified-build registry but never participate in or prune shared
-Test/Latest/Previous role records. Completed structured worker records are
-capped at 20 per chat; task cleanup may delete them sooner under the retention
-rules.
+`na228 build -c <configuration>` keeps its operational
+`latest.log`/`rolling.log` and structured `builds/<build-id>/` records under the
+acting chat's `work/<chat title>/logs/` when `NA228_TASK_WORK_ROOT` is set. It
+participates in the shared verified-build registry and returns its canonical
+cached ISO path without creating a separate output. Cache builds never
+participate in or prune shared Test/Latest/Previous role records. Completed
+structured cache-build records are capped at 20 per chat; task cleanup may
+delete them sooner under the retention rules.
 
 Persistent command logs must be normalized after transcript capture. They omit
 PowerShell transcript boilerplate, replace configured roots with aliases, and

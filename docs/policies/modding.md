@@ -7,8 +7,9 @@
   [feature documentation](../features/README.md). Do not recreate retired
   schemas or assumptions from historical notes.
 - `na228_builder/configurations/base.json` owns the complete shared `features`
-  tree. Normal development builds use `dev.json`, test, worker, and E2E
-  builds use `test.json`, and only release packaging uses `release.json`.
+  tree. Normal development builds use `dev.json`, Manual and E2E builds use
+  `test.json`, cache builds use their explicitly selected configuration, and
+  only release packaging uses `release.json`.
   Loading applies the selected configuration's `overrides` directly to the base
   features. Matching `base`, `dev`, `test`, and `release`
   `.character_overrides.tsv` files layer nonempty per-character battle values

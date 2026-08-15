@@ -20,7 +20,7 @@ try {
     $e2eScriptRoot = Join-Path $repository 'e2e\scripts'
     New-Item -ItemType Directory -Force `
         -Path $scriptRoot, $libRoot, $e2eScriptRoot | Out-Null
-    foreach ($name in 'build.ps1', 'build_registry.ps1', 'worker_paths.ps1') {
+    foreach ($name in 'build.ps1', 'build_registry.ps1') {
         Copy-Item -LiteralPath (Join-Path $sourceRepository "scripts\na228\$name") `
             -Destination $scriptRoot
     }
@@ -159,10 +159,8 @@ iso`tbuild_record
                 return ($result | ConvertTo-Json -Compress)
             }
             if ($command -eq 'complete') {
-                foreach ($entry in $global:Na2RegistryEntries.Values) {
-                    $locationIndex = [Array]::IndexOf($arguments, '--location')
-                    if ($locationIndex -ge 0) { $entry.Image = $arguments[$locationIndex + 1] }
-                }
+                $global:LASTEXITCODE = 0
+                return (@{ status='completed'; fingerprint=$fingerprint } | ConvertTo-Json -Compress)
             }
             $global:LASTEXITCODE = 0
             return (@{ status=$command; fingerprint=$fingerprint } | ConvertTo-Json -Compress)
@@ -248,12 +246,14 @@ iso`tbuild_record
     Assert-Na2PreflightTest ($retried.Status -eq 'updated') 'Next matching build did not retry pending promotion.'
     Assert-Na2PreflightTest ($global:Na2BuilderCalls.Count -eq 1) 'Pending promotion retry rebuilt the image.'
 
-    $workerOutput = 'work\Project\build\development-worker.iso'
-    $worker = & (Join-Path $scriptRoot 'build.ps1') -WorkerOutputIso $workerOutput -WorkerConfiguration dev
-    Assert-Na2PreflightTest $worker.PreflightCacheHit 'Development worker did not reuse the Latest verification.'
-    Assert-Na2PreflightTest (Test-Path -LiteralPath (Join-Path $repository $workerOutput) -PathType Leaf) 'Worker reuse did not materialize its output.'
-    Assert-Na2PreflightTest ((Get-Item -LiteralPath (Join-Path $repository $workerOutput)).LinkType -eq 'HardLink') 'Worker output was not published as a hardlink.'
-    Assert-Na2PreflightTest ($global:Na2BuilderCalls.Count -eq 1) 'Worker reuse rebuilt the image.'
+    $cacheLogDirectory = Join-Path $repository 'work\Project\logs'
+    $cacheBuild = & (Join-Path $scriptRoot 'build.ps1') `
+        -CacheConfiguration dev `
+        -CacheLogDirectory $cacheLogDirectory
+    Assert-Na2PreflightTest $cacheBuild.PreflightCacheHit 'Cache build did not reuse the Latest verification.'
+    Assert-Na2PreflightTest ($cacheBuild.OutputIso -ceq $cacheImage) 'Cache build did not return the canonical cached ISO.'
+    Assert-Na2PreflightTest (@(Get-ChildItem -LiteralPath (Join-Path $repository 'work\Project') -Recurse -Filter '*.iso' -File).Count -eq 0) 'Cache build materialized a task-owned ISO.'
+    Assert-Na2PreflightTest ($global:Na2BuilderCalls.Count -eq 1) 'Cache reuse rebuilt the image.'
 
     $e2e = & (Join-Path $scriptRoot 'build.ps1') -E2eVariant normal
     $e2eIso = Join-Path $repository 'build\Synthetic Product - E2E Test.iso'

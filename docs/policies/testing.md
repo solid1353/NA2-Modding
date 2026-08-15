@@ -1,6 +1,6 @@
 # Validation and patch-completion policy
 
-Exact PCSX2, savestate, worker-ISO, injection, and screenshot procedures are in
+Exact PCSX2, savestate, cached-ISO, injection, and screenshot procedures are in
 [`../runbooks/runtime-testing.md`](../runbooks/runtime-testing.md). Current E2E
 command behavior and artifact layout are in
 [`../../e2e/README.md`](../../e2e/README.md).
@@ -81,19 +81,18 @@ that behavior.
 - Internal PowerShell or Python entrypoints do not bypass these build
   boundaries.
 - The only ordinary full-ISO build route for an agent is
-  `na228 worker [--configuration <id>]
-  work/<chat title>/build/<name>.iso`. The configuration defaults to `test`.
-  Build a chat-owned worker ISO only when the selected validation requires
-  image assembly. It is an internal agent artifact, never a user testing ground
+  `na228 build -c <configuration>`. Use `dev` unless the task states another
+  configuration. Build or reuse a cached ISO only when the selected validation
+  requires image assembly. The canonical
+  hash-named cache image is internal agent evidence, never a user testing ground
   or deliverable. Agents launch it only through the
   [input-recording validation workflow](../workflows/input_recording_validation.md);
   otherwise they do not runtime-execute it. Maintained E2E is a separate
   explicitly selected route.
 - An exact shared verified-build registry hit is reusable build evidence: it
   proves the same byte-affecting fingerprint was already fully assembled and
-  verified. Do not rebuild merely to repeat that proof. A worker request
-  requires a verified matching physical ISO and creates its output as a
-  hardlink to the canonical hash-named cache image.
+  verified. Do not rebuild merely to repeat that proof. Agents use the canonical
+  cached ISO directly; do not create a task-owned ISO or hardlink.
 - Agent-authorized builds are final validation steps except for the pre-change
   baseline required by an approved hash-equivalence comparison. Build that
   baseline before implementation with the agreed inputs and configuration.
@@ -104,12 +103,10 @@ that behavior.
   rerun the candidate build. Any subsequent implementation change invalidates
   the prior candidate result.
 - For hash-equivalence validation, build the baseline and candidate through
-  `na228 worker --configuration <id>` with identical configuration and source
+  `na228 build -c <configuration>` with identical configuration and source
   inputs, then compare the SHA-256 values in their retained structured records.
-  Delete task-owned worker output links after the selected validation and
-  evidence extraction, whether validation passes or fails, unless the user
-  explicitly requested retention. The bounded canonical hash-cache image is
-  shared build evidence and is not a task-owned disposable copy.
+  The bounded canonical hash-cache image is shared build evidence and is not a
+  task-owned disposable artifact.
 
 ### Visual game changes
 

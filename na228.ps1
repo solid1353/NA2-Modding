@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'scripts\lib\paths.ps1')
-. (Join-Path $PSScriptRoot 'scripts\na228\worker_paths.ps1')
+. (Join-Path $PSScriptRoot 'scripts\na228\task_paths.ps1')
 $paths = Get-Na2Paths
 
 trap {
@@ -72,13 +72,16 @@ $arguments = @(
     }
 )
 
+if ($mode -eq 'worker') {
+    throw 'Use na228 build -c <configuration>.'
+}
+
 if (($turbo -or $unlimited) -and $mode -in @(
     'help',
     'test',
     'e2e',
     'release',
     'build',
-    'worker',
     'w'
 )) {
     throw '-t and -u are valid only when launching one or two games.'
@@ -104,7 +107,7 @@ if ($mode -eq 'help') {
         '  additional launch arguments  See workshop help'
         ''
         '  na228 build l|m [-f]        Build Latest or Manual without running it'
-        '  na228 worker [--configuration <id>] work/<worker>/build/<name>.iso  Build or reuse a worker ISO'
+        '  na228 build -c <configuration>  Build or reuse a cached ISO'
         '  na228 test                  Run unit tests'
         ''
         '  na228 e2e [-s]              Run all E2E suites; -s also qualifies against shifted'
@@ -242,8 +245,33 @@ if ($mode -eq 'release') {
 }
 
 if ($mode -eq 'build') {
+    if ($arguments.Count -eq 2 -and $arguments[0] -ceq '-c') {
+        if ($forceBuild) {
+            throw '-f is valid only for ordinary Latest or Manual builds.'
+        }
+        $configuration = $arguments[1]
+        if ($configuration -cnotmatch '^[A-Za-z0-9][A-Za-z0-9_-]*$') {
+            throw "Invalid configuration ID: $configuration"
+        }
+        $cacheArguments = @{
+            Action = 'cache-build'
+            CacheConfiguration = $configuration
+        }
+        if (-not [string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)) {
+            $task = Get-Na2TaskContext `
+                -TaskRoot $env:NA228_TASK_WORK_ROOT `
+                -Paths $paths
+            $cacheArguments.CacheLogDirectory = $task.Logs
+        }
+        $cacheResult = & (Join-Path $paths.scripts 'na228\run.ps1') @cacheArguments
+        if (-not $cacheResult -or $cacheResult.Status -ne 'cache') {
+            throw 'Cache build did not return a valid result.'
+        }
+        Write-Output $cacheResult.OutputIso
+        return
+    }
     if ($arguments.Count -ne 1) {
-        throw 'na228 build requires exactly one target: l or m.'
+        throw 'Usage: na228 build l|m [-f] | na228 build -c <configuration>'
     }
     $target = $arguments[0].ToLowerInvariant()
     switch ($target) {
@@ -260,51 +288,9 @@ if ($mode -eq 'build') {
             return
         }
         default {
-            throw "na228 build target must be l or m: $target"
+            throw 'Usage: na228 build l|m [-f] | na228 build -c <configuration>'
         }
     }
-}
-
-if ($mode -eq 'worker') {
-    if ($forceBuild) {
-        throw '-f is valid only for ordinary Latest or Manual builds.'
-    }
-    $workerConfiguration = 'test'
-    $workerConfigurationSpecified = $false
-    $workerOutputArgument = $null
-    for ($index = 0; $index -lt $arguments.Count; $index++) {
-        $token = $arguments[$index]
-        if ($token -ieq '--configuration') {
-            if ($workerConfigurationSpecified) {
-                throw '--configuration may be specified only once.'
-            }
-            if ($index + 1 -ge $arguments.Count) {
-                throw '--configuration requires an ID.'
-            }
-            $index++
-            $workerConfiguration = $arguments[$index]
-            $workerConfigurationSpecified = $true
-        }
-        elseif ($null -eq $workerOutputArgument) {
-            $workerOutputArgument = $token
-        }
-        else {
-            throw 'Usage: na228 worker [--configuration <id>] work/<worker>/build/<name>.iso'
-        }
-    }
-    if ([string]::IsNullOrWhiteSpace($workerOutputArgument)) {
-        throw 'Usage: na228 worker [--configuration <id>] work/<worker>/build/<name>.iso'
-    }
-    $workerBuild = Get-Na2WorkerBuildContext `
-        -OutputPath $workerOutputArgument `
-        -Paths $paths `
-        -RequireRelative
-    & (Join-Path $paths.scripts 'na228\run.ps1') `
-        -Action worker-build `
-        -WorkerOutputIso $workerBuild.OutputIso `
-        -WorkerLogDirectory $workerBuild.Logs `
-        -WorkerConfiguration $workerConfiguration
-    return
 }
 
 if (-not $mode) {

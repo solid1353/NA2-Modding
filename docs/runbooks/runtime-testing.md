@@ -21,32 +21,20 @@ acceptance remain canonical in
 ## Runtime ISO provenance
 
 - For agent PCSX2 operations against a pre-existing ISO, do not open shared
-  Latest, Previous, Manual, or E2E Test ISO paths directly. Create a task-owned
-  hardlink under `work/<chat title>/inputs/isos/` to the selected verified
-  hash-cache image.
-- Preserve the linked ISO's SHA-256, serial, CRC, applicable build record,
+  Latest, Previous, Manual, or E2E Test ISO paths directly. Use the selected
+  verified hash-cache image directly.
+- Preserve the ISO's SHA-256, serial, CRC, applicable build record,
   payload hashes, and symbol map before relying on it for runtime evidence.
-- Do not substitute the newest shared ISO when the required identity or linking
+- Do not substitute the newest shared ISO when the required identity or
   metadata is absent. Ask for the smallest exact missing input.
-- The task-owned ISO hardlink is disposable. Delete it after the selected
-  validation and evidence extraction. Retain only required captures and compact
-  provenance outside that disposable path.
 
 ## Agent ISO builds
 
-Use only:
-
-```powershell
-na228 worker [--configuration <id>] work/<exact chat title>/build/<name>.iso
-```
-
-- Worker builds use `test` unless `--configuration <id>` is supplied. They keep
-  operational and structured records under `work/<chat title>/logs/` and share
-  exact verified identities with all other build roles through the central
-  registry.
-- Worker output paths are hardlinks to canonical hash-named cache images. Delete
-  the task-owned output link after evidence extraction unless retention was
-  explicitly requested; do not delete the bounded shared cache image.
+- Use `na228 build -c <configuration>`. It builds or reuses the canonical
+  hash-named cache image and keeps operational and
+  structured records under `work/<chat title>/logs/`.
+- Use the canonical cached ISO path directly. Do not create a task-owned
+  ISO or hardlink, and do not delete the shared cache image after validation.
 - They do not touch Latest/Previous, Manual/E2E Test outputs or their role
   records, promotion, PNACH, GameSettings, or PCSX2 state.
 
@@ -58,16 +46,14 @@ Current shared-build and user-facing command behavior is documented by
 
 The complete lifecycle is in the
 [input-recording validation workflow](../workflows/input_recording_validation.md).
-When that workflow requires candidate replay, use the task-owned worker ISO and
+When that workflow requires candidate replay, use the cached ISO and
 an explicit task-owned capture path:
 
 ```powershell
-ws <worker-iso-path> -s <recording> <task-owned-candidate-path>
+ws <cached-iso-path> -s <recording> <task-owned-candidate-path>
 ```
 
 Do not omit the candidate capture path or use Workshop's default capture path.
-After evidence extraction, apply the normal worker-ISO and artifact-retention
-cleanup rules.
 
 ## Screenshots and evidence
 

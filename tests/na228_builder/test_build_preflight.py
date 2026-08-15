@@ -573,7 +573,7 @@ class BuildPreflightTests(unittest.TestCase):
             first_state = self.state(paths)
             first_fingerprint = state_fingerprint(first_state)
             self.record(paths, first_fingerprint)
-            for index in range(15):
+            for index in range(20):
                 state = self.state(
                     paths,
                     dependencies=dict(
@@ -584,7 +584,7 @@ class BuildPreflightTests(unittest.TestCase):
                 fingerprint = state_fingerprint(state)
                 image = paths["cache"] / ".incoming" / f"bounded-{index}.iso"
                 image.parent.mkdir(parents=True, exist_ok=True)
-                if index == 14:
+                if index == 19:
                     image.write_bytes(b"verified latest")
                 else:
                     image.write_bytes(f"bounded-{index:02d}".encode("ascii"))
@@ -599,7 +599,7 @@ class BuildPreflightTests(unittest.TestCase):
                 )
 
             registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
-            self.assertEqual(len(registry["entries"]), 15)
+            self.assertEqual(len(registry["entries"]), 20)
             self.assertNotIn(first_fingerprint, registry["entries"])
 
             newest_fingerprint = fingerprint

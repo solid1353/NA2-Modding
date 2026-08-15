@@ -2,15 +2,14 @@
 param(
     [switch]$ManualOnly,
     [ValidateSet('normal', 'shifted')][string]$E2eVariant,
-    [string]$WorkerOutputIso,
-    [string]$WorkerConfiguration = 'test',
+    [string]$CacheConfiguration,
+    [string]$CacheLogDirectory,
     [switch]$Force
 )
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\paths.ps1')
 . (Join-Path $PSScriptRoot '..\lib\build_log.ps1')
-. (Join-Path $PSScriptRoot 'worker_paths.ps1')
 . (Join-Path $PSScriptRoot 'build_registry.ps1')
 $paths = Get-Na2Paths
 $pythonRunner = Join-Path $paths.repository 'scripts\lib\run_python.ps1'
@@ -18,6 +17,7 @@ $registryPath = Join-Path $paths.logs 'na228\preflight\registry.json'
 $isoCacheRoot = Join-Path $paths.cache 'isos'
 $incomingRoot = Join-Path $isoCacheRoot '.incoming'
 $e2eBuild = $null
+$cacheBuild = $PSBoundParameters.ContainsKey('CacheConfiguration')
 if (-not [string]::IsNullOrWhiteSpace($E2eVariant)) {
     . (Join-Path $paths.repository 'e2e\scripts\config.ps1')
     $e2eBuild = Get-E2eBuildVariant -Name $E2eVariant
@@ -26,20 +26,19 @@ if (-not [string]::IsNullOrWhiteSpace($E2eVariant)) {
 if (@(
     $ManualOnly.IsPresent
     $null -ne $e2eBuild
-    -not [string]::IsNullOrWhiteSpace($WorkerOutputIso)
+    $cacheBuild
 ).Where({ $_ }).Count -gt 1) {
-    throw '-ManualOnly, -E2eVariant, and -WorkerOutputIso are mutually exclusive.'
+    throw '-ManualOnly, -E2eVariant, and -CacheConfiguration are mutually exclusive.'
 }
-if ($Force -and ($null -ne $e2eBuild -or $WorkerOutputIso)) {
+if ($Force -and ($null -ne $e2eBuild -or $cacheBuild)) {
     throw '-Force is valid only for ordinary Latest or Manual builds.'
 }
-if ($WorkerConfiguration -cnotmatch '^[A-Za-z0-9][A-Za-z0-9_-]*$') {
-    throw "Invalid worker configuration ID: $WorkerConfiguration"
+if ($cacheBuild -and $CacheConfiguration -cnotmatch '^[A-Za-z0-9][A-Za-z0-9_-]*$') {
+    throw "Invalid cache configuration ID: $CacheConfiguration"
 }
-$workerBuild = if ($WorkerOutputIso) {
-    Get-Na2WorkerBuildContext -OutputPath $WorkerOutputIso -Paths $paths
+if (-not $cacheBuild -and -not [string]::IsNullOrWhiteSpace($CacheLogDirectory)) {
+    throw '-CacheLogDirectory is valid only with -CacheConfiguration.'
 }
-else { $null }
 
 function Invoke-Na2BuilderModule {
     param(
@@ -104,21 +103,26 @@ $latestIso = [IO.Path]::GetFullPath($paths.files.latest_iso)
 $previousIso = [IO.Path]::GetFullPath($paths.files.previous_iso)
 $manualIso = [IO.Path]::GetFullPath($paths.files.manual_iso)
 $payloadShift = if ($null -ne $e2eBuild) { [int]$e2eBuild.payload_shift_bytes } else { 0 }
-$configurationId = if ($null -ne $workerBuild) { $WorkerConfiguration } `
+$configurationId = if ($cacheBuild) { $CacheConfiguration } `
     elseif ($ManualOnly -or $null -ne $e2eBuild) { 'test' } else { 'dev' }
 $configuration = Join-Path $paths.builder "configurations\$configurationId.json"
 if (-not (Test-Path -LiteralPath $configuration -PathType Leaf)) {
-    throw "Worker configuration does not exist: $configurationId"
+    throw "Configuration does not exist: $configurationId"
 }
 $configurationRelative = [IO.Path]::GetRelativePath($paths.repository, $configuration)
 $sharedLogDirectory = Join-Path $paths.logs 'na228'
 
-if ($null -ne $workerBuild) {
-    $kind = 'worker'
-    $role = 'worker:' + (ConvertTo-Na2ProjectPath -Path $workerBuild.OutputIso -Paths $paths)
-    $outputIso = $workerBuild.OutputIso
-    $recordRoot = Join-Path $workerBuild.Logs 'builds'
-    $recordAliasRoot = '@work/' + $workerBuild.WorkerName + '/logs/builds'
+if ($cacheBuild) {
+    $kind = 'cache'
+    $outputIso = $null
+    $cacheRecordBase = if ([string]::IsNullOrWhiteSpace($CacheLogDirectory)) {
+        Join-Path $sharedLogDirectory 'cache-builds'
+    }
+    else {
+        [IO.Path]::GetFullPath($CacheLogDirectory)
+    }
+    $recordRoot = Join-Path $cacheRecordBase 'builds'
+    $recordAliasRoot = (ConvertTo-Na2PortableText -Text $recordRoot -Paths $paths).Replace('\', '/')
 }
 elseif ($null -ne $e2eBuild) {
     $kind = 'e2e-test'
@@ -318,18 +322,27 @@ if ([string]::IsNullOrWhiteSpace($candidate) -or
     -not (Test-Path -LiteralPath $candidate -PathType Leaf)) {
     throw 'Verification registry returned no reusable physical ISO.'
 }
-$publishArguments = @{
-    Candidate = $candidate
-    Destination = $outputIso
-    Size = $size
-    Sha256 = $sha256
-    CacheRoot = $isoCacheRoot
+$promotion = if ($cacheBuild) {
+    $outputIso = $candidate
+    [pscustomobject]@{
+        Status = if ($cacheHit) { 'reused' } else { 'built' }
+        Rotated = $false
+    }
 }
-if ($kind -eq 'latest') {
-    $publishArguments.Previous = $previousIso
-    $publishArguments.Rotate = $true
+else {
+    $publishArguments = @{
+        Candidate = $candidate
+        Destination = $outputIso
+        Size = $size
+        Sha256 = $sha256
+        CacheRoot = $isoCacheRoot
+    }
+    if ($kind -eq 'latest') {
+        $publishArguments.Previous = $previousIso
+        $publishArguments.Rotate = $true
+    }
+    Publish-Na2VerifiedImage @publishArguments
 }
-$promotion = Publish-Na2VerifiedImage @publishArguments
 if ($promotion.Status -eq 'pending') {
     $retryMessage = if ($registered) {
         'Rotation will be retried without rebuilding on the next matching build.'
@@ -343,7 +356,7 @@ if ($promotion.Status -eq 'pending') {
     )
 }
 else {
-    if ($registered) {
+    if ($registered -and -not $cacheBuild) {
         try {
             $completedLocations = @($outputIso)
             if ($kind -eq 'latest' -and $promotion.Rotated) {
@@ -414,23 +427,11 @@ else {
         -State pending -Configuration $configuration -OutputIso $candidate `
         -Size $size -Sha256 $sha256 `
         -Variant $(if ($null -ne $e2eBuild) { $E2eVariant } else { '' })
-    if ($kind -eq 'worker') {
-        Get-ChildItem -LiteralPath $recordRoot -Directory |
-            Sort-Object LastWriteTimeUtc -Descending |
-            Select-Object -Skip 20 |
-            Remove-Item -Recurse -Force
+    Remove-Item -LiteralPath $configurationLog -Recurse -Force
+    if ($registered) {
         $buildRecord = [pscustomobject]@{
             BuildId = $buildId
-            BuildRecord = "$recordAliasRoot/$buildId"
-        }
-    }
-    else {
-        Remove-Item -LiteralPath $configurationLog -Recurse -Force
-        if ($registered) {
-            $buildRecord = [pscustomobject]@{
-                BuildId = $buildId
-                BuildRecord = "@logs/na228/preflight/records/$fingerprint"
-            }
+            BuildRecord = "@logs/na228/preflight/records/$fingerprint"
         }
     }
 }

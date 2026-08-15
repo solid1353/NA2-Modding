@@ -30,8 +30,8 @@ integrated catalog data.
   concrete `overrides`. Each overrides object may be empty or partially mirror
   the catalog's feature tree directly. The loader applies the concrete
   configuration's `overrides` to `base.features`. Normal local builds use
-  `dev.json`; Manual, worker, and E2E builds use `test.json`; only
-  release packaging uses `release.json`.
+  `dev.json`; Manual and E2E builds use `test.json`; cache builds use their
+  explicitly selected configuration; only release packaging uses `release.json`.
 - `configurations/base.character_overrides.tsv` contains the required `base`
   row and shared per-character overrides. Matching `dev`, `test`, and `release`
   TSVs layer nonempty cells over it by character ID. Empty cells inherit;
@@ -199,8 +199,8 @@ than showing them in the user-facing window. Successful runs create no log.
 
 `scripts/na228/build.ps1` resolves the `builder` package set from
 `packages.json` and uses `configurations/dev.json` for normal builds or
-`configurations/test.json` for Manual and E2E outputs. Worker builds default to
-`test` and accept `--configuration <id>`.
+`configurations/test.json` for Manual and E2E outputs. Cache builds select an
+explicit configuration with `na228 build -c <configuration>`.
 
 The public `-f` option applies to ordinary Latest and Manual build routes,
 including build-only and build-and-run commands. It keeps building when a
@@ -213,8 +213,8 @@ Latest path fails. Every bypassed failure remains visible as a warning.
 Force mode never bypasses checks required to construct a valid image. Catalog
 and configuration structure, compilation and linking, source and patch guards,
 edit conflicts, resident-payload layout, image layout, and final image-content
-verification remain fatal. `-f` is not valid for a pure launch, a
-worker build, E2E, unit tests, or release packaging.
+verification remain fatal. `-f` is not valid for a pure launch, a cache build,
+E2E, unit tests, or release packaging.
 
 The public `na228` development commands present configuration failures as one
 concise path/value/expectation message. Their existing `latest.log` and
@@ -222,17 +222,18 @@ concise path/value/expectation message. Their existing `latest.log` and
 `technical_details`; catalog-authoring and internal failures remain developer
 errors and keep their existing presentation.
 
-`na228 worker [--configuration <id>] work/<task>/build/<name>.iso` reuses an
-exact verified registry identity or runs full composition and physical image
-verification, then publishes a hardlink to the canonical hash-named image.
+`na228 build -c <configuration>` reuses an exact verified registry identity or
+runs full composition and physical image verification, then returns the
+canonical hash-named cache image without publishing another output.
 
-Latest, Manual, E2E, and worker builds share one byte-affecting
+Latest, Manual, E2E, and cache builds share one byte-affecting
 fingerprint registry under `@logs/na228/preflight/`. A physical miss is assembled
 to a unique incoming path, verified, atomically registered as
-`@work/cache/isos/<SHA-256>.iso`, and then promoted to its requested role.
+`@work/cache/isos/<SHA-256>.iso`, and is then available for role promotion.
 The hash-named image remains canonical; physical Latest, Previous, Manual, E2E,
-and worker outputs are ordinary hardlinks to it. Distinct fingerprints that
-produce the same SHA-256 share that image identity and all verified locations.
+and other user-facing outputs are ordinary hardlinks to it. Distinct
+fingerprints that produce the same SHA-256 share that image identity and all
+verified locations.
 Latest rotation hardlinks the outgoing Latest identity to Previous and updates
 both image-location records. If a destination is locked, the invocation reports
 pending and retains the verified cached image; the next matching request retries

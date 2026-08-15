@@ -2,16 +2,15 @@
 param(
     [Parameter(Mandatory)]
     [ValidateSet(
-        'worker-build',
+        'cache-build',
         'manual-build',
         'latest-build',
         'latest-build-and-launch'
     )]
     [string]$Action,
 
-    [string]$WorkerOutputIso,
-    [string]$WorkerLogDirectory,
-    [string]$WorkerConfiguration = 'test',
+    [string]$CacheConfiguration,
+    [string]$CacheLogDirectory,
     [switch]$Force,
     [switch]$Turbo,
     [switch]$Unlimited
@@ -29,16 +28,13 @@ function Write-Na2Stage {
     Write-Host "[na228] $Message" -ForegroundColor Cyan
 }
 
-if ($Action -eq 'worker-build') {
-    if (
-        [string]::IsNullOrWhiteSpace($WorkerOutputIso) -or
-        [string]::IsNullOrWhiteSpace($WorkerLogDirectory)
-    ) {
-        throw 'Worker build action requires its output ISO and log directory.'
+if ($Action -eq 'cache-build') {
+    if ([string]::IsNullOrWhiteSpace($CacheConfiguration)) {
+        throw 'Cache build action requires a configuration.'
     }
 }
-elseif ($WorkerOutputIso -or $WorkerLogDirectory) {
-    throw 'Worker output arguments are valid only for worker-build.'
+elseif ($CacheConfiguration -or $CacheLogDirectory) {
+    throw 'Cache arguments are valid only for cache-build.'
 }
 if ($Force -and $Action -notin @(
     'manual-build',
@@ -55,7 +51,7 @@ if ($Turbo -and $Unlimited) {
 }
 
 $runMode = switch ($Action) {
-    'worker-build' { 'worker-build' }
+    'cache-build' { 'cache-build' }
     'manual-build' { 'manual-build' }
     default { 'build' }
 }
@@ -65,8 +61,8 @@ try {
         Mode = $runMode
         Paths = $paths
     }
-    if ($Action -eq 'worker-build') {
-        $runLogArguments.LogDirectory = $WorkerLogDirectory
+    if (-not [string]::IsNullOrWhiteSpace($CacheLogDirectory)) {
+        $runLogArguments.LogDirectory = $CacheLogDirectory
     }
     $runLog = Start-Na2RunLog @runLogArguments
 }
@@ -79,16 +75,13 @@ $runFailure = ''
 $runTechnicalDetails = ''
 try {
     switch ($Action) {
-        'worker-build' {
-            $portableOutput = ConvertTo-Na2ProjectPath `
-                -Path $WorkerOutputIso `
-                -Paths $paths
-            Write-Na2Stage "Build isolated worker ISO $portableOutput"
+        'cache-build' {
+            Write-Na2Stage "Build or reuse cached ISO for $CacheConfiguration"
             $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') `
-                -WorkerOutputIso $WorkerOutputIso `
-                -WorkerConfiguration $WorkerConfiguration
-            if (-not $buildResult -or $buildResult.Status -ne 'worker') {
-                throw 'Worker build did not return a valid result.'
+                -CacheConfiguration $CacheConfiguration `
+                -CacheLogDirectory $CacheLogDirectory
+            if (-not $buildResult -or $buildResult.Status -ne 'cache') {
+                throw 'Cache build did not return a valid result.'
             }
         }
         'manual-build' {
@@ -166,4 +159,8 @@ finally {
             Write-Warning "Could not finalize NA2 logs: $($_.Exception.Message)"
         }
     }
+}
+
+if ($Action -eq 'cache-build') {
+    return $buildResult
 }

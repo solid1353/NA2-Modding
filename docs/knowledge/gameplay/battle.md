@@ -244,8 +244,16 @@ Input handling is independent of interface-object creation. In contest state
 exported `0x00769F54` to latch a press into inner field `+0x3A`, then calls the
 same accessor at exported `0x0076A1B0` while waiting for release. These are live
 addresses `0x00769F94` and `0x0076A1F0`, at clean BTL file offsets `0xB6094`
-and `0xB62F0`. Returning zero at both call sites blocks the recorded input
+and `0xB62F0`. Returning zero at both call sites blocks the contest input path
 without changing the rest of the controller state machine.
+
+The resident accessor contains two three-byte input-state banks: its first
+argument selects bank `0` or `1`, and its second indexes slot `0` through `2`.
+Both contest calls use bank `1`, slot `0`. That static slice does not establish
+how the contest maps physical controllers onto the logical slot. Runtime
+observation after acceptance confirmed that neither Player 1 nor Player 2 input
+affects the contest, establishing the both-player behavior while the exact
+logical-slot routing remains untraced.
 
 The wrapper's flags byte at `+0x10` only gates its auxiliary inner-object
 pointers. Setting both bits did not change the visible contest interface. An

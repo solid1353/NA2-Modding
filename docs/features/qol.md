@@ -145,9 +145,9 @@ and the battle-path evidence is in
 
 ## Disable the Ultimate Jutsu input contest
 
-`qol.ultimate_jutsu.disable_input_contest` blocks Player 1 input during the
-Ultimate Jutsu contest and suppresses its bottom meter, button prompts, and
-result messages. The ordinary top battle HUD remains visible. The base
+`qol.ultimate_jutsu.disable_input_contest` blocks both players' inputs during
+the Ultimate Jutsu contest and suppresses its bottom meter, button prompts,
+and result messages. The ordinary top battle HUD remains visible. The base
 configuration enables the setting, so the development configuration inherits
 it.
 
@@ -155,14 +155,15 @@ One guarded BTL edit passes native contest type `0` to the resident Ultimate
 Jutsu factory. That disabled type creates no contest object, which removes the
 interface and its later result message at their common owner. Two independent
 guarded edits replace the contest controller's press-latch and release-poll
-reads with zero so the recorded input cannot affect the controller even though
+reads with zero so neither player's input can affect the controller even though
 no interface object exists.
 
 Development replay of `pcsx2_files/input_recordings/uj.p2m2` confirmed that
 checkpoints 3 through 5 contain no bottom contest interface, checkpoints 6 and
-7 contain no contest result messages, and the input latch remains zero. The
-user accepted the replayed result on 2026-08-15. Clean offsets, live addresses,
-NUN6 homologs, and replay evidence are recorded in
+7 contain no contest result messages, and the recorded input latch remains
+zero. The user accepted the replayed result and confirmed that inputs are
+blocked for both Player 1 and Player 2 on 2026-08-15. Clean offsets, live
+addresses, NUN6 homologs, and replay evidence are recorded in
 [`../knowledge/gameplay/battle.md`](../knowledge/gameplay/battle.md).
 
 ## Unlock all content without loading a save

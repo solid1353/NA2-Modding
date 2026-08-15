@@ -1734,8 +1734,16 @@
         "symbol": "character_select_no_support_confirm_fighter",
         "encoding": "jal26"
       },
+      "route_support_confirmation_without_linked_mode": {
+        "description": "Finalize a selected support in Manual linked mode without opening the Linked Mode choice modal.",
+        "target_id": "na2_elf",
+        "offset": "0x2B7E70",
+        "expected_hex": "F0FFBD270000BFFF",
+        "symbol": "character_select_no_support_finalize_support",
+        "encoding": "j26"
+      },
       "route_no_support_only_return_to_fighter_selection": {
-        "description": "Return a finalized No-Support-only fighter directly to fighter selection instead of reopening the Linked Mode path, while retaining native return routing for larger rosters.",
+        "description": "Return a finalized No-Support-only fighter directly to fighter selection, or a larger roster directly to support selection in Manual linked mode, without reopening the Linked Mode choice modal.",
         "target_id": "na2_elf",
         "offset": "0x2B8150",
         "expected_hex": "F0FFBD270000BFFF",
@@ -1843,6 +1851,10 @@
           "character_select_no_support_confirm_fighter": {
             "order": 118,
             "object": "qol.character.select.no.support.text.qol.character.select.no.support.confirm.fighter"
+          },
+          "character_select_no_support_finalize_support": {
+            "order": 121,
+            "object": "qol.character.select.no.support.text.qol.character.select.no.support.finalize.support"
           },
           "character_select_no_support_return_from_finalized": {
             "order": 119,

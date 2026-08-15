@@ -23,10 +23,11 @@ typedef unsigned int u32;
 
 #define SUPPORT_STATE_AVAILABLE 4u
 #define NO_SUPPORT_ID 0x25u
+#define CHARACTER_SELECT_LINKED_MODE_MANUAL 0u
 
 #define CHARACTER_SELECT_STATE_FIGHTER_SELECTION 1u
 #define CHARACTER_SELECT_STATE_ENTERING_SUPPORT_SELECTION 2u
-#define CHARACTER_SELECT_STATE_ENTERING_LINKED_MODE 8u
+#define CHARACTER_SELECT_STATE_SUPPORT_SELECTION 5u
 #define CHARACTER_SELECT_STATE_FINALIZED 12u
 
 #define NATIVE_POPULATE_SUPPORT_LIST_ADDRESS 0x003BB210u
@@ -453,7 +454,25 @@ void qol_character_select_no_support_confirm_fighter(
     ) = 0u;
     *(u32 *)(
         player + CHARACTER_SELECT_PLAYER_LINKED_MODE_OFFSET
-    ) = 0u;
+    ) = CHARACTER_SELECT_LINKED_MODE_MANUAL;
+    set_state(player_select, CHARACTER_SELECT_STATE_FINALIZED);
+}
+
+CHARACTER_SELECT_NO_SUPPORT_SECTION(
+    ".text.qol_character_select_no_support_finalize_support"
+)
+void qol_character_select_no_support_finalize_support(
+    void *player_select
+)
+{
+    NativeSetCharacterSelectState set_state =
+        (NativeSetCharacterSelectState)
+            NATIVE_SET_CHARACTER_SELECT_STATE_ADDRESS;
+    u8 *player = (u8 *)player_select;
+
+    *(u32 *)(
+        player + CHARACTER_SELECT_PLAYER_LINKED_MODE_OFFSET
+    ) = CHARACTER_SELECT_LINKED_MODE_MANUAL;
     set_state(player_select, CHARACTER_SELECT_STATE_FINALIZED);
 }
 
@@ -486,7 +505,10 @@ void qol_character_select_no_support_return_from_finalized(
     ) {
         next_state = CHARACTER_SELECT_STATE_FIGHTER_SELECTION;
     } else {
-        next_state = CHARACTER_SELECT_STATE_ENTERING_LINKED_MODE;
+        *(u32 *)(
+            player + CHARACTER_SELECT_PLAYER_LINKED_MODE_OFFSET
+        ) = CHARACTER_SELECT_LINKED_MODE_MANUAL;
+        next_state = CHARACTER_SELECT_STATE_SUPPORT_SELECTION;
     }
 
     set_state(player_select, next_state);

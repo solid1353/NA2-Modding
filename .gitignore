@@ -11,5 +11,6 @@ Desktop.ini
 /e2e/.transactions/
 __pycache__/
 
-# Misc
+# PCSX2
+pcsx2_files/input_recordings/__generated/
 *.ps2

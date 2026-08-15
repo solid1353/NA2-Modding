@@ -2,13 +2,10 @@
 
 ## In Progress
 
+## Backlog
+
 ### General
 - Create notifications.
-
-### Font
-- Layout/autofit.
-
-## Backlog
 
 ### Project
 - Investigate cross-platform development/deployment possibilities.
@@ -20,19 +17,11 @@
 - **General:** practice menu entries (like Damage) flicker again (unstable).
 
 ### Logic
-- Make knj cost selective.
-- Make xDash cost 1 chakra.
-- Add damage scaling?
-- [Improve substitution reliability](docs/knowledge/gameplay/substitution.md)
+- Add damage scaling.
 - Add substitution bar.
+- [Improve substitution reliability](docs/knowledge/gameplay/substitution.md)
 - Fix extra hit floating animation (or maybe not?).
-
-### QoL
-- Finish NUN5 startup parity and repair the test loading override.
-- Disable UJ overlay and inputs.
-- Replace selected character with no support on character select screen.
-- Replace support selector with Team J/UJ selector.
-- Move support bar upwards.
+- 60 FPS patch.
 
 ### Visuals
 - Create a proper widescreen patch.
@@ -40,9 +29,12 @@
 
 ### Testing
 - Isolate and promote runtime-proven patches.
-- Test translation thoroughout the whole game.
 
 ## Archive
+
+### Font
+
+### QoL
 
 ### Docs
 

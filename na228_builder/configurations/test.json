@@ -3,9 +3,9 @@
     "qol": {
       "practice": {
         "bootstrap": {
-          "p1": 84,
-          "support": 26,
-          "awakening": "none"
+          "p1": 67,
+          "support": "0x25",
+          "awakening": "0x44"
         }
       },
       "startup": {

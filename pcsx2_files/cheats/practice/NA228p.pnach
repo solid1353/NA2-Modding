@@ -1,0 +1,133 @@
+[+Practice QoL]
+patch=1,EE,001E7B30,word,00000000 // Voice off
+patch=1,EE,001E7B7C,word,A080000B // Support off
+patch=1,EE,001E7A94,word,00000000 // Command display off
+patch=1,EE,001E7AAC,word,00000000 // Simple display off
+
+[+Practice bootstrap]
+// Route successful Continue startup into the native Practice controller.
+patch=1,EE,001E9AF8,word,24020004 // li v0,4
+patch=1,EE,001E9AFC,word,AE020008 // sw v0,8(s0)
+patch=1,EE,001E9B00,word,24020003 // li v0,3
+patch=1,EE,001E9B04,word,10000029 // retain the native branch
+patch=1,EE,001E9B08,word,AE02000C // sw v0,12(s0)
+
+// FUN_001ED450 is called only by Practice state 7. Replace that constructor and
+// the state-15 battle-update call while retaining the native loading states.
+patch=1,EE,001ECACC,word,0C07B533 // jal 0x001ed4cc
+
+// Configured-match wrapper at 0x001ED450.
+patch=1,EE,001ED450,word,3C080060 // lui t0,0x60
+patch=1,EE,001ED454,word,8D087600 // lw t0,0x7600(t0)
+patch=1,EE,001ED458,word,1100001A // beqz t0,0x001ed4c4
+patch=1,EE,001ED45C,word,00000000 // nop
+patch=1,EE,001ED460,word,3C09001F // lui t1,0x1f
+patch=1,EE,001ED464,word,2529D600 // addiu t1,t1,-0x2a00
+patch=1,EE,001ED468,word,8D2A0000 // lw t2,0(t1)
+patch=1,EE,001ED46C,word,8D2B0004 // lw t3,4(t1)
+patch=1,EE,001ED470,word,AD20FFFC // sw zero,-4(t1)
+patch=1,EE,001ED474,word,240C0039 // li t4,57
+patch=1,EE,001ED478,word,240D0001 // li t5,1
+patch=1,EE,001ED47C,word,240E0006 // li t6,6
+patch=1,EE,001ED480,word,AD0A004C // sw t2,76(t0)
+patch=1,EE,001ED484,word,AD0A00C8 // sw t2,200(t0)
+patch=1,EE,001ED488,word,AD0B0068 // sw t3,104(t0)
+patch=1,EE,001ED48C,word,AD0B00E4 // sw t3,228(t0)
+patch=1,EE,001ED490,word,AD0C0074 // sw t4,116(t0)
+patch=1,EE,001ED494,word,AD0C00F0 // sw t4,240(t0)
+patch=1,EE,001ED498,word,AD0D0090 // sw t5,144(t0)
+patch=1,EE,001ED49C,word,AD0D010C // sw t5,268(t0)
+patch=1,EE,001ED4A0,word,A10E0098 // sb t6,152(t0)
+patch=1,EE,001ED4A4,word,240E0003 // li t6,3
+patch=1,EE,001ED4A8,word,AC8E0004 // sw t6,4(a0)
+patch=1,EE,001ED4AC,word,240E000A // li t6,10
+patch=1,EE,001ED4B0,word,AC8E0000 // sw t6,0(a0)
+patch=1,EE,001ED4B4,word,0807B567 // j 0x001ed59c
+patch=1,EE,001ED4B8,word,0100202D // move a0,t0
+patch=1,EE,001ED4BC,word,00000000 // nop
+patch=1,EE,001ED4C0,word,00000000 // nop
+patch=1,EE,001ED4C4,word,03E00008 // jr ra
+patch=1,EE,001ED4C8,word,00000000 // nop
+
+// Native battle update plus one requested awakening at 0x001ED4CC.
+patch=1,EE,001ED4CC,word,27BDFFF0 // addiu sp,sp,-16
+patch=1,EE,001ED4D0,word,FFBF0000 // sd ra,0(sp)
+patch=1,EE,001ED4D4,word,0C07B6DC // jal 0x001edb70
+patch=1,EE,001ED4D8,word,00000000 // nop
+patch=1,EE,001ED4DC,word,3C18001F // lui t8,0x1f
+patch=1,EE,001ED4E0,word,2718D600 // addiu t8,t8,-0x2a00
+patch=1,EE,001ED4E4,word,8F0AFFFC // lw t2,-4(t8)
+patch=1,EE,001ED4E8,word,15400041 // bnez t2,0x001ed5f0
+patch=1,EE,001ED4EC,word,8F090008 // lw t1,8(t8)
+patch=1,EE,001ED4F0,word,240AFFFF // li t2,-1
+patch=1,EE,001ED4F4,word,112A003E // beq t1,t2,0x001ed5f0
+patch=1,EE,001ED4F8,word,3C080060 // lui t0,0x60
+patch=1,EE,001ED4FC,word,8D087600 // lw t0,0x7600(t0)
+patch=1,EE,001ED500,word,1100003B // beqz t0,0x001ed5f0
+patch=1,EE,001ED504,word,00000000 // nop
+patch=1,EE,001ED508,word,8D080DE4 // lw t0,3556(t0)
+patch=1,EE,001ED50C,word,11000038 // beqz t0,0x001ed5f0
+patch=1,EE,001ED510,word,00000000 // nop
+patch=1,EE,001ED514,word,950A08E8 // lhu t2,2280(t0)
+patch=1,EE,001ED518,word,152A0004 // bne t1,t2,0x001ed52c
+patch=1,EE,001ED51C,word,240B0001 // li t3,1
+patch=1,EE,001ED520,word,AF0BFFFC // sw t3,-4(t8)
+patch=1,EE,001ED524,word,10000032 // b 0x001ed5f0
+patch=1,EE,001ED528,word,00000000 // nop
+
+// Wait for the native controller gate, then recreate FUN_0020D910's frame and
+// enter its shared transition tail with the exact configured effect in s1.
+patch=1,EE,001ED52C,word,3C0A0060 // lui t2,0x60
+patch=1,EE,001ED530,word,8D4A7834 // lw t2,0x7834(t2)
+patch=1,EE,001ED534,word,11400005 // beqz t2,0x001ed54c
+patch=1,EE,001ED538,word,00000000 // nop
+patch=1,EE,001ED53C,word,914A0010 // lbu t2,16(t2)
+patch=1,EE,001ED540,word,11400002 // beqz t2,0x001ed54c
+patch=1,EE,001ED544,word,240B00FF // li t3,255
+patch=1,EE,001ED548,word,154B0029 // bne t2,t3,0x001ed5f0
+patch=1,EE,001ED54C,word,DFBF0000 // ld ra,0(sp)
+patch=1,EE,001ED550,word,27BD0010 // addiu sp,sp,16
+patch=1,EE,001ED554,word,27BDFFC0 // addiu sp,sp,-64
+patch=1,EE,001ED558,word,FFBF0030 // sd ra,48(sp)
+patch=1,EE,001ED55C,word,7FB20020 // sq s2,32(sp)
+patch=1,EE,001ED560,word,7FB10010 // sq s1,16(sp)
+patch=1,EE,001ED564,word,7FB00000 // sq s0,0(sp)
+patch=1,EE,001ED568,word,0100902D // move s2,t0
+patch=1,EE,001ED56C,word,0120882D // move s1,t1
+patch=1,EE,001ED570,word,96440060 // lhu a0,96(s2)
+patch=1,EE,001ED574,word,00042142 // srl a0,a0,5
+patch=1,EE,001ED578,word,3084000F // andi a0,a0,15
+patch=1,EE,001ED57C,word,0C07F880 // jal 0x001fe200
+patch=1,EE,001ED580,word,00000000 // nop
+patch=1,EE,001ED584,word,14400003 // bnez v0,0x001ed594
+patch=1,EE,001ED588,word,00000000 // nop
+patch=1,EE,001ED58C,word,08083710 // j 0x0020dc40
+patch=1,EE,001ED590,word,00000000 // nop
+patch=1,EE,001ED594,word,0808373E // j 0x0020dcf8
+patch=1,EE,001ED598,word,00000000 // nop
+// Initialize the configured character's native ordinary-Jutsu slots before the
+// state-10 loadout finalizer applies support-linked replacements.
+patch=1,EE,001ED59C,word,27BDFFE0 // addiu sp,sp,-32
+patch=1,EE,001ED5A0,word,FFBF0010 // sd ra,16(sp)
+patch=1,EE,001ED5A4,word,7FB00000 // sq s0,0(sp)
+patch=1,EE,001ED5A8,word,0080802D // move s0,a0
+patch=1,EE,001ED5AC,word,26040020 // addiu a0,s0,32
+patch=1,EE,001ED5B0,word,24050001 // li a1,1
+patch=1,EE,001ED5B4,word,0000302D // move a2,zero
+patch=1,EE,001ED5B8,word,0C07D2A0 // jal 0x001f4a80
+patch=1,EE,001ED5BC,word,00000000 // nop
+patch=1,EE,001ED5C0,word,26040020 // addiu a0,s0,32
+patch=1,EE,001ED5C4,word,24050001 // li a1,1
+patch=1,EE,001ED5C8,word,0000302D // move a2,zero
+patch=1,EE,001ED5CC,word,0C07D2BC // jal 0x001f4af0
+patch=1,EE,001ED5D0,word,00000000 // nop
+patch=1,EE,001ED5D4,word,DFBF0010 // ld ra,16(sp)
+patch=1,EE,001ED5D8,word,7BB00000 // lq s0,0(sp)
+patch=1,EE,001ED5DC,word,27BD0020 // addiu sp,sp,32
+patch=1,EE,001ED5E0,word,24040001 // li a0,1
+patch=1,EE,001ED5E4,word,0000282D // move a1,zero
+patch=1,EE,001ED5E8,word,0808016C // j 0x002005b0
+patch=1,EE,001ED5EC,word,00000000 // nop
+patch=1,EE,001ED5F0,word,DFBF0000 // ld ra,0(sp)
+patch=1,EE,001ED5F4,word,03E00008 // jr ra
+patch=1,EE,001ED5F8,word,27BD0010 // addiu sp,sp,16

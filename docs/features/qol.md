@@ -4,45 +4,47 @@ File-backed and resident quality-of-life behavior. Selectable nodes, guarded
 binary edits, runtime hooks, and payload declarations are selected by
 `na228_builder/catalog/qol.modcat`.
 
-## Practice bootstrap
+## Practice bootstrap PNACH
 
-`qol.practice.bootstrap` enters Practice directly after startup with three
-configured inputs: Player 1 character ID `p1`, Player 1 support ID `support`,
-and `awakening`, which is `none` or one of the selected character's native IDs
-from the `awakening_ids` column in `resources/character_data.tsv`. That column
-unites the native fighter-controller associations, Ultimate-Jutsu post-effects,
-hard-coded transformed-form initialization effects, and character-specific
-direct or successor effect applications; it defines attainable active states,
-not their normal entry routes. Configuration JSON keeps `p1` as a decimal
-integer, while `support` and a non-`none` `awakening` are hexadecimal strings
-such as `"0x18"` and `"0x57"`. The builder rejects decimal forms,
-unknown Player 1 IDs, and awakenings that are valid globally but do not belong
-to that character. Player 2 is fixed to Naruto with Sakura support and the
-Practice stage remains the native fixed stage. Starting HP is deliberately not
-duplicated in this object:
-`qol.practice.starting_hp` continues to select `full`, `half`, or `critical`.
+Practice bootstrap is runtime-only and has no builder catalog node,
+configuration field, resident fragment, or ISO rebuild input. The cheats
+configuration invocation is
+`na228 <game> [game] -c <cheats-config> <row>`;
+`practice` selects a physical row from `resources/movesets.tsv`, starting at
+row 2 after the header. It works with NUN5,
+NA2.28 build selectors, build-and-launch tokens, and input playback. It reads
+only that row; it neither reads
+`character_data.tsv` nor expands character, support, or awakening combinations.
+Exactly one of `linked_j_id` or `linked_uj_id` may select a support; when
+both cells are empty, the profile selects No Support `0x25`. An empty
+`awakening_id` cell writes the `FFFFFFFF` no-effect sentinel.
 
-The base, development, and release configurations disable the bootstrap. The
-test configuration enables Tsunade (`84`) with Jiraiya support (`"0x18"`),
-awakening `"0x57"`, and the existing half-HP Practice setting. The builder
-converts the typed bootstrap object into a 16-byte read-only resident
-configuration. This is a scoped generated fragment, not a new general catalog
-payload schema.
+`pcsx2_files/cheats/practice/NA228p.pnach` and
+`pcsx2_files/cheats/practice/NUN5p.pnach` contain the
+complete game-specific bootstraps. Each selected game receives its own file and
+three ordinary inline PNACH lines at that game's character, support, and
+awakening configuration addresses. Those process-local lines are the sole case
+values and do not modify or regenerate either file. The normal
+PNACHs at `pcsx2_files/games/NA228/NA228.pnach` and
+`pcsx2_files/games/NUN5/NUN5.pnach` contain no Practice bootstrap.
+Practice-profile launches use read-only
+settings and discard memory-card writes, so paired launches do not share
+mutable configuration. Clean NA2 is not supported.
 
-A guarded file edit changes only successful Continue startup from main-menu
-substate `1` to Practice substate `3`. The native Practice controller still
-runs its resource states `1` through `6`. Its state-`7` Character Select call
-is replaced by a resident wrapper that writes both current and match-start
-character/support fields, fixes the stage, and enters the native state-`10`
-battle-loading transition. Character Select and the final Practice Settings
-screen are never constructed. A second wrapper retains the native active-
-battle update and, when requested, applies the configured awakening once after
-Player 1's live fighter exists.
+The bootstrap writes both current and match-start Player 1 fields, fixes Player
+2 to Naruto with Sakura support and the Practice stage to `6`, skips Character
+Select and Practice Settings, and retains the native battle-loading states.
+Its battle wrapper first runs the native update, then applies the requested
+awakening once after Player 1 exists. Every non-`none` awakening ID enters the
+native awakening function's shared exact-effect transition tail, so the
+requested effect, awakened controller state, transition actions, sound, and
+moveset refresh are applied together. There is no raw-effect fallback.
 
-The clean guards are ELF `0xE9BF8` for the post-Continue route, `0xECB2C` for
-the state-`7` Character Select call, and `0xECBCC` for the state-`15` battle
-update call. The reverse-engineering evidence and native field contract are in
-[`../knowledge/gameplay/battle.md`](../knowledge/gameplay/battle.md).
+The NA2 guards are runtime `0x001E9AF8` for the post-Continue route,
+`0x001ECA2C` for the unchanged state-`7` call into the replaced native
+`FUN_001ED450` range, and `0x001ECACC` for the state-`15` battle-update call.
+The reverse-engineering evidence, PNACH layout, and native field contract are
+in [`../knowledge/gameplay/battle.md`](../knowledge/gameplay/battle.md).
 
 ## Practice starting HP
 
@@ -126,8 +128,8 @@ advance directly from fighter selection to the finalized state with support
 index zero and Linked Mode disabled. The support-selection and Linked Mode
 screens are never rendered. Back from that finalized state returns directly to
 fighter selection; rosters with selectable partners retain the complete native
-forward and backward flow. Replay of `pcsx2_files/input_recordings/supports.p2m2`
-confirmed that Naruto's four recorded menu markers remain unchanged while the
+forward and backward flow. A retained replay confirmed that Naruto's four
+recorded menu markers remain unchanged while the
 No-Support-only fighter moves directly from marker 5 to marker 8. A derivative
 replay confirmed the reverse marker-8-to-marker-5 transition. The user accepted
 both directions on 2026-08-15.
@@ -159,7 +161,7 @@ guarded edits replace the contest controller's press-latch and release-poll
 reads with zero so neither player's input can affect the controller even though
 no interface object exists.
 
-Development replay of `pcsx2_files/input_recordings/uj.p2m2` confirmed that
+Development replay confirmed that
 checkpoints 3 through 5 contain no bottom contest interface, checkpoints 6 and
 7 contain no contest result messages, and the recorded input latch remains
 zero. The user accepted the replayed result and confirmed that inputs are
@@ -307,9 +309,8 @@ observation in the current launch setup measured the visible loading screen at
 about 6-7 seconds. The user accepted the integrated patch and elapsed-time
 counter on 2026-08-11; first-use voice delay and repeated or concurrent
 first-use playback were not separately isolated during acceptance.
-The test configuration disables `faster_loading`, so Manual, worker, and E2E
-outputs retain native eager voice-index loading; development and release
-outputs keep the faster-loading selection from the base configuration.
+Every maintained configuration inherits `faster_loading` from the base
+configuration; none overrides it.
 The complete disassembly findings, worker layout, outcome matrix, and state
 machine are recorded in
 [`../knowledge/game/startup.md`](../knowledge/game/startup.md).
@@ -320,7 +321,7 @@ startup driver.
 
 ## ELF-Q004: Remove Adventure mode
 
-NUN6 A35 removes Adventure from the Mode Select carousel by storing the signed
+NUN6 removes Adventure from the Mode Select carousel by storing the signed
 sentinel `-1` in entry 0 of the boot ELF's seven-entry mode table. The menu setup
 loop skips entries whose table value is negative, so the item is omitted rather
 than displayed and blocked after selection.
@@ -331,7 +332,7 @@ The corresponding tables are:
   `(4, 2, 3, -1, 5, 6, 7)`.
 - NUN5: virtual address `0x005DC300`, ELF offset `0x4DC480`, values
   `(4, 2, 3, -1, 5, 6, 7)`.
-- NUN6 A35: the NUN5 address and offset, values
+- NUN6: the NUN5 address and offset, values
   `(-1, 2, 3, -1, -1, -1, 7)`.
 
 `ELF-Q004` changes only NA2 entry 0 from `04 00 00 00` to `FF FF FF FF`.

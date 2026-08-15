@@ -60,7 +60,7 @@ class ProjectPathTests(unittest.TestCase):
                 "schema_version": 1,
                 "imports": {"workshop": "../missing/paths.json"},
                 "roots": {"repository": ".", "build": "build"},
-                "files": {"settings": "settings.json"},
+                "files": {"settings": "game.json"},
             }
             (root / "paths.json").write_text(
                 json.dumps(manifest), encoding="utf-8"
@@ -231,6 +231,9 @@ class ProjectPathTests(unittest.TestCase):
                 "pcsx2/game_settings",
                 "pcsx2/input_profiles",
                 "pcsx2/memory_cards",
+                "pcsx2_files/games/NA2",
+                "pcsx2_files/games/NA228",
+                "pcsx2_files/games/NUN5",
             ):
                 (root / path).mkdir(parents=True, exist_ok=True)
             manifest = {
@@ -239,6 +242,7 @@ class ProjectPathTests(unittest.TestCase):
                     "repository": ".",
                     "build": "build",
                     "source": "source",
+                    "pcsx2_files": "pcsx2_files",
                     "pcsx2_cheats": "pcsx2/cheats",
                     "pcsx2_game_settings": "pcsx2/game_settings",
                     "pcsx2_input_profiles": "pcsx2/input_profiles",
@@ -246,7 +250,7 @@ class ProjectPathTests(unittest.TestCase):
                 },
                 "files": {
                     "game_catalog": "@repository/games.json",
-                    "settings": "@repository/settings.json",
+                    "settings": "@repository/game.json",
                 },
             }
             source_catalog = {
@@ -280,11 +284,11 @@ class ProjectPathTests(unittest.TestCase):
             (root / "games.json").write_text(
                 json.dumps(source_catalog), encoding="utf-8"
             )
-            (root / "settings.json").write_text(
+            (root / "game.json").write_text(
                 json.dumps(settings), encoding="utf-8"
             )
-            (root / "pcsx2/game_settings/SLOP-NA228.ini").write_text(
-                "[MemoryCards]\nSlot1_Filename = NA v2.28.ps2\n",
+            (root / "pcsx2_files/games/NA228/NA228.ini").write_text(
+                "[EmuCore]\nEnableCheats = true\n",
                 encoding="utf-8",
             )
             override_directory = (
@@ -304,7 +308,7 @@ class ProjectPathTests(unittest.TestCase):
             )
             self.assertEqual(
                 paths.file("latest_memory_card"),
-                root.resolve() / "pcsx2/memory_cards/NA v2.28 - Latest.ps2",
+                root.resolve() / "pcsx2_files/games/NA228/NA228.ps2",
             )
             self.assertEqual(
                 paths.file("e2e_test_shifted_iso"),
@@ -334,8 +338,10 @@ class ProjectPathTests(unittest.TestCase):
                 "NA2",
                 catalog,
                 {
+                    "repository": root.resolve(),
                     "build": root.resolve() / "build",
                     "source": root.resolve() / "source",
+                    "pcsx2_files": root.resolve() / "pcsx2_files",
                     "pcsx2_cheats": root.resolve() / "pcsx2/cheats",
                     "pcsx2_game_settings": root.resolve() / "pcsx2/game_settings",
                     "pcsx2_input_profiles": root.resolve() / "pcsx2/input_profiles",
@@ -352,12 +358,24 @@ class ProjectPathTests(unittest.TestCase):
                 / "pcsx2/input_profiles/sources/overrides/games/NA2.ini",
             )
             self.assertEqual(
+                na2_paths["cheats"],
+                root.resolve() / "pcsx2_files/games/NA2/NA2.pnach",
+            )
+            self.assertEqual(
+                na2_paths["game_settings"],
+                root.resolve() / "pcsx2_files/games/NA2/NA2.ini",
+            )
+            self.assertEqual(
+                na2_paths["memory_card"],
+                root.resolve() / "pcsx2_files/games/NA2/NA2.ps2",
+            )
+            self.assertEqual(
                 paths.file("cheat_template"),
-                root.resolve() / "pcsx2/cheats/SLOP-NA228.pnach",
+                root.resolve() / "pcsx2_files/games/NA228/NA228.pnach",
             )
             self.assertEqual(
                 paths.file("gamesettings_template"),
-                root.resolve() / "pcsx2/game_settings/SLOP-NA228.ini",
+                root.resolve() / "pcsx2_files/games/NA228/NA228.ini",
             )
 
 if __name__ == "__main__":

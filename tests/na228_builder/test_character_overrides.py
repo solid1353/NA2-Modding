@@ -39,7 +39,7 @@ class CharacterOverrideTests(unittest.TestCase):
     def create_builder(self, root: Path) -> Path:
         builder = root / "na228_builder"
         self.write_tsv(
-            builder / "resources" / "character_data.tsv",
+            builder.parent / "resources" / "character_data.tsv",
             REFERENCE_FIELDS,
             [
                 {
@@ -63,7 +63,7 @@ class CharacterOverrideTests(unittest.TestCase):
             definition.parent.mkdir(parents=True, exist_ok=True)
             definition.write_text("{}\n", encoding="utf-8")
             self.write_tsv(
-                configurations / "base.character_overrides.tsv",
+                configurations / "overrides" / "base.character_overrides.tsv",
                 OVERRIDE_FIELDS,
                 [
                     {"id": "base", "character": "Base", "substitution_cost": "2.5"},
@@ -83,7 +83,7 @@ class CharacterOverrideTests(unittest.TestCase):
                 ],
             )
             self.write_tsv(
-                configurations / "dev.character_overrides.tsv",
+                configurations / "overrides" / "dev.character_overrides.tsv",
                 OVERRIDE_FIELDS,
                 [
                     {"id": "base", "character": "Base", "hp": 100},
@@ -171,7 +171,7 @@ class CharacterOverrideTests(unittest.TestCase):
             ):
                 builder = Path(directory) / "na228_builder"
                 self.write_tsv(
-                    builder / "resources" / "character_data.tsv",
+                    builder.parent / "resources" / "character_data.tsv",
                     REFERENCE_FIELDS,
                     [
                         {
@@ -186,12 +186,12 @@ class CharacterOverrideTests(unittest.TestCase):
                 definition.parent.mkdir(parents=True, exist_ok=True)
                 definition.write_text("{}\n", encoding="utf-8")
                 self.write_tsv(
-                    configurations / "base.character_overrides.tsv",
+                    configurations / "overrides" / "base.character_overrides.tsv",
                     OVERRIDE_FIELDS,
                     [{"id": "base", "character": "Base"}],
                 )
                 self.write_tsv(
-                    configurations / "dev.character_overrides.tsv",
+                    configurations / "overrides" / "dev.character_overrides.tsv",
                     OVERRIDE_FIELDS,
                     [],
                 )
@@ -212,7 +212,7 @@ class CharacterOverrideTests(unittest.TestCase):
             ):
                 builder = Path(directory) / "na228_builder"
                 self.write_tsv(
-                    builder / "resources" / "character_data.tsv",
+                    builder.parent / "resources" / "character_data.tsv",
                     REFERENCE_FIELDS,
                     [
                         {
@@ -227,12 +227,12 @@ class CharacterOverrideTests(unittest.TestCase):
                 definition.parent.mkdir(parents=True, exist_ok=True)
                 definition.write_text("{}\n", encoding="utf-8")
                 self.write_tsv(
-                    configurations / "base.character_overrides.tsv",
+                    configurations / "overrides" / "base.character_overrides.tsv",
                     OVERRIDE_FIELDS,
                     [{"id": "base", "character": "Base"}],
                 )
                 self.write_tsv(
-                    configurations / "dev.character_overrides.tsv",
+                    configurations / "overrides" / "dev.character_overrides.tsv",
                     OVERRIDE_FIELDS,
                     [],
                 )
@@ -244,7 +244,7 @@ class CharacterOverrideTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             builder = Path(directory) / "na228_builder"
             self.write_tsv(
-                builder / "resources" / "character_data.tsv",
+                builder.parent / "resources" / "character_data.tsv",
                 REFERENCE_FIELDS,
                 [
                     {"character": "Alpha", "id": 1, "support_id": "0x01"},
@@ -256,12 +256,12 @@ class CharacterOverrideTests(unittest.TestCase):
             definition.parent.mkdir(parents=True, exist_ok=True)
             definition.write_text("{}\n", encoding="utf-8")
             self.write_tsv(
-                configurations / "base.character_overrides.tsv",
+                configurations / "overrides" / "base.character_overrides.tsv",
                 OVERRIDE_FIELDS,
                 [{"id": "base", "character": "Base"}],
             )
             self.write_tsv(
-                configurations / "dev.character_overrides.tsv",
+                configurations / "overrides" / "dev.character_overrides.tsv",
                 OVERRIDE_FIELDS,
                 [],
             )
@@ -286,7 +286,7 @@ class CharacterOverrideTests(unittest.TestCase):
             ):
                 builder = Path(directory) / "na228_builder"
                 self.write_tsv(
-                    builder / "resources" / "character_data.tsv",
+                    builder.parent / "resources" / "character_data.tsv",
                     REFERENCE_FIELDS,
                     [{"character": "Alpha", "id": 1, field: value}],
                 )
@@ -295,12 +295,12 @@ class CharacterOverrideTests(unittest.TestCase):
                 definition.parent.mkdir(parents=True, exist_ok=True)
                 definition.write_text("{}\n", encoding="utf-8")
                 self.write_tsv(
-                    configurations / "base.character_overrides.tsv",
+                    configurations / "overrides" / "base.character_overrides.tsv",
                     OVERRIDE_FIELDS,
                     [{"id": "base", "character": "Base"}],
                 )
                 self.write_tsv(
-                    configurations / "dev.character_overrides.tsv",
+                    configurations / "overrides" / "dev.character_overrides.tsv",
                     OVERRIDE_FIELDS,
                     [],
                 )
@@ -316,7 +316,7 @@ class CharacterOverrideTests(unittest.TestCase):
             definition.parent.mkdir(parents=True, exist_ok=True)
             definition.write_text("{}\n", encoding="utf-8")
             self.write_tsv(
-                configurations / "base.character_overrides.tsv",
+                configurations / "overrides" / "base.character_overrides.tsv",
                 OVERRIDE_FIELDS,
                 [
                     {"id": "base", "character": "Base", "substitution_cost": "2.5"},
@@ -325,7 +325,7 @@ class CharacterOverrideTests(unittest.TestCase):
                 ],
             )
             self.write_tsv(
-                configurations / "dev.character_overrides.tsv",
+                configurations / "overrides" / "dev.character_overrides.tsv",
                 OVERRIDE_FIELDS,
                 [{"id": 1, "character": "Alpha", "substitution_cost": "3"}],
             )
@@ -362,7 +362,7 @@ class CharacterOverrideTests(unittest.TestCase):
             self.assertEqual(configuration.base.values[0], 1.0)
             self.assertEqual(
                 configuration.resource_files,
-                ((builder / "resources" / "character_data.tsv").resolve(), table.resolve()),
+                ((builder.parent / "resources" / "character_data.tsv").resolve(), table.resolve()),
             )
 
     def test_rejects_identity_mismatch_and_invalid_numbers(self) -> None:
@@ -381,12 +381,12 @@ class CharacterOverrideTests(unittest.TestCase):
                 definition.parent.mkdir(parents=True, exist_ok=True)
                 definition.write_text("{}\n", encoding="utf-8")
                 self.write_tsv(
-                    configurations / "base.character_overrides.tsv",
+                    configurations / "overrides" / "base.character_overrides.tsv",
                     OVERRIDE_FIELDS,
                     [{"id": "base", "character": "Base", "substitution_cost": 0.5}],
                 )
                 self.write_tsv(
-                    configurations / "dev.character_overrides.tsv",
+                    configurations / "overrides" / "dev.character_overrides.tsv",
                     OVERRIDE_FIELDS,
                     [row],
                 )
@@ -402,12 +402,12 @@ class CharacterOverrideTests(unittest.TestCase):
             definition.parent.mkdir(parents=True, exist_ok=True)
             definition.write_text("{}\n", encoding="utf-8")
             self.write_tsv(
-                configurations / "base.character_overrides.tsv",
+                configurations / "overrides" / "base.character_overrides.tsv",
                 OVERRIDE_FIELDS,
                 [{"id": "base", "character": "Base", "substitution_cost": "+2.5"}],
             )
             self.write_tsv(
-                configurations / "dev.character_overrides.tsv",
+                configurations / "overrides" / "dev.character_overrides.tsv",
                 OVERRIDE_FIELDS,
                 [],
             )
@@ -426,12 +426,12 @@ class CharacterOverrideTests(unittest.TestCase):
             definition.parent.mkdir(parents=True, exist_ok=True)
             definition.write_text("{}\n", encoding="utf-8")
             self.write_tsv(
-                configurations / "base.character_overrides.tsv",
+                configurations / "overrides" / "base.character_overrides.tsv",
                 OVERRIDE_FIELDS,
                 [{"id": 1, "character": "Alpha", "substitution_cost": 2}],
             )
             self.write_tsv(
-                configurations / "dev.character_overrides.tsv",
+                configurations / "overrides" / "dev.character_overrides.tsv",
                 OVERRIDE_FIELDS,
                 [],
             )

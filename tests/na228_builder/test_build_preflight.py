@@ -106,13 +106,14 @@ class BuildPreflightTests(unittest.TestCase):
                         "builder": "na228_builder",
                         "source": "source_roots",
                         "build": "build",
+                        "pcsx2_files": "shared",
                         "pcsx2_cheats": "shared/cheats",
                         "pcsx2_game_settings": "shared/game_settings",
                         "pcsx2_input_profiles": "shared/input_profiles",
                         "pcsx2_memory_cards": "shared/memory_cards",
                     },
                     "files": {
-                        "settings": "@repository/settings.json",
+                        "settings": "@repository/game.json",
                         "game_catalog": "@repository/games.json",
                     },
                 }
@@ -131,7 +132,7 @@ class BuildPreflightTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        (workspace / "settings.json").write_text(
+        (workspace / "game.json").write_text(
             json.dumps(
                 {
                     "schema_version": 1,
@@ -329,7 +330,7 @@ class BuildPreflightTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             initial = state_fingerprint(self.state(paths))
-            settings = paths["workspace"] / "settings.json"
+            settings = paths["workspace"] / "game.json"
             document = json.loads(settings.read_text(encoding="utf-8"))
             document["title"] = "Changed Product"
             settings.write_text(json.dumps(document), encoding="utf-8")

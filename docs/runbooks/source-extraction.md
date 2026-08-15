@@ -69,7 +69,7 @@ The command refuses the whole source root and `@source/__old/`.
 Confirmed ROFS/CVM passwords:
 
 - NA2, NUN3, NUN5: `cc2fuku`
-- NUN6 A35: `Iruka`
+- NUN6: `Iruka`
 
 Use `@media_scripts/split_cvm_rofs.ps1` to split encrypted CVM safely. Do not use
 the historical `@tools/old/CVM Parser/cvm_tool.exe` workflow.

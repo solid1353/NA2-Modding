@@ -1,0 +1,270 @@
+[+Practice QoL]
+patch=1,EE,001ED920,word,00000000 // Voice off
+patch=1,EE,001ED96C,word,A080000B // Support off
+patch=1,EE,001ED884,word,00000000 // Command display off
+patch=1,EE,001ED89C,word,00000000 // Simple display off
+
+[+Match NA228 automatic startup flow]
+// Select English and complete the only call to the language selector immediately.
+patch=1,EE,003D0C60,word,3C020061 // lui v0,0x61
+patch=1,EE,003D0C64,word,AC401C10 // sw zero,0x1c10(v0)
+patch=1,EE,003D0C68,word,24020001 // li v0,1
+patch=1,EE,003D0C6C,word,03E00008 // jr ra
+patch=1,EE,003D0C70,word,00000000 // nop
+
+// Suppress the remaining logo sequence after the normal English text load.
+patch=1,EE,001E6620,word,00000000 // nop the branch into logo playback
+
+// Enter the title state after required startup loaders, select Continue, map every
+// no-load result to normal menu continuation, and suppress the Save/Load child draw.
+patch=1,EE,001E6DB4,word,24030003 // li v1,3
+patch=1,EE,001E6E28,word,24020002 // li v0,2
+patch=1,EE,001EFEDC,word,0C0F4320 // jal 0x003d0c80
+patch=1,EE,001EFEFC,word,0000102D // move v0,zero
+patch=1,EE,001F0174,word,00000000 // nop
+
+// Silent record-zero loader at 0x003D0C80. The selector tail is unreachable after
+// the entry stub above. This 448-byte block ends at 0x003D0E3F; each word retains
+// its decoded instruction so the PNACH is the auditable assembly source.
+patch=1,EE,003D0C80,word,27BDFFA0 // addiu sp,sp,-96
+patch=1,EE,003D0C84,word,3C03001E // lui v1,0x1e
+patch=1,EE,003D0C88,word,FFB40040 // sd s4,64(sp)
+patch=1,EE,003D0C8C,word,3C06001E // lui a2,0x1e
+patch=1,EE,003D0C90,word,FFB30030 // sd s3,48(sp)
+patch=1,EE,003D0C94,word,3C07001E // lui a3,0x1e
+patch=1,EE,003D0C98,word,FFB20020 // sd s2,32(sp)
+patch=1,EE,003D0C9C,word,3C13001E // lui s3,0x1e
+patch=1,EE,003D0CA0,word,FFB00000 // sd s0,0(sp)
+patch=1,EE,003D0CA4,word,3C12001D // lui s2,0x1d
+patch=1,EE,003D0CA8,word,FFBF0050 // sd ra,80(sp)
+patch=1,EE,003D0CAC,word,0080A02D // move s4,a0
+patch=1,EE,003D0CB0,word,FFB10010 // sd s1,16(sp)
+patch=1,EE,003D0CB4,word,00A0802D // move s0,a1
+patch=1,EE,003D0CB8,word,34637A00 // ori v1,v1,0x7a00
+patch=1,EE,003D0CBC,word,3652EEF0 // ori s2,s2,0xeef0
+patch=1,EE,003D0CC0,word,36737A20 // ori s3,s3,0x7a20
+patch=1,EE,003D0CC4,word,34C67A90 // ori a2,a2,0x7a90
+patch=1,EE,003D0CC8,word,3C110061 // lui s1,0x61
+patch=1,EE,003D0CCC,word,8E317CF4 // lw s1,31988(s1)
+patch=1,EE,003D0CD0,word,10800004 // beqz a0,0x003d0ce4
+patch=1,EE,003D0CD4,word,34E78E60 // ori a3,a3,0x8e60
+patch=1,EE,003D0CD8,word,24020001 // li v0,1
+patch=1,EE,003D0CDC,word,10A2000C // beq a1,v0,0x003d0d10
+patch=1,EE,003D0CE0,word,00000000 // nop
+patch=1,EE,003D0CE4,word,24030002 // li v1,2
+patch=1,EE,003D0CE8,word,DFBF0050 // ld ra,80(sp)
+patch=1,EE,003D0CEC,word,0060102D // move v0,v1
+patch=1,EE,003D0CF0,word,DFB40040 // ld s4,64(sp)
+patch=1,EE,003D0CF4,word,DFB30030 // ld s3,48(sp)
+patch=1,EE,003D0CF8,word,DFB20020 // ld s2,32(sp)
+patch=1,EE,003D0CFC,word,DFB10010 // ld s1,16(sp)
+patch=1,EE,003D0D00,word,DFB00000 // ld s0,0(sp)
+patch=1,EE,003D0D04,word,03E00008 // jr ra
+patch=1,EE,003D0D08,word,27BD0060 // addiu sp,sp,96
+patch=1,EE,003D0D0C,word,00000000 // nop
+patch=1,EE,003D0D10,word,5220FFF5 // beqzl s1,0x003d0ce8
+patch=1,EE,003D0D14,word,24030002 // li v1,2
+patch=1,EE,003D0D18,word,8C840008 // lw a0,8(a0)
+patch=1,EE,003D0D1C,word,1080003C // beqz a0,0x003d0e10
+patch=1,EE,003D0D20,word,00000000 // nop
+patch=1,EE,003D0D24,word,8E25004C // lw a1,76(s1)
+patch=1,EE,003D0D28,word,8E280050 // lw t0,80(s1)
+patch=1,EE,003D0D2C,word,10900028 // beq a0,s0,0x003d0dd0
+patch=1,EE,003D0D30,word,24020002 // li v0,2
+patch=1,EE,003D0D34,word,10820011 // beq a0,v0,0x003d0d7c
+patch=1,EE,003D0D38,word,24020003 // li v0,3
+patch=1,EE,003D0D3C,word,1482FFEA // bne a0,v0,0x003d0ce8
+patch=1,EE,003D0D40,word,24030002 // li v1,2
+patch=1,EE,003D0D44,word,24020004 // li v0,4
+patch=1,EE,003D0D48,word,10A2000A // beq a1,v0,0x003d0d74
+patch=1,EE,003D0D4C,word,24020011 // li v0,17
+patch=1,EE,003D0D50,word,10A20008 // beq a1,v0,0x003d0d74
+patch=1,EE,003D0D54,word,24020012 // li v0,18
+patch=1,EE,003D0D58,word,10A20006 // beq a1,v0,0x003d0d74
+patch=1,EE,003D0D5C,word,24020013 // li v0,19
+patch=1,EE,003D0D60,word,14A2FFE2 // bne a1,v0,0x003d0cec
+patch=1,EE,003D0D64,word,DFBF0050 // ld ra,80(sp)
+patch=1,EE,003D0D68,word,39020001 // xori v0,t0,0x1
+patch=1,EE,003D0D6C,word,1000FFDF // b 0x003d0cec
+patch=1,EE,003D0D70,word,2C430001 // sltiu v1,v0,1
+patch=1,EE,003D0D74,word,1000FFDC // b 0x003d0ce8
+patch=1,EE,003D0D78,word,0000182D // move v1,zero
+patch=1,EE,003D0D7C,word,24020004 // li v0,4
+patch=1,EE,003D0D80,word,10A2FFD9 // beq a1,v0,0x003d0ce8
+patch=1,EE,003D0D84,word,0000182D // move v1,zero
+patch=1,EE,003D0D88,word,24020010 // li v0,16
+patch=1,EE,003D0D8C,word,50A2000B // beql a1,v0,0x003d0dbc
+patch=1,EE,003D0D90,word,24020003 // li v0,3
+patch=1,EE,003D0D94,word,14A2FFD4 // bne a1,v0,0x003d0ce8
+patch=1,EE,003D0D98,word,24030002 // li v1,2
+patch=1,EE,003D0D9C,word,0220202D // move a0,s1
+patch=1,EE,003D0DA0,word,00E0F809 // jalr a3
+patch=1,EE,003D0DA4,word,24050001 // li a1,1
+patch=1,EE,003D0DA8,word,24020003 // li v0,3
+patch=1,EE,003D0DAC,word,0000182D // move v1,zero
+patch=1,EE,003D0DB0,word,AE820008 // sw v0,8(s4)
+patch=1,EE,003D0DB4,word,1000FFCD // b 0x003d0cec
+patch=1,EE,003D0DB8,word,DFBF0050 // ld ra,80(sp)
+patch=1,EE,003D0DBC,word,1502FFCA // bne t0,v0,0x003d0ce8
+patch=1,EE,003D0DC0,word,0000182D // move v1,zero
+patch=1,EE,003D0DC4,word,1000FFF3 // b 0x003d0d94
+patch=1,EE,003D0DC8,word,24020010 // li v0,16
+patch=1,EE,003D0DCC,word,00000000 // nop
+patch=1,EE,003D0DD0,word,24020004 // li v0,4
+patch=1,EE,003D0DD4,word,10A2FFC4 // beq a1,v0,0x003d0ce8
+patch=1,EE,003D0DD8,word,0000182D // move v1,zero
+patch=1,EE,003D0DDC,word,14A4FFC2 // bne a1,a0,0x003d0ce8
+patch=1,EE,003D0DE0,word,24030002 // li v1,2
+patch=1,EE,003D0DE4,word,1500FFC1 // bnez t0,0x003d0cec
+patch=1,EE,003D0DE8,word,DFBF0050 // ld ra,80(sp)
+patch=1,EE,003D0DEC,word,92220000 // lbu v0,0(s1)
+patch=1,EE,003D0DF0,word,5040FFBF // beqzl v0,0x003d0cf0
+patch=1,EE,003D0DF4,word,0060102D // move v0,v1
+patch=1,EE,003D0DF8,word,0220202D // move a0,s1
+patch=1,EE,003D0DFC,word,00C0F809 // jalr a2
+patch=1,EE,003D0E00,word,0000282D // move a1,zero
+patch=1,EE,003D0E04,word,24020002 // li v0,2
+patch=1,EE,003D0E08,word,1000FFE9 // b 0x003d0db0
+patch=1,EE,003D0E0C,word,0000182D // move v1,zero
+patch=1,EE,003D0E10,word,AE250054 // sw a1,84(s1)
+patch=1,EE,003D0E14,word,0060F809 // jalr v1
+patch=1,EE,003D0E18,word,0220202D // move a0,s1
+patch=1,EE,003D0E1C,word,0240F809 // jalr s2
+patch=1,EE,003D0E20,word,0000202D // move a0,zero
+patch=1,EE,003D0E24,word,0000282D // move a1,zero
+patch=1,EE,003D0E28,word,0260F809 // jalr s3
+patch=1,EE,003D0E2C,word,0220202D // move a0,s1
+patch=1,EE,003D0E30,word,AE900008 // sw s0,8(s4)
+patch=1,EE,003D0E34,word,1000FFAC // b 0x003d0ce8
+patch=1,EE,003D0E38,word,0000182D // move v1,zero
+patch=1,EE,003D0E3C,word,00000000 // nop
+
+[+Practice bootstrap]
+// Requires the automatic-startup section above. Its language-selector stub makes
+// the remaining 0x003D0E40..0x003D0FFF tail resident and unreachable.
+// Route successful Continue startup into the native Practice controller.
+patch=1,EE,001EFA28,word,24020004 // li v0,4
+patch=1,EE,001EFA2C,word,AE020008 // sw v0,8(s0)
+patch=1,EE,001EFA30,word,24020003 // li v0,3
+patch=1,EE,001EFA34,word,10000029 // retain the native branch
+patch=1,EE,001EFA38,word,AE02000C // sw v0,12(s0)
+
+// Replace only the state-7 Character Select and state-15 battle-update calls.
+patch=1,EE,001F2D7C,word,0C0F4390 // jal 0x003d0e40
+patch=1,EE,001F2E1C,word,0C0F43AF // jal 0x003d0ebc
+
+// Configured-match wrapper at 0x003D0E40.
+patch=1,EE,003D0E40,word,3C080061 // lui t0,0x61
+patch=1,EE,003D0E44,word,8D087D00 // lw t0,32000(t0)
+patch=1,EE,003D0E48,word,1100001A // beqz t0,3d0eb4
+patch=1,EE,003D0E4C,word,00000000 // nop
+patch=1,EE,003D0E50,word,3C09003D // lui t1,0x3d
+patch=1,EE,003D0E54,word,25290FF0 // addiu t1,t1,4080
+patch=1,EE,003D0E58,word,8D2A0000 // lw t2,0(t1)
+patch=1,EE,003D0E5C,word,8D2B0004 // lw t3,4(t1)
+patch=1,EE,003D0E60,word,AD20FFFC // sw zero,-4(t1)
+patch=1,EE,003D0E64,word,240C0039 // li t4,57
+patch=1,EE,003D0E68,word,240D0001 // li t5,1
+patch=1,EE,003D0E6C,word,240E0006 // li t6,6
+patch=1,EE,003D0E70,word,AD0A004C // sw t2,76(t0)
+patch=1,EE,003D0E74,word,AD0A00C8 // sw t2,200(t0)
+patch=1,EE,003D0E78,word,AD0B0068 // sw t3,104(t0)
+patch=1,EE,003D0E7C,word,AD0B00E4 // sw t3,228(t0)
+patch=1,EE,003D0E80,word,AD0C0074 // sw t4,116(t0)
+patch=1,EE,003D0E84,word,AD0C00F0 // sw t4,240(t0)
+patch=1,EE,003D0E88,word,AD0D0090 // sw t5,144(t0)
+patch=1,EE,003D0E8C,word,AD0D010C // sw t5,268(t0)
+patch=1,EE,003D0E90,word,A10E0098 // sb t6,152(t0)
+patch=1,EE,003D0E94,word,240E0003 // li t6,3
+patch=1,EE,003D0E98,word,AC8E0004 // sw t6,4(a0)
+patch=1,EE,003D0E9C,word,240E000A // li t6,10
+patch=1,EE,003D0EA0,word,AC8E0000 // sw t6,0(a0)
+patch=1,EE,003D0EA4,word,080F43E3 // j 3d0f8c
+patch=1,EE,003D0EA8,word,0100202D // move a0,t0
+patch=1,EE,003D0EAC,word,00000000 // nop
+patch=1,EE,003D0EB0,word,00000000 // nop
+patch=1,EE,003D0EB4,word,03E00008 // jr ra
+patch=1,EE,003D0EB8,word,00000000 // nop
+
+// Native battle update plus one requested awakening at 0x003D0EBC.
+patch=1,EE,003D0EBC,word,27BDFFF0 // addiu sp,sp,-16
+patch=1,EE,003D0EC0,word,FFBF0000 // sd ra,0(sp)
+patch=1,EE,003D0EC4,word,0C07CFD0 // jal 1f3f40
+patch=1,EE,003D0EC8,word,00000000 // nop
+patch=1,EE,003D0ECC,word,3C18003D // lui t8,0x3d
+patch=1,EE,003D0ED0,word,27180FF0 // addiu t8,t8,4080
+patch=1,EE,003D0ED4,word,8F0AFFFC // lw t2,-4(t8)
+patch=1,EE,003D0ED8,word,15400041 // bnez t2,3d0fe0
+patch=1,EE,003D0EDC,word,8F090008 // lw t1,8(t8)
+patch=1,EE,003D0EE0,word,240AFFFF // li t2,-1
+patch=1,EE,003D0EE4,word,112A003E // beq t1,t2,3d0fe0
+patch=1,EE,003D0EE8,word,3C080061 // lui t0,0x61
+patch=1,EE,003D0EEC,word,8D087D00 // lw t0,32000(t0)
+patch=1,EE,003D0EF0,word,1100003B // beqz t0,3d0fe0
+patch=1,EE,003D0EF4,word,00000000 // nop
+patch=1,EE,003D0EF8,word,8D080DE4 // lw t0,3556(t0)
+patch=1,EE,003D0EFC,word,11000038 // beqz t0,3d0fe0
+patch=1,EE,003D0F00,word,00000000 // nop
+patch=1,EE,003D0F04,word,950A08E8 // lhu t2,2280(t0)
+patch=1,EE,003D0F08,word,152A0004 // bne t1,t2,3d0f1c
+patch=1,EE,003D0F0C,word,240B0001 // li t3,1
+patch=1,EE,003D0F10,word,AF0BFFFC // sw t3,-4(t8)
+patch=1,EE,003D0F14,word,10000032 // b 3d0fe0
+patch=1,EE,003D0F18,word,00000000 // nop
+
+// Wait for the native controller gate, then recreate FUN_002149E0's frame and
+// enter its shared transition tail with the exact configured effect in s1.
+patch=1,EE,003D0F1C,word,3C0A0061 // lui t2,0x61
+patch=1,EE,003D0F20,word,8D4A7F54 // lw t2,32596(t2)
+patch=1,EE,003D0F24,word,11400005 // beqz t2,3d0f3c
+patch=1,EE,003D0F28,word,00000000 // nop
+patch=1,EE,003D0F2C,word,914A0010 // lbu t2,16(t2)
+patch=1,EE,003D0F30,word,11400002 // beqz t2,3d0f3c
+patch=1,EE,003D0F34,word,240B00FF // li t3,255
+patch=1,EE,003D0F38,word,154B0029 // bne t2,t3,3d0fe0
+patch=1,EE,003D0F3C,word,DFBF0000 // ld ra,0(sp)
+patch=1,EE,003D0F40,word,27BD0010 // addiu sp,sp,16
+patch=1,EE,003D0F44,word,27BDFFC0 // addiu sp,sp,-64
+patch=1,EE,003D0F48,word,FFBF0030 // sd ra,48(sp)
+patch=1,EE,003D0F4C,word,7FB20020 // sq s2,32(sp)
+patch=1,EE,003D0F50,word,7FB10010 // sq s1,16(sp)
+patch=1,EE,003D0F54,word,7FB00000 // sq s0,0(sp)
+patch=1,EE,003D0F58,word,0100902D // move s2,t0
+patch=1,EE,003D0F5C,word,0120882D // move s1,t1
+patch=1,EE,003D0F60,word,96440060 // lhu a0,96(s2)
+patch=1,EE,003D0F64,word,00042142 // srl a0,a0,5
+patch=1,EE,003D0F68,word,3084000F // andi a0,a0,15
+patch=1,EE,003D0F6C,word,0C0813B4 // jal 204ed0
+patch=1,EE,003D0F70,word,00000000 // nop
+patch=1,EE,003D0F74,word,14400003 // bnez v0,3d0f84
+patch=1,EE,003D0F78,word,00000000 // nop
+patch=1,EE,003D0F7C,word,08085333 // j 214ccc
+patch=1,EE,003D0F80,word,00000000 // nop
+patch=1,EE,003D0F84,word,08085378 // j 214de0
+patch=1,EE,003D0F88,word,00000000 // nop
+// Initialize the configured character's native ordinary-Jutsu slots before the
+// state-10 loadout finalizer applies support-linked replacements.
+patch=1,EE,003D0F8C,word,27BDFFE0 // addiu sp,sp,-32
+patch=1,EE,003D0F90,word,FFBF0010 // sd ra,16(sp)
+patch=1,EE,003D0F94,word,7FB00000 // sq s0,0(sp)
+patch=1,EE,003D0F98,word,0080802D // move s0,a0
+patch=1,EE,003D0F9C,word,26040020 // addiu a0,s0,32
+patch=1,EE,003D0FA0,word,24050001 // li a1,1
+patch=1,EE,003D0FA4,word,0000302D // move a2,zero
+patch=1,EE,003D0FA8,word,0C07ECF0 // jal 0x001fb3c0
+patch=1,EE,003D0FAC,word,00000000 // nop
+patch=1,EE,003D0FB0,word,26040020 // addiu a0,s0,32
+patch=1,EE,003D0FB4,word,24050001 // li a1,1
+patch=1,EE,003D0FB8,word,0000302D // move a2,zero
+patch=1,EE,003D0FBC,word,0C07ED0C // jal 0x001fb430
+patch=1,EE,003D0FC0,word,00000000 // nop
+patch=1,EE,003D0FC4,word,DFBF0010 // ld ra,16(sp)
+patch=1,EE,003D0FC8,word,7BB00000 // lq s0,0(sp)
+patch=1,EE,003D0FCC,word,27BD0020 // addiu sp,sp,32
+patch=1,EE,003D0FD0,word,24040001 // li a0,1
+patch=1,EE,003D0FD4,word,0000282D // move a1,zero
+patch=1,EE,003D0FD8,word,08081CE4 // j 0x00207390
+patch=1,EE,003D0FDC,word,00000000 // nop
+patch=1,EE,003D0FE0,word,DFBF0000 // ld ra,0(sp)
+patch=1,EE,003D0FE4,word,03E00008 // jr ra
+patch=1,EE,003D0FE8,word,27BD0010 // addiu sp,sp,16

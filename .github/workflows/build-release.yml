@@ -48,7 +48,7 @@ jobs:
         shell: pwsh
         run: |
           $manifest = Get-Content -Raw na228_builder/release_manifest.json | ConvertFrom-Json
-          $settings = Get-Content -Raw settings.json | ConvertFrom-Json
+          $settings = Get-Content -Raw game.json | ConvertFrom-Json
           . ./scripts/lib/paths.ps1
           $paths = Get-Na2LocalPaths -AllowMissing
           $executableName = "$([string]$settings.title)_$([string]$manifest.product_version).exe"

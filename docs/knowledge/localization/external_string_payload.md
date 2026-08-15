@@ -65,9 +65,9 @@ The source artifacts remained read-only. The principal artifacts inspected were:
 | NA2 | `@source_na2/PRG/ETC.BIN` | 200,448 | `8FF3C6E1ED5CE2B093B0934C898C40D1CEEA0C20778C49CDA5591AAD02375C74` |
 | NUN5 | `@source_nun5/SLES_556.05` | 5,340,912 | `20A43677397731A2A20899336D1165ACE5B436906B9B89BE90FB10F4558DD19D` |
 | NUN5 | `@source_nun5/PRG/TEXTENG.BIN` | 199,936 | `3E42D2DDFFE770B05DD41E2C5937380133E255C9CE32CA2F037E34C65A8E571E` |
-| NUN6 A35 | `@source_nun6/SLUS_556.06` | 5,340,912 | `47C40141A3E1AEB0C96BC28E8DC311938B284D54FD21F4D8BA953C2E16234809` |
-| NUN6 A35 | `@source_nun6/PRG/MOD.BIN` | 804,320 | `6EAB9760D2BD6583630D096EB08FB7F09E299F5E2FB64DF2413E5DC2ED182998` |
-| NUN6 A35 | `@source_nun6/PRG/TEXTBRA.BIN` | 312,064 | `07E30831DC9E88BA4E0DDB1B4F3FD8EDD0D8C4D1CF170BD59BFCB17C09E256BF` |
+| NUN6 | `@source_nun6/SLUS_556.06` | 5,340,912 | `47C40141A3E1AEB0C96BC28E8DC311938B284D54FD21F4D8BA953C2E16234809` |
+| NUN6 | `@source_nun6/PRG/MOD.BIN` | 804,320 | `6EAB9760D2BD6583630D096EB08FB7F09E299F5E2FB64DF2413E5DC2ED182998` |
+| NUN6 | `@source_nun6/PRG/TEXTBRA.BIN` | 312,064 | `07E30831DC9E88BA4E0DDB1B4F3FD8EDD0D8C4D1CF170BD59BFCB17C09E256BF` |
 
 Methods and tools:
 
@@ -103,9 +103,9 @@ accessors. Relevant established functions are:
 The NUN5 filename block begins at runtime `0x005BB228`, its pointer table at
 `0x005BB280`, and its path prefix at `0x005BB298`.
 
-### NUN6 A35
+### NUN6
 
-NUN6 A35 is a Brazilian modification of NUN5. It retains the five language
+NUN6 is a Brazilian modification of NUN5. It retains the five language
 slots but makes only the first slot non-null (`TextBra.bin`). It also adds
 `MOD.BIN`, redirects the NUN5 loader's filename and destination to that module,
 and transfers control into resident MOD code.

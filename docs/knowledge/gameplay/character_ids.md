@@ -18,13 +18,15 @@ stored entry. See [Content availability](../game/content_availability.md) for
 the save-backed domain and unlock-reader contract.
 
 The complete builder reference is
-[`na228_builder/resources/character_data.tsv`](../../../na228_builder/resources/character_data.tsv).
+[`resources/character_data.tsv`](../../../resources/character_data.tsv).
 Its names and IDs validate per-character configuration. Its `awakening_ids`
 column records the union of the fighter-controller association list and every
 non-`0xFFFF` post-effect in that character's Ultimate-Jutsu records, plus effects
 applied by hard-coded transformed-form initialization and character-specific
-direct or successor paths. The union defines compatible active states for
-Practice bootstrap and does not imply how the game normally enters each state.
+direct or successor paths. The union records compatible active states for
+fixed Practice test matrices and does not imply how the game normally enters
+each state. The runtime Practice launcher does not read this table or infer
+cases from it.
 `support_id` maps a playable character to its
 separate native support-roster ID, with a blank cell when no native support
 entry maps to that character. `linked_uj` and `linked_jutsu` record the support

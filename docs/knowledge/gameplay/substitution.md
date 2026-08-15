@@ -11,7 +11,8 @@ control-flow boundary so they are not investigated again without new evidence.
   `SLPS_258.37`.
 - Clean source: `@source/NA2.iso.files/SLPS_258.37`, SHA-256
   `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`.
-- Current serial-wide cheat file: `@pcsx2_cheats/SLOP-NA228.pnach`.
+- Current serial-wide cheat file:
+  `@pcsx2_files/games/NA228/NA228.pnach`.
 - Historical CRC alias during the investigation: `@pcsx2_cheats/SLPS-25837_E0F064C5.pnach`. The current workflow no longer generates CRC aliases.
 - Historical NA2 decompiler/Ghidra evidence remains available through Git
   history. Restore reusable analysis only under `@disassembly/NA2/`.
@@ -73,20 +74,21 @@ Naruto transformed during the match retains base ID 57 there even though its
 live fighter ID becomes 73. Native subtraction and zero clamping resume
 unchanged at `0x202298C8`.
 
-The table is generated from `base.character_overrides.tsv` and the selected
-profile TSV. The base substitution cell is literal. An unsigned character cell
-is literal, while an explicitly signed character cell is a delta from the
-resolved base cost; empty profile cells inherit both value and mode. The current
-configuration records base cost `2.5` and tier deltas from `+0.0` through
-`+3.5` in `0.5` steps. No IDs or values are compiled into the selector C. The
-configuration also reserves `hp`, damage, and recovery fields for later
-consumers.
+The table is generated from
+`configurations/overrides/base.character_overrides.tsv` and the selected
+profile TSV in that directory. The base substitution cell is literal. An
+unsigned character cell is literal, while an explicitly signed character cell
+is a delta from the resolved base cost; empty profile cells inherit both value
+and mode. The current configuration records base cost `2.5` and tier deltas
+from `+0.0` through `+3.5` in `0.5` steps. No IDs or values are compiled into
+the selector C. The configuration also reserves `hp`, damage, and recovery
+fields for later consumers.
 
 The addresses, displaced instructions, and identity field are statically and
 capture-confirmed. The user runtime-confirmed the earlier selective selector in
 Practice: Naruto versus Naruto in save state 1, and Sakura versus Naruto in save
-state 2. The generated-table implementation and its development Character
-Select overlay were accepted through `ver` on 2026-08-14. See
+state 2. The generated-table implementation was accepted through `ver` on
+2026-08-14. See
 [Character identity in battle](character_ids.md) for the selector and active
 fighter evidence.
 

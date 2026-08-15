@@ -10,3 +10,6 @@ Desktop.ini
 /e2e/captures/
 /e2e/.transactions/
 __pycache__/
+
+# Misc
+*.ps2

@@ -12,13 +12,14 @@
   only release packaging uses `release.json`.
   Loading applies the selected configuration's `overrides` directly to the base
   features. Matching `base`, `dev`, `test`, and `release`
-  `.character_overrides.tsv` files layer nonempty per-character battle values
-  by ID. Release packaging materializes both selected layers into one external
-  JSON configuration and one external character-override TSV.
+  `.character_overrides.tsv` files under `configurations/overrides/` layer
+  nonempty per-character battle values by ID. Release packaging materializes
+  both selected layers into one external JSON configuration and one external
+  character-override TSV.
   Feature-named JSON files under
   `na228_builder/catalog/` own selectable definitions; files under
   `na228_builder/catalog/implementation/` own guarded binary edits, runtime
-  hooks and payload declarations, and targets. Root `settings.json` owns output
+  hooks and payload declarations, and targets. Root `game.json` owns output
   identity, build variants, and project launch settings.
 - JSON files under `na228_builder/configurations/` exclusively own feature
   enablement and nested selection. Paired character-override TSVs exclusively

@@ -98,13 +98,14 @@ if ($mode -eq 'help') {
         '  na228 [-f] [-t|-u]         Build and run Latest with accelerated startup'
         '  na228 w [C path|plan]      Watch all registered C by default'
         '  na228 w injection_test     Watch only the reload-message smoke test'
-        '  na228 <token> [token] [-t|-u]  Run one or two games with accelerated startup'
+        '  na228 <token> [token] [-c <cheats-config> <row>] [-t|-u]  Run one or two games'
         '  l | p | m                  Latest | Previous | Manual'
         '  bl | bm [-f]               Build and run Latest | Manual'
         '  <token>w [C path|plan]     Watch that game; selection follows its token'
+        '  -f                          Bypass non-critical validation errors during an ordinary build'
         '  -t                          Continue in Turbo after startup acceleration'
         '  -u                          Launch in Unlimited'
-        '  -f                          Bypass non-critical validation errors during an ordinary build'
+        '  -c <cheats-config> <row>     Select cheats and a movesets.tsv row starting at 2'
         '  additional launch arguments  See workshop help'
         ''
         '  na228 build l|m [-f]        Build Latest or Manual without running it'
@@ -405,6 +406,7 @@ foreach ($buildAction in @($buildActions | Select-Object -Unique)) {
 $launchParameters = @{
     Games = @($games)
     ProjectRoot = $paths.repository
+    InputRecordingsRoot = $paths.pcsx2_input_recordings
 }
 $valuedLaunchOptions = @{
     '-p' = 'Play'
@@ -412,8 +414,34 @@ $valuedLaunchOptions = @{
     '-s' = 'Snapshots'
     '-mc' = 'MemoryCard'
 }
+$cheatsConfiguration = $null
+$cheatsRow = $null
 for ($index = 0; $index -lt $forwardedLaunchArguments.Count; $index++) {
     $option = $forwardedLaunchArguments[$index].ToLowerInvariant()
+    if ($option -eq '-c') {
+        if ($null -ne $cheatsConfiguration) {
+            throw '-c may be specified only once.'
+        }
+        if ($index + 2 -ge $forwardedLaunchArguments.Count) {
+            throw '-c requires a cheats configuration and row.'
+        }
+        $cheatsConfiguration = $forwardedLaunchArguments[++$index].ToLowerInvariant()
+        if ($cheatsConfiguration -cne 'practice') {
+            throw "Unknown cheats configuration: $cheatsConfiguration"
+        }
+        $row = 0
+        if (
+            -not [int]::TryParse(
+                [string]$forwardedLaunchArguments[++$index],
+                [ref]$row
+            ) -or
+            $row -lt 2
+        ) {
+            throw 'Cheats configuration row must be a decimal integer starting at 2.'
+        }
+        $cheatsRow = $row
+        continue
+    }
     if ($option -eq '-dw') {
         if ($launchParameters.ContainsKey('DiscardMemoryCardWrites')) {
             throw '-dw may be specified only once.'
@@ -440,6 +468,16 @@ $selectedLaunchModes = @(
 )
 if ($selectedLaunchModes.Count -gt 1) {
     throw 'Use only one of -p, -r, or -s.'
+}
+if ($cheatsConfiguration -ceq 'practice') {
+    $practice = & (Join-Path $paths.scripts 'na228\practice.ps1') `
+        -MovesetRow $cheatsRow `
+        -Games @($games) `
+        -ProjectRoot $paths.repository
+    $launchParameters.PnachByGame = $practice.PnachByGame
+    $launchParameters.PnachLinesByGame = $practice.PnachLinesByGame
+    $launchParameters.ReadOnlySettings = $true
+    $launchParameters.DiscardMemoryCardWrites = $true
 }
 if ($launchParameters.ContainsKey('Snapshots')) {
     if ($turbo -or $unlimited) {

@@ -140,6 +140,8 @@ try {
     New-Item -ItemType Directory -Force -Path $fakeNa2Scripts | Out-Null
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\run.ps1') `
         -Destination $fakeNa2Scripts
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\practice.ps1') `
+        -Destination $fakeNa2Scripts
     Set-Na2Utf8FileAtomic `
         -Path (Join-Path $fakeNa2Scripts 'launch_settings.ps1') `
         -Content @'
@@ -167,11 +169,13 @@ function Get-Na2StartupFastForwardFrames {
     "build": "build",
     "logs": "logs",
     "builder": "na228_builder",
+    "resources": "resources",
     "pcsx2_dev": "pcsx2_dev",
     "pcsx2_files": "pcsx2_files",
     "pcsx2_cheats": "@pcsx2_files/cheats",
     "pcsx2_game_settings": "@pcsx2_files/game_settings",
     "pcsx2_input_profiles": "@pcsx2_files/input_profiles",
+    "pcsx2_input_recordings": "@pcsx2_files/input_recordings",
     "pcsx2_memory_cards": "@pcsx2_files/memory_cards",
     "scripts": "scripts",
     "pcsx2_scripts": "@scripts/pcsx2",
@@ -179,7 +183,7 @@ function Get-Na2StartupFastForwardFrames {
   },
   "files": {
     "game_catalog": "@repository/games.json",
-    "settings": "@repository/settings.json",
+    "settings": "@repository/game.json",
     "game_resolver": "@scripts/lib/resolve_game.py",
     "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
     "pcsx2_game_launch_command": "@scripts/pcsx2/launch_games.ps1",
@@ -204,7 +208,7 @@ function Get-Na2StartupFastForwardFrames {
   }
 }
 '@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'settings.json') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'game.json') -Content @'
 {
   "schema_version": 1,
   "title": "Narutimate Accel v2.28",
@@ -245,31 +249,55 @@ if name in builds:
     result = {
         "iso": str(root / "build" / f"{title} - {builds[name]}.iso"),
         "postfix": builds[name],
-        "cheats": str(root / "pcsx2_files" / "cheats" / "SLOP-NA228.pnach"),
-        "game_settings": str(root / "pcsx2_files" / "game_settings" / "SLOP-NA228.ini"),
-        "memory_card": str(root / "pcsx2_files" / "memory_cards" / f"NA v2.28 - {builds[name]}.ps2"),
+        "cheats": str(root / "pcsx2_files" / "games" / "NA228" / "NA228.pnach"),
+        "game_settings": str(root / "pcsx2_files" / "games" / "NA228" / "NA228.ini"),
+        "memory_card": str(root / "pcsx2_files" / "games" / "NA228" / "NA228.ps2"),
         "input_profile": str(root / "pcsx2_files" / "input_profiles" / "Default_Base.ini"),
     }
 else:
     canonical = name.upper()
+    bundle = root / "pcsx2_files" / "games" / canonical
     result = {
         "iso": str(root / "source" / f"{canonical}.iso"),
         "extracted": str(root / "source" / f"{canonical}.iso.files"),
-        "cheats": str(root / "pcsx2_files" / "cheats" / "source" / f"{canonical}.pnach"),
-        "game_settings": str(root / "pcsx2_files" / "game_settings" / "source" / f"{canonical}.ini"),
-        "memory_card": str(root / "pcsx2_files" / "memory_cards" / f"{canonical}.ps2"),
+        "cheats": str(bundle / f"{canonical}.pnach"),
+        "game_settings": str(bundle / f"{canonical}.ini"),
+        "memory_card": str(bundle / f"{canonical}.ps2"),
         "input_profile": str(root / "pcsx2_files" / "input_profiles" / "Default_Base.ini"),
     }
 print(json.dumps(result))
 '@
     foreach ($directory in @(
-        'source', 'utils', 'build', 'logs', 'na228_builder', 'pcsx2_dev',
-        'pcsx2_files\cheats', 'pcsx2_files\game_settings',
-        'pcsx2_files\input_profiles', 'pcsx2_files\memory_cards', 'scripts', 'source\NA2.iso.files',
+        'source', 'utils', 'build', 'logs', 'na228_builder', 'resources', 'pcsx2_dev',
+        'pcsx2_files\games\NA2', 'pcsx2_files\games\NA228',
+        'pcsx2_files\games\NUN5',
+        'pcsx2_files\cheats\practice', 'pcsx2_files\game_settings',
+        'pcsx2_files\input_profiles', 'pcsx2_files\input_recordings',
+        'pcsx2_files\memory_cards', 'scripts', 'source\NA2.iso.files',
         'source\NUN5.iso.files', 'tests', 'work'
     )) {
         New-Item -ItemType Directory -Force -Path (Join-Path $fakeRepository $directory) | Out-Null
     }
+    $sourcePaths = Get-Na2Paths `
+        -ManifestPath (Join-Path $sourceRepository 'paths.json')
+    Copy-Item `
+        -LiteralPath ([string]$sourcePaths.files.cheat_template) `
+        -Destination (Join-Path $fakeRepository 'pcsx2_files\games\NA228\NA228.pnach')
+    Copy-Item `
+        -LiteralPath ([string]$sourcePaths.games.Entries.NA2.Config.cheats) `
+        -Destination (Join-Path $fakeRepository 'pcsx2_files\games\NA2\NA2.pnach')
+    Copy-Item `
+        -LiteralPath ([string]$sourcePaths.games.Entries.NUN5.Config.cheats) `
+        -Destination (Join-Path $fakeRepository 'pcsx2_files\games\NUN5\NUN5.pnach')
+    Copy-Item `
+        -LiteralPath (Join-Path $sourceRepository 'pcsx2_files\cheats\practice\NA228p.pnach') `
+        -Destination (Join-Path $fakeRepository 'pcsx2_files\cheats\practice\NA228p.pnach')
+    Copy-Item `
+        -LiteralPath (Join-Path $sourceRepository 'pcsx2_files\cheats\practice\NUN5p.pnach') `
+        -Destination (Join-Path $fakeRepository 'pcsx2_files\cheats\practice\NUN5p.pnach')
+    Copy-Item `
+        -LiteralPath (Join-Path $sourceRepository 'resources\movesets.tsv') `
+        -Destination (Join-Path $fakeRepository 'resources\movesets.tsv')
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'tests\run.ps1') -Content @'
 param()
 Add-Content `
@@ -283,7 +311,7 @@ Write-Output '[fake] unit tests'
         -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'logs\na228'))) `
         -Message 'Help invocation created run logs.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 <token> \[token\] \[-t\|-u\]') `
+        -Condition ($helpText -match '(?m)^\s*na228 <token> \[token\] \[-c <cheats-config> <row>\] \[-t\|-u\]') `
         -Message 'Root help omitted the ordered token grammar.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 \[-f\] \[-t\|-u\]\s+') `
@@ -294,6 +322,12 @@ Write-Output '[fake] unit tests'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 build l\|m\s') `
         -Message 'Root help omitted the explicit build-only command.'
+    Assert-Na2Test `
+        -Condition ($helpText -match '(?m)^\s*-c <cheats-config> <row>\s+') `
+        -Message 'Root help omitted the cheats-configuration selector.'
+    Assert-Na2Test `
+        -Condition ($helpText -notmatch '(?m)^\s*na228 practice\s+') `
+        -Message 'Root help retained the separate Practice command.'
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 build -d\s+') `
         -Message 'Root help retained the retired development dry-run command.'
@@ -328,11 +362,24 @@ Write-Output '[fake] unit tests'
 param(
     [string]$Target = 'dev',
     [string]$IsoPath,
+    [string]$MemoryCard,
+    [string]$Pnach,
+    [string[]]$PnachLines,
+    [switch]$ReadOnlySettings,
+    [switch]$DiscardMemoryCardWrites,
+    [switch]$Wait,
     [switch]$Turbo,
     [switch]$Unlimited,
     [UInt64]$UnlimitedForFrames
 )
-Write-Host "[fake] launch $Target $IsoPath turbo=$($Turbo.IsPresent) unlimited=$($Unlimited.IsPresent) frames=$UnlimitedForFrames"
+$bootstrapValues = @($PnachLines) -join '|'
+Write-Host (
+    "[fake] launch $Target $IsoPath turbo=$($Turbo.IsPresent) " +
+    "unlimited=$($Unlimited.IsPresent) frames=$UnlimitedForFrames " +
+    "readonly=$($ReadOnlySettings.IsPresent) " +
+    "discard=$($DiscardMemoryCardWrites.IsPresent) wait=$($Wait.IsPresent) " +
+    "pnach=$Pnach bootstrap=$bootstrapValues"
+)
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakePcsx2Scripts 'launch_games.ps1') -Content @'
 param(
@@ -343,10 +390,14 @@ param(
     [switch]$Snapshots,
     [string]$MemoryCard,
     [switch]$DiscardMemoryCardWrites,
+    [switch]$ReadOnlySettings,
+    [hashtable]$PnachByGame,
+    [hashtable]$PnachLinesByGame,
     [switch]$Turbo,
     [switch]$Unlimited,
     [UInt64]$UnlimitedForFrames,
-    [string]$ProjectRoot
+    [string]$ProjectRoot,
+    [string]$InputRecordingsRoot
 )
 $aliases = @{
     l = 'latest'
@@ -361,10 +412,30 @@ if (@($canonical | Where-Object { $_ -notin @(
 ) }).Count -gt 0) {
     throw "Unknown game name: $($Games -join ',')"
 }
+$pnachSummary = @(
+    $canonical | ForEach-Object {
+        $value = if ($null -ne $PnachByGame) {
+            [string]$PnachByGame[$_]
+        }
+        else { '' }
+        "$_=$value"
+    }
+) -join ';'
+$lineSummary = @(
+    $canonical | ForEach-Object {
+        $value = if ($null -ne $PnachLinesByGame) {
+            @($PnachLinesByGame[$_]) -join '|'
+        }
+        else { '' }
+        "$_=$value"
+    }
+) -join ';'
 Write-Output (
     "[fake] multi-game launch $($canonical -join ',') " +
     "play=$Play record=$Record snapshots=$($Snapshots.IsPresent) " +
     "memory=$MemoryCard discard=$($DiscardMemoryCardWrites.IsPresent) " +
+    "readonly=$($ReadOnlySettings.IsPresent) pnaches=$pnachSummary " +
+    "lines=$lineSummary " +
     "turbo=$($Turbo.IsPresent) unlimited=$($Unlimited.IsPresent) " +
     "frames=$UnlimitedForFrames project=$ProjectRoot"
 )
@@ -551,6 +622,104 @@ Add-Content `
     Assert-Na2Test `
         -Condition $suiteSelectionRejected `
         -Message 'The public E2E command accepted a single-suite execution.'
+    $practiceOutput = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            nun5 `
+            manual `
+            -c `
+            practice `
+            76 `
+            -t *>&1
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $practiceOutput -match 'turbo=True unlimited=False frames=222' -and
+            $practiceOutput -match 'readonly=True' -and
+            $practiceOutput -match 'discard=True' -and
+            $practiceOutput.Contains(
+                'nun5=' + (Join-Path $fakeRepository 'pcsx2_files\cheats\practice\NUN5p.pnach')
+            ) -and
+            $practiceOutput.Contains(
+                'manual=' + (Join-Path $fakeRepository 'pcsx2_files\cheats\practice\NA228p.pnach')
+            ) -and
+            $practiceOutput -match '003D0FF0,word,00000054' -and
+            $practiceOutput -match '003D0FF4,word,00000025' -and
+            $practiceOutput -match '003D0FF8,word,00000057' -and
+            $practiceOutput -match '001ED600,word,00000054' -and
+            $practiceOutput -match '001ED604,word,00000025' -and
+            $practiceOutput -match '001ED608,word,00000057'
+        ) `
+        -Message (
+            "The Practice profile did not generate distinct NUN5 and NA2.28 " +
+            "PNACH inputs. Output:`n$practiceOutput"
+        )
+    $linkedJutsuOutput = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            nun5 `
+            -c `
+            practice `
+            3 *>&1
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $linkedJutsuOutput -match '003D0FF4,word,00000008'
+        ) `
+        -Message (
+            "The Practice profile did not resolve linked_j_id. " +
+            "Output:`n$linkedJutsuOutput"
+        )
+    $linkedUjOutput = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            nun5 `
+            -c `
+            practice `
+            5 *>&1
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $linkedUjOutput -match '003D0FF4,word,00000001'
+        ) `
+        -Message (
+            "The Practice profile did not resolve linked_uj_id. " +
+            "Output:`n$linkedUjOutput"
+        )
+    $headerRowRejected = $false
+    try {
+        & (Join-Path $fakeRepository 'na228.ps1') nun5 -c practice 1
+    }
+    catch {
+        $headerRowRejected = $_.Exception.Message -ceq (
+            'Cheats configuration row must be a decimal integer starting at 2.'
+        )
+    }
+    Assert-Na2Test `
+        -Condition $headerRowRejected `
+        -Message 'The Practice profile accepted the TSV header as a moveset row.'
+    $cleanPracticeRejected = $false
+    try {
+        & (Join-Path $fakeRepository 'na228.ps1') na2 -c practice 2
+    }
+    catch {
+        $cleanPracticeRejected = $_.Exception.Message -ceq (
+            "Practice supports NUN5 and NA2.28 build games; got 'NA2'."
+        )
+    }
+    Assert-Na2Test `
+        -Condition $cleanPracticeRejected `
+        -Message 'The Practice profile accepted clean NA2.'
+    $unknownMovesetRejected = $false
+    try {
+        & (Join-Path $fakeRepository 'na228.ps1') nun5 -c practice 9999
+    }
+    catch {
+        $unknownMovesetRejected = $_.Exception.Message -ceq 'Unknown moveset row: 9999'
+    }
+    Assert-Na2Test `
+        -Condition $unknownMovesetRejected `
+        -Message 'The Practice profile accepted an unknown moveset row.'
+    Assert-Na2Test `
+        -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'work\practice-bootstrap'))) `
+        -Message 'The Practice profile created a bootstrap work directory.'
     }
 
     if ($Group -ceq 'game-launch') {
@@ -583,6 +752,9 @@ Add-Content `
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
             l `
+            -c `
+            practice `
+            2 `
             -p `
             'practice-menu'
     ) -join "`n"
@@ -593,7 +765,7 @@ Add-Content `
                 'play=practice-menu record='
             )
         ) `
-        -Message "Paired playback was not forwarded to the shared launcher: $pairedPlayback"
+        -Message "Practice-profile playback was not forwarded to the shared launcher: $pairedPlayback"
     $pairedRecording = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `

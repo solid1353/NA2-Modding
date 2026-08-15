@@ -427,7 +427,7 @@ def load_character_overrides(
     builder_root: Path,
 ) -> CharacterOverrideConfiguration:
     configuration_root = (builder_root / "configurations").resolve()
-    reference_path = (builder_root / "resources" / "character_data.tsv").resolve()
+    reference_path = (builder_root.parent / "resources" / "character_data.tsv").resolve()
     (
         reference_by_id,
         support_id_by_character,
@@ -437,8 +437,9 @@ def load_character_overrides(
     ) = _reference_characters(reference_path)
     definition_path = definition_path.resolve()
     if definition_path.parent == configuration_root:
-        base_path = configuration_root / "base.character_overrides.tsv"
-        profile_path = configuration_root / (
+        override_root = configuration_root / "overrides"
+        base_path = override_root / "base.character_overrides.tsv"
+        profile_path = override_root / (
             definition_path.stem + ".character_overrides.tsv"
         )
         paths = (base_path.resolve(), profile_path.resolve())

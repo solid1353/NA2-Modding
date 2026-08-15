@@ -1,0 +1,7 @@
+// [Restore modes]
+// patch=1,EE,005D51D0,word,00000004 // Master mode
+// patch=1,EE,005D51E0,word,00000005 // Shop
+
+// [Widescreen 16:9]
+// gsaspectratio=16:9
+// patch=1,EE,20b0aa04,extended,3f400000

@@ -10,13 +10,16 @@
     "logs": "logs",
     "task_logs": "@logs/tasks",
     "builder": "na228_builder",
+    "resources": "resources",
     "scripts": "scripts",
     "work": "work",
     "cache": "@work/cache",
-    "release": "release"
+    "release": "release",
+    "pcsx2_files": "@repository/pcsx2_files",
+    "pcsx2_input_recordings": "@pcsx2_files/input_recordings"
   },
   "files": {
-    "settings": "@repository/settings.json",
+    "settings": "@repository/game.json",
     "na228_command": "@repository/na228.ps1",
     "release_publish_command": "@scripts/release/publish_release.ps1"
   }

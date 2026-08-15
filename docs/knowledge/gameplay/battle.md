@@ -81,12 +81,33 @@ The Practice controller at global `0x00607620` dispatches through
 `FUN_001ec960`. States `1` through `6` perform native resource preparation.
 State `7` normally calls `FUN_001ed450` to construct Character Select. State
 `9` normally constructs the final VS/Practice Settings screen, then stores the
-stage, calls `FUN_002005b0(1, 0)`, and enters state `10`. The bootstrap hook at
-runtime `0x001ECA2C` (ELF `0xECB2C`) replaces only the state-`7` call: it writes
-the current and match-start identity fields, fixes the opponent and stage,
-sets the native three-frame countdown, calls `FUN_002005b0(1, 0)`, and enters
-state `10`. States `10` through `15` remain native, including both fighters'
-construction and stage loading.
+stage, calls `FUN_002005b0(1, 0)`, and enters state `10`. The NA2.28 PNACH leaves
+the clean state-`7` call at runtime `0x001ECA2C` intact and replaces its
+`FUN_001ed450` callee instead. That wrapper writes the current and match-start
+identity fields, fixes the opponent and stage, sets the native three-frame
+countdown, calls `FUN_002005b0(1, 0)`, and enters state `10`. States `10`
+through `15` remain native, including both fighters' construction and stage
+loading.
+
+Read-only call-reference inspection establishes that clean `FUN_001ed450` is
+owned only by this Practice state-`7` path. It begins at `0x001ED450`; the next
+native function begins at `0x001ED6C0`, leaving `0x270` bytes for a transport
+that intentionally bypasses Character Select. The PNACH uses a contiguous
+selection/battle wrapper through `0x001ED5F8`, mutable one-shot state at
+`0x001ED5FC`, and three configuration slots at `0x001ED600..0x001ED608`
+supplied only by process-local inline PNACH lines. It
+patches the clean state-`15` call at `0x001ECACC` from `FUN_001edb70` to the
+battle wrapper at `0x001ED4CC`; that wrapper calls `FUN_001edb70` first. No
+write reaches the next native function.
+
+`pcsx2_files/cheats/practice/NA228p.pnach` owns the complete NA2.28 bootstrap,
+while `pcsx2_files/cheats/practice/NUN5p.pnach` owns its separately ported startup and bootstrap
+code at `0x003D0C60..0x003D0FF8`. The normal
+`-c <cheats-config> <row>` selector maps `practice` to
+`pcsx2_files/cheats/practice/`, reads one physical `movesets.tsv` row starting
+at row 2, and passes a different three-line
+address set to each selected game. It neither rewrites a profile nor creates a
+generated PNACH. Clean NA2 is not a supported launcher target.
 
 In the baseline battle marker the live fighter's effect container at fighter
 `+0x8C4` was empty and `u16` field `+0x8E8` was `0xFFFF`. The two status markers
@@ -151,25 +172,28 @@ Ultimate-Jutsu-only `0x72` transformation, so both IDs are compatible active
 states for Naruto.
 
 There is no exhaustive native `character -> possible active effects` table.
-The builder's `awakening_ids` column is the union needed by the bootstrap: the
+The `character_data.tsv` `awakening_ids` column records the useful test-matrix
+union: the
 controller-table IDs, every non-`0xFFFF` effect in that character's
 Ultimate-Jutsu records, hard-coded effects applied when transformed forms are
 constructed directly, character-specific direct applications, and the sole
 hard-coded successor `0x23`. It declares character compatibility, not how an
 effect is normally entered.
 `FUN_003047c0` classifies the broader native effect domain `0..0x89`, but that
-global range does not establish character compatibility. The bootstrap accepts
-`none` or one ID from the selected Player 1 row and passes that ID through
-unchanged.
+global range does not establish character compatibility. The Practice profile
+passes the selected Practice `movesets.tsv` row's awakening through unchanged, using an
+empty cell for no starting awakening. It does not read the character table or
+expand cases; the fixed moveset matrix owns the character-specific
+combinations.
 
 `FUN_00305c30(fighter, effect_id, -1, 1)` is the native high-level effect
 entry: it validates the effect category, resolves the default parameter,
 constructs the effect through `FUN_00305270`, performs native side effects,
-and writes the active effect ID to fighter `+0x8E8`. The hook at runtime
-`0x001ECACC` (ELF `0xECBCC`) retains `FUN_001edb70`, then invokes this entry
-once after the Player 1 fighter exists. It retries until `+0x8E8` confirms the
-requested ID and resets its one-shot state whenever a new bootstrap reaches
-controller state `7`.
+and writes the active effect ID to fighter `+0x8E8`. The PNACH replacement at
+runtime `0x001ECACC` (ELF `0xECBCC`) calls a wrapper that retains
+`FUN_001edb70`, then applies one configured awakening after the Player 1 fighter
+exists. It retries until `+0x8E8` confirms the requested ID and resets its
+one-shot state whenever a new bootstrap reaches controller state `7`.
 
 An active effect and the fighter controller's awakened state are distinct.
 `FUN_0020d910` applies the effect chosen by the condition-driven controller,
@@ -185,47 +209,56 @@ The per-character trigger descriptor is the four-byte table at runtime
 bits `1..5` feed `FUN_0020d910`, bit `0` describes an already-active or
 constructor-owned form, and bit `6` instead feeds the exact selected class-`7`
 Ultimate-Jutsu effect through `FUN_0020d690`. Combining bits `1..5` with the
-association lists identifies 38 clean-start character/effect pairs that use
-`FUN_0020d910`. Most select the association list's first ID. Hinata `0x50`,
-Shizune `0x55`, Kurenai `0x57`, and Yamato `0x5B` select the second ID when no
-effect is active. This distinction excludes table members such as Naruto
-`0x72` and Sai `0x62` whose native entry is not the condition-driven path.
+association lists identifies 38 clean-start character/effect pairs that reach
+`FUN_0020d910` naturally. Most select the association list's first ID. Hinata
+`0x50`, Shizune `0x55`, Kurenai `0x57`, and Yamato `0x5B` select the second ID
+when no effect is active. This native selection logic does not cover direct
+effects such as Naruto `0x39`, and it cannot accept an exact arbitrary ID.
 
-Before evaluating any of those controller conditions, `FUN_0020e280` reads the
-controller-gate pointer at `0x00607834`. A zero state byte at gate `+0x10` is
-normalized to `-1`; while the signed state has any other value, an existing
-nonzero `+0x63` bit `0x20` is cleared. The bootstrap therefore identifies the
-configured effect's exact clean-start route from those two native tables. For
-one of the 38 condition-driven pairs it waits until the gate is absent or its
-state is `0`/`0xFF`, then calls `FUN_0020d910`; effects owned by the other native
-routes continue through the raw high-level effect entry.
+The bootstrap therefore does not use the trigger flags or association table as
+a route classifier. After the controller gate at `0x00607834` is absent or has
+state `0`/`0xFF`, it preserves the register frame expected by
+`FUN_0020d910`, places the fighter and configured effect ID in that function's
+native `s2` and `s1` inputs, runs its battle-mode guard `FUN_001fe200`, and
+enters the shared transition tail at `0x0020DC40`. That tail calls
+`FUN_00305c30` with the exact configured ID, sets fighter `+0x63` bit `0x20`,
+and performs the native transition sequence before returning through the
+original epilogue at `0x0020DCF8`. Consequently every non-`none` value supplied
+as an awakening, including Naruto `0x39`, uses the complete transition; there
+is no raw-effect branch. NUN5 uses the homologous mode guard `FUN_00204ed0`,
+transition tail `0x00214CCC`, and epilogue `0x00214DE0`.
 
 The implementation deliberately leaves starting HP to the independently
 verified native Practice enum described above. It uses neither savestates nor
 input recordings at runtime; those artifacts are evidence and regression
 inputs only.
 
-Candidate validation replayed the same eight-marker recording against two
-isolated worker builds. With the test configuration (`p1: 84`, `support: 26`,
-`awakening: none`), every marker was already in the live Practice battle;
+The earlier resident-C candidate was validated by replaying the same
+eight-marker recording against two isolated worker builds. With Player 1 `84`,
+support `26`, and no starting awakening, every marker was already in the live
+Practice battle;
 marker `0001` had manager state `4`, substate `3`, both configured current and
 match-start identities, live character `84`, HP `0.5`, and active effect
 `0xFFFF`. A second diagnostic build directly encoded raw effect `0x22` and
 reached the same state with `Reg.` active at marker `0001`. Later marker effects
 followed the recording's gameplay inputs rather than being forced back to
 `0x22`, confirming that the bootstrap applies only the initial active state.
-That diagnostic established the native application path. The character-aware
-configuration accepts Tsunade's `0x22`, chained `0x23`, and controller-owned
-`0x57` from their confirmed native sources.
+That diagnostic established the native application path for Tsunade's `0x22`,
+chained `0x23`, and controller-owned `0x57`.
 
-The generalized controller route was replayed independently with Player 1
+The earlier generalized controller route was replayed independently with Player 1
 Rock Lee (`67`) and configured effect `0x44`. In retained capture
 `work/QoL/captures/bootstrap/controller-awakening-generalized-v1`, marker
 `0001` was in live Practice manager state/substate `4/3`, the fighter's sole
 effect was `0x44`, fighter `+0x8E8` was `0x44`, and fighter `+0x63` had native
 awakened bit `0x20` set. Later recording inputs removed and reapplied the effect
 without the bootstrap forcing it back, preserving one-shot behavior. This
-confirms the `FUN_0020d910` route on a non-Tsunade condition-driven character.
+confirms the shared `FUN_0020d910` transition tail on a non-Tsunade
+condition-driven character. The current exact-ID PNACH route has static
+verification of both games' clean tail and epilogue instructions, branch and
+absolute-jump targets, configuration slots, register-frame contract, and the
+`FUN_001ed450` ownership boundary. Runtime confirmation of the generalized
+exact-ID entry remains pending.
 
 ## Ultimate Jutsu input-contest controller
 
@@ -242,7 +275,7 @@ type into `t0` and calls resident `FUN_0035CF00`. That routine forwards the type
 through `FUN_0036C120` to `FUN_0036B6D0`: type `1` randomizes among contest
 implementations, types `2` through `6` allocate their respective contest
 objects, and type `0` matches no allocation branch. With type `0`, the meter,
-prompts, and result-message object therefore never exists. NUN6 A35 retains the
+prompts, and result-message object therefore never exists. NUN6 retains the
 same disabled-type path in homologs `FUN_00369200`, `FUN_003789B0`, and
 `FUN_00377F20`. The NA2 port replaces the final sign extension at clean BTL
 file offset `0xB61F8`, exported `0x0076A0B8` and live `0x0076A0F8`, with a zero
@@ -342,7 +375,7 @@ m = 0.5 - ((d - 1.5) / 1.5) * 0.2              otherwise
 ```
 
 The `default_hp` column in
-[`na228_builder/resources/character_data.tsv`](../../../na228_builder/resources/character_data.tsv) expresses
+[`resources/character_data.tsv`](../../../resources/character_data.tsv) expresses
 neutral effective base HP as `100 / m`. This isolates the static durability
 parameter; attacker offense and temporary battle-state multipliers are
 separate factors in `FUN_00224e30`. The default-HP values are derived balance

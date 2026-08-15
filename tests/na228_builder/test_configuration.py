@@ -68,7 +68,7 @@ class ConfigurationTests(unittest.TestCase):
                     "files": {
                         "placeholder": "placeholder",
                         "game_catalog": "games.json",
-                        "settings": "settings.json",
+                        "settings": "game.json",
                     },
                 }
             ),
@@ -200,7 +200,7 @@ class ConfigurationTests(unittest.TestCase):
             json.dumps({"overrides": normalized_selection}, indent=2) + "\n",
             encoding="utf-8",
         )
-        (root / "settings.json").write_text(
+        (root / "game.json").write_text(
             json.dumps(
                 {
                     "schema_version": 1,
@@ -290,7 +290,7 @@ class ConfigurationTests(unittest.TestCase):
             )
             loaded = load_configuration(configuration, root, root)
             resources = set(configuration_resource_files(loaded))
-            self.assertIn((root / "settings.json").resolve(), resources)
+            self.assertIn((root / "game.json").resolve(), resources)
             self.assertIn((root / "catalog" / "localization.modcat").resolve(), resources)
             self.assertIn(
                 (root / "catalog" / "implementation" / "edits.json").resolve(),
@@ -380,7 +380,7 @@ class ConfigurationTests(unittest.TestCase):
                 {"localization": {"description": "Localization"}},
                 {"localization": True},
             )
-            settings_path = root / "settings.json"
+            settings_path = root / "game.json"
             settings = json.loads(settings_path.read_text(encoding="utf-8"))
             settings["output_boot_path"] = "BOOT.ELF"
             settings_path.write_text(

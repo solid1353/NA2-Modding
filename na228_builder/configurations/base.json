@@ -16,13 +16,13 @@
     },
     "qol": {
       "startup": {
+        "faster_loading": true,
         "flow": {
           "savedata_loading": "automatic",
           "loading_screen": true
         }
       },
       "practice": {
-        "bootstrap": false,
         "starting_hp": "full",
         "voice_off_by_default": true,
         "support_off_by_default": true,
@@ -47,7 +47,6 @@
       }
     },
     "battle_logic": {
-      "character_id_overlay": false,
       "disable_shadowblur_extra_hit": true,
       "disable_extra_hit_with_aura_punishment_for_initiator": true,
       "character_overrides": true,

@@ -21,7 +21,6 @@ from ..payload_builder.operations import (
 )
 from .configuration import BuildConfiguration, ModuleInvocation
 from .character_overrides import character_override_fragment
-from .practice_bootstrap import practice_bootstrap_fragment
 from .xdash_chakra_cost import xdash_chakra_cost_fragment
 
 
@@ -161,24 +160,6 @@ def prepare_module_pipeline(
                         declaration,
                         fragments=(
                             xdash_cost_fragment,
-                            *declaration.fragments,
-                        ),
-                    )
-            if module.feature_id == "qol":
-                bootstrap_fragment = practice_bootstrap_fragment(
-                    configuration.selection,
-                    owner=module.module_id,
-                    awakening_ids_by_character=(
-                        configuration.character_overrides.awakening_ids_by_character()
-                        if configuration.character_overrides is not None
-                        else {}
-                    ),
-                )
-                if bootstrap_fragment is not None:
-                    declaration = replace(
-                        declaration,
-                        fragments=(
-                            bootstrap_fragment,
                             *declaration.fragments,
                         ),
                     )

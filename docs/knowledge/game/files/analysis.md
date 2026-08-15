@@ -38,7 +38,7 @@ though the boot ELF warrants a full-program analysis project.
   files, and placeholders require format-aware data inspection rather than
   disassembly unless execution evidence proves otherwise.
 
-NUN6 A35 is a Brazilian mod derived from NUN5, not an official sequel. Its
+NUN6 is a Brazilian mod derived from NUN5, not an official sequel. Its
 analysis value is specifically as a feature donor: compare its executable and
 overlay changes against NUN5, identify implemented modifications, and preserve
 portable behavior that may later be ported to NA2.
@@ -60,7 +60,7 @@ game; it does not include resource files merely because they use `.BIN` names.
 - NUN5: `@source_nun5/SLES_556.05`, plus `PRG/ADV.BIN`,
   `PRG/BTL.BIN`, `PRG/ETC.BIN`, `PRG/TEXTENG.BIN`, `PRG/TEXTFRN.BIN`,
   `PRG/TEXTGER.BIN`, `PRG/TEXTITA.BIN`, and `PRG/TEXTSPA.BIN`.
-- NUN6 A35: `@source_nun6/SLUS_556.06`, plus `PRG/ADV.BIN`,
+- NUN6: `@source_nun6/SLUS_556.06`, plus `PRG/ADV.BIN`,
   `PRG/BTL.BIN`, `PRG/ETC.BIN`, `PRG/MOD.BIN`, and `PRG/TEXTBRA.BIN`.
 - Shared identical IOP inputs analyze the NA2 copy once. `MODULES.BIN` belongs
   to the NA2/NUN3/NUN5/NUN6 cohort; `CRI_ADXI.IRX` and `SNDBASE.IRX` belong to
@@ -109,7 +109,7 @@ optical-disc seeks for frequently opened files, but it offers no material gain
 for a file opened only once because it merely performs the same resolution
 earlier during startup.
 
-NA2 and NUN5 have byte-identical 124-byte lists. NUN6 A35 adds
+NA2 and NUN5 have byte-identical 124-byte lists. NUN6 adds
 `prg\MOD.BIN` but does not add `TEXTBRA.BIN`, consistent with prewarming its new
 resident code module rather than declaring every required file. On 2026-07-20,
 the user confirmed that the integrated NA2 ISO works in-game while loading the

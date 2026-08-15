@@ -32,12 +32,12 @@ integrated catalog data.
   configuration's `overrides` to `base.features`. Normal local builds use
   `dev.json`; Manual and E2E builds use `test.json`; cache builds use their
   explicitly selected configuration; only release packaging uses `release.json`.
-- `configurations/base.character_overrides.tsv` contains the required `base`
-  row and shared per-character overrides. Matching `dev`, `test`, and `release`
-  TSVs layer nonempty cells over it by character ID. Empty cells inherit;
-  numeric zero is an explicit value.
-- `resources/character_data.tsv` is the builder-owned ID/name and native-value
-  reference used to validate character rows and Practice bootstrap inputs. Its
+- `configurations/overrides/base.character_overrides.tsv` contains the required
+  `base` row and shared per-character overrides. Matching `dev`, `test`, and
+  `release` TSVs in that directory layer nonempty cells over it by character
+  ID. Empty cells inherit; numeric zero is an explicit value.
+- `../resources/character_data.tsv` is the repository-owned ID/name and native-value
+  reference used to validate character rows. Its
   `support_id` cells contain the native support-roster ID corresponding to each
   playable character, written in hexadecimal; an empty cell means that the
   character has no native support entry. Its
@@ -49,7 +49,16 @@ integrated catalog data.
   activation route; an empty cell means none of those native sources supplies
   an effect. `linked_uj` and `linked_jutsu` contain the native
   support IDs associated with each character by the corresponding BTL tables;
-  empty cells mean no relationship of that type. It is not an override file.
+  empty cells mean no relationship of that type. These metadata columns are
+  not builder catalog inputs. The file is not an override file.
+- `../resources/movesets.tsv` contains ordered moveset-test metadata. The physical
+  TSV row is its launcher selector: the header is row 1 and the first moveset is
+  row 2. Within each character block, the base row comes first, followed by
+  linked-J rows, linked-UJ rows, and awakening rows. `character` is descriptive
+  metadata; `character_id`, `linked_j_id`, `linked_uj_id`, and `awakening_id`
+  contain the runtime inputs. A support row populates exactly one linked-support
+  column. Empty linked-support columns mean No Support, and an empty awakening
+  cell means no starting awakening. The file is not a builder catalog input.
 - `catalog/implementation/targets.tsv` is the single target registry used by
   edits and injection hooks.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.
@@ -58,7 +67,7 @@ integrated catalog data.
 - `scripts/` contains every builder Python implementation file. Reusable engines and their code-only contracts remain under `modules/`.
 - Root `release_manifest.json` owns release packaging metadata and remains
   outside the catalog.
-- Root `settings.json` owns the product title, explicit output boot path, named
+- Root `game.json` owns the product title, explicit output boot path, named
   build variants, and the default startup fast-forward frame count.
 
 JSON configurations select features. The paired character-override TSVs are
@@ -67,17 +76,18 @@ the separate per-character build inputs for battle values.
 ## Edit per-character battle values
 
 1. Put shared defaults and agreed character values in
-   `configurations/base.character_overrides.tsv`.
-2. Put temporary local values in `dev.character_overrides.tsv`, test-only
-   values in `test.character_overrides.tsv`, or release-only values in
-   `release.character_overrides.tsv`. Only nonempty cells replace the base
-   layer.
+   `configurations/overrides/base.character_overrides.tsv`.
+2. Put temporary local values in
+   `configurations/overrides/dev.character_overrides.tsv`, test-only values in
+   `test.character_overrides.tsv`, or release-only values in
+   `release.character_overrides.tsv` in the same directory. Only nonempty cells
+   replace the base layer.
 3. Keep each numeric `id` paired with the exact `character` name from
-   `resources/character_data.tsv`. `base_id` identifies a form's base
+   `../resources/character_data.tsv`. `base_id` identifies a form's base
    character, and `tier` records the human-readable balance tier. Tier labels
-   use at most four ASCII characters because the development Character Select
-   overlay reads them from the resident table. Rows retain the order written in
-   the base TSV so forms can stay directly below their base characters.
+   use at most four ASCII characters because the resident table stores a
+   fixed-width four-byte field. Rows retain the order written in the base TSV
+   so forms can stay directly below their base characters.
 4. Write the `base` row's `substitution_cost` as a literal value such as `2.5`.
    In a character row, write an unsigned value such as `3` for a literal cost,
    `+0.5` to add to the base cost, or `-0.5` to subtract from it. The explicit
@@ -129,7 +139,7 @@ construct, including `null`.
 An internal setting may declare startup launch timing as
 `startup_fast_forward_frames: { additive: N, override: N }`, with either key or
 both. Additives are signed integers; overrides are positive UInt64 frame
-counts. Resolution starts from the non-negative `settings.json` default, uses
+counts. Resolution starts from the non-negative `game.json` default, uses
 the sole enabled override instead when present, and then sums every enabled
 additive. More than one enabled override or a final result outside UInt64 is a
 configuration error. A zero result omits timed fast-forward. Disabled settings

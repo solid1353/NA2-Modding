@@ -854,6 +854,7 @@ function Invoke-VisualRegressionReplay {
             -Play $stagedName `
             -Snapshots `
             -CaptureDirectory $CaptureRoot `
+            -InputRecordingsRoot $SharedRecordingRoot `
             -ProjectRoot $Repository
     }
     finally {

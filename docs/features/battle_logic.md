@@ -6,13 +6,13 @@ table shared by current and future per-character battle hooks.
 
 ## Substitution cost
 
-`configurations/base.character_overrides.tsv` supplies the shared base and
-character rows. The selected profile's matching TSV layers nonempty cells over
-it. Character IDs and names are validated against
+`configurations/overrides/base.character_overrides.tsv` supplies the shared
+base and character rows. The selected profile's matching TSV in that directory
+layers nonempty cells over it. Character IDs and names are validated against
 `resources/character_data.tsv`. `base_id` records form relationships as
 human-readable configuration metadata. `tier` records the balancing tier and
-is also serialized for the development Character Select overlay. Empty cells
-inherit, while zero remains an explicit value.
+is serialized as fixed-width table metadata. Empty cells inherit, while zero
+remains an explicit value.
 
 The `base` row's `substitution_cost` is a literal value. In a character row, an
 unsigned value such as `3` is also literal, while an explicitly signed value
@@ -25,11 +25,9 @@ float32 values into a dense ID-indexed resident table. The
 substitution hook at ELF offset `0x1299C0` maps the incoming fighter to its
 player slot and reads that slot's match-start character ID. A directly selected
 form therefore uses its form row, while a base character transformed during
-the match keeps its base row. The development Character Select overlay reads
-the same table and draws `TIER` and resolved `SUB` values in separate left and
-right top-screen blocks without player labels or numeric IDs. The clean
-instruction at `0x1299BC` is no longer edited. The current TSV selects base cost
-`2.5` and tier deltas from D `+0.0` through S+++ `+3.5` in `0.5` steps.
+the match keeps its base row. The clean instruction at `0x1299BC` is no longer
+edited. The current TSV selects base cost `2.5` and tier deltas from D `+0.0`
+through S+++ `+3.5` in `0.5` steps.
 
 `hp`, damage, and recovery columns are present for later hooks; only
 `substitution_cost` currently has a runtime consumer.

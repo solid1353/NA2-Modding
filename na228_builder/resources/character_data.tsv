@@ -1,5 +1,5 @@
 character	id	support_id	awakening_ids	linked_uj	linked_jutsu	record_address	default_hp	durability_parameter	incoming_damage_multiplier	offense_multiplier	health_recovery_multiplier	chakra_recovery_multiplier
-Naruto Uzumaki	57	0x00	0x72	0x01	0x08,0x20	0x004DAD80	90.909091	0.90	1.10	1.10	1.00	1.20
+Naruto Uzumaki	57	0x00	0x39,0x72	0x01	0x08,0x20	0x004DAD80	90.909091	0.90	1.10	1.10	1.00	1.20
 Nine-Tailed Fourth Awakened State	73		0x72			0x00535D50	125.000000	1.20	0.80	1.25	1.10	1.50
 Sakura Haruno	58	0x01	0x3A	0x00,0x1B		0x004E01B0	83.333333	0.80	1.20	1.20	1.10	1.10
 Kakashi Hatake	70	0x02	0x49			0x00525BC0	100.000000	1.00	1.00	1.15	1.00	1.00

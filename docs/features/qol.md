@@ -11,10 +11,11 @@ configured inputs: Player 1 character ID `p1`, Player 1 support ID `support`,
 and `awakening`, which is `none` or one of the selected character's native IDs
 from the `awakening_ids` column in `resources/character_data.tsv`. That column
 unites the native fighter-controller associations, Ultimate-Jutsu post-effects,
-and hard-coded transformed-form initialization effects; it defines attainable
-active states, not their normal entry routes. Configuration JSON keeps `p1` as
-a decimal integer, while `support` and a non-`none` `awakening` are hexadecimal
-strings such as `"0x18"` and `"0x57"`. The builder rejects decimal forms,
+hard-coded transformed-form initialization effects, and character-specific
+direct or successor effect applications; it defines attainable active states,
+not their normal entry routes. Configuration JSON keeps `p1` as a decimal
+integer, while `support` and a non-`none` `awakening` are hexadecimal strings
+such as `"0x18"` and `"0x57"`. The builder rejects decimal forms,
 unknown Player 1 IDs, and awakenings that are valid globally but do not belong
 to that character. Player 2 is fixed to Naruto with Sakura support and the
 Practice stage remains the native fixed stage. Starting HP is deliberately not

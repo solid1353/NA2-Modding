@@ -43,10 +43,11 @@ integrated catalog data.
   character has no native support entry. Its
   `awakening_ids` cells contain comma-separated native IDs such as
   `0x61,0x62`. They are the union of the character's fighter-controller effect
-  associations, nonempty Ultimate-Jutsu post-effects, and hard-coded
-  transformed-form initialization effects, so membership does not imply a
-  particular activation route; an empty cell means none of those native sources
-  supplies an effect. `linked_uj` and `linked_jutsu` contain the native
+  associations, nonempty Ultimate-Jutsu post-effects, hard-coded
+  transformed-form initialization effects, and character-specific direct or
+  successor effect applications, so membership does not imply a particular
+  activation route; an empty cell means none of those native sources supplies
+  an effect. `linked_uj` and `linked_jutsu` contain the native
   support IDs associated with each character by the corresponding BTL tables;
   empty cells mean no relationship of that type. It is not an override file.
 - `catalog/implementation/targets.tsv` is the single target registry used by

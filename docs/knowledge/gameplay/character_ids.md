@@ -21,10 +21,11 @@ The complete builder reference is
 [`na228_builder/resources/character_data.tsv`](../../../na228_builder/resources/character_data.tsv).
 Its names and IDs validate per-character configuration. Its `awakening_ids`
 column records the union of the fighter-controller association list and every
-non-`0xFFFF` post-effect in that character's Ultimate-Jutsu records, plus any
-effect applied by hard-coded transformed-form initialization. The union defines
-compatible active states for Practice bootstrap and does not imply how the game
-normally enters each state. `support_id` maps a playable character to its
+non-`0xFFFF` post-effect in that character's Ultimate-Jutsu records, plus effects
+applied by hard-coded transformed-form initialization and character-specific
+direct or successor paths. The union defines compatible active states for
+Practice bootstrap and does not imply how the game normally enters each state.
+`support_id` maps a playable character to its
 separate native support-roster ID, with a blank cell when no native support
 entry maps to that character. `linked_uj` and `linked_jutsu` record the support
 IDs associated with that selected character by the two native linked-attack

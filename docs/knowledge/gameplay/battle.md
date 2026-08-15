@@ -142,12 +142,21 @@ pair supplied solely by this constructor mapping. Thus a base character's
 Ultimate-Jutsu record can own the transition while the transformed character's
 constructor or controller entry owns the resulting active form.
 
+Character-specific runtime application is another source. Naruto's callback
+table at runtime `0x004D56D0` contains `FUN_00299100` at `+0x04`. When Naruto's
+HP field at fighter `+0x6C` is at or below `0.15`, effect `0x39` is absent, the
+fighter is eligible, and the active mode permits it, that callback applies
+`0x39` through `FUN_00305c30`. This direct low-HP path is separate from Naruto's
+Ultimate-Jutsu-only `0x72` transformation, so both IDs are compatible active
+states for Naruto.
+
 There is no exhaustive native `character -> possible active effects` table.
 The builder's `awakening_ids` column is the union needed by the bootstrap: the
 controller-table IDs, every non-`0xFFFF` effect in that character's
 Ultimate-Jutsu records, hard-coded effects applied when transformed forms are
-constructed directly, and the sole hard-coded successor `0x23`. It declares
-character compatibility, not how an effect is normally entered.
+constructed directly, character-specific direct applications, and the sole
+hard-coded successor `0x23`. It declares character compatibility, not how an
+effect is normally entered.
 `FUN_003047c0` classifies the broader native effect domain `0..0x89`, but that
 global range does not establish character compatibility. The bootstrap accepts
 `none` or one ID from the selected Player 1 row and passes that ID through

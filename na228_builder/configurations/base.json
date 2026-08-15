@@ -42,6 +42,9 @@
       },
       "save_load": {
         "display_only_first_save": true
+      },
+      "ultimate_jutsu": {
+        "disable_input_contest": true
       }
     },
     "battle_logic": {

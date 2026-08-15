@@ -5180,6 +5180,36 @@
     "expected_hex": "02000424",
     "replacement_hex": "07000010"
   },
+  "e__qol__ultimate_jutsu__disable_input_contest__block_press_latch": {
+    "description": "Ignore the Player 1 press-state read while the Ultimate Jutsu input contest is waiting to latch an input.",
+    "operation": "replace",
+    "destination_target_id": "na2_btl",
+    "destination_offsets": [
+      "0xB6094"
+    ],
+    "expected_hex": "6C66070C",
+    "replacement_hex": "21100000"
+  },
+  "e__qol__ultimate_jutsu__disable_input_contest__block_release_poll": {
+    "description": "Ignore the Player 1 press-state read while the Ultimate Jutsu input contest is waiting for input release.",
+    "operation": "replace",
+    "destination_target_id": "na2_btl",
+    "destination_offsets": [
+      "0xB62F0"
+    ],
+    "expected_hex": "6C66070C",
+    "replacement_hex": "21100000"
+  },
+  "e__qol__ultimate_jutsu__disable_input_contest__suppress_contest_object_creation": {
+    "description": "Pass the native disabled contest mode to the Ultimate Jutsu factory so it creates no meter, prompts, or result-message object.",
+    "operation": "replace",
+    "destination_target_id": "na2_btl",
+    "destination_offsets": [
+      "0xB61F8"
+    ],
+    "expected_hex": "3F440800",
+    "replacement_hex": "21400000"
+  },
   "e__rendering__native_16_9_horizontal_scale__force_0": {
     "description": "Force 0.75f at the renderer's horizontal-scale store while preserving the caller-provided vertical scale.",
     "operation": "replace",

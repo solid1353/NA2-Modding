@@ -218,6 +218,49 @@ awakened bit `0x20` set. Later recording inputs removed and reapplied the effect
 without the bootstrap forcing it back, preserving one-shot behavior. This
 confirms the `FUN_0020d910` route on a non-Tsunade condition-driven character.
 
+## Ultimate Jutsu input-contest controller
+
+The clean NA2 `BTL.BIN`, SHA-256
+`56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C`,
+contains the battle-side controller for the Ultimate Jutsu input contest. Its
+file header loads the complete file at runtime base `0x006B3F00`; the preserved
+Ghidra export maps file offset `0x40` to that base, so its displayed addresses
+are `0x40` below the live addresses.
+
+The visible contest interface is owned by the resident Ultimate Jutsu factory,
+not by a BTL draw function. In state `1`, BTL sign-extends the selected contest
+type into `t0` and calls resident `FUN_0035CF00`. That routine forwards the type
+through `FUN_0036C120` to `FUN_0036B6D0`: type `1` randomizes among contest
+implementations, types `2` through `6` allocate their respective contest
+objects, and type `0` matches no allocation branch. With type `0`, the meter,
+prompts, and result-message object therefore never exists. NUN6 A35 retains the
+same disabled-type path in homologs `FUN_00369200`, `FUN_003789B0`, and
+`FUN_00377F20`. The NA2 port replaces the final sign extension at clean BTL
+file offset `0xB61F8`, exported `0x0076A0B8` and live `0x0076A0F8`, with a zero
+value for `t0`.
+
+Input handling is independent of interface-object creation. In contest state
+`1`, the controller calls resident press-state accessor `FUN_001D99B0(1, 0)` at
+exported `0x00769F54` to latch a press into inner field `+0x3A`, then calls the
+same accessor at exported `0x0076A1B0` while waiting for release. These are live
+addresses `0x00769F94` and `0x0076A1F0`, at clean BTL file offsets `0xB6094`
+and `0xB62F0`. Returning zero at both call sites blocks the recorded input
+without changing the rest of the controller state machine.
+
+The wrapper's flags byte at `+0x10` only gates its auxiliary inner-object
+pointers. Setting both bits did not change the visible contest interface. An
+early return at BTL file offset `0x17E0` also had no effect because that xcombo
+renderer belongs to the command-list interface, and returning from the
+controller render entry at `0xB69E0` likewise left the contest interface
+visible. These replayed negatives exclude all three as owners of this UI.
+
+In the development `uj` replay, checkpoints `0004` and `0005` loaded bytes
+`21100000`, `21400000`, and `21100000` at the three live patch addresses. The
+active wrapper at `0x00E4C770` referenced inner object `0x00E9C470`; its input
+latch `+0x3A` remained zero at both checkpoints. Screenshots `0003` through
+`0005` contain no bottom meter or prompts, and `0006` through `0007` contain no
+contest result messages. The ordinary top battle HUD remains visible.
+
 ## Support field-call and gauge paths
 
 NUN5 and NUN6 expose one exact difference at exported BTL text address

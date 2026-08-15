@@ -176,4 +176,15 @@
       ],
     },
   },
+  ultimate_jutsu: {
+    description: "Ultimate Jutsu cinematic battle behavior.",
+    disable_input_contest: setting {
+      description: "Disable Player 1 input during the Ultimate Jutsu contest and suppress its meter, prompts, and result messages.",
+      patches: [
+        "e__qol__ultimate_jutsu__disable_input_contest__block_press_latch",
+        "e__qol__ultimate_jutsu__disable_input_contest__block_release_poll",
+        "e__qol__ultimate_jutsu__disable_input_contest__suppress_contest_object_creation",
+      ],
+    },
+  },
 }

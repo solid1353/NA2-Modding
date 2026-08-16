@@ -1,9 +1,9 @@
 # Agent commands
 
-This document is the canonical reference for commands interpreted by project
-agents. It does not document the `na228` or Workshop command-line interfaces;
-use `na228 help`, `workshop help`, and the owning component documentation for
-those.
+This document is the canonical reference for project-specific agent commands.
+Global commands are defined in `@codex-utils/AGENT_COMMANDS.md`. This document
+does not document the `na228` or Workshop command-line interfaces; use
+`na228 help`, `workshop help`, and the owning component documentation for those.
 
 ## Interaction modes
 
@@ -19,8 +19,6 @@ those.
   Follow the active interaction mode's implementation behavior.
 - `ver`: accept the current pending result and follow the active interaction mode's
   acceptance behavior.
-- `commit`, `com`: commit the current task-owned pending changes. They do not
-  verify the result.
 - `exit`: exit Design mode or Interactive mode without accepting the result
   or authorizing a commit. It has no effect in Normal mode.
 - `zxc`: follow the
@@ -47,26 +45,10 @@ those.
   mode`, or `Interactive mode`, whichever is active. It does not change the
   mode or grant authority. Do not trigger it from a longer message, quoted
   text, or supplied context.
-- `ag`: reread the live global and project `AGENTS.md`, the active interaction
-  mode,
-  and every routed policy relevant to the current work, then apply them
-  immediately.
-- `q:`: the request was queued earlier and may be stale. Compare it with the
-  current state before acting. Perform only the still-relevant portion; do not
-  repeat, undo, or conflict with work completed while it waited.
-- `con`: resume the current work with scope, effort, progress, and approval
-  state intact.
 - `sum`: apply the
   [discussion-summary rule](AGENTS.md#discussion-and-action) to the current
   discussion topic. The boundary resets only when the discussion explicitly
   moves on.
-- `diff`: display the complete intended pending changes using the global diff
-  format. Do not apply the changes or grant authority. If no intended changes
-  are pending, state that.
-- `ex`: explain the current subject.
-- `eff`: report the currently recommended effort without changing it.
-- `sw`: resume after the user changed the chat to the recommended effort;
-  preserve prior approval.
 - `ss`, `ss<number>`: identify a savestate or numbered savestate slot. The
   surrounding request determines the authorized action.
 

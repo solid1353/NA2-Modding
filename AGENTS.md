@@ -116,13 +116,12 @@ the exact commands below enters a mode; when a mode exits, Normal mode resumes.
 
 ### Command index
 
-Canonical command definitions and their workflow or procedure routing are in
-[`AGENT_COMMANDS.md`](AGENT_COMMANDS.md).
+Canonical project command definitions and their workflow or procedure routing
+are in [`AGENT_COMMANDS.md`](AGENT_COMMANDS.md).
 
 Command index: `des mode`, `design mode`, `int mode`, `interactive mode`,
-`snap`, `imp`, `ver`, `commit`, `com`, `exit`, `zxc`, `tasks`, `task done`, `c`,
-`c on`, `c off`, `mode`, `n`, `imm`, `ag`, `q:`, `con`, `e2e`, `sum`, `diff`, `ex`,
-`eff`, `sw`, `ss`, `mute`, `unmute`.
+`snap`, `imp`, `ver`, `exit`, `zxc`, `tasks`, `task done`, `c`, `c on`, `c off`,
+`mode`, `n`, `imm`, `e2e`, `sum`, `ss`, `mute`, `unmute`.
 
 ### Policy routing
 

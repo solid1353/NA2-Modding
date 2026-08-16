@@ -2,7 +2,7 @@
 param(
     [Parameter(Mandatory)]
     [ValidateRange(2, [int]::MaxValue)]
-    [int]$MovesetRow,
+    [int[]]$MovesetRow,
 
     [Parameter(Mandatory)]
     [ValidateCount(1, 2)]
@@ -43,10 +43,12 @@ if ($movesets.Count -eq 0) {
 }
 $expectedColumns = @(
     'character',
-    'character_id',
+    'id',
     'linked_j_id',
     'linked_uj_id',
-    'awakening_id'
+    'awakening_id',
+    'reversal',
+    'uniqueness'
 )
 $actualColumns = @($movesets[0].PSObject.Properties.Name)
 if (($actualColumns -join "`t") -cne ($expectedColumns -join "`t")) {
@@ -56,19 +58,26 @@ if (($actualColumns -join "`t") -cne ($expectedColumns -join "`t")) {
     )
 }
 
-$movesetIndex = $MovesetRow - 2
+foreach ($currentMovesetRow in $MovesetRow) {
+$movesetIndex = $currentMovesetRow - 2
 if ($movesetIndex -ge $movesets.Count) {
-    throw "Unknown moveset row: $MovesetRow"
+    throw "Unknown moveset row: $currentMovesetRow"
 }
 $selected = $movesets[$movesetIndex]
+$reversalText = [string]$selected.reversal
+if (-not [string]::IsNullOrWhiteSpace($reversalText) -and
+    $reversalText -cne 'Y') {
+    throw "Moveset row $currentMovesetRow reversal must be an empty cell or Y."
+}
+$isReversal = $reversalText -ceq 'Y'
 
-$characterText = [string]$selected.character_id
+$characterText = [string]$selected.id
 if ($characterText -cnotmatch '^[0-9]+$') {
-    throw "Moveset row $MovesetRow has an invalid decimal character ID."
+    throw "Moveset row $currentMovesetRow has an invalid decimal character ID."
 }
 $character = [uint32]$characterText
 if ($character -lt 1 -or $character -gt 93) {
-    throw "Moveset row $MovesetRow character ID must be between 1 and 93."
+    throw "Moveset row $currentMovesetRow character ID must be between 1 and 93."
 }
 $linkedJutsu = if (
     [string]::IsNullOrWhiteSpace([string]$selected.linked_j_id)
@@ -78,7 +87,7 @@ $linkedJutsu = if (
 else {
     ConvertFrom-PracticeHexId `
         -Value ([string]$selected.linked_j_id) `
-        -Label "Moveset row $MovesetRow linked Jutsu ID" `
+        -Label "Moveset row $currentMovesetRow linked Jutsu ID" `
         -Maximum 0x25
 }
 $linkedUj = if (
@@ -89,11 +98,11 @@ $linkedUj = if (
 else {
     ConvertFrom-PracticeHexId `
         -Value ([string]$selected.linked_uj_id) `
-        -Label "Moveset row $MovesetRow linked UJ ID" `
+        -Label "Moveset row $currentMovesetRow linked UJ ID" `
         -Maximum 0x25
 }
 if ($null -ne $linkedJutsu -and $null -ne $linkedUj) {
-    throw "Moveset row $MovesetRow may select only one linked support ID."
+    throw "Moveset row $currentMovesetRow may select only one linked support ID."
 }
 $support = if ($null -ne $linkedJutsu) {
     [uint32]$linkedJutsu
@@ -110,10 +119,19 @@ $awakening = if ([string]::IsNullOrWhiteSpace([string]$selected.awakening_id)) {
 else {
     ConvertFrom-PracticeHexId `
         -Value ([string]$selected.awakening_id) `
-        -Label "Moveset row $MovesetRow awakening ID" `
+        -Label "Moveset row $currentMovesetRow awakening ID" `
         -Maximum 0x89
 }
 $values = @($character, $support, $awakening)
+$usesGaaraMovesetAwakening = (
+    $character -eq 0x3B -and $awakening -eq 0x3B
+)
+$usesChiyoMovesetAwakening = (
+    $character -eq 0x4D -and $awakening -eq 0x4E
+)
+$usesFullNativeAwakeningEntry = (
+    $character -eq 0x40 -and $awakening -eq 0x41
+)
 
 $pnachByGame = @{}
 $pnachLinesByGame = @{}
@@ -132,10 +150,86 @@ foreach ($requestedGame in $Games) {
     if ([string]$entry.Category -ceq 'builds') {
         $pnachName = 'NA228p.pnach'
         $addresses = @('001ED600', '001ED604', '001ED608')
+        $halfHpAddress = '001E7AE8'
+        $gaaraMovesetAwakeningLines = @(
+            'patch=1,EE,001ED54C,word,FFA80008'
+            'patch=1,EE,001ED550,word,0100202D'
+            'patch=1,EE,001ED554,word,24050001'
+            'patch=1,EE,001ED558,word,0C0A7078'
+            'patch=1,EE,001ED55C,word,00000000'
+            'patch=1,EE,001ED560,word,DFA80008'
+            'patch=1,EE,001ED564,word,DFBF0000'
+            'patch=1,EE,001ED568,word,27BD0010'
+            'patch=1,EE,001ED56C,word,27BDFFC0'
+            'patch=1,EE,001ED570,word,FFBF0030'
+            'patch=1,EE,001ED574,word,7FB20020'
+            'patch=1,EE,001ED578,word,7FB10010'
+            'patch=1,EE,001ED57C,word,7FB00000'
+            'patch=1,EE,001ED580,word,0100902D'
+            'patch=1,EE,001ED584,word,2411003B'
+            'patch=1,EE,001ED588,word,08083710'
+            'patch=1,EE,001ED58C,word,00000000'
+        )
+        $chiyoMovesetAwakeningLines = @(
+            'patch=1,EE,001ED54C,word,FFA80008'
+            'patch=1,EE,001ED550,word,0100202D'
+            'patch=1,EE,001ED554,word,24050001'
+            'patch=1,EE,001ED558,word,0C0B606C'
+            'patch=1,EE,001ED55C,word,00000000'
+            'patch=1,EE,001ED560,word,DFA80008'
+            'patch=1,EE,001ED564,word,DFBF0000'
+            'patch=1,EE,001ED568,word,27BD0010'
+            'patch=1,EE,001ED56C,word,08083644'
+            'patch=1,EE,001ED570,word,0100202D'
+        )
+        $fullNativeAwakeningLines = @(
+            'patch=1,EE,001ED54C,word,0100202D'
+            'patch=1,EE,001ED550,word,DFBF0000'
+            'patch=1,EE,001ED554,word,08083644'
+            'patch=1,EE,001ED558,word,27BD0010'
+        )
     }
     elseif ([string]$entry.Name -ceq 'NUN5') {
         $pnachName = 'NUN5p.pnach'
         $addresses = @('003D0FF0', '003D0FF4', '003D0FF8')
+        $halfHpAddress = '001ED8D8'
+        $gaaraMovesetAwakeningLines = @(
+            'patch=1,EE,003D0F3C,word,FFA80008'
+            'patch=1,EE,003D0F40,word,0100202D'
+            'patch=1,EE,003D0F44,word,24050001'
+            'patch=1,EE,003D0F48,word,0C0A9644'
+            'patch=1,EE,003D0F4C,word,00000000'
+            'patch=1,EE,003D0F50,word,DFA80008'
+            'patch=1,EE,003D0F54,word,DFBF0000'
+            'patch=1,EE,003D0F58,word,27BD0010'
+            'patch=1,EE,003D0F5C,word,27BDFFC0'
+            'patch=1,EE,003D0F60,word,FFBF0030'
+            'patch=1,EE,003D0F64,word,7FB20020'
+            'patch=1,EE,003D0F68,word,7FB10010'
+            'patch=1,EE,003D0F6C,word,7FB00000'
+            'patch=1,EE,003D0F70,word,0100902D'
+            'patch=1,EE,003D0F74,word,2411003B'
+            'patch=1,EE,003D0F78,word,08085333'
+            'patch=1,EE,003D0F7C,word,00000000'
+        )
+        $chiyoMovesetAwakeningLines = @(
+            'patch=1,EE,003D0F3C,word,FFA80008'
+            'patch=1,EE,003D0F40,word,0100202D'
+            'patch=1,EE,003D0F44,word,24050001'
+            'patch=1,EE,003D0F48,word,0C0B88BC'
+            'patch=1,EE,003D0F4C,word,00000000'
+            'patch=1,EE,003D0F50,word,DFA80008'
+            'patch=1,EE,003D0F54,word,DFBF0000'
+            'patch=1,EE,003D0F58,word,27BD0010'
+            'patch=1,EE,003D0F5C,word,08085278'
+            'patch=1,EE,003D0F60,word,0100202D'
+        )
+        $fullNativeAwakeningLines = @(
+            'patch=1,EE,003D0F3C,word,0100202D'
+            'patch=1,EE,003D0F40,word,DFBF0000'
+            'patch=1,EE,003D0F44,word,08085278'
+            'patch=1,EE,003D0F48,word,27BD0010'
+        )
     }
     else {
         throw (
@@ -155,14 +249,28 @@ foreach ($requestedGame in $Games) {
                     ([uint32]$values[$index]).ToString('X8')
             )
         }
+        if ($isReversal) {
+            'patch=1,EE,{0},word,A0850001' -f $halfHpAddress
+        }
+        if ($usesGaaraMovesetAwakening) {
+            $gaaraMovesetAwakeningLines
+        }
+        elseif ($usesChiyoMovesetAwakening) {
+            $chiyoMovesetAwakeningLines
+        }
+        elseif ($usesFullNativeAwakeningEntry) {
+            $fullNativeAwakeningLines
+        }
     )
 }
 
 [pscustomobject]@{
-    MovesetRow = $MovesetRow
+    MovesetRow = $currentMovesetRow
     CharacterId = $character
     SupportId = $support
     AwakeningId = $awakening
+    Reversal = $isReversal
     PnachByGame = $pnachByGame
     PnachLinesByGame = $pnachLinesByGame
+}
 }

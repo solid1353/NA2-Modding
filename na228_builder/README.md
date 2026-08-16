@@ -53,12 +53,16 @@ integrated catalog data.
   not builder catalog inputs. The file is not an override file.
 - `../resources/movesets.tsv` contains ordered moveset-test metadata. The physical
   TSV row is its launcher selector: the header is row 1 and the first moveset is
-  row 2. Within each character block, the base row comes first, followed by
-  linked-J rows, linked-UJ rows, and awakening rows. `character` is descriptive
-  metadata; `character_id`, `linked_j_id`, `linked_uj_id`, and `awakening_id`
+  row 2. Within each base-form character block, the base row comes first,
+  followed by awakening rows, the reversal row, linked-UJ rows, and linked-J
+  rows. The reversal row copies the base inputs and sets `reversal` to `Y`;
+  second forms have no reversal row. `character` is descriptive
+  metadata; `id`, `linked_j_id`, `linked_uj_id`, and `awakening_id`
   contain the runtime inputs. A support row populates exactly one linked-support
   column. Empty linked-support columns mean No Support, and an empty awakening
-  cell means no starting awakening. The file is not a builder catalog input.
+  cell means no starting awakening. A `Y` reversal cell selects half starting
+  HP through the Practice PNACH injection. `uniqueness` is metadata.
+  The file is not a builder catalog input.
 - `catalog/implementation/targets.tsv` is the single target registry used by
   edits and injection hooks.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.

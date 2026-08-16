@@ -628,7 +628,7 @@ Add-Content `
             manual `
             -c `
             practice `
-            76 `
+            101 `
             -t *>&1
     ) -join "`n"
     Assert-Na2Test `
@@ -653,12 +653,73 @@ Add-Content `
             "The Practice profile did not generate distinct NUN5 and NA2.28 " +
             "PNACH inputs. Output:`n$practiceOutput"
         )
+    $gaaraAwakeningOutput = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            nun5 `
+            manual `
+            -c `
+            practice `
+            59 *>&1
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $gaaraAwakeningOutput -match '003D0FF8,word,0000003B' -and
+            $gaaraAwakeningOutput -match '003D0F48,word,0C0A9644' -and
+            $gaaraAwakeningOutput -match '003D0F78,word,08085333' -and
+            $gaaraAwakeningOutput -match '001ED608,word,0000003B' -and
+            $gaaraAwakeningOutput -match '001ED558,word,0C0A7078' -and
+            $gaaraAwakeningOutput -match '001ED588,word,08083710'
+        ) `
+        -Message (
+            'The Practice profile did not enter Gaara regular awakening ' +
+            "through the native moveset-state transition for both games. " +
+            "Output:`n$gaaraAwakeningOutput"
+        )
+    $gaaraBaseOutput = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            nun5 `
+            manual `
+            -c `
+            practice `
+            58 *>&1
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $gaaraBaseOutput -match '003D0FF8,word,FFFFFFFF' -and
+            $gaaraBaseOutput -match '001ED608,word,FFFFFFFF' -and
+            $gaaraBaseOutput -notmatch '003D0F48,word,0C0A9644' -and
+            $gaaraBaseOutput -notmatch '001ED558,word,0C0A7078'
+        ) `
+        -Message (
+            'The Practice profile applied Gaara awakening-only state to his ' +
+            "base row. Output:`n$gaaraBaseOutput"
+        )
+    $reversalOutput = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            nun5 `
+            manual `
+            -c `
+            practice `
+            4 *>&1
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $reversalOutput -match '003D0FF0,word,00000039' -and
+            $reversalOutput -match '003D0FF4,word,00000025' -and
+            $reversalOutput -match '003D0FF8,word,FFFFFFFF' -and
+            $reversalOutput -match '001ED8D8,word,A0850001' -and
+            $reversalOutput -match '001E7AE8,word,A0850001'
+        ) `
+        -Message (
+            'The Practice reversal row did not inject half HP for both games. ' +
+            "Output:`n$reversalOutput"
+        )
     $linkedJutsuOutput = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
             -c `
             practice `
-            3 *>&1
+            6 *>&1
     ) -join "`n"
     Assert-Na2Test `
         -Condition (

@@ -17,7 +17,10 @@ only that row; it neither reads
 `character_data.tsv` nor expands character, support, or awakening combinations.
 Exactly one of `linked_j_id` or `linked_uj_id` may select a support; when
 both cells are empty, the profile selects No Support `0x25`. An empty
-`awakening_id` cell writes the `FFFFFFFF` no-effect sentinel.
+`awakening_id` cell writes the `FFFFFFFF` no-effect sentinel. A `Y` in the
+`reversal` column adds a fourth, game-specific inline PNACH line that selects
+the native Half starting-HP mode; an empty cell leaves starting HP unchanged.
+The `uniqueness` column is metadata.
 
 `pcsx2_files/cheats/practice/NA228p.pnach` and
 `pcsx2_files/cheats/practice/NUN5p.pnach` contain the
@@ -35,10 +38,15 @@ The bootstrap writes both current and match-start Player 1 fields, fixes Player
 2 to Naruto with Sakura support and the Practice stage to `6`, skips Character
 Select and Practice Settings, and retains the native battle-loading states.
 Its battle wrapper first runs the native update, then applies the requested
-awakening once after Player 1 exists. Every non-`none` awakening ID enters the
-native awakening function's shared exact-effect transition tail, so the
-requested effect, awakened controller state, transition actions, sound, and
-moveset refresh are applied together. There is no raw-effect fallback.
+awakening once after Player 1 exists. Every non-`none` awakening ID reaches the
+native awakening function's exact-effect transition, so the requested effect,
+awakened controller state, transition actions, and sound are applied together.
+Deidara `0x41` retains the complete native entry. Taijutsu Chiyo `0x4E` first
+enters her separate native moveset state, then uses the complete native entry to
+remove her constructor-owned `0x4D` effect and apply `0x4E`. Gaara's regular
+`0x3B` first enters his separate native moveset state, then reaches the shared
+transition; his item awakening `0x3C` deliberately does not enter that moveset
+state. There is no raw-effect fallback.
 
 The NA2 guards are runtime `0x001E9AF8` for the post-Continue route,
 `0x001ECA2C` for the unchanged state-`7` call into the replaced native
@@ -61,6 +69,10 @@ the initializer and preserves the immediately following settings field. Static
 binary and savestate comparison are complete; patched-build runtime validation
 remains pending. The reverse-engineering record is in
 [`../knowledge/gameplay/battle.md`](../knowledge/gameplay/battle.md).
+
+Practice reversal rows override the initializer process-locally with
+`0x001E7AE8 = 0xA0850001` for NA228 or
+`0x001ED8D8 = 0xA0850001` for NUN5. Ordinary rows do not add either write.
 
 ## Select No Support on Character Select
 

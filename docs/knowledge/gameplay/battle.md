@@ -105,9 +105,11 @@ while `pcsx2_files/cheats/practice/NUN5p.pnach` owns its separately ported start
 code at `0x003D0C60..0x003D0FF8`. The normal
 `-c <cheats-config> <row>` selector maps `practice` to
 `pcsx2_files/cheats/practice/`, reads one physical `movesets.tsv` row starting
-at row 2, and passes a different three-line
-address set to each selected game. It neither rewrites a profile nor creates a
-generated PNACH. Clean NA2 is not a supported launcher target.
+at row 2, and passes a different three-line character/support/awakening address
+set to each selected game. A row with `reversal` set to `Y` adds the native
+half-HP initializer write as a fourth line: `0x001E7AE8 = 0xA0850001` for
+NA228 or `0x001ED8D8 = 0xA0850001` for NUN5. It neither rewrites a profile nor
+creates a generated PNACH. Clean NA2 is not a supported launcher target.
 
 In the baseline battle marker the live fighter's effect container at fighter
 `+0x8C4` was empty and `u16` field `+0x8E8` was `0xFFFF`. The two status markers
@@ -224,9 +226,59 @@ enters the shared transition tail at `0x0020DC40`. That tail calls
 `FUN_00305c30` with the exact configured ID, sets fighter `+0x63` bit `0x20`,
 and performs the native transition sequence before returning through the
 original epilogue at `0x0020DCF8`. Consequently every non-`none` value supplied
-as an awakening, including Naruto `0x39`, uses the complete transition; there
-is no raw-effect branch. NUN5 uses the homologous mode guard `FUN_00204ed0`,
-transition tail `0x00214CCC`, and epilogue `0x00214DE0`.
+as an awakening, including Naruto `0x39`, reaches the complete transition;
+there is no raw-effect branch. NUN5 uses the homologous mode guard
+`FUN_00204ed0`, transition tail `0x00214CCC`, and epilogue `0x00214DE0`.
+
+Three characters have native work before that shared tail. Deidara `0x41` uses
+the complete `FUN_0020d910` entry, and NUN5 uses `FUN_002149e0`, retaining its
+character-specific prefix. Taijutsu Chiyo starts with constructor-owned effect
+`0x4D`, while her controller association is the sole effect `0x4E`. Her
+ordinary-move slots are switched independently by `FUN_002d81b0(fighter, 1)`,
+or NUN5 `FUN_002e22f0(fighter, 1)`. The full native entry then removes `0x4D`
+through `FUN_00305510`, or NUN5 `FUN_0030fda0`, before applying `0x4E`.
+Entering either the shared tail directly or the full native entry without the
+moveset helper leaves her base ordinary moves. Both clean boot ELFs encode the
+same `0x4E` association at character-table entry `77`: NA2 runtime
+`0x005C1F98` / file `0x4C2098`, and NUN5 runtime `0x005C9418` / file
+`0x4C9598`.
+
+Gaara's regular `0x3B` additionally requires
+`FUN_0029c1e0(fighter, 1)`, or NUN5 `FUN_002a5910(fighter, 1)`, which switches
+his ordinary-move slots and model state independently of the active effect.
+The process-local Gaara override calls that helper, reconstructs the native
+awakening frame, and then enters the same exact-effect transition tail. Focused
+NUN5 and NA228 replays both showed `Sand Attack: Crush Burial`, `Sand Attack:
+Ruin Burial`, `Sand Attack: Heaven Burial`, and `Fierce Sand Downpour` in place
+of the base ordinary moves, plus `Destructive Sand Burial` as the Ultimate
+Jutsu. That override does not yet reproduce the native prefix's fighter
+`+0x63` bit `0x10` write or its external activation call, so the ordinary
+moveset is runtime-confirmed while complete native semantic parity remains
+unverified.
+
+Gaara's item awakening is effect `0x3C`. His runtime callback tests it
+separately from regular `0x3B`; it does not select the alternate ordinary
+moveset. `character_data.tsv` therefore records `0x3B,0x3C` as compatible
+active effects, and the moveset matrix records the regular and item cases
+separately.
+
+The current 78-row awakening matrix was exhaustively classified against both
+games' homologous controller branches. Fifty-nine rows use the ordinary exact
+tail. Twelve exact-ID rows bypass prefixes that only select between associated
+effects, two Might Guy rows define an initial stage rather than executing the
+native already-active stage transition, Taijutsu Chiyo `0x4D` is
+constructor-owned, and Gaara `0x3C` is the non-moveset item state. The remaining
+three routes are the special cases above: full native entry for Deidara `0x41`,
+the Chiyo helper plus full native entry for `0x4E`, and the Gaara helper plus
+exact tail for `0x3B`.
+Scanning both resident executables' character-specific ordinary-move slot
+writers and their callbacks found no further pre-transition helper required by
+a configured row. The pre-fix NUN5 capture set covers 77 rows; Gaara `0x3C` is
+the sole uncaptured row, and Taijutsu Chiyo `0x4E` is retained as the captured
+failure rather than overwritten by this repair. Isolated NUN5 and NA228 replays
+after adding Chiyo's helper both showed her alternate ordinary set, beginning
+with `Looking Up at the Air`, `Passed Years`, `Falling Bow`, `Cut Off End`, and
+`Flying Bird Dance`.
 
 The implementation deliberately leaves starting HP to the independently
 verified native Practice enum described above. It uses neither savestates nor

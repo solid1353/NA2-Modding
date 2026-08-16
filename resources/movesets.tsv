@@ -1,167 +1,230 @@
-character	character_id	linked_j_id	linked_uj_id	awakening_id
-Naruto Uzumaki	57			
-Naruto Uzumaki	57	0x08		
-Naruto Uzumaki	57	0x20		
-Naruto Uzumaki	57		0x01	
-Naruto Uzumaki	57			0x39
-Nine-Tailed Fourth Awakened State	73			
-Sakura Haruno	58			
-Sakura Haruno	58		0x00	
-Sakura Haruno	58		0x1B	
-Sakura Haruno	58			0x3A
-Kakashi Hatake	70			
-Kakashi Hatake	70			0x49
-Sai	92			
-Sai	92			0x61
-Sai	92			0x62
-Neji Hyuga	65			
-Neji Hyuga	65			0x42
-Rock Lee	67			
-Rock Lee	67			0x44
-Rock Lee	67			0x45
-Might Guy	69			
-Might Guy	69			0x47
-Might Guy	69			0x48
-Tenten	66			
-Tenten	66			0x43
-Choji Akimichi	81			
-Choji Akimichi	81			0x54
-Shikamaru Nara	68			
-Shikamaru Nara	68	0x13		
-Shikamaru Nara	68			0x46
-Ino Yamanaka	82			
-Ino Yamanaka	82			0x55
-Asuma Sarutobi	86			
-Asuma Sarutobi	86			0x5A
-Shino Aburame	79			
-Shino Aburame	79			0x51
-Kiba Inuzuka	78			
-Kiba Inuzuka	78			0x50
-Hinata Hyuga	80			
-Hinata Hyuga	80			0x52
-Hinata Hyuga	80			0x53
-Kazekage Gaara	59			
-Kazekage Gaara	59			0x3B
-Kurenai Yuhi	87			
-Kurenai Yuhi	87			0x5B
-Kurenai Yuhi	87			0x5C
-Kankuro	60			
-Kankuro	60			0x3D
-Temari	61			
-Temari	61			0x3E
-Granny Chiyo (Taijutsu)	77			
+character	id	linked_j_id	linked_uj_id	awakening_id	reversal	uniqueness
+Naruto Uzumaki	57
+Naruto Uzumaki	57			0x39		-
+Naruto Uzumaki	57				Y
+Naruto Uzumaki	57		0x01
+Naruto Uzumaki	57	0x08
+Naruto Uzumaki	57	0x20
+Nine-Tailed Fourth Awakened State	73
+Sakura Haruno	58
+Sakura Haruno	58			0x3A		s
+Sakura Haruno	58				Y
+Sakura Haruno	58		0x00
+Sakura Haruno	58		0x1B
+Kakashi Hatake	70
+Kakashi Hatake	70			0x49		s
+Kakashi Hatake	70				Y
+Sai	92
+Sai	92			0x61		ds
+Sai	92			0x62		ds
+Sai	92				Y
+Neji Hyuga	65
+Neji Hyuga	65			0x42		s
+Neji Hyuga	65				Y
+Rock Lee	67
+Rock Lee	67			0x44		d+
+Rock Lee	67			0x45		d+
+Rock Lee	67				Y
+Might Guy	69
+Might Guy	69			0x47		+
+Might Guy	69			0x48		+
+Might Guy	69				Y
+Tenten	66
+Tenten	66			0x43		s
+Tenten	66				Y
+Choji Akimichi	81
+Choji Akimichi	81			0x54		+
+Choji Akimichi	81				Y
+Shikamaru Nara	68
+Shikamaru Nara	68			0x46		+
+Shikamaru Nara	68				Y
+Shikamaru Nara	68	0x13
+Ino Yamanaka	82
+Ino Yamanaka	82			0x55		s
+Ino Yamanaka	82				Y
+Asuma Sarutobi	86
+Asuma Sarutobi	86			0x5A		s
+Asuma Sarutobi	86				Y
+Shino Aburame	79
+Shino Aburame	79			0x51		s
+Shino Aburame	79				Y
+Kiba Inuzuka	78
+Kiba Inuzuka	78			0x50		+
+Kiba Inuzuka	78				Y
+Hinata Hyuga	80
+Hinata Hyuga	80			0x52		s
+Hinata Hyuga	80			0x53		+
+Hinata Hyuga	80				Y
+Kazekage Gaara	59
+Kazekage Gaara	59			0x3B		+
+Kazekage Gaara	59			0x3C		-
+Kazekage Gaara	59				Y
+Kurenai Yuhi	87
+Kurenai Yuhi	87			0x5B		ds
+Kurenai Yuhi	87			0x5C		ds
+Kurenai Yuhi	87				Y
+Kankuro	60
+Kankuro	60			0x3D		s
+Kankuro	60				Y
+Temari	61
+Temari	61			0x3E		s
+Temari	61				Y
+Granny Chiyo (Taijutsu)	77
 Granny Chiyo (Taijutsu)	77			0x4D
 Granny Chiyo (Taijutsu)	77			0x4E
-Kisame Hoshigaki	72			
-Kisame Hoshigaki	72		0x0D	
-Kisame Hoshigaki	72			0x4B
-Itachi Uchiha	71			
-Itachi Uchiha	71		0x0E	
-Itachi Uchiha	71			0x4A
-Deidara	64			
-Deidara	64		0x1E	
-Deidara	64			0x41
-Granny Chiyo	62			
-Granny Chiyo	62		0x01	
-Granny Chiyo	62			0x3F
-Sasori	63			
-Sasori	63		0x0B	
-Sasori (Puppet)	75			
-Sasori (Hiruko)	76			
-Sasori (Hiruko)	76			0x4C
-Tsunade	84			
-Tsunade	84	0x18		
-Tsunade	84			0x22
-Tsunade	84			0x23
-Tsunade	84			0x57
-Jiraiya	83			
-Jiraiya	83			0x56
-Shizune	85			
-Shizune	85			0x58
-Shizune	85			0x59
-Orochimaru	89			
-Orochimaru	89		0x21	
-Orochimaru	89			0x5D
-Yamato	91			
-Yamato	91			0x5F
-Yamato	91			0x60
-Kabuto Yakushi	90			
-Kabuto Yakushi	90			0x5E
-Sasuke Uchiha	93			
-Sasuke Uchiha	93	0x00		
-Sasuke Uchiha	93		0x1C	
-Sasuke Uchiha	93			0x63
-Sasuke Uchiha	93			0x64
-Naruto Uzumaki (Classic)	1			
-Naruto Uzumaki (Classic)	1			0x0E
-Naruto Uzumaki (Nine-Tailed)	47			
-Sasuke Uchiha (Classic)	2			
-Sasuke Uchiha (Classic)	2			0x0F
-Second Stage Sasuke Uchiha	48			
-Sakura Haruno (Classic)	7			
-Sakura Haruno (Classic)	7			0x13
-Neji Hyuga (Classic)	6			
-Neji Hyuga (Classic)	6			0x12
-Rock Lee (Classic)	3			
-Rock Lee (Classic)	3			0x10
-Loopy Fist Lee	49			
-Tenten (Classic)	13			
-Tenten (Classic)	13			0x19
-Shikamaru Nara (Classic)	5			
-Shikamaru Nara (Classic)	5			0x11
-Choji Akimichi (Classic)	14			
-Choji Akimichi (Classic)	14			0x1A
-Super Choji	51			
-Kiba Inuzuka (Classic)	16			
-Kiba Inuzuka (Classic)	16			0x1C
-Ino Yamanaka (Classic)	15			
-Ino Yamanaka (Classic)	15			0x1B
-Shino Aburame (Classic)	17			
-Shino Aburame (Classic)	17			0x1D
-Hinata Hyuga (Classic)	12			
-Hinata Hyuga (Classic)	12			0x17
-Hinata Hyuga (Classic)	12			0x18
-Hanabi Hyuga	41			
-Hanabi Hyuga	41			0x30
-Hanabi Hyuga	41			0x31
-Konohamaru Ninja Squad	40			
-Konohamaru Ninja Squad	40			0x2E
-Konohamaru Ninja Squad	40			0x2F
-Anko Mitarashi	46			
-Anko Mitarashi	46			0x37
-Anko Mitarashi	46			0x38
-The First Hokage	42			
-The First Hokage	42			0x32
-The Second Hokage	43			
-The Second Hokage	43			0x33
-The Second Hokage	43			0x34
-The Yellow Flash	39			
-The Yellow Flash	39			0x2C
-The Yellow Flash	39			0x2D
-The Third Hokage	22			
-The Third Hokage	22			0x21
-Gaara (Classic)	4			
-Possessed Gaara	50			
-Temari (Classic)	19			
-Temari (Classic)	19			0x1F
-Kankuro (Classic)	18			
-Kankuro (Classic)	18			0x1E
-Kimimaro	38			
-Kimimaro	38			0x2B
-Second Stage Kimimaro	56			
-Sakon	37			
-Sakon	37			0x2A
-Second Stage Sakon	55			
-Tayuya	36			
-Tayuya	36			0x29
-Second Stage Tayuya	54			
-Kidomaru	35			
-Kidomaru	35			0x28
-Second Stage Kidomaru	53			
-Jirobo	34			
-Jirobo	34			0x27
-Second Stage Jirobo	52			
-Zabuza Momochi	11			
-Zabuza Momochi	11			0x16
-Haku	10			
-Haku	10			0x15
+Granny Chiyo (Taijutsu)	77				Y
+Kisame Hoshigaki	72
+Kisame Hoshigaki	72			0x4B		s
+Kisame Hoshigaki	72				Y
+Kisame Hoshigaki	72		0x0D
+Itachi Uchiha	71
+Itachi Uchiha	71			0x4A		s
+Itachi Uchiha	71				Y
+Itachi Uchiha	71		0x0E
+Deidara	64
+Deidara	64			0x41		+
+Deidara	64				Y
+Deidara	64		0x1E
+Granny Chiyo	62
+Granny Chiyo	62			0x3F		s
+Granny Chiyo	62				Y
+Granny Chiyo	62		0x01
+Sasori	63
+Sasori	63				Y
+Sasori	63		0x0B
+Sasori (Puppet)	75
+Sasori (Hiruko)	76
+Sasori (Hiruko)	76			0x4C		s
+Sasori (Hiruko)	76				Y
+Tsunade	84
+Tsunade	84			0x22		-
+Tsunade	84			0x23		-
+Tsunade	84			0x57		+
+Tsunade	84				Y
+Tsunade	84	0x18
+Jiraiya	83
+Jiraiya	83			0x56		s
+Jiraiya	83				Y
+Shizune	85
+Shizune	85			0x58		ds
+Shizune	85			0x59		ds
+Shizune	85				Y
+Orochimaru	89
+Orochimaru	89			0x5D		s
+Orochimaru	89				Y
+Orochimaru	89		0x21
+Yamato	91
+Yamato	91			0x5F		ds
+Yamato	91			0x60		ds
+Yamato	91				Y
+Kabuto Yakushi	90
+Kabuto Yakushi	90			0x5E		s
+Kabuto Yakushi	90				Y
+Sasuke Uchiha	93
+Sasuke Uchiha	93			0x63		ds
+Sasuke Uchiha	93			0x64		ds
+Sasuke Uchiha	93				Y
+Sasuke Uchiha	93		0x1C
+Sasuke Uchiha	93	0x00
+Naruto Uzumaki (Classic)	1
+Naruto Uzumaki (Classic)	1			0x0E		-
+Naruto Uzumaki (Classic)	1				Y
+Naruto Uzumaki (Nine-Tailed)	47
+Sasuke Uchiha (Classic)	2
+Sasuke Uchiha (Classic)	2			0x0F		-
+Sasuke Uchiha (Classic)	2				Y
+Second Stage Sasuke Uchiha	48
+Sakura Haruno (Classic)	7
+Sakura Haruno (Classic)	7			0x13		s
+Sakura Haruno (Classic)	7				Y
+Neji Hyuga (Classic)	6
+Neji Hyuga (Classic)	6			0x12		s
+Neji Hyuga (Classic)	6				Y
+Rock Lee (Classic)	3
+Rock Lee (Classic)	3			0x10		-
+Rock Lee (Classic)	3				Y
+Loopy Fist Lee	49
+Tenten (Classic)	13
+Tenten (Classic)	13			0x19		s
+Tenten (Classic)	13				Y
+Shikamaru Nara (Classic)	5
+Shikamaru Nara (Classic)	5			0x11		s
+Shikamaru Nara (Classic)	5				Y
+Choji Akimichi (Classic)	14
+Choji Akimichi (Classic)	14			0x1A		s
+Choji Akimichi (Classic)	14				Y
+Super Choji	51
+Kiba Inuzuka (Classic)	16
+Kiba Inuzuka (Classic)	16			0x1C		s
+Kiba Inuzuka (Classic)	16				Y
+Ino Yamanaka (Classic)	15
+Ino Yamanaka (Classic)	15			0x1B		s
+Ino Yamanaka (Classic)	15				Y
+Shino Aburame (Classic)	17
+Shino Aburame (Classic)	17			0x1D		s
+Shino Aburame (Classic)	17				Y
+Hinata Hyuga (Classic)	12
+Hinata Hyuga (Classic)	12			0x17		ds
+Hinata Hyuga (Classic)	12			0x18		ds
+Hinata Hyuga (Classic)	12				Y
+Hanabi Hyuga	41
+Hanabi Hyuga	41			0x30		ds
+Hanabi Hyuga	41			0x31		ds
+Hanabi Hyuga	41				Y
+Konohamaru Ninja Squad	40
+Konohamaru Ninja Squad	40			0x2E		-
+Konohamaru Ninja Squad	40			0x2F		s
+Konohamaru Ninja Squad	40				Y
+Anko Mitarashi	46
+Anko Mitarashi	46			0x37		ds
+Anko Mitarashi	46			0x38		ds
+Anko Mitarashi	46				Y
+The First Hokage	42
+The First Hokage	42			0x32		s
+The First Hokage	42				Y
+The Second Hokage	43
+The Second Hokage	43			0x33		ds
+The Second Hokage	43			0x34		ds
+The Second Hokage	43				Y
+The Yellow Flash	39
+The Yellow Flash	39			0x2C		ds
+The Yellow Flash	39			0x2D		ds
+The Yellow Flash	39				Y
+The Third Hokage	22
+The Third Hokage	22			0x21		s
+The Third Hokage	22				Y
+Gaara (Classic)	4
+Gaara (Classic)	4				Y
+Possessed Gaara	50
+Temari (Classic)	19
+Temari (Classic)	19			0x1F		s
+Temari (Classic)	19				Y
+Kankuro (Classic)	18
+Kankuro (Classic)	18			0x1E		s
+Kankuro (Classic)	18				Y
+Kimimaro	38
+Kimimaro	38			0x2B		-
+Kimimaro	38				Y
+Second Stage Kimimaro	56
+Sakon	37
+Sakon	37			0x2A		-
+Sakon	37				Y
+Second Stage Sakon	55
+Tayuya	36
+Tayuya	36			0x29		-
+Tayuya	36				Y
+Second Stage Tayuya	54
+Kidomaru	35
+Kidomaru	35			0x28		-
+Kidomaru	35				Y
+Second Stage Kidomaru	53
+Jirobo	34
+Jirobo	34			0x27		-
+Jirobo	34				Y
+Second Stage Jirobo	52
+Zabuza Momochi	11
+Zabuza Momochi	11			0x16		s
+Zabuza Momochi	11				Y
+Haku	10
+Haku	10			0x15		s
+Haku	10				Y

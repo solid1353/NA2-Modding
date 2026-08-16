@@ -4,14 +4,19 @@ param(
     [string]$CaptureRoot,
     [string]$CaptureRepository,
     [switch]$Shifted,
-    [switch]$RepeatNormal,
-    [object[]]$SupervisedJob = @()
+    [object[]]$SupervisedJob = @(),
+    [string]$MovesetRange,
+    [ValidateRange(0, 64)]
+    [int]$MovesetThrottleLimit = 0
 )
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'suite.ps1')
 . (Join-Path $PSScriptRoot 'config.ps1')
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
+. (Join-Path $repository 'scripts\lib\paths.ps1')
+$paths = Get-Na2Paths
 $configuration = Get-E2eConfiguration -Root $root
 $suiteRoot = Join-Path $root 'suites'
 $suiteWasSpecified = $PSBoundParameters.ContainsKey('Suite')
@@ -31,9 +36,6 @@ if (-not [string]::IsNullOrWhiteSpace($CaptureRoot) -and
 if (-not [string]::IsNullOrWhiteSpace($CaptureRepository) -and
     $requestedSuites.Count -eq 0) {
     throw 'CaptureRepository requires selected suites.'
-}
-if ($RepeatNormal.IsPresent -and $requestedSuites.Count -eq 0) {
-    throw 'RepeatNormal requires selected suites.'
 }
 function Get-E2eRunContext {
     param([Parameter(Mandatory)][string]$Name)
@@ -62,7 +64,7 @@ $suites = @(
         )
         foreach ($requestedSuite in $requestedSuites) {
             $requestedContext = Get-E2eRunContext -Name $requestedSuite
-            if (-not (Test-Path -LiteralPath $requestedContext.SuitePath -PathType Leaf)) {
+            if (-not (Test-VisualRegressionSuiteExists -Context $requestedContext)) {
                 throw "E2E suite does not exist: $($requestedContext.Suite)"
             }
             if (-not $selected.Add($requestedContext.Suite)) {
@@ -74,6 +76,22 @@ $suites = @(
 )
 if ($suites.Count -eq 0) {
     throw 'No E2E suites are available.'
+}
+$movesetRangeSpecified = -not [string]::IsNullOrWhiteSpace($MovesetRange)
+if ($movesetRangeSpecified -and
+    ($suites.Count -ne 1 -or $suites[0] -ine $script:E2eGeneratedSuiteName)) {
+    throw 'MovesetRange requires the movesets suite to be selected by itself.'
+}
+if ($movesetRangeSpecified) {
+    $characterData = @(
+        Import-Csv `
+            -LiteralPath (Join-Path ([string]$paths.resources) 'character_data.tsv') `
+            -Delimiter "`t"
+    )
+    $resolvedMovesetRange = Resolve-VisualRegressionMovesetRange `
+        -Range $MovesetRange `
+        -LastAvailableRow ($characterData.Count + 1)
+    $MovesetRange = $resolvedMovesetRange.Value
 }
 $publishedVariant = [string]$configuration.PublishedVariant.name
 $runVariants = @(
@@ -88,22 +106,82 @@ $comparisonVariants = @(
     $runVariants |
         Where-Object { [string]$_.name -cne $publishedVariant }
 )
-$comparisonRuns = @(
-    if ($RepeatNormal.IsPresent) {
-        [pscustomobject]@{
-            name = "$publishedVariant-repeat"
-            compare_against = $publishedVariant
-        }
-    }
-    $comparisonVariants
-)
-foreach ($comparisonVariant in $comparisonRuns) {
+$movesetReplayLanes = $runVariants.Count
+$effectiveMovesetThrottleLimit = if ($MovesetThrottleLimit -gt 0) {
+    $MovesetThrottleLimit
+}
+else {
+    [Math]::Max(1, [Math]::Floor(16 / $movesetReplayLanes))
+}
+foreach ($comparisonVariant in $comparisonVariants) {
     if ([string]$comparisonVariant.compare_against -cne $publishedVariant) {
         throw "Comparison variant $($comparisonVariant.name) must compare against $publishedVariant."
     }
 }
 
-$transaction = New-VisualRegressionTransaction -Root $root -Prefix 'run'
+$inputIdentity = [Collections.Generic.List[object]]::new()
+$hasGeneratedSuite = $false
+foreach ($suiteName in $suites) {
+    $context = Get-E2eRunContext -Name $suiteName
+    if ($context.Generated) {
+        $hasGeneratedSuite = $true
+        continue
+    }
+    $inputIdentity.Add([ordered]@{
+        path = [IO.Path]::GetRelativePath($repository, $context.SuitePath).Replace('\', '/')
+        sha256 = (Get-FileHash -LiteralPath $context.SuitePath -Algorithm SHA256).Hash
+    })
+}
+if ($hasGeneratedSuite) {
+    $generatedInputPaths = @(
+        Join-Path ([string]$paths.resources) 'character_data.tsv'
+        Join-Path ([string]$paths.resources) 'movesets.tsv'
+        Get-ChildItem `
+            -LiteralPath (Join-Path ([string]$paths.pcsx2_input_recordings) $script:E2eGeneratedSuiteName) `
+            -Filter '*.p2m2' `
+            -File `
+            -ErrorAction Stop |
+            Select-Object -ExpandProperty FullName
+    ) | Sort-Object -Unique
+    foreach ($path in $generatedInputPaths) {
+        $inputIdentity.Add([ordered]@{
+            path = [IO.Path]::GetRelativePath($repository, $path).Replace('\', '/')
+            sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
+        })
+    }
+}
+$resumeRequest = [ordered]@{
+    schema_version = 1
+    command = 'run'
+    shifted = $Shifted.IsPresent
+}
+if ($movesetRangeSpecified) {
+    $resumeRequest['moveset_range'] = $MovesetRange
+}
+$resumeRequest['suites'] = [string[]]@($suites | Sort-Object)
+$resumeRequest['inputs'] = [object[]]@($inputIdentity | Sort-Object path)
+$resumeKey = $resumeRequest | ConvertTo-Json -Compress -Depth 6
+$transaction = New-VisualRegressionTransaction `
+    -Root $root `
+    -Prefix 'run' `
+    -ResumeKey $resumeKey `
+    -LegacySuite $(if ($movesetRangeSpecified) { $null } else { $suites }) `
+    -LegacyShifted $Shifted.IsPresent
+if (Test-VisualRegressionTransactionResumed -Transaction $transaction) {
+    $resumeArtifacts = [Collections.Generic.List[string]]::new()
+    foreach ($relative in @('publish', 'stages', 'comparisons', 'evidence', '.backups')) {
+        $resumeArtifacts.Add($relative)
+    }
+    foreach ($variant in $runVariants) {
+        $resumeArtifacts.Add("jobs\$([string]$variant.name)\ready.json")
+        $resumeArtifacts.Add("jobs\$([string]$variant.name)\result.json")
+    }
+    Move-VisualRegressionTransactionItemsToAttempt `
+        -Transaction $transaction `
+        -RelativePath ([string[]]$resumeArtifacts) `
+        -Label 'resume' |
+        Out-Null
+}
 $jobs = [Collections.Generic.List[object]]::new()
 $tasks = [Collections.Generic.List[object]]::new()
 $comparisonTasks = [Collections.Generic.List[object]]::new()
@@ -117,71 +195,123 @@ foreach ($suiteName in $suites) {
         (Join-Path (Join-Path (Join-Path $transaction 'jobs') $publishedVariant) 'suites') `
         $context.SuiteRelativePath
     $normalComplete = Join-Path $normalSuite 'complete.json'
+    $normalReady = Join-Path (Join-Path $transaction "jobs\$publishedVariant") 'ready.json'
     $prepareKey = "prepare/$taskSuite"
     $taskCaptureRoot = $context.CaptureRoot
-    $tasks.Add([pscustomobject]@{
-        Key = $prepareKey
-        Priority = 80
-        DependsOn = @()
-        Ready = {
-            Test-Path -LiteralPath $normalComplete -PathType Leaf
-        }.GetNewClosure()
-        Start = {
-            Start-ThreadJob -Name $prepareKey -ScriptBlock {
-                param($Script, $Suite, $Transaction, $CaptureRoot, $Variant)
-                $ErrorActionPreference = 'Stop'
-                & $Script `
-                    -Action CurrentPrepare `
-                    -Suite $Suite `
-                    -Transaction $Transaction `
-                    -CaptureRoot $CaptureRoot `
-                    -PublishedVariant $Variant
-            } -ArgumentList (
-                $postprocessScript,
-                $taskSuite,
-                $transaction,
-                $taskCaptureRoot,
-                $publishedVariant
-            )
-        }.GetNewClosure()
-    })
-    foreach ($action in @('ScreenshotGrid', 'Pair', 'Blend', 'Diff')) {
-        $taskAction = $action
-        $taskKey = "artifact/$taskSuite/$($taskAction.ToLowerInvariant())"
+    if ($context.Generated) {
+        $capturedGridDirectory = Join-Path $normalSuite 'capture\grid-screenshots'
+        $existingGridDirectory = $context.Capture.ScreenshotGrids
+        $outputGridDirectory = Join-Path `
+            (Join-Path (Join-Path $transaction 'publish') $context.SuiteRelativePath) `
+            $script:E2eScreenshotGridDirectory
         $tasks.Add([pscustomobject]@{
-            Key = $taskKey
-            Priority = 10
-            DependsOn = @($prepareKey)
-            Ready = $null
+            Key = $prepareKey
+            Priority = 80
+            DependsOn = @()
+            Ready = {
+                (Test-Path -LiteralPath $normalReady -PathType Leaf) -and
+                    (Test-Path -LiteralPath $normalComplete -PathType Leaf)
+            }.GetNewClosure()
             Start = {
-                Start-ThreadJob -Name $taskKey -ScriptBlock {
-                    param($Script, $Action, $Suite, $Transaction, $CaptureRoot)
+                Start-ThreadJob -Name $prepareKey -ScriptBlock {
+                    param(
+                        $Script,
+                        $ExistingDirectory,
+                        $CapturedDirectory,
+                        $OutputDirectory,
+                        $PreserveCapturedTier
+                    )
                     $ErrorActionPreference = 'Stop'
-                    & $Script `
-                        -Action $Action `
-                        -Suite $Suite `
-                        -Transaction $Transaction `
-                        -CaptureRoot $CaptureRoot
+                    . $Script
+                    New-VisualRegressionGeneratedGridStage `
+                        -ExistingDirectory $ExistingDirectory `
+                        -CapturedDirectory $CapturedDirectory `
+                        -OutputDirectory $OutputDirectory `
+                        -CapturedTier Current `
+                        -PreserveCapturedTier:$PreserveCapturedTier
                 } -ArgumentList (
-                    $postprocessScript,
-                    $taskAction,
-                    $taskSuite,
-                    $transaction,
-                    $taskCaptureRoot
+                    $suiteScript,
+                    $existingGridDirectory,
+                    $capturedGridDirectory,
+                    $outputGridDirectory,
+                    $movesetRangeSpecified
                 )
             }.GetNewClosure()
         })
     }
-    foreach ($comparisonVariant in $comparisonRuns) {
+    else {
+        $tasks.Add([pscustomobject]@{
+            Key = $prepareKey
+            Priority = 80
+            DependsOn = @()
+            Ready = {
+                (Test-Path -LiteralPath $normalReady -PathType Leaf) -and
+                    (Test-Path -LiteralPath $normalComplete -PathType Leaf)
+            }.GetNewClosure()
+            Start = {
+                Start-ThreadJob -Name $prepareKey -ScriptBlock {
+                    param($Script, $Suite, $Transaction, $CaptureRoot, $Variant)
+                    $ErrorActionPreference = 'Stop'
+                    & $Script `
+                        -Action CurrentPrepare `
+                        -Suite $Suite `
+                        -Transaction $Transaction `
+                        -CaptureRoot $CaptureRoot `
+                        -PublishedVariant $Variant
+                } -ArgumentList (
+                    $postprocessScript,
+                    $taskSuite,
+                    $transaction,
+                    $taskCaptureRoot,
+                    $publishedVariant
+                )
+            }.GetNewClosure()
+        })
+        foreach ($action in @('ScreenshotGrid', 'Pair', 'Blend', 'Diff')) {
+            $taskAction = $action
+            $taskKey = "artifact/$taskSuite/$($taskAction.ToLowerInvariant())"
+            $tasks.Add([pscustomobject]@{
+                Key = $taskKey
+                Priority = 10
+                DependsOn = @($prepareKey)
+                Ready = $null
+                Start = {
+                    Start-ThreadJob -Name $taskKey -ScriptBlock {
+                        param($Script, $Action, $Suite, $Transaction, $CaptureRoot)
+                        $ErrorActionPreference = 'Stop'
+                        & $Script `
+                            -Action $Action `
+                            -Suite $Suite `
+                            -Transaction $Transaction `
+                            -CaptureRoot $CaptureRoot
+                    } -ArgumentList (
+                        $postprocessScript,
+                        $taskAction,
+                        $taskSuite,
+                        $transaction,
+                        $taskCaptureRoot
+                    )
+                }.GetNewClosure()
+            })
+        }
+    }
+    foreach ($comparisonVariant in $comparisonVariants) {
         $candidateName = [string]$comparisonVariant.name
         $candidateSuite = Join-Path `
             (Join-Path (Join-Path (Join-Path $transaction 'jobs') $candidateName) 'suites') `
             $context.SuiteRelativePath
         $candidateComplete = Join-Path $candidateSuite 'complete.json'
+        $candidateReady = Join-Path (Join-Path $transaction "jobs\$candidateName") 'ready.json'
         $comparisonRoot = Join-Path `
             (Join-Path (Join-Path $transaction 'comparisons') $candidateName) `
             $context.SuiteRelativePath
         $comparisonKey = "compare/$candidateName/$taskSuite"
+        $baselineArtifactDirectory = Join-Path `
+            $normalSuite `
+            $(if ($context.Generated) { 'capture\grid-screenshots' } else { 'capture\screenshots' })
+        $candidateArtifactDirectory = Join-Path `
+            $candidateSuite `
+            $(if ($context.Generated) { 'capture\grid-screenshots' } else { 'capture\screenshots' })
         $comparisonTask = [pscustomobject]@{
             Key = $comparisonKey
             Priority = 100
@@ -190,7 +320,9 @@ foreach ($suiteName in $suites) {
             Result = Join-Path $comparisonRoot 'result.json'
             DependsOn = @()
             Ready = {
-                (Test-Path -LiteralPath $normalComplete -PathType Leaf) -and
+                (Test-Path -LiteralPath $normalReady -PathType Leaf) -and
+                    (Test-Path -LiteralPath $candidateReady -PathType Leaf) -and
+                    (Test-Path -LiteralPath $normalComplete -PathType Leaf) -and
                     (Test-Path -LiteralPath $candidateComplete -PathType Leaf)
             }.GetNewClosure()
             Start = {
@@ -221,8 +353,8 @@ foreach ($suiteName in $suites) {
                 } -ArgumentList (
                     $suiteScript,
                     $taskSuite,
-                    (Join-Path $normalSuite 'capture\screenshots'),
-                    (Join-Path $candidateSuite 'capture\screenshots'),
+                    $baselineArtifactDirectory,
+                    $candidateArtifactDirectory,
                     $candidateName,
                     $comparisonRoot
                 )
@@ -236,9 +368,6 @@ $pipelineCompleted = $false
 try {
     $suiteSelectionJson = ConvertTo-Json -Compress -InputObject ([string[]]$suites)
     $replayNames = @($runVariants.name)
-    if ($RepeatNormal.IsPresent) {
-        $replayNames += "$publishedVariant-repeat"
-    }
     Write-Host (
         "E2E pipeline started for $($suites -join ', '): " +
         "build/replay lanes $($replayNames -join ', ') run concurrently."
@@ -246,21 +375,29 @@ try {
     foreach ($variant in $runVariants) {
         $variantName = [string]$variant.name
         $variantJob = Start-Job -Name $variantName -ScriptBlock {
-            param($Script, $Variant, $Transaction, $SuiteSelectionJson, $Repeat)
+            param(
+                $Script,
+                $Variant,
+                $Transaction,
+                $SuiteSelectionJson,
+                $MovesetThrottleLimit,
+                $MovesetRange
+            )
             $ErrorActionPreference = 'Stop'
             $variantArguments = @{
                 Variant = $Variant
                 Transaction = $Transaction
                 Suite = [string[]]@($SuiteSelectionJson | ConvertFrom-Json)
+                MovesetThrottleLimit = $MovesetThrottleLimit
             }
-            if ($Repeat) {
-                $variantArguments.Repeat = $true
+            if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
+                $variantArguments.MovesetRange = $MovesetRange
             }
             & $Script @variantArguments
         } -ArgumentList (
             Join-Path $PSScriptRoot 'variant.ps1'
-        ), $variantName, $transaction, $suiteSelectionJson, (
-            $RepeatNormal.IsPresent -and $variantName -ceq $publishedVariant
+        ), $variantName, $transaction, $suiteSelectionJson, $effectiveMovesetThrottleLimit, (
+            $MovesetRange
         )
         $jobs.Add($variantJob)
     }
@@ -298,7 +435,7 @@ try {
         if ($failedComparison) {
             Preserve-VisualRegressionMismatchEvidence `
                 -Transaction $transaction `
-                -ComparisonVariant ([string[]]@($comparisonRuns.name))
+                -ComparisonVariant ([string[]]@($comparisonVariants.name))
         }
         throw
     }
@@ -320,7 +457,7 @@ try {
     if ($comparisonFailures.Count -gt 0) {
         Preserve-VisualRegressionMismatchEvidence `
             -Transaction $transaction `
-            -ComparisonVariant ([string[]]@($comparisonRuns.name))
+            -ComparisonVariant ([string[]]@($comparisonVariants.name))
         throw (
             'E2E capture comparison failed for case(s): ' +
             ($comparisonFailures -join ', ')
@@ -330,12 +467,16 @@ try {
     $replacements = [ordered]@{}
     foreach ($suiteName in $suites) {
         $context = Get-E2eRunContext -Name $suiteName
+        $suitePublish = Join-Path (Join-Path $transaction 'publish') $context.SuiteRelativePath
+        if ($context.Generated) {
+            $replacements[$context.CaptureRoot] = $suitePublish
+            continue
+        }
         $suiteStage = Join-Path (Join-Path $transaction 'stages') $context.SuiteRelativePath
         $metadata = Get-Content `
             -Raw `
             -LiteralPath (Join-Path $suiteStage 'postprocess.json') |
             ConvertFrom-Json
-        $suitePublish = Join-Path (Join-Path $transaction 'publish') $context.SuiteRelativePath
         $screenshotStage = Join-Path $suitePublish $script:E2eScreenshotDirectory
         $screenshotGridStage = Join-Path `
             $suitePublish `
@@ -390,11 +531,15 @@ try {
         -TransactionRoot $transaction `
         -AfterPublish {
             $aggregateContexts = @(
-                $suites | ForEach-Object { Get-E2eRunContext -Name $_ }
+                $suites |
+                    ForEach-Object { Get-E2eRunContext -Name $_ } |
+                    Where-Object { -not $_.Generated }
             )
-            Publish-VisualRegressionAggregateViews `
-                -Context $aggregateContexts `
-                -TransactionRoot $transaction
+            if ($aggregateContexts.Count -gt 0) {
+                Publish-VisualRegressionAggregateViews `
+                    -Context $aggregateContexts `
+                    -TransactionRoot $transaction
+            }
         }
     Write-Host (
         "E2E pipeline passed: $($suites.Count) suite(s), " +
@@ -425,6 +570,7 @@ finally {
         catch {
             Write-Warning "Failed to mark the retained E2E transaction inactive: $($_.Exception.Message)"
         }
-        Write-Warning "Failed E2E transaction retained for inspection: $transaction"
+        Write-Warning "Failed E2E transaction retained for continuation: $transaction"
+        Write-Warning 'Rerun the same e2e command to continue completed suites.'
     }
 }

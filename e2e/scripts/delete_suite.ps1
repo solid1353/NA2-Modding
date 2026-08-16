@@ -31,8 +31,18 @@ if ($All) {
 
 $context = Get-VisualRegressionContext -Suite $Suite
 
-if (-not (Test-Path -LiteralPath $context.SuitePath -PathType Leaf)) {
+if (-not (Test-VisualRegressionSuiteExists -Context $context)) {
     throw "E2E suite does not exist: $($context.Suite)"
+}
+if ($context.Generated) {
+    if (Test-Path -LiteralPath $context.CaptureRoot -PathType Container) {
+        Remove-Item -LiteralPath $context.CaptureRoot -Recurse -Force
+        Remove-VisualRegressionEmptyParents `
+            -Path $context.CaptureRoot `
+            -Boundary $context.CaptureRepository
+    }
+    Write-Host "Deleted generated E2E capture history: $($context.Suite)" -ForegroundColor Green
+    return
 }
 
 $descendantBranches = [Collections.Generic.HashSet[string]]::new(

@@ -1,15 +1,21 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory, Position = 0)]
-    [ValidatePattern('^(?:all|\d+(?:-\d+)?)$')]
-    [string]$Range,
+    [Parameter(Mandatory)]
+    [string]$Game,
+
+    [Parameter(Mandatory)]
+    [ValidateSet('reference', 'current')]
+    [string]$Tier,
+
+    [Parameter(Mandatory)]
+    [string]$OutputRoot,
+
+    [string]$MovesetRange,
 
     [ValidateRange(1, 64)]
     [int]$ThrottleLimit = 16,
 
-    [string]$OutputRoot,
-
-    [string]$ProjectRoot = (Join-Path $PSScriptRoot '..\..\..')
+    [string]$ProjectRoot = (Join-Path $PSScriptRoot '..\..')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -17,89 +23,61 @@ $ProjectRoot = [IO.Path]::GetFullPath($ProjectRoot)
 
 . (Join-Path $ProjectRoot 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths -ManifestPath (Join-Path $ProjectRoot 'paths.json')
+$taskScript = Join-Path $ProjectRoot 'e2e\scripts\suite.ps1'
+. $taskScript
 
 $characterDataPath = Join-Path ([string]$paths.resources) 'character_data.tsv'
 $characterData = @(Import-Csv -LiteralPath $characterDataPath -Delimiter "`t")
 $movesetsPath = Join-Path ([string]$paths.resources) 'movesets.tsv'
 $movesets = @(Import-Csv -LiteralPath $movesetsPath -Delimiter "`t")
 $lastAvailableRow = $characterData.Count + 1
-$firstRow, $lastRow = if ($Range -ieq 'all') {
-    2, $lastAvailableRow
-}
-elseif ($Range -match '^\d+$') {
-    [int]$Range, [int]$Range
-}
-else {
-    $rangeMatch = [regex]::Match($Range, '^(\d+)-(\d+)$')
-    [int]$rangeMatch.Groups[1].Value,
-    [int]$rangeMatch.Groups[2].Value
-}
-if ($firstRow -lt 2 -or $lastRow -lt $firstRow) {
-    throw (
-        "Range must be 'all', one physical TSV row, or an inclusive " +
-        'physical TSV row range starting at row 2.'
-    )
-}
-if ($lastRow -gt $lastAvailableRow) {
-    throw (
-        "Range ends at row $lastRow, but character_data.tsv ends at row " +
-        "$lastAvailableRow."
-    )
+$firstRow = 2
+$lastRow = $lastAvailableRow
+if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
+    $resolvedRange = Resolve-VisualRegressionMovesetRange `
+        -Range $MovesetRange `
+        -LastAvailableRow $lastAvailableRow
+    $firstRow = $resolvedRange.FirstRow
+    $lastRow = $resolvedRange.LastRow
+    $MovesetRange = $resolvedRange.Value
 }
 
-$workRoot = [IO.Path]::GetFullPath((Join-Path $ProjectRoot 'work'))
-$runRoot = if ([string]::IsNullOrWhiteSpace($OutputRoot)) {
-    [IO.Path]::GetFullPath((Join-Path $workRoot 'captures\movesets'))
+if ([string]::IsNullOrWhiteSpace($OutputRoot)) {
+    throw 'OutputRoot cannot be empty.'
 }
-elseif ([IO.Path]::IsPathRooted($OutputRoot)) {
+$runRoot = if ([IO.Path]::IsPathRooted($OutputRoot)) {
     [IO.Path]::GetFullPath($OutputRoot)
 }
 else {
     [IO.Path]::GetFullPath((Join-Path $ProjectRoot $OutputRoot))
 }
-$relativeOutput = [IO.Path]::GetRelativePath($workRoot, $runRoot)
-if ($relativeOutput -eq '.' -or
-    [IO.Path]::IsPathRooted($relativeOutput) -or
-    $relativeOutput -eq '..' -or
-    $relativeOutput.StartsWith(
-        '..' + [IO.Path]::DirectorySeparatorChar,
-        [StringComparison]::Ordinal
-    )) {
-    throw "Moveset output must be below the project work directory: $runRoot"
-}
-[void](New-Item -ItemType Directory -Path $runRoot -Force)
+$gridOutputRoot = Join-Path $runRoot 'grid-screenshots'
+$workingBase = Join-Path $runRoot '.work'
+[void](New-Item -ItemType Directory -Path $gridOutputRoot, $workingBase -Force)
 
 $practiceScript = Join-Path $ProjectRoot 'scripts\na228\practice.ps1'
 $gridScript = Join-Path `
     $ProjectRoot `
     'scripts\research\localization\compare_font_capture_sets.ps1'
 $launcher = [string]$paths.files.pcsx2_game_launch_command
-$taskScript = Join-Path $ProjectRoot 'e2e\scripts\suite.ps1'
-. $taskScript
 
-$e2eRoot = Join-Path $ProjectRoot 'e2e'
-$publishedE2eVariant = & {
-    param($ConfigScript, $Root)
-
-    . $ConfigScript
-    (Get-E2eConfiguration -Root $Root).PublishedVariant
-} (Join-Path $e2eRoot 'scripts\config.ps1') $e2eRoot
-$currentE2eVariant = [string]$publishedE2eVariant.name
-$currentGame = [string]$publishedE2eVariant.build
-$gameTargets = @(
+$gameTarget = if ($Tier -ieq 'reference') {
     [pscustomobject]@{
-        Selector = 'nun5'
+        Selector = $Game
         Suffix = 'a-reference'
         GridVariant = 'a_reference'
-        Label = 'NUN5 reference'
+        Label = "$Game reference"
     }
+}
+else {
     [pscustomobject]@{
-        Selector = $currentGame
+        Selector = $Game
         Suffix = 'b-current'
         GridVariant = 'b_current'
-        Label = 'NA2.28 current'
+        Label = "$Game current"
     }
-)
+}
+$gameTargets = @($gameTarget)
 
 function Get-MovesetRowKind {
     param([Parameter(Mandatory)]$Moveset)
@@ -250,6 +228,21 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
         $block.Rows | Where-Object Kind -CEQ 'reversal'
     ).Count -gt 0
     if ($hasReversal) {
+        $secondFormBlock = $null
+        if ($characterIndex + 1 -lt $characterData.Count) {
+            $secondForm = $characterData[$characterIndex + 1]
+            $secondFormKey = "$($secondForm.character)`t$($secondForm.id)"
+            if ($blocksByCharacter.ContainsKey($secondFormKey)) {
+                $candidate = $blocksByCharacter[$secondFormKey]
+                $candidateHasReversal = @(
+                    $candidate.Rows | Where-Object Kind -CEQ 'reversal'
+                ).Count -gt 0
+                if (-not $candidateHasReversal) {
+                    $secondFormBlock = $candidate
+                }
+            }
+        }
+
         $specialCaptures = [Collections.Generic.List[object]]::new()
         [void]$specialCaptures.Add([pscustomobject]@{
             Row = $block.Base.Row
@@ -290,6 +283,12 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
                 })
             }
         }
+        if ($null -ne $secondFormBlock) {
+            [void]$specialCaptures.Add([pscustomobject]@{
+                Row = $secondFormBlock.Base.Row
+                Recording = 'movesets\specials.p2m2'
+            })
+        }
         [void]$outputPlans.Add([pscustomobject]@{
             Name = ('{0:D3}-{1}-specials' -f $outputNumber, $slug)
             Captures = @($specialCaptures)
@@ -303,17 +302,6 @@ $practiceRows = @(
         ForEach-Object { [int]$_.Row } |
         Sort-Object -Unique
 )
-$buildResult = @(
-    & (Join-Path $ProjectRoot 'scripts\na228\build.ps1') `
-        -E2eVariant $currentE2eVariant
-) | Where-Object {
-    [string]$_.Status -ceq 'e2e-test' -and
-    [string]$_.E2eVariant -ceq $currentE2eVariant
-} | Select-Object -Last 1
-if ($null -eq $buildResult) {
-    throw "E2E Test $currentE2eVariant build returned no valid result."
-}
-
 $practiceGames = [string[]]@($gameTargets | ForEach-Object Selector)
 $practiceByRow = @{}
 foreach ($practice in @(
@@ -330,8 +318,11 @@ $gridPlans = [Collections.Generic.List[object]]::new()
 foreach ($outputPlan in $outputPlans) {
     foreach ($gameTarget in $gameTargets) {
         $outputName = "$($outputPlan.Name)-$($gameTarget.Suffix)"
-        $workingRoot = Join-Path $runRoot $outputName
-        $finalGrid = Join-Path $runRoot ($outputName + '.png')
+        $workingRoot = Join-Path $workingBase $outputName
+        $finalGrid = Join-Path $gridOutputRoot ($outputName + '.png')
+        if (Test-Path -LiteralPath $finalGrid -PathType Leaf) {
+            continue
+        }
         $captureContexts = [Collections.Generic.List[object]]::new()
         $captureTaskKeys = [Collections.Generic.List[string]]::new()
         $captureIndex = 0
@@ -369,6 +360,7 @@ foreach ($outputPlan in $outputPlans) {
                 InputRecordingsRoot = [string]$paths.pcsx2_input_recordings
                 CaptureRoot = $captureRoot
                 CaseRoot = Split-Path -Parent $captureRoot
+                CompletePath = Join-Path (Split-Path -Parent $captureRoot) 'complete.json'
                 PnachByGame = $pnachByGame
                 PnachLinesByGame = $pnachLinesByGame
             }
@@ -378,6 +370,20 @@ foreach ($outputPlan in $outputPlans) {
                 $outputPlan.Name,
                 $gameTarget.GridVariant,
                 $captureIndex
+            $capturedScreenshots = Join-Path $taskContext.CaptureRoot 'screenshots'
+            $captureComplete = (
+                (Test-Path -LiteralPath $taskContext.CompletePath -PathType Leaf) -and
+                @(
+                    Get-ChildItem `
+                        -LiteralPath $capturedScreenshots `
+                        -Filter '*.png' `
+                        -File `
+                        -ErrorAction SilentlyContinue
+                ).Count -gt 0
+            )
+            if ($captureComplete) {
+                continue
+            }
             [void]$captureTaskKeys.Add($taskName)
             $startTask = {
                 Start-ThreadJob `
@@ -432,6 +438,21 @@ foreach ($outputPlan in $outputPlans) {
                                 "$($Context.Row)."
                             )
                         }
+                        $complete = [ordered]@{
+                            schema_version = 1
+                            row = $Context.Row
+                            recording = $Context.Recording
+                            game = $Context.Game
+                            screenshots = $screenshotCount
+                            completed_utc = (Get-Date).ToUniversalTime().ToString('O')
+                        } | ConvertTo-Json
+                        $temporary = "$($Context.CompletePath).tmp-$([guid]::NewGuid().ToString('N'))"
+                        [IO.File]::WriteAllText(
+                            $temporary,
+                            $complete + "`n",
+                            [Text.UTF8Encoding]::new($false)
+                        )
+                        [IO.File]::Move($temporary, $Context.CompletePath, $true)
                         [pscustomobject]@{
                             Row = $Context.Row
                             Character = $Context.Character
@@ -520,7 +541,7 @@ $gridJobScript = {
                             'screenshots; one grid supports at most 32.'
                         )
                     }
-                    $gridColumns = if ($slot -le 4) {
+                    $gridColumns = if ($slot -le 2) {
                         $slot
                     }
                     else {
@@ -617,4 +638,19 @@ Invoke-VisualRegressionTaskGraph `
     -ThrottleLimit $ThrottleLimit `
     -FailurePrefix 'Moveset capture'
 
-Write-Host "NUN5/NA2.28 moveset grids: $runRoot" -ForegroundColor Green
+if (Test-Path -LiteralPath $workingBase -PathType Container) {
+    Remove-Item -LiteralPath $workingBase -Recurse -Force
+}
+$gridCount = @(
+    Get-ChildItem -LiteralPath $gridOutputRoot -Filter '*.png' -File
+).Count
+if ($gridCount -eq 0) {
+    throw "Moveset capture produced no $Tier grids for $Game."
+}
+Write-Host "Moveset $Tier grids captured for ${Game}: $gridOutputRoot" -ForegroundColor Green
+[pscustomobject]@{
+    Game = $Game
+    Tier = $Tier
+    Grids = $gridCount
+    OutputRoot = $gridOutputRoot
+}

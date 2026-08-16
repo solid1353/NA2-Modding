@@ -3,6 +3,7 @@ $script:E2eCaptureTiers = [ordered]@{
     Reference = 'reference'
     Current = 'current'
 }
+$script:E2eGeneratedSuiteName = 'movesets'
 $script:E2eScreenshotKinds = [ordered]@{
     Reference = [pscustomobject]@{ Order = 'a'; Label = 'reference' }
     Current = [pscustomobject]@{ Order = 'b'; Label = 'current' }
@@ -34,6 +35,91 @@ $script:E2eStableCaptureDirectories = @(
     'sstates'
 )
 
+function Test-VisualRegressionGeneratedSuite {
+    param([Parameter(Mandatory)][string]$Suite)
+
+    $Suite.Replace('\', '/').Equals(
+        $script:E2eGeneratedSuiteName,
+        [StringComparison]::OrdinalIgnoreCase
+    )
+}
+
+function Resolve-VisualRegressionMovesetRange {
+    param(
+        [Parameter(Mandatory)][string]$Range,
+        [Parameter(Mandatory)][ValidateRange(2, [int]::MaxValue)]
+        [int]$LastAvailableRow
+    )
+
+    $rangeMatch = [regex]::Match($Range, '^(\d+)(?:-(\d+))?$')
+    if (-not $rangeMatch.Success) {
+        throw (
+            'Moveset range must be one character_data.tsv row or an inclusive ' +
+            'row range, for example 8 or 8-18.'
+        )
+    }
+    $firstRow = 0
+    $lastRow = 0
+    if (-not [int]::TryParse($rangeMatch.Groups[1].Value, [ref]$firstRow)) {
+        throw "Moveset range is outside the supported integer range: $Range"
+    }
+    if ($rangeMatch.Groups[2].Success) {
+        if (-not [int]::TryParse($rangeMatch.Groups[2].Value, [ref]$lastRow)) {
+            throw "Moveset range is outside the supported integer range: $Range"
+        }
+    }
+    else {
+        $lastRow = $firstRow
+    }
+    if ($firstRow -gt $lastRow) {
+        throw "Moveset range starts after it ends: $Range"
+    }
+    if ($firstRow -lt 2 -or $lastRow -gt $LastAvailableRow) {
+        throw (
+            "Moveset range $Range must stay within character_data.tsv rows " +
+            "2-$LastAvailableRow."
+        )
+    }
+
+    [pscustomobject]@{
+        FirstRow = $firstRow
+        LastRow = $lastRow
+        Value = $(if ($firstRow -eq $lastRow) {
+            [string]$firstRow
+        }
+        else {
+            "$firstRow-$lastRow"
+        })
+    }
+}
+
+function Test-VisualRegressionGeneratedSuiteNamespace {
+    param([Parameter(Mandatory)][string]$Suite)
+
+    $Suite.Replace('\', '/').Split('/')[0].Equals(
+        $script:E2eGeneratedSuiteName,
+        [StringComparison]::OrdinalIgnoreCase
+    )
+}
+
+function Get-VisualRegressionGeneratedSuiteScript {
+    param([Parameter(Mandatory)][string]$Root)
+
+    Join-Path (Join-Path $Root 'scripts') ($script:E2eGeneratedSuiteName + '.ps1')
+}
+
+function Test-VisualRegressionSuiteExists {
+    param([Parameter(Mandatory)][object]$Context)
+
+    if ($Context.Generated) {
+        return Test-Path -LiteralPath $Context.GeneratedScript -PathType Leaf
+    }
+    if ($Context.GeneratedNamespace) {
+        return $false
+    }
+    Test-Path -LiteralPath $Context.SuitePath -PathType Leaf
+}
+
 function Get-VisualRegressionRequestedSuiteNames {
     param(
         [AllowNull()][string[]]$Suite,
@@ -62,6 +148,7 @@ function Wait-VisualRegressionJobs {
     )
 
     $activeStates = @('NotStarted', 'Running')
+    $terminalStates = @('Completed', 'Failed', 'Stopped')
     $receivedFailure = @{}
     $receiveOutput = {
         param([Parameter(Mandatory)][object]$CurrentJob)
@@ -90,8 +177,12 @@ function Wait-VisualRegressionJobs {
             )
         ) | Select-Object -First 1
         if ($null -ne $failedJob) {
-            foreach ($activeJob in $Job | Where-Object State -In $activeStates) {
+            $jobsToStop = @($Job | Where-Object State -NotIn $terminalStates)
+            foreach ($activeJob in $jobsToStop) {
                 Stop-Job -Job $activeJob -ErrorAction SilentlyContinue
+            }
+            foreach ($activeJob in $jobsToStop) {
+                Wait-Job -Job $activeJob -Timeout 5 | Out-Null
             }
             foreach ($currentJob in $Job) {
                 . $receiveOutput -CurrentJob $currentJob
@@ -178,6 +269,7 @@ function Invoke-VisualRegressionTaskGraph {
     $taskJobs = [Collections.Generic.List[object]]::new()
     $receivedFailure = @{}
     $activeStates = @('NotStarted', 'Running')
+    $terminalStates = @('Completed', 'Failed', 'Stopped')
     $receiveOutput = {
         param([Parameter(Mandatory)][object]$CurrentJob)
 
@@ -194,8 +286,9 @@ function Invoke-VisualRegressionTaskGraph {
     }
     $stopAll = {
         foreach ($job in @($SupervisedJob) + @($taskJobs)) {
-            if ($job.State -in $activeStates) {
+            if ($job.State -notin $terminalStates) {
                 Stop-Job -Job $job -ErrorAction SilentlyContinue
+                Wait-Job -Job $job -Timeout 5 | Out-Null
             }
         }
     }
@@ -342,6 +435,8 @@ function Get-VisualRegressionContext {
     $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
     $suiteRepository = Join-Path $root 'suites'
     $suitePath = Join-Path $suiteRepository ($suiteRelativePath + '.p2m2')
+    $generated = Test-VisualRegressionGeneratedSuite -Suite $suiteName
+    $generatedNamespace = Test-VisualRegressionGeneratedSuiteNamespace -Suite $suiteName
     $captureRoot = if ([string]::IsNullOrWhiteSpace($CaptureRoot)) {
         Join-Path (Join-Path $root 'captures') $suiteRelativePath
     }
@@ -356,6 +451,9 @@ function Get-VisualRegressionContext {
         Suite = $suiteName
         SuiteRelativePath = $suiteRelativePath
         SuitePath = $suitePath
+        Generated = $generated
+        GeneratedNamespace = $generatedNamespace
+        GeneratedScript = Get-VisualRegressionGeneratedSuiteScript -Root $root
         DescendantSuiteRoot = Join-Path $suiteRepository $suiteRelativePath
         CaptureRoot = $captureRoot
         Capture = [pscustomobject]@{
@@ -382,17 +480,86 @@ function Get-VisualRegressionContext {
 function Get-VisualRegressionSuiteNames {
     param([Parameter(Mandatory)][string]$SuiteRepository)
 
-    if (-not (Test-Path -LiteralPath $SuiteRepository -PathType Container)) {
-        return [string[]]@()
-    }
     [string[]]@(
-        Get-ChildItem -LiteralPath $SuiteRepository -Filter '*.p2m2' -File -Recurse |
-            ForEach-Object {
-                $relative = [IO.Path]::GetRelativePath($SuiteRepository, $_.FullName)
-                $relative.Substring(0, $relative.Length - 5).Replace('\', '/')
-            } |
-            Sort-Object -Unique
+        if (Test-Path -LiteralPath $SuiteRepository -PathType Container) {
+            Get-ChildItem -LiteralPath $SuiteRepository -Filter '*.p2m2' -File -Recurse |
+                ForEach-Object {
+                    $relative = [IO.Path]::GetRelativePath($SuiteRepository, $_.FullName)
+                    $suite = $relative.Substring(0, $relative.Length - 5).Replace('\', '/')
+                    if (-not (Test-VisualRegressionGeneratedSuiteNamespace -Suite $suite)) {
+                        $suite
+                    }
+                }
+        }
+        $root = [IO.Path]::GetFullPath((Join-Path $SuiteRepository '..'))
+        $generatedScript = Get-VisualRegressionGeneratedSuiteScript -Root $root
+        if (Test-Path -LiteralPath $generatedScript -PathType Leaf) {
+            $script:E2eGeneratedSuiteName
+        }
+    ) | Sort-Object -Unique
+}
+
+function New-VisualRegressionGeneratedGridStage {
+    param(
+        [Parameter(Mandatory)][string]$ExistingDirectory,
+        [Parameter(Mandatory)][string]$CapturedDirectory,
+        [Parameter(Mandatory)][string]$OutputDirectory,
+        [Parameter(Mandatory)]
+        [ValidateSet('Reference', 'Current')]
+        [string]$CapturedTier,
+        [switch]$PreserveCapturedTier
     )
+
+    $capturedDefinition = Get-VisualRegressionScreenshotDefinition -Kind $CapturedTier
+    $preservedTier = if ($CapturedTier -ieq 'Reference') { 'Current' } else { 'Reference' }
+    $preservedDefinition = Get-VisualRegressionScreenshotDefinition -Kind $preservedTier
+    $capturedSuffix = "-$($capturedDefinition.Order)-$($capturedDefinition.Label).png"
+    $preservedSuffix = "-$($preservedDefinition.Order)-$($preservedDefinition.Label).png"
+
+    if (-not (Test-Path -LiteralPath $CapturedDirectory -PathType Container)) {
+        throw "Generated E2E grid capture does not exist: $CapturedDirectory"
+    }
+    $capturedFiles = @(
+        Get-ChildItem -LiteralPath $CapturedDirectory -Filter '*.png' -File |
+            Where-Object { $_.Name.EndsWith($capturedSuffix, [StringComparison]::Ordinal) }
+    )
+    if ($capturedFiles.Count -eq 0) {
+        throw "Generated E2E capture contains no $CapturedTier grids: $CapturedDirectory"
+    }
+    $unexpectedFiles = @(
+        Get-ChildItem -LiteralPath $CapturedDirectory -Filter '*.png' -File |
+            Where-Object { -not $_.Name.EndsWith($capturedSuffix, [StringComparison]::Ordinal) }
+    )
+    if ($unexpectedFiles.Count -gt 0) {
+        throw (
+            "Generated E2E $CapturedTier capture contains an unexpected grid: " +
+            $unexpectedFiles[0].Name
+        )
+    }
+
+    if (Test-Path -LiteralPath $OutputDirectory) {
+        Remove-Item -LiteralPath $OutputDirectory -Recurse -Force
+    }
+    [void](New-Item -ItemType Directory -Path $OutputDirectory -Force)
+    if (Test-Path -LiteralPath $ExistingDirectory -PathType Container) {
+        Get-ChildItem -LiteralPath $ExistingDirectory -Filter '*.png' -File |
+            Where-Object {
+                $_.Name.EndsWith($preservedSuffix, [StringComparison]::Ordinal) -or
+                    ($PreserveCapturedTier.IsPresent -and
+                        $_.Name.EndsWith($capturedSuffix, [StringComparison]::Ordinal))
+            } |
+            Copy-Item -Destination $OutputDirectory
+    }
+    $capturedFiles | Copy-Item -Destination $OutputDirectory -Force
+
+    [pscustomobject]@{
+        CapturedTier = $CapturedTier.ToLowerInvariant()
+        Captured = $capturedFiles.Count
+        Preserved = @(
+            Get-ChildItem -LiteralPath $OutputDirectory -Filter '*.png' -File |
+                Where-Object { $_.Name.EndsWith($preservedSuffix, [StringComparison]::Ordinal) }
+        ).Count
+    }
 }
 
 function Remove-VisualRegressionEmptyParents {
@@ -696,65 +863,37 @@ function New-VisualRegressionAggregateViewStage {
         -OutputDirectory (Join-Path $OutputRoot $script:E2eAllGridDirectory)
 }
 
-function New-VisualRegressionTransaction {
-    param(
-        [Parameter(Mandatory)][string]$Root,
-        [Parameter(Mandatory)][string]$Prefix
-    )
+function Test-VisualRegressionTransactionOwnerLive {
+    param([Parameter(Mandatory)][string]$Transaction)
 
-    $transactions = [IO.Path]::GetFullPath((Join-Path $Root '.transactions'))
-    [void](New-Item -ItemType Directory -Path $transactions -Force)
-    $ownerlessGraceCutoff = [DateTime]::UtcNow.AddMinutes(-1)
-    foreach ($candidate in Get-ChildItem -LiteralPath $transactions -Directory -Force) {
-        if (Test-Path -LiteralPath (Join-Path $candidate.FullName 'retained.json') -PathType Leaf) {
-            Remove-Item -LiteralPath $candidate.FullName -Recurse -Force
-            continue
-        }
-        $ownerPath = Join-Path $candidate.FullName 'owner.json'
-        if (-not (Test-Path -LiteralPath $ownerPath -PathType Leaf)) {
-            if ($candidate.LastWriteTimeUtc -lt $ownerlessGraceCutoff) {
-                Remove-Item -LiteralPath $candidate.FullName -Recurse -Force
-            }
-            continue
-        }
-        try {
-            $owner = Get-Content -Raw -LiteralPath $ownerPath | ConvertFrom-Json
-            $ownerProcess = [Diagnostics.Process]::GetProcessById([int]$owner.pid)
-            if ($null -ne $owner.process_start_file_time_utc) {
-                $isLive = (
-                    $ownerProcess.StartTime.ToFileTimeUtc() -eq
-                    [long]$owner.process_start_file_time_utc
-                )
-            }
-            else {
-                $ownerStart = [DateTime]::Parse(
-                    [string]$owner.process_start_utc,
-                    [Globalization.CultureInfo]::InvariantCulture,
-                    [Globalization.DateTimeStyles]::RoundtripKind
-                ).ToUniversalTime()
-                $isLive = (
-                    $ownerProcess.StartTime.ToUniversalTime() -eq $ownerStart
-                )
-            }
-        }
-        catch [ArgumentException] {
-            $isLive = $false
-        }
-        catch [InvalidOperationException] {
-            $isLive = $false
-        }
-        catch {
-            $isLive = $candidate.LastWriteTimeUtc -ge $ownerlessGraceCutoff
-        }
-        if ($isLive) {
-            continue
-        }
-        Remove-Item -LiteralPath $candidate.FullName -Recurse -Force
+    $ownerPath = Join-Path $Transaction 'owner.json'
+    if (-not (Test-Path -LiteralPath $ownerPath -PathType Leaf)) {
+        return $false
     }
-    $transaction = Join-Path $transactions (
-        $Prefix + '-' + [guid]::NewGuid().ToString('N')
-    )
-    [void](New-Item -ItemType Directory -Path $transaction)
+    try {
+        $owner = Get-Content -Raw -LiteralPath $ownerPath | ConvertFrom-Json
+        $ownerProcess = [Diagnostics.Process]::GetProcessById([int]$owner.pid)
+        if ($null -ne $owner.process_start_file_time_utc) {
+            return (
+                $ownerProcess.StartTime.ToFileTimeUtc() -eq
+                [long]$owner.process_start_file_time_utc
+            )
+        }
+        $ownerStart = [DateTime]::Parse(
+            [string]$owner.process_start_utc,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [Globalization.DateTimeStyles]::RoundtripKind
+        ).ToUniversalTime()
+        return $ownerProcess.StartTime.ToUniversalTime() -eq $ownerStart
+    }
+    catch [ArgumentException] { return $false }
+    catch [InvalidOperationException] { return $false }
+    catch { return $false }
+}
+
+function Set-VisualRegressionTransactionOwner {
+    param([Parameter(Mandatory)][string]$Transaction)
+
     $process = Get-Process -Id $PID
     $owner = [ordered]@{
         schema_version = 2
@@ -762,10 +901,255 @@ function New-VisualRegressionTransaction {
         process_start_file_time_utc = $process.StartTime.ToFileTimeUtc()
         created_utc = (Get-Date).ToUniversalTime().ToString('O')
     } | ConvertTo-Json
-    $ownerPath = Join-Path $transaction 'owner.json'
+    $ownerPath = Join-Path $Transaction 'owner.json'
     $ownerTemporary = "$ownerPath.tmp-$([guid]::NewGuid().ToString('N'))"
-    [IO.File]::WriteAllText($ownerTemporary, $owner + "`n", [Text.UTF8Encoding]::new($false))
-    [IO.File]::Move($ownerTemporary, $ownerPath, $true)
+    try {
+        [IO.File]::WriteAllText(
+            $ownerTemporary,
+            $owner + "`n",
+            [Text.UTF8Encoding]::new($false)
+        )
+        [IO.File]::Move($ownerTemporary, $ownerPath, $true)
+    }
+    finally {
+        if (Test-Path -LiteralPath $ownerTemporary -PathType Leaf) {
+            Remove-Item -LiteralPath $ownerTemporary -Force
+        }
+    }
+}
+
+function Set-VisualRegressionTransactionRequest {
+    param(
+        [Parameter(Mandatory)][string]$Transaction,
+        [Parameter(Mandatory)][string]$Prefix,
+        [Parameter(Mandatory)][string]$ResumeKey,
+        [Parameter(Mandatory)][int]$ResumeCount,
+        [string]$CreatedUtc
+    )
+
+    if ([string]::IsNullOrWhiteSpace($CreatedUtc)) {
+        $CreatedUtc = (Get-Date).ToUniversalTime().ToString('O')
+    }
+    $request = [ordered]@{
+        schema_version = 1
+        prefix = $Prefix
+        resume_key = $ResumeKey
+        resume_count = $ResumeCount
+        created_utc = $CreatedUtc
+        resumed_utc = if ($ResumeCount -gt 0) {
+            (Get-Date).ToUniversalTime().ToString('O')
+        }
+        else { $null }
+    } | ConvertTo-Json
+    $requestPath = Join-Path $Transaction 'request.json'
+    $temporary = "$requestPath.tmp-$([guid]::NewGuid().ToString('N'))"
+    try {
+        [IO.File]::WriteAllText(
+            $temporary,
+            $request + "`n",
+            [Text.UTF8Encoding]::new($false)
+        )
+        [IO.File]::Move($temporary, $requestPath, $true)
+    }
+    finally {
+        if (Test-Path -LiteralPath $temporary -PathType Leaf) {
+            Remove-Item -LiteralPath $temporary -Force
+        }
+    }
+}
+
+function Test-VisualRegressionLegacyRunTransaction {
+    param(
+        [Parameter(Mandatory)][string]$Transaction,
+        [Parameter(Mandatory)][string[]]$Suite,
+        [Parameter(Mandatory)][bool]$Shifted
+    )
+
+    $suiteRoot = Join-Path $Transaction 'jobs\normal\suites'
+    if (-not (Test-Path -LiteralPath $suiteRoot -PathType Container)) {
+        return $false
+    }
+    $capturedSuites = @(
+        Get-ChildItem -LiteralPath $suiteRoot -Filter 'complete.json' -File -Recurse |
+            ForEach-Object {
+                [IO.Path]::GetRelativePath($suiteRoot, $_.DirectoryName).Replace('\', '/')
+            } |
+            Sort-Object -Unique
+    )
+    $requestedSuites = @($Suite | Sort-Object -Unique)
+    if (($capturedSuites -join "`n") -cne ($requestedSuites -join "`n")) {
+        return $false
+    }
+    $hasShifted = Test-Path -LiteralPath (Join-Path $Transaction 'jobs\shifted') -PathType Container
+    return $hasShifted -eq $Shifted
+}
+
+function Test-VisualRegressionTransactionResumed {
+    param([Parameter(Mandatory)][string]$Transaction)
+
+    $requestPath = Join-Path $Transaction 'request.json'
+    if (-not (Test-Path -LiteralPath $requestPath -PathType Leaf)) {
+        return $false
+    }
+    $request = Get-Content -Raw -LiteralPath $requestPath | ConvertFrom-Json
+    return [int]$request.resume_count -gt 0
+}
+
+function Move-VisualRegressionTransactionItemsToAttempt {
+    param(
+        [Parameter(Mandatory)][string]$Transaction,
+        [Parameter(Mandatory)][string[]]$RelativePath,
+        [string]$Label = 'resume'
+    )
+
+    $transactionRoot = [IO.Path]::GetFullPath($Transaction).TrimEnd(
+        [IO.Path]::DirectorySeparatorChar,
+        [IO.Path]::AltDirectorySeparatorChar
+    )
+    $transactionPrefix = $transactionRoot + [IO.Path]::DirectorySeparatorChar
+    foreach ($relative in $RelativePath) {
+        if ([IO.Path]::IsPathRooted($relative) -or $relative -match '(^|[\\/])\.\.([\\/]|$)') {
+            throw "Attempt artifact path must remain relative: $relative"
+        }
+        $resolved = [IO.Path]::GetFullPath((Join-Path $transactionRoot $relative))
+        if (-not $resolved.StartsWith($transactionPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "Attempt artifact path escapes its transaction: $relative"
+        }
+    }
+    $existing = @(
+        $RelativePath | Where-Object {
+            Test-Path -LiteralPath (Join-Path $transactionRoot $_)
+        }
+    )
+    if ($existing.Count -eq 0) {
+        return $null
+    }
+    $attempt = Join-Path `
+        (Join-Path $transactionRoot '.attempts') `
+        ("$Label-$((Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssfff'))-" +
+            [guid]::NewGuid().ToString('N'))
+    [void](New-Item -ItemType Directory -Path $attempt -Force)
+    foreach ($relative in $existing) {
+        $source = Join-Path $transactionRoot $relative
+        $destination = Join-Path $attempt $relative
+        [void](New-Item `
+            -ItemType Directory `
+            -Path ([IO.Path]::GetDirectoryName($destination)) `
+            -Force)
+        if (Test-Path -LiteralPath $source -PathType Container) {
+            [IO.Directory]::Move($source, $destination)
+        }
+        else {
+            [IO.File]::Move($source, $destination)
+        }
+    }
+    return $attempt
+}
+
+function New-VisualRegressionTransaction {
+    param(
+        [Parameter(Mandatory)][string]$Root,
+        [Parameter(Mandatory)][string]$Prefix,
+        [string]$ResumeKey,
+        [string[]]$LegacySuite,
+        [bool]$LegacyShifted = $false
+    )
+
+    $transactions = [IO.Path]::GetFullPath((Join-Path $Root '.transactions'))
+    [void](New-Item -ItemType Directory -Path $transactions -Force)
+    if (-not [string]::IsNullOrWhiteSpace($ResumeKey)) {
+        $candidates = @(
+            Get-ChildItem -LiteralPath $transactions -Directory -Force |
+                Where-Object {
+                    $_.Name.StartsWith("$Prefix-", [StringComparison]::Ordinal)
+                } |
+                Sort-Object LastWriteTimeUtc -Descending
+        )
+        foreach ($candidate in $candidates) {
+            $retainedPath = Join-Path $candidate.FullName 'retained.json'
+            $isRetained = Test-Path -LiteralPath $retainedPath -PathType Leaf
+            if (-not $isRetained -and
+                (Test-VisualRegressionTransactionOwnerLive -Transaction $candidate.FullName)) {
+                continue
+            }
+            $claim = $null
+            try {
+                $claim = [IO.FileStream]::new(
+                    (Join-Path $candidate.FullName '.resume-claim'),
+                    [IO.FileMode]::CreateNew,
+                    [IO.FileAccess]::ReadWrite,
+                    [IO.FileShare]::None,
+                    1,
+                    [IO.FileOptions]::DeleteOnClose
+                )
+            }
+            catch [IO.IOException] {
+                continue
+            }
+            try {
+                $isRetained = Test-Path -LiteralPath $retainedPath -PathType Leaf
+                if (-not $isRetained -and
+                    (Test-VisualRegressionTransactionOwnerLive -Transaction $candidate.FullName)) {
+                    continue
+                }
+                $requestPath = Join-Path $candidate.FullName 'request.json'
+                $request = if (Test-Path -LiteralPath $requestPath -PathType Leaf) {
+                    try { Get-Content -Raw -LiteralPath $requestPath | ConvertFrom-Json }
+                    catch { $null }
+                }
+                else { $null }
+                $matches = $null -ne $request -and
+                    [string]$request.resume_key -ceq $ResumeKey
+                if (-not $matches -and $null -eq $request -and
+                    $Prefix -ceq 'run' -and $null -ne $LegacySuite) {
+                    $matches = Test-VisualRegressionLegacyRunTransaction `
+                        -Transaction $candidate.FullName `
+                        -Suite $LegacySuite `
+                        -Shifted $LegacyShifted
+                }
+                if (-not $matches) {
+                    continue
+                }
+                $resumeCount = if ($null -ne $request) {
+                    [int]$request.resume_count + 1
+                }
+                else { 1 }
+                $createdUtc = if ($null -ne $request) {
+                    [string]$request.created_utc
+                }
+                else { $null }
+                Set-VisualRegressionTransactionOwner -Transaction $candidate.FullName
+                Set-VisualRegressionTransactionRequest `
+                    -Transaction $candidate.FullName `
+                    -Prefix $Prefix `
+                    -ResumeKey $ResumeKey `
+                    -ResumeCount $resumeCount `
+                    -CreatedUtc $createdUtc
+                if ($isRetained) {
+                    Remove-Item -LiteralPath $retainedPath -Force
+                }
+                Write-Host (
+                    "Continuing failed E2E transaction: $($candidate.FullName)"
+                ) -ForegroundColor Cyan
+                return $candidate.FullName
+            }
+            finally {
+                $claim.Dispose()
+            }
+        }
+    }
+    $transaction = Join-Path $transactions (
+        $Prefix + '-' + [guid]::NewGuid().ToString('N')
+    )
+    [void](New-Item -ItemType Directory -Path $transaction)
+    Set-VisualRegressionTransactionOwner -Transaction $transaction
+    if (-not [string]::IsNullOrWhiteSpace($ResumeKey)) {
+        Set-VisualRegressionTransactionRequest `
+            -Transaction $transaction `
+            -Prefix $Prefix `
+            -ResumeKey $ResumeKey `
+            -ResumeCount 0
+    }
     return $transaction
 }
 
@@ -1086,7 +1470,10 @@ function Preserve-VisualRegressionMismatchEvidence {
         [Parameter(Mandatory)][string[]]$ComparisonVariant
     )
 
-    $evidenceStage = Join-Path $Transaction '.retained-evidence'
+    $evidenceStage = Join-Path `
+        (Join-Path $Transaction 'evidence') `
+        ("failure-$((Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssfff'))-" +
+            [guid]::NewGuid().ToString('N'))
     [void](New-Item -ItemType Directory -Path $evidenceStage -Force)
     foreach ($comparisonName in $ComparisonVariant) {
         $comparisonRoot = Join-Path `
@@ -1156,16 +1543,7 @@ function Preserve-VisualRegressionMismatchEvidence {
                 -Destination (Join-Path $reportRoot 'result.json')
         }
     }
-    foreach ($item in Get-ChildItem -LiteralPath $Transaction -Force) {
-        if ($item.FullName -ceq $evidenceStage) {
-            continue
-        }
-        Remove-Item -LiteralPath $item.FullName -Recurse -Force
-    }
-    foreach ($item in Get-ChildItem -LiteralPath $evidenceStage -Force) {
-        [IO.Directory]::Move($item.FullName, (Join-Path $Transaction $item.Name))
-    }
-    Remove-Item -LiteralPath $evidenceStage -Force
+    return $evidenceStage
 }
 
 function Publish-VisualRegressionTransaction {
@@ -1224,6 +1602,48 @@ function Publish-VisualRegressionTransaction {
                         }.GetNewClosure()
                 }
             }
+        }
+    }
+
+    function Link-PublishedFiles {
+        param(
+            [Parameter(Mandatory)][string]$Source,
+            [Parameter(Mandatory)][string]$Destination
+        )
+
+        [void](New-Item -ItemType Directory -Path $Destination -Force)
+        foreach ($file in Get-ChildItem -LiteralPath $Source -Recurse -File -Force) {
+            $relative = [IO.Path]::GetRelativePath($Source, $file.FullName)
+            $target = Join-Path $Destination $relative
+            [void](New-Item `
+                -ItemType Directory `
+                -Path ([IO.Path]::GetDirectoryName($target)) `
+                -Force)
+            $linkPath = [IO.Path]::GetFullPath($target)
+            $sourcePath = [IO.Path]::GetFullPath($file.FullName)
+            if ([IO.Path]::DirectorySeparatorChar -ceq '\') {
+                $linkPath = if ($linkPath.StartsWith('\\')) {
+                    '\\?\UNC\' + $linkPath.Substring(2)
+                }
+                else {
+                    '\\?\' + $linkPath
+                }
+                $sourcePath = if ($sourcePath.StartsWith('\\')) {
+                    '\\?\UNC\' + $sourcePath.Substring(2)
+                }
+                else {
+                    '\\?\' + $sourcePath
+                }
+            }
+            Invoke-VisualRegressionFileOperation `
+                -Description "Hardlinking staged file '$($file.FullName)'" `
+                -Operation {
+                    [void](New-Item `
+                        -ItemType HardLink `
+                        -Path $linkPath `
+                        -Target $sourcePath `
+                        -ErrorAction Stop)
+                }.GetNewClosure()
         }
     }
 
@@ -1300,7 +1720,9 @@ function Publish-VisualRegressionTransaction {
     }
 
     $published = [Collections.Generic.List[object]]::new()
-    $backupRoot = Join-Path $TransactionRoot '.backups'
+    $backupRoot = Join-Path `
+        (Join-Path $TransactionRoot '.backups') `
+        ('publish-' + [guid]::NewGuid().ToString('N'))
     [void](New-Item -ItemType Directory -Path $backupRoot -Force)
     $backupIndex = 0
     try {
@@ -1331,11 +1753,23 @@ function Publish-VisualRegressionTransaction {
                 }
                 continue
             }
+            if (-not (Test-Path -LiteralPath $source -PathType Container)) {
+                throw "Staged publication directory does not exist: $source"
+            }
+            $destinationParent = [IO.Path]::GetDirectoryName($destination)
+            [void](New-Item -ItemType Directory -Path $destinationParent -Force)
             if (Test-Path -LiteralPath $destination) {
                 [IO.Directory]::Move($destination, $backup)
             }
+            $temporaryDestination = Join-Path `
+                $destinationParent `
+                ('.' + [IO.Path]::GetFileName($destination) +
+                    '.publishing-' + [guid]::NewGuid().ToString('N'))
             try {
-                [IO.Directory]::Move($source, $destination)
+                Link-PublishedFiles `
+                    -Source $source `
+                    -Destination $temporaryDestination
+                [IO.Directory]::Move($temporaryDestination, $destination)
                 $published.Add([pscustomobject]@{
                     Destination = $destination
                     Backup = $backup
@@ -1343,6 +1777,9 @@ function Publish-VisualRegressionTransaction {
                 })
             }
             catch {
+                if (Test-Path -LiteralPath $temporaryDestination) {
+                    Remove-Item -LiteralPath $temporaryDestination -Recurse -Force
+                }
                 if (Test-Path -LiteralPath $backup) {
                     [IO.Directory]::Move($backup, $destination)
                 }
@@ -1377,5 +1814,8 @@ function Publish-VisualRegressionTransaction {
         if (Test-Path -LiteralPath $item.Backup) {
             Remove-Item -LiteralPath $item.Backup -Recurse -Force
         }
+    }
+    if (Test-Path -LiteralPath $backupRoot) {
+        Remove-Item -LiteralPath $backupRoot -Recurse -Force
     }
 }

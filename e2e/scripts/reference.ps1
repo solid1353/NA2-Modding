@@ -9,7 +9,10 @@ param(
     [Parameter(Mandatory, ParameterSetName = 'Publish')]
     [string]$CapturedRoot,
     [Parameter(Mandatory, ParameterSetName = 'Publish')]
-    [string]$CaptureRoot
+    [string]$CaptureRoot,
+    [string]$MovesetRange,
+    [ValidateRange(1, 64)]
+    [int]$MovesetThrottleLimit = 16
 )
 
 $ErrorActionPreference = 'Stop'
@@ -23,8 +26,80 @@ else {
 $captureRootExists = Test-Path -LiteralPath $context.CaptureRoot -PathType Container
 $captureRootEmpty = $captureRootExists -and
     @(Get-ChildItem -LiteralPath $context.CaptureRoot -Force).Count -eq 0
-if (-not (Test-Path -LiteralPath $context.SuitePath -PathType Leaf)) {
+if (-not (Test-VisualRegressionSuiteExists -Context $context)) {
     throw "Visual-regression suite does not exist: $Suite"
+}
+if (-not [string]::IsNullOrWhiteSpace($MovesetRange) -and -not $context.Generated) {
+    throw 'MovesetRange is valid only for the movesets suite.'
+}
+if ($context.Generated) {
+    if ($PSCmdlet.ParameterSetName -ceq 'Capture') {
+        $generatedArguments = @{
+            Game = $Game
+            Tier = 'reference'
+            OutputRoot = $CaptureOutputRoot
+            ThrottleLimit = $MovesetThrottleLimit
+            ProjectRoot = $context.Repository
+        }
+        if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
+            $generatedArguments.MovesetRange = $MovesetRange
+        }
+        & $context.GeneratedScript @generatedArguments
+        $capturedGrids = Join-Path $CaptureOutputRoot $script:E2eScreenshotGridDirectory
+        if (@(Get-ChildItem -LiteralPath $capturedGrids -Filter '*.png' -File).Count -eq 0) {
+            throw 'Generated reference replay completed without captured grids.'
+        }
+        Write-Host 'Generated reference grids captured for coordinated publication.' -ForegroundColor Green
+        return
+    }
+
+    $generatedTransaction = New-VisualRegressionTransaction `
+        -Root $context.Root `
+        -Prefix 'reference'
+    try {
+        $generatedRuntimeCapture = if ($PSCmdlet.ParameterSetName -ceq 'Publish') {
+            [IO.Path]::GetFullPath($CapturedRoot)
+        }
+        else {
+            Join-Path $generatedTransaction 'capture'
+        }
+        if ($PSCmdlet.ParameterSetName -ceq 'Replay') {
+            $generatedArguments = @{
+                Game = $Game
+                Tier = 'reference'
+                OutputRoot = $generatedRuntimeCapture
+                ThrottleLimit = $MovesetThrottleLimit
+                ProjectRoot = $context.Repository
+            }
+            if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
+                $generatedArguments.MovesetRange = $MovesetRange
+            }
+            & $context.GeneratedScript @generatedArguments
+        }
+        $generatedPublishRoot = Join-Path `
+            (Join-Path $generatedTransaction 'publish') `
+            $context.SuiteRelativePath
+        New-VisualRegressionGeneratedGridStage `
+            -ExistingDirectory $context.Capture.ScreenshotGrids `
+            -CapturedDirectory (Join-Path `
+                $generatedRuntimeCapture `
+                $script:E2eScreenshotGridDirectory) `
+            -OutputDirectory (Join-Path `
+                $generatedPublishRoot `
+                $script:E2eScreenshotGridDirectory) `
+            -CapturedTier Reference `
+            -PreserveCapturedTier:(-not [string]::IsNullOrWhiteSpace($MovesetRange))
+        Publish-VisualRegressionTransaction `
+            -Replacements ([ordered]@{ ($context.CaptureRoot) = $generatedPublishRoot }) `
+            -TransactionRoot $generatedTransaction
+        Write-Host 'Generated reference grids were published atomically.' -ForegroundColor Green
+    }
+    finally {
+        Remove-VisualRegressionTransaction `
+            -Transaction $generatedTransaction `
+            -Root $context.Root
+    }
+    return
 }
 $recordingPath = $context.SuitePath
 

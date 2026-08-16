@@ -51,7 +51,318 @@ try {
         ) `
         -Message 'E2E suite selection did not distinguish omission from an explicitly blank name.'
 
-    foreach ($runnerName in @('run.ps1', 'variant.ps1')) {
+    $singleMovesetRow = Resolve-VisualRegressionMovesetRange `
+        -Range '8' `
+        -LastAvailableRow 20
+    $movesetRows = Resolve-VisualRegressionMovesetRange `
+        -Range '8-18' `
+        -LastAvailableRow 20
+    $reversedMovesetRangeRejected = $false
+    $outsideMovesetRangeRejected = $false
+    try {
+        Resolve-VisualRegressionMovesetRange -Range '18-8' -LastAvailableRow 20
+    }
+    catch {
+        $reversedMovesetRangeRejected = $true
+    }
+    try {
+        Resolve-VisualRegressionMovesetRange -Range '1' -LastAvailableRow 20
+    }
+    catch {
+        $outsideMovesetRangeRejected = $true
+    }
+    Assert-E2eHelperTest `
+        -Condition (
+            $singleMovesetRow.FirstRow -eq 8 -and
+            $singleMovesetRow.LastRow -eq 8 -and
+            $singleMovesetRow.Value -ceq '8' -and
+            $movesetRows.FirstRow -eq 8 -and
+            $movesetRows.LastRow -eq 18 -and
+            $movesetRows.Value -ceq '8-18' -and
+            $reversedMovesetRangeRejected -and
+            $outsideMovesetRangeRejected
+        ) `
+        -Message 'Movesets range parsing or character-data row bounds regressed.'
+
+    $generatedDiscoveryRoot = Join-Path $testRoot 'generated-discovery\e2e'
+    $generatedSuiteRoot = Join-Path $generatedDiscoveryRoot 'suites'
+    $generatedScriptRoot = Join-Path $generatedDiscoveryRoot 'scripts'
+    [void](New-Item -ItemType Directory -Path `
+        (Join-Path $generatedSuiteRoot 'collection'), `
+        (Join-Path $generatedSuiteRoot 'movesets'), `
+        $generatedScriptRoot `
+        -Force)
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedSuiteRoot 'collection\test.p2m2'),
+        'recording'
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedSuiteRoot 'movesets\base.p2m2'),
+        'generated input, not a suite'
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedScriptRoot 'movesets.ps1'),
+        '# generated suite'
+    )
+    $generatedSuiteNames = @(
+        Get-VisualRegressionSuiteNames -SuiteRepository $generatedSuiteRoot
+    )
+    Assert-E2eHelperTest `
+        -Condition (($generatedSuiteNames -join ',') -ceq 'collection/test,movesets') `
+        -Message 'Generated suite discovery did not add movesets or exclude its input recordings.'
+
+    $generatedStageRoot = Join-Path $testRoot 'generated-grid-stage'
+    $existingGrids = Join-Path $generatedStageRoot 'existing'
+    $capturedCurrentGrids = Join-Path $generatedStageRoot 'captured-current'
+    $capturedReferenceGrids = Join-Path $generatedStageRoot 'captured-reference'
+    $stagedGrids = Join-Path $generatedStageRoot 'staged'
+    [void](New-Item -ItemType Directory -Path `
+        $existingGrids, `
+        $capturedCurrentGrids, `
+        $capturedReferenceGrids `
+        -Force)
+    [IO.File]::WriteAllText(
+        (Join-Path $existingGrids '002-naruto-base-a-reference.png'),
+        'accepted reference'
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $existingGrids '002-naruto-base-b-current.png'),
+        'stale current'
+    )
+    [IO.File]::WriteAllText((Join-Path $existingGrids 'stale.png'), 'stale')
+    [IO.File]::WriteAllText(
+        (Join-Path $capturedCurrentGrids '002-naruto-base-b-current.png'),
+        'new current'
+    )
+    [void](New-VisualRegressionGeneratedGridStage `
+        -ExistingDirectory $existingGrids `
+        -CapturedDirectory $capturedCurrentGrids `
+        -OutputDirectory $stagedGrids `
+        -CapturedTier Current)
+    Assert-E2eHelperTest `
+        -Condition (
+            [IO.File]::ReadAllText((Join-Path $stagedGrids '002-naruto-base-a-reference.png')) -ceq 'accepted reference' -and
+            [IO.File]::ReadAllText((Join-Path $stagedGrids '002-naruto-base-b-current.png')) -ceq 'new current' -and
+            -not (Test-Path -LiteralPath (Join-Path $stagedGrids 'stale.png'))
+        ) `
+        -Message 'Generated current-grid staging did not preserve only reference history.'
+    [IO.File]::WriteAllText(
+        (Join-Path $capturedReferenceGrids '002-naruto-base-a-reference.png'),
+        'new reference'
+    )
+    [void](New-VisualRegressionGeneratedGridStage `
+        -ExistingDirectory $stagedGrids `
+        -CapturedDirectory $capturedReferenceGrids `
+        -OutputDirectory $existingGrids `
+        -CapturedTier Reference)
+    Assert-E2eHelperTest `
+        -Condition (
+            [IO.File]::ReadAllText((Join-Path $existingGrids '002-naruto-base-a-reference.png')) -ceq 'new reference' -and
+            [IO.File]::ReadAllText((Join-Path $existingGrids '002-naruto-base-b-current.png')) -ceq 'new current' -and
+            -not (Test-Path -LiteralPath (Join-Path $existingGrids 'stale.png'))
+        ) `
+        -Message 'Generated reference-grid staging did not preserve only current history.'
+
+    $generatedRunRepository = Join-Path $testRoot 'generated-run-repository'
+    $generatedRunRoot = Join-Path $generatedRunRepository 'e2e'
+    $generatedRunScripts = Join-Path $generatedRunRoot 'scripts'
+    $generatedRunCapture = Join-Path $generatedRunRoot 'captures\movesets\grid-screenshots'
+    $generatedRunResources = Join-Path $generatedRunRepository 'resources'
+    $generatedRunRecordings = Join-Path $generatedRunRepository 'pcsx2_files\input_recordings'
+    $generatedRunLibrary = Join-Path $generatedRunRepository 'scripts\lib'
+    [void](New-Item -ItemType Directory -Path `
+        $generatedRunScripts, `
+        $generatedRunCapture, `
+        $generatedRunResources, `
+        (Join-Path $generatedRunRecordings 'movesets'), `
+        $generatedRunLibrary `
+        -Force)
+    foreach ($file in @('suite.ps1', 'run.ps1', 'config.ps1')) {
+        Copy-Item `
+            -LiteralPath (Join-Path $repository "e2e\scripts\$file") `
+            -Destination (Join-Path $generatedRunScripts $file)
+    }
+    Copy-Item `
+        -LiteralPath (Join-Path $repository 'e2e\config.json') `
+        -Destination (Join-Path $generatedRunRoot 'config.json')
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedRunScripts 'movesets.ps1'),
+        '# generated suite'
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedRunResources 'character_data.tsv'),
+        "character`tcharacter_id`nNaruto`t1`n"
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedRunResources 'movesets.tsv'),
+        "character`tid`nNaruto`t1`n"
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedRunRecordings 'movesets\base.p2m2'),
+        'recording'
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedRunLibrary 'paths.ps1'),
+        @"
+function Get-Na2Paths {
+    [pscustomobject]@{
+        resources = '$($generatedRunResources.Replace("'", "''"))'
+        pcsx2_input_recordings = '$($generatedRunRecordings.Replace("'", "''"))'
+    }
+}
+"@
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedRunScripts 'variant.ps1'),
+        @'
+param(
+    [string]$Variant,
+    [string]$Transaction,
+    [string[]]$Suite,
+    [string]$MovesetRange,
+    [int]$MovesetThrottleLimit
+)
+if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
+    [IO.File]::WriteAllText(
+        (Join-Path $PSScriptRoot 'moveset-range.txt'),
+        $MovesetRange
+    )
+}
+foreach ($suiteName in $Suite) {
+    $suiteRoot = Join-Path `
+        (Join-Path (Join-Path (Join-Path $Transaction 'jobs') $Variant) 'suites') `
+        $suiteName.Replace('/', [IO.Path]::DirectorySeparatorChar)
+    $grids = Join-Path $suiteRoot 'capture\grid-screenshots'
+    [void](New-Item -ItemType Directory -Path $grids -Force)
+    $gridName = '002-naruto-base-b-current.png'
+    $gridContent = if ([string]::IsNullOrWhiteSpace($MovesetRange)) {
+        'identical current grid'
+    }
+    else {
+        "range $MovesetRange current grid"
+    }
+    [IO.File]::WriteAllText((Join-Path $grids $gridName), $gridContent)
+    [IO.File]::WriteAllText(
+        (Join-Path $suiteRoot 'complete.json'),
+        '{"screenshots":1}'
+    )
+}
+$jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
+[IO.File]::WriteAllText((Join-Path $jobRoot 'ready.json'), '{}')
+'@
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedRunCapture '002-naruto-base-a-reference.png'),
+        'accepted reference grid'
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedRunCapture '002-naruto-base-b-current.png'),
+        'stale current grid'
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedRunRoot 'captures\movesets\stale.txt'),
+        'stale generated artifact'
+    )
+    & (Join-Path $generatedRunScripts 'run.ps1') `
+        -Suite 'movesets' `
+        -Shifted | Out-Null
+    Assert-E2eHelperTest `
+        -Condition (
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-a-reference.png')) -ceq 'accepted reference grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-b-current.png')) -ceq 'identical current grid' -and
+            -not (Test-Path -LiteralPath (
+                Join-Path $generatedRunRoot 'captures\movesets\stale.txt'
+            ))
+        ) `
+        -Message 'Generated run did not compare normal/shifted grids and publish current history.'
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedRunCapture '003-sakura-base-a-reference.png'),
+        'preserved reference grid'
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedRunCapture '003-sakura-base-b-current.png'),
+        'preserved outside-range current grid'
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedRunCapture 'stale.png'),
+        'invalid generated artifact'
+    )
+    & (Join-Path $generatedRunScripts 'run.ps1') `
+        -Suite 'movesets' `
+        -MovesetRange '2' | Out-Null
+    Assert-E2eHelperTest `
+        -Condition (
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-a-reference.png')) -ceq 'accepted reference grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-b-current.png')) -ceq 'range 2 current grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '003-sakura-base-a-reference.png')) -ceq 'preserved reference grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '003-sakura-base-b-current.png')) -ceq 'preserved outside-range current grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'moveset-range.txt')) -ceq '2' -and
+            -not (Test-Path -LiteralPath (Join-Path $generatedRunCapture 'stale.png'))
+        ) `
+        -Message 'Ranged generated run did not replace selected grids and preserve all other history.'
+    Copy-Item `
+        -LiteralPath (Join-Path $repository 'e2e\scripts\publish_references.ps1') `
+        -Destination (Join-Path $generatedRunScripts 'publish_references.ps1')
+    $generatedReferenceRepository = Join-Path $generatedRunRepository 'captured-reference'
+    $generatedReferenceCapture = Join-Path `
+        $generatedReferenceRepository `
+        'movesets\grid-screenshots'
+    [void](New-Item -ItemType Directory -Path $generatedReferenceCapture -Force)
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedReferenceCapture '002-naruto-base-a-reference.png'),
+        'refreshed reference grid'
+    )
+    & (Join-Path $generatedRunScripts 'publish_references.ps1') `
+        -Suite 'movesets' `
+        -CapturedRepository $generatedReferenceRepository `
+        -CaptureRepository (Join-Path $generatedRunRoot 'captures') `
+        -PreserveGeneratedTier | Out-Null
+    Assert-E2eHelperTest `
+        -Condition (
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-a-reference.png')) -ceq 'refreshed reference grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-b-current.png')) -ceq 'range 2 current grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '003-sakura-base-a-reference.png')) -ceq 'preserved reference grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '003-sakura-base-b-current.png')) -ceq 'preserved outside-range current grid'
+        ) `
+        -Message 'Generated reference publication did not refresh reference and preserve current grids.'
+    Copy-Item `
+        -LiteralPath (Join-Path $repository 'e2e\scripts\reference.ps1') `
+        -Destination (Join-Path $generatedRunScripts 'reference.ps1')
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedRunScripts 'movesets.ps1'),
+        @'
+param(
+    [string]$Game,
+    [string]$Tier,
+    [string]$OutputRoot,
+    [string]$MovesetRange,
+    [int]$ThrottleLimit,
+    [string]$ProjectRoot
+)
+$grids = Join-Path $OutputRoot 'grid-screenshots'
+[void](New-Item -ItemType Directory -Path $grids -Force)
+[IO.File]::WriteAllText(
+    (Join-Path $grids '002-naruto-base-a-reference.png'),
+    "$Game/$Tier/$ThrottleLimit/$MovesetRange"
+)
+'@
+    )
+    $coordinatedReferenceCapture = Join-Path $generatedRunRepository 'coordinated-reference'
+    & (Join-Path $generatedRunScripts 'reference.ps1') `
+        -Suite 'movesets' `
+        -Game 'nun5' `
+        -CaptureOutputRoot $coordinatedReferenceCapture `
+        -MovesetRange '2' `
+        -MovesetThrottleLimit 5 | Out-Null
+    Assert-E2eHelperTest `
+        -Condition (
+            [IO.File]::ReadAllText((Join-Path `
+                $coordinatedReferenceCapture `
+                'grid-screenshots\002-naruto-base-a-reference.png')) -ceq 'nun5/reference/5/2'
+        ) `
+        -Message 'Generated reference capture did not delegate to the moveset suite runner.'
+
+    foreach ($runnerName in @('run.ps1', 'variant.ps1', 'movesets.ps1')) {
         $tokens = $null
         $parseErrors = $null
         $runnerPath = Join-Path $repository "e2e\scripts\$runnerName"
@@ -505,9 +816,35 @@ try {
         -Condition (
             $callbackFailed -and
             (Test-Path -LiteralPath (Join-Path $callbackDestination 'old.txt')) -and
-            -not (Test-Path -LiteralPath (Join-Path $callbackDestination 'new.txt'))
+            -not (Test-Path -LiteralPath (Join-Path $callbackDestination 'new.txt')) -and
+            (Test-Path -LiteralPath (Join-Path $callbackSource 'new.txt') -PathType Leaf)
         ) `
-        -Message 'A failed post-publication callback did not roll back canonical publication.'
+        -Message 'A failed post-publication callback did not preserve staged output and roll back canonical publication.'
+
+    $missingParentSource = Join-Path $testRoot 'missing-parent-source\movesets'
+    $missingParentDestination = Join-Path `
+        $testRoot `
+        'missing-parent-destination\capture-history\movesets'
+    [void](New-Item -ItemType Directory -Path $missingParentSource -Force)
+    [IO.File]::WriteAllText(
+        (Join-Path $missingParentSource 'grid.png'),
+        'completed generated capture'
+    )
+    Publish-VisualRegressionTransaction `
+        -Replacements ([ordered]@{
+            $missingParentDestination = $missingParentSource
+        }) `
+        -TransactionRoot (Join-Path $testRoot 'missing-parent-transaction')
+    Assert-E2eHelperTest `
+        -Condition (
+            [IO.File]::ReadAllText(
+                (Join-Path $missingParentDestination 'grid.png')
+            ) -ceq 'completed generated capture' -and
+            (Test-Path -LiteralPath (
+                Join-Path $missingParentSource 'grid.png'
+            ) -PathType Leaf)
+        ) `
+        -Message 'Generated E2E publication failed when the capture-history parent did not exist.'
 
     $transactions = Join-Path $testRoot '.transactions'
     $legacy = Join-Path $transactions 'legacy-without-owner'
@@ -521,11 +858,11 @@ try {
     )
     $transaction = New-VisualRegressionTransaction -Root $testRoot -Prefix 'run'
     Assert-E2eHelperTest `
-        -Condition (-not (Test-Path -LiteralPath $stale)) `
-        -Message 'A metadata-owned abandoned E2E transaction was not removed.'
+        -Condition (Test-Path -LiteralPath $stale -PathType Container) `
+        -Message 'A metadata-owned abandoned E2E transaction was discarded.'
     Assert-E2eHelperTest `
-        -Condition (-not (Test-Path -LiteralPath $legacy)) `
-        -Message 'An old ownerless E2E transaction was not removed.'
+        -Condition (Test-Path -LiteralPath $legacy -PathType Container) `
+        -Message 'An old ownerless E2E transaction was discarded.'
     Assert-E2eHelperTest `
         -Condition (Test-Path -LiteralPath $recent -PathType Container) `
         -Message 'A newly created ownerless transaction was not protected from the creation race.'
@@ -543,20 +880,93 @@ try {
     Assert-E2eHelperTest `
         -Condition (
             (Test-Path -LiteralPath $transaction -PathType Container) -and
-            -not (Test-Path -LiteralPath $recent)
+            (Test-Path -LiteralPath $recent -PathType Container)
         ) `
-        -Message 'Nested same-shell ownership or aged ownerless cleanup was incorrect.'
+        -Message 'Creating a transaction discarded unrelated retained state.'
     Set-VisualRegressionTransactionRetained `
         -Transaction $nestedTransaction `
         -Root $testRoot
     $sweepTransaction = New-VisualRegressionTransaction -Root $testRoot -Prefix 'sweep'
     Assert-E2eHelperTest `
         -Condition (
-            -not (Test-Path -LiteralPath $nestedTransaction) -and
+            (Test-Path -LiteralPath $nestedTransaction -PathType Container) -and
             (Test-Path -LiteralPath $transaction -PathType Container)
         ) `
-        -Message 'A completed failed transaction remained pinned to its live interactive shell.'
+        -Message 'Creating another transaction discarded a failed resumable transaction.'
     Remove-VisualRegressionTransaction -Transaction $sweepTransaction -Root $testRoot
+
+    $resumeKey = '{"suite":"resume-test"}'
+    $resumableTransaction = New-VisualRegressionTransaction `
+        -Root $testRoot `
+        -Prefix 'resume' `
+        -ResumeKey $resumeKey
+    [void](New-Item `
+        -ItemType Directory `
+        -Path (Join-Path $resumableTransaction 'publish') `
+        -Force)
+    [IO.File]::WriteAllText(
+        (Join-Path $resumableTransaction 'publish\result.txt'),
+        'completed output'
+    )
+    Set-VisualRegressionTransactionRetained `
+        -Transaction $resumableTransaction `
+        -Root $testRoot
+    $resumedTransaction = New-VisualRegressionTransaction `
+        -Root $testRoot `
+        -Prefix 'resume' `
+        -ResumeKey $resumeKey
+    $resumedRequest = Get-Content `
+        -Raw `
+        -LiteralPath (Join-Path $resumedTransaction 'request.json') |
+        ConvertFrom-Json
+    Assert-E2eHelperTest `
+        -Condition (
+            $resumedTransaction -ceq $resumableTransaction -and
+            [int]$resumedRequest.resume_count -eq 1 -and
+            -not (Test-Path -LiteralPath (Join-Path $resumedTransaction 'retained.json')) -and
+            [IO.File]::ReadAllText(
+                (Join-Path $resumedTransaction 'publish\result.txt')
+            ) -ceq 'completed output'
+        ) `
+        -Message 'The same request did not reclaim its retained transaction and completed output.'
+    $differentTransaction = New-VisualRegressionTransaction `
+        -Root $testRoot `
+        -Prefix 'resume' `
+        -ResumeKey '{"suite":"different"}'
+    Assert-E2eHelperTest `
+        -Condition (
+            $differentTransaction -cne $resumedTransaction -and
+            (Test-Path -LiteralPath $resumedTransaction -PathType Container)
+        ) `
+        -Message 'A different request reused or discarded an incompatible transaction.'
+
+    $legacyRun = Join-Path $transactions 'run-legacy-resume'
+    $legacySuite = Join-Path $legacyRun 'jobs\normal\suites\legacy\suite'
+    [void](New-Item -ItemType Directory -Path $legacySuite -Force)
+    [IO.File]::WriteAllText((Join-Path $legacySuite 'complete.json'), '{}')
+    Set-VisualRegressionTransactionRetained -Transaction $legacyRun -Root $testRoot
+    $adoptedLegacyRun = New-VisualRegressionTransaction `
+        -Root $testRoot `
+        -Prefix 'run' `
+        -ResumeKey '{"legacy":true}' `
+        -LegacySuite @('legacy/suite')
+    Assert-E2eHelperTest `
+        -Condition (
+            $adoptedLegacyRun -ceq $legacyRun -and
+            (Test-VisualRegressionTransactionResumed -Transaction $adoptedLegacyRun)
+        ) `
+        -Message 'A compatible pre-resume E2E run was not adopted.'
+
+    $attempt = Move-VisualRegressionTransactionItemsToAttempt `
+        -Transaction $resumedTransaction `
+        -RelativePath @('publish') `
+        -Label 'test'
+    Assert-E2eHelperTest `
+        -Condition (
+            -not (Test-Path -LiteralPath (Join-Path $resumedTransaction 'publish')) -and
+            [IO.File]::ReadAllText((Join-Path $attempt 'publish\result.txt')) -ceq 'completed output'
+        ) `
+        -Message 'Superseded derived output was not preserved as a resumable attempt.'
 
     $normal = Join-Path $testRoot 'normal'
     $shifted = Join-Path $testRoot 'shifted'
@@ -589,20 +999,11 @@ try {
     $qualificationComparison = Join-Path `
         $qualification `
         'comparisons\shifted\test\helpers'
-    $repeatComparison = Join-Path `
-        $qualification `
-        'comparisons\normal-repeat\test\helpers'
     [void](New-Item -ItemType Directory -Path $qualificationComparison -Force)
     Copy-Item -Path (Join-Path $comparison '*') `
         -Destination $qualificationComparison `
         -Recurse
-    [void](Compare-VisualRegressionVariants `
-        -Suite 'test/helpers' `
-        -BaselineDirectory $normal `
-        -CandidateDirectory $shifted `
-        -CandidateName 'normal-repeat' `
-        -OutputRoot $repeatComparison)
-    foreach ($variant in @('normal', 'normal-repeat', 'shifted')) {
+    foreach ($variant in @('normal', 'shifted')) {
         $states = Join-Path `
             $qualification `
             "jobs\$variant\suites\test\helpers\capture\sstates"
@@ -611,32 +1012,31 @@ try {
         [IO.File]::WriteAllText((Join-Path $states '0002.p2s'), $variant)
     }
     [IO.File]::WriteAllText((Join-Path $qualification 'owner.json'), 'discarded')
-    Preserve-VisualRegressionMismatchEvidence `
+    $qualificationEvidence = Preserve-VisualRegressionMismatchEvidence `
         -Transaction $qualification `
-        -ComparisonVariant @('normal-repeat', 'shifted')
+        -ComparisonVariant @('shifted')
     $qualificationFiles = @(
-        Get-ChildItem -LiteralPath $qualification -Recurse -File |
+        Get-ChildItem -LiteralPath $qualificationEvidence -Recurse -File |
             ForEach-Object {
-                [IO.Path]::GetRelativePath($qualification, $_.FullName).Replace('\', '/')
+                [IO.Path]::GetRelativePath($qualificationEvidence, $_.FullName).Replace('\', '/')
             } |
             Sort-Object
     )
     Assert-E2eHelperTest `
         -Condition (
             ($qualificationFiles -join ',') -ceq (
-                'normal-repeat/test/helpers/report/result.json,' +
-                'normal-repeat/test/helpers/screenshots/normal-repeat/0002.png,' +
-                'normal-repeat/test/helpers/screenshots/normal/0002.png,' +
-                'normal-repeat/test/helpers/sstates/normal-repeat/0002.p2s,' +
-                'normal-repeat/test/helpers/sstates/normal/0002.p2s,' +
                 'shifted/test/helpers/report/result.json,' +
                 'shifted/test/helpers/screenshots/normal/0002.png,' +
                 'shifted/test/helpers/screenshots/shifted/0002.png,' +
                 'shifted/test/helpers/sstates/normal/0002.p2s,' +
                 'shifted/test/helpers/sstates/shifted/0002.p2s'
-            )
+            ) -and
+            (Test-Path -LiteralPath (Join-Path $qualification 'owner.json') -PathType Leaf) -and
+            (Test-Path -LiteralPath (
+                Join-Path $qualification 'jobs\normal\suites\test\helpers\capture\sstates\0002.p2s'
+            ) -PathType Leaf)
         ) `
-        -Message 'Failed qualification retained more or less than its mismatch evidence.'
+        -Message 'Failed qualification did not preserve both resumable captures and focused mismatch evidence.'
 
     $firstDestination = Join-Path $testRoot 'published\one\current'
     $secondDestination = Join-Path $testRoot 'published\two\current'
@@ -658,7 +1058,11 @@ try {
         -Condition ([IO.File]::ReadAllText((Join-Path $firstDestination 'new.txt')) -ceq 'new-one') `
         -Message 'First same-name capture directory was not published.'
     Assert-E2eHelperTest `
-        -Condition ([IO.File]::ReadAllText((Join-Path $secondDestination 'new.txt')) -ceq 'new-two') `
+        -Condition (
+            [IO.File]::ReadAllText((Join-Path $secondDestination 'new.txt')) -ceq 'new-two' -and
+            (Test-Path -LiteralPath (Join-Path $firstSource 'new.txt') -PathType Leaf) -and
+            (Test-Path -LiteralPath (Join-Path $secondSource 'new.txt') -PathType Leaf)
+        ) `
         -Message 'Second same-name capture directory was not published.'
 
     $stateDestination = Join-Path $testRoot 'published\states\sstates'
@@ -801,11 +1205,13 @@ try {
     $fakeRepository = Join-Path $testRoot 'suite-lifecycle-repository'
     $fakeScripts = Join-Path $fakeRepository 'e2e\scripts'
     $fakeRecordings = Join-Path $testRoot 'shared-recordings'
+    $fakeResources = Join-Path $fakeRepository 'resources'
     [void](New-Item -ItemType Directory -Path `
         $fakeScripts, `
         (Join-Path $fakeRepository 'e2e\captures'), `
         (Join-Path $fakeRepository 'scripts\lib'), `
-        $fakeRecordings `
+        $fakeRecordings, `
+        $fakeResources `
         -Force)
     Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\suite.ps1') `
         -Destination (Join-Path $fakeScripts 'suite.ps1')
@@ -819,7 +1225,10 @@ try {
         (Join-Path $fakeRepository 'scripts\lib\paths.ps1'),
         @"
 function Get-Na2Paths {
-    [pscustomobject]@{ pcsx2_input_recordings = '$($fakeRecordings.Replace("'", "''"))' }
+    [pscustomobject]@{
+        pcsx2_input_recordings = '$($fakeRecordings.Replace("'", "''"))'
+        resources = '$($fakeResources.Replace("'", "''"))'
+    }
 }
 "@
     )
@@ -831,7 +1240,8 @@ param(
     [string]$Game,
     [string]$CaptureOutputRoot,
     [string]$CapturedRoot,
-    [string]$CaptureRoot
+    [string]$CaptureRoot,
+    [string]$MovesetRange
 )
 $sync = Join-Path $PSScriptRoot 'sync'
 [void](New-Item -ItemType Directory -Path $sync -Force)
@@ -860,7 +1270,8 @@ Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "reference
 param(
     [string[]]$Suite,
     [string]$CapturedRepository,
-    [string]$CaptureRepository
+    [string]$CaptureRepository,
+    [switch]$PreserveGeneratedTier
 )
 foreach ($suiteName in $Suite) {
     $captureRoot = Join-Path $CaptureRepository $suiteName.Replace('/', [IO.Path]::DirectorySeparatorChar)
@@ -878,8 +1289,9 @@ param(
     [string]$CaptureRoot,
     [string]$CaptureRepository,
     [switch]$Shifted,
-    [switch]$RepeatNormal,
-    [object[]]$SupervisedJob
+    [object[]]$SupervisedJob,
+    [string]$MovesetRange,
+    [int]$MovesetThrottleLimit
 )
 if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'fail-run')) {
     throw 'synthetic run failure'
@@ -897,8 +1309,8 @@ if ($hasReferenceSuite) {
     }
 }
 Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value (
-    "run suite=$($suites -join ',') shifted=$($Shifted.IsPresent) " +
-    "repeatNormal=$($RepeatNormal.IsPresent)"
+    "run suite=$($suites -join ',') shifted=$($Shifted.IsPresent)" +
+        $(if ([string]::IsNullOrWhiteSpace($MovesetRange)) { '' } else { " range=$MovesetRange" })
 )
 if ($hasReferenceSuite) {
     [IO.File]::WriteAllText((Join-Path $sync 'run-started'), '')
@@ -964,9 +1376,9 @@ foreach ($suiteName in $suites) {
     Assert-E2eHelperTest `
         -Condition (
             $newSuiteCalls.Count -eq 5 -and
-            $newSuiteCalls[0] -ceq 'run suite=test/no_reference shifted=False repeatNormal=True' -and
-            $newSuiteCalls[1] -ceq 'run suite=test/no_reference shifted=False repeatNormal=True' -and
-            $newSuiteCalls[2] -ceq 'run suite=test/with_reference shifted=False repeatNormal=True' -and
+            $newSuiteCalls[0] -ceq 'run suite=test/no_reference shifted=False' -and
+            $newSuiteCalls[1] -ceq 'run suite=test/no_reference shifted=False' -and
+            $newSuiteCalls[2] -ceq 'run suite=test/with_reference shifted=False' -and
             $newSuiteCalls[3] -ceq 'reference-capture suite=test/with_reference game=nun5' -and
             $newSuiteCalls[4] -ceq 'reference-publish suite=test/with_reference'
         ) `
@@ -1051,15 +1463,72 @@ foreach ($suiteName in $suites) {
         ) `
         -Message 'Leaf suite deletion did not remove both roots and their empty parents.'
 
+    $fakeGeneratedScript = Join-Path $fakeScripts 'movesets.ps1'
+    $fakeMovesetInput = Join-Path $fakeRecordings 'movesets\base.p2m2'
+    [void](New-Item -ItemType Directory -Path (Split-Path -Parent $fakeMovesetInput) -Force)
+    [IO.File]::WriteAllText(
+        (Join-Path $fakeResources 'character_data.tsv'),
+        "character`tid`nNaruto`t1`n"
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $fakeResources 'movesets.tsv'),
+        "character`tid`nNaruto`t1`n"
+    )
+    [IO.File]::WriteAllText($fakeMovesetInput, 'generated suite input')
+    [IO.File]::WriteAllText($fakeGeneratedScript, '# generated suite')
+    & (Join-Path $fakeScripts 'create_suite.ps1') -Suite 'movesets' -NoReference
+    $fakeGeneratedCapture = Join-Path $fakeRepository 'e2e\captures\movesets'
+    [IO.File]::WriteAllText(
+        (Join-Path $fakeGeneratedCapture 'preserved.txt'),
+        'preserved ranged history'
+    )
+    & (Join-Path $fakeScripts 'create_suite.ps1') `
+        -Suite 'movesets' `
+        -MovesetRange '2' `
+        -NoReference
+    Assert-E2eHelperTest `
+        -Condition (
+            [IO.File]::ReadAllText((Join-Path $fakeGeneratedCapture 'preserved.txt')) -ceq 'preserved ranged history' -and
+            @(Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt'))[-1] -ceq 'run suite=movesets shifted=False range=2'
+        ) `
+        -Message 'Ranged generated creation did not preserve existing history or pass its range to the run.'
+    $generatedRenameRejected = $false
+    try {
+        & (Join-Path $fakeScripts 'rename_suite.ps1') `
+            -Suite 'movesets' `
+            -NewSuite 'renamed-movesets'
+    }
+    catch {
+        $generatedRenameRejected = $_.Exception.Message -ceq (
+            "The generated E2E suite 'movesets' cannot be renamed."
+        )
+    }
+    & (Join-Path $fakeScripts 'delete_suite.ps1') -Suite 'movesets'
+    $postDeleteGeneratedNames = @(
+        Get-VisualRegressionSuiteNames `
+            -SuiteRepository (Join-Path $fakeRepository 'e2e\suites')
+    )
+    Assert-E2eHelperTest `
+        -Condition (
+            -not (Test-Path -LiteralPath (
+                Join-Path $fakeRepository 'e2e\suites\movesets.p2m2'
+            )) -and
+            -not (Test-Path -LiteralPath $fakeGeneratedCapture) -and
+            $generatedRenameRejected -and
+            $postDeleteGeneratedNames -ccontains 'movesets'
+        ) `
+        -Message 'Generated suite create, rename, or capture-history deletion semantics regressed.'
     $fakeCaptureGit = Join-Path $fakeRepository 'e2e\captures\.git'
     $fakeCaptureAttributes = Join-Path $fakeRepository 'e2e\captures\.gitattributes'
     $fakeCaptureIgnore = Join-Path $fakeRepository 'e2e\captures\.gitignore'
     $orphanCapture = Join-Path $fakeRepository 'e2e\captures\orphan'
     $generatedRecording = Join-Path $fakeRecordings '__generated\transient.p2m2'
+    $movesetInputRecording = Join-Path $fakeRecordings 'movesets\base.p2m2'
     [void](New-Item -ItemType Directory -Path $fakeCaptureGit, $orphanCapture -Force)
-    [void](New-Item -ItemType Directory -Path (
-        [IO.Path]::GetDirectoryName($generatedRecording)
-    ) -Force)
+    [void](New-Item -ItemType Directory -Path `
+        ([IO.Path]::GetDirectoryName($generatedRecording)), `
+        ([IO.Path]::GetDirectoryName($movesetInputRecording)) `
+        -Force)
     [IO.File]::WriteAllText((Join-Path $fakeCaptureGit 'preserved.txt'), 'git metadata')
     [IO.File]::WriteAllText(
         $fakeCaptureAttributes,
@@ -1073,6 +1542,7 @@ foreach ($suiteName in $suites) {
     $orphanSuite = Join-Path $fakeRepository 'e2e\suites\orphan.p2m2'
     [IO.File]::WriteAllText($orphanSuite, 'orphan suite')
     [IO.File]::WriteAllText($generatedRecording, 'transient recording')
+    [IO.File]::WriteAllText($movesetInputRecording, 'generated suite input')
     & (Join-Path $fakeScripts 'create_suite.ps1') -All -NoReference
     $bulkSuiteNames = @(
         Get-VisualRegressionSuiteNames `
@@ -1080,14 +1550,17 @@ foreach ($suiteName in $suites) {
     )
     Assert-E2eHelperTest `
         -Condition (
-            ($bulkSuiteNames -join ',') -ceq 'test/no_reference,test/with_reference' -and
+            ($bulkSuiteNames -join ',') -ceq 'movesets,test/no_reference,test/with_reference' -and
             (Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt') | Select-Object -Last 1) `
-                -ceq 'run suite=test/no_reference,test/with_reference shifted=False repeatNormal=True' -and
+                -ceq 'run suite=test/no_reference,test/with_reference,movesets shifted=False' -and
             (Test-Path -LiteralPath (
                 Join-Path $fakeRepository 'e2e\captures\test\no_reference\current.txt'
             ) -PathType Leaf) -and
             (Test-Path -LiteralPath (
                 Join-Path $fakeRepository 'e2e\captures\test\with_reference\current.txt'
+            ) -PathType Leaf) -and
+            (Test-Path -LiteralPath (
+                Join-Path $fakeRepository 'e2e\captures\movesets\current.txt'
             ) -PathType Leaf) -and
             -not (Test-Path -LiteralPath $orphanSuite) -and
             -not (Test-Path -LiteralPath $orphanCapture) -and

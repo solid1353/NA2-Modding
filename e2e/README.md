@@ -7,8 +7,8 @@ nested local Git repository at `captures/`.
 ## Current command surface
 
 ```powershell
-na228 e2e [-s]
-na228 e2e create <all|suite> [-noref]
+na228 e2e [<suite> [<range>]] [-s]
+na228 e2e create <all|suite> [<range>] [-noref]
 na228 e2e rename <suite> <new-suite>
 na228 e2e delete <all|suite>
 na228 e2e commit [-p]
@@ -17,24 +17,35 @@ na228 e2e commit [-p]
 `na228 e2e` owns E2E execution and suite lifecycle. Unit tests are an
 independent lane invoked with `na228 test`.
 
-E2E execution is global across the tracked suite set. A suite/capture named in
-an agent request identifies expected evidence, not a narrower execution
-boundary. The E2E runner retains internal single-suite execution only for suite
-creation and its repeatability transaction.
+With no suite selector, E2E execution covers the complete maintained suite set.
+Supplying a suite runs only that suite. `movesets` additionally accepts one
+physical `character_data.tsv` row or an inclusive row range, such as `8` or
+`8-18`; omitting the range selects every character row. Other suites do not
+accept a range.
+
+`movesets` is a code-owned generated suite. It expands `resources/movesets.tsv`
+over the two fixed recordings in `pcsx2_files/input_recordings/movesets/` and
+publishes only flat contact sheets. It has no `.p2m2` definition under
+`e2e/suites/`.
 
 `-s` adds the shifted E2E Test build and replays the same suites against it.
 Every normal and shifted capture must match.
 
 `e2e create all` replaces the complete suite-definition tree and all capture
 history except the nested capture repository's `.git` metadata. It processes
-every shared `.p2m2` recording except recordings beneath `__*` directories such
-as the internal `__generated` staging area, prepares one build, and runs every
-suite's normal/repeat replays concurrently. NUN5 reference replays run
+every shared `.p2m2` recording except recordings beneath `__*` directories and
+the `movesets/` inputs owned by the generated suite, prepares one build, and runs
+every suite's normal replay concurrently. NUN5 reference replays run
 concurrently by default; use `-noref` to skip reference capture. A suite
 selector instead replaces only that suite from its
-matching Workshop recording. `e2e rename` moves the
+matching Workshop recording; selecting `movesets` rebuilds the generated suite.
+`e2e create movesets <range>` regenerates only that character-row selection and
+preserves existing moveset grids outside it. The same range syntax is available
+when running `movesets` directly.
+`e2e rename` moves the
 suite definition and capture history together; `e2e delete` removes both for only the
-named suite while preserving descendant suites, while `e2e delete all` directly
+named suite while preserving descendant suites. Deleting `movesets` removes its
+capture history, but the code-owned suite remains available. `e2e delete all` directly
 removes the complete suite tree and all capture history but preserves the nested
 capture Git repository. `e2e commit` creates an ordinary `Update E2E suites`
 commit containing only changes under `e2e/suites/` in the main repository. It
@@ -49,12 +60,17 @@ commit. Unrelated main-repository changes are excluded from the suite commit.
 ## Execution and publication
 
 Build variants run concurrently. Each variant starts its suite replays as soon
-as that variant's build completes, and suite-creation repeatability runs two
-normal replays from the same discard-write memory-card baseline. Ready
+as that variant's build completes. Ready
 suite/variant comparisons and independent screenshot-grid, pair, blend, and
 diff branches share a bounded task queue; a failed task cancels its active
-siblings immediately. NUN5 capture overlaps the normal/repeat pipeline and its
+siblings immediately. NUN5 capture overlaps the normal pipeline and its
 artifact publication uses the same bounded scheduling across suites.
+
+Each moveset lane batch-resolves its Practice rows, replays all required cases
+concurrently, and creates each grid as soon as its captures finish. The shared
+16-process budget is divided across concurrent moveset lanes, so normal,
+shifted, and reference work overlap without each claiming 16 PCSX2
+instances independently.
 
 Typed artifacts are generated once and reused when their grids and aggregate
 hardlink views are staged. Aggregate preparation runs concurrently per suite.
@@ -62,11 +78,20 @@ Canonical publication, rollback, and cleanup remain serial so normal
 screenshots, changed-screen savestates, reports, and aggregate views become
 visible atomically only after the complete command succeeds. Publication and
 rollback retry transient file-reader locks instead of leaving a partially
-restored capture directory.
+restored capture directory. Staged output is copied during publication, so a
+late publication failure cannot consume the only completed capture set.
 
-Transactions live under `.transactions/run-<uuid>/`. Active transactions record
-the owning PID/start time. Failed comparisons retain only the evidence needed to
-review the failure; later runs clean inactive retained transactions.
+Transactions live under `.transactions/<create|run>-<uuid>/`. Active
+transactions record the owning PID/start time and the request identity. A failed
+command retains its complete and partial suite outputs. Rerunning the same
+command automatically continues the newest compatible transaction; suite
+selection, movesets range, shifted/reference mode, and recording or generated-suite input
+hashes must match. Each build lane revalidates its ISO hash, completed suites
+are reused, and only unfinished or incompatible captures run again. Generated
+moveset grids also resume at the individual capture and completed-grid level.
+Superseded derived stages move under `.attempts/`, while mismatch evidence is
+added without removing replay output. The transaction is removed only after
+canonical publication succeeds.
 
 The optional shifted variant moves resident-payload layout internally while
 preserving the fixed reservation envelope and compares every capture with
@@ -89,6 +114,7 @@ main-repository implementation as one coherent delivery.
 e2e/
 ├── config.json
 ├── suites/<suite>.p2m2
+├── scripts/movesets.ps1           # generated movesets suite
 ├── captures/<suite>/              # nested Git repository
 │   ├── base-all/                  # ignored hardlink aggregate
 │   ├── base-screenshots/
@@ -101,12 +127,22 @@ e2e/
 │   ├── grid-diffs/
 │   ├── grid-pairs/
 │   └── sstates/{reference,current}/
-└── .transactions/run-<uuid>/      # transient, ignored
+└── .transactions/<kind>-<uuid>/   # resumable, ignored
     ├── owner.json
+    ├── request.json
     ├── retained.json
     ├── jobs/
-    └── comparisons/
+    ├── reference-captures/
+    ├── comparisons/
+    ├── evidence/
+    └── .attempts/
 ```
+
+The generated `captures/movesets/` layout contains only
+`grid-screenshots/`. Its flat filenames are
+`NNN-character-base|specials|mode-<awakening-id>-a-reference.png` and the
+corresponding `-b-current.png`; the numeric prefix is the physical
+`character_data.tsv` row.
 
 Every one-image-per-slot view uses the `base-` prefix, and every paged
 contact-sheet view uses `grid-`. The typed folders are canonical and tracked.

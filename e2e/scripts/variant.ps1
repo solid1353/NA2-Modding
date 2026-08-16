@@ -3,7 +3,9 @@ param(
     [Parameter(Mandatory)][ValidateSet('normal', 'shifted')][string]$Variant,
     [Parameter(Mandatory)][string]$Transaction,
     [string[]]$Suite,
-    [switch]$Repeat
+    [string]$MovesetRange,
+    [ValidateRange(1, 64)]
+    [int]$MovesetThrottleLimit = 16
 )
 
 $ErrorActionPreference = 'Stop'
@@ -13,14 +15,7 @@ $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
 . (Join-Path $repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
-$configuration = Get-E2eConfiguration -Root $root
 $buildVariant = Get-E2eBuildVariant -Name $Variant -Root $root
-if (
-    $Repeat.IsPresent -and
-    $Variant -cne [string]$configuration.PublishedVariant.name
-) {
-    throw 'Only the published E2E variant can be repeated.'
-}
 $suiteRoot = Join-Path $root 'suites'
 $suiteWasSpecified = $PSBoundParameters.ContainsKey('Suite')
 $requestedSuites = @(
@@ -38,7 +33,7 @@ $suites = @(
         )
         foreach ($requestedSuite in $requestedSuites) {
             $requestedContext = Get-VisualRegressionContext -Suite $requestedSuite
-            if (-not (Test-Path -LiteralPath $requestedContext.SuitePath -PathType Leaf)) {
+            if (-not (Test-VisualRegressionSuiteExists -Context $requestedContext)) {
                 throw "E2E suite does not exist: $($requestedContext.Suite)"
             }
             if (-not $selected.Add($requestedContext.Suite)) {
@@ -51,9 +46,152 @@ $suites = @(
 if ($suites.Count -eq 0) {
     throw 'No E2E suites are available.'
 }
+if (-not [string]::IsNullOrWhiteSpace($MovesetRange) -and
+    ($suites.Count -ne 1 -or $suites[0] -ine $script:E2eGeneratedSuiteName)) {
+    throw 'MovesetRange requires the movesets suite to be selected by itself.'
+}
 
 $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
+$buildPath = Join-Path $jobRoot 'build.json'
+$readyPath = Join-Path $jobRoot 'ready.json'
+$resultPath = Join-Path $jobRoot 'result.json'
 [void](New-Item -ItemType Directory -Path $jobRoot -Force)
+
+function Write-E2eVariantJson {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)]$Value
+    )
+
+    [void](New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($Path)) -Force)
+    $temporary = "$Path.tmp-$([guid]::NewGuid().ToString('N'))"
+    try {
+        [IO.File]::WriteAllText(
+            $temporary,
+            (($Value | ConvertTo-Json -Depth 6) + "`n"),
+            [Text.UTF8Encoding]::new($false)
+        )
+        [IO.File]::Move($temporary, $Path, $true)
+    }
+    finally {
+        if (Test-Path -LiteralPath $temporary -PathType Leaf) {
+            Remove-Item -LiteralPath $temporary -Force
+        }
+    }
+}
+
+function Get-E2eVariantSuiteOutput {
+    param([Parameter(Mandatory)]$Context)
+
+    return Join-Path (Join-Path $jobRoot 'suites') $Context.SuiteRelativePath
+}
+
+function Test-E2eVariantSuiteComplete {
+    param([Parameter(Mandatory)]$Context)
+
+    $suiteOutput = Get-E2eVariantSuiteOutput -Context $Context
+    $completePath = Join-Path $suiteOutput 'complete.json'
+    if (-not (Test-Path -LiteralPath $completePath -PathType Leaf)) {
+        return $false
+    }
+    try {
+        $complete = Get-Content -Raw -LiteralPath $completePath | ConvertFrom-Json
+        $expectedCount = [int]$complete.screenshots
+    }
+    catch {
+        return $false
+    }
+    if ($expectedCount -le 0) {
+        return $false
+    }
+    $expectedArtifactType = if ($Context.Generated) { 'grids' } else { 'screenshots' }
+    if ([string]$complete.suite -cne [string]$Context.Suite -or
+        [string]$complete.variant -cne $Variant -or
+        [string]$complete.artifact_type -cne $expectedArtifactType) {
+        return $false
+    }
+    $artifactDirectory = Join-Path `
+        (Join-Path $suiteOutput 'capture') `
+        $(if ($Context.Generated) { 'grid-screenshots' } else { 'screenshots' })
+    $actualCount = @(
+        Get-ChildItem `
+            -LiteralPath $artifactDirectory `
+            -Filter '*.png' `
+            -File `
+            -ErrorAction SilentlyContinue
+    ).Count
+    return $actualCount -eq $expectedCount
+}
+
+function Set-E2eVariantReady {
+    param([string]$IsoSha256)
+
+    $completedUtc = (Get-Date).ToUniversalTime().ToString('O')
+    Write-E2eVariantJson -Path $readyPath -Value ([ordered]@{
+        schema_version = 1
+        variant = $Variant
+        iso_sha256 = $IsoSha256
+        completed_utc = $completedUtc
+    })
+}
+
+function Complete-E2eVariant {
+    $completedUtc = (Get-Date).ToUniversalTime().ToString('O')
+    $result = [ordered]@{
+        schema_version = 1
+        variant = $Variant
+        status = 'passed'
+        suites = $suites.Count
+        replays_per_suite = 1
+        completed_utc = $completedUtc
+    }
+    Write-E2eVariantJson -Path $resultPath -Value $result
+    return [pscustomobject]$result
+}
+
+$suiteContexts = @(
+    $suites | ForEach-Object { Get-VisualRegressionContext -Suite $_ }
+)
+$existingBuild = if (Test-Path -LiteralPath $buildPath -PathType Leaf) {
+    try { Get-Content -Raw -LiteralPath $buildPath | ConvertFrom-Json }
+    catch { $null }
+}
+else { $null }
+$existingBuildMatchesVariant = $null -ne $existingBuild -and
+    [string]$existingBuild.variant -ceq $Variant
+$allSuitesComplete = @(
+    $suiteContexts | Where-Object { -not (Test-E2eVariantSuiteComplete -Context $_) }
+).Count -eq 0
+$previousIsoSha256 = if ($existingBuildMatchesVariant) {
+    [string]$existingBuild.iso_sha256
+}
+else { '' }
+if ([string]::IsNullOrWhiteSpace($previousIsoSha256) -and $existingBuildMatchesVariant) {
+    $buildMapPath = Join-Path ([string]$paths.logs) 'na228\builds.tsv'
+    $mappedBuild = if (Test-Path -LiteralPath $buildMapPath -PathType Leaf) {
+        @(
+            Import-Csv -LiteralPath $buildMapPath -Delimiter "`t" |
+                Where-Object {
+                    [string]$_.build_record -ceq [string]$existingBuild.build_record
+                }
+        ) | Select-Object -First 1
+    }
+    else { $null }
+    $preflightPath = Join-Path `
+        ([string]$paths.logs) `
+        "na228\preflight\e2e_test_$Variant.json"
+    if ($null -ne $mappedBuild -and
+        (Test-Path -LiteralPath $preflightPath -PathType Leaf)) {
+        try {
+            $preflight = Get-Content -Raw -LiteralPath $preflightPath | ConvertFrom-Json
+            $previousIsoSha256 = [string]$preflight.output.sha256
+        }
+        catch {
+            $previousIsoSha256 = ''
+        }
+    }
+}
+
 $buildOutput = @(
     & (Join-Path $repository 'scripts\na228\build.ps1') -E2eVariant $Variant
 )
@@ -66,37 +204,81 @@ $build = @(
 if ($null -eq $build -or $build.E2eVariant -cne $Variant) {
     throw "E2E Test $Variant build returned no valid result."
 }
+$isoSha256 = [string]$build.OutputSha256
+if ([string]::IsNullOrWhiteSpace($isoSha256)) {
+    throw "E2E Test $Variant build returned no ISO hash."
+}
+
+$suiteOutputRoot = Join-Path $jobRoot 'suites'
+$hasExistingSuiteOutput = Test-Path -LiteralPath $suiteOutputRoot -PathType Container
+$buildIsCompatible = $existingBuildMatchesVariant -and
+    -not [string]::IsNullOrWhiteSpace($previousIsoSha256) -and
+    $previousIsoSha256 -ceq $isoSha256
+if ($hasExistingSuiteOutput -and -not $buildIsCompatible) {
+    Move-VisualRegressionTransactionItemsToAttempt `
+        -Transaction $Transaction `
+        -RelativePath @(
+            "jobs\$Variant\suites",
+            "jobs\$Variant\build.json",
+            "jobs\$Variant\result.json",
+            "jobs\$Variant\ready.json"
+        ) `
+        -Label "$Variant-build" |
+        Out-Null
+    $existingBuild = $null
+}
+elseif ($null -ne $existingBuild -and -not $buildIsCompatible) {
+    Move-VisualRegressionTransactionItemsToAttempt `
+        -Transaction $Transaction `
+        -RelativePath @(
+            "jobs\$Variant\build.json",
+            "jobs\$Variant\result.json",
+            "jobs\$Variant\ready.json"
+        ) `
+        -Label "$Variant-build" |
+        Out-Null
+    $existingBuild = $null
+}
 
 $buildResult = [ordered]@{
-    schema_version = 1
+    schema_version = 2
     variant = $Variant
     build = [string]$buildVariant.build
     iso = [string]$build.OutputIso
+    iso_sha256 = $isoSha256
     build_id = [string]$build.BuildId
     build_record = [string]$build.ConfigurationLogDirectory
     preflight_cache_hit = [bool]$build.PreflightCacheHit
 }
-[IO.File]::WriteAllText(
-    (Join-Path $jobRoot 'build.json'),
-    (($buildResult | ConvertTo-Json -Depth 4) + "`n"),
-    [Text.UTF8Encoding]::new($false)
-)
+Write-E2eVariantJson -Path $buildPath -Value $buildResult
+Set-E2eVariantReady -IsoSha256 $isoSha256
+if ($allSuitesComplete -and $buildIsCompatible) {
+    Write-Host "Continuing with completed $Variant E2E suite captures." -ForegroundColor Cyan
+    Complete-E2eVariant
+    return
+}
 
 $replayJobs = [Collections.Generic.List[object]]::new()
 try {
-    foreach ($suiteName in $suites) {
-        $context = Get-VisualRegressionContext -Suite $suiteName
-        $recordingPath = $context.SuitePath
-        $replayNames = @($Variant)
-        if ($Repeat.IsPresent) {
-            $replayNames += "$Variant-repeat"
+    foreach ($context in $suiteContexts) {
+        if (Test-E2eVariantSuiteComplete -Context $context) {
+            Write-Host "Reusing completed $Variant/$($context.Suite) capture." -ForegroundColor Cyan
+            continue
         }
-        foreach ($replayName in $replayNames) {
-            $replayRoot = Join-Path (Join-Path $Transaction 'jobs') $replayName
-            $suiteOutput = Join-Path `
-                (Join-Path $replayRoot 'suites') `
-                $context.SuiteRelativePath
-            $replayJob = Start-ThreadJob -Name "$replayName/$($context.Suite)" -ScriptBlock {
+        $suiteOutput = Get-E2eVariantSuiteOutput -Context $context
+        if (-not $context.Generated -and (Test-Path -LiteralPath $suiteOutput)) {
+            Move-VisualRegressionTransactionItemsToAttempt `
+                -Transaction $Transaction `
+                -RelativePath @(
+                    [IO.Path]::GetRelativePath($Transaction, $suiteOutput)
+                ) `
+                -Label "$Variant-incomplete" |
+                Out-Null
+        }
+        $recordingPath = $context.SuitePath
+        $replayName = $Variant
+        $suiteName = $context.Suite
+        $replayJob = Start-ThreadJob -Name "$replayName/$suiteName" -ScriptBlock {
                 param(
                     $SuiteScript,
                     $Repository,
@@ -106,32 +288,55 @@ try {
                     $CaptureRoot,
                     $SuiteOutput,
                     $Suite,
-                    $ReplayName
+                    $ReplayName,
+                    $Generated,
+                    $GeneratedScript,
+                    $MovesetThrottleLimit,
+                    $MovesetRange
                 )
                 $ErrorActionPreference = 'Stop'
                 . $SuiteScript
-                Invoke-VisualRegressionReplay `
-                    -Repository $Repository `
-                    -SharedRecordingRoot $SharedRecordingRoot `
-                    -RecordingPath $RecordingPath `
-                    -Game $Game `
-                    -CaptureRoot $CaptureRoot
-                $screenshots = Join-Path $CaptureRoot 'screenshots'
-                $screenshotCount = @(
+                if ($Generated) {
+                    $generatedArguments = @{
+                        Game = $Game
+                        Tier = 'current'
+                        OutputRoot = $CaptureRoot
+                        ThrottleLimit = $MovesetThrottleLimit
+                        ProjectRoot = $Repository
+                    }
+                    if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
+                        $generatedArguments.MovesetRange = $MovesetRange
+                    }
+                    & $GeneratedScript @generatedArguments
+                    $artifactDirectory = Join-Path $CaptureRoot 'grid-screenshots'
+                    $artifactLabel = 'grids'
+                }
+                else {
+                    Invoke-VisualRegressionReplay `
+                        -Repository $Repository `
+                        -SharedRecordingRoot $SharedRecordingRoot `
+                        -RecordingPath $RecordingPath `
+                        -Game $Game `
+                        -CaptureRoot $CaptureRoot
+                    $artifactDirectory = Join-Path $CaptureRoot 'screenshots'
+                    $artifactLabel = 'screenshots'
+                }
+                $artifactCount = @(
                     Get-ChildItem `
-                        -LiteralPath $screenshots `
+                        -LiteralPath $artifactDirectory `
                         -Filter '*.png' `
                         -File `
                         -ErrorAction SilentlyContinue
                 ).Count
-                if ($screenshotCount -eq 0) {
-                    throw "E2E suite $Suite completed without captured screenshots for $ReplayName."
+                if ($artifactCount -eq 0) {
+                    throw "E2E suite $Suite completed without captured $artifactLabel for $ReplayName."
                 }
                 $complete = [ordered]@{
                     schema_version = 1
                     suite = $Suite
                     variant = $ReplayName
-                    screenshots = $screenshotCount
+                    screenshots = $artifactCount
+                    artifact_type = $artifactLabel
                     completed_utc = (Get-Date).ToUniversalTime().ToString('O')
                 }
                 $completePath = Join-Path $SuiteOutput 'complete.json'
@@ -144,18 +349,21 @@ try {
                 )
                 [IO.File]::Move($temporary, $completePath, $true)
                 [pscustomobject]$complete
-            } -ArgumentList (
-                Join-Path $PSScriptRoot 'suite.ps1'
-            ), $repository, $paths.pcsx2_input_recordings, $recordingPath, (
-                [string]$buildVariant.build
-            ), (Join-Path $suiteOutput 'capture'), $suiteOutput, $suiteName, $replayName
-            $replayJobs.Add($replayJob)
-        }
+        } -ArgumentList (
+            Join-Path $PSScriptRoot 'suite.ps1'
+        ), $repository, $paths.pcsx2_input_recordings, $recordingPath, (
+            [string]$buildVariant.build
+        ), (Join-Path $suiteOutput 'capture'), $suiteOutput, $suiteName, $replayName, (
+            [bool]$context.Generated
+        ), $context.GeneratedScript, $MovesetThrottleLimit, $MovesetRange
+        $replayJobs.Add($replayJob)
     }
 
-    Wait-VisualRegressionJobs `
-        -Job ([object[]]$replayJobs) `
-        -FailurePrefix 'E2E suite replay job'
+    if ($replayJobs.Count -gt 0) {
+        Wait-VisualRegressionJobs `
+            -Job ([object[]]$replayJobs) `
+            -FailurePrefix 'E2E suite replay job'
+    }
 }
 finally {
     foreach ($replayJob in $replayJobs) {
@@ -166,17 +374,13 @@ finally {
     }
 }
 
-$result = [ordered]@{
-    schema_version = 1
-    variant = $Variant
-    status = 'passed'
-    suites = $suites.Count
-    replays_per_suite = $(if ($Repeat.IsPresent) { 2 } else { 1 })
-    completed_utc = (Get-Date).ToUniversalTime().ToString('O')
-}
-[IO.File]::WriteAllText(
-    (Join-Path $jobRoot 'result.json'),
-    (($result | ConvertTo-Json -Depth 4) + "`n"),
-    [Text.UTF8Encoding]::new($false)
+$incompleteSuites = @(
+    $suiteContexts | Where-Object { -not (Test-E2eVariantSuiteComplete -Context $_) }
 )
-[pscustomobject]$result
+if ($incompleteSuites.Count -gt 0) {
+    throw (
+        "E2E Test $Variant did not complete suites: " +
+        (@($incompleteSuites.Suite) -join ', ')
+    )
+}
+Complete-E2eVariant

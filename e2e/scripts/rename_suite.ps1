@@ -9,6 +9,9 @@ $ErrorActionPreference = 'Stop'
 $source = Get-VisualRegressionContext -Suite $Suite
 $destination = Get-VisualRegressionContext -Suite $NewSuite
 
+if ($source.GeneratedNamespace -or $destination.GeneratedNamespace) {
+    throw "The generated E2E suite '$($script:E2eGeneratedSuiteName)' cannot be renamed."
+}
 if ($source.Suite -ceq $destination.Suite) {
     throw 'The source and destination suite names are identical.'
 }

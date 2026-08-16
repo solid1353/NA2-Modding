@@ -112,10 +112,11 @@ if ($mode -eq 'help') {
         '  na228 build -c <configuration>  Build or reuse a cached ISO'
         '  na228 test                  Run unit tests'
         ''
-        '  na228 e2e [-s]              Run all E2E suites; -s also qualifies against shifted'
-        '  na228 e2e create <all|suite> [-noref]  Rebuild suites with NUN5 reference by default'
-        '  na228 e2e rename <suite> <new-suite>  Rename the .p2m2 suite and its capture history'
-        '  na228 e2e delete <all|suite>           Delete every .p2m2 suite or one suite and its capture history'
+        '  na228 e2e [<suite> [<range>]] [-s]  Run all E2E suites or one suite; -s adds shifted'
+        '  na228 e2e create <all|suite> [<range>] [-noref]  Rebuild with NUN5 reference by default'
+        '  <range>                     Movesets character-data row or inclusive rows: 8 or 8-18'
+        '  na228 e2e rename <suite> <new-suite>  Rename a recording-backed suite and its capture history'
+        '  na228 e2e delete <all|suite>           Delete suite definitions and capture history'
         '  na228 e2e commit [-p]                  Commit suites and captures; -p preserves capture commits'
         ''
         '  na228 release [version]     Publish a GitHub release'
@@ -159,20 +160,46 @@ if ($mode -eq 'e2e') {
         }
     }
 
+    $runUsage = 'Usage: na228 e2e [<suite> [<range>]] [-s]'
+    $createUsage = 'Usage: na228 e2e create <all|suite> [<range>] [-noref]'
     if ($arguments.Count -eq 0) {
         & $visualRun
         return
     }
-    if ($arguments.Count -eq 1 -and $arguments[0] -ceq '-s') {
-        & $visualRun -Shifted
+    $testCommand = $arguments[0].ToLowerInvariant()
+    if ($testCommand -cnotin @('create', 'rename', 'delete', 'commit')) {
+        if (@($arguments | Where-Object {
+            ([string]$_).StartsWith('-', [StringComparison]::Ordinal) -and $_ -cne '-s'
+        }).Count -gt 0) {
+            throw $runUsage
+        }
+        $shiftedCount = @($arguments | Where-Object { $_ -ceq '-s' }).Count
+        $runOperands = @($arguments | Where-Object { $_ -cne '-s' })
+        if ($shiftedCount -gt 1 -or $runOperands.Count -gt 2) {
+            throw $runUsage
+        }
+        $runArguments = @{}
+        if ($shiftedCount -eq 1) {
+            $runArguments.Shifted = $true
+        }
+        if ($runOperands.Count -ge 1) {
+            $runArguments.Suite = $runOperands[0]
+        }
+        if ($runOperands.Count -eq 2) {
+            if ($runOperands[0] -ine 'movesets' -or
+                $runOperands[1] -notmatch '^\d+(?:-\d+)?$') {
+                throw $runUsage
+            }
+            $runArguments.MovesetRange = $runOperands[1]
+        }
+        & $visualRun @runArguments
         return
     }
-    $testCommand = $arguments[0].ToLowerInvariant()
     if (
         $testCommand -cne 'commit' -and
         @($arguments | Where-Object { $_ -ceq '-s' }).Count -gt 0
     ) {
-        throw 'Usage: na228 e2e [-s]'
+        throw $runUsage
     }
     if (
         $testCommand -cne 'commit' -and
@@ -181,19 +208,28 @@ if ($mode -eq 'e2e') {
         throw 'Usage: na228 e2e commit [-p]'
     }
     if ($testCommand -ceq 'create') {
-        if (
-            $arguments.Count -notin 2, 3 -or
-            ($arguments.Count -eq 3 -and $arguments[2] -cne '-noref')
-        ) {
-            throw 'Usage: na228 e2e create <all|suite> [-noref]'
+        $noReferenceCount = @($arguments | Where-Object { $_ -ceq '-noref' }).Count
+        $createOperands = @(
+            $arguments | Select-Object -Skip 1 | Where-Object { $_ -cne '-noref' }
+        )
+        if ($noReferenceCount -gt 1 -or $createOperands.Count -notin 1, 2) {
+            throw $createUsage
         }
-        $createArguments = if ($arguments[1] -ieq 'all') {
+        if ($createOperands.Count -eq 2 -and
+            ($createOperands[0] -ine 'movesets' -or
+                $createOperands[1] -notmatch '^\d+(?:-\d+)?$')) {
+            throw $createUsage
+        }
+        $createArguments = if ($createOperands[0] -ieq 'all') {
             @{ All = $true }
         }
         else {
-            @{ Suite = $arguments[1] }
+            @{ Suite = $createOperands[0] }
         }
-        if ($arguments.Count -eq 3) {
+        if ($createOperands.Count -eq 2) {
+            $createArguments.MovesetRange = $createOperands[1]
+        }
+        if ($noReferenceCount -eq 1) {
             $createArguments.NoReference = $true
         }
         & $visualCreate @createArguments
@@ -228,7 +264,7 @@ if ($mode -eq 'e2e') {
         & $visualCommit -Preserve:($arguments.Count -eq 2)
         return
     }
-    throw 'Usage: na228 e2e [-s] | na228 e2e create <all|suite> [-noref] | na228 e2e rename <suite> <new-suite> | na228 e2e delete <all|suite> | na228 e2e commit [-p]'
+    throw "$runUsage | $createUsage | na228 e2e rename <suite> <new-suite> | na228 e2e delete <all|suite> | na228 e2e commit [-p]"
 }
 
 if ($mode -eq 'release') {

@@ -79,12 +79,12 @@ When `ver` is received:
 
 1. Finalize accepted patch-specific tests and documentation.
 2. Refresh both repositories and confirm every pending change under
-   `e2e/captures/` and `e2e/suites/` belongs to the accepted result. If
+   `e2e/captures/` belongs to the accepted result. If
    unaccepted concurrent E2E changes are present, wait until only accepted state
    would be committed.
 3. Run `na228 e2e commit` before committing the main repository. This command
-   exclusively owns delivery of the capture and suite paths; do not commit
-   those paths separately. Use `-p` only when the user explicitly requests
+   exclusively owns delivery of the capture repository. Use `-p` only when the
+   user explicitly requests
    preserved capture history.
 4. Commit the accepted implementation changes in the main repository so both
    repositories form one coherent delivery.

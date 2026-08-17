@@ -116,8 +116,8 @@ if ($mode -eq 'help') {
         '  na228 e2e create <all|suite> [<range>] [-noref]  Rebuild with NUN5 reference by default'
         '  <range>                     Movesets character-data row or inclusive rows: 8 or 8-18'
         '  na228 e2e rename <suite> <new-suite>  Rename a recording-backed suite and its capture history'
-        '  na228 e2e delete <all|suite>           Delete suite definitions and capture history'
-        '  na228 e2e commit [-p]                  Commit suites and captures; -p preserves capture commits'
+        '  na228 e2e remove <all|suite>           Remove capture history'
+        '  na228 e2e commit [-p]                  Commit captures; -p preserves capture commits'
         ''
         '  na228 release [version]     Publish a GitHub release'
         '  na228 help                  Show this help'
@@ -152,9 +152,9 @@ if ($mode -eq 'e2e') {
     $visualRun = Join-Path $visualScripts 'run.ps1'
     $visualCreate = Join-Path $visualScripts 'create_suite.ps1'
     $visualRename = Join-Path $visualScripts 'rename_suite.ps1'
-    $visualDelete = Join-Path $visualScripts 'delete_suite.ps1'
+    $visualRemove = Join-Path $visualScripts 'remove_suite.ps1'
     $visualCommit = Join-Path $visualScripts 'commit_captures.ps1'
-    foreach ($required in $visualRun, $visualCreate, $visualRename, $visualDelete, $visualCommit) {
+    foreach ($required in $visualRun, $visualCreate, $visualRename, $visualRemove, $visualCommit) {
         if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
             throw "The E2E infrastructure is unavailable: $required"
         }
@@ -167,7 +167,7 @@ if ($mode -eq 'e2e') {
         return
     }
     $testCommand = $arguments[0].ToLowerInvariant()
-    if ($testCommand -cnotin @('create', 'rename', 'delete', 'commit')) {
+    if ($testCommand -cnotin @('create', 'rename', 'remove', 'commit')) {
         if (@($arguments | Where-Object {
             ([string]$_).StartsWith('-', [StringComparison]::Ordinal) -and $_ -cne '-s'
         }).Count -gt 0) {
@@ -186,7 +186,7 @@ if ($mode -eq 'e2e') {
             $runArguments.Suite = $runOperands[0]
         }
         if ($runOperands.Count -eq 2) {
-            if ($runOperands[0] -ine 'movesets' -or
+            if ($runOperands[0] -inotmatch '^movesets(?:/(?:base|specials|idle))?$' -or
                 $runOperands[1] -notmatch '^\d+(?:-\d+)?$') {
                 throw $runUsage
             }
@@ -216,7 +216,7 @@ if ($mode -eq 'e2e') {
             throw $createUsage
         }
         if ($createOperands.Count -eq 2 -and
-            ($createOperands[0] -ine 'movesets' -or
+            ($createOperands[0] -inotmatch '^movesets(?:/(?:base|specials|idle))?$' -or
                 $createOperands[1] -notmatch '^\d+(?:-\d+)?$')) {
             throw $createUsage
         }
@@ -242,15 +242,15 @@ if ($mode -eq 'e2e') {
         & $visualRename -Suite $arguments[1] -NewSuite $arguments[2]
         return
     }
-    if ($testCommand -ceq 'delete') {
+    if ($testCommand -ceq 'remove') {
         if ($arguments.Count -ne 2) {
-            throw 'Usage: na228 e2e delete <all|suite>'
+            throw 'Usage: na228 e2e remove <all|suite>'
         }
         if ($arguments[1] -ieq 'all') {
-            & $visualDelete -All
+            & $visualRemove -All
         }
         else {
-            & $visualDelete -Suite $arguments[1]
+            & $visualRemove -Suite $arguments[1]
         }
         return
     }
@@ -264,7 +264,7 @@ if ($mode -eq 'e2e') {
         & $visualCommit -Preserve:($arguments.Count -eq 2)
         return
     }
-    throw "$runUsage | $createUsage | na228 e2e rename <suite> <new-suite> | na228 e2e delete <all|suite> | na228 e2e commit [-p]"
+    throw "$runUsage | $createUsage | na228 e2e rename <suite> <new-suite> | na228 e2e remove <all|suite> | na228 e2e commit [-p]"
 }
 
 if ($mode -eq 'release') {

@@ -347,8 +347,8 @@ Write-Output '[fake] unit tests'
         -Condition ($helpText -match '(?m)^\s*na228 e2e rename <suite> <new-suite>\s+') `
         -Message 'Root help omitted suite rename.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 e2e delete <all\|suite>\s+') `
-        -Message 'Root help omitted suite deletion.'
+        -Condition ($helpText -match '(?m)^\s*na228 e2e remove <all\|suite>\s+') `
+        -Message 'Root help omitted capture removal.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 e2e commit \[-p\]\s+') `
         -Message 'Root help omitted the coordinated E2E commit command.'
@@ -551,11 +551,11 @@ Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
     -Value "rename suite=$Suite newSuite=$NewSuite"
 '@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'delete_suite.ps1') -Content @'
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'remove_suite.ps1') -Content @'
 param([string]$Suite, [switch]$All)
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
-    -Value "delete suite=$Suite all=$($All.IsPresent)"
+    -Value "remove suite=$Suite all=$($All.IsPresent)"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'commit_captures.ps1') -Content @'
 param([switch]$Preserve)
@@ -591,34 +591,38 @@ Add-Content `
     & (Join-Path $fakeRepository 'na228.ps1') e2e alpha
     & (Join-Path $fakeRepository 'na228.ps1') e2e movesets 8
     & (Join-Path $fakeRepository 'na228.ps1') e2e movesets 8-18 -s
+    & (Join-Path $fakeRepository 'na228.ps1') e2e movesets/idle 8
     & (Join-Path $fakeRepository 'na228.ps1') e2e create font/character_select
     & (Join-Path $fakeRepository 'na228.ps1') e2e create font/no_reference -noref
     & (Join-Path $fakeRepository 'na228.ps1') e2e create all
     & (Join-Path $fakeRepository 'na228.ps1') e2e create movesets 8
     & (Join-Path $fakeRepository 'na228.ps1') e2e create movesets 8-18 -noref
+    & (Join-Path $fakeRepository 'na228.ps1') e2e create movesets/specials 8
     & (Join-Path $fakeRepository 'na228.ps1') e2e rename font/character_select font/characters
-    & (Join-Path $fakeRepository 'na228.ps1') e2e delete font/characters
-    & (Join-Path $fakeRepository 'na228.ps1') e2e delete all
+    & (Join-Path $fakeRepository 'na228.ps1') e2e remove font/characters
+    & (Join-Path $fakeRepository 'na228.ps1') e2e remove all
     & (Join-Path $fakeRepository 'na228.ps1') e2e commit
     & (Join-Path $fakeRepository 'na228.ps1') e2e commit -p
     $calls = @(Get-Content -LiteralPath $visualCalls)
     Assert-Na2Test `
-        -Condition ($calls.Count -eq 15 -and
+        -Condition ($calls.Count -eq 17 -and
             $calls[0] -ceq 'run suite= shifted=False' -and
             $calls[1] -ceq 'run suite= shifted=True' -and
             $calls[2] -ceq 'run suite=alpha shifted=False' -and
             $calls[3] -ceq 'run suite=movesets shifted=False range=8' -and
             $calls[4] -ceq 'run suite=movesets shifted=True range=8-18' -and
-            $calls[5] -ceq 'create suite=font/character_select all=False noref=False' -and
-            $calls[6] -ceq 'create suite=font/no_reference all=False noref=True' -and
-            $calls[7] -ceq 'create suite= all=True noref=False' -and
-            $calls[8] -ceq 'create suite=movesets all=False noref=False range=8' -and
-            $calls[9] -ceq 'create suite=movesets all=False noref=True range=8-18' -and
-            $calls[10] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
-            $calls[11] -ceq 'delete suite=font/characters all=False' -and
-            $calls[12] -ceq 'delete suite= all=True' -and
-            $calls[13] -ceq 'commit preserve=False' -and
-            $calls[14] -ceq 'commit preserve=True') `
+            $calls[5] -ceq 'run suite=movesets/idle shifted=False range=8' -and
+            $calls[6] -ceq 'create suite=font/character_select all=False noref=False' -and
+            $calls[7] -ceq 'create suite=font/no_reference all=False noref=True' -and
+            $calls[8] -ceq 'create suite= all=True noref=False' -and
+            $calls[9] -ceq 'create suite=movesets all=False noref=False range=8' -and
+            $calls[10] -ceq 'create suite=movesets all=False noref=True range=8-18' -and
+            $calls[11] -ceq 'create suite=movesets/specials all=False noref=False range=8' -and
+            $calls[12] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
+            $calls[13] -ceq 'remove suite=font/characters all=False' -and
+            $calls[14] -ceq 'remove suite= all=True' -and
+            $calls[15] -ceq 'commit preserve=False' -and
+            $calls[16] -ceq 'commit preserve=True') `
         -Message 'Selected/global E2E or lifecycle-command dispatch was incorrect.'
     $customReferenceRejected = $false
     try {

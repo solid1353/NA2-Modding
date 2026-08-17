@@ -11,6 +11,8 @@ param(
     [Parameter(Mandatory, ParameterSetName = 'Publish')]
     [string]$CaptureRoot,
     [string]$MovesetRange,
+    [ValidateSet('all', 'base', 'specials', 'idle')]
+    [string]$MovesetFamily,
     [string]$ConcurrencyPoolRoot,
     [ValidateRange(1, 64)]
     [int]$ConcurrencyLimit = 16
@@ -46,6 +48,9 @@ if ($context.Generated) {
         if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
             $generatedArguments.MovesetRange = $MovesetRange
         }
+        $generatedArguments.MovesetFamily = $(if ($PSBoundParameters.ContainsKey('MovesetFamily')) {
+            $MovesetFamily
+        } else { $context.GeneratedFamily })
         & $context.GeneratedScript @generatedArguments
         $capturedGrids = Join-Path $CaptureOutputRoot $script:E2eScreenshotGridDirectory
         if (@(Get-ChildItem -LiteralPath $capturedGrids -Filter '*.png' -File).Count -eq 0) {
@@ -84,6 +89,9 @@ if ($context.Generated) {
             if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
                 $generatedArguments.MovesetRange = $MovesetRange
             }
+            $generatedArguments.MovesetFamily = $(if ($PSBoundParameters.ContainsKey('MovesetFamily')) {
+                $MovesetFamily
+            } else { $context.GeneratedFamily })
             & $context.GeneratedScript @generatedArguments
         }
         $generatedPublishRoot = Join-Path `
@@ -97,7 +105,8 @@ if ($context.Generated) {
             -OutputRoot $generatedPublishRoot `
             -Comparator $context.Comparator `
             -CapturedTier Reference `
-            -PreserveCapturedTier:(-not [string]::IsNullOrWhiteSpace($MovesetRange))
+            -PreserveCapturedTier:($context.GeneratedFamily -cne 'all' -or
+                -not [string]::IsNullOrWhiteSpace($MovesetRange))
         Publish-VisualRegressionTransaction `
             -Replacements ([ordered]@{ ($context.CaptureRoot) = $generatedPublishRoot }) `
             -TransactionRoot $generatedTransaction `

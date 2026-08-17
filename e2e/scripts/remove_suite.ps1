@@ -9,14 +9,7 @@ $ErrorActionPreference = 'Stop'
 
 if ($All) {
     $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-    $suiteRepository = Join-Path $root 'suites'
     $captureRepository = Join-Path $root 'captures'
-    $suites = @(
-        Get-VisualRegressionSuiteNames -SuiteRepository $suiteRepository
-    )
-    if (Test-Path -LiteralPath $suiteRepository) {
-        Remove-Item -LiteralPath $suiteRepository -Recurse -Force
-    }
     if (Test-Path -LiteralPath $captureRepository -PathType Container) {
         foreach ($item in Get-ChildItem -LiteralPath $captureRepository -Force) {
             if ($script:E2eCaptureRepositoryMetadataNames -ccontains $item.Name) {
@@ -25,7 +18,7 @@ if ($All) {
             Remove-Item -LiteralPath $item.FullName -Recurse -Force
         }
     }
-    Write-Host "Deleted all E2E suites: $($suites.Count)" -ForegroundColor Green
+    Write-Host 'Removed all E2E capture history.' -ForegroundColor Green
     return
 }
 
@@ -35,13 +28,16 @@ if (-not (Test-VisualRegressionSuiteExists -Context $context)) {
     throw "E2E suite does not exist: $($context.Suite)"
 }
 if ($context.Generated) {
+    if ($context.GeneratedFamily -cne 'all') {
+        throw 'Generated moveset sub-suites cannot be removed independently.'
+    }
     if (Test-Path -LiteralPath $context.CaptureRoot -PathType Container) {
         Remove-Item -LiteralPath $context.CaptureRoot -Recurse -Force
         Remove-VisualRegressionEmptyParents `
             -Path $context.CaptureRoot `
             -Boundary $context.CaptureRepository
     }
-    Write-Host "Deleted generated E2E capture history: $($context.Suite)" -ForegroundColor Green
+    Write-Host "Removed generated E2E capture history: $($context.Suite)" -ForegroundColor Green
     return
 }
 
@@ -67,7 +63,6 @@ if (Test-Path -LiteralPath $context.DescendantSuiteRoot -PathType Container) {
         }
 }
 
-Remove-Item -LiteralPath $context.SuitePath -Force
 if (Test-Path -LiteralPath $context.CaptureRoot -PathType Container) {
     foreach ($item in Get-ChildItem -LiteralPath $context.CaptureRoot -Force) {
         if ($item.PSIsContainer -and $descendantBranches.Contains($item.Name)) {
@@ -80,9 +75,6 @@ if (Test-Path -LiteralPath $context.CaptureRoot -PathType Container) {
     }
 }
 Remove-VisualRegressionEmptyParents `
-    -Path $context.SuitePath `
-    -Boundary $context.SuiteRepository
-Remove-VisualRegressionEmptyParents `
     -Path $context.CaptureRoot `
     -Boundary $context.CaptureRepository
-Write-Host "Deleted E2E suite: $($context.Suite)" -ForegroundColor Green
+Write-Host "Removed E2E capture history: $($context.Suite)" -ForegroundColor Green

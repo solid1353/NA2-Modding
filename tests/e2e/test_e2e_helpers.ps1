@@ -208,7 +208,7 @@ param(
         -Message 'E2E replay did not use the command pool or screenshot-only PCSX2 capture.'
 
     $generatedDiscoveryRoot = Join-Path $testRoot 'generated-discovery\e2e'
-    $generatedSuiteRoot = Join-Path $generatedDiscoveryRoot 'suites'
+    $generatedSuiteRoot = Join-Path $generatedDiscoveryRoot 'recordings'
     $generatedScriptRoot = Join-Path $generatedDiscoveryRoot 'scripts'
     [void](New-Item -ItemType Directory -Path `
         (Join-Path $generatedSuiteRoot 'collection'), `
@@ -228,11 +228,20 @@ param(
         '# generated suite'
     )
     $generatedSuiteNames = @(
-        Get-VisualRegressionSuiteNames -SuiteRepository $generatedSuiteRoot
+        Get-VisualRegressionSuiteNames -RecordingRepository $generatedSuiteRoot
     )
     Assert-E2eHelperTest `
         -Condition (($generatedSuiteNames -join ',') -ceq 'collection/test,movesets') `
         -Message 'Generated suite discovery did not add movesets or exclude its input recordings.'
+    $generatedIdleContext = Get-VisualRegressionContext -Suite 'movesets/idle'
+    Assert-E2eHelperTest `
+        -Condition (
+            $generatedIdleContext.Generated -and
+            $generatedIdleContext.GeneratedFamily -ceq 'idle' -and
+            $generatedIdleContext.SuiteRelativePath -ceq 'movesets' -and
+            [IO.Path]::GetFileName($generatedIdleContext.CaptureRoot) -ceq 'movesets'
+        ) `
+        -Message 'Generated moveset sub-suite selection did not retain the shared capture root.'
 
     $generatedStageRoot = Join-Path $testRoot 'generated-grid-stage'
     $existingGrids = Join-Path $generatedStageRoot 'existing'
@@ -300,7 +309,7 @@ param(
         $generatedRunScripts, `
         $generatedRunCapture, `
         $generatedRunResources, `
-        (Join-Path $generatedRunRecordings 'movesets'), `
+        (Join-Path $generatedRunRecordings 'e2e\movesets'), `
         $generatedRunLibrary, `
         $generatedRunComparatorRoot `
         -Force)
@@ -325,7 +334,7 @@ param(
         "character`tid`nNaruto`t1`n"
     )
     [IO.File]::WriteAllText(
-        (Join-Path $generatedRunRecordings 'movesets\base.p2m2'),
+        (Join-Path $generatedRunRecordings 'e2e\movesets\base.p2m2'),
         'recording'
     )
     [IO.File]::WriteAllText(
@@ -722,7 +731,6 @@ $grids = Join-Path $OutputRoot 'screenshots'
       "name": "qualified",
       "build": "qualified_build",
       "payload_shift_bytes": 16,
-      "ignored": false,
       "compare_against": "baseline"
     }
   ]
@@ -736,81 +744,12 @@ $grids = Join-Path $OutputRoot 'screenshots'
     Assert-E2eHelperTest `
         -Condition ([string]$configuration.PublishedVariant.name -ceq 'baseline') `
         -Message 'E2E configuration did not select the published synthetic variant.'
+    $qualifiedBuildVariant = Get-E2eBuildVariant `
+        -Name 'qualified' `
+        -Root $activeVariantRoot
     Assert-E2eHelperTest `
-        -Condition ($configuration.AllVariants[1].ignored -eq $false) `
-        -Message 'The qualified synthetic variant is not explicitly active.'
-
-    $ignoredVariantRoot = Join-Path $testRoot 'ignored-variant-config'
-    [void](New-Item -ItemType Directory -Path $ignoredVariantRoot -Force)
-    [IO.File]::WriteAllText(
-        (Join-Path $ignoredVariantRoot 'config.json'),
-        @'
-{
-  "schema_version": 1,
-  "build_variants": [
-    {
-      "name": "normal",
-      "build": "e2e_test",
-      "payload_shift_bytes": 0,
-      "publish": true
-    },
-    {
-      "name": "shifted",
-      "build": "e2e_test_shifted",
-      "payload_shift_bytes": 32,
-      "ignored": true,
-      "compare_against": "normal"
-    }
-  ]
-}
-'@
-    )
-    $ignoredVariantConfiguration = Get-E2eConfiguration -Root $ignoredVariantRoot
-    Assert-E2eHelperTest `
-        -Condition (
-            (@($ignoredVariantConfiguration.Variants.name) -join ',') -ceq 'normal' -and
-            (@($ignoredVariantConfiguration.AllVariants.name) -join ',') -ceq 'normal,shifted'
-        ) `
-        -Message 'An ignored build variant was not excluded from the active variants.'
-    $ignoredBuildVariant = Get-E2eBuildVariant `
-        -Name 'shifted' `
-        -Root $ignoredVariantRoot
-    Assert-E2eHelperTest `
-        -Condition (
-            [string]$ignoredBuildVariant.name -ceq 'shifted' -and
-            $ignoredBuildVariant.ignored -eq $true
-        ) `
-        -Message 'An ignored build variant was unavailable to explicit build resolution.'
-
-    $invalidVariantRoot = Join-Path $testRoot 'invalid-variant-config'
-    [void](New-Item -ItemType Directory -Path $invalidVariantRoot -Force)
-    [IO.File]::WriteAllText(
-        (Join-Path $invalidVariantRoot 'config.json'),
-        @'
-{
-  "schema_version": 1,
-  "build_variants": [
-    {
-      "name": "normal",
-      "build": "e2e_test",
-      "payload_shift_bytes": 0,
-      "publish": true,
-      "ignored": "false"
-    }
-  ]
-}
-'@
-    )
-    $invalidIgnoredRejected = $false
-    try {
-        [void](Get-E2eConfiguration -Root $invalidVariantRoot)
-    }
-    catch {
-        $invalidIgnoredRejected = $_.Exception.Message -match 'ignored must be a boolean'
-    }
-    Assert-E2eHelperTest `
-        -Condition $invalidIgnoredRejected `
-        -Message 'A non-boolean build-variant ignored field was accepted.'
+        -Condition ([string]$qualifiedBuildVariant.name -ceq 'qualified') `
+        -Message 'A configured build variant was unavailable to explicit build resolution.'
 
     $layoutRoot = Join-Path $testRoot ('capture-layout-' + ('x' * 128))
     $layoutPublish = Join-Path $layoutRoot 'publish'
@@ -1112,11 +1051,8 @@ $grids = Join-Path $OutputRoot 'screenshots'
         -CandidateName 'shifted' `
         -OutputRoot $comparison
     Assert-E2eHelperTest `
-        -Condition (
-            $failed.status -ceq 'failed' -and
-            $failed.PSObject.Properties.Name -notcontains 'ignored'
-        ) `
-        -Message 'A normal/shifted difference was not mandatory or still exposed ignore state.'
+        -Condition ($failed.status -ceq 'failed') `
+        -Message 'A normal/shifted difference was not mandatory.'
     Assert-E2eHelperTest `
         -Condition (Test-Path -LiteralPath (Join-Path $comparison 'differences\normal\0002.png')) `
         -Message 'Normal evidence for a failed variant comparison was not retained.'
@@ -1246,11 +1182,9 @@ $grids = Join-Path $OutputRoot 'screenshots'
 
     $fakeCommitRoot = Join-Path $testRoot 'g'
     $fakeCommitScripts = Join-Path $fakeCommitRoot 'e2e\scripts'
-    $fakeSuiteRepository = Join-Path $fakeCommitRoot 'e2e\suites'
     $fakeCaptureRepository = Join-Path $fakeCommitRoot 'e2e\captures'
     [void](New-Item -ItemType Directory -Path `
         $fakeCommitScripts, `
-        $fakeSuiteRepository, `
         $fakeCaptureRepository `
         -Force)
     Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\commit_captures.ps1') `
@@ -1277,22 +1211,13 @@ $grids = Join-Path $OutputRoot 'screenshots'
         & git -C $fakeCaptureRepository add --all
         & git -C $fakeCaptureRepository commit -m 'Initial commit' | Out-Null
 
-        [IO.File]::WriteAllText(
-            (Join-Path $fakeSuiteRepository 'test.p2m2'),
-            'suite recording'
-        )
         [IO.File]::WriteAllText((Join-Path $fakeCommitRoot 'unrelated.txt'), 'staged unrelated')
         & git -C $fakeCommitRoot add -- 'unrelated.txt'
         Remove-Item -LiteralPath (Join-Path $fakeCaptureRepository 'capture.txt') -Force
         & (Join-Path $fakeCommitScripts 'commit_captures.ps1')
 
-        [IO.File]::WriteAllText(
-            (Join-Path $fakeSuiteRepository 'test.p2m2'),
-            'updated suite recording'
-        )
         & (Join-Path $fakeCommitScripts 'commit_captures.ps1') -Preserve
 
-        Remove-Item -LiteralPath $fakeSuiteRepository -Recurse -Force
         & (Join-Path $fakeCommitScripts 'commit_captures.ps1') -Preserve
     }
     finally {
@@ -1307,20 +1232,16 @@ $grids = Join-Path $OutputRoot 'screenshots'
             @(& git -C $fakeCaptureRepository ls-tree -r --name-only HEAD).Count -eq 0 -and
             @(& git -C $fakeCaptureRepository status --porcelain).Count -eq 0 -and
             [string](& git -C $fakeCaptureRepository log -1 --format='%s') -ceq 'Initial commit' -and
-            [int](& git -C $fakeCommitRoot rev-list --count HEAD) -eq 4 -and
-            [string](& git -C $fakeCommitRoot log -1 --format='%s') -ceq 'Update E2E suites' -and
-            (@(
-                & git -C $fakeCommitRoot show --format= --name-only HEAD |
-                    Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
-            ) -join ',') -ceq 'e2e/suites/test.p2m2' -and
-            (@(& git -C $fakeCommitRoot diff --cached --name-only) -join ',') -ceq 'unrelated.txt' -and
-            @(& git -C $fakeCommitRoot ls-tree -r --name-only HEAD -- 'e2e/suites').Count -eq 0
+            [int](& git -C $fakeCommitRoot rev-list --count HEAD) -eq 1 -and
+            [string](& git -C $fakeCommitRoot log -1 --format='%s') -ceq 'Initial main commit' -and
+            (@(& git -C $fakeCommitRoot diff --cached --name-only) -join ',') -ceq 'unrelated.txt'
         ) `
-        -Message 'E2E update did not commit only suites across capture modes while preserving unrelated staging.'
+        -Message 'E2E capture commit changed the main repository or disturbed unrelated staging.'
 
     $fakeRepository = Join-Path $testRoot 'suite-lifecycle-repository'
     $fakeScripts = Join-Path $fakeRepository 'e2e\scripts'
-    $fakeRecordings = Join-Path $testRoot 'shared-recordings'
+    $fakeInputRecordingsRoot = Join-Path $fakeRepository 'pcsx2_files\input_recordings'
+    $fakeRecordings = Join-Path $fakeInputRecordingsRoot 'e2e'
     $fakeResources = Join-Path $fakeRepository 'resources'
     [void](New-Item -ItemType Directory -Path `
         $fakeScripts, `
@@ -1335,14 +1256,14 @@ $grids = Join-Path $OutputRoot 'screenshots'
         -Destination (Join-Path $fakeScripts 'create_suite.ps1')
     Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\rename_suite.ps1') `
         -Destination (Join-Path $fakeScripts 'rename_suite.ps1')
-    Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\delete_suite.ps1') `
-        -Destination (Join-Path $fakeScripts 'delete_suite.ps1')
+    Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\remove_suite.ps1') `
+        -Destination (Join-Path $fakeScripts 'remove_suite.ps1')
     [IO.File]::WriteAllText(
         (Join-Path $fakeRepository 'scripts\lib\paths.ps1'),
         @"
 function Get-Na2Paths {
     [pscustomobject]@{
-        pcsx2_input_recordings = '$($fakeRecordings.Replace("'", "''"))'
+        pcsx2_input_recordings = '$($fakeInputRecordingsRoot.Replace("'", "''"))'
         resources = '$($fakeResources.Replace("'", "''"))'
     }
 }
@@ -1471,17 +1392,13 @@ foreach ($suiteName in $suites) {
     & (Join-Path $fakeScripts 'create_suite.ps1') `
         -Suite 'test/no_reference' `
         -NoReference
-    $firstSuitePath = Join-Path $fakeRepository 'e2e\suites\test\no_reference.p2m2'
+    $firstSuitePath = $noReferenceRecording
     Assert-E2eHelperTest `
         -Condition (
             [IO.File]::ReadAllText($firstSuitePath) -ceq 'first' -and
-            @(Get-ChildItem `
-                -LiteralPath (Join-Path $fakeRepository 'e2e\suites') `
-                -Filter 'ignore.txt' `
-                -File `
-                -Recurse).Count -eq 0
+            @(Get-ChildItem -LiteralPath $fakeRecordings -Filter '*.p2m2' -File -Recurse).Count -eq 1
         ) `
-        -Message 'Suite creation did not produce one flat .p2m2 definition without ignores.'
+        -Message 'Suite creation did not use the canonical recording in place.'
     $firstCaptureRoot = Join-Path $fakeRepository 'e2e\captures\test\no_reference'
     [void](New-Item -ItemType Directory -Path (
         Join-Path $firstCaptureRoot 'screenshots'
@@ -1503,7 +1420,7 @@ foreach ($suiteName in $suites) {
                 Join-Path $firstCaptureRoot 'screenshots\001_b_current.png'
             ))
         ) `
-        -Message 'Existing suite definition or capture history was not completely replaced.'
+        -Message 'Existing suite capture history was not completely replaced.'
     [IO.File]::WriteAllText($withReferenceRecording, 'second')
     & (Join-Path $fakeScripts 'create_suite.ps1') `
         -Suite 'test/with_reference'
@@ -1531,10 +1448,10 @@ foreach ($suiteName in $suites) {
         -Message 'Suite creation did not share one 16-slot replay pool across reference and current work.'
     $suiteNames = @(
         Get-VisualRegressionSuiteNames `
-            -SuiteRepository (Join-Path $fakeRepository 'e2e\suites')
+            -RecordingRepository $fakeRecordings
     )
     Assert-E2eHelperTest `
-        -Condition (($suiteNames -join ',') -ceq 'test/no_reference,test/with_reference') `
+        -Condition (($suiteNames -join ',') -ceq 'movesets,test/no_reference,test/with_reference') `
         -Message 'Flat .p2m2 suite discovery did not return canonical extensionless names.'
 
     $sourceCaptureRoot = Join-Path $fakeRepository 'e2e\captures\test\with_reference'
@@ -1554,14 +1471,12 @@ foreach ($suiteName in $suites) {
     Assert-E2eHelperTest `
         -Condition (
             $replacementFailed -and
-            [IO.File]::ReadAllText((Join-Path $fakeRepository 'e2e\suites\test\with_reference.p2m2')) -ceq 'second' -and
+            [IO.File]::ReadAllText($withReferenceRecording) -ceq 'first' -and
             [IO.File]::ReadAllText((Join-Path $sourceCaptureRoot 'accepted.txt')) -ceq 'accepted history'
         ) `
-        -Message 'Failed suite replacement did not restore its previous definition and capture history.'
+        -Message 'Failed suite replacement changed the canonical recording or accepted capture history.'
     [IO.File]::WriteAllText((Join-Path $sourceCaptureRoot 'capture.txt'), 'capture history')
-    $sourceChildSuitePath = Join-Path `
-        $fakeRepository `
-        'e2e\suites\test\with_reference\child.p2m2'
+    $sourceChildSuitePath = Join-Path $fakeRecordings 'test\with_reference\child.p2m2'
     $sourceChildCaptureRoot = Join-Path $sourceCaptureRoot 'child'
     [void](New-Item -ItemType Directory -Path `
         ([IO.Path]::GetDirectoryName($sourceChildSuitePath)), `
@@ -1575,13 +1490,13 @@ foreach ($suiteName in $suites) {
     & (Join-Path $fakeScripts 'rename_suite.ps1') `
         -Suite 'test/with_reference' `
         -NewSuite 'renamed/with_reference'
-    $renamedSuitePath = Join-Path $fakeRepository 'e2e\suites\renamed\with_reference.p2m2'
+    $renamedSuitePath = Join-Path $fakeRecordings 'renamed\with_reference.p2m2'
     $renamedCaptureRoot = Join-Path $fakeRepository 'e2e\captures\renamed\with_reference'
-    $childSuitePath = Join-Path $fakeRepository 'e2e\suites\renamed\with_reference\child.p2m2'
+    $childSuitePath = Join-Path $fakeRecordings 'renamed\with_reference\child.p2m2'
     $childCaptureRoot = Join-Path $renamedCaptureRoot 'child'
     Assert-E2eHelperTest `
         -Condition (
-            -not (Test-Path -LiteralPath (Join-Path $fakeRepository 'e2e\suites\test\with_reference.p2m2')) -and
+            -not (Test-Path -LiteralPath $withReferenceRecording) -and
             -not (Test-Path -LiteralPath $sourceChildSuitePath) -and
             -not (Test-Path -LiteralPath $sourceCaptureRoot) -and
             (Test-Path -LiteralPath $renamedSuitePath -PathType Leaf) -and
@@ -1590,24 +1505,24 @@ foreach ($suiteName in $suites) {
             [IO.File]::ReadAllText((Join-Path $childCaptureRoot 'capture.txt')) -ceq 'child history'
         ) `
         -Message 'Suite rename did not move the definition, descendants, and capture history.'
-    & (Join-Path $fakeScripts 'delete_suite.ps1') -Suite 'renamed/with_reference'
+    & (Join-Path $fakeScripts 'remove_suite.ps1') -Suite 'renamed/with_reference'
     Assert-E2eHelperTest `
         -Condition (
-            -not (Test-Path -LiteralPath $renamedSuitePath) -and
+            (Test-Path -LiteralPath $renamedSuitePath -PathType Leaf) -and
             -not (Test-Path -LiteralPath (Join-Path $renamedCaptureRoot 'capture.txt')) -and
             (Test-Path -LiteralPath $childSuitePath -PathType Leaf) -and
             [IO.File]::ReadAllText((Join-Path $childCaptureRoot 'capture.txt')) -ceq 'child history'
         ) `
-        -Message 'Suite deletion removed a descendant suite or retained parent artifacts.'
-    & (Join-Path $fakeScripts 'delete_suite.ps1') -Suite 'renamed/with_reference/child'
+        -Message 'Capture removal changed canonical recordings, removed descendant history, or retained parent artifacts.'
+    & (Join-Path $fakeScripts 'remove_suite.ps1') -Suite 'renamed/with_reference/child'
     Assert-E2eHelperTest `
         -Condition (
-            -not (Test-Path -LiteralPath $renamedSuitePath) -and
+            (Test-Path -LiteralPath $renamedSuitePath -PathType Leaf) -and
+            (Test-Path -LiteralPath $childSuitePath -PathType Leaf) -and
             -not (Test-Path -LiteralPath $renamedCaptureRoot) -and
-            -not (Test-Path -LiteralPath (Join-Path $fakeRepository 'e2e\suites\renamed')) -and
             -not (Test-Path -LiteralPath (Join-Path $fakeRepository 'e2e\captures\renamed'))
         ) `
-        -Message 'Leaf suite deletion did not remove both roots and their empty parents.'
+        -Message 'Leaf capture removal changed canonical recordings or retained empty capture parents.'
 
     $fakeGeneratedScript = Join-Path $fakeScripts 'movesets.ps1'
     $fakeMovesetInput = Join-Path $fakeRecordings 'movesets\base.p2m2'
@@ -1653,21 +1568,19 @@ foreach ($suiteName in $suites) {
             "The generated E2E suite 'movesets' cannot be renamed."
         )
     }
-    & (Join-Path $fakeScripts 'delete_suite.ps1') -Suite 'movesets'
-    $postDeleteGeneratedNames = @(
+    & (Join-Path $fakeScripts 'remove_suite.ps1') -Suite 'movesets'
+    $postRemoveGeneratedNames = @(
         Get-VisualRegressionSuiteNames `
-            -SuiteRepository (Join-Path $fakeRepository 'e2e\suites')
+            -RecordingRepository $fakeRecordings
     )
     Assert-E2eHelperTest `
         -Condition (
-            -not (Test-Path -LiteralPath (
-                Join-Path $fakeRepository 'e2e\suites\movesets.p2m2'
-            )) -and
+            (Test-Path -LiteralPath $fakeMovesetInput -PathType Leaf) -and
             -not (Test-Path -LiteralPath $fakeGeneratedCapture) -and
             $generatedRenameRejected -and
-            $postDeleteGeneratedNames -ccontains 'movesets'
+            $postRemoveGeneratedNames -ccontains 'movesets'
         ) `
-        -Message 'Generated suite create, rename, or capture-history deletion semantics regressed.'
+        -Message 'Generated suite create, rename, or capture-history removal semantics regressed.'
     $fakeCaptureGit = Join-Path $fakeRepository 'e2e\captures\.git'
     $fakeCaptureAttributes = Join-Path $fakeRepository 'e2e\captures\.gitattributes'
     $fakeCaptureIgnore = Join-Path $fakeRepository 'e2e\captures\.gitignore'
@@ -1689,31 +1602,29 @@ foreach ($suiteName in $suites) {
         "**/all/`n"
     )
     [IO.File]::WriteAllText((Join-Path $orphanCapture 'stale.txt'), 'orphan history')
-    $orphanSuite = Join-Path $fakeRepository 'e2e\suites\orphan.p2m2'
+    $orphanSuite = Join-Path $fakeRecordings 'orphan.p2m2'
     [IO.File]::WriteAllText($orphanSuite, 'orphan suite')
     [IO.File]::WriteAllText($generatedRecording, 'transient recording')
     [IO.File]::WriteAllText($movesetInputRecording, 'generated suite input')
     & (Join-Path $fakeScripts 'create_suite.ps1') -All -NoReference
     $bulkSuiteNames = @(
         Get-VisualRegressionSuiteNames `
-            -SuiteRepository (Join-Path $fakeRepository 'e2e\suites')
+            -RecordingRepository $fakeRecordings
     )
     Assert-E2eHelperTest `
         -Condition (
-            ($bulkSuiteNames -join ',') -ceq 'movesets,test/no_reference,test/with_reference' -and
+            ($bulkSuiteNames -join ',') -ceq '__generated/transient,movesets,orphan,renamed/with_reference,renamed/with_reference/child,test/no_reference' -and
             (Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt') | Select-Object -Last 1) `
-                -ceq 'run suite=test/no_reference,test/with_reference,movesets shifted=False' -and
+                -ceq 'run suite=__generated/transient,orphan,renamed/with_reference,renamed/with_reference/child,test/no_reference,movesets shifted=False' -and
             (Test-Path -LiteralPath (
                 Join-Path $fakeRepository 'e2e\captures\test\no_reference\current.txt'
             ) -PathType Leaf) -and
             (Test-Path -LiteralPath (
-                Join-Path $fakeRepository 'e2e\captures\test\with_reference\current.txt'
-            ) -PathType Leaf) -and
-            (Test-Path -LiteralPath (
                 Join-Path $fakeRepository 'e2e\captures\movesets\current.txt'
             ) -PathType Leaf) -and
-            -not (Test-Path -LiteralPath $orphanSuite) -and
-            -not (Test-Path -LiteralPath $orphanCapture) -and
+            (Test-Path -LiteralPath $orphanSuite -PathType Leaf) -and
+            (Test-Path -LiteralPath (Join-Path $orphanCapture 'current.txt') -PathType Leaf) -and
+            -not (Test-Path -LiteralPath (Join-Path $orphanCapture 'stale.txt')) -and
             [IO.File]::ReadAllText((Join-Path $fakeCaptureGit 'preserved.txt')) -ceq 'git metadata' -and
             [IO.File]::ReadAllText($fakeCaptureAttributes) -ceq (
                 ".gitattributes text eol=lf`n.gitignore text eol=lf`n"
@@ -1722,7 +1633,7 @@ foreach ($suiteName in $suites) {
                 "**/all/`n"
             )
         ) `
-        -Message 'Bulk suite creation did not completely rewrite public suites and histories while preserving capture Git metadata.'
+        -Message 'Bulk suite creation did not discover canonical recordings or rewrite histories while preserving capture Git metadata.'
     $acceptedBulkCapture = Join-Path `
         $fakeRepository `
         'e2e\captures\test\no_reference\accepted.txt'
@@ -1740,7 +1651,7 @@ foreach ($suiteName in $suites) {
     Assert-E2eHelperTest `
         -Condition (
             $bulkReplacementFailed -and
-            [IO.File]::ReadAllText($firstSuitePath) -ceq 'second' -and
+            [IO.File]::ReadAllText($firstSuitePath) -ceq 'third' -and
             [IO.File]::ReadAllText($acceptedBulkCapture) -ceq 'accepted bulk history' -and
             [IO.File]::ReadAllText((Join-Path $fakeCaptureGit 'preserved.txt')) -ceq 'git metadata' -and
             [IO.File]::ReadAllText($fakeCaptureAttributes) -ceq (
@@ -1750,16 +1661,17 @@ foreach ($suiteName in $suites) {
                 "**/all/`n"
             )
         ) `
-        -Message 'Failed bulk suite creation did not restore the complete prior definition and capture trees.'
+        -Message 'Failed bulk suite creation changed canonical recordings or accepted capture history.'
     $looseCapture = Join-Path $fakeRepository 'e2e\captures\loose.txt'
-    $suiteMetadata = Join-Path $fakeRepository 'e2e\suites\metadata.txt'
     [IO.File]::WriteAllText($looseCapture, 'loose capture history')
-    [IO.File]::WriteAllText($suiteMetadata, 'suite metadata')
-    & (Join-Path $fakeScripts 'delete_suite.ps1') -All
-    & (Join-Path $fakeScripts 'delete_suite.ps1') -All
+    & (Join-Path $fakeScripts 'remove_suite.ps1') -All
+    & (Join-Path $fakeScripts 'remove_suite.ps1') -All
     Assert-E2eHelperTest `
         -Condition (
-            -not (Test-Path -LiteralPath (Join-Path $fakeRepository 'e2e\suites')) -and
+            (Test-Path -LiteralPath $movesetInputRecording -PathType Leaf) -and
+            (Test-Path -LiteralPath $orphanSuite -PathType Leaf) -and
+            (Test-Path -LiteralPath $generatedRecording -PathType Leaf) -and
+            (Test-Path -LiteralPath $firstSuitePath -PathType Leaf) -and
             @(
                 Get-ChildItem `
                     -LiteralPath (Join-Path $fakeRepository 'e2e\captures') `
@@ -1774,7 +1686,7 @@ foreach ($suiteName in $suites) {
                 "**/all/`n"
             )
         ) `
-        -Message 'Bulk suite deletion did not remove all histories idempotently or preserve capture Git metadata.'
+        -Message 'Bulk capture removal changed canonical recordings, retained history, or changed capture Git metadata.'
 
     Remove-VisualRegressionTransaction -Transaction $transaction -Root $testRoot
     Write-Host 'E2E helper tests passed.' -ForegroundColor Green

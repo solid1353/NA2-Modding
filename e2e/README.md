@@ -1,7 +1,8 @@
 # NA2 end-to-end tests
 
-This directory contains main-repository E2E infrastructure, suite definitions,
-and configuration. Accepted screenshot history is stored in the
+This directory contains main-repository E2E infrastructure and configuration.
+Canonical recordings live under `pcsx2_files/input_recordings/e2e/`. Accepted
+screenshot history is stored in the
 nested local Git repository at `captures/`.
 
 ## Current command surface
@@ -10,7 +11,7 @@ nested local Git repository at `captures/`.
 na228 e2e [<suite> [<range>]] [-s]
 na228 e2e create <all|suite> [<range>] [-noref]
 na228 e2e rename <suite> <new-suite>
-na228 e2e delete <all|suite>
+na228 e2e remove <all|suite>
 na228 e2e commit [-p]
 ```
 
@@ -24,38 +25,39 @@ physical `character_data.tsv` row or an inclusive row range, such as `8` or
 accept a range.
 
 `movesets` is a code-owned generated suite. It expands `resources/movesets.tsv`
-over the two fixed recordings in `pcsx2_files/input_recordings/movesets/` and
-publishes flat screenshot, pair, blend, and diff contact sheets. It has no
-`.p2m2` definition under `e2e/suites/`.
+over the fixed recordings in `pcsx2_files/input_recordings/e2e/movesets/` and
+publishes flat screenshot, pair, blend, and diff artifacts. Select
+`movesets/base`, `movesets/specials`, or `movesets/idle` to update only that
+output family; each selector accepts the same optional character-data row
+range. `base` includes the normal base output and unique awakening modes.
+`idle` emits one case for every selected character row, including second forms.
 
 `-s` adds the shifted E2E Test build and replays the same suites against it.
 Every normal and shifted capture must match.
 
-`e2e create all` replaces the complete suite-definition tree and all capture
-history except the nested capture repository's `.git` metadata. It processes
-every shared `.p2m2` recording except recordings beneath `__*` directories and
-the `movesets/` inputs owned by the generated suite, prepares one build, and runs
+`e2e create all` replaces all capture history except the nested capture
+repository's `.git` metadata. It processes every `.p2m2` recording below
+`pcsx2_files/input_recordings/e2e/` except the `movesets/` inputs owned by the
+generated suite, prepares one build, and runs
 every suite's normal replay concurrently. NUN5 reference replays run
 concurrently by default; use `-noref` to skip reference capture. A suite
-selector instead replaces only that suite from its
-matching Workshop recording; selecting `movesets` rebuilds the generated suite.
+selector instead replaces only that suite; selecting `movesets` rebuilds the
+generated suite.
 `e2e create movesets <range>` regenerates only that character-row selection and
 preserves existing moveset grids outside it. The same range syntax is available
 when running `movesets` directly.
-`e2e rename` moves the
-suite definition and capture history together; `e2e delete` removes both for only the
-named suite while preserving descendant suites. Deleting `movesets` removes its
-capture history, but the code-owned suite remains available. `e2e delete all` directly
-removes the complete suite tree and all capture history but preserves the nested
-capture Git repository. `e2e commit` creates an ordinary `Update E2E suites`
-commit containing only changes under `e2e/suites/` in the main repository. It
-also stages all current capture changes and consolidates them into
+`e2e rename` moves the canonical recording and capture history together;
+`e2e remove` removes capture history for only the named suite while preserving
+descendant suites. Removing `movesets` clears its capture history, but the
+code-owned suite remains available. `e2e remove all` clears all capture history
+while preserving canonical recordings and nested capture Git metadata.
+`e2e commit` stages all current capture changes and consolidates them into
 `Initial commit`: a one-commit repository is amended, while a multi-commit
 repository is reset softly to its root and squashed. It then expires reflogs and
 runs normal Git garbage collection with immediate pruning. An empty accepted
 capture set remains represented by one empty `Initial commit`. With `-p`, it
 instead preserves the existing capture commits and adds an `Update captures`
-commit. Unrelated main-repository changes are excluded from the suite commit.
+commit. Canonical recording changes remain ordinary main-repository changes.
 
 ## Execution and publication
 
@@ -115,7 +117,6 @@ main-repository implementation as one coherent delivery.
 ```text
 e2e/
 ├── config.json
-├── suites/<suite>.p2m2
 ├── scripts/movesets.ps1           # generated movesets suite
 ├── captures/<suite>/              # nested Git repository
 │   ├── all/                       # ignored hardlink aggregate
@@ -134,13 +135,26 @@ e2e/
     └── .attempts/
 ```
 
+```text
+pcsx2_files/input_recordings/e2e/
+├── <folder>/<suite>.p2m2          # ordinary suites, recursively discovered
+└── movesets/
+    ├── base.p2m2
+    ├── idle.p2m2
+    └── specials.p2m2
+```
+
 The generated `captures/movesets/` layout uses `screenshots/`, `pairs/`,
 `blends/`, and `diffs/`, plus the ignored `all/`
 hardlink aggregate. Screenshot filenames are
-`NNN-character-base|specials|mode-<awakening-id>-a-reference.png` and the
+`NNN-character-base|idle|specials|mode-<awakening-id>-a-reference.png` and the
 corresponding `-b-current.png`. Pair, blend, and diff folders use the same case
 name without the tier suffix. The numeric prefix is the physical
 `character_data.tsv` row.
+
+A complete generated case containing one screenshot is published as that
+original screenshot. Cases containing two or more screenshots use the fixed
+3×2 compositor.
 
 Existing `sstates/` directories are legacy capture history. Screenshot-only
 replays do not generate or update them.

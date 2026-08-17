@@ -44,7 +44,7 @@ if (Test-Path -LiteralPath $source.CaptureRoot -PathType Container) {
 }
 Remove-VisualRegressionEmptyParents `
     -Path $source.SuitePath `
-    -Boundary $source.SuiteRepository
+    -Boundary $source.RecordingRepository
 Remove-VisualRegressionEmptyParents `
     -Path $source.CaptureRoot `
     -Boundary $source.CaptureRepository

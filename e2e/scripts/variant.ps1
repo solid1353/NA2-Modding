@@ -4,6 +4,8 @@ param(
     [Parameter(Mandatory)][string]$Transaction,
     [string[]]$Suite,
     [string]$MovesetRange,
+    [ValidateSet('all', 'base', 'specials', 'idle')]
+    [string]$MovesetFamily = 'all',
     [Parameter(Mandatory)][string]$ConcurrencyPoolRoot,
     [ValidateRange(1, 64)]
     [int]$ConcurrencyLimit = 16
@@ -17,7 +19,7 @@ $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
 . (Join-Path $repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
 $buildVariant = Get-E2eBuildVariant -Name $Variant -Root $root
-$suiteRoot = Join-Path $root 'suites'
+$recordingRoot = Join-Path ([string]$paths.pcsx2_input_recordings) 'e2e'
 $suiteWasSpecified = $PSBoundParameters.ContainsKey('Suite')
 $requestedSuites = @(
     Get-VisualRegressionRequestedSuiteNames `
@@ -26,7 +28,7 @@ $requestedSuites = @(
 )
 $suites = @(
     if ($requestedSuites.Count -eq 0) {
-        Get-VisualRegressionSuiteNames -SuiteRepository $suiteRoot
+        Get-VisualRegressionSuiteNames -RecordingRepository $recordingRoot
     }
     else {
         $selected = [Collections.Generic.HashSet[string]]::new(
@@ -47,8 +49,15 @@ $suites = @(
 if ($suites.Count -eq 0) {
     throw 'No E2E suites are available.'
 }
+$generatedSelection = @($suites | Where-Object {
+    Test-VisualRegressionGeneratedSuite -Suite $_
+}) | Select-Object -First 1
+if ($null -ne $generatedSelection -and
+    -not $PSBoundParameters.ContainsKey('MovesetFamily')) {
+    $MovesetFamily = Get-VisualRegressionGeneratedSuiteFamily -Suite $generatedSelection
+}
 if (-not [string]::IsNullOrWhiteSpace($MovesetRange) -and
-    ($suites.Count -ne 1 -or $suites[0] -ine $script:E2eGeneratedSuiteName)) {
+    ($suites.Count -ne 1 -or -not (Test-VisualRegressionGeneratedSuite -Suite $suites[0]))) {
     throw 'MovesetRange requires the movesets suite to be selected by itself.'
 }
 
@@ -294,7 +303,8 @@ try {
                     $GeneratedScript,
                     $ConcurrencyLimit,
                     $ConcurrencyPoolRoot,
-                    $MovesetRange
+                    $MovesetRange,
+                    $MovesetFamily
                 )
                 $ErrorActionPreference = 'Stop'
                 . $SuiteScript
@@ -310,6 +320,7 @@ try {
                     if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
                         $generatedArguments.MovesetRange = $MovesetRange
                     }
+                    $generatedArguments.MovesetFamily = $MovesetFamily
                     & $GeneratedScript @generatedArguments
                     $artifactDirectory = Join-Path $CaptureRoot 'screenshots'
                     $artifactLabel = 'grids'
@@ -362,7 +373,7 @@ try {
             [bool]$context.Generated
         ), $context.GeneratedScript, $ConcurrencyLimit, (
             $ConcurrencyPoolRoot
-        ), $MovesetRange
+        ), $MovesetRange, $MovesetFamily
         $replayJobs.Add($replayJob)
     }
 

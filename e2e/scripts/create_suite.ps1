@@ -12,9 +12,10 @@ $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
 . (Join-Path $repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
-$recordingRoot = [IO.Path]::GetFullPath($paths.pcsx2_input_recordings)
+$recordingRoot = [IO.Path]::GetFullPath(
+    (Join-Path ([string]$paths.pcsx2_input_recordings) 'e2e')
+)
 $referenceGame = 'nun5'
-$suiteRepository = Join-Path $root 'suites'
 $captureRepository = Join-Path $root 'captures'
 
 if (-not (Test-Path -LiteralPath $recordingRoot -PathType Container)) {
@@ -26,18 +27,8 @@ $recordings = @(
         Get-ChildItem -LiteralPath $recordingRoot -Filter '*.p2m2' -File -Recurse |
             Where-Object {
                 $relative = [IO.Path]::GetRelativePath($recordingRoot, $_.FullName)
-                $relativeDirectory = [IO.Path]::GetDirectoryName($relative)
                 $segments = $relative.Split([IO.Path]::DirectorySeparatorChar)
-                $segments[0] -ine $script:E2eGeneratedSuiteName -and
-                    (
-                        [string]::IsNullOrEmpty($relativeDirectory) -or
-                        @(
-                        $relativeDirectory.Split([IO.Path]::DirectorySeparatorChar) |
-                            Where-Object {
-                                $_.StartsWith('__', [StringComparison]::Ordinal)
-                            }
-                        ).Count -eq 0
-                    )
+                $segments[0] -ine $script:E2eGeneratedSuiteName
             } |
             Sort-Object FullName |
             ForEach-Object {
@@ -107,6 +98,11 @@ if ($movesetRangeSpecified) {
         -LastAvailableRow ($characterData.Count + 1)
     $MovesetRange = $resolvedMovesetRange.Value
 }
+$partialGeneratedSelection = $movesetRangeSpecified -or (
+    $recordings.Count -eq 1 -and
+    $recordings[0].Generated -and
+    (Get-VisualRegressionGeneratedSuiteFamily -Suite $recordings[0].Suite) -cne 'all'
+)
 
 $inputIdentity = @(
     foreach ($recording in $recordings) {
@@ -153,16 +149,12 @@ $transaction = New-VisualRegressionTransaction `
     -Root $root `
     -Prefix 'create' `
     -ResumeKey $resumeKey
-$definitionStageRoot = Join-Path $transaction 'suite-definitions'
-$definitionBackupRoot = Join-Path $transaction 'previous-suite-definitions'
 $captureStageRoot = Join-Path $transaction 'capture-history'
 $referenceCaptureRoot = Join-Path $transaction 'reference-captures'
 $concurrencyPoolRoot = Join-Path $transaction 'concurrency'
 $concurrencyLimit = 16
 $referenceJobs = [Collections.Generic.List[object]]::new()
 $installed = [Collections.Generic.List[object]]::new()
-$allDefinitionsBackedUp = $false
-$allDefinitionsInstalled = $false
 $allCapturesPublished = $false
 $completed = $false
 
@@ -226,46 +218,16 @@ function Test-E2eCreateRunStageComplete {
 }
 
 try {
-    [void](New-Item -ItemType Directory -Path $definitionStageRoot -Force)
     foreach ($recording in $recordings) {
         $context = Get-VisualRegressionContext -Suite $recording.Suite
-        $suiteStage = Join-Path $definitionStageRoot ($context.SuiteRelativePath + '.p2m2')
-        $suiteBackup = Join-Path $definitionBackupRoot ($context.SuiteRelativePath + '.p2m2')
         $entry = [pscustomobject]@{
             Context = $context
-            Backup = $suiteBackup
-            Installed = $false
-            BackedUp = $false
             Generated = [bool]$recording.Generated
         }
         $installed.Add($entry)
-
-        if ($entry.Generated) {
-            continue
-        }
-
-        [void](New-Item -ItemType Directory -Path (
-            [IO.Path]::GetDirectoryName($suiteStage)
-        ) -Force)
-        Copy-Item -LiteralPath $recording.Path -Destination $suiteStage -Force
-        if (-not $All) {
-            [void](New-Item -ItemType Directory -Path @(
-                [IO.Path]::GetDirectoryName($context.SuitePath)
-                [IO.Path]::GetDirectoryName($context.CaptureRoot)
-            ) -Force)
-            if (Test-Path -LiteralPath $context.SuitePath -PathType Leaf) {
-                [void](New-Item -ItemType Directory -Path (
-                    [IO.Path]::GetDirectoryName($suiteBackup)
-                ) -Force)
-                [IO.File]::Move($context.SuitePath, $suiteBackup)
-                $entry.BackedUp = $true
-            }
-            Copy-Item -LiteralPath $suiteStage -Destination $context.SuitePath -Force
-            $entry.Installed = $true
-        }
     }
 
-    if ($movesetRangeSpecified) {
+    if ($partialGeneratedSelection) {
         $sourceCapture = $installed[0].Context.CaptureRoot
         $stagedCapture = Join-Path `
             $captureStageRoot `
@@ -282,22 +244,6 @@ try {
                 -Recurse `
                 -Force
         }
-    }
-
-    if ($All) {
-        if (Test-Path -LiteralPath $suiteRepository) {
-            [IO.Directory]::Move($suiteRepository, $definitionBackupRoot)
-            $allDefinitionsBackedUp = $true
-        }
-        [void](New-Item -ItemType Directory -Path $suiteRepository -Force)
-        foreach ($item in Get-ChildItem -LiteralPath $definitionStageRoot -Force) {
-            Copy-Item `
-                -LiteralPath $item.FullName `
-                -Destination (Join-Path $suiteRepository $item.Name) `
-                -Recurse `
-                -Force
-        }
-        $allDefinitionsInstalled = $true
     }
 
     if (-not $NoReference.IsPresent) {
@@ -406,7 +352,7 @@ try {
                 -Suite ([string[]]@($installed.Context.Suite)) `
                 -CapturedRepository $referenceCaptureRoot `
                 -CaptureRepository $captureStageRoot `
-                -PreserveGeneratedTier:$movesetRangeSpecified
+                -PreserveGeneratedTier:$partialGeneratedSelection
             Write-E2eCreateMarker `
                 -Path $referencePublishComplete `
                 -Value ([ordered]@{
@@ -473,12 +419,12 @@ try {
     }
     $completed = $true
     if ($All) {
-        Write-Host "Created or replaced all E2E suites: $($recordings.Count)" -ForegroundColor Green
+        Write-Host "Regenerated all E2E capture suites: $($recordings.Count)" -ForegroundColor Green
     }
     else {
         $rangeLabel = if ($movesetRangeSpecified) { " rows $MovesetRange" } else { '' }
         Write-Host (
-            "Created or replaced E2E suite: $($recordings[0].Suite)$rangeLabel"
+            "Regenerated E2E captures: $($recordings[0].Suite)$rangeLabel"
         ) -ForegroundColor Green
     }
 }
@@ -505,35 +451,6 @@ finally {
                             -LiteralPath $item.FullName `
                             -Destination (Join-Path $captureRepository $item.Name)
                     }
-                }
-                if ($allDefinitionsInstalled) {
-                    if (Test-Path -LiteralPath $suiteRepository) {
-                        Remove-Item -LiteralPath $suiteRepository -Recurse -Force
-                    }
-                }
-                if ($allDefinitionsBackedUp -and (Test-Path -LiteralPath $definitionBackupRoot)) {
-                    [IO.Directory]::Move($definitionBackupRoot, $suiteRepository)
-                }
-            }
-            else {
-                for ($index = $installed.Count - 1; $index -ge 0; $index--) {
-                    $entry = $installed[$index]
-                    $context = $entry.Context
-                    if ($entry.Generated) {
-                        continue
-                    }
-                    if ($entry.Installed -and (Test-Path -LiteralPath $context.SuitePath -PathType Leaf)) {
-                        Remove-Item -LiteralPath $context.SuitePath -Force
-                    }
-                    if ($entry.BackedUp -and (Test-Path -LiteralPath $entry.Backup -PathType Leaf)) {
-                        [void](New-Item -ItemType Directory -Path (
-                            [IO.Path]::GetDirectoryName($context.SuitePath)
-                        ) -Force)
-                        [IO.File]::Move($entry.Backup, $context.SuitePath)
-                    }
-                    Remove-VisualRegressionEmptyParents `
-                        -Path $context.SuitePath `
-                        -Boundary $context.SuiteRepository
                 }
             }
         }

@@ -11,7 +11,6 @@
       "name": "shifted",
       "build": "e2e_test_shifted",
       "payload_shift_bytes": 32,
-      "ignored": false,
       "compare_against": "normal"
     }
   ]

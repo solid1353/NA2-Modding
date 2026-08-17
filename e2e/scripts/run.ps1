@@ -19,7 +19,7 @@ $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
 . (Join-Path $repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
 $configuration = Get-E2eConfiguration -Root $root
-$suiteRoot = Join-Path $root 'suites'
+$recordingRoot = Join-Path ([string]$paths.pcsx2_input_recordings) 'e2e'
 $suiteWasSpecified = $PSBoundParameters.ContainsKey('Suite')
 $requestedSuites = @(
     Get-VisualRegressionRequestedSuiteNames `
@@ -53,7 +53,7 @@ function Get-E2eRunContext {
     return Get-VisualRegressionContext -Suite $Name
 }
 $availableSuites = @(
-    Get-VisualRegressionSuiteNames -SuiteRepository $suiteRoot
+    Get-VisualRegressionSuiteNames -RecordingRepository $recordingRoot
 )
 $suites = @(
     if ($requestedSuites.Count -eq 0) {
@@ -80,7 +80,7 @@ if ($suites.Count -eq 0) {
 }
 $movesetRangeSpecified = -not [string]::IsNullOrWhiteSpace($MovesetRange)
 if ($movesetRangeSpecified -and
-    ($suites.Count -ne 1 -or $suites[0] -ine $script:E2eGeneratedSuiteName)) {
+    ($suites.Count -ne 1 -or -not (Test-VisualRegressionGeneratedSuite -Suite $suites[0]))) {
     throw 'MovesetRange requires the movesets suite to be selected by itself.'
 }
 if ($movesetRangeSpecified) {
@@ -131,7 +131,7 @@ if ($hasGeneratedSuite) {
         Join-Path ([string]$paths.resources) 'character_data.tsv'
         Join-Path ([string]$paths.resources) 'movesets.tsv'
         Get-ChildItem `
-            -LiteralPath (Join-Path ([string]$paths.pcsx2_input_recordings) $script:E2eGeneratedSuiteName) `
+            -LiteralPath (Join-Path $recordingRoot $script:E2eGeneratedSuiteName) `
             -Filter '*.p2m2' `
             -File `
             -ErrorAction Stop |
@@ -152,6 +152,13 @@ $resumeRequest = [ordered]@{
 }
 if ($movesetRangeSpecified) {
     $resumeRequest['moveset_range'] = $MovesetRange
+}
+$generatedSelection = @($suites | Where-Object {
+    Test-VisualRegressionGeneratedSuite -Suite $_
+}) | Select-Object -First 1
+if ($null -ne $generatedSelection) {
+    $resumeRequest['moveset_family'] = Get-VisualRegressionGeneratedSuiteFamily `
+        -Suite $generatedSelection
 }
 $resumeRequest['suites'] = [string[]]@($suites | Sort-Object)
 $resumeRequest['inputs'] = [object[]]@($inputIdentity | Sort-Object path)
@@ -200,6 +207,8 @@ foreach ($suiteName in $suites) {
     $prepareKey = "prepare/$taskSuite"
     $taskCaptureRoot = $context.CaptureRoot
     if ($context.Generated) {
+        $preserveGeneratedTier = $movesetRangeSpecified -or
+            $context.GeneratedFamily -cne 'all'
         $capturedGridDirectory = Join-Path $normalSuite 'capture\screenshots'
         $existingGridDirectory = $context.Capture.ScreenshotGrids
         $outputRoot = Join-Path `
@@ -239,7 +248,7 @@ foreach ($suiteName in $suites) {
                     $capturedGridDirectory,
                     $outputRoot,
                     $comparator,
-                    $movesetRangeSpecified
+                    $preserveGeneratedTier
                 )
             }.GetNewClosure()
         })
@@ -387,7 +396,8 @@ try {
                 $SuiteSelectionJson,
                 $ConcurrencyLimit,
                 $ConcurrencyPoolRoot,
-                $MovesetRange
+                $MovesetRange,
+                $MovesetFamily
             )
             $ErrorActionPreference = 'Stop'
             $variantArguments = @{
@@ -400,12 +410,21 @@ try {
             if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
                 $variantArguments.MovesetRange = $MovesetRange
             }
+            if (-not [string]::IsNullOrWhiteSpace($MovesetFamily)) {
+                $variantArguments.MovesetFamily = $MovesetFamily
+            }
             & $Script @variantArguments
         } -ArgumentList (
             Join-Path $PSScriptRoot 'variant.ps1'
         ), $variantName, $transaction, $suiteSelectionJson, $ConcurrencyLimit, (
             $ConcurrencyPoolRoot
-        ), $MovesetRange
+        ), $MovesetRange, $(
+            if ($suites.Count -eq 1 -and
+                (Test-VisualRegressionGeneratedSuite -Suite $suites[0])) {
+                Get-VisualRegressionGeneratedSuiteFamily -Suite $suites[0]
+            }
+            else { $null }
+        )
         $jobs.Add($variantJob)
     }
     Write-Host (

@@ -47,7 +47,8 @@ Shared infrastructure is not duplicated here:
 - `na228_builder/` owns configuration composition and verified image assembly;
   see [`../na228_builder/README.md`](../na228_builder/README.md).
 - `scripts/na228/` owns the user-command implementation and output promotion.
-- `e2e/` owns emulator-driven test infrastructure and suite definitions; see
+- `e2e/` owns emulator-driven test infrastructure; canonical recordings live
+  under `pcsx2_files/input_recordings/e2e/`; see
   [`../e2e/README.md`](../e2e/README.md).
 - `tests/` owns the current repository-wide unit-test runner. Component
   documentation may expose narrower existing unit-test invocations where they

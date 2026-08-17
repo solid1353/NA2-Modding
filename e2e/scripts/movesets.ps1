@@ -12,6 +12,9 @@ param(
 
     [string]$MovesetRange,
 
+    [ValidateSet('all', 'base', 'specials', 'idle')]
+    [string]$MovesetFamily = 'all',
+
     [ValidateRange(1, 64)]
     [int]$ThrottleLimit = 16,
 
@@ -196,10 +199,21 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
     }
     [void]$outputPlans.Add([pscustomobject]@{
         Name = ('{0:D3}-{1}-base' -f $outputNumber, $slug)
+        Family = 'base'
         Captures = @(
             [pscustomobject]@{
                 Row = $block.Base.Row
                 Recording = 'movesets\base.p2m2'
+            }
+        )
+    })
+    [void]$outputPlans.Add([pscustomobject]@{
+        Name = ('{0:D3}-{1}-idle' -f $outputNumber, $slug)
+        Family = 'idle'
+        Captures = @(
+            [pscustomobject]@{
+                Row = $block.Base.Row
+                Recording = 'movesets\idle.p2m2'
             }
         )
     })
@@ -223,6 +237,7 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
         $awakeningId = [string]$awakeningRow.Data.awakening_id
         [void]$outputPlans.Add([pscustomobject]@{
             Name = ('{0:D3}-{1}-mode-{2}' -f $outputNumber, $slug, $awakeningId)
+            Family = 'base'
             Captures = @(
                 [pscustomobject]@{
                     Row = $awakeningRow.Row
@@ -299,13 +314,19 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
         }
         [void]$outputPlans.Add([pscustomobject]@{
             Name = ('{0:D3}-{1}-specials' -f $outputNumber, $slug)
+            Family = 'specials'
             Captures = @($specialCaptures)
         })
     }
 }
 
+$selectedOutputPlans = @(
+    $outputPlans | Where-Object {
+        $MovesetFamily -ceq 'all' -or $_.Family -ceq $MovesetFamily
+    }
+)
 $practiceRows = @(
-    $outputPlans |
+    $selectedOutputPlans |
         ForEach-Object Captures |
         ForEach-Object { [int]$_.Row } |
         Sort-Object -Unique
@@ -323,7 +344,7 @@ foreach ($practice in @(
 
 $tasks = [Collections.Generic.List[object]]::new()
 $gridPlans = [Collections.Generic.List[object]]::new()
-foreach ($outputPlan in $outputPlans) {
+foreach ($outputPlan in $selectedOutputPlans) {
     foreach ($gameTarget in $gameTargets) {
         $outputName = "$($outputPlan.Name)-$($gameTarget.Suffix)"
         $workingRoot = Join-Path $workingBase $outputName
@@ -365,7 +386,7 @@ foreach ($outputPlan in $outputPlans) {
                 Recording = $capture.Recording
                 Game = $gameTarget.Selector
                 GameLabel = $gameTarget.Label
-                InputRecordingsRoot = [string]$paths.pcsx2_input_recordings
+                InputRecordingsRoot = Join-Path ([string]$paths.pcsx2_input_recordings) 'e2e'
                 CaptureRoot = $captureRoot
                 CaseRoot = Split-Path -Parent $captureRoot
                 CompletePath = Join-Path (Split-Path -Parent $captureRoot) 'complete.json'
@@ -529,6 +550,7 @@ $gridJobScript = {
                     -Force)
                 try {
                     $slot = 0
+                    $singleScreenshot = $null
                     foreach ($capture in $Context.Captures) {
                         $screenshots = Join-Path $capture.CaptureRoot 'screenshots'
                         $captureScreenshots = @(
@@ -546,6 +568,7 @@ $gridJobScript = {
                         }
                         foreach ($screenshot in $captureScreenshots) {
                             $slot++
+                            $singleScreenshot = $screenshot.FullName
                             $canonicalName = '{0:D4}_{1}.png' -f
                                 $slot,
                                 $Context.CanonicalVariant
@@ -561,11 +584,35 @@ $gridJobScript = {
                             'screenshots; the fixed 3x2 grid supports at most 6.'
                         )
                     }
-                    & $GridScript `
-                        -ScreenshotDirectory $Context.GridInput `
-                        -OutputDirectory $Context.GridRoot
-                    if ($LASTEXITCODE -ne 0) {
-                        throw "Grid generation failed for $($Context.Name)."
+                    if ($slot -eq 1) {
+                        Copy-Item `
+                            -LiteralPath $singleScreenshot `
+                            -Destination $Context.FinalGrid `
+                            -Force
+                    }
+                    else {
+                        & $GridScript `
+                            -ScreenshotDirectory $Context.GridInput `
+                            -OutputDirectory $Context.GridRoot
+                        if ($LASTEXITCODE -ne 0) {
+                            throw "Grid generation failed for $($Context.Name)."
+                        }
+                        $gridPages = @(
+                            Get-ChildItem `
+                                -LiteralPath $Context.GridRoot `
+                                -Filter 'page_*.png' `
+                                -File
+                        )
+                        if ($gridPages.Count -ne 1) {
+                            throw (
+                                "Grid generation produced $($gridPages.Count) pages " +
+                                "for $($Context.Name); expected exactly one."
+                            )
+                        }
+                        Move-Item `
+                            -LiteralPath $gridPages[0].FullName `
+                            -Destination $Context.FinalGrid `
+                            -Force
                     }
                 }
                 finally {
@@ -579,23 +626,6 @@ $gridJobScript = {
                             -Force
                     }
                 }
-
-                $gridPages = @(
-                    Get-ChildItem `
-                        -LiteralPath $Context.GridRoot `
-                        -Filter 'page_*.png' `
-                        -File
-                )
-                if ($gridPages.Count -ne 1) {
-                    throw (
-                        "Grid generation produced $($gridPages.Count) pages " +
-                        "for $($Context.Name); expected exactly one."
-                    )
-                }
-                Move-Item `
-                    -LiteralPath $gridPages[0].FullName `
-                    -Destination $Context.FinalGrid `
-                    -Force
 
                 for ($attempt = 1; $attempt -le 50; $attempt++) {
                     try {

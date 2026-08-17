@@ -27,10 +27,22 @@ $script:E2eStableCaptureDirectories = @(
 function Test-VisualRegressionGeneratedSuite {
     param([Parameter(Mandatory)][string]$Suite)
 
-    $Suite.Replace('\', '/').Equals(
-        $script:E2eGeneratedSuiteName,
-        [StringComparison]::OrdinalIgnoreCase
-    )
+    $normalized = $Suite.Replace('\', '/').TrimEnd('/')
+    return $normalized -imatch '^movesets(?:/(?:base|specials|idle))?$'
+}
+
+function Get-VisualRegressionGeneratedSuiteFamily {
+    param([Parameter(Mandatory)][string]$Suite)
+
+    $normalized = $Suite.Replace('\', '/').TrimEnd('/')
+    if (-not (Test-VisualRegressionGeneratedSuite -Suite $normalized)) {
+        return $null
+    }
+    $segments = @($normalized.Split('/'))
+    if ($segments.Count -eq 1) {
+        return 'all'
+    }
+    return $segments[1].ToLowerInvariant()
 }
 
 function Resolve-VisualRegressionMovesetRange {
@@ -422,12 +434,22 @@ function Get-VisualRegressionContext {
     $suiteRelativePath = $segments -join [IO.Path]::DirectorySeparatorChar
     $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
     $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
-    $suiteRepository = Join-Path $root 'suites'
-    $suitePath = Join-Path $suiteRepository ($suiteRelativePath + '.p2m2')
     $generated = Test-VisualRegressionGeneratedSuite -Suite $suiteName
     $generatedNamespace = Test-VisualRegressionGeneratedSuiteNamespace -Suite $suiteName
+    $generatedFamily = if ($generated) {
+        Get-VisualRegressionGeneratedSuiteFamily -Suite $suiteName
+    }
+    else { $null }
+    $recordingRepository = Join-Path $repository 'pcsx2_files\input_recordings\e2e'
+    $storageRelativePath = if ($generated) {
+        $script:E2eGeneratedSuiteName
+    }
+    else {
+        $suiteRelativePath
+    }
+    $suitePath = Join-Path $recordingRepository ($suiteRelativePath + '.p2m2')
     $captureRoot = if ([string]::IsNullOrWhiteSpace($CaptureRoot)) {
-        Join-Path (Join-Path $root 'captures') $suiteRelativePath
+        Join-Path (Join-Path $root 'captures') $storageRelativePath
     }
     else {
         [IO.Path]::GetFullPath($CaptureRoot)
@@ -435,14 +457,15 @@ function Get-VisualRegressionContext {
     [pscustomobject]@{
         Root = $root
         CaptureRepository = Join-Path $root 'captures'
-        SuiteRepository = $suiteRepository
+        RecordingRepository = $recordingRepository
         Suite = $suiteName
-        SuiteRelativePath = $suiteRelativePath
+        SuiteRelativePath = $storageRelativePath
         SuitePath = $suitePath
         Generated = $generated
         GeneratedNamespace = $generatedNamespace
+        GeneratedFamily = $generatedFamily
         GeneratedScript = Get-VisualRegressionGeneratedSuiteScript -Root $root
-        DescendantSuiteRoot = Join-Path $suiteRepository $suiteRelativePath
+        DescendantSuiteRoot = Join-Path $recordingRepository $suiteRelativePath
         CaptureRoot = $captureRoot
         Capture = [pscustomobject]@{
             AllGrids = Join-Path $captureRoot $script:E2eAllGridDirectory
@@ -457,20 +480,20 @@ function Get-VisualRegressionContext {
 }
 
 function Get-VisualRegressionSuiteNames {
-    param([Parameter(Mandatory)][string]$SuiteRepository)
+    param([Parameter(Mandatory)][string]$RecordingRepository)
 
     [string[]]@(
-        if (Test-Path -LiteralPath $SuiteRepository -PathType Container) {
-            Get-ChildItem -LiteralPath $SuiteRepository -Filter '*.p2m2' -File -Recurse |
+        if (Test-Path -LiteralPath $RecordingRepository -PathType Container) {
+            Get-ChildItem -LiteralPath $RecordingRepository -Filter '*.p2m2' -File -Recurse |
                 ForEach-Object {
-                    $relative = [IO.Path]::GetRelativePath($SuiteRepository, $_.FullName)
+                    $relative = [IO.Path]::GetRelativePath($RecordingRepository, $_.FullName)
                     $suite = $relative.Substring(0, $relative.Length - 5).Replace('\', '/')
                     if (-not (Test-VisualRegressionGeneratedSuiteNamespace -Suite $suite)) {
                         $suite
                     }
                 }
         }
-        $root = [IO.Path]::GetFullPath((Join-Path $SuiteRepository '..'))
+        $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
         $generatedScript = Get-VisualRegressionGeneratedSuiteScript -Root $root
         if (Test-Path -LiteralPath $generatedScript -PathType Leaf) {
             $script:E2eGeneratedSuiteName

@@ -321,8 +321,8 @@ observation in the current launch setup measured the visible loading screen at
 about 6-7 seconds. The user accepted the integrated patch and elapsed-time
 counter on 2026-08-11; first-use voice delay and repeated or concurrent
 first-use playback were not separately isolated during acceptance.
-Every maintained configuration inherits `faster_loading` from the base
-configuration; none overrides it.
+Development and release inherit `faster_loading` from the base configuration.
+The test configuration used by Manual and E2E builds disables it.
 The complete disassembly findings, worker layout, outcome matrix, and state
 machine are recorded in
 [`../knowledge/game/startup.md`](../knowledge/game/startup.md).

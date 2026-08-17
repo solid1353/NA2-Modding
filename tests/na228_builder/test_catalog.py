@@ -445,7 +445,7 @@ class CatalogTests(unittest.TestCase):
                 )
             )
 
-    def test_repository_configurations_inherit_base_startup_flow(self) -> None:
+    def test_repository_configurations_select_startup_behavior(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         catalog_path = repository / "na228_builder" / "catalog"
         configurations = repository / "na228_builder" / "configurations"
@@ -467,14 +467,17 @@ class CatalogTests(unittest.TestCase):
                 "features", "qol", "startup", "flow", "loading_screen"
             )
         )
-        for name in ("dev", "test", "release"):
+        for name in ("dev", "release"):
             with self.subTest(configuration=name):
                 self.assertTrue(
                     selections[name].node_enabled(
                         "features", "qol", "startup", "faster_loading"
                     )
                 )
-        expected_frames = {"dev": 1160, "test": 1160, "release": 1160}
+        self.assertFalse(
+            test.node_enabled("features", "qol", "startup", "faster_loading")
+        )
+        expected_frames = {"dev": 1160, "test": 1760, "release": 1160}
         for name, selection in selections.items():
             with self.subTest(configuration=name):
                 self.assertEqual(

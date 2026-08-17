@@ -94,8 +94,12 @@ try {
         -Condition (
             $idlePagePlans.Count -eq 2 -and
             $idlePagePlans[0].Page -eq 2 -and
+            $idlePagePlans[0].Page -is [int] -and
+            ('page_{0:D2}' -f $idlePagePlans[0].Page) -ceq 'page_02' -and
             $idlePagePlans[0].FirstCharacterIndex -eq 6 -and
+            $idlePagePlans[0].FirstCharacterIndex -is [int] -and
             $idlePagePlans[0].LastCharacterIndex -eq 11 -and
+            $idlePagePlans[0].LastCharacterIndex -is [int] -and
             $idlePagePlans[1].Page -eq 3 -and
             $idlePagePlans[1].FirstCharacterIndex -eq 12 -and
             $idlePagePlans[1].LastCharacterIndex -eq 17

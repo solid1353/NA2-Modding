@@ -124,13 +124,16 @@ function Get-VisualRegressionIdlePagePlans {
     if ($FirstRow -gt $LastRow -or $LastRow -gt $CharacterCount + 1) {
         throw 'Idle page rows must be an ascending range within character_data.tsv.'
     }
-    $firstPage = [Math]::Floor(($FirstRow - 2) / 6) + 1
-    $lastPage = [Math]::Floor(($LastRow - 2) / 6) + 1
+    [int]$firstPage = [Math]::Floor(($FirstRow - 2) / 6) + 1
+    [int]$lastPage = [Math]::Floor(($LastRow - 2) / 6) + 1
     for ($page = $firstPage; $page -le $lastPage; $page++) {
         [pscustomobject]@{
-            Page = $page
-            FirstCharacterIndex = ($page - 1) * 6
-            LastCharacterIndex = [Math]::Min(($page * 6) - 1, $CharacterCount - 1)
+            Page = [int]$page
+            FirstCharacterIndex = [int](($page - 1) * 6)
+            LastCharacterIndex = [int][Math]::Min(
+                ($page * 6) - 1,
+                $CharacterCount - 1
+            )
         }
     }
 }

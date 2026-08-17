@@ -12,7 +12,6 @@
 - Global cleanup - preserve/promote what is needed, delete the rest.
 
 ### Bugs
-- **UI Translation:** long character names.
 - **String Translation:** save message.
 - **General:** practice menu entries (like Damage) flicker again (unstable).
 

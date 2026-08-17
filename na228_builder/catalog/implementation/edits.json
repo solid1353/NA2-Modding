@@ -1920,6 +1920,18 @@
     "expected_hex": "42010146640060C4",
     "replacement_hex": "D0CF1A0CA0000424"
   },
+  "e__localization__ui_layout__battle_hud_names_na2_btl_at_002103d8": {
+    "description": "Copy NUN5's shared mirrored battle-HUD character-name X anchor (74.0) over NA2's 90.0 anchor.",
+    "operation": "copy",
+    "destination_target_id": "na2_btl",
+    "destination_offsets": [
+      "0x2103D8"
+    ],
+    "length": 4,
+    "expected_hex": "0000B442",
+    "source_target_id": "nun5_btl",
+    "source_offset": "0x215BF8"
+  },
   "e__localization__ui_layout__battle_results_na2_btl_at_00062b24": {
     "description": "Copy only NUN5's X=342 immediate halfword for Display Details while preserving NA2's v0 destination register.",
     "operation": "copy",

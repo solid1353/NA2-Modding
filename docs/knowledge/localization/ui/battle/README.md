@@ -40,3 +40,38 @@ The focused exports are under
 live address minus `0x40`. File offsets below always refer to the complete
 source file. For the boot ELFs, the relevant `PT_LOAD` mappings place NA2 file
 offset `0x100` and NUN5 file offset `0x180` at runtime `0x00100000`.
+
+Direct MIPS call targets and absolute data operands remain runtime addresses.
+Resolve those operands to a complete BTL file offset by subtracting the
+archived live base directly; do not apply the Ghidra project's header shift a
+second time. For example, NA2 runtime operand `0x008C42D8` maps to file offset
+`0x2103D8`, not `0x210418`.
+
+## Battle HUD character-name anchor
+
+The `characters/idle` E2E baseline contains 74 populated character cells. In
+every cell, NA2 v2.28 placed the Player 1 name exactly 20 output pixels to the
+right of NUN5 and the Player 2 name exactly 20 output pixels to the left. At the
+640-pixel capture width, that symmetric error corresponds to 16 units in the
+game's 512-unit logical coordinate system, identifying a shared mirrored anchor
+rather than character-specific data or font metrics.
+
+NA2 renders these names through the function at BTL file offset `0x67F20`,
+runtime `0x0071BE20`, which the header-omitting Ghidra project labels
+`FUN_0071bde0`. The NUN5 homolog is at file offset `0x6B0C0`, runtime
+`0x00731DC0`, and Ghidra label `FUN_00731d80`. The renderer applies its X
+anchor as:
+
+```text
+left:  x = base_x + local_x
+right: x = base_x - local_x - rendered_width
+```
+
+The NA2 instruction reads runtime address `0x008C42D8`, BTL file offset
+`0x2103D8`, whose value is `90.0`. NUN5 reads runtime `0x008DC8F8`, file offset
+`0x215BF8`, whose value is `74.0`. Copying that NUN5 value moves the left name
+16 logical units left and the mirrored right name 16 units right while leaving
+character data and font metrics unchanged. The offset and direction are
+screenshot-proven across the full existing suite; runtime confirmation of the
+corrected patch remains pending because captures are not regenerated as part
+of this change.

@@ -52,6 +52,12 @@ typedef signed int s32;
 /* Uses the caller-supplied horizontal scale instead of deriving an overflow fit. */
 #define FONT_V2_FLAG_FIXED_SCALE_X 0x80u
 
+/* Measures visible quotes with NUN5's original @-delimiter advance. */
+#define FONT_V2_FLAG_NUN5_QUOTE_WIDTH 0x100u
+
+/* Excludes renderer-consumed color tags from visible-width measurement. */
+#define FONT_V2_FLAG_COLOR_TAGS 0x200u
+
 /* Native fallback row advance when no separate line spacing is requested. */
 #define FONT_V2_NATIVE_LINE_ADVANCE 40.0f
 
@@ -365,6 +371,64 @@ static u32 font_v2_is_br(const u8 *text) {
            text[3] == (u8)'>';
 }
 
+static u32 font_v2_is_hex_digit(u8 character) {
+    return
+        (character >= (u8)'0' && character <= (u8)'9') ||
+        (character >= (u8)'A' && character <= (u8)'F') ||
+        (character >= (u8)'a' && character <= (u8)'f');
+}
+
+static u32 font_v2_color_tag_length(const u8 *text) {
+    u32 index;
+
+    if (text[0] != (u8)'<') {
+        return 0;
+    }
+    if (
+        text[1] == (u8)'B' &&
+        text[2] == (u8)'L' &&
+        text[3] == (u8)'A' &&
+        text[4] == (u8)'C' &&
+        text[5] == (u8)'K' &&
+        text[6] == (u8)'>'
+    ) {
+        return 7;
+    }
+    if (
+        text[1] == (u8)'W' &&
+        text[2] == (u8)'H' &&
+        text[3] == (u8)'I' &&
+        text[4] == (u8)'T' &&
+        text[5] == (u8)'E' &&
+        text[6] == (u8)'>'
+    ) {
+        return 7;
+    }
+    if (
+        text[1] == (u8)'R' &&
+        text[2] == (u8)'E' &&
+        text[3] == (u8)'D' &&
+        text[4] == (u8)'>'
+    ) {
+        return 5;
+    }
+    if (
+        text[1] != (u8)'c' ||
+        text[2] != (u8)'o' ||
+        text[3] != (u8)'l' ||
+        text[4] != (u8)'o' ||
+        text[5] != (u8)'r'
+    ) {
+        return 0;
+    }
+    for (index = 6; index < 12; index += 1) {
+        if (!font_v2_is_hex_digit(text[index])) {
+            return 0;
+        }
+    }
+    return text[12] == (u8)'>' ? 13u : 0u;
+}
+
 static int font_v2_is_mode_select_body(const u8 *text) {
     return text &&
            text[0] == (u8)'R' &&
@@ -410,6 +474,14 @@ int font_v2_measure(
 
     while (*text) {
         u32 character = *text;
+        u32 color_tag_length = 0;
+        if (
+            (flags & FONT_V2_FLAG_COLOR_TAGS) &&
+            (color_tag_length = font_v2_color_tag_length(text)) != 0
+        ) {
+            text += color_tag_length;
+            continue;
+        }
         if ((flags & FONT_V2_FLAG_BR_TAGS) && font_v2_is_br(text)) {
             text += 4;
         } else if (
@@ -420,6 +492,12 @@ int font_v2_measure(
         } else {
             if (character < 0x20u || character > 0x7Eu) {
                 return -1;
+            }
+            if (
+                (flags & FONT_V2_FLAG_NUN5_QUOTE_WIDTH) &&
+                character == (u32)'"'
+            ) {
+                character = (u32)'@';
             }
             current_width += font_v2_ascii_widths[character - 0x20u];
             text += 1;

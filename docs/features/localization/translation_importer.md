@@ -103,10 +103,10 @@ for this NA2 slot, so the complete visible title is stored as its override.
 T30 is the sole donorless row and uses user-authored
 `Ultimate`, externalized through `NA2_BTL@0x209CB4`. Donor-backed rows otherwise
 leave `replacement` blank and execute independently validated official donor
-text. The paired Command Chart capture proves that NUN5's `@Divinity@`
-font convention renders as copyright symbols in NA2, so T1877 retains the
-official donor and overrides it with ASCII quotation marks. T1958 retains the
-established Cross-confirm override.
+text. NUN5 stores visible quotation spans as paired `@...@` delimiters. The
+importer normalizes that donor convention centrally to ASCII quotation marks
+before transforms or placement and rejects row-level overrides for the family.
+T1958 retains the established Cross-confirm override.
 The paired Ninja Song passes add 25 displayed numeric/status/bonus fields, and
 the paired ss7 Movie pass adds the locked-title placeholder. This
 is an evidence-scoped English table, not a claim that uncaptured screens are
@@ -148,7 +148,9 @@ entry independently, so a shared row contributes to each proven suite.
 importer selects nonempty `replacement` or otherwise `donor`, applies the
 declared transform, then prepends the user-editable `prefix`. For sequence rows,
 the prefix is applied to the first resulting fragment. Most rows require no
-transform.
+transform. Paired `@...@` spans in official NUN5 donor text are decoded as
+quotation marks by the importer before those operations; the raw `donor` and
+`donor_ref` remain unchanged as provenance.
 
 `reference_refs` stores optional comma-separated pointer sites in the same
 `SOURCE@OFFSET` form. `parent_mapping_id` lets a continuation row reuse its
@@ -162,6 +164,8 @@ Those pointer-specific aliases are always linked, even when their text would
 fit inline, so one shared Japanese string can retain distinct official donor
 selections at structurally distinct records. Aliases must declare identical
 source text and capacity, and none may redirect the source slot itself.
+An empty shared slot may instead contain only pointer-specific aliases; every
+alias is linked and the empty inline storage remains untouched.
 
 ## Output
 
@@ -221,7 +225,8 @@ Official Western text is decoded as Windows-1252. NA2 target strings are decoded
 The original NA2 target is authoritative for renderer-specific color forms:
 
 - NUN5 `<WHITE>` becomes NA2 `<colorFFFFFF>` only where that target uses it.
-- NUN5 `<BLACK>` remains `<BLACK>` or becomes `<color000000>` according to the verified target form.
+- NUN5 `<BLACK>` adopts a target's existing `<color000000>` form; otherwise it
+  remains the native `<BLACK>` token supported by clean NA2 binaries.
 - `<RED>` is retained only where the target supports it.
 - Other shared color, icon, line-break, and control tags are preserved.
 

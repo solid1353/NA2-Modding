@@ -1687,6 +1687,33 @@
       }
     }
   },
+  "i__localization__ui_layout__command_chart_header": {
+    "description": "Use the official NUN5 Command Chart character-name width cap and center while retaining NA2's selected localized name rectangle.",
+    "hooks": {
+      "draw_localized_command_chart_name": {
+        "description": "Scale names wider than 172 pixels and center every localized name at NUN5's X=150 anchor.",
+        "target_id": "na2_btl",
+        "offset": "0x1C7104",
+        "expected_hex": "D0EE0D0C00000000",
+        "symbol": "localization_command_chart_name_draw",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "command_chart_layout": {
+        "kind": "c",
+        "path": "src/localization/ui/command_chart_layout.c",
+        "namespace": "localization.ui.command.chart",
+        "imports": {},
+        "fragments": {
+          "localization_command_chart_name_draw": {
+            "order": 93,
+            "object": "localization.ui.command.chart.text.localization.command.chart.name.draw"
+          }
+        }
+      }
+    }
+  },
   "i__qol__character_select__no_support__support_list": {
     "description": "Build compact per-player Character Select support lists containing declared special entries plus the directional native pairs declared by the injection, retain selected supports for linked Jutsu, disable their free-field calls and gauge, draw each compact entry once, resolve special display and name records, and retain native availability states and rendering.",
     "hooks": {

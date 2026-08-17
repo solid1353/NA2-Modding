@@ -19,13 +19,13 @@
 /* === Command Chart: title === */
 
 /* Left edge of the Command Chart title; increase to move it right. */
-#define FONT_COMMAND_TITLE_BOX_X 30.4f
+#define FONT_COMMAND_TITLE_BOX_X 28.0f
 
 /* Title width; larger values shrink less and permit longer titles. */
 #define FONT_COMMAND_TITLE_BOX_WIDTH 288u
 
 /* Added to the native title Y; more negative moves the title up. */
-#define FONT_COMMAND_TITLE_Y_OFFSET -0.6f
+#define FONT_COMMAND_TITLE_Y_OFFSET -2.2f
 
 /* === Battle Settings: left and right Jutsu-selector lists === */
 
@@ -288,7 +288,10 @@ int font_v2_title_adapter_common(
     session.box_height = FONT_TITLE_BOX_HEIGHT;
     session.horizontal_alignment = FONT_V2_ALIGN_START;
     session.vertical_alignment = FONT_V2_ALIGN_START;
-    session.flags = FONT_V2_FLAG_SHRINK_X;
+    session.flags =
+        FONT_V2_FLAG_SHRINK_X |
+        FONT_V2_FLAG_NUN5_QUOTE_WIDTH |
+        FONT_V2_FLAG_COLOR_TAGS;
     session.line_limit = 1;
     session.line_height = FONT_TITLE_LINE_HEIGHT;
     session.callback = (u32)font_v2_title_callback;
@@ -308,10 +311,28 @@ int font_v2_command_title_entry(
     float native_x,
     float native_y
 ) {
+    u8 buffer[FONT_BODY_BUFFER_SIZE];
+    u32 length = 0;
+
     (void)native_x;
+    if (!text) {
+        return -1;
+    }
+    while (text[length] && length < FONT_BODY_BUFFER_SIZE - 1u) {
+        buffer[length] = text[length];
+        length += 1;
+    }
+    if (text[length]) {
+        return -1;
+    }
+    if (length && buffer[length - 1u] == 0x0Au) {
+        length -= 1;
+    }
+    buffer[length] = 0;
+
     return font_v2_title_adapter_common(
         arg0,
-        text,
+        buffer,
         arg2,
         native_y,
         FONT_COMMAND_TITLE_BOX_X,

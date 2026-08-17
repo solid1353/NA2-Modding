@@ -41,11 +41,16 @@ Matched 640x480 captures on worker CRC `D64F4D9F` show:
 | Practice: `Guard` | `(96,208)-(153,221)` | `(96,208)-(153,221)` |
 | Practice: `Linked Attack` | `(96,333)-(245,346)` | `(96,333)-(245,346)` |
 
-The long current title is complete and unclipped. Its eight-pixel right-edge
-difference is not a fit error: official NUN5 bytes `0x40` render quote-shaped
-glyphs, while the accepted NA2 atlas deliberately preserves literal at-signs.
-The occasional one-pixel short-title height or leading-bearing difference is
-likewise accepted raster/metric residue, not a container offset. The NUN5
+The long-title right-edge difference was a fit-denominator error rather than a
+container offset. NUN5 measures each raw byte-`0x40` quotation delimiter with
+the 14-unit `@` metric, then renders the delimiter as a visible quotation mark.
+The translation importer must materialize visible ASCII quotation marks because
+NA2 does not implement NUN5's delimiter parser, but the shared one-line title
+fitter must still measure each materialized quote with the original 14-unit
+delimiter advance rather than the ASCII quote's 9-unit advance. This preserves
+NUN5's two-stage markup semantics without changing the canonical donor or
+drawing literal at-signs. The occasional one-pixel short-title height or
+leading-bearing difference remains raster/metric residue. The NUN5
 reference screenshot hashes are
 `E602195AF1CC4EFD122735DD7F7D08A15ECCC38B88DB1FCF85C5CD966E70E9DE`
 and
@@ -54,6 +59,38 @@ the matched current hashes are
 `FE37ABB125396BA6786230A6B580DE4C59EEF20527A4FD5B49B52D98BCC15598`
 and
 `D10643D42B96D0135C4E25F636EB517042C6ABE28822BEB56DFFD0AE5D084C8F`.
+
+The corrected denominator was exercised through the maintained Movesets suite
+on Sai's complete three-page Specials family. Reference and Current now share
+the exact 640x480 ink bounds for all affected quoted titles: `Wild Dog`
+`(142,213)-(481,229)`, `White Picture` `(142,338)-(489,354)`, and both
+`Dragon` captures `(142,338)-(488,354)`. The unquoted title remains
+`(143,88)-(490,104)` in every page. This isolates the correction to NUN5 quote
+markup width and confirms that it does not move ordinary Command Chart titles.
+
+NUN5's exact `Air Strike Palm` record at `TEXTENG.BIN` `0xB9A0` is the sole
+Command Chart move-title donor ending in byte `0x0A`. Its native single-line
+title path treats that terminal LF as an inert record terminator and displays
+the preceding text. The NA2 v2 title fitter instead rejected the control byte
+before reaching its callback, leaving the complete title blank. The Command
+Chart entrypoint now makes a bounded transient copy, removes only one terminal
+LF, and passes that copy through the same one-line fitter. Canonical donor bytes,
+translation provenance, all internal line breaks, and the separate Practice
+title entrypoint remain unchanged.
+The maintained Neji Movesets replay confirms the corrected Current title has
+the exact NUN5 ink bounds `(142,213)-(305,226)` and width `164`; all other
+base and Specials rows remain aligned in the same regenerated family.
+
+Move titles may also contain renderer-consumed color controls. Konohamaru's
+exact moveset donor is
+`<BLACK>Charge! Konohamaru <color0808C0>Ninja Squad<BLACK>!`; measuring those
+tags as visible ASCII reduced the rendered title to roughly half its intended
+width even though the native callback consumed them correctly. The shared
+title fitter now recognizes `<BLACK>`, `<WHITE>`, `<RED>`, and six-digit
+`<colorRRGGBB>` controls and excludes them only from width measurement. Their
+bytes remain intact for the native renderer, so visible text uses the same
+one-line `288`-unit fit as an untagged title while preserving color transitions.
+
 Confidence is **high** for the denominators, caller guards, fit thresholds,
 origins, and separation from the unresolved Practice explanation family.
 

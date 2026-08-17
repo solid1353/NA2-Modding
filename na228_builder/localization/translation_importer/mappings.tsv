@@ -135,8 +135,8 @@ T106	1	Collection > Characters > Ultimate Jutsu name	<r春|はる>の<r蹴来|�
 T107	1	Collection > Characters > Ultimate Jutsu name	キラキラ<r乙女心|おとめごころ>	Twinkling Maiden's Heart			e2e:collection/ultimates	NA2_ETC@0x28510	NUN5_TEXTENG@0x3FA0	slot	32				
 T108	1	Collection > Characters > Ultimate Jutsu name	<r大地割|だいちわ>り	Earth Chop			e2e:collection/ultimates	NA2_ETC@0x28530	NUN5_TEXTENG@0x3FC0	slot	32				
 T109	1	Collection > Characters > Ultimate Jutsu name	<r傀儡|くぐつ>・<r桜舞|サクラマイ>	Puppet: Cherry Blossom Dance			e2e:collection/ultimates	NA2_ETC@0x28550	NUN5_TEXTENG@0x3FD0	slot	48				
-T110	1	Collection > Characters > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r白描|はくびょう>	Ninja Art: Beast Scroll Replicas @White Picture@		Ninja Art: Beast Scroll Replicas "White Picture"	e2e:collection/ultimates	NA2_ETC@0x28580	NUN5_TEXTENG@0x3FF0	slot	80				
-T111	1	Collection > Characters > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r龍|りゅう>	Ninja Art: Beast Scroll Replicas @Dragon@		Ninja Art: Beast Scroll Replicas "Dragon"	e2e:collection/ultimates	NA2_ETC@0x285D0	NUN5_TEXTENG@0x4030	slot	64				
+T110	1	Collection > Characters > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r白描|はくびょう>	Ninja Art: Beast Scroll Replicas @White Picture@			e2e:collection/ultimates	NA2_ETC@0x28580	NUN5_TEXTENG@0x3FF0	slot	80
+T111	1	Collection > Characters > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r龍|りゅう>	Ninja Art: Beast Scroll Replicas @Dragon@			e2e:collection/ultimates	NA2_ETC@0x285D0	NUN5_TEXTENG@0x4030	slot	64
 T112	1	Collection > Characters > Ultimate Jutsu name	<r雷切|らいきり>・<r一尖|いっせん>	Lightning Blade, Single Sharpness			e2e:collection/ultimates	NA2_ETC@0x28610	NUN5_TEXTENG@0x4060	slot	48				
 T113	1	Collection > Characters > Ultimate Jutsu name	<r土遁|どとん>・<r裂穿牙|れっせんが>	Earth Style: Ripping Drill Fang			e2e:collection/ultimates	NA2_ETC@0x28640	NUN5_TEXTENG@0x4090	slot	48				
 T114	1	Collection > Characters > Ultimate Jutsu name	コピー<r忍術|にんじゅつ>	Ninja Art: Copy Jutsu			e2e:collection/ultimates	NA2_ETC@0x28670	NUN5_TEXTENG@0x40B0	slot	32				
@@ -284,8 +284,6 @@ T255	1	Collection > Characters > Ultimate Jutsu name	<r水遁|すいとん>・<r
 T256	1	Collection > Characters > Ultimate Jutsu name	<r水遁|すいとん>・<r大瀑布|だいばくふ>の<r術|じゅつ>	Water Style: Giant Vortex Jutsu			e2e:collection/ultimates	NA2_ETC@0x29EE0	NUN5_TEXTENG@0x5160	slot	64				
 T257	1	Collection > Characters > Ultimate Jutsu name	<r千殺水翔|せんさつすいしょう>	A Thousand Needles of Death			e2e:collection/ultimates	NA2_ETC@0x29F20	NUN5_TEXTENG@0x5180	slot	32				
 T258	1	Collection > Characters > Ultimate Jutsu name	<r魔鏡氷晶|まきょうひょうしょう>	Crystal Ice Mirrors			e2e:collection/ultimates	NA2_ETC@0x29F40	NUN5_TEXTENG@0x51A0	slot	52				
-T259	1	Character menus > Ultimate Jutsu name	<r鹿蝶封結|かちょうふうげつ>	Kachofuketsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x49D690	NUN5_TEXTENG@0x78F0	slot	32				
-T260	1	Character menus > Ultimate Jutsu name	<r涅槃精舎|ねはんしょうじゃ>の<r術|じゅつ>	Temple of Nirvana Technique			character:ultimate-jutsu-metadata	NA2_SLPS@0x49DE80	NUN5_TEXTENG@0x7960	slot	48				
 T261	1	Character menus > Ultimate Jutsu name	うずまきナルト<r連弾|れんだん>	Naruto Uzumaki Barrage			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD240	NUN5_TEXTENG@0x4960	slot	32				
 T262	1	Character menus > Ultimate Jutsu name	うずまきナルト<r忍法帳|にんぽうちょう>	Naruto's Ninja Handbook			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD260	NUN5_TEXTENG@0x4980	slot	48				
 T263	1	Character menus > Ultimate Jutsu name	ハヤブサ<r落|お>とし	Falcon Drop			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD290	NUN5_TEXTENG@0x49C0	slot	32				
@@ -329,7 +327,7 @@ T300	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r影役者|�
 T301	1	Character menus > Ultimate Jutsu name	<r傀儡|くぐつ>・<r廻刃天穿|かいじんてんせん>	Spinning Blade Drill of Underworld			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD8F0	NUN5_TEXTENG@0x4ED0	slot	48				
 T302	1	Character menus > Ultimate Jutsu name	<r黒秘技機々一発|くろひぎききいっぱつ>	Secret Black Move: Iron Maiden			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD920	NUN5_TEXTENG@0x4F00	slot	48				
 T303	1	Character menus > Ultimate Jutsu name	<r乱|みだ>れ<r扇舞|せんぶ>	Mad Fan Dance			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD950	NUN5_TEXTENG@0x4F20	slot	32				
-T304	1	Character menus > Ultimate Jutsu name	<r大|だい>カマイタチの<r術|じゅつ>	Cyclone Scythe Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD970	NUN5_TEXTENG@0x4F30	slot	48				
+T304	1	Character menus > Ultimate Jutsu name	<r大|だい>カマイタチの<r術|じゅつ>	<BLACK>Cyclone Scythe <color0808C0>Jutsu			e2e:movesets	NA2_SLPS@0x4AD970	NUN5_TEXTENG@0x11280	slot	48
 T305	1	Character menus > Ultimate Jutsu name	<r口寄|くちよ>せ・<r斬|き>り<r斬|き>り<r舞|まい>	Summoning: Blade Dance			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD9A0	NUN5_TEXTENG@0x4F50	slot	64				
 T306	1	Character menus > Ultimate Jutsu name	<r火遁|かとん>・<r豪炎螺旋丸|ごうえんらせんがん>	Fire Style: Flame Rasengan			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AD9E0	NUN5_TEXTENG@0x4760	slot	64				
 T307	1	Character menus > Ultimate Jutsu name	<r双迅螺旋丸|そうじんらせんがん>	Double Rapid Rasengan			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADA20	NUN5_TEXTENG@0x4780	slot	48				
@@ -348,7 +346,7 @@ T319	1	Character menus > Ultimate Jutsu name	<r毒舌|どくぜつ>コンボ	Ton
 T320	1	Character menus > Ultimate Jutsu name	<r口寄|くちよ>せ・<r羅生門|ラショウモン>　<r奈落|ならく>	Summoning: Rashomon, Abyss			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADC30	NUN5_TEXTENG@0x4FD0	slot	64				
 T321	1	Character menus > Ultimate Jutsu name	<r八重葎|やえむぐら>の<r舞|まい>	Galium Spurium Dance			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADC70	NUN5_TEXTENG@0x4F70	slot	48				
 T322	1	Character menus > Ultimate Jutsu name	<r飛雷神|ひらいしん>の<r術|じゅつ>	Flying Thunder God Jutsu			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADCA0	NUN5_TEXTENG@0x4E60	slot	48				
-T323	1	Character menus > Ultimate Jutsu name	<r突撃|とつげき>！　<r木|こ>ノ<r葉丸|はまる><r軍団|ぐんだん>！	Charge! Konohamaru Ninja Squad!			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADCD0	NUN5_TEXTENG@0x4D30	slot	64				
+T323	1	Character menus > Ultimate Jutsu name	<r突撃|とつげき>！　<r木|こ>ノ<r葉丸|はまる><r軍団|ぐんだん>！	<BLACK>Charge! Konohamaru <color0808C0>Ninja Squad<BLACK>!			e2e:movesets	NA2_SLPS@0x4ADCD0	NUN5_TEXTENG@0x112D0	slot	64
 T324	1	Character menus > Ultimate Jutsu name	<r柔拳指南|じゅうけんしなん>	Gentle Fist Instruction			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADD10	NUN5_TEXTENG@0x4D10	slot	32				
 T325	1	Character menus > Ultimate Jutsu name	<r金剛力|こんごうりき>・<r不動|ふどう>	Adamantine Power, Acala			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADD30	NUN5_TEXTENG@0x11310	slot	48				
 T326	1	Character menus > Ultimate Jutsu name	<r木遁秘術|もくとんひじゅつ>・<r樹界降誕|じゅかいこうたん>	Secret Wood Style Jutsu: Deep Forest Emergence			character:ultimate-jutsu-metadata	NA2_SLPS@0x4ADD60	NUN5_TEXTENG@0x4D90	slot	64				
@@ -435,8 +433,8 @@ T406	1	Character menus > Ultimate Jutsu name	<r二凪|ふたなぎ>ノ<r草薙|�
 T407	1	Character menus > Ultimate Jutsu name	<r死術|しじゅつ>・<r帰魂遊戯|きこんゆうぎ>	Death Technique: Soul Return			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEBB0	NUN5_TEXTENG@0x48F0	slot	48				
 T408	1	Character menus > Ultimate Jutsu name	<r木遁|もくとん>・<r飛乃木|ひのき>	Wood Style: Flying Tree			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEBE0	NUN5_TEXTENG@0x4830	slot	48				
 T409	1	Character menus > Ultimate Jutsu name	<r木遁|もくとん>・<r梁木|やなぎ>	Wood Style: Tree Columns			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEC10	NUN5_TEXTENG@0x4850	slot	48				
-T410	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r白描|はくびょう>	Ninja Art: Beast Scroll Replicas @White Picture@			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEC40	NUN5_TEXTENG@0x3FF0	slot	80				
-T411	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r龍|りゅう>	Ninja Art: Beast Scroll Replicas @Dragon@			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AEC90	NUN5_TEXTENG@0x4030	slot	64				
+T410	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r白描|はくびょう>	Ninja Art: Beast Scroll Replicas @White Picture@			e2e:movesets	NA2_SLPS@0x4AEC40	NUN5_TEXTENG@0x3FF0	slot	80
+T411	1	Character menus > Ultimate Jutsu name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r龍|りゅう>	Ninja Art: Beast Scroll Replicas @Dragon@			e2e:movesets	NA2_SLPS@0x4AEC90	NUN5_TEXTENG@0x4030	slot	64
 T412	1	Character menus > Ultimate Jutsu name	<r草薙|くさなぎ>の<r舞|まい>	Dance of Kusanagi			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AECD0	NUN5_TEXTENG@0x4910	slot	32				
 T413	1	Character menus > Ultimate Jutsu name	<r翔|か>け<r鳥崩|どりくず>し	Darting Bird Crusher			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AECF0	NUN5_TEXTENG@0x4930	slot	32				
 T414	1	Character menus > Ultimate Jutsu name	<r千鳥|ちどり>・<r雷鳴|らいめい>	Chidori Thunder			character:ultimate-jutsu-metadata	NA2_SLPS@0x4AED10	NUN5_TEXTENG@0x4950	slot	48				
@@ -857,6 +855,8 @@ T2206	1	Collection > Voice > character voice title	<r青春|せいしゅん>フ�
 T2207	1	Collection > Voice > character voice title	<r勝負開始|しょうぶかいし>	Duel Start			e2e:collection/voice	NA2_ETC@0x2BFC0	NUN5_TEXTENG@0x2948	slot	32			NA2_ETC@0x2D4E4	
 T2208	1	Collection > Voice > character voice title	<r余裕|よゆう>	No Worries			e2e:collection/voice	NA2_ETC@0x2C7A8	NUN5_TEXTENG@0x2B08	slot	24			NA2_ETC@0x2D5A4	
 T2209	1	Collection > non-Figurine top-plaque character name	チヨバア	Granny Chiyo 			e2e:collection/characters	NA2_ETC@0x251E0	NUN5_TEXTENG@0x518	slot	16			NA2_ETC@0x25A68	
+T259	1	Command Chart > character move name	<r鹿蝶封結|かちょうふうげつ>	Kachofuketsu			e2e:movesets	NA2_SLPS@0x49D690	NUN5_TEXTENG@0x78F0	slot	32
+T260	1	Command Chart > character move name	<r涅槃精舎|ねはんしょうじゃ>の<r術|じゅつ>	Temple of Nirvana Technique			e2e:movesets	NA2_SLPS@0x49DE80	NUN5_TEXTENG@0x7960	slot	48
 T825	1	Command Chart > character move name	<r多重影分身|たじゅうかげぶんしん>の<r術|じゅつ>	Multi Shadow Clone Jutsu			character:command-record-index	NA2_SLPS@0x30CA80	NUN5_TEXTENG@0x51C0	slot	64				
 T826	1	Command Chart > character move name	<r螺旋丸|らせんがん>	Rasengan			character:command-record-index	NA2_SLPS@0x30CAC0	NUN5_TEXTENG@0x51E0	slot	32				
 T827	1	Command Chart > character move name	<r特攻蹴撃|とっこうしゅうげき>	Charging Kick			character:command-record-index	NA2_SLPS@0x30CAE0	NUN5_TEXTENG@0x51F0	slot	32				
@@ -1887,7 +1887,7 @@ T1850	1	Command Chart > character move name	<r落裂斬|らくれつざん>	Fall
 T1851	1	Command Chart > character move name	<r激裂斬|げきれつざん>	Fierce Cutter			character:command-record-index	NA2_SLPS@0x48F490	NUN5_TEXTENG@0xEBD8	slot	32				
 T1852	1	Command Chart > character move name	<r木突横掌|もくとつおうしょう>	Side Thrust Fist			character:command-record-index	NA2_SLPS@0x48F4B0	NUN5_TEXTENG@0xEBF0	slot	32				
 T1853	1	Command Chart > character move name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>	Ninja Art: Beast Scroll Replicas			character:command-record-index	NA2_SLPS@0x494C20	NUN5_TEXTENG@0x3100	slot	48				
-T1854	1	Command Chart > character move name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r狛犬|こまいぬ>	Ninja Art: Beast Scroll Replicas @Wild Dog@ 			character:command-record-index	NA2_SLPS@0x494C50	NUN5_TEXTENG@0xECD0	slot	80				
+T1854	1	Command Chart > character move name	<r忍法|にんぽう>・<r超獣偽画|ちょうじゅうぎが>　<r狛犬|こまいぬ>	Ninja Art: Beast Scroll Replicas @Wild Dog@ 			e2e:movesets	NA2_SLPS@0x494C50	NUN5_TEXTENG@0xECD0	slot	80
 T1855	1	Command Chart > character move name	<r見返龍|みかえりりゅう>	Returning Dragon			character:command-record-index	NA2_SLPS@0x494CA0	NUN5_TEXTENG@0xED00	slot	32				
 T1856	1	Command Chart > character move name	<r燕雀|えんじゃく>	Swallow			character:command-record-index	NA2_SLPS@0x494CC0	NUN5_SLES@0x514208	slot	32				
 T1857	1	Command Chart > character move name	<r巴獅子|ともえじし>	Unyielding Lion			character:command-record-index	NA2_SLPS@0x494CE0	NUN5_TEXTENG@0xED20	slot	32				
@@ -1910,9 +1910,17 @@ T1873	1	Command Chart > character move name	<r裏御光|うらごこう>	Reverse
 T1874	1	Command Chart > character move name	<r火遁|かとん>・<r鳳仙火|ほうせんか>の<r術|じゅつ>・<r落花散|らっかさん>	Fire Style: Phoenix Flower Jutsu @Petal Shower@			character:command-record-index	NA2_SLPS@0x49AD40	NUN5_TEXTENG@0xEF10	slot	80				
 T1875	1	Command Chart > character move name	<r幻日|げんじつ>	False Sun			character:command-record-index	NA2_SLPS@0x49AD90	NUN5_TEXTENG@0xEF40	slot	32				
 T1876	1	Command Chart > character move name	<r東雲|しののめ>	Dawnbreak			character:command-record-index	NA2_SLPS@0x49ADB0	NUN5_TEXTENG@0xEF50	slot	32				
-T1877	1	Command Chart > character move name	<r火遁|かとん>・<r豪火球|ごうかきゅう>の<r術|じゅつ>・<r天来|てんらい>	Fire Style: Fireball Jutsu @Divinity@		"Fire Style: Fireball Jutsu ""Divinity"""	character:command-record-index	NA2_SLPS@0x49ADD0	NUN5_TEXTENG@0xEF60	slot	80				
+T1877	1	Command Chart > character move name	<r火遁|かとん>・<r豪火球|ごうかきゅう>の<r術|じゅつ>・<r天来|てんらい>	Fire Style: Fireball Jutsu @Divinity@			character:command-record-index	NA2_SLPS@0x49ADD0	NUN5_TEXTENG@0xEF60	slot	80
 T1878	1	Command Chart > character move name	<r莢雲|さやぐも>	Heavenly Cloud			character:command-record-index	NA2_SLPS@0x49AE20	NUN5_TEXTENG@0xEF88	slot	32				
 T1879	1	Command Chart > character move name	<r千鳥|ちどり>・<r迅雷|じんらい>	Chidori: Thunderclap			character:command-record-index	NA2_SLPS@0x49AE40	NUN5_TEXTENG@0xEFA0	slot	48				
+T2210	1	Command Chart > character move name	<r忍犬口寄|にんけんくちよ>せ	Ninja Hound Summoning			e2e:movesets	NA2_SLPS@0x49C6E0	NUN5_TEXTENG@0x31E0	slot	32
+T2211	1	Command Chart > character move name	<r風魔特攻弾|ふうまとっこうだん>	Demon Wind Bomb			e2e:movesets	NA2_SLPS@0x49C700	NUN5_TEXTENG@0x7880	slot	48
+T2212	1	Command Chart > character move name	<r二人|ふたり>の<r切|き>り<r札|ふだ>	Double Last Resort			e2e:movesets	NA2_SLPS@0x49CEB0	NUN5_TEXTENG@0x78A0	slot	48
+T2213	1	Command Chart > character move name	<r砂塵舞|さじんま>う<r螺旋丸|らせんがん>	Swirling Sand Rasengan			e2e:movesets	NA2_SLPS@0x49CEE0	NUN5_TEXTENG@0x78C0	slot	48
+T2214	1	Command Chart > character move name	<r伝説|でんせつ>の<r片鱗|へんりん>	Fragment of a Legend			e2e:movesets	NA2_SLPS@0x49D6B0	NUN5_TEXTENG@0x7900	slot	48
+T2215	1	Command Chart > character move name	<r喧乱|けんらん>・<r超獣偽画絵巻|ちょうじゅうぎがえまき>	Dazzling Battle: Beast Scroll Replicas			e2e:movesets	NA2_SLPS@0x49DE40	NUN5_TEXTENG@0x7930	slot	64
+T2216	1	Command Chart > character move name		Floating Bugs			e2e:movesets	NA2_SLPS@0x5032F0	NUN5_TEXTENG@0xD5E8	slot	8			NA2_SLPS@0x452688
+T2217	1	Command Chart > character move name		Speeding Bugs			e2e:movesets	NA2_SLPS@0x5032F0	NUN5_TEXTENG@0xD5F8	slot	8			NA2_SLPS@0x452730
 T1880	1	Command Chart > shared control name or help text	"ナルティメットアクセル<r独特|どくとく>の<r操作|そうさ>を
 <r分|わ>かりやすく<r表示|ひょうじ>する<r為|ため>の<r機能|きのう>です。"	A feature to display the special controls for the game.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208E60	NUN5_TEXTENG@0xAC0	slot	128				
 T1881	1	Command Chart > shared control name or help text	チャクラゲージ<r壱以上|いちいじょう>	Chakra Gauge 1+			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208F70	NUN5_TEXTENG@0xB20	slot	48				

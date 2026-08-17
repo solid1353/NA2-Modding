@@ -1878,6 +1878,28 @@
     "source_target_id": "nun5_elf",
     "source_offset": "0x4DEA30"
   },
+  "e__localization__ui_layout__command_chart_header_marker": {
+    "description": "Move the Command Chart character marker from NA2's X=80 to the official NUN5 X=26 anchor.",
+    "operation": "replace",
+    "destination_target_id": "na2_btl",
+    "destination_offsets": [
+      "0x1C7008"
+    ],
+    "expected_hex": "A042023C",
+    "replacement_hex": "D041023C"
+  },
+  "e__localization__ui_layout__command_chart_header_plaque_geometry": {
+    "description": "Copy the official NUN5 Command Chart plaque geometry (X=58, Y=24, width=184, height=32) over NA2's narrower X=66, width=168 record.",
+    "operation": "copy",
+    "destination_target_id": "na2_btl",
+    "destination_offsets": [
+      "0x209A30"
+    ],
+    "length": 16,
+    "expected_hex": "000084420000C0410000284300000042",
+    "source_target_id": "nun5_btl",
+    "source_offset": "0x210EC0"
+  },
   "e__localization__ui_layout__battle_hud_names_na2_btl_at_00000040": {
     "description": "Install a size-preserving helper in verified loaded zero padding that computes display width as min(source width, 160) times the existing scale.",
     "operation": "replace",

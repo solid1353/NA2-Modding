@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+import csv
 import unittest
 from pathlib import Path
 
 from na228_builder.payload_builder import build_resident_payload
+from na228_builder.payload_builder import mips
 from na228_builder.scripts import catalog
 from na228_builder.scripts.composer import resolve_symbolic_patches
+from scripts.research.localization.verify_font_renderer import (
+    ASCII_FIRST,
+    build_ascii_widths,
+)
 from tests.na228_builder._fixtures import resident_payload_config
 
 
@@ -124,6 +130,143 @@ class FontRuntimeContractTests(unittest.TestCase):
         self.assertEqual((mfc1 >> 21) & 0x1F, 0)
         self.assertEqual((mfc1 >> 16) & 0x1F, 9)
         self.assertEqual((mfc1 >> 11) & 0x1F, 12)
+
+    def test_command_relationship_uses_live_nun5_wrap_width(self) -> None:
+        fragments = {
+            fragment.symbol: fragment for fragment in self.package.fragments
+        }
+        relationship = words(
+            fragments["v2_c_command_relationship_impl"].payload
+        )
+        self.assertIn(mips.i_type(0x09, 0, 5, 272), relationship)
+        self.assertIn(mips.i_type(0x09, 0, 2, 272), relationship)
+
+        widths = build_ascii_widths()
+
+        def measure(text: str) -> int:
+            return sum(
+                widths[ord(character) - ASCII_FIRST]
+                for character in text
+            )
+
+        def wrap(text: str) -> list[str]:
+            lines: list[str] = []
+            current = ""
+            for word in text.split(" "):
+                candidate = f"{current} {word}" if current else word
+                if current and measure(candidate) > 272:
+                    lines.append(current)
+                    current = word
+                else:
+                    current = candidate
+            lines.append(current)
+            return lines
+
+        self.assertEqual(
+            wrap("Consume Chakra/Charge/Jump OK"),
+            ["Consume Chakra/Charge/Jump", "OK"],
+        )
+        self.assertEqual(
+            wrap("Chakra Gauge 1+/Nor. Ultimate Jutsu"),
+            ["Chakra Gauge 1+/Nor.", "Ultimate Jutsu"],
+        )
+        self.assertEqual(
+            wrap("Chakra Gauge 2+/Awk. Ultimate Jutsu"),
+            ["Chakra Gauge 2+/Awk.", "Ultimate Jutsu"],
+        )
+        self.assertEqual(
+            wrap("Chakra Gauge 3/Rev. Ultimate Jutsu"),
+            ["Chakra Gauge 3/Rev. Ultimate", "Jutsu"],
+        )
+
+    def test_title_fit_preserves_nun5_quote_delimiter_width(self) -> None:
+        fragments = {
+            fragment.symbol: fragment for fragment in self.package.fragments
+        }
+        measure = words(fragments["v2_measure"].payload)
+        title = words(fragments["v2_title_adapter"].payload)
+        self.assertTrue(
+            any(
+                word >> 26 == 0x0C and word & 0xFFFF == 0x100
+                for word in measure
+            ),
+            "v2 measurement must test the NUN5 quote-width flag",
+        )
+        self.assertTrue(
+            any(
+                word >> 26 in {0x09, 0x0D} and word & 0xFFFF == 0x301
+                for word in title
+            ),
+            "the shared title adapter must request shrink, NUN5 quote width, "
+            "and color-tag measurement",
+        )
+        self.assertTrue(
+            any(
+                word >> 26 == 0x0C and word & 0xFFFF == 0x200
+                for word in measure
+            ),
+            "v2 measurement must test the color-tag flag",
+        )
+
+        widths = build_ascii_widths()
+        self.assertEqual(widths[ord('"') - ASCII_FIRST], 9)
+        self.assertEqual(widths[ord("@") - ASCII_FIRST], 14)
+
+        title_text = 'Ninja Art: Beast Scroll Replicas "Wild Dog" '
+        ordinary_width = sum(
+            widths[ord(character) - ASCII_FIRST]
+            for character in title_text
+        )
+        nun5_width = sum(
+            widths[ord("@" if character == '"' else character) - ASCII_FIRST]
+            for character in title_text
+        )
+        self.assertEqual(ordinary_width, 391)
+        self.assertEqual(nun5_width, 401)
+
+    def test_command_title_ignores_only_the_terminal_nun5_lf(self) -> None:
+        fragments = {
+            fragment.symbol: fragment for fragment in self.package.fragments
+        }
+        command = words(fragments["v2_command_title_entry"].payload)
+        self.assertTrue(
+            any(
+                word >> 26 == 0x0B and word & 0xFFFF == 0xFF
+                for word in command
+            ),
+            "the Command title copy must remain bounded to 255 text bytes",
+        )
+        self.assertTrue(
+            any(
+                word >> 26 == 0x0E and word & 0xFFFF == 0x0A
+                for word in command
+            ),
+            "the Command title entry must test its final byte for LF",
+        )
+        self.assertTrue(
+            any(
+                word >> 26 == 0x28 and (word >> 16) & 0x1F == 0
+                for word in command
+            ),
+            "the transient Command title copy must receive a NUL terminator",
+        )
+
+        mapping_path = (
+            REPOSITORY
+            / "na228_builder"
+            / "localization"
+            / "translation_importer"
+            / "mappings.tsv"
+        )
+        with mapping_path.open("r", encoding="utf-8-sig", newline="") as handle:
+            mapping = next(
+                row
+                for row in csv.DictReader(handle, delimiter="\t")
+                if row["id"] == "T1486"
+            )
+        self.assertEqual(mapping["donor_ref"], "NUN5_TEXTENG@0xB9A0")
+        self.assertEqual(mapping["donor"], "Air Strike Palm\n")
+        self.assertEqual(mapping["replacement"], "")
 
 
 if __name__ == "__main__":

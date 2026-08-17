@@ -46,6 +46,7 @@ PRINTF_FORMAT_TOKEN = re.compile(
     r"%(?!%)(?:[-+ #0]*)(?:[0-9]+|\*)?(?:\.(?:[0-9]+|\*))?"
     r"(?:hh|h|ll|l|j|z|t|L)?[diuoxXfFeEgGaAcspn]"
 )
+NUN5_QUOTED_SPAN = re.compile(r"@([^@\r\n]+)@")
 VALID_TRANSFORMS = {
     "",
     "empty",
@@ -74,6 +75,7 @@ NAMED_COLOR_TAG_EQUIVALENTS = {
     "<BLACK>": ("<BLACK>", "<color000000>"),
     "<RED>": ("<RED>",),
 }
+NATIVE_NA2_COLOR_TAGS = frozenset({"<BLACK>"})
 
 
 @dataclass(frozen=True)
@@ -454,9 +456,7 @@ def resolve_replacement_text(
     donor_by_ref: dict[str, str] | None = None,
 ) -> str:
     override = str(row["replacement"])
-    template = normalize_fullwidth_ascii(
-        override if override else str(row["donor"])
-    )
+    template = select_replacement_template(row)
     prefix = normalize_fullwidth_ascii(str(row.get("prefix", "")))
     transform = str(row.get("transform", ""))
     arguments = dict(row.get("arguments", {}))
@@ -469,7 +469,7 @@ def resolve_replacement_text(
             raise ValueError(f"{label}: donor reference lookup is unavailable")
         parse_donor_ref(value, label)
         try:
-            return donor_by_ref[value]
+            return normalize_nun5_donor_markup(donor_by_ref[value])
         except KeyError as exc:
             raise ValueError(
                 f"{label}: donor reference {value!r} has no canonical donor text"
@@ -562,6 +562,22 @@ def resolve_replacement_text(
     return normalize_fullwidth_ascii(prefix + resolved)
 
 
+def normalize_nun5_donor_markup(text: str) -> str:
+    """Resolve NUN5's paired at-sign quotation delimiters."""
+    return NUN5_QUOTED_SPAN.sub(
+        lambda match: f'"{match.group(1)}"',
+        text,
+    )
+
+
+def select_replacement_template(row: dict[str, object]) -> str:
+    override = str(row["replacement"])
+    selected = override if override else normalize_nun5_donor_markup(
+        str(row["donor"])
+    )
+    return normalize_fullwidth_ascii(selected)
+
+
 def read_target_sequence(data: bytes, offset: int, capacity: int, label: str) -> tuple[list[str], bytes]:
     if capacity <= 0 or offset < 0 or offset + capacity > len(data):
         raise ValueError(f"{label}: invalid target range 0x{offset:X}+{capacity}")
@@ -640,6 +656,8 @@ def adapt_source_markup(source_text: str, target_text: str, label: str) -> str:
         if source_tag not in adapted:
             continue
         replacement = next((candidate for candidate in candidates if candidate in target_text), None)
+        if replacement is None and source_tag in NATIVE_NA2_COLOR_TAGS:
+            replacement = source_tag
         if replacement is None:
             raise ValueError(f"{label}: cannot verify an NA2 equivalent for {source_tag}")
         adapted = adapted.replace(source_tag, replacement)
@@ -762,6 +780,11 @@ def parse_mappings(
         donor_ref = row["donor_ref"]
         if donor_ref:
             parse_donor_ref(donor_ref, label)
+        if NUN5_QUOTED_SPAN.search(row["donor"]) and row["replacement"]:
+            raise ValueError(
+                f"{label}: NUN5 @...@ quotation markup is normalized centrally; "
+                "replacement must be blank"
+            )
         reference_refs = parse_reference_refs(row["reference_refs"], label)
         parsed = {
             "id": row["id"],
@@ -909,10 +932,7 @@ def resolve_text_materializations(
         if str(row["target"]) not in selected:
             continue
         mapping_id = str(row["id"])
-        override = str(row["replacement"])
-        template = normalize_fullwidth_ascii(
-            override if override else str(row["donor"])
-        )
+        template = select_replacement_template(row)
         prefix = normalize_fullwidth_ascii(str(row["prefix"]))
         materialized = prefix + template
         source_texts[mapping_id] = str(row["source"])

@@ -115,18 +115,49 @@ lookalike/duplicate selections; those rows now use the exact record-selected
 offsets. Exact selection includes otherwise invisible trailing spaces when the
 Collection record points to them.
 
-NUN5's `@...@` title convention is font-specific: byte `0x40` renders as a
-quote-shaped glyph there, while the accepted NA2 atlas preserves the literal
-at-sign. Collection rows retain the exact NUN5 donor and offset as evidence but
-materialize ASCII quotation marks where necessary, just like the established
-Command Chart convention. This is a renderer adaptation, not a literal donor
-substitution.
+NUN5 uses paired byte-`0x40` delimiters as quotation markup in English display
+strings. The raw records select `@White Picture@` at `TEXTENG.BIN` `0x3FF0`,
+`@Dragon@` at `0x4030`, `@Wild Dog@` at `0xECD0`, `@Petal Shower@` at
+`0xEF10`, and `@Divinity@` at `0xEF60`; paired Collection and Command Chart
+captures render those spans as quotation marks. The accepted NA2 atlas renders
+byte `0x40` literally, so the translation importer decodes every balanced
+NUN5 `@...@` span centrally before transforms or placement. Canonical rows
+retain the exact raw donor and offset, keep `replacement` blank, and cannot
+declare a row-level override for this family.
+
+Command Chart move title T1486 is a separate exact-record edge case: NUN5
+`TEXTENG.BIN` `0xB9A0` stores `Air Strike Palm` followed by byte `0x0A` and
+then NUL. That terminal LF belongs to the selected donor record and remains in
+the canonical mapping. NUN5's one-line title consumer ignores it after the
+visible text; NA2 parity is therefore owned by the Command Chart draw adapter,
+not by a translation override or altered donor offset.
 
 The separate NA2 boot-ELF mappings beginning at `SLPS_258.37` `0x4AD3D0`
 belong to 20-byte moveset records: one localized-name pointer plus four
 metadata words. Those records must continue to be joined to their own NUN5
 homologs. A Collection donor must never be propagated into that family merely
 because the current text is equal, and the reverse is equally invalid.
+
+`Charge! Konohamaru Ninja Squad!` demonstrates why that join must include all
+four metadata words. The NA2 record selecting `SLPS_258.37` `0x4ADCD0` begins
+at `0x4AF380` and has metadata bytes
+`43 00 01 00 03 01 48 00 FF FF FF FF 23 00 00 00`. The identical tuple selects
+the NUN5 record at `TEXTENG.BIN` `0x2CF50`, whose pointer resolves to the exact
+donor at `0x112D0`:
+`<BLACK>Charge! Konohamaru <color0808C0>Ninja Squad<BLACK>!`. The plain copy at
+`0x4D30` is selected by the separate Collection family and is not a valid
+moveset donor. Clean NA2 binaries contain native `<BLACK>` tokens, so the
+importer preserves that named token when a target slot has no existing black
+form; a target that already uses `<color000000>` still determines that local
+equivalent.
+
+The same join separates Temari's moveset title from its Collection copy. The
+NA2 record at `SLPS_258.37` `0x4AF100` selects source slot `0x4AD970` and has
+metadata bytes `2F 00 03 00 03 02 2B 00 FF FF FF FF 2D 00 00 00`. Its exact
+NUN5 homolog at `TEXTENG.BIN` `0x2CCD0` selects
+`<BLACK>Cyclone Scythe <color0808C0>Jutsu` at `0x11280`; Collection instead
+selects the plain copy at `0x4F30`. The terminal red span therefore belongs to
+the moveset record and must not be erased by the similar Collection title.
 
 The same namespace rule applies to Collection Music. Its rows preserve their
 own sequence across the homologous Collection tables. For example, the

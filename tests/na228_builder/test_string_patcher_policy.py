@@ -232,6 +232,69 @@ class LinkedStringTests(unittest.TestCase):
             "ALIAS",
         )
 
+    def test_empty_shared_slot_supports_only_pointer_specific_aliases(self) -> None:
+        clean = bytearray(32)
+        clean[16:20] = (0x1000).to_bytes(4, "little")
+        clean[20:24] = (0x1000).to_bytes(4, "little")
+        references = tuple(
+            translation_importer.Reference(
+                mapping_id=mapping_id,
+                target="BTL",
+                target_file_offset=0,
+                target_runtime_address=0x1000,
+                resolution="direct",
+                reference_binary="BTL",
+                reference_file_offsets=(reference_offset,),
+                parent_mapping_id=None,
+                parent_file_offset=None,
+                parent_runtime_address=None,
+            )
+            for mapping_id, reference_offset in (
+                ("FIRST", 16),
+                ("SECOND", 20),
+            )
+        )
+        draft = string_patcher.build_translation_draft(
+            translation_plan=linked_plan(
+                mappings=(
+                    text_mapping(
+                        "FIRST",
+                        offset=0,
+                        capacity=4,
+                        source="",
+                        donor_ref="first",
+                    ),
+                    text_mapping(
+                        "SECOND",
+                        offset=0,
+                        capacity=4,
+                        source="",
+                        donor_ref="second",
+                    ),
+                ),
+                resolved_texts={"FIRST": "ONE", "SECOND": "TWO"},
+                references=references,
+                clean=bytes(clean),
+            ),
+            owner="test.string_patcher",
+            title_policy=None,
+        )
+        self.assertEqual(
+            draft.external_draft.excluded_mapping_ids,
+            frozenset({"FIRST", "SECOND"}),
+        )
+        self.assertEqual(
+            {fragment.payload for fragment in draft.external_draft.fragments},
+            {b"ONE\0", b"TWO\0"},
+        )
+        self.assertEqual(
+            {
+                patch.mapping_id
+                for patch in draft.external_draft.symbolic_patches
+            },
+            {"FIRST", "SECOND"},
+        )
+
     def test_shared_slot_without_one_pointer_specific_alias_fails(self) -> None:
         with self.assertRaisesRegex(
             ValueError,

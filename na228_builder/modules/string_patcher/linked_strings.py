@@ -73,10 +73,19 @@ def _external_mapping_ids(
             for row in mappings
             if str(row["id"]) in reference_ids
         ]
-        if len(inline) != 1 or len(aliases) != len(mappings) - 1:
+        alias_only_empty_slot = (
+            not inline
+            and len(aliases) == len(mappings)
+            and sources == {""}
+        )
+        if not (
+            (len(inline) == 1 and len(aliases) == len(mappings) - 1)
+            or alias_only_empty_slot
+        ):
             raise ValueError(
                 f"{label}: requires one unreferenced inline mapping and "
-                "pointer-referenced aliases"
+                "pointer-referenced aliases, or only pointer-referenced "
+                "aliases for an empty slot"
             )
         if any(
             reference.mapping_id in aliases

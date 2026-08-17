@@ -279,6 +279,72 @@ class TranslationImporterTests(unittest.TestCase):
             "[P] MAX Damage!",
         )
 
+    def test_nun5_paired_at_signs_materialize_as_quotation_marks(self) -> None:
+        row = {
+            "donor": "Ninja Art: Beast Scroll Replicas @Wild Dog@ ",
+            "prefix": "",
+            "replacement": "",
+            "transform": "",
+            "arguments": {},
+        }
+        self.assertEqual(
+            engine.resolve_replacement_text(row, "quoted-title"),
+            'Ninja Art: Beast Scroll Replicas "Wild Dog" ',
+        )
+
+    def test_nun5_quote_materialization_preserves_raw_donor_evidence(self) -> None:
+        mappings = [
+            {
+                "id": "MTEST",
+                "target": "SLPS",
+                "mode": "slot",
+                "donor_ref": "NUN5_TEXTENG@0xECD0",
+                "source": "Japanese title",
+                "donor": "Ninja Art: Beast Scroll Replicas @Wild Dog@ ",
+                "prefix": "",
+                "replacement": "",
+                "transform": "",
+                "arguments": {},
+            }
+        ]
+        resolved, _, _, donors, materialized = (
+            engine.resolve_text_materializations(mappings, {"SLPS"})
+        )
+        self.assertEqual(
+            donors["MTEST"],
+            "Ninja Art: Beast Scroll Replicas @Wild Dog@ ",
+        )
+        self.assertEqual(
+            resolved["MTEST"],
+            'Ninja Art: Beast Scroll Replicas "Wild Dog" ',
+        )
+        self.assertEqual(materialized["MTEST"], resolved["MTEST"])
+
+    def test_nun5_quote_family_rejects_row_level_override(self) -> None:
+        row = {
+            "id": "MTEST",
+            "enabled": "1",
+            "display_context": "Command Chart > character move name",
+            "display_basis": "e2e:movesets",
+            "mode": "slot",
+            "source_ref": "NA2_SLPS@0",
+            "donor_ref": "NUN5_TEXTENG@0x10",
+            "capacity": "80",
+            "source": "Japanese title",
+            "donor": "Fire Style: Fireball Jutsu @Divinity@",
+            "prefix": "",
+            "replacement": 'Fire Style: Fireball Jutsu "Divinity"',
+            "transform": "",
+            "arguments": "",
+            "reference_refs": "",
+            "parent_mapping_id": "",
+        }
+        with self.assertRaisesRegex(
+            ValueError,
+            "quotation markup is normalized centrally",
+        ):
+            engine.parse_mappings([row])
+
     def test_fullwidth_ascii_is_normalized_in_donor_reference_arguments(
         self,
     ) -> None:
@@ -302,6 +368,26 @@ class TranslationImporterTests(unittest.TestCase):
         self.assertEqual(
             engine.adapt_source_markup("Score %1", "Score %04d", "M1"),
             "Score %04d",
+        )
+
+    def test_native_black_markup_is_retained_without_a_target_color_tag(self) -> None:
+        self.assertEqual(
+            engine.adapt_source_markup(
+                "<BLACK>Charge! <color0808C0>Ninja Squad<BLACK>!",
+                "Japanese title without color tags",
+                "T323",
+            ),
+            "<BLACK>Charge! <color0808C0>Ninja Squad<BLACK>!",
+        )
+
+    def test_black_markup_adopts_the_target_specific_equivalent(self) -> None:
+        self.assertEqual(
+            engine.adapt_source_markup(
+                "<BLACK>Title",
+                "<color000000>Japanese title",
+                "existing-black-equivalent",
+            ),
+            "<color000000>Title",
         )
 
     def test_declared_source_must_match_clean_target_text(self) -> None:

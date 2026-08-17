@@ -7,16 +7,16 @@
 #define FONT_COMMAND_TEXT_TABLE_ADDRESS 0x008BD1D0u
 
 /* Left edge of wrapped relationship text; increase to move it right. */
-#define FONT_COMMAND_RELATION_BOX_X 46.4f
+#define FONT_COMMAND_RELATION_BOX_X 44.0f
 
 /* Added to wrapped-block Y; more negative moves multiline text up. */
-#define FONT_COMMAND_RELATION_Y_OFFSET -9.9f
+#define FONT_COMMAND_RELATION_Y_OFFSET -11.5f
 
 /* Added only to fitting one-line relationship text; more negative moves it up. */
-#define FONT_COMMAND_RELATION_SINGLE_LINE_Y_OFFSET -8.0f
+#define FONT_COMMAND_RELATION_SINGLE_LINE_Y_OFFSET -7.2f
 
-/* Relationship text width; larger values wrap later. */
-#define FONT_COMMAND_RELATION_BOX_WIDTH 226u
+/* NUN5 relationship wrapper width captured live before style application. */
+#define FONT_COMMAND_RELATION_BOX_WIDTH 272u
 
 /* Relationship box height used to center one- or two-line output. */
 #define FONT_COMMAND_RELATION_BOX_HEIGHT 32u

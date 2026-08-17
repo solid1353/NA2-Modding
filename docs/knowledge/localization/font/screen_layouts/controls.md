@@ -18,23 +18,44 @@ The structural NUN5 homolog is `FUN_00896E70`. Its branch at
 `LAB_008977BC` resolves selector `+4` through `SUB_003D16C0`, copies the
 result into a 0x100-byte stack buffer, resolves and appends selector `+5` when
 present, then draws the complete buffer once through `SUB_00393ED0`. The
-request uses width `308`, height `32`, line limit `2`, and style `9`. Its
-native row formula also separates relationship and icon placement: after the
-title it draws the combined relationship from `fVar17 + 4` and the icons from
-`fVar17 + 44`, while NA2 advances its shared row coordinate by `30` before
-the relationship and then draws icons only `20` units below it. This explains
-both refreshed cases: ss1 needs one jointly wrapped two-line block, while all
-three ss2 single-line rows and their icons share the same repeatable vertical
-correction.
+request passes right edge `308`, height `32`, line limit `2`, and style `9`.
+`SUB_00393ED0` folds its already composed X input into that right edge before
+calling the word wrapper. The sole NUN5 BTL float pair at file `0x1FAD34` is
+title-local X `4` followed by relationship-local X `20`; a 16-unit container
+term reaches the outer wrapper with those values, and the object contributes
+the final 8 units to visible origins `28` and `44`. The word wrapper therefore
+receives `308 - (16 + 4) = 288` for titles but
+`308 - (16 + 20) = 272` for relationships. A hidden task-owned runtime probe
+at the exact `FUN_0018C4F0` call confirmed both widths with tracking `0`, scale
+X/Y `1`, and descriptor `0x00B592D0`. The former `288` relationship result
+subtracted only the stored row-local value and omitted the already composed
+container term. The native row formula also separates relationship and icon
+placement: after the title it draws the combined relationship from
+`fVar17 + 4` and the icons from `fVar17 + 44`, while NA2 advances its shared
+row coordinate by `30` before the relationship and then draws icons only `20`
+units below it. This explains both refreshed cases: ss1 needs one jointly
+wrapped two-line block, while all three ss2 single-line rows and their icons
+share the same repeatable vertical correction.
 
 The bounded NA2 port therefore hooks only the first exact auxiliary call through
 a 36-byte native-register shim, passes the row record and native Y to generated
 C, and suppresses only the second exact draw. The C entry resolves both strings
 from NA2's live table at `0x008BD1D0`, combines them without modifying canonical
 mapping bytes, and wraps at spaces through the shared native-metric v2 helper.
-The measured NA2-side request uses X `43.2`, native Y minus `11.5`, width `226`,
-height `32`, line advance `30`, glyph height `14`, and a further `-8` Y bias
-only when the wrapped result has one line. The native icon loop remains intact.
+The NA2-side port uses visible X `44`, native Y minus `11.5`, width `272`,
+height `32`, line advance `30`, glyph height `14`, and a further `-7.2` Y bias
+only when the wrapped result has one line. The accepted ASCII width table
+measures `Consume Chakra/Take Down` at `252`,
+`Consume Chakra/Charge/Jump` at `272`, and the latter plus ` OK` at `303`.
+It also measures `Chakra Gauge 1+/Nor. Ultimate` at `275`,
+`Chakra Gauge 2+/Awk. Ultimate` at `281`, and
+`Chakra Gauge 3/Rev. Ultimate` at `267`. Width `272` therefore reproduces all
+observed NUN5 boundaries: it retains the complete `/Jump` line and breaks
+before `OK`, breaks the 1+/Nor. and 2+/Awk. forms before `Ultimate`, and keeps
+the 3/Rev. form through `Ultimate` before breaking at `Jutsu`. The former
+`226`, `264`, and `288` relationship widths were empirical or incomplete
+derivations, while `308` incorrectly treated the right edge as a width. The
+native icon loop remains intact.
 A first candidate changed its one shared `+20` float constant at BTL file
 `0x1C6ACC` to `+16`; this matched rows with relationship text but was wrong for
 rows without it. The reason is visible in both preserved homologs. NA2 leaves

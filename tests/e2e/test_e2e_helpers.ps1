@@ -183,13 +183,16 @@ param(
 '@
     )
     $replayRecording = Join-Path $replayRecordings 'recording.p2m2'
+    $replayPool = Join-Path $replayRepository 'command-pool'
     [IO.File]::WriteAllText($replayRecording, 'recording')
-    Invoke-VisualRegressionReplay `
+    Invoke-VisualRegressionPooledReplay `
         -Repository $replayRepository `
         -SharedRecordingRoot $replayRecordings `
         -RecordingPath $replayRecording `
         -Game 'e2e_test' `
-        -CaptureRoot $replayCapture
+        -CaptureRoot $replayCapture `
+        -ConcurrencyPoolRoot $replayPool `
+        -ConcurrencyLimit 16
     $replayInvocation = Get-Content `
         -Raw `
         -LiteralPath (Join-Path $replayRepository 'launcher.json') |
@@ -199,9 +202,10 @@ param(
             $replayInvocation.snapshots -and
             $replayInvocation.capture_mode -ceq 'screenshots' -and
             (Test-Path -LiteralPath (Join-Path $replayCapture 'screenshots\0001.png')) -and
+            (Test-Path -LiteralPath (Join-Path $replayPool 'slot-01.lock')) -and
             -not (Test-Path -LiteralPath (Join-Path $replayCapture 'sstates'))
         ) `
-        -Message 'E2E replay did not request screenshot-only PCSX2 capture.'
+        -Message 'E2E replay did not use the command pool or screenshot-only PCSX2 capture.'
 
     $generatedDiscoveryRoot = Join-Path $testRoot 'generated-discovery\e2e'
     $generatedSuiteRoot = Join-Path $generatedDiscoveryRoot 'suites'
@@ -285,16 +289,20 @@ param(
     $generatedRunRepository = Join-Path $testRoot 'generated-run-repository'
     $generatedRunRoot = Join-Path $generatedRunRepository 'e2e'
     $generatedRunScripts = Join-Path $generatedRunRoot 'scripts'
-    $generatedRunCapture = Join-Path $generatedRunRoot 'captures\movesets\grid-screenshots'
+    $generatedRunCapture = Join-Path $generatedRunRoot 'captures\movesets\screenshots'
     $generatedRunResources = Join-Path $generatedRunRepository 'resources'
     $generatedRunRecordings = Join-Path $generatedRunRepository 'pcsx2_files\input_recordings'
     $generatedRunLibrary = Join-Path $generatedRunRepository 'scripts\lib'
+    $generatedRunComparatorRoot = Join-Path `
+        $generatedRunRepository `
+        'scripts\research\localization'
     [void](New-Item -ItemType Directory -Path `
         $generatedRunScripts, `
         $generatedRunCapture, `
         $generatedRunResources, `
         (Join-Path $generatedRunRecordings 'movesets'), `
-        $generatedRunLibrary `
+        $generatedRunLibrary, `
+        $generatedRunComparatorRoot `
         -Force)
     foreach ($file in @('suite.ps1', 'run.ps1', 'config.ps1')) {
         Copy-Item `
@@ -332,6 +340,41 @@ function Get-Na2Paths {
 "@
     )
     [IO.File]::WriteAllText(
+        (Join-Path $generatedRunComparatorRoot 'compare_font_capture_sets.ps1'),
+        @'
+param(
+    [string]$PairedGridDirectory,
+    [string]$OutputDirectory,
+    [string]$Kind
+)
+foreach ($reference in Get-ChildItem -LiteralPath $PairedGridDirectory -Filter '*-a-reference.png' -File) {
+    $caseName = $reference.Name.Substring(
+        0,
+        $reference.Name.Length - '-a-reference.png'.Length
+    )
+    $current = Join-Path $PairedGridDirectory ($caseName + '-b-current.png')
+    if (-not (Test-Path -LiteralPath $current -PathType Leaf)) {
+        continue
+    }
+    $directories = if ([string]::IsNullOrWhiteSpace($Kind)) {
+        @('pairs', 'blends', 'diffs')
+    }
+    else {
+        @($Kind.ToLowerInvariant() + 's')
+    }
+    foreach ($directory in $directories) {
+        $targetRoot = Join-Path $OutputDirectory $directory
+        [void](New-Item -ItemType Directory -Path $targetRoot -Force)
+        Copy-Item `
+            -LiteralPath $reference.FullName `
+            -Destination (Join-Path $targetRoot ($caseName + '.png')) `
+            -Force
+    }
+}
+exit 0
+'@
+    )
+    [IO.File]::WriteAllText(
         (Join-Path $generatedRunScripts 'variant.ps1'),
         @'
 param(
@@ -339,16 +382,16 @@ param(
     [string]$Transaction,
     [string[]]$Suite,
     [string]$MovesetRange,
-    [string]$MovesetConcurrencyPoolRoot,
-    [int]$MovesetThrottleLimit
+    [string]$ConcurrencyPoolRoot,
+    [int]$ConcurrencyLimit
 )
 [IO.File]::WriteAllText(
-    (Join-Path $PSScriptRoot "moveset-pool-$Variant.txt"),
-    $MovesetConcurrencyPoolRoot
+    (Join-Path $PSScriptRoot "command-pool-$Variant.txt"),
+    $ConcurrencyPoolRoot
 )
 [IO.File]::WriteAllText(
-    (Join-Path $PSScriptRoot "moveset-throttle-$Variant.txt"),
-    [string]$MovesetThrottleLimit
+    (Join-Path $PSScriptRoot "command-limit-$Variant.txt"),
+    [string]$ConcurrencyLimit
 )
 if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
     [IO.File]::WriteAllText(
@@ -360,7 +403,7 @@ foreach ($suiteName in $Suite) {
     $suiteRoot = Join-Path `
         (Join-Path (Join-Path (Join-Path $Transaction 'jobs') $Variant) 'suites') `
         $suiteName.Replace('/', [IO.Path]::DirectorySeparatorChar)
-    $grids = Join-Path $suiteRoot 'capture\grid-screenshots'
+    $grids = Join-Path $suiteRoot 'capture\screenshots'
     [void](New-Item -ItemType Directory -Path $grids -Force)
     $gridName = '002-naruto-base-b-current.png'
     $gridContent = if ([string]::IsNullOrWhiteSpace($MovesetRange)) {
@@ -398,11 +441,32 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
         -Condition (
             [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-a-reference.png')) -ceq 'accepted reference grid' -and
             [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-b-current.png')) -ceq 'identical current grid' -and
-            [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'moveset-pool-normal.txt')) -ceq
-                [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'moveset-pool-shifted.txt')) -and
-            -not [string]::IsNullOrWhiteSpace([IO.File]::ReadAllText((Join-Path $generatedRunScripts 'moveset-pool-normal.txt'))) -and
-            [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'moveset-throttle-normal.txt')) -ceq '16' -and
-            [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'moveset-throttle-shifted.txt')) -ceq '16' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-pool-normal.txt')) -ceq
+                [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-pool-shifted.txt')) -and
+            -not [string]::IsNullOrWhiteSpace([IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-pool-normal.txt'))) -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-limit-normal.txt')) -ceq '16' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-limit-shifted.txt')) -ceq '16' -and
+            (Test-Path -LiteralPath (Join-Path `
+                $generatedRunRoot `
+                'captures\movesets\pairs\002-naruto-base.png')) -and
+            (Test-Path -LiteralPath (Join-Path `
+                $generatedRunRoot `
+                'captures\movesets\blends\002-naruto-base.png')) -and
+            (Test-Path -LiteralPath (Join-Path `
+                $generatedRunRoot `
+                'captures\movesets\diffs\002-naruto-base.png')) -and
+            (Test-Path -LiteralPath (Join-Path `
+                $generatedRunRoot `
+                'captures\movesets\all\002-naruto-base-a-reference.png')) -and
+            (Test-Path -LiteralPath (Join-Path `
+                $generatedRunRoot `
+                'captures\movesets\all\002-naruto-base_c_blend.png')) -and
+            (Test-Path -LiteralPath (Join-Path `
+                $generatedRunRoot `
+                'captures\movesets\all\002-naruto-base_d_diff.png')) -and
+            -not (Test-Path -LiteralPath (Join-Path `
+                $generatedRunRoot `
+                'captures\movesets\all\002-naruto-base_e_pair.png')) -and
             -not (Test-Path -LiteralPath (
                 Join-Path $generatedRunRoot 'captures\movesets\stale.txt'
             ))
@@ -439,7 +503,7 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
     $generatedReferenceRepository = Join-Path $generatedRunRepository 'captured-reference'
     $generatedReferenceCapture = Join-Path `
         $generatedReferenceRepository `
-        'movesets\grid-screenshots'
+        'movesets\screenshots'
     [void](New-Item -ItemType Directory -Path $generatedReferenceCapture -Force)
     [IO.File]::WriteAllText(
         (Join-Path $generatedReferenceCapture '002-naruto-base-a-reference.png'),
@@ -473,7 +537,7 @@ param(
     [string]$ConcurrencyPoolRoot,
     [string]$ProjectRoot
 )
-$grids = Join-Path $OutputRoot 'grid-screenshots'
+$grids = Join-Path $OutputRoot 'screenshots'
 [void](New-Item -ItemType Directory -Path $grids -Force)
 [IO.File]::WriteAllText(
     (Join-Path $grids '002-naruto-base-a-reference.png'),
@@ -487,12 +551,12 @@ $grids = Join-Path $OutputRoot 'grid-screenshots'
         -Game 'nun5' `
         -CaptureOutputRoot $coordinatedReferenceCapture `
         -MovesetRange '2' `
-        -MovesetThrottleLimit 5 | Out-Null
+        -ConcurrencyLimit 5 | Out-Null
     Assert-E2eHelperTest `
         -Condition (
             [IO.File]::ReadAllText((Join-Path `
                 $coordinatedReferenceCapture `
-                'grid-screenshots\002-naruto-base-a-reference.png')) -ceq 'nun5/reference/5/2'
+                'screenshots\002-naruto-base-a-reference.png')) -ceq 'nun5/reference/5/2'
         ) `
         -Message 'Generated reference capture did not delegate to the moveset suite runner.'
 
@@ -749,101 +813,48 @@ $grids = Join-Path $OutputRoot 'grid-screenshots'
         -Message 'A non-boolean build-variant ignored field was accepted.'
 
     $layoutRoot = Join-Path $testRoot ('capture-layout-' + ('x' * 128))
-    $layoutReference = Join-Path $layoutRoot 'reference'
-    $layoutCurrent = Join-Path $layoutRoot 'current'
-    $layoutReport = Join-Path $layoutRoot 'report'
     $layoutPublish = Join-Path $layoutRoot 'publish'
     foreach ($directory in @(
-        $layoutReference,
-        $layoutCurrent,
-        (Join-Path $layoutReport 'base-pairs'),
-        (Join-Path $layoutReport 'base-blends'),
-        (Join-Path $layoutReport 'base-diffs'),
-        (Join-Path $layoutReport 'grid-screenshots'),
-        (Join-Path $layoutReport 'grid-pairs'),
-        (Join-Path $layoutReport 'grid-blends'),
-        (Join-Path $layoutReport 'grid-diffs')
+        (Join-Path $layoutPublish 'screenshots'),
+        (Join-Path $layoutPublish 'pairs'),
+        (Join-Path $layoutPublish 'blends'),
+        (Join-Path $layoutPublish 'diffs')
     )) {
         [void](New-Item -ItemType Directory -Path $directory -Force)
     }
-    [IO.File]::WriteAllText((Join-Path $layoutReference '0001.png'), 'reference')
-    [IO.File]::WriteAllText((Join-Path $layoutCurrent '0001.png'), 'current')
-    [IO.File]::WriteAllText((Join-Path $layoutReport 'base-pairs\0001.png'), 'pair')
-    [IO.File]::WriteAllText((Join-Path $layoutReport 'base-blends\0001.png'), 'blend')
-    [IO.File]::WriteAllText((Join-Path $layoutReport 'base-diffs\0001.png'), 'diff')
     [IO.File]::WriteAllText(
-        (Join-Path $layoutReport 'grid-screenshots\page_01_a_reference.png'),
+        (Join-Path $layoutPublish 'screenshots\page_01_a_reference.png'),
         'reference grid'
     )
     [IO.File]::WriteAllText(
-        (Join-Path $layoutReport 'grid-screenshots\page_01_b_current.png'),
+        (Join-Path $layoutPublish 'screenshots\page_01_b_current.png'),
         'current grid'
     )
-    [IO.File]::WriteAllText((Join-Path $layoutReport 'grid-pairs\page_01.png'), 'pair grid')
+    [IO.File]::WriteAllText((Join-Path $layoutPublish 'pairs\page_01.png'), 'pair grid')
     [IO.File]::WriteAllText(
-        (Join-Path $layoutReport 'grid-blends\page_01.png'),
+        (Join-Path $layoutPublish 'blends\page_01.png'),
         'blend grid'
     )
     [IO.File]::WriteAllText(
-        (Join-Path $layoutReport 'grid-diffs\page_01.png'),
+        (Join-Path $layoutPublish 'diffs\page_01.png'),
         'diff grid'
     )
-    New-VisualRegressionScreenshotStage `
-        -ReferenceDirectory $layoutReference `
-        -CurrentDirectory $layoutCurrent `
-        -OutputDirectory (Join-Path $layoutPublish 'base-screenshots')
-    foreach ($comparison in @(
-        [pscustomobject]@{ Kind = 'Pair'; Directory = 'base-pairs' },
-        [pscustomobject]@{ Kind = 'Blend'; Directory = 'base-blends' },
-        [pscustomobject]@{ Kind = 'Diff'; Directory = 'base-diffs' }
-    )) {
-        New-VisualRegressionComparisonStage `
-            -ReportDirectory $layoutReport `
-            -OutputDirectory (Join-Path $layoutPublish $comparison.Directory) `
-            -Kind $comparison.Kind
-    }
     New-VisualRegressionAggregateLinkStage `
         -Source @(
             [pscustomobject]@{
-                Directory = (Join-Path $layoutPublish 'base-screenshots')
-                Suffix = ''
-            },
-            [pscustomobject]@{ Directory = (Join-Path $layoutPublish 'base-blends'); Suffix = '' },
-            [pscustomobject]@{ Directory = (Join-Path $layoutPublish 'base-diffs'); Suffix = '' }
-        ) `
-        -OutputDirectory (Join-Path $layoutPublish 'base-all')
-    New-VisualRegressionGridStage `
-        -ReportDirectory $layoutReport `
-        -GridDirectory 'grid-screenshots' `
-        -OutputDirectory (Join-Path $layoutPublish 'grid-screenshots')
-    New-VisualRegressionGridStage `
-        -ReportDirectory $layoutReport `
-        -GridDirectory 'grid-pairs' `
-        -OutputDirectory (Join-Path $layoutPublish 'grid-pairs')
-    New-VisualRegressionGridStage `
-        -ReportDirectory $layoutReport `
-        -GridDirectory 'grid-blends' `
-        -OutputDirectory (Join-Path $layoutPublish 'grid-blends')
-    New-VisualRegressionGridStage `
-        -ReportDirectory $layoutReport `
-        -GridDirectory 'grid-diffs' `
-        -OutputDirectory (Join-Path $layoutPublish 'grid-diffs')
-    New-VisualRegressionAggregateLinkStage `
-        -Source @(
-            [pscustomobject]@{
-                Directory = (Join-Path $layoutPublish 'grid-screenshots')
+                Directory = (Join-Path $layoutPublish 'screenshots')
                 Suffix = ''
             },
             [pscustomobject]@{
-                Directory = (Join-Path $layoutPublish 'grid-blends')
+                Directory = (Join-Path $layoutPublish 'blends')
                 Suffix = 'c_blend'
             },
             [pscustomobject]@{
-                Directory = (Join-Path $layoutPublish 'grid-diffs')
+                Directory = (Join-Path $layoutPublish 'diffs')
                 Suffix = 'd_diff'
             }
         ) `
-        -OutputDirectory (Join-Path $layoutPublish 'grid-all')
+        -OutputDirectory (Join-Path $layoutPublish 'all')
     $layoutFiles = @(
         Get-ChildItem -LiteralPath $layoutPublish -Recurse -File |
             ForEach-Object {
@@ -854,24 +865,15 @@ $grids = Join-Path $OutputRoot 'grid-screenshots'
     Assert-E2eHelperTest `
         -Condition (
             ($layoutFiles -join ',') -ceq (
-                'base-all/001_a_reference.png,' +
-                'base-all/001_b_current.png,' +
-                'base-all/001_c_blend.png,' +
-                'base-all/001_d_diff.png,' +
-                'base-blends/001_c_blend.png,' +
-                'base-diffs/001_d_diff.png,' +
-                'base-pairs/001_e_pair.png,' +
-                'base-screenshots/001_a_reference.png,' +
-                'base-screenshots/001_b_current.png,' +
-                'grid-all/page_01_a_reference.png,' +
-                'grid-all/page_01_b_current.png,' +
-                'grid-all/page_01_c_blend.png,' +
-                'grid-all/page_01_d_diff.png,' +
-                'grid-blends/page_01.png,' +
-                'grid-diffs/page_01.png,' +
-                'grid-pairs/page_01.png,' +
-                'grid-screenshots/page_01_a_reference.png,' +
-                'grid-screenshots/page_01_b_current.png'
+                'all/page_01_a_reference.png,' +
+                'all/page_01_b_current.png,' +
+                'all/page_01_c_blend.png,' +
+                'all/page_01_d_diff.png,' +
+                'blends/page_01.png,' +
+                'diffs/page_01.png,' +
+                'pairs/page_01.png,' +
+                'screenshots/page_01_a_reference.png,' +
+                'screenshots/page_01_b_current.png'
             )
         ) `
         -Message (
@@ -879,30 +881,26 @@ $grids = Join-Path $OutputRoot 'grid-screenshots'
             ($layoutFiles -join ',')
         )
     [IO.File]::WriteAllText(
-        (Join-Path $layoutPublish 'base-blends\001_c_blend.png'),
+        (Join-Path $layoutPublish 'blends\page_01.png'),
         'updated blend'
     )
     Assert-E2eHelperTest `
         -Condition (
             [IO.File]::ReadAllText(
-                (Join-Path $layoutPublish 'base-all\001_c_blend.png')
+                (Join-Path $layoutPublish 'all\page_01_c_blend.png')
             ) -ceq 'updated blend'
         ) `
         -Message 'The all view did not reuse its canonical blend through a hardlink.'
 
     $aggregateContext = [pscustomobject]@{
         SuiteRelativePath = 'capture-layout'
+        Generated = $false
         Capture = [pscustomobject]@{
-            Screenshots = Join-Path $layoutPublish 'base-screenshots'
-            Pairs = Join-Path $layoutPublish 'base-pairs'
-            Blends = Join-Path $layoutPublish 'base-blends'
-            Diffs = Join-Path $layoutPublish 'base-diffs'
-            All = Join-Path $layoutPublish 'base-all'
-            ScreenshotGrids = Join-Path $layoutPublish 'grid-screenshots'
-            PairGrids = Join-Path $layoutPublish 'grid-pairs'
-            BlendGrids = Join-Path $layoutPublish 'grid-blends'
-            DiffGrids = Join-Path $layoutPublish 'grid-diffs'
-            AllGrids = Join-Path $layoutPublish 'grid-all'
+            ScreenshotGrids = Join-Path $layoutPublish 'screenshots'
+            PairGrids = Join-Path $layoutPublish 'pairs'
+            BlendGrids = Join-Path $layoutPublish 'blends'
+            DiffGrids = Join-Path $layoutPublish 'diffs'
+            AllGrids = Join-Path $layoutPublish 'all'
         }
     }
     Publish-VisualRegressionAggregateViews `
@@ -911,21 +909,18 @@ $grids = Join-Path $OutputRoot 'grid-screenshots'
     Assert-E2eHelperTest `
         -Condition (
             -not (Test-Path -LiteralPath (
-                Join-Path $layoutPublish 'base-all\001_e_pair.png'
-            )) -and
-            -not (Test-Path -LiteralPath (
-                Join-Path $layoutPublish 'grid-all\page_01_e_pair.png'
+                Join-Path $layoutPublish 'all\page_01_e_pair.png'
             ))
         ) `
         -Message 'Aggregate publication included a pair view.'
     [IO.File]::WriteAllText(
-        (Join-Path $layoutPublish 'grid-diffs\page_01.png'),
+        (Join-Path $layoutPublish 'diffs\page_01.png'),
         'updated diff grid'
     )
     Assert-E2eHelperTest `
         -Condition (
             [IO.File]::ReadAllText(
-                (Join-Path $layoutPublish 'grid-all\page_01_d_diff.png')
+                (Join-Path $layoutPublish 'all\page_01_d_diff.png')
             ) -ceq 'updated diff grid'
         ) `
         -Message 'Aggregate publication did not retain hardlinks to canonical grid pages.'
@@ -1186,8 +1181,8 @@ $grids = Join-Path $OutputRoot 'grid-screenshots'
         ) `
         -Message 'Second same-name capture directory was not published.'
 
-    $screenshotDestination = Join-Path $testRoot 'published\screenshots\base-screenshots'
-    $screenshotSource = Join-Path $testRoot 'sources\screenshots\base-screenshots'
+    $screenshotDestination = Join-Path $testRoot 'published\screenshots\screenshots'
+    $screenshotSource = Join-Path $testRoot 'sources\screenshots\screenshots'
     [void](New-Item -ItemType Directory -Path $screenshotDestination, $screenshotSource -Force)
     [IO.File]::WriteAllText((Join-Path $screenshotDestination '0001.png'), 'old')
     [IO.File]::WriteAllText((Join-Path $screenshotDestination 'stale.png'), 'stale')
@@ -1203,8 +1198,8 @@ $grids = Join-Path $OutputRoot 'grid-screenshots'
         ) `
         -Message 'Screenshots were not synchronized without moving their staged directory.'
 
-    $lockedDestination = Join-Path $testRoot 'published\locked\base-screenshots'
-    $lockedSource = Join-Path $testRoot 'sources\locked\base-screenshots'
+    $lockedDestination = Join-Path $testRoot 'published\locked\screenshots'
+    $lockedSource = Join-Path $testRoot 'sources\locked\screenshots'
     $lockedPath = Join-Path $lockedDestination '0025.png'
     $lockReady = Join-Path $testRoot 'locked-file-ready'
     [void](New-Item -ItemType Directory -Path $lockedDestination, $lockedSource -Force)
@@ -1363,14 +1358,19 @@ param(
     [string]$CapturedRoot,
     [string]$CaptureRoot,
     [string]$MovesetRange,
-    [string]$MovesetConcurrencyPoolRoot
+    [string]$ConcurrencyPoolRoot,
+    [int]$ConcurrencyLimit
 )
 $sync = Join-Path $PSScriptRoot 'sync'
 [void](New-Item -ItemType Directory -Path $sync -Force)
 if (-not [string]::IsNullOrWhiteSpace($CaptureOutputRoot)) {
     [IO.File]::WriteAllText(
         (Join-Path $PSScriptRoot 'reference-pool.txt'),
-        $MovesetConcurrencyPoolRoot
+        $ConcurrencyPoolRoot
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $PSScriptRoot 'reference-limit.txt'),
+        [string]$ConcurrencyLimit
     )
     [IO.File]::WriteAllText((Join-Path $sync 'reference-started'), '')
     $deadline = [DateTime]::UtcNow.AddSeconds(5)
@@ -1417,8 +1417,8 @@ param(
     [switch]$Shifted,
     [object[]]$SupervisedJob,
     [string]$MovesetRange,
-    [string]$MovesetConcurrencyPoolRoot,
-    [int]$MovesetThrottleLimit
+    [string]$ConcurrencyPoolRoot,
+    [int]$ConcurrencyLimit
 )
 if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'fail-run')) {
     throw 'synthetic run failure'
@@ -1426,11 +1426,11 @@ if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'fail-run')) {
 $suites = [string[]]@($Suite)
 [IO.File]::WriteAllText(
     (Join-Path $PSScriptRoot 'run-pool.txt'),
-    $MovesetConcurrencyPoolRoot
+    $ConcurrencyPoolRoot
 )
 [IO.File]::WriteAllText(
     (Join-Path $PSScriptRoot 'run-throttle.txt'),
-    [string]$MovesetThrottleLimit
+    [string]$ConcurrencyLimit
 )
 $hasReferenceSuite = $suites -ccontains 'test/with_reference'
 if ($hasReferenceSuite) {
@@ -1484,10 +1484,10 @@ foreach ($suiteName in $suites) {
         -Message 'Suite creation did not produce one flat .p2m2 definition without ignores.'
     $firstCaptureRoot = Join-Path $fakeRepository 'e2e\captures\test\no_reference'
     [void](New-Item -ItemType Directory -Path (
-        Join-Path $firstCaptureRoot 'base-screenshots'
+        Join-Path $firstCaptureRoot 'screenshots'
     ) -Force)
     [IO.File]::WriteAllText(
-        (Join-Path $firstCaptureRoot 'base-screenshots\001_b_current.png'),
+        (Join-Path $firstCaptureRoot 'screenshots\001_b_current.png'),
         'stale capture data'
     )
     [IO.File]::WriteAllText($noReferenceRecording, 'second')
@@ -1500,7 +1500,7 @@ foreach ($suiteName in $suites) {
             (Test-Path -LiteralPath $firstCaptureRoot -PathType Container) -and
             [IO.File]::ReadAllText((Join-Path $firstCaptureRoot 'current.txt')) -ceq 'current' -and
             -not (Test-Path -LiteralPath (
-                Join-Path $firstCaptureRoot 'base-screenshots\001_b_current.png'
+                Join-Path $firstCaptureRoot 'screenshots\001_b_current.png'
             ))
         ) `
         -Message 'Existing suite definition or capture history was not completely replaced.'
@@ -1518,6 +1518,17 @@ foreach ($suiteName in $suites) {
             $newSuiteCalls[4] -ceq 'reference-publish suite=test/with_reference'
         ) `
         -Message 'Suite creation did not overlap reference capture with the mandatory run before publication.'
+    Assert-E2eHelperTest `
+        -Condition (
+            [IO.File]::ReadAllText((Join-Path $fakeScripts 'reference-pool.txt')) -ceq
+                [IO.File]::ReadAllText((Join-Path $fakeScripts 'run-pool.txt')) -and
+            -not [string]::IsNullOrWhiteSpace(
+                [IO.File]::ReadAllText((Join-Path $fakeScripts 'run-pool.txt'))
+            ) -and
+            [IO.File]::ReadAllText((Join-Path $fakeScripts 'reference-limit.txt')) -ceq '16' -and
+            [IO.File]::ReadAllText((Join-Path $fakeScripts 'run-throttle.txt')) -ceq '16'
+        ) `
+        -Message 'Suite creation did not share one 16-slot replay pool across reference and current work.'
     $suiteNames = @(
         Get-VisualRegressionSuiteNames `
             -SuiteRepository (Join-Path $fakeRepository 'e2e\suites')
@@ -1675,7 +1686,7 @@ foreach ($suiteName in $suites) {
     )
     [IO.File]::WriteAllText(
         $fakeCaptureIgnore,
-        "**/base-all/`n**/grid-all/`n"
+        "**/all/`n"
     )
     [IO.File]::WriteAllText((Join-Path $orphanCapture 'stale.txt'), 'orphan history')
     $orphanSuite = Join-Path $fakeRepository 'e2e\suites\orphan.p2m2'
@@ -1708,7 +1719,7 @@ foreach ($suiteName in $suites) {
                 ".gitattributes text eol=lf`n.gitignore text eol=lf`n"
             ) -and
             [IO.File]::ReadAllText($fakeCaptureIgnore) -ceq (
-                "**/base-all/`n**/grid-all/`n"
+                "**/all/`n"
             )
         ) `
         -Message 'Bulk suite creation did not completely rewrite public suites and histories while preserving capture Git metadata.'
@@ -1736,7 +1747,7 @@ foreach ($suiteName in $suites) {
                 ".gitattributes text eol=lf`n.gitignore text eol=lf`n"
             ) -and
             [IO.File]::ReadAllText($fakeCaptureIgnore) -ceq (
-                "**/base-all/`n**/grid-all/`n"
+                "**/all/`n"
             )
         ) `
         -Message 'Failed bulk suite creation did not restore the complete prior definition and capture trees.'
@@ -1760,7 +1771,7 @@ foreach ($suiteName in $suites) {
                 ".gitattributes text eol=lf`n.gitignore text eol=lf`n"
             ) -and
             [IO.File]::ReadAllText($fakeCaptureIgnore) -ceq (
-                "**/base-all/`n**/grid-all/`n"
+                "**/all/`n"
             )
         ) `
         -Message 'Bulk suite deletion did not remove all histories idempotently or preserve capture Git metadata.'

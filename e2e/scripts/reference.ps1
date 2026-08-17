@@ -11,9 +11,9 @@ param(
     [Parameter(Mandatory, ParameterSetName = 'Publish')]
     [string]$CaptureRoot,
     [string]$MovesetRange,
-    [string]$MovesetConcurrencyPoolRoot,
+    [string]$ConcurrencyPoolRoot,
     [ValidateRange(1, 64)]
-    [int]$MovesetThrottleLimit = 16
+    [int]$ConcurrencyLimit = 16
 )
 
 $ErrorActionPreference = 'Stop'
@@ -39,8 +39,8 @@ if ($context.Generated) {
             Game = $Game
             Tier = 'reference'
             OutputRoot = $CaptureOutputRoot
-            ThrottleLimit = $MovesetThrottleLimit
-            ConcurrencyPoolRoot = $MovesetConcurrencyPoolRoot
+            ThrottleLimit = $ConcurrencyLimit
+            ConcurrencyPoolRoot = $ConcurrencyPoolRoot
             ProjectRoot = $context.Repository
         }
         if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
@@ -70,8 +70,15 @@ if ($context.Generated) {
                 Game = $Game
                 Tier = 'reference'
                 OutputRoot = $generatedRuntimeCapture
-                ThrottleLimit = $MovesetThrottleLimit
-                ConcurrencyPoolRoot = $MovesetConcurrencyPoolRoot
+                ThrottleLimit = $ConcurrencyLimit
+                ConcurrencyPoolRoot = $(
+                    if ([string]::IsNullOrWhiteSpace($ConcurrencyPoolRoot)) {
+                        Join-Path $generatedTransaction 'concurrency'
+                    }
+                    else {
+                        $ConcurrencyPoolRoot
+                    }
+                )
                 ProjectRoot = $context.Repository
             }
             if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
@@ -82,19 +89,23 @@ if ($context.Generated) {
         $generatedPublishRoot = Join-Path `
             (Join-Path $generatedTransaction 'publish') `
             $context.SuiteRelativePath
-        New-VisualRegressionGeneratedGridStage `
+        New-VisualRegressionGeneratedArtifactStage `
             -ExistingDirectory $context.Capture.ScreenshotGrids `
             -CapturedDirectory (Join-Path `
                 $generatedRuntimeCapture `
                 $script:E2eScreenshotGridDirectory) `
-            -OutputDirectory (Join-Path `
-                $generatedPublishRoot `
-                $script:E2eScreenshotGridDirectory) `
+            -OutputRoot $generatedPublishRoot `
+            -Comparator $context.Comparator `
             -CapturedTier Reference `
             -PreserveCapturedTier:(-not [string]::IsNullOrWhiteSpace($MovesetRange))
         Publish-VisualRegressionTransaction `
             -Replacements ([ordered]@{ ($context.CaptureRoot) = $generatedPublishRoot }) `
-            -TransactionRoot $generatedTransaction
+            -TransactionRoot $generatedTransaction `
+            -AfterPublish {
+                Publish-VisualRegressionAggregateViews `
+                    -Context @($context) `
+                    -TransactionRoot $generatedTransaction
+            }
         Write-Host 'Generated reference grids were published atomically.' -ForegroundColor Green
     }
     finally {
@@ -111,12 +122,19 @@ $paths = Get-Na2Paths
 $initializeCapture = -not $captureRootExists -or $captureRootEmpty
 
 if ($PSCmdlet.ParameterSetName -ceq 'Capture') {
-    Invoke-VisualRegressionReplay `
+    if ([string]::IsNullOrWhiteSpace($ConcurrencyPoolRoot)) {
+        $ConcurrencyPoolRoot = Join-Path `
+            ([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($CaptureOutputRoot))) `
+            'concurrency'
+    }
+    Invoke-VisualRegressionPooledReplay `
         -Repository $context.Repository `
         -SharedRecordingRoot $paths.pcsx2_input_recordings `
         -RecordingPath $recordingPath `
         -Game $Game `
-        -CaptureRoot $CaptureOutputRoot
+        -CaptureRoot $CaptureOutputRoot `
+        -ConcurrencyPoolRoot $ConcurrencyPoolRoot `
+        -ConcurrencyLimit $ConcurrencyLimit
     $capturedScreenshots = Join-Path $CaptureOutputRoot 'screenshots'
     if (@(Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File).Count -eq 0) {
         throw 'Reference replay completed without captured screenshots.'
@@ -136,110 +154,62 @@ else {
 }
 $suiteCaptureStage = Join-Path $transaction 'suite-captures'
 $stageRoot = Join-Path $transaction 'stages'
-$referenceStage = Join-Path $stageRoot $script:E2eCaptureTiers.Reference
-$currentStage = Join-Path $stageRoot $script:E2eCaptureTiers.Current
-$reportStage = Join-Path $stageRoot 'report'
-$screenshotStage = if ($initializeCapture) {
-    Join-Path $suiteCaptureStage $script:E2eScreenshotDirectory
-}
-else {
-    Join-Path $stageRoot $script:E2eScreenshotDirectory
-}
-$pairStage = Join-Path `
-    $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
-    $script:E2ePairDirectory
-$blendStage = Join-Path `
-    $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
-    $script:E2eBlendDirectory
-$diffStage = Join-Path `
-    $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
-    $script:E2eDiffDirectory
-$screenshotGridStage = Join-Path `
-    $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
-    $script:E2eScreenshotGridDirectory
-$pairGridStage = Join-Path `
-    $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
-    $script:E2ePairGridDirectory
-$blendGridStage = Join-Path `
-    $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
-    $script:E2eBlendGridDirectory
-$diffGridStage = Join-Path `
-    $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
-    $script:E2eDiffGridDirectory
-$scratch = Join-Path $transaction 'scratch'
+$publishRoot = if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }
+$screenshotGridStage = Join-Path $publishRoot $script:E2eScreenshotGridDirectory
+$pairGridStage = Join-Path $publishRoot $script:E2ePairGridDirectory
+$blendGridStage = Join-Path $publishRoot $script:E2eBlendGridDirectory
+$diffGridStage = Join-Path $publishRoot $script:E2eDiffGridDirectory
 
 try {
-    [void](New-Item -ItemType Directory -Path $referenceStage, $currentStage, $scratch -Force)
-    New-VisualRegressionTierStage `
-        -ScreenshotDirectory $context.Capture.Screenshots `
-        -StageDirectory $currentStage `
-        -Kind Current
     if ($PSCmdlet.ParameterSetName -ceq 'Replay') {
-        Invoke-VisualRegressionReplay `
+        if ([string]::IsNullOrWhiteSpace($ConcurrencyPoolRoot)) {
+            $ConcurrencyPoolRoot = Join-Path $transaction 'concurrency'
+        }
+        Invoke-VisualRegressionPooledReplay `
             -Repository $context.Repository `
             -SharedRecordingRoot $paths.pcsx2_input_recordings `
             -RecordingPath $recordingPath `
             -Game $Game `
-            -CaptureRoot $runtimeCapture
+            -CaptureRoot $runtimeCapture `
+            -ConcurrencyPoolRoot $ConcurrencyPoolRoot `
+            -ConcurrencyLimit $ConcurrencyLimit
     }
     $capturedScreenshots = Join-Path $runtimeCapture 'screenshots'
     if (@(Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File).Count -eq 0) {
         throw 'Reference replay completed without captured screenshots.'
     }
-    Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File |
-        Copy-Item -Destination $referenceStage
-    $hasCurrent = @(Get-NumericPngSlots -Directory $currentStage).Count -gt 0
-    if ($hasCurrent) {
-        New-VisualRegressionReport `
-            -Suite $Suite `
-            -ReferenceDirectory $referenceStage `
-            -CurrentDirectory $currentStage `
-            -OutputRoot $reportStage
-    }
-    New-VisualRegressionScreenshotStage `
-        -ReferenceDirectory $referenceStage `
-        -CurrentDirectory $currentStage `
-        -OutputDirectory $screenshotStage
-    New-VisualRegressionScreenshotGridStage `
+    New-VisualRegressionPagedScreenshotGridStage `
         -Suite $Suite `
-        -ScreenshotDirectory $screenshotStage `
-        -OutputDirectory $screenshotGridStage
+        -ExistingDirectory $context.Capture.ScreenshotGrids `
+        -CapturedScreenshotDirectory $capturedScreenshots `
+        -OutputDirectory $screenshotGridStage `
+        -CapturedTier Reference
+    $hasCurrent = @(
+        Get-ChildItem `
+            -LiteralPath $screenshotGridStage `
+            -Filter 'page_*_b_current.png' `
+            -File `
+            -ErrorAction SilentlyContinue
+    ).Count -gt 0
     if ($hasCurrent) {
-        foreach ($comparison in @(
-            [pscustomobject]@{ Kind = 'Pair'; Output = $pairStage },
-            [pscustomobject]@{ Kind = 'Blend'; Output = $blendStage },
-            [pscustomobject]@{ Kind = 'Diff'; Output = $diffStage }
-        )) {
-            New-VisualRegressionComparisonStage `
-                -ReportDirectory $reportStage `
-                -OutputDirectory $comparison.Output `
-                -Kind $comparison.Kind
+        foreach ($kind in @('Pair', 'Blend', 'Diff')) {
+            & $context.Comparator `
+                -PairedGridDirectory $screenshotGridStage `
+                -OutputDirectory $publishRoot `
+                -Kind $kind
+            if ($LASTEXITCODE -ne 0) {
+                throw "$kind grid generation failed with exit code $LASTEXITCODE."
+            }
         }
-        New-VisualRegressionGridStage `
-            -ReportDirectory $reportStage `
-            -GridDirectory $script:E2ePairGridDirectory `
-            -OutputDirectory $pairGridStage
-        New-VisualRegressionGridStage `
-            -ReportDirectory $reportStage `
-            -GridDirectory $script:E2eBlendGridDirectory `
-            -OutputDirectory $blendGridStage
-        New-VisualRegressionGridStage `
-            -ReportDirectory $reportStage `
-            -GridDirectory $script:E2eDiffGridDirectory `
-            -OutputDirectory $diffGridStage
     }
     $replacements = if ($initializeCapture) {
         [ordered]@{ ($context.CaptureRoot) = $suiteCaptureStage }
     }
     else {
         $existingReplacements = [ordered]@{
-            ($context.Capture.Screenshots) = $screenshotStage
             ($context.Capture.ScreenshotGrids) = $screenshotGridStage
         }
         if ($hasCurrent) {
-            $existingReplacements[$context.Capture.Pairs] = $pairStage
-            $existingReplacements[$context.Capture.Blends] = $blendStage
-            $existingReplacements[$context.Capture.Diffs] = $diffStage
             $existingReplacements[$context.Capture.PairGrids] = $pairGridStage
             $existingReplacements[$context.Capture.BlendGrids] = $blendGridStage
             $existingReplacements[$context.Capture.DiffGrids] = $diffGridStage
@@ -254,7 +224,7 @@ try {
                 -Context @($context) `
                 -TransactionRoot $transaction
         }
-    Write-Host 'Reference screenshots and comparison artifacts were published atomically.' -ForegroundColor Green
+    Write-Host 'Reference screenshot and comparison grids were published atomically.' -ForegroundColor Green
 }
 finally {
     Remove-VisualRegressionTransaction -Transaction $transaction -Root $context.Root

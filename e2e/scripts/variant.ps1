@@ -4,9 +4,9 @@ param(
     [Parameter(Mandatory)][string]$Transaction,
     [string[]]$Suite,
     [string]$MovesetRange,
-    [string]$MovesetConcurrencyPoolRoot,
+    [Parameter(Mandatory)][string]$ConcurrencyPoolRoot,
     [ValidateRange(1, 64)]
-    [int]$MovesetThrottleLimit = 16
+    [int]$ConcurrencyLimit = 16
 )
 
 $ErrorActionPreference = 'Stop'
@@ -113,7 +113,7 @@ function Test-E2eVariantSuiteComplete {
     }
     $artifactDirectory = Join-Path `
         (Join-Path $suiteOutput 'capture') `
-        $(if ($Context.Generated) { 'grid-screenshots' } else { 'screenshots' })
+        'screenshots'
     $actualCount = @(
         Get-ChildItem `
             -LiteralPath $artifactDirectory `
@@ -292,8 +292,8 @@ try {
                     $ReplayName,
                     $Generated,
                     $GeneratedScript,
-                    $MovesetThrottleLimit,
-                    $MovesetConcurrencyPoolRoot,
+                    $ConcurrencyLimit,
+                    $ConcurrencyPoolRoot,
                     $MovesetRange
                 )
                 $ErrorActionPreference = 'Stop'
@@ -303,24 +303,26 @@ try {
                         Game = $Game
                         Tier = 'current'
                         OutputRoot = $CaptureRoot
-                        ThrottleLimit = $MovesetThrottleLimit
-                        ConcurrencyPoolRoot = $MovesetConcurrencyPoolRoot
+                        ThrottleLimit = $ConcurrencyLimit
+                        ConcurrencyPoolRoot = $ConcurrencyPoolRoot
                         ProjectRoot = $Repository
                     }
                     if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
                         $generatedArguments.MovesetRange = $MovesetRange
                     }
                     & $GeneratedScript @generatedArguments
-                    $artifactDirectory = Join-Path $CaptureRoot 'grid-screenshots'
+                    $artifactDirectory = Join-Path $CaptureRoot 'screenshots'
                     $artifactLabel = 'grids'
                 }
                 else {
-                    Invoke-VisualRegressionReplay `
+                    Invoke-VisualRegressionPooledReplay `
                         -Repository $Repository `
                         -SharedRecordingRoot $SharedRecordingRoot `
                         -RecordingPath $RecordingPath `
                         -Game $Game `
-                        -CaptureRoot $CaptureRoot
+                        -CaptureRoot $CaptureRoot `
+                        -ConcurrencyPoolRoot $ConcurrencyPoolRoot `
+                        -ConcurrencyLimit $ConcurrencyLimit
                     $artifactDirectory = Join-Path $CaptureRoot 'screenshots'
                     $artifactLabel = 'screenshots'
                 }
@@ -358,8 +360,8 @@ try {
             [string]$buildVariant.build
         ), (Join-Path $suiteOutput 'capture'), $suiteOutput, $suiteName, $replayName, (
             [bool]$context.Generated
-        ), $context.GeneratedScript, $MovesetThrottleLimit, (
-            $MovesetConcurrencyPoolRoot
+        ), $context.GeneratedScript, $ConcurrencyLimit, (
+            $ConcurrencyPoolRoot
         ), $MovesetRange
         $replayJobs.Add($replayJob)
     }

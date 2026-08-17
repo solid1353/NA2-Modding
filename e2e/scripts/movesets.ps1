@@ -53,7 +53,7 @@ $runRoot = if ([IO.Path]::IsPathRooted($OutputRoot)) {
 else {
     [IO.Path]::GetFullPath((Join-Path $ProjectRoot $OutputRoot))
 }
-$gridOutputRoot = Join-Path $runRoot 'grid-screenshots'
+$gridOutputRoot = Join-Path $runRoot 'screenshots'
 $workingBase = Join-Path $runRoot '.work'
 [void](New-Item -ItemType Directory -Path $gridOutputRoot, $workingBase -Force)
 $ConcurrencyPoolRoot = if ([string]::IsNullOrWhiteSpace($ConcurrencyPoolRoot)) {
@@ -555,23 +555,15 @@ $gridJobScript = {
                                 -Target $screenshot.FullName)
                         }
                     }
-                    if ($slot -gt 32) {
+                    if ($slot -gt 6) {
                         throw (
                             "Moveset grid $($Context.Name) contains $slot " +
-                            'screenshots; one grid supports at most 32.'
+                            'screenshots; the fixed 3x2 grid supports at most 6.'
                         )
-                    }
-                    $gridColumns = if ($slot -le 2) {
-                        $slot
-                    }
-                    else {
-                        [Math]::Min(8, [int][Math]::Ceiling($slot / 2.0))
                     }
                     & $GridScript `
                         -ScreenshotDirectory $Context.GridInput `
-                        -OutputDirectory $Context.GridRoot `
-                        -GridColumns $gridColumns `
-                        -GridItemsPerPage $slot
+                        -OutputDirectory $Context.GridRoot
                     if ($LASTEXITCODE -ne 0) {
                         throw "Grid generation failed for $($Context.Name)."
                     }

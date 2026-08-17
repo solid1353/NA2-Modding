@@ -23,11 +23,10 @@ command behavior and artifact layout are in
   run`. Do not invent an additional validation campaign.
 - Unit tests and E2E are independently selectable. Choosing one does
   not authorize the other.
-- Do not add unit tests whose only purpose is rejecting a retired field,
-  interface, or migration input when the canonical schema already excludes it.
-  Verify removal during the refactor with searches, one-off scripts, or
-  temporary tests removed before completion. Retain tests only for supported
-  behavior that must continue working.
+- Retirement checks must never be included in the maintained unit-test suite.
+  Verify removals with searches, one-off scripts, or one-off tests removed
+  before completion. Unit tests cover only supported behavior that must
+  continue working.
 
 ## Repository defaults
 

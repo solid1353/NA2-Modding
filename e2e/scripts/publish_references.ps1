@@ -33,11 +33,10 @@ try {
             $capturedGridDirectory = Join-Path `
                 $taskCapturedRoot `
                 $script:E2eScreenshotGridDirectory
-            $outputGridDirectory = Join-Path `
-                (Join-Path `
-                    (Join-Path $transaction 'publish') `
-                    $context.SuiteRelativePath) `
-                $script:E2eScreenshotGridDirectory
+            $outputRoot = Join-Path `
+                (Join-Path $transaction 'publish') `
+                $context.SuiteRelativePath
+            $comparator = $context.Comparator
             $tasks.Add([pscustomobject]@{
                 Key = $prepareKey
                 Priority = 80
@@ -49,22 +48,25 @@ try {
                             $Script,
                             $ExistingDirectory,
                             $CapturedDirectory,
-                            $OutputDirectory,
+                            $OutputRoot,
+                            $Comparator,
                             $PreserveCapturedTier
                         )
                         $ErrorActionPreference = 'Stop'
                         . $Script
-                        New-VisualRegressionGeneratedGridStage `
+                        New-VisualRegressionGeneratedArtifactStage `
                             -ExistingDirectory $ExistingDirectory `
                             -CapturedDirectory $CapturedDirectory `
-                            -OutputDirectory $OutputDirectory `
+                            -OutputRoot $OutputRoot `
+                            -Comparator $Comparator `
                             -CapturedTier Reference `
                             -PreserveCapturedTier:$PreserveCapturedTier
                     } -ArgumentList (
                         $suiteScript,
                         $existingGridDirectory,
                         $capturedGridDirectory,
-                        $outputGridDirectory,
+                        $outputRoot,
+                        $comparator,
                         $PreserveGeneratedTier.IsPresent
                     )
                 }.GetNewClosure()
@@ -95,7 +97,7 @@ try {
                 )
             }.GetNewClosure()
         })
-        foreach ($action in @('ScreenshotGrid', 'Pair', 'Blend', 'Diff')) {
+        foreach ($action in @('Pair', 'Blend', 'Diff')) {
             $taskAction = $action
             $taskKey = "reference-artifact/$taskSuite/$($taskAction.ToLowerInvariant())"
             $tasks.Add([pscustomobject]@{
@@ -140,22 +142,10 @@ try {
             -Raw `
             -LiteralPath (Join-Path $suiteStage 'postprocess.json') |
             ConvertFrom-Json
-        $replacements[$context.Capture.Screenshots] = Join-Path `
-            $suitePublish `
-            $script:E2eScreenshotDirectory
         $replacements[$context.Capture.ScreenshotGrids] = Join-Path `
             $suitePublish `
             $script:E2eScreenshotGridDirectory
         if ($metadata.has_reference -and $metadata.has_current) {
-            $replacements[$context.Capture.Pairs] = Join-Path `
-                $suitePublish `
-                $script:E2ePairDirectory
-            $replacements[$context.Capture.Blends] = Join-Path `
-                $suitePublish `
-                $script:E2eBlendDirectory
-            $replacements[$context.Capture.Diffs] = Join-Path `
-                $suitePublish `
-                $script:E2eDiffDirectory
             $replacements[$context.Capture.PairGrids] = Join-Path `
                 $suitePublish `
                 $script:E2ePairGridDirectory
@@ -171,7 +161,7 @@ try {
         -Replacements $replacements `
         -TransactionRoot $transaction `
         -AfterPublish {
-            $aggregateContexts = @($contexts | Where-Object { -not $_.Generated })
+            $aggregateContexts = @($contexts)
             if ($aggregateContexts.Count -gt 0) {
                 Publish-VisualRegressionAggregateViews `
                     -Context ([object[]]$aggregateContexts) `

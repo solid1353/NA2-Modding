@@ -25,8 +25,8 @@ accept a range.
 
 `movesets` is a code-owned generated suite. It expands `resources/movesets.tsv`
 over the two fixed recordings in `pcsx2_files/input_recordings/movesets/` and
-publishes only flat contact sheets. It has no `.p2m2` definition under
-`e2e/suites/`.
+publishes flat screenshot, pair, blend, and diff contact sheets. It has no
+`.p2m2` definition under `e2e/suites/`.
 
 `-s` adds the shifted E2E Test build and replays the same suites against it.
 Every normal and shifted capture must match.
@@ -67,10 +67,12 @@ siblings immediately. NUN5 capture overlaps the normal pipeline and its
 artifact publication uses the same bounded scheduling across suites.
 
 Each moveset lane batch-resolves its Practice rows, replays all required cases
-concurrently, and creates each grid as soon as its captures finish. Normal,
-shifted, and reference work draw dynamically from one transaction-scoped
-16-process pool, so unfinished lanes immediately reuse capacity released by a
-lane that completes earlier.
+concurrently, and creates each grid as soon as its captures finish. Every PCSX2
+replay in one command—ordinary and generated suites, NUN5 and NA228, and normal,
+shifted, and reference work—draws dynamically from one transaction-scoped
+16-process pool. Unfinished lanes immediately reuse capacity released by work
+that completes earlier. Independent commands use independent pools; builds and
+image-processing tasks do not consume PCSX2 permits.
 
 Typed artifacts are generated once and reused when their grids and aggregate
 hardlink views are staged. Aggregate preparation runs concurrently per suite.
@@ -116,16 +118,11 @@ e2e/
 ├── suites/<suite>.p2m2
 ├── scripts/movesets.ps1           # generated movesets suite
 ├── captures/<suite>/              # nested Git repository
-│   ├── base-all/                  # ignored hardlink aggregate
-│   ├── base-screenshots/
-│   ├── base-blends/
-│   ├── base-diffs/
-│   ├── base-pairs/
-│   ├── grid-all/                  # ignored hardlink aggregate
-│   ├── grid-screenshots/
-│   ├── grid-blends/
-│   ├── grid-diffs/
-│   └── grid-pairs/
+│   ├── all/                       # ignored hardlink aggregate
+│   ├── screenshots/
+│   ├── blends/
+│   ├── diffs/
+│   └── pairs/
 └── .transactions/<kind>-<uuid>/   # resumable, ignored
     ├── owner.json
     ├── request.json
@@ -137,27 +134,31 @@ e2e/
     └── .attempts/
 ```
 
-The generated `captures/movesets/` layout contains only
-`grid-screenshots/`. Its flat filenames are
+The generated `captures/movesets/` layout uses `screenshots/`, `pairs/`,
+`blends/`, and `diffs/`, plus the ignored `all/`
+hardlink aggregate. Screenshot filenames are
 `NNN-character-base|specials|mode-<awakening-id>-a-reference.png` and the
-corresponding `-b-current.png`; the numeric prefix is the physical
+corresponding `-b-current.png`. Pair, blend, and diff folders use the same case
+name without the tier suffix. The numeric prefix is the physical
 `character_data.tsv` row.
 
 Existing `sstates/` directories are legacy capture history. Screenshot-only
 replays do not generate or update them.
 
-Every one-image-per-slot view uses the `base-` prefix, and every paged
-contact-sheet view uses `grid-`. The typed folders are canonical and tracked.
-`base-all/` and `grid-all/` are ignored, regenerated hardlink views over
-those canonical artifacts, so they consume no duplicate image storage. Pair
-views remain only in `base-pairs/` and `grid-pairs/`; both aggregate views
-exclude them to keep scrolling focused on the less repetitive variants. Within
-the base filenames, the full labels sort as `a_reference`, `b_current`,
-`c_blend`, `d_diff`, and `e_pair`.
+Only grids are retained. The typed `screenshots/`, `pairs/`, `blends/`, and
+`diffs/` folders are canonical and tracked. `all/` is an ignored regenerated
+hardlink view, so it consumes no duplicate image storage; it excludes pairs to
+keep scrolling focused on the less repetitive variants.
 
-`grid-screenshots/` builds reference and current screenshots as separate page
+Screenshot, blend, and diff grid pages use a fixed horizontal 3×2 layout. Their
+slots fill in ascending order; missing and unused slots remain black instead of
+shifting later images. Pair grids retain their existing layout and side-by-side
+reference/current cells. Pair, blend, and diff cells contain no embedded
+headers.
+
+`screenshots/` builds reference and current screenshots as separate page
 series named `page_<n>_a_reference.png` and `page_<n>_b_current.png`.
-`grid-all/` reuses those pages alongside `page_<n>_c_blend.png` and
+`all/` reuses those pages alongside `page_<n>_c_blend.png` and
 `page_<n>_d_diff.png`.
 
 Build provenance remains under `logs/na228/builds/` and output-specific

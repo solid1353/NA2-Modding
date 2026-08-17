@@ -22,21 +22,32 @@ tracked suite set so unintended changes elsewhere can surface.
 For suite `<suite>` and capture `<slot>`, accepted visual history is in the
 nested Git repository under `e2e/captures/<suite>/`:
 
-- `base-screenshots/<slot>_a_reference.png`: optional reference-game image.
-- `base-screenshots/<slot>_b_current.png`: accepted NA2 image.
-- `base-blends/<slot>_c_blend.png`: 50% reference/current blend.
-- `base-diffs/<slot>_d_diff.png`: amplified reference/current difference.
-- `base-pairs/<slot>_e_pair.png`: side-by-side reference/current image.
-- `grid-screenshots/`: separate `page_<n>_a_reference.png` and
+- `screenshots/`: separate `page_<n>_a_reference.png` and
   `page_<n>_b_current.png` grid series.
-- `grid-pairs/`: paged grids of side-by-side pairs.
-- `grid-blends/`: paged 50% blend grids.
-- `grid-diffs/`: paged amplified-difference grids.
-- `base-all/` and `grid-all/`: ignored regenerated hardlink aggregates that
-  intentionally exclude pairs.
+- `pairs/`: paged grids of side-by-side pairs.
+- `blends/`: paged 50% blend grids.
+- `diffs/`: paged amplified-difference grids.
+- `all/`: ignored regenerated hardlink aggregate that intentionally excludes
+  pairs.
+
+Screenshot, blend, and diff grids use six fixed cells in a horizontal 3×2
+layout, with missing slots left black. Pair grids retain their existing layout
+and side-by-side cells. Pair, blend, and diff cells contain no embedded headers.
 
 For text, inspect relevant images at sufficient zoom to judge glyph pixels,
 spacing, baselines, and alignment.
+
+## Selective diagnostic savestates
+
+If investigating one or more concrete E2E pictures requires savestates, rerun
+only their corresponding recording marker numbers through PCSX2 using
+`-input-recording-capture-mode savestates` and
+`-input-recording-capture-markers <markers>`.
+
+Write the diagnostic savestates only within the acting task's
+`work/<exact chat title>/` directory. Confirm each state's embedded screenshot
+corresponds to the requested picture. Never publish diagnostic savestates as
+E2E capture history. Delete them before completing the task.
 
 ## Run and review
 

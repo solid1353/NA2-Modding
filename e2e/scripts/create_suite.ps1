@@ -157,7 +157,8 @@ $definitionStageRoot = Join-Path $transaction 'suite-definitions'
 $definitionBackupRoot = Join-Path $transaction 'previous-suite-definitions'
 $captureStageRoot = Join-Path $transaction 'capture-history'
 $referenceCaptureRoot = Join-Path $transaction 'reference-captures'
-$movesetConcurrencyPoolRoot = Join-Path $transaction 'moveset-concurrency'
+$concurrencyPoolRoot = Join-Path $transaction 'concurrency'
+$concurrencyLimit = 16
 $referenceJobs = [Collections.Generic.List[object]]::new()
 $installed = [Collections.Generic.List[object]]::new()
 $allDefinitionsBackedUp = $false
@@ -194,9 +195,7 @@ function Test-E2eCreateRawCaptureComplete {
         [Parameter(Mandatory)][string]$CaptureRoot
     )
 
-    $artifactDirectory = Join-Path `
-        $CaptureRoot `
-        $(if ($Context.Generated) { 'grid-screenshots' } else { 'screenshots' })
+    $artifactDirectory = Join-Path $CaptureRoot 'screenshots'
     return @(
         Get-ChildItem `
             -LiteralPath $artifactDirectory `
@@ -212,12 +211,7 @@ function Test-E2eCreateRunStageComplete {
         $stagedContext = Get-VisualRegressionContext `
             -Suite $context.Suite `
             -CaptureRoot (Join-Path $captureStageRoot $context.SuiteRelativePath)
-        $artifactDirectory = if ($context.Generated) {
-            $stagedContext.Capture.ScreenshotGrids
-        }
-        else {
-            $stagedContext.Capture.Screenshots
-        }
+        $artifactDirectory = $stagedContext.Capture.ScreenshotGrids
         if (@(
             Get-ChildItem `
                 -LiteralPath $artifactDirectory `
@@ -307,7 +301,6 @@ try {
     }
 
     if (-not $NoReference.IsPresent) {
-        $movesetThrottleLimit = 16
         foreach ($entry in $installed) {
             $context = $entry.Context
             $referenceCapture = Join-Path $referenceCaptureRoot $context.SuiteRelativePath
@@ -326,7 +319,7 @@ try {
                     $CaptureOutputRoot,
                     $CompletePath,
                     $Generated,
-                    $ThrottleLimit,
+                    $ConcurrencyLimit,
                     $ConcurrencyPoolRoot,
                     $MovesetRange
                 )
@@ -335,10 +328,10 @@ try {
                     Suite = $Suite
                     Game = $Game
                     CaptureOutputRoot = $CaptureOutputRoot
+                    ConcurrencyLimit = $ConcurrencyLimit
+                    ConcurrencyPoolRoot = $ConcurrencyPoolRoot
                 }
                 if ($Generated) {
-                    $arguments.MovesetThrottleLimit = $ThrottleLimit
-                    $arguments.MovesetConcurrencyPoolRoot = $ConcurrencyPoolRoot
                     if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
                         $arguments.MovesetRange = $MovesetRange
                     }
@@ -361,7 +354,7 @@ try {
                 Join-Path $PSScriptRoot 'reference.ps1'
             ), $context.Suite, $referenceGame, $referenceCapture, $referenceComplete, (
                 [bool]$context.Generated
-            ), $movesetThrottleLimit, $movesetConcurrencyPoolRoot, $MovesetRange
+            ), $concurrencyLimit, $concurrencyPoolRoot, $MovesetRange
             $referenceJobs.Add($referenceJob)
         }
         if ($referenceJobs.Count -gt 0) {
@@ -375,10 +368,10 @@ try {
     $runArguments = @{
         Suite = [string[]]@($recordings.Suite)
         CaptureRepository = $captureStageRoot
+        ConcurrencyLimit = $concurrencyLimit
+        ConcurrencyPoolRoot = $concurrencyPoolRoot
     }
     if (@($recordings | Where-Object Generated).Count -gt 0) {
-        $runArguments.MovesetThrottleLimit = 16
-        $runArguments.MovesetConcurrencyPoolRoot = $movesetConcurrencyPoolRoot
         if ($movesetRangeSpecified) {
             $runArguments.MovesetRange = $MovesetRange
         }

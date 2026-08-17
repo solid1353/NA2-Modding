@@ -6,9 +6,9 @@ param(
     [switch]$Shifted,
     [object[]]$SupervisedJob = @(),
     [string]$MovesetRange,
-    [string]$MovesetConcurrencyPoolRoot,
-    [ValidateRange(0, 64)]
-    [int]$MovesetThrottleLimit = 0
+    [string]$ConcurrencyPoolRoot,
+    [ValidateRange(1, 64)]
+    [int]$ConcurrencyLimit = 16
 )
 
 $ErrorActionPreference = 'Stop'
@@ -107,12 +107,6 @@ $comparisonVariants = @(
     $runVariants |
         Where-Object { [string]$_.name -cne $publishedVariant }
 )
-$effectiveMovesetThrottleLimit = if ($MovesetThrottleLimit -gt 0) {
-    $MovesetThrottleLimit
-}
-else {
-    16
-}
 foreach ($comparisonVariant in $comparisonVariants) {
     if ([string]$comparisonVariant.compare_against -cne $publishedVariant) {
         throw "Comparison variant $($comparisonVariant.name) must compare against $publishedVariant."
@@ -168,8 +162,11 @@ $transaction = New-VisualRegressionTransaction `
     -ResumeKey $resumeKey `
     -LegacySuite $(if ($movesetRangeSpecified) { $null } else { $suites }) `
     -LegacyShifted $Shifted.IsPresent
-if ($hasGeneratedSuite -and [string]::IsNullOrWhiteSpace($MovesetConcurrencyPoolRoot)) {
-    $MovesetConcurrencyPoolRoot = Join-Path $transaction 'moveset-concurrency'
+if ([string]::IsNullOrWhiteSpace($ConcurrencyPoolRoot)) {
+    $ConcurrencyPoolRoot = Join-Path $transaction 'concurrency'
+}
+else {
+    $ConcurrencyPoolRoot = [IO.Path]::GetFullPath($ConcurrencyPoolRoot)
 }
 if (Test-VisualRegressionTransactionResumed -Transaction $transaction) {
     $resumeArtifacts = [Collections.Generic.List[string]]::new()
@@ -203,11 +200,12 @@ foreach ($suiteName in $suites) {
     $prepareKey = "prepare/$taskSuite"
     $taskCaptureRoot = $context.CaptureRoot
     if ($context.Generated) {
-        $capturedGridDirectory = Join-Path $normalSuite 'capture\grid-screenshots'
+        $capturedGridDirectory = Join-Path $normalSuite 'capture\screenshots'
         $existingGridDirectory = $context.Capture.ScreenshotGrids
-        $outputGridDirectory = Join-Path `
-            (Join-Path (Join-Path $transaction 'publish') $context.SuiteRelativePath) `
-            $script:E2eScreenshotGridDirectory
+        $outputRoot = Join-Path `
+            (Join-Path $transaction 'publish') `
+            $context.SuiteRelativePath
+        $comparator = $context.Comparator
         $tasks.Add([pscustomobject]@{
             Key = $prepareKey
             Priority = 80
@@ -222,22 +220,25 @@ foreach ($suiteName in $suites) {
                         $Script,
                         $ExistingDirectory,
                         $CapturedDirectory,
-                        $OutputDirectory,
+                        $OutputRoot,
+                        $Comparator,
                         $PreserveCapturedTier
                     )
                     $ErrorActionPreference = 'Stop'
                     . $Script
-                    New-VisualRegressionGeneratedGridStage `
+                    New-VisualRegressionGeneratedArtifactStage `
                         -ExistingDirectory $ExistingDirectory `
                         -CapturedDirectory $CapturedDirectory `
-                        -OutputDirectory $OutputDirectory `
+                        -OutputRoot $OutputRoot `
+                        -Comparator $Comparator `
                         -CapturedTier Current `
                         -PreserveCapturedTier:$PreserveCapturedTier
                 } -ArgumentList (
                     $suiteScript,
                     $existingGridDirectory,
                     $capturedGridDirectory,
-                    $outputGridDirectory,
+                    $outputRoot,
+                    $comparator,
                     $movesetRangeSpecified
                 )
             }.GetNewClosure()
@@ -271,7 +272,7 @@ foreach ($suiteName in $suites) {
                 )
             }.GetNewClosure()
         })
-        foreach ($action in @('ScreenshotGrid', 'Pair', 'Blend', 'Diff')) {
+        foreach ($action in @('Pair', 'Blend', 'Diff')) {
             $taskAction = $action
             $taskKey = "artifact/$taskSuite/$($taskAction.ToLowerInvariant())"
             $tasks.Add([pscustomobject]@{
@@ -312,10 +313,10 @@ foreach ($suiteName in $suites) {
         $comparisonKey = "compare/$candidateName/$taskSuite"
         $baselineArtifactDirectory = Join-Path `
             $normalSuite `
-            $(if ($context.Generated) { 'capture\grid-screenshots' } else { 'capture\screenshots' })
+            'capture\screenshots'
         $candidateArtifactDirectory = Join-Path `
             $candidateSuite `
-            $(if ($context.Generated) { 'capture\grid-screenshots' } else { 'capture\screenshots' })
+            'capture\screenshots'
         $comparisonTask = [pscustomobject]@{
             Key = $comparisonKey
             Priority = 100
@@ -384,8 +385,8 @@ try {
                 $Variant,
                 $Transaction,
                 $SuiteSelectionJson,
-                $MovesetThrottleLimit,
-                $MovesetConcurrencyPoolRoot,
+                $ConcurrencyLimit,
+                $ConcurrencyPoolRoot,
                 $MovesetRange
             )
             $ErrorActionPreference = 'Stop'
@@ -393,8 +394,8 @@ try {
                 Variant = $Variant
                 Transaction = $Transaction
                 Suite = [string[]]@($SuiteSelectionJson | ConvertFrom-Json)
-                MovesetThrottleLimit = $MovesetThrottleLimit
-                MovesetConcurrencyPoolRoot = $MovesetConcurrencyPoolRoot
+                ConcurrencyLimit = $ConcurrencyLimit
+                ConcurrencyPoolRoot = $ConcurrencyPoolRoot
             }
             if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
                 $variantArguments.MovesetRange = $MovesetRange
@@ -402,8 +403,8 @@ try {
             & $Script @variantArguments
         } -ArgumentList (
             Join-Path $PSScriptRoot 'variant.ps1'
-        ), $variantName, $transaction, $suiteSelectionJson, $effectiveMovesetThrottleLimit, (
-            $MovesetConcurrencyPoolRoot
+        ), $variantName, $transaction, $suiteSelectionJson, $ConcurrencyLimit, (
+            $ConcurrencyPoolRoot
         ), $MovesetRange
         $jobs.Add($variantJob)
     }
@@ -483,34 +484,11 @@ try {
             -Raw `
             -LiteralPath (Join-Path $suiteStage 'postprocess.json') |
             ConvertFrom-Json
-        $screenshotStage = Join-Path $suitePublish $script:E2eScreenshotDirectory
         $screenshotGridStage = Join-Path `
             $suitePublish `
             $script:E2eScreenshotGridDirectory
-        $replacements[$context.Capture.Screenshots] = $screenshotStage
         $replacements[$context.Capture.ScreenshotGrids] = $screenshotGridStage
         if ($metadata.has_reference -and $metadata.has_current) {
-            foreach ($comparison in @(
-                [pscustomobject]@{
-                    Name = $script:E2ePairDirectory
-                    Kind = 'Pair'
-                    Destination = $context.Capture.Pairs
-                },
-                [pscustomobject]@{
-                    Name = $script:E2eBlendDirectory
-                    Kind = 'Blend'
-                    Destination = $context.Capture.Blends
-                },
-                [pscustomobject]@{
-                    Name = $script:E2eDiffDirectory
-                    Kind = 'Diff'
-                    Destination = $context.Capture.Diffs
-                }
-            )) {
-                $replacements[$comparison.Destination] = Join-Path `
-                    $suitePublish `
-                    $comparison.Name
-            }
             foreach ($grid in @(
                 [pscustomobject]@{
                     Name = $script:E2ePairGridDirectory
@@ -535,8 +513,7 @@ try {
         -AfterPublish {
             $aggregateContexts = @(
                 $suites |
-                    ForEach-Object { Get-E2eRunContext -Name $_ } |
-                    Where-Object { -not $_.Generated }
+                    ForEach-Object { Get-E2eRunContext -Name $_ }
             )
             if ($aggregateContexts.Count -gt 0) {
                 Publish-VisualRegressionAggregateViews `

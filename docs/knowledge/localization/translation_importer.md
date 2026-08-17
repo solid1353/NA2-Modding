@@ -26,9 +26,10 @@ official source or display location exists.
 The completed Collection batch records every proven owning suite when a row is
 visible in more than one suite. Multiple `display_basis` entries use `|`, and
 the importer counts each entry independently. Coverage counts can therefore
-overlap without hiding a shared row from any suite. Generic shared strings such
-as modal `Yes` and `No` remain `seen:` unless the exact table instance used by
-Collection is proven.
+overlap without hiding a shared row from any suite. Generic shared text does
+not receive Collection coverage unless its exact executable instance is
+proven; the Collection confirmation telemetry establishes the exact modal
+`No` and `Yes` slots used by the accepted Misc captures.
 
 The accepted generated Movesets suite contains 146 grids: 74 base-character,
 62 specials, and 10 unique-mode grids. A complete audit of those grids and
@@ -42,17 +43,62 @@ this mapping count.
 
 | Display basis | Covered rows | Proven family |
 | --- | ---: | --- |
-| `e2e:collection/characters` | 31 | 30 shared common names plus the secondary Granny Chiyo plaque field |
-| `e2e:collection/figures` | 132 | Common Figure names and animation titles, plus Diorama titles |
-| `e2e:collection/misc` | 49 | Simulation, Movie, Music, quit, and locked-title rows |
-| `e2e:collection/opponents` | 44 | Opponents-only character names and selector label |
-| `e2e:collection/ultimates` | 161 | Collection-owned Ultimate Jutsu title table |
-| `e2e:collection/voice` | 153 | Collection-owned Voice title table and aliases |
+| `e2e:collection/characters` | 31 | Character-plaque names selected by the Characters captures |
+| `e2e:collection/figures` | 132 | 31 character-plaque names, 89 Figure animation titles, and 12 Diorama titles |
+| `e2e:collection/misc` | 61 | 12 Diorama titles, 47 Movie/Music/quit rows, and the exact `No`/`Yes` modal slots |
+| `e2e:collection/opponents` | 78 | 74 roster names, the selector label, and the displayed three-title Ultimate set |
+| `e2e:collection/ultimates` | 221 | 60 selected plaque names and 161 Collection-owned Ultimate Jutsu titles |
+| `e2e:collection/voice` | 184 | 31 character-plaque names and 153 Collection-owned Voice titles or aliases |
 | `e2e:movesets` | 1,226 | 1,052 selected Command Chart titles, 154 selected metadata-owned Ultimate/Jutsu titles, and 20 selected shared relationship/control records |
 
-These suite counts total 1,796 `e2e:` entries on 1,766 unique rows. Thirty
-shared Collection rows own more than one suite entry, and 322 of the 2,088
-canonical rows have no accepted-suite E2E basis.
+These suite counts total 1,933 `e2e:` entries on 1,765 unique rows. The six
+Collection suites own 707 entries on 539 unique rows because exact records can
+be selected by several Collection paths. The 1,226 Movesets rows are separate
+executable records even where the visible English is equal. Of the 2,088
+canonical rows, 323 have no accepted-suite E2E basis.
+
+### Collection capture-selection boundary
+
+The accepted Collection plans contain 207 cases: 31 Characters, 43 Figures,
+22 Misc, 19 Opponents, 61 Ultimates, and 31 Voice. Visible text identifies the
+field being exercised, but exact `e2e:` membership comes from the executable
+record selected along that suite path rather than from OCR or equal English.
+The complete selection is reproducible from these canonical ID sets:
+
+- the 30 common-name rows T427-T443, T445-T447, T450-T454, and T522-T526,
+  plus the pointer-specific Granny Chiyo row T2209, are selected by Characters,
+  Figures, Opponents, Ultimates, and Voice;
+- Figures additionally selects T530-T618 and the 12 Diorama-title rows T527
+  and T619-T629;
+- Misc selects T527, T619-T676, and the exact confirmation slots T2025-T2026;
+- Opponents additionally selects T444, T448, T455-T495, T528, T116, T197, and
+  T198;
+- Ultimates additionally selects the legacy-name rows T457-T485 and every
+  Collection Ultimate title T98-T258;
+- Voice additionally selects T677-T824, T2158, and T2205-T2208.
+
+NA2's Collection master roster is a 75-record, 12-byte table at `ETC.BIN`
+`0x25948`: 74 character entries followed by the Diorama selector entry. Direct
+caller analysis establishes that every accepted character plaque, including
+the common Figurine viewer, loads this master table. Granny Chiyo's master-table
+pointer field is `ETC.BIN` `0x25A68`, represented by T2209 and redirected to
+the exact NUN5 secondary string `Granny Chiyo ` at `TEXTENG.BIN` `0x518`.
+T449 is the separate primary `Granny Chiyo` slot and therefore does not inherit
+Collection E2E membership.
+
+The accepted Misc confirmation telemetry identifies runtime slots `0x00604568`
+and `0x00604570`, corresponding to `SLPS_258.37` file offsets `0x504668` and
+`0x504670`. Those are T2025 `No` and T2026 `Yes`; their ordinary shared-modal
+context does not prevent exact Misc ownership once the selected addresses are
+known.
+
+Three visually similar groups are explicitly outside accepted Collection text
+coverage. T529 is the master-table Diorama selector, while the visible grid
+label comes from `HOME.CCS`; it retains structural Figure-identifier evidence
+instead of `e2e:`. The short character-grid labels corresponding to T496-T521
+are also texture artwork rather than those translation rows. T2200 is a valid
+locked Movie placeholder seen in an earlier paired pass, but every accepted
+Misc Movie capture is unlocked, so it retains `seen:` rather than Misc E2E.
 
 ## Structural mapping families
 
@@ -93,8 +139,9 @@ T1881-T1893, T1925-T1926, and T1896-T1900: exactly 20 rows. Indices 16-17
 T1901-T1924, and T1927-T1932 belong to other help, Practice, or control
 consumers and do not inherit Movesets coverage. In particular, the visible
 Command Chart `Charge` is T1926 rather than the Practice-owned T1920;
-`While jumping` is T1886 rather than T1901 `(while jumping)`; and T1929 `Flee`
-does not appear in any accepted Movesets grid.
+`While jumping` is T1886 rather than T1901 `(while jumping)`. All other table
+indices remain non-Movesets rows unless a future accepted plan selects their
+exact records.
 
 ### Collection display titles are not moveset names
 
@@ -246,13 +293,13 @@ join; their English still comes exclusively from `mappings.tsv` and exact
 NUN5 offsets.
 
 Collection character plaques demonstrate the same rule outside Voice. NA2's
-Japanese `Granny Chiyo` slot at `ETC.BIN` `0x251E0` is shared by four record
-families, but the Characters Collection pointer field at `0x25A68` corresponds
-to NUN5's secondary localized-roster field. NUN5 selects `Granny Chiyo ` at
-`TEXTENG.BIN` `0x518` there, while the primary field used by the other records
-selects unpadded `Granny Chiyo` at `0x508`. Mapping only pointer field `0x25A68`
-to the exact secondary donor preserves both official forms without a renderer
-string test or a global overwrite of the shared NA2 slot.
+Japanese `Granny Chiyo` slot at `ETC.BIN` `0x251E0` is shared by several record
+families, but all accepted Collection plaque paths select master-roster pointer
+field `0x25A68`. NUN5 selects `Granny Chiyo ` at `TEXTENG.BIN` `0x518` there,
+while the separate primary mapping selects unpadded `Granny Chiyo` at `0x508`.
+Mapping only pointer field `0x25A68` to the exact secondary donor preserves both
+official forms without a renderer string test or a global overwrite of the
+shared NA2 slot.
 
 ## Packed message blocks
 

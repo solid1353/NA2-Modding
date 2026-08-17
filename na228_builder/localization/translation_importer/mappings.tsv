@@ -141,7 +141,7 @@ T112	1	Collection > Characters > Ultimate Jutsu name	<r雷切|らいきり>・<r
 T113	1	Collection > Characters > Ultimate Jutsu name	<r土遁|どとん>・<r裂穿牙|れっせんが>	Earth Style: Ripping Drill Fang			e2e:collection/ultimates	NA2_ETC@0x28640	NUN5_TEXTENG@0x4090	slot	48				
 T114	1	Collection > Characters > Ultimate Jutsu name	コピー<r忍術|にんじゅつ>	Ninja Art: Copy Jutsu			e2e:collection/ultimates	NA2_ETC@0x28670	NUN5_TEXTENG@0x40B0	slot	32				
 T115	1	Collection > Characters > Ultimate Jutsu name	<r八卦四天空掌|はっけしてんくうしょう>	8 Trigrams 4 Sky Palms			e2e:collection/ultimates	NA2_ETC@0x28690	NUN5_TEXTENG@0x40D0	slot	48				
-T116	1	Collection > Characters > Ultimate Jutsu name	<r八卦六十四掌|はっけろくじゅうよんしょう>	8 Trigrams 64 Palms			e2e:collection/ultimates	NA2_ETC@0x286C0	NUN5_TEXTENG@0x40F0	slot	48				
+T116	1	Collection > Characters > Ultimate Jutsu name	<r八卦六十四掌|はっけろくじゅうよんしょう>	8 Trigrams 64 Palms			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x286C0	NUN5_TEXTENG@0x40F0	slot	48				
 T117	1	Collection > Characters > Ultimate Jutsu name	<r八卦破山撃|はっけはざんげき>	8 Trigrams Mountain Break			e2e:collection/ultimates	NA2_ETC@0x286F0	NUN5_TEXTENG@0x4110	slot	32			NA2_ETC@0x2A07C	
 T118	1	Collection > Characters > Ultimate Jutsu name	<r木|こ>ノ<r葉旋光|はせんこう>	Leaf Spiral Light			e2e:collection/ultimates	NA2_ETC@0x28710	NUN5_TEXTENG@0x4130	slot	32				
 T119	1	Collection > Characters > Ultimate Jutsu name	<r青春|せいしゅん>フルパワー！！	Youth at Full Power!!			e2e:collection/ultimates	NA2_ETC@0x28730	NUN5_TEXTENG@0x4150	slot	48				
@@ -222,8 +222,8 @@ T193	1	Collection > Characters > Ultimate Jutsu name	<r忌|い>まわしき<r千
 T194	1	Collection > Characters > Ultimate Jutsu name	<r呪|のろ>われし<r力|ちから>	Cursed Power			e2e:collection/ultimates	NA2_ETC@0x293F0	NUN5_TEXTENG@0x49E0	slot	32				
 T195	1	Collection > Characters > Ultimate Jutsu name	<r負|ま>けるもんですか！	I Won't Lose!			e2e:collection/ultimates	NA2_ETC@0x29410	NUN5_TEXTENG@0x49F0	slot	32				
 T196	1	Collection > Characters > Ultimate Jutsu name	<r忍法|にんぽう>・<r雪桜|ゆきざくら>の<r舞|まい>	Ninja Art: Snow Cherry Blossom Dance			e2e:collection/ultimates	NA2_ETC@0x29430	NUN5_TEXTENG@0x4A00	slot	64				
-T197	1	Collection > Characters > Ultimate Jutsu name	<r八卦三百六十一式|はっけさんびゃくろくじゅういっしき>	8 Trigrams 361 Style			e2e:collection/ultimates	NA2_ETC@0x29470	NUN5_TEXTENG@0x4A30	slot	64				
-T198	1	Collection > Characters > Ultimate Jutsu name	<r絶招八門崩撃|ぜっしょうはちもんほうげき>	Last Resort: Eight Gates Assault			e2e:collection/ultimates	NA2_ETC@0x294B0	NUN5_TEXTENG@0x4A50	slot	48				
+T197	1	Collection > Characters > Ultimate Jutsu name	<r八卦三百六十一式|はっけさんびゃくろくじゅういっしき>	8 Trigrams 361 Style			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x29470	NUN5_TEXTENG@0x4A30	slot	64				
+T198	1	Collection > Characters > Ultimate Jutsu name	<r絶招八門崩撃|ぜっしょうはちもんほうげき>	Last Resort: Eight Gates Assault			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x294B0	NUN5_TEXTENG@0x4A50	slot	48				
 T199	1	Collection > Characters > Ultimate Jutsu name	すい<r拳|けん>	Loopy Fist			e2e:collection/ultimates	NA2_ETC@0x294E0	NUN5_TEXTENG@0x4A78	slot	16				
 T200	1	Collection > Characters > Ultimate Jutsu name	<r裏蓮華|うられんげ>	Hidden Lotus			e2e:collection/ultimates	NA2_ETC@0x294F0	NUN5_TEXTENG@0x4A88	slot	32				
 T201	1	Collection > Characters > Ultimate Jutsu name	<r突|つ>き<r抜|ぬ>ける<r熱|あつ>き<r思|おも>い	Smashing Passion			e2e:collection/ultimates	NA2_ETC@0x29510	NUN5_TEXTENG@0x4AA0	slot	48				
@@ -450,65 +450,65 @@ T423	1	Character Select > return confirmation	ゲームモード<r選択|せん�
 T424	1	Character Select > return confirmation	タイトルに<r戻|もど>りますか？	Return to Title Screen?			inferred:character-select-return-table	NA2_SLPS@0x4B4260	NUN5_TEXTENG@0x1C90	slot	32				
 T425	1	Character Select > return confirmation	<r任務|にんむ><r選択|せんたく>に<r戻|もど>りますか？	Return to Mission Select?			inferred:character-select-return-table	NA2_SLPS@0x4B4280	NUN5_TEXTENG@0x1E10	slot	64				
 T426	1	Character Select > return confirmation	<r種目選択|しゅもくせんたく>に<r戻|もど>りますか？	Return to Event Select?			inferred:character-select-return-table	NA2_SLPS@0x4B42C0	NUN5_TEXTENG@0x1E30	slot	64				
-T427	1	Character selectors > character or variant name	うずまきナルト	Naruto Uzumaki			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x24F98	NUN5_TEXTENG@0x4D8	slot	24				
-T428	1	Character selectors > character or variant name	<r春野|はるの>サクラ	Sakura Haruno			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x24FB0	NUN5_TEXTENG@0x4E8	slot	24				
-T429	1	Character selectors > character or variant name	はたけカカシ	Kakashi Hatake			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x24FC8	NUN5_TEXTENG@0x568	slot	24				
-T430	1	Character selectors > character or variant name	<r日向|ひゅうが>ネジ	Neji Hyuga			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x24FE0	NUN5_TEXTENG@0x528	slot	24				
-T431	1	Character selectors > character or variant name	ロック・リー	Rock Lee			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x24FF8	NUN5_TEXTENG@0x538	slot	16				
-T432	1	Character selectors > character or variant name	テンテン	Tenten			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25008	NUN5_SLES@0x513d60	slot	16				
-T433	1	Character selectors > character or variant name	マイト・ガイ	Might Guy			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25018	NUN5_TEXTENG@0x558	slot	24				
-T434	1	Character selectors > character or variant name	<r奈良|なら>シカマル	Shikamaru Nara			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25030	NUN5_TEXTENG@0x548	slot	32				
-T435	1	Character selectors > character or variant name	<r秋道|あきみち>チョウジ	Choji Akimichi			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25050	NUN5_TEXTENG@0x648	slot	32				
-T436	1	Character selectors > character or variant name	<r山中|やまなか>いの	Ino Yamanaka			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25070	NUN5_TEXTENG@0x658	slot	32				
-T437	1	Character selectors > character or variant name	<r猿飛|さるとび>アスマ	Asuma Sarutobi			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25090	NUN5_TEXTENG@0x668	slot	32				
-T438	1	Character selectors > character or variant name	<r犬塚|いぬづか>キバ	Kiba Inuzuka			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x250B0	NUN5_TEXTENG@0x618	slot	32				
-T439	1	Character selectors > character or variant name	<r油女|あぶらめ>シノ	Shino Aburame			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x250D0	NUN5_TEXTENG@0x628	slot	32				
-T440	1	Character selectors > character or variant name	<r日向|ひゅうが>ヒナタ	Hinata Hyuga			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x250F0	NUN5_TEXTENG@0x638	slot	32				
-T441	1	Character selectors > character or variant name	<r夕日|ゆうひ><r紅|くれない>	Kurenai Yuhi			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25110	NUN5_TEXTENG@0x678	slot	32				
-T442	1	Character selectors > character or variant name	<r風影|かぜかげ>・<r我愛羅|ガアラ>	Kazekage Gaara			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25130	NUN5_TEXTENG@0x4F8	slot	40				
-T443	1	Character selectors > character or variant name	カンクロウ	Kankuro			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25158	NUN5_SLES@0x513D88	slot	24				
+T427	1	Character selectors > character or variant name	うずまきナルト	Naruto Uzumaki			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x24F98	NUN5_TEXTENG@0x4D8	slot	24				
+T428	1	Character selectors > character or variant name	<r春野|はるの>サクラ	Sakura Haruno			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x24FB0	NUN5_TEXTENG@0x4E8	slot	24				
+T429	1	Character selectors > character or variant name	はたけカカシ	Kakashi Hatake			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x24FC8	NUN5_TEXTENG@0x568	slot	24				
+T430	1	Character selectors > character or variant name	<r日向|ひゅうが>ネジ	Neji Hyuga			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x24FE0	NUN5_TEXTENG@0x528	slot	24				
+T431	1	Character selectors > character or variant name	ロック・リー	Rock Lee			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x24FF8	NUN5_TEXTENG@0x538	slot	16				
+T432	1	Character selectors > character or variant name	テンテン	Tenten			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25008	NUN5_SLES@0x513d60	slot	16				
+T433	1	Character selectors > character or variant name	マイト・ガイ	Might Guy			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25018	NUN5_TEXTENG@0x558	slot	24				
+T434	1	Character selectors > character or variant name	<r奈良|なら>シカマル	Shikamaru Nara			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25030	NUN5_TEXTENG@0x548	slot	32				
+T435	1	Character selectors > character or variant name	<r秋道|あきみち>チョウジ	Choji Akimichi			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25050	NUN5_TEXTENG@0x648	slot	32				
+T436	1	Character selectors > character or variant name	<r山中|やまなか>いの	Ino Yamanaka			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25070	NUN5_TEXTENG@0x658	slot	32				
+T437	1	Character selectors > character or variant name	<r猿飛|さるとび>アスマ	Asuma Sarutobi			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25090	NUN5_TEXTENG@0x668	slot	32				
+T438	1	Character selectors > character or variant name	<r犬塚|いぬづか>キバ	Kiba Inuzuka			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x250B0	NUN5_TEXTENG@0x618	slot	32				
+T439	1	Character selectors > character or variant name	<r油女|あぶらめ>シノ	Shino Aburame			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x250D0	NUN5_TEXTENG@0x628	slot	32				
+T440	1	Character selectors > character or variant name	<r日向|ひゅうが>ヒナタ	Hinata Hyuga			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x250F0	NUN5_TEXTENG@0x638	slot	32				
+T441	1	Character selectors > character or variant name	<r夕日|ゆうひ><r紅|くれない>	Kurenai Yuhi			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25110	NUN5_TEXTENG@0x678	slot	32				
+T442	1	Character selectors > character or variant name	<r風影|かぜかげ>・<r我愛羅|ガアラ>	Kazekage Gaara			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25130	NUN5_TEXTENG@0x4F8	slot	40				
+T443	1	Character selectors > character or variant name	カンクロウ	Kankuro			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25158	NUN5_SLES@0x513D88	slot	24				
 T444	1	Character selectors > character or variant name	チヨバア（<r体術|たいじゅつ>）	Granny Chiyo (Taijutsu)			e2e:collection/opponents	NA2_ETC@0x25170	NUN5_TEXTENG@0x600	slot	32				
-T445	1	Character selectors > character or variant name	うちはイタチ	Itachi Uchiha			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25190	NUN5_TEXTENG@0x578	slot	16				
-T446	1	Character selectors > character or variant name	<r干柿鬼鮫|ほしがきキサメ>	Kisame Hoshigaki			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x251A0	NUN5_TEXTENG@0x590	slot	32				
-T447	1	Character selectors > character or variant name	デイダラ	Deidara			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x251C0	NUN5_TEXTENG@0x254F8	slot	16				
+T445	1	Character selectors > character or variant name	うちはイタチ	Itachi Uchiha			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25190	NUN5_TEXTENG@0x578	slot	16				
+T446	1	Character selectors > character or variant name	<r干柿鬼鮫|ほしがきキサメ>	Kisame Hoshigaki			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x251A0	NUN5_TEXTENG@0x590	slot	32				
+T447	1	Character selectors > character or variant name	デイダラ	Deidara			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x251C0	NUN5_TEXTENG@0x254F8	slot	16				
 T448	1	Character selectors > character or variant name	サソリ・ヒルコ	Sasori (Hiruko)			e2e:collection/opponents	NA2_ETC@0x251D0	NUN5_TEXTENG@0x5F0	slot	16				
-T449	1	Character selectors > character or variant name	チヨバア	Granny Chiyo			e2e:collection/figures	NA2_ETC@0x251E0	NUN5_TEXTENG@0x508	slot	16				
-T450	1	Character selectors > character or variant name	<r自来也|じらいや>	Jiraiya			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x251f0	NUN5_SLES@0x513df0	slot	24				
-T451	1	Character selectors > character or variant name	<r綱手|ツナデ>	Tsunade			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25208	NUN5_TEXTENG@0x29DE	slot	24				
-T452	1	Character selectors > character or variant name	<r大蛇丸|オロチまる>	Orochimaru			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25220	NUN5_TEXTENG@0x688	slot	32				
-T453	1	Character selectors > character or variant name	<r薬師|やくし>カブト	Kabuto Yakushi			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25240	NUN5_TEXTENG@0x698	slot	24				
-T454	1	Character selectors > character or variant name	うちはサスケ	Sasuke Uchiha			e2e:collection/characters|e2e:collection/figures	NA2_ETC@0x25258	NUN5_TEXTENG@0x6A8	slot	24				
+T449	1	Character selectors > character or variant name	チヨバア	Granny Chiyo			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x251E0	NUN5_TEXTENG@0x508	slot	16				
+T450	1	Character selectors > character or variant name	<r自来也|じらいや>	Jiraiya			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x251f0	NUN5_SLES@0x513df0	slot	24				
+T451	1	Character selectors > character or variant name	<r綱手|ツナデ>	Tsunade			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25208	NUN5_TEXTENG@0x29DE	slot	24				
+T452	1	Character selectors > character or variant name	<r大蛇丸|オロチまる>	Orochimaru			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25220	NUN5_TEXTENG@0x688	slot	32				
+T453	1	Character selectors > character or variant name	<r薬師|やくし>カブト	Kabuto Yakushi			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25240	NUN5_TEXTENG@0x698	slot	24				
+T454	1	Character selectors > character or variant name	うちはサスケ	Sasuke Uchiha			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25258	NUN5_TEXTENG@0x6A8	slot	24				
 T455	1	Character selectors > character or variant name	<r九尾第四覚醒状態|きゅうびだいよんかくせいじょうたい>	Nine-Tailed Fourth Awakened State			e2e:collection/opponents	NA2_ETC@0x25270	NUN5_TEXTENG@0x5B0	slot	64				
 T456	1	Character selectors > character or variant name	サソリ（<r自分傀儡|じぶんくぐつ>）	Sasori (Puppet)			e2e:collection/opponents	NA2_ETC@0x252B0	NUN5_TEXTENG@0x5E0	slot	48				
-T457	1	Character selectors > character or variant name	うずまきナルト（<r旧章|きゅうしょう>）	N. Uzumaki (Classic)			e2e:collection/opponents	NA2_ETC@0x252E0	NUN5_TEXTENG@0x100	slot	48				
-T458	1	Character selectors > character or variant name	うちはサスケ（<r旧章|きゅうしょう>）	S. Uchiha (Classic)			e2e:collection/opponents	NA2_ETC@0x25310	NUN5_TEXTENG@0x120	slot	48				
-T459	1	Character selectors > character or variant name	<r春野|はるの>サクラ（<r旧章|きゅうしょう>）	S. Haruno (Classic)			e2e:collection/opponents	NA2_ETC@0x25340	NUN5_TEXTENG@0x1C0	slot	48				
-T460	1	Character selectors > character or variant name	<r日向|ひゅうが>ネジ（<r旧章|きゅうしょう>）	Neji Hyuga (Classic)			e2e:collection/opponents	NA2_ETC@0x25370	NUN5_TEXTENG@0x1A0	slot	48				
-T461	1	Character selectors > character or variant name	ロック・リー（<r旧章|きゅうしょう>）	Rock Lee (Classic)			e2e:collection/opponents	NA2_ETC@0x253A0	NUN5_TEXTENG@0x140	slot	48				
-T462	1	Character selectors > character or variant name	テンテン（<r旧章|きゅうしょう>）	Tenten (Classic)			e2e:collection/opponents	NA2_ETC@0x253D0	NUN5_TEXTENG@0x210	slot	48				
-T463	1	Character selectors > character or variant name	<r奈良|なら>シカマル（<r旧章|きゅうしょう>）	S. Nara (Classic)			e2e:collection/opponents	NA2_ETC@0x25400	NUN5_TEXTENG@0x180	slot	48				
-T464	1	Character selectors > character or variant name	<r秋道|あきみち>チョウジ（<r旧章|きゅうしょう>）	C. Akimichi (Classic)			e2e:collection/opponents	NA2_ETC@0x25430	NUN5_TEXTENG@0x230	slot	64				
-T465	1	Character selectors > character or variant name	<r山中|やまなか>いの（<r旧章|きゅうしょう>）	I. Yamanaka (Class.)			e2e:collection/opponents	NA2_ETC@0x25470	NUN5_TEXTENG@0x250	slot	48				
-T466	1	Character selectors > character or variant name	<r犬塚|いぬづか>キバ（<r旧章|きゅうしょう>）	K. Inuzuka (Classic)			e2e:collection/opponents	NA2_ETC@0x254A0	NUN5_TEXTENG@0x270	slot	48				
-T467	1	Character selectors > character or variant name	<r油女|あぶらめ>シノ（<r旧章|きゅうしょう>）	S. Aburame (Classic)			e2e:collection/opponents	NA2_ETC@0x254D0	NUN5_TEXTENG@0x290	slot	48				
-T468	1	Character selectors > character or variant name	<r日向|ひゅうが>ヒナタ（<r旧章|きゅうしょう>）	H. Hyuga (Classic)			e2e:collection/opponents	NA2_ETC@0x25500	NUN5_TEXTENG@0x1F0	slot	48				
-T469	1	Character selectors > character or variant name	<r日向|ひゅうが>ハナビ	Hanabi Hyuga			e2e:collection/opponents	NA2_ETC@0x25530	NUN5_TEXTENG@0x358	slot	32				
-T470	1	Character selectors > character or variant name	<r木|こ>ノ<r葉丸|はまる><r軍団|ぐんだん>	Konohamaru NS			e2e:collection/opponents	NA2_ETC@0x25550	NUN5_TEXTENG@0x348	slot	48				
-T471	1	Character selectors > character or variant name	みたらしアンコ	Anko Mitarashi			e2e:collection/opponents	NA2_ETC@0x25580	NUN5_TEXTENG@0x3B8	slot	16				
-T472	1	Character selectors > character or variant name	<r初代火影|しょだいほかげ>	The First Hokage			e2e:collection/opponents	NA2_ETC@0x25590	NUN5_TEXTENG@0x370	slot	32				
-T473	1	Character selectors > character or variant name	<r二代目火影|にだいめほかげ>	The Second Hokage			e2e:collection/opponents	NA2_ETC@0x255B0	NUN5_TEXTENG@0x3A0	slot	32				
-T474	1	Character selectors > character or variant name	<r三代目火影|さんだいめほかげ>	The Third Hokage			e2e:collection/opponents	NA2_ETC@0x255D0	NUN5_TEXTENG@0x2F0	slot	32				
-T475	1	Character selectors > character or variant name	<r黄色|きいろ>い<r閃光|せんこう>	The Yellow Flash			e2e:collection/opponents	NA2_ETC@0x255F0	NUN5_TEXTENG@0x330	slot	48				
-T476	1	Character selectors > character or variant name	<r砂瀑|さばく>の<r我愛羅|ガアラ>（<r旧章|きゅうしょう>）	Gaara (Classic)			e2e:collection/opponents	NA2_ETC@0x25620	NUN5_TEXTENG@0x160	slot	64				
-T477	1	Character selectors > character or variant name	カンクロウ（<r旧章|きゅうしょう>）	Kankuro (Classic)			e2e:collection/opponents	NA2_ETC@0x25660	NUN5_TEXTENG@0x2B0	slot	48				
-T478	1	Character selectors > character or variant name	テマリ（<r旧章|きゅうしょう>）	Temari (Classic)			e2e:collection/opponents	NA2_ETC@0x25690	NUN5_TEXTENG@0x2D0	slot	32				
-T479	1	Character selectors > character or variant name	<r君麻呂|キミマロ>	Kimimaro			e2e:collection/opponents	NA2_ETC@0x256B0	NUN5_TEXTENG@0x318	slot	24				
-T480	1	Character selectors > character or variant name	<r左近|サコン>	Sakon			e2e:collection/opponents	NA2_ETC@0x256C8	NUN5_TEXTENG@0x4AD	slot	24				
-T481	1	Character selectors > character or variant name	<r多由也|タユヤ>	Tayuya			e2e:collection/opponents	NA2_ETC@0x256E0	NUN5_TEXTENG@0x48D	slot	32				
-T482	1	Character selectors > character or variant name	<r鬼童丸|キドウマル>	Kidomaru			e2e:collection/opponents	NA2_ETC@0x25700	NUN5_TEXTENG@0x308	slot	32				
-T483	1	Character selectors > character or variant name	<r次郎坊|ジロウボウ>	Jirobo			e2e:collection/opponents	NA2_ETC@0x25720	NUN5_TEXTENG@0x44D	slot	32				
-T484	1	Character selectors > character or variant name	<r桃地|ももち><r再不斬|ザブザ>	Zabuza Momochi			e2e:collection/opponents	NA2_ETC@0x25740	NUN5_TEXTENG@0x1D8	slot	32				
-T485	1	Character selectors > character or variant name	<r白|ハク>	Haku			e2e:collection/opponents	NA2_ETC@0x25760	NUN5_SLES@0x513d48	slot	16				
+T457	1	Character selectors > character or variant name	うずまきナルト（<r旧章|きゅうしょう>）	N. Uzumaki (Classic)			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x252E0	NUN5_TEXTENG@0x100	slot	48				
+T458	1	Character selectors > character or variant name	うちはサスケ（<r旧章|きゅうしょう>）	S. Uchiha (Classic)			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25310	NUN5_TEXTENG@0x120	slot	48				
+T459	1	Character selectors > character or variant name	<r春野|はるの>サクラ（<r旧章|きゅうしょう>）	S. Haruno (Classic)			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25340	NUN5_TEXTENG@0x1C0	slot	48				
+T460	1	Character selectors > character or variant name	<r日向|ひゅうが>ネジ（<r旧章|きゅうしょう>）	Neji Hyuga (Classic)			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25370	NUN5_TEXTENG@0x1A0	slot	48				
+T461	1	Character selectors > character or variant name	ロック・リー（<r旧章|きゅうしょう>）	Rock Lee (Classic)			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x253A0	NUN5_TEXTENG@0x140	slot	48				
+T462	1	Character selectors > character or variant name	テンテン（<r旧章|きゅうしょう>）	Tenten (Classic)			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x253D0	NUN5_TEXTENG@0x210	slot	48				
+T463	1	Character selectors > character or variant name	<r奈良|なら>シカマル（<r旧章|きゅうしょう>）	S. Nara (Classic)			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25400	NUN5_TEXTENG@0x180	slot	48				
+T464	1	Character selectors > character or variant name	<r秋道|あきみち>チョウジ（<r旧章|きゅうしょう>）	C. Akimichi (Classic)			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25430	NUN5_TEXTENG@0x230	slot	64				
+T465	1	Character selectors > character or variant name	<r山中|やまなか>いの（<r旧章|きゅうしょう>）	I. Yamanaka (Class.)			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25470	NUN5_TEXTENG@0x250	slot	48				
+T466	1	Character selectors > character or variant name	<r犬塚|いぬづか>キバ（<r旧章|きゅうしょう>）	K. Inuzuka (Classic)			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x254A0	NUN5_TEXTENG@0x270	slot	48				
+T467	1	Character selectors > character or variant name	<r油女|あぶらめ>シノ（<r旧章|きゅうしょう>）	S. Aburame (Classic)			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x254D0	NUN5_TEXTENG@0x290	slot	48				
+T468	1	Character selectors > character or variant name	<r日向|ひゅうが>ヒナタ（<r旧章|きゅうしょう>）	H. Hyuga (Classic)			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25500	NUN5_TEXTENG@0x1F0	slot	48				
+T469	1	Character selectors > character or variant name	<r日向|ひゅうが>ハナビ	Hanabi Hyuga			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25530	NUN5_TEXTENG@0x358	slot	32				
+T470	1	Character selectors > character or variant name	<r木|こ>ノ<r葉丸|はまる><r軍団|ぐんだん>	Konohamaru NS			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25550	NUN5_TEXTENG@0x348	slot	48				
+T471	1	Character selectors > character or variant name	みたらしアンコ	Anko Mitarashi			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25580	NUN5_TEXTENG@0x3B8	slot	16				
+T472	1	Character selectors > character or variant name	<r初代火影|しょだいほかげ>	The First Hokage			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25590	NUN5_TEXTENG@0x370	slot	32				
+T473	1	Character selectors > character or variant name	<r二代目火影|にだいめほかげ>	The Second Hokage			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x255B0	NUN5_TEXTENG@0x3A0	slot	32				
+T474	1	Character selectors > character or variant name	<r三代目火影|さんだいめほかげ>	The Third Hokage			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x255D0	NUN5_TEXTENG@0x2F0	slot	32				
+T475	1	Character selectors > character or variant name	<r黄色|きいろ>い<r閃光|せんこう>	The Yellow Flash			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x255F0	NUN5_TEXTENG@0x330	slot	48				
+T476	1	Character selectors > character or variant name	<r砂瀑|さばく>の<r我愛羅|ガアラ>（<r旧章|きゅうしょう>）	Gaara (Classic)			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25620	NUN5_TEXTENG@0x160	slot	64				
+T477	1	Character selectors > character or variant name	カンクロウ（<r旧章|きゅうしょう>）	Kankuro (Classic)			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25660	NUN5_TEXTENG@0x2B0	slot	48				
+T478	1	Character selectors > character or variant name	テマリ（<r旧章|きゅうしょう>）	Temari (Classic)			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25690	NUN5_TEXTENG@0x2D0	slot	32				
+T479	1	Character selectors > character or variant name	<r君麻呂|キミマロ>	Kimimaro			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x256B0	NUN5_TEXTENG@0x318	slot	24				
+T480	1	Character selectors > character or variant name	<r左近|サコン>	Sakon			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x256C8	NUN5_TEXTENG@0x4AD	slot	24				
+T481	1	Character selectors > character or variant name	<r多由也|タユヤ>	Tayuya			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x256E0	NUN5_TEXTENG@0x48D	slot	32				
+T482	1	Character selectors > character or variant name	<r鬼童丸|キドウマル>	Kidomaru			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25700	NUN5_TEXTENG@0x308	slot	32				
+T483	1	Character selectors > character or variant name	<r次郎坊|ジロウボウ>	Jirobo			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25720	NUN5_TEXTENG@0x44D	slot	32				
+T484	1	Character selectors > character or variant name	<r桃地|ももち><r再不斬|ザブザ>	Zabuza Momochi			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25740	NUN5_TEXTENG@0x1D8	slot	32				
+T485	1	Character selectors > character or variant name	<r白|ハク>	Haku			e2e:collection/opponents|e2e:collection/ultimates	NA2_ETC@0x25760	NUN5_SLES@0x513d48	slot	16				
 T486	1	Character selectors > character or variant name	うずまきナルト（<r九尾|きゅうび>）	Naruto Uzumaki (Nine-Tailed)			e2e:collection/opponents	NA2_ETC@0x25770	NUN5_TEXTENG@0x3D0	slot	48				
 T487	1	Character selectors > character or variant name	うちはサスケ<r状態|じょうたい>２	Second Stage Sasuke Uchiha			e2e:collection/opponents	NA2_ETC@0x257A0	NUN5_TEXTENG@0x3F0	slot	48				
 T488	1	Character selectors > character or variant name	すい<r拳|けん>リー	Loopy Fist Lee			e2e:collection/opponents	NA2_ETC@0x257D0	NUN5_TEXTENG@0x410	slot	32				
@@ -545,14 +545,14 @@ T518	1	Character selectors > character or variant name	サソリ	Sasori			charac
 T519	1	Character selectors > character or variant name	シズネ	Shizune			character:roster-name-table	NA2_SLPS@0x506668	NUN5_SLES@0x513E00	slot	8				
 T520	1	Character selectors > character or variant name	ヤマト	Yamato			character:roster-name-table	NA2_SLPS@0x506670	NUN5_SLES@0x513E20	slot	8				
 T521	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x506B10	NUN5_SLES@0x513D18	slot	8				
-T522	1	Character selectors > character or variant name	サイ	Sai			e2e:collection/characters|e2e:collection/figures	NA2_SLPS@0x506fe0	NUN5_SLES@0x513e28	slot	8				
-T523	1	Character selectors > character or variant name	テマリ	Temari			e2e:collection/characters|e2e:collection/figures	NA2_SLPS@0x506fe8	NUN5_SLES@0x513d90	slot	8				
-T524	1	Character selectors > character or variant name	サソリ	Sasori			e2e:collection/characters|e2e:collection/figures	NA2_SLPS@0x506ff0	NUN5_SLES@0x513dc0	slot	8				
-T525	1	Character selectors > character or variant name	シズネ	Shizune			e2e:collection/characters|e2e:collection/figures	NA2_SLPS@0x506ff8	NUN5_SLES@0x513e00	slot	8				
-T526	1	Character selectors > character or variant name	ヤマト	Yamato			e2e:collection/characters|e2e:collection/figures	NA2_SLPS@0x507000	NUN5_SLES@0x513e20	slot	8				
-T527	1	Collection > category label	シミュレーション	Simulation			e2e:collection/misc	NA2_ETC@0x2DDA0	NUN5_TEXTENG@0x3E78	slot	24				
+T522	1	Character selectors > character or variant name	サイ	Sai			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_SLPS@0x506fe0	NUN5_SLES@0x513e28	slot	8				
+T523	1	Character selectors > character or variant name	テマリ	Temari			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_SLPS@0x506fe8	NUN5_SLES@0x513d90	slot	8				
+T524	1	Character selectors > character or variant name	サソリ	Sasori			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_SLPS@0x506ff0	NUN5_SLES@0x513dc0	slot	8				
+T525	1	Character selectors > character or variant name	シズネ	Shizune			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_SLPS@0x506ff8	NUN5_SLES@0x513e00	slot	8				
+T526	1	Character selectors > character or variant name	ヤマト	Yamato			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_SLPS@0x507000	NUN5_SLES@0x513e20	slot	8				
+T527	1	Collection > Characters > Diorama title	シミュレーション	Simulation			e2e:collection/figures|e2e:collection/misc	NA2_ETC@0x2DDA0	NUN5_TEXTENG@0x3E78	slot	24				
 T528	1	Collection > Characters > selector label	<r対戦相手|たいせんあいて>	Opponent			e2e:collection/opponents	NA2_ETC@0x2EE50	NUN5_TEXTENG@0x778	slot	32				
-T529	1	Collection > Figures > character animation title	ジオラマ	Diorama			e2e:collection/figures	NA2_ETC@0x25928	NUN5_ETC@0x28959	slot	28				
+T529	1	Collection > Characters > Diorama selector entry	ジオラマ	Diorama			character:figure-animation-identifier	NA2_ETC@0x25928	NUN5_ETC@0x28959	slot	28				
 T530	1	Collection > Figures > character animation title	オッス！	Right!			e2e:collection/figures	NA2_ETC@0x25CD8	NUN5_SLES@0x513F60	slot	16				
 T531	1	Collection > Figures > character animation title	<r影分身|かげぶんしん>の<r術|じゅつ>	Shadow Clone Jutsu			e2e:collection/figures	NA2_ETC@0x25D00	NUN5_TEXTENG@0x3030	slot	40				
 T532	1	Collection > Figures > character animation title	<r暴走|ぼうそう>	Running Wild			e2e:collection/figures	NA2_ETC@0x25D40	NUN5_TEXTENG@0x3058	slot	24				
@@ -642,18 +642,18 @@ T615	1	Collection > Figures > character animation title	<r千鳥|ちどり>	Chid
 T616	1	Collection > Figures > character animation title	ふー…	Hmph...			e2e:collection/figures	NA2_SLPS@0x507058	NUN5_SLES@0x513FB0	slot	8				
 T617	1	Collection > Figures > character animation title	さて…	Now then...			e2e:collection/figures	NA2_SLPS@0x5070A8	NUN5_TEXTENG@0x3798	slot	8			NA2_ETC@0x27894	
 T618	1	Collection > Figures > character animation title	エヘヘ	Heh Heh			e2e:collection/figures	NA2_SLPS@0x507110	NUN5_SLES@0x514090	slot	8				
-T2200	1	Collection > Movie list > locked title	？？？？？？	???			e2e:collection/misc	NA2_ETC@0x2E738	NUN5_SLES@0x513E48	slot	24				
-T619	1	Collection > Movie list > scene title	<r紅班勢揃|くれないはんせいぞろ>い	Team Kurenai Unites			e2e:collection/figures	NA2_ETC@0x2d950	NUN5_TEXTENG@0x3d80	slot	40				
-T620	1	Collection > Movie list > scene title	いのシカチョウトリオ	The Boar-Deer-Butterfly Trio			e2e:collection/figures	NA2_ETC@0x2D9D0	NUN5_TEXTENG@0x3DA0	slot	24			NA2_ETC@0x2E0FC	
-T621	1	Collection > Movie list > scene title	ナルトの<r帰郷|ききょう>	Naruto Returns Home			e2e:collection/figures	NA2_ETC@0x2da30	NUN5_TEXTENG@0x3dc0	slot	32				
-T622	1	Collection > Movie list > scene title	<r風影|かぜかげ>の<r闘|たたか>い	Battle of the Kazekage			e2e:collection/figures	NA2_ETC@0x2da70	NUN5_TEXTENG@0x3de0	slot	40				
-T623	1	Collection > Movie list > scene title	<r木|こ>ノ<r葉|は>の<r白|しろ>い<r牙|きば>！？	White Fang of the Leaf!?			e2e:collection/figures	NA2_ETC@0x2dae0	NUN5_TEXTENG@0x3e00	slot	48				
-T624	1	Collection > Movie list > scene title	“<r暁|あかつき>”の<r目的|もくてき>	Akatsuki's Scheme			e2e:collection/figures	NA2_ETC@0x2db80	NUN5_TEXTENG@0x3e20	slot	40				
-T625	1	Collection > Movie list > scene title	<r傀儡師|くぐつし>の<r激闘|げきとう>	Fierce Puppetmaster Battle			e2e:collection/figures	NA2_ETC@0x2dc30	NUN5_TEXTENG@0x3e40	slot	40				
-T626	1	Collection > Movie list > scene title	<r突然|とつぜん>の<r襲撃|しゅうげき>！	A Sudden Assault!			e2e:collection/figures	NA2_ETC@0x2dca0	NUN5_TEXTENG@0x3e60	slot	40				
-T627	1	Collection > Movie list > scene title	<r人外|じんがい>の<r闘|たたか>い	Outcast Battle			e2e:collection/figures	NA2_ETC@0x2de70	NUN5_TEXTENG@0x3e88	slot	40				
-T628	1	Collection > Movie list > scene title	<r運命|うんめい>の<r再会|さいかい>	Fateful Reunion			e2e:collection/figures	NA2_ETC@0x2df50	NUN5_TEXTENG@0x3ea0	slot	40				
-T629	1	Collection > Movie list > scene title	<r漆黒|しっこく>に<r浮|う>かぶ<r影|かげ>	The Pitch-Black Shadow			e2e:collection/figures	NA2_ETC@0x2dff0	NUN5_TEXTENG@0x3eb0	slot	48				
+T2200	1	Collection > Movie list > locked title	？？？？？？	???			seen:ss7-paired-locked-Movie-entries	NA2_ETC@0x2E738	NUN5_SLES@0x513E48	slot	24				
+T619	1	Collection > Characters > Diorama title	<r紅班勢揃|くれないはんせいぞろ>い	Team Kurenai Unites			e2e:collection/figures|e2e:collection/misc	NA2_ETC@0x2d950	NUN5_TEXTENG@0x3d80	slot	40				
+T620	1	Collection > Characters > Diorama title	いのシカチョウトリオ	The Boar-Deer-Butterfly Trio			e2e:collection/figures|e2e:collection/misc	NA2_ETC@0x2D9D0	NUN5_TEXTENG@0x3DA0	slot	24			NA2_ETC@0x2E0FC	
+T621	1	Collection > Characters > Diorama title	ナルトの<r帰郷|ききょう>	Naruto Returns Home			e2e:collection/figures|e2e:collection/misc	NA2_ETC@0x2da30	NUN5_TEXTENG@0x3dc0	slot	32				
+T622	1	Collection > Characters > Diorama title	<r風影|かぜかげ>の<r闘|たたか>い	Battle of the Kazekage			e2e:collection/figures|e2e:collection/misc	NA2_ETC@0x2da70	NUN5_TEXTENG@0x3de0	slot	40				
+T623	1	Collection > Characters > Diorama title	<r木|こ>ノ<r葉|は>の<r白|しろ>い<r牙|きば>！？	White Fang of the Leaf!?			e2e:collection/figures|e2e:collection/misc	NA2_ETC@0x2dae0	NUN5_TEXTENG@0x3e00	slot	48				
+T624	1	Collection > Characters > Diorama title	“<r暁|あかつき>”の<r目的|もくてき>	Akatsuki's Scheme			e2e:collection/figures|e2e:collection/misc	NA2_ETC@0x2db80	NUN5_TEXTENG@0x3e20	slot	40				
+T625	1	Collection > Characters > Diorama title	<r傀儡師|くぐつし>の<r激闘|げきとう>	Fierce Puppetmaster Battle			e2e:collection/figures|e2e:collection/misc	NA2_ETC@0x2dc30	NUN5_TEXTENG@0x3e40	slot	40				
+T626	1	Collection > Characters > Diorama title	<r突然|とつぜん>の<r襲撃|しゅうげき>！	A Sudden Assault!			e2e:collection/figures|e2e:collection/misc	NA2_ETC@0x2dca0	NUN5_TEXTENG@0x3e60	slot	40				
+T627	1	Collection > Characters > Diorama title	<r人外|じんがい>の<r闘|たたか>い	Outcast Battle			e2e:collection/figures|e2e:collection/misc	NA2_ETC@0x2de70	NUN5_TEXTENG@0x3e88	slot	40				
+T628	1	Collection > Characters > Diorama title	<r運命|うんめい>の<r再会|さいかい>	Fateful Reunion			e2e:collection/figures|e2e:collection/misc	NA2_ETC@0x2df50	NUN5_TEXTENG@0x3ea0	slot	40				
+T629	1	Collection > Characters > Diorama title	<r漆黒|しっこく>に<r浮|う>かぶ<r影|かげ>	The Pitch-Black Shadow			e2e:collection/figures|e2e:collection/misc	NA2_ETC@0x2dff0	NUN5_TEXTENG@0x3eb0	slot	48				
 T630	1	Collection > Movies > movie title	<ruby再会|さいかい>の<ruby時|とき>・<ruby壱|いち>	Reunion Time I			e2e:collection/misc	NA2_SLPS@0x2FFBA0	NUN5_TEXTENG@0x28930	slot	64				
 T631	1	Collection > Movies > movie title	<ruby封印術|ふういんじゅつ>・<ruby幻龍九封尽|げんりゅうきゅうふうじん>	Sealing Jutsu: Nine Phantom Dragons			e2e:collection/misc	NA2_SLPS@0x2ffbe0	NUN5_TEXTENG@0x28670	slot	80				
 T632	1	Collection > Movies > movie title	<ruby常闇|とこやみ>の<ruby者|もの>たち	People of Endless Darkness			e2e:collection/misc	NA2_SLPS@0x2ffc30	NUN5_TEXTENG@0x287d0	slot	48				
@@ -854,7 +854,7 @@ T2205	1	Collection > Voice > character voice title	<r自分自身|じぶんじ�
 T2206	1	Collection > Voice > character voice title	<r青春|せいしゅん>フルパワー！！	Youth at Full Power!			e2e:collection/voice	NA2_ETC@0x28730	NUN5_TEXTENG@0x2210	slot	48			NA2_ETC@0x2D0C4	
 T2207	1	Collection > Voice > character voice title	<r勝負開始|しょうぶかいし>	Duel Start			e2e:collection/voice	NA2_ETC@0x2BFC0	NUN5_TEXTENG@0x2948	slot	32			NA2_ETC@0x2D4E4	
 T2208	1	Collection > Voice > character voice title	<r余裕|よゆう>	No Worries			e2e:collection/voice	NA2_ETC@0x2C7A8	NUN5_TEXTENG@0x2B08	slot	24			NA2_ETC@0x2D5A4	
-T2209	1	Collection > non-Figurine top-plaque character name	チヨバア	Granny Chiyo 			e2e:collection/characters	NA2_ETC@0x251E0	NUN5_TEXTENG@0x518	slot	16			NA2_ETC@0x25A68	
+T2209	1	Collection > character name plaque	チヨバア	Granny Chiyo 			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x251E0	NUN5_TEXTENG@0x518	slot	16			NA2_ETC@0x25A68	
 T259	1	Command Chart > character move name	<r鹿蝶封結|かちょうふうげつ>	Kachofuketsu			e2e:movesets	NA2_SLPS@0x49D690	NUN5_TEXTENG@0x78F0	slot	32
 T260	1	Command Chart > character move name	<r涅槃精舎|ねはんしょうじゃ>の<r術|じゅつ>	Temple of Nirvana Technique			character:command-record-index	NA2_SLPS@0x49DE80	NUN5_TEXTENG@0x7960	slot	48
 T825	1	Command Chart > character move name	<r多重影分身|たじゅうかげぶんしん>の<r術|じゅつ>	Multi Shadow Clone Jutsu			e2e:movesets	NA2_SLPS@0x30CA80	NUN5_TEXTENG@0x51C0	slot	64				
@@ -2070,8 +2070,8 @@ T2041	1	Save or Load menu > saving-progress message	”ＰｌａｙＳｔａｔ�
 T2042	1	Save or Load menu > saving-progress message	を<ruby抜|ぬ>かないでください。	Saving to memory card (PS2) in <br>MEMORY CARD slot 1.<br>Please do not remove memory card (PS2), <br>controller, or reset/switch off the console.			inferred:complete-save-progress-message-family-from-paired-screen	NA2_SLPS@0x303FAC	NUN5_TEXTENG@0x29350	slot	36	join_br_parts	parts=2,3;join=<br>	NA2_SLPS@0x5030B4	T2011
 T1	1	Shared game modal > Yes or No choice	はい	Yes			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x503110	NUN5_SLES@0x513E50	slot	5				
 T2024	1	Shared game modal > Yes or No choice	いいえ	No			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x503118	NUN5_SLES@0x513E4C	slot	7				
-T2025	1	Shared game modal > Yes or No choice	いいえ	No			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x504668	NUN5_SLES@0x513E4C	slot	7				
-T2026	1	Shared game modal > Yes or No choice	は　い	Yes			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x504670	NUN5_SLES@0x513E50	slot	8				
+T2025	1	Shared game modal > Yes or No choice	いいえ	No			e2e:collection/misc	NA2_SLPS@0x504668	NUN5_SLES@0x513E4C	slot	7				
+T2026	1	Shared game modal > Yes or No choice	は　い	Yes			e2e:collection/misc	NA2_SLPS@0x504670	NUN5_SLES@0x513E50	slot	8				
 T2035	1	Startup and save flow > memory-card prompt or status	ＭＥＭＯＲＹ ＣＡＲＤ<ruby差込口|さしこみぐち>１に<NUL>”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）が<NUL><ruby差|さ>されていません。	No memory card (PS2) is inserted in <br>MEMORY CARD slot 1.<br>Please insert a memory card (PS2) in<br>MEMORY CARD slot 1.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x3039E0	NUN5_TEXTENG@0x29060	sequence	160	split_br_sequence	parts=0,1,2,3		
 T2036	1	Startup and save flow > memory-card prompt or status	ＭＥＭＯＲＹ ＣＡＲＤ<ruby差込口|さしこみぐち>１の<NUL>”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）が<NUL>フォーマットされていません。	The memory card (PS2) in <br>MEMORY CARD slot 1 is unformatted.<br>Format memory card (PS2)?			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x303C40	NUN5_TEXTENG@0x291D0	sequence	160	split_br_sequence	parts=0,1		
 T2037	1	Startup and save flow > memory-card prompt or status	”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）<NUL>をフォーマットしますか？	The memory card (PS2) in <br>MEMORY CARD slot 1 is unformatted.<br>Format memory card (PS2)?			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x303CE0	NUN5_TEXTENG@0x291D0	sequence	112	split_br_sequence	parts=2		

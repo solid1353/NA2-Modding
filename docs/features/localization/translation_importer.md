@@ -14,7 +14,7 @@ in [translation importer knowledge](../../knowledge/localization/translation_imp
 ## Mapping metadata
 
 - Canonical `mappings.tsv` rows: `2,088`
-- Canonical `mappings.tsv` SHA-256: `AA7EBA6BACEDEBBCC5361FF0E37D67CB53A782D3842DE2687BFBABCB31B6929D`
+- Canonical `mappings.tsv` SHA-256: `101AF784C6EA78425DB3DF70ABCBDCB99BCE21F68EBCD951FAC883C568F7A3BE`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the builder's configuration-resource fingerprint own content identity.
@@ -80,7 +80,7 @@ Canonical `mappings.tsv` contains 2,088 enabled `T#` rows admitted by exact
 display evidence or a documented structural-family basis, sorted by
 `display_context` and numeric ID. Exact source, source reference, mode, and
 capacity are guarded by the canonical row declarations. The current accepted
-E2E suites exercise 1,766 unique rows; 322 rows retain a non-E2E basis. T2042,
+E2E suites exercise 1,765 unique rows; 323 rows retain a non-E2E basis. T2042,
 T2045, and T2050 use canonical parent IDs `T2011`, `T2043`, and `T2048`.
 Paired screenshots correct three reference-table errors: T1956 uses `Off` at
 `NUN5_SLES@0x513EF8`, T1957 uses `On` at `NUN5_SLES@0x513EFC`, and T2158 uses

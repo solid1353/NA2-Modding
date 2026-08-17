@@ -11,8 +11,6 @@ param(
     [Parameter(Mandatory, ParameterSetName = 'Publish')]
     [string]$CaptureRoot,
     [string]$MovesetRange,
-    [ValidateSet('all', 'base', 'specials', 'idle')]
-    [string]$MovesetFamily,
     [string]$ConcurrencyPoolRoot,
     [ValidateRange(1, 64)]
     [int]$ConcurrencyLimit = 16
@@ -33,7 +31,7 @@ if (-not (Test-VisualRegressionSuiteExists -Context $context)) {
     throw "Visual-regression suite does not exist: $Suite"
 }
 if (-not [string]::IsNullOrWhiteSpace($MovesetRange) -and -not $context.Generated) {
-    throw 'MovesetRange is valid only for the movesets suite.'
+    throw 'MovesetRange is valid only for a generated character suite.'
 }
 if ($context.Generated) {
     if ($PSCmdlet.ParameterSetName -ceq 'Capture') {
@@ -48,9 +46,7 @@ if ($context.Generated) {
         if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
             $generatedArguments.MovesetRange = $MovesetRange
         }
-        $generatedArguments.MovesetFamily = $(if ($PSBoundParameters.ContainsKey('MovesetFamily')) {
-            $MovesetFamily
-        } else { $context.GeneratedFamily })
+        $generatedArguments.MovesetFamily = $context.GeneratedFamily
         & $context.GeneratedScript @generatedArguments
         $capturedGrids = Join-Path $CaptureOutputRoot $script:E2eScreenshotGridDirectory
         if (@(Get-ChildItem -LiteralPath $capturedGrids -Filter '*.png' -File).Count -eq 0) {
@@ -89,9 +85,7 @@ if ($context.Generated) {
             if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
                 $generatedArguments.MovesetRange = $MovesetRange
             }
-            $generatedArguments.MovesetFamily = $(if ($PSBoundParameters.ContainsKey('MovesetFamily')) {
-                $MovesetFamily
-            } else { $context.GeneratedFamily })
+            $generatedArguments.MovesetFamily = $context.GeneratedFamily
             & $context.GeneratedScript @generatedArguments
         }
         $generatedPublishRoot = Join-Path `
@@ -105,7 +99,9 @@ if ($context.Generated) {
             -OutputRoot $generatedPublishRoot `
             -Comparator $context.Comparator `
             -CapturedTier Reference `
-            -PreserveCapturedTier:($context.GeneratedFamily -cne 'all' -or
+            -PreserveCapturedTier:(-not (
+                    Test-VisualRegressionGeneratedSuiteRoot -Suite $context.Suite
+                ) -or
                 -not [string]::IsNullOrWhiteSpace($MovesetRange))
         Publish-VisualRegressionTransaction `
             -Replacements ([ordered]@{ ($context.CaptureRoot) = $generatedPublishRoot }) `

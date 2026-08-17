@@ -27,8 +27,8 @@ $recordings = @(
         Get-ChildItem -LiteralPath $recordingRoot -Filter '*.p2m2' -File -Recurse |
             Where-Object {
                 $relative = [IO.Path]::GetRelativePath($recordingRoot, $_.FullName)
-                $segments = $relative.Split([IO.Path]::DirectorySeparatorChar)
-                $segments[0] -ine $script:E2eGeneratedSuiteName
+                $suite = $relative.Substring(0, $relative.Length - 5).Replace('\', '/')
+                -not (Test-VisualRegressionGeneratedSuiteNamespace -Suite $suite)
             } |
             Sort-Object FullName |
             ForEach-Object {
@@ -39,19 +39,21 @@ $recordings = @(
                     Generated = $false
                 }
             }
-        $generatedContext = Get-VisualRegressionContext -Suite $script:E2eGeneratedSuiteName
-        if (Test-VisualRegressionSuiteExists -Context $generatedContext) {
-            [pscustomobject]@{
-                Path = $null
-                Suite = $generatedContext.Suite
-                Generated = $true
+        foreach ($generatedSuite in $script:E2eGeneratedSuiteNames) {
+            $generatedContext = Get-VisualRegressionContext -Suite $generatedSuite
+            if (Test-VisualRegressionSuiteExists -Context $generatedContext) {
+                [pscustomobject]@{
+                    Path = $null
+                    Suite = $generatedContext.Suite
+                    Generated = $true
+                }
             }
         }
     }
     else {
         $context = Get-VisualRegressionContext -Suite $Suite
         if ($context.GeneratedNamespace -and -not $context.Generated) {
-            throw "The '$($script:E2eGeneratedSuiteName)' E2E suite namespace is generated."
+            throw "The E2E suite namespace is generated: $($context.Suite)"
         }
         if ($context.Generated) {
             if (-not (Test-VisualRegressionSuiteExists -Context $context)) {
@@ -85,7 +87,7 @@ if ($recordings.Count -eq 0) {
 $movesetRangeSpecified = -not [string]::IsNullOrWhiteSpace($MovesetRange)
 if ($movesetRangeSpecified -and
     ($All.IsPresent -or $recordings.Count -ne 1 -or -not $recordings[0].Generated)) {
-    throw 'MovesetRange requires the movesets suite to be selected by itself.'
+    throw 'MovesetRange requires one generated character suite.'
 }
 if ($movesetRangeSpecified) {
     $characterData = @(
@@ -101,7 +103,7 @@ if ($movesetRangeSpecified) {
 $partialGeneratedSelection = $movesetRangeSpecified -or (
     $recordings.Count -eq 1 -and
     $recordings[0].Generated -and
-    (Get-VisualRegressionGeneratedSuiteFamily -Suite $recordings[0].Suite) -cne 'all'
+    -not (Test-VisualRegressionGeneratedSuiteRoot -Suite $recordings[0].Suite)
 )
 
 $inputIdentity = @(
@@ -117,13 +119,12 @@ $inputIdentity = @(
         $generatedInputs = @(
             Join-Path ([string]$paths.resources) 'character_data.tsv'
             Join-Path ([string]$paths.resources) 'movesets.tsv'
-            Get-ChildItem `
-                -LiteralPath (Join-Path $recordingRoot $script:E2eGeneratedSuiteName) `
-                -Filter '*.p2m2' `
-                -File `
-                -ErrorAction SilentlyContinue |
-                Select-Object -ExpandProperty FullName
-        )
+            foreach ($generatedRecording in @($recordings | Where-Object Generated)) {
+                Get-VisualRegressionGeneratedInputPaths `
+                    -RecordingRepository $recordingRoot `
+                    -Suite $generatedRecording.Suite
+            }
+        ) | Sort-Object -Unique
         foreach ($path in $generatedInputs) {
             [ordered]@{
                 path = [IO.Path]::GetRelativePath($repository, $path).Replace('\', '/')

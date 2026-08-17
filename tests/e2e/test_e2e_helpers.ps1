@@ -84,6 +84,24 @@ try {
         ) `
         -Message 'Movesets range parsing or character-data row bounds regressed.'
 
+    $idlePagePlans = @(
+        Get-VisualRegressionIdlePagePlans `
+            -FirstRow 8 `
+            -LastRow 14 `
+            -CharacterCount 20
+    )
+    Assert-E2eHelperTest `
+        -Condition (
+            $idlePagePlans.Count -eq 2 -and
+            $idlePagePlans[0].Page -eq 2 -and
+            $idlePagePlans[0].FirstCharacterIndex -eq 6 -and
+            $idlePagePlans[0].LastCharacterIndex -eq 11 -and
+            $idlePagePlans[1].Page -eq 3 -and
+            $idlePagePlans[1].FirstCharacterIndex -eq 12 -and
+            $idlePagePlans[1].LastCharacterIndex -eq 17
+        ) `
+        -Message 'Idle range selection did not expand to complete fixed 3x2 pages.'
+
     $poolRoot = Join-Path $testRoot 'shared-concurrency-pool'
     $poolPermit = Enter-VisualRegressionConcurrencyPool -Root $poolRoot -Capacity 1
     $poolReady = Join-Path $poolRoot 'waiter-ready'
@@ -212,7 +230,7 @@ param(
     $generatedScriptRoot = Join-Path $generatedDiscoveryRoot 'scripts'
     [void](New-Item -ItemType Directory -Path `
         (Join-Path $generatedSuiteRoot 'collection'), `
-        (Join-Path $generatedSuiteRoot 'movesets'), `
+        (Join-Path $generatedSuiteRoot 'characters\movesets'), `
         $generatedScriptRoot `
         -Force)
     [IO.File]::WriteAllText(
@@ -220,7 +238,15 @@ param(
         'recording'
     )
     [IO.File]::WriteAllText(
-        (Join-Path $generatedSuiteRoot 'movesets\base.p2m2'),
+        (Join-Path $generatedSuiteRoot 'characters\movesets\base.p2m2'),
+        'generated input, not a suite'
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedSuiteRoot 'characters\movesets\specials.p2m2'),
+        'generated input, not a suite'
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedSuiteRoot 'characters\idle.p2m2'),
         'generated input, not a suite'
     )
     [IO.File]::WriteAllText(
@@ -231,17 +257,27 @@ param(
         Get-VisualRegressionSuiteNames -RecordingRepository $generatedSuiteRoot
     )
     Assert-E2eHelperTest `
-        -Condition (($generatedSuiteNames -join ',') -ceq 'collection/test,movesets') `
-        -Message 'Generated suite discovery did not add movesets or exclude its input recordings.'
-    $generatedIdleContext = Get-VisualRegressionContext -Suite 'movesets/idle'
+        -Condition (
+            ($generatedSuiteNames -join ',') -ceq (
+                'characters/idle,characters/movesets,collection/test'
+            )
+        ) `
+        -Message 'Generated suite discovery did not add character suites or exclude their inputs.'
+    $generatedIdleContext = Get-VisualRegressionContext -Suite 'characters/idle'
+    $generatedMovesetContext = Get-VisualRegressionContext `
+        -Suite 'characters/movesets/specials'
     Assert-E2eHelperTest `
         -Condition (
             $generatedIdleContext.Generated -and
             $generatedIdleContext.GeneratedFamily -ceq 'idle' -and
-            $generatedIdleContext.SuiteRelativePath -ceq 'movesets' -and
-            [IO.Path]::GetFileName($generatedIdleContext.CaptureRoot) -ceq 'movesets'
+            $generatedIdleContext.SuiteRelativePath -ceq 'characters\idle' -and
+            [IO.Path]::GetFileName($generatedIdleContext.CaptureRoot) -ceq 'idle' -and
+            $generatedMovesetContext.Generated -and
+            $generatedMovesetContext.GeneratedFamily -ceq 'specials' -and
+            $generatedMovesetContext.SuiteRelativePath -ceq 'characters\movesets' -and
+            [IO.Path]::GetFileName($generatedMovesetContext.CaptureRoot) -ceq 'movesets'
         ) `
-        -Message 'Generated moveset sub-suite selection did not retain the shared capture root.'
+        -Message 'Generated character suite selection did not resolve split capture roots.'
 
     $generatedStageRoot = Join-Path $testRoot 'generated-grid-stage'
     $existingGrids = Join-Path $generatedStageRoot 'existing'
@@ -298,7 +334,7 @@ param(
     $generatedRunRepository = Join-Path $testRoot 'generated-run-repository'
     $generatedRunRoot = Join-Path $generatedRunRepository 'e2e'
     $generatedRunScripts = Join-Path $generatedRunRoot 'scripts'
-    $generatedRunCapture = Join-Path $generatedRunRoot 'captures\movesets\screenshots'
+    $generatedRunCapture = Join-Path $generatedRunRoot 'captures\characters\movesets\screenshots'
     $generatedRunResources = Join-Path $generatedRunRepository 'resources'
     $generatedRunRecordings = Join-Path $generatedRunRepository 'pcsx2_files\input_recordings'
     $generatedRunLibrary = Join-Path $generatedRunRepository 'scripts\lib'
@@ -309,7 +345,7 @@ param(
         $generatedRunScripts, `
         $generatedRunCapture, `
         $generatedRunResources, `
-        (Join-Path $generatedRunRecordings 'e2e\movesets'), `
+        (Join-Path $generatedRunRecordings 'e2e\characters\movesets'), `
         $generatedRunLibrary, `
         $generatedRunComparatorRoot `
         -Force)
@@ -334,7 +370,11 @@ param(
         "character`tid`nNaruto`t1`n"
     )
     [IO.File]::WriteAllText(
-        (Join-Path $generatedRunRecordings 'e2e\movesets\base.p2m2'),
+        (Join-Path $generatedRunRecordings 'e2e\characters\movesets\base.p2m2'),
+        'recording'
+    )
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedRunRecordings 'e2e\characters\movesets\specials.p2m2'),
         'recording'
     )
     [IO.File]::WriteAllText(
@@ -441,11 +481,11 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
         'stale current grid'
     )
     [IO.File]::WriteAllText(
-        (Join-Path $generatedRunRoot 'captures\movesets\stale.txt'),
+        (Join-Path $generatedRunRoot 'captures\characters\movesets\stale.txt'),
         'stale generated artifact'
     )
     $generatedRunOutput = @(& (Join-Path $generatedRunScripts 'run.ps1') `
-        -Suite 'movesets' `
+        -Suite 'characters/movesets' `
         -Shifted *>&1 | ForEach-Object { [string]$_ })
     $generatedProgressLines = @(
         $generatedRunOutput |
@@ -462,27 +502,27 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
             [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-limit-shifted.txt')) -ceq '16' -and
             (Test-Path -LiteralPath (Join-Path `
                 $generatedRunRoot `
-                'captures\movesets\pairs\002-naruto-base.png')) -and
+                'captures\characters\movesets\pairs\002-naruto-base.png')) -and
             (Test-Path -LiteralPath (Join-Path `
                 $generatedRunRoot `
-                'captures\movesets\blends\002-naruto-base.png')) -and
+                'captures\characters\movesets\blends\002-naruto-base.png')) -and
             (Test-Path -LiteralPath (Join-Path `
                 $generatedRunRoot `
-                'captures\movesets\diffs\002-naruto-base.png')) -and
+                'captures\characters\movesets\diffs\002-naruto-base.png')) -and
             (Test-Path -LiteralPath (Join-Path `
                 $generatedRunRoot `
-                'captures\movesets\all\002-naruto-base-a-reference.png')) -and
+                'captures\characters\movesets\all\002-naruto-base-a-reference.png')) -and
             (Test-Path -LiteralPath (Join-Path `
                 $generatedRunRoot `
-                'captures\movesets\all\002-naruto-base_c_blend.png')) -and
+                'captures\characters\movesets\all\002-naruto-base_c_blend.png')) -and
             (Test-Path -LiteralPath (Join-Path `
                 $generatedRunRoot `
-                'captures\movesets\all\002-naruto-base_d_diff.png')) -and
+                'captures\characters\movesets\all\002-naruto-base_d_diff.png')) -and
             -not (Test-Path -LiteralPath (Join-Path `
                 $generatedRunRoot `
-                'captures\movesets\all\002-naruto-base_e_pair.png')) -and
+                'captures\characters\movesets\all\002-naruto-base_e_pair.png')) -and
             -not (Test-Path -LiteralPath (
-                Join-Path $generatedRunRoot 'captures\movesets\stale.txt'
+                Join-Path $generatedRunRoot 'captures\characters\movesets\stale.txt'
             )) -and
             $generatedProgressLines.Count -eq 1 -and
             $generatedProgressLines[0] -match (
@@ -505,7 +545,7 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
         'invalid generated artifact'
     )
     & (Join-Path $generatedRunScripts 'run.ps1') `
-        -Suite 'movesets' `
+        -Suite 'characters/movesets' `
         -MovesetRange '2' | Out-Null
     Assert-E2eHelperTest `
         -Condition (
@@ -523,14 +563,14 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
     $generatedReferenceRepository = Join-Path $generatedRunRepository 'captured-reference'
     $generatedReferenceCapture = Join-Path `
         $generatedReferenceRepository `
-        'movesets\screenshots'
+        'characters\movesets\screenshots'
     [void](New-Item -ItemType Directory -Path $generatedReferenceCapture -Force)
     [IO.File]::WriteAllText(
         (Join-Path $generatedReferenceCapture '002-naruto-base-a-reference.png'),
         'refreshed reference grid'
     )
     & (Join-Path $generatedRunScripts 'publish_references.ps1') `
-        -Suite 'movesets' `
+        -Suite 'characters/movesets' `
         -CapturedRepository $generatedReferenceRepository `
         -CaptureRepository (Join-Path $generatedRunRoot 'captures') `
         -PreserveGeneratedTier | Out-Null
@@ -567,7 +607,7 @@ $grids = Join-Path $OutputRoot 'screenshots'
     )
     $coordinatedReferenceCapture = Join-Path $generatedRunRepository 'coordinated-reference'
     & (Join-Path $generatedRunScripts 'reference.ps1') `
-        -Suite 'movesets' `
+        -Suite 'characters/movesets' `
         -Game 'nun5' `
         -CaptureOutputRoot $coordinatedReferenceCapture `
         -MovesetRange '2' `
@@ -1462,7 +1502,7 @@ foreach ($suiteName in $suites) {
             -RecordingRepository $fakeRecordings
     )
     Assert-E2eHelperTest `
-        -Condition (($suiteNames -join ',') -ceq 'movesets,test/no_reference,test/with_reference') `
+        -Condition (($suiteNames -join ',') -ceq 'test/no_reference,test/with_reference') `
         -Message 'Flat .p2m2 suite discovery did not return canonical extensionless names.'
 
     $sourceCaptureRoot = Join-Path $fakeRepository 'e2e\captures\test\with_reference'
@@ -1536,7 +1576,9 @@ foreach ($suiteName in $suites) {
         -Message 'Leaf capture removal changed canonical recordings or retained empty capture parents.'
 
     $fakeGeneratedScript = Join-Path $fakeScripts 'movesets.ps1'
-    $fakeMovesetInput = Join-Path $fakeRecordings 'movesets\base.p2m2'
+    $fakeMovesetInput = Join-Path $fakeRecordings 'characters\movesets\base.p2m2'
+    $fakeSpecialsInput = Join-Path $fakeRecordings 'characters\movesets\specials.p2m2'
+    $fakeIdleInput = Join-Path $fakeRecordings 'characters\idle.p2m2'
     [void](New-Item -ItemType Directory -Path (Split-Path -Parent $fakeMovesetInput) -Force)
     [IO.File]::WriteAllText(
         (Join-Path $fakeResources 'character_data.tsv'),
@@ -1547,15 +1589,19 @@ foreach ($suiteName in $suites) {
         "character`tid`nNaruto`t1`n"
     )
     [IO.File]::WriteAllText($fakeMovesetInput, 'generated suite input')
+    [IO.File]::WriteAllText($fakeSpecialsInput, 'generated suite input')
+    [IO.File]::WriteAllText($fakeIdleInput, 'generated suite input')
     [IO.File]::WriteAllText($fakeGeneratedScript, '# generated suite')
-    & (Join-Path $fakeScripts 'create_suite.ps1') -Suite 'movesets' -NoReference
-    $fakeGeneratedCapture = Join-Path $fakeRepository 'e2e\captures\movesets'
+    & (Join-Path $fakeScripts 'create_suite.ps1') `
+        -Suite 'characters/movesets' `
+        -NoReference
+    $fakeGeneratedCapture = Join-Path $fakeRepository 'e2e\captures\characters\movesets'
     [IO.File]::WriteAllText(
         (Join-Path $fakeGeneratedCapture 'preserved.txt'),
         'preserved ranged history'
     )
     & (Join-Path $fakeScripts 'create_suite.ps1') `
-        -Suite 'movesets' `
+        -Suite 'characters/movesets' `
         -MovesetRange '2' `
         -NoReference
     Assert-E2eHelperTest `
@@ -1565,21 +1611,23 @@ foreach ($suiteName in $suites) {
                 [IO.File]::ReadAllText((Join-Path $fakeScripts 'run-pool.txt'))
             ) -and
             [IO.File]::ReadAllText((Join-Path $fakeScripts 'run-throttle.txt')) -ceq '16' -and
-            @(Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt'))[-1] -ceq 'run suite=movesets shifted=False range=2'
+            @(Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt'))[-1] -ceq (
+                'run suite=characters/movesets shifted=False range=2'
+            )
         ) `
         -Message 'Ranged generated creation did not preserve existing history or pass its range to the run.'
     $generatedRenameRejected = $false
     try {
         & (Join-Path $fakeScripts 'rename_suite.ps1') `
-            -Suite 'movesets' `
+            -Suite 'characters/movesets' `
             -NewSuite 'renamed-movesets'
     }
     catch {
         $generatedRenameRejected = $_.Exception.Message -ceq (
-            "The generated E2E suite 'movesets' cannot be renamed."
+            'Generated E2E suites cannot be renamed.'
         )
     }
-    & (Join-Path $fakeScripts 'remove_suite.ps1') -Suite 'movesets'
+    & (Join-Path $fakeScripts 'remove_suite.ps1') -Suite 'characters/movesets'
     $postRemoveGeneratedNames = @(
         Get-VisualRegressionSuiteNames `
             -RecordingRepository $fakeRecordings
@@ -1589,7 +1637,8 @@ foreach ($suiteName in $suites) {
             (Test-Path -LiteralPath $fakeMovesetInput -PathType Leaf) -and
             -not (Test-Path -LiteralPath $fakeGeneratedCapture) -and
             $generatedRenameRejected -and
-            $postRemoveGeneratedNames -ccontains 'movesets'
+            $postRemoveGeneratedNames -ccontains 'characters/movesets' -and
+            $postRemoveGeneratedNames -ccontains 'characters/idle'
         ) `
         -Message 'Generated suite create, rename, or capture-history removal semantics regressed.'
     $fakeCaptureGit = Join-Path $fakeRepository 'e2e\captures\.git'
@@ -1597,7 +1646,7 @@ foreach ($suiteName in $suites) {
     $fakeCaptureIgnore = Join-Path $fakeRepository 'e2e\captures\.gitignore'
     $orphanCapture = Join-Path $fakeRepository 'e2e\captures\orphan'
     $generatedRecording = Join-Path $fakeRecordings '__generated\transient.p2m2'
-    $movesetInputRecording = Join-Path $fakeRecordings 'movesets\base.p2m2'
+    $movesetInputRecording = Join-Path $fakeRecordings 'characters\movesets\base.p2m2'
     [void](New-Item -ItemType Directory -Path $fakeCaptureGit, $orphanCapture -Force)
     [void](New-Item -ItemType Directory -Path `
         ([IO.Path]::GetDirectoryName($generatedRecording)), `
@@ -1624,14 +1673,17 @@ foreach ($suiteName in $suites) {
     )
     Assert-E2eHelperTest `
         -Condition (
-            ($bulkSuiteNames -join ',') -ceq '__generated/transient,movesets,orphan,renamed/with_reference,renamed/with_reference/child,test/no_reference' -and
+            ($bulkSuiteNames -join ',') -ceq '__generated/transient,characters/idle,characters/movesets,orphan,renamed/with_reference,renamed/with_reference/child,test/no_reference' -and
             (Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt') | Select-Object -Last 1) `
-                -ceq 'run suite=__generated/transient,orphan,renamed/with_reference,renamed/with_reference/child,test/no_reference,movesets shifted=False' -and
+                -ceq 'run suite=__generated/transient,orphan,renamed/with_reference,renamed/with_reference/child,test/no_reference,characters/movesets,characters/idle shifted=False' -and
             (Test-Path -LiteralPath (
                 Join-Path $fakeRepository 'e2e\captures\test\no_reference\current.txt'
             ) -PathType Leaf) -and
             (Test-Path -LiteralPath (
-                Join-Path $fakeRepository 'e2e\captures\movesets\current.txt'
+                Join-Path $fakeRepository 'e2e\captures\characters\movesets\current.txt'
+            ) -PathType Leaf) -and
+            (Test-Path -LiteralPath (
+                Join-Path $fakeRepository 'e2e\captures\characters\idle\current.txt'
             ) -PathType Leaf) -and
             (Test-Path -LiteralPath $orphanSuite -PathType Leaf) -and
             (Test-Path -LiteralPath (Join-Path $orphanCapture 'current.txt') -PathType Leaf) -and

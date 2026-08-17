@@ -28,8 +28,8 @@ if (-not (Test-VisualRegressionSuiteExists -Context $context)) {
     throw "E2E suite does not exist: $($context.Suite)"
 }
 if ($context.Generated) {
-    if ($context.GeneratedFamily -cne 'all') {
-        throw 'Generated moveset sub-suites cannot be removed independently.'
+    if (-not (Test-VisualRegressionGeneratedSuiteRoot -Suite $context.Suite)) {
+        throw 'Generated E2E sub-suites cannot be removed independently.'
     }
     if (Test-Path -LiteralPath $context.CaptureRoot -PathType Container) {
         Remove-Item -LiteralPath $context.CaptureRoot -Recurse -Force

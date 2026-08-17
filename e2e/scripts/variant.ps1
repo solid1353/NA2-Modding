@@ -4,8 +4,6 @@ param(
     [Parameter(Mandatory)][string]$Transaction,
     [string[]]$Suite,
     [string]$MovesetRange,
-    [ValidateSet('all', 'base', 'specials', 'idle')]
-    [string]$MovesetFamily = 'all',
     [Parameter(Mandatory)][string]$ConcurrencyPoolRoot,
     [ValidateRange(1, 64)]
     [int]$ConcurrencyLimit = 16
@@ -49,16 +47,9 @@ $suites = @(
 if ($suites.Count -eq 0) {
     throw 'No E2E suites are available.'
 }
-$generatedSelection = @($suites | Where-Object {
-    Test-VisualRegressionGeneratedSuite -Suite $_
-}) | Select-Object -First 1
-if ($null -ne $generatedSelection -and
-    -not $PSBoundParameters.ContainsKey('MovesetFamily')) {
-    $MovesetFamily = Get-VisualRegressionGeneratedSuiteFamily -Suite $generatedSelection
-}
 if (-not [string]::IsNullOrWhiteSpace($MovesetRange) -and
     ($suites.Count -ne 1 -or -not (Test-VisualRegressionGeneratedSuite -Suite $suites[0]))) {
-    throw 'MovesetRange requires the movesets suite to be selected by itself.'
+    throw 'MovesetRange requires one generated character suite.'
 }
 
 $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
@@ -373,7 +364,7 @@ try {
             [bool]$context.Generated
         ), $context.GeneratedScript, $ConcurrencyLimit, (
             $ConcurrencyPoolRoot
-        ), $MovesetRange, $MovesetFamily
+        ), $MovesetRange, $context.GeneratedFamily
         $replayJobs.Add($replayJob)
     }
 

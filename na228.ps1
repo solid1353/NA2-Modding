@@ -114,7 +114,7 @@ if ($mode -eq 'help') {
         ''
         '  na228 e2e [<suite> [<range>]] [-s]  Run all E2E suites or one suite; -s adds shifted'
         '  na228 e2e create <all|suite> [<range>] [-noref]  Rebuild with NUN5 reference by default'
-        '  <range>                     Movesets character-data row or inclusive rows: 8 or 8-18'
+        '  <range>                     Generated character-data row or inclusive rows: 8 or 8-18'
         '  na228 e2e rename <suite> <new-suite>  Rename a recording-backed suite and its capture history'
         '  na228 e2e remove <all|suite>           Remove capture history'
         '  na228 e2e commit [-p]                  Commit captures; -p preserves capture commits'
@@ -186,7 +186,7 @@ if ($mode -eq 'e2e') {
             $runArguments.Suite = $runOperands[0]
         }
         if ($runOperands.Count -eq 2) {
-            if ($runOperands[0] -inotmatch '^movesets(?:/(?:base|specials|idle))?$' -or
+            if ($runOperands[0] -inotmatch '^characters/(?:movesets(?:/(?:base|specials))?|idle)$' -or
                 $runOperands[1] -notmatch '^\d+(?:-\d+)?$') {
                 throw $runUsage
             }
@@ -216,7 +216,7 @@ if ($mode -eq 'e2e') {
             throw $createUsage
         }
         if ($createOperands.Count -eq 2 -and
-            ($createOperands[0] -inotmatch '^movesets(?:/(?:base|specials|idle))?$' -or
+            ($createOperands[0] -inotmatch '^characters/(?:movesets(?:/(?:base|specials))?|idle)$' -or
                 $createOperands[1] -notmatch '^\d+(?:-\d+)?$')) {
             throw $createUsage
         }

@@ -19,38 +19,40 @@ na228 e2e commit [-p]
 independent lane invoked with `na228 test`.
 
 With no suite selector, E2E execution covers the complete maintained suite set.
-Supplying a suite runs only that suite. `movesets` additionally accepts one
-physical `character_data.tsv` row or an inclusive row range, such as `8` or
-`8-18`; omitting the range selects every character row. Other suites do not
-accept a range.
+Supplying a suite runs only that suite. The generated `characters/movesets` and
+`characters/idle` suites additionally accept one physical `character_data.tsv`
+row or an inclusive row range, such as `8` or `8-18`; omitting the range selects
+every character row. Other suites do not accept a range.
 
-`movesets` is a code-owned generated suite. It expands `resources/movesets.tsv`
-over the fixed recordings in `pcsx2_files/input_recordings/e2e/movesets/` and
-publishes flat screenshot, pair, blend, and diff artifacts. Select
-`movesets/base`, `movesets/specials`, or `movesets/idle` to update only that
-output family; each selector accepts the same optional character-data row
-range. `base` includes the normal base output and unique awakening modes.
-`idle` emits one case for every selected character row, including second forms.
+`characters/movesets` expands `resources/movesets.tsv` over the fixed base and
+specials recordings and publishes per-character base, unique awakening-mode,
+and specials grids. Select `characters/movesets/base` or
+`characters/movesets/specials` to update only that output family.
+`characters/idle` replays every selected character, including second forms, and
+combines their idle screenshots into sequential fixed 3×2 pages. A ranged idle
+run expands to the complete affected pages so unselected cells are preserved.
 
 `-s` adds the shifted E2E Test build and replays the same suites against it.
 Every normal and shifted capture must match.
 
 `e2e create all` replaces all capture history except the nested capture
 repository's `.git` metadata. It processes every `.p2m2` recording below
-`pcsx2_files/input_recordings/e2e/` except the `movesets/` inputs owned by the
-generated suite, prepares one build, and runs
+`pcsx2_files/input_recordings/e2e/` except the inputs owned by the two generated
+character suites, prepares one build, and runs
 every suite's normal replay concurrently. NUN5 reference replays run
 concurrently by default; use `-noref` to skip reference capture. A suite
-selector instead replaces only that suite; selecting `movesets` rebuilds the
-generated suite.
-`e2e create movesets <range>` regenerates only that character-row selection and
-preserves existing moveset grids outside it. The same range syntax is available
-when running `movesets` directly.
+selector instead replaces only that suite; selecting either generated character
+suite rebuilds only that branch.
+`e2e create characters/movesets <range>` and
+`e2e create characters/idle <range>` regenerate only the selected character
+rows or affected idle pages and preserve grids outside them. The same range
+syntax is available when running either suite directly.
 `e2e rename` moves the canonical recording and capture history together;
 `e2e remove` removes capture history for only the named suite while preserving
-descendant suites. Removing `movesets` clears its capture history, but the
-code-owned suite remains available. `e2e remove all` clears all capture history
-while preserving canonical recordings and nested capture Git metadata.
+descendant suites. Removing either generated character suite clears its capture
+history, but the code-owned suite remains available. `e2e remove all` clears all
+capture history while preserving canonical recordings and nested capture Git
+metadata.
 `e2e commit` stages all current capture changes and consolidates them into
 `Initial commit`: a one-commit repository is amended, while a multi-commit
 repository is reset softly to its root and squashed. It then expires reflogs and
@@ -68,8 +70,9 @@ diff branches share a bounded task queue; a failed task cancels its active
 siblings immediately. NUN5 capture overlaps the normal pipeline and its
 artifact publication uses the same bounded scheduling across suites.
 
-Each moveset lane batch-resolves its Practice rows, replays all required cases
-concurrently, and creates each grid as soon as its captures finish. Every PCSX2
+Each generated character lane batch-resolves its Practice rows, replays all
+required cases concurrently, and creates each grid as soon as its captures
+finish. Every PCSX2
 replay in one command—ordinary and generated suites, NUN5 and NA228, and normal,
 shifted, and reference work—draws dynamically from one transaction-scoped
 16-process pool. Unfinished lanes immediately reuse capacity released by work
@@ -89,10 +92,11 @@ Transactions live under `.transactions/<create|run>-<uuid>/`. Active
 transactions record the owning PID/start time and the request identity. A failed
 command retains its complete and partial suite outputs. Rerunning the same
 command automatically continues the newest compatible transaction; suite
-selection, movesets range, shifted/reference mode, and recording or generated-suite input
-hashes must match. Each build lane revalidates its ISO hash, completed suites
-are reused, and only unfinished or incompatible captures run again. Generated
-moveset grids also resume at the individual capture and completed-grid level.
+selection, generated character range, shifted/reference mode, and recording or
+generated-suite input hashes must match. Each build lane revalidates its ISO
+hash, completed suites are reused, and only unfinished or incompatible captures
+run again. Generated
+character grids also resume at the individual capture and completed-grid level.
 Superseded derived stages move under `.attempts/`, while mismatch evidence is
 added without removing replay output. The transaction is removed only after
 canonical publication succeeds.
@@ -117,7 +121,7 @@ main-repository implementation as one coherent delivery.
 ```text
 e2e/
 ├── config.json
-├── scripts/movesets.ps1           # generated movesets suite
+├── scripts/movesets.ps1           # generated character suites
 ├── captures/<suite>/              # nested Git repository
 │   ├── all/                       # ignored hardlink aggregate
 │   ├── screenshots/
@@ -138,23 +142,26 @@ e2e/
 ```text
 pcsx2_files/input_recordings/e2e/
 ├── <folder>/<suite>.p2m2          # ordinary suites, recursively discovered
-└── movesets/
-    ├── base.p2m2
+└── characters/
     ├── idle.p2m2
-    └── specials.p2m2
+    └── movesets/
+        ├── base.p2m2
+        └── specials.p2m2
 ```
 
-The generated `captures/movesets/` layout uses `screenshots/`, `pairs/`,
-`blends/`, and `diffs/`, plus the ignored `all/`
-hardlink aggregate. Screenshot filenames are
-`NNN-character-base|idle|specials|mode-<awakening-id>-a-reference.png` and the
-corresponding `-b-current.png`. Pair, blend, and diff folders use the same case
-name without the tier suffix. The numeric prefix is the physical
-`character_data.tsv` row.
+Generated output is split between `captures/characters/movesets/` and
+`captures/characters/idle/`. Both use `screenshots/`, `pairs/`, `blends/`, and
+`diffs/`, plus the ignored `all/` hardlink aggregate. Moveset screenshot names
+are `NNN-character-base|specials|mode-<awakening-id>-a-reference.png` and the
+corresponding `-b-current.png`; the numeric prefix is the physical
+`character_data.tsv` row. Idle screenshots are paginated as
+`page_<n>-a-reference.png` and `page_<n>-b-current.png`. Pair, blend, and diff
+folders use the same case name without the tier suffix.
 
-A complete generated case containing one screenshot is published as that
-original screenshot. Cases containing two or more screenshots use the fixed
-3×2 compositor.
+A complete moveset case containing one screenshot is published as that original
+screenshot. Cases containing two or more screenshots use the fixed 3×2
+compositor. Idle pages always use the compositor, including a final page with
+only one character.
 
 Existing `sstates/` directories are legacy capture history. Screenshot-only
 replays do not generate or update them.

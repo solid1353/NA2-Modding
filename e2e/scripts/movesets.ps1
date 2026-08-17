@@ -12,8 +12,8 @@ param(
 
     [string]$MovesetRange,
 
-    [ValidateSet('all', 'base', 'specials', 'idle')]
-    [string]$MovesetFamily = 'all',
+    [ValidateSet('movesets', 'base', 'specials', 'idle')]
+    [string]$MovesetFamily = 'movesets',
 
     [ValidateRange(1, 64)]
     [int]$ThrottleLimit = 16,
@@ -163,6 +163,9 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
     }
     $block = $blocksByCharacter[$key]
     $outputNumber = $characterIndex + 2
+    if ($MovesetFamily -ceq 'idle') {
+        continue
+    }
 
     foreach ($awakeningRow in @(
         $block.Rows | Where-Object Kind -CEQ 'awakening'
@@ -203,21 +206,10 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
         Captures = @(
             [pscustomobject]@{
                 Row = $block.Base.Row
-                Recording = 'movesets\base.p2m2'
+                Recording = 'characters\movesets\base.p2m2'
             }
         )
     })
-    [void]$outputPlans.Add([pscustomobject]@{
-        Name = ('{0:D3}-{1}-idle' -f $outputNumber, $slug)
-        Family = 'idle'
-        Captures = @(
-            [pscustomobject]@{
-                Row = $block.Base.Row
-                Recording = 'movesets\idle.p2m2'
-            }
-        )
-    })
-
     $emittedDuplicateBase = $false
     foreach ($awakeningRow in @(
         $block.Rows | Where-Object Kind -CEQ 'awakening'
@@ -241,7 +233,7 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
             Captures = @(
                 [pscustomobject]@{
                     Row = $awakeningRow.Row
-                    Recording = 'movesets\base.p2m2'
+                    Recording = 'characters\movesets\base.p2m2'
                 }
             )
         })
@@ -269,7 +261,7 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
         $specialCaptures = [Collections.Generic.List[object]]::new()
         [void]$specialCaptures.Add([pscustomobject]@{
             Row = $block.Base.Row
-            Recording = 'movesets\specials.p2m2'
+            Recording = 'characters\movesets\specials.p2m2'
         })
         $emittedDuplicatePlusSpecials = $false
         $emittedDuplicateSpecials = $false
@@ -302,14 +294,14 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
             if ($include) {
                 [void]$specialCaptures.Add([pscustomobject]@{
                     Row = $movesetRow.Row
-                    Recording = 'movesets\specials.p2m2'
+                    Recording = 'characters\movesets\specials.p2m2'
                 })
             }
         }
         if ($null -ne $secondFormBlock) {
             [void]$specialCaptures.Add([pscustomobject]@{
                 Row = $secondFormBlock.Base.Row
-                Recording = 'movesets\specials.p2m2'
+                Recording = 'characters\movesets\specials.p2m2'
             })
         }
         [void]$outputPlans.Add([pscustomobject]@{
@@ -320,9 +312,44 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
     }
 }
 
+if ($MovesetFamily -ceq 'idle') {
+    foreach ($idlePage in @(
+        Get-VisualRegressionIdlePagePlans `
+            -FirstRow $firstRow `
+            -LastRow $lastRow `
+            -CharacterCount $characterData.Count
+    )) {
+        $pageCaptures = [Collections.Generic.List[object]]::new()
+        for (
+            $characterIndex = $idlePage.FirstCharacterIndex;
+            $characterIndex -le $idlePage.LastCharacterIndex;
+            $characterIndex++
+        ) {
+            $character = $characterData[$characterIndex]
+            $key = "$($character.character)`t$($character.id)"
+            if (-not $blocksByCharacter.ContainsKey($key)) {
+                throw (
+                    "Character_data.tsv row $($characterIndex + 2) has no matching " +
+                    'movesets.tsv block.'
+                )
+            }
+            [void]$pageCaptures.Add([pscustomobject]@{
+                Row = $blocksByCharacter[$key].Base.Row
+                Recording = 'characters\idle.p2m2'
+            })
+        }
+        [void]$outputPlans.Add([pscustomobject]@{
+            Name = ('page_{0:D2}' -f $idlePage.Page)
+            Family = 'idle'
+            Captures = @($pageCaptures)
+        })
+    }
+}
+
 $selectedOutputPlans = @(
     $outputPlans | Where-Object {
-        $MovesetFamily -ceq 'all' -or $_.Family -ceq $MovesetFamily
+        ($MovesetFamily -ceq 'movesets' -and $_.Family -cin @('base', 'specials')) -or
+            $_.Family -ceq $MovesetFamily
     }
 )
 $practiceRows = @(
@@ -518,6 +545,7 @@ foreach ($outputPlan in $selectedOutputPlans) {
             Name = $outputName
             Captures = @($captureContexts)
             CanonicalVariant = $gameTarget.GridVariant
+            AlwaysGrid = $outputPlan.Family -ceq 'idle'
             GridRoot = $gridRoot
             GridInput = $gridInput
             FinalGrid = $finalGrid
@@ -584,7 +612,7 @@ $gridJobScript = {
                             'screenshots; the fixed 3x2 grid supports at most 6.'
                         )
                     }
-                    if ($slot -eq 1) {
+                    if ($slot -eq 1 -and -not $Context.AlwaysGrid) {
                         Copy-Item `
                             -LiteralPath $singleScreenshot `
                             -Destination $Context.FinalGrid `

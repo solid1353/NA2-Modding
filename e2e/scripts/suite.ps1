@@ -3,7 +3,12 @@ $script:E2eCaptureTiers = [ordered]@{
     Reference = 'reference'
     Current = 'current'
 }
-$script:E2eGeneratedSuiteName = 'movesets'
+$script:E2eGeneratedMovesetSuiteName = 'characters/movesets'
+$script:E2eGeneratedIdleSuiteName = 'characters/idle'
+$script:E2eGeneratedSuiteNames = @(
+    $script:E2eGeneratedMovesetSuiteName,
+    $script:E2eGeneratedIdleSuiteName
+)
 $script:E2eScreenshotKinds = [ordered]@{
     Reference = [pscustomobject]@{ Order = 'a'; Label = 'reference' }
     Current = [pscustomobject]@{ Order = 'b'; Label = 'current' }
@@ -28,7 +33,10 @@ function Test-VisualRegressionGeneratedSuite {
     param([Parameter(Mandatory)][string]$Suite)
 
     $normalized = $Suite.Replace('\', '/').TrimEnd('/')
-    return $normalized -imatch '^movesets(?:/(?:base|specials|idle))?$'
+    return (
+        $normalized -imatch '^characters/movesets(?:/(?:base|specials))?$' -or
+        $normalized -ieq $script:E2eGeneratedIdleSuiteName
+    )
 }
 
 function Get-VisualRegressionGeneratedSuiteFamily {
@@ -38,11 +46,20 @@ function Get-VisualRegressionGeneratedSuiteFamily {
     if (-not (Test-VisualRegressionGeneratedSuite -Suite $normalized)) {
         return $null
     }
-    $segments = @($normalized.Split('/'))
-    if ($segments.Count -eq 1) {
-        return 'all'
+    if ($normalized -ieq $script:E2eGeneratedIdleSuiteName) {
+        return 'idle'
     }
-    return $segments[1].ToLowerInvariant()
+    if ($normalized -ieq $script:E2eGeneratedMovesetSuiteName) {
+        return 'movesets'
+    }
+    return @($normalized.Split('/'))[-1].ToLowerInvariant()
+}
+
+function Test-VisualRegressionGeneratedSuiteRoot {
+    param([Parameter(Mandatory)][string]$Suite)
+
+    $normalized = $Suite.Replace('\', '/').TrimEnd('/')
+    return $script:E2eGeneratedSuiteNames -icontains $normalized
 }
 
 function Resolve-VisualRegressionMovesetRange {
@@ -94,26 +111,87 @@ function Resolve-VisualRegressionMovesetRange {
     }
 }
 
+function Get-VisualRegressionIdlePagePlans {
+    param(
+        [Parameter(Mandatory)][ValidateRange(2, [int]::MaxValue)]
+        [int]$FirstRow,
+        [Parameter(Mandatory)][ValidateRange(2, [int]::MaxValue)]
+        [int]$LastRow,
+        [Parameter(Mandatory)][ValidateRange(1, [int]::MaxValue)]
+        [int]$CharacterCount
+    )
+
+    if ($FirstRow -gt $LastRow -or $LastRow -gt $CharacterCount + 1) {
+        throw 'Idle page rows must be an ascending range within character_data.tsv.'
+    }
+    $firstPage = [Math]::Floor(($FirstRow - 2) / 6) + 1
+    $lastPage = [Math]::Floor(($LastRow - 2) / 6) + 1
+    for ($page = $firstPage; $page -le $lastPage; $page++) {
+        [pscustomobject]@{
+            Page = $page
+            FirstCharacterIndex = ($page - 1) * 6
+            LastCharacterIndex = [Math]::Min(($page * 6) - 1, $CharacterCount - 1)
+        }
+    }
+}
+
 function Test-VisualRegressionGeneratedSuiteNamespace {
     param([Parameter(Mandatory)][string]$Suite)
 
-    $Suite.Replace('\', '/').Split('/')[0].Equals(
-        $script:E2eGeneratedSuiteName,
-        [StringComparison]::OrdinalIgnoreCase
+    $normalized = $Suite.Replace('\', '/').TrimEnd('/')
+    return (
+        $normalized -ieq $script:E2eGeneratedIdleSuiteName -or
+        $normalized.StartsWith(
+            $script:E2eGeneratedIdleSuiteName + '/',
+            [StringComparison]::OrdinalIgnoreCase
+        ) -or
+        $normalized -ieq $script:E2eGeneratedMovesetSuiteName -or
+        $normalized.StartsWith(
+            $script:E2eGeneratedMovesetSuiteName + '/',
+            [StringComparison]::OrdinalIgnoreCase
+        )
     )
 }
 
 function Get-VisualRegressionGeneratedSuiteScript {
     param([Parameter(Mandatory)][string]$Root)
 
-    Join-Path (Join-Path $Root 'scripts') ($script:E2eGeneratedSuiteName + '.ps1')
+    Join-Path (Join-Path $Root 'scripts') 'movesets.ps1'
+}
+
+function Get-VisualRegressionGeneratedInputPaths {
+    param(
+        [Parameter(Mandatory)][string]$RecordingRepository,
+        [Parameter(Mandatory)][string]$Suite
+    )
+
+    $family = Get-VisualRegressionGeneratedSuiteFamily -Suite $Suite
+    [string[]]@(
+        if ($family -cin @('movesets', 'base')) {
+            Join-Path $RecordingRepository 'characters\movesets\base.p2m2'
+        }
+        if ($family -cin @('movesets', 'specials')) {
+            Join-Path $RecordingRepository 'characters\movesets\specials.p2m2'
+        }
+        if ($family -ceq 'idle') {
+            Join-Path $RecordingRepository 'characters\idle.p2m2'
+        }
+    )
 }
 
 function Test-VisualRegressionSuiteExists {
     param([Parameter(Mandatory)][object]$Context)
 
     if ($Context.Generated) {
-        return Test-Path -LiteralPath $Context.GeneratedScript -PathType Leaf
+        if (-not (Test-Path -LiteralPath $Context.GeneratedScript -PathType Leaf)) {
+            return $false
+        }
+        return @(
+            Get-VisualRegressionGeneratedInputPaths `
+                -RecordingRepository $Context.RecordingRepository `
+                -Suite $Context.Suite |
+                Where-Object { -not (Test-Path -LiteralPath $_ -PathType Leaf) }
+        ).Count -eq 0
     }
     if ($Context.GeneratedNamespace) {
         return $false
@@ -447,7 +525,18 @@ function Get-VisualRegressionContext {
     else { $null }
     $recordingRepository = Join-Path $repository 'pcsx2_files\input_recordings\e2e'
     $storageRelativePath = if ($generated) {
-        $script:E2eGeneratedSuiteName
+        if ($generatedFamily -ceq 'idle') {
+            $script:E2eGeneratedIdleSuiteName.Replace(
+                '/',
+                [IO.Path]::DirectorySeparatorChar
+            )
+        }
+        else {
+            $script:E2eGeneratedMovesetSuiteName.Replace(
+                '/',
+                [IO.Path]::DirectorySeparatorChar
+            )
+        }
     }
     else {
         $suiteRelativePath
@@ -501,7 +590,19 @@ function Get-VisualRegressionSuiteNames {
         $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
         $generatedScript = Get-VisualRegressionGeneratedSuiteScript -Root $root
         if (Test-Path -LiteralPath $generatedScript -PathType Leaf) {
-            $script:E2eGeneratedSuiteName
+            foreach ($generatedSuite in $script:E2eGeneratedSuiteNames) {
+                $missingInputs = @(
+                    Get-VisualRegressionGeneratedInputPaths `
+                        -RecordingRepository $RecordingRepository `
+                        -Suite $generatedSuite |
+                        Where-Object {
+                            -not (Test-Path -LiteralPath $_ -PathType Leaf)
+                        }
+                )
+                if ($missingInputs.Count -eq 0) {
+                    $generatedSuite
+                }
+            }
         }
     ) | Sort-Object -Unique
 }

@@ -13,8 +13,8 @@ in [translation importer knowledge](../../knowledge/localization/translation_imp
 
 ## Mapping metadata
 
-- Canonical `mappings.tsv` rows: `2,080`
-- Canonical `mappings.tsv` SHA-256: `FDE2D2C536B0021E2371B4F182E9E54FCEF0E42020AF6026263E16A8E65E2D44`
+- Canonical `mappings.tsv` rows: `2,088`
+- Canonical `mappings.tsv` SHA-256: `676CEF095FBE5F4C86D3EC9F939885B8C04930BFC2A1F5C0772B63A5F66D1BEF`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the builder's configuration-resource fingerprint own content identity.

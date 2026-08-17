@@ -25,6 +25,15 @@ overlap without hiding a shared row from any suite. Generic shared strings such
 as modal `Yes` and `No` remain `seen:` unless the exact table instance used by
 Collection is proven.
 
+The accepted generated Movesets suite contains 146 grids: 74 base-character,
+62 specials, and 10 unique-mode grids. Together they exercise all 74 Command
+Chart record arrays, the separate metadata-selected Ultimate/Jutsu title
+family, and the shared relationship/control vocabulary rendered by those
+records. Every executable mapping row displayed by that accepted set records
+`e2e:movesets`. The character-name plaque and controller icons are localized
+rectangles or textures rather than translation-table rows, so they are outside
+this mapping count.
+
 | Display basis | Covered rows | Proven family |
 | --- | ---: | --- |
 | `e2e:collection/characters` | 31 | 30 shared common names plus the secondary Granny Chiyo plaque field |
@@ -33,6 +42,7 @@ Collection is proven.
 | `e2e:collection/opponents` | 44 | Opponents-only character names and selector label |
 | `e2e:collection/ultimates` | 161 | Collection-owned Ultimate Jutsu title table |
 | `e2e:collection/voice` | 153 | Collection-owned Voice title table and aliases |
+| `e2e:movesets` | 1,272 | 1,065 Command Chart move titles, 154 metadata-selected Ultimate/Jutsu titles, and 53 shared control/help rows |
 
 ## Structural mapping families
 

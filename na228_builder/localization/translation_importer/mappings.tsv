@@ -856,7 +856,7 @@ T2207	1	Collection > Voice > character voice title	<r勝負開始|しょうぶ�
 T2208	1	Collection > Voice > character voice title	<r余裕|よゆう>	No Worries			e2e:collection/voice	NA2_ETC@0x2C7A8	NUN5_TEXTENG@0x2B08	slot	24			NA2_ETC@0x2D5A4	
 T2209	1	Collection > non-Figurine top-plaque character name	チヨバア	Granny Chiyo 			e2e:collection/characters	NA2_ETC@0x251E0	NUN5_TEXTENG@0x518	slot	16			NA2_ETC@0x25A68	
 T259	1	Command Chart > character move name	<r鹿蝶封結|かちょうふうげつ>	Kachofuketsu			e2e:movesets	NA2_SLPS@0x49D690	NUN5_TEXTENG@0x78F0	slot	32
-T260	1	Command Chart > character move name	<r涅槃精舎|ねはんしょうじゃ>の<r術|じゅつ>	Temple of Nirvana Technique			e2e:movesets	NA2_SLPS@0x49DE80	NUN5_TEXTENG@0x7960	slot	48
+T260	1	Command Chart > character move name	<r涅槃精舎|ねはんしょうじゃ>の<r術|じゅつ>	Temple of Nirvana Technique			character:command-record-index	NA2_SLPS@0x49DE80	NUN5_TEXTENG@0x7960	slot	48
 T825	1	Command Chart > character move name	<r多重影分身|たじゅうかげぶんしん>の<r術|じゅつ>	Multi Shadow Clone Jutsu			e2e:movesets	NA2_SLPS@0x30CA80	NUN5_TEXTENG@0x51C0	slot	64				
 T826	1	Command Chart > character move name	<r螺旋丸|らせんがん>	Rasengan			e2e:movesets	NA2_SLPS@0x30CAC0	NUN5_TEXTENG@0x51E0	slot	32				
 T827	1	Command Chart > character move name	<r特攻蹴撃|とっこうしゅうげき>	Charging Kick			e2e:movesets	NA2_SLPS@0x30CAE0	NUN5_TEXTENG@0x51F0	slot	32				
@@ -1684,16 +1684,16 @@ T1647	1	Command Chart > character move name	<r北砕|ほくさい>	North Clash		
 T1648	1	Command Chart > character move name	<r底閃|ていせん>	Bottom Flash			e2e:movesets	NA2_SLPS@0x446030	NUN5_TEXTENG@0xD0F0	slot	32				
 T1649	1	Command Chart > character move name	<r斜落|しゃらく>	Slant Drop			e2e:movesets	NA2_SLPS@0x446050	NUN5_TEXTENG@0xD100	slot	24				
 T1650	1	Command Chart > character move name	<r風刺|ふうし>	Wind Pierce			e2e:movesets	NA2_SLPS@0x446068	NUN5_TEXTENG@0xD110	slot	24				
-T1651	1	Command Chart > character move name	<r仰|あお>ぐ<r大気|そら>	Looking Up at the Air			e2e:movesets	NA2_SLPS@0x446080	NUN5_TEXTENG@0xD120	slot	32				
-T1652	1	Command Chart > character move name	<r過|す>ぐ<r歳月|ながれ>	Passed Years			e2e:movesets	NA2_SLPS@0x4460A0	NUN5_TEXTENG@0xD138	slot	32				
-T1653	1	Command Chart > character move name	<r降|ふ>り<r作礼|さらい>	Falling Bow			e2e:movesets	NA2_SLPS@0x4460C0	NUN5_TEXTENG@0xD148	slot	32				
-T1654	1	Command Chart > character move name	<r絶|た>ち<r終焉|わかれ>	Cut Off End			e2e:movesets	NA2_SLPS@0x4460E0	NUN5_TEXTENG@0xD158	slot	32				
-T1655	1	Command Chart > character move name	<r天|てん>の<r構|かま>え・<r刹|せつ>	Heaven Stance: Pillar			e2e:movesets	NA2_SLPS@0x446100	NUN5_TEXTENG@0xD170	slot	48				
-T1656	1	Command Chart > character move name	<r舞|ま>い<r飛鳥|あすか>	Flying Bird Dance			e2e:movesets	NA2_SLPS@0x446130	NUN5_TEXTENG@0xD190	slot	32				
-T1657	1	Command Chart > character move name	<r地|ち>の<r構|かま>え・<r掩|えん>	Earth Stance: Conceal			e2e:movesets	NA2_SLPS@0x446150	NUN5_TEXTENG@0xD1B0	slot	48				
-T1658	1	Command Chart > character move name	<r這|は>い<r土竜|もぐら>	Crawling Mole			e2e:movesets	NA2_SLPS@0x446180	NUN5_TEXTENG@0xD1C8	slot	32				
-T1659	1	Command Chart > character move name	<r人|じん>の<r構|かま>え・<r斥|せき>	Human Stance: Avoid			e2e:movesets	NA2_SLPS@0x4461A0	NUN5_TEXTENG@0xD1E0	slot	48				
-T1660	1	Command Chart > character move name	<r刺|さ>し<r朱音|あかね>	Scarlet Sonic Pierce			e2e:movesets	NA2_SLPS@0x4461D0	NUN5_TEXTENG@0xD200	slot	32				
+T1651	1	Command Chart > character move name	<r仰|あお>ぐ<r大気|そら>	Looking Up at the Air			character:command-record-index	NA2_SLPS@0x446080	NUN5_TEXTENG@0xD120	slot	32				
+T1652	1	Command Chart > character move name	<r過|す>ぐ<r歳月|ながれ>	Passed Years			character:command-record-index	NA2_SLPS@0x4460A0	NUN5_TEXTENG@0xD138	slot	32				
+T1653	1	Command Chart > character move name	<r降|ふ>り<r作礼|さらい>	Falling Bow			character:command-record-index	NA2_SLPS@0x4460C0	NUN5_TEXTENG@0xD148	slot	32				
+T1654	1	Command Chart > character move name	<r絶|た>ち<r終焉|わかれ>	Cut Off End			character:command-record-index	NA2_SLPS@0x4460E0	NUN5_TEXTENG@0xD158	slot	32				
+T1655	1	Command Chart > character move name	<r天|てん>の<r構|かま>え・<r刹|せつ>	Heaven Stance: Pillar			character:command-record-index	NA2_SLPS@0x446100	NUN5_TEXTENG@0xD170	slot	48				
+T1656	1	Command Chart > character move name	<r舞|ま>い<r飛鳥|あすか>	Flying Bird Dance			character:command-record-index	NA2_SLPS@0x446130	NUN5_TEXTENG@0xD190	slot	32				
+T1657	1	Command Chart > character move name	<r地|ち>の<r構|かま>え・<r掩|えん>	Earth Stance: Conceal			character:command-record-index	NA2_SLPS@0x446150	NUN5_TEXTENG@0xD1B0	slot	48				
+T1658	1	Command Chart > character move name	<r這|は>い<r土竜|もぐら>	Crawling Mole			character:command-record-index	NA2_SLPS@0x446180	NUN5_TEXTENG@0xD1C8	slot	32				
+T1659	1	Command Chart > character move name	<r人|じん>の<r構|かま>え・<r斥|せき>	Human Stance: Avoid			character:command-record-index	NA2_SLPS@0x4461A0	NUN5_TEXTENG@0xD1E0	slot	48				
+T1660	1	Command Chart > character move name	<r刺|さ>し<r朱音|あかね>	Scarlet Sonic Pierce			character:command-record-index	NA2_SLPS@0x4461D0	NUN5_TEXTENG@0xD200	slot	32				
 T1661	1	Command Chart > character move name	<r暴双砕牙|ばくそうさいが>	Dual Raging Fangs			e2e:movesets	NA2_SLPS@0x44BF90	NUN5_TEXTENG@0xD320	slot	32				
 T1662	1	Command Chart > character move name	<r牙通牙|がつうが>	Fang Over Fang			e2e:movesets	NA2_SLPS@0x44BFB0	NUN5_TEXTENG@0x4C18	slot	32				
 T1663	1	Command Chart > character move name	<r円月爪|えんげつそう>	Circle Claws			e2e:movesets	NA2_SLPS@0x44BFD0	NUN5_TEXTENG@0xD338	slot	32				
@@ -1913,8 +1913,8 @@ T1876	1	Command Chart > character move name	<r東雲|しののめ>	Dawnbreak			e
 T1877	1	Command Chart > character move name	<r火遁|かとん>・<r豪火球|ごうかきゅう>の<r術|じゅつ>・<r天来|てんらい>	Fire Style: Fireball Jutsu @Divinity@			e2e:movesets	NA2_SLPS@0x49ADD0	NUN5_TEXTENG@0xEF60	slot	80
 T1878	1	Command Chart > character move name	<r莢雲|さやぐも>	Heavenly Cloud			e2e:movesets	NA2_SLPS@0x49AE20	NUN5_TEXTENG@0xEF88	slot	32				
 T1879	1	Command Chart > character move name	<r千鳥|ちどり>・<r迅雷|じんらい>	Chidori: Thunderclap			e2e:movesets	NA2_SLPS@0x49AE40	NUN5_TEXTENG@0xEFA0	slot	48				
-T2210	1	Command Chart > character move name	<r忍犬口寄|にんけんくちよ>せ	Ninja Hound Summoning			e2e:movesets	NA2_SLPS@0x49C6E0	NUN5_TEXTENG@0x31E0	slot	32
-T2211	1	Command Chart > character move name	<r風魔特攻弾|ふうまとっこうだん>	Demon Wind Bomb			e2e:movesets	NA2_SLPS@0x49C700	NUN5_TEXTENG@0x7880	slot	48
+T2210	1	Command Chart > character move name	<r忍犬口寄|にんけんくちよ>せ	Ninja Hound Summoning			character:command-record-index	NA2_SLPS@0x49C6E0	NUN5_TEXTENG@0x31E0	slot	32
+T2211	1	Command Chart > character move name	<r風魔特攻弾|ふうまとっこうだん>	Demon Wind Bomb			character:command-record-index	NA2_SLPS@0x49C700	NUN5_TEXTENG@0x7880	slot	48
 T2212	1	Command Chart > character move name	<r二人|ふたり>の<r切|き>り<r札|ふだ>	Double Last Resort			e2e:movesets	NA2_SLPS@0x49CEB0	NUN5_TEXTENG@0x78A0	slot	48
 T2213	1	Command Chart > character move name	<r砂塵舞|さじんま>う<r螺旋丸|らせんがん>	Swirling Sand Rasengan			e2e:movesets	NA2_SLPS@0x49CEE0	NUN5_TEXTENG@0x78C0	slot	48
 T2214	1	Command Chart > character move name	<r伝説|でんせつ>の<r片鱗|へんりん>	Fragment of a Legend			e2e:movesets	NA2_SLPS@0x49D6B0	NUN5_TEXTENG@0x7900	slot	48
@@ -1922,7 +1922,7 @@ T2215	1	Command Chart > character move name	<r喧乱|けんらん>・<r超獣偽
 T2216	1	Command Chart > character move name		Floating Bugs			e2e:movesets	NA2_SLPS@0x5032F0	NUN5_TEXTENG@0xD5E8	slot	8			NA2_SLPS@0x452688
 T2217	1	Command Chart > character move name		Speeding Bugs			e2e:movesets	NA2_SLPS@0x5032F0	NUN5_TEXTENG@0xD5F8	slot	8			NA2_SLPS@0x452730
 T1880	1	Command Chart > shared control name or help text	"ナルティメットアクセル<r独特|どくとく>の<r操作|そうさ>を
-<r分|わ>かりやすく<r表示|ひょうじ>する<r為|ため>の<r機能|きのう>です。"	A feature to display the special controls for the game.			e2e:movesets	NA2_BTL@0x208E60	NUN5_TEXTENG@0xAC0	slot	128				
+<r分|わ>かりやすく<r表示|ひょうじ>する<r為|ため>の<r機能|きのう>です。"	A feature to display the special controls for the game.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208E60	NUN5_TEXTENG@0xAC0	slot	128				
 T1881	1	Command Chart > shared control name or help text	チャクラゲージ<r壱以上|いちいじょう>	Chakra Gauge 1+			e2e:movesets	NA2_BTL@0x208F70	NUN5_TEXTENG@0xB20	slot	48				
 T1882	1	Command Chart > shared control name or help text	チャクラゲージ<r弐以上|にいじょう>	Chakra Gauge 2+			e2e:movesets	NA2_BTL@0x208FA0	NUN5_TEXTENG@0xB30	slot	48				
 T1883	1	Command Chart > shared control name or help text	チャクラゲージ<r参|さん>	Chakra Gauge 3			e2e:movesets	NA2_BTL@0x208FD0	NUN5_TEXTENG@0xB40	slot	32				
@@ -1936,45 +1936,45 @@ T1890	1	Command Chart > shared control name or help text	<r空中|くうちゅ�
 T1891	1	Command Chart > shared control name or help text	チャクラ<r消費|しょうひ>／<r当|あ>て<r身技|みわざ>	Consume Chakra/Take Down			e2e:movesets	NA2_BTL@0x209130	NUN5_TEXTENG@0xBC0	slot	64				
 T1892	1	Command Chart > shared control name or help text	チャクラ<r消費|しょうひ>／<r溜|た>め<r技|わざ>	Consume Chakra/Charge			e2e:movesets	NA2_BTL@0x209170	NUN5_TEXTENG@0xBE0	slot	48				
 T1893	1	Command Chart > shared control name or help text	チャクラ<r消費|しょうひ>／<r連打技|れんだわざ>	Consume Chakra/Combo			e2e:movesets	NA2_BTL@0x2091A0	NUN5_TEXTENG@0xC00	slot	48				
-T1894	1	Command Chart > shared control name or help text	<r溜|た>め<r技|わざ>　<r弱|じゃく>	Charge-weak			e2e:movesets	NA2_BTL@0x2091D0	NUN5_TEXTENG@0xC18	slot	48				
-T1895	1	Command Chart > shared control name or help text	<r溜|た>め<r技|わざ>　<r強|きょう>	Charge-strong			e2e:movesets	NA2_BTL@0x209200	NUN5_TEXTENG@0xC28	slot	48				
+T1894	1	Command Chart > shared control name or help text	<r溜|た>め<r技|わざ>　<r弱|じゃく>	Charge-weak			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2091D0	NUN5_TEXTENG@0xC18	slot	48				
+T1895	1	Command Chart > shared control name or help text	<r溜|た>め<r技|わざ>　<r強|きょう>	Charge-strong			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209200	NUN5_TEXTENG@0xC28	slot	48				
 T1896	1	Command Chart > shared control name or help text	／<r空中可|くうちゅうか>	/Jump OK			e2e:movesets	NA2_BTL@0x209230	NUN5_TEXTENG@0xC38	slot	32				
 T1897	1	Command Chart > shared control name or help text	／<r通常奥義|つうじょうおうぎ>	/Nor. Ultimate Jutsu			e2e:movesets	NA2_BTL@0x209250	NUN5_TEXTENG@0xC50	slot	32				
 T1898	1	Command Chart > shared control name or help text	／<r逆転奥義|ぎゃくてんおうぎ>	/Rev. Ultimate Jutsu			e2e:movesets	NA2_BTL@0x209270	NUN5_TEXTENG@0xC70	slot	32				
 T1899	1	Command Chart > shared control name or help text	／<r覚醒奥義|かくせいおうぎ>	/Awk. Ultimate Jutsu			e2e:movesets	NA2_BTL@0x209290	NUN5_TEXTENG@0xC90	slot	32				
 T1900	1	Command Chart > shared control name or help text	／<r連係奥義|れんけいおうぎ>	/Lnk. Ultimate Jutsu			e2e:movesets	NA2_BTL@0x2092B0	NUN5_TEXTENG@0xCB0	slot	32				
-T1901	1	Command Chart > shared control name or help text	（ジャンプ<r中|ちゅう>）	(while jumping)			e2e:movesets	NA2_BTL@0x209330	NUN5_TEXTENG@0xD30	slot	32				
-T1902	1	Command Chart > shared control name or help text	（<r相手|あいて>の<r前|まえ>で）	(in front of opponent)			e2e:movesets	NA2_BTL@0x209350	NUN5_TEXTENG@0xD40	slot	48				
-T1903	1	Command Chart > shared control name or help text	（<r相手|あいて>の<r攻撃|こうげき>の<r当|あ>たる<r瞬間|しゅんかん>）	(right when getting hit)			e2e:movesets	NA2_BTL@0x2093B0	NUN5_TEXTENG@0xDB0	slot	80				
-T1904	1	Command Chart > shared control name or help text	（<r投|な>げられた<r時|とき>、<r叩|たた>き<r付|つ>けられる<r瞬間|しゅんかん>）	(right when getting thrown/hit)			e2e:movesets	NA2_BTL@0x209400	NUN5_TEXTENG@0xDD0	slot	80				
-T1905	1	Command Chart > shared control name or help text	（<r吹|ふ>っ<r飛|と>ばした<r方向|ほうこう>の<r方向|ほうこう>キー）	(directional button of the direction of your choice)			e2e:movesets	NA2_BTL@0x209450	NUN5_TEXTENG@0xDF0	slot	80				
-T1906	1	Command Chart > shared control name or help text	（<r相手|あいて>の<r追|お>い<r討|う>ち<r攻撃|こうげき>が<r当|あ>たる<r瞬間|しゅんかん>）	(right when receiving an Extra Hit)			e2e:movesets	NA2_BTL@0x2094A0	NUN5_TEXTENG@0xE30	slot	96				
-T1907	1	Command Chart > shared control name or help text	（<r地上|ちじょう>で）	(on ground)			e2e:movesets	NA2_BTL@0x209520	NUN5_TEXTENG@0xE58	slot	32				
-T1908	1	Command Chart > shared control name or help text	（<r高速移動|こうそくいどう>の<r相殺中|そうさいちゅう>や<r攻撃|こうげき>の<r相殺中|そうさいちゅう>）	(High Speed Move and attack are cancelled out)			e2e:movesets	NA2_BTL@0x209540	NUN5_TEXTENG@0xE70	slot	112				
-T1909	1	Command Chart > shared control name or help text	（マニュアル：<r出現後|しゅつげんご>もう<r一度|いちど><r押|お>すと<r攻撃|こうげき>）	(Manual: Press again after move to attack)			e2e:movesets	NA2_BTL@0x2095B0	NUN5_TEXTENG@0xEA0	slot	96				
-T1910	1	Command Chart > shared control name or help text	<r連係攻撃|れんけいこうげき>	Linked Attack			e2e:movesets	NA2_BTL@0x209650	NUN5_TEXTENG@0xF08	slot	32				
-T1911	1	Command Chart > shared control name or help text	アイテム<r選択|せんたく>	Item Select			e2e:movesets	NA2_BTL@0x209670	NUN5_TEXTENG@0xF18	slot	32				
-T1912	1	Command Chart > shared control name or help text	アイテム<r使用|しよう>	Item Use			e2e:movesets	NA2_BTL@0x209690	NUN5_TEXTENG@0xF28	slot	24				
-T1913	1	Command Chart > shared control name or help text	ジャンプ	Jump			e2e:movesets	NA2_BTL@0x2096A8	NUN5_TEXTENG@0xD935	slot	24				
-T1914	1	Command Chart > shared control name or help text	<r二段|にだん>ジャンプ	Double-jump			e2e:movesets	NA2_BTL@0x2096C0	NUN5_TEXTENG@0xF38	slot	32				
-T1915	1	Command Chart > shared control name or help text	<r高速移動|こうそくいどう>	High Speed Move			e2e:movesets	NA2_BTL@0x2096E0	NUN5_TEXTENG@0xF50	slot	32				
-T1916	1	Command Chart > shared control name or help text	<r変|か>わり<r身|み>の<r術|じゅつ>（チャクラ<r消費|しょうひ>）	Substitution Jutsu (Consume Chakra)			e2e:movesets	NA2_BTL@0x209720	NUN5_TEXTENG@0xF60	slot	64				
-T1917	1	Command Chart > shared control name or help text	<r受|う>け<r身|み>	Rebound			e2e:movesets	NA2_BTL@0x209760	NUN5_SLES@0x513EE0	slot	32				
-T1918	1	Command Chart > shared control name or help text	<r追|お>い<r討|う>ち	Extra Hit			e2e:movesets	NA2_BTL@0x209780	NUN5_TEXTENG@0xF88	slot	32				
-T1919	1	Command Chart > shared control name or help text	<r追|お>い<r討|う>ち<r返|がえ>し	Extra Hit Counter			e2e:movesets	NA2_BTL@0x2097A0	NUN5_TEXTENG@0xFA0	slot	48				
-T1920	1	Command Chart and Practice explanations > shared control title	チャクラをためる	Charge		Charge Chakra	seen:Font paired Practice ss5, 2026-07-27; inferred:Command Chart shared control family|e2e:movesets	NA2_BTL@0x2097D0	NUN5_SLES@0x513EB0	slot	32				
-T1921	1	Command Chart > shared control name or help text	<r奥|おく>へ<r軸移動|じくいどう>	Side-jump Back			e2e:movesets	NA2_BTL@0x209810	NUN5_TEXTENG@0xFC8	slot	48				
-T1922	1	Command Chart > shared control name or help text	<r手前|てまえ>へ<r軸移動|じくいどう>	Side-jump Forward			e2e:movesets	NA2_BTL@0x209840	NUN5_TEXTENG@0xFE0	slot	48				
-T1923	1	Command Chart > shared control name or help text	ガード<r崩|くず>し	Guard Break			e2e:movesets	NA2_BTL@0x209870	NUN5_TEXTENG@0xFF8	slot	32				
-T1924	1	Command Chart > shared control name or help text	<r残影追|ざんえいお>い<r討|う>ち	Shadowblur Extra Hit			e2e:movesets	NA2_BTL@0x209890	NUN5_TEXTENG@0x1010	slot	48				
+T1901	1	Command Chart > shared control name or help text	（ジャンプ<r中|ちゅう>）	(while jumping)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209330	NUN5_TEXTENG@0xD30	slot	32				
+T1902	1	Command Chart > shared control name or help text	（<r相手|あいて>の<r前|まえ>で）	(in front of opponent)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209350	NUN5_TEXTENG@0xD40	slot	48				
+T1903	1	Command Chart > shared control name or help text	（<r相手|あいて>の<r攻撃|こうげき>の<r当|あ>たる<r瞬間|しゅんかん>）	(right when getting hit)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2093B0	NUN5_TEXTENG@0xDB0	slot	80				
+T1904	1	Command Chart > shared control name or help text	（<r投|な>げられた<r時|とき>、<r叩|たた>き<r付|つ>けられる<r瞬間|しゅんかん>）	(right when getting thrown/hit)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209400	NUN5_TEXTENG@0xDD0	slot	80				
+T1905	1	Command Chart > shared control name or help text	（<r吹|ふ>っ<r飛|と>ばした<r方向|ほうこう>の<r方向|ほうこう>キー）	(directional button of the direction of your choice)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209450	NUN5_TEXTENG@0xDF0	slot	80				
+T1906	1	Command Chart > shared control name or help text	（<r相手|あいて>の<r追|お>い<r討|う>ち<r攻撃|こうげき>が<r当|あ>たる<r瞬間|しゅんかん>）	(right when receiving an Extra Hit)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2094A0	NUN5_TEXTENG@0xE30	slot	96				
+T1907	1	Command Chart > shared control name or help text	（<r地上|ちじょう>で）	(on ground)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209520	NUN5_TEXTENG@0xE58	slot	32				
+T1908	1	Command Chart > shared control name or help text	（<r高速移動|こうそくいどう>の<r相殺中|そうさいちゅう>や<r攻撃|こうげき>の<r相殺中|そうさいちゅう>）	(High Speed Move and attack are cancelled out)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209540	NUN5_TEXTENG@0xE70	slot	112				
+T1909	1	Command Chart > shared control name or help text	（マニュアル：<r出現後|しゅつげんご>もう<r一度|いちど><r押|お>すと<r攻撃|こうげき>）	(Manual: Press again after move to attack)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2095B0	NUN5_TEXTENG@0xEA0	slot	96				
+T1910	1	Command Chart > shared control name or help text	<r連係攻撃|れんけいこうげき>	Linked Attack			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209650	NUN5_TEXTENG@0xF08	slot	32				
+T1911	1	Command Chart > shared control name or help text	アイテム<r選択|せんたく>	Item Select			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209670	NUN5_TEXTENG@0xF18	slot	32				
+T1912	1	Command Chart > shared control name or help text	アイテム<r使用|しよう>	Item Use			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209690	NUN5_TEXTENG@0xF28	slot	24				
+T1913	1	Command Chart > shared control name or help text	ジャンプ	Jump			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2096A8	NUN5_TEXTENG@0xD935	slot	24				
+T1914	1	Command Chart > shared control name or help text	<r二段|にだん>ジャンプ	Double-jump			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2096C0	NUN5_TEXTENG@0xF38	slot	32				
+T1915	1	Command Chart > shared control name or help text	<r高速移動|こうそくいどう>	High Speed Move			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2096E0	NUN5_TEXTENG@0xF50	slot	32				
+T1916	1	Command Chart > shared control name or help text	<r変|か>わり<r身|み>の<r術|じゅつ>（チャクラ<r消費|しょうひ>）	Substitution Jutsu (Consume Chakra)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209720	NUN5_TEXTENG@0xF60	slot	64				
+T1917	1	Command Chart > shared control name or help text	<r受|う>け<r身|み>	Rebound			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209760	NUN5_SLES@0x513EE0	slot	32				
+T1918	1	Command Chart > shared control name or help text	<r追|お>い<r討|う>ち	Extra Hit			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209780	NUN5_TEXTENG@0xF88	slot	32				
+T1919	1	Command Chart > shared control name or help text	<r追|お>い<r討|う>ち<r返|がえ>し	Extra Hit Counter			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2097A0	NUN5_TEXTENG@0xFA0	slot	48				
+T1920	1	Command Chart and Practice explanations > shared control title	チャクラをためる	Charge		Charge Chakra	seen:Font paired Practice ss5, 2026-07-27; inferred:Command Chart shared control family	NA2_BTL@0x2097D0	NUN5_SLES@0x513EB0	slot	32				
+T1921	1	Command Chart > shared control name or help text	<r奥|おく>へ<r軸移動|じくいどう>	Side-jump Back			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209810	NUN5_TEXTENG@0xFC8	slot	48				
+T1922	1	Command Chart > shared control name or help text	<r手前|てまえ>へ<r軸移動|じくいどう>	Side-jump Forward			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209840	NUN5_TEXTENG@0xFE0	slot	48				
+T1923	1	Command Chart > shared control name or help text	ガード<r崩|くず>し	Guard Break			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209870	NUN5_TEXTENG@0xFF8	slot	32				
+T1924	1	Command Chart > shared control name or help text	<r残影追|ざんえいお>い<r討|う>ち	Shadowblur Extra Hit			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209890	NUN5_TEXTENG@0x1010	slot	48				
 T1925	1	Command Chart > shared move qualifier or help text	<r連打技|れんだわざ>	Combo			e2e:movesets	NA2_BTL@0x209090	NUN5_SLES@0x513EA8	slot	32				
 T1926	1	Command Chart > shared move qualifier or help text	<r溜|た>め<r技|わざ>	Charge			e2e:movesets	NA2_BTL@0x2090B0	NUN5_SLES@0x513EB0	slot	32				
-T1927	1	Command Chart > shared move qualifier or help text	<r後側方向|うしろがわほうこう>キー	directional button in the opposite direction to that you are facing			e2e:movesets	NA2_BTL@0x209380	NUN5_TEXTENG@0xD60	slot	48			NA2_BTL@0x209618	
-T1928	1	Command Chart > shared move qualifier or help text	（しばらく<r押|お>す）	(Hold)			e2e:movesets	NA2_BTL@0x209500	NUN5_SLES@0x513EB8	slot	32				
-T1929	1	Command Chart > shared move qualifier or help text	<r飛|と>び<r退|の>き	Flee			e2e:movesets	NA2_BTL@0x209700	NUN5_SLES@0x513ED8	slot	32				
-T1930	1	Command Chart > shared move qualifier or help text	<r挑発|ちょうはつ>	Taunt			e2e:movesets	NA2_BTL@0x2097F0	NUN5_SLES@0x513EE8	slot	32				
-T1931	1	Command Chart > shared move qualifier or help text	または	or			e2e:movesets	NA2_SLPS@0x505B08	NUN5_SLES@0x513EC0	slot	8				
-T1932	1	Command Chart > shared move qualifier or help text	ガード	Guard			e2e:movesets	NA2_SLPS@0x505B18	NUN5_SLES@0x513EC8	slot	8				
+T1927	1	Command Chart > shared move qualifier or help text	<r後側方向|うしろがわほうこう>キー	directional button in the opposite direction to that you are facing			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209380	NUN5_TEXTENG@0xD60	slot	48			NA2_BTL@0x209618	
+T1928	1	Command Chart > shared move qualifier or help text	（しばらく<r押|お>す）	(Hold)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209500	NUN5_SLES@0x513EB8	slot	32				
+T1929	1	Command Chart > shared move qualifier or help text	<r飛|と>び<r退|の>き	Flee			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209700	NUN5_SLES@0x513ED8	slot	32				
+T1930	1	Command Chart > shared move qualifier or help text	<r挑発|ちょうはつ>	Taunt			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2097F0	NUN5_SLES@0x513EE8	slot	32				
+T1931	1	Command Chart > shared move qualifier or help text	または	or			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B08	NUN5_SLES@0x513EC0	slot	8				
+T1932	1	Command Chart > shared move qualifier or help text	ガード	Guard			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B18	NUN5_SLES@0x513EC8	slot	8				
 T1933	1	Game Mode Select > return confirmation	タイトル<r画面|がめん>に<r戻|もど>りますか？	Return to Title Screen?			seen:replacement-pass-2-2026-07-26 paired screenshot	NA2_SLPS@0x4B1E00	NUN5_TEXTENG@0x1C90	slot	48				
 T1934	1	Game Mode Select > running help	<color00FFFF>マスターモード<colorFFFFFF>では<r広大|こうだい>な<r世界|せかい>を<r舞台|ぶたい>に、<r成長|せいちょう>したうずまきナルトの<r新|あたら>しい<r物語|ものがたり>を<r体験|たいけん>することができます。	<color00FFFF>Master Mode<WHITE> is set in a vast world. Experience a stronger Naruto Uzumaki in this new story.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B19D0	NUN5_TEXTENG@0x1A20	slot	208				
 T1935	1	Game Mode Select > running help	<color00FFFF>フリーバトル<colorFFFFFF>では<r好|す>きなキャラクターを<r使|つか>って<r自由|じゆう>に<r闘|たたか>うことができます。	<color00FFFF>Free Battle<WHITE> allows you to use any character to fight how you like.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B1AA0	NUN5_TEXTENG@0x1A90	slot	144				

@@ -13,6 +13,11 @@ an exact maintained E2E suite (`e2e:<suite-name>`), directly seen rows without
 maintained-suite coverage, hidden members inferred from a proven shared table,
 and character-family rows established through matching structures.
 
+An `e2e:` entry requires both exact executable-family ownership and selection
+of that exact record by the accepted capture plan. Matching English, membership
+in a larger family, or visibility of a different record with the same text does
+not transfer E2E coverage between Collection, Movesets, or any other consumer.
+
 An evidence-scoped rebuild removed unvisited alternate-mode, inventory,
 generic-choice, and unmatched voice-title rows instead of treating historical
 coverage as proof. Clean Japanese bytes remain authoritative when no verified
@@ -26,11 +31,12 @@ as modal `Yes` and `No` remain `seen:` unless the exact table instance used by
 Collection is proven.
 
 The accepted generated Movesets suite contains 146 grids: 74 base-character,
-62 specials, and 10 unique-mode grids. Together they exercise all 74 Command
-Chart record arrays, the separate metadata-selected Ultimate/Jutsu title
-family, and the shared relationship/control vocabulary rendered by those
-records. Every executable mapping row displayed by that accepted set records
-`e2e:movesets`. The character-name plaque and controller icons are localized
+62 specials, and 10 unique-mode grids. A complete audit of those grids and
+their executable selectors proves `e2e:movesets` for 1,052 of the 1,065 mapped
+Command Chart titles, all 154 metadata-selected Ultimate/Jutsu titles, and 20
+exact shared relationship/control records. The remaining 13 Command Chart
+titles belong to the same record family but are not selected by the accepted
+capture plan. The character-name plaque and controller icons are localized
 rectangles or textures rather than translation-table rows, so they are outside
 this mapping count.
 
@@ -42,14 +48,19 @@ this mapping count.
 | `e2e:collection/opponents` | 44 | Opponents-only character names and selector label |
 | `e2e:collection/ultimates` | 161 | Collection-owned Ultimate Jutsu title table |
 | `e2e:collection/voice` | 153 | Collection-owned Voice title table and aliases |
-| `e2e:movesets` | 1,272 | 1,065 Command Chart move titles, 154 metadata-selected Ultimate/Jutsu titles, and 53 shared control/help rows |
+| `e2e:movesets` | 1,226 | 1,052 selected Command Chart titles, 154 selected metadata-owned Ultimate/Jutsu titles, and 20 selected shared relationship/control records |
+
+These suite counts total 1,796 `e2e:` entries on 1,766 unique rows. Thirty
+shared Collection rows own more than one suite entry, and 322 of the 2,088
+canonical rows have no accepted-suite E2E basis.
 
 ## Structural mapping families
 
 Character Command Chart names are selected through 74 matching executable
 record arrays. Each record is `0x54` bytes and stores its displayed-name pointer
 at `+0x08`; a row is mapped only when the corresponding NA2 and NUN5 record
-indices both identify nonblank text.
+indices both identify nonblank text. That join establishes family membership
+and the exact donor; it does not by itself establish E2E selection.
 
 Ultimate and character-specific Jutsu names use a separate `0x14`-byte record.
 Its first word is the localized-name pointer and the remaining four metadata
@@ -57,6 +68,33 @@ words identify homologous records across NA2 and NUN5. Matching those metadata
 words is the evidence boundary; string order alone is insufficient. When a
 record-selected NUN5 name contains decorative color tags but a separate plain
 official copy exists, the plain copy is used for a plain NA2 slot.
+
+### Movesets capture-selection boundary
+
+The accepted Movesets plans select 1,052 Command Chart title records. Thirteen
+valid `0x54` records remain mapped through `character:command-record-index` but
+do not own `e2e:movesets`: T260, T1651-T1660, T2210, and T2211. T1651-T1660
+continue Granny Chiyo's record block beyond the entries selected by her
+accepted grids. T2210, T2211, and T260 belong to structurally valid extra
+four-record arrays, but the accepted plans select other sibling records rather
+than those three. Their presence in the Command Chart family is not capture
+evidence.
+
+The Ultimate/Jutsu titles shown in the third slot of accepted specials grids
+come from the separate `0x14`-byte family. All 154 canonical rows in that family
+are selected. The join is the localized pointer plus all four metadata words;
+an identical Collection title is still a different executable record and a
+different E2E owner.
+
+The Command Chart relationship selector is the pointer table at `BTL.BIN`
+`0x2092D0`. Accepted grids select table indices 1-15 and 18-22, which are
+T1881-T1893, T1925-T1926, and T1896-T1900: exactly 20 rows. Indices 16-17
+(`Charge-weak` and `Charge-strong`) are not selected. T1880, T1894-T1895,
+T1901-T1924, and T1927-T1932 belong to other help, Practice, or control
+consumers and do not inherit Movesets coverage. In particular, the visible
+Command Chart `Charge` is T1926 rather than the Practice-owned T1920;
+`While jumping` is T1886 rather than T1901 `(while jumping)`; and T1929 `Flee`
+does not appear in any accepted Movesets grid.
 
 ### Collection display titles are not moveset names
 

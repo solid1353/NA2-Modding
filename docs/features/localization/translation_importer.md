@@ -14,7 +14,7 @@ in [translation importer knowledge](../../knowledge/localization/translation_imp
 ## Mapping metadata
 
 - Canonical `mappings.tsv` rows: `2,088`
-- Canonical `mappings.tsv` SHA-256: `676CEF095FBE5F4C86D3EC9F939885B8C04930BFC2A1F5C0772B63A5F66D1BEF`
+- Canonical `mappings.tsv` SHA-256: `AA7EBA6BACEDEBBCC5361FF0E37D67CB53A782D3842DE2687BFBABCB31B6929D`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the builder's configuration-resource fingerprint own content identity.
@@ -76,18 +76,12 @@ The 16 columns are:
   current rows are enabled. Unconfirmed rows are absent instead of retained as
   disabled inventory.
 
-Canonical `mappings.tsv` contains `T#` rows confirmed visible by the paired
-screenshot pass plus the explicit character-family exception, sorted by
-`display_context` and numeric ID. Its cumulative first two passes have 752
-unique enabled rows: 567 from the
-hash-verified first-pass corpus and 185 from the second. The verified 74-table
-Command Chart family adds 1,041 rows, including Naruto moves absent from the
-captured 14-row subset. A subsequent missing-row audit adds another 260
-policy-supported rows: 53 directly seen rows, 10 structurally inferred
-siblings, and 197 character-family rows, for 2,053 total rows. Exact source,
-source reference, mode, and capacity are guarded by the canonical row
-declarations. T2042, T2045,
-and T2050 use canonical parent IDs `T2011`, `T2043`, and `T2048`.
+Canonical `mappings.tsv` contains 2,088 enabled `T#` rows admitted by exact
+display evidence or a documented structural-family basis, sorted by
+`display_context` and numeric ID. Exact source, source reference, mode, and
+capacity are guarded by the canonical row declarations. The current accepted
+E2E suites exercise 1,766 unique rows; 322 rows retain a non-E2E basis. T2042,
+T2045, and T2050 use canonical parent IDs `T2011`, `T2043`, and `T2048`.
 Paired screenshots correct three reference-table errors: T1956 uses `Off` at
 `NUN5_SLES@0x513EF8`, T1957 uses `On` at `NUN5_SLES@0x513EFC`, and T2158 uses
 `Warning` at `NUN5_SLES@0x513F38`.
@@ -141,8 +135,11 @@ screen and field where the row appears. `display_basis` contains one or more
 `|`-separated entries beginning with `seen:`, `e2e:`, `inferred:`, or
 `character:` and records why that row is admitted to the executable table.
 `e2e:<suite-name>` identifies each exact maintained E2E suite that exercised
-the row, for example `e2e:collection/voice`. Coverage summaries count every
-entry independently, so a shared row contributes to each proven suite.
+the row, for example `e2e:collection/voice`. It requires both ownership by the
+exact executable family consumed by that suite and selection of that exact
+record by the accepted capture plan; equal text or family membership alone is
+not coverage. Coverage summaries count every entry independently, so a shared
+row contributes to each proven suite.
 
 `replacement` is a user-editable override field and is normally blank. The
 importer selects nonempty `replacement` or otherwise `donor`, applies the

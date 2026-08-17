@@ -294,16 +294,16 @@ param(
         $capturedReferenceGrids `
         -Force)
     [IO.File]::WriteAllText(
-        (Join-Path $existingGrids '002-naruto-base-a-reference.png'),
+        (Join-Path $existingGrids '002_naruto_base_a_reference.png'),
         'accepted reference'
     )
     [IO.File]::WriteAllText(
-        (Join-Path $existingGrids '002-naruto-base-b-current.png'),
+        (Join-Path $existingGrids '002_naruto_base_b_current.png'),
         'stale current'
     )
     [IO.File]::WriteAllText((Join-Path $existingGrids 'stale.png'), 'stale')
     [IO.File]::WriteAllText(
-        (Join-Path $capturedCurrentGrids '002-naruto-base-b-current.png'),
+        (Join-Path $capturedCurrentGrids '002_naruto_base_b_current.png'),
         'new current'
     )
     [void](New-VisualRegressionGeneratedGridStage `
@@ -313,13 +313,13 @@ param(
         -CapturedTier Current)
     Assert-E2eHelperTest `
         -Condition (
-            [IO.File]::ReadAllText((Join-Path $stagedGrids '002-naruto-base-a-reference.png')) -ceq 'accepted reference' -and
-            [IO.File]::ReadAllText((Join-Path $stagedGrids '002-naruto-base-b-current.png')) -ceq 'new current' -and
+            [IO.File]::ReadAllText((Join-Path $stagedGrids '002_naruto_base_a_reference.png')) -ceq 'accepted reference' -and
+            [IO.File]::ReadAllText((Join-Path $stagedGrids '002_naruto_base_b_current.png')) -ceq 'new current' -and
             -not (Test-Path -LiteralPath (Join-Path $stagedGrids 'stale.png'))
         ) `
         -Message 'Generated current-grid staging did not preserve only reference history.'
     [IO.File]::WriteAllText(
-        (Join-Path $capturedReferenceGrids '002-naruto-base-a-reference.png'),
+        (Join-Path $capturedReferenceGrids '002_naruto_base_a_reference.png'),
         'new reference'
     )
     [void](New-VisualRegressionGeneratedGridStage `
@@ -329,8 +329,8 @@ param(
         -CapturedTier Reference)
     Assert-E2eHelperTest `
         -Condition (
-            [IO.File]::ReadAllText((Join-Path $existingGrids '002-naruto-base-a-reference.png')) -ceq 'new reference' -and
-            [IO.File]::ReadAllText((Join-Path $existingGrids '002-naruto-base-b-current.png')) -ceq 'new current' -and
+            [IO.File]::ReadAllText((Join-Path $existingGrids '002_naruto_base_a_reference.png')) -ceq 'new reference' -and
+            [IO.File]::ReadAllText((Join-Path $existingGrids '002_naruto_base_b_current.png')) -ceq 'new current' -and
             -not (Test-Path -LiteralPath (Join-Path $existingGrids 'stale.png'))
         ) `
         -Message 'Generated reference-grid staging did not preserve only current history.'
@@ -400,12 +400,12 @@ param(
     [string]$OutputDirectory,
     [string]$Kind
 )
-foreach ($reference in Get-ChildItem -LiteralPath $PairedGridDirectory -Filter '*-a-reference.png' -File) {
+foreach ($reference in Get-ChildItem -LiteralPath $PairedGridDirectory -Filter '*_a_reference.png' -File) {
     $caseName = $reference.Name.Substring(
         0,
-        $reference.Name.Length - '-a-reference.png'.Length
+        $reference.Name.Length - '_a_reference.png'.Length
     )
-    $current = Join-Path $PairedGridDirectory ($caseName + '-b-current.png')
+    $current = Join-Path $PairedGridDirectory ($caseName + '_b_current.png')
     if (-not (Test-Path -LiteralPath $current -PathType Leaf)) {
         continue
     }
@@ -459,7 +459,7 @@ foreach ($suiteName in $Suite) {
         $suiteName.Replace('/', [IO.Path]::DirectorySeparatorChar)
     $grids = Join-Path $suiteRoot 'capture\screenshots'
     [void](New-Item -ItemType Directory -Path $grids -Force)
-    $gridName = '002-naruto-base-b-current.png'
+    $gridName = '002_naruto_base_b_current.png'
     $gridContent = if ([string]::IsNullOrWhiteSpace($MovesetRange)) {
         'identical current grid'
     }
@@ -477,11 +477,11 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
 '@
     )
     [IO.File]::WriteAllText(
-        (Join-Path $generatedRunCapture '002-naruto-base-a-reference.png'),
+        (Join-Path $generatedRunCapture '002_naruto_base_a_reference.png'),
         'accepted reference grid'
     )
     [IO.File]::WriteAllText(
-        (Join-Path $generatedRunCapture '002-naruto-base-b-current.png'),
+        (Join-Path $generatedRunCapture '002_naruto_base_b_current.png'),
         'stale current grid'
     )
     [IO.File]::WriteAllText(
@@ -497,8 +497,8 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
     )
     Assert-E2eHelperTest `
         -Condition (
-            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-a-reference.png')) -ceq 'accepted reference grid' -and
-            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-b-current.png')) -ceq 'identical current grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002_naruto_base_a_reference.png')) -ceq 'accepted reference grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002_naruto_base_b_current.png')) -ceq 'identical current grid' -and
             [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-pool-normal.txt')) -ceq
                 [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-pool-shifted.txt')) -and
             -not [string]::IsNullOrWhiteSpace([IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-pool-normal.txt'))) -and
@@ -506,25 +506,25 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
             [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-limit-shifted.txt')) -ceq '16' -and
             (Test-Path -LiteralPath (Join-Path `
                 $generatedRunRoot `
-                'captures\characters\movesets\pairs\002-naruto-base.png')) -and
+                'captures\characters\movesets\pairs\002_naruto_base.png')) -and
             (Test-Path -LiteralPath (Join-Path `
                 $generatedRunRoot `
-                'captures\characters\movesets\blends\002-naruto-base.png')) -and
+                'captures\characters\movesets\blends\002_naruto_base.png')) -and
             (Test-Path -LiteralPath (Join-Path `
                 $generatedRunRoot `
-                'captures\characters\movesets\diffs\002-naruto-base.png')) -and
+                'captures\characters\movesets\diffs\002_naruto_base.png')) -and
             (Test-Path -LiteralPath (Join-Path `
                 $generatedRunRoot `
-                'captures\characters\movesets\all\002-naruto-base-a-reference.png')) -and
+                'captures\characters\movesets\all\002_naruto_base_a_reference.png')) -and
             (Test-Path -LiteralPath (Join-Path `
                 $generatedRunRoot `
-                'captures\characters\movesets\all\002-naruto-base_c_blend.png')) -and
+                'captures\characters\movesets\all\002_naruto_base_c_blend.png')) -and
             (Test-Path -LiteralPath (Join-Path `
                 $generatedRunRoot `
-                'captures\characters\movesets\all\002-naruto-base_d_diff.png')) -and
+                'captures\characters\movesets\all\002_naruto_base_d_diff.png')) -and
             -not (Test-Path -LiteralPath (Join-Path `
                 $generatedRunRoot `
-                'captures\characters\movesets\all\002-naruto-base_e_pair.png')) -and
+                'captures\characters\movesets\all\002_naruto_base_e_pair.png')) -and
             -not (Test-Path -LiteralPath (
                 Join-Path $generatedRunRoot 'captures\characters\movesets\stale.txt'
             )) -and
@@ -537,11 +537,11 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
         ) `
         -Message 'Generated run output, comparison, or current-history publication regressed.'
     [IO.File]::WriteAllText(
-        (Join-Path $generatedRunCapture '003-sakura-base-a-reference.png'),
+        (Join-Path $generatedRunCapture '003_sakura_base_a_reference.png'),
         'preserved reference grid'
     )
     [IO.File]::WriteAllText(
-        (Join-Path $generatedRunCapture '003-sakura-base-b-current.png'),
+        (Join-Path $generatedRunCapture '003_sakura_base_b_current.png'),
         'preserved outside-range current grid'
     )
     [IO.File]::WriteAllText(
@@ -553,10 +553,10 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
         -MovesetRange '2' | Out-Null
     Assert-E2eHelperTest `
         -Condition (
-            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-a-reference.png')) -ceq 'accepted reference grid' -and
-            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-b-current.png')) -ceq 'range 2 current grid' -and
-            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '003-sakura-base-a-reference.png')) -ceq 'preserved reference grid' -and
-            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '003-sakura-base-b-current.png')) -ceq 'preserved outside-range current grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002_naruto_base_a_reference.png')) -ceq 'accepted reference grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002_naruto_base_b_current.png')) -ceq 'range 2 current grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '003_sakura_base_a_reference.png')) -ceq 'preserved reference grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '003_sakura_base_b_current.png')) -ceq 'preserved outside-range current grid' -and
             [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'moveset-range.txt')) -ceq '2' -and
             -not (Test-Path -LiteralPath (Join-Path $generatedRunCapture 'stale.png'))
         ) `
@@ -570,7 +570,7 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
         'characters\movesets\screenshots'
     [void](New-Item -ItemType Directory -Path $generatedReferenceCapture -Force)
     [IO.File]::WriteAllText(
-        (Join-Path $generatedReferenceCapture '002-naruto-base-a-reference.png'),
+        (Join-Path $generatedReferenceCapture '002_naruto_base_a_reference.png'),
         'refreshed reference grid'
     )
     & (Join-Path $generatedRunScripts 'publish_references.ps1') `
@@ -580,10 +580,10 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
         -PreserveGeneratedTier | Out-Null
     Assert-E2eHelperTest `
         -Condition (
-            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-a-reference.png')) -ceq 'refreshed reference grid' -and
-            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-b-current.png')) -ceq 'range 2 current grid' -and
-            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '003-sakura-base-a-reference.png')) -ceq 'preserved reference grid' -and
-            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '003-sakura-base-b-current.png')) -ceq 'preserved outside-range current grid'
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002_naruto_base_a_reference.png')) -ceq 'refreshed reference grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002_naruto_base_b_current.png')) -ceq 'range 2 current grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '003_sakura_base_a_reference.png')) -ceq 'preserved reference grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunCapture '003_sakura_base_b_current.png')) -ceq 'preserved outside-range current grid'
         ) `
         -Message 'Generated reference publication did not refresh reference and preserve current grids.'
     Copy-Item `
@@ -604,7 +604,7 @@ param(
 $grids = Join-Path $OutputRoot 'screenshots'
 [void](New-Item -ItemType Directory -Path $grids -Force)
 [IO.File]::WriteAllText(
-    (Join-Path $grids '002-naruto-base-a-reference.png'),
+    (Join-Path $grids '002_naruto_base_a_reference.png'),
     "$Game/$Tier/$ThrottleLimit/$MovesetRange"
 )
 '@
@@ -620,7 +620,7 @@ $grids = Join-Path $OutputRoot 'screenshots'
         -Condition (
             [IO.File]::ReadAllText((Join-Path `
                 $coordinatedReferenceCapture `
-                'screenshots\002-naruto-base-a-reference.png')) -ceq 'nun5/reference/5/2'
+                'screenshots\002_naruto_base_a_reference.png')) -ceq 'nun5/reference/5/2'
         ) `
         -Message 'Generated reference capture did not delegate to the moveset suite runner.'
 

@@ -152,10 +152,10 @@ pcsx2_files/input_recordings/e2e/
 Generated output is split between `captures/characters/movesets/` and
 `captures/characters/idle/`. Both use `screenshots/`, `pairs/`, `blends/`, and
 `diffs/`, plus the ignored `all/` hardlink aggregate. Moveset screenshot names
-are `NNN-character-base|specials|mode-<awakening-id>-a-reference.png` and the
-corresponding `-b-current.png`; the numeric prefix is the physical
+are `NNN_character_base|specials|mode_<awakening-id>_a_reference.png` and the
+corresponding `_b_current.png`; the numeric prefix is the physical
 `character_data.tsv` row. Idle screenshots are paginated as
-`page_<n>-a-reference.png` and `page_<n>-b-current.png`. Pair, blend, and diff
+`page_<n>_a_reference.png` and `page_<n>_b_current.png`. Pair, blend, and diff
 folders use the same case name without the tier suffix.
 
 A complete moveset case containing one screenshot is published as that original

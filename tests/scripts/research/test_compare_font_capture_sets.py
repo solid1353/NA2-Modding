@@ -56,23 +56,23 @@ class ComparisonGridTests(unittest.TestCase):
             output = root / "output"
             grids.mkdir()
             write_rgb_png(
-                grids / "002-naruto-base-a-reference.png",
+                grids / "002_naruto_base_a_reference.png",
                 (1, 0, 0),
             )
             write_rgb_png(
-                grids / "002-naruto-base-b-current.png",
+                grids / "002_naruto_base_b_current.png",
                 (1, 1, 0),
             )
             write_rgb_png(
-                grids / "003-sakura-base-a-reference.png",
+                grids / "003_sakura_base_a_reference.png",
                 (2, 0, 0),
             )
             write_rgb_png(
-                grids / "003-sakura-base-b-current.png",
+                grids / "003_sakura_base_b_current.png",
                 (2, 0, 0),
             )
             write_rgb_png(
-                grids / "004-kakashi-base-b-current.png",
+                grids / "004_kakashi_base_b_current.png",
                 (3, 0, 0),
             )
             for directory in ("pairs", "blends", "diffs"):
@@ -99,18 +99,18 @@ class ComparisonGridTests(unittest.TestCase):
             for directory in ("pairs", "blends", "diffs"):
                 self.assertEqual(
                     sorted(path.name for path in (output / directory).glob("*.png")),
-                    ["002-naruto-base.png"],
+                    ["002_naruto_base.png"],
                 )
             self.assertEqual(
-                read_png_size(output / "pairs" / "002-naruto-base.png"),
+                read_png_size(output / "pairs" / "002_naruto_base.png"),
                 (2, 1),
             )
             self.assertEqual(
-                read_png_size(output / "blends" / "002-naruto-base.png"),
+                read_png_size(output / "blends" / "002_naruto_base.png"),
                 (1, 1),
             )
             self.assertEqual(
-                read_png_size(output / "diffs" / "002-naruto-base.png"),
+                read_png_size(output / "diffs" / "002_naruto_base.png"),
                 (1, 1),
             )
 

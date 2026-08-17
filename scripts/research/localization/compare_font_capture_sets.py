@@ -14,9 +14,8 @@ from PIL import Image, ImageChops, ImageEnhance, ImageOps
 
 SLOT_SUFFIX = re.compile(r"(\d+)$")
 SCREENSHOT_NAME = re.compile(r"^(\d+)_(a_reference|b_current)\.png$")
-PAIRED_GRID_NAMES = (
-    re.compile(r"^(?P<case>.+)-(?P<tier>a-reference|b-current)\.png$"),
-    re.compile(r"^(?P<case>page_\d+)_(?P<tier>a_reference|b_current)\.png$"),
+PAIRED_GRID_NAME = re.compile(
+    r"^(?P<case>.+)_(?P<tier>a_reference|b_current)\.png$"
 )
 GRID_COLUMNS = 3
 GRID_ROWS = 2
@@ -259,12 +258,10 @@ def write_screenshot_grid_pages(
 
 
 def parse_paired_grid_name(path: Path) -> tuple[str, str]:
-    for pattern in PAIRED_GRID_NAMES:
-        match = pattern.fullmatch(path.name)
-        if match is not None:
-            tier = match.group("tier").replace("_", "-")
-            return match.group("case"), tier
-    raise ValueError(f"Invalid paired grid name: {path}")
+    match = PAIRED_GRID_NAME.fullmatch(path.name)
+    if match is None:
+        raise ValueError(f"Invalid paired grid name: {path}")
+    return match.group("case"), match.group("tier")
 
 
 def write_paired_grid_comparisons(
@@ -299,8 +296,8 @@ def write_paired_grid_comparisons(
     compared = 0
     changed = 0
     for case, tiers in sorted(cases.items()):
-        reference_path = tiers.get("a-reference")
-        current_path = tiers.get("b-current")
+        reference_path = tiers.get("a_reference")
+        current_path = tiers.get("b_current")
         if reference_path is None or current_path is None:
             continue
 

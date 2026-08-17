@@ -624,8 +624,8 @@ function New-VisualRegressionGeneratedGridStage {
     $capturedDefinition = Get-VisualRegressionScreenshotDefinition -Kind $CapturedTier
     $preservedTier = if ($CapturedTier -ieq 'Reference') { 'Current' } else { 'Reference' }
     $preservedDefinition = Get-VisualRegressionScreenshotDefinition -Kind $preservedTier
-    $capturedSuffix = "-$($capturedDefinition.Order)-$($capturedDefinition.Label).png"
-    $preservedSuffix = "-$($preservedDefinition.Order)-$($preservedDefinition.Label).png"
+    $capturedSuffix = "_$($capturedDefinition.Order)_$($capturedDefinition.Label).png"
+    $preservedSuffix = "_$($preservedDefinition.Order)_$($preservedDefinition.Label).png"
 
     if (-not (Test-Path -LiteralPath $CapturedDirectory -PathType Container)) {
         throw "Generated E2E grid capture does not exist: $CapturedDirectory"

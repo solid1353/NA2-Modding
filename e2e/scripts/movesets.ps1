@@ -75,7 +75,7 @@ $launcher = [string]$paths.files.pcsx2_game_launch_command
 $gameTarget = if ($Tier -ieq 'reference') {
     [pscustomobject]@{
         Selector = $Game
-        Suffix = 'a-reference'
+        Suffix = 'a_reference'
         GridVariant = 'a_reference'
         Label = "$Game reference"
     }
@@ -83,7 +83,7 @@ $gameTarget = if ($Tier -ieq 'reference') {
 else {
     [pscustomobject]@{
         Selector = $Game
-        Suffix = 'b-current'
+        Suffix = 'b_current'
         GridVariant = 'b_current'
         Label = "$Game current"
     }
@@ -195,13 +195,13 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
     }
 
     $slug = ([string]$block.Base.Data.character).ToLowerInvariant()
-    $slug = [regex]::Replace($slug, '[^a-z0-9]+', '-')
-    $slug = $slug.Trim('-')
+    $slug = [regex]::Replace($slug, '[^a-z0-9]+', '_')
+    $slug = $slug.Trim('_')
     if ([string]::IsNullOrWhiteSpace($slug)) {
         $slug = 'character'
     }
     [void]$outputPlans.Add([pscustomobject]@{
-        Name = ('{0:D3}-{1}-base' -f $outputNumber, $slug)
+        Name = ('{0:D3}_{1}_base' -f $outputNumber, $slug)
         Family = 'base'
         Captures = @(
             [pscustomobject]@{
@@ -228,7 +228,7 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
         }
         $awakeningId = [string]$awakeningRow.Data.awakening_id
         [void]$outputPlans.Add([pscustomobject]@{
-            Name = ('{0:D3}-{1}-mode-{2}' -f $outputNumber, $slug, $awakeningId)
+            Name = ('{0:D3}_{1}_mode_{2}' -f $outputNumber, $slug, $awakeningId)
             Family = 'base'
             Captures = @(
                 [pscustomobject]@{
@@ -305,7 +305,7 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
             })
         }
         [void]$outputPlans.Add([pscustomobject]@{
-            Name = ('{0:D3}-{1}-specials' -f $outputNumber, $slug)
+            Name = ('{0:D3}_{1}_specials' -f $outputNumber, $slug)
             Family = 'specials'
             Captures = @($specialCaptures)
         })
@@ -373,7 +373,7 @@ $tasks = [Collections.Generic.List[object]]::new()
 $gridPlans = [Collections.Generic.List[object]]::new()
 foreach ($outputPlan in $selectedOutputPlans) {
     foreach ($gameTarget in $gameTargets) {
-        $outputName = "$($outputPlan.Name)-$($gameTarget.Suffix)"
+        $outputName = '{0}_{1}' -f $outputPlan.Name, $gameTarget.Suffix
         $workingRoot = Join-Path $workingBase $outputName
         $finalGrid = Join-Path $gridOutputRoot ($outputName + '.png')
         if (Test-Path -LiteralPath $finalGrid -PathType Leaf) {

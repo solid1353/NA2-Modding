@@ -17,6 +17,8 @@ acceptance remain canonical in
 - An explicit PCSX2 operation uses `@pcsx2_dev` and authorizes only the exact
   requested operation. It does not authorize probing, closing, or otherwise
   controlling an existing PCSX2 process.
+- Every agent-launched PCSX2 process must run in the background. Never launch
+  PCSX2 as a foreground or task-terminal-blocking process.
 
 ## Runtime ISO provenance
 

@@ -311,11 +311,17 @@ Write-Output '[fake] unit tests'
         -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'logs\na228'))) `
         -Message 'Help invocation created run logs.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 <token> \[token\] \[-c <cheats-config> <row>\] \[-t\|-u\]') `
+        -Condition ($helpText -match '(?m)^\s*na228 <token> \[token\] \[-c <cheats-config> <row>\]\s+') `
         -Message 'Root help omitted the ordered token grammar.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 \[-f\] \[-t\|-u\]\s+') `
+        -Condition ($helpText -match '(?m)^\s*na228 \[-f\]\s+') `
         -Message 'Root help omitted the default build-and-launch signature.'
+    Assert-Na2Test `
+        -Condition (
+            $helpText -match '(?m)^\s*additional launch arguments\s+See workshop help$' -and
+            $helpText -notmatch '(?m)^\s*-(?:t|u)\s+'
+        ) `
+        -Message 'Root help duplicated Workshop launch-option documentation.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 build -c <configuration>\s+') `
         -Message 'Root help omitted the canonical cache-build command.'

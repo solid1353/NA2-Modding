@@ -34,7 +34,6 @@ nested Git repository under `e2e/captures/<suite>/`:
 - `grid-diffs/`: paged amplified-difference grids.
 - `base-all/` and `grid-all/`: ignored regenerated hardlink aggregates that
   intentionally exclude pairs.
-- `sstates/current/<slot>.p2s`: retained state when the capture changed.
 
 For text, inspect relevant images at sufficient zoom to judge glyph pixels,
 spacing, baselines, and alignment.

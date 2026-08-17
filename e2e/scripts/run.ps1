@@ -6,6 +6,7 @@ param(
     [switch]$Shifted,
     [object[]]$SupervisedJob = @(),
     [string]$MovesetRange,
+    [string]$MovesetConcurrencyPoolRoot,
     [ValidateRange(0, 64)]
     [int]$MovesetThrottleLimit = 0
 )
@@ -106,12 +107,11 @@ $comparisonVariants = @(
     $runVariants |
         Where-Object { [string]$_.name -cne $publishedVariant }
 )
-$movesetReplayLanes = $runVariants.Count
 $effectiveMovesetThrottleLimit = if ($MovesetThrottleLimit -gt 0) {
     $MovesetThrottleLimit
 }
 else {
-    [Math]::Max(1, [Math]::Floor(16 / $movesetReplayLanes))
+    16
 }
 foreach ($comparisonVariant in $comparisonVariants) {
     if ([string]$comparisonVariant.compare_against -cne $publishedVariant) {
@@ -154,6 +154,7 @@ $resumeRequest = [ordered]@{
     schema_version = 1
     command = 'run'
     shifted = $Shifted.IsPresent
+    capture_mode = 'screenshots'
 }
 if ($movesetRangeSpecified) {
     $resumeRequest['moveset_range'] = $MovesetRange
@@ -167,6 +168,9 @@ $transaction = New-VisualRegressionTransaction `
     -ResumeKey $resumeKey `
     -LegacySuite $(if ($movesetRangeSpecified) { $null } else { $suites }) `
     -LegacyShifted $Shifted.IsPresent
+if ($hasGeneratedSuite -and [string]::IsNullOrWhiteSpace($MovesetConcurrencyPoolRoot)) {
+    $MovesetConcurrencyPoolRoot = Join-Path $transaction 'moveset-concurrency'
+}
 if (Test-VisualRegressionTransactionResumed -Transaction $transaction) {
     $resumeArtifacts = [Collections.Generic.List[string]]::new()
     foreach ($relative in @('publish', 'stages', 'comparisons', 'evidence', '.backups')) {
@@ -381,6 +385,7 @@ try {
                 $Transaction,
                 $SuiteSelectionJson,
                 $MovesetThrottleLimit,
+                $MovesetConcurrencyPoolRoot,
                 $MovesetRange
             )
             $ErrorActionPreference = 'Stop'
@@ -389,6 +394,7 @@ try {
                 Transaction = $Transaction
                 Suite = [string[]]@($SuiteSelectionJson | ConvertFrom-Json)
                 MovesetThrottleLimit = $MovesetThrottleLimit
+                MovesetConcurrencyPoolRoot = $MovesetConcurrencyPoolRoot
             }
             if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
                 $variantArguments.MovesetRange = $MovesetRange
@@ -397,8 +403,8 @@ try {
         } -ArgumentList (
             Join-Path $PSScriptRoot 'variant.ps1'
         ), $variantName, $transaction, $suiteSelectionJson, $effectiveMovesetThrottleLimit, (
-            $MovesetRange
-        )
+            $MovesetConcurrencyPoolRoot
+        ), $MovesetRange
         $jobs.Add($variantJob)
     }
     Write-Host (
@@ -521,9 +527,6 @@ try {
             )) {
                 $replacements[$grid.Destination] = Join-Path $suitePublish $grid.Name
             }
-        }
-        if ($metadata.has_states) {
-            $replacements[$context.Capture.States] = Join-Path $suitePublish 'sstates'
         }
     }
     Publish-VisualRegressionTransaction `

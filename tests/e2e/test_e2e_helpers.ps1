@@ -84,6 +84,125 @@ try {
         ) `
         -Message 'Movesets range parsing or character-data row bounds regressed.'
 
+    $poolRoot = Join-Path $testRoot 'shared-concurrency-pool'
+    $poolPermit = Enter-VisualRegressionConcurrencyPool -Root $poolRoot -Capacity 1
+    $poolReady = Join-Path $poolRoot 'waiter-ready'
+    $poolAcquired = Join-Path $poolRoot 'waiter-acquired'
+    $poolJob = Start-Job -ArgumentList @(
+        (Join-Path $repository 'e2e\scripts\suite.ps1'),
+        $poolRoot,
+        $poolReady,
+        $poolAcquired
+    ) -ScriptBlock {
+        param($SuiteScript, $PoolRoot, $ReadyPath, $AcquiredPath)
+        $ErrorActionPreference = 'Stop'
+        . $SuiteScript
+        [IO.File]::WriteAllText($ReadyPath, '')
+        $permit = Enter-VisualRegressionConcurrencyPool -Root $PoolRoot -Capacity 1
+        try {
+            [IO.File]::WriteAllText($AcquiredPath, '')
+        }
+        finally {
+            $permit.Dispose()
+        }
+    }
+    try {
+        $deadline = [DateTime]::UtcNow.AddSeconds(5)
+        while (-not (Test-Path -LiteralPath $poolReady -PathType Leaf)) {
+            if ([DateTime]::UtcNow -ge $deadline) {
+                throw 'Shared concurrency-pool waiter did not start.'
+            }
+            Start-Sleep -Milliseconds 20
+        }
+        Start-Sleep -Milliseconds 100
+        Assert-E2eHelperTest `
+            -Condition (-not (Test-Path -LiteralPath $poolAcquired -PathType Leaf)) `
+            -Message 'Shared concurrency pool exceeded its capacity.'
+        $poolPermit.Dispose()
+        $poolPermit = $null
+        Wait-Job -Job $poolJob -Timeout 5 | Out-Null
+        Receive-Job -Job $poolJob -ErrorAction Stop | Out-Null
+        Assert-E2eHelperTest `
+            -Condition (
+                $poolJob.State -ceq 'Completed' -and
+                (Test-Path -LiteralPath $poolAcquired -PathType Leaf)
+            ) `
+            -Message 'Released shared concurrency capacity was not reused by another process.'
+    }
+    finally {
+        if ($null -ne $poolPermit) {
+            $poolPermit.Dispose()
+        }
+        if ($poolJob.State -in @('NotStarted', 'Running')) {
+            Stop-Job -Job $poolJob -ErrorAction SilentlyContinue
+        }
+        Remove-Job -Job $poolJob -Force -ErrorAction SilentlyContinue
+    }
+
+    $replayRepository = Join-Path $testRoot 'screenshot-replay'
+    $replayLibrary = Join-Path $replayRepository 'scripts\lib'
+    $replayRecordings = Join-Path $replayRepository 'recordings'
+    $replayCapture = Join-Path $replayRepository 'capture'
+    $replayLauncher = Join-Path $replayRepository 'launcher.ps1'
+    [void](New-Item -ItemType Directory -Path $replayLibrary, $replayRecordings -Force)
+    [IO.File]::WriteAllText((Join-Path $replayRepository 'paths.json'), '{}')
+    [IO.File]::WriteAllText(
+        (Join-Path $replayLibrary 'paths.ps1'),
+        @"
+function Get-Na2Paths {
+    [pscustomobject]@{
+        files = [pscustomobject]@{
+            pcsx2_game_launch_command = '$($replayLauncher.Replace("'", "''"))'
+        }
+    }
+}
+"@
+    )
+    [IO.File]::WriteAllText(
+        $replayLauncher,
+        @'
+param(
+    [string[]]$Games,
+    [string]$Play,
+    [switch]$Snapshots,
+    [string]$InputRecordingCaptureMode,
+    [string]$CaptureDirectory,
+    [string]$InputRecordingsRoot,
+    [string]$ProjectRoot
+)
+[void](New-Item -ItemType Directory -Path (Join-Path $CaptureDirectory 'screenshots') -Force)
+[IO.File]::WriteAllText((Join-Path $CaptureDirectory 'screenshots\0001.png'), 'screenshot')
+[IO.File]::WriteAllText(
+    (Join-Path $ProjectRoot 'launcher.json'),
+    ([ordered]@{
+        snapshots = $Snapshots.IsPresent
+        capture_mode = $InputRecordingCaptureMode
+        play = $Play
+    } | ConvertTo-Json)
+)
+'@
+    )
+    $replayRecording = Join-Path $replayRecordings 'recording.p2m2'
+    [IO.File]::WriteAllText($replayRecording, 'recording')
+    Invoke-VisualRegressionReplay `
+        -Repository $replayRepository `
+        -SharedRecordingRoot $replayRecordings `
+        -RecordingPath $replayRecording `
+        -Game 'e2e_test' `
+        -CaptureRoot $replayCapture
+    $replayInvocation = Get-Content `
+        -Raw `
+        -LiteralPath (Join-Path $replayRepository 'launcher.json') |
+        ConvertFrom-Json
+    Assert-E2eHelperTest `
+        -Condition (
+            $replayInvocation.snapshots -and
+            $replayInvocation.capture_mode -ceq 'screenshots' -and
+            (Test-Path -LiteralPath (Join-Path $replayCapture 'screenshots\0001.png')) -and
+            -not (Test-Path -LiteralPath (Join-Path $replayCapture 'sstates'))
+        ) `
+        -Message 'E2E replay did not request screenshot-only PCSX2 capture.'
+
     $generatedDiscoveryRoot = Join-Path $testRoot 'generated-discovery\e2e'
     $generatedSuiteRoot = Join-Path $generatedDiscoveryRoot 'suites'
     $generatedScriptRoot = Join-Path $generatedDiscoveryRoot 'scripts'
@@ -220,7 +339,16 @@ param(
     [string]$Transaction,
     [string[]]$Suite,
     [string]$MovesetRange,
+    [string]$MovesetConcurrencyPoolRoot,
     [int]$MovesetThrottleLimit
+)
+[IO.File]::WriteAllText(
+    (Join-Path $PSScriptRoot "moveset-pool-$Variant.txt"),
+    $MovesetConcurrencyPoolRoot
+)
+[IO.File]::WriteAllText(
+    (Join-Path $PSScriptRoot "moveset-throttle-$Variant.txt"),
+    [string]$MovesetThrottleLimit
 )
 if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
     [IO.File]::WriteAllText(
@@ -270,6 +398,11 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
         -Condition (
             [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-a-reference.png')) -ceq 'accepted reference grid' -and
             [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-b-current.png')) -ceq 'identical current grid' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'moveset-pool-normal.txt')) -ceq
+                [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'moveset-pool-shifted.txt')) -and
+            -not [string]::IsNullOrWhiteSpace([IO.File]::ReadAllText((Join-Path $generatedRunScripts 'moveset-pool-normal.txt'))) -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'moveset-throttle-normal.txt')) -ceq '16' -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'moveset-throttle-shifted.txt')) -ceq '16' -and
             -not (Test-Path -LiteralPath (
                 Join-Path $generatedRunRoot 'captures\movesets\stale.txt'
             ))
@@ -337,6 +470,7 @@ param(
     [string]$OutputRoot,
     [string]$MovesetRange,
     [int]$ThrottleLimit,
+    [string]$ConcurrencyPoolRoot,
     [string]$ProjectRoot
 )
 $grids = Join-Path $OutputRoot 'grid-screenshots'
@@ -1003,14 +1137,6 @@ $grids = Join-Path $OutputRoot 'grid-screenshots'
     Copy-Item -Path (Join-Path $comparison '*') `
         -Destination $qualificationComparison `
         -Recurse
-    foreach ($variant in @('normal', 'shifted')) {
-        $states = Join-Path `
-            $qualification `
-            "jobs\$variant\suites\test\helpers\capture\sstates"
-        [void](New-Item -ItemType Directory -Path $states -Force)
-        [IO.File]::WriteAllText((Join-Path $states '0001.p2s'), 'matching')
-        [IO.File]::WriteAllText((Join-Path $states '0002.p2s'), $variant)
-    }
     [IO.File]::WriteAllText((Join-Path $qualification 'owner.json'), 'discarded')
     $qualificationEvidence = Preserve-VisualRegressionMismatchEvidence `
         -Transaction $qualification `
@@ -1027,16 +1153,11 @@ $grids = Join-Path $OutputRoot 'grid-screenshots'
             ($qualificationFiles -join ',') -ceq (
                 'shifted/test/helpers/report/result.json,' +
                 'shifted/test/helpers/screenshots/normal/0002.png,' +
-                'shifted/test/helpers/screenshots/shifted/0002.png,' +
-                'shifted/test/helpers/sstates/normal/0002.p2s,' +
-                'shifted/test/helpers/sstates/shifted/0002.p2s'
+                'shifted/test/helpers/screenshots/shifted/0002.png'
             ) -and
-            (Test-Path -LiteralPath (Join-Path $qualification 'owner.json') -PathType Leaf) -and
-            (Test-Path -LiteralPath (
-                Join-Path $qualification 'jobs\normal\suites\test\helpers\capture\sstates\0002.p2s'
-            ) -PathType Leaf)
+            (Test-Path -LiteralPath (Join-Path $qualification 'owner.json') -PathType Leaf)
         ) `
-        -Message 'Failed qualification did not preserve both resumable captures and focused mismatch evidence.'
+        -Message 'Failed qualification did not preserve focused screenshot mismatch evidence.'
 
     $firstDestination = Join-Path $testRoot 'published\one\current'
     $secondDestination = Join-Path $testRoot 'published\two\current'
@@ -1065,30 +1186,30 @@ $grids = Join-Path $OutputRoot 'grid-screenshots'
         ) `
         -Message 'Second same-name capture directory was not published.'
 
-    $stateDestination = Join-Path $testRoot 'published\states\sstates'
-    $stateSource = Join-Path $testRoot 'sources\states\sstates'
-    [void](New-Item -ItemType Directory -Path $stateDestination, $stateSource -Force)
-    [IO.File]::WriteAllText((Join-Path $stateDestination '0001.p2s'), 'old')
-    [IO.File]::WriteAllText((Join-Path $stateDestination 'stale.p2s'), 'stale')
-    [IO.File]::WriteAllText((Join-Path $stateSource '0001.p2s'), 'new')
+    $screenshotDestination = Join-Path $testRoot 'published\screenshots\base-screenshots'
+    $screenshotSource = Join-Path $testRoot 'sources\screenshots\base-screenshots'
+    [void](New-Item -ItemType Directory -Path $screenshotDestination, $screenshotSource -Force)
+    [IO.File]::WriteAllText((Join-Path $screenshotDestination '0001.png'), 'old')
+    [IO.File]::WriteAllText((Join-Path $screenshotDestination 'stale.png'), 'stale')
+    [IO.File]::WriteAllText((Join-Path $screenshotSource '0001.png'), 'new')
     Publish-VisualRegressionTransaction `
-        -Replacements ([ordered]@{ $stateDestination = $stateSource }) `
+        -Replacements ([ordered]@{ $screenshotDestination = $screenshotSource }) `
         -TransactionRoot $transaction
     Assert-E2eHelperTest `
         -Condition (
-            [IO.File]::ReadAllText((Join-Path $stateDestination '0001.p2s')) -ceq 'new' -and
-            -not (Test-Path -LiteralPath (Join-Path $stateDestination 'stale.p2s')) -and
-            (Test-Path -LiteralPath (Join-Path $stateSource '0001.p2s') -PathType Leaf)
+            [IO.File]::ReadAllText((Join-Path $screenshotDestination '0001.png')) -ceq 'new' -and
+            -not (Test-Path -LiteralPath (Join-Path $screenshotDestination 'stale.png')) -and
+            (Test-Path -LiteralPath (Join-Path $screenshotSource '0001.png') -PathType Leaf)
         ) `
-        -Message 'Savestates were not synchronized without moving their staged directory.'
+        -Message 'Screenshots were not synchronized without moving their staged directory.'
 
-    $lockedDestination = Join-Path $testRoot 'published\locked\sstates'
-    $lockedSource = Join-Path $testRoot 'sources\locked\sstates'
-    $lockedPath = Join-Path $lockedDestination '0025.p2s'
+    $lockedDestination = Join-Path $testRoot 'published\locked\base-screenshots'
+    $lockedSource = Join-Path $testRoot 'sources\locked\base-screenshots'
+    $lockedPath = Join-Path $lockedDestination '0025.png'
     $lockReady = Join-Path $testRoot 'locked-file-ready'
     [void](New-Item -ItemType Directory -Path $lockedDestination, $lockedSource -Force)
-    [IO.File]::WriteAllText($lockedPath, 'old locked state')
-    [IO.File]::WriteAllText((Join-Path $lockedSource '0025.p2s'), 'new state')
+    [IO.File]::WriteAllText($lockedPath, 'old locked screenshot')
+    [IO.File]::WriteAllText((Join-Path $lockedSource '0025.png'), 'new screenshot')
     $lockJob = Start-ThreadJob -Name 'synthetic-transient-file-reader' -ScriptBlock {
         param($Path, $Ready)
         $stream = [IO.File]::Open(
@@ -1125,7 +1246,7 @@ $grids = Join-Path $OutputRoot 'grid-screenshots'
         Remove-Job -Job $lockJob -Force -ErrorAction SilentlyContinue
     }
     Assert-E2eHelperTest `
-        -Condition ([IO.File]::ReadAllText($lockedPath) -ceq 'new state') `
+        -Condition ([IO.File]::ReadAllText($lockedPath) -ceq 'new screenshot') `
         -Message 'Atomic E2E publication did not tolerate a transient file reader.'
 
     $fakeCommitRoot = Join-Path $testRoot 'g'
@@ -1241,11 +1362,16 @@ param(
     [string]$CaptureOutputRoot,
     [string]$CapturedRoot,
     [string]$CaptureRoot,
-    [string]$MovesetRange
+    [string]$MovesetRange,
+    [string]$MovesetConcurrencyPoolRoot
 )
 $sync = Join-Path $PSScriptRoot 'sync'
 [void](New-Item -ItemType Directory -Path $sync -Force)
 if (-not [string]::IsNullOrWhiteSpace($CaptureOutputRoot)) {
+    [IO.File]::WriteAllText(
+        (Join-Path $PSScriptRoot 'reference-pool.txt'),
+        $MovesetConcurrencyPoolRoot
+    )
     [IO.File]::WriteAllText((Join-Path $sync 'reference-started'), '')
     $deadline = [DateTime]::UtcNow.AddSeconds(5)
     while (-not (Test-Path -LiteralPath (Join-Path $sync 'run-started'))) {
@@ -1291,12 +1417,21 @@ param(
     [switch]$Shifted,
     [object[]]$SupervisedJob,
     [string]$MovesetRange,
+    [string]$MovesetConcurrencyPoolRoot,
     [int]$MovesetThrottleLimit
 )
 if (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'fail-run')) {
     throw 'synthetic run failure'
 }
 $suites = [string[]]@($Suite)
+[IO.File]::WriteAllText(
+    (Join-Path $PSScriptRoot 'run-pool.txt'),
+    $MovesetConcurrencyPoolRoot
+)
+[IO.File]::WriteAllText(
+    (Join-Path $PSScriptRoot 'run-throttle.txt'),
+    [string]$MovesetThrottleLimit
+)
 $hasReferenceSuite = $suites -ccontains 'test/with_reference'
 if ($hasReferenceSuite) {
     $sync = Join-Path $PSScriptRoot 'sync'
@@ -1489,6 +1624,10 @@ foreach ($suiteName in $suites) {
     Assert-E2eHelperTest `
         -Condition (
             [IO.File]::ReadAllText((Join-Path $fakeGeneratedCapture 'preserved.txt')) -ceq 'preserved ranged history' -and
+            -not [string]::IsNullOrWhiteSpace(
+                [IO.File]::ReadAllText((Join-Path $fakeScripts 'run-pool.txt'))
+            ) -and
+            [IO.File]::ReadAllText((Join-Path $fakeScripts 'run-throttle.txt')) -ceq '16' -and
             @(Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt'))[-1] -ceq 'run suite=movesets shifted=False range=2'
         ) `
         -Message 'Ranged generated creation did not preserve existing history or pass its range to the run.'

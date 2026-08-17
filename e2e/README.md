@@ -1,7 +1,7 @@
 # NA2 end-to-end tests
 
 This directory contains main-repository E2E infrastructure, suite definitions,
-and configuration. Accepted screenshot/savestate history is stored in the
+and configuration. Accepted screenshot history is stored in the
 nested local Git repository at `captures/`.
 
 ## Current command surface
@@ -67,15 +67,15 @@ siblings immediately. NUN5 capture overlaps the normal pipeline and its
 artifact publication uses the same bounded scheduling across suites.
 
 Each moveset lane batch-resolves its Practice rows, replays all required cases
-concurrently, and creates each grid as soon as its captures finish. The shared
-16-process budget is divided across concurrent moveset lanes, so normal,
-shifted, and reference work overlap without each claiming 16 PCSX2
-instances independently.
+concurrently, and creates each grid as soon as its captures finish. Normal,
+shifted, and reference work draw dynamically from one transaction-scoped
+16-process pool, so unfinished lanes immediately reuse capacity released by a
+lane that completes earlier.
 
 Typed artifacts are generated once and reused when their grids and aggregate
 hardlink views are staged. Aggregate preparation runs concurrently per suite.
 Canonical publication, rollback, and cleanup remain serial so normal
-screenshots, changed-screen savestates, reports, and aggregate views become
+screenshots, reports, and aggregate views become
 visible atomically only after the complete command succeeds. Publication and
 rollback retry transient file-reader locks instead of leaving a partially
 restored capture directory. Staged output is copied during publication, so a
@@ -125,8 +125,7 @@ e2e/
 │   ├── grid-screenshots/
 │   ├── grid-blends/
 │   ├── grid-diffs/
-│   ├── grid-pairs/
-│   └── sstates/{reference,current}/
+│   └── grid-pairs/
 └── .transactions/<kind>-<uuid>/   # resumable, ignored
     ├── owner.json
     ├── request.json
@@ -143,6 +142,9 @@ The generated `captures/movesets/` layout contains only
 `NNN-character-base|specials|mode-<awakening-id>-a-reference.png` and the
 corresponding `-b-current.png`; the numeric prefix is the physical
 `character_data.tsv` row.
+
+Existing `sstates/` directories are legacy capture history. Screenshot-only
+replays do not generate or update them.
 
 Every one-image-per-slot view uses the `base-` prefix, and every paged
 contact-sheet view uses `grid-`. The typed folders are canonical and tracked.

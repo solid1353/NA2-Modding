@@ -31,8 +31,7 @@ $script:E2eStableCaptureDirectories = @(
     $script:E2eScreenshotGridDirectory,
     $script:E2ePairGridDirectory,
     $script:E2eBlendGridDirectory,
-    $script:E2eDiffGridDirectory,
-    'sstates'
+    $script:E2eDiffGridDirectory
 )
 
 function Test-VisualRegressionGeneratedSuite {
@@ -443,7 +442,6 @@ function Get-VisualRegressionContext {
     else {
         [IO.Path]::GetFullPath($CaptureRoot)
     }
-    $statesRoot = Join-Path $captureRoot 'sstates'
     [pscustomobject]@{
         Root = $root
         CaptureRepository = Join-Path $root 'captures'
@@ -467,13 +465,9 @@ function Get-VisualRegressionContext {
             PairGrids = Join-Path $captureRoot $script:E2ePairGridDirectory
             BlendGrids = Join-Path $captureRoot $script:E2eBlendGridDirectory
             DiffGrids = Join-Path $captureRoot $script:E2eDiffGridDirectory
-            States = $statesRoot
-            ReferenceStates = Join-Path $statesRoot $script:E2eCaptureTiers.Reference
-            CurrentStates = Join-Path $statesRoot $script:E2eCaptureTiers.Current
         }
         Repository = $repository
         Comparator = Join-Path $repository 'scripts\research\localization\compare_font_capture_sets.ps1'
-        PythonRunner = Join-Path $repository 'scripts\lib\run_python.ps1'
     }
 }
 
@@ -1237,6 +1231,7 @@ function Invoke-VisualRegressionReplay {
             -Games $Game `
             -Play $stagedName `
             -Snapshots `
+            -InputRecordingCaptureMode screenshots `
             -CaptureDirectory $CaptureRoot `
             -InputRecordingsRoot $SharedRecordingRoot `
             -ProjectRoot $Repository
@@ -1248,87 +1243,31 @@ function Invoke-VisualRegressionReplay {
     }
 }
 
-function New-VisualRegressionStateStage {
+function Enter-VisualRegressionConcurrencyPool {
     param(
-        [Parameter(Mandatory)][string]$ExistingRoot,
-        [Parameter(Mandatory)][string]$StageRoot,
-        [Parameter(Mandatory)][string]$Tier,
-        [Parameter(Mandatory)][string]$CapturedDirectory,
-        [Parameter(Mandatory)][string]$CaptureRepository,
-        [Parameter(Mandatory)][string]$ExistingScreenshotDirectory,
-        [Parameter(Mandatory)][string]$ExistingScreenshotKind,
-        [Parameter(Mandatory)][string]$CapturedScreenshotDirectory,
-        [Parameter(Mandatory)][string]$PythonRunner
+        [Parameter(Mandatory)][string]$Root,
+        [Parameter(Mandatory)][ValidateRange(1, 64)][int]$Capacity
     )
 
-    if ($Tier -cnotin $script:E2eCaptureTiers.Values) {
-        throw "Unknown capture tier: $Tier"
-    }
-    [void](New-Item -ItemType Directory -Path $StageRoot -Force)
-    foreach ($preservedTier in $script:E2eCaptureTiers.Values) {
-        if ($preservedTier -ceq $Tier) { continue }
-        $source = Join-Path $ExistingRoot $preservedTier
-        if (Test-Path -LiteralPath $source -PathType Container) {
-            Copy-Item -LiteralPath $source -Destination $StageRoot -Recurse -Force
-        }
-    }
-    $destination = Join-Path $StageRoot $Tier
-    [void](New-Item -ItemType Directory -Path $destination -Force)
-    $existingStates = Join-Path $ExistingRoot $Tier
-    $committedStates = Join-Path $StageRoot '.committed-states'
-    [void](New-Item -ItemType Directory -Path $committedStates -Force)
-    $identicalScreenshots = [Collections.Generic.HashSet[string]]::new(
-        [StringComparer]::OrdinalIgnoreCase
-    )
-    $screenshotDefinition = Get-VisualRegressionScreenshotDefinition `
-        -Kind $ExistingScreenshotKind
-    if (Test-Path -LiteralPath $ExistingScreenshotDirectory -PathType Container) {
-        $comparison = @(
-            & $PythonRunner `
-                -PackageSet imaging `
-                -Script (Join-Path $PSScriptRoot 'find_identical_pngs.py') `
-                -ArgumentList @(
-                    '--repository', $CaptureRepository,
-                    '--existing-prefix', [IO.Path]::GetRelativePath(
-                        $CaptureRepository,
-                        $ExistingScreenshotDirectory
-                    ).Replace('\', '/'),
-                    '--existing-order', $screenshotDefinition.Order,
-                    '--existing-label', $screenshotDefinition.Label,
-                    '--captured', $CapturedScreenshotDirectory,
-                    '--state-prefix', [IO.Path]::GetRelativePath(
-                        $CaptureRepository,
-                        $existingStates
-                    ).Replace('\', '/'),
-                    '--state-output', $committedStates
-                ) `
-                -NoBytecode
-        )
-        if ($LASTEXITCODE -ne 0) {
-            throw "PNG comparison failed with exit code $LASTEXITCODE."
-        }
-        foreach ($name in $comparison) {
-            if (-not [string]::IsNullOrWhiteSpace($name)) {
-                [void]$identicalScreenshots.Add($name)
+    $resolvedRoot = [IO.Path]::GetFullPath($Root)
+    [void](New-Item -ItemType Directory -Path $resolvedRoot -Force)
+    while ($true) {
+        for ($slot = 1; $slot -le $Capacity; $slot++) {
+            $slotPath = Join-Path $resolvedRoot ('slot-{0:D2}.lock' -f $slot)
+            try {
+                return [IO.File]::Open(
+                    $slotPath,
+                    [IO.FileMode]::OpenOrCreate,
+                    [IO.FileAccess]::ReadWrite,
+                    [IO.FileShare]::None
+                )
+            }
+            catch [IO.IOException] {
+                # Another replay owns this slot. Try the next one.
             }
         }
+        Start-Sleep -Milliseconds 50
     }
-
-    foreach ($capturedState in Get-ChildItem -LiteralPath $CapturedDirectory -Filter '*.p2s' -File) {
-        $screenshotName = $capturedState.BaseName + '.png'
-        $existingState = Join-Path $committedStates $capturedState.Name
-        $sourceState = if (
-            $identicalScreenshots.Contains($screenshotName) -and
-            (Test-Path -LiteralPath $existingState -PathType Leaf)
-        ) {
-            $existingState
-        }
-        else {
-            $capturedState.FullName
-        }
-        Copy-Item -LiteralPath $sourceState -Destination $destination
-    }
-    Remove-Item -LiteralPath $committedStates -Recurse -Force
 }
 
 function Get-NumericPngSlots {
@@ -1496,12 +1435,10 @@ function Preserve-VisualRegressionMismatchEvidence {
                 (Join-Path $evidenceStage $comparisonName) `
                 $context.SuiteRelativePath
             $screenshotsRoot = Join-Path $caseRoot 'screenshots'
-            $statesRoot = Join-Path $caseRoot 'sstates'
             $reportRoot = Join-Path $caseRoot 'report'
             $comparisonCaseRoot = $resultFile.DirectoryName
             foreach ($mismatch in @($result.mismatches)) {
                 $name = [string]$mismatch.name
-                $stateName = [IO.Path]::ChangeExtension($name, '.p2s')
                 foreach ($variant in @('normal', $comparisonName)) {
                     $screenshot = Join-Path `
                         (Join-Path $comparisonCaseRoot "differences\$variant") `
@@ -1515,25 +1452,6 @@ function Preserve-VisualRegressionMismatchEvidence {
                         Copy-Item `
                             -LiteralPath $screenshot `
                             -Destination (Join-Path $screenshotDestination $name)
-                    }
-                    $state = Join-Path `
-                        (Join-Path `
-                            (Join-Path `
-                                (Join-Path `
-                                    (Join-Path $Transaction "jobs\$variant\suites") `
-                                    $context.SuiteRelativePath) `
-                                'capture') `
-                            'sstates') `
-                        $stateName
-                    if (Test-Path -LiteralPath $state -PathType Leaf) {
-                        $stateDestination = Join-Path $statesRoot $variant
-                        [void](New-Item `
-                            -ItemType Directory `
-                            -Path $stateDestination `
-                            -Force)
-                        Copy-Item `
-                            -LiteralPath $state `
-                            -Destination (Join-Path $stateDestination $stateName)
                     }
                 }
             }

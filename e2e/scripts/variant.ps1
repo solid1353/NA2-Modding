@@ -4,6 +4,7 @@ param(
     [Parameter(Mandatory)][string]$Transaction,
     [string[]]$Suite,
     [string]$MovesetRange,
+    [string]$MovesetConcurrencyPoolRoot,
     [ValidateRange(1, 64)]
     [int]$MovesetThrottleLimit = 16
 )
@@ -292,6 +293,7 @@ try {
                     $Generated,
                     $GeneratedScript,
                     $MovesetThrottleLimit,
+                    $MovesetConcurrencyPoolRoot,
                     $MovesetRange
                 )
                 $ErrorActionPreference = 'Stop'
@@ -302,6 +304,7 @@ try {
                         Tier = 'current'
                         OutputRoot = $CaptureRoot
                         ThrottleLimit = $MovesetThrottleLimit
+                        ConcurrencyPoolRoot = $MovesetConcurrencyPoolRoot
                         ProjectRoot = $Repository
                     }
                     if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
@@ -355,7 +358,9 @@ try {
             [string]$buildVariant.build
         ), (Join-Path $suiteOutput 'capture'), $suiteOutput, $suiteName, $replayName, (
             [bool]$context.Generated
-        ), $context.GeneratedScript, $MovesetThrottleLimit, $MovesetRange
+        ), $context.GeneratedScript, $MovesetThrottleLimit, (
+            $MovesetConcurrencyPoolRoot
+        ), $MovesetRange
         $replayJobs.Add($replayJob)
     }
 

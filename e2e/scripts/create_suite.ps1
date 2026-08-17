@@ -141,6 +141,7 @@ $resumeRequest = [ordered]@{
     command = 'create'
     all = [bool]$All
     no_reference = $NoReference.IsPresent
+    capture_mode = 'screenshots'
 }
 if ($movesetRangeSpecified) {
     $resumeRequest['moveset_range'] = $MovesetRange
@@ -156,6 +157,7 @@ $definitionStageRoot = Join-Path $transaction 'suite-definitions'
 $definitionBackupRoot = Join-Path $transaction 'previous-suite-definitions'
 $captureStageRoot = Join-Path $transaction 'capture-history'
 $referenceCaptureRoot = Join-Path $transaction 'reference-captures'
+$movesetConcurrencyPoolRoot = Join-Path $transaction 'moveset-concurrency'
 $referenceJobs = [Collections.Generic.List[object]]::new()
 $installed = [Collections.Generic.List[object]]::new()
 $allDefinitionsBackedUp = $false
@@ -305,8 +307,7 @@ try {
     }
 
     if (-not $NoReference.IsPresent) {
-        $movesetLaneCount = 2
-        $movesetThrottleLimit = [Math]::Max(1, [Math]::Floor(16 / $movesetLaneCount))
+        $movesetThrottleLimit = 16
         foreach ($entry in $installed) {
             $context = $entry.Context
             $referenceCapture = Join-Path $referenceCaptureRoot $context.SuiteRelativePath
@@ -326,6 +327,7 @@ try {
                     $CompletePath,
                     $Generated,
                     $ThrottleLimit,
+                    $ConcurrencyPoolRoot,
                     $MovesetRange
                 )
                 $ErrorActionPreference = 'Stop'
@@ -336,6 +338,7 @@ try {
                 }
                 if ($Generated) {
                     $arguments.MovesetThrottleLimit = $ThrottleLimit
+                    $arguments.MovesetConcurrencyPoolRoot = $ConcurrencyPoolRoot
                     if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
                         $arguments.MovesetRange = $MovesetRange
                     }
@@ -358,7 +361,7 @@ try {
                 Join-Path $PSScriptRoot 'reference.ps1'
             ), $context.Suite, $referenceGame, $referenceCapture, $referenceComplete, (
                 [bool]$context.Generated
-            ), $movesetThrottleLimit, $MovesetRange
+            ), $movesetThrottleLimit, $movesetConcurrencyPoolRoot, $MovesetRange
             $referenceJobs.Add($referenceJob)
         }
         if ($referenceJobs.Count -gt 0) {
@@ -374,11 +377,8 @@ try {
         CaptureRepository = $captureStageRoot
     }
     if (@($recordings | Where-Object Generated).Count -gt 0) {
-        $movesetLaneCount = if ($NoReference.IsPresent) { 1 } else { 2 }
-        $runArguments.MovesetThrottleLimit = [Math]::Max(
-            1,
-            [Math]::Floor(16 / $movesetLaneCount)
-        )
+        $runArguments.MovesetThrottleLimit = 16
+        $runArguments.MovesetConcurrencyPoolRoot = $movesetConcurrencyPoolRoot
         if ($movesetRangeSpecified) {
             $runArguments.MovesetRange = $MovesetRange
         }

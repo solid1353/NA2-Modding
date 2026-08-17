@@ -166,9 +166,6 @@ try {
                 $suitePublish `
                 $script:E2eDiffGridDirectory
         }
-        if ($metadata.has_states) {
-            $replacements[$context.Capture.States] = Join-Path $suitePublish 'sstates'
-        }
     }
     Publish-VisualRegressionTransaction `
         -Replacements $replacements `

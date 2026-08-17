@@ -38,8 +38,6 @@ if ($Action -in @('CurrentPrepare', 'ReferencePrepare')) {
         [void](New-Item -ItemType Directory -Path $currentStage -Force)
         Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File |
             Copy-Item -Destination $currentStage
-        $tier = $script:E2eCaptureTiers.Current
-        $existingKind = 'Current'
     }
     else {
         if ([string]::IsNullOrWhiteSpace($CapturedRoot)) {
@@ -54,25 +52,6 @@ if ($Action -in @('CurrentPrepare', 'ReferencePrepare')) {
         [void](New-Item -ItemType Directory -Path $referenceStage -Force)
         Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File |
             Copy-Item -Destination $referenceStage
-        $tier = $script:E2eCaptureTiers.Reference
-        $existingKind = 'Reference'
-    }
-
-    $statesStage = Join-Path (Join-Path $Transaction 'publish') (
-        Join-Path $context.SuiteRelativePath 'sstates'
-    )
-    $capturedStates = Join-Path $capturedRoot 'sstates'
-    if (Test-Path -LiteralPath $capturedStates -PathType Container) {
-        New-VisualRegressionStateStage `
-            -ExistingRoot $context.Capture.States `
-            -StageRoot $statesStage `
-            -Tier $tier `
-            -CapturedDirectory $capturedStates `
-            -CaptureRepository $context.CaptureRepository `
-            -ExistingScreenshotDirectory $context.Capture.Screenshots `
-            -ExistingScreenshotKind $existingKind `
-            -CapturedScreenshotDirectory $capturedScreenshots `
-            -PythonRunner $context.PythonRunner
     }
 
     New-VisualRegressionScreenshotStage `
@@ -84,7 +63,6 @@ if ($Action -in @('CurrentPrepare', 'ReferencePrepare')) {
         suite = $context.Suite
         has_reference = @(Get-NumericPngSlots -Directory $referenceStage).Count -gt 0
         has_current = @(Get-NumericPngSlots -Directory $currentStage).Count -gt 0
-        has_states = Test-Path -LiteralPath $statesStage -PathType Container
     }
     [void](New-Item -ItemType Directory -Path $suiteStage -Force)
     [IO.File]::WriteAllText(

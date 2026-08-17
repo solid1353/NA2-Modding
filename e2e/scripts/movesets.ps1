@@ -15,6 +15,8 @@ param(
     [ValidateRange(1, 64)]
     [int]$ThrottleLimit = 16,
 
+    [string]$ConcurrencyPoolRoot,
+
     [string]$ProjectRoot = (Join-Path $PSScriptRoot '..\..')
 )
 
@@ -54,6 +56,12 @@ else {
 $gridOutputRoot = Join-Path $runRoot 'grid-screenshots'
 $workingBase = Join-Path $runRoot '.work'
 [void](New-Item -ItemType Directory -Path $gridOutputRoot, $workingBase -Force)
+$ConcurrencyPoolRoot = if ([string]::IsNullOrWhiteSpace($ConcurrencyPoolRoot)) {
+    Join-Path $workingBase 'concurrency'
+}
+else {
+    [IO.Path]::GetFullPath($ConcurrencyPoolRoot)
+}
 
 $practiceScript = Join-Path $ProjectRoot 'scripts\na228\practice.ps1'
 $gridScript = Join-Path `
@@ -363,6 +371,8 @@ foreach ($outputPlan in $outputPlans) {
                 CompletePath = Join-Path (Split-Path -Parent $captureRoot) 'complete.json'
                 PnachByGame = $pnachByGame
                 PnachLinesByGame = $pnachLinesByGame
+                ConcurrencyPoolRoot = $ConcurrencyPoolRoot
+                ConcurrencyLimit = $ThrottleLimit
             }
             [void]$captureContexts.Add($taskContext)
 
@@ -392,11 +402,13 @@ foreach ($outputPlan in $outputPlans) {
                     -ArgumentList @(
                         $taskContext,
                         $launcher,
-                        $ProjectRoot
+                        $ProjectRoot,
+                        $taskScript
                     ) `
                     -ScriptBlock {
-                        param($Context, $Launcher, $Repository)
+                        param($Context, $Launcher, $Repository, $SuiteScript)
                         $ErrorActionPreference = 'Stop'
+                        . $SuiteScript
                         Write-Host (
                             "Capturing $($Context.GameLabel) moveset row " +
                             "$($Context.Row) with $($Context.Recording) -> " +
@@ -412,17 +424,25 @@ foreach ($outputPlan in $outputPlans) {
                             -ItemType Directory `
                             -Path $Context.CaptureRoot `
                             -Force)
-                        & $Launcher `
-                            -Games @($Context.Game) `
-                            -Play $Context.Recording `
-                            -Snapshots `
-                            -InputRecordingCaptureMode screenshots `
-                            -CaptureDirectory $Context.CaptureRoot `
-                            -ReadOnlySettings `
-                            -PnachByGame $Context.PnachByGame `
-                            -PnachLinesByGame $Context.PnachLinesByGame `
-                            -ProjectRoot $Repository `
-                            -InputRecordingsRoot $Context.InputRecordingsRoot
+                        $permit = Enter-VisualRegressionConcurrencyPool `
+                            -Root $Context.ConcurrencyPoolRoot `
+                            -Capacity $Context.ConcurrencyLimit
+                        try {
+                            & $Launcher `
+                                -Games @($Context.Game) `
+                                -Play $Context.Recording `
+                                -Snapshots `
+                                -InputRecordingCaptureMode screenshots `
+                                -CaptureDirectory $Context.CaptureRoot `
+                                -ReadOnlySettings `
+                                -PnachByGame $Context.PnachByGame `
+                                -PnachLinesByGame $Context.PnachLinesByGame `
+                                -ProjectRoot $Repository `
+                                -InputRecordingsRoot $Context.InputRecordingsRoot
+                        }
+                        finally {
+                            $permit.Dispose()
+                        }
 
                         $screenshots = Join-Path $Context.CaptureRoot 'screenshots'
                         $screenshotCount = @(

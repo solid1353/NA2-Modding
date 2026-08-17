@@ -11,6 +11,7 @@ param(
     [Parameter(Mandatory, ParameterSetName = 'Publish')]
     [string]$CaptureRoot,
     [string]$MovesetRange,
+    [string]$MovesetConcurrencyPoolRoot,
     [ValidateRange(1, 64)]
     [int]$MovesetThrottleLimit = 16
 )
@@ -39,6 +40,7 @@ if ($context.Generated) {
             Tier = 'reference'
             OutputRoot = $CaptureOutputRoot
             ThrottleLimit = $MovesetThrottleLimit
+            ConcurrencyPoolRoot = $MovesetConcurrencyPoolRoot
             ProjectRoot = $context.Repository
         }
         if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
@@ -69,6 +71,7 @@ if ($context.Generated) {
                 Tier = 'reference'
                 OutputRoot = $generatedRuntimeCapture
                 ThrottleLimit = $MovesetThrottleLimit
+                ConcurrencyPoolRoot = $MovesetConcurrencyPoolRoot
                 ProjectRoot = $context.Repository
             }
             if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
@@ -163,12 +166,6 @@ $blendGridStage = Join-Path `
 $diffGridStage = Join-Path `
     $(if ($initializeCapture) { $suiteCaptureStage } else { $stageRoot }) `
     $script:E2eDiffGridDirectory
-$statesStage = if ($initializeCapture) {
-    Join-Path $suiteCaptureStage 'sstates'
-}
-else {
-    Join-Path $stageRoot 'sstates'
-}
 $scratch = Join-Path $transaction 'scratch'
 
 try {
@@ -191,20 +188,6 @@ try {
     }
     Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File |
         Copy-Item -Destination $referenceStage
-    $capturedStates = Join-Path $runtimeCapture 'sstates'
-    if (Test-Path -LiteralPath $capturedStates -PathType Container) {
-        New-VisualRegressionStateStage `
-            -ExistingRoot $context.Capture.States `
-            -StageRoot $statesStage `
-            -Tier $script:E2eCaptureTiers.Reference `
-            -CapturedDirectory $capturedStates `
-            -CaptureRepository $context.CaptureRepository `
-            -ExistingScreenshotDirectory $context.Capture.Screenshots `
-            -ExistingScreenshotKind Reference `
-            -CapturedScreenshotDirectory $capturedScreenshots `
-            -PythonRunner $context.PythonRunner
-    }
-
     $hasCurrent = @(Get-NumericPngSlots -Directory $currentStage).Count -gt 0
     if ($hasCurrent) {
         New-VisualRegressionReport `
@@ -261,9 +244,6 @@ try {
             $existingReplacements[$context.Capture.BlendGrids] = $blendGridStage
             $existingReplacements[$context.Capture.DiffGrids] = $diffGridStage
         }
-        if (Test-Path -LiteralPath $statesStage -PathType Container) {
-            $existingReplacements[$context.Capture.States] = $statesStage
-        }
         $existingReplacements
     }
     Publish-VisualRegressionTransaction `
@@ -274,7 +254,7 @@ try {
                 -Context @($context) `
                 -TransactionRoot $transaction
         }
-    Write-Host 'Reference screenshots, savestates, and comparison artifacts were published atomically.' -ForegroundColor Green
+    Write-Host 'Reference screenshots and comparison artifacts were published atomically.' -ForegroundColor Green
 }
 finally {
     Remove-VisualRegressionTransaction -Transaction $transaction -Root $context.Root

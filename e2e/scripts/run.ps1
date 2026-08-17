@@ -432,16 +432,35 @@ try {
         "$(@($runVariants.name) -join ', ')."
     ) -ForegroundColor Cyan
 
-    $nextProgress = [DateTime]::UtcNow
-    $pollJobs = {
-        if ([DateTime]::UtcNow -ge $nextProgress) {
-            $jobState = @(
-                $jobs | ForEach-Object { "$($_.Name)=$($_.State)" }
-            ) -join ', '
-            Write-Host "E2E pipeline running: $jobState"
-            $nextProgress = [DateTime]::UtcNow.AddSeconds(10)
-        }
+    $progressState = [pscustomobject]@{
+        Next = [DateTime]::UtcNow
     }
+    $pollJobs = {
+        param([Parameter(Mandatory)][object]$Progress)
+
+        $now = [DateTime]::UtcNow
+        if ($now -ge $progressState.Next) {
+            $replayCompleted = @(
+                $jobs | Where-Object State -EQ 'Completed'
+            ).Count
+            $status = [Collections.Generic.List[string]]::new()
+            $status.Add("replays $replayCompleted/$($jobs.Count) completed")
+            $status.Add(
+                "tasks $($Progress.TaskCompleted)/$($Progress.TaskTotal) completed, " +
+                "$($Progress.TaskRunning) running, $($Progress.TaskWaiting) waiting"
+            )
+            if ($SupervisedJob.Count -gt 0) {
+                $referenceCompleted = @(
+                    $SupervisedJob | Where-Object State -EQ 'Completed'
+                ).Count
+                $status.Add(
+                    "references $referenceCompleted/$($SupervisedJob.Count) completed"
+                )
+            }
+            Write-Host "E2E pipeline running: $($status -join '; ')"
+            $progressState.Next = $now.AddSeconds(10)
+        }
+    }.GetNewClosure()
     try {
         Invoke-VisualRegressionTaskGraph `
             -Task ([object[]]$tasks) `

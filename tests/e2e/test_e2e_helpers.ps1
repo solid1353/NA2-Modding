@@ -408,6 +408,7 @@ if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
         $MovesetRange
     )
 }
+Start-Sleep -Milliseconds 600
 foreach ($suiteName in $Suite) {
     $suiteRoot = Join-Path `
         (Join-Path (Join-Path (Join-Path $Transaction 'jobs') $Variant) 'suites') `
@@ -443,9 +444,13 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
         (Join-Path $generatedRunRoot 'captures\movesets\stale.txt'),
         'stale generated artifact'
     )
-    & (Join-Path $generatedRunScripts 'run.ps1') `
+    $generatedRunOutput = @(& (Join-Path $generatedRunScripts 'run.ps1') `
         -Suite 'movesets' `
-        -Shifted | Out-Null
+        -Shifted *>&1 | ForEach-Object { [string]$_ })
+    $generatedProgressLines = @(
+        $generatedRunOutput |
+            Where-Object { $_ -like 'E2E pipeline running:*' }
+    )
     Assert-E2eHelperTest `
         -Condition (
             [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002-naruto-base-a-reference.png')) -ceq 'accepted reference grid' -and
@@ -478,9 +483,15 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
                 'captures\movesets\all\002-naruto-base_e_pair.png')) -and
             -not (Test-Path -LiteralPath (
                 Join-Path $generatedRunRoot 'captures\movesets\stale.txt'
-            ))
+            )) -and
+            $generatedProgressLines.Count -eq 1 -and
+            $generatedProgressLines[0] -match (
+                '^E2E pipeline running: replays \d+/2 completed; ' +
+                'tasks \d+/\d+ completed, \d+ running, \d+ waiting$'
+            ) -and
+            $generatedProgressLines[0] -notmatch 'normal=|shifted='
         ) `
-        -Message 'Generated run did not compare normal/shifted grids and publish current history.'
+        -Message 'Generated run output, comparison, or current-history publication regressed.'
     [IO.File]::WriteAllText(
         (Join-Path $generatedRunCapture '003-sakura-base-a-reference.png'),
         'preserved reference grid'

@@ -369,10 +369,6 @@ function Invoke-VisualRegressionTaskGraph {
                 }
             }
 
-            if ($null -ne $OnPoll) {
-                & $OnPoll
-            }
-
             $supervisedActive = @(
                 $SupervisedJob | Where-Object State -In $activeStates
             ).Count
@@ -389,6 +385,15 @@ function Invoke-VisualRegressionTaskGraph {
                     'E2E task graph has unresolved dependencies or inputs: ' +
                     (@($pending.Keys) -join ', ')
                 )
+            }
+            if ($null -ne $OnPoll) {
+                & $OnPoll ([pscustomobject]@{
+                    TaskTotal = $Task.Count
+                    TaskCompleted = $completed.Count
+                    TaskRunning = $running.Count
+                    TaskWaiting = $pending.Count
+                    SupervisedActive = $supervisedActive
+                })
             }
             Start-Sleep -Milliseconds 200
         }

@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('CurrentPrepare', 'ReferencePrepare', 'Pair', 'Blend', 'Diff')]
+    [ValidateSet('CurrentPrepare', 'ReferencePrepare', 'All', 'Pair', 'Blend', 'Diff')]
     [string]$Action,
     [Parameter(Mandatory)][string]$Suite,
     [Parameter(Mandatory)][string]$Transaction,

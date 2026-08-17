@@ -197,14 +197,12 @@ try {
             -ErrorAction SilentlyContinue
     ).Count -gt 0
     if ($hasCurrent) {
-        foreach ($kind in @('Pair', 'Blend', 'Diff')) {
-            & $context.Comparator `
-                -PairedGridDirectory $screenshotGridStage `
-                -OutputDirectory $publishRoot `
-                -Kind $kind
-            if ($LASTEXITCODE -ne 0) {
-                throw "$kind grid generation failed with exit code $LASTEXITCODE."
-            }
+        & $context.Comparator `
+            -PairedGridDirectory $screenshotGridStage `
+            -OutputDirectory $publishRoot `
+            -Kind All
+        if ($LASTEXITCODE -ne 0) {
+            throw "Comparison grid generation failed with exit code $LASTEXITCODE."
         }
     }
     $replacements = if ($initializeCapture) {

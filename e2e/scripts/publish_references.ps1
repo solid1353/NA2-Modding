@@ -97,33 +97,29 @@ try {
                 )
             }.GetNewClosure()
         })
-        foreach ($action in @('Pair', 'Blend', 'Diff')) {
-            $taskAction = $action
-            $taskKey = "reference-artifact/$taskSuite/$($taskAction.ToLowerInvariant())"
-            $tasks.Add([pscustomobject]@{
-                Key = $taskKey
-                Priority = 10
-                DependsOn = @($prepareKey)
-                Ready = $null
-                Start = {
-                    Start-ThreadJob -Name $taskKey -ScriptBlock {
-                        param($Script, $Action, $Suite, $Transaction, $CaptureRoot)
-                        $ErrorActionPreference = 'Stop'
-                        & $Script `
-                            -Action $Action `
-                            -Suite $Suite `
-                            -Transaction $Transaction `
-                            -CaptureRoot $CaptureRoot
-                    } -ArgumentList (
-                        $postprocessScript,
-                        $taskAction,
-                        $taskSuite,
-                        $transaction,
-                        $taskCaptureRoot
-                    )
-                }.GetNewClosure()
-            })
-        }
+        $artifactKey = "reference-artifact/$taskSuite/all"
+        $tasks.Add([pscustomobject]@{
+            Key = $artifactKey
+            Priority = 10
+            DependsOn = @($prepareKey)
+            Ready = $null
+            Start = {
+                Start-ThreadJob -Name $artifactKey -ScriptBlock {
+                    param($Script, $Suite, $Transaction, $CaptureRoot)
+                    $ErrorActionPreference = 'Stop'
+                    & $Script `
+                        -Action All `
+                        -Suite $Suite `
+                        -Transaction $Transaction `
+                        -CaptureRoot $CaptureRoot
+                } -ArgumentList (
+                    $postprocessScript,
+                    $taskSuite,
+                    $transaction,
+                    $taskCaptureRoot
+                )
+            }.GetNewClosure()
+        })
     }
 
     Invoke-VisualRegressionTaskGraph `

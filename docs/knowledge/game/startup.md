@@ -69,6 +69,14 @@ black screen without materially reducing total boot time. Those two resource
 checks must remain because the main-menu controller consumes the initialized
 data.
 
+Static tracing now resolves the ROFS/data-ready side of that barrier. Startup
+mounts `DATA.CVM` as `VOL`, loads the root directory synchronously, and creates
+the `Load ROFS_Data` worker at `FUN_001BD970`. The worker recursively loads the
+20 child directories described by `GZLIST.TXT` and sets `0x006074A0` only after
+their metadata is ready. It does not preload the 2,310 CCS payloads. The mount,
+tree layout, retry behavior, and path-routing contract are documented in
+[Resident file and archive services](files/runtime_services.md).
+
 After all three values are ready, the native code writes state `2` at virtual
 address `0x001E11CC` (file offset `0xE12CC`). The current patch changes that
 assignment to state `3`, bypassing the opening path. The title dispatcher at

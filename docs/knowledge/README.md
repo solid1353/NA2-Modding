@@ -40,6 +40,8 @@ Operational logs remain disposable after their durable findings are promoted. Gi
   and the canonical human-readable game-file and media-layout references.
 - [`runtime/`](runtime/README.md): EE address-space, allocator,
   overlay-lifetime, injection-capacity, and menu-input runtime findings.
+- [`rendering/`](rendering/README.md): proper-widescreen requirements,
+  NUN6 implementation evidence, NA2 donor-site mapping, and validation plan.
 - [`gameplay/`](gameplay/README.md): battle behavior, substitution, and
   topic-local unresolved leads.
 - [`localization/`](localization/README.md): translation, string placement, UI

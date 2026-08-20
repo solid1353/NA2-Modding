@@ -5,6 +5,33 @@ availability to the frontend, Adventure, and battle overlays. It separates the
 confirmed data and call contracts from the `qol.content.unlock_all` patch that
 overrides those reads.
 
+## Research coverage
+
+- **Assigned scope:** save-backed content availability: resident accessors and
+  hook seams, the stored arrays they expose, and the frontend/ETC consumers
+  needed to establish native grouped-content semantics.
+- **Exploration depth:** the resident reader families and bounded
+  character/jutsu gates were traced; all six ETC Collection viewer groups and
+  their fixed record tables were decoded; direct state-1, state-2, and state-3
+  writers in ETC were inventoried; and the complete Collection-root NEW scans
+  and 12-record Diorama derivation pass were checked. Coverage is exhaustive
+  for those fixed group tables, viewer state transitions, and direct ETC setter
+  sites, but not for every prerequisite or acquisition producer in the game.
+- **Confirmed coverage:** historical savestates corroborated the resident
+  layout, and an earlier user-observed Figure-viewer run corroborated the
+  native stable state used by the documented override.
+- **Unresolved or untested:** movie acquisition lies outside ETC; several
+  eligibility tables are only bounded through their consumers; and
+  indirect/computed callers may exist beyond the direct-reference inventory.
+  No controlled runtime matrix exercised all groups or lifecycle values.
+- **Deliberate exclusions and overlap:** Adventure consumer behavior was not
+  analyzed in this pass. Human-facing labels and broader profile serialization
+  remain owned by their dedicated documents.
+- **Evidence limitations:** conclusions combine static resident/ETC tracing,
+  historical savestates, and one earlier user-observed Figure-viewer run; they
+  do not constitute exhaustive runtime validation of every acquisition path,
+  group, or lifecycle value.
+
 ## Evidence and identity
 
 Static analysis uses the canonical Ghidra 12.1.2 exports under
@@ -19,8 +46,8 @@ On 2026-08-10, direct byte inspection compared the extracted `eeMemory.bin`
 members of two user-supplied NA v2.28 savestates for serial `SLOP-NA228`, CRC
 `7E793241`: SS1 had a fully unlocked save loaded, while SS2 had no loaded save.
 The memory values observed in those captures and the static reader contracts
-below are **high-confidence facts**. Semantic names for the six grouped tables
-remain incomplete and are identified separately as an unresolved mapping.
+below are **high-confidence facts**. Later ETC analysis resolves all six
+grouped-table meanings and their native `0..3` lifecycle below.
 
 ## Live manager and profile mapping
 
@@ -81,19 +108,19 @@ Offsets in this table are relative to the reader base (`profile + 0x08`).
 | Character status | `0x900` | 94 bytes | ID 0 is `FF`; IDs 1-93 are `03` | Mostly `00`; `03` at IDs 57-61, 65-70, 73, and 78-87 |
 | Secondary bitset | `0x960` | 8 bytes / 64 bits | all `FF` | all `00` |
 | Small availability table | `0x968` | 32 bytes | all `FF` | all `00` |
-| Group 0 | `0x988` | 93 bytes | index 0 is `03`; remainder `FF` | all `00` |
-| Group 1 | `0x9E5` | 41 bytes | all `FF` | all `00` |
-| Group 2 | `0xA0E` | 155 bytes | all `FF` | all `00` |
-| Group 3 | `0xAA9` | 168 bytes | all `FF` | all `00` |
-| Group 4 | `0xB51` | 7 bytes | index 0 is `03`; remainder `FF` | all `00` |
-| Group 5 | `0xB58` | 12 bytes | all `FF` | all `00` |
+| Group 0, Figures/Dolls | `0x988` | 93 bytes | index 0 is `03`; remainder `FF` | all `00` |
+| Group 1, Music | `0x9E5` | 41 bytes | all `FF` | all `00` |
+| Group 2, Voice | `0xA0E` | 155 bytes | all `FF` | all `00` |
+| Group 3, Skills/Ultimate Jutsu | `0xAA9` | 168 bytes | all `FF` | all `00` |
+| Group 4, Movies | `0xB51` | 7 bytes | index 0 is `03`; remainder `FF` | all `00` |
+| Group 5, Dioramas | `0xB58` | 12 bytes | all `FF` | all `00` |
 
 `FUN_001e39b0`, the native grouped-table reset, independently confirms the six
 counts as `93`, `41`, `155`, `168`, `7`, and `12`. The paired captures confirm
-the fully unlocked byte values. `ETC.BIN` consumes all six groups across Shop,
-Collection, and other frontend paths; `ADV.BIN` also consumes grouped values.
-The exact semantic label for every group number is not yet reconstructed and
-must not be inferred merely from an individual caller.
+the fully unlocked byte values. ETC record tables, viewer group constants, and
+embedded class strings independently establish the labels above. `ETC.BIN`
+consumes all six groups across Shop, Collection, and other frontend paths;
+`ADV.BIN` also consumes grouped values.
 
 ## Read-only unlock override
 
@@ -200,3 +227,70 @@ expose all 93 figure entries, but represents each one in the native stable
 unlocked state and no longer masks the viewer's `3` with `FF`. On 2026-08-11,
 the user confirmed in-game that Collection figure pedestals render with
 `unlock_all` enabled.
+
+## Native grouped-content lifecycle
+
+Clean `ETC.BIN` has SHA-256
+`8FF3C6E1ED5CE2B093B0934C898C40D1CEEA0C20778C49CDA5591AAD02375C74`.
+Its MWo3 header remains resident at runtime, so live overlay addresses are the
+preserved export addresses plus `0x40`; encoded absolute operands are already
+live. The six viewer prologues independently select groups 0 through 5:
+
+| Group | Content | Count | Record table, live | Record size |
+| ---: | --- | ---: | ---: | ---: |
+| 0 | Figures/Dolls | 93 | `0x006DADE0` | `0x30` |
+| 1 | Music | 41 | `0x006DF7B0` | `0x10` |
+| 2 | Voice | 155 | `0x006E0E00` | `0x0C` |
+| 3 | Skills/Ultimate Jutsu | 168 | `0x006DDE70` | `0x10` |
+| 4 | Movies | 7 | `0x006DF170` | `0x10` |
+| 5 | Dioramas | 12 | `0x006E1F70` | `0x88` |
+
+Figure and Voice content also have 31-entry character bundle tables, each
+using `0x14`-byte records containing character ID, price, first record, count,
+and pointer. Their live tables are `0x006DBF50` and `0x006E1550`.
+
+The safe native meanings of grouped bytes are:
+
+| Value | Meaning |
+| ---: | --- |
+| `0` | default/unowned/not yet promoted; eligibility can still come from prerequisite tables |
+| `1` | Shop-offered or announced, still unowned |
+| `2` | owned and NEW/unviewed |
+| `3` | owned and viewed/stable |
+
+This qualification on zero matters: ETC writes `0 -> 1` only for Figure,
+Voice, and Music offers. Skills can be Shop-eligible while still zero, and no
+group-3 state-1 writer was found. The common award dispatcher at live
+`0x006CAE30` writes state 2. Figure and Voice awards are bulk operations over a
+character bundle; Skill and Music awards write a single ID.
+
+Every Collection viewer requires a value greater than 1 and persists 3 after
+opening the item. The setter sites are live `0x006BA834` (Figure),
+`0x006BBAE8` (Diorama), `0x006C0694` (Skill), `0x006C2BE8` (Voice),
+`0x006C3FB0` (Movie), and `0x006C569C` (Music). Exact-2 scans used for NEW
+badges corroborate state 2 across all six groups. No ETC writer of Movie state
+1 or 2, or Diorama state 1, was found; Movie acquisition lies outside this
+overlay, and Diorama acquisition is derived as described next.
+
+### Collection-root NEW badges
+
+The Collection-root render callback at export/live
+`0x006B53C0/0x006B5400` builds three category flags:
+
+- Characters scans all Dioramas, then Figure, Skill, and Voice entries grouped
+  through the 75-entry master character table at live `0x006D9840`;
+- Movie scans all seven group-4 entries;
+- Music scans all 41 group-1 entries.
+
+Every scan tests exactly for state 2. A category draws NEW only when its flag
+was set.
+
+### Derived Diorama unlocks
+
+Diorama list initialization at export/live `0x006BB550/0x006BB590` visits all
+12 records. A record contains up to six signed linked character IDs at
+`+0x14 + n * 0x0C`. For a Diorama whose state is below 2, the initializer skips
+negative IDs and tests whether **any** linked character owns **any** Figure
+(group-0 state greater than 1). The first success persists Diorama state 2;
+the viewer later converts it to state 3. The rule is any linked character, not
+all six.

@@ -117,6 +117,15 @@ new `PRG/MOD.BIN` and `PRG/TEXTENG.BIN` through explicit paths with the original
 NA2 `FLIST.DIR` unchanged. The compact successor loads only `PRG/228.BIN`
 through the same path and therefore also intentionally omits a FLIST edit.
 
+The resident allocation is exactly 40 entries. `FUN_00143D98` divides its
+`0x668`-byte buffer into forty 8-byte location tuples and forty 33-byte name
+slots, with a configured maximum name length of `0x20`. The clean eight-line
+manifest therefore leaves 32 entries, but this is not permission to use longer
+paths: the parser does not reject a name longer than 32 characters before the
+copy crosses its fixed stride. Full cache, normalization, and explicit-device
+fallback evidence is in
+[Resident file and archive services](runtime_services.md).
+
 ## Analysis levels
 
 ### Full existing program analysis

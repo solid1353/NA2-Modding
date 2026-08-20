@@ -13,6 +13,63 @@ semantics. The shortened secondary atlas remains confined to its own parser
 path. Exact current integration and generation ownership are documented in the
 [integration baseline](integration_baseline.md).
 
+## Resident loader and auxiliary ruby atlas
+
+Fresh static tracing against clean NA2 `SLPS_258.37`, SHA-256
+`20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`,
+resolves the complete five-file font load family. `FUN_00186050` queues
+`SF1.BIN`, `SF1C.BIN`, `GF4.BIN`, `GF4C.BIN`, and `GRF4.BIN` through
+`FUN_00184840`. The resident selector `FUN_00186510(renderer, mode)` installs
+SF1 plus SF1C for mode 0 and GF4 plus GF4C for nonzero mode.
+
+The common parser at `FUN_00184100` reads an 8-byte resource header and routes
+type 1 to raster parser `FUN_00184240`, or type 2 to companion-table parser
+`FUN_00184630`. GF4 and SF1 each expose two raster descriptors. Both 104-byte
+companion files contain an 8-byte header followed by a `0x60`-byte record: a
+32-byte filename and exactly 64 bytes of 16 RGBA entries. The type-2 parser
+constructs a render-side CLUT object from those entries. `FUN_00189860`
+installs the selected raw record and CLUT object in the renderer.
+
+`GRF4.BIN` has a distinct, now-confirmed role. Its single type-1 descriptor at
+file offset `0x30` declares 8×8 glyphs, 167 raster entries, and a 334-record
+two-byte-code map. The raster stride is 32 bytes per glyph, exactly one 8×8
+4-bpp cell. Its only renderer path is `FUN_00186C30`, reached from shared
+string renderer `FUN_00188140` when inline markup enters the annotation arm
+after a pipe character. The renderer counts two-byte annotation glyphs through
+the closing `>`, centers their aggregate width over the base-text span in
+horizontal layout (or beside it in vertical layout), and resolves each glyph
+through the GRF4 code map. This establishes GRF4 as the small ruby/furigana
+annotation atlas rather than a generic graphics-support file.
+
+The clean GRF4 file closes exactly under that interpretation:
+
+| File range | Size | Meaning |
+| --- | ---: | --- |
+| `0x0000..0x0007` | `0x08` | Common type-1 resource header |
+| `0x0008..0x0027` | `0x20` | Padded `GRF4.BIN` name |
+| `0x0028..0x002F` | `0x08` | Flags and alignment |
+| `0x0030..0x004B` | `0x1C` | Single raster descriptor |
+| `0x004C..0x152B` | `0x14E0` | `167 * 0x20` packed glyph bytes |
+| `0x152C..0x1A63` | `0x538` | `334 * 4` code-map records |
+
+The final byte is the end of the 6,756-byte file; no unexplained trailer is
+left by the parsed counts.
+
+The exact direct evidence is:
+
+| Resource | Clean size | Loader type | Confirmed resident use |
+| --- | ---: | ---: | --- |
+| `GF4.BIN` | 906,678 | 1 | Mode-1 selectable font rasters and metrics |
+| `GF4C.BIN` | 104 | 2 | GF4's 16-entry RGBA CLUT |
+| `GRF4.BIN` | 6,756 | 1 | 8×8 inline ruby/annotation glyphs |
+| `SF1.BIN` | 103,046 | 1 | Mode-0 selectable font rasters and metrics |
+| `SF1C.BIN` | 104 | 2 | SF1's 16-entry RGBA CLUT |
+
+This result is high-confidence static evidence from the clean file headers,
+the allocation sizes in both parsers, the selector calls, and the annotation
+branch's positioning math. The semantic names of every type-1 descriptor flag
+remain unresolved; do not extrapolate those bits beyond the observed branches.
+
 ## Superseded clean 10x22 baseline
 
 An earlier clean-NA2 baseline established a coherent 10x22 bitmap font with 157

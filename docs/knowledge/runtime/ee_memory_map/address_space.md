@@ -181,8 +181,11 @@ resident-payload end changes.
 Rendering patch `ELF-R001` replaces the shared rendering-state writer at
 boot-ELF offset `0xEDC0`. It forces `0.75f` at object offset `0x274` through
 the live object pointer while preserving the caller-provided vertical scale at
-`0x278`. This is the verified good-enough file-backed implementation and
-affects every call through that writer.
+`0x278`. This is the verified good-enough file-backed horizontal-scale
+implementation and affects every call through that writer. It is not the
+complete widescreen design; the canonical NUN6 comparison, scoped-writer
+hypothesis, selective 2D inventory, and validation plan are in
+[`docs/knowledge/rendering/`](../../rendering/README.md).
 
 The clean ELF's first `PT_LOAD` begins at file offset `0x100`, maps at
 `0x00100000`, has file size `0x507380`, and has memory size `0x5B3F00`.

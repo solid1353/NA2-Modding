@@ -59,7 +59,7 @@ fields were:
 | manager `+0xDE8` | Player 2/COM fighter pointer |
 | fighter `+0x20` | Opponent fighter pointer; reciprocal in both captures |
 | fighter `+0x68` | Active character ID (`u32`) |
-| fighter `+0x70` | Current substitution resource (`float32`) |
+| fighter `+0x70` | Current chakra resource (`float32`); native substitution also spends it |
 
 SS1 was Naruto versus Naruto: manager choices were 57/57 and both live fighter
 IDs were 57. SS2 was Sakura versus Naruto: manager choices were 58/57 and the

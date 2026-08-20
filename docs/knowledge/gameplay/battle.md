@@ -3,6 +3,53 @@
 This document owns unresolved and established leads about battle behavior that
 do not belong to a narrower gameplay subsystem.
 
+## Research coverage
+
+- **Assigned scope:** this task determines how accepted combo hits reach the
+  native damage calculator, which native state supplies the hit index, whether
+  configurable per-hit scaling can be inserted without replacing combo
+  bookkeeping, and what deterministic input evidence is needed to implement
+  and validate it. The primary reproduction is `damage_scaling.p2m2` with
+  Sakura in Practice row 9.
+- **Exploration depth:** within the exact clean NA2.28 executable
+  and this reproduction, the investigation statically classified every one of
+  the ten clean calls to `FUN_00224e30`, traced the native combo owner,
+  pending-hit producer/consumer, timer/reset behavior, and response/contact
+  branch, and audited all 24 clean stage archives for the relevant collision
+  flag.
+- **Confirmed coverage:** runtime work replayed all 13 checkpoints with an all-caller logger, a
+  focused call-boundary probe, an unmodified-behavior control, the proposed
+  `0.10`-decay/`0.30`-floor curve, and an `S08` stage control. It confirms the
+  active main and secondary `.02` call paths, the
+  `max(1, current + max(pending, 0))` hit index, hits one through five and
+  native reset, preservation of native combo fields, scaled HP and HUD
+  consumption, and the complete 3,620-record controller stream. The static
+  `.04` contact path and its post-damage callback are structurally mapped, and
+  `S08` is confirmed as the only clean stage containing authored environment
+  triangles with the required `0x400` flag.
+- **Unresolved or untested:** no natural runtime event has yet entered the
+  `.04` contact call at `0x00231634`; the `S08` control proves the resource is
+  present but the existing side-0 movie never reaches its upper/side-1 flagged
+  geometry or qualifying response states. The five-hit recording does not
+  exercise the eight-hit `0.30` floor boundary. Coverage is also still open for
+  other characters, guard outcomes, throws, projectiles, specials, linked or
+  support attacks, transformations, and any caller dormant in this movie.
+- **Deliberate exclusions and overlap:** this research does not implement the
+  production builder/configuration feature, invent a replacement combo timer,
+  alter collision or stage data, or activate the separate dormant character
+  `damage_multiplier` proposal. Practice bootstrap, starting HP, awakening,
+  support, status, and other battle sections in this shared document are prior
+  or parallel scopes and were not re-investigated for damage scaling.
+- **Evidence limitations:** static conclusions use the read-only clean
+  `SLPS_258.37` export and executable with SHA-256
+  `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`;
+  there is no original game source. Runtime conclusions are bounded to the
+  verified Manual cache, the exact Practice PNACH/bootstrap, and the named
+  movie and transient probes. Captured heap addresses are allocation-specific,
+  marker snapshots observe selected frames rather than every intermediate
+  state, and static reachability alone is not evidence that an unobserved
+  caller executes in ordinary play.
+
 ## Practice starting-HP selector
 
 Practice Settings stores its native HP selection as an integer enum: `0` is
@@ -422,8 +469,9 @@ multiplier `m`:
 
 ```text
 d = clamp(d, 0.0, 3.0)
-m = 2.0 - d                                      when d < 1.5
-m = 0.5 - ((d - 1.5) / 1.5) * 0.2              otherwise
+m = 2.0 - d                                      when d < 1.0
+m = 1.0 - ((d - 1.0) / 0.5) * 0.5              when 1.0 <= d < 1.5
+m = 0.5 - ((d - 1.5) / 1.5) * 0.2              when d >= 1.5
 ```
 
 The `default_hp` column in
@@ -485,6 +533,430 @@ damage rather than during full-health initialization.
 The remaining copied record fields are character-specific data but are not yet
 semantically identified. They must not be assigned gameplay names until a
 consumer proves each role.
+
+## Combo hit state and damage path
+
+The deterministic movie
+[`damage_scaling.p2m2`](../../../pcsx2_files/input_recordings/damage_scaling.p2m2),
+SHA-256
+`CAE410908B7D9CAFDFFC63178C5F1EACDD57D0565DD285EE15740C6CAF6C85A5`,
+declares 3,619 input frames. Its 3,620 serialized 36-byte controller records
+include the format's frame-0 placeholder; excluding that placeholder, there are
+13 actionable rising edges of the `L3+R3` marker chord. It was created from
+power-on with PCSX2 `v2.7.505-41-g667f9e2e0` and zero re-records. The exact
+launch provenance recovered from the local shell history was Manual ISO
+selector `m`, Practice row `9`, recording `damage_scaling`, and the update
+flag, exactly `na m -c practice 9 -r damage_scaling -u`. Practice row 9 selects
+Sakura (ID `58`), No Support (`0x25`), and no awakening for Player 1 through:
+
+```text
+patch=1,EE,001ED600,word,0000003A
+patch=1,EE,001ED604,word,00000025
+patch=1,EE,001ED608,word,FFFFFFFF
+```
+
+Two negative replays used built-ISO caches
+`3A56428FA33E28F627941875ACC4E8097D292464A04DE3FF6A1868CF2CEC2170` and
+`DDF776B7DF5A603B7A9DBA72556AAEFE073FB1BA313C01A1ABE62B3B06F77F63`;
+both desynchronized into Mode Select. The immediate cause was not inferred
+from their current JSON. All 13 states in each failed run retained native bytes
+`0C0004AE2900001000000000` at `0x001E9B00` and
+`DCB6070C00000000` at `0x001ECACC`; their `0x001ED600` region was native code,
+not configured fighter data. All 13 synchronized states instead contained the
+Practice bootstrap bytes `03000224290000100C0002AE` and
+`33B5070C00000000` at those locations, plus words
+`0000003A,00000025,FFFFFFFF` at `0x001ED600`. The failed launches therefore
+did not have the recording's required Practice bootstrap/configuration active,
+so reaching ordinary Mode Select was expected.
+
+The cached ISOs were also not byte-identical just because the configuration
+files looked equivalent later. The Manual and E2E-Test ISOs have the same boot
+ELF hash but different `PRG/BTL.BIN` hashes; their build registries record
+different build-time localization-input hashes. The Latest ISO additionally
+has different boot ELF, `PRG/BTL.BIN`, `PRG/ETC.BIN`, and `PRG/228.BIN`
+hashes. That historical binary drift is a separate reproducibility issue; the
+missing runtime Practice patch above is the first proven cause of the shared
+Mode Select outcome.
+
+The synchronized replay used the immutable Manual cache whose ISO SHA-256 is
+`4773DEFAB12C7926980D8D6B7D6505BF5021FE105A5BD411ECFEA6EFA366A5CD`,
+`pcsx2_files/cheats/practice/NA228p.pnach`, read-only emulator settings, and
+discarded memory-card writes.
+
+The marker chord is not an input sequencer. Every attack input already exists
+in the movie's per-frame controller stream; markers only identify deterministic
+frames at which the replay workflow saves a screenshot and state. They are
+therefore unnecessary to execute the combo, but materially reduce ambiguity
+when correlating a visual hit with memory before and after native updates.
+
+The project's PCSX2 fork can also drive controller input through PINE protocol
+version 1. Its agent-control `step` operation atomically installs complete
+18-byte DualShock 2 states and advances an exact positive frame count, so a
+client can stream an attack sequence as successive state/frame runs. PINE does
+not provide one command that accepts an entire authored timeline, and an
+English move description still has to be translated into exact presses,
+releases, and frame durations. For this investigation, replaying the existing
+movie is more reliable because those per-frame states are already serialized;
+PINE is appropriate for constructing new isolated cases interactively.
+
+A complete byte-level audit confirms what is available without markers. The
+570-byte movie prefix contains format version `1`, emulator
+`PCSX2-v2.7.505-41-g667f9e2e0`, game `SLOP-NA228 [?]`, 3,619 declared frames,
+zero re-records, and a power-on rather than savestate start. The remaining
+130,320 bytes divide exactly into 3,620 records of 36 bytes: one 18-byte state
+for each of two controller ports. Record zero is the all-zero placeholder.
+Across records 1 through 3,619, Controller 2 is always neutral, Controller 1's
+four analog bytes are always centered at `0x7F`, and every pressure-capable
+digital press has the matching `0xFF` pressure byte. The actionable input is
+therefore reproduced exactly by the following independent inclusive frame
+runs; all buttons not named for a frame are released and all unlisted frames
+are neutral except for overlaps among the listed runs:
+
+| Control | Inclusive movie-frame runs |
+| --- | --- |
+| `L3+R3` marker chord | `2673-2680`, `2802-2809`, `2813-2816`, `2828-2833`, `2929-2936`, `2939-2948`, `2950-2953`, `2987-2990`, `3061-3066`, `3171-3176`, `3207-3210`, `3249-3256`, `3502-3506` |
+| `Circle` attack | `2751-2757`, `2766-2770`, `2776-2783`, `2789-2792`, `2803-2808`, `2814-2818`, `2827-2831`, `2841-2850`, `2942-2947`, `2955-2967`, `2972-2979`, `2983-2987`, `3025-3028`, `3149-3157`, `3193-3201`, `3239-3245`, `3268-3274` |
+| `Cross` | `3461-3466`, `3471-3477`, `3480-3488` |
+| `Right` | `2692-2734`, `2770-2866`, `2892-2924`, `3084-3095`, `3117-3124`, `3351-3362`, `3375-3413` |
+| `Down` | `2922-3023` |
+| `Left` | `3309-3352`, `3362-3376` |
+
+This independent-run form deliberately preserves simultaneous inputs: for
+example, the five frames where `Left` and `Right` overlap and the marker/attack
+overlaps are not normalized away. Recombining the active controls at every
+change boundary yields the movie's exact 18-byte Controller 1 stream and can
+be sent as consecutive PINE `step` requests. Removing the `L3+R3` runs leaves
+the same movement and attacks, so markers are not required for execution. Full
+per-frame game-state inspection still requires stepping the emulator and
+reading or capturing the desired consumer after each frame; decoding the
+movie alone proves the inputs, not every intermediate animation or memory
+state.
+
+The synchronized captures are under
+`work/Battle mechanics/captures/damage_scaling/manual-practice-row9/`. Their
+screenshots and `eeMemory.bin` state members establish this timeline:
+
+| Marker | Movie frame | Visible result | Naruto HP | Current / record combo | Timer words `+0x14/+0x18/+0x1C` |
+| ---: | ---: | --- | ---: | ---: | --- |
+| `0001` | 2673 | Baseline | `1.000000000` | `0 / 0` | `0/0/0` |
+| `0002` | 2802 | 2 hits, displayed `6.5%` | `0.934000015` | `2 / 0` | `90/88/87` |
+| `0003` | 2813 | Same 2-hit result | `0.934000015` | `2 / 0` | `90/82/81` |
+| `0004` | 2828 | Same 2-hit result | `0.934000015` | `2 / 0` | `90/75/74` |
+| `0005` | 2929 | 3 hits, displayed `15.3%` | `0.846000016` | `3 / 0` | `90/44/43` |
+| `0006` | 2939 | Same 3-hit result | `0.846000016` | `3 / 0` | `90/39/38` |
+| `0007` | 2950 | Same 3-hit result | `0.846000016` | `3 / 0` | `90/34/33` |
+| `0008` | 2987 | 4 hits, displayed `18.0%` | `0.819599986` | `4 / 0` | `90/79/78` |
+| `0009` | 3061 | 5 hits, displayed `20.0%` | `0.799799979` | `5 / 0` | `90/64/63` |
+| `0010` | 3171 | Fresh 1-hit attack, displayed `2.6%` | `0.973600030` | `1 / 5` | `90/86/85` |
+| `0011` | 3207 | Same 1-hit result | `0.973600030` | `1 / 5` | `90/90/89` |
+| `0012` | 3249 | Native current-combo reset | `0.973600030` | `0 / 5` | `90/69/68` |
+| `0013` | 3502 | Next hit counted before HP subtraction | `1.000000000` | `1 / 5` | `90/84/83` |
+
+The stable root at EE `0x00607600` pointed to `0x00CA4700`. Its live-fighter
+pointers were Sakura at `0x00E36CA0` and Naruto at `0x00E44CE0` in every exact
+capture. This is capture-specific allocation evidence; consumers must follow
+the pointers rather than embed those allocated addresses.
+
+### Native combo owner
+
+`FUN_0020c270(fighter)` allocates a `0x3C`-byte object, initializes it through
+`FUN_0020c320`, and stores its pointer at
+`0x006076B8 + 4 * (fighter[+0x60] & 1)`. The two globals at `0x006076B8` and
+`0x006076BC` therefore own Player 1 and Player 2's native combo state. The
+confirmed object fields are:
+
+| Offset | Type | Confirmed behavior |
+| ---: | --- | --- |
+| `+0x00` | pointer | Owning fighter |
+| `+0x04..+0x0C` | pointers | Lazily resolved BTL-side UI/controller objects |
+| `+0x10` | timer object | Armed for `0x5A` (90) by each accepted hit |
+| `+0x34` | signed 16-bit | Current active hit count |
+| `+0x36` | signed 16-bit | Highest completed combo recorded by this object |
+
+Accepted-hit state first accumulates in the attacker's signed byte at fighter
+`+0xA45`. `FUN_00239230(fighter, delta)` adds to that byte.
+`FUN_002391d0(fighter, result, flag)` adds one only when `result == 1` and the
+flag is nonzero; the collision-resolution path `FUN_0021f610` calls it with
+the accepted result and flag `1`. `FUN_00233540` is a second confirmed producer
+that can add a hit to the opposing fighter's pending byte.
+
+The per-frame manager routine `FUN_0020c420` consumes a nonzero pending byte,
+adds its signed value to current count `+0x34`, arms the timer for 90, clears
+fighter `+0xA45`, and triggers the native multi-hit notification after the
+count exceeds one. When its timer or battle-state conditions end the combo, it
+copies a new record to `+0x36` and clears `+0x34`. `FUN_0020c2e0` and
+`FUN_0020cd40` can explicitly adjust or set the current count. This native
+owner should be read by a scaling hook; duplicating a separate combo-reset
+timer would diverge from native hit acceptance and reset behavior.
+
+The pending byte was zero at all marker snapshots because the manager had
+already consumed it, but the focused call-boundary probe below observed both
+legal orderings. Main attack-record damage ran before manager consumption:
+hits one through five saw `(current, pending)` values `(0,1)`, `(1,1)`,
+`(2,1)`, `(3,1)`, and `(4,1)`. The third hit's secondary damage ran after
+consumption and saw `(3,0)`. Consequently the synchronous one-based index
+
+```text
+max(1, current_count + max(pending_count, 0))
+```
+
+produces `1, 2, 3, 3, 4, 5`: both damage events belonging to hit three receive
+index three without a separate latch or a second increment. Every observed
+fresh post-reset call saw `(0,1)` and therefore returned to index one. This
+formula is runtime-confirmed for the two paths exercised by this normal string;
+other damage categories still need isolated path classification.
+
+### Native damage calculation
+
+Two similar consumers, `FUN_00228b50(defender)` and
+`FUN_002346b0(defender)`, resolve an active attack record, read normalized
+damage from record `+0x24`, and divide by the signed short at record `+0x2E`
+when that field is nonzero. Both combine that value with a temporary attacker
+factor from `FUN_003071c0`, select native flags `0x133` or `0x122` from
+attack-record bits, call `FUN_00224e30(raw_damage, defender, flags)`, and pass
+its returned normalized damage to `FUN_00225050` for bookkeeping, Practice
+damage display, HP subtraction, and the zero clamp. Their state roles differ:
+`FUN_00228b50` is called by guarded-hit initializer `FUN_00228760`, while
+`FUN_002346b0` is the ordinary hit-response consumer. The recorded Sakura
+string used the latter; it did not exercise guarded-hit damage.
+
+The calculator `FUN_00224e30` receives raw damage in `f12`, defender in `a0`,
+flags in `a1`, and returns damage in `f0`. Defender `+0x20` points to the
+attacker. According to the enabled flag bits it applies attacker offense
+`+0x148`, the defender durability curve at `+0x14C`, a `1.5` defender-state
+factor, temporary attacker and defender factors, and attacker/defender fields
+`+0x16C/+0x170`; it finally clamps the result to `[0, 1]`. It does not read the
+native combo manager or hit count.
+
+The positive-control replay below separated the synchronized Sakura string's
+calculator inputs. Its first two hits used exact raw values `0.02` and `0.03`
+with flags `0x133`. The third visible hit produced two calculator events: the
+main attack-record event used raw `0.05` with flags `0x133`, and a secondary
+direct event used raw `0.02` with flags `0x122`. Hits four and five used main
+raw values `0.02` and `0.015`, both with flags `0x133`. With the factors active
+in these events, the native results agree exactly with the HP timeline:
+`0.02 * 1.32 + 0.03 * 1.32 = 0.066`,
+`0.05 * 1.32 + 0.02 * 1.10 = 0.088`, `0.02 * 1.32 = 0.0264`, and
+`0.015 * 1.32 = 0.0198`. The differing attack records and the third hit's
+secondary event therefore explain the declining and nonuniform damage. No
+additional native combo-scaling factor was found in the shared calculator.
+
+### Candidate implementation seam and coverage limit
+
+The runtime-confirmed main seam for this movie is the call from
+`FUN_002346b0` to `FUN_00224e30` at runtime `0x00234A80`, ELF offset
+`0x134B80`, using the established `runtime = ELF offset + 0xFFF00` mapping.
+Clean `SLPS_258.37` contains instruction bytes `8C93080C` there, the
+little-endian encoding of `jal FUN_00224e30`. Replacing only this guarded call
+with a same-ABI shim is the narrowest proven main-path candidate: the shim can
+multiply raw `f12` by a combo factor and then call the original calculator,
+preserving native character factors, temporary state, clamp, display, and HP
+subtraction.
+
+Hooking `FUN_00224e30` itself is too broad. Its ten static call sites have the
+following bounded dispositions; the movie counts come from the positive-
+control replay:
+
+| Runtime call | Static owner / role | Movie calls | Combo-scaling disposition |
+| ---: | --- | ---: | --- |
+| `0x0022529C` | `FUN_00225230`, generic nonzero-damage wrapper with two resident callers | 0 | Classify its two source actions before inclusion. |
+| `0x002252F4` | `FUN_002252e0`, externally supplied raw damage with flags `0x100`, called from `FUN_0035b740` | 0 | Exclude from ordinary-string phase 1. |
+| `0x00228D18` | `FUN_00228b50`, guarded-hit attack-record damage | 0 | Exclude unless guard/chip scaling is explicitly desired and recorded. |
+| `0x00231634` | `FUN_002312b0`, fixed `0.04` response/contact-stage branch | 0 | Static sibling of the observed branch; validate before claiming complete contact-stage coverage. |
+| `0x00231698` | `FUN_002312b0`, fixed `0.02` response/contact-stage branch | 1 | Include for the demonstrated normal-string scope. |
+| `0x002334BC` | `FUN_002333a0`, generic direct-damage/effect-provenance wrapper with 15 BTL callers | 0 | Classify each desired source category before inclusion. |
+| `0x00234A80` | `FUN_002346b0`, ordinary attack-record damage | 8 | Include for the demonstrated normal-string scope. |
+| `0x00236354` | `FUN_00235c60`, fixed `0.05` in special response/recovery substate `0x61` | 0 | Exclude from ordinary-string phase 1. |
+| `0x0024F00C` | `FUN_0024ed40`, zero-raw state/outcome path | 0 | Exclude. |
+| `0x0035B2F8` | `FUN_0035af20`, calculation for Practice presentation | 0 | Exclude; scaling it would alter display computation independently of HP damage. |
+
+Hooking `FUN_00225050` is broader still and loses the attack flags and
+raw-damage boundary. This movie also exercised a secondary
+direct call at runtime `0x00231698`, ELF offset `0x131798`, during its third
+visible hit. Static control flow identifies it as the `0.02` branch of
+`FUN_002312b0`, an initializer used only for ordinary response substates
+`0x42..0x49`; a per-state flag can select its `0.04` branch instead. At the
+observed call the current response was still `(5,0x3D)`, and the later marker
+showed `(5,0x43)`. This matches the independently documented promotion from
+the `0x3C..0x41` launch group into the `0x42..0x47` contact-stage group in
+[`hit_response.md`](hit_response.md#response-exits-contact-stages-and-downed-handoff).
+It is therefore fixed response/contact-stage damage, not a second accepted
+hit. Hooking only `0x00234A80` would leave its `0.022` native damage unscaled.
+The evidence does not assign a visual authoring name such as “wall splat” to
+that raw state family. Jutsu, Ultimate Jutsu, throws, projectiles, supports,
+status damage, and scripted/environmental damage require isolated recordings
+plus a temporary call-site counter before their paths can be included or
+excluded. The fixed `0.04` sibling is at runtime `0x00231634`, ELF offset
+`0x131734`, with the same clean `jal` bytes `8C93080C`. A general
+ordinary/contact implementation must cover it too after a natural positive
+capture; otherwise its public scope must explicitly remain the two paths
+demonstrated here.
+
+The sibling's exact static gate is bounded. Target substates `0x42` and `0x43`
+select `0.04` when fighter word `+0xBB0` has bit `0x400`; substate `0x44`
+tests `+0xBBC`; and substates `0x45..0x47` test `+0xBB4`. If the applicable
+bit is clear, and for substates `0x48/0x49`, the initializer uses `0.02`.
+After the `0.04` damage branch it may also invoke an object callback through
+fighter `+0x28`; intercepting only the calculator call preserves that native
+callback. The minimum missing positive case is therefore a natural transition
+to `0x42..0x47` with its applicable bit `0x400` set, not an arbitrary
+eight-or-more-hit combo.
+
+The `0x400` prerequisite is stage-specific in the clean resources. An in-memory
+walk of every `0x0B00` model-linked hit/collision mesh in clean
+`STAGE/S01.CCS` through `S24.CCS` validated each section's group count, vertex
+count, section length, and triangle divisibility. Only `S08.CCS` contains a
+group whose authored primitive flags include `0x400`:
+`HIT_s08are00_hit_s3`, group 2, has two triangles and raw flags
+`0x00959595`. Their six authored vertices span approximately
+`x=-824..-713`, `y=736..923`, `z=1059..1124`. `S08.CCS` is load slot 7 and
+logical stage ID 8. By contrast, the Practice bootstrap records load slot 6,
+which is `S07.CCS`; that archive has 1,125 collision triangles and no authored
+group with bit `0x400`. The synchronized marker-1 runtime walk independently
+found exactly 1,125 active environment primitives and zero with bit `0x400`,
+joining the loaded runtime geometry to the clean `S07` resource. Replaying the
+same attacks on that stage cannot exercise runtime `0x00231634`, regardless of
+marker placement or input timing. A natural positive capture must instead use
+load slot 7, reach the two flagged `S08` triangles, and produce response target
+`0x42..0x47`; merely changing stages does not by itself prove that all three
+conditions occurred.
+
+That stage-only control was run against the same verified Manual-cache ISO and
+movie with a process-local load-slot-7 override and the 140-byte native-behavior
+counter shim at runtime `0x008F0000` (SHA-256
+`C0CDCB78868150059CAA9FF1BC5080EA48B900C5E2967729D45198B41D850B40`).
+Only runtime `0x00231634` was redirected; the capture is under
+`work/Battle mechanics/captures/damage_scaling/probe-s08-callsite-231634/`.
+All 13 states retained the hook and shim, loaded slot 7, and contained exactly
+395 active environment primitives. Two had runtime flags `0x40959595`, the
+orientation-augmented form of the authored `0x00959595`; the counter remained
+zero at every marker. All 13 PNGs validated as 640-by-480 images.
+
+The unchanged input movie did not navigate to those triangles. Both live
+fighter position vectors at `+0x30` kept component 1 at zero, and component 2
+stayed between 0 and approximately 180, while the flagged authored vertices
+occupy component-1 range `736..923` and component-2 range `1059..1124`.
+Those coordinates agree with `S08`'s side-1 combo anchors at component 1 `800`
+and component 2 `1030`; the movie remained in the lower side-0 region visible
+in its screenshots. Naruto's marker substates were only `0`, `0x29`, `0x2B`,
+`0x48`, and `0x5D`, never `0x42..0x47`. His `+0xBB0/+0xBB4/+0xBBC` values
+were respectively `0`, `0x200060C1`, and `0` at every marker, so none contained
+bit `0x400`. The stage-only replay therefore proves resource availability but
+not the missing branch. A useful new movie or PINE sequence must first navigate
+both fighters naturally into `S08`'s upper/side-1 region, then drive a launch
+response into the flagged surface; reusing the side-0 attack timing cannot do
+so.
+
+The first guarded counter replay targeted only runtime `0x00228D18`. It placed
+the probe in the proven-zero development reservation at `0x008F0000`, left its
+mutable counter at `0x008F1000` without a recurring PNACH initializer, and
+captured all 13 markers under
+`work/Battle mechanics/captures/damage_scaling/probe-callsite-228d18/`. Every
+state contained the redirected `jal` bytes `00C0230C00000000` and the complete
+resident probe, while the counter remained zero and the HP timeline matched
+the synchronized baseline exactly.
+
+A positive-control replay then redirected all ten clean calculator call sites
+through one resident logger and retained native behavior. Its captures are
+under
+`work/Battle mechanics/captures/damage_scaling/probe-all-damage-callers/`.
+The cumulative invocation counts at markers `0001` through `0013` were
+`0, 2, 2, 2, 4, 4, 4, 5, 6, 7, 8, 8, 9`. Eight events came from runtime
+`0x00234A80`, one came from runtime `0x00231698`, and the other eight static
+sites recorded zero. The exact raw/flags sequence was:
+
+| Event | Raw `f12` | Flags `a1` | Runtime call site |
+| ---: | ---: | ---: | ---: |
+| 1 | `0.02` | `0x133` | `0x00234A80` |
+| 2 | `0.03` | `0x133` | `0x00234A80` |
+| 3 | `0.05` | `0x133` | `0x00234A80` |
+| 4 | `0.02` | `0x122` | `0x00231698` |
+| 5 | `0.02` | `0x133` | `0x00234A80` |
+| 6 | `0.015` | `0x133` | `0x00234A80` |
+| 7 | `0.02` | `0x133` | `0x00234A80` |
+| 8 | `0.02` | `0x133` | `0x00234A80` |
+| 9 | `0.02` | `0x133` | `0x00234A80` |
+
+Every event targeted Naruto at capture-specific pointer `0x00E44CE0`. The
+resident hook and positive counts rule out a code-cache artifact: runtime
+`0x00228D18` is conclusively uninvoked by this movie, while `0x00234A80` is its
+observed normal-string main path. Events 7 through 9 occur around the later
+reset demonstrations; their exact relationship to marker timing requires the
+focused call-boundary state probe rather than inference from equal marker HP.
+
+The focused replay then hooked only runtime `0x00234A80` and `0x00231698` and
+logged each call before and after the original calculator. Its captures are
+under
+`work/Battle mechanics/captures/damage_scaling/probe-live-damage-state/`.
+Every record resolved attacker `0x00E36CA0`, side zero, manager
+`0x00E40A90`, and matching manager owner `0x00E36CA0`. The decisive records
+were:
+
+| Event | Site | Raw | Current / pending | Hit index | Native result |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | `0x00234A80` | `0.02` | `0 / 1` | 1 | `0.0264` |
+| 2 | `0x00234A80` | `0.03` | `1 / 1` | 2 | `0.0396` |
+| 3 | `0x00234A80` | `0.05` | `2 / 1` | 3 | `0.0660` |
+| 4 | `0x00231698` | `0.02` | `3 / 0` | 3 | `0.0220` |
+| 5 | `0x00234A80` | `0.02` | `3 / 1` | 4 | `0.0264` |
+| 6 | `0x00234A80` | `0.015` | `4 / 1` | 5 | `0.0198` |
+| 7 | `0x00234A80` | `0.02` | `0 / 1` | 1 | `0.0264` |
+| 8 | `0x00234A80` | `0.02` | `0 / 1` | 1 | `0.0264` |
+| 9 | `0x00234A80` | `0.02` | `0 / 1` | 1 | `0.0264` |
+
+All 13 focused-probe marker snapshots matched the baseline HP and native
+current/record counts. The resident shim therefore preserved calculator
+behavior while proving the input state, native return value, manager ownership,
+and reset behavior at the exact call boundary.
+
+A final transient test shim applied the recommended curve (`0.10` decay,
+`0.30` floor) at both proven call sites, then called the original calculator.
+Its full captures are under
+`work/Battle mechanics/captures/damage_scaling/probe-scaling-curve/`. The
+472-byte resident shim at `0x008F0000` had SHA-256
+`213E92686716FAFC1854CE1A88E0090C5F2B5BD9C7171AFD7CCF2FEE67509FED` in
+all 13 states, and both call sites contained hook word `0x0C23C000`. The
+observed main-event tiers were `100%`, `90%`, `80%`, `70%`, and `60%`; the
+secondary response/contact event shared hit three's `80%` tier. Exact native
+results changed as follows:
+
+| Accepted hit / event | Scaled raw | Native result |
+| --- | ---: | ---: |
+| hit 1 main | `0.020000000` | `0.026400000` |
+| hit 2 main | `0.026999999` | `0.035639998` |
+| hit 3 main | `0.039999999` | `0.052800000` |
+| hit 3 contact-stage | `0.015999999` | `0.017599998` |
+| hit 4 main | `0.014000000` | `0.018479999` |
+| hit 5 main | `0.009000000` | `0.011879999` |
+
+The corresponding HP checkpoints after hits two through five were
+`0.937960029`, `0.867560029`, `0.849080026`, and `0.837200046`. Native
+current/record counts and timer words at every marker remained identical to
+baseline. Practice displayed `6.2%`, `13.2%`, `15.0%`, and `16.2%` at those
+checkpoints without a display-specific hook. All three later post-reset calls
+computed hit index one and returned the unscaled `0.026400000`. This proves
+the two-site, stateless raw-input scaling mechanism for the recorded string and
+that the native bookkeeping/display consumer receives the scaled result. The
+last-place differences from decimal arithmetic are the observed EE
+single-precision operation results and should be retained as runtime
+expectations rather than replaced by HUD-rounded values.
+
+A final extraction audit reopened all marker savestates and checked the raw EE
+fields rather than relying on HUD text. Each of the baseline, focused-probe,
+and scaled runs contained exactly 13 savestates and 13 `640x480` screenshots.
+The focused probe matched baseline HP bits, manager pointer, owner pointer,
+current/record counts, and timer words at every marker. The scaled run matched
+all of those native combo fields while producing the expected scaled HP bits.
+The audit also decoded all nine focused and scaled log records, the all-caller
+count progression `0,2,2,2,4,4,4,5,6,7,8,8,9`, every hook word, and the
+resident-code hash above. All checks passed.
+
+All static claims above come from the read-only clean `SLPS_258.37` export and
+binary, SHA-256
+`20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`.
+The combo object layout, reset sequence, HP timeline, main and secondary damage
+call sites, and hit-index formula are additionally runtime-confirmed by
+synchronized replays. Coverage outside this Sakura normal string remains open.
 
 ## Unresolved extra-hit branch lead
 

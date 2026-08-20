@@ -21,16 +21,20 @@ artifacts.
 - **Unknown**: the format or placement may be known, but the purpose is not.
 
 The shallow inspection recorded here was performed on 2026-07-21 against the
-read-only `@source_na2/` extraction. It inspected headers and readable strings,
-parsed AFS/ADX and MPEG/PSS metadata, searched the boot ELF and overlays for
-file references, compared same-named NA2/NUN5 files, and reused the existing
-Ghidra and patch evidence. No source file was modified.
+read-only `@source_na2/` extraction, with focused audio/video header research
+updated on 2026-08-20. It inspected headers and readable strings, parsed AFS,
+AHX/ADX, and MPEG/PSS metadata, searched the boot ELF and overlays for file
+references, compared same-named NA2/NUN5 files, and reused the existing Ghidra
+and patch evidence. No source file was modified.
 
-The ADX metadata parser follows the channel/sample-rate fields documented by
-the [FFmpeg CRI ADX demuxer](https://ffmpeg.org/doxygen/trunk/libavformat_2adxdec_8c_source.html);
-[CRIWARE](https://game.criware.com/) independently identifies ADX as its game
-audio middleware. Game-specific role assignments below come from the local
-archive populations and executable evidence, not from those generic sources.
+The codec classifications follow the local headers and are cross-checked
+against vgmstream's [AHX](https://github.com/vgmstream/vgmstream/blob/master/src/meta/ahx.c)
+and [ADX](https://github.com/vgmstream/vgmstream/blob/master/src/meta/adx.c)
+parsers. Game-specific role assignments below come from the local archive
+populations and executable evidence, not from those generic sources. See
+[Audio and video replacement](audio_video_replacement.md) for exact profiles,
+container constraints, candidate toolchains, and the proposed replacement
+workflows.
 
 ## Storage hierarchy
 
@@ -56,28 +60,30 @@ Those directories are extraction views, not additional disc files.
 | --- | --- | --- |
 | `SYSTEM.CNF` | PS2 boot configuration | **Confirmed.** Plain text selects `SLPS_258.37`, version `1.00`, and NTSC video mode. |
 | `SLPS_258.37` | Resident Emotion Engine executable | **Confirmed.** 32-bit little-endian MIPS ELF, entry point `0x00100008`; owns startup and shared game systems and loads the on-demand overlays/resources. It is the only full-program Ghidra target. |
-| `FLIST.DIR` | Startup file-location cache list | **Confirmed.** Lists the four AFS archives, `DATA.CVM`, and the three PRG overlays. The boot ELF resolves these paths early and caches their disc locations; ordinary filesystem lookup still handles files not listed here. |
+| `FLIST.DIR` | Startup file-location cache list | **Confirmed.** Lists the four AFS archives, `DATA.CVM`, and the three PRG overlays. The resident table has 40 slots and 32-character normalized-name capacity; the clean eight-line file leaves 32 slots, while longer names can overrun a slot. The boot ELF caches disc locations, and ordinary explicit-device lookup still handles files not listed here. |
 | `OUT1M.BIN` | One-MiB zero-filled placeholder | **Confirmed content; unknown purpose.** Every byte is zero and the file is identical in NUN5. It is probably reserved/padding media space, but no loader or allocation role has been proven. |
 
 ## `DATA/`: fonts, graphics, sound, and archives
 
 | Path | Role | Evidence and limits |
 | --- | --- | --- |
-| `DATA/GF4.BIN` | Main glyph atlas and font data | **Confirmed.** Font experiments and the current Localization font patches identify its cell bitmap data and descriptors. NA2 is much larger than NUN5 because the two games use different font layouts. |
-| `DATA/GF4C.BIN` | GF4 companion color/palette table | **Supported.** The 104-byte structured companion changes how GF4 pixels are interpreted; unsafe palette-swap tests confirm that it is coupled to GF4. Its complete field semantics remain unknown. |
-| `DATA/GRF4.BIN` | GF4-family graphics support resource | **Supported format family; exact function unknown.** Its header follows the same named resource pattern, and it is byte-identical to NUN5. No executable or glyph-table role has been isolated. |
-| `DATA/SF1.BIN` | Secondary font/graphics resource | **Supported format family; exact function unknown.** It uses the same named resource envelope as GF4, is byte-identical to NUN5, and has no executable signature. |
-| `DATA/SF1C.BIN` | SF1 companion table | **Supported.** It is a 104-byte companion with the same envelope as GF4C and is byte-identical to NUN5. Individual fields remain unresolved. |
+| `DATA/GF4.BIN` | GF4 selectable font raster | **Confirmed.** The resident type-1 parser loads its two raster descriptors, and renderer mode 1 selects it together with `GF4C.BIN`. Font experiments and current Localization patches identify its glyph cells and metrics. NA2 is much larger than NUN5 because their GF4 layouts differ. |
+| `DATA/GF4C.BIN` | GF4 16-entry RGBA CLUT | **Confirmed.** The resident type-2 parser reads its 32-byte name followed by 64 bytes of palette entries, constructs the render-side CLUT object, and installs it whenever GF4 is selected. Whole-file NUN5 palette substitution remains unsafe for NA2 raster data. |
+| `DATA/GRF4.BIN` | 8×8 ruby/annotation glyph atlas | **Confirmed.** Its type-1 descriptor contains 167 4-bpp glyph rasters and a 334-record two-byte-code map. The resident string renderer uses it only for the annotation arm of pipe-delimited inline markup, centering the small glyphs over or beside the base span. It is byte-identical to NUN5. |
+| `DATA/SF1.BIN` | SF1 selectable font raster | **Confirmed.** The same resident type-1 parser loads its two raster descriptors, and renderer mode 0 selects it together with `SF1C.BIN`. It is byte-identical to NUN5. |
+| `DATA/SF1C.BIN` | SF1 16-entry RGBA CLUT | **Confirmed.** It has the same type-2 name-plus-64-byte-palette layout and render-object construction as GF4C, and is selected with SF1. It is byte-identical to NUN5. |
 | `DATA/SNDDATA.BIN` | Sony-style sound bank/program data | **Confirmed at shallow format level.** It contains `IECS`-marked version, header, VAG, sample, set, and program sections. `SNDBASE.IRX` and the boot ELF reference it. It is data, not executable code, and is byte-identical to NUN5. |
-| `DATA/PLVOICE.AFS` | Short player/battle voice clips | **Supported by contents.** Its nested archives yield 2,232 mono 24-kHz ADX clips; median duration is 0.922 s and the longest is 6.309 s. The short vocal population supports the player/battle-call role implied by the filename. It is byte-identical to NUN5. |
-| `DATA/RPGVOICE.AFS` | Adventure/RPG dialogue | **Supported by contents.** Its nested archives yield 5,597 mono ADX clips; median duration is 3.104 s and the longest is 14.351 s. The much longer voice population supports dialogue rather than battle barks. It is byte-identical to NUN5. |
-| `DATA/SOUND.AFS` | General sound effects and longer audio cues | **Supported by contents.** Its nested archives yield 1,312 ADX files: 1,239 mono and 73 stereo, all 24 kHz, ranging from 0.289 s to 160.910 s. The mixture fits effects plus longer music/cue material; the exact bank-to-system mapping is not catalogued. It is byte-identical to NUN5. |
-| `DATA/STREAM.AFS` | Streamed stereo audio cues | **Supported by contents.** It yields 173 stereo 24-kHz ADX files, 6.367–40.233 s long with a 13.333 s median. The uniform stereo, longer-form population distinguishes it from voices and ordinary effects. It is byte-identical to NUN5. |
-| `DATA/DATA.CVM` | Encrypted resource filesystem | **Confirmed.** `CVMH`/ROFS container built with ROFSBLD 1.52; password `cc2fuku`. Splitting it yields a fixed-capacity ISO containing 2,310 CCS resources, `GZLIST.TXT`, and `ICON.BIN`. |
+| `DATA/PLVOICE.AFS` | Short player/battle voice clips | **Supported by contents.** Its nested archives yield 2,232 mono 24-kHz AHX type-`0x11` clips; median duration is 0.922 s and the longest is 6.309 s. The short vocal population supports the player/battle-call role implied by the filename. It is byte-identical to NUN5. |
+| `DATA/RPGVOICE.AFS` | Adventure/RPG dialogue | **Supported by contents.** Its nested archives yield 5,597 mono AHX clips (914 type `0x10`, 4,683 type `0x11`); all but one are 24 kHz. Median duration is 3.104 s and the longest is 14.351 s. The much longer voice population supports dialogue rather than battle barks. It is byte-identical to NUN5. |
+| `DATA/SOUND.AFS` | General sound effects and longer audio cues | **Supported by contents.** Its nested archives yield 1,239 mono AHX clips and 73 stereo ADX type-`0x03` clips, all 24 kHz, ranging from 0.289 s to 160.910 s. The mixture fits effects plus longer music/cue material; the exact bank-to-system mapping is not catalogued. It is byte-identical to NUN5. |
+| `DATA/STREAM.AFS` | Streamed stereo audio cues | **Supported by contents.** It yields 173 stereo 24-kHz ADX type-`0x03` files, 6.367–40.233 s long with a 13.333 s median. The uniform stereo, longer-form population distinguishes it from voices and ordinary effects. It is byte-identical to NUN5. |
+| `DATA/DATA.CVM` | Encrypted resource filesystem | **Confirmed.** `CVMH`/ROFS container built with ROFSBLD 1.52; password `cc2fuku`. Startup mounts it as `VOL`, synchronously loads the root directory, then asynchronously preloads all child-directory metadata before clearing the startup barrier. Splitting it yields a fixed-capacity ISO containing 2,310 CCS resources, `GZLIST.TXT`, and `ICON.BIN`. |
 
-The AFS counts above describe successfully parsed non-empty ADX files across
-all nested AFS levels. `media/afs_members.tsv` remains authoritative for exact
-container, index, offset, and size records.
+The AFS counts above describe successfully parsed non-empty AHX/ADX files across
+all nested AFS levels. The inventory's extracted `.adx` suffix is a shallow CRI
+signature classification and must not be treated as the codec. The
+[`media/afs_members.tsv`](media/afs_members.tsv) inventory remains authoritative
+for exact container, index, offset, and size records.
 
 ## `MODULES/`: IOP runtime components
 
@@ -113,8 +119,21 @@ whole-file donors.
 
 All ten files are MPEG program streams with an MPEG video stream (`0xE0`), a
 private audio stream (`0xBD`), and padding (`0xBE`). They run at approximately
-29.97 fps. Durations below use the audio PTS span because it is slightly longer
-than the video span.
+29.97 fps. The private substream is `0xA0` `SShd`/`SSbd` audio: uncompressed
+signed 16-bit stereo PCM at 48 kHz with a `0x200` interleave field. Durations
+below use the audio PTS span because it is slightly longer than the video span.
+The exact profiles and replacement constraints are documented in
+[Audio and video replacement](audio_video_replacement.md).
+
+The resident movie player is clocked separately from ordinary 30 Hz gameplay.
+FUN_001057B0 saves the renderer's current VBlank threshold, forces the
+threshold to one while its MPEG demux/video-decoder and audio-streaming threads
+run, and FUN_00105320 restores the saved threshold during cleanup. Therefore a
+gameplay change from two VBlanks per scheduler update to one does not require
+halving PSS video or audio speed: clean playback already presents through the
+one-VBlank movie path. See the
+[60 FPS timing research](../../gameplay/framerate.md#prerecorded-pss-video-and-video-speed)
+for the complete control-flow evidence and validation requirements.
 
 The boot ELF contains `NOTICE`, `OPENING`, and all seven `DA####` identifiers in
 one movie-name table beside cutscene/audio script commands. This confirms that
@@ -134,19 +153,33 @@ identify their exact story scenes. That requires visual review.
 | `PSS/DA3250.PSS` | 512×352 | 193.05 s | **Confirmed movie; exact scene unknown.** Numbered cutscene identifier `DA3250`. |
 | `PSS/DA3999.PSS` | 512×448 | 215.96 s | **Confirmed movie; exact scene unknown.** Numbered cutscene identifier `DA3999`. |
 
+The resident movie-descriptor table has two additional rows, indices 10 and
+11, whose exact strings are `logo_cT.pss` and `openingT.pss`. **Confirmed
+static status:** neither file exists in the ISO, and the recovered resident,
+ADV, and ETC direct callers select other numeric rows rather than applying a
+runtime suffix. These are dormant executable-table entries, not missing members
+of the file inventory. Their suffix meaning and retention reason remain
+unresolved; see the [selector trace](audio_video_replacement.md#resident-selector-and-dormant-descriptor-rows).
+
 Several PSS files have the same byte size as their NUN5 counterpart but
 different contents; others differ in size, and NUN5 lacks `NOTICE.PSS`. The
 names alone are therefore not sufficient to assume cross-game video parity.
 
 ## Inside `DATA.CVM`
 
+The resident mount, cache, path-routing, sector-I/O, and compression-manifest
+contracts are documented in [Resident file and archive services](runtime_services.md).
+Generic container/object lookup and lifetime are documented in
+[Resident CCS runtime](ccs_runtime.md); confirmed numeric parser-tag identities
+are separated into [Resident CCS object-type identities](ccs_object_types.md).
+
 ### File families
 
 | Family | Role | Evidence and limits |
 | --- | --- | --- |
 | `*.CCS` (2,310 files) | CC2 resource containers | **Confirmed.** CCS containers hold named objects such as textures/palettes, models, and animations. Individual containers can combine several resource kinds. Use structural CCS parsing rather than treating them as flat images or text files. |
-| `GZLIST.TXT` | CCS compression/member-count manifest | **Confirmed.** Plain text records directory names and CCS counts. Existing UI work also established its relationship to gzip-wrapped CCS payloads. It is metadata, not a complete semantic asset index. |
-| `ICON.BIN` | Fixed binary icon/resource table | **Unknown beyond structure.** It is a 61,440-byte non-executable binary referenced by the boot ELF. No parser or runtime evidence currently establishes what its records display or control. |
+| `GZLIST.TXT` | Directory-capacity and gzip-size manifest | **Confirmed.** Its first section sizes the resident ROFS directory tree. In each file row, the first numeric value is discarded and the second is retained as the decompressed output size and compression marker; actual compressed read length comes from ROFS. It is metadata, not a semantic asset index. |
+| `ICON.BIN` | PS2 save icon payload | **Confirmed.** The resident save path sector-reads the 61,440-byte member, writes its first `0xE920` bytes as `icon00.icn`, and names that file in all three `icon.sys` icon slots. The remaining `0x6E0` bytes are `0xFF` sector padding; internal ICN visual/animation fields remain undecoded. |
 
 ### CCS directory map
 

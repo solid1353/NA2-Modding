@@ -44,28 +44,31 @@ class BuildPreflightTests(unittest.TestCase):
         for name in ("containers.tsv", "mappings.tsv", "strategies.tsv"):
             (texture / name).write_text("id\n", encoding="utf-8")
         catalog_root = builder / "catalog"
-        implementation_root = catalog_root / "implementation"
-        implementation_root.mkdir(parents=True)
-        targets = implementation_root / "targets.tsv"
+        catalog_root.mkdir(parents=True)
+        targets = catalog_root / "targets.tsv"
         targets.write_text(
             "\t".join(binary_patcher.TARGET_FIELDS) + "\n",
             encoding="utf-8",
         )
-        (catalog_root / "localization.modcat").write_text(
+        (catalog_root / "catalog.modcat").write_text(
             '''{
-  enabled: setting {
-    description: "Localization.",
-    patches: ["i__localization__enabled"],
+  features: {
+    localization: {
+      enabled: setting {
+        description: "Localization.",
+        patches: ["i__localization__enabled"],
+      },
+    },
   },
 }
 ''',
             encoding="utf-8",
         )
-        (implementation_root / "edits.json").write_text("{}\n", encoding="utf-8")
-        (implementation_root / "string_patches.json").write_text(
+        (catalog_root / "edits.json").write_text("{}\n", encoding="utf-8")
+        (catalog_root / "string_patches.json").write_text(
             "{}\n", encoding="utf-8"
         )
-        (implementation_root / "injections.json").write_text(
+        (catalog_root / "injections.json").write_text(
             json.dumps(
                 {
                     "i__localization__enabled": {
@@ -314,7 +317,6 @@ class BuildPreflightTests(unittest.TestCase):
             targets = (
                 paths["builder"]
                 / "catalog"
-                / "implementation"
                 / "targets.tsv"
             )
             targets.write_text(

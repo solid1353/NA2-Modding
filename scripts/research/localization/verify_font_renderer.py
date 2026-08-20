@@ -3394,7 +3394,6 @@ def main() -> None:
         REPOSITORY
         / "na228_builder"
         / "catalog"
-        / "implementation"
         / "targets.tsv",
         REPOSITORY,
         "localization.runtime_injector",

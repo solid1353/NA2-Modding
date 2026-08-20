@@ -252,7 +252,7 @@ component separately.
   address-reference finder, MIPS mask analyzer, and Ghidra-export comparison
   helpers for targeted EE work.
 - `na228_builder/catalog/*.json`: selectable overlay and boot-ELF feature nodes;
-  `na228_builder/catalog/implementation/edits.json`: their guarded edits.
+  `na228_builder/catalog/edits.json`: their guarded edits.
   Provenance and runtime
   conclusions are retained in feature/knowledge docs.
 - `docs/knowledge/gameplay/substitution.md`,

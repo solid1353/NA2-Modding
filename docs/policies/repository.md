@@ -128,10 +128,10 @@ hierarchy.
 - A code area may retain one concise local `README.md` when nearby orientation
   or a component contract is useful. Link to substantial documentation instead
   of accumulating multiple Markdown files beside code.
-- The builder has no physical `features/` directory. Selectable structure is
-  split by feature under `na228_builder/catalog/`; guarded edits, runtime
-  injection units, and targets live under
-  `na228_builder/catalog/implementation/`. Non-inline executable inputs and
+- The builder has no physical `features/` directory. Selectable structure lives
+  in `na228_builder/catalog/catalog.modcat`; guarded edits, runtime injection
+  units, and targets live beside it under `na228_builder/catalog/`. Non-inline
+  executable inputs and
   assets live under their concrete builder data area, and feature documentation
   belongs under `docs/features/`. Catalog-only features require no directory.
 - Current operational documentation describes the current system. Delete

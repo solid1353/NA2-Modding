@@ -5,8 +5,8 @@ integrated catalog data.
 
 ## Canonical data
 
-- `catalog/*.modcat` owns the complete nested selectable hierarchy. Each file
-  is named for one direct child of the logical `features` root. The custom
+- `catalog/catalog.modcat` owns the complete nested selectable hierarchy. Its
+  `features` object contains every direct feature child. The custom
   declarative syntax uses JSON-like objects and TypeScript-like value types and
   is parsed directly by the Python builder.
   [`CATALOG.md`](CATALOG.md) is the complete authoring and
@@ -16,14 +16,14 @@ integrated catalog data.
   resolve to injection units; IDs beginning with `s__` resolve to semantic
   string patches. Implementation details never appear in the release catalog
   reference.
-- `catalog/implementation/edits.json` is the direct root map of guarded binary
+- `catalog/edits.json` is the direct root map of guarded binary
   edit definitions. A typed setting may feed its validated value to a declared
   binary adapter instead of storing a fixed `replacement_hex`. A bare setting
   may also select an adapter-backed fixed edit whose readable expected and
   replacement values are encoded by the adapter.
-- `catalog/implementation/injections.json` is the direct root map of runtime
+- `catalog/injections.json` is the direct root map of runtime
   injection units. Each unit contains `hooks`, `payload`, or both.
-- `catalog/implementation/string_patches.json` owns semantic transformations
+- `catalog/string_patches.json` owns semantic transformations
   performed by the string patcher before inline and external string layout.
 - `configurations/base.json` contains the complete shared `features` tree.
   `dev.json`, `test.json`, and `release.json` contain
@@ -63,7 +63,7 @@ integrated catalog data.
   cell means no starting awakening. A `Y` reversal cell selects half starting
   HP through the Practice PNACH injection. `uniqueness` is metadata.
   The file is not a builder catalog input.
-- `catalog/implementation/targets.tsv` is the single target registry used by
+- `catalog/targets.tsv` is the single target registry used by
   edits and injection hooks.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.
 - `localization/assets/` owns edit-referenced localization binary assets.
@@ -194,8 +194,9 @@ Documentation is not an executable builder input.
 
 ## Current release configuration
 
-Feature files are discovered in alphabetical filename order. Module execution
-within each feature remains derived from the stable internal engine order above.
+Features are read from `catalog.modcat` in alphabetical ID order. Module
+execution within each feature remains derived from the stable internal engine
+order above.
 
 Release packaging applies `release.overrides` to `base.features`, then writes
 one editable JSON configuration named `config.json` containing only the

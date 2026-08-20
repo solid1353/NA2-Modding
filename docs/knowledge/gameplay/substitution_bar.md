@@ -1058,7 +1058,8 @@ not introduce another schema.
 ### Catalog shape and defaults
 
 Add `features.battle_logic.storm_substitution_gauge` to
-`catalog/battle_logic.modcat` as a union of a bare setting and an object-valued
+`features.battle_logic` in `catalog/catalog.modcat` as a union of a bare setting
+and an object-valued
 setting. This uses existing catalog semantics to support all three useful
 states:
 
@@ -1149,8 +1150,8 @@ store gameplay state in `BTL.BIN`.
 ### Exact builder hook map
 
 Add one `i__battle_logic__storm_substitution_gauge` definition in
-`catalog/implementation/injections.json`. All targets already exist in
-`catalog/implementation/targets.tsv`; no new target registry or patching
+`catalog/injections.json`. All targets already exist in
+`catalog/targets.tsv`; no new target registry or patching
 mechanism is needed.
 
 | Hook | Target/offset | Clean guard | Replacement template | Adapter behavior |
@@ -1183,8 +1184,8 @@ The minimal implementation touches these existing ownership points:
 
 | Purpose | Canonical location |
 | --- | --- |
-| Public setting and descriptions | `na228_builder/catalog/battle_logic.modcat` |
-| Hook and payload declarations | `na228_builder/catalog/implementation/injections.json` |
+| Public setting and descriptions | `features.battle_logic` in `na228_builder/catalog/catalog.modcat` |
+| Hook and payload declarations | `na228_builder/catalog/injections.json` |
 | Default/profile selection | `na228_builder/configurations/*.json` |
 | Config-to-fragment encoder | `na228_builder/scripts/substitution_gauge.py` and `module_pipeline.py` |
 | Gameplay state and native adapters | `src/battle_logic/substitution_gauge*.c` plus declared ABI shims |

@@ -3,7 +3,8 @@
 The `localization.ui_layout` catalog leaf ports the geometry, atlas selection,
 visibility, and draw behavior required by the imported English UI assets. The
 exact selected edit IDs are owned by
-`na228_builder/catalog/localization.modcat`; guarded bytes and shared injection
+`features.localization` in `na228_builder/catalog/catalog.modcat`; guarded
+bytes and shared injection
 units are owned by the catalog implementation stores.
 
 ## Contract

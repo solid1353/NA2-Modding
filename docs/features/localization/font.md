@@ -3,7 +3,8 @@
 The `localization.font` catalog subtree provides the English secondary-font
 asset, proportional measurement, fitted and wrapped layout, caller-family
 adapters, and numeric formatting. Exact edit and injection membership is owned
-by `na228_builder/catalog/localization.modcat` and the catalog implementation
+by `features.localization` in `na228_builder/catalog/catalog.modcat` and the
+catalog implementation
 stores.
 
 ## Selectable contract

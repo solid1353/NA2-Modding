@@ -2,7 +2,7 @@
 
 Project-wide selectable behavior that does not belong to gameplay, rendering,
 localization, or quality-of-life categories. Selectable nodes and guarded edits
-are owned by `na228_builder/catalog/general.modcat`.
+are owned by `features.general` in `na228_builder/catalog/catalog.modcat`.
 
 ## Dedicated save namespace
 

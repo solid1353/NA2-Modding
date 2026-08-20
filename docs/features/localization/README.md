@@ -1,9 +1,9 @@
 # Localization feature documentation
 
-The selectable hierarchy lives in `na228_builder/catalog/localization.modcat`;
-its guarded edits and runtime units live in
-`na228_builder/catalog/implementation/edits.json` and
-`na228_builder/catalog/implementation/injections.json`. Non-inline assets and
+The selectable hierarchy lives under `features.localization` in
+`na228_builder/catalog/catalog.modcat`; its guarded edits and runtime units live
+in `na228_builder/catalog/edits.json` and
+`na228_builder/catalog/injections.json`. Non-inline assets and
 the remaining translation/texture TSV inputs live under
 `na228_builder/localization/`.
 
@@ -15,10 +15,11 @@ fingerprint covers its canonical executable inputs.
 
 ## Canonical builder inputs
 
-`na228_builder/catalog/localization.modcat` owns localization's nested selection
-and leaf references. `na228_builder/catalog/implementation/edits.json` owns
+`features.localization` in `na228_builder/catalog/catalog.modcat` owns
+localization's nested selection and leaf references.
+`na228_builder/catalog/edits.json` owns
 guarded binary edits;
-`na228_builder/catalog/implementation/injections.json` owns runtime hooks,
+`na228_builder/catalog/injections.json` owns runtime hooks,
 resident sources and fragments, relocations, and ABI metadata. Files retained under
 `na228_builder/localization/` are only non-inline inputs:
 

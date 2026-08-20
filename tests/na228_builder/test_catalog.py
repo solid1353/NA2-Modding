@@ -30,8 +30,7 @@ class CatalogTests(unittest.TestCase):
         string_patches: dict[str, object] | None = None,
     ) -> tuple[Path, Path]:
         catalog_path = root / "catalog"
-        implementation = catalog_path / "implementation"
-        implementation.mkdir(parents=True)
+        catalog_path.mkdir(parents=True)
         referenced = {
             patch for source in sources.values() for patch in PATCH_ID.findall(source)
         }
@@ -59,14 +58,20 @@ class CatalogTests(unittest.TestCase):
         generated_edits.update(edits or {})
         generated_injections.update(injections or {})
         generated_string_patches.update(string_patches or {})
+        parsed_features: dict[str, catalog_format.ContainerNode] = {}
         for feature_id, source in sources.items():
-            (catalog_path / f"{feature_id}.modcat").write_text(
-                source, encoding="utf-8"
-            )
-        self.write_json(implementation / "edits.json", generated_edits)
-        self.write_json(implementation / "injections.json", generated_injections)
+            temporary = catalog_path / f".{feature_id}.modcat"
+            temporary.write_text(source, encoding="utf-8")
+            parsed_features[feature_id] = catalog_format.parse_catalog(temporary)
+            temporary.unlink()
+        (catalog_path / "catalog.modcat").write_text(
+            catalog_format.serialize_catalog(parsed_features, include_patches=True),
+            encoding="utf-8",
+        )
+        self.write_json(catalog_path / "edits.json", generated_edits)
+        self.write_json(catalog_path / "injections.json", generated_injections)
         self.write_json(
-            implementation / "string_patches.json", generated_string_patches
+            catalog_path / "string_patches.json", generated_string_patches
         )
         self.write_json(
             root / "configurations" / "base.json",
@@ -510,7 +515,7 @@ class CatalogTests(unittest.TestCase):
                     package = catalog.load_binary_package(
                         selection,
                         "qol",
-                        catalog_path / "implementation" / "targets.tsv",
+                        catalog_path / "targets.tsv",
                         repository,
                         builder / "modules" / "binary_patcher" / "operations",
                     )
@@ -855,7 +860,7 @@ class CatalogTests(unittest.TestCase):
                 {"feature": {"leaf": True}},
                 edits={"e__f__orphan": {"description": "Orphan."}},
             )
-            edits_path = catalog_path / "implementation" / "edits.json"
+            edits_path = catalog_path / "edits.json"
             values = json.loads(edits_path.read_text(encoding="utf-8"))
             values.pop("e__f__missing")
             self.write_json(edits_path, values)

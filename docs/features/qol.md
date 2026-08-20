@@ -2,7 +2,7 @@
 
 File-backed and resident quality-of-life behavior. Selectable nodes, guarded
 binary edits, runtime hooks, and payload declarations are selected by
-`na228_builder/catalog/qol.modcat`.
+`features.qol` in `na228_builder/catalog/catalog.modcat`.
 
 ## Practice bootstrap PNACH
 

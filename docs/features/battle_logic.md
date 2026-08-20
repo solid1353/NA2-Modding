@@ -174,8 +174,8 @@ could imply an ABI that has not been established.
 
 Implementation should stay inside the existing battle-logic mechanisms:
 
-- add the typed `combo_damage_scaling` object to
-  `na228_builder/catalog/battle_logic.modcat`, pointing to new injection ID
+- add the typed `combo_damage_scaling` object under `features.battle_logic` in
+  `na228_builder/catalog/catalog.modcat`, pointing to new injection ID
   `i__battle_logic__combo_damage_scaling`, and select the accepted values in
   `na228_builder/configurations/base.json` so existing profile overrides inherit
   them;
@@ -186,7 +186,7 @@ Implementation should stay inside the existing battle-logic mechanisms:
 - add `src/battle_logic/combo_damage_scaling.c` with a multiplier entry that
   imports the curve symbol and reads the proven native combo state;
 - add the three guarded call-site hooks, compiled helper fragment, and one
-  shared ABI shim to `na228_builder/catalog/implementation/injections.json`;
+  shared ABI shim to `na228_builder/catalog/injections.json`;
   the third hook at ELF `0x131734` remains a deployment gate until its natural
   `0.04` path has a positive capture (response target `0x42..0x47` with the
   applicable fighter `+0xBB0/+0xBBC/+0xBB4` bit `0x400` set). The clean-stage

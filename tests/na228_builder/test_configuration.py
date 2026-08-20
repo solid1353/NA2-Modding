@@ -9,6 +9,7 @@ from pathlib import Path
 
 from na228_builder.modules.binary_patcher import engine as binary_patcher
 from na228_builder.modules.runtime_injector import engine as runtime_injector
+from na228_builder.scripts import catalog_format
 from na228_builder.scripts.composer import resolve_module_order
 from na228_builder.scripts.configuration import (
     load_configuration,
@@ -34,7 +35,7 @@ class ConfigurationTests(unittest.TestCase):
         pcsx2 = root / "pcsx2"
         localization.mkdir()
         write_tsv(
-            root / "catalog" / "implementation" / "targets.tsv",
+            root / "catalog" / "targets.tsv",
             binary_patcher.TARGET_FIELDS,
             [],
         )
@@ -99,14 +100,14 @@ class ConfigurationTests(unittest.TestCase):
         module = feature / module_type
         module.mkdir(parents=True, exist_ok=True)
         if module_type == "binary_patcher":
-            targets = feature.parent / "catalog" / "implementation" / "targets.tsv"
+            targets = feature.parent / "catalog" / "targets.tsv"
             if not targets.is_file():
                 write_tsv(targets, binary_patcher.TARGET_FIELDS, [])
             write_tsv(module / "groups.tsv", binary_patcher.GROUP_FIELDS, [])
             write_tsv(module / "patches.tsv", binary_patcher.PATCH_FIELDS, [])
             write_tsv(module / "edits.tsv", binary_patcher.EDIT_FIELDS, [])
         elif module_type == "runtime_injector":
-            targets = feature.parent / "catalog" / "implementation" / "targets.tsv"
+            targets = feature.parent / "catalog" / "targets.tsv"
             if not targets.is_file():
                 write_tsv(targets, runtime_injector.TARGET_FIELDS, [])
             for name, fields in (
@@ -152,15 +153,16 @@ class ConfigurationTests(unittest.TestCase):
         root = configurations.parent
         configuration = configurations / f"{configuration_id}.json"
         catalog_root = root / "catalog"
-        implementation_root = catalog_root / "implementation"
-        implementation_root.mkdir(parents=True, exist_ok=True)
+        catalog_root.mkdir(parents=True, exist_ok=True)
         injections: dict[str, object] = {}
+        parsed_features: dict[str, catalog_format.ContainerNode] = {}
         for feature_id, feature in catalog.items():
             if not isinstance(feature, dict):
                 raise ValueError("Test catalog feature must be an object")
             description = feature.get("description", f"{feature_id} feature")
             injection_id = f"i__{feature_id}__enabled"
-            (catalog_root / f"{feature_id}.modcat").write_text(
+            temporary = catalog_root / f".{feature_id}.modcat"
+            temporary.write_text(
                 "{\n"
                 f"  description: {json.dumps(description)},\n"
                 "  enabled: setting {\n"
@@ -170,12 +172,18 @@ class ConfigurationTests(unittest.TestCase):
                 "}\n",
                 encoding="utf-8",
             )
+            parsed_features[feature_id] = catalog_format.parse_catalog(temporary)
+            temporary.unlink()
             injections[injection_id] = {"description": str(description)}
-        (implementation_root / "edits.json").write_text("{}\n", encoding="utf-8")
-        (implementation_root / "injections.json").write_text(
+        (catalog_root / "catalog.modcat").write_text(
+            catalog_format.serialize_catalog(parsed_features, include_patches=True),
+            encoding="utf-8",
+        )
+        (catalog_root / "edits.json").write_text("{}\n", encoding="utf-8")
+        (catalog_root / "injections.json").write_text(
             json.dumps(injections, indent=2) + "\n", encoding="utf-8"
         )
-        (implementation_root / "string_patches.json").write_text(
+        (catalog_root / "string_patches.json").write_text(
             "{}\n", encoding="utf-8"
         )
         (configurations / "base.json").write_text(
@@ -292,17 +300,17 @@ class ConfigurationTests(unittest.TestCase):
             loaded = load_configuration(configuration, root, root)
             resources = set(configuration_resource_files(loaded))
             self.assertIn((root / "game.json").resolve(), resources)
-            self.assertIn((root / "catalog" / "localization.modcat").resolve(), resources)
+            self.assertIn((root / "catalog" / "catalog.modcat").resolve(), resources)
             self.assertIn(
-                (root / "catalog" / "implementation" / "edits.json").resolve(),
+                (root / "catalog" / "edits.json").resolve(),
                 resources,
             )
             self.assertIn(
-                (root / "catalog" / "implementation" / "injections.json").resolve(),
+                (root / "catalog" / "injections.json").resolve(),
                 resources,
             )
             self.assertIn(
-                (root / "catalog" / "implementation" / "string_patches.json").resolve(),
+                (root / "catalog" / "string_patches.json").resolve(),
                 resources,
             )
             self.assertIn(
@@ -311,7 +319,7 @@ class ConfigurationTests(unittest.TestCase):
             self.assertIn(configuration.resolve(), resources)
             self.assertIn((feature / "translation_importer" / "mappings.tsv").resolve(), resources)
             self.assertIn(
-                (builder / "catalog" / "implementation" / "targets.tsv").resolve(),
+                (builder / "catalog" / "targets.tsv").resolve(),
                 resources,
             )
             self.assertNotIn(helper.resolve(), resources)
@@ -402,7 +410,6 @@ class ConfigurationTests(unittest.TestCase):
             targets = (
                 feature.parent
                 / "catalog"
-                / "implementation"
                 / "targets.tsv"
             )
             targets.write_text(

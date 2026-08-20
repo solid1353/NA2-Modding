@@ -45,8 +45,8 @@ applies `release.overrides` to `base.features` and writes the resulting complete
 `features` tree to `config.json`. It materializes the base and release
 character-override layers into `character_overrides.tsv`, including every
 reference ID/name row for direct editing. It derives the
-consolidated `catalog.modcat` from the canonical feature catalogs, strips every patch and
-implementation detail, and distributes it only as a readable reference. The
+external `catalog.modcat` from the canonical project catalog, strips every
+patch and implementation detail, and distributes it only as a readable reference. The
 executable never reads that external reference. The executable embeds the
 interpreter, builder engines, catalog, resources for the complete selectable
 catalog rather than only the default selection, payload-builder configuration,

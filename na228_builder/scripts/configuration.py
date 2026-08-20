@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from .character_overrides import CharacterOverrideConfiguration
 
 
-BUILDER_TARGETS_FILE = Path("catalog") / "implementation" / "targets.tsv"
+BUILDER_TARGETS_FILE = Path("catalog") / "targets.tsv"
 SOURCE_BOOT_PATH = "SLPS_258.37"
 SYSTEM_CNF_PATH = "SYSTEM.CNF"
 PRODUCT_ROOT_ALIASES = {
@@ -339,7 +339,7 @@ def module_content_sha256(path: Path, module_type: str) -> str:
     files = _module_content_files(path, module_type)
     external_labels = (
         {
-            _builder_targets_file(path): "@builder/catalog/implementation/targets.tsv"
+            _builder_targets_file(path): "@builder/catalog/targets.tsv"
         }
         if module_type in {"binary_patcher", "runtime_injector"}
         else None
@@ -417,18 +417,15 @@ def _catalog_feature_sha256(
     targets_path: Path,
     configuration_files: tuple[Path, ...] = (),
 ) -> str:
-    from . import catalog as catalog_module
+    from . import catalog as catalog_module, catalog_format
 
-    catalog_file = next(
-        (path for path in selection.catalog_files if path.stem == feature_id),
-        None,
-    )
-    if catalog_file is None:
-        raise ValueError(f"Catalog feature has no source file: {feature_id}")
+    feature = selection.catalog.get(feature_id)
+    if feature is None:
+        raise ValueError(f"Catalog has no feature: {feature_id}")
     entries: list[tuple[str, bytes]] = [
         (
-            f"catalog/{feature_id}.modcat",
-            catalog_file.read_bytes(),
+            f"catalog/catalog.modcat#features.{feature_id}",
+            catalog_format.serialize_feature(feature).encode("utf-8"),
         )
     ]
     for edit_id in catalog_module.feature_reference_ids(

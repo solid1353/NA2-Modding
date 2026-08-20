@@ -245,9 +245,17 @@ def main() -> int:
     patch, generated_edits = build_patch_rows()
     if args.write:
         catalog_root = REPOSITORY / "na228_builder" / "catalog"
-        catalog_path = catalog_root / "localization.modcat"
-        edits_path = catalog_root / "implementation" / "edits.json"
-        feature = catalog_format.parse_catalog(catalog_path)
+        catalog_path = catalog_root / "catalog.modcat"
+        edits_path = catalog_root / "edits.json"
+        catalog_source = catalog_format.parse_catalog(catalog_path)
+        root_fields = {field.name: field.node for field in catalog_source.fields}
+        feature_root = root_fields.get("features")
+        if not isinstance(feature_root, catalog_format.ContainerNode):
+            raise ValueError("catalog.features must be one object")
+        features = {field.name: field.node for field in feature_root.fields}
+        feature = features.get("localization")
+        if not isinstance(feature, catalog_format.ContainerNode):
+            raise ValueError("catalog.features.localization must be one object")
         edits = json.loads(edits_path.read_text(encoding="utf-8"))
         fields = {field.name: field for field in feature.fields}
         ui_layout = fields["ui_layout"].node
@@ -311,11 +319,12 @@ def main() -> int:
                 for field in feature.fields
             ),
         )
+        features["localization"] = feature
         for edit_id, definition in generated.items():
             edits[edit_id] = definition
         catalog_temporary = catalog_path.with_suffix(".modcat.tmp")
         catalog_temporary.write_text(
-            catalog_format.serialize_feature(feature),
+            catalog_format.serialize_catalog(features, include_patches=True),
             encoding="utf-8",
         )
         edits_temporary = edits_path.with_suffix(".json.tmp")

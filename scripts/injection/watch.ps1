@@ -24,7 +24,7 @@ $repository = [IO.Path]::GetFullPath(
 . (Join-Path $repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
 $injectionsPath = Join-Path $repository (
-    'na228_builder\catalog\implementation\injections.json'
+    'na228_builder\catalog\injections.json'
 )
 $configurationPath = Join-Path $repository (
     'na228_builder\configurations\dev.json'

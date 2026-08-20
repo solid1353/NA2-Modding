@@ -5,12 +5,12 @@ declarative format with JSON-like objects and TypeScript-like value types. The
 Python builder parses it directly; there is no compiler, generated schema, or
 CUE, Go, Node, or TypeScript runtime.
 
-Each `catalog/<feature>.modcat` file defines one direct child of the logical
-`features` root. Project catalog files contain both the user-facing contract and
-their `patches` mappings. Release packaging consolidates them into an inert
-`catalog.modcat` reference and removes the mappings and every other
-implementation detail. The packaged executable uses its embedded complete
-catalog and never reads the external reference.
+`catalog/catalog.modcat` defines the logical `features` root and all of its
+direct feature children. The project catalog contains both the user-facing
+contract and its `patches` mappings. Release packaging writes an inert
+`catalog.modcat` reference with the mappings and every other implementation
+detail removed. The packaged executable uses its embedded complete catalog and
+never reads the external reference.
 
 A complete standalone or released configuration has one JSON root field:
 `features` contains the complete selected tree. Repository build variants use
@@ -166,8 +166,8 @@ layout_mode:
   },
 ```
 
-If the synthetic nodes above belong to `example.modcat` alongside this simple
-bare setting:
+If the synthetic nodes above belong to `features.example` alongside this
+simple bare setting:
 
 ```text
 simple_patch: setting {
@@ -291,10 +291,10 @@ children remain disabled.
 
 Every setting has one `patches` array. Edit IDs use the `e__` prefix and must
 resolve to exactly one guarded definition in
-`catalog/implementation/edits.json`. Injection IDs use `i__` and must resolve
-to exactly one unit in `catalog/implementation/injections.json`. Semantic
+`catalog/edits.json`. Injection IDs use `i__` and must resolve
+to exactly one unit in `catalog/injections.json`. Semantic
 string-patch IDs use `s__` and must resolve to exactly one definition in
-`catalog/implementation/string_patches.json`. Every other prefix is invalid.
+`catalog/string_patches.json`. Every other prefix is invalid.
 
 Multiple setting branches may share a patch ID. Every edit, injection, and
 string patch must be referenced by at least one catalog branch; orphan

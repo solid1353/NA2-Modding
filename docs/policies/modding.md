@@ -16,19 +16,17 @@
   nonempty per-character battle values by ID. Release packaging materializes
   both selected layers into one external JSON configuration and one external
   character-override TSV.
-  Feature-named JSON files under
-  `na228_builder/catalog/` own selectable definitions; files under
-  `na228_builder/catalog/implementation/` own guarded binary edits, runtime
-  hooks and payload declarations, and targets. Root `game.json` owns output
+  `na228_builder/catalog/catalog.modcat` owns selectable definitions; the JSON
+  and TSV files beside it own guarded binary edits, runtime hooks and payload
+  declarations, and targets. Root `game.json` owns output
   identity, build variants, and project launch settings.
 - JSON files under `na228_builder/configurations/` exclusively own feature
   enablement and nested selection. Paired character-override TSVs exclusively
   own per-character battle values; there is no feature-pin table.
 - Reusable engines, operation definitions, and tools belong under
   `na228_builder/modules/`; executable definitions belong in
-  `catalog/implementation/edits.json` or
-  `catalog/implementation/injections.json`, catalog leaves reference them by
-  ID, and non-inline inputs remain under the owning feature.
+  `catalog/edits.json` or `catalog/injections.json`; catalog leaves reference
+  them by ID, and non-inline inputs remain under the owning feature.
 - Remaining feature engine directories contain executable inputs, not placeholders,
   identity manifests, `.gitkeep`, or header-only files used only to register an
   engine.

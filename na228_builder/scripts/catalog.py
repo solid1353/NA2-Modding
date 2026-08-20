@@ -149,21 +149,22 @@ def _read_catalog(
     path = path.resolve()
     if not path.is_dir():
         raise FileNotFoundError(path)
-    feature_paths: dict[str, Path] = {
-        item.stem: item.resolve()
-        for item in path.glob("*.modcat")
-    }
-    if not feature_paths:
-        raise ValueError(f"Catalog contains no feature files: {path}")
-    feature_ids = sorted(feature_paths)
-    features: dict[str, catalog_format.ContainerNode] = {}
-    files: list[Path] = []
-    for feature_id in feature_ids:
-        _identifier(feature_id, "Catalog feature filename")
-        feature_path = feature_paths[feature_id]
-        features[feature_id] = catalog_format.parse_catalog(feature_path)
-        files.append(feature_path)
-    return features, tuple(files)
+    catalog_file = path / "catalog.modcat"
+    root = catalog_format.parse_catalog(catalog_file)
+    root_fields = _container_fields(root)
+    if set(root_fields) != {"features"}:
+        raise ValueError("Catalog root must contain only the features object")
+    feature_root = root_fields["features"]
+    if not isinstance(feature_root, catalog_format.ContainerNode):
+        raise ValueError("Catalog features must be an object")
+    features = _container_fields(feature_root)
+    if not features:
+        raise ValueError(f"Catalog contains no features: {catalog_file}")
+    for feature_id, feature in features.items():
+        _identifier(feature_id, "Catalog feature ID")
+        if not isinstance(feature, catalog_format.ContainerNode):
+            raise ValueError(f"Catalog feature must be an object: {feature_id}")
+    return dict(sorted(features.items())), (catalog_file.resolve(),)
 
 
 def _identifier(value: str, label: str) -> str:
@@ -639,10 +640,9 @@ def _load_implementation(
     dict[str, dict[str, object]],
     dict[str, dict[str, object]],
 ]:
-    implementation_path = catalog_path / "implementation"
-    edits_path = implementation_path / "edits.json"
-    injections_path = implementation_path / "injections.json"
-    string_patches_path = implementation_path / "string_patches.json"
+    edits_path = catalog_path / "edits.json"
+    injections_path = catalog_path / "injections.json"
+    string_patches_path = catalog_path / "string_patches.json"
     raw_edits = _read_json(edits_path, "Edits", allow_empty=True)
     raw_injections = _read_json(injections_path, "Injections", allow_empty=True)
     raw_string_patches = _read_json(

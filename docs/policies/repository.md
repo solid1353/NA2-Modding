@@ -93,8 +93,10 @@
 - Third-party packages use the affected component's existing central dependency
   set and runtime resolver. Do not select interpreters, install packages, or add
   fallback discovery independently in a task or script.
-- On Windows, do not execute a `.py` path directly through the shell. Use the
-  maintained Python wrapper or an explicitly resolved compatible interpreter.
+- On Windows, never invoke a `.py` file as a command, including PowerShell
+  `& path.py`; that can trigger the OS file-association dialog. Pass the file to
+  the maintained Python wrapper or an explicitly resolved compatible
+  interpreter.
 - User-facing repeated operations must accept state produced by their own prior
   successful run. Do not add workflow-blocking identity, expected-state, guard,
   backup, recovery, or restart validation unless it is explicitly authorized by

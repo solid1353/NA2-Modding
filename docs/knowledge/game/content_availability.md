@@ -141,6 +141,32 @@ perform no writes, so the profile's settings, progress, currency, inventory,
 statistics, and availability bytes remain unchanged. Disabling the catalog
 setting omits the injection and restores native save-dependent reads.
 
+### Provisional NUN5 PNACH port
+
+Static structural matching against verified NUN5 `SLES_556.05` (SHA-256
+`20A43677397731A2A20899336D1165ACE5B436906B9B89BE90FB10F4558DD19D`)
+establishes the corresponding resident wrappers and saved-value call seams:
+
+| Role | NUN5 wrapper | Overridden read call | Clean word |
+| --- | ---: | ---: | ---: |
+| Character unlocked | `0x001FBE20` | `0x001FBE30` | `0x0C07A52C` |
+| Character Select R1-form progress | `0x001FEA10` | `0x001FEA34` | `0x0C07A6D0` |
+| Secondary bit unlocked | `0x001FC0D0` | `0x001FC0E0` | `0x0C07A55C` |
+| Small-table availability | `0x001FDA10` | `0x001FDA20` | `0x0C07A578` |
+| Grouped availability | `0x001FDAA0` | `0x001FDAB0` | `0x0C07A5A0` |
+| Character/jutsu availability | `0x001FDC00` | `0x001FDC8C` | `0x0C081924` |
+
+NUN5 grouped reset `FUN_001E9720` independently confirms the same six bounds:
+`0x5D`, `0x29`, `0x9B`, `0xA8`, `7`, and `0x0C`.
+
+The provisional PNACH reuses the unchanged bounded C helpers and places their
+176 immutable bytes at `0x01FF5310..0x01FF53C0`, after the No Support mutable
+storage and inside the same allocator-tail reservation. The heap-end guard
+prevents payload and hook writes before a clean boot has established that
+reservation. Each hook additionally checks both halves of its clean NUN5 call
+word before replacing it. The six calls continue to preserve native wrapper,
+metadata, and caller behavior. Runtime behavior remains unvalidated.
+
 ## Rejected character mask and correction
 
 The first character implementation incorrectly treated the value from

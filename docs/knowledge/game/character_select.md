@@ -58,6 +58,72 @@ one entry; it does not replace a roster item.
 
 NA2 already uses support ID `0x25` for No Support in Story Mode.
 
+## NUN5 Character Select port map
+
+Static analysis on 2026-08-20 mapped the accepted NA2 Character Select
+implementation to the verified NUN5 `SLES_556.05`. The main-code ELF mapping
+is `runtime = file + 0xFFE80`. The NUN5 native equivalents used by the port are:
+
+| Role | Runtime address |
+| --- | ---: |
+| Populate support list | `0x003CDE30` |
+| Resolve selected character ID | `0x003C7520` |
+| Confirm fighter | `0x003C7D50` |
+| Draw support cell | `0x0038AD00` |
+| Resolve support display ID | `0x008A28A0` |
+| Resolve selected support ID | `0x003C77B0` |
+| Draw selected support name | `0x003CB640` |
+| Set Character Select state | `0x003C80F0` |
+| Frame/system pointer slot | `0x00617AFC` |
+| Font-renderer pointer slot | `0x00617B70` |
+| Set font context | `0x00187AE0` |
+
+The port replaces 18 guarded Character Select sites: six compatibility calls,
+two population calls, two fighter-confirmation calls, two state-transition
+function entries, four display-ID calls, one support-cell draw, and one
+selected-name draw:
+
+| Consumer | Runtime | ELF offset | Clean word |
+| --- | ---: | ---: | ---: |
+| Default compatibility | `0x003C7A60` | `0x002C7BE0` | `0x0C2289EC` |
+| Initial-transition compatibility | `0x003C808C` | `0x002C820C` | `0x0C2289EC` |
+| Primary-confirmation compatibility | `0x003C96BC` | `0x002C983C` | `0x0C2289EC` |
+| Repeated-confirmation compatibility | `0x003C99DC` | `0x002C9B5C` | `0x0C2289EC` |
+| Navigation compatibility | `0x003C9CE8` | `0x002C9E68` | `0x0C2289EC` |
+| Draw compatibility | `0x003CB568` | `0x002CB6E8` | `0x0C2289EC` |
+| Initial population | `0x003CDCAC` | `0x002CDE2C` | `0x0C0F378C` |
+| Refreshed population | `0x003CF6E0` | `0x002CF860` | `0x0C0F378C` |
+| Primary fighter confirmation | `0x003C89CC` | `0x002C8B4C` | `0x0C0F1F54` |
+| Repeated fighter confirmation | `0x003C8AE4` | `0x002C8C64` | `0x0C0F1F54` |
+| Finalize support entry | `0x003CA8D0` | `0x002CAA50` | `0x27BDFFF0` |
+| Return from finalized entry | `0x003CABF0` | `0x002CAD70` | `0x27BDFFF0` |
+| Primary-list display ID | `0x003CB30C` | `0x002CB48C` | `0x0C228A28` |
+| Available-list display ID | `0x003CB50C` | `0x002CB68C` | `0x0C228A28` |
+| Selected-name display ID | `0x003CB6F4` | `0x002CB874` | `0x0C228A28` |
+| Selected-portrait display ID | `0x003CB984` | `0x002CBB04` | `0x0C228A28` |
+| Support-cell draw | `0x003CB358` | `0x002CB4D8` | `0x0C0E2B40` |
+| Selected-name draw | `0x003CC734` | `0x002CC8B4` | `0x0C0F2D90` |
+
+The two replaced function entries both retain clean second prologue word
+`0xFFBF0000`; the port replaces each with a jump delay-slot `nop`. The runtime
+replacements are encoded in the generated PNACH section in
+`@pcsx2_files/games/NUN5/NUN5.pnach`. Battle-overlay support-call and gauge
+suppression are not part of this menu-baseline port.
+
+NUN5's largest verified BTL overlay ends at `0x008ECE80`, and its language
+overlay begins at `0x008F3D00`. The resident candidate occupies the intervening
+gap through `0x008EE1E0`. Immutable code and read-only table words are recurring
+PNACH writes; the private selector buffers at
+`0x008ED930..0x008EE1D8` are left as mutable runtime storage.
+
+NUN5's native font renderer stores tracking at `+0x3C` and horizontal scale at
+`+0x80`. Static inspection of `FUN_001891A0` and `FUN_00189640` establishes
+that the latter scales both glyph geometry and advances. The NUN5 adapter can
+therefore fit the 112-unit `NO SUPPORT` label to the existing 84-unit box with
+the native renderer instead of importing NA2's global Font v2 hooks. Runtime
+behavior of this NUN5 port remains unvalidated until user testing; the address,
+guard, payload-range, and renderer-field claims above are static evidence.
+
 ## Selection compatibility and observed runtime failure
 
 The initial list-only injection produced the intended 34-entry roster in a

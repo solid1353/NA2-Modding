@@ -33,14 +33,8 @@
   authorization; do not ask for it again. Changing remotes, force-pushing, or
   rewriting published history
   still requires explicit instruction.
-- Never modify Git identity configuration at any scope, including system,
-  global, local, and worktree configuration. Resolve the matching agent identity
-  from `@codex-utils/settings/git-authors.tsv`, or use
-  `<agent-name>@agent.invalid` when it has no entry, and apply it only to the
-  individual commit operation. Do not use or override the user's persistent
-  identity. Use the concise task-authored subject
-  `[<chat name>] <imperative summary>`, with the current chat name in square
-  brackets. Verify the subject before pushing.
+- Never modify persistent Git identity configuration. The shared Git policy
+  guard owns per-command identity and subject validation.
 - Git history is the recovery mechanism for tracked files. Preserve
   irreplaceable untracked inputs deliberately before deleting them.
 

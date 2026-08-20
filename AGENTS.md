@@ -1,5 +1,10 @@
 # AGENTS.md
 
+Commit: agent-identity
+Commit-Roots:
+  - .
+Push: auto
+
 PS2 modding and reverse-engineering workspace for *Narutimate Accel v2.28*,
 based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 

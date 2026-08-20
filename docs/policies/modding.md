@@ -56,11 +56,9 @@
 - Every binary edit records its target, offset, destination guard, and
   replacement operation. Rationale and evidence belong in documentation, not
   executable fields.
-- Check encoded byte length before writing strings. `[S]`/`shorten` exceptions
-  are manual fit decisions only when they retain an exact official NUN5 source
-  reference. Prefer Shift-JIS/CP932-compatible text unless proven otherwise.
-- Do not include `ADV.bin` in release builds unless explicitly requested. Do not
-  delete or rename PSS files blindly.
+- Check encoded byte length before writing strings. Prefer
+  Shift-JIS/CP932-compatible text unless proven otherwise.
+- Do not delete or rename PSS files blindly.
 
 ## Source media
 

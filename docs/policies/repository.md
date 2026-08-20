@@ -50,7 +50,9 @@
   that chat may create, change, move, or delete content there. Another chat may
   read it but copies anything it needs into its own tree before changing it.
   Project-wide, release, build, test, script, and other non-chat workflows use
-  their own configured roots outside every chat directory.
+  their own configured roots outside every chat directory. Generic skill
+  workspace conventions do not override this rule; remap paths such as
+  `tmp/pdfs/` into the acting chat's directory.
 - Agents do not use the operating-system `TEMP`/`TMP` directory as a workspace
   or artifact root. Set `NA228_TASK_WORK_ROOT` to the acting chat's
   `work/<exact chat title>/` before maintained commands that create temporary

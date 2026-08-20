@@ -73,34 +73,7 @@ Catalog-derived compatibility files remain available to callers:
 - `<build>_iso` and `<build>_memory_card`;
 - `input_profile`, `cheat_template`, and `gamesettings_template`.
 
-## Catalog schemas
-
-Workshop source games use a direct map:
-
-```json
-{
-  "schema_version": 1,
-  "sources": {
-    "NUN5": { "serial": "SLES-55605", "crc": "C071D4C1" }
-  }
-}
-```
-
-The NA2 settings are deliberately flat apart from the builds section:
-
-```text
-{
-  "schema_version": 1,
-  "title": "Narutimate Accel v2.28",
-  "serial": "SLOP-NA228",
-  "output_boot_path": "SLOP_NA2.28",
-  "startup_fast_forward_frames": <non-negative integer>,
-  "builds": {
-    "latest": { "aliases": ["l"] },
-    "e2e_test": {}
-  }
-}
-```
+## Resolution
 
 Workshop `resolve_game.py <selector> [--project-root <path>]` resolves one
 selector case-insensitively and emits one JSON object containing fully resolved

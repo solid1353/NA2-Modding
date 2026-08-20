@@ -5,6 +5,7 @@ import struct
 import sys
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 
 REPOSITORY = Path(__file__).resolve().parents[4]
@@ -23,6 +24,7 @@ class FakeClient:
     def __init__(self, status: str = "paused") -> None:
         self.words: dict[int, int] = {}
         self.vm_status = status
+        self.step_calls: list[tuple[int, object]] = []
 
     def write_u8(self, address: int, value: int) -> None:
         word_address = address & ~3
@@ -50,6 +52,10 @@ class FakeClient:
 
     def status(self) -> str:
         return self.vm_status
+
+    def step_frames(self, frames: int, states: object) -> object:
+        self.step_calls.append((frames, states))
+        return LAB.PINE.FrameStep(100, 100 + frames)
 
 
 class AgentLabTests(unittest.TestCase):
@@ -211,6 +217,34 @@ class AgentLabTests(unittest.TestCase):
     def test_observe_rejects_a_moving_vm(self) -> None:
         with self.assertRaisesRegex(RuntimeError, "requires a paused VM"):
             LAB.observe(FakeClient("running"))
+
+    def test_running_step_returns_status_without_paused_observation(self) -> None:
+        client = FakeClient("running")
+        states = {0: LAB.PadState.neutral()}
+        with patch.object(LAB, "observe") as observer:
+            output = LAB.step_output(client, 1, states)
+
+        observer.assert_not_called()
+        self.assertEqual(client.step_calls, [(1, states)])
+        self.assertEqual(output["vm_status"], "running")
+        self.assertEqual(
+            output["frame_step"], {"start": 100, "end": 101, "count": 1}
+        )
+
+    def test_paused_step_retains_rich_observation(self) -> None:
+        client = FakeClient("paused")
+        states = {0: LAB.PadState.neutral()}
+        observation = {"vm_status": "paused", "battle_active": True}
+        catalog: dict[tuple[int, int], dict[str, object]] = {}
+        with patch.object(LAB, "observe", return_value=observation) as observer:
+            output = LAB.step_output(client, 2, states, catalog)
+
+        observer.assert_called_once_with(client, catalog)
+        self.assertEqual(client.step_calls, [(2, states)])
+        self.assertTrue(output["battle_active"])
+        self.assertEqual(
+            output["frame_step"], {"start": 100, "end": 102, "count": 2}
+        )
 
 
 if __name__ == "__main__":

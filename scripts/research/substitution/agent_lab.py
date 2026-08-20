@@ -364,6 +364,23 @@ def pad_map(specifications: Sequence[tuple[int, PadState]]) -> dict[int, PadStat
     return result
 
 
+def step_output(
+    client: PineClient,
+    frames: int,
+    states: Mapping[int, PadState],
+    catalog: Mapping[tuple[int, int], Mapping[str, object]] | None = None,
+) -> dict[str, object]:
+    step = client.step_frames(frames, states)
+    status = client.status()
+    output = observe(client, catalog) if status == "paused" else {"vm_status": status}
+    output["frame_step"] = {
+        "start": step.start_frame,
+        "end": step.end_frame,
+        "count": frames,
+    }
+    return output
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Frame-exact NA2 control and substitution-state observer."
@@ -400,13 +417,7 @@ def main() -> int:
         if args.command == "observe":
             output = observe(client, catalog)
         elif args.command == "step":
-            step = client.step_frames(args.frames, pad_map(args.pad))
-            output = observe(client, catalog)
-            output["frame_step"] = {
-                "start": step.start_frame,
-                "end": step.end_frame,
-                "count": args.frames,
-            }
+            output = step_output(client, args.frames, pad_map(args.pad), catalog)
         elif args.command == "release":
             client.release_pad_states(args.slots)
             output = {"released": args.slots or "all"}

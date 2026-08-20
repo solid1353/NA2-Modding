@@ -98,12 +98,12 @@ if ($mode -eq 'help') {
         '  na228 [-f]                 Build and run Latest with accelerated startup'
         '  na228 w [C path|plan]      Watch all registered C by default'
         '  na228 w injection_test     Watch only the reload-message smoke test'
-        '  na228 <token> [token] [-c <cheats-config> <row>]  Run one or two games'
+        '  na228 <token> [token] [-l <profile> [args]]  Run one or two games'
         '  l | p | m                  Latest | Previous | Manual'
         '  bl | bm [-f]               Build and run Latest | Manual'
         '  <token>w [C path|plan]     Watch that game; selection follows its token'
         '  -f                          Bypass non-critical validation errors during an ordinary build'
-        '  -c <cheats-config> <row>     Select cheats and a movesets.tsv row starting at 2'
+        '  -l <profile> [args]        Select an optional launch profile; Practice requires a row'
         '  additional launch arguments  See workshop help'
         ''
         '  na228 build l|m [-f]        Build Latest or Manual without running it'
@@ -448,32 +448,38 @@ $valuedLaunchOptions = @{
     '-s' = 'Snapshots'
     '-mc' = 'MemoryCard'
 }
-$cheatsConfiguration = $null
-$cheatsRow = $null
+$launchProfile = $null
+$launchProfileRow = $null
 for ($index = 0; $index -lt $forwardedLaunchArguments.Count; $index++) {
     $option = $forwardedLaunchArguments[$index].ToLowerInvariant()
-    if ($option -eq '-c') {
-        if ($null -ne $cheatsConfiguration) {
-            throw '-c may be specified only once.'
+    if ($option -eq '-l') {
+        if ($null -ne $launchProfile) {
+            throw '-l may be specified only once.'
         }
-        if ($index + 2 -ge $forwardedLaunchArguments.Count) {
-            throw '-c requires a cheats configuration and row.'
+        if ($index + 1 -ge $forwardedLaunchArguments.Count) {
+            throw '-l requires a launch profile.'
         }
-        $cheatsConfiguration = $forwardedLaunchArguments[++$index].ToLowerInvariant()
-        if ($cheatsConfiguration -cne 'practice') {
-            throw "Unknown cheats configuration: $cheatsConfiguration"
+        $launchProfile = $forwardedLaunchArguments[++$index].ToLowerInvariant()
+        $profile = $paths.settings.launch_settings.PSObject.Properties[$launchProfile]
+        if ($null -eq $profile -or $profile.Value -isnot [pscustomobject]) {
+            throw "Unknown launch profile: $launchProfile"
         }
-        $row = 0
-        if (
-            -not [int]::TryParse(
-                [string]$forwardedLaunchArguments[++$index],
-                [ref]$row
-            ) -or
-            $row -lt 2
-        ) {
-            throw 'Cheats configuration row must be a decimal integer starting at 2.'
+        if ($launchProfile -ceq 'practice') {
+            if ($index + 1 -ge $forwardedLaunchArguments.Count) {
+                throw 'The Practice launch profile requires a row.'
+            }
+            $row = 0
+            if (
+                -not [int]::TryParse(
+                    [string]$forwardedLaunchArguments[++$index],
+                    [ref]$row
+                ) -or
+                $row -lt 2
+            ) {
+                throw 'Launch profile row must be a decimal integer starting at 2.'
+            }
+            $launchProfileRow = $row
         }
-        $cheatsRow = $row
         continue
     }
     if ($option -eq '-dw') {
@@ -503,9 +509,9 @@ $selectedLaunchModes = @(
 if ($selectedLaunchModes.Count -gt 1) {
     throw 'Use only one of -p, -r, or -s.'
 }
-if ($cheatsConfiguration -ceq 'practice') {
+if ($launchProfile -ceq 'practice') {
     $practice = & (Join-Path $paths.scripts 'na228\practice.ps1') `
-        -MovesetRow $cheatsRow `
+        -MovesetRow $launchProfileRow `
         -Games @($games) `
         -ProjectRoot $paths.repository
     $launchParameters.PnachByGame = $practice.PnachByGame
@@ -547,7 +553,10 @@ else {
     }
     $launchFrameCounts = @(
         $launchConfigurations | ForEach-Object {
-            Get-Na2StartupFastForwardFrames -Configuration $_ -Paths $paths
+            Get-Na2StartupFastForwardFrames `
+                -Configuration $_ `
+                -Paths $paths `
+                -LaunchProfile $launchProfile
         } | Select-Object -Unique
     )
     if ($launchFrameCounts.Count -gt 1) {

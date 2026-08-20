@@ -6,12 +6,11 @@ binary edits, runtime hooks, and payload declarations are selected by
 
 ## Practice bootstrap PNACH
 
-Practice bootstrap is runtime-only and has no builder catalog node,
-configuration field, resident fragment, or ISO rebuild input. The cheats
-configuration invocation is
-`na228 <game> [game] -c <cheats-config> <row>`;
-`practice` selects a physical row from `resources/movesets.tsv`, starting at
-row 2 after the header. It works with NUN5,
+Practice bootstrap is runtime-only and has no builder catalog node, builder
+configuration field, resident fragment, or ISO rebuild input. The launch
+profile invocation is `na228 <game> [game] -l practice <row>`; `practice`
+selects a physical row from `resources/movesets.tsv`, starting at row 2 after
+the header. It works with NUN5,
 NA2.28 build selectors, build-and-launch tokens, and input playback. It reads
 only that row; it neither reads
 `character_data.tsv` nor expands character, support, or awakening combinations.

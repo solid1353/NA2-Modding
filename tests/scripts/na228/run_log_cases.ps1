@@ -146,7 +146,13 @@ try {
         -Path (Join-Path $fakeNa2Scripts 'launch_settings.ps1') `
         -Content @'
 function Get-Na2StartupFastForwardFrames {
-    param([string]$Configuration, [psobject]$Paths)
+    param(
+        [string]$Configuration,
+        [psobject]$Paths,
+        [string]$LaunchProfile
+    )
+    if ($LaunchProfile -ceq 'practice') { return [UInt64]2500 }
+    if ($LaunchProfile -ceq 'cinematic') { return [UInt64]777 }
     if ($Configuration -ceq 'test') { return [UInt64]222 }
     return [UInt64]321
 }
@@ -214,7 +220,11 @@ function Get-Na2StartupFastForwardFrames {
   "title": "Narutimate Accel v2.28",
   "serial": "SLOP-NA228",
   "output_boot_path": "SLOP_NA2.28",
-  "startup_fast_forward_frames": 321,
+  "launch_settings": {
+    "startup_fast_forward_frames": 321,
+    "practice": { "startup_fast_forward_frames": 2500 },
+    "cinematic": { "startup_fast_forward_frames": 777 }
+  },
   "builds": {
     "latest": { "aliases": ["l"] },
     "previous": { "aliases": ["p"] },
@@ -311,7 +321,7 @@ Write-Output '[fake] unit tests'
         -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'logs\na228'))) `
         -Message 'Help invocation created run logs.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 <token> \[token\] \[-c <cheats-config> <row>\]\s+') `
+        -Condition ($helpText -match '(?m)^\s*na228 <token> \[token\] \[-l <profile> \[args\]\]\s+') `
         -Message 'Root help omitted the ordered token grammar.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 \[-f\]\s+') `
@@ -329,8 +339,8 @@ Write-Output '[fake] unit tests'
         -Condition ($helpText -match '(?m)^\s*na228 build l\|m\s') `
         -Message 'Root help omitted the explicit build-only command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*-c <cheats-config> <row>\s+') `
-        -Message 'Root help omitted the cheats-configuration selector.'
+        -Condition ($helpText -match '(?m)^\s*-l <profile> \[args\]\s+') `
+        -Message 'Root help omitted the optional generic launch-profile selector.'
     Assert-Na2Test `
         -Condition ($helpText -notmatch '(?m)^\s*na228 practice\s+') `
         -Message 'Root help retained the separate Practice command.'
@@ -654,18 +664,59 @@ Add-Content `
     Assert-Na2Test `
         -Condition $nonMovesetRangeRejected `
         -Message 'The public E2E command accepted a range for a non-movesets suite.'
+    $genericProfileOutput = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            nun5 `
+            -l `
+            cinematic `
+            -t *>&1
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $genericProfileOutput -match 'turbo=True unlimited=False frames=777' -and
+            $genericProfileOutput -match 'readonly=False' -and
+            $genericProfileOutput -match 'discard=False'
+        ) `
+        -Message (
+            'A settings-only launch profile required hard-coded parser support. ' +
+            "Output:`n$genericProfileOutput"
+        )
+    $unknownProfileRejected = $false
+    try {
+        & (Join-Path $fakeRepository 'na228.ps1') nun5 -l missing
+    }
+    catch {
+        $unknownProfileRejected = $_.Exception.Message -ceq (
+            'Unknown launch profile: missing'
+        )
+    }
+    Assert-Na2Test `
+        -Condition $unknownProfileRejected `
+        -Message 'The launcher accepted an undeclared launch profile.'
+    $practiceRowRequired = $false
+    try {
+        & (Join-Path $fakeRepository 'na228.ps1') nun5 -l practice
+    }
+    catch {
+        $practiceRowRequired = $_.Exception.Message -ceq (
+            'The Practice launch profile requires a row.'
+        )
+    }
+    Assert-Na2Test `
+        -Condition $practiceRowRequired `
+        -Message 'The Practice launch profile accepted no moveset row.'
     $practiceOutput = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
             manual `
-            -c `
+            -l `
             practice `
             101 `
             -t *>&1
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
-            $practiceOutput -match 'turbo=True unlimited=False frames=222' -and
+            $practiceOutput -match 'turbo=True unlimited=False frames=2500' -and
             $practiceOutput -match 'readonly=True' -and
             $practiceOutput -match 'discard=True' -and
             $practiceOutput.Contains(
@@ -689,7 +740,7 @@ Add-Content `
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
             manual `
-            -c `
+            -l `
             practice `
             59 *>&1
     ) -join "`n"
@@ -711,7 +762,7 @@ Add-Content `
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
             manual `
-            -c `
+            -l `
             practice `
             58 *>&1
     ) -join "`n"
@@ -730,7 +781,7 @@ Add-Content `
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
             manual `
-            -c `
+            -l `
             practice `
             4 *>&1
     ) -join "`n"
@@ -749,7 +800,7 @@ Add-Content `
     $linkedJutsuOutput = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
-            -c `
+            -l `
             practice `
             6 *>&1
     ) -join "`n"
@@ -764,7 +815,7 @@ Add-Content `
     $linkedUjOutput = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
-            -c `
+            -l `
             practice `
             5 *>&1
     ) -join "`n"
@@ -778,11 +829,11 @@ Add-Content `
         )
     $headerRowRejected = $false
     try {
-        & (Join-Path $fakeRepository 'na228.ps1') nun5 -c practice 1
+        & (Join-Path $fakeRepository 'na228.ps1') nun5 -l practice 1
     }
     catch {
         $headerRowRejected = $_.Exception.Message -ceq (
-            'Cheats configuration row must be a decimal integer starting at 2.'
+            'Launch profile row must be a decimal integer starting at 2.'
         )
     }
     Assert-Na2Test `
@@ -790,7 +841,7 @@ Add-Content `
         -Message 'The Practice profile accepted the TSV header as a moveset row.'
     $cleanPracticeRejected = $false
     try {
-        & (Join-Path $fakeRepository 'na228.ps1') na2 -c practice 2
+        & (Join-Path $fakeRepository 'na228.ps1') na2 -l practice 2
     }
     catch {
         $cleanPracticeRejected = $_.Exception.Message -ceq (
@@ -802,7 +853,7 @@ Add-Content `
         -Message 'The Practice profile accepted clean NA2.'
     $unknownMovesetRejected = $false
     try {
-        & (Join-Path $fakeRepository 'na228.ps1') nun5 -c practice 9999
+        & (Join-Path $fakeRepository 'na228.ps1') nun5 -l practice 9999
     }
     catch {
         $unknownMovesetRejected = $_.Exception.Message -ceq 'Unknown moveset row: 9999'
@@ -845,7 +896,7 @@ Add-Content `
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
             l `
-            -c `
+            -l `
             practice `
             2 `
             -p `

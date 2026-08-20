@@ -220,13 +220,51 @@ function Resolve-Na2PathManifest {
         if ([int]$projectSettings.schema_version -ne 1) {
             throw "Unsupported project settings schema: $($projectSettings.schema_version)"
         }
-        $startupFrames = $projectSettings.PSObject.Properties[
+        $launchSettings = $projectSettings.PSObject.Properties['launch_settings']
+        if ($null -eq $launchSettings -or
+            $launchSettings.Value -isnot [pscustomobject]) {
+            throw 'Project launch_settings must be an object.'
+        }
+        $baseFrames = $launchSettings.Value.PSObject.Properties[
             'startup_fast_forward_frames'
         ]
-        if ($null -eq $startupFrames -or
-            $startupFrames.Value -isnot [long] -or
-            [long]$startupFrames.Value -lt 0) {
-            throw 'Project startup_fast_forward_frames must be a non-negative integer.'
+        if ($null -eq $baseFrames -or
+            $baseFrames.Value -isnot [long] -or
+            [long]$baseFrames.Value -lt 0) {
+            throw (
+                'Project launch_settings.startup_fast_forward_frames must be ' +
+                'a non-negative integer.'
+            )
+        }
+        $profileDefinitions = @(
+            $launchSettings.Value.PSObject.Properties |
+                Where-Object { $_.Name -cne 'startup_fast_forward_frames' }
+        )
+        foreach ($profile in $profileDefinitions) {
+            if ($profile.Value -isnot [pscustomobject]) {
+                throw "Project launch_settings.$($profile.Name) must be an object."
+            }
+            $profileSettings = @($profile.Value.PSObject.Properties)
+            if (@(
+                $profileSettings |
+                    Where-Object { $_.Name -cne 'startup_fast_forward_frames' }
+            ).Count -gt 0) {
+                throw (
+                    "Project launch_settings.$($profile.Name) may define " +
+                    'only startup_fast_forward_frames.'
+                )
+            }
+            $startupFrames = $profile.Value.PSObject.Properties[
+                'startup_fast_forward_frames'
+            ]
+            if ($null -ne $startupFrames -and
+                ($startupFrames.Value -isnot [long] -or
+                    [long]$startupFrames.Value -lt 0)) {
+                throw (
+                    "Project launch_settings.$($profile.Name)." +
+                    'startup_fast_forward_frames must be a non-negative integer.'
+                )
+            }
         }
         if ($resolvedFiles.Contains('game_catalog')) {
             $sourceCatalogPath = [string]$resolvedFiles['game_catalog']

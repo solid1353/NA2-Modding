@@ -13,13 +13,13 @@ def main() -> int:
     )
     parser.add_argument("--catalog", required=True, type=Path)
     parser.add_argument("--configuration", required=True, type=Path)
-    parser.add_argument("--default-frames", required=True, type=int)
+    parser.add_argument("--baseline-frames", required=True, type=int)
     args = parser.parse_args()
     try:
         frames = load_startup_fast_forward_frames(
             args.catalog,
             args.configuration,
-            args.default_frames,
+            args.baseline_frames,
         )
     except (OSError, ValueError) as exc:
         print(f"ConfigurationError: {exc}", file=sys.stderr)

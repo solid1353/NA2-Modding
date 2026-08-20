@@ -118,6 +118,7 @@ Give each document one job and canonical authority:
 - runbooks own exact operational procedures;
 - the implementing repository or component owns user-facing CLI help;
 - component docs own current architecture, contracts, inputs, and outputs;
+  never duplicate canonical source as a documentation example;
 - knowledge/research docs own evidence, findings, hypotheses, and negative
   results;
 - historical docs contain only non-current material with concrete continuing

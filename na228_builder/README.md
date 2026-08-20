@@ -72,10 +72,15 @@ integrated catalog data.
 - Root `release_manifest.json` owns release packaging metadata and remains
   outside the catalog.
 - Root `game.json` owns the product title, explicit output boot path, named
-  build variants, and the default startup fast-forward frame count.
+  build variants, base launch settings, and direct named launch-profile
+  overrides.
 
 JSON configurations select features. The paired character-override TSVs are
 the separate per-character build inputs for battle values.
+
+The `-l <profile>` launcher option is optional. Without it, the base fields
+apply. A selected direct profile inherits every base field it does not override.
+Profile names are not a closed set.
 
 ## Edit per-character battle values
 
@@ -143,12 +148,13 @@ construct, including `null`.
 An internal setting may declare startup launch timing as
 `startup_fast_forward_frames: { additive: N, override: N }`, with either key or
 both. Additives are signed integers; overrides are positive UInt64 frame
-counts. Resolution starts from the non-negative `game.json` default, uses
-the sole enabled override instead when present, and then sums every enabled
-additive. More than one enabled override or a final result outside UInt64 is a
-configuration error. A zero result omits timed fast-forward. Disabled settings
-contribute nothing. This launch metadata is omitted from the public release
-catalog along with patch implementation references.
+counts. Resolution starts from the non-negative base value under `game.json`
+`launch_settings`, or a value supplied by the selected direct profile override,
+uses the sole enabled catalog override instead when present, and then sums every
+enabled additive. More than one enabled catalog override or a final result
+outside UInt64 is a configuration error. A zero result omits timed fast-forward.
+Disabled settings contribute nothing. This launch metadata is omitted from the
+public release catalog along with patch implementation references.
 
 Binary edit definitions always contain an explicit `operation`. Runtime target
 changes live under an injection unit's `hooks` and therefore have no operation

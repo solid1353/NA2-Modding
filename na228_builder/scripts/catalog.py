@@ -590,15 +590,15 @@ def _startup_fast_forward_override(nodes: tuple[CatalogNode, ...]) -> int | None
 
 def _startup_fast_forward_frames(
     nodes: tuple[CatalogNode, ...],
-    default_frames: int,
+    baseline_frames: int,
 ) -> int:
     if (
-        isinstance(default_frames, bool)
-        or not isinstance(default_frames, int)
-        or default_frames < 0
-        or default_frames > UINT64_MAX
+        isinstance(baseline_frames, bool)
+        or not isinstance(baseline_frames, int)
+        or baseline_frames < 0
+        or baseline_frames > UINT64_MAX
     ):
-        raise ValueError("Default startup fast-forward frames must be a UInt64 integer")
+        raise ValueError("Baseline startup fast-forward frames must be a UInt64 integer")
     override = _startup_fast_forward_override(nodes)
     enabled = [
         node
@@ -610,7 +610,7 @@ def _startup_fast_forward_frames(
         for node in enabled
         if node.startup_fast_forward_frames is not None
     )
-    baseline = override if override is not None else default_frames
+    baseline = override if override is not None else baseline_frames
     result = baseline + additive
     if result < 0 or result > UINT64_MAX:
         raise ConfigurationError(
@@ -622,11 +622,11 @@ def _startup_fast_forward_frames(
 
 def startup_fast_forward_frames(
     selection: CatalogSelection,
-    default_frames: int,
+    baseline_frames: int,
 ) -> int:
     """Return the selected startup fast-forward frame count."""
 
-    return _startup_fast_forward_frames(selection.nodes, default_frames)
+    return _startup_fast_forward_frames(selection.nodes, baseline_frames)
 
 
 def _load_implementation(
@@ -874,7 +874,7 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
 def load_startup_fast_forward_frames(
     catalog_path: Path,
     configuration_path: Path,
-    default_frames: int,
+    baseline_frames: int,
 ) -> int:
     """Resolve launch metadata without loading binary implementation definitions."""
 
@@ -885,7 +885,7 @@ def load_startup_fast_forward_frames(
         catalog_path, configuration_path, features
     )
     nodes = _selected_nodes(_feature_root(features), effective)
-    return _startup_fast_forward_frames(nodes, default_frames)
+    return _startup_fast_forward_frames(nodes, baseline_frames)
 
 
 def materialized_configuration(

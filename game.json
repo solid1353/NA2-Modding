@@ -3,7 +3,12 @@
   "title": "Narutimate Accel v2.28",
   "serial": "SLOP-NA228",
   "output_boot_path": "SLOP_NA2.28",
-  "startup_fast_forward_frames": 1760,
+  "launch_settings": {
+    "startup_fast_forward_frames": 1760,
+    "practice": {
+      "startup_fast_forward_frames": 2500
+    }
+  },
   "builds": {
     "latest": {
       "aliases": ["l"]

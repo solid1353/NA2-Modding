@@ -216,7 +216,10 @@ class ConfigurationTests(unittest.TestCase):
                     "title": "Test Product",
                     "serial": "TEST-00000",
                     "output_boot_path": "SLOP_NA2.28",
-                    "startup_fast_forward_frames": 321,
+                    "launch_settings": {
+                        "startup_fast_forward_frames": 321,
+                        "practice": {"startup_fast_forward_frames": 654},
+                    },
                     "builds": {"latest": {}},
                 },
                 indent=2,
@@ -397,6 +400,29 @@ class ConfigurationTests(unittest.TestCase):
             )
             with self.assertRaisesRegex(ValueError, "byte length"):
                 load_configuration(configuration, root, root)
+
+    def test_launch_settings_accept_open_direct_profile_overrides(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            builder, source, configurations = self.create_workspace(root)
+            self.create_feature_inputs(builder, "localization", "translation_importer")
+            configuration = self.create_configuration(
+                configurations,
+                source,
+                {"localization": {"description": "Localization"}},
+                {"localization": True},
+            )
+            settings_path = root / "game.json"
+            settings = json.loads(settings_path.read_text(encoding="utf-8"))
+            settings["launch_settings"] = {
+                "startup_fast_forward_frames": 321,
+                "tool_assisted": {},
+            }
+            settings_path.write_text(
+                json.dumps(settings, indent=2) + "\n", encoding="utf-8"
+            )
+            loaded = load_configuration(configuration, root, root)
+            self.assertEqual(loaded.configuration_id, configuration.stem)
 
     def test_binary_hash_ignores_helpers_but_includes_referenced_blobs(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

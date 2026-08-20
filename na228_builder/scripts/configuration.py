@@ -109,7 +109,15 @@ def _settings_text(value: object, label: str) -> str:
     return value
 
 
-def _read_settings(path: Path) -> tuple[str, str, int]:
+def _startup_frames(value: object, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"Settings {label} must be an integer")
+    if value < 0 or value > UINT64_MAX:
+        raise ValueError(f"Settings {label} must be a UInt64 integer")
+    return value
+
+
+def _read_settings(path: Path) -> tuple[str, str, tuple[int, ...]]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
@@ -121,25 +129,48 @@ def _read_settings(path: Path) -> tuple[str, str, int]:
             "title",
             "serial",
             "output_boot_path",
-            "startup_fast_forward_frames",
+            "launch_settings",
             "builds",
         },
         "root",
     )
     if settings["schema_version"] != 1:
         raise ValueError("Unsupported settings schema_version")
-    startup_frames = settings["startup_fast_forward_frames"]
-    if isinstance(startup_frames, bool) or not isinstance(startup_frames, int):
-        raise ValueError("Settings startup_fast_forward_frames must be an integer")
-    if startup_frames < 0 or startup_frames > UINT64_MAX:
+    launch_settings = settings["launch_settings"]
+    if not isinstance(launch_settings, dict):
+        raise ValueError("Settings launch_settings must be an object")
+    if "startup_fast_forward_frames" not in launch_settings:
         raise ValueError(
-            "Settings startup_fast_forward_frames must be a UInt64 integer"
+            "Settings launch_settings must define startup_fast_forward_frames"
         )
+    base_frames = _startup_frames(
+        launch_settings["startup_fast_forward_frames"],
+        "launch_settings.startup_fast_forward_frames",
+    )
+    startup_frames = [base_frames]
+    for profile, raw_profile in launch_settings.items():
+        if profile == "startup_fast_forward_frames":
+            continue
+        if not isinstance(raw_profile, dict):
+            raise ValueError(f"Settings launch_settings.{profile} must be an object")
+        unexpected = set(raw_profile) - {"startup_fast_forward_frames"}
+        if unexpected:
+            keys = ", ".join(sorted(unexpected))
+            raise ValueError(
+                f"Settings launch_settings.{profile} has unsupported keys: {keys}"
+            )
+        frames = base_frames
+        if "startup_fast_forward_frames" in raw_profile:
+            frames = _startup_frames(
+                raw_profile["startup_fast_forward_frames"],
+                f"launch_settings.{profile}.startup_fast_forward_frames",
+            )
+        startup_frames.append(frames)
     product_title = _settings_text(settings["title"], "title")
     output_boot_path = _settings_text(
         settings["output_boot_path"], "output_boot_path"
     )
-    return output_boot_path, product_title, startup_frames
+    return output_boot_path, product_title, tuple(startup_frames)
 
 
 def _tree_digest(
@@ -349,7 +380,7 @@ def module_content_sha256(path: Path, module_type: str) -> str:
 
 def _validated_settings(
     settings_path: Path,
-) -> tuple[str, str, int]:
+) -> tuple[str, str, tuple[int, ...]]:
     output_boot_path, product_title, startup_frames = _read_settings(settings_path)
     from ..image_assembler.iso9660 import normalize_iso_path
 
@@ -521,7 +552,8 @@ def _load_configuration(
     paths = project_paths or load_paths(workspace, allow_missing=True)
     settings_path = paths.file("settings").resolve()
     output_boot_path, product_title, startup_frames = _validated_settings(settings_path)
-    catalog_module.startup_fast_forward_frames(selection, startup_frames)
+    for frames in startup_frames:
+        catalog_module.startup_fast_forward_frames(selection, frames)
     roots = _resolved_roots(paths, root_overrides)
     targets_path = builder_root / BUILDER_TARGETS_FILE
     if not targets_path.is_file():

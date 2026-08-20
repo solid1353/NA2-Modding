@@ -150,7 +150,7 @@ write reaches the next native function.
 `pcsx2_files/cheats/practice/NA228p.pnach` owns the complete NA2.28 bootstrap,
 while `pcsx2_files/cheats/practice/NUN5p.pnach` owns its separately ported startup and bootstrap
 code at `0x003D0C60..0x003D0FF8`. The normal
-`-c <cheats-config> <row>` selector maps `practice` to
+`-l practice <row>` launch-profile selector maps `practice` to
 `pcsx2_files/cheats/practice/`, reads one physical `movesets.tsv` row starting
 at row 2, and passes a different three-line character/support/awakening address
 set to each selected game. A row with `reversal` set to `Y` adds the native

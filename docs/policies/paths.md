@@ -6,8 +6,8 @@ The path system has four layers with separate technical owners:
 2. NA2 root `paths.json` imports Workshop and adds only NA2-local paths.
 3. Workshop root `games.json` owns shared source-game selectors, aliases,
    serials, and CRCs.
-4. NA2 root `game.json` owns NA2.28 output identity, build variants, and
-   the default startup fast-forward frame count.
+4. NA2 root `game.json` owns NA2.28 output identity, build variants, base launch
+   settings, and direct named launch-profile overrides.
 
 The PowerShell and Python loaders merge both catalogs. Canonical files store
 only repository-relative paths or `@root/child` references. Resolved absolute

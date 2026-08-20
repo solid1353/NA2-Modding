@@ -4,7 +4,8 @@ function Get-Na2StartupFastForwardFrames {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)][string]$Configuration,
-        [Parameter(Mandatory)][psobject]$Paths
+        [Parameter(Mandatory)][psobject]$Paths,
+        [string]$LaunchProfile
     )
 
     if ($Configuration -cnotmatch '^[A-Za-z0-9][A-Za-z0-9_-]*$') {
@@ -17,10 +18,24 @@ function Get-Na2StartupFastForwardFrames {
         throw "Launch configuration does not exist: $Configuration"
     }
     $pythonRunner = Join-Path $Paths.repository 'scripts\lib\run_python.ps1'
+    $launchSettings = $Paths.settings.launch_settings
+    $startupFrames = $launchSettings.startup_fast_forward_frames
+    if (-not [string]::IsNullOrWhiteSpace($LaunchProfile)) {
+        $profile = $launchSettings.PSObject.Properties[$LaunchProfile]
+        if ($null -eq $profile -or $profile.Value -isnot [pscustomobject]) {
+            throw "Unknown launch profile: $LaunchProfile"
+        }
+        $profileFrames = $profile.Value.PSObject.Properties[
+            'startup_fast_forward_frames'
+        ]
+        if ($null -ne $profileFrames) {
+            $startupFrames = $profileFrames.Value
+        }
+    }
     $arguments = @(
         '--catalog', (Join-Path $Paths.builder 'catalog'),
         '--configuration', $configurationPath,
-        '--default-frames', [string]$Paths.settings.startup_fast_forward_frames
+        '--baseline-frames', [string]$startupFrames
     )
     Push-Location -LiteralPath $Paths.repository
     try {

@@ -271,7 +271,10 @@ class ProjectPathTests(unittest.TestCase):
                 "title": "Narutimate Accel v2.28",
                 "serial": "SLOP-NA228",
                 "output_boot_path": "SLOP_NA2.28",
-                "startup_fast_forward_frames": 321,
+                "launch_settings": {
+                    "startup_fast_forward_frames": 321,
+                    "practice": {"startup_fast_forward_frames": 654},
+                },
                 "builds": {
                     "latest": {
                         "aliases": ["l"],

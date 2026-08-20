@@ -58,7 +58,7 @@ one entry; it does not replace a roster item.
 
 NA2 already uses support ID `0x25` for No Support in Story Mode.
 
-## NUN5 Character Select port map
+## NUN5 Character Select PNACH port
 
 Static analysis on 2026-08-20 mapped the accepted NA2 Character Select
 implementation to the verified NUN5 `SLES_556.05`. The main-code ELF mapping
@@ -105,24 +105,52 @@ selected-name draw:
 | Selected-name draw | `0x003CC734` | `0x002CC8B4` | `0x0C0F2D90` |
 
 The two replaced function entries both retain clean second prologue word
-`0xFFBF0000`; the port replaces each with a jump delay-slot `nop`. The runtime
-replacements are encoded in the generated PNACH section in
-`@pcsx2_files/games/NUN5/NUN5.pnach`. Battle-overlay support-call and gauge
-suppression are not part of this menu-baseline port.
+`0xFFBF0000`; the port replaces each with a jump delay-slot `nop`.
+Battle-overlay support-call and gauge suppression were not included.
 
-NUN5's largest verified BTL overlay ends at `0x008ECE80`, and its language
-overlay begins at `0x008F3D00`. The resident candidate occupies the intervening
-gap through `0x008EE1E0`. Immutable code and read-only table words are recurring
-PNACH writes; the private selector buffers at
-`0x008ED930..0x008EE1D8` are left as mutable runtime storage.
+### Rejected overlay placement
+
+Runtime evidence on 2026-08-21 rejected the candidate. NUN5 SS1, preserved with
+SHA-256
+`7F3B3DF7E147BDC739BBF2533D8404B44ED29765C8F21F0865A6C2068834FB56`,
+contains structured live battle data throughout the alleged
+`0x008ECE80..0x008F3D00` gap. The recurring payload at
+`0x008ECED0..0x008ED930` and its mutable storage at
+`0x008ED930..0x008EE1D8` therefore overwrote battle runtime state.
+
+The NUN5 ELF program headers explain the collision. Its resident `PT_LOAD`
+starts at `0x00100000` with memory size `0x005C6D00`, ending exactly at
+`0x006C6D00`; overlay reservations begin at that same address. The region after
+a particular BTL file image is unused file capacity within the overlay
+reservation, not free resident memory. No safe fixed-address resident gap
+exists for this payload. The broken overlay candidate was removed.
+
+The corrected NUN5 candidate reserves an `0x2000`-byte tail from the game's own
+allocator instead. NUN5 allocator initialization at `0x00118CA0` obtains the
+same full system block as native code, but the clean `move s6,s0` at
+`0x00118D6C` becomes `addiu s6,s0,-0x2000` before the game allocator builds its
+sentinels. The observed user base therefore remains `0x00928920`, while the
+game heap end moves from `0x01FF5FF0` to `0x01FF3FF0`. The system-owned block
+and high-memory system tail do not move.
+
+The rebuilt relocation-bearing payload occupies
+`0x01FF4000..0x01FF5308` inside that excluded allocator tail. Its immutable
+code, read-only table, and Character Select hooks are recurring extended PNACH
+writes; mutable selector buffers at `0x01FF4A60..0x01FF5308` are not. Three
+conditional blocks require allocator global `0x00617A84` to contain heap-end
+low half `0x3FF0` before any payload or hook write can execute. Hot-reloading
+the PNACH into a native process whose heap still ends at `0x01FF5FF0` therefore
+changes only the future-boot allocator instruction and cannot write into that
+live heap. This leaves 3,304 bytes before the native system-owned end at
+`0x01FF5FF0`. Clean-ELF guards, relocation closure, conditional block counts,
+payload range, and absence of writes to the mutable buffers are statically
+validated. Runtime behavior remains unvalidated pending a clean NUN5 boot and
+Character Select to battle test.
 
 NUN5's native font renderer stores tracking at `+0x3C` and horizontal scale at
 `+0x80`. Static inspection of `FUN_001891A0` and `FUN_00189640` establishes
-that the latter scales both glyph geometry and advances. The NUN5 adapter can
-therefore fit the 112-unit `NO SUPPORT` label to the existing 84-unit box with
-the native renderer instead of importing NA2's global Font v2 hooks. Runtime
-behavior of this NUN5 port remains unvalidated until user testing; the address,
-guard, payload-range, and renderer-field claims above are static evidence.
+that the latter scales both glyph geometry and advances. This renderer-field
+mapping remains valid independent of the rejected injection location.
 
 ## Selection compatibility and observed runtime failure
 

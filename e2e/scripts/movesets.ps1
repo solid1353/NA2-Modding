@@ -66,7 +66,6 @@ else {
     [IO.Path]::GetFullPath($ConcurrencyPoolRoot)
 }
 
-$practiceScript = Join-Path $ProjectRoot 'scripts\na228\practice.ps1'
 $gridScript = Join-Path `
     $ProjectRoot `
     'scripts\research\localization\compare_font_capture_sets.ps1'
@@ -361,10 +360,10 @@ $practiceRows = @(
 $practiceGames = [string[]]@($gameTargets | ForEach-Object Selector)
 $practiceByRow = @{}
 foreach ($practice in @(
-    & $practiceScript `
+    Get-VisualRegressionPracticeConfiguration `
+        -Repository $ProjectRoot `
         -MovesetRow $practiceRows `
-        -Games $practiceGames `
-        -ProjectRoot $ProjectRoot
+        -Game $practiceGames
 )) {
     $practiceByRow[[int]$practice.MovesetRow] = $practice
 }

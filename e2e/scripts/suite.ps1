@@ -5,6 +5,8 @@ $script:E2eCaptureTiers = [ordered]@{
 }
 $script:E2eGeneratedMovesetSuiteName = 'characters/movesets'
 $script:E2eGeneratedIdleSuiteName = 'characters/idle'
+$script:E2ePracticeSuiteName = 'practice'
+$script:E2ePracticeMovesetRow = 2
 $script:E2eGeneratedSuiteNames = @(
     $script:E2eGeneratedMovesetSuiteName,
     $script:E2eGeneratedIdleSuiteName
@@ -160,6 +162,19 @@ function Get-VisualRegressionGeneratedSuiteScript {
     param([Parameter(Mandatory)][string]$Root)
 
     Join-Path (Join-Path $Root 'scripts') 'movesets.ps1'
+}
+
+function Get-VisualRegressionPracticeConfiguration {
+    param(
+        [Parameter(Mandatory)][string]$Repository,
+        [Parameter(Mandatory)][int[]]$MovesetRow,
+        [Parameter(Mandatory)][string[]]$Game
+    )
+
+    & (Join-Path $Repository 'scripts\na228\practice.ps1') `
+        -MovesetRow $MovesetRow `
+        -Games $Game `
+        -ProjectRoot $Repository
 }
 
 function Get-VisualRegressionGeneratedInputPaths {
@@ -562,6 +577,10 @@ function Get-VisualRegressionContext {
         GeneratedNamespace = $generatedNamespace
         GeneratedFamily = $generatedFamily
         GeneratedScript = Get-VisualRegressionGeneratedSuiteScript -Root $root
+        PracticeMovesetRow = if ($suiteName -ceq $script:E2ePracticeSuiteName) {
+            $script:E2ePracticeMovesetRow
+        }
+        else { $null }
         DescendantSuiteRoot = Join-Path $recordingRepository $suiteRelativePath
         CaptureRoot = $captureRoot
         Capture = [pscustomobject]@{
@@ -1388,7 +1407,8 @@ function Invoke-VisualRegressionReplay {
         [Parameter(Mandatory)][string]$SharedRecordingRoot,
         [Parameter(Mandatory)][string]$RecordingPath,
         [Parameter(Mandatory)][string]$Game,
-        [Parameter(Mandatory)][string]$CaptureRoot
+        [Parameter(Mandatory)][string]$CaptureRoot,
+        [Nullable[int]]$PracticeMovesetRow
     )
 
     $generatedRecordingRoot = Join-Path $SharedRecordingRoot '__generated'
@@ -1402,14 +1422,25 @@ function Invoke-VisualRegressionReplay {
         Write-Host "[e2e] Replaying $Game"
         . (Join-Path $Repository 'scripts\lib\paths.ps1')
         $paths = Get-Na2Paths -ManifestPath (Join-Path $Repository 'paths.json')
-        & $paths.files.pcsx2_game_launch_command `
-            -Games $Game `
-            -Play $stagedName `
-            -Snapshots `
-            -InputRecordingCaptureMode screenshots `
-            -CaptureDirectory $CaptureRoot `
-            -InputRecordingsRoot $SharedRecordingRoot `
-            -ProjectRoot $Repository
+        $launchArguments = @{
+            Games = $Game
+            Play = $stagedName
+            Snapshots = $true
+            InputRecordingCaptureMode = 'screenshots'
+            CaptureDirectory = $CaptureRoot
+            InputRecordingsRoot = $SharedRecordingRoot
+            ProjectRoot = $Repository
+        }
+        if ($null -ne $PracticeMovesetRow) {
+            $practice = Get-VisualRegressionPracticeConfiguration `
+                -Repository $Repository `
+                -MovesetRow $PracticeMovesetRow `
+                -Game $Game
+            $launchArguments.ReadOnlySettings = $true
+            $launchArguments.PnachByGame = $practice.PnachByGame
+            $launchArguments.PnachLinesByGame = $practice.PnachLinesByGame
+        }
+        & $paths.files.pcsx2_game_launch_command @launchArguments
     }
     finally {
         if (Test-Path -LiteralPath $stagedPath -PathType Leaf) {
@@ -1453,7 +1484,8 @@ function Invoke-VisualRegressionPooledReplay {
         [Parameter(Mandatory)][string]$Game,
         [Parameter(Mandatory)][string]$CaptureRoot,
         [Parameter(Mandatory)][string]$ConcurrencyPoolRoot,
-        [Parameter(Mandatory)][ValidateRange(1, 64)][int]$ConcurrencyLimit
+        [Parameter(Mandatory)][ValidateRange(1, 64)][int]$ConcurrencyLimit,
+        [Nullable[int]]$PracticeMovesetRow
     )
 
     $permit = Enter-VisualRegressionConcurrencyPool `
@@ -1465,7 +1497,8 @@ function Invoke-VisualRegressionPooledReplay {
             -SharedRecordingRoot $SharedRecordingRoot `
             -RecordingPath $RecordingPath `
             -Game $Game `
-            -CaptureRoot $CaptureRoot
+            -CaptureRoot $CaptureRoot `
+            -PracticeMovesetRow $PracticeMovesetRow
     }
     finally {
         $permit.Dispose()

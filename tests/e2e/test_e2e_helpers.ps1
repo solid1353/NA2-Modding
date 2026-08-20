@@ -163,10 +163,12 @@ try {
 
     $replayRepository = Join-Path $testRoot 'screenshot-replay'
     $replayLibrary = Join-Path $replayRepository 'scripts\lib'
+    $replayNa228Scripts = Join-Path $replayRepository 'scripts\na228'
     $replayRecordings = Join-Path $replayRepository 'recordings'
     $replayCapture = Join-Path $replayRepository 'capture'
     $replayLauncher = Join-Path $replayRepository 'launcher.ps1'
-    [void](New-Item -ItemType Directory -Path $replayLibrary, $replayRecordings -Force)
+    [void](New-Item -ItemType Directory -Path `
+        $replayLibrary, $replayNa228Scripts, $replayRecordings -Force)
     [IO.File]::WriteAllText((Join-Path $replayRepository 'paths.json'), '{}')
     [IO.File]::WriteAllText(
         (Join-Path $replayLibrary 'paths.ps1'),
@@ -181,6 +183,29 @@ function Get-Na2Paths {
 "@
     )
     [IO.File]::WriteAllText(
+        (Join-Path $replayNa228Scripts 'practice.ps1'),
+        @'
+param(
+    [int[]]$MovesetRow,
+    [string[]]$Games,
+    [string]$ProjectRoot
+)
+foreach ($row in $MovesetRow) {
+    $pnachByGame = @{}
+    $pnachLinesByGame = @{}
+    foreach ($game in $Games) {
+        $pnachByGame[$game] = "practice-$row.pnach"
+        $pnachLinesByGame[$game] = @("practice-row=$row")
+    }
+    [pscustomobject]@{
+        MovesetRow = $row
+        PnachByGame = $pnachByGame
+        PnachLinesByGame = $pnachLinesByGame
+    }
+}
+'@
+    )
+    [IO.File]::WriteAllText(
         $replayLauncher,
         @'
 param(
@@ -190,7 +215,10 @@ param(
     [string]$InputRecordingCaptureMode,
     [string]$CaptureDirectory,
     [string]$InputRecordingsRoot,
-    [string]$ProjectRoot
+    [string]$ProjectRoot,
+    [switch]$ReadOnlySettings,
+    [hashtable]$PnachByGame,
+    [hashtable]$PnachLinesByGame
 )
 [void](New-Item -ItemType Directory -Path (Join-Path $CaptureDirectory 'screenshots') -Force)
 [IO.File]::WriteAllText((Join-Path $CaptureDirectory 'screenshots\0001.png'), 'screenshot')
@@ -200,6 +228,14 @@ param(
         snapshots = $Snapshots.IsPresent
         capture_mode = $InputRecordingCaptureMode
         play = $Play
+        read_only_settings = $ReadOnlySettings.IsPresent
+        pnach = if ($null -eq $PnachByGame) { $null } else { $PnachByGame[$Games[0]] }
+        pnach_lines = if ($null -eq $PnachLinesByGame) {
+            [string[]]@()
+        }
+        else {
+            [string[]]@($PnachLinesByGame[$Games[0]])
+        }
     } | ConvertTo-Json)
 )
 '@
@@ -228,6 +264,32 @@ param(
             -not (Test-Path -LiteralPath (Join-Path $replayCapture 'sstates'))
         ) `
         -Message 'E2E replay did not use the command pool or screenshot-only PCSX2 capture.'
+
+    $practiceCapture = Join-Path $replayRepository 'practice-capture'
+    Invoke-VisualRegressionPooledReplay `
+        -Repository $replayRepository `
+        -SharedRecordingRoot $replayRecordings `
+        -RecordingPath $replayRecording `
+        -Game 'e2e_test' `
+        -CaptureRoot $practiceCapture `
+        -PracticeMovesetRow 2 `
+        -ConcurrencyPoolRoot $replayPool `
+        -ConcurrencyLimit 16
+    $practiceInvocation = Get-Content `
+        -Raw `
+        -LiteralPath (Join-Path $replayRepository 'launcher.json') |
+        ConvertFrom-Json
+    $practiceContext = Get-VisualRegressionContext -Suite 'practice'
+    $nestedPracticeContext = Get-VisualRegressionContext -Suite 'other/practice'
+    Assert-E2eHelperTest `
+        -Condition (
+            $practiceContext.PracticeMovesetRow -eq 2 -and
+            $null -eq $nestedPracticeContext.PracticeMovesetRow -and
+            $practiceInvocation.read_only_settings -and
+            $practiceInvocation.pnach -ceq 'practice-2.pnach' -and
+            ($practiceInvocation.pnach_lines -join ',') -ceq 'practice-row=2'
+        ) `
+        -Message 'The practice suite did not use Practice row 2 through the generated-character launch configuration path.'
 
     $generatedDiscoveryRoot = Join-Path $testRoot 'generated-discovery\e2e'
     $generatedSuiteRoot = Join-Path $generatedDiscoveryRoot 'recordings'

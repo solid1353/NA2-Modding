@@ -138,6 +138,7 @@ if ($PSCmdlet.ParameterSetName -ceq 'Capture') {
         -RecordingPath $recordingPath `
         -Game $Game `
         -CaptureRoot $CaptureOutputRoot `
+        -PracticeMovesetRow $context.PracticeMovesetRow `
         -ConcurrencyPoolRoot $ConcurrencyPoolRoot `
         -ConcurrencyLimit $ConcurrencyLimit
     $capturedScreenshots = Join-Path $CaptureOutputRoot 'screenshots'
@@ -176,6 +177,7 @@ try {
             -RecordingPath $recordingPath `
             -Game $Game `
             -CaptureRoot $runtimeCapture `
+            -PracticeMovesetRow $context.PracticeMovesetRow `
             -ConcurrencyPoolRoot $ConcurrencyPoolRoot `
             -ConcurrencyLimit $ConcurrencyLimit
     }

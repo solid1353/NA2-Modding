@@ -31,6 +31,8 @@ and specials grids. Select `characters/movesets/base` or
 `characters/idle` replays every selected character, including second forms, and
 combines their idle screenshots into sequential fixed 3×2 pages. A ranged idle
 run expands to the complete affected pages so unselected cells are preserved.
+The `practice` suite replays with the same generated Practice configuration as
+`na228 <game> -l practice 2` and the generated character suites.
 
 `-s` adds the shifted E2E Test build and replays the same suites against it.
 Every normal and shifted capture must match.

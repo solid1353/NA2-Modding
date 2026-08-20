@@ -292,6 +292,7 @@ try {
                     $ReplayName,
                     $Generated,
                     $GeneratedScript,
+                    $PracticeMovesetRow,
                     $ConcurrencyLimit,
                     $ConcurrencyPoolRoot,
                     $MovesetRange,
@@ -323,6 +324,7 @@ try {
                         -RecordingPath $RecordingPath `
                         -Game $Game `
                         -CaptureRoot $CaptureRoot `
+                        -PracticeMovesetRow $PracticeMovesetRow `
                         -ConcurrencyPoolRoot $ConcurrencyPoolRoot `
                         -ConcurrencyLimit $ConcurrencyLimit
                     $artifactDirectory = Join-Path $CaptureRoot 'screenshots'
@@ -362,7 +364,7 @@ try {
             [string]$buildVariant.build
         ), (Join-Path $suiteOutput 'capture'), $suiteOutput, $suiteName, $replayName, (
             [bool]$context.Generated
-        ), $context.GeneratedScript, $ConcurrencyLimit, (
+        ), $context.GeneratedScript, $context.PracticeMovesetRow, $ConcurrencyLimit, (
             $ConcurrencyPoolRoot
         ), $MovesetRange, $context.GeneratedFamily
         $replayJobs.Add($replayJob)

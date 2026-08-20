@@ -4,7 +4,7 @@
   "serial": "SLOP-NA228",
   "output_boot_path": "SLOP_NA2.28",
   "launch_settings": {
-    "startup_fast_forward_frames": 1760,
+    "startup_fast_forward_frames": 1800,
     "practice": {
       "startup_fast_forward_frames": 2500
     }

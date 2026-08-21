@@ -249,12 +249,6 @@ extern FontV2Session *font_v2_active_session;
 extern volatile u32 font_v2_quit_active;
 extern const u8 font_v2_practice_tokens[];
 extern const u8 font_v2_practice_icon_map[];
-extern int font_v2_controls_callback(
-    u32 arg0,
-    u32 arg1,
-    u32 arg2,
-    u32 arg3
-);
 extern int font_v2_title_callback(
     u32 arg0,
     u32 arg1,
@@ -273,25 +267,7 @@ extern int font_v2_pause_list_selected_callback(
     u32 arg2,
     u32 arg3
 );
-extern int font_v2_quit_unselected_callback(
-    u32 arg0,
-    u32 arg1,
-    u32 arg2,
-    u32 arg3
-);
 extern int font_v2_special_choice_selected_callback(
-    u32 arg0,
-    u32 arg1,
-    u32 arg2,
-    u32 arg3
-);
-extern int font_v2_quit_body_callback(
-    u32 arg0,
-    u32 arg1,
-    u32 arg2,
-    u32 arg3
-);
-extern int font_v2_special_controls_body_callback(
     u32 arg0,
     u32 arg1,
     u32 arg2,
@@ -302,19 +278,6 @@ static int font_v2_collection_body_callback(
     const u8 *text,
     u32 arg2,
     FontV2Session *session
-);
-extern u32 font_v2_native_measure_callback(const u8 *text);
-extern void font_v2_practice_icon_draw_callback(
-    u32 object,
-    u32 record,
-    float draw_x,
-    float draw_y
-);
-extern int font_v2_practice_callback(
-    u32 arg0,
-    u32 arg1,
-    u32 arg2,
-    u32 arg3
 );
 extern int font_ninja_song_ascii_number(
     u32 unused,

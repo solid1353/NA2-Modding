@@ -46,6 +46,16 @@
 /* Fixed runtime address of Practice's native icon records; do not tune. */
 #define FONT_PRACTICE_ICON_TABLE_ADDRESS 0x008D14C0u
 
+/* Fixed native Practice icon-draw entrypoint; do not tune. */
+#define FONT_PRACTICE_ICON_DRAW_ADDRESS 0x0037BB40u
+
+typedef void (*FontV2NativePracticeIconDraw)(
+    u32 object,
+    u32 record,
+    float draw_x,
+    float draw_y
+);
+
 /* Fixed runtime address of Practice's native text table; do not tune. */
 #define FONT_PRACTICE_TEXT_TABLE_ADDRESS 0x008BD510u
 
@@ -221,6 +231,8 @@ void font_v2_practice_icon_draw(
     const FontV2IconRecord *record = font_v2_icon_record(token);
     FontV2PracticeFrame *frame =
         (FontV2PracticeFrame *)font_v2_active_session;
+    FontV2NativePracticeIconDraw draw =
+        (FontV2NativePracticeIconDraw)FONT_PRACTICE_ICON_DRAW_ADDRESS;
     u32 object;
     float y;
 
@@ -238,7 +250,7 @@ void font_v2_practice_icon_draw(
     } else if (token == 17u) {
         y += 1.0f;
     }
-    font_v2_practice_icon_draw_callback(
+    draw(
         object,
         (u32)record,
         *draw_x,
@@ -360,7 +372,7 @@ int font_v2_practice_adapter_impl(
     frame.session.line_limit = FONT_PRACTICE_LINE_LIMIT;
     frame.session.line_height = FONT_PRACTICE_LINE_ADVANCE;
     frame.session.glyph_height = FONT_PRACTICE_GLYPH_HEIGHT;
-    frame.session.callback = (u32)font_v2_practice_callback;
+    frame.session.callback = (u32)font_v2_title_callback;
     frame.session.callback_arg0 = arg2;
     frame.session.callback_arg1 = (u32)frame.buffer;
     frame.session.callback_arg2 = 0x0Fu;

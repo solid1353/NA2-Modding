@@ -45,7 +45,7 @@ adapter after the central primitives save X/Y in `f21/f20`. Seven exact gray
 record-draw calls in `FUN_001E6060`, `FUN_001E6370`, and `FUN_001E6CE0` call
 one 56-byte record adapter before their untouched native `(-1,-2)` step.
 Boot-ELF file `0x279D30`, guarded by `A0FFBD275000BFFF`, redirects the fixed
-two-choice primitive to a 208-byte dispatcher: selected rows use corrected
+two-choice primitive to a typed C dispatcher: selected rows use corrected
 `FUN_00379150`, ordinary rows use native `FUN_00378F50`, and the original
 renderer context, record pointers, order, and colors are preserved.
 

@@ -148,8 +148,13 @@ native Y float bits into `t1`.
 
 The accepted boundary keeps layout policy in relocatable C while retaining
 small assembly bridges only for game-specific entry ABIs, displaced
-instructions, and native tail calls. Historical fragment counts, payload
-hashes, and test totals are recoverable from Git and are not current contracts.
+instructions, and native tail calls. Controls centering and the global
+two-choice dispatcher are ordinary C; native measurement, ordinary UI-record
+drawing, and Practice icon drawing are called directly from their owning C
+units instead of passing through resident tail-jump aliases. The remaining
+Font assembly preserves live register channels or exact native rejoin behavior.
+Historical fragment counts, payload hashes, and test totals are recoverable
+from Git and are not current contracts.
 
 ## Renderer-family architecture
 

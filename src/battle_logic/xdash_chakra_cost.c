@@ -25,8 +25,13 @@ typedef struct XdashChargeState {
     volatile u32 charged[2];
 } XdashChargeState;
 
+typedef void (*NativeFighterUpdate)(void *fighter);
+
 extern const float battle_logic_xdash_chakra_cost;
 extern volatile XdashChargeState battle_logic_xdash_charge_state;
+
+#define NATIVE_PRE_FIGHTER_UPDATE \
+    ((NativeFighterUpdate)0x0020E280u)
 
 XDASH_CHAKRA_COST_SECTION(".text.battle_logic_xdash_pre_fighter_update")
 void battle_logic_xdash_pre_fighter_update(void *fighter)
@@ -70,4 +75,11 @@ void battle_logic_xdash_pre_fighter_update(void *fighter)
         *chakra = remaining > 0.0f ? remaining : 0.0f;
         *charged = 1u;
     }
+}
+
+XDASH_CHAKRA_COST_SECTION(".text.xdash_pre_update_shim")
+void xdash_pre_update_shim(void *fighter)
+{
+    battle_logic_xdash_pre_fighter_update(fighter);
+    NATIVE_PRE_FIGHTER_UPDATE(fighter);
 }

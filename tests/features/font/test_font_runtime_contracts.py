@@ -123,13 +123,42 @@ class FontRuntimeContractTests(unittest.TestCase):
         )
 
         practice = words(fragments["v2_practice_adapter"].payload)
-        self.assertTrue(is_register_move(practice[2], source=19, destination=7))
-        self.assertTrue(is_register_move(practice[3], source=18, destination=8))
-        mfc1 = practice[4]
+        self.assertEqual(len(practice), 5)
+        self.assertTrue(is_register_move(practice[0], source=19, destination=7))
+        self.assertTrue(is_register_move(practice[1], source=18, destination=8))
+        mfc1 = practice[2]
         self.assertEqual(mfc1 >> 26, 0x11)
         self.assertEqual((mfc1 >> 21) & 0x1F, 0)
         self.assertEqual((mfc1 >> 16) & 0x1F, 9)
         self.assertEqual((mfc1 >> 11) & 0x1F, 12)
+        self.assertEqual(practice[3] >> 26, 0x02)
+        self.assertEqual(practice[4], 0)
+
+        command = words(fragments["v2_command_relationship_adapter"].payload)
+        self.assertEqual(len(command), 4)
+        self.assertTrue(is_register_move(command[0], source=17, destination=5))
+        mfc1 = command[1]
+        self.assertEqual(mfc1 >> 26, 0x11)
+        self.assertEqual((mfc1 >> 21) & 0x1F, 0)
+        self.assertEqual((mfc1 >> 16) & 0x1F, 7)
+        self.assertEqual((mfc1 >> 11) & 0x1F, 13)
+        self.assertEqual(command[2] >> 26, 0x02)
+        self.assertEqual(command[3], 0)
+
+    def test_selected_list_hooks_target_c_without_forwarding_wrappers(self) -> None:
+        hook_symbols = {
+            edit.symbolic_patch.symbol for edit in self.package.active_edits
+        }
+        self.assertIn("v2_c_linked_choice_selected_impl", hook_symbols)
+        self.assertIn("v2_c_pause_list_selected_impl", hook_symbols)
+        self.assertNotIn("v2_linked_choice_selected_adapter", hook_symbols)
+        self.assertNotIn("v2_pause_list_selected_adapter", hook_symbols)
+
+        fragment_symbols = {
+            fragment.symbol for fragment in self.package.fragments
+        }
+        self.assertNotIn("v2_linked_choice_selected_adapter", fragment_symbols)
+        self.assertNotIn("v2_pause_list_selected_adapter", fragment_symbols)
 
     def test_command_relationship_uses_live_nun5_wrap_width(self) -> None:
         fragments = {

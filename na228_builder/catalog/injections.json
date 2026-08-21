@@ -68,20 +68,10 @@
           "battle_logic_xdash_pre_fighter_update": {
             "order": 113,
             "object": "battle.logic.xdash.chakra.cost.c.text.battle.logic.xdash.pre.fighter.update"
-          }
-        }
-      },
-      "xdash_chakra_cost_abi": {
-        "kind": "asm",
-        "path": "src/battle_logic/xdash_chakra_cost_abi.S",
-        "namespace": "battle.logic.xdash.chakra.cost.asm",
-        "imports": {
-          "battle_logic_xdash_pre_fighter_update": "battle_logic_xdash_pre_fighter_update"
-        },
-        "fragments": {
+          },
           "xdash_pre_update_shim": {
             "order": 114,
-            "object": "battle.logic.xdash.chakra.cost.asm.text.xdash.pre.update.shim"
+            "object": "battle.logic.xdash.chakra.cost.c.text.xdash.pre.update.shim"
           }
         }
       },
@@ -577,10 +567,18 @@
           "v2_global_selected_style": {
             "order": 97,
             "object": "localization.font.v2.global.selected.style.asm.text.v2.global.selected.style"
-          },
+          }
+        }
+      },
+      "font_v2_selected_style": {
+        "kind": "c",
+        "path": "src/localization/font/font_v2_selected_style.c",
+        "namespace": "localization.font.v2.selected.style.c",
+        "imports": {},
+        "fragments": {
           "v2_global_two_choice_draw": {
             "order": 99,
-            "object": "localization.font.v2.global.selected.style.asm.text.v2.global.two.choice.draw"
+            "object": "localization.font.v2.selected.style.c.text.font.v2.global.two.choice.draw"
           }
         }
       }
@@ -615,24 +613,8 @@
         "target_id": "na2_elf",
         "offset": "0x2B91DC",
         "expected_hex": "84090E0C00000000",
-        "symbol": "v2_linked_choice_selected_adapter",
+        "symbol": "v2_c_linked_choice_selected_impl",
         "encoding": "jal26"
-      }
-    },
-    "payload": {
-      "font_v2_linked_mode_modal_abi": {
-        "kind": "asm",
-        "path": "src/localization/font/font_v2_linked_mode_modal_abi.S",
-        "namespace": "localization.font.v2.linked.mode.modal.asm",
-        "imports": {
-          "v2_c_linked_choice_selected_impl": "v2_c_linked_choice_selected_impl"
-        },
-        "fragments": {
-          "v2_linked_choice_selected_adapter": {
-            "order": 109,
-            "object": "localization.font.v2.linked.mode.modal.asm.text.v2.linked.choice.selected.adapter"
-          }
-        }
       }
     }
   },
@@ -698,24 +680,8 @@
         "target_id": "na2_btl",
         "offset": "0x1C9794",
         "expected_hex": "E8090E0C00000000",
-        "symbol": "v2_pause_list_selected_adapter",
+        "symbol": "v2_c_pause_list_selected_impl",
         "encoding": "jal26"
-      }
-    },
-    "payload": {
-      "font_v2_pause_controls_abi": {
-        "kind": "asm",
-        "path": "src/localization/font/font_v2_pause_controls_abi.S",
-        "namespace": "localization.font.v2.pause.controls.asm",
-        "imports": {
-          "v2_c_pause_list_selected_impl": "v2_c_pause_list_selected_impl"
-        },
-        "fragments": {
-          "v2_pause_list_selected_adapter": {
-            "order": 35,
-            "object": "localization.font.v2.pause.controls.asm.text.v2.pause.list.selected.adapter"
-          }
-        }
       }
     }
   },
@@ -821,22 +787,6 @@
           "v2_c_quit_scope_leave": "v2_c_quit_scope_leave"
         },
         "fragments": {
-          "v2_c_native_measure_callback": {
-            "order": 40,
-            "object": "localization.font.v2.runtime.asm.text.v2.c.native.measure.callback"
-          },
-          "v2_c_practice_icon_draw_callback": {
-            "order": 41,
-            "object": "localization.font.v2.runtime.asm.text.v2.c.practice.icon.draw.callback"
-          },
-          "v2_c_quit_unselected_callback": {
-            "order": 38,
-            "object": "localization.font.v2.runtime.asm.text.v2.c.quit.unselected.callback"
-          },
-          "v2_controls_callback": {
-            "order": 31,
-            "object": "localization.font.v2.runtime.asm.text.v2.controls.callback"
-          },
           "v2_pause_list_callback": {
             "order": 33,
             "object": "localization.font.v2.runtime.asm.text.v2.pause.list.callback"
@@ -845,14 +795,6 @@
             "order": 34,
             "object": "localization.font.v2.runtime.asm.text.v2.pause.list.selected.callback"
           },
-          "v2_practice_callback": {
-            "order": 42,
-            "object": "localization.font.v2.runtime.asm.text.v2.practice.callback"
-          },
-          "v2_quit_body_callback": {
-            "order": 39,
-            "object": "localization.font.v2.runtime.asm.text.v2.quit.body.callback"
-          },
           "v2_quit_choices_scope": {
             "order": 36,
             "object": "localization.font.v2.runtime.asm.text.v2.quit.choices.scope"
@@ -860,10 +802,6 @@
           "v2_special_choice_selected_callback": {
             "order": 96,
             "object": "localization.font.v2.runtime.asm.text.v2.special.choice.selected.callback"
-          },
-          "v2_special_controls_body_callback": {
-            "order": 57,
-            "object": "localization.font.v2.runtime.asm.text.v2.special.controls.body.callback"
           },
           "v2_title_callback": {
             "order": 32,
@@ -904,18 +842,19 @@
         "namespace": "localization.font.v2.c",
         "imports": {
           "font_v2_active_session": "v2_session_pointer",
-          "font_v2_controls_callback": "v2_controls_callback",
-          "font_v2_native_measure_callback": "v2_c_native_measure_callback",
           "font_v2_pause_list_callback": "v2_pause_list_callback",
           "font_v2_pause_list_selected_callback": "v2_pause_list_selected_callback",
           "font_v2_quit_active": "v2_quit_active",
-          "font_v2_quit_unselected_callback": "v2_c_quit_unselected_callback",
           "font_v2_special_choice_selected_callback": "v2_special_choice_selected_callback",
           "font_v2_title_callback": "v2_title_callback",
           "font_v2_measure": "v2_measure",
           "font_v2_adapter_call": "v2_adapter_call"
         },
         "fragments": {
+          "v2_controls_callback": {
+            "order": 31,
+            "object": "localization.font.v2.c.text.font.v2.controls.callback"
+          },
           "v2_controls_adapter": {
             "order": 10,
             "object": "localization.font.v2.c.text.font.v2.controls.adapter",
@@ -1026,8 +965,6 @@
         "namespace": "localization.font.v2.c",
         "imports": {
           "font_v2_quit_active": "v2_quit_active",
-          "font_v2_quit_body_callback": "v2_quit_body_callback",
-          "font_v2_special_controls_body_callback": "v2_special_controls_body_callback",
           "font_v2_wrap_native": "v2_wrap_native",
           "font_v2_adapter_call": "v2_adapter_call",
           "font_v2_is_mode_select_body": {
@@ -1078,8 +1015,6 @@
         "namespace": "localization.font.v2.c",
         "imports": {
           "font_v2_active_session": "v2_session_pointer",
-          "font_v2_practice_callback": "v2_practice_callback",
-          "font_v2_practice_icon_draw_callback": "v2_c_practice_icon_draw_callback",
           "font_v2_practice_icon_map": "v2_practice_icon_map",
           "font_v2_practice_tokens": "v2_practice_tokens",
           "font_v2_title_callback": "v2_title_callback",

@@ -16,6 +16,21 @@
 #define FONT_CONTROLS_X_OFFSET 0.8f
 #define FONT_CONTROLS_Y_OFFSET 0.8f
 
+/* Fixed native Controls measurement and draw entrypoints; do not tune. */
+#define FONT_CONTROLS_MEASURE_ADDRESS 0x003798E0u
+#define FONT_CONTROLS_DRAW_ADDRESS 0x00379240u
+
+/* Fixed native ordinary UI-record draw entrypoint; do not tune. */
+#define FONT_UI_RECORD_DRAW_ADDRESS 0x00379A20u
+
+typedef u32 (*FontV2NativeMeasure)(const u8 *text, u32 mode);
+typedef int (*FontV2NativeControlsDraw)(
+    const u8 *text,
+    u32 style,
+    float draw_x,
+    float draw_y
+);
+
 /* === Command Chart: title === */
 
 /* Left edge of the Command Chart title; increase to move it right. */
@@ -238,6 +253,29 @@
 
 #define FONT_V2_SECTION(name) \
     __attribute__((section(name), noinline))
+
+FONT_V2_SECTION(".text.font_v2_controls_callback")
+int font_v2_controls_callback(
+    u32 arg0,
+    u32 arg1,
+    u32 arg2,
+    u32 arg3
+) {
+    FontV2NativeMeasure measure =
+        (FontV2NativeMeasure)FONT_CONTROLS_MEASURE_ADDRESS;
+    FontV2NativeControlsDraw draw =
+        (FontV2NativeControlsDraw)FONT_CONTROLS_DRAW_ADDRESS;
+    const FontV2Session *session = (const FontV2Session *)arg2;
+    s32 half_width = (s32)measure((const u8 *)arg0, 0u) >> 1;
+
+    (void)arg3;
+    return draw(
+        (const u8 *)arg0,
+        arg1,
+        session->draw_x + (float)half_width,
+        session->draw_y
+    );
+}
 
 FONT_V2_SECTION(".text.font_v2_controls_adapter")
 int font_v2_controls_adapter(
@@ -770,6 +808,8 @@ int font_v2_quit_unselected_adapter(
     u32 arg2,
     u32 arg3
 ) {
+    FontV2NativeUiDraw draw =
+        (FontV2NativeUiDraw)FONT_UI_RECORD_DRAW_ADDRESS;
     FontV2Session session;
     u32 original_x;
     u32 original_y;
@@ -788,8 +828,11 @@ int font_v2_quit_unselected_adapter(
     target_x = original_x;
     target_y = original_y;
     if (!font_v2_map_choice(text, original_y, &target_x, &target_y)) {
-        return font_v2_quit_unselected_callback(
-            arg0, (u32)record, arg2, arg3
+        return draw(
+            arg0,
+            (const FontV2UiDrawRecord *)record,
+            arg2,
+            (s32)arg3
         );
     }
 
@@ -807,7 +850,7 @@ int font_v2_quit_unselected_adapter(
             draw_x.f,
             draw_y.f,
             FONT_SPECIAL_CHOICE_UNSELECTED_SCALE_X,
-            (u32)font_v2_quit_unselected_callback
+            FONT_UI_RECORD_DRAW_ADDRESS
         );
         session.callback_arg0 = arg0;
         session.callback_arg1 = (u32)record;
@@ -815,8 +858,11 @@ int font_v2_quit_unselected_adapter(
         session.callback_arg3 = arg3;
         result = font_v2_adapter_call(&session);
     } else {
-        result = font_v2_quit_unselected_callback(
-            arg0, (u32)record, arg2, arg3
+        result = draw(
+            arg0,
+            (const FontV2UiDrawRecord *)record,
+            arg2,
+            (s32)arg3
         );
     }
     record[0] = original_x;
@@ -826,7 +872,9 @@ int font_v2_quit_unselected_adapter(
 
 FONT_V2_SECTION(".text.font_v2_native_measure")
 u32 font_v2_native_measure(const u8 *text) {
-    u32 width = font_v2_native_measure_callback(text);
+    FontV2NativeMeasure measure =
+        (FontV2NativeMeasure)FONT_CONTROLS_MEASURE_ADDRESS;
+    u32 width = measure(text, 0u);
     const u8 *cursor = text;
 
     while (*cursor) {

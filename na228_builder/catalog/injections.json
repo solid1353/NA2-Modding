@@ -1952,7 +1952,7 @@
     }
   },
   "i__qol__content__unlock_all__availability": {
-    "description": "Report the fully unlocked reference save's content availability through bounded read-only helpers without changing the live save structure.",
+    "description": "Report the fully unlocked reference save's content availability and Ultimate difficulty gate through bounded read-only helpers without changing the live save structure.",
     "hooks": {
       "route_character_unlock_read_through_bounded_reference_result": {
         "description": "Replace only the character-status byte read with the fully unlocked reference result for one bounded character ID; native callers retain their metadata filters.",
@@ -1984,6 +1984,14 @@
         "offset": "0xF739C",
         "expected_hex": "D8FD070C",
         "symbol": "jutsu",
+        "encoding": "jal26"
+      },
+      "route_progress_read_through_ultimate_difficulty_override": {
+        "description": "Report progress slot 0x6A available so the sixth Ultimate difficulty value remains selectable, while preserving native reads for every other progress slot.",
+        "target_id": "na2_elf",
+        "offset": "0xF7890",
+        "expected_hex": "508F070C",
+        "symbol": "ultimate_difficulty",
         "encoding": "jal26"
       },
       "route_secondary_unlock_read_through_bounded_reference_bits": {
@@ -2045,6 +2053,12 @@
             "object": "qol.content.unlock.all.text.qol.unlock.all.jutsu",
             "abi": "unused_character_record_character_id_jutsu_id",
             "description": "Return available for a character-and-jutsu pair already accepted by native metadata checks."
+          },
+          "ultimate_difficulty": {
+            "order": 124,
+            "object": "qol.content.unlock.all.text.qol.unlock.all.ultimate.difficulty",
+            "abi": "progress_base_progress_id",
+            "description": "Report the Ultimate difficulty progress gate available while preserving native reads for every other progress ID."
           }
         }
       }

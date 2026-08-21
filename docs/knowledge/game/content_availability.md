@@ -82,6 +82,7 @@ the canonical export currently retains its `FUN_` symbols.
 | Small-table availability | `FUN_001f7030` | `0x001F7030` | `0x001F7040` | `0xF7140` | `1C8E070C` | resident ELF, `BTL.BIN` |
 | Grouped availability | `FUN_001f70c0` | `0x001F70C0` | `0x001F70D0` | `0xF71D0` | `448E070C` | resident ELF, `ETC.BIN`, `ADV.BIN` |
 | Character/jutsu availability | `FUN_001f7210` | `0x001F7210` | `0x001F729C` | `0xF739C` | `D8FD070C` | resident ELF, `BTL.BIN`, `ADV.BIN` |
+| Progress word / Ultimate difficulty gate | `FUN_001f7780` | `0x001F7780` | `0x001F7790` | `0xF7890` | `508F070C` | resident ELF, `BTL.BIN` |
 
 The character wrapper reads one byte through `FUN_001e3740`, masks bit 0, and
 normalizes it to Boolean. Character-select call paths perform their native ID,
@@ -98,6 +99,14 @@ The jutsu wrapper first accepts only pairs allowed by `FUN_00307ed0` or
 `profile + 0x38 + character_id * 0x18` and calls `FUN_001ff760` for the saved
 jutsu bit. The hook at `0x001F729C` is after both metadata gates, so overriding
 that call cannot create nonexistent character/jutsu pairs.
+
+`FUN_001f7780` passes `profile + 0xDFC` and the caller's progress ID to
+`FUN_001e3d40`, which loads the 32-bit word at `base + 0xE60 + id * 4`.
+Resident selector `FUN_0038bac0` and the Practice settings consumers in
+`BTL.BIN` use ID `0x6A` as a Boolean gate that lowers the six-value Strength
+selector's maximum from `5` to `4` when zero. The sixth value is the displayed
+Ultimate difficulty tier. The producer and native unlock event for slot
+`0x6A` remain unresolved.
 
 ## Stored layout and observed values
 
@@ -134,14 +143,21 @@ callers intact:
 - small-table IDs below 32 return `FF`;
 - grouped IDs are bounded by the six native counts and reproduce the SS1
   values, including `03` at group 0/index 0 and group 4/index 0;
-- metadata-valid character/jutsu pairs report available after the native gates.
+- metadata-valid character/jutsu pairs report available after the native gates;
+- progress ID `0x6A` reports `1`, while every other progress ID retains the
+  native word-bank read.
 
-No setter is hooked. The injected functions ignore the live profile pointer and
-perform no writes, so the profile's settings, progress, currency, inventory,
-statistics, and availability bytes remain unchanged. Disabling the catalog
-setting omits the injection and restores native save-dependent reads.
+No setter is hooked. The content helpers ignore the live profile pointer, and
+the Ultimate helper reads the live word bank only for IDs other than `0x6A`;
+none of them writes the profile. Settings, progress, currency, inventory,
+statistics, and availability bytes therefore remain unchanged. Disabling the
+catalog setting omits the injection and restores native save-dependent reads.
 
-### Provisional NUN5 PNACH port
+The `0xF7890` hook, clean call bytes, reader contract, and both selector
+consumer families are statically verified. User runtime testing on 2026-08-21
+confirmed that `unlock_all` exposes Ultimate difficulty.
+
+### NUN5 PNACH port
 
 Static structural matching against verified NUN5 `SLES_556.05` (SHA-256
 `20A43677397731A2A20899336D1165ACE5B436906B9B89BE90FB10F4558DD19D`)
@@ -151,21 +167,27 @@ establishes the corresponding resident wrappers and saved-value call seams:
 | --- | ---: | ---: | ---: |
 | Character unlocked | `0x001FBE20` | `0x001FBE30` | `0x0C07A52C` |
 | Character Select R1-form progress | `0x001FEA10` | `0x001FEA34` | `0x0C07A6D0` |
+| Progress word / Ultimate difficulty gate | `0x001FE1D0` | `0x001FE1E0` | `0x0C07A6D0` |
 | Secondary bit unlocked | `0x001FC0D0` | `0x001FC0E0` | `0x0C07A55C` |
 | Small-table availability | `0x001FDA10` | `0x001FDA20` | `0x0C07A578` |
 | Grouped availability | `0x001FDAA0` | `0x001FDAB0` | `0x0C07A5A0` |
 | Character/jutsu availability | `0x001FDC00` | `0x001FDC8C` | `0x0C081924` |
 
 NUN5 grouped reset `FUN_001E9720` independently confirms the same six bounds:
-`0x5D`, `0x29`, `0x9B`, `0xA8`, `7`, and `0x0C`.
+`0x5D`, `0x29`, `0x9B`, `0xA8`, `7`, and `0x0C`. The clean Ultimate call
+word is also verified directly at ELF file offset `0xFE360`. Resident selector
+and BTL consumers pass progress ID `0x6A` through this shared wrapper.
 
-The provisional PNACH reuses the unchanged bounded C helpers and places their
-176 immutable bytes at `0x01FF5310..0x01FF53C0`, after the No Support mutable
-storage and inside the same allocator-tail reservation. The heap-end guard
-prevents payload and hook writes before a clean boot has established that
-reservation. Each hook additionally checks both halves of its clean NUN5 call
-word before replacing it. The six calls continue to preserve native wrapper,
-metadata, and caller behavior. Runtime behavior remains unvalidated.
+The normal PNACH reuses the unchanged bounded C helpers and places
+their 208 immutable bytes at `0x01FF5310..0x01FF53E0`, after the No Support
+mutable storage and inside the same allocator-tail reservation. Its seven
+guarded calls include a 32-byte leaf helper that returns `1` only for progress
+ID `0x6A` and performs the native word-bank read for every other ID. The file
+reserves the allocator tail, and its heap-end guard prevents payload and hook
+writes before a clean boot has established the reservation. Each hook
+additionally checks both halves of its clean NUN5 call word before replacing
+it. Native wrapper, metadata, and caller behavior remain intact. User runtime
+testing on 2026-08-21 confirmed that this port exposes Ultimate difficulty.
 
 ## Rejected character mask and correction
 

@@ -1,6 +1,7 @@
-/* Runtime-only content availability overrides. */
+/* Runtime-only content availability and unlock-gate overrides. */
 
 typedef unsigned int u32;
+typedef unsigned char u8;
 
 #define UNLOCK_ALL_SECTION(name) \
     __attribute__((section(name), noinline))
@@ -27,6 +28,22 @@ u32 qol_unlock_all_character_form_progress(
     (void)unused_save_data;
     (void)unused_index;
     return 0x66u;
+}
+
+/*
+ * FUN_001F7780 passes profile + 0xDFC and a progress ID to the native word
+ * reader. Progress ID 0x6A gates the sixth (Ultimate) difficulty value.
+ * Preserve the native word-bank read for every other progress ID.
+ */
+UNLOCK_ALL_SECTION(".text.qol_unlock_all_ultimate_difficulty")
+u32 qol_unlock_all_ultimate_difficulty(void *progress_base, u32 progress_id)
+{
+    const u8 *progress_bytes = (const u8 *)progress_base;
+
+    if (progress_id == 0x6Au) {
+        return 1u;
+    }
+    return *(const u32 *)(progress_bytes + 0xE60u + progress_id * 4u);
 }
 
 UNLOCK_ALL_SECTION(".text.qol_unlock_all_secondary")

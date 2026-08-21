@@ -183,18 +183,20 @@ addresses, NUN6 homologs, and replay evidence are recorded in
 ## Unlock all content without loading a save
 
 `qol.content.unlock_all` selects the resident injection
-`i__qol__content__unlock_all__availability`. Six guarded hooks replace only the
+`i__qol__content__unlock_all__availability`. Seven guarded hooks replace only the
 save-backed reads for characters, the Character Select R1-form gate, secondary
 content, the 32-entry small table, the six grouped tables, and metadata-valid
-jutsu. The injected helpers reproduce bounded fully unlocked values and the
-native stable state for Collection figures; native wrappers, metadata checks,
-and callers remain intact.
+jutsu, plus progress slot `0x6A`, which gates Ultimate difficulty. The injected
+helpers reproduce bounded fully unlocked values and the native stable state for
+Collection figures; the progress helper returns available only for slot `0x6A`
+and preserves every other native progress read. Native wrappers, metadata
+checks, and callers remain intact.
 
 The feature performs no save-data writes. It therefore exposes characters and
 their R1 forms, supports, stages, jutsu, Shop items, and Collection entries
-without importing the reference save's settings, progress, currency,
-inventory, statistics, or availability bytes. Disabling the setting restores
-the native save-dependent readers.
+plus Ultimate difficulty without importing the reference save's settings,
+progress, currency, inventory, statistics, or availability bytes. Disabling
+the setting restores the native save-dependent readers.
 
 The first character candidate used an invalid mask derived through the wrong
 global and produced an incorrect, displaced roster. The corrected helper makes
@@ -209,6 +211,9 @@ without a loaded save and that Collection figure pedestals render when
 `unlock_all` is enabled. The R1 hook supplies only the gate's fully unlocked
 progress value `0x66`; grouped Collection reads return their native stable
 viewed-and-unlocked state `3`.
+
+User runtime testing on 2026-08-21 confirmed that Ultimate difficulty remains
+selectable with `unlock_all` in NA2 and with the regular NUN5 PNACH port.
 
 ## ELF-Q010: Use only first save
 

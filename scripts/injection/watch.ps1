@@ -170,9 +170,10 @@ if ($directScope) {
     }
     if (
         -not $sourceItem.PSIsContainer -and
-        [IO.Path]::GetExtension($resolvedSourcePath) -ine '.c'
+        [IO.Path]::GetExtension($resolvedSourcePath) -cne '.c' -and
+        [IO.Path]::GetExtension($resolvedSourcePath) -cne '.S'
     ) {
-        throw "Source path must be a C file or folder: $resolvedSourcePath"
+        throw "Source path must be an EE .c/.S file or folder: $resolvedSourcePath"
     }
 }
 else {
@@ -193,15 +194,25 @@ else {
         )
         $sourceRows = @(
             $payloadEntries |
-                Where-Object { $_.Value['kind'] -ceq 'c' }
+                Where-Object {
+                    $_.Value['kind'] -ceq 'c' -or
+                    $_.Value['kind'] -ceq 'asm'
+                }
         )
         if (-not $resolvedOverlayPlan) {
             $entryRows = [Collections.Generic.List[object]]::new()
             foreach ($sourceRow in $sourceRows) {
                 $fragments = $sourceRow.Value['fragments']
                 if ($fragments.Contains($Entry)) {
+                    $fragment = $fragments[$Entry]
+                    $entrySourceId = if ($fragment.Contains('source')) {
+                        [string]$fragment['source']
+                    }
+                    else {
+                        $sourceRow.Id
+                    }
                     $entryRows.Add([pscustomobject]@{
-                        source_id = $sourceRow.Id
+                        source_id = $entrySourceId
                         entry_symbol = $Entry
                     })
                 }
@@ -233,7 +244,7 @@ else {
             $sourceRows | Where-Object { $_.Id -ceq $SourceId }
         )
         if ($selectedSources.Count -ne 1) {
-            throw "Source '$SourceId' must match exactly one canonical C source."
+            throw "Source '$SourceId' must match exactly one canonical EE source."
         }
         $sourceDeclaration = [string]$selectedSources[0].Value['path']
         $canonicalSource = [IO.Path]::GetFullPath(

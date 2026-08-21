@@ -16,17 +16,18 @@ against another build by normalized instruction structure. It accepts both the
 `SECTION4:0038...` boot-ELF form, so existing exports can be reused without
 another disassembly.
 
-The two Victory generators rebuild canonical source-derived inputs without
-storing CCS or binary blobs:
+The Victory texture generator derives canonical source inputs without storing
+CCS or binary blobs:
 
 ```powershell
 python scripts/research/ui_translation/generate_victory_texture_mappings.py --write
-python scripts/research/ui_translation/generate_victory_layout_patch.py --write
 ```
 
-The first classifies and derives the 62 Victory CCS recipes. The second
-verifies both games' exact ELF/BTL identities and converts NUN5's localized
-frame templates and character-width table into NA2's prebuilt rectangle ABI.
+It classifies and derives the 62 Victory CCS recipes. The internal read-only
+Victory layout check separately verifies both games' exact ELF/BTL identities,
+derives NUN5's localized frame templates and character-width table for NA2's
+prebuilt rectangle ABI, and checks them against the stored edit definitions
+without rewriting them.
 
 The normal comparison has two targets:
 

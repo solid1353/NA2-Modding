@@ -7,6 +7,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest import mock
 
 
@@ -179,10 +180,12 @@ class InjectionBuildTests(unittest.TestCase):
             hot_reload = source_root / "hot_reload_message.c"
             first = source_root / "first.c"
             second = nested / "second.c"
-            for path in (hot_reload, first, second):
+            third = nested / "third.S"
+            for path in (hot_reload, first, second, third):
                 path.write_text("void entry(void) {}\n", encoding="ascii")
             sources = {
                 "first": {
+                    "kind": "c",
                     "path": "src/first.c",
                     "namespace": "test.first",
                     "imports": {},
@@ -191,11 +194,21 @@ class InjectionBuildTests(unittest.TestCase):
                     },
                 },
                 "second": {
+                    "kind": "c",
                     "path": "src/nested/second.c",
                     "namespace": "test.second",
                     "imports": {},
                     "fragments": {
                         "second_code": {"order": 2, "object": "test.second.text"}
+                    },
+                },
+                "third": {
+                    "kind": "asm",
+                    "path": "src/nested/third.S",
+                    "namespace": "test.third",
+                    "imports": {},
+                    "fragments": {
+                        "third_code": {"order": 3, "object": "test.third.text"}
                     },
                 },
             }
@@ -208,20 +221,113 @@ class InjectionBuildTests(unittest.TestCase):
                 selected, selected_sources = build_injection.source_ids_for_path(
                     Path("src/nested/second.c")
                 )
+                selected_asm, selected_asm_sources = (
+                    build_injection.source_ids_for_path(Path("src/nested/third.S"))
+                )
 
                 self.assertEqual(root, source_root)
                 self.assertEqual(
                     root_sources,
-                    [build_injection.HOT_RELOAD_SOURCE, "first", "second"],
+                    [
+                        build_injection.HOT_RELOAD_SOURCE,
+                        "first",
+                        "second",
+                        "third",
+                    ],
                 )
                 self.assertEqual(selected, second)
                 self.assertEqual(selected_sources, ["second"])
+                self.assertEqual(selected_asm, third)
+                self.assertEqual(selected_asm_sources, ["third"])
 
-                (nested / "unregistered.c").write_text(
-                    "void other(void) {}\n", encoding="ascii"
+                (nested / "unregistered.S").write_text(
+                    "nop\n", encoding="ascii"
                 )
-                with self.assertRaisesRegex(ValueError, "unregistered C files"):
+                with self.assertRaisesRegex(
+                    ValueError, "unregistered EE source files"
+                ):
                     build_injection.source_ids_for_path(Path("src/nested"))
+
+    def test_static_loader_compiles_assembly_but_not_c_sources(self) -> None:
+        node = SimpleNamespace(feature_id="feature")
+        compiled = build_injection.PayloadFragment(
+            owner="feature.runtime_injector",
+            symbol="asm_code",
+            kind="code",
+            alignment=4,
+            payload=bytes(4),
+        )
+        static = build_injection.PayloadFragment(
+            owner="feature.runtime_injector",
+            symbol="static_data",
+            kind="data",
+            alignment=4,
+            payload=bytes(4),
+        )
+        payload = {
+            "c_source": (node, "i__feature__c", {"kind": "c"}),
+            "asm_source": (node, "i__feature__asm", {"kind": "asm"}),
+            "static_data": (node, "i__feature__data", {"kind": "data"}),
+        }
+        with mock.patch.object(
+            build_injection, "configured_payload", return_value=payload
+        ), mock.patch.object(
+            build_injection.catalog_module,
+            "_compile_source",
+            return_value=[(2, compiled)],
+        ) as compile_source, mock.patch.object(
+            build_injection.catalog_module,
+            "load_static_fragment",
+            return_value=(3, static),
+        ) as load_static:
+            fragments = build_injection._load_static_fragments()
+
+        self.assertEqual([(2, 1, compiled), (3, 1, static)], fragments)
+        self.assertEqual("asm_source", compile_source.call_args.args[2])
+        self.assertEqual("static_data", load_static.call_args.args[2])
+
+    def test_compile_fragments_dispatches_declared_assembly_language(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "runtime.S"
+            source.write_text("nop\n", encoding="ascii")
+            extracted = build_injection.ee_c_fragments.ExtractedEeObject(
+                fragments=(
+                    build_injection.PayloadFragment(
+                        owner="feature.runtime_injector",
+                        symbol="runtime.asm.text",
+                        kind="code",
+                        alignment=4,
+                        payload=bytes(4),
+                    ),
+                ),
+                symbols={},
+            )
+            with mock.patch.object(
+                build_injection.ee_c_fragments,
+                "compile_and_extract",
+                return_value=extracted,
+            ) as compile_source, mock.patch.object(
+                build_injection.ee_c_fragments,
+                "default_toolchain_bin",
+                return_value=root,
+            ), mock.patch.object(
+                build_injection,
+                "production_source_owner",
+                return_value="feature.runtime_injector",
+            ):
+                fragments = build_injection.compile_fragments(
+                    "runtime_asm",
+                    source,
+                    "asm",
+                    "runtime.asm",
+                    {},
+                    [(1, "runtime.asm.text", "runtime_code")],
+                    root / "runtime.o",
+                )
+
+        self.assertEqual("runtime_code", fragments[0].symbol)
+        self.assertEqual("asm", compile_source.call_args.kwargs["language"])
 
     def test_overlay_plan_accepts_resident_symbol_overrides(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

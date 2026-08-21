@@ -53,14 +53,14 @@ CATALOG_SELECTION = catalog_module.load_selection(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Compile and link a runtime-injector C fragment."
+        description="Compile and link runtime-injector EE source fragments."
     )
     parser.add_argument("--source-id")
     parser.add_argument("--entry")
     parser.add_argument(
         "--source-path",
         type=Path,
-        help="Compile every registered C source selected by this file or folder.",
+        help="Compile every registered EE C/assembly source selected by this file or folder.",
     )
     parser.add_argument("--overlay-plan")
     parser.add_argument(
@@ -463,7 +463,7 @@ def production_sources() -> dict[str, dict[str, object]]:
     values = [
         (payload_id, node.feature_id, value)
         for payload_id, (node, _injection_id, value) in configured_payload().items()
-        if value.get("kind") == "c"
+        if value.get("kind") in {"c", "asm"}
     ]
 
     feature_order = {
@@ -492,8 +492,8 @@ def production_sources() -> dict[str, dict[str, object]]:
 
 def production_source_owner(source_id: str) -> str:
     selected = configured_payload().get(source_id)
-    if selected is None or selected[2].get("kind") != "c":
-        raise ValueError(f"Unknown production C source: {source_id!r}")
+    if selected is None or selected[2].get("kind") not in {"c", "asm"}:
+        raise ValueError(f"Unknown production EE source: {source_id!r}")
     node = selected[0]
     return f"{node.feature_id}.runtime_injector"
 
@@ -502,6 +502,16 @@ def _load_static_fragments() -> list[tuple[int, int, PayloadFragment]]:
     result: list[tuple[int, int, PayloadFragment]] = []
     for payload_id, (node, injection_id, value) in configured_payload().items():
         if value.get("kind") == "c":
+            continue
+        if value.get("kind") == "asm":
+            compiled = catalog_module._compile_source(
+                REPOSITORY,
+                f"{node.feature_id}.runtime_injector",
+                payload_id,
+                value,
+                f"injections.{injection_id}.payload.{payload_id}",
+            )
+            result.extend((order, 1, fragment) for order, fragment in compiled)
             continue
         order, fragment = catalog_module.load_static_fragment(
             REPOSITORY,
@@ -519,12 +529,14 @@ def load_source(
 ) -> tuple[
     Path,
     str,
+    str,
     dict[str, ee_c_fragments.SymbolReference],
     list[tuple[int, str, str]],
 ]:
     if source_id == HOT_RELOAD_SOURCE:
         return (
             REPOSITORY / "src" / "hot_reload_message.c",
+            "c",
             "project.hot_reload",
             {},
             [
@@ -536,25 +548,30 @@ def load_source(
 
     row = production_sources().get(source_id)
     if row is None:
-        raise ValueError(f"Unknown production C source: {source_id!r}")
+        raise ValueError(f"Unknown production EE source: {source_id!r}")
     source_value = row.get("path")
     if not isinstance(source_value, str):
-        raise ValueError(f"Catalog C source {source_id!r} has no path")
+        raise ValueError(f"Catalog EE source {source_id!r} has no path")
     relative_source = Path(source_value.replace("\\", "/"))
     if relative_source.is_absolute() or ".." in relative_source.parts:
         raise ValueError(f"Production source path is invalid: {source_value}")
     source_path = (REPOSITORY / relative_source).resolve()
     if REPOSITORY not in source_path.parents or not source_path.is_file():
         raise ValueError(f"Production source was not found: {source_path}")
+    language_value = row.get("kind")
+    if language_value not in {"c", "asm"}:
+        raise ValueError(f"Catalog EE source {source_id!r} has invalid kind")
+    language = str(language_value)
+    ee_c_fragments.validate_source_language(source_path, language)
     namespace_value = row.get("namespace")
     if not isinstance(namespace_value, str):
-        raise ValueError(f"Catalog C source {source_id!r} has no namespace")
+        raise ValueError(f"Catalog EE source {source_id!r} has no namespace")
     namespace = identifier(namespace_value, "catalog namespace")
 
     imports: dict[str, ee_c_fragments.SymbolReference] = {}
     raw_imports = row.get("imports", {})
     if not isinstance(raw_imports, dict):
-        raise ValueError(f"Catalog C source {source_id!r} imports must be an object")
+        raise ValueError(f"Catalog EE source {source_id!r} imports must be an object")
     for name, import_value in raw_imports.items():
         name = identifier(name, f"catalog source {source_id} import name")
         if name in imports:
@@ -582,7 +599,7 @@ def load_source(
     seen_final: set[str] = set()
     raw_fragments = row.get("fragments")
     if not isinstance(raw_fragments, dict):
-        raise ValueError(f"Catalog C source {source_id!r} fragments must be an object")
+        raise ValueError(f"Catalog EE source {source_id!r} fragments must be an object")
     for fragment_id, fragment_row in raw_fragments.items():
         if not isinstance(fragment_row, dict):
             raise ValueError(f"Catalog source {source_id} fragment {fragment_id} is invalid")
@@ -605,9 +622,9 @@ def load_source(
         seen_final.add(fragment_id)
         mappings.append((order, object_fragment, fragment_id))
     if not mappings:
-        raise ValueError(f"Production source {source_id!r} has no fragments")
+        raise ValueError(f"Production EE source {source_id!r} has no fragments")
     mappings.sort()
-    return source_path, namespace, imports, mappings
+    return source_path, language, namespace, imports, mappings
 
 
 def load_declared_entry(
@@ -630,7 +647,20 @@ def load_declared_entry(
     if source is not None and isinstance(source.get("fragments"), dict):
         fragment = source["fragments"].get(entry_symbol)
     if not isinstance(fragment, dict):
-        fragment = payload.get(entry_symbol)
+        fragment = next(
+            (
+                source_fragment
+                for value in payload.values()
+                if isinstance(value, dict)
+                and isinstance(value.get("fragments"), dict)
+                and isinstance(
+                    source_fragment := value["fragments"].get(entry_symbol),
+                    dict,
+                )
+                and source_fragment.get("source", source_id) == source_id
+            ),
+            payload.get(entry_symbol),
+        )
     if not isinstance(fragment, dict):
         raise ValueError(
             "The selected production source/entry is not an explicitly "
@@ -653,6 +683,7 @@ def load_declared_entry(
 def compile_fragments(
     source_id: str,
     source_path: Path,
+    source_language: str,
     namespace: str,
     imports: dict[str, ee_c_fragments.SymbolReference],
     mappings: list[tuple[int, str, str]],
@@ -667,6 +698,7 @@ def compile_fragments(
         source_path,
         object_path,
         namespace=namespace,
+        language=source_language,
         toolchain_bin=ee_c_fragments.default_toolchain_bin(REPOSITORY),
         owner=(
             "localization.runtime_injector"
@@ -728,9 +760,11 @@ def select_fragment_closure(
         catalog[fragment.symbol] = (c_orders[fragment.symbol], 1, fragment)
     for order, line, fragment in _load_static_fragments():
         if fragment.symbol in catalog:
-            raise ValueError(
-                f"Duplicate canonical fragment symbol {fragment.symbol!r}"
-            )
+            if catalog[fragment.symbol][2] != fragment:
+                raise ValueError(
+                    f"Conflicting canonical fragment symbol {fragment.symbol!r}"
+                )
+            continue
         catalog[fragment.symbol] = (order, line, fragment)
     for entry_symbol in entry_symbols:
         if entry_symbol not in catalog:
@@ -911,15 +945,15 @@ def source_ids_for_path(value: Path) -> tuple[Path, list[str]]:
         raise ValueError(f"Source scope must be inside {source_root}: {scope}") from exc
     if not scope.exists():
         raise ValueError(f"Source scope was not found: {scope}")
-    if not scope.is_dir() and scope.suffix.lower() != ".c":
-        raise ValueError(f"Source scope must be a C file or folder: {scope}")
+    if not scope.is_dir() and scope.suffix not in {".c", ".S"}:
+        raise ValueError(f"Source scope must be an EE C/.S file or folder: {scope}")
 
     registered: list[tuple[str, Path]] = [
         (HOT_RELOAD_SOURCE, (source_root / "hot_reload_message.c").resolve())
     ]
     for source_id in production_sources():
-        source_id = identifier(source_id, "catalog C source ID")
-        source_path, _namespace, _imports, _mappings = load_source(source_id)
+        source_id = identifier(source_id, "catalog EE source ID")
+        source_path, _language, _namespace, _imports, _mappings = load_source(source_id)
         registered.append((source_id, source_path.resolve()))
 
     selected = [
@@ -929,24 +963,27 @@ def source_ids_for_path(value: Path) -> tuple[Path, list[str]]:
         or (scope.is_dir() and source_path.is_relative_to(scope))
     ]
     if not selected:
-        raise ValueError(f"Source scope contains no registered C sources: {scope}")
+        raise ValueError(f"Source scope contains no registered EE sources: {scope}")
 
     selected_paths = {
         source_path
         for source_id, source_path in registered
         if source_id in selected
     }
-    discovered = {
-        path.resolve()
-        for path in (
-            scope.rglob("*.c") if scope.is_dir() else [scope]
-        )
-    }
+    discovered = (
+        {
+            path.resolve()
+            for pattern in ("*.c", "*.S")
+            for path in scope.rglob(pattern)
+        }
+        if scope.is_dir()
+        else {scope}
+    )
     unregistered = sorted(discovered - selected_paths)
     if unregistered:
         relative = [path.relative_to(REPOSITORY).as_posix() for path in unregistered]
         raise ValueError(
-            "Source scope contains unregistered C files: "
+            "Source scope contains unregistered EE source files: "
             + ", ".join(relative)
         )
     return scope, selected
@@ -1046,6 +1083,7 @@ def main() -> int:
         for selected_source_id in compiled_source_ids:
             (
                 selected_source_path,
+                source_language,
                 namespace,
                 imports,
                 source_mappings,
@@ -1068,6 +1106,7 @@ def main() -> int:
                 compile_fragments(
                     selected_source_id,
                     selected_source_path,
+                    source_language,
                     namespace,
                     imports,
                     source_mappings,
@@ -1109,7 +1148,7 @@ def main() -> int:
                 {
                     "symbol": symbol,
                     "abi": "resident_symbol",
-                    "purpose": "Direct registered C-source attachment.",
+                    "purpose": "Direct registered EE-source attachment.",
                 },
             )
             for symbol in entry_symbols
@@ -1190,7 +1229,7 @@ def main() -> int:
                     ).hex().upper(),
                     "reason": (
                         "Redirect the Latest resident entry to the selected "
-                        "development C sources."
+                        "development EE sources."
                     ),
                 }
             )

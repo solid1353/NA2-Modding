@@ -128,47 +128,40 @@ def prepare_module_pipeline(
     for module in ordered_modules:
         if module.module != "runtime_injector":
             continue
-        if configuration.selection is not None:
-            declaration = catalog_module.load_runtime_package(
-                configuration.selection,
-                module.feature_id,
-                configuration.targets_path,
-                configuration.selection.catalog_path.parent.parent,
-                module.module_id,
+        declaration = catalog_module.load_runtime_package(
+            configuration.selection,
+            module.feature_id,
+            configuration.targets_path,
+            configuration.selection.catalog_path.parent.parent,
+            module.module_id,
+        )
+        if (
+            module.feature_id == "battle_logic"
+            and configuration.character_overrides is not None
+        ):
+            declaration = replace(
+                declaration,
+                fragments=(
+                    character_override_fragment(
+                        configuration.character_overrides,
+                        owner=module.module_id,
+                    ),
+                    *declaration.fragments,
+                ),
             )
-            if (
-                module.feature_id == "battle_logic"
-                and configuration.character_overrides is not None
-            ):
+        if module.feature_id == "battle_logic":
+            xdash_cost_fragment = xdash_chakra_cost_fragment(
+                configuration.selection,
+                owner=module.module_id,
+            )
+            if xdash_cost_fragment is not None:
                 declaration = replace(
                     declaration,
                     fragments=(
-                        character_override_fragment(
-                            configuration.character_overrides,
-                            owner=module.module_id,
-                        ),
+                        xdash_cost_fragment,
                         *declaration.fragments,
                     ),
                 )
-            if module.feature_id == "battle_logic":
-                xdash_cost_fragment = xdash_chakra_cost_fragment(
-                    configuration.selection,
-                    owner=module.module_id,
-                )
-                if xdash_cost_fragment is not None:
-                    declaration = replace(
-                        declaration,
-                        fragments=(
-                            xdash_cost_fragment,
-                            *declaration.fragments,
-                        ),
-                    )
-        else:
-            declaration = runtime_injector_module.load_package(
-                module.input_path,
-                owner=module.module_id,
-                targets_path=configuration.targets_path,
-            )
         if module.module_id in owners:
             raise ValueError(
                 f"Duplicate resident-payload owner: {module.module_id}"

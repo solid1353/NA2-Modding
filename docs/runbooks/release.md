@@ -50,7 +50,7 @@ patch and implementation detail, and distributes it only as a readable reference
 executable never reads that external reference. The executable embeds the
 interpreter, builder engines, catalog, resources for the complete selectable
 catalog rather than only the default selection, payload-builder configuration,
-precompiled objects for injection-owned runtime C sources, and Zopfli runtime.
+precompiled objects for injection-owned runtime C and assembly sources, and Zopfli runtime.
 It does not embed the project PS2 toolchain, source ISOs, extracted source trees,
 or derived game payloads.
 
@@ -73,7 +73,7 @@ The toolchain is pinned by `scripts/release/toolchain.json` and
 `scripts/release/requirements.txt`. The builder creates an isolated virtual
 environment under `@work/release/temp/`, runs the complete
 builder test suite, inventories the full definition resource closure, builds a
-precompiled object for each injection-owned runtime C source, builds a PyInstaller
+precompiled object for each injection-owned runtime C or `.S` source, builds a PyInstaller
 one-file console EXE, self-tests the packaged data with the derived default
 configuration, and atomically updates the configured ZIP
 candidate. Temporary packaging state is removed afterward.

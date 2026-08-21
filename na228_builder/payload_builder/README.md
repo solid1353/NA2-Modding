@@ -11,8 +11,9 @@ a complete symbol map.
 `module_pipeline.py` gathers every contribution before invoking the builder, so
 no individual feature consumer decides when the shared payload is complete.
 
-`ee_c_fragments.py` is the generic C frontend used by `runtime_injector`: it
-compiles ordinary PS2 EE C with the configured EE toolchain and
+`ee_c_fragments.py` is the shared EE source frontend used by
+`runtime_injector`: it compiles ordinary PS2 EE C and preprocessed `.S`
+assembly with the configured EE toolchain and
 converts supported ELF sections and relocations directly into this builder's
 address-independent fragment model. Object files are temporary. The builder
 then lays out those fragments together with static and external-string

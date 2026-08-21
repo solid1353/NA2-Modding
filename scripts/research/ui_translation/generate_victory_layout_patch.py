@@ -3,11 +3,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
 import struct
 import sys
 from collections import defaultdict
-from dataclasses import replace
 from pathlib import Path
 
 
@@ -16,7 +14,6 @@ if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
 from scripts.lib.paths import load_paths  # noqa: E402
-from na228_builder.scripts import catalog_format  # noqa: E402
 
 
 PATCH_ID = "ui_layout_victory_names"
@@ -68,7 +65,7 @@ def read_verified(
     return payload
 
 
-def build_patch_rows() -> tuple[dict[str, str], list[dict[str, str]]]:
+def build_patch_rows() -> list[dict[str, str]]:
     paths = load_paths(REPOSITORY)
     na2_btl = read_verified(
         paths.path("source_na2", "PRG", "BTL.BIN"),
@@ -199,178 +196,85 @@ def build_patch_rows() -> tuple[dict[str, str], list[dict[str, str]]]:
             }
         )
 
-    patch = {
-        "patch_id": PATCH_ID,
-        "group_id": "ui_layout",
-        "enabled": "1",
-        "status": "approved_for_test",
-        "confidence": "high",
-        "name": "Use localized Victory character-name layouts",
-        "description": (
-            "Derive every compatible NA2 prebuilt Victory name rectangle from "
-            "the official NUN5 frame templates and English character-width table."
-        ),
-        "evidence_id": "UI-VICTORY-NAME-LAYOUT-001",
-        "review_notes": (
-            "Runtime: overlay | NUN5 builds each 24-byte rectangle at runtime from a localized "
-            "width row and frame template, whereas NA2's BTL callback returns "
-            "a pointer to a prebuilt rectangle. Each replacement is therefore "
-            "the complete official frame template plus the verified NUN5 width "
-            "minus the renderer's two-pixel border; zero-only aliases remain "
-            "untouched."
-        ),
-    }
-    return patch, edits
+    return edits
+
+
+def build_definitions(
+    generated_edits: list[dict[str, str]],
+) -> dict[str, dict[str, object]]:
+    grouped: dict[tuple[str, ...], list[dict[str, str]]] = defaultdict(list)
+    for edit in generated_edits:
+        signature = (
+            edit["operation"],
+            edit["destination_target_id"],
+            edit["expected_hex"],
+            edit["replacement_hex"],
+        )
+        grouped[signature].append(edit)
+
+    generated: dict[str, dict[str, object]] = {}
+    for group in grouped.values():
+        source_ids = frozenset(edit["edit_id"] for edit in group)
+        if len(group) == 1:
+            edit_id = group[0]["edit_id"]
+            description = group[0]["reason"]
+        else:
+            merged = MERGED_DEFINITIONS.get(source_ids)
+            if merged is None:
+                raise ValueError(
+                    "Equivalent Victory edits need one declared multi-offset "
+                    f"identity: {sorted(source_ids)}"
+                )
+            edit_id, description = merged
+        first = group[0]
+        generated[edit_id] = {
+            "description": description,
+            "operation": first["operation"],
+            "destination_target_id": first["destination_target_id"],
+            "destination_offsets": [
+                edit["destination_offset"] for edit in group
+            ],
+            "expected_hex": first["expected_hex"],
+            "replacement_hex": first["replacement_hex"],
+        }
+    return generated
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Generate donor-derived Victory name-width edits."
+        description=(
+            "Verify the stored Victory name-width edits against their original "
+            "NA2 and NUN5 derivation."
+        )
     )
-    parser.add_argument(
-        "--write",
-        action="store_true",
-        help="Replace the ui_layout_victory_names edit definitions after validation.",
-    )
-    parser.add_argument(
-        "--state-plan",
-        type=Path,
-        help=(
-            "Write a task-local patch-memory plan using the generated BTL "
-            "runtime addresses."
-        ),
-    )
-    args = parser.parse_args()
+    parser.parse_args()
 
-    patch, generated_edits = build_patch_rows()
-    if args.write:
-        catalog_root = REPOSITORY / "na228_builder" / "catalog"
-        catalog_path = catalog_root / "catalog.modcat"
-        edits_path = catalog_root / "edits.json"
-        catalog_source = catalog_format.parse_catalog(catalog_path)
-        root_fields = {field.name: field.node for field in catalog_source.fields}
-        feature_root = root_fields.get("features")
-        if not isinstance(feature_root, catalog_format.ContainerNode):
-            raise ValueError("catalog.features must be one object")
-        features = {field.name: field.node for field in feature_root.fields}
-        feature = features.get("localization")
-        if not isinstance(feature, catalog_format.ContainerNode):
-            raise ValueError("catalog.features.localization must be one object")
-        edits = json.loads(edits_path.read_text(encoding="utf-8"))
-        fields = {field.name: field for field in feature.fields}
-        ui_layout = fields["ui_layout"].node
-        if not isinstance(ui_layout, catalog_format.SettingNode):
-            raise ValueError("localization.ui_layout must be one setting")
-        grouped: dict[tuple[str, ...], list[dict[str, str]]] = defaultdict(list)
-        for edit in sorted(generated_edits, key=lambda item: int(item["order"])):
-            signature = (
-                edit["operation"],
-                edit["destination_target_id"],
-                edit["expected_hex"],
-                edit["replacement_hex"],
-            )
-            grouped[signature].append(edit)
-        generated: dict[str, dict[str, object]] = {}
-        for group in grouped.values():
-            source_ids = frozenset(edit["edit_id"] for edit in group)
-            if len(group) == 1:
-                edit_id = group[0]["edit_id"]
-                description = group[0]["reason"]
-            else:
-                merged = MERGED_DEFINITIONS.get(source_ids)
-                if merged is None:
-                    raise ValueError(
-                        "Equivalent generated Victory edits need one declared "
-                        f"multi-offset identity: {sorted(source_ids)}"
-                    )
-                edit_id, description = merged
-            first = group[0]
-            generated[edit_id] = {
-                "description": description,
-                "operation": first["operation"],
-                "destination_target_id": first["destination_target_id"],
-                "destination_offsets": [
-                    edit["destination_offset"] for edit in group
-                ],
-                "expected_hex": first["expected_hex"],
-                "replacement_hex": first["replacement_hex"],
-            }
-        old_ids = [
+    generated_edits = build_patch_rows()
+    generated = build_definitions(generated_edits)
+    edits_path = REPOSITORY / "na228_builder" / "catalog" / "edits.json"
+    stored_edits = json.loads(edits_path.read_text(encoding="utf-8"))
+    stored = {
+        edit_id: definition
+        for edit_id, definition in stored_edits.items()
+        if edit_id.startswith("e__localization__ui_layout__victory_names_")
+    }
+    if stored != generated:
+        missing = sorted(set(generated) - set(stored))
+        unexpected = sorted(set(stored) - set(generated))
+        changed = sorted(
             edit_id
-            for edit_id in ui_layout.patches
-            if "__victory_names_" in edit_id
-        ]
-        if set(old_ids) != set(generated):
-            raise ValueError(
-                "Generated Victory edit IDs differ from the catalog references"
-            )
-        replacement = replace(
-            ui_layout,
-            patches=tuple(
-                sorted((set(ui_layout.patches) - set(old_ids)) | set(generated))
-            ),
+            for edit_id in set(stored) & set(generated)
+            if stored[edit_id] != generated[edit_id]
         )
-        feature = replace(
-            feature,
-            fields=tuple(
-                replace(field, node=replacement)
-                if field.name == "ui_layout"
-                else field
-                for field in feature.fields
-            ),
+        raise ValueError(
+            "Stored Victory definitions differ from the verified derivation: "
+            f"missing={missing}, unexpected={unexpected}, changed={changed}"
         )
-        features["localization"] = feature
-        for edit_id, definition in generated.items():
-            edits[edit_id] = definition
-        catalog_temporary = catalog_path.with_suffix(".modcat.tmp")
-        catalog_temporary.write_text(
-            catalog_format.serialize_catalog(features, include_patches=True),
-            encoding="utf-8",
-        )
-        edits_temporary = edits_path.with_suffix(".json.tmp")
-        edits_temporary.write_text(
-            json.dumps(dict(sorted(edits.items())), indent=2, ensure_ascii=False) + "\n",
-            encoding="utf-8",
-        )
-        os.replace(catalog_temporary, catalog_path)
-        os.replace(edits_temporary, edits_path)
-    if args.state_plan is not None:
-        plan_path = args.state_plan
-        if plan_path.is_absolute():
-            raise ValueError("--state-plan must be repository-relative")
-        plan_path = (REPOSITORY / plan_path).resolve()
-        if REPOSITORY not in plan_path.parents:
-            raise ValueError("--state-plan escapes the repository")
-        plan_path.parent.mkdir(parents=True, exist_ok=True)
-        plan = {
-            "schema_version": 1,
-            "actions": [
-                {
-                    "action": "patch_memory",
-                    "address": "0x"
-                    + format(
-                        NA2_BTL_RUNTIME_BASE
-                        + int(edit["destination_offset"], 0),
-                        "08X",
-                    ),
-                    "expected_hex": edit["expected_hex"],
-                    "replacement_hex": edit["replacement_hex"],
-                }
-                for edit in generated_edits
-            ],
-        }
-        temporary = plan_path.with_suffix(plan_path.suffix + ".tmp")
-        temporary.write_text(
-            json.dumps(plan, indent=2) + "\n",
-            encoding="utf-8",
-        )
-        os.replace(temporary, plan_path)
 
     print(f"patch_id={PATCH_ID}")
     print(f"edits={len(generated_edits)}")
-    print(f"mode={'write' if args.write else 'check'}")
-    if args.state_plan is not None:
-        print(f"state_plan={args.state_plan.as_posix()}")
+    print(f"definitions={len(generated)}")
+    print("mode=check")
     return 0
 
 

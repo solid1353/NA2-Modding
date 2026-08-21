@@ -158,7 +158,7 @@ def configuration_resources_entry(
         "file_count": len(files),
         "size": total_size,
         "sha256": digest.hexdigest().upper(),
-        "uses_ee_compiler": any(path.suffix.casefold() == ".c" for path in files),
+        "uses_ee_compiler": any(path.suffix in {".c", ".S"} for path in files),
     }
 
 

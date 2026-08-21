@@ -131,6 +131,86 @@ class EeCFragmentTests(unittest.TestCase):
                     namespace="test.ee.probe",
                 )
 
+    def test_real_ee_assembly_preserves_bytes_relocations_and_determinism(self) -> None:
+        source_text = """\
+    .set noreorder
+    .set noat
+    .section .text.entry,"ax",@progbits
+    .balign 4
+    .globl entry
+entry:
+    addiu $sp, $sp, -16
+    sw $ra, 0($sp)
+    jal native_call
+    nop
+    lw $ra, 0($sp)
+    jr $ra
+    addiu $sp, $sp, 16
+"""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "probe.S"
+            source.write_text(source_text, encoding="ascii")
+            arguments = {
+                "namespace": "test.ee.asm",
+                "language": "asm",
+                "toolchain_bin": TOOLCHAIN_BIN,
+                "external_symbols": {
+                    "native_call": ee_c_fragments.SymbolReference(
+                        "test.ee.native"
+                    )
+                },
+            }
+            first = ee_c_fragments.compile_and_extract(
+                source, root / "first.o", **arguments
+            )
+            second = ee_c_fragments.compile_and_extract(
+                source, root / "second.o", **arguments
+            )
+
+        self.assertEqual(first, second)
+        self.assertEqual(first.fingerprint, second.fingerprint)
+        self.assertEqual(1, len(first.fragments))
+        fragment = first.fragments[0]
+        self.assertEqual("code", fragment.kind)
+        self.assertEqual(4, fragment.alignment)
+        self.assertEqual(
+            bytes.fromhex(
+                "F0FFBD270000BFAF0000000C00000000"
+                "0000BF8F0800E0031000BD27"
+            ),
+            fragment.payload,
+        )
+        self.assertEqual(
+            [(8, "jal26", "test.ee.native", 0)],
+            [
+                (item.offset, item.kind, item.symbol, item.addend)
+                for item in fragment.relocations
+            ],
+        )
+
+    def test_ee_source_kind_requires_its_canonical_suffix(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            wrong_assembly = root / "probe.s"
+            wrong_assembly.write_text("nop\n", encoding="ascii")
+            wrong_c = root / "probe.S"
+            wrong_c.write_text("nop\n", encoding="ascii")
+            with self.assertRaisesRegex(ValueError, "exact .S suffix"):
+                ee_c_fragments.compile_ee_source(
+                    wrong_assembly,
+                    root / "assembly.o",
+                    language="asm",
+                    toolchain_bin=TOOLCHAIN_BIN,
+                )
+            with self.assertRaisesRegex(ValueError, "exact .c suffix"):
+                ee_c_fragments.compile_ee_source(
+                    wrong_c,
+                    root / "c.o",
+                    language="c",
+                    toolchain_bin=TOOLCHAIN_BIN,
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

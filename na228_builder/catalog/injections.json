@@ -27,16 +27,17 @@
           }
         }
       },
-      "substitution_cost_shim": {
-        "kind": "code",
-        "order": 111,
-        "alignment": 4,
-        "value": "2D2840000000000800000000",
-        "relocations": {
-          "call_cost_selector": {
-            "offset": "0x4",
-            "encoding": "j26",
-            "symbol": "substitution_cost_for_fighter"
+      "substitution_cost_abi": {
+        "kind": "asm",
+        "path": "src/battle_logic/substitution_cost_abi.S",
+        "namespace": "battle.logic.substitution.cost.asm",
+        "imports": {
+          "substitution_cost_for_fighter": "substitution_cost_for_fighter"
+        },
+        "fragments": {
+          "substitution_cost_shim": {
+            "order": 111,
+            "object": "battle.logic.substitution.cost.asm.text.substitution.cost.shim"
           }
         }
       }
@@ -70,16 +71,17 @@
           }
         }
       },
-      "xdash_pre_update_shim": {
-        "kind": "code",
-        "order": 114,
-        "alignment": 4,
-        "value": "F0FFBD270000BFAF0400A4AF0000000C000000000400A48FA038080C000000000000BF8F1000BD270800E00300000000",
-        "relocations": {
-          "call_pre_fighter_update": {
-            "offset": "0xC",
-            "encoding": "jal26",
-            "symbol": "battle_logic_xdash_pre_fighter_update"
+      "xdash_chakra_cost_abi": {
+        "kind": "asm",
+        "path": "src/battle_logic/xdash_chakra_cost_abi.S",
+        "namespace": "battle.logic.xdash.chakra.cost.asm",
+        "imports": {
+          "battle_logic_xdash_pre_fighter_update": "battle_logic_xdash_pre_fighter_update"
+        },
+        "fragments": {
+          "xdash_pre_update_shim": {
+            "order": 114,
+            "object": "battle.logic.xdash.chakra.cost.asm.text.xdash.pre.update.shim"
           }
         }
       },
@@ -171,21 +173,18 @@
       }
     },
     "payload": {
-      "v2_character_choices_scope": {
-        "kind": "code",
-        "order": 105,
-        "alignment": 4,
-        "value": "C0FFBD273C00BFAF1000A4AF1400A5AF1800A6AF1C00A7AF2000ACE72400ADE70000000C000000002800A2AF1000A48F1400A58F1800A68F1C00A78F2000ACC72400ADC7800D0E0C000000002C00A2AF2800A48F0000000C000000002C00A28F3C00BF8F0800E0034000BD27",
-        "relocations": {
-          "fr_v2_char_scope_r001": {
-            "offset": "0x20",
-            "encoding": "jal26",
-            "symbol": "v2_c_character_scope_enter"
-          },
-          "fr_v2_char_scope_r002": {
-            "offset": "0x54",
-            "encoding": "jal26",
-            "symbol": "v2_c_quit_scope_leave"
+      "font_v2_character_select_modal_abi": {
+        "kind": "asm",
+        "path": "src/localization/font/font_v2_character_select_modal_abi.S",
+        "namespace": "localization.font.v2.character.select.modal.asm",
+        "imports": {
+          "v2_c_character_scope_enter": "v2_c_character_scope_enter",
+          "v2_c_quit_scope_leave": "v2_c_quit_scope_leave"
+        },
+        "fragments": {
+          "v2_character_choices_scope": {
+            "order": 105,
+            "object": "localization.font.v2.character.select.modal.asm.text.v2.character.choices.scope"
           }
         }
       }
@@ -366,34 +365,27 @@
       }
     },
     "payload": {
-      "v2_command_icon_offset_adapter": {
-        "kind": "code",
-        "order": 63,
-        "alignment": 4,
-        "value": "212020020000000000000000",
-        "relocations": {
-          "fr_v2_cmd_r002": {
-            "offset": "0x4",
-            "encoding": "j26",
-            "symbol": "v2_c_command_icon_offset"
+      "font_v2_command_relationships_abi": {
+        "kind": "asm",
+        "path": "src/localization/font/font_v2_command_relationships_abi.S",
+        "namespace": "localization.font.v2.command.relationships.asm",
+        "imports": {
+          "v2_c_command_icon_offset": "v2_c_command_icon_offset",
+          "v2_c_command_relationship_impl": "v2_c_command_relationship_impl"
+        },
+        "fragments": {
+          "v2_command_icon_offset_adapter": {
+            "order": 63,
+            "object": "localization.font.v2.command.relationships.asm.text.v2.command.icon.offset.adapter"
+          },
+          "v2_command_relationship_adapter": {
+            "order": 62,
+            "object": "localization.font.v2.command.relationships.asm.text.v2.command.relationship.adapter",
+            "abi": "command_relationship_native",
+            "description": "Command Chart relationship row",
+            "source": "font_v2_core"
           }
         }
-      },
-      "v2_command_relationship_adapter": {
-        "kind": "code",
-        "order": 62,
-        "alignment": 4,
-        "value": "E0FFBD271C00BFAF21282002006807440000000C000000001C00BF8F0800E0032000BD27",
-        "relocations": {
-          "fr_v2_cmd_r001": {
-            "offset": "0x10",
-            "encoding": "jal26",
-            "symbol": "v2_c_command_relationship_impl"
-          }
-        },
-        "abi": "command_relationship_native",
-        "description": "Command Chart relationship row",
-        "source": "font_v2_core"
       }
     }
   },
@@ -455,93 +447,33 @@
       }
     },
     "payload": {
-      "v2_glyph_advance": {
-        "kind": "code",
-        "order": 56,
-        "alignment": 4,
-        "value": "F0FFBD270000A2AF0400A3AF0000023C0000438C0900601040000246380063C4420803461C0060C60000A28F0400A38F1000BD27B8250608000000001C0060C60000A28F0400A38F1000BD27B825060800000000",
-        "relocations": {
-          "fr_v2_ss1_r001": {
-            "offset": "0xC",
-            "encoding": "hi16",
-            "symbol": "v2_session_pointer"
+      "font_v2_core_abi": {
+        "kind": "asm",
+        "path": "src/localization/font/font_v2_core_abi.S",
+        "namespace": "localization.font.v2.core.asm",
+        "imports": {
+          "v2_session_pointer": "v2_session_pointer"
+        },
+        "fragments": {
+          "v2_glyph_advance": {
+            "order": 56,
+            "object": "localization.font.v2.core.asm.text.v2.glyph.advance"
           },
-          "fr_v2_ss1_r002": {
-            "offset": "0x10",
-            "encoding": "lo16",
-            "symbol": "v2_session_pointer"
-          }
-        }
-      },
-      "v2_half_space": {
-        "kind": "code",
-        "order": 47,
-        "alignment": 4,
-        "value": "F0FFBD270000A2AF0400A3AF0000023C0000438C0A00601000000000380064C4021904461C1004461C0060E60000A28F0400A38F1000BD27A1220608000000001C1003461C0060E60000A28F0400A38F1000BD27A122060800000000",
-        "relocations": {
-          "fr_v2_r083": {
-            "offset": "0xC",
-            "encoding": "hi16",
-            "symbol": "v2_session_pointer"
+          "v2_half_space": {
+            "order": 47,
+            "object": "localization.font.v2.core.asm.text.v2.half.space"
           },
-          "fr_v2_r084": {
-            "offset": "0x10",
-            "encoding": "lo16",
-            "symbol": "v2_session_pointer"
-          }
-        }
-      },
-      "v2_newline_advance": {
-        "kind": "code",
-        "order": 45,
-        "alignment": 4,
-        "value": "F0FFBD270000A2AF0400A3AF0000023C0000438C0F006010400060C64008004680C0023C00008244400800463C0062C442080246200060C600000146200060E60000A28F0400A38F1000BD279C21060800000000400800460000A28F0400A38F1000BD278321060800000000",
-        "relocations": {
-          "fr_v2_r079": {
-            "offset": "0xC",
-            "encoding": "hi16",
-            "symbol": "v2_session_pointer"
+          "v2_newline_advance": {
+            "order": 45,
+            "object": "localization.font.v2.core.asm.text.v2.newline.advance"
           },
-          "fr_v2_r080": {
-            "offset": "0x10",
-            "encoding": "lo16",
-            "symbol": "v2_session_pointer"
-          }
-        }
-      },
-      "v2_plain_space": {
-        "kind": "code",
-        "order": 44,
-        "alignment": 4,
-        "value": "F0FFBD270000A2AF0400A3AF0000023C0000438C0C006010040060C640000146C0C0023C0010824440080246380062C4420802460000A28F0400A38F1000BD27BD24060800000000400001460000A28F0400A38F1000BD27BD24060800000000",
-        "relocations": {
-          "fr_v2_r077": {
-            "offset": "0xC",
-            "encoding": "hi16",
-            "symbol": "v2_session_pointer"
+          "v2_plain_space": {
+            "order": 44,
+            "object": "localization.font.v2.core.asm.text.v2.plain.space"
           },
-          "fr_v2_r078": {
-            "offset": "0x10",
-            "encoding": "lo16",
-            "symbol": "v2_session_pointer"
-          }
-        }
-      },
-      "v2_right_edge": {
-        "kind": "code",
-        "order": 46,
-        "alignment": 4,
-        "value": "F0FFBD270000A2AF0400A3AF0000023C0000438C15006010400D0046380062C48208024640150046200020C62000628C400042300800401000000000680061C4000501460000A28F0400A38F1000BD27E01F06086CCA848F0000A28F0400A38F1000BD27DE1F060800000000200020C60000A28F0400A38F1000BD27DE1F060800000000",
-        "relocations": {
-          "fr_v2_r081": {
-            "offset": "0xC",
-            "encoding": "hi16",
-            "symbol": "v2_session_pointer"
-          },
-          "fr_v2_r082": {
-            "offset": "0x10",
-            "encoding": "lo16",
-            "symbol": "v2_session_pointer"
+          "v2_right_edge": {
+            "order": 46,
+            "object": "localization.font.v2.core.asm.text.v2.right.edge"
           }
         }
       }
@@ -632,23 +564,25 @@
       }
     },
     "payload": {
-      "v2_global_selected_record_draw": {
-        "kind": "code",
-        "order": 98,
-        "alignment": 4,
-        "value": "803F083C000088440000A1C400000000400800460000A1E40040083C000088440400A1C400000000400800460400A1E474080E0800000000"
-      },
-      "v2_global_selected_style": {
-        "kind": "code",
-        "order": 97,
-        "alignment": 4,
-        "value": "803F083C000088440000000040AD00460040083C000088440000000000A5004680CA848F80FF02340800E00300000000"
-      },
-      "v2_global_two_choice_draw": {
-        "kind": "code",
-        "order": 99,
-        "alignment": 4,
-        "value": "C0FFBD273000B2AF3400B1AF3800B0AF3C00BFAF218080002188A0005B00123C8012523680CA848F1C00058EB419060C0000000010004CC614004DC61800448E01000824060028120000000000FF053CD4E30D0C00000000050000100000000000FF053CD400A53454E40D0C0000000000004CC604004DC60800448E060020120000000000FF053CD4E30D0C00000000050000100000000000FF053CD400A53454E40D0C0000000080CA848F84CA858FB419060C000000003000B28F3400B18F3800B08F3C00BF8F0800E0034000BD27"
+      "font_v2_global_selected_style_abi": {
+        "kind": "asm",
+        "path": "src/localization/font/font_v2_global_selected_style_abi.S",
+        "namespace": "localization.font.v2.global.selected.style.asm",
+        "imports": {},
+        "fragments": {
+          "v2_global_selected_record_draw": {
+            "order": 98,
+            "object": "localization.font.v2.global.selected.style.asm.text.v2.global.selected.record.draw"
+          },
+          "v2_global_selected_style": {
+            "order": 97,
+            "object": "localization.font.v2.global.selected.style.asm.text.v2.global.selected.style"
+          },
+          "v2_global_two_choice_draw": {
+            "order": 99,
+            "object": "localization.font.v2.global.selected.style.asm.text.v2.global.two.choice.draw"
+          }
+        }
       }
     }
   },
@@ -686,16 +620,17 @@
       }
     },
     "payload": {
-      "v2_linked_choice_selected_adapter": {
-        "kind": "code",
-        "order": 109,
-        "alignment": 4,
-        "value": "E0FFBD271C00BFAF0000000C000000001C00BF8F0800E0032000BD27",
-        "relocations": {
-          "fr_v2_linked_r001": {
-            "offset": "0x8",
-            "encoding": "jal26",
-            "symbol": "v2_c_linked_choice_selected_impl"
+      "font_v2_linked_mode_modal_abi": {
+        "kind": "asm",
+        "path": "src/localization/font/font_v2_linked_mode_modal_abi.S",
+        "namespace": "localization.font.v2.linked.mode.modal.asm",
+        "imports": {
+          "v2_c_linked_choice_selected_impl": "v2_c_linked_choice_selected_impl"
+        },
+        "fragments": {
+          "v2_linked_choice_selected_adapter": {
+            "order": 109,
+            "object": "localization.font.v2.linked.mode.modal.asm.text.v2.linked.choice.selected.adapter"
           }
         }
       }
@@ -768,16 +703,17 @@
       }
     },
     "payload": {
-      "v2_pause_list_selected_adapter": {
-        "kind": "code",
-        "order": 35,
-        "alignment": 4,
-        "value": "E0FFBD271C00BFAF0000000C000000001C00BF8F0800E0032000BD27",
-        "relocations": {
-          "fr_v2_r072": {
-            "offset": "0x8",
-            "encoding": "jal26",
-            "symbol": "v2_c_pause_list_selected_impl"
+      "font_v2_pause_controls_abi": {
+        "kind": "asm",
+        "path": "src/localization/font/font_v2_pause_controls_abi.S",
+        "namespace": "localization.font.v2.pause.controls.asm",
+        "imports": {
+          "v2_c_pause_list_selected_impl": "v2_c_pause_list_selected_impl"
+        },
+        "fragments": {
+          "v2_pause_list_selected_adapter": {
+            "order": 35,
+            "object": "localization.font.v2.pause.controls.asm.text.v2.pause.list.selected.adapter"
           }
         }
       }
@@ -798,16 +734,17 @@
       }
     },
     "payload": {
-      "v2_practice_adapter": {
-        "kind": "code",
-        "order": 43,
-        "alignment": 4,
-        "value": "D0FFBD272C00BFAF2138600221404002006009440000000C000000002C00BF8F0800E0033000BD27",
-        "relocations": {
-          "fr_v2_r076": {
-            "offset": "0x14",
-            "encoding": "jal26",
-            "symbol": "v2_c_practice_adapter_impl"
+      "font_v2_practice_explanations_abi": {
+        "kind": "asm",
+        "path": "src/localization/font/font_v2_practice_explanations_abi.S",
+        "namespace": "localization.font.v2.practice.explanations.asm",
+        "imports": {
+          "v2_c_practice_adapter_impl": "v2_c_practice_adapter_impl"
+        },
+        "fragments": {
+          "v2_practice_adapter": {
+            "order": 43,
+            "object": "localization.font.v2.practice.explanations.asm.text.v2.practice.adapter"
           }
         }
       }
@@ -850,21 +787,18 @@
       }
     },
     "payload": {
-      "v2_quit_selected_adapter": {
-        "kind": "code",
-        "order": 37,
-        "alignment": 4,
-        "value": "D0FFBD272C00BFAF1000A4AF1400A5AF1800A6AF1C00A7AF6000083CF059083505008810000000006000083CF8590835080088140000000000600844006809440000000C000000002C00BF8F0800E0033000BD2700680544006006442000A7270000000C00000000006082442000A88F006888441000A48F1400A58F1800A68F1C00A78F2C00BF8F3000BD2754E40D0800000000",
-        "relocations": {
-          "fr_v2_r075": {
-            "offset": "0x60",
-            "encoding": "jal26",
-            "symbol": "v2_c_quit_selected_map"
-          },
-          "fr_v2_special_r001": {
-            "offset": "0x40",
-            "encoding": "jal26",
-            "symbol": "v2_c_special_choice_selected_adapter"
+      "font_v2_quit_confirmation_abi": {
+        "kind": "asm",
+        "path": "src/localization/font/font_v2_quit_confirmation_abi.S",
+        "namespace": "localization.font.v2.quit.confirmation.asm",
+        "imports": {
+          "v2_c_quit_selected_map": "v2_c_quit_selected_map",
+          "v2_c_special_choice_selected_adapter": "v2_c_special_choice_selected_adapter"
+        },
+        "fragments": {
+          "v2_quit_selected_adapter": {
+            "order": 37,
+            "object": "localization.font.v2.quit.confirmation.asm.text.v2.quit.selected.adapter"
           }
         }
       }
@@ -878,29 +812,64 @@
         "alignment": 1,
         "value": "0805090B0B0C0D0508080C0A0507050A0A080A0A0C0A0A0B0A0A05050A0A0A0A0E0C0B0D0B0B0A0C0C050A0B0A0E0C0C0B0C0B0B0C0C0D0E0D0D0B080C07060E050A0A0B0A0A080A0A05070A050E0A0B0A0A080A090A0A0D0A0A0906050608"
       },
-      "v2_c_native_measure_callback": {
-        "kind": "code",
-        "order": 40,
-        "alignment": 4,
-        "value": "2128000038E60D0800000000"
-      },
-      "v2_c_practice_icon_draw_callback": {
-        "kind": "code",
-        "order": 41,
-        "alignment": 4,
-        "value": "D0EE0D0800000000"
-      },
-      "v2_c_quit_unselected_callback": {
-        "kind": "code",
-        "order": 38,
-        "alignment": 4,
-        "value": "88E60D0800000000"
-      },
-      "v2_controls_callback": {
-        "kind": "code",
-        "order": 31,
-        "alignment": 4,
-        "value": "E0FFBD271C00BFAF1800B0AF1400B1AF1000B2AF218080002188A0002190C0002128000038E60D0C0000000043400200000088442000804648004CC6006300464C004DC6212000022128200290E40D0C000000001000B28F1400B18F1800B08F1C00BF8F0800E0032000BD27"
+      "font_v2_runtime_abi": {
+        "kind": "asm",
+        "path": "src/localization/font/font_v2_runtime_abi.S",
+        "namespace": "localization.font.v2.runtime.asm",
+        "imports": {
+          "v2_c_quit_scope_enter": "v2_c_quit_scope_enter",
+          "v2_c_quit_scope_leave": "v2_c_quit_scope_leave"
+        },
+        "fragments": {
+          "v2_c_native_measure_callback": {
+            "order": 40,
+            "object": "localization.font.v2.runtime.asm.text.v2.c.native.measure.callback"
+          },
+          "v2_c_practice_icon_draw_callback": {
+            "order": 41,
+            "object": "localization.font.v2.runtime.asm.text.v2.c.practice.icon.draw.callback"
+          },
+          "v2_c_quit_unselected_callback": {
+            "order": 38,
+            "object": "localization.font.v2.runtime.asm.text.v2.c.quit.unselected.callback"
+          },
+          "v2_controls_callback": {
+            "order": 31,
+            "object": "localization.font.v2.runtime.asm.text.v2.controls.callback"
+          },
+          "v2_pause_list_callback": {
+            "order": 33,
+            "object": "localization.font.v2.runtime.asm.text.v2.pause.list.callback"
+          },
+          "v2_pause_list_selected_callback": {
+            "order": 34,
+            "object": "localization.font.v2.runtime.asm.text.v2.pause.list.selected.callback"
+          },
+          "v2_practice_callback": {
+            "order": 42,
+            "object": "localization.font.v2.runtime.asm.text.v2.practice.callback"
+          },
+          "v2_quit_body_callback": {
+            "order": 39,
+            "object": "localization.font.v2.runtime.asm.text.v2.quit.body.callback"
+          },
+          "v2_quit_choices_scope": {
+            "order": 36,
+            "object": "localization.font.v2.runtime.asm.text.v2.quit.choices.scope"
+          },
+          "v2_special_choice_selected_callback": {
+            "order": 96,
+            "object": "localization.font.v2.runtime.asm.text.v2.special.choice.selected.callback"
+          },
+          "v2_special_controls_body_callback": {
+            "order": 57,
+            "object": "localization.font.v2.runtime.asm.text.v2.special.controls.body.callback"
+          },
+          "v2_title_callback": {
+            "order": 32,
+            "object": "localization.font.v2.runtime.asm.text.v2.title.callback"
+          }
+        }
       },
       "v2_core": {
         "kind": "c",
@@ -1338,24 +1307,6 @@
           }
         }
       },
-      "v2_pause_list_callback": {
-        "kind": "code",
-        "order": 33,
-        "alignment": 4,
-        "value": "4800ECC44C00EDC41C090E0800000000"
-      },
-      "v2_pause_list_selected_callback": {
-        "kind": "code",
-        "order": 34,
-        "alignment": 4,
-        "value": "4800E0C424000046000005444C00E1C464080046000806446800E88C0400E78CE8090E0800000000"
-      },
-      "v2_practice_callback": {
-        "kind": "code",
-        "order": 42,
-        "alignment": 4,
-        "value": "4800ECC44C00EDC4C4080E0800000000"
-      },
       "v2_practice_icon_map": {
         "kind": "rodata",
         "order": 5,
@@ -1374,53 +1325,11 @@
         "alignment": 4,
         "value": "00000000"
       },
-      "v2_quit_body_callback": {
-        "kind": "code",
-        "order": 39,
-        "alignment": 4,
-        "value": "D0FFBD272C00BFAF9841083C0000A8AF4041083C0400A8AF0800A5AF0C00A6AF62008890060000117400868C7800848C0000A527FFFF072488E60D0C000000002C00BF8F0800E0033000BD27"
-      },
-      "v2_quit_choices_scope": {
-        "kind": "code",
-        "order": 36,
-        "alignment": 4,
-        "value": "C0FFBD273C00BFAF1000A4AF1400A5AF1800A6AF1C00A7AF2000ACE72400ADE70000000C000000002800A2AF1000A48F1400A58F1800A68F1C00A78F2000ACC72400ADC7800D0E0C000000002C00A2AF2800A48F0000000C000000002C00A28F3C00BF8F0800E0034000BD27",
-        "relocations": {
-          "fr_v2_r073": {
-            "offset": "0x20",
-            "encoding": "jal26",
-            "symbol": "v2_c_quit_scope_enter"
-          },
-          "fr_v2_r074": {
-            "offset": "0x54",
-            "encoding": "jal26",
-            "symbol": "v2_c_quit_scope_leave"
-          }
-        }
-      },
       "v2_session_pointer": {
         "kind": "data",
         "order": 1,
         "alignment": 4,
         "value": "00000000"
-      },
-      "v2_special_choice_selected_callback": {
-        "kind": "code",
-        "order": 96,
-        "alignment": 4,
-        "value": "4800ECC44C00EDC46C00E78C54E40D0800000000"
-      },
-      "v2_special_controls_body_callback": {
-        "kind": "code",
-        "order": 57,
-        "alignment": 4,
-        "value": "D0FFBD272C00BFAFC041083C0000A8AF4041083C0400A8AF0800A5AF0C00A6AF62008890060000117400868C7800848C0000A527FFFF072488E60D0C000000002C00BF8F0800E0033000BD27"
-      },
-      "v2_title_callback": {
-        "kind": "code",
-        "order": 32,
-        "alignment": 4,
-        "value": "4800ECC44C00EDC4C4080E0800000000"
       }
     }
   },
@@ -1638,17 +1547,21 @@
   },
   "i__localization__shared_font_payload": {
     "payload": {
-      "c_numeric_format_decimal": {
-        "kind": "code",
-        "order": 54,
-        "alignment": 4,
-        "value": "2130A0006000053CD342A53428EF050800000000"
-      },
-      "c_numeric_format_two_decimal": {
-        "kind": "code",
-        "order": 55,
-        "alignment": 4,
-        "value": "2130A0006000053C205CA53428EF050800000000"
+      "font_numeric_abi": {
+        "kind": "asm",
+        "path": "src/localization/font/font_numeric_abi.S",
+        "namespace": "localization.font.numeric.asm",
+        "imports": {},
+        "fragments": {
+          "c_numeric_format_decimal": {
+            "order": 54,
+            "object": "localization.font.numeric.asm.text.c.numeric.format.decimal"
+          },
+          "c_numeric_format_two_decimal": {
+            "order": 55,
+            "object": "localization.font.numeric.asm.text.c.numeric.format.two.decimal"
+          }
+        }
       },
       "font_numeric": {
         "kind": "c",

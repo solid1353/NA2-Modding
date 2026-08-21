@@ -3,11 +3,9 @@
 from .engine import (
     RuntimeInjectionPackage,
     build_binary_package,
-    load_package,
 )
 
 __all__ = [
     "RuntimeInjectionPackage",
     "build_binary_package",
-    "load_package",
 ]

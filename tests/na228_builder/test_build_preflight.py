@@ -4,7 +4,9 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
+from na228_builder.scripts import build_preflight
 from na228_builder.scripts.build_preflight import (
     builder_tree_entry,
     collect_build_state,
@@ -242,6 +244,43 @@ class BuildPreflightTests(unittest.TestCase):
                 state_fingerprint(
                     self.state(paths, dependencies=changed_dependencies)
                 ),
+            )
+
+    def test_assembly_resource_selects_ee_toolchain_fingerprint(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self.create_workspace(Path(directory))
+            workspace = paths["workspace"]
+            assembly = workspace / "src" / "runtime.S"
+            assembly.parent.mkdir()
+            assembly.write_text("nop\n", encoding="ascii")
+            injections_path = paths["builder"] / "catalog" / "injections.json"
+            injections = json.loads(injections_path.read_text(encoding="utf-8"))
+            injections["i__localization__enabled"]["payload"] = {
+                "runtime_asm": {
+                    "kind": "asm",
+                    "path": "src/runtime.S",
+                    "namespace": "runtime.asm",
+                    "imports": {},
+                    "fragments": {
+                        "runtime_code": {
+                            "order": 1,
+                            "object": "runtime.asm.text",
+                        }
+                    },
+                }
+            }
+            injections_path.write_text(
+                json.dumps(injections, indent=2) + "\n", encoding="utf-8"
+            )
+            toolchain = {"label": "ee_toolchain", "sha256": "A" * 64}
+            with mock.patch.object(
+                build_preflight, "ee_toolchain_entry", return_value=toolchain
+            ) as fingerprint_toolchain:
+                state = self.state(paths)
+            self.assertTrue(state["configuration_resources"]["uses_ee_compiler"])
+            self.assertEqual(toolchain, state["ee_toolchain"])
+            self.assertEqual(
+                workspace.resolve(), fingerprint_toolchain.call_args.args[0].resolve()
             )
 
     def test_builder_hash_excludes_non_composing_files_and_python_cache(self) -> None:

@@ -66,13 +66,15 @@ Derive and verify every pinned production replacement from the repository root:
   )
 ```
 
-Regenerate the reviewed Victory rows and hashes after an intentional source or
-strategy change:
+Regenerate the reviewed Victory texture rows and hashes after an intentional
+source or strategy change:
 
 ```powershell
 python scripts/research/ui_translation/generate_victory_texture_mappings.py --write
-python scripts/research/ui_translation/generate_victory_layout_patch.py --write
 ```
+
+The internal read-only Victory layout check verifies the stored layout
+definitions against their original NA2 and NUN5 derivation.
 
 Write a review-only generated extraction outside the source roots:
 

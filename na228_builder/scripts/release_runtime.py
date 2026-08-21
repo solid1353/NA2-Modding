@@ -78,7 +78,7 @@ def validate_packaged_release() -> int:
             workspace,
             feature_id,
         ):
-            if source.suffix.lower() == ".c":
+            if source.suffix in {".c", ".S"}:
                 packaged_object = source.with_name(source.name + ".o")
                 if not packaged_object.is_file():
                     raise FileNotFoundError(

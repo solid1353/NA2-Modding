@@ -161,18 +161,21 @@ from pathlib import Path
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
 from na228_builder.payload_builder.ee_c_fragments import (
-    compile_ee_c,
+    compile_ee_source,
     default_toolchain_bin,
 )
 
-compile_ee_c(
-    Path(sys.argv[2]),
+source = Path(sys.argv[2])
+compile_ee_source(
+    source,
     Path(sys.argv[3]),
+    language="asm" if source.suffix == ".S" else "c",
     toolchain_bin=default_toolchain_bin(repository),
 )
 '@
     foreach ($relative in @($resources | Sort-Object -Unique)) {
-        if (-not ([string]$relative).EndsWith('.c', [StringComparison]::OrdinalIgnoreCase)) {
+        $suffix = [IO.Path]::GetExtension([string]$relative)
+        if ($suffix -cne '.c' -and $suffix -cne '.S') {
             continue
         }
         $source = [IO.Path]::GetFullPath((Join-Path $repository $relative))

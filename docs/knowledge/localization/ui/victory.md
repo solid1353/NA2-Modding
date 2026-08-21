@@ -160,16 +160,18 @@ bool victory_rect(Rect* out, int character_id, int frame) {
 }
 ```
 
-`ui_layout_victory_names` preserves NA2's pointer-return ABI and generates the equivalent
-prebuilt records instead of replacing the renderer. The maintained
-`generate_victory_layout_patch.py` script verifies all four source identities,
-reads every NA2 pointer and NUN5 English row, and derives each complete
-24-byte replacement from the appropriate official NUN5 frame template plus
-the donor width. It emits 78 unique guarded records. Repeated NA2 pointers are
-deduplicated; all nineteen apparent alias conflicts are zero-versus-one-valid
-NUN5 row, never two conflicting nonzero widths. Records referenced only by
-zero-width NUN5 rows remain untouched so NA2-only or unused forms are not
-blanked without a donor equivalent.
+`ui_layout_victory_names` preserves NA2's pointer-return ABI and uses equivalent
+prebuilt records instead of replacing the renderer. The maintained read-only
+`generate_victory_layout_patch.py` check verifies all four source identities,
+reads every NA2 pointer and NUN5 English row, derives each complete 24-byte
+replacement from the appropriate official NUN5 frame template plus the donor
+width, and compares the result with the stored edit definitions. It derives 78
+concrete records represented by 77 definitions because one definition has two
+destination offsets. Repeated NA2 pointers are deduplicated; all nineteen
+apparent alias conflicts are zero-versus-one-valid NUN5 row, never two
+conflicting nonzero widths. Records referenced only by zero-width NUN5 rows
+remain untouched so NA2-only or unused forms are not blanked without a donor
+equivalent.
 
 A direct donor copy cannot express this change: NUN5 stores zero-width
 templates plus a separate localized table and synthesizes the final record at

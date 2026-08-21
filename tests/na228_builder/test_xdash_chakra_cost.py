@@ -107,19 +107,32 @@ class XdashChakraCostTests(unittest.TestCase):
             "battle_logic_xdash_charge_state",
         )
 
-        shim = injection["payload"]["xdash_pre_update_shim"]
+        assembly = injection["payload"]["xdash_chakra_cost_abi"]
         self.assertEqual(
-            shim["value"],
+            assembly["path"],
+            "src/battle_logic/xdash_chakra_cost_abi.S",
+        )
+        compiled = dict(
+            catalog._compile_source(
+                self.repository,
+                "battle_logic.runtime_injector",
+                "xdash_chakra_cost_abi",
+                assembly,
+                "xdash_chakra_cost_abi",
+            )
+        )
+        shim = compiled[114]
+        self.assertEqual(
+            shim.payload.hex().upper(),
             "F0FFBD270000BFAF0400A4AF0000000C000000000400A48F"
             "A038080C000000000000BF8F1000BD270800E00300000000",
         )
         self.assertEqual(
-            shim["relocations"]["call_pre_fighter_update"]["offset"],
-            "0xC",
-        )
-        self.assertEqual(
-            shim["relocations"]["call_pre_fighter_update"]["symbol"],
-            "battle_logic_xdash_pre_fighter_update",
+            [(0xC, "jal26", "battle_logic_xdash_pre_fighter_update", 0)],
+            [
+                (item.offset, item.kind, item.symbol, item.addend)
+                for item in shim.relocations
+            ],
         )
         self.assertEqual(
             injection["payload"]["battle_logic_xdash_charge_state"]["value"],

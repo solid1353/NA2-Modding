@@ -1035,6 +1035,7 @@ class CatalogTests(unittest.TestCase):
                 symbols={},
             )
             value = {
+                "kind": "c",
                 "path": "runtime.c",
                 "namespace": "runtime",
                 "imports": {},
@@ -1065,6 +1066,132 @@ class CatalogTests(unittest.TestCase):
             )
             compile_source.assert_not_called()
             toolchain.assert_not_called()
+
+    def test_runtime_assembly_uses_packaged_object_without_toolchain(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            source = repository / "runtime.S"
+            source.write_text("nop\n", encoding="ascii")
+            packaged_object = repository / "runtime.S.o"
+            packaged_object.write_bytes(b"packaged object")
+            extracted = catalog.ee_c_fragments.ExtractedEeObject(
+                fragments=(
+                    catalog.PayloadFragment(
+                        owner="feature.runtime_injector",
+                        symbol="runtime.text.entry",
+                        kind="code",
+                        alignment=4,
+                        payload=bytes(4),
+                    ),
+                ),
+                symbols={},
+            )
+            value = {
+                "kind": "asm",
+                "path": "runtime.S",
+                "namespace": "runtime",
+                "imports": {},
+                "fragments": {
+                    "runtime_code": {
+                        "object": "runtime.text.entry",
+                        "order": 1,
+                    }
+                },
+            }
+            with mock.patch.object(
+                catalog.ee_c_fragments, "extract_ee_object", return_value=extracted
+            ) as extract, mock.patch.object(
+                catalog.ee_c_fragments, "compile_and_extract"
+            ) as compile_source, mock.patch.object(
+                catalog.ee_c_fragments, "default_toolchain_bin"
+            ) as toolchain:
+                fragments = catalog._compile_source(
+                    repository,
+                    "feature.runtime_injector",
+                    "runtime_source",
+                    value,
+                    "feature.payload.runtime_source",
+                )
+            self.assertEqual(fragments[0][1].symbol, "runtime_code")
+            extract.assert_called_once_with(
+                packaged_object.resolve(),
+                namespace="runtime",
+                owner="feature.runtime_injector",
+                external_symbols={},
+            )
+            compile_source.assert_not_called()
+            toolchain.assert_not_called()
+
+    def test_runtime_source_kind_and_suffix_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            (repository / "runtime.c").write_text("nop\n", encoding="ascii")
+            base = {
+                "path": "runtime.c",
+                "namespace": "runtime",
+                "imports": {},
+                "fragments": {
+                    "runtime_code": {"object": "runtime.text", "order": 1}
+                },
+            }
+            with self.assertRaisesRegex(ValueError, "supported EE source language"):
+                catalog._compile_source(
+                    repository,
+                    "feature.runtime_injector",
+                    "runtime_source",
+                    {**base, "kind": "code"},
+                    "feature.payload.runtime_source",
+                )
+            with self.assertRaisesRegex(ValueError, "exact .S suffix"):
+                catalog._compile_source(
+                    repository,
+                    "feature.runtime_injector",
+                    "runtime_source",
+                    {**base, "kind": "asm"},
+                    "feature.payload.runtime_source",
+                )
+
+    def test_referenced_files_includes_selected_assembly_source(self) -> None:
+        source = '''{
+          runtime: setting {
+            description: "Assembly runtime.",
+            patches: ["i__feature__runtime"],
+          },
+        }'''
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            assembly = root / "src" / "runtime.S"
+            assembly.parent.mkdir()
+            assembly.write_text("nop\n", encoding="ascii")
+            catalog_path, configuration_path = self.write_project(
+                root,
+                {"feature": source},
+                {"feature": {"runtime": True}},
+                injections={
+                    "i__feature__runtime": {
+                        "description": "Assembly runtime.",
+                        "payload": {
+                            "runtime_source": {
+                                "kind": "asm",
+                                "path": "src/runtime.S",
+                                "namespace": "runtime",
+                                "imports": {},
+                                "fragments": {
+                                    "runtime_code": {
+                                        "order": 1,
+                                        "object": "runtime.text",
+                                    }
+                                },
+                            }
+                        },
+                    }
+                },
+            )
+            selection = catalog.load_selection(catalog_path, configuration_path)
+            self.assertEqual(
+                (assembly.resolve(),),
+                catalog.referenced_files(selection, root, "feature"),
+            )
 
 if __name__ == "__main__":
     unittest.main()

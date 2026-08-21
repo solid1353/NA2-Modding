@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile PS2 EE C and extract relocatable runtime-injector fragments.
+"""Compile PS2 EE C/assembly and extract relocatable injector fragments.
 
 The compiler produces an ordinary ELF32 little-endian MIPS relocatable object.
 This module converts its allocated sections and supported MIPS relocations into
@@ -47,6 +47,7 @@ SUPPORTED_RELOCATIONS = frozenset(
     {R_MIPS_32, R_MIPS_26, R_MIPS_HI16, R_MIPS_LO16}
 )
 IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
+SOURCE_SUFFIXES = {"c": ".c", "asm": ".S"}
 
 
 @dataclass(frozen=True)
@@ -127,18 +128,32 @@ def default_toolchain_bin(repository_root: Path) -> Path:
     )
 
 
-def compile_ee_c(
+def validate_source_language(source: Path, language: str) -> None:
+    """Require the canonical extension for one declared EE source language."""
+
+    expected = SOURCE_SUFFIXES.get(language)
+    if expected is None:
+        raise ValueError(f"Unsupported EE source language: {language!r}")
+    if source.suffix != expected:
+        raise ValueError(
+            f"EE {language} source must use the exact {expected} suffix: {source}"
+        )
+
+
+def compile_ee_source(
     source: Path,
     output_object: Path,
     *,
+    language: str,
     toolchain_bin: Path,
     include_dirs: Sequence[Path] = (),
     defines: Mapping[str, str | None] | None = None,
 ) -> None:
-    """Compile one C translation unit with the maintained deterministic flags."""
+    """Compile one EE C or assembly unit with deterministic project flags."""
 
     source = source.resolve()
     output_object = output_object.resolve()
+    validate_source_language(source, language)
     compiler = toolchain_bin.resolve() / "ee-gcc.exe"
     if not compiler.is_file():
         raise FileNotFoundError(compiler)
@@ -150,17 +165,24 @@ def compile_ee_c(
         "-w",
         "-D_EE",
         "-G0",
-        "-O2",
-        "-std=c99",
-        "-ffreestanding",
-        "-fno-builtin",
-        "-fno-common",
     ]
+    if language == "c":
+        command.extend(
+            (
+                "-O2",
+                "-std=c99",
+                "-ffreestanding",
+                "-fno-builtin",
+                "-fno-common",
+            )
+        )
+    else:
+        command.extend(("-x", "assembler-with-cpp"))
     for path in include_dirs:
         command.extend(("-I", str(path.resolve())))
     for name, value in sorted((defines or {}).items()):
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
-            raise ValueError(f"Invalid C preprocessor name: {name!r}")
+            raise ValueError(f"Invalid EE preprocessor name: {name!r}")
         command.append(f"-D{name}" if value is None else f"-D{name}={value}")
     command.extend(("-c", str(source), "-o", str(output_object)))
     environment = os.environ.copy()
@@ -177,8 +199,48 @@ def compile_ee_c(
     if result.returncode:
         detail = result.stderr.strip() or result.stdout.strip()
         raise RuntimeError(
-            f"EE C compilation failed ({result.returncode}): {detail}"
+            f"EE {language} compilation failed ({result.returncode}): {detail}"
         )
+
+
+def compile_ee_c(
+    source: Path,
+    output_object: Path,
+    *,
+    toolchain_bin: Path,
+    include_dirs: Sequence[Path] = (),
+    defines: Mapping[str, str | None] | None = None,
+) -> None:
+    """Compile one C translation unit with the maintained EE frontend."""
+
+    compile_ee_source(
+        source,
+        output_object,
+        language="c",
+        toolchain_bin=toolchain_bin,
+        include_dirs=include_dirs,
+        defines=defines,
+    )
+
+
+def compile_ee_assembly(
+    source: Path,
+    output_object: Path,
+    *,
+    toolchain_bin: Path,
+    include_dirs: Sequence[Path] = (),
+    defines: Mapping[str, str | None] | None = None,
+) -> None:
+    """Assemble one preprocessed source with the maintained EE frontend."""
+
+    compile_ee_source(
+        source,
+        output_object,
+        language="asm",
+        toolchain_bin=toolchain_bin,
+        include_dirs=include_dirs,
+        defines=defines,
+    )
 
 
 def _slice(blob: bytes, offset: int, length: int, label: str) -> bytes:
@@ -529,14 +591,16 @@ def compile_and_extract(
     *,
     namespace: str,
     toolchain_bin: Path,
+    language: str = "c",
     owner: str = "localization.runtime_injector",
     include_dirs: Sequence[Path] = (),
     defines: Mapping[str, str | None] | None = None,
     external_symbols: Mapping[str, SymbolReference] | None = None,
 ) -> ExtractedEeObject:
-    compile_ee_c(
+    compile_ee_source(
         source,
         output_object,
+        language=language,
         toolchain_bin=toolchain_bin,
         include_dirs=include_dirs,
         defines=defines,
@@ -586,6 +650,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("source", type=Path)
     parser.add_argument("--namespace", required=True)
+    parser.add_argument("--language", choices=("c", "asm"), default="c")
     parser.add_argument("--object", required=True, type=Path)
     parser.add_argument("--manifest", required=True, type=Path)
     parser.add_argument("--repository-root", type=Path, default=Path.cwd())
@@ -594,6 +659,7 @@ def main() -> int:
         arguments.source,
         arguments.object,
         namespace=arguments.namespace,
+        language=arguments.language,
         toolchain_bin=default_toolchain_bin(arguments.repository_root.resolve()),
     )
     arguments.manifest.parent.mkdir(parents=True, exist_ok=True)

@@ -1,10 +1,11 @@
-A “hook” is a small MIPS patch at an instruction the game already executes. It replaces that instruction with a jump or function call into our compiled C code.
+A “hook” is a small MIPS patch at an instruction the game already executes. It replaces that instruction with a jump or function call into resident payload code.
 
 The PS2 never runs C directly:
 
 ```text
-C source → EE MIPS compiler → relocatable code fragments
-         → assigned RAM addresses → original game instruction patched with j/jal
+C source ───────┐
+                ├→ EE compiler/object extractor → relocatable code fragments
+EE `.S` source ─┘   → assigned RAM addresses → game instruction patched with j/jal
 ```
 
 | | Font | Hot reload |
@@ -17,7 +18,10 @@ C source → EE MIPS compiler → relocatable code fragments
 
 ### Font
 
-1. The build compiles the registered files under `src/localization/font/` using the PS2 EE C compiler.
+1. The build compiles registered `.c` and `.S` files under
+   `src/localization/font/` using the same PS2 EE toolchain. C owns ordinary
+   logic; `.S` owns register-, delay-slot-, tail-call-, and rejoin-sensitive
+   native boundaries.
 
 2. The compiler output is split into named fragments such as:
 
@@ -50,7 +54,7 @@ Some hooks use `j` because the C function replaces a displaced instruction block
 
 Hot reload does not rebuild the ISO. The watcher:
 
-1. Detects a changed registered C source.
+1. Detects a changed registered EE C or assembly source.
 2. Compiles it into EE MIPS.
 3. Links it into the reserved development range `0x008F0000–0x008F3D00`.
 4. Pauses PCSX2 through PINE.

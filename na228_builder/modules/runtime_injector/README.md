@@ -1,6 +1,6 @@
 # Runtime injector module
 
-This reusable engine validates feature-owned resident code/data fragments,
+This runtime-injector pipeline validates feature-owned resident code/data fragments,
 their internal symbolic relocations, and guarded symbolic game-file hooks.
 It contributes fragments to the shared `payload_builder`; after the builder
 assigns final addresses, the composer resolves each hook template and this
@@ -13,7 +13,8 @@ Canonical production inputs are the shared
 `na228_builder/catalog/injections.json`, and referenced
 repository sources and assets.
 Catalog settings select injection units through `i__` patch IDs.
-There is no separate runtime-injector data directory.
+There is no separate runtime-injector data directory or standalone TSV package
+format; the catalog loader is the only declaration parser.
 
 Each root injection identity begins with `i__`, followed by its catalog
 ownership path and semantic unit identity. The root map and
@@ -22,9 +23,11 @@ fragments use concise local semantic identities rather than repeating their
 owner's catalog prefix. Optional nonempty injection and hook descriptions hold
 only definition-local purpose or provenance and never affect execution.
 
-A `payload` declaration is either a C source or a static code/data/rodata
-fragment. C sources contain their path, namespace, private imports, emitted
-fragment aliases, and optional ABI metadata. Static fragments contain their
+A `payload` declaration is either a C source, an assembly source, or a static
+data/rodata fragment. C and assembly sources contain their path, namespace,
+private imports, emitted fragment aliases, and optional ABI metadata. C uses
+`kind: "c"` with an exact `.c` suffix; preprocessed EE assembly uses
+`kind: "asm"` with an exact `.S` suffix. Static fragments contain their
 bytes or guarded blob, alignment, initialization marker, and private
 relocations. Shared declarations are stored once in an injection unit
 referenced by every consuming catalog leaf.

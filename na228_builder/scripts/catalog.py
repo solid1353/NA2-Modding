@@ -1357,7 +1357,11 @@ def _compile_source(
     value: dict[str, object],
     label: str,
 ) -> list[tuple[int, PayloadFragment]]:
+    language = value.get("kind")
+    if language not in {"c", "asm"}:
+        raise ValueError(f"{label}.kind is not a supported EE source language")
     source_path = _source_path(repository, value.get("path"), f"{label}.path")
+    ee_c_fragments.validate_source_language(source_path, str(language))
     namespace = value.get("namespace")
     if not isinstance(namespace, str) or not runtime_injector.IDENTIFIER.fullmatch(namespace):
         raise ValueError(f"{label}.namespace is invalid")
@@ -1403,11 +1407,12 @@ def _compile_source(
         )
     else:
         toolchain = ee_c_fragments.default_toolchain_bin(repository)
-        with tempfile.TemporaryDirectory(prefix="na2-catalog-c-") as temporary:
+        with tempfile.TemporaryDirectory(prefix="na2-catalog-ee-") as temporary:
             extracted = ee_c_fragments.compile_and_extract(
                 source_path,
                 Path(temporary) / f"{source_id}.o",
                 namespace=namespace,
+                language=str(language),
                 toolchain_bin=toolchain,
                 owner=owner,
                 external_symbols=imports,
@@ -1526,7 +1531,7 @@ def load_runtime_package(
     declared: list[tuple[int, PayloadFragment]] = []
     for _, injection_id, payload_id, raw in payload_entries(selection, feature_id):
         label = f"injections.{injection_id}.payload.{payload_id}"
-        if raw.get("kind") == "c":
+        if raw.get("kind") in {"c", "asm"}:
             declared.extend(_compile_source(repository, owner, payload_id, raw, label))
         else:
             declared.append(
@@ -1653,7 +1658,7 @@ def referenced_files(selection: CatalogSelection, repository: Path, feature_id: 
         for payload_id, raw in payload.items():
             if not isinstance(raw, dict):
                 continue
-            if raw.get("kind") == "c":
+            if raw.get("kind") in {"c", "asm"}:
                 files.add(
                     _source_path(
                         repository,

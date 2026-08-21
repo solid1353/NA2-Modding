@@ -22,7 +22,9 @@ integrated catalog data.
   may also select an adapter-backed fixed edit whose readable expected and
   replacement values are encoded by the adapter.
 - `catalog/injections.json` is the direct root map of runtime
-  injection units. Each unit contains `hooks`, `payload`, or both.
+  injection units. Each unit contains `hooks`, `payload`, or both. Source
+  payloads declare `kind: "c"` with an exact `.c` path or `kind: "asm"` with
+  an exact `.S` path; both use the same namespace/import/fragment mapping.
 - `catalog/string_patches.json` owns semantic transformations
   performed by the string patcher before inline and external string layout.
 - `configurations/base.json` contains the complete shared `features` tree.
@@ -217,7 +219,7 @@ explains the editable files in simple terms.
 The packaged EXE validates `config.json` against its embedded complete catalog
 and never reads the external catalog reference. It contains resources for every selectable
 catalog node, including nodes disabled by the default release selection.
-Catalog-owned runtime C sources have packaged objects, so end users do not need
+Catalog-owned runtime C and assembly sources have packaged objects, so end users do not need
 the project PS2 toolchain. Invalid configuration errors identify the exact path,
 supplied value, and expected type or shape. After a failure, the EXE creates or
 replaces `builder-error.log` with full exception details and stack traces rather

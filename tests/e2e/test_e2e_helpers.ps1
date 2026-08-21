@@ -259,11 +259,13 @@ param(
         -Condition (
             $replayInvocation.snapshots -and
             $replayInvocation.capture_mode -ceq 'screenshots' -and
+            $replayInvocation.play -ceq 'recording.p2m2' -and
             (Test-Path -LiteralPath (Join-Path $replayCapture 'screenshots\0001.png')) -and
             (Test-Path -LiteralPath (Join-Path $replayPool 'slot-01.lock')) -and
+            -not (Test-Path -LiteralPath (Join-Path $replayRecordings '__generated')) -and
             -not (Test-Path -LiteralPath (Join-Path $replayCapture 'sstates'))
         ) `
-        -Message 'E2E replay did not use the command pool or screenshot-only PCSX2 capture.'
+        -Message 'E2E replay did not use the canonical recording, command pool, or screenshot-only PCSX2 capture.'
 
     $practiceCapture = Join-Path $replayRepository 'practice-capture'
     Invoke-VisualRegressionPooledReplay `
@@ -1711,11 +1713,11 @@ foreach ($suiteName in $suites) {
     $fakeCaptureAttributes = Join-Path $fakeRepository 'e2e\captures\.gitattributes'
     $fakeCaptureIgnore = Join-Path $fakeRepository 'e2e\captures\.gitignore'
     $orphanCapture = Join-Path $fakeRepository 'e2e\captures\orphan'
-    $generatedRecording = Join-Path $fakeRecordings '__generated\transient.p2m2'
+    $nestedRecording = Join-Path $fakeRecordings 'nested\transient.p2m2'
     $movesetInputRecording = Join-Path $fakeRecordings 'characters\movesets\base.p2m2'
     [void](New-Item -ItemType Directory -Path $fakeCaptureGit, $orphanCapture -Force)
     [void](New-Item -ItemType Directory -Path `
-        ([IO.Path]::GetDirectoryName($generatedRecording)), `
+        ([IO.Path]::GetDirectoryName($nestedRecording)), `
         ([IO.Path]::GetDirectoryName($movesetInputRecording)) `
         -Force)
     [IO.File]::WriteAllText((Join-Path $fakeCaptureGit 'preserved.txt'), 'git metadata')
@@ -1730,7 +1732,7 @@ foreach ($suiteName in $suites) {
     [IO.File]::WriteAllText((Join-Path $orphanCapture 'stale.txt'), 'orphan history')
     $orphanSuite = Join-Path $fakeRecordings 'orphan.p2m2'
     [IO.File]::WriteAllText($orphanSuite, 'orphan suite')
-    [IO.File]::WriteAllText($generatedRecording, 'transient recording')
+    [IO.File]::WriteAllText($nestedRecording, 'nested recording')
     [IO.File]::WriteAllText($movesetInputRecording, 'generated suite input')
     & (Join-Path $fakeScripts 'create_suite.ps1') -All -NoReference
     $bulkSuiteNames = @(
@@ -1739,9 +1741,9 @@ foreach ($suiteName in $suites) {
     )
     Assert-E2eHelperTest `
         -Condition (
-            ($bulkSuiteNames -join ',') -ceq '__generated/transient,characters/idle,characters/movesets,orphan,renamed/with_reference,renamed/with_reference/child,test/no_reference' -and
+            ($bulkSuiteNames -join ',') -ceq 'characters/idle,characters/movesets,nested/transient,orphan,renamed/with_reference,renamed/with_reference/child,test/no_reference' -and
             (Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt') | Select-Object -Last 1) `
-                -ceq 'run suite=__generated/transient,orphan,renamed/with_reference,renamed/with_reference/child,test/no_reference,characters/movesets,characters/idle shifted=False' -and
+                -ceq 'run suite=nested/transient,orphan,renamed/with_reference,renamed/with_reference/child,test/no_reference,characters/movesets,characters/idle shifted=False' -and
             (Test-Path -LiteralPath (
                 Join-Path $fakeRepository 'e2e\captures\test\no_reference\current.txt'
             ) -PathType Leaf) -and
@@ -1799,7 +1801,7 @@ foreach ($suiteName in $suites) {
         -Condition (
             (Test-Path -LiteralPath $movesetInputRecording -PathType Leaf) -and
             (Test-Path -LiteralPath $orphanSuite -PathType Leaf) -and
-            (Test-Path -LiteralPath $generatedRecording -PathType Leaf) -and
+            (Test-Path -LiteralPath $nestedRecording -PathType Leaf) -and
             (Test-Path -LiteralPath $firstSuitePath -PathType Leaf) -and
             @(
                 Get-ChildItem `

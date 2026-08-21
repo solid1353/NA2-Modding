@@ -12,5 +12,4 @@ Desktop.ini
 __pycache__/
 
 # PCSX2
-pcsx2_files/input_recordings/__generated/
 *.ps2

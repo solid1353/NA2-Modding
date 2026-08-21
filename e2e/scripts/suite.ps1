@@ -1411,42 +1411,45 @@ function Invoke-VisualRegressionReplay {
         [Nullable[int]]$PracticeMovesetRow
     )
 
-    $generatedRecordingRoot = Join-Path $SharedRecordingRoot '__generated'
-    [void](New-Item -ItemType Directory -Path $generatedRecordingRoot -Force)
-    $stagedName = Join-Path `
-        '__generated' `
-        ('e2e-' + [guid]::NewGuid().ToString('N') + '.p2m2')
-    $stagedPath = Join-Path $SharedRecordingRoot $stagedName
-    try {
-        Copy-Item -LiteralPath $RecordingPath -Destination $stagedPath
-        Write-Host "[e2e] Replaying $Game"
-        . (Join-Path $Repository 'scripts\lib\paths.ps1')
-        $paths = Get-Na2Paths -ManifestPath (Join-Path $Repository 'paths.json')
-        $launchArguments = @{
-            Games = $Game
-            Play = $stagedName
-            Snapshots = $true
-            InputRecordingCaptureMode = 'screenshots'
-            CaptureDirectory = $CaptureRoot
-            InputRecordingsRoot = $SharedRecordingRoot
-            ProjectRoot = $Repository
-        }
-        if ($null -ne $PracticeMovesetRow) {
-            $practice = Get-VisualRegressionPracticeConfiguration `
-                -Repository $Repository `
-                -MovesetRow $PracticeMovesetRow `
-                -Game $Game
-            $launchArguments.ReadOnlySettings = $true
-            $launchArguments.PnachByGame = $practice.PnachByGame
-            $launchArguments.PnachLinesByGame = $practice.PnachLinesByGame
-        }
-        & $paths.files.pcsx2_game_launch_command @launchArguments
+    $resolvedRecordingRoot = [IO.Path]::GetFullPath($SharedRecordingRoot)
+    $resolvedRecordingPath = [IO.Path]::GetFullPath($RecordingPath)
+    $recordingPrefix = $resolvedRecordingRoot.TrimEnd(
+        [IO.Path]::DirectorySeparatorChar,
+        [IO.Path]::AltDirectorySeparatorChar
+    ) + [IO.Path]::DirectorySeparatorChar
+    if (-not $resolvedRecordingPath.StartsWith(
+        $recordingPrefix,
+        [StringComparison]::OrdinalIgnoreCase
+    )) {
+        throw "E2E recording must be inside $resolvedRecordingRoot."
     }
-    finally {
-        if (Test-Path -LiteralPath $stagedPath -PathType Leaf) {
-            Remove-Item -LiteralPath $stagedPath -Force
-        }
+    $recordingName = [IO.Path]::GetRelativePath(
+        $resolvedRecordingRoot,
+        $resolvedRecordingPath
+    )
+
+    Write-Host "[e2e] Replaying $Game"
+    . (Join-Path $Repository 'scripts\lib\paths.ps1')
+    $paths = Get-Na2Paths -ManifestPath (Join-Path $Repository 'paths.json')
+    $launchArguments = @{
+        Games = $Game
+        Play = $recordingName
+        Snapshots = $true
+        InputRecordingCaptureMode = 'screenshots'
+        CaptureDirectory = $CaptureRoot
+        InputRecordingsRoot = $SharedRecordingRoot
+        ProjectRoot = $Repository
     }
+    if ($null -ne $PracticeMovesetRow) {
+        $practice = Get-VisualRegressionPracticeConfiguration `
+            -Repository $Repository `
+            -MovesetRow $PracticeMovesetRow `
+            -Game $Game
+        $launchArguments.ReadOnlySettings = $true
+        $launchArguments.PnachByGame = $practice.PnachByGame
+        $launchArguments.PnachLinesByGame = $practice.PnachLinesByGame
+    }
+    & $paths.files.pcsx2_game_launch_command @launchArguments
 }
 
 function Enter-VisualRegressionConcurrencyPool {

@@ -47,6 +47,15 @@ PRINTF_FORMAT_TOKEN = re.compile(
     r"(?:hh|h|ll|l|j|z|t|L)?[diuoxXfFeEgGaAcspn]"
 )
 NUN5_QUOTED_SPAN = re.compile(r"@([^@\r\n]+)@")
+NUN5_MARKUP_EQUIVALENTS = {
+    "<iconOK>": "<iconCROSS>",
+}
+NUN5_FORMULA_SYMBOLS = {
+    "*": "*",
+    "=": "=",
+    "·": ".",
+    "%": "%",
+}
 VALID_TRANSFORMS = {
     "",
     "empty",
@@ -64,6 +73,8 @@ VALID_TRANSFORMS = {
     "insert_br_after_words",
     "append_space",
     "flatten_br_slice",
+    "escape_literal_percent",
+    "normalize_formula_symbol",
 }
 TARGET_RUNTIME_BASES = {
     "SLPS": 0x000FFF00,
@@ -557,17 +568,44 @@ def resolve_replacement_text(
                 f"{len(flattened)}"
             )
         resolved = flattened[start:end]
+    elif transform == "escape_literal_percent":
+        if (
+            "%" not in template
+            or "%%" in template
+            or POSITIONAL_FORMAT_TOKEN.search(template)
+            or PRINTF_FORMAT_TOKEN.search(template)
+        ):
+            raise ValueError(
+                f"{label}: escape_literal_percent requires an unescaped "
+                "literal percent"
+            )
+        resolved = template.replace("%", "%%")
+    elif transform == "normalize_formula_symbol":
+        match = re.fullmatch(r"( *)([*=·%])( *)", template)
+        if match is None:
+            raise ValueError(
+                f"{label}: normalize_formula_symbol requires one supported "
+                "formula symbol with optional spaces"
+            )
+        resolved = (
+            match.group(1)
+            + NUN5_FORMULA_SYMBOLS[match.group(2)]
+            + match.group(3)
+        )
     else:
         raise ValueError(f"{label}: unsupported transform {transform!r}")
     return normalize_fullwidth_ascii(prefix + resolved)
 
 
 def normalize_nun5_donor_markup(text: str) -> str:
-    """Resolve NUN5's paired at-sign quotation delimiters."""
-    return NUN5_QUOTED_SPAN.sub(
+    """Resolve NUN5 markup and semantic tokens for NA2 consumers."""
+    normalized = NUN5_QUOTED_SPAN.sub(
         lambda match: f'"{match.group(1)}"',
         text,
     )
+    for source, replacement in NUN5_MARKUP_EQUIVALENTS.items():
+        normalized = normalized.replace(source, replacement)
+    return normalized
 
 
 def select_replacement_template(row: dict[str, object]) -> str:
@@ -749,6 +787,8 @@ def parse_mappings(
             "between_placeholders",
             "after_placeholder2",
             "append_space",
+            "escape_literal_percent",
+            "normalize_formula_symbol",
         }:
             if arguments:
                 raise ValueError(f"{label}: {transform} does not accept arguments")
@@ -783,6 +823,14 @@ def parse_mappings(
         if NUN5_QUOTED_SPAN.search(row["donor"]) and row["replacement"]:
             raise ValueError(
                 f"{label}: NUN5 @...@ quotation markup is normalized centrally; "
+                "replacement must be blank"
+            )
+        if (
+            any(token in row["donor"] for token in NUN5_MARKUP_EQUIVALENTS)
+            and row["replacement"]
+        ):
+            raise ValueError(
+                f"{label}: NUN5 semantic icon markup is normalized centrally; "
                 "replacement must be blank"
             )
         reference_refs = parse_reference_refs(row["reference_refs"], label)

@@ -14,12 +14,13 @@ in [translation importer knowledge](../../knowledge/localization/translation_imp
 ## Mapping metadata
 
 - Canonical `mappings.tsv` rows: `2,088`
-- Canonical `mappings.tsv` SHA-256: `101AF784C6EA78425DB3DF70ABCBDCB99BCE21F68EBCD951FAC883C568F7A3BE`
+- Canonical `mappings.tsv` SHA-256: `CA8C3B10C41841E7B73F7F25320DFCDC377E9E1653ACE8FD24CD9D23B98B5B03`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the builder's configuration-resource fingerprint own content identity.
-`mappings.tsv` owns the canonical executable donor translations, overrides,
-and optional pointer inventory. Normal builds import only `mappings.tsv`. Root
+`mappings.tsv` owns the canonical executable donor translations, user
+overrides, and optional pointer inventory. Normal builds import only
+`mappings.tsv`. Root
 `catalog/string_patches.json` owns the guarded imported-title
 declaration, while root `settings.title` supplies its replacement;
 `string_patcher` applies that selected operation to the normal translation path.
@@ -35,11 +36,13 @@ Clean NA2 targets:
 NUN5 donor references and donor text are retained in the table for review,
 provenance, and executable translation. Normal builds do not read donor
 binaries: the verified `donor` text in the table is the default translation.
-A nonempty `replacement` is a user-editable override, and `prefix` is a
-user-editable string prepended to the selected translation. Official donor text
-and ordinary overrides remain complete. T30 uses the complete user-authored
-`Ultimate` translation and the validated pointer at `NA2_BTL@0x209CB4`; encoded
-fit therefore externalizes it automatically.
+A nonempty `replacement` is reserved for a direct user override, and `prefix`
+is a user-editable string prepended to the selected translation. Agent handling
+is defined by the [modding policy](../../policies/modding.md#binary-and-donor-changes).
+The current table uses verified official donors and contains no row-level
+replacements. T30 uses the exact `Ultimate` donor at `NUN5_TEXTENG@0xF208` and
+the validated pointer at `NA2_BTL@0x209CB4`; encoded fit therefore externalizes
+it automatically.
 
 Treat PCSX2 operator overlays and the underlying game screen as separate
 evidence. Compare NA2 and NUN5 memory-card formatting and data-creation flows by
@@ -92,15 +95,17 @@ label links through the exact pointer at `NA2_BTL@0x20A264`. T24 reuses the
 official Jump-mode help text. Paired screens correct T637 to `Hidden Leaf
 Village`, T638 to `Hidden Leaf Gate`, T744 to `Faint Unease`, and T767 to
 `Silent Confidence`. The paired Practice ss5 comparison corrects T1920's
-displayed title to `Charge Chakra`; the retained `Charge` donor is incomplete
-for this NA2 slot, so the complete visible title is stored as its override.
-T30 is the sole donorless row and uses user-authored
-`Ultimate`, externalized through `NA2_BTL@0x209CB4`. Donor-backed rows otherwise
-leave `replacement` blank and execute independently validated official donor
-text. NUN5 stores visible quotation spans as paired `@...@` delimiters. The
-importer normalizes that donor convention centrally to ASCII quotation marks
-before transforms or placement and rejects row-level overrides for the family.
-T1958 retains the established Cross-confirm override.
+displayed title to the exact `Charge Chakra` donor at
+`NUN5_TEXTENG@0xFB8`; the separate Command Chart T1926 row correctly retains
+`Charge` at `NUN5_SLES@0x513EB0`. T30 uses the exact `Ultimate` donor at
+`NUN5_TEXTENG@0xF208`, externalized through `NA2_BTL@0x209CB4`. All rows leave
+`replacement` blank and execute independently validated official donor text.
+NUN5 stores visible quotation spans as paired `@...@` delimiters and uses the
+semantic `<iconOK>` token for the confirm icon. The importer normalizes those
+conventions centrally to ASCII quotation marks and NA2's `<iconCROSS>` token
+before transforms or placement and rejects row-level overrides for either
+family. T2194 declares literal-percent escaping for its printf-style consumer,
+and T2195-T2198 declare one formula-symbol normalization transform.
 The paired Ninja Song passes add 25 displayed numeric/status/bonus fields, and
 the paired ss7 Movie pass adds the locked-title placeholder. This
 is an evidence-scoped English table, not a claim that uncaptured screens are
@@ -141,13 +146,16 @@ record by the accepted capture plan; equal text or family membership alone is
 not coverage. Coverage summaries count every entry independently, so a shared
 row contributes to each proven suite.
 
-`replacement` is a user-editable override field and is normally blank. The
+`replacement` is reserved for direct user edits and is normally blank. The
 importer selects nonempty `replacement` or otherwise `donor`, applies the
 declared transform, then prepends the user-editable `prefix`. For sequence rows,
 the prefix is applied to the first resulting fragment. Most rows require no
 transform. Paired `@...@` spans in official NUN5 donor text are decoded as
-quotation marks by the importer before those operations; the raw `donor` and
-`donor_ref` remain unchanged as provenance.
+quotation marks by the importer before those operations, and NUN5's semantic
+`<iconOK>` confirm token becomes NA2's `<iconCROSS>` token. The explicit
+`escape_literal_percent` and `normalize_formula_symbol` transforms handle the
+Ninja Song printf and formula consumers without changing their raw official
+donors. Raw `donor` and `donor_ref` values remain unchanged as provenance.
 
 `reference_refs` stores optional comma-separated pointer sites in the same
 `SOURCE@OFFSET` form. `parent_mapping_id` lets a continuation row reuse its
@@ -225,6 +233,7 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - NUN5 `<BLACK>` adopts a target's existing `<color000000>` form; otherwise it
   remains the native `<BLACK>` token supported by clean NA2 binaries.
 - `<RED>` is retained only where the target supports it.
+- NUN5 `<iconOK>` becomes NA2 `<iconCROSS>` for the shared confirm semantic.
 - Other shared color, icon, line-break, and control tags are preserved.
 
 

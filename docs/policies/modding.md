@@ -51,6 +51,9 @@
 - Prefer verified canonical NUN5 data/bytes when suitable. When donor data is
   unsuitable, document the intended NA2 behavior and evidence for replacement
   bytes.
+- The translation importer's `replacement` field is user-only. Agents leave it
+  blank; if a translation cannot be expressed through a verified donor and
+  centralized importer behavior, report that limitation to the user.
 - Every binary edit records its target, offset, destination guard, and
   replacement operation. Rationale and evidence belong in documentation, not
   executable fields.

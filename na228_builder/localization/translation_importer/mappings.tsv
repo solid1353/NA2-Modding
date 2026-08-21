@@ -24,7 +24,7 @@ T26	1	Battle or Practice Settings > label or running help	<r練習設定|れん�
 T27	1	Battle or Practice Settings > selector value	楽々	Simple			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B48	NUN5_SLES@0x514218	slot	8				
 T28	1	Battle or Practice Settings > selector value	ふつう	Normal			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B50	NUN5_SLES@0x514228	slot	8				
 T29	1	Battle or Practice Settings > selector value	激むず	Insane			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B58	NUN5_SLES@0x514238	slot	8				
-T30	1	Battle or Practice Settings > selector value	究極			Ultimate	inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B60		slot	8			NA2_BTL@0x209CB4	
+T30	1	Battle or Practice Settings > selector value	究極	Ultimate			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B60	NUN5_TEXTENG@0xF208	slot	8			NA2_BTL@0x209CB4	
 T31	1	Battle or Practice Settings > selector value	なし	None			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B68	NUN5_SLES@0x514240	slot	8				
 T32	1	Battle or Practice Settings > selector value	少なめ	Less			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B70	NUN5_SLES@0x514248	slot	8				
 T33	1	Battle or Practice Settings > selector value	多め	More			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B78	NUN5_SLES@0x514250	slot	8				
@@ -118,11 +118,11 @@ T2190	1	Battle Results > Ninja Song objective or bonus	なし	N/A			seen:ss1-5-p
 T2191	1	Battle Results > Ninja Song objective or bonus	<r発|はつ>	times			seen:ss1-5-paired-Ninja-Song	NA2_BTL@0x1E5BB0	NUN5_SLES@0x514310	slot	16	empty			
 T2192	1	Battle Results > Ninja Song objective or bonus	<r回|かい>	hits			seen:ss1-5-paired-Ninja-Song	NA2_BTL@0x1E5BA0	NUN5_SLES@0x514318	slot	16	empty			
 T2193	1	Battle Results > Ninja Song objective or bonus	<r個|こ>	Destroy breakable objects			seen:ss1-5-paired-Ninja-Song	NA2_BTL@0x1E5BD0	NUN5_TEXTENG@0x102F0	slot	16	empty			
-T2194	1	Battle Results > Ninja Song objective or bonus	<r体力|たいりょく>１００％ボーナス	100% Health bonus		100%% Health bonus	seen:ss10-paired-Ninja-Song	NA2_BTL@0x1E5A90	NUN5_TEXTENG@0x10480	slot	48				
-T2195	1	Battle Results > Ninja Song objective or bonus	" × "	" * "			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DA0	NUN5_SLES@0x514300	slot	8				
-T2196	1	Battle Results > Ninja Song objective or bonus	" ＝ "	" = "			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DA8	NUN5_SLES@0x514304	slot	8				
-T2197	1	Battle Results > Ninja Song objective or bonus	･	·		.	seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DB8	NUN5_SLES@0x51430C	slot	8				
-T2198	1	Battle Results > Ninja Song objective or bonus	％	%			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DC0	NUN5_SLES@0x514320	slot	4				
+T2194	1	Battle Results > Ninja Song objective or bonus	<r体力|たいりょく>１００％ボーナス	100% Health bonus			seen:ss10-paired-Ninja-Song	NA2_BTL@0x1E5A90	NUN5_TEXTENG@0x10480	slot	48	escape_literal_percent			
+T2195	1	Battle Results > Ninja Song objective or bonus	" × "	" * "			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DA0	NUN5_SLES@0x514300	slot	8	normalize_formula_symbol			
+T2196	1	Battle Results > Ninja Song objective or bonus	" ＝ "	" = "			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DA8	NUN5_SLES@0x514304	slot	8	normalize_formula_symbol			
+T2197	1	Battle Results > Ninja Song objective or bonus	･	·			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DB8	NUN5_SLES@0x51430C	slot	8	normalize_formula_symbol			
+T2198	1	Battle Results > Ninja Song objective or bonus	％	%			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DC0	NUN5_SLES@0x514320	slot	4	normalize_formula_symbol			
 T98	1	Collection > Characters > Ultimate Jutsu name	<r朝孔雀|あさくじゃく>	Morning Peacock			e2e:collection/ultimates	NA2_ETC@0x26180	NUN5_TEXTENG@0x33B0	slot	24				
 T99	1	Collection > Characters > Ultimate Jutsu name	<r忍法|にんぽう>・<r影縫|かげぬ>い	Ninja Art: Shadow Sew			e2e:collection/ultimates	NA2_ETC@0x26210	NUN5_TEXTENG@0x3410	slot	40				
 T100	1	Collection > Characters > Ultimate Jutsu name	<r部分倍化|ぶぶんばいか>の<r術|じゅつ>	Partial Expansion Jutsu			e2e:collection/ultimates	NA2_ETC@0x262C0	NUN5_TEXTENG@0x3490	slot	40				
@@ -1962,7 +1962,7 @@ T1916	1	Command Chart > shared control name or help text	<r変|か>わり<r身|�
 T1917	1	Command Chart > shared control name or help text	<r受|う>け<r身|み>	Rebound			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209760	NUN5_SLES@0x513EE0	slot	32				
 T1918	1	Command Chart > shared control name or help text	<r追|お>い<r討|う>ち	Extra Hit			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209780	NUN5_TEXTENG@0xF88	slot	32				
 T1919	1	Command Chart > shared control name or help text	<r追|お>い<r討|う>ち<r返|がえ>し	Extra Hit Counter			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2097A0	NUN5_TEXTENG@0xFA0	slot	48				
-T1920	1	Command Chart and Practice explanations > shared control title	チャクラをためる	Charge		Charge Chakra	seen:Font paired Practice ss5, 2026-07-27; inferred:Command Chart shared control family	NA2_BTL@0x2097D0	NUN5_SLES@0x513EB0	slot	32				
+T1920	1	Command Chart and Practice explanations > shared control title	チャクラをためる	Charge Chakra			seen:Font paired Practice ss5, 2026-07-27; inferred:Command Chart shared control family	NA2_BTL@0x2097D0	NUN5_TEXTENG@0xFB8	slot	32				
 T1921	1	Command Chart > shared control name or help text	<r奥|おく>へ<r軸移動|じくいどう>	Side-jump Back			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209810	NUN5_TEXTENG@0xFC8	slot	48				
 T1922	1	Command Chart > shared control name or help text	<r手前|てまえ>へ<r軸移動|じくいどう>	Side-jump Forward			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209840	NUN5_TEXTENG@0xFE0	slot	48				
 T1923	1	Command Chart > shared control name or help text	ガード<r崩|くず>し	Guard Break			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209870	NUN5_TEXTENG@0xFF8	slot	32				
@@ -2000,7 +2000,7 @@ T1954	1	Options > Control Settings > assigned action or toggle	攻撃	Attack			s
 T1955	1	Options > Control Settings > assigned action or toggle	ガード	Guard			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x504740	NUN5_SLES@0x4AFD6D	slot	8				
 T1956	1	Options > Control Settings > assigned action or toggle	オフ	Off			seen:replacement-validation-control-settings-vibration-case	NA2_SLPS@0x504748	NUN5_SLES@0x513EF8	slot	8				
 T1957	1	Options > Control Settings > assigned action or toggle	オン	On			seen:replacement-validation-control-settings-vibration-case	NA2_SLPS@0x504750	NUN5_SLES@0x513EFC	slot	8				
-T1958	1	Options > Control Settings > instructions or reset result	<r変更|へんこう>したいボタン・<r項目|こうもく>を<iconOK>ボタンで<r選択|せんたく>し、<r方向|ほうこう>キー<r左右|さゆう>で<r操作|そうさ>を<r変更|へんこう>してください。	Press <iconOK> to select the button/item to change. Press the left directional button or right directional button to change controls.		Press <iconCROSS> to select the button/item to change. Press the left directional button or right directional button to change controls.	seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2230	NUN5_TEXTENG@0x1240	slot	176				
+T1958	1	Options > Control Settings > instructions or reset result	<r変更|へんこう>したいボタン・<r項目|こうもく>を<iconOK>ボタンで<r選択|せんたく>し、<r方向|ほうこう>キー<r左右|さゆう>で<r操作|そうさ>を<r変更|へんこう>してください。	Press <iconOK> to select the button/item to change. Press the left directional button or right directional button to change controls.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2230	NUN5_TEXTENG@0x1240	slot	176				
 T1959	1	Options > Control Settings > instructions or reset result	１Ｐの<r操作設定|そうさせってい>をデフォルトに<r戻|もど>しました。	1P controls restored to defaults.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B22E0	NUN5_TEXTENG@0x12D0	slot	80				
 T1960	1	Options > Control Settings > instructions or reset result	２Ｐの<r操作設定|そうさせってい>をデフォルトに<r戻|もど>しました。	2P controls restored to defaults.			inferred:control-settings-sibling-table	NA2_SLPS@0x4B2330	NUN5_TEXTENG@0x1300	slot	80				
 T1961	1	Practice Settings > label or running help	案内忍音声	Guide Ninja Sound			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A788	NUN5_TEXTENG@0xF8D0	slot	16			NA2_BTL@0x20A7E0	

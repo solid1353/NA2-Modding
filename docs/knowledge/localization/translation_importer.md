@@ -343,6 +343,12 @@ outside the translation importer.
 
 ## Durable resolved mappings
 
+- T30's Battle/Practice selector is not donorless: NUN5 stores the exact
+  standalone `Ultimate` string at `TEXTENG.BIN` `0xF208`. The NA2 row retains
+  its validated `BTL.BIN` pointer at `0x209CB4` for external placement.
+- T1920's Practice title selects the standalone `Charge Chakra` string at NUN5
+  `TEXTENG.BIN` `0xFB8`. It must not reuse the SLES `Charge` string at
+  `0x513EB0`, which belongs to the separate T1926 Command Chart qualifier.
 - Collection's confirmed selector label uses official `Opponent`; its paired
   screen established that the missing mapping, not layout, caused the Japanese
   label.

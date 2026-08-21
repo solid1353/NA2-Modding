@@ -266,6 +266,56 @@ class TranslationImporterTests(unittest.TestCase):
             "Quit Battle",
         )
 
+    def test_literal_percent_is_escaped_by_an_explicit_transform(self) -> None:
+        row = {
+            "donor": "100% Health bonus",
+            "prefix": "",
+            "replacement": "",
+            "transform": "escape_literal_percent",
+            "arguments": {},
+        }
+        self.assertEqual(
+            engine.resolve_replacement_text(row, "literal-percent"),
+            "100%% Health bonus",
+        )
+
+    def test_literal_percent_transform_rejects_format_tokens(self) -> None:
+        for donor in ("Score %1", "Score %04d", "Score %%"):
+            with self.subTest(donor=donor):
+                row = {
+                    "donor": donor,
+                    "prefix": "",
+                    "replacement": "",
+                    "transform": "escape_literal_percent",
+                    "arguments": {},
+                }
+                with self.assertRaisesRegex(
+                    ValueError,
+                    "requires an unescaped literal percent",
+                ):
+                    engine.resolve_replacement_text(row, "literal-percent")
+
+    def test_formula_symbol_transform_preserves_spacing(self) -> None:
+        expected = {
+            " * ": " * ",
+            " = ": " = ",
+            "·": ".",
+            "%": "%",
+        }
+        for donor, resolved in expected.items():
+            with self.subTest(donor=donor):
+                row = {
+                    "donor": donor,
+                    "prefix": "",
+                    "replacement": "",
+                    "transform": "normalize_formula_symbol",
+                    "arguments": {},
+                }
+                self.assertEqual(
+                    engine.resolve_replacement_text(row, "formula-symbol"),
+                    resolved,
+                )
+
     def test_fullwidth_ascii_is_normalized_only_in_resolved_output(self) -> None:
         row = {
             "donor": "ＭＡＸ　Ｄａｍａｇｅ！",
@@ -290,6 +340,19 @@ class TranslationImporterTests(unittest.TestCase):
         self.assertEqual(
             engine.resolve_replacement_text(row, "quoted-title"),
             'Ninja Art: Beast Scroll Replicas "Wild Dog" ',
+        )
+
+    def test_nun5_ok_icon_materializes_as_na2_cross(self) -> None:
+        row = {
+            "donor": "Press <iconOK> to select.",
+            "prefix": "",
+            "replacement": "",
+            "transform": "",
+            "arguments": {},
+        }
+        self.assertEqual(
+            engine.resolve_replacement_text(row, "confirm-icon"),
+            "Press <iconCROSS> to select.",
         )
 
     def test_nun5_quote_materialization_preserves_raw_donor_evidence(self) -> None:
@@ -342,6 +405,31 @@ class TranslationImporterTests(unittest.TestCase):
         with self.assertRaisesRegex(
             ValueError,
             "quotation markup is normalized centrally",
+        ):
+            engine.parse_mappings([row])
+
+    def test_nun5_ok_icon_rejects_row_level_override(self) -> None:
+        row = {
+            "id": "MTEST",
+            "enabled": "1",
+            "display_context": "Options > instructions",
+            "display_basis": "seen:test-fixture",
+            "mode": "slot",
+            "source_ref": "NA2_SLPS@0",
+            "donor_ref": "NUN5_TEXTENG@0x10",
+            "capacity": "80",
+            "source": "Japanese instructions",
+            "donor": "Press <iconOK> to select.",
+            "prefix": "",
+            "replacement": "Press <iconCROSS> to select.",
+            "transform": "",
+            "arguments": "",
+            "reference_refs": "",
+            "parent_mapping_id": "",
+        }
+        with self.assertRaisesRegex(
+            ValueError,
+            "semantic icon markup is normalized centrally",
         ):
             engine.parse_mappings([row])
 

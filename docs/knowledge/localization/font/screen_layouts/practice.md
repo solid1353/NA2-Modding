@@ -32,7 +32,7 @@ Supplied Practice slots 2-7 were converted with exact source hashes and guarded
 memory edits because a savestate restores its captured BTL overlay and resident
 RAM over the worker ISO. The converted task-owned states and manifests are
 under
-`work/Font/artifacts/autofit_v2/practice_explanations/`. Hidden 640x480
+`@work/Font/artifacts/autofit_v2/practice_explanations/`. Hidden 640x480
 captures show:
 
 - `ss2`: the Manual Linked Attack explanation wraps to two lines;
@@ -63,9 +63,9 @@ Deterministic fragment and relocation tables have SHA-256
 and
 `CB45E870106EF9E95C29947922BEC5F4CC640DBCE044CC2AA9AEC8F60BA703C4`.
 The grouped comparison sheets are
-`work/Font/artifacts/autofit_v2/practice_explanations/report/practice-explanations-02-04.png`
+`@work/Font/artifacts/autofit_v2/practice_explanations/report/practice-explanations-02-04.png`
 and
-`work/Font/artifacts/autofit_v2/practice_explanations/report/practice-explanations-05-07.png`.
+`@work/Font/artifacts/autofit_v2/practice_explanations/report/practice-explanations-05-07.png`.
 The family is runtime-proven and enabled; the grids still await user
 acceptance before work begins on another caller family.
 
@@ -101,8 +101,8 @@ not establish persistent ownership of the helper interval.
 Evidence date: 2026-08-02.
 
 The paired 2026-07-31 Practice Settings inputs are retained under
-`work/Font/inputs/sstates/batches/2026-07-31-practice-settings-ss1/` and
-`work/Font/inputs/sstates/batches/2026-07-31-practice-settings-ss3/`, with
+`@work/Font/inputs/sstates/batches/2026-07-31-practice-settings-ss1/` and
+`@work/Font/inputs/sstates/batches/2026-07-31-practice-settings-ss3/`, with
 matching extracted screenshots and provenance in their sibling input trees.
 The ss1 state selects `Attack`; ss3 selects `Extra Hit Counter`.
 

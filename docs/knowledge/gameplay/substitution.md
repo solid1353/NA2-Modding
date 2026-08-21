@@ -349,7 +349,7 @@ at the defender's `+0xE50` or `+0xE54` normally maps against the attacker's
 table, not the defender's.
 
 For the clean boot ELF, every character row currently catalogued in
-`resources/character_data.tsv` has a zero optional base at metadata `+0x30` and
+`@resources/character_data.tsv` has a zero optional base at metadata `+0x30` and
 uses the primary base at `+0x2C`. The exact timing-byte virtual address for
 record index `i` is:
 
@@ -363,7 +363,7 @@ Any file-backed implementation must guard the original byte at that computed
 offset; a virtual address must not be mistaken for its file offset.
 
 A complete read-only scan of the 74 primary-roster tables in
-`resources/character_data.tsv` found 3,428 action records with these raw timing
+`@resources/character_data.tsv` found 3,428 action records with these raw timing
 values:
 
 | Raw `+0x1A` | Record count | Predicate policy |
@@ -526,7 +526,7 @@ and reports whether the substitution block bit is also mutated. The live lab
 includes the same warning fields whenever it resolves one of these records.
 
 The read-only catalog command reproduces the full join directly from the
-hash-pinned clean ELF, `resources/character_data.tsv`, and the canonical
+hash-pinned clean ELF, `@resources/character_data.tsv`, and the canonical
 translation mappings:
 
 ```powershell
@@ -723,9 +723,9 @@ stepping, agent-only requests, and one command per connection. The minimal
 reload repair is to abort and neutralize agent control before `Deinitialize()`
 joins, with the step wait predicate observing that abort.
 
-Workshop `scripts/pcsx2/pine.py` owns the protocol client and full-state
+`@pcsx2_scripts/pine.py` owns the protocol client and full-state
 encoder. This repository's
-`scripts/research/substitution/agent_lab.ps1` is the maintained entrypoint for
+`@scripts/research/substitution/agent_lab.ps1` is the maintained entrypoint for
 substitution work. With an agent-capable PCSX2 VM already paused, its basic
 operations are:
 

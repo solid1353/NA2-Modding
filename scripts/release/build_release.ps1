@@ -115,19 +115,22 @@ from pathlib import Path
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
 from na228_builder.scripts.configuration import configuration_resource_files, load_configuration
+from scripts.lib.paths import load_local_paths
 
 marker = Path(sys.argv[3]).resolve()
+paths = load_local_paths(repository, allow_missing=True)
 configuration = load_configuration(
     Path(sys.argv[2]),
     repository,
-    repository / "na228_builder",
+    paths.path("builder"),
+    project_paths=paths,
     root_overrides={"na2": marker, "nun5": marker},
 )
 excluded = {Path(sys.argv[2]).resolve()}
 if configuration.selection.base_configuration_path is not None:
     excluded.add(configuration.selection.base_configuration_path.resolve())
 if configuration.character_overrides is not None:
-    configuration_root = repository / "na228_builder" / "configurations"
+    configuration_root = paths.path("builder", "configurations")
     excluded.update(
         path.resolve()
         for path in configuration.character_overrides.resource_files
@@ -145,7 +148,10 @@ print(json.dumps([
     $resources += @(
         [IO.Path]::GetRelativePath($repository, $paths.ManifestPath).Replace('\', '/'),
         [IO.Path]::GetRelativePath($repository, $manifestPath).Replace('\', '/'),
-        'na228_builder/payload_builder/config.tsv'
+        [IO.Path]::GetRelativePath(
+            $repository,
+            (Join-Path $paths.builder 'payload_builder\config.tsv')
+        ).Replace('\', '/')
     )
     foreach ($relative in @($resources | Sort-Object -Unique)) {
         $source = [IO.Path]::GetFullPath((Join-Path $repository $relative))
@@ -223,9 +229,12 @@ from pathlib import Path
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
 from na228_builder.scripts.catalog import materialized_configuration
+from scripts.lib.paths import load_local_paths
+
+paths = load_local_paths(repository, allow_missing=True)
 
 print(json.dumps(materialized_configuration(
-    repository / "na228_builder" / "catalog",
+    paths.path("builder", "catalog"),
     Path(sys.argv[2]),
 ), indent=2))
 '@
@@ -248,10 +257,14 @@ from na228_builder.scripts.character_overrides import (
     load_character_overrides,
     render_character_overrides,
 )
+from scripts.lib.paths import load_local_paths
+
+paths = load_local_paths(repository, allow_missing=True)
 
 configuration = load_character_overrides(
     Path(sys.argv[2]),
-    repository / "na228_builder",
+    paths.path("builder"),
+    paths.path("resources", "character_data.tsv"),
 )
 print(render_character_overrides(configuration), end="")
 '@
@@ -273,8 +286,11 @@ from pathlib import Path
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
 from na228_builder.scripts.catalog import public_catalog
+from scripts.lib.paths import load_local_paths
 
-print(public_catalog(repository / "na228_builder" / "catalog"), end="")
+paths = load_local_paths(repository, allow_missing=True)
+
+print(public_catalog(paths.path("builder", "catalog")), end="")
 '@
     $catalogText = @(& $python -B -c $catalogProbe $repository)
     if ($LASTEXITCODE -ne 0) {

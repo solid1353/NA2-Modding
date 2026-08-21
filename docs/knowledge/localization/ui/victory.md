@@ -8,7 +8,7 @@ character-name artwork, while NUN5 rendered the English equivalents. The
 canonical source members are under the configured `@source_na2/` and
 `@source_nun5/` extractions; exact identities for every selected member remain
 machine-verifiable in
-`na228_builder/localization/texture_patcher/containers.tsv`.
+`@builder/localization/texture_patcher/containers.tsv`.
 
 The shared emblem and the two fixed-capacity character exceptions have these
 raw gzip identities:
@@ -72,7 +72,7 @@ Two members require deterministic mapped exceptions:
 
 No replacement CCS blob or authored raster asset is stored. The maintained
 generator
-`scripts/research/ui_translation/generate_victory_texture_mappings.py`
+`@scripts/research/ui_translation/generate_victory_texture_mappings.py`
 enumerates all 78 family members from both canonical source filesystems,
 requires their inventories to match, structurally excludes only the four
 members without `TEX_name`, rejects any unclassified decoded visual

@@ -1,7 +1,7 @@
 # NA2 end-to-end tests
 
 This directory contains main-repository E2E infrastructure and configuration.
-Canonical recordings live under `pcsx2_files/input_recordings/e2e/`. Accepted
+Canonical recordings live under `@pcsx2_input_recordings/e2e/`. Accepted
 screenshot history is stored in the
 nested local Git repository at `captures/`.
 
@@ -26,7 +26,7 @@ suites with independent arguments. The generated `movesets` and
 inclusive row range, such as `8` or `8-18`; omitting the argument selects every
 character row. Other current suites accept no arguments.
 
-`movesets` expands `resources/movesets.tsv` over the fixed base and
+`movesets` expands `@resources/movesets.tsv` over the fixed base and
 specials recordings and publishes per-character base, unique awakening-mode,
 and specials grids. Select `movesets/base` or `movesets/specials` to update
 only that output family.
@@ -50,7 +50,7 @@ Every normal and shifted capture must match.
 
 `e2e create all` replaces all capture history except the nested capture
 repository's `.git` metadata. It processes every `.p2m2` recording below
-`pcsx2_files/input_recordings/e2e/` except the inputs owned by the two generated
+`@pcsx2_input_recordings/e2e/` except the inputs owned by the two generated
 character suites, prepares one build, and runs
 every suite's normal replay concurrently. NUN5 reference replays run
 concurrently by default; use `-noref` to skip reference capture. A suite
@@ -196,5 +196,5 @@ series named `page_<n>_a_reference.png` and `page_<n>_b_current.png`.
 `all/` reuses those pages alongside `page_<n>_c_blend.png` and
 `page_<n>_d_diff.png`.
 
-Build provenance remains under `logs/na228/builds/` and output-specific
-preflight receipts under `logs/na228/preflight/`.
+Build provenance remains under `@logs/na228/builds/` and output-specific
+preflight receipts under `@logs/na228/preflight/`.

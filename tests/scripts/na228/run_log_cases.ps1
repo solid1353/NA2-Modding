@@ -191,8 +191,8 @@ function Get-Na2StartupFastForwardFrames {
     "game_catalog": "@repository/games.json",
     "settings": "@repository/game.json",
     "game_resolver": "@scripts/lib/resolve_game.py",
-    "pcsx2_launch_command": "@scripts/pcsx2/launch.ps1",
-    "pcsx2_game_launch_command": "@scripts/pcsx2/launch_games.ps1",
+    "pcsx2_launch_command": "@pcsx2_scripts/launch.ps1",
+    "pcsx2_game_launch_command": "@pcsx2_scripts/launch_games.ps1",
     "workshop_command": "@repository/workshop.ps1",
     "release_publish_command": "@scripts/release/publish_release.ps1"
   }
@@ -244,6 +244,21 @@ parser.add_argument("selector")
 parser.add_argument("--project-root", type=Path, required=True)
 args = parser.parse_args()
 root = args.project_root.resolve()
+manifest = json.loads((root / "paths.json").read_text(encoding="utf-8"))
+resolved_roots = {}
+
+def configured_root(name):
+    if name in resolved_roots:
+        return resolved_roots[name]
+    raw = manifest["roots"][name]
+    if raw.startswith("@"):
+        parent, _, child = raw[1:].partition("/")
+        value = configured_root(parent) / child
+    else:
+        value = root / raw
+    resolved_roots[name] = value.resolve()
+    return resolved_roots[name]
+
 name = args.selector
 builds = {
     "latest": "Latest",
@@ -256,24 +271,25 @@ aliases = {"l": "latest", "p": "previous", "m": "manual"}
 name = aliases.get(name.casefold(), name)
 if name in builds:
     title = "Narutimate Accel v2.28"
+    bundle = configured_root("pcsx2_files") / "games" / "NA228"
     result = {
-        "iso": str(root / "build" / f"{title} - {builds[name]}.iso"),
+        "iso": str(configured_root("build") / f"{title} - {builds[name]}.iso"),
         "postfix": builds[name],
-        "cheats": str(root / "pcsx2_files" / "games" / "NA228" / "NA228.pnach"),
-        "game_settings": str(root / "pcsx2_files" / "games" / "NA228" / "NA228.ini"),
-        "memory_card": str(root / "pcsx2_files" / "games" / "NA228" / "NA228.ps2"),
-        "input_profile": str(root / "pcsx2_files" / "input_profiles" / "Default_Base.ini"),
+        "cheats": str(bundle / "NA228.pnach"),
+        "game_settings": str(bundle / "NA228.ini"),
+        "memory_card": str(bundle / "NA228.ps2"),
+        "input_profile": str(configured_root("pcsx2_input_profiles") / "Default_Base.ini"),
     }
 else:
     canonical = name.upper()
-    bundle = root / "pcsx2_files" / "games" / canonical
+    bundle = configured_root("pcsx2_files") / "games" / canonical
     result = {
-        "iso": str(root / "source" / f"{canonical}.iso"),
-        "extracted": str(root / "source" / f"{canonical}.iso.files"),
+        "iso": str(configured_root("source") / f"{canonical}.iso"),
+        "extracted": str(configured_root("source") / f"{canonical}.iso.files"),
         "cheats": str(bundle / f"{canonical}.pnach"),
         "game_settings": str(bundle / f"{canonical}.ini"),
         "memory_card": str(bundle / f"{canonical}.ps2"),
-        "input_profile": str(root / "pcsx2_files" / "input_profiles" / "Default_Base.ini"),
+        "input_profile": str(configured_root("pcsx2_input_profiles") / "Default_Base.ini"),
     }
 print(json.dumps(result))
 '@
@@ -510,7 +526,7 @@ if ($CacheConfiguration) {
     Write-Host '[na228] ISO result: cache (reused); rotation: no; PCSX2 left running.'
     [pscustomobject]@{
         Status = 'cache'
-        OutputIso = 'work\cache\isos\FAKE.iso'
+        OutputIso = '@cache/isos/FAKE.iso'
         ChangedRoles = [string[]]@()
     }
 }
@@ -1042,7 +1058,7 @@ Add-Content `
     Assert-Na2Test `
         -Condition (
             $configuredCacheDispatch -match '\[fake\] cache configuration=dev' -and
-            $configuredCacheDispatch -match 'work\\cache\\isos\\FAKE\.iso'
+            $configuredCacheDispatch -match '@cache/isos/FAKE\.iso'
         ) `
         -Message 'Root cache-build command did not return the selected configuration cache path.'
     & (Join-Path $fakeRepository 'na228.ps1') build l

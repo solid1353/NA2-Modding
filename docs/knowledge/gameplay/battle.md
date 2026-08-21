@@ -147,11 +147,11 @@ patches the clean state-`15` call at `0x001ECACC` from `FUN_001edb70` to the
 battle wrapper at `0x001ED4CC`; that wrapper calls `FUN_001edb70` first. No
 write reaches the next native function.
 
-`pcsx2_files/cheats/practice/NA228p.pnach` owns the complete NA2.28 bootstrap,
-while `pcsx2_files/cheats/practice/NUN5p.pnach` owns its separately ported startup and bootstrap
+`@pcsx2_cheats/practice/NA228p.pnach` owns the complete NA2.28 bootstrap,
+while `@pcsx2_cheats/practice/NUN5p.pnach` owns its separately ported startup and bootstrap
 code at `0x003D0C60..0x003D0FF8`. The normal
 `-l practice <row>` launch-profile selector maps `practice` to
-`pcsx2_files/cheats/practice/`, reads one physical `movesets.tsv` row starting
+`@pcsx2_cheats/practice/`, reads one physical `movesets.tsv` row starting
 at row 2, and passes a different three-line character/support/awakening address
 set to each selected game. A row with `reversal` set to `Y` adds the native
 half-HP initializer write as a fourth line: `0x001E7AE8 = 0xA0850001` for
@@ -347,7 +347,7 @@ chained `0x23`, and controller-owned `0x57`.
 
 The earlier generalized controller route was replayed independently with Player 1
 Rock Lee (`67`) and configured effect `0x44`. In retained capture
-`work/QoL/captures/bootstrap/controller-awakening-generalized-v1`, marker
+`@work/QoL/captures/bootstrap/controller-awakening-generalized-v1`, marker
 `0001` was in live Practice manager state/substate `4/3`, the fighter's sole
 effect was `0x44`, fighter `+0x8E8` was `0x44`, and fighter `+0x63` had native
 awakened bit `0x20` set. Later recording inputs removed and reapplied the effect
@@ -495,7 +495,7 @@ m = 0.5 - ((d - 1.5) / 1.5) * 0.2              when d >= 1.5
 ```
 
 The `default_hp` column in
-[`resources/character_data.tsv`](../../../resources/character_data.tsv) expresses
+[`@resources/character_data.tsv`](../../../resources/character_data.tsv) expresses
 neutral effective base HP as `100 / m`. This isolates the static durability
 parameter; attacker offense and temporary battle-state multipliers are
 separate factors in `FUN_00224e30`. The default-HP values are derived balance
@@ -600,7 +600,7 @@ Mode Select outcome.
 
 The synchronized replay used the immutable Manual cache whose ISO SHA-256 is
 `4773DEFAB12C7926980D8D6B7D6505BF5021FE105A5BD411ECFEA6EFA366A5CD`,
-`pcsx2_files/cheats/practice/NA228p.pnach`, read-only emulator settings, and
+`@pcsx2_cheats/practice/NA228p.pnach`, read-only emulator settings, and
 discarded memory-card writes.
 
 The marker chord is not an input sequencer. Every attack input already exists
@@ -653,7 +653,7 @@ movie alone proves the inputs, not every intermediate animation or memory
 state.
 
 The synchronized captures are under
-`work/Battle mechanics/captures/damage_scaling/manual-practice-row9/`. Their
+`@work/Battle mechanics/captures/damage_scaling/manual-practice-row9/`. Their
 screenshots and `eeMemory.bin` state members establish this timeline:
 
 | Marker | Movie frame | Visible result | Naruto HP | Current / record combo | Timer words `+0x14/+0x18/+0x1C` |
@@ -846,7 +846,7 @@ movie with a process-local load-slot-7 override and the 140-byte native-behavior
 counter shim at runtime `0x008F0000` (SHA-256
 `C0CDCB78868150059CAA9FF1BC5080EA48B900C5E2967729D45198B41D850B40`).
 Only runtime `0x00231634` was redirected; the capture is under
-`work/Battle mechanics/captures/damage_scaling/probe-s08-callsite-231634/`.
+`@work/Battle mechanics/captures/damage_scaling/probe-s08-callsite-231634/`.
 All 13 states retained the hook and shim, loaded slot 7, and contained exactly
 395 active environment primitives. Two had runtime flags `0x40959595`, the
 orientation-augmented form of the authored `0x00959595`; the counter remained
@@ -871,7 +871,7 @@ The first guarded counter replay targeted only runtime `0x00228D18`. It placed
 the probe in the proven-zero development reservation at `0x008F0000`, left its
 mutable counter at `0x008F1000` without a recurring PNACH initializer, and
 captured all 13 markers under
-`work/Battle mechanics/captures/damage_scaling/probe-callsite-228d18/`. Every
+`@work/Battle mechanics/captures/damage_scaling/probe-callsite-228d18/`. Every
 state contained the redirected `jal` bytes `00C0230C00000000` and the complete
 resident probe, while the counter remained zero and the HP timeline matched
 the synchronized baseline exactly.
@@ -879,7 +879,7 @@ the synchronized baseline exactly.
 A positive-control replay then redirected all ten clean calculator call sites
 through one resident logger and retained native behavior. Its captures are
 under
-`work/Battle mechanics/captures/damage_scaling/probe-all-damage-callers/`.
+`@work/Battle mechanics/captures/damage_scaling/probe-all-damage-callers/`.
 The cumulative invocation counts at markers `0001` through `0013` were
 `0, 2, 2, 2, 4, 4, 4, 5, 6, 7, 8, 8, 9`. Eight events came from runtime
 `0x00234A80`, one came from runtime `0x00231698`, and the other eight static
@@ -907,7 +907,7 @@ focused call-boundary state probe rather than inference from equal marker HP.
 The focused replay then hooked only runtime `0x00234A80` and `0x00231698` and
 logged each call before and after the original calculator. Its captures are
 under
-`work/Battle mechanics/captures/damage_scaling/probe-live-damage-state/`.
+`@work/Battle mechanics/captures/damage_scaling/probe-live-damage-state/`.
 Every record resolved attacker `0x00E36CA0`, side zero, manager
 `0x00E40A90`, and matching manager owner `0x00E36CA0`. The decisive records
 were:
@@ -932,7 +932,7 @@ and reset behavior at the exact call boundary.
 A final transient test shim applied the recommended curve (`0.10` decay,
 `0.30` floor) at both proven call sites, then called the original calculator.
 Its full captures are under
-`work/Battle mechanics/captures/damage_scaling/probe-scaling-curve/`. The
+`@work/Battle mechanics/captures/damage_scaling/probe-scaling-curve/`. The
 472-byte resident shim at `0x008F0000` had SHA-256
 `213E92686716FAFC1854CE1A88E0090C5F2B5BD9C7171AFD7CCF2FEE67509FED` in
 all 13 states, and both call sites contained hook word `0x0C23C000`. The

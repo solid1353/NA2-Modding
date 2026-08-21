@@ -10,13 +10,15 @@ from na228_builder.scripts import catalog
 from na228_builder.scripts.xdash_chakra_cost import (
     xdash_chakra_cost_fragment,
 )
+from scripts.lib.paths import load_local_paths
 
 
 class XdashChakraCostTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.repository = Path(__file__).resolve().parents[2]
-        cls.builder = cls.repository / "na228_builder"
+        cls.paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
+        cls.repository = cls.paths.repository
+        cls.builder = cls.paths.path("builder")
         cls.catalog_path = cls.builder / "catalog"
         cls.configurations = cls.builder / "configurations"
 

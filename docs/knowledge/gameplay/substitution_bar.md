@@ -1114,7 +1114,7 @@ decision, not an implementation side effect.
 
 Follow the existing `xdash_chakra_cost.py` pattern rather than embedding
 configuration literals in assembly. A focused
-`na228_builder/scripts/substitution_gauge.py` reader should find exactly one
+`@builder/scripts/substitution_gauge.py` reader should find exactly one
 selected catalog node, expand bare `true` to the defaults above, revalidate an
 explicit object defensively, and emit one aligned read-only fragment such as:
 
@@ -1184,13 +1184,13 @@ The minimal implementation touches these existing ownership points:
 
 | Purpose | Canonical location |
 | --- | --- |
-| Public setting and descriptions | `features.battle_logic` in `na228_builder/catalog/catalog.modcat` |
-| Hook and payload declarations | `na228_builder/catalog/injections.json` |
-| Default/profile selection | `na228_builder/configurations/*.json` |
-| Config-to-fragment encoder | `na228_builder/scripts/substitution_gauge.py` and `module_pipeline.py` |
+| Public setting and descriptions | `features.battle_logic` in `@builder/catalog/catalog.modcat` |
+| Hook and payload declarations | `@builder/catalog/injections.json` |
+| Default/profile selection | `@builder/configurations/*.json` |
+| Config-to-fragment encoder | `@builder/scripts/substitution_gauge.py` and `module_pipeline.py` |
 | Gameplay state and native adapters | `src/battle_logic/substitution_gauge*.c` plus declared ABI shims |
 | Builder/state tests | `tests/na228_builder/test_substitution_gauge.py` and focused pure-C/state tests |
-| End-user explanation | `scripts/release/README.md` |
+| End-user explanation | `@scripts/release/README.md` |
 
 The release README and catalog descriptions must state both observable
 consequences: substitution uses the four-stock gauge, and ordinary successful

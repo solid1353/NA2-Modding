@@ -22,11 +22,11 @@ root manifest owns reusable public infrastructure:
 - source media, analysis, tools, and configured emulator roots;
 - shared PCSX2 assets;
 - reusable PCSX2, savestate, PINE, input-profile, ISO-identity, and Ghidra
-  tooling under `@workshop/scripts/`;
-- source-game configuration under `@workshop/games.json`;
-- source-game savestate filing under ignored `@workshop/work/sstates/`;
+  tooling under `@scripts/`;
+- source-game configuration in the configured `game_catalog` file;
+- source-game savestate filing under ignored `@savestates/`;
   project build savestates stay under the invoking project's ignored
-  `work/sstates/`.
+  `@work/sstates/`.
 
 The public repository ignores original media, extracted data, private analysis
 databases, toolchains, emulator binaries, BIOS files, memory cards, savestates,
@@ -42,12 +42,12 @@ feature donor, not an official successor or English authority.
 
 - `repository`: this repository; always `.`.
 - `workshop`, `source`, `disassembly`, and `tools`: imported Workshop roots.
-- `build`, `logs`, `task_logs`, `builder`, `resources`, `features`, `scripts`, `work`, and
-  `release`: NA2 roots. `task_logs` resolves to deferred generated records
-  under `@logs/tasks/`. `work` contains only chat-owned workspaces; `release`
-  resolves to the ignored repository-root `release/` publication directory.
+- `build`, `logs`, `task_logs`, `builder`, `resources`, `scripts`, `work`, and
+  `release`: NA2 roots. `task_logs` owns deferred generated records. `work`
+  contains only chat-owned workspaces; `release` owns the ignored publication
+  directory.
   `resources` owns repository-wide metadata shared by the builder and launcher.
-- `pcsx2_scripts`: `@workshop/scripts/pcsx2`.
+- `pcsx2_scripts`: imported shared PCSX2 scripts.
 - `pcsx2_dev` and `pcsx2_fork`: the protected configured development runtime
   and the external clean worker template.
 - `pcsx2_files` and `pcsx2_input_recordings`: NA2-owned game bundles under
@@ -60,7 +60,7 @@ feature donor, not an official successor or English authority.
 
 - `game_catalog`: Workshop root `games.json`.
 - `settings`: root `game.json`.
-- `game_resolver`: Workshop `scripts/lib/resolve_game.py`.
+- `game_resolver`: configured Workshop game resolver.
 - `workshop_command`: Workshop `workshop.ps1`.
 - `pcsx2_launch_command`, `pcsx2_game_launch_command`, `pcsx2_copy_worker_command`,
   `pcsx2_pine_command`, and `pcsx2_iso_identity`: Workshop utilities.
@@ -87,9 +87,11 @@ canonical bundle under `@pcsx2_files/games/`, and all NA2.28 builds use the
 The command is independent of the caller's current working directory.
 
 PowerShell callers use `Get-Na2Paths`; Python callers use
-`load_paths()` or Workshop's `resolve_game.py`. They do not
-duplicate derivation logic. NA2 overlays its local roots/files on the imported
-Workshop map; Workshop never imports NA2.
+`load_paths()` or Workshop's `resolve_game.py`.
+Once `paths.json` names a root, code, tests, logs, and documentation use it
+through `@root/...` or the loader API; only manifest definitions and the minimal
+loader bootstrap may spell backing paths. NA2 overlays its local roots/files on
+the imported Workshop map; Workshop never imports NA2.
 
 ## Migration rule
 

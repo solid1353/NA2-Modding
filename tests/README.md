@@ -1,10 +1,10 @@
 # Tests
 
-Production utilities live under `scripts/`; injected C lives under `src/`.
+Production utilities live under `@scripts/`; injected C lives under `src/`.
 Tests live here and are grouped by the responsibility they verify:
 
-- `na228_builder/`: builder, compositor, module, profile, and image tests.
-- `scripts/`: tests mirroring project-owned script components, including
+- `@builder/`: builder, compositor, module, profile, and image tests.
+- `@scripts/`: tests mirroring project-owned script components, including
   injection, `na228`, and maintained research tooling.
 - `features/`: accepted feature and canonical runtime-contract regressions.
 - `e2e/`: E2E infrastructure safety contracts.
@@ -25,6 +25,6 @@ deterministic path order.
 `na228 test` invokes this unit-test runner only. E2E is an independent
 validation lane invoked globally with `na228 e2e all`.
 
-`scripts/injection/inject_candidate.ps1` is an operational agent injection
-command, not a test. It remains under `scripts/` accordingly. Reusable PCSX2 and
+`@scripts/injection/inject_candidate.ps1` is an operational agent injection
+command, not a test. It remains under `@scripts/` accordingly. Reusable PCSX2 and
 media-tool tests mirror their implementations under Workshop `tests/scripts/`.

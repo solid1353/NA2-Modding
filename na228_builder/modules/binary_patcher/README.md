@@ -1,8 +1,8 @@
 # Binary patcher module
 
 This internal engine applies selected guarded edits to verified clean binaries.
-`na228_builder/catalog/edits.json` owns production edit
-definitions; feature files under `na228_builder/catalog/` assign their IDs to
+`@builder/catalog/edits.json` owns production edit
+definitions; feature files under `@builder/catalog/` assign their IDs to
 selectable leaves. The TSV
 files in `operations/` define each operation's allowed fields and basic types.
 The root definition map is serialized alphabetically. Every edit identity uses

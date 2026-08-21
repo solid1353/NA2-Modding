@@ -94,7 +94,7 @@ addresses beside them are EE virtual addresses. Statements called
 such as an array length or aligned copy are not treated as field semantics.
 
 A read-only parse on 2026-08-20 also inspected the historical local card image
-`pcsx2_files/games/NA2/NA2.ps2`:
+`@pcsx2_files/games/NA2/NA2.ps2`:
 
 - size: `17,301,504` bytes;
 - SHA-256 before and after inspection:

@@ -23,11 +23,11 @@ $repository = [IO.Path]::GetFullPath(
 )
 . (Join-Path $repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
-$injectionsPath = Join-Path $repository (
-    'na228_builder\catalog\injections.json'
+$injectionsPath = Join-Path ([string]$paths.builder) (
+    'catalog\injections.json'
 )
-$configurationPath = Join-Path $repository (
-    'na228_builder\configurations\dev.json'
+$configurationPath = Join-Path ([string]$paths.builder) (
+    'configurations\dev.json'
 )
 $buildScript = Join-Path $PSScriptRoot 'build.py'
 $applyScript = Join-Path $PSScriptRoot 'apply.py'
@@ -59,8 +59,6 @@ function Get-InjectionPayloadEntry {
 }
 
 function Get-ConfiguredDevelopmentPinePort {
-    . (Join-Path $repository 'scripts\lib\paths.ps1')
-    $paths = Get-Na2Paths
     $iniPath = Join-Path $paths.pcsx2_dev 'inis\PCSX2.ini'
     if (-not (Test-Path -LiteralPath $iniPath -PathType Leaf)) {
         throw "Development PCSX2 configuration was not found: $iniPath"
@@ -298,7 +296,7 @@ $resolvedOutput = if ($Output) {
     Resolve-RepositoryPath $Output
 }
 else {
-    Join-Path $repository "build\injection\$outputName"
+    Join-Path ([string]$paths.build) "injection\$outputName"
 }
 if (-not $BuildOnly) {
     if ($PinePort -eq 0) {

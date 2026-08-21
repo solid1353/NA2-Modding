@@ -14,7 +14,7 @@ Ultimate Jutsu input blocking, and battle-side support UI are separate scopes.
 
 The user supplied Slot 1 states at the relevant NUN6 and clean-NA2 screens.
 Task-owned copies, paired screenshots, and hashes are retained under
-`work/QoL/inputs/savestates` as immutable diagnostic evidence, not build
+`@work/QoL/inputs/savestates` as immutable diagnostic evidence, not build
 inputs.
 
 ## Native scrollable list
@@ -253,7 +253,7 @@ and its little-endian linked replacement ID. `FUN_00885ec0` checks all five:
 | Sasuke (`0x5D`) | Naruto (`0x00`) |
 
 The inverse support mapping and these relationship support IDs are canonical in
-`resources/character_data.tsv`; empty relationship cells mean that the selected
+`@resources/character_data.tsv`; empty relationship cells mean that the selected
 character has no row in the corresponding linked-attack table.
 
 ### Rejected compact-list candidate
@@ -340,7 +340,7 @@ intermediate menu rendered. A backward diagnostic first reproduced the clean
 marker-8 Back route through states `12, 8, 9, 9`; the accepted candidate
 produced `12, 1, 1, 1`, with fighter selection visible from the first marker
 after Back. The retained captures and provenance under
-`work/QoL/captures/supports/` exist solely as future regression evidence for
+`@work/QoL/captures/supports/` exist solely as future regression evidence for
 these direct forward and backward transitions.
 
 ## Display resolution and official Leaf artwork
@@ -386,7 +386,7 @@ follow-up `-8.0` draw offset.
 Direct pixel measurement on the retained 1902-pixel captures found the initial
 label 376 pixels wide and the supposed `0.80` label 384 pixels wide. The latter
 therefore was not narrower at all. Those captures and their hashes remain under
-`work/QoL/inputs/runtime` solely for future renderer-regression comparison.
+`@work/QoL/inputs/runtime` solely for future renderer-regression comparison.
 
 The cause is now established: writing live scale word `0x0060737C` alone does
 not activate the accepted Font v2 glyph-quad and glyph-advance hooks. The

@@ -67,7 +67,7 @@ correct result left.
 For the exact accepted string, both NUN5 and NA2.28 black-ink bounds are
 `(151,328)-(484,341)`; dark-pixel counts are `1209` and `1202`. The retained
 comparison is
-`work/Font/artifacts/priority3/ss7-secondary-renderer-left-edge-comparison.png`.
+`@work/Font/artifacts/priority3/ss7-secondary-renderer-left-edge-comparison.png`.
 The user accepted that lower confirmation body as good enough on 2026-07-30.
 
 The same replacement-batch ss1 proves that the body remains correct while the

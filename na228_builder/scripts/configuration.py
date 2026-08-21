@@ -360,6 +360,7 @@ def _catalog_feature_sha256(
     selection: CatalogSelection,
     feature_id: str,
     repository: Path,
+    builder_root: Path,
     module_inputs: list[tuple[str, Path]],
     targets_path: Path,
     configuration_files: tuple[Path, ...] = (),
@@ -422,7 +423,7 @@ def _catalog_feature_sha256(
     ):
         entries.append((targets_path.relative_to(repository).as_posix(), targets_path.read_bytes()))
     if catalog_module.feature_has(selection, feature_id, "edits"):
-        operations = repository / "na228_builder" / "modules" / "binary_patcher" / "operations"
+        operations = builder_root / "modules" / "binary_patcher" / "operations"
         for file in sorted(operations.glob("*.tsv")):
             entries.append((file.relative_to(repository).as_posix(), file.read_bytes()))
     for file in catalog_module.referenced_files(selection, repository, feature_id):
@@ -457,6 +458,7 @@ def _load_configuration(
         raise ValueError(f"Invalid configuration name: {configuration_id!r}")
     catalog_path = builder_root / "catalog"
     selection = catalog_module.load_selection(catalog_path, definition_path)
+    paths = project_paths or load_paths(workspace, allow_missing=True)
     character_overrides = None
     if any(
         node.path == ("features", "battle_logic", "character_overrides")
@@ -464,8 +466,11 @@ def _load_configuration(
     ):
         from .character_overrides import load_character_overrides
 
-        character_overrides = load_character_overrides(definition_path, builder_root)
-    paths = project_paths or load_paths(workspace, allow_missing=True)
+        character_overrides = load_character_overrides(
+            definition_path,
+            builder_root,
+            paths.path("resources", "character_data.tsv"),
+        )
     settings_path = paths.file("settings").resolve()
     output_boot_path, product_title, startup_frames = _validated_settings(settings_path)
     for frames in startup_frames:
@@ -482,6 +487,7 @@ def _load_configuration(
             selection,
             feature_id,
             workspace,
+            builder_root,
             module_inputs,
             targets_path,
             (

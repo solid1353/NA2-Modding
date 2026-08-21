@@ -416,7 +416,7 @@ respectively `220 + 118 = 338` and `233 + 144 = 377`.
   `61E60F6FB91C8B200FB00669FC4A706BF1BE29ED214CFBDF9C5233426236E1A3`
   and `B7DF3E9B4333E068336531E2073796B2CF72AC08A31ABED88DBD71144EE7163B`.
   The retained working copies remain under
-  `work/UI translation/temp/slot1_20260722_063419/` until runtime acceptance.
+  `@work/UI translation/temp/slot1_20260722_063419/` until runtime acceptance.
 - The paired Movie state hashes are
   `0C35717E24EA1827FAB6A364969A13FAC82FD5CAB0D89471E368FA3A4B7F864D`
   (NA2.28) and
@@ -431,7 +431,7 @@ respectively `220 + 118 = 338` and `233 + 144 = 377`.
   `754BBB6F4F7E5041E6DE1A8614123E94DA6F8B8FED5D91CE1B1FA27F14558035`
   and `47226A13B272A6532798F27CC22D0F41290E596A122DD5854F385839F876687E`.
   Their retained copies are under
-  `work/UI translation/temp/slots2_3_20260722_0745/` until runtime acceptance.
+  `@work/UI translation/temp/slots2_3_20260722_0745/` until runtime acceptance.
 - The later paired character-viewer slot-1 state hashes are
   `7A90746FC65D62F2027F11AFEB3847FCBEAB92C5FF797C60C33904698814CAD9`
   (NA2.28) and
@@ -443,7 +443,7 @@ respectively `220 + 118 = 338` and `233 + 144 = 377`.
   `9E8DDA2E5C8511178DAE758606BB13D7FB18117AF16F5119CFDA2EE4F6827532`
   and `9BC30D17F76EC79E172AC373880742CEB8EFC0BB0ADA04D3016192AD46CA994B`.
   Working copies remain under
-  `work/UI translation/temp/slot1_20260722_0827_down_labels/` until runtime
+  `@work/UI translation/temp/slot1_20260722_0827_down_labels/` until runtime
   acceptance; the original PCSX2 states were not modified.
 - The isolated eight-edit `ui_layout_collection_submenu` apply preserves the 200,448-byte ETC
   size and produces SHA-256

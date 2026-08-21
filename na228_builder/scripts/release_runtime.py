@@ -18,15 +18,23 @@ def packaged_workspace() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
+def application_cache_root() -> Path:
+    """Map the configured cache root onto the release application directory."""
+    paths = load_local_paths(packaged_workspace(), allow_missing=True)
+    relative_cache = paths.path("cache").relative_to(paths.repository)
+    return application_directory() / relative_cache
+
+
 def load_release_configuration(
     configuration_path: Path,
     na2_iso: Path,
     nun5_iso: Path,
 ) -> tuple[Path, BuildConfiguration]:
     workspace = packaged_workspace()
+    paths = load_local_paths(workspace, allow_missing=True)
     manifest = load_release_manifest()
     configuration_path = configuration_path.resolve()
-    builder_root = (workspace / "na228_builder").resolve()
+    builder_root = paths.path("builder").resolve()
     try:
         builder_root.relative_to(workspace)
     except ValueError as exc:
@@ -40,7 +48,7 @@ def load_release_configuration(
         configuration_path,
         workspace,
         builder_root,
-        project_paths=load_local_paths(workspace, allow_missing=True),
+        project_paths=paths,
         root_overrides={"na2": na2_iso, "nun5": nun5_iso},
     )
     if configuration.product_title != manifest.product_name:
@@ -53,7 +61,9 @@ def load_release_configuration(
 def validate_release_configuration(configuration_path: Path) -> int:
     """Validate one external configuration without requiring copyrighted ISOs."""
     workspace = packaged_workspace()
-    marker = workspace / "na228_builder" / "release_manifest.json"
+    marker = load_local_paths(workspace, allow_missing=True).path(
+        "builder", "release_manifest.json"
+    )
     _, configuration = load_release_configuration(configuration_path, marker, marker)
     if not configuration.modules:
         raise RuntimeError("Release configuration has no module invocations")
@@ -64,7 +74,10 @@ def validate_packaged_release() -> int:
     """Verify the external configuration and packaged data without source ISOs."""
     manifest = load_release_manifest()
     configuration_path = application_directory() / manifest.configuration_name
-    marker = packaged_workspace() / "na228_builder" / "release_manifest.json"
+    workspace = packaged_workspace()
+    marker = load_local_paths(workspace, allow_missing=True).path(
+        "builder", "release_manifest.json"
+    )
     workspace, configuration = load_release_configuration(
         configuration_path,
         marker,
@@ -112,9 +125,7 @@ def build_release_iso(
         configuration=configuration,
         workspace=workspace,
         configuration_log_directory=None,
-        texture_cache_root=(
-            application_directory() / "work" / "cache" / "texture_patcher"
-        ),
+        texture_cache_root=application_cache_root() / "texture_patcher",
     )
     if build.output_iso != building_iso.resolve():
         raise RuntimeError("Build engine produced an unexpected staging path")

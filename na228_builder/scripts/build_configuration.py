@@ -48,6 +48,11 @@ class ConfigurationCompositionResult:
     insertion_owners: dict[str, str]
 
 
+def _default_texture_cache_root(start: Path) -> Path:
+    paths = PATHS or load_paths(start, allow_missing=True)
+    return paths.path("cache", "texture_patcher")
+
+
 def normalize(path: str) -> str:
     return normalize_iso_path(path)
 
@@ -795,10 +800,7 @@ def compose_configuration_candidate(
     if not source_iso.is_file():
         raise FileNotFoundError(source_iso)
     if texture_cache_root is None:
-        project_paths = PATHS or load_paths(Path(__file__).resolve(), allow_missing=True)
-        texture_cache_root = (
-            project_paths.repository / "work" / "cache" / "texture_patcher"
-        )
+        texture_cache_root = _default_texture_cache_root(Path(__file__).resolve())
 
     source = Iso9660(source_iso)
     payloads: dict[str, bytearray] = {}
@@ -879,7 +881,7 @@ def build_configuration_candidate(
         texture_cache_root=(
             texture_cache_root
             if texture_cache_root is not None
-            else workspace / "work" / "cache" / "texture_patcher"
+            else _default_texture_cache_root(workspace)
         ),
     )
     configuration_results = list(composed.results)
@@ -1031,7 +1033,7 @@ def main() -> int:
     configuration = load_configuration(
         configuration_path,
         workspace,
-        workspace / "na228_builder",
+        paths.path("builder"),
     )
     if args.compose_only:
         composed = compose_configuration_candidate(

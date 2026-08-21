@@ -70,7 +70,7 @@ It does not choose inline versus external placement and does not write game
 payloads. Canonical rows store pointer sites as combined `reference_refs` and
 generate patch-log reasons from their mapping IDs instead of carrying historical
 version labels. The active mapping package and its review history live under
-`na228_builder/localization/translation_importer/`.
+`@builder/localization/translation_importer/`.
 
 ## Invokes
 

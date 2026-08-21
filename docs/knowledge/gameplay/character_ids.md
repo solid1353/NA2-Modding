@@ -18,7 +18,7 @@ stored entry. See [Content availability](../game/content_availability.md) for
 the save-backed domain and unlock-reader contract.
 
 The complete builder reference is
-[`resources/character_data.tsv`](../../../resources/character_data.tsv).
+[`@resources/character_data.tsv`](../../../resources/character_data.tsv).
 Its names and IDs validate per-character configuration. Its `awakening_ids`
 column records the union of the fighter-controller association list and every
 non-`0xFFFF` post-effect in that character's Ultimate-Jutsu records, plus effects
@@ -90,7 +90,7 @@ establishes the selector, manager, pointer, character-ID, and resource values.
 
 The direct-versus-transformed pair is for `SLOP-NA228`, CRC `3755A94A`. It was
 copied read-only from the active PCSX2 `sstates` folder into
-`work/Battle mechanics/inputs/savestates` before extraction.
+`@work/Battle mechanics/inputs/savestates` before extraction.
 
 | Capture | Meaning | State SHA-256 | Extracted EE-memory SHA-256 |
 | --- | --- | --- | --- |

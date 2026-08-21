@@ -10,14 +10,11 @@ import zlib
 from pathlib import Path
 
 from PIL import Image
+from scripts.lib.paths import load_paths
 
 REPOSITORY = Path(__file__).resolve().parents[3]
-COMPARATOR = (
-    REPOSITORY
-    / "scripts"
-    / "research"
-    / "localization"
-    / "compare_font_capture_sets.ps1"
+COMPARATOR = load_paths(REPOSITORY).path(
+    "scripts", "research", "localization", "compare_font_capture_sets.ps1"
 )
 
 

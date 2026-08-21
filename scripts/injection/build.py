@@ -14,10 +14,6 @@ from pathlib import Path
 
 SCRIPT_ROOT = Path(__file__).resolve().parent
 REPOSITORY = SCRIPT_ROOT.parents[1]
-CATALOG_PATH = REPOSITORY / "na228_builder" / "catalog"
-CONFIGURATION_PATH = (
-    REPOSITORY / "na228_builder" / "configurations" / "dev.json"
-)
 sys.path.insert(0, str(REPOSITORY))
 
 from na228_builder.scripts import catalog as catalog_module
@@ -30,6 +26,10 @@ from na228_builder.payload_builder.operations import (
 from na228_builder.image_assembler.iso9660 import Iso9660
 from scripts.lib.paths import load_paths
 
+
+PATHS = load_paths(REPOSITORY)
+CATALOG_PATH = PATHS.path("builder", "catalog")
+CONFIGURATION_PATH = PATHS.path("builder", "configurations", "dev.json")
 
 SYMBOL_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
 SYMBOL_MAP_FIELDS = [
@@ -125,7 +125,7 @@ def load_overlay_plan(
     if not plan_path.is_absolute():
         plan_path = REPOSITORY / plan_path
     plan_path = plan_path.resolve()
-    work_root = (REPOSITORY / "work").resolve()
+    work_root = PATHS.path("work").resolve()
     try:
         relative = plan_path.relative_to(work_root)
     except ValueError:
@@ -383,7 +383,7 @@ def locate_build_record(
     required: bool = True,
 ) -> tuple[Path, dict[str, object]] | None:
     matches: list[tuple[Path, dict[str, object]]] = []
-    builds_root = REPOSITORY / "logs" / "na228" / "builds"
+    builds_root = PATHS.path("logs", "na228", "builds")
     for summary_path in builds_root.glob("*/payload_builder/payload_summary.json"):
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
         if str(summary.get("sha256", "")).upper() == payload_sha256:
@@ -1017,7 +1017,7 @@ def main() -> int:
         output_name = source_id
     iso_path = resolved_path(args.iso)
     output = resolved_path(
-        args.output or Path("build") / "injection" / output_name
+        args.output or PATHS.path("build", "injection", output_name)
     )
     code_base = 0x008F0000
     code_end = 0x008F3D00

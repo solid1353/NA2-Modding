@@ -67,8 +67,8 @@ else {
 }
 
 $gridScript = Join-Path `
-    $ProjectRoot `
-    'scripts\research\localization\compare_font_capture_sets.ps1'
+    ([string]$paths.scripts) `
+    'research\localization\compare_font_capture_sets.ps1'
 $launcher = [string]$paths.files.pcsx2_game_launch_command
 
 $gameTarget = if ($Tier -ieq 'reference') {

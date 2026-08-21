@@ -229,7 +229,7 @@ height `26` through the existing session-scoped renderer state. The session is
 restored after each native callback, and no string bytes are written. A guarded
 hidden-worker candidate against the matching Current ISO produces the retained
 comparison
-`work/Font 3/outputs/comparisons/settings/ss1_onoff_state_split_s102_u101_h26_nun5_top_candidate_bottom_zoom.png`:
+`@work/Font 3/outputs/comparisons/settings/ss1_onoff_state_split_s102_u101_h26_nun5_top_candidate_bottom_zoom.png`:
 NUN5 is above, the candidate is below, and the crop is nearest-neighbor 8x.
 The selected and ordinary core-glyph bounds align with NUN5 while all unrelated
 choice pointers continue through their prior native paths. Confidence is

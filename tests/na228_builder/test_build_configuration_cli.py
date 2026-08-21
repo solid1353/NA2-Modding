@@ -80,7 +80,12 @@ class BuildConfigurationCliTests(unittest.TestCase):
                 patch.object(
                     build_configuration,
                     "PATHS",
-                    new=SimpleNamespace(repository=workspace),
+                    new=SimpleNamespace(
+                        repository=workspace,
+                        path=lambda root, *children: workspace.joinpath(
+                            root, *children
+                        ),
+                    ),
                 ),
                 patch.object(
                     build_configuration,
@@ -158,7 +163,12 @@ class BuildConfigurationCliTests(unittest.TestCase):
                 patch.object(
                     build_configuration,
                     "PATHS",
-                    new=SimpleNamespace(repository=workspace),
+                    new=SimpleNamespace(
+                        repository=workspace,
+                        path=lambda root, *children: workspace.joinpath(
+                            root, *children
+                        ),
+                    ),
                 ),
                 patch.object(
                     build_configuration,
@@ -239,6 +249,7 @@ class BuildConfigurationCliTests(unittest.TestCase):
                     workspace=workspace,
                     configuration_log_directory=log_directory,
                     best_effort_metadata=True,
+                    texture_cache_root=workspace / "texture-cache",
                 )
 
             self.assertEqual(result.output_iso, output_iso)
@@ -291,6 +302,7 @@ class BuildConfigurationCliTests(unittest.TestCase):
                     configuration=configuration,
                     workspace=workspace,
                     configuration_log_directory=workspace / "logs" / "configuration",
+                    texture_cache_root=workspace / "texture-cache",
                 )
 
             self.assertFalse(output_iso.exists())

@@ -69,8 +69,8 @@ uncommitted release work:
 & scripts/release/build_release.ps1 -Development
 ```
 
-The toolchain is pinned by `scripts/release/toolchain.json` and
-`scripts/release/requirements.txt`. The builder creates an isolated virtual
+The toolchain is pinned by `@scripts/release/toolchain.json` and
+`@scripts/release/requirements.txt`. The builder creates an isolated virtual
 environment under `@work/release/temp/`, runs the complete
 builder test suite, inventories the full definition resource closure, builds a
 precompiled object for each injection-owned runtime C or `.S` source, builds a PyInstaller
@@ -109,19 +109,19 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
 
 ## Architecture
 
-- `na228_builder/scripts/app.py` owns external configuration preflight, end-user source
+- `@builder/scripts/app.py` owns external configuration preflight, end-user source
   discovery, hashing, locking, staging cleanup, atomic output replacement,
   console messages, and the Enter pause.
-- `na228_builder/scripts/release_runtime.py` loads the sibling configuration against the
+- `@builder/scripts/release_runtime.py` loads the sibling configuration against the
   embedded catalog with the two verified source ISOs as root overrides and calls
   the ordinary configuration builder without runtime logs.
-- `na228_builder/scripts/source_media.py` gives engines one read-only boundary for files
+- `@builder/scripts/source_media.py` gives engines one read-only boundary for files
   from either extracted roots or original ISOs.
-- `na228_builder/scripts/cvm.py` reads encrypted `DATA.CVM` members directly using the
+- `@builder/scripts/cvm.py` reads encrypted `DATA.CVM` members directly using the
   confirmed `cc2fuku` password; it does not extract or modify the container.
-- `na228_builder/scripts/build_configuration.py` exposes the same staged-image composition used
+- `@builder/scripts/build_configuration.py` exposes the same staged-image composition used
   by the normal CLI and the release adapter.
-- `scripts/release/build_release.ps1` owns packaging; the GitHub workflow calls
+- `@scripts/release/build_release.ps1` owns packaging; the GitHub workflow calls
   that same script rather than implementing another packager.
 
 The ordinary `na228`, `na228 b`, and `na228 m` workflows are unchanged.

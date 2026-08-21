@@ -202,7 +202,7 @@ component separately.
 6. **Create working material outside the source root.** Keep maintained shared
    analysis under `@disassembly/<target>/`. Put baseline copies and
    experiments in `@work/<target>/base/`, `@work/<target>/mod/`, or a
-   chat-specific `work/<chat title>/temp/` folder. Never let Ghidra locks, caches, exports,
+   chat-specific `@work/<chat title>/temp/` folder. Never let Ghidra locks, caches, exports,
    probes, or scripts write under `@source/`.
 7. **Preserve the minimum evidence.** Record tool/version, import settings,
    function or range boundaries, callers/callees or references used, byte and
@@ -248,11 +248,11 @@ component separately.
   completed analysis roots are recursively read-only; clear that protection
   deliberately before updating a maintained project, then restore it when the
   update is complete.
-- `scripts/research/menu_input/`: range disassembler, direct-call finder,
+- `@scripts/research/menu_input/`: range disassembler, direct-call finder,
   address-reference finder, MIPS mask analyzer, and Ghidra-export comparison
   helpers for targeted EE work.
-- `na228_builder/catalog/*.json`: selectable overlay and boot-ELF feature nodes;
-  `na228_builder/catalog/edits.json`: their guarded edits.
+- `@builder/catalog/*.json`: selectable overlay and boot-ELF feature nodes;
+  `@builder/catalog/edits.json`: their guarded edits.
   Provenance and runtime
   conclusions are retained in feature/knowledge docs.
 - `docs/knowledge/gameplay/substitution.md`,

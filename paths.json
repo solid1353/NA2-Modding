@@ -3,7 +3,7 @@
   "imports": {
     "workshop": "../UN Workshop/paths.json"
   },
-  "existence_deferred_roots": ["task_logs"],
+  "existence_deferred_roots": ["task_logs", "cache"],
   "roots": {
     "repository": ".",
     "build": "build",
@@ -13,7 +13,7 @@
     "resources": "resources",
     "scripts": "scripts",
     "work": "work",
-    "cache": "@work/cache",
+    "cache": "@build/cache",
     "release": "release",
     "pcsx2_files": "@repository/pcsx2_files",
     "pcsx2_input_recordings": "@pcsx2_files/input_recordings"

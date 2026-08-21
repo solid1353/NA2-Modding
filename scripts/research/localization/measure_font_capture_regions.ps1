@@ -19,6 +19,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
+. (Join-Path $repositoryRoot 'scripts\lib\paths.ps1')
+$paths = Get-Na2Paths
 $pythonScript = Join-Path $PSScriptRoot 'measure_font_capture_regions.py'
 $arguments = @(
     '--reference', [IO.Path]::GetFullPath($ReferenceDirectory)
@@ -29,7 +31,7 @@ $arguments = @(
     '--current-label', $CurrentLabel
 )
 
-& (Join-Path $repositoryRoot 'scripts\lib\run_python.ps1') `
+& (Join-Path ([string]$paths.scripts) 'lib\run_python.ps1') `
     -PackageSet imaging `
     -Script $pythonScript `
     -ArgumentList $arguments `

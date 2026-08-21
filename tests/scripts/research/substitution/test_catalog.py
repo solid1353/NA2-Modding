@@ -6,9 +6,12 @@ import sys
 import unittest
 from pathlib import Path
 
+from scripts.lib.paths import load_paths
 
 REPOSITORY = Path(__file__).resolve().parents[4]
-MODULE_PATH = REPOSITORY / "scripts" / "research" / "substitution" / "catalog.py"
+MODULE_PATH = load_paths(REPOSITORY).path(
+    "scripts", "research", "substitution", "catalog.py"
+)
 SPEC = importlib.util.spec_from_file_location("na2_substitution_catalog", MODULE_PATH)
 if SPEC is None or SPEC.loader is None:
     raise RuntimeError(f"could not load {MODULE_PATH}")

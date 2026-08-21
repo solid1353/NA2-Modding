@@ -34,7 +34,7 @@ acceptance remain canonical in
 
 - Use `na228 build -c <configuration>`. It builds or reuses the canonical
   hash-named cache image and keeps operational and
-  structured records under `work/<chat title>/logs/`.
+  structured records under `@work/<chat title>/logs/`.
 - Use the canonical cached ISO path directly. Do not create a task-owned
   ISO or hardlink, and do not delete the shared cache image after validation.
 - They do not touch Latest/Previous, Manual/E2E Test outputs or their role

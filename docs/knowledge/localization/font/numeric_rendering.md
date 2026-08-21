@@ -3,7 +3,7 @@
 ## Save/Load ASCII numeric fields
 
 The matched slot-6 pair is preserved under
-`work/Font/inputs/sstates/sjis_digits/slot-06/`. Its embedded screenshots and
+`@work/Font/inputs/sstates/sjis_digits/slot-06/`. Its embedded screenshots and
 EE-memory payloads establish that NA2 emits fullwidth CP932 digits for
 `２０２６/０７/１７` and `Play Time ０２７：３９：４５`, while NUN5 emits
 ordinary ASCII digits and punctuation.
@@ -35,7 +35,7 @@ The first consolidated C candidate at commit `1d796a5` was runtime-rejected on
 Current CRC `8A663AA9`: user `ss1` records the menu immediately before Load,
 and `ss2` records the broken Load screen. Their task-owned copies and hashes
 are retained under
-`work/Font/inputs/sstates/c-migration-load-regression-2026-07-28/`.
+`@work/Font/inputs/sstates/c-migration-load-regression-2026-07-28/`.
 
 Static control-flow comparison identifies the exact defect with high
 confidence. All six guarded blocks are mid-function replacements for native
@@ -49,12 +49,12 @@ sizes, and every formatter outside this family remain unchanged. Runtime
 acceptance is complete: after the fresh corrected build, the user verified
 that Load and Save open without freezing and retain the accepted date/time
 presentation. Independent fragment reconstruction is retained in
-`scripts/research/localization/verify_font_renderer.py`. Unit-test coverage now
+`@scripts/research/localization/verify_font_renderer.py`. Unit-test coverage now
 protects the independently established linking-call contract for all six
 Save/Load hooks.
 
 The isolated worker build retained at
-`work/Font/build/save-load-ascii-digits.iso` has boot CRC `F9FC3002`. After a
+`@work/Font/build/save-load-ascii-digits.iso` has boot CRC `F9FC3002`. After a
 clean manual launch in the Font-owned PCSX2 copy, the user confirmed that the
 Save/Load date and Play Time fields render correctly as ASCII. The patch is
 therefore proven for its original ASCII-conversion stage. The later EU date
@@ -64,7 +64,7 @@ ordering is separately user-confirmed on Current CRC `55739D20`.
 
 The matched slot-1 pair copied read-only from the user's PCSX2 is preserved
 under
-`work/Font/inputs/sstates/sjis_digits/slot-01-20260726_115913/` with source
+`@work/Font/inputs/sstates/sjis_digits/slot-01-20260726_115913/` with source
 timestamps and SHA-256 provenance. Both embedded screenshots show Battle
 Settings with `Time 99`; NA2 emits the value through its fullwidth numeric
 path, producing visibly wider digit spacing than NUN5's ordinary ASCII value.
@@ -85,7 +85,7 @@ changes only the hook encoding. C uses the immutable `%d` bridge. The adjacent
 `100` continues to render the native infinity symbol. Selector state, the
 stored timer value, the other five settings rows, and every other fullwidth
 formatter caller remain unchanged. Independent fragment reconstruction is
-retained in `scripts/research/localization/verify_font_renderer.py`. After the
+retained in `@scripts/research/localization/verify_font_renderer.py`. After the
 corrected fresh build, the user verified the ordinary below-100 value and the separate
 100/infinity behavior. The patch is therefore `runtime_proven`, and unit-test
 coverage protects its linking-call contract.
@@ -93,7 +93,7 @@ coverage protects its linking-call contract.
 ## Ninja Song ASCII dynamic numbers
 
 The paired ss2–ss5 states are copied read-only under
-`work/Font/inputs/sstates/ninja-song/ss2-5/` with exact source filenames,
+`@work/Font/inputs/sstates/ninja-song/ss2-5/` with exact source filenames,
 timestamps, sizes, and SHA-256 provenance. Together they cover the dynamically
 generated arithmetic factors, arithmetic total, inline numeric placeholder,
 and detail score used by the Ninja Song screens.
@@ -127,8 +127,8 @@ they are not separate strings: all values pass through the same five guarded
 call sites and width-aware decimal helper. The patch is therefore
 `runtime_proven`; arbitrary unseen decimal values retain the same mode and
 padding behavior. Deterministic verification is provided by
-`scripts/research/localization/verify_font_renderer.py` and
-`scripts/research/localization/generate_ninja_song_ascii_numbers.py`.
+`@scripts/research/localization/verify_font_renderer.py` and
+`@scripts/research/localization/generate_ninja_song_ascii_numbers.py`.
 
 Controls retains full-width `Linked Attack`, fits the official 19-byte
 `Ultimate Jutsu Prep` probe through the shared NUN5 logical-width helper,

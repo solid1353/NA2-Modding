@@ -3,10 +3,10 @@
 ## Canonical builder contract
 
 - Before modifying builder composition, read the relevant sections of
-  `na228_builder/README.md` and the affected
+  `@builder/README.md` and the affected
   [feature documentation](../features/README.md). Do not recreate retired
   schemas or assumptions from historical notes.
-- `na228_builder/configurations/base.json` owns the complete shared `features`
+- `@builder/configurations/base.json` owns the complete shared `features`
   tree. Normal development builds use `dev.json`, Manual and E2E builds use
   `test.json`, cache builds use their explicitly selected configuration, and
   only release packaging uses `release.json`.
@@ -16,15 +16,15 @@
   nonempty per-character battle values by ID. Release packaging materializes
   both selected layers into one external JSON configuration and one external
   character-override TSV.
-  `na228_builder/catalog/catalog.modcat` owns selectable definitions; the JSON
+  `@builder/catalog/catalog.modcat` owns selectable definitions; the JSON
   and TSV files beside it own guarded binary edits, runtime hooks and payload
   declarations, and targets. Root `game.json` owns output
   identity, build variants, and project launch settings.
-- JSON files under `na228_builder/configurations/` exclusively own feature
+- JSON files under `@builder/configurations/` exclusively own feature
   enablement and nested selection. Paired character-override TSVs exclusively
   own per-character battle values; there is no feature-pin table.
 - Reusable engines, operation definitions, and tools belong under
-  `na228_builder/modules/`; executable definitions belong in
+  `@builder/modules/`; executable definitions belong in
   `catalog/edits.json` or `catalog/injections.json`; catalog leaves reference
   them by ID, and non-inline inputs remain under the owning feature.
 - Remaining feature engine directories contain executable inputs, not placeholders,
@@ -36,7 +36,7 @@
   integration. Feature engines contribute fragments/symbols but do not choose
   global offsets or construct the final file.
 - Localization normal builds use
-  `na228_builder/localization/translation_importer/mappings.tsv` as the
+  `@builder/localization/translation_importer/mappings.tsv` as the
   sole translation source of truth.
 - Preflight dependency closure covers every input capable of changing the
   selected ISO. Any build-affecting input/dependency change updates the closure

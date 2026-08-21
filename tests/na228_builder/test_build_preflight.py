@@ -16,6 +16,7 @@ from na228_builder.scripts.build_preflight import (
     state_fingerprint,
 )
 from na228_builder.modules.binary_patcher import engine as binary_patcher
+from scripts.lib.paths import load_local_paths
 
 
 DEPENDENCIES = {
@@ -30,7 +31,36 @@ DEPENDENCIES = {
 class BuildPreflightTests(unittest.TestCase):
     def create_workspace(self, root: Path) -> dict[str, Path]:
         workspace = root / "repository"
-        builder = workspace / "na228_builder"
+        workspace.mkdir()
+        (workspace / "paths.json").write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "existence_deferred_roots": ["cache"],
+                    "roots": {
+                        "repository": ".",
+                        "builder": "na228_builder",
+                        "source": "source_roots",
+                        "build": "build",
+                        "cache": "@build/cache",
+                        "logs": "logs",
+                        "pcsx2_files": "shared",
+                        "pcsx2_cheats": "@pcsx2_files/cheats",
+                        "pcsx2_game_settings": "@pcsx2_files/game_settings",
+                        "pcsx2_input_profiles": "@pcsx2_files/input_profiles",
+                        "pcsx2_memory_cards": "@pcsx2_files/memory_cards",
+                    },
+                    "files": {
+                        "settings": "@repository/game.json",
+                        "game_catalog": "@repository/games.json",
+                    },
+                }
+            ),
+            encoding="utf-8",
+        )
+        project_paths = load_local_paths(workspace, allow_missing=True)
+        project_paths.path("logs").mkdir()
+        builder = project_paths.path("builder")
         configuration = builder / "configurations" / "release.json"
         configuration.parent.mkdir(parents=True)
         scripts = builder / "scripts"
@@ -89,11 +119,11 @@ class BuildPreflightTests(unittest.TestCase):
             json.dumps({"overrides": {}}),
             encoding="utf-8",
         )
-        source_roots = workspace / "source_roots"
+        source_roots = project_paths.path("source")
         source_roots.mkdir(parents=True)
         (source_roots / "NA2.iso.files").mkdir()
         (source_roots / "NUN5.iso.files").mkdir()
-        shared = workspace / "shared"
+        shared = project_paths.path("pcsx2_files")
         for name in (
             "cheats",
             "game_settings",
@@ -101,30 +131,7 @@ class BuildPreflightTests(unittest.TestCase):
             "memory_cards",
         ):
             (shared / name).mkdir(parents=True)
-        (workspace / "build").mkdir()
-        (workspace / "paths.json").write_text(
-            json.dumps(
-                {
-                    "schema_version": 1,
-                    "roots": {
-                        "repository": ".",
-                        "builder": "na228_builder",
-                        "source": "source_roots",
-                        "build": "build",
-                        "pcsx2_files": "shared",
-                        "pcsx2_cheats": "shared/cheats",
-                        "pcsx2_game_settings": "shared/game_settings",
-                        "pcsx2_input_profiles": "shared/input_profiles",
-                        "pcsx2_memory_cards": "shared/memory_cards",
-                    },
-                    "files": {
-                        "settings": "@repository/game.json",
-                        "game_catalog": "@repository/games.json",
-                    },
-                }
-            ),
-            encoding="utf-8",
-        )
+        project_paths.path("build").mkdir()
         (workspace / "games.json").write_text(
             json.dumps(
                 {
@@ -158,7 +165,7 @@ class BuildPreflightTests(unittest.TestCase):
         na2_iso.parent.mkdir()
         na2_iso.write_bytes(b"clean na2")
         nun5_iso.write_bytes(b"clean nun5")
-        latest_iso = workspace / "build" / "NA2.28 - Latest.iso"
+        latest_iso = project_paths.path("build", "NA2.28 - Latest.iso")
         latest_iso.parent.mkdir(exist_ok=True)
         latest_iso.write_bytes(b"verified latest")
         return {
@@ -168,8 +175,10 @@ class BuildPreflightTests(unittest.TestCase):
             "na2_iso": na2_iso,
             "nun5_iso": nun5_iso,
             "latest_iso": latest_iso,
-            "registry": workspace / "logs" / "na228" / "preflight" / "registry.json",
-            "cache": workspace / "work" / "cache" / "isos",
+            "registry": project_paths.path(
+                "logs", "na228", "preflight", "registry.json"
+            ),
+            "cache": project_paths.path("cache", "isos"),
         }
 
     def state(self, paths: dict[str, Path], **overrides: object) -> dict[str, object]:
@@ -649,7 +658,7 @@ class BuildPreflightTests(unittest.TestCase):
 
             newest_fingerprint = fingerprint
             for index in range(21):
-                location = paths["workspace"] / "build" / f"copy-{index}.iso"
+                location = paths["latest_iso"].parent / f"copy-{index}.iso"
                 location.write_bytes(b"verified latest")
                 record_locations(
                     workspace=paths["workspace"],

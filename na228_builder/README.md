@@ -38,7 +38,7 @@ integrated catalog data.
   `base` row and shared per-character overrides. Matching `dev`, `test`, and
   `release` TSVs in that directory layer nonempty cells over it by character
   ID. Empty cells inherit; numeric zero is an explicit value.
-- `../resources/character_data.tsv` is the repository-owned ID/name and native-value
+- `@resources/character_data.tsv` is the repository-owned ID/name and native-value
   reference used to validate character rows. Its
   `support_id` cells contain the native support-roster ID corresponding to each
   playable character, written in hexadecimal; an empty cell means that the
@@ -53,7 +53,7 @@ integrated catalog data.
   support IDs associated with each character by the corresponding BTL tables;
   empty cells mean no relationship of that type. These metadata columns are
   not builder catalog inputs. The file is not an override file.
-- `../resources/movesets.tsv` contains ordered moveset-test metadata. The physical
+- `@resources/movesets.tsv` contains ordered moveset-test metadata. The physical
   TSV row is its launcher selector: the header is row 1 and the first moveset is
   row 2. Within each base-form character block, the base row comes first,
   followed by awakening rows, the reversal row, linked-UJ rows, and linked-J
@@ -70,7 +70,7 @@ integrated catalog data.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.
 - `localization/assets/` owns edit-referenced localization binary assets.
 - Enabling `features.localization` includes the retained translation-importer and texture-patcher inputs under `localization/`; they are real inputs, not empty catalog selector nodes.
-- `scripts/` contains every builder Python implementation file. Reusable engines and their code-only contracts remain under `modules/`.
+- `@scripts/` contains every builder Python implementation file. Reusable engines and their code-only contracts remain under `modules/`.
 - Root `release_manifest.json` owns release packaging metadata and remains
   outside the catalog.
 - Root `game.json` owns the product title, explicit output boot path, named
@@ -94,7 +94,7 @@ Profile names are not a closed set.
    `release.character_overrides.tsv` in the same directory. Only nonempty cells
    replace the base layer.
 3. Keep each numeric `id` paired with the exact `character` name from
-   `../resources/character_data.tsv`. `base_id` identifies a form's base
+   `@resources/character_data.tsv`. `base_id` identifies a form's base
    character, and `tier` records the human-readable balance tier. Tier labels
    use at most four ASCII characters because the resident table stores a
    fixed-width four-byte field. Rows retain the order written in the base TSV
@@ -231,7 +231,7 @@ than showing them in the user-facing window. Successful runs create no log.
 & scripts/na228/build.ps1
 ```
 
-`scripts/na228/build.ps1` resolves the `builder` package set from
+`@scripts/na228/build.ps1` resolves the `builder` package set from
 `packages.json` and uses `configurations/dev.json` for normal builds or
 `configurations/test.json` for Manual and E2E outputs. Cache builds select an
 explicit configuration with `na228 build -c <configuration>`.
@@ -263,7 +263,7 @@ canonical hash-named cache image without publishing another output.
 Latest, Manual, E2E, and cache builds share one byte-affecting
 fingerprint registry under `@logs/na228/preflight/`. A physical miss is assembled
 to a unique incoming path, verified, atomically registered as
-`@work/cache/isos/<SHA-256>.iso`, and is then available for role promotion.
+`@cache/isos/<SHA-256>.iso`, and is then available for role promotion.
 The hash-named image remains canonical; physical Latest, Previous, Manual, E2E,
 and other user-facing outputs are ordinary hardlinks to it. Distinct
 fingerprints that produce the same SHA-256 share that image identity and all
@@ -278,9 +278,9 @@ touching live parallel builds.
 Preflight fingerprints both canonical source ISOs, ISO-composing Python code,
 the exact selected configuration resources, product/path configuration, active
 Python/Zlib/Zopfli versions, and the EE compiler components whenever selected C
-sources require them. `scripts/module_pipeline.py` prepares internal invocations
-and shared payload contributions; `scripts/build_configuration.py` composes
-them; `scripts/composer.py` closes typed image operations; and
+sources require them. `@scripts/module_pipeline.py` prepares internal invocations
+and shared payload contributions; `@scripts/build_configuration.py` composes
+them; `@scripts/composer.py` closes typed image operations; and
 `image_assembler/` alone stages and verifies the ISO.
 
 The development injector reads the feature files under `catalog/` with

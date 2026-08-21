@@ -14,10 +14,12 @@ from scripts.research.localization.verify_font_renderer import (
     ASCII_FIRST,
     build_ascii_widths,
 )
+from scripts.lib.paths import load_paths
 from tests.na228_builder._fixtures import resident_payload_config
 
 
 REPOSITORY = Path(__file__).resolve().parents[3]
+PATHS = load_paths(REPOSITORY)
 
 
 def words(payload: bytes) -> tuple[int, ...]:
@@ -42,7 +44,7 @@ def is_register_move(word: int, *, source: int, destination: int) -> bool:
 class FontRuntimeContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        builder = REPOSITORY / "na228_builder"
+        builder = PATHS.path("builder")
         selection = catalog.load_selection(
             builder / "catalog",
             builder / "configurations" / "release.json",
@@ -145,19 +147,16 @@ class FontRuntimeContractTests(unittest.TestCase):
         self.assertEqual(command[2] >> 26, 0x02)
         self.assertEqual(command[3], 0)
 
-    def test_selected_list_hooks_target_c_without_forwarding_wrappers(self) -> None:
+    def test_pause_selected_hook_targets_c_without_forwarding_wrapper(self) -> None:
         hook_symbols = {
             edit.symbolic_patch.symbol for edit in self.package.active_edits
         }
-        self.assertIn("v2_c_linked_choice_selected_impl", hook_symbols)
         self.assertIn("v2_c_pause_list_selected_impl", hook_symbols)
-        self.assertNotIn("v2_linked_choice_selected_adapter", hook_symbols)
         self.assertNotIn("v2_pause_list_selected_adapter", hook_symbols)
 
         fragment_symbols = {
             fragment.symbol for fragment in self.package.fragments
         }
-        self.assertNotIn("v2_linked_choice_selected_adapter", fragment_symbols)
         self.assertNotIn("v2_pause_list_selected_adapter", fragment_symbols)
 
     def test_command_relationship_uses_live_nun5_wrap_width(self) -> None:
@@ -280,12 +279,8 @@ class FontRuntimeContractTests(unittest.TestCase):
             "the transient Command title copy must receive a NUL terminator",
         )
 
-        mapping_path = (
-            REPOSITORY
-            / "na228_builder"
-            / "localization"
-            / "translation_importer"
-            / "mappings.tsv"
+        mapping_path = PATHS.path(
+            "builder", "localization", "translation_importer", "mappings.tsv"
         )
         with mapping_path.open("r", encoding="utf-8-sig", newline="") as handle:
             mapping = next(

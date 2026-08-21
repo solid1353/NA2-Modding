@@ -425,9 +425,10 @@ def _merge_rows(
 def load_character_overrides(
     definition_path: Path,
     builder_root: Path,
+    reference_path: Path,
 ) -> CharacterOverrideConfiguration:
     configuration_root = (builder_root / "configurations").resolve()
-    reference_path = (builder_root.parent / "resources" / "character_data.tsv").resolve()
+    reference_path = reference_path.resolve()
     (
         reference_by_id,
         support_id_by_character,

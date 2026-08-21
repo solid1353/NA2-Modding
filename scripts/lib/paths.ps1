@@ -52,7 +52,7 @@ function Resolve-Na2PathManifest {
                 throw "Project path import loader not found: $importLoader"
             }
             . $importLoader
-            $imported = Get-UnWorkshopPaths
+            $imported = Get-UnWorkshopPaths -NoProject
             if ($resolved.Contains($importName)) {
                 throw "Duplicate imported root '$importName'."
             }

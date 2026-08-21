@@ -12,7 +12,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\build_log.ps1')
 . (Join-Path $PSScriptRoot 'build_registry.ps1')
 $paths = Get-Na2Paths
-$pythonRunner = Join-Path $paths.repository 'scripts\lib\run_python.ps1'
+$pythonRunner = Join-Path ([string]$paths.scripts) 'lib\run_python.ps1'
 $registryPath = Join-Path $paths.logs 'na228\preflight\registry.json'
 $isoCacheRoot = Join-Path $paths.cache 'isos'
 $incomingRoot = Join-Path $isoCacheRoot '.incoming'

@@ -23,6 +23,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
+. (Join-Path $repository 'scripts\lib\paths.ps1')
+$paths = Get-Na2Paths
 $arguments = @(
     '--iso', [IO.Path]::GetFullPath($IsoPath),
     '--build-record', [IO.Path]::GetFullPath($BuildRecordDirectory),
@@ -38,7 +40,7 @@ foreach ($symbol in @(
     $arguments += @('--required-symbol', $symbol)
 }
 
-& (Join-Path $repository 'scripts\lib\run_python.ps1') `
+& (Join-Path ([string]$paths.scripts) 'lib\run_python.ps1') `
     -PackageSet builder `
     -Script (Join-Path $PSScriptRoot 'verify_font_replay_bundle.py') `
     -ArgumentList $arguments `

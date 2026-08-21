@@ -120,13 +120,15 @@ def configuration_resources_entry(
     workspace: Path,
     configuration_path: Path,
 ) -> dict[str, object]:
+    paths = load_paths(workspace)
     configuration = load_configuration(
         configuration_path,
         workspace,
-        workspace / "na228_builder",
+        paths.path("builder"),
+        project_paths=paths,
     )
     files = sorted(
-        set(configuration_resource_files(configuration)) | {workspace / "paths.json"},
+        set(configuration_resource_files(configuration)) | {paths.manifest},
         key=lambda path: path.as_posix(),
     )
     digest = hashlib.sha256()
@@ -228,7 +230,7 @@ def collect_build_state(
         raise ValueError(
             "Payload shift must be a 16-byte multiple from 0 through 65536"
         )
-    builder = (workspace / "na228_builder").resolve()
+    builder = load_paths(workspace).path("builder").resolve()
     try:
         configuration_name = configuration_path.relative_to(builder).as_posix()
     except ValueError as error:

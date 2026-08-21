@@ -34,7 +34,7 @@ scripts/project/extract_source_iso.ps1 `
 ```
 
 The command stages under
-`work/<chat title>/temp/source_extraction/`, recursively expands CVM, inner ISO, AFS,
+`@work/<chat title>/temp/source_extraction/`, recursively expands CVM, inner ISO, AFS,
 and nested AFS containers, verifies file sets/bytes, normalizes timestamps, and
 promotes one complete `<ISO filename>.files` tree. It refuses to merge into an
 existing extraction.

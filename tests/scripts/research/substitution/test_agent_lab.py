@@ -7,10 +7,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from scripts.lib.paths import load_paths
 
 REPOSITORY = Path(__file__).resolve().parents[4]
-MODULE_PATH = (
-    REPOSITORY / "scripts" / "research" / "substitution" / "agent_lab.py"
+MODULE_PATH = load_paths(REPOSITORY).path(
+    "scripts", "research", "substitution", "agent_lab.py"
 )
 SPEC = importlib.util.spec_from_file_location("na2_substitution_agent_lab", MODULE_PATH)
 if SPEC is None or SPEC.loader is None:

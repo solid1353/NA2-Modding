@@ -11,7 +11,9 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
-$pythonRunner = Join-Path $repository 'scripts\lib\run_python.ps1'
+. (Join-Path $repository 'scripts\lib\paths.ps1')
+$paths = Get-Na2Paths
+$pythonRunner = Join-Path ([string]$paths.scripts) 'lib\run_python.ps1'
 $pythonScript = Join-Path $PSScriptRoot 'agent_lab.py'
 $pythonArguments = @('--port', [string]$Port) + @($CommandArguments)
 

@@ -17,7 +17,7 @@ function Get-Na2StartupFastForwardFrames {
     if (-not (Test-Path -LiteralPath $configurationPath -PathType Leaf)) {
         throw "Launch configuration does not exist: $Configuration"
     }
-    $pythonRunner = Join-Path $Paths.repository 'scripts\lib\run_python.ps1'
+    $pythonRunner = Join-Path ([string]$Paths.scripts) 'lib\run_python.ps1'
     $launchSettings = $Paths.settings.launch_settings
     $startupFrames = $launchSettings.startup_fast_forward_frames
     if (-not [string]::IsNullOrWhiteSpace($LaunchProfile)) {

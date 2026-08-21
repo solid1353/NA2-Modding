@@ -9,7 +9,7 @@ table shared by current and future per-character battle hooks.
 `configurations/overrides/base.character_overrides.tsv` supplies the shared
 base and character rows. The selected profile's matching TSV in that directory
 layers nonempty cells over it. Character IDs and names are validated against
-`resources/character_data.tsv`. `base_id` records form relationships as
+`@resources/character_data.tsv`. `base_id` records form relationships as
 human-readable configuration metadata. `tier` records the balancing tier and
 is serialized as fixed-width table metadata. Empty cells inherit, while zero
 remains an explicit value.
@@ -175,18 +175,18 @@ could imply an ABI that has not been established.
 Implementation should stay inside the existing battle-logic mechanisms:
 
 - add the typed `combo_damage_scaling` object under `features.battle_logic` in
-  `na228_builder/catalog/catalog.modcat`, pointing to new injection ID
+  `@builder/catalog/catalog.modcat`, pointing to new injection ID
   `i__battle_logic__combo_damage_scaling`, and select the accepted values in
-  `na228_builder/configurations/base.json` so existing profile overrides inherit
+  `@builder/configurations/base.json` so existing profile overrides inherit
   them;
-- add `na228_builder/scripts/combo_damage_scaling.py`, analogous to
+- add `@builder/scripts/combo_damage_scaling.py`, analogous to
   `xdash_chakra_cost.py`, to emit read-only symbol
   `battle_logic_combo_damage_scaling` as `<2f>`, then import and prepend that
   fragment in the existing battle-logic branch of `module_pipeline.py`;
 - add `src/battle_logic/combo_damage_scaling.c` with a multiplier entry that
   imports the curve symbol and reads the proven native combo state;
 - add the three guarded call-site hooks, compiled helper fragment, and one
-  shared ABI shim to `na228_builder/catalog/injections.json`;
+  shared ABI shim to `@builder/catalog/injections.json`;
   the third hook at ELF `0x131734` remains a deployment gate until its natural
   `0.04` path has a positive capture (response target `0x42..0x47` with the
   applicable fighter `+0xBB0/+0xBBC/+0xBB4` bit `0x400` set). The clean-stage

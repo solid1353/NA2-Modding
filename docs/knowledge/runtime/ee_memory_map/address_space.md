@@ -140,8 +140,8 @@ lifetime, release-payload placement, or callers not exercised through the
 selected entry.
 
 On 2026-07-30, the maintained workflow replaced PNACH transport and alternating
-banks with `scripts/injection/build.py` and
-`scripts/injection/apply.py`. The builder emits one addressed `fragment.bin`
+banks with `@scripts/injection/build.py` and
+`@scripts/injection/apply.py`. The builder emits one addressed `fragment.bin`
 and `manifest.json`; the applier synchronously pauses the VM, writes one fixed
 development reservation and exact-guarded callers through PINE, invokes the
 custom cache-only opcode `0x14`, and restores the prior running/paused state.

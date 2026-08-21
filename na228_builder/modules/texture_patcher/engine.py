@@ -1486,8 +1486,9 @@ def main() -> int:
     preview_parser.add_argument("--workers", type=int)
     args = parser.parse_args()
 
-    na2_root, nun5_root = default_roots()
     repository = Path(__file__).resolve().parents[3]
+    paths = load_paths(repository)
+    na2_root, nun5_root = default_roots()
     data_root = args.package
     if not data_root.is_absolute():
         data_root = repository / data_root
@@ -1498,7 +1499,7 @@ def main() -> int:
         data_root=data_root,
         selection=selection,
         workers=args.workers,
-        cache_root=repository / "work" / "cache" / "texture_patcher",
+        cache_root=paths.path("cache", "texture_patcher"),
     )
     if args.command == "preview":
         output = Path(args.output)

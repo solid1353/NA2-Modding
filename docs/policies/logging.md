@@ -8,7 +8,7 @@ knowledge.
 
 - Write bounded shared workflow logs below `@logs/`, generated task records
   below `@task_logs/<exact chat title>/`, and cache-build/runtime logs below
-  `work/<chat title>/logs/`. Do not write files directly in `@logs/` or
+  `@work/<chat title>/logs/`. Do not write files directly in `@logs/` or
   `@task_logs/`.
 - Persist only repository-relative paths or configured `@root/...` aliases.
   Machine-specific absolute paths are forbidden.
@@ -75,7 +75,7 @@ below `@task_logs/`.
 Help output is not logged. An exact registry hit clones the matching structured
 provenance into the invocation's role-specific build record without repeating
 assembly. A full verified physical build first moves its unique candidate into
-`@work/cache/isos/<SHA-256>.iso` and registers it. Promotion then updates a
+`@cache/isos/<SHA-256>.iso` and registers it. Promotion then updates a
 user-facing build role by creating or atomically replacing a hardlink to the
 canonical hash-named image. Cache validation uses the canonical cache image
 directly and creates no task-owned ISO or hardlink. Latest rotation similarly
@@ -96,7 +96,7 @@ record that rotation is disabled and PCSX2 is left running.
 
 `na228 build -c <configuration>` keeps its operational
 `latest.log`/`rolling.log` and structured `builds/<build-id>/` records under the
-acting chat's `work/<chat title>/logs/` when `NA228_TASK_WORK_ROOT` is set. It
+acting chat's `@work/<chat title>/logs/` when `NA228_TASK_WORK_ROOT` is set. It
 participates in the shared verified-build registry and returns its canonical
 cached ISO path without creating a separate output. Cache builds never
 participate in or prune shared Test/Latest/Previous role records. Completed

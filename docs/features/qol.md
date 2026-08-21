@@ -2,14 +2,14 @@
 
 File-backed and resident quality-of-life behavior. Selectable nodes, guarded
 binary edits, runtime hooks, and payload declarations are selected by
-`features.qol` in `na228_builder/catalog/catalog.modcat`.
+`features.qol` in `@builder/catalog/catalog.modcat`.
 
 ## Practice bootstrap PNACH
 
 Practice bootstrap is runtime-only and has no builder catalog node, builder
 configuration field, resident fragment, or ISO rebuild input. The launch
 profile invocation is `na228 <game> [game] -l practice <row>`; `practice`
-selects a physical row from `resources/movesets.tsv`, starting at row 2 after
+selects a physical row from `@resources/movesets.tsv`, starting at row 2 after
 the header. It works with NUN5,
 NA2.28 build selectors, build-and-launch tokens, and input playback. It reads
 only that row; it neither reads
@@ -21,14 +21,14 @@ both cells are empty, the profile selects No Support `0x25`. An empty
 the native Half starting-HP mode; an empty cell leaves starting HP unchanged.
 The `uniqueness` column is metadata.
 
-`pcsx2_files/cheats/practice/NA228p.pnach` and
-`pcsx2_files/cheats/practice/NUN5p.pnach` contain the
+`@pcsx2_cheats/practice/NA228p.pnach` and
+`@pcsx2_cheats/practice/NUN5p.pnach` contain the
 complete game-specific bootstraps. Each selected game receives its own file and
 three ordinary inline PNACH lines at that game's character, support, and
 awakening configuration addresses. Those process-local lines are the sole case
 values and do not modify or regenerate either file. The normal
-PNACHs at `pcsx2_files/games/NA228/NA228.pnach` and
-`pcsx2_files/games/NUN5/NUN5.pnach` contain no Practice bootstrap.
+PNACHs at `@pcsx2_files/games/NA228/NA228.pnach` and
+`@pcsx2_files/games/NUN5/NUN5.pnach` contain no Practice bootstrap.
 Practice-profile launches use read-only
 settings and discard memory-card writes, so paired launches do not share
 mutable configuration. Clean NA2 is not supported.

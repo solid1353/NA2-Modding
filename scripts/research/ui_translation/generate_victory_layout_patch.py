@@ -251,7 +251,7 @@ def main() -> int:
 
     generated_edits = build_patch_rows()
     generated = build_definitions(generated_edits)
-    edits_path = REPOSITORY / "na228_builder" / "catalog" / "edits.json"
+    edits_path = load_paths(REPOSITORY).path("builder", "catalog", "edits.json")
     stored_edits = json.loads(edits_path.read_text(encoding="utf-8"))
     stored = {
         edit_id: definition

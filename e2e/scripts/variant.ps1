@@ -171,7 +171,7 @@ if ([string]::IsNullOrWhiteSpace($previousIsoSha256) -and $existingBuildMatchesV
 }
 
 $buildOutput = @(
-    & (Join-Path $repository 'scripts\na228\build.ps1') -E2eVariant $Variant
+    & (Join-Path ([string]$paths.scripts) 'na228\build.ps1') -E2eVariant $Variant
 )
 $build = @(
     $buildOutput | Where-Object {

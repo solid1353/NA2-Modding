@@ -57,9 +57,9 @@ No matching NUN5 slot-9 state was supplied, so the comparison uses the retained
 640x480 NUN5 Save/Load capture with SHA-256
 `55626DB58BB0316F2502A20B2B825AABD25C94D343A427242F15C12A3343B2DC`.
 Exact task-owned paths and source provenance are recorded in
-`work/Font/inputs/sstates/autofit_positions/modal/provenance.json`; the
+`@work/Font/inputs/sstates/autofit_positions/modal/provenance.json`; the
 comparison grid is retained as the task artifact
-`work/Font/artifacts/autofit_positions/save_load/pre_reset-slot-09.png`.
+`@work/Font/artifacts/autofit_positions/save_load/pre_reset-slot-09.png`.
 
 At 640x480, NUN5's lower-panel orange borders occupy `y=289..293` and
 `y=460..464`; current NA2 uses `y=296..299` and `y=449..452`. NUN5's
@@ -131,11 +131,11 @@ Special Controls modal; its provisional adapter hook is removed.
 ## Contextual Special Controls / Practice Settings ON/OFF
 
 The remade paired ss1 states are retained under
-`work/Font/inputs/sstates/special-controls-on-off/remade-ss1-20260727/`.
+`@work/Font/inputs/sstates/special-controls-on-off/remade-ss1-20260727/`.
 Their embedded frames show compact uppercase NUN5 `ON`/`OFF` and oversized,
 widely spaced NA2 fullwidth text. Exact-guarded draw telemetry from the copied
 NA2 state is retained under
-`work/Font/artifacts/special-controls-on-off/remade-ss1-20260727/draw-telemetry/`.
+`@work/Font/artifacts/special-controls-on-off/remade-ss1-20260727/draw-telemetry/`.
 
 The telemetry proves that the selected row reads runtime string
 `0x006059F0`, bytes `82 6E 81 40 82 6D 00` (`Ｏ　Ｎ`), from callers
@@ -194,7 +194,7 @@ title-case table `0x00604658`, preserving the original Off-then-On index order.
 The user verified Practice Settings working. No string bytes, global glyph
 metrics, spacing logic, scale, or renderer calls change. The deterministic
 guard generator is
-`scripts/research/localization/generate_on_off_context_split.py`; it now
+`@scripts/research/localization/generate_on_off_context_split.py`; it now
 generates and verifies only these three runtime-proven Practice pointer edits.
 
 The supplied title-to-Load `ss1` has boot CRC `A8A3C694`, state SHA-256
@@ -204,7 +204,7 @@ and an embedded 640x480 frame SHA-256
 It shows all three Load rows plus the complete instruction/action panel, proving
 that the accepted worker ISO survives the real transition without the former
 helper-erasure freeze. Exact provenance is retained under
-`work/Font/inputs/sstates/autofit_v2/controls/load-transition/`.
+`@work/Font/inputs/sstates/autofit_v2/controls/load-transition/`.
 
 Static linked-package validation confirms the five core hook targets, the
 two eight-byte Controls redirects, both adapter ABIs, state restoration,

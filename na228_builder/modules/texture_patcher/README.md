@@ -3,7 +3,7 @@
 This reusable engine interprets feature-owned container, mapping, and strategy
 tables and derives fixed-size texture replacements from canonical sources. The
 active UI translation package lives under
-`na228_builder/localization/texture_patcher/`.
+`@builder/localization/texture_patcher/`.
 
 `whole` strategies use the complete donor payload and may apply a guarded
 upward translation to one bounded region of an 8-bit indexed donor texture
@@ -19,7 +19,7 @@ derivation or ISO builds. Indexed-region translations use the pinned Zopfli
 encoder so their replacement bytes do not vary with the host zlib version.
 
 Every build route uses the shared optional derivation cache at
-`work/cache/texture_patcher/` relative to the active project or release
+`@cache/texture_patcher/` relative to the active project or release
 application directory. Entries are keyed by the actual target and donor
 container bytes, applicable strategy and mappings, texture-patcher
 implementation, and compression runtime. A hit still verifies the replacement

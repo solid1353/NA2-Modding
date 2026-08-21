@@ -176,7 +176,7 @@ alias is linked and the empty inline storage remains untouched.
 
 Each configuration build records the translation importer under:
 
-`logs/na228/builds/<build-id>/<module-id>/`
+`@logs/na228/builds/<build-id>/<module-id>/`
 
 containing:
 
@@ -239,7 +239,7 @@ The original NA2 target is authoritative for renderer-specific color forms:
 
 ## Integration expectations
 
-- The reusable engine lives in `na228_builder/modules/translation_importer/`; this feature-owned directory contains the live mappings and their documentation.
+- The reusable engine lives in `@builder/modules/translation_importer/`; this feature-owned directory contains the live mappings and their documentation.
 - Do not replace the integrated module by extracting a legacy builder archive over the project.
 - Do not copy generated configuration-log plans back into the module.
 - Do not add patched `BTL.BIN`, `ETC.BIN`, or `SLPS_258.37` payloads to the importer or checkpoint commits; binary deliverables belong only in the frozen release archive.

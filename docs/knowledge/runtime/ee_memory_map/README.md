@@ -55,7 +55,7 @@ conclusions above were promoted.
 ## Provenance and reproduction
 
 Runtime analysis uses the maintained
-`scripts/research/ee_memory_map/analyze_savestates.py` tool. It extracts the
+`@scripts/research/ee_memory_map/analyze_savestates.py` tool. It extracts the
 32 MiB `eeMemory.bin` member from each PCSX2 savestate, validates the allocator,
 identifies the overlay, and hashes fixed regions. Focused synthetic tests cover
 identity parsing, allocator invariants, overlay interpretation, and region

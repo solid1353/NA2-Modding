@@ -12,7 +12,7 @@ current task.
    ```
 
 2. The user gives the agent the recording name. The baseline is under
-   `work/captures/<recording>/<game>/`.
+   `@work/captures/<recording>/<game>/`.
 3. The agent treats that baseline as read-only. If it does not exist, ask the
    user to create it. If multiple game directories make the intended baseline
    genuinely ambiguous, ask which one applies.

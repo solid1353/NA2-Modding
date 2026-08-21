@@ -74,10 +74,10 @@ Methods and tools:
 - maintained Ghidra 12.1.2 projects/exports under
   `@disassembly/NA2/`, `@disassembly/NUN5/`, and
   `@disassembly/NUN6/`;
-- `scripts/research/menu_input/find_mips_address_refs.py` and
-  `scripts/research/menu_input/disassemble_mips32_range.py`;
+- `@scripts/research/menu_input/find_mips_address_refs.py` and
+  `@scripts/research/menu_input/disassemble_mips32_range.py`;
 - quote-aware parsing of
-  `na228_builder/localization/translation_importer/mappings.tsv`;
+  `@builder/localization/translation_importer/mappings.tsv`;
 - aligned little-endian pointer scans plus PowerShell size, hash, ISO-layout,
   and byte inspection.
 
@@ -243,7 +243,7 @@ The pool starts at file offset `0x100`. Thirty distinct terminated strings use
 The three continuation mappings are T2042 through parent T2011, T2045 through
 parent T2043, and T2050 through parent T2048. The complete reusable inventory
 is folded into the applicable rows in
-`na228_builder/localization/translation_importer/mappings.tsv`.
+`@builder/localization/translation_importer/mappings.tsv`.
 
 BTL and ETC themselves contain the applicable pointer words. A static patch to
 those files is therefore restored whenever the overlay loads; no post-load

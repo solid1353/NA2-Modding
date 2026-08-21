@@ -360,8 +360,11 @@ class InjectionBuildTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            with mock.patch.object(
-                build_injection, "REPOSITORY", repository
+            fixture_paths = mock.Mock()
+            fixture_paths.path.return_value = repository / "work"
+            with (
+                mock.patch.object(build_injection, "REPOSITORY", repository),
+                mock.patch.object(build_injection, "PATHS", fixture_paths),
             ):
                 (
                     _path,

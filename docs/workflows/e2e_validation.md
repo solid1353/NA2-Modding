@@ -45,7 +45,7 @@ only their corresponding recording marker numbers through PCSX2 using
 `-input-recording-capture-markers <markers>`.
 
 Write the diagnostic savestates only within the acting task's
-`work/<exact chat title>/` directory. Confirm each state's embedded screenshot
+`@work/<exact chat title>/` directory. Confirm each state's embedded screenshot
 corresponds to the requested picture. Never publish diagnostic savestates as
 E2E capture history. Delete them before completing the task.
 

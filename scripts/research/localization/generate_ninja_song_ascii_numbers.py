@@ -155,12 +155,8 @@ def verify_source() -> Path:
 
 
 def verify_multiplication_mapping() -> Path:
-    mappings = (
-        REPOSITORY
-        / "na228_builder"
-        / "localization"
-        / "translation_importer"
-        / "mappings.tsv"
+    mappings = load_paths(REPOSITORY).path(
+        "builder", "localization", "translation_importer", "mappings.tsv"
     )
     with mappings.open("r", encoding="utf-8-sig", newline="") as stream:
         rows = list(csv.DictReader(stream, delimiter="\t"))

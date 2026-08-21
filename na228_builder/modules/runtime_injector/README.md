@@ -9,8 +9,8 @@ package. A feature never chooses an offset inside `PRG/228.BIN` or owns its
 loader, memory reservation, or final runtime address.
 
 Canonical production inputs are the shared
-`na228_builder/catalog/targets.tsv` registry, injection units from
-`na228_builder/catalog/injections.json`, and referenced
+`@builder/catalog/targets.tsv` registry, injection units from
+`@builder/catalog/injections.json`, and referenced
 repository sources and assets.
 Catalog settings select injection units through `i__` patch IDs.
 There is no separate runtime-injector data directory or standalone TSV package

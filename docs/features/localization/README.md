@@ -1,11 +1,11 @@
 # Localization feature documentation
 
 The selectable hierarchy lives under `features.localization` in
-`na228_builder/catalog/catalog.modcat`; its guarded edits and runtime units live
-in `na228_builder/catalog/edits.json` and
-`na228_builder/catalog/injections.json`. Non-inline assets and
+`@builder/catalog/catalog.modcat`; its guarded edits and runtime units live
+in `@builder/catalog/edits.json` and
+`@builder/catalog/injections.json`. Non-inline assets and
 the remaining translation/texture TSV inputs live under
-`na228_builder/localization/`.
+`@builder/localization/`.
 
 Localization composes the accepted English translation, source-derived UI
 textures, guarded UI layout edits, the native NUN5-derived Font stack, compact
@@ -15,13 +15,13 @@ fingerprint covers its canonical executable inputs.
 
 ## Canonical builder inputs
 
-`features.localization` in `na228_builder/catalog/catalog.modcat` owns
+`features.localization` in `@builder/catalog/catalog.modcat` owns
 localization's nested selection and leaf references.
-`na228_builder/catalog/edits.json` owns
+`@builder/catalog/edits.json` owns
 guarded binary edits;
-`na228_builder/catalog/injections.json` owns runtime hooks,
+`@builder/catalog/injections.json` owns runtime hooks,
 resident sources and fragments, relocations, and ABI metadata. Files retained under
-`na228_builder/localization/` are only non-inline inputs:
+`@builder/localization/` are only non-inline inputs:
 
 - `assets/`: edit-referenced native Font assets;
 - `translation_importer/`: canonical text mappings and donor provenance;

@@ -1,8 +1,8 @@
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'scripts\lib\paths.ps1')
-. (Join-Path $PSScriptRoot 'scripts\na228\task_paths.ps1')
-. (Join-Path $PSScriptRoot 'scripts\na228\launch_settings.ps1')
 $paths = Get-Na2Paths
+. (Join-Path ([string]$paths.scripts) 'na228\task_paths.ps1')
+. (Join-Path ([string]$paths.scripts) 'na228\launch_settings.ps1')
 
 trap {
     if ([bool]$_.Exception.Data['Na2ConfigurationError']) {

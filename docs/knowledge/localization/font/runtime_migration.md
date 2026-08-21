@@ -16,14 +16,14 @@ The user captured a state after the game froze while entering the Load screen.
 The source was read from
 the user PCSX2 savestate `SLOP-NA228 (682CC5FB).01.p2s`, copied without modifying
 the user library to
-`work/Font/inputs/sstates/load_freeze/user/SLOP-NA228 (682CC5FB).01.p2s`,
+`@work/Font/inputs/sstates/load_freeze/user/SLOP-NA228 (682CC5FB).01.p2s`,
 and has SHA-256
 `67B9329411667E32211B4FAA319ADCF3EF255362FD26C8DF70AFA475D8937644`.
 Its embedded screenshot shows the two Load-screen panels before any text was
 drawn.
 
 Offline comparison against the same-CRC pre-Load state
-`work/Font/artifacts/load_freeze/crash_state/pre_load_same_crc.p2s`, SHA-256
+`@work/Font/artifacts/load_freeze/crash_state/pre_load_same_crc.p2s`, SHA-256
 `B20EF54A12952C0A30BD2907E2FD9B6B1B98961620E72658A62B2B2BC7001E0F`,
 establishes the failure:
 
@@ -114,15 +114,15 @@ frame limit. This proves that the replacement code remains resident across the
 transition that erased the old ELF cave.
 
 The integrated build record is
-`work/Font/logs/builds/20260725_090026_130_pid29660/`; the fresh title state,
+`@work/Font/logs/builds/20260725_090026_130_pid29660/`; the fresh title state,
 Cross recording, and Load capture are under
-`work/Font/artifacts/load_freeze/resident_relocation/final_runtime/`. A state
+`@work/Font/artifacts/load_freeze/resident_relocation/final_runtime/`. A state
 captured after the old hook had already entered erased code cannot be repaired
 by applying the new hooks after load; execution must start before that
 transition.
 
 The ten converted captures and the untouched-state controls are retained under
-`work/Font/artifacts/load_freeze/resident_regression/` for comparison while the
+`@work/Font/artifacts/load_freeze/resident_regression/` for comparison while the
 remaining caller families are implemented.
 
 
@@ -257,12 +257,12 @@ its own synchronized replay; older captures are not presented as proof of
 byte-identical current output.
 
 The synchronized main replay provides valid post-change cases 1-49 under
-`work/Font 3/overhaul/comparisons/font-overhaul-final-red-main-1-49-vs-nun5/`.
+`@work/Font 3/overhaul/comparisons/font-overhaul-final-red-main-1-49-vs-nun5/`.
 A severity-first review found no wrong selected color, overflow, bad wrap,
 missing label, or large width/position error. Linked `Auto` and `Manual` are red
 in both selected captures. The separate Collection replay provides valid cases
 1-7 under
-`work/Font 3/overhaul/comparisons/font-overhaul-final-red-font2-vs-nun5/`,
+`@work/Font 3/overhaul/comparisons/font-overhaul-final-red-font2-vs-nun5/`,
 covering Sakura Figure, Ultimate Jutsu and Music, Movie rows, and legacy Naruto
 Ultimate Jutsu; no large Font defect remains there. Classic Naruto's missing
 Figure and Music pages are native content structure, not missing Font output.
@@ -277,7 +277,7 @@ final-build replay is supplied; no stronger claim is retained.
 
 ### Preserved regression tooling
 
-Reusable scripts under `scripts/research/localization/` are retained as the
+Reusable scripts under `@scripts/research/localization/` are retained as the
 reproducible project surface:
 
 - `replay_font_recording_worker.ps1` runs a recording against the task-owned
@@ -296,7 +296,7 @@ reproducible project surface:
   separate patch-state script or executable `enabled` field.
 
 Generated ISOs, captures, logs, and comparison products remain task-owned
-under `work/Font 3/`; only reusable scripts and canonical findings are tracked.
+under `@work/Font 3/`; only reusable scripts and canonical findings are tracked.
 
 ### Capturing remaining discrepancies
 
@@ -393,5 +393,5 @@ published after the complete run passes.
 The verified initial focused proof matched all 58 non-ignored `font/main`
 screenshots byte for byte. Seven volatile save-data slots remain governed by
 the base suite's existing `ignore.txt`. Reusable probe evidence and comparison scripts are under
-`work/Font 3/investigation/heap-boundary-tail-probe/` and
-`work/Font 3/investigation/stable-boundary-ab/`.
+`@work/Font 3/investigation/heap-boundary-tail-probe/` and
+`@work/Font 3/investigation/stable-boundary-ab/`.

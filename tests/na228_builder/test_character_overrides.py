@@ -13,9 +13,20 @@ from na228_builder.scripts.character_overrides import (
     TABLE_VERSION,
     TIER_WIDTH,
     character_override_fragment,
-    load_character_overrides,
+    load_character_overrides as _load_character_overrides,
     render_character_overrides,
 )
+
+
+def load_character_overrides(
+    definition_path: Path,
+    builder_root: Path,
+):
+    return _load_character_overrides(
+        definition_path,
+        builder_root,
+        builder_root.parent / "resources" / "character_data.tsv",
+    )
 
 
 class CharacterOverrideTests(unittest.TestCase):

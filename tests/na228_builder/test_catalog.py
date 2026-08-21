@@ -9,6 +9,7 @@ from unittest import mock
 
 from na228_builder.modules.binary_patcher import adapters
 from na228_builder.scripts import catalog, catalog_format
+from scripts.lib.paths import load_local_paths
 
 
 PATCH_ID = re.compile(r'"((?:e|i|s)__[a-z0-9_]+)"')
@@ -451,9 +452,9 @@ class CatalogTests(unittest.TestCase):
             )
 
     def test_repository_configurations_select_startup_behavior(self) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        catalog_path = repository / "na228_builder" / "catalog"
-        configurations = repository / "na228_builder" / "configurations"
+        paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
+        catalog_path = paths.path("builder", "catalog")
+        configurations = paths.path("builder", "configurations")
 
         selections = {
             name: catalog.load_selection(
@@ -491,8 +492,8 @@ class CatalogTests(unittest.TestCase):
                 )
 
     def test_repository_practice_starting_hp_variants_select_exact_guarded_edits(self) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        builder = repository / "na228_builder"
+        paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
+        builder = paths.path("builder")
         catalog_path = builder / "catalog"
         base = json.loads(
             (builder / "configurations" / "base.json").read_text(encoding="utf-8")
@@ -516,7 +517,7 @@ class CatalogTests(unittest.TestCase):
                         selection,
                         "qol",
                         catalog_path / "targets.tsv",
-                        repository,
+                        paths.repository,
                         builder / "modules" / "binary_patcher" / "operations",
                     )
                     edits = [

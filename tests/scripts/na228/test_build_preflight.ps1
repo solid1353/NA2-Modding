@@ -61,7 +61,7 @@ exit $LASTEXITCODE
     "builder": "na228_builder",
     "scripts": "scripts",
     "work": "work",
-    "cache": "@work/cache"
+    "cache": "@build/cache"
   },
   "files": {
     "na2_iso": "@source/NA2.iso",
@@ -74,12 +74,18 @@ exit $LASTEXITCODE
   }
 }
 '@)
+    . (Join-Path $libRoot 'paths.ps1')
+    $testPaths = Get-Na2LocalPaths `
+        -ManifestPath (Join-Path $repository 'paths.json') `
+        -AllowMissing
+    $isoCacheRoot = Join-Path $testPaths.cache 'isos'
     foreach ($directory in @(
         'source', 'build', 'logs\na228\builds\existing',
-        'na228_builder\configurations', 'scripts', 'work\cache\isos', 'work\Project'
+        'na228_builder\configurations', 'scripts', 'work\Project'
     )) {
         New-Item -ItemType Directory -Force -Path (Join-Path $repository $directory) | Out-Null
     }
+    New-Item -ItemType Directory -Force -Path $isoCacheRoot | Out-Null
     foreach ($name in 'dev', 'test', 'release') {
         [IO.File]::WriteAllText(
             (Join-Path $repository "na228_builder\configurations\$name.json"),
@@ -104,6 +110,7 @@ iso`tbuild_record
     $global:Na2RegistryCalls = @()
     $global:Na2BuilderCalls = @()
     $global:Na2RegistryRepository = $repository
+    $global:Na2RegistryIsoCacheRoot = $isoCacheRoot
     $global:Na2RegistryUnavailable = $false
     function python {
         $arguments = @($args)
@@ -143,7 +150,7 @@ iso`tbuild_record
                 $incoming = $arguments[$imageIndex + 1]
                 $item = Get-Item -LiteralPath $incoming
                 $hash = (Get-FileHash -LiteralPath $incoming -Algorithm SHA256).Hash
-                $cached = Join-Path $global:Na2RegistryRepository "work\cache\isos\$hash.iso"
+                $cached = Join-Path $global:Na2RegistryIsoCacheRoot "$hash.iso"
                 [IO.File]::Move($incoming, $cached, $true)
                 $size = $item.Length
                 $entry = [pscustomobject]@{
@@ -180,7 +187,7 @@ iso`tbuild_record
         throw "Unexpected python invocation: $($arguments -join ' ')"
     }
 
-    $incomingRoot = Join-Path $repository 'work\cache\isos\.incoming'
+    $incomingRoot = Join-Path $isoCacheRoot '.incoming'
     New-Item -ItemType Directory -Path $incomingRoot -Force | Out-Null
     $staleIncoming = Join-Path $incomingRoot 'stale.iso'
     $activeIncoming = Join-Path $incomingRoot 'active.iso'
@@ -231,7 +238,7 @@ iso`tbuild_record
     Assert-Na2PreflightTest ($global:Na2BuilderCalls.Count -eq 1) 'Registry hit rebuilt the image.'
 
     $developmentEntry = $global:Na2RegistryEntries['na228_builder\configurations\dev.json|0']
-    $cacheImage = Join-Path $repository "work\cache\isos\$($developmentEntry.Hash).iso"
+    $cacheImage = Join-Path $isoCacheRoot "$($developmentEntry.Hash).iso"
     Assert-Na2PreflightTest (Test-Path -LiteralPath $cacheImage -PathType Leaf) 'Latest promotion did not retain its canonical cache image.'
     $developmentEntry.Image = $cacheImage
     Remove-Item -LiteralPath $latestIso -Force
@@ -275,7 +282,7 @@ iso`tbuild_record
         -Destination $otherDestination `
         -Size (Get-Item -LiteralPath $otherIso).Length `
         -Sha256 $otherHash `
-        -CacheRoot (Join-Path $repository 'work\cache\isos')
+        -CacheRoot $isoCacheRoot
     Assert-Na2PreflightTest ($otherPromotion.Status -eq 'updated') 'A retained registry location was not copied.'
     Assert-Na2PreflightTest (Test-Path -LiteralPath $otherIso -PathType Leaf) 'A non-cache directory named isos was mistaken for the shared cache.'
     Assert-Na2PreflightTest ((Get-Item -LiteralPath $otherDestination).LinkType -eq 'HardLink') 'A retained registry location was not materialized as a hardlink.'
@@ -285,7 +292,7 @@ iso`tbuild_record
     $manualIso = Join-Path $repository 'build\Synthetic Product - Manual.iso'
     Assert-Na2PreflightTest ($manual.Status -eq 'manual') 'Force mode did not complete through a registry outage.'
     Assert-Na2PreflightTest (Test-Path -LiteralPath $manualIso -PathType Leaf) 'Force mode did not promote its verified Manual ISO.'
-    Assert-Na2PreflightTest (@(Get-ChildItem -LiteralPath (Join-Path $repository 'work\cache\isos\.incoming') -File -ErrorAction SilentlyContinue).Count -eq 0) 'Force registry fallback left an incoming ISO.'
+    Assert-Na2PreflightTest (@(Get-ChildItem -LiteralPath (Join-Path $isoCacheRoot '.incoming') -File -ErrorAction SilentlyContinue).Count -eq 0) 'Force registry fallback left an incoming ISO.'
     $global:Na2RegistryUnavailable = $false
 
     Write-Host 'NA2 shared build registry PowerShell tests passed.' -ForegroundColor Green
@@ -298,6 +305,7 @@ finally {
     Remove-Variable Na2RegistryCalls -Scope Global -ErrorAction SilentlyContinue
     Remove-Variable Na2BuilderCalls -Scope Global -ErrorAction SilentlyContinue
     Remove-Variable Na2RegistryRepository -Scope Global -ErrorAction SilentlyContinue
+    Remove-Variable Na2RegistryIsoCacheRoot -Scope Global -ErrorAction SilentlyContinue
     Remove-Variable Na2RegistryUnavailable -Scope Global -ErrorAction SilentlyContinue
     if (Test-Path -LiteralPath $testRoot) {
         Remove-Item -LiteralPath $testRoot -Recurse -Force

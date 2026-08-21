@@ -64,7 +64,7 @@ PNG hashes without publishing an alternate baseline. The original focused proof 
 captures byte-identically; seven established volatile save-data captures in
 that suite's `ignore.txt` remain excluded. Detailed paired states, GS/VU
 comparisons, heap reports, and the original probe build record are retained under
-`work/Font 3/investigation/heap-boundary-tail-probe/`.
+`@work/Font 3/investigation/heap-boundary-tail-probe/`.
 
 ### Fixed-boundary allocation-order divergence (2026-08-04)
 

@@ -40,7 +40,7 @@
 
 ## Work ownership and external inputs
 
-- `work/<exact chat title>/` is exclusively the workspace of that chat. Only
+- `@work/<exact chat title>/` is exclusively the workspace of that chat. Only
   that chat may create, change, move, or delete content there. Another chat may
   read it but copies anything it needs into its own tree before changing it.
   Project-wide, release, build, test, script, and other non-chat workflows use
@@ -49,15 +49,15 @@
   `tmp/pdfs/` into the acting chat's directory.
 - Agents do not use the operating-system `TEMP`/`TMP` directory as a workspace
   or artifact root. Set `NA228_TASK_WORK_ROOT` to the acting chat's
-  `work/<exact chat title>/` before maintained commands that create temporary
+  `@work/<exact chat title>/` before maintained commands that create temporary
   files.
 - When `NA228_TASK_WORK_ROOT` is unset, the unit-test runner uses the ignored
-  `work/temp/tests/` technical root instead of impersonating a chat.
-- Reserve top-level `work/temp/` for unit-test scratch. Keep inputs,
+  `@work/temp/tests/` technical root instead of impersonating a chat.
+- Reserve top-level `@work/temp/` for unit-test scratch. Keep inputs,
   experiments, intermediates, outputs, builds, runtime artifacts, and logs in
   clearly named subdirectories outside that technical root.
 - Copy changing external inputs such as selected savestates or screenshots into
-  `work/<chat title>/inputs/` with provenance before relying on them. Keep baselines,
+  `@work/<chat title>/inputs/` with provenance before relying on them. Keep baselines,
   modified copies, analysis outputs, and builds separate.
 - After moving or deleting files, inspect every affected parent directory on
   disk with hidden and ignored entries included. Remove unintended empty
@@ -79,13 +79,13 @@
 - User-facing utilities are PowerShell. Python may be used internally behind a
   maintained PowerShell entrypoint.
 - Keep root `na228.ps1` a short parser/router; substantive implementation belongs
-  under `scripts/` by responsibility. Shared PCSX2, media, and Ghidra tooling
+  under `@scripts/` by responsibility. Shared PCSX2, media, and Ghidra tooling
   belongs in Workshop.
 - Domain-specific scripts remain with their owning area until they become
   shared project infrastructure.
 - When a task changes the shared PowerShell profile, locate it through
   `$env:USERPROFILE`; keep the profile change to a thin alias or dot-source and
-  keep reusable implementation in the project `scripts/` tree.
+  keep reusable implementation in the project `@scripts/` tree.
 - Optional reusable analysis/research tools belong in an existing tooling area;
   task-local scratch tools remain under the task and are deleted when no longer
   useful. See the implementation boundary in root
@@ -132,8 +132,8 @@ hierarchy.
   or a component contract is useful. Link to substantial documentation instead
   of accumulating multiple Markdown files beside code.
 - The builder has no physical `features/` directory. Selectable structure lives
-  in `na228_builder/catalog/catalog.modcat`; guarded edits, runtime injection
-  units, and targets live beside it under `na228_builder/catalog/`. Non-inline
+  in `@builder/catalog/catalog.modcat`; guarded edits, runtime injection
+  units, and targets live beside it under `@builder/catalog/`. Non-inline
   executable inputs and
   assets live under their concrete builder data area, and feature documentation
   belongs under `docs/features/`. Catalog-only features require no directory.

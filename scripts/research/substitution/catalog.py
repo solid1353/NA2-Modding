@@ -571,15 +571,13 @@ def load_clean_catalog() -> tuple[list[dict[str, object]], dict[str, object], Pa
         )
     characters = [
         {**row, "catalog_scope": "primary"}
-        for row in _read_tsv(REPOSITORY / "resources" / "character_data.tsv")
+        for row in _read_tsv(paths.path("resources", "character_data.tsv"))
     ]
     characters.extend(dict(row) for row in AUXILIARY_CHARACTER_ROWS)
     mappings = _read_tsv(
-        REPOSITORY
-        / "na228_builder"
-        / "localization"
-        / "translation_importer"
-        / "mappings.tsv"
+        paths.path(
+            "builder", "localization", "translation_importer", "mappings.tsv"
+        )
     )
     records, summary = scan_action_catalog(elf, characters, mappings)
     summary["elf_sha256"] = digest

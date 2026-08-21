@@ -171,7 +171,9 @@ function Get-VisualRegressionPracticeConfiguration {
         [Parameter(Mandatory)][string[]]$Game
     )
 
-    & (Join-Path $Repository 'scripts\na228\practice.ps1') `
+    . (Join-Path $Repository 'scripts\lib\paths.ps1')
+    $paths = Get-Na2Paths -ManifestPath (Join-Path $Repository 'paths.json')
+    & (Join-Path ([string]$paths.scripts) 'na228\practice.ps1') `
         -MovesetRow $MovesetRow `
         -Games $Game `
         -ProjectRoot $Repository
@@ -515,13 +517,15 @@ function Get-VisualRegressionContext {
     $suiteRelativePath = $segments -join [IO.Path]::DirectorySeparatorChar
     $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
     $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
+    . (Join-Path $repository 'scripts\lib\paths.ps1')
+    $paths = Get-Na2Paths
     $generated = Test-VisualRegressionGeneratedSuite -Suite $suiteName
     $generatedNamespace = Test-VisualRegressionGeneratedSuiteNamespace -Suite $suiteName
     $generatedFamily = if ($generated) {
         Get-VisualRegressionGeneratedSuiteFamily -Suite $suiteName
     }
     else { $null }
-    $recordingRepository = Join-Path $repository 'pcsx2_files\input_recordings\e2e'
+    $recordingRepository = Join-Path ([string]$paths.pcsx2_input_recordings) 'e2e'
     $storageRelativePath = if ($generated) {
         if ($generatedFamily -ceq 'idle') {
             $script:E2eGeneratedIdleSuiteName.Replace(
@@ -571,7 +575,7 @@ function Get-VisualRegressionContext {
             DiffGrids = Join-Path $captureRoot $script:E2eDiffGridDirectory
         }
         Repository = $repository
-        Comparator = Join-Path $repository 'scripts\research\localization\compare_font_capture_sets.ps1'
+        Comparator = Join-Path ([string]$paths.scripts) 'research\localization\compare_font_capture_sets.ps1'
     }
 }
 
@@ -650,7 +654,9 @@ function Resolve-VisualRegressionSuiteArguments {
         }
     }
 
-    $characterDataPath = Join-Path $Context.Repository 'resources\character_data.tsv'
+    . (Join-Path $Context.Repository 'scripts\lib\paths.ps1')
+    $paths = Get-Na2Paths -ManifestPath (Join-Path $Context.Repository 'paths.json')
+    $characterDataPath = Join-Path ([string]$paths.resources) 'character_data.tsv'
     $characterData = @(Import-Csv -LiteralPath $characterDataPath -Delimiter "`t")
     $resolvedRange = Resolve-VisualRegressionMovesetRange `
         -Range $arguments[0] `
@@ -871,11 +877,12 @@ function Get-VisualRegressionRequestCaptureFilter {
         }
         else { $firstRow }
         if ($family -ceq 'idle') {
+            $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+            . (Join-Path $repository 'scripts\lib\paths.ps1')
+            $paths = Get-Na2Paths
             $characterData = @(
                 Import-Csv `
-                    -LiteralPath (Join-Path (
-                        [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
-                    ) 'resources\character_data.tsv') `
+                    -LiteralPath (Join-Path ([string]$paths.resources) 'character_data.tsv') `
                     -Delimiter "`t"
             )
             $rangePrefixes = [string[]]@(

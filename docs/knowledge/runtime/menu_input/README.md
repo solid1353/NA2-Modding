@@ -101,8 +101,8 @@ The module already retains the reusable subroutine and regional comparison data:
 
 - [`function_map.tsv`](function_map.tsv) maps NA2/NUN5 functions, file offsets,
   input masks, scope, and evidence.
-- `features.localization` in `na228_builder/catalog/catalog.modcat` records the
-  selectable regional-input nodes; `na228_builder/catalog/edits.json` records
+- `features.localization` in `@builder/catalog/catalog.modcat` records the
+  selectable regional-input nodes; `@builder/catalog/edits.json` records
   the exact
   guarded byte edits they reference.
 - This document and the linked evidence tables record runtime classification

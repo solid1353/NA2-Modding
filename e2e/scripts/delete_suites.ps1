@@ -8,7 +8,9 @@ $ErrorActionPreference = 'Stop'
 
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
-$recordingRoot = Join-Path $repository 'pcsx2_files\input_recordings\e2e'
+. (Join-Path $repository 'scripts\lib\paths.ps1')
+$paths = Get-Na2Paths
+$recordingRoot = Join-Path ([string]$paths.pcsx2_input_recordings) 'e2e'
 $captureRepository = Join-Path $root 'captures'
 $selection = Resolve-VisualRegressionSuiteSelection `
     -Token $SelectionToken `
@@ -54,9 +56,12 @@ function Remove-E2eGeneratedRange {
     }
     else { $firstRow }
     $patterns = if ($Context.GeneratedFamily -ceq 'idle') {
+        . (Join-Path $Context.Repository 'scripts\lib\paths.ps1')
+        $contextPaths = Get-Na2Paths `
+            -ManifestPath (Join-Path $Context.Repository 'paths.json')
         $characterData = @(
             Import-Csv `
-                -LiteralPath (Join-Path $Context.Repository 'resources\character_data.tsv') `
+                -LiteralPath (Join-Path ([string]$contextPaths.resources) 'character_data.tsv') `
                 -Delimiter "`t"
         )
         Get-VisualRegressionIdlePagePlans `

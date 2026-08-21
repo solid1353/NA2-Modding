@@ -26,6 +26,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
+. (Join-Path $repositoryRoot 'scripts\lib\paths.ps1')
+$paths = Get-Na2Paths
 $pythonScript = Join-Path $PSScriptRoot 'compare_font_capture_sets.py'
 $arguments = @('--output', [IO.Path]::GetFullPath($OutputDirectory))
 if ($PSCmdlet.ParameterSetName -ceq 'ScreenshotGrid') {
@@ -50,7 +52,7 @@ else {
     }
 }
 
-& (Join-Path $repositoryRoot 'scripts\lib\run_python.ps1') `
+& (Join-Path ([string]$paths.scripts) 'lib\run_python.ps1') `
     -PackageSet imaging `
     -Script $pythonScript `
     -ArgumentList $arguments `

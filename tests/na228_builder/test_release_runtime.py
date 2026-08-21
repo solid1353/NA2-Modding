@@ -7,12 +7,49 @@ from types import SimpleNamespace
 from unittest import mock
 
 from na228_builder.scripts import release_runtime
+from scripts.lib.paths import load_local_paths
 
 
 class ReleaseRuntimeTests(unittest.TestCase):
+    def test_application_cache_root_uses_configured_root(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            workspace = root / "workspace"
+            application = root / "application"
+            workspace.mkdir()
+            application.mkdir()
+            (workspace / "paths.json").write_text(
+                '{"schema_version":1,"roots":{"repository":".",'
+                '"build":"build","cache":"@build/cache"},'
+                '"files":{"settings":"game.json"}}',
+                encoding="utf-8",
+            )
+            configured = load_local_paths(workspace, allow_missing=True)
+            expected = application / configured.path("cache").relative_to(
+                configured.repository
+            )
+
+            with (
+                mock.patch.object(
+                    release_runtime, "packaged_workspace", return_value=workspace
+                ),
+                mock.patch.object(
+                    release_runtime,
+                    "application_directory",
+                    return_value=application,
+                ),
+            ):
+                self.assertEqual(expected, release_runtime.application_cache_root())
+
     def test_packaged_release_requires_precompiled_assembly_object(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             workspace = Path(temporary)
+            (workspace / "paths.json").write_text(
+                '{"schema_version":1,"roots":{"repository":".",'
+                '"builder":"na228_builder"},'
+                '"files":{"settings":"game.json"}}',
+                encoding="utf-8",
+            )
             assembly = workspace / "src" / "runtime.S"
             assembly.parent.mkdir()
             assembly.write_text("nop\n", encoding="ascii")

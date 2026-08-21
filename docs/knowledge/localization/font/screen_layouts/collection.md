@@ -85,7 +85,7 @@ the corrected payload remains pending.
 The supplied ss8 state was reloaded through the standard task-owned direct-PINE
 workflow after compiling the canonical C. The retained runtime-injected
 candidate at
-`work/Font/artifacts/priority5_movie_list/rework_2026-07-30/`
+`@work/Font/artifacts/priority5_movie_list/rework_2026-07-30/`
 shows the four exact breaks above, native-height one-line rows, and native
 glyph geometry on the wrapped rows. Its screenshot SHA-256 is
 `E26CA0B3F66E413CE55EBA562C7760E6EF539CE6A6096D327D6006510E0391E5`;
@@ -158,7 +158,7 @@ English strings. Official two-line results include `Granny Chiyo` / `(Taijutsu)`
 and selected Second Stage forms.
 
 The earlier representative paired batch is retained at
-`work/Font/inputs/sstates/batches/2026-07-31-collection-ss4-8/`, with hashes and
+`@work/Font/inputs/sstates/batches/2026-07-31-collection-ss4-8/`, with hashes and
 source aliases in `provenance.tsv`:
 
 - ss4: Naruto character-specific Music;
@@ -168,7 +168,7 @@ source aliases in `provenance.tsv`:
 - ss8: Sasori ordinary-character Ultimate Jutsu.
 
 Matching screenshots are under
-`work/Font/inputs/screenshots/batches/2026-07-31-collection-ss4-8/`. That tree
+`@work/Font/inputs/screenshots/batches/2026-07-31-collection-ss4-8/`. That tree
 also retains `character-index_NA228.png`; the earlier single-screen review
 reported no large Font defect on the Characters index, so it remained
 reference-only at that checkpoint. Synchronized final-red font2 cases 1-7

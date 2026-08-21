@@ -41,7 +41,7 @@ if (-not (Test-Path -LiteralPath $resolvedIso -PathType Leaf)) {
     throw "Worker ISO does not exist: $resolvedIso"
 }
 $taskName = ($relativeIso -split '[\\/]')[1]
-$resolvedOutput = Join-Path $repository "work\$taskName\injection"
+$resolvedOutput = Join-Path ([string]$paths.work) "$taskName\injection"
 
 $buildArguments = @(
     '-B',

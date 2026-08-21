@@ -184,7 +184,7 @@ if ($mode -eq 'e2e') {
             $runArguments.Suite = $runOperands[0]
         }
         if ($runOperands.Count -eq 2) {
-            if ($runOperands[0] -inotmatch '^characters/(?:movesets(?:/(?:base|specials))?|idle)$' -or
+            if ($runOperands[0] -inotmatch '^(?:movesets(?:/(?:base|specials))?|characters/idle)$' -or
                 $runOperands[1] -notmatch '^\d+(?:-\d+)?$') {
                 throw $runUsage
             }
@@ -214,7 +214,7 @@ if ($mode -eq 'e2e') {
             throw $createUsage
         }
         if ($createOperands.Count -eq 2 -and
-            ($createOperands[0] -inotmatch '^characters/(?:movesets(?:/(?:base|specials))?|idle)$' -or
+            ($createOperands[0] -inotmatch '^(?:movesets(?:/(?:base|specials))?|characters/idle)$' -or
                 $createOperands[1] -notmatch '^\d+(?:-\d+)?$')) {
             throw $createUsage
         }

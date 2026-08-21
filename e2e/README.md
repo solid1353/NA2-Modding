@@ -19,15 +19,15 @@ na228 e2e commit [-p]
 independent lane invoked with `na228 test`.
 
 With no suite selector, E2E execution covers the complete maintained suite set.
-Supplying a suite runs only that suite. The generated `characters/movesets` and
+Supplying a suite runs only that suite. The generated `movesets` and
 `characters/idle` suites additionally accept one physical `character_data.tsv`
 row or an inclusive row range, such as `8` or `8-18`; omitting the range selects
 every character row. Other suites do not accept a range.
 
-`characters/movesets` expands `resources/movesets.tsv` over the fixed base and
+`movesets` expands `resources/movesets.tsv` over the fixed base and
 specials recordings and publishes per-character base, unique awakening-mode,
-and specials grids. Select `characters/movesets/base` or
-`characters/movesets/specials` to update only that output family.
+and specials grids. Select `movesets/base` or `movesets/specials` to update
+only that output family.
 `characters/idle` replays every selected character, including second forms, and
 combines their idle screenshots into sequential fixed 3×2 pages. A ranged idle
 run expands to the complete affected pages so unselected cells are preserved.
@@ -45,7 +45,7 @@ every suite's normal replay concurrently. NUN5 reference replays run
 concurrently by default; use `-noref` to skip reference capture. A suite
 selector instead replaces only that suite; selecting either generated character
 suite rebuilds only that branch.
-`e2e create characters/movesets <range>` and
+`e2e create movesets <range>` and
 `e2e create characters/idle <range>` regenerate only the selected character
 rows or affected idle pages and preserve grids outside them. The same range
 syntax is available when running either suite directly.
@@ -144,14 +144,14 @@ e2e/
 ```text
 pcsx2_files/input_recordings/e2e/
 ├── <folder>/<suite>.p2m2          # ordinary suites, recursively discovered
-└── characters/
-    ├── idle.p2m2
-    └── movesets/
-        ├── base.p2m2
-        └── specials.p2m2
+├── characters/
+│   └── idle.p2m2
+└── movesets/
+    ├── base.p2m2
+    └── specials.p2m2
 ```
 
-Generated output is split between `captures/characters/movesets/` and
+Generated output is split between `captures/movesets/` and
 `captures/characters/idle/`. Both use `screenshots/`, `pairs/`, `blends/`, and
 `diffs/`, plus the ignored `all/` hardlink aggregate. Moveset screenshot names
 are `NNN_character_base|specials|mode_<awakening-id>_a_reference.png` and the

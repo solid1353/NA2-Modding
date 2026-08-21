@@ -3,7 +3,7 @@ $script:E2eCaptureTiers = [ordered]@{
     Reference = 'reference'
     Current = 'current'
 }
-$script:E2eGeneratedMovesetSuiteName = 'characters/movesets'
+$script:E2eGeneratedMovesetSuiteName = 'movesets'
 $script:E2eGeneratedIdleSuiteName = 'characters/idle'
 $script:E2ePracticeSuiteName = 'practice'
 $script:E2ePracticeMovesetRow = 2
@@ -36,7 +36,7 @@ function Test-VisualRegressionGeneratedSuite {
 
     $normalized = $Suite.Replace('\', '/').TrimEnd('/')
     return (
-        $normalized -imatch '^characters/movesets(?:/(?:base|specials))?$' -or
+        $normalized -imatch '^movesets(?:/(?:base|specials))?$' -or
         $normalized -ieq $script:E2eGeneratedIdleSuiteName
     )
 }
@@ -186,10 +186,10 @@ function Get-VisualRegressionGeneratedInputPaths {
     $family = Get-VisualRegressionGeneratedSuiteFamily -Suite $Suite
     [string[]]@(
         if ($family -cin @('movesets', 'base')) {
-            Join-Path $RecordingRepository 'characters\movesets\base.p2m2'
+            Join-Path $RecordingRepository 'movesets\base.p2m2'
         }
         if ($family -cin @('movesets', 'specials')) {
-            Join-Path $RecordingRepository 'characters\movesets\specials.p2m2'
+            Join-Path $RecordingRepository 'movesets\specials.p2m2'
         }
         if ($family -ceq 'idle') {
             Join-Path $RecordingRepository 'characters\idle.p2m2'

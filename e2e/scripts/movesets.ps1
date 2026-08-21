@@ -205,7 +205,7 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
         Captures = @(
             [pscustomobject]@{
                 Row = $block.Base.Row
-                Recording = 'characters\movesets\base.p2m2'
+                Recording = 'movesets\base.p2m2'
             }
         )
     })
@@ -232,7 +232,7 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
             Captures = @(
                 [pscustomobject]@{
                     Row = $awakeningRow.Row
-                    Recording = 'characters\movesets\base.p2m2'
+                    Recording = 'movesets\base.p2m2'
                 }
             )
         })
@@ -260,7 +260,7 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
         $specialCaptures = [Collections.Generic.List[object]]::new()
         [void]$specialCaptures.Add([pscustomobject]@{
             Row = $block.Base.Row
-            Recording = 'characters\movesets\specials.p2m2'
+            Recording = 'movesets\specials.p2m2'
         })
         $emittedDuplicatePlusSpecials = $false
         $emittedDuplicateSpecials = $false
@@ -293,14 +293,14 @@ for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $charact
             if ($include) {
                 [void]$specialCaptures.Add([pscustomobject]@{
                     Row = $movesetRow.Row
-                    Recording = 'characters\movesets\specials.p2m2'
+                    Recording = 'movesets\specials.p2m2'
                 })
             }
         }
         if ($null -ne $secondFormBlock) {
             [void]$specialCaptures.Add([pscustomobject]@{
                 Row = $secondFormBlock.Base.Row
-                Recording = 'characters\movesets\specials.p2m2'
+                Recording = 'movesets\specials.p2m2'
             })
         }
         [void]$outputPlans.Add([pscustomobject]@{

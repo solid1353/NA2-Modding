@@ -605,15 +605,15 @@ Add-Content `
     & (Join-Path $fakeRepository 'na228.ps1') e2e
     & (Join-Path $fakeRepository 'na228.ps1') e2e -s
     & (Join-Path $fakeRepository 'na228.ps1') e2e alpha
-    & (Join-Path $fakeRepository 'na228.ps1') e2e characters/movesets 8
-    & (Join-Path $fakeRepository 'na228.ps1') e2e characters/movesets 8-18 -s
+    & (Join-Path $fakeRepository 'na228.ps1') e2e movesets 8
+    & (Join-Path $fakeRepository 'na228.ps1') e2e movesets 8-18 -s
     & (Join-Path $fakeRepository 'na228.ps1') e2e characters/idle 8
     & (Join-Path $fakeRepository 'na228.ps1') e2e create font/character_select
     & (Join-Path $fakeRepository 'na228.ps1') e2e create font/no_reference -noref
     & (Join-Path $fakeRepository 'na228.ps1') e2e create all
-    & (Join-Path $fakeRepository 'na228.ps1') e2e create characters/movesets 8
-    & (Join-Path $fakeRepository 'na228.ps1') e2e create characters/movesets 8-18 -noref
-    & (Join-Path $fakeRepository 'na228.ps1') e2e create characters/movesets/specials 8
+    & (Join-Path $fakeRepository 'na228.ps1') e2e create movesets 8
+    & (Join-Path $fakeRepository 'na228.ps1') e2e create movesets 8-18 -noref
+    & (Join-Path $fakeRepository 'na228.ps1') e2e create movesets/specials 8
     & (Join-Path $fakeRepository 'na228.ps1') e2e rename font/character_select font/characters
     & (Join-Path $fakeRepository 'na228.ps1') e2e remove font/characters
     & (Join-Path $fakeRepository 'na228.ps1') e2e remove all
@@ -625,15 +625,15 @@ Add-Content `
             $calls[0] -ceq 'run suite= shifted=False' -and
             $calls[1] -ceq 'run suite= shifted=True' -and
             $calls[2] -ceq 'run suite=alpha shifted=False' -and
-            $calls[3] -ceq 'run suite=characters/movesets shifted=False range=8' -and
-            $calls[4] -ceq 'run suite=characters/movesets shifted=True range=8-18' -and
+            $calls[3] -ceq 'run suite=movesets shifted=False range=8' -and
+            $calls[4] -ceq 'run suite=movesets shifted=True range=8-18' -and
             $calls[5] -ceq 'run suite=characters/idle shifted=False range=8' -and
             $calls[6] -ceq 'create suite=font/character_select all=False noref=False' -and
             $calls[7] -ceq 'create suite=font/no_reference all=False noref=True' -and
             $calls[8] -ceq 'create suite= all=True noref=False' -and
-            $calls[9] -ceq 'create suite=characters/movesets all=False noref=False range=8' -and
-            $calls[10] -ceq 'create suite=characters/movesets all=False noref=True range=8-18' -and
-            $calls[11] -ceq 'create suite=characters/movesets/specials all=False noref=False range=8' -and
+            $calls[9] -ceq 'create suite=movesets all=False noref=False range=8' -and
+            $calls[10] -ceq 'create suite=movesets all=False noref=True range=8-18' -and
+            $calls[11] -ceq 'create suite=movesets/specials all=False noref=False range=8' -and
             $calls[12] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
             $calls[13] -ceq 'remove suite=font/characters all=False' -and
             $calls[14] -ceq 'remove suite= all=True' -and

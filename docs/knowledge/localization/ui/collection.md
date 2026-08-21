@@ -233,32 +233,33 @@ void draw_home_action_prompt(HomePromptState state) {
 
 `ui_layout_common_prompts` implements this once for every caller of the NA2 helper:
 
-- ETC file `0x30`, load address `0x006B3F30`: replace 16 zero padding bytes
-  retained in the loaded MWO3 image with a four-instruction wrapper. It moves
-  a caller-supplied float delta from `v1` to `f0`, adds it to `f12`, and
-  tail-calls NA2's existing compositor.
-- ETC file/load `0x6B0` / `0x006B45B0`: state 1 redirects through the wrapper
-  with `-12.0`.
-- ETC file/load `0x6D4` / `0x006B45D4`: state 2 redirects through the wrapper
-  with `-24.0`.
-- ETC file/load `0x738` / `0x006B4638`: state 3 redirects through the wrapper
-  with `-8.0`.
+- Resident `PRG/228.BIN` fragment
+  `localization_ui_common_prompt_x_offset`: an exact four-instruction ABI shim
+  moves a caller-supplied float delta from `v1` to `f0`, adds it to `f12`, and
+  tail-calls NA2's existing compositor. The old ETC file `0x30` zero-padding
+  cave is no longer modified.
+- ETC file/load `0x6B0` / `0x006B45B0`: a guarded call hook routes state 1
+  through the shim with `-12.0` in its delay slot.
+- ETC file/load `0x6D4` / `0x006B45D4`: a guarded call hook routes state 2
+  through the shim with `-24.0` in its delay slot.
+- ETC file/load `0x738` / `0x006B4638`: a guarded call hook routes state 3
+  through the shim with `-8.0` in its delay slot.
 - ETC file/load `0x2E7F0` / `0x006E26F0`: state 2 changes only its first
   label-local X offset from `-35.0` to `-59.0`.
 - ETC file `0x2E798`: copy the exact NUN5 localized Stop rectangle
   `(144,48,76,24)` from SLES file `0x4DDC78` over NA2's
   `(120,48,72,24)` rectangle.
-- ETC file/load `0x764` / `0x006B4664`: state 4 redirects through the same
-  wrapper with `-2.0`, the exact result of NUN5's
+- ETC file/load `0x764` / `0x006B4664`: a guarded call hook routes state 4
+  through the same shim with `-2.0` in its delay slot, the exact result of NUN5's
   `(76-64)/2-8` centering arithmetic.
 - ETC file/load `0x2E7F8` / `0x006E26F8`: state 4 changes its label-local X
   offset from `-35.0` to `-40.0`, reproducing NUN5 label X=`420`.
 
 The NUN5 helper code itself is not a safe byte donor: it calls different
 language accessors and reads build-specific GP-relative regional globals.
-The wrapper is therefore an authored ABI-preserving port of the verified NUN5
-arithmetic. The pristine zero range, all four call guards, and both data guards
-were confirmed in the clean source and task-owned states. The guarded Slot 3
+The resident shim is therefore an authored exact-ABI port of the verified NUN5
+arithmetic. All four call guards and both retained data guards were confirmed
+in the clean source and task-owned states. The guarded Slot 3
 Music render aligns Play and Back with the official NUN5 capture. A newer
 paired Slot 2 Collection Characters state independently passed the five
 earlier guards; applying the already-canonical helper rows aligned its OK/Back
@@ -270,6 +271,13 @@ three exact canonical edits renders the complete Triangle/Stop group at the
 NUN5 footer anchor while leaving Cross/Play unchanged. The user explicitly
 accepted that final ss10 comparison on 2026-07-27. Confidence is high for the
 shared helper arithmetic.
+
+Those behavior and acceptance claims apply to the integrated NA228 result.
+The resident-storage refactor is uncommitted and has only static validation:
+the shim compiles to the exact accepted 16 bytes, and its four guarded call
+hooks passed source/ABI contracts, catalog tests, and production payload/hook
+resolution. No runtime or E2E run has validated the refactored storage path;
+that validation remains user-only.
 
 Useful negative result: changing only the nominal `0x2E7E0` table cannot
 express the helper's three distinct `-12`, `-24`, and `-8` state deltas. The

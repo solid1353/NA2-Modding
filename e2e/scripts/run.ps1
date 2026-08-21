@@ -11,6 +11,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$runStopwatch = [Diagnostics.Stopwatch]::StartNew()
+try {
 . (Join-Path $PSScriptRoot 'suite.ps1')
 . (Join-Path $PSScriptRoot 'config.ps1')
 $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
@@ -604,4 +606,11 @@ finally {
         Write-Warning "Failed E2E transaction retained for continuation: $transaction"
         Write-Warning 'Rerun the same e2e command to continue completed suites.'
     }
+}
+}
+finally {
+    $runStopwatch.Stop()
+    Write-Host (
+        'E2E run elapsed: {0:hh\:mm\:ss\.fff}' -f $runStopwatch.Elapsed
+    )
 }

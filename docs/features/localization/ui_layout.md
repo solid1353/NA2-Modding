@@ -55,13 +55,15 @@ case is currently awaiting approval.
 
 ## Composition boundary
 
-Most UI-layout changes are guarded binary edits. Helpers that need resident
-code compose through `localization__shared_font_payload`; this is shared
-placement infrastructure, not ownership transfer to the Font feature. UI
-layout remains responsible for graphical rectangles, anchors, visibility,
-ordering, and ABI-safe draw-path adaptations. Text content belongs to the
-translation importer, glyph measurement and wrapping belong to Font, and
-regional button behavior belongs to `localization.regional_input`.
+Compatible records, tables, and isolated constants remain guarded binary
+edits. Source-owned runtime behavior is declared by
+`i__localization__ui_layout__runtime`; its fragments compose into the shared
+`PRG/228.BIN` resident payload alongside Font contributions. Shared placement
+infrastructure does not transfer ownership to the Font feature. UI layout
+remains responsible for graphical rectangles, anchors, visibility, ordering,
+and ABI-safe draw-path adaptations. Text content belongs to the translation
+importer, glyph measurement and wrapping belong to Font, and regional button
+behavior belongs to `localization.regional_input`.
 
 Exact source/donor identities, offsets, function relationships, negative
 results, runtime observations, and confidence belong only in the linked

@@ -2,6 +2,64 @@
 
 Binary identities and address conventions are defined in the [Battle UI index](README.md#binary-identities-and-address-convention).
 
+## Current NA228 storage ownership
+
+The behavior of the current committed NA228 build is the oracle for this
+storage-only refactor. The native common updater beginning at BTL file
+`0x59EA0` remains intact through the prefix immediately before file `0x59F30`.
+A guarded jump at `0x59F30` enters
+`localization_item_status_update_tail_bridge`; the hook delay preserves the
+native object in `a0`, and the bridge supplies the native transformed position
+at `sp+0x30` before calling resident C. C owns the clamp, smoothing, foreground
+origin, width scale, variant, bubble draw, and class dispatch tail. The bridge
+then rejoins the native restore/return epilogue at BTL file `0x5A098`, live
+`0x0070DF98`.
+
+The record-`0x80` bubble uses the native transformed position at `sp+0x30`.
+The class foreground uses the separate `sp+0x20` copy plus `(0,-33)`. Keeping
+those pointers distinct preserves the accepted bubble-to-foreground spacing.
+The bubble variant still comes from the native resource lookup at `0x00377CB0`
+and preserves the native state-to-variant mapping; the refactor does not invent
+a replacement resource identity or state rule.
+
+The four class draws are resident C entries reached through guarded full-draw
+hooks:
+
+| Class | BTL file | Live | Ghidra | Resident entry |
+| --- | ---: | ---: | ---: | --- |
+| Numeric | `0x5A290` | `0x0070E190` | `0x0070E150` | `localization_item_status_numeric_draw` |
+| Single | `0x5AB90` | `0x0070EA90` | `0x0070EA50` | `localization_item_status_single_draw` |
+| Paired | `0x5ADC0` | `0x0070ECC0` | `0x0070EC80` | `localization_item_status_paired_draw` |
+| Fixed | `0x5B0F0` | `0x0070EFF0` | `0x0070EFB0` | `localization_item_status_fixed_draw` |
+
+Resident C owns the accepted per-class record mapping, geometry, width scales,
+rotation, and native draw routing. Numeric, paired, and fixed foregrounds call
+`localization_item_status_foreground_draw`, an exact 500-byte current-NA228
+renderer body authored in `src/localization/ui/item_status_renderer.S` and
+stored in `PRG/228.BIN`. Its SHA-256 is
+`A39D248B11539514FA49523952E09755DA57649ED0A03A09CEBA2081C3011A2F`.
+The single class retains the native uniform wrapper. No item-status executable
+payload is stored in a BTL or boot-ELF code cave.
+
+Exactly seven static item-status data edits remain:
+
+- `e__localization__ui_layout__item_status_numeric` / `health_record`;
+- `e__localization__ui_layout__item_status_numeric` / `chakra_record`;
+- `e__localization__ui_layout__item_status_numeric` / `recovery_record`;
+- `e__localization__ui_layout__item_status_paired` / `rank_offset_table`;
+- `e__localization__ui_layout__item_status_paired` / `records_8e_through_94`;
+- `e__localization__ui_layout__item_status_paired` / `records_9b_and_9c`;
+- `e__localization__ui_layout__item_status_single` / `records_96_through_9a`.
+
+The substitution-doll pickup record documented below belongs to its separate
+feature and is not one of those seven item-status edits.
+
+The historical runtime evidence below continues to verify the accepted NA228
+behavior. The resident-storage refactor itself is uncommitted and currently
+has static source/ABI, renderer-hash, catalog, and production-resolution
+validation only. No runtime or E2E run has validated the refactored storage
+path; that validation remains user-only.
+
 ## Paired item-status labels
 
 ### Identity and address map
@@ -26,34 +84,40 @@ The paired path can be summarized as:
 
 ```cpp
 float widthScale = normalizeDonorWidth(itemCode);
-Vec2 origin = {-33.0f, -33.0f};
+Vec2 foregroundOrigin = {0.0f, -33.0f};
 PairLayout layout = pairLayout(rank, row, widthScale);
-drawBubble(origin, widthScale, 1.0f, layout.rotation);
-drawPairForeground(layout.x, layout.y, widthScale, 1.0f, layout.rotation);
+drawBubble(transformed, widthScale, 1.0f, layout.rotation);
+drawPairForeground(
+    transformed + foregroundOrigin,
+    layout.x,
+    layout.y,
+    widthScale,
+    1.0f,
+    layout.rotation
+);
 ```
 
 NUN5 carries independent horizontal and vertical scale values through its
 sprite call. NA2's homolog originally reused one value and its object offset
 `+0x40` is a next pointer rather than NUN5's scale field. Copying the NUN5
-implementation wholesale would corrupt the NA2 object chain. `ui_layout_item_status_paired`
-therefore ports the anisotropic renderer contract into NA2's resident renderer
-and uses verified zero padding at BTL file `0x2119E4..0x211C1F` for ABI-safe
-helpers and constants. Callers pass derived values without changing the NA2
-object layout. The foreground helper takes explicit caller-owned X adjustment,
-Y adjustment, row selector, and angle-output storage. Paired callers pass
-neutral adjustments; the numeric class supplies its separate donor-derived
-layout through the same ABI-safe helper. Fixed callers still explicitly clear
-the added rotation argument.
+implementation wholesale would corrupt the NA2 object chain. The resident C
+tail and paired draw entry therefore derive the accepted values without
+changing the NA2 object layout. The exact anisotropic foreground renderer is
+the resident assembly body identified above; the former BTL padding helpers
+and constants are not current storage.
 
-The common origin is changed from NA2 `(-33,-42)` to NUN5 `(-33,-33)`.
+Relative to the native transformed position, the class-foreground origin
+changes from NA2 `(-33,-42)` to `(0,-33)`; the bubble stays at the unshifted
+native position.
 The complete NUN5 rank offsets are `(20,-30)`, `(-64,-63)`, and `(0,-96)`;
 NA2 had `(50,-20)`, `(-16,-62)`, and `(30,-104)`.
 
 ### Shared foreground fade correction
 
-The Character Items transition uses the same resident anisotropic sprite
-renderer for paired, numeric, single, and fixed foregrounds. The relevant boot
-ELF mappings are:
+The Character Items transition uses the same anisotropic sprite behavior for
+paired, numeric, and fixed foregrounds; single labels retain the native uniform
+wrapper. The boot-ELF homologs from which the accepted foreground behavior was
+reconstructed are:
 
 | Role | NA2 | NUN5 |
 | --- | --- | --- |
@@ -90,11 +154,13 @@ state retained those offsets through alpha `0.0`.
 
 The earlier hypothesis that the BTL wrapper passed its anisotropic arguments
 in the wrong order was disproven: changing that order moved the bubbles and
-did not correct the foreground transition. No wrapper, object field, timing,
-atlas, or item-effect change is needed. `localization__ui_layout__item_status_paired_na2_elf_at_002772f4` therefore copies only
-the exact four-byte NUN5 instruction. Confidence is **verified** from both
-preserved ELF exports, exact clean-file bytes, paired saved-memory fields, and
-fresh isolated runtime captures.
+did not correct the foreground transition. No object field, timing, atlas, or
+item-effect change is needed. The earlier accepted implementation copied the
+single NUN5 instruction at boot-ELF file `0x2772F4`; current storage instead
+preserves the complete accepted 500-byte renderer body in the exact resident
+assembly fragment, so no static boot-ELF renderer edit remains. Confidence is
+**verified** from both preserved ELF exports, exact clean-file bytes, paired
+saved-memory fields, and fresh isolated runtime captures.
 
 ### Evidence and limits
 
@@ -118,7 +184,7 @@ offset `x` maps to EE `0x006C6D00 + x`.
 | Role | NA2 | NUN5 |
 | --- | --- | --- |
 | Numeric factory | file `0x5A1D0`, Ghidra `FUN_0070E0D0` | file `0x5C530`, Ghidra `FUN_00723230` |
-| Numeric draw dispatcher | file `0x5A250`, Ghidra `FUN_0070E150` | file `0x5C5B0`, Ghidra `FUN_007232B0` |
+| Numeric full-draw hook | file `0x5A290`, live `0x0070E190`, Ghidra `FUN_0070E150` | file `0x5C5B0`, Ghidra `FUN_007232B0` |
 | Top localized label | file `0x5A300`, Ghidra `FUN_0070E200` | file `0x5C660`, Ghidra `FUN_00723360` |
 | Lower Recovery label | file `0x5A450`, Ghidra `FUN_0070E350` | file `0x5C870`, Ghidra `FUN_00723570` |
 | Numeric value draw | file `0x5A760`, Ghidra `FUN_0070E660` | file `0x5CC30`, Ghidra `FUN_00723930` |
@@ -164,23 +230,24 @@ object layout and renderer call ABI differ, so copying the complete NUN5
 functions is unsafe. `ui_layout_item_status_numeric` instead:
 
 - imports the three exact NUN5 records;
-- calls the existing NA2-compatible item helper with the NUN5 `22/20` and
-  `37/37` anchor contract and caller-owned angle storage;
-- ports the six digit positions into NA2's already-corrected coordinate frame
-  as `-36/-27/-18`, `-32/-22`, and `-26`.
+- enters resident C through the full-draw hook at BTL file `0x5A290`;
+- reproduces the accepted top and lower record mapping, centering, anchors, and
+  rotations before calling the exact resident foreground renderer;
+- passes a negative-50 X origin to the retained native digit draw, producing
+  the accepted `-36/-27/-18`, `-32/-22`, and `-26` positions.
 
-The transformed digit constants are intentionally authored binary-patcher
-replacements rather than byte copies: they equal the donor additions minus the
-donor negative-50 origin, which is represented elsewhere in the NA2 port.
-Copying the donor instructions literally would apply the origin twice.
+Those transformed digit positions still equal the donor additions minus the
+donor negative-50 origin. Current C owns that origin once, so the former six
+individual digit-position instruction edits are no longer stored. Copying the
+donor instructions literally would still apply the origin twice.
 
 ### Side effects, evidence, and confidence
 
 The patch changes only record selection and geometry passed to the item sprite
 renderer. It does not change item values, recovery arithmetic, effect timing,
-object allocation, object links, or the atlas itself. The shared helper writes
-its angle only to caller-owned stack storage; it never uses NUN5's incompatible
-object `+0x40` scale field.
+object allocation, object links, or the atlas itself. Resident C keeps rotation
+in its own draw state and never uses NUN5's incompatible object `+0x40` scale
+field.
 
 Evidence includes complete NA2/NUN5 BTL decompilation and instruction exports,
 exact boot-ELF record bytes, the preserved numeric Slot 3 object inventory, a
@@ -203,13 +270,11 @@ live code addresses because their imports omit the MWo3 header.
 | Role | NA2 | NUN5 |
 | --- | --- | --- |
 | Single constructor | file `0x5AB20`, Ghidra `FUN_0070e9e0` | file `0x5D030`, Ghidra `FUN_00723cf0` |
-| Single draw | file `0x5AB90`, live `0x0070EA90`, Ghidra `FUN_0070ea50` | file `0x5D0A0`, live `0x00723DA0`, Ghidra `FUN_00723d60` |
+| Single full-draw hook | file `0x5AB90`, live `0x0070EA90`, Ghidra `FUN_0070ea50` | file `0x5D0A0`, live `0x00723DA0`, Ghidra `FUN_00723d60` |
 | Single width update | shared NA2 update at file `0x59EA0` | file `0x5D230`, Ghidra `FUN_00723ef0` |
 | Object-code map | file/live `0x1E4CD0` / `0x00898BD0` | file/live `0x1ED8B0` / `0x008B45B0` |
 | Single-class vtable | live `0x005DDEC0` | live `0x005EB3D0` |
 | Uniform sprite wrapper | boot ELF `FUN_00377720` | boot ELF `FUN_00384800` |
-| Added rotation helper | BTL file `0x211C20`, live `0x008C5B20` | not applicable |
-| Existing pi/2 constant | BTL file `0x1EE630`, live `0x008A2530` | inline in the donor draw function |
 
 The five object-code maps are byte-identical:
 
@@ -253,18 +318,16 @@ float singleBubbleScale(const SingleItemObject *object) {
 ```
 
 The NUN5 `+0x40` scale field cannot be copied into NA2 because the homologous
-NA2 field is a next-object pointer. The existing NA2-compatible common helper
-instead derives `1.90625` for object code `0x09` and `1.0` for every other
-single record. The same bounded edit replaces the fixed class's approximate
-`1.6` with its exact donor width scale `102/64 = 1.59375`; the accepted pair
-path and shared store remain at their previous addresses.
+NA2 field is a next-object pointer. The resident common C tail derives
+`1.90625` for object code `0x09` and `1.0` for every other single record; it
+also selects the fixed class's exact donor width scale
+`102/64 = 1.59375`. The single full-draw C entry uses the native mapping table
+and resource lookup, applies pi/2 only to records `0x82` and `0x99`, and calls
+the retained native uniform wrapper. The former record-aware rotation helper,
+its call, and the two origin instruction edits are no longer stored.
 
-The rotation helper runs after resource lookup because that call may clobber
-caller-saved floating-point registers. Its call delay clears `f14`; the helper
-loads pi/2 only for records `0x82` and `0x99`, preserves the renderer variant in
-`v0`, and restores `a0` in the return delay slot. The original uniform wrapper
-is retained. An experimental direct call to the lower anisotropic renderer
-produced no foreground because it bypassed the wrapper's distinct argument
+An experimental direct call to the lower anisotropic renderer produced no
+foreground because it bypassed the uniform wrapper's distinct argument
 shuffle; that approach was rejected and is not an implementation parent.
 
 ### Side effects, evidence, and confidence
@@ -280,9 +343,9 @@ the unique boot-ELF record ranges, live vtable/object inventories, and fresh
 `Substitution Jutsu`; paired Slot 12 represents the shared poison/status path.
 Both current captures match NUN5 bubble bounds, label centers, clipping, and
 row placement. The numeric regression remains matched. The valid paired-class
-execution slice and shared store are unchanged from its accepted helper; a
-fresh-process capture can outlive that short notification and is not used as
-placement evidence.
+execution slice and shared width behavior are preserved by the resident C
+tail; a fresh-process capture can outlive that short notification and is not
+used as placement evidence.
 
 Visible single/status behavior is **runtime-proven** with **high confidence**.
 Record `0x99` was absent from the captured set, so its quarter-turn remains a
@@ -360,17 +423,15 @@ the preserved Ghidra labels remain `0x40` below the live addresses.
 | Role | NA2 | NUN5 |
 | --- | --- | --- |
 | Fixed constructor | file `0x5B080`, Ghidra `FUN_0070ef40`, live `0x0070EF80` | file `0x5D840`, Ghidra `FUN_00724500`, live `0x00724540` |
-| Fixed draw | file `0x5B0F0`, Ghidra `FUN_0070efb0`, live `0x0070EFF0` | file `0x5D8B0`, Ghidra `FUN_00724570`, live `0x007245B0` |
+| Fixed full-draw hook | file `0x5B0F0`, Ghidra `FUN_0070efb0`, live `0x0070EFF0` | file `0x5D8B0`, Ghidra `FUN_00724570`, live `0x007245B0` |
 | Fixed width update | absent from the NA2 object ABI | file `0x5DB20`, Ghidra `FUN_007247e0`, live `0x00724820` |
 | Fixed-class vtable | live `0x005DDE80` | live `0x005EB370` |
-| Shared NA2 width helper | BTL file `0x211B54`, live `0x008C5A54` | not applicable |
-| First adapted draw block | BTL file `0x5B128`, live `0x0070F028` | behavior inside `FUN_00724570` |
-| Second adapted draw block | BTL file `0x5B1F0`, live `0x0070F0F0` | behavior inside `FUN_00724570` |
 
 The class always draws record `0x8E` followed by record `0x8D`. Their complete
 official NUN5 rectangles are already imported by `ui_layout_item_status_paired` and
-`ui_layout_item_status_numeric`; `ui_layout_item_status_fixed` therefore contains only two NA2 ABI adaptations and
-no new texture or table donor.
+`ui_layout_item_status_numeric`. Fixed behavior is now owned entirely by the
+resident full-draw C hook and has no static edit group, texture, or table donor
+of its own.
 
 ### Reconstructed behavior
 
@@ -395,12 +456,10 @@ NUN5 whole-function body cannot be copied safely because its fixed object owns
 a scale at `+0x40`, where NA2 stores the next-object pointer, and it calls a
 NUN5-only width-query helper.
 
-The NA2 port instead reuses the runtime-proven `ui_layout_item_status_paired` width helper. Both
-call sites pass zero X bias. The first selects the helper's 18-unit top row and
-adds two units; the second selects its 20-unit lower row and adds 17 units. The
-fixed renderer does not consume the helper's angle output, so its original
-uniform wrapper and rotation behavior remain unchanged. The exact fixed bubble
-scale `102/64 = 1.59375` is already selected by the shared common helper.
+The resident fixed C entry directly centers each record from its retained item
+table width and applies Y=`20` and Y=`37`. Both draws use zero rotation and the
+exact resident foreground renderer. The common C tail selects the exact fixed
+bubble scale `102/64 = 1.59375` without touching the NA2 object layout.
 
 ### Side effects, evidence, and confidence
 
@@ -414,9 +473,11 @@ screen delta accompanies a one-frame update/pulse difference and does not
 change internal placement.
 
 An earlier experimental v32 helper was rejected before canonical promotion
-because its proposed runtime address overlapped live BTL data. V33 reuses the
-existing proven helper and changes only the two guarded draw blocks; no new
-code cave or data overwrite remains.
+because its proposed runtime address overlapped live BTL data. V33 established
+the accepted geometry through a shared helper and two guarded draw blocks.
+Current storage preserves that behavior in the resident common tail and fixed
+full-draw C entry; neither the helper nor the two static draw-block edits
+remain, and no BTL or boot-ELF code cave is used.
 
 The fixed draw geometry is **runtime-proven** with **high confidence**. It is
 not marked verified because the checkpoint transformed a live paired object

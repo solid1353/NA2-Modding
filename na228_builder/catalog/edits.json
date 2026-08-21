@@ -82,36 +82,6 @@
         "expected_hex": "00000000",
         "replacement_hex": "0000803F"
       },
-      "normal_glyph_bottom_edge_helper": {
-        "description": "Select descriptor width for primary/fullwidth glyphs or descriptor height for secondary glyphs, compute only the normal quad bottom edge, and rejoin the untouched renderer path from guarded linker padding.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x2F8840"
-        ],
-        "expected_hex": "0000000000000000000000000000000000000000000000000000000000000000",
-        "replacement_hex": "08006330020060100C0021C6100021C660088046000D0046E01F06086CCA848F"
-      },
-      "normal_glyph_bottom_edge_hook": {
-        "description": "Route only the normal glyph bottom-edge calculation through the glyph-owned secondary-height helper while reading the existing secondary-font mode bit in the jump delay slot.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x88078"
-        ],
-        "expected_hex": "000D00466CCA848F",
-        "replacement_hex": "D0E10F0870002392"
-      },
-      "secondary_cell_index_guard": {
-        "description": "Bound only the secondary draw-path cell index to 0..122 and use blank cell 0 for negative or larger indices; preserve the shared parser and primary font.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x2F8814"
-        ],
-        "expected_hex": "0000000000000000000000000000000000000000",
-        "replacement_hex": "7B00412C0A1001000600A3941F1C060800000000"
-      },
       "secondary_font_descriptor": {
         "description": "Set the secondary descriptor to native 14x20 packed cells with a 140-byte stride and 123 reachable entries while retaining its original 24x28 output quad.",
         "operation": "replace",
@@ -143,42 +113,12 @@
         "expected_sha256": "26563C6C773B372CB0DE4845FFBE83023DAD94526AB2990B72C55EF39A7D18EF",
         "blob_path": "na228_builder/localization/assets/nun5_semantic_14x20_packed_map.bin",
         "blob_sha256": "6F691015E5BA54EA87B2976970D828863E274BB543CC3D531D93800018EB7A5E"
-      },
-      "secondary_raster_lookup_hook": {
-        "description": "Route the secondary raster lookup through its local 123-cell guard while retaining the displaced descriptor load in the jump delay slot.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x87174"
-        ],
-        "expected_hex": "6800658E0600A394",
-        "replacement_hex": "C5E10F086800658E"
       }
     }
   },
   "e__localization__font__layout": {
     "description": "Apply the direct English font-layout tables and guarded call-site glue.",
     "edits": {
-      "character_modal_row_layout": {
-        "description": "Load every row X from the user-reviewed local table, retain the clean ordinary-row Y origin, and place the fifth row at local Y 115.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x2BC924"
-        ],
-        "expected_hex": "04000224090002160000000008C2023C000082440000000040AD00468041023C000082440000000000A50046",
-        "replacement_hex": "4000033C008763248010100021104300000055C404000224040002163041023C000082440000000000A50046"
-      },
-      "character_modal_row_x_table": {
-        "description": "Store the five user-reviewed native-font row X positions 81.75, 73.375, 72.375, 63.5, and 3.5 in proven cross-game linker padding outside external-translation ownership.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x2F8800"
-        ],
-        "expected_hex": "0000000000000000000000000000000000000000",
-        "replacement_hex": "0080A34200C0924200C0904200007E4200006040"
-      },
       "command_relationships_suppress_second_auxiliary_draw": {
         "description": "Suppress the second exact native Command Chart auxiliary-string draw after the generated-C first-call adapter has combined record bytes +4 and +5; preserve the surrounding setup and following native icon loop.",
         "operation": "replace",
@@ -837,26 +777,6 @@
         "length": 4,
         "expected_hex": "0000B442",
         "replacement_hex": "00009442"
-      },
-      "width_fit_helper": {
-        "description": "Install a size-preserving helper in verified loaded zero padding that computes display width as min(source width, 160) times the existing scale.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x40"
-        ],
-        "expected_hex": "0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        "replacement_hex": "0010844400000000A01080463410004603000045000000000000844420008046420101460800E003640060C4"
-      },
-      "width_fit_helper_call": {
-        "description": "Call the width-fitting helper at live EE 0x006B3F40 and pass the official NUN5 160-pixel cap in the original height-load delay slot.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x67F44"
-        ],
-        "expected_hex": "42010146640060C4",
-        "replacement_hex": "D0CF1A0CA0000424"
       }
     }
   },
@@ -1270,56 +1190,6 @@
         "expected_hex": "0000E643",
         "replacement_hex": "0000E243"
       },
-      "home_offset_wrapper": {
-        "description": "Install a four-instruction HOME prompt tail-call wrapper in load-preserved MWO3 header padding: move the caller's exact float delta from v1 to f0, add it to f12, and tail-call NA2's existing common compositor. NUN5's GP-relative regional globals and language accessors are not ABI-compatible donor code.",
-        "operation": "replace",
-        "destination_target_id": "na2_etc",
-        "destination_offsets": [
-          "0x30"
-        ],
-        "expected_hex": "00000000000000000000000000000000",
-        "replacement_hex": "000083440063004660F20D0800000000"
-      },
-      "home_state_1_cross_offset": {
-        "description": "Route HOME helper state 1 through the guarded wrapper and load -12.0 in its delay slot, reproducing NUN5's Cross regional X offset for every caller.",
-        "operation": "replace",
-        "destination_target_id": "na2_etc",
-        "destination_offsets": [
-          "0x6B0"
-        ],
-        "expected_hex": "60F20D0C00000000",
-        "replacement_hex": "CCCF1A0C40C1033C"
-      },
-      "home_state_2_play_offset": {
-        "description": "Route HOME helper state 2 through the guarded wrapper and load -24.0 in its delay slot, reproducing NUN5's localized Play icon/label centering result without porting incompatible language accessors.",
-        "operation": "replace",
-        "destination_target_id": "na2_etc",
-        "destination_offsets": [
-          "0x6D4"
-        ],
-        "expected_hex": "60F20D0C00000000",
-        "replacement_hex": "CCCF1A0CC0C1033C"
-      },
-      "home_state_3_triangle_offset": {
-        "description": "Route HOME helper state 3 through the guarded wrapper and load -8.0 in its delay slot, reproducing NUN5's Triangle regional X offset for every caller.",
-        "operation": "replace",
-        "destination_target_id": "na2_etc",
-        "destination_offsets": [
-          "0x738"
-        ],
-        "expected_hex": "60F20D0C00000000",
-        "replacement_hex": "CCCF1A0C00C1033C"
-      },
-      "home_state_4_stop_offset": {
-        "description": "Route HOME helper state 4 through the existing guarded wrapper with -2.0, reproducing NUN5's effective Triangle-prompt anchor 460 + (76-64)/2 - 8 = 458.",
-        "operation": "replace",
-        "destination_target_id": "na2_etc",
-        "destination_offsets": [
-          "0x764"
-        ],
-        "expected_hex": "60F20D0C00000000",
-        "replacement_hex": "CCCF1A0C00C0033C"
-      },
       "play_label_local_x": {
         "description": "Use -59.0 for the HOME state-2 label-local X offset so the Play label follows the same 24-pixel localized centering shift as its icon.",
         "operation": "replace",
@@ -1408,44 +1278,8 @@
     "expected_hex": "0100A100C1001E001E000A00",
     "replacement_hex": "0100A100E1001E001E000A00"
   },
-  "e__localization__ui_layout__item_status_fixed": {
-    "description": "Apply the fixed two-label item-status layout.",
-    "edits": {
-      "clear_foreground_rotations": {
-        "description": "Clear the new rotation argument for both fixed-status foreground callers.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5B1E0",
-          "0x5B2A0"
-        ],
-        "expected_hex": "00000000",
-        "replacement_hex": "00708044"
-      },
-      "recovery_record_8d_layout": {
-        "description": "Center fixed record 0x8D through the same shared donor-width helper and adapt its lower-row base to NUN5's positive 37-pixel Y offset.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5B1F0"
-        ],
-        "expected_hex": "6000A1C79041023C0000824400000000000800466000A0E76400A1C7C841023C0000824400000000000800466400A0E7",
-        "replacement_hex": "2D2000026000A527010006242D4000000800A927110007249516230C0000000000000000000000000000000000000000"
-      },
-      "status_effect_record_8e_layout": {
-        "description": "Center fixed record 0x8E through the established shared donor-width helper and adapt its top-row base to NUN5's positive 20-pixel Y offset.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5B128"
-        ],
-        "expected_hex": "6000A1C71842023C0000824400000000000800466000A0E76400A1C73041023C0000824400000000000800466400A0E7",
-        "replacement_hex": "2D2020026000A527000006242D4000000800A927020007249516230C0000000000000000000000000000000000000000"
-      }
-    }
-  },
   "e__localization__ui_layout__item_status_numeric": {
-    "description": "Apply numeric item-status labels and recovery-value geometry.",
+    "description": "Copy the localized numeric item-status records consumed by the resident runtime layout.",
     "edits": {
       "chakra_record": {
         "description": "Copy the complete official NUN5 Chakra item record, including its localized rectangle and flags.",
@@ -1469,47 +1303,6 @@
         "expected_hex": "0100790001000F0021000000",
         "replacement_hex": "01003100610046000E000000"
       },
-      "lower_label_layouts": {
-        "description": "Route both numeric lower-label variants through the shared donor-width helper with the class-specific NUN5 row and anchor contract.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5A460"
-        ],
-        "expected_hex": "2000A2270000A8780000487C2000A1C7000086440000000020008046000800462000A0E72400A1C7000087440000000020008046000800462400A0E7",
-        "replacement_hex": "2000A2270000AA7800004A7C2D2840000C0003928D0004242D4000001100072414000224040062141800A9279500042401000624F9FF07249516230C"
-      },
-      "lower_label_rotation_loads": {
-        "description": "Load the helper-produced numeric lower-label rotation in both renderer delay slots.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5A530",
-          "0x5A5C0"
-        ],
-        "expected_hex": "00000000",
-        "replacement_hex": "1800AEC7"
-      },
-      "one_digit_x": {
-        "description": "Port the NUN5 one-digit position into NA2 coordinates after the shared negative-50 X-origin correction.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5AA60"
-        ],
-        "expected_hex": "C041023C",
-        "replacement_hex": "D0C1023C"
-      },
-      "preserved_item_code_load": {
-        "description": "Read the numeric item code from the preserved NA2 object register after preparing the shared-helper arguments.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5A49C"
-        ],
-        "expected_hex": "0C008390",
-        "replacement_hex": "0C000392"
-      },
       "recovery_record": {
         "description": "Copy the complete official NUN5 Recovery item record, including its localized rectangle and flags.",
         "operation": "replace",
@@ -1520,183 +1313,12 @@
         "length": 12,
         "expected_hex": "0100A100E1000E001E000200",
         "replacement_hex": "0100A100D10032000A000200"
-      },
-      "three_digit_column_1_x": {
-        "description": "Port the NUN5 three-digit first-column position into NA2 coordinates after the shared negative-50 X-origin correction.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5A8C0"
-        ],
-        "expected_hex": "6041023C",
-        "replacement_hex": "10C2023C"
-      },
-      "three_digit_column_2_x": {
-        "description": "Port the NUN5 three-digit second-column position into NA2 coordinates after the shared negative-50 X-origin correction.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5A910"
-        ],
-        "expected_hex": "B841023C",
-        "replacement_hex": "D8C1023C"
-      },
-      "three_digit_column_3_x": {
-        "description": "Port the NUN5 three-digit third-column position into NA2 coordinates after the shared negative-50 X-origin correction.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5A95C"
-        ],
-        "expected_hex": "0042023C",
-        "replacement_hex": "90C1023C"
-      },
-      "top_label_layout": {
-        "description": "Route the numeric top label through the shared donor-width helper with the NUN5 X/Y anchors and stack-local rotation output while preserving NA2's object ABI.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5A370"
-        ],
-        "expected_hex": "3000A2270000A8780000487C3000A1C7000086440000000020008046000800463000A0E73400A1C7000087440000000020008046000800463400A0E7",
-        "replacement_hex": "3000A2270000AA7800004A7C2D2000022D2840002D3000001600082482000324020003162800A92708000824020007249516230C0000000000000000"
-      },
-      "top_label_rotation_load": {
-        "description": "Load the helper-produced numeric top-label rotation in the renderer delay slot.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5A430"
-        ],
-        "expected_hex": "00000000",
-        "replacement_hex": "2800AEC7"
-      },
-      "top_label_row_zero": {
-        "description": "Pass row zero to the shared numeric top-label layout helper.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5A2C0"
-        ],
-        "expected_hex": "10000624",
-        "replacement_hex": "2D300000"
-      },
-      "two_digit_column_1_x": {
-        "description": "Port the NUN5 two-digit first-column position into NA2 coordinates after the shared negative-50 X-origin correction.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5A9BC"
-        ],
-        "expected_hex": "9041023C",
-        "replacement_hex": "00C2023C"
-      },
-      "two_digit_column_2_x": {
-        "description": "Port the NUN5 two-digit second-column position into NA2 coordinates after the shared negative-50 X-origin correction.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5AA0C"
-        ],
-        "expected_hex": "E041023C",
-        "replacement_hex": "B0C1023C"
       }
     }
   },
   "e__localization__ui_layout__item_status_paired": {
-    "description": "Apply paired item-status layout and ABI-safe renderer glue.",
+    "description": "Copy the localized paired item-status records and rank offsets consumed by the resident runtime layout.",
     "edits": {
-      "anisotropic_sprite_wrapper": {
-        "description": "Install the NA2-ABI wrapper that passes donor horizontal scale, neutral vertical scale, and the donor quarter-turn to the lower sprite renderer.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x211AB8"
-        ],
-        "expected_hex": "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-        "replacement_hex": "F0FFBD270000BFFF8C00083C405B0DC5803F083C00708844C83F083CC3F50835007888442D204000800005242D30000234002CC698DC0D0C000000000000BFDF1000BD270800E00300000000"
-      },
-      "bubble_anisotropic_wrapper_call": {
-        "description": "Route the bubble background through the anisotropic compatibility wrapper and resume the common draw path.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5A0EC"
-        ],
-        "expected_hex": "803F033C00688344007080442D204000",
-        "replacement_hex": "6E16230C0000000004381C0800000000"
-      },
-      "bubble_center_width_clamp": {
-        "description": "Clamp the bubble center using the helper-produced display width without changing NA2 object fields.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x59F58"
-        ],
-        "expected_hex": "F643023C9A1942340000824400000000",
-        "replacement_hex": "0044023C000082440100034600000000"
-      },
-      "center_from_horizontal_scale": {
-        "description": "Copy NUN5's scale-register centering instruction so item foregrounds fade in place instead of moving with alpha.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x2772F4"
-        ],
-        "length": 4,
-        "expected_hex": "87A80046",
-        "replacement_hex": "87B00046"
-      },
-      "class_width_scale_helper": {
-        "description": "Retain the accepted pair width path while assigning the traced donor scales to every concrete class: 1.90625/1.0 for single labels, exactly 1.59375 for fixed labels, and 1.25 for numeric recovery.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2119E4"
-        ],
-        "expected_sha256": "E3C2AF35D1DFC500E16F826A071CC311BF55003A3DE77DE7EA3376C6B6FA2857",
-        "replacement_hex": "0000888C5E00093CA0DE2925070009112000292510000911C0FF292514000911A03F0A3C1800001000008A440C008A9012004B2DFAFF601140500A008C000C3C94598C2521608A0100008A9500540A000D00001000008A440C008A9009000B2407004B15F43F0A3C0700001000008A44CC3F0A3C0400001000008A4400000000803F0A3C00008A448C000C3C405B80E528420A3C00088A4400000000020001460800E003C6000046"
-      },
-      "origin_x_zero": {
-        "description": "Remove NA2's regional negative 33-pixel X origin shift.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5A028"
-        ],
-        "expected_hex": "04C2023C",
-        "replacement_hex": "0000023C"
-      },
-      "origin_y_minus_33": {
-        "description": "Use the official NUN5 negative 33-pixel Y origin instead of NA2's negative 42-pixel origin.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5A040"
-        ],
-        "expected_hex": "28C2023C",
-        "replacement_hex": "04C2023C"
-      },
-      "pair_event_scale_table": {
-        "description": "Store the pair-event scale table derived exactly from official NUN5 record widths and its 65-pixel normalization threshold.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x211A94"
-        ],
-        "expected_hex": "000000000000000000000000000000000000000000000000000000000000000000000000",
-        "replacement_hex": "803F803F803F803FCC3FC43FF43F803F803F803F803F803F803F803FF43F8C3F803F943F"
-      },
-      "preserve_renderer_parameter": {
-        "description": "Preserve the additional floating-point renderer parameter in the existing stack frame.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x2772F0"
-        ],
-        "expected_hex": "4C0080AC",
-        "replacement_hex": "4C0094E4"
-      },
       "rank_offset_table": {
         "description": "Copy the complete official NUN5 three-rank item-bubble offset table.",
         "operation": "replace",
@@ -1729,146 +1351,12 @@
         "length": 24,
         "expected_hex": "0100680001000F001E0000000100CF0054000F002B000000",
         "replacement_hex": "01003100510046000E0000000100310041004A000E000000"
-      },
-      "renderer_anisotropic_call_contract": {
-        "description": "Port the NUN5 anisotropic sprite-call contract into NA2's homologous resident renderer while preserving NA2 register and stack layout.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x277174"
-        ],
-        "expected_hex": "0400B5E70000B4E72D9080002D80A00046650046066D00462D88C00084D90D0C000000002D20400064008010000000002D28200260D40D0C000000002D204000",
-        "replacement_hex": "0800B6E70400B5E70000B4E72D9080002D80A00086650046466D00462D88C0000675004684D90D0C000000002D2040002D28200260D40D0C000000002D204000"
-      },
-      "renderer_horizontal_scale_registers": {
-        "description": "Use the ported horizontal scale register in all four renderer branches.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x2772BC",
-          "0x2772C8",
-          "0x2772D4",
-          "0x2772E0"
-        ],
-        "expected_hex": "02001546",
-        "replacement_hex": "02001646"
-      },
-      "restore_renderer_parameter": {
-        "description": "Restore the saved renderer parameter before returning.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x277350"
-        ],
-        "expected_hex": "00000000",
-        "replacement_hex": "A8FFB6C7"
-      },
-      "row_1_layout": {
-        "description": "Route paired row 1 through the generalized helper with neutral X/Y adjustments and stack-local angle output.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5AE6C"
-        ],
-        "expected_hex": "6000A1C71842023C0000824400000000000800466000A0E76400A1C73041023C0000824400000000000800466400A0E7",
-        "replacement_hex": "2D2020026000A5272D3000002D4000000800A9272D3800009516230C0000000000000000000000000000000000000000"
-      },
-      "row_2_layout": {
-        "description": "Route paired row 2 through the generalized helper with neutral X/Y adjustments and stack-local angle output.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5AF34"
-        ],
-        "expected_hex": "6000A1C79041023C0000824400000000000800466000A0E76400A1C7F041023C0000824400000000000800466400A0E7",
-        "replacement_hex": "2D2000026000A527010006242D4000000800A9272D3800009516230C0000000000000000000000000000000000000000"
-      },
-      "row_rotation_loads": {
-        "description": "Load the helper-produced paired-row rotation in both renderer delay slots.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5AF24",
-          "0x5AFE4"
-        ],
-        "expected_hex": "00000000",
-        "replacement_hex": "0800AEC7"
-      },
-      "shared_item_layout_helper": {
-        "description": "Generalize the runtime-proven pair helper so pair and numeric callers explicitly supply X anchor, Y bias, row, and angle-output storage while preserving the NA2 object ABI.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x211B54"
-        ],
-        "expected_sha256": "C0C74543CC9DCC7F0DDC24EACED85C278AA3E357D3CB319977A8140D26268D06",
-        "replacement_hex": "4010040021104400801002005B00033C600A63242110430006004294431002000000824400000000200080460000A1C401080046000888440000000060088046000001460000A0E4C93F0B3CDB0F6B350D00C01400000000AD162308000000008200022405008214000020AD8040023C00002BADBF162308000000009041023CBF162308000000009B00022404008214000020AD0842023CBF16230800000000A041023C00002BAD00008244001087440400A1C4A010804600000246000800460400A0E40800E00300000000"
-      },
-      "store_vertical_scale_component": {
-        "description": "Store the second anisotropic scale component in the ported renderer frame.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x27731C"
-        ],
-        "expected_hex": "400094E4",
-        "replacement_hex": "400095E4"
-      },
-      "width_scale_helper_call": {
-        "description": "Call the ABI-safe width-scale helper from the common item-bubble update.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x59F30"
-        ],
-        "expected_hex": "9E41023C6766423400008244",
-        "replacement_hex": "2D2000023916230C00000000"
       }
     }
   },
   "e__localization__ui_layout__item_status_single": {
-    "description": "Apply the single item-status label layout.",
+    "description": "Copy the localized single item-status records consumed by the resident runtime layout.",
     "edits": {
-      "default_rotation_zero": {
-        "description": "Clear rotation in the helper-call delay slot after resource lookup; the helper restores a quarter-turn only for donor records that require it.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5ACB0"
-        ],
-        "expected_hex": "2D204000",
-        "replacement_hex": "00708044"
-      },
-      "origin_x_zero": {
-        "description": "Remove NA2's regional positive 33-pixel single-label X shift to match NUN5.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5AC10"
-        ],
-        "expected_hex": "0442023C",
-        "replacement_hex": "0000023C"
-      },
-      "origin_y_plus_33": {
-        "description": "Use NUN5's positive 33-pixel single-label Y shift instead of NA2's positive 42-pixel shift.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5AC28"
-        ],
-        "expected_hex": "2842023C",
-        "replacement_hex": "0442023C"
-      },
-      "record_aware_rotation_helper": {
-        "description": "Install the bounded record-aware rotation helper in the final verified zero span before the shared scale slot; preserve v0 and restore a0 in the return delay slot.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x211C20"
-        ],
-        "expected_hex": "0000000000000000000000000000000000000000000000000000000000000000",
-        "replacement_hex": "820008240200081299000824020008168A00083C30250EC50800E0032D204000"
-      },
       "records_96_through_9a": {
         "description": "Copy complete official NUN5 single-status records 0x96 through 0x9A as one guarded donor range.",
         "operation": "replace",
@@ -1879,32 +1367,12 @@
         "length": 60,
         "expected_hex": "01005D00020021004600010001000100E1001E001E0002000100F00054000F002B0000000100570001000F001E0000000100AD000100100043000000",
         "replacement_hex": "01001B00010024004E0001000100E100C1001E000E0002000100B10071003E000E0000000100AD0021000E002A0000000100410001007A000E000000"
-      },
-      "rotation_helper_call": {
-        "description": "Call the bounded single-label rotation helper after the resource lookup and renderer-variant selection.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x5ACAC"
-        ],
-        "expected_hex": "00708044",
-        "replacement_hex": "C816230C"
       }
     }
   },
   "e__localization__ui_layout__jutsu_selector_arrows": {
     "description": "Apply localized Jutsu-selector arrow records and draw-scoped rotation glue.",
     "edits": {
-      "draw_scoped_rotation_helper": {
-        "description": "Replace the two open-state horizontal-arrow blocks with a branch plus a draw-scoped helper: enable NA2 sprite mode 1, apply the lower-arrow flip from the signed NUN5 angle, draw and flush while that mode is active, restore mode 0, and return without using the shared header cave.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x9ABC"
-        ],
-        "expected_hex": "4400448E0400838CDFFF022424106200040082AC4400448E8C00053CE808A52406AB004646B3004610EF0D0C000000004400438E0400628C20004234040062AC5243023C0000824400000000000315464400448E8C00053CE808A52446B3004610EF0D0C00000000",
-        "replacement_hex": "1E000010000000002D98E0032D8080000A00052401000624902F070C2D2000024C00028E030041040400038E40006334040003AE8C00053CE008A52410EF0D0C2D2000021C30070C2D2000020A0005242D300000902F070C2D2000022DF860020800E00300000000"
-      },
       "green_arrow_rectangle": {
         "description": "Copy the official NUN5 localized green-arrow record (145,385,22,38) used by both rotated indicators.",
         "operation": "replace",
@@ -1915,62 +1383,6 @@
         "length": 8,
         "expected_hex": "8B00010126001600",
         "replacement_hex": "9100810116002600"
-      },
-      "lower_rotation_minus_pi_over_2": {
-        "description": "Copy NUN5's exact -pi/2 lower-arrow rotation load into an otherwise unused NA2 pipeline slot.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x9BD4"
-        ],
-        "length": 4,
-        "expected_hex": "00000000",
-        "replacement_hex": "C9BF023C"
-      },
-      "rotation_fraction_immediates": {
-        "description": "Copy NUN5's exact pi/2 fractional immediate for both vertical-arrow rotations.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x9B84",
-          "0x9BE0"
-        ],
-        "length": 4,
-        "expected_hex": "00000000",
-        "replacement_hex": "DB0F4334"
-      },
-      "upper_rotation_plus_pi_over_2": {
-        "description": "Copy NUN5's exact +pi/2 upper-arrow rotation load into an otherwise unused NA2 pipeline slot.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x9B78"
-        ],
-        "length": 4,
-        "expected_hex": "00000000",
-        "replacement_hex": "C93F023C"
-      },
-      "vertical_draw_helper_calls": {
-        "description": "Route both vertical-arrow draws through the draw-scoped helper at loaded BTL address 0x006BD9C4.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x9BA0",
-          "0x9BFC"
-        ],
-        "expected_hex": "10EF0D0C",
-        "replacement_hex": "71F61A0C"
-      },
-      "vertical_rotation_stores": {
-        "description": "Store each exact loaded vertical-arrow rotation in the sprite before entering the helper.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x9BA4",
-          "0x9C00"
-        ],
-        "expected_hex": "00000000",
-        "replacement_hex": "4C0083AC"
       }
     }
   },
@@ -2172,26 +1584,6 @@
   "e__localization__ui_layout__stage_select": {
     "description": "Apply the complete localized Stage Select record set and guarded draw glue.",
     "edits": {
-      "load_horizontal_name_scale": {
-        "description": "Load the precomputed NUN5-equivalent horizontal fit from the selected 16-byte stage record into f14.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x6157C"
-        ],
-        "expected_hex": "C6730046",
-        "replacement_hex": "04006EC4"
-      },
-      "preserve_vertical_name_scale": {
-        "description": "Preserve the original 1.0 vertical stage-name scale in f15 instead of copying the horizontal fit into both axes.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x61570"
-        ],
-        "expected_hex": "00708244",
-        "replacement_hex": "00788244"
-      },
       "random_prompt_x": {
         "description": "Copy NUN5's exact X=260 instruction for the Stage Select Random prompt item and companion sprite.",
         "operation": "replace",
@@ -2204,16 +1596,6 @@
         "expected_hex": "9643023C",
         "replacement_hex": "8243023C"
       },
-      "recover_preview_index_from_row_offset": {
-        "description": "Recover the preview index as row_offset >> 4 instead of interpreting the repurposed scale word as an atlas index.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x603B8"
-        ],
-        "expected_hex": "0000448C",
-        "replacement_hex": "02210300"
-      },
       "stage_s01_logical_01_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 0.",
         "operation": "replace",
@@ -2224,16 +1606,6 @@
         "length": 8,
         "expected_hex": "00000000BE002800",
         "replacement_hex": "00000000E8002000"
-      },
-      "stage_s01_logical_01_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 0 (232px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC14"
-        ],
-        "expected_hex": "00000000",
-        "replacement_hex": "4F236C3F"
       },
       "stage_s02_logical_02_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 1.",
@@ -2246,16 +1618,6 @@
         "expected_hex": "BE00000090002800",
         "replacement_hex": "E8000000E8002000"
       },
-      "stage_s02_logical_02_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 1 (232px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC24"
-        ],
-        "expected_hex": "01000000",
-        "replacement_hex": "4F236C3F"
-      },
       "stage_s03_logical_23_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 2.",
         "operation": "replace",
@@ -2266,16 +1628,6 @@
         "length": 8,
         "expected_hex": "4E010000A8002800",
         "replacement_hex": "0000200010012000"
-      },
-      "stage_s03_logical_23_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 2 (272px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC34"
-        ],
-        "expected_hex": "02000000",
-        "replacement_hex": "6969493F"
       },
       "stage_s04_logical_24_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 3.",
@@ -2288,16 +1640,6 @@
         "expected_hex": "0000280086002800",
         "replacement_hex": "10012000D0002000"
       },
-      "stage_s04_logical_24_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 3 (208px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC44"
-        ],
-        "expected_hex": "03000000",
-        "replacement_hex": "0000803F"
-      },
       "stage_s05_logical_05_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 4.",
         "operation": "replace",
@@ -2308,16 +1650,6 @@
         "length": 8,
         "expected_hex": "860028008E002800",
         "replacement_hex": "0000400058012000"
-      },
-      "stage_s05_logical_05_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 4 (344px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC54"
-        ],
-        "expected_hex": "04000000",
-        "replacement_hex": "7D411F3F"
       },
       "stage_s06_logical_06_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 5.",
@@ -2330,16 +1662,6 @@
         "expected_hex": "14012800A4002800",
         "replacement_hex": "58014000A0002000"
       },
-      "stage_s06_logical_06_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 5 (160px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC64"
-        ],
-        "expected_hex": "05000000",
-        "replacement_hex": "0000803F"
-      },
       "stage_s07_logical_07_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 6.",
         "operation": "replace",
@@ -2350,16 +1672,6 @@
         "length": 8,
         "expected_hex": "00005000B4004400",
         "replacement_hex": "00006000A8002000"
-      },
-      "stage_s07_logical_07_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 6 (168px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC74"
-        ],
-        "expected_hex": "06000000",
-        "replacement_hex": "0000803F"
       },
       "stage_s08_logical_08_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 7.",
@@ -2372,16 +1684,6 @@
         "expected_hex": "B40050008C002800",
         "replacement_hex": "A8006000F0002000"
       },
-      "stage_s08_logical_08_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 7 (240px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC84"
-        ],
-        "expected_hex": "07000000",
-        "replacement_hex": "4444643F"
-      },
       "stage_s09_logical_09_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 8.",
         "operation": "replace",
@@ -2392,16 +1694,6 @@
         "length": 8,
         "expected_hex": "40015000BA004400",
         "replacement_hex": "A800600120012800"
-      },
-      "stage_s09_logical_09_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 8 (288px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC94"
-        ],
-        "expected_hex": "08000000",
-        "replacement_hex": "E4383E3F"
       },
       "stage_s10_logical_10_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 9.",
@@ -2414,16 +1706,6 @@
         "expected_hex": "0000940074002800",
         "replacement_hex": "00008000C8002000"
       },
-      "stage_s10_logical_10_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 9 (200px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FCA4"
-        ],
-        "expected_hex": "09000000",
-        "replacement_hex": "0000803F"
-      },
       "stage_s11_logical_11_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 10.",
         "operation": "replace",
@@ -2434,16 +1716,6 @@
         "length": 8,
         "expected_hex": "740094008C002800",
         "replacement_hex": "C8008000D8002000"
-      },
-      "stage_s11_logical_11_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 10 (216px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FCB4"
-        ],
-        "expected_hex": "0A000000",
-        "replacement_hex": "2FA17D3F"
       },
       "stage_s12_logical_12_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 11.",
@@ -2456,16 +1728,6 @@
         "expected_hex": "180194008E002800",
         "replacement_hex": "0000A000D8002000"
       },
-      "stage_s12_logical_12_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 11 (216px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FCC4"
-        ],
-        "expected_hex": "0B000000",
-        "replacement_hex": "2FA17D3F"
-      },
       "stage_s13_logical_13_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 12.",
         "operation": "replace",
@@ -2476,16 +1738,6 @@
         "length": 8,
         "expected_hex": "0000BC008C002800",
         "replacement_hex": "D800A00000012000"
-      },
-      "stage_s13_logical_13_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 12 (256px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FCD4"
-        ],
-        "expected_hex": "0C000000",
-        "replacement_hex": "0000563F"
       },
       "stage_s14_logical_14_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 13.",
@@ -2498,16 +1750,6 @@
         "expected_hex": "8C00BC00AE004400",
         "replacement_hex": "0000C00000012000"
       },
-      "stage_s14_logical_14_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 13 (256px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FCE4"
-        ],
-        "expected_hex": "0D000000",
-        "replacement_hex": "0000563F"
-      },
       "stage_s15_logical_15_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 14.",
         "operation": "replace",
@@ -2518,16 +1760,6 @@
         "length": 8,
         "expected_hex": "3A01BC00C2002800",
         "replacement_hex": "0000E00030012000"
-      },
-      "stage_s15_logical_15_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 14 (304px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FCF4"
-        ],
-        "expected_hex": "0E000000",
-        "replacement_hex": "E535343F"
       },
       "stage_s16_logical_16_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 15.",
@@ -2540,16 +1772,6 @@
         "expected_hex": "0000000188002800",
         "replacement_hex": "0001C00098002000"
       },
-      "stage_s16_logical_16_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 15 (152px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD04"
-        ],
-        "expected_hex": "0F000000",
-        "replacement_hex": "0000803F"
-      },
       "stage_s17_logical_17_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 16.",
         "operation": "replace",
@@ -2560,16 +1782,6 @@
         "length": 8,
         "expected_hex": "880000018C002800",
         "replacement_hex": "3001E000A8002000"
-      },
-      "stage_s17_logical_17_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 16 (168px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD14"
-        ],
-        "expected_hex": "10000000",
-        "replacement_hex": "0000803F"
       },
       "stage_s18_logical_18_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 17.",
@@ -2582,16 +1794,6 @@
         "expected_hex": "1401000174002800",
         "replacement_hex": "00000001B0002000"
       },
-      "stage_s18_logical_18_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 17 (176px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD24"
-        ],
-        "expected_hex": "11000000",
-        "replacement_hex": "0000803F"
-      },
       "stage_s19_logical_19_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 18.",
         "operation": "replace",
@@ -2602,16 +1804,6 @@
         "length": 8,
         "expected_hex": "00002801C0002800",
         "replacement_hex": "B000000108012000"
-      },
-      "stage_s19_logical_19_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 18 (264px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD34"
-        ],
-        "expected_hex": "12000000",
-        "replacement_hex": "E1834F3F"
       },
       "stage_s20_logical_20_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 19.",
@@ -2624,16 +1816,6 @@
         "expected_hex": "C000280174002800",
         "replacement_hex": "0000200100012000"
       },
-      "stage_s20_logical_20_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 19 (256px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD44"
-        ],
-        "expected_hex": "13000000",
-        "replacement_hex": "0000563F"
-      },
       "stage_s21_logical_21_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 20.",
         "operation": "replace",
@@ -2644,16 +1826,6 @@
         "length": 8,
         "expected_hex": "340128018C002800",
         "replacement_hex": "00012001C0002000"
-      },
-      "stage_s21_logical_21_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 20 (192px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD54"
-        ],
-        "expected_hex": "14000000",
-        "replacement_hex": "0000803F"
       },
       "stage_s22_logical_22_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 21.",
@@ -2666,16 +1838,6 @@
         "expected_hex": "A0016C015A002800",
         "replacement_hex": "00006001A8002000"
       },
-      "stage_s22_logical_22_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 21 (168px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD64"
-        ],
-        "expected_hex": "15000000",
-        "replacement_hex": "0000803F"
-      },
       "stage_s23_logical_03_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 22.",
         "operation": "replace",
@@ -2687,16 +1849,6 @@
         "expected_hex": "C0006C0184002800",
         "replacement_hex": "0000400118012000"
       },
-      "stage_s23_logical_03_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 22 (280px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD74"
-        ],
-        "expected_hex": "16000000",
-        "replacement_hex": "3BA8433F"
-      },
       "stage_s24_logical_04_name_rectangle": {
         "description": "Copy official NUN5 stage-name UV rectangle row 23.",
         "operation": "replace",
@@ -2707,26 +1859,6 @@
         "length": 8,
         "expected_hex": "46016C015A002800",
         "replacement_hex": "18014001B8002000"
-      },
-      "stage_s24_logical_04_name_scale_x": {
-        "description": "Store the NUN5-equivalent horizontal scale for stage row 23 (184px source width).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD84"
-        ],
-        "expected_hex": "17000000",
-        "replacement_hex": "0000803F"
-      },
-      "use_matched_stage_row_index": {
-        "description": "Use the matched loop index directly so the redundant per-record index word can hold the stage-name scale.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x606BC"
-        ],
-        "expected_hex": "0000508C",
-        "replacement_hex": "2D802002"
       }
     }
   },
@@ -3658,26 +2790,6 @@
         "length": 4,
         "expected_hex": "00008044",
         "replacement_hex": "2042033C"
-      },
-      "jutsu_label_placement_helper": {
-        "description": "Install the size-preserving Jutsu-label placement helper in verified loaded zero padding immediately before the disjoint stage-width helper.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x30"
-        ],
-        "expected_hex": "00000000000000000000000000000000",
-        "replacement_hex": "D041023C000082440800E00300031546"
-      },
-      "jutsu_label_placement_helper_call": {
-        "description": "Call the relocated localized Jutsu-label placement helper instead of copying the unadjusted base X coordinate.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x9188"
-        ],
-        "expected_hex": "06AB0046",
-        "replacement_hex": "CCCF1A0C"
       },
       "ok_back_prompt_records": {
         "description": "Copy the complete official NUN5 Cross/OK and Triangle/Back records (56x22 and 64x22) into NA2's homologous boot-ELF table.",

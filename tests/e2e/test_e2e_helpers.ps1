@@ -318,8 +318,9 @@ try {
     }
 
     $replayRepository = Join-Path $testRoot 'screenshot-replay'
-    $replayLibrary = Join-Path $replayRepository 'scripts\lib'
-    $replayNa228Scripts = Join-Path $replayRepository 'scripts\na228'
+    $replayScripts = Join-Path $replayRepository 'scripts'
+    $replayLibrary = Join-Path $replayScripts 'lib'
+    $replayNa228Scripts = Join-Path $replayScripts 'na228'
     $replayRecordings = Join-Path $replayRepository 'recordings'
     $replayCapture = Join-Path $replayRepository 'capture'
     $replayLauncher = Join-Path $replayRepository 'launcher.ps1'
@@ -331,6 +332,7 @@ try {
         @"
 function Get-Na2Paths {
     [pscustomobject]@{
+        scripts = '$($replayScripts.Replace("'", "''"))'
         files = [pscustomobject]@{
             pcsx2_game_launch_command = '$($replayLauncher.Replace("'", "''"))'
         }
@@ -562,10 +564,11 @@ param(
     $generatedRunCapture = Join-Path $generatedRunRoot 'captures\movesets\screenshots'
     $generatedRunResources = Join-Path $generatedRunRepository 'resources'
     $generatedRunRecordings = Join-Path $generatedRunRepository 'pcsx2_files\input_recordings'
-    $generatedRunLibrary = Join-Path $generatedRunRepository 'scripts\lib'
+    $generatedRunProjectScripts = Join-Path $generatedRunRepository 'scripts'
+    $generatedRunLibrary = Join-Path $generatedRunProjectScripts 'lib'
     $generatedRunComparatorRoot = Join-Path `
-        $generatedRunRepository `
-        'scripts\research\localization'
+        $generatedRunProjectScripts `
+        'research\localization'
     [void](New-Item -ItemType Directory -Path `
         $generatedRunScripts, `
         $generatedRunCapture, `
@@ -607,6 +610,7 @@ param(
         @"
 function Get-Na2Paths {
     [pscustomobject]@{
+        scripts = '$($generatedRunProjectScripts.Replace("'", "''"))'
         resources = '$($generatedRunResources.Replace("'", "''"))'
         pcsx2_input_recordings = '$($generatedRunRecordings.Replace("'", "''"))'
     }
@@ -772,6 +776,9 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
                 'tasks \d+/\d+ completed, \d+ running, \d+ waiting$'
             ) -and
             $generatedProgressLines[0] -notmatch 'normal=|shifted=' -and
+            $generatedRunOutput[-1] -match (
+                '^E2E run elapsed: \d{2}:\d{2}:\d{2}\.\d{3}$'
+            ) -and
             $generatedRunResult.Execution -ceq 'completed' -and
             $generatedRunResult.Regression -ceq 'changed' -and
             $generatedRunResult.Suites -eq 1 -and
@@ -1550,6 +1557,7 @@ $grids = Join-Path $OutputRoot 'screenshots'
         -Message 'E2E capture commit changed the main repository or disturbed unrelated staging.'
 
     $fakeRepository = Join-Path $testRoot 'suite-lifecycle-repository'
+    $fakeProjectScripts = Join-Path $fakeRepository 'scripts'
     $fakeScripts = Join-Path $fakeRepository 'e2e\scripts'
     $fakeInputRecordingsRoot = Join-Path $fakeRepository 'pcsx2_files\input_recordings'
     $fakeRecordings = Join-Path $fakeInputRecordingsRoot 'e2e'
@@ -1557,7 +1565,7 @@ $grids = Join-Path $OutputRoot 'screenshots'
     [void](New-Item -ItemType Directory -Path `
         $fakeScripts, `
         (Join-Path $fakeRepository 'e2e\captures'), `
-        (Join-Path $fakeRepository 'scripts\lib'), `
+        (Join-Path $fakeProjectScripts 'lib'), `
         $fakeRecordings, `
         $fakeResources `
         -Force)
@@ -1570,10 +1578,11 @@ $grids = Join-Path $OutputRoot 'screenshots'
     Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\delete_suites.ps1') `
         -Destination (Join-Path $fakeScripts 'delete_suites.ps1')
     [IO.File]::WriteAllText(
-        (Join-Path $fakeRepository 'scripts\lib\paths.ps1'),
+        (Join-Path $fakeProjectScripts 'lib\paths.ps1'),
         @"
 function Get-Na2Paths {
     [pscustomobject]@{
+        scripts = '$($fakeProjectScripts.Replace("'", "''"))'
         pcsx2_input_recordings = '$($fakeInputRecordingsRoot.Replace("'", "''"))'
         resources = '$($fakeResources.Replace("'", "''"))'
     }
@@ -1720,14 +1729,20 @@ foreach ($suiteName in $suites) {
         [IO.Path]::GetDirectoryName($noReferenceRecording)
     ) -Force)
     [IO.File]::WriteAllText($noReferenceRecording, 'first')
-    & (Join-Path $fakeScripts 'create_suite.ps1') `
+    $firstCreateRecords = @(& (Join-Path $fakeScripts 'create_suite.ps1') `
         -SelectionToken 'test/no_reference' `
-        -NoReference
+        -NoReference *>&1)
+    $firstCreateOutput = [string[]]@(
+        $firstCreateRecords | ForEach-Object { [string]$_ }
+    )
     $firstSuitePath = $noReferenceRecording
     Assert-E2eHelperTest `
         -Condition (
             [IO.File]::ReadAllText($firstSuitePath) -ceq 'first' -and
-            @(Get-ChildItem -LiteralPath $fakeRecordings -Filter '*.p2m2' -File -Recurse).Count -eq 1
+            @(Get-ChildItem -LiteralPath $fakeRecordings -Filter '*.p2m2' -File -Recurse).Count -eq 1 -and
+            $firstCreateOutput[-1] -match (
+                '^E2E creation elapsed: \d{2}:\d{2}:\d{2}\.\d{3}$'
+            )
         ) `
         -Message 'Suite creation did not use the canonical recording in place.'
     $firstCaptureRoot = Join-Path $fakeRepository 'e2e\captures\test\no_reference'

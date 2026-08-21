@@ -62,14 +62,15 @@ offsets or final runtime addresses. The UI helper also replaces the former
 global scratch record with a 64-byte call-local stack frame, so neither code
 nor transient wrapper state depends on the erased ELF interval.
 
-The canonical resident-only link at load base `0x008F3D00` places the nine
-Font fragments in `0x008F3D50..0x008F42A0`. The complete profile then appends
-its external-string fragments in the same shared image. Eight guarded boot-ELF
-hooks target these symbols:
+The resident link at load base `0x008F3D00` places the Font fragments in the
+shared image before the complete profile appends its external strings. Guarded
+boot-ELF hooks target these symbols:
 
 - ordinary space and newline at file offsets `0x893EC` and `0x88704`;
 - normal right-edge, inline-markup half-space, and ordinary glyph advance at
   `0x88070`, `0x88B7C`, and `0x897D8`;
+- the secondary-cell guard and normal bottom-edge bridge at `0x87174` and
+  `0x88078`;
 - the Controls wrapper at `0x288848`;
 - selected-choice and shared-UI wrappers at `0x279250` and `0x279B20`.
 
@@ -355,13 +356,16 @@ files `0x87374` and `0x87B60`, targeting `glyph_metric_apply` and
 `glyph_metric_lookup`. Their final runtime addresses are payload-builder
 results rather than feature-owned constants.
 
-The atlas, packed map, descriptor, secondary-cell guard, horizontal scale word,
-and secondary-only quad-height path remain unchanged. The pre-generated
-decoder and measurement blobs are removed. At cutover, static confidence came
-from clean-byte guards, bounded disassembly of both native contexts,
-compiler-instruction review, and resolved-hook inspection. That evidence does
-not by itself claim representative current secondary-font and unaffected
-primary/fullwidth runtime coverage.
+The atlas, packed map, descriptor, and horizontal scale word remain unchanged.
+The secondary-cell guard and secondary-only quad-height path keep their exact
+accepted instruction bodies in `font_glyph_geometry_abi.S`; two symbolic hooks
+now route to those resident fragments instead of storing the bodies as fixed-ELF
+edits. The pre-generated decoder and measurement blobs are removed. At cutover,
+static confidence came from clean-byte guards, bounded disassembly of both
+native contexts, compiler-instruction review, byte comparison of the two
+geometry bodies, and resolved-hook inspection. That evidence does not by itself
+claim representative current secondary-font and unaffected primary/fullwidth
+runtime coverage.
 
 ## Stable heap reservation and screenshot determinism
 

@@ -84,19 +84,18 @@ The guarded task-local Y-only precursor is
 (SHA-256
 `629180D28C75881CF7D7E5149AE38B935BD3F322160AB9D706DF94B06A7168F2`).
 It changes only copied savestate memory through
-`@work/Font/analysis/font_match_v1/prepare_renderer_geometry_state.py`. Its
-accepted behavior is now canonical in two guarded ELF edits:
-
-- file offset `0x2F8840`, original 32 zero bytes, installs
-  `08006330020060100C0021C6100021C660088046000D0046E01F06086CCA848F`;
-- file offset `0x88078`, original `000D00466CCA848F`, installs
-  `D0E10F0870002392`.
+`@work/Font/analysis/font_match_v1/prepare_renderer_geometry_state.py`. The
+accepted 32-byte helper body is now byte-exact resident assembly in
+`font_glyph_geometry_abi.S`. A guarded symbolic jump at ELF file `0x88078`
+retains the displaced secondary-mode load in its delay slot and targets that
+payload fragment; no helper remains in fixed-ELF zero padding.
 
 The helper reads the existing secondary-font mode bit, selects descriptor
 `+0x10` height only for secondary glyphs or `+0x0C` width otherwise, computes
 the normal quad bottom edge, and rejoins the untouched path at runtime
 `0x00187F80`. It leaves X geometry, primary/fullwidth glyphs, spaces, logical
-measurement, and row positions unchanged.
+measurement, and row positions unchanged. Focused source tests also compare the
+compiled helper bytes with the accepted body before catalog resolution.
 
 Final guarded runtime validation on the matched Control Settings state confirms
 the canonical result. Exact reads matched the secondary-only hook and helper,

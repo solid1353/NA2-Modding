@@ -84,7 +84,7 @@
     }
   },
   "i__localization__font__glyphs__metrics": {
-    "description": "Decode the accepted packed 14x20 metric rows for measurement and drawing from composition-time C in 228.BIN, leaving only guarded register-setup hooks in the fixed boot ELF.",
+    "description": "Decode the accepted packed 14x20 metric rows from composition-time C and keep the secondary-glyph geometry bridges resident in 228.BIN, leaving only guarded register-setup and branch hooks in the fixed boot ELF.",
     "hooks": {
       "expand_current_secondary_byte_compiled_packed": {
         "description": "Expand the current secondary byte through the compiled packed-metric lookup, store the native four-byte row, and rejoin the original measurement cleanup.",
@@ -105,9 +105,43 @@
         "encoding": "jal26",
         "replacement_hex": "2D2060022D2840000000000000000000ED1C060800000000",
         "relocation_offset": "0x8"
+      },
+      "route_normal_bottom_edge_through_resident_geometry": {
+        "description": "Route only the normal glyph bottom-edge calculation through the resident secondary-height bridge while reading the existing secondary-font mode bit in the jump delay slot.",
+        "target_id": "na2_elf",
+        "offset": "0x88078",
+        "expected_hex": "000D00466CCA848F",
+        "symbol": "glyph_normal_bottom_edge",
+        "encoding": "j26",
+        "replacement_hex": "0000000070002392"
+      },
+      "route_secondary_raster_lookup_through_resident_guard": {
+        "description": "Route the secondary raster lookup through the resident 123-cell guard while retaining the displaced descriptor load in the jump delay slot.",
+        "target_id": "na2_elf",
+        "offset": "0x87174",
+        "expected_hex": "6800658E0600A394",
+        "symbol": "glyph_secondary_cell_guard",
+        "encoding": "j26",
+        "replacement_hex": "000000006800658E"
       }
     },
     "payload": {
+      "glyph_geometry_abi": {
+        "kind": "asm",
+        "path": "src/localization/font/font_glyph_geometry_abi.S",
+        "namespace": "localization.font.glyph.geometry.asm",
+        "imports": {},
+        "fragments": {
+          "glyph_normal_bottom_edge": {
+            "order": 152,
+            "object": "localization.font.glyph.geometry.asm.text.glyph.normal.bottom.edge"
+          },
+          "glyph_secondary_cell_guard": {
+            "order": 151,
+            "object": "localization.font.glyph.geometry.asm.text.glyph.secondary.cell.guard"
+          }
+        }
+      },
       "glyph_metrics": {
         "kind": "c",
         "path": "src/localization/font/font_glyph_metrics.c",
@@ -1522,6 +1556,273 @@
           "localization_command_chart_name_draw": {
             "order": 93,
             "object": "localization.ui.command.chart.text.localization.command.chart.name.draw"
+          }
+        }
+      }
+    }
+  },
+  "i__localization__ui_layout__runtime": {
+    "description": "Keep accepted NA228 UI layout and draw behavior in resident source-owned helpers instead of overlay or linker-padding code caves.",
+    "hooks": {
+      "apply_home_state_1_cross_offset": {
+        "description": "Apply the accepted -12.0 HOME-state Cross offset before tail-calling the native common-prompt compositor.",
+        "target_id": "na2_etc",
+        "offset": "0x6B0",
+        "expected_hex": "60F20D0C00000000",
+        "symbol": "localization_ui_common_prompt_x_offset",
+        "encoding": "jal26",
+        "replacement_hex": "0000000C40C1033C"
+      },
+      "apply_home_state_2_play_offset": {
+        "description": "Apply the accepted -24.0 HOME-state Play offset before tail-calling the native common-prompt compositor.",
+        "target_id": "na2_etc",
+        "offset": "0x6D4",
+        "expected_hex": "60F20D0C00000000",
+        "symbol": "localization_ui_common_prompt_x_offset",
+        "encoding": "jal26",
+        "replacement_hex": "0000000CC0C1033C"
+      },
+      "apply_home_state_3_triangle_offset": {
+        "description": "Apply the accepted -8.0 HOME-state Triangle offset before tail-calling the native common-prompt compositor.",
+        "target_id": "na2_etc",
+        "offset": "0x738",
+        "expected_hex": "60F20D0C00000000",
+        "symbol": "localization_ui_common_prompt_x_offset",
+        "encoding": "jal26",
+        "replacement_hex": "0000000C00C1033C"
+      },
+      "apply_home_state_4_stop_offset": {
+        "description": "Apply the accepted -2.0 HOME-state Stop offset before tail-calling the native common-prompt compositor.",
+        "target_id": "na2_etc",
+        "offset": "0x764",
+        "expected_hex": "60F20D0C00000000",
+        "symbol": "localization_ui_common_prompt_x_offset",
+        "encoding": "jal26",
+        "replacement_hex": "0000000C00C0033C"
+      },
+      "draw_jutsu_selector_lower_arrow": {
+        "description": "Draw the lower localized Jutsu-selector arrow with its accepted rotation and flip inside the native mode-enable, draw, flush, and mode-disable scope.",
+        "target_id": "na2_btl",
+        "offset": "0x9BFC",
+        "expected_hex": "10EF0D0C00000000",
+        "symbol": "localization_ui_jutsu_selector_arrow_draw_lower",
+        "encoding": "jal26"
+      },
+      "draw_jutsu_selector_upper_arrow": {
+        "description": "Draw the upper localized Jutsu-selector arrow with its accepted rotation inside the native mode-enable, draw, flush, and mode-disable scope.",
+        "target_id": "na2_btl",
+        "offset": "0x9BA0",
+        "expected_hex": "10EF0D0C00000000",
+        "symbol": "localization_ui_jutsu_selector_arrow_draw_upper",
+        "encoding": "jal26"
+      },
+      "fit_battle_hud_name_width": {
+        "description": "Route the accepted 160-pixel Battle HUD width cap through a resident C helper while preserving every live caller value and the displaced height load.",
+        "target_id": "na2_btl",
+        "offset": "0x67F44",
+        "expected_hex": "42010146640060C4",
+        "symbol": "localization_ui_battle_hud_fit_width_adapter",
+        "encoding": "jal26",
+        "replacement_hex": "0000000CA0000424"
+      },
+      "fit_stage_name_width": {
+        "description": "Derive the accepted shrink-only stage-name scale from the selected rectangle at draw time while retaining the native record indices.",
+        "target_id": "na2_btl",
+        "offset": "0x61580",
+        "expected_hex": "40EF0D0C00000000",
+        "symbol": "localization_ui_stage_select_name_draw",
+        "encoding": "jal26"
+      },
+      "render_fixed_item_status": {
+        "description": "Render the accepted fixed two-label item-status layout from resident C while preserving the current foreground renderer bytes.",
+        "target_id": "na2_btl",
+        "offset": "0x5B0F0",
+        "expected_hex": "90FFBD275000BFFF",
+        "symbol": "localization_item_status_fixed_draw",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "render_numeric_item_status": {
+        "description": "Render the accepted numeric item-status labels and recovery digits from resident C while preserving the current foreground renderer bytes.",
+        "target_id": "na2_btl",
+        "offset": "0x5A290",
+        "expected_hex": "D0FFBD272000BFFF",
+        "symbol": "localization_item_status_numeric_draw",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "render_paired_item_status": {
+        "description": "Render the accepted paired item-status layout from resident C while preserving the current foreground renderer bytes.",
+        "target_id": "na2_btl",
+        "offset": "0x5ADC0",
+        "expected_hex": "90FFBD275000BFFF",
+        "symbol": "localization_item_status_paired_draw",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "render_single_item_status": {
+        "description": "Render the accepted single-label item-status layout from resident C through the native uniform renderer.",
+        "target_id": "na2_btl",
+        "offset": "0x5AB90",
+        "expected_hex": "C0FFBD272000BFFF",
+        "symbol": "localization_item_status_single_draw",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "place_vs_confirmation_jutsu_label": {
+        "description": "Route the accepted VS-confirmation Jutsu-label placement through the resident exact-ABI shim.",
+        "target_id": "na2_btl",
+        "offset": "0x9188",
+        "expected_hex": "06AB0046",
+        "symbol": "localization_ui_vs_confirmation_jutsu_label_place",
+        "encoding": "jal26"
+      },
+      "suppress_jutsu_selector_horizontal_arrows": {
+        "description": "Skip the two retired horizontal-arrow draws and rejoin the accepted native bit-0x40 clearing block without changing caller state.",
+        "target_id": "na2_btl",
+        "offset": "0x9ABC",
+        "expected_hex": "4400448E0400838C",
+        "symbol": "localization_ui_jutsu_selector_arrows_suppress_horizontal",
+        "encoding": "j26"
+      },
+      "update_item_status_tail": {
+        "description": "Run the accepted item-bubble clamp, smoothing, origin, variant, and draw tail from resident C after the native updater has prepared its transformed position.",
+        "target_id": "na2_btl",
+        "offset": "0x59F30",
+        "expected_hex": "9E41023C67664234",
+        "symbol": "localization_item_status_update_tail_bridge",
+        "encoding": "j26",
+        "replacement_hex": "000000082D200002"
+      }
+    },
+    "payload": {
+      "battle_hud_names": {
+        "kind": "c",
+        "path": "src/localization/ui/battle_hud_names.c",
+        "namespace": "localization.ui.battle.hud.names",
+        "imports": {},
+        "fragments": {
+          "localization_ui_battle_hud_fit_width": {
+            "order": 160,
+            "object": "localization.ui.battle.hud.names.text.localization.ui.battle.hud.fit.width"
+          }
+        }
+      },
+      "item_status": {
+        "kind": "c",
+        "path": "src/localization/ui/item_status.c",
+        "namespace": "localization.ui.item.status.c",
+        "imports": {
+          "localization_item_status_foreground_draw": "localization_item_status_foreground_draw"
+        },
+        "fragments": {
+          "localization_item_status_update_tail": {
+            "order": 168,
+            "object": "localization.ui.item.status.c.text.localization.item.status.update.tail"
+          },
+          "localization_item_status_numeric_draw": {
+            "order": 169,
+            "object": "localization.ui.item.status.c.text.localization.item.status.numeric.draw"
+          },
+          "localization_item_status_single_draw": {
+            "order": 170,
+            "object": "localization.ui.item.status.c.text.localization.item.status.single.draw"
+          },
+          "localization_item_status_paired_draw": {
+            "order": 171,
+            "object": "localization.ui.item.status.c.text.localization.item.status.paired.draw"
+          },
+          "localization_item_status_fixed_draw": {
+            "order": 172,
+            "object": "localization.ui.item.status.c.text.localization.item.status.fixed.draw"
+          }
+        }
+      },
+      "item_status_renderer": {
+        "kind": "asm",
+        "path": "src/localization/ui/item_status_renderer.S",
+        "namespace": "localization.ui.item.status.renderer.asm",
+        "imports": {},
+        "fragments": {
+          "localization_item_status_foreground_draw": {
+            "order": 173,
+            "object": "localization.ui.item.status.renderer.asm.text.localization.item.status.foreground.draw"
+          }
+        }
+      },
+      "item_status_update_abi": {
+        "kind": "asm",
+        "path": "src/localization/ui/item_status_update_abi.S",
+        "namespace": "localization.ui.item.status.update.asm",
+        "imports": {
+          "localization_item_status_update_tail": "localization_item_status_update_tail"
+        },
+        "fragments": {
+          "localization_item_status_update_tail_bridge": {
+            "order": 174,
+            "object": "localization.ui.item.status.update.asm.text.localization.item.status.update.tail.bridge"
+          }
+        }
+      },
+      "jutsu_selector_arrows": {
+        "kind": "c",
+        "path": "src/localization/ui/jutsu_selector_arrows.c",
+        "namespace": "localization.ui.jutsu.selector.arrows",
+        "imports": {},
+        "fragments": {
+          "localization_ui_jutsu_selector_arrow_draw_lower": {
+            "order": 166,
+            "object": "localization.ui.jutsu.selector.arrows.text.localization.ui.jutsu.selector.arrow.draw.lower"
+          },
+          "localization_ui_jutsu_selector_arrow_draw_upper": {
+            "order": 165,
+            "object": "localization.ui.jutsu.selector.arrows.text.localization.ui.jutsu.selector.arrow.draw.upper"
+          }
+        }
+      },
+      "jutsu_selector_arrows_abi": {
+        "kind": "asm",
+        "path": "src/localization/ui/jutsu_selector_arrows_abi.S",
+        "namespace": "localization.ui.jutsu.selector.arrows.abi",
+        "imports": {},
+        "fragments": {
+          "localization_ui_jutsu_selector_arrows_suppress_horizontal": {
+            "order": 167,
+            "object": "localization.ui.jutsu.selector.arrows.abi.text.localization.ui.jutsu.selector.arrows.suppress.horizontal"
+          }
+        }
+      },
+      "stage_select": {
+        "kind": "c",
+        "path": "src/localization/ui/stage_select.c",
+        "namespace": "localization.ui.stage.select",
+        "imports": {},
+        "fragments": {
+          "localization_ui_stage_select_name_draw": {
+            "order": 161,
+            "object": "localization.ui.stage.select.text.localization.ui.stage.select.name.draw"
+          }
+        }
+      },
+      "ui_layout_abi": {
+        "kind": "asm",
+        "path": "src/localization/ui/ui_layout_abi.S",
+        "namespace": "localization.ui.layout.abi",
+        "imports": {
+          "localization_ui_battle_hud_fit_width": "localization_ui_battle_hud_fit_width"
+        },
+        "fragments": {
+          "localization_ui_battle_hud_fit_width_adapter": {
+            "order": 162,
+            "object": "localization.ui.layout.abi.text.localization.ui.battle.hud.fit.width.adapter"
+          },
+          "localization_ui_common_prompt_x_offset": {
+            "order": 163,
+            "object": "localization.ui.layout.abi.text.localization.ui.common.prompt.x.offset"
+          },
+          "localization_ui_vs_confirmation_jutsu_label_place": {
+            "order": 164,
+            "object": "localization.ui.layout.abi.text.localization.ui.vs.confirmation.jutsu.label.place"
           }
         }
       }

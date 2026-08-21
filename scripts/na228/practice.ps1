@@ -239,7 +239,7 @@ foreach ($requestedGame in $Games) {
     }
 
     $pnachByGame[$selector] = [IO.Path]::GetFullPath(
-        (Join-Path $paths.pcsx2_cheats "practice\$pnachName")
+        (Join-Path $paths.pcsx2_files "cheats\practice\$pnachName")
     )
     $pnachLinesByGame[$selector] = [string[]]@(
         for ($index = 0; $index -lt $addresses.Count; $index++) {

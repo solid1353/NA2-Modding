@@ -232,11 +232,11 @@ same-semantic English cells. Unsupported punctuation is reconstructed from
 clean NA2, retaining 95/95 printable-ASCII coverage. The 123-cell secondary
 atlas is locally bounded; packed metric rows occupy only value words of empty
 primary-map slots and are decoded by secondary-only draw and measurement
-hooks. A glyph-owned normal-path helper keeps descriptor width for
-primary/fullwidth glyphs and selects descriptor height only for the secondary
-quad, restoring its intended 24x28 presentation without changing horizontal
-geometry. Clean NA2 GF4C remains untouched. The two deterministic generators
-verify these referenced blobs:
+hooks. Resident byte-exact geometry shims bound the secondary cell index, keep
+descriptor width for primary/fullwidth glyphs, and select descriptor height
+only for the secondary quad, restoring its intended 24x28 presentation without
+changing horizontal geometry. Clean NA2 GF4C remains untouched. The two
+deterministic generators verify these referenced blobs:
 
 - atlas: 17,220 bytes, SHA-256
   `6E4B988E512568F0A91E0226A8A4046362C1A4EF078E50BBF630BEEF90333736`;

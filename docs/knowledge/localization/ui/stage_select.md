@@ -31,7 +31,7 @@ NA2 file range `0x20FC10..0x20FD8F` is 24 records of 16 bytes:
 ```cpp
 struct Na2StageRecord {
     int32_t stage_id;
-    int32_t preview_index; // repurposed by ui_layout_stage_select as name_scale_x
+    int32_t preview_index;
     int16_t u, v, width, height;
 };
 ```
@@ -49,8 +49,9 @@ Every stage ID and preview index matches by row, and every preview index equals
 its row number `0..23`. NA2's selected-preview path is represented by Ghidra
 `FUN_007144e0`; NUN5's structural twin is `FUN_00729f00`. Their relevant
 function boundaries in the exports are `0x007144E0..0x007146BC` and
-`0x00729F00..0x0072A0E0`. `ui_layout_stage_select` redirects the selected-preview read at
-NA2 file offset `0x606BC` to the already matched row index.
+`0x00729F00..0x0072A0E0`. `ui_layout_stage_select` retains the native
+`preview_index` word and the selected-preview read at NA2 file offset
+`0x606BC` unchanged.
 
 Ghidra omitted a second, structurally matched preview-construction range. Its
 relevant NA2 file range is `0x60378..0x60428`; the NUN5 twin is
@@ -65,21 +66,24 @@ int preview_index = stage_records[row].preview_index;
 build_preview_atlas_cell(preview_index);
 ```
 
-After the NA2 word is repurposed for `name_scale_x`, the final load interprets
-IEEE-754 scale bits as an atlas index. At NA2 file offset `0x603B8`, the
-size-preserving port changes `lw a0,0(v0)` to `srl a0,v1,4`; `v1` is still
-`row * 16`, so the result is the exact canonical index `0..23`. NUN5 retains
-the direct load because its eight-byte record still contains the index. This is
-an intentional NA2-specific adaptation, not a donor-copy candidate.
+Both native preview consumers continue to load that word directly, including
+the second consumer at NA2 file offset `0x603B8`. No preview-construction
+instruction or atlas-index source is changed.
 
 ## Localized stage names
 
 NUN5 obtains 24 English rectangles from boot-ELF file range
 `0x4DDB90..0x4DDC4F` and applies `min(1.0f, 214.0f / width)` horizontally.
-`ui_layout_stage_select` copies those rectangles into the NA2 inline records and stores the
-exact single-precision result in each repurposed second word. NA2 file offsets
-`0x61570` and `0x6157C` keep vertical scale at `1.0` and load the stored value
-only into horizontal scale.
+`ui_layout_stage_select` copies those rectangles into the NA2 inline records.
+At draw time, the resident C entry
+`localization_ui_stage_select_name_draw` reads the selected rectangle width and
+derives the shrink-only horizontal scale as
+`min(1.0f, 214.0f / width)`. A guarded call hook at BTL file offset `0x61580`
+routes the native draw through that entry while preserving X, Y, vertical
+scale, the fifth-argument context, the sixth-argument rectangle, and the
+native NOP delay slot. The entry then calls NA2's existing compositor at
+`0x0037BD00`. Static calculation reproduced every one of the 24 previously
+accepted single-precision scale bit patterns exactly.
 
 The carousel transform functions, NA2 `FUN_00714D40` and NUN5
 `FUN_0072A7A0`, are structural twins apart from relocated engine calls. Their
@@ -118,7 +122,8 @@ labels; the retained Current screenshot then matched the NUN5 footer.
 ## Side effects, callers, and negative results
 
 - The preview constructors create/configure the selected preview and carousel
-  sprites from `MAPSEL1.CCS`; the patch changes only their atlas index source.
+  sprites from `MAPSEL1.CCS`; the patch leaves their atlas-index source and
+  `preview_index` data unchanged.
 - The draw dispatcher updates presentation objects and submits prompt sprites;
   the patch changes four X constants: two exact donor copies for Random and
   two effective-anchor adaptations for OK/Back.
@@ -132,10 +137,18 @@ labels; the retained Current screenshot then matched the NUN5 footer.
 - Copying the NUN5 regional-offset loads was rejected because their global
   pointers are not ABI-compatible with NA2. The two effective constants are
   the bounded equivalent and do not alter control flow.
-- No code cave, absolute jump, file growth, text change, or font change is used.
+- Stage-name fitting is owned by one resident C entry and one guarded call
+  hook. No BTL code cave, file growth, text change, or font change is used.
 
 Confidence is **high** for record topology, file/runtime mapping, both preview
 consumers, stage-name scale behavior, the Random constants, and the effective
 OK/Back anchors. The user compared the integrated stage layout with NUN5 and
 accepted it on 2026-07-22; the later paired Slot 5 footer proof independently
 verifies the two added anchor adaptations.
+
+Those behavior and acceptance claims apply to the integrated NA228 result.
+The resident-storage refactor described above is uncommitted and has only
+static validation: EE source/ABI contracts, exact 24-width float-bit
+comparison, catalog tests, and production payload/hook resolution passed. No
+runtime or E2E run has validated the refactored storage path; that validation
+remains user-only.

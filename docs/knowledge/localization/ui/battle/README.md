@@ -75,3 +75,22 @@ character data and font metrics unchanged. The offset and direction are
 screenshot-proven across the full existing suite; runtime confirmation of the
 corrected patch remains pending because captures are not regenerated as part
 of this change.
+
+The independent 160-unit name-width cap remains part of the same renderer.
+The `74.0` anchor stays a guarded data edit, while width fitting is owned by
+resident `PRG/228.BIN` entries
+`localization_ui_battle_hud_fit_width` and
+`localization_ui_battle_hud_fit_width_adapter`. A guarded call hook at BTL file
+offset `0x67F44` replaces the native width multiplication and preserves the
+accepted `a0=160` delay-slot side effect. The adapter preserves the caller-live
+`a1`, `v1`, `f1`, and `ra`, calls C to compute
+`min(source_width, 160.0f) * scale`, returns the result in native `f5`, and
+executes the displaced height load in its return delay slot. The former BTL
+header-cave helper is no longer used.
+
+The behavior and screenshot evidence above apply to the integrated NA228
+result. This resident-storage refactor is uncommitted and has only static
+validation: the compiled C body, ABI adapter, guard, and production
+payload/hook resolution passed their focused contracts and catalog tests. No
+runtime or E2E run has validated the refactored storage path; that validation
+remains user-only.

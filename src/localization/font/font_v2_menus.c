@@ -141,6 +141,33 @@ typedef int (*FontV2NativeControlsDraw)(
 /* Single-row layout height for Character Select options. */
 #define FONT_CHARACTER_LIST_LINE_HEIGHT 20.0f
 
+/*
+ * The clean row producer supplies Y=8,32,56,80,120. The accepted layout
+ * formerly replaced that producer with a fixed-ELF X table and a fifth-row
+ * Y correction. Keep the same five results in the C adapters that own the
+ * selected and ordinary draws. Y=115 retains compatibility with a state that
+ * already ran the former producer patch before receiving this payload.
+ */
+static inline __attribute__((always_inline)) void
+font_v2_character_row_layout(float native_y, float *row_x, float *row_y) {
+    if (native_y < 20.0f) {
+        *row_x = 81.75f;
+        *row_y = 8.0f;
+    } else if (native_y < 44.0f) {
+        *row_x = 73.375f;
+        *row_y = 32.0f;
+    } else if (native_y < 68.0f) {
+        *row_x = 72.375f;
+        *row_y = 56.0f;
+    } else if (native_y < FONT_CHARACTER_LIST_FOOTER_Y_THRESHOLD) {
+        *row_x = 63.5f;
+        *row_y = 80.0f;
+    } else {
+        *row_x = 3.5f;
+        *row_y = 115.0f;
+    }
+}
+
 /* === Shared Yes/No selectors: quit, return, and Special Controls === */
 
 /* Exact native Y bit pattern identifying the ordinary Yes row. */
@@ -458,7 +485,14 @@ int font_v2_character_selected_adapter(
     const u8 *text
 ) {
     FontV2Session session;
-    s32 selected_y = draw_y;
+    float row_x = (float)draw_x;
+    float row_y = (float)draw_y;
+    s32 selected_x;
+    s32 selected_y;
+
+    font_v2_character_row_layout(row_y, &row_x, &row_y);
+    selected_x = (s32)(row_x + 0.5f);
+    selected_y = (s32)row_y;
 
     if ((float)selected_y > FONT_CHARACTER_LIST_FOOTER_Y_THRESHOLD) {
         selected_y += FONT_CHARACTER_LIST_SELECTED_FOOTER_Y_OFFSET;
@@ -466,7 +500,7 @@ int font_v2_character_selected_adapter(
 
     session.text = text;
     session.box_x =
-        (float)draw_x + (float)FONT_CHARACTER_LIST_SELECTED_X_OFFSET;
+        (float)selected_x + (float)FONT_CHARACTER_LIST_SELECTED_X_OFFSET;
     session.box_y = (float)selected_y;
     session.box_width = FONT_CHARACTER_LIST_BOX_WIDTH;
     session.box_height = FONT_CHARACTER_LIST_BOX_HEIGHT;
@@ -478,7 +512,7 @@ int font_v2_character_selected_adapter(
     session.callback = FONT_CHARACTER_SELECTED_DRAW_ADDRESS;
     session.callback_arg0 = object;
     session.callback_arg1 =
-        (u32)(draw_x + FONT_CHARACTER_LIST_SELECTED_X_OFFSET);
+        (u32)(selected_x + FONT_CHARACTER_LIST_SELECTED_X_OFFSET);
     session.callback_arg2 = (u32)selected_y;
     session.callback_arg3 = (u32)text;
 
@@ -494,10 +528,14 @@ int font_v2_character_unselected_adapter(
     float native_y
 ) {
     FontV2Session session;
+    float row_x = native_x;
+    float row_y = native_y;
+
+    font_v2_character_row_layout(native_y, &row_x, &row_y);
 
     session.text = text;
-    session.box_x = native_x + FONT_CHARACTER_LIST_X_OFFSET;
-    session.box_y = native_y;
+    session.box_x = row_x + FONT_CHARACTER_LIST_X_OFFSET;
+    session.box_y = row_y;
     session.box_width = FONT_CHARACTER_LIST_BOX_WIDTH;
     session.box_height = FONT_CHARACTER_LIST_BOX_HEIGHT;
     session.horizontal_alignment = FONT_V2_ALIGN_START;

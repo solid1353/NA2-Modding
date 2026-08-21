@@ -165,33 +165,38 @@ rejected rather than retained as a special texture-engine transform.
 ### Accepted draw-scoped compatibility port
 
 `UI-VS-001` remains a byte-for-byte whole NUN5 donor. `ui_layout_jutsu_selector_arrows` replaces the
-now-unwanted horizontal blocks at file `0x9ABC..0x9B23` with a branch over a
-compact helper stored inside those same dead blocks. The main path resumes at
-file `0x9B38`; no shared BTL-header cave is used. The upper and lower paths copy
-NUN5's exact angle loads from `0xA06C/0xA070` and `0xA0F4/0xA0F8`, store the
-angle in the sprite, and call the helper from `0x9BA0` and `0x9BFC`. The exact
-NUN5 record `(145,385,22,38)` is copied from ELF `0x4DE0F0` to BTL `0x20C9E0`.
+the unwanted horizontal draws through a guarded jump at BTL file `0x9ABC` to
+resident exact-ABI trampoline
+`localization_ui_jutsu_selector_arrows_suppress_horizontal`. The trampoline
+rejoins the accepted native bit-`0x40` clearing block at live `0x006BDA38`,
+which is BTL file `0x9B38` and Ghidra `0x006BD9F8`. Guarded call hooks at file
+`0x9BA0` and `0x9BFC` route the upper and lower draws to resident C entries
+`localization_ui_jutsu_selector_arrow_draw_upper` and
+`localization_ui_jutsu_selector_arrow_draw_lower`. The exact NUN5 record
+`(145,385,22,38)` remains a data copy from ELF `0x4DE0F0` to BTL `0x20C9E0`.
 
 The helper's practical reconstruction is:
 
 ```cpp
-void drawLocalizedSelectorArrow(Sprite *sprite) {
+void drawLocalizedSelectorArrow(Sprite *sprite, Rect *rectangle,
+                                float rotation, bool lower) {
     configureSpriteMode(sprite, 10, 1);       // NA2 FUN_001cbe40
-    if (bit_cast<int>(sprite->rotation) < 0)
+    sprite->rotation = rotation;              // exact +/-pi/2 bits
+    if (lower)
         sprite->flags |= 0x40;                // lower-arrow flip
-    drawSpriteRecord(sprite, (Rect *)0x008C08E0); // FUN_0037bc40
+    drawSpriteRecord(sprite, rectangle);      // FUN_0037bc40
     flushSprite(sprite);                      // FUN_001cc070
     configureSpriteMode(sprite, 10, 0);
 }
 ```
 
 The crucial behavior is the flush while mode 1 is still active; restoring mode
-0 before flushing loses or corrupts the queued rotated primitive. The helper
-uses only `s0` and `s3`, which are dead at both completed loop call sites, to
-preserve the sprite and return address without a stack frame. Its only lasting
-state change is the existing lower-arrow flip expected by the surrounding
-method. The closed sibling `FUN_006bd0f0` and every other VS object remain
-untouched.
+0 before flushing loses or corrupts the queued rotated primitive. The two C
+entries preserve the accepted mode-enable, exact rotation/flip, draw, flush,
+and mode-disable order without storing executable code in the retired draw
+blocks. Their only lasting state change is the existing lower-arrow flip
+expected by the surrounding method. The closed sibling `FUN_006bd0f0` and
+every other VS object remain untouched.
 
 The final hidden, muted isolated run produced correct upper and lower arrows,
 no horizontal arrows, and no bottom fragment. The user accepted the paired
@@ -202,6 +207,14 @@ the corrected NA2 screenshot SHA-256 is
 Evidence also includes paired EE memory, exact Ghidra structural comparison,
 canonical file-byte guards, decoded atlases, and guarded PINE readback.
 Confidence and runtime acceptance are **verified**.
+
+That runtime acceptance applies to the integrated NA228 behavior. The
+resident-storage refactor is uncommitted and has only static validation: the
+two C entries preserve the exact scoped call order, the suppression trampoline
+compiles to `8EF61A0800000000`, and all three guarded hooks passed focused
+contracts, catalog tests, and production payload/hook resolution. No runtime
+or E2E run has validated the refactored storage path; that validation remains
+user-only.
 
 ## VS confirmation prompts and bottom legends
 
@@ -235,10 +248,25 @@ NA2's destination register. Contrary to the earlier provisional conclusion,
 X=`260` does not wrap once the selector state is corrected; it places the full
 Circle prompt exactly like NUN5. Text and font rendering are not modified.
 
+The accepted Jutsu-label placement arithmetic is now owned by resident
+`PRG/228.BIN` exact-ABI shim
+`localization_ui_vs_confirmation_jutsu_label_place`. A guarded call hook at
+BTL file `0x9188` replaces the native `mov.s f12,f21`; the shim loads `26.0f`,
+returns, and performs `f12 = f21 + 26.0f` in its return delay slot. It compiles
+to the exact 16 bytes previously stored in the BTL file `0x30` zero-padding
+cave, which is no longer modified. All VS-confirmation rectangles, input-glyph
+instructions, anchors, and glyph-suppression edits remain data/code-site edits.
+
 Evidence: complete-function comparison, boot-ELF `PT_LOAD` mapping, guarded
 live records and instructions, v19/v20/v21 paired raster calibration, and the
 same accepted screenshot hashes above. Confidence and runtime acceptance are
 **verified**.
+
+Those behavior and acceptance claims predate the uncommitted resident-storage
+refactor. The exact shim bytes, guarded `0x9188` call, source/ABI contracts,
+catalog tests, and production payload/hook resolution passed static validation.
+No runtime or E2E run has validated the refactored storage path; that
+validation remains user-only.
 
 ## Command Menu and Command Chart scroll indicators
 

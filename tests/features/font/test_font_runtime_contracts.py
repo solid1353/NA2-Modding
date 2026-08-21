@@ -41,6 +41,29 @@ def is_register_move(word: int, *, source: int, destination: int) -> bool:
     )
 
 
+def loads_u32(words_: tuple[int, ...], value: int) -> bool:
+    """Return whether a compiled fragment materializes one exact 32-bit value."""
+    upper = value >> 16
+    lower = value & 0xFFFF
+    for index, word in enumerate(words_):
+        if word >> 26 != 0x0F or word & 0xFFFF != upper:
+            continue
+        register = (word >> 16) & 0x1F
+        if lower == 0:
+            return True
+        if index + 1 >= len(words_):
+            continue
+        following = words_[index + 1]
+        if (
+            following >> 26 == 0x0D
+            and (following >> 21) & 0x1F == register
+            and (following >> 16) & 0x1F == register
+            and following & 0xFFFF == lower
+        ):
+            return True
+    return False
+
+
 class FontRuntimeContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -146,6 +169,94 @@ class FontRuntimeContractTests(unittest.TestCase):
         self.assertEqual((mfc1 >> 11) & 0x1F, 13)
         self.assertEqual(command[2] >> 26, 0x02)
         self.assertEqual(command[3], 0)
+
+    def test_glyph_geometry_shims_preserve_accepted_instruction_bodies(
+        self,
+    ) -> None:
+        accepted_bodies = {
+            "glyph_secondary_cell_guard": bytes.fromhex(
+                "7B00412C0A1001000600A3941F1C060800000000"
+            ),
+            "glyph_normal_bottom_edge": bytes.fromhex(
+                "08006330020060100C0021C6100021C660088046"
+                "000D0046E01F06086CCA848F"
+            ),
+        }
+        fragments = {
+            fragment.symbol: fragment for fragment in self.package.fragments
+        }
+        for symbol, accepted in accepted_bodies.items():
+            self.assertEqual(fragments[symbol].payload, accepted)
+
+        accepted_hooks = {
+            "glyph_secondary_cell_guard": (
+                0x87174,
+                bytes.fromhex("6800658E0600A394"),
+                bytes.fromhex("000000006800658E"),
+            ),
+            "glyph_normal_bottom_edge": (
+                0x88078,
+                bytes.fromhex("000D00466CCA848F"),
+                bytes.fromhex("0000000070002392"),
+            ),
+        }
+        edits = tuple(
+            edit
+            for edit in self.package.active_edits
+            if edit.symbolic_patch.symbol in accepted_hooks
+        )
+        self.assertEqual(len(edits), len(accepted_hooks))
+        resolved = {
+            patch.mapping_id: patch
+            for patch in resolve_symbolic_patches(
+                self.build,
+                tuple(edit.symbolic_patch for edit in edits),
+            )
+        }
+        for edit in edits:
+            symbolic = edit.symbolic_patch
+            offset, expected, template = accepted_hooks[symbolic.symbol]
+            self.assertEqual(symbolic.offset, offset)
+            self.assertEqual(symbolic.expected, expected)
+            self.assertEqual(symbolic.replacement_template, template)
+            self.assertEqual(symbolic.encoding, "j26")
+            self.assertEqual(symbolic.relocation_offset, 0)
+
+            replacement = resolved[symbolic.mapping_id].replacement
+            self.assertEqual(replacement[4:], template[4:])
+            self.assertEqual(int.from_bytes(replacement[:4], "little") >> 26, 0x02)
+
+    def test_character_modal_rows_are_owned_by_both_existing_c_adapters(self) -> None:
+        fragments = {
+            fragment.symbol: fragment for fragment in self.package.fragments
+        }
+        accepted_coordinates = (
+            0x42A38000,  # 81.75
+            0x4292C000,  # 73.375
+            0x4290C000,  # 72.375
+            0x427E0000,  # 63.5
+            0x40600000,  # 3.5
+            0x41000000,  # 8
+            0x42000000,  # 32
+            0x42600000,  # 56
+            0x42A00000,  # 80
+            0x42E60000,  # 115
+        )
+        for symbol in (
+            "v2_character_selected_adapter",
+            "v2_character_unselected_adapter",
+        ):
+            payload_words = words(fragments[symbol].payload)
+            missing = tuple(
+                value
+                for value in accepted_coordinates
+                if not loads_u32(payload_words, value)
+            )
+            self.assertEqual(
+                missing,
+                (),
+                f"{symbol} lost accepted Character-modal row coordinates",
+            )
 
     def test_pause_selected_hook_targets_c_without_forwarding_wrapper(self) -> None:
         hook_symbols = {

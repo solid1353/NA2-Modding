@@ -12,6 +12,10 @@ from .operations import (
     FileRename,
 )
 
+
+_WRITE_CHUNK_SIZE = 16 * 1024 * 1024
+
+
 def _flush_image(handle: object) -> None:
     handle.flush()
     try:
@@ -19,6 +23,17 @@ def _flush_image(handle: object) -> None:
     except (AttributeError, OSError):
         return
     os.fsync(descriptor)
+
+
+def _write_exact(handle: object, data: bytes) -> None:
+    view = memoryview(data)
+    offset = 0
+    while offset < len(view):
+        end = min(offset + _WRITE_CHUNK_SIZE, len(view))
+        written = handle.write(view[offset:end])
+        if not isinstance(written, int) or written <= 0:
+            raise OSError(f"Image write stopped after {offset} of {len(view)} bytes")
+        offset += written
 
 
 @contextmanager
@@ -102,7 +117,7 @@ def _apply_iso9660_rename(image: Path, operation: FileRename) -> dict[str, objec
             )
         identifier_offset = record_offset + 33
         handle.seek(identifier_offset)
-        handle.write(replacement)
+        _write_exact(handle, replacement)
         _flush_image(handle)
 
     return {
@@ -186,7 +201,7 @@ def _apply_and_verify_assembly(
         for path in sorted(replacements):
             record = current.by_path[path]
             output.seek(record.byte_offset)
-            output.write(replacements[path])
+            _write_exact(output, replacements[path])
         _flush_image(output)
 
     iso9660_rename_results = tuple(

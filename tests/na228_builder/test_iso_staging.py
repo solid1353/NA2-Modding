@@ -4,10 +4,32 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.image_assembler.assembler import output_image_candidate
+from na228_builder.image_assembler.assembler import _write_exact, output_image_candidate
+
+
+class PartialWriter:
+    def __init__(self, limit: int) -> None:
+        self.limit = limit
+        self.data = bytearray()
+
+    def write(self, data: memoryview) -> int:
+        count = min(self.limit, len(data))
+        self.data.extend(data[:count])
+        return count
 
 
 class IsoCandidateTests(unittest.TestCase):
+    def test_exact_write_completes_partial_writes(self) -> None:
+        writer = PartialWriter(3)
+
+        _write_exact(writer, b"complete replacement")
+
+        self.assertEqual(bytes(writer.data), b"complete replacement")
+
+    def test_exact_write_rejects_stalled_writes(self) -> None:
+        with self.assertRaisesRegex(OSError, "stopped after 0 of 11 bytes"):
+            _write_exact(PartialWriter(0), b"replacement")
+
     def test_failure_removes_unique_output_candidate(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

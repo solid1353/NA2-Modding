@@ -43,7 +43,7 @@ Contributions fail before crossing the reservation.
 
 The shifted E2E Test build exposes a test-only aligned `payload_shift` input.
 It is fingerprinted by preflight and moves every real contributed fragment
-before symbolic relocations are resolved. Explicit global `na228 e2e -s`
+before symbolic relocations are resolved. Explicit global `na228 e2e all -s`
 qualification uses the configured 32-byte shift and requires every non-ignored
 normal/shifted PNG to remain byte-identical.
 

@@ -23,7 +23,7 @@ for serial debugging. Output is buffered per module or script and reported in
 deterministic path order.
 
 `na228 test` invokes this unit-test runner only. E2E is an independent
-validation lane invoked globally with `na228 e2e`.
+validation lane invoked globally with `na228 e2e all`.
 
 `scripts/injection/inject_candidate.ps1` is an operational agent injection
 command, not a test. It remains under `scripts/` accordingly. Reusable PCSX2 and

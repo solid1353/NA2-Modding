@@ -23,6 +23,9 @@ command behavior and artifact layout are in
   run`. Do not invent an additional validation campaign.
 - Unit tests and E2E are independently selectable. Choosing one does
   not authorize the other.
+- Shifted E2E is user-only. Agents do not discuss, propose, select, run, or
+  report it unless the user explicitly requests shifted E2E for the current
+  task.
 - Retirement checks must never be included in the maintained unit-test suite.
   Verify removals with searches, one-off scripts, or one-off tests removed
   before completion. Unit tests cover only supported behavior that must

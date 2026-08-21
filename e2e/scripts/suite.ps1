@@ -217,26 +217,6 @@ function Test-VisualRegressionSuiteExists {
     Test-Path -LiteralPath $Context.SuitePath -PathType Leaf
 }
 
-function Get-VisualRegressionRequestedSuiteNames {
-    param(
-        [AllowNull()][string[]]$Suite,
-        [Parameter(Mandatory)][bool]$WasSpecified
-    )
-
-    if (-not $WasSpecified) {
-        return
-    }
-    $providedSuites = @($Suite)
-    $requestedSuites = @(
-        $providedSuites |
-            Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
-    )
-    if ($providedSuites.Count -ne $requestedSuites.Count) {
-        throw 'Suite cannot contain an empty name.'
-    }
-    $requestedSuites
-}
-
 function Wait-VisualRegressionJobs {
     param(
         [Parameter(Mandatory)][object[]]$Job,
@@ -627,6 +607,392 @@ function Get-VisualRegressionSuiteNames {
             }
         }
     ) | Sort-Object -Unique
+}
+
+function Get-VisualRegressionSelectableSuiteNames {
+    param([Parameter(Mandatory)][string]$RecordingRepository)
+
+    $available = @(
+        Get-VisualRegressionSuiteNames -RecordingRepository $RecordingRepository
+    )
+    [string[]]@(
+        $available
+        if ($available -icontains $script:E2eGeneratedMovesetSuiteName) {
+            "$($script:E2eGeneratedMovesetSuiteName)/base"
+            "$($script:E2eGeneratedMovesetSuiteName)/specials"
+        }
+    ) | Sort-Object -Unique
+}
+
+function Resolve-VisualRegressionSuiteArguments {
+    param(
+        [Parameter(Mandatory)][object]$Context,
+        [AllowEmptyCollection()][string[]]$Argument = @()
+    )
+
+    $arguments = [string[]]@($Argument)
+    if (-not $Context.Generated) {
+        if ($arguments.Count -gt 0) {
+            throw "E2E suite $($Context.Suite) accepts no arguments."
+        }
+        return [pscustomobject]@{
+            Arguments = $arguments
+            MovesetRange = $null
+        }
+    }
+    if ($arguments.Count -gt 1) {
+        throw "E2E suite $($Context.Suite) accepts at most one character row range."
+    }
+    if ($arguments.Count -eq 0) {
+        return [pscustomobject]@{
+            Arguments = $arguments
+            MovesetRange = $null
+        }
+    }
+
+    $characterDataPath = Join-Path $Context.Repository 'resources\character_data.tsv'
+    $characterData = @(Import-Csv -LiteralPath $characterDataPath -Delimiter "`t")
+    $resolvedRange = Resolve-VisualRegressionMovesetRange `
+        -Range $arguments[0] `
+        -LastAvailableRow ($characterData.Count + 1)
+    [pscustomobject]@{
+        Arguments = [string[]]@($resolvedRange.Value)
+        MovesetRange = $resolvedRange.Value
+    }
+}
+
+function Resolve-VisualRegressionSuiteSelection {
+    param(
+        [Parameter(Mandatory)][string[]]$Token,
+        [Parameter(Mandatory)][string]$RecordingRepository
+    )
+
+    $tokens = [string[]]@($Token)
+    if ($tokens.Count -eq 0) {
+        throw 'Select all or at least one E2E suite.'
+    }
+    if (@($tokens | Where-Object { [string]::IsNullOrWhiteSpace($_) }).Count -gt 0) {
+        throw 'E2E suite selection cannot contain an empty token.'
+    }
+    $allTokens = @($tokens | Where-Object { $_ -ieq 'all' })
+    if ($allTokens.Count -gt 0) {
+        if ($tokens.Count -ne 1) {
+            throw 'E2E all cannot be combined with suites or suite arguments.'
+        }
+        $allRequests = @(
+            Get-VisualRegressionSuiteNames -RecordingRepository $RecordingRepository |
+                ForEach-Object {
+                    $context = Get-VisualRegressionContext -Suite $_
+                    [pscustomobject]@{
+                        Suite = $context.Suite
+                        Arguments = [string[]]@()
+                        MovesetRange = $null
+                        Generated = [bool]$context.Generated
+                        GeneratedFamily = $context.GeneratedFamily
+                    }
+                }
+        )
+        if ($allRequests.Count -eq 0) {
+            throw 'No E2E suites are available.'
+        }
+        return [pscustomobject]@{
+            All = $true
+            Requests = [object[]]$allRequests
+        }
+    }
+
+    $suiteLookup = [Collections.Generic.Dictionary[string, string]]::new(
+        [StringComparer]::OrdinalIgnoreCase
+    )
+    foreach ($suiteName in @(
+        Get-VisualRegressionSelectableSuiteNames -RecordingRepository $RecordingRepository
+    )) {
+        $suiteLookup[$suiteName] = $suiteName
+    }
+    $requests = [Collections.Generic.List[object]]::new()
+    $selected = [Collections.Generic.HashSet[string]]::new(
+        [StringComparer]::OrdinalIgnoreCase
+    )
+    $captureOwners = [Collections.Generic.Dictionary[string, string]]::new(
+        [StringComparer]::OrdinalIgnoreCase
+    )
+    $currentSuite = $null
+    $currentArguments = [Collections.Generic.List[string]]::new()
+    $completeRequest = {
+        if ($null -ne $currentSuite) {
+            $context = Get-VisualRegressionContext -Suite $currentSuite
+            $resolved = Resolve-VisualRegressionSuiteArguments `
+                -Context $context `
+                -Argument ([string[]]$currentArguments)
+            if (-not $selected.Add($context.Suite)) {
+                throw "Duplicate E2E suite selection: $($context.Suite)"
+            }
+            $captureKey = [IO.Path]::GetFullPath($context.CaptureRoot)
+            if ($captureOwners.ContainsKey($captureKey)) {
+                throw (
+                    "E2E suites $($captureOwners[$captureKey]) and $($context.Suite) " +
+                    'share capture history and cannot be selected together.'
+                )
+            }
+            $captureOwners[$captureKey] = $context.Suite
+            $requests.Add([pscustomobject]@{
+                Suite = $context.Suite
+                Arguments = [string[]]@($resolved.Arguments)
+                MovesetRange = $resolved.MovesetRange
+                Generated = [bool]$context.Generated
+                GeneratedFamily = $context.GeneratedFamily
+            })
+        }
+    }
+
+    foreach ($tokenValue in $tokens) {
+        $normalized = $tokenValue.Replace('\', '/')
+        if ($normalized.EndsWith('.p2m2', [StringComparison]::OrdinalIgnoreCase)) {
+            $normalized = $normalized.Substring(0, $normalized.Length - 5)
+        }
+        if ($suiteLookup.ContainsKey($normalized)) {
+            . $completeRequest
+            $currentSuite = $suiteLookup[$normalized]
+            $currentArguments = [Collections.Generic.List[string]]::new()
+            continue
+        }
+        if ($null -eq $currentSuite) {
+            throw "E2E suite does not exist: $tokenValue"
+        }
+        $currentArguments.Add($tokenValue)
+    }
+    . $completeRequest
+    if ($requests.Count -eq 0) {
+        throw 'Select all or at least one E2E suite.'
+    }
+    [pscustomobject]@{
+        All = $false
+        Requests = [object[]]$requests
+    }
+}
+
+function Assert-VisualRegressionCaptureGitBaseline {
+    param([Parameter(Mandatory)][string]$CaptureRepository)
+
+    $captureRoot = [IO.Path]::GetFullPath($CaptureRepository)
+    if (-not (Test-Path -LiteralPath $captureRoot -PathType Container)) {
+        throw "E2E capture repository does not exist: $captureRoot"
+    }
+    $topLevelOutput = @(
+        & git -C $captureRoot rev-parse --show-toplevel 2>&1
+    )
+    if ($LASTEXITCODE -ne 0 -or $topLevelOutput.Count -ne 1) {
+        throw "E2E capture Git baseline is unavailable: $($topLevelOutput -join ' ')"
+    }
+    $topLevel = [IO.Path]::GetFullPath([string]$topLevelOutput[0])
+    if (-not [string]::Equals(
+        $topLevel,
+        $captureRoot,
+        [StringComparison]::OrdinalIgnoreCase
+    )) {
+        throw "E2E captures are not their own Git repository: $captureRoot"
+    }
+    $headOutput = @(& git -C $captureRoot rev-parse --verify HEAD 2>&1)
+    if ($LASTEXITCODE -ne 0 -or $headOutput.Count -ne 1) {
+        throw "E2E capture Git HEAD is unavailable: $($headOutput -join ' ')"
+    }
+}
+
+function Get-VisualRegressionCaptureGitChanges {
+    param([Parameter(Mandatory)][string]$CaptureRepository)
+
+    $captureRoot = [IO.Path]::GetFullPath($CaptureRepository)
+    $changes = [Collections.Generic.List[object]]::new()
+    $trackedOutput = @(
+        & git -C $captureRoot -c core.quotepath=false `
+            diff --name-status --no-renames HEAD -- . 2>&1
+    )
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to read E2E capture changes: $($trackedOutput -join ' ')"
+    }
+    foreach ($line in $trackedOutput) {
+        $separator = ([string]$line).IndexOf("`t")
+        if ($separator -lt 1) {
+            throw "Git returned an invalid E2E capture change: $line"
+        }
+        $status = ([string]$line).Substring(0, $separator)
+        $path = ([string]$line).Substring($separator + 1).Replace('\', '/')
+        $kind = if ($status.StartsWith('A', [StringComparison]::Ordinal)) {
+            'Added'
+        }
+        elseif ($status.StartsWith('D', [StringComparison]::Ordinal)) {
+            'Deleted'
+        }
+        else { 'Modified' }
+        $changes.Add([pscustomobject]@{
+            Path = $path
+            Kind = $kind
+        })
+    }
+    $untrackedOutput = @(
+        & git -C $captureRoot -c core.quotepath=false `
+            ls-files --others --exclude-standard -- . 2>&1
+    )
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to read untracked E2E captures: $($untrackedOutput -join ' ')"
+    }
+    foreach ($path in $untrackedOutput) {
+        $changes.Add([pscustomobject]@{
+            Path = ([string]$path).Replace('\', '/')
+            Kind = 'Added'
+        })
+    }
+    return [object[]]$changes
+}
+
+function Get-VisualRegressionRequestCaptureFilter {
+    param([Parameter(Mandatory)][object]$Request)
+
+    $suite = [string]$Request.Suite
+    $generated = [bool]$Request.Generated
+    $family = [string]$Request.GeneratedFamily
+    $storagePath = if ($generated) {
+        if ($family -ceq 'idle') {
+            $script:E2eGeneratedIdleSuiteName
+        }
+        else { $script:E2eGeneratedMovesetSuiteName }
+    }
+    else { $suite }
+    $rangePrefixes = $null
+    if ($generated -and
+        -not [string]::IsNullOrWhiteSpace([string]$Request.MovesetRange)) {
+        $rangeMatch = [regex]::Match(
+            [string]$Request.MovesetRange,
+            '^(\d+)(?:-(\d+))?$'
+        )
+        $firstRow = [int]$rangeMatch.Groups[1].Value
+        $lastRow = if ($rangeMatch.Groups[2].Success) {
+            [int]$rangeMatch.Groups[2].Value
+        }
+        else { $firstRow }
+        if ($family -ceq 'idle') {
+            $characterData = @(
+                Import-Csv `
+                    -LiteralPath (Join-Path (
+                        [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
+                    ) 'resources\character_data.tsv') `
+                    -Delimiter "`t"
+            )
+            $rangePrefixes = [string[]]@(
+                Get-VisualRegressionIdlePagePlans `
+                    -FirstRow $firstRow `
+                    -LastRow $lastRow `
+                    -CharacterCount $characterData.Count |
+                    ForEach-Object { 'page_{0:D2}_' -f $_.Page }
+            )
+        }
+        else {
+            $rangePrefixes = [string[]]@(
+                for ($row = $firstRow; $row -le $lastRow; $row++) {
+                    '{0:D3}_' -f $row
+                }
+            )
+        }
+    }
+    $movesetSubfamily = if ($suite -ceq "$($script:E2eGeneratedMovesetSuiteName)/base") {
+        'base'
+    }
+    elseif ($suite -ceq "$($script:E2eGeneratedMovesetSuiteName)/specials") {
+        'specials'
+    }
+    else { $null }
+    [pscustomobject]@{
+        Suite = $suite
+        PathPrefix = $storagePath.Trim('/') + '/'
+        Generated = $generated
+        ArtifactDirectories = [string[]]$script:E2eStableCaptureDirectories
+        RangePrefixes = $rangePrefixes
+        MovesetSubfamily = $movesetSubfamily
+    }
+}
+
+function Test-VisualRegressionCaptureChangeSelected {
+    param(
+        [Parameter(Mandatory)][object]$Change,
+        [Parameter(Mandatory)][object]$Filter
+    )
+
+    $path = [string]$Change.Path
+    if (-not $path.StartsWith(
+        [string]$Filter.PathPrefix,
+        [StringComparison]::OrdinalIgnoreCase
+    )) {
+        return $false
+    }
+    $relativePath = $path.Substring(([string]$Filter.PathPrefix).Length)
+    $artifactDirectory = @($relativePath.Split('/'))[0]
+    if ($Filter.ArtifactDirectories -inotcontains $artifactDirectory) {
+        return $false
+    }
+    if (-not $Filter.Generated) {
+        return $true
+    }
+    $name = [IO.Path]::GetFileName($path)
+    if ($null -ne $Filter.RangePrefixes -and @(
+        $Filter.RangePrefixes | Where-Object {
+            $name.StartsWith($_, [StringComparison]::OrdinalIgnoreCase)
+        }
+    ).Count -eq 0) {
+        return $false
+    }
+    if ($Filter.MovesetSubfamily -ceq 'base') {
+        return $name -match '_(?:base|mode_[^_]+)(?:_|\.png$)'
+    }
+    if ($Filter.MovesetSubfamily -ceq 'specials') {
+        return $name -match '_specials(?:_|\.png$)'
+    }
+    return $true
+}
+
+function Get-VisualRegressionCaptureRegression {
+    param(
+        [Parameter(Mandatory)][object[]]$Request,
+        [Parameter(Mandatory)][string]$CaptureRepository
+    )
+
+    $changes = @(Get-VisualRegressionCaptureGitChanges `
+        -CaptureRepository $CaptureRepository)
+    $suiteChanges = [Collections.Generic.List[object]]::new()
+    $added = 0
+    $modified = 0
+    $deleted = 0
+    foreach ($suiteRequest in $Request) {
+        $filter = Get-VisualRegressionRequestCaptureFilter -Request $suiteRequest
+        $selected = @(
+            $changes | Where-Object {
+                Test-VisualRegressionCaptureChangeSelected `
+                    -Change $_ `
+                    -Filter $filter
+            }
+        )
+        if ($selected.Count -eq 0) {
+            continue
+        }
+        $suiteChange = [pscustomobject]@{
+            Suite = [string]$suiteRequest.Suite
+            Added = @($selected | Where-Object Kind -CEQ 'Added').Count
+            Modified = @($selected | Where-Object Kind -CEQ 'Modified').Count
+            Deleted = @($selected | Where-Object Kind -CEQ 'Deleted').Count
+        }
+        $suiteChanges.Add($suiteChange)
+        $added += $suiteChange.Added
+        $modified += $suiteChange.Modified
+        $deleted += $suiteChange.Deleted
+    }
+    [pscustomobject]@{
+        Regression = $(if ($suiteChanges.Count -gt 0) { 'changed' } else { 'unchanged' })
+        Suites = $Request.Count
+        ChangedSuites = $suiteChanges.Count
+        Added = $added
+        Modified = $modified
+        Deleted = $deleted
+        SuiteChanges = [object[]]$suiteChanges
+    }
 }
 
 function New-VisualRegressionGeneratedGridStage {
@@ -1033,6 +1399,9 @@ function New-VisualRegressionAggregateViewStage {
         [Parameter(Mandatory)][string]$OutputRoot
     )
 
+    if (Test-Path -LiteralPath $OutputRoot) {
+        Remove-Item -LiteralPath $OutputRoot -Recurse -Force
+    }
     New-VisualRegressionAggregateLinkStage `
         -Source @(
             [pscustomobject]@{

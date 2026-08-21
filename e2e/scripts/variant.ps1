@@ -2,8 +2,7 @@
 param(
     [Parameter(Mandatory)][ValidateSet('normal', 'shifted')][string]$Variant,
     [Parameter(Mandatory)][string]$Transaction,
-    [string[]]$Suite,
-    [string]$MovesetRange,
+    [Parameter(Mandatory)][string]$SuiteRequestJson,
     [Parameter(Mandatory)][string]$ConcurrencyPoolRoot,
     [ValidateRange(1, 64)]
     [int]$ConcurrencyLimit = 16
@@ -17,39 +16,10 @@ $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
 . (Join-Path $repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
 $buildVariant = Get-E2eBuildVariant -Name $Variant -Root $root
-$recordingRoot = Join-Path ([string]$paths.pcsx2_input_recordings) 'e2e'
-$suiteWasSpecified = $PSBoundParameters.ContainsKey('Suite')
-$requestedSuites = @(
-    Get-VisualRegressionRequestedSuiteNames `
-        -Suite $Suite `
-        -WasSpecified $suiteWasSpecified
-)
-$suites = @(
-    if ($requestedSuites.Count -eq 0) {
-        Get-VisualRegressionSuiteNames -RecordingRepository $recordingRoot
-    }
-    else {
-        $selected = [Collections.Generic.HashSet[string]]::new(
-            [StringComparer]::OrdinalIgnoreCase
-        )
-        foreach ($requestedSuite in $requestedSuites) {
-            $requestedContext = Get-VisualRegressionContext -Suite $requestedSuite
-            if (-not (Test-VisualRegressionSuiteExists -Context $requestedContext)) {
-                throw "E2E suite does not exist: $($requestedContext.Suite)"
-            }
-            if (-not $selected.Add($requestedContext.Suite)) {
-                throw "Duplicate E2E suite selection: $($requestedContext.Suite)"
-            }
-            $requestedContext.Suite
-        }
-    }
-)
+$suiteRequests = @($SuiteRequestJson | ConvertFrom-Json)
+$suites = [string[]]@($suiteRequests.Suite)
 if ($suites.Count -eq 0) {
     throw 'No E2E suites are available.'
-}
-if (-not [string]::IsNullOrWhiteSpace($MovesetRange) -and
-    ($suites.Count -ne 1 -or -not (Test-VisualRegressionGeneratedSuite -Suite $suites[0]))) {
-    throw 'MovesetRange requires one generated character suite.'
 }
 
 $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
@@ -151,7 +121,14 @@ function Complete-E2eVariant {
 }
 
 $suiteContexts = @(
-    $suites | ForEach-Object { Get-VisualRegressionContext -Suite $_ }
+    foreach ($request in $suiteRequests) {
+        $context = Get-VisualRegressionContext -Suite ([string]$request.Suite)
+        Add-Member `
+            -InputObject $context `
+            -NotePropertyName MovesetRange `
+            -NotePropertyValue ([string]$request.MovesetRange)
+        $context
+    }
 )
 $existingBuild = if (Test-Path -LiteralPath $buildPath -PathType Leaf) {
     try { Get-Content -Raw -LiteralPath $buildPath | ConvertFrom-Json }
@@ -255,7 +232,7 @@ Write-E2eVariantJson -Path $buildPath -Value $buildResult
 Set-E2eVariantReady -IsoSha256 $isoSha256
 if ($allSuitesComplete -and $buildIsCompatible) {
     Write-Host "Continuing with completed $Variant E2E suite captures." -ForegroundColor Cyan
-    Complete-E2eVariant
+    Complete-E2eVariant | Out-Null
     return
 }
 
@@ -366,7 +343,7 @@ try {
             [bool]$context.Generated
         ), $context.GeneratedScript, $context.PracticeMovesetRow, $ConcurrencyLimit, (
             $ConcurrencyPoolRoot
-        ), $MovesetRange, $context.GeneratedFamily
+        ), $context.MovesetRange, $context.GeneratedFamily
         $replayJobs.Add($replayJob)
     }
 
@@ -394,4 +371,4 @@ if ($incompleteSuites.Count -gt 0) {
         (@($incompleteSuites.Suite) -join ', ')
     )
 }
-Complete-E2eVariant
+Complete-E2eVariant | Out-Null

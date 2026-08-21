@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory)][string[]]$Suite,
     [Parameter(Mandatory)][string]$CapturedRepository,
     [Parameter(Mandatory)][string]$CaptureRepository,
-    [switch]$PreserveGeneratedTier
+    [string[]]$PreserveGeneratedSuite = @()
 )
 
 $ErrorActionPreference = 'Stop'
@@ -16,6 +16,12 @@ $suiteScript = Join-Path $PSScriptRoot 'suite.ps1'
 $transaction = New-VisualRegressionTransaction -Root $root -Prefix 'reference-publish'
 $tasks = [Collections.Generic.List[object]]::new()
 $contexts = [Collections.Generic.List[object]]::new()
+$preserveGenerated = [Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::OrdinalIgnoreCase
+)
+foreach ($suiteName in $PreserveGeneratedSuite) {
+    [void]$preserveGenerated.Add($suiteName)
+}
 
 try {
     foreach ($suiteName in $Suite) {
@@ -29,6 +35,7 @@ try {
         $contexts.Add($context)
         $prepareKey = "reference-prepare/$taskSuite"
         if ($context.Generated) {
+            $preserveCapturedTier = $preserveGenerated.Contains($context.Suite)
             $existingGridDirectory = $context.Capture.ScreenshotGrids
             $capturedGridDirectory = Join-Path `
                 $taskCapturedRoot `
@@ -67,7 +74,7 @@ try {
                         $capturedGridDirectory,
                         $outputRoot,
                         $comparator,
-                        $PreserveGeneratedTier.IsPresent
+                        $preserveCapturedTier
                     )
                 }.GetNewClosure()
             })

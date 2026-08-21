@@ -8,21 +8,23 @@ nested local Git repository at `captures/`.
 ## Current command surface
 
 ```powershell
-na228 e2e [<suite> [<range>]] [-s]
-na228 e2e create <all|suite> [<range>] [-noref]
+na228 e2e <all|suite [args...] ...> [-s]
+na228 e2e create <all|suite [args...] ...> [-noref]
 na228 e2e rename <suite> <new-suite>
-na228 e2e remove <all|suite>
+na228 e2e delete <all|suite [args...] ...>
 na228 e2e commit [-p]
 ```
 
 `na228 e2e` owns E2E execution and suite lifecycle. Unit tests are an
 independent lane invoked with `na228 test`.
 
-With no suite selector, E2E execution covers the complete maintained suite set.
-Supplying a suite runs only that suite. The generated `movesets` and
-`characters/idle` suites additionally accept one physical `character_data.tsv`
-row or an inclusive row range, such as `8` or `8-18`; omitting the range selects
-every character row. Other suites do not accept a range.
+`all` selects the complete maintained suite set. Otherwise, each recognized
+suite name begins a selection and subsequent tokens belong to that suite until
+the next suite name. This allows one command to run, create, or delete multiple
+suites with independent arguments. The generated `movesets` and
+`characters/idle` suites accept one physical `character_data.tsv` row or an
+inclusive row range, such as `8` or `8-18`; omitting the argument selects every
+character row. Other current suites accept no arguments.
 
 `movesets` expands `resources/movesets.tsv` over the fixed base and
 specials recordings and publishes per-character base, unique awakening-mode,
@@ -33,6 +35,15 @@ combines their idle screenshots into sequential fixed 3×2 pages. A ranged idle
 run expands to the complete affected pages so unselected cells are preserved.
 The `practice` suite replays with the same generated Practice configuration as
 `na228 <game> -l practice 2` and the generated character suites.
+
+After a normal E2E run publishes successfully, it compares only the selected
+capture paths with `captures/` Git `HEAD`. The console reports `UNCHANGED` when
+they match or `CHANGED` with added, modified, and deleted counts for each
+changed suite and the total. Dirty capture paths outside the selection are
+ignored, including descendant suites below a selected parent. Capture changes
+are the regression result and do not make successful
+execution fail. The returned object separates `Execution = completed` from
+`Regression = changed|unchanged` and includes the same counts.
 
 `-s` adds the shifted E2E Test build and replays the same suites against it.
 Every normal and shifted capture must match.
@@ -49,12 +60,13 @@ suite rebuilds only that branch.
 `e2e create characters/idle <range>` regenerate only the selected character
 rows or affected idle pages and preserve grids outside them. The same range
 syntax is available when running either suite directly.
-`e2e rename` moves the canonical recording and capture history together;
-`e2e remove` removes capture history for only the named suite while preserving
-descendant suites. Removing either generated character suite clears its capture
-history, but the code-owned suite remains available. `e2e remove all` clears all
-capture history while preserving canonical recordings and nested capture Git
-metadata.
+`e2e rename` moves the canonical recording and capture history together.
+`e2e delete` deletes capture history for each selected suite while preserving
+descendant suites and canonical recordings. A generated-suite range deletes
+only its selected rows or affected idle pages. Deleting either generated
+character suite without arguments clears its capture history, but the code-owned
+suite remains available. `e2e delete all` clears all capture history while
+preserving canonical recordings and nested capture Git metadata.
 `e2e commit` stages all current capture changes and consolidates them into
 `Initial commit`: a one-commit repository is amended, while a multi-commit
 repository is reset softly to its root and squashed. It then expires reflogs and

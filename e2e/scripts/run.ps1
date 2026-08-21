@@ -1,11 +1,10 @@
 [CmdletBinding()]
 param(
-    [string[]]$Suite,
+    [Parameter(Mandatory)][string[]]$SelectionToken,
     [string]$CaptureRoot,
     [string]$CaptureRepository,
     [switch]$Shifted,
     [object[]]$SupervisedJob = @(),
-    [string]$MovesetRange,
     [string]$ConcurrencyPoolRoot,
     [ValidateRange(1, 64)]
     [int]$ConcurrencyLimit = 16
@@ -20,22 +19,27 @@ $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
 $paths = Get-Na2Paths
 $configuration = Get-E2eConfiguration -Root $root
 $recordingRoot = Join-Path ([string]$paths.pcsx2_input_recordings) 'e2e'
-$suiteWasSpecified = $PSBoundParameters.ContainsKey('Suite')
-$requestedSuites = @(
-    Get-VisualRegressionRequestedSuiteNames `
-        -Suite $Suite `
-        -WasSpecified $suiteWasSpecified
-)
+$selection = Resolve-VisualRegressionSuiteSelection `
+    -Token $SelectionToken `
+    -RecordingRepository $recordingRoot
+$suiteRequests = [object[]]@($selection.Requests)
+$suites = [string[]]@($suiteRequests.Suite)
+$reportRegression = [string]::IsNullOrWhiteSpace($CaptureRoot) -and
+    [string]::IsNullOrWhiteSpace($CaptureRepository)
+if ($reportRegression) {
+    Assert-VisualRegressionCaptureGitBaseline `
+        -CaptureRepository (Join-Path $root 'captures')
+}
 if (-not [string]::IsNullOrWhiteSpace($CaptureRoot) -and
     -not [string]::IsNullOrWhiteSpace($CaptureRepository)) {
     throw 'CaptureRoot and CaptureRepository cannot be combined.'
 }
 if (-not [string]::IsNullOrWhiteSpace($CaptureRoot) -and
-    $requestedSuites.Count -ne 1) {
+    $suiteRequests.Count -ne 1) {
     throw 'CaptureRoot requires one selected suite.'
 }
 if (-not [string]::IsNullOrWhiteSpace($CaptureRepository) -and
-    $requestedSuites.Count -eq 0) {
+    $suiteRequests.Count -eq 0) {
     throw 'CaptureRepository requires selected suites.'
 }
 function Get-E2eRunContext {
@@ -52,47 +56,11 @@ function Get-E2eRunContext {
     }
     return Get-VisualRegressionContext -Suite $Name
 }
-$availableSuites = @(
-    Get-VisualRegressionSuiteNames -RecordingRepository $recordingRoot
+$requestBySuite = [Collections.Generic.Dictionary[string, object]]::new(
+    [StringComparer]::OrdinalIgnoreCase
 )
-$suites = @(
-    if ($requestedSuites.Count -eq 0) {
-        $availableSuites
-    }
-    else {
-        $selected = [Collections.Generic.HashSet[string]]::new(
-            [StringComparer]::OrdinalIgnoreCase
-        )
-        foreach ($requestedSuite in $requestedSuites) {
-            $requestedContext = Get-E2eRunContext -Name $requestedSuite
-            if (-not (Test-VisualRegressionSuiteExists -Context $requestedContext)) {
-                throw "E2E suite does not exist: $($requestedContext.Suite)"
-            }
-            if (-not $selected.Add($requestedContext.Suite)) {
-                throw "Duplicate E2E suite selection: $($requestedContext.Suite)"
-            }
-            $requestedContext.Suite
-        }
-    }
-)
-if ($suites.Count -eq 0) {
-    throw 'No E2E suites are available.'
-}
-$movesetRangeSpecified = -not [string]::IsNullOrWhiteSpace($MovesetRange)
-if ($movesetRangeSpecified -and
-    ($suites.Count -ne 1 -or -not (Test-VisualRegressionGeneratedSuite -Suite $suites[0]))) {
-    throw 'MovesetRange requires one generated character suite.'
-}
-if ($movesetRangeSpecified) {
-    $characterData = @(
-        Import-Csv `
-            -LiteralPath (Join-Path ([string]$paths.resources) 'character_data.tsv') `
-            -Delimiter "`t"
-    )
-    $resolvedMovesetRange = Resolve-VisualRegressionMovesetRange `
-        -Range $MovesetRange `
-        -LastAvailableRow ($characterData.Count + 1)
-    $MovesetRange = $resolvedMovesetRange.Value
+foreach ($request in $suiteRequests) {
+    $requestBySuite[$request.Suite] = $request
 }
 $publishedVariant = [string]$configuration.PublishedVariant.name
 $runVariants = @(
@@ -115,8 +83,8 @@ foreach ($comparisonVariant in $comparisonVariants) {
 
 $inputIdentity = [Collections.Generic.List[object]]::new()
 $hasGeneratedSuite = $false
-foreach ($suiteName in $suites) {
-    $context = Get-E2eRunContext -Name $suiteName
+foreach ($request in $suiteRequests) {
+    $context = Get-E2eRunContext -Name $request.Suite
     if ($context.Generated) {
         $hasGeneratedSuite = $true
         continue
@@ -130,12 +98,10 @@ if ($hasGeneratedSuite) {
     $generatedInputPaths = @(
         Join-Path ([string]$paths.resources) 'character_data.tsv'
         Join-Path ([string]$paths.resources) 'movesets.tsv'
-        foreach ($generatedSuite in @($suites | Where-Object {
-            Test-VisualRegressionGeneratedSuite -Suite $_
-        })) {
+        foreach ($generatedSuite in @($suiteRequests | Where-Object Generated)) {
             Get-VisualRegressionGeneratedInputPaths `
                 -RecordingRepository $recordingRoot `
-                -Suite $generatedSuite
+                -Suite $generatedSuite.Suite
         }
     ) | Sort-Object -Unique
     foreach ($path in $generatedInputPaths) {
@@ -146,29 +112,30 @@ if ($hasGeneratedSuite) {
     }
 }
 $resumeRequest = [ordered]@{
-    schema_version = 1
+    schema_version = 2
     command = 'run'
     shifted = $Shifted.IsPresent
     capture_mode = 'screenshots'
 }
-if ($movesetRangeSpecified) {
-    $resumeRequest['moveset_range'] = $MovesetRange
-}
-$generatedSelection = @($suites | Where-Object {
-    Test-VisualRegressionGeneratedSuite -Suite $_
-})
-if ($generatedSelection.Count -eq 1) {
-    $resumeRequest['moveset_family'] = Get-VisualRegressionGeneratedSuiteFamily `
-        -Suite $generatedSelection[0]
-}
-$resumeRequest['suites'] = [string[]]@($suites | Sort-Object)
+$resumeRequest['suite_requests'] = [object[]]@(
+    $suiteRequests |
+        Sort-Object Suite |
+        ForEach-Object {
+            [ordered]@{
+                suite = [string]$_.Suite
+                arguments = [string[]]@($_.Arguments)
+            }
+        }
+)
 $resumeRequest['inputs'] = [object[]]@($inputIdentity | Sort-Object path)
 $resumeKey = $resumeRequest | ConvertTo-Json -Compress -Depth 6
 $transaction = New-VisualRegressionTransaction `
     -Root $root `
     -Prefix 'run' `
     -ResumeKey $resumeKey `
-    -LegacySuite $(if ($movesetRangeSpecified) { $null } else { $suites }) `
+    -LegacySuite $(if (@($suiteRequests | Where-Object { $_.Arguments.Count -gt 0 }).Count -gt 0) {
+        $null
+    } else { $suites }) `
     -LegacyShifted $Shifted.IsPresent
 if ([string]::IsNullOrWhiteSpace($ConcurrencyPoolRoot)) {
     $ConcurrencyPoolRoot = Join-Path $transaction 'concurrency'
@@ -197,8 +164,9 @@ $comparisonTasks = [Collections.Generic.List[object]]::new()
 $comparisonFailures = [Collections.Generic.List[string]]::new()
 $postprocessScript = Join-Path $PSScriptRoot 'postprocess.ps1'
 $suiteScript = Join-Path $PSScriptRoot 'suite.ps1'
-foreach ($suiteName in $suites) {
-    $taskSuite = $suiteName
+foreach ($request in $suiteRequests) {
+    $taskRequest = $request
+    $taskSuite = [string]$request.Suite
     $context = Get-E2eRunContext -Name $taskSuite
     $normalSuite = Join-Path `
         (Join-Path (Join-Path (Join-Path $transaction 'jobs') $publishedVariant) 'suites') `
@@ -208,7 +176,9 @@ foreach ($suiteName in $suites) {
     $prepareKey = "prepare/$taskSuite"
     $taskCaptureRoot = $context.CaptureRoot
     if ($context.Generated) {
-        $preserveGeneratedTier = $movesetRangeSpecified -or
+        $preserveGeneratedTier = -not [string]::IsNullOrWhiteSpace(
+            [string]$taskRequest.MovesetRange
+        ) -or
             -not (Test-VisualRegressionGeneratedSuiteRoot -Suite $context.Suite)
         $capturedGridDirectory = Join-Path $normalSuite 'capture\screenshots'
         $existingGridDirectory = $context.Capture.ScreenshotGrids
@@ -377,7 +347,18 @@ foreach ($suiteName in $suites) {
 }
 $pipelineCompleted = $false
 try {
-    $suiteSelectionJson = ConvertTo-Json -Compress -InputObject ([string[]]$suites)
+    $suiteRequestJson = ConvertTo-Json `
+        -Compress `
+        -Depth 4 `
+        -InputObject ([object[]]@($suiteRequests | ForEach-Object {
+            [ordered]@{
+                Suite = [string]$_.Suite
+                Arguments = [string[]]@($_.Arguments)
+                MovesetRange = $_.MovesetRange
+                Generated = [bool]$_.Generated
+                GeneratedFamily = $_.GeneratedFamily
+            }
+        }))
     $replayNames = @($runVariants.name)
     Write-Host (
         "E2E pipeline started for $($suites -join ', '): " +
@@ -390,28 +371,24 @@ try {
                 $Script,
                 $Variant,
                 $Transaction,
-                $SuiteSelectionJson,
+                $SuiteRequestJson,
                 $ConcurrencyLimit,
-                $ConcurrencyPoolRoot,
-                $MovesetRange
+                $ConcurrencyPoolRoot
             )
             $ErrorActionPreference = 'Stop'
             $variantArguments = @{
                 Variant = $Variant
                 Transaction = $Transaction
-                Suite = [string[]]@($SuiteSelectionJson | ConvertFrom-Json)
+                SuiteRequestJson = $SuiteRequestJson
                 ConcurrencyLimit = $ConcurrencyLimit
                 ConcurrencyPoolRoot = $ConcurrencyPoolRoot
-            }
-            if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
-                $variantArguments.MovesetRange = $MovesetRange
             }
             & $Script @variantArguments
         } -ArgumentList (
             Join-Path $PSScriptRoot 'variant.ps1'
-        ), $variantName, $transaction, $suiteSelectionJson, $ConcurrencyLimit, (
+        ), $variantName, $transaction, $suiteRequestJson, $ConcurrencyLimit, (
             $ConcurrencyPoolRoot
-        ), $MovesetRange
+        )
         $jobs.Add($variantJob)
     }
     Write-Host (
@@ -546,15 +523,64 @@ try {
                     -TransactionRoot $transaction
             }
         }
-    Write-Host (
-        "E2E pipeline passed: $($suites.Count) suite(s), " +
-        "build variant(s) $(@($runVariants.name) -join ', '), " +
-        "$publishedVariant captures published."
-    ) -ForegroundColor Green
-    [pscustomobject]@{
-        Status = 'passed'
-        Suites = $suites.Count
-        Variants = $runVariants.Count
+    if ($reportRegression) {
+        $regression = Get-VisualRegressionCaptureRegression `
+            -Request $suiteRequests `
+            -CaptureRepository (Join-Path $root 'captures')
+        Write-Host "E2E completed: $($regression.Suites) suite(s)." -ForegroundColor Green
+        if ($regression.Regression -ceq 'changed') {
+            $fileCount = $regression.Added + $regression.Modified + $regression.Deleted
+            Write-Host (
+                "Regression: CHANGED - $($regression.ChangedSuites)/" +
+                "$($regression.Suites) suites, $fileCount files."
+            ) -ForegroundColor Yellow
+            $labelWidth = [Math]::Max(
+                5,
+                [int](($regression.SuiteChanges |
+                    ForEach-Object { $_.Suite.Length } |
+                    Measure-Object -Maximum).Maximum)
+            )
+            foreach ($suiteChange in $regression.SuiteChanges) {
+                $parts = @(
+                    if ($suiteChange.Modified -gt 0) {
+                        "$($suiteChange.Modified) modified"
+                    }
+                    if ($suiteChange.Added -gt 0) {
+                        "$($suiteChange.Added) added"
+                    }
+                    if ($suiteChange.Deleted -gt 0) {
+                        "$($suiteChange.Deleted) deleted"
+                    }
+                )
+                Write-Host (
+                    ("  {0,-$labelWidth}  {1}" -f $suiteChange.Suite, ($parts -join ', '))
+                )
+            }
+            Write-Host (
+                ("  {0,-$labelWidth}  {1} modified, {2} added, {3} deleted" -f
+                    'total',
+                    $regression.Modified,
+                    $regression.Added,
+                    $regression.Deleted)
+            )
+        }
+        else {
+            Write-Host (
+                'Regression: UNCHANGED - selected captures match the accepted Git baseline.'
+            ) -ForegroundColor Green
+        }
+        [pscustomobject]@{
+            Execution = 'completed'
+            Regression = $regression.Regression
+            Suites = $regression.Suites
+            ChangedSuites = $regression.ChangedSuites
+            Added = $regression.Added
+            Modified = $regression.Modified
+            Deleted = $regression.Deleted
+        }
+    }
+    else {
+        Write-Host "E2E execution completed: $($suites.Count) suite(s)." -ForegroundColor Green
     }
     $pipelineCompleted = $true
 }

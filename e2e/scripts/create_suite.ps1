@@ -1,8 +1,6 @@
-[CmdletBinding(DefaultParameterSetName = 'Suite')]
+[CmdletBinding()]
 param(
-    [Parameter(Mandatory, ParameterSetName = 'Suite')][string]$Suite,
-    [Parameter(Mandatory, ParameterSetName = 'All')][switch]$All,
-    [string]$MovesetRange,
+    [Parameter(Mandatory)][string[]]$SelectionToken,
     [switch]$NoReference
 )
 
@@ -22,90 +20,29 @@ if (-not (Test-Path -LiteralPath $recordingRoot -PathType Container)) {
     throw "Shared recording root does not exist: $recordingRoot"
 }
 
+$selection = Resolve-VisualRegressionSuiteSelection `
+    -Token $SelectionToken `
+    -RecordingRepository $recordingRoot
+$All = [bool]$selection.All
 $recordings = @(
-    if ($All) {
-        Get-ChildItem -LiteralPath $recordingRoot -Filter '*.p2m2' -File -Recurse |
-            Where-Object {
-                $relative = [IO.Path]::GetRelativePath($recordingRoot, $_.FullName)
-                $suite = $relative.Substring(0, $relative.Length - 5).Replace('\', '/')
-                -not (Test-VisualRegressionGeneratedSuiteNamespace -Suite $suite)
-            } |
-            Sort-Object FullName |
-            ForEach-Object {
-                $relative = [IO.Path]::GetRelativePath($recordingRoot, $_.FullName)
-                [pscustomobject]@{
-                    Path = $_.FullName
-                    Suite = $relative.Substring(0, $relative.Length - 5).Replace('\', '/')
-                    Generated = $false
-                }
-            }
-        foreach ($generatedSuite in $script:E2eGeneratedSuiteNames) {
-            $generatedContext = Get-VisualRegressionContext -Suite $generatedSuite
-            if (Test-VisualRegressionSuiteExists -Context $generatedContext) {
-                [pscustomobject]@{
-                    Path = $null
-                    Suite = $generatedContext.Suite
-                    Generated = $true
-                }
-            }
-        }
-    }
-    else {
-        $context = Get-VisualRegressionContext -Suite $Suite
-        if ($context.GeneratedNamespace -and -not $context.Generated) {
-            throw "The E2E suite namespace is generated: $($context.Suite)"
-        }
-        if ($context.Generated) {
-            if (-not (Test-VisualRegressionSuiteExists -Context $context)) {
-                throw "Generated E2E suite does not exist: $($context.Suite)"
-            }
-            [pscustomobject]@{
-                Path = $null
-                Suite = $context.Suite
-                Generated = $true
-            }
-        }
-        else {
-            $recordingPath = [IO.Path]::GetFullPath((Join-Path `
-                $recordingRoot `
-                ($context.SuiteRelativePath + '.p2m2')
-            ))
-            if (-not (Test-Path -LiteralPath $recordingPath -PathType Leaf)) {
-                throw "Input recording does not exist: $recordingPath"
-            }
-            [pscustomobject]@{
-                Path = $recordingPath
-                Suite = $context.Suite
-                Generated = $false
-            }
+    foreach ($request in $selection.Requests) {
+        $context = Get-VisualRegressionContext -Suite $request.Suite
+        [pscustomobject]@{
+            Path = $(if ($context.Generated) { $null } else { $context.SuitePath })
+            Suite = $context.Suite
+            Arguments = [string[]]@($request.Arguments)
+            MovesetRange = $request.MovesetRange
+            Generated = [bool]$context.Generated
+            PartialGenerated = [bool]$context.Generated -and (
+                -not [string]::IsNullOrWhiteSpace([string]$request.MovesetRange) -or
+                -not (Test-VisualRegressionGeneratedSuiteRoot -Suite $context.Suite)
+            )
         }
     }
 )
 if ($recordings.Count -eq 0) {
     throw "No shared E2E recordings exist under: $recordingRoot"
 }
-$movesetRangeSpecified = -not [string]::IsNullOrWhiteSpace($MovesetRange)
-if ($movesetRangeSpecified -and
-    ($All.IsPresent -or $recordings.Count -ne 1 -or -not $recordings[0].Generated)) {
-    throw 'MovesetRange requires one generated character suite.'
-}
-if ($movesetRangeSpecified) {
-    $characterData = @(
-        Import-Csv `
-            -LiteralPath (Join-Path ([string]$paths.resources) 'character_data.tsv') `
-            -Delimiter "`t"
-    )
-    $resolvedMovesetRange = Resolve-VisualRegressionMovesetRange `
-        -Range $MovesetRange `
-        -LastAvailableRow ($characterData.Count + 1)
-    $MovesetRange = $resolvedMovesetRange.Value
-}
-$partialGeneratedSelection = $movesetRangeSpecified -or (
-    $recordings.Count -eq 1 -and
-    $recordings[0].Generated -and
-    -not (Test-VisualRegressionGeneratedSuiteRoot -Suite $recordings[0].Suite)
-)
-
 $inputIdentity = @(
     foreach ($recording in $recordings) {
         if (-not $recording.Generated) {
@@ -134,16 +71,22 @@ $inputIdentity = @(
     }
 )
 $resumeRequest = [ordered]@{
-    schema_version = 1
+    schema_version = 2
     command = 'create'
     all = [bool]$All
     no_reference = $NoReference.IsPresent
     capture_mode = 'screenshots'
 }
-if ($movesetRangeSpecified) {
-    $resumeRequest['moveset_range'] = $MovesetRange
-}
-$resumeRequest['suites'] = [string[]]@($recordings.Suite | Sort-Object)
+$resumeRequest['suite_requests'] = [object[]]@(
+    $recordings |
+        Sort-Object Suite |
+        ForEach-Object {
+            [ordered]@{
+                suite = [string]$_.Suite
+                arguments = [string[]]@($_.Arguments)
+            }
+        }
+)
 $resumeRequest['inputs'] = [object[]]@($inputIdentity | Sort-Object path)
 $resumeKey = $resumeRequest | ConvertTo-Json -Compress -Depth 6
 $transaction = New-VisualRegressionTransaction `
@@ -224,26 +167,26 @@ try {
         $entry = [pscustomobject]@{
             Context = $context
             Generated = [bool]$recording.Generated
+            Recording = $recording
         }
         $installed.Add($entry)
     }
 
-    if ($partialGeneratedSelection) {
-        $sourceCapture = $installed[0].Context.CaptureRoot
-        $stagedCapture = Join-Path `
-            $captureStageRoot `
-            $installed[0].Context.SuiteRelativePath
-        if (-not (Test-Path -LiteralPath $stagedCapture) -and
-            (Test-Path -LiteralPath $sourceCapture -PathType Container)) {
-            [void](New-Item `
-                -ItemType Directory `
-                -Path ([IO.Path]::GetDirectoryName($stagedCapture)) `
-                -Force)
-            Copy-Item `
-                -LiteralPath $sourceCapture `
-                -Destination $stagedCapture `
-                -Recurse `
-                -Force
+    foreach ($entry in @($installed | Where-Object { $_.Recording.PartialGenerated })) {
+        $sourceCapture = $entry.Context.CaptureRoot
+        $stagedCapture = Join-Path $captureStageRoot $entry.Context.SuiteRelativePath
+        if (-not (Test-Path -LiteralPath $stagedCapture)) {
+            if (Test-Path -LiteralPath $sourceCapture -PathType Container) {
+                [void](New-Item `
+                    -ItemType Directory `
+                    -Path ([IO.Path]::GetDirectoryName($stagedCapture)) `
+                    -Force)
+                Copy-Item `
+                    -LiteralPath $sourceCapture `
+                    -Destination $stagedCapture `
+                    -Recurse `
+                    -Force
+            }
         }
     }
 
@@ -301,7 +244,7 @@ try {
                 Join-Path $PSScriptRoot 'reference.ps1'
             ), $context.Suite, $referenceGame, $referenceCapture, $referenceComplete, (
                 [bool]$context.Generated
-            ), $concurrencyLimit, $concurrencyPoolRoot, $MovesetRange
+            ), $concurrencyLimit, $concurrencyPoolRoot, $entry.Recording.MovesetRange
             $referenceJobs.Add($referenceJob)
         }
         if ($referenceJobs.Count -gt 0) {
@@ -313,15 +256,10 @@ try {
     }
 
     $runArguments = @{
-        Suite = [string[]]@($recordings.Suite)
+        SelectionToken = [string[]]$SelectionToken
         CaptureRepository = $captureStageRoot
         ConcurrencyLimit = $concurrencyLimit
         ConcurrencyPoolRoot = $concurrencyPoolRoot
-    }
-    if (@($recordings | Where-Object Generated).Count -gt 0) {
-        if ($movesetRangeSpecified) {
-            $runArguments.MovesetRange = $MovesetRange
-        }
     }
     if ($referenceJobs.Count -gt 0) {
         $runArguments.SupervisedJob = [object[]]$referenceJobs
@@ -330,7 +268,7 @@ try {
     $reuseCompletedRun = (Test-Path -LiteralPath $runComplete -PathType Leaf) -and
         (Test-E2eCreateRunStageComplete)
     if (-not $reuseCompletedRun) {
-        & (Join-Path $PSScriptRoot 'run.ps1') @runArguments
+        $null = & (Join-Path $PSScriptRoot 'run.ps1') @runArguments
         Write-E2eCreateMarker -Path $runComplete -Value ([ordered]@{
             schema_version = 1
             suites = [string[]]@($recordings.Suite)
@@ -353,7 +291,11 @@ try {
                 -Suite ([string[]]@($installed.Context.Suite)) `
                 -CapturedRepository $referenceCaptureRoot `
                 -CaptureRepository $captureStageRoot `
-                -PreserveGeneratedTier:$partialGeneratedSelection
+                -PreserveGeneratedSuite ([string[]]@(
+                    $installed |
+                        Where-Object { $_.Recording.PartialGenerated } |
+                        ForEach-Object { $_.Context.Suite }
+                ))
             Write-E2eCreateMarker `
                 -Path $referencePublishComplete `
                 -Value ([ordered]@{
@@ -423,9 +365,18 @@ try {
         Write-Host "Regenerated all E2E capture suites: $($recordings.Count)" -ForegroundColor Green
     }
     else {
-        $rangeLabel = if ($movesetRangeSpecified) { " rows $MovesetRange" } else { '' }
+        $selectionLabel = @(
+            $recordings | ForEach-Object {
+                if ($_.Arguments.Count -eq 0) {
+                    $_.Suite
+                }
+                else {
+                    "$($_.Suite) $($_.Arguments -join ' ')"
+                }
+            }
+        ) -join ', '
         Write-Host (
-            "Regenerated E2E captures: $($recordings[0].Suite)$rangeLabel"
+            "Regenerated E2E captures: $selectionLabel"
         ) -ForegroundColor Green
     }
 }

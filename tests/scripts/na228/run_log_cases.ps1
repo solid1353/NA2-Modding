@@ -351,20 +351,20 @@ Write-Output '[fake] unit tests'
         -Condition ($helpText -match '(?m)^\s*na228 test\s+') `
         -Message 'Root help omitted the unit-test command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 e2e \[<suite> \[<range>\]\] \[-s\]\s+') `
-        -Message 'Root help omitted the all-suite and selected-suite E2E command.'
+        -Condition ($helpText -match '(?m)^\s*na228 e2e <all\|suite \[args\.\.\.\] \.\.\.> \[-s\]\s+') `
+        -Message 'Root help omitted explicit all or multi-suite E2E execution.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 e2e create <all\|suite> \[<range>\] \[-noref\]\s+') `
+        -Condition ($helpText -match '(?m)^\s*na228 e2e create <all\|suite \[args\.\.\.\] \.\.\.> \[-noref\]\s+') `
         -Message 'Root help omitted default NUN5 reference creation and its opt-out.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*<range>\s+Generated character-data row or inclusive rows: 8 or 8-18') `
-        -Message 'Root help omitted generated character range semantics.'
+        -Condition ($helpText -match '(?m)^\s*suite args\s+Passed to that suite; generated suites accept row or rows: 8 or 8-18') `
+        -Message 'Root help omitted suite-owned argument semantics.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 e2e rename <suite> <new-suite>\s+') `
         -Message 'Root help omitted suite rename.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 e2e remove <all\|suite>\s+') `
-        -Message 'Root help omitted capture removal.'
+        -Condition ($helpText -match '(?m)^\s*na228 e2e delete <all\|suite \[args\.\.\.\] \.\.\.>\s+') `
+        -Message 'Root help omitted multi-suite capture deletion.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 e2e commit \[-p\]\s+') `
         -Message 'Root help omitted the coordinated E2E commit command.'
@@ -538,27 +538,31 @@ else {
             -Content 'recording'
     }
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'run.ps1') -Content @'
-param([string]$Suite, [string]$MovesetRange, [switch]$Shifted)
+param([string[]]$SelectionToken, [switch]$Shifted)
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
     -Value (
-        "run suite=$Suite shifted=$($Shifted.IsPresent)" +
-            $(if ([string]::IsNullOrWhiteSpace($MovesetRange)) { '' } else { " range=$MovesetRange" })
+        "run selection=$($SelectionToken -join '|') shifted=$($Shifted.IsPresent)"
     )
-[pscustomobject]@{ Status = 'passed' }
+[pscustomobject]@{
+    Execution = 'completed'
+    Regression = 'unchanged'
+    Suites = $SelectionToken.Count
+    ChangedSuites = 0
+    Added = 0
+    Modified = 0
+    Deleted = 0
+}
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'create_suite.ps1') -Content @'
 param(
-    [string]$Suite,
-    [switch]$All,
-    [string]$MovesetRange,
+    [string[]]$SelectionToken,
     [switch]$NoReference
 )
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
     -Value (
-        "create suite=$Suite all=$($All.IsPresent) noref=$($NoReference.IsPresent)" +
-            $(if ([string]::IsNullOrWhiteSpace($MovesetRange)) { '' } else { " range=$MovesetRange" })
+        "create selection=$($SelectionToken -join '|') noref=$($NoReference.IsPresent)"
     )
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'rename_suite.ps1') -Content @'
@@ -567,11 +571,11 @@ Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
     -Value "rename suite=$Suite newSuite=$NewSuite"
 '@
-    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'remove_suite.ps1') -Content @'
-param([string]$Suite, [switch]$All)
+    Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'delete_suites.ps1') -Content @'
+param([string[]]$SelectionToken)
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
-    -Value "remove suite=$Suite all=$($All.IsPresent)"
+    -Value "delete selection=$($SelectionToken -join '|')"
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'commit_captures.ps1') -Content @'
 param([switch]$Preserve)
@@ -602,68 +606,71 @@ Add-Content `
     Assert-Na2Test `
         -Condition $testArgumentsRejected `
         -Message 'na228 test accepted an argument after the command split.'
-    & (Join-Path $fakeRepository 'na228.ps1') e2e
-    & (Join-Path $fakeRepository 'na228.ps1') e2e -s
+    $missingE2eSelectionRejected = $false
+    try {
+        & (Join-Path $fakeRepository 'na228.ps1') e2e
+    }
+    catch {
+        $missingE2eSelectionRejected = $_.Exception.Message -ceq (
+            'Usage: na228 e2e <all|suite [args...] ...> [-s]'
+        )
+    }
+    Assert-Na2Test `
+        -Condition $missingE2eSelectionRejected `
+        -Message 'Bare na228 e2e still selected all implicitly.'
+    $directE2eOutput = @(& (Join-Path $fakeRepository 'na228.ps1') e2e all)
+    Assert-Na2Test `
+        -Condition ($directE2eOutput.Count -eq 0) `
+        -Message 'Direct E2E leaked its internal structured result into console output.'
+    & (Join-Path $fakeRepository 'na228.ps1') e2e all -s
     & (Join-Path $fakeRepository 'na228.ps1') e2e alpha
     & (Join-Path $fakeRepository 'na228.ps1') e2e movesets 8
-    & (Join-Path $fakeRepository 'na228.ps1') e2e movesets 8-18 -s
+    & (Join-Path $fakeRepository 'na228.ps1') e2e movesets 8-18 characters/idle 20-30 -s
     & (Join-Path $fakeRepository 'na228.ps1') e2e characters/idle 8
     & (Join-Path $fakeRepository 'na228.ps1') e2e create font/character_select
     & (Join-Path $fakeRepository 'na228.ps1') e2e create font/no_reference -noref
     & (Join-Path $fakeRepository 'na228.ps1') e2e create all
     & (Join-Path $fakeRepository 'na228.ps1') e2e create movesets 8
-    & (Join-Path $fakeRepository 'na228.ps1') e2e create movesets 8-18 -noref
+    & (Join-Path $fakeRepository 'na228.ps1') e2e create movesets 8-18 characters/idle 20-30 -noref
     & (Join-Path $fakeRepository 'na228.ps1') e2e create movesets/specials 8
     & (Join-Path $fakeRepository 'na228.ps1') e2e rename font/character_select font/characters
-    & (Join-Path $fakeRepository 'na228.ps1') e2e remove font/characters
-    & (Join-Path $fakeRepository 'na228.ps1') e2e remove all
+    & (Join-Path $fakeRepository 'na228.ps1') e2e delete movesets 8 characters/idle 14-20
+    & (Join-Path $fakeRepository 'na228.ps1') e2e delete all
     & (Join-Path $fakeRepository 'na228.ps1') e2e commit
     & (Join-Path $fakeRepository 'na228.ps1') e2e commit -p
     $calls = @(Get-Content -LiteralPath $visualCalls)
     Assert-Na2Test `
         -Condition ($calls.Count -eq 17 -and
-            $calls[0] -ceq 'run suite= shifted=False' -and
-            $calls[1] -ceq 'run suite= shifted=True' -and
-            $calls[2] -ceq 'run suite=alpha shifted=False' -and
-            $calls[3] -ceq 'run suite=movesets shifted=False range=8' -and
-            $calls[4] -ceq 'run suite=movesets shifted=True range=8-18' -and
-            $calls[5] -ceq 'run suite=characters/idle shifted=False range=8' -and
-            $calls[6] -ceq 'create suite=font/character_select all=False noref=False' -and
-            $calls[7] -ceq 'create suite=font/no_reference all=False noref=True' -and
-            $calls[8] -ceq 'create suite= all=True noref=False' -and
-            $calls[9] -ceq 'create suite=movesets all=False noref=False range=8' -and
-            $calls[10] -ceq 'create suite=movesets all=False noref=True range=8-18' -and
-            $calls[11] -ceq 'create suite=movesets/specials all=False noref=False range=8' -and
+            $calls[0] -ceq 'run selection=all shifted=False' -and
+            $calls[1] -ceq 'run selection=all shifted=True' -and
+            $calls[2] -ceq 'run selection=alpha shifted=False' -and
+            $calls[3] -ceq 'run selection=movesets|8 shifted=False' -and
+            $calls[4] -ceq 'run selection=movesets|8-18|characters/idle|20-30 shifted=True' -and
+            $calls[5] -ceq 'run selection=characters/idle|8 shifted=False' -and
+            $calls[6] -ceq 'create selection=font/character_select noref=False' -and
+            $calls[7] -ceq 'create selection=font/no_reference noref=True' -and
+            $calls[8] -ceq 'create selection=all noref=False' -and
+            $calls[9] -ceq 'create selection=movesets|8 noref=False' -and
+            $calls[10] -ceq 'create selection=movesets|8-18|characters/idle|20-30 noref=True' -and
+            $calls[11] -ceq 'create selection=movesets/specials|8 noref=False' -and
             $calls[12] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
-            $calls[13] -ceq 'remove suite=font/characters all=False' -and
-            $calls[14] -ceq 'remove suite= all=True' -and
+            $calls[13] -ceq 'delete selection=movesets|8|characters/idle|14-20' -and
+            $calls[14] -ceq 'delete selection=all' -and
             $calls[15] -ceq 'commit preserve=False' -and
             $calls[16] -ceq 'commit preserve=True') `
         -Message 'Selected/global E2E or lifecycle-command dispatch was incorrect.'
-    $customReferenceRejected = $false
+    $removeRetired = $false
     try {
-        & (Join-Path $fakeRepository 'na228.ps1') e2e create font/with_reference nun6
+        & (Join-Path $fakeRepository 'na228.ps1') e2e remove alpha
     }
     catch {
-        $customReferenceRejected = $_.Exception.Message -ceq (
-            'Usage: na228 e2e create <all|suite> [<range>] [-noref]'
+        $removeRetired = $_.Exception.Message -ceq (
+            'na228 e2e remove is retired; use na228 e2e delete.'
         )
     }
     Assert-Na2Test `
-        -Condition $customReferenceRejected `
-        -Message 'The public E2E create command accepted a custom reference game.'
-    $nonMovesetRangeRejected = $false
-    try {
-        & (Join-Path $fakeRepository 'na228.ps1') e2e alpha 8
-    }
-    catch {
-        $nonMovesetRangeRejected = $_.Exception.Message -ceq (
-            'Usage: na228 e2e [<suite> [<range>]] [-s]'
-        )
-    }
-    Assert-Na2Test `
-        -Condition $nonMovesetRangeRejected `
-        -Message 'The public E2E command accepted a range for a non-movesets suite.'
+        -Condition $removeRetired `
+        -Message 'The retired E2E remove command did not direct callers to delete.'
     $genericProfileOutput = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `

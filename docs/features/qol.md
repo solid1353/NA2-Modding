@@ -222,13 +222,13 @@ selectable with `unlock_all` in NA2 and with the regular NUN5 PNACH port.
 
 ## ELF-Q010: Use only first save
 
-`ELF-Q010` changes the shared Save/Load slot-row renderer's loop limit from
-three records to one at boot-ELF virtual address `0x001E6970` (file offset
-`0xE6A70`). The three-slot occupancy scan, save data, and memory card remain
-unchanged. Any fallback slot display therefore contains only its first record.
-Two additional guarded edits replace the handler's Down and Up input-mask
-results with zero before either movement branch, so vertical input cannot
-change the selected slot or play the slot-navigation sound.
+`ELF-Q010` retains 12 guarded direct edits for presentation and navigation.
+They change the shared Save/Load slot-row renderer's loop limit from three
+records to one at boot-ELF virtual address `0x001E6970` (file offset
+`0xE6A70`) and replace the handler's Down and Up input-mask results with zero
+before either movement branch. The three-slot occupancy scan, save data, and
+memory card remain unchanged; vertical input cannot change the selected slot
+or play the slot-navigation sound.
 
 The upper frame is reduced from X/Y/width/height `58/10/400/224` to
 `146/90/224/96`, placing a compact one-record panel above and visibly detached
@@ -238,21 +238,23 @@ record moves outside the viewport, the row-separator condition is disabled, and
 the now-meaningless independent slot-cursor model is not drawn. The lower
 instruction panel and all of its contents remain unchanged.
 
-The normal record-selection path is bypassed before its list update. The
-guarded edit at runtime `0x001E5008` sets the child selection to record zero,
-calls the existing `FUN_001e1e10` load operation when the controller mode is
-`1`, and branches to the unchanged `FUN_001e1e50` save body for every other
-mode. It then uses the controller's unchanged post-operation states.
+The controller behavior is implemented by one generated-C wrapper at virtual
+`0x001E3F08` (file `0xE4008`), the sole call from `FUN_001e3f00` to the clean
+visible-controller update `FUN_001e3f20`. It handles only the state-machine
+branches needed to select record zero and bypass the removed list, retaining
+the native scan, status UI, confirmations, load/save requests, result
+resolution, and frame-counter tails. Every unaffected frame delegates exactly
+once to `FUN_001e3f20`. The automatic startup hook at file `0xEA084` replaces
+the outer call to `FUN_001e3f00`, so it bypasses this wrapper and remains
+independent.
 
 The native `Load this data?` confirmation remains visible. Yes continues the
-record-zero load. The guarded correction changes the No branch at
-runtime `0x001E5474` (file offset `0xE5574`) from Save/Load state `4` to its
-native completion state `8`, avoiding reconstruction of the removed record
-list. The startup Continue result mapping at runtime `0x001E9FB8` (file offset
-`0xEA0B8`) then maps that no-load completion to the existing success path, which
-enters the main menu without loaded save data. The clean
-instructions, replacement branch targets, and immediates are statically
-verified, and user runtime validation confirmed the integrated behavior.
+record-zero load; No enters Save/Load completion state `8` instead of
+reconstructing the removed record list. The startup Continue result mapping at
+runtime `0x001E9FB8` (file offset `0xEA0B8`) then uses the existing success path
+to enter the main menu without loaded save data. This is the previously
+accepted runtime behavior; the refactor changes its storage and hook shape, not
+its intended result.
 
 ## ELF-Q009: Loading screen then first-save load
 

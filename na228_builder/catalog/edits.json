@@ -2906,18 +2906,8 @@
     "replacement_hex": "00000000"
   },
   "e__qol__save_load__display_only_first_save": {
-    "description": "Select and display only record zero while retaining native memory-card operations.",
+    "description": "Restrict the visible Save/Load slot UI to its first row and compact layout without changing save data or memory-card scans.",
     "edits": {
-      "advance_status_0x0a_without_info_screen": {
-        "description": "Advance status 0x0A without constructing its informational screen, then retain native dispatch for every other status.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0xE5140"
-        ],
-        "expected_hex": "0E006316000000002400828E1000428C040082AE04CC848F0400858E8487070C00000000",
-        "replacement_hex": "4C00528C0A00032442FC4316000000002400838E01000224140062AC43FC001000000000"
-      },
       "date_play_time_block_x": {
         "description": "Center the date and play-time block at local X 45 inside the compact panel.",
         "operation": "replace",
@@ -2948,26 +2938,6 @@
         "expected_hex": "00108230",
         "replacement_hex": "2D100000"
       },
-      "enter_sole_slot_path_before_record_list": {
-        "description": "Enter the sole-slot save path before constructing the redundant slot-list screen.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0xE43C0"
-        ],
-        "expected_hex": "04CC848F8C87070C",
-        "replacement_hex": "5103001000000000"
-      },
-      "final_confirmation_no_exit": {
-        "description": "Exit the save controller when the final confirmation returns No instead of reopening the removed slot list.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0xE53CC"
-        ],
-        "expected_hex": "04CC848F8C87070C00000000",
-        "replacement_hex": "01001524F500001000000000"
-      },
       "hide_redundant_slot_number": {
         "description": "Move the redundant slot-number record outside the viewport.",
         "operation": "replace",
@@ -2988,46 +2958,6 @@
         "expected_hex": "0300432A",
         "replacement_hex": "0100432A"
       },
-      "load_confirmation_no_completion": {
-        "description": "Route load-confirmation No to the native Save/Load completion state instead of returning to the removed record-list state.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0xE5574"
-        ],
-        "expected_hex": "04000224",
-        "replacement_hex": "08000224"
-      },
-      "memory_card_status_dispatch": {
-        "description": "Route memory-card status dispatch through the unformatted-screen bypass.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0xE424C"
-        ],
-        "expected_hex": "04CC828F4C00528C",
-        "replacement_hex": "BC03001004CC828F"
-      },
-      "no_data_confirmation_no_exit": {
-        "description": "Exit the save controller when the no-save-data confirmation returns No instead of resetting the save flow to its initial prompt.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0xE4688"
-        ],
-        "expected_hex": "6087070C0000000001000224",
-        "replacement_hex": "010015244604001000000000"
-      },
-      "record_zero_operation_dispatch": {
-        "description": "Select record zero without updating the slot list; call the native load operation in mode 1, or branch to the unchanged native save operation in every other mode.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0xE5108"
-        ],
-        "expected_hex": "2400848E6C9A070C00000000030003243200431000000000020003242200431000000000010003240300431000000000",
-        "replacement_hex": "2400838E010002241A006216100060AC04CC848F8487070C2D2800002400838E140060AC060002249D010010080082AE"
-      },
       "single_record_y": {
         "description": "Center the single save record at local Y 20 inside the compact panel.",
         "operation": "replace",
@@ -3037,26 +2967,6 @@
         ],
         "expected_hex": "6041023C",
         "replacement_hex": "A041023C"
-      },
-      "skip_unformatted_card_info_modal": {
-        "description": "Skip the unformatted-card informational modal helper and supply its completed result in the save flow.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0xE495C"
-        ],
-        "expected_hex": "2400848E2D280000",
-        "replacement_hex": "0300601201000224"
-      },
-      "status_0x0a_modal_helper_argument": {
-        "description": "Prepare the status-0x0A modal-helper argument before its save-flow bypass.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0xE47E4"
-        ],
-        "expected_hex": "00000000",
-        "replacement_hex": "2400848E"
       },
       "suppress_obsolete_slot_cursor": {
         "description": "Suppress the obsolete independent save-slot cursor model draw.",
@@ -3077,26 +2987,6 @@
         ],
         "expected_hex": "0200412A",
         "replacement_hex": "0000412A"
-      },
-      "unformatted_confirmation_no_main_menu": {
-        "description": "Return to the Main Menu when the unformatted format confirmation returns No instead of entering the save restart state.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0xE46E0"
-        ],
-        "expected_hex": "04CC848F6087070C00000000",
-        "replacement_hex": "010015243004001000000000"
-      },
-      "unformatted_helper_zero_second_argument": {
-        "description": "Retain the helper's zero second argument when the unformatted save-flow bypass is not taken.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0xE4968"
-        ],
-        "expected_hex": "00000000",
-        "replacement_hex": "2D280000"
       },
       "upper_panel_height": {
         "description": "Shrink the upper Save/Load panel height from 224 to 96.",

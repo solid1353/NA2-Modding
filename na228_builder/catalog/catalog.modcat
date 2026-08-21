@@ -270,6 +270,7 @@
           description: "Select record zero directly in Save and Load flows while retaining the native memory-card scan, confirmation, load/save operations, and non-record status handling; No completes without reopening the removed record list.",
           patches: [
             "e__qol__save_load__display_only_first_save",
+            "i__qol__save_load__display_only_first_save",
           ],
         },
       },

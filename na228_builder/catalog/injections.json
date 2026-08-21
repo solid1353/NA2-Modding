@@ -2178,6 +2178,33 @@
       }
     }
   },
+  "i__qol__save_load__display_only_first_save": {
+    "description": "Select record zero through one shared visible Save/Load controller wrapper while retaining native worker operations, confirmations, status handling, and completion results.",
+    "hooks": {
+      "route_shared_save_load_update": {
+        "description": "Route every visible Save/Load update through the first-record controller while automatic startup remains on its independent caller hook.",
+        "target_id": "na2_elf",
+        "offset": "0xE4008",
+        "expected_hex": "C88F070C00000000",
+        "symbol": "display_only_first_save_update",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "display_only_first_save": {
+        "kind": "c",
+        "path": "src/qol/save_load_display_only_first_save.c",
+        "namespace": "qol.save.load.display.only.first.save",
+        "imports": {},
+        "fragments": {
+          "display_only_first_save_update": {
+            "order": 125,
+            "object": "qol.save.load.display.only.first.save.text.save.load.display.only.first.save.update"
+          }
+        }
+      }
+    }
+  },
   "i__qol__startup__faster_loading__lazy_voice_indexes": {
     "description": "Keep sound and stream initialization at boot while loading each RPG or player voice-bank index on its first playback.",
     "hooks": {

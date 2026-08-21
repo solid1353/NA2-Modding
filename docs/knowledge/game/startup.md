@@ -208,12 +208,21 @@ copies the loaded profile into the live save object before reporting success.
 
 ## Visible first-record branch
 
-The confirmed visible branch combines Continue with the guarded first-record
-dispatch at virtual `0x001E5008` (file `0xE5108`). The dispatch sets record zero
-before the list update, calls `FUN_001e1e10` in load mode, branches to the
-unchanged native save operation in other modes, and rejoins the controller's
-normal post-operation states. It ends before the independent guarded edit at
-virtual `0x001E5040` (file `0xE5140`).
+The visible first-record behavior is concentrated at the shared inner update
+seam: virtual `0x001E3F08` (file `0xE4008`) is the sole call from
+`FUN_001e3f00` to the clean controller update `FUN_001e3f20`. One generated-C
+wrapper intercepts seven bounded cases: state-2 worker statuses `0x0A`, `0x0B`,
+and `0x0C`; state-2 save scan completion; state-4 record dispatch; state-5 save
+confirmation statuses `0x1A`/`0x1B`; and state-6 load confirmation status
+`0x10`. It preserves the native worker operations, helper arguments, result
+resolution, return values, and frame-counter tails while selecting record zero
+and omitting the record list. Every unaffected frame delegates exactly once to
+`FUN_001e3f20`.
+
+The silent automatic branch remains independent. Its hook at virtual
+`0x001E9F84` (file `0xEA084`) replaces Continue's outer call to
+`FUN_001e3f00`, so automatic startup bypasses the inner visible-controller
+wrapper entirely.
 
 Two user-supplied NA2.28 savestates from CRC `7E79CCB3` establish the current
 load-confirmation loop. Slot 1 captures the initial `Load this data? Yes / No`
@@ -224,16 +233,15 @@ with record `0`, modal result `0`, and memory-card operation `1` with status
 `0x10`, result type `3`, and record `0`.
 
 Static tracing identifies the loop mechanism. In Save/Load state `6`, modal
-result `2` (No) closes the confirmation and writes state `4` at runtime
-`0x001E5474` (file offset `0xE5574`). The first-record edit replaces state `4`'s
-record-list dispatch with an immediate load-confirmation dispatch, so the next
-update reconstructs the same modal. The correction changes the clean
-`li v0,4` instruction (`04 00 02 24`) to `li v0,8` (`08 00 02 24`), routing No
-through the native Save/Load completion path. At runtime `0x001E9FB8` (file
-offset `0xEA0B8`), it also changes the Continue result immediate from `-1`
-(`FF FF 02 24`) to `1` (`01 00 02 24`) so the unchanged Continue success path
-enters the main menu without loaded save data. User runtime validation
-confirmed the integrated behavior of this visible branch.
+result `2` (No) natively closes the confirmation and writes state `4`, whose
+record-list dispatch would reconstruct the same modal after record-zero
+selection. The wrapper instead resolves No through the controller's existing
+completion state `8`. At runtime `0x001E9FB8` (file offset `0xEA0B8`), the
+independent Continue result mapping changes `-1` to `1`, so the unchanged
+Continue success path enters the main menu without loaded save data. User
+runtime validation established this integrated visible behavior before the
+storage refactor; runtime parity of the refactored implementation remains for
+user validation.
 
 ## Silent automatic first-save branch
 

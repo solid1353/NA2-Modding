@@ -89,11 +89,20 @@ remains pending user review.
 The save-mode "No Narutimate Accel v2.28 data found" confirmation is memory-card
 status `0x0C`, not status `0x2C`. Its No branch resets the save controller to
 the initial save prompt after runtime `0x001E4588` (ELF file `0xE4688`).
-`ELF-Q010-22` replaces that reset with the controller's existing nonzero exit,
-so the enclosing menu resumes instead of reopening the prompt. The user
-confirmed the corrected runtime behavior on 2026-08-05. Two earlier candidates
-at file `0xE47A4` were ineffective because that address belongs to the unrelated
-status-`0x2C` branch; neither candidate was retained.
+The visible first-record C wrapper resolves that branch through the
+controller's existing nonzero exit, so the enclosing menu resumes instead of
+reopening the prompt. The user confirmed the corrected runtime behavior on
+2026-08-05. Two earlier candidates at file `0xE47A4` were ineffective because
+that address belongs to the unrelated status-`0x2C` branch; neither candidate
+was retained.
+
+The same wrapper preserves the regional-input patch as the authority for menu
+accept. Instead of embedding Circle or Cross, it reads the low halfword of the
+live comparison instruction at runtime `0x001E451C` and applies that effective
+mask to the status-`0x0B` and status-`0x0C` confirmation paths. The regional
+input group updates that instruction together with the other Save/Load parent
+masks, so the wrapper follows the selected mapping without a second setting or
+duplicated constant.
 
 ## Static-analysis index
 

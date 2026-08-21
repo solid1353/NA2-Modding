@@ -165,19 +165,24 @@ and result messages. The ordinary top battle HUD remains visible. The base
 configuration enables the setting, so the development configuration inherits
 it.
 
-One guarded BTL edit passes native contest type `0` to the resident Ultimate
-Jutsu factory. That disabled type creates no contest object, which removes the
-interface and its later result message at their common owner. Two independent
-guarded edits replace the contest controller's press-latch and release-poll
-reads with zero so neither player's input can affect the controller even though
-no interface object exists.
+Two guarded BTL edits replace the contest controller's press-latch and
+release-poll reads with zero so neither player's input can affect the
+controller. A guarded resident-ELF edit suppresses the contest object's common
+render dispatch while preserving its native allocation, update, result, and
+completion lifecycle.
 
-Development replay confirmed that
-checkpoints 3 through 5 contain no bottom contest interface, checkpoints 6 and
-7 contain no contest result messages, and the recorded input latch remains
-zero. The user accepted the replayed result and confirmed that inputs are
-blocked for both Player 1 and Player 2 on 2026-08-15. Clean offsets, live
-addresses, NUN6 homologs, and replay evidence are recorded in
+The earlier implementation selected native contest type `0`, which prevented
+the entire contest object from being allocated. Its development replay proved
+that the interface was hidden and the recorded input latch remained zero, but
+it did not cover post-Ultimate-Jutsu awakening. The user subsequently reported
+that enabling the setting prevented that awakening. Static investigation
+confirmed that type `0` removes the object's nonvisual update lifecycle as well
+as its interface, so the accepted correction restores native object creation
+and suppresses only its common render call. User runtime testing on 2026-08-21
+confirmed that post-Ultimate-Jutsu awakening occurs, the meter, prompts, and
+result messages remain invisible, and both players' inputs remain blocked.
+Clean offsets, live addresses, dispatcher ownership, and the earlier replay
+evidence are recorded in
 [`../knowledge/gameplay/battle.md`](../knowledge/gameplay/battle.md).
 
 ## Unlock all content without loading a save

@@ -915,6 +915,20 @@ Thus gate value `2` is a BTL-produced UJ outcome/state, but its exact
 user-facing name remains open. The resident consumer's behavior is exact:
 value `2` diverts to side event slot `0x0E` and suppresses the form request.
 
+The former `qol.ultimate_jutsu.disable_input_contest` implementation forced
+contest type `0`. That type leaves the resident contest-object global at
+`0x00607750` empty, so the main manager skips both the object's update
+dispatcher `FUN_0036BF10` and render dispatcher `FUN_0036BFF0`. The user
+established at runtime that enabling this implementation prevents post-UJ
+awakening. Static analysis establishes that object suppression removes the
+shared nonvisual contest lifecycle used alongside the BTL-produced completion
+state, but it does not isolate a single omitted field as the cause. The
+accepted correction keeps native contest-object creation and updates, retains
+the two BTL input-read suppressions, and NOPs only the sole resident call to
+`FUN_0036BFF0` at `0x001F0940` (clean ELF file offset `0xF0A40`). User runtime
+testing on 2026-08-21 confirmed that the corrected post-UJ awakening path
+executes while the contest remains invisible and unresponsive to both players.
+
 The final gate is a per-side UJ defeat latch, not a chakra or resource check.
 `FUN_001FDB40(side,index)` reads a `3 * 0x5D` state matrix at `0x006B2B40`,
 with side stride `0x174`; slot `7` is `0x006B2CD0` for side 1 and

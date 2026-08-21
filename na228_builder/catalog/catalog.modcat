@@ -658,7 +658,7 @@
           patches: [
             "e__qol__ultimate_jutsu__disable_input_contest__block_press_latch",
             "e__qol__ultimate_jutsu__disable_input_contest__block_release_poll",
-            "e__qol__ultimate_jutsu__disable_input_contest__suppress_contest_object_creation",
+            "e__qol__ultimate_jutsu__disable_input_contest__suppress_contest_render_dispatch",
           ],
         },
       },

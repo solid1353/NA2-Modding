@@ -368,17 +368,32 @@ file header loads the complete file at runtime base `0x006B3F00`; the preserved
 Ghidra export maps file offset `0x40` to that base, so its displayed addresses
 are `0x40` below the live addresses.
 
-The visible contest interface is owned by the resident Ultimate Jutsu factory,
-not by a BTL draw function. In state `1`, BTL sign-extends the selected contest
-type into `t0` and calls resident `FUN_0035CF00`. That routine forwards the type
+The contest object is owned by the resident Ultimate Jutsu factory, not by a
+BTL draw function. In state `1`, BTL sign-extends the selected contest type
+into `t0` and calls resident `FUN_0035CF00`. That routine forwards the type
 through `FUN_0036C120` to `FUN_0036B6D0`: type `1` randomizes among contest
 implementations, types `2` through `6` allocate their respective contest
-objects, and type `0` matches no allocation branch. With type `0`, the meter,
-prompts, and result-message object therefore never exists. NUN6 retains the
-same disabled-type path in homologs `FUN_00369200`, `FUN_003789B0`, and
-`FUN_00377F20`. The NA2 port replaces the final sign extension at clean BTL
-file offset `0xB61F8`, exported `0x0076A0B8` and live `0x0076A0F8`, with a zero
-value for `t0`.
+objects, and type `0` matches no allocation branch. NUN6 retains the same
+disabled-type path in homologs `FUN_00369200`, `FUN_003789B0`, and
+`FUN_00377F20`.
+
+Type `0` is not a presentation-only mode. With no object at resident global
+`0x00607750`, the main manager cannot invoke either the object's update
+dispatcher `FUN_0036BF10` or its render dispatcher `FUN_0036BFF0`. The earlier
+patch forced type `0` at clean BTL file offset `0xB61F8`, exported
+`0x0076A0B8` and live `0x0076A0F8`. The user later established that enabling
+that patch prevented post-Ultimate-Jutsu awakening. Static analysis proves
+that the patch removed the shared update/lifecycle object, although it does not
+isolate which individual omitted lifecycle field causes the awakening failure.
+
+The main manager calls `FUN_0036BF10` under its update mask and
+`FUN_0036BFF0` under its render mask. `FUN_0036BFF0` dispatches vtable slot
+`+0x0C` for every allocated contest type, and each type's slot is its meter,
+prompt, and result renderer. Its sole direct caller is at resident address
+`0x001F0940`, clean ELF file offset `0xF0A40`, with instruction bytes
+`FCAF0D0C`. The accepted correction replaces only that call with a
+NOP. Native contest allocation and `FUN_0036BF10` updates therefore remain in
+the execution path while the common contest render dispatch is skipped.
 
 Input handling is independent of interface-object creation. In contest state
 `1`, the controller calls resident press-state accessor `FUN_001D99B0(1, 0)` at
@@ -403,12 +418,17 @@ renderer belongs to the command-list interface, and returning from the
 controller render entry at `0xB69E0` likewise left the contest interface
 visible. These replayed negatives exclude all three as owners of this UI.
 
-In the development `uj` replay, checkpoints `0004` and `0005` loaded bytes
-`21100000`, `21400000`, and `21100000` at the three live patch addresses. The
-active wrapper at `0x00E4C770` referenced inner object `0x00E9C470`; its input
-latch `+0x3A` remained zero at both checkpoints. Screenshots `0003` through
-`0005` contain no bottom meter or prompts, and `0006` through `0007` contain no
-contest result messages. The ordinary top battle HUD remains visible.
+In the earlier development `uj` replay, checkpoints `0004` and `0005` loaded
+bytes `21100000`, `21400000`, and `21100000` at the three former live patch
+addresses. The active BTL wrapper at `0x00E4C770` referenced inner object
+`0x00E9C470`; its input latch `+0x3A` remained zero at both checkpoints.
+Screenshots `0003` through `0005` contained no bottom meter or prompts, and
+`0006` through `0007` contained no contest result messages. That replay did
+not exercise post-UJ awakening and therefore did not validate the removed
+resident contest-object lifecycle. User runtime testing of the render-only
+correction on 2026-08-21 confirmed that post-UJ awakening occurs, the meter,
+prompts, and result messages remain invisible, and both players' inputs remain
+blocked.
 
 ## Support field-call and gauge paths
 

@@ -14,6 +14,5 @@ and the matched-screen baseline have their own document.
 - [Collection](collection.md): fixed-cadence lists and structural Collection
   renderer families.
 - [Character Select](character_select.md): confirmation and player-mode rows.
-- [Linked Mode](linked_mode.md): selector placement and selected-color ABI.
 - [Shared style and baseline](shared_style.md): global selected styling and the
   final matched-screen baseline.

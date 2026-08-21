@@ -23,8 +23,8 @@ caller's Y and five local units to the right of its incoming X. The original
 declarative selected-delay-slot compensation is removed because the symbolic
 eight-byte hook replaces that call and delay slot atomically. The final ss5
 red-ink bounds are `x=170..466`, exactly matching NUN5. The supplied ss6
-Linked Mode state remains unchanged, proving that the selected hook does not
-select the adjacent ordinary-row family.
+isolation comparison proves that the selected hook does not select the adjacent
+ordinary-row family.
 
 The 2026-08-03 `font/main` captures 50 and 51 isolate the structural fifth row
 in both draw states. Capture 51's ordinary black ink is two output pixels below
@@ -106,8 +106,8 @@ session, so their Y bounds were already exact but their visible widths were
 eight or nine pixels too large and their left edges were six pixels too far
 left. A second caller-specific C entry now gives only the ordinary draw the
 same metric session and X correction, then returns through the original
-ordinary callback. It does not alter the row table, selected renderer, Linked
-Mode, or confirmation callers.
+ordinary callback. It does not alter the row table, selected renderer, or
+confirmation callers.
 
 At 640x480, the three ordinary comparison rows now have exact NUN5 bounds:
 `(259..377,206..219)`, `(257..379,236..249)`, and

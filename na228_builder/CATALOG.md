@@ -290,8 +290,9 @@ children remain disabled.
 ## Patch mappings and validation
 
 Every setting has one `patches` array. Edit IDs use the `e__` prefix and must
-resolve to exactly one guarded definition in
-`catalog/edits.json`. Injection IDs use `i__` and must resolve
+resolve to exactly one root in `catalog/edits.json`. A root is either one
+primitive guarded edit or a semantic group containing a nonempty `edits` map
+of named primitive guarded edits. Injection IDs use `i__` and must resolve
 to exactly one unit in `catalog/injections.json`. Semantic
 string-patch IDs use `s__` and must resolve to exactly one definition in
 `catalog/string_patches.json`. Every other prefix is invalid.
@@ -302,6 +303,18 @@ definitions are rejected.
 Every target, adapter, asset, source, runtime object, and operation reachable
 through a referenced definition must also pass its owning component's normal
 validation.
+
+A grouped edit has only an optional `description` and its `edits` map. Child
+keys are stable snake-case semantic identities, not destination addresses.
+Each child retains the complete primitive contract, including its explicit
+`operation`, target, destination offsets, guard, replacement or source, and
+optional description. Groups are one level only and may contain different
+primitive operations or targets. The loader expands children by semantic key
+before ordinary operation validation and guarded composition. Existing
+single-operation roots remain primitive definitions; grouping adds no binary
+operation and does not change the binary patcher engine contract. Destination
+ranges belonging to different children in one group must not overlap; an
+ordered same-range chain remains separate primitive roots.
 
 A parameterized edit retains the ordinary `replace` operation, target, offset,
 and destination guard. It declares an adapter instead of `replacement_hex`;
@@ -327,7 +340,7 @@ replaces that text with root `settings.title` before choosing inline or linked
 external placement. Disabling its catalog setting leaves the imported text
 unchanged.
 
-Every binary edit definition uses a nonempty unique `destination_offsets` list.
+Every primitive binary edit uses a nonempty unique `destination_offsets` list.
 When the same guarded operation applies at multiple known locations in one
 target, one definition lists all of them. The loader expands the list into
 independently guarded and logged concrete edits; it never searches the target

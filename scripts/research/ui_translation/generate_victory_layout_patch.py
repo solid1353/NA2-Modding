@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import struct
 import sys
 from collections import defaultdict
@@ -17,6 +18,7 @@ from scripts.lib.paths import load_paths  # noqa: E402
 
 
 PATCH_ID = "ui_layout_victory_names"
+EDIT_ROOT_ID = "e__localization__ui_layout__victory_names"
 CHARACTER_COUNT = 94
 NA2_BTL_EXPECTED_SIZE = 2_237_184
 NA2_BTL_EXPECTED_SHA256 = (
@@ -212,11 +214,10 @@ def build_definitions(
         )
         grouped[signature].append(edit)
 
-    generated: dict[str, dict[str, object]] = {}
+    members: dict[str, dict[str, object]] = {}
     for group in grouped.values():
         source_ids = frozenset(edit["edit_id"] for edit in group)
         if len(group) == 1:
-            edit_id = group[0]["edit_id"]
             description = group[0]["reason"]
         else:
             merged = MERGED_DEFINITIONS.get(source_ids)
@@ -225,9 +226,33 @@ def build_definitions(
                     "Equivalent Victory edits need one declared multi-offset "
                     f"identity: {sorted(source_ids)}"
                 )
-            edit_id, description = merged
+            _, description = merged
+        character_ids: list[int] = []
+        frames: set[int] = set()
+        for edit in group:
+            rows = re.search(
+                r"row\(s\) (.+?) supply atlas width",
+                edit["reason"],
+            )
+            if rows is None:
+                raise ValueError(
+                    f"Victory edit has no donor-row identity: {edit['edit_id']}"
+                )
+            for character_id, frame in re.findall(r"(\d+)/f([01])", rows.group(1)):
+                character_ids.append(int(character_id))
+                frames.add(int(frame))
+        if len(frames) != 1:
+            raise ValueError(f"Victory edit group mixes frames: {sorted(source_ids)}")
+        frame = next(iter(frames))
+        member_id = (
+            "character_ids_"
+            + "_".join(f"{character_id:02d}" for character_id in character_ids)
+            + f"_frame_{frame}_descriptor"
+        )
+        if member_id in members:
+            raise ValueError(f"Duplicate Victory member identity: {member_id}")
         first = group[0]
-        generated[edit_id] = {
+        members[member_id] = {
             "description": description,
             "operation": first["operation"],
             "destination_target_id": first["destination_target_id"],
@@ -237,7 +262,12 @@ def build_definitions(
             "expected_hex": first["expected_hex"],
             "replacement_hex": first["replacement_hex"],
         }
-    return generated
+    return {
+        EDIT_ROOT_ID: {
+            "description": "Apply the complete localized Victory name descriptor set.",
+            "edits": dict(sorted(members.items())),
+        }
+    }
 
 
 def main() -> int:
@@ -254,10 +284,8 @@ def main() -> int:
     edits_path = load_paths(REPOSITORY).path("builder", "catalog", "edits.json")
     stored_edits = json.loads(edits_path.read_text(encoding="utf-8"))
     stored = {
-        edit_id: definition
-        for edit_id, definition in stored_edits.items()
-        if edit_id.startswith("e__localization__ui_layout__victory_names_")
-    }
+        EDIT_ROOT_ID: stored_edits[EDIT_ROOT_ID]
+    } if EDIT_ROOT_ID in stored_edits else {}
     if stored != generated:
         missing = sorted(set(generated) - set(stored))
         unexpected = sorted(set(stored) - set(generated))
@@ -274,6 +302,7 @@ def main() -> int:
     print(f"patch_id={PATCH_ID}")
     print(f"edits={len(generated_edits)}")
     print(f"definitions={len(generated)}")
+    print(f"members={len(generated[EDIT_ROOT_ID]['edits'])}")
     print("mode=check")
     return 0
 

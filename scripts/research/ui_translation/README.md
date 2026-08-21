@@ -26,8 +26,8 @@ python scripts/research/ui_translation/generate_victory_texture_mappings.py --wr
 It classifies and derives the 62 Victory CCS recipes. The internal read-only
 Victory layout check separately verifies both games' exact ELF/BTL identities,
 derives NUN5's localized frame templates and character-width table for NA2's
-prebuilt rectangle ABI, and checks them against the stored edit definitions
-without rewriting them.
+prebuilt rectangle ABI, and checks them against the stored grouped Victory edit
+and its semantic descriptor children without rewriting them.
 
 The normal comparison has two targets:
 

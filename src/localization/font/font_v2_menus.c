@@ -120,18 +120,6 @@ typedef int (*FontV2NativeControlsDraw)(
 /* Single-row layout height for Pause Controls labels. */
 #define FONT_PAUSE_LIST_LINE_HEIGHT 20.0f
 
-/* === Character Select: Linked Mode choices === */
-
-/* Both choices share one centered horizontal-scale correction. */
-#define FONT_LINKED_CHOICE_SCALE_X 1.05f
-
-/* The native Linked selected helper always chooses the red selected style. */
-#define FONT_LINKED_CHOICE_SELECTED_COLOR 0xFF0000D4u
-
-/* One-line choice geometry; the native caller supplies the shared row Y. */
-#define FONT_LINKED_CHOICE_BOX_HEIGHT 20u
-#define FONT_LINKED_CHOICE_LINE_HEIGHT 20.0f
-
 /* === Character Select: player-mode option list === */
 
 /* Option-row width; larger values shrink less. */
@@ -459,102 +447,6 @@ int font_v2_pause_list_selected_impl(
     session.callback_arg3 = (u32)&session;
     session.glyph_height = color_bits.f;
 
-    return font_v2_adapter_call(&session);
-}
-
-static FONT_V2_SECTION(".text.font_v2_linked_choice_session_prepare")
-int font_v2_linked_choice_session_prepare(
-    FontV2Session *session,
-    const u8 *text,
-    float native_x,
-    float native_y,
-    u32 callback
-) {
-    u32 measured_width;
-    u32 line_count;
-
-    if (
-        font_v2_measure(text, 0u, &measured_width, &line_count) != 0 ||
-        measured_width == 0u ||
-        line_count != 1u
-    ) {
-        return -1;
-    }
-
-    session->text = text;
-    session->box_x = native_x;
-    session->box_y = native_y;
-    session->box_width = measured_width;
-    session->box_height = FONT_LINKED_CHOICE_BOX_HEIGHT;
-    session->horizontal_alignment = FONT_V2_ALIGN_CENTER;
-    session->vertical_alignment = FONT_V2_ALIGN_START;
-    session->flags =
-        FONT_V2_FLAG_FIXED_SCALE_X | FONT_V2_FLAG_PREMEASURED;
-    session->line_limit = 1u;
-    session->line_height = FONT_LINKED_CHOICE_LINE_HEIGHT;
-    session->callback = callback;
-    session->measured_width = measured_width;
-    session->line_count = line_count;
-    session->scale_x = FONT_LINKED_CHOICE_SCALE_X;
-    return 0;
-}
-
-FONT_V2_SECTION(".text.font_v2_linked_choice_selected_impl")
-int font_v2_linked_choice_selected_impl(
-    u32 arg0,
-    s32 native_x,
-    s32 native_y,
-    const u8 *text,
-    u32 ignored_color
-) {
-    FontV2Session session;
-    FontV2Bits color_bits;
-
-    (void)ignored_color;
-
-    if (font_v2_linked_choice_session_prepare(
-            &session,
-            text,
-            (float)native_x,
-            (float)native_y,
-            (u32)font_v2_pause_list_selected_callback
-        ) != 0) {
-        return -1;
-    }
-
-    color_bits.u = FONT_LINKED_CHOICE_SELECTED_COLOR;
-    session.callback_arg0 = arg0;
-    session.callback_arg1 = (u32)native_x;
-    session.callback_arg2 = (u32)native_y;
-    session.callback_arg3 = (u32)&session;
-    session.glyph_height = color_bits.f;
-    return font_v2_adapter_call(&session);
-}
-
-FONT_V2_SECTION(".text.font_v2_linked_choice_unselected_adapter")
-int font_v2_linked_choice_unselected_adapter(
-    u32 arg0,
-    const u8 *text,
-    u32 arg2,
-    float native_x,
-    float native_y
-) {
-    FontV2Session session;
-
-    if (font_v2_linked_choice_session_prepare(
-            &session,
-            text,
-            native_x,
-            native_y,
-            (u32)font_v2_pause_list_callback
-        ) != 0) {
-        return -1;
-    }
-
-    session.callback_arg0 = arg0;
-    session.callback_arg1 = (u32)text;
-    session.callback_arg2 = arg2;
-    session.callback_arg3 = (u32)&session;
     return font_v2_adapter_call(&session);
 }
 

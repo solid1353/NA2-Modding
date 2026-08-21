@@ -165,8 +165,8 @@ prebuilt records instead of replacing the renderer. The maintained read-only
 `generate_victory_layout_patch.py` check verifies all four source identities,
 reads every NA2 pointer and NUN5 English row, derives each complete 24-byte
 replacement from the appropriate official NUN5 frame template plus the donor
-width, and compares the result with the stored edit definitions. It derives 78
-concrete records represented by 77 definitions because one definition has two
+width, and compares the result with the stored grouped edit. Its 77 semantic
+descriptor children expand to 78 concrete records because one child has two
 destination offsets. Repeated NA2 pointers are deduplicated; all nineteen
 apparent alias conflicts are zero-versus-one-valid NUN5 row, never two
 conflicting nonzero widths. Records referenced only by zero-width NUN5 rows

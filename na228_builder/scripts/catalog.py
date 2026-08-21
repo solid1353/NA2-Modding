@@ -658,7 +658,36 @@ def _load_implementation(
         if not isinstance(edit, dict):
             raise ValueError(f"Edit {edit_id!r} must be an object")
         _description(edit.get("description"), f"Edit {edit_id!r}")
-        if "adapter" in edit:
+        if "edits" in edit:
+            members = edit["edits"]
+            extra = sorted(set(edit) - {"description", "edits"})
+            if extra:
+                raise ValueError(
+                    f"Edit group {edit_id!r} has unknown fields: {extra}"
+                )
+            if not isinstance(members, dict) or not members:
+                raise ValueError(
+                    f"Edit group {edit_id!r}.edits must be a non-empty object"
+                )
+            for member_id, member in members.items():
+                _identifier(member_id, f"Edit group {edit_id!r} member ID")
+                if not isinstance(member, dict):
+                    raise ValueError(
+                        f"Edit group {edit_id!r} member {member_id!r} "
+                        "must be an object"
+                    )
+                if "edits" in member:
+                    raise ValueError(
+                        f"Edit group {edit_id!r} member {member_id!r} "
+                        "must be a primitive edit"
+                    )
+                _description(
+                    member.get("description"),
+                    f"Edit group {edit_id!r} member {member_id!r}",
+                )
+                if "adapter" in member:
+                    binary_adapters.validate_adapter_name(member["adapter"])
+        elif "adapter" in edit:
             binary_adapters.validate_adapter_name(edit["adapter"])
         edits[edit_id] = edit
     for injection_id, injection in raw_injections.items():
@@ -1086,6 +1115,23 @@ def _groups(nodes: list[CatalogNode]) -> dict[str, binary_patcher.Group]:
     return groups
 
 
+def _edit_members(
+    edit_id: str,
+    definition: dict[str, object],
+) -> tuple[tuple[str | None, dict[str, object]], ...]:
+    if "edits" not in definition:
+        return ((None, definition),)
+    members = definition["edits"]
+    if not isinstance(members, dict):
+        raise TypeError(f"Edit group {edit_id!r}.edits was not validated")
+    result: list[tuple[str | None, dict[str, object]]] = []
+    for member_id, member in sorted(members.items()):
+        if not isinstance(member_id, str) or not isinstance(member, dict):
+            raise TypeError(f"Edit group {edit_id!r} was not validated")
+        result.append((member_id, member))
+    return tuple(result)
+
+
 def load_binary_package(
     selection: CatalogSelection,
     feature_id: str,
@@ -1106,113 +1152,161 @@ def load_binary_package(
     order = 0
     for node in nodes:
         for edit_key in node.edit_ids:
-            raw_edit = selection.edits[edit_key]
-            label = f"edits.{edit_key}"
-            operation = _validate_operation(raw_edit, label, contracts)
-            destination_id = str(raw_edit["destination_target_id"])
-            if destination_id not in targets:
-                raise ValueError(f"{label}: unknown destination target {destination_id!r}")
-            expected_hex = ""
-            expected_sha256 = ""
-            if "expected_hex" in raw_edit:
-                expected_hex = _hex(raw_edit["expected_hex"], f"{label}.expected_hex")
-            if "expected_sha256" in raw_edit:
-                expected_sha256 = _sha256(raw_edit["expected_sha256"], f"{label}.expected_sha256")
-            destination_offsets = _parse_int_list(
-                raw_edit["destination_offsets"],
-                f"{label}.destination_offsets",
-            )
-            replacement_hex = ""
-            source_id = ""
-            source_offset: int | None = None
-            blob_path: PurePosixPath | None = None
-            blob_sha256 = ""
-            fill_hex = ""
-            if operation == "replace":
-                if "adapter" in raw_edit:
-                    if binary_adapters.is_fixed_value_adapter(raw_edit["adapter"]):
-                        if node.has_configured_value:
-                            raise ValueError(
-                                f"{label}.adapter requires a bare catalog setting"
-                            )
-                        expected_hex, replacement_hex = (
-                            binary_adapters.apply_fixed_adapter(
-                                raw_edit["adapter"],
-                                raw_edit["expected_value"],
-                                raw_edit["replacement_value"],
-                                encoding=raw_edit.get("encoding"),
-                                length=raw_edit.get("length"),
-                            )
-                        )
-                    else:
-                        if not node.has_configured_value:
-                            raise ValueError(
-                                f"{label}.adapter requires a typed catalog setting"
-                            )
-                        if not expected_hex or "expected_sha256" in raw_edit:
-                            raise ValueError(
-                                f"{label}.adapter requires expected_hex, not expected_sha256"
-                            )
-                        replacement_hex = binary_adapters.apply_adapter(
-                            raw_edit["adapter"], expected_hex, node.configured_value
-                        )
-                else:
-                    replacement_hex = _hex(
-                        raw_edit["replacement_hex"], f"{label}.replacement_hex"
+            grouped_ranges: dict[str, list[tuple[int, int, str]]] = {}
+            for member_id, raw_edit in _edit_members(
+                edit_key, selection.edits[edit_key]
+            ):
+                label = f"edits.{edit_key}"
+                if member_id is not None:
+                    label += f".edits.{member_id}"
+                operation = _validate_operation(raw_edit, label, contracts)
+                destination_id = str(raw_edit["destination_target_id"])
+                if destination_id not in targets:
+                    raise ValueError(
+                        f"{label}: unknown destination target {destination_id!r}"
                     )
-                length = len(bytes.fromhex(replacement_hex))
-            elif operation == "copy":
-                length = _parse_int(raw_edit["length"], f"{label}.length", minimum=1)
-                source_id = str(raw_edit["source_target_id"])
-                source_offset = _parse_int(raw_edit["source_offset"], f"{label}.source_offset")
-                if source_id not in targets:
-                    raise ValueError(f"{label}: unknown source target {source_id!r}")
-                used_targets.add(source_id)
-            elif operation == "blob":
-                blob_path = _relative_path(raw_edit["blob_path"], f"{label}.blob_path")
-                blob_sha256 = _sha256(raw_edit["blob_sha256"], f"{label}.blob_sha256")
-                blob_file = repository.joinpath(*blob_path.parts)
-                if not blob_file.is_file():
-                    raise FileNotFoundError(blob_file)
-                length = blob_file.stat().st_size
-            else:
-                length = _parse_int(raw_edit["length"], f"{label}.length", minimum=1)
-                fill_hex = _hex(raw_edit["fill_hex"], f"{label}.fill_hex")
-                if len(bytes.fromhex(fill_hex)) != 1:
-                    raise ValueError(f"{label}.fill_hex must be exactly one byte")
-            if expected_hex and len(bytes.fromhex(expected_hex)) != length:
-                raise ValueError(f"{label}.expected_hex length mismatch")
-            used_targets.add(destination_id)
-            reason = _description(raw_edit.get("description"), label)
-            multiple_destinations = len(destination_offsets) > 1
-            for destination_offset in destination_offsets:
-                order += 1
-                edit_id = f"{node.node_id}.{edit_key}"
-                if multiple_destinations:
-                    edit_id += f".at_{destination_offset:08x}"
-                edits.append(
-                    binary_patcher.Edit(
-                        edit_id=edit_id,
-                        patch_id=node.node_id,
-                        order=order,
-                        destination_target_id=destination_id,
-                        destination_offset=destination_offset,
-                        operation=operation,
-                        length=length,
-                        expected_hex=expected_hex,
-                        expected_sha256=expected_sha256,
-                        replacement_hex=replacement_hex,
-                        source_target_id=source_id,
-                        source_offset=source_offset,
-                        source_expected_hex="",
-                        source_expected_sha256="",
-                        blob_path=blob_path,
-                        blob_offset=0 if blob_path is not None else None,
-                        blob_sha256=blob_sha256,
-                        fill_hex=fill_hex,
-                        reason=reason,
+                expected_hex = ""
+                expected_sha256 = ""
+                if "expected_hex" in raw_edit:
+                    expected_hex = _hex(
+                        raw_edit["expected_hex"], f"{label}.expected_hex"
                     )
+                if "expected_sha256" in raw_edit:
+                    expected_sha256 = _sha256(
+                        raw_edit["expected_sha256"], f"{label}.expected_sha256"
+                    )
+                destination_offsets = _parse_int_list(
+                    raw_edit["destination_offsets"],
+                    f"{label}.destination_offsets",
                 )
+                replacement_hex = ""
+                source_id = ""
+                source_offset: int | None = None
+                blob_path: PurePosixPath | None = None
+                blob_sha256 = ""
+                fill_hex = ""
+                if operation == "replace":
+                    if "adapter" in raw_edit:
+                        if binary_adapters.is_fixed_value_adapter(raw_edit["adapter"]):
+                            if node.has_configured_value:
+                                raise ValueError(
+                                    f"{label}.adapter requires a bare catalog setting"
+                                )
+                            expected_hex, replacement_hex = (
+                                binary_adapters.apply_fixed_adapter(
+                                    raw_edit["adapter"],
+                                    raw_edit["expected_value"],
+                                    raw_edit["replacement_value"],
+                                    encoding=raw_edit.get("encoding"),
+                                    length=raw_edit.get("length"),
+                                )
+                            )
+                        else:
+                            if not node.has_configured_value:
+                                raise ValueError(
+                                    f"{label}.adapter requires a typed catalog setting"
+                                )
+                            if not expected_hex or "expected_sha256" in raw_edit:
+                                raise ValueError(
+                                    f"{label}.adapter requires expected_hex, "
+                                    "not expected_sha256"
+                                )
+                            replacement_hex = binary_adapters.apply_adapter(
+                                raw_edit["adapter"],
+                                expected_hex,
+                                node.configured_value,
+                            )
+                    else:
+                        replacement_hex = _hex(
+                            raw_edit["replacement_hex"],
+                            f"{label}.replacement_hex",
+                        )
+                    length = len(bytes.fromhex(replacement_hex))
+                elif operation == "copy":
+                    length = _parse_int(
+                        raw_edit["length"], f"{label}.length", minimum=1
+                    )
+                    source_id = str(raw_edit["source_target_id"])
+                    source_offset = _parse_int(
+                        raw_edit["source_offset"], f"{label}.source_offset"
+                    )
+                    if source_id not in targets:
+                        raise ValueError(
+                            f"{label}: unknown source target {source_id!r}"
+                        )
+                    used_targets.add(source_id)
+                elif operation == "blob":
+                    blob_path = _relative_path(
+                        raw_edit["blob_path"], f"{label}.blob_path"
+                    )
+                    blob_sha256 = _sha256(
+                        raw_edit["blob_sha256"], f"{label}.blob_sha256"
+                    )
+                    blob_file = repository.joinpath(*blob_path.parts)
+                    if not blob_file.is_file():
+                        raise FileNotFoundError(blob_file)
+                    length = blob_file.stat().st_size
+                else:
+                    length = _parse_int(
+                        raw_edit["length"], f"{label}.length", minimum=1
+                    )
+                    fill_hex = _hex(raw_edit["fill_hex"], f"{label}.fill_hex")
+                    if len(bytes.fromhex(fill_hex)) != 1:
+                        raise ValueError(f"{label}.fill_hex must be exactly one byte")
+                if expected_hex and len(bytes.fromhex(expected_hex)) != length:
+                    raise ValueError(f"{label}.expected_hex length mismatch")
+                if member_id is not None:
+                    for destination_offset in destination_offsets:
+                        destination_end = destination_offset + length
+                        for prior_start, prior_end, prior_member_id in grouped_ranges.get(
+                            destination_id, []
+                        ):
+                            if (
+                                prior_member_id != member_id
+                                and max(prior_start, destination_offset)
+                                < min(prior_end, destination_end)
+                            ):
+                                raise ValueError(
+                                    f"edits.{edit_key} members {prior_member_id!r} "
+                                    f"and {member_id!r} have overlapping destination "
+                                    f"ranges in {destination_id!r}"
+                                )
+                        grouped_ranges.setdefault(destination_id, []).append(
+                            (destination_offset, destination_end, member_id)
+                        )
+                used_targets.add(destination_id)
+                reason = _description(raw_edit.get("description"), label)
+                multiple_destinations = len(destination_offsets) > 1
+                for destination_offset in destination_offsets:
+                    order += 1
+                    edit_id = f"{node.node_id}.{edit_key}"
+                    if member_id is not None:
+                        edit_id += f".{member_id}"
+                    if multiple_destinations:
+                        edit_id += f".at_{destination_offset:08x}"
+                    edits.append(
+                        binary_patcher.Edit(
+                            edit_id=edit_id,
+                            patch_id=node.node_id,
+                            order=order,
+                            destination_target_id=destination_id,
+                            destination_offset=destination_offset,
+                            operation=operation,
+                            length=length,
+                            expected_hex=expected_hex,
+                            expected_sha256=expected_sha256,
+                            replacement_hex=replacement_hex,
+                            source_target_id=source_id,
+                            source_offset=source_offset,
+                            source_expected_hex="",
+                            source_expected_sha256="",
+                            blob_path=blob_path,
+                            blob_offset=0 if blob_path is not None else None,
+                            blob_sha256=blob_sha256,
+                            fill_hex=fill_hex,
+                            reason=reason,
+                        )
+                    )
     return binary_patcher.Package(
         directory=repository,
         package_id=f"{feature_id}.binary_patcher",
@@ -1641,15 +1735,18 @@ def selected_string_patches(
 def referenced_files(selection: CatalogSelection, repository: Path, feature_id: str) -> tuple[Path, ...]:
     files: set[Path] = set()
     for edit_id in feature_reference_ids(selection, feature_id, "edits"):
-        raw = selection.edits[edit_id]
-        if "blob_path" in raw:
-            files.add(
-                _source_path(
-                    repository,
-                    raw["blob_path"],
-                    f"edits.{edit_id}.blob_path",
+        for member_id, raw in _edit_members(edit_id, selection.edits[edit_id]):
+            if "blob_path" in raw:
+                label = f"edits.{edit_id}"
+                if member_id is not None:
+                    label += f".edits.{member_id}"
+                files.add(
+                    _source_path(
+                        repository,
+                        raw["blob_path"],
+                        f"{label}.blob_path",
+                    )
                 )
-            )
     for injection_id in feature_reference_ids(selection, feature_id, "injections"):
         injection = selection.injections[injection_id]
         payload = injection.get("payload")

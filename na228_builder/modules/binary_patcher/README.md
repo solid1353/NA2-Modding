@@ -1,19 +1,22 @@
 # Binary patcher module
 
 This internal engine applies selected guarded edits to verified clean binaries.
-`@builder/catalog/edits.json` owns production edit
-definitions; feature files under `@builder/catalog/` assign their IDs to
-selectable leaves. The TSV
-files in `operations/` define each operation's allowed fields and basic types.
-The root definition map is serialized alphabetically. Every edit identity uses
-the `e__` prefix, then its catalog ownership path and semantic operation
-identity. Catalog settings reference those identities through their single
+`@builder/catalog/edits.json` owns production edit roots; feature files under
+`@builder/catalog/` assign their IDs to selectable leaves. A root is either one
+primitive edit or a semantic group with named primitive children under its
+`edits` map. The TSV files in `operations/` define each primitive operation's
+allowed fields and basic types. Root and child maps are serialized
+alphabetically. Every root identity uses the `e__` prefix and its catalog
+ownership path; grouped child identities name the semantic edit within
+that root. Catalog settings reference root identities through their single
 `patches` array.
 
-An edit may contain a nonempty `description` when concise purpose or provenance
-belongs specifically to that operation. Description text is logged as the
-edit reason but never changes execution. Broader feature behavior, research,
-analysis, procedures, and history remain in their canonical documentation.
+A primitive edit may contain a nonempty `description` when concise purpose or
+provenance belongs specifically to that edit. Its description is logged as the
+concrete edit reason but never changes execution. A group description labels
+the organizational root and is not a concrete log reason. Broader feature
+behavior, research, analysis, procedures, and history remain in their canonical
+documentation.
 
 ## Invokes
 
@@ -25,9 +28,14 @@ guarded file edits.
 - All persisted paths are relative.
 - Every input target is checked by size and SHA-256.
 - Every destination range is checked by exact bytes or a range SHA-256.
-- Every catalog edit uses a nonempty unique `destination_offsets` list.
+- Every primitive catalog edit uses a nonempty unique `destination_offsets` list.
   Multiple offsets expand into independently guarded and logged concrete edits
   with otherwise identical behavior.
+- A grouped root contains a nonempty, one-level map of semantic child edits.
+  The catalog loader expands it before operation validation, so the binary
+  patcher receives the same concrete edit model as a flat primitive root.
+  Destination ranges from different children must not overlap; ordered chains
+  remain separate roots.
 - A `replace` edit declares exactly one of a static `replacement_hex` or an
   adapter. Adapters in `adapters.py` either convert a validated typed catalog
   value or encode fixed readable values selected by a bare setting. Fixed-value
@@ -52,8 +60,9 @@ guarded file edits.
 
 ## Production use
 
-The catalog loader validates an edit against its operation manifest, resolves
-the shared target registry, and constructs the engine's in-memory package.
+The catalog loader expands grouped roots, validates every primitive against its
+operation manifest, resolves the shared target registry, and constructs the
+engine's in-memory package.
 Normal builds do not load separate binary-patcher TSV data packages. Build logs
 retain the selected edit inventory and before/after hashes beneath the
 configuration build record.

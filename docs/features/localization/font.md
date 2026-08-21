@@ -64,8 +64,8 @@ synchronized final-build Ninja Song objective capture remain deferred.
 The current layout component covers Control Settings; Practice and Special
 Controls; Command Chart and related titles; Pause Controls; Battle, Practice,
 Mode Select, Character Select, and Collection confirmations; Collection lists;
-Linked Mode; the Jutsu selector; Practice explanations; Settings rows; Ninja
-Song details; and the shared selected-style paths proven by those callers.
+the Jutsu selector; Practice explanations; Settings rows; Ninja Song details;
+and the shared selected-style paths proven by those callers.
 
 ## Knowledge
 

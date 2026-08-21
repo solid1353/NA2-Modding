@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import tempfile
@@ -1015,6 +1016,220 @@ class CatalogTests(unittest.TestCase):
             catalog._parse_int_list([], "offsets")
         with self.assertRaisesRegex(ValueError, "unique offsets"):
             catalog._parse_int_list(["0x10", "0x10"], "offsets")
+
+    def test_grouped_edit_expands_named_primitive_edits(self) -> None:
+        source = '''{
+          grouped: setting {
+            description: "Grouped edits.",
+            patches: ["e__feature__grouped"],
+          },
+        }'''
+        grouped = {
+            "description": "Three independently guarded operations.",
+            "edits": {
+                "set_values": {
+                    "description": "Set two matching values.",
+                    "operation": "replace",
+                    "destination_target_id": "test_target",
+                    "destination_offsets": ["0x0", "0x4"],
+                    "expected_hex": "0000",
+                    "replacement_hex": "3412",
+                },
+                "install_blob": {
+                    "description": "Install one binary asset.",
+                    "operation": "blob",
+                    "destination_target_id": "test_target",
+                    "destination_offsets": ["0xC"],
+                    "expected_sha256": "0" * 64,
+                    "blob_path": "asset.bin",
+                    "blob_sha256": hashlib.sha256(b"\xAA\xBB").hexdigest(),
+                },
+                "clear_flag": {
+                    "description": "Clear one flag.",
+                    "operation": "replace",
+                    "destination_target_id": "test_target",
+                    "destination_offsets": ["0x8"],
+                    "expected_hex": "01",
+                    "replacement_hex": "00",
+                },
+            },
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path, configuration_path = self.write_project(
+                root,
+                {"feature": source},
+                {"feature": {"grouped": True}},
+                edits={"e__feature__grouped": grouped},
+            )
+            (root / "asset.bin").write_bytes(b"\xAA\xBB")
+            (catalog_path / "targets.tsv").write_text(
+                "target_id\troot_id\trole\tpath\texpected_size\t"
+                "expected_sha256\n"
+                "test_target\ttest\tdestination\tdata.bin\t16\t"
+                + "0" * 64
+                + "\n",
+                encoding="utf-8",
+            )
+            selection = catalog.load_selection(catalog_path, configuration_path)
+            paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
+            package = catalog.load_binary_package(
+                selection,
+                "feature",
+                catalog_path / "targets.tsv",
+                root,
+                paths.path("builder", "modules", "binary_patcher", "operations"),
+            )
+            referenced = catalog.referenced_files(selection, root, "feature")
+
+        self.assertEqual(
+            [edit.destination_offset for edit in package.edits],
+            [0x8, 0xC, 0x0, 0x4],
+        )
+        self.assertEqual(
+            [edit.operation for edit in package.edits],
+            ["replace", "blob", "replace", "replace"],
+        )
+        self.assertTrue(all("e__feature__grouped" in edit.edit_id for edit in package.edits))
+        self.assertIn(".clear_flag", package.edits[0].edit_id)
+        self.assertIn(".install_blob", package.edits[1].edit_id)
+        self.assertIn(".set_values", package.edits[2].edit_id)
+        self.assertEqual(
+            referenced,
+            ((root / "asset.bin").resolve(),),
+        )
+
+    def test_grouped_edit_rejects_overlapping_child_destinations(self) -> None:
+        source = '''{
+          grouped: setting {
+            description: "Grouped edits.",
+            patches: ["e__feature__grouped"],
+          },
+        }'''
+        grouped = {
+            "description": "Invalid overlapping edits.",
+            "edits": {
+                "first": {
+                    "operation": "replace",
+                    "destination_target_id": "test_target",
+                    "destination_offsets": ["0x0"],
+                    "expected_hex": "0000",
+                    "replacement_hex": "1111",
+                },
+                "second": {
+                    "operation": "replace",
+                    "destination_target_id": "test_target",
+                    "destination_offsets": ["0x1"],
+                    "expected_hex": "00",
+                    "replacement_hex": "22",
+                },
+            },
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path, configuration_path = self.write_project(
+                root,
+                {"feature": source},
+                {"feature": {"grouped": True}},
+                edits={"e__feature__grouped": grouped},
+            )
+            (catalog_path / "targets.tsv").write_text(
+                "target_id\troot_id\trole\tpath\texpected_size\t"
+                "expected_sha256\n"
+                "test_target\ttest\tdestination\tdata.bin\t16\t"
+                + "0" * 64
+                + "\n",
+                encoding="utf-8",
+            )
+            selection = catalog.load_selection(catalog_path, configuration_path)
+            paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
+            with self.assertRaisesRegex(ValueError, "overlapping destination ranges"):
+                catalog.load_binary_package(
+                    selection,
+                    "feature",
+                    catalog_path / "targets.tsv",
+                    root,
+                    paths.path("builder", "modules", "binary_patcher", "operations"),
+                )
+
+    def test_repository_grouped_edit_maps_are_alphabetical(self) -> None:
+        paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
+        definitions = json.loads(
+            paths.path("builder", "catalog", "edits.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(list(definitions), sorted(definitions))
+        for edit_id, definition in definitions.items():
+            with self.subTest(edit_id=edit_id):
+                if "edits" in definition:
+                    self.assertEqual(
+                        list(definition["edits"]),
+                        sorted(definition["edits"]),
+                    )
+
+    def test_grouped_edit_structure_fails_closed(self) -> None:
+        source = '''{
+          grouped: setting {
+            description: "Grouped edits.",
+            patches: ["e__feature__grouped"],
+          },
+        }'''
+        invalid_groups = (
+            (
+                {"description": "Null group.", "edits": None},
+                "must be a non-empty object",
+            ),
+            (
+                {"description": "Empty group.", "edits": {}},
+                "must be a non-empty object",
+            ),
+            (
+                {
+                    "description": "Mixed group.",
+                    "operation": "replace",
+                    "edits": {"member": {"description": "Member."}},
+                },
+                "unknown fields",
+            ),
+            (
+                {
+                    "description": "Nested group.",
+                    "edits": {
+                        "member": {
+                            "description": "Member.",
+                            "edits": {"nested": {}},
+                        }
+                    },
+                },
+                "must be a primitive edit",
+            ),
+            (
+                {
+                    "description": "Invalid member ID.",
+                    "edits": {"not-semantic": {"description": "Member."}},
+                },
+                "meaningful snake_case key",
+            ),
+            (
+                {
+                    "description": "Invalid member value.",
+                    "edits": {"member": "not an object"},
+                },
+                "must be an object",
+            ),
+        )
+        for grouped, message in invalid_groups:
+            with self.subTest(message=message), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                catalog_path, configuration_path = self.write_project(
+                    root,
+                    {"feature": source},
+                    {"feature": {"grouped": True}},
+                    edits={"e__feature__grouped": grouped},
+                )
+                with self.assertRaisesRegex(ValueError, message):
+                    catalog.load_selection(catalog_path, configuration_path)
 
     def test_runtime_source_uses_packaged_object_without_toolchain(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

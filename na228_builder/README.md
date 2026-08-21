@@ -16,11 +16,12 @@ integrated catalog data.
   resolve to injection units; IDs beginning with `s__` resolve to semantic
   string patches. Implementation details never appear in the release catalog
   reference.
-- `catalog/edits.json` is the direct root map of guarded binary
-  edit definitions. A typed setting may feed its validated value to a declared
-  binary adapter instead of storing a fixed `replacement_hex`. A bare setting
-  may also select an adapter-backed fixed edit whose readable expected and
-  replacement values are encoded by the adapter.
+- `catalog/edits.json` is the direct root map of guarded binary edits. A root
+  may be one primitive edit or a semantic group whose `edits` map contains
+  named primitive children. A typed setting may feed its validated value to a
+  declared binary adapter instead of storing a fixed `replacement_hex`. A bare
+  setting may also select an adapter-backed fixed edit whose readable expected
+  and replacement values are encoded by the adapter.
 - `catalog/injections.json` is the direct root map of runtime
   injection units. Each unit contains `hooks`, `payload`, or both. Source
   payloads declare `kind: "c"` with an exact `.c` path or `kind: "asm"` with
@@ -158,15 +159,18 @@ outside UInt64 is a configuration error. A zero result omits timed fast-forward.
 Disabled settings contribute nothing. This launch metadata is omitted from the
 public release catalog along with patch implementation references.
 
-Binary edit definitions always contain an explicit `operation`. Runtime target
-changes live under an injection unit's `hooks` and therefore have no operation
+Every primitive binary edit contains an explicit `operation`. A grouped edit
+root contains only its optional description and a nonempty, one-level `edits`
+map; each semantic child is an ordinary primitive edit. Runtime target changes
+live under an injection unit's `hooks` and therefore have no operation
 discriminator. Runtime sources, fragments, imports, relocations, and ABI
 metadata live under that unit's `payload`. Multiple catalog leaves may
 reference the same shared injection unit.
 
-Root edit and injection identities use `e__` and `i__` prefixes. Definition
-maps and unordered nested
-maps are serialized alphabetically and unit tests enforce that source
+Root edit and injection identities use `e__` and `i__` prefixes. Grouped edit
+children use concise semantic identities within their root; destination
+addresses remain data rather than identity. Definition maps and unordered
+nested maps are serialized alphabetically and unit tests enforce that source
 convention without making source order a loader requirement. Hook and payload
 fragment identities are concise within their owning injection. Payload
 fragment numeric `order` values remain explicit, validated declaration data;

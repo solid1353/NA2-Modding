@@ -597,27 +597,6 @@
       }
     }
   },
-  "i__localization__font__layout__linked_mode_modal": {
-    "description": "Apply one shared centered 1.05 horizontal-scale session to both Linked Mode choices while retaining the accepted title, base-row, and interval geometry.",
-    "hooks": {
-      "route_every_ordinary_linked_mode_choice": {
-        "description": "Route every ordinary Linked Mode choice through the same centered 1.05 horizontal-scale session; Manual and Auto share the renderer unchanged.",
-        "target_id": "na2_elf",
-        "offset": "0x2B91FC",
-        "expected_hex": "1C090E0C00000000",
-        "symbol": "v2_linked_choice_unselected_adapter",
-        "encoding": "jal26"
-      },
-      "route_every_selected_linked_mode_choice": {
-        "description": "Route every selected Linked Mode choice through one centered 1.05 horizontal-scale session, supply the native red selected color, and preserve its text and structural row formula.",
-        "target_id": "na2_elf",
-        "offset": "0x2B91DC",
-        "expected_hex": "84090E0C00000000",
-        "symbol": "v2_c_linked_choice_selected_impl",
-        "encoding": "jal26"
-      }
-    }
-  },
   "i__localization__font__layout__mode_select_confirmation": {
     "description": "Route the dedicated Return to Title Screen body draw through NUN5 renderer state and retain the scoped Yes/No coordinate mapper for the top selector.",
     "hooks": {
@@ -932,20 +911,6 @@
           "v2_c_character_scope_enter": {
             "order": 104,
             "object": "localization.font.v2.c.text.font.v2.character.scope.enter"
-          },
-          "v2_c_linked_choice_session_prepare": {
-            "order": 106,
-            "object": "localization.font.v2.c.text.font.v2.linked.choice.session.prepare"
-          },
-          "v2_c_linked_choice_selected_impl": {
-            "order": 107,
-            "object": "localization.font.v2.c.text.font.v2.linked.choice.selected.impl"
-          },
-          "v2_linked_choice_unselected_adapter": {
-            "order": 108,
-            "object": "localization.font.v2.c.text.font.v2.linked.choice.unselected.adapter",
-            "abi": "arg0_text_arg2_native_x_native_y",
-            "description": "Linked Mode ordinary centered choice"
           },
           "v2_character_selected_adapter": {
             "order": 65,

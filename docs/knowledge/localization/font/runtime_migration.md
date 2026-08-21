@@ -204,9 +204,6 @@ hook to unrelated consumers.
   and Practice retain the same structural row model, but their final pixel
   phases are separate because forcing the Practice phase onto Battle produced
   visibly different weight and alignment.
-- **Linked Mode:** title Y is `8`; both choices use `45 + 22*i` and one centered
-  `1.05` horizontal scale session. Both draw states share placement. The
-  selected entry supplies native red `0xFF0000D4` instead of undefined `t0`.
 - **Character Select player-mode list:** selected and ordinary rows share one
   bounded metric family. Rows one through four share the normal formula; the
   structurally distinct fifth footer receives one selected-state Y correction.

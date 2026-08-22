@@ -137,7 +137,7 @@
 /* === Special Controls explanatory body === */
 
 /* Special Controls body left edge; increase to move it right. */
-#define FONT_SPECIAL_BODY_BOX_X 26.0f
+#define FONT_SPECIAL_BODY_BOX_X 24.0f
 
 /* Special Controls body top edge; increase to move it down. */
 #define FONT_SPECIAL_BODY_BOX_Y 12.0f

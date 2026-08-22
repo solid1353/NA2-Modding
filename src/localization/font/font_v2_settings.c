@@ -15,16 +15,30 @@
 #define FONT_PRACTICE_SETTINGS_LABEL_X (92.0f + FONT_SETTINGS_X_OFFSET)
 #define FONT_PRACTICE_SETTINGS_LABEL_WIDTH 150u
 
+/* Selected labels use a wider native style; retain the matched horizontal fit. */
+#define FONT_PRACTICE_SETTINGS_SELECTED_SCALE_X 0.93f
+
 /* NUN5 left edge and width for both settings value columns. */
 #define FONT_SETTINGS_VALUE_X (303.25f + FONT_SETTINGS_X_OFFSET)
 #define FONT_SETTINGS_VALUE_WIDTH 104u
 
+/* The primary text branch has a distinct center phase from other values. */
+#define FONT_BATTLE_SETTINGS_VALUE_X_OFFSET (-0.8f)
+#define FONT_BATTLE_SETTINGS_PRIMARY_TEXT_VALUE_X_OFFSET (-1.6f)
+#define FONT_BATTLE_SETTINGS_NUMERIC_VALUE_X_OFFSET (-1.6f)
+#define FONT_BATTLE_SETTINGS_NUMERIC_VALUE_Y_OFFSET (-1.2f)
+#define FONT_BATTLE_SETTINGS_NUMERIC_VALUE_SCALE_X 1.0f
+#define FONT_BATTLE_SETTINGS_NUMERIC_VALUE_GLYPH_HEIGHT 27.0f
+
+/* Practice values sit one output pixel left of the shared Battle position. */
+#define FONT_PRACTICE_SETTINGS_VALUE_X_OFFSET (-0.8f)
+
+/* Tokens no wider than half the value box use NUN5's alternate center phase. */
+#define FONT_PRACTICE_SETTINGS_SHORT_VALUE_X_OFFSET 0.0f
+
 /* NUN5 uses one 104-unit box; descriptive phrases retain their accepted fit. */
 #define FONT_SETTINGS_PHRASE_FIT_WIDTH 99u
 #define FONT_SETTINGS_PHRASE_X_OFFSET -1.5f
-
-/* Raster-phase correction when NA2's special-value branch enters ASCII mode. */
-#define FONT_SETTINGS_SPECIAL_VALUE_X_OFFSET -1.0f
 
 /* Shared geometry for digit-leading Settings values. */
 #define FONT_SETTINGS_NUMERIC_VALUE_X_OFFSET 1.8f
@@ -38,6 +52,7 @@
 #define FONT_BATTLE_SETTINGS_ORDINARY_Y_OFFSET 0.8f
 #define FONT_BATTLE_SETTINGS_VALUE_Y_OFFSET 0.8f
 #define FONT_PRACTICE_SETTINGS_ROW_Y_OFFSET 0.75f
+#define FONT_PRACTICE_SETTINGS_SELECTED_Y_OFFSET (-1.6f)
 #define FONT_SETTINGS_SELECTED_Y_OFFSET 1.5f
 
 /* NUN5 left edge and width for the Practice Settings section heading. */
@@ -118,9 +133,12 @@ int font_v2_settings_row_common(
     float fixed_scale_x,
     float glyph_height,
     u32 horizontal_alignment,
+    u32 use_donor_ascii_metrics,
     u32 callback
 ) {
     FontV2Session session;
+    u32 measured_width = 0u;
+    u32 measured_lines = 0u;
 
     session.text = text;
     session.box_x = box_x;
@@ -136,7 +154,20 @@ int font_v2_settings_row_common(
     }
     session.line_limit = 1u;
     session.line_height = FONT_SETTINGS_LINE_HEIGHT;
-    session.measured_width = font_v2_native_measure(text);
+    if (
+        use_donor_ascii_metrics &&
+        font_v2_measure(
+            text,
+            0u,
+            &measured_width,
+            &measured_lines
+        ) == 0 &&
+        measured_lines == 1u
+    ) {
+        session.measured_width = measured_width;
+    } else {
+        session.measured_width = font_v2_native_measure(text);
+    }
     if (fixed_scale_x > 0.0f) {
         session.flags |= FONT_V2_FLAG_FIXED_SCALE_X;
         session.scale_x = fixed_scale_x;
@@ -178,6 +209,7 @@ int font_v2_battle_settings_label_adapter(
         0.0f,
         0.0f,
         FONT_V2_ALIGN_START,
+        0u,
         (u32)font_v2_settings_label_callback
     );
 }
@@ -194,28 +226,36 @@ int font_v2_practice_settings_label_adapter(
         text,
         style,
         native_y + FONT_PRACTICE_SETTINGS_ROW_Y_OFFSET +
-            (style ? FONT_SETTINGS_SELECTED_Y_OFFSET : 0.0f),
+            (style
+                ? FONT_SETTINGS_SELECTED_Y_OFFSET +
+                    FONT_PRACTICE_SETTINGS_SELECTED_Y_OFFSET
+                : 0.0f),
         FONT_PRACTICE_SETTINGS_LABEL_X,
         FONT_PRACTICE_SETTINGS_LABEL_WIDTH,
         0u,
-        0.0f,
+        style ? FONT_PRACTICE_SETTINGS_SELECTED_SCALE_X : 0.0f,
         0.0f,
         FONT_V2_ALIGN_START,
+        1u,
         (u32)font_v2_settings_label_callback
     );
 }
 
-FONT_V2_SECTION(".text.font_v2_settings_value_adapter")
-int font_v2_settings_value_adapter(
+static FONT_V2_SECTION(".text.font_v2_settings_value_common")
+int font_v2_settings_value_common(
     const u8 *text,
     u32 color,
     float native_x,
-    float native_y
+    float native_y,
+    float box_x_offset,
+    float numeric_y_offset,
+    float numeric_scale_x,
+    float numeric_glyph_height
 ) {
     volatile u8 *renderer =
         *(volatile u8 **)FONT_RENDERER_POINTER_ADDRESS;
     const u8 *cursor = text;
-    float box_x = FONT_SETTINGS_VALUE_X;
+    float box_x = FONT_SETTINGS_VALUE_X + box_x_offset;
     u32 fit_width = 0u;
     u8 saved_renderer_flags = 0u;
     u32 numeric_value = 0u;
@@ -228,7 +268,8 @@ int font_v2_settings_value_adapter(
     }
     if (numeric_value) {
         box_x += FONT_SETTINGS_NUMERIC_VALUE_X_OFFSET;
-        native_y += FONT_SETTINGS_NUMERIC_VALUE_Y_OFFSET;
+        native_y +=
+            FONT_SETTINGS_NUMERIC_VALUE_Y_OFFSET + numeric_y_offset;
     }
     if (
         renderer && text && *text && !numeric_value &&
@@ -239,7 +280,6 @@ int font_v2_settings_value_adapter(
         renderer[FONT_RENDERER_FLAGS_OFFSET] =
             saved_renderer_flags | (u8)FONT_RENDERER_ASCII_MODE_FLAG;
         restore_renderer_flags = 1u;
-        box_x += FONT_SETTINGS_SPECIAL_VALUE_X_OFFSET;
     }
     while (cursor && *cursor) {
         if (*cursor == (u8)' ') {
@@ -256,15 +296,43 @@ int font_v2_settings_value_adapter(
         box_x,
         FONT_SETTINGS_VALUE_WIDTH,
         fit_width,
-        numeric_value ? FONT_SETTINGS_NUMERIC_VALUE_SCALE_X : 0.0f,
-        numeric_value ? FONT_SETTINGS_NUMERIC_VALUE_GLYPH_HEIGHT : 0.0f,
+        numeric_value ? numeric_scale_x : 0.0f,
+        numeric_value ? numeric_glyph_height : 0.0f,
         FONT_V2_ALIGN_CENTER,
+        0u,
         (u32)font_v2_settings_value_callback
     );
     if (restore_renderer_flags) {
         renderer[FONT_RENDERER_FLAGS_OFFSET] = saved_renderer_flags;
     }
     return result;
+}
+
+FONT_V2_SECTION(".text.font_v2_settings_value_adapter")
+int font_v2_settings_value_adapter(
+    const u8 *text,
+    u32 color,
+    float native_x,
+    float native_y
+) {
+    float box_x_offset = FONT_PRACTICE_SETTINGS_VALUE_X_OFFSET;
+
+    if (
+        text &&
+        font_v2_native_measure(text) <= FONT_SETTINGS_VALUE_WIDTH / 2u
+    ) {
+        box_x_offset = FONT_PRACTICE_SETTINGS_SHORT_VALUE_X_OFFSET;
+    }
+    return font_v2_settings_value_common(
+        text,
+        color,
+        native_x,
+        native_y,
+        box_x_offset,
+        0.0f,
+        FONT_SETTINGS_NUMERIC_VALUE_SCALE_X,
+        FONT_SETTINGS_NUMERIC_VALUE_GLYPH_HEIGHT
+    );
 }
 
 FONT_V2_SECTION(".text.font_v2_battle_settings_value_adapter")
@@ -274,17 +342,54 @@ int font_v2_battle_settings_value_adapter(
     float native_x,
     float native_y
 ) {
-    if (
-        !text || !*text ||
-        *text < (u8)'0' || *text > (u8)'9'
-    ) {
+    u32 numeric_value =
+        text && *text >= (u8)'0' && *text <= (u8)'9';
+    float box_x_offset = numeric_value
+        ? FONT_BATTLE_SETTINGS_NUMERIC_VALUE_X_OFFSET
+        : FONT_BATTLE_SETTINGS_VALUE_X_OFFSET;
+
+    if (!numeric_value) {
+        box_x_offset =
+            FONT_BATTLE_SETTINGS_PRIMARY_TEXT_VALUE_X_OFFSET;
         native_y += FONT_BATTLE_SETTINGS_VALUE_Y_OFFSET;
     }
-    return font_v2_settings_value_adapter(
+    return font_v2_settings_value_common(
         text,
         color,
         native_x,
-        native_y
+        native_y,
+        box_x_offset,
+        FONT_BATTLE_SETTINGS_NUMERIC_VALUE_Y_OFFSET,
+        FONT_BATTLE_SETTINGS_NUMERIC_VALUE_SCALE_X,
+        FONT_BATTLE_SETTINGS_NUMERIC_VALUE_GLYPH_HEIGHT
+    );
+}
+
+FONT_V2_SECTION(".text.font_v2_battle_settings_alternate_value_adapter")
+int font_v2_battle_settings_alternate_value_adapter(
+    const u8 *text,
+    u32 color,
+    float native_x,
+    float native_y
+) {
+    u32 numeric_value =
+        text && *text >= (u8)'0' && *text <= (u8)'9';
+    float box_x_offset = numeric_value
+        ? FONT_BATTLE_SETTINGS_NUMERIC_VALUE_X_OFFSET
+        : FONT_BATTLE_SETTINGS_VALUE_X_OFFSET;
+
+    if (!numeric_value) {
+        native_y += FONT_BATTLE_SETTINGS_VALUE_Y_OFFSET;
+    }
+    return font_v2_settings_value_common(
+        text,
+        color,
+        native_x,
+        native_y,
+        box_x_offset,
+        FONT_BATTLE_SETTINGS_NUMERIC_VALUE_Y_OFFSET,
+        FONT_BATTLE_SETTINGS_NUMERIC_VALUE_SCALE_X,
+        FONT_BATTLE_SETTINGS_NUMERIC_VALUE_GLYPH_HEIGHT
     );
 }
 
@@ -306,6 +411,7 @@ int font_v2_practice_settings_heading_adapter(
         0.0f,
         0.0f,
         FONT_V2_ALIGN_START,
+        0u,
         (u32)font_v2_settings_heading_callback
     );
 }

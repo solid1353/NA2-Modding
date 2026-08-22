@@ -112,3 +112,18 @@ the exact Practice heading and loop label callers through shared page formulas
 while keeping the right value and explanation families separate. The final
 main replay includes the corrected page without a large position, width, wrap,
 or style discrepancy.
+
+## Maintained Practice E2E boundary
+
+Evidence date: 2026-08-22.
+
+The maintained three-page Practice suite covers 16 deterministic capture
+states. Its regenerated reference/current grids establish matching text
+origins for the Pause rows, all 18 help headings, both selected and ordinary
+Special Controls choices, the Special Controls body, the captured Practice
+Settings states, and the quit-confirmation body and choices. The fixes remain
+owned by their renderer families; there is no global Practice offset.
+
+The remaining aligned edge-pixel differences are the intentional taller font
+raster and shading. Long helper, status, and explanation lines were explicitly
+excluded from this acceptance boundary.

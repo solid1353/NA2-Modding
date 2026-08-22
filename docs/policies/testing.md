@@ -23,9 +23,9 @@ command behavior and artifact layout are in
   run`. Do not invent an additional validation campaign.
 - Unit tests and E2E are independently selectable. Choosing one does
   not authorize the other.
-- Shifted E2E is user-only. Agents do not discuss, propose, select, run, or
-  report it unless the user explicitly requests shifted E2E for the current
-  task.
+- Shifted E2E is user-only. Unless explicitly requested for the current task,
+  agents treat it as nonexistent: do not mention it, even by qualifying
+  ordinary E2E, and do not propose, select, run, or report it.
 ## Repository defaults
 
 ### Non-patch code changes

@@ -206,6 +206,7 @@ V2_SETTINGS_LABEL_CALLBACK = f"{V2_PREFIX}.c.settings_label_callback"
 V2_SETTINGS_HEADING_CALLBACK = f"{V2_PREFIX}.c.settings_heading_callback"
 V2_SETTINGS_VALUE_CALLBACK = f"{V2_PREFIX}.c.settings_value_callback"
 V2_SETTINGS_ROW_COMMON = f"{V2_PREFIX}.c.settings_row_common"
+V2_SETTINGS_VALUE_COMMON = f"{V2_PREFIX}.c.settings_value_common"
 V2_BATTLE_SETTINGS_LABEL_ADAPTER = (
     f"{V2_PREFIX}.battle_settings_label_adapter"
 )
@@ -215,6 +216,9 @@ V2_PRACTICE_SETTINGS_LABEL_ADAPTER = (
 V2_SETTINGS_VALUE_ADAPTER = f"{V2_PREFIX}.settings_value_adapter"
 V2_BATTLE_SETTINGS_VALUE_ADAPTER = (
     f"{V2_PREFIX}.battle_settings_value_adapter"
+)
+V2_BATTLE_SETTINGS_ALTERNATE_VALUE_ADAPTER = (
+    f"{V2_PREFIX}.battle_settings_alternate_value_adapter"
 )
 V2_PRACTICE_SETTINGS_HEADING_ADAPTER = (
     f"{V2_PREFIX}.practice_settings_heading_adapter"
@@ -257,6 +261,7 @@ FONT_RENDERER_POINTER = 0x00607470
 FONT_MEASURE = 0x003798E0
 FONT_CENTER = 0x00379240
 FONT_PLAIN_DRAW = 0x00378F50
+FONT_SELECTED_SHADOW_COLOR = 0xFF808080
 FONT_BOX_DRAW = 0x00382310
 FONT_PAUSE_LIST_DRAW = 0x00382470
 FONT_PAUSE_LIST_SELECTED_DRAW = 0x003827A0
@@ -298,6 +303,8 @@ YES_TARGET = (64.5, 31.5)
 NO_TARGET = (68.5, 49.0)
 SPECIAL_CONTROLS_ON_TEXT = 0x006059F0
 SPECIAL_CONTROLS_OFF_TEXT = 0x006059F8
+QUIT_YES_TEXT = 0x00604570
+QUIT_NO_TEXT = 0x00604568
 SPECIAL_CONTROLS_ON_TARGET = (66.0, 31.0)
 SPECIAL_CONTROLS_OFF_TARGET = (59.0, 49.0)
 PRACTICE_PAUSE_LIST_Y_OFFSET = -4.0
@@ -359,7 +366,6 @@ V2_SESSION_SAVED_SCALE = 0x64
 V2_SESSION_SIZE = 0x68
 V2_SESSION_GLYPH_HEIGHT = 0x68
 V2_PAUSE_LIST_SELECTED_COLOR = V2_SESSION_SIZE
-V2_SPECIAL_CHOICE_NATIVE_ARG3 = 0x6C
 
 V2_PRACTICE_OBJECT_PRIMARY = 0x6C
 V2_PRACTICE_OBJECT_SECONDARY = 0x70
@@ -623,6 +629,7 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         "font_v2_practice_settings_label_adapter",
         "font_v2_settings_value_adapter",
         "font_v2_battle_settings_value_adapter",
+        "font_v2_battle_settings_alternate_value_adapter",
         "font_v2_practice_settings_heading_adapter",
         "font_v2_ninja_arithmetic_template",
         "font_v2_ninja_bonus_template",
@@ -746,6 +753,9 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
             "font_v2_battle_settings_value_adapter"
         ].symbol: V2_BATTLE_SETTINGS_VALUE_ADAPTER,
         extracted.symbols[
+            "font_v2_battle_settings_alternate_value_adapter"
+        ].symbol: V2_BATTLE_SETTINGS_ALTERNATE_VALUE_ADAPTER,
+        extracted.symbols[
             "font_v2_practice_settings_heading_adapter"
         ].symbol: V2_PRACTICE_SETTINGS_HEADING_ADAPTER,
         extracted.symbols["font_v2_ninja_arithmetic_template"].symbol: (
@@ -817,6 +827,9 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         ),
         f"{V2_PREFIX}.c.text.font.v2.settings.row.common": (
             V2_SETTINGS_ROW_COMMON
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.settings.value.common": (
+            V2_SETTINGS_VALUE_COMMON
         ),
         f"{V2_PREFIX}.c.text.font.v2.special.choice.session.init": (
             f"{V2_PREFIX}.c.special_choice_session_init"
@@ -945,10 +958,12 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         V2_SETTINGS_HEADING_CALLBACK,
         V2_SETTINGS_VALUE_CALLBACK,
         V2_SETTINGS_ROW_COMMON,
+        V2_SETTINGS_VALUE_COMMON,
         V2_BATTLE_SETTINGS_LABEL_ADAPTER,
         V2_PRACTICE_SETTINGS_LABEL_ADAPTER,
         V2_SETTINGS_VALUE_ADAPTER,
         V2_BATTLE_SETTINGS_VALUE_ADAPTER,
+        V2_BATTLE_SETTINGS_ALTERNATE_VALUE_ADAPTER,
         V2_PRACTICE_SETTINGS_HEADING_ADAPTER,
         V2_NINJA_TEXT_CALLBACK,
         V2_NINJA_TEXT_COMMON,
@@ -1540,7 +1555,7 @@ def build_v2_quit_selected_adapter() -> Fragment:
 def build_v2_quit_selected_entry() -> Fragment:
     """Bridge native float coordinates through the C choice mapper."""
 
-    v0, a0, a1, a2, a3 = 2, 4, 5, 6, 7
+    zero, v0, a0, a1, a2, a3 = 0, 2, 4, 5, 6, 7
     t0, t1 = 8, 9
     sp, ra = 29, 31
     frame_size = 0x30
@@ -1565,7 +1580,22 @@ def build_v2_quit_selected_entry() -> Fragment:
     assembler.branch(0x04, a0, t0, "special_choice")
     assembler.emit(0)
     mips.load_u32(assembler, t0, SPECIAL_CONTROLS_OFF_TEXT)
+    assembler.branch(0x04, a0, t0, "special_choice")
+    assembler.emit(0)
+    mips.load_u32(assembler, t0, QUIT_YES_TEXT)
+    assembler.branch(0x04, a0, t0, "quit_choice")
+    assembler.emit(0)
+    mips.load_u32(assembler, t0, QUIT_NO_TEXT)
     assembler.branch(0x05, a0, t0, "mapped_choice")
+    assembler.emit(0)
+
+    assembler.label("quit_choice")
+    assembler.load_symbol_word(t0, t0, 0x23, V2_QUIT_ACTIVE)
+    assembler.emit(mips.i_type(0x09, zero, t1, 1))
+    assembler.branch(0x04, t0, t1, "special_choice")
+    assembler.emit(0)
+    assembler.emit(mips.i_type(0x09, zero, t1, 3))
+    assembler.branch(0x05, t0, t1, "mapped_choice")
     assembler.emit(0)
 
     assembler.label("special_choice")
@@ -1602,16 +1632,53 @@ def build_v2_quit_selected_entry() -> Fragment:
 
 
 def build_v2_special_choice_selected_callback() -> Fragment:
-    """Draw one prepared selected Special Controls choice natively."""
+    """Draw one prepared choice with the shared selected-style formula."""
 
-    a3 = 7
+    a0, a1, a2, a3 = 4, 5, 6, 7
+    t0 = 8
+    sp, ra = 29, 31
+    frame_size = 0x30
+    saved_arg0 = 0x10
+    saved_arg1 = 0x14
+    saved_arg2 = 0x18
+    saved_arg3 = 0x1C
+    saved_ra = 0x2C
     assembler = mips.Assembler()
+
+    assembler.emit(mips.i_type(0x09, sp, sp, -frame_size))
+    assembler.emit(mips.i_type(0x2B, sp, ra, saved_ra))
+    for register, offset in (
+        (a0, saved_arg0),
+        (a1, saved_arg1),
+        (a2, saved_arg2),
+        (a3, saved_arg3),
+    ):
+        assembler.emit(mips.i_type(0x2B, sp, register, offset))
+
+    assembler.emit(mips.i_type(0x31, a3, 12, V2_SESSION_DRAW_X))
+    emit_load_float(assembler, t0, 0, 1.0)
+    assembler.emit(0)
+    assembler.emit(mips.cop1(0x00, 12, 12, 0))
+    assembler.emit(mips.i_type(0x31, a3, 13, V2_SESSION_DRAW_Y))
+    emit_load_float(assembler, t0, 0, 2.0)
+    assembler.emit(0)
+    assembler.emit(mips.cop1(0x00, 13, 13, 0))
+    mips.load_u32(assembler, a1, FONT_SELECTED_SHADOW_COLOR)
+    assembler.emit(mips.jump(0x03, FONT_PLAIN_DRAW))
+    assembler.emit(0)
+
+    for register, offset in (
+        (a0, saved_arg0),
+        (a1, saved_arg1),
+        (a2, saved_arg2),
+        (a3, saved_arg3),
+    ):
+        assembler.emit(mips.i_type(0x23, sp, register, offset))
     assembler.emit(mips.i_type(0x31, a3, 12, V2_SESSION_DRAW_X))
     assembler.emit(mips.i_type(0x31, a3, 13, V2_SESSION_DRAW_Y))
-    assembler.emit(
-        mips.i_type(0x23, a3, a3, V2_SPECIAL_CHOICE_NATIVE_ARG3)
-    )
-    assembler.emit(mips.jump(0x02, FONT_SELECTED_DRAW))
+    assembler.emit(mips.i_type(0x23, sp, ra, saved_ra))
+    assembler.emit(mips.i_type(0x09, sp, sp, frame_size))
+    assembler.emit(mips.jump(0x02, FONT_PLAIN_DRAW))
     assembler.emit(0)
     payload, relocations = assembler.build()
     return Fragment(

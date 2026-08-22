@@ -69,11 +69,36 @@ v2_quit_choices_scope:
     .globl v2_special_choice_selected_callback
     .type v2_special_choice_selected_callback, @function
 v2_special_choice_selected_callback:
-    lwc1 $f12,72($a3)                                    # 0xC4EC0048
-    lwc1 $f13,76($a3)                                    # 0xC4ED004C
-    lw $a3,108($a3)                                      # 0x8CE7006C
-    j 0x379150                                           # 0x080DE454
-    nop                                                  # 0x00000000
+    addiu $sp,$sp,-48
+    sw $ra,44($sp)
+    sw $a0,16($sp)
+    sw $a1,20($sp)
+    sw $a2,24($sp)
+    sw $a3,28($sp)
+    lwc1 $f12,72($a3)
+    lui $t0,0x3f80
+    mtc1 $t0,$f0
+    nop
+    add.s $f12,$f12,$f0
+    lwc1 $f13,76($a3)
+    lui $t0,0x4000
+    mtc1 $t0,$f0
+    nop
+    add.s $f13,$f13,$f0
+    lui $a1,0xff80
+    ori $a1,$a1,0x8080
+    jal 0x378f50
+    nop
+    lw $a0,16($sp)
+    lw $a1,20($sp)
+    lw $a2,24($sp)
+    lw $a3,28($sp)
+    lwc1 $f12,72($a3)
+    lwc1 $f13,76($a3)
+    lw $ra,44($sp)
+    addiu $sp,$sp,48
+    j 0x378f50
+    nop
     .size v2_special_choice_selected_callback, . - v2_special_choice_selected_callback
 
     .section .text.v2_title_callback,"ax",@progbits

@@ -84,6 +84,11 @@ String-dependent width errors and caller-dependent vertical offsets proved
 that one global scale, tracking, X, or Y correction could not establish
 parity.
 
+Selected and ordinary rows can enter different renderer paths even when they
+display the same text. A matched ordinary row therefore does not establish the
+selected result, or vice versa. Maintained E2E plans deliberately capture both
+states, and a caller-family correction is validated against both together.
+
 The three confirmation screens reproduced the same choice geometry: NUN5
 placed `Yes` and `No` about 25 pixels apart vertically, while NA2 placed them
 about 43 pixels apart and shifted both left. This justified one shared modal

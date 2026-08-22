@@ -31,11 +31,11 @@ not receive Collection coverage unless its exact executable instance is
 proven; the Collection confirmation telemetry establishes the exact modal
 `No` and `Yes` slots used by the accepted Misc captures.
 
-The accepted generated Movesets suite contains 146 grids: 74 base-character,
-62 specials, and 10 unique-mode grids. A complete audit of those grids and
-their executable selectors proves `e2e:movesets` for 1,052 of the 1,065 mapped
+The accepted generated Movesets suite contains 147 grids: 74 base-character,
+62 specials, and 11 unique-mode grids. A complete audit of those grids and
+their executable selectors proves `e2e:movesets` for 1,062 of the 1,065 mapped
 Command Chart titles, all 154 metadata-selected Ultimate/Jutsu titles, and 20
-exact shared relationship/control records. The remaining 13 Command Chart
+exact shared relationship/control records. The remaining three Command Chart
 titles belong to the same record family but are not selected by the accepted
 capture plan. The character-name plaque and controller icons are localized
 rectangles or textures rather than translation-table rows, so they are outside
@@ -55,6 +55,11 @@ states. It covers the displayed objective prose, indices, timer label, N/A and
 bonus strings, and formula symbols without transferring coverage to unseen
 bonus siblings or unused unit slots.
 
+The maintained Practice suite selects 55 exact non-helper rows across its 16
+capture states. Fourteen are shared with Menus; the remaining 41 receive their
+first maintained-suite basis here. Long status, explanation, and running-help
+rows are deliberately outside this batch and retain their prior evidence.
+
 | Display basis | Covered rows | Proven family |
 | --- | ---: | --- |
 | `e2e:collection/characters` | 31 | Character-plaque names selected by the Characters captures |
@@ -65,16 +70,18 @@ bonus siblings or unused unit slots.
 | `e2e:collection/voice` | 184 | 31 character-plaque names and 153 Collection-owned Voice titles or aliases |
 | `e2e:jutsus` | 26 | Exact Command Chart title records selected by the three Jutsus pages |
 | `e2e:menus` | 30 | Exact Character Select, Battle Settings, Pause, and quit-confirmation records selected by the three Menus pages |
-| `e2e:movesets` | 1,226 | 1,052 selected Command Chart titles, 154 selected metadata-owned Ultimate/Jutsu titles, and 20 selected shared relationship/control records |
+| `e2e:movesets` | 1,236 | 1,062 selected Command Chart titles, 154 selected metadata-owned Ultimate/Jutsu titles, and 20 selected shared relationship/control records |
 | `e2e:ninja_song` | 40 | Exact objective, index, unit/status, bonus, and formula records selected by the five Ninja Song states |
+| `e2e:practice` | 55 | Exact Pause, Control Settings, Practice-title, selector, Settings, and quit records selected by the 16 Practice states |
 
-These suite counts total 2,029 `e2e:` entries on 1,836 unique rows. The six
+These suite counts total 2,094 `e2e:` entries on 1,887 unique rows. The six
 Collection suites own 707 entries on 539 unique rows because exact records can
-be selected by several Collection paths. The 1,226 Movesets rows are separate
+be selected by several Collection paths. The 1,236 Movesets rows are separate
 executable records even where the visible English is equal. Jutsus overlaps
 Movesets on 25 rows and adds T260 as one newly selected row. Menus adds 30
-previously non-E2E rows, and Ninja Song adds 40. Of the 2,088 canonical rows,
-252 have no maintained-suite E2E basis.
+previously non-E2E rows, Ninja Song adds 40, and Practice adds 41 while sharing
+14 with Menus. Of the 2,061 canonical rows, 174 have no maintained-suite E2E
+basis.
 
 ### Menus capture-selection boundary
 
@@ -97,6 +104,37 @@ byte checks against the clean NA2 and NUN5 files prove these 30 selected rows:
 The canonical `source_ref` and `donor_ref` fields on those 30 rows record every
 exact verified NA2 and NUN5 offset. No Menus row uses a replacement or prefix,
 and equal English in another executable family does not transfer this basis.
+
+### Practice capture-selection boundary
+
+The three Practice pages contain 16 capture states. Clean-file validation
+proves the declared NA2 source bytes and exact NUN5 donor bytes for these 55
+selected rows:
+
+- the Pause list selects T57-T59, T61-T62, and T68-T69;
+- Control Settings selects T1949-T1957, excluding its defaults-status and
+  instruction lines;
+- the six Practice help pages select title records T1910-T1924, T1929-T1930,
+  and T1932, without transferring coverage to their explanation records;
+- Special Controls selects the exact boot-ELF T2203 `ON` and T2204 `OFF`
+  slots;
+- Practice Settings selects labels T1980, T53-T55, T1962, T17, and T1963,
+  plus displayed values T28, T1994, T44, T1995, and T34;
+- the quit modal is assembled from Practice head T64, T66-T67, destination
+  T2201 or T2202, and the generic boot-ELF T1/T2024 Yes/No slots.
+
+The Practice label-pointer array is BTL file `0x20A7C0`; entries 10-16 at
+`0x20A7E8..0x20A800` select the seven displayed Settings labels in row order.
+The paired value-array table is BTL file `0x20B480`; entries 10-16 at
+`0x20B4A8..0x20B4C0` resolve the recorded values above through their row-local
+arrays. This separates the exact T28/T34 `Normal` records and distinguishes
+the Practice-owned T1920 `Charge Chakra` title from the Command Chart T1926
+`Charge` record.
+
+The user excluded long helper, status, and explanatory strings from this
+batch. T1880, T1959, the Practice explanations, and the Settings running-help
+rows therefore receive no `e2e:practice` basis from these captures. All 55
+admitted rows retain blank `prefix` and `replacement` fields.
 
 ### Ninja Song capture-selection boundary
 
@@ -245,12 +283,12 @@ or direct binary edit.
 
 ### Movesets capture-selection boundary
 
-The accepted Movesets plans select 1,052 Command Chart title records. Thirteen
+The accepted Movesets plans select 1,062 Command Chart title records. Three
 valid `0x54` records remain mapped through `character:command-record-index` but
-do not own `e2e:movesets`: T260, T1651-T1660, T2210, and T2211. T260 now owns
-`e2e:jutsus`; the other 12 retain only structural family evidence. T1651-T1660
-continue Granny Chiyo's record block beyond the entries selected by her
-accepted grids. T2210, T2211, and T260 belong to structurally valid extra
+do not own `e2e:movesets`: T260, T2210, and T2211. T260 owns `e2e:jutsus`;
+T2210 and T2211 retain only structural family evidence. The added Granny Chiyo
+(Taijutsu) `0x4E` unique-mode grid selects T1651-T1660 from her alternate
+ordinary-move block. T2210, T2211, and T260 belong to structurally valid extra
 four-record arrays, but the accepted plans select other sibling records rather
 than those three. Their presence in the Command Chart family is not Movesets
 capture evidence.

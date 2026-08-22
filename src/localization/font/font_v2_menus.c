@@ -12,9 +12,9 @@
 /* Single-row layout height used by the Controls adapter. */
 #define FONT_CONTROLS_LINE_HEIGHT 20.0f
 
-/* Shared one-output-pixel raster phase for all first-eight labels. */
-#define FONT_CONTROLS_X_OFFSET 0.8f
-#define FONT_CONTROLS_Y_OFFSET 0.8f
+/* Shared raster phase for all first-eight labels. */
+#define FONT_CONTROLS_X_OFFSET 0.0f
+#define FONT_CONTROLS_Y_OFFSET 0.0f
 
 /* Fixed native Controls measurement and draw entrypoints; do not tune. */
 #define FONT_CONTROLS_MEASURE_ADDRESS 0x003798E0u
@@ -84,13 +84,13 @@ typedef int (*FontV2NativeControlsDraw)(
 /* === Practice: screen title === */
 
 /* Left edge of the Practice title; increase to move it right. */
-#define FONT_PRACTICE_TITLE_BOX_X 31.2f
+#define FONT_PRACTICE_TITLE_BOX_X 32.0f
 
 /* Practice-title width; larger values shrink less. */
 #define FONT_PRACTICE_TITLE_BOX_WIDTH 352u
 
 /* Added to native Practice-title Y; more negative moves it up. */
-#define FONT_PRACTICE_TITLE_Y_OFFSET -6.8f
+#define FONT_PRACTICE_TITLE_Y_OFFSET -6.0f
 
 /* === Shared Command Chart and Practice title geometry === */
 
@@ -163,15 +163,16 @@ font_v2_character_row_y(float native_y) {
 /* Exact native Y bit pattern identifying the ordinary No row. */
 #define FONT_QUIT_NO_SOURCE_BITS 0x42600000u
 
+/* Fixed runtime pointers identifying the shared Yes and No strings. */
+#define FONT_QUIT_YES_TEXT 0x00604570u
+#define FONT_QUIT_NO_TEXT 0x00604568u
+
 /* Shared residual correction for the first row of confirmation selectors. */
 #define FONT_CONFIRMATION_YES_X_OFFSET 0.0f
 #define FONT_CONFIRMATION_YES_Y_OFFSET 0.0f
 
-/* Selected confirmations retain one output-pixel vertical style residual. */
-#define FONT_CONFIRMATION_SELECTED_Y_OFFSET (-0.8f)
-
-/* Character Select's confirmation container is one output pixel lower. */
-#define FONT_CHARACTER_CONFIRMATION_Y_OFFSET (-0.8f)
+/* Shared one-output-pixel first-row phase for scoped confirmations. */
+#define FONT_CONFIRMATION_YES_SCOPED_Y_OFFSET (-0.8f)
 
 /* Target local Yes X; increase to move Yes right. */
 #define FONT_QUIT_YES_X (64.5f + FONT_CONFIRMATION_YES_X_OFFSET)
@@ -234,19 +235,35 @@ font_v2_character_row_y(float native_y) {
 #define FONT_SPECIAL_ROW_1_SOURCE_Y_BITS 0x42600000u
 
 /* Shared two-row formula; neither coordinate follows the selected text. */
-#define FONT_SPECIAL_ROW_X 68.4f
+#define FONT_SPECIAL_ROW_X 66.0f
 #define FONT_SPECIAL_ROW_X_INTERVAL -7.0f
 #define FONT_SPECIAL_ROW_Y 29.0f
 #define FONT_SPECIAL_ROW_Y_INTERVAL 20.0f
 
-/* Shared font-only geometry for both Special Controls choices. */
+/* Shared font-only geometry for the bounded two-choice token family. */
 #define FONT_SPECIAL_CHOICE_BOX_WIDTH 104u
 #define FONT_SPECIAL_CHOICE_BOX_HEIGHT 20u
 #define FONT_SPECIAL_CHOICE_LINE_HEIGHT 20.0f
 #define FONT_SPECIAL_CHOICE_SELECTED_X_OFFSET 0.0f
-#define FONT_SPECIAL_CHOICE_SELECTED_SCALE_X 1.02f
-#define FONT_SPECIAL_CHOICE_UNSELECTED_SCALE_X 1.01f
-#define FONT_SPECIAL_CHOICE_GLYPH_HEIGHT 26.0f
+#define FONT_QUIT_CHOICE_SELECTED_SCALE_X 1.0f
+#define FONT_QUIT_CHOICE_SELECTED_Y_OFFSET 0.0f
+#define FONT_QUIT_CHOICE_SELECTED_GLYPH_HEIGHT 28.0f
+#define FONT_QUIT_CHOICE_UNSELECTED_YES_SCALE_X 1.0f
+#define FONT_QUIT_CHOICE_UNSELECTED_NO_SCALE_X 0.98f
+#define FONT_QUIT_CHOICE_UNSELECTED_Y_OFFSET 0.4f
+#define FONT_QUIT_CHOICE_UNSELECTED_NO_X_OFFSET 0.9f
+#define FONT_QUIT_CHOICE_UNSELECTED_GLYPH_HEIGHT 28.0f
+#define FONT_SPECIAL_CHOICE_SELECTED_ON_SCALE_X 1.02f
+#define FONT_SPECIAL_CHOICE_SELECTED_ON_Y_OFFSET -1.4f
+#define FONT_SPECIAL_CHOICE_SELECTED_ON_GLYPH_HEIGHT 30.0f
+#define FONT_SPECIAL_CHOICE_SELECTED_OFF_SCALE_X 1.0f
+#define FONT_SPECIAL_CHOICE_SELECTED_OFF_Y_OFFSET -0.8f
+#define FONT_SPECIAL_CHOICE_SELECTED_OFF_GLYPH_HEIGHT 28.0f
+#define FONT_SPECIAL_CHOICE_UNSELECTED_ON_SCALE_X 1.02f
+#define FONT_SPECIAL_CHOICE_UNSELECTED_OFF_SCALE_X 0.99f
+#define FONT_SPECIAL_CHOICE_UNSELECTED_Y_OFFSET -0.4f
+#define FONT_SPECIAL_CHOICE_UNSELECTED_ON_GLYPH_HEIGHT 27.0f
+#define FONT_SPECIAL_CHOICE_UNSELECTED_OFF_GLYPH_HEIGHT 28.0f
 
 /* === Shared temporary body storage: internal capacity === */
 
@@ -581,13 +598,13 @@ u32 font_v2_map_choice(
     FontV2Bits y;
 
     if (
-        text == 0x00604570u &&
+        text == FONT_QUIT_YES_TEXT &&
         source_y == FONT_QUIT_YES_SOURCE_BITS
     ) {
         x.f = FONT_COLLECTION_YES_X;
         y.f = FONT_COLLECTION_YES_Y;
     } else if (
-        text == 0x00604568u &&
+        text == FONT_QUIT_NO_TEXT &&
         source_y == FONT_QUIT_NO_SOURCE_BITS
     ) {
         x.f = FONT_COLLECTION_NO_X;
@@ -633,10 +650,11 @@ u32 font_v2_map_choice(
     }
 
     if (
-        font_v2_quit_active == FONT_CHARACTER_CHOICE_SCOPE &&
+        (font_v2_quit_active == 1u ||
+            font_v2_quit_active == FONT_CHARACTER_CHOICE_SCOPE) &&
         source_y == FONT_QUIT_YES_SOURCE_BITS
     ) {
-        y.f += FONT_CHARACTER_CONFIRMATION_Y_OFFSET;
+        y.f += FONT_CONFIRMATION_YES_SCOPED_Y_OFFSET;
     }
 
     *target_x = x.u;
@@ -657,11 +675,12 @@ u32 font_v2_quit_selected_map(
 
     if (font_v2_map_choice(text, source_y, &target_x, &mapped_y)) {
         if (
+            font_v2_quit_active != 1u &&
             font_v2_quit_active != FONT_CHARACTER_CHOICE_SCOPE &&
-            source_y != FONT_QUIT_NO_SOURCE_BITS
+            source_y == FONT_QUIT_YES_SOURCE_BITS
         ) {
             selected_y.u = mapped_y;
-            selected_y.f += FONT_CONFIRMATION_SELECTED_Y_OFFSET;
+            selected_y.f += FONT_CONFIRMATION_YES_SCOPED_Y_OFFSET;
             mapped_y = selected_y.u;
         }
     }
@@ -676,6 +695,7 @@ void font_v2_special_choice_session_init(
     float draw_x,
     float draw_y,
     float scale_x,
+    float glyph_height,
     u32 callback
 ) {
     session->text = text;
@@ -691,7 +711,7 @@ void font_v2_special_choice_session_init(
     session->line_height = FONT_SPECIAL_CHOICE_LINE_HEIGHT;
     session->callback = callback;
     session->scale_x = scale_x;
-    session->glyph_height = FONT_SPECIAL_CHOICE_GLYPH_HEIGHT;
+    session->glyph_height = glyph_height;
 }
 
 FONT_V2_SECTION(".text.font_v2_special_choice_selected_adapter")
@@ -706,17 +726,34 @@ int font_v2_special_choice_selected_adapter(
     FontV2SpecialChoiceFrame frame;
     FontV2Bits draw_x;
     FontV2Bits draw_y;
+    float glyph_height;
+    float scale_x;
+    float y_offset;
 
     draw_x.u = native_x_bits;
     draw_y.u = native_y_bits;
     font_v2_map_choice(text, native_y_bits, &draw_x.u, &draw_y.u);
     draw_x.f += FONT_SPECIAL_CHOICE_SELECTED_X_OFFSET;
+    if (text == FONT_SPECIAL_ON_TEXT) {
+        y_offset = FONT_SPECIAL_CHOICE_SELECTED_ON_Y_OFFSET;
+        glyph_height = FONT_SPECIAL_CHOICE_SELECTED_ON_GLYPH_HEIGHT;
+        scale_x = FONT_SPECIAL_CHOICE_SELECTED_ON_SCALE_X;
+    } else if (text == FONT_SPECIAL_OFF_TEXT) {
+        y_offset = FONT_SPECIAL_CHOICE_SELECTED_OFF_Y_OFFSET;
+        glyph_height = FONT_SPECIAL_CHOICE_SELECTED_OFF_GLYPH_HEIGHT;
+        scale_x = FONT_SPECIAL_CHOICE_SELECTED_OFF_SCALE_X;
+    } else {
+        y_offset = FONT_QUIT_CHOICE_SELECTED_Y_OFFSET;
+        glyph_height = FONT_QUIT_CHOICE_SELECTED_GLYPH_HEIGHT;
+        scale_x = FONT_QUIT_CHOICE_SELECTED_SCALE_X;
+    }
     font_v2_special_choice_session_init(
         &frame.session,
         (const u8 *)text,
         draw_x.f,
-        draw_y.f,
-        FONT_SPECIAL_CHOICE_SELECTED_SCALE_X,
+        draw_y.f + y_offset,
+        scale_x,
+        glyph_height,
         (u32)font_v2_special_choice_selected_callback
     );
     frame.session.callback_arg0 = text;
@@ -742,12 +779,17 @@ int font_v2_quit_unselected_adapter(
     u32 target_x;
     u32 target_y;
     u32 text;
+    u32 quit_choice;
     u32 special_choice;
     int result;
 
     original_x = record[0];
     original_y = record[1];
     text = record[2];
+    quit_choice =
+        (text == FONT_QUIT_YES_TEXT || text == FONT_QUIT_NO_TEXT) &&
+        (font_v2_quit_active == 1u ||
+            font_v2_quit_active == FONT_CHARACTER_CHOICE_SCOPE);
     special_choice =
         text == FONT_SPECIAL_ON_TEXT || text == FONT_SPECIAL_OFF_TEXT;
 
@@ -764,18 +806,43 @@ int font_v2_quit_unselected_adapter(
 
     record[0] = target_x;
     record[1] = target_y;
-    if (special_choice) {
+    if (special_choice || quit_choice) {
         FontV2Bits draw_x;
         FontV2Bits draw_y;
+        float glyph_height;
+        float scale_x;
+        float y_offset;
 
         draw_x.u = target_x;
         draw_y.u = target_y;
+        if (text == FONT_SPECIAL_ON_TEXT) {
+            scale_x = FONT_SPECIAL_CHOICE_UNSELECTED_ON_SCALE_X;
+            y_offset = FONT_SPECIAL_CHOICE_UNSELECTED_Y_OFFSET;
+            glyph_height = FONT_SPECIAL_CHOICE_UNSELECTED_ON_GLYPH_HEIGHT;
+        } else if (text == FONT_SPECIAL_OFF_TEXT) {
+            scale_x = FONT_SPECIAL_CHOICE_UNSELECTED_OFF_SCALE_X;
+            y_offset = FONT_SPECIAL_CHOICE_UNSELECTED_Y_OFFSET;
+            glyph_height = FONT_SPECIAL_CHOICE_UNSELECTED_OFF_GLYPH_HEIGHT;
+        } else {
+            scale_x = text == FONT_QUIT_YES_TEXT
+                ? FONT_QUIT_CHOICE_UNSELECTED_YES_SCALE_X
+                : FONT_QUIT_CHOICE_UNSELECTED_NO_SCALE_X;
+            y_offset = FONT_QUIT_CHOICE_UNSELECTED_Y_OFFSET;
+            glyph_height = FONT_QUIT_CHOICE_UNSELECTED_GLYPH_HEIGHT;
+            if (text == FONT_QUIT_NO_TEXT) {
+                draw_x.f += FONT_QUIT_CHOICE_UNSELECTED_NO_X_OFFSET;
+            }
+        }
+        record[0] = draw_x.u;
+        draw_y.f += y_offset;
+        record[1] = draw_y.u;
         font_v2_special_choice_session_init(
             &session,
             (const u8 *)text,
             draw_x.f,
             draw_y.f,
-            FONT_SPECIAL_CHOICE_UNSELECTED_SCALE_X,
+            scale_x,
+            glyph_height,
             FONT_UI_RECORD_DRAW_ADDRESS
         );
         session.callback_arg0 = arg0;

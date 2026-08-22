@@ -13,8 +13,8 @@ in [translation importer knowledge](../../knowledge/localization/translation_imp
 
 ## Mapping metadata
 
-- Canonical `mappings.tsv` rows: `2,088`
-- Canonical `mappings.tsv` SHA-256: `B85600645B2E7D3364AD056D2234C776CA088058C4DC07B3148369025CC8E457`
+- Canonical `mappings.tsv` rows: `2,061`
+- Canonical `mappings.tsv` SHA-256: `71ED63B0A5E9BC703FD4426E17BAA7B22DB549158C3755EF292205FD34A61A37`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the builder's configuration-resource fingerprint own content identity.
@@ -79,11 +79,11 @@ The 16 columns are:
   current rows are enabled. Unconfirmed rows are absent instead of retained as
   disabled inventory.
 
-Canonical `mappings.tsv` contains 2,088 enabled `T#` rows admitted by exact
+Canonical `mappings.tsv` contains 2,061 enabled `T#` rows admitted by exact
 display evidence or a documented structural-family basis, sorted by
 `display_context` and numeric ID. Exact source, source reference, mode, and
 capacity are guarded by the canonical row declarations. The current maintained
-E2E suites exercise 1,796 unique rows; 292 rows retain a non-E2E basis. The
+E2E suites exercise 1,887 unique rows; 174 rows retain a non-E2E basis. The
 Jutsus suite selects 26 exact Command Chart records, including T260 plus 25
 records also selected by Movesets. The Menus suite selects 30 exact Battle
 Settings, Pause, confirmation, and Character Select rows. T2042, T2045, and

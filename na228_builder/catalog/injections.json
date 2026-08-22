@@ -751,7 +751,7 @@
         "encoding": "jal26"
       },
       "map_selected_yes_no_exact_ss4": {
-        "description": "Map selected Yes or No while the exact ss4 scope is active, or the exact Special Controls ON pointer outside it; every other selected row remains native.",
+        "description": "Apply bounded metrics to exact Yes or No only in Battle or Character confirmation scope, or to exact Special Controls On or Off; Collection and every unrelated selected row retain their accepted native style.",
         "target_id": "na2_elf",
         "offset": "0x283914",
         "expected_hex": "54E40D0C00000000",
@@ -767,7 +767,7 @@
         "encoding": "jal26"
       },
       "temporarily_map_unselected_yes_no_exact": {
-        "description": "Temporarily map unselected Yes or No while the exact ss4 scope is active, or the exact Special Controls OFF pointer outside it, then restore native coordinates.",
+        "description": "Apply bounded metrics to exact unselected Yes or No only in Battle or Character confirmation scope, or to exact Special Controls On or Off, then restore native coordinates.",
         "target_id": "na2_elf",
         "offset": "0x283A60",
         "expected_hex": "88E60D0C00000000",
@@ -781,6 +781,7 @@
         "path": "src/localization/font/font_v2_quit_confirmation_abi.S",
         "namespace": "localization.font.v2.quit.confirmation.asm",
         "imports": {
+          "v2_quit_active": "v2_quit_active",
           "v2_c_quit_selected_map": "v2_c_quit_selected_map",
           "v2_c_special_choice_selected_adapter": "v2_c_special_choice_selected_adapter"
         },
@@ -1138,6 +1139,7 @@
         "namespace": "localization.font.v2.c",
         "imports": {
           "font_v2_adapter_call": "v2_adapter_call",
+          "font_v2_measure": "v2_measure",
           "font_v2_native_measure": "v2_native_measure"
         },
         "fragments": {
@@ -1185,7 +1187,17 @@
             "order": 103,
             "object": "localization.font.v2.c.text.font.v2.battle.settings.value.adapter",
             "abi": "text_color_native_x_native_y",
-            "description": "Battle Settings centered value with page-local raster phase"
+            "description": "Ordinary Battle Settings centered value with caller-local raster phase"
+          },
+          "v2_c_settings_value_common": {
+            "order": 126,
+            "object": "localization.font.v2.c.text.font.v2.settings.value.common"
+          },
+          "v2_battle_settings_alternate_value_adapter": {
+            "order": 127,
+            "object": "localization.font.v2.c.text.font.v2.battle.settings.alternate.value.adapter",
+            "abi": "text_color_native_x_native_y",
+            "description": "Alternate Battle Settings centered value with caller-local raster phase"
           }
         }
       },
@@ -1295,11 +1307,11 @@
     "description": "Route the exact Battle Settings and Practice Settings loops through page-level label, heading, compact-token value, descriptive-phrase value, and digit-leading value templates.",
     "hooks": {
       "route_alternate_battle_settings_value_branch": {
-        "description": "Route the alternate Battle Settings value branch through the same Battle-only structural value template.",
+        "description": "Route the alternate Battle Settings value branch through its Battle-only structural value template.",
         "target_id": "na2_btl",
         "offset": "0x1CC598",
         "expected_hex": "90E40D0C00000000",
-        "symbol": "v2_battle_settings_value_adapter",
+        "symbol": "v2_battle_settings_alternate_value_adapter",
         "encoding": "jal26"
       },
       "route_each_practice_settings_label_nun5": {

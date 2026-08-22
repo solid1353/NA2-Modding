@@ -43,11 +43,11 @@
 #define FONT_NINJA_TOTAL_RIGHT_EDGE_X_OFFSET 314.2f
 /* NA2's Jutsu draw adds four local units between adjacent glyphs. */
 #define FONT_NINJA_TOTAL_INTER_GLYPH_ADVANCE 4.0f
-#define FONT_NINJA_EMPTY_X_OFFSET 256.0f
-#define FONT_NINJA_EMPTY_Y_OFFSET -1.0f
+#define FONT_NINJA_EMPTY_X_OFFSET 255.2f
+#define FONT_NINJA_EMPTY_Y_OFFSET 0.0f
 #define FONT_NINJA_EMPTY_WIDTH 96u
-#define FONT_NINJA_EMPTY_SCALE_X 1.02f
-#define FONT_NINJA_EMPTY_GLYPH_HEIGHT 30.0f
+#define FONT_NINJA_EMPTY_SCALE_X 1.0f
+#define FONT_NINJA_EMPTY_GLYPH_HEIGHT 28.75f
 #define FONT_NINJA_SINGLE_LINE_HEIGHT 20.0f
 
 /* NUN5 dynamic bonus/detail boxes relative to the native row origin. */

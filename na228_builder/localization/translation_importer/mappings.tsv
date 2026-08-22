@@ -11,7 +11,7 @@ T13	1	Battle or Practice Settings > label or running help	<r方向|ほうこう>
 T14	1	Battle or Practice Settings > label or running help	<r方向|ほうこう>キー<r左右|さゆう>で<r奥義|おうぎ>の<r入力勝負|にゅうりょくしょうぶ>の<r切|き>り<r替|か>えなどが<r設定|せってい>できます。	Press the left directional button or right directional button to change Ultimate Jutsu controls.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A4D0	NUN5_TEXTENG@0xF730	slot	144				
 T15	1	Battle or Practice Settings > label or running help	<r方向|ほうこう>キー<r左右|さゆう>でハンディキャップの<r設定|せってい>ができます。　　　　　<r赤|あか>いマークが<r多|おお>いほど、１Ｐが<r有利|ゆうり>。<r逆|ぎゃく>に<r青|あお>いマークが<r多|おお>いと２Ｐが<r有利|ゆうり>な<r設定|せってい>です。	Press the left directional button or right directional button to change handicap. More red marks means a better advantage for 1P. Blue marks are for 2P.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A560	NUN5_TEXTENG@0xF7A0	slot	256				
 T16	1	Battle or Practice Settings > label or running help	<r対戦設定|たいせんせってい>をデフォルトに<r戻|もど>しました。	Battle Settings returned to defaults.			e2e:menus	NA2_BTL@0x20A680	NUN5_TEXTENG@0xF260	slot	68				
-T17	1	Battle or Practice Settings > label or running help	連係攻撃	Linked Attack			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A748	NUN5_TEXTENG@0xF08	slot	16				
+T17	1	Battle or Practice Settings > label or running help	連係攻撃	Linked Attack			e2e:practice	NA2_BTL@0x20A748	NUN5_TEXTENG@0xF08	slot	16				
 T18	1	Battle or Practice Settings > label or running help	連係モード	Linked Mode			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A758	NUN5_TEXTENG@0x1E60	slot	16				
 T19	1	Battle or Practice Settings > label or running help	コマンド表示	Commands			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A768	NUN5_TEXTENG@0x893	slot	16				
 T20	1	Battle or Practice Settings > label or running help	ダメージ量表示	Damage			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A778	NUN5_SLES@0x5142E8	slot	16				
@@ -22,13 +22,13 @@ T24	1	Battle or Practice Settings > label or running help	<r対戦|たいせん>
 T25	1	Battle or Practice Settings > label or running help	対戦相手の設定	Opponent Settings			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20B468	NUN5_TEXTENG@0xF920	slot	24				
 T26	1	Battle or Practice Settings > label or running help	<r練習設定|れんしゅうせってい>をデフォルトに<r戻|もど>しました。	Practice settings returned to defaults.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20B4D0	NUN5_TEXTENG@0xF940	slot	72				
 T27	1	Battle or Practice Settings > selector value	楽々	Simple			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B48	NUN5_SLES@0x514218	slot	8				
-T28	1	Battle or Practice Settings > selector value	ふつう	Normal			e2e:menus	NA2_SLPS@0x505B50	NUN5_SLES@0x514228	slot	8				
+T28	1	Battle or Practice Settings > selector value	ふつう	Normal			e2e:menus|e2e:practice	NA2_SLPS@0x505B50	NUN5_SLES@0x514228	slot	8				
 T29	1	Battle or Practice Settings > selector value	激むず	Insane			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B58	NUN5_SLES@0x514238	slot	8				
 T30	1	Battle or Practice Settings > selector value	究極	Ultimate			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B60	NUN5_TEXTENG@0xF208	slot	8			NA2_BTL@0x209CB4	
 T31	1	Battle or Practice Settings > selector value	なし	None			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B68	NUN5_SLES@0x514240	slot	8				
 T32	1	Battle or Practice Settings > selector value	少なめ	Less			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B70	NUN5_SLES@0x514248	slot	8				
 T33	1	Battle or Practice Settings > selector value	多め	More			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B78	NUN5_SLES@0x514250	slot	8				
-T34	1	Battle or Practice Settings > selector value	通常	Normal			e2e:menus	NA2_SLPS@0x505B80	NUN5_SLES@0x4B9519	slot	8				
+T34	1	Battle or Practice Settings > selector value	通常	Normal			e2e:menus|e2e:practice	NA2_SLPS@0x505B80	NUN5_SLES@0x4B9519	slot	8				
 T35	1	Battle or Practice Settings > selector value	回転	Turn			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B98	NUN5_SLES@0x514278	slot	8				
 T36	1	Battle or Practice Settings > selector value	連打	Combo			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505BA0	NUN5_SLES@0x4AFE80	slot	8				
 T37	1	Battle or Practice Settings > selector value	オフ	OFF			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505BB0	NUN5_SLES@0x513E6C	slot	8				
@@ -38,7 +38,7 @@ T40	1	Battle or Practice Settings > selector value	オート	Auto			inferred:rep
 T41	1	Battle or Practice Settings > selector value	手動	Manual			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505BF0	NUN5_SLES@0x513F10	slot	8				
 T42	1	Battle or Practice Settings > selector value	ＣＯＭ	COM			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505BF8	NUN5_SLES@0x514290	slot	8				
 T43	1	Battle or Practice Settings > selector value	立ち	Stand			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505C00	NUN5_SLES@0x514298	slot	8				
-T44	1	Battle or Practice Settings > selector value	しない	No			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505C08	NUN5_SLES@0x513E4C	slot	8				
+T44	1	Battle or Practice Settings > selector value	しない	No			e2e:practice	NA2_SLPS@0x505C08	NUN5_SLES@0x513E4C	slot	8				
 T45	1	Battle or Practice Settings > selector value	単発	Single			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505C10	NUN5_SLES@0x5142A0	slot	8				
 T46	1	Battle or Practice Settings > selector value	コンボ	Combo			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505C18	NUN5_SLES@0x4AFE80	slot	8				
 T47	1	Battle or Practice Settings > selector value	忍術	Jutsu			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505C28	NUN5_SLES@0x5142A8	slot	8				
@@ -47,29 +47,29 @@ T49	1	Battle or Practice Settings > selector value	追う	Follow			inferred:repl
 T50	1	Battle or Practice Settings > selector value	難易度	Difficulty			e2e:menus	NA2_SLPS@0x505C70	NUN5_TEXTENG@0xF880	slot	8			NA2_BTL@0x20A264	
 T51	1	Battle or Practice Settings > selector value	体力	Health			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505CA0	NUN5_SLES@0x5142E0	slot	8				
 T52	1	Battle or Practice Settings > selector value	状態	Status			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505CA8	NUN5_SLES@0x4AFF1D	slot	8				
-T53	1	Battle or Practice Settings > selector value	攻撃	Attack			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505CB8	NUN5_SLES@0x513EF0	slot	8				
-T54	1	Battle or Practice Settings > selector value	ガード	Guard			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505CC0	NUN5_SLES@0x4AFD6D	slot	8				
-T55	1	Battle or Practice Settings > selector value	行動	Move			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505CC8	NUN5_SLES@0x5142F8	slot	8				
+T53	1	Battle or Practice Settings > selector value	攻撃	Attack			e2e:practice	NA2_SLPS@0x505CB8	NUN5_SLES@0x513EF0	slot	8				
+T54	1	Battle or Practice Settings > selector value	ガード	Guard			e2e:practice	NA2_SLPS@0x505CC0	NUN5_SLES@0x4AFD6D	slot	8				
+T55	1	Battle or Practice Settings > selector value	行動	Move			e2e:practice	NA2_SLPS@0x505CC8	NUN5_SLES@0x5142F8	slot	8				
 T56	1	Battle or Practice Settings > unlimited-time value	無限	Unlimited			e2e:menus	NA2_SLPS@0x505B88	NUN5_TEXTENG@0xF218	slot	8			NA2_SLPS@0x505B94,NA2_SLPS@0x505BAC,NA2_SLPS@0x505C68	
-T57	1	Battle pause menu > menu item	<r操作設定|そうさせってい>	Controls			e2e:menus	NA2_BTL@0x208A30	NUN5_TEXTENG@0x870	slot	32				
-T58	1	Battle pause menu > menu item	<r基本操作|きほんそうさ>コマンド<r表|ひょう>	Command Chart			e2e:menus	NA2_BTL@0x208A50	NUN5_TEXTENG@0x880	slot	48				
-T59	1	Battle pause menu > menu item	１Ｐコマンド<r表|ひょう>	1P Commands			e2e:menus	NA2_BTL@0x208A80	NUN5_TEXTENG@0x890	slot	32				
+T57	1	Battle pause menu > menu item	<r操作設定|そうさせってい>	Controls			e2e:menus|e2e:practice	NA2_BTL@0x208A30	NUN5_TEXTENG@0x870	slot	32				
+T58	1	Battle pause menu > menu item	<r基本操作|きほんそうさ>コマンド<r表|ひょう>	Command Chart			e2e:menus|e2e:practice	NA2_BTL@0x208A50	NUN5_TEXTENG@0x880	slot	48				
+T59	1	Battle pause menu > menu item	１Ｐコマンド<r表|ひょう>	1P Commands			e2e:menus|e2e:practice	NA2_BTL@0x208A80	NUN5_TEXTENG@0x890	slot	32				
 T60	1	Battle pause menu > menu item	２Ｐコマンド<r表|ひょう>	2P Commands			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208AA0	NUN5_TEXTENG@0x8A0	slot	32				
-T61	1	Battle pause menu > menu item	<r練習設定|れんしゅうせってい>	Practice			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208AF0	NUN5_TEXTENG@0x718	slot	32				
-T62	1	Battle pause menu > menu item	かんたん<r表示|ひょうじ><r設定|せってい>	Simple Display			e2e:menus	NA2_BTL@0x208B10	NUN5_TEXTENG@0x8B0	slot	48				
+T61	1	Battle pause menu > menu item	<r練習設定|れんしゅうせってい>	Practice			e2e:practice	NA2_BTL@0x208AF0	NUN5_TEXTENG@0x718	slot	32				
+T62	1	Battle pause menu > menu item	かんたん<r表示|ひょうじ><r設定|せってい>	Simple Display			e2e:menus|e2e:practice	NA2_BTL@0x208B10	NUN5_TEXTENG@0x8B0	slot	48				
 T63	1	Battle pause menu > quit or return confirmation	<r対戦|たいせん>	Are you sure you want to quit %1 and return to %2?			e2e:menus	NA2_BTL@0x208CF0	NUN5_TEXTENG@0xA20	slot	32	format_literal_through_arg1	arg1=Battle	NA2_BTL@0x208E40	
-T64	1	Battle pause menu > quit or return confirmation	<r練習|れんしゅう>	Are you sure you want to quit %1 and return to %2?			seen:ss4-shared-callers-2026-07-27 paired screenshot	NA2_BTL@0x208D10	NUN5_TEXTENG@0xA20	slot	32	format_literal_through_arg1	arg1=Practice	NA2_BTL@0x208E44	
+T64	1	Battle pause menu > quit or return confirmation	<r練習|れんしゅう>	Are you sure you want to quit %1 and return to %2?			e2e:practice	NA2_BTL@0x208D10	NUN5_TEXTENG@0xA20	slot	32	format_literal_through_arg1	arg1=Practice	NA2_BTL@0x208E44	
 T65	1	Battle pause menu > quit or return confirmation	"を<r終了|しゅうりょう>しますが、よろしいですか？
 <iconCANCEL>キャンセル"	Do you want to quit %1?			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208D30	NUN5_TEXTENG@0xA00	slot	80	format_literal_arg1	arg1=Free Battle	NA2_BTL@0x208E48	
-T66	1	Battle pause menu > quit or return confirmation	を<r終了|しゅうりょう>して	Are you sure you want to quit %1 and return to %2?			e2e:menus	NA2_BTL@0x208D80	NUN5_TEXTENG@0xA20	slot	32	between_placeholders			
+T66	1	Battle pause menu > quit or return confirmation	を<r終了|しゅうりょう>して	Are you sure you want to quit %1 and return to %2?			e2e:menus|e2e:practice	NA2_BTL@0x208D80	NUN5_TEXTENG@0xA20	slot	32	between_placeholders			
 T67	1	Battle pause menu > quit or return confirmation	"に<r戻|もど>りますが、
-よろしいですか？　　　　<iconCANCEL>キャンセル"	Are you sure you want to quit %1 and return to %2?			e2e:menus	NA2_BTL@0x208DF0	NUN5_TEXTENG@0xA20	slot	80	after_placeholder2			
-T2201	1	Battle pause menu > quit or return confirmation	キャラクター<r選択|せんたく>	Character Select			e2e:menus	NA2_BTL@0x208DA0	NUN5_TEXTENG@0xA60	slot	32				
-T2202	1	Battle pause menu > quit or return confirmation	ゲームモード<r選択|せんたく>	Game Mode Select			e2e:menus	NA2_BTL@0x208DC0	NUN5_TEXTENG@0xA80	slot	32				
-T2203	1	Battle pause menu > Special Controls selector	Ｏ　Ｎ	ON			seen:ss1-special-controls-draw-telemetry-2026-07-27	NA2_SLPS@0x505AF0	NUN5_SLES@0x513E68	slot	8	""	""	""	""
-T2204	1	Battle pause menu > Special Controls selector	ＯＦＦ	OFF			seen:ss1-special-controls-draw-telemetry-2026-07-27	NA2_SLPS@0x505AF8	NUN5_SLES@0x513E6C	slot	8	""	""	""	""
-T68	1	Battle pause menu > return destination	ゲームモード<r選択|せんたく>に<r戻|もど>る	Back to Game Mode Screen			e2e:menus	NA2_BTL@0x208BB0	NUN5_TEXTENG@0x900	slot	48				
-T69	1	Battle pause menu > return destination	キャラクター<r選択|せんたく>に<r戻|もど>る	Back to Character Select			e2e:menus	NA2_BTL@0x208BE0	NUN5_TEXTENG@0x920	slot	48				
+よろしいですか？　　　　<iconCANCEL>キャンセル"	Are you sure you want to quit %1 and return to %2?			e2e:menus|e2e:practice	NA2_BTL@0x208DF0	NUN5_TEXTENG@0xA20	slot	80	after_placeholder2			
+T2201	1	Battle pause menu > quit or return confirmation	キャラクター<r選択|せんたく>	Character Select			e2e:menus|e2e:practice	NA2_BTL@0x208DA0	NUN5_TEXTENG@0xA60	slot	32				
+T2202	1	Battle pause menu > quit or return confirmation	ゲームモード<r選択|せんたく>	Game Mode Select			e2e:menus|e2e:practice	NA2_BTL@0x208DC0	NUN5_TEXTENG@0xA80	slot	32				
+T2203	1	Battle pause menu > Special Controls selector	Ｏ　Ｎ	ON			e2e:practice	NA2_SLPS@0x505AF0	NUN5_SLES@0x513E68	slot	8	""	""	""	""
+T2204	1	Battle pause menu > Special Controls selector	ＯＦＦ	OFF			e2e:practice	NA2_SLPS@0x505AF8	NUN5_SLES@0x513E6C	slot	8	""	""	""	""
+T68	1	Battle pause menu > return destination	ゲームモード<r選択|せんたく>に<r戻|もど>る	Back to Game Mode Screen			e2e:menus|e2e:practice	NA2_BTL@0x208BB0	NUN5_TEXTENG@0x900	slot	48				
+T69	1	Battle pause menu > return destination	キャラクター<r選択|せんたく>に<r戻|もど>る	Back to Character Select			e2e:menus|e2e:practice	NA2_BTL@0x208BE0	NUN5_TEXTENG@0x920	slot	48				
 T70	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r忍術|にんじゅつ>にて<r攻|せ>めるべし	Attack the enemy with Ninjutsu			e2e:ninja_song	NA2_BTL@0x1E5550	NUN5_TEXTENG@0x10120	slot	64				
 T71	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r奥義|おうぎ>にて<r攻|せ>めるべし	Attack the enemy with Ultimate Jutsu			e2e:ninja_song	NA2_BTL@0x1E5590	NUN5_TEXTENG@0x10140	slot	48				
 T72	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r連係攻撃|れんけいこうげき>にて<r攻|せ>めるべし	Attack the enemy with Linked attacks			e2e:ninja_song	NA2_BTL@0x1E55C0	NUN5_TEXTENG@0x10170	slot	64				
@@ -472,7 +472,6 @@ T445	1	Character selectors > character or variant name	うちはイタチ	Itachi
 T446	1	Character selectors > character or variant name	<r干柿鬼鮫|ほしがきキサメ>	Kisame Hoshigaki			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x251A0	NUN5_TEXTENG@0x590	slot	32				
 T447	1	Character selectors > character or variant name	デイダラ	Deidara			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x251C0	NUN5_TEXTENG@0x254F8	slot	16				
 T448	1	Character selectors > character or variant name	サソリ・ヒルコ	Sasori (Hiruko)			e2e:collection/opponents	NA2_ETC@0x251D0	NUN5_TEXTENG@0x5F0	slot	16				
-T449	1	Character selectors > character or variant name	チヨバア	Granny Chiyo			seen:tid-pass-2026-07-26 paired screenshot	NA2_ETC@0x251E0	NUN5_TEXTENG@0x508	slot	16				
 T450	1	Character selectors > character or variant name	<r自来也|じらいや>	Jiraiya			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x251f0	NUN5_SLES@0x513df0	slot	24				
 T451	1	Character selectors > character or variant name	<r綱手|ツナデ>	Tsunade			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25208	NUN5_TEXTENG@0x29DE	slot	24				
 T452	1	Character selectors > character or variant name	<r大蛇丸|オロチまる>	Orochimaru			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_ETC@0x25220	NUN5_TEXTENG@0x688	slot	32				
@@ -519,32 +518,6 @@ T492	1	Character selectors > character or variant name	<r鬼童丸|キドウマ�
 T493	1	Character selectors > character or variant name	<r多由也|タユヤ><r状態|じょうたい>２	Second Stage Tayuya			e2e:collection/opponents	NA2_ETC@0x258A0	NUN5_TEXTENG@0x480	slot	48				
 T494	1	Character selectors > character or variant name	<r左近|サコン><r状態|じょうたい>２	Second Stage Sakon			e2e:collection/opponents	NA2_ETC@0x258D0	NUN5_TEXTENG@0x4A0	slot	48				
 T495	1	Character selectors > character or variant name	<r君麻呂|キミマロ><r状態|じょうたい>２	Second Stage Kimimaro			e2e:collection/opponents	NA2_ETC@0x25900	NUN5_TEXTENG@0x4C0	slot	40				
-T496	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x502DF0	NUN5_SLES@0x513D18	slot	8				
-T497	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x5032F8	NUN5_SLES@0x513D18	slot	8				
-T498	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x505F48	NUN5_SLES@0x513D18	slot	8				
-T499	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x5063A8	NUN5_SLES@0x513D18	slot	8				
-T500	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x506450	NUN5_SLES@0x513D18	slot	8				
-T501	1	Character selectors > character or variant name	サクラ	Sakura			character:roster-name-table	NA2_SLPS@0x506458	NUN5_SLES@0x4AFEDC	slot	8				
-T502	1	Character selectors > character or variant name	カカシ	Kakashi			character:roster-name-table	NA2_SLPS@0x506460	NUN5_SLES@0x513DD8	slot	8				
-T503	1	Character selectors > character or variant name	ネジ	Neji			character:roster-name-table	NA2_SLPS@0x506468	NUN5_SLES@0x513D38	slot	8				
-T504	1	Character selectors > character or variant name	サイ	Sai			character:roster-name-table	NA2_SLPS@0x506470	NUN5_SLES@0x513E28	slot	8				
-T505	1	Character selectors > character or variant name	サスケ	Sasuke			character:roster-name-table	NA2_SLPS@0x506478	NUN5_SLES@0x513D20	slot	8				
-T506	1	Character selectors > character or variant name	シズネ	Shizune			character:roster-name-table	NA2_SLPS@0x506480	NUN5_SLES@0x513E00	slot	8				
-T507	1	Character selectors > character or variant name	アスマ	Asuma			character:roster-name-table	NA2_SLPS@0x506488	NUN5_SLES@0x513E08	slot	8				
-T508	1	Character selectors > character or variant name	テマリ	Temari			character:roster-name-table	NA2_SLPS@0x506490	NUN5_SLES@0x513D90	slot	8				
-T509	1	Character selectors > character or variant name	ヤマト	Yamato			character:roster-name-table	NA2_SLPS@0x506498	NUN5_SLES@0x513E20	slot	8				
-T510	1	Character selectors > character or variant name	リー	Lee			character:roster-name-table	NA2_SLPS@0x5064A0	NUN5_SLES@0x513D28	slot	8				
-T511	1	Character selectors > character or variant name	ガイ	Guy			character:roster-name-table	NA2_SLPS@0x5064A8	NUN5_SLES@0x513DD0	slot	8				
-T512	1	Character selectors > character or variant name	いの	Ino			character:roster-name-table	NA2_SLPS@0x5064B0	NUN5_SLES@0x513D70	slot	8				
-T513	1	Character selectors > character or variant name	キバ	Kiba			character:roster-name-table	NA2_SLPS@0x5064B8	NUN5_SLES@0x513D78	slot	8				
-T514	1	Character selectors > character or variant name	シノ	Shino			character:roster-name-table	NA2_SLPS@0x5064C0	NUN5_SLES@0x513D80	slot	8				
-T515	1	Character selectors > character or variant name	ヒナタ	Hinata			character:roster-name-table	NA2_SLPS@0x5064C8	NUN5_SLES@0x513D58	slot	8				
-T516	1	Character selectors > character or variant name	サイ	Sai			character:roster-name-table	NA2_SLPS@0x506650	NUN5_SLES@0x513E28	slot	8				
-T517	1	Character selectors > character or variant name	テマリ	Temari			character:roster-name-table	NA2_SLPS@0x506658	NUN5_SLES@0x513D90	slot	8				
-T518	1	Character selectors > character or variant name	サソリ	Sasori			character:roster-name-table	NA2_SLPS@0x506660	NUN5_SLES@0x513DC0	slot	8				
-T519	1	Character selectors > character or variant name	シズネ	Shizune			character:roster-name-table	NA2_SLPS@0x506668	NUN5_SLES@0x513E00	slot	8				
-T520	1	Character selectors > character or variant name	ヤマト	Yamato			character:roster-name-table	NA2_SLPS@0x506670	NUN5_SLES@0x513E20	slot	8				
-T521	1	Character selectors > character or variant name	ナルト	Naruto			character:roster-name-table	NA2_SLPS@0x506B10	NUN5_SLES@0x513D18	slot	8				
 T522	1	Character selectors > character or variant name	サイ	Sai			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_SLPS@0x506fe0	NUN5_SLES@0x513e28	slot	8				
 T523	1	Character selectors > character or variant name	テマリ	Temari			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_SLPS@0x506fe8	NUN5_SLES@0x513d90	slot	8				
 T524	1	Character selectors > character or variant name	サソリ	Sasori			e2e:collection/characters|e2e:collection/figures|e2e:collection/opponents|e2e:collection/ultimates|e2e:collection/voice	NA2_SLPS@0x506ff0	NUN5_SLES@0x513dc0	slot	8				
@@ -1684,16 +1657,16 @@ T1647	1	Command Chart > character move name	<r北砕|ほくさい>	North Clash		
 T1648	1	Command Chart > character move name	<r底閃|ていせん>	Bottom Flash			e2e:movesets	NA2_SLPS@0x446030	NUN5_TEXTENG@0xD0F0	slot	32				
 T1649	1	Command Chart > character move name	<r斜落|しゃらく>	Slant Drop			e2e:movesets	NA2_SLPS@0x446050	NUN5_TEXTENG@0xD100	slot	24				
 T1650	1	Command Chart > character move name	<r風刺|ふうし>	Wind Pierce			e2e:movesets	NA2_SLPS@0x446068	NUN5_TEXTENG@0xD110	slot	24				
-T1651	1	Command Chart > character move name	<r仰|あお>ぐ<r大気|そら>	Looking Up at the Air			character:command-record-index	NA2_SLPS@0x446080	NUN5_TEXTENG@0xD120	slot	32				
-T1652	1	Command Chart > character move name	<r過|す>ぐ<r歳月|ながれ>	Passed Years			character:command-record-index	NA2_SLPS@0x4460A0	NUN5_TEXTENG@0xD138	slot	32				
-T1653	1	Command Chart > character move name	<r降|ふ>り<r作礼|さらい>	Falling Bow			character:command-record-index	NA2_SLPS@0x4460C0	NUN5_TEXTENG@0xD148	slot	32				
-T1654	1	Command Chart > character move name	<r絶|た>ち<r終焉|わかれ>	Cut Off End			character:command-record-index	NA2_SLPS@0x4460E0	NUN5_TEXTENG@0xD158	slot	32				
-T1655	1	Command Chart > character move name	<r天|てん>の<r構|かま>え・<r刹|せつ>	Heaven Stance: Pillar			character:command-record-index	NA2_SLPS@0x446100	NUN5_TEXTENG@0xD170	slot	48				
-T1656	1	Command Chart > character move name	<r舞|ま>い<r飛鳥|あすか>	Flying Bird Dance			character:command-record-index	NA2_SLPS@0x446130	NUN5_TEXTENG@0xD190	slot	32				
-T1657	1	Command Chart > character move name	<r地|ち>の<r構|かま>え・<r掩|えん>	Earth Stance: Conceal			character:command-record-index	NA2_SLPS@0x446150	NUN5_TEXTENG@0xD1B0	slot	48				
-T1658	1	Command Chart > character move name	<r這|は>い<r土竜|もぐら>	Crawling Mole			character:command-record-index	NA2_SLPS@0x446180	NUN5_TEXTENG@0xD1C8	slot	32				
-T1659	1	Command Chart > character move name	<r人|じん>の<r構|かま>え・<r斥|せき>	Human Stance: Avoid			character:command-record-index	NA2_SLPS@0x4461A0	NUN5_TEXTENG@0xD1E0	slot	48				
-T1660	1	Command Chart > character move name	<r刺|さ>し<r朱音|あかね>	Scarlet Sonic Pierce			character:command-record-index	NA2_SLPS@0x4461D0	NUN5_TEXTENG@0xD200	slot	32				
+T1651	1	Command Chart > character move name	<r仰|あお>ぐ<r大気|そら>	Looking Up at the Air			e2e:movesets	NA2_SLPS@0x446080	NUN5_TEXTENG@0xD120	slot	32				
+T1652	1	Command Chart > character move name	<r過|す>ぐ<r歳月|ながれ>	Passed Years			e2e:movesets	NA2_SLPS@0x4460A0	NUN5_TEXTENG@0xD138	slot	32				
+T1653	1	Command Chart > character move name	<r降|ふ>り<r作礼|さらい>	Falling Bow			e2e:movesets	NA2_SLPS@0x4460C0	NUN5_TEXTENG@0xD148	slot	32				
+T1654	1	Command Chart > character move name	<r絶|た>ち<r終焉|わかれ>	Cut Off End			e2e:movesets	NA2_SLPS@0x4460E0	NUN5_TEXTENG@0xD158	slot	32				
+T1655	1	Command Chart > character move name	<r天|てん>の<r構|かま>え・<r刹|せつ>	Heaven Stance: Pillar			e2e:movesets	NA2_SLPS@0x446100	NUN5_TEXTENG@0xD170	slot	48				
+T1656	1	Command Chart > character move name	<r舞|ま>い<r飛鳥|あすか>	Flying Bird Dance			e2e:movesets	NA2_SLPS@0x446130	NUN5_TEXTENG@0xD190	slot	32				
+T1657	1	Command Chart > character move name	<r地|ち>の<r構|かま>え・<r掩|えん>	Earth Stance: Conceal			e2e:movesets	NA2_SLPS@0x446150	NUN5_TEXTENG@0xD1B0	slot	48				
+T1658	1	Command Chart > character move name	<r這|は>い<r土竜|もぐら>	Crawling Mole			e2e:movesets	NA2_SLPS@0x446180	NUN5_TEXTENG@0xD1C8	slot	32				
+T1659	1	Command Chart > character move name	<r人|じん>の<r構|かま>え・<r斥|せき>	Human Stance: Avoid			e2e:movesets	NA2_SLPS@0x4461A0	NUN5_TEXTENG@0xD1E0	slot	48				
+T1660	1	Command Chart > character move name	<r刺|さ>し<r朱音|あかね>	Scarlet Sonic Pierce			e2e:movesets	NA2_SLPS@0x4461D0	NUN5_TEXTENG@0xD200	slot	32				
 T1661	1	Command Chart > character move name	<r暴双砕牙|ばくそうさいが>	Dual Raging Fangs			e2e:movesets	NA2_SLPS@0x44BF90	NUN5_TEXTENG@0xD320	slot	32				
 T1662	1	Command Chart > character move name	<r牙通牙|がつうが>	Fang Over Fang			e2e:movesets	NA2_SLPS@0x44BFB0	NUN5_TEXTENG@0x4C18	slot	32				
 T1663	1	Command Chart > character move name	<r円月爪|えんげつそう>	Circle Claws			e2e:movesets	NA2_SLPS@0x44BFD0	NUN5_TEXTENG@0xD338	slot	32				
@@ -1952,29 +1925,29 @@ T1906	1	Command Chart > shared control name or help text	（<r相手|あいて>�
 T1907	1	Command Chart > shared control name or help text	（<r地上|ちじょう>で）	(on ground)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209520	NUN5_TEXTENG@0xE58	slot	32				
 T1908	1	Command Chart > shared control name or help text	（<r高速移動|こうそくいどう>の<r相殺中|そうさいちゅう>や<r攻撃|こうげき>の<r相殺中|そうさいちゅう>）	(High Speed Move and attack are cancelled out)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209540	NUN5_TEXTENG@0xE70	slot	112				
 T1909	1	Command Chart > shared control name or help text	（マニュアル：<r出現後|しゅつげんご>もう<r一度|いちど><r押|お>すと<r攻撃|こうげき>）	(Manual: Press again after move to attack)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2095B0	NUN5_TEXTENG@0xEA0	slot	96				
-T1910	1	Command Chart > shared control name or help text	<r連係攻撃|れんけいこうげき>	Linked Attack			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209650	NUN5_TEXTENG@0xF08	slot	32				
-T1911	1	Command Chart > shared control name or help text	アイテム<r選択|せんたく>	Item Select			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209670	NUN5_TEXTENG@0xF18	slot	32				
-T1912	1	Command Chart > shared control name or help text	アイテム<r使用|しよう>	Item Use			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209690	NUN5_TEXTENG@0xF28	slot	24				
-T1913	1	Command Chart > shared control name or help text	ジャンプ	Jump			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2096A8	NUN5_TEXTENG@0xD935	slot	24				
-T1914	1	Command Chart > shared control name or help text	<r二段|にだん>ジャンプ	Double-jump			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2096C0	NUN5_TEXTENG@0xF38	slot	32				
-T1915	1	Command Chart > shared control name or help text	<r高速移動|こうそくいどう>	High Speed Move			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2096E0	NUN5_TEXTENG@0xF50	slot	32				
-T1916	1	Command Chart > shared control name or help text	<r変|か>わり<r身|み>の<r術|じゅつ>（チャクラ<r消費|しょうひ>）	Substitution Jutsu (Consume Chakra)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209720	NUN5_TEXTENG@0xF60	slot	64				
-T1917	1	Command Chart > shared control name or help text	<r受|う>け<r身|み>	Rebound			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209760	NUN5_SLES@0x513EE0	slot	32				
-T1918	1	Command Chart > shared control name or help text	<r追|お>い<r討|う>ち	Extra Hit			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209780	NUN5_TEXTENG@0xF88	slot	32				
-T1919	1	Command Chart > shared control name or help text	<r追|お>い<r討|う>ち<r返|がえ>し	Extra Hit Counter			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2097A0	NUN5_TEXTENG@0xFA0	slot	48				
-T1920	1	Command Chart and Practice explanations > shared control title	チャクラをためる	Charge Chakra			seen:Font paired Practice ss5, 2026-07-27; inferred:Command Chart shared control family	NA2_BTL@0x2097D0	NUN5_TEXTENG@0xFB8	slot	32				
-T1921	1	Command Chart > shared control name or help text	<r奥|おく>へ<r軸移動|じくいどう>	Side-jump Back			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209810	NUN5_TEXTENG@0xFC8	slot	48				
-T1922	1	Command Chart > shared control name or help text	<r手前|てまえ>へ<r軸移動|じくいどう>	Side-jump Forward			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209840	NUN5_TEXTENG@0xFE0	slot	48				
-T1923	1	Command Chart > shared control name or help text	ガード<r崩|くず>し	Guard Break			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209870	NUN5_TEXTENG@0xFF8	slot	32				
-T1924	1	Command Chart > shared control name or help text	<r残影追|ざんえいお>い<r討|う>ち	Shadowblur Extra Hit			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209890	NUN5_TEXTENG@0x1010	slot	48				
+T1910	1	Command Chart > shared control name or help text	<r連係攻撃|れんけいこうげき>	Linked Attack			e2e:practice	NA2_BTL@0x209650	NUN5_TEXTENG@0xF08	slot	32				
+T1911	1	Command Chart > shared control name or help text	アイテム<r選択|せんたく>	Item Select			e2e:practice	NA2_BTL@0x209670	NUN5_TEXTENG@0xF18	slot	32				
+T1912	1	Command Chart > shared control name or help text	アイテム<r使用|しよう>	Item Use			e2e:practice	NA2_BTL@0x209690	NUN5_TEXTENG@0xF28	slot	24				
+T1913	1	Command Chart > shared control name or help text	ジャンプ	Jump			e2e:practice	NA2_BTL@0x2096A8	NUN5_TEXTENG@0xD935	slot	24				
+T1914	1	Command Chart > shared control name or help text	<r二段|にだん>ジャンプ	Double-jump			e2e:practice	NA2_BTL@0x2096C0	NUN5_TEXTENG@0xF38	slot	32				
+T1915	1	Command Chart > shared control name or help text	<r高速移動|こうそくいどう>	High Speed Move			e2e:practice	NA2_BTL@0x2096E0	NUN5_TEXTENG@0xF50	slot	32				
+T1916	1	Command Chart > shared control name or help text	<r変|か>わり<r身|み>の<r術|じゅつ>（チャクラ<r消費|しょうひ>）	Substitution Jutsu (Consume Chakra)			e2e:practice	NA2_BTL@0x209720	NUN5_TEXTENG@0xF60	slot	64				
+T1917	1	Command Chart > shared control name or help text	<r受|う>け<r身|み>	Rebound			e2e:practice	NA2_BTL@0x209760	NUN5_SLES@0x513EE0	slot	32				
+T1918	1	Command Chart > shared control name or help text	<r追|お>い<r討|う>ち	Extra Hit			e2e:practice	NA2_BTL@0x209780	NUN5_TEXTENG@0xF88	slot	32				
+T1919	1	Command Chart > shared control name or help text	<r追|お>い<r討|う>ち<r返|がえ>し	Extra Hit Counter			e2e:practice	NA2_BTL@0x2097A0	NUN5_TEXTENG@0xFA0	slot	48				
+T1920	1	Command Chart and Practice explanations > shared control title	チャクラをためる	Charge Chakra			e2e:practice	NA2_BTL@0x2097D0	NUN5_TEXTENG@0xFB8	slot	32				
+T1921	1	Command Chart > shared control name or help text	<r奥|おく>へ<r軸移動|じくいどう>	Side-jump Back			e2e:practice	NA2_BTL@0x209810	NUN5_TEXTENG@0xFC8	slot	48				
+T1922	1	Command Chart > shared control name or help text	<r手前|てまえ>へ<r軸移動|じくいどう>	Side-jump Forward			e2e:practice	NA2_BTL@0x209840	NUN5_TEXTENG@0xFE0	slot	48				
+T1923	1	Command Chart > shared control name or help text	ガード<r崩|くず>し	Guard Break			e2e:practice	NA2_BTL@0x209870	NUN5_TEXTENG@0xFF8	slot	32				
+T1924	1	Command Chart > shared control name or help text	<r残影追|ざんえいお>い<r討|う>ち	Shadowblur Extra Hit			e2e:practice	NA2_BTL@0x209890	NUN5_TEXTENG@0x1010	slot	48				
 T1925	1	Command Chart > shared move qualifier or help text	<r連打技|れんだわざ>	Combo			e2e:movesets	NA2_BTL@0x209090	NUN5_SLES@0x513EA8	slot	32				
 T1926	1	Command Chart > shared move qualifier or help text	<r溜|た>め<r技|わざ>	Charge			e2e:movesets	NA2_BTL@0x2090B0	NUN5_SLES@0x513EB0	slot	32				
 T1927	1	Command Chart > shared move qualifier or help text	<r後側方向|うしろがわほうこう>キー	directional button in the opposite direction to that you are facing			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209380	NUN5_TEXTENG@0xD60	slot	48			NA2_BTL@0x209618	
 T1928	1	Command Chart > shared move qualifier or help text	（しばらく<r押|お>す）	(Hold)			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209500	NUN5_SLES@0x513EB8	slot	32				
-T1929	1	Command Chart > shared move qualifier or help text	<r飛|と>び<r退|の>き	Flee			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209700	NUN5_SLES@0x513ED8	slot	32				
-T1930	1	Command Chart > shared move qualifier or help text	<r挑発|ちょうはつ>	Taunt			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x2097F0	NUN5_SLES@0x513EE8	slot	32				
+T1929	1	Command Chart > shared move qualifier or help text	<r飛|と>び<r退|の>き	Flee			e2e:practice	NA2_BTL@0x209700	NUN5_SLES@0x513ED8	slot	32				
+T1930	1	Command Chart > shared move qualifier or help text	<r挑発|ちょうはつ>	Taunt			e2e:practice	NA2_BTL@0x2097F0	NUN5_SLES@0x513EE8	slot	32				
 T1931	1	Command Chart > shared move qualifier or help text	または	or			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B08	NUN5_SLES@0x513EC0	slot	8				
-T1932	1	Command Chart > shared move qualifier or help text	ガード	Guard			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B18	NUN5_SLES@0x513EC8	slot	8				
+T1932	1	Command Chart > shared move qualifier or help text	ガード	Guard			e2e:practice	NA2_SLPS@0x505B18	NUN5_SLES@0x513EC8	slot	8				
 T1933	1	Game Mode Select > return confirmation	タイトル<r画面|がめん>に<r戻|もど>りますか？	Return to Title Screen?			seen:replacement-pass-2-2026-07-26 paired screenshot	NA2_SLPS@0x4B1E00	NUN5_TEXTENG@0x1C90	slot	48				
 T1934	1	Game Mode Select > running help	<color00FFFF>マスターモード<colorFFFFFF>では<r広大|こうだい>な<r世界|せかい>を<r舞台|ぶたい>に、<r成長|せいちょう>したうずまきナルトの<r新|あたら>しい<r物語|ものがたり>を<r体験|たいけん>することができます。	<color00FFFF>Master Mode<WHITE> is set in a vast world. Experience a stronger Naruto Uzumaki in this new story.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B19D0	NUN5_TEXTENG@0x1A20	slot	208				
 T1935	1	Game Mode Select > running help	<color00FFFF>フリーバトル<colorFFFFFF>では<r好|す>きなキャラクターを<r使|つか>って<r自由|じゆう>に<r闘|たたか>うことができます。	<color00FFFF>Free Battle<WHITE> allows you to use any character to fight how you like.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B1AA0	NUN5_TEXTENG@0x1A90	slot	144				
@@ -1991,21 +1964,21 @@ T1945	1	Options > category help or reset result	ボタン<r操作|そうさ>の<
 T1946	1	Options > category help or reset result	<r音量|おんりょう>や<r音|おと>の<r出力設定|しゅつりょくせってい>ができます。	Change volume and audio output settings.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4b2ae0	NUN5_TEXTENG@0x1190	slot	80				
 T1947	1	Options > category help or reset result	<r画面|がめん>の<r位置|いち>の<r調整|ちょうせい>ができます。	Adjust screen position.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4b2b30	NUN5_TEXTENG@0x11c0	slot	64				
 T1948	1	Options > category help or reset result	<r難易度|なんいど>をデフォルトに<r戻|もど>します。	Return to default difficulty.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4b2b70	NUN5_TEXTENG@0x11e0	slot	64				
-T1949	1	Options > Control Settings > action label	奥義準備	Ultimate Jutsu Prep			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2640	NUN5_TEXTENG@0x1450	slot	16			NA2_SLPS@0x4B2690	
-T1950	1	Options > Control Settings > action label	ジャンプ	Jump			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2650	NUN5_SLES@0x513ED0	slot	16				
-T1951	1	Options > Control Settings > action label	アイテム使用	Item Use			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2660	NUN5_TEXTENG@0xF28	slot	16				
-T1952	1	Options > Control Settings > action label	アイテム選択	Item Select			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2670	NUN5_TEXTENG@0xF18	slot	16				
-T1953	1	Options > Control Settings > action label	連係攻撃	Linked Attack			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2680	NUN5_TEXTENG@0xF08	slot	16				
-T1954	1	Options > Control Settings > assigned action or toggle	攻撃	Attack			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x504738	NUN5_SLES@0x513EF0	slot	8				
-T1955	1	Options > Control Settings > assigned action or toggle	ガード	Guard			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x504740	NUN5_SLES@0x4AFD6D	slot	8				
-T1956	1	Options > Control Settings > assigned action or toggle	オフ	Off			seen:replacement-validation-control-settings-vibration-case	NA2_SLPS@0x504748	NUN5_SLES@0x513EF8	slot	8				
-T1957	1	Options > Control Settings > assigned action or toggle	オン	On			seen:replacement-validation-control-settings-vibration-case	NA2_SLPS@0x504750	NUN5_SLES@0x513EFC	slot	8				
+T1949	1	Options > Control Settings > action label	奥義準備	Ultimate Jutsu Prep			e2e:practice	NA2_SLPS@0x4B2640	NUN5_TEXTENG@0x1450	slot	16			NA2_SLPS@0x4B2690	
+T1950	1	Options > Control Settings > action label	ジャンプ	Jump			e2e:practice	NA2_SLPS@0x4B2650	NUN5_SLES@0x513ED0	slot	16				
+T1951	1	Options > Control Settings > action label	アイテム使用	Item Use			e2e:practice	NA2_SLPS@0x4B2660	NUN5_TEXTENG@0xF28	slot	16				
+T1952	1	Options > Control Settings > action label	アイテム選択	Item Select			e2e:practice	NA2_SLPS@0x4B2670	NUN5_TEXTENG@0xF18	slot	16				
+T1953	1	Options > Control Settings > action label	連係攻撃	Linked Attack			e2e:practice	NA2_SLPS@0x4B2680	NUN5_TEXTENG@0xF08	slot	16				
+T1954	1	Options > Control Settings > assigned action or toggle	攻撃	Attack			e2e:practice	NA2_SLPS@0x504738	NUN5_SLES@0x513EF0	slot	8				
+T1955	1	Options > Control Settings > assigned action or toggle	ガード	Guard			e2e:practice	NA2_SLPS@0x504740	NUN5_SLES@0x4AFD6D	slot	8				
+T1956	1	Options > Control Settings > assigned action or toggle	オフ	Off			e2e:practice	NA2_SLPS@0x504748	NUN5_SLES@0x513EF8	slot	8				
+T1957	1	Options > Control Settings > assigned action or toggle	オン	On			e2e:practice	NA2_SLPS@0x504750	NUN5_SLES@0x513EFC	slot	8				
 T1958	1	Options > Control Settings > instructions or reset result	<r変更|へんこう>したいボタン・<r項目|こうもく>を<iconOK>ボタンで<r選択|せんたく>し、<r方向|ほうこう>キー<r左右|さゆう>で<r操作|そうさ>を<r変更|へんこう>してください。	Press <iconOK> to select the button/item to change. Press the left directional button or right directional button to change controls.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B2230	NUN5_TEXTENG@0x1240	slot	176				
 T1959	1	Options > Control Settings > instructions or reset result	１Ｐの<r操作設定|そうさせってい>をデフォルトに<r戻|もど>しました。	1P controls restored to defaults.			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x4B22E0	NUN5_TEXTENG@0x12D0	slot	80				
 T1960	1	Options > Control Settings > instructions or reset result	２Ｐの<r操作設定|そうさせってい>をデフォルトに<r戻|もど>しました。	2P controls restored to defaults.			inferred:control-settings-sibling-table	NA2_SLPS@0x4B2330	NUN5_TEXTENG@0x1300	slot	80				
 T1961	1	Practice Settings > label or running help	案内忍音声	Guide Ninja Sound			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A788	NUN5_TEXTENG@0xF8D0	slot	16			NA2_BTL@0x20A7E0	
-T1962	1	Practice Settings > label or running help	変わり身の術	Substitution Jutsu			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A798	NUN5_TEXTENG@0xF900	slot	16			NA2_BTL@0x20A7F8	
-T1963	1	Practice Settings > label or running help	追い討ち返し	Extra Hit Counter			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A7A8	NUN5_TEXTENG@0xFA0	slot	24				
+T1962	1	Practice Settings > label or running help	変わり身の術	Substitution Jutsu			e2e:practice	NA2_BTL@0x20A798	NUN5_TEXTENG@0xF900	slot	16			NA2_BTL@0x20A7F8	
+T1963	1	Practice Settings > label or running help	追い討ち返し	Extra Hit Counter			e2e:practice	NA2_BTL@0x20A7A8	NUN5_TEXTENG@0xFA0	slot	24				
 T1964	1	Practice Settings > label or running help	<r方向|ほうこう>キー<r左右|さゆう>でプレイヤーの<r体力|たいりょく>の<r状態|じょうたい>を<r設定|せってい>することができます。	Press the left directional button or right directional button to set players' Health.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A810	NUN5_TEXTENG@0xF9C0	slot	128				
 T1965	1	Practice Settings > label or running help	<r方向|ほうこう>キー<r左右|さゆう>でチャクラが<r減|へ>るか<r減|へ>らないかを<r設定|せってい>できます。	Press the left directional button or right directional button to choose whether Chakra decreases or not when using Jutsu.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A890	NUN5_TEXTENG@0xFA20	slot	112			NA2_BTL@0x20B074	
 T1966	1	Practice Settings > label or running help	<r方向|ほうこう>キー<r左右|さゆう>でプレイヤーの<r連係|れんけい>ゲージの<r溜|た>まり<r方|かた>を<r設定|せってい>することができます。	Press the left directional button or right directional button to set how player's Link Gauge charges.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A900	NUN5_TEXTENG@0xFAA0	slot	144				
@@ -2022,7 +1995,7 @@ T1976	1	Practice Settings > label or running help	<r状態|じょうたい>が�
 T1977	1	Practice Settings > label or running help	<r状態|じょうたい>が「<r手動|しゅどう>」<r以外|いがい>に<r設定|せってい>されている<r時|とき>の<r連係攻撃|れんけいこうげき>の<r使用頻度|しようひんど>を<r指定|してい>できます。	Set the frequency of Linked Attacks when not in Manual mode.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20AF10	NUN5_TEXTENG@0xFEC0	slot	176				
 T1978	1	Practice Settings > label or running help	<r状態|じょうたい>が「<r手動|しゅどう>」<r以外|いがい>に<r設定|せってい>されている<r時|とき>の<r追|お>い<r討|う>ち<r返|がえ>しの<r頻度|ひんど>を<r指定|してい>できます。	Set the frequency of the Extra Hit Counter when in the COM mode.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20AFC0	NUN5_TEXTENG@0xFF00	slot	176				
 T1979	1	Practice Settings > label or running help	奥義	Ultimate Jutsu			e2e:menus	NA2_SLPS@0x505C20	NUN5_TEXTENG@0xF238	slot	8			NA2_BTL@0x209DD4,NA2_BTL@0x20A270,NA2_BTL@0x20A7CC	
-T1980	1	Practice Settings > label or running help	強さ	Strength			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505CB0	NUN5_TEXTENG@0xF8E8	slot	8			NA2_BTL@0x20A7E8	
+T1980	1	Practice Settings > label or running help	強さ	Strength			e2e:practice	NA2_SLPS@0x505CB0	NUN5_TEXTENG@0xF8E8	slot	8			NA2_BTL@0x20A7E8	
 T1981	1	Practice Settings > opponent setting help or value	<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。<r手動|しゅどう>では、<r別|べつ>のコントローラで<r操作|そうさ>する<r事|こと>ができます。	You can use another analog controller (DUALSHOCK®2) to input commands when in Manual mode.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20B0C0	NUN5_TEXTENG@0xFF80	slot	176				
 T1982	1	Practice Settings > opponent setting help or value	乱発	Random			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505C60	NUN5_SLES@0x514260	slot	8				
 T1983	1	Practice Settings > selector value or running help	やさしい	Easy			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209C80	NUN5_SLES@0x514220	slot	16				
@@ -2036,8 +2009,8 @@ T1990	1	Practice Settings > selector value or running help	マニュアル	Manua
 T1991	1	Practice Settings > selector value or running help	ジャンプ	Jump			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209D58	NUN5_TEXTENG@0xD935	slot	16				
 T1992	1	Practice Settings > selector value or running help	二段ジャンプ	Double-jump			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209D68	NUN5_TEXTENG@0xF38	slot	24				
 T1993	1	Practice Settings > selector value or running help	飛び道具	Projectile			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209D98	NUN5_BTL@0x1F9362	slot	16				
-T1994	1	Practice Settings > selector value or running help	高速移動	High Speed Move			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209DA8	NUN5_TEXTENG@0xF50	slot	16				
-T1995	1	Practice Settings > selector value or running help	動かない	Stay			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209DE0	NUN5_SLES@0x5142B0	slot	16				
+T1994	1	Practice Settings > selector value or running help	高速移動	High Speed Move			e2e:practice	NA2_BTL@0x209DA8	NUN5_TEXTENG@0xF50	slot	16				
+T1995	1	Practice Settings > selector value or running help	動かない	Stay			e2e:practice	NA2_BTL@0x209DE0	NUN5_SLES@0x5142B0	slot	16				
 T1996	1	Practice Settings > selector value or running help	必ず返す	Return			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209DF0	NUN5_SLES@0x5142C0	slot	16				
 T1997	1	Practice Settings > selector value or running help	使用しない	Don't use			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209E00	NUN5_TEXTENG@0xF248	slot	17				
 T1998	1	Practice Settings > selector value or running help	「<r使用不可|しようふか>」は、<r奥義|おうぎ>が<r使|つか>えなくなるので<r注意|ちゅうい>してください。	No Use: Ultimate Jutsu cannot be used.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209E20	NUN5_TEXTENG@0xF370	slot	112				
@@ -2068,8 +2041,8 @@ T2015	1	Save or Load menu > overwrite confirmation	<ruby上書|うわが>きし�
 T2011	1	Save or Load menu > saving-progress message	セーブしています。	Saving to memory card (PS2) in <br>MEMORY CARD slot 1.<br>Please do not remove memory card (PS2), <br>controller, or reset/switch off the console.			seen:replacement-validation-save-progress-corruption	NA2_SLPS@0x303F50	NUN5_TEXTENG@0x29350	slot	19	split_br	part=0	NA2_SLPS@0x5030B4	
 T2041	1	Save or Load menu > saving-progress message	”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）	Saving to memory card (PS2) in <br>MEMORY CARD slot 1.<br>Please do not remove memory card (PS2), <br>controller, or reset/switch off the console.			inferred:complete-save-progress-message-family-from-paired-screen	NA2_SLPS@0x303F63	NUN5_TEXTENG@0x29350	slot	73	split_br	part=1		
 T2042	1	Save or Load menu > saving-progress message	を<ruby抜|ぬ>かないでください。	Saving to memory card (PS2) in <br>MEMORY CARD slot 1.<br>Please do not remove memory card (PS2), <br>controller, or reset/switch off the console.			inferred:complete-save-progress-message-family-from-paired-screen	NA2_SLPS@0x303FAC	NUN5_TEXTENG@0x29350	slot	36	join_br_parts	parts=2,3;join=<br>	NA2_SLPS@0x5030B4	T2011
-T1	1	Shared game modal > Yes or No choice	はい	Yes			e2e:menus	NA2_SLPS@0x503110	NUN5_SLES@0x513E50	slot	5				
-T2024	1	Shared game modal > Yes or No choice	いいえ	No			e2e:menus	NA2_SLPS@0x503118	NUN5_SLES@0x513E4C	slot	7				
+T1	1	Shared game modal > Yes or No choice	はい	Yes			e2e:menus|e2e:practice	NA2_SLPS@0x503110	NUN5_SLES@0x513E50	slot	5				
+T2024	1	Shared game modal > Yes or No choice	いいえ	No			e2e:menus|e2e:practice	NA2_SLPS@0x503118	NUN5_SLES@0x513E4C	slot	7				
 T2025	1	Shared game modal > Yes or No choice	いいえ	No			e2e:collection/misc	NA2_SLPS@0x504668	NUN5_SLES@0x513E4C	slot	7				
 T2026	1	Shared game modal > Yes or No choice	は　い	Yes			e2e:collection/misc	NA2_SLPS@0x504670	NUN5_SLES@0x513E50	slot	8				
 T2035	1	Startup and save flow > memory-card prompt or status	ＭＥＭＯＲＹ ＣＡＲＤ<ruby差込口|さしこみぐち>１に<NUL>”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）が<NUL><ruby差|さ>されていません。	No memory card (PS2) is inserted in <br>MEMORY CARD slot 1.<br>Please insert a memory card (PS2) in<br>MEMORY CARD slot 1.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x3039E0	NUN5_TEXTENG@0x29060	sequence	160	split_br_sequence	parts=0,1,2,3		

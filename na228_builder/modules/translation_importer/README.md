@@ -14,9 +14,9 @@ from the clean target bytes.
 
 Canonical `mappings.tsv` contains the completed screenshot-confirmed rebuild
 plus the explicit character-family exception. Its cumulative first two passes
-contribute 752 rows, the verified 74-table Command Chart family contributes
-another 1,041, the missing-row audit adds 260 policy-supported rows—53 directly
-seen, 10 structurally inferred, and 197 character-family rows—the paired
+contribute 751 rows, the verified 74-table Command Chart family contributes
+another 1,041, the missing-row audit adds 234 policy-supported rows—53 directly
+seen, 10 structurally inferred, and 171 character-family rows—the paired
 Ninja Song passes add 25 displayed numeric/status/bonus fields. The paired
 ss7 Movie pass adds the locked-title placeholder.
 T2042, T2045, and T2050 use parents in the canonical `T#`

@@ -14,7 +14,7 @@ in [translation importer knowledge](../../knowledge/localization/translation_imp
 ## Mapping metadata
 
 - Canonical `mappings.tsv` rows: `2,088`
-- Canonical `mappings.tsv` SHA-256: `AEA6420929D97D9F627DB8C50B95054273D00196D02BA21BCB6D71309D1B2FF1`
+- Canonical `mappings.tsv` SHA-256: `B85600645B2E7D3364AD056D2234C776CA088058C4DC07B3148369025CC8E457`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the builder's configuration-resource fingerprint own content identity.
@@ -82,11 +82,12 @@ The 16 columns are:
 Canonical `mappings.tsv` contains 2,088 enabled `T#` rows admitted by exact
 display evidence or a documented structural-family basis, sorted by
 `display_context` and numeric ID. Exact source, source reference, mode, and
-capacity are guarded by the canonical row declarations. The current accepted
-E2E suites exercise 1,766 unique rows; 322 rows retain a non-E2E basis. The
+capacity are guarded by the canonical row declarations. The current maintained
+E2E suites exercise 1,796 unique rows; 292 rows retain a non-E2E basis. The
 Jutsus suite selects 26 exact Command Chart records, including T260 plus 25
-records also selected by Movesets. T2042, T2045, and T2050 use canonical parent
-IDs `T2011`, `T2043`, and `T2048`.
+records also selected by Movesets. The Menus suite selects 30 exact Battle
+Settings, Pause, confirmation, and Character Select rows. T2042, T2045, and
+T2050 use canonical parent IDs `T2011`, `T2043`, and `T2048`.
 Paired screenshots correct three reference-table errors: T1956 uses `Off` at
 `NUN5_SLES@0x513EF8`, T1957 uses `On` at `NUN5_SLES@0x513EFC`, and T2158 uses
 `Warning` at `NUN5_SLES@0x513F38`.

@@ -226,21 +226,23 @@ class FontRuntimeContractTests(unittest.TestCase):
             self.assertEqual(replacement[4:], template[4:])
             self.assertEqual(int.from_bytes(replacement[:4], "little") >> 26, 0x02)
 
-    def test_character_modal_rows_are_owned_by_both_existing_c_adapters(self) -> None:
+    def test_character_modal_rows_share_centered_box_and_structural_y(self) -> None:
         fragments = {
             fragment.symbol: fragment for fragment in self.package.fragments
         }
         accepted_coordinates = (
+            0x41000000,  # shared box X and first-row Y: 8
+            0x42000000,  # 32
+            0x42600000,  # 56
+            0x42A00000,  # 80
+            0x42E40000,  # shared footer Y: 114
+        )
+        retired_per_string_x = (
             0x42A38000,  # 81.75
             0x4292C000,  # 73.375
             0x4290C000,  # 72.375
             0x427E0000,  # 63.5
             0x40600000,  # 3.5
-            0x41000000,  # 8
-            0x42000000,  # 32
-            0x42600000,  # 56
-            0x42A00000,  # 80
-            0x42E60000,  # 115
         )
         for symbol in (
             "v2_character_selected_adapter",
@@ -255,7 +257,17 @@ class FontRuntimeContractTests(unittest.TestCase):
             self.assertEqual(
                 missing,
                 (),
-                f"{symbol} lost accepted Character-modal row coordinates",
+                f"{symbol} lost the centered Character-modal contract",
+            )
+            retained = tuple(
+                value
+                for value in retired_per_string_x
+                if loads_u32(payload_words, value)
+            )
+            self.assertEqual(
+                retained,
+                (),
+                f"{symbol} retained per-string Character-modal X positions",
             )
 
     def test_pause_selected_hook_targets_c_without_forwarding_wrapper(self) -> None:

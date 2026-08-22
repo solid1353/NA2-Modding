@@ -1,19 +1,19 @@
 # Localization E2E Parity
 
-Status: scope refinement
+Status: Jutsus and Menus complete; Practice and Ninja Song pending
 
 ## Scope
 
-This document records the visual differences currently observed between NUN5
+This document records the visual differences still to be resolved between NUN5
 and NA228 in these E2E suites:
 
-- `menus`
 - `ninja_song`
 - `practice`
 
-The review covered all 7 published diff-grid pages in those suites together
-with their pair and blend grids. The findings describe their current baseline
-captures and do not yet prescribe an implementation.
+The original review covered all 7 published diff-grid pages across Menus,
+Practice, and Ninja Song together with their pair and blend grids. Menus is
+complete; its durable findings are recorded in the canonical localization
+documentation. Practice and Ninja Song remain pending here.
 
 ## Accepted differences and review exclusions
 
@@ -40,30 +40,13 @@ renderers. The mismatch is not one uniform screen-wide offset:
 - long strings expose advance differences that are nearly invisible on short
   labels;
 - centered choices inherit width or centering differences even when their
-  surrounding UI is aligned.
+  surrounding UI is aligned;
+- selected or highlighted lines can behave differently from ordinary lines,
+  so every fix must account for both states. The multiple screens captured for
+  each menu deliberately cover those state variants.
 
 This behavior appeared in all three baseline suites, but its magnitude and
 direction vary by renderer family.
-
-## Menus
-
-### Confirmed differences
-
-- Battle Settings labels are approximately two pixels to the right of NUN5.
-- Pause-menu and confirmation text is generally one to two pixels to the right.
-- `Yes` and `No` have slightly different widths or centering from NUN5.
-- Long status text has an advance mismatch. In the current captures,
-  `Battle Settings returned to defaults.` begins at the matching origin but
-  ends approximately seven pixels farther right.
-
-The Character Select return prompt and the main game-mode list are already
-substantially aligned, so the remaining mismatch must not be treated as a
-single offset applied indiscriminately to every menu string.
-
-### Confirmed matches
-
-- The reviewed translations match NUN5.
-- No UI-texture placement mismatch was found.
 
 ## Practice
 
@@ -116,19 +99,3 @@ they do not support one global Practice offset.
 - Apart from the missing counter labels and extra percent sign, the reviewed
   objective wording matches NUN5.
 - No static UI-texture placement mismatch has been established.
-
-## Remaining scope to refine
-
-Before implementing the remaining suites, refine these decisions:
-
-1. Confirm that every recorded one-to-three-pixel horizontal origin difference
-   in Menus and Practice is in scope, while the accepted vertical height and
-   shading remain unchanged.
-2. Decide whether the target is exact NUN5 horizontal metrics for every listed
-   renderer family or only exact wrapping and visible placement at the reviewed
-   strings.
-3. Confirm that Ninja Song must reproduce NUN5's line breaks and consequent
-   scroll composition exactly despite retaining NA228's non-collapsed font
-   height.
-4. Confirm that the Ninja Song counter labels and removal of the percent sign
-   are required content corrections.

@@ -136,9 +136,9 @@ leaves `OFF` on the ordinary renderer, and restores local scale immediately
 after a fitted draw. Its labels move one local X unit without moving selection
 markers. Shared layout wrappers also reproduce the reviewed confirmation
 choices, Practice pause-list box and Y origin, confirmation-body placement,
-and character-return box. The character modal keeps its independent local X
-values `81.75, 73.375, 72.375, 63.5, 3.5`; reviewed ordinary-row centers are
-within one pixel of NUN5 and the long fifth row fits inside the modal.
+and character-return box. The character modal measures and centers all five
+selected and ordinary rows in one local `(8, *, 240, 20)` box; the long footer
+shrinks within that box, and the shared structural footer origin is Y `114`.
 
 A clean glyph derivation preserves the GF4 and GF4C file sizes and produces:
 

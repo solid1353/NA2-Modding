@@ -8,7 +8,7 @@
 
 /* NUN5 left edge and width for Battle Settings labels. */
 #define FONT_BATTLE_SETTINGS_LABEL_X \
-    (92.0f + FONT_SETTINGS_X_OFFSET + 0.8f)
+    (92.0f + FONT_SETTINGS_X_OFFSET)
 #define FONT_BATTLE_SETTINGS_LABEL_WIDTH 158u
 
 /* NUN5 left edge and width for Practice Settings labels. */
@@ -35,7 +35,7 @@
 /* Shared row baselines; selected labels use the taller selected glyph pass. */
 #define FONT_BATTLE_SETTINGS_ROW_Y_OFFSET 0.0f
 #define FONT_BATTLE_SETTINGS_SELECTED_Y_OFFSET -0.8f
-#define FONT_BATTLE_SETTINGS_ORDINARY_Y_OFFSET 1.6f
+#define FONT_BATTLE_SETTINGS_ORDINARY_Y_OFFSET 0.8f
 #define FONT_BATTLE_SETTINGS_VALUE_Y_OFFSET 0.8f
 #define FONT_PRACTICE_SETTINGS_ROW_Y_OFFSET 0.75f
 #define FONT_SETTINGS_SELECTED_Y_OFFSET 1.5f

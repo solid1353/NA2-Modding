@@ -109,10 +109,10 @@ typedef int (*FontV2NativeControlsDraw)(
 #define FONT_PAUSE_LIST_BOX_HEIGHT 20u
 
 /* Shared ordinary/selected Pause Controls row-origin correction. */
-#define FONT_PAUSE_LIST_X_OFFSET 1.6f
+#define FONT_PAUSE_LIST_X_OFFSET 0.8f
 
 /* Added to every Pause Controls row Y; more negative moves rows up. */
-#define FONT_PAUSE_LIST_Y_OFFSET -2.4f
+#define FONT_PAUSE_LIST_Y_OFFSET -3.2f
 
 /* Extra X correction for the selected red row; positive moves it right. */
 #define FONT_PAUSE_LIST_SELECTED_X_OFFSET 0.0f
@@ -122,50 +122,37 @@ typedef int (*FontV2NativeControlsDraw)(
 
 /* === Character Select: player-mode option list === */
 
-/* Option-row width; larger values shrink less. */
+/* Shared left edge and width of the centered player-mode row box. */
+#define FONT_CHARACTER_LIST_BOX_X 8.0f
 #define FONT_CHARACTER_LIST_BOX_WIDTH 240u
 
 /* Option-row box height used for vertical centering. */
 #define FONT_CHARACTER_LIST_BOX_HEIGHT 20u
 
-/* Added to every native option-row X; positive moves the row right. */
-#define FONT_CHARACTER_LIST_X_OFFSET 5.8f
-
-/* Selected helper consumes integer coordinates, so use the nearest integer. */
-#define FONT_CHARACTER_LIST_SELECTED_X_OFFSET 6
-
 /* The fifth structural row is a separate footer group below the options. */
 #define FONT_CHARACTER_LIST_FOOTER_Y_THRESHOLD 96.0f
-#define FONT_CHARACTER_LIST_SELECTED_FOOTER_Y_OFFSET (-1)
 
 /* Single-row layout height for Character Select options. */
 #define FONT_CHARACTER_LIST_LINE_HEIGHT 20.0f
 
 /*
- * The clean row producer supplies Y=8,32,56,80,120. The accepted layout
- * formerly replaced that producer with a fixed-ELF X table and a fifth-row
- * Y correction. Keep the same five results in the C adapters that own the
- * selected and ordinary draws. Y=115 retains compatibility with a state that
- * already ran the former producer patch before receiving this payload.
+ * The clean row producer supplies Y=8,32,56,80,120. Both adapters preserve
+ * the five structural Y rows and center every string in the same modal box.
+ * Y=114 retains compatibility with a state that already ran the former
+ * producer patch before receiving this payload.
  */
-static inline __attribute__((always_inline)) void
-font_v2_character_row_layout(float native_y, float *row_x, float *row_y) {
+static inline __attribute__((always_inline)) float
+font_v2_character_row_y(float native_y) {
     if (native_y < 20.0f) {
-        *row_x = 81.75f;
-        *row_y = 8.0f;
+        return 8.0f;
     } else if (native_y < 44.0f) {
-        *row_x = 73.375f;
-        *row_y = 32.0f;
+        return 32.0f;
     } else if (native_y < 68.0f) {
-        *row_x = 72.375f;
-        *row_y = 56.0f;
+        return 56.0f;
     } else if (native_y < FONT_CHARACTER_LIST_FOOTER_Y_THRESHOLD) {
-        *row_x = 63.5f;
-        *row_y = 80.0f;
-    } else {
-        *row_x = 3.5f;
-        *row_y = 115.0f;
+        return 80.0f;
     }
+    return 114.0f;
 }
 
 /* === Shared Yes/No selectors: quit, return, and Special Controls === */
@@ -485,36 +472,46 @@ int font_v2_character_selected_adapter(
     const u8 *text
 ) {
     FontV2Session session;
-    float row_x = (float)draw_x;
-    float row_y = (float)draw_y;
+    u32 measured_width;
+    u32 line_count;
+    float rendered_width;
     s32 selected_x;
-    s32 selected_y;
+    s32 selected_y = (s32)font_v2_character_row_y((float)draw_y);
 
-    font_v2_character_row_layout(row_y, &row_x, &row_y);
-    selected_x = (s32)(row_x + 0.5f);
-    selected_y = (s32)row_y;
+    (void)draw_x;
 
-    if ((float)selected_y > FONT_CHARACTER_LIST_FOOTER_Y_THRESHOLD) {
-        selected_y += FONT_CHARACTER_LIST_SELECTED_FOOTER_Y_OFFSET;
+    if (
+        font_v2_measure(text, 0u, &measured_width, &line_count) != 0 ||
+        line_count != 1u
+    ) {
+        return -1;
     }
+    rendered_width = (float)(s32)measured_width;
+    if (measured_width > FONT_CHARACTER_LIST_BOX_WIDTH) {
+        rendered_width = (float)(s32)FONT_CHARACTER_LIST_BOX_WIDTH;
+    }
+    selected_x = (s32)(
+        FONT_CHARACTER_LIST_BOX_X +
+        ((float)(s32)FONT_CHARACTER_LIST_BOX_WIDTH - rendered_width) * 0.5f
+    );
 
     session.text = text;
-    session.box_x =
-        (float)selected_x + (float)FONT_CHARACTER_LIST_SELECTED_X_OFFSET;
+    session.box_x = (float)selected_x;
     session.box_y = (float)selected_y;
     session.box_width = FONT_CHARACTER_LIST_BOX_WIDTH;
     session.box_height = FONT_CHARACTER_LIST_BOX_HEIGHT;
     session.horizontal_alignment = FONT_V2_ALIGN_START;
     session.vertical_alignment = FONT_V2_ALIGN_START;
-    session.flags = FONT_V2_FLAG_SHRINK_X;
+    session.flags = FONT_V2_FLAG_SHRINK_X | FONT_V2_FLAG_PREMEASURED;
     session.line_limit = 1;
     session.line_height = FONT_CHARACTER_LIST_LINE_HEIGHT;
     session.callback = FONT_CHARACTER_SELECTED_DRAW_ADDRESS;
     session.callback_arg0 = object;
-    session.callback_arg1 =
-        (u32)(selected_x + FONT_CHARACTER_LIST_SELECTED_X_OFFSET);
+    session.callback_arg1 = (u32)selected_x;
     session.callback_arg2 = (u32)selected_y;
     session.callback_arg3 = (u32)text;
+    session.measured_width = measured_width;
+    session.line_count = line_count;
 
     return font_v2_adapter_call(&session);
 }
@@ -528,17 +525,16 @@ int font_v2_character_unselected_adapter(
     float native_y
 ) {
     FontV2Session session;
-    float row_x = native_x;
-    float row_y = native_y;
+    float row_y = font_v2_character_row_y(native_y);
 
-    font_v2_character_row_layout(native_y, &row_x, &row_y);
+    (void)native_x;
 
     session.text = text;
-    session.box_x = row_x + FONT_CHARACTER_LIST_X_OFFSET;
+    session.box_x = FONT_CHARACTER_LIST_BOX_X;
     session.box_y = row_y;
     session.box_width = FONT_CHARACTER_LIST_BOX_WIDTH;
     session.box_height = FONT_CHARACTER_LIST_BOX_HEIGHT;
-    session.horizontal_alignment = FONT_V2_ALIGN_START;
+    session.horizontal_alignment = FONT_V2_ALIGN_CENTER;
     session.vertical_alignment = FONT_V2_ALIGN_START;
     session.flags = FONT_V2_FLAG_SHRINK_X;
     session.line_limit = 1;
@@ -636,7 +632,10 @@ u32 font_v2_map_choice(
         return 0;
     }
 
-    if (font_v2_quit_active == FONT_CHARACTER_CHOICE_SCOPE) {
+    if (
+        font_v2_quit_active == FONT_CHARACTER_CHOICE_SCOPE &&
+        source_y == FONT_QUIT_YES_SOURCE_BITS
+    ) {
         y.f += FONT_CHARACTER_CONFIRMATION_Y_OFFSET;
     }
 
@@ -659,10 +658,7 @@ u32 font_v2_quit_selected_map(
     if (font_v2_map_choice(text, source_y, &target_x, &mapped_y)) {
         if (
             font_v2_quit_active != FONT_CHARACTER_CHOICE_SCOPE &&
-            !(
-                font_v2_quit_active == FONT_COLLECTION_CHOICE_SCOPE &&
-                source_y == FONT_QUIT_NO_SOURCE_BITS
-            )
+            source_y != FONT_QUIT_NO_SOURCE_BITS
         ) {
             selected_y.u = mapped_y;
             selected_y.f += FONT_CONFIRMATION_SELECTED_Y_OFFSET;

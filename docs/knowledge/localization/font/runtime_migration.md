@@ -205,9 +205,10 @@ hook to unrelated consumers.
   and Practice retain the same structural row model, but their final pixel
   phases are separate because forcing the Practice phase onto Battle produced
   visibly different weight and alignment.
-- **Character Select player-mode list:** selected and ordinary rows share one
-  bounded metric family. Rows one through four share the normal formula; the
-  structurally distinct fifth footer receives one selected-state Y correction.
+- **Character Select player-mode list:** selected and ordinary rows measure and
+  center in one local `(8, *, 240, 20)` box. The structural Y rows are `8`,
+  `32`, `56`, `80`, and `114`; no per-string X table or selected-state footer
+  correction remains.
 - **Pause, Special Controls, quit, Character Select confirmation, Collection
   confirmation, and Mode Select confirmation:** each native modal family keeps
   its own container but shares selected/ordinary geometry within that family.

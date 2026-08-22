@@ -1,16 +1,16 @@
 ﻿id	enabled	display_context	source	donor	prefix	replacement	display_basis	source_ref	donor_ref	mode	capacity	transform	arguments	reference_refs	parent_mapping_id
 T5	1	Battle HUD > maximum damage label	最大	MAX			seen:savestate-084	NA2_SLPS@0x504970	NUN5_SLES@0x513E70	slot	8				
-T6	1	Battle or Practice Settings > label or running help	対戦時間	Time			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A210	NUN5_SLES@0x5142C8	slot	16				
-T7	1	Battle or Practice Settings > label or running help	アイテム出現	Items			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A220	NUN5_SLES@0x5142D0	slot	16				
-T8	1	Battle or Practice Settings > label or running help	チャクラ	Chakra			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A230	NUN5_TEXTENG@0xB88	slot	16				
-T9	1	Battle or Practice Settings > label or running help	ハンディキャップ	Handicap			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A240	NUN5_TEXTENG@0xF890	slot	32				
+T6	1	Battle or Practice Settings > label or running help	対戦時間	Time			e2e:menus	NA2_BTL@0x20A210	NUN5_SLES@0x5142C8	slot	16				
+T7	1	Battle or Practice Settings > label or running help	アイテム出現	Items			e2e:menus	NA2_BTL@0x20A220	NUN5_SLES@0x5142D0	slot	16				
+T8	1	Battle or Practice Settings > label or running help	チャクラ	Chakra			e2e:menus	NA2_BTL@0x20A230	NUN5_TEXTENG@0xB88	slot	16				
+T9	1	Battle or Practice Settings > label or running help	ハンディキャップ	Handicap			e2e:menus	NA2_BTL@0x20A240	NUN5_TEXTENG@0xF890	slot	32				
 T10	1	Battle or Practice Settings > label or running help	<r方向|ほうこう>キー<r左右|さゆう>で<r対戦時間|たいせんじかん>の<r変更|へんこう>ができます。	Press the left directional button or right directional button to change battle time.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A280	NUN5_TEXTENG@0xF540	slot	96				
 T11	1	Battle or Practice Settings > label or running help	<r方向|ほうこう>キー<r左右|さゆう>でＣＯＭの<r強|つよ>さを<r変更|へんこう>できます。	Press the left directional button or right directional button to change COM strength.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A2E0	NUN5_TEXTENG@0xF5A0	slot	96				
 T12	1	Battle or Practice Settings > label or running help	<r方向|ほうこう>キー<r左右|さゆう>でアイテムの<r出現率|しゅつげんりつ>が<r変更|へんこう>できます。　　　　　<r多|おお>めにすると、いつもよりゲーム<r中|ちゅう>に<r出現|しゅつげん>するアイテムの<r数|かず>が<r多|おお>くなります。	Press the left directional button or right directional button to change frequency of item appearance. Set to More to make items appear more frequently than usual.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A340	NUN5_TEXTENG@0xF600	slot	240				
 T13	1	Battle or Practice Settings > label or running help	<r方向|ほうこう>キー<r左右|さゆう>で<r忍術|にんじゅつ>などを<r使用|しよう>した<r時|とき>に、チャクラが<r減|へ>るか<r減|へ>らないかを<r設定|せってい>できます。	Press the left directional button or right directional button to chose whether Chakra decreases or not when using Jutsu.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A430	NUN5_TEXTENG@0xF6B0	slot	160				
 T14	1	Battle or Practice Settings > label or running help	<r方向|ほうこう>キー<r左右|さゆう>で<r奥義|おうぎ>の<r入力勝負|にゅうりょくしょうぶ>の<r切|き>り<r替|か>えなどが<r設定|せってい>できます。	Press the left directional button or right directional button to change Ultimate Jutsu controls.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A4D0	NUN5_TEXTENG@0xF730	slot	144				
 T15	1	Battle or Practice Settings > label or running help	<r方向|ほうこう>キー<r左右|さゆう>でハンディキャップの<r設定|せってい>ができます。　　　　　<r赤|あか>いマークが<r多|おお>いほど、１Ｐが<r有利|ゆうり>。<r逆|ぎゃく>に<r青|あお>いマークが<r多|おお>いと２Ｐが<r有利|ゆうり>な<r設定|せってい>です。	Press the left directional button or right directional button to change handicap. More red marks means a better advantage for 1P. Blue marks are for 2P.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A560	NUN5_TEXTENG@0xF7A0	slot	256				
-T16	1	Battle or Practice Settings > label or running help	<r対戦設定|たいせんせってい>をデフォルトに<r戻|もど>しました。	Battle Settings returned to defaults.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A680	NUN5_TEXTENG@0xF260	slot	68				
+T16	1	Battle or Practice Settings > label or running help	<r対戦設定|たいせんせってい>をデフォルトに<r戻|もど>しました。	Battle Settings returned to defaults.			e2e:menus	NA2_BTL@0x20A680	NUN5_TEXTENG@0xF260	slot	68				
 T17	1	Battle or Practice Settings > label or running help	連係攻撃	Linked Attack			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A748	NUN5_TEXTENG@0xF08	slot	16				
 T18	1	Battle or Practice Settings > label or running help	連係モード	Linked Mode			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A758	NUN5_TEXTENG@0x1E60	slot	16				
 T19	1	Battle or Practice Settings > label or running help	コマンド表示	Commands			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20A768	NUN5_TEXTENG@0x893	slot	16				
@@ -22,13 +22,13 @@ T24	1	Battle or Practice Settings > label or running help	<r対戦|たいせん>
 T25	1	Battle or Practice Settings > label or running help	対戦相手の設定	Opponent Settings			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20B468	NUN5_TEXTENG@0xF920	slot	24				
 T26	1	Battle or Practice Settings > label or running help	<r練習設定|れんしゅうせってい>をデフォルトに<r戻|もど>しました。	Practice settings returned to defaults.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20B4D0	NUN5_TEXTENG@0xF940	slot	72				
 T27	1	Battle or Practice Settings > selector value	楽々	Simple			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B48	NUN5_SLES@0x514218	slot	8				
-T28	1	Battle or Practice Settings > selector value	ふつう	Normal			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B50	NUN5_SLES@0x514228	slot	8				
+T28	1	Battle or Practice Settings > selector value	ふつう	Normal			e2e:menus	NA2_SLPS@0x505B50	NUN5_SLES@0x514228	slot	8				
 T29	1	Battle or Practice Settings > selector value	激むず	Insane			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B58	NUN5_SLES@0x514238	slot	8				
 T30	1	Battle or Practice Settings > selector value	究極	Ultimate			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B60	NUN5_TEXTENG@0xF208	slot	8			NA2_BTL@0x209CB4	
 T31	1	Battle or Practice Settings > selector value	なし	None			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B68	NUN5_SLES@0x514240	slot	8				
 T32	1	Battle or Practice Settings > selector value	少なめ	Less			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B70	NUN5_SLES@0x514248	slot	8				
 T33	1	Battle or Practice Settings > selector value	多め	More			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B78	NUN5_SLES@0x514250	slot	8				
-T34	1	Battle or Practice Settings > selector value	通常	Normal			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B80	NUN5_SLES@0x4B9519	slot	8				
+T34	1	Battle or Practice Settings > selector value	通常	Normal			e2e:menus	NA2_SLPS@0x505B80	NUN5_SLES@0x4B9519	slot	8				
 T35	1	Battle or Practice Settings > selector value	回転	Turn			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B98	NUN5_SLES@0x514278	slot	8				
 T36	1	Battle or Practice Settings > selector value	連打	Combo			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505BA0	NUN5_SLES@0x4AFE80	slot	8				
 T37	1	Battle or Practice Settings > selector value	オフ	OFF			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505BB0	NUN5_SLES@0x513E6C	slot	8				
@@ -44,32 +44,32 @@ T46	1	Battle or Practice Settings > selector value	コンボ	Combo			inferred:re
 T47	1	Battle or Practice Settings > selector value	忍術	Jutsu			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505C28	NUN5_SLES@0x5142A8	slot	8				
 T48	1	Battle or Practice Settings > selector value	する	Use			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505C30	NUN5_SLES@0x51425B	slot	8				
 T49	1	Battle or Practice Settings > selector value	追う	Follow			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505C40	NUN5_SLES@0x5142B8	slot	8				
-T50	1	Battle or Practice Settings > selector value	難易度	Difficulty			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505C70	NUN5_TEXTENG@0xF880	slot	8			NA2_BTL@0x20A264	
+T50	1	Battle or Practice Settings > selector value	難易度	Difficulty			e2e:menus	NA2_SLPS@0x505C70	NUN5_TEXTENG@0xF880	slot	8			NA2_BTL@0x20A264	
 T51	1	Battle or Practice Settings > selector value	体力	Health			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505CA0	NUN5_SLES@0x5142E0	slot	8				
 T52	1	Battle or Practice Settings > selector value	状態	Status			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505CA8	NUN5_SLES@0x4AFF1D	slot	8				
 T53	1	Battle or Practice Settings > selector value	攻撃	Attack			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505CB8	NUN5_SLES@0x513EF0	slot	8				
 T54	1	Battle or Practice Settings > selector value	ガード	Guard			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505CC0	NUN5_SLES@0x4AFD6D	slot	8				
 T55	1	Battle or Practice Settings > selector value	行動	Move			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505CC8	NUN5_SLES@0x5142F8	slot	8				
-T56	1	Battle or Practice Settings > unlimited-time value	無限	Unlimited			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505B88	NUN5_TEXTENG@0xF218	slot	8			NA2_SLPS@0x505B94,NA2_SLPS@0x505BAC,NA2_SLPS@0x505C68	
-T57	1	Battle pause menu > menu item	<r操作設定|そうさせってい>	Controls			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208A30	NUN5_TEXTENG@0x870	slot	32				
-T58	1	Battle pause menu > menu item	<r基本操作|きほんそうさ>コマンド<r表|ひょう>	Command Chart			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208A50	NUN5_TEXTENG@0x880	slot	48				
-T59	1	Battle pause menu > menu item	１Ｐコマンド<r表|ひょう>	1P Commands			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208A80	NUN5_TEXTENG@0x890	slot	32				
+T56	1	Battle or Practice Settings > unlimited-time value	無限	Unlimited			e2e:menus	NA2_SLPS@0x505B88	NUN5_TEXTENG@0xF218	slot	8			NA2_SLPS@0x505B94,NA2_SLPS@0x505BAC,NA2_SLPS@0x505C68	
+T57	1	Battle pause menu > menu item	<r操作設定|そうさせってい>	Controls			e2e:menus	NA2_BTL@0x208A30	NUN5_TEXTENG@0x870	slot	32				
+T58	1	Battle pause menu > menu item	<r基本操作|きほんそうさ>コマンド<r表|ひょう>	Command Chart			e2e:menus	NA2_BTL@0x208A50	NUN5_TEXTENG@0x880	slot	48				
+T59	1	Battle pause menu > menu item	１Ｐコマンド<r表|ひょう>	1P Commands			e2e:menus	NA2_BTL@0x208A80	NUN5_TEXTENG@0x890	slot	32				
 T60	1	Battle pause menu > menu item	２Ｐコマンド<r表|ひょう>	2P Commands			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208AA0	NUN5_TEXTENG@0x8A0	slot	32				
 T61	1	Battle pause menu > menu item	<r練習設定|れんしゅうせってい>	Practice			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208AF0	NUN5_TEXTENG@0x718	slot	32				
-T62	1	Battle pause menu > menu item	かんたん<r表示|ひょうじ><r設定|せってい>	Simple Display			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208B10	NUN5_TEXTENG@0x8B0	slot	48				
-T63	1	Battle pause menu > quit or return confirmation	<r対戦|たいせん>	Are you sure you want to quit %1 and return to %2?			seen:ss4-shared-callers-2026-07-27 paired screenshot	NA2_BTL@0x208CF0	NUN5_TEXTENG@0xA20	slot	32	format_literal_through_arg1	arg1=Battle	NA2_BTL@0x208E40	
+T62	1	Battle pause menu > menu item	かんたん<r表示|ひょうじ><r設定|せってい>	Simple Display			e2e:menus	NA2_BTL@0x208B10	NUN5_TEXTENG@0x8B0	slot	48				
+T63	1	Battle pause menu > quit or return confirmation	<r対戦|たいせん>	Are you sure you want to quit %1 and return to %2?			e2e:menus	NA2_BTL@0x208CF0	NUN5_TEXTENG@0xA20	slot	32	format_literal_through_arg1	arg1=Battle	NA2_BTL@0x208E40	
 T64	1	Battle pause menu > quit or return confirmation	<r練習|れんしゅう>	Are you sure you want to quit %1 and return to %2?			seen:ss4-shared-callers-2026-07-27 paired screenshot	NA2_BTL@0x208D10	NUN5_TEXTENG@0xA20	slot	32	format_literal_through_arg1	arg1=Practice	NA2_BTL@0x208E44	
 T65	1	Battle pause menu > quit or return confirmation	"を<r終了|しゅうりょう>しますが、よろしいですか？
 <iconCANCEL>キャンセル"	Do you want to quit %1?			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208D30	NUN5_TEXTENG@0xA00	slot	80	format_literal_arg1	arg1=Free Battle	NA2_BTL@0x208E48	
-T66	1	Battle pause menu > quit or return confirmation	を<r終了|しゅうりょう>して	Are you sure you want to quit %1 and return to %2?			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208D80	NUN5_TEXTENG@0xA20	slot	32	between_placeholders			
+T66	1	Battle pause menu > quit or return confirmation	を<r終了|しゅうりょう>して	Are you sure you want to quit %1 and return to %2?			e2e:menus	NA2_BTL@0x208D80	NUN5_TEXTENG@0xA20	slot	32	between_placeholders			
 T67	1	Battle pause menu > quit or return confirmation	"に<r戻|もど>りますが、
-よろしいですか？　　　　<iconCANCEL>キャンセル"	Are you sure you want to quit %1 and return to %2?			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208DF0	NUN5_TEXTENG@0xA20	slot	80	after_placeholder2			
-T2201	1	Battle pause menu > quit or return confirmation	キャラクター<r選択|せんたく>	Character Select			seen:ss4-shared-callers-2026-07-27 paired screenshot	NA2_BTL@0x208DA0	NUN5_TEXTENG@0xA60	slot	32				
-T2202	1	Battle pause menu > quit or return confirmation	ゲームモード<r選択|せんたく>	Game Mode Select			seen:ss4-shared-callers-2026-07-27 paired screenshot	NA2_BTL@0x208DC0	NUN5_TEXTENG@0xA80	slot	32				
+よろしいですか？　　　　<iconCANCEL>キャンセル"	Are you sure you want to quit %1 and return to %2?			e2e:menus	NA2_BTL@0x208DF0	NUN5_TEXTENG@0xA20	slot	80	after_placeholder2			
+T2201	1	Battle pause menu > quit or return confirmation	キャラクター<r選択|せんたく>	Character Select			e2e:menus	NA2_BTL@0x208DA0	NUN5_TEXTENG@0xA60	slot	32				
+T2202	1	Battle pause menu > quit or return confirmation	ゲームモード<r選択|せんたく>	Game Mode Select			e2e:menus	NA2_BTL@0x208DC0	NUN5_TEXTENG@0xA80	slot	32				
 T2203	1	Battle pause menu > Special Controls selector	Ｏ　Ｎ	ON			seen:ss1-special-controls-draw-telemetry-2026-07-27	NA2_SLPS@0x505AF0	NUN5_SLES@0x513E68	slot	8	""	""	""	""
 T2204	1	Battle pause menu > Special Controls selector	ＯＦＦ	OFF			seen:ss1-special-controls-draw-telemetry-2026-07-27	NA2_SLPS@0x505AF8	NUN5_SLES@0x513E6C	slot	8	""	""	""	""
-T68	1	Battle pause menu > return destination	ゲームモード<r選択|せんたく>に<r戻|もど>る	Back to Game Mode Screen			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208BB0	NUN5_TEXTENG@0x900	slot	48				
-T69	1	Battle pause menu > return destination	キャラクター<r選択|せんたく>に<r戻|もど>る	Back to Character Select			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x208BE0	NUN5_TEXTENG@0x920	slot	48				
+T68	1	Battle pause menu > return destination	ゲームモード<r選択|せんたく>に<r戻|もど>る	Back to Game Mode Screen			e2e:menus	NA2_BTL@0x208BB0	NUN5_TEXTENG@0x900	slot	48				
+T69	1	Battle pause menu > return destination	キャラクター<r選択|せんたく>に<r戻|もど>る	Back to Character Select			e2e:menus	NA2_BTL@0x208BE0	NUN5_TEXTENG@0x920	slot	48				
 T70	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r忍術|にんじゅつ>にて<r攻|せ>めるべし	Attack the enemy with Ninjutsu			seen:savestates-091-099	NA2_BTL@0x1E5550	NUN5_TEXTENG@0x10120	slot	64				
 T71	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r奥義|おうぎ>にて<r攻|せ>めるべし	Attack the enemy with Ultimate Jutsu			seen:savestates-091-099	NA2_BTL@0x1E5590	NUN5_TEXTENG@0x10140	slot	48				
 T72	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r連係攻撃|れんけいこうげき>にて<r攻|せ>めるべし	Attack the enemy with Linked attacks			seen:savestates-091-099	NA2_BTL@0x1E55C0	NUN5_TEXTENG@0x10170	slot	64				
@@ -441,12 +441,12 @@ T414	1	Character menus > Ultimate Jutsu name	<r千鳥|ちどり>・<r雷鳴|ら�
 T415	1	Character Select > Linked Mode selector value	<r連係|れんけい>モード	Linked Mode			seen:replacement-pass-2-2026-07-26 paired screenshot	NA2_SLPS@0x4B4310	NUN5_TEXTENG@0x1E60	slot	24				
 T416	1	Character Select > Linked Mode selector value	マニュアル	Manual			seen:replacement-pass-2-2026-07-26 paired screenshot	NA2_SLPS@0x4B4328	NUN5_SLES@0x513F10	slot	16				
 T417	1	Character Select > Linked Mode selector value	オート	Auto			seen:replacement-pass-2-2026-07-26 paired screenshot	NA2_SLPS@0x504908	NUN5_SLES@0x513F18	slot	8				
-T418	1	Character Select > player-control mode or return item	 １Ｐ　ｖｓ　２Ｐ	1P vs. 2P			inferred:character-select-control-mode-table	NA2_SLPS@0x4B4150	NUN5_TEXTENG@0x1D88	slot	32				
-T419	1	Character Select > player-control mode or return item	 １Ｐ　ｖｓ ＣＯＭ	1P vs. COM			inferred:character-select-control-mode-table	NA2_SLPS@0x4B4170	NUN5_TEXTENG@0x1D98	slot	32				
-T420	1	Character Select > player-control mode or return item	ＣＯＭ ｖｓ　２Ｐ	COM vs. 2P			inferred:character-select-control-mode-table	NA2_SLPS@0x4B4190	NUN5_TEXTENG@0x1DA8	slot	32				
-T421	1	Character Select > player-control mode or return item	ＣＯＭ ｖｓ ＣＯＭ	COM vs. COM			inferred:character-select-control-mode-table	NA2_SLPS@0x4B41B0	NUN5_TEXTENG@0x1DB8	slot	32				
-T422	1	Character Select > player-control mode or return item	ゲームモード<r選択|せんたく>に<r戻|もど>る	Back to Game Mode Screen			inferred:character-select-control-mode-table	NA2_SLPS@0x4B41D0	NUN5_TEXTENG@0x900	slot	48				
-T423	1	Character Select > return confirmation	ゲームモード<r選択|せんたく>に<r戻|もど>りますか？	Return to Game Mode Screen?			inferred:character-select-return-table	NA2_SLPS@0x4B4220	NUN5_TEXTENG@0x1DF0	slot	64				
+T418	1	Character Select > player-control mode or return item	 １Ｐ　ｖｓ　２Ｐ	1P vs. 2P			e2e:menus	NA2_SLPS@0x4B4150	NUN5_TEXTENG@0x1D88	slot	32				
+T419	1	Character Select > player-control mode or return item	 １Ｐ　ｖｓ ＣＯＭ	1P vs. COM			e2e:menus	NA2_SLPS@0x4B4170	NUN5_TEXTENG@0x1D98	slot	32				
+T420	1	Character Select > player-control mode or return item	ＣＯＭ ｖｓ　２Ｐ	COM vs. 2P			e2e:menus	NA2_SLPS@0x4B4190	NUN5_TEXTENG@0x1DA8	slot	32				
+T421	1	Character Select > player-control mode or return item	ＣＯＭ ｖｓ ＣＯＭ	COM vs. COM			e2e:menus	NA2_SLPS@0x4B41B0	NUN5_TEXTENG@0x1DB8	slot	32				
+T422	1	Character Select > player-control mode or return item	ゲームモード<r選択|せんたく>に<r戻|もど>る	Back to Game Mode Screen			e2e:menus	NA2_SLPS@0x4B41D0	NUN5_TEXTENG@0x900	slot	48				
+T423	1	Character Select > return confirmation	ゲームモード<r選択|せんたく>に<r戻|もど>りますか？	Return to Game Mode Screen?			e2e:menus	NA2_SLPS@0x4B4220	NUN5_TEXTENG@0x1DF0	slot	64				
 T424	1	Character Select > return confirmation	タイトルに<r戻|もど>りますか？	Return to Title Screen?			inferred:character-select-return-table	NA2_SLPS@0x4B4260	NUN5_TEXTENG@0x1C90	slot	32				
 T425	1	Character Select > return confirmation	<r任務|にんむ><r選択|せんたく>に<r戻|もど>りますか？	Return to Mission Select?			inferred:character-select-return-table	NA2_SLPS@0x4B4280	NUN5_TEXTENG@0x1E10	slot	64				
 T426	1	Character Select > return confirmation	<r種目選択|しゅもくせんたく>に<r戻|もど>りますか？	Return to Event Select?			inferred:character-select-return-table	NA2_SLPS@0x4B42C0	NUN5_TEXTENG@0x1E30	slot	64				
@@ -2021,7 +2021,7 @@ T1975	1	Practice Settings > label or running help	<r状態|じょうたい>が�
 T1976	1	Practice Settings > label or running help	<r状態|じょうたい>が「ＣＯＭ」に<r設定|せってい>されている<r時|とき>の<r変|か>わり<r身|み>の<r術|じゅつ>の<r使用頻度|しようひんど>を<r指定|してい>できます。	Set the frequency of Substitution Jutsu when in COM mode.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20AE70	NUN5_TEXTENG@0xFE80	slot	160				
 T1977	1	Practice Settings > label or running help	<r状態|じょうたい>が「<r手動|しゅどう>」<r以外|いがい>に<r設定|せってい>されている<r時|とき>の<r連係攻撃|れんけいこうげき>の<r使用頻度|しようひんど>を<r指定|してい>できます。	Set the frequency of Linked Attacks when not in Manual mode.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20AF10	NUN5_TEXTENG@0xFEC0	slot	176				
 T1978	1	Practice Settings > label or running help	<r状態|じょうたい>が「<r手動|しゅどう>」<r以外|いがい>に<r設定|せってい>されている<r時|とき>の<r追|お>い<r討|う>ち<r返|がえ>しの<r頻度|ひんど>を<r指定|してい>できます。	Set the frequency of the Extra Hit Counter when in the COM mode.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20AFC0	NUN5_TEXTENG@0xFF00	slot	176				
-T1979	1	Practice Settings > label or running help	奥義	Ultimate Jutsu			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505C20	NUN5_TEXTENG@0xF238	slot	8			NA2_BTL@0x209DD4,NA2_BTL@0x20A270,NA2_BTL@0x20A7CC	
+T1979	1	Practice Settings > label or running help	奥義	Ultimate Jutsu			e2e:menus	NA2_SLPS@0x505C20	NUN5_TEXTENG@0xF238	slot	8			NA2_BTL@0x209DD4,NA2_BTL@0x20A270,NA2_BTL@0x20A7CC	
 T1980	1	Practice Settings > label or running help	強さ	Strength			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505CB0	NUN5_TEXTENG@0xF8E8	slot	8			NA2_BTL@0x20A7E8	
 T1981	1	Practice Settings > opponent setting help or value	<r対戦|たいせん><r相手|あいて>の<r状態|じょうたい>を<r指定|してい>できます。<r手動|しゅどう>では、<r別|べつ>のコントローラで<r操作|そうさ>する<r事|こと>ができます。	You can use another analog controller (DUALSHOCK®2) to input commands when in Manual mode.			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x20B0C0	NUN5_TEXTENG@0xFF80	slot	176				
 T1982	1	Practice Settings > opponent setting help or value	乱発	Random			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_SLPS@0x505C60	NUN5_SLES@0x514260	slot	8				
@@ -2029,7 +2029,7 @@ T1983	1	Practice Settings > selector value or running help	やさしい	Easy			i
 T1984	1	Practice Settings > selector value or running help	むずかしい	Hard			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209C90	NUN5_SLES@0x514230	slot	16				
 T1985	1	Practice Settings > selector value or running help	使用不可	No Use			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209CD0	NUN5_SLES@0x514258	slot	16				
 T1986	1	Practice Settings > selector value or running help	ランダム	Random			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209CE0	NUN5_SLES@0x514260	slot	16				
-T1987	1	Practice Settings > selector value or running help	コマンド	Command			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209CF0	NUN5_BTL@0x1ECEC2	slot	16				
+T1987	1	Practice Settings > selector value or running help	コマンド	Command			e2e:menus	NA2_BTL@0x209CF0	NUN5_BTL@0x1ECEC2	slot	16				
 T1988	1	Practice Settings > selector value or running help	タイミング	Timing			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209D00	NUN5_SLES@0x514270	slot	16				
 T1989	1	Practice Settings > selector value or running help	ギリギリ	Almost			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209D28	NUN5_SLES@0x514288	slot	16				
 T1990	1	Practice Settings > selector value or running help	マニュアル	Manual			inferred:replacement-pass-2-2026-07-26 selector or running-help family	NA2_BTL@0x209D48	NUN5_SLES@0x513F10	slot	16				
@@ -2068,8 +2068,8 @@ T2015	1	Save or Load menu > overwrite confirmation	<ruby上書|うわが>きし�
 T2011	1	Save or Load menu > saving-progress message	セーブしています。	Saving to memory card (PS2) in <br>MEMORY CARD slot 1.<br>Please do not remove memory card (PS2), <br>controller, or reset/switch off the console.			seen:replacement-validation-save-progress-corruption	NA2_SLPS@0x303F50	NUN5_TEXTENG@0x29350	slot	19	split_br	part=0	NA2_SLPS@0x5030B4	
 T2041	1	Save or Load menu > saving-progress message	”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）	Saving to memory card (PS2) in <br>MEMORY CARD slot 1.<br>Please do not remove memory card (PS2), <br>controller, or reset/switch off the console.			inferred:complete-save-progress-message-family-from-paired-screen	NA2_SLPS@0x303F63	NUN5_TEXTENG@0x29350	slot	73	split_br	part=1		
 T2042	1	Save or Load menu > saving-progress message	を<ruby抜|ぬ>かないでください。	Saving to memory card (PS2) in <br>MEMORY CARD slot 1.<br>Please do not remove memory card (PS2), <br>controller, or reset/switch off the console.			inferred:complete-save-progress-message-family-from-paired-screen	NA2_SLPS@0x303FAC	NUN5_TEXTENG@0x29350	slot	36	join_br_parts	parts=2,3;join=<br>	NA2_SLPS@0x5030B4	T2011
-T1	1	Shared game modal > Yes or No choice	はい	Yes			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x503110	NUN5_SLES@0x513E50	slot	5				
-T2024	1	Shared game modal > Yes or No choice	いいえ	No			seen:tid-pass-2026-07-26 paired screenshot	NA2_SLPS@0x503118	NUN5_SLES@0x513E4C	slot	7				
+T1	1	Shared game modal > Yes or No choice	はい	Yes			e2e:menus	NA2_SLPS@0x503110	NUN5_SLES@0x513E50	slot	5				
+T2024	1	Shared game modal > Yes or No choice	いいえ	No			e2e:menus	NA2_SLPS@0x503118	NUN5_SLES@0x513E4C	slot	7				
 T2025	1	Shared game modal > Yes or No choice	いいえ	No			e2e:collection/misc	NA2_SLPS@0x504668	NUN5_SLES@0x513E4C	slot	7				
 T2026	1	Shared game modal > Yes or No choice	は　い	Yes			e2e:collection/misc	NA2_SLPS@0x504670	NUN5_SLES@0x513E50	slot	8				
 T2035	1	Startup and save flow > memory-card prompt or status	ＭＥＭＯＲＹ ＣＡＲＤ<ruby差込口|さしこみぐち>１に<NUL>”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）が<NUL><ruby差|さ>されていません。	No memory card (PS2) is inserted in <br>MEMORY CARD slot 1.<br>Please insert a memory card (PS2) in<br>MEMORY CARD slot 1.			seen:savestates-100-104-and-format-captures	NA2_SLPS@0x3039E0	NUN5_TEXTENG@0x29060	sequence	160	split_br_sequence	parts=0,1,2,3		

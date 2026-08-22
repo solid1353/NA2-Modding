@@ -45,6 +45,11 @@ The maintained Jutsus suite selects 26 exact Command Chart title records. Its
 three paired pages establish `e2e:jutsus` for those records only: 25 are also
 selected by Movesets, while T260 is selected by Jutsus but not Movesets.
 
+The maintained Menus suite selects 30 exact rows across Character Select,
+Battle Settings, the Battle pause list, and both quit-confirmation destinations.
+Its three paired pages distinguish the boot-ELF shared-modal slots from the
+separate Collection choices and distinguish selected rows from ordinary rows.
+
 | Display basis | Covered rows | Proven family |
 | --- | ---: | --- |
 | `e2e:collection/characters` | 31 | Character-plaque names selected by the Characters captures |
@@ -54,14 +59,38 @@ selected by Movesets, while T260 is selected by Jutsus but not Movesets.
 | `e2e:collection/ultimates` | 221 | 60 selected plaque names and 161 Collection-owned Ultimate Jutsu titles |
 | `e2e:collection/voice` | 184 | 31 character-plaque names and 153 Collection-owned Voice titles or aliases |
 | `e2e:jutsus` | 26 | Exact Command Chart title records selected by the three Jutsus pages |
+| `e2e:menus` | 30 | Exact Character Select, Battle Settings, Pause, and quit-confirmation records selected by the three Menus pages |
 | `e2e:movesets` | 1,226 | 1,052 selected Command Chart titles, 154 selected metadata-owned Ultimate/Jutsu titles, and 20 selected shared relationship/control records |
 
-These suite counts total 1,959 `e2e:` entries on 1,766 unique rows. The six
+These suite counts total 1,989 `e2e:` entries on 1,796 unique rows. The six
 Collection suites own 707 entries on 539 unique rows because exact records can
 be selected by several Collection paths. The 1,226 Movesets rows are separate
 executable records even where the visible English is equal. Jutsus overlaps
-Movesets on 25 rows and adds T260 as one newly selected row. Of the 2,088
-canonical rows, 322 have no accepted-suite E2E basis.
+Movesets on 25 rows and adds T260 as one newly selected row. Menus adds 30
+previously non-E2E rows. Of the 2,088 canonical rows, 292 have no maintained-
+suite E2E basis.
+
+### Menus capture-selection boundary
+
+The three Menus pages contain 14 capture states. Exact source-byte and donor-
+byte checks against the clean NA2 and NUN5 files prove these 30 selected rows:
+
+- Character Select consumes T418-T422 from the boot-ELF option table at
+  `0x4B4150..0x4B41FF` and T423 from the return prompt at `0x4B4220`.
+- Battle Settings consumes label-pointer array `BTL.BIN` `0x20A260`, which
+  selects T6, T50, T7, T8, T1979, and T9 in row order. The recorded values are
+  T56 `Unlimited`, T28 `Normal` for both Difficulty and Items, T34 `Normal`
+  for Chakra, and T1987 `Command`. The visible defaults message is T16.
+- The recorded Battle pause list selects T57-T59, T62, T68, and T69. Similar
+  unrecorded siblings such as T60 and T61 do not inherit Menus coverage.
+- The quit body is assembled from T63, T66, and T67, with T2201 or T2202 as
+  the selected destination. The generic Menus modal uses boot-ELF T1 `Yes` at
+  `0x503110` and T2024 `No` at `0x503118`; Collection instead uses T2025 and
+  T2026 at different boot-ELF slots and does not share this coverage.
+
+The canonical `source_ref` and `donor_ref` fields on those 30 rows record every
+exact verified NA2 and NUN5 offset. No Menus row uses a replacement or prefix,
+and equal English in another executable family does not transfer this basis.
 
 ### Collection capture-selection boundary
 

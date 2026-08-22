@@ -97,7 +97,7 @@
 /* === Battle/Practice quit-confirmation body === */
 
 /* Quit prompt body left edge; increase to move the body right. */
-#define FONT_QUIT_BODY_BOX_X 25.4f
+#define FONT_QUIT_BODY_BOX_X 24.6f
 
 /* Quit prompt body top edge; increase to move the body down. */
 #define FONT_QUIT_BODY_BOX_Y 12.0f

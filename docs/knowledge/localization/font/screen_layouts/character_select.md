@@ -18,33 +18,36 @@ isolates its remaining return-confirmation list caller:
   `C4080E0C00000000`, draws only the `Return to Game Mode Screen?`
   confirmation body.
 
-The selected-row adapter uses a 240-by-20, single-line, shrink-only box at the
-caller's Y and five local units to the right of its incoming X. The original
-declarative selected-delay-slot compensation is removed because the symbolic
-eight-byte hook replaces that call and delay slot atomically. The final ss5
-red-ink bounds are `x=170..466`, exactly matching NUN5. The supplied ss6
-isolation comparison proves that the selected hook does not select the adjacent
-ordinary-row family.
+The 2026-08-22 Menus suite supersedes the earlier per-string positioning
+candidate. The row loop in clean NA2 main-ELF `FUN_003BC780` supplies Y `8`,
+`32`, `56`, `80`, and `120` before the selected call at file `0x2BC984` or the
+ordinary call at file `0x2BC9BC`. Both existing C adapters preserve the first
+four structural Y rows and map the footer to Y `114`; an already-adjusted
+historical input Y `115` follows the same footer branch.
 
-The 2026-08-03 `font/main` captures 50 and 51 isolate the structural fifth row
-in both draw states. Capture 51's ordinary black ink is two output pixels below
-NUN5, whereas capture 50 proves the selected footer already has the correct
-vertical phase. The accepted final row origins are Y `8`, `32`, `56`, `80`, and
-`115`; the selected adapter applies its existing footer-only `-1` correction,
-preserving final selected Y `114`, while the ordinary adapter consumes Y `115`
-directly.
+Both draw states now measure the live string and center it in one local
+`(8, *, 240, 20)` shrink-only box. The selected native helper accepts integer
+X, so its adapter truncates the measured centered X; the ordinary helper keeps
+the centered float. This replaces the former per-string X table `81.75`,
+`73.375`, `72.375`, `63.5`, `3.5` and removes the selected-footer-only Y
+special case without adding another hook.
 
-The row loop in clean NA2 main-ELF `FUN_003BC780` supplies Y `8`, `32`, `56`,
-`80`, and `120` before the selected call at file `0x2BC984` or the ordinary call
-at file `0x2BC9BC`. Both existing C adapters now translate those native values
-to the accepted X table `81.75`, `73.375`, `72.375`, `63.5`, `3.5` and the five
-accepted Y values. They also accept an already-adjusted Y `115` from historical
-states. The former fixed-ELF producer replacement and X table are therefore
-retired without adding another hook. Confidence is high: clean-ELF disassembly
-identifies both consumers, compiled-fragment tests require every accepted
-coordinate in both adapters, and captures 50 and 51 independently expose the
-two final renderer phases. Runtime validation of the storage refactor remains
-for the user; the visible coordinate contract itself is unchanged.
+Menus page 1 captures selected rows 2 through 5, and page 2 captures selected
+row 1. Their NA228/NUN5 red-ink bounds are exact at 640x480:
+
+- row 1: `(272..367,177..190)`;
+- row 2: `(260..378,207..220)`;
+- row 3: `(259..380,237..250)`;
+- row 4: `(248..391,267..280)`;
+- footer: `(172..468,309..322)`.
+
+The ordinary row origins and footer bounds use the same center contract. At a
+dark-gray threshold, the only horizontal edge variation is the left edge of
+ordinary `COM vs. 2P` (`259` in NUN5, `260` in NA228); the selected form has
+exact bounds, so this is a glyph-raster edge rather than a row-origin offset.
+The extra bottom edge on the ordinary fourth row is the intentional
+non-collapsed NA228 glyph height. The user accepted this centered family
+through `ver` on 2026-08-22.
 
 NUN5 telemetry for the confirmation body is box `(8,8,368,24)`, horizontal
 policy `2` (center), vertical policy `1`, and incoming scale `1`. A first C
@@ -78,12 +81,11 @@ installed only that guarded call, and produced a native 640x480 capture. The
 modal boxes have different absolute X positions between games, but both
 Current rows then have the same X/Y offsets from their respective modal
 origins as NUN5. The accepted lower body remains unchanged. This selector
-result is agent-validated and awaits explicit user acceptance.
+result was accepted with the complete Menus result on 2026-08-22.
 
 Confidence is **verified** for the three call sites, renderer selection,
 coordinate contracts, caller isolation, and supplied-state behavior. User
-acceptance currently covers the lower confirmation body, not the new top
-selector result.
+acceptance covers the complete modal family.
 
 
 ## Character Select ordinary-row metric session
@@ -98,18 +100,9 @@ main-ELF `FUN_003BC780`. NA2 draws its selected entry through
 through one `FUN_00393210` helper, with native local Y values `0`, `24`, `48`,
 `72`, and `106`.
 
-The existing selected hook already enters the accepted 240-unit v2 metric
-session and applies a five-local-unit X correction. Ordinary rows bypassed that
-session, so their Y bounds were already exact but their visible widths were
-eight or nine pixels too large and their left edges were six pixels too far
-left. A second caller-specific C entry now gives only the ordinary draw the
-same metric session and X correction, then returns through the original
-ordinary callback. It does not alter the row table, selected renderer, or
-confirmation callers.
-
-At 640x480, the three ordinary comparison rows now have exact NUN5 bounds:
-`(259..377,206..219)`, `(257..379,236..249)`, and
-`(246..390,266..279)`. The selected first row remains on its prior accepted
-path. This proves that the discrepancy was session selection rather than
-per-row Y drift or a need for individual scale constants. Confidence is high;
-explicit user acceptance of the refreshed five-row list remains pending.
+The selected and ordinary hooks both enter the same 240-unit metric session.
+The 2026-08-22 Menus evidence above proves that the durable contract is shared
+measurement and centering, not a fixed correction or a table of positions for
+the current five English strings. The selected renderer, ordinary renderer,
+and confirmation callers remain independently scoped. Confidence is high; the
+refreshed five-row list was accepted on 2026-08-22.

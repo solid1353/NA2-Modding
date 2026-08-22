@@ -1,4 +1,4 @@
-/* Build compact per-player support lists and enforce their compatibility. */
+/* Build compact per-player support lists with bounded navigation. */
 
 typedef unsigned char u8;
 typedef signed int s32;
@@ -16,6 +16,7 @@ typedef unsigned int u32;
 
 #define CHARACTER_SELECT_PLAYER_SUPPORT_INDEX_OFFSET 0x30u
 #define CHARACTER_SELECT_PLAYER_SUPPORT_PAGE_OFFSET 0x34u
+#define CHARACTER_SELECT_PLAYER_SUPPORT_SCROLL_OFFSET 0x38u
 #define CHARACTER_SELECT_PLAYER_DATA_POINTER_OFFSET 0x74u
 #define CHARACTER_SELECT_PLAYER_LINKED_MODE_OFFSET 0x10u
 #define CHARACTER_SELECT_PLAYER_SECONDARY_SELECTION_OFFSET 0x08u
@@ -30,6 +31,9 @@ typedef unsigned int u32;
 #define CHARACTER_SELECT_STATE_SUPPORT_SELECTION 5u
 #define CHARACTER_SELECT_STATE_FINALIZED 12u
 
+#define SUPPORT_NAVIGATION_LEFT 2u
+#define SUPPORT_NAVIGATION_RIGHT 3u
+
 #define NATIVE_POPULATE_SUPPORT_LIST_ADDRESS 0x003BB210u
 #define NATIVE_SELECTED_CHARACTER_ID_ADDRESS 0x003B4A90u
 #define NATIVE_CONFIRM_FIGHTER_ADDRESS 0x003B52E0u
@@ -38,6 +42,7 @@ typedef unsigned int u32;
 #define NATIVE_SELECTED_SUPPORT_ID_ADDRESS 0x003B4D30u
 #define NATIVE_SELECTED_SUPPORT_NAME_DRAW_ADDRESS 0x003B8A90u
 #define NATIVE_SET_CHARACTER_SELECT_STATE_ADDRESS 0x003B5670u
+#define NATIVE_SUPPORT_NAVIGATION_ADDRESS 0x003B7280u
 
 #define FRAME_POINTER_ADDRESS 0x006073FCu
 #define FONT_RENDERER_POINTER_ADDRESS 0x00607470u
@@ -88,6 +93,10 @@ typedef void (*NativeConfirmFighter)(void *player_select);
 typedef void (*NativeSetCharacterSelectState)(
     void *player_select,
     u32 state
+);
+typedef void (*NativeSupportNavigation)(
+    void *player_select,
+    u32 direction
 );
 typedef void (*NativeFontSetContext)(void *renderer, void *context);
 typedef void (*NativeTextDraw)(float x, float y, const u8 *text, u32 color);
@@ -355,6 +364,31 @@ void clamp_support_cursor(void *player_select, u32 support_count)
 }
 
 static __attribute__((always_inline)) inline
+void select_no_support(void *player_select)
+{
+    u8 *player = (u8 *)player_select;
+    u8 *data = *(u8 **)(
+        player + CHARACTER_SELECT_PLAYER_DATA_POINTER_OFFSET
+    );
+    u32 support_count = *(u32 *)(
+        data + CHARACTER_SELECT_DATA_SUPPORT_COUNT_OFFSET
+    );
+    u32 center_index = support_count == 0u
+        ? 0u
+        : (support_count - 1u) / 2u;
+
+    *(u32 *)(
+        player + CHARACTER_SELECT_PLAYER_SUPPORT_INDEX_OFFSET
+    ) = 0u;
+    *(u32 *)(
+        player + CHARACTER_SELECT_PLAYER_SUPPORT_PAGE_OFFSET
+    ) = 0u;
+    *(float *)(
+        player + CHARACTER_SELECT_PLAYER_SUPPORT_SCROLL_OFFSET
+    ) = -(float)center_index;
+}
+
+static __attribute__((always_inline)) inline
 u32 has_only_no_support(void *player_select)
 {
     u8 *player = (u8 *)player_select;
@@ -439,19 +473,16 @@ void qol_character_select_no_support_confirm_fighter(
     native_confirm(player_select);
 
     if (
-        *(u32 *)player !=
-            CHARACTER_SELECT_STATE_ENTERING_SUPPORT_SELECTION ||
-        !has_only_no_support(player_select)
+        *(u32 *)player != CHARACTER_SELECT_STATE_ENTERING_SUPPORT_SELECTION
     ) {
         return;
     }
 
-    *(u32 *)(
-        player + CHARACTER_SELECT_PLAYER_SUPPORT_INDEX_OFFSET
-    ) = 0u;
-    *(u32 *)(
-        player + CHARACTER_SELECT_PLAYER_SUPPORT_PAGE_OFFSET
-    ) = 0u;
+    select_no_support(player_select);
+    if (!has_only_no_support(player_select)) {
+        return;
+    }
+
     *(u32 *)(
         player + CHARACTER_SELECT_PLAYER_LINKED_MODE_OFFSET
     ) = CHARACTER_SELECT_LINKED_MODE_MANUAL;
@@ -505,6 +536,7 @@ void qol_character_select_no_support_return_from_finalized(
     ) {
         next_state = CHARACTER_SELECT_STATE_FIGHTER_SELECTION;
     } else {
+        select_no_support(player_select);
         *(u32 *)(
             player + CHARACTER_SELECT_PLAYER_LINKED_MODE_OFFSET
         ) = CHARACTER_SELECT_LINKED_MODE_MANUAL;
@@ -512,6 +544,38 @@ void qol_character_select_no_support_return_from_finalized(
     }
 
     set_state(player_select, next_state);
+}
+
+CHARACTER_SELECT_NO_SUPPORT_SECTION(
+    ".text.qol_character_select_no_support_bounded_support_navigation"
+)
+void qol_character_select_no_support_bounded_support_navigation(
+    void *player_select,
+    u32 direction
+)
+{
+    NativeSupportNavigation native_navigate =
+        (NativeSupportNavigation)NATIVE_SUPPORT_NAVIGATION_ADDRESS;
+    u8 *player = (u8 *)player_select;
+    u8 *data = *(u8 **)(
+        player + CHARACTER_SELECT_PLAYER_DATA_POINTER_OFFSET
+    );
+    u32 support_count = *(u32 *)(
+        data + CHARACTER_SELECT_DATA_SUPPORT_COUNT_OFFSET
+    );
+    u32 support_index = *(u32 *)(
+        player + CHARACTER_SELECT_PLAYER_SUPPORT_INDEX_OFFSET
+    );
+
+    if (
+        (direction == SUPPORT_NAVIGATION_LEFT && support_index == 0u) ||
+        (direction == SUPPORT_NAVIGATION_RIGHT &&
+            (support_count == 0u || support_index + 1u >= support_count))
+    ) {
+        return;
+    }
+
+    native_navigate(player_select, direction);
 }
 
 CHARACTER_SELECT_NO_SUPPORT_SECTION(

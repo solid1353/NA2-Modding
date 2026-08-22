@@ -1865,7 +1865,7 @@
     }
   },
   "i__qol__character_select__no_support__support_list": {
-    "description": "Build compact per-player Character Select support lists containing declared special entries plus the directional native pairs declared by the injection, retain selected supports for linked Jutsu, disable their free-field calls and gauge, draw each compact entry once, resolve special display and name records, and retain native availability states and rendering.",
+    "description": "Build compact per-player Character Select support lists containing declared special entries plus the directional native pairs declared by the injection, default to No Support without wrapping across list edges, retain selected supports for linked Jutsu, disable their free-field calls and gauge, draw each compact entry once, resolve special display and name records, and retain native availability states and rendering.",
     "hooks": {
       "suppress_free_field_support_call": {
         "description": "Replace the sole per-fighter support-button acceptance call with a no-op, preventing its linked-fighter signal without changing selected support data or linked Jutsu.",
@@ -1995,6 +1995,22 @@
         "symbol": "character_select_no_support_is_compatible",
         "encoding": "jal26"
       },
+      "route_support_navigation_left_without_wrap": {
+        "description": "Delegate native left navigation except at the first compact support-list entry, where the cursor remains in place.",
+        "target_id": "na2_elf",
+        "offset": "0x2B6D48",
+        "expected_hex": "A0DC0E0C",
+        "symbol": "character_select_no_support_bounded_support_navigation",
+        "encoding": "jal26"
+      },
+      "route_support_navigation_right_without_wrap": {
+        "description": "Delegate native right navigation except at the last compact support-list entry, where the cursor remains in place.",
+        "target_id": "na2_elf",
+        "offset": "0x2B6D8C",
+        "expected_hex": "A0DC0E0C",
+        "symbol": "character_select_no_support_bounded_support_navigation",
+        "encoding": "jal26"
+      },
       "route_support_navigation_compatibility": {
         "description": "Apply the declared directional support whitelist to Character Select's navigation eligibility while keeping declared special entries eligible.",
         "target_id": "na2_elf",
@@ -2092,6 +2108,10 @@
           "character_select_no_support_is_compatible": {
             "order": 108,
             "object": "qol.character.select.no.support.text.qol.character.select.no.support.is.compatible"
+          },
+          "character_select_no_support_bounded_support_navigation": {
+            "order": 127,
+            "object": "qol.character.select.no.support.text.qol.character.select.no.support.bounded.support.navigation"
           },
           "character_select_no_support_prepend": {
             "order": 107,

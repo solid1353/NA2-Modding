@@ -232,7 +232,7 @@
       character_select: {
         description: "Character Select support-list behavior.",
         no_support: setting {
-          description: "Build compact per-character support lists with selectable No Support, retain selected supports for linked Jutsu, and disable free-field support calls and their gauge.",
+          description: "Build compact per-character support lists defaulting to No Support without wrapping across list edges, retain selected supports for linked Jutsu, and disable free-field support calls and their gauge.",
           patches: [
             "i__qol__character_select__no_support__support_list",
           ],

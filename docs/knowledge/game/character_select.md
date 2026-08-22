@@ -303,14 +303,62 @@ unchanged native cell renderer only for offsets in
 `[-selected_index, count - selected_index)`. Every compact entry is therefore
 drawn exactly once with the selected entry at the native center position. A
 one-entry roster draws one centered, highlighted Leaf cell; the other carousel
-positions draw nothing, and native navigation continues to wrap to the same
-sole entry.
+positions draw nothing. In the accepted 2026-08-15 baseline, native navigation
+wrapped to that same sole entry; the accepted bounded navigation described
+below blocks outward edge input before it reaches the native function.
 
 The implementation remains table-driven: every roster contains No Support
 followed by only the selected fighter's declared native partners. User runtime
 acceptance on 2026-08-15 established the corrected behavior: Naruto retains
 his fighter portrait and shows Leaf, Sakura, Sai, and Gaara once each, while a
 fighter with no declared partner shows one centered Leaf cell.
+
+## Default, centered, and bounded support navigation
+
+The clean NA2 support selector routes horizontal input to `FUN_003b7280` at two
+call sites. Left uses direction `2` at runtime `0x003B6C48` (ELF offset
+`0x2B6D48`), and right uses direction `3` at runtime `0x003B6C8C` (ELF offset
+`0x2B6D8C`). Both store the clean call bytes `A0 DC 0E 0C`. The native function
+decrements or increments the support index and wraps it from the first entry to
+the last or from the last entry to the first.
+
+The accepted implementation resets the support index and page to zero after
+native fighter confirmation enters support selection. It performs the same
+reset when Back returns an ordinary roster from finalized state to support
+selection. No Support, the compact list's first entry, is therefore selected by
+default.
+
+`FUN_003b84d0` also uses the selector's float at `+0x38` as a horizontal
+carousel anchor, multiplying it by 36 internal pixels before drawing the cells.
+The `support2.p2m2` baseline had index and page zero at both markers, but the
+anchor changed from `0.0` at the misaligned opening marker to `-1.0` after
+navigation. At the captured 640-pixel output scale, that one-cell difference is
+the observed 45-pixel shift. Resetting only the index and page therefore left
+the opening frame anchored to the native recommended support.
+
+The accepted implementation initializes the anchor to
+`-((support_count - 1) / 2)` whenever it selects No Support. This places the
+complete compact row around the native center immediately, while later native
+navigation increments or decrements the same anchor with the selected index so
+the row remains stationary.
+
+Only the two horizontal call sites are redirected through a bounded wrapper.
+The wrapper ignores left at index zero and right at the last entry, and delegates
+every in-range movement to the untouched `FUN_003b7280`. The existing
+navigation-compatibility call at ELF offset `0x2B72B0` remains in place, so the
+directional roster whitelist still applies after each permitted movement.
+
+A `support.p2m2` replay on 2026-08-23 produced No Support at both
+marker 1 (on entering support selection) and marker 2 (after the recorded
+left-edge input). The corresponding baseline markers selected Sakura and Gaara.
+The user accepted this default-selection and left-edge result on 2026-08-23.
+
+A `support2.p2m2` centered-opening replay produced index zero,
+page zero, anchor `-1.0`, and count four at both markers. Both screenshots show
+the same support-cell positions and selected Leaf as the good baseline marker
+2; marker 2 is byte-identical to that baseline PNG with SHA-256
+`282D508AB5D9D9E1943CB57017B8112911708CA664404913503D1D5F3B20E5C4`.
+The user accepted the centered-opening result on 2026-08-23.
 
 ## No-Support-only transition bypass
 
@@ -421,15 +469,20 @@ native calls to `FUN_003bb210` are redirected to the same wrapper. The wrapper:
    native IDs declared for the selected fighter;
 4. clears unused list slots and clamps an out-of-range support cursor to the
    first compact entry;
-5. accepts declared added IDs at all six Character Select compatibility calls
+5. selects the first compact entry and centers the complete compact row whenever
+   native fighter confirmation enters support selection and when Back returns
+   there from finalized state;
+6. blocks horizontal movement beyond either compact-list edge while delegating
+   every in-range movement to native navigation;
+7. accepts declared added IDs at all six Character Select compatibility calls
    and accepts native IDs only through the same directional roster table;
-6. resolves added IDs through their declared display record at the four
+8. resolves added IDs through their declared display record at the four
    Character Select rendering consumers;
-7. renders a declared name for an added ID while delegating native selected
+9. renders a declared name for an added ID while delegating native selected
    names and their ancillary icons to the original renderer;
-8. draws each compact entry once instead of repeating it across the native
+10. draws each compact entry once instead of repeating it across the native
    13-position carousel; and
-9. bypasses both intermediate support menus in both directions when No Support
+11. bypasses both intermediate support menus in both directions when No Support
    is the roster's only entry.
 
 The initial declaration contains
@@ -441,8 +494,12 @@ required while the total remains within the native 40-slot capacity.
 
 Static confidence is strong: all declared guards, both population xrefs, all
 six compatibility xrefs, all display/name and compact-cell xrefs, both fighter
-confirmation calls, the finalized-state Back handler, object offsets,
-capacity, NA2/NUN5 33-ID sequence, NUN6 34-ID sequence, display mapping, atlas
-rectangle, and the NA2/NUN6 compatibility bounds are directly verified.
-Selection, the Leaf, the fitted `NO SUPPORT` renderer, the compact roster, and
-both No-Support-only transition directions are runtime-confirmed.
+confirmation calls, both horizontal-navigation calls and their native wrap
+path, the finalized-state Back handler, object offsets, capacity, NA2/NUN5
+33-ID sequence, NUN6 34-ID sequence, display mapping, atlas rectangle, and the
+NA2/NUN6 compatibility bounds are directly verified. Selection, the Leaf, the
+fitted `NO SUPPORT` renderer, the compact roster, and both No-Support-only
+transition directions are runtime-confirmed. The default selection and
+left-edge guard are runtime-confirmed through `support.p2m2`; the matching
+opening and post-navigation anchors are runtime-confirmed through `support2.p2m2`.
+The user accepted both results on 2026-08-23.

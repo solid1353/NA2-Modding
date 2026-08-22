@@ -128,12 +128,16 @@ so later special entries can supply their own display record, name, and maximum
 label width without editing the executable list. The native renderer always
 visits 13 carousel positions and wraps them modulo the roster count; an
 additional guarded draw hook suppresses those wrapped repetitions so every
-compact entry is rendered once at its native position. A one-entry roster thus
-shows one centered, highlighted Leaf cell, and left or right navigation wraps
-to that same entry. Clean call sites, both native list producers, all six
-compatibility consumers, and all six render hooks are statically guarded. The
-user accepted the fitted-and-centered label in runtime on 2026-08-14 and the
-compact per-character roster behavior on 2026-08-15.
+compact entry is rendered once at its native position. The selector defaults to
+No Support and initializes the carousel anchor from the compact count so the
+complete row opens centered. Left and right retain native movement between
+entries, while input past the first or last entry is ignored instead of
+wrapping. A one-entry roster thus shows one centered, highlighted Leaf cell and
+remains there. Clean call sites, both native list producers, all six
+compatibility consumers, both horizontal-navigation calls, and all six render
+hooks are statically guarded. The user accepted the fitted-and-centered label
+in runtime on 2026-08-14, the compact per-character roster behavior on
+2026-08-15, and the centered default plus bounded navigation on 2026-08-23.
 
 For a fighter whose compact roster contains only No Support, both native
 fighter-confirmation calls now retain the native confirmation work and then

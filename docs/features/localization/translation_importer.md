@@ -14,7 +14,7 @@ in [translation importer knowledge](../../knowledge/localization/translation_imp
 ## Mapping metadata
 
 - Canonical `mappings.tsv` rows: `2,088`
-- Canonical `mappings.tsv` SHA-256: `CA8C3B10C41841E7B73F7F25320DFCDC377E9E1653ACE8FD24CD9D23B98B5B03`
+- Canonical `mappings.tsv` SHA-256: `AEA6420929D97D9F627DB8C50B95054273D00196D02BA21BCB6D71309D1B2FF1`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the builder's configuration-resource fingerprint own content identity.
@@ -83,8 +83,10 @@ Canonical `mappings.tsv` contains 2,088 enabled `T#` rows admitted by exact
 display evidence or a documented structural-family basis, sorted by
 `display_context` and numeric ID. Exact source, source reference, mode, and
 capacity are guarded by the canonical row declarations. The current accepted
-E2E suites exercise 1,765 unique rows; 323 rows retain a non-E2E basis. T2042,
-T2045, and T2050 use canonical parent IDs `T2011`, `T2043`, and `T2048`.
+E2E suites exercise 1,766 unique rows; 322 rows retain a non-E2E basis. The
+Jutsus suite selects 26 exact Command Chart records, including T260 plus 25
+records also selected by Movesets. T2042, T2045, and T2050 use canonical parent
+IDs `T2011`, `T2043`, and `T2048`.
 Paired screenshots correct three reference-table errors: T1956 uses `Off` at
 `NUN5_SLES@0x513EF8`, T1957 uses `On` at `NUN5_SLES@0x513EFC`, and T2158 uses
 `Warning` at `NUN5_SLES@0x513F38`.

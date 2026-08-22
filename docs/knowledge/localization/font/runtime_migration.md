@@ -211,10 +211,14 @@ hook to unrelated consumers.
 - **Pause, Special Controls, quit, Character Select confirmation, Collection
   confirmation, and Mode Select confirmation:** each native modal family keeps
   its own container but shares selected/ordinary geometry within that family.
-- **Jutsu selector:** all fitting names use one family session at scale `1.0`
-  with side-dependent X and one-line Y origins. Only measured overflow enters
-  the `186 x 32` two-line compositor and its separate multiline Y/line-step
-  geometry, so fitting text is never vertically collapsed.
+- **Jutsu selector:** all names use one shrink-only family session with X
+  origins `-6.4` left and `-4.0` right. Fitting rows retain scale `1.0` and
+  one-line Y `-4.0`; measured overflow uses `186 / measured_width`. Only
+  measured overflow enters the `186 x 32` two-line compositor with wrapped Y
+  `-6.5`, 16-unit line advance, and glyph height `22.0`, so fitting text is
+  never vertically collapsed. The corrected 2026-08-22 Jutsus E2E replay
+  validates the current geometry and page 01 shrink behavior. The user visually
+  approved the result and accepted it through `ver` on 2026-08-22.
 - **Practice explanations:** one bounded mixed text/icon compositor replaces
   the native per-token loop. One-, two-, and three-line outputs use shared
   line-count Y formulas; native icon callbacks and source strings remain.

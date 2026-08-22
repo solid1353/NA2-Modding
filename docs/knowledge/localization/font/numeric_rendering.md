@@ -259,20 +259,48 @@ hypothesis.
 The replacement ss1–ss2 evidence supplied on 2026-07-31 established the
 selective-wrap boundary and the 16-unit wrapped-line interval. Those historical
 captures led through a `0.96` scale and `-6.5` Y candidate, but the 2026-08-02
-overhaul supersedes those final constants. The current family measures before
-drawing and publishes scale `1.0` for both branches. Fitting rows use the native
-glyph path through a session with X offsets `-5.6` on the left and `-4.0` on
-the right plus one-line Y offset `-1.6`; they do not receive multiline glyph
-height or cadence. Wrapped rows use Y offset `-5.7`, glyph height `22.0`, and
-the retained 16-unit line interval. Only measured overflow selects that
-multiline branch, preserving the verified `Explosive Destruction` /
-`Formation` break without vertically collapsing fitting labels.
+overhaul superseded those constants. That accepted family measured before
+drawing and published scale `1.0` for both branches. Fitting rows used the
+native glyph path through a session with X offsets `-5.6` on the left and
+`-4.0` on the right plus one-line Y offset `-1.6`; wrapped rows used Y offset
+`-5.7`, glyph height `22.0`, and the retained 16-unit line interval. Only
+measured overflow selected that multiline branch, preserving the verified
+`Explosive Destruction` / `Formation` break without vertically collapsing
+fitting labels.
 
 The user verified the final whole-Font hot-reloaded Jutsu selector on
 2026-07-31, including fitting one-line and wrapped two-line rows. Canonical
 fragment reconstruction passed afterward. Confidence is high for this caller
 family; this verification establishes the live displayed result and does not
 claim a separate integrated-ISO runtime pass.
+
+### 2026-08-22 Jutsus E2E alignment candidate
+
+The maintained three-page Jutsus replay exposed residual origin differences
+in that otherwise accepted family. Before correction, the measured title starts
+were one output pixel right of NUN5; fitting one-line rows were three output
+pixels low and wrapped rows were one output pixel low. The shared family now
+uses left X `-6.4`, right X `-4.0`, fitting-row Y `-4.0`, and wrapped-block Y
+`-6.5`. The `186 x 32` box, two-line limit, 16-unit wrapped-line interval, and
+wrapped glyph height `22.0` remain unchanged, preserving the intentional
+non-collapsed font height.
+
+The first alignment replay incorrectly retained fixed horizontal scale `1.0`.
+That bypassed the existing shrink contract after `font_v2_wrap_retry` widened
+its threshold to keep an overflowing title within two lines. Page 01 therefore
+still rendered long two-line rows too wide. The corrected adapter uses
+`FONT_V2_FLAG_SHRINK_X` for both branches: fitting rows retain scale `1.0`,
+while any measured line wider than `186` uses `186 / measured_width`. This is
+the shared boxed-renderer behavior, not a string-specific scale or coordinate.
+
+The corrected `na228 e2e jutsus` replay completed successfully and regenerated
+exactly the 12 Jutsus screenshot, pair, blend, and diff pages. Across all three
+pages, fitting and wrapped rows retain NUN5's starts, line bands, and line
+breaks. On page 01, `Earth Style: Gushing Rock` changed from 239 output pixels
+to NUN5's 223, `Explosive Destruction` changed from 240 to NUN5's 229, and the
+short fitting rows remained unscaled. The remaining title pixels in the diff
+grids are the intentional taller glyph raster and shading. The user visually
+approved this corrected result and accepted it through `ver` on 2026-08-22.
 
 ## 2026-07-31 Settings and Ninja Song page templates
 

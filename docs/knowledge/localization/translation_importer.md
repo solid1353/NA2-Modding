@@ -41,6 +41,10 @@ capture plan. The character-name plaque and controller icons are localized
 rectangles or textures rather than translation-table rows, so they are outside
 this mapping count.
 
+The maintained Jutsus suite selects 26 exact Command Chart title records. Its
+three paired pages establish `e2e:jutsus` for those records only: 25 are also
+selected by Movesets, while T260 is selected by Jutsus but not Movesets.
+
 | Display basis | Covered rows | Proven family |
 | --- | ---: | --- |
 | `e2e:collection/characters` | 31 | Character-plaque names selected by the Characters captures |
@@ -49,13 +53,15 @@ this mapping count.
 | `e2e:collection/opponents` | 78 | 74 roster names, the selector label, and the displayed three-title Ultimate set |
 | `e2e:collection/ultimates` | 221 | 60 selected plaque names and 161 Collection-owned Ultimate Jutsu titles |
 | `e2e:collection/voice` | 184 | 31 character-plaque names and 153 Collection-owned Voice titles or aliases |
+| `e2e:jutsus` | 26 | Exact Command Chart title records selected by the three Jutsus pages |
 | `e2e:movesets` | 1,226 | 1,052 selected Command Chart titles, 154 selected metadata-owned Ultimate/Jutsu titles, and 20 selected shared relationship/control records |
 
-These suite counts total 1,933 `e2e:` entries on 1,765 unique rows. The six
+These suite counts total 1,959 `e2e:` entries on 1,766 unique rows. The six
 Collection suites own 707 entries on 539 unique rows because exact records can
 be selected by several Collection paths. The 1,226 Movesets rows are separate
-executable records even where the visible English is equal. Of the 2,088
-canonical rows, 323 have no accepted-suite E2E basis.
+executable records even where the visible English is equal. Jutsus overlaps
+Movesets on 25 rows and adds T260 as one newly selected row. Of the 2,088
+canonical rows, 322 have no accepted-suite E2E basis.
 
 ### Collection capture-selection boundary
 
@@ -115,16 +121,78 @@ words is the evidence boundary; string order alone is insufficient. When a
 record-selected NUN5 name contains decorative color tags but a separate plain
 official copy exists, the plain copy is used for a plain NA2 slot.
 
+### Jutsus capture-selection boundary
+
+The Jutsus selector does not consume the separate `0x14`-byte Ultimate/Jutsu
+family despite the screen name. NA2 row compositor `FUN_006BCB30` resolves its
+title through `FUN_00885F00` and the boot-ELF accessor at Ghidra
+`0x00307C80`. That accessor indexes the pointer table at Ghidra `0x005A2320`,
+loads a `0x54`-byte Command Chart record, and reads its displayed-name pointer
+at `+0x08`. The NUN5 homolog follows `FUN_006CFE30` through `FUN_008A2E60`,
+accessor `0x00312630`, and `FUN_00259290`. This trace distinguishes the
+selector from both Collection strings and the metadata-owned `0x14` family.
+
+The audit used clean NA2 `SLPS_258.37` SHA-256
+`20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`,
+clean NUN5 `SLES_556.05` SHA-256
+`20A43677397731A2A20899336D1165ACE5B436906B9B89BE90FB10F4558DD19D`,
+and clean NUN5 `PRG/TEXTENG.BIN` SHA-256
+`3E42D2DDFFE770B05DD41E2C5937380133E255C9CE32CA2F037E34C65A8E571E`.
+For each displayed row, bytes `+0x0C..+0x53` of the NA2 record identify its
+NUN5 homolog independently of the localized pointer. T1434 is the sole
+duplicate: two NA2 records share its exact source slot and match two NUN5
+records, and both NUN5 records resolve the same donor.
+
+NUN5's English table root is at raw `TEXTENG.BIN` offset `0xF090`. Following
+each homolog's `(group,index)` selector through that root proves the exact
+donor pointer below. Source slots and record addresses are raw executable file
+offsets; donor addresses are raw `TEXTENG.BIN` offsets.
+
+| Mapping | NA2 source | NA2 `0x54` record(s) | NUN5 `0x54` record(s) | NUN5 selector(s) | Exact donor |
+| --- | ---: | ---: | ---: | --- | ---: |
+| T260 | `0x49DE80` | `0x49DFAC` | `0x4A7FEC` | `31:3` | `0x7960` |
+| T939 | `0x337080` | `0x3372A4` | `0x349644` | `11:1` | `0x5140` |
+| T954 | `0x33C0E0` | `0x33C37C` | `0x34E53C` | `12:3` | `0x64B0` |
+| T968 | `0x3413A0` | `0x3416DC` | `0x35363C` | `13:3` | `0x6700` |
+| T996 | `0x34B9F0` | `0x34BCBC` | `0x35D8BC` | `15:3` | `0x6B00` |
+| T1011 | `0x351100` | `0x3513AC` | `0x362DDC` | `16:3` | `0x6D30` |
+| T1082 | `0x36C220` | `0x36C4BC` | `0x37D44C` | `34:3` | `0x79C0` |
+| T1096 | `0x371200` | `0x37150C` | `0x38226C` | `35:3` | `0x7BA0` |
+| T1124 | `0x37B3C0` | `0x37B70C` | `0x38BFBC` | `37:3` | `0x8090` |
+| T1202 | `0x39A980` | `0x39AC1C` | `0x3AAB3C` | `43:3` | `0x8BE0` |
+| T1216 | `0x39FF80` | `0x3A02AC` | `0x3AFF7C` | `46:3` | `0x8DF0` |
+| T1301 | `0x3C0630` | `0x3C086C` | `0x3CFA6C` | `52:3` | `0x9BA0` |
+| T1364 | `0x3D9C40` | `0x3D9EA4` | `0x3E84D4` | `57:1` | `0xA6B0` |
+| T1365 | `0x3D9C60` | `0x3D9F4C` | `0x3E857C` | `57:3` | `0x3F00` |
+| T1379 | `0x3DF1C0` | `0x3DF47C` | `0x3ED8AC` | `58:3` | `0xA918` |
+| T1434 | `0x3F5C30` | `0x3F5F1C` / `0x4462EC` | `0x403B1C` / `0x4520AC` | `62:3` / `77:3` | `0xB1E0` |
+| T1480 | `0x406B70` | `0x406DEC` | `0x4142EC` | `65:3` | `0x3230` |
+| T1493 | `0x40C650` | `0x40C9FC` | `0x419C1C` | `66:3` | `0xBB20` |
+| T1523 | `0x418A00` | `0x418C4C` | `0x425ADC` | `68:3` | `0xC070` |
+| T1533 | `0x41F0E0` | `0x41F3FC` | `0x42C04C` | `69:3` | `0xC238` |
+| T1551 | `0x424B40` | `0x424DEC` | `0x43186C` | `70:3` | `0xC4C0` |
+| T1566 | `0x42A0F0` | `0x42A39C` | `0x436C3C` | `71:3` | `0xC690` |
+| T1580 | `0x42F5D0` | `0x42F8BC` | `0x43BF3C` | `72:3` | `0xC890` |
+| T1727 | `0x463D00` | `0x463F1C` | `0x46F32C` | `82:3` | `0xDB50` |
+| T1750 | `0x46E6D0` | `0x46E9AC` | `0x4799FC` | `84:3` | `0xDF20` |
+| T1767 | `0x474140` | `0x47440C` | `0x47F25C` | `85:3` | `0xE160` |
+
+These 26 rows are the complete displayed-title selection in the maintained
+three-page suite. Their official donors and offsets were already correct; the
+mapping change records exact Jutsus visibility and introduces no replacement
+or direct binary edit.
+
 ### Movesets capture-selection boundary
 
 The accepted Movesets plans select 1,052 Command Chart title records. Thirteen
 valid `0x54` records remain mapped through `character:command-record-index` but
-do not own `e2e:movesets`: T260, T1651-T1660, T2210, and T2211. T1651-T1660
+do not own `e2e:movesets`: T260, T1651-T1660, T2210, and T2211. T260 now owns
+`e2e:jutsus`; the other 12 retain only structural family evidence. T1651-T1660
 continue Granny Chiyo's record block beyond the entries selected by her
 accepted grids. T2210, T2211, and T260 belong to structurally valid extra
 four-record arrays, but the accepted plans select other sibling records rather
-than those three. Their presence in the Command Chart family is not capture
-evidence.
+than those three. Their presence in the Command Chart family is not Movesets
+capture evidence.
 
 The Ultimate/Jutsu titles shown in the third slot of accepted specials grids
 come from the separate `0x14`-byte family. All 154 canonical rows in that family

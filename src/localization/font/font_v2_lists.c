@@ -10,19 +10,16 @@
 #define FONT_JUTSU_BOX_HEIGHT 32u
 
 /* Horizontal correction for the left list; more negative moves rows left. */
-#define FONT_JUTSU_LEFT_X_OFFSET -5.6f
+#define FONT_JUTSU_LEFT_X_OFFSET -6.4f
 
 /* Horizontal correction for the right list; more negative moves rows left. */
 #define FONT_JUTSU_RIGHT_X_OFFSET -4.0f
 
-/* Draw-width multiplier shared by one-line and wrapped Jutsu-title rows. */
-#define FONT_JUTSU_HORIZONTAL_SCALE 1.0f
-
 /* Vertical correction for fitting one-line rows; more negative moves them up. */
-#define FONT_JUTSU_SINGLE_LINE_Y_OFFSET -1.6f
+#define FONT_JUTSU_SINGLE_LINE_Y_OFFSET -4.0f
 
 /* Applied only to wrapped blocks; more negative moves the block up. */
-#define FONT_JUTSU_Y_OFFSET -5.7f
+#define FONT_JUTSU_Y_OFFSET -6.5f
 
 /* Native X below this value is classified as the left-side list. */
 #define FONT_JUTSU_SIDE_THRESHOLD 256.0f
@@ -241,11 +238,10 @@ int font_v2_jutsu_draw_entry(
         frame.session.horizontal_alignment = FONT_V2_ALIGN_START;
         frame.session.vertical_alignment = FONT_V2_ALIGN_START;
         frame.session.flags =
-            FONT_V2_FLAG_FIXED_SCALE_X |
+            FONT_V2_FLAG_SHRINK_X |
             FONT_V2_FLAG_PREMEASURED;
         frame.session.line_limit = 1u;
         frame.session.line_height = FONT_JUTSU_LAYOUT_GLYPH_HEIGHT;
-        frame.session.scale_x = FONT_JUTSU_HORIZONTAL_SCALE;
         frame.session.glyph_height = FONT_JUTSU_LAYOUT_GLYPH_HEIGHT;
         frame.session.callback = (u32)font_v2_jutsu_draw_callback;
         frame.session.callback_arg0 = renderer_address;
@@ -271,11 +267,10 @@ int font_v2_jutsu_draw_entry(
     frame.session.flags =
         FONT_V2_FLAG_SEPARATE_LINE_ADVANCE |
         FONT_V2_FLAG_GLYPH_HEIGHT |
-        FONT_V2_FLAG_FIXED_SCALE_X |
+        FONT_V2_FLAG_SHRINK_X |
         FONT_V2_FLAG_PREMEASURED;
     frame.session.line_limit = FONT_JUTSU_LINE_LIMIT;
     frame.session.line_height = FONT_JUTSU_LINE_ADVANCE;
-    frame.session.scale_x = FONT_JUTSU_HORIZONTAL_SCALE;
     frame.session.glyph_height = FONT_JUTSU_LAYOUT_GLYPH_HEIGHT;
     frame.session.callback = (u32)font_v2_jutsu_draw_callback;
     frame.session.callback_arg0 = renderer_address;

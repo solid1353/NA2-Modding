@@ -256,7 +256,7 @@ class StateArchiveTests(unittest.TestCase):
                 repository,
                 source,
                 pcsx2 / "inis",
-                pcsx2 / "gamesettings",
+                repository / "pcsx2_files" / "games" / "NA228",
                 pcsx2 / "sstates",
                 build,
                 work,
@@ -265,7 +265,7 @@ class StateArchiveTests(unittest.TestCase):
             (pcsx2 / "inis" / "PCSX2.ini").write_text(
                 RenderingTests.GLOBAL, encoding="utf-8"
             )
-            (pcsx2 / "gamesettings" / "SLOP-NA228_71ADE583.ini").write_text(
+            (repository / "pcsx2_files" / "games" / "NA228" / "NA228.ini").write_text(
                 "[MemoryCards]\nSlot1_Enable = true\n", encoding="utf-8"
             )
             image = build / "Current.iso"
@@ -277,7 +277,7 @@ class StateArchiveTests(unittest.TestCase):
                     "repository": repository,
                     "source": source,
                     "pcsx2_dev": pcsx2,
-                    "pcsx2_game_settings": pcsx2 / "gamesettings",
+                    "pcsx2_files": repository / "pcsx2_files",
                     "build": build,
                     "work": work,
                 },
@@ -289,7 +289,7 @@ class StateArchiveTests(unittest.TestCase):
                 crc="71ADE583",
                 image_kind="project_file",
                 image_value="latest_iso",
-                settings_file="SLOP-NA228_71ADE583.ini",
+                settings_file="games/NA228/NA228.ini",
             )
 
             class FakeClient:
@@ -358,7 +358,7 @@ class StateArchiveTests(unittest.TestCase):
                 repository,
                 source,
                 pcsx2 / "inis",
-                pcsx2 / "gamesettings",
+                repository / "pcsx2_files" / "games" / "NUN5",
                 pcsx2 / "sstates",
                 build,
                 work,
@@ -367,7 +367,7 @@ class StateArchiveTests(unittest.TestCase):
             (pcsx2 / "inis" / "PCSX2.ini").write_text(
                 RenderingTests.GLOBAL, encoding="utf-8"
             )
-            (pcsx2 / "gamesettings" / "SLES-55605_C071D4C1.ini").write_text(
+            (repository / "pcsx2_files" / "games" / "NUN5" / "NUN5.ini").write_text(
                 "[EmuCore/GS]\nAspectRatio = 4:3\n", encoding="utf-8"
             )
             image = source / "NUN5.iso"
@@ -379,7 +379,7 @@ class StateArchiveTests(unittest.TestCase):
                     "repository": repository,
                     "source": source,
                     "pcsx2_dev": pcsx2,
-                    "pcsx2_game_settings": pcsx2 / "gamesettings",
+                    "pcsx2_files": repository / "pcsx2_files",
                     "build": build,
                     "work": work,
                 },
@@ -391,7 +391,7 @@ class StateArchiveTests(unittest.TestCase):
                 crc="C071D4C1",
                 image_kind="project_file",
                 image_value="nun5_iso",
-                settings_file="SLES-55605_C071D4C1.ini",
+                settings_file="games/NUN5/NUN5.ini",
             )
             state = pcsx2 / "sstates" / "SLES-55605 (C071D4C1).01.p2s"
             with zipfile.ZipFile(state, "w", zipfile.ZIP_DEFLATED) as archive:

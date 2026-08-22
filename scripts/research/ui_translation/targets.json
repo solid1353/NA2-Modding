@@ -7,7 +7,7 @@
       },
       "serial": "SLES-55605",
       "crc": "C071D4C1",
-      "settings_file": "source/SLES-55605_C071D4C1.ini"
+      "settings_file": "games/NUN5/NUN5.ini"
     },
     "current": {
       "image": {
@@ -16,7 +16,7 @@
       },
       "serial": "SLOP-NA228",
       "crc": "6D94D5CC",
-      "settings_file": "SLOP-NA228_6D94D5CC.ini"
+      "settings_file": "games/NA228/NA228.ini"
     }
   }
 }

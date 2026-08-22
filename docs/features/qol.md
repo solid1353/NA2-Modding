@@ -21,17 +21,15 @@ both cells are empty, the profile selects No Support `0x25`. An empty
 the native Half starting-HP mode; an empty cell leaves starting HP unchanged.
 The `uniqueness` column is metadata.
 
-`@pcsx2_cheats/practice/NA228p.pnach` and
-`@pcsx2_cheats/practice/NUN5p.pnach` contain the
+`@repository/launch_profiles/practice/NA228.pnach` and
+`@repository/launch_profiles/practice/NUN5.pnach` contain the
 complete game-specific bootstraps. Each selected game receives its own file and
 three ordinary inline PNACH lines at that game's character, support, and
 awakening configuration addresses. Those process-local lines are the sole case
 values and do not modify or regenerate either file. The normal
 PNACHs at `@pcsx2_files/games/NA228/NA228.pnach` and
 `@pcsx2_files/games/NUN5/NUN5.pnach` contain no Practice bootstrap.
-Practice-profile launches use read-only
-settings and discard memory-card writes, so paired launches do not share
-mutable configuration. Clean NA2 is not supported.
+Clean NA2 is not supported yet.
 
 The bootstrap writes both current and match-start Player 1 fields, fixes Player
 2 to Naruto with Sakura support and the Practice stage to `6`, skips Character

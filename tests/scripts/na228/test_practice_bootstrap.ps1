@@ -116,16 +116,16 @@ function Assert-PatchWords {
     }
 }
 
-$na228Profile = Join-Path $paths.pcsx2_files 'cheats\practice\NA228p.pnach'
-$nun5Profile = Join-Path $paths.pcsx2_files 'cheats\practice\NUN5p.pnach'
-$practice = & (Join-Path $repository 'scripts\na228\practice.ps1') `
-    -MovesetRow 2 `
+$na228Profile = Join-Path $paths.repository 'launch_profiles\practice\NA228.pnach'
+$nun5Profile = Join-Path $paths.repository 'launch_profiles\practice\NUN5.pnach'
+$practice = & (Join-Path $repository 'launch_profiles\practice\launch.ps1') `
+    -Arguments 2 `
     -Games @('manual', 'nun5') `
     -ProjectRoot $repository
 Assert-PracticeBootstrapTest (
     $practice.PnachByGame['manual'] -ceq $na228Profile -and
     $practice.PnachByGame['nun5'] -ceq $nun5Profile
-) 'Practice launch configuration did not resolve PNACH files from the NA2-owned pcsx2_files root.'
+) 'Practice launch configuration did not resolve PNACH files from its launch-profile assets.'
 $na228Patches = Read-ActivePatches -Path $na228Profile
 $nun5Patches = Read-ActivePatches -Path $nun5Profile
 

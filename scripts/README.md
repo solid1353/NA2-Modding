@@ -11,9 +11,11 @@ exact agent procedures belong in the linked runbooks.
   help dispatch.
 - `na228/build.ps1`: shared and worker-output build execution, verified-build
   registry reuse, promotion, and provenance.
-- `na228/practice.ps1`: resolves one or more `@resources/movesets.tsv` rows
-  into game-specific Practice PNACH files and process-local inline bootstrap
-  values for the normal launcher.
+- `na228/launch_profile.ps1`: resolves configured launch profiles, invokes
+  optional profile-local launch behavior, and merges its launch parameters.
+- `../launch_profiles/practice/launch.ps1`: resolves one
+  `@resources/movesets.tsv` row into game-specific Practice PNACH files and
+  process-local inline bootstrap values for the normal launcher.
 - `@release/build_release.ps1` and `@release/publish_release.ps1`: release
   candidate construction and publication; see
   [`../docs/runbooks/release.md`](../docs/runbooks/release.md).

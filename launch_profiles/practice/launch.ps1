@@ -1,8 +1,7 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)]
-    [ValidateRange(2, [int]::MaxValue)]
-    [int[]]$MovesetRow,
+    [AllowEmptyCollection()]
+    [string[]]$Arguments = @(),
 
     [Parameter(Mandatory)]
     [ValidateCount(1, 2)]
@@ -14,6 +13,15 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $ProjectRoot 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths -ManifestPath (Join-Path $ProjectRoot 'paths.json')
+
+if ($Arguments.Count -ne 1) {
+    throw 'The Practice launch profile requires a row.'
+}
+$movesetRow = 0
+if (-not [int]::TryParse([string]$Arguments[0], [ref]$movesetRow) -or
+    $movesetRow -lt 2) {
+    throw 'Launch profile row must be a decimal integer starting at 2.'
+}
 
 function ConvertFrom-PracticeHexId {
     param(
@@ -58,7 +66,7 @@ if (($actualColumns -join "`t") -cne ($expectedColumns -join "`t")) {
     )
 }
 
-foreach ($currentMovesetRow in $MovesetRow) {
+$currentMovesetRow = $movesetRow
 $movesetIndex = $currentMovesetRow - 2
 if ($movesetIndex -ge $movesets.Count) {
     throw "Unknown moveset row: $currentMovesetRow"
@@ -147,8 +155,14 @@ foreach ($requestedGame in $Games) {
     $entry = $paths.games.Entries.PSObject.Properties[
         [string]$alias.Value
     ].Value
+    $catalogPnach = if ([string]$entry.Category -ceq 'builds') {
+        [string]$entry.Config.cheat_template
+    }
+    else {
+        [string]$entry.Config.cheats
+    }
+    $pnachName = [IO.Path]::GetFileName($catalogPnach)
     if ([string]$entry.Category -ceq 'builds') {
-        $pnachName = 'NA228p.pnach'
         $addresses = @('001ED600', '001ED604', '001ED608')
         $halfHpAddress = '001E7AE8'
         $gaaraMovesetAwakeningLines = @(
@@ -190,7 +204,6 @@ foreach ($requestedGame in $Games) {
         )
     }
     elseif ([string]$entry.Name -ceq 'NUN5') {
-        $pnachName = 'NUN5p.pnach'
         $addresses = @('003D0FF0', '003D0FF4', '003D0FF8')
         $halfHpAddress = '001ED8D8'
         $gaaraMovesetAwakeningLines = @(
@@ -238,9 +251,11 @@ foreach ($requestedGame in $Games) {
         )
     }
 
-    $pnachByGame[$selector] = [IO.Path]::GetFullPath(
-        (Join-Path $paths.pcsx2_files "cheats\practice\$pnachName")
-    )
+    $pnachPath = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot $pnachName))
+    if (-not (Test-Path -LiteralPath $pnachPath -PathType Leaf)) {
+        throw "Practice launch profile PNACH does not exist: $pnachPath"
+    }
+    $pnachByGame[$selector] = $pnachPath
     $pnachLinesByGame[$selector] = [string[]]@(
         for ($index = 0; $index -lt $addresses.Count; $index++) {
             (
@@ -272,5 +287,8 @@ foreach ($requestedGame in $Games) {
     Reversal = $isReversal
     PnachByGame = $pnachByGame
     PnachLinesByGame = $pnachLinesByGame
-}
+    LaunchParameters = @{
+        PnachByGame = $pnachByGame
+        PnachLinesByGame = $pnachLinesByGame
+    }
 }

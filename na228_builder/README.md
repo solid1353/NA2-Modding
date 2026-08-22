@@ -86,7 +86,11 @@ the separate per-character build inputs for battle values.
 
 The `-l <profile>` launcher option is optional. Without it, the base fields
 apply. A selected direct profile inherits every base field it does not override.
-Profile names are not a closed set.
+Profile names are not a closed set. A configured profile may own executable
+argument handling in `@repository/launch_profiles/<profile>/launch.ps1`.
+Profiles without that script are settings-only and accept no profile arguments.
+Executable profiles return their additional Workshop launch parameters through
+a `LaunchParameters` dictionary.
 
 ## Edit per-character battle values
 

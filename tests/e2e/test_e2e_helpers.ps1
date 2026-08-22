@@ -321,18 +321,29 @@ try {
     $replayScripts = Join-Path $replayRepository 'scripts'
     $replayLibrary = Join-Path $replayScripts 'lib'
     $replayNa228Scripts = Join-Path $replayScripts 'na228'
+    $replayPracticeProfile = Join-Path $replayRepository 'launch_profiles\practice'
     $replayRecordings = Join-Path $replayRepository 'recordings'
     $replayCapture = Join-Path $replayRepository 'capture'
     $replayLauncher = Join-Path $replayRepository 'launcher.ps1'
     [void](New-Item -ItemType Directory -Path `
-        $replayLibrary, $replayNa228Scripts, $replayRecordings -Force)
+        $replayLibrary, $replayNa228Scripts, $replayPracticeProfile, `
+        $replayRecordings -Force)
+    Copy-Item `
+        -LiteralPath (Join-Path $repository 'scripts\na228\launch_profile.ps1') `
+        -Destination $replayNa228Scripts
     [IO.File]::WriteAllText((Join-Path $replayRepository 'paths.json'), '{}')
     [IO.File]::WriteAllText(
         (Join-Path $replayLibrary 'paths.ps1'),
         @"
 function Get-Na2Paths {
     [pscustomobject]@{
+        repository = '$($replayRepository.Replace("'", "''"))'
         scripts = '$($replayScripts.Replace("'", "''"))'
+        settings = [pscustomobject]@{
+            launch_settings = [pscustomobject]@{
+                practice = [pscustomobject]@{}
+            }
+        }
         files = [pscustomobject]@{
             pcsx2_game_launch_command = '$($replayLauncher.Replace("'", "''"))'
         }
@@ -341,22 +352,25 @@ function Get-Na2Paths {
 "@
     )
     [IO.File]::WriteAllText(
-        (Join-Path $replayNa228Scripts 'practice.ps1'),
+        (Join-Path $replayPracticeProfile 'launch.ps1'),
         @'
 param(
-    [int[]]$MovesetRow,
+    [string[]]$Arguments,
     [string[]]$Games,
     [string]$ProjectRoot
 )
-foreach ($row in $MovesetRow) {
-    $pnachByGame = @{}
-    $pnachLinesByGame = @{}
-    foreach ($game in $Games) {
-        $pnachByGame[$game] = "practice-$row.pnach"
-        $pnachLinesByGame[$game] = @("practice-row=$row")
-    }
-    [pscustomobject]@{
-        MovesetRow = $row
+$row = [int]$Arguments[0]
+$pnachByGame = @{}
+$pnachLinesByGame = @{}
+foreach ($game in $Games) {
+    $pnachByGame[$game] = "practice-$row.pnach"
+    $pnachLinesByGame[$game] = @("practice-row=$row")
+}
+[pscustomobject]@{
+    MovesetRow = $row
+    PnachByGame = $pnachByGame
+    PnachLinesByGame = $pnachLinesByGame
+    LaunchParameters = @{
         PnachByGame = $pnachByGame
         PnachLinesByGame = $pnachLinesByGame
     }

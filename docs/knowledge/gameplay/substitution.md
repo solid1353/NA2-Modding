@@ -77,7 +77,7 @@ PINE-reload, and legacy-packet lifecycle caveats.
   `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`.
 - Current serial-wide cheat file:
   `@pcsx2_files/games/NA228/NA228.pnach`.
-- Historical CRC alias during the investigation: `@pcsx2_cheats/SLPS-25837_E0F064C5.pnach`. The current workflow no longer generates CRC aliases.
+- Historical CRC-alias file during the investigation: `pcsx2_files/cheats/SLPS-25837_E0F064C5.pnach`. The current workflow no longer generates CRC aliases.
 - Historical NA2 decompiler/Ghidra evidence remains available through Git
   history. Restore reusable analysis only under `@disassembly/NA2/`.
 - Original global substitution-cost site: ELF offset `0x1299BC` (legacy

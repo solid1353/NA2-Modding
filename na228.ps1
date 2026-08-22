@@ -3,6 +3,7 @@ $ErrorActionPreference = 'Stop'
 $paths = Get-Na2Paths
 . (Join-Path ([string]$paths.scripts) 'na228\task_paths.ps1')
 . (Join-Path ([string]$paths.scripts) 'na228\launch_settings.ps1')
+. (Join-Path ([string]$paths.scripts) 'na228\launch_profile.ps1')
 
 trap {
     if ([bool]$_.Exception.Data['Na2ConfigurationError']) {
@@ -103,7 +104,7 @@ if ($mode -eq 'help') {
         '  bl | bm [-f]               Build and run Latest | Manual'
         '  <token>w [C path|plan]     Watch that game; selection follows its token'
         '  -f                          Bypass non-critical validation errors during an ordinary build'
-        '  -l <profile> [args]        Select an optional launch profile; Practice requires a row'
+        '  -l <profile> [args]        Select a configured launch profile and its own arguments'
         '  additional launch arguments  See workshop help'
         ''
         '  na228 build l|m [-f]        Build Latest or Manual without running it'
@@ -416,7 +417,7 @@ $valuedLaunchOptions = @{
     '-mc' = 'MemoryCard'
 }
 $launchProfile = $null
-$launchProfileRow = $null
+$launchProfileArguments = [Collections.Generic.List[string]]::new()
 for ($index = 0; $index -lt $forwardedLaunchArguments.Count; $index++) {
     $option = $forwardedLaunchArguments[$index].ToLowerInvariant()
     if ($option -eq '-l') {
@@ -426,26 +427,21 @@ for ($index = 0; $index -lt $forwardedLaunchArguments.Count; $index++) {
         if ($index + 1 -ge $forwardedLaunchArguments.Count) {
             throw '-l requires a launch profile.'
         }
-        $launchProfile = $forwardedLaunchArguments[++$index].ToLowerInvariant()
-        $profile = $paths.settings.launch_settings.PSObject.Properties[$launchProfile]
-        if ($null -eq $profile -or $profile.Value -isnot [pscustomobject]) {
-            throw "Unknown launch profile: $launchProfile"
-        }
-        if ($launchProfile -ceq 'practice') {
-            if ($index + 1 -ge $forwardedLaunchArguments.Count) {
-                throw 'The Practice launch profile requires a row.'
+        $profileName = $forwardedLaunchArguments[++$index].ToLowerInvariant()
+        $launchProfile = Resolve-Na2LaunchProfile `
+            -Name $profileName `
+            -Paths $paths
+        while ($index + 1 -lt $forwardedLaunchArguments.Count) {
+            $nextArgument = [string]$forwardedLaunchArguments[$index + 1]
+            $nextOption = $nextArgument.ToLowerInvariant()
+            if ($nextOption -eq '-l' -or
+                $nextOption -eq '-dw' -or
+                $valuedLaunchOptions.ContainsKey($nextOption)) {
+                break
             }
-            $row = 0
-            if (
-                -not [int]::TryParse(
-                    [string]$forwardedLaunchArguments[++$index],
-                    [ref]$row
-                ) -or
-                $row -lt 2
-            ) {
-                throw 'Launch profile row must be a decimal integer starting at 2.'
-            }
-            $launchProfileRow = $row
+            $launchProfileArguments.Add(
+                [string]$forwardedLaunchArguments[++$index]
+            )
         }
         continue
     }
@@ -476,15 +472,23 @@ $selectedLaunchModes = @(
 if ($selectedLaunchModes.Count -gt 1) {
     throw 'Use only one of -p, -r, or -s.'
 }
-if ($launchProfile -ceq 'practice') {
-    $practice = & (Join-Path $paths.scripts 'na228\practice.ps1') `
-        -MovesetRow $launchProfileRow `
-        -Games @($games) `
-        -ProjectRoot $paths.repository
-    $launchParameters.PnachByGame = $practice.PnachByGame
-    $launchParameters.PnachLinesByGame = $practice.PnachLinesByGame
-    $launchParameters.ReadOnlySettings = $true
-    $launchParameters.DiscardMemoryCardWrites = $true
+if ($null -ne $launchProfile) {
+    $profileResults = @(
+        Invoke-Na2LaunchProfile `
+            -Profile $launchProfile `
+            -Arguments @($launchProfileArguments) `
+            -Games @($games) `
+            -ProjectRoot $paths.repository
+    )
+    if ($profileResults.Count -gt 1) {
+        throw "Launch profile '$($launchProfile.Name)' returned multiple results."
+    }
+    if ($profileResults.Count -eq 1) {
+        Merge-Na2LaunchProfileParameters `
+            -Target $launchParameters `
+            -Profile $launchProfile `
+            -Result $profileResults[0]
+    }
 }
 if ($launchParameters.ContainsKey('Snapshots')) {
     if ($turbo -or $unlimited) {
@@ -523,7 +527,14 @@ else {
             Get-Na2StartupFastForwardFrames `
                 -Configuration $_ `
                 -Paths $paths `
-                -LaunchProfile $launchProfile
+                -LaunchProfile $(
+                    if ($null -eq $launchProfile) {
+                        $null
+                    }
+                    else {
+                        [string]$launchProfile.Name
+                    }
+                )
         } | Select-Object -Unique
     )
     if ($launchFrameCounts.Count -gt 1) {

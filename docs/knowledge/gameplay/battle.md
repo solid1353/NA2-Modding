@@ -147,11 +147,11 @@ patches the clean state-`15` call at `0x001ECACC` from `FUN_001edb70` to the
 battle wrapper at `0x001ED4CC`; that wrapper calls `FUN_001edb70` first. No
 write reaches the next native function.
 
-`@pcsx2_cheats/practice/NA228p.pnach` owns the complete NA2.28 bootstrap,
-while `@pcsx2_cheats/practice/NUN5p.pnach` owns its separately ported startup and bootstrap
+`@repository/launch_profiles/practice/NA228.pnach` owns the complete NA2.28 bootstrap,
+while `@repository/launch_profiles/practice/NUN5.pnach` owns its separately ported startup and bootstrap
 code at `0x003D0C60..0x003D0FF8`. The normal
 `-l practice <row>` launch-profile selector maps `practice` to
-`@pcsx2_cheats/practice/`, reads one physical `movesets.tsv` row starting
+`@repository/launch_profiles/practice/`, reads one physical `movesets.tsv` row starting
 at row 2, and passes a different three-line character/support/awakening address
 set to each selected game. A row with `reversal` set to `Y` adds the native
 half-HP initializer write as a fourth line: `0x001E7AE8 = 0xA0850001` for
@@ -600,7 +600,7 @@ Mode Select outcome.
 
 The synchronized replay used the immutable Manual cache whose ISO SHA-256 is
 `4773DEFAB12C7926980D8D6B7D6505BF5021FE105A5BD411ECFEA6EFA366A5CD`,
-`@pcsx2_cheats/practice/NA228p.pnach`, read-only emulator settings, and
+`@repository/launch_profiles/practice/NA228.pnach`, read-only emulator settings, and
 discarded memory-card writes.
 
 The marker chord is not an input sequencer. Every attack input already exists

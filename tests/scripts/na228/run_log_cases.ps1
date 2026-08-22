@@ -140,8 +140,31 @@ try {
     New-Item -ItemType Directory -Force -Path $fakeNa2Scripts | Out-Null
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\run.ps1') `
         -Destination $fakeNa2Scripts
-    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\practice.ps1') `
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\launch_profile.ps1') `
         -Destination $fakeNa2Scripts
+    $fakePracticeProfile = Join-Path $fakeRepository 'launch_profiles\practice'
+    New-Item -ItemType Directory -Force -Path $fakePracticeProfile | Out-Null
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'launch_profiles\practice\launch.ps1') `
+        -Destination $fakePracticeProfile
+    $fakeTrainingProfile = Join-Path $fakeRepository 'launch_profiles\training'
+    New-Item -ItemType Directory -Force -Path $fakeTrainingProfile | Out-Null
+    Set-Na2Utf8FileAtomic `
+        -Path (Join-Path $fakeTrainingProfile 'launch.ps1') `
+        -Content @'
+param(
+    [string[]]$Arguments,
+    [string[]]$Games,
+    [string]$ProjectRoot
+)
+if ($Arguments.Count -ne 2 -or $Arguments[0] -cne '-label') {
+    throw 'The Training launch profile requires -label <value>.'
+}
+[pscustomobject]@{
+    LaunchParameters = @{
+        MemoryCard = "training-$($Arguments[1]).ps2"
+    }
+}
+'@
     Set-Na2Utf8FileAtomic `
         -Path (Join-Path $fakeNa2Scripts 'launch_settings.ps1') `
         -Content @'
@@ -153,6 +176,7 @@ function Get-Na2StartupFastForwardFrames {
     )
     if ($LaunchProfile -ceq 'practice') { return [UInt64]2500 }
     if ($LaunchProfile -ceq 'cinematic') { return [UInt64]777 }
+    if ($LaunchProfile -ceq 'training') { return [UInt64]888 }
     if ($Configuration -ceq 'test') { return [UInt64]222 }
     return [UInt64]321
 }
@@ -178,7 +202,6 @@ function Get-Na2StartupFastForwardFrames {
     "resources": "resources",
     "pcsx2_dev": "pcsx2_dev",
     "pcsx2_files": "pcsx2_files",
-    "pcsx2_cheats": "@pcsx2_files/cheats",
     "pcsx2_game_settings": "@pcsx2_files/game_settings",
     "pcsx2_input_profiles": "@pcsx2_files/input_profiles",
     "pcsx2_input_recordings": "@pcsx2_files/input_recordings",
@@ -223,7 +246,8 @@ function Get-Na2StartupFastForwardFrames {
   "launch_settings": {
     "startup_fast_forward_frames": 321,
     "practice": { "startup_fast_forward_frames": 2500 },
-    "cinematic": { "startup_fast_forward_frames": 777 }
+    "cinematic": { "startup_fast_forward_frames": 777 },
+    "training": { "startup_fast_forward_frames": 888 }
   },
   "builds": {
     "latest": { "aliases": ["l"] },
@@ -297,7 +321,9 @@ print(json.dumps(result))
         'source', 'utils', 'build', 'logs', 'na228_builder', 'resources', 'pcsx2_dev',
         'pcsx2_files\games\NA2', 'pcsx2_files\games\NA228',
         'pcsx2_files\games\NUN5',
-        'pcsx2_files\cheats\practice', 'pcsx2_files\game_settings',
+        'launch_profiles\practice',
+        'launch_profiles\training',
+        'pcsx2_files\game_settings',
         'pcsx2_files\input_profiles', 'pcsx2_files\input_recordings',
         'pcsx2_files\memory_cards', 'scripts', 'source\NA2.iso.files',
         'source\NUN5.iso.files', 'tests', 'work'
@@ -316,11 +342,11 @@ print(json.dumps(result))
         -LiteralPath ([string]$sourcePaths.games.Entries.NUN5.Config.cheats) `
         -Destination (Join-Path $fakeRepository 'pcsx2_files\games\NUN5\NUN5.pnach')
     Copy-Item `
-        -LiteralPath (Join-Path $sourceRepository 'pcsx2_files\cheats\practice\NA228p.pnach') `
-        -Destination (Join-Path $fakeRepository 'pcsx2_files\cheats\practice\NA228p.pnach')
+        -LiteralPath (Join-Path $sourceRepository 'launch_profiles\practice\NA228.pnach') `
+        -Destination (Join-Path $fakeRepository 'launch_profiles\practice\NA228.pnach')
     Copy-Item `
-        -LiteralPath (Join-Path $sourceRepository 'pcsx2_files\cheats\practice\NUN5p.pnach') `
-        -Destination (Join-Path $fakeRepository 'pcsx2_files\cheats\practice\NUN5p.pnach')
+        -LiteralPath (Join-Path $sourceRepository 'launch_profiles\practice\NUN5.pnach') `
+        -Destination (Join-Path $fakeRepository 'launch_profiles\practice\NUN5.pnach')
     Copy-Item `
         -LiteralPath (Join-Path $sourceRepository 'resources\movesets.tsv') `
         -Destination (Join-Path $fakeRepository 'resources\movesets.tsv')
@@ -704,6 +730,38 @@ Add-Content `
             'A settings-only launch profile required hard-coded parser support. ' +
             "Output:`n$genericProfileOutput"
         )
+    $settingsOnlyArgumentsRejected = $false
+    try {
+        & (Join-Path $fakeRepository 'na228.ps1') nun5 -l cinematic extra
+    }
+    catch {
+        $settingsOnlyArgumentsRejected = $_.Exception.Message -ceq (
+            "Launch profile 'cinematic' accepts no arguments."
+        )
+    }
+    Assert-Na2Test `
+        -Condition $settingsOnlyArgumentsRejected `
+        -Message 'A settings-only launch profile accepted executable arguments.'
+    $executableProfileOutput = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            nun5 `
+            -l `
+            training `
+            -label `
+            alpha `
+            -t *>&1
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $executableProfileOutput -match 'turbo=True unlimited=False frames=888' -and
+            $executableProfileOutput -match 'memory=training-alpha\.ps2' -and
+            $executableProfileOutput -match 'readonly=False' -and
+            $executableProfileOutput -match 'discard=False'
+        ) `
+        -Message (
+            'A non-Practice executable launch profile was not resolved generically. ' +
+            "Output:`n$executableProfileOutput"
+        )
     $unknownProfileRejected = $false
     try {
         & (Join-Path $fakeRepository 'na228.ps1') nun5 -l missing
@@ -740,13 +798,13 @@ Add-Content `
     Assert-Na2Test `
         -Condition (
             $practiceOutput -match 'turbo=True unlimited=False frames=2500' -and
-            $practiceOutput -match 'readonly=True' -and
-            $practiceOutput -match 'discard=True' -and
+            $practiceOutput -match 'readonly=False' -and
+            $practiceOutput -match 'discard=False' -and
             $practiceOutput.Contains(
-                'nun5=' + (Join-Path $fakeRepository 'pcsx2_files\cheats\practice\NUN5p.pnach')
+                'nun5=' + (Join-Path $fakeRepository 'launch_profiles\practice\NUN5.pnach')
             ) -and
             $practiceOutput.Contains(
-                'manual=' + (Join-Path $fakeRepository 'pcsx2_files\cheats\practice\NA228p.pnach')
+                'manual=' + (Join-Path $fakeRepository 'launch_profiles\practice\NA228.pnach')
             ) -and
             $practiceOutput -match '003D0FF0,word,00000054' -and
             $practiceOutput -match '003D0FF4,word,00000025' -and

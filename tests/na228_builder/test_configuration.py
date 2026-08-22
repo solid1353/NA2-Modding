@@ -61,7 +61,6 @@ class ConfigurationTests(unittest.TestCase):
                         "source": "source",
                         "build": "build",
                         "pcsx2_files": "pcsx2",
-                        "pcsx2_cheats": "pcsx2/cheats",
                         "pcsx2_game_settings": "pcsx2/game_settings",
                         "pcsx2_input_profiles": "pcsx2/input_profiles",
                         "pcsx2_memory_cards": "pcsx2/memory_cards",

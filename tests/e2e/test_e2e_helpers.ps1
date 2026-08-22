@@ -388,6 +388,7 @@ param(
     [string]$CaptureDirectory,
     [string]$InputRecordingsRoot,
     [string]$ProjectRoot,
+    [string]$MemoryCard,
     [switch]$ReadOnlySettings,
     [hashtable]$PnachByGame,
     [hashtable]$PnachLinesByGame
@@ -400,6 +401,7 @@ param(
         snapshots = $Snapshots.IsPresent
         capture_mode = $InputRecordingCaptureMode
         play = $Play
+        memory_card = $MemoryCard
         read_only_settings = $ReadOnlySettings.IsPresent
         pnach = if ($null -eq $PnachByGame) { $null } else { $PnachByGame[$Games[0]] }
         pnach_lines = if ($null -eq $PnachLinesByGame) {
@@ -439,6 +441,9 @@ param(
         ) `
         -Message 'E2E replay did not use the canonical recording, command pool, or screenshot-only PCSX2 capture.'
 
+    $practiceContext = Get-VisualRegressionContext -Suite 'practice'
+    $nestedPracticeContext = Get-VisualRegressionContext -Suite 'other/practice'
+    $ninjaSongContext = Get-VisualRegressionContext -Suite 'ninja_song'
     $practiceCapture = Join-Path $replayRepository 'practice-capture'
     Invoke-VisualRegressionPooledReplay `
         -Repository $replayRepository `
@@ -446,24 +451,44 @@ param(
         -RecordingPath $replayRecording `
         -Game 'e2e_test' `
         -CaptureRoot $practiceCapture `
-        -PracticeMovesetRow 2 `
+        -MemoryCard $practiceContext.MemoryCard `
+        -LaunchProfile $practiceContext.LaunchProfile `
         -ConcurrencyPoolRoot $replayPool `
         -ConcurrencyLimit 16
     $practiceInvocation = Get-Content `
         -Raw `
         -LiteralPath (Join-Path $replayRepository 'launcher.json') |
         ConvertFrom-Json
-    $practiceContext = Get-VisualRegressionContext -Suite 'practice'
-    $nestedPracticeContext = Get-VisualRegressionContext -Suite 'other/practice'
+    $ninjaSongCapture = Join-Path $replayRepository 'ninja-song-capture'
+    Invoke-VisualRegressionPooledReplay `
+        -Repository $replayRepository `
+        -SharedRecordingRoot $replayRecordings `
+        -RecordingPath $replayRecording `
+        -Game 'e2e_test' `
+        -CaptureRoot $ninjaSongCapture `
+        -MemoryCard $ninjaSongContext.MemoryCard `
+        -ConcurrencyPoolRoot $replayPool `
+        -ConcurrencyLimit 16
+    $ninjaSongInvocation = Get-Content `
+        -Raw `
+        -LiteralPath (Join-Path $replayRepository 'launcher.json') |
+        ConvertFrom-Json
     Assert-E2eHelperTest `
         -Condition (
-            $practiceContext.PracticeMovesetRow -eq 2 -and
-            $null -eq $nestedPracticeContext.PracticeMovesetRow -and
+            $practiceContext.LaunchProfile.Name -ceq 'practice' -and
+            ($practiceContext.LaunchProfile.Arguments -join ',') -ceq '2' -and
+            $practiceContext.MemoryCard -ceq 'templates/2_formatted.ps2' -and
+            $null -eq $nestedPracticeContext.LaunchProfile -and
+            $nestedPracticeContext.MemoryCard -ceq 'templates/2_formatted.ps2' -and
+            $practiceInvocation.memory_card -ceq 'templates/2_formatted.ps2' -and
             $practiceInvocation.read_only_settings -and
             $practiceInvocation.pnach -ceq 'practice-2.pnach' -and
-            ($practiceInvocation.pnach_lines -join ',') -ceq 'practice-row=2'
+            ($practiceInvocation.pnach_lines -join ',') -ceq 'practice-row=2' -and
+            $ninjaSongContext.MemoryCard -ceq 'templates/2_formatted.ps2' -and
+            $null -eq $ninjaSongContext.LaunchProfile -and
+            $ninjaSongInvocation.memory_card -ceq 'templates/2_formatted.ps2'
         ) `
-        -Message 'The practice suite did not use Practice row 2 through the generated-character launch configuration path.'
+        -Message 'E2E defaults and suite overrides did not drive replay settings.'
 
     $generatedDiscoveryRoot = Join-Path $testRoot 'generated-discovery\e2e'
     $generatedSuiteRoot = Join-Path $generatedDiscoveryRoot 'recordings'
@@ -513,10 +538,12 @@ param(
             $generatedIdleContext.GeneratedFamily -ceq 'idle' -and
             $generatedIdleContext.SuiteRelativePath -ceq 'characters\idle' -and
             [IO.Path]::GetFileName($generatedIdleContext.CaptureRoot) -ceq 'idle' -and
+            $generatedIdleContext.MemoryCard -ceq 'templates/2_formatted.ps2' -and
             $generatedMovesetContext.Generated -and
             $generatedMovesetContext.GeneratedFamily -ceq 'specials' -and
             $generatedMovesetContext.SuiteRelativePath -ceq 'movesets' -and
-            [IO.Path]::GetFileName($generatedMovesetContext.CaptureRoot) -ceq 'movesets'
+            [IO.Path]::GetFileName($generatedMovesetContext.CaptureRoot) -ceq 'movesets' -and
+            $generatedMovesetContext.MemoryCard -ceq 'templates/2_formatted.ps2'
         ) `
         -Message 'Generated character suite selection did not resolve split capture roots.'
 
@@ -864,13 +891,15 @@ param(
     [string]$MovesetRange,
     [int]$ThrottleLimit,
     [string]$ConcurrencyPoolRoot,
+    [string]$MemoryCard,
+    [psobject]$LaunchProfile,
     [string]$ProjectRoot
 )
 $grids = Join-Path $OutputRoot 'screenshots'
 [void](New-Item -ItemType Directory -Path $grids -Force)
 [IO.File]::WriteAllText(
     (Join-Path $grids '002_naruto_base_a_reference.png'),
-    "$Game/$Tier/$ThrottleLimit/$MovesetRange"
+    "$Game/$Tier/$ThrottleLimit/$MovesetRange/$MemoryCard"
 )
 '@
     )
@@ -885,7 +914,9 @@ $grids = Join-Path $OutputRoot 'screenshots'
         -Condition (
             [IO.File]::ReadAllText((Join-Path `
                 $coordinatedReferenceCapture `
-                'screenshots\002_naruto_base_a_reference.png')) -ceq 'nun5/reference/5/2'
+                'screenshots\002_naruto_base_a_reference.png')) -ceq (
+                    'nun5/reference/5/2/templates/2_formatted.ps2'
+                )
         ) `
         -Message 'Generated reference capture did not delegate to the moveset suite runner.'
 
@@ -1053,7 +1084,23 @@ $grids = Join-Path $OutputRoot 'screenshots'
       "payload_shift_bytes": 16,
       "compare_against": "baseline"
     }
-  ]
+  ],
+  "memory_card": "templates/default.ps2",
+  "suite_overrides": {
+    "card-and-profile": {
+      "memory_card": "templates/override.ps2",
+      "launch_profile": {
+        "name": "synthetic",
+        "arguments": ["one", "two"]
+      }
+    },
+    "profile-only": {
+      "launch_profile": {
+        "name": "synthetic",
+        "arguments": []
+      }
+    }
+  }
 }
 '@
     )
@@ -1064,6 +1111,27 @@ $grids = Join-Path $OutputRoot 'screenshots'
     Assert-E2eHelperTest `
         -Condition ([string]$configuration.PublishedVariant.name -ceq 'baseline') `
         -Message 'E2E configuration did not select the published synthetic variant.'
+    $defaultSuiteSettings = Resolve-E2eSuiteSettings `
+        -Configuration $configuration `
+        -Suite 'default'
+    $overrideSuiteSettings = Resolve-E2eSuiteSettings `
+        -Configuration $configuration `
+        -Suite 'card-and-profile'
+    $profileOnlySettings = Resolve-E2eSuiteSettings `
+        -Configuration $configuration `
+        -Suite 'profile-only'
+    Assert-E2eHelperTest `
+        -Condition (
+            $configuration.MemoryCard -ceq 'templates/default.ps2' -and
+            $defaultSuiteSettings.MemoryCard -ceq 'templates/default.ps2' -and
+            $null -eq $defaultSuiteSettings.LaunchProfile -and
+            $overrideSuiteSettings.MemoryCard -ceq 'templates/override.ps2' -and
+            $overrideSuiteSettings.LaunchProfile.Name -ceq 'synthetic' -and
+            ($overrideSuiteSettings.LaunchProfile.Arguments -join ',') -ceq 'one,two' -and
+            $profileOnlySettings.MemoryCard -ceq 'templates/default.ps2' -and
+            $profileOnlySettings.LaunchProfile.Name -ceq 'synthetic'
+        ) `
+        -Message 'E2E memory-card defaults or per-suite overrides were not resolved correctly.'
     $qualifiedBuildVariant = Get-E2eBuildVariant `
         -Name 'qualified' `
         -Root $activeVariantRoot
@@ -1585,6 +1653,10 @@ $grids = Join-Path $OutputRoot 'screenshots'
         -Force)
     Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\suite.ps1') `
         -Destination (Join-Path $fakeScripts 'suite.ps1')
+    Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\config.ps1') `
+        -Destination (Join-Path $fakeScripts 'config.ps1')
+    Copy-Item -LiteralPath (Join-Path $repository 'e2e\config.json') `
+        -Destination (Join-Path $fakeRepository 'e2e\config.json')
     Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\create_suite.ps1') `
         -Destination (Join-Path $fakeScripts 'create_suite.ps1')
     Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\rename_suite.ps1') `

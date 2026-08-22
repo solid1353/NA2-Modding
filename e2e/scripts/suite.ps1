@@ -1,12 +1,11 @@
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'config.ps1')
 $script:E2eCaptureTiers = [ordered]@{
     Reference = 'reference'
     Current = 'current'
 }
 $script:E2eGeneratedMovesetSuiteName = 'movesets'
 $script:E2eGeneratedIdleSuiteName = 'characters/idle'
-$script:E2ePracticeSuiteName = 'practice'
-$script:E2ePracticeMovesetRow = 2
 $script:E2eGeneratedSuiteNames = @(
     $script:E2eGeneratedMovesetSuiteName,
     $script:E2eGeneratedIdleSuiteName
@@ -530,6 +529,10 @@ function Get-VisualRegressionContext {
         Get-VisualRegressionGeneratedSuiteFamily -Suite $suiteName
     }
     else { $null }
+    $configuration = Get-E2eConfiguration -Root $root
+    $suiteSettings = Resolve-E2eSuiteSettings `
+        -Configuration $configuration `
+        -Suite $suiteName
     $recordingRepository = Join-Path ([string]$paths.pcsx2_input_recordings) 'e2e'
     $storageRelativePath = if ($generated) {
         if ($generatedFamily -ceq 'idle') {
@@ -566,10 +569,8 @@ function Get-VisualRegressionContext {
         GeneratedNamespace = $generatedNamespace
         GeneratedFamily = $generatedFamily
         GeneratedScript = Get-VisualRegressionGeneratedSuiteScript -Root $root
-        PracticeMovesetRow = if ($suiteName -ceq $script:E2ePracticeSuiteName) {
-            $script:E2ePracticeMovesetRow
-        }
-        else { $null }
+        MemoryCard = $suiteSettings.MemoryCard
+        LaunchProfile = $suiteSettings.LaunchProfile
         DescendantSuiteRoot = Join-Path $recordingRepository $suiteRelativePath
         CaptureRoot = $captureRoot
         Capture = [pscustomobject]@{
@@ -1789,7 +1790,8 @@ function Invoke-VisualRegressionReplay {
         [Parameter(Mandatory)][string]$RecordingPath,
         [Parameter(Mandatory)][string]$Game,
         [Parameter(Mandatory)][string]$CaptureRoot,
-        [Nullable[int]]$PracticeMovesetRow
+        [string]$MemoryCard,
+        [AllowNull()][psobject]$LaunchProfile
     )
 
     $resolvedRecordingRoot = [IO.Path]::GetFullPath($SharedRecordingRoot)
@@ -1821,16 +1823,58 @@ function Invoke-VisualRegressionReplay {
         InputRecordingsRoot = $SharedRecordingRoot
         ProjectRoot = $Repository
     }
-    if ($null -ne $PracticeMovesetRow) {
-        $practice = Get-VisualRegressionPracticeConfiguration `
-            -Repository $Repository `
-            -MovesetRow $PracticeMovesetRow `
-            -Game $Game
-        $launchArguments.ReadOnlySettings = $true
-        $launchArguments.PnachByGame = $practice.PnachByGame
-        $launchArguments.PnachLinesByGame = $practice.PnachLinesByGame
-    }
+    Add-VisualRegressionSuiteLaunchSettings `
+        -Target $launchArguments `
+        -Repository $Repository `
+        -Game $Game `
+        -MemoryCard $MemoryCard `
+        -LaunchProfile $LaunchProfile `
+        -Paths $paths
     & $paths.files.pcsx2_game_launch_command @launchArguments
+}
+
+function Add-VisualRegressionSuiteLaunchSettings {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][hashtable]$Target,
+        [Parameter(Mandatory)][string]$Repository,
+        [Parameter(Mandatory)][string]$Game,
+        [string]$MemoryCard,
+        [AllowNull()][psobject]$LaunchProfile,
+        [AllowNull()][psobject]$Paths
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($MemoryCard)) {
+        $Target.MemoryCard = $MemoryCard
+    }
+    if ($null -ne $LaunchProfile) {
+        if ($null -eq $Paths) {
+            . (Join-Path $Repository 'scripts\lib\paths.ps1')
+            $Paths = Get-Na2Paths -ManifestPath (Join-Path $Repository 'paths.json')
+        }
+        . (Join-Path $Repository 'scripts\na228\launch_profile.ps1')
+        $profile = Resolve-Na2LaunchProfile `
+            -Name ([string]$LaunchProfile.Name) `
+            -Paths $Paths
+        $profileResults = @(
+            Invoke-Na2LaunchProfile `
+                -Profile $profile `
+                -Arguments ([string[]]@($LaunchProfile.Arguments)) `
+                -Games @($Game) `
+                -ProjectRoot $Repository
+        )
+        if ($profileResults.Count -ne 1) {
+            throw (
+                "E2E suite launch profile $($profile.Name) must return exactly " +
+                "one configuration; got $($profileResults.Count)."
+            )
+        }
+        $Target.ReadOnlySettings = $true
+        Merge-Na2LaunchProfileParameters `
+            -Target $Target `
+            -Profile $profile `
+            -Result $profileResults[0]
+    }
 }
 
 function Enter-VisualRegressionConcurrencyPool {
@@ -1869,7 +1913,8 @@ function Invoke-VisualRegressionPooledReplay {
         [Parameter(Mandatory)][string]$CaptureRoot,
         [Parameter(Mandatory)][string]$ConcurrencyPoolRoot,
         [Parameter(Mandatory)][ValidateRange(1, 64)][int]$ConcurrencyLimit,
-        [Nullable[int]]$PracticeMovesetRow
+        [string]$MemoryCard,
+        [AllowNull()][psobject]$LaunchProfile
     )
 
     $permit = Enter-VisualRegressionConcurrencyPool `
@@ -1882,7 +1927,8 @@ function Invoke-VisualRegressionPooledReplay {
             -RecordingPath $RecordingPath `
             -Game $Game `
             -CaptureRoot $CaptureRoot `
-            -PracticeMovesetRow $PracticeMovesetRow
+            -MemoryCard $MemoryCard `
+            -LaunchProfile $LaunchProfile
     }
     finally {
         $permit.Dispose()

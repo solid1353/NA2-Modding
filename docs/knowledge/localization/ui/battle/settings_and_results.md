@@ -462,6 +462,50 @@ localized record-2 geometry. Reapplying or changing those rows would target
 the wrong screen. The two new rows are **statically verified with high
 confidence** and remain **awaiting normal-build runtime and user validation**.
 
+### 2026-08-22 Ninja Song objective, arithmetic, and bonus ownership
+
+The maintained Ninja Song E2E grid exercises the detail renderer inside the
+same NA2/NUN5 functions identified above. The objective loops are NA2 Ghidra
+`0x00718430..0x007187B4` / BTL file `0x64570..0x648F4` and NUN5 Ghidra
+`0x0072DFF0..0x0072E580` / BTL file `0x67330..0x678C0`. Both begin with
+`rowY = 70 - scroll`, advance ordinary rows by `36`, advance grouped content by
+`50`, and apply the same `-100..484` visibility bounds. The NUN5 objective draw
+uses index X=`80`, prose X=`112`, prose Y=`rowY - 6`, and a `320 x 32` box.
+
+Arithmetic is owned by NA2 `FUN_00718920` / BTL file `0x64A60` and NUN5
+`FUN_0072E5B0` / BTL file `0x678F0`. The NUN5 expanded path draws its localized
+unit resource at relative `(176,-6)` in a `52 x 32` box and its total in a
+right-aligned `64`-unit box beginning at relative X=`256`. NA2's one
+function-level adapter preserves expanded, total-only, and N/A routing. It maps
+descriptor unit `2` to the exact `timer counts` resource, suppresses descriptor
+unit `4`, and applies one right-edge formula to every total. No objective or
+visible string is used as a renderer selector.
+
+The result-dependent bonus renderer is NA2 `FUN_00718C60` / BTL file `0x64DA0`
+and NUN5 `FUN_0072E9C0`. It consumes the fight-selected 12-byte row, so bonus
+strings and their vertical positions vary after different fights. One shared
+replacement formats all rows, wraps labels in NUN5's `288 x 32` two-line box,
+and right-aligns padded totals in its `96 x 20` value box. BODY's two-unit
+inter-digit advance is included in the measurement; one-, two-, and longer
+totals therefore share the donor right edge. The current recording visibly
+exercises the item and health variants without using either string as a hook.
+
+NA2 controller Ghidra `0x00718FE0` / live `0x00719020` and NUN5 controller
+Ghidra `0x0072EDD0` / live `0x0072EE10` both receive F12=`30.0` from their
+homologous callers and implement the same subtract/add, upper-limit, and zero
+clamps. The accepted tracked reference and current grids use the same E2E
+memory-card configuration and synchronized deterministic markers. Fresh
+savestates retrieved from those markers show matching runtime objective-row
+origins; their embedded screenshots are diagnostic state evidence, not the
+visual-parity baseline.
+
+The integrated 2026-08-22 replay proves the current objective line breaks,
+arithmetic columns, two-line timer label, suppressed percent unit, N/A rows,
+dynamic bonus label boxes, and right-aligned totals. Remaining differences are
+limited to the intentional taller/shaded font raster and animated panel/title
+phase. The user visually accepted the complete result through `ver` on
+2026-08-22.
+
 ## Practice Settings prompt
 
 The VS-screen Practice Settings prompt requires both the English atlas

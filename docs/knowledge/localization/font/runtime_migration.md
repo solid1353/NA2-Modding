@@ -233,11 +233,16 @@ hook to unrelated consumers.
   or legacy Ultimate Jutsu headers share another. No character or string
   whitelist is used.
 - **Ninja Song arithmetic:** one data-driven renderer reads the native row
-  table and covers all fifteen expanded, total-only, and N/A rows.
+  table and covers all fifteen expanded, total-only, and N/A rows. Descriptor
+  unit selection and total right alignment remain structural formulas.
 - **Ninja Song objectives:** one caller hook draws the existing red index,
   existing one-byte marker, and existing prose as independent elements. Prose
-  uses one `288`-unit constant for both wrapping and the bounded two-line
+  uses the donor's `320`-unit constant for both wrapping and the bounded two-line
   compositor; no text is prefixed or substituted.
+- **Ninja Song bonuses:** one row-driven renderer formats whichever bonus the
+  completed fight selects, wraps its label in the donor `288 x 32` box, and
+  right-aligns every padded numeric total in the donor value box. It contains
+  no string whitelist or per-result coordinates.
 
 ### Retired Save confirmation absolute-position fix
 
@@ -253,11 +258,11 @@ retirement.
 
 ### Runtime and static result
 
-The captured runtime evidence predates the final source change that replaced
-the objective-only `320`-unit wrap threshold with the same `288`-unit constant
-used by its render box. The final objective implementation therefore requires
-its own synchronized replay; older captures are not presented as proof of
-byte-identical current output.
+The maintained 2026-08-22 Ninja Song E2E replay is synchronized with the
+current objective, arithmetic, and dynamic-bonus payload. It replaces the
+earlier static-only objective evidence and proves all five planned capture
+states through the integrated build. The result is runtime-proven and
+user-accepted.
 
 The synchronized main replay provides valid post-change cases 1-49 under
 `@work/Font 3/overhaul/comparisons/font-overhaul-final-red-main-1-49-vs-nun5/`.
@@ -270,13 +275,12 @@ covering Sakura Figure, Ultimate Jutsu and Music, Movie rows, and legacy Naruto
 Ultimate Jutsu; no large Font defect remains there. Classic Naruto's missing
 Figure and Music pages are native content structure, not missing Font output.
 
-The Ninja arithmetic family was runtime-proven in the earlier fresh ss3
-injection and redraws continuously after resume. The final six Ninja objective
-capture markers are not runtime evidence: that recording desynchronized and
-captured Character Select instead. Earlier runs prove older objective
-candidates, but their payload differs from the final build. The final objective
-implementation therefore remains statically verified until one synchronized
-final-build replay is supplied; no stronger claim is retained.
+The current Ninja replay covers the objective, arithmetic, and dynamic-bonus
+families together. Its accepted tracked reference and current grids use the
+same E2E memory-card configuration and synchronized deterministic markers.
+Fresh NUN5 and NA228 savestates retrieved from those markers established
+matching runtime objective-row origins; their embedded screenshots were not
+used as visual-parity evidence.
 
 ### Preserved regression tooling
 

@@ -109,10 +109,10 @@ conventions centrally to ASCII quotation marks and NA2's `<iconCROSS>` token
 before transforms or placement and rejects row-level overrides for either
 family. T2194 declares literal-percent escaping for its printf-style consumer,
 and T2195-T2198 declare one formula-symbol normalization transform.
-The paired Ninja Song passes add 25 displayed numeric/status/bonus fields, and
-the paired ss7 Movie pass adds the locked-title placeholder. This
-is an evidence-scoped English table, not a claim that uncaptured screens are
-covered.
+The maintained Ninja Song suite establishes 40 exact objective, index,
+numeric/status, bonus, and formula-symbol rows. The paired ss7 Movie pass adds
+the locked-title placeholder. This is an evidence-scoped English table, not a
+claim that uncaptured screens are covered.
 
 The canonical table closes every admitted multi-slot `<br>` message family.
 T2011/T2041/T2042 cover all four save-progress message parts, while

@@ -47,6 +47,7 @@ C_V2_SOURCES = {
     "lists": C_CORE_SOURCE.with_name("font_v2_lists.c"),
     "settings": C_CORE_SOURCE.with_name("font_v2_settings.c"),
     "ninja_song": C_CORE_SOURCE.with_name("font_v2_ninja_song.c"),
+    "selected_style": C_CORE_SOURCE.with_name("font_v2_selected_style.c"),
 }
 C_NUMERIC_SOURCE = C_CORE_SOURCE.with_name("font_numeric.c")
 C_TOOLCHAIN_BIN = ee_c_fragments.default_toolchain_bin(REPOSITORY)
@@ -228,6 +229,9 @@ V2_NINJA_EMPTY_ADAPTER = f"{V2_PREFIX}.ninja_empty_adapter"
 V2_NINJA_ARITHMETIC_TEMPLATE = (
     f"{V2_PREFIX}.ninja_arithmetic_template"
 )
+V2_NINJA_BONUS_LABEL_DRAW = f"{V2_PREFIX}.c.ninja_bonus_label_draw"
+V2_NINJA_BONUS_TOTAL_DRAW = f"{V2_PREFIX}.c.ninja_bonus_total_draw"
+V2_NINJA_BONUS_TEMPLATE = f"{V2_PREFIX}.ninja_bonus_template"
 V2_NINJA_OBJECTIVE_CALLBACK = f"{V2_PREFIX}.c.ninja_objective_callback"
 V2_NINJA_OBJECTIVE_DRAW = f"{V2_PREFIX}.c.ninja_objective_draw"
 V2_NINJA_OBJECTIVE_ROW_ADAPTER = (
@@ -583,13 +587,12 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         "font_v2_prepare",
         "font_v2_adapter_call",
         "font_v2_wrap_retry",
+        "font_v2_controls_callback",
         "font_v2_controls_adapter",
         "font_v2_command_title_entry",
         "font_v2_practice_title_entry",
         "font_v2_pause_list_adapter",
         "font_v2_pause_list_selected_impl",
-        "font_v2_linked_choice_selected_impl",
-        "font_v2_linked_choice_unselected_adapter",
         "font_v2_quit_scope_enter",
         "font_v2_character_scope_enter",
         "font_v2_quit_scope_leave",
@@ -622,7 +625,9 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         "font_v2_battle_settings_value_adapter",
         "font_v2_practice_settings_heading_adapter",
         "font_v2_ninja_arithmetic_template",
+        "font_v2_ninja_bonus_template",
         "font_v2_ninja_objective_row_adapter",
+        "font_v2_global_two_choice_draw",
     }
     if set(extracted.symbols) != expected_exports:
         raise ValueError(
@@ -634,6 +639,9 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         extracted.symbols["font_v2_measure"].symbol: V2_MEASURE,
         extracted.symbols["font_v2_prepare"].symbol: V2_PREPARE,
         extracted.symbols["font_v2_adapter_call"].symbol: V2_ADAPTER_CALL,
+        extracted.symbols["font_v2_controls_callback"].symbol: (
+            V2_CONTROLS_CALLBACK
+        ),
         extracted.symbols["font_v2_controls_adapter"].symbol: (
             V2_CONTROLS_ADAPTER
         ),
@@ -649,12 +657,6 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         extracted.symbols["font_v2_pause_list_selected_impl"].symbol: (
             V2_PAUSE_LIST_SELECTED_IMPL
         ),
-        extracted.symbols["font_v2_linked_choice_selected_impl"].symbol: (
-            V2_LINKED_CHOICE_SELECTED_IMPL
-        ),
-        extracted.symbols[
-            "font_v2_linked_choice_unselected_adapter"
-        ].symbol: V2_LINKED_CHOICE_UNSELECTED_ADAPTER,
         extracted.symbols["font_v2_quit_scope_enter"].symbol: (
             V2_QUIT_SCOPE_ENTER
         ),
@@ -749,9 +751,15 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         extracted.symbols["font_v2_ninja_arithmetic_template"].symbol: (
             V2_NINJA_ARITHMETIC_TEMPLATE
         ),
+        extracted.symbols["font_v2_ninja_bonus_template"].symbol: (
+            V2_NINJA_BONUS_TEMPLATE
+        ),
         extracted.symbols[
             "font_v2_ninja_objective_row_adapter"
         ].symbol: V2_NINJA_OBJECTIVE_ROW_ADAPTER,
+        extracted.symbols["font_v2_global_two_choice_draw"].symbol: (
+            V2_GLOBAL_TWO_CHOICE_DRAW
+        ),
     }
     helper_symbols = {
         fragment.symbol
@@ -765,9 +773,6 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         ),
         f"{V2_PREFIX}.c.text.font.v2.map.choice": (
             f"{V2_PREFIX}.c.map_choice"
-        ),
-        f"{V2_PREFIX}.c.text.font.v2.linked.choice.session.prepare": (
-            f"{V2_PREFIX}.c.linked_choice_session_prepare"
         ),
         f"{V2_PREFIX}.c.text.font.v2.wrapped.body.common": (
             f"{V2_PREFIX}.c.wrapped_body_common"
@@ -843,6 +848,12 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         f"{V2_PREFIX}.c.text.font.v2.ninja.objective.draw": (
             V2_NINJA_OBJECTIVE_DRAW
         ),
+        f"{V2_PREFIX}.c.text.font.v2.ninja.bonus.label.draw": (
+            V2_NINJA_BONUS_LABEL_DRAW
+        ),
+        f"{V2_PREFIX}.c.text.font.v2.ninja.bonus.total.draw": (
+            V2_NINJA_BONUS_TOTAL_DRAW
+        ),
     }
     if helper_symbols != set(helper_aliases):
         raise ValueError(
@@ -884,15 +895,13 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         V2_MEASURE,
         V2_PREPARE,
         V2_ADAPTER_CALL,
+        V2_CONTROLS_CALLBACK,
         V2_CONTROLS_ADAPTER,
         V2_TITLE_ADAPTER,
         V2_COMMAND_TITLE_ENTRY,
         V2_PRACTICE_TITLE_ENTRY,
         V2_PAUSE_LIST_ADAPTER,
         V2_PAUSE_LIST_SELECTED_IMPL,
-        _concise_payload_symbol(f"{V2_PREFIX}.c.linked_choice_session_prepare"),
-        V2_LINKED_CHOICE_SELECTED_IMPL,
-        V2_LINKED_CHOICE_UNSELECTED_ADAPTER,
         V2_QUIT_SCOPE_ENTER,
         V2_CHARACTER_SCOPE_ENTER,
         V2_QUIT_SCOPE_LEAVE,
@@ -949,9 +958,13 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         V2_NINJA_TOTAL_ADAPTER,
         V2_NINJA_EMPTY_ADAPTER,
         V2_NINJA_ARITHMETIC_TEMPLATE,
+        V2_NINJA_BONUS_LABEL_DRAW,
+        V2_NINJA_BONUS_TOTAL_DRAW,
+        V2_NINJA_BONUS_TEMPLATE,
         V2_NINJA_OBJECTIVE_CALLBACK,
         V2_NINJA_OBJECTIVE_DRAW,
         V2_NINJA_OBJECTIVE_ROW_ADAPTER,
+        V2_GLOBAL_TWO_CHOICE_DRAW,
     }:
         raise ValueError("Font v2 C fragment aliases are incomplete")
     return result
@@ -3331,27 +3344,15 @@ def v2_fragments() -> tuple[Fragment, ...]:
             alignment=1,
         ),
         *build_v2_c_sources(),
-        build_v2_controls_callback(),
         build_v2_title_callback(),
         build_v2_pause_list_callback(),
         build_v2_pause_list_selected_callback(),
-        build_v2_pause_list_selected_entry(),
-        build_v2_pause_list_selected_entry(
-            V2_LINKED_CHOICE_SELECTED_ADAPTER,
-            V2_LINKED_CHOICE_SELECTED_IMPL,
-        ),
         build_v2_quit_choices_scope_entry(),
         build_v2_quit_choices_scope_entry(
             V2_CHARACTER_CHOICES_SCOPE,
             V2_CHARACTER_SCOPE_ENTER,
         ),
         build_v2_quit_selected_entry(),
-        build_v2_quit_unselected_callback(),
-        build_v2_quit_body_callback(),
-        build_v2_native_measure_callback(),
-        build_v2_practice_icon_draw_callback(),
-        build_v2_practice_callback(),
-        build_v2_practice_adapter_entry(),
         build_v2_plain_space(),
         build_v2_newline_advance(),
         build_v2_right_edge(),
@@ -3359,9 +3360,7 @@ def v2_fragments() -> tuple[Fragment, ...]:
         build_v2_special_choice_selected_callback(),
         build_v2_global_selected_style(),
         build_v2_global_selected_record_draw(),
-        build_v2_global_two_choice_draw(),
         build_v2_glyph_advance(),
-        build_v2_special_controls_body_callback(),
     )
     symbols = [fragment.symbol for fragment in result]
     if len(symbols) != len(set(symbols)):

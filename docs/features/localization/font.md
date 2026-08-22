@@ -56,8 +56,9 @@ MIPS payload blobs are not production inputs.
 - Recheck previously accepted caller families after a shared-core change.
 
 The accepted layout baseline has no known large defect in its maintained
-comparison cases. A small raster-appearance mismatch against NUN5 and one
-synchronized final-build Ninja Song objective capture remain deferred.
+comparison cases. A small intentional raster-appearance mismatch against NUN5
+remains. The synchronized Ninja Song objective, arithmetic, and fight-dependent
+bonus renderers are runtime-proven and user-accepted.
 
 ## Covered layout families
 

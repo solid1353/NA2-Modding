@@ -85,7 +85,8 @@ exit $LASTEXITCODE
       "payload_shift_bytes": 0,
       "publish": true
     }
-  ]
+  ],
+  "memory_card": "templates/2_formatted.ps2"
 }
 '@)
     [IO.File]::WriteAllText((Join-Path $repository 'paths.json'), @'

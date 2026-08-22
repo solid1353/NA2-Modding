@@ -50,6 +50,11 @@ Battle Settings, the Battle pause list, and both quit-confirmation destinations.
 Its three paired pages distinguish the boot-ELF shared-modal slots from the
 separate Collection choices and distinguish selected rows from ordinary rows.
 
+The maintained Ninja Song suite selects 40 exact rows across its five capture
+states. It covers the displayed objective prose, indices, timer label, N/A and
+bonus strings, and formula symbols without transferring coverage to unseen
+bonus siblings or unused unit slots.
+
 | Display basis | Covered rows | Proven family |
 | --- | ---: | --- |
 | `e2e:collection/characters` | 31 | Character-plaque names selected by the Characters captures |
@@ -61,14 +66,15 @@ separate Collection choices and distinguish selected rows from ordinary rows.
 | `e2e:jutsus` | 26 | Exact Command Chart title records selected by the three Jutsus pages |
 | `e2e:menus` | 30 | Exact Character Select, Battle Settings, Pause, and quit-confirmation records selected by the three Menus pages |
 | `e2e:movesets` | 1,226 | 1,052 selected Command Chart titles, 154 selected metadata-owned Ultimate/Jutsu titles, and 20 selected shared relationship/control records |
+| `e2e:ninja_song` | 40 | Exact objective, index, unit/status, bonus, and formula records selected by the five Ninja Song states |
 
-These suite counts total 1,989 `e2e:` entries on 1,796 unique rows. The six
+These suite counts total 2,029 `e2e:` entries on 1,836 unique rows. The six
 Collection suites own 707 entries on 539 unique rows because exact records can
 be selected by several Collection paths. The 1,226 Movesets rows are separate
 executable records even where the visible English is equal. Jutsus overlaps
 Movesets on 25 rows and adds T260 as one newly selected row. Menus adds 30
-previously non-E2E rows. Of the 2,088 canonical rows, 292 have no maintained-
-suite E2E basis.
+previously non-E2E rows, and Ninja Song adds 40. Of the 2,088 canonical rows,
+252 have no maintained-suite E2E basis.
 
 ### Menus capture-selection boundary
 
@@ -91,6 +97,32 @@ byte checks against the clean NA2 and NUN5 files prove these 30 selected rows:
 The canonical `source_ref` and `donor_ref` fields on those 30 rows record every
 exact verified NA2 and NUN5 offset. No Menus row uses a replacement or prefix,
 and equal English in another executable family does not transfer this basis.
+
+### Ninja Song capture-selection boundary
+
+The five Ninja Song states select these exact mapping groups:
+
+- objective prose T70-T82 and T84-T86; T83 `Fulfill special objectives` is not
+  selected by the plan and retains its earlier `seen:` evidence;
+- item bonus T88 and health bonus T2194; the other bonus-template siblings are
+  not displayed and do not inherit Ninja Song coverage;
+- timer label T97 and objective indices T2174-T2189;
+- N/A T2190 and formula symbols T2195-T2198.
+
+The NA2 arithmetic descriptor table begins at BTL file `0x20FEE0`. The
+objective-6 descriptor at `0x20FF1C` selects unit index `2`; direct comparison
+with NUN5 `FUN_0072E5B0` proves that the regional renderer instead resolves
+localized resource selector `unit_index + 4`. The exact selected English text
+is T97 `timer counts` at `NUN5_TEXTENG@0x10538`, while NA2's live unit pointer
+table selects the imported T97 slot at index `3`. Objective 9's descriptor unit
+index `4` has no visible NUN5 unit, so the renderer suppresses it rather than
+displaying T2198 `%` as a unit.
+
+T2191-T2193 are literal NA2 unit slots that this capture plan does not display;
+they retain their historical basis and `empty` transforms. Every admitted
+Ninja Song row keeps its exact `source_ref` and `donor_ref`, all `replacement`
+fields remain blank, and importer validation resolves the source and donor
+bytes at those recorded offsets.
 
 ### Collection capture-selection boundary
 

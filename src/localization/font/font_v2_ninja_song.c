@@ -4,15 +4,17 @@
 /* === Ninja Song objective and arithmetic rows === */
 
 /* NUN5 objective row geometry converted to NA2 renderer coordinates. */
-#define FONT_NINJA_OBJECTIVE_INDEX_ORIGIN_X 81.6f
+#define FONT_NINJA_OBJECTIVE_INDEX_ORIGIN_X 80.0f
 #define FONT_NINJA_OBJECTIVE_INDEX_LEADING_SPACE_OFFSET 5.6f
-#define FONT_NINJA_OBJECTIVE_MARKER_ORIGIN_X 88.0f
-#define FONT_NINJA_OBJECTIVE_PROSE_X 113.6f
+#define FONT_NINJA_OBJECTIVE_MARKER_ORIGIN_X 87.0f
+#define FONT_NINJA_OBJECTIVE_MARKER_SCALE_X 1.1f
+#define FONT_NINJA_OBJECTIVE_PROSE_X 112.0f
 #define FONT_NINJA_OBJECTIVE_INDEX_Y_OFFSET 0.8f
-#define FONT_NINJA_OBJECTIVE_MARKER_Y_OFFSET -1.6f
+#define FONT_NINJA_OBJECTIVE_MARKER_Y_OFFSET -2.4f
 #define FONT_NINJA_OBJECTIVE_PROSE_Y_OFFSET 0.8f
 #define FONT_NINJA_OBJECTIVE_Y_OFFSET -9.6f
-#define FONT_NINJA_OBJECTIVE_WIDTH 288u
+#define FONT_NINJA_OBJECTIVE_WRAP_WIDTH 320u
+#define FONT_NINJA_OBJECTIVE_WIDTH 320u
 #define FONT_NINJA_OBJECTIVE_HEIGHT 32u
 #define FONT_NINJA_OBJECTIVE_LINE_LIMIT 2u
 /* Layout-only height reproduces donor line-count centering; glyphs stay native. */
@@ -22,18 +24,47 @@
 
 /* NUN5 arithmetic positions relative to the shared formula origin. */
 #define FONT_NINJA_FORMULA_Y_OFFSET 0.975f
+#define FONT_NINJA_EXPANDED_FORMULA_Y_OFFSET -1.2f
+#define FONT_NINJA_DYNAMIC_NUMBER_GLYPH_HEIGHT 30.0f
+#define FONT_NINJA_DYNAMIC_SYMBOL_GLYPH_HEIGHT 30.0f
+#define FONT_NINJA_TOTAL_ONLY_GLYPH_HEIGHT 28.0f
 #define FONT_NINJA_UNIT_X_OFFSET 176.0f
-#define FONT_NINJA_UNIT_Y_OFFSET -6.0f
-#define FONT_NINJA_UNIT_SCALE_X 0.62f
+#define FONT_NINJA_UNIT_Y_OFFSET -4.0f
+#define FONT_NINJA_UNIT_SCALE_X 0.84f
+#define FONT_NINJA_UNIT_GLYPH_HEIGHT 22.0f
 #define FONT_NINJA_UNIT_WIDTH 52u
 #define FONT_NINJA_UNIT_HEIGHT 32u
-#define FONT_NINJA_EQUALS_X_OFFSET 227.0f
-#define FONT_NINJA_TOTAL_X_OFFSET 263.4f
-#define FONT_NINJA_TOTAL_WIDTH 64u
-#define FONT_NINJA_EMPTY_X_OFFSET 256.075f
+#define FONT_NINJA_UNIT_LINE_LIMIT 2u
+#define FONT_NINJA_UNIT_LINE_ADVANCE 16.6f
+#define FONT_NINJA_EQUALS_X_OFFSET 226.9f
+#define FONT_NINJA_EQUALS_Y_OFFSET 0.0f
+#define FONT_NINJA_EQUALS_SCALE_X 0.96f
+/* NUN5 right-aligns totals at its 256 + 64 box edge. */
+#define FONT_NINJA_TOTAL_RIGHT_EDGE_X_OFFSET 314.2f
+/* NA2's Jutsu draw adds four local units between adjacent glyphs. */
+#define FONT_NINJA_TOTAL_INTER_GLYPH_ADVANCE 4.0f
+#define FONT_NINJA_EMPTY_X_OFFSET 256.0f
+#define FONT_NINJA_EMPTY_Y_OFFSET -1.0f
 #define FONT_NINJA_EMPTY_WIDTH 96u
-#define FONT_NINJA_EMPTY_SCALE_X 0.97f
+#define FONT_NINJA_EMPTY_SCALE_X 1.02f
+#define FONT_NINJA_EMPTY_GLYPH_HEIGHT 30.0f
 #define FONT_NINJA_SINGLE_LINE_HEIGHT 20.0f
+
+/* NUN5 dynamic bonus/detail boxes relative to the native row origin. */
+#define FONT_NINJA_BONUS_LABEL_X_OFFSET 60.0f
+/* Convert NUN5's Y=-8 box to the retained NA2 BODY raster phase. */
+#define FONT_NINJA_BONUS_LABEL_BOX_Y_OFFSET -10.8f
+#define FONT_NINJA_BONUS_LABEL_WIDTH 288u
+#define FONT_NINJA_BONUS_LABEL_HEIGHT 32u
+#define FONT_NINJA_BONUS_LABEL_LINE_LIMIT 2u
+#define FONT_NINJA_BONUS_LABEL_LAYOUT_LINE_HEIGHT 12.8f
+#define FONT_NINJA_BONUS_TOTAL_X_OFFSET 226.0f
+#define FONT_NINJA_BONUS_TOTAL_Y_OFFSET 30.0f
+#define FONT_NINJA_BONUS_TOTAL_WIDTH 96u
+#define FONT_NINJA_BONUS_TOTAL_HEIGHT 20u
+#define FONT_NINJA_BONUS_TOTAL_GLYPH_HEIGHT 28.0f
+/* NA2's BODY draw adds two local units between adjacent ASCII digits. */
+#define FONT_NINJA_BONUS_TOTAL_INTER_GLYPH_ADVANCE 2u
 
 /* Fixed NA2 Ninja Song renderer data contracts; do not tune. */
 #define FONT_NINJA_MULTIPLY_POINTER_ADDRESS 0x00899A90u
@@ -42,8 +73,13 @@
 #define FONT_NINJA_MARKER_POINTER_ADDRESS 0x00899A9Cu
 #define FONT_NINJA_INDEX_TABLE_ADDRESS 0x008993E0u
 #define FONT_NINJA_UNIT_TABLE_ADDRESS 0x00899AE0u
+#define FONT_NINJA_UNIT_TABLE_COUNT 6u
+#define FONT_NINJA_TIMER_DESCRIPTOR_UNIT_INDEX 2u
+#define FONT_NINJA_TIMER_TEXT_UNIT_INDEX 3u
+#define FONT_NINJA_PERCENT_DESCRIPTOR_UNIT_INDEX 4u
 #define FONT_NINJA_MULTIPLIER_TABLE_ADDRESS 0x008C3CB0u
 #define FONT_NINJA_RENDERER_FLAGS_OFFSET 0x70u
+#define FONT_NINJA_SPRINTF_ADDRESS 0x0017BCA0u
 
 /* === Shared temporary body storage: internal capacity === */
 
@@ -52,6 +88,8 @@
 
 #define FONT_V2_SECTION(name) \
     __attribute__((section(name), noinline))
+
+typedef int (*FontV2NinjaSprintf)(u8 *destination, const u8 *format, ...);
 
 static FONT_V2_SECTION(".text.font_v2_ninja_text_callback")
 int font_v2_ninja_text_callback(
@@ -64,10 +102,62 @@ int font_v2_ninja_text_callback(
         (FontV2NativeSetPosition)FONT_SET_POSITION_ADDRESS;
     FontV2NativeTextDraw draw =
         (FontV2NativeTextDraw)FONT_JUTSU_DRAW_ADDRESS;
+    u8 *cursor = (u8 *)text;
+    u8 *line_start = cursor;
+    u32 line_index = 0u;
 
     (void)unused;
-    set_position(session->draw_x, session->draw_y, renderer_address);
-    draw(renderer_address, (const u8 *)text);
+    for (;;) {
+        if (!*cursor || *cursor == (u8)'\n') {
+            u8 saved = *cursor;
+            float line_x = session->draw_x;
+
+            *cursor = 0u;
+            if (session->horizontal_alignment != FONT_V2_ALIGN_START) {
+                u32 line_width;
+                u32 line_count;
+
+                if (
+                    font_v2_measure(
+                        line_start,
+                        0u,
+                        &line_width,
+                        &line_count
+                    ) != 0
+                ) {
+                    *cursor = saved;
+                    return -1;
+                }
+                if (session->horizontal_alignment == FONT_V2_ALIGN_CENTER) {
+                    line_x = session->box_x +
+                        ((float)(s32)session->box_width -
+                            (float)(s32)line_width * session->scale_x) * 0.5f;
+                } else if (
+                    session->horizontal_alignment == FONT_V2_ALIGN_END
+                ) {
+                    line_x = session->box_x +
+                        (float)(s32)session->box_width -
+                        (float)(s32)line_width * session->scale_x;
+                }
+            }
+            set_position(
+                line_x,
+                session->draw_y +
+                    (float)(s32)line_index * session->line_height,
+                renderer_address
+            );
+            draw(renderer_address, line_start);
+            if (!saved) {
+                break;
+            }
+            *cursor = saved;
+            line_index += 1u;
+            cursor += 1;
+            line_start = cursor;
+        } else {
+            cursor += 1;
+        }
+    }
     return 0;
 }
 static FONT_V2_SECTION(".text.font_v2_ninja_text_common")
@@ -79,7 +169,8 @@ int font_v2_ninja_text_common(
     u32 box_width,
     u32 box_height,
     u32 horizontal_alignment,
-    float fixed_scale_x
+    float fixed_scale_x,
+    float glyph_height
 ) {
     volatile float *renderer = (volatile float *)renderer_address;
     FontV2Session session;
@@ -104,6 +195,10 @@ int font_v2_ninja_text_common(
     } else {
         session.flags = FONT_V2_FLAG_SHRINK_X;
     }
+    if (glyph_height > 0.0f) {
+        session.flags |= FONT_V2_FLAG_GLYPH_HEIGHT;
+        session.glyph_height = glyph_height;
+    }
     session.line_limit = 1u;
     session.line_height = FONT_NINJA_SINGLE_LINE_HEIGHT;
     session.callback = (u32)font_v2_ninja_text_callback;
@@ -127,7 +222,8 @@ int font_v2_ninja_compact_adapter(
         512u,
         (u32)FONT_NINJA_SINGLE_LINE_HEIGHT,
         FONT_V2_ALIGN_START,
-        0.0f
+        0.0f,
+        FONT_NINJA_DYNAMIC_NUMBER_GLYPH_HEIGHT
     );
 }
 
@@ -136,19 +232,58 @@ int font_v2_ninja_unit_adapter(
     u32 renderer_address,
     const u8 *text
 ) {
+    volatile float *renderer = (volatile float *)renderer_address;
+    FontV2BodyFrame frame;
+    u32 index = 0u;
+    u32 split = 0u;
+
     if (!text || !*text) {
         return 0;
     }
-    return font_v2_ninja_text_common(
-        renderer_address,
-        text,
-        0.0f,
-        0.0f,
-        FONT_NINJA_UNIT_WIDTH,
-        FONT_NINJA_UNIT_HEIGHT,
-        FONT_V2_ALIGN_START,
-        FONT_NINJA_UNIT_SCALE_X
-    );
+    while (index < FONT_BODY_BUFFER_SIZE - 1u && text[index]) {
+        frame.buffer[index] = text[index];
+        if (!split && frame.buffer[index] == (u8)' ') {
+            frame.buffer[index] = (u8)'\n';
+            split = 1u;
+        }
+        index += 1u;
+    }
+    frame.buffer[index] = 0u;
+    if (
+        font_v2_measure(
+            frame.buffer,
+            FONT_V2_FLAG_NEWLINE_BYTES,
+            &frame.session.measured_width,
+            &frame.session.line_count
+        ) != 0
+    ) {
+        return -1;
+    }
+
+    frame.session.text = frame.buffer;
+    frame.session.box_x =
+        renderer[FONT_RENDERER_POSITION_X_OFFSET / sizeof(float)];
+    frame.session.box_y =
+        renderer[FONT_RENDERER_POSITION_Y_OFFSET / sizeof(float)];
+    frame.session.box_width = FONT_NINJA_UNIT_WIDTH;
+    frame.session.box_height = FONT_NINJA_UNIT_HEIGHT;
+    frame.session.horizontal_alignment = FONT_V2_ALIGN_START;
+    frame.session.vertical_alignment = FONT_V2_ALIGN_CENTER;
+    frame.session.flags =
+        FONT_V2_FLAG_FIXED_SCALE_X |
+        FONT_V2_FLAG_GLYPH_HEIGHT |
+        FONT_V2_FLAG_NEWLINE_BYTES |
+        FONT_V2_FLAG_PREMEASURED;
+    frame.session.line_limit = FONT_NINJA_UNIT_LINE_LIMIT;
+    frame.session.line_height = FONT_NINJA_UNIT_LINE_ADVANCE;
+    frame.session.scale_x = FONT_NINJA_UNIT_SCALE_X;
+    frame.session.glyph_height = FONT_NINJA_UNIT_GLYPH_HEIGHT;
+    frame.session.callback = (u32)font_v2_ninja_text_callback;
+    frame.session.callback_arg0 = renderer_address;
+    frame.session.callback_arg1 = (u32)frame.buffer;
+    frame.session.callback_arg2 = 0u;
+    frame.session.callback_arg3 = (u32)&frame.session;
+    return font_v2_adapter_call(&frame.session);
 }
 
 static FONT_V2_SECTION(".text.font_v2_ninja_equals_adapter")
@@ -164,24 +299,58 @@ int font_v2_ninja_equals_adapter(
         32u,
         (u32)FONT_NINJA_SINGLE_LINE_HEIGHT,
         FONT_V2_ALIGN_START,
-        0.0f
+        FONT_NINJA_EQUALS_SCALE_X,
+        FONT_NINJA_DYNAMIC_SYMBOL_GLYPH_HEIGHT
     );
 }
 
 static FONT_V2_SECTION(".text.font_v2_ninja_total_adapter")
 int font_v2_ninja_total_adapter(
     u32 renderer_address,
-    const u8 *text
+    const u8 *text,
+    float glyph_height
 ) {
+    const u8 *visible = text;
+    u32 measured_width;
+    u32 line_count;
+    u32 visible_count = 0u;
+    float rendered_width;
+
+    while (visible && *visible == (u8)' ') {
+        visible += 1;
+    }
+    if (!visible || !*visible) {
+        return 0;
+    }
+    if (
+        font_v2_measure(
+            visible,
+            0u,
+            &measured_width,
+            &line_count
+        ) != 0
+    ) {
+        return -1;
+    }
+    while (visible[visible_count]) {
+        visible_count += 1u;
+    }
+    rendered_width = (float)(s32)measured_width;
+    if (visible_count > 1u) {
+        rendered_width +=
+            (float)(s32)(visible_count - 1u) *
+                FONT_NINJA_TOTAL_INTER_GLYPH_ADVANCE;
+    }
     return font_v2_ninja_text_common(
         renderer_address,
-        text,
+        visible,
+        -rendered_width,
         0.0f,
-        0.0f,
-        FONT_NINJA_TOTAL_WIDTH,
+        512u,
         (u32)FONT_NINJA_SINGLE_LINE_HEIGHT,
-        FONT_V2_ALIGN_CENTER,
-        0.0f
+        FONT_V2_ALIGN_START,
+        0.0f,
+        glyph_height
     );
 }
 
@@ -194,11 +363,12 @@ int font_v2_ninja_empty_adapter(
         renderer_address,
         text,
         0.0f,
-        0.0f,
+        FONT_NINJA_EMPTY_Y_OFFSET,
         FONT_NINJA_EMPTY_WIDTH,
         (u32)FONT_NINJA_SINGLE_LINE_HEIGHT,
         FONT_V2_ALIGN_CENTER,
-        FONT_NINJA_EMPTY_SCALE_X
+        FONT_NINJA_EMPTY_SCALE_X,
+        FONT_NINJA_EMPTY_GLYPH_HEIGHT
     );
 }
 
@@ -217,6 +387,10 @@ void font_v2_ninja_arithmetic_template(
     volatile u8 *renderer_flags;
     s32 *row;
     u32 descriptor;
+    u32 expanded;
+    u32 unit_index;
+    const u8 *const *unit_table =
+        (const u8 *const *)FONT_NINJA_UNIT_TABLE_ADDRESS;
     const u8 *unit_text;
     u8 number[32];
 
@@ -235,6 +409,9 @@ void font_v2_ninja_arithmetic_template(
     set_color(renderer_address, 0x00404070u, 1u);
 
     if (row[2] == 0) {
+        *renderer_flags =
+            (*renderer_flags & (u8)0xF7u) |
+            (u8)FONT_RENDERER_ASCII_MODE_FLAG;
         set_position(
             native_x + FONT_NINJA_EMPTY_X_OFFSET,
             native_y,
@@ -247,8 +424,12 @@ void font_v2_ninja_arithmetic_template(
         return;
     }
 
+    expanded = row_index != 10 && row_index != 13 && row_index != 9;
+    if (expanded) {
+        native_y += FONT_NINJA_EXPANDED_FORMULA_Y_OFFSET;
+    }
     *renderer_flags &= (u8)0xF7u;
-    if (row_index != 10 && row_index != 13 && row_index != 9) {
+    if (expanded) {
         font_ninja_song_ascii_number(
             0u,
             (s32)*(s16 *)descriptor,
@@ -286,19 +467,31 @@ void font_v2_ninja_arithmetic_template(
         font_v2_ninja_compact_adapter(renderer_address, number);
         set_color(renderer_address, 0x00404070u, 1u);
 
-        unit_text = ((const u8 **)FONT_NINJA_UNIT_TABLE_ADDRESS)[
-            (u32)*(s16 *)(descriptor + 2u)
-        ];
+        unit_index = (u32)*(unsigned short *)(descriptor + 2u);
+        if (unit_index == FONT_NINJA_TIMER_DESCRIPTOR_UNIT_INDEX) {
+            unit_text = unit_table[FONT_NINJA_TIMER_TEXT_UNIT_INDEX];
+        } else if (
+            unit_index == FONT_NINJA_PERCENT_DESCRIPTOR_UNIT_INDEX ||
+            unit_index >= FONT_NINJA_UNIT_TABLE_COUNT
+        ) {
+            unit_text = 0;
+        } else {
+            unit_text = unit_table[unit_index];
+        }
         set_position(
             native_x + FONT_NINJA_UNIT_X_OFFSET,
             native_y + FONT_NINJA_UNIT_Y_OFFSET,
             renderer_address
         );
+        *renderer_flags =
+            (*renderer_flags & (u8)0xF7u) |
+            (u8)FONT_RENDERER_ASCII_MODE_FLAG;
         font_v2_ninja_unit_adapter(renderer_address, unit_text);
+        *renderer_flags &= (u8)0xF7u;
 
         set_position(
             native_x + FONT_NINJA_EQUALS_X_OFFSET,
-            native_y,
+            native_y + FONT_NINJA_EQUALS_Y_OFFSET,
             renderer_address
         );
         font_v2_ninja_equals_adapter(
@@ -309,11 +502,17 @@ void font_v2_ninja_arithmetic_template(
 
     font_ninja_song_ascii_number(0u, row[2], 5, number, 0);
     set_position(
-        native_x + FONT_NINJA_TOTAL_X_OFFSET,
+        native_x + FONT_NINJA_TOTAL_RIGHT_EDGE_X_OFFSET,
         native_y,
         renderer_address
     );
-    font_v2_ninja_total_adapter(renderer_address, number);
+    font_v2_ninja_total_adapter(
+        renderer_address,
+        number,
+        expanded
+            ? FONT_NINJA_DYNAMIC_NUMBER_GLYPH_HEIGHT
+            : FONT_NINJA_TOTAL_ONLY_GLYPH_HEIGHT
+    );
     *renderer_flags = (*renderer_flags & (u8)0xF7u) | (u8)8u;
 }
 
@@ -377,7 +576,7 @@ int font_v2_ninja_objective_draw(
     if (
         font_v2_wrap_native(
             frame.buffer,
-            FONT_NINJA_OBJECTIVE_WIDTH,
+            FONT_NINJA_OBJECTIVE_WRAP_WIDTH,
             FONT_NINJA_OBJECTIVE_LINE_LIMIT,
             &frame.session.measured_width,
             &frame.session.line_count
@@ -406,6 +605,176 @@ int font_v2_ninja_objective_draw(
     return font_v2_adapter_call(&frame.session);
 }
 
+static FONT_V2_SECTION(".text.font_v2_ninja_bonus_label_draw")
+int font_v2_ninja_bonus_label_draw(
+    const u8 *text,
+    u32 color,
+    float native_x,
+    float native_y
+) {
+    FontV2BodyFrame frame;
+    u32 index = 0u;
+
+    if (!text) {
+        return -1;
+    }
+    while (index < FONT_BODY_BUFFER_SIZE - 1u && text[index]) {
+        frame.buffer[index] = text[index];
+        index += 1u;
+    }
+    frame.buffer[index] = 0u;
+    if (
+        font_v2_wrap_native(
+            frame.buffer,
+            FONT_NINJA_BONUS_LABEL_WIDTH,
+            FONT_NINJA_BONUS_LABEL_LINE_LIMIT,
+            &frame.session.measured_width,
+            &frame.session.line_count
+        ) != 0
+    ) {
+        return -1;
+    }
+
+    frame.session.text = frame.buffer;
+    frame.session.box_x = native_x + FONT_NINJA_BONUS_LABEL_X_OFFSET;
+    frame.session.box_y =
+        native_y + FONT_NINJA_BONUS_LABEL_BOX_Y_OFFSET;
+    frame.session.box_width = FONT_NINJA_BONUS_LABEL_WIDTH;
+    frame.session.box_height = FONT_NINJA_BONUS_LABEL_HEIGHT;
+    frame.session.horizontal_alignment = FONT_V2_ALIGN_START;
+    frame.session.vertical_alignment = FONT_V2_ALIGN_CENTER;
+    frame.session.flags =
+        FONT_V2_FLAG_NEWLINE_BYTES |
+        FONT_V2_FLAG_PREMEASURED;
+    frame.session.line_limit = FONT_NINJA_BONUS_LABEL_LINE_LIMIT;
+    frame.session.line_height = FONT_NINJA_BONUS_LABEL_LAYOUT_LINE_HEIGHT;
+    frame.session.callback = (u32)font_v2_ninja_objective_callback;
+    frame.session.callback_arg0 = (u32)frame.buffer;
+    frame.session.callback_arg1 = color;
+    frame.session.callback_arg2 = 0u;
+    frame.session.callback_arg3 = (u32)&frame.session;
+    return font_v2_adapter_call(&frame.session);
+}
+
+static FONT_V2_SECTION(".text.font_v2_ninja_bonus_total_draw")
+int font_v2_ninja_bonus_total_draw(
+    const u8 *text,
+    u32 color,
+    float native_x,
+    float native_y
+) {
+    FontV2Session session;
+    u32 visible_count = 0u;
+
+    while (text && *text == (u8)' ') {
+        text += 1;
+    }
+    if (!text || !*text) {
+        return 0;
+    }
+    if (
+        font_v2_measure(
+            text,
+            0u,
+            &session.measured_width,
+            &session.line_count
+        ) != 0
+    ) {
+        return -1;
+    }
+    while (text[visible_count]) {
+        visible_count += 1u;
+    }
+    if (visible_count > 1u) {
+        session.measured_width +=
+            (visible_count - 1u) *
+                FONT_NINJA_BONUS_TOTAL_INTER_GLYPH_ADVANCE;
+    }
+
+    session.text = text;
+    session.box_x = native_x + FONT_NINJA_BONUS_TOTAL_X_OFFSET;
+    session.box_y = native_y + FONT_NINJA_BONUS_TOTAL_Y_OFFSET;
+    session.box_width = FONT_NINJA_BONUS_TOTAL_WIDTH;
+    session.box_height = FONT_NINJA_BONUS_TOTAL_HEIGHT;
+    session.horizontal_alignment = FONT_V2_ALIGN_END;
+    session.vertical_alignment = FONT_V2_ALIGN_CENTER;
+    session.flags =
+        FONT_V2_FLAG_GLYPH_HEIGHT |
+        FONT_V2_FLAG_SHRINK_X |
+        FONT_V2_FLAG_PREMEASURED;
+    session.line_limit = 1u;
+    session.line_height = (float)FONT_NINJA_BONUS_TOTAL_HEIGHT;
+    session.glyph_height = FONT_NINJA_BONUS_TOTAL_GLYPH_HEIGHT;
+    session.callback = (u32)font_v2_ninja_objective_callback;
+    session.callback_arg0 = (u32)text;
+    session.callback_arg1 = color;
+    session.callback_arg2 = 0u;
+    session.callback_arg3 = (u32)&session;
+    return font_v2_adapter_call(&session);
+}
+
+FONT_V2_SECTION(".text.font_v2_ninja_bonus_template")
+void font_v2_ninja_bonus_template(
+    float native_x,
+    float native_y,
+    u32 row_set,
+    s32 row_index
+) {
+    FontV2NinjaSprintf format =
+        (FontV2NinjaSprintf)FONT_NINJA_SPRINTF_ADDRESS;
+    u32 renderer_address = *(volatile u32 *)FONT_RENDERER_POINTER_ADDRESS;
+    volatile u8 *renderer_flags;
+    s32 *row;
+    u32 descriptor;
+    const u8 *descriptor_text;
+    u32 color;
+    u8 number[32];
+    u8 label[FONT_BODY_BUFFER_SIZE];
+
+    if (!renderer_address || !row_set) {
+        return;
+    }
+    renderer_flags = (volatile u8 *)(
+        renderer_address + FONT_NINJA_RENDERER_FLAGS_OFFSET
+    );
+    row = (s32 *)(
+        *(u32 *)(row_set + 4u) + (u32)row_index * 12u
+    );
+    descriptor = (u32)row[0];
+    descriptor_text = *(const u8 **)(descriptor + 8u);
+    color = *(u32 *)(row_set + 0x40u);
+    if (!descriptor_text) {
+        return;
+    }
+
+    if (
+        row_index == 17 || row_index == 18 || row_index == 22 ||
+        row_index == 25 || row_index == 26 || row_index == 27
+    ) {
+        font_ninja_song_ascii_number(0u, row[1], 4, number, 1);
+        format(label, descriptor_text, number);
+    } else {
+        format(label, descriptor_text);
+    }
+
+    font_v2_ninja_bonus_label_draw(
+        label,
+        color,
+        native_x,
+        native_y
+    );
+    *renderer_flags &= (u8)0xF7u;
+
+    font_ninja_song_ascii_number(0u, row[2], 4, number, 0);
+    font_v2_ninja_bonus_total_draw(
+        number,
+        color,
+        native_x,
+        native_y
+    );
+    *renderer_flags = (*renderer_flags & (u8)0xF7u) | (u8)8u;
+}
+
 FONT_V2_SECTION(".text.font_v2_ninja_objective_row_adapter")
 void font_v2_ninja_objective_row_adapter(
     u32 page,
@@ -420,6 +789,7 @@ void font_v2_ninja_objective_row_adapter(
     FontV2NativeTextDraw draw =
         (FontV2NativeTextDraw)FONT_JUTSU_DRAW_ADDRESS;
     u32 renderer_address = *(volatile u32 *)FONT_RENDERER_POINTER_ADDRESS;
+    volatile u8 *renderer_flags;
     const u8 *const *index_table =
         (const u8 *const *)FONT_NINJA_INDEX_TABLE_ADDRESS;
     const u8 *marker = *(const u8 **)FONT_NINJA_MARKER_POINTER_ADDRESS;
@@ -432,6 +802,15 @@ void font_v2_ninja_objective_row_adapter(
     u32 index_lines;
 
     (void)page;
+    if (!renderer_address) {
+        return;
+    }
+    renderer_flags = (volatile u8 *)(
+        renderer_address + FONT_NINJA_RENDERER_FLAGS_OFFSET
+    );
+    *renderer_flags =
+        (*renderer_flags & (u8)0xF7u) |
+        (u8)FONT_RENDERER_ASCII_MODE_FLAG;
     row_y.u = row_y_bits;
     index_text = index_table[display_index];
     if (font_v2_measure(index_text, 0u, &index_width, &index_lines)) {
@@ -463,7 +842,17 @@ void font_v2_ninja_objective_row_adapter(
         row_y.f + FONT_NINJA_OBJECTIVE_MARKER_Y_OFFSET,
         renderer_address
     );
-    draw(renderer_address, marker);
+    font_v2_ninja_text_common(
+        renderer_address,
+        marker,
+        0.0f,
+        0.0f,
+        32u,
+        (u32)FONT_NINJA_SINGLE_LINE_HEIGHT,
+        FONT_V2_ALIGN_START,
+        FONT_NINJA_OBJECTIVE_MARKER_SCALE_X,
+        0.0f
+    );
 
     font_v2_ninja_objective_draw(
         prose,

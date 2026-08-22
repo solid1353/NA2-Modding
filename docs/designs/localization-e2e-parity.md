@@ -1,19 +1,18 @@
 # Localization E2E Parity
 
-Status: Jutsus and Menus complete; Practice and Ninja Song pending
+Status: Jutsus, Menus, and Ninja Song complete; Practice pending
 
 ## Scope
 
 This document records the visual differences still to be resolved between NUN5
 and NA228 in these E2E suites:
 
-- `ninja_song`
 - `practice`
 
 The original review covered all 7 published diff-grid pages across Menus,
-Practice, and Ninja Song together with their pair and blend grids. Menus is
-complete; its durable findings are recorded in the canonical localization
-documentation. Practice and Ninja Song remain pending here.
+Practice, and Ninja Song together with their pair and blend grids. Jutsus,
+Menus, and Ninja Song are complete; their durable findings are recorded in the
+canonical localization documentation. Practice remains pending here.
 
 ## Accepted differences and review exclusions
 
@@ -25,9 +24,7 @@ The following differences are intentional and are not defects:
   animation.
 
 Vertical pixel-edge differences attributable only to the accepted font height
-are therefore excluded. Ninja Song's animated patterned panel and title-logo
-phase are also excluded unless later evidence establishes a static placement
-error.
+are therefore excluded.
 
 ## Cross-suite finding
 
@@ -73,29 +70,3 @@ they do not support one global Practice offset.
 - No UI-texture placement mismatch was found.
 - Fighter-position differences in the pair and blend grids are replay timing,
   not Practice UI defects.
-
-## Ninja Song
-
-### Confirmed content differences
-
-- Objective 6 is missing NUN5's `timer` and `counts` counter labels. NUN5 places
-  those labels between the second operand and the equals sign; NA228 leaves the
-  area empty.
-- Objective 9 has an extra percent sign. NA228 displays
-  `1 * 100 % = 100`, while NUN5 displays `1 * 100 = 100`.
-
-### Confirmed layout differences
-
-- Objective text begins approximately two pixels to the right of NUN5.
-- Text width or advances produce different line breaks:
-  - objective 5 breaks after `Extra Hit` in NUN5 but after `Extra` in NA228;
-  - objective 14 is one line in NUN5 and two lines in NA228;
-  - objective 16 is one line in NUN5 and two lines in NA228.
-- The extra wrapped lines alter the vertical composition and leave three
-  captured scroll positions visibly out of parity with NUN5.
-
-### Confirmed matches
-
-- Apart from the missing counter labels and extra percent sign, the reviewed
-  objective wording matches NUN5.
-- No static UI-texture placement mismatch has been established.

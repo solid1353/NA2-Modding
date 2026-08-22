@@ -70,25 +70,25 @@ T2203	1	Battle pause menu > Special Controls selector	Ｏ　Ｎ	ON			seen:ss1-sp
 T2204	1	Battle pause menu > Special Controls selector	ＯＦＦ	OFF			seen:ss1-special-controls-draw-telemetry-2026-07-27	NA2_SLPS@0x505AF8	NUN5_SLES@0x513E6C	slot	8	""	""	""	""
 T68	1	Battle pause menu > return destination	ゲームモード<r選択|せんたく>に<r戻|もど>る	Back to Game Mode Screen			e2e:menus	NA2_BTL@0x208BB0	NUN5_TEXTENG@0x900	slot	48				
 T69	1	Battle pause menu > return destination	キャラクター<r選択|せんたく>に<r戻|もど>る	Back to Character Select			e2e:menus	NA2_BTL@0x208BE0	NUN5_TEXTENG@0x920	slot	48				
-T70	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r忍術|にんじゅつ>にて<r攻|せ>めるべし	Attack the enemy with Ninjutsu			seen:savestates-091-099	NA2_BTL@0x1E5550	NUN5_TEXTENG@0x10120	slot	64				
-T71	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r奥義|おうぎ>にて<r攻|せ>めるべし	Attack the enemy with Ultimate Jutsu			seen:savestates-091-099	NA2_BTL@0x1E5590	NUN5_TEXTENG@0x10140	slot	48				
-T72	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r連係攻撃|れんけいこうげき>にて<r攻|せ>めるべし	Attack the enemy with Linked attacks			seen:savestates-091-099	NA2_BTL@0x1E55C0	NUN5_TEXTENG@0x10170	slot	64				
-T73	1	Battle Results > Ninja Song objective or bonus	<r変|か>わり<r身|み>にて<r敵|てき>を<r欺|あざむ>くべし	Deceive the enemy using Substitution Jutsu			seen:savestates-091-099	NA2_BTL@0x1E5600	NUN5_TEXTENG@0x101A0	slot	64				
-T74	1	Battle Results > Ninja Song objective or bonus	<r追|お>い<r討|う>ちにて<r敵|てき>を<r追撃|ついげき>すべし	Pursue the enemy with Extra Hit attacks 			seen:savestates-091-099	NA2_BTL@0x1E5640	NUN5_TEXTENG@0x101D0	slot	64				
-T75	1	Battle Results > Ninja Song objective or bonus	<r連続|れんぞく><r攻撃|こうげき>にて<r敵|てき>を<r圧倒|あっとう>するべし	Overwhelm the enemy with consecutive attacks			seen:savestates-091-099	NA2_BTL@0x1E5680	NUN5_TEXTENG@0x10200	slot	80				
-T76	1	Battle Results > Ninja Song objective or bonus	<r特殊忍具|とくしゅにんぐ>を<r用|もち>いて<r攻|せ>めるべし	Attack with Special Ninja Tool			seen:savestates-091-099	NA2_BTL@0x1E56D0	NUN5_TEXTENG@0x10230	slot	64				
-T77	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r素早|すばや>く<r排除|はいじょ>すべし	Defeat the enemy quickly			seen:savestates-091-099	NA2_BTL@0x1E5710	NUN5_TEXTENG@0x10250	slot	64				
-T78	1	Battle Results > Ninja Song objective or bonus	<r己|おのれ>の<r体力|たいりょく>は<r温存|おんぞん>すべし	Conserve your health			seen:savestates-091-099	NA2_BTL@0x1E5750	NUN5_TEXTENG@0x10270	slot	64				
-T79	1	Battle Results > Ninja Song objective or bonus	<r強者|つわもの>を<r打|う>ち<r破|やぶ>るべし	Defeat a powerful enemy			seen:savestates-091-099	NA2_BTL@0x1E5790	NUN5_TEXTENG@0x10290	slot	48				
-T80	1	Battle Results > Ninja Song objective or bonus	<r秘|ひ>めたる<r力|ちから>を<r解|と>き<r放|はな>つべし	Release your hidden power			seen:savestates-091-099	NA2_BTL@0x1E57C0	NUN5_TEXTENG@0x102B0	slot	64				
-T81	1	Battle Results > Ninja Song objective or bonus	<r挑発|ちょうはつ>を<r以|も>って<r敵|てき>を<r刺激|しげき>すべし	Taunt the enemy into action			seen:savestates-091-099	NA2_BTL@0x1E5800	NUN5_TEXTENG@0x102D0	slot	80				
-T82	1	Battle Results > Ninja Song objective or bonus	<r壊|こわ>れ<r物|もの>を<r破壊|はかい>すべし	Destroy breakable objects			seen:savestates-091-099	NA2_BTL@0x1E5850	NUN5_TEXTENG@0x102F0	slot	48				
+T70	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r忍術|にんじゅつ>にて<r攻|せ>めるべし	Attack the enemy with Ninjutsu			e2e:ninja_song	NA2_BTL@0x1E5550	NUN5_TEXTENG@0x10120	slot	64				
+T71	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r奥義|おうぎ>にて<r攻|せ>めるべし	Attack the enemy with Ultimate Jutsu			e2e:ninja_song	NA2_BTL@0x1E5590	NUN5_TEXTENG@0x10140	slot	48				
+T72	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r連係攻撃|れんけいこうげき>にて<r攻|せ>めるべし	Attack the enemy with Linked attacks			e2e:ninja_song	NA2_BTL@0x1E55C0	NUN5_TEXTENG@0x10170	slot	64				
+T73	1	Battle Results > Ninja Song objective or bonus	<r変|か>わり<r身|み>にて<r敵|てき>を<r欺|あざむ>くべし	Deceive the enemy using Substitution Jutsu			e2e:ninja_song	NA2_BTL@0x1E5600	NUN5_TEXTENG@0x101A0	slot	64				
+T74	1	Battle Results > Ninja Song objective or bonus	<r追|お>い<r討|う>ちにて<r敵|てき>を<r追撃|ついげき>すべし	Pursue the enemy with Extra Hit attacks 			e2e:ninja_song	NA2_BTL@0x1E5640	NUN5_TEXTENG@0x101D0	slot	64				
+T75	1	Battle Results > Ninja Song objective or bonus	<r連続|れんぞく><r攻撃|こうげき>にて<r敵|てき>を<r圧倒|あっとう>するべし	Overwhelm the enemy with consecutive attacks			e2e:ninja_song	NA2_BTL@0x1E5680	NUN5_TEXTENG@0x10200	slot	80				
+T76	1	Battle Results > Ninja Song objective or bonus	<r特殊忍具|とくしゅにんぐ>を<r用|もち>いて<r攻|せ>めるべし	Attack with Special Ninja Tool			e2e:ninja_song	NA2_BTL@0x1E56D0	NUN5_TEXTENG@0x10230	slot	64				
+T77	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>は<r素早|すばや>く<r排除|はいじょ>すべし	Defeat the enemy quickly			e2e:ninja_song	NA2_BTL@0x1E5710	NUN5_TEXTENG@0x10250	slot	64				
+T78	1	Battle Results > Ninja Song objective or bonus	<r己|おのれ>の<r体力|たいりょく>は<r温存|おんぞん>すべし	Conserve your health			e2e:ninja_song	NA2_BTL@0x1E5750	NUN5_TEXTENG@0x10270	slot	64				
+T79	1	Battle Results > Ninja Song objective or bonus	<r強者|つわもの>を<r打|う>ち<r破|やぶ>るべし	Defeat a powerful enemy			e2e:ninja_song	NA2_BTL@0x1E5790	NUN5_TEXTENG@0x10290	slot	48				
+T80	1	Battle Results > Ninja Song objective or bonus	<r秘|ひ>めたる<r力|ちから>を<r解|と>き<r放|はな>つべし	Release your hidden power			e2e:ninja_song	NA2_BTL@0x1E57C0	NUN5_TEXTENG@0x102B0	slot	64				
+T81	1	Battle Results > Ninja Song objective or bonus	<r挑発|ちょうはつ>を<r以|も>って<r敵|てき>を<r刺激|しげき>すべし	Taunt the enemy into action			e2e:ninja_song	NA2_BTL@0x1E5800	NUN5_TEXTENG@0x102D0	slot	80				
+T82	1	Battle Results > Ninja Song objective or bonus	<r壊|こわ>れ<r物|もの>を<r破壊|はかい>すべし	Destroy breakable objects			e2e:ninja_song	NA2_BTL@0x1E5850	NUN5_TEXTENG@0x102F0	slot	48				
 T83	1	Battle Results > Ninja Song objective or bonus	<r特殊|とくしゅ><r条件|じょうけん>を<r完遂|かんすい>すべし	Fulfill special objectives			seen:savestates-091-099	NA2_BTL@0x1E5880	NUN5_TEXTENG@0x10310	slot	64				
-T84	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>の<r奥義|おうぎ>を<r打|う>ち<r破|やぶ>るべし	Defeat the enemy's Ultimate Jutsu			seen:savestates-091-099	NA2_BTL@0x1E58C0	NUN5_TEXTENG@0x10330	slot	64				
-T85	1	Battle Results > Ninja Song objective or bonus	<r術|じゅつ>の<r競|せ>り<r合|あ>いにて<r勝利|しょうり>すべし	Win in a battle of Ninjutsu			seen:savestates-091-099	NA2_BTL@0x1E5900	NUN5_TEXTENG@0x10360	slot	64				
-T86	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>に<r残影|ざんえい>をもって<r挑|いど>むべし	Use Shadowblur against the enemy			seen:savestates-091-099	NA2_BTL@0x1E5940	NUN5_TEXTENG@0x10380	slot	64				
+T84	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>の<r奥義|おうぎ>を<r打|う>ち<r破|やぶ>るべし	Defeat the enemy's Ultimate Jutsu			e2e:ninja_song	NA2_BTL@0x1E58C0	NUN5_TEXTENG@0x10330	slot	64				
+T85	1	Battle Results > Ninja Song objective or bonus	<r術|じゅつ>の<r競|せ>り<r合|あ>いにて<r勝利|しょうり>すべし	Win in a battle of Ninjutsu			e2e:ninja_song	NA2_BTL@0x1E5900	NUN5_TEXTENG@0x10360	slot	64				
+T86	1	Battle Results > Ninja Song objective or bonus	<r敵|てき>に<r残影|ざんえい>をもって<r挑|いど>むべし	Use Shadowblur against the enemy			e2e:ninja_song	NA2_BTL@0x1E5940	NUN5_TEXTENG@0x10380	slot	64				
 T87	1	Battle Results > Ninja Song objective or bonus	コンボ<r数|すう>%sHitボーナス	%1 hit combo bonus			seen:savestates-091-099	NA2_BTL@0x1E5980	NUN5_TEXTENG@0x103B0	slot	32				
-T88	1	Battle Results > Ninja Song objective or bonus	<r所持|しょじ>アイテム%s<r個|こ>ボーナス	%1 items carried bonus			seen:savestates-091-099	NA2_BTL@0x1E59A0	NUN5_TEXTENG@0x103D0	slot	48				
+T88	1	Battle Results > Ninja Song objective or bonus	<r所持|しょじ>アイテム%s<r個|こ>ボーナス	%1 items carried bonus			e2e:ninja_song	NA2_BTL@0x1E59A0	NUN5_TEXTENG@0x103D0	slot	48				
 T89	1	Battle Results > Ninja Song objective or bonus	<r背景破壊|はいけいはかい>ボーナス	Environment destruction bonus			seen:savestates-091-099	NA2_BTL@0x1E59D0	NUN5_TEXTENG@0x103F0	slot	48				
 T90	1	Battle Results > Ninja Song objective or bonus	<r残影勝利|ざんえいしょうり>ボーナス	Shadowblur victory bonus			seen:savestates-091-099	NA2_BTL@0x1E5A00	NUN5_TEXTENG@0x10410	slot	48				
 T91	1	Battle Results > Ninja Song objective or bonus	<r奥義|おうぎ>ボーナス	Ultimate Jutsu bonus			seen:savestates-091-099	NA2_BTL@0x1E5A30	NUN5_TEXTENG@0x10430	slot	32				
@@ -97,32 +97,32 @@ T93	1	Battle Results > Ninja Song objective or bonus	キャラクター<r組|く
 T94	1	Battle Results > Ninja Song objective or bonus	<r特殊連係攻撃|とくしゅれんけいこうげき>%sHitボーナス	%1 hit special linked attack bonus			seen:savestates-091-099	NA2_BTL@0x1E5AF0	NUN5_TEXTENG@0x104C0	slot	64				
 T95	1	Battle Results > Ninja Song objective or bonus	<r連係忍術|れんけいにんじゅつ>%sHitボーナス	%1 hit linked Jutsu bonus			seen:savestates-091-099	NA2_BTL@0x1E5B30	NUN5_TEXTENG@0x104F0	slot	48				
 T96	1	Battle Results > Ninja Song objective or bonus	<r連係奥義|れんけいおうぎ>%sHitボーナス	%1 hit linked Ultimate Jutsu bonus			seen:savestates-091-099	NA2_BTL@0x1E5B60	NUN5_TEXTENG@0x10510	slot	48				
-T97	1	Battle Results > Ninja Song objective or bonus	カウント	timer counts			seen:savestates-091-099	NA2_BTL@0x1E5BC0	NUN5_TEXTENG@0x10538	slot	16				
-T2174	1	Battle Results > Ninja Song objective or bonus	　　壱	 1			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504CC0	NUN5_SLES@0x512070	slot	8	append_space			
-T2175	1	Battle Results > Ninja Song objective or bonus	　　弐	 2			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504CC8	NUN5_SLES@0x512074	slot	8	append_space			
-T2176	1	Battle Results > Ninja Song objective or bonus	　　参	 3			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504CD0	NUN5_SLES@0x512078	slot	8	append_space			
-T2177	1	Battle Results > Ninja Song objective or bonus	　　四	 4			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504CD8	NUN5_SLES@0x51207C	slot	8	append_space			
-T2178	1	Battle Results > Ninja Song objective or bonus	　　五	 5			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504CE0	NUN5_SLES@0x512080	slot	8	append_space			
-T2179	1	Battle Results > Ninja Song objective or bonus	　　六	 6			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504CE8	NUN5_SLES@0x512084	slot	8	append_space			
-T2180	1	Battle Results > Ninja Song objective or bonus	　　七	 7			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504CF0	NUN5_SLES@0x512088	slot	8	append_space			
-T2181	1	Battle Results > Ninja Song objective or bonus	　　八	 8			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504CF8	NUN5_SLES@0x51208C	slot	8	append_space			
-T2182	1	Battle Results > Ninja Song objective or bonus	　　九	 9			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504D00	NUN5_SLES@0x512090	slot	8	append_space			
-T2183	1	Battle Results > Ninja Song objective or bonus	　　十	10			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504D08	NUN5_SLES@0x512094	slot	8	append_space			
-T2184	1	Battle Results > Ninja Song objective or bonus	　十一	11			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504D10	NUN5_SLES@0x512098	slot	8	append_space			
-T2185	1	Battle Results > Ninja Song objective or bonus	　十二	12			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504D18	NUN5_SLES@0x51209C	slot	8	append_space			
-T2186	1	Battle Results > Ninja Song objective or bonus	　十三	13			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504D20	NUN5_SLES@0x5120A0	slot	8	append_space			
-T2187	1	Battle Results > Ninja Song objective or bonus	　十四	14			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504D28	NUN5_SLES@0x5120A4	slot	8	append_space			
-T2188	1	Battle Results > Ninja Song objective or bonus	　十五	15			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504D30	NUN5_SLES@0x5120A8	slot	8	append_space			
-T2189	1	Battle Results > Ninja Song objective or bonus	　十六	16			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504D38	NUN5_SLES@0x5120AC	slot	8	append_space			
-T2190	1	Battle Results > Ninja Song objective or bonus	なし	N/A			seen:ss1-5-paired-Ninja-Song	NA2_SLPS@0x504DB0	NUN5_SLES@0x514308	slot	8				
+T97	1	Battle Results > Ninja Song objective or bonus	カウント	timer counts			e2e:ninja_song	NA2_BTL@0x1E5BC0	NUN5_TEXTENG@0x10538	slot	16				
+T2174	1	Battle Results > Ninja Song objective or bonus	　　壱	 1			e2e:ninja_song	NA2_SLPS@0x504CC0	NUN5_SLES@0x512070	slot	8	append_space			
+T2175	1	Battle Results > Ninja Song objective or bonus	　　弐	 2			e2e:ninja_song	NA2_SLPS@0x504CC8	NUN5_SLES@0x512074	slot	8	append_space			
+T2176	1	Battle Results > Ninja Song objective or bonus	　　参	 3			e2e:ninja_song	NA2_SLPS@0x504CD0	NUN5_SLES@0x512078	slot	8	append_space			
+T2177	1	Battle Results > Ninja Song objective or bonus	　　四	 4			e2e:ninja_song	NA2_SLPS@0x504CD8	NUN5_SLES@0x51207C	slot	8	append_space			
+T2178	1	Battle Results > Ninja Song objective or bonus	　　五	 5			e2e:ninja_song	NA2_SLPS@0x504CE0	NUN5_SLES@0x512080	slot	8	append_space			
+T2179	1	Battle Results > Ninja Song objective or bonus	　　六	 6			e2e:ninja_song	NA2_SLPS@0x504CE8	NUN5_SLES@0x512084	slot	8	append_space			
+T2180	1	Battle Results > Ninja Song objective or bonus	　　七	 7			e2e:ninja_song	NA2_SLPS@0x504CF0	NUN5_SLES@0x512088	slot	8	append_space			
+T2181	1	Battle Results > Ninja Song objective or bonus	　　八	 8			e2e:ninja_song	NA2_SLPS@0x504CF8	NUN5_SLES@0x51208C	slot	8	append_space			
+T2182	1	Battle Results > Ninja Song objective or bonus	　　九	 9			e2e:ninja_song	NA2_SLPS@0x504D00	NUN5_SLES@0x512090	slot	8	append_space			
+T2183	1	Battle Results > Ninja Song objective or bonus	　　十	10			e2e:ninja_song	NA2_SLPS@0x504D08	NUN5_SLES@0x512094	slot	8	append_space			
+T2184	1	Battle Results > Ninja Song objective or bonus	　十一	11			e2e:ninja_song	NA2_SLPS@0x504D10	NUN5_SLES@0x512098	slot	8	append_space			
+T2185	1	Battle Results > Ninja Song objective or bonus	　十二	12			e2e:ninja_song	NA2_SLPS@0x504D18	NUN5_SLES@0x51209C	slot	8	append_space			
+T2186	1	Battle Results > Ninja Song objective or bonus	　十三	13			e2e:ninja_song	NA2_SLPS@0x504D20	NUN5_SLES@0x5120A0	slot	8	append_space			
+T2187	1	Battle Results > Ninja Song objective or bonus	　十四	14			e2e:ninja_song	NA2_SLPS@0x504D28	NUN5_SLES@0x5120A4	slot	8	append_space			
+T2188	1	Battle Results > Ninja Song objective or bonus	　十五	15			e2e:ninja_song	NA2_SLPS@0x504D30	NUN5_SLES@0x5120A8	slot	8	append_space			
+T2189	1	Battle Results > Ninja Song objective or bonus	　十六	16			e2e:ninja_song	NA2_SLPS@0x504D38	NUN5_SLES@0x5120AC	slot	8	append_space			
+T2190	1	Battle Results > Ninja Song objective or bonus	なし	N/A			e2e:ninja_song	NA2_SLPS@0x504DB0	NUN5_SLES@0x514308	slot	8				
 T2191	1	Battle Results > Ninja Song objective or bonus	<r発|はつ>	times			seen:ss1-5-paired-Ninja-Song	NA2_BTL@0x1E5BB0	NUN5_SLES@0x514310	slot	16	empty			
 T2192	1	Battle Results > Ninja Song objective or bonus	<r回|かい>	hits			seen:ss1-5-paired-Ninja-Song	NA2_BTL@0x1E5BA0	NUN5_SLES@0x514318	slot	16	empty			
 T2193	1	Battle Results > Ninja Song objective or bonus	<r個|こ>	Destroy breakable objects			seen:ss1-5-paired-Ninja-Song	NA2_BTL@0x1E5BD0	NUN5_TEXTENG@0x102F0	slot	16	empty			
-T2194	1	Battle Results > Ninja Song objective or bonus	<r体力|たいりょく>１００％ボーナス	100% Health bonus			seen:ss10-paired-Ninja-Song	NA2_BTL@0x1E5A90	NUN5_TEXTENG@0x10480	slot	48	escape_literal_percent			
-T2195	1	Battle Results > Ninja Song objective or bonus	" × "	" * "			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DA0	NUN5_SLES@0x514300	slot	8	normalize_formula_symbol			
-T2196	1	Battle Results > Ninja Song objective or bonus	" ＝ "	" = "			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DA8	NUN5_SLES@0x514304	slot	8	normalize_formula_symbol			
-T2197	1	Battle Results > Ninja Song objective or bonus	･	·			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DB8	NUN5_SLES@0x51430C	slot	8	normalize_formula_symbol			
-T2198	1	Battle Results > Ninja Song objective or bonus	％	%			seen:ss7-9-paired-Ninja-Song	NA2_SLPS@0x504DC0	NUN5_SLES@0x514320	slot	4	normalize_formula_symbol			
+T2194	1	Battle Results > Ninja Song objective or bonus	<r体力|たいりょく>１００％ボーナス	100% Health bonus			e2e:ninja_song	NA2_BTL@0x1E5A90	NUN5_TEXTENG@0x10480	slot	48	escape_literal_percent			
+T2195	1	Battle Results > Ninja Song objective or bonus	" × "	" * "			e2e:ninja_song	NA2_SLPS@0x504DA0	NUN5_SLES@0x514300	slot	8	normalize_formula_symbol			
+T2196	1	Battle Results > Ninja Song objective or bonus	" ＝ "	" = "			e2e:ninja_song	NA2_SLPS@0x504DA8	NUN5_SLES@0x514304	slot	8	normalize_formula_symbol			
+T2197	1	Battle Results > Ninja Song objective or bonus	･	·			e2e:ninja_song	NA2_SLPS@0x504DB8	NUN5_SLES@0x51430C	slot	8	normalize_formula_symbol			
+T2198	1	Battle Results > Ninja Song objective or bonus	％	%			e2e:ninja_song	NA2_SLPS@0x504DC0	NUN5_SLES@0x514320	slot	4	normalize_formula_symbol			
 T98	1	Collection > Characters > Ultimate Jutsu name	<r朝孔雀|あさくじゃく>	Morning Peacock			e2e:collection/ultimates	NA2_ETC@0x26180	NUN5_TEXTENG@0x33B0	slot	24				
 T99	1	Collection > Characters > Ultimate Jutsu name	<r忍法|にんぽう>・<r影縫|かげぬ>い	Ninja Art: Shadow Sew			e2e:collection/ultimates	NA2_ETC@0x26210	NUN5_TEXTENG@0x3410	slot	40				
 T100	1	Collection > Characters > Ultimate Jutsu name	<r部分倍化|ぶぶんばいか>の<r術|じゅつ>	Partial Expansion Jutsu			e2e:collection/ultimates	NA2_ETC@0x262C0	NUN5_TEXTENG@0x3490	slot	40				

@@ -33,8 +33,12 @@ only that output family.
 `characters/idle` replays every selected character, including second forms, and
 combines their idle screenshots into sequential fixed 3×2 pages. A ranged idle
 run expands to the complete affected pages so unselected cells are preserved.
-The `practice` suite replays with the same generated Practice configuration as
-`na228 <game> -l practice 2` and the generated character suites.
+The top-level `memory_card` in `config.json` supplies the default card for every
+suite. Per-suite settings under `suite_overrides` can replace that card and/or
+attach a launch profile; `practice` uses the same generated configuration as
+`na228 <game> -l practice 2`. Memory-card values use the shared launcher's path
+rules, and snapshot replay always discards memory-card writes. Defaults and
+overrides apply equally to reference and current replays.
 
 After a normal E2E run publishes successfully, it compares only the selected
 capture paths with `captures/` Git `HEAD`. The console reports `UNCHANGED` when

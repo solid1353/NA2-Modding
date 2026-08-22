@@ -13,5 +13,14 @@
       "payload_shift_bytes": 32,
       "compare_against": "normal"
     }
-  ]
+  ],
+  "memory_card": "templates/2_formatted.ps2",
+  "suite_overrides": {
+    "practice": {
+      "launch_profile": {
+        "name": "practice",
+        "arguments": ["2"]
+      }
+    }
+  }
 }

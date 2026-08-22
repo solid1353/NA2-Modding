@@ -653,8 +653,18 @@
     }
   },
   "i__localization__font__layout__ninja_song_details": {
-    "description": "Replace the shared data-driven formula renderer used by all fifteen rows, retaining its three native formula variants while applying the NUN5 term boxes and positions; wrap every objective through one separate 288x32 prose template.",
+    "description": "Replace the shared data-driven formula and bonus renderers, applying the NUN5 boxes and positions to every native row while wrapping every objective through one separate 320x32 prose template.",
     "hooks": {
+      "replace_shared_data_driven_ninja_song_bonus": {
+        "description": "Replace the shared data-driven Ninja Song bonus function once so every fight-dependent label and total uses the NUN5 288x32 label box and 96-unit right-aligned value box.",
+        "target_id": "na2_btl",
+        "offset": "0x64DA0",
+        "expected_hex": "A0FEBD273000BFFF2000B17F1000B07F0400B5E70000B4E72D888000",
+        "symbol": "v2_ninja_bonus_template",
+        "encoding": "jal26",
+        "replacement_hex": "A0FEBD273000BFFF00000000000000003000BFDF0800E0036001BD27",
+        "relocation_offset": "0x8"
+      },
       "replace_shared_data_driven_ninja_song": {
         "description": "Replace the shared data-driven Ninja Song arithmetic function once so its native row data and branches render all fifteen formula rows through the NUN5 layout template.",
         "target_id": "na2_btl",
@@ -666,7 +676,7 @@
         "relocation_offset": "0x8"
       },
       "replace_visible_numbered_objective_row_block": {
-        "description": "Replace the visible numbered-objective row block once, independently positioning its existing index and marker and wrapping its existing prose through the NUN5 288x32 two-line box without modifying any string bytes.",
+        "description": "Replace the visible numbered-objective row block once, independently positioning its existing index and marker and wrapping its existing prose through the NUN5 320x32 two-line box without modifying any string bytes.",
         "target_id": "na2_btl",
         "offset": "0x64630",
         "expected_hex": "80CA848F0A00052401000624B01A060C00000000A042023C0060824480CA848F46A30046C019060C00000000801813008A00023CE09342242110430080CA848F0000458C5020060C0000000080CA848F0F00052401000624B01A060C0000000080CA848F8A00023C9C9A458C5020060C000000000000428E80CA848F0800458C5020060C00000000",
@@ -1238,6 +1248,20 @@
             "object": "localization.font.v2.c.text.font.v2.ninja.objective.row.adapter",
             "abi": "page_row_record_display_index_row_y_bits",
             "description": "Shared Ninja Song visible objective-row renderer preserving the native index, marker, and prose strings"
+          },
+          "v2_c_ninja_bonus_label_draw": {
+            "order": 106,
+            "object": "localization.font.v2.c.text.font.v2.ninja.bonus.label.draw"
+          },
+          "v2_c_ninja_bonus_total_draw": {
+            "order": 107,
+            "object": "localization.font.v2.c.text.font.v2.ninja.bonus.total.draw"
+          },
+          "v2_ninja_bonus_template": {
+            "order": 108,
+            "object": "localization.font.v2.c.text.font.v2.ninja.bonus.template",
+            "abi": "native_x_native_y_row_set_row_index",
+            "description": "Shared data-driven Ninja Song bonus renderer for every fight-dependent label and total"
           }
         }
       },

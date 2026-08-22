@@ -337,14 +337,11 @@ value-class formulas, not per-row coordinates or visible-string identities.
 
 Ninja Song arithmetic is likewise one function-level redirect, not a set of
 token or row hooks. NA2 `FUN_00718920` is replaced from BTL file `0x64A60` by
-one call to `v2_ninja_arithmetic_template`; the template
-reads the native 12-byte row record and renders all fifteen entries. The full
-15-entry live table confirms the native routine has three structural outputs:
-expanded arithmetic, total-only, and N/A. NA2 carries the total-only routing
-through its existing indices `9`, `10`, and `13`; the replacement preserves
-that native routing inside the single page renderer rather than creating three
-row patches. The shared geometry owns factor, multiplier, unit, equals, total,
-and N/A placement once for every applicable row.
+one call to `font_v2_ninja_arithmetic_template`; the template reads the native
+12-byte row record and renders all fifteen entries. The full table confirms
+three structural outputs: expanded arithmetic, total-only, and N/A. NA2 carries
+the total-only routing through its existing indices `9`, `10`, and `13`; the
+replacement preserves that routing instead of creating row patches.
 
 Fresh hidden-worker ss1–ss3 injection runs proved the Settings loops and the
 continuously redrawn Ninja formulas. At 640x480, the final Practice phrase and
@@ -374,16 +371,51 @@ numeric ASCII-mode switch, which matched height but compressed the two-digit
 span from 25 pixels to 18. The user verified the exact supplemental
 Time 10 result on 2026-07-31; the Settings row family is runtime-proven.
 
-The Ninja factor/total columns and N/A row are within one pixel horizontally; their
-retained current glyph ink is shorter than NUN5, so subpixel baseline changes
-quantize to the neighboring output pixel rather than creating a stable
-per-row correction.
+The maintained 2026-08-22 Ninja Song E2E run supersedes the earlier incomplete
+objective evidence. NUN5 `FUN_0072E5B0` at BTL file `0x678F0` proves the
+expanded expression geometry: factor X offsets `30`, `90`, and `120`; unit
+resource box `(176,-6,52,32)`; equals X `226`; and total box
+`(256,0,64,20)`. Its descriptor selects the localized unit resource with
+`unit_index + 4`. The NA2 template maps descriptor unit `2` to the proven
+`timer counts` text, suppresses descriptor unit `4` where NUN5 draws no `%`,
+left-aligns both timer lines in the donor box, and preserves the three native
+output classes. Totals strip formatter padding and use one right-edge formula,
+so the captured `1`, `100`, and `150` end at the same donor column.
 
-The final objective boundary is no longer the earlier detail-only call at
-`0x64E98`. The overhaul replaces the complete visible objective-row block at
-BTL file `0x64630` once. Its adapter independently positions the existing red
-index, existing one-byte marker, and existing prose, then wraps only the prose
-through the NUN5 `288 x 32` two-line box. The final font2 replay desynchronized
-before this page, so the final objective's visible result remains statically
-verified. This limitation does not apply to the arithmetic renderer, which was
-runtime-proven and executes continuously after resume.
+The objective boundary is the complete visible row block at NA2 BTL file
+`0x64630`, not the earlier detail-only call at `0x64E98`. One adapter positions
+the existing red index, one-byte marker, and prose independently. NUN5's
+homologous draw uses index X `80`, prose X `112`, prose Y `rowY - 6`, and a
+`320 x 32` two-line box. Current retains the intentional taller ASCII raster
+through local Y-phase compensation but uses the same `320`-unit wrap and box
+width. The maintained grid proves the donor breaks after `Extra Hit`, keeps
+objectives 14 and 16 on one line, and uses no prefixed or substituted prose.
+
+The post-objective bonus fields are a third data-driven family. NA2
+`FUN_00718C60` at BTL file `0x64DA0` and NUN5 `FUN_0072E9C0` both consume the
+native 12-byte row selected after the fight; different results can therefore
+display different strings at different vertical positions. One function-level
+replacement reads that row, formats its descriptor, and applies NUN5's shared
+`288 x 32` two-line label box and `96 x 20` right-aligned total box. Rows 17,
+18, 22, 25, 26, and 27 insert the row's unpadded inline number into the label;
+the remaining rows format their descriptor directly. The total strips native
+left padding and includes BODY's two-unit inter-digit advance in its measured
+width, so every digit count uses the same right edge. No bonus string, row
+index, or captured Y position selects a layout correction.
+
+The integrated E2E run executed the current payload and produced all five
+planned Ninja Song states. Objective anchors, N/A rows, arithmetic columns,
+unit-label structure, and total right edges are runtime-proven. The accepted
+tracked reference and current grids use the same E2E memory-card configuration
+and synchronized deterministic markers. Diagnostic savestates established the
+matching runtime row origins only; their embedded screenshots were not used as
+visual-parity evidence.
+
+The maintained replay visibly exercises T88 `2 items carried bonus` and T2194
+`100% Health bonus`. Their label spans match NUN5 exactly; their two- and
+three-digit totals both end at output X `508`. Other fight-dependent bonus
+strings are not granted E2E translation coverage, but they execute the same
+row-driven renderer and geometry. Remaining pixel differences are the
+intentional taller glyph raster and shading plus the animated panel/title
+phase. The user visually accepted the complete result through `ver` on
+2026-08-22.

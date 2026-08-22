@@ -269,7 +269,8 @@ try {
                     $ReplayName,
                     $Generated,
                     $GeneratedScript,
-                    $PracticeMovesetRow,
+                    $MemoryCard,
+                    $LaunchProfile,
                     $ConcurrencyLimit,
                     $ConcurrencyPoolRoot,
                     $MovesetRange,
@@ -285,6 +286,8 @@ try {
                         ThrottleLimit = $ConcurrencyLimit
                         ConcurrencyPoolRoot = $ConcurrencyPoolRoot
                         ProjectRoot = $Repository
+                        MemoryCard = $MemoryCard
+                        LaunchProfile = $LaunchProfile
                     }
                     if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
                         $generatedArguments.MovesetRange = $MovesetRange
@@ -301,7 +304,8 @@ try {
                         -RecordingPath $RecordingPath `
                         -Game $Game `
                         -CaptureRoot $CaptureRoot `
-                        -PracticeMovesetRow $PracticeMovesetRow `
+                        -MemoryCard $MemoryCard `
+                        -LaunchProfile $LaunchProfile `
                         -ConcurrencyPoolRoot $ConcurrencyPoolRoot `
                         -ConcurrencyLimit $ConcurrencyLimit
                     $artifactDirectory = Join-Path $CaptureRoot 'screenshots'
@@ -341,7 +345,9 @@ try {
             [string]$buildVariant.build
         ), (Join-Path $suiteOutput 'capture'), $suiteOutput, $suiteName, $replayName, (
             [bool]$context.Generated
-        ), $context.GeneratedScript, $context.PracticeMovesetRow, $ConcurrencyLimit, (
+        ), $context.GeneratedScript, $context.MemoryCard, $context.LaunchProfile, (
+            $ConcurrencyLimit
+        ), (
             $ConcurrencyPoolRoot
         ), $context.MovesetRange, $context.GeneratedFamily
         $replayJobs.Add($replayJob)

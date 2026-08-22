@@ -20,6 +20,11 @@ param(
 
     [string]$ConcurrencyPoolRoot,
 
+    [string]$MemoryCard,
+
+    [AllowNull()]
+    [psobject]$LaunchProfile,
+
     [string]$ProjectRoot = (Join-Path $PSScriptRoot '..\..')
 )
 
@@ -418,6 +423,8 @@ foreach ($outputPlan in $selectedOutputPlans) {
                 CompletePath = Join-Path (Split-Path -Parent $captureRoot) 'complete.json'
                 PnachByGame = $pnachByGame
                 PnachLinesByGame = $pnachLinesByGame
+                MemoryCard = $MemoryCard
+                LaunchProfile = $LaunchProfile
                 ConcurrencyPoolRoot = $ConcurrencyPoolRoot
                 ConcurrencyLimit = $ThrottleLimit
             }
@@ -475,17 +482,25 @@ foreach ($outputPlan in $selectedOutputPlans) {
                             -Root $Context.ConcurrencyPoolRoot `
                             -Capacity $Context.ConcurrencyLimit
                         try {
-                            & $Launcher `
-                                -Games @($Context.Game) `
-                                -Play $Context.Recording `
-                                -Snapshots `
-                                -InputRecordingCaptureMode screenshots `
-                                -CaptureDirectory $Context.CaptureRoot `
-                                -ReadOnlySettings `
-                                -PnachByGame $Context.PnachByGame `
-                                -PnachLinesByGame $Context.PnachLinesByGame `
-                                -ProjectRoot $Repository `
-                                -InputRecordingsRoot $Context.InputRecordingsRoot
+                            $launchArguments = @{
+                                Games = @($Context.Game)
+                                Play = $Context.Recording
+                                Snapshots = $true
+                                InputRecordingCaptureMode = 'screenshots'
+                                CaptureDirectory = $Context.CaptureRoot
+                                ReadOnlySettings = $true
+                                PnachByGame = $Context.PnachByGame
+                                PnachLinesByGame = $Context.PnachLinesByGame
+                                ProjectRoot = $Repository
+                                InputRecordingsRoot = $Context.InputRecordingsRoot
+                            }
+                            Add-VisualRegressionSuiteLaunchSettings `
+                                -Target $launchArguments `
+                                -Repository $Repository `
+                                -Game $Context.Game `
+                                -MemoryCard $Context.MemoryCard `
+                                -LaunchProfile $Context.LaunchProfile
+                            & $Launcher @launchArguments
                         }
                         finally {
                             $permit.Dispose()

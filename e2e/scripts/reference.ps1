@@ -42,6 +42,8 @@ if ($context.Generated) {
             ThrottleLimit = $ConcurrencyLimit
             ConcurrencyPoolRoot = $ConcurrencyPoolRoot
             ProjectRoot = $context.Repository
+            MemoryCard = $context.MemoryCard
+            LaunchProfile = $context.LaunchProfile
         }
         if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
             $generatedArguments.MovesetRange = $MovesetRange
@@ -81,6 +83,8 @@ if ($context.Generated) {
                     }
                 )
                 ProjectRoot = $context.Repository
+                MemoryCard = $context.MemoryCard
+                LaunchProfile = $context.LaunchProfile
             }
             if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
                 $generatedArguments.MovesetRange = $MovesetRange
@@ -138,7 +142,8 @@ if ($PSCmdlet.ParameterSetName -ceq 'Capture') {
         -RecordingPath $recordingPath `
         -Game $Game `
         -CaptureRoot $CaptureOutputRoot `
-        -PracticeMovesetRow $context.PracticeMovesetRow `
+        -MemoryCard $context.MemoryCard `
+        -LaunchProfile $context.LaunchProfile `
         -ConcurrencyPoolRoot $ConcurrencyPoolRoot `
         -ConcurrencyLimit $ConcurrencyLimit
     $capturedScreenshots = Join-Path $CaptureOutputRoot 'screenshots'
@@ -177,7 +182,8 @@ try {
             -RecordingPath $recordingPath `
             -Game $Game `
             -CaptureRoot $runtimeCapture `
-            -PracticeMovesetRow $context.PracticeMovesetRow `
+            -MemoryCard $context.MemoryCard `
+            -LaunchProfile $context.LaunchProfile `
             -ConcurrencyPoolRoot $ConcurrencyPoolRoot `
             -ConcurrencyLimit $ConcurrencyLimit
     }

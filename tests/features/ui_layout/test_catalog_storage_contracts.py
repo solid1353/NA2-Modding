@@ -1,4 +1,4 @@
-"""Production-catalog contracts for the collapsed UI-layout edit storage."""
+"""Production-catalog contracts for the UI-layout runtime hooks."""
 
 from __future__ import annotations
 
@@ -9,95 +9,9 @@ from pathlib import Path
 
 REPOSITORY = Path(__file__).resolve().parents[3]
 CATALOG = REPOSITORY / "na228_builder" / "catalog"
-STAGE_LOGICAL_ORDER = (1, 2, 23, 24, *range(5, 23), 3, 4)
 
 
-class UiLayoutCatalogStorageContractTests(unittest.TestCase):
-    def test_affected_edit_groups_keep_only_static_data_and_site_edits(
-        self,
-    ) -> None:
-        edits = json.loads(
-            (CATALOG / "edits.json").read_text(encoding="utf-8")
-        )
-        expected_members = {
-            "e__localization__font__glyphs": {
-                "decoder_horizontal_scale_default",
-                "secondary_font_descriptor",
-                "secondary_glyph_atlas",
-                "secondary_metric_hash_values",
-            },
-            "e__localization__font__layout": {
-                "command_relationships_suppress_second_auxiliary_draw",
-                "practice_commands_on_off_table",
-                "practice_damage_on_off_table",
-                "practice_guide_ninja_sound_on_off_table",
-            },
-            "e__localization__ui_layout__battle_hud_names": {
-                "mirrored_x_anchor_74",
-            },
-            "e__localization__ui_layout__common_prompts": {
-                "collection_root_cross_x",
-                "collection_root_triangle_x",
-                "play_label_local_x",
-                "record_2_next",
-                "record_4_cancel_label",
-                "record_5_cancel_tail",
-                "record_6_triangle_icon",
-                "stop_label_local_x",
-                "stop_rectangle",
-            },
-            "e__localization__ui_layout__item_status_numeric": {
-                "chakra_record",
-                "health_record",
-                "recovery_record",
-            },
-            "e__localization__ui_layout__item_status_paired": {
-                "rank_offset_table",
-                "records_8e_through_94",
-                "records_9b_and_9c",
-            },
-            "e__localization__ui_layout__item_status_single": {
-                "records_96_through_9a",
-            },
-            "e__localization__ui_layout__jutsu_selector_arrows": {
-                "green_arrow_rectangle",
-            },
-            "e__localization__ui_layout__stage_select": {
-                "random_prompt_x",
-                *(
-                    f"stage_s{row:02d}_logical_{logical:02d}_name_rectangle"
-                    for row, logical in enumerate(
-                        STAGE_LOGICAL_ORDER,
-                        start=1,
-                    )
-                ),
-            },
-            "e__localization__ui_layout__vs_confirmation": {
-                "battle_settings_rectangle",
-                "battle_settings_x_94",
-                "customize_jutsu_rectangle",
-                "customize_jutsu_x_260",
-                "disable_back_separate_glyph",
-                "disable_ok_separate_glyph",
-                "jutsu_1_label_rectangle",
-                "jutsu_2_label_rectangle",
-                "jutsu_input_glyph_1_rectangle",
-                "jutsu_input_glyph_2_rectangle",
-                "jutsu_input_glyph_3_rectangle",
-                "jutsu_input_glyph_offset_40_accumulate",
-                "jutsu_input_glyph_offset_40_load",
-                "ok_back_prompt_records",
-                "two_arrow_control_rectangle",
-            },
-        }
-
-        self.assertNotIn(
-            "e__localization__ui_layout__item_status_fixed",
-            edits,
-        )
-        for group, expected in expected_members.items():
-            self.assertEqual(set(edits[group]["edits"]), expected, group)
-
+class UiLayoutRuntimeContractTests(unittest.TestCase):
     def test_runtime_injection_keeps_the_exact_fifteen_ui_hooks(self) -> None:
         injections = json.loads(
             (CATALOG / "injections.json").read_text(encoding="utf-8")

@@ -1119,7 +1119,131 @@ def _edit_members(
     edit_id: str,
     definition: dict[str, object],
 ) -> tuple[tuple[str | None, dict[str, object]], ...]:
+    def expand_table(
+        table_id: str | None,
+        table: dict[str, object],
+    ) -> tuple[tuple[str, dict[str, object]], ...]:
+        label = f"edits.{edit_id}"
+        if table_id is not None:
+            label += f".edits.{table_id}"
+        allowed = {
+            "description",
+            "operation",
+            "destination_target_id",
+            "table_offset",
+            "record_stride",
+            "field_offset",
+            "record_patches",
+        }
+        required = allowed - {"description"}
+        extra = sorted(set(table) - allowed)
+        missing = sorted(required - set(table))
+        if extra or missing:
+            problems: list[str] = []
+            if missing:
+                problems.append("missing fields: " + ", ".join(missing))
+            if extra:
+                problems.append("unknown fields: " + ", ".join(extra))
+            raise ValueError(f"{label} is invalid: {'; '.join(problems)}")
+
+        table_offset = _parse_int(table["table_offset"], f"{label}.table_offset")
+        record_stride = _parse_int(
+            table["record_stride"], f"{label}.record_stride", minimum=1
+        )
+        field_offset = _parse_int(table["field_offset"], f"{label}.field_offset")
+        record_patches = table["record_patches"]
+        if not isinstance(record_patches, dict) or not record_patches:
+            raise ValueError(f"{label}.record_patches must be a non-empty object")
+
+        expanded: list[tuple[str, dict[str, object]]] = []
+        used_indices: set[int] = set()
+        patch_length: int | None = None
+        for record_id, record in sorted(record_patches.items()):
+            _identifier(record_id, f"{label}.record_patches record ID")
+            record_label = f"{label}.record_patches.{record_id}"
+            if not isinstance(record, dict):
+                raise ValueError(f"{record_label} must be an object")
+            index_fields = {"record_index", "record_indices"} & set(record)
+            if len(index_fields) != 1:
+                raise ValueError(
+                    f"{record_label} requires exactly one of record_index "
+                    "or record_indices"
+                )
+            allowed_record = index_fields | {"expected_hex", "replacement_hex"}
+            extra_record = sorted(set(record) - allowed_record)
+            missing_record = sorted(allowed_record - set(record))
+            if extra_record or missing_record:
+                problems = []
+                if missing_record:
+                    problems.append("missing fields: " + ", ".join(missing_record))
+                if extra_record:
+                    problems.append("unknown fields: " + ", ".join(extra_record))
+                raise ValueError(
+                    f"{record_label} is invalid: {'; '.join(problems)}"
+                )
+
+            if "record_index" in record:
+                indices = (
+                    _parse_int(record["record_index"], f"{record_label}.record_index"),
+                )
+            else:
+                indices = _parse_int_list(
+                    record["record_indices"], f"{record_label}.record_indices"
+                )
+            duplicates = sorted(used_indices.intersection(indices))
+            if duplicates:
+                raise ValueError(
+                    f"{record_label} reuses table record indices: {duplicates}"
+                )
+            used_indices.update(indices)
+
+            expected_hex = _hex(
+                record["expected_hex"], f"{record_label}.expected_hex"
+            )
+            replacement_hex = _hex(
+                record["replacement_hex"], f"{record_label}.replacement_hex"
+            )
+            expected_length = len(bytes.fromhex(expected_hex))
+            replacement_length = len(bytes.fromhex(replacement_hex))
+            if expected_length != replacement_length:
+                raise ValueError(f"{record_label} expected/replacement length mismatch")
+            if patch_length is None:
+                patch_length = replacement_length
+            elif replacement_length != patch_length:
+                raise ValueError(
+                    f"{record_label} length differs from other table records"
+                )
+            if field_offset + replacement_length > record_stride:
+                raise ValueError(
+                    f"{record_label} field exceeds the {record_stride}-byte record stride"
+                )
+
+            member_id = record_id if table_id is None else f"{table_id}__{record_id}"
+            expanded.append(
+                (
+                    member_id,
+                    {
+                        **(
+                            {"description": table["description"]}
+                            if "description" in table
+                            else {}
+                        ),
+                        "operation": "replace",
+                        "destination_target_id": table["destination_target_id"],
+                        "destination_offsets": [
+                            table_offset + index * record_stride + field_offset
+                            for index in indices
+                        ],
+                        "expected_hex": expected_hex,
+                        "replacement_hex": replacement_hex,
+                    },
+                )
+            )
+        return tuple(expanded)
+
     if "edits" not in definition:
+        if definition.get("operation") == "replace_table":
+            return expand_table(None, definition)
         return ((None, definition),)
     members = definition["edits"]
     if not isinstance(members, dict):
@@ -1128,7 +1252,10 @@ def _edit_members(
     for member_id, member in sorted(members.items()):
         if not isinstance(member_id, str) or not isinstance(member, dict):
             raise TypeError(f"Edit group {edit_id!r} was not validated")
-        result.append((member_id, member))
+        if member.get("operation") == "replace_table":
+            result.extend(expand_table(member_id, member))
+        else:
+            result.append((member_id, member))
     return tuple(result)
 
 

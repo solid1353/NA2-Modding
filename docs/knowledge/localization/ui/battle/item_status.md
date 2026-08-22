@@ -41,18 +41,13 @@ stored in `PRG/228.BIN`. Its SHA-256 is
 The single class retains the native uniform wrapper. No item-status executable
 payload is stored in a BTL or boot-ELF code cave.
 
-Exactly seven static item-status data edits remain:
-
-- `e__localization__ui_layout__item_status_numeric` / `health_record`;
-- `e__localization__ui_layout__item_status_numeric` / `chakra_record`;
-- `e__localization__ui_layout__item_status_numeric` / `recovery_record`;
-- `e__localization__ui_layout__item_status_paired` / `rank_offset_table`;
-- `e__localization__ui_layout__item_status_paired` / `records_8e_through_94`;
-- `e__localization__ui_layout__item_status_paired` / `records_9b_and_9c`;
-- `e__localization__ui_layout__item_status_single` / `records_96_through_9a`.
-
-The substitution-doll pickup record documented below belongs to its separate
-feature and is not one of those seven item-status edits.
+Two static catalog definitions remain: the `item_records` table under
+`e__localization__ui_layout__record_tables` patches seventeen sparse
+item-status entries in the resident 12-byte record table, and
+`e__localization__ui_layout__item_status_paired` patches the separate
+three-rank BTL offset table. The substitution-doll pickup record documented
+below remains behaviorally separate but shares the resident record-table
+definition as its eighteenth patched entry.
 
 The historical runtime evidence below continues to verify the accepted NA228
 behavior. The resident-storage refactor itself is uncommitted and currently
@@ -394,9 +389,9 @@ three pixels at the captured animation phase. After one updater pass, Current
 record `0x0A` supplies `(161,193,30,30)`, which selects the green `Recovery`
 artwork from the imported NUN5 atlas. NUN5 record `0x0A` supplies
 `(161,225,30,30)`, which selects the substitution doll.
-The `ui_layout_item_pickup_doll` group, implemented by
-`localization__ui_layout__item_pickup_doll`, therefore performs one guarded
-same-index 12-byte copy from NUN5 ELF file `0x4B80C8` to NA2 ELF file
+The `item_records` table under
+`e__localization__ui_layout__record_tables` therefore performs one guarded
+same-index 12-byte replacement from NUN5 ELF file `0x4B80C8` to NA2 ELF file
 `0x4B0BD8`.
 
 The rejected cross-index copy from NUN5 record `0x0A` to NA2 record `0x2E` is a

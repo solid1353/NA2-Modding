@@ -291,9 +291,10 @@ children remain disabled.
 
 Every setting has one `patches` array. Edit IDs use the `e__` prefix and must
 resolve to exactly one root in `catalog/edits.json`. A root is either one
-primitive guarded edit or a semantic group containing a nonempty `edits` map
-of named primitive guarded edits. Injection IDs use `i__` and must resolve
-to exactly one unit in `catalog/injections.json`. Semantic
+primitive guarded edit, one fixed-stride table replacement, or a semantic group
+containing a nonempty `edits` map of named primitive and table edits.
+Injection IDs use `i__` and must resolve to exactly one unit in
+`catalog/injections.json`. Semantic
 string-patch IDs use `s__` and must resolve to exactly one definition in
 `catalog/string_patches.json`. Every other prefix is invalid.
 
@@ -306,15 +307,35 @@ validation.
 
 A grouped edit has only an optional `description` and its `edits` map. Child
 keys are stable snake-case semantic identities, not destination addresses.
-Each child retains the complete primitive contract, including its explicit
-`operation`, target, destination offsets, guard, replacement or source, and
-optional description. Groups are one level only and may contain different
-primitive operations or targets. The loader expands children by semantic key
-before ordinary operation validation and guarded composition. Existing
-single-operation roots remain primitive definitions; grouping adds no binary
-operation and does not change the binary patcher engine contract. Destination
-ranges belonging to different children in one group must not overlap; an
-ordered same-range chain remains separate primitive roots.
+Each child retains its explicit `operation` and complete operation contract.
+Groups are one level only and may contain different operations or targets. The
+loader expands children by semantic key before ordinary operation validation
+and guarded composition. Existing single-operation roots remain primitive
+definitions; grouping adds no binary operation and does not change the binary
+patcher engine contract. Destination ranges belonging to different children
+in one group must not overlap; an ordered same-range chain remains separate
+primitive roots.
+
+`replace_table` is a catalog authoring operation for guarded fields repeated in
+one fixed-stride game table. It declares one `destination_target_id`,
+`table_offset`, positive `record_stride`, `field_offset`, and nonempty
+`record_patches` map. Each semantic record patch contains exactly one
+`record_index` or nonempty unique `record_indices` list, plus `expected_hex`
+and `replacement_hex`. All record patches in one table have the same nonzero
+byte length, both hex values have equal length, and the patched field must fit
+inside the stride. A record index resolves to:
+
+```text
+table_offset + record_index * record_stride + field_offset
+```
+
+Record indices must be unique across the table. The loader expands every
+semantic record patch into one ordinary `replace` definition with the resolved
+destination offsets before operation-manifest validation. The binary patcher
+therefore receives no table-specific operation, and its exact guards, conflict
+handling, logging, and output behavior remain unchanged. Tables may be dense
+or sparse; `record_indices` exists only to share identical guarded bytes across
+several records.
 
 A parameterized edit retains the ordinary `replace` operation, target, offset,
 and destination guard. It declares an adapter instead of `replacement_hex`;

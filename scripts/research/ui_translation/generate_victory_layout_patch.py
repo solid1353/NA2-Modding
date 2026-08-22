@@ -18,7 +18,8 @@ from scripts.lib.paths import load_paths  # noqa: E402
 
 
 PATCH_ID = "ui_layout_victory_names"
-EDIT_ROOT_ID = "e__localization__ui_layout__victory_names"
+EDIT_ROOT_ID = "e__localization__ui_layout__record_tables"
+TABLE_ID = "victory_name_descriptors"
 CHARACTER_COUNT = 94
 NA2_BTL_EXPECTED_SIZE = 2_237_184
 NA2_BTL_EXPECTED_SHA256 = (
@@ -38,17 +39,15 @@ NUN5_ENGLISH_WIDTH_TABLE_OFFSET = 0x004DE6D0
 NUN5_TEMPLATE_OFFSETS = (0x0021B9C0, 0x0021B9E0)
 DESCRIPTOR_SIZE = 24
 WIDTH_OFFSET = 4
-MERGED_DEFINITIONS = {
+TABLE_OFFSET = 0x002161B0
+RECORD_STRIDE = 32
+MERGED_SOURCE_IDS = {
     frozenset(
         {
             "e__localization__ui_layout__victory_names_na2_btl_at_00216610",
             "e__localization__ui_layout__victory_names_na2_btl_at_00216c30",
         }
-    ): (
-        "e__localization__ui_layout__victory_names_width_154_frame_0_na2_btl",
-        "Use the NUN5 frame-0 template with atlas width 156 and renderer "
-        "width 154 for all matching Victory name descriptors.",
-    ),
+    )
 }
 
 
@@ -203,7 +202,7 @@ def build_patch_rows() -> list[dict[str, str]]:
 
 def build_definitions(
     generated_edits: list[dict[str, str]],
-) -> dict[str, dict[str, object]]:
+) -> dict[str, object]:
     grouped: dict[tuple[str, ...], list[dict[str, str]]] = defaultdict(list)
     for edit in generated_edits:
         signature = (
@@ -214,19 +213,14 @@ def build_definitions(
         )
         grouped[signature].append(edit)
 
-    members: dict[str, dict[str, object]] = {}
+    records: dict[str, dict[str, object]] = {}
     for group in grouped.values():
         source_ids = frozenset(edit["edit_id"] for edit in group)
-        if len(group) == 1:
-            description = group[0]["reason"]
-        else:
-            merged = MERGED_DEFINITIONS.get(source_ids)
-            if merged is None:
-                raise ValueError(
-                    "Equivalent Victory edits need one declared multi-offset "
-                    f"identity: {sorted(source_ids)}"
-                )
-            _, description = merged
+        if len(group) > 1 and source_ids not in MERGED_SOURCE_IDS:
+            raise ValueError(
+                "Equivalent Victory edits need one declared multi-offset "
+                f"identity: {sorted(source_ids)}"
+            )
         character_ids: list[int] = []
         frames: set[int] = set()
         for edit in group:
@@ -247,26 +241,39 @@ def build_definitions(
         member_id = (
             "character_ids_"
             + "_".join(f"{character_id:02d}" for character_id in character_ids)
-            + f"_frame_{frame}_descriptor"
+            + f"_frame_{frame}"
         )
-        if member_id in members:
+        if member_id in records:
             raise ValueError(f"Duplicate Victory member identity: {member_id}")
         first = group[0]
-        members[member_id] = {
-            "description": description,
-            "operation": first["operation"],
-            "destination_target_id": first["destination_target_id"],
-            "destination_offsets": [
-                edit["destination_offset"] for edit in group
-            ],
+        indices: list[int] = []
+        for edit in group:
+            destination = int(edit["destination_offset"], 0)
+            relative = destination - TABLE_OFFSET
+            if relative < 0 or relative % RECORD_STRIDE != 0:
+                raise ValueError(
+                    f"Victory descriptor is outside the fixed-stride table: "
+                    f"0x{destination:X}"
+                )
+            indices.append(relative // RECORD_STRIDE)
+        index_field = (
+            {"record_index": indices[0]}
+            if len(indices) == 1
+            else {"record_indices": indices}
+        )
+        records[member_id] = {
+            **index_field,
             "expected_hex": first["expected_hex"],
             "replacement_hex": first["replacement_hex"],
         }
     return {
-        EDIT_ROOT_ID: {
-            "description": "Apply the complete localized Victory name descriptor set.",
-            "edits": dict(sorted(members.items())),
-        }
+        "description": "Patch behavior-equivalent localized Victory name descriptors.",
+        "operation": "replace_table",
+        "destination_target_id": "na2_btl",
+        "table_offset": f"0x{TABLE_OFFSET:X}",
+        "record_stride": RECORD_STRIDE,
+        "field_offset": 0,
+        "record_patches": dict(sorted(records.items())),
     }
 
 
@@ -283,26 +290,18 @@ def main() -> int:
     generated = build_definitions(generated_edits)
     edits_path = load_paths(REPOSITORY).path("builder", "catalog", "edits.json")
     stored_edits = json.loads(edits_path.read_text(encoding="utf-8"))
-    stored = {
-        EDIT_ROOT_ID: stored_edits[EDIT_ROOT_ID]
-    } if EDIT_ROOT_ID in stored_edits else {}
+    stored_root = stored_edits.get(EDIT_ROOT_ID, {})
+    stored_tables = stored_root.get("edits", {})
+    stored = stored_tables.get(TABLE_ID)
     if stored != generated:
-        missing = sorted(set(generated) - set(stored))
-        unexpected = sorted(set(stored) - set(generated))
-        changed = sorted(
-            edit_id
-            for edit_id in set(stored) & set(generated)
-            if stored[edit_id] != generated[edit_id]
-        )
         raise ValueError(
-            "Stored Victory definitions differ from the verified derivation: "
-            f"missing={missing}, unexpected={unexpected}, changed={changed}"
+            "Stored Victory table differs from the verified derivation"
         )
 
     print(f"patch_id={PATCH_ID}")
     print(f"edits={len(generated_edits)}")
-    print(f"definitions={len(generated)}")
-    print(f"members={len(generated[EDIT_ROOT_ID]['edits'])}")
+    print("tables=1")
+    print(f"records={len(generated['record_patches'])}")
     print("mode=check")
     return 0
 

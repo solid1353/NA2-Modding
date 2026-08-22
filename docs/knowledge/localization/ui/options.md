@@ -65,9 +65,10 @@ NUN5's localized records total 80 logical pixels:
 | Cancel label | `0x4DEA10` / `0100310038001600` | `(1,49,56,22)` |
 | Empty tail | `0x4DEA18` / `0000000000000000` | empty |
 
-`ui_layout_common_prompts` copies all three official NUN5 records into the corresponding NA2
-static slots. This preserves NA2's object ABI and compositor code while making
-every shared case-4 caller use the same geometry as NUN5.
+The `common_prompt_records` table copies all three official NUN5 records into
+the corresponding NA2 static slots. This preserves NA2's object ABI and
+compositor code while making every shared case-4 caller use the same geometry
+as NUN5.
 
 ## Options-root OK and Back anchors
 

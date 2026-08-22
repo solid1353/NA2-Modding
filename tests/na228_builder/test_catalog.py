@@ -1099,6 +1099,140 @@ class CatalogTests(unittest.TestCase):
             ((root / "asset.bin").resolve(),),
         )
 
+    def test_replace_table_expands_fixed_stride_record_patches(self) -> None:
+        source = '''{
+          table: setting {
+            description: "Table edit.",
+            patches: ["e__feature__table"],
+          },
+        }'''
+        table = {
+            "description": "Patch synthetic table fields.",
+            "operation": "replace_table",
+            "destination_target_id": "test_target",
+            "table_offset": "0x10",
+            "record_stride": 8,
+            "field_offset": 2,
+            "record_patches": {
+                "first": {
+                    "record_index": 0,
+                    "expected_hex": "0001",
+                    "replacement_hex": "1001",
+                },
+                "shared": {
+                    "record_indices": [2, 4],
+                    "expected_hex": "0203",
+                    "replacement_hex": "1203",
+                },
+            },
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path, configuration_path = self.write_project(
+                root,
+                {"feature": source},
+                {"feature": {"table": True}},
+                edits={"e__feature__table": table},
+            )
+            (catalog_path / "targets.tsv").write_text(
+                "target_id\troot_id\trole\tpath\texpected_size\t"
+                "expected_sha256\n"
+                "test_target\ttest\tdestination\tdata.bin\t64\t"
+                + "0" * 64
+                + "\n",
+                encoding="utf-8",
+            )
+            selection = catalog.load_selection(catalog_path, configuration_path)
+            paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
+            package = catalog.load_binary_package(
+                selection,
+                "feature",
+                catalog_path / "targets.tsv",
+                root,
+                paths.path("builder", "modules", "binary_patcher", "operations"),
+            )
+
+        self.assertEqual(
+            [edit.destination_offset for edit in package.edits],
+            [0x12, 0x22, 0x32],
+        )
+        self.assertEqual(
+            [edit.expected_hex for edit in package.edits],
+            ["0001", "0203", "0203"],
+        )
+        self.assertEqual(
+            [edit.replacement_hex for edit in package.edits],
+            ["1001", "1203", "1203"],
+        )
+        self.assertTrue(all(edit.operation == "replace" for edit in package.edits))
+        self.assertIn(".first", package.edits[0].edit_id)
+        self.assertIn(".shared.at_00000022", package.edits[1].edit_id)
+
+    def test_replace_table_rejects_invalid_record_contracts(self) -> None:
+        valid = {
+            "operation": "replace_table",
+            "destination_target_id": "test_target",
+            "table_offset": "0x10",
+            "record_stride": 4,
+            "field_offset": 0,
+            "record_patches": {
+                "first": {
+                    "record_index": 0,
+                    "expected_hex": "0000",
+                    "replacement_hex": "1111",
+                },
+            },
+        }
+        invalid = (
+            (
+                {
+                    **valid,
+                    "record_patches": {
+                        "first": {
+                            "expected_hex": "0000",
+                            "replacement_hex": "1111",
+                        }
+                    },
+                },
+                "requires exactly one of record_index or record_indices",
+            ),
+            (
+                {
+                    **valid,
+                    "record_patches": {
+                        "first": valid["record_patches"]["first"],
+                        "second": {
+                            "record_index": 0,
+                            "expected_hex": "2222",
+                            "replacement_hex": "3333",
+                        },
+                    },
+                },
+                "reuses table record indices",
+            ),
+            (
+                {
+                    **valid,
+                    "record_patches": {
+                        "first": {
+                            "record_index": 0,
+                            "expected_hex": "00",
+                            "replacement_hex": "1111",
+                        }
+                    },
+                },
+                "expected/replacement length mismatch",
+            ),
+            (
+                {**valid, "field_offset": 3},
+                "field exceeds the 4-byte record stride",
+            ),
+        )
+        for definition, message in invalid:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    catalog._edit_members("e__feature__table", definition)
+
     def test_grouped_edit_rejects_overlapping_child_destinations(self) -> None:
         source = '''{
           grouped: setting {
@@ -1167,6 +1301,17 @@ class CatalogTests(unittest.TestCase):
                         list(definition["edits"]),
                         sorted(definition["edits"]),
                     )
+                members = (
+                    definition["edits"].values()
+                    if "edits" in definition
+                    else (definition,)
+                )
+                for member in members:
+                    if member.get("operation") == "replace_table":
+                        self.assertEqual(
+                            list(member["record_patches"]),
+                            sorted(member["record_patches"]),
+                        )
 
     def test_grouped_edit_structure_fails_closed(self) -> None:
         source = '''{

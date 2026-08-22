@@ -955,17 +955,6 @@
   "e__localization__ui_layout__collection_submenu": {
     "description": "Apply the localized Collection submenu and viewer geometry.",
     "edits": {
-      "characters_title_rectangle": {
-        "description": "Copy NUN5's Characters rectangle (0,0,192,28), excluding the Movie-row pixels selected by NA2's 34-pixel source height.",
-        "operation": "replace",
-        "destination_target_id": "na2_etc",
-        "destination_offsets": [
-          "0x30490"
-        ],
-        "length": 8,
-        "expected_hex": "01000100C0002200",
-        "replacement_hex": "00000000C0001C00"
-      },
       "diorama_viewer_control_positions": {
         "description": "Copy NUN5's complete second four-record Collection viewer-control position table used by Dioramas, aligning Zoom In and Zoom Out with Move and Rotate instead of clipping the two top-right rows.",
         "operation": "replace",
@@ -976,28 +965,6 @@
         "length": 64,
         "expected_hex": "0000DC430000914300000000000000000000DC430000854300000000000000000080EA4300005A4300000000000000000000EA43000072430000000000000000",
         "replacement_hex": "0000DC430000914300000000000000000000DC430000854300000000000000000000DC4300005A4300000000000000000000DC43000072430000000000000000"
-      },
-      "movie_title_rectangle": {
-        "description": "Copy NUN5's Movie rectangle (0,28,96,28), preventing NA2's 34-pixel rectangle from sampling the Music row.",
-        "operation": "replace",
-        "destination_target_id": "na2_etc",
-        "destination_offsets": [
-          "0x30498"
-        ],
-        "length": 8,
-        "expected_hex": "0100250088002200",
-        "replacement_hex": "00001C0060001C00"
-      },
-      "music_title_rectangle": {
-        "description": "Copy NUN5's Music rectangle (0,56,96,28), replacing NA2's source range outside the imported English title rows.",
-        "operation": "replace",
-        "destination_target_id": "na2_etc",
-        "destination_offsets": [
-          "0x304A0"
-        ],
-        "length": 8,
-        "expected_hex": "0100530050002500",
-        "replacement_hex": "0000380060001C00"
       },
       "page_prompt_positions": {
         "description": "Copy NUN5's complete paired Collection page-prompt center table: Previous Page X=87, Next Page X=233, both Y=360.",
@@ -1020,17 +987,6 @@
         "length": 16,
         "expected_hex": "01000100760018000100180076001800",
         "replacement_hex": "01000100900018000100180090001800"
-      },
-      "play_rectangle": {
-        "description": "Copy NUN5's Play rectangle (144,24,72,24); NA2's X=120 rectangle starts 24 pixels before the imported English control and clips the label.",
-        "operation": "replace",
-        "destination_target_id": "na2_etc",
-        "destination_offsets": [
-          "0x2E790"
-        ],
-        "length": 8,
-        "expected_hex": "7800180048001800",
-        "replacement_hex": "9000180048001800"
       },
       "viewer_control_positions": {
         "description": "Copy NUN5's complete four-record Collection viewer-control position table, changing NA2's single bottom row into the official 2x2 Zoom In/Zoom Out and Move/Rotate layout.",
@@ -1167,224 +1123,16 @@
       }
     }
   },
-  "e__localization__ui_layout__common_prompts": {
-    "description": "Apply the shared localized frontend and Collection prompt records.",
-    "edits": {
-      "collection_root_cross_x": {
-        "description": "Use X=368 for the Collection-root Cross prompt, reproducing NUN5's effective 380-12 anchor where NA2 lacks the regional offset addition.",
-        "operation": "replace",
-        "destination_target_id": "na2_etc",
-        "destination_offsets": [
-          "0x2F010"
-        ],
-        "expected_hex": "0000BE43",
-        "replacement_hex": "0000B843"
-      },
-      "collection_root_triangle_x": {
-        "description": "Use X=452 for the Collection-root Triangle prompt, reproducing NUN5's effective 460-8 anchor where NA2 lacks the regional offset addition.",
-        "operation": "replace",
-        "destination_target_id": "na2_etc",
-        "destination_offsets": [
-          "0x2F018"
-        ],
-        "expected_hex": "0000E643",
-        "replacement_hex": "0000E243"
-      },
-      "play_label_local_x": {
-        "description": "Use -59.0 for the HOME state-2 label-local X offset so the Play label follows the same 24-pixel localized centering shift as its icon.",
-        "operation": "replace",
-        "destination_target_id": "na2_etc",
-        "destination_offsets": [
-          "0x2E7F0"
-        ],
-        "expected_hex": "00000CC2",
-        "replacement_hex": "00006CC2"
-      },
-      "record_2_next": {
-        "description": "Copy NUN5 localized common-prompt record 2, narrowing the shared Next label from 70 to 66 pixels so its donor atlas geometry and centered anchor match.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x4D47A0"
-        ],
-        "length": 8,
-        "expected_hex": "2D00490046001600",
-        "replacement_hex": "2D00490042001600"
-      },
-      "record_4_cancel_label": {
-        "description": "Copy NUN5 localized common-prompt record 4, replacing the 114-pixel Japanese Cancel label with the 56-pixel English label.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x4D47B0"
-        ],
-        "length": 8,
-        "expected_hex": "0100310072001600",
-        "replacement_hex": "0100310038001600"
-      },
-      "record_5_cancel_tail": {
-        "description": "Copy NUN5 localized common-prompt record 5, removing the Japanese-only 42-pixel tail from the shared Cancel compositor.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x4D47B8"
-        ],
-        "length": 8,
-        "expected_hex": "010049002A001600",
-        "replacement_hex": "0000000000000000"
-      },
-      "record_6_triangle_icon": {
-        "description": "Copy NUN5 localized common-prompt record 6, replacing the Japanese Triangle-icon rectangle used first by the shared Cancel compositor.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x4D47C0"
-        ],
-        "length": 8,
-        "expected_hex": "030019001A001600",
-        "replacement_hex": "0200180018001800"
-      },
-      "stop_label_local_x": {
-        "description": "Use -40.0 for the HOME state-4 label-local X offset, reproducing NUN5's Stop-label anchor 458 - 76/2 = 420 while retaining the already-matching Y=348.",
-        "operation": "replace",
-        "destination_target_id": "na2_etc",
-        "destination_offsets": [
-          "0x2E7F8"
-        ],
-        "expected_hex": "00000CC2",
-        "replacement_hex": "000020C2"
-      },
-      "stop_rectangle": {
-        "description": "Copy the official NUN5 Stop rectangle (144,48,76,24) over NA2's Japanese-atlas rectangle (120,48,72,24).",
-        "operation": "replace",
-        "destination_target_id": "na2_etc",
-        "destination_offsets": [
-          "0x2E798"
-        ],
-        "length": 8,
-        "expected_hex": "7800300048001800",
-        "replacement_hex": "900030004C001800"
-      }
-    }
-  },
-  "e__localization__ui_layout__item_pickup_doll": {
-    "description": "Copy NUN5 record 0x0A's complete substitution-doll rectangle over homologous NA2 record 0x0A, the record selected by the live per-frame pickup updater.",
-    "operation": "replace",
-    "destination_target_id": "na2_elf",
-    "destination_offsets": [
-      "0x4B0BD8"
-    ],
-    "length": 12,
-    "expected_hex": "0100A100C1001E001E000A00",
-    "replacement_hex": "0100A100E1001E001E000A00"
-  },
-  "e__localization__ui_layout__item_status_numeric": {
-    "description": "Copy the localized numeric item-status records consumed by the resident runtime layout.",
-    "edits": {
-      "chakra_record": {
-        "description": "Copy the complete official NUN5 Chakra item record, including its localized rectangle and flags.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x4B1178"
-        ],
-        "length": 12,
-        "expected_hex": "01008A00010010003A000000",
-        "replacement_hex": "0100F10055000E002A000000"
-      },
-      "health_record": {
-        "description": "Copy the complete official NUN5 Health item record, including its localized rectangle and flags.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x4B116C"
-        ],
-        "length": 12,
-        "expected_hex": "0100790001000F0021000000",
-        "replacement_hex": "01003100610046000E000000"
-      },
-      "recovery_record": {
-        "description": "Copy the complete official NUN5 Recovery item record, including its localized rectangle and flags.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x4B11FC"
-        ],
-        "length": 12,
-        "expected_hex": "0100A100E1000E001E000200",
-        "replacement_hex": "0100A100D10032000A000200"
-      }
-    }
-  },
   "e__localization__ui_layout__item_status_paired": {
-    "description": "Copy the localized paired item-status records and rank offsets consumed by the resident runtime layout.",
-    "edits": {
-      "rank_offset_table": {
-        "description": "Copy the complete official NUN5 three-rank item-bubble offset table.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x1E4C90"
-        ],
-        "length": 24,
-        "expected_hex": "32000000ECFFFFFFF0FFFFFFC2FFFFFF1E00000098FFFFFF",
-        "replacement_hex": "14000000E2FFFFFFC0FFFFFFC1FFFFFF00000000A0FFFFFF"
-      },
-      "records_8e_through_94": {
-        "description": "Copy official NUN5 paired item-status records 0x8E through 0x94.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x4B1208"
-        ],
-        "length": 84,
-        "expected_hex": "0100410025000E003A00000001009C0001000F002D0000000100E00054000E002B0000000100470001000F001E0000000100090041000E002E0001000100290051000E002E0001000100090001000E001E000100",
-        "replacement_hex": "01004100310066000E00000001004100210062000E0000000100410011007A000E0000000100B500550032000E00000001002D00510012002E00010001001900510012002E000100010005000100120036000100"
-      },
-      "records_9b_and_9c": {
-        "description": "Copy official NUN5 paired item-status records 0x9B and 0x9C.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x4B12A4"
-        ],
-        "length": 24,
-        "expected_hex": "0100680001000F001E0000000100CF0054000F002B000000",
-        "replacement_hex": "01003100510046000E0000000100310041004A000E000000"
-      }
-    }
-  },
-  "e__localization__ui_layout__item_status_single": {
-    "description": "Copy the localized single item-status records consumed by the resident runtime layout.",
-    "edits": {
-      "records_96_through_9a": {
-        "description": "Copy complete official NUN5 single-status records 0x96 through 0x9A as one guarded donor range.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x4B1268"
-        ],
-        "length": 60,
-        "expected_hex": "01005D00020021004600010001000100E1001E001E0002000100F00054000F002B0000000100570001000F001E0000000100AD000100100043000000",
-        "replacement_hex": "01001B00010024004E0001000100E100C1001E000E0002000100B10071003E000E0000000100AD0021000E002A0000000100410001007A000E000000"
-      }
-    }
-  },
-  "e__localization__ui_layout__jutsu_selector_arrows": {
-    "description": "Apply localized Jutsu-selector arrow records and draw-scoped rotation glue.",
-    "edits": {
-      "green_arrow_rectangle": {
-        "description": "Copy the official NUN5 localized green-arrow record (145,385,22,38) used by both rotated indicators.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20C9E0"
-        ],
-        "length": 8,
-        "expected_hex": "8B00010126001600",
-        "replacement_hex": "9100810116002600"
-      }
-    }
+    "description": "Copy the complete official NUN5 three-rank item-bubble offset table.",
+    "operation": "replace",
+    "destination_target_id": "na2_btl",
+    "destination_offsets": [
+      "0x1E4C90"
+    ],
+    "length": 24,
+    "expected_hex": "32000000ECFFFFFFF0FFFFFFC2FFFFFF1E00000098FFFFFF",
+    "replacement_hex": "14000000E2FFFFFFC0FFFFFFC1FFFFFF00000000A0FFFFFF"
   },
   "e__localization__ui_layout__mash_prompts": {
     "description": "Copy the complete official NUN5 English main-prompt rectangle table for localized battle input labels; leave the adjacent controller-glyph table at BTL offset 0x1DB770 untouched.",
@@ -1475,29 +1223,851 @@
     }
   },
   "e__localization__ui_layout__practice_settings_prompt": {
-    "description": "Apply the localized Practice Settings prompt.",
+    "description": "Copy the structurally equivalent official NUN5 Practice Settings X=100 instruction.",
+    "operation": "replace",
+    "destination_target_id": "na2_btl",
+    "destination_offsets": [
+      "0xCFA0"
+    ],
+    "length": 4,
+    "expected_hex": "7042023C",
+    "replacement_hex": "C842023C"
+  },
+  "e__localization__ui_layout__record_tables": {
+    "description": "Apply fixed-stride localized UI record-table patches.",
     "edits": {
-      "rectangle": {
-        "description": "Copy the official NUN5 English Practice Settings UV rectangle (0, 280, 176, 24).",
-        "operation": "replace",
+      "battle_prompt_rectangles": {
+        "description": "Patch localized rectangles in the shared battle prompt table.",
+        "operation": "replace_table",
         "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20C9D8"
-        ],
-        "length": 8,
-        "expected_hex": "0100190170001600",
-        "replacement_hex": "00001801B0001800"
+        "table_offset": "0x20C9C8",
+        "record_stride": 8,
+        "field_offset": 0,
+        "record_patches": {
+          "battle_settings": {
+            "record_index": 1,
+            "expected_hex": "0100010170001600",
+            "replacement_hex": "00000001A0001800"
+          },
+          "customize_jutsu": {
+            "record_index": 0,
+            "expected_hex": "0100E900A6001600",
+            "replacement_hex": "0000E800A8001800"
+          },
+          "green_arrow": {
+            "record_index": 3,
+            "expected_hex": "8B00010126001600",
+            "replacement_hex": "9100810116002600"
+          },
+          "jutsu_1_label": {
+            "record_index": 9,
+            "expected_hex": "010021002E001E00",
+            "replacement_hex": "010001003E001A00"
+          },
+          "jutsu_2_label": {
+            "record_index": 10,
+            "expected_hex": "310021002E001E00",
+            "replacement_hex": "410001003E001A00"
+          },
+          "jutsu_input_glyph_1": {
+            "record_index": 5,
+            "expected_hex": "6100210016001600",
+            "replacement_hex": "3500210016001600"
+          },
+          "jutsu_input_glyph_2": {
+            "record_index": 6,
+            "expected_hex": "7900210016001600",
+            "replacement_hex": "4D00210016001600"
+          },
+          "jutsu_input_glyph_3": {
+            "record_index": 7,
+            "expected_hex": "9100210016001600",
+            "replacement_hex": "6500210016001600"
+          },
+          "practice_settings": {
+            "record_index": 2,
+            "expected_hex": "0100190170001600",
+            "replacement_hex": "00001801B0001800"
+          },
+          "two_arrow_control": {
+            "record_index": 4,
+            "expected_hex": "7300010116002A00",
+            "replacement_hex": "9100A90116002A00"
+          }
+        }
       },
-      "x_100": {
-        "description": "Copy the structurally equivalent official NUN5 Practice Settings X=100 instruction.",
-        "operation": "replace",
+      "collection_action_rectangles": {
+        "description": "Patch the localized Collection Play and Stop rectangles.",
+        "operation": "replace_table",
+        "destination_target_id": "na2_etc",
+        "table_offset": "0x2E790",
+        "record_stride": 8,
+        "field_offset": 0,
+        "record_patches": {
+          "play": {
+            "record_index": 0,
+            "expected_hex": "7800180048001800",
+            "replacement_hex": "9000180048001800"
+          },
+          "stop": {
+            "record_index": 1,
+            "expected_hex": "7800300048001800",
+            "replacement_hex": "900030004C001800"
+          }
+        }
+      },
+      "collection_category_title_rectangles": {
+        "description": "Patch the localized Collection category-title rectangles.",
+        "operation": "replace_table",
+        "destination_target_id": "na2_etc",
+        "table_offset": "0x30490",
+        "record_stride": 8,
+        "field_offset": 0,
+        "record_patches": {
+          "characters": {
+            "record_index": 0,
+            "expected_hex": "01000100C0002200",
+            "replacement_hex": "00000000C0001C00"
+          },
+          "movie": {
+            "record_index": 1,
+            "expected_hex": "0100250088002200",
+            "replacement_hex": "00001C0060001C00"
+          },
+          "music": {
+            "record_index": 2,
+            "expected_hex": "0100530050002500",
+            "replacement_hex": "0000380060001C00"
+          }
+        }
+      },
+      "collection_home_label_x": {
+        "description": "Patch the Collection HOME action-label X fields.",
+        "operation": "replace_table",
+        "destination_target_id": "na2_etc",
+        "table_offset": "0x2E7F0",
+        "record_stride": 8,
+        "field_offset": 0,
+        "record_patches": {
+          "play": {
+            "record_index": 0,
+            "expected_hex": "00000CC2",
+            "replacement_hex": "00006CC2"
+          },
+          "stop": {
+            "record_index": 1,
+            "expected_hex": "00000CC2",
+            "replacement_hex": "000020C2"
+          }
+        }
+      },
+      "collection_root_footer_x": {
+        "description": "Patch the Collection-root footer X fields.",
+        "operation": "replace_table",
+        "destination_target_id": "na2_etc",
+        "table_offset": "0x2F010",
+        "record_stride": 8,
+        "field_offset": 0,
+        "record_patches": {
+          "cross": {
+            "record_index": 0,
+            "expected_hex": "0000BE43",
+            "replacement_hex": "0000B843"
+          },
+          "triangle": {
+            "record_index": 1,
+            "expected_hex": "0000E643",
+            "replacement_hex": "0000E243"
+          }
+        }
+      },
+      "common_prompt_records": {
+        "description": "Patch localized records in the shared frontend prompt table.",
+        "operation": "replace_table",
+        "destination_target_id": "na2_elf",
+        "table_offset": "0x4D4790",
+        "record_stride": 8,
+        "field_offset": 0,
+        "record_patches": {
+          "cancel_label": {
+            "record_index": 4,
+            "expected_hex": "0100310072001600",
+            "replacement_hex": "0100310038001600"
+          },
+          "cancel_tail": {
+            "record_index": 5,
+            "expected_hex": "010049002A001600",
+            "replacement_hex": "0000000000000000"
+          },
+          "cross_ok": {
+            "record_index": 0,
+            "expected_hex": "0100010046001600",
+            "replacement_hex": "0100010038001600"
+          },
+          "next": {
+            "record_index": 2,
+            "expected_hex": "2D00490046001600",
+            "replacement_hex": "2D00490042001600"
+          },
+          "triangle_back": {
+            "record_index": 1,
+            "expected_hex": "0100190046001600",
+            "replacement_hex": "0100190040001600"
+          },
+          "triangle_icon": {
+            "record_index": 6,
+            "expected_hex": "030019001A001600",
+            "replacement_hex": "0200180018001800"
+          }
+        }
+      },
+      "item_records": {
+        "description": "Patch localized entries in the shared resident item-record table.",
+        "operation": "replace_table",
+        "destination_target_id": "na2_elf",
+        "table_offset": "0x4B0B60",
+        "record_stride": 12,
+        "field_offset": 0,
+        "record_patches": {
+          "chakra_82": {
+            "record_index": 130,
+            "expected_hex": "01008A00010010003A000000",
+            "replacement_hex": "0100F10055000E002A000000"
+          },
+          "health_81": {
+            "record_index": 129,
+            "expected_hex": "0100790001000F0021000000",
+            "replacement_hex": "01003100610046000E000000"
+          },
+          "recovery_8d": {
+            "record_index": 141,
+            "expected_hex": "0100A100E1000E001E000200",
+            "replacement_hex": "0100A100D10032000A000200"
+          },
+          "status_8e": {
+            "record_index": 142,
+            "expected_hex": "0100410025000E003A000000",
+            "replacement_hex": "01004100310066000E000000"
+          },
+          "status_8f": {
+            "record_index": 143,
+            "expected_hex": "01009C0001000F002D000000",
+            "replacement_hex": "01004100210062000E000000"
+          },
+          "status_90": {
+            "record_index": 144,
+            "expected_hex": "0100E00054000E002B000000",
+            "replacement_hex": "0100410011007A000E000000"
+          },
+          "status_91": {
+            "record_index": 145,
+            "expected_hex": "0100470001000F001E000000",
+            "replacement_hex": "0100B500550032000E000000"
+          },
+          "status_92": {
+            "record_index": 146,
+            "expected_hex": "0100090041000E002E000100",
+            "replacement_hex": "01002D00510012002E000100"
+          },
+          "status_93": {
+            "record_index": 147,
+            "expected_hex": "0100290051000E002E000100",
+            "replacement_hex": "01001900510012002E000100"
+          },
+          "status_94": {
+            "record_index": 148,
+            "expected_hex": "0100090001000E001E000100",
+            "replacement_hex": "010005000100120036000100"
+          },
+          "status_96": {
+            "record_index": 150,
+            "expected_hex": "01005D000200210046000100",
+            "replacement_hex": "01001B00010024004E000100"
+          },
+          "status_97": {
+            "record_index": 151,
+            "expected_hex": "01000100E1001E001E000200",
+            "replacement_hex": "0100E100C1001E000E000200"
+          },
+          "status_98": {
+            "record_index": 152,
+            "expected_hex": "0100F00054000F002B000000",
+            "replacement_hex": "0100B10071003E000E000000"
+          },
+          "status_99": {
+            "record_index": 153,
+            "expected_hex": "0100570001000F001E000000",
+            "replacement_hex": "0100AD0021000E002A000000"
+          },
+          "status_9a": {
+            "record_index": 154,
+            "expected_hex": "0100AD000100100043000000",
+            "replacement_hex": "0100410001007A000E000000"
+          },
+          "status_9b": {
+            "record_index": 155,
+            "expected_hex": "0100680001000F001E000000",
+            "replacement_hex": "01003100510046000E000000"
+          },
+          "status_9c": {
+            "record_index": 156,
+            "expected_hex": "0100CF0054000F002B000000",
+            "replacement_hex": "0100310041004A000E000000"
+          },
+          "substitution_doll_0a": {
+            "record_index": 10,
+            "expected_hex": "0100A100C1001E001E000A00",
+            "replacement_hex": "0100A100E1001E001E000A00"
+          }
+        }
+      },
+      "round_label_glyph_rectangles": {
+        "description": "Patch the two Round-label glyph rectangle records.",
+        "operation": "replace_table",
         "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0xCFA0"
-        ],
-        "length": 4,
-        "expected_hex": "7042023C",
-        "replacement_hex": "C842023C"
+        "table_offset": "0x20C970",
+        "record_stride": 8,
+        "field_offset": 0,
+        "record_patches": {
+          "english_label": {
+            "record_index": 0,
+            "expected_hex": "A100410026002600",
+            "replacement_hex": "810001005E001E00"
+          },
+          "unused_second_glyph": {
+            "record_index": 1,
+            "expected_hex": "C900410026002600",
+            "replacement_hex": "0000000000000000"
+          }
+        }
+      },
+      "stage_select_name_rectangles": {
+        "description": "Patch the localized rectangle field in every Stage Select record.",
+        "operation": "replace_table",
+        "destination_target_id": "na2_btl",
+        "table_offset": "0x20FC10",
+        "record_stride": 16,
+        "field_offset": 8,
+        "record_patches": {
+          "stage_s01_logical_01": {
+            "record_index": 0,
+            "expected_hex": "00000000BE002800",
+            "replacement_hex": "00000000E8002000"
+          },
+          "stage_s02_logical_02": {
+            "record_index": 1,
+            "expected_hex": "BE00000090002800",
+            "replacement_hex": "E8000000E8002000"
+          },
+          "stage_s03_logical_23": {
+            "record_index": 2,
+            "expected_hex": "4E010000A8002800",
+            "replacement_hex": "0000200010012000"
+          },
+          "stage_s04_logical_24": {
+            "record_index": 3,
+            "expected_hex": "0000280086002800",
+            "replacement_hex": "10012000D0002000"
+          },
+          "stage_s05_logical_05": {
+            "record_index": 4,
+            "expected_hex": "860028008E002800",
+            "replacement_hex": "0000400058012000"
+          },
+          "stage_s06_logical_06": {
+            "record_index": 5,
+            "expected_hex": "14012800A4002800",
+            "replacement_hex": "58014000A0002000"
+          },
+          "stage_s07_logical_07": {
+            "record_index": 6,
+            "expected_hex": "00005000B4004400",
+            "replacement_hex": "00006000A8002000"
+          },
+          "stage_s08_logical_08": {
+            "record_index": 7,
+            "expected_hex": "B40050008C002800",
+            "replacement_hex": "A8006000F0002000"
+          },
+          "stage_s09_logical_09": {
+            "record_index": 8,
+            "expected_hex": "40015000BA004400",
+            "replacement_hex": "A800600120012800"
+          },
+          "stage_s10_logical_10": {
+            "record_index": 9,
+            "expected_hex": "0000940074002800",
+            "replacement_hex": "00008000C8002000"
+          },
+          "stage_s11_logical_11": {
+            "record_index": 10,
+            "expected_hex": "740094008C002800",
+            "replacement_hex": "C8008000D8002000"
+          },
+          "stage_s12_logical_12": {
+            "record_index": 11,
+            "expected_hex": "180194008E002800",
+            "replacement_hex": "0000A000D8002000"
+          },
+          "stage_s13_logical_13": {
+            "record_index": 12,
+            "expected_hex": "0000BC008C002800",
+            "replacement_hex": "D800A00000012000"
+          },
+          "stage_s14_logical_14": {
+            "record_index": 13,
+            "expected_hex": "8C00BC00AE004400",
+            "replacement_hex": "0000C00000012000"
+          },
+          "stage_s15_logical_15": {
+            "record_index": 14,
+            "expected_hex": "3A01BC00C2002800",
+            "replacement_hex": "0000E00030012000"
+          },
+          "stage_s16_logical_16": {
+            "record_index": 15,
+            "expected_hex": "0000000188002800",
+            "replacement_hex": "0001C00098002000"
+          },
+          "stage_s17_logical_17": {
+            "record_index": 16,
+            "expected_hex": "880000018C002800",
+            "replacement_hex": "3001E000A8002000"
+          },
+          "stage_s18_logical_18": {
+            "record_index": 17,
+            "expected_hex": "1401000174002800",
+            "replacement_hex": "00000001B0002000"
+          },
+          "stage_s19_logical_19": {
+            "record_index": 18,
+            "expected_hex": "00002801C0002800",
+            "replacement_hex": "B000000108012000"
+          },
+          "stage_s20_logical_20": {
+            "record_index": 19,
+            "expected_hex": "C000280174002800",
+            "replacement_hex": "0000200100012000"
+          },
+          "stage_s21_logical_21": {
+            "record_index": 20,
+            "expected_hex": "340128018C002800",
+            "replacement_hex": "00012001C0002000"
+          },
+          "stage_s22_logical_22": {
+            "record_index": 21,
+            "expected_hex": "A0016C015A002800",
+            "replacement_hex": "00006001A8002000"
+          },
+          "stage_s23_logical_03": {
+            "record_index": 22,
+            "expected_hex": "C0006C0184002800",
+            "replacement_hex": "0000400118012000"
+          },
+          "stage_s24_logical_04": {
+            "record_index": 23,
+            "expected_hex": "46016C015A002800",
+            "replacement_hex": "18014001B8002000"
+          }
+        }
+      },
+      "victory_name_descriptors": {
+        "description": "Patch behavior-equivalent localized Victory name descriptors.",
+        "operation": "replace_table",
+        "destination_target_id": "na2_btl",
+        "table_offset": "0x2161B0",
+        "record_stride": 32,
+        "field_offset": 0,
+        "record_patches": {
+          "character_ids_01_47_57_73_frame_0": {
+            "record_index": 0,
+            "expected_hex": "01000100EC003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010001009A003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_01_47_57_73_frame_1": {
+            "record_index": 1,
+            "expected_hex": "01004100AD003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100BE003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_02_48_93_frame_0": {
+            "record_index": 2,
+            "expected_hex": "01000100AE003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100A2003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_02_48_93_frame_1": {
+            "record_index": 3,
+            "expected_hex": "01004100B3003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010041009E003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_03_49_67_frame_0": {
+            "record_index": 4,
+            "expected_hex": "01000100C5003E00000000000000F8C10000000000000000",
+            "replacement_hex": "0100010076003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_03_49_67_frame_1": {
+            "record_index": 5,
+            "expected_hex": "0100410074003E00000000000000F8C10000000000000000",
+            "replacement_hex": "0100410056003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_04_50_frame_0": {
+            "record_index": 6,
+            "expected_hex": "01000100B3003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100BE003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_04_50_frame_1": {
+            "record_index": 7,
+            "expected_hex": "01004100B4003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100CA003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_05_68_frame_0": {
+            "record_index": 8,
+            "expected_hex": "0100010078003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100EA003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_05_68_frame_1": {
+            "record_index": 9,
+            "expected_hex": "01004100ED003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010041006E003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_06_65_frame_0": {
+            "record_index": 10,
+            "expected_hex": "0100010076003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010001005A003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_06_65_frame_1": {
+            "record_index": 11,
+            "expected_hex": "010041007C003E00000000000000F8C10000000000000000",
+            "replacement_hex": "0100410092003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_07_58_frame_0": {
+            "record_index": 12,
+            "expected_hex": "010001007B003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010001009E003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_07_58_frame_1": {
+            "record_index": 13,
+            "expected_hex": "01004100B3003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100A6003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_10_frame_0": {
+            "record_index": 18,
+            "expected_hex": "010001003C003E00000000000000F8C10000000000000000",
+            "replacement_hex": "0100010076003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_11_frame_0": {
+            "record_index": 19,
+            "expected_hex": "010001007A003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100A6003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_11_frame_1": {
+            "record_index": 20,
+            "expected_hex": "01004100B6003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100CA003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_12_80_frame_0": {
+            "record_index": 21,
+            "expected_hex": "0100010076003E00000000000000F8C10000000000000000",
+            "replacement_hex": "0100010092003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_12_80_frame_1": {
+            "record_index": 22,
+            "expected_hex": "01004100AD003E00000000000000F8C10000000000000000",
+            "replacement_hex": "0100410092003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_13_66_frame_0": {
+            "record_index": 23,
+            "expected_hex": "0100010080003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010001009E003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_14_51_81_frame_0": {
+            "record_index": 25,
+            "expected_hex": "010001007D003E00000000000000F8C10000000000000000",
+            "replacement_hex": "0100010076003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_14_51_81_frame_1": {
+            "record_index": 26,
+            "expected_hex": "01004100F0003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100C2003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_15_82_frame_0": {
+            "record_index": 27,
+            "expected_hex": "0100010080003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010001004A003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_15_82_frame_1": {
+            "record_index": 28,
+            "expected_hex": "010041007F003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100E2003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_16_78_frame_0": {
+            "record_index": 29,
+            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
+            "replacement_hex": "0100010066003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_16_78_frame_1": {
+            "record_index": 30,
+            "expected_hex": "0100410080003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100AE003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_17_79_frame_0": {
+            "record_index": 31,
+            "expected_hex": "010001007C003E00000000000000F8C10000000000000000",
+            "replacement_hex": "0100010082003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_17_79_frame_1": {
+            "record_index": 32,
+            "expected_hex": "010041007A003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100CA003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_18_60_frame_0": {
+            "record_index": 33,
+            "expected_hex": "01000100B0003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100B6003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_19_61_86_frame_0": {
+            "record_indices": [
+              35,
+              84
+            ],
+            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010001009A003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_22_frame_1": {
+            "record_index": 42,
+            "expected_hex": "010041008D003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100C6003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_34_52_frame_0": {
+            "record_index": 64,
+            "expected_hex": "01000100B6003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100EA003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_34_52_frame_1": {
+            "record_index": 65,
+            "expected_hex": "01004100B8003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100D2003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_35_53_frame_0": {
+            "record_index": 66,
+            "expected_hex": "01000100B5003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100E2003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_35_53_frame_1": {
+            "record_index": 67,
+            "expected_hex": "01004100B5003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100FE003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_36_54_frame_0": {
+            "record_index": 68,
+            "expected_hex": "01000100B6003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100BA003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_36_54_frame_1": {
+            "record_index": 69,
+            "expected_hex": "01004100B6003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100CE003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_37_55_frame_0": {
+            "record_index": 70,
+            "expected_hex": "01000100B5003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100EA003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_37_55_frame_1": {
+            "record_index": 71,
+            "expected_hex": "010041007D003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100C2003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_38_56_frame_0": {
+            "record_index": 72,
+            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100CE003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_39_frame_0": {
+            "record_index": 74,
+            "expected_hex": "01000100B9003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100F2003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_39_frame_1": {
+            "record_index": 75,
+            "expected_hex": "010041007D003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010041007A003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_40_frame_0": {
+            "record_index": 76,
+            "expected_hex": "01000100EF003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100EA003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_40_frame_1": {
+            "record_index": 77,
+            "expected_hex": "010041007E003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100E2003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_41_frame_0": {
+            "record_index": 78,
+            "expected_hex": "0100010078003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010001009A003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_41_frame_1": {
+            "record_index": 79,
+            "expected_hex": "01004100B8003E00000000000000F8C10000000000000000",
+            "replacement_hex": "0100410092003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_42_frame_0": {
+            "record_index": 80,
+            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100CA003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_42_frame_1": {
+            "record_index": 81,
+            "expected_hex": "010041007C003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100AA003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_43_frame_0": {
+            "record_index": 82,
+            "expected_hex": "01000100B4003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100F6003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_43_frame_1": {
+            "record_index": 83,
+            "expected_hex": "010041007E003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010041009E003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_46_frame_0": {
+            "record_index": 88,
+            "expected_hex": "01000100E5003E00000000000000F8C10000000000000000",
+            "replacement_hex": "0100010076003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_46_frame_1": {
+            "record_index": 89,
+            "expected_hex": "01004100AF003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100CE003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_59_frame_1": {
+            "record_index": 91,
+            "expected_hex": "01004100C5003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100B2003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_62_77_frame_0": {
+            "record_index": 92,
+            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100A2003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_62_77_frame_1": {
+            "record_index": 93,
+            "expected_hex": "0100410070003E00000000000000F8C10000000000000000",
+            "replacement_hex": "0100410082003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_63_75_76_frame_0": {
+            "record_index": 94,
+            "expected_hex": "01000100B7003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100EA003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_63_75_76_frame_1": {
+            "record_index": 95,
+            "expected_hex": "01004100AD003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100BA003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_64_frame_0": {
+            "record_index": 96,
+            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100AE003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_69_frame_0": {
+            "record_index": 37,
+            "expected_hex": "01000100C5003E00000000000000F8C10000000000000000",
+            "replacement_hex": "0100010082003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_69_frame_1": {
+            "record_index": 38,
+            "expected_hex": "010041007F003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010041005E003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_70_frame_0": {
+            "record_index": 14,
+            "expected_hex": "01000100B2003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100AE003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_70_frame_1": {
+            "record_index": 15,
+            "expected_hex": "01004100B0003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010041009E003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_71_frame_0": {
+            "record_index": 43,
+            "expected_hex": "01000100B6003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010001007E003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_71_frame_1": {
+            "record_index": 44,
+            "expected_hex": "01004100B7003F00000000000000FCC10000000000000000",
+            "replacement_hex": "010041009E003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_72_frame_0": {
+            "record_index": 98,
+            "expected_hex": "010001007D003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100A2003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_72_frame_1": {
+            "record_index": 99,
+            "expected_hex": "010041007D003F00000000000000FCC10000000000000000",
+            "replacement_hex": "01004100DA003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_83_frame_0": {
+            "record_index": 39,
+            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
+            "replacement_hex": "0100010096003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_84_frame_0": {
+            "record_index": 47,
+            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100C2003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_85_frame_0": {
+            "record_index": 50,
+            "expected_hex": "0100010080003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100B6003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_86_frame_1": {
+            "record_index": 85,
+            "expected_hex": "01004100B5003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100BE003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_87_frame_0": {
+            "record_index": 86,
+            "expected_hex": "010001007F003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100AA003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_87_frame_1": {
+            "record_index": 87,
+            "expected_hex": "0100410036003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010041006A003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_89_frame_0": {
+            "record_index": 16,
+            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01000100FE003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_90_frame_0": {
+            "record_index": 52,
+            "expected_hex": "010001007D003E00000000000000F8C10000000000000000",
+            "replacement_hex": "010001009E003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_90_frame_1": {
+            "record_index": 53,
+            "expected_hex": "01004100AE003E00000000000000F8C10000000000000000",
+            "replacement_hex": "01004100B2003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_91_frame_0": {
+            "record_index": 100,
+            "expected_hex": "010001007F003F00000000000000FCC10000000000000000",
+            "replacement_hex": "01000100AA003E00000000000000F8C10000000000000000"
+          },
+          "character_ids_92_frame_0": {
+            "record_index": 102,
+            "expected_hex": "0100010078003F00000000000000FCC10000000000000000",
+            "replacement_hex": "010001004A003E00000000000000F8C10000000000000000"
+          }
+        }
       }
     }
   },
@@ -1536,27 +2106,6 @@
         "expected_hex": "B33F033C33336334",
         "replacement_hex": "993F033C9A996334"
       },
-      "disable_second_glyph": {
-        "description": "Disable the second Japanese Round glyph after replacing the first with the one-part English label.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20C978"
-        ],
-        "expected_hex": "C900410026002600",
-        "replacement_hex": "0000000000000000"
-      },
-      "english_rectangle": {
-        "description": "Replace the first Japanese Round glyph rectangle with the official one-part NUN5 English Round rectangle (129,1,94,30).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20C970"
-        ],
-        "length": 8,
-        "expected_hex": "A100410026002600",
-        "replacement_hex": "810001005E001E00"
-      },
       "render_scale_1_2": {
         "description": "Copy the structurally equivalent official NUN5 1.2 Round render-scale instructions.",
         "operation": "replace",
@@ -1582,285 +2131,16 @@
     }
   },
   "e__localization__ui_layout__stage_select": {
-    "description": "Apply the complete localized Stage Select record set and guarded draw glue.",
-    "edits": {
-      "random_prompt_x": {
-        "description": "Copy NUN5's exact X=260 instruction for the Stage Select Random prompt item and companion sprite.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x61F40",
-          "0x61F64"
-        ],
-        "length": 4,
-        "expected_hex": "9643023C",
-        "replacement_hex": "8243023C"
-      },
-      "stage_s01_logical_01_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 0.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC18"
-        ],
-        "length": 8,
-        "expected_hex": "00000000BE002800",
-        "replacement_hex": "00000000E8002000"
-      },
-      "stage_s02_logical_02_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 1.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC28"
-        ],
-        "length": 8,
-        "expected_hex": "BE00000090002800",
-        "replacement_hex": "E8000000E8002000"
-      },
-      "stage_s03_logical_23_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 2.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC38"
-        ],
-        "length": 8,
-        "expected_hex": "4E010000A8002800",
-        "replacement_hex": "0000200010012000"
-      },
-      "stage_s04_logical_24_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 3.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC48"
-        ],
-        "length": 8,
-        "expected_hex": "0000280086002800",
-        "replacement_hex": "10012000D0002000"
-      },
-      "stage_s05_logical_05_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 4.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC58"
-        ],
-        "length": 8,
-        "expected_hex": "860028008E002800",
-        "replacement_hex": "0000400058012000"
-      },
-      "stage_s06_logical_06_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 5.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC68"
-        ],
-        "length": 8,
-        "expected_hex": "14012800A4002800",
-        "replacement_hex": "58014000A0002000"
-      },
-      "stage_s07_logical_07_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 6.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC78"
-        ],
-        "length": 8,
-        "expected_hex": "00005000B4004400",
-        "replacement_hex": "00006000A8002000"
-      },
-      "stage_s08_logical_08_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 7.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC88"
-        ],
-        "length": 8,
-        "expected_hex": "B40050008C002800",
-        "replacement_hex": "A8006000F0002000"
-      },
-      "stage_s09_logical_09_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 8.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FC98"
-        ],
-        "length": 8,
-        "expected_hex": "40015000BA004400",
-        "replacement_hex": "A800600120012800"
-      },
-      "stage_s10_logical_10_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 9.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FCA8"
-        ],
-        "length": 8,
-        "expected_hex": "0000940074002800",
-        "replacement_hex": "00008000C8002000"
-      },
-      "stage_s11_logical_11_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 10.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FCB8"
-        ],
-        "length": 8,
-        "expected_hex": "740094008C002800",
-        "replacement_hex": "C8008000D8002000"
-      },
-      "stage_s12_logical_12_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 11.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FCC8"
-        ],
-        "length": 8,
-        "expected_hex": "180194008E002800",
-        "replacement_hex": "0000A000D8002000"
-      },
-      "stage_s13_logical_13_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 12.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FCD8"
-        ],
-        "length": 8,
-        "expected_hex": "0000BC008C002800",
-        "replacement_hex": "D800A00000012000"
-      },
-      "stage_s14_logical_14_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 13.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FCE8"
-        ],
-        "length": 8,
-        "expected_hex": "8C00BC00AE004400",
-        "replacement_hex": "0000C00000012000"
-      },
-      "stage_s15_logical_15_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 14.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FCF8"
-        ],
-        "length": 8,
-        "expected_hex": "3A01BC00C2002800",
-        "replacement_hex": "0000E00030012000"
-      },
-      "stage_s16_logical_16_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 15.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD08"
-        ],
-        "length": 8,
-        "expected_hex": "0000000188002800",
-        "replacement_hex": "0001C00098002000"
-      },
-      "stage_s17_logical_17_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 16.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD18"
-        ],
-        "length": 8,
-        "expected_hex": "880000018C002800",
-        "replacement_hex": "3001E000A8002000"
-      },
-      "stage_s18_logical_18_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 17.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD28"
-        ],
-        "length": 8,
-        "expected_hex": "1401000174002800",
-        "replacement_hex": "00000001B0002000"
-      },
-      "stage_s19_logical_19_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 18.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD38"
-        ],
-        "length": 8,
-        "expected_hex": "00002801C0002800",
-        "replacement_hex": "B000000108012000"
-      },
-      "stage_s20_logical_20_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 19.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD48"
-        ],
-        "length": 8,
-        "expected_hex": "C000280174002800",
-        "replacement_hex": "0000200100012000"
-      },
-      "stage_s21_logical_21_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 20.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD58"
-        ],
-        "length": 8,
-        "expected_hex": "340128018C002800",
-        "replacement_hex": "00012001C0002000"
-      },
-      "stage_s22_logical_22_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 21.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD68"
-        ],
-        "length": 8,
-        "expected_hex": "A0016C015A002800",
-        "replacement_hex": "00006001A8002000"
-      },
-      "stage_s23_logical_03_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 22.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD78"
-        ],
-        "length": 8,
-        "expected_hex": "C0006C0184002800",
-        "replacement_hex": "0000400118012000"
-      },
-      "stage_s24_logical_04_name_rectangle": {
-        "description": "Copy official NUN5 stage-name UV rectangle row 23.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20FD88"
-        ],
-        "length": 8,
-        "expected_hex": "46016C015A002800",
-        "replacement_hex": "18014001B8002000"
-      }
-    }
+    "description": "Copy NUN5's exact X=260 instruction for the Stage Select Random prompt item and companion sprite.",
+    "operation": "replace",
+    "destination_target_id": "na2_btl",
+    "destination_offsets": [
+      "0x61F40",
+      "0x61F64"
+    ],
+    "length": 4,
+    "expected_hex": "9643023C",
+    "replacement_hex": "8243023C"
   },
   "e__localization__ui_layout__ultimate_jutsu_label": {
     "description": "Match the one-part English OUGI label layout used by both NUN5 and NUN6.",
@@ -1872,796 +2152,9 @@
     "expected_hex": "0200422A",
     "replacement_hex": "0100422A"
   },
-  "e__localization__ui_layout__victory_names": {
-    "description": "Apply the complete localized Victory name descriptor set.",
-    "edits": {
-      "character_ids_01_47_57_73_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 1/f0, 47/f0, 57/f0, 73/f0 supply atlas width 156; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 156-2=154.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2161B0"
-        ],
-        "expected_hex": "01000100EC003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010001009A003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_01_47_57_73_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 1/f1, 47/f1, 57/f1, 73/f1 supply atlas width 192; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 192-2=190.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2161D0"
-        ],
-        "expected_hex": "01004100AD003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100BE003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_02_48_93_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 2/f0, 48/f0, 93/f0 supply atlas width 164; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 164-2=162.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2161F0"
-        ],
-        "expected_hex": "01000100AE003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100A2003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_02_48_93_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 2/f1, 48/f1, 93/f1 supply atlas width 160; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 160-2=158.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216210"
-        ],
-        "expected_hex": "01004100B3003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010041009E003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_03_49_67_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 3/f0, 49/f0, 67/f0 supply atlas width 120; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 120-2=118.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216230"
-        ],
-        "expected_hex": "01000100C5003E00000000000000F8C10000000000000000",
-        "replacement_hex": "0100010076003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_03_49_67_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 3/f1, 49/f1, 67/f1 supply atlas width 88; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 88-2=86.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216250"
-        ],
-        "expected_hex": "0100410074003E00000000000000F8C10000000000000000",
-        "replacement_hex": "0100410056003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_04_50_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 4/f0, 50/f0 supply atlas width 192; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 192-2=190.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216270"
-        ],
-        "expected_hex": "01000100B3003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100BE003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_04_50_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 4/f1, 50/f1 supply atlas width 204; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 204-2=202.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216290"
-        ],
-        "expected_hex": "01004100B4003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100CA003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_05_68_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 5/f0, 68/f0 supply atlas width 236; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 236-2=234.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2162B0"
-        ],
-        "expected_hex": "0100010078003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100EA003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_05_68_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 5/f1, 68/f1 supply atlas width 112; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 112-2=110.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2162D0"
-        ],
-        "expected_hex": "01004100ED003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010041006E003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_06_65_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 6/f0, 65/f0 supply atlas width 92; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 92-2=90.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2162F0"
-        ],
-        "expected_hex": "0100010076003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010001005A003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_06_65_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 6/f1, 65/f1 supply atlas width 148; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 148-2=146.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216310"
-        ],
-        "expected_hex": "010041007C003E00000000000000F8C10000000000000000",
-        "replacement_hex": "0100410092003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_07_58_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 7/f0, 58/f0 supply atlas width 160; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 160-2=158.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216330"
-        ],
-        "expected_hex": "010001007B003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010001009E003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_07_58_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 7/f1, 58/f1 supply atlas width 168; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 168-2=166.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216350"
-        ],
-        "expected_hex": "01004100B3003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100A6003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_10_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 10/f0 supply atlas width 120; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 120-2=118.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2163F0"
-        ],
-        "expected_hex": "010001003C003E00000000000000F8C10000000000000000",
-        "replacement_hex": "0100010076003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_11_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 11/f0 supply atlas width 168; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 168-2=166.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216410"
-        ],
-        "expected_hex": "010001007A003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100A6003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_11_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 11/f1 supply atlas width 204; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 204-2=202.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216430"
-        ],
-        "expected_hex": "01004100B6003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100CA003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_12_80_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 12/f0, 80/f0 supply atlas width 148; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 148-2=146.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216450"
-        ],
-        "expected_hex": "0100010076003E00000000000000F8C10000000000000000",
-        "replacement_hex": "0100010092003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_12_80_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 12/f1, 80/f1 supply atlas width 148; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 148-2=146.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216470"
-        ],
-        "expected_hex": "01004100AD003E00000000000000F8C10000000000000000",
-        "replacement_hex": "0100410092003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_13_66_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 13/f0, 66/f0 supply atlas width 160; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 160-2=158.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216490"
-        ],
-        "expected_hex": "0100010080003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010001009E003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_14_51_81_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 14/f0, 51/f0, 81/f0 supply atlas width 120; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 120-2=118.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2164D0"
-        ],
-        "expected_hex": "010001007D003E00000000000000F8C10000000000000000",
-        "replacement_hex": "0100010076003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_14_51_81_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 14/f1, 51/f1, 81/f1 supply atlas width 196; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 196-2=194.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2164F0"
-        ],
-        "expected_hex": "01004100F0003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100C2003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_15_82_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 15/f0, 82/f0 supply atlas width 76; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 76-2=74.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216510"
-        ],
-        "expected_hex": "0100010080003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010001004A003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_15_82_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 15/f1, 82/f1 supply atlas width 228; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 228-2=226.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216530"
-        ],
-        "expected_hex": "010041007F003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100E2003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_16_78_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 16/f0, 78/f0 supply atlas width 104; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 104-2=102.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216550"
-        ],
-        "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-        "replacement_hex": "0100010066003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_16_78_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 16/f1, 78/f1 supply atlas width 176; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 176-2=174.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216570"
-        ],
-        "expected_hex": "0100410080003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100AE003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_17_79_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 17/f0, 79/f0 supply atlas width 132; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 132-2=130.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216590"
-        ],
-        "expected_hex": "010001007C003E00000000000000F8C10000000000000000",
-        "replacement_hex": "0100010082003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_17_79_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 17/f1, 79/f1 supply atlas width 204; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 204-2=202.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2165B0"
-        ],
-        "expected_hex": "010041007A003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100CA003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_18_60_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 18/f0, 60/f0 supply atlas width 184; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 184-2=182.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2165D0"
-        ],
-        "expected_hex": "01000100B0003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100B6003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_19_61_86_frame_0_descriptor": {
-        "description": "Use the NUN5 frame-0 template with atlas width 156 and renderer width 154 for all matching Victory name descriptors.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216610",
-          "0x216C30"
-        ],
-        "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010001009A003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_22_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 22/f1 supply atlas width 200; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 200-2=198.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2166F0"
-        ],
-        "expected_hex": "010041008D003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100C6003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_34_52_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 34/f0, 52/f0 supply atlas width 236; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 236-2=234.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2169B0"
-        ],
-        "expected_hex": "01000100B6003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100EA003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_34_52_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 34/f1, 52/f1 supply atlas width 212; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 212-2=210.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2169D0"
-        ],
-        "expected_hex": "01004100B8003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100D2003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_35_53_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 35/f0, 53/f0 supply atlas width 228; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 228-2=226.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2169F0"
-        ],
-        "expected_hex": "01000100B5003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100E2003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_35_53_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 35/f1, 53/f1 supply atlas width 256; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 256-2=254.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216A10"
-        ],
-        "expected_hex": "01004100B5003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100FE003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_36_54_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 36/f0, 54/f0 supply atlas width 188; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 188-2=186.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216A30"
-        ],
-        "expected_hex": "01000100B6003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100BA003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_36_54_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 36/f1, 54/f1 supply atlas width 208; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 208-2=206.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216A50"
-        ],
-        "expected_hex": "01004100B6003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100CE003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_37_55_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 37/f0, 55/f0 supply atlas width 236; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 236-2=234.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216A70"
-        ],
-        "expected_hex": "01000100B5003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100EA003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_37_55_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 37/f1, 55/f1 supply atlas width 196; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 196-2=194.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216A90"
-        ],
-        "expected_hex": "010041007D003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100C2003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_38_56_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 38/f0, 56/f0 supply atlas width 208; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 208-2=206.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216AB0"
-        ],
-        "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100CE003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_39_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 39/f0 supply atlas width 244; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 244-2=242.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216AF0"
-        ],
-        "expected_hex": "01000100B9003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100F2003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_39_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 39/f1 supply atlas width 124; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 124-2=122.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216B10"
-        ],
-        "expected_hex": "010041007D003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010041007A003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_40_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 40/f0 supply atlas width 236; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 236-2=234.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216B30"
-        ],
-        "expected_hex": "01000100EF003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100EA003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_40_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 40/f1 supply atlas width 228; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 228-2=226.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216B50"
-        ],
-        "expected_hex": "010041007E003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100E2003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_41_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 41/f0 supply atlas width 156; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 156-2=154.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216B70"
-        ],
-        "expected_hex": "0100010078003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010001009A003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_41_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 41/f1 supply atlas width 148; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 148-2=146.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216B90"
-        ],
-        "expected_hex": "01004100B8003E00000000000000F8C10000000000000000",
-        "replacement_hex": "0100410092003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_42_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 42/f0 supply atlas width 204; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 204-2=202.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216BB0"
-        ],
-        "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100CA003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_42_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 42/f1 supply atlas width 172; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 172-2=170.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216BD0"
-        ],
-        "expected_hex": "010041007C003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100AA003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_43_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 43/f0 supply atlas width 248; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 248-2=246.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216BF0"
-        ],
-        "expected_hex": "01000100B4003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100F6003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_43_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 43/f1 supply atlas width 160; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 160-2=158.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216C10"
-        ],
-        "expected_hex": "010041007E003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010041009E003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_46_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 46/f0 supply atlas width 120; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 120-2=118.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216CB0"
-        ],
-        "expected_hex": "01000100E5003E00000000000000F8C10000000000000000",
-        "replacement_hex": "0100010076003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_46_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 46/f1 supply atlas width 208; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 208-2=206.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216CD0"
-        ],
-        "expected_hex": "01004100AF003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100CE003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_59_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 59/f1 supply atlas width 180; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 180-2=178.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216D10"
-        ],
-        "expected_hex": "01004100C5003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100B2003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_62_77_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 62/f0, 77/f0 supply atlas width 164; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 164-2=162.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216D30"
-        ],
-        "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100A2003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_62_77_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 62/f1, 77/f1 supply atlas width 132; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 132-2=130.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216D50"
-        ],
-        "expected_hex": "0100410070003E00000000000000F8C10000000000000000",
-        "replacement_hex": "0100410082003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_63_75_76_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 63/f0, 75/f0, 76/f0 supply atlas width 236; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 236-2=234.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216D70"
-        ],
-        "expected_hex": "01000100B7003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100EA003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_63_75_76_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 63/f1, 75/f1, 76/f1 supply atlas width 188; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 188-2=186.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216D90"
-        ],
-        "expected_hex": "01004100AD003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100BA003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_64_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 64/f0 supply atlas width 176; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 176-2=174.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216DB0"
-        ],
-        "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100AE003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_69_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 69/f0 supply atlas width 132; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 132-2=130.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216650"
-        ],
-        "expected_hex": "01000100C5003E00000000000000F8C10000000000000000",
-        "replacement_hex": "0100010082003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_69_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 69/f1 supply atlas width 96; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 96-2=94.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216670"
-        ],
-        "expected_hex": "010041007F003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010041005E003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_70_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 70/f0 supply atlas width 176; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 176-2=174.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216370"
-        ],
-        "expected_hex": "01000100B2003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100AE003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_70_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 70/f1 supply atlas width 160; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 160-2=158.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216390"
-        ],
-        "expected_hex": "01004100B0003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010041009E003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_71_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 71/f0 supply atlas width 128; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 128-2=126.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216710"
-        ],
-        "expected_hex": "01000100B6003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010001007E003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_71_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 71/f1 supply atlas width 160; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 160-2=158.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216730"
-        ],
-        "expected_hex": "01004100B7003F00000000000000FCC10000000000000000",
-        "replacement_hex": "010041009E003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_72_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 72/f0 supply atlas width 164; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 164-2=162.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216DF0"
-        ],
-        "expected_hex": "010001007D003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100A2003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_72_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 72/f1 supply atlas width 220; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 220-2=218.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216E10"
-        ],
-        "expected_hex": "010041007D003F00000000000000FCC10000000000000000",
-        "replacement_hex": "01004100DA003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_83_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 83/f0 supply atlas width 152; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 152-2=150.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216690"
-        ],
-        "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-        "replacement_hex": "0100010096003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_84_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 84/f0 supply atlas width 196; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 196-2=194.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216790"
-        ],
-        "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100C2003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_85_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 85/f0 supply atlas width 184; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 184-2=182.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2167F0"
-        ],
-        "expected_hex": "0100010080003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100B6003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_86_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 86/f1 supply atlas width 192; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 192-2=190.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216C50"
-        ],
-        "expected_hex": "01004100B5003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100BE003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_87_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 87/f0 supply atlas width 172; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 172-2=170.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216C70"
-        ],
-        "expected_hex": "010001007F003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100AA003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_87_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 87/f1 supply atlas width 108; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 108-2=106.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216C90"
-        ],
-        "expected_hex": "0100410036003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010041006A003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_89_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 89/f0 supply atlas width 256; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 256-2=254.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x2163B0"
-        ],
-        "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01000100FE003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_90_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 90/f0 supply atlas width 160; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 160-2=158.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216830"
-        ],
-        "expected_hex": "010001007D003E00000000000000F8C10000000000000000",
-        "replacement_hex": "010001009E003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_90_frame_1_descriptor": {
-        "description": "NUN5 English width row(s) 90/f1 supply atlas width 180; derive the complete NA2 descriptor from NUN5 frame-1 template 0x21B9E0 and its renderer width 180-2=178.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216850"
-        ],
-        "expected_hex": "01004100AE003E00000000000000F8C10000000000000000",
-        "replacement_hex": "01004100B2003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_91_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 91/f0 supply atlas width 172; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 172-2=170.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216E30"
-        ],
-        "expected_hex": "010001007F003F00000000000000FCC10000000000000000",
-        "replacement_hex": "01000100AA003E00000000000000F8C10000000000000000"
-      },
-      "character_ids_92_frame_0_descriptor": {
-        "description": "NUN5 English width row(s) 92/f0 supply atlas width 76; derive the complete NA2 descriptor from NUN5 frame-0 template 0x21B9C0 and its renderer width 76-2=74.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x216E70"
-        ],
-        "expected_hex": "0100010078003F00000000000000FCC10000000000000000",
-        "replacement_hex": "010001004A003E00000000000000F8C10000000000000000"
-      }
-    }
-  },
   "e__localization__ui_layout__vs_confirmation": {
     "description": "Apply localized VS confirmation labels, prompts, input glyphs, and placement glue.",
     "edits": {
-      "battle_settings_rectangle": {
-        "description": "Copy the official NUN5 Battle Settings rectangle (0,256,160,24).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20C9D0"
-        ],
-        "length": 8,
-        "expected_hex": "0100010170001600",
-        "replacement_hex": "00000001A0001800"
-      },
       "battle_settings_x_94": {
         "description": "Move Battle Settings from X=60 to the official NUN5 X=94 anchor so the localized 160-pixel prompt is not clipped.",
         "operation": "replace",
@@ -2671,17 +2164,6 @@
         ],
         "expected_hex": "7042023C",
         "replacement_hex": "BC42023C"
-      },
-      "customize_jutsu_rectangle": {
-        "description": "Copy the official NUN5 Customize Jutsu rectangle (0,232,168,24).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20C9C8"
-        ],
-        "length": 8,
-        "expected_hex": "0100E900A6001600",
-        "replacement_hex": "0000E800A8001800"
       },
       "customize_jutsu_x_260": {
         "description": "Copy only NUN5's X=260 immediate halfword while preserving NA2's v0 destination register; exact runtime testing proved the full prompt does not wrap.",
@@ -2714,61 +2196,6 @@
         "expected_hex": "01000624",
         "replacement_hex": "2D300000"
       },
-      "jutsu_1_label_rectangle": {
-        "description": "Copy the official NUN5 Jutsu1 label rectangle (1,1,62,26).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20CA10"
-        ],
-        "length": 8,
-        "expected_hex": "010021002E001E00",
-        "replacement_hex": "010001003E001A00"
-      },
-      "jutsu_2_label_rectangle": {
-        "description": "Copy the official NUN5 Jutsu2 label rectangle (65,1,62,26).",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20CA18"
-        ],
-        "length": 8,
-        "expected_hex": "310021002E001E00",
-        "replacement_hex": "410001003E001A00"
-      },
-      "jutsu_input_glyph_1_rectangle": {
-        "description": "Copy official NUN5 Jutsu input-glyph rectangle 1.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20C9F0"
-        ],
-        "length": 8,
-        "expected_hex": "6100210016001600",
-        "replacement_hex": "3500210016001600"
-      },
-      "jutsu_input_glyph_2_rectangle": {
-        "description": "Copy official NUN5 Jutsu input-glyph rectangle 2.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20C9F8"
-        ],
-        "length": 8,
-        "expected_hex": "7900210016001600",
-        "replacement_hex": "4D00210016001600"
-      },
-      "jutsu_input_glyph_3_rectangle": {
-        "description": "Copy official NUN5 Jutsu input-glyph rectangle 3.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20CA00"
-        ],
-        "length": 8,
-        "expected_hex": "9100210016001600",
-        "replacement_hex": "6500210016001600"
-      },
       "jutsu_input_glyph_offset_40_accumulate": {
         "description": "Copy the structurally equivalent official NUN5 instruction that moves the 40-pixel offset into the input accumulator.",
         "operation": "replace",
@@ -2790,28 +2217,6 @@
         "length": 4,
         "expected_hex": "00008044",
         "replacement_hex": "2042033C"
-      },
-      "ok_back_prompt_records": {
-        "description": "Copy the complete official NUN5 Cross/OK and Triangle/Back records (56x22 and 64x22) into NA2's homologous boot-ELF table.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offsets": [
-          "0x4D4790"
-        ],
-        "length": 16,
-        "expected_hex": "01000100460016000100190046001600",
-        "replacement_hex": "01000100380016000100190040001600"
-      },
-      "two_arrow_control_rectangle": {
-        "description": "Copy the official NUN5 two-arrow control rectangle and remove the unrelated atlas strip drawn by NA2's regional coordinates.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0x20C9E8"
-        ],
-        "length": 8,
-        "expected_hex": "7300010116002A00",
-        "replacement_hex": "9100A90116002A00"
       }
     }
   },

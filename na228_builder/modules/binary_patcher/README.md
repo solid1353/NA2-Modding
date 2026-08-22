@@ -3,9 +3,11 @@
 This internal engine applies selected guarded edits to verified clean binaries.
 `@builder/catalog/edits.json` owns production edit roots; feature files under
 `@builder/catalog/` assign their IDs to selectable leaves. A root is either one
-primitive edit or a semantic group with named primitive children under its
-`edits` map. The TSV files in `operations/` define each primitive operation's
-allowed fields and basic types. Root and child maps are serialized
+primitive edit, one fixed-stride table replacement, or a semantic group with
+named primitive and table children under its `edits` map. The catalog loader
+expands table records before this module receives them. The TSV files in
+`operations/` define each primitive operation's allowed fields and basic types.
+Root and child maps are serialized
 alphabetically. Every root identity uses the `e__` prefix and its catalog
 ownership path; grouped child identities name the semantic edit within
 that root. Catalog settings reference root identities through their single
@@ -31,6 +33,10 @@ guarded file edits.
 - Every primitive catalog edit uses a nonempty unique `destination_offsets` list.
   Multiple offsets expand into independently guarded and logged concrete edits
   with otherwise identical behavior.
+- A catalog `replace_table` records one target, table base, stride, field offset,
+  and semantic record map. The catalog loader validates its fixed record shape
+  and expands it into ordinary guarded `replace` edits; the binary patcher has
+  no table-specific execution path.
 - A grouped root contains a nonempty, one-level map of semantic child edits.
   The catalog loader expands it before operation validation, so the binary
   patcher receives the same concrete edit model as a flat primitive root.
@@ -60,9 +66,9 @@ guarded file edits.
 
 ## Production use
 
-The catalog loader expands grouped roots, validates every primitive against its
-operation manifest, resolves the shared target registry, and constructs the
-engine's in-memory package.
+The catalog loader expands grouped roots and fixed-stride tables, validates
+every resulting primitive against its operation manifest, resolves the shared
+target registry, and constructs the engine's in-memory package.
 Normal builds do not load separate binary-patcher TSV data packages. Build logs
 retain the selected edit inventory and before/after hashes beneath the
 configuration build record.

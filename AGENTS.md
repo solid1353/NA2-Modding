@@ -125,7 +125,7 @@ Canonical project command definitions and their workflow or procedure routing
 are in [`AGENT_COMMANDS.md`](AGENT_COMMANDS.md).
 
 Command index: `des mode`, `design mode`, `int mode`, `interactive mode`,
-`snap`, `imp`, `ver`, `exit`, `zxc`, `tasks`, `task done`, `c`, `c on`, `c off`,
+`snap`, `ver`, `exit`, `zxc`, `tasks`, `task done`, `c`, `c on`, `c off`,
 `mode`, `n`, `imm`, `e2e`, `sum`, `ss`, `mute`, `unmute`.
 
 ### Policy routing

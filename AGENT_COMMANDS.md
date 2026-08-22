@@ -15,8 +15,6 @@ does not document the `na228` or Workshop command-line interfaces; use
 ## Approval and task control
 
 - `snap`: present the current consolidated implementation snapshot.
-- `imp`: authorize implementation of the current consolidated proposal.
-  Follow the active interaction mode's implementation behavior.
 - `ver`: accept the current pending result and follow the active interaction mode's
   acceptance behavior.
 - `exit`: exit Design mode or Interactive mode without accepting the result

@@ -118,8 +118,11 @@ auxiliary metadata object at `0x0059C7A0`:
 | T2211 `Demon Wind Bomb` | `0x35` | `0x005A24C8` | `0x0059C72C` (array index 3) | `0x0035001A` | `2nrocha1.ccs` |
 
 Stores at `0x005D88E8` and `0x005D88F4` write those display-record pointers as
-auxiliary action base `+0x54` and `+0xFC`. In each record, the low halfword at
-`+0x0C` is direct owner `0x1A`; the high halfword is the selector ID.
+auxiliary action base `+0x54` and `+0xFC`. `FUN_00307ED0` derives a selector's
+native paired owner as `selector >> 1` and requires the record's low halfword at
+`+0x0C` to match it. Both records therefore encode native metadata owner
+`0x1A`; the high halfword is the selector ID. Owner `0x1A` is not a playable
+character entry. Classic Naruto's runtime character ID is `0x01`.
 
 T2210 has an explicit cross-character compatibility exception. Selector
 `0x34` appears in the special-selector list at `0x005C0C70`, and the exception
@@ -134,6 +137,26 @@ special-selector list. Its only metadata-compatible character is direct owner
 Consequently, ordinary Jutsu Select cannot admit `Demon Wind Bomb`, even when
 all saved availability bits are forced available; the override is downstream
 of this failed compatibility gate.
+
+#### Candidate Classic Naruto assignment
+
+Classic Naruto (`0x01`) is the deliberately selected recipient, not the clean
+selector's native metadata owner. A rejected data-only candidate appended
+selector `0x35` to the special-selector array and Classic Naruto's per-character
+list. Slot-1 runtime evidence under build CRC `ED4F0A84` confirmed that all
+three candidate words were resident, but `Demon Wind Bomb` remained absent.
+Re-reading `FUN_001FF8D0` established why: the per-character lists are
+exclusions. Finding selector `0x35` in Classic Naruto's list returns false, so
+the candidate explicitly rejected the requested pair.
+
+Candidate injection `i__qol__content__unlock_all__demon_wind_bomb` instead
+guards the native special-compatibility call at runtime `0x001F7254` / ELF
+offset `0xF7354` (clean call bytes `34FE070C`). Its wrapper returns true only
+for character `0x01` with selector `0x35`; every other pair delegates to clean
+`FUN_001FF8D0`. The existing downstream `qol.content.unlock_all` Jutsu hook
+then reports the admitted pair available without changing saved progress or
+exposing the selector to other characters. Runtime validation of the corrected
+candidate remains pending.
 
 The selector nevertheless has complete generic consumers. Jutsu Select row
 compositor `FUN_006bcb30` resolves a selected title through `FUN_00885f00` and

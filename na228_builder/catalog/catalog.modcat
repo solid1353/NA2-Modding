@@ -258,6 +258,7 @@
         unlock_all: setting {
           description: "Expose the characters, supports, stages, jutsu, Shop items, and Collection entries present in a fully unlocked save without changing saved progress, currency, inventory, or settings.",
           patches: [
+            "i__qol__content__unlock_all__demon_wind_bomb",
             "i__qol__content__unlock_all__availability",
           ],
         },

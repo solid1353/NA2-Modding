@@ -2101,6 +2101,35 @@
       }
     }
   },
+  "i__qol__content__unlock_all__demon_wind_bomb": {
+    "description": "Assign the dormant Demon Wind Bomb selector only to Classic Naruto while preserving native compatibility for every other character-and-Jutsu pair.",
+    "hooks": {
+      "route_demon_wind_bomb_through_classic_naruto_assignment": {
+        "description": "Replace the native special-compatibility call with a wrapper that admits only Classic Naruto for selector 0x35 and delegates every other pair unchanged.",
+        "target_id": "na2_elf",
+        "offset": "0xF7354",
+        "expected_hex": "34FE070C",
+        "symbol": "compatibility",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "demon_wind_bomb": {
+        "kind": "c",
+        "path": "src/qol/demon_wind_bomb.c",
+        "namespace": "qol.content.unlock.all.demon.wind.bomb",
+        "imports": {},
+        "fragments": {
+          "compatibility": {
+            "order": 126,
+            "object": "qol.content.unlock.all.demon.wind.bomb.text.qol.demon.wind.bomb.compatibility",
+            "abi": "character_id_jutsu_id",
+            "description": "Admit Demon Wind Bomb only for Classic Naruto and retain the native special-compatibility result for every other pair."
+          }
+        }
+      }
+    }
+  },
   "i__qol__content__unlock_all__availability": {
     "description": "Report the fully unlocked reference save's content availability and Ultimate difficulty gate through bounded read-only helpers without changing the live save structure.",
     "hooks": {

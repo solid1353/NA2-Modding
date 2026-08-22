@@ -107,6 +107,69 @@ def _startup_frames(value: object, label: str) -> int:
     return value
 
 
+def _validate_build_targets(value: object) -> None:
+    if not isinstance(value, dict) or not value:
+        raise ValueError("Settings builds must be a non-empty object")
+    configurations: dict[str, str | None] = {}
+    rotations: dict[str, str] = {}
+    rotation_destinations: dict[str, str] = {}
+    for name, raw_target in value.items():
+        if not isinstance(name, str) or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_]*", name) is None:
+            raise ValueError(f"Settings has invalid build target name: {name!r}")
+        if not isinstance(raw_target, dict):
+            raise ValueError(f"Settings builds.{name} must be an object")
+        raw_configuration = raw_target.get("configuration")
+        if raw_configuration is not None and (
+            not isinstance(raw_configuration, str)
+            or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", raw_configuration) is None
+        ):
+            raise ValueError(
+                f"Settings builds.{name}.configuration is invalid: "
+                f"{raw_configuration!r}"
+            )
+        configurations[name.casefold()] = raw_configuration
+        raw_rotation = raw_target.get("rotate_to")
+        if raw_rotation is None:
+            continue
+        if (
+            not isinstance(raw_rotation, str)
+            or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_]*", raw_rotation) is None
+            or raw_rotation.casefold() == name.casefold()
+        ):
+            raise ValueError(
+                f"Settings builds.{name}.rotate_to is invalid: {raw_rotation!r}"
+            )
+        destination = raw_rotation.casefold()
+        if destination in rotation_destinations:
+            raise ValueError(
+                f"Settings build targets {rotation_destinations[destination]!r} "
+                f"and {name!r} both rotate to {raw_rotation!r}"
+            )
+        rotations[name.casefold()] = raw_rotation
+        rotation_destinations[destination] = name
+    for source, destination_name in rotations.items():
+        if configurations[source] is None:
+            raise ValueError(
+                f"Settings buildable target {source!r} requires a configuration"
+            )
+        destination = destination_name.casefold()
+        if destination not in configurations:
+            raise ValueError(
+                f"Settings build target {source!r} rotates to unknown target "
+                f"{destination_name!r}"
+            )
+        if configurations[destination] is not None:
+            raise ValueError(
+                f"Settings rotation target {destination_name!r} must not define "
+                "a configuration"
+            )
+    for name, configuration in configurations.items():
+        if configuration is None and name not in rotation_destinations:
+            raise ValueError(
+                f"Settings buildable target {name!r} requires a configuration"
+            )
+
+
 def _read_settings(path: Path) -> tuple[str, str, tuple[int, ...]]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
@@ -156,6 +219,7 @@ def _read_settings(path: Path) -> tuple[str, str, tuple[int, ...]]:
                 f"launch_settings.{profile}.startup_fast_forward_frames",
             )
         startup_frames.append(frames)
+    _validate_build_targets(settings["builds"])
     product_title = _settings_text(settings["title"], "title")
     output_boot_path = _settings_text(
         settings["output_boot_path"], "output_boot_path"

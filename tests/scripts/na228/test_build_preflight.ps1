@@ -24,6 +24,44 @@ try {
         Copy-Item -LiteralPath (Join-Path $sourceRepository "scripts\na228\$name") `
             -Destination $scriptRoot
     }
+    [IO.File]::WriteAllText((Join-Path $scriptRoot 'build_targets.ps1'), @'
+function Find-Na2BuildTarget {
+    param([Collections.IDictionary]$Targets, [string]$Name)
+    foreach ($key in $Targets.Keys) {
+        if ([string]$key -ieq $Name) { return $Targets[$key] }
+    }
+    return $null
+}
+function Get-Na2BuildTargetRegistry {
+    param([psobject]$Paths)
+    [ordered]@{
+        latest = [pscustomobject]@{
+            Name = 'latest'
+            Entry = [pscustomobject]@{ IsoPath = $Paths.files.latest_iso }
+            Configuration = 'dev'
+            RotateTo = 'previous'
+        }
+        previous = [pscustomobject]@{
+            Name = 'previous'
+            Entry = [pscustomobject]@{ IsoPath = $Paths.files.previous_iso }
+            Configuration = $null
+            RotateTo = $null
+        }
+        manual = [pscustomobject]@{
+            Name = 'manual'
+            Entry = [pscustomobject]@{ IsoPath = $Paths.files.manual_iso }
+            Configuration = 'release'
+            RotateTo = $null
+        }
+        e2e_test = [pscustomobject]@{
+            Name = 'e2e_test'
+            Entry = [pscustomobject]@{ IsoPath = $Paths.files.e2e_test_iso }
+            Configuration = 'test'
+            RotateTo = $null
+        }
+    }
+}
+'@)
     . (Join-Path $scriptRoot 'build_registry.ps1')
     foreach ($name in 'paths.ps1', 'run_log.ps1', 'build_log.ps1') {
         Copy-Item -LiteralPath (Join-Path $sourceRepository "scripts\lib\$name") `
@@ -203,6 +241,7 @@ iso`tbuild_record
 
     $first = & (Join-Path $scriptRoot 'build.ps1')
     Assert-Na2PreflightTest ($first.Status -eq 'updated') 'First Latest build was not promoted.'
+    Assert-Na2PreflightTest ($first.ConfigurationId -ceq 'dev') 'Latest did not use its owned configuration.'
     Assert-Na2PreflightTest (-not $first.PreflightCacheHit) 'First build was incorrectly a registry hit.'
     Assert-Na2PreflightTest ([IO.File]::ReadAllText($latestIso) -ceq 'verified development') 'Latest did not receive the verified image.'
     Assert-Na2PreflightTest ([IO.File]::ReadAllText($previousIso) -ceq 'old latest') 'Latest rotation did not preserve Previous.'
@@ -266,6 +305,7 @@ iso`tbuild_record
     $e2eIso = Join-Path $repository 'build\Synthetic Product - E2E Test.iso'
     Assert-Na2PreflightTest ($e2e.Status -eq 'e2e-test') 'E2E build did not return e2e-test status.'
     Assert-Na2PreflightTest ($e2e.E2eVariant -ceq 'normal') 'E2E build did not retain its variant.'
+    Assert-Na2PreflightTest ($e2e.ConfigurationId -ceq 'test') 'E2E did not use its build target configuration.'
     Assert-Na2PreflightTest ($e2e.OutputIso -ceq $e2eIso) 'E2E build did not resolve the configured build selector to its ISO.'
     Assert-Na2PreflightTest (Test-Path -LiteralPath $e2eIso -PathType Leaf) 'E2E build did not publish its configured ISO.'
 
@@ -291,6 +331,7 @@ iso`tbuild_record
     $manual = & (Join-Path $scriptRoot 'build.ps1') -ManualOnly -Force
     $manualIso = Join-Path $repository 'build\Synthetic Product - Manual.iso'
     Assert-Na2PreflightTest ($manual.Status -eq 'manual') 'Force mode did not complete through a registry outage.'
+    Assert-Na2PreflightTest ($manual.ConfigurationId -ceq 'release') 'Manual did not use its owned configuration.'
     Assert-Na2PreflightTest (Test-Path -LiteralPath $manualIso -PathType Leaf) 'Force mode did not promote its verified Manual ISO.'
     Assert-Na2PreflightTest (@(Get-ChildItem -LiteralPath (Join-Path $isoCacheRoot '.incoming') -File -ErrorAction SilentlyContinue).Count -eq 0) 'Force registry fallback left an incoming ISO.'
     $global:Na2RegistryUnavailable = $false

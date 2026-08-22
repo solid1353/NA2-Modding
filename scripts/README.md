@@ -11,6 +11,8 @@ exact agent procedures belong in the linked runbooks.
   help dispatch.
 - `na228/build.ps1`: shared and worker-output build execution, verified-build
   registry reuse, promotion, and provenance.
+- `na228/build_targets.ps1`: validates build-owned configurations and rotation
+  relationships and resolves retained-target configuration ownership.
 - `na228/launch_profile.ps1`: resolves configured launch profiles, invokes
   optional profile-local launch behavior, and merges its launch parameters.
 - `../launch_profiles/practice/launch.ps1`: resolves one

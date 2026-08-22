@@ -11,15 +11,22 @@
   },
   "builds": {
     "latest": {
-      "aliases": ["l"]
+      "aliases": ["l"],
+      "configuration": "dev",
+      "rotate_to": "previous"
     },
     "previous": {
       "aliases": ["p"]
     },
     "manual": {
-      "aliases": ["m"]
+      "aliases": ["m"],
+      "configuration": "test"
     },
-    "e2e_test": {},
-    "e2e_test_shifted": {}
+    "e2e_test": {
+      "configuration": "test"
+    },
+    "e2e_test_shifted": {
+      "configuration": "test"
+    }
   }
 }

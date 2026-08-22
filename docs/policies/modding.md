@@ -7,9 +7,10 @@
   [feature documentation](../features/README.md). Do not recreate retired
   schemas or assumptions from historical notes.
 - `@builder/configurations/base.json` owns the complete shared `features`
-  tree. Normal development builds use `dev.json`, Manual and E2E builds use
-  `test.json`, cache builds use their explicitly selected configuration, and
-  only release packaging uses `release.json`.
+  tree. Each buildable target in root `game.json` owns its configuration;
+  retained targets inherit the configuration of their rotation source. Cache
+  builds use their explicitly selected configuration, and only release
+  packaging uses `release.json`.
   Loading applies the selected configuration's `overrides` directly to the base
   features. Matching `base`, `dev`, `test`, and `release`
   `.character_overrides.tsv` files under `configurations/overrides/` layer
@@ -19,7 +20,15 @@
   `@builder/catalog/catalog.modcat` owns selectable definitions; the JSON
   and TSV files beside it own guarded binary edits, runtime hooks and payload
   declarations, and targets. Root `game.json` owns output
-  identity, build variants, and project launch settings.
+  identity, build targets, their configuration and rotation relationships, and
+  project launch settings. Configurations never select build targets or launch
+  profiles.
+- Each named `game.json` launch-setting override declares a launch profile.
+  Its matching `launch_profiles/<profile>/` directory owns optional profile
+  behavior and assets.
+- `e2e/config.json` owns E2E-only variant properties and references build
+  targets by name. Build targets do not own E2E comparison or payload-shift
+  settings.
 - JSON files under `@builder/configurations/` exclusively own feature
   enablement and nested selection. Paired character-override TSVs exclusively
   own per-character battle values; there is no feature-pin table.

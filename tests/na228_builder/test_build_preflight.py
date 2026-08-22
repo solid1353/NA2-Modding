@@ -45,6 +45,7 @@ class BuildPreflightTests(unittest.TestCase):
                         "cache": "@build/cache",
                         "logs": "logs",
                         "pcsx2_files": "shared",
+                        "pcsx2_cheats": "@pcsx2_files/cheats",
                         "pcsx2_game_settings": "@pcsx2_files/game_settings",
                         "pcsx2_input_profiles": "@pcsx2_files/input_profiles",
                         "pcsx2_memory_cards": "@pcsx2_files/memory_cards",
@@ -154,7 +155,13 @@ class BuildPreflightTests(unittest.TestCase):
                         "startup_fast_forward_frames": 321,
                         "practice": {"startup_fast_forward_frames": 654},
                     },
-                    "builds": {"latest": {}},
+                    "builds": {
+                        "latest": {
+                            "configuration": "dev",
+                            "rotate_to": "previous",
+                        },
+                        "previous": {},
+                    },
                 }
             ),
             encoding="utf-8",

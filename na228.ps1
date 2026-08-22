@@ -4,6 +4,7 @@ $paths = Get-Na2Paths
 . (Join-Path ([string]$paths.scripts) 'na228\task_paths.ps1')
 . (Join-Path ([string]$paths.scripts) 'na228\launch_settings.ps1')
 . (Join-Path ([string]$paths.scripts) 'na228\launch_profile.ps1')
+. (Join-Path ([string]$paths.scripts) 'na228\build_targets.ps1')
 
 trap {
     if ([bool]$_.Exception.Data['Na2ConfigurationError']) {
@@ -511,31 +512,45 @@ else {
             else {
                 [string]$_
             }
-            if ($canonical -in @('manual', 'e2e_test', 'e2e_test_shifted')) {
-                'test'
-            }
-            elseif ($canonical -in @('latest', 'previous')) {
-                'dev'
+            $entry = $paths.games.Entries.PSObject.Properties[$canonical]
+            if ($null -ne $entry -and
+                [string]$entry.Value.Category -ceq 'builds') {
+                Get-Na2BuildTargetConfiguration `
+                    -Name $canonical `
+                    -Paths $paths
             }
         } | Select-Object -Unique
     )
-    if ($launchConfigurations.Count -eq 0) {
-        $launchConfigurations = @('dev')
-    }
     $launchFrameCounts = @(
-        $launchConfigurations | ForEach-Object {
-            Get-Na2StartupFastForwardFrames `
-                -Configuration $_ `
-                -Paths $paths `
-                -LaunchProfile $(
-                    if ($null -eq $launchProfile) {
-                        $null
-                    }
-                    else {
-                        [string]$launchProfile.Name
-                    }
-                )
-        } | Select-Object -Unique
+        @(
+            if ($launchConfigurations.Count -eq 0) {
+                Get-Na2StartupFastForwardFrames `
+                    -Paths $paths `
+                    -LaunchProfile $(
+                        if ($null -eq $launchProfile) {
+                            $null
+                        }
+                        else {
+                            [string]$launchProfile.Name
+                        }
+                    )
+            }
+            else {
+                $launchConfigurations | ForEach-Object {
+                    Get-Na2StartupFastForwardFrames `
+                        -Configuration $_ `
+                        -Paths $paths `
+                        -LaunchProfile $(
+                            if ($null -eq $launchProfile) {
+                                $null
+                            }
+                            else {
+                                [string]$launchProfile.Name
+                            }
+                        )
+                }
+            }
+        ) | Select-Object -Unique
     )
     if ($launchFrameCounts.Count -gt 1) {
         throw (

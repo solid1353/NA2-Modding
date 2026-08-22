@@ -61,6 +61,7 @@ class ConfigurationTests(unittest.TestCase):
                         "source": "source",
                         "build": "build",
                         "pcsx2_files": "pcsx2",
+                        "pcsx2_cheats": "pcsx2/cheats",
                         "pcsx2_game_settings": "pcsx2/game_settings",
                         "pcsx2_input_profiles": "pcsx2/input_profiles",
                         "pcsx2_memory_cards": "pcsx2/memory_cards",
@@ -203,7 +204,13 @@ class ConfigurationTests(unittest.TestCase):
                         "startup_fast_forward_frames": 321,
                         "practice": {"startup_fast_forward_frames": 654},
                     },
-                    "builds": {"latest": {}},
+                    "builds": {
+                        "latest": {
+                            "configuration": configuration_id,
+                            "rotate_to": "previous",
+                        },
+                        "previous": {},
+                    },
                 },
                 indent=2,
             )
@@ -406,6 +413,48 @@ class ConfigurationTests(unittest.TestCase):
             )
             loaded = load_configuration(configuration, root, root)
             self.assertEqual(loaded.configuration_id, configuration.stem)
+
+    def test_build_targets_require_composition_and_valid_rotation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            builder, source, configurations = self.create_workspace(root)
+            self.create_feature_inputs(builder, "localization", "translation_importer")
+            configuration = self.create_configuration(
+                configurations,
+                source,
+                {"localization": {"description": "Localization"}},
+                {"localization": True},
+            )
+            settings_path = root / "game.json"
+            original = json.loads(settings_path.read_text(encoding="utf-8"))
+
+            missing_composition = json.loads(json.dumps(original))
+            del missing_composition["builds"]["latest"]["configuration"]
+            settings_path.write_text(
+                json.dumps(missing_composition, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "requires a configuration"):
+                load_configuration(configuration, root, root)
+
+            unknown_rotation = json.loads(json.dumps(original))
+            unknown_rotation["builds"]["latest"]["rotate_to"] = "missing"
+            settings_path.write_text(
+                json.dumps(unknown_rotation, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "rotates to unknown target"):
+                load_configuration(configuration, root, root)
+
+            unconfigured_rotation = json.loads(json.dumps(original))
+            del unconfigured_rotation["builds"]["latest"]["configuration"]
+            unconfigured_rotation["builds"]["previous"]["rotate_to"] = "latest"
+            settings_path.write_text(
+                json.dumps(unconfigured_rotation, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "requires a configuration"):
+                load_configuration(configuration, root, root)
 
     def test_binary_hash_ignores_helpers_but_includes_referenced_blobs(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

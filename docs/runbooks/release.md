@@ -124,10 +124,10 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
 - `@scripts/release/build_release.ps1` owns packaging; the GitHub workflow calls
   that same script rather than implementing another packager.
 
-The ordinary `na228`, `na228 b`, and `na228 m` workflows are unchanged.
-Normal development builds use `dev.json`; Manual and E2E builds use `test.json`;
-cache builds use their explicitly selected configuration. `release.json` is
-used only by this release-packaging pipeline.
+The ordinary `na228`, `na228 b`, and `na228 m` workflows select the
+configuration owned by their root `game.json` build target. Cache builds use
+their explicitly selected configuration. `release.json` is used only by this
+release-packaging pipeline.
 
 ## GitHub releases
 

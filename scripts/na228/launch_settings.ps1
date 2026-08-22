@@ -3,21 +3,11 @@ Set-StrictMode -Version Latest
 function Get-Na2StartupFastForwardFrames {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory)][string]$Configuration,
+        [string]$Configuration,
         [Parameter(Mandatory)][psobject]$Paths,
         [string]$LaunchProfile
     )
 
-    if ($Configuration -cnotmatch '^[A-Za-z0-9][A-Za-z0-9_-]*$') {
-        throw "Invalid launch configuration ID: $Configuration"
-    }
-    $configurationPath = Join-Path $Paths.builder (
-        "configurations\$Configuration.json"
-    )
-    if (-not (Test-Path -LiteralPath $configurationPath -PathType Leaf)) {
-        throw "Launch configuration does not exist: $Configuration"
-    }
-    $pythonRunner = Join-Path ([string]$Paths.scripts) 'lib\run_python.ps1'
     $launchSettings = $Paths.settings.launch_settings
     $startupFrames = $launchSettings.startup_fast_forward_frames
     if (-not [string]::IsNullOrWhiteSpace($LaunchProfile)) {
@@ -32,6 +22,19 @@ function Get-Na2StartupFastForwardFrames {
             $startupFrames = $profileFrames.Value
         }
     }
+    if ([string]::IsNullOrWhiteSpace($Configuration)) {
+        return [UInt64]$startupFrames
+    }
+    if ($Configuration -cnotmatch '^[A-Za-z0-9][A-Za-z0-9_-]*$') {
+        throw "Invalid launch configuration ID: $Configuration"
+    }
+    $configurationPath = Join-Path $Paths.builder (
+        "configurations\$Configuration.json"
+    )
+    if (-not (Test-Path -LiteralPath $configurationPath -PathType Leaf)) {
+        throw "Launch configuration does not exist: $Configuration"
+    }
+    $pythonRunner = Join-Path ([string]$Paths.scripts) 'lib\run_python.ps1'
     $arguments = @(
         '--catalog', (Join-Path $Paths.builder 'catalog'),
         '--configuration', $configurationPath,

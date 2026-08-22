@@ -142,6 +142,8 @@ try {
         -Destination $fakeNa2Scripts
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\launch_profile.ps1') `
         -Destination $fakeNa2Scripts
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\build_targets.ps1') `
+        -Destination $fakeNa2Scripts
     $fakePracticeProfile = Join-Path $fakeRepository 'launch_profiles\practice'
     New-Item -ItemType Directory -Force -Path $fakePracticeProfile | Out-Null
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'launch_profiles\practice\launch.ps1') `
@@ -178,6 +180,7 @@ function Get-Na2StartupFastForwardFrames {
     if ($LaunchProfile -ceq 'cinematic') { return [UInt64]777 }
     if ($LaunchProfile -ceq 'training') { return [UInt64]888 }
     if ($Configuration -ceq 'test') { return [UInt64]222 }
+    if ($Configuration -ceq 'release') { return [UInt64]444 }
     return [UInt64]321
 }
 '@
@@ -250,11 +253,15 @@ function Get-Na2StartupFastForwardFrames {
     "training": { "startup_fast_forward_frames": 888 }
   },
   "builds": {
-    "latest": { "aliases": ["l"] },
+    "latest": {
+      "aliases": ["l"],
+      "configuration": "dev",
+      "rotate_to": "previous"
+    },
     "previous": { "aliases": ["p"] },
-    "manual": { "aliases": ["m"] },
-    "e2e_test": {},
-    "e2e_test_shifted": {}
+    "manual": { "aliases": ["m"], "configuration": "release" },
+    "e2e_test": { "configuration": "test" },
+    "e2e_test_shifted": { "configuration": "test" }
   }
 }
 '@
@@ -319,6 +326,7 @@ print(json.dumps(result))
 '@
     foreach ($directory in @(
         'source', 'utils', 'build', 'logs', 'na228_builder', 'resources', 'pcsx2_dev',
+        'na228_builder\configurations',
         'pcsx2_files\games\NA2', 'pcsx2_files\games\NA228',
         'pcsx2_files\games\NUN5',
         'launch_profiles\practice',
@@ -329,6 +337,11 @@ print(json.dumps(result))
         'source\NUN5.iso.files', 'tests', 'work'
     )) {
         New-Item -ItemType Directory -Force -Path (Join-Path $fakeRepository $directory) | Out-Null
+    }
+    foreach ($configuration in @('dev', 'test', 'release')) {
+        Set-Na2Utf8FileAtomic `
+            -Path (Join-Path $fakeRepository "na228_builder\configurations\$configuration.json") `
+            -Content '{ "overrides": {} }'
     }
     $sourcePaths = Get-Na2Paths `
         -ManifestPath (Join-Path $sourceRepository 'paths.json')
@@ -358,6 +371,44 @@ Add-Content `
 Write-Output '[fake] unit tests'
 '@
     if ($Group -ceq 'command-routing') {
+    $fakePaths = Get-Na2Paths `
+        -ManifestPath (Join-Path $fakeRepository 'paths.json')
+    . (Join-Path $fakeNa2Scripts 'build_targets.ps1')
+    Assert-Na2Test `
+        -Condition (
+            (Get-Na2BuildTargetConfiguration -Name latest -Paths $fakePaths) -ceq 'dev' -and
+            (Get-Na2BuildTargetConfiguration -Name previous -Paths $fakePaths) -ceq 'dev' -and
+            (Get-Na2BuildTargetConfiguration -Name manual -Paths $fakePaths) -ceq 'release'
+        ) `
+        -Message 'Build targets did not own direct and retained configurations.'
+    $fakePaths.settings.builds.manual.configuration = 'missing'
+    $missingTargetConfigurationRejected = $false
+    try {
+        Get-Na2BuildTargetRegistry -Paths $fakePaths | Out-Null
+    }
+    catch {
+        $missingTargetConfigurationRejected = $_.Exception.Message -ceq (
+            "Build target 'manual' references a missing configuration: missing"
+        )
+    }
+    $fakePaths.settings.builds.manual.configuration = 'release'
+    Assert-Na2Test `
+        -Condition $missingTargetConfigurationRejected `
+        -Message 'A build target accepted a missing configuration.'
+    $fakePaths.settings.builds.latest.rotate_to = 'missing'
+    $unknownRotationRejected = $false
+    try {
+        Get-Na2BuildTargetRegistry -Paths $fakePaths | Out-Null
+    }
+    catch {
+        $unknownRotationRejected = $_.Exception.Message -ceq (
+            "Build target 'latest' references an unknown rotate_to target: missing"
+        )
+    }
+    $fakePaths.settings.builds.latest.rotate_to = 'previous'
+    Assert-Na2Test `
+        -Condition $unknownRotationRejected `
+        -Message 'A build target accepted an unknown rotation target.'
     $helpText = (& (Join-Path $fakeRepository 'na228.ps1') help) -join "`n"
     Assert-Na2Test `
         -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'logs\na228'))) `
@@ -554,11 +605,16 @@ if ($CacheConfiguration) {
         Status = 'cache'
         OutputIso = '@cache/isos/FAKE.iso'
         ChangedRoles = [string[]]@()
+        ConfigurationId = $CacheConfiguration
     }
 }
 elseif ($ManualOnly) {
     Write-Host "[na228] ISO result: manual; rotation: no; PCSX2 left running; force=$($Force.IsPresent)."
-    [pscustomobject]@{ Status = 'manual'; ChangedRoles = [string[]]@('manual') }
+    [pscustomobject]@{
+        Status = 'manual'
+        ChangedRoles = [string[]]@('manual')
+        ConfigurationId = 'release'
+    }
 }
 else {
     Write-Host "[na228] ISO result: updated; rotation: yes; force=$($Force.IsPresent)."
@@ -566,6 +622,7 @@ else {
         Status = 'updated'
         ChangedRoles = [string[]]@('latest', 'previous')
         LaunchIso = if ($Force) { 'force-output.iso' } else { $null }
+        ConfigurationId = 'dev'
     }
 }
 '@
@@ -1099,9 +1156,9 @@ Add-Content `
     Assert-Na2Test `
         -Condition (
             $testLaunch -match 'multi-game launch manual' -and
-            $testLaunch -match 'frames=222'
+            $testLaunch -match 'frames=444'
         ) `
-        -Message 'Manual selector did not use the test catalog launch settings.'
+        -Message 'Manual selector did not use its build-owned configuration.'
     }
 
     if ($Group -ceq 'build-launch') {

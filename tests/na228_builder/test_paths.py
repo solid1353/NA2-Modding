@@ -276,8 +276,11 @@ class ProjectPathTests(unittest.TestCase):
                 "builds": {
                     "latest": {
                         "aliases": ["l"],
+                        "configuration": "dev",
+                        "rotate_to": "previous",
                     },
-                    "e2e_test_shifted": {},
+                    "previous": {},
+                    "e2e_test_shifted": {"configuration": "test"},
                 },
             }
             manifest_path = root / "paths.json"

@@ -6,7 +6,8 @@ The path system has four layers with separate technical owners:
 2. NA2 root `paths.json` imports Workshop and adds only NA2-local paths.
 3. Workshop root `games.json` owns shared source-game selectors, aliases,
    serials, and CRCs.
-4. NA2 root `game.json` owns NA2.28 output identity, build variants, base launch
+4. NA2 root `game.json` owns NA2.28 output identity, build targets, each
+   buildable target's configuration, rotation relationships, base launch
    settings, and direct named launch-profile overrides.
 
 The PowerShell and Python loaders merge both catalogs. Canonical files store
@@ -51,9 +52,10 @@ feature donor, not an official successor or English authority.
 - `pcsx2_dev` and `pcsx2_fork`: the protected configured development runtime
   and the external clean worker template.
 - `pcsx2_files` and `pcsx2_input_recordings`: NA2-owned game bundles under
-  `@pcsx2_files/games/`, Practice cheats, and recordings. Workshop retains
-  shared BIOS and input profiles,
-  NUN3's flat PNACH, GameSettings, and memory card, and default and test cards.
+  `@pcsx2_files/games/` and recordings. Root `launch_profiles/` owns
+  launch-profile behavior and assets. Workshop retains shared BIOS and input
+  profiles, NUN3's flat PNACH, GameSettings, and memory card, and default and
+  test cards.
 - `source_<game>`: derived extraction roots from the Workshop source catalog.
 
 ## Important NA2 files

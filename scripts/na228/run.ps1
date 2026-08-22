@@ -103,15 +103,27 @@ try {
             ) {
                 throw 'Configuration build did not return a valid promotion result.'
             }
+            if ($null -eq $buildResult.PSObject.Properties['ConfigurationId'] -or
+                [string]::IsNullOrWhiteSpace(
+                    [string]$buildResult.ConfigurationId
+                )) {
+                throw 'Configuration build did not report its build target configuration.'
+            }
         }
         'latest-build-and-launch' {
-            Write-Na2Stage '1/2 Build development configuration'
+            Write-Na2Stage "1/2 Build $latestIsoName"
             $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') -Force:$Force
             if (
                 -not $buildResult -or
                 $buildResult.Status -notin @('unchanged', 'updated', 'pending')
             ) {
                 throw 'Configuration build did not return a valid promotion result.'
+            }
+            if ($null -eq $buildResult.PSObject.Properties['ConfigurationId'] -or
+                [string]::IsNullOrWhiteSpace(
+                    [string]$buildResult.ConfigurationId
+                )) {
+                throw 'Configuration build did not report its build target configuration.'
             }
             $launchIso = if (
                 $null -ne $buildResult.PSObject.Properties['LaunchIso'] -and
@@ -129,7 +141,7 @@ try {
             }
             else {
                 $startupFrames = Get-Na2StartupFastForwardFrames `
-                    -Configuration dev `
+                    -Configuration ([string]$buildResult.ConfigurationId) `
                     -Paths $paths
                 if ($startupFrames -gt 0) {
                     $launchArguments.UnlimitedForFrames = [UInt64]$startupFrames

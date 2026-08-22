@@ -11,6 +11,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\paths.ps1')
 . (Join-Path $PSScriptRoot '..\lib\build_log.ps1')
 . (Join-Path $PSScriptRoot 'build_registry.ps1')
+. (Join-Path $PSScriptRoot 'build_targets.ps1')
 $paths = Get-Na2Paths
 $pythonRunner = Join-Path ([string]$paths.scripts) 'lib\run_python.ps1'
 $registryPath = Join-Path $paths.logs 'na228\preflight\registry.json'
@@ -99,12 +100,52 @@ function Write-Na2IsolatedResult {
 
 $inputIso = $paths.files.na2_iso
 $nun5Iso = $paths.files.nun5_iso
-$latestIso = [IO.Path]::GetFullPath($paths.files.latest_iso)
-$previousIso = [IO.Path]::GetFullPath($paths.files.previous_iso)
-$manualIso = [IO.Path]::GetFullPath($paths.files.manual_iso)
+$buildTargets = Get-Na2BuildTargetRegistry -Paths $paths
+$latestTarget = Find-Na2BuildTarget -Targets $buildTargets -Name 'latest'
+$manualTarget = Find-Na2BuildTarget -Targets $buildTargets -Name 'manual'
+if ($null -eq $latestTarget) {
+    throw "Unknown build target: latest"
+}
+if ($null -eq $manualTarget) {
+    throw "Unknown build target: manual"
+}
+if ([string]::IsNullOrWhiteSpace([string]$latestTarget.RotateTo)) {
+    throw "Build target 'latest' requires rotate_to."
+}
+$previousTarget = Find-Na2BuildTarget `
+    -Targets $buildTargets `
+    -Name $latestTarget.RotateTo
+$latestIso = [IO.Path]::GetFullPath([string]$latestTarget.Entry.IsoPath)
+$previousIso = [IO.Path]::GetFullPath([string]$previousTarget.Entry.IsoPath)
+$manualIso = [IO.Path]::GetFullPath([string]$manualTarget.Entry.IsoPath)
 $payloadShift = if ($null -ne $e2eBuild) { [int]$e2eBuild.payload_shift_bytes } else { 0 }
-$configurationId = if ($cacheBuild) { $CacheConfiguration } `
-    elseif ($ManualOnly -or $null -ne $e2eBuild) { 'test' } else { 'dev' }
+$buildTarget = if ($cacheBuild) {
+    $null
+}
+elseif ($null -ne $e2eBuild) {
+    Find-Na2BuildTarget `
+        -Targets $buildTargets `
+        -Name ([string]$e2eBuild.build)
+}
+elseif ($ManualOnly) {
+    $manualTarget
+}
+else {
+    $latestTarget
+}
+if (-not $cacheBuild -and $null -eq $buildTarget) {
+    throw "E2E variant '$E2eVariant' references an unknown build target."
+}
+if (-not $cacheBuild -and
+    [string]::IsNullOrWhiteSpace([string]$buildTarget.Configuration)) {
+    throw "Build target '$($buildTarget.Name)' is retained and cannot be built."
+}
+$configurationId = if ($cacheBuild) {
+    $CacheConfiguration
+}
+else {
+    [string]$buildTarget.Configuration
+}
 $configuration = Join-Path $paths.builder "configurations\$configurationId.json"
 if (-not (Test-Path -LiteralPath $configuration -PathType Leaf)) {
     throw "Configuration does not exist: $configurationId"
@@ -126,13 +167,8 @@ if ($cacheBuild) {
 }
 elseif ($null -ne $e2eBuild) {
     $kind = 'e2e-test'
-    $role = "e2e_test_$E2eVariant"
-    $outputProperty = "$([string]$e2eBuild.build)_iso"
-    $configuredOutput = $paths.files.PSObject.Properties[$outputProperty]
-    if ($null -eq $configuredOutput) {
-        throw "E2E build output is not configured: $outputProperty"
-    }
-    $outputIso = [IO.Path]::GetFullPath([string]$configuredOutput.Value)
+    $role = [string]$buildTarget.Name
+    $outputIso = [IO.Path]::GetFullPath([string]$buildTarget.Entry.IsoPath)
     $recordRoot = Join-Path $sharedLogDirectory 'builds'
     $recordAliasRoot = '@logs/na228/builds'
 }
@@ -456,6 +492,7 @@ if ($kind -eq 'latest') {
         ConfigurationLogDirectory = if ($null -ne $buildRecord) { $buildRecord.BuildRecord } else { "$recordAliasRoot/$buildId" }
         PreflightCacheHit = $cacheHit
         ChangedRoles = $changedRoles
+        ConfigurationId = $configurationId
     }
 }
 
@@ -474,4 +511,5 @@ return [pscustomobject]@{
     ConfigurationLogDirectory = if ($null -ne $buildRecord) { $buildRecord.BuildRecord } else { "$recordAliasRoot/$buildId" }
     PreflightCacheHit = $cacheHit
     ChangedRoles = $changedRoles
+    ConfigurationId = $configurationId
 }

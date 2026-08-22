@@ -78,9 +78,10 @@ assembly. A full verified physical build first moves its unique candidate into
 `@cache/isos/<SHA-256>.iso` and registers it. Promotion then updates a
 user-facing build role by creating or atomically replacing a hardlink to the
 canonical hash-named image. Cache validation uses the canonical cache image
-directly and creates no task-owned ISO or hardlink. Latest rotation similarly
-replaces Previous with a hardlink to the outgoing Latest image and synchronizes
-both locations in the registry.
+directly and creates no task-owned ISO or hardlink. Latest rotation follows the
+target named by `game.json` `builds.latest.rotate_to`, replaces it with a
+hardlink to the outgoing Latest image, and synchronizes both locations in the
+registry.
 If a destination is locked, the invocation reports pending and the hash-named
 ISO remains available for launch. The next request with the same fingerprint
 retries promotion naturally through the cache hit.

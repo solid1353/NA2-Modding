@@ -35,9 +35,10 @@ integrated catalog data.
   `dev.json`, `test.json`, and `release.json` contain
   concrete `overrides`. Each overrides object may be empty or partially mirror
   the catalog's feature tree directly. The loader applies the concrete
-  configuration's `overrides` to `base.features`. Normal local builds use
-  `dev.json`; Manual and E2E builds use `test.json`; cache builds use their
-  explicitly selected configuration; only release packaging uses `release.json`.
+  configuration's `overrides` to `base.features`. Each buildable target in root
+  `game.json` selects its configuration; retained targets inherit their
+  rotation source's configuration. Cache builds use their explicitly selected
+  configuration; only release packaging uses `release.json`.
 - `configurations/overrides/base.character_overrides.tsv` contains the required
   `base` row and shared per-character overrides. Matching `dev`, `test`, and
   `release` TSVs in that directory layer nonempty cells over it by character
@@ -78,8 +79,8 @@ integrated catalog data.
 - Root `release_manifest.json` owns release packaging metadata and remains
   outside the catalog.
 - Root `game.json` owns the product title, explicit output boot path, named
-  build variants, base launch settings, and direct named launch-profile
-  overrides.
+  build targets, their configuration and rotation relationships, base launch
+  settings, and direct named launch-profile overrides.
 
 JSON configurations select features. The paired character-override TSVs are
 the separate per-character build inputs for battle values.
@@ -159,12 +160,14 @@ An internal setting may declare startup launch timing as
 `startup_fast_forward_frames: { additive: N, override: N }`, with either key or
 both. Additives are signed integers; overrides are positive UInt64 frame
 counts. Resolution starts from the non-negative base value under `game.json`
-`launch_settings`, or a value supplied by the selected direct profile override,
-uses the sole enabled catalog override instead when present, and then sums every
-enabled additive. More than one enabled catalog override or a final result
-outside UInt64 is a configuration error. A zero result omits timed fast-forward.
-Disabled settings contribute nothing. This launch metadata is omitted from the
-public release catalog along with patch implementation references.
+`launch_settings`, applies the selected direct profile override, then applies
+the selected build target's configuration metadata: the sole enabled catalog
+override replaces the baseline when present, and every enabled additive is
+summed. Source-only launches have no build configuration modifier. More than one
+enabled catalog override or a final result outside UInt64 is a configuration
+error. A zero result omits timed fast-forward. Disabled settings contribute
+nothing. This launch metadata is omitted from the public release catalog along
+with patch implementation references.
 
 Every binary edit contains an explicit `operation`. A grouped edit root
 contains only its optional description and a nonempty, one-level `edits` map;
@@ -245,9 +248,9 @@ than showing them in the user-facing window. Successful runs create no log.
 ```
 
 `@scripts/na228/build.ps1` resolves the `builder` package set from
-`packages.json` and uses `configurations/dev.json` for normal builds or
-`configurations/test.json` for Manual and E2E outputs. Cache builds select an
-explicit configuration with `na228 build -c <configuration>`.
+`packages.json` and uses the configuration owned by the selected build target
+in root `game.json`. Cache builds select an explicit configuration with
+`na228 build -c <configuration>`.
 
 The public `-f` option applies to ordinary Latest and Manual build routes,
 including build-only and build-and-run commands. It keeps building when a

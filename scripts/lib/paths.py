@@ -107,7 +107,7 @@ def _load_paths(
         raise ValueError("Invalid existence-deferred project root")
 
     repository = manifest_path.parent.resolve()
-    roots: dict[str, Path] = {}
+    roots: dict[str, Path] = {"repository": repository}
     files: dict[str, Path] = {}
     local_root_names = set(configured)
     local_files = data.get("files")
@@ -288,12 +288,12 @@ def _load_paths(
             )
         files[name] = configured_path
 
-    settings_path = files.get("settings") if include_catalog else None
+    settings_path = files.get("project_settings") if include_catalog else None
     if settings_path is not None:
         if not settings_path.is_file():
             raise FileNotFoundError(f"Project settings not found: {settings_path}")
         project_settings = json.loads(settings_path.read_text(encoding="utf-8"))
-        source_catalog_path = files.get("game_catalog")
+        source_catalog_path = files.get("source_catalog")
         if source_catalog_path is not None:
             if not source_catalog_path.is_file():
                 raise FileNotFoundError(

@@ -24,7 +24,7 @@ root manifest owns reusable public infrastructure:
 - shared PCSX2 assets;
 - reusable PCSX2, savestate, PINE, input-profile, ISO-identity, and Ghidra
   tooling under `@scripts/`;
-- source-game configuration in the configured `game_catalog` file;
+- source-game configuration in the configured `source_catalog` file;
 - source-game savestate filing under ignored `@savestates/`;
   project build savestates stay under the invoking project's ignored
   `@work/sstates/`.
@@ -50,24 +50,23 @@ feature donor, not an official successor or English authority.
   `resources` owns repository-wide metadata shared by the builder and launcher.
 - `pcsx2_scripts`: imported shared PCSX2 scripts.
 - `pcsx2_dev` and `pcsx2_fork`: the protected configured development runtime
-  and the external clean worker template.
+  and the maintained fork build output.
 - `pcsx2_files` and `pcsx2_input_recordings`: NA2-owned game bundles under
   `@pcsx2_files/games/` and recordings. Root `launch_profiles/` owns
-  launch-profile behavior and assets. Workshop retains shared BIOS and input
-  profiles, NUN3's flat PNACH, GameSettings, and memory card, and default and
-  test cards.
+  launch-profile behavior and assets. Workshop retains input profiles, NUN3's
+  registered bundle under `@pcsx2_files/games/NUN3/`, and default and test
+  cards.
 - `source_<game>`: derived extraction roots from the Workshop source catalog.
 
 ## Important NA2 files
 
-- `game_catalog`: Workshop root `games.json`.
-- `settings`: root `game.json`.
+- `source_catalog`: Workshop root `games.json`.
+- `project_settings`: root `game.json`.
 - `game_resolver`: configured Workshop game resolver.
-- `workshop_command`: Workshop `workshop.ps1`.
-- `pcsx2_launch_command`, `pcsx2_game_launch_command`, `pcsx2_copy_worker_command`,
-  `pcsx2_pine_command`, and `pcsx2_iso_identity`: Workshop utilities.
+- `pcsx2_launch_command`, `pcsx2_game_launch_command`, and
+  `pcsx2_pine_command`: Workshop utilities.
 - `ghidra_runtime`: Workshop headless-Ghidra runtime setup.
-- `na228_command` and `release_publish_command`: NA2-specific entrypoints.
+- `publish_release_command`: NA2 release entrypoint.
 
 Catalog-derived compatibility files remain available to callers:
 
@@ -86,6 +85,11 @@ and title-casing the result (`e2e_test` becomes `E2E Test`). Build ISO paths
 derive from title and that postfix. NA2-family PCSX2 files resolve from their
 canonical bundle under `@pcsx2_files/games/`, and all NA2.28 builds use the
 `NA228` bundle.
+The loader searches the Workshop and invoking-project `pcsx2_files` roots and
+requires each registered bundle to exist in exactly one of them with matching
+PNACH, GameSettings, and memory-card files. The manifest directory is injected
+as the `repository` root by the loader; manifests do not configure `.` as a
+root.
 The command is independent of the caller's current working directory.
 
 PowerShell callers use `Get-Na2Paths`; Python callers use

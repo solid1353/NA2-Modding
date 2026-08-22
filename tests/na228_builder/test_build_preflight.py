@@ -37,21 +37,18 @@ class BuildPreflightTests(unittest.TestCase):
                 {
                     "existence_deferred_roots": ["cache"],
                     "roots": {
-                        "repository": ".",
                         "builder": "na228_builder",
                         "source": "source_roots",
                         "build": "build",
                         "cache": "@build/cache",
                         "logs": "logs",
                         "pcsx2_files": "shared",
-                        "pcsx2_cheats": "@pcsx2_files/cheats",
-                        "pcsx2_game_settings": "@pcsx2_files/game_settings",
                         "pcsx2_input_profiles": "@pcsx2_files/input_profiles",
                         "pcsx2_memory_cards": "@pcsx2_files/memory_cards",
                     },
                     "files": {
-                        "settings": "@repository/game.json",
-                        "game_catalog": "@repository/games.json",
+                        "project_settings": "game.json",
+                        "source_catalog": "games.json",
                     },
                 }
             ),

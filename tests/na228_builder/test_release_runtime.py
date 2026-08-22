@@ -39,9 +39,8 @@ class ReleaseRuntimeTests(unittest.TestCase):
             workspace.mkdir()
             application.mkdir()
             (workspace / "paths.json").write_text(
-                '{"roots":{"repository":".",'
-                '"build":"build","cache":"@build/cache"},'
-                '"files":{"settings":"game.json"}}',
+                '{"roots":{"build":"build","cache":"@build/cache"},'
+                '"files":{"project_settings":"game.json"}}',
                 encoding="utf-8",
             )
             configured = load_local_paths(workspace, allow_missing=True)
@@ -65,9 +64,8 @@ class ReleaseRuntimeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             workspace = Path(temporary)
             (workspace / "paths.json").write_text(
-                '{"roots":{"repository":".",'
-                '"builder":"na228_builder"},'
-                '"files":{"settings":"game.json"}}',
+                '{"roots":{"builder":"na228_builder"},'
+                '"files":{"project_settings":"game.json"}}',
                 encoding="utf-8",
             )
             assembly = workspace / "src" / "runtime.S"

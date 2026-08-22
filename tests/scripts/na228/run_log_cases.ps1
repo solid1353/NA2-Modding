@@ -195,7 +195,6 @@ function Get-Na2StartupFastForwardFrames {
     $manifest = @'
 {
   "roots": {
-    "repository": ".",
     "source": "source",
     "utils": "utils",
     "build": "build",
@@ -204,7 +203,6 @@ function Get-Na2StartupFastForwardFrames {
     "resources": "resources",
     "pcsx2_dev": "pcsx2_dev",
     "pcsx2_files": "pcsx2_files",
-    "pcsx2_game_settings": "@pcsx2_files/game_settings",
     "pcsx2_input_profiles": "@pcsx2_files/input_profiles",
     "pcsx2_input_recordings": "@pcsx2_files/input_recordings",
     "pcsx2_memory_cards": "@pcsx2_files/memory_cards",
@@ -213,13 +211,12 @@ function Get-Na2StartupFastForwardFrames {
     "work": "work"
   },
   "files": {
-    "game_catalog": "@repository/games.json",
-    "settings": "@repository/game.json",
+    "source_catalog": "games.json",
+    "project_settings": "game.json",
     "game_resolver": "@scripts/lib/resolve_game.py",
     "pcsx2_launch_command": "@pcsx2_scripts/launch.ps1",
     "pcsx2_game_launch_command": "@pcsx2_scripts/launch_games.ps1",
-    "workshop_command": "@repository/workshop.ps1",
-    "release_publish_command": "@scripts/release/publish_release.ps1"
+    "publish_release_command": "@scripts/release/publish_release.ps1"
   }
 }
 '@
@@ -328,7 +325,6 @@ print(json.dumps(result))
         'pcsx2_files\games\NUN5',
         'launch_profiles\practice',
         'launch_profiles\training',
-        'pcsx2_files\game_settings',
         'pcsx2_files\input_profiles', 'pcsx2_files\input_recordings',
         'pcsx2_files\memory_cards', 'scripts', 'source\NA2.iso.files',
         'source\NUN5.iso.files', 'tests', 'work'

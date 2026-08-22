@@ -11,7 +11,7 @@ from scripts.lib.paths import derive_game_paths, load_local_paths, load_paths
 class ProjectPathTests(unittest.TestCase):
     def write_manifest(self, root: Path, files: dict[str, str] | None) -> Path:
         manifest = {
-            "roots": {"repository": ".", "build": "build"},
+            "roots": {"build": "build"},
         }
         if files is not None:
             manifest["files"] = files
@@ -57,8 +57,8 @@ class ProjectPathTests(unittest.TestCase):
             root = Path(directory)
             manifest = {
                 "imports": {"workshop": "../missing/paths.json"},
-                "roots": {"repository": ".", "build": "build"},
-                "files": {"settings": "game.json"},
+                "roots": {"build": "build"},
+                "files": {"project_settings": "game.json"},
             }
             (root / "paths.json").write_text(
                 json.dumps(manifest), encoding="utf-8"
@@ -91,7 +91,6 @@ class ProjectPathTests(unittest.TestCase):
             source.mkdir()
             manifest = {
                 "roots": {
-                    "repository": ".",
                     "source": "../source",
                 },
                 "files": {"nun5_iso": "@source/NUN5.iso"},
@@ -113,7 +112,6 @@ class ProjectPathTests(unittest.TestCase):
             extracted.mkdir(parents=True)
             manifest = {
                 "roots": {
-                    "repository": ".",
                     "source_na2": "@source/NA2.iso.files",
                     "source": "../source",
                 },
@@ -132,7 +130,6 @@ class ProjectPathTests(unittest.TestCase):
             manifest = {
                 "existence_deferred_roots": ["optional_runtime"],
                 "roots": {
-                    "repository": ".",
                     "optional_runtime": "missing-user-runtime",
                     "optional_runtime_data": "@optional_runtime/data",
                 },
@@ -155,7 +152,7 @@ class ProjectPathTests(unittest.TestCase):
             root = Path(directory)
             manifest = {
                 "existence_deferred_roots": ["missing"],
-                "roots": {"repository": "."},
+                "roots": {"build": "build"},
                 "files": {"latest_iso": "Latest.iso"},
             }
             manifest_path = root / "paths.json"
@@ -171,7 +168,6 @@ class ProjectPathTests(unittest.TestCase):
             root = Path(directory)
             manifest = {
                 "roots": {
-                    "repository": ".",
                     "first": "@second/child",
                     "second": "@first/child",
                 },
@@ -230,17 +226,15 @@ class ProjectPathTests(unittest.TestCase):
                 (root / path).mkdir(parents=True, exist_ok=True)
             manifest = {
                 "roots": {
-                    "repository": ".",
                     "build": "build",
                     "source": "source",
                     "pcsx2_files": "pcsx2_files",
-                    "pcsx2_game_settings": "pcsx2/game_settings",
                     "pcsx2_input_profiles": "pcsx2/input_profiles",
                     "pcsx2_memory_cards": "pcsx2/memory_cards",
                 },
                 "files": {
-                    "game_catalog": "@repository/games.json",
-                    "settings": "@repository/game.json",
+                    "source_catalog": "games.json",
+                    "project_settings": "game.json",
                 },
             }
             source_catalog = {
@@ -335,7 +329,6 @@ class ProjectPathTests(unittest.TestCase):
                     "build": root.resolve() / "build",
                     "source": root.resolve() / "source",
                     "pcsx2_files": root.resolve() / "pcsx2_files",
-                    "pcsx2_game_settings": root.resolve() / "pcsx2/game_settings",
                     "pcsx2_input_profiles": root.resolve() / "pcsx2/input_profiles",
                     "pcsx2_memory_cards": root.resolve() / "pcsx2/memory_cards",
                 },

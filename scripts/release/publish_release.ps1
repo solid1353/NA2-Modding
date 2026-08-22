@@ -15,7 +15,7 @@ $toolchain = Get-Content -Raw -LiteralPath $toolchainPath | ConvertFrom-Json
 $manifestRelative = [string]$toolchain.release_manifest
 $manifestPath = [IO.Path]::GetFullPath((Join-Path $repository $manifestRelative))
 $builderPath = Join-Path $PSScriptRoot 'build_release.ps1'
-$settingsPath = [IO.Path]::GetFullPath($paths.files.settings)
+$settingsPath = [IO.Path]::GetFullPath($paths.files.project_settings)
 
 function Invoke-ReleaseGit {
     param(

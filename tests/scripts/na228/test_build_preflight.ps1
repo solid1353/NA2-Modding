@@ -91,7 +91,6 @@ exit $LASTEXITCODE
     [IO.File]::WriteAllText((Join-Path $repository 'paths.json'), @'
 {
   "roots": {
-    "repository": ".",
     "source": "source",
     "build": "build",
     "logs": "logs",

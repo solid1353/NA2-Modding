@@ -26,6 +26,7 @@ function Resolve-Na2PathManifest {
 
     $resolved = [ordered]@{
         ManifestPath = $manifestItem.FullName
+        repository = $repositoryRoot
     }
     $resolvedFiles = [ordered]@{}
     if ($IncludeImports -and $null -ne $manifest.PSObject.Properties['imports']) {
@@ -208,8 +209,8 @@ function Resolve-Na2PathManifest {
     $resolvedGames = [ordered]@{}
     $resolvedGameAliases = [ordered]@{}
     $projectSettings = $null
-    if ($IncludeImports -and $resolvedFiles.Contains('settings')) {
-        $settingsPath = [string]$resolvedFiles['settings']
+    if ($IncludeImports -and $resolvedFiles.Contains('project_settings')) {
+        $settingsPath = [string]$resolvedFiles['project_settings']
         if (-not (Test-Path -LiteralPath $settingsPath -PathType Leaf)) {
             throw "Project settings not found: $settingsPath"
         }
@@ -260,8 +261,8 @@ function Resolve-Na2PathManifest {
                 )
             }
         }
-        if ($resolvedFiles.Contains('game_catalog')) {
-            $sourceCatalogPath = [string]$resolvedFiles['game_catalog']
+        if ($resolvedFiles.Contains('source_catalog')) {
+            $sourceCatalogPath = [string]$resolvedFiles['source_catalog']
             if (-not (Test-Path -LiteralPath $sourceCatalogPath -PathType Leaf)) {
                 throw "Source game catalog not found: $sourceCatalogPath"
             }
@@ -374,7 +375,7 @@ function Resolve-Na2PathManifest {
                         $configProperty.Value
                 }
                 $resolverArguments = @('-B', $gameResolver, $gameName)
-                if ($resolvedFiles.Contains('game_catalog')) {
+                if ($resolvedFiles.Contains('source_catalog')) {
                     $resolverArguments += @('--project-root', $repositoryRoot)
                 }
                 $resolverOutput = & python @resolverArguments

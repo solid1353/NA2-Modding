@@ -2,24 +2,22 @@
   "imports": {
     "workshop": "../UN Workshop/paths.json"
   },
-  "existence_deferred_roots": ["task_logs", "cache"],
+  "existence_deferred_roots": ["cache", "task_logs"],
   "roots": {
-    "repository": ".",
-    "build": "build",
-    "logs": "logs",
-    "task_logs": "@logs/tasks",
     "builder": "na228_builder",
     "resources": "resources",
     "scripts": "scripts",
-    "work": "work",
+    "build": "build",
     "cache": "@build/cache",
     "release": "release",
-    "pcsx2_files": "@repository/pcsx2_files",
+    "work": "work",
+    "logs": "logs",
+    "task_logs": "@logs/tasks",
+    "pcsx2_files": "pcsx2_files",
     "pcsx2_input_recordings": "@pcsx2_files/input_recordings"
   },
   "files": {
-    "settings": "@repository/game.json",
-    "na228_command": "@repository/na228.ps1",
-    "release_publish_command": "@scripts/release/publish_release.ps1"
+    "project_settings": "game.json",
+    "publish_release_command": "@scripts/release/publish_release.ps1"
   }
 }

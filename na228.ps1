@@ -245,7 +245,7 @@ if ($mode -eq 'release') {
     if ($arguments.Count -eq 1) {
         $releaseArguments.Version = $arguments[0]
     }
-    & $paths.files.release_publish_command @releaseArguments
+    & $paths.files.publish_release_command @releaseArguments
     return
 }
 

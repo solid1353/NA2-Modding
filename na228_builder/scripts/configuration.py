@@ -532,7 +532,7 @@ def _load_configuration(
             builder_root,
             paths.path("resources", "character_data.tsv"),
         )
-    settings_path = paths.file("settings").resolve()
+    settings_path = paths.file("project_settings").resolve()
     output_boot_path, product_title, startup_frames = _validated_settings(settings_path)
     for frames in startup_frames:
         catalog_module.startup_fast_forward_frames(selection, frames)

@@ -20,8 +20,8 @@ HASH_CHUNK_SIZE = 8 * 1024 * 1024
 ERROR_LOG_NAME = "builder-error.log"
 
 Emit = Callable[[str], None]
-ReleaseBuilder = Callable[[Path, Path, Path, Path, Emit], None]
-ReleaseConfigurationValidator = Callable[[Path], None]
+ReleaseBuilder = Callable[[Path, Path | None, Path, Path, Emit], None]
+ReleaseConfigurationValidator = Callable[[Path], Iterable[str] | None]
 
 
 class ReleaseError(RuntimeError):
@@ -327,10 +327,15 @@ def identify_supported_images(
         else:
             selected[image.image_id] = paths[0]
     if problems:
+        labels = [image.label for image in specs]
+        required = (
+            labels[0]
+            if len(labels) == 1
+            else ", ".join(labels[:-1]) + f" and {labels[-1]}"
+        )
         raise ReleaseError(
             " ".join(problems)
-            + " Place exactly one supported NA2 ISO and one supported NUN5 ISO "
-            "beside this program."
+            + f" Place exactly one supported {required} beside this program."
         )
     return selected
 
@@ -436,7 +441,7 @@ def _remove_staging(path: Path) -> OSError | None:
 
 def _runtime_builder(
     na2_iso: Path,
-    nun5_iso: Path,
+    nun5_iso: Path | None,
     configuration_path: Path,
     building_iso: Path,
     emit: Emit,
@@ -446,11 +451,11 @@ def _runtime_builder(
     build_release_iso(na2_iso, nun5_iso, configuration_path, building_iso, emit)
 
 
-def _runtime_configuration_validator(configuration_path: Path) -> None:
+def _runtime_configuration_validator(configuration_path: Path) -> tuple[str, ...]:
     from .release_runtime import validate_release_configuration
 
     try:
-        validate_release_configuration(configuration_path)
+        return validate_release_configuration(configuration_path)
     except ReleaseError:
         raise
     except Exception as exc:
@@ -505,22 +510,39 @@ def run_release(
     emit(f"{manifest.product_name} {manifest.product_version}")
     emit(f"Loading {configuration_path.name}...")
     _validate_user_configuration(configuration_path)
+    required_image_ids: tuple[str, ...] | None = None
     if configuration_validator is not None:
-        configuration_validator(configuration_path)
+        validated_ids = configuration_validator(configuration_path)
+        if validated_ids is not None:
+            required_image_ids = tuple(validated_ids)
+    if required_image_ids is None:
+        required_image_ids = tuple(image.image_id for image in manifest.images)
+    if "na2" not in required_image_ids:
+        raise ReleaseError("Release configuration must require the NA2 source ISO")
+    if len(required_image_ids) != len(set(required_image_ids)):
+        raise ReleaseError("Release configuration returned duplicate source image ids")
+    images_by_id = {image.image_id: image for image in manifest.images}
+    unknown_ids = sorted(set(required_image_ids) - set(images_by_id))
+    if unknown_ids:
+        raise ReleaseError(
+            "Release configuration requires unknown source image ids: "
+            + ", ".join(unknown_ids)
+        )
+    required_images = tuple(images_by_id[image_id] for image_id in required_image_ids)
     emit("Scanning for supported ISO files...")
     selected = identify_supported_images(
         directory,
-        manifest.images,
+        required_images,
         ignored_names=(manifest.output_name, building_iso.name),
         emit=emit,
     )
     try:
         with locked_input_files(selected.values()):
-            verify_locked_images(selected, manifest.images, emit=emit)
+            verify_locked_images(selected, required_images, emit=emit)
             emit(f"Building {manifest.output_name}...")
             builder(
                 selected["na2"],
-                selected["nun5"],
+                selected.get("nun5"),
                 configuration_path,
                 building_iso,
                 emit,

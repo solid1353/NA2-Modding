@@ -51,8 +51,8 @@ not replace identifiers, placeholders, or data of uncertain display purpose
 with arbitrary text.
 
 The translation importer owns game text and its mapping and reference data.
-Font owns glyph rendering and fitting; UI layout and texture modules own
-graphical assets and their placement.
+Font owns glyph rendering and fitting; `localization.ui` owns matching graphical
+assets and their placement as one selection.
 
 ## Canonical mapping table
 

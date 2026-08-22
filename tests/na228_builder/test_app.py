@@ -279,6 +279,40 @@ class ReleaseAppTests(unittest.TestCase):
             )
             self.assertEqual(calls[0][2], configuration_path.resolve())
 
+    def test_nun5_is_not_required_without_texture_patcher(self) -> None:
+        na2 = b"clean-na2"
+        nun5 = b"clean-nun5"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            na2_path = root / "NA2.iso"
+            na2_path.write_bytes(na2)
+            configuration_path = self.write_configuration(root)
+            calls: list[tuple[Path, Path | None, Path]] = []
+
+            def builder(
+                source_na2: Path,
+                source_nun5: Path | None,
+                configuration: Path,
+                building: Path,
+                _emit,
+            ) -> None:
+                calls.append((source_na2, source_nun5, configuration))
+                building.write_bytes(na2)
+
+            output = run_release(
+                root,
+                self.manifest(na2, nun5),
+                builder,
+                configuration_validator=lambda _path: ("na2",),
+                emit=lambda _message: None,
+            )
+
+            self.assertEqual(output.read_bytes(), na2)
+            self.assertEqual(
+                calls,
+                [(na2_path.resolve(), None, configuration_path.resolve())],
+            )
+
     def test_existing_output_is_replaced_and_ignored_during_source_discovery(self) -> None:
         na2 = b"clean-na2"
         nun5 = b"clean-nun5"

@@ -28,7 +28,7 @@ def application_cache_root() -> Path:
 def load_release_configuration(
     configuration_path: Path,
     na2_iso: Path,
-    nun5_iso: Path,
+    nun5_iso: Path | None,
 ) -> tuple[Path, BuildConfiguration]:
     workspace = packaged_workspace()
     paths = load_local_paths(workspace, allow_missing=True)
@@ -44,12 +44,15 @@ def load_release_configuration(
             f"Release configuration is missing: {configuration_path.name}"
         )
 
+    root_overrides = {"na2": na2_iso}
+    if nun5_iso is not None:
+        root_overrides["nun5"] = nun5_iso
     configuration = load_configuration(
         configuration_path,
         workspace,
         builder_root,
         project_paths=paths,
-        root_overrides={"na2": na2_iso, "nun5": nun5_iso},
+        root_overrides=root_overrides,
     )
     if configuration.product_title != manifest.product_name:
         raise RuntimeError(
@@ -58,7 +61,16 @@ def load_release_configuration(
     return workspace, configuration
 
 
-def validate_release_configuration(configuration_path: Path) -> int:
+def required_release_image_ids(
+    configuration: BuildConfiguration,
+) -> tuple[str, ...]:
+    image_ids = ["na2"]
+    if any(module.module == "texture_patcher" for module in configuration.modules):
+        image_ids.append("nun5")
+    return tuple(image_ids)
+
+
+def validate_release_configuration(configuration_path: Path) -> tuple[str, ...]:
     """Validate one external configuration without requiring copyrighted ISOs."""
     workspace = packaged_workspace()
     marker = load_local_paths(workspace, allow_missing=True).path(
@@ -67,7 +79,7 @@ def validate_release_configuration(configuration_path: Path) -> int:
     _, configuration = load_release_configuration(configuration_path, marker, marker)
     if not configuration.modules:
         raise RuntimeError("Release configuration has no module invocations")
-    return len(configuration.modules)
+    return required_release_image_ids(configuration)
 
 
 def validate_packaged_release() -> int:
@@ -104,7 +116,7 @@ def validate_packaged_release() -> int:
 
 def build_release_iso(
     na2_iso: Path,
-    nun5_iso: Path,
+    nun5_iso: Path | None,
     configuration_path: Path,
     building_iso: Path,
     emit: Emit,

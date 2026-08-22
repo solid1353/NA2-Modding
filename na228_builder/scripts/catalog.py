@@ -43,6 +43,7 @@ class CatalogNode:
     startup_fast_forward_frames: (
         catalog_format.StartupFastForwardFrames | None
     ) = None
+    modules: tuple[str, ...] = ()
 
     @property
     def feature_id(self) -> str:
@@ -501,6 +502,11 @@ def _selected_nodes(
                 if isinstance(node, catalog_format.SettingNode)
                 else None
             )
+            modules = (
+                node.modules
+                if isinstance(node, catalog_format.SettingNode)
+                else ()
+            )
             nodes.append(
                 CatalogNode(
                     path,
@@ -508,6 +514,7 @@ def _selected_nodes(
                     patches,
                     description,
                     startup_fast_forward_frames=startup_frames,
+                    modules=modules,
                 )
             )
             if isinstance(node, catalog_format.ContainerNode):
@@ -525,6 +532,7 @@ def _selected_nodes(
                     configured if has_value else None,
                     has_value,
                     node.startup_fast_forward_frames,
+                    node.modules,
                 )
             )
             return True

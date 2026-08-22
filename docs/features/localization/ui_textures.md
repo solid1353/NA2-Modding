@@ -1,8 +1,11 @@
 # UI texture translation
 
-This module derives the selected official English NUN5 UI containers directly
-from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
-`DATA/DATA.CVM` member ranges. No replacement CCS blobs are stored in Git.
+This document covers the texture-patcher side of the `localization.ui` catalog
+leaf. That leaf atomically selects these official English NUN5 UI containers
+and their matching layout/runtime patches; neither side can be enabled alone.
+The module derives the containers directly from the canonical NA2 and NUN5
+sources and writes them into the unchanged NA2 `DATA/DATA.CVM` member ranges.
+No replacement CCS blobs are stored in Git.
 
 ## Safety and reproducibility
 
@@ -43,7 +46,7 @@ from the canonical NA2 and NUN5 sources and writes them into the unchanged NA2
   NUN5's Cross/OK and Triangle/Back legends wherever the common panel is used.
 - The NUN5 one-part `OUGI.CCS` layout also requires the paired,
   size-preserving `ui_layout_ultimate_jutsu_label` semantic port in
-  the owning `localization.ui_layout` catalog node.
+  the owning `localization.ui` catalog node.
 
 The engine searches deterministic zlib encodings first. Twenty-eight
 fixed-capacity members require Zopfli, and indexed-region translations use it

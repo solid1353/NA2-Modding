@@ -93,8 +93,11 @@
           ],
         },
       },
-      ui_layout: setting {
-        description: "Apply English UI rectangles, anchors, scaling, and screen-specific geometry.",
+      ui: setting {
+        description: "Apply matching English UI textures, rectangles, anchors, scaling, and screen-specific geometry.",
+        modules: [
+          "texture_patcher",
+        ],
         patches: [
           "e__localization__ui_layout__common_prompt_anchors",
           "e__localization__ui_layout__battle_hud_name_rectangles",

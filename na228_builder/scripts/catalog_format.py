@@ -84,6 +84,7 @@ class SettingNode:
     description: str
     patches: tuple[str, ...]
     startup_fast_forward_frames: StartupFastForwardFrames | None = None
+    modules: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -325,6 +326,7 @@ class _Parser:
         self.expect("{", "expected setting body")
         description: str | None = None
         patches: tuple[str, ...] | None = None
+        modules: tuple[str, ...] | None = None
         startup_fast_forward_frames: StartupFastForwardFrames | None = None
         seen: set[str] = set()
         while self.current.kind != "}":
@@ -340,6 +342,8 @@ class _Parser:
                 )
             elif key == "patches":
                 patches = self.string_array()
+            elif key == "modules":
+                modules = self.string_array()
             elif key == "startup_fast_forward_frames":
                 startup_fast_forward_frames = self.startup_fast_forward_frames()
             else:
@@ -357,6 +361,7 @@ class _Parser:
                 self.current,
                 "every setting requires a nonempty description",
             )
+        modules = modules or ()
         if patches is None or not patches:
             raise _syntax(
                 self.path,
@@ -365,11 +370,21 @@ class _Parser:
             )
         if len(patches) != len(set(patches)):
             raise _syntax(self.path, self.current, "setting patches must be unique")
+        if len(modules) != len(set(modules)):
+            raise _syntax(self.path, self.current, "setting modules must be unique")
+        for module in modules:
+            if not IDENTIFIER.fullmatch(module):
+                raise _syntax(
+                    self.path,
+                    self.current,
+                    f"setting module must be a meaningful snake_case key: {module!r}",
+                )
         return SettingNode(
             value_type,
             description,
             patches,
             startup_fast_forward_frames,
+            modules,
         )
 
     def startup_fast_forward_frames(self) -> StartupFastForwardFrames:
@@ -1048,14 +1063,24 @@ def _node_lines(
                         " " * (indent + 4) + f"override: {frames.override},"
                     )
                 lines.append(" " * (indent + 2) + "},")
-            lines.append(" " * (indent + 2) + "patches: [")
-            for patch in node.patches:
-                lines.append(
-                    " " * (indent + 4)
-                    + json.dumps(patch, ensure_ascii=False)
-                    + ","
-                )
-            lines.append(" " * (indent + 2) + "],")
+            if node.modules:
+                lines.append(" " * (indent + 2) + "modules: [")
+                for module in node.modules:
+                    lines.append(
+                        " " * (indent + 4)
+                        + json.dumps(module, ensure_ascii=False)
+                        + ","
+                    )
+                lines.append(" " * (indent + 2) + "],")
+            if node.patches:
+                lines.append(" " * (indent + 2) + "patches: [")
+                for patch in node.patches:
+                    lines.append(
+                        " " * (indent + 4)
+                        + json.dumps(patch, ensure_ascii=False)
+                        + ","
+                    )
+                lines.append(" " * (indent + 2) + "],")
         lines.append(prefix + "}")
         return lines
     if isinstance(node, ContainerNode):

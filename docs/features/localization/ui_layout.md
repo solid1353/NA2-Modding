@@ -1,8 +1,9 @@
-# UI translation layout patches
+# English UI integration
 
-The `localization.ui_layout` catalog leaf ports the geometry, atlas selection,
-visibility, and draw behavior required by the imported English UI assets. The
-exact selected edit IDs are owned by
+The `localization.ui` catalog leaf atomically imports the matching English UI
+textures and applies the geometry, atlas selection, visibility, and draw
+behavior they require. Its texture-patcher input and layout/runtime patches
+cannot be selected independently. The exact selected edit IDs are owned by
 `features.localization` in `@builder/catalog/catalog.modcat`; guarded
 bytes and shared injection
 units are owned by the catalog implementation stores.
@@ -59,11 +60,12 @@ Compatible records, tables, and isolated constants remain guarded binary
 edits. Source-owned runtime behavior is declared by
 `i__localization__ui_layout__runtime`; its fragments compose into the shared
 `PRG/228.BIN` resident payload alongside Font contributions. Shared placement
-infrastructure does not transfer ownership to the Font feature. UI layout
-remains responsible for graphical rectangles, anchors, visibility, ordering,
-and ABI-safe draw-path adaptations. Text content belongs to the translation
-importer, glyph measurement and wrapping belong to Font, and regional button
-behavior belongs to `localization.regional_input`.
+infrastructure does not transfer ownership to the Font feature. The UI
+selection remains responsible for matching graphical assets, rectangles,
+anchors, visibility, ordering, and ABI-safe draw-path adaptations. Text content
+belongs to the translation importer, glyph measurement and wrapping belong to
+Font, and regional button behavior belongs to
+`localization.regional_input`.
 
 Exact source/donor identities, offsets, function relationships, negative
 results, runtime observations, and confidence belong only in the linked

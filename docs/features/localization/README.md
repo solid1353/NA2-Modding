@@ -13,6 +13,10 @@ external strings, and regional menu input behavior. Enabling the feature
 is selected by a structurally matching configuration. The build-resource
 fingerprint covers its canonical executable inputs.
 
+`localization.ui` atomically selects the source-derived English UI textures and
+their matching guarded layout/runtime patches. Neither implementation side is
+independently selectable.
+
 ## Canonical builder inputs
 
 `features.localization` in `@builder/catalog/catalog.modcat` owns
@@ -35,9 +39,9 @@ shared string-patcher engine as a derived stage.
 
 - [Translation importer](translation_importer.md): current mapping schema,
   source/donor contract, output, safety, and integration behavior.
-- [UI textures](ui_textures.md): source-derived fixed-size CCS replacements.
-- [UI layout patches](ui_layout.md): guarded executable layout edits paired
-  with the localized UI containers.
+- [English UI integration](ui_layout.md): the combined `localization.ui`
+  selection and its guarded layout/runtime behavior; [texture derivation](ui_textures.md)
+  documents its source-derived fixed-size CCS replacements.
 - [Compact external strings](external_strings.md): linked resident string
   placement and loader integration.
 - [Native NUN5-derived Font](font.md): feature-owned Font assets, hooks, and

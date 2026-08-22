@@ -36,6 +36,10 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 
 ## Implementation boundaries
 
+- After replacing or removing behavior, delete its retired code and tests.
+  Do not retain compatibility, detection, rejection, fallback, migration, or
+  retirement checks unless explicitly requested. Verify removals with temporary
+  searches or checks discarded before completion.
 - Choose ordinary code-level implementation details inside the approved outcome
   and scope.
 - Ask before changing unrequested user-visible behavior or introducing a new

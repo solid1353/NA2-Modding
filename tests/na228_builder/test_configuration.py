@@ -142,8 +142,25 @@ class ConfigurationTests(unittest.TestCase):
             if not isinstance(feature, dict):
                 raise ValueError("Test catalog feature must be an object")
             description = feature.get("description", f"{feature_id} feature")
+            module_settings = feature.get("module_settings", {})
+            if not isinstance(module_settings, dict):
+                raise ValueError("Test module settings must be an object")
             injection_id = f"i__{feature_id}__enabled"
             temporary = catalog_root / f".{feature_id}.modcat"
+            module_source_parts: list[str] = []
+            for setting_id, module_type in module_settings.items():
+                module_injection_id = f"i__{feature_id}__{setting_id}"
+                module_source_parts.append(
+                    f"  {setting_id}: setting {{\n"
+                    f"    description: {json.dumps(f'Select {module_type}.')},\n"
+                    f"    modules: [{json.dumps(module_type)}],\n"
+                    f"    patches: [{json.dumps(module_injection_id)}],\n"
+                    "  },\n"
+                )
+                injections[module_injection_id] = {
+                    "description": f"Synthetic {setting_id}."
+                }
+            module_source = "".join(module_source_parts)
             temporary.write_text(
                 "{\n"
                 f"  description: {json.dumps(description)},\n"
@@ -151,6 +168,7 @@ class ConfigurationTests(unittest.TestCase):
                 f"    description: {json.dumps(description)},\n"
                 f"    patches: [{json.dumps(injection_id)}],\n"
                 "  },\n"
+                f"{module_source}"
                 "}\n",
                 encoding="utf-8",
             )
@@ -172,8 +190,16 @@ class ConfigurationTests(unittest.TestCase):
             json.dumps(
                 {
                     "features": {
-                        feature_id: {"enabled": True}
-                        for feature_id in catalog
+                        feature_id: {
+                            "enabled": True,
+                            **{
+                                setting_id: True
+                                for setting_id in feature.get(
+                                    "module_settings", {}
+                                )
+                            },
+                        }
+                        for feature_id, feature in catalog.items()
                     }
                 },
                 indent=2,
@@ -245,6 +271,37 @@ class ConfigurationTests(unittest.TestCase):
                 ],
             )
             self.assertEqual([item.order for item in configuration.modules], [1, 2])
+
+    def test_ui_setting_controls_texture_module(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            builder, source, configurations = self.create_workspace(root)
+            self.create_feature_inputs(
+                builder,
+                "localization",
+                "translation_importer",
+                "texture_patcher",
+            )
+            configuration_path = self.create_configuration(
+                configurations,
+                source,
+                {
+                    "localization": {
+                        "description": "Localization",
+                        "module_settings": {
+                            "ui": "texture_patcher",
+                        },
+                    }
+                },
+                {"localization": {"ui": False}},
+            )
+
+            configuration = load_configuration(configuration_path, root, root)
+
+            self.assertEqual(
+                [item.module_id for item in configuration.modules],
+                ["localization.translation_importer"],
+            )
 
     def test_disabled_catalog_only_feature_requires_no_directory(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

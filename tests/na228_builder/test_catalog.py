@@ -99,6 +99,11 @@ class CatalogTests(unittest.TestCase):
             description: "Boolean data wrapped in an object.",
             patches: ["e__feature__supplied_bool"],
           },
+          patch_and_module: setting {
+            description: "Patch-backed internal module.",
+            modules: ["texture_patcher"],
+            patches: ["e__feature__patch_and_module"],
+          },
           numeric: setting<(int & 1..15) | (decimal & >0 & <1)> {
             description: "Disjoint numeric union.",
             patches: ["e__feature__numeric"],
@@ -125,6 +130,14 @@ class CatalogTests(unittest.TestCase):
         fields = {field.name: field.node for field in parsed.fields}
         self.assertEqual(fields["plain"].startup_fast_forward_frames.additive, 25)
         self.assertEqual(fields["plain"].startup_fast_forward_frames.override, 100)
+        self.assertEqual(
+            fields["patch_and_module"].patches,
+            ("e__feature__patch_and_module",),
+        )
+        self.assertEqual(
+            fields["patch_and_module"].modules,
+            ("texture_patcher",),
+        )
         self.assertTrue(catalog_format.matches_type(fields["numeric"].value_type, 5))
         self.assertTrue(catalog_format.matches_type(fields["numeric"].value_type, 0.5))
         self.assertFalse(catalog_format.matches_type(fields["numeric"].value_type, 16))
@@ -138,8 +151,13 @@ class CatalogTests(unittest.TestCase):
         rendered = catalog_format.serialize_catalog(
             {"feature": parsed}, include_patches=False
         )
+        embedded = catalog_format.serialize_catalog(
+            {"feature": parsed}, include_patches=True
+        )
         self.assertIn("\n      |\n      {\n", rendered)
         self.assertNotIn("startup_fast_forward_frames", rendered)
+        self.assertNotIn("modules:", rendered)
+        self.assertIn('modules: [\n          "texture_patcher",', embedded)
 
     def test_startup_fast_forward_frames_combine_one_override_and_additives(
         self,

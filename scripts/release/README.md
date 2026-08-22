@@ -7,8 +7,11 @@ Ninja 5*.
 ## Use it
 
 1. Extract all five release files into one directory.
-2. Put one supported clean NA2 ISO and one supported clean Ultimate Ninja 5 ISO
-   in that directory. Their filenames do not matter.
+2. Put one supported clean NA2 ISO in that directory. If
+   `features.localization.ui` is enabled in `config.json`, also put one
+   supported clean Ultimate Ninja 5 ISO there. English UI textures and their
+   matching layout/runtime patches are selected together. Their filenames do
+   not matter. A build with UI disabled needs only NA2.
 3. Edit `config.json` if you want to change the selected features. Edit
    `character_overrides.tsv` if you want to change per-character battle values.
 4. Double-click the EXE.

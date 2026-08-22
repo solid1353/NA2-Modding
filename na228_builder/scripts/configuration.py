@@ -544,6 +544,24 @@ def _load_configuration(
     modules: list[ModuleInvocation] = []
     for feature_id in selection.feature_ids:
         module_inputs = _feature_module_inputs(builder_root, feature_id)
+        declared_modules = {
+            module
+            for node in selection.feature_nodes(feature_id)
+            for module in node.modules
+        }
+        available_module_types = {module_type for module_type, _ in module_inputs}
+        unknown_modules = sorted(declared_modules - available_module_types)
+        if unknown_modules:
+            raise ValueError(
+                f"Catalog feature {feature_id!r} selects unavailable modules: "
+                + ", ".join(unknown_modules)
+            )
+        selected_modules = {
+            module
+            for node in selection.feature_nodes(feature_id)
+            if node.enabled
+            for module in node.modules
+        }
         actual = _catalog_feature_sha256(
             selection,
             feature_id,
@@ -559,7 +577,10 @@ def _load_configuration(
         )
         available: dict[str, Path] = {}
         for module_type, module_path in module_inputs:
-            if selection.node_enabled("features", feature_id):
+            if selection.node_enabled("features", feature_id) and (
+                module_type not in declared_modules
+                or module_type in selected_modules
+            ):
                 available[module_type] = module_path
         if catalog_module.feature_has(
             selection,

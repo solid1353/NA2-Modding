@@ -7,8 +7,8 @@ CUE, Go, Node, or TypeScript runtime.
 
 `catalog/catalog.modcat` defines the logical `features` root and all of its
 direct feature children. The project catalog contains both the user-facing
-contract and its `patches` mappings. Release packaging writes an inert
-`catalog.modcat` reference with the mappings and every other implementation
+contract and its `patches` and `modules` mappings. Release packaging writes an
+inert `catalog.modcat` reference with the mappings and every other implementation
 detail removed. The packaged executable uses its embedded complete catalog and
 never reads the external reference.
 
@@ -50,8 +50,10 @@ by the referenced patch definition. A typed setting has no option-to-patches
 map; alternatives with different patches are complete setting branches.
 
 Every setting requires a nonempty `description` and a nonempty `patches` array.
-Patch IDs within one setting must be unique. Descriptions do not inherit and
-have no fallback behavior.
+It may also declare a nonempty `modules` array. IDs within each array must be
+unique. Descriptions do not inherit and have no fallback behavior. Module
+mappings remain implementation details and are omitted from the public release
+catalog.
 
 The node-level value `false` disables any setting, union, or structural
 container before typed-value validation or union matching. It never reaches a
@@ -300,7 +302,8 @@ string-patch IDs use `s__` and must resolve to exactly one definition in
 
 Multiple setting branches may share a patch ID. Every edit, injection, and
 string patch must be referenced by at least one catalog branch; orphan
-definitions are rejected.
+definitions are rejected. A setting's `modules` array names internal module
+types registered for its owning feature; unknown module types are rejected.
 Every target, adapter, asset, source, runtime object, and operation reachable
 through a referenced definition must also pass its owning component's normal
 validation.

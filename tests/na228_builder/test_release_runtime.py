@@ -11,6 +11,26 @@ from scripts.lib.paths import load_local_paths
 
 
 class ReleaseRuntimeTests(unittest.TestCase):
+    def test_required_images_follow_texture_patcher_selection(self) -> None:
+        without_textures = SimpleNamespace(
+            modules=(SimpleNamespace(module="translation_importer"),)
+        )
+        with_textures = SimpleNamespace(
+            modules=(
+                SimpleNamespace(module="translation_importer"),
+                SimpleNamespace(module="texture_patcher"),
+            )
+        )
+
+        self.assertEqual(
+            ("na2",),
+            release_runtime.required_release_image_ids(without_textures),
+        )
+        self.assertEqual(
+            ("na2", "nun5"),
+            release_runtime.required_release_image_ids(with_textures),
+        )
+
     def test_application_cache_root_uses_configured_root(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -11,7 +11,8 @@ integrated catalog data.
   is parsed directly by the Python builder.
   [`CATALOG.md`](CATALOG.md) is the complete authoring and
   configuration-semantics reference.
-- Catalog settings contain their descriptions and one `patches` array. IDs
+- Catalog settings contain their descriptions, one `patches` array, and an
+  optional `modules` array. Patch IDs
   beginning with `e__` resolve to guarded edits; IDs beginning with `i__`
   resolve to injection units; IDs beginning with `s__` resolve to semantic
   string patches. Implementation details never appear in the release catalog
@@ -74,7 +75,12 @@ integrated catalog data.
   edits and injection hooks.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.
 - `localization/assets/` owns edit-referenced localization binary assets.
-- Enabling `features.localization` includes the retained translation-importer and texture-patcher inputs under `localization/`; they are real inputs, not empty catalog selector nodes.
+- Enabling `features.localization` includes the retained translation importer.
+  `features.localization.ui` atomically selects its layout patches and
+  the matching texture patcher. Both inputs live under `localization/` and are
+  real inputs, not empty selector nodes. Release builds always require the clean
+  NA2 ISO and require the clean NUN5 ISO only when the resolved module list
+  includes the texture patcher.
 - `@scripts/` contains every builder Python implementation file. Reusable engines and their code-only contracts remain under `modules/`.
 - Root `release_manifest.json` owns release packaging metadata and remains
   outside the catalog.
@@ -193,7 +199,10 @@ execution.
 
 ## Internal execution
 
-Reusable engines remain internal under `modules/` and are not represented in catalog or configuration data. The builder derives internal engine invocations in this stable order:
+Reusable engines remain internal under `modules/`. Catalog settings may select
+an engine by module type without exposing its implementation in the public
+release catalog. The builder derives internal engine invocations in this stable
+order:
 
 1. `translation_importer`
 2. `string_patcher`

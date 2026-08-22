@@ -11,7 +11,7 @@
         "layout": true,
         "numeric_formatting": true
       },
-      "ui_layout": true,
+      "ui": true,
       "regional_input": true
     },
     "qol": {

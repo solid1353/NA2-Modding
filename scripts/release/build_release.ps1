@@ -24,9 +24,6 @@ $instructionsPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.ins
 $configurationPath = [IO.Path]::GetFullPath((Join-Path $repository $manifest.configuration))
 $releaseTemp = Resolve-Na2ProjectPathAlias -Alias $toolchain.temporary_root -Paths $paths
 
-if ([int]$toolchain.schema_version -ne 1 -or [int]$manifest.schema_version -ne 1) {
-    throw 'Unsupported release schema.'
-}
 if ([string]::IsNullOrWhiteSpace($productName) -or
     [IO.Path]::GetFileName($executableName) -cne $executableName) {
     throw 'Product title must produce one release executable filename.'

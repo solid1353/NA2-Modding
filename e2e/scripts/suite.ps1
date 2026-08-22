@@ -1466,7 +1466,6 @@ function Set-VisualRegressionTransactionOwner {
 
     $process = Get-Process -Id $PID
     $owner = [ordered]@{
-        schema_version = 2
         pid = $PID
         process_start_file_time_utc = $process.StartTime.ToFileTimeUtc()
         created_utc = (Get-Date).ToUniversalTime().ToString('O')
@@ -1501,7 +1500,6 @@ function Set-VisualRegressionTransactionRequest {
         $CreatedUtc = (Get-Date).ToUniversalTime().ToString('O')
     }
     $request = [ordered]@{
-        schema_version = 1
         prefix = $Prefix
         resume_key = $ResumeKey
         resume_count = $ResumeCount
@@ -1742,7 +1740,6 @@ function Set-VisualRegressionTransactionRetained {
         throw "Transaction does not exist: $resolvedTransaction"
     }
     $marker = [ordered]@{
-        schema_version = 1
         status = 'failed'
         completed_utc = (Get-Date).ToUniversalTime().ToString('O')
     } | ConvertTo-Json
@@ -2051,7 +2048,6 @@ function Compare-VisualRegressionVariants {
     }
     [void](New-Item -ItemType Directory -Path $OutputRoot -Force)
     $result = [ordered]@{
-        schema_version = 1
         suite = $Suite
         status = if ($mismatches.Count -eq 0) { 'passed' } else { 'failed' }
         compared = $names.Count

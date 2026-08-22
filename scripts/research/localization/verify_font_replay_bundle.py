@@ -91,7 +91,6 @@ def main() -> int:
         )
 
     result = {
-        "schema_version": 1,
         "iso": str(iso),
         "serial": args.serial,
         "crc": args.crc.upper(),

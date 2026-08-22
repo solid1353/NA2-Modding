@@ -64,7 +64,6 @@ def write_candidate(directory: Path) -> None:
     (directory / "manifest.json").write_text(
         json.dumps(
             {
-                "schema_version": 1,
                 "fragment_file": "fragment.bin",
                 "fragment_sha256": hashlib.sha256(fragment).hexdigest(),
                 "segments": [

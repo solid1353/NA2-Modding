@@ -46,7 +46,6 @@ if ($Action -in @('CurrentPrepare', 'ReferencePrepare')) {
         -OutputDirectory $screenshotStage `
         -CapturedTier $capturedTier
     $metadata = [ordered]@{
-        schema_version = 1
         suite = $context.Suite
         has_reference = @(
             Get-ChildItem `

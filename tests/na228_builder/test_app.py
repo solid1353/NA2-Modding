@@ -31,7 +31,6 @@ class ReleaseAppTests(unittest.TestCase):
 
     def manifest(self, na2: bytes, nun5: bytes) -> ReleaseManifest:
         return ReleaseManifest(
-            schema_version=1,
             product_name="Narutimate Accel v2.28",
             product_version="v-test",
             executable_name="Narutimate Accel v2.28_test.exe",
@@ -59,7 +58,6 @@ class ReleaseAppTests(unittest.TestCase):
 
     def test_manifest_parser_normalizes_and_validates_image_identities(self) -> None:
         data = {
-            "schema_version": 1,
             "product_version": "1.0.0",
             "configuration": "builder/configurations/synthetic.json",
             "configuration_name": "config.json",
@@ -97,7 +95,6 @@ class ReleaseAppTests(unittest.TestCase):
 
     def test_manifest_parser_rejects_unsafe_product_name(self) -> None:
         data = {
-            "schema_version": 1,
             "product_version": "1.0.0",
             "configuration": "builder/configurations/synthetic.json",
             "configuration_name": "config.json",

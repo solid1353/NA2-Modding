@@ -101,6 +101,10 @@
   successful run. Do not add workflow-blocking identity, expected-state, guard,
   backup, recovery, or restart validation unless it is explicitly authorized by
   the applicable validation plan.
+- Do not add or retain `schema_version` unless it selects supported incompatible
+  behavior, migration, or cache invalidation.
+- Do not create a manifest unless an independent consumer needs metadata that
+  cannot be derived from its canonical inputs.
 - Follow [`logging.md`](logging.md) for log roots, retention, and
   knowledge promotion.
 - Prefer cohesive responsibility-based files. Split independent concerns when

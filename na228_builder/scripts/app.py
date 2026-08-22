@@ -38,7 +38,6 @@ class SupportedImage:
 
 @dataclass(frozen=True)
 class ReleaseManifest:
-    schema_version: int
     product_name: str
     product_version: str
     executable_name: str
@@ -126,11 +125,6 @@ def parse_release_manifest(text: str, *, product_name: str) -> ReleaseManifest:
         raise ReleaseError("Release manifest is not valid JSON") from exc
     if not isinstance(data, dict):
         raise ReleaseError("Release manifest root must be an object")
-    if data.get("schema_version") != 1:
-        raise ReleaseError(
-            f"Unsupported release manifest schema: {data.get('schema_version')!r}"
-        )
-
     raw_images = data.get("images")
     if not isinstance(raw_images, list):
         raise ReleaseError("Release manifest images must be a list")
@@ -192,7 +186,6 @@ def parse_release_manifest(text: str, *, product_name: str) -> ReleaseManifest:
     product_version = _required_text(data, "product_version")
 
     return ReleaseManifest(
-        schema_version=1,
         product_name=product_name,
         product_version=product_version,
         executable_name=_validate_executable_name(

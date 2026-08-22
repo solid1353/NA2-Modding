@@ -73,7 +73,6 @@ $inputIdentity = @(
     }
 )
 $resumeRequest = [ordered]@{
-    schema_version = 2
     command = 'create'
     all = [bool]$All
     no_reference = $NoReference.IsPresent
@@ -230,7 +229,6 @@ try {
                 }
                 & $Script @arguments
                 $complete = [ordered]@{
-                    schema_version = 1
                     suite = $Suite
                     game = $Game
                     completed_utc = (Get-Date).ToUniversalTime().ToString('O')
@@ -272,7 +270,6 @@ try {
     if (-not $reuseCompletedRun) {
         $null = & (Join-Path $PSScriptRoot 'run.ps1') @runArguments
         Write-E2eCreateMarker -Path $runComplete -Value ([ordered]@{
-            schema_version = 1
             suites = [string[]]@($recordings.Suite)
             completed_utc = (Get-Date).ToUniversalTime().ToString('O')
         })
@@ -301,7 +298,6 @@ try {
             Write-E2eCreateMarker `
                 -Path $referencePublishComplete `
                 -Value ([ordered]@{
-                    schema_version = 1
                     completed_utc = (Get-Date).ToUniversalTime().ToString('O')
                 })
         }

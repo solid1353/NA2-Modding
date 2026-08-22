@@ -91,10 +91,6 @@ def _load_paths(
 ) -> Paths:
     manifest_path = _find_manifest(start or Path.cwd())
     data = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if data.get("schema_version") != 1:
-        raise ValueError(
-            f"Unsupported project path manifest schema: {data.get('schema_version')!r}"
-        )
     configured = data.get("roots")
     if not isinstance(configured, dict) or not configured:
         raise ValueError("Project path manifest has no roots")
@@ -297,11 +293,6 @@ def _load_paths(
         if not settings_path.is_file():
             raise FileNotFoundError(f"Project settings not found: {settings_path}")
         project_settings = json.loads(settings_path.read_text(encoding="utf-8"))
-        if project_settings.get("schema_version") != 1:
-            raise ValueError(
-                "Unsupported project settings schema: "
-                f"{project_settings.get('schema_version')!r}"
-            )
         source_catalog_path = files.get("game_catalog")
         if source_catalog_path is not None:
             if not source_catalog_path.is_file():
@@ -311,13 +302,7 @@ def _load_paths(
             source_catalog = json.loads(
                 source_catalog_path.read_text(encoding="utf-8")
             )
-            if source_catalog.get("schema_version") != 1:
-                raise ValueError(
-                    "Unsupported source game catalog schema: "
-                    f"{source_catalog.get('schema_version')!r}"
-                )
             catalog = {
-                "schema_version": 1,
                 "sources": source_catalog.get("sources"),
                 "title": project_settings.get("title"),
                 "serial": project_settings.get("serial"),

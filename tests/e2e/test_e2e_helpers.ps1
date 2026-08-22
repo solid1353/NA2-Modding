@@ -1070,7 +1070,6 @@ $grids = Join-Path $OutputRoot 'screenshots'
         (Join-Path $activeVariantRoot 'config.json'),
         @'
 {
-  "schema_version": 1,
   "build_variants": [
     {
       "name": "baseline",
@@ -1322,7 +1321,7 @@ $grids = Join-Path $OutputRoot 'screenshots'
     (Get-Item -LiteralPath $legacy).LastWriteTimeUtc = [DateTime]::UtcNow.AddMinutes(-2)
     [IO.File]::WriteAllText(
         (Join-Path $stale 'owner.json'),
-        '{"schema_version":1,"pid":2147483647,"process_start_utc":"2000-01-01T00:00:00.0000000Z"}'
+        '{"pid":2147483647,"process_start_utc":"2000-01-01T00:00:00.0000000Z"}'
     )
     $transaction = New-VisualRegressionTransaction -Root $testRoot -Prefix 'run'
     Assert-E2eHelperTest `
@@ -1338,7 +1337,6 @@ $grids = Join-Path $OutputRoot 'screenshots'
         ConvertFrom-Json
     Assert-E2eHelperTest `
         -Condition (
-            [int]$transactionOwner.schema_version -eq 2 -and
             [long]$transactionOwner.process_start_file_time_utc -eq
                 (Get-Process -Id $PID).StartTime.ToFileTimeUtc()
         ) `

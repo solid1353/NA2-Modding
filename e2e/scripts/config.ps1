@@ -137,9 +137,6 @@ function Get-E2eConfiguration {
     catch {
         throw "Invalid E2E configuration JSON: $configurationPath"
     }
-    if ([int]$configuration.schema_version -ne 1) {
-        throw "Unsupported E2E configuration schema: $($configuration.schema_version)"
-    }
     $variants = @($configuration.build_variants)
     if ($variants.Count -lt 1) {
         throw 'E2E configuration requires at least one build variant.'

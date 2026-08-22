@@ -100,10 +100,6 @@ class LiveIdentity:
 
 def load_targets(path: Path = TARGETS_PATH) -> dict[str, Target]:
     data = json.loads(path.read_text(encoding="utf-8"))
-    if data.get("schema_version") != 1:
-        raise UiRuntimeError(
-            f"Unsupported target schema: {data.get('schema_version')!r}"
-        )
     raw_targets = data.get("targets")
     if not isinstance(raw_targets, dict) or not raw_targets:
         raise UiRuntimeError("Target configuration has no targets")
@@ -755,7 +751,6 @@ def _archive_state(
         image_stat = image_path.stat()
         state_stat = archived_state.stat()
         manifest = {
-            "schema_version": 1,
             "capture_id": capture_id,
             "captured_at_utc": captured_at,
             "capture_method": capture_method,

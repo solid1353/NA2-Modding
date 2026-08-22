@@ -24,9 +24,6 @@ $ErrorActionPreference = 'Stop'
 $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $configPath = Join-Path $repository 'packages.json'
 $config = Get-Content -Raw -LiteralPath $configPath | ConvertFrom-Json
-if ([int]$config.schema_version -ne 1) {
-    throw "Unsupported Python package-set schema: $($config.schema_version)"
-}
 
 $setProperty = $config.sets.PSObject.Properties[$PackageSet]
 if ($null -eq $setProperty) {

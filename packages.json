@@ -1,5 +1,4 @@
 {
-  "schema_version": 1,
   "sets": {
     "builder": [
       "zopfli==0.4.3"

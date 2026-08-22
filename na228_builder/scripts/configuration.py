@@ -178,7 +178,6 @@ def _read_settings(path: Path) -> tuple[str, str, tuple[int, ...]]:
     settings = _settings_object(
         data,
         {
-            "schema_version",
             "title",
             "serial",
             "output_boot_path",
@@ -187,8 +186,6 @@ def _read_settings(path: Path) -> tuple[str, str, tuple[int, ...]]:
         },
         "root",
     )
-    if settings["schema_version"] != 1:
-        raise ValueError("Unsupported settings schema_version")
     launch_settings = settings["launch_settings"]
     if not isinstance(launch_settings, dict):
         raise ValueError("Settings launch_settings must be an object")

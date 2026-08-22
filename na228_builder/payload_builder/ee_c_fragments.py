@@ -615,7 +615,6 @@ def compile_and_extract(
 
 def manifest(extracted: ExtractedEeObject) -> dict[str, object]:
     return {
-        "schema_version": 1,
         "fingerprint": extracted.fingerprint,
         "fragments": [
             {

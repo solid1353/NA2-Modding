@@ -55,7 +55,6 @@ class ConfigurationTests(unittest.TestCase):
         (root / "paths.json").write_text(
             json.dumps(
                 {
-                    "schema_version": 1,
                     "roots": {
                         "repository": ".",
                         "source": "source",
@@ -78,7 +77,6 @@ class ConfigurationTests(unittest.TestCase):
         (root / "games.json").write_text(
             json.dumps(
                 {
-                    "schema_version": 1,
                     "sources": {
                         "NA2": {
                             "serial": "SLPS-25837",
@@ -196,7 +194,6 @@ class ConfigurationTests(unittest.TestCase):
         (root / "game.json").write_text(
             json.dumps(
                 {
-                    "schema_version": 1,
                     "title": "Test Product",
                     "serial": "TEST-00000",
                     "output_boot_path": "SLOP_NA2.28",

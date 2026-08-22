@@ -93,8 +93,8 @@ def load_candidate(
         )
 
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    if not isinstance(manifest, dict) or manifest.get("schema_version") != 1:
-        raise ValueError("manifest.json: unsupported injection schema")
+    if not isinstance(manifest, dict):
+        raise ValueError("manifest.json: root must be an object")
     if manifest.get("fragment_file") != "fragment.bin":
         raise ValueError("manifest.json: fragment_file must be fragment.bin")
 

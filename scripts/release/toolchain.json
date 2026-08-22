@@ -1,5 +1,4 @@
 {
-  "schema_version": 1,
   "platform": "win32",
   "architecture": "64bit",
   "python_version": "3.14.6",

@@ -1,5 +1,4 @@
 {
-  "schema_version": 1,
   "product_version": "0.1.1",
   "configuration": "na228_builder/configurations/release.json",
   "configuration_name": "config.json",

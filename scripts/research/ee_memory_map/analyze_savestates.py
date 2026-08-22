@@ -668,7 +668,6 @@ def write_reports(output_dir: Path, observations: Sequence[StateObservation]) ->
         )
 
     summary = {
-        "schema_version": 1,
         "state_count": len(observations),
         "variants": sorted({item.variant for item in observations}),
         "observations": summary_observations,

@@ -19,7 +19,7 @@ class ReleaseRuntimeTests(unittest.TestCase):
             workspace.mkdir()
             application.mkdir()
             (workspace / "paths.json").write_text(
-                '{"schema_version":1,"roots":{"repository":".",'
+                '{"roots":{"repository":".",'
                 '"build":"build","cache":"@build/cache"},'
                 '"files":{"settings":"game.json"}}',
                 encoding="utf-8",
@@ -45,7 +45,7 @@ class ReleaseRuntimeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             workspace = Path(temporary)
             (workspace / "paths.json").write_text(
-                '{"schema_version":1,"roots":{"repository":".",'
+                '{"roots":{"repository":".",'
                 '"builder":"na228_builder"},'
                 '"files":{"settings":"game.json"}}',
                 encoding="utf-8",

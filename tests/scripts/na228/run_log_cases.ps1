@@ -194,7 +194,6 @@ function Get-Na2StartupFastForwardFrames {
         -Destination $fakeNa2Scripts
     $manifest = @'
 {
-  "schema_version": 1,
   "roots": {
     "repository": ".",
     "source": "source",
@@ -227,7 +226,6 @@ function Get-Na2StartupFastForwardFrames {
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'paths.json') -Content $manifest
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'games.json') -Content @'
 {
-  "schema_version": 1,
   "sources": {
     "NA2": {
       "serial": "SLPS-25837",
@@ -242,7 +240,6 @@ function Get-Na2StartupFastForwardFrames {
 '@
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'game.json') -Content @'
 {
-  "schema_version": 1,
   "title": "Narutimate Accel v2.28",
   "serial": "SLOP-NA228",
   "output_boot_path": "SLOP_NA2.28",

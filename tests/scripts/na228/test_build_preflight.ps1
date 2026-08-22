@@ -77,7 +77,6 @@ exit $LASTEXITCODE
 '@)
     [IO.File]::WriteAllText((Join-Path $repository 'e2e\config.json'), @'
 {
-  "schema_version": 1,
   "build_variants": [
     {
       "name": "normal",
@@ -91,7 +90,6 @@ exit $LASTEXITCODE
 '@)
     [IO.File]::WriteAllText((Join-Path $repository 'paths.json'), @'
 {
-  "schema_version": 1,
   "roots": {
     "repository": ".",
     "source": "source",

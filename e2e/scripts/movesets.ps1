@@ -521,7 +521,6 @@ foreach ($outputPlan in $selectedOutputPlans) {
                             )
                         }
                         $complete = [ordered]@{
-                            schema_version = 1
                             row = $Context.Row
                             recording = $Context.Recording
                             game = $Context.Game

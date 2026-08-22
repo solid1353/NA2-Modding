@@ -1284,7 +1284,6 @@ def main() -> int:
     manifest_path = output / "manifest.json"
     fragment_path.write_bytes(fragment)
     manifest = {
-        "schema_version": 1,
         "source_id": source_id,
         "source_ids": source_ids,
         "source_scope": (

@@ -35,7 +35,6 @@ class BuildPreflightTests(unittest.TestCase):
         (workspace / "paths.json").write_text(
             json.dumps(
                 {
-                    "schema_version": 1,
                     "existence_deferred_roots": ["cache"],
                     "roots": {
                         "repository": ".",
@@ -135,7 +134,6 @@ class BuildPreflightTests(unittest.TestCase):
         (workspace / "games.json").write_text(
             json.dumps(
                 {
-                    "schema_version": 1,
                     "sources": {
                         "NA2": {"serial": "SLPS-25837", "crc": "C0659AD1"},
                         "NUN5": {"serial": "SLES-55605", "crc": "C071D4C1"},
@@ -147,7 +145,6 @@ class BuildPreflightTests(unittest.TestCase):
         (workspace / "game.json").write_text(
             json.dumps(
                 {
-                    "schema_version": 1,
                     "title": "Test Product",
                     "serial": "TEST-00000",
                     "output_boot_path": "SLOP_NA2.28",

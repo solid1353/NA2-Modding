@@ -99,7 +99,6 @@ function Set-E2eVariantReady {
 
     $completedUtc = (Get-Date).ToUniversalTime().ToString('O')
     Write-E2eVariantJson -Path $readyPath -Value ([ordered]@{
-        schema_version = 1
         variant = $Variant
         iso_sha256 = $IsoSha256
         completed_utc = $completedUtc
@@ -109,7 +108,6 @@ function Set-E2eVariantReady {
 function Complete-E2eVariant {
     $completedUtc = (Get-Date).ToUniversalTime().ToString('O')
     $result = [ordered]@{
-        schema_version = 1
         variant = $Variant
         status = 'passed'
         suites = $suites.Count
@@ -219,7 +217,6 @@ elseif ($null -ne $existingBuild -and -not $buildIsCompatible) {
 }
 
 $buildResult = [ordered]@{
-    schema_version = 2
     variant = $Variant
     build = [string]$buildVariant.build
     iso = [string]$build.OutputIso
@@ -322,7 +319,6 @@ try {
                     throw "E2E suite $Suite completed without captured $artifactLabel for $ReplayName."
                 }
                 $complete = [ordered]@{
-                    schema_version = 1
                     suite = $Suite
                     variant = $ReplayName
                     screenshots = $artifactCount

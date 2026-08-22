@@ -11,7 +11,6 @@ from scripts.lib.paths import derive_game_paths, load_local_paths, load_paths
 class ProjectPathTests(unittest.TestCase):
     def write_manifest(self, root: Path, files: dict[str, str] | None) -> Path:
         manifest = {
-            "schema_version": 1,
             "roots": {"repository": ".", "build": "build"},
         }
         if files is not None:
@@ -57,7 +56,6 @@ class ProjectPathTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             manifest = {
-                "schema_version": 1,
                 "imports": {"workshop": "../missing/paths.json"},
                 "roots": {"repository": ".", "build": "build"},
                 "files": {"settings": "game.json"},
@@ -92,7 +90,6 @@ class ProjectPathTests(unittest.TestCase):
             root.mkdir()
             source.mkdir()
             manifest = {
-                "schema_version": 1,
                 "roots": {
                     "repository": ".",
                     "source": "../source",
@@ -115,7 +112,6 @@ class ProjectPathTests(unittest.TestCase):
             root.mkdir()
             extracted.mkdir(parents=True)
             manifest = {
-                "schema_version": 1,
                 "roots": {
                     "repository": ".",
                     "source_na2": "@source/NA2.iso.files",
@@ -134,7 +130,6 @@ class ProjectPathTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             manifest = {
-                "schema_version": 1,
                 "existence_deferred_roots": ["optional_runtime"],
                 "roots": {
                     "repository": ".",
@@ -159,7 +154,6 @@ class ProjectPathTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             manifest = {
-                "schema_version": 1,
                 "existence_deferred_roots": ["missing"],
                 "roots": {"repository": "."},
                 "files": {"latest_iso": "Latest.iso"},
@@ -176,7 +170,6 @@ class ProjectPathTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             manifest = {
-                "schema_version": 1,
                 "roots": {
                     "repository": ".",
                     "first": "@second/child",
@@ -236,7 +229,6 @@ class ProjectPathTests(unittest.TestCase):
             ):
                 (root / path).mkdir(parents=True, exist_ok=True)
             manifest = {
-                "schema_version": 1,
                 "roots": {
                     "repository": ".",
                     "build": "build",
@@ -252,7 +244,6 @@ class ProjectPathTests(unittest.TestCase):
                 },
             }
             source_catalog = {
-                "schema_version": 1,
                 "sources": {
                     "NA2": {
                         "serial": "SLPS-25837",
@@ -265,7 +256,6 @@ class ProjectPathTests(unittest.TestCase):
                 },
             }
             settings = {
-                "schema_version": 1,
                 "title": "Narutimate Accel v2.28",
                 "serial": "SLOP-NA228",
                 "output_boot_path": "SLOP_NA2.28",
@@ -332,7 +322,6 @@ class ProjectPathTests(unittest.TestCase):
                 root.resolve() / "pcsx2/input_profiles/Default_Base.ini",
             )
             catalog = {
-                "schema_version": 1,
                 "sources": source_catalog["sources"],
                 "title": settings["title"],
                 "serial": settings["serial"],

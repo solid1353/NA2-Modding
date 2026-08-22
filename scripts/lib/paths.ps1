@@ -15,9 +15,6 @@ function Resolve-Na2PathManifest {
     $manifestItem = Get-Item -LiteralPath $ManifestPath
     $repositoryRoot = $manifestItem.Directory.FullName
     $manifest = Get-Content -Raw -LiteralPath $manifestItem.FullName | ConvertFrom-Json
-    if ([int]$manifest.schema_version -ne 1) {
-        throw "Unsupported project path manifest schema: $($manifest.schema_version)"
-    }
     $names = @($manifest.roots.PSObject.Properties.Name)
     $configuredFiles = $manifest.files
     $fileNames = if ($null -eq $configuredFiles) {
@@ -217,9 +214,6 @@ function Resolve-Na2PathManifest {
             throw "Project settings not found: $settingsPath"
         }
         $projectSettings = Get-Content -Raw -LiteralPath $settingsPath | ConvertFrom-Json
-        if ([int]$projectSettings.schema_version -ne 1) {
-            throw "Unsupported project settings schema: $($projectSettings.schema_version)"
-        }
         $launchSettings = $projectSettings.PSObject.Properties['launch_settings']
         if ($null -eq $launchSettings -or
             $launchSettings.Value -isnot [pscustomobject]) {
@@ -273,14 +267,7 @@ function Resolve-Na2PathManifest {
             }
             $sourceCatalog = Get-Content -Raw -LiteralPath $sourceCatalogPath |
                 ConvertFrom-Json
-            if ([int]$sourceCatalog.schema_version -ne 1) {
-                throw (
-                    'Unsupported source game catalog schema: ' +
-                    $sourceCatalog.schema_version
-                )
-            }
             $catalog = [pscustomobject][ordered]@{
-                schema_version = 1
                 sources = $sourceCatalog.sources
                 title = $projectSettings.title
                 serial = $projectSettings.serial

@@ -114,7 +114,6 @@ if ($hasGeneratedSuite) {
     }
 }
 $resumeRequest = [ordered]@{
-    schema_version = 2
     command = 'run'
     shifted = $Shifted.IsPresent
     capture_mode = 'screenshots'

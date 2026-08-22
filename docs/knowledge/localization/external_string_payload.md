@@ -191,7 +191,7 @@ boundary from every linked contribution; the isolated string-only plan ends at
 `0x008F4410`. The current combined layout is recorded in the
 [Localization external-string documentation](../../features/localization/external_strings.md). Matched captures of the preceding
 two-file build confirmed its exact `0x63080`
-heap reduction and substantial allocator headroom in eight representative
+heap reduction and substantial allocator headroom in seven representative
 states; see
 [`EE runtime memory map`](../runtime/ee_memory_map/README.md). This is representative
 capacity evidence, not proof of every result/save/transition peak.
@@ -333,9 +333,9 @@ Confirmed at runtime:
    without adding either path to `FLIST.DIR`. The compact one-file Candidate
    completed a hidden 15-second PCSX2 boot with CRC `18BBBDC0`; representative
    visible external-string screens remain untested.
-2. Eight matched vanilla/Current captures cover title, mode select, active
-   Adventure, character select, active battle, Shop, Collection, and Options.
-   The Current heap remains valid in all eight; active Adventure is the tightest
+2. Seven matched vanilla/Current captures cover title, mode select, active
+   Adventure, character select, active battle, Collection, and Options.
+   The Current heap remains valid in all seven; active Adventure is the tightest
    observed state at `0x759260` total free and `0x52B4C0` largest contiguous.
    The full evidence is in
    [`EE runtime memory map`](../runtime/ee_memory_map/README.md).

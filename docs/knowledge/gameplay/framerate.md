@@ -3,10 +3,9 @@
 ## Status
 
 This document records the current evidence for implementing a real 60 FPS mode
-in Narutimate Accel 2 v2.28, clean executable CRC C0659AD1. It supersedes the
-earlier assumption that the Master Mode and in-engine cinematic targets were
-anonymous dynamically generated code. They are stable words in the ADV and BTL
-overlay files and can be guarded and patched at their file offsets.
+in Narutimate Accel 2 v2.28, clean executable CRC C0659AD1. In-engine cinematic
+targets are stable words in the ADV and BTL overlay files and can be guarded and
+patched at their file offsets.
 
 The core conclusion is that changing the resident renderer threshold from two
 VBlanks to one doubles the engine-update and task-manager wake cadence. It is
@@ -36,9 +35,9 @@ specific evidence needed to diagnose that build.
 ## Research coverage
 
 - **Assigned scope:** the architecture required for a correct 60 FPS mode in
-clean *Narutimate Accel 2* v2.28: renderer/scheduler cadence, skeletal and cel
-animation speed, battle and training time, Master Mode traversal, in-engine
-cinematics, effects, camera, stage objects, HUD/front-end UI, input/repeat,
+  clean *Narutimate Accel 2* v2.28: renderer/scheduler cadence, skeletal and cel
+  animation speed, battle and training time, in-engine cinematics, effects,
+  camera, stage objects, HUD/front-end UI, input/repeat,
 rumble, prerecorded PSS video, and audio/cue synchronization. The goal is to
 separate physical 60 Hz presentation from every clean wall-time owner, not to
 produce a renderer-only unlock or to redesign authored media.
@@ -57,9 +56,9 @@ class, or every dynamic +0x94/+0x278 producer.
 task cadence; CCS 8.8 playback, fractional transform evaluation, integer cel
 cursors, absolute seeks, one-shot priming, and custom/odd playback increments;
 the safe final battle-actor factor boundary and the failure of the inherited
-shared-producer patch; independent hitstop, combo, round, support, projectile,
-camera, stage, HUD, lifecycle, input-repeat, ordinal, and rumble timing; ADV
-traversal/cinematic/effect candidates; nonlinear UI/controller updates; P2M2
+  shared-producer patch; independent hitstop, combo, round, support, projectile,
+  camera, stage, HUD, lifecycle, input-repeat, ordinal, and rumble timing; ADV
+  cinematic/effect candidates; nonlinear UI/controller updates; P2M2
 physical-VSync semantics; and the separation of approximately 29.97 FPS PSS
 video, audio sample clocks, and gameplay-owned cue timestamps.
 
@@ -149,7 +148,6 @@ patch.
 | Battle camera | Controller/object callbacks, raw phase counters, and clamped recursive tracking | Preset durations halve and tracking response changes | Advance authored camera phases on logical 30 Hz; either preserve clean tracking on that phase or decouple it and interpolate render transforms |
 | Battle-stage environment | Stage-class callbacks for blends, break/rebirth timers, moving props, gravity, and effect triggers | Fades, respawns, props, and authored effect frames run twice as fast | Classify each state mutation; gate integer phases and event triggers, and compensate or interpolate continuous transforms |
 | Battle HUD | CCS scene time plus controller-local slide, pulse, delay, and reverse-frame cursor | Gauge entrances, pulses, and reverse animation complete twice as fast | Use the compensated CCS clock, halve continuous HUD deltas, and keep integer delays/cursors on logical 30 Hz or convert them to fractional state |
-| Master Mode traversal/encounters | ADV overlay constants | Movement and encounter animation run twice as fast | Patch the mapped ADV timing terms, then validate interactions |
 | In-engine cinematics | ADV event counters and scene transforms | Durations halve and motion doubles | Double integer durations and halve per-update motion/conversion terms |
 | ADV continuous effects | Paired GP-relative deltas at -0x48F0 and -0x4620 | Particle motion, fades, and float lifetimes advance twice as fast | Halve both clean deltas at every producer while preserving freeze/slow-motion ratios; separately gate raw integer delays |
 | UI fades and recursive easing | Front-end/controller-local float mutations | Linear transitions and nonlinear settling complete in roughly half the wall time | Gate for exact legacy state, or halve linear deltas and convert recursive coefficients by their two-substep composition |
@@ -867,42 +865,6 @@ pulse phase/velocity/delay fields +0x20..+0x3C, gauge +0x60/+0x64, and scene
 +0xEC at matched wall-clock timestamps. A visually plausible static HUD does
 not establish correct exit timing.
 
-## Master Mode traversal and encounter timing
-
-The original NUN5 community patch describes four sites behaviorally as enemy
-encounter speed, player encounter speed, player animation outside battle, and
-movement/traversal outside battle. The community author also reported limited
-testing and double speed outside Master Mode. Those labels are useful leads,
-not NA2 proof. The original discussion is archived in the
-[PCSX2 60 FPS codes thread](https://forums.pcsx2.net/Thread-60-fps-codes?page=29).
-
-Cross-version structure and stable overlay offsets resolve the NA2 homologs:
-
-| Reported NUN5 runtime | NUN5 ADV file | NA2 ADV file | NA2 runtime | Clean | Candidate |
-| ---: | ---: | ---: | ---: | ---: | ---: |
-| 0x007056E0 | 0x0003E9E0 | 0x0003D680 | 0x006F1580 | 0x3C033F80 | 0x3C033F00 |
-| 0x007080AC | 0x000413AC | 0x0004033C | 0x006F423C | 0x3C033F80 | 0x3C033F00 |
-| 0x0076C36C | 0x000A566C | 0x000A213C | 0x0075603C | 0x3C023F80 | 0x3C023F00 |
-| 0x0076CE08 | 0x000A6108 | 0x000A2BA8 | 0x00756AA8 | 0x3C023F80 | 0x3C023F00 |
-
-The last NUN5 word also exists in its BTL overlay. Its NA2 BTL homolog is file
-offset 0x000A2018 / runtime 0x00755F18, with the same 1.0-to-0.5 replacement.
-That shared BTL constant must not be enabled blindly together with the resident
-battle actor factor: matched runtime traces must establish whether they own
-different stages or would compensate the same quantity twice.
-
-Static NA2 context gives these narrower descriptions:
-
-- ADV +0x3D680 initializes three related fields at +0x218, +0x21C, and +0x220
-  with a 1.0 term.
-- ADV +0x4033C supplies the base term in a float update involving +0x220.
-- ADV +0xA213C writes 1.0 to +0x274 after an authored-frame calculation.
-- ADV +0xA2BA8, and the BTL homolog, supply a 1.0 term in a
-  movement/placement formula.
-
-All four are high-confidence structural ports. The exact gameplay labels and
-the necessity of the BTL homolog remain runtime questions.
-
 ## In-engine cinematic timing
 
 In-engine story and UJ scenes use ADV overlay objects, event queues, authored
@@ -1398,34 +1360,30 @@ configuration with internally atomic compensation, not a menu of partial
     an authoritative clean-rate state where constant substitution is unsafe.
 11. Compensate battle-HUD CCS, pulse, and slide clocks independently; keep its
     reverse-frame cursor and state decisions logical or fractional.
-12. Exercise the four Master/encounter port candidates separately, correlate
-    each with its live consumer, and enable only the terms not already covered
-    by periodic CCS or actor compensation; compensate traversal integrators as
-    complete position/velocity systems rather than isolated constants.
-13. Keep in-engine cinematic queues and script-derived integer durations on
+12. Keep in-engine cinematic queues and script-derived integer durations on
     clean wall time, halve proven per-update displacement, and route their CCS
     playback through the classified periodic clock. Preserve cue/event ordering;
     do not route these scenes through the PSS policy.
-14. Halve both paired ADV effect deltas at every nonzero producer, including
+13. Halve both paired ADV effect deltas at every nonzero producer, including
     slow-motion states and their object-dispatch copies; gate uncovered integer
     effect phases separately.
-15. Compensate controller-local UI/menu deltas and easing, keep their integer
+14. Compensate controller-local UI/menu deltas and easing, keep their integer
     delays logical, and accumulate 60 Hz input edges across any logical-phase
     UI update gate.
-16. Double both core repeat-delay thresholds and filter sustained repeat to
+15. Double both core repeat-delay thresholds and filter sustained repeat to
     logical 30 Hz while preserving immediate changed-mask and edge publication.
-17. Apply only the guarded overlay mappings required by the active overlay.
-18. Use the project's existing injection/patch mechanism if runtime overlay
+16. Apply only the guarded overlay mappings required by the active overlay.
+17. Use the project's existing injection/patch mechanism if runtime overlay
     writes are required; do not introduce a second patch pipeline.
-19. Leave PSS decode/presentation, audio sample clocks, and vibration conversion
+18. Leave PSS decode/presentation, audio sample clocks, and vibration conversion
     unchanged unless runtime evidence identifies a specific defect.
-20. Keep the feature experimental and disabled by default until the complete
+19. Keep the feature experimental and disabled by default until the complete
     validation matrix passes.
 
 Partial combinations are useful for diagnosis but must not be presented as a
 working 60 FPS mode. In particular, the gate alone is expected to produce
 double-speed gameplay, and a visually correct battle does not establish
-correct Master Mode, cinematics, PSS playback, or UI timing.
+correct cinematics, PSS playback, or UI timing.
 
 ## Runtime validation matrix
 
@@ -1441,8 +1399,6 @@ not only the displayed FPS counter.
 | Battle stage | Proximity blend, break/rebirth, fade, falling/moving prop, crane effects | Same state/event timing and endpoints; no missed or doubled contacts/effects |
 | Battle HUD | Gauge entrance/value change, staggered pulse, reverse/exit | Same wall-clock state and cursor timing; pulse remains smooth and reverse does not finish early |
 | Training | Recording playback, resets, dummy behavior, counters | Same deterministic sequence and wall-clock duration |
-| Master traversal | Run, jump, camera, NPCs, transitions | Same distance and authored animation phase at matched timestamps |
-| Encounters | Player/enemy approach, prompt, engagement transition | No double speed and no duplicated compensation |
 | In-engine cinematic | Event queue, camera, actor animation, subtitles, cues | Same cue order, scene duration, final transforms, and audio sync |
 | CCS/UI/effects | Menus, HUD, particles, fades, looping and sentinel states | No doubled cursor, truncated effect, or every-other-frame jitter |
 | Front end/ETC | Title, mode select, options, save/load, transitions | Same wall-clock states and random-event order; compensated local motion beside CCS animation |
@@ -1464,10 +1420,8 @@ CRC C0659AD1:
 
 1. A battle savestate and deterministic P2M2 input covering idle, movement,
    attack, hitstop, and a terminal transition.
-2. A Master Mode traversal capture with an identifiable start and endpoint.
-3. An active player/enemy encounter capture through the mode transition.
-4. Start, middle, and end captures of the same in-engine UJ or story cinematic.
-5. Start and near-end captures of one long PSS movie, including audio.
+2. Start, middle, and end captures of the same in-engine UJ or story cinematic.
+3. Start and near-end captures of one long PSS movie, including audio.
 
 For each capture, record the PCSX2 build, game CRC, scene or characters,
 emulation speed, EE cycle-rate/skip settings, renderer, and any active patches.

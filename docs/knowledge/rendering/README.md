@@ -968,7 +968,7 @@ At minimum, capture matching clean-4:3 and patched-16:9 frames for:
 - battle HUD for both players, practice HUD, pause, commands, and move lists;
 - ordinary battle, assists, awakenings, ultimate jutsu, stage transitions, and
   all full-screen fades/filters;
-- ADV exploration, dialogue, cutscenes, maps, prompts, shops, and save/load;
+- ADV exploration, dialogue, cutscenes, maps, prompts, and save/load;
 - collection/extras screens backed by resident code and `ETC.BIN`;
 - subtitles and all localized text layouts;
 - every FMV class; and

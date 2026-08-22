@@ -47,16 +47,6 @@ shared string-patcher engine as a derived stage.
 - [Native NUN5-derived Font](font.md): feature-owned Font assets, hooks, and
   runtime contributions.
 
-## Intentional exclusion
-
-Shop is intentionally omitted from Mode Select and is not a maintained
-localization target. Shop-owned translations, texture imports, layout patches,
-tests, and detailed maintenance documentation remain excluded. The QoL
-`Remove Shop` patch remains the shipped default, while the disabled
-`Restore Shop` cheat remains available for deliberate inspection. Strings
-owned by Game Mode Select or Collection remain maintained even when their text
-mentions Shop.
-
 ## String placement boundary
 
 The derived string-patcher stage owns string placement policy. The importer

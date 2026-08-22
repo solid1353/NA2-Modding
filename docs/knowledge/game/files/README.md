@@ -109,7 +109,7 @@ PNACH writes.
 | --- | --- | --- |
 | `PRG/ADV.BIN` | Adventure/story-mode overlay | **Supported strongly.** Internal name `ADV_product.bin`; the corresponding resource tree contains adventure characters, events, players, skills, and stages. Use targeted analysis for adventure-mode behavior. |
 | `PRG/BTL.BIN` | Battle and practice overlay | **Confirmed at subsystem level.** Internal name `BTL_product.bin`; existing runtime/static work locates battle input, practice settings, combat UI, and battle logic here. |
-| `PRG/ETC.BIN` | Frontend/extras overlay | **Confirmed at subsystem level.** Internal name `ETC_product.bin`; existing work locates Home, Shop, Collection, save/load menu, and related UI behavior here. Readable resource names include `home.ccs` and Home animation/texture identifiers. |
+| `PRG/ETC.BIN` | Frontend/extras overlay | **Confirmed at subsystem level.** Internal name `ETC_product.bin`; existing work locates Home, Collection, save/load menu, and related UI behavior here. Readable resource names include `home.ccs` and Home animation/texture identifiers. |
 
 The NA2 overlays differ structurally from their NUN5 equivalents. Compare
 behaviors and functions deliberately; do not treat them as interchangeable
@@ -209,7 +209,7 @@ useful first routing layer:
 - combat/UI: `BATTLEGAUGE`, `PRAC`, `SPBATTLE`, `VS`, and `OUGI`;
 - selection/settings: `CHARSEL1`, `MAPSEL1`, `MODESEL1`, `OPTION`, and
   `SETTING`;
-- hub/extras: `HOME` and `SHOP`;
+- hub/extras: `HOME`;
 - startup/title: `CONTINUE`, `LOGO`, `LOGO_T`, `TITLE`, `TITLE_P`, `TITLE_T`,
   and `TITLE_T2`;
 - unresolved or only filename-inferred: `DBGMENU`, `NAKOKUTI`, `NINMU`,

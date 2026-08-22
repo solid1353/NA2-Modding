@@ -31,9 +31,8 @@ every retail unlock or battle mechanic.
 - **Unresolved or untested:** post-round Free Battle results; the full
   24-stage roster; alternate team/settings combinations; most setting value
   domains and Defaults actions; whether Options Reset affects anything besides
-  Difficulty; complete unlock-dependent Collection contents and media
-  playback; and the activation conditions for the PNACH-labelled Master mode
-  and Shop remain unestablished.
+  Difficulty; and complete unlock-dependent Collection contents and media
+  playback.
 - **Deliberate exclusions and overlap:** substitution timing, defender control,
   and incoming-definition telemetry belong to the separate Substitution task
   and are not duplicated here. Static menu constructors and command-ID owners
@@ -122,11 +121,6 @@ The selected Practice checkpoint is `041_practice_selected.png`. A two-frame
 Cross state sent after the return transition was missed, while an eight-frame
 Cross state was accepted. This establishes a controller-sampling miss rather
 than an inaccessible Practice entry.
-
-The PNACH passed to PCSX2 contains enabled writes labelled `Master mode` and
-`Shop`, but neither appeared in the observed Mode Select cycle. The writes were
-not independently read back from EE memory during this run; their presence in
-the input file must not be treated as proof that either menu was active.
 
 Resident callback IDs, overlay handoffs, and unlock-driven physical-slot
 construction are owned by [`mode_flow.md`](../game/mode_flow.md). This document
@@ -556,8 +550,6 @@ not tested.
   visible portions of Movie and Music were recorded. Collection completeness
   depends on save unlocks and was not established.
 - No collection media was played and no Free Battle round was completed.
-- Master mode and Shop were not exposed in this runtime, despite their labels
-  in the supplied PNACH. Activation and unlock conditions remain unresolved.
 - Several screenshots in the evidence directory intentionally preserve white
   or partially faded transition frames. They demonstrate the transition/input
   timing issue but are not menu-state evidence.

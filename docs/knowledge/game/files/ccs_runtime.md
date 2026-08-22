@@ -34,9 +34,9 @@ xref census. BTL coverage includes the stage family
 `FUN_006e7860`/`FUN_006e7c80`, and the four-resource sync/queue/resolve/unload
 family `FUN_00768f50..FUN_00769160`. Its raw stage pointer table, four-resource
 pointer table, and associated literal strings were checked. ETC coverage
-includes `FUN_006be290`/`FUN_006be6d0`, deferred caller `FUN_006b9c00`, and the
-`shop.ccs` ownership pair `FUN_006d3270`/`FUN_006d3c30`; the relevant literal
-strings were checked in the raw overlay. Resident C exports, the corresponding
+includes `FUN_006be290`/`FUN_006be6d0` and deferred caller `FUN_006b9c00`;
+the relevant literal strings were checked in the raw overlay. Resident C
+exports, the corresponding
 ASCII instruction listing, and raw BTL/ETC bytes were cross-checked where
 control flow or the retained `MWo3` header made the decompiler display
 ambiguous.
@@ -1068,21 +1068,12 @@ is no prelookup/adoption for the two owned fields, either remains zero when its
 container was already resident; only `+0x408` deliberately holds a borrowed
 pre-existing container.
 
-`FUN_006d3270` (Ghidra/export `0x006D3270`, live `0x006D32B0`) optionally
-finds `shop.ccs`, loads it only on a miss into object `+0x694`, and sets owns
-byte `+0x14` only for the load case. It then performs a required lookup of
-`ANM_shop_ca`. `FUN_006d3c30` (Ghidra/export `0x006D3C30`, live
-`0x006D3C70`) destroys `+0x694` only when that owns byte is set. This is a
-literal ETC example of the same borrowed-versus-owned convention as BTL.
-
 These ETC instructions also encode already-live data pointers. For
 `FUN_006be6d0`, `pl/1cmnbod1.ccs` is live `0x006E2C20`, raw `0x0002ED20`, and
 preserved/display `0x006E2BE0`; `strmcmn.ccs` is live `0x006E2C30`, raw
-`0x0002ED30`, and preserved/display `0x006E2BF0`. For `FUN_006d3270`,
-`shop.ccs` is live `0x006E3920`, raw `0x0002FA20`, and preserved/display
-`0x006E38E0`; `ANM_shop_ca` is live `0x006E3A90`, raw `0x0002FB90`, and
-preserved/display `0x006E3A50`. The strings were confirmed directly in the
-hashed raw `ETC.BIN`; none of the encoded pointers receives another `+0x40`.
+`0x0002ED30`, and preserved/display `0x006E2BF0`. The strings were confirmed
+directly in the hashed raw `ETC.BIN`; none of the encoded pointers receives
+another `+0x40`.
 
 `FUN_006b9c00` (Ghidra/export `0x006B9C00`, live `0x006B9C40`) is a concrete
 deferred caller. On a selected-name miss it releases its prior owned container

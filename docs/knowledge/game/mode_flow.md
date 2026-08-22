@@ -35,16 +35,16 @@ are also out of scope.
   allocators/helpers were **sampled** only far enough to prove their controller
   contracts. Direct clean-binary anchors checked included result table
   `0x005D51D0`, filename table `0x004049E0`, default bindings `0x005C06A0`,
-  BTL process table `0x005D9F98`, Shop type pointer `0x005D9FA8`, remembered
-  slot `0x006045E0`, and the two resident hook seams documented below.
+  BTL process table `0x005D9F98`, remembered slot `0x006045E0`, and the two
+  resident hook seams documented below.
 - **Confirmed coverage:** the nested controller phases and result
   contracts; title-to-manager boundary; manager fields and object lifetimes;
   numeric Mode Select mapping, input priority, confirmation/back routing,
   remembered-slot behavior, allocator/failure edges, and unsupported states;
   the synchronous selector/cache contract; BTL type/process selection, hook
-  and return convergence; ETC Shop/Collection plus resident Options creation,
-  teardown, and return behavior; and the resulting patch surfaces and lifetime
-  constraints.
+  and return convergence; ETC Collection plus resident Options creation,
+  teardown, and return behavior; and the resulting patch surfaces and
+  lifetime constraints.
 - **Unresolved or untested:** original source names for stripped
   fields; the semantic roles of `0x006077AC` and BTL process offset `+0x10`;
   allocation-failure and malformed-state behavior at runtime; loader failure
@@ -172,7 +172,7 @@ The clean wrappers do not share a uniform allocation-failure contract:
   internal `+0xDD4` (`0x40` bytes) and `+0xDD8` (`0x98` bytes) allocations
   succeed: it dereferences each result unconditionally. The optional
   `+0xDDC` allocation is different; its later BTL handoff checks for null.
-- Shop, Collection, and Options can pass a null mode object to their
+- Collection and Options can pass a null mode object to their
   overlay/resident poll entry after allocation failure. This establishes the
   wrapper boundary only; no assumption is made about whether those callees
   tolerate null.
@@ -385,15 +385,11 @@ When manager phase is 4, `FUN_001e9980` switches directly on manager
 | 1 | Mode Select / main menu | `FUN_001ea240` at `0x001E9B38` | Resident | N/A |
 | 2 | Free Battle | `FUN_001ea8c0` at `0x001E9B48` | BTL, battle type 1 | `FUN_001eeb10` writes mode 1 |
 | 3 | Practice | `FUN_001ea940` at `0x001E9B58` | BTL, battle type 2 | `FUN_001eeb10` writes mode 1 |
-| 5 | Shop | `FUN_001eacb0` at `0x001E9B78` | ETC | callback cleanup writes mode 1 |
 | 6 | Collection | `FUN_001eb120` at `0x001E9B88` | ETC | callback cleanup writes mode 1 |
 | 7 | Options | `FUN_001eb440` at `0x001E9B98` | Resident | callback cleanup writes mode 1 |
 
 The English meanings are corroborated by the stock Mode Select order and the
-called subsystems. In particular, the mode-5 path uses `FUN_001eb020`, whose
-type table `0x005D9FA8` points to the preserved RTTI string
-`ccList<SHOP_ITEM_DATA>` at `0x00404C30`; this independently supports the Shop
-label.
+called subsystems.
 
 All analyzed mode callbacks return by writing 1 to manager `+0x0C`; manager
 phase remains 4. Thus returning from a mode does not recreate the profile
@@ -408,7 +404,6 @@ mapping is:
 | --- | ---: | ---: | ---: | --- |
 | Free Battle | 1 | 2 | 0 (BTL) | BTL type 1 |
 | Practice | 2 | 3 | 0 (BTL) | BTL type 2 |
-| Shop | 4 | 5 | 2 (ETC) | `0x6C8`-byte ETC object |
 | Collection | 5 | 6 | 2 (ETC) | `0x80`-byte ETC object |
 | Options | 6 | 7 | 0 retained; no selector call in mode 7 | `0x5C`-byte resident object |
 
@@ -427,21 +422,15 @@ The resident mapping table is at runtime `0x005D51D0`, ELF file offset
 | 1 | 2 | Free Battle | manager mode 2 / BTL type 1 |
 | 2 | 3 | Practice | manager mode 3 / BTL type 2 |
 | 3 | -1 | Disabled stock slot | Removed from the compact selection list |
-| 4 | 5 | Shop | manager mode 5 / ETC |
 | 5 | 6 | Collection | manager mode 6 / ETC |
 | 6 | 7 | Options | manager mode 7 / resident |
-
-The raw seven-slot table also contains one excluded nonnegative entry. That
-fact is retained only to explain the stock compact count below; its physical
-index, mapped result, and behavior are not documented here.
 
 The table is not the visual selection array itself:
 
 - `FUN_00384690` loops all seven table entries, keeps only entries whose signed
   result is nonnegative, and writes their **physical slot indices** to a compact
   array in the controller.
-- In the stock executable the active count is 6: the five documented in-scope
-  slots plus the one excluded entry.
+- In the stock executable the active count is 6.
 - `FUN_00384700` converts the selected compact index back to a physical slot.
 - `FUN_003845d0` converts that physical slot through `DAT_005d51d0`, but only
   when the controller has reached terminal state 6; otherwise it returns `-1`.
@@ -803,7 +792,7 @@ the selection controller is constructed.
   result or runs New Game/Continue preparation.
 - A BTL terminal return leaves BTL selected. Mode Select phase 3 asks for
   selector 0 again, which is normally a cache hit.
-- Shop and Collection clean up their ETC-bound objects and write manager mode 1
+- Collection cleans up its ETC-bound object and writes manager mode 1
   without immediately replacing ETC. The next Mode Select callback performs
   only resident work in phases 0 through 2; phase 3 synchronously restores BTL,
   and phase 4 then constructs the selection controller.
@@ -966,53 +955,9 @@ note owns only the front-end entry/return boundary and dispatcher contract.
 
 ## ETC handoffs and returns
 
-Both ETC callbacks call `FUN_001f3d10(2)` before entering their overlay-bound
-objects. Their overlay entry points are listed only as handoff evidence; their
-internals were not inspected.
-
-### Mode 5 / Shop
-
-`FUN_001eacb0` owns its ETC object through global `0x00607618`
-(`iGpffffcc28`):
-
-- select ETC at call site `0x001EAD4C`;
-- allocate `0x6C8` bytes and call overlay-bound constructor
-  `func_0x006d32b0`;
-- poll `func_0x006d80f0`; while active, call `func_0x006d84e0`;
-- on result 1, seed transient `+0x04` to 3 and enter its terminal countdown;
-- call `func_0x006d3c70`, free the object, clear `0x00607618`, and write
-  manager `+0x0C = 1`.
-
-All four `0x006Dxxxx` entry points lie within the established ETC runtime
-range.
-
-The `0x6C8` allocation is not an opaque overlay-only blob. Before calling the
-ETC constructor, the resident wrapper constructs two arrays of `0x10`-byte
-list headers:
-
-| Object range | Header count | Resident construction |
-| ---: | ---: | --- |
-| `+0x04C..+0x09B` | 5 | `FUN_00119290` with initializer `LAB_001eb0f0` |
-| `+0x09C..+0x67B` | `0x5E` (94) | Same initializer and `0x10`-byte stride |
-
-`LAB_001eb0f0` clears header `+0x00/+0x04/+0x08` and writes
-`0x005D9FA8` at header `+0x0C`. That static word, at ELF file offset
-`0x004DA0A8`, leads through `0x005C0B30` to the preserved original type
-string `ccList<SHOP_ITEM_DATA>` at `0x00404C30`.
-
-Teardown reverses the ownership boundary: the wrapper first calls overlay
-destructor `func_0x006d3c70`, then `FUN_00119220` walks the 94 headers in
-reverse at call site `0x001EAEBC` and the five headers in reverse at
-`0x001EAED8`, using resident `FUN_001eb020` to free every linked node and
-clear each header. Only after those resident-owned subobjects are clean does
-the wrapper free the containing `0x6C8` allocation.
-
-Its shared-transient phase machine is exactly:
-
-| Phase | Resident wrapper action |
-| ---: | --- |
-| 0 | If the object is absent, wait for the resident transition to become idle, reset it, select ETC, construct the object, and stage the resident handoff. Poll the object; exact result 1 writes phase 1 and `+0x04 = 3`, while every other result calls the active-update entry. |
-| 1 | Decrement transient `+0x04`. At completion free the transient and ETC object, clear their globals, release/restage resident resources, and write manager mode 1. |
+The Collection ETC callback calls `FUN_001f3d10(2)` before entering its
+overlay-bound object. Its overlay entry points are listed only as handoff
+evidence; their internals were not inspected.
 
 ### Mode 6 / Collection
 
@@ -1081,8 +1026,6 @@ phase 1 and transient `+0x04 = 3`, while every other result calls
 | `FUN_001ec270/001ec280` | BTL pause/return control | `0x00607670` | Write/read resident BTL route code; value 7 returns toward Mode Select |
 | `FUN_001eeb10` | `FUN_001ec960` state `0x19` | transition/resource helpers | Writes manager mode 1 |
 | `FUN_001fd030` | BTL initializer at `0x001EC864` | manager `+0xDDC` | Resets resident battle-condition payload before BTL state 1 |
-| `FUN_001eacb0` | mode-5 case at `0x001E9B78` | selector 2, `0x006Dxxxx` handoff | ETC Shop lifecycle, then mode 1 |
-| `LAB_001eb0f0` / `FUN_001eb020` | Shop resident object wrapper | type pointer `0x005D9FA8` | Construct/clear embedded `ccList<SHOP_ITEM_DATA>` headers |
 | `FUN_001eb120` | mode-6 case at `0x001E9B88` | selector 2, `0x006Cxxxx` handoff | ETC Collection lifecycle, then mode 1 |
 | `FUN_001eb440` | mode-7 case at `0x001E9B98` | resident `FUN_0038xxxx` object | Options lifecycle, then mode 1 |
 
@@ -1123,7 +1066,7 @@ Unsupported controller states do not share a common recovery policy:
 - The clean `ccGbtlProcess` indirect hook is a return-zero stub and both
   wrappers ignore its return, so their differing hook-call conditions are
   inert unless the process table target is replaced.
-- Shop, Collection, and Options recognize only exact poll/update result 1 as
+- Collection and Options recognize only exact poll/update result 1 as
   completion. Other values remain in their active callback path; no alternate
   terminal route is present in these wrappers.
 - Their wrappers also contain no object-allocation failure branch before the
@@ -1132,5 +1075,4 @@ Unsupported controller states do not share a common recovery policy:
   whether an individual callee tolerates that was not assumed.
 - Native PS2 button names come from the resident packet-to-mask evidence in
   `controller_input.md`; host/emulator bindings remain out of scope.
-- The excluded mode and its overlay selector are not documented here. The
-  save/load child branch was likewise not traced beyond its resident presence.
+- The save/load child branch was not traced beyond its resident presence.

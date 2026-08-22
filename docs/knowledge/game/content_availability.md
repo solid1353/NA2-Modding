@@ -196,8 +196,8 @@ Offsets in this table are relative to the reader base (`profile + 0x08`).
 counts as `93`, `41`, `155`, `168`, `7`, and `12`. The paired captures confirm
 the fully unlocked byte values. ETC record tables, viewer group constants, and
 embedded class strings independently establish the labels above. `ETC.BIN`
-consumes all six groups across Shop, Collection, and other frontend paths;
-`ADV.BIN` also consumes grouped values.
+consumes all six groups across Collection and other frontend paths; `ADV.BIN`
+also consumes grouped values.
 
 ## Read-only unlock override
 
@@ -370,12 +370,12 @@ The safe native meanings of grouped bytes are:
 | Value | Meaning |
 | ---: | --- |
 | `0` | default/unowned/not yet promoted; eligibility can still come from prerequisite tables |
-| `1` | Shop-offered or announced, still unowned |
+| `1` | available or announced, still unowned |
 | `2` | owned and NEW/unviewed |
 | `3` | owned and viewed/stable |
 
 This qualification on zero matters: ETC writes `0 -> 1` only for Figure,
-Voice, and Music offers. Skills can be Shop-eligible while still zero, and no
+Voice, and Music offers. Skills can be eligible while still zero, and no
 group-3 state-1 writer was found. The common award dispatcher at live
 `0x006CAE30` writes state 2. Figure and Voice awards are bulk operations over a
 character bundle; Skill and Music awards write a single ID.

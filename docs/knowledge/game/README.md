@@ -10,5 +10,4 @@ structure of the original disc and its contained files.
 - [Character assets](character_assets.md)
 - [Character Select support list](character_select.md)
 - [Content availability and save-backed unlock state](content_availability.md)
-- [Frontend Shop and bonus game](frontend_shop.md)
 - [Game files](files/README.md)

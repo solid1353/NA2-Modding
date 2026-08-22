@@ -161,7 +161,6 @@ largest single gap and is the relevant limit for one ordinary allocation.
 | Active Adventure | ADV | `0x07B2D30` | `0x0759260` | `0x0509600` | `0x052B4C0` | `0x22DDA0` |
 | Character select | BTL | `0x0CD1560` | `0x0C6F410` | `0x0AFD2E0` | `0x0A04F80` | `0x26A490` |
 | Active battle | BTL | `0x0866FB0` | `0x080C050` | `0x084E210` | `0x0803E50` | `0x8200` |
-| Shop | ETC | `0x1042B10` | `0x0FDFA50` | `0x0AFD1A0` | `0x0A95A40` | `0x54A010` |
 | Collection | ETC | `0x0C89CB0` | `0x0C26C60` | `0x0A7EB80` | `0x0A3A3A0` | `0x1EC8C0` |
 | Options | BTL | `0x0B09660` | `0x0AA7340` | `0x0A96680` | `0x09D0350` | `0xD6FF0` |
 

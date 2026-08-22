@@ -44,8 +44,8 @@ Coverage depth was deliberately mixed:
   `FUN_001F4200`, `FUN_001F4360`, and `FUN_001F4680`, plus the CD/DVD-readiness
   gate through `FUN_00105FC0`, `FUN_00107F80`, `FUN_001086C0`, and
   `FUN_00173328`, were bounded extensions of that chain.
-  **Bounded application-lifetime tracing:** the six scoped selector callsites
-  and the Shop, Collection, and selected BTL setup/teardown paths were traced
+  **Bounded application-lifetime tracing:** the five scoped selector callsites
+  and the Collection and selected BTL setup/teardown paths were traced
   far enough to prove ordering and the contracts listed below. This was not a
   semantic audit of every BTL/ETC routine or every resident mode state.
   **Sampled ABI recovery:** typed calling-convention examples, full-width
@@ -406,13 +406,12 @@ matters. The disc-readiness polling inside `FUN_001BE7F0` does not close this
 window because cache hits never enter that loader and the selector does not
 set the polled state.
 
-An exhaustive direct-`jal` scan of the resident found these six scoped selector
+An exhaustive direct-`jal` scan of the resident found these five scoped selector
 calls:
 
 | Caller | Selector callsite | ELF file offset | Image | Nearby identity-sensitive overlay calls |
 | --- | ---: | ---: | --- | --- |
 | `FUN_001EA240` | `0x001EA368` | `0x0EA468` | BTL | none in the selecting state; it sets `manager + 0x0C = 1` and continues resident setup |
-| `FUN_001EACB0` | `0x001EAD4C` | `0x0EAE4C` | ETC | `0x006D32B0` at `0x001EADBC`, `0x006D80F0` at `0x001EADE0`, `0x006D84E0` at `0x001EAE18` |
 | `FUN_001EB120` | `0x001EB1F0` | `0x0EB2F0` | ETC | `0x006C65C0` at `0x001EB22C`, `0x006C68F0` at `0x001EB238`, `0x006C8940` at `0x001EB258` |
 | `FUN_001EC7A0` | `0x001EC7BC` | `0x0EC8BC` | BTL | `0x007190D0` at `0x001EC824`, `0x00719500` at `0x001EC83C`, `0x00885210` at `0x001EC844` |
 | `FUN_0038E140` | `0x0038E17C` | `0x28E27C` | BTL | unresolved pre-switch target `0x007D7580` at `0x0038E16C`; BTL `0x006EE810` at `0x0038E200` after selection |
@@ -427,10 +426,6 @@ clean files gives this exact cross-coordinate map:
 | BTL | `0x00719500` | `0x065600` | `0x007194C0` | `0x27BDFFE0` |
 | BTL | `0x00885210` | `0x1D1310` | `0x008851D0` | `0x27BDFFF0` |
 | BTL | `0x006EE810` | `0x03A910` | `0x006EE7D0` | `0xAC800000` |
-| ETC | `0x006D32B0` | `0x01F3B0` | `0x006D3270` | `0x27BDFF90` |
-| ETC | `0x006D3C70` | `0x01FD70` | `0x006D3C30` | `0x27BDFFB0` |
-| ETC | `0x006D80F0` | `0x0241F0` | `0x006D80B0` | `0x27BDFFD0` |
-| ETC | `0x006D84E0` | `0x0245E0` | `0x006D84A0` | `0x27BDFF40` |
 | ETC | `0x006C65C0` | `0x0126C0` | `0x006C6580` | `0xAC800000` |
 | ETC | `0x006C6630` | `0x012730` | `0x006C65F0` | `0x27BDFFC0` |
 | ETC | `0x006C68F0` | `0x0129F0` | `0x006C68B0` | `0x27BDFFC0` |
@@ -467,9 +462,9 @@ it is not an accidental cache hit on a zero-initialized selector. Allocation
 failure is not handled on this path: a null result is still passed to
 `FUN_001F45B0`, whose first operation reads `manager + 0x10`.
 
-Clean return routing also separates object lifetime from byte residency. Shop
-and Collection release their ETC-owned objects and switch the manager back to
-its resident Mode Select callback, but they do not immediately replace ETC.
+Clean return routing also separates object lifetime from byte residency.
+Collection releases its ETC-owned object and switches the manager back to its
+resident Mode Select callback, but it does not immediately replace ETC.
 Resident-only phases run first; Mode Select phase 3 calls selector `0` to
 restore BTL, and only phase 4 constructs the selection controller. Returning
 to title destroys the manager and its cache but likewise does not clear the
@@ -479,12 +474,9 @@ in [`../game/mode_flow.md`](../game/mode_flow.md); the ABI point is that
 “object cleanup,” “image replacement,” and “cache destruction” are three
 distinct events.
 
-The ETC state machines also show the mode-owned teardown boundary:
-
-- `FUN_001EACB0` calls ETC cleanup `0x006D3C70` at `0x001EAE94`, destroys its
-  two resident arrays through `FUN_00119220`, and frees the owner object;
-- `FUN_001EB120` calls ETC cleanup `0x006C6630` at `0x001EB2FC`, then frees its
-  owner object at `0x001EB308`.
+The Collection ETC state machine also shows the mode-owned teardown boundary:
+`FUN_001EB120` calls ETC cleanup `0x006C6630` at `0x001EB2FC`, then frees its
+owner object at `0x001EB308`.
 
 Those calls execute while ETC is still the selected image. They are explicit
 knowledge in the owning resident state machines, not callbacks discovered
@@ -510,24 +502,6 @@ exactly `1`, calls the release routine, and only then frees the `0x80` byte
 allocation. The field initializer intentionally does not clear every byte of
 the allocation; safety relies on the paired resource initializer and the
 fresh-allocation contract, not on treating `0x006C65C0` as a general `memset`.
-
-The Shop ETC path in `FUN_001EACB0` owns a resident-allocated `0x6C8` byte
-object. Before entering ETC, the resident uses `FUN_00119290` to construct five
-16-byte elements at object `+0x4C` and 94 more at `+0x9C`; the second array ends
-at `+0x67C`. It then calls:
-
-| Runtime target | Contract proven by caller and clean code |
-| ---: | --- |
-| `0x006D32B0` | `init(object)`: initializes the outer object and its overlay-owned resources; the caller uses no result |
-| `0x006D80F0` | `poll(object)`: its return is compared with exactly `1` as the completion condition |
-| `0x006D84E0` | `update(object)`: called on each resident state-machine pass while the poll result is not `1` |
-| `0x006D3C70` | `release(object)`: releases and zeroes the outer object's overlay-owned handles and allocations |
-
-On teardown, `0x006D3C70` runs first while ETC is live; the resident then
-destroys the 94-element and five-element inline arrays with `FUN_00119220`,
-frees the `0x6C8` allocation, and clears its global owner pointer. This ordering
-is part of the application ABI even though none of it appears in the file
-header.
 
 The BTL path in `FUN_001EC7A0` similarly owns a `0x188` byte allocation:
 
@@ -888,8 +862,6 @@ zero match over the first 16 or 64 bytes. Representative entry words are:
 | Live target | BTL first word | ETC first word |
 | ---: | ---: | ---: |
 | `0x006B3F80` | `0x8F82CC14` | `0x27BDFFF0` |
-| `0x006D32B0` | `0x3C0241F0` | `0x27BDFF90` |
-| `0x006D80F0` | `0x7BB10030` | `0x27BDFFD0` |
 | `0x006C65C0` | `0x00000000` | `0xAC800000` |
 
 This does not rule out coincidentally similar higher-level behavior elsewhere;

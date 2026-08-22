@@ -14,6 +14,8 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
   fork, and future repositories added to this maintained project may be changed
   together when the task requires it. Cross-repository work needs no separate
   approval.
+- Master Mode and Shop are globally out of scope. Do not work on or document
+  them.
 
 ## Discussion and action
 

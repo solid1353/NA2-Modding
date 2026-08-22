@@ -8,7 +8,7 @@ dated binary-patcher logs. The canonical per-screen results are in
 
 All four tests used runtime-proven `regional_input_selectable_modal`
 (evidence `ELF-M008`) as the baseline. It is the generic selectable-list/modal
-decoder already confirmed in Collection, Shop, Free Battle, Practice, and the
+decoder already confirmed in Collection, Free Battle, Practice, and the
 Main Menu leave dialog.
 
 The candidate family is:

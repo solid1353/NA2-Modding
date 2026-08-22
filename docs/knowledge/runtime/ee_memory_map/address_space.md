@@ -13,7 +13,7 @@ end-exclusive.
 | `0x00100000-0x00607380` | `0x507380` | File-backed resident NA2 ELF code and static data. The single resident load segment is RWX and also contains the six static thread stacks. | Resident and occupied. Use only individually proven caves. |
 | `0x00607380-0x006B3F00` | `0xACB80` | Zero-filled tail of the resident ELF load segment: BSS, allocator globals, and other mutable/static runtime storage. | Resident and occupied; zero at load does not mean free. |
 | `0x006B3F00-0x008DD080` | `0x229180` | Reused MWo3 overlay window for `BTL.BIN`, `ADV.BIN`, and `ETC.BIN`. Contents change with phase. | Never a global fixed injection range. Phase-only use requires a proven overlay/state guard. |
-| `0x008DD080-0x008F3D00` | `0x16C80` | Current-only safety gap above the maximum overlay end. Zero and hash-stable in all eight Current captures. | 93,312-byte persistent fixed candidate while the structural reservation remains active. |
+| `0x008DD080-0x008F3D00` | `0x16C80` | Current-only safety gap above the maximum overlay end. Zero and hash-stable in all seven Current captures. | 93,312-byte persistent fixed candidate while the structural reservation remains active. |
 | `0x008F3D00-0x008F8550` | `0x4850` | Current compact `228.BIN`; the exact end changes as linked resident fragments change. | Occupied resident code/data. |
 | `0x008F8550-0x00940100` | `0x47BB0` | Unused portion of the stable resident-payload envelope for the current 18,512-byte build. | Reserved for future linked payload growth; never use as heap or an independent fixed cave. |
 | `0x00940100-0x00940110` | `0x10` | Alignment before the Current heap base sentinel. Vanilla has the analogous padding at `0x008DD080-0x008DD090`. | Reserve for allocator/system alignment; do not use. |
@@ -200,6 +200,6 @@ stacks are represented here through the resident image and game heap instead.
 
 The resident ELF contains a previously proven 108-byte zero cave at
 `0x00607314-0x00607380`. The Current bootstrap owns that whole range and its
-hash was stable in all eight Current captures; residual zero bytes inside it
+hash was stable in all seven Current captures; residual zero bytes inside it
 must not be treated as unassigned capacity. The allocator globals begin
 immediately afterward at `0x00607380`.

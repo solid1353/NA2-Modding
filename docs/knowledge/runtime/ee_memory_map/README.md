@@ -6,8 +6,8 @@ with matched PCSX2 savestates from clean NA2 and the integrated NA2.28 Current
 image. The runtime evidence was captured on 2026-07-22.
 
 The results are representative, not an absolute proof of every possible peak.
-The eight matched states cover title, mode select, active Adventure, character
-select, active battle, Shop, Collection, and Options. They do not include a
+The seven matched states cover title, mode select, active Adventure, character
+select, active battle, Collection, and Options. They do not include a
 result screen, save/load activity, or long transition stress. Active Adventure
 was the tightest sampled state, so the absent result capture does not affect the
 reported worst-observed value.

@@ -17,20 +17,18 @@ else {
     [IO.Path]::GetFullPath($env:NA228_TASK_WORK_ROOT)
 }
 $workspaceExisted = Test-Path -LiteralPath $workspaceRoot -PathType Container
-$workspaceTempRoot = Join-Path $workspaceRoot 'temp'
-$testTempParent = Join-Path $workspaceTempRoot 'tests'
-$testTemp = Join-Path $testTempParent ("run-$PID-$([Guid]::NewGuid().ToString('N'))")
+$unitTestRoot = Join-Path $workspaceRoot 'unit-tests'
+$unitTestRunRoot = Join-Path $unitTestRoot ("run-$PID-$([Guid]::NewGuid().ToString('N'))")
 $originalTemp = [Environment]::GetEnvironmentVariable('TEMP', 'Process')
 $originalTmp = [Environment]::GetEnvironmentVariable('TMP', 'Process')
 $originalTestPowerShell = [Environment]::GetEnvironmentVariable(
     'NA228_TEST_POWERSHELL',
     'Process'
 )
-$workspaceTempExisted = Test-Path -LiteralPath $workspaceTempRoot -PathType Container
 
-[void](New-Item -ItemType Directory -Path $testTemp -Force)
-$env:TEMP = $testTemp
-$env:TMP = $testTemp
+[void](New-Item -ItemType Directory -Path $unitTestRunRoot -Force)
+$env:TEMP = $unitTestRunRoot
+$env:TMP = $unitTestRunRoot
 $env:NA228_TEST_POWERSHELL = $powershell
 
 Push-Location $repository
@@ -64,15 +62,12 @@ finally {
         $env:NA228_TEST_POWERSHELL = $originalTestPowerShell
     }
 
-    Remove-Item -LiteralPath $testTemp -Recurse -Force -ErrorAction SilentlyContinue
-    if ((Test-Path -LiteralPath $testTempParent -PathType Container) -and
-        @(Get-ChildItem -LiteralPath $testTempParent -Force).Count -eq 0) {
-        Remove-Item -LiteralPath $testTempParent -Force
+    if (Test-Path -LiteralPath $unitTestRunRoot -PathType Container) {
+        Remove-Item -LiteralPath $unitTestRunRoot -Recurse -Force
     }
-    if (-not $workspaceTempExisted -and
-        (Test-Path -LiteralPath $workspaceTempRoot -PathType Container) -and
-        @(Get-ChildItem -LiteralPath $workspaceTempRoot -Force).Count -eq 0) {
-        Remove-Item -LiteralPath $workspaceTempRoot -Force
+    if ((Test-Path -LiteralPath $unitTestRoot -PathType Container) -and
+        @(Get-ChildItem -LiteralPath $unitTestRoot -Force).Count -eq 0) {
+        Remove-Item -LiteralPath $unitTestRoot -Force
     }
     if ($usesSharedTestRoot -and
         -not $workspaceExisted -and

@@ -99,7 +99,7 @@ foreach ($request in $suiteRequests) {
 if ($hasGeneratedSuite) {
     $generatedInputPaths = @(
         Join-Path ([string]$paths.resources) 'character_data.tsv'
-        Join-Path ([string]$paths.resources) 'movesets.tsv'
+        [string]$paths.files.practice_movesets
         foreach ($generatedSuite in @($suiteRequests | Where-Object Generated)) {
             Get-VisualRegressionGeneratedInputPaths `
                 -RecordingRepository $recordingRoot `

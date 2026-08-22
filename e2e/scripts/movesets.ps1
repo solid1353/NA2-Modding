@@ -38,7 +38,15 @@ $taskScript = Join-Path $ProjectRoot 'e2e\scripts\suite.ps1'
 
 $characterDataPath = Join-Path ([string]$paths.resources) 'character_data.tsv'
 $characterData = @(Import-Csv -LiteralPath $characterDataPath -Delimiter "`t")
-$movesetsPath = Join-Path ([string]$paths.resources) 'movesets.tsv'
+$characterDataById = @{}
+foreach ($character in $characterData) {
+    $characterId = [string]$character.id
+    if ($characterDataById.ContainsKey($characterId)) {
+        throw "Duplicate character_data.tsv ID: $characterId"
+    }
+    $characterDataById[$characterId] = $character
+}
+$movesetsPath = [string]$paths.files.practice_movesets
 $movesets = @(Import-Csv -LiteralPath $movesetsPath -Delimiter "`t")
 $lastAvailableRow = $characterData.Count + 1
 $firstRow = 2
@@ -94,225 +102,233 @@ else {
 }
 $gameTargets = @($gameTarget)
 
-function Get-MovesetRowKind {
-    param([Parameter(Mandatory)]$Moveset)
+function Resolve-VisualRegressionMovesetKind {
+    param([Parameter(Mandatory)][string]$CaseId)
 
-    if (-not [string]::IsNullOrWhiteSpace([string]$Moveset.awakening_id)) {
-        return 'awakening'
+    switch -Regex -CaseSensitive ($CaseId) {
+        '-2nd$' { return '2nd form' }
+        '-rev$' { return 'half_hp' }
+        '-awk-[1-9][0-9]*$' { return 'awakening' }
+        '-luj-[1-9][0-9]*$' { return 'linked_uj' }
+        '-lj-[1-9][0-9]*$' { return 'linked_jutsu' }
+        default { return 'base' }
     }
-    if (-not [string]::IsNullOrWhiteSpace([string]$Moveset.linked_j_id) -or
-        -not [string]::IsNullOrWhiteSpace([string]$Moveset.linked_uj_id)) {
-        return 'support'
-    }
-    if ([string]$Moveset.reversal -ceq 'Y') {
-        return 'reversal'
-    }
-    return 'base'
 }
 
+$expectedMovesetColumns = @(
+    'case_id',
+    'character_id',
+    'awakening_id',
+    'support_id',
+    'capture_policy'
+)
+if ($movesets.Count -eq 0) {
+    throw "Moveset metadata is empty: $movesetsPath"
+}
+$actualMovesetColumns = @($movesets[0].PSObject.Properties.Name)
+if (($actualMovesetColumns -join "`t") -cne
+    ($expectedMovesetColumns -join "`t")) {
+    throw (
+        'Moveset metadata columns must be: ' +
+        ($expectedMovesetColumns -join ', ')
+    )
+}
+
+$knownCaseIds = [Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::OrdinalIgnoreCase
+)
 $indexedMovesets = @(
-    for ($index = 0; $index -lt $movesets.Count; $index++) {
+    foreach ($moveset in $movesets) {
+        $caseId = [string]$moveset.case_id
+        if ($caseId -cnotmatch '^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$') {
+            throw "Moveset case ID '$caseId' is not a hyphen-separated alphanumeric identifier."
+        }
+        if (-not $knownCaseIds.Add($caseId)) {
+            throw "Duplicate moveset case ID: $caseId"
+        }
+        $characterId = [string]$moveset.character_id
+        if (-not $characterDataById.ContainsKey($characterId)) {
+            throw (
+                "Moveset case '$caseId' has unknown character ID " +
+                "'$characterId'."
+            )
+        }
+        $kind = Resolve-VisualRegressionMovesetKind -CaseId $caseId
+        $capturePolicy = [string]$moveset.capture_policy
+        if ($capturePolicy -cnotin @(
+            '',
+            'base',
+            'specials',
+            'base, specials',
+            'base, parent-specials'
+        )) {
+            throw (
+                "Moveset case '$caseId' has invalid capture_policy " +
+                "'$capturePolicy'."
+            )
+        }
+        if ($capturePolicy -ceq 'base, parent-specials' -and
+            $kind -cne '2nd form') {
+            throw (
+                "Moveset case '$caseId' may use capture_policy " +
+                "'base, parent-specials' only with kind '2nd form'."
+            )
+        }
+        if ($kind -ceq '2nd form' -and
+            $capturePolicy -cne 'base, parent-specials') {
+            throw (
+                "Moveset case '$caseId' with kind '2nd form' must use " +
+                "capture_policy 'base, parent-specials'."
+            )
+        }
         [pscustomobject]@{
-            Row = $index + 2
-            Data = $movesets[$index]
-            Kind = Get-MovesetRowKind -Moveset $movesets[$index]
+            CaseId = $caseId
+            CharacterId = $characterId
+            CharacterName = [string]$characterDataById[$characterId].character
+            Data = $moveset
+            Kind = $kind
+            CapturesBase = $capturePolicy -cin @(
+                'base',
+                'base, specials',
+                'base, parent-specials'
+            )
+            CapturesSpecials = $capturePolicy -cin @('specials', 'base, specials')
+            CapturesParentSpecials = $capturePolicy -ceq 'base, parent-specials'
         }
     }
 )
+$indexedMovesetsByCaseId = @{}
+foreach ($movesetCase in $indexedMovesets) {
+    $indexedMovesetsByCaseId[$movesetCase.CaseId] = $movesetCase
+}
 $blocks = [Collections.Generic.List[object]]::new()
 $currentBlock = $null
-foreach ($movesetRow in $indexedMovesets) {
-    if ($movesetRow.Kind -ceq 'base') {
+foreach ($movesetCase in $indexedMovesets) {
+    if ($movesetCase.Kind -cin @('base', '2nd form')) {
         $currentBlock = [pscustomobject]@{
-            Base = $movesetRow
+            Base = $movesetCase
             Rows = [Collections.Generic.List[object]]::new()
         }
         [void]$blocks.Add($currentBlock)
     }
     elseif ($null -eq $currentBlock) {
-        throw "Moveset row $($movesetRow.Row) has no preceding base row."
-    }
-    elseif (
-        [string]$movesetRow.Data.character -cne
-            [string]$currentBlock.Base.Data.character -or
-        [string]$movesetRow.Data.id -cne
-            [string]$currentBlock.Base.Data.id
-    ) {
         throw (
-            "Moveset row $($movesetRow.Row) does not match its base row " +
-            "$($currentBlock.Base.Row)."
+            "Moveset case '$($movesetCase.CaseId)' has no preceding base or " +
+            "'2nd form' case."
         )
     }
-    [void]$currentBlock.Rows.Add($movesetRow)
+    elseif (
+        $movesetCase.CharacterId -cne $currentBlock.Base.CharacterId
+    ) {
+        throw (
+            "Moveset case '$($movesetCase.CaseId)' does not match its block " +
+            "case '$($currentBlock.Base.CaseId)'."
+        )
+    }
+    [void]$currentBlock.Rows.Add($movesetCase)
 }
 
-$blocksByCharacter = @{}
+$blocksByCharacterId = @{}
 foreach ($block in $blocks) {
-    $key = (
-        "$($block.Base.Data.character)`t" +
-        [string]$block.Base.Data.id
-    )
-    $blocksByCharacter[$key] = $block
+    $characterId = $block.Base.CharacterId
+    if ($blocksByCharacterId.ContainsKey($characterId)) {
+        throw "Duplicate moveset block for character ID '$characterId'."
+    }
+    $blocksByCharacterId[$characterId] = $block
 }
 
 $outputPlans = [Collections.Generic.List[object]]::new()
 for ($characterIndex = $firstRow - 2; $characterIndex -le $lastRow - 2; $characterIndex++) {
     $character = $characterData[$characterIndex]
-    $key = "$($character.character)`t$($character.id)"
-    if (-not $blocksByCharacter.ContainsKey($key)) {
+    $characterId = [string]$character.id
+    if (-not $blocksByCharacterId.ContainsKey($characterId)) {
         throw (
             "Character_data.tsv row $($characterIndex + 2) has no matching " +
             'movesets.tsv block.'
         )
     }
-    $block = $blocksByCharacter[$key]
+    $block = $blocksByCharacterId[$characterId]
     $outputNumber = $characterIndex + 2
     if ($MovesetFamily -ceq 'idle') {
         continue
     }
 
-    foreach ($awakeningRow in @(
-        $block.Rows | Where-Object Kind -CEQ 'awakening'
-    )) {
-        $uniqueness = ([string]$awakeningRow.Data.uniqueness).Trim()
-        if ($uniqueness -cnotin @('', '-', '+', 's', 'd-', 'd+', 'ds')) {
-            throw (
-                "Moveset row $($awakeningRow.Row) has invalid uniqueness " +
-                "'$uniqueness'."
-            )
-        }
-    }
-    foreach ($duplicateKind in @('d-', 'd+', 'ds')) {
-        $duplicateRows = @(
-            $block.Rows | Where-Object {
-                $_.Kind -ceq 'awakening' -and
-                ([string]$_.Data.uniqueness).Trim() -ceq $duplicateKind
-            }
-        )
-        if ($duplicateRows.Count -notin @(0, 2)) {
-            throw (
-                "Moveset base row $($block.Base.Row) has " +
-                "$($duplicateRows.Count) '$duplicateKind' awakenings; " +
-                'duplicate uniqueness requires exactly two.'
-            )
-        }
-    }
-
-    $slug = ([string]$block.Base.Data.character).ToLowerInvariant()
+    $slug = ([string]$character.character).ToLowerInvariant()
     $slug = [regex]::Replace($slug, '[^a-z0-9]+', '_')
     $slug = $slug.Trim('_')
     if ([string]::IsNullOrWhiteSpace($slug)) {
         $slug = 'character'
     }
-    [void]$outputPlans.Add([pscustomobject]@{
-        Name = ('{0:D3}_{1}_base' -f $outputNumber, $slug)
-        Family = 'base'
-        Captures = @(
-            [pscustomobject]@{
-                Row = $block.Base.Row
-                Recording = 'movesets\base.p2m2'
-            }
-        )
-    })
-    $emittedDuplicateBase = $false
-    foreach ($awakeningRow in @(
+    if ($block.Base.CapturesBase) {
+        [void]$outputPlans.Add([pscustomobject]@{
+            Name = ('{0:D3}_{1}_base' -f $outputNumber, $slug)
+            Family = 'base'
+            Captures = @(
+                [pscustomobject]@{
+                    CaseId = $block.Base.CaseId
+                    Recording = 'movesets\base.p2m2'
+                }
+            )
+        })
+    }
+    foreach ($awakeningCase in @(
         $block.Rows | Where-Object Kind -CEQ 'awakening'
     )) {
-        $uniqueness = ([string]$awakeningRow.Data.uniqueness).Trim()
-        $isUniqueMode = $false
-        if ($uniqueness -ceq '+') {
-            $isUniqueMode = $true
-        }
-        elseif ($uniqueness -ceq 'd+' -and -not $emittedDuplicateBase) {
-            $emittedDuplicateBase = $true
-            $isUniqueMode = $true
-        }
-        if (-not $isUniqueMode) {
+        if (-not $awakeningCase.CapturesBase) {
             continue
         }
-        $awakeningId = [string]$awakeningRow.Data.awakening_id
+        $awakeningId = [string]$awakeningCase.Data.awakening_id
         [void]$outputPlans.Add([pscustomobject]@{
             Name = ('{0:D3}_{1}_mode_{2}' -f $outputNumber, $slug, $awakeningId)
             Family = 'base'
             Captures = @(
                 [pscustomobject]@{
-                    Row = $awakeningRow.Row
+                    CaseId = $awakeningCase.CaseId
                     Recording = 'movesets\base.p2m2'
                 }
             )
         })
     }
 
-    $hasReversal = @(
-        $block.Rows | Where-Object Kind -CEQ 'reversal'
+    $ownsSpecialsGrid = @(
+        $block.Rows | Where-Object Kind -CEQ 'half_hp'
     ).Count -gt 0
-    if ($hasReversal) {
+    if ($ownsSpecialsGrid) {
         $secondFormBlock = $null
         if ($characterIndex + 1 -lt $characterData.Count) {
             $secondForm = $characterData[$characterIndex + 1]
-            $secondFormKey = "$($secondForm.character)`t$($secondForm.id)"
-            if ($blocksByCharacter.ContainsKey($secondFormKey)) {
-                $candidate = $blocksByCharacter[$secondFormKey]
-                $candidateHasReversal = @(
-                    $candidate.Rows | Where-Object Kind -CEQ 'reversal'
-                ).Count -gt 0
-                if (-not $candidateHasReversal) {
+            $secondFormId = [string]$secondForm.id
+            if ($blocksByCharacterId.ContainsKey($secondFormId)) {
+                $candidate = $blocksByCharacterId[$secondFormId]
+                if ($candidate.Base.Kind -ceq '2nd form') {
                     $secondFormBlock = $candidate
                 }
             }
         }
 
         $specialCaptures = [Collections.Generic.List[object]]::new()
-        [void]$specialCaptures.Add([pscustomobject]@{
-            Row = $block.Base.Row
-            Recording = 'movesets\specials.p2m2'
-        })
-        $emittedDuplicatePlusSpecials = $false
-        $emittedDuplicateSpecials = $false
-        foreach ($movesetRow in $block.Rows) {
-            $include = switch ($movesetRow.Kind) {
-                'awakening' {
-                    $uniqueness = ([string]$movesetRow.Data.uniqueness).Trim()
-                    if ($uniqueness -cin @('+', 's')) {
-                        $true
-                    }
-                    elseif ($uniqueness -ceq 'd+' -and
-                        -not $emittedDuplicatePlusSpecials) {
-                        $emittedDuplicatePlusSpecials = $true
-                        $true
-                    }
-                    elseif ($uniqueness -ceq 'ds' -and
-                        -not $emittedDuplicateSpecials) {
-                        $emittedDuplicateSpecials = $true
-                        $true
-                    }
-                    else {
-                        $false
-                    }
-                    break
-                }
-                'support' { $true; break }
-                'reversal' { $true; break }
-                default { $false }
-            }
-            if ($include) {
+        foreach ($movesetCase in $block.Rows) {
+            if ($movesetCase.CapturesSpecials) {
                 [void]$specialCaptures.Add([pscustomobject]@{
-                    Row = $movesetRow.Row
+                    CaseId = $movesetCase.CaseId
                     Recording = 'movesets\specials.p2m2'
                 })
             }
         }
-        if ($null -ne $secondFormBlock) {
+        if ($null -ne $secondFormBlock -and
+            $secondFormBlock.Base.CapturesParentSpecials) {
             [void]$specialCaptures.Add([pscustomobject]@{
-                Row = $secondFormBlock.Base.Row
+                CaseId = $secondFormBlock.Base.CaseId
                 Recording = 'movesets\specials.p2m2'
             })
         }
-        [void]$outputPlans.Add([pscustomobject]@{
-            Name = ('{0:D3}_{1}_specials' -f $outputNumber, $slug)
-            Family = 'specials'
-            Captures = @($specialCaptures)
-        })
+        if ($specialCaptures.Count -gt 0) {
+            [void]$outputPlans.Add([pscustomobject]@{
+                Name = ('{0:D3}_{1}_specials' -f $outputNumber, $slug)
+                Family = 'specials'
+                Captures = @($specialCaptures)
+            })
+        }
     }
 }
 
@@ -330,15 +346,15 @@ if ($MovesetFamily -ceq 'idle') {
             $characterIndex++
         ) {
             $character = $characterData[$characterIndex]
-            $key = "$($character.character)`t$($character.id)"
-            if (-not $blocksByCharacter.ContainsKey($key)) {
+            $characterId = [string]$character.id
+            if (-not $blocksByCharacterId.ContainsKey($characterId)) {
                 throw (
                     "Character_data.tsv row $($characterIndex + 2) has no matching " +
                     'movesets.tsv block.'
                 )
             }
             [void]$pageCaptures.Add([pscustomobject]@{
-                Row = $blocksByCharacter[$key].Base.Row
+                CaseId = $blocksByCharacterId[$characterId].Base.CaseId
                 Recording = 'characters\idle.p2m2'
             })
         }
@@ -356,21 +372,21 @@ $selectedOutputPlans = @(
             $_.Family -ceq $MovesetFamily
     }
 )
-$practiceRows = @(
+$practiceCaseIds = [string[]]@(
     $selectedOutputPlans |
         ForEach-Object Captures |
-        ForEach-Object { [int]$_.Row } |
+        ForEach-Object { [string]$_.CaseId } |
         Sort-Object -Unique
 )
 $practiceGames = [string[]]@($gameTargets | ForEach-Object Selector)
-$practiceByRow = @{}
+$practiceByCaseId = @{}
 foreach ($practice in @(
     Get-VisualRegressionPracticeConfiguration `
         -Repository $ProjectRoot `
-        -MovesetRow $practiceRows `
+        -MovesetCaseId $practiceCaseIds `
         -Game $practiceGames
 )) {
-    $practiceByRow[[int]$practice.MovesetRow] = $practice
+    $practiceByCaseId[[string]$practice.MovesetCaseId] = $practice
 }
 
 $tasks = [Collections.Generic.List[object]]::new()
@@ -390,18 +406,21 @@ foreach ($outputPlan in $selectedOutputPlans) {
             $captureIndex++
             $captureRoot = Join-Path `
                 $workingRoot `
-                ('captures\{0:D3}-{1:D3}\{2}' -f
+                ('captures\{0:D3}-{1}\{2}' -f
                     $captureIndex,
-                    $capture.Row,
+                    $capture.CaseId,
                     $gameTarget.Selector)
-            if (-not $practiceByRow.ContainsKey($capture.Row)) {
-                throw "Practice data was not resolved for moveset row $($capture.Row)."
+            if (-not $practiceByCaseId.ContainsKey($capture.CaseId)) {
+                throw (
+                    "Practice data was not resolved for moveset case " +
+                    "'$($capture.CaseId)'."
+                )
             }
-            $practice = $practiceByRow[$capture.Row]
+            $practice = $practiceByCaseId[$capture.CaseId]
             if (-not $practice.PnachByGame.ContainsKey($gameTarget.Selector) -or
                 -not $practice.PnachLinesByGame.ContainsKey($gameTarget.Selector)) {
                 throw (
-                    "Practice data for moveset row $($capture.Row) does not " +
+                    "Practice data for moveset case '$($capture.CaseId)' does not " +
                     "contain game $($gameTarget.Selector)."
                 )
             }
@@ -412,8 +431,10 @@ foreach ($outputPlan in $selectedOutputPlans) {
             $pnachLinesByGame[$gameTarget.Selector] =
                 $practice.PnachLinesByGame[$gameTarget.Selector]
             $taskContext = [pscustomobject]@{
-                Row = $capture.Row
-                Character = [string]$movesets[$capture.Row - 2].character
+                CaseId = $capture.CaseId
+                Character = [string](
+                    $indexedMovesetsByCaseId[$capture.CaseId].CharacterName
+                )
                 Recording = $capture.Recording
                 Game = $gameTarget.Selector
                 GameLabel = $gameTarget.Label
@@ -464,8 +485,8 @@ foreach ($outputPlan in $selectedOutputPlans) {
                         $ErrorActionPreference = 'Stop'
                         . $SuiteScript
                         Write-Host (
-                            "Capturing $($Context.GameLabel) moveset row " +
-                            "$($Context.Row) with $($Context.Recording) -> " +
+                            "Capturing $($Context.GameLabel) moveset case " +
+                            "'$($Context.CaseId)' with $($Context.Recording) -> " +
                             $Context.CaptureRoot
                         ) -ForegroundColor Cyan
                         if (Test-Path -LiteralPath $Context.CaseRoot) {
@@ -516,12 +537,12 @@ foreach ($outputPlan in $selectedOutputPlans) {
                         if ($screenshotCount -eq 0) {
                             throw (
                                 "$($Context.GameLabel) snapshot replay produced " +
-                                'no screenshots for moveset row ' +
-                                "$($Context.Row)."
+                                "no screenshots for moveset case " +
+                                "'$($Context.CaseId)'."
                             )
                         }
                         $complete = [ordered]@{
-                            row = $Context.Row
+                            case_id = $Context.CaseId
                             recording = $Context.Recording
                             game = $Context.Game
                             screenshots = $screenshotCount
@@ -535,7 +556,7 @@ foreach ($outputPlan in $selectedOutputPlans) {
                         )
                         [IO.File]::Move($temporary, $Context.CompletePath, $true)
                         [pscustomobject]@{
-                            Row = $Context.Row
+                            CaseId = $Context.CaseId
                             Character = $Context.Character
                             Recording = $Context.Recording
                             Game = $Context.Game
@@ -603,8 +624,8 @@ $gridJobScript = {
                         )
                         if ($captureScreenshots.Count -eq 0) {
                             throw (
-                                "No screenshots remain for moveset row " +
-                                "$($capture.Row)."
+                                "No screenshots remain for moveset case " +
+                                "'$($capture.CaseId)'."
                             )
                         }
                         foreach ($screenshot in $captureScreenshots) {

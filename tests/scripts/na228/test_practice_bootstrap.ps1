@@ -119,10 +119,11 @@ function Assert-PatchWords {
 $na228Profile = Join-Path $paths.repository 'launch_profiles\practice\NA228.pnach'
 $nun5Profile = Join-Path $paths.repository 'launch_profiles\practice\NUN5.pnach'
 $practice = & (Join-Path $repository 'launch_profiles\practice\launch.ps1') `
-    -Arguments 2 `
+    -Arguments BNARUTO `
     -Games @('manual', 'nun5') `
     -ProjectRoot $repository
 Assert-PracticeBootstrapTest (
+    $practice.MovesetCaseId -ceq 'bNaruto' -and
     $practice.PnachByGame['manual'] -ceq $na228Profile -and
     $practice.PnachByGame['nun5'] -ceq $nun5Profile
 ) 'Practice launch configuration did not resolve PNACH files from its launch-profile assets.'

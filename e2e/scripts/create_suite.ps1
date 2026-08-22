@@ -57,7 +57,7 @@ $inputIdentity = @(
     if (@($recordings | Where-Object Generated).Count -gt 0) {
         $generatedInputs = @(
             Join-Path ([string]$paths.resources) 'character_data.tsv'
-            Join-Path ([string]$paths.resources) 'movesets.tsv'
+            [string]$paths.files.practice_movesets
             foreach ($generatedRecording in @($recordings | Where-Object Generated)) {
                 Get-VisualRegressionGeneratedInputPaths `
                     -RecordingRepository $recordingRoot `

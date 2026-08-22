@@ -150,11 +150,12 @@ write reaches the next native function.
 `@repository/launch_profiles/practice/NA228.pnach` owns the complete NA2.28 bootstrap,
 while `@repository/launch_profiles/practice/NUN5.pnach` owns its separately ported startup and bootstrap
 code at `0x003D0C60..0x003D0FF8`. The normal
-`-l practice <row>` launch-profile selector maps `practice` to
-`@repository/launch_profiles/practice/`, reads one physical `movesets.tsv` row starting
-at row 2, and passes a different three-line character/support/awakening address
-set to each selected game. A row with `reversal` set to `Y` adds the native
-half-HP initializer write as a fourth line: `0x001E7AE8 = 0xA0850001` for
+`-l practice <case-id>` launch-profile selector maps `practice` to
+`@repository/launch_profiles/practice/`, resolves one stable `case_id`
+case-insensitively from `movesets.tsv`, and passes a different three-line
+character/support/awakening address set to each selected game. A `-rev` case
+adds the native half-HP initializer write as a fourth line:
+`0x001E7AE8 = 0xA0850001` for
 NA228 or `0x001ED8D8 = 0xA0850001` for NUN5. It neither rewrites a profile nor
 creates a generated PNACH. Clean NA2 is not a supported launcher target.
 
@@ -230,8 +231,8 @@ hard-coded successor `0x23`. It declares character compatibility, not how an
 effect is normally entered.
 `FUN_003047c0` classifies the broader native effect domain `0..0x89`, but that
 global range does not establish character compatibility. The Practice profile
-passes the selected Practice `movesets.tsv` row's awakening through unchanged, using an
-empty cell for no starting awakening. It does not read the character table or
+passes the selected Practice `movesets.tsv` case's awakening through unchanged,
+using `none` for no starting awakening. It does not read the character table or
 expand cases; the fixed moveset matrix owns the character-specific
 combinations.
 

@@ -211,6 +211,7 @@ function Get-Na2StartupFastForwardFrames {
     "work": "work"
   },
   "files": {
+    "practice_movesets": "launch_profiles/practice/movesets.tsv",
     "source_catalog": "games.json",
     "project_settings": "game.json",
     "game_resolver": "@scripts/lib/resolve_game.py",
@@ -354,8 +355,8 @@ print(json.dumps(result))
         -LiteralPath (Join-Path $sourceRepository 'launch_profiles\practice\NUN5.pnach') `
         -Destination (Join-Path $fakeRepository 'launch_profiles\practice\NUN5.pnach')
     Copy-Item `
-        -LiteralPath (Join-Path $sourceRepository 'resources\movesets.tsv') `
-        -Destination (Join-Path $fakeRepository 'resources\movesets.tsv')
+        -LiteralPath (Join-Path $sourceRepository 'launch_profiles\practice\movesets.tsv') `
+        -Destination (Join-Path $fakeRepository 'launch_profiles\practice\movesets.tsv')
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeRepository 'tests\run.ps1') -Content @'
 param()
 Add-Content `
@@ -824,25 +825,25 @@ Add-Content `
     Assert-Na2Test `
         -Condition $unknownProfileRejected `
         -Message 'The launcher accepted an undeclared launch profile.'
-    $practiceRowRequired = $false
+    $practiceCaseRequired = $false
     try {
         & (Join-Path $fakeRepository 'na228.ps1') nun5 -l practice
     }
     catch {
-        $practiceRowRequired = $_.Exception.Message -ceq (
-            'The Practice launch profile requires a row.'
+        $practiceCaseRequired = $_.Exception.Message -ceq (
+            'The Practice launch profile requires a case ID.'
         )
     }
     Assert-Na2Test `
-        -Condition $practiceRowRequired `
-        -Message 'The Practice launch profile accepted no moveset row.'
+        -Condition $practiceCaseRequired `
+        -Message 'The Practice launch profile accepted no moveset case ID.'
     $practiceOutput = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
             manual `
             -l `
             practice `
-            101 `
+            tsunade-awk-2 `
             -t *>&1
     ) -join "`n"
     Assert-Na2Test `
@@ -873,7 +874,7 @@ Add-Content `
             manual `
             -l `
             practice `
-            59 *>&1
+            gaara-awk-1 *>&1
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
@@ -895,7 +896,7 @@ Add-Content `
             manual `
             -l `
             practice `
-            58 *>&1
+            gaara *>&1
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
@@ -906,41 +907,41 @@ Add-Content `
         ) `
         -Message (
             'The Practice profile applied Gaara awakening-only state to his ' +
-            "base row. Output:`n$gaaraBaseOutput"
+            "base case. Output:`n$gaaraBaseOutput"
         )
-    $reversalOutput = (
+    $halfHpOutput = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
             manual `
             -l `
             practice `
-            4 *>&1
+            NARUTO-REV *>&1
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
-            $reversalOutput -match '003D0FF0,word,00000039' -and
-            $reversalOutput -match '003D0FF4,word,00000025' -and
-            $reversalOutput -match '003D0FF8,word,FFFFFFFF' -and
-            $reversalOutput -match '001ED8D8,word,A0850001' -and
-            $reversalOutput -match '001E7AE8,word,A0850001'
+            $halfHpOutput -match '003D0FF0,word,00000039' -and
+            $halfHpOutput -match '003D0FF4,word,00000025' -and
+            $halfHpOutput -match '003D0FF8,word,FFFFFFFF' -and
+            $halfHpOutput -match '001ED8D8,word,A0850001' -and
+            $halfHpOutput -match '001E7AE8,word,A0850001'
         ) `
         -Message (
-            'The Practice reversal row did not inject half HP for both games. ' +
-            "Output:`n$reversalOutput"
+            'The Practice half-HP case did not inject half HP for both games. ' +
+            "Output:`n$halfHpOutput"
         )
     $linkedJutsuOutput = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
             -l `
             practice `
-            6 *>&1
+            naruto-lj-1 *>&1
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
             $linkedJutsuOutput -match '003D0FF4,word,00000008'
         ) `
         -Message (
-            "The Practice profile did not resolve linked_j_id. " +
+            "The Practice profile did not resolve linked_jutsu support_id. " +
             "Output:`n$linkedJutsuOutput"
         )
     $linkedUjOutput = (
@@ -948,31 +949,31 @@ Add-Content `
             nun5 `
             -l `
             practice `
-            5 *>&1
+            naruto-luj-1 *>&1
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
             $linkedUjOutput -match '003D0FF4,word,00000001'
         ) `
         -Message (
-            "The Practice profile did not resolve linked_uj_id. " +
+            "The Practice profile did not resolve linked_uj support_id. " +
             "Output:`n$linkedUjOutput"
         )
-    $headerRowRejected = $false
+    $invalidCaseIdRejected = $false
     try {
-        & (Join-Path $fakeRepository 'na228.ps1') nun5 -l practice 1
+        & (Join-Path $fakeRepository 'na228.ps1') nun5 -l practice 'Naruto Base'
     }
     catch {
-        $headerRowRejected = $_.Exception.Message -ceq (
-            'Launch profile row must be a decimal integer starting at 2.'
+        $invalidCaseIdRejected = $_.Exception.Message -ceq (
+            'Launch profile case ID must be a hyphen-separated alphanumeric identifier.'
         )
     }
     Assert-Na2Test `
-        -Condition $headerRowRejected `
-        -Message 'The Practice profile accepted the TSV header as a moveset row.'
+        -Condition $invalidCaseIdRejected `
+        -Message 'The Practice profile accepted an invalid moveset case ID.'
     $cleanPracticeRejected = $false
     try {
-        & (Join-Path $fakeRepository 'na228.ps1') na2 -l practice 2
+        & (Join-Path $fakeRepository 'na228.ps1') na2 -l practice naruto
     }
     catch {
         $cleanPracticeRejected = $_.Exception.Message -ceq (
@@ -984,14 +985,16 @@ Add-Content `
         -Message 'The Practice profile accepted clean NA2.'
     $unknownMovesetRejected = $false
     try {
-        & (Join-Path $fakeRepository 'na228.ps1') nun5 -l practice 9999
+        & (Join-Path $fakeRepository 'na228.ps1') nun5 -l practice missing-case
     }
     catch {
-        $unknownMovesetRejected = $_.Exception.Message -ceq 'Unknown moveset row: 9999'
+        $unknownMovesetRejected = $_.Exception.Message -ceq (
+            'Unknown moveset case ID: missing-case'
+        )
     }
     Assert-Na2Test `
         -Condition $unknownMovesetRejected `
-        -Message 'The Practice profile accepted an unknown moveset row.'
+        -Message 'The Practice profile accepted an unknown moveset case ID.'
     Assert-Na2Test `
         -Condition (-not (Test-Path -LiteralPath (Join-Path $fakeRepository 'work\practice-bootstrap'))) `
         -Message 'The Practice profile created a bootstrap work directory.'
@@ -1029,7 +1032,7 @@ Add-Content `
             l `
             -l `
             practice `
-            2 `
+            naruto `
             -p `
             'practice-menu'
     ) -join "`n"

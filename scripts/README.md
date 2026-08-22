@@ -16,8 +16,9 @@ exact agent procedures belong in the linked runbooks.
 - `na228/launch_profile.ps1`: resolves configured launch profiles, invokes
   optional profile-local launch behavior, and merges its launch parameters.
 - `../launch_profiles/practice/launch.ps1`: resolves one
-  `@resources/movesets.tsv` row into game-specific Practice PNACH files and
-  process-local inline bootstrap values for the normal launcher.
+  `@repository/launch_profiles/practice/movesets.tsv` case ID into game-specific
+  Practice PNACH files and process-local inline bootstrap values for the normal
+  launcher.
 - `@release/build_release.ps1` and `@release/publish_release.ps1`: release
   candidate construction and publication; see
   [`../docs/runbooks/release.md`](../docs/runbooks/release.md).

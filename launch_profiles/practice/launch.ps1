@@ -15,12 +15,11 @@ $ErrorActionPreference = 'Stop'
 $paths = Get-Na2Paths -ManifestPath (Join-Path $ProjectRoot 'paths.json')
 
 if ($Arguments.Count -ne 1) {
-    throw 'The Practice launch profile requires a row.'
+    throw 'The Practice launch profile requires a case ID.'
 }
-$movesetRow = 0
-if (-not [int]::TryParse([string]$Arguments[0], [ref]$movesetRow) -or
-    $movesetRow -lt 2) {
-    throw 'Launch profile row must be a decimal integer starting at 2.'
+$movesetCaseId = [string]$Arguments[0]
+if ($movesetCaseId -cnotmatch '^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$') {
+    throw 'Launch profile case ID must be a hyphen-separated alphanumeric identifier.'
 }
 
 function ConvertFrom-PracticeHexId {
@@ -32,7 +31,7 @@ function ConvertFrom-PracticeHexId {
 
     $match = [regex]::Match($Value, '^0[xX]([0-9A-Fa-f]{1,8})$')
     if (-not $match.Success) {
-        throw "$Label must be an empty cell or a hexadecimal 0x-prefixed ID."
+        throw "$Label must be a hexadecimal 0x-prefixed ID."
     }
     $result = [Convert]::ToUInt32($match.Groups[1].Value, 16)
     if ($result -gt $Maximum) {
@@ -41,7 +40,20 @@ function ConvertFrom-PracticeHexId {
     return $result
 }
 
-$movesetsPath = Join-Path ([string]$paths.resources) 'movesets.tsv'
+function Resolve-PracticeMovesetKind {
+    param([Parameter(Mandatory)][string]$CaseId)
+
+    switch -Regex -CaseSensitive ($CaseId) {
+        '-2nd$' { return '2nd form' }
+        '-rev$' { return 'half_hp' }
+        '-awk-[1-9][0-9]*$' { return 'awakening' }
+        '-luj-[1-9][0-9]*$' { return 'linked_uj' }
+        '-lj-[1-9][0-9]*$' { return 'linked_jutsu' }
+        default { return 'base' }
+    }
+}
+
+$movesetsPath = [string]$paths.files.practice_movesets
 if (-not (Test-Path -LiteralPath $movesetsPath -PathType Leaf)) {
     throw "Moveset metadata does not exist: $movesetsPath"
 }
@@ -50,13 +62,11 @@ if ($movesets.Count -eq 0) {
     throw "Moveset metadata is empty: $movesetsPath"
 }
 $expectedColumns = @(
-    'character',
-    'id',
-    'linked_j_id',
-    'linked_uj_id',
+    'case_id',
+    'character_id',
     'awakening_id',
-    'reversal',
-    'uniqueness'
+    'support_id',
+    'capture_policy'
 )
 $actualColumns = @($movesets[0].PSObject.Properties.Name)
 if (($actualColumns -join "`t") -cne ($expectedColumns -join "`t")) {
@@ -66,70 +76,113 @@ if (($actualColumns -join "`t") -cne ($expectedColumns -join "`t")) {
     )
 }
 
-$currentMovesetRow = $movesetRow
-$movesetIndex = $currentMovesetRow - 2
-if ($movesetIndex -ge $movesets.Count) {
-    throw "Unknown moveset row: $currentMovesetRow"
-}
-$selected = $movesets[$movesetIndex]
-$reversalText = [string]$selected.reversal
-if (-not [string]::IsNullOrWhiteSpace($reversalText) -and
-    $reversalText -cne 'Y') {
-    throw "Moveset row $currentMovesetRow reversal must be an empty cell or Y."
-}
-$isReversal = $reversalText -ceq 'Y'
+$movesetsByCaseId =
+    [Collections.Generic.Dictionary[string, object]]::new(
+        [StringComparer]::OrdinalIgnoreCase
+    )
+foreach ($moveset in $movesets) {
+    $caseId = [string]$moveset.case_id
+    if ($caseId -cnotmatch '^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$') {
+        throw "Moveset case ID '$caseId' is not a hyphen-separated alphanumeric identifier."
+    }
+    if ($movesetsByCaseId.ContainsKey($caseId)) {
+        throw "Duplicate moveset case ID: $caseId"
+    }
+    $characterText = [string]$moveset.character_id
+    if ($characterText -cnotmatch '^[0-9]+$') {
+        throw "Moveset case '$caseId' has an invalid decimal character ID."
+    }
+    $characterId = [uint32]$characterText
+    if ($characterId -lt 1 -or $characterId -gt 93) {
+        throw "Moveset case '$caseId' character ID must be between 1 and 93."
+    }
 
-$characterText = [string]$selected.id
-if ($characterText -cnotmatch '^[0-9]+$') {
-    throw "Moveset row $currentMovesetRow has an invalid decimal character ID."
+    $kind = Resolve-PracticeMovesetKind -CaseId $caseId
+    $supportText = [string]$moveset.support_id
+    $supportId = if ($supportText -ceq '') {
+        [uint32]0x25
+    }
+    else {
+        ConvertFrom-PracticeHexId `
+            -Value $supportText `
+            -Label "Moveset case '$caseId' support ID" `
+            -Maximum 0x25
+    }
+    $awakeningText = [string]$moveset.awakening_id
+    $awakeningId = if ($awakeningText -ceq '') {
+        [uint32]::MaxValue
+    }
+    else {
+        ConvertFrom-PracticeHexId `
+            -Value $awakeningText `
+            -Label "Moveset case '$caseId' awakening ID" `
+            -Maximum 0x89
+    }
+    $capturePolicy = [string]$moveset.capture_policy
+    if ($capturePolicy -cnotin @(
+        '',
+        'base',
+        'specials',
+        'base, specials',
+        'base, parent-specials'
+    )) {
+        throw "Moveset case '$caseId' has invalid capture_policy '$capturePolicy'."
+    }
+    if ($capturePolicy -ceq 'base, parent-specials' -and $kind -cne '2nd form') {
+        throw (
+            "Moveset case '$caseId' may use capture_policy " +
+            "'base, parent-specials' only with kind '2nd form'."
+        )
+    }
+    if ($kind -ceq '2nd form' -and
+        $capturePolicy -cne 'base, parent-specials') {
+        throw (
+            "Moveset case '$caseId' with kind '2nd form' must use " +
+            "capture_policy 'base, parent-specials'."
+        )
+    }
+
+    switch -CaseSensitive ($kind) {
+        { $_ -cin @('base', '2nd form') } {
+            if ($supportText -cne '' -or $awakeningText -cne '') {
+                throw "Moveset case '$caseId' has fields incompatible with kind '$kind'."
+            }
+        }
+        'awakening' {
+            if ($supportText -cne '' -or $awakeningText -ceq '') {
+                throw "Moveset case '$caseId' has fields incompatible with kind 'awakening'."
+            }
+        }
+        'half_hp' {
+            if ($supportText -cne '' -or $awakeningText -cne '') {
+                throw "Moveset case '$caseId' has fields incompatible with kind 'half_hp'."
+            }
+        }
+        { $_ -cin @('linked_uj', 'linked_jutsu') } {
+            if ($supportText -ceq '' -or $supportId -eq 0x25 -or
+                $awakeningText -cne '') {
+                throw "Moveset case '$caseId' has fields incompatible with kind '$kind'."
+            }
+        }
+    }
+
+    $movesetsByCaseId.Add($caseId, [pscustomobject]@{
+        CaseId = $caseId
+        Kind = $kind
+        CharacterId = $characterId
+        SupportId = [uint32]$supportId
+        AwakeningId = [uint32]$awakeningId
+    })
 }
-$character = [uint32]$characterText
-if ($character -lt 1 -or $character -gt 93) {
-    throw "Moveset row $currentMovesetRow character ID must be between 1 and 93."
+if (-not $movesetsByCaseId.ContainsKey($movesetCaseId)) {
+    throw "Unknown moveset case ID: $movesetCaseId"
 }
-$linkedJutsu = if (
-    [string]::IsNullOrWhiteSpace([string]$selected.linked_j_id)
-) {
-    $null
-}
-else {
-    ConvertFrom-PracticeHexId `
-        -Value ([string]$selected.linked_j_id) `
-        -Label "Moveset row $currentMovesetRow linked Jutsu ID" `
-        -Maximum 0x25
-}
-$linkedUj = if (
-    [string]::IsNullOrWhiteSpace([string]$selected.linked_uj_id)
-) {
-    $null
-}
-else {
-    ConvertFrom-PracticeHexId `
-        -Value ([string]$selected.linked_uj_id) `
-        -Label "Moveset row $currentMovesetRow linked UJ ID" `
-        -Maximum 0x25
-}
-if ($null -ne $linkedJutsu -and $null -ne $linkedUj) {
-    throw "Moveset row $currentMovesetRow may select only one linked support ID."
-}
-$support = if ($null -ne $linkedJutsu) {
-    [uint32]$linkedJutsu
-}
-elseif ($null -ne $linkedUj) {
-    [uint32]$linkedUj
-}
-else {
-    [uint32]0x25
-}
-$awakening = if ([string]::IsNullOrWhiteSpace([string]$selected.awakening_id)) {
-    [uint32]::MaxValue
-}
-else {
-    ConvertFrom-PracticeHexId `
-        -Value ([string]$selected.awakening_id) `
-        -Label "Moveset row $currentMovesetRow awakening ID" `
-        -Maximum 0x89
-}
+$selected = $movesetsByCaseId[$movesetCaseId]
+$movesetCaseId = [string]$selected.CaseId
+$character = [uint32]$selected.CharacterId
+$support = [uint32]$selected.SupportId
+$awakening = [uint32]$selected.AwakeningId
+$usesHalfHp = [string]$selected.Kind -ceq 'half_hp'
 $values = @($character, $support, $awakening)
 $usesGaaraMovesetAwakening = (
     $character -eq 0x3B -and $awakening -eq 0x3B
@@ -264,7 +317,7 @@ foreach ($requestedGame in $Games) {
                     ([uint32]$values[$index]).ToString('X8')
             )
         }
-        if ($isReversal) {
+        if ($usesHalfHp) {
             'patch=1,EE,{0},word,A0850001' -f $halfHpAddress
         }
         if ($usesGaaraMovesetAwakening) {
@@ -280,11 +333,11 @@ foreach ($requestedGame in $Games) {
 }
 
 [pscustomobject]@{
-    MovesetRow = $currentMovesetRow
+    MovesetCaseId = $movesetCaseId
     CharacterId = $character
     SupportId = $support
     AwakeningId = $awakening
-    Reversal = $isReversal
+    HalfHp = $usesHalfHp
     PnachByGame = $pnachByGame
     PnachLinesByGame = $pnachLinesByGame
     LaunchParameters = @{

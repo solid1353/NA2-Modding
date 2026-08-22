@@ -26,19 +26,20 @@ suites with independent arguments. The generated `movesets` and
 inclusive row range, such as `8` or `8-18`; omitting the argument selects every
 character row. Other current suites accept no arguments.
 
-`movesets` expands `@resources/movesets.tsv` over the fixed base and
+`movesets` expands
+`@repository/launch_profiles/practice/movesets.tsv` over the fixed base and
 specials recordings and publishes per-character base, unique awakening-mode,
-and specials grids. Select `movesets/base` or `movesets/specials` to update
-only that output family.
+and specials grids. Select `movesets/base` or `movesets/specials` to update only
+that output family.
 `characters/idle` replays every selected character, including second forms, and
 combines their idle screenshots into sequential fixed 3×2 pages. A ranged idle
 run expands to the complete affected pages so unselected cells are preserved.
 The top-level `memory_card` in `config.json` supplies the default card for every
 suite. Per-suite settings under `suite_overrides` can replace that card and/or
 attach a launch profile; `practice` uses the same generated configuration as
-`na228 <game> -l practice 2`. Memory-card values use the shared launcher's path
-rules, and snapshot replay always discards memory-card writes. Defaults and
-overrides apply equally to reference and current replays.
+`na228 <game> -l practice naruto`. Memory-card values use the shared
+launcher's path rules, and snapshot replay always discards memory-card writes.
+Defaults and overrides apply equally to reference and current replays.
 
 After a normal E2E run publishes successfully, it compares only the selected
 capture paths with `captures/` Git `HEAD`. The console reports `UNCHANGED` when
@@ -88,7 +89,7 @@ diff branches share a bounded task queue; a failed task cancels its active
 siblings immediately. NUN5 capture overlaps the normal pipeline and its
 artifact publication uses the same bounded scheduling across suites.
 
-Each generated character lane batch-resolves its Practice rows, replays all
+Each generated character lane batch-resolves its Practice cases, replays all
 required cases concurrently, and creates each grid as soon as its captures
 finish. Every PCSX2
 replay in one command—ordinary and generated suites, NUN5 and NA228, and normal,

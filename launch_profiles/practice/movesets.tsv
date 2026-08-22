@@ -1,0 +1,230 @@
+case_id	character_id	awakening_id	support_id	capture_policy
+naruto	57			base, specials
+naruto-rev	57			specials
+naruto-awk-1	57	0x39		
+naruto-luj-1	57		0x01	specials
+naruto-lj-1	57		0x08	specials
+naruto-lj-2	57		0x20	specials
+naruto-2nd	73			base, parent-specials
+sakura	58			base, specials
+sakura-rev	58			specials
+sakura-awk-1	58	0x3A		specials
+sakura-luj-1	58		0x00	specials
+sakura-luj-2	58		0x1B	specials
+kakashi	70			base, specials
+kakashi-rev	70			specials
+kakashi-awk-1	70	0x49		specials
+sai	92			base, specials
+sai-rev	92			specials
+sai-awk-1	92	0x61		specials
+sai-awk-2	92	0x62		
+neji	65			base, specials
+neji-rev	65			specials
+neji-awk-1	65	0x42		specials
+lee	67			base, specials
+lee-rev	67			specials
+lee-awk-1	67	0x44		base, specials
+lee-awk-2	67	0x45		
+guy	69			base, specials
+guy-rev	69			specials
+guy-awk-1	69	0x47		base, specials
+guy-awk-2	69	0x48		base, specials
+tenten	66			base, specials
+tenten-rev	66			specials
+tenten-awk-1	66	0x43		specials
+choji	81			base, specials
+choji-rev	81			specials
+choji-awk-1	81	0x54		base, specials
+shikamaru	68			base, specials
+shikamaru-rev	68			specials
+shikamaru-awk-1	68	0x46		base, specials
+shikamaru-lj-1	68		0x13	specials
+ino	82			base, specials
+ino-rev	82			specials
+ino-awk-1	82	0x55		specials
+asuma	86			base, specials
+asuma-rev	86			specials
+asuma-awk-1	86	0x5A		specials
+shino	79			base, specials
+shino-rev	79			specials
+shino-awk-1	79	0x51		specials
+kiba	78			base, specials
+kiba-rev	78			specials
+kiba-awk-1	78	0x50		base, specials
+hinata	80			base, specials
+hinata-rev	80			specials
+hinata-awk-1	80	0x52		specials
+hinata-awk-2	80	0x53		base, specials
+gaara	59			base, specials
+gaara-rev	59			specials
+gaara-awk-1	59	0x3B		base, specials
+gaara-awk-2	59	0x3C		
+kurenai	87			base, specials
+kurenai-rev	87			specials
+kurenai-awk-1	87	0x5B		specials
+kurenai-awk-2	87	0x5C		
+kankuro	60			base, specials
+kankuro-rev	60			specials
+kankuro-awk-1	60	0x3D		specials
+temari	61			base, specials
+temari-rev	61			specials
+temari-awk-1	61	0x3E		specials
+chiyo-taijutsu	77			base, specials
+chiyo-taijutsu-rev	77			specials
+chiyo-taijutsu-awk-1	77	0x4D		
+chiyo-taijutsu-awk-2	77	0x4E		base, specials
+kisame	72			base, specials
+kisame-rev	72			specials
+kisame-awk-1	72	0x4B		specials
+kisame-luj-1	72		0x0D	specials
+itachi	71			base, specials
+itachi-rev	71			specials
+itachi-awk-1	71	0x4A		specials
+itachi-luj-1	71		0x0E	specials
+deidara	64			base, specials
+deidara-rev	64			specials
+deidara-awk-1	64	0x41		base, specials
+deidara-luj-1	64		0x1E	specials
+chiyo	62			base, specials
+chiyo-rev	62			specials
+chiyo-awk-1	62	0x3F		specials
+chiyo-luj-1	62		0x01	specials
+sasori	63			base, specials
+sasori-rev	63			specials
+sasori-luj-1	63		0x0B	specials
+sasori-2nd	75			base, parent-specials
+hiruko	76			base, specials
+hiruko-rev	76			specials
+hiruko-awk-1	76	0x4C		specials
+tsunade	84			base, specials
+tsunade-rev	84			specials
+tsunade-awk-1	84	0x22		
+tsunade-awk-2	84	0x23		
+tsunade-awk-3	84	0x57		base, specials
+tsunade-lj-1	84		0x18	specials
+jiraiya	83			base, specials
+jiraiya-rev	83			specials
+jiraiya-awk-1	83	0x56		specials
+shizune	85			base, specials
+shizune-rev	85			specials
+shizune-awk-1	85	0x58		specials
+shizune-awk-2	85	0x59		
+orochimaru	89			base, specials
+orochimaru-rev	89			specials
+orochimaru-awk-1	89	0x5D		specials
+orochimaru-luj-1	89		0x21	specials
+yamato	91			base, specials
+yamato-rev	91			specials
+yamato-awk-1	91	0x5F		specials
+yamato-awk-2	91	0x60		
+kabuto	90			base, specials
+kabuto-rev	90			specials
+kabuto-awk-1	90	0x5E		specials
+sasuke	93			base, specials
+sasuke-rev	93			specials
+sasuke-awk-1	93	0x63		specials
+sasuke-awk-2	93	0x64		
+sasuke-luj-1	93		0x1C	specials
+sasuke-lj-1	93		0x00	specials
+bNaruto	1			base, specials
+bNaruto-rev	1			specials
+bNaruto-awk-1	1	0x0E		
+bNaruto-2nd	47			base, parent-specials
+bSasuke	2			base, specials
+bSasuke-rev	2			specials
+bSasuke-awk-1	2	0x0F		
+bSasuke-2nd	48			base, parent-specials
+bSakura	7			base, specials
+bSakura-rev	7			specials
+bSakura-awk-1	7	0x13		specials
+bNeji	6			base, specials
+bNeji-rev	6			specials
+bNeji-awk-1	6	0x12		specials
+bLee	3			base, specials
+bLee-rev	3			specials
+bLee-awk-1	3	0x10		
+bLee-2nd	49			base, parent-specials
+bTenten	13			base, specials
+bTenten-rev	13			specials
+bTenten-awk-1	13	0x19		specials
+bShikamaru	5			base, specials
+bShikamaru-rev	5			specials
+bShikamaru-awk-1	5	0x11		specials
+bChoji	14			base, specials
+bChoji-rev	14			specials
+bChoji-awk-1	14	0x1A		specials
+bChoji-2nd	51			base, parent-specials
+bKiba	16			base, specials
+bKiba-rev	16			specials
+bKiba-awk-1	16	0x1C		specials
+bIno	15			base, specials
+bIno-rev	15			specials
+bIno-awk-1	15	0x1B		specials
+bShino	17			base, specials
+bShino-rev	17			specials
+bShino-awk-1	17	0x1D		specials
+bHinata	12			base, specials
+bHinata-rev	12			specials
+bHinata-awk-1	12	0x17		specials
+bHinata-awk-2	12	0x18		
+hanabi	41			base, specials
+hanabi-rev	41			specials
+hanabi-awk-1	41	0x30		specials
+hanabi-awk-2	41	0x31		
+konohamaru	40			base, specials
+konohamaru-rev	40			specials
+konohamaru-awk-1	40	0x2E		
+konohamaru-awk-2	40	0x2F		specials
+anko	46			base, specials
+anko-rev	46			specials
+anko-awk-1	46	0x37		specials
+anko-awk-2	46	0x38		
+hashirama	42			base, specials
+hashirama-rev	42			specials
+hashirama-awk-1	42	0x32		specials
+tobirama	43			base, specials
+tobirama-rev	43			specials
+tobirama-awk-1	43	0x33		specials
+tobirama-awk-2	43	0x34		
+minato	39			base, specials
+minato-rev	39			specials
+minato-awk-1	39	0x2C		specials
+minato-awk-2	39	0x2D		
+hiruzen	22			base, specials
+hiruzen-rev	22			specials
+hiruzen-awk-1	22	0x21		specials
+bGaara	4			base, specials
+bGaara-rev	4			specials
+bGaara-2nd	50			base, parent-specials
+bTemari	19			base, specials
+bTemari-rev	19			specials
+bTemari-awk-1	19	0x1F		specials
+bKankuro	18			base, specials
+bKankuro-rev	18			specials
+bKankuro-awk-1	18	0x1E		specials
+kimimaro	38			base, specials
+kimimaro-rev	38			specials
+kimimaro-awk-1	38	0x2B		
+kimimaro-2nd	56			base, parent-specials
+sakon	37			base, specials
+sakon-rev	37			specials
+sakon-awk-1	37	0x2A		
+sakon-2nd	55			base, parent-specials
+tayuya	36			base, specials
+tayuya-rev	36			specials
+tayuya-awk-1	36	0x29		
+tayuya-2nd	54			base, parent-specials
+kidomaru	35			base, specials
+kidomaru-rev	35			specials
+kidomaru-awk-1	35	0x28		
+kidomaru-2nd	53			base, parent-specials
+jirobo	34			base, specials
+jirobo-rev	34			specials
+jirobo-awk-1	34	0x27		
+jirobo-2nd	52			base, parent-specials
+zabuza	11			base, specials
+zabuza-rev	11			specials
+zabuza-awk-1	11	0x16		specials
+haku	10			base, specials
+haku-rev	10			specials
+haku-awk-1	10	0x15		specials

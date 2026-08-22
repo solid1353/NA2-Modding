@@ -166,7 +166,7 @@ function Get-VisualRegressionGeneratedSuiteScript {
 function Get-VisualRegressionPracticeConfiguration {
     param(
         [Parameter(Mandatory)][string]$Repository,
-        [Parameter(Mandatory)][int[]]$MovesetRow,
+        [Parameter(Mandatory)][string[]]$MovesetCaseId,
         [Parameter(Mandatory)][string[]]$Game
     )
 
@@ -174,10 +174,10 @@ function Get-VisualRegressionPracticeConfiguration {
     $paths = Get-Na2Paths -ManifestPath (Join-Path $Repository 'paths.json')
     . (Join-Path ([string]$paths.scripts) 'na228\launch_profile.ps1')
     $profile = Resolve-Na2LaunchProfile -Name 'practice' -Paths $paths
-    foreach ($row in $MovesetRow) {
+    foreach ($caseId in $MovesetCaseId) {
         Invoke-Na2LaunchProfile `
             -Profile $profile `
-            -Arguments @([string]$row) `
+            -Arguments @($caseId) `
             -Games $Game `
             -ProjectRoot $Repository
     }

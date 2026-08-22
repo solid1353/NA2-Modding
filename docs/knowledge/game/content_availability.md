@@ -100,6 +100,51 @@ The jutsu wrapper first accepts only pairs allowed by `FUN_00307ed0` or
 jutsu bit. The hook at `0x001F729C` is after both metadata gates, so overriding
 that call cannot create nonexistent character/jutsu pairs.
 
+### Auxiliary Jutsu selectors `0x34` and `0x35`
+
+The BTL Jutsu Select list does not enumerate every populated resident selector.
+BTL export `FUN_006bc400` advances through selector IDs `2..0xBB` and admits a
+candidate only when resident `FUN_001f7210` accepts the selected-character and
+selector pair; `FUN_006bc610` uses the same predicate when counting the row's
+available choices. This compatibility gate runs before the saved availability
+bit described above.
+
+Boot initialization populates two adjacent selector-table entries from the
+auxiliary metadata object at `0x0059C7A0`:
+
+| Mapping | Selector | Table entry | Display record | Record `+0x0C` | CCS resource |
+| --- | ---: | ---: | ---: | ---: | --- |
+| T2210 `Ninja Hound Summoning` | `0x34` | `0x005A24C0` | `0x0059C684` (array index 1) | `0x0034001A` | `2kkvcha1.ccs` |
+| T2211 `Demon Wind Bomb` | `0x35` | `0x005A24C8` | `0x0059C72C` (array index 3) | `0x0035001A` | `2nrocha1.ccs` |
+
+Stores at `0x005D88E8` and `0x005D88F4` write those display-record pointers as
+auxiliary action base `+0x54` and `+0xFC`. In each record, the low halfword at
+`+0x0C` is direct owner `0x1A`; the high halfword is the selector ID.
+
+T2210 has an explicit cross-character compatibility exception. Selector
+`0x34` appears in the special-selector list at `0x005C0C70`, and the exception
+row at `0x005C1440` is `0x34, 0x46, -1`, admitting character `0x46` (Kakashi).
+Fresh-profile initialization separately adds bit `0x34` to character `0x46`'s
+availability record. The user confirmed the resulting Jutsu Select entry as
+Kakashi's `Ninja Hound Summoning`.
+
+T2211 has no corresponding exception: selector `0x35` is absent from the
+special-selector list. Its only metadata-compatible character is direct owner
+`0x1A`, which has no entry in the canonical 74-character playable reference.
+Consequently, ordinary Jutsu Select cannot admit `Demon Wind Bomb`, even when
+all saved availability bits are forced available; the override is downstream
+of this failed compatibility gate.
+
+The selector nevertheless has complete generic consumers. Jutsu Select row
+compositor `FUN_006bcb30` resolves a selected title through `FUN_00885f00` and
+resident accessor `0x00307C80`. Resident `FUN_00307c60` returns the paired CCS
+resource. During fighter initialization, `FUN_00219620` decodes the selector
+through `FUN_00307eb0`; even selector `0x34` copies auxiliary action records
+0/1, while odd selector `0x35` copies records 2/3 into the fighter's live Jutsu
+action slots. T2211 is therefore implemented and consumable if selector
+`0x35` is supplied, but the clean Jutsu Select candidate producer never
+supplies it for a playable character.
+
 `FUN_001f7780` passes `profile + 0xDFC` and the caller's progress ID to
 `FUN_001e3d40`, which loads the 32-bit word at `base + 0xE60 + id * 4`.
 Resident selector `FUN_0038bac0` and the Practice settings consumers in

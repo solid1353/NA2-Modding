@@ -359,15 +359,15 @@ param(
     [string[]]$Games,
     [string]$ProjectRoot
 )
-$row = [int]$Arguments[0]
+$caseId = [string]$Arguments[0]
 $pnachByGame = @{}
 $pnachLinesByGame = @{}
 foreach ($game in $Games) {
-    $pnachByGame[$game] = "practice-$row.pnach"
-    $pnachLinesByGame[$game] = @("practice-row=$row")
+    $pnachByGame[$game] = "practice-$caseId.pnach"
+    $pnachLinesByGame[$game] = @("practice-case=$caseId")
 }
 [pscustomobject]@{
-    MovesetRow = $row
+    MovesetCaseId = $caseId
     PnachByGame = $pnachByGame
     PnachLinesByGame = $pnachLinesByGame
     LaunchParameters = @{
@@ -476,14 +476,14 @@ param(
     Assert-E2eHelperTest `
         -Condition (
             $practiceContext.LaunchProfile.Name -ceq 'practice' -and
-            ($practiceContext.LaunchProfile.Arguments -join ',') -ceq '2' -and
+            ($practiceContext.LaunchProfile.Arguments -join ',') -ceq 'naruto' -and
             $practiceContext.MemoryCard -ceq 'templates/2_formatted.ps2' -and
             $null -eq $nestedPracticeContext.LaunchProfile -and
             $nestedPracticeContext.MemoryCard -ceq 'templates/2_formatted.ps2' -and
             $practiceInvocation.memory_card -ceq 'templates/2_formatted.ps2' -and
             $practiceInvocation.read_only_settings -and
-            $practiceInvocation.pnach -ceq 'practice-2.pnach' -and
-            ($practiceInvocation.pnach_lines -join ',') -ceq 'practice-row=2' -and
+            $practiceInvocation.pnach -ceq 'practice-naruto.pnach' -and
+            ($practiceInvocation.pnach_lines -join ',') -ceq 'practice-case=naruto' -and
             $ninjaSongContext.MemoryCard -ceq 'templates/2_formatted.ps2' -and
             $null -eq $ninjaSongContext.LaunchProfile -and
             $ninjaSongInvocation.memory_card -ceq 'templates/2_formatted.ps2'
@@ -604,6 +604,9 @@ param(
     $generatedRunScripts = Join-Path $generatedRunRoot 'scripts'
     $generatedRunCapture = Join-Path $generatedRunRoot 'captures\movesets\screenshots'
     $generatedRunResources = Join-Path $generatedRunRepository 'resources'
+    $generatedRunPracticeMovesets = Join-Path `
+        $generatedRunRepository `
+        'launch_profiles\practice\movesets.tsv'
     $generatedRunRecordings = Join-Path $generatedRunRepository 'pcsx2_files\input_recordings'
     $generatedRunProjectScripts = Join-Path $generatedRunRepository 'scripts'
     $generatedRunLibrary = Join-Path $generatedRunProjectScripts 'lib'
@@ -614,6 +617,7 @@ param(
         $generatedRunScripts, `
         $generatedRunCapture, `
         $generatedRunResources, `
+        (Split-Path -Parent $generatedRunPracticeMovesets), `
         (Join-Path $generatedRunRecordings 'e2e\movesets'), `
         $generatedRunLibrary, `
         $generatedRunComparatorRoot `
@@ -635,7 +639,7 @@ param(
         "character`tcharacter_id`nNaruto`t1`n"
     )
     [IO.File]::WriteAllText(
-        (Join-Path $generatedRunResources 'movesets.tsv'),
+        $generatedRunPracticeMovesets,
         "character`tid`nNaruto`t1`n"
     )
     [IO.File]::WriteAllText(
@@ -654,6 +658,9 @@ function Get-Na2Paths {
         scripts = '$($generatedRunProjectScripts.Replace("'", "''"))'
         resources = '$($generatedRunResources.Replace("'", "''"))'
         pcsx2_input_recordings = '$($generatedRunRecordings.Replace("'", "''"))'
+        files = [pscustomobject]@{
+            practice_movesets = '$($generatedRunPracticeMovesets.Replace("'", "''"))'
+        }
     }
 }
 "@
@@ -1068,7 +1075,7 @@ $grids = Join-Path $OutputRoot 'screenshots'
     [void](New-Item -ItemType Directory -Path $activeVariantRoot -Force)
     [IO.File]::WriteAllText(
         (Join-Path $activeVariantRoot 'config.json'),
-        @'
+@'
 {
   "build_variants": [
     {
@@ -1642,12 +1649,16 @@ $grids = Join-Path $OutputRoot 'screenshots'
     $fakeInputRecordingsRoot = Join-Path $fakeRepository 'pcsx2_files\input_recordings'
     $fakeRecordings = Join-Path $fakeInputRecordingsRoot 'e2e'
     $fakeResources = Join-Path $fakeRepository 'resources'
+    $fakePracticeMovesets = Join-Path `
+        $fakeRepository `
+        'launch_profiles\practice\movesets.tsv'
     [void](New-Item -ItemType Directory -Path `
         $fakeScripts, `
         (Join-Path $fakeRepository 'e2e\captures'), `
         (Join-Path $fakeProjectScripts 'lib'), `
         $fakeRecordings, `
-        $fakeResources `
+        $fakeResources, `
+        (Split-Path -Parent $fakePracticeMovesets) `
         -Force)
     Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\suite.ps1') `
         -Destination (Join-Path $fakeScripts 'suite.ps1')
@@ -1669,6 +1680,9 @@ function Get-Na2Paths {
         scripts = '$($fakeProjectScripts.Replace("'", "''"))'
         pcsx2_input_recordings = '$($fakeInputRecordingsRoot.Replace("'", "''"))'
         resources = '$($fakeResources.Replace("'", "''"))'
+        files = [pscustomobject]@{
+            practice_movesets = '$($fakePracticeMovesets.Replace("'", "''"))'
+        }
     }
 }
 "@
@@ -1968,7 +1982,7 @@ foreach ($suiteName in $suites) {
         "character`tid`nNaruto`t1`n"
     )
     [IO.File]::WriteAllText(
-        (Join-Path $fakeResources 'movesets.tsv'),
+        $fakePracticeMovesets,
         "character`tid`nNaruto`t1`n"
     )
     [IO.File]::WriteAllText($fakeMovesetInput, 'generated suite input')

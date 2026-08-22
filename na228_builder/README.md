@@ -59,18 +59,27 @@ integrated catalog data.
   support IDs associated with each character by the corresponding BTL tables;
   empty cells mean no relationship of that type. These metadata columns are
   not builder catalog inputs. The file is not an override file.
-- `@resources/movesets.tsv` contains ordered moveset-test metadata. The physical
-  TSV row is its launcher selector: the header is row 1 and the first moveset is
-  row 2. Within each base-form character block, the base row comes first,
-  followed by awakening rows, the reversal row, linked-UJ rows, and linked-J
-  rows. The reversal row copies the base inputs and sets `reversal` to `Y`;
-  second forms have no reversal row. `character` is descriptive
-  metadata; `id`, `linked_j_id`, `linked_uj_id`, and `awakening_id`
-  contain the runtime inputs. A support row populates exactly one linked-support
-  column. Empty linked-support columns mean No Support, and an empty awakening
-  cell means no starting awakening. A `Y` reversal cell selects half starting
-  HP through the Practice PNACH injection. `uniqueness` is metadata.
-  The file is not a builder catalog input.
+- `@repository/launch_profiles/practice/movesets.tsv` contains ordered
+  moveset-test metadata. `case_id` is the stable Practice launcher selector;
+  input lookup is case-insensitive and table spelling is canonical. Physical
+  row numbers are not an interface. Each character block starts with its plain
+  primary ID or its `-2nd` case. A primary form's `-rev` case follows the plain
+  ID immediately, then any `-awk-N`, `-luj-N`, and `-lj-N` cases.
+  Primary IDs use the short character stem, Classic IDs use `bName`, and second
+  forms append `-2nd`. Other cases append `-rev`, `-awk-N`, `-luj-N`, or
+  `-lj-N`; numbered slots are append-only. Runtime IDs belong only in their
+  dedicated columns.
+  `character_id`, `awakening_id`, and `support_id` are runtime inputs. E2E
+  resolves each display name from `@resources/character_data.tsv` by
+  `character_id`. Empty `awakening_id` and `support_id` cells mean no starting
+  awakening and No Support. Nonempty cells record hexadecimal awakening or
+  support IDs.
+  A `-rev` suffix selects the native Half starting-HP mode. Every case has an
+  authoritative E2E `capture_policy`: an empty cell means no capture; populated
+  values are `base`, `specials`, `base, specials`, or
+  `base, parent-specials`. The last value belongs to `-2nd`: it captures
+  that form in its own Base grid and the preceding primary form's Specials
+  grid. The file is not a builder catalog input.
 - `catalog/targets.tsv` is the single target registry used by
   edits and injection hooks.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.

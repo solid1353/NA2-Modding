@@ -8,18 +8,22 @@ binary edits, runtime hooks, and payload declarations are selected by
 
 Practice bootstrap is runtime-only and has no builder catalog node, builder
 configuration field, resident fragment, or ISO rebuild input. The launch
-profile invocation is `na228 <game> [game] -l practice <row>`; `practice`
-selects a physical row from `@resources/movesets.tsv`, starting at row 2 after
-the header. It works with NUN5,
+profile invocation is `na228 <game> [game] -l practice <case-id>`; `practice`
+selects a stable `case_id` case-insensitively from
+`@repository/launch_profiles/practice/movesets.tsv`. It works with NUN5,
 NA2.28 build selectors, build-and-launch tokens, and input playback. It reads
-only that row; it neither reads
+only that case; it neither reads
 `character_data.tsv` nor expands character, support, or awakening combinations.
-Exactly one of `linked_j_id` or `linked_uj_id` may select a support; when
-both cells are empty, the profile selects No Support `0x25`. An empty
-`awakening_id` cell writes the `FFFFFFFF` no-effect sentinel. A `Y` in the
-`reversal` column adds a fourth, game-specific inline PNACH line that selects
-the native Half starting-HP mode; an empty cell leaves starting HP unchanged.
-The `uniqueness` column is metadata.
+The table's spelling is canonical and is returned regardless of input casing.
+Empty `support_id` and `awakening_id` cells select No Support `0x25` and the
+`FFFFFFFF` no-effect awakening sentinel. A nonempty hexadecimal support or
+awakening ID overrides its default. A `-rev` case adds a fourth, game-specific
+inline PNACH line that selects the native Half starting-HP mode; all other cases
+retain normal starting HP. Every case has an authoritative E2E
+`capture_policy`: an empty cell means no capture; populated values are `base`,
+`specials`, `base, specials`, or `base, parent-specials`. The last value records
+a second form in its own Base grid and appends it to the preceding primary
+form's Specials grid. ID suffixes do not implicitly select a capture family.
 
 `@repository/launch_profiles/practice/NA228.pnach` and
 `@repository/launch_profiles/practice/NUN5.pnach` contain the
@@ -35,7 +39,7 @@ The bootstrap writes both current and match-start Player 1 fields, fixes Player
 2 to Naruto with Sakura support and the Practice stage to `6`, skips Character
 Select and Practice Settings, and retains the native battle-loading states.
 Its battle wrapper first runs the native update, then applies the requested
-awakening once after Player 1 exists. Every non-`none` awakening ID reaches the
+awakening once after Player 1 exists. Every nonempty awakening ID reaches the
 native awakening function's exact-effect transition, so the requested effect,
 awakened controller state, transition actions, and sound are applied together.
 Deidara `0x41` retains the complete native entry. Taijutsu Chiyo `0x4E` first
@@ -67,9 +71,9 @@ binary and savestate comparison are complete; patched-build runtime validation
 remains pending. The reverse-engineering record is in
 [`../knowledge/gameplay/battle.md`](../knowledge/gameplay/battle.md).
 
-Practice reversal rows override the initializer process-locally with
+Practice `-rev` cases override the initializer process-locally with
 `0x001E7AE8 = 0xA0850001` for NA228 or
-`0x001ED8D8 = 0xA0850001` for NUN5. Ordinary rows do not add either write.
+`0x001ED8D8 = 0xA0850001` for NUN5. Other cases do not add either write.
 
 ## Select No Support on Character Select
 

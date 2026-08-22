@@ -46,6 +46,9 @@
 
 - Never edit binaries manually. All binary changes go through reproducible
   scripts and guarded canonical data.
+- Prefer one injection over multiple binary edits when they implement one
+  behavior and a stable guarded hook can express it clearly in C or assembly.
+  Keep isolated constant or instruction replacements as direct edits.
 - Preserve file sizes unless the user explicitly approves expansion of the
   affected DATA.CVM, ELF, BIN, AFS, CCS, or ISO structure.
 - Prefer verified canonical NUN5 data/bytes when suitable. When donor data is

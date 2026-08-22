@@ -124,6 +124,13 @@ UI elements, and similar visible game behavior.
 3. When E2E is selected, follow the
    [E2E validation workflow](../workflows/e2e_validation.md).
 
+## Test failures
+
+- A failing maintained test discovered during work becomes part of that work.
+  Fix it before completion regardless of its cause. If conflicting concurrent
+  ownership prevents a safe fix, report and complete. Unrelated failing tests
+  are not blockers.
+
 ## Hard and soft validation
 
 - A validation is a hard gate only when failure makes the primary result

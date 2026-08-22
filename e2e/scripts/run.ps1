@@ -133,11 +133,7 @@ $resumeKey = $resumeRequest | ConvertTo-Json -Compress -Depth 6
 $transaction = New-VisualRegressionTransaction `
     -Root $root `
     -Prefix 'run' `
-    -ResumeKey $resumeKey `
-    -LegacySuite $(if (@($suiteRequests | Where-Object { $_.Arguments.Count -gt 0 }).Count -gt 0) {
-        $null
-    } else { $suites }) `
-    -LegacyShifted $Shifted.IsPresent
+    -ResumeKey $resumeKey
 if ([string]::IsNullOrWhiteSpace($ConcurrencyPoolRoot)) {
     $ConcurrencyPoolRoot = Join-Path $transaction 'concurrency'
 }

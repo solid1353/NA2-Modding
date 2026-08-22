@@ -1413,23 +1413,6 @@ $grids = Join-Path $OutputRoot 'screenshots'
         ) `
         -Message 'A different request reused or discarded an incompatible transaction.'
 
-    $legacyRun = Join-Path $transactions 'run-legacy-resume'
-    $legacySuite = Join-Path $legacyRun 'jobs\normal\suites\legacy\suite'
-    [void](New-Item -ItemType Directory -Path $legacySuite -Force)
-    [IO.File]::WriteAllText((Join-Path $legacySuite 'complete.json'), '{}')
-    Set-VisualRegressionTransactionRetained -Transaction $legacyRun -Root $testRoot
-    $adoptedLegacyRun = New-VisualRegressionTransaction `
-        -Root $testRoot `
-        -Prefix 'run' `
-        -ResumeKey '{"legacy":true}' `
-        -LegacySuite @('legacy/suite')
-    Assert-E2eHelperTest `
-        -Condition (
-            $adoptedLegacyRun -ceq $legacyRun -and
-            (Test-VisualRegressionTransactionResumed -Transaction $adoptedLegacyRun)
-        ) `
-        -Message 'A compatible pre-resume E2E run was not adopted.'
-
     $attempt = Move-VisualRegressionTransactionItemsToAttempt `
         -Transaction $resumedTransaction `
         -RelativePath @('publish') `

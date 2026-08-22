@@ -1151,30 +1151,6 @@ function Get-VisualRegressionScreenshotName {
     return '{0:D3}_{1}_{2}.png' -f $Slot, $definition.Order, $definition.Label
 }
 
-function New-VisualRegressionTierStage {
-    param(
-        [Parameter(Mandatory)][string]$ScreenshotDirectory,
-        [Parameter(Mandatory)][string]$StageDirectory,
-        [Parameter(Mandatory)][string]$Kind
-    )
-
-    $definition = Get-VisualRegressionScreenshotDefinition -Kind $Kind
-    [void](New-Item -ItemType Directory -Path $StageDirectory -Force)
-    if (-not (Test-Path -LiteralPath $ScreenshotDirectory -PathType Container)) {
-        return
-    }
-    $suffix = "_$($definition.Order)_$($definition.Label)"
-    foreach ($file in Get-ChildItem -LiteralPath $ScreenshotDirectory -Filter "*$suffix.png" -File) {
-        if ($file.BaseName -notmatch "^(\d+)$([regex]::Escape($suffix))$") {
-            throw "Invalid canonical screenshot name: $($file.FullName)"
-        }
-        $slot = [int]$Matches[1]
-        Copy-Item -LiteralPath $file.FullName -Destination (
-            Join-Path $StageDirectory ('{0:D4}.png' -f $slot)
-        )
-    }
-}
-
 function New-VisualRegressionScreenshotInputStage {
     param(
         [Parameter(Mandatory)][string]$ReferenceDirectory,
@@ -1317,21 +1293,6 @@ function New-VisualRegressionAggregateLinkStage {
                 throw "Cannot hardlink aggregate view '$target' to '$($file.FullName)': $($_.Exception.Message)"
             }
         }
-    }
-}
-
-function New-VisualRegressionGridStage {
-    param(
-        [Parameter(Mandatory)][string]$ReportDirectory,
-        [Parameter(Mandatory)][string]$GridDirectory,
-        [Parameter(Mandatory)][string]$OutputDirectory
-    )
-
-    [void](New-Item -ItemType Directory -Path $OutputDirectory -Force)
-    $sourceDirectory = Join-Path $ReportDirectory $GridDirectory
-    if (Test-Path -LiteralPath $sourceDirectory -PathType Container) {
-        Get-ChildItem -LiteralPath $sourceDirectory -Filter '*.png' -File |
-            Copy-Item -Destination $OutputDirectory
     }
 }
 
@@ -1526,32 +1487,6 @@ function Set-VisualRegressionTransactionRequest {
     }
 }
 
-function Test-VisualRegressionLegacyRunTransaction {
-    param(
-        [Parameter(Mandatory)][string]$Transaction,
-        [Parameter(Mandatory)][string[]]$Suite,
-        [Parameter(Mandatory)][bool]$Shifted
-    )
-
-    $suiteRoot = Join-Path $Transaction 'jobs\normal\suites'
-    if (-not (Test-Path -LiteralPath $suiteRoot -PathType Container)) {
-        return $false
-    }
-    $capturedSuites = @(
-        Get-ChildItem -LiteralPath $suiteRoot -Filter 'complete.json' -File -Recurse |
-            ForEach-Object {
-                [IO.Path]::GetRelativePath($suiteRoot, $_.DirectoryName).Replace('\', '/')
-            } |
-            Sort-Object -Unique
-    )
-    $requestedSuites = @($Suite | Sort-Object -Unique)
-    if (($capturedSuites -join "`n") -cne ($requestedSuites -join "`n")) {
-        return $false
-    }
-    $hasShifted = Test-Path -LiteralPath (Join-Path $Transaction 'jobs\shifted') -PathType Container
-    return $hasShifted -eq $Shifted
-}
-
 function Test-VisualRegressionTransactionResumed {
     param([Parameter(Mandatory)][string]$Transaction)
 
@@ -1618,9 +1553,7 @@ function New-VisualRegressionTransaction {
     param(
         [Parameter(Mandatory)][string]$Root,
         [Parameter(Mandatory)][string]$Prefix,
-        [string]$ResumeKey,
-        [string[]]$LegacySuite,
-        [bool]$LegacyShifted = $false
+        [string]$ResumeKey
     )
 
     $transactions = [IO.Path]::GetFullPath((Join-Path $Root '.transactions'))
@@ -1661,31 +1594,21 @@ function New-VisualRegressionTransaction {
                     continue
                 }
                 $requestPath = Join-Path $candidate.FullName 'request.json'
-                $request = if (Test-Path -LiteralPath $requestPath -PathType Leaf) {
-                    try { Get-Content -Raw -LiteralPath $requestPath | ConvertFrom-Json }
-                    catch { $null }
-                }
-                else { $null }
-                $matches = $null -ne $request -and
-                    [string]$request.resume_key -ceq $ResumeKey
-                if (-not $matches -and $null -eq $request -and
-                    $Prefix -ceq 'run' -and $null -ne $LegacySuite) {
-                    $matches = Test-VisualRegressionLegacyRunTransaction `
-                        -Transaction $candidate.FullName `
-                        -Suite $LegacySuite `
-                        -Shifted $LegacyShifted
-                }
-                if (-not $matches) {
+                if (-not (Test-Path -LiteralPath $requestPath -PathType Leaf)) {
                     continue
                 }
-                $resumeCount = if ($null -ne $request) {
-                    [int]$request.resume_count + 1
+                try {
+                    $request = Get-Content -Raw -LiteralPath $requestPath |
+                        ConvertFrom-Json
                 }
-                else { 1 }
-                $createdUtc = if ($null -ne $request) {
-                    [string]$request.created_utc
+                catch {
+                    continue
                 }
-                else { $null }
+                if ([string]$request.resume_key -cne $ResumeKey) {
+                    continue
+                }
+                $resumeCount = [int]$request.resume_count + 1
+                $createdUtc = [string]$request.created_utc
                 Set-VisualRegressionTransactionOwner -Transaction $candidate.FullName
                 Set-VisualRegressionTransactionRequest `
                     -Transaction $candidate.FullName `
@@ -1971,31 +1894,6 @@ function Get-CommonSlots {
         return [int[]]@()
     }
     [int[]]@($common | Sort-Object)
-}
-
-function New-VisualRegressionReport {
-    param(
-        [Parameter(Mandatory)][string]$Suite,
-        [Parameter(Mandatory)][string]$CurrentDirectory,
-        [Parameter(Mandatory)][string]$OutputRoot,
-        [Parameter(Mandatory)][string]$ReferenceDirectory,
-        [ValidateSet('All', 'Pair', 'Blend', 'Diff')][string]$Kind = 'All'
-    )
-
-    $context = Get-VisualRegressionContext -Suite $Suite
-    $slots = @(Get-CommonSlots -Directories @($ReferenceDirectory, $CurrentDirectory))
-    if ($slots.Count -eq 0) {
-        return
-    }
-    [void](New-Item -ItemType Directory -Path $OutputRoot -Force)
-    & $context.Comparator `
-        -ReferenceDirectory $ReferenceDirectory `
-        -CurrentDirectory $CurrentDirectory `
-        -OutputDirectory $OutputRoot `
-        -Kind $Kind
-    if ($LASTEXITCODE -ne 0) {
-        throw "Reference/current comparison failed with exit code $LASTEXITCODE."
-    }
 }
 
 function Compare-VisualRegressionVariants {

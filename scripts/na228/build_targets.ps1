@@ -114,21 +114,6 @@ function Get-Na2BuildTargetRegistry {
     return $targets
 }
 
-function Get-Na2BuildTarget {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)][string]$Name,
-        [Parameter(Mandatory)][psobject]$Paths
-    )
-
-    $targets = Get-Na2BuildTargetRegistry -Paths $Paths
-    $target = Find-Na2BuildTarget -Targets $targets -Name $Name
-    if ($null -eq $target) {
-        throw "Unknown build target: $Name"
-    }
-    return $target
-}
-
 function Get-Na2BuildTargetConfiguration {
     [CmdletBinding()]
     param(

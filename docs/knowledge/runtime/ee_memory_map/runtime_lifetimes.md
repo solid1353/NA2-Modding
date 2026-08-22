@@ -1,6 +1,6 @@
 # EE runtime lifetimes
 
-Lifetime and ownership evidence for overlays, stacks, retired mode-switch injection, and the visible hot-reload hook.
+Lifetime and ownership evidence for overlays, stacks, and the visible hot-reload hook.
 
 ## Overlay lifetimes and phase-only space
 
@@ -44,37 +44,6 @@ The `0x01FF6000-0x02000000` tail is outside that allocator and changed across
 the captures. Register-level ownership of every byte was not established, but
 its observed use and position make the conservative classification clear:
 leave it to the system/stack runtime.
-
-## Retired Injection Lab mode-switch lifetime
-
-The retired Lab's generic mode installed a recurring call at runtime
-`0x001D0578`, while production mode redirects one resident `228.BIN` entry to
-the fixed dispatcher at `0x008F0000`. Removing the PNACH restores the file on
-disk but cannot undo either write already applied to EE memory.
-
-The 2026-07-29 generic-to-production trial proved the resulting hazard. The
-same PCSX2 session first activated the generic dispatcher, removed its PNACH,
-then installed production entry `v2_controls_adapter`
-without restarting Current. Production repointed the dispatcher while the
-old generic per-frame call remained live. That stale call invoked the Font
-entry with unrelated registers, including `a0 = 0x7`, producing repeated
-loads from address `0x7` at hot-linked PC `0x008F01A0`
-(`v2_measure + 0x58`) and cascading native renderer TLB
-misses at `0x001858D0` and `0x001896E8`.
-
-This was a lifecycle conflict, not a different Font ABI or bad C compilation:
-
-- the guarded production caller at `0x00388748` loads the text pointer into
-  `a0`, style into `a1`, and centers into `f12`/`f13`;
-- the banked controls fragment matched the exact resident fragment byte for
-  byte except its expected relocated call to `adapter_call`; and
-- the first invalid access began only after production reused the dispatcher
-  in the still-running generic session.
-
-This was a Lab/PNACH lifecycle hazard. The maintained direct-PINE transaction
-does not install recurring cheat writes, share a dispatcher between modes, or
-maintain install/remove state. Exact caller guards still determine whether a
-candidate is compatible with the current runtime state.
 
 ## Visible hot-reload smoke hook
 

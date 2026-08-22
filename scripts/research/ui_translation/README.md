@@ -16,6 +16,28 @@ against another build by normalized instruction structure. It accepts both the
 `SECTION4:0038...` boot-ELF form, so existing exports can be reused without
 another disassembly.
 
+## Offline memory triage
+
+`scan_memory.py` searches an extracted EE RAM snapshot for exactly one ASCII,
+hex, little-endian `u32`, or float pattern and prints matching addresses.
+`inspect_sprite_objects.py` scans the same snapshot for likely 0xF8-byte CC2
+sprite objects and reports their screen geometry, source dimensions, resource
+pointer, and `TEX_`/`CLT_` name.
+
+```powershell
+python scripts/research/ui_translation/scan_memory.py `
+  work/ui-translation/inputs/eeMemory.bin --ascii TEX_TITLE
+
+python scripts/research/ui_translation/inspect_sprite_objects.py `
+  work/ui-translation/inputs/eeMemory.bin --name title --limit 20
+```
+
+Both tools are read-only and write tabular results to standard output. They
+support the runtime object and selector findings under
+[`docs/knowledge/localization/ui/`](../../../docs/knowledge/localization/ui/).
+They use structural filters rather than type metadata, so every candidate must
+be confirmed in the matching game state before it becomes canonical evidence.
+
 The Victory texture generator derives canonical source inputs without storing
 CCS or binary blobs:
 

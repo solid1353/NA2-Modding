@@ -18,6 +18,10 @@ Promote information here, or into the closest module-owned evidence file, when i
 
 Module-specific machine-readable evidence should stay beside its module. Repository-wide explanations and evidence that do not belong to one patch module live under `docs/knowledge/`.
 
+Removed architectures and experiments with continuing negative value are
+condensed in [`retired_approaches.md`](retired_approaches.md). Do not distribute
+retirement histories through current component documentation.
+
 ## Promotion policy
 
 Before deleting or rolling operational logs:

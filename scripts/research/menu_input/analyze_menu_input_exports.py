@@ -14,9 +14,6 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from paths import PATHS
-
-
 FUNCTION_RE = re.compile(r"(?m)^(?:[\w *]+)\s+(FUN_[0-9a-f]{8})\([^\n]*\)\s*\n\s*\{")
 MASK_RE = re.compile(r"&\s*(0x10|0x20|0x40|0x80)(?:[uUlL]+)?\b")
 MASKS = ("0x10", "0x20", "0x40", "0x80")

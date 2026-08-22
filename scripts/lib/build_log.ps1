@@ -78,31 +78,11 @@ function Read-Na2BuildMap {
 
     $latestRow = $rowsByIso[$isoKeys.Latest]
     $previousRow = $rowsByIso[$isoKeys.Previous]
-    $migrated = $false
     if ($null -eq $latestRow) {
-        $legacyLatest = @(
-            $rows | Where-Object {
-                ([string]$_.iso).EndsWith(' - Current.iso', [StringComparison]::Ordinal) -or
-                ([string]$_.iso).EndsWith(' - Latest.iso', [StringComparison]::Ordinal)
-            }
-        )
-        if ($legacyLatest.Count -ne 1) {
-            throw "builds.tsv has no row for $($isoKeys.Latest)."
-        }
-        $latestRow = $legacyLatest[0]
-        $migrated = $true
+        throw "builds.tsv has no row for $($isoKeys.Latest)."
     }
     if ($null -eq $previousRow) {
-        $legacyPrevious = @(
-            $rows | Where-Object {
-                ([string]$_.iso).EndsWith(' - Previous.iso', [StringComparison]::Ordinal)
-            }
-        )
-        if ($legacyPrevious.Count -ne 1) {
-            throw "builds.tsv has no row for $($isoKeys.Previous)."
-        }
-        $previousRow = $legacyPrevious[0]
-        $migrated = $true
+        throw "builds.tsv has no row for $($isoKeys.Previous)."
     }
 
     $latestBuildId = ConvertFrom-Na2BuildRecordPath `
@@ -125,16 +105,6 @@ function Read-Na2BuildMap {
     $shiftedBuildId = ConvertFrom-Na2BuildRecordPath `
         -BuildRecord $(if ($null -ne $shiftedRow) { [string]$shiftedRow.build_record } else { '' }) `
         -LogDirectory $LogDirectory
-    if ($migrated) {
-        Set-Na2BuildMap `
-            -LogDirectory $LogDirectory `
-            -LatestBuildId $latestBuildId `
-            -PreviousBuildId $previousBuildId `
-            -E2eTestNormalBuildId $normalBuildId `
-            -E2eTestShiftedBuildId $shiftedBuildId `
-            -Paths $Paths
-    }
-
     return [pscustomobject]@{
         LatestBuildId = $latestBuildId
         PreviousBuildId = $previousBuildId

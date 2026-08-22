@@ -1,10 +1,9 @@
 # Font renderer and asset findings
 
 This directory preserves the confirmed visual, structural, runtime, and
-byte-level evidence for the native NUN5-derived Font stack. Raw schema-v1
-replicas of retired m01/v22/v23 packages and the rejected palette experiment
-remain recoverable from Git commit `55d1163`; they are not implementation
-parents or active patch inputs.
+byte-level evidence for the native NUN5-derived Font stack. Removed Font
+architectures are summarized in the repository-wide
+[`retired approaches`](../../retired_approaches.md) record.
 
 ## Documents
 
@@ -14,8 +13,8 @@ parents or active patch inputs.
   integration, staged autofit reset, and contextual selector behavior.
 - [Numeric rendering](numeric_rendering.md): Save/Load, Battle Settings, Ninja
   Song, and related numeric formatting.
-- [Renderer metrics](renderer_metrics.md): geometry, tracking, spacing,
-  bearings, and the retired v1 metric port.
+- [Renderer metrics](renderer_metrics.md): geometry, tracking, spacing, and
+  bearings.
 - [Screen layouts](screen_layouts/README.md): caller-specific menu, modal,
   list, and selected-state layout findings split by screen family.
 - [Runtime migration](runtime_migration.md): resident relocation, C migration,

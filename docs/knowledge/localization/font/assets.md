@@ -109,10 +109,6 @@ whole NUN5 GF4 or GF4C as an implementation parent. The accepted native
 baseline changes only bounded secondary GF4 data and leaves clean NA2 GF4C
 unchanged.
 
-The retired m01, m02, v22, v23, and semantic-palette records remain
-recoverable from Git commit `55d1163`; none is an active patch set or
-implementation parent.
-
 ## Unresolved selective palette refinement
 
 Clean NA2's primary GF4 raster and the accepted secondary raster both use

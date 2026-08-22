@@ -6,7 +6,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.image_assembler.iso9660 import SECTOR, Iso9660, insert_files
+from na228_builder.image_assembler.iso9660 import (
+    SECTOR,
+    Iso9660,
+    compose_filesystems,
+)
 
 
 RECORDED_AT = bytes((126, 7, 19, 12, 0, 0, 12))
@@ -134,14 +138,14 @@ class IsoInsertionTests(unittest.TestCase):
 
             mod = b"M" * 3000
             texteng = b"T" * 100
-            first = insert_files(
+            first = compose_filesystems(
                 first_path,
                 {"PRG/TEXTENG.BIN": texteng, "PRG/MOD.BIN": mod},
-            )
-            second = insert_files(
+            ).insertions
+            second = compose_filesystems(
                 second_path,
                 {"prg/mod.bin": mod, "prg/texteng.bin": texteng},
-            )
+            ).insertions
 
             self.assertEqual(source_path.read_bytes(), source_data)
             self.assertEqual(first_path.stat().st_size, len(source_data))
@@ -176,10 +180,10 @@ class IsoInsertionTests(unittest.TestCase):
             image = Path(directory) / "image.iso"
             make_iso(image, dirty_tail_sectors=(25,))
             before = image.read_bytes()[25 * SECTOR:(25 + 1) * SECTOR]
-            results = insert_files(
+            results = compose_filesystems(
                 image,
                 {"PRG/MOD.BIN": b"M" * 3000, "PRG/TEXTENG.BIN": b"T"},
-            )
+            ).insertions
             self.assertEqual([item.extent for item in results], [26, 28])
             self.assertEqual(
                 image.read_bytes()[25 * SECTOR:(25 + 1) * SECTOR], before
@@ -190,7 +194,7 @@ class IsoInsertionTests(unittest.TestCase):
             image = Path(directory) / "image.iso"
             make_iso(image)
             before = Iso9660(image)
-            insert_files(image, {"ROOT.BIN": b"root"})
+            compose_filesystems(image, {"ROOT.BIN": b"root"})
             after = Iso9660(image)
             expected_root_size = before.by_path[""].size + 44
             self.assertEqual(after.by_path[""].size, expected_root_size)
@@ -210,9 +214,9 @@ class IsoInsertionTests(unittest.TestCase):
             image = Path(directory) / "image.iso"
             make_iso(image)
             with self.assertRaisesRegex(RuntimeError, "already exists"):
-                insert_files(image, {"PRG/ETC.BIN": b"collision"})
+                compose_filesystems(image, {"PRG/ETC.BIN": b"collision"})
             with self.assertRaisesRegex(ValueError, "Duplicate normalized"):
-                insert_files(
+                compose_filesystems(
                     image,
                     {"prg/mod.bin": b"one", "PRG/MOD.BIN": b"two"},
                 )
@@ -222,9 +226,9 @@ class IsoInsertionTests(unittest.TestCase):
             image = Path(directory) / "image.iso"
             make_iso(image)
             with self.assertRaisesRegex(RuntimeError, "parent directory"):
-                insert_files(image, {"MISSING/MOD.BIN": b"data"})
+                compose_filesystems(image, {"MISSING/MOD.BIN": b"data"})
             with self.assertRaisesRegex(ValueError, "Unsupported ISO9660"):
-                insert_files(image, {"PRG/BAD-NAME.BIN": b"data"})
+                compose_filesystems(image, {"PRG/BAD-NAME.BIN": b"data"})
 
     def test_rejects_directory_capacity_and_nonzero_append_area(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -234,16 +238,16 @@ class IsoInsertionTests(unittest.TestCase):
             make_iso(full, prg_size=2030)
             make_iso(dirty, dirty_append_area=True)
             with self.assertRaisesRegex(RuntimeError, "no record capacity"):
-                insert_files(full, {"PRG/MOD.BIN": b"data"})
+                compose_filesystems(full, {"PRG/MOD.BIN": b"data"})
             with self.assertRaisesRegex(RuntimeError, "append area is not zero"):
-                insert_files(dirty, {"PRG/MOD.BIN": b"data"})
+                compose_filesystems(dirty, {"PRG/MOD.BIN": b"data"})
 
     def test_insufficient_zero_tail_capacity_fails_before_writing(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             image = Path(directory) / "image.iso"
             original = make_iso(image, sectors=28)
             with self.assertRaisesRegex(RuntimeError, "No verified-zero tail extent"):
-                insert_files(
+                compose_filesystems(
                     image,
                     {"PRG/MOD.BIN": b"M" * 3000, "PRG/TEXTENG.BIN": b"T"},
                 )
@@ -257,7 +261,7 @@ class IsoInsertionTests(unittest.TestCase):
             raw[21 * SECTOR + 14:21 * SECTOR + 18] = (999).to_bytes(4, "big")
             image.write_bytes(raw)
             with self.assertRaisesRegex(RuntimeError, "both-endian"):
-                insert_files(image, {"PRG/MOD.BIN": b"data"})
+                compose_filesystems(image, {"PRG/MOD.BIN": b"data"})
 
 
 if __name__ == "__main__":

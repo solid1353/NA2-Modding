@@ -135,25 +135,12 @@ def load_overlay_plan(
     raw = json.loads(plan_path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict):
         raise ValueError("Overlay plan root must be a JSON object")
-    version = raw.get("schema_version")
-    expected_fields = (
-        {
-            "schema_version",
-            "source_id",
-            "entry_symbol",
-            "abi",
-            "purpose",
-            "writes",
-        }
-        if version == 1
-        else {
-            "schema_version",
-            "source_id",
-            "entry_symbols",
-            "purpose",
-            "writes",
-        }
-    )
+    expected_fields = {
+        "source_id",
+        "entry_symbols",
+        "purpose",
+        "writes",
+    }
     optional_fields = {"resident_symbol_overrides"}
     actual_fields = set(raw)
     if not expected_fields.issubset(actual_fields) or (
@@ -164,8 +151,6 @@ def load_overlay_plan(
             f"missing={sorted(expected_fields - actual_fields)}, "
             f"extra={sorted(actual_fields - expected_fields - optional_fields)}"
         )
-    if version not in (1, 2):
-        raise ValueError("Overlay plan schema_version must be 1 or 2")
     if raw["source_id"] != source_id:
         raise ValueError("Overlay plan source_id does not match selection")
     if not isinstance(raw["purpose"], str) or not raw["purpose"].strip():
@@ -192,48 +177,34 @@ def load_overlay_plan(
             )
         resident_symbol_overrides[symbol] = address
 
-    if version == 1:
-        selected_symbol = identifier(
-            str(raw["entry_symbol"]), "overlay plan entry_symbol"
+    raw_entries = raw["entry_symbols"]
+    if not isinstance(raw_entries, list) or not raw_entries:
+        raise ValueError(
+            "Overlay plan entry_symbols must be a non-empty array"
         )
-        if selected_symbol != entry_symbol:
-            raise ValueError("Overlay plan entry_symbol does not match selection")
-        entries = [
+    entries: list[dict[str, str]] = []
+    seen_symbols: set[str] = set()
+    for index, item in enumerate(raw_entries, 1):
+        label = f"overlay plan entry_symbols[{index}]"
+        if not isinstance(item, dict) or set(item) != {"symbol", "abi"}:
+            raise ValueError(
+                f"{label}: expected only symbol and abi"
+            )
+        symbol = identifier(str(item["symbol"]), f"{label} symbol")
+        if symbol in seen_symbols:
+            raise ValueError(f"{label}: duplicate symbol {symbol!r}")
+        seen_symbols.add(symbol)
+        entries.append(
             {
-                "symbol": selected_symbol,
-                "abi": identifier(str(raw["abi"]), "overlay plan abi"),
+                "symbol": symbol,
+                "abi": identifier(str(item["abi"]), f"{label} abi"),
                 "purpose": str(raw["purpose"]).strip(),
             }
-        ]
-    else:
-        raw_entries = raw["entry_symbols"]
-        if not isinstance(raw_entries, list) or not raw_entries:
-            raise ValueError(
-                "Overlay plan entry_symbols must be a non-empty array"
-            )
-        entries: list[dict[str, str]] = []
-        seen_symbols: set[str] = set()
-        for index, item in enumerate(raw_entries, 1):
-            label = f"overlay plan entry_symbols[{index}]"
-            if not isinstance(item, dict) or set(item) != {"symbol", "abi"}:
-                raise ValueError(
-                    f"{label}: expected only symbol and abi"
-                )
-            symbol = identifier(str(item["symbol"]), f"{label} symbol")
-            if symbol in seen_symbols:
-                raise ValueError(f"{label}: duplicate symbol {symbol!r}")
-            seen_symbols.add(symbol)
-            entries.append(
-                {
-                    "symbol": symbol,
-                    "abi": identifier(str(item["abi"]), f"{label} abi"),
-                    "purpose": str(raw["purpose"]).strip(),
-                }
-            )
-        if entries[0]["symbol"] != entry_symbol:
-            raise ValueError(
-                "Overlay plan first entry_symbols item does not match selection"
-            )
+        )
+    if entries[0]["symbol"] != entry_symbol:
+        raise ValueError(
+            "Overlay plan first entry_symbols item does not match selection"
+        )
 
     selected_symbols = {entry["symbol"] for entry in entries}
     unresolved: list[dict[str, object]] = []

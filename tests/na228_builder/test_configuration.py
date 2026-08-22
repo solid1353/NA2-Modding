@@ -9,10 +9,8 @@ from pathlib import Path
 from na228_builder.modules.binary_patcher import engine as binary_patcher
 from na228_builder.scripts import catalog as catalog_module
 from na228_builder.scripts import catalog_format
-from na228_builder.scripts.composer import resolve_module_order
 from na228_builder.scripts.configuration import (
     load_configuration,
-    module_content_sha256,
     configuration_resource_files,
 )
 
@@ -93,16 +91,7 @@ class ConfigurationTests(unittest.TestCase):
     def create_module(self, feature: Path, module_type: str) -> Path:
         module = feature / module_type
         module.mkdir(parents=True, exist_ok=True)
-        if module_type == "binary_patcher":
-            targets = feature.parent / "catalog" / "targets.tsv"
-            if not targets.is_file():
-                write_tsv(targets, binary_patcher.TARGET_FIELDS, [])
-            write_tsv(module / "groups.tsv", binary_patcher.GROUP_FIELDS, [])
-            write_tsv(module / "patches.tsv", binary_patcher.PATCH_FIELDS, [])
-            write_tsv(module / "edits.tsv", binary_patcher.EDIT_FIELDS, [])
-        elif module_type == "string_patcher":
-            (module / "strings.tsv").write_text("string_id\n", encoding="utf-8")
-        elif module_type == "translation_importer":
+        if module_type == "translation_importer":
             (module / "mappings.tsv").write_text("id\n", encoding="utf-8")
         elif module_type == "texture_patcher":
             for name in ("containers.tsv", "mappings.tsv", "strategies.tsv"):
@@ -408,20 +397,6 @@ class ConfigurationTests(unittest.TestCase):
             resources = set(configuration_resource_files(loaded))
             self.assertNotIn((feature / "manifest.tsv").resolve(), resources)
 
-    def test_importer_uses_derived_string_consumer_without_string_directory(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            builder, source, configurations = self.create_workspace(root)
-            self.create_feature_inputs(builder, "localization", "translation_importer")
-            configuration = self.create_configuration(
-                configurations,
-                source,
-                {"localization": {"description": "Localization"}},
-                {"localization": True},
-            )
-            loaded = load_configuration(configuration, root, root)
-            self.assertEqual(resolve_module_order(loaded.modules), loaded.modules)
-
     def test_output_boot_path_must_preserve_source_length(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -506,37 +481,6 @@ class ConfigurationTests(unittest.TestCase):
             )
             with self.assertRaisesRegex(ValueError, "requires a configuration"):
                 load_configuration(configuration, root, root)
-
-    def test_binary_hash_ignores_helpers_but_includes_referenced_blobs(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            feature = root / "feature"
-            feature.mkdir()
-            module = self.create_module(feature, "binary_patcher")
-            first = module_content_sha256(module, "binary_patcher")
-            (module / "helper.py").write_text("print('one')\n", encoding="utf-8")
-            self.assertEqual(first, module_content_sha256(module, "binary_patcher"))
-            targets = (
-                feature.parent
-                / "catalog"
-                / "targets.tsv"
-            )
-            targets.write_text(
-                targets.read_text(encoding="utf-8")
-                + "boot\tna2\tdestination\tSLPS_258.37\t16\t"
-                + "0" * 64
-                + "\n",
-                encoding="utf-8",
-            )
-            self.assertNotEqual(
-                first, module_content_sha256(module, "binary_patcher")
-            )
-            (module / "groups.tsv").write_text(
-                "group_id\tname\tdescription\treview_notes\n"
-                "g\tGroup\tChanged canonical input.\t\n",
-                encoding="utf-8",
-            )
-            self.assertNotEqual(first, module_content_sha256(module, "binary_patcher"))
 
     def test_complete_resources_include_disabled_feature_inputs(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

@@ -461,7 +461,3 @@ class CvmIso:
         if isinstance(record, str):
             record = self.record(record)
         return self.header_size + record.byte_offset
-
-    def member_image_offset(self, record: IsoRecord | str) -> int:
-        """Return the member's absolute byte offset in ``path``."""
-        return self.cvm_offset + self.member_cvm_offset(record)

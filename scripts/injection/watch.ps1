@@ -129,12 +129,7 @@ if ($OverlayPlan) {
         $SourceId = [string]$plan.source_id
     }
     if (-not $Entry) {
-        if ([int]$plan.schema_version -eq 2) {
-            $Entry = [string]$plan.entry_symbols[0].symbol
-        }
-        else {
-            $Entry = [string]$plan.entry_symbol
-        }
+        $Entry = [string]$plan.entry_symbols[0].symbol
     }
 }
 

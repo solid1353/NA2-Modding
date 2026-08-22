@@ -59,15 +59,14 @@ mentions Shop.
 
 ## String placement boundary
 
-The generic module owns string placement policy. Localization has no
-`string_patcher/` data directory because it owns no local string declarations;
-the importer artifact invokes the engine as a derived consumer. It accepts
-validated in-memory rows, resolved source text, and references, compiles inline
+The derived string-patcher stage owns string placement policy. The importer
+invokes it directly with validated in-memory rows, resolved source text, and
+references, compiles inline
 imports, contributes external strings as named read-only-data fragments, and
 declares symbolic pointer writes. The shared `payload_builder` chooses offsets
 and constructs `PRG/228.BIN`; the composer resolves symbols; `binary_patcher`
-owns byte guards, conflict handling, replacement, and logging. If Localization
-later owns local declarations, it can add `string_patcher/strings.tsv` then.
+owns byte guards, conflict handling, replacement, and logging. There is no
+physical `string_patcher/` module or `strings.tsv` interface.
 
 The selectable memory-card title is owned by
 `general.replace_memory_card_title`; its evidence is documented in

@@ -20,8 +20,9 @@ from scripts.lib.paths import load_paths
 REGISTRY_SCHEMA_VERSION = 2
 FINGERPRINT_SCHEMA_VERSION = 11
 SHA256_HEX_LENGTH = 64
-MAX_ENTRIES = 20
+MAX_ENTRIES = 15
 MAX_LOCATIONS_PER_IMAGE = 20
+ROLE_FILE_NAMES = ("latest_iso", "previous_iso", "manual_iso")
 GENERATED_SUFFIXES = {".pyc", ".pyo"}
 NON_COMPOSING_BUILDER_FILES = {
     "scripts/app.py",
@@ -263,49 +264,12 @@ def _empty_registry() -> dict[str, object]:
     }
 
 
-def _migrate_registry_v1(value: dict[str, object]) -> dict[str, object]:
-    entries = value.get("entries")
-    if not isinstance(entries, dict):
-        raise ValueError("verification registry has an invalid structure")
-    migrated = _empty_registry()
-    migrated_entries = migrated["entries"]
-    images = migrated["images"]
-    assert isinstance(migrated_entries, dict)
-    assert isinstance(images, dict)
-    for fingerprint, entry in entries.items():
-        if not isinstance(entry, dict):
-            migrated_entries[fingerprint] = entry
-            continue
-        sha256 = entry.get("sha256")
-        size = entry.get("size")
-        migrated_entries[fingerprint] = {
-            "state": entry.get("state"),
-            "sha256": sha256,
-            "verified_utc": entry.get("verified_utc"),
-        }
-        if not _valid_sha256(sha256) or not isinstance(size, int) or size < 0:
-            continue
-        image = images.setdefault(sha256, {"size": size, "locations": []})
-        if not isinstance(image, dict) or image.get("size") != size:
-            raise ValueError(f"registry image identity has inconsistent sizes: {sha256}")
-        locations = image["locations"]
-        assert isinstance(locations, list)
-        for location in entry.get("locations", []):
-            if isinstance(location, str) and location not in locations:
-                locations.append(location)
-        if len(locations) > MAX_LOCATIONS_PER_IMAGE:
-            del locations[:-MAX_LOCATIONS_PER_IMAGE]
-    return migrated
-
-
 def _read_registry(path: Path) -> dict[str, object]:
     if not path.is_file():
         return _empty_registry()
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
         raise ValueError("verification registry has an invalid structure")
-    if value.get("schema_version") == 1:
-        value = _migrate_registry_v1(value)
     if (
         value.get("schema_version") != REGISTRY_SCHEMA_VERSION
         or not isinstance(value.get("entries"), dict)
@@ -495,11 +459,86 @@ def _copy_provenance(source: Path, destination: Path) -> None:
     os.replace(temporary, destination)
 
 
+def _replace_with_hardlink(source: Path, destination: Path) -> None:
+    source = source.resolve()
+    destination = destination.resolve()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_name(f".{destination.name}.{os.getpid()}.tmp")
+    try:
+        if temporary.exists():
+            temporary.unlink()
+        os.link(source, temporary)
+        os.replace(temporary, destination)
+    finally:
+        if temporary.exists():
+            temporary.unlink()
+
+
+def _configured_role_paths(workspace: Path) -> dict[str, Path]:
+    try:
+        paths = load_paths(workspace, allow_missing=True)
+    except (OSError, ValueError, KeyError):
+        return {}
+    result: dict[str, Path] = {}
+    for name in ROLE_FILE_NAMES:
+        try:
+            role_path = paths.file(name).resolve()
+            relative = _relative_workspace_path(role_path, workspace)
+        except (KeyError, ValueError):
+            continue
+        result[relative] = role_path
+    return result
+
+
+def _ensure_role_cache_hardlinks(
+    registry: dict[str, object], workspace: Path, cache_root: Path
+) -> set[str]:
+    images = registry["images"]
+    assert isinstance(images, dict)
+    role_paths = _configured_role_paths(workspace)
+    protected: set[str] = set()
+    for sha256, image in images.items():
+        if not _valid_sha256(sha256) or not isinstance(image, dict):
+            continue
+        size = image.get("size")
+        locations = image.get("locations")
+        if not isinstance(size, int) or size < 0 or not isinstance(locations, list):
+            continue
+        for relative, role_path in role_paths.items():
+            if relative not in locations or not role_path.is_file():
+                continue
+            cache_image = cache_root / f"{sha256}.iso"
+            try:
+                if cache_image.is_file() and os.path.samefile(role_path, cache_image):
+                    protected.add(sha256)
+                    break
+            except OSError:
+                pass
+            if not _valid_image(role_path, size, sha256):
+                continue
+            if cache_image.is_file():
+                if not _valid_image(cache_image, size, sha256):
+                    _replace_with_hardlink(role_path, cache_image)
+                _replace_with_hardlink(cache_image, role_path)
+            else:
+                _replace_with_hardlink(role_path, cache_image)
+            if not os.path.samefile(role_path, cache_image):
+                raise RuntimeError(
+                    f"Role ISO is not linked to its canonical cache image: {role_path}"
+                )
+            protected.add(sha256)
+            break
+    return protected
+
+
 def _prune_registry(
-    registry: dict[str, object],
+    registry: dict[str, object], workspace: Path, cache_root: Path
 ) -> list[tuple[str, dict[str, object]]]:
     entries = registry["entries"]
     assert isinstance(entries, dict)
+    protected_hashes = _ensure_role_cache_hardlinks(
+        registry, workspace, cache_root
+    )
     candidates = sorted(
         (
             (fingerprint, entry)
@@ -511,17 +550,41 @@ def _prune_registry(
     removed: list[tuple[str, dict[str, object]]] = []
     while len(entries) > MAX_ENTRIES and candidates:
         fingerprint, entry = candidates.pop(0)
+        if fingerprint not in entries:
+            continue
         del entries[fingerprint]
         removed.append((fingerprint, entry))
-    retained_hashes = {
-        entry.get("sha256")
-        for entry in entries.values()
-        if isinstance(entry, dict) and _valid_sha256(entry.get("sha256"))
-    }
+
+    def retained_hashes() -> set[str]:
+        return {
+            sha256
+            for entry in entries.values()
+            if isinstance(entry, dict)
+            and _valid_sha256(sha256 := entry.get("sha256"))
+        }
+
+    required_hashes = retained_hashes() | protected_hashes
+    while len(required_hashes) > MAX_ENTRIES:
+        candidate = next(
+            (
+                (fingerprint, entry)
+                for fingerprint, entry in candidates
+                if fingerprint in entries
+                and entry.get("sha256") not in protected_hashes
+            ),
+            None,
+        )
+        if candidate is None:
+            break
+        fingerprint, entry = candidate
+        del entries[fingerprint]
+        removed.append((fingerprint, entry))
+        required_hashes = retained_hashes() | protected_hashes
+
     registry["images"] = {
         sha256: image
         for sha256, image in registry["images"].items()
-        if sha256 in retained_hashes
+        if sha256 in required_hashes
     }
     return removed
 
@@ -619,7 +682,7 @@ def record_registry(
                 "sha256": sha256,
                 "verified_utc": datetime.now(timezone.utc).isoformat(),
             }
-            _prune_registry(registry)
+            _prune_registry(registry, workspace, cache_root)
             _write_registry(registry_path, registry)
             _cleanup_registry_artifacts(registry, registry_path, cache_root)
         except BaseException:

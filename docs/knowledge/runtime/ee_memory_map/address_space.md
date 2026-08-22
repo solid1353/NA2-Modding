@@ -87,11 +87,11 @@ mode. It sends no command to PCSX2. User-observed PCSX2 behavior confirms that
 the in-place rewrite itself triggers the emulator's file watcher and automatic
 cheat reparse. An earlier bounded clone check used a replacement-style update
 and did not reload, so it does not contradict the in-place watcher path. The
-now-retired Lab installer preserved the filesystem object and performed the
+historical Lab installer preserved the filesystem object and performed the
 same truncate/write/flush sequence. The
 project's PCSX2 fork adds parameterless PINE opcode `0x10`, which synchronously
 dispatches `VMManager::ReloadPatches(true, false, true, true)` on the CPU
-thread. The retired Lab sent that opcode after each install and required the
+thread. The Lab sent that opcode after each install and required the
 five-byte `OK` reply before returning. Stock PCSX2 rejects the unknown opcode;
 the extension does not change PNACH parsing or patch application semantics.
 

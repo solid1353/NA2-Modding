@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import tempfile
 import unittest
 from pathlib import Path
@@ -61,27 +60,6 @@ class ItemStatusRuntimeContractTests(unittest.TestCase):
                 toolchain_bin=TOOLCHAIN_BIN,
                 external_symbols=external_symbols,
             )
-
-    def test_resident_renderer_is_the_exact_accepted_boot_elf_body(self) -> None:
-        assembly = self.compile_source(
-            "item_status_renderer.S",
-            "test.ui.item.status.renderer.asm",
-            language="asm",
-        )
-        self.assertEqual(len(assembly.fragments), 1)
-        renderer = assembly.fragments[0]
-
-        self.assertEqual(
-            "test.ui.item.status.renderer.asm.text."
-            "localization.item.status.foreground.draw",
-            renderer.symbol,
-        )
-        self.assertEqual(len(renderer.payload), 500)
-        self.assertEqual(renderer.relocations, ())
-        self.assertEqual(
-            hashlib.sha256(renderer.payload).hexdigest().upper(),
-            "A39D248B11539514FA49523952E09755DA57649ED0A03A09CEBA2081C3011A2F",
-        )
 
     def test_common_update_bridge_enters_only_the_tail_and_rejoins_epilogue(
         self,

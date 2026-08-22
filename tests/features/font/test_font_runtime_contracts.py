@@ -237,13 +237,6 @@ class FontRuntimeContractTests(unittest.TestCase):
             0x42A00000,  # 80
             0x42E40000,  # shared footer Y: 114
         )
-        retired_per_string_x = (
-            0x42A38000,  # 81.75
-            0x4292C000,  # 73.375
-            0x4290C000,  # 72.375
-            0x427E0000,  # 63.5
-            0x40600000,  # 3.5
-        )
         for symbol in (
             "v2_character_selected_adapter",
             "v2_character_unselected_adapter",
@@ -259,17 +252,6 @@ class FontRuntimeContractTests(unittest.TestCase):
                 (),
                 f"{symbol} lost the centered Character-modal contract",
             )
-            retained = tuple(
-                value
-                for value in retired_per_string_x
-                if loads_u32(payload_words, value)
-            )
-            self.assertEqual(
-                retained,
-                (),
-                f"{symbol} retained per-string Character-modal X positions",
-            )
-
     def test_pause_selected_hook_targets_c_without_forwarding_wrapper(self) -> None:
         hook_symbols = {
             edit.symbolic_patch.symbol for edit in self.package.active_edits

@@ -244,18 +244,6 @@ hook to unrelated consumers.
   right-aligns every padded numeric total in the donor value box. It contains
   no string whitelist or per-result coordinates.
 
-### Retired Save confirmation absolute-position fix
-
-The Save confirmation header and choice-position patches are retired. They
-copied NUN5-local absolute coordinates into NA2 even though the two games use
-different modal dimensions, so those coordinates are not equivalent layout
-targets. The two header record edits at ELF files `0x4C0780` and `0x4C0790`,
-the initializer hook at `0xE6F8C`, its stack-record adapter, and all supporting
-payload declarations are removed. NA2 again owns the modal's native text
-positions. The independent global selected-style dispatcher remains active;
-no displayed string, color, or Save/Load numeric formatting is changed by this
-retirement.
-
 ### Runtime and static result
 
 The maintained 2026-08-22 Ninja Song E2E replay is synchronized with the
@@ -282,16 +270,11 @@ Fresh NUN5 and NA228 savestates retrieved from those markers established
 matching runtime objective-row origins; their embedded screenshots were not
 used as visual-parity evidence.
 
-### Preserved regression tooling
+### Regression tooling
 
 Reusable scripts under `@scripts/research/localization/` are retained as the
 reproducible project surface:
 
-- `replay_font_recording_worker.ps1` runs a recording against the task-owned
-  worker and collects marker screenshots without using the shared ISO paths.
-- `verify_font_replay_bundle.ps1` and `verify_font_replay_bundle.py` verify the
-  copied ISO's boot/resident members, payload hash and size, retained build
-  record, symbol map, and required symbol identities before replay.
 - `compare_font_capture_sets.ps1` and `compare_font_capture_sets.py` pair exact
   marker IDs and generate full-scale side-by-side images, blends, differences,
   and paged grids.

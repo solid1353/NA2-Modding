@@ -31,8 +31,8 @@ conclusions above were promoted.
   development-injection, heap, and protected ranges.
 - [Allocator and resident capacity](allocator_and_capacity.md): reservation
   decisions, allocator model, measured headroom, and compact-payload tradeoffs.
-- [Runtime lifetimes](runtime_lifetimes.md): overlay, stack, mode-switch, and
-  hot-reload ownership constraints.
+- [Runtime lifetimes](runtime_lifetimes.md): overlay, stack, and hot-reload
+  ownership constraints.
 
 ## Safe-use constraints
 

@@ -203,46 +203,6 @@ def compile_ee_source(
         )
 
 
-def compile_ee_c(
-    source: Path,
-    output_object: Path,
-    *,
-    toolchain_bin: Path,
-    include_dirs: Sequence[Path] = (),
-    defines: Mapping[str, str | None] | None = None,
-) -> None:
-    """Compile one C translation unit with the maintained EE frontend."""
-
-    compile_ee_source(
-        source,
-        output_object,
-        language="c",
-        toolchain_bin=toolchain_bin,
-        include_dirs=include_dirs,
-        defines=defines,
-    )
-
-
-def compile_ee_assembly(
-    source: Path,
-    output_object: Path,
-    *,
-    toolchain_bin: Path,
-    include_dirs: Sequence[Path] = (),
-    defines: Mapping[str, str | None] | None = None,
-) -> None:
-    """Assemble one preprocessed source with the maintained EE frontend."""
-
-    compile_ee_source(
-        source,
-        output_object,
-        language="asm",
-        toolchain_bin=toolchain_bin,
-        include_dirs=include_dirs,
-        defines=defines,
-    )
-
-
 def _slice(blob: bytes, offset: int, length: int, label: str) -> bytes:
     if offset < 0 or length < 0 or offset + length > len(blob):
         raise ValueError(f"{label} exceeds ELF object")

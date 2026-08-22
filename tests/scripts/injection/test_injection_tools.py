@@ -336,11 +336,14 @@ class InjectionBuildTests(unittest.TestCase):
             plan_path.write_text(
                 json.dumps(
                     {
-                        "schema_version": 1,
                         "source_id": "font_v2_core",
-                        "entry_symbol": "localization.font.v2.entry",
-                        "abi": "arg0_text_arg2",
-                        "purpose": "Exercise an older resident layout.",
+                        "entry_symbols": [
+                            {
+                                "symbol": "localization.font.v2.entry",
+                                "abi": "arg0_text_arg2",
+                            }
+                        ],
+                        "purpose": "Exercise a resident layout.",
                         "writes": [
                             {
                                 "id": "caller",

@@ -214,12 +214,12 @@ release catalog. The builder derives internal engine invocations in this stable
 order:
 
 1. `translation_importer`
-2. `string_patcher`
-3. `runtime_injector`
-4. `texture_patcher`
-5. `binary_patcher`
+2. `runtime_injector`
+3. `texture_patcher`
+4. `binary_patcher`
 
-The localization importer invokes the string patcher as a derived consumer.
+The localization importer derives its in-memory string-patcher plan directly;
+there is no separate string-patcher module invocation or data interface.
 Selected injection payload declarations are compiled and linked into the shared
 resident `PRG/228.BIN`; resolved hooks then become guarded in-memory binary
 replacements. The binary patcher applies selected edits last.

@@ -143,7 +143,6 @@ class CvmTests(unittest.TestCase):
         record = reader.record("HELLO.BIN")
         expected_cvm_offset = 3 * SECTOR + 21 * SECTOR
         self.assertEqual(reader.member_cvm_offset(record), expected_cvm_offset)
-        self.assertEqual(reader.member_image_offset(record), 2 * SECTOR + expected_cvm_offset)
         self.assertEqual(path.read_bytes(), before)
 
     def test_reads_unencrypted_toc(self) -> None:

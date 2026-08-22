@@ -303,50 +303,6 @@ The preceding v3 helper remains rejected because it clobbered that return
 register and produced no usable capture.
 
 
-### Retired v1 shared renderer-metric and layout-wrapper port
-
-The following describes the superseded July v1 implementation for historical
-and reverse-engineering reference. None of these symbols or hook declarations
-remain executable inputs after the 2026-07-28 retirement.
-
-The exact boxed result is now implemented as shared renderer behavior rather
-than another screen-local denominator. The canonical port makes these guarded
-boot-ELF changes:
-
-- secondary initializer runtime `0x001865E0` (file `0x866E0`) now stores NUN5
-  tracking `0.0` instead of NA2 `-1.0`;
-- ordinary ASCII-space runtime `0x001892EC` (file `0x893EC`) routes through
-  resident symbol `localization.font.plain_space` and evaluates
-  `(cell_width + tracking - 6) * scale_x`;
-- newline runtime `0x00188604` (file `0x88704`) routes through resident symbol
-  `localization.font.newline_advance`, retaining NA2 descriptor height and line
-  spacing while removing its four-unit excess and skipping the second
-  alternate-font height;
-- resident symbol `localization.font.measure` calls the accepted NA2 metric
-  path once and preserves that legacy result in `v1`. Pure printable ASCII is
-  measured in `v0` through the 95-entry NUN5-derived proportional-width table
-  packed beside the resident code. Tagged, multiline, or non-ASCII input keeps
-  the legacy path with the proven six-unit ordinary-space correction.
-
-The Controls wrapper remains a distinct 128-unit container, but its helper at
-resident symbol `localization.font.controls_fit` consumes that shared
-denominator.
-The old cave at file `0x2BDDFC` is no longer patched; the superseded
-`9.5 * byte_count + 1` approximation is no longer executable. On the matched
-`Ultimate Jutsu Prep` crop, NUN5 is `157x16` with center X `154.0` and the
-current result is `157x17` with center X `154.0`. The one-pixel vertical raster
-difference is outside the horizontal fit decision.
-
-Shared layout behavior is ported once behind exact caller guards. The selected
-choice primitive at runtime `0x00379150` routes to resident symbol
-`localization.font.selected_helper`; the UI wrapper at `0x00379A20` routes to
-`localization.font.ui_helper`. They map the reviewed confirmation positions.
-The same UI helper applies the 216-unit shrink-only box and four-unit Y
-correction to the Practice pause list, aligns Practice and Collection
-confirmation bodies, and routes the character-return body through a centered
-368-unit box after selecting the accepted secondary renderer. Unrelated
-callers resume through the resident displaced-code trampolines.
-
 ## Rejected tracking and threshold-only fitting
 
 ### Global zero-tracking edit

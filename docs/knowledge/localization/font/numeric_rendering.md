@@ -127,8 +127,10 @@ they are not separate strings: all values pass through the same five guarded
 call sites and width-aware decimal helper. The patch is therefore
 `runtime_proven`; arbitrary unseen decimal values retain the same mode and
 padding behavior. Deterministic verification is provided by
-`@scripts/research/localization/verify_font_renderer.py` and
-`@scripts/research/localization/generate_ninja_song_ascii_numbers.py`.
+`@scripts/research/localization/verify_font_renderer.py`; the five guarded hook
+rows are canonical under
+`i__localization__font__numeric_formatting__ninja_song` in
+`@builder/catalog/injections.json`.
 
 Controls retains full-width `Linked Attack`, fits the official 19-byte
 `Ultimate Jutsu Prep` probe through the shared NUN5 logical-width helper,

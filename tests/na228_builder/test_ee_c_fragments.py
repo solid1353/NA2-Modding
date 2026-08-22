@@ -118,9 +118,10 @@ class EeCFragmentTests(unittest.TestCase):
                 "void entry(void) { missing(); }\n",
                 encoding="ascii",
             )
-            ee_c_fragments.compile_ee_c(
+            ee_c_fragments.compile_ee_source(
                 source,
                 object_path,
+                language="c",
                 toolchain_bin=TOOLCHAIN_BIN,
             )
             with self.assertRaisesRegex(

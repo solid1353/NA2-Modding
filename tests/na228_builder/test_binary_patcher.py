@@ -5,7 +5,7 @@ import hashlib
 import tempfile
 import unittest
 from dataclasses import replace
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from na228_builder.modules.binary_patcher import engine as patcher
 from na228_builder.scripts.build_configuration import write_binary_patch_log
@@ -13,14 +13,6 @@ from na228_builder.scripts.build_configuration import write_binary_patch_log
 
 def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest().upper()
-
-
-def write_tsv(path: Path, fields: list[str], rows: list[dict[str, object]]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, delimiter="\t", lineterminator="\n")
-        writer.writeheader()
-        writer.writerows(rows)
 
 
 class BinaryPatcherTests(unittest.TestCase):
@@ -34,151 +26,97 @@ class BinaryPatcherTests(unittest.TestCase):
         source = bytes.fromhex("AABBCCDD") + bytes(range(4, 16))
         (na2 / "target.bin").write_bytes(clean)
         (nun5 / "source.bin").write_bytes(source)
-
-        write_tsv(
-            package_dir / "targets.tsv",
-            patcher.TARGET_FIELDS,
-            [
-                {
-                    "target_id": "destination",
-                    "root_id": "na2",
-                    "role": "destination",
-                    "path": "target.bin",
-                    "expected_size": len(clean),
-                    "expected_sha256": sha256(clean),
-                },
-                {
-                    "target_id": "source",
-                    "root_id": "nun5",
-                    "role": "source",
-                    "path": "source.bin",
-                    "expected_size": len(source),
-                    "expected_sha256": sha256(source),
-                },
-                {
-                    "target_id": "unused",
-                    "root_id": "unused",
-                    "role": "destination",
-                    "path": "unused.bin",
-                    "expected_size": 1,
-                    "expected_sha256": sha256(b"x"),
-                },
+        package = patcher.Package(
+            directory=package_dir,
+            package_id="fixture.binary_patcher",
+            targets={
+                "destination": patcher.Target(
+                    target_id="destination",
+                    root_id="na2",
+                    role="destination",
+                    path=PurePosixPath("target.bin"),
+                    expected_size=len(clean),
+                    expected_sha256=sha256(clean),
+                ),
+                "source": patcher.Target(
+                    target_id="source",
+                    root_id="nun5",
+                    role="source",
+                    path=PurePosixPath("source.bin"),
+                    expected_size=len(source),
+                    expected_sha256=sha256(source),
+                ),
+            },
+            groups={
+                "fixture_group": patcher.Group(
+                    group_id="fixture_group",
+                    enabled=True,
+                    name="Fixture group",
+                    description="Fixture patches.",
+                    review_notes="",
+                )
+            },
+            patches={
+                "test_patch": patcher.Patch(
+                    patch_id="test_patch",
+                    group_id="fixture_group",
+                    enabled=False,
+                    status="approved_for_test",
+                    confidence="verified",
+                    name="test patch",
+                    description="replace and copy",
+                    evidence_id="",
+                    review_notes="",
+                )
+            },
+            edits=[
+                patcher.Edit(
+                    edit_id="replace_word",
+                    patch_id="test_patch",
+                    order=10,
+                    destination_target_id="destination",
+                    destination_offset=4,
+                    operation="replace",
+                    length=4,
+                    expected_hex=clean[4:8].hex().upper(),
+                    expected_sha256="",
+                    replacement_hex="10203040",
+                    source_target_id="",
+                    source_offset=None,
+                    source_expected_hex="",
+                    source_expected_sha256="",
+                    blob_path=None,
+                    blob_offset=None,
+                    blob_sha256="",
+                    fill_hex="",
+                    reason="literal replacement",
+                ),
+                patcher.Edit(
+                    edit_id="copy_word",
+                    patch_id="test_patch",
+                    order=20,
+                    destination_target_id="destination",
+                    destination_offset=12,
+                    operation="copy",
+                    length=4,
+                    expected_hex=clean[12:16].hex().upper(),
+                    expected_sha256="",
+                    replacement_hex="",
+                    source_target_id="source",
+                    source_offset=0,
+                    source_expected_hex="AABBCCDD",
+                    source_expected_sha256="",
+                    blob_path=None,
+                    blob_offset=None,
+                    blob_sha256="",
+                    fill_hex="",
+                    reason="verified source copy",
+                ),
             ],
         )
-        write_tsv(
-            package_dir / "groups.tsv",
-            patcher.GROUP_FIELDS,
-            [{
-                "group_id": "fixture_group",
-                "enabled": 1,
-                "name": "Fixture group",
-                "description": "Fixture patches.",
-                "review_notes": "",
-            }],
-        )
-        write_tsv(
-            package_dir / "patches.tsv",
-            patcher.PATCH_FIELDS,
-            [{
-                "patch_id": "test_patch",
-                "group_id": "fixture_group",
-                "enabled": 0,
-                "status": "approved_for_test",
-                "confidence": "verified",
-                "name": "test patch",
-                "description": "replace and copy",
-                "evidence_id": "",
-                "review_notes": "",
-            }],
-        )
-        blank = {
-            "expected_sha256": "",
-            "replacement_hex": "",
-            "source_target_id": "",
-            "source_offset": "",
-            "source_expected_hex": "",
-            "source_expected_sha256": "",
-            "blob_path": "",
-            "blob_offset": "",
-            "blob_sha256": "",
-            "fill_hex": "",
-        }
-        write_tsv(
-            package_dir / "edits.tsv",
-            patcher.EDIT_FIELDS,
-            [
-                {
-                    **blank,
-                    "edit_id": "replace_word",
-                    "patch_id": "test_patch",
-                    "order": 10,
-                    "destination_target_id": "destination",
-                    "destination_offset": "0x4",
-                    "operation": "replace",
-                    "length": 4,
-                    "expected_hex": clean[4:8].hex().upper(),
-                    "replacement_hex": "10203040",
-                    "reason": "literal replacement",
-                },
-                {
-                    **blank,
-                    "edit_id": "copy_word",
-                    "patch_id": "test_patch",
-                    "order": 20,
-                    "destination_target_id": "destination",
-                    "destination_offset": "0xC",
-                    "operation": "copy",
-                    "length": 4,
-                    "expected_hex": clean[12:16].hex().upper(),
-                    "source_target_id": "source",
-                    "source_offset": "0x0",
-                    "source_expected_hex": "AABBCCDD",
-                    "reason": "verified source copy",
-                },
-            ],
-        )
-        package = patcher.load_package(package_dir)
-        self.assertEqual(set(package.targets), {"destination", "source"})
         roots = {"na2": na2, "nun5": nun5}
         target_data = patcher.verify_package_data(package, roots)
         return package, roots, target_data
-
-    def test_apply_is_size_preserving_and_logged(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            package, roots, target_data = self.make_fixture(root)
-            selected = ["test_patch"]
-            edits = patcher.validate_selection(package, selected, for_apply=True)
-            output = root / "output"
-            logs = root / "logs"
-            patcher.apply_package(
-                package,
-                roots,
-                target_data,
-                selected,
-                edits,
-                output,
-                "work/temp/output",
-                logs,
-                "logs/na228/binary_patcher/test",
-                selection_mode="explicit",
-            )
-            result = (output / "target.bin").read_bytes()
-            self.assertEqual(len(result), 16)
-            self.assertEqual(result[4:8], bytes.fromhex("10203040"))
-            self.assertEqual(result[12:16], bytes.fromhex("AABBCCDD"))
-            self.assertTrue((logs / "patch_log.tsv").is_file())
-            with (logs / "patch_selection.tsv").open(
-                encoding="utf-8", newline=""
-            ) as handle:
-                row = next(csv.DictReader(handle, delimiter="\t"))
-            self.assertEqual(row["group_id"], "fixture_group")
-            self.assertEqual(row["group_name"], "Fixture group")
-            self.assertEqual(row["group_enabled"], "1")
-            self.assertEqual(row["patch_enabled"], "0")
-            self.assertEqual(row["effective_selected"], "1")
-            self.assertEqual(row["selection_mode"], "explicit")
-            self.assertEqual((roots["na2"] / "target.bin").read_bytes(), bytes(range(16)))
 
     def test_configuration_log_writes_binary_patch_summary(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -237,6 +175,42 @@ class BinaryPatcherTests(unittest.TestCase):
             with self.assertRaisesRegex(patcher.PatchError, "SHA-256 mismatch"):
                 patcher.verify_package_data(package, roots)
 
+    def test_blob_replacement_verifies_file_and_composes_selected_range(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            package, roots, _ = self.make_fixture(root)
+            blob = bytes.fromhex("00AABBCCDDFF")
+            blob_path = package.directory / "assets" / "replacement.bin"
+            blob_path.parent.mkdir(parents=True)
+            blob_path.write_bytes(blob)
+            package.edits = [
+                replace(
+                    package.edits[0],
+                    operation="blob",
+                    replacement_hex="",
+                    blob_path=PurePosixPath("assets/replacement.bin"),
+                    blob_offset=1,
+                    blob_sha256=sha256(blob),
+                )
+            ]
+
+            target_data = patcher.verify_package_data(package, roots)
+            edits = patcher.validate_selection(
+                package, ["test_patch"], for_apply=True
+            )
+            buffers, _, _ = patcher.compose_edits(
+                package,
+                target_data,
+                edits,
+            )
+            self.assertEqual(
+                buffers["destination"][4:8], bytes.fromhex("AABBCCDD")
+            )
+
+            blob_path.write_bytes(blob + b"X")
+            with self.assertRaisesRegex(patcher.PatchError, "blob SHA-256 mismatch"):
+                patcher.verify_package_data(package, roots)
+
     def test_composition_accepts_unrelated_prior_changes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             package, _, target_data = self.make_fixture(Path(temporary))
@@ -273,31 +247,6 @@ class BinaryPatcherTests(unittest.TestCase):
                     {"destination": staged},
                 )
 
-    def test_patch_must_reference_declared_group(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            package, _, _ = self.make_fixture(root)
-            patches = package.directory / "patches.tsv"
-            patches.write_text(
-                patches.read_text(encoding="utf-8").replace(
-                    "test_patch\tfixture_group\t",
-                    "test_patch\tmissing_group\t",
-                ),
-                encoding="utf-8",
-            )
-            with self.assertRaisesRegex(patcher.PatchError, "unknown group_id"):
-                patcher.load_package(package.directory)
-
-    def test_group_without_patches_is_rejected(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            package, _, _ = self.make_fixture(root)
-            groups = package.directory / "groups.tsv"
-            with groups.open("a", encoding="utf-8", newline="") as handle:
-                handle.write("unused\t1\tUnused\tNo patches.\t\n")
-            with self.assertRaisesRegex(patcher.PatchError, "group unused has no patches"):
-                patcher.load_package(package.directory)
-
     def test_hierarchical_enabled_selection_and_explicit_override(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             package, _, target_data = self.make_fixture(Path(temporary))
@@ -333,49 +282,6 @@ class BinaryPatcherTests(unittest.TestCase):
             self.assertEqual(len(edits), 2)
             self.assertEqual([row["outcome"] for row in rows], ["applied", "applied"])
             self.assertEqual(buffers["destination"][4:8], bytes.fromhex("10203040"))
-
-    def test_enabled_non_applicable_patch_is_rejected_under_disabled_group(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            package, _, _ = self.make_fixture(root)
-            groups = package.directory / "groups.tsv"
-            groups.write_text(
-                groups.read_text(encoding="utf-8").replace(
-                    "fixture_group\t1\t",
-                    "fixture_group\t0\t",
-                ),
-                encoding="utf-8",
-            )
-            patches = package.directory / "patches.tsv"
-            patches.write_text(
-                patches.read_text(encoding="utf-8")
-                .replace("test_patch\tfixture_group\t0\t", "test_patch\tfixture_group\t1\t")
-                .replace("approved_for_test", "pending"),
-                encoding="utf-8",
-            )
-            with self.assertRaisesRegex(
-                patcher.PatchError, "enabled patches must be applicable"
-            ):
-                patcher.load_package(package.directory)
-
-    def test_cli_exposes_enabled_selection(self) -> None:
-        parser = patcher.build_parser()
-        enabled_args = parser.parse_args(
-            ["plan", "--package", "fixture", "--enabled"]
-        )
-        self.assertTrue(enabled_args.enabled)
-
-    def test_empty_package_is_valid(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            directory = Path(temporary) / "empty"
-            write_tsv(directory / "targets.tsv", patcher.TARGET_FIELDS, [])
-            write_tsv(directory / "groups.tsv", patcher.GROUP_FIELDS, [])
-            write_tsv(directory / "patches.tsv", patcher.PATCH_FIELDS, [])
-            write_tsv(directory / "edits.tsv", patcher.EDIT_FIELDS, [])
-            package = patcher.load_package(directory)
-            self.assertEqual(package.groups, {})
-            self.assertEqual(package.patches, {})
-            self.assertEqual(patcher.verify_package_data(package, {}), {})
 
     def test_incompatible_overlapping_patches_fail_during_composition(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

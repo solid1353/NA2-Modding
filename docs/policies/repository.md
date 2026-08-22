@@ -86,9 +86,11 @@
 - When a task changes the shared PowerShell profile, locate it through
   `$env:USERPROFILE`; keep the profile change to a thin alias or dot-source and
   keep reusable implementation in the project `@scripts/` tree.
-- Optional reusable analysis/research tools belong in an existing tooling area;
-  task-local scratch tools remain under the task and are deleted when no longer
-  useful. See the implementation boundary in root
+- Research scripts may start as undocumented task-local scratch code. Before the
+  task ends, delete them after promoting their findings, or promote them into an
+  existing tooling area, document their current use in the same change, and
+  remove unreachable or superseded code. See the implementation boundary in
+  root
   [`AGENTS.md`](../../AGENTS.md#implementation-boundaries).
 - Third-party packages use the affected component's existing central dependency
   set and runtime resolver. Do not select interpreters, install packages, or add

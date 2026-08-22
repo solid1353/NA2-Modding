@@ -67,7 +67,7 @@ below `@task_logs/`.
   output reuse the same image.
 - `preflight/records/<fingerprint>/`: reusable structured provenance for each
   registry entry. Registry entries, provenance records, and cached images are
-  capped at 20; retained locations per image are independently capped at 20.
+  capped at 15; retained locations per image are independently capped at 20.
 - `manual/<build-id>/`: the latest Manual-only configuration record, including
   `build_result.tsv`. It is independent of `builds.tsv`; a successful Manual
   build replaces the previous Manual record.
@@ -81,7 +81,9 @@ canonical hash-named image. Cache validation uses the canonical cache image
 directly and creates no task-owned ISO or hardlink. Latest rotation follows the
 target named by `game.json` `builds.latest.rotate_to`, replaces it with a
 hardlink to the outgoing Latest image, and synchronizes both locations in the
-registry.
+registry. Registry pruning preserves images referenced by configured Latest,
+Previous, and Manual roles. Before pruning, a verified role whose canonical
+cache path is missing is hash-checked and atomically relinked into the cache.
 If a destination is locked, the invocation reports pending and the hash-named
 ISO remains available for launch. The next request with the same fingerprint
 retries promotion naturally through the cache hit.

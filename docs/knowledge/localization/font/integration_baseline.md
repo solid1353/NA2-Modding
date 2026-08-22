@@ -28,23 +28,7 @@ below. Their confirmed formulas and rejected integration behavior remained
 evidence for the independent v2 reimplementation rather than an enabled
 baseline.
 
-### 2026-07-28 v1 executable retirement
-
-After the v2 caller families became the only active implementation, a complete
-symbol-relocation closure from all enabled resident hook roots reached all 37
-v2 fragments and the numeric formatter, but none of the ten v1 fragments.
-The generic runtime injector validates all declarations and contributes every
-declared fragment whenever any resident edit is active, so the unreachable
-1,847-byte v1 blob was still physically linked into each current `228.BIN`.
-An in-memory payload build measured 1,856 bytes of actual linked size after
-alignment.
-
-The obsolete v1 fragments, relocations, disabled patch/edit rows, generated
-blob, generator-only assembly builders, and v1-specific tests were therefore
-removed. The paired binary-patcher tracking/alignment rows were removed with
-them. Git history is the executable archive; the detailed findings below
-remain canonical historical evidence. The live v2 renderer, numeric formatter,
-native glyph data, and independent binary patches were unchanged.
+### 2026-07-28 Save/Load baseline after the reset
 
 The user identified `ss9` as the current broken Save/Load modal. Its protected
 state was copied read-only from
@@ -192,10 +176,9 @@ to those arrays from files `0x20B498`, `0x20B49C`, and `0x20B4A0` for Commands,
 Damage, and Guide Ninja Sound. Each row pointer is redirected to the existing
 title-case table `0x00604658`, preserving the original Off-then-On index order.
 The user verified Practice Settings working. No string bytes, global glyph
-metrics, spacing logic, scale, or renderer calls change. The deterministic
-guard generator is
-`@scripts/research/localization/generate_on_off_context_split.py`; it now
-generates and verifies only these three runtime-proven Practice pointer edits.
+metrics, spacing logic, scale, or renderer calls change. The three guarded
+pointer edits are canonical under `e__localization__font__layout` in
+`@builder/catalog/edits.json`.
 
 The supplied title-to-Load `ss1` has boot CRC `A8A3C694`, state SHA-256
 `B35AFFF69FDCDDF5478B6AE86DC9BF909469512F52E5268471FC9CF524EF1AF4`,
@@ -206,26 +189,10 @@ that the accepted worker ISO survives the real transition without the former
 helper-erasure freeze. Exact provenance is retained under
 `@work/Font/inputs/sstates/autofit_v2/controls/load-transition/`.
 
-Static linked-package validation confirms the five core hook targets, the
-two eight-byte Controls redirects, both adapter ABIs, state restoration,
-internal branch bounds, the `Ultimate Jutsu Prep` denominator of 178, and the
-unchanged retained-v1 blob. The separate v2 asset is 1,760 bytes with SHA-256
-`AA56FE2A0D6BCB6FFEC7715D69D8CA17BFB76CE5CCB16A0597BF68F60BC645B8`.
-Automatic word wrapping and remaining caller-native coordinate records remain
-later family work.
-
 ## Accepted native 14x20 integration
 
-The current patch set builds on the accepted version 5 baseline. Its former
-standalone profile module pin was
-`9FC3C4905DFF6D14BAAA848C56E6C17D1DE4E79EEFAB2E1A7A74FAD6A25013F8`,
-and its former standalone feature pin was
-`23A2CFDD285FF00A40F35AC42D0656580E4D9DE5884F2CF568453A20E93AA3A7`.
-The then-current profile covered it through the complete Localization feature pin
-`175401CC76981D5E5AD8A3B07E526DB9AB4DE0903144C78E4CFDFB9A96AA30F4`.
-It is a new, deterministic donor built from hash-verified clean NA2 and
-official NUN5 inputs; it is not based on m01, v22/v23, the rejected semantic
-palette swap, the 10x22 resample, or a whole-file GF4 replacement.
+The current patch set is a deterministic donor built from hash-verified clean
+NA2 and official NUN5 inputs.
 
 `font_glyphs_native` installs native NUN5 14x20 geometry and metrics for
 same-semantic English cells. Unsupported punctuation is reconstructed from
@@ -243,18 +210,11 @@ deterministic generators verify these referenced blobs:
 - packed map: 1,736 bytes, SHA-256
   `6F691015E5BA54EA87B2976970D828863E274BB543CC3D531D93800018EB7A5E`.
 
-The former 316-byte decoder and 24-byte measurement-hook blobs are retained
-only in Git history. Their accepted behavior is now expressed by
-composition-time C and guarded symbolic hooks, documented in the 2026-07-28
-cutover record below.
-
 The current runtime injector compiles Font behavior from canonical C units and
 links retained ABI shims directly from declarative fragments; it stores no
 aggregate executable Font blob in Git.
-The original 19-edit `native_final_v2` state established the atlas, metrics,
-fit, and modal baseline; the later bearing and secondary-height work promoted
-the remaining proven behavior into canonical guarded locations. Matched
-Controls, Practice, Save/Load, and character-modal comparisons were presented
-to the user. After the final secondary-height capture, the user accepted the
-font itself as almost pixel-for-pixel. Fullwidth Shift-JIS Save/Load digits use
-a different glyph path and were excluded from halfwidth-Latin comparison.
+Matched Controls, Practice, Save/Load, and character-modal comparisons were
+presented to the user. After the final secondary-height capture, the user
+accepted the font itself as almost pixel-for-pixel. Fullwidth Shift-JIS
+Save/Load digits use a different glyph path and were excluded from
+halfwidth-Latin comparison.

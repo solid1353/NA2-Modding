@@ -167,9 +167,6 @@ if ($mode -eq 'e2e') {
         throw $runUsage
     }
     $testCommand = $arguments[0].ToLowerInvariant()
-    if ($testCommand -ceq 'remove') {
-        throw 'na228 e2e remove is retired; use na228 e2e delete.'
-    }
     if ($testCommand -cnotin @('create', 'rename', 'delete', 'commit')) {
         $shiftedCount = @($arguments | Where-Object { $_ -ceq '-s' }).Count
         $runOperands = @($arguments | Where-Object { $_ -cne '-s' })

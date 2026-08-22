@@ -834,11 +834,3 @@ def compose_filesystems(
         for item in (udf_plan.renames if udf_plan is not None else ())
     )
     return IsoComposition(tuple(insertions), rename_results)
-
-
-def insert_files(
-    image: Path,
-    payloads: Mapping[str, bytes | bytearray],
-) -> tuple[IsoInsertion, ...]:
-    """Insert files into existing directories without changing image size."""
-    return compose_filesystems(image, payloads).insertions

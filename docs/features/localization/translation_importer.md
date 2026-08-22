@@ -248,8 +248,8 @@ The original NA2 target is authoritative for renderer-specific color forms:
 - Do not add patched `BTL.BIN`, `ETC.BIN`, or `SLPS_258.37` payloads to the importer or checkpoint commits; binary deliverables belong only in the frozen release archive.
 - `string_patcher` owns conversion of imported rows into enabled BTL,
   ETC, and SLPS patches; `binary_patcher` owns guards, conflicts, writes, and logs.
-- The configuration orchestrator owns composition and ISO application. The importer
-  must run immediately before its consuming `string_patcher` instance.
+- The configuration orchestrator owns composition and ISO application and derives
+  the in-memory string-patcher plan directly from the importer output.
 
 The module has no standalone CLI. Mapping `enabled` flags determine imported
 targets, and enabling the Localization feature invokes the complete importer.

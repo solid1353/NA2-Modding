@@ -75,5 +75,4 @@ version labels. The active mapping package and its review history live under
 ## Invokes
 
 - `string_patcher` as a derived consumer of the validated translation artifact.
-  No feature-owned string-patcher directory is required when there are no local
-  string declarations.
+  It has no feature-owned directory or file-backed interface.

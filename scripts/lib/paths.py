@@ -463,14 +463,6 @@ def _load_paths(
     )
 
 
-def load_base_paths(
-    start: Path | None = None, *, allow_missing: bool = False
-) -> Paths:
-    return _load_paths(
-        start, allow_missing=allow_missing, include_catalog=False
-    )
-
-
 def load_local_paths(
     start: Path | None = None, *, allow_missing: bool = False
 ) -> Paths:

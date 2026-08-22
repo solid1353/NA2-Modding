@@ -70,7 +70,6 @@ class RuntimeInjectorTests(unittest.TestCase):
             owners: dict[str, str] = {}
 
             result = apply_binary_patch_set(
-                directory,
                 package=package,
                 roots={"na2": root},
                 feature_id="feature",

@@ -18,8 +18,8 @@ isolates its remaining return-confirmation list caller:
   `C4080E0C00000000`, draws only the `Return to Game Mode Screen?`
   confirmation body.
 
-The 2026-08-22 Menus suite supersedes the earlier per-string positioning
-candidate. The row loop in clean NA2 main-ELF `FUN_003BC780` supplies Y `8`,
+The 2026-08-22 Menus suite established the shared row-family behavior. The row
+loop in clean NA2 main-ELF `FUN_003BC780` supplies Y `8`,
 `32`, `56`, `80`, and `120` before the selected call at file `0x2BC984` or the
 ordinary call at file `0x2BC9BC`. Both existing C adapters preserve the first
 four structural Y rows and map the footer to Y `114`; an already-adjusted
@@ -28,9 +28,7 @@ historical input Y `115` follows the same footer branch.
 Both draw states now measure the live string and center it in one local
 `(8, *, 240, 20)` shrink-only box. The selected native helper accepts integer
 X, so its adapter truncates the measured centered X; the ordinary helper keeps
-the centered float. This replaces the former per-string X table `81.75`,
-`73.375`, `72.375`, `63.5`, `3.5` and removes the selected-footer-only Y
-special case without adding another hook.
+the centered float.
 
 Menus page 1 captures selected rows 2 through 5, and page 2 captures selected
 row 1. Their NA228/NUN5 red-ink bounds are exact at 640x480:

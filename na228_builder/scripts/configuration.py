@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import csv
 import hashlib
 import json
 import re
@@ -25,7 +24,6 @@ PRODUCT_ROOT_ALIASES = {
 }
 MODULE_TYPE_ORDER = (
     "translation_importer",
-    "string_patcher",
     "runtime_injector",
     "texture_patcher",
     "binary_patcher",
@@ -38,12 +36,6 @@ FEATURE_MODULE_INPUTS = {
         ("texture_patcher", ("localization", "texture_patcher")),
     ),
 }
-BINARY_PATCHER_CONTROL_FILES = (
-    "groups.tsv",
-    "patches.tsv",
-    "edits.tsv",
-)
-STRING_PATCHER_CONTROL_FILES = ("strings.tsv",)
 TRANSLATION_IMPORTER_CONTROL_FILES = (
     "mappings.tsv",
 )
@@ -256,18 +248,6 @@ def _tree_digest(
     return digest.hexdigest().upper()
 
 
-def content_sha256(path: Path) -> str:
-    """Hash one file or a complete directory tree deterministically."""
-    if path.is_file():
-        return hashlib.sha256(path.read_bytes()).hexdigest().upper()
-    if not path.is_dir():
-        raise FileNotFoundError(path)
-    files = [item for item in path.rglob("*") if item.is_file()]
-    if not files:
-        raise ValueError(f"Cannot hash empty directory: {path}")
-    return _tree_digest(path, files)
-
-
 def _required_files(path: Path, names: tuple[str, ...], label: str) -> list[Path]:
     files = [path / name for name in names]
     missing = [item.name for item in files if not item.is_file()]
@@ -276,60 +256,10 @@ def _required_files(path: Path, names: tuple[str, ...], label: str) -> list[Path
     return files
 
 
-def _builder_targets_file(module_path: Path) -> Path:
-    for parent in (module_path.resolve(), *module_path.resolve().parents):
-        targets_path = parent / BUILDER_TARGETS_FILE
-        if targets_path.is_file():
-            return targets_path
-    raise FileNotFoundError(
-        f"Builder target registry is missing above: {module_path.resolve()}"
-    )
-
-
-def _binary_patcher_content_files(path: Path) -> list[Path]:
-    path = path.resolve()
-    files = _required_files(
-        path, BINARY_PATCHER_CONTROL_FILES, "Binary-patcher module"
-    )
-    files.append(_builder_targets_file(path))
-    edits_path = path / "edits.tsv"
-    with edits_path.open("r", encoding="utf-8-sig", newline="") as handle:
-        reader = csv.DictReader(handle, delimiter="\t")
-        fields = reader.fieldnames or []
-        if "blob_path" not in fields:
-            raise ValueError(f"{edits_path}: missing blob_path column")
-        blob_paths = {
-            (row.get("blob_path") or "").strip()
-            for row in reader
-            if (row.get("blob_path") or "").strip()
-        }
-    for value in sorted(blob_paths):
-        candidate = Path(value.replace("\\", "/"))
-        if candidate.is_absolute() or ".." in candidate.parts:
-            raise ValueError(
-                f"{edits_path}: blob_path must be package-relative: {value!r}"
-            )
-        blob = (path / candidate).resolve()
-        try:
-            blob.relative_to(path)
-        except ValueError as exc:
-            raise ValueError(f"{edits_path}: blob_path escapes package: {value!r}") from exc
-        if not blob.is_file():
-            raise FileNotFoundError(blob)
-        files.append(blob)
-    return files
-
-
 def _module_content_files(path: Path, module_type: str) -> list[Path]:
     path = path.resolve()
-    if module_type == "binary_patcher":
-        return _binary_patcher_content_files(path)
-    if module_type == "runtime_injector":
-        raise ValueError("runtime_injector declarations are catalog-owned")
-    if module_type == "string_patcher":
-        return _required_files(
-            path, STRING_PATCHER_CONTROL_FILES, "string_patcher module"
-        )
+    if module_type in {"binary_patcher", "runtime_injector"}:
+        raise ValueError(f"{module_type} declarations are catalog-owned")
     names = {
         "translation_importer": TRANSLATION_IMPORTER_CONTROL_FILES,
         "texture_patcher": TEXTURE_PATCHER_CONTROL_FILES,
@@ -345,14 +275,7 @@ def module_content_sha256(path: Path, module_type: str) -> str:
     if not path.is_dir():
         raise FileNotFoundError(path)
     files = _module_content_files(path, module_type)
-    external_labels = (
-        {
-            _builder_targets_file(path): "@builder/catalog/targets.tsv"
-        }
-        if module_type == "binary_patcher"
-        else None
-    )
-    return _tree_digest(path, files, external_labels=external_labels)
+    return _tree_digest(path, files)
 
 
 def _validated_settings(

@@ -9,7 +9,7 @@ from na228_builder.modules.string_patcher import engine as string_patcher
 class StringPatcherTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.package = string_patcher.build_binary_package(None)
+        cls.package = string_patcher.build_binary_package()
 
     def test_allows_import_only_derived_consumer(self) -> None:
         self.assertIsInstance(self.package, binary_patcher.Package)
@@ -21,7 +21,6 @@ class StringPatcherTests(unittest.TestCase):
 
     def test_compiles_imported_strings_as_default_binary_patches(self) -> None:
         package = string_patcher.build_binary_package(
-            None,
             imported_rows=(
                 {
                     "import_id": "BTL-I0001",

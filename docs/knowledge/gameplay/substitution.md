@@ -84,13 +84,6 @@ PINE-reload, and legacy-packet lifecycle caveats.
   evidence ID `ELF-S001`). The current implementation leaves this instruction clean
   and sources overrides from the character configuration table.
 
-The retired generic Testing feature preserved the four edits below as
-`ELF-H001`. That executable duplicate was removed after this evidence became
-canonical. Confidence is high in the clean-ELF addresses, original
-instructions, and recorded runtime outcomes, but low in the discarded claim
-that bypassing these gates could improve substitution reliability. Exact
-declarative rows remain recoverable through Git history.
-
 Function names below are Ghidra-generated names for the NA2 boot ELF and are stable only within the preserved analysis project.
 
 ## Substitution-cost mechanism

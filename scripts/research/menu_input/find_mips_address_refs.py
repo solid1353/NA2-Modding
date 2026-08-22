@@ -6,9 +6,6 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from paths import PATHS
-
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("binary", type=Path)

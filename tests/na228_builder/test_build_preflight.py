@@ -426,52 +426,6 @@ class BuildPreflightTests(unittest.TestCase):
             paths["registry"].unlink()
             self.assertEqual(self.check(paths)["reason"], "fingerprint-missing")
 
-    def test_version_one_registry_migrates_without_losing_physical_locations(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            paths = self.create_workspace(Path(directory))
-            state = self.state(paths)
-            fingerprint = state_fingerprint(state)
-            recorded = self.record(paths, fingerprint)
-            registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
-            sha256 = registry["entries"][fingerprint]["sha256"]
-            size = registry["images"][sha256]["size"]
-            Path(str(recorded["image"])).unlink()
-            legacy = {
-                "schema_version": 1,
-                "entries": {
-                    fingerprint: {
-                        "state": state,
-                        "size": size,
-                        "sha256": sha256,
-                        "verified_utc": registry["entries"][fingerprint][
-                            "verified_utc"
-                        ],
-                        "locations": ["build/NA2.28 - Latest.iso"],
-                    }
-                },
-                "pending": {},
-            }
-            paths["registry"].write_text(json.dumps(legacy), encoding="utf-8")
-
-            migrated_hit = self.check(paths)
-            self.assertEqual(migrated_hit["status"], "hit")
-            self.assertEqual(
-                Path(str(migrated_hit["image"])), paths["latest_iso"].resolve()
-            )
-            record_locations(
-                workspace=paths["workspace"],
-                registry_path=paths["registry"],
-                cache_root=paths["cache"],
-                fingerprint=fingerprint,
-                locations=[paths["latest_iso"]],
-            )
-            migrated = json.loads(paths["registry"].read_text(encoding="utf-8"))
-            self.assertEqual(migrated["schema_version"], 2)
-            self.assertEqual(
-                migrated["images"][sha256]["locations"],
-                ["build/NA2.28 - Latest.iso"],
-            )
-
     def test_registry_is_not_written_if_inputs_change_during_build(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
@@ -653,7 +607,7 @@ class BuildPreflightTests(unittest.TestCase):
                 )
 
             registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
-            self.assertEqual(len(registry["entries"]), 20)
+            self.assertEqual(len(registry["entries"]), 15)
             self.assertNotIn(first_fingerprint, registry["entries"])
 
             newest_fingerprint = fingerprint
@@ -673,6 +627,62 @@ class BuildPreflightTests(unittest.TestCase):
             locations = registry["images"][newest_sha256]["locations"]
             self.assertEqual(len(locations), 20)
             self.assertNotIn("build/copy-0.iso", locations)
+
+    def test_pruning_keeps_and_repairs_configured_role_cache_hardlinks(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self.create_workspace(Path(directory))
+            first_state = self.state(paths)
+            first_fingerprint = state_fingerprint(first_state)
+            first_record = self.record(paths, first_fingerprint)
+            first_cache = Path(str(first_record["image"]))
+            paths["latest_iso"].unlink()
+            paths["latest_iso"].hardlink_to(first_cache)
+            record_locations(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                fingerprint=first_fingerprint,
+                locations=[paths["latest_iso"]],
+            )
+            first_cache.unlink()
+
+            with mock.patch.object(
+                build_preflight,
+                "_configured_role_paths",
+                return_value={
+                    "build/NA2.28 - Latest.iso": paths["latest_iso"],
+                },
+            ):
+                for index in range(16):
+                    state = self.state(
+                        paths,
+                        dependencies=dict(
+                            DEPENDENCIES,
+                            python_version=f"role-prune-{index}",
+                        ),
+                    )
+                    fingerprint = state_fingerprint(state)
+                    incoming = paths["cache"] / ".incoming" / f"role-{index}.iso"
+                    incoming.parent.mkdir(parents=True, exist_ok=True)
+                    incoming.write_bytes(f"role-prune-{index}".encode("ascii"))
+                    record_registry(
+                        workspace=paths["workspace"],
+                        registry_path=paths["registry"],
+                        cache_root=paths["cache"],
+                        state=state,
+                        expected_fingerprint=fingerprint,
+                        image=incoming,
+                        provenance=None,
+                    )
+
+            registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
+            first_sha256 = str(first_record["output_sha256"])
+            self.assertNotIn(first_fingerprint, registry["entries"])
+            self.assertIn(first_sha256, registry["images"])
+            self.assertLessEqual(len(registry["entries"]), 15)
+            self.assertLessEqual(len(registry["images"]), 15)
+            self.assertTrue(first_cache.is_file())
+            self.assertTrue(first_cache.samefile(paths["latest_iso"]))
 
 if __name__ == "__main__":
     unittest.main()

@@ -752,18 +752,6 @@ Add-Content `
             $calls[15] -ceq 'commit preserve=False' -and
             $calls[16] -ceq 'commit preserve=True') `
         -Message 'Selected/global E2E or lifecycle-command dispatch was incorrect.'
-    $removeRetired = $false
-    try {
-        & (Join-Path $fakeRepository 'na228.ps1') e2e remove alpha
-    }
-    catch {
-        $removeRetired = $_.Exception.Message -ceq (
-            'na228 e2e remove is retired; use na228 e2e delete.'
-        )
-    }
-    Assert-Na2Test `
-        -Condition $removeRetired `
-        -Message 'The retired E2E remove command did not direct callers to delete.'
     $genericProfileOutput = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `
@@ -1424,34 +1412,6 @@ Add-Content `
     }
     Set-Content -NoNewline -LiteralPath $paths.files.latest_iso -Value 'latest'
     Set-Content -NoNewline -LiteralPath $paths.files.previous_iso -Value 'previous'
-    Set-Na2Utf8FileAtomic `
-        -Path (Join-Path $structuredLog 'builds.tsv') `
-        -Content (
-            "iso`tbuild_record`n" +
-            "@build/NA2.28 - Current.iso`t@logs/na228/builds/old-latest`n" +
-            "@build/NA2.28 - Previous.iso`t@logs/na228/builds/old-previous`n"
-        )
-    $renamedPaths = $paths.PSObject.Copy()
-    $renamedFiles = $paths.files.PSObject.Copy()
-    $renamedFiles.latest_iso = Join-Path $build 'Narutimate Accel v2.28 - Latest.iso'
-    $renamedFiles.previous_iso = Join-Path $build 'Narutimate Accel v2.28 - Previous.iso'
-    $renamedPaths.files = $renamedFiles
-    $migratedMap = Read-Na2BuildMap `
-        -LogDirectory $structuredLog `
-        -Paths $renamedPaths
-    Assert-Na2Test `
-        -Condition ($migratedMap.LatestBuildId -eq 'old-latest') `
-        -Message 'Renamed Latest ISO key lost its retained build record.'
-    Assert-Na2Test `
-        -Condition ($migratedMap.PreviousBuildId -eq 'old-previous') `
-        -Message 'Renamed Previous ISO key lost its retained build record.'
-    $migratedMapText = [IO.File]::ReadAllText((Join-Path $structuredLog 'builds.tsv'))
-    Assert-Na2Test `
-        -Condition ($migratedMapText -match '@build/Narutimate Accel v2\.28 - Latest\.iso') `
-        -Message 'Renamed Latest ISO key was not migrated in builds.tsv.'
-    Assert-Na2Test `
-        -Condition ($migratedMapText -notmatch '@build/NA2\.28 - Current\.iso') `
-        -Message 'The stale Current ISO key remained in builds.tsv.'
     Set-Na2BuildMap `
         -LogDirectory $structuredLog `
         -LatestBuildId 'old-latest' `

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import codecs
-import csv
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path, PurePosixPath
@@ -10,49 +8,6 @@ from ..binary_patcher import engine as binary_patcher
 from ..translation_importer import engine as translation_importer
 from ...payload_builder.operations import ResidentPayloadBuild, ResolvedPatch
 from . import linked_strings
-
-
-STRING_FIELDS = [
-    "string_id",
-    "group_id",
-    "enabled",
-    "status",
-    "confidence",
-    "root_id",
-    "path",
-    "expected_size",
-    "expected_sha256",
-    "offset",
-    "capacity",
-    "encoding",
-    "storage",
-    "expected_text",
-    "replacement_text",
-    "reason",
-    "review_notes",
-]
-STORAGE_MODES = {"fixed", "nul_padded"}
-
-
-@dataclass(frozen=True)
-class StringSpec:
-    string_id: str
-    group_id: str
-    enabled: bool
-    status: str
-    confidence: str
-    root_id: str
-    path: str
-    expected_size: int
-    expected_sha256: str
-    offset: int
-    capacity: int
-    encoding: str
-    storage: str
-    expected_text: str
-    replacement_text: str
-    reason: str
-    review_notes: str
 
 
 @dataclass(frozen=True)
@@ -130,157 +85,12 @@ def _apply_game_title_policy(
     )
 
 
-def _encode_slot(text: str, spec: StringSpec, label: str) -> bytes:
-    if "\x00" in text:
-        raise binary_patcher.PatchError(
-            f"{spec.string_id} {label} contains an embedded NUL"
-        )
-    try:
-        encoded = text.encode(spec.encoding)
-    except UnicodeEncodeError as exc:
-        raise binary_patcher.PatchError(
-            f"{spec.string_id} {label} is not encodable as {spec.encoding}"
-        ) from exc
-    if spec.storage == "fixed":
-        if len(encoded) != spec.capacity:
-            raise binary_patcher.PatchError(
-                f"{spec.string_id} {label} encodes to {len(encoded)} bytes, "
-                f"expected exactly {spec.capacity}"
-            )
-        return encoded
-    if len(encoded) >= spec.capacity:
-        raise binary_patcher.PatchError(
-            f"{spec.string_id} {label} encodes to {len(encoded)} bytes and "
-            f"does not fit a NUL-terminated {spec.capacity}-byte slot"
-        )
-    return encoded + bytes(spec.capacity - len(encoded))
-
-
-def load_specs(directory: Path) -> tuple[StringSpec, ...]:
-    directory = directory.resolve()
-    path = directory / "strings.tsv"
-    if not path.is_file():
-        raise FileNotFoundError(path)
-    with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        reader = csv.DictReader(handle, delimiter="\t")
-        if reader.fieldnames != STRING_FIELDS:
-            raise binary_patcher.PatchError(
-                f"{path}: expected columns {STRING_FIELDS}, found {reader.fieldnames}"
-            )
-        rows = list(reader)
-    specs: list[StringSpec] = []
-    seen: set[str] = set()
-    for row_number, row in enumerate(rows, 2):
-        string_id = row["string_id"].strip()
-        if not string_id or string_id in seen:
-            raise binary_patcher.PatchError(
-                f"{path} row {row_number}: missing or duplicate string_id {string_id!r}"
-            )
-        seen.add(string_id)
-        group_id = row["group_id"].strip()
-        if not group_id:
-            raise binary_patcher.PatchError(
-                f"{path} row {row_number}: group_id is empty"
-            )
-        status = row["status"].strip()
-        if status not in binary_patcher.PATCH_STATUSES:
-            raise binary_patcher.PatchError(
-                f"{path} row {row_number}: invalid status {status!r}"
-            )
-        confidence = row["confidence"].strip()
-        if confidence not in binary_patcher.CONFIDENCE_VALUES:
-            raise binary_patcher.PatchError(
-                f"{path} row {row_number}: invalid confidence {confidence!r}"
-            )
-        root_id = row["root_id"].strip()
-        if not root_id:
-            raise binary_patcher.PatchError(
-                f"{path} row {row_number}: root_id is empty"
-            )
-        target_path = binary_patcher.relative_posix(
-            row["path"], f"{path} row {row_number} path"
-        ).as_posix()
-        expected_size = binary_patcher.parse_int(
-            row["expected_size"], f"{path} row {row_number} expected_size"
-        )
-        offset = binary_patcher.parse_int(
-            row["offset"], f"{path} row {row_number} offset"
-        )
-        capacity = binary_patcher.parse_int(
-            row["capacity"], f"{path} row {row_number} capacity"
-        )
-        if expected_size <= 0 or offset < 0 or capacity <= 0:
-            raise binary_patcher.PatchError(
-                f"{path} row {row_number}: sizes must be positive and offset non-negative"
-            )
-        if offset + capacity > expected_size:
-            raise binary_patcher.PatchError(
-                f"{path} row {row_number}: string slot exceeds target size"
-            )
-        encoding = row["encoding"].strip()
-        try:
-            encoding = codecs.lookup(encoding).name
-        except LookupError as exc:
-            raise binary_patcher.PatchError(
-                f"{path} row {row_number}: unknown encoding {encoding!r}"
-            ) from exc
-        storage = row["storage"].strip()
-        if storage not in STORAGE_MODES:
-            raise binary_patcher.PatchError(
-                f"{path} row {row_number}: invalid storage mode {storage!r}"
-            )
-        spec = StringSpec(
-            string_id=string_id,
-            group_id=group_id,
-            enabled=binary_patcher.parse_bool(
-                row["enabled"],
-                f"{path} row {row_number} enabled",
-            ),
-            status=status,
-            confidence=confidence,
-            root_id=root_id,
-            path=target_path,
-            expected_size=expected_size,
-            expected_sha256=binary_patcher.normalized_sha256(
-                row["expected_sha256"],
-                f"{path} row {row_number} expected_sha256",
-            ),
-            offset=offset,
-            capacity=capacity,
-            encoding=encoding,
-            storage=storage,
-            expected_text=row["expected_text"],
-            replacement_text=row["replacement_text"],
-            reason=row["reason"].strip(),
-            review_notes=row["review_notes"].strip(),
-        )
-        if (
-            spec.enabled
-            and spec.status not in binary_patcher.APPLICABLE_STATUSES
-        ):
-            raise binary_patcher.PatchError(
-                f"{path} row {row_number}: enabled strings must be applicable"
-            )
-        if not spec.reason:
-            raise binary_patcher.PatchError(
-                f"{path} row {row_number}: reason is empty"
-            )
-        _encode_slot(spec.expected_text, spec, "expected_text")
-        _encode_slot(spec.replacement_text, spec, "replacement_text")
-        specs.append(spec)
-    return tuple(specs)
-
-
 def build_binary_package(
-    directory: Path | None,
     *,
     imported_rows: Sequence[Mapping[str, str]] = (),
     imported_targets: Mapping[str, Mapping[str, object]] | None = None,
 ) -> binary_patcher.Package:
-    package_directory = (
-        directory.resolve() if directory is not None else Path(__file__).resolve().parent
-    )
-    specs = load_specs(package_directory) if directory is not None else ()
+    package_directory = Path(__file__).resolve().parent
     imported_targets = imported_targets or {}
     targets: dict[str, binary_patcher.Target] = {}
     target_ids: dict[tuple[str, str], str] = {}
@@ -323,63 +133,6 @@ def build_binary_package(
                 f"{root_id}:{normalized_path}"
             )
         return target_id
-
-    for spec in specs:
-        target_id = ensure_target(
-            root_id=spec.root_id,
-            path=spec.path,
-            expected_size=spec.expected_size,
-            expected_sha256=spec.expected_sha256,
-            label=spec.string_id,
-        )
-        groups.setdefault(
-            spec.group_id,
-            binary_patcher.Group(
-                group_id=spec.group_id,
-                enabled=True,
-                name=spec.group_id.replace("_", " ").title(),
-                description="String patch selection group.",
-                review_notes="",
-            ),
-        )
-        patches[spec.string_id] = binary_patcher.Patch(
-            patch_id=spec.string_id,
-            group_id=spec.group_id,
-            enabled=spec.enabled,
-            status=spec.status,
-            confidence=spec.confidence,
-            name=spec.string_id,
-            description=spec.reason,
-            evidence_id="",
-            review_notes=spec.review_notes,
-        )
-        edits.append(
-            binary_patcher.Edit(
-                edit_id=f"{spec.string_id}-string",
-                patch_id=spec.string_id,
-                order=10,
-                destination_target_id=target_id,
-                destination_offset=spec.offset,
-                operation="replace",
-                length=spec.capacity,
-                expected_hex=_encode_slot(
-                    spec.expected_text, spec, "expected_text"
-                ).hex().upper(),
-                expected_sha256="",
-                replacement_hex=_encode_slot(
-                    spec.replacement_text, spec, "replacement_text"
-                ).hex().upper(),
-                source_target_id="",
-                source_offset=None,
-                source_expected_hex="",
-                source_expected_sha256="",
-                blob_path=None,
-                blob_offset=None,
-                blob_sha256="",
-                fill_hex="",
-                reason=spec.reason,
-            )
-        )
 
     for row_number, row in enumerate(imported_rows, 1):
         label = f"translation import row {row_number}"
@@ -489,15 +242,7 @@ def build_binary_package(
 
     return binary_patcher.Package(
         directory=package_directory,
-        package_id=(
-            f"{package_directory.parent.name}.{package_directory.name}"
-            if directory is not None and package_directory.name == "string_patcher"
-            else (
-                package_directory.name
-                if directory is not None
-                else "derived.string_patcher"
-            )
-        ),
+        package_id="derived.string_patcher",
         targets=targets,
         groups=groups,
         patches=patches,
@@ -543,7 +288,6 @@ def build_translation_draft(
 
 
 def finalize_translation_plan(
-    directory: Path | None,
     *,
     draft: StringPatchDraft,
     build: ResidentPayloadBuild | None,
@@ -571,7 +315,6 @@ def finalize_translation_plan(
     )
     inline_rows = tuple(translation_plan.import_rows)
     package = build_binary_package(
-        directory,
         imported_rows=inline_rows + external_rows,
         imported_targets=translation_plan.targets,
     )

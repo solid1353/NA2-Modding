@@ -11,9 +11,6 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from paths import PATHS
-
-
 REG = (
     "zero", "at", "v0", "v1", "a0", "a1", "a2", "a3",
     "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",

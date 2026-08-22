@@ -1,7 +1,7 @@
 # String patcher engine
 
-This reusable engine validates feature-owned semantic string declarations and
-translation imports, chooses inline or linked external placement, and compiles
+This internal derived stage validates translation imports, chooses inline or
+linked external placement, and compiles
 all concrete file-backed edits into one in-memory binary-patcher package.
 External strings are contributed as named read-only-data fragments with
 symbolic pointer writes; `payload_builder` assigns their offsets and constructs
@@ -9,10 +9,8 @@ symbolic pointer writes; `payload_builder` assigns their offsets and constructs
 guarded writes and conflict validation. The engine never owns the shared file,
 loader, memory reservation, or final runtime addresses.
 
-Localization owns no `string_patcher/` data directory because it currently
-has no local string declarations. Its importer artifact invokes this generic
-consumer as a derived stage. A feature creates `string_patcher/strings.tsv` only
-when it owns actual local declarations.
+The translation importer invokes this engine directly with validated in-memory
+rows. There is no physical `string_patcher/` module or `strings.tsv` interface.
 
 The importer supplies replacement message families only after proving complete
 `<br>`-part coverage. When a family member overflows, the patcher materializes

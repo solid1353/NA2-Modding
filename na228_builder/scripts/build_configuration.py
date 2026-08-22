@@ -58,10 +58,8 @@ def normalize(path: str) -> str:
 
 
 def apply_binary_patch_set(
-    package_directory: Path,
     *,
-    package: binary_patcher_module.Package | None = None,
-    targets_path: Path | None = None,
+    package: binary_patcher_module.Package,
     roots: dict[str, Path],
     feature_id: str,
     source: Iso9660,
@@ -69,11 +67,6 @@ def apply_binary_patch_set(
     owners: dict[str, str],
     allow_empty_enabled: bool = False,
 ) -> dict[str, object]:
-    if package is None:
-        package = binary_patcher_module.load_package(
-            package_directory,
-            targets_path=targets_path,
-        )
     target_data = binary_patcher_module.verify_package_data(package, roots)
     enabled_patch_ids = [
         patch.patch_id
@@ -461,7 +454,6 @@ def apply_configuration_modules(
     pipeline = prepare_module_pipeline(configuration, payload_shift=payload_shift)
     ordered_modules = pipeline.ordered_modules
     import_plans = pipeline.import_plans
-    string_plans = pipeline.string_plans
     derived_string_plans = pipeline.derived_string_plans
     runtime_injection_declarations = pipeline.runtime_injection_declarations
     runtime_injection_packages = pipeline.runtime_injection_packages
@@ -469,49 +461,19 @@ def apply_configuration_modules(
 
     results: list[dict[str, object]] = []
     for module in ordered_modules:
-        if module.module == "string_patcher":
-            string_plan = string_plans.get(module.module_id)
-            compiled_package = (
-                string_plan.package
-                if string_plan is not None
-                else string_patcher_module.build_binary_package(module.input_path)
-            )
-            result = apply_binary_patch_set(
-                module.input_path,
-                package=compiled_package,
-                roots=configuration.roots,
-                feature_id=module.feature_id,
-                source=source,
-                payloads=payloads,
-                owners=owners,
-            )
-            paths = list(result["patched_paths"])
-            results.append(
-                {
-                    "module": module,
-                    "binary_patch_result": result,
-                    "string_patch_plan": string_plan,
-                    "paths": paths,
-                }
-            )
-            continue
         if module.module == "binary_patcher":
-            package = None
-            if configuration.selection is not None:
-                package = catalog_module.load_binary_package(
-                    configuration.selection,
-                    module.feature_id,
-                    configuration.targets_path,
-                    configuration.selection.catalog_path.parent.parent,
-                    configuration.selection.catalog_path.parent
-                    / "modules"
-                    / "binary_patcher"
-                    / "operations",
-                )
+            package = catalog_module.load_binary_package(
+                configuration.selection,
+                module.feature_id,
+                configuration.targets_path,
+                configuration.selection.catalog_path.parent.parent,
+                configuration.selection.catalog_path.parent
+                / "modules"
+                / "binary_patcher"
+                / "operations",
+            )
             result = apply_binary_patch_set(
-                module.input_path,
                 package=package,
-                targets_path=configuration.targets_path,
                 roots=configuration.roots,
                 feature_id=module.feature_id,
                 source=source,
@@ -530,7 +492,6 @@ def apply_configuration_modules(
         if module.module == "runtime_injector":
             declaration = runtime_injection_declarations[module.module_id]
             result = apply_binary_patch_set(
-                module.input_path,
                 package=runtime_injection_packages[module.module_id],
                 roots=configuration.roots,
                 feature_id=module.feature_id,
@@ -559,7 +520,6 @@ def apply_configuration_modules(
             derived = derived_string_plans.get(module.module_id)
             if derived is not None:
                 derived_result = apply_binary_patch_set(
-                    Path(string_patcher_module.__file__).resolve().parent,
                     package=derived.package,
                     roots=configuration.roots,
                     feature_id=module.feature_id,
@@ -613,7 +573,6 @@ def apply_configuration_modules(
             clean_boot=clean_boot,
         )
         integration_result = apply_binary_patch_set(
-            Path(payload_builder_module.__file__).resolve().parent,
             package=integration_package,
             roots=configuration.roots,
             feature_id="payload_builder",

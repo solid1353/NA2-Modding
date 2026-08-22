@@ -361,9 +361,12 @@ replaces that text with root `settings.title` before choosing inline or linked
 external placement. Disabling its catalog setting leaves the imported text
 unchanged.
 
-Every primitive binary edit uses a nonempty unique `destination_offsets` list.
-When the same guarded operation applies at multiple known locations in one
-target, one definition lists all of them. The loader expands the list into
+Every primitive binary edit declares exactly one destination form:
+`destination_offset` for one integer address, or `destination_offsets` for a
+unique list of at least two addresses. The loader normalizes the singular form
+to its internal one-element list before operation-manifest validation. When the
+same guarded operation applies at multiple known locations in one target, one
+definition lists all of them. The loader expands the normalized list into
 independently guarded and logged concrete edits; it never searches the target
 or derives an occurrence count.
 

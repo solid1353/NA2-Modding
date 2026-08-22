@@ -30,9 +30,11 @@ guarded file edits.
 - All persisted paths are relative.
 - Every input target is checked by size and SHA-256.
 - Every destination range is checked by exact bytes or a range SHA-256.
-- Every primitive catalog edit uses a nonempty unique `destination_offsets` list.
-  Multiple offsets expand into independently guarded and logged concrete edits
-  with otherwise identical behavior.
+- Catalog authoring uses `destination_offset` for one address or a unique
+  `destination_offsets` list for at least two. The catalog loader normalizes
+  both forms to the nonempty list this module receives. Multiple offsets expand
+  into independently guarded and logged concrete edits with otherwise
+  identical behavior.
 - A catalog `replace_table` records one target, table base, stride, field offset,
   and semantic record map. The catalog loader validates its fixed record shape
   and expands it into ordinary guarded `replace` edits; the binary patcher has

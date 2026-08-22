@@ -1017,6 +1017,62 @@ class CatalogTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unique offsets"):
             catalog._parse_int_list(["0x10", "0x10"], "offsets")
 
+    def test_destination_offset_forms_normalize_to_internal_lists(self) -> None:
+        singular = {
+            "operation": "replace",
+            "destination_target_id": "test_target",
+            "destination_offset": "0x10",
+            "expected_hex": "00",
+            "replacement_hex": "01",
+        }
+        plural = {
+            **singular,
+            "destination_offsets": ["0x10", "0x20"],
+        }
+        del plural["destination_offset"]
+
+        singular_member = catalog._edit_members(
+            "e__feature__singular", singular
+        )[0][1]
+        plural_member = catalog._edit_members(
+            "e__feature__plural", plural
+        )[0][1]
+
+        self.assertNotIn("destination_offset", singular_member)
+        self.assertEqual(singular_member["destination_offsets"], [0x10])
+        self.assertEqual(plural_member["destination_offsets"], [0x10, 0x20])
+
+    def test_destination_offset_forms_reject_ambiguous_or_redundant_input(
+        self,
+    ) -> None:
+        definition = {
+            "operation": "replace",
+            "destination_target_id": "test_target",
+            "destination_offset": "0x10",
+            "expected_hex": "00",
+            "replacement_hex": "01",
+        }
+        with self.assertRaisesRegex(
+            ValueError,
+            "exactly one of destination_offset or destination_offsets",
+        ):
+            catalog._edit_members(
+                "e__feature__ambiguous",
+                {**definition, "destination_offsets": ["0x10", "0x20"]},
+            )
+        with self.assertRaisesRegex(
+            ValueError,
+            "exactly one of destination_offset or destination_offsets",
+        ):
+            missing = dict(definition)
+            del missing["destination_offset"]
+            catalog._edit_members("e__feature__missing", missing)
+        with self.assertRaisesRegex(ValueError, "must contain at least two"):
+            redundant = dict(definition)
+            del redundant["destination_offset"]
+            redundant["destination_offsets"] = ["0x10"]
+            catalog._edit_members("e__feature__redundant", redundant)
+
     def test_grouped_edit_expands_named_primitive_edits(self) -> None:
         source = '''{
           grouped: setting {
@@ -1039,7 +1095,7 @@ class CatalogTests(unittest.TestCase):
                     "description": "Install one binary asset.",
                     "operation": "blob",
                     "destination_target_id": "test_target",
-                    "destination_offsets": ["0xC"],
+                    "destination_offset": "0xC",
                     "expected_sha256": "0" * 64,
                     "blob_path": "asset.bin",
                     "blob_sha256": hashlib.sha256(b"\xAA\xBB").hexdigest(),
@@ -1048,7 +1104,7 @@ class CatalogTests(unittest.TestCase):
                     "description": "Clear one flag.",
                     "operation": "replace",
                     "destination_target_id": "test_target",
-                    "destination_offsets": ["0x8"],
+                    "destination_offset": "0x8",
                     "expected_hex": "01",
                     "replacement_hex": "00",
                 },
@@ -1246,14 +1302,14 @@ class CatalogTests(unittest.TestCase):
                 "first": {
                     "operation": "replace",
                     "destination_target_id": "test_target",
-                    "destination_offsets": ["0x0"],
+                    "destination_offset": "0x0",
                     "expected_hex": "0000",
                     "replacement_hex": "1111",
                 },
                 "second": {
                     "operation": "replace",
                     "destination_target_id": "test_target",
-                    "destination_offsets": ["0x1"],
+                    "destination_offset": "0x1",
                     "expected_hex": "00",
                     "replacement_hex": "22",
                 },

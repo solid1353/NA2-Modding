@@ -1119,6 +1119,44 @@ def _edit_members(
     edit_id: str,
     definition: dict[str, object],
 ) -> tuple[tuple[str | None, dict[str, object]], ...]:
+    def normalize_destination(
+        member_id: str | None,
+        edit: dict[str, object],
+    ) -> dict[str, object]:
+        label = f"edits.{edit_id}"
+        if member_id is not None:
+            label += f".edits.{member_id}"
+        destination_fields = {
+            "destination_offset",
+            "destination_offsets",
+        } & set(edit)
+        if len(destination_fields) != 1:
+            raise ValueError(
+                f"{label} requires exactly one of destination_offset "
+                "or destination_offsets"
+            )
+
+        normalized = dict(edit)
+        if "destination_offset" in edit:
+            destination_offset = _parse_int(
+                edit["destination_offset"],
+                f"{label}.destination_offset",
+            )
+            del normalized["destination_offset"]
+            normalized["destination_offsets"] = [destination_offset]
+        else:
+            destination_offsets = _parse_int_list(
+                edit["destination_offsets"],
+                f"{label}.destination_offsets",
+            )
+            if len(destination_offsets) < 2:
+                raise ValueError(
+                    f"{label}.destination_offsets must contain at least two "
+                    "offsets; use destination_offset for one"
+                )
+            normalized["destination_offsets"] = list(destination_offsets)
+        return normalized
+
     def expand_table(
         table_id: str | None,
         table: dict[str, object],
@@ -1244,7 +1282,7 @@ def _edit_members(
     if "edits" not in definition:
         if definition.get("operation") == "replace_table":
             return expand_table(None, definition)
-        return ((None, definition),)
+        return ((None, normalize_destination(None, definition)),)
     members = definition["edits"]
     if not isinstance(members, dict):
         raise TypeError(f"Edit group {edit_id!r}.edits was not validated")
@@ -1255,7 +1293,7 @@ def _edit_members(
         if member.get("operation") == "replace_table":
             result.extend(expand_table(member_id, member))
         else:
-            result.append((member_id, member))
+            result.append((member_id, normalize_destination(member_id, member)))
     return tuple(result)
 
 

@@ -6,8 +6,8 @@
   migration validation are defined in [`paths.md`](paths.md).
 - For a requested `from <source> to <destination>` link, preserve the source and
   create the link at the destination. Do not redesign ownership unless asked.
-- Treat `@pcsx2_dev` and the PCSX2 fork worker template as
-  protected. Runtime-specific handling is in
+- Treat `@pcsx2_dev` as protected; `@pcsx2_fork` is build output, not a
+  runnable installation. Runtime procedures are in
   [`../runbooks/runtime-testing.md`](../runbooks/runtime-testing.md).
 
 ## Git and concurrent work

@@ -1,110 +1,74 @@
 # Path configuration
 
-The path system has four layers with separate technical owners:
+## Ownership
 
-1. Workshop root `paths.json` owns every shared root and named file.
-2. NA2 root `paths.json` imports Workshop and adds only NA2-local paths.
-3. Workshop root `games.json` owns shared source-game selectors, aliases,
-   serials, and CRCs.
-4. NA2 root `game.json` owns NA2.28 output identity, build targets, each
-   buildable target's configuration, rotation relationships, base launch
-   settings, and direct named launch-profile overrides.
+- Workshop `paths.json` owns shared source, tooling, PCSX2, work, log, and
+  savestate paths.
+- NA2 `paths.json` imports Workshop and defines only NA2-owned roots and files.
+- Workshop `games.json` owns source-game names, aliases, serials, and CRCs.
+- NA2 `game.json` owns the project identity, build targets, launch settings,
+  and launch-profile overrides.
 
-The PowerShell and Python loaders merge both catalogs. Canonical files store
-only repository-relative paths or `@root/child` references. Resolved absolute
-paths exist only at runtime.
+Workshop must not depend on NA2. NA2 may override imported entries only by
+defining the same name in its own manifest.
 
-## Workshop boundary
+## Manifest contract
 
-`@workshop` is imported from the sibling `UN Workshop/paths.json`. Workshop
-is shared across consuming modding projects and does not depend on NA2. Its
-root manifest owns reusable public infrastructure:
+- Roots and files use repository-relative paths or `@root/child` references.
+- Each manifest is resolved relative to its own directory, never the caller's
+  working directory.
+- Loaders inject `repository`; manifests do not define it.
+- Parent roots precede entries derived from them. Group related roots and files
+  together; do not alphabetize aliases away from their parent.
+- `existence_deferred_roots` contains only generated roots that may be absent
+  while loading the manifest.
+- Consumers use manifest names through a maintained loader. Do not repeat a
+  backing path in code, tests, commands, or documentation.
 
-- source media, analysis, tools, and configured emulator roots;
-- shared PCSX2 assets;
-- reusable PCSX2, savestate, PINE, input-profile, ISO-identity, and Ghidra
-  tooling under `@scripts/`;
-- source-game configuration in the configured `source_catalog` file;
-- source-game savestate filing under ignored `@savestates/`;
-  project build savestates stay under the invoking project's ignored
-  `@work/sstates/`.
+Workshop owns shared names such as `source_catalog`, `game_resolver`,
+`pcsx2_dev`, and `pcsx2_*_command`. NA2 owns `project_settings`,
+`publish_release_command`, and its local build, work, log, and PCSX2 content
+roots. The manifests are the complete inventory; this policy does not duplicate
+their entries.
 
-The public repository ignores original media, extracted data, private analysis
-databases, toolchains, emulator binaries, BIOS files, memory cards, savestates,
-logs, and task artifacts.
+## Registered game content
 
-## Source games
+Alias-owned PCSX2 content is stored as one bundle:
 
-The configured original project files are `na2_iso`, `nun3_iso`, `nun5_iso`,
-and `nun6_iso`. NUN6 is a Brazilian NUN5 mod retained as a possible
-feature donor, not an official successor or English authority.
+```text
+pcsx2_files/games/<alias>/
+  <alias>.ini
+  <alias>.pnach
+  <alias>.ps2
+```
 
-## Important NA2 roots
+Each registered bundle must exist in exactly one configured `pcsx2_files` root.
+Workshop owns NUN3; NA2 owns NA2, NA228, NUN5, and NUN6. All NA2.28 build
+selectors use the NA228 bundle. Shared default and test cards remain in
+Workshop `pcsx2_files/memory_cards`; input recordings remain under each owning
+repository's `pcsx2_files/input_recordings`.
 
-- `repository`: this repository; always `.`.
-- `workshop`, `source`, `disassembly`, and `tools`: imported Workshop roots.
-- `build`, `logs`, `task_logs`, `builder`, `resources`, `scripts`, `work`, and
-  `release`: NA2 roots. `task_logs` owns deferred generated records. `work`
-  contains only chat-owned workspaces; `release` owns the ignored publication
-  directory.
-  `resources` owns repository-wide metadata shared by the builder and launcher.
-- `pcsx2_scripts`: imported shared PCSX2 scripts.
-- `pcsx2_dev` and `pcsx2_fork`: the protected configured development runtime
-  and the maintained fork build output.
-- `pcsx2_files` and `pcsx2_input_recordings`: NA2-owned game bundles under
-  `@pcsx2_files/games/` and recordings. Root `launch_profiles/` owns
-  launch-profile behavior and assets. Workshop retains input profiles, NUN3's
-  registered bundle under `@pcsx2_files/games/NUN3/`, and default and test
-  cards.
-- `source_<game>`: derived extraction roots from the Workshop source catalog.
+`resolve_game.py <selector> [--project-root <path>]` resolves selectors
+case-insensitively and returns absolute ISO, extracted-source, bundle-file, and
+input-profile paths, plus the build postfix. Project resolution searches
+Workshop and the invoking repository and rejects missing or duplicate
+registered bundles.
 
-## Important NA2 files
+## Loader APIs
 
-- `source_catalog`: Workshop root `games.json`.
-- `project_settings`: root `game.json`.
-- `game_resolver`: configured Workshop game resolver.
-- `pcsx2_launch_command`, `pcsx2_game_launch_command`, and
-  `pcsx2_pine_command`: Workshop utilities.
-- `ghidra_runtime`: Workshop headless-Ghidra runtime setup.
-- `publish_release_command`: NA2 release entrypoint.
+- PowerShell: `Get-Na2Paths` or `Get-UnWorkshopPaths`.
+- Python: `load_paths()`, `load_workshop_paths()`, or `resolve_game.py`.
+- Runtime-derived entries include `source_<source>`, `<source>_iso`,
+  `<build>_iso`, `<build>_memory_card`, `input_profile`, `cheat_template`, and
+  `gamesettings_template`.
 
-Catalog-derived compatibility files remain available to callers:
+## Changes and validation
 
-- `<source>_iso` and `source_<source>`;
-- `<build>_iso` and `<build>_memory_card`;
-- `input_profile`, `cheat_template`, and `gamesettings_template`.
+Move the canonical content first, then update its manifest name and every
+consumer in the same change. Delete retired names and logic; do not add
+compatibility handling.
 
-## Resolution
-
-Workshop `resolve_game.py <selector> [--project-root <path>]` resolves one
-selector case-insensitively and emits one JSON object containing fully resolved
-absolute paths, plus the derived postfix for project builds. Source paths derive
-from the canonical key plus serial/CRC.
-Build postfixes derive from canonical keys by replacing underscores with spaces
-and title-casing the result (`e2e_test` becomes `E2E Test`). Build ISO paths
-derive from title and that postfix. NA2-family PCSX2 files resolve from their
-canonical bundle under `@pcsx2_files/games/`, and all NA2.28 builds use the
-`NA228` bundle.
-The loader searches the Workshop and invoking-project `pcsx2_files` roots and
-requires each registered bundle to exist in exactly one of them with matching
-PNACH, GameSettings, and memory-card files. The manifest directory is injected
-as the `repository` root by the loader; manifests do not configure `.` as a
-root.
-The command is independent of the caller's current working directory.
-
-PowerShell callers use `Get-Na2Paths`; Python callers use
-`load_paths()` or Workshop's `resolve_game.py`.
-Once `paths.json` names a root, code, tests, logs, and documentation use it
-through `@root/...` or the loader API; only manifest definitions and the minimal
-loader bootstrap may spell backing paths. NA2 overlays its local roots/files on
-the imported Workshop map; Workshop never imports NA2.
-
-## Migration rule
-
-Move the canonical owner first and update `paths.json` or the owning builder
-definition file.
-For an NA2 path/catalog change, validate the PowerShell loader and its existing
-Python unit tests with:
+For NA2 path changes, run:
 
 ```powershell
 & { . .\scripts\lib\paths.ps1; Get-Na2Paths | Out-Null }
@@ -114,3 +78,6 @@ Python unit tests with:
   -NoBytecode `
   -ArgumentList @('discover', '-s', 'tests/na228_builder', '-p', 'test_paths.py')
 ```
+
+For Workshop path changes, run its affected tests or the full
+`tests/run.ps1` suite.

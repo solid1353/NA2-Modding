@@ -27,7 +27,7 @@ from current disassembly or runtime evidence before implementation.
 - [Pause, start-menu, and battle-restart control](pause_and_replay.md)
 - [NA228 modes and menu navigation](modes_and_navigation.md)
 - [Character identity in battle](character_ids.md)
-- [60 FPS implementation research](framerate.md)
+- [60 FPS implementation research](../../../experiments/60%20fps/framerate.md)
 - [Storm-style substitution bar](substitution_bar.md)
 - [Substitution knowledge](substitution.md)
 - [X-dash knowledge](xdash.md)

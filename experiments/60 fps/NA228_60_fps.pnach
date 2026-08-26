@@ -1,0 +1,632 @@
+[+60 FPS scheduler]
+// Status: verified site; incomplete and broken when enabled alone.
+// Produces the 59.94 Hz engine cadence, but doubles uncompensated battle work.
+// Sequential replay status: boot-wide activation reaches the pre-input anchor
+// at frame 2589 with wrong fighter positions and action-timeline cursors.
+// A battle-ready activation boundary is required before input parity can test.
+// Rejected boundary: clean inner state 4 at frame 2437 still owns the opening
+// clash; activation there reached frame 2589 at about +/-183 and cursor 12,
+// versus clean about +/-255 and cursor 50. Test the post-opening idle boundary.
+// Runtime activation must call the live threshold setter: changing this
+// one-time initializer after boot left context +0x01 at 2. A direct frame-2491
+// live switch restored cursor 50 at frame 2589, but history was 3 vs clean 2
+// and X positions were not bit-exact. The activation hook is still unresolved.
+patch=1,EE,201E11C0,extended,24050001 // li a1,1
+
+[+Combo continuation timer]
+// Status: locally runtime verified; full replay parity is not yet verified.
+// Changes the independent countdown delta from 1.0 to 0.5.
+// Intended to keep the 90-frame combo window at its clean wall-clock duration.
+// A natural three-hit sequence reset the timer to 90 at frames 3127, 3131,
+// and 3135; its float timeline then advanced in 0.5 steps per VBlank.
+// This confirms the timer mechanism only; the run had diverged earlier.
+// Clean word: 3C023F80.
+patch=1,EE,2020C4E8,extended,3C023F00 // lui v0,0x3f00
+
+[+Fighter hitstop timer]
+// Status: locally runtime verified; full replay parity is not yet verified.
+// Changes the actor +0x200 pause countdown delta from 1.0 to 0.5.
+// Intended to preserve actor +0x200 hitstop duration independently of motion.
+// Natural hits at frames 3127, 3131, and 3135 each produced a positive
+// one-count hitstop on the following two VBlanks before returning to zero.
+// This confirms the timer mechanism only; the run had diverged earlier.
+// Clean word: 3C023F80.
+patch=1,EE,2024CA68,extended,3C023F00 // lui v0,0x3f00
+
+[+Fighter animation factor]
+// Status: runtime verified for ordinary, override, and modifier paths.
+// Multiplies the final composed fighter factor by 0.5.
+// Rewrites only the existing 0x0024C4A0..0x0024C4C8 composition window:
+// multiply the selected +0x1AC value by +0x1B4, then by 0.5, store it, and
+// preserve the original a0=s1 / a1=0 call setup. No code cave is used.
+// Runtime: both fighters changed from forced 0.0 to exactly 0.5 at frame 5446.
+// Synthetic branch tests also produced 0.8*1.0*0.5=0.4 and
+// 1.0*0.25*0.5=0.125; all +0x1B0/+0x1B4 composition paths are covered.
+// Boot-combined replay: both live factors were exactly 0.5 at frame 2400;
+// over frames 2400..2412 the fractional cursor gained 0.5 each VBlank and
+// the authored integer cursor advanced every other VBlank. The independent
+// transform-history index still advanced every VBlank and needs another fix.
+// Sequential frame-2491 activation: both full fighter objects matched clean
+// before injection. At the first clean logical endpoint, frame 2493, the
+// authored cursor matched but whole-update fields +0x4C4, +0x548, +0x8C0,
+// and +0xB98 were each one update ahead, and positions were not bit-exact.
+// Status: factor compensation is necessary but not sufficient; fighter logic
+// and history need a separate 30 Hz phase gate before input frame 2590 can test.
+// Clean words replaced in order: 3C023F80, 44820000, 00000000, 46010032,
+// 45010004, C62001AC, 46010002. Unchanged load/store/join words remain native.
+patch=1,EE,2024C4A4,extended,C62001AC // lwc1 f0,0x1ac(s1)
+patch=1,EE,2024C4A8,extended,46010002 // mul.s f0,f0,f1
+patch=1,EE,2024C4AC,extended,3C023F00 // lui v0,0x3f00
+patch=1,EE,2024C4B0,extended,44820800 // mtc1 v0,f1
+patch=1,EE,2024C4B4,extended,00000000 // nop
+patch=1,EE,2024C4BC,extended,46010002 // mul.s f0,f0,f1
+patch=1,EE,2024C4C0,extended,00000000 // nop
+
+[-Fighter logical phase gate]
+// Status: runtime verified as necessary; disabled pending complete pre-input parity.
+// Gates ccPlayerCtrl first-phase fighter logic and third-phase history to odd
+// renderer ordinals, matching the clean replay's logical-update phase. The
+// second transform/presentation phase remains active on every physical VBlank.
+// This diagnostic must be tested with Fighter animation factor disabled/clean;
+// otherwise its 0.5 factor would advance only on the retained 30 Hz phase.
+// Frame 2492 matched both clean 0xC00-byte fighter objects exactly. Combined
+// with the angular-jitter gate below, frames 2493 and 2494 also matched both
+// complete fighter objects; the next mismatch is shared RNG outside fighters.
+// Code uses the Current-only development reservation at 0x008F0000 and is not
+// a portable clean-ELF cave. Runtime identity/header and hook words must match.
+// Clean hook words: 323E0004, 13C00008, 00000000 at 0x001F05DC..0x001F05E4.
+patch=1,EE,208F0000,extended,3C020060 // lui v0,0x0060
+patch=1,EE,208F0004,extended,8C4273FC // lw v0,0x73fc(v0): live system context
+patch=1,EE,208F0008,extended,8C420194 // lw v0,0x194(v0): renderer ordinal
+patch=1,EE,208F000C,extended,30420001 // andi v0,v0,1
+patch=1,EE,208F0010,extended,00021080 // sll v0,v0,2
+patch=1,EE,208F0014,extended,0222F024 // and s8,s1,v0: retain ccPlayerCtrl bit on odd phase
+patch=1,EE,208F0018,extended,03E00008 // jr ra
+patch=1,EE,208F001C,extended,00000000 // nop
+patch=1,EE,201F05DC,extended,0C23C000 // jal 0x008f0000
+patch=1,EE,201F05E0,extended,00000000 // nop
+patch=1,EE,201F05E4,extended,13C00007 // beq s8,zero,0x001f0604
+
+[-Controller input state logical phase]
+// Status: locally runtime verified through frame 2605; disabled pending the
+// rest of the recording and a final decision on sub-logical-frame input edges.
+// Gates resident FUN_00113710 to odd renderer ordinals for both controller
+// ports. FUN_00113480 still ages both rumble queues through FUN_00113B80 on
+// every physical VBlank; only raw-pad publication, held/pressed/released state,
+// and the repeat counter retain the clean 30 Hz logical phase.
+// In the clean replay, Right begins at recording frame 2590 and is published to
+// the game at frame 2593; Cross begins at frame 2602 and is published at frame
+// 2605. Without this gate, the 60 Hz candidate publishes them at frames 2592
+// and 2604. The early Cross edge is cleared before the retained fighter update,
+// leaving Kakashi in action 1/substate 14 and causing 18 downstream effect RNG
+// draws at frame 2605 instead of clean action 2/substate 23 and MT index 384.
+// With this gate, the complete controller state and every tracked battle/RNG
+// region are byte-exact to clean on every frame 2589..2605. A press and release
+// wholly contained in a skipped even VBlank is not covered by this replay;
+// preserve or accumulate such edges before treating this as a final input fix.
+// Code uses the Current-only development reservation at 0x008F0900.
+// Clean hook words: 27BDFF80, FFBF0060, 7FB50050 at 0x00113710..0x00113718.
+patch=1,EE,20113710,extended,03E0C825 // or t9,ra,zero: preserve caller return
+patch=1,EE,20113714,extended,0823C240 // j 0x008f0900
+patch=1,EE,20113718,extended,00000000 // nop
+patch=1,EE,208F0900,extended,3C020060 // lui v0,0x0060
+patch=1,EE,208F0904,extended,8C4273FC // lw v0,0x73fc(v0): live system context
+patch=1,EE,208F0908,extended,8C420194 // lw v0,0x194(v0): renderer ordinal
+patch=1,EE,208F090C,extended,30420001 // andi v0,v0,1
+patch=1,EE,208F0910,extended,14400003 // bne v0,zero,0x008f0920
+patch=1,EE,208F0914,extended,00000000 // nop
+patch=1,EE,208F0918,extended,03200008 // jr t9: skip added even-phase refresh
+patch=1,EE,208F091C,extended,00000000 // nop
+patch=1,EE,208F0920,extended,27BDFF80 // addiu sp,sp,-0x80
+patch=1,EE,208F0924,extended,FFB90060 // sd t9,0x60(sp): displaced saved ra
+patch=1,EE,208F0928,extended,7FB50050 // sq s5,0x50(sp): displaced prologue
+patch=1,EE,208F092C,extended,08044DC7 // j 0x0011371c
+patch=1,EE,208F0930,extended,00000000 // nop
+
+[-Fighter visual-effect timer logical phase]
+// Status: locally runtime verified at the first semantic mismatch, frame 2642;
+// disabled pending the rest of the replay and render-state alignment.
+// Calls resident FUN_00226370 only on odd renderer ordinals while leaving the
+// rest of FUN_0024DD70's fighter presentation path active every physical VBlank.
+// FUN_00226370 owns the reached fighter fade/timer triplet at +0x31A/+0x31C/
+// +0x31E. At unpatched frame 2642, clean Naruto had duration 1, delta +200,
+// and value 100 while candidate had duration 0, delta -200, and value 0.
+// With this callsite gate, both complete fighters and every tracked battle,
+// controller, emitter, and RNG region are byte-exact at frame 2642.
+// Screenshots still differ at frame 2641 despite fighter-state parity, so this
+// is a verified timer fix, not proof of final render interpolation or alignment.
+// Code uses the Current-only reservation at 0x008F0980.
+// Clean callsite word: 0C0898DC at 0x0024DD94.
+patch=1,EE,2024DD94,extended,0C23C260 // jal 0x008f0980
+patch=1,EE,208F0980,extended,3C020060 // lui v0,0x0060
+patch=1,EE,208F0984,extended,8C4273FC // lw v0,0x73fc(v0): live system context
+patch=1,EE,208F0988,extended,8C420194 // lw v0,0x194(v0): renderer ordinal
+patch=1,EE,208F098C,extended,30420001 // andi v0,v0,1
+patch=1,EE,208F0990,extended,10400003 // beq v0,zero,0x008f09a0
+patch=1,EE,208F0994,extended,00000000 // nop
+patch=1,EE,208F0998,extended,080898DC // j FUN_00226370 on retained phase
+patch=1,EE,208F099C,extended,00000000 // nop
+patch=1,EE,208F09A0,extended,03E00008 // jr ra: skip added even-phase timer update
+patch=1,EE,208F09A4,extended,00000000 // nop
+
+[-Per-element angular jitter logical phase gate]
+// Status: runtime verified for the isolated 23-draw discrepancy; disabled
+// pending complete pre-input parity and a battle-ready activation boundary.
+// Gates resident FUN_00393BD0 to odd renderer ordinals. Its live 23-element
+// loop ran on the added even frame 2492, advanced every element angle, and
+// consumed exactly 23 shared MT words through FUN_001802B0. All calls returned
+// to 0x00393C48; the MT index moved 4->27 before the next fighter update.
+// The hook preserves the incoming return in t9, skips the complete method on
+// even ordinals, and replays its three displaced prologue words on odd ones.
+// Runtime with the fighter phase gate kept the MT index at 4 on frame 2492,
+// reached clean index 29 on frame 2493, and made both full fighter objects
+// exact through frame 2494. The next added draw is in FUN_0030E020 at frame
+// 2494, so this gate fixes its concrete owner but is not complete parity.
+// Code uses the Current-only development reservation at 0x008F0100 and must be
+// combined with the fighter phase gate.
+// Clean hook words: 27BDFFC0, FFBF0030, 7FB20020 at 0x00393BD0..0x00393BD8.
+patch=1,EE,20393BD0,extended,03E0C825 // or t9,ra,zero: preserve caller return
+patch=1,EE,20393BD4,extended,0823C040 // j 0x008f0100
+patch=1,EE,20393BD8,extended,00000000 // nop
+patch=1,EE,208F0100,extended,3C020060 // lui v0,0x0060
+patch=1,EE,208F0104,extended,8C4273FC // lw v0,0x73fc(v0): live system context
+patch=1,EE,208F0108,extended,8C420194 // lw v0,0x194(v0): renderer ordinal
+patch=1,EE,208F010C,extended,30420001 // andi v0,v0,1
+patch=1,EE,208F0110,extended,14400003 // bne v0,zero,0x008f0120
+patch=1,EE,208F0114,extended,00000000 // nop
+patch=1,EE,208F0118,extended,03200008 // jr t9: skip added even-phase update
+patch=1,EE,208F011C,extended,00000000 // nop
+patch=1,EE,208F0120,extended,27BDFFC0 // addiu sp,sp,-0x40
+patch=1,EE,208F0124,extended,FFB90030 // sd t9,0x30(sp): displaced saved ra
+patch=1,EE,208F0128,extended,7FB20020 // sq s2,0x20(sp): displaced prologue
+patch=1,EE,208F012C,extended,080E4EF7 // j 0x00393bdc
+patch=1,EE,208F0130,extended,00000000 // nop
+
+[-CCS logical update and cleanup phase gate]
+// Status: runtime-verified downstream cadence component; disabled pending the
+// upstream battle-camera timing fix.
+// Gates resident FUN_0030E020 to odd renderer ordinals. This manager pass calls
+// every active CCS object's vtable +0x14 logical update, then finalizes objects
+// whose +0x24 bit 0 was set. The added even frame 2494 finalized live object
+// 0x00CBE400 through 0x0030E090 -> FUN_0030EBC0 -> FUN_0030EC30 ->
+// FUN_0030ED40 and consumed one raw shared-MT word before clean did.
+// A clean entry probe measured 0, 3, 0, 3 calls on frames 2492..2495. The
+// candidate receives three calls on added frame 2492 and this gate skips all
+// three, matching clean logical cadence. With presentation still ungated,
+// however, object transforms advance at frame 2492 and the same object is
+// finalized at frame 2495, two logical frames before clean. The late cleanup
+// consumes pre-index 54 through 0x0030EDD4 after the matching fighter/angle
+// calls, leaving the shared MT state one word ahead. This gate is necessary but
+// not sufficient. Combined tests with the presentation gates below restore the
+// frame-2492 CCS object, but its camera-published source matrix has already
+// advanced one clean logical step on that added frame.
+// The hook preserves the incoming return in t9, skips the complete logical
+// update/cleanup pass on even ordinals, and replays its displaced prologue on
+// odd ordinals.
+// Code uses the Current-only development reservation at 0x008F0140.
+// Clean hook words: 27BDFFC0, FFBF0030, 7FB20020 at 0x0030E020..0x0030E028.
+patch=1,EE,2030E020,extended,03E0C825 // or t9,ra,zero: preserve caller return
+patch=1,EE,2030E024,extended,0823C050 // j 0x008f0140
+patch=1,EE,2030E028,extended,00000000 // nop
+patch=1,EE,208F0140,extended,3C020060 // lui v0,0x0060
+patch=1,EE,208F0144,extended,8C4273FC // lw v0,0x73fc(v0): live system context
+patch=1,EE,208F0148,extended,8C420194 // lw v0,0x194(v0): renderer ordinal
+patch=1,EE,208F014C,extended,30420001 // andi v0,v0,1
+patch=1,EE,208F0150,extended,14400003 // bne v0,zero,0x008f0160
+patch=1,EE,208F0154,extended,00000000 // nop
+patch=1,EE,208F0158,extended,03200008 // jr t9: skip added even-phase pass
+patch=1,EE,208F015C,extended,00000000 // nop
+patch=1,EE,208F0160,extended,27BDFFC0 // addiu sp,sp,-0x40
+patch=1,EE,208F0164,extended,FFB90030 // sd t9,0x30(sp): displaced saved ra
+patch=1,EE,208F0168,extended,7FB20020 // sq s2,0x20(sp): displaced prologue
+patch=1,EE,208F016C,extended,080C380B // j 0x0030e02c
+patch=1,EE,208F0170,extended,00000000 // nop
+
+[-CCS vtable +0x10 pass phase gate]
+// Status: runtime rejected; keep disabled.
+// Gates resident FUN_0030DF80 to odd renderer ordinals. That manager pass walks
+// active CCS objects and calls vtable +0x10. A combined exact frame-2492 test
+// with the logical gate left the same 16-byte +0x44..+0x6A mismatch unchanged,
+// proving this pass is not the direct writer of the early transform state. A
+// later three-gate replay also left source matrix 0x00B564A0 one logical step
+// ahead at frame 2492, so this pass does not fix the upstream source either.
+// Code uses the Current-only development reservation at 0x008F0180.
+// Clean hook words: 27BDFFD0, FFBF0020, 7FB10010 at 0x0030DF80..0x0030DF88.
+patch=1,EE,2030DF80,extended,03E0C825 // or t9,ra,zero: preserve caller return
+patch=1,EE,2030DF84,extended,0823C060 // j 0x008f0180
+patch=1,EE,2030DF88,extended,00000000 // nop
+patch=1,EE,208F0180,extended,3C020060 // lui v0,0x0060
+patch=1,EE,208F0184,extended,8C4273FC // lw v0,0x73fc(v0): live system context
+patch=1,EE,208F0188,extended,8C420194 // lw v0,0x194(v0): renderer ordinal
+patch=1,EE,208F018C,extended,30420001 // andi v0,v0,1
+patch=1,EE,208F0190,extended,14400003 // bne v0,zero,0x008f01a0
+patch=1,EE,208F0194,extended,00000000 // nop
+patch=1,EE,208F0198,extended,03200008 // jr t9: skip added even-phase pass
+patch=1,EE,208F019C,extended,00000000 // nop
+patch=1,EE,208F01A0,extended,27BDFFD0 // addiu sp,sp,-0x30
+patch=1,EE,208F01A4,extended,FFB90020 // sd t9,0x20(sp): displaced saved ra
+patch=1,EE,208F01A8,extended,7FB10010 // sq s1,0x10(sp): displaced prologue
+patch=1,EE,208F01AC,extended,080C37E3 // j 0x0030df8c
+patch=1,EE,208F01B0,extended,00000000 // nop
+
+[-CCS vtable +0x0C transform phase gate]
+// Status: runtime-verified downstream gate; disabled pending the upstream
+// battle-camera timing fix.
+// Gates resident FUN_0030DEE0 to odd renderer ordinals. This manager pass owns
+// object delay +0x28 and calls vtable +0x0C; object 0x00CBE400 resolves that
+// slot to FUN_003108A0, which enters its transform/activation path. The added
+// frame-2492 object values match clean frame 2493 in 16 bytes at +0x44..+0x6A,
+// while the separate +0x1E4 logical counter remains at its clean frame-2492
+// value. Gating this pass together with the logical gate restores the complete
+// object at frame 2492. At frame 2493 it still diverges because the live battle-
+// camera matrix at 0x00B564A0 advanced on added frame 2492 and already equals
+// clean frame 2493. This gate fixes downstream sampling cadence, not the camera.
+// True-60-Hz interpolation remains separate.
+// Code uses the Current-only development reservation at 0x008F01C0.
+// Clean hook words: 27BDFFE0, FFBF0010, 7FB00000 at 0x0030DEE0..0x0030DEE8.
+patch=1,EE,2030DEE0,extended,03E0C825 // or t9,ra,zero: preserve caller return
+patch=1,EE,2030DEE4,extended,0823C070 // j 0x008f01c0
+patch=1,EE,2030DEE8,extended,00000000 // nop
+patch=1,EE,208F01C0,extended,3C020060 // lui v0,0x0060
+patch=1,EE,208F01C4,extended,8C4273FC // lw v0,0x73fc(v0): live system context
+patch=1,EE,208F01C8,extended,8C420194 // lw v0,0x194(v0): renderer ordinal
+patch=1,EE,208F01CC,extended,30420001 // andi v0,v0,1
+patch=1,EE,208F01D0,extended,14400003 // bne v0,zero,0x008f01e0
+patch=1,EE,208F01D4,extended,00000000 // nop
+patch=1,EE,208F01D8,extended,03200008 // jr t9: skip added even-phase pass
+patch=1,EE,208F01DC,extended,00000000 // nop
+patch=1,EE,208F01E0,extended,27BDFFE0 // addiu sp,sp,-0x20
+patch=1,EE,208F01E4,extended,FFB90010 // sd t9,0x10(sp): displaced saved ra
+patch=1,EE,208F01E8,extended,7FB00000 // sq s0,0x00(sp): displaced prologue
+patch=1,EE,208F01EC,extended,080C37BB // j 0x0030deec
+patch=1,EE,208F01F0,extended,00000000 // nop
+
+[-Battle camera authoritative update phase]
+// Status: locally runtime verified for deterministic parity; disabled because
+// it duplicates authoritative camera state on the added VBlank rather than
+// providing smooth 60 Hz presentation, and the activation boundary is not final.
+// Gates the loaded BTL main camera callback to odd renderer ordinals. With the
+// separate effect-state gate below, the full controller, complete 0x50-byte
+// source matrix, and published 0x100-byte matrix were byte-exact to clean at
+// both the frame-2589 input anchor and frame-2590 first input. Without the
+// effect-state gate, the source and published matrices were exact but effect
+// angle +0xB4 and its quaternion still advanced on every physical VBlank.
+// Code uses the Current-only reservation at 0x008F0740 and a loaded-BTL hook.
+// Clean hook words at 0x006D6AD0..D8: 27BDFFA0, FFBF0040, 7FB20030.
+patch=1,EE,208F0740,extended,3C020060 // lui v0,0x0060
+patch=1,EE,208F0744,extended,8C4273FC // lw v0,0x73fc(v0): live system context
+patch=1,EE,208F0748,extended,8C420194 // lw v0,0x194(v0): renderer ordinal
+patch=1,EE,208F074C,extended,30420001 // andi v0,v0,1
+patch=1,EE,208F0750,extended,14400003 // bne v0,zero,0x008f0760
+patch=1,EE,208F0754,extended,00000000 // nop
+patch=1,EE,208F0758,extended,03200008 // jr t9: skip added even-phase update
+patch=1,EE,208F075C,extended,0000102D // move v0,zero: callback reports no stop
+patch=1,EE,208F0760,extended,27BDFFA0 // addiu sp,sp,-0x60
+patch=1,EE,208F0764,extended,FFB90040 // sd t9,0x40(sp): displaced saved ra
+patch=1,EE,208F0768,extended,7FB20030 // sq s2,0x30(sp): displaced prologue
+patch=1,EE,208F076C,extended,081B5AB7 // j 0x006d6adc
+patch=1,EE,208F0770,extended,00000000 // nop
+patch=1,EE,206D6AD0,extended,03E0C825 // or t9,ra,zero
+patch=1,EE,206D6AD4,extended,0823C1D0 // j 0x008f0740
+patch=1,EE,206D6AD8,extended,00000000 // nop
+
+[-Battle camera effect state logical phase]
+// Status: locally runtime verified for deterministic parity; disabled pending
+// a smooth presentation design and a final battle-ready activation boundary.
+// Gates loaded BTL FUN_006D6110 to odd renderer ordinals. This method owns the
+// selected effect angle at controller +0xB4 and its derived quaternion. Combined
+// with Battle camera authoritative update phase, it made the complete controller
+// and both matrix outputs byte-exact at frames 2589 and 2590. This exact mode
+// deliberately repeats the clean effect state on the intervening physical frame.
+// Code uses the Current-only reservation at 0x008F0780 and a loaded-BTL hook.
+// Clean hook words at 0x006D6150..58: 27BDFFC0, FFBF0020, 7FB10010.
+patch=1,EE,208F0780,extended,3C020060 // lui v0,0x0060
+patch=1,EE,208F0784,extended,8C4273FC // lw v0,0x73fc(v0): live system context
+patch=1,EE,208F0788,extended,8C420194 // lw v0,0x194(v0): renderer ordinal
+patch=1,EE,208F078C,extended,30420001 // andi v0,v0,1
+patch=1,EE,208F0790,extended,14400003 // bne v0,zero,0x008f07a0
+patch=1,EE,208F0794,extended,00000000 // nop
+patch=1,EE,208F0798,extended,03200008 // jr t9: skip added even-phase update
+patch=1,EE,208F079C,extended,00000000 // nop
+patch=1,EE,208F07A0,extended,27BDFFC0 // addiu sp,sp,-0x40
+patch=1,EE,208F07A4,extended,FFB90020 // sd t9,0x20(sp): displaced saved ra
+patch=1,EE,208F07A8,extended,7FB10010 // sq s1,0x10(sp): displaced prologue
+patch=1,EE,208F07AC,extended,081B5857 // j 0x006d615c
+patch=1,EE,208F07B0,extended,00000000 // nop
+patch=1,EE,206D6150,extended,03E0C825 // or t9,ra,zero
+patch=1,EE,206D6154,extended,0823C1E0 // j 0x008f0780
+patch=1,EE,206D6158,extended,00000000 // nop
+
+[-Bounded-lifetime particle logical phase]
+// Status: locally runtime verified; disabled pending complete pre-input parity.
+// Gates resident FUN_00397BC0 to odd renderer ordinals. On candidate frame
+// 2497 this method made two bounded FUN_00180210 draws, returning to
+// 0x00397CF8 and 0x00397D1C, that clean had not made. The gate removed exactly
+// those two calls: the ending MT index changed from 126 to 124 while all other
+// sampled state remained exact. It does not own the 44 emitter-spawn draws
+// fixed separately below.
+// Code uses the Current-only reservation at 0x008F0840.
+// Clean hook words: 27BDFFC0, FFBF0030, 7FB10020 at 0x00397BC0..0x00397BC8.
+patch=1,EE,20397BC0,extended,03E0C825 // or t9,ra,zero
+patch=1,EE,20397BC4,extended,0823C210 // j 0x008f0840
+patch=1,EE,20397BC8,extended,00000000 // nop
+patch=1,EE,208F0840,extended,3C020060 // lui v0,0x0060
+patch=1,EE,208F0844,extended,8C4273FC // lw v0,0x73fc(v0): live system context
+patch=1,EE,208F0848,extended,8C420194 // lw v0,0x194(v0): renderer ordinal
+patch=1,EE,208F084C,extended,30420001 // andi v0,v0,1
+patch=1,EE,208F0850,extended,14400003 // bne v0,zero,0x008f0860
+patch=1,EE,208F0854,extended,00000000 // nop
+patch=1,EE,208F0858,extended,03200008 // jr t9: skip added even-phase update
+patch=1,EE,208F085C,extended,00000000 // nop
+patch=1,EE,208F0860,extended,27BDFFC0 // addiu sp,sp,-0x40
+patch=1,EE,208F0864,extended,FFB90030 // sd t9,0x30(sp): displaced saved ra
+patch=1,EE,208F0868,extended,7FB10020 // sq s1,0x20(sp): displaced prologue
+patch=1,EE,208F086C,extended,080E5EF3 // j 0x00397bcc
+patch=1,EE,208F0870,extended,00000000 // nop
+
+[-Emitter controller logical phase]
+// Status: runtime verified for semantic state through frame 2642; disabled
+// pending the remainder of the replay and final render-state alignment.
+// Gates the complete resident FUN_0034C610 emitter lifecycle/update controller
+// to odd renderer ordinals. A skipped even-phase call returns active status 1.
+// The narrower FUN_0034CE00 spawn gate below stopped due spawns but still let
+// long-lived controller +0x04 update counts and lifecycle state advance every
+// physical VBlank; by frame 2615 a candidate count was 62 updates ahead.
+// This complete gate restored emitter accumulator, update count, semantic
+// records, and the related shared-RNG position to the clean sequence.
+// Raw frame-2611 differences were only heap pointer identity and generator byte
+// +0x19B, which FUN_0034A070 leaves uninitialized. Meaningful +0x198..+0x19A
+// state and all eight constructor calls matched clean, so no padding patch is
+// justified. Code uses the Current-only reservation at 0x008F0940.
+// Clean hook words: 27BDFF70, FFBF0060, 7FB50050 at 0x0034C610..0x0034C618.
+patch=1,EE,2034C610,extended,03E0C825 // or t9,ra,zero: preserve caller return
+patch=1,EE,2034C614,extended,0823C250 // j 0x008f0940
+patch=1,EE,2034C618,extended,00000000 // nop
+patch=1,EE,208F0940,extended,3C020060 // lui v0,0x0060
+patch=1,EE,208F0944,extended,8C4273FC // lw v0,0x73fc(v0): live system context
+patch=1,EE,208F0948,extended,8C420194 // lw v0,0x194(v0): renderer ordinal
+patch=1,EE,208F094C,extended,30420001 // andi v0,v0,1
+patch=1,EE,208F0950,extended,14400003 // bne v0,zero,0x008f0960
+patch=1,EE,208F0954,extended,00000000 // nop
+patch=1,EE,208F0958,extended,03200008 // jr t9: skip added even-phase controller
+patch=1,EE,208F095C,extended,24020001 // li v0,1: retain active status
+patch=1,EE,208F0960,extended,27BDFF70 // addiu sp,sp,-0x90
+patch=1,EE,208F0964,extended,FFB90060 // sd t9,0x60(sp): displaced saved ra
+patch=1,EE,208F0968,extended,7FB50050 // sq s5,0x50(sp): displaced prologue
+patch=1,EE,208F096C,extended,080D3187 // j 0x0034c61c
+patch=1,EE,208F0970,extended,00000000 // nop
+
+[-Emitter spawn schedule logical phase]
+// Status: runtime-verified narrow symptom fix, superseded by the complete
+// emitter-controller gate above; keep disabled.
+// Gates resident FUN_0034CE00 to odd renderer ordinals. Its +0x24 accumulator
+// advances by +0x200/30 per call and invokes FUN_0034CF70 when a spawn becomes
+// due. The added physical update at frame 2497 produced four 11-draw spawn
+// groups, 44 shared-MT words total. Combined with the bounded-lifetime gate,
+// this gate removed all 46 added frame-2497 draws and kept every sampled state
+// and MT index exact through frame 2566; the next mismatch moved to frame 2567.
+// It does not stop controller +0x04 update counts or lifecycle work from
+// advancing on added even phases and is therefore insufficient on its own.
+// Code uses the Current-only reservation at 0x008F0880.
+// Clean hook words: 27BDFFD0, FFBF0020, 7FB10010 at 0x0034CE00..0x0034CE08.
+patch=1,EE,2034CE00,extended,03E0C825 // or t9,ra,zero
+patch=1,EE,2034CE04,extended,0823C220 // j 0x008f0880
+patch=1,EE,2034CE08,extended,00000000 // nop
+patch=1,EE,208F0880,extended,3C020060 // lui v0,0x0060
+patch=1,EE,208F0884,extended,8C4273FC // lw v0,0x73fc(v0): live system context
+patch=1,EE,208F0888,extended,8C420194 // lw v0,0x194(v0): renderer ordinal
+patch=1,EE,208F088C,extended,30420001 // andi v0,v0,1
+patch=1,EE,208F0890,extended,14400003 // bne v0,zero,0x008f08a0
+patch=1,EE,208F0894,extended,00000000 // nop
+patch=1,EE,208F0898,extended,03200008 // jr t9: skip added even-phase update
+patch=1,EE,208F089C,extended,00000000 // nop
+patch=1,EE,208F08A0,extended,27BDFFD0 // addiu sp,sp,-0x30
+patch=1,EE,208F08A4,extended,FFB90020 // sd t9,0x20(sp): displaced saved ra
+patch=1,EE,208F08A8,extended,7FB10010 // sq s1,0x10(sp): displaced prologue
+patch=1,EE,208F08AC,extended,080D3383 // j 0x0034ce0c
+patch=1,EE,208F08B0,extended,00000000 // nop
+
+[-Randomized cooldown owner logical phase]
+// Status: locally runtime verified through the first input; disabled pending
+// complete input-sequence parity.
+// Gates the loaded-BTL logical update at 0x006C6940 to odd renderer ordinals
+// while leaving its paired draw callback at 0x006C7080 active every VBlank.
+// The update decrements object byte +0x190 once per call; when it reaches zero,
+// the reached state path stores FUN_00180210(60)+60 back to that byte. At frame
+// 2567 the candidate alone made this one draw, returning to 0x006C704C, and
+// ended at MT index 426 versus clean 425. The gate removed that discrepancy:
+// every tracked region and MT index matched clean on every frame 2491..2590,
+// including the frame-2589 anchor and frame-2590 first recorded input.
+// Code uses the Current-only reservation at 0x008F08C0 and a loaded-BTL hook.
+// Clean hook words: 27BDFF80, FFBF0050, 7FB40040 at 0x006C6940..0x006C6948.
+patch=1,EE,206C6940,extended,03E0C825 // or t9,ra,zero
+patch=1,EE,206C6944,extended,0823C230 // j 0x008f08c0
+patch=1,EE,206C6948,extended,00000000 // nop
+patch=1,EE,208F08C0,extended,3C020060 // lui v0,0x0060
+patch=1,EE,208F08C4,extended,8C4273FC // lw v0,0x73fc(v0): live system context
+patch=1,EE,208F08C8,extended,8C420194 // lw v0,0x194(v0): renderer ordinal
+patch=1,EE,208F08CC,extended,30420001 // andi v0,v0,1
+patch=1,EE,208F08D0,extended,14400003 // bne v0,zero,0x008f08e0
+patch=1,EE,208F08D4,extended,00000000 // nop
+patch=1,EE,208F08D8,extended,03200008 // jr t9: skip added even-phase update
+patch=1,EE,208F08DC,extended,0000102D // move v0,zero: no completed state transition
+patch=1,EE,208F08E0,extended,27BDFF80 // addiu sp,sp,-0x80
+patch=1,EE,208F08E4,extended,FFB90050 // sd t9,0x50(sp): displaced saved ra
+patch=1,EE,208F08E8,extended,7FB40040 // sq s4,0x40(sp): displaced prologue
+patch=1,EE,208F08EC,extended,081B1A53 // j 0x006c694c
+patch=1,EE,208F08F0,extended,00000000 // nop
+
+[-Battle camera effect angular phase rate]
+// Status: locally runtime verified; incomplete camera treatment; disabled.
+// Halves the selected camera-effect slot's per-update angle step from 0x1000
+// to 0x0800 in loaded BTL FUN_006D6110 (live instruction 0x006D62E0).
+// Candidate frame 2492 then held controller +0xB4 at 0x1800 instead of the
+// unpatched 0x2000; frame 2493 reached clean 0x2000 and its derived quaternion
+// matched clean. This corrects that local angular channel only. At candidate
+// frame 2492 the source matrix and published global matrix still equal clean
+// frame 2493, proving camera position remains one full update ahead. The other
+// controller rates must be corrected before this section can be enabled.
+// Clean loaded-BTL word: 24421000.
+patch=1,EE,206D62E0,extended,24420800 // addiu v0,v0,0x0800
+
+[-Battle camera recursive tracking half-step]
+// Status: locally runtime verified for the reached camera state; incomplete;
+// disabled pending the derived-gain phase fix and input-origin replay.
+// Replaces each of the six vector-tracking calls in loaded BTL FUN_006D8EB0
+// with a wrapper that converts its recursive gain k to 1-sqrt(1-k). Two 60 Hz
+// substeps then compose to the clean 30 Hz gain in real arithmetic. At frame
+// 2493 this made controller +0x88 bit-exact because its +0x17C gain stayed at
+// 0.65. Controller +0x34/+0x38 remained wrong because their +0x178 gain and
+// its +0x170/+0x174 inputs had themselves advanced on the added phase.
+// This section therefore fixes the vector integrator only; it must be combined
+// with Battle camera derived tracking-gain phase and the angular-rate section.
+// Code uses the Current-only development reservation at 0x008F0200 and the
+// call-site edits target loaded BTL addresses, so this is not yet portable.
+patch=1,EE,208F0200,extended,3C083F80 // lui t0,0x3f80: 1.0
+patch=1,EE,208F0204,extended,44880000 // mtc1 t0,f0
+patch=1,EE,208F0208,extended,00000000 // nop
+patch=1,EE,208F020C,extended,460D0041 // sub.s f1,f0,f13: 1-k
+patch=1,EE,208F0210,extended,46010044 // sqrt.s f1,f1
+patch=1,EE,208F0214,extended,46010341 // sub.s f13,f0,f1: 1-sqrt(1-k)
+patch=1,EE,208F0218,extended,081B63AC // j 0x006d8eb0
+patch=1,EE,208F021C,extended,00000000 // nop
+patch=1,EE,206D8ACC,extended,0C23C080 // first-vector X tracking
+patch=1,EE,206D8AE8,extended,0C23C080 // first-vector Y tracking
+patch=1,EE,206D8B04,extended,0C23C080 // first-vector Z tracking
+patch=1,EE,206D8E4C,extended,0C23C080 // second-vector X tracking
+patch=1,EE,206D8E68,extended,0C23C080 // second-vector Y tracking
+patch=1,EE,206D8E84,extended,0C23C080 // second-vector Z tracking
+
+[-Battle camera derived tracking-gain phase]
+// Status: locally runtime verified at the first logical endpoint; incomplete;
+// disabled pending replay from input frame 2590 and a portable installation.
+// Holds the +0x170/+0x174 gain source and the +0x178 smoothed gain on the added
+// odd renderer phase while still running vector tracking on every VBlank. With
+// the recursive half-step and angular-rate sections, candidate frame 2493 made
+// the full 0x1C0-byte controller, its complete 0x50-byte source-matrix
+// allocation, and the published 0x100-byte matrix byte-exact to clean. An
+// earlier 0x150-byte capture crossed the source allocation's next allocator
+// header at 0x00E34E90; its apparent +0xF8/+0xFC mismatch was unrelated memory.
+// Input-origin parity is still untested, so this remains disabled.
+// Both hooks and caves target loaded BTL/Current-only development addresses.
+// Clean hook word at 0x006D6C74: AE200170. Clean words at 0x006D8860..64:
+// C6010014, C6200034.
+patch=1,EE,208F0280,extended,3C020060 // lui v0,0x0060
+patch=1,EE,208F0284,extended,8C4273FC // lw v0,0x73fc(v0): live system context
+patch=1,EE,208F0288,extended,8C420194 // lw v0,0x194(v0): renderer ordinal
+patch=1,EE,208F028C,extended,30420001 // andi v0,v0,1
+patch=1,EE,208F0290,extended,14400004 // bne v0,zero,0x008f02a4: hold added phase
+patch=1,EE,208F0294,extended,00000000 // nop
+patch=1,EE,208F0298,extended,AE200170 // replay displaced sw zero,0x170(s1)
+patch=1,EE,208F029C,extended,081B5B1F // j 0x006d6c7c: run clean gain-source path
+patch=1,EE,208F02A0,extended,00000000 // nop
+patch=1,EE,208F02A4,extended,081B5B75 // j 0x006d6dd4: retain prior +0x170/+0x174
+patch=1,EE,208F02A8,extended,00000000 // nop
+patch=1,EE,206D6C74,extended,0823C0A0 // j 0x008f0280
+patch=1,EE,208F02C0,extended,3C020060 // lui v0,0x0060
+patch=1,EE,208F02C4,extended,8C4273FC // lw v0,0x73fc(v0): live system context
+patch=1,EE,208F02C8,extended,8C420194 // lw v0,0x194(v0): renderer ordinal
+patch=1,EE,208F02CC,extended,30420001 // andi v0,v0,1
+patch=1,EE,208F02D0,extended,14400006 // bne v0,zero,0x008f02ec: retain +0x178
+patch=1,EE,208F02D4,extended,00000000 // nop
+patch=1,EE,208F02D8,extended,C6010014 // replay displaced lwc1 f1,0x14(s0)
+patch=1,EE,208F02DC,extended,C6200034 // replay displaced lwc1 f0,0x34(s1)
+patch=1,EE,208F02E0,extended,46000B01 // replay clean scalar-update setup
+patch=1,EE,208F02E4,extended,081B621B // j 0x006d886c: update +0x178 then track
+patch=1,EE,208F02E8,extended,00000000 // nop
+patch=1,EE,208F02EC,extended,081B62AC // j 0x006d8ab0: track with retained gain
+patch=1,EE,208F02F0,extended,00000000 // nop
+patch=1,EE,206D8860,extended,0823C0B0 // j 0x008f02c0
+patch=1,EE,206D8864,extended,00000000 // nop
+
+[-Recurring CCS animation clock]
+// Status: runtime-proven recurring mechanism; this global edit remains unsafe.
+// A behavior-preserving input-boundary logger found 17 candidate-only even-frame
+// FUN_001BB210 calls across six recurring return sites: 003962B8, 006C4F58,
+// 00712DA8, 0071DA34, 0071DBFC, and 006B85A8. Six fighter/overlay calls already
+// retain clean odd-only cadence and must not be halved. Site 003962B8 also uses
+// 153 and 230 increments, which require remainder/carry rather than truncation.
+// This edit changes the default automatic clock from 1.0 to 0.5, but it also
+// halves one-shot constructor priming and cannot classify custom increments.
+// Keep it disabled; implement and test the proven recurring consumers instead.
+// Clean word: 24030100.
+patch=1,EE,201B7524,extended,24030080 // li v1,0x80
+
+[-Chakra charge action rate]
+// Status: statically verified formula; to test.
+// Changes only sustained charge-action gain from recovery*0.05 per update to
+// recovery*0.025. The recording has no sustained charge input, so this remains
+// disabled. Discrete health damage, chakra costs, and recovery events must not
+// be scaled; the clean recording writes -5.0 and +0.75 as one-shot events.
+// Clean words: 3C023D4C, 3442CCCD. The ORI word remains unchanged.
+patch=1,EE,20228084,extended,3C023CCC // lui v0,0x3ccc
+
+[-Battle HUD pulse velocity]
+// Status: statically verified constants; to test; incomplete HUD treatment.
+// Halves both 1.0 pulse-velocity producers to 0.5 for 60 Hz updates.
+// BTL overlay load timing and the independent reverse cursor remain unresolved.
+// Clean words: 3C023F80 at both sites.
+patch=1,EE,20718084,extended,3C023F00 // initial pulse velocities
+patch=1,EE,20718F8C,extended,3C033F00 // velocity after zero crossing
+
+[-Battle HUD pulse stagger delay]
+// Status: statically verified constant; to test; incomplete HUD treatment.
+// Doubles the 15-update stagger to 30 updates so it retains its wall time at
+// 60 Hz. BTL overlay load timing and controller-state cadence remain unresolved.
+// Clean word: 2402000F.
+patch=1,EE,207180A0,extended,2402001E // li v0,30
+
+[-Battle HUD entrance slide]
+// Status: statically verified constant; to test; incomplete HUD treatment.
+// Halves the state-3 gauge-position step from 30.0 to 15.0 per 60 Hz update.
+// BTL overlay load timing and the independent reverse cursor remain unresolved.
+// Clean word: 3C0241F0.
+patch=1,EE,20718204,extended,3C024170 // lui v0,0x4170
+
+[-Round clock]
+// Status: statically verified; runtime test unavailable in the infinity-clock recording.
+// Changes the fixed-point delta from 0x44444 to 0x22222.
+// Both startup and per-round reset must change together or later rounds revert.
+// Clean words: 3C030004, 34644444, 3C020004, 34434444.
+patch=1,EE,201ED204,extended,3C030002 // lui v1,0x2
+patch=1,EE,201ED208,extended,34642222 // ori a0,v1,0x2222
+patch=1,EE,205D83D4,extended,3C020002 // lui v0,0x2
+patch=1,EE,205D83D8,extended,34432222 // ori v1,v0,0x2222
+
+[-Rejected shared fighter-factor producer]
+// Status: rejected; retained only as an auditable failed diagnostic.
+// It slows an ordinary actor path, but also halves authored transition
+// thresholds and misses +0x1B0 override states; do not enable as a fix.
+patch=1,EE,20306D5C,extended,3C083F00
+patch=1,EE,20306E6C,extended,4488A000
+patch=1,EE,20306E70,extended,46140002
+patch=1,EE,20306E74,extended,27BD0030
+patch=1,EE,20306E78,extended,03E00008
+patch=1,EE,20306E7C,extended,C7B4FFD0
+
+[-BTL projectile manager factor]
+// Status: hypothesis; overlay load guard and reached-state coverage unresolved.
+// Halves the common manager-produced projectile factor from 1.0 to 0.5.
+// This runtime overlay write can be overwritten at overlay load or hit the
+// wrong resident contents without a verified BTL load guard.
+patch=1,EE,20735638,extended,3C033F00
+
+[-BTL projectile state factors]
+// Status: hypothesis; overlay load guard and reached-state coverage unresolved.
+// Halves the per-projectile selected factors from 0.25/1.0 to 0.125/0.5.
+// These runtime overlay writes can be overwritten at overlay load or hit the
+// wrong resident contents without a verified BTL load guard.
+patch=1,EE,2072EDAC,extended,3C033E00
+patch=1,EE,2072EDBC,extended,3C033F00
+
+// Status: verified no resource-amount patch.
+// The two top gauges are health and chakra. Their observed -5.0 chakra cost,
+// +0.75 chakra recovery, and health damage writes are discrete event amounts;
+// scaling those values would change gameplay rather than correct frame cadence.
+
+// Status: Ultimate-Jutsu presentation and camera remain under investigation.
+// Clean frame-by-frame memory shows the sampled roots update only on the 30 Hz
+// logical phase. Their exact fractional/render boundary is not yet isolated.
+
+// Status: audio sample rate and 60 Hz rumble tick conversion need no patch.
+// Audio remaining normal while battle doubles is expected; do not speed audio.

@@ -132,7 +132,7 @@ run, and FUN_00105320 restores the saved threshold during cleanup. Therefore a
 gameplay change from two VBlanks per scheduler update to one does not require
 halving PSS video or audio speed: clean playback already presents through the
 one-VBlank movie path. See the
-[60 FPS timing research](../../gameplay/framerate.md#prerecorded-pss-video-and-video-speed)
+[60 FPS timing research](../../../../experiments/60%20fps/framerate.md#prerecorded-pss-video-and-video-speed)
 for the complete control-flow evidence and validation requirements.
 
 The boot ELF contains `NOTICE`, `OPENING`, and all seven `DA####` identifiers in

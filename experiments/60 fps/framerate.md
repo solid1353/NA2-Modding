@@ -24,61 +24,94 @@ The static mapping is now sufficient to build guarded diagnostic patch
 components. It is not sufficient to enable 60 FPS by default. In particular,
 the exact six-word community battle port changes a shared producer and has a
 confirmed second-consumer side effect; it is not a safe final actor-speed fix.
-Clean matched runtime captures are still required to prove the remaining
-candidates, find uncovered timing domains, and rule out double compensation.
+The clean battle-only Practice/Kakashi baseline and a matched gate-only
+diagnostic from the user-provided P2M2 have both been traced through final replay
+frame 5747. Per-VBlank observations confirm the clean gate, live battle objects,
+logical-update phase, action cursor and movement cadence, hitstop and
+action-lock countdowns, combo state, Practice damage/reset behavior,
+actor-linked and auxiliary CCS clocks, the complete clean Ultimate-Jutsu
+interval, and the gate-only divergence of those domains. A compensated 60 FPS
+diagnostic now preserves every tracked authoritative and controller region
+through frame 2642, but its image already differs at the first input edge,
+frame 2590. A behavior-preserving logger isolates 17 added-even recurring CCS
+timeline calls at six return sites. Those consumers are not yet compensated or
+mapped to their exact sky, HUD, and fighter pixels, so a complete playable
+replay remains blocked at the earlier visual boundary.
 
-The checked-in NA228 PNACH contains no enabled 60 FPS recipe. This research
-therefore does not claim to reproduce the exact external or local build that
-was reported broken. It establishes the clean-code failure mechanisms and the
-specific evidence needed to diagnose that build.
+The dedicated `experiments/60 fps/NA228_60_fps.pnach` now enables the
+proven resident scheduler gate and runtime-verified fighter-factor, combo, and
+hitstop compensations as an experimental battle implementation. The normal
+`NA228.pnach` is not used as the 60 FPS ledger. This is not yet a complete
+compensated 60 FPS recipe:
+timers, scenes, projectiles, camera, stage, HUD, and scripted presentation can
+still run at double speed. This research does not claim to reproduce the exact
+external or local build that was reported broken; it establishes the clean-code
+failure mechanisms and the specific evidence needed to diagnose and replace it.
 
 ## Research coverage
 
-- **Assigned scope:** the architecture required for a correct 60 FPS mode in
-  clean *Narutimate Accel 2* v2.28: renderer/scheduler cadence, skeletal and cel
-  animation speed, battle and training time, in-engine cinematics, effects,
-  camera, stage objects, HUD/front-end UI, input/repeat,
-rumble, prerecorded PSS video, and audio/cue synchronization. The goal is to
-separate physical 60 Hz presentation from every clean wall-time owner, not to
-produce a renderer-only unlock or to redesign authored media.
+- **Assigned scope:** the current implementation and recording audit is battle
+  only: the renderer/scheduler cadence and the animation, fighter, timer,
+  hitstop, combo, projectile, camera, stage, HUD, input, and cue timing that can
+  affect a Practice fight. Earlier cross-mode static notes remain below as
+  inherited timing-reference material, but ADV, Master Mode, front-end/menu,
+  and PSS behavior are not part of the current runtime candidate or patch
+  decision.
 
-- **Exploration depth:** deep static reverse engineering of the clean boot ELF and the
-ADV, BTL, and ETC overlays, with complete-word checks for the listed patch
-sites, cross-version mapping of the inherited NUN5 community candidates,
-targeted clean-media inspection, and source inspection of the maintained PCSX2
-input-recording path. CCS call coverage was counted in both recovered C and raw
-aligned JAL scans; representative controller/projectile/stage/UI families were
-traced forward through their state mutations. This is broad subsystem coverage,
-but not an exhaustive classification of every unrecovered call, every virtual
-class, or every dynamic +0x94/+0x278 producer.
+- **Exploration depth:** deep static reverse engineering of the clean boot ELF
+  and the ADV, BTL, and ETC overlays, with complete-word checks for the listed
+  patch sites, cross-version mapping of the inherited NUN5 community
+  candidates, targeted clean-media inspection, and source inspection of the
+  maintained PCSX2 input-recording path. Runtime work used fresh surfaceless
+  clean/candidate replays from the exact frame-2491 activation seam, sequential
+  byte comparisons from the first input edge through frame 2642, same-frame and
+  cross-frame image comparison at frames 2588..2594, a full EE-memory
+  comparison at frame 2590, and behavior-preserving RNG, emitter, constructor,
+  and CCS-call loggers. This is broad subsystem coverage, but not an exhaustive
+  classification of every unrecovered call, virtual class, dynamic
+  `+0x94`/`+0x278` producer, or render-buffer writer.
 
 - **Confirmed coverage:** the two-to-one-VBlank renderer gate and resulting
 task cadence; CCS 8.8 playback, fractional transform evaluation, integer cel
 cursors, absolute seeks, one-shot priming, and custom/odd playback increments;
-the safe final battle-actor factor boundary and the failure of the inherited
-  shared-producer patch; independent hitstop, combo, round, support, projectile,
+  the fighter-factor composition boundary and the failure of the inherited
+  shared-producer patch; discrete health/chakra event amounts versus the
+  separate sustained-charge formula; independent hitstop, combo, round, projectile,
   camera, stage, HUD, lifecycle, input-repeat, ordinal, and rumble timing; ADV
   cinematic/effect candidates; nonlinear UI/controller updates; P2M2
 physical-VSync semantics; and the separation of approximately 29.97 FPS PSS
-video, audio sample clocks, and gameplay-owned cue timestamps.
+video, audio sample clocks, and gameplay-owned cue timestamps. The reached
+battle path additionally confirms an exact logical/controller-state diagnostic
+through frame 2642, the earlier image mismatch at frame 2590, and the clean
+odd-only versus candidate every-frame cadence of 17 recurring CCS consumers at
+six return sites.
 
-- **Unresolved or untested:** no
-complete 60 FPS build has been executed. Matched clean-30/candidate-60 captures
-are still required to classify recurring versus setup CCS calls, cover dynamic
-and class-specific producers, confirm battle half-frame bone matrices, identify
-the smooth camera render handoff, prove event/audio/subtitle sync, validate all
-modes and overlay reloads, and measure sustained EE/GS performance. The final
-actor hook still needs a guarded payload location, and formula-derived easing
-or camera constants remain diagnostics where nonlinear authoritative-state
-interpolation is the safer design.
+- **Unresolved or untested:** there is no complete playable compensated 60 FPS
+  patch or end-to-end candidate replay. The latest diagnostic is exact only for
+  tracked logical/controller state through frame 2642; visible output is already
+  divergent at frame 2590, so later images cannot be compared from a common
+  base. The reached recurring and already-logical CCS calls are now classified,
+  but the six recurring return sites are not implemented with half increments
+  or odd-increment carry and are not mapped to their exact sky, HUD, and fighter
+  pixels. The whole fighter-presentation gate is runtime-rejected. Work beyond
+  the first visual boundary, the clean Ultimate's dynamic presentation owners,
+  untracked bone/render work buffers, battle cue synchronization, and sustained
+  EE/GS performance remain untested. Formula-derived easing or camera constants
+  remain diagnostics where nonlinear authoritative-state interpolation is the
+  safer design. The supplied recording does not contain sustained chakra
+  charging, so the exact 0.025 charge candidate is static and untested at
+  runtime.
 
-- **Deliberate exclusions and overlap:** unrelated gameplay/localization changes, asset
-replacement, frame interpolation for prerecorded video or authored cel art,
-global audio resampling, and implementation/staging/commit work. Existing
-canonical task-system, controller-input, battle-camera, stage, pause/replay,
-and game-file documents own their detailed contracts; this document links or
-summarizes only the timing implications needed for 60 FPS. It does not claim an
-in-game replay system where the separate pause/replay research found none.
+- **Deliberate exclusions and overlap:** current runtime work deliberately
+excludes support mechanics (the Practice profile removes support), ADV, Master
+Mode, menus, PSS playback, unrelated gameplay/localization
+changes, asset replacement, global audio resampling, implementation beyond the
+experimental PNACH diagnostic ledger, staging, and commit work.
+Existing canonical task-system, controller-input, battle-camera, stage,
+pause/replay, and game-file documents own their detailed contracts; this
+document links or summarizes only the battle timing implications needed for 60
+FPS. It does not claim an in-game replay system where the separate pause/replay
+research found none.
 
 - **Evidence limitations:** the Ghidra overlay imports omit the
 0x40-byte MWo3 header, some functions are split or mis-prototyped, and static
@@ -102,6 +135,212 @@ Every conclusion below uses one of these labels:
 
 Static analysis can prove what a word does. Only matched 30/60 recordings can
 prove that a complete patch preserves wall-clock behavior.
+
+## Live Practice recording evidence (2026-08-23)
+
+This section promotes the reusable conclusions from the user-provided battle
+recording. Disposable emulator logs, per-run JSON, redundant frame captures,
+and instrumentation payloads are not canonical evidence. One contact sheet is
+retained because it directly shows the unresolved first-input visual boundary;
+all numeric and callsite findings needed to resume are recorded below.
+
+### Identity and method
+
+| Evidence | Identity |
+| --- | --- |
+| Original recording | `experiments/60 fps/60_fps_1.p2m2`; 207,498 bytes; SHA-256 `E33187E2F5E690AE8100EDB6934DCAF41F3AA6CEBEDF8936E34CEB8C9FF67259` |
+| P2M2 metadata | Power-on recording; records 0..5747; recorded by `PCSX2-v2.7.505-47-g6ed5fb570`; associated game `SLOP-NA228` |
+| Replayed ISO | SHA-256 `1614C787D16BA6B832C6589A79C25E4967EDBA6C80B6EB830A12F7243B967F79`; 1,928,429,568 bytes |
+| Runtime game | `SLOP-NA228`; ELF CRC `ED4FA3D5`; boot path `SLOP_NA2.28` |
+| Replay PCSX2 | `PCSX2-v2.7.505-48-g9e11abca0`; executable SHA-256 `6F9B147FEB49A56D92D87A7F8B4A8DD3D83B4C2D6B6A85E4323883D683F735FF` |
+| Practice input | Existing `-l practice kakashi` profile: Kakashi ID 70, No Support `0x25`, no-awakening sentinel `0xFFFFFFFF` |
+
+The recording remained read-only. Replays used the existing surfaceless path,
+discarded memory-card writes, the fixed Practice PNACH, and repeatable additional
+PNACH injection. PINE supplied replay status, exact physical-VBlank stepping,
+compound EE reads, and offscreen PNG capture while P2M2 input remained
+authoritative. Analysis starts from the first input edge, not recording frame 0
+or the loading screens.
+
+### Clean battle cadence
+
+The clean scheduler word is `0x24050002` at `0x001E11C0`. At frames 2581..2640,
+every observed fighter mutation occurred on one physical VBlank and was copied
+unchanged on the next. Primary cursors advanced by one only on the mutating
+phase; current and predicted fractional positions remained exact integers at
+factor 1.0; transform-history indices advanced modulo eight on the same phase;
+and action, position, and idle-animation changes followed that cadence. This is
+direct runtime proof that the word selects a complete logical update every two
+physical VBlanks, not a render-only throttle.
+
+Hitstop is an independent fighter countdown. Positive values freeze that
+fighter's primary cursor and decrement once per clean logical update. The combo
+continuation timer arms to 90 and likewise decrements once per logical update.
+Neither is corrected by changing only fighter animation playback. Practice
+automatically restores health between sequences; these resets are not versus
+recovery. Supports are excluded. The two visible top gauges are health and
+chakra.
+
+The recording contains no sustained chakra charge. Its reached chakra changes
+around frames 4305 and 4335 are discrete `-5.0` and `+0.75` events with no
+intermediate writes; those amounts must not be halved. The separate sustained
+charge-rate candidate remains static and untested.
+
+At frame 4341 the clean Ultimate sequence begins. Both fighter factors become
+0, then exactly 0.05. Their fractional cursors preserve sub-frame remainder and
+carry correctly, proving the final factor path can represent half-rate and
+authored slow-motion playback. Later both primary fighter cursors freeze while
+the in-engine Ultimate presentation continues and applies five separate damage
+events. Therefore fighter factor alone cannot retime the cinematic, camera,
+effects, cues, or its auxiliary battle owners.
+
+Live CCS inspection confirmed actor-linked 8.8 clocks at `0x00E3EF10` and
+`0x00E4D030`, symmetric 60-frame scenes at `0x00E8E700` and `0x00E93810`, and
+an auxiliary 20-frame scene at `0x00E9BE90`. Each mutates only on the clean
+logical phase. The visible Ultimate shot is not driven by an undiscovered
+ordinary `FUN_001BB210` timeline in the sampled EE range. Its resident
+presentation ownership instead reaches selector 13 in `FUN_001F03E0`, the
+Ultimate root at `0x00EA15C0`, and type update `FUN_00362140`; those complete
+roots also mutate only on the clean logical phase.
+
+The BTL camera controller and its slots have their own clean logical cadence,
+independent of the fighter factor. The sampled vectors are not proven to be the
+render-facing Ultimate camera, so the final render handoff remains unresolved.
+
+### Gate-only failure
+
+Changing only the scheduler to `0x24050001` runs fighter cursors, transform
+history, action state, hitstop, combo timers, ordinary/custom CCS increments,
+camera, effects, stage, and UI work on every physical VBlank. At matched frame
+2400, clean is still in `START BATTLE` while gate-only is already in the arena;
+at frame 2450, clean remains in the opening clash while gate-only is in idle
+battle. Recorded actions then occur one physical frame early and diverge
+further as identical held inputs are consumed by twice as many game updates.
+
+The gate-only replay does not reproduce the clean Ultimate, ends with a
+different maximum combo, and reaches a different fight state. The user's direct
+observation that everything visible in battle except sound is approximately
+twice as fast agrees with this runtime mechanism. Audio sample/hardware cadence
+is independent; its normal speed is not evidence that audio should be doubled.
+
+### Sequential compensated diagnostic
+
+All comparisons use a clean, byte-exact activation seam at frame 2491 and stop
+at the first unresolved discrepancy. The diagnostic combines the scheduler and
+two half-rate timer words with disabled-ledger phase gates. Fighter animation
+factor remains clean when whole fighter logic is retained on the clean phase;
+combining a 0.5 factor with that gate would double-compensate it.
+
+The pre-input discrepancy chain was repaired in order:
+
+1. The fighter logical-phase gate restored both complete fighter objects.
+2. The per-element angular-jitter gate removed 23 added shared-RNG draws.
+3. CCS logical cleanup and vtable `+0x0C` transform gates restored object
+   lifecycle and transform cadence.
+4. Authoritative camera and camera-effect gates restored the complete camera
+   controller, its `0x50`-byte source matrix, and published `0x100`-byte matrix.
+   A recursive half-step is mathematically smooth but accumulates Float32
+   differences; exact authority must remain logical-rate, with smoothing moved
+   to a separate render transform.
+5. Bounded particle, emitter schedule, and randomized-cooldown gates removed
+   the remaining pre-input lifecycle and RNG advances. The cooldown owner is
+   loaded BTL logical update `0x006C6940`; its draw callback remains separate.
+
+With those gates, every tracked battle, fighter, camera, CCS, cooldown, full
+MT19937, and MT-index region matches clean on frames 2491..2590. This closes the
+pre-input state chain at the first recorded input.
+
+The first post-input mismatch was controller-state publication. Right begins
+at recording frame 2590 and Cross at 2602. Clean `FUN_00113710` publishes them
+on the retained logical phase; the 60 Hz candidate published each one physical
+frame early, causing Kakashi to miss the clean Cross transition and take a
+different effect/RNG path. Gating `FUN_00113710` to odd renderer ordinals for
+both ports restores held, pressed, released, repeat, and repeat-counter state
+through frame 2605 while leaving `FUN_00113B80` rumble aging active every
+physical VBlank. A press and release wholly contained in a skipped phase is not
+covered and may require edge accumulation in a final design.
+
+Post-input comparison then reached frame 2615. Gating only emitter spawn
+scheduler `FUN_0034CE00` was too narrow: complete controller `FUN_0034C610`
+had advanced 62 extra times. Gating the controller restored its accumulator,
+update count, lifecycle, spawn order, and shared RNG. Apparent frame-2611
+generator differences were allocator pointers and uninitialized padding byte
+`+0x19B`; initialized fields and constructor calls match, so pointer identity
+and padding must not be patched.
+
+The next semantic mismatch was frame 2642 in fighter visual-effect timer
+`FUN_00226370`: clean Naruto held duration 1, delta +200, value 100 while the
+candidate held duration 0, delta -200, value 0. Gating only its call at
+`0x0024DD94` restores both complete fighters and every tracked authoritative
+region at frames 2641 and 2642 while leaving the rest of presentation active on
+every physical VBlank.
+
+### First-input visual boundary
+
+Logical parity is not visual parity. A fresh clean/candidate pair inspected
+frames 2588..2594 around the first input edge. At frame 2590 every tracked
+authoritative and controller region is byte-exact, but 159,300 of 307,200
+same-frame pixels differ (51.855%, mean absolute channel error 6.881). Candidate
+frame 2590 is closer to clean frame 2591 than clean frame 2590. Clean output
+changes only on retained odd transitions while candidate output changes on
+every physical frame.
+
+The single retained visual artifact is
+`experiments/60 fps/input_boundary_2588_2594.png` (SHA-256
+`0980844AFDF75CF6928BFC1BC199FECA7015E55CB06BE54CAB808CED4CE1AB6C`).
+It is the clean/candidate contact sheet for frames 2588..2594 and the exact
+future restart boundary.
+
+Gating the complete fighter presentation path to logical cadence was tested and
+rejected: tracked state stayed exact, but both fighter-region image errors grew.
+A full EE-memory comparison at frame 2590 found 195,783 raw differing bytes and
+195,263 after excluding the 185 candidate patch words and immediate code
+contexts. Of those, 186,585 are in `0x0095...` system/battle render work buffers
+and 8,600 in dynamic runtime state. Fighter roots, linked actors, vtables, and
+stable resources match. Kakashi render model `0x00E3EF10` and Naruto model
+`0x00E4D030` differ at object offsets `+0xA1`, `+0xA5`, and `+0xDD`; other
+nearby differences are adjacent allocation or derived-buffer state. Patching
+pointer identity is invalid.
+
+### Recurring CCS consumers at the visual boundary
+
+A behavior-preserving `FUN_001BB210` entry logger recorded calls at frames
+2588..2594. Clean counts are `0, 23, 0, 23, 0, 23, 0`; candidate counts are
+`17, 23, 17, 23, 17, 23, 17`. These six recurring return sites account for all
+17 added-even calls:
+
+| Return site | Live scenes | Clean cadence | Candidate cadence | Reached increments |
+| --- | --- | --- | --- | --- |
+| `0x003962B8` | `00E5A490`, `00E74240`, `00E74700`, `00E74BB0`, `00E75060`, `00E75510`, `00E759D0`, `00E76E80`, `00E77330` | odd only | every frame | 153, 204, 230, 256, 512 |
+| `0x006C4F58` | `00E65B00` | odd only | every frame | 256 |
+| `0x00712DA8` | `00E79DE0`, `00E7BD50` | odd only | every frame | 256 |
+| `0x0071DA34` | `00E8FFD0`, `00E950D0` | odd only | every frame | 256 |
+| `0x0071DBFC` | `00E8E700`, `00E93810` | odd only | every frame | 256 |
+| `0x006B85A8` | `00E9BE90` | odd only | every frame | 256 |
+
+Two fighter-model scenes returning to `0x0024D334` and four overlay scenes
+returning to `0x006C6EC0` remain odd-only in both runs because existing gates
+already cover them. A global half-step at `FUN_001BB210` would therefore
+double-compensate those calls. Changing constructor default `FUN_001B7524` is
+also unsafe because it affects one-shot priming and cannot classify custom
+increments. The six recurring callsites above are the proven next patch scope.
+Increments 153 and 230 require remainder/carry; truncating them would drift.
+Their exact mapping to sky, HUD, and fighter pixels is still unresolved.
+
+### Instrumentation exclusions and PNACH checkpoint
+
+No conclusion uses the frame-2567 logger whose cave overlapped the live
+`FUN_00397BC0` gate, or the later logger that wrote beyond the proven
+development reservation and produced an unaligned jump. Replacement loggers
+were non-overlapping, bounded, and behavior-preserving.
+
+The experimental ledger is
+`experiments/60 fps/NA228_60_fps.pnach`. It keeps enabled sections at the
+top and every unresolved candidate in a separate disabled section. The fixed
+Practice PNACH remains separate. The latest exact-state diagnostic deliberately
+used `Fighter animation factor` disabled and the verified logical-phase
+candidates enabled; that diagnostic bundle is not the ledger's default state
+and is not a complete playable 60 FPS patch.
 
 ## Binary identity and address conventions
 
@@ -143,7 +382,6 @@ patch.
 | Battle fractional actor state | Final per-actor timing factor and accumulators | Actor animation/state advances twice as fast | Multiply the final effective factor by 0.5 after all clean modifiers |
 | Battle integer state | Raw countdowns, authored-frame tests, and transform-history ring | Counts and history samples advance twice as often | Advance on a 30 Hz logical phase or add fractional state; do not rely on the actor float alone |
 | Battle round timer | Timer +0x1C fixed-point delta | Remaining/elapsed counters change twice as fast | Halve both startup and per-round reset deltas |
-| Support gauge | Per-fighter recharge/drain mutation | Gauge fills and drains in half the clean wall time | Gate the gauge mutation at logical 30 Hz for exactness, or halve both constants |
 | Battle projectiles | Manager callback cadence, projectile +0x278 float factor, and raw +0x82/+0x84/+0x200 counters | Motion/progress and authored projectile phases run twice as fast | Halve all common +0x278 producer states and gate raw counters/modulo schedules on logical 30 Hz |
 | Battle camera | Controller/object callbacks, raw phase counters, and clamped recursive tracking | Preset durations halve and tracking response changes | Advance authored camera phases on logical 30 Hz; either preserve clean tracking on that phase or decouple it and interpolate render transforms |
 | Battle-stage environment | Stage-class callbacks for blends, break/rebirth timers, moving props, gravity, and effect triggers | Fades, respawns, props, and authored effect frames run twice as fast | Classify each state mutation; gate integer phases and event triggers, and compensate or interpolate continuous transforms |
@@ -153,8 +391,8 @@ patch.
 | UI fades and recursive easing | Front-end/controller-local float mutations | Linear transitions and nonlinear settling complete in roughly half the wall time | Gate for exact legacy state, or halve linear deltas and convert recursive coefficients by their two-substep composition |
 | PSS movies | Resident MPEG/IPU player | Movie path already owns a one-VBlank presentation rate | Do not alter video or audio speed |
 | Streamed/sequence audio | Audio hardware and cue producers | Samples retain their rate; gameplay cues may fire early | Do not resample; validate cue scheduling |
-| Input edges | Resident poll before the game callback | Held/pressed/released refresh at 60 Hz | Preserve unless a consumer proves otherwise |
-| Input repeat | Two 15-update delay generators | Delay and sustained repeat become twice as fast | Double initial delay and pulse sustained repeat every other update |
+| Input edges | Resident `FUN_00113710` publication before the game callback | A 60 Hz refresh publishes edges one physical frame earlier than the clean logical fighter phase and can clear them before that consumer runs | Publish or accumulate held/pressed/released for the logical 30 Hz consumer; keep raw acquisition separate if 60 Hz responsiveness is required |
+| Input repeat | `FUN_00113710` counter `+0x44` and repeat mask `+0x70` | The counter advances and sustained repeat becomes twice as fast | Advance the published repeat state on the logical phase; the current exact gate does this but has not validated sub-phase edges |
 | Rumble | Milliseconds converted to 60 Hz ticks and aged by current VBlank threshold | 2 ticks at 30 Hz becomes 1 tick at 60 Hz | No timing patch required |
 | PCSX2 P2M2 input recording | Emulator VSync boundary, outside the game | Recording frames remain physical VBlanks; they do not become 60-FPS game-update frames | Replay the same records unchanged and compare by physical recording frame/wall time; preserve intervening input edges in logical game consumers |
 | Renderer frame ordinal | Physical engine-cycle counter used by masks, modulo schedules, and buffer alternation | Legacy periodic effects run twice as often, while true render alternation may be correct | Keep a physical 60 Hz ordinal and route only wall-clock consumers to a logical 30 Hz ordinal |
@@ -255,9 +493,10 @@ it also doubles every task that assumes one scheduler call equals one authored
 | --- | ---: | ---: | ---: | ---: | --- |
 | Boot ELF | 0x001E11C0 | 0x000E12C0 | 0x24050002 | 0x24050001 | Initial renderer threshold 2 to 1 |
 
-This is proven static ownership. It has not yet been executed as part of a
-complete NA2 patch. The more detailed resident task contract is recorded in
-[runtime/task_system.md](../runtime/task_system.md).
+This is proven static ownership and has been executed as the matched gate-only
+diagnostic above. It has not been executed as part of a compensated NA2 patch.
+The more detailed resident task contract is recorded in
+[runtime/task_system.md](../../docs/knowledge/runtime/task_system.md).
 
 ## CCS animation architecture
 
@@ -526,14 +765,42 @@ FUN_00306D30 only when actor +0x1B0 is exactly 1.0. Otherwise it copies +0x1B0
 directly to +0x1AC, then optionally multiplies by +0x1B4. A 0.5 multiply inside
 FUN_00306D30 cannot normalize that override path.
 
-The final implementation should therefore leave FUN_00306D30's clean semantics
-intact and multiply the composed +0x1AC value after the +0x1B0 selection and
-+0x1B4 modifier. Runtime 0x0024C4C8 / ELF offset 0x0014C5C8 is the first common
-instruction after that composition; its clean word is 0x0220202D
-(`move a0,s1`). It is a viable guarded hook site if an injected stub performs
-the 0.5 multiply, restores `a0 = s1`, preserves the following `a1 = 0`, and
-returns to 0x0024C4D0. A concrete code-cave address must be selected and guarded
-before this becomes an executable recipe.
+The implemented correction leaves FUN_00306D30 intact and uses the existing
+0x0024C4A0..0x0024C4C8 composition window instead of an injected stub. The
+clean block conditionally skips multiplication when +0x1B4 is exactly 1.0. The
+rewrite always computes `(+0x1AC * +0x1B4) * 0.5`, stores the result, and keeps
+the native `move a0,s1` at 0x0024C4C8 and `move a1,zero` at 0x0024C4CC. It
+changes only these seven complete words:
+
+| Runtime | Clean | Replacement | Replacement instruction |
+| ---: | ---: | ---: | --- |
+| 0x0024C4A4 | 0x3C023F80 | 0xC62001AC | `lwc1 f0,0x1AC(s1)` |
+| 0x0024C4A8 | 0x44820000 | 0x46010002 | `mul.s f0,f0,f1` |
+| 0x0024C4AC | 0x00000000 | 0x3C023F00 | `lui v0,0x3F00` |
+| 0x0024C4B0 | 0x46010032 | 0x44820800 | `mtc1 v0,f1` |
+| 0x0024C4B4 | 0x45010004 | 0x00000000 | `nop` |
+| 0x0024C4BC | 0xC62001AC | 0x46010002 | `mul.s f0,f0,f1` |
+| 0x0024C4C0 | 0x46010002 | 0x00000000 | `nop` |
+
+The unchanged load at 0x0024C4A0 supplies +0x1B4; the unchanged nop at
+0x0024C4B8 provides the second spacing instruction after `mtc1`; and the
+unchanged store at 0x0024C4C4 publishes +0x1AC. This clobbers only f0, f1, and
+v0, exactly the register set used by the clean block, and needs no code cave.
+
+The candidate was applied to the owned paused surfaceless Practice/Kakashi
+replay at frame 5011 together with the one-VBlank scheduler word, read back,
+and followed through the remainder of the Ultimate. Both fighters remained at
+the authored forced factor 0.0 through frame 5441. At frame 5446, both became
+exactly 0.5 while +0x1B0 and +0x1B4 were both 1.0, and both primary cursors reset
+to 0 without a crash. This runtime-verifies the ordinary composed path.
+
+Two controlled field-injection cases at frame 5447 exercised the remaining
+branches. P1 used +0x1B0=0.8 and +0x1B4=1.0 and produced +0x1AC approximately
+0.400000006; P2 used +0x1B0=1.0 and +0x1B4=0.25 and produced exactly 0.125.
+Both match `override * modifier * 0.5`. Restoring both inputs to 1.0 left the
+previous output for one ineligible VBlank, then both recomputed to exactly 0.5
+at frame 5449. This verifies every composition branch while independently
+confirming that +0x1AC is recomputed only on eligible fighter updates.
 
 ### Proven battle paths outside the actor float
 
@@ -589,7 +856,43 @@ the pause expires. Consequently, the final +0x1AC factor covers the action lock
 but not hitstop; the +0x200 literal-delta candidate above is required to keep
 hitstop at the clean wall-clock duration.
 
-### Round timer and support gauge
+The two 0.5 instruction candidates were then injected into the owned paused
+Practice/Kakashi replay and read back. A live P1 combo timer and P1 +0x200
+hitstop timer were each seeded at integer count 2 with fractional remainder
+0.0. The first eligible clean-scheduler update left count 2 and changed the
+remainder to -0.5; the second left remainder 0.0 and changed count to 1. Both
+timers produced the exact same trajectory, and the synthetic fields were then
+restored. This runtime-verifies the half-rate countdown arithmetic. Because the
+test process retained its boot-time two-VBlank scheduler object, eligible
+updates occurred at frames 5451 and 5453; a fresh one-VBlank scheduler executes
+the same 0.5 subtraction on each 60 Hz update.
+
+### Health and chakra resource timing
+
+The two top HUD gauges represent health and chakra. Their stored gameplay
+resources are not generic time deltas: damage, costs, refunds, and recovery
+events pass authored amounts to the resource routines and must not be halved
+merely because the scheduler runs at 60 Hz. The exact frame-4305/frame-4335
+trace above confirms one-shot `-5.0` and `+0.75` chakra writes with no
+intermediate mutation. The 60 FPS PNACH therefore has no health-damage or
+discrete chakra-amount patch.
+
+Sustained chakra charging is a distinct per-update path. FUN_00227EE0 computes
+`fighter_or_linked_source[+0x164] * 0.05 * FUN_00307230(fighter)` once per
+eligible charge-action update. With a one-VBlank scheduler and unchanged
+action wall time, this producer would be visited twice as often. Its literal
+has an exact smooth half-rate candidate:
+
+| Owner | Runtime | ELF offset | Clean | 60 Hz candidate |
+| --- | ---: | ---: | ---: | ---: |
+| Charge action FUN_00227EE0 | 0x00228084 | 0x00128184 | 0x3C023D4C (`0.05` high half) | 0x3C023CCC (`0.025` high half) |
+
+The following ORI at `0x00228088` remains `0x3442CCCD`; together the candidate
+words construct float32 `0.025`. This site is present under its own disabled
+`[-Chakra charge action rate]` header in `NA228_60_fps.pnach`. It is statically
+exact but runtime-untested because the supplied P2M2 has no sustained charge.
+
+### Round timer
 
 The battle round timer has another independent fixed-point delta.
 FUN_001EBA80 subtracts timer +0x1C from remaining +0x04 and adds it to elapsed
@@ -609,39 +912,24 @@ Patching only startup would be undone by the next round reset; patching only
 the reset would leave the first initialized instance dependent on call order.
 The timer's existing freeze and battle-state gates remain untouched.
 
-Support availability is not a simple integer cooldown. Normal fighter update
-FUN_00238540 either adds `fighter[+0x78] / 450` to gauge +0x74 when no support
-object is active, or subtracts `1 / 300` while one is active, clamping to
-0..1. At twice the fighter-update cadence, both recharge and active drain take
-half their clean wall time. Exact half-constant diagnostics are:
+Support mechanics are deliberately excluded from this game configuration and
+from this 60 FPS implementation. The two visible top gauges are health and
+chakra; neither is a support gauge. `NA228_60_fps.pnach` therefore contains no
+support-rate patch.
 
-| Path | Runtime | ELF offset | Clean | 60 Hz diagnostic |
-| --- | ---: | ---: | ---: | ---: |
-| Recharge, 1/450 to 1/900 | 0x0023861C | 0x0013871C | 0x3C033B11 | 0x3C033A91 |
-| Active drain, 1/300 to 1/600 | 0x00238738 | 0x00138838 | 0x3C033B5A | 0x3C033ADA |
-
-The following ORI words retain mantissas 0xA2B4 and 0x740E respectively; only
-the exponent-bearing LUI words change. Halving gives a smoother 60 Hz gauge,
-but two rounded float32 half-additions are not guaranteed to reproduce every
-bit of one clean full addition. Gating only the gauge mutation on the logical
-30 Hz phase instead preserves the exact clean float sequence and threshold
-crossing order. The caller-supplied signed-delta helpers FUN_00238830 and
-FUN_00238950 are event mutations and must not be halved without classifying
-their callers.
-
-These facts make the required architecture explicit: continuous actor and
-fractional-timer deltas need a 0.5 global factor, while raw counters, history
-sampling, round timing, gauge mutation, and authored integer transitions need
-either a legacy 30 Hz phase or their own exact fractional treatment. Gating the
+These facts make the general timing architecture explicit: continuous actor
+and fractional-timer deltas need a 0.5 factor, while raw counters, history
+sampling, round timing, and authored integer transitions need either a legacy
+30 Hz phase or their own exact fractional treatment. Gating the
 entire actor routine every other update would preserve integer state but would
 also discard the 60 Hz opportunity for continuous motion and transforms. The
 correction must be narrower than the whole actor update.
 
 The six-word producer patch remains useful as a diagnostic comparison because
 it reaches a broad ordinary actor path. It must not be described or shipped as
-the complete battle compensation. Round timing, hitstop, support characters,
-projectiles, particles, camera shake, battle UI, and scripted controllers still
-require independent classification.
+the complete battle compensation. Round timing, hitstop, projectiles, particles,
+camera shake, battle UI, and scripted controllers still require independent
+classification.
 
 Training mode must be validated independently. Shared actor code does not prove
 that training resets, recording playback, dummy logic, and UI clocks use the
@@ -712,7 +1000,7 @@ sampling.
 
 The BTL camera controller and camera objects form another independent timing
 surface; the recovered layout and state machine are documented in
-[battle_camera.md](battle_camera.md). The controller's per-update commit
+[battle_camera.md](../../docs/knowledge/gameplay/battle_camera.md). The controller's per-update commit
 increments controller +0x2C when its +0x28 condition is active. This is an
 integer duration counter and is not multiplied by actor +0x1AC.
 
@@ -768,7 +1056,7 @@ camera vectors, and final render transform at matched wall-clock timestamps.
 ### Battle-stage environment and breakables
 
 Stage visuals and props are not passive consumers of the fighter clock. The
-recovered classes in [stages.md](stages.md) have their own callback-local
+recovered classes in [stages.md](../../docs/knowledge/gameplay/stages.md) have their own callback-local
 state, exposing several distinct 60 Hz problems:
 
 - `ccBgTransObject`, `ccBgTransAnm`, and `ccBgTransObject2` update proximity
@@ -849,6 +1137,23 @@ words below were read directly from the clean BTL.BIN:
 | Offset pulse delay, 15 -> 30 calls | 0x000641A0 | 0x007180A0 | `0x2402000F` | `0x2402001E` |
 | State-3 gauge slide, 30.0 -> 15.0 | 0x00064304 | 0x00718204 | `0x3C0241F0` | `0x3C024170` |
 | Pulse velocity after the zero crossing, 1.0 -> 0.5 | 0x0006508C | 0x00718F8C | `0x3C033F80` | `0x3C033F00` |
+
+The live BTL task table identifies this controller without relying on a heap
+layout guess. Runtime vtable 0x005DDF80 contains metadata 0x008C4060 and these
+callable slots: deleting destructor 0x0071A4B0 at +0x08, initializer
+0x00717DA0 at +0x0C, update 0x00717FC0 at +0x10, and draw 0x00718320 at
++0x14. The active object stores that vtable at object +0x1C. These runtime
+addresses are the corresponding Ghidra symbols plus the BTL MWo3 header's
+0x40-byte runtime shift.
+
+A full aligned scan of EE RAM 0x00080000..0x01FFFFFF found no object carrying
+that vtable at either clean replay frame 2450 or frame 5500, even though the
+static battle gauges were visible in both offscreen captures. This is useful
+negative evidence: those two frames are too late to observe this transition
+controller, and its local pulse/slide fields cannot be validated by guessing a
+persistent HUD address. A subsequent replay must sample the battle entrance
+before frame 2450 and locate the instance through vtable 0x005DDF80 while it is
+alive.
 
 These four replacements are not a complete HUD patch: state transitions,
 +0x14 reverse time, and any other reached controller-local integers remain
@@ -1066,7 +1371,7 @@ embedded scene still uses the compensated CCS clock; gating the whole menu and
 also halving that scene would double-compensate it.
 
 Battle pause is selective rather than one global frozen-update branch, as
-documented in [pause_and_replay.md](pause_and_replay.md). FUN_001F03E0 applies
+documented in [pause_and_replay.md](../../docs/knowledge/gameplay/pause_and_replay.md). FUN_001F03E0 applies
 different masks to three virtual-update phases, while camera/controller and
 other work can remain outside those masks. A 60 FPS implementation must keep
 the clean pause masks and compensate each still-running timer/UI/camera owner;
@@ -1143,7 +1448,7 @@ its own logical counter happens to match the clean numeric value.
 
 The disc contains ten PSS files. They are MPEG program streams at approximately
 29.97 encoded frames per second; their resolutions and durations are catalogued
-in [game/files/README.md](../game/files/README.md#pss-video).
+in [game/files/README.md](../../docs/knowledge/game/files/README.md#pss-video).
 
 PSS playback has its own resident timing ownership:
 
@@ -1272,7 +1577,7 @@ validation is still required for actuator transmission latency, override
 stacking, pauses, and emulator behavior.
 
 The full controller record and queue evidence is recorded in
-[runtime/controller_input.md](../runtime/controller_input.md).
+[runtime/controller_input.md](../../docs/knowledge/runtime/controller_input.md).
 
 ## Physical and logical frame ordinals
 
@@ -1345,9 +1650,9 @@ configuration with internally atomic compensation, not a menu of partial
    carry for odd increments; the FUN_001B7520 0x0080 word is a steady-state
    diagnostic, not a safe global final patch. Preserve FUN_001BB5C0 absolute
    seeks and leave CCS 1.0 render weights unchanged.
-6. Leave shared FUN_00306D30 clean. Hook the common post-composition point in
-   FUN_0024C440 so the final +0x1AC factor, including +0x1B0/+0x1B4 paths, is
-   multiplied by 0.5 exactly once.
+6. Leave shared FUN_00306D30 clean. Use the verified in-place composition-window
+   rewrite in FUN_0024C440 so the final +0x1AC factor, including +0x1B0/+0x1B4
+   paths, is multiplied by 0.5 exactly once.
 7. Compensate literal battle timers and gate raw countdown/history operations
    on the logical phase; do not present the six-word producer port as final.
 8. Halve the three common projectile factor states, audit reached
@@ -1394,7 +1699,7 @@ not only the displayed FPS counter.
 | Area | Required observations | Acceptance condition |
 | --- | --- | --- |
 | Scheduler | VBlank count, scheduler ordinal, present cadence | One scheduler update per VBlank without stalls or runaway catch-up |
-| Battle | Idle, movement, attack, hitstop, projectile, support, KO, timer | Same wall-clock animation and event timing; correct end states |
+| Battle | Idle, movement, attack, hitstop, projectile, KO, timer | Same wall-clock animation and event timing; correct end states |
 | Battle camera | Tracking, large clamped displacement, preset transition, stage edge, shake | Same authoritative endpoints and transition timing; smooth mode has stable interpolated transforms |
 | Battle stage | Proximity blend, break/rebirth, fade, falling/moving prop, crane effects | Same state/event timing and endpoints; no missed or doubled contacts/effects |
 | Battle HUD | Gauge entrance/value change, staggered pulse, reverse/exit | Same wall-clock state and cursor timing; pulse remains smooth and reverse does not finish early |

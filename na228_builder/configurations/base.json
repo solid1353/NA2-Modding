@@ -49,6 +49,7 @@
     "battle_logic": {
       "disable_shadowblur_extra_hit": true,
       "disable_extra_hit_with_aura_punishment_for_initiator": true,
+      "character_select_balance_overlay": true,
       "character_overrides": true,
       "xdash_chakra_cost": 1
     },

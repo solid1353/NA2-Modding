@@ -141,6 +141,13 @@ from `+0.0` through `+3.5` in `0.5` steps. No IDs or values are compiled into
 the selector C. The configuration also reserves `hp`, damage, and recovery
 fields for later consumers.
 
+The shared base `character_select_balance_overlay` setting reads this same
+table from Character Select. Its guarded hook at ELF offset `0x2B9B14`
+replaces the first native player-panel draw call with a wrapper that preserves
+that draw, resolves the selected character ID, and displays the row's `TIER`
+and resolved `SUB` value in the corresponding top-screen block. It does not
+display player labels or numeric character IDs.
+
 The addresses, displaced instructions, and identity field are statically and
 capture-confirmed. The user runtime-confirmed the earlier selective selector in
 Practice: Naruto versus Naruto in save state 1, and Sakura versus Naruto in save

@@ -43,6 +43,35 @@
       }
     }
   },
+  "i__battle_logic__character_select_balance_overlay": {
+    "description": "Draw each selected character's tier and resolved substitution cost after its Character Select player panel.",
+    "hooks": {
+      "draw_character_balance_values": {
+        "description": "Replace the first native player-panel draw call with a wrapper that retains it and adds the selected character's tier and resolved substitution cost on its side of the screen.",
+        "target_id": "na2_elf",
+        "offset": "0x2B9B14",
+        "expected_hex": "58E40E0C00000000",
+        "symbol": "character_select_balance_overlay",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "character_select_balance_overlay": {
+        "kind": "c",
+        "path": "src/battle_logic/character_select_balance_overlay.c",
+        "namespace": "battle.logic.character.select.balance.overlay.c",
+        "imports": {
+          "battle_logic_character_overrides": "character_overrides"
+        },
+        "fragments": {
+          "character_select_balance_overlay": {
+            "order": 112,
+            "object": "battle.logic.character.select.balance.overlay.c.text.battle.logic.character.select.balance.overlay"
+          }
+        }
+      }
+    }
+  },
   "i__battle_logic__xdash_chakra_cost": {
     "description": "Spend the configured chakra cost on the first fighter update after X-dash becomes non-cancellable.",
     "hooks": {

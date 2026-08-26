@@ -113,6 +113,15 @@ while keeping the right value and explanation families separate. The final
 main replay includes the corrected page without a large position, width, wrap,
 or style discrepancy.
 
+A 2026-08-27 follow-up comparison exposed a gap in that evidence: the
+maintained Practice grid selected only the overflowing `Extra Hit Counter`
+label. Its fixed `0.93` selected-state scale matched that row but unnecessarily
+narrowed shorter selected labels such as `Linked Attack`. The accepted adapter
+now uses the same 150-unit shrink-only fit for selected and ordinary labels.
+Fitting labels retain scale `1.0`, overflowing labels shrink from the shared
+donor measurement, and the selected-state vertical correction remains
+independent.
+
 ## Maintained Practice E2E boundary
 
 Evidence date: 2026-08-22.

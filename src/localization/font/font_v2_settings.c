@@ -15,9 +15,6 @@
 #define FONT_PRACTICE_SETTINGS_LABEL_X (92.0f + FONT_SETTINGS_X_OFFSET)
 #define FONT_PRACTICE_SETTINGS_LABEL_WIDTH 150u
 
-/* Selected labels use a wider native style; retain the matched horizontal fit. */
-#define FONT_PRACTICE_SETTINGS_SELECTED_SCALE_X 0.93f
-
 /* NUN5 left edge and width for both settings value columns. */
 #define FONT_SETTINGS_VALUE_X (303.25f + FONT_SETTINGS_X_OFFSET)
 #define FONT_SETTINGS_VALUE_WIDTH 104u
@@ -233,7 +230,7 @@ int font_v2_practice_settings_label_adapter(
         FONT_PRACTICE_SETTINGS_LABEL_X,
         FONT_PRACTICE_SETTINGS_LABEL_WIDTH,
         0u,
-        style ? FONT_PRACTICE_SETTINGS_SELECTED_SCALE_X : 0.0f,
+        0.0f,
         0.0f,
         FONT_V2_ALIGN_START,
         1u,

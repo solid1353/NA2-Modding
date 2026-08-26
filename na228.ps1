@@ -5,6 +5,7 @@ $paths = Get-Na2Paths
 . (Join-Path ([string]$paths.scripts) 'na228\launch_settings.ps1')
 . (Join-Path ([string]$paths.scripts) 'na228\launch_profile.ps1')
 . (Join-Path ([string]$paths.scripts) 'na228\build_targets.ps1')
+. (Join-Path ([string]$paths.pcsx2_scripts) 'launch_arguments.ps1')
 
 trap {
     if ([bool]$_.Exception.Data['Na2ConfigurationError']) {
@@ -408,12 +409,7 @@ $launchParameters = @{
     ProjectRoot = $paths.repository
     InputRecordingsRoot = $paths.pcsx2_input_recordings
 }
-$valuedLaunchOptions = @{
-    '-p' = 'Play'
-    '-r' = 'Record'
-    '-s' = 'Snapshots'
-    '-mc' = 'MemoryCard'
-}
+$workshopLaunchArguments = [Collections.Generic.List[string]]::new()
 $launchProfile = $null
 $launchProfileArguments = [Collections.Generic.List[string]]::new()
 for ($index = 0; $index -lt $forwardedLaunchArguments.Count; $index++) {
@@ -433,8 +429,7 @@ for ($index = 0; $index -lt $forwardedLaunchArguments.Count; $index++) {
             $nextArgument = [string]$forwardedLaunchArguments[$index + 1]
             $nextOption = $nextArgument.ToLowerInvariant()
             if ($nextOption -eq '-l' -or
-                $nextOption -eq '-dw' -or
-                $valuedLaunchOptions.ContainsKey($nextOption)) {
+                (Test-UnWorkshopLaunchOption -Token $nextOption)) {
                 break
             }
             $launchProfileArguments.Add(
@@ -443,25 +438,18 @@ for ($index = 0; $index -lt $forwardedLaunchArguments.Count; $index++) {
         }
         continue
     }
-    if ($option -eq '-dw') {
-        if ($launchParameters.ContainsKey('DiscardMemoryCardWrites')) {
-            throw '-dw may be specified only once.'
-        }
-        $launchParameters.DiscardMemoryCardWrites = $true
-        continue
+    $workshopLaunchArguments.Add(
+        [string]$forwardedLaunchArguments[$index]
+    )
+}
+$workshopLaunch = ConvertFrom-UnWorkshopLaunchArguments `
+    -Tokens @($workshopLaunchArguments) `
+    -OptionsOnly
+foreach ($entry in $workshopLaunch.LaunchParameters.GetEnumerator()) {
+    if ($launchParameters.ContainsKey([string]$entry.Key)) {
+        throw "Launch parameter '$($entry.Key)' was already selected."
     }
-    if (-not $valuedLaunchOptions.ContainsKey($option)) {
-        throw "Unknown Workshop launch option: $($forwardedLaunchArguments[$index])"
-    }
-    if ($index + 1 -ge $forwardedLaunchArguments.Count) {
-        throw "$($forwardedLaunchArguments[$index]) requires a value."
-    }
-    $index++
-    $parameterName = $valuedLaunchOptions[$option]
-    if ($launchParameters.ContainsKey($parameterName)) {
-        throw "$option may be specified only once."
-    }
-    $launchParameters[$parameterName] = $forwardedLaunchArguments[$index]
+    $launchParameters[[string]$entry.Key] = $entry.Value
 }
 $selectedLaunchModes = @(
     @('Play', 'Record', 'Snapshots') |

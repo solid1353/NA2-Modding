@@ -16,6 +16,8 @@ $ErrorActionPreference = 'Stop'
 $sourceRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
 $originalTaskWorkRoot = $env:NA228_TASK_WORK_ROOT
 . (Join-Path $sourceRepository 'scripts\lib\build_log.ps1')
+. (Join-Path $sourceRepository 'scripts\lib\paths.ps1')
+$sourcePaths = Get-Na2Paths
 
 function Assert-Na2Test {
     param(
@@ -186,6 +188,9 @@ function Get-Na2StartupFastForwardFrames {
 '@
     $fakePcsx2Scripts = Join-Path $fakeRepository 'scripts\pcsx2'
     New-Item -ItemType Directory -Force -Path $fakePcsx2Scripts | Out-Null
+    Copy-Item `
+        -LiteralPath (Join-Path $sourcePaths.pcsx2_scripts 'launch_arguments.ps1') `
+        -Destination $fakePcsx2Scripts
     $fakeReleaseScripts = Join-Path $fakeRepository 'scripts\release'
     New-Item -ItemType Directory -Force -Path $fakeReleaseScripts | Out-Null
     $fakeInjectionScripts = Join-Path $fakeRepository 'scripts\injection'
@@ -498,6 +503,7 @@ param(
     [switch]$DiscardMemoryCardWrites,
     [switch]$ReadOnlySettings,
     [hashtable]$PnachByGame,
+    [string[]]$AdditionalPnach,
     [hashtable]$PnachLinesByGame,
     [switch]$Turbo,
     [switch]$Unlimited,
@@ -541,6 +547,7 @@ Write-Output (
     "play=$Play record=$Record snapshots=$($Snapshots.IsPresent) " +
     "memory=$MemoryCard discard=$($DiscardMemoryCardWrites.IsPresent) " +
     "readonly=$($ReadOnlySettings.IsPresent) pnaches=$pnachSummary " +
+    "additionalPnaches=$($AdditionalPnach -join '|') " +
     "lines=$lineSummary " +
     "turbo=$($Turbo.IsPresent) unlimited=$($Unlimited.IsPresent) " +
     "frames=$UnlimitedForFrames project=$ProjectRoot"
@@ -856,6 +863,53 @@ Add-Content `
             "The Practice profile did not generate distinct NUN5 and NA2.28 " +
             "PNACH inputs. Output:`n$practiceOutput"
         )
+    $firstAdditionalPnach = Join-Path $fakeRepository 'first-extra.pnach'
+    $secondAdditionalPnach = Join-Path $fakeRepository 'second-extra.pnach'
+    $practiceAdditionalPnachOutput = (
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            manual `
+            -l `
+            practice `
+            kakashi `
+            -pnach `
+            $firstAdditionalPnach `
+            -pnach `
+            $secondAdditionalPnach *>&1
+    ) -join "`n"
+    Assert-Na2Test `
+        -Condition (
+            $practiceAdditionalPnachOutput.Contains(
+                'manual=' + (Join-Path `
+                    $fakeRepository `
+                    'launch_profiles\practice\NA228.pnach'
+                )
+            ) -and
+            $practiceAdditionalPnachOutput.Contains(
+                "additionalPnaches=$firstAdditionalPnach|$secondAdditionalPnach"
+            ) -and
+            $practiceAdditionalPnachOutput -match '001ED600,word,00000046'
+        ) `
+        -Message (
+            'The NA launcher did not forward Workshop-owned additional PNACH ' +
+            "files after the Practice profile PNACH. Output:`n$practiceAdditionalPnachOutput"
+        )
+    $missingPnachValueRejected = $false
+    try {
+        & (Join-Path $fakeRepository 'na228.ps1') `
+            manual `
+            -l `
+            practice `
+            kakashi `
+            -pnach
+    }
+    catch {
+        $missingPnachValueRejected = $_.Exception.Message -ceq (
+            '-pnach requires a value.'
+        )
+    }
+    Assert-Na2Test `
+        -Condition $missingPnachValueRejected `
+        -Message 'The NA launcher accepted Workshop -pnach without a file.'
     $gaaraAwakeningOutput = (
         & (Join-Path $fakeRepository 'na228.ps1') `
             nun5 `

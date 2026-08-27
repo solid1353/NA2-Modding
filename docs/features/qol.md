@@ -163,34 +163,6 @@ Ultimate Jutsu remains outside this patch. The Character Select record is in
 and the battle-path evidence is in
 [`../knowledge/gameplay/battle.md`](../knowledge/gameplay/battle.md).
 
-## Disable the Ultimate Jutsu input contest
-
-`qol.ultimate_jutsu.disable_input_contest` blocks both players' inputs during
-the Ultimate Jutsu contest and suppresses its bottom meter, button prompts,
-and result messages. The ordinary top battle HUD remains visible. The base
-configuration enables the setting, so the development configuration inherits
-it.
-
-Two guarded BTL edits replace the contest controller's press-latch and
-release-poll reads with zero so neither player's input can affect the
-controller. A guarded resident-ELF edit suppresses the contest object's common
-render dispatch while preserving its native allocation, update, result, and
-completion lifecycle.
-
-The earlier implementation selected native contest type `0`, which prevented
-the entire contest object from being allocated. Its development replay proved
-that the interface was hidden and the recorded input latch remained zero, but
-it did not cover post-Ultimate-Jutsu awakening. The user subsequently reported
-that enabling the setting prevented that awakening. Static investigation
-confirmed that type `0` removes the object's nonvisual update lifecycle as well
-as its interface, so the accepted correction restores native object creation
-and suppresses only its common render call. User runtime testing on 2026-08-21
-confirmed that post-Ultimate-Jutsu awakening occurs, the meter, prompts, and
-result messages remain invisible, and both players' inputs remain blocked.
-Clean offsets, live addresses, dispatcher ownership, and the earlier replay
-evidence are recorded in
-[`../knowledge/gameplay/battle.md`](../knowledge/gameplay/battle.md).
-
 ## Unlock all content without loading a save
 
 `qol.content.unlock_all` selects the resident injection

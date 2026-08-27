@@ -112,6 +112,42 @@
       }
     }
   },
+  "i__battle_logic__ultimate_jutsu__hud_hidden": {
+    "description": "Use the native ordinary-jutsu transition to hide and restore the complete Battle HUD with the retained Ultimate Jutsu contest lifecycle.",
+    "hooks": {
+      "transition_complete_battle_hud_during_contest": {
+        "description": "Observe the retained contest lifecycle from the common battlegauge updater and request the same all-HUD hide/show transition APIs used by ordinary jutsu; native update and rendering retain their exact motion, timing, visibility gates, and injected children.",
+        "target_id": "na2_btl",
+        "offset": "0x67030",
+        "expected_hex": "E0FFBD271000BFFF",
+        "symbol": "battle_logic_ultimate_jutsu_battle_hud_transition",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      }
+    },
+    "payload": {
+      "ultimate_jutsu_hud": {
+        "kind": "asm",
+        "path": "src/battle_logic/ultimate_jutsu_hud.S",
+        "namespace": "battle.logic.ultimate.jutsu.hud",
+        "imports": {
+          "battle_logic_ultimate_jutsu_hud_transition_active": "ultimate_jutsu_hud_transition_active"
+        },
+        "fragments": {
+          "battle_logic_ultimate_jutsu_battle_hud_transition": {
+            "order": 137,
+            "object": "battle.logic.ultimate.jutsu.hud.text.battle.logic.ultimate.jutsu.battle.hud.transition"
+          }
+        }
+      },
+      "ultimate_jutsu_hud_transition_active": {
+        "kind": "data",
+        "order": 138,
+        "alignment": 4,
+        "value": "00000000"
+      }
+    }
+  },
   "i__localization__font__glyphs__metrics": {
     "description": "Decode the accepted packed 14x20 metric rows from composition-time C and keep the secondary-glyph geometry bridges resident in 228.BIN, leaving only guarded register-setup and branch hooks in the fixed boot ELF.",
     "hooks": {

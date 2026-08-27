@@ -32,6 +32,21 @@
           "i__battle_logic__xdash_chakra_cost",
         ],
       },
+      ultimate_jutsu: {
+        description: "Independent Ultimate Jutsu contest and battle-HUD behavior.",
+        contest_disabled: setting {
+          description: "Disable both players' inputs during the Ultimate Jutsu contest and suppress its meter, prompts, and result messages.",
+          patches: [
+            "e__battle_logic__ultimate_jutsu__contest_disabled",
+          ],
+        },
+        hud_hidden: setting {
+          description: "Hide the complete battle HUD during the Ultimate Jutsu contest through the native ordinary-jutsu transition.",
+          patches: [
+            "i__battle_logic__ultimate_jutsu__hud_hidden",
+          ],
+        },
+      },
     },
     general: {
       dedicated_save_namespace: setting {
@@ -276,15 +291,6 @@
           patches: [
             "e__qol__save_load__display_only_first_save",
             "i__qol__save_load__display_only_first_save",
-          ],
-        },
-      },
-      ultimate_jutsu: {
-        description: "Ultimate Jutsu cinematic battle behavior.",
-        disable_input_contest: setting {
-          description: "Disable both players' inputs during the Ultimate Jutsu contest and suppress its meter, prompts, and result messages.",
-          patches: [
-            "e__qol__ultimate_jutsu__disable_input_contest",
           ],
         },
       },

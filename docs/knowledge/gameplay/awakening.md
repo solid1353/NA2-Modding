@@ -915,9 +915,8 @@ Thus gate value `2` is a BTL-produced UJ outcome/state, but its exact
 user-facing name remains open. The resident consumer's behavior is exact:
 value `2` diverts to side event slot `0x0E` and suppresses the form request.
 
-The former `qol.ultimate_jutsu.disable_input_contest` implementation forced
-contest type `0`. That type leaves the resident contest-object global at
-`0x00607750` empty, so the main manager skips both the object's update
+The former Ultimate-Jutsu type-`0` candidate left the resident contest-object
+global at `0x00607750` empty, so the main manager skips both the object's update
 dispatcher `FUN_0036BF10` and render dispatcher `FUN_0036BFF0`. The user
 established at runtime that enabling this implementation prevents post-UJ
 awakening. Static analysis establishes that object suppression removes the

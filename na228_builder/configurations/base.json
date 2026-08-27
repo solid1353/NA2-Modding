@@ -41,9 +41,6 @@
       },
       "save_load": {
         "display_only_first_save": true
-      },
-      "ultimate_jutsu": {
-        "disable_input_contest": true
       }
     },
     "battle_logic": {
@@ -51,7 +48,11 @@
       "disable_extra_hit_with_aura_punishment_for_initiator": true,
       "character_select_balance_overlay": true,
       "character_overrides": true,
-      "xdash_chakra_cost": 1
+      "xdash_chakra_cost": 1,
+      "ultimate_jutsu": {
+        "contest_disabled": true,
+        "hud_hidden": true
+      }
     },
     "rendering": {
       "native_16_9_horizontal_scale": false

@@ -4,6 +4,21 @@ The `battle_logic` catalog subtree selects guarded definitions through patch
 IDs. Its character-override node loads layered TSV data and emits one resident
 table shared by current and future per-character battle hooks.
 
+## Ultimate Jutsu
+
+`features.battle_logic.ultimate_jutsu` owns two independent settings:
+
+- `contest_disabled` blocks both players' contest inputs and suppresses the
+  contest meter, prompts, and result messages while retaining the native
+  contest lifecycle.
+- `hud_hidden` hides and restores the complete battle HUD through the same
+  native transition used by ordinary Jutsu. Native motion, timing, visibility,
+  and restoration apply to the existing HUD and injected children, including
+  the substitution bar.
+
+Either setting can be enabled without the other. The base configuration enables
+both.
+
 ## Substitution cost
 
 `configurations/overrides/base.character_overrides.tsv` supplies the shared

@@ -36,6 +36,30 @@
       }
     }
   },
+  "e__battle_logic__ultimate_jutsu__contest_disabled": {
+    "description": "Disable contest input reads and rendering while retaining its native lifecycle.",
+    "edits": {
+      "block_press_state_reads": {
+        "description": "Ignore the contest controller's press-state reads while waiting to latch an input or observe release.",
+        "operation": "replace",
+        "destination_target_id": "na2_btl",
+        "destination_offsets": [
+          "0xB6094",
+          "0xB62F0"
+        ],
+        "expected_hex": "6C66070C",
+        "replacement_hex": "21100000"
+      },
+      "suppress_render_dispatch": {
+        "description": "Skip the resident contest object's common render dispatch while preserving its update, result, and completion lifecycle.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xF0A40",
+        "expected_hex": "FCAF0D0C",
+        "replacement_hex": "00000000"
+      }
+    }
+  },
   "e__general__dedicated_save_namespace__directory_references": {
     "description": "Use the dedicated NA228 save namespace at both memory-card directory references.",
     "operation": "replace",
@@ -2295,30 +2319,6 @@
     "destination_offset": "0xDE8C4",
     "expected_hex": "02000424",
     "replacement_hex": "07000010"
-  },
-  "e__qol__ultimate_jutsu__disable_input_contest": {
-    "description": "Disable contest input reads and rendering while retaining its native lifecycle.",
-    "edits": {
-      "block_press_state_reads": {
-        "description": "Ignore the contest controller's press-state reads while waiting to latch an input or observe release.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0xB6094",
-          "0xB62F0"
-        ],
-        "expected_hex": "6C66070C",
-        "replacement_hex": "21100000"
-      },
-      "suppress_render_dispatch": {
-        "description": "Skip the resident contest object's common render dispatch while preserving its update, result, and completion lifecycle.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0xF0A40",
-        "expected_hex": "FCAF0D0C",
-        "replacement_hex": "00000000"
-      }
-    }
   },
   "e__rendering__native_16_9_horizontal_scale__force_0": {
     "description": "Force 0.75f at the renderer's horizontal-scale store while preserving the caller-provided vertical scale.",

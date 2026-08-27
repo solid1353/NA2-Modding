@@ -431,6 +431,22 @@ correction on 2026-08-21 confirmed that post-UJ awakening occurs, the meter,
 prompts, and result messages remain invisible, and both players' inputs remain
 blocked.
 
+### Native complete-HUD transition
+
+The retained contest object pointer at resident global `0x00607750` also gives
+the complete battle HUD a stable Ultimate-Jutsu lifecycle signal. The accepted
+Battle Logic hook at BTL file offset `0x67030` edge-detects that pointer around
+the displaced common battlegauge update prologue. On a null-to-non-null edge it
+calls resident `0x001F1820(-1)`; on the matching non-null-to-null edge it calls
+resident `0x001F1A20(-1)`.
+
+These are the native all-HUD hide and show requests used by ordinary Jutsu.
+Consequently the Ultimate-Jutsu path inherits the same HUD translation, timing,
+visibility gates, and restoration instead of directly suppressing individual
+renderers. Children injected into the battle-HUD hierarchy, including the
+independent substitution bar, follow that native transition without a separate
+Ultimate-Jutsu condition.
+
 ## Support field-call and gauge paths
 
 NUN5 and NUN6 expose one exact difference at exported BTL text address

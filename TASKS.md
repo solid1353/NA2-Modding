@@ -1,51 +1,26 @@
 # Tasks
 
-## In Progress
-
-## Backlog
-
 ### General
-- Create notifications.
 
-### Project
-- Investigate cross-platform development/deployment possibilities.
-- Global cleanup - preserve/promote what is needed, delete the rest.
+-   Damage scaling
+-   Turn sub bar into a game mode
+-   Fix extra hit floating animation, add an optional punishment for initiation attempt
+-   Unblock launch with no MC
 
 ### Bugs
-- **Font:** ninja song long line.
-- **String Translation:** save message.
-- **General:** practice menu entries (like Damage) flicker again (unstable).
 
-### Logic
-- Add damage scaling.
-- Add substitution bar.
-- [Improve substitution reliability](docs/knowledge/gameplay/substitution.md)
-- Fix extra hit floating animation (or maybe not?).
-- 60 FPS patch.
+-   Font: ninja song long line
+-   Font: practice - opponent settings misalignment
+-   String translation: save message
+-   Textures: chakra seal tag applied bubble
+-   Practice menu flickers due to running help text
+-   4TK/Orochimaru texture stretching
 
-### Visuals
-- Create a proper widescreen patch.
-- Create an upscaled texture pack for pcsx2 (currently blocked by UI translation).
+### Backlog
 
-### Testing
-- Isolate and promote runtime-proven patches.
-
-## Archive
-
-### Font
-
-### QoL
-
-### Docs
-
-### UI Translation
-
-### String Translation
-
-### Code Injection
-
-### Decompilation
-
-### EE Runtime Memory Map
-
-### PCSX2
+-   Proper startup
+-   Cross-platform deployment
+-   Proper widescreen patch
+-   Upscaled texture pack for pcsx2
+-   Port stages/characters
+-   60 FPS

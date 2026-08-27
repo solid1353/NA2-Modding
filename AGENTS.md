@@ -16,6 +16,7 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
   approval.
 - Master Mode and Shop are globally out of scope. Do not work on or document
   them.
+- `TASKS.md` is user-only. Agents must not read or modify it.
 
 ## Discussion and action
 
@@ -131,7 +132,7 @@ Canonical project command definitions and their workflow or procedure routing
 are in [`AGENT_COMMANDS.md`](AGENT_COMMANDS.md).
 
 Command index: `des mode`, `design mode`, `int mode`, `interactive mode`,
-`snap`, `ver`, `exit`, `zxc`, `tasks`, `task done`, `c`, `c on`, `c off`,
+`snap`, `ver`, `exit`, `zxc`, `c`, `c on`, `c off`,
 `mode`, `n`, `imm`, `e2e`, `sum`, `ss`, `mute`, `unmute`.
 
 ### Policy routing
@@ -144,11 +145,10 @@ Read only the routed policy whose trigger applies:
 | validation, tests, builds, PCSX2, runtime injection, E2E | [`docs/policies/testing.md`](docs/policies/testing.md) |
 | profiles, builder inputs, binaries, donor data, source media, PNACH | [`docs/policies/modding.md`](docs/policies/modding.md) |
 | reverse engineering, disassembly, evidence, knowledge, hypotheses | [`docs/policies/research.md`](docs/policies/research.md) |
-| `TASKS.md`, concurrent work, project chats, Notifications | [`docs/policies/coordination.md`](docs/policies/coordination.md) |
 
 Read component documentation only when working on that component. Read a task's
 directly linked documentation when entering or resuming that task, not before
-every message. `TASKS.md`, handoffs, knowledge, research, hypothesis, and large
+every message. Handoffs, knowledge, research, hypothesis, and large
 technical documents are not default context; load them only when the current
 request requires them. For a large technical document, read only the relevant
 sections unless broader context is necessary.

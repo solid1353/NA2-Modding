@@ -1,13 +1,14 @@
 # Research and knowledge policy
 
-- Choose the most direct available evidence source. Before pursuing an
-  investigation, determine whether a user-provided recording, savestate,
-  screenshot, dump, or reproduction can reveal runtime state or event sequence
-  that would otherwise remain uncertain or require a substantially slower
-  investigation. If so, request the exact input and pause the work that depends
-  on it. Do not substitute speculation or weaker indirect evidence merely
-  because investigation can technically continue. Prefer reproducible
-  CLI/scripted workflows when practical and state the tools used.
+- For a user-reported runtime discrepancy, request the recording, savestate,
+  screenshot, dump, or exact reproduction that captures it before beginning
+  investigation. Do not run investigative commands until the user provides the
+  evidence or states that none is available. When several forms are available,
+  request the one that most directly preserves the relevant runtime state or
+  event sequence. Afterward, use the most direct available evidence source.
+  Do not substitute speculation or weaker indirect evidence merely because
+  investigation can technically continue. Prefer reproducible CLI/scripted
+  workflows when practical and state the tools used.
 - Read the relevant topic/component knowledge before repeating research. For
   game-file investigations, begin with
   [`../knowledge/game/files/README.md`](../knowledge/game/files/README.md).

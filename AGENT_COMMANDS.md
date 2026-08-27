@@ -21,10 +21,6 @@ does not document the `na228` or Workshop command-line interfaces; use
   or authorizing a commit. It has no effect in Normal mode.
 - `zxc`: follow the
   [graceful-stop procedure](docs/procedures/graceful_stop.md).
-- `tasks`: read and present `TASKS.md` under the
-  [coordination policy](docs/policies/coordination.md).
-- `task done`: apply the task-completion behavior defined by the
-  [coordination policy](docs/policies/coordination.md).
 - `c on`, `c off`: change the current chat's persistent Normal mode
   commit setting as defined in
   [`normal_mode.md`](docs/interactions/normal_mode.md#commit-setting).

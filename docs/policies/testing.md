@@ -20,28 +20,20 @@
 
 ## Runtime validation
 
+- Agents must not directly launch, attach to, command, screenshot, probe, or
+  close any PCSX2 process. Runtime execution is permitted only through the
+  maintained E2E and input-recording validation workflows; agents invoke their
+  entrypoints and inspect their outputs, while the workflows own emulator
+  control.
 - When the user provides an input recording for the task, follow the
   [input-recording validation workflow](../workflows/input_recording_validation.md).
   Its agent replay is runtime validation, not user acceptance of the result.
 - A standalone savestate may support diagnosis but does not validate a change.
-- For agent PCSX2 operations, use the selected verified hash-cache image rather
-  than shared role paths or an arbitrarily newer ISO.
 - Before relying on an ISO as runtime evidence, verify its identity and
   provenance from the available SHA-256, serial, CRC, build record, payload
   hashes, and symbol map. Request any required missing metadata.
-- `@pcsx2_dev` is the only PCSX2 installation agents may use. Do not create,
-  copy, select, launch, or control another installation or runtime, including
-  `@pcsx2_fork` or a chat-owned copy.
-- An explicit PCSX2 operation authorizes only the requested operation. It does
-  not authorize probing, closing, or otherwise controlling an existing PCSX2
-  process. Every agent-launched PCSX2 process must run in the background.
 - Extract `Screenshot.png` from an existing savestate when that frame is enough;
   do not create a complete state solely to obtain a screenshot.
-- For a fresh runtime frame, request a PINE screenshot from the explicitly
-  authorized `@pcsx2_dev` port and poll that installation's `snaps/` tree for
-  the new PNG.
-- Do not use window capture, screenshot hotkeys, window messages, or
-  foregrounding as substitutes.
 
 ## Validation behavior and tests
 

@@ -15,7 +15,10 @@
 - Treat `e2e/captures/` as a separate maintained Git repository for every
   repository-wide Git operation and completion report, even though it is
   local-only and has no remote.
-- Refresh Git status and relevant history before mutating Git.
+- Track every repository changed by the task as participating until its delivery
+  is complete or the user explicitly excludes it. Before the first commit,
+  refresh every participating repository and confirm that all task-owned pending
+  changes are included.
 - If the user requests further changes to a task whose changes are staged,
   unstage only that task's changes before editing. Do not commit incomplete work
   merely to clean the tree; report its task-owned dirty state.

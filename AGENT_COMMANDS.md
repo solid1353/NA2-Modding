@@ -15,9 +15,10 @@ does not document the `na228` or Workshop command-line interfaces; use
 ## Task control and validation
 
 - `snap`: present the current consolidated implementation snapshot.
-- `ver`: accept the current result. Agents may then add tests. Validate, commit,
-  and push the accepted result. In Design mode, first promote useful design
-  content and delete the design document, then exit after pushing.
+- `ver`: accept the current result across every repository changed by the task.
+  Agents may then add tests. Validate, commit, and push the accepted result. In
+  Design mode, first promote useful design content and delete the design
+  document, then exit after pushing.
 - `exit`: exit Design mode or Interactive mode without accepting the result
   or authorizing a commit. It has no effect when no mode is active.
 - `zxc`: follow the

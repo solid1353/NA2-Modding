@@ -5,6 +5,10 @@ Use this workflow after E2E has been selected for the current work under
 infrastructure own build, replay, capture, transaction retention, and report
 generation; do not reproduce those steps manually.
 
+Shifted E2E is user-only. Unless explicitly requested for the current task,
+agents treat it as nonexistent: do not mention it, even by qualifying ordinary
+E2E, and do not propose, select, run, or report it.
+
 ## Requested evidence
 
 An agent request may identify expected evidence using the existing syntax:

@@ -28,9 +28,6 @@ serious structural work.
   messages, approvals, corrections, and wording changes are not milestones.
 - Keep unresolved decisions explicit.
 - `imp` is the only implementation command in Design mode.
-- Design mode remains active until the user approves the reviewed implementation
-  with `ver` or sends `exit`. An instruction to stop or switch work does
-  not itself exit Design mode.
 
 ## Implementation and review
 
@@ -40,21 +37,6 @@ serious structural work.
 2. Implement and validate the design.
 3. Add an implementation summary to the design document and set its status to
    `Pending review`.
-4. Commit the implementation together with the updated design
-   document.
-5. Report the result in chat and request user review.
-
-Review may remain pending indefinitely. Do not impose a deadline, restriction,
-or automatic cleanup.
-
-If the result is wrong or incomplete, further requested corrections do not
-require another `imp`. Do not choose a correction workflow automatically.
-
-When the user enters `ver` after reviewing the implementation, treat it as
-implementation approval. Before deleting the individual design document,
-review it against the implemented result and promote every still-useful
-decision, contract, explanation, example, limitation, and validation finding
-to its canonical current documentation, then delete the individual design
-document, commit the promotion and deletion, and exit Design mode.
-
-`exit` leaves the individual design document intact.
+4. Report the result in chat and request user review.
+5. Apply further requested corrections without another `imp`, then repeat
+   steps 3–4.

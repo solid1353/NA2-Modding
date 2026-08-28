@@ -2,7 +2,7 @@
 
 This runbook owns the canonical extraction layout and procedures for original
 source media. Source protection remains canonical in
-[`../policies/modding.md`](../policies/modding.md).
+[`repository.md`](../policies/repository.md#file-and-folder-management).
 
 ## Layout
 

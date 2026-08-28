@@ -6,33 +6,27 @@
   migration validation are defined in [`paths.md`](paths.md).
 - For a requested `from <source> to <destination>` link, preserve the source and
   create the link at the destination. Do not redesign ownership unless asked.
-- Treat `@pcsx2_dev` as protected; `@pcsx2_fork` is build output, not a
-  runnable installation. Runtime procedures are in
-  [`../runbooks/runtime-testing.md`](../runbooks/runtime-testing.md).
+- `@pcsx2_fork` is build output, not a runnable installation. Runtime
+  procedures are in
+  [`testing.md`](testing.md#runtime-validation).
 
 ## Git and concurrent work
 
 - Treat `e2e/captures/` as a separate maintained Git repository for every
-  repository-wide Git operation, including identity configuration, status
-  checks, commits, and completion reporting, even though it is local-only and
-  has no remote.
-- Refresh Git status and history before operations.
+  repository-wide Git operation and completion report, even though it is
+  local-only and has no remote.
+- Refresh Git status and relevant history before mutating Git.
 - If the user requests further changes to a task whose changes are staged,
-  unstage only that task's changes before editing.
-- Do not commit incomplete work merely to clean the working tree. Report its
-  task-owned dirty state.
-- When a remote exists, immediately push each task-owned commit unless it
-  belongs to a coherent multi-repository delivery. For such a delivery, create
-  every intended commit before pushing any repository; if any commit fails,
-  push none. Once all commits exist, push every remote-backed participating
-  repository without unrelated intervening work. If a push fails partway,
-  report the exact partial delivery; do not rewrite or roll back published
-  history automatically. Report every participating repository's commit, push,
-  and dirty state.
-  Normal pushes to the configured current branch/origin have standing
-  authorization; do not ask for it again. Changing remotes, force-pushing, or
-  rewriting published history
-  still requires explicit instruction.
+  unstage only that task's changes before editing. Do not commit incomplete work
+  merely to clean the tree; report its task-owned dirty state.
+- When a remote exists, immediately push each task-owned commit. For a coherent
+  multi-repository delivery, create all intended commits before pushing any; if
+  a commit fails, push none. Then push every remote-backed repository without
+  unrelated intervening work. If a push fails, report the exact partial delivery
+  and do not rewrite or roll back published history. Report each participating
+  repository's commit, push, and dirty state. Normal pushes to the current
+  branch/origin have standing authorization; changing remotes, force-pushing, or
+  rewriting published history requires explicit instruction.
 - Never modify persistent Git identity configuration. The shared Git policy
   guard owns per-command identity and subject validation.
 - Git history is the recovery mechanism for tracked files. Preserve
@@ -40,39 +34,70 @@
 
 ## Work ownership and external inputs
 
-- Under `@work`, a chat may write only inside `@work/<exact chat title>/` or a
-  configured non-chat workflow root.
-- A chat may read but not change another chat's directory.
-- No other path under `@work` may be created or changed.
-- Tool and skill workspace conventions do not override these rules.
-- Agents do not use the operating-system `TEMP`/`TMP` directory as a workspace
-  or artifact root. Set `NA228_TASK_WORK_ROOT` to the acting chat's
-  `@work/<exact chat title>/` before maintained commands that create temporary
-  files.
-- When `NA228_TASK_WORK_ROOT` is unset, the unit-test runner uses the ignored
-  `@work/unit-tests/` technical root instead of impersonating a chat. Every run
-  removes its run directory and the empty technical root on success or failure.
-- Keep inputs, experiments, intermediates, outputs, runtime artifacts, and logs
-  in clearly named work directories.
-- Copy changing external inputs such as selected savestates or screenshots into
-  `@work/<chat title>/inputs/` with provenance before relying on them. Keep
-  baselines, modified copies, and analysis outputs separate.
-- After moving or deleting files, inspect every affected parent directory on
-  disk with hidden and ignored entries included. Remove unintended empty
-  parents and inspect them again; the task remains incomplete until this is
-  done. Git status cannot prove directory cleanup.
-- `docs/designs/` is exclusively owned by Design mode. Do not create or modify
-  files there in any other mode.
+- Set `NA228_TASK_WORK_ROOT` to the acting chat's work root before maintained
+  commands that create temporary files.
+- Copy changing external inputs to `@work/<chat title>/inputs/` with provenance
+  before relying on them. Keep baselines, modified copies, and analysis outputs
+  separate.
+- Before completion, remove disposable task artifacts and apply applicable
+  [research](game.md#research-and-knowledge) retention rules.
+
+## File and folder management
+
+- `TASKS.md` is user-only. Agents must not read or modify it.
+- Never use a system temporary directory or write outside repositories
+  configured for the current task.
+- Write authorized project changes to their canonical project paths and
+  maintained workflow outputs to their configured repository paths. Put every
+  other task-created file—including temporary files, experiments, generated
+  artifacts, clones, and detached worktrees—under
+  `@work/<exact chat title>/`.
+- Within `@work/`, a chat may write only in its own root. All other `@work`
+  paths are read-only, regardless of tool or skill workspace conventions.
+- `docs/designs/` is read-only outside Design mode.
+- Everything under `@source/`, including extracted views, is read-only unless
+  the user authorizes an exact modification. Only original archives and
+  extraction views created through the
+  [source-extraction runbook](../runbooks/source-extraction.md) belong there;
+  keep all other generated files and modified source-derived working copies
+  outside it.
+- The entire `@disassembly/` tree is a read-only evidence archive. Do not alter
+  its contents, metadata, filesystem protection, Ghidra projects, or exports,
+  including through a writable copy.
+- `@pcsx2_dev` is protected and user-owned. Agents may read it or copy
+  individual evidence from it, but must not create, modify, move, delete, or
+  link anything inside it unless the user authorizes that exact action.
+- Outside maintained E2E and the
+  [input-recording validation workflow](../workflows/input_recording_validation.md),
+  savestates are read-only diagnostic evidence: do not create, modify, convert,
+  patch, load, replay, or inject through them for validation.
+- Input-recording baselines under `@work/captures/<recording>/<game>/` are
+  read-only.
+- After moving or deleting files, inspect affected parent directories with
+  hidden and ignored entries included. Remove unintended empty parents and
+  inspect them again; Git status cannot prove directory cleanup.
 - Do not create or preserve a directory containing only one file unless it has a
   clear structural, ownership, namespace, tooling, or future-extension purpose.
   Otherwise move the file to the nearest appropriate existing directory and
   remove the unnecessary folder.
-- Before completion, apply the applicable
-  [logging](logging.md#retention) and [research](research.md) retention rules,
-  remove other disposable task artifacts, and document every retained artifact
-  and its future use.
 
-## Scripts, dependencies, and logs
+## Logs and retention
+
+- Write bounded shared workflow logs below `@logs/`, generated task records
+  below `@task_logs/<exact chat title>/`, and task-local build or runtime logs
+  below `@work/<exact chat title>/logs/`. Do not write files directly in
+  `@logs/` or `@task_logs/`.
+- Persist only repository-relative paths or configured aliases, never
+  machine-specific absolute paths.
+- Record only the inputs, selected configuration, result, validation, timing,
+  and failure detail needed to reproduce or diagnose the operation.
+- Generated logs are ignored by Git and disposable. Before completion, delete
+  task-owned logs and resulting empty directories. Retain a log only when an
+  existing tracked document already names a concrete future use and
+  regeneration is expensive or impractical.
+- Large inventories may remain only when they prevent expensive rediscovery.
+
+## Scripts and dependencies
 
 - User-facing utilities are PowerShell. Python may be used internally behind a
   maintained PowerShell entrypoint.
@@ -87,9 +112,7 @@
 - Research scripts may start as undocumented task-local scratch code. Before the
   task ends, delete them after promoting their findings, or promote them into an
   existing tooling area, document their current use in the same change, and
-  remove unreachable or superseded code. See the implementation boundary in
-  root
-  [`AGENTS.md`](../../AGENTS.md#implementation-boundaries).
+  remove unreachable or superseded code.
 - Third-party packages use the affected component's existing central dependency
   set and runtime resolver. Do not select interpreters, install packages, or add
   fallback discovery independently in a task or script.
@@ -97,16 +120,9 @@
   `& path.py`; that can trigger the OS file-association dialog. Pass the file to
   the maintained Python wrapper or an explicitly resolved compatible
   interpreter.
-- User-facing repeated operations must accept state produced by their own prior
-  successful run. Do not add workflow-blocking identity, expected-state, guard,
-  backup, recovery, or restart validation unless it is explicitly authorized by
-  the applicable validation plan.
-- Do not add or retain `schema_version` unless it selects supported incompatible
-  behavior, migration, or cache invalidation.
-- Do not create a manifest unless an independent consumer needs metadata that
-  cannot be derived from its canonical inputs.
-- Follow [`logging.md`](logging.md) for log roots, retention, and
-  knowledge promotion.
+- Create a manifest only when an independent consumer needs metadata that cannot
+  be derived from canonical inputs. Add `schema_version` only when it selects
+  supported incompatible behavior, migration, or cache invalidation.
 - Prefer cohesive responsibility-based files. Split independent concerns when
   it improves ownership, navigation, testing, or concurrency, not merely by
   size.
@@ -118,29 +134,19 @@
 
 Give each document one job and canonical authority:
 
-- interaction documents under `docs/interactions/` own interaction modes;
-- workflow documents under `docs/workflows/` own multi-step task workflows;
-- procedure documents under `docs/procedures/` own non-mode agent procedures;
-- runbooks own exact operational procedures;
-- the implementing repository or component owns user-facing CLI help;
-- component docs own current architecture, contracts, inputs, and outputs;
-  never duplicate canonical source as a documentation example;
-- knowledge/research docs own evidence, findings, hypotheses, and negative
-  results;
-- historical docs contain only non-current material with concrete continuing
-  value.
-
-Substantial supporting documentation belongs under the repository root `docs/`
-hierarchy.
-- A code area may retain one concise local `README.md` when nearby orientation
-  or a component contract is useful. Link to substantial documentation instead
-  of accumulating multiple Markdown files beside code.
-- The builder has no physical `features/` directory. Selectable structure lives
-  in `@builder/catalog/catalog.modcat`; guarded edits, runtime injection
-  units, and targets live beside it under `@builder/catalog/`. Non-inline
-  executable inputs and
-  assets live under their concrete builder data area, and feature documentation
-  belongs under `docs/features/`. Catalog-only features require no directory.
-- Current operational documentation describes the current system. Delete
-  superseded policy, stale incident explanations, and obsolete retirement notes
-  when they no longer provide concrete current value; Git preserves history.
+- `AGENT_COMMANDS.md` owns project-specific command definitions;
+  `docs/interactions/` owns interaction modes, `docs/procedures/` owns command
+  procedures, `docs/workflows/` owns multi-step task workflows, and runbooks own
+  exact operational procedures.
+- The implementing repository or component owns user-facing CLI help and current
+  architecture, contracts, inputs, and outputs. Link to canonical source instead
+  of maintaining copied examples.
+- Knowledge and research docs own evidence, findings, hypotheses, and negative
+  results. Current operational docs describe the current system; historical docs
+  retain only non-current material with concrete continuing value. Delete
+  superseded policy, stale incident explanations, and obsolete retirement notes;
+  Git preserves history.
+- Substantial supporting documentation belongs under `docs/`. A code area may
+  retain one concise local `README.md` for nearby orientation or a component
+  contract; link to substantial documentation instead of accumulating Markdown
+  files beside code.

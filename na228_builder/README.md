@@ -45,7 +45,9 @@ integrated catalog data.
   rows are not characters, so their `base_id`, `character`, and `tier` cells
   are empty. Matching `test` and `release` TSVs in that directory layer
   nonempty cells over it by row identity. Empty cells inherit; numeric zero is
-  an explicit value.
+  an explicit value. Release packaging materializes the resolved feature and
+  character-override layers into one external JSON configuration and one
+  external character-override TSV.
 - `@resources/character_data.tsv` is the repository-owned ID/name and native-value
   reference used to validate character rows. Its
   `support_id` cells contain the native support-roster ID corresponding to each
@@ -92,12 +94,19 @@ integrated catalog data.
   real inputs, not empty selector nodes. Release builds always require the clean
   NA2 ISO and require the clean NUN5 ISO only when the resolved module list
   includes the texture patcher.
-- `@scripts/` contains every builder Python implementation file. Reusable engines and their code-only contracts remain under `modules/`.
+- `@scripts/` contains every builder Python implementation file. Reusable
+  engines and their code-only contracts remain under `modules/`; non-inline
+  feature inputs remain with their owning feature. Do not use placeholder
+  engine directories, identity manifests, `.gitkeep`, or header-only files
+  merely to register an engine. Each reusable module README states its
+  downstream module invocations or that it invokes none.
 - Root `release_manifest.json` owns release packaging metadata and remains
   outside the catalog.
 - Root `game.json` owns the product title, explicit output boot path, named
   build targets, their configuration and rotation relationships, base launch
-  settings, and direct named launch-profile overrides.
+  settings, and direct named launch-profile overrides. Each named override
+  declares a profile; its matching `launch_profiles/<profile>/` directory owns
+  optional profile behavior and assets.
 
 JSON configurations select features. The paired character-override TSVs are
 the separate per-character build inputs for battle values.
@@ -303,6 +312,12 @@ concise path/value/expectation message. Their existing `latest.log` and
 `technical_details`; catalog-authoring and internal failures remain developer
 errors and keep their existing presentation.
 
+Completed operational invocations maintain `@logs/na228/latest.log` and the
+newest 20 bounded sections in `@logs/na228/rolling.log`. Help output is not
+logged. Persistent command logs omit transcript boilerplate, normalize
+configured roots to aliases, and record mode, timing, outcome, ISO result or
+rotation, and the configuration record when applicable.
+
 `na228 build -c <configuration>` reuses an exact verified registry identity or
 runs full composition and physical image verification, then returns the
 canonical hash-named cache image without publishing another output.
@@ -322,6 +337,34 @@ promotion without rebuilding. Physical candidates hold exclusive activity
 locks, so a later build can reclaim crash-orphaned incoming ISOs without
 touching live parallel builds.
 
+`@logs/na228/builds/<build-id>/` retains structured records only for the
+catalog-derived Latest, Previous, normal E2E Test, and shifted E2E Test images.
+`@logs/na228/builds.tsv` atomically maps those four roles to images and records;
+an unavailable record leaves its role row empty. Parallel completion serializes
+replacement through `@logs/na228/.builds.lock` without deleting active unmapped
+records. An exact registry hit clones its provenance into the role record
+without repeating assembly. `@logs/na228/manual/<build-id>/` independently
+retains only the latest successful Manual record and its `build_result.tsv`.
+
+`@logs/na228/preflight/registry.json` stores byte-affecting fingerprint state,
+ISO SHA-256, verification time, verified image size, and portable locations;
+`preflight/records/<fingerprint>/` stores reusable structured provenance.
+Registry entries, provenance records, and cached images are capped at 15, and
+retained locations per image at 20. Pruning preserves configured Latest,
+Previous, and Manual images and hash-checks a verified role before relinking its
+missing canonical cache path. A missing or corrupt registry causes a complete
+verified build and is recreated only after success.
+
+Manual-only builds require an exact fully verified composition, may reuse an
+exact registry hit, and report whether the Manual image changed while recording
+that rotation is disabled and PCSX2 remains running.
+
+When `NA228_TASK_WORK_ROOT` is set, cache builds keep their operational and
+structured records below the acting chat's `logs/` directory. They retain at
+most 20 completed structured records per chat and may be cleaned sooner under
+the repository retention policy. Cache builds neither write nor prune shared
+Test, Latest, or Previous role records.
+
 Preflight fingerprints both canonical source ISOs, ISO-composing Python code,
 the exact selected configuration resources, product/path configuration, active
 Python/Zlib/Zopfli versions, and the EE compiler components whenever selected C
@@ -329,6 +372,10 @@ sources require them. `@scripts/module_pipeline.py` prepares internal invocation
 and shared payload contributions; `@scripts/build_configuration.py` composes
 them; `@scripts/composer.py` closes typed image operations; and
 `image_assembler/` alone stages and verifies the ISO.
+
+The preflight dependency closure covers every input capable of changing the
+selected ISO. A build-affecting input or dependency change updates that closure
+and its existing invalidation coverage in the same change.
 
 The development injector reads the feature files under `catalog/` with
 `configurations/base.json` and `base.character_overrides.tsv`.

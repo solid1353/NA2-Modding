@@ -2,5 +2,6 @@
 
 Validate changes as the work is iteratively refined.
 
-`ver` accepts and commits the accumulated result, then exits Interactive mode.
-`commit` commits the current result without accepting it or exiting the mode.
+Assume the user edits task files concurrently. Reread each target immediately
+before editing; preserve compatible user changes and stop for conflicting edits
+instead of overwriting them.

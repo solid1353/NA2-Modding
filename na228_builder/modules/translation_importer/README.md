@@ -59,7 +59,7 @@ The official `donor` is the default executable translation. User-authored
 `prefix` is prepended to the resolved text, while `replacement` is reserved for
 a direct user edit that overrides the donor before transforms are applied.
 Agents follow the
-[modding policy](../../../docs/policies/modding.md#binary-and-donor-changes).
+[modding policy](../../../docs/policies/game.md#builder-binary-and-donor-changes).
 The importer normalizes fullwidth ASCII-compatible characters in resolved
 output while preserving exact CP932 source guards. When an official donor uses
 positional tokens such as `%1` for a clean NA2 runtime-format string, the importer

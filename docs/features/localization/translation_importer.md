@@ -37,8 +37,9 @@ NUN5 donor references and donor text are retained in the table for review,
 provenance, and executable translation. Normal builds do not read donor
 binaries: the verified `donor` text in the table is the default translation.
 A nonempty `replacement` is reserved for a direct user override, and `prefix`
-is a user-editable string prepended to the selected translation. Agent handling
-is defined by the [modding policy](../../policies/modding.md#binary-and-donor-changes).
+is a user-editable string prepended to the selected translation. Agents leave
+`replacement` blank. If a translation cannot be expressed through a verified
+donor and centralized importer behavior, report that limitation to the user.
 The current table uses verified official donors and contains no row-level
 replacements. T30 uses the exact `Ultimate` donor at `NUN5_TEXTENG@0xF208` and
 the validated pointer at `NA2_BTL@0x209CB4`; encoded fit therefore externalizes

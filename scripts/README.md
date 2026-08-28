@@ -33,7 +33,7 @@ exact agent procedures belong in the linked runbooks.
   configured read-only maintenance. The procedure is in
   [`../docs/runbooks/source-extraction.md`](../docs/runbooks/source-extraction.md).
 - `injection/`: direct-PINE candidate build/apply tooling. Agent use is defined
-  by [`../docs/runbooks/runtime-testing.md`](../docs/runbooks/runtime-testing.md).
+  by [`../docs/policies/testing.md`](../docs/policies/testing.md).
 - `@release/`: self-contained release construction and publication.
 - `research/menu_input/`, `research/ee_memory_map/`,
   `research/localization/`, and `research/ui_translation/`: reusable preserved
@@ -58,8 +58,8 @@ Shared infrastructure is not duplicated here:
 - `tests/` owns the current repository-wide unit-test runner. Component
   documentation may expose narrower existing unit-test invocations where they
   are supported.
-- Exact agent PCSX2 runtime procedures are in
-  [`../docs/runbooks/runtime-testing.md`](../docs/runbooks/runtime-testing.md).
+- Agent PCSX2 runtime rules are in
+  [`../docs/policies/testing.md`](../docs/policies/testing.md).
 
 Do not reproduce CLI syntax or workflow procedures in this index. Link to the
 owning command help, component document, or runbook instead.

@@ -38,15 +38,10 @@ knowledge, tests, and release behavior.
   agents.
 - Policies:
   [repository](docs/policies/repository.md),
-  [coordination](docs/policies/coordination.md),
   [validation](docs/policies/testing.md),
-  [modding/source](docs/policies/modding.md), and
-  [research/knowledge](docs/policies/research.md).
-- Runbooks:
-  [runtime testing](docs/runbooks/runtime-testing.md) and
-  [source extraction](docs/runbooks/source-extraction.md).
-- [Path configuration](docs/policies/paths.md) and
-  [logging/retention](docs/policies/logging.md).
+  [game modding and research](docs/policies/game.md), and
+  [path configuration](docs/policies/paths.md).
+- Runbooks: [source extraction](docs/runbooks/source-extraction.md).
 - [Feature documentation](docs/features/README.md) and
   [knowledge index](docs/knowledge/README.md) for current contracts and durable
   technical findings.

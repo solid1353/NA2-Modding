@@ -30,7 +30,7 @@ so it deliberately does not belong to a feature module. The mandatory image
 assembler applies it to both ISO9660 and UDF, logs the identity edits, and
 verifies the declared final tree. No file extent, file size, or ISO size changes.
 
-The separate `general.dedicated_save_namespace` catalog setting owns the clean
+The separate `memory_card.dedicated_save_namespace` catalog setting owns the clean
 boot ELF's two 19-byte memory-card directory fields at `0x2FBAC1` and
 `0x2FBBF0`. When enabled, its guarded binary edits change
 `BISLPS-25837NARUTO5` to `BASLOP-NA228NARUTO6`. It is enabled in the base
@@ -38,7 +38,7 @@ configuration. Setting it to `false` leaves the stock name intact, so NA228
 shares NA2's save data. Existing `.ps2` memory cards and data remain untouched,
 and changing the setting does not migrate data between the two names.
 
-The separate `general.replace_memory_card_title` setting owns the clean boot
+The separate `memory_card.replace_memory_card_title` setting owns the clean boot
 ELF's 64-byte CP932 title slot at `0x2FBAE0`. Its fixed-value adapter guards the
 original Japanese title and replaces it with `ＮＡ　ｖ２．２８`, with both values
 NUL-terminated and zero-padded through the slot. The base configuration enables

@@ -35,6 +35,7 @@ typedef struct CharacterOverrideTable {
 } CharacterOverrideTable;
 
 extern const CharacterOverrideTable battle_logic_character_overrides;
+extern const u32 battle_logic_character_overrides_enabled;
 
 #define CHARACTER_OVERRIDE_SUBSTITUTION_COST_PRESENT (1u << 0)
 #define CHARACTER_OVERRIDE_SUBSTITUTION_COST_DELTA (1u << 16)
@@ -111,11 +112,14 @@ static __attribute__((always_inline)) inline void format_substitution_cost(
     }
     cursor = append_u32(text, cursor, magnitude / 100u);
     fractional = magnitude % 100u;
-    text[cursor++] = (u8)'.';
-    text[cursor++] = (u8)('0' + fractional / 10u);
-    if (fractional % 10u != 0u) {
-        text[cursor++] = (u8)('0' + fractional % 10u);
+    if (fractional != 0u) {
+        text[cursor++] = (u8)'.';
+        text[cursor++] = (u8)('0' + fractional / 10u);
+        if (fractional % 10u != 0u) {
+            text[cursor++] = (u8)('0' + fractional % 10u);
+        }
     }
+    text[cursor++] = (u8)'%';
     text[cursor] = 0u;
 }
 
@@ -176,6 +180,8 @@ void battle_logic_character_select_balance_overlay(u32 selector)
     cost_present = resolved_substitution_cost(character_id, &character, &cost);
     format_tier(text, character);
     draw_text(x, 8.0f, text, 0xFF000000u);
-    format_substitution_cost(text, cost_present, cost);
-    draw_text(x, 28.0f, text, 0xFF000000u);
+    if (battle_logic_character_overrides_enabled != 0u) {
+        format_substitution_cost(text, cost_present, cost);
+        draw_text(x, 28.0f, text, 0xFF000000u);
+    }
 }

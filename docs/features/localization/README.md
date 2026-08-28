@@ -59,7 +59,7 @@ owns byte guards, conflict handling, replacement, and logging. There is no
 physical `string_patcher/` module or `strings.tsv` interface.
 
 The selectable memory-card title is owned by
-`general.replace_memory_card_title`; its evidence is documented in
+`memory_card.replace_memory_card_title`; its evidence is documented in
 `docs/knowledge/game/disc_identity.md`.
 
 ## Regional menu input

@@ -112,7 +112,7 @@ merely to satisfy a format.
 
 ## Context and command routing
 
-On every new task, read and follow
+On every fresh chat, read and follow
 [`Normal mode`](docs/interactions/normal_mode.md) and every routed policy triggered
 by the request before stating implementation intent, scope, approach, or
 validation. Any required pre-tool commentary may state only that the applicable

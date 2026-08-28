@@ -1,4 +1,81 @@
 {
+  "e__battle__control_settings_rework": {
+    "description": "Expose Guard and Substitution as independent remappable actions and own the default shoulder-button layout for both players.",
+    "edits": {
+      "allow_substitution_while_guard_is_held": {
+        "description": "Bypass the native 16-frame held-Guard rejection before the independent Substitution input search.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x129720",
+        "expected_hex": "10004228",
+        "replacement_hex": "01000224"
+      },
+      "default_battle_overlay_bindings": {
+        "description": "Initialize the battle overlay with Substitution on L1, Guard on R1, Item Select on L2, and Linked Attack on R2.",
+        "operation": "replace",
+        "destination_target_id": "na2_btl",
+        "destination_offset": "0x1E4250",
+        "expected_hex": "10002000400080000400080001000200",
+        "replacement_hex": "10002000400080000100020008000400"
+      },
+      "default_control_settings_reset_selections": {
+        "description": "Make the Control Settings Select-button reset assign Substitution to L1, Guard to R1, Item Select to L2, and Linked Attack to R2 for either player.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x4D5350",
+        "expected_hex": "010000000000000003000000020000000400000005000000060000000700000001000000",
+        "replacement_hex": "010000000000000003000000020000000700000006000000040000000500000001000000"
+      },
+      "default_resident_bindings": {
+        "description": "Reset every resident controller bank to Substitution on L1, Guard on R1, Item Select on L2, and Linked Attack on R2.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x4C07A0",
+        "expected_hex": "10002000400080000400080001000200",
+        "replacement_hex": "10002000400080000100020008000400"
+      },
+      "include_substitution_in_shoulder_assignment_selector": {
+        "description": "Extend the Control Settings shoulder-action selector through action index 7 so Substitution can be chosen independently.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x2883FC",
+        "expected_hex": "06000324",
+        "replacement_hex": "07000324"
+      },
+      "preserve_substitution_when_opening_assignment": {
+        "description": "Stop the native editor from rewriting action index 7 to Guard index 6 when its assignment selector opens.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x287FBC",
+        "expected_hex": "0000A3AC",
+        "replacement_hex": "00000000"
+      },
+      "remove_substitution_action_from_logical_block_mask": {
+        "description": "Remove action-map index 7 from the held Guard translation while preserving index 6 as the sole source of the logical block bit.",
+        "operation": "replace",
+        "destination_target_id": "na2_btl",
+        "destination_offset": "0x3C02C",
+        "expected_hex": "0E002286",
+        "replacement_hex": "2D100000"
+      },
+      "search_substitution_action_in_first_input_history_arm": {
+        "description": "Search configured action-map index 7 instead of Guard at index 6, matching the predicate's unchanged second arm.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x129740",
+        "expected_hex": "06000524",
+        "replacement_hex": "07000524"
+      }
+    }
+  },
+  "e__battle__simple_display": {
+    "description": "Choose the native battle Simple Display default.",
+    "operation": "replace",
+    "destination_target_id": "na2_elf",
+    "destination_offset": "0xE7BAC",
+    "expected_hex": "25186600",
+    "adapter": "mips_simple_display_default"
+  },
   "e__battle_logic__disable_extra_hit_with_aura_punishment_for_initiator__retain_aura_punishment": {
     "description": "Disable the extra hit while retaining aura punishment for the initiator.",
     "operation": "replace",
@@ -35,6 +112,14 @@
         "replacement_hex": "78000010"
       }
     }
+  },
+  "e__battle_logic__substitution__frames_before": {
+    "description": "Use the configured deterministic pre-impact input-history frames for otherwise eligible substitutions while preserving resource, response, state, and attack-block gates.",
+    "operation": "replace",
+    "destination_target_id": "na2_elf",
+    "destination_offset": "0x1296C8",
+    "expected_hex": "1100010600000000",
+    "adapter": "mips_substitution_frames_before"
   },
   "e__battle_logic__ultimate_jutsu__contest_disabled": {
     "description": "Disable contest input reads and rendering while retaining its native lifecycle.",
@@ -2109,62 +2194,6 @@
     "destination_offset": "0x4D52E0",
     "expected_hex": "05000000",
     "replacement_hex": "FFFFFFFF"
-  },
-  "e__qol__practice__command_display_off_by_default__force_preserving_following_settings_field": {
-    "description": "Force command display off while preserving the following settings-field reload.",
-    "operation": "replace",
-    "destination_target_id": "na2_elf",
-    "destination_offset": "0xE7B94",
-    "expected_hex": "25186600",
-    "replacement_hex": "00000000"
-  },
-  "e__qol__practice__simple_display_off__by_default": {
-    "description": "Simple display off by default.",
-    "operation": "replace",
-    "destination_target_id": "na2_elf",
-    "destination_offset": "0xE7BAC",
-    "expected_hex": "25186600",
-    "replacement_hex": "00000000"
-  },
-  "e__qol__practice__starting_hp__critical": {
-    "description": "Initialize the native Practice HP enum to critical while preserving the following field's value of two.",
-    "operation": "replace",
-    "destination_target_id": "na2_elf",
-    "destination_offset": "0xE7BE8",
-    "expected_hex": "010080A002000924",
-    "replacement_hex": "02000924010089A0"
-  },
-  "e__qol__practice__starting_hp__full": {
-    "description": "Retain and verify the native full-HP Practice initializer.",
-    "operation": "replace",
-    "destination_target_id": "na2_elf",
-    "destination_offset": "0xE7BE8",
-    "expected_hex": "010080A002000924",
-    "replacement_hex": "010080A002000924"
-  },
-  "e__qol__practice__starting_hp__half": {
-    "description": "Initialize the native Practice HP enum to half using the function's existing constant one.",
-    "operation": "replace",
-    "destination_target_id": "na2_elf",
-    "destination_offset": "0xE7BE8",
-    "expected_hex": "010080A002000924",
-    "replacement_hex": "010085A002000924"
-  },
-  "e__qol__practice__support_off_by_default__force_instead_leaving_previous_settings": {
-    "description": "Force support off instead of leaving the previous settings-block value unchanged.",
-    "operation": "replace",
-    "destination_target_id": "na2_elf",
-    "destination_offset": "0xE7C7C",
-    "expected_hex": "0B0085A0",
-    "replacement_hex": "0B0080A0"
-  },
-  "e__qol__practice__voice_off_by_default__voice_off_by_default": {
-    "description": "Voice off by default.",
-    "operation": "replace",
-    "destination_target_id": "na2_elf",
-    "destination_offset": "0xE7C30",
-    "expected_hex": "2530C700",
-    "replacement_hex": "00000000"
   },
   "e__qol__save_load__display_only_first_save": {
     "description": "Restrict the visible Save/Load slot UI to its first row and compact layout without changing save data or memory-card scans.",

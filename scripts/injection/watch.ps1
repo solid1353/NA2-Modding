@@ -27,7 +27,7 @@ $injectionsPath = Join-Path ([string]$paths.builder) (
     'catalog\injections.json'
 )
 $configurationPath = Join-Path ([string]$paths.builder) (
-    'configurations\dev.json'
+    'configurations\base.json'
 )
 $buildScript = Join-Path $PSScriptRoot 'build.py'
 $applyScript = Join-Path $PSScriptRoot 'apply.py'

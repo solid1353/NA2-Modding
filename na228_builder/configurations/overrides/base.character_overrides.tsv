@@ -1,76 +1,77 @@
 id	base_id	character	tier	substitution_cost	hp	damage_multiplier	health_recovery_multiplier	chakra_recovery_multiplier
-base		Base		2.5				
-76		Sasori (Hiruko)	S+++	+3.5				
-69		Might Guy	S+	+2.5				
-68		Shikamaru Nara	S+	+2.5				
-71		Itachi Uchiha	S+	+2.5				
-61		Temari	S+	+2.5				
-67		Rock Lee	S+	+2.5				
-3		Rock Lee (Classic)	S+	+2.5				
-49	3	Loopy Fist Lee	S	+2.0				
-66		Tenten	S+	+2.5				
-43		The Second Hokage	S+	+2.5				
-39		The Yellow Flash	S+	+2.5				
-38		Kimimaro	S+	+2.5				
-56	38	Second Stage Kimimaro	S+++	+3.5				
-82		Ino Yamanaka	S	+2.0				
-13		Tenten (Classic)	S	+2.0				
-57		Naruto Uzumaki	S	+2.0				
-73	57	Nine-Tailed Fourth Awakened State	S+++	+3.5				
-79		Shino Aburame	S	+2.0				
-10		Haku	S	+2.0				
-89		Orochimaru	S	+2.0				
-60		Kankuro	S	+2.0				
-63		Sasori	S	+2.0				
-75	63	Sasori (Puppet)	C	+0.5				
-64		Deidara	S	+2.0				
-92		Sai	S	+2.0				
-62		Granny Chiyo	A	+1.5				
-65		Neji Hyuga	A	+1.5				
-42		The First Hokage	A	+1.5				
-6		Neji Hyuga (Classic)	A	+1.5				
-70		Kakashi Hatake	A	+1.5				
-35		Kidomaru	A	+1.5				
-53	35	Second Stage Kidomaru	S+++	+3.5				
-91		Yamato	A	+1.5				
-59		Kazekage Gaara	A	+1.5				
-58		Sakura Haruno	A	+1.5				
-18		Kankuro (Classic)	A	+1.5				
-15		Ino Yamanaka (Classic)	A	+1.5				
-4		Gaara (Classic)	B	+1.0				
-50	4	Possessed Gaara	S+	+2.5				
-12		Hinata Hyuga (Classic)	B	+1.0				
-90		Kabuto Yakushi	B	+1.0				
-2		Sasuke Uchiha (Classic)	B	+1.0				
-48	2	Second Stage Sasuke Uchiha	A	+1.5				
-80		Hinata Hyuga	B	+1.0				
-7		Sakura Haruno (Classic)	B	+1.0				
-1		Naruto Uzumaki (Classic)	B	+1.0				
-47	1	Naruto Uzumaki (Nine-Tailed)	S+	+2.5				
-34		Jirobo	B	+1.0				
-52	34	Second Stage Jirobo	B	+1.0				
-36		Tayuya	B	+1.0				
-54	36	Second Stage Tayuya	S+	+2.5				
-84		Tsunade	B	+1.0				
-72		Kisame Hoshigaki	B	+1.0				
-86		Asuma Sarutobi	C	+0.5				
-78		Kiba Inuzuka	C	+0.5				
-41		Hanabi Hyuga	C	+0.5				
-83		Jiraiya	C	+0.5				
-81		Choji Akimichi	C	+0.5				
-93		Sasuke Uchiha	C	+0.5				
-22		The Third Hokage	C	+0.5				
-37		Sakon	C	+0.5				
-55	37	Second Stage Sakon	A	+1.5				
-16		Kiba Inuzuka (Classic)	C	+0.5				
-19		Temari (Classic)	C	+0.5				
-17		Shino Aburame (Classic)	C	+0.5				
-85		Shizune	D	+0.0				
-5		Shikamaru Nara (Classic)	D	+0.0				
-11		Zabuza Momochi	D	+0.0				
-14		Choji Akimichi (Classic)	D	+0.0				
-51	14	Super Choji	S	+2.0				
-40		Konohamaru Ninja Squad	D	+0.0				
-46		Anko Mitarashi	D	+0.0				
-77		Granny Chiyo (Taijutsu)	D	+0.0				
-87		Kurenai Yuhi	D	+0.0				
+base				20
+step				+5
+76		Sasori (Hiruko)	S+++
+69		Might Guy	S+
+68		Shikamaru Nara	S+
+71		Itachi Uchiha	S+
+61		Temari	S+
+67		Rock Lee	S+
+3		Rock Lee (Classic)	S+
+49	3	Loopy Fist Lee	S
+66		Tenten	S+
+43		The Second Hokage	S+
+39		The Yellow Flash	S+
+38		Kimimaro	S+
+56	38	Second Stage Kimimaro	S+++
+82		Ino Yamanaka	S
+13		Tenten (Classic)	S
+57		Naruto Uzumaki	S
+73	57	Nine-Tailed Fourth Awakened State	S+++
+79		Shino Aburame	S
+10		Haku	S
+89		Orochimaru	S
+60		Kankuro	S
+63		Sasori	S
+75	63	Sasori (Puppet)	C
+64		Deidara	S
+92		Sai	S
+62		Granny Chiyo	A
+65		Neji Hyuga	A
+42		The First Hokage	A
+6		Neji Hyuga (Classic)	A
+70		Kakashi Hatake	A
+35		Kidomaru	A
+53	35	Second Stage Kidomaru	S+++
+91		Yamato	A
+59		Kazekage Gaara	A
+58		Sakura Haruno	A
+18		Kankuro (Classic)	A
+15		Ino Yamanaka (Classic)	A
+4		Gaara (Classic)	B
+50	4	Possessed Gaara	S+
+12		Hinata Hyuga (Classic)	B
+90		Kabuto Yakushi	B
+2		Sasuke Uchiha (Classic)	B
+48	2	Second Stage Sasuke Uchiha	A
+80		Hinata Hyuga	B
+7		Sakura Haruno (Classic)	B
+1		Naruto Uzumaki (Classic)	B
+47	1	Naruto Uzumaki (Nine-Tailed)	S+
+34		Jirobo	B
+52	34	Second Stage Jirobo	B
+36		Tayuya	B
+54	36	Second Stage Tayuya	S+
+84		Tsunade	B
+72		Kisame Hoshigaki	B
+86		Asuma Sarutobi	C
+78		Kiba Inuzuka	C
+41		Hanabi Hyuga	C
+83		Jiraiya	C
+81		Choji Akimichi	C
+93		Sasuke Uchiha	C
+22		The Third Hokage	C
+37		Sakon	C
+55	37	Second Stage Sakon	A
+16		Kiba Inuzuka (Classic)	C
+19		Temari (Classic)	C
+17		Shino Aburame (Classic)	C
+85		Shizune	D
+5		Shikamaru Nara (Classic)	D
+11		Zabuza Momochi	D
+14		Choji Akimichi (Classic)	D
+51	14	Super Choji	S
+40		Konohamaru Ninja Squad	D
+46		Anko Mitarashi	D
+77		Granny Chiyo (Taijutsu)	D
+87		Kurenai Yuhi	D

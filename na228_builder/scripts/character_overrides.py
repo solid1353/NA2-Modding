@@ -5,8 +5,12 @@ import math
 import struct
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from ..payload_builder.operations import PayloadFragment
+
+if TYPE_CHECKING:
+    from .catalog import CatalogSelection
 
 
 REFERENCE_FIELDS = (
@@ -32,12 +36,38 @@ VALUE_FIELDS = (
     "chakra_recovery_multiplier",
 )
 OVERRIDE_FIELDS = ("id", "base_id", "character", "tier", *VALUE_FIELDS)
-TABLE_VERSION = 3
+TABLE_VERSION = 4
 TIER_WIDTH = 4
 SUBSTITUTION_COST_INDEX = VALUE_FIELDS.index("substitution_cost")
 SUBSTITUTION_COST_DELTA_FLAG = 1 << 16
 MAX_AWAKENING_ID = 0x89
 MAX_NATIVE_SUPPORT_ID = 0x21
+SUBSTITUTION_TIER_STEPS = {
+    "": 0,
+    "D": 0,
+    "C": 1,
+    "B": 2,
+    "A": 3,
+    "S": 4,
+    "S+": 5,
+    "S++": 6,
+    "S+++": 7,
+}
+
+
+def character_override_fragment_feature(
+    selection: CatalogSelection,
+) -> str | None:
+    enabled_by_path = {node.path: node.enabled for node in selection.nodes}
+    if enabled_by_path.get(
+        ("features", "battle", "character_overrides"), False
+    ):
+        return "battle"
+    if enabled_by_path.get(
+        ("features", "character_select", "balance_overlay"), False
+    ):
+        return "character_select"
+    return None
 
 
 @dataclass(frozen=True)
@@ -53,6 +83,7 @@ class CharacterOverrideRow:
 @dataclass(frozen=True)
 class CharacterOverrideConfiguration:
     base: CharacterOverrideRow
+    step: CharacterOverrideRow
     characters: tuple[CharacterOverrideRow, ...]
     reference_characters: tuple[tuple[int, str], ...]
     reference_support_ids: tuple[tuple[int, int | None], ...]
@@ -282,16 +313,18 @@ def _substitution_cost(
     if not value:
         return None, False
     is_delta = value.startswith(("+", "-"))
-    return (
-        _number(
-            path,
-            line,
-            "substitution_cost",
-            value,
-            allow_negative=is_delta,
-        ),
-        is_delta,
+    result = _number(
+        path,
+        line,
+        "substitution_cost",
+        value,
+        allow_negative=is_delta,
     )
+    if not is_delta and result is not None and result > 100.0:
+        raise ValueError(
+            f"{path}:{line}: substitution_cost must be from 0 through 100"
+        )
+    return result, is_delta
 
 
 def _tier(path: Path, line: int, value: str) -> str:
@@ -331,8 +364,13 @@ def _base_id(
 def _override_rows(
     path: Path,
     reference_by_id: dict[int, str],
-) -> tuple[CharacterOverrideRow | None, dict[int, CharacterOverrideRow]]:
+) -> tuple[
+    CharacterOverrideRow | None,
+    CharacterOverrideRow | None,
+    dict[int, CharacterOverrideRow],
+]:
     base: CharacterOverrideRow | None = None
+    step: CharacterOverrideRow | None = None
     characters: dict[int, CharacterOverrideRow] = {}
     for line, raw in enumerate(_read_rows(path, OVERRIDE_FIELDS), 2):
         raw_id = raw["id"]
@@ -354,8 +392,8 @@ def _override_rows(
         if raw_id == "base":
             if base is not None:
                 raise ValueError(f"{path}:{line}: duplicate base row")
-            if character != "Base":
-                raise ValueError(f"{path}:{line}: base row character must be 'Base'")
+            if character:
+                raise ValueError(f"{path}:{line}: base row character must be empty")
             if raw_base_id:
                 raise ValueError(f"{path}:{line}: base row base_id must be empty")
             if tier:
@@ -365,6 +403,41 @@ def _override_rows(
                     f"{path}:{line}: base substitution_cost must be a literal value"
                 )
             base = CharacterOverrideRow(None, None, character, tier, values)
+            continue
+        if raw_id == "step":
+            if step is not None:
+                raise ValueError(f"{path}:{line}: duplicate step row")
+            if character:
+                raise ValueError(f"{path}:{line}: step row character must be empty")
+            if raw_base_id:
+                raise ValueError(f"{path}:{line}: step row base_id must be empty")
+            if tier:
+                raise ValueError(f"{path}:{line}: step row tier must be empty")
+            if (
+                substitution_cost is None or
+                not substitution_cost_is_delta or
+                substitution_cost <= 0.0
+            ):
+                raise ValueError(
+                    f"{path}:{line}: step substitution_cost must be an "
+                    "explicitly signed positive value"
+                )
+            if substitution_cost > 100.0:
+                raise ValueError(
+                    f"{path}:{line}: step substitution_cost must not exceed 100"
+                )
+            if any(value is not None for value in values[1:]):
+                raise ValueError(
+                    f"{path}:{line}: step row may only set substitution_cost"
+                )
+            step = CharacterOverrideRow(
+                None,
+                None,
+                character,
+                tier,
+                values,
+                substitution_cost_is_delta,
+            )
             continue
         try:
             character_id = int(raw_id, 10)
@@ -387,7 +460,7 @@ def _override_rows(
             values,
             substitution_cost_is_delta,
         )
-    return base, characters
+    return base, step, characters
 
 
 def _merge_values(
@@ -422,6 +495,24 @@ def _merge_rows(
     )
 
 
+def _encoded_substitution_cost(
+    row: CharacterOverrideRow,
+    step_cost: float,
+) -> tuple[float | None, bool]:
+    value = row.values[SUBSTITUTION_COST_INDEX]
+    if value is not None and not row.substitution_cost_is_delta:
+        return value, False
+    tier_steps = SUBSTITUTION_TIER_STEPS.get(row.tier)
+    if tier_steps is None:
+        raise ValueError(
+            f"character ID {row.character_id} tier {row.tier!r} requires a "
+            "literal substitution_cost override"
+        )
+    if not row.tier and value is None:
+        return None, False
+    return tier_steps * step_cost + (value or 0.0), True
+
+
 def load_character_overrides(
     definition_path: Path,
     builder_root: Path,
@@ -443,18 +534,29 @@ def load_character_overrides(
         profile_path = override_root / (
             definition_path.stem + ".character_overrides.tsv"
         )
-        paths = (base_path.resolve(), profile_path.resolve())
+        paths = (
+            (base_path.resolve(),)
+            if profile_path.resolve() == base_path.resolve()
+            else (base_path.resolve(), profile_path.resolve())
+        )
     else:
         paths = (definition_path.with_name("character_overrides.tsv").resolve(),)
 
-    base, merged = _override_rows(paths[0], reference_by_id)
+    base, step, merged = _override_rows(paths[0], reference_by_id)
     if base is None:
         raise ValueError(f"{paths[0]}: missing required base row")
+    if step is None:
+        raise ValueError(f"{paths[0]}: missing required step row")
     character_order = list(merged)
     for path in paths[1:]:
-        profile_base, profile_rows = _override_rows(path, reference_by_id)
+        profile_base, profile_step, profile_rows = _override_rows(
+            path,
+            reference_by_id,
+        )
         if profile_base is not None:
             base = _merge_rows(base, profile_base)
+        if profile_step is not None:
+            step = _merge_rows(step, profile_step)
         for character_id, row in profile_rows.items():
             inherited = merged.get(character_id)
             if inherited is None:
@@ -462,8 +564,29 @@ def load_character_overrides(
                 character_order.append(character_id)
             else:
                 merged[character_id] = _merge_rows(inherited, row)
+    base_cost = base.values[SUBSTITUTION_COST_INDEX]
+    step_cost = step.values[SUBSTITUTION_COST_INDEX]
+    if base_cost is None:
+        raise ValueError("base substitution_cost is required for tier-derived costs")
+    assert step_cost is not None
+    for character_id in character_order:
+        row = merged[character_id]
+        value, is_delta = _encoded_substitution_cost(row, step_cost)
+        if value is None:
+            resolved_cost = base_cost
+        elif is_delta:
+            resolved_cost = base_cost + value
+        else:
+            resolved_cost = value
+        if resolved_cost is not None and not 0.0 <= resolved_cost <= 100.0:
+            raise ValueError(
+                f"resolved substitution_cost for character ID {character_id} "
+                "must be from 0 through 100"
+            )
+
     return CharacterOverrideConfiguration(
         base=base,
+        step=step,
         characters=tuple(merged[key] for key in character_order),
         reference_characters=tuple(reference_by_id.items()),
         reference_support_ids=tuple(
@@ -510,6 +633,7 @@ def render_character_overrides(configuration: CharacterOverrideConfiguration) ->
     configured_ids = set(configured)
     rows = (
         configuration.base,
+        configuration.step,
         *configuration.characters,
         *(
             CharacterOverrideRow(
@@ -524,7 +648,13 @@ def render_character_overrides(configuration: CharacterOverrideConfiguration) ->
         ),
     )
     for row in rows:
-        identity = "base" if row.character_id is None else str(row.character_id)
+        if row is configuration.base:
+            identity = "base"
+        elif row is configuration.step:
+            identity = "step"
+        else:
+            assert row.character_id is not None
+            identity = str(row.character_id)
         lines.append(
             "\t".join(
                 (
@@ -548,14 +678,25 @@ def character_override_fragment(
 ) -> PayloadFragment:
     row_by_id = configuration.row_by_id()
 
+    step_cost = configuration.step.values[SUBSTITUTION_COST_INDEX]
+    assert step_cost is not None
+
     def encode_row(row: CharacterOverrideRow | None) -> bytes:
-        values = row.values if row is not None else (None,) * len(VALUE_FIELDS)
+        values = list(
+            row.values if row is not None else (None,) * len(VALUE_FIELDS)
+        )
+        substitution_cost_is_delta = False
+        if row is not None:
+            (
+                values[SUBSTITUTION_COST_INDEX],
+                substitution_cost_is_delta,
+            ) = _encoded_substitution_cost(row, step_cost)
         flags = sum(
             1 << index
             for index, value in enumerate(values)
             if value is not None
         )
-        if row is not None and row.substitution_cost_is_delta:
+        if substitution_cost_is_delta:
             flags |= SUBSTITUTION_COST_DELTA_FLAG
         tier = (
             row.tier.encode("ascii").ljust(TIER_WIDTH, b"\0")
@@ -583,4 +724,19 @@ def character_override_fragment(
         kind="rodata",
         alignment=4,
         payload=payload,
+    )
+
+
+def character_overrides_enabled_fragment(
+    enabled: bool,
+    *,
+    owner: str,
+    symbol: str = "character_overrides_enabled",
+) -> PayloadFragment:
+    return PayloadFragment(
+        owner=owner,
+        symbol=symbol,
+        kind="rodata",
+        alignment=4,
+        payload=struct.pack("<I", int(enabled)),
     )

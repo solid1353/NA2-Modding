@@ -1685,7 +1685,7 @@ def main() -> None:
     paths = load_paths(REPOSITORY)
     selection = catalog.load_selection(
         paths.path("builder", "catalog"),
-        paths.path("builder", "configurations", "dev.json"),
+        paths.path("builder", "configurations", "base.json"),
     )
     declaration = catalog.load_runtime_package(
         selection,

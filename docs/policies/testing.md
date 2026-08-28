@@ -78,7 +78,7 @@ that behavior.
 - Internal PowerShell or Python entrypoints do not bypass these build
   boundaries.
 - The only ordinary full-ISO build route for an agent is
-  `na228 build -c <configuration>`. Use `dev` unless the task states another
+  `na228 build -c <configuration>`. Use `base` unless the task states another
   configuration. Build or reuse a cached ISO only when the selected validation
   requires image assembly. The canonical
   hash-named cache image is internal agent evidence, never a user testing ground

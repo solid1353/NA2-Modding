@@ -22,24 +22,54 @@ class XdashChakraCostTests(unittest.TestCase):
         cls.catalog_path = cls.builder / "catalog"
         cls.configurations = cls.builder / "configurations"
 
-    def test_base_configuration_encodes_one_chakra(self) -> None:
+    def test_normalized_base_maps_five_percent_to_native_chakra(self) -> None:
         selection = catalog.load_selection(
             self.catalog_path,
             self.configurations / "base.json",
         )
         fragment = xdash_chakra_cost_fragment(
             selection,
-            owner="battle_logic.runtime_injector",
+            owner="battle.runtime_injector",
         )
         self.assertIsNotNone(fragment)
         assert fragment is not None
-        self.assertEqual(struct.unpack("<f", fragment.payload), (1.0,))
+        self.assertEqual(struct.unpack("<f", fragment.payload), (0.75,))
+
+    def test_normalized_cost_maps_to_native_fifteen_point_gauge(self) -> None:
+        base = json.loads(
+            (self.configurations / "base.json").read_text(encoding="utf-8")
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            configuration_path = Path(directory) / "normalized.json"
+            for normalized, native in ((0, 0.0), (50, 7.5), (100, 15.0)):
+                with self.subTest(normalized=normalized):
+                    base["features"]["battle"][
+                        "xdash_chakra_cost"
+                    ] = normalized
+                    configuration_path.write_text(
+                        json.dumps(base, indent=2) + "\n",
+                        encoding="utf-8",
+                    )
+                    selection = catalog.load_selection(
+                        self.catalog_path,
+                        configuration_path,
+                    )
+                    fragment = xdash_chakra_cost_fragment(
+                        selection,
+                        owner="battle.runtime_injector",
+                    )
+                    self.assertIsNotNone(fragment)
+                    assert fragment is not None
+                    self.assertEqual(
+                        struct.unpack("<f", fragment.payload),
+                        (native,),
+                    )
 
     def test_false_disables_the_fragment(self) -> None:
         base = json.loads(
             (self.configurations / "base.json").read_text(encoding="utf-8")
         )
-        base["features"]["battle_logic"]["xdash_chakra_cost"] = False
+        base["features"]["battle"]["xdash_chakra_cost"] = False
         with tempfile.TemporaryDirectory() as directory:
             configuration_path = Path(directory) / "disabled.json"
             configuration_path.write_text(
@@ -53,19 +83,19 @@ class XdashChakraCostTests(unittest.TestCase):
         self.assertIsNone(
             xdash_chakra_cost_fragment(
                 selection,
-                owner="battle_logic.runtime_injector",
+                owner="battle.runtime_injector",
             )
         )
 
-    def test_catalog_rejects_cost_outside_the_chakra_gauge(self) -> None:
+    def test_catalog_rejects_cost_outside_normalized_gauge(self) -> None:
         base = json.loads(
             (self.configurations / "base.json").read_text(encoding="utf-8")
         )
         with tempfile.TemporaryDirectory() as directory:
             configuration_path = Path(directory) / "invalid.json"
-            for value in (-0.5, 15.5):
+            for value in (-0.5, 100.5):
                 with self.subTest(value=value):
-                    base["features"]["battle_logic"]["xdash_chakra_cost"] = value
+                    base["features"]["battle"]["xdash_chakra_cost"] = value
                     configuration_path.write_text(
                         json.dumps(base, indent=2) + "\n",
                         encoding="utf-8",
@@ -113,7 +143,7 @@ class XdashChakraCostTests(unittest.TestCase):
         compiled = dict(
             catalog._compile_source(
                 self.repository,
-                "battle_logic.runtime_injector",
+                "battle.runtime_injector",
                 "xdash_chakra_cost",
                 source,
                 "xdash_chakra_cost",

@@ -289,7 +289,7 @@ There is deliberately no synthetic timeout: while an operation is in one of its
 documented busy states, the branch preserves the native worker's blocking
 contract instead of guessing that a slow valid card has failed. Every native
 terminal outcome other than verified record-zero success takes the no-load menu
-path. `qol.save_load.display_only_first_save` remains independent; it controls
+path. `features.memory_card.display_only_first_save` remains independent; it controls
 the visible Save/Load interface and is not used by the silent state machine.
 
 The function boundaries, clean instruction guards, global pointer, worker

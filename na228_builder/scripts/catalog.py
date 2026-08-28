@@ -253,6 +253,31 @@ def _invalid_configuration_value(
     )
 
 
+def _setting_configured_value(
+    node: catalog_format.SettingNode,
+    value: object,
+) -> object:
+    if (
+        value is True
+        and node.value_type is not None
+        and catalog_format.matches_type(node.value_type, {})
+    ):
+        return {}
+    return value
+
+
+def _matches_configuration_node(
+    node: catalog_format.CatalogNodeExpression,
+    value: object,
+) -> bool:
+    if isinstance(node, catalog_format.SettingNode):
+        configured = _setting_configured_value(node, value)
+        if node.value_type is None:
+            return configured is True
+        return catalog_format.matches_type(node.value_type, configured)
+    return catalog_format.matches_type(catalog_format.active_type(node), value)
+
+
 def _validate_configuration_value(
     node: catalog_format.CatalogNodeExpression,
     value: object,
@@ -265,8 +290,13 @@ def _validate_configuration_value(
         if node.value_type is None:
             if value is not True:
                 raise _invalid_configuration_value(path, value, "true or false")
-        elif not catalog_format.matches_type(node.value_type, value):
+        else:
+            configured = _setting_configured_value(node, value)
+            if catalog_format.matches_type(node.value_type, configured):
+                return
             expected = " ".join(catalog_format.type_text(node.value_type).split())
+            if catalog_format.matches_type(node.value_type, {}):
+                expected += ", or true for an empty object"
             raise _invalid_configuration_value(
                 path,
                 value,
@@ -300,7 +330,7 @@ def _validate_configuration_value(
         matches = [
             branch
             for branch in node.branches
-            if catalog_format.matches_type(catalog_format.active_type(branch), value)
+            if _matches_configuration_node(branch, value)
         ]
         if len(matches) != 1:
             expected = " ".join(
@@ -523,6 +553,7 @@ def _selected_nodes(
             return False
         if isinstance(node, catalog_format.SettingNode):
             has_value = node.value_type is not None
+            configured = _setting_configured_value(node, configured)
             nodes.append(
                 CatalogNode(
                     path,
@@ -542,9 +573,7 @@ def _selected_nodes(
             matches = [
                 branch
                 for branch in node.branches
-                if catalog_format.matches_type(
-                    catalog_format.active_type(branch), configured
-                )
+                if _matches_configuration_node(branch, configured)
             ]
             if len(matches) != 1:
                 expected = " ".join(

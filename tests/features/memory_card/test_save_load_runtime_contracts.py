@@ -99,10 +99,17 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
         )
         cls.package = catalog.load_runtime_package(
             cls.selection,
-            "qol",
+            "memory_card",
             BUILDER / "catalog" / "targets.tsv",
             REPOSITORY,
-            "qol.runtime_injector",
+            "memory_card.runtime_injector",
+        )
+        cls.startup_package = catalog.load_runtime_package(
+            cls.selection,
+            "startup",
+            BUILDER / "catalog" / "targets.tsv",
+            REPOSITORY,
+            "startup.runtime_injector",
         )
         with tempfile.TemporaryDirectory() as temporary:
             cls.compiled = ee_c_fragments.compile_and_extract(
@@ -118,8 +125,7 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
             for node in self.selection.nodes
             if node.path == (
                 "features",
-                "qol",
-                "save_load",
+                "memory_card",
                 "display_only_first_save",
             )
         )
@@ -157,7 +163,7 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
         )
         automatic = next(
             edit
-            for edit in self.package.active_edits
+            for edit in self.startup_package.active_edits
             if edit.symbolic_patch.symbol == "automatic_save_loading_update"
         )
         self.assertEqual(0xE4008, visible.symbolic_patch.offset)

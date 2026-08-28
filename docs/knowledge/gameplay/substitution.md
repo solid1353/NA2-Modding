@@ -133,20 +133,32 @@ unchanged at `0x202298C8`.
 
 The table is generated from
 `configurations/overrides/base.character_overrides.tsv` and the selected
-profile TSV in that directory. The base substitution cell is literal. An
-unsigned character cell is literal, while an explicitly signed character cell
-is a delta from the resolved base cost; empty profile cells inherit both value
-and mode. The current configuration records base cost `2.5` and tier deltas
-from `+0.0` through `+3.5` in `0.5` steps. No IDs or values are compiled into
-the selector C. The configuration also reserves `hp`, damage, and recovery
-fields for later consumers.
+profile TSV in that directory. Its required `base` and `step` rows are metadata,
+not characters, and therefore have empty `base_id`, `character`, and `tier`
+cells. The base substitution cell is literal; the step cell is explicitly
+positive and signed. An empty character cost is inferred as
+`base + tier_index * step`: D `0`, C `1`, B `2`, A `3`, S `4`, S+ `5`, S++
+`6`, and S+++ `7`. An unsigned character cell is a literal override, while an
+explicitly signed character cell adjusts the tier-derived cost; empty profile
+cells inherit both value and mode. Costs are percentage points on an inclusive
+`0..100` scale. The native-chakra consumer converts the resolved value back to
+NA2's 15-point resource with `cost * 15 / 100`; the optional substitution-gauge
+consumer uses the same value against its full capacity. The current
+configuration uses base `20` and step `+5`, producing D `20`, C `25`, B `30`,
+A `35`, S `40`, S+ `45`, S++ `50`, and S+++ `55`, all over `100`. No IDs or
+values are compiled into the selector C. The configuration also reserves `hp`,
+damage, and recovery fields for later consumers.
 
-The shared base `character_select_balance_overlay` setting reads this same
-table from Character Select. Its guarded hook at ELF offset `0x2B9B14`
-replaces the first native player-panel draw call with a wrapper that preserves
-that draw, resolves the selected character ID, and displays the row's `TIER`
-and resolved `SUB` value in the corresponding top-screen block. It does not
-display player labels or numeric character IDs.
+`features.character_select.balance_overlay` reads this same complete table from
+Character Select independently of the battle override setting. Its guarded
+hook at ELF offset `0x2B9B14` replaces the first native player-panel draw call
+with a wrapper that preserves that draw, resolves the selected character ID,
+and displays the row's `TIER` in the corresponding top-screen block. When
+`features.battle.character_overrides` is enabled, it also displays the resolved
+`SUB x%` value, omitting trailing decimal zeroes. With battle overrides
+disabled, the table remains available only to supply tier metadata and is not
+applied to gameplay. The overlay does not display player labels or numeric
+character IDs.
 
 The addresses, displaced instructions, and identity field are statically and
 capture-confirmed. The user runtime-confirmed the earlier selective selector in
@@ -655,6 +667,36 @@ held-duration check. That location preserves every eligibility, resource, and
 transition gate while changing only window/probability policy. Bypassing the
 function's final return or forcing `FUN_002297d0` would incorrectly admit
 ineligible states and is not an equivalent control.
+
+The current unaccepted runtime candidate exposes timing under
+`features.battle.substitution`. `frames_before` accepts `0..16` and means the
+literal number of prior 30 FPS input-history records searched in addition to
+the current record. Its guarded eight-byte edit at clean ELF raw `0x1296C8`
+replaces `bgez s0,0x00229610; nop` (`1100010600000000`) with
+`b 0x00229620; li s0,frames_before`. Branching to `0x00229620` skips both the
+negative-timing modulo block and the native nonnegative clamp while preserving
+the history helper and all later gates. Base value `4` therefore emits
+`1500001004001024`.
+
+`frames_after` independently accepts `0..16`. The clean per-action dispatcher
+calls the ordinary-response driver `FUN_00234DA0` at virtual `0x00249CF0` / ELF
+raw `0x149DF0` with `jal 0x00234DA0; nop`
+(`68D3080C00000000`). The candidate wraps only that call. The native state
+setter resets primary action cursor `fighter+0x1C4` on impact; the wrapper
+therefore retries the native substitution predicate only while the cursor is
+positive and at most `frames_after`. It supplies selector `5`, the current
+ordinary-response substate from `fighter+0x190`, resource validation `1`, and a
+null explicit attack so the predicate resolves the retained attack at
+`fighter+0xE54`. A successful predicate result enters the existing native
+ordinary substitution transition; otherwise the displaced ordinary-response
+driver runs exactly once. Base value `4` permits cursor frames `1..4`; `0`
+disables the post-impact opportunity without disabling pre-impact timing or the
+gauge.
+
+Both timing controls retain the native eligibility, resource, response,
+attack-flag, held-guard, and transition machinery. The post-impact wrapper is
+bounded to the active ordinary response and does not create a combo-long input
+latch. Runtime acceptance remains pending.
 
 Per-attack ownership, record sizing, offset calculation, clean-roster value
 distribution, and the exact Command Chart name join are now established.

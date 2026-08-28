@@ -15,7 +15,15 @@ from ..payload_builder.operations import (
     ResolvedPatch,
 )
 from .configuration import BuildConfiguration, ModuleInvocation
-from .character_overrides import character_override_fragment
+from .character_overrides import (
+    character_override_fragment,
+    character_override_fragment_feature,
+    character_overrides_enabled_fragment,
+)
+from .battle_settings import battle_settings_fragment
+from .substitution_gauge import substitution_gauge_fragment
+from .substitution_timing import substitution_frames_after_fragment
+from .practice_settings import practice_settings_fragment
 from .xdash_chakra_cost import xdash_chakra_cost_fragment
 
 
@@ -94,6 +102,15 @@ def prepare_module_pipeline(
         str, runtime_injector_module.RuntimeInjectionPackage
     ] = {}
     title_policy = _selected_game_title_policy(configuration)
+    character_overrides_enabled = configuration.selection.node_enabled(
+        "features", "battle", "character_overrides"
+    )
+    character_select_overlay_enabled = configuration.selection.node_enabled(
+        "features", "character_select", "balance_overlay"
+    )
+    character_override_feature = character_override_fragment_feature(
+        configuration.selection
+    )
     for module in ordered_modules:
         if module.module != "runtime_injector":
             continue
@@ -105,7 +122,7 @@ def prepare_module_pipeline(
             module.module_id,
         )
         if (
-            module.feature_id == "battle_logic"
+            module.feature_id == character_override_feature
             and configuration.character_overrides is not None
         ):
             declaration = replace(
@@ -118,7 +135,45 @@ def prepare_module_pipeline(
                     *declaration.fragments,
                 ),
             )
-        if module.feature_id == "battle_logic":
+        if (
+            module.feature_id == "character_select"
+            and character_select_overlay_enabled
+        ):
+            declaration = replace(
+                declaration,
+                fragments=(
+                    character_overrides_enabled_fragment(
+                        character_overrides_enabled,
+                        owner=module.module_id,
+                    ),
+                    *declaration.fragments,
+                ),
+            )
+        if module.feature_id == "battle":
+            settings_schema_fragment = battle_settings_fragment(
+                configuration.selection,
+                owner=module.module_id,
+            )
+            if settings_schema_fragment is not None:
+                declaration = replace(
+                    declaration,
+                    fragments=(
+                        settings_schema_fragment,
+                        *declaration.fragments,
+                    ),
+                )
+            frames_after_fragment = substitution_frames_after_fragment(
+                configuration.selection,
+                owner=module.module_id,
+            )
+            if frames_after_fragment is not None:
+                declaration = replace(
+                    declaration,
+                    fragments=(
+                        frames_after_fragment,
+                        *declaration.fragments,
+                    ),
+                )
             xdash_cost_fragment = xdash_chakra_cost_fragment(
                 configuration.selection,
                 owner=module.module_id,
@@ -128,6 +183,31 @@ def prepare_module_pipeline(
                     declaration,
                     fragments=(
                         xdash_cost_fragment,
+                        *declaration.fragments,
+                    ),
+                )
+            gauge_config_fragment = substitution_gauge_fragment(
+                configuration.selection,
+                owner=module.module_id,
+            )
+            if gauge_config_fragment is not None:
+                declaration = replace(
+                    declaration,
+                    fragments=(
+                        gauge_config_fragment,
+                        *declaration.fragments,
+                    ),
+                )
+        if module.feature_id == "practice":
+            settings_schema_fragment = practice_settings_fragment(
+                configuration.selection,
+                owner=module.module_id,
+            )
+            if settings_schema_fragment is not None:
+                declaration = replace(
+                    declaration,
+                    fragments=(
+                        settings_schema_fragment,
                         *declaration.fragments,
                     ),
                 )

@@ -260,7 +260,7 @@ class ProjectPathTests(unittest.TestCase):
                 "builds": {
                     "latest": {
                         "aliases": ["l"],
-                        "configuration": "dev",
+                        "configuration": "base",
                         "rotate_to": "previous",
                     },
                     "previous": {},

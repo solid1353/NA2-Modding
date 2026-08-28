@@ -12,7 +12,7 @@
   builds use their explicitly selected configuration, and only release
   packaging uses `release.json`.
   Loading applies the selected configuration's `overrides` directly to the base
-  features. Matching `base`, `dev`, `test`, and `release`
+  features. Matching `base`, `test`, and `release`
   `.character_overrides.tsv` files under `configurations/overrides/` layer
   nonempty per-character battle values by ID. Release packaging materializes
   both selected layers into one external JSON configuration and one external

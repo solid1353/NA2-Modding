@@ -618,10 +618,10 @@ the physical control currently assigned to that action:
 | 1 | Attack |
 | 2 | Jump |
 | 3 | Item Use |
-| 4 | Guard slot 1 |
-| 5 | Guard slot 2 |
-| 6 | Item Select |
-| 7 | Linked Attack |
+| 4 | Item Select |
+| 5 | Linked Attack |
+| 6 | Guard slot 1 |
+| 7 | Guard slot 2 |
 
 | Physical control | Stored mask |
 | --- | ---: |
@@ -637,8 +637,8 @@ the physical control currently assigned to that action:
 This mapping is observed jointly in `FUN_00387950`, the mask table at
 `0x005D5230`, the control-settings screen, and the historical record bytes.
 The fixed array above therefore decodes as Triangle/Circle/Cross/Square for
-the first four logical slots, L1/R1 for the two Guard slots, L2 for Item
-Select, and R2 for Linked Attack.
+the first four logical slots, L1 for Item Select, R1 for Linked Attack, and
+L2/R2 for the two Guard slots.
 
 This map copy is not inside `FUN_001f47d0`: the whole-record clear initially
 leaves those 32 bytes zero. On first manager creation, `FUN_001e9980` calls
@@ -949,8 +949,8 @@ Their controller arrays were:
 | `data02`/`data03` | `0010 0020 0040 0080 0001 0002 0004 0008` | `0010 0020 0040 0080 0001 0002 0004 0008` |
 
 The first sequence is the fixed native default. In the second, the four
-shoulder assignments are permuted so Guard uses L2/R2, Item Select uses L1,
-and Linked Attack uses R1. The `data01` pair exactly matches the independently
+shoulder assignments are permuted so Item Select uses L2, Linked Attack uses
+R2, and Guard uses L1/R1. The `data01` pair exactly matches the independently
 captured control-settings screen: default port 1 and shoulder-permuted port 2.
 The additive checksum formula reproduced each embedded and descriptor checksum
 exactly:

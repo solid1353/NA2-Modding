@@ -1,12 +1,12 @@
-# Battle logic
+# Battle
 
-The `battle_logic` catalog subtree selects guarded definitions through patch
+The `battle` catalog subtree selects guarded definitions through patch
 IDs. Its character-override node loads layered TSV data and emits one resident
 table shared by current and future per-character battle hooks.
 
 ## Ultimate Jutsu
 
-`features.battle_logic.ultimate_jutsu` owns two independent settings:
+`features.battle.ultimate_jutsu` owns two independent settings:
 
 - `contest_disabled` blocks both players' contest inputs and suppresses the
   contest meter, prompts, and result messages while retaining the native
@@ -19,37 +19,147 @@ table shared by current and future per-character battle hooks.
 Either setting can be enabled without the other. The base configuration enables
 both.
 
+## Control Settings
+
+`features.battle.control_settings_rework` owns the Control Settings action split and
+default shoulder-button layout independently of the substitution gauge. Action
+index `6` remains Guard and is the sole source of the logical block bit. Action
+index `7` is labelled Substitution, is searched by both native substitution
+history arms, and does not contribute to block. A fresh Substitution press is
+therefore accepted while Guard remains held without making Guard request a
+substitution.
+
+The setting owns both clean default-binding tables. Their shared action-order
+map defaults both players to L1 Substitution, R1 Guard, L2 Item Select, and R2
+Linked Attack. An owned assignment helper replaces the native editor's hard-
+coded coupling of the two Guard rows. Changing any action performs one ordinary
+permutation swap, so Guard, Substitution, Item Select, and Linked Attack remain
+separate actions. Saved per-player maps retain the resulting assignments. The
+Select action uses an independently guarded reset table and restores the same
+owned layout.
+
+## Simple Display
+
+`features.battle.simple_display` independently selects whether battles start
+with the native Simple Display setting `"off"` or `"on"`. The base
+configuration selects `"off"`. The setting owns only the guarded main-ELF
+initializer instruction at offset `0xE7BAC`; it does not depend on the Practice
+Settings rework.
+
+## X-dash chakra cost
+
+`features.battle.xdash_chakra_cost` is expressed as normalized percentage
+points on the inclusive `0..100` scale. The builder converts `x/100` to NA2's
+native 15-point chakra gauge as `x * 15 / 100` before emitting the resident
+float32 cost. The base value `5` therefore emits `0.75` native chakra. `0` is free and
+`100` consumes a full native chakra gauge. This normalization changes the
+configuration unit only; it does not change the accepted committed-X-dash hook
+or add an affordability gate.
+
+## Substitution
+
+`features.battle.substitution` groups three independent settings:
+
+- `frames_before` is the literal number of 30 FPS input-history records before
+  impact that the native predicate may search. The current input record remains
+  part of the native search, so `0` means only the impact-frame record.
+- `frames_after` is the number of initial ordinary hit-response frames after
+  impact during which a Substitution press can still activate. `0` disables the
+  post-impact opportunity.
+- `gauge` installs one shared `Substitution: Chakra | Gauge | Free` setting in
+  both the pre-battle and Practice menus. Its required `default` field selects
+  the value used initially and by each menu's reset action. Optional object
+  fields configure recovery delay, refill time per stock, damage recovery, and
+  damage percentage per stock. `false` disables the feature; because `default`
+  is mandatory, `true` is not accepted.
+
+The base configuration uses `4`, `4`, and `{"default": "gauge"}`. `Chakra`
+retains native chakra eligibility, suppression, spending, and bookkeeping;
+`Gauge` uses the independent 100-point resource and displays its HUD; `Free`
+uses no resource and hides the gauge. Both menus stage and commit the same
+runtime enum rather than separate visibility and unlimited flags. The timing settings preserve
+the native eligibility, resource, response-state, attack-flag, and transition
+gates. The pre-impact patch replaces only the attack-authored random/history
+policy. The post-impact hook runs only from the ordinary-response dispatcher
+while the reset native action cursor is `1..frames_after`; it retries the native
+predicate with the retained attack record and current response substate. A
+successful retry enters the native substitution transition, while a failed or
+out-of-window retry calls the displaced ordinary-response driver once.
+
+The settings are not coupled: either timing setting may be disabled without
+disabling the gauge, and the gauge may be disabled while either timing setting
+remains active. Runtime acceptance of the post-impact candidate is pending.
+
 ## Substitution cost
 
-`configurations/overrides/base.character_overrides.tsv` supplies the shared
-base and character rows. The selected profile's matching TSV in that directory
-layers nonempty cells over it. Character IDs and names are validated against
+`configurations/overrides/base.character_overrides.tsv` supplies the required
+`base` and `step` metadata rows plus the shared character rows. `base` and
+`step` are not characters: their `base_id`, `character`, and `tier` cells are
+empty. The selected profile's matching TSV in that directory layers nonempty
+cells over it. Numeric character IDs and names are validated against
 `@resources/character_data.tsv`. `base_id` records form relationships as
 human-readable configuration metadata. `tier` records the balancing tier and
-is serialized as fixed-width table metadata for the Character Select balance
-overlay. Empty cells inherit, while zero remains an explicit value.
+is serialized as fixed-width table metadata for
+`features.character_select.balance_overlay`. Empty cells inherit, while zero
+remains an explicit value.
 
-The `base` row's `substitution_cost` is a literal value. In a character row, an
-unsigned value such as `3` is also literal, while an explicitly signed value
-such as `+0.5` or `-0.5` is a delta from the resolved base cost. Profile layers
-inherit both the number and its literal-or-delta mode when the cell is empty.
-Other numeric fields remain nonnegative literal float32 values.
+All substitution costs are percentage points on the inclusive `0..100` scale.
+The `base` row is a literal cost and the explicitly positive, signed `step` row
+is the increment between tiers. An empty character cost is inferred from its
+tier as `base + tier_index * step`, using D `0`, C `1`, B `2`, A `3`, S `4`,
+S+ `5`, S++ `6`, and S+++ `7`. An unsigned character value such as `30` is a
+literal per-character override. An explicitly signed character value such as
+`+5` or `-5` adjusts that character's tier-derived cost. Profile layers inherit
+the character cell and its literal-or-signed mode when empty. The builder
+rejects an invalid metadata row or resolved result outside `0..100`. Other
+numeric fields remain nonnegative literal float32 values.
 
 The builder serializes four-byte tier labels, presence and delta flags, and
 float32 values into a dense ID-indexed resident table. The
 substitution hook at ELF offset `0x1299C0` maps the incoming fighter to its
 player slot and reads that slot's match-start character ID. A directly selected
 form therefore uses its form row, while a base character transformed during
-the match keeps its base row. The shared base
-`character_select_balance_overlay` setting reads the same table and draws
-`TIER` and resolved `SUB` values in separate left and right top-screen blocks
-without player labels or numeric IDs. The clean instruction at `0x1299BC` is
-no longer edited. The current TSV selects base cost `2.5` and tier deltas from
-D `+0.0` through S+++ `+3.5` in `0.5` steps.
+the match keeps its base row. The clean instruction at `0x1299BC` is no longer
+edited.
 
-`tier` is consumed by the Character Select overlay, and `substitution_cost` is
-consumed by both the overlay and the battle hook. `hp`, damage, and recovery
-columns are present for later hooks and currently have no runtime consumers.
+`features.character_select.balance_overlay` independently reads the same
+complete table. It always draws `TIER` in separate left and right top-screen
+blocks. It draws the resolved `SUB x%` value only when
+`features.battle.character_overrides` is enabled, omitting trailing decimal
+zeroes. It never draws player labels or numeric IDs.
+
+Every runtime consumer uses that normalized value. With the gauge feature
+disabled, or with its runtime mode set to `Chakra`, the battle hook converts
+`x/100` to the native 15-point chakra resource as `x * 15 / 100`. In `Gauge`
+mode, the same value is rounded once to `capacity_counts * x / 100`;
+eligibility, spending, and the independent top-HUD textured bar's red threshold
+all use that executable integer cost. `Free` bypasses both resource spends. The
+current TSV uses base `20` and step `+5`, so its empty character cost cells
+resolve from their tiers as D `20`, C `25`, B `30`, A `35`, S `40`, S+ `45`,
+S++ `50`, and S+++ `55`, all over `100`.
+
+`tier` is consumed whenever the Character Select overlay is enabled.
+`substitution_cost` is consumed by the overlay only when character overrides
+are enabled, and by the native chakra-cost and substitution-gauge battle hooks.
+The gauge therefore requires `character_overrides`. `support_disabled` is
+independent: when false, native field support and its lower gauge coexist with
+the independent top-HUD substitution bar; when true, only the native support
+gauge and field-support action are suppressed.
+`hp`, damage, and recovery columns are present for later hooks and currently
+have no runtime consumers.
+
+## Disable battle support
+
+`features.battle.support_disabled` suppresses free-field support calls and the
+native lower support gauge without changing selected support data, Character
+Select behavior, or linked Jutsu. A guarded main-ELF hook replaces only the
+per-fighter support-button acceptance call with a no-op. A second guarded BTL
+hook replaces only the dedicated `TEX_xgauge` draw call with a no-op for both
+players; the rest of the battle HUD remains native.
+
+The setting is independent of
+`features.character_select.support_selection_rework`. Either feature may be
+enabled without the other.
 
 ## Combo damage scaling design
 
@@ -63,7 +173,7 @@ damage by combo hit index.
 
 ### Recommended configuration
 
-Use one typed object under `features.battle_logic`, rather than a marker list or
+Use one typed object under `features.battle`, rather than a marker list or
 per-move input sequence:
 
 ```json
@@ -193,7 +303,7 @@ could imply an ABI that has not been established.
 
 Implementation should stay inside the existing battle-logic mechanisms:
 
-- add the typed `combo_damage_scaling` object under `features.battle_logic` in
+- add the typed `combo_damage_scaling` object under `features.battle` in
   `@builder/catalog/catalog.modcat`, pointing to new injection ID
   `i__battle_logic__combo_damage_scaling`, and select the accepted values in
   `@builder/configurations/base.json` so existing profile overrides inherit

@@ -135,6 +135,14 @@ substate `2`; the later phase `2` / substate `3` hit transition remained at
 from phase `0` / substate `1` to major action `7`, action `0x64`, and remained
 at `14.0`. PCSX2 reported no window handle during the replay.
 
+The builder-facing cost uses normalized percentage points on `0..100`, while
+fighter chakra at `+0x70` retains NA2's native `0..15` scale. The encoder emits
+`configured_cost * 15 / 100` as the resident float32 consumed by the accepted
+hook. The base configuration uses `6.666666666666667/100`, which emits exactly
+`1.0` native chakra and preserves the runtime behavior validated above. A
+configured `100/100` emits `15.0` and therefore represents the full native
+gauge.
+
 This implementation does not create a minimum-chakra requirement. For action-record
 type `0x00000002`, `FUN_00244190` returns before its normal cost-affordability
 check. The action can therefore begin below the configured cost, and the

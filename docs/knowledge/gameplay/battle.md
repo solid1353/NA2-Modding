@@ -481,6 +481,91 @@ instruction bytes `BC721C0C`; the exported Ghidra text address is `0x0071D258`.
 Replacing that call with a no-op suppresses the gauge for both players without
 altering any other HUD draw.
 
+The native support-bar draw also chooses its displayed controller button from
+the action map. `FUN_0071CAF0` calls `FUN_001F3F10(side + 1)` at live
+`0x0071D03C`, then executes `lh a0,0xA(v0)` at live `0x0071D044` / BTL raw
+`0x69184`. The clean instruction bytes are `0A004484`; offset `+0x0A` selects
+action index `5`, Linked Attack, independently for each player. The current
+unaccepted substitution-gauge candidate leaves this entire renderer and all of
+its X/Y constants clean. `features.battle.support_disabled` independently
+suppresses only its outer call at raw `0x69398`.
+
+The first independent-renderer candidate hooked the preceding controller-update
+call at raw `0x69380`, called the displaced update once, and drew from that
+callback. User runtime testing on 2026-08-27 established that this lifecycle is
+not the top-HUD lifecycle: the substitution bar remained visible while ordinary
+Jutsu hid HP/chakra, then disappeared while Ultimate Jutsu retained the ordinary
+top HUD. The current candidate therefore keeps `0x69380` only as a per-side
+cache/update seam for the controller's initialized bar sprite at `+0x18` and
+BTL `$gp`.
+
+The actual per-side top-HUD dispatcher starts at BTL raw `0x673E0`, exported
+`FUN_0071B2A0` and live `0x0071B2E0`. It reads parent byte `+0x54` at raw
+`0x673F4` and skips all four child draws when that state equals `1`. After that
+gate, it loads the primary child from parent `+0x20`; when non-null, raw
+`0x67434` calls live `0x0071B720` with clean bytes `C86D1C0C`. The child's
+layout pointer is at `+0x00`, and layout byte `+0x0C` is the same side/mirroring
+value consumed throughout the primary renderer. That renderer loads live layout
+X, Y, and scale from `+0x00`, `+0x04`, and `+0x08`. The name renderer at raw
+`0x67F20` consumes the same four layout fields, establishing that the slide and
+Ultimate-Jutsu shake are shared parent transforms rather than component-local
+state.
+
+The first parent-gated candidate selected the right visibility states but still
+drew at fixed screen coordinates. User runtime testing on 2026-08-27 reported
+that it did not follow HP/chakra/name as they moved upward off-screen and did
+not receive the Ultimate-Jutsu shake. The current wrapper replaces only the
+same `jal`, calls the displaced native renderer once, then selects the cached
+controller for that accepted HUD side. It derives its base from layout origin
+plus mirrored X offset `64.0` and Y offset `38.0`, scales every bar geometry
+offset and dimension by layout `+0x08`, and copies primary child sprite alpha
+`+0x40` for the draw. Thus visibility, translation, shake, scale, and alpha are
+inherited from the common native HUD state rather than duplicated Jutsu or
+animation tests.
+
+The independent renderer uses the same outer-frame, marker, and inner-bar
+rectangle records that the native support renderer addresses as BTL
+`$gp - 0x5CD8`, `$gp - 0x5CD0`, and `$gp - 0x5CC0`, but owns its geometry and
+state. The two bar anchors are `64.0/448.0` with shared Y `38.0`; no native
+support-controller fill, visibility, button, or decoration state is
+repurposed. Runtime confirmation of the corrected slide-off and Ultimate-Jutsu
+shake remains pending.
+
+The Battle HUD name renderer at raw `0x67F20` resolves its X anchor before
+loading the shared Y anchor through raw `0x67F60..0x67F67`
+(`8C00023CDC4240C4`). The substitution feature leaves the complete X path and
+the Y load untouched. Its only name-position hook is the immediately following
+raw `0x67F68..0x67F6F` pair (`820001460C00A290`): native Y-scale
+multiplication followed by the side-byte load. The resident adapter receives
+the already loaded Y, preserves the live name destination, layout pointer,
+scale, width/height results, and anchor result, and calls a C adjuster. Chakra
+and Free return the loaded Y unchanged; Gauge returns `Y + 11.0`. The adapter
+then reproduces the displaced multiplication and side-byte load before
+rejoining the native branch. The substitution feature therefore owns no X
+coordinate, no absolute Y coordinate, and no localization dependency. Runtime
+confirmation of the relative-Y path remains pending.
+
+The red marker in the same native draw is not a stock boundary. The clean code
+loads `52.0` at live `0x0071CFA0`, while the fill begins at `20.0` and spans
+`64.0`; its fixed normalized position is therefore `(52 - 20) / 64 = 0.5`.
+The marker's native draw call is live `0x0071CFD0`, BTL raw `0x69110`, guarded
+by clean bytes `10EF0D0C` (`jal 0x0037BC40`). The candidate leaves it clean and
+uses the native scaled sibling at `0x0037BD00` so the independent marker follows
+the common top-HUD scale. Marker X is
+`base + mirror * scale * (20 + 64 * executable_cost_fraction)`. The fraction is
+published per side from the same rounded meter-count cost used by eligibility
+and spending, so the marker describes the actual amount required rather than
+an independently rounded configuration value.
+
+The native lower-support marker loads its tint from resident `0x0040BFC8`.
+Clean `SLPS_258.37` bytes there are `12 00 00 00 FF FF FF FF`; the native
+packing sequence at live `0x0071CF60..0x0071CF9C` resolves that to RGB
+`(0x12, 0x00, 0x00)`. Reusing that very dark tint on the independent top-HUD
+bar made its cost threshold appear black in user runtime testing. The current
+candidate keeps the native marker texture but supplies normal-intensity red
+RGB `(0x7F, 0x00, 0x00)` for the independent draw only. The native lower
+support renderer and its tint remain unchanged.
+
 The `supports2.p2m2` clean baseline records both paths: marker `0001` shows the
 gauge for Player 1's selected support while Player 2's No Support side has none;
 markers `0002` and `0003` use the selected support in a linked Jutsu; marker

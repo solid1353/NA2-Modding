@@ -151,7 +151,7 @@ class BuildPreflightTests(unittest.TestCase):
                     },
                     "builds": {
                         "latest": {
-                            "configuration": "dev",
+                            "configuration": "base",
                             "rotate_to": "previous",
                         },
                         "previous": {},

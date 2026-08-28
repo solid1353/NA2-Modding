@@ -1,23 +1,17 @@
 {
   features: {
-    battle_logic: {
+    battle: {
       description: "Runtime-proven battle behavior and substitution settings.",
-      disable_shadowblur_extra_hit: setting {
+      shadowblur_extra_hit_disabled: setting {
         description: "Shadowblur extra-hit behavior.",
         patches: [
           "e__battle_logic__disable_shadowblur_extra_hit",
         ],
       },
-      disable_extra_hit_with_aura_punishment_for_initiator: setting {
-        description: "Extra-hit and aura-punishment behavior.",
+      extra_hit_disabled_with_aura_punishment_for_initiator: setting {
+        description: "Apply aura punishment to the initiator without the native extra hit.",
         patches: [
           "e__battle_logic__disable_extra_hit_with_aura_punishment_for_initiator__retain_aura_punishment",
-        ],
-      },
-      character_select_balance_overlay: setting {
-        description: "Show each side's character tier and resolved substitution cost on Character Select.",
-        patches: [
-          "i__battle_logic__character_select_balance_overlay",
         ],
       },
       character_overrides: setting {
@@ -26,10 +20,57 @@
           "i__battle_logic__character_overrides",
         ],
       },
-      xdash_chakra_cost: setting<decimal & 0..15> {
-        description: "Chakra spent when X-dash enters its committed dash phase.",
+      control_settings_rework: setting {
+        description: "Expose Guard and Substitution as independent remappable actions and default both players to L1 Substitution, R1 Guard, L2 Item Select, and R2 Linked Attack.",
+        patches: [
+          "e__battle__control_settings_rework",
+          "i__battle__control_settings_rework",
+        ],
+      },
+      simple_display: setting<"off" | "on"> {
+        description: "Choose whether battles start with the native Simple Display setting off or on.",
+        patches: [
+          "e__battle__simple_display",
+        ],
+      },
+      xdash_chakra_cost: setting<decimal & 0..100> {
+        description: "Normalized chakra percentage (x/100) spent when X-dash enters its committed dash phase.",
         patches: [
           "i__battle_logic__xdash_chakra_cost",
+        ],
+      },
+      substitution: {
+        description: "Independent substitution timing and resource settings.",
+        frames_before: setting<int & 0..16> {
+          description: "Number of 30 FPS input-history frames before impact accepted for otherwise eligible substitutions; replaces attack-authored random timing.",
+          patches: [
+            "e__battle_logic__substitution__frames_before",
+          ],
+        },
+        frames_after: setting<int & 0..16> {
+          description: "Number of 30 FPS ordinary hit-response frames after impact during which an otherwise eligible substitution can still activate.",
+          patches: [
+            "i__battle_logic__substitution__frames_after",
+          ],
+        },
+        gauge: setting<{
+          default: "chakra" | "gauge" | "free",
+          recovery_delay_seconds?: decimal & 0..60 & step 0.25,
+          refill_seconds_per_stock?: decimal & >0 & <=10 & step 0.05,
+          damage_recovery?: bool,
+          damage_percent_per_stock?: decimal & >0 & <=100 & step 0.25,
+        }> {
+          description: "Install a selectable Chakra, Gauge, or Free substitution resource mode in pre-battle and Practice Settings. Gauge uses a 100-point resource with optionally configurable recovery and each character's normalized substitution cost, displayed through an independent textured bar below each top chakra bar with a matching cost marker. Omitted recovery values use the parity defaults. Requires Character Overrides. Battle Support Disabled independently controls whether field support and its native lower gauge are available.",
+          patches: [
+            "i__battle__settings_rework",
+            "i__battle_logic__substitution__gauge",
+          ],
+        },
+      },
+      support_disabled: setting {
+        description: "Disable free-field support calls and hide the native battle support gauge without changing Character Select support rosters, selected supports, or linked Jutsu.",
+        patches: [
+          "i__battle__support_disabled",
         ],
       },
       ultimate_jutsu: {
@@ -38,6 +79,7 @@
           description: "Disable both players' inputs during the Ultimate Jutsu contest and suppress its meter, prompts, and result messages.",
           patches: [
             "e__battle_logic__ultimate_jutsu__contest_disabled",
+            "i__battle__settings_rework",
           ],
         },
         hud_hidden: setting {
@@ -48,11 +90,26 @@
         },
       },
     },
-    general: {
-      dedicated_save_namespace: setting {
-        description: "Use a dedicated NA228 save namespace instead of sharing the original NA2 save namespace.",
+    practice: {
+      description: "Practice-mode menu and default settings.",
+      settings_rework: setting<{
+        health?: "full" | "half" | "critical",
+        commands?: "off" | "on",
+        guide_ninja_sound?: "off" | "on",
+        linked_attack?: "off" | "on" | "random",
+      }> {
+        description: "Own the compact native Practice Settings menu and optionally configure its Health, Commands, Guide Ninja Sound, and Linked Attack defaults; expose the shared Substitution Chakra, Gauge, or Free mode when the substitution gauge feature is enabled.",
         patches: [
-          "e__general__dedicated_save_namespace__directory_references",
+          "i__practice__settings_rework",
+        ],
+      },
+    },
+    general: {
+      unlock_all: setting {
+        description: "Expose the characters, supports, stages, jutsu, Shop items, and Collection entries present in a fully unlocked save without changing saved progress, currency, inventory, or settings.",
+        patches: [
+          "i__qol__content__unlock_all__demon_wind_bomb",
+          "i__qol__content__unlock_all__availability",
         ],
       },
       replace_imported_game_title: setting {
@@ -61,10 +118,115 @@
           "s__general__replace_imported_game_title",
         ],
       },
+    },
+    memory_card: {
+      display_only_first_save: setting {
+        description: "Select record zero directly in Save and Load flows while retaining the native memory-card scan, confirmation, load/save operations, and non-record status handling; No completes without reopening the removed record list.",
+        patches: [
+          "e__qol__save_load__display_only_first_save",
+          "i__qol__save_load__display_only_first_save",
+        ],
+      },
+      dedicated_save_namespace: setting {
+        description: "Use a dedicated NA228 save namespace instead of sharing the original NA2 save namespace.",
+        patches: [
+          "e__general__dedicated_save_namespace__directory_references",
+        ],
+      },
       replace_memory_card_title: setting {
         description: "Replace the original memory-card title with the NA228 title.",
         patches: [
           "e__general__replace_memory_card_title",
+        ],
+      },
+    },
+    startup: {
+        faster_loading: setting {
+          description: "Shorten startup by loading RPG and player voice-bank indexes only when each bank is first played.",
+          startup_fast_forward_frames: {
+            additive: -600,
+          },
+          patches: [
+            "i__qol__startup__faster_loading__lazy_voice_indexes",
+          ],
+        },
+        flow: {
+          description: "Retain the native title path with independent optional skips for its preceding sequences.",
+          skip_cc2_intro: setting {
+            description: "Skip the CyberConnect2 intro.",
+            patches: [
+              "e__qol__startup__skip_cc2_intro__skip_cc2_intro",
+            ],
+          },
+          skip_opening: setting {
+            description: "Skip the opening sequence.",
+            patches: [
+              "e__qol__startup__skip_opening__skip_opening",
+            ],
+          },
+        }
+        |
+        {
+          description: "Replace the boot presentation and route directly through the startup Save/Load path.",
+          savedata_loading: setting<"manual"> {
+            description: "Retain the native visible Save/Load flow; no-load completion proceeds to the main menu.",
+            patches: [
+              "e__qol__startup__save_loading__core",
+            ],
+          }
+          |
+          setting<"automatic"> {
+            description: "Silently load record zero when it exists, and otherwise proceed to the main menu without showing Save/Load UI or requiring input. Report the outcome in black for ten seconds in the top-right corner of the usable menu; successful loads also show play time and the saved date/time.",
+            patches: [
+              "e__qol__startup__save_loading__core",
+              "e__qol__startup__save_loading__automatic__suppress_save_load_draw",
+              "i__qol__startup__save_loading__automatic__first_save",
+            ],
+          },
+          loading_screen: setting {
+            description: "Replace the boot splashes with a large primitive percentage and progress bar paced across a 6.5-second elapsed-time estimate while the original startup loaders run.",
+            patches: [
+              "i__qol__startup__loading_screen__runtime",
+            ],
+          },
+        },
+    },
+    character_select: {
+        description: "Character Select behavior and overlays.",
+        balance_overlay: setting {
+          description: "Show each side's character tier on Character Select and include resolved substitution cost only when Character Overrides is enabled.",
+          patches: [
+            "i__battle_logic__character_select_balance_overlay",
+          ],
+        },
+        support_selection_rework: setting {
+          description: "Build compact per-character support lists defaulting to No Support without wrapping across list edges and retain selected supports for linked Jutsu without changing battle support availability.",
+          patches: [
+            "i__character_select__support_selection_rework",
+          ],
+        },
+    },
+    mode_select: {
+        description: "Mode availability and selection behavior.",
+        remove_adventure: setting {
+          description: "Omit Adventure from Mode Select using the NUN6 negative availability sentinel.",
+          patches: [
+            "e__qol__mode_select__remove_adventure__mark_entry_unavailable_matching_nun6",
+          ],
+        },
+        remove_shop: setting {
+          description: "Omit Shop from Mode Select using the same negative availability sentinel as the Adventure omission.",
+          patches: [
+            "e__qol__mode_select__remove_shop__mark_entry_unavailable_using_existing",
+          ],
+        },
+    },
+    rendering: {
+      description: "Game-wide rendering and output geometry.",
+      native_16_9_horizontal_scale: setting {
+        description: "Force the renderer's horizontal-scale field to 0.75 through its object pointer.",
+        patches: [
+          "e__rendering__native_16_9_horizontal_scale__force_0",
         ],
       },
     },
@@ -148,159 +310,6 @@
         patches: [
           "e__localization__regional_input",
           "i__localization__shared_font_payload",
-        ],
-      },
-    },
-    qol: {
-      startup: {
-        faster_loading: setting {
-          description: "Shorten startup by loading RPG and player voice-bank indexes only when each bank is first played.",
-          startup_fast_forward_frames: {
-            additive: -600,
-          },
-          patches: [
-            "i__qol__startup__faster_loading__lazy_voice_indexes",
-          ],
-        },
-        flow: {
-          description: "Retain the native title path with independent optional skips for its preceding sequences.",
-          skip_cc2_intro: setting {
-            description: "Skip the CyberConnect2 intro.",
-            patches: [
-              "e__qol__startup__skip_cc2_intro__skip_cc2_intro",
-            ],
-          },
-          skip_opening: setting {
-            description: "Skip the opening sequence.",
-            patches: [
-              "e__qol__startup__skip_opening__skip_opening",
-            ],
-          },
-        }
-        |
-        {
-          description: "Replace the boot presentation and route directly through the startup Save/Load path.",
-          savedata_loading: setting<"manual"> {
-            description: "Retain the native visible Save/Load flow; no-load completion proceeds to the main menu.",
-            patches: [
-              "e__qol__startup__save_loading__core",
-            ],
-          }
-          |
-          setting<"automatic"> {
-            description: "Silently load record zero when it exists, and otherwise proceed to the main menu without showing Save/Load UI or requiring input. Report the outcome in black for ten seconds in the top-right corner of the usable menu; successful loads also show play time and the saved date/time.",
-            patches: [
-              "e__qol__startup__save_loading__core",
-              "e__qol__startup__save_loading__automatic__suppress_save_load_draw",
-              "i__qol__startup__save_loading__automatic__first_save",
-            ],
-          },
-          loading_screen: setting {
-            description: "Replace the boot splashes with a large primitive percentage and progress bar paced across a 6.5-second elapsed-time estimate while the original startup loaders run.",
-            patches: [
-              "i__qol__startup__loading_screen__runtime",
-            ],
-          },
-        },
-      },
-      practice: {
-        description: "Independent Practice-mode default settings.",
-        starting_hp: setting<"full"> {
-          description: "Start both Practice fighters at full HP.",
-          patches: [
-            "e__qol__practice__starting_hp__full",
-          ],
-        }
-        |
-        setting<"half"> {
-          description: "Start both Practice fighters at half HP.",
-          patches: [
-            "e__qol__practice__starting_hp__half",
-          ],
-        }
-        |
-        setting<"critical"> {
-          description: "Start both Practice fighters at critical HP.",
-          patches: [
-            "e__qol__practice__starting_hp__critical",
-          ],
-        },
-        voice_off_by_default: setting {
-          description: "Start Practice with voice disabled.",
-          patches: [
-            "e__qol__practice__voice_off_by_default__voice_off_by_default",
-          ],
-        },
-        support_off_by_default: setting {
-          description: "Start Practice with support disabled.",
-          patches: [
-            "e__qol__practice__support_off_by_default__force_instead_leaving_previous_settings",
-          ],
-        },
-        command_display_off_by_default: setting {
-          description: "Start Practice with command display disabled.",
-          patches: [
-            "e__qol__practice__command_display_off_by_default__force_preserving_following_settings_field",
-          ],
-        },
-        simple_display_off: setting {
-          description: "Simple-display default control.",
-          patches: [
-            "e__qol__practice__simple_display_off__by_default",
-          ],
-        },
-      },
-      character_select: {
-        description: "Character Select support-list behavior.",
-        no_support: setting {
-          description: "Build compact per-character support lists defaulting to No Support without wrapping across list edges, retain selected supports for linked Jutsu, and disable free-field support calls and their gauge.",
-          patches: [
-            "i__qol__character_select__no_support__support_list",
-          ],
-        },
-      },
-      mode_select: {
-        description: "Mode availability and selection behavior.",
-        remove_adventure: setting {
-          description: "Omit Adventure from Mode Select using the NUN6 negative availability sentinel.",
-          patches: [
-            "e__qol__mode_select__remove_adventure__mark_entry_unavailable_matching_nun6",
-          ],
-        },
-        remove_shop: setting {
-          description: "Omit Shop from Mode Select using the same negative availability sentinel as the Adventure omission.",
-          patches: [
-            "e__qol__mode_select__remove_shop__mark_entry_unavailable_using_existing",
-          ],
-        },
-      },
-      content: {
-        description: "Runtime content availability independent of loaded save progress.",
-        unlock_all: setting {
-          description: "Expose the characters, supports, stages, jutsu, Shop items, and Collection entries present in a fully unlocked save without changing saved progress, currency, inventory, or settings.",
-          patches: [
-            "i__qol__content__unlock_all__demon_wind_bomb",
-            "i__qol__content__unlock_all__availability",
-          ],
-        },
-      },
-      save_load: {
-        description: "Save and load modal presentation.",
-        display_only_first_save: setting {
-          description: "Select record zero directly in Save and Load flows while retaining the native memory-card scan, confirmation, load/save operations, and non-record status handling; No completes without reopening the removed record list.",
-          patches: [
-            "e__qol__save_load__display_only_first_save",
-            "i__qol__save_load__display_only_first_save",
-          ],
-        },
-      },
-    },
-    rendering: {
-      description: "Game-wide rendering and output geometry.",
-      native_16_9_horizontal_scale: setting {
-        description: "Force the renderer's horizontal-scale field to 0.75 through its object pointer.",
-        patches: [
-          "e__rendering__native_16_9_horizontal_scale__force_0",
         ],
       },
     },

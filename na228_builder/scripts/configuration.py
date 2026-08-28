@@ -443,13 +443,14 @@ def _load_configuration(
     catalog_path = builder_root / "catalog"
     selection = catalog_module.load_selection(catalog_path, definition_path)
     paths = project_paths or load_paths(workspace, allow_missing=True)
-    character_overrides = None
-    if any(
-        node.path == ("features", "battle_logic", "character_overrides")
-        for node in selection.feature_nodes("battle_logic")
-    ):
-        from .character_overrides import load_character_overrides
+    from .character_overrides import (
+        character_override_fragment_feature,
+        load_character_overrides,
+    )
 
+    character_override_feature = character_override_fragment_feature(selection)
+    character_overrides = None
+    if character_override_feature is not None:
         character_overrides = load_character_overrides(
             definition_path,
             builder_root,
@@ -494,7 +495,8 @@ def _load_configuration(
             targets_path,
             (
                 character_overrides.resource_files
-                if feature_id == "battle_logic" and character_overrides is not None
+                if feature_id == character_override_feature
+                and character_overrides is not None
                 else ()
             ),
         )

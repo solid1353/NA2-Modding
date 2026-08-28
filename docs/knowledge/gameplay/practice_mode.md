@@ -818,6 +818,20 @@ construction (`FUN_001F4200` / `FUN_001F5910`) applies it to
 `manager+0x9F4`, `+0xA00`, and `+0xA0C`. The visible Practice defaults match
 the local Defaults row values above.
 
+The Practice Settings rework hooks the initializer tail at live
+`0x001E7B7C`, replacing the native `sb a1,11(a0); jr ra` pair with a tail jump
+to an owned leaf. The leaf reproduces byte `11 = 1`, then optionally overrides
+Health byte `1`, Commands bit `0`, and Guide Ninja Sound bit `5` in byte `0`,
+plus Linked Attack byte `11`. The resident schema uses `0xFF` per field to
+preserve the native value; configured enum values are stored directly as
+`0..2`.
+
+Simple Display is independent of the Practice Settings rework. Its native
+initializer write is the `or v1,v1,a2` at live `0x001E7AAC` after masking byte
+`0` with `0xFFFFFFFD`, confirming that its native mask is `0x02`.
+`features.battle.simple_display` owns that guarded instruction directly:
+`"on"` retains it and `"off"` replaces it with a no-op.
+
 Resident `FUN_001F5960` is used by the Practice-controller startup/restart
 path. It resets `+0x9F4` and `+0xA00`, then in modes `2/3` re-applies Strength
 key `0xB` from mirror byte `manager+0xA13`. This is a manager-level default
@@ -977,6 +991,108 @@ The renderer is therefore not completely read-only: it advances presentation
 delay `+0x56`. It does not write the manager settings pack or apply local
 values. Input ownership remains in live `0x00881660` and phase ownership in
 live `0x00881AB0`.
+
+### Compact-schema presentation alignment
+
+User-supplied, timestamp-matched NUN5 and NA228 savestate slots `1..3` from
+2026-08-27 preserve two distinct presentation faults in the compact Practice
+Settings implementation. Their extracted screenshots and source-state hashes
+are retained under
+`work/Battle mechanics/inputs/practice_settings_nun5_na228_ss1-3/`.
+
+The NA228 controller is at `0x00EB1120` in all three captured EE-memory
+snapshots. The preserved states contain:
+
+| Slot | Selected compact row | Scroll `+0x44` | Upper/lower starts |
+| --- | ---: | ---: | ---: |
+| `1` | `0` (Health) | `0.0` | `0 / 0` |
+| `2` | `13` (Substitution Jutsu) | `-242.0` | `0 / 0` |
+| `3` | `8` (Status) | `-242.0` | `0 / 0` |
+
+The matching NUN5 controller is at `0x00DE4FA0`; slot `3` preserves native
+Status selection `9`, scroll `-270.0`, and starts `0 / 0`. Static disassembly
+explains the numeric difference: the native window update uses a `28.0` row
+step and computes the opponent target as `-18 - 28*9 - 28*lower_start`.
+The compact target generalizes that expression to
+`-18 - 28*player_count - 28*lower_start`. A separate `30.0` step has no native
+basis and is incorrect for any nonzero window start.
+
+The SS1 up-arrow fault is a control-flow error, not a bad window value. Native
+live `0x00882078` skips the up-arrow draw body at `0x00882080` when its flag is
+zero. The first compact bridge returned directly to `0x00882080`, bypassing
+that branch and drawing the arrow unconditionally even though the captured
+upper start is zero. The corrected bridge returns to `0x008820FC` when no rows
+exist above the current window and to `0x00882080` only when the flag is set.
+
+SS2/SS3 preserve a second, independent split: the row text loop inserts the
+Opponent Settings heading at the compact player count, but the native
+`ANM_setting01` row backing retains its fixed nine-player/eight-opponent row
+topology. The first candidate added `28 * (9 - player_count)` to the backing
+translation. Its section phase was correct, but the first unused backing row
+still left a thin edge after the final compact row in both sections.
+
+A later candidate incorrectly divided that delta by the backing transform's
+`0.96` multiplier and used `29.166666` per omitted row. Current user-supplied
+states `SLOP-NA228 (0C8A0D9B).01.p2s` and `.02.p2s`, captured on 2026-08-28,
+reject that compensation. Slot 1 ends the seven-row player section at Guide
+Ninja Sound; slot 2 ends the six-row opponent section at Substitution Jutsu.
+Both retain the unused-row edge, while slot 2 and the supplied old/current
+comparison show that the compensated backing is `2.24` game units too far from
+the text. The correct section delta remains the native `28.0` units per omitted
+player row; the transform applies the same raster phase used by the untouched
+row renderer.
+
+The same states expose the backing object's exact draw inventory. Object
+`controller+0x2C` points at an 18-record animation whose record list is at
+`object+0xFC`. Resident `FUN_001BB790` iterates the resource count and draws a
+record only when byte `record+0x0A` has bit `0x04` set. Record `0` is the
+Opponent Settings heading. Player rows use record `1` followed by records
+`10..17`; opponent rows use records `2..9`. Their settled transforms differ by
+the native row pitch. In the supplied seven/six-row schema, player records
+`16..17` and opponent records `8..9` are therefore unused; their first visible
+edges are the reported terminal lines.
+
+The selection-dependent global backing correction was invalid: selection
+changes immediately while controller scroll `+0x44` approaches its new target
+by `20.0` per update. Applying the complete compact-section correction as soon
+as selection crosses the boundary therefore jumps every backing while text,
+values, and cursor continue along the native eased path.
+
+Slot 2 also confirms the record-to-transform link needed to compact the
+animation locally. Each record's word at `+0x00` points to its render object.
+That object stores world Y at `+0x38` and authored local Y at `+0x78`; the
+native object draw composes the latter with the backing object's global
+translation to produce the former. In this state, player records `15` and `17`
+have local Y values `-66.612` and `-119.454`, while the heading and first
+opponent records have `-165.931` and `-192.744`. Anchoring the heading and
+opponent records to record `15` while preserving their native deltas from
+record `17` therefore removes exactly the two omitted player slots without a
+global phase correction.
+
+The subsequent draw-time candidate was also rejected by user runtime evidence.
+The supplied current slots `1..2`, retained with provenance under
+`work/Battle mechanics/inputs/practice_settings_current_ss1-2_20260828/`, show
+that unused terminal lines were suppressed but the compact backing geometry did
+not follow the text. Static control flow explains the split. Live
+`0x00881AE0` advances `controller+0x2C` through resident `0x001BB210`, and live
+`0x00881AEC` immediately composes its hierarchy through resident `0x001BB6F0`.
+The rejected hook changed record-local Y only later, at the draw-time scroll
+load at live `0x00882368`. Resident `0x001BB790` reads the record draw bits
+directly, so suppression worked, but it drew the already-composed world
+transforms. Changing authored local Y at that point could not move them.
+
+The replacement source candidate removes that draw-time hook and leaves the
+native `lwc1 controller+0x44` / `neg.s` scroll pair intact. Its layout wrapper
+replaces only the compose call at live `0x00881AEC`: after native animation
+advance, it anchors the heading and opponent records to the compact section's
+actual last player row, applies active record bits, and then calls the displaced
+native hierarchy composer. The draw call at live `0x008823D0` remains native
+except for a wrapper that draws one additional copy of the native final player
+backing when all ten possible player rows are present; the animation owns only
+nine player backings. Native controller slots remain authoritative for all 17
+native values. The compact list stores only resolved label/value-table pointers,
+and the custom Substitution value alone has staged state for Confirm/Cancel.
+Runtime confirmation of this replacement candidate is pending.
 
 The `+0x56` delay is draw-call-counted, not update-counted. Reset sets it to
 zero; once alpha is full, each invocation of live `0x00882250` increments it

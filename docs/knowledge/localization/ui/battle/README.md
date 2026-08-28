@@ -67,26 +67,46 @@ left:  x = base_x + local_x
 right: x = base_x - local_x - rendered_width
 ```
 
-The NA2 instruction reads runtime address `0x008C42D8`, BTL file offset
-`0x2103D8`, whose value is `90.0`. NUN5 reads runtime `0x008DC8F8`, file offset
-`0x215BF8`, whose value is `74.0`. Copying that NUN5 value moves the left name
-16 logical units left and the mirrored right name 16 units right while leaving
-character data and font metrics unchanged. The offset and direction are
-screenshot-proven across the full existing suite; runtime confirmation of the
-corrected patch remains pending because captures are not regenerated as part
-of this change.
+The native X load is the isolated `lui/lwc1` pair at complete BTL file range
+`0x67F54..0x67F5B`, clean bytes `8C00023CD84240C4`. It reads runtime address
+`0x008C42D8`, BTL file offset `0x2103D8`, whose value is `90.0`. NUN5 reads
+runtime `0x008DC8F8`, file offset `0x215BF8`, whose value is `74.0`. When the
+substitution gauge is selected, the current uncommitted candidate replaces that
+pair with a guarded `jal; nop` to
+`substitution_gauge_battle_hud_character_name_x_shim`. The shim preserves the
+renderer's live `v1` destination pointer, calls the C coordinate getter, and
+returns its readable decimal `BATTLE_HUD_CHARACTER_NAME_X` value in `f0` to the
+unchanged native scale multiplication.
+This moves the left name 16 logical units left and the mirrored right name 16
+units right while leaving character data and font metrics unchanged. The
+offset and direction are screenshot-proven across the full existing suite;
+runtime confirmation of the injected storage path remains pending.
 
-The independent 160-unit name-width cap remains part of the same renderer.
-The `74.0` anchor stays a guarded data edit, while width fitting is owned by
-resident `PRG/228.BIN` entries
-`localization_ui_battle_hud_fit_width` and
+The independent 160-unit name-width cap remains part of the same renderer and
+continues to belong to the Localization runtime injection. Its resident
+`PRG/228.BIN` entries are `localization_ui_battle_hud_fit_width` and
 `localization_ui_battle_hud_fit_width_adapter`. A guarded call hook at BTL file
 offset `0x67F44` replaces the native width multiplication and preserves the
 accepted `a0=160` delay-slot side effect. The adapter preserves the caller-live
 `a1`, `v1`, `f1`, and `ra`, calls C to compute
 `min(source_width, 160.0f) * scale`, returns the result in native `f5`, and
 executes the displaced height load in its return delay slot. The former BTL
-header-cave helper is no longer used.
+header-cave helper is no longer used. The width hook ends at `0x67F4B`; the X
+anchor hook begins at `0x67F54`, so the two guarded ranges do not overlap.
+
+The immediately following native Y pair at `0x67F60..0x67F67`, clean bytes
+`8C00023CDC4240C4`, is owned by the same substitution-gauge feature. When
+selected, that injection returns the readable decimal
+`BATTLE_HUD_CHARACTER_NAME_Y` (`55.0`) compiled from the same C file through the
+same pointer-preserving shim pattern. The gauge therefore owns both character-name coordinates; when
+it is disabled, neither coordinate hook is selected and the native anchors
+remain in use. Localization owns only name width fitting and atlas content.
+
+The supplied `ss1` from build CRC `0CAE98A3` established why direct calls to the
+C getters were invalid at these two inline hooks: the native renderer loads its
+name destination into `v1` before both coordinate loads and stores X/Y through
+that pointer afterward, while the C display-state lookup uses `v1` as a
+temporary. Preserving `v1` in the two ABI shims restores both names.
 
 The behavior and screenshot evidence above apply to the integrated NA228
 result. This resident-storage refactor is uncommitted and has only static

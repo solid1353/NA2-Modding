@@ -32,18 +32,20 @@ integrated catalog data.
   an exact `.S` path; both use the same namespace/import/fragment mapping.
 - `catalog/string_patches.json` owns semantic transformations
   performed by the string patcher before inline and external string layout.
-- `configurations/base.json` contains the complete shared `features` tree.
-  `dev.json`, `test.json`, and `release.json` contain
-  concrete `overrides`. Each overrides object may be empty or partially mirror
+- `configurations/base.json` contains the complete shared `features` tree and
+  is the canonical development configuration. `test.json` and `release.json`
+  contain concrete `overrides`. Each overrides object may be empty or partially mirror
   the catalog's feature tree directly. The loader applies the concrete
   configuration's `overrides` to `base.features`. Each buildable target in root
   `game.json` selects its configuration; retained targets inherit their
   rotation source's configuration. Cache builds use their explicitly selected
   configuration; only release packaging uses `release.json`.
 - `configurations/overrides/base.character_overrides.tsv` contains the required
-  `base` row and shared per-character overrides. Matching `dev`, `test`, and
-  `release` TSVs in that directory layer nonempty cells over it by character
-  ID. Empty cells inherit; numeric zero is an explicit value.
+  `base` and `step` metadata rows and shared per-character overrides. These two
+  rows are not characters, so their `base_id`, `character`, and `tier` cells
+  are empty. Matching `test` and `release` TSVs in that directory layer
+  nonempty cells over it by row identity. Empty cells inherit; numeric zero is
+  an explicit value.
 - `@resources/character_data.tsv` is the repository-owned ID/name and native-value
   reference used to validate character rows. Its
   `support_id` cells contain the native support-roster ID corresponding to each
@@ -112,52 +114,63 @@ a `LaunchParameters` dictionary.
 
 1. Put shared defaults and agreed character values in
    `configurations/overrides/base.character_overrides.tsv`.
-2. Put temporary local values in
-   `configurations/overrides/dev.character_overrides.tsv`, test-only values in
-   `test.character_overrides.tsv`, or release-only values in
-   `release.character_overrides.tsv` in the same directory. Only nonempty cells
-   replace the base layer.
+2. Put test-only values in `test.character_overrides.tsv` or release-only values
+   in `release.character_overrides.tsv` in the same directory. Only nonempty
+   cells replace the base layer.
 3. Keep each numeric `id` paired with the exact `character` name from
    `@resources/character_data.tsv`. `base_id` identifies a form's base
    character, and `tier` records the human-readable balance tier. Tier labels
    use at most four ASCII characters because the resident table stores a
    fixed-width four-byte field. Rows retain the order written in the base TSV
    so forms can stay directly below their base characters.
-4. Write the `base` row's `substitution_cost` as a literal value such as `2.5`.
-   In a character row, write an unsigned value such as `3` for a literal cost,
-   `+0.5` to add to the base cost, or `-0.5` to subtract from it. The explicit
-   sign is what distinguishes a delta from a literal value.
-5. Leave a value cell empty to inherit the lower layer, including its
-   literal-or-delta mode. If neither a character nor the `base` row supplies a
-   substitution cost, the generated table leaves that value to native game
-   behavior. `0` is literal zero; `+0.0` is a zero delta.
-6. Save the file as UTF-8 TSV and run the normal build for that profile.
+4. Keep the `base` and `step` rows' `base_id`, `character`, and `tier` cells
+   empty. Write the `base` substitution cost as a literal percentage from `0`
+   through `100`, and write `step` as an explicitly positive, signed increment.
+   The canonical values are `20` and `+5`.
+5. Leave a character's `substitution_cost` empty to derive it from `tier` as
+   `base + tier_index * step`: D `0`, C `1`, B `2`, A `3`, S `4`, S+ `5`,
+   S++ `6`, and S+++ `7`. Write an unsigned value such as `30` for a literal
+   `30/100` per-character override. Write an explicitly signed value such as
+   `+5` or `-5` to adjust that character's tier-derived cost. The resolved
+   result must remain in `0..100`.
+6. Leave a profile value cell empty to inherit the lower-layer character cell,
+   including its literal-or-signed mode. `0` is a literal zero-cost override;
+   `+0.0` is a zero adjustment.
+7. Save the file as UTF-8 TSV and run the normal build for that profile.
 
-For example, these rows set the base cost to `2.5`, give Naruto a `+2.0`
-delta, and give Sakura a literal cost of `3`:
+For example, these rows set base `20` and step `+5`. Naruto's empty cost is
+inferred from tier S as `40/100`; Sakura's unsigned `25` is a literal
+per-character override:
 
 ```tsv
 id	base_id	character	tier	substitution_cost	hp	damage_multiplier	health_recovery_multiplier	chakra_recovery_multiplier
-base		Base		2.5
-57		Naruto Uzumaki	S	+2.0
-58		Sakura Haruno	A	3
+base				20
+step				+5
+57		Naruto Uzumaki	S
+58		Sakura Haruno	A	25
 ```
 
 The builder rejects unknown IDs, invalid base IDs, mismatched names, duplicate
 rows, malformed columns, non-finite numbers, and negative literal values before
-composition. Signed substitution-cost deltas may be negative.
+composition. Signed per-character adjustments may be negative, but every
+resolved substitution cost must remain inside `0..100`. With the gauge feature
+disabled, or with its runtime setting on `Chakra`, the runtime charges
+`cost / 100` of NA2's 15-point chakra capacity. `Gauge` charges the same
+fraction of the independent resource and places the top-HUD textured bar's red
+marker at the exact rounded executable cost. `Free` charges neither resource.
 
 ## Catalog nodes
 
 Catalog nodes may nest to any depth. A bare `setting` accepts `true` to apply
 its patches and `false` to disable it. `setting<T>` accepts a typed scalar or
-closed object value. Direct boolean typed settings are forbidden so `true` and
-`false` remain unambiguous node controls; boolean data is supplied through an
-object such as `setting<{ value: bool }>`.
+closed object value; when `T` accepts `{}`, `true` is its empty-object shorthand
+and the selected value is normalized to `{}`. Direct boolean typed settings are
+forbidden so boolean data remains inside an object such as
+`setting<{ value: bool }>`.
 
 `false` disables any setting, union, or structural parent before type
 validation. Structural parents otherwise require explicit objects; `true`
-does not expand a parent. Plain containers merge recursively through
+never expands a structural parent. Plain containers merge recursively through
 configuration overrides, while settings and node unions replace atomically.
 Union branches must be provably disjoint and are never selected by order.
 Structural catalog objects may use `&` to declare fields shared by several
@@ -318,4 +331,4 @@ them; `@scripts/composer.py` closes typed image operations; and
 `image_assembler/` alone stages and verifies the ISO.
 
 The development injector reads the feature files under `catalog/` with
-`configurations/dev.json` and the layered base/dev character-override TSVs.
+`configurations/base.json` and `base.character_overrides.tsv`.

@@ -2,7 +2,7 @@
 
 This document records the resident-ELF readers that expose save-backed content
 availability to the frontend, Adventure, and battle overlays. It separates the
-confirmed data and call contracts from the `qol.content.unlock_all` patch that
+confirmed data and call contracts from the `features.general.unlock_all` patch that
 overrides those reads.
 
 ## Research coverage
@@ -153,7 +153,7 @@ Candidate injection `i__qol__content__unlock_all__demon_wind_bomb` instead
 guards the native special-compatibility call at runtime `0x001F7254` / ELF
 offset `0xF7354` (clean call bytes `34FE070C`). Its wrapper returns true only
 for character `0x01` with selector `0x35`; every other pair delegates to clean
-`FUN_001FF8D0`. The existing downstream `qol.content.unlock_all` Jutsu hook
+`FUN_001FF8D0`. The existing downstream `features.general.unlock_all` Jutsu hook
 then reports the admitted pair available without changing saved progress or
 exposing the selector to other characters. Runtime validation of the corrected
 candidate remains pending.
@@ -201,7 +201,7 @@ also consumes grouped values.
 
 ## Read-only unlock override
 
-Catalog setting `qol.content.unlock_all` selects injection
+Catalog setting `features.general.unlock_all` selects injection
 `i__qol__content__unlock_all__availability`. Each guarded JAL replaces only the
 saved-value read inside a resident wrapper and leaves the wrapper and its
 callers intact:

@@ -479,30 +479,30 @@ class CatalogTests(unittest.TestCase):
             name: catalog.load_selection(
                 catalog_path, configurations / f"{name}.json"
             )
-            for name in ("dev", "test", "release")
+            for name in ("base", "test", "release")
         }
         test = selections["test"]
         self.assertTrue(
             test.node_enabled(
-                "features", "qol", "startup", "flow", "savedata_loading"
+                "features", "startup", "flow", "savedata_loading"
             )
         )
         self.assertTrue(
             test.node_enabled(
-                "features", "qol", "startup", "flow", "loading_screen"
+                "features", "startup", "flow", "loading_screen"
             )
         )
-        for name in ("dev", "release"):
+        for name in ("base", "release"):
             with self.subTest(configuration=name):
                 self.assertTrue(
                     selections[name].node_enabled(
-                        "features", "qol", "startup", "faster_loading"
+                        "features", "startup", "faster_loading"
                     )
                 )
         self.assertFalse(
-            test.node_enabled("features", "qol", "startup", "faster_loading")
+            test.node_enabled("features", "startup", "faster_loading")
         )
-        expected_frames = {"dev": 1160, "test": 1760, "release": 1160}
+        expected_frames = {"base": 1160, "test": 1760, "release": 1160}
         for name, selection in selections.items():
             with self.subTest(configuration=name):
                 self.assertEqual(
@@ -510,44 +510,68 @@ class CatalogTests(unittest.TestCase):
                     expected_frames[name],
                 )
 
-    def test_repository_practice_starting_hp_variants_select_exact_guarded_edits(self) -> None:
+    def test_repository_practice_defaults_are_owned_by_settings_rework(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         builder = paths.path("builder")
         catalog_path = builder / "catalog"
         base = json.loads(
             (builder / "configurations" / "base.json").read_text(encoding="utf-8")
         )
-        expected_replacements = {
-            "full": "010080A002000924",
-            "half": "010085A002000924",
-            "critical": "02000924010089A0",
-        }
+        self.assertEqual(
+            base["features"]["practice"],
+            {
+                "settings_rework": {
+                    "health": "full",
+                    "commands": "off",
+                    "guide_ninja_sound": "off",
+                    "linked_attack": "off",
+                }
+            },
+        )
+        selection = catalog.load_selection(
+            catalog_path, builder / "configurations" / "base.json"
+        )
+        package = catalog.load_binary_package(
+            selection,
+            "practice",
+            catalog_path / "targets.tsv",
+            paths.repository,
+            builder / "modules" / "binary_patcher" / "operations",
+        )
+        self.assertEqual(package.edits, [])
+        self.assertIn("i__practice__settings_rework", selection.injections)
 
-        with tempfile.TemporaryDirectory() as directory:
-            configuration_path = Path(directory) / "configuration.json"
-            for value, expected_replacement in expected_replacements.items():
-                with self.subTest(value=value):
-                    base["features"]["qol"]["practice"]["starting_hp"] = value
-                    self.write_json(configuration_path, base)
-                    selection = catalog.load_selection(
-                        catalog_path, configuration_path
-                    )
-                    package = catalog.load_binary_package(
-                        selection,
-                        "qol",
-                        catalog_path / "targets.tsv",
-                        paths.repository,
-                        builder / "modules" / "binary_patcher" / "operations",
-                    )
-                    edits = [
-                        edit
-                        for edit in package.edits
-                        if "e__qol__practice__starting_hp__" in edit.edit_id
-                    ]
-                    self.assertEqual(len(edits), 1)
-                    self.assertEqual(edits[0].destination_offset, 0xE7BE8)
-                    self.assertEqual(edits[0].expected_hex, "010080A002000924")
-                    self.assertEqual(edits[0].replacement_hex, expected_replacement)
+    def test_repository_simple_display_is_an_independent_battle_setting(self) -> None:
+        paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
+        builder = paths.path("builder")
+        catalog_path = builder / "catalog"
+        base = json.loads(
+            (builder / "configurations" / "base.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(base["features"]["battle"]["simple_display"], "off")
+
+        for value, replacement_hex in (("off", "00000000"), ("on", "25186600")):
+            with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
+                configuration = Path(directory) / "configuration.json"
+                configured = json.loads(json.dumps(base))
+                configured["features"]["battle"]["simple_display"] = value
+                configuration.write_text(json.dumps(configured), encoding="utf-8")
+                selection = catalog.load_selection(catalog_path, configuration)
+                package = catalog.load_binary_package(
+                    selection,
+                    "battle",
+                    catalog_path / "targets.tsv",
+                    paths.repository,
+                    builder / "modules" / "binary_patcher" / "operations",
+                )
+                edit = next(
+                    edit
+                    for edit in package.edits
+                    if edit.edit_id.endswith(".e__battle__simple_display")
+                )
+                self.assertEqual(edit.destination_offset, 0xE7BAC)
+                self.assertEqual(edit.expected_hex, "25186600")
+                self.assertEqual(edit.replacement_hex, replacement_hex)
 
     def test_object_intersection_rejects_duplicate_fields(self) -> None:
         source = '''{
@@ -687,6 +711,65 @@ class CatalogTests(unittest.TestCase):
         self.assertTrue(boolean_node.enabled)
         self.assertEqual(boolean_node.configured_value, {"value": False})
         self.assertFalse(selection.node_enabled("features", "feature", "alternative"))
+
+    def test_true_normalizes_to_empty_object_only_when_the_type_accepts_it(
+        self,
+    ) -> None:
+        source = '''{
+          optional: setting<{ count?: int }> {
+            description: "Optional object.", patches: ["e__f__optional"],
+          },
+          required: setting<{ count: int }> {
+            description: "Required object.", patches: ["e__f__required"],
+          },
+          alternative:
+            setting<{ count?: int }> {
+              description: "Optional branch.", patches: ["e__f__branch_object"],
+            }
+            |
+            setting<"named"> {
+              description: "Named branch.", patches: ["e__f__branch_named"],
+            },
+        }'''
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            catalog_path, configuration_path = self.write_project(
+                root,
+                {"feature": source},
+                {
+                    "feature": {
+                        "optional": True,
+                        "required": {"count": 1},
+                        "alternative": True,
+                    }
+                },
+            )
+            selection = catalog.load_selection(catalog_path, configuration_path)
+            selected = {
+                node.node_id: node
+                for node in selection.nodes
+                if node.node_id in {"feature.optional", "feature.alternative"}
+            }
+            self.assertEqual(selected["feature.optional"].configured_value, {})
+            self.assertEqual(selected["feature.alternative"].configured_value, {})
+
+            self.write_json(
+                root / "configurations" / "base.json",
+                {
+                    "features": {
+                        "feature": {
+                            "optional": True,
+                            "required": True,
+                            "alternative": True,
+                        }
+                    }
+                },
+            )
+            with self.assertRaisesRegex(
+                catalog.ConfigurationError,
+                r"feature\.required: got true",
+            ):
+                catalog.load_selection(catalog_path, configuration_path)
 
     def test_containers_merge_recursively_but_settings_and_unions_are_atomic(self) -> None:
         source = '''{

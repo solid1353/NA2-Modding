@@ -458,7 +458,7 @@ five unrelated edits have been removed.
 
 ## Current injection
 
-`qol.character_select.no_support` now selects one resident C injection. Both
+`features.character_select.support_selection_rework` selects one resident C injection. Both
 native calls to `FUN_003bb210` are redirected to the same wrapper. The wrapper:
 
 1. calls the untouched native function, preserving all 33 IDs and their
@@ -489,7 +489,7 @@ The initial declaration contains
 `{0x25, 4, 0x5F, "NO SUPPORT", 84}`: No Support with the native available
 state, the official NUN5 Leaf display record, and its label's maximum rendered
 width. Adding later special entries is a table edit in
-`src/qol/character_select_no_support.c`; no further executable list surgery is
+`src/qol/character_select_support_selection_rework.c`; no further executable list surgery is
 required while the total remains within the native 40-slot capacity.
 
 Static confidence is strong: all declared guards, both population xrefs, all

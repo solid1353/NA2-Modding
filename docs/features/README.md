@@ -7,8 +7,12 @@ targets live beside it. Non-inline executable inputs and
 assets live under their concrete builder data area. Catalog-only features
 require no directory.
 
-- [Battle logic](battle_logic.md)
+- [Battle](battle.md)
+- [Practice](practice.md)
 - [General](general.md)
-- [Localization](localization/README.md)
-- [Quality of life](qol.md)
+- [Memory Card](memory_card.md)
+- [Startup](startup.md)
+- [Character Select](character_select.md)
+- [Mode Select](mode_select.md)
 - [Rendering](rendering.md)
+- [Localization](localization/README.md)

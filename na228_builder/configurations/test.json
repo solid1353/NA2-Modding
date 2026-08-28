@@ -1,9 +1,7 @@
 {
   "overrides": {
-    "qol": {
-      "startup": {
-        "faster_loading": false
-      }
+    "startup": {
+      "faster_loading": false
     }
   }
 }

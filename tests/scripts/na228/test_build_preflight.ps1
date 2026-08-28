@@ -38,7 +38,7 @@ function Get-Na2BuildTargetRegistry {
         latest = [pscustomobject]@{
             Name = 'latest'
             Entry = [pscustomobject]@{ IsoPath = $Paths.files.latest_iso }
-            Configuration = 'dev'
+            Configuration = 'base'
             RotateTo = 'previous'
         }
         previous = [pscustomobject]@{
@@ -122,7 +122,7 @@ exit $LASTEXITCODE
         New-Item -ItemType Directory -Force -Path (Join-Path $repository $directory) | Out-Null
     }
     New-Item -ItemType Directory -Force -Path $isoCacheRoot | Out-Null
-    foreach ($name in 'dev', 'test', 'release') {
+    foreach ($name in 'base', 'test', 'release') {
         [IO.File]::WriteAllText(
             (Join-Path $repository "na228_builder\configurations\$name.json"),
             "{}`n"
@@ -161,7 +161,7 @@ iso`tbuild_record
             $configIndex = [Array]::IndexOf($arguments, '--configuration')
             $configuration = if ($configIndex -ge 0) { $arguments[$configIndex + 1] } else { '' }
             $key = "$configuration|0"
-            $fingerprint = if ($configuration -match 'dev') { 'A' * 64 } else { 'B' * 64 }
+            $fingerprint = if ($configuration -match 'base') { 'A' * 64 } else { 'B' * 64 }
             if ($command -eq 'lookup') {
                 if (-not $global:Na2RegistryEntries.ContainsKey($key)) {
                     $global:LASTEXITCODE = 0
@@ -239,7 +239,7 @@ iso`tbuild_record
 
     $first = & (Join-Path $scriptRoot 'build.ps1')
     Assert-Na2PreflightTest ($first.Status -eq 'updated') 'First Latest build was not promoted.'
-    Assert-Na2PreflightTest ($first.ConfigurationId -ceq 'dev') 'Latest did not use its owned configuration.'
+    Assert-Na2PreflightTest ($first.ConfigurationId -ceq 'base') 'Latest did not use its owned configuration.'
     Assert-Na2PreflightTest (-not $first.PreflightCacheHit) 'First build was incorrectly a registry hit.'
     Assert-Na2PreflightTest ([IO.File]::ReadAllText($latestIso) -ceq 'verified development') 'Latest did not receive the verified image.'
     Assert-Na2PreflightTest ([IO.File]::ReadAllText($previousIso) -ceq 'old latest') 'Latest rotation did not preserve Previous.'
@@ -274,10 +274,10 @@ iso`tbuild_record
     Assert-Na2PreflightTest $second.PreflightCacheHit 'Repeated Latest build did not reuse the registry.'
     Assert-Na2PreflightTest ($global:Na2BuilderCalls.Count -eq 1) 'Registry hit rebuilt the image.'
 
-    $developmentEntry = $global:Na2RegistryEntries['na228_builder\configurations\dev.json|0']
-    $cacheImage = Join-Path $isoCacheRoot "$($developmentEntry.Hash).iso"
+    $baseEntry = $global:Na2RegistryEntries['na228_builder\configurations\base.json|0']
+    $cacheImage = Join-Path $isoCacheRoot "$($baseEntry.Hash).iso"
     Assert-Na2PreflightTest (Test-Path -LiteralPath $cacheImage -PathType Leaf) 'Latest promotion did not retain its canonical cache image.'
-    $developmentEntry.Image = $cacheImage
+    $baseEntry.Image = $cacheImage
     Remove-Item -LiteralPath $latestIso -Force
     New-Item -ItemType Directory -Path $latestIso | Out-Null
     $pending = & (Join-Path $scriptRoot 'build.ps1')
@@ -292,7 +292,7 @@ iso`tbuild_record
 
     $cacheLogDirectory = Join-Path $repository 'work\Project\logs'
     $cacheBuild = & (Join-Path $scriptRoot 'build.ps1') `
-        -CacheConfiguration dev `
+        -CacheConfiguration base `
         -CacheLogDirectory $cacheLogDirectory
     Assert-Na2PreflightTest $cacheBuild.PreflightCacheHit 'Cache build did not reuse the Latest verification.'
     Assert-Na2PreflightTest ($cacheBuild.OutputIso -ceq $cacheImage) 'Cache build did not return the canonical cached ISO.'

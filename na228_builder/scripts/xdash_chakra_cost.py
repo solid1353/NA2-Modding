@@ -12,9 +12,11 @@ if TYPE_CHECKING:
 
 XDASH_CHAKRA_COST_PATH = (
     "features",
-    "battle_logic",
+    "battle",
     "xdash_chakra_cost",
 )
+NORMALIZED_CHAKRA_CAPACITY = 100.0
+NATIVE_CHAKRA_CAPACITY = 15.0
 
 
 def xdash_chakra_cost_fragment(
@@ -23,7 +25,7 @@ def xdash_chakra_cost_fragment(
     owner: str,
     symbol: str = "battle_logic_xdash_chakra_cost",
 ) -> PayloadFragment | None:
-    """Encode the configured X-dash chakra cost for the resident hook."""
+    """Encode a normalized X-dash cost for NA2's native chakra scale."""
 
     matches = [
         node for node in selection.nodes if node.path == XDASH_CHAKRA_COST_PATH
@@ -40,14 +42,22 @@ def xdash_chakra_cost_fragment(
         or not isinstance(value, (int, float))
     ):
         raise ValueError("X-dash chakra cost requires a configured number")
-    cost = float(value)
-    if not math.isfinite(cost) or not 0.0 <= cost <= 15.0:
-        raise ValueError("X-dash chakra cost must be from 0 through 15")
+    normalized_cost = float(value)
+    if (
+        not math.isfinite(normalized_cost)
+        or not 0.0 <= normalized_cost <= NORMALIZED_CHAKRA_CAPACITY
+    ):
+        raise ValueError("X-dash chakra cost must be from 0 through 100")
+    native_cost = (
+        normalized_cost
+        * NATIVE_CHAKRA_CAPACITY
+        / NORMALIZED_CHAKRA_CAPACITY
+    )
 
     return PayloadFragment(
         owner=owner,
         symbol=symbol,
         kind="rodata",
         alignment=4,
-        payload=struct.pack("<f", cost),
+        payload=struct.pack("<f", native_cost),
     )

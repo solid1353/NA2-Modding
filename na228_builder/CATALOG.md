@@ -33,8 +33,8 @@ skip_opening: setting {
 ```
 
 Its configuration value is `true` to select its patches or `false` to select
-nothing. `true` applies only to a bare setting; it never expands a container,
-selects a child, or chooses a default branch.
+nothing. `true` never expands a structural container or recursively selects its
+children.
 
 `setting<T>` accepts one supplied JSON value described by `T`:
 
@@ -48,6 +48,9 @@ camera_distance: setting<decimal & 0.5..2 & step 0.25> {
 The selected value is validated against `T` and passed to any adapter declared
 by the referenced patch definition. A typed setting has no option-to-patches
 map; alternatives with different patches are complete setting branches.
+When `T` accepts an empty object, `true` is shorthand for `{}` and the selected
+value exposed to adapters and resident-fragment encoders is normalized to `{}`.
+Typed settings with any required object field reject that shorthand.
 
 Every setting requires a nonempty `description` and a nonempty `patches` array.
 It may also declare a nonempty `modules` array. IDs within each array must be

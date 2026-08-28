@@ -4,16 +4,40 @@ Project-wide selectable behavior that does not belong to gameplay, rendering,
 localization, or quality-of-life categories. Selectable nodes and guarded edits
 are owned by `features.general` in `@builder/catalog/catalog.modcat`.
 
-## Dedicated save namespace
+## Unlock all content without loading a save
 
-`general.dedicated_save_namespace` selects two guarded, equal-length boot-ELF
-replacements at file offsets `0x2FBAC1` and `0x2FBBF0`. They replace the stock
-NA2 memory-card directory name `BISLPS-25837NARUTO5` with the dedicated NA228
-name `BASLOP-NA228NARUTO6` without changing the ELF size.
+`features.general.unlock_all` selects the resident injection
+`i__qol__content__unlock_all__availability`. Seven guarded hooks replace only the
+save-backed reads for characters, the Character Select R1-form gate, secondary
+content, the 32-entry small table, the six grouped tables, and metadata-valid
+jutsu, plus progress slot `0x6A`, which gates Ultimate difficulty. The injected
+helpers reproduce bounded fully unlocked values and the native stable state for
+Collection figures; the progress helper returns available only for slot `0x6A`
+and preserves every other native progress read. Native wrappers, metadata
+checks, and callers remain intact.
 
-The base configuration enables the setting. Setting it to `false` leaves the
-stock directory name intact, so NA228 and NA2 address the same saved data.
-Changing the setting does not copy or migrate saves between the two names.
+The feature performs no save-data writes. It therefore exposes characters and
+their R1 forms, supports, stages, jutsu, and Collection entries plus Ultimate
+difficulty without importing the reference save's settings, progress,
+currency, inventory, statistics, or availability bytes. Disabling the setting
+restores the native save-dependent readers.
+
+The first character candidate used an invalid mask derived through the wrong
+global and produced an incorrect, displaced roster. The corrected helper makes
+all 94 stored character IDs available and leaves native roster filtering to
+the existing callers. User runtime testing on 2026-08-10 confirmed the
+correction. The reader contracts, stored values, hook seams, evidence, and
+rejected-mask failure are recorded in
+[`../knowledge/game/content_availability.md`](../knowledge/game/content_availability.md).
+
+User runtime testing on 2026-08-11 confirmed that R1 forms remain accessible
+without a loaded save and that Collection figure pedestals render when
+`unlock_all` is enabled. The R1 hook supplies only the gate's fully unlocked
+progress value `0x66`; grouped Collection reads return their native stable
+viewed-and-unlocked state `3`.
+
+User runtime testing on 2026-08-21 confirmed that Ultimate difficulty remains
+selectable with `unlock_all` in NA2 and with the regular NUN5 PNACH port.
 
 ## Imported game title
 
@@ -21,15 +45,5 @@ Changing the setting does not copy or migrate saves between the two names.
 `Naruto Shippuden: Ultimate Ninja 5` with root `settings.title` before the
 string patcher decides which strings stay inline and which use linked external
 storage. Its catalog definition guards the known six mappings and seven total
-occurrences. Setting it to `false` leaves the imported title unchanged.
-
-## Memory-card title
-
-`general.replace_memory_card_title` selects one guarded 64-byte replacement in
-the clean boot ELF at `0x2FBAE0`. The `nul_padded_text` adapter encodes both the
-original Japanese title and `ＮＡ　ｖ２．２８` as CP932, requires a terminating
-NUL, and pads the remainder of the fixed slot with zeroes. Setting it to
-`false` leaves the original title intact.
-
-Both title settings are enabled by the base configuration. They are independent
-of each other and of `general.dedicated_save_namespace`.
+occurrences. Setting it to `false` leaves the imported title unchanged. It is
+independent of the settings under `features.memory_card`.

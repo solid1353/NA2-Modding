@@ -41,34 +41,42 @@ extern const CharacterOverrideTable battle_logic_character_overrides;
 
 #define CHARACTER_OVERRIDE_SUBSTITUTION_COST_PRESENT (1u << 0)
 #define CHARACTER_OVERRIDE_SUBSTITUTION_COST_DELTA (1u << 16)
+#define NORMALIZED_COST_CAPACITY 100.0f
+#define NATIVE_CHAKRA_CAPACITY 15.0f
 
 static __attribute__((always_inline)) inline u32 match_start_character_id(
     void *fighter
 )
 {
     u8 *manager = *(u8 **)BATTLE_MANAGER_POINTER_ADDRESS;
-    void *p1_fighter = *(void **)(manager + BATTLE_MANAGER_P1_FIGHTER_OFFSET);
-    void *p2_fighter = *(void **)(manager + BATTLE_MANAGER_P2_FIGHTER_OFFSET);
+    if (manager != (u8 *)0) {
+        void *p1_fighter = *(void **)(
+            manager + BATTLE_MANAGER_P1_FIGHTER_OFFSET
+        );
+        void *p2_fighter = *(void **)(
+            manager + BATTLE_MANAGER_P2_FIGHTER_OFFSET
+        );
 
-    if (fighter == p1_fighter) {
-        return *(u32 *)(manager + BATTLE_MANAGER_P1_SELECTED_ID_OFFSET);
-    }
-    if (fighter == p2_fighter) {
-        return *(u32 *)(manager + BATTLE_MANAGER_P2_SELECTED_ID_OFFSET);
+        if (fighter == p1_fighter) {
+            return *(u32 *)(manager + BATTLE_MANAGER_P1_SELECTED_ID_OFFSET);
+        }
+        if (fighter == p2_fighter) {
+            return *(u32 *)(manager + BATTLE_MANAGER_P2_SELECTED_ID_OFFSET);
+        }
     }
     return *(u32 *)((u8 *)fighter + FIGHTER_LIVE_CHARACTER_ID_OFFSET);
 }
 
-SUBSTITUTION_COST_SECTION(".text.battle_logic_substitution_cost")
-float battle_logic_substitution_cost(void *fighter, u32 default_cost_bits)
+static __attribute__((always_inline)) inline float resolved_substitution_cost_percent(
+    void *fighter,
+    float default_cost_percent
+)
 {
     u32 character_id = match_start_character_id(fighter);
     const CharacterOverrideRow *character = 0;
-    FloatBits default_cost;
     float base_cost;
 
-    default_cost.bits = default_cost_bits;
-    base_cost = default_cost.value;
+    base_cost = default_cost_percent;
     if ((battle_logic_character_overrides.base.flags &
          CHARACTER_OVERRIDE_SUBSTITUTION_COST_PRESENT) != 0u) {
         base_cost = battle_logic_character_overrides.base.substitution_cost;
@@ -86,4 +94,34 @@ float battle_logic_substitution_cost(void *fighter, u32 default_cost_bits)
         }
     }
     return base_cost;
+}
+
+SUBSTITUTION_COST_SECTION(".text.battle_logic_substitution_cost")
+float battle_logic_substitution_cost(void *fighter, u32 default_cost_bits)
+{
+    FloatBits default_cost;
+    float cost_percent;
+
+    default_cost.bits = default_cost_bits;
+    cost_percent = resolved_substitution_cost_percent(
+        fighter,
+        default_cost.value * NORMALIZED_COST_CAPACITY / NATIVE_CHAKRA_CAPACITY
+    );
+    return cost_percent * NATIVE_CHAKRA_CAPACITY / NORMALIZED_COST_CAPACITY;
+}
+
+SUBSTITUTION_COST_SECTION(".text.battle_logic_substitution_cost_fraction")
+float battle_logic_substitution_cost_fraction(void *fighter)
+{
+    float cost_percent = resolved_substitution_cost_percent(
+        fighter,
+        NORMALIZED_COST_CAPACITY / NATIVE_CHAKRA_CAPACITY
+    );
+
+    if (!(cost_percent >= 0.0f)) {
+        cost_percent = 0.0f;
+    } else if (cost_percent > NORMALIZED_COST_CAPACITY) {
+        cost_percent = NORMALIZED_COST_CAPACITY;
+    }
+    return cost_percent / NORMALIZED_COST_CAPACITY;
 }

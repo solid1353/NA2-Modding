@@ -255,7 +255,7 @@ function Get-Na2StartupFastForwardFrames {
   "builds": {
     "latest": {
       "aliases": ["l"],
-      "configuration": "dev",
+      "configuration": "base",
       "rotate_to": "previous"
     },
     "previous": { "aliases": ["p"] },
@@ -337,7 +337,7 @@ print(json.dumps(result))
     )) {
         New-Item -ItemType Directory -Force -Path (Join-Path $fakeRepository $directory) | Out-Null
     }
-    foreach ($configuration in @('dev', 'test', 'release')) {
+    foreach ($configuration in @('base', 'test', 'release')) {
         Set-Na2Utf8FileAtomic `
             -Path (Join-Path $fakeRepository "na228_builder\configurations\$configuration.json") `
             -Content '{ "overrides": {} }'
@@ -375,8 +375,8 @@ Write-Output '[fake] unit tests'
     . (Join-Path $fakeNa2Scripts 'build_targets.ps1')
     Assert-Na2Test `
         -Condition (
-            (Get-Na2BuildTargetConfiguration -Name latest -Paths $fakePaths) -ceq 'dev' -and
-            (Get-Na2BuildTargetConfiguration -Name previous -Paths $fakePaths) -ceq 'dev' -and
+            (Get-Na2BuildTargetConfiguration -Name latest -Paths $fakePaths) -ceq 'base' -and
+            (Get-Na2BuildTargetConfiguration -Name previous -Paths $fakePaths) -ceq 'base' -and
             (Get-Na2BuildTargetConfiguration -Name manual -Paths $fakePaths) -ceq 'release'
         ) `
         -Message 'Build targets did not own direct and retained configurations.'
@@ -623,7 +623,7 @@ else {
         Status = 'updated'
         ChangedRoles = [string[]]@('latest', 'previous')
         LaunchIso = if ($Force) { 'force-output.iso' } else { $null }
-        ConfigurationId = 'dev'
+        ConfigurationId = 'base'
     }
 }
 '@
@@ -1206,11 +1206,11 @@ Add-Content `
     ) -join "`n"
     $env:NA228_TASK_WORK_ROOT = 'work\Equivalence'
     $configuredCacheDispatch = (
-        & (Join-Path $fakeRepository 'na228.ps1') build -c dev *>&1
+        & (Join-Path $fakeRepository 'na228.ps1') build -c base *>&1
     ) -join "`n"
     Assert-Na2Test `
         -Condition (
-            $configuredCacheDispatch -match '\[fake\] cache configuration=dev' -and
+            $configuredCacheDispatch -match '\[fake\] cache configuration=base' -and
             $configuredCacheDispatch -match '@cache/isos/FAKE\.iso'
         ) `
         -Message 'Root cache-build command did not return the selected configuration cache path.'
@@ -1478,7 +1478,7 @@ Add-Content `
         -Rotated $true `
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $paths.files.previous_iso `
-        -Configuration (Join-Path $paths.builder 'configurations\dev.json') `
+        -Configuration (Join-Path $paths.builder 'configurations\base.json') `
         -Paths $paths
     Assert-Na2Test -Condition ($record.BuildId -eq 'new-latest') -Message 'Updated build was not retained.'
     $updatedBuildMap = Read-Na2BuildMap `
@@ -1515,7 +1515,7 @@ Add-Content `
         -Rotated $false `
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $paths.files.previous_iso `
-        -Configuration 'na228_builder/configurations/dev.json' `
+        -Configuration 'na228_builder/configurations/base.json' `
         -Paths $paths
     Assert-Na2Test `
         -Condition ($unchanged.BuildId -eq 'duplicate') `
@@ -1538,7 +1538,7 @@ Add-Content `
         -Rotated $false `
         -LatestIso $paths.files.latest_iso `
         -PreviousIso $null `
-        -Configuration 'na228_builder/configurations/dev.json' `
+        -Configuration 'na228_builder/configurations/base.json' `
         -Paths $paths
     Assert-Na2Test `
         -Condition ($firstUnchanged.BuildId -eq $firstBuildId) `

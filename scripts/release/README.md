@@ -48,29 +48,40 @@ This tab-separated file controls per-character battle values. Every supported
 character's `id`, `base_id`, name, and balance `tier` are already listed. Keep
 the identity columns unchanged.
 
-- Write the `base` row's `substitution_cost` as a literal value such as `2.5`.
-- In a character row, write an unsigned value such as `3` for a literal cost,
-  `+0.5` to add to the base cost, or `-0.5` to subtract from it.
-- Leave a value empty to inherit the packaged value and its literal-or-delta
-  mode. If neither the character nor `base` supplies a value, the game keeps
-  its native behavior.
-- `0` is literal zero; `+0.0` is a zero delta; an empty cell inherits.
+- `base` and `step` are metadata, not characters. Keep their `base_id`,
+  `character`, and `tier` cells empty. Write `base` as a literal percentage
+  from `0` through `100` and `step` as an explicitly positive, signed tier
+  increment; the packaged values are `20` and `+5`.
+- Leave a character cost empty to infer it from tier as
+  `base + tier_index * step`: D `0`, C `1`, B `2`, A `3`, S `4`, S+ `5`,
+  S++ `6`, and S+++ `7`.
+- In a character row, write an unsigned value such as `30` for a literal
+  `30/100` override, or write `+5`/`-5` to adjust the tier-derived cost. The
+  resolved result must remain in `0..100`.
+- Leave a value empty to inherit the packaged value and its literal-or-signed
+  mode. `0` is literal zero; `+0.0` is a zero adjustment.
 - A form row applies when that form is selected at match start. Transforming
   during a match keeps the originally selected base character's row.
 
-For example, these rows make the base cost `2.5`, add `2.0` for Naruto, and use
-literal cost `3` for Sakura:
+For example, these rows make Naruto inherit tier S (`40/100`) and give Sakura
+a literal `25/100` override:
 
 ```tsv
 id	base_id	character	tier	substitution_cost	hp	damage_multiplier	health_recovery_multiplier	chakra_recovery_multiplier
-base		Base		2.5
-57		Naruto Uzumaki	S	+2.0
-58		Sakura Haruno	A	3
+base				20
+step				+5
+57		Naruto Uzumaki	S
+58		Sakura Haruno	A	25
 ```
 
-Save the file as UTF-8 TSV and run the builder normally. The runtime implements
-`substitution_cost`; the other columns are reserved for later per-character
-battle hooks and may be left empty.
+Save the file as UTF-8 TSV and run the builder normally. With the gauge feature
+disabled, or with its shared runtime setting on `Chakra`, the runtime charges
+`substitution_cost / 100` of NA2's 15-point chakra capacity. `Gauge` charges
+the same fraction of the independent resource and places the red marker at the
+exact rounded executable cost. `Free` charges neither resource. The Gauge mode
+requires Character Overrides. Battle Support Disabled independently
+controls whether field support and its native lower gauge remain available. The other columns
+are reserved for later per-character battle hooks and may be left empty.
 
 ## `catalog.modcat`
 

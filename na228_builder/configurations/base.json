@@ -1,9 +1,59 @@
 {
   "features": {
+    "battle": {
+      "shadowblur_extra_hit_disabled": true,
+      "extra_hit_disabled_with_aura_punishment_for_initiator": true,
+      "character_overrides": true,
+      "control_settings_rework": true,
+      "simple_display": "off",
+      "xdash_chakra_cost": 5,
+      "substitution": {
+        "frames_before": 4,
+        "frames_after": 4,
+        "gauge": {
+          "default": "gauge"
+        }
+      },
+      "support_disabled": true,
+      "ultimate_jutsu": {
+        "contest_disabled": true,
+        "hud_hidden": true
+      }
+    },
+    "practice": {
+      "settings_rework": {
+        "health": "full",
+        "commands": "off",
+        "guide_ninja_sound": "off",
+        "linked_attack": "off"
+      }
+    },
     "general": {
-      "dedicated_save_namespace": true,
       "replace_imported_game_title": true,
+      "unlock_all": true
+    },
+    "memory_card": {
+      "display_only_first_save": true,
+      "dedicated_save_namespace": true,
       "replace_memory_card_title": true
+    },
+    "startup": {
+      "faster_loading": true,
+      "flow": {
+        "savedata_loading": "automatic",
+        "loading_screen": true
+      }
+    },
+    "character_select": {
+      "balance_overlay": true,
+      "support_selection_rework": true
+    },
+    "mode_select": {
+      "remove_adventure": true,
+      "remove_shop": true
+    },
+    "rendering": {
+      "native_16_9_horizontal_scale": false
     },
     "localization": {
       "font": {
@@ -13,49 +63,6 @@
       },
       "ui": true,
       "regional_input": true
-    },
-    "qol": {
-      "startup": {
-        "faster_loading": true,
-        "flow": {
-          "savedata_loading": "automatic",
-          "loading_screen": true
-        }
-      },
-      "practice": {
-        "starting_hp": "full",
-        "voice_off_by_default": true,
-        "support_off_by_default": true,
-        "command_display_off_by_default": true,
-        "simple_display_off": true
-      },
-      "character_select": {
-        "no_support": true
-      },
-      "mode_select": {
-        "remove_adventure": true,
-        "remove_shop": true
-      },
-      "content": {
-        "unlock_all": true
-      },
-      "save_load": {
-        "display_only_first_save": true
-      }
-    },
-    "battle_logic": {
-      "disable_shadowblur_extra_hit": true,
-      "disable_extra_hit_with_aura_punishment_for_initiator": true,
-      "character_select_balance_overlay": true,
-      "character_overrides": true,
-      "xdash_chakra_cost": 1,
-      "ultimate_jutsu": {
-        "contest_disabled": true,
-        "hud_hidden": true
-      }
-    },
-    "rendering": {
-      "native_16_9_horizontal_scale": false
     }
   }
 }

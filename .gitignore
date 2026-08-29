@@ -1,14 +1,12 @@
-# Windows noise
-Thumbs.db
-Desktop.ini
-
-# Heavy/generated workspace folders
-/build
-/logs
+# Common
+/build/
+/logs/
 /release/
-/work
+/work/
 /e2e/captures/
 /e2e/.transactions/
+
+# Python
 __pycache__/
 
 # PCSX2

@@ -39,7 +39,6 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 Immediately before beginning state-changing work in any workflow, state:
 
 ```text
-Interaction mode: <Design mode or Interactive mode; omit when no interaction mode is active>
 Changes: <what will be changed>
 Validation: <how the changes will be validated>
 Required user actions: <later user action or nothing>

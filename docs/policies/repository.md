@@ -12,6 +12,10 @@
 
 ## Git and concurrent work
 
+- After successful validation of task-owned PCSX2 repository changes,
+  automatically stage, commit, push, and deploy the validated build to
+  `@pcsx2_dev`. This standing authorization applies only to PCSX2 repository
+  changes.
 - Treat `e2e/captures/` as a separate maintained Git repository for every
   repository-wide Git operation and completion report, even though it is
   local-only and has no remote.

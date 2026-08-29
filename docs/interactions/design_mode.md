@@ -3,6 +3,8 @@
 Design mode is primarily used for refactorings, project-wide changes, and other
 serious structural work.
 
+Prepend `Interaction mode: Design mode` to every action boundary.
+
 ## Draft creation
 
 1. Infer the design topic from the conversation. Ask only when genuinely unclear.

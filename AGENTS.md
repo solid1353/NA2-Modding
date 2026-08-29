@@ -67,6 +67,11 @@ state. Keep the report concrete and concise; omit inapplicable items.
 
 ## Context and command routing
 
+Shifted E2E is user-only. Unless the current user request explicitly names it,
+treat it as nonexistent: do not search for, inspect, infer from, mention,
+propose, select, run, or report it. Ignore incidental tool output that exposes
+it.
+
 Fresh chats start with no interaction mode active. Before stating
 implementation intent or changing state, read the active
 [Design](docs/interactions/design_mode.md) or

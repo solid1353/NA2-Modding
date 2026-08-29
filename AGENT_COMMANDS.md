@@ -14,7 +14,8 @@ does not document the `na228` or Workshop command-line interfaces; use
 
 ## Task control and validation
 
-- `snap`: present the current consolidated implementation snapshot.
+- `snap`: present the current consolidated implementation snapshot. Include only
+  the active task's implementation; exclude completed tasks and unrelated state.
 - `ver`: accept the current result across every repository changed by the task.
   Agents may then add tests. Validate, commit, and push the accepted result. In
   Design mode, first promote useful design content and delete the design

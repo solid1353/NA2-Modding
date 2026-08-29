@@ -22,9 +22,10 @@ small deterministic instruction/relocation encoder used only for unavoidable
 native ABI shims and guarded hook templates. Both are maintained build inputs
 rather than research artifacts.
 
-Payload-fragment numeric `order` values are retained and validated while named
-JSON maps are serialized canonically. Final placement remains deterministic by
-fragment kind, owner, and semantic symbol, independent of source-map order.
+Payload source and fragment maps retain file declaration order, and the
+injection builder derives fragment positions from that order instead of numeric
+`order` fields. Final resident-payload placement remains deterministic by
+fragment kind, owner, and semantic symbol.
 
 No feature owns the file, its load address, its entrypoint, or the global loader
 and memory-reservation integration. Modules never declare offsets inside

@@ -510,7 +510,7 @@ class CatalogTests(unittest.TestCase):
                     expected_frames[name],
                 )
 
-    def test_repository_practice_defaults_are_owned_by_settings_rework(self) -> None:
+    def test_repository_practice_defaults_are_owned_by_settings(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         builder = paths.path("builder")
         catalog_path = builder / "catalog"
@@ -518,14 +518,12 @@ class CatalogTests(unittest.TestCase):
             (builder / "configurations" / "base.json").read_text(encoding="utf-8")
         )
         self.assertEqual(
-            base["features"]["practice"],
+            base["features"]["settings"]["practice"],
             {
-                "settings_rework": {
-                    "health": "full",
-                    "commands": "off",
-                    "guide_ninja_sound": "off",
-                    "linked_attack": "off",
-                }
+                "health": "full",
+                "commands": "off",
+                "guide_ninja_sound": "off",
+                "linked_attack": "off",
             },
         )
         selection = catalog.load_selection(
@@ -541,25 +539,30 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(package.edits, [])
         self.assertIn("i__practice__settings_rework", selection.injections)
 
-    def test_repository_simple_display_is_an_independent_battle_setting(self) -> None:
+    def test_repository_simple_display_is_a_shared_setting(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         builder = paths.path("builder")
         catalog_path = builder / "catalog"
         base = json.loads(
             (builder / "configurations" / "base.json").read_text(encoding="utf-8")
         )
-        self.assertEqual(base["features"]["battle"]["simple_display"], "off")
+        self.assertEqual(
+            base["features"]["settings"]["shared"]["simple_display"],
+            "off",
+        )
 
         for value, replacement_hex in (("off", "00000000"), ("on", "25186600")):
             with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
                 configuration = Path(directory) / "configuration.json"
                 configured = json.loads(json.dumps(base))
-                configured["features"]["battle"]["simple_display"] = value
+                configured["features"]["settings"]["shared"][
+                    "simple_display"
+                ] = value
                 configuration.write_text(json.dumps(configured), encoding="utf-8")
                 selection = catalog.load_selection(catalog_path, configuration)
                 package = catalog.load_binary_package(
                     selection,
-                    "battle",
+                    "settings",
                     catalog_path / "targets.tsv",
                     paths.repository,
                     builder / "modules" / "binary_patcher" / "operations",
@@ -1544,10 +1547,17 @@ class CatalogTests(unittest.TestCase):
                 fragments=(
                     catalog.PayloadFragment(
                         owner="feature.runtime_injector",
-                        symbol="runtime.text",
+                        symbol="runtime.text.second",
                         kind="code",
                         alignment=4,
                         payload=b"\0\0\0\0",
+                    ),
+                    catalog.PayloadFragment(
+                        owner="feature.runtime_injector",
+                        symbol="runtime.text.first",
+                        kind="code",
+                        alignment=4,
+                        payload=b"\1\0\0\0",
                     ),
                 ),
                 symbols={},
@@ -1558,7 +1568,8 @@ class CatalogTests(unittest.TestCase):
                 "namespace": "runtime",
                 "imports": {},
                 "fragments": {
-                    "runtime_code": {"object": "runtime.text", "order": 1}
+                    "runtime_first": {"object": "runtime.text.first"},
+                    "runtime_second": {"object": "runtime.text.second"},
                 },
             }
             with mock.patch.object(
@@ -1575,7 +1586,10 @@ class CatalogTests(unittest.TestCase):
                     value,
                     "feature.payload.runtime_source",
                 )
-            self.assertEqual(fragments[0][1].symbol, "runtime_code")
+            self.assertEqual(
+                [fragment.symbol for fragment in fragments],
+                ["runtime_first", "runtime_second"],
+            )
             extract.assert_called_once_with(
                 packaged_object.resolve(),
                 namespace="runtime",
@@ -1612,7 +1626,6 @@ class CatalogTests(unittest.TestCase):
                 "fragments": {
                     "runtime_code": {
                         "object": "runtime.text.entry",
-                        "order": 1,
                     }
                 },
             }
@@ -1630,7 +1643,7 @@ class CatalogTests(unittest.TestCase):
                     value,
                     "feature.payload.runtime_source",
                 )
-            self.assertEqual(fragments[0][1].symbol, "runtime_code")
+            self.assertEqual(fragments[0].symbol, "runtime_code")
             extract.assert_called_once_with(
                 packaged_object.resolve(),
                 namespace="runtime",
@@ -1649,7 +1662,7 @@ class CatalogTests(unittest.TestCase):
                 "namespace": "runtime",
                 "imports": {},
                 "fragments": {
-                    "runtime_code": {"object": "runtime.text", "order": 1}
+                    "runtime_code": {"object": "runtime.text"}
                 },
             }
             with self.assertRaisesRegex(ValueError, "supported EE source language"):
@@ -1696,7 +1709,6 @@ class CatalogTests(unittest.TestCase):
                                 "imports": {},
                                 "fragments": {
                                     "runtime_code": {
-                                        "order": 1,
                                         "object": "runtime.text",
                                     }
                                 },

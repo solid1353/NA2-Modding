@@ -1,27 +1,64 @@
 # Battle
 
-The `battle` catalog subtree selects guarded definitions through patch
-IDs. Its character-override node loads layered TSV data and emits one resident
-table shared by current and future per-character battle hooks.
+Battle menu defaults live under `features.settings`; Character Overrides lives
+under `features.general.character_overrides`, loads layered TSV data, and emits
+one resident table shared by current and future per-character battle hooks.
 
-## Ultimate Jutsu
+## Battle Settings
 
-`features.battle.ultimate_jutsu` owns two independent settings:
+The `features.settings.shared` object owns the shared runtime
+defaults used by Battle Settings and Practice Settings, plus the initial Simple
+Display value. Its `ultimate_jutsu` selector accepts the six native values
+`no_use`, `random`, `command`, `timing`, `turn`, and `combo`, followed by the
+custom values `no_contest` and `no_hud`. The configured value initializes the
+shared runtime enum and is restored by either menu's reset action; changing and
+confirming it in either menu updates the other menu.
 
-- `contest_disabled` blocks both players' contest inputs and suppresses the
-  contest meter, prompts, and result messages while retaining the native
-  contest lifecycle.
-- `hud_hidden` hides and restores the complete battle HUD through the same
-  native transition used by ordinary Jutsu. Native motion, timing, visibility,
-  and restoration apply to the existing HUD and injected children, including
-  the substitution bar.
+`no_contest` blocks both players' contest inputs and suppresses the contest
+meter, prompts, and result messages while retaining the native contest
+lifecycle. `no_hud` includes that behavior and hides and restores the complete
+battle HUD through the same native transition used by ordinary Jutsu. Native
+motion, timing, visibility, and restoration apply to the existing HUD and
+injected children, including the substitution bar. Both custom values retain
+`command` as the underlying native selector value.
 
-Either setting can be enabled without the other. The base configuration enables
-both.
+The same object accepts `shadowblur: "off" | "on"` and
+`extra_hit: "off" | "on"`. They initialize and reset Battle Settings rows
+labelled `Shadowblur Extra Hit` and `Extra Hit` with matching `Off` and `On`
+values. The same rows are available in Practice Settings. Confirming either
+menu commits both staged values to the shared runtime state. The Shadowblur
+Extra Hit gate preserves the native predicate result but skips its side effects
+while `Off`. The Extra Hit gate skips its selected native call block while
+`Off`. Their retired unconditional ELF edits are not retained.
+
+The object also owns `sub_active_frames`, `xdash_chakra_cost`, `support`, and
+`substitution`. They appear as
+`Sub Active Frames: 0..16`, `Substitution: Chakra | Gauge | Free`, and
+`X-dash Chakra Cost: 0% | 5% | ... | 100%`, plus `Support: Off | On`. Each
+configuration value is the direct initial and reset value shown by both menus;
+both menus snapshot, stage, reset, and commit the same runtime values.
+
+The feature-aware Battle Settings schema may contain more rows than fit in the
+native table. The native double-height Handicap panel is replaced by two
+ordinary row strips, so the unchanged table footprint presents seven uniform
+slots. Selection updates a Practice-style logical window only when the schema
+exceeds those seven slots; labels, values, row-specific rendering, arrows, and
+the cursor are remapped to the visible rows.
+
+With the base configuration, the logical order is Time, Difficulty, Items,
+Chakra, Substitution, Sub Active Frames, X-dash Chakra Cost, Support, Ultimate
+Jutsu, Shadowblur Extra Hit, Extra Hit, and Handicap. The twelve rows scroll
+through the seven physical slots; changing the schema's logical count does not
+change the table footprint.
+
+Handicap remains the final logical row and uses the ordinary row renderer with
+the text values `0-10`, `1-9`, `2-8`, `3-7`, `4-6`, `5-5`, `6-4`, `7-3`,
+`8-2`, `9-1`, and `10-0`. The native shuriken display and special Handicap
+cursor and arrow paths are not rendered.
 
 ## Control Settings
 
-`features.battle.control_settings_rework` owns the Control Settings action split and
+`features.settings.controls` owns the Control Settings action split and
 default shoulder-button layout independently of the substitution gauge. Action
 index `6` remains Guard and is the sole source of the logical block bit. Action
 index `7` is labelled Substitution, is searched by both native substitution
@@ -40,55 +77,45 @@ owned layout.
 
 ## Simple Display
 
-`features.battle.simple_display` independently selects whether battles start
-with the native Simple Display setting `"off"` or `"on"`. The base
-configuration selects `"off"`. The setting owns only the guarded main-ELF
-initializer instruction at offset `0xE7BAC`; it does not depend on the Practice
-Settings rework.
+`features.settings.shared.simple_display` selects whether battles start with
+the native Simple Display setting `"off"` or `"on"`. The base configuration
+selects `"off"`. The setting owns only the guarded main-ELF initializer
+instruction at offset `0xE7BAC`.
 
 ## X-dash chakra cost
 
-`features.battle.xdash_chakra_cost` is expressed as normalized percentage
-points on the inclusive `0..100` scale. The builder converts `x/100` to NA2's
-native 15-point chakra gauge as `x * 15 / 100` before emitting the resident
-float32 cost. The base value `5` therefore emits `0.75` native chakra. `0` is free and
-`100` consumes a full native chakra gauge. This normalization changes the
-configuration unit only; it does not change the accepted committed-X-dash hook
-or add an affordability gate.
+`features.settings.shared.xdash_chakra_cost` is expressed as normalized
+percentage points on the inclusive `0..100` scale in 5-point steps. The menu
+therefore exposes `0%`, `5%`, through `100%`. The runtime consumer converts the
+selected `x/100` value to NA2's native 15-point chakra gauge as `x * 15 / 100`.
+The base value `5` spends `0.75` native chakra. `0` is free and `100` consumes a
+full native chakra gauge. The selector does not add an affordability gate.
 
 ## Substitution
 
-`features.battle.substitution` groups three independent settings:
+`features.settings.shared` owns two substitution settings:
 
-- `frames_before` is the literal number of 30 FPS input-history records before
-  impact that the native predicate may search. The current input record remains
-  part of the native search, so `0` means only the impact-frame record.
-- `frames_after` is the number of initial ordinary hit-response frames after
-  impact during which a Substitution press can still activate. `0` disables the
-  post-impact opportunity.
-- `gauge` installs one shared `Substitution: Chakra | Gauge | Free` setting in
+- `sub_active_frames` accepts `0..16` and selects how many prior input-history
+  frames remain active for Substitution in addition to the current frame.
+- `substitution` installs one shared `Substitution: Chakra | Gauge | Free` setting in
   both the pre-battle and Practice menus. Its required `default` field selects
   the value used initially and by each menu's reset action. Optional object
   fields configure recovery delay, refill time per stock, damage recovery, and
-  damage percentage per stock. `false` disables the feature; because `default`
-  is mandatory, `true` is not accepted.
+  damage percentage per stock.
 
-The base configuration uses `4`, `4`, and `{"default": "gauge"}`. `Chakra`
+The base configuration uses `4` and `{"default": "gauge"}`. `Chakra`
 retains native chakra eligibility, suppression, spending, and bookkeeping;
 `Gauge` uses the independent 100-point resource and displays its HUD; `Free`
 uses no resource and hides the gauge. Both menus stage and commit the same
-runtime enum rather than separate visibility and unlimited flags. The timing settings preserve
-the native eligibility, resource, response-state, attack-flag, and transition
-gates. The pre-impact patch replaces only the attack-authored random/history
-policy. The post-impact hook runs only from the ordinary-response dispatcher
-while the reset native action cursor is `1..frames_after`; it retries the native
-predicate with the retained attack record and current response substate. A
-successful retry enters the native substitution transition, while a failed or
-out-of-window retry calls the displaced ordinary-response driver once.
+runtime enum rather than separate visibility and unlimited flags. The active-
+frames setting replaces only the attack-authored random and clamped timing
+policy inside the native eligibility predicate. `0` searches the current input
+record only; `N` searches the current record plus exactly `N` prior records.
+The hook rejoins the unchanged held-Guard, response-state, resource,
+attack-flag, history-search, and transition gates.
 
-The settings are not coupled: either timing setting may be disabled without
-disabling the gauge, and the gauge may be disabled while either timing setting
-remains active. Runtime acceptance of the post-impact candidate is pending.
+The active-frame limit and selected resource mode are independent runtime
+values. Runtime confirmation of the active-frame selector remains pending.
 
 ## Substitution cost
 
@@ -125,11 +152,11 @@ edited.
 `features.character_select.balance_overlay` independently reads the same
 complete table. It always draws `TIER` in separate left and right top-screen
 blocks. It draws the resolved `SUB x%` value only when
-`features.battle.character_overrides` is enabled, omitting trailing decimal
+`features.general.character_overrides` is enabled, omitting trailing decimal
 zeroes. It never draws player labels or numeric IDs.
 
-Every runtime consumer uses that normalized value. With the gauge feature
-disabled, or with its runtime mode set to `Chakra`, the battle hook converts
+Every runtime consumer uses that normalized value. With the runtime mode set to
+`Chakra`, the battle hook converts
 `x/100` to the native 15-point chakra resource as `x * 15 / 100`. In `Gauge`
 mode, the same value is rounded once to `capacity_counts * x / 100`;
 eligibility, spending, and the independent top-HUD textured bar's red threshold
@@ -141,21 +168,22 @@ S++ `50`, and S+++ `55`, all over `100`.
 `tier` is consumed whenever the Character Select overlay is enabled.
 `substitution_cost` is consumed by the overlay only when character overrides
 are enabled, and by the native chakra-cost and substitution-gauge battle hooks.
-The gauge therefore requires `character_overrides`. `support_disabled` is
-independent: when false, native field support and its lower gauge coexist with
-the independent top-HUD substitution bar; when true, only the native support
-gauge and field-support action are suppressed.
+The gauge therefore requires `features.general.character_overrides`.
+`support` is independent: `"on"` keeps native field support and its lower
+gauge, while `"off"` suppresses only the native support gauge and field-support
+action.
 `hp`, damage, and recovery columns are present for later hooks and currently
 have no runtime consumers.
 
-## Disable battle support
+## Battle support
 
-`features.battle.support_disabled` suppresses free-field support calls and the
-native lower support gauge without changing selected support data, Character
-Select behavior, or linked Jutsu. A guarded main-ELF hook replaces only the
-per-fighter support-button acceptance call with a no-op. A second guarded BTL
-hook replaces only the dedicated `TEX_xgauge` draw call with a no-op for both
-players; the rest of the battle HUD remains native.
+`features.settings.shared.support: "off" | "on"` directly chooses the initial
+and reset value of the `Support: Off | On` row. `Off` suppresses free-field
+support calls and the native lower support gauge without changing selected
+support data, Character Select behavior, or linked Jutsu. A guarded main-ELF
+wrapper conditionally calls the native per-fighter support-button handler. A
+second guarded BTL wrapper conditionally calls the dedicated `TEX_xgauge`
+renderer for both players; the rest of the battle HUD remains native.
 
 The setting is independent of
 `features.character_select.support_selection_rework`. Either feature may be
@@ -173,7 +201,7 @@ damage by combo hit index.
 
 ### Recommended configuration
 
-Use one typed object under `features.battle`, rather than a marker list or
+Use one typed object under `features.general`, rather than a marker list or
 per-move input sequence:
 
 ```json
@@ -303,13 +331,13 @@ could imply an ABI that has not been established.
 
 Implementation should stay inside the existing battle-logic mechanisms:
 
-- add the typed `combo_damage_scaling` object under `features.battle` in
+- add the typed `combo_damage_scaling` object under `features.general` in
   `@builder/catalog/catalog.modcat`, pointing to new injection ID
   `i__battle_logic__combo_damage_scaling`, and select the accepted values in
   `@builder/configurations/base.json` so existing profile overrides inherit
   them;
-- add `@builder/scripts/combo_damage_scaling.py`, analogous to
-  `xdash_chakra_cost.py`, to emit read-only symbol
+- add `@builder/scripts/combo_damage_scaling.py`, following the focused runtime
+  configuration-fragment pattern, to emit read-only symbol
   `battle_logic_combo_damage_scaling` as `<2f>`, then import and prepend that
   fragment in the existing battle-logic branch of `module_pipeline.py`;
 - add `src/battle_logic/combo_damage_scaling.c` with a multiplier entry that

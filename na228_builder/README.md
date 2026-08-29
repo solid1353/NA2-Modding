@@ -218,13 +218,13 @@ unit.
 
 Root edit and injection identities use `e__` and `i__` prefixes. Grouped edit
 children use concise semantic identities within their root; destination
-addresses remain data rather than identity. Definition maps and unordered
-nested maps are serialized alphabetically and unit tests enforce that source
-convention without making source order a loader requirement. Hook and payload
-fragment identities are concise within their owning injection. Payload
-fragment numeric `order` values remain explicit, validated declaration data;
-final payload placement is deterministic by fragment kind, owner, and semantic
-symbol. Edit, injection, and hook descriptions are optional definition-local
+addresses remain data rather than identity. Genuinely unordered definition
+maps are serialized alphabetically. Feature declarations, payload source maps,
+and source fragment maps retain file declaration order; the injection builder
+derives fragment positions from that order instead of numeric `order` fields.
+Hook and payload fragment identities are concise within their owning injection.
+Final resident-payload placement is deterministic by fragment kind, owner, and
+semantic symbol. Edit, injection, and hook descriptions are optional definition-local
 documentation; a present description must be nonempty and never affects
 execution.
 
@@ -258,7 +258,7 @@ Documentation is not an executable builder input.
 
 ## Current release configuration
 
-Features are read from `catalog.modcat` in alphabetical ID order. Module
+Features are read from `catalog.modcat` in declaration order. Module
 execution within each feature remains derived from the stable internal engine
 order above.
 

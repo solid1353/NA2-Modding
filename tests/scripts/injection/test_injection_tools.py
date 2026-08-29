@@ -189,7 +189,7 @@ class InjectionBuildTests(unittest.TestCase):
                     "namespace": "test.first",
                     "imports": {},
                     "fragments": {
-                        "first_code": {"order": 1, "object": "test.first.text"}
+                        "first_code": {"object": "test.first.text"}
                     },
                 },
                 "second": {
@@ -198,7 +198,7 @@ class InjectionBuildTests(unittest.TestCase):
                     "namespace": "test.second",
                     "imports": {},
                     "fragments": {
-                        "second_code": {"order": 2, "object": "test.second.text"}
+                        "second_code": {"object": "test.second.text"}
                     },
                 },
                 "third": {
@@ -207,7 +207,7 @@ class InjectionBuildTests(unittest.TestCase):
                     "namespace": "test.third",
                     "imports": {},
                     "fragments": {
-                        "third_code": {"order": 3, "object": "test.third.text"}
+                        "third_code": {"object": "test.third.text"}
                     },
                 },
             }
@@ -273,15 +273,15 @@ class InjectionBuildTests(unittest.TestCase):
         ), mock.patch.object(
             build_injection.catalog_module,
             "_compile_source",
-            return_value=[(2, compiled)],
+            return_value=[compiled],
         ) as compile_source, mock.patch.object(
             build_injection.catalog_module,
             "load_static_fragment",
-            return_value=(3, static),
+            return_value=static,
         ) as load_static:
             fragments = build_injection._load_static_fragments()
 
-        self.assertEqual([(2, 1, compiled), (3, 1, static)], fragments)
+        self.assertEqual([compiled, static], fragments)
         self.assertEqual("asm_source", compile_source.call_args.args[2])
         self.assertEqual("static_data", load_static.call_args.args[2])
 
@@ -321,7 +321,7 @@ class InjectionBuildTests(unittest.TestCase):
                     "asm",
                     "runtime.asm",
                     {},
-                    [(1, "runtime.asm.text", "runtime_code")],
+                    [("runtime.asm.text", "runtime_code")],
                     root / "runtime.o",
                 )
 
@@ -447,8 +447,8 @@ class InjectionBuildTests(unittest.TestCase):
                 ["localization.font.v2.new_entry"],
                 [entry, helper],
                 [
-                    (1, "entry", "localization.font.v2.new_entry"),
-                    (2, "helper", "localization.font.v2.resident_helper"),
+                    ("entry", "localization.font.v2.new_entry"),
+                    ("helper", "localization.font.v2.resident_helper"),
                 ],
                 {},
                 b"",
@@ -507,8 +507,8 @@ class InjectionBuildTests(unittest.TestCase):
                 ["localization.font.v2.entry"],
                 [entry, changed_impl],
                 [
-                    (1, "entry", "localization.font.v2.entry"),
-                    (2, "impl", "localization.font.v2.changed_impl"),
+                    ("entry", "localization.font.v2.entry"),
+                    ("impl", "localization.font.v2.changed_impl"),
                 ],
                 symbol_map,
                 current_payload,

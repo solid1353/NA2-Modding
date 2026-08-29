@@ -5,30 +5,22 @@ from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from ..payload_builder.operations import PayloadFragment, PayloadRelocation
+from .battle_settings_runtime import (
+    PRACTICE_SETTINGS_PATH,
+    SHARED_SETTINGS_PATH,
+    ULTIMATE_JUTSU_NATIVE_MODE_COUNT,
+    extra_hit_default,
+    shadowblur_default,
+    sub_active_frames_default,
+    substitution_default,
+    support_default,
+    ultimate_jutsu_default,
+    xdash_chakra_cost_option_default,
+)
 
 if TYPE_CHECKING:
     from .catalog import CatalogSelection
 
-
-PRACTICE_SETTINGS_PATH = ("features", "practice", "settings_rework")
-SUBSTITUTION_GAUGE_PATH = (
-    "features",
-    "battle",
-    "substitution",
-    "gauge",
-)
-SUPPORT_DISABLED_PATH = ("features", "battle", "support_disabled")
-ULTIMATE_JUTSU_CONTEST_DISABLED_PATH = (
-    "features",
-    "battle",
-    "ultimate_jutsu",
-    "contest_disabled",
-)
-EXTRA_HIT_DISABLED_PATH = (
-    "features",
-    "battle",
-    "extra_hit_disabled_with_aura_punishment_for_initiator",
-)
 
 ROW_SECTION_PLAYER = 0
 ROW_SECTION_OPPONENT = 1
@@ -45,6 +37,12 @@ ROW_FLAG_HELP_BY_VALUE = 0x04
 ROW_FLAG_VALUES_SLOT = 0x08
 ROW_FLAG_STRENGTH_LIMIT = 0x10
 ROW_FLAG_CUSTOM_SUBSTITUTION = 0x20
+ROW_FLAG_CUSTOM_ULTIMATE_JUTSU = 0x40
+ROW_FLAG_CUSTOM_SHADOWBLUR = 0x80
+ROW_FLAG_CUSTOM_EXTRA_HIT = 0x100
+ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES = 0x200
+ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST = 0x400
+ROW_FLAG_CUSTOM_SUPPORT = 0x800
 
 NATIVE_LABEL_TABLE = 0x008BE6C0
 NATIVE_HELP_TABLE = 0x008BEF70
@@ -52,7 +50,12 @@ NATIVE_STATUS_HELP_TABLE = 0x008BF350
 NATIVE_VALUE_TABLE = 0x008BF380
 
 SUBSTITUTION_ROW_ID = 17
-SCHEMA_HEADER_SIZE = 24
+SHADOWBLUR_ROW_ID = 18
+EXTRA_HIT_ROW_ID = 19
+SUB_ACTIVE_FRAMES_ROW_ID = 20
+XDASH_CHAKRA_COST_ROW_ID = 21
+SUPPORT_ROW_ID = 22
+SCHEMA_HEADER_SIZE = 84
 ROW_FIELD_COUNT = 10
 ROW_SIZE = ROW_FIELD_COUNT * 4
 LABEL_REFERENCE_FIELD = 3
@@ -63,10 +66,41 @@ SUBSTITUTION_MODE_LABELS = (
     "substitution_gauge_mode_gauge_label",
     "substitution_gauge_mode_free_label",
 )
-SUBSTITUTION_MODE_VALUES = {
-    "chakra": 0,
-    "gauge": 1,
-    "free": 2,
+TOGGLE_LABELS = (
+    "battle_settings_off_label",
+    "battle_settings_on_label",
+)
+CUSTOM_ROW_RESOURCES = {
+    SUBSTITUTION_ROW_ID: (
+        "battle_settings_substitution_label",
+        "battle_settings_substitution_help",
+        "substitution",
+    ),
+    SHADOWBLUR_ROW_ID: (
+        "battle_settings_shadowblur_label",
+        "battle_settings_shadowblur_help",
+        "toggle",
+    ),
+    EXTRA_HIT_ROW_ID: (
+        "battle_settings_extra_hit_label",
+        "battle_settings_extra_hit_help",
+        "toggle",
+    ),
+    SUB_ACTIVE_FRAMES_ROW_ID: (
+        "battle_settings_sub_active_frames_label",
+        "battle_settings_sub_active_frames_help",
+        "sub_active_frames",
+    ),
+    XDASH_CHAKRA_COST_ROW_ID: (
+        "battle_settings_xdash_chakra_cost_label",
+        "battle_settings_xdash_chakra_cost_help",
+        "xdash_chakra_cost",
+    ),
+    SUPPORT_ROW_ID: (
+        "battle_settings_support_label",
+        "battle_settings_support_help",
+        "toggle",
+    ),
 }
 
 DEFAULT_PRESERVE_NATIVE = 0xFF
@@ -227,12 +261,7 @@ def _configured_defaults(
 
 
 def _active_rows(selection: CatalogSelection) -> tuple[PracticeRow, ...]:
-    substitution_gauge = _node_enabled(selection, SUBSTITUTION_GAUGE_PATH)
-    support_disabled = _node_enabled(selection, SUPPORT_DISABLED_PATH)
-    ultimate_jutsu_contest_disabled = _node_enabled(
-        selection, ULTIMATE_JUTSU_CONTEST_DISABLED_PATH
-    )
-    extra_hit_disabled = _node_enabled(selection, EXTRA_HIT_DISABLED_PATH)
+    shared_settings = _node_enabled(selection, SHARED_SETTINGS_PATH)
     health, commands, guide_ninja_sound, linked_attack = _configured_defaults(
         selection
     )
@@ -251,38 +280,81 @@ def _active_rows(selection: CatalogSelection) -> tuple[PracticeRow, ...]:
         return replace(row, default_value=default_value)
 
     rows = [native_row(0), native_row(1)]
-    if substitution_gauge:
-        gauge_node = _selected_node(selection, SUBSTITUTION_GAUGE_PATH)
-        gauge_value = gauge_node.configured_value
-        if not isinstance(gauge_value, dict):
-            raise ValueError("Substitution gauge requires a settings object")
-        gauge_default = gauge_value.get("default")
-        if gauge_default not in SUBSTITUTION_MODE_VALUES:
-            raise ValueError(
-                "Substitution-gauge default must be 'chakra', 'gauge', or 'free'"
-            )
-        rows.append(
-            PracticeRow(
-                SUBSTITUTION_ROW_ID,
-                ROW_SECTION_PLAYER,
-                ROW_LOCAL_CUSTOM,
-                3,
-                SUBSTITUTION_MODE_VALUES[gauge_default],
-                flags=ROW_FLAG_CUSTOM_SUBSTITUTION,
+    if shared_settings:
+        rows.extend(
+            (
+                PracticeRow(
+                    SUBSTITUTION_ROW_ID,
+                    ROW_SECTION_PLAYER,
+                    ROW_LOCAL_CUSTOM,
+                    3,
+                    substitution_default(selection),
+                    flags=ROW_FLAG_CUSTOM_SUBSTITUTION,
+                ),
+                PracticeRow(
+                    SUB_ACTIVE_FRAMES_ROW_ID,
+                    ROW_SECTION_PLAYER,
+                    ROW_LOCAL_CUSTOM,
+                    17,
+                    sub_active_frames_default(selection),
+                    flags=ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES,
+                ),
+                PracticeRow(
+                    XDASH_CHAKRA_COST_ROW_ID,
+                    ROW_SECTION_PLAYER,
+                    ROW_LOCAL_CUSTOM,
+                    21,
+                    xdash_chakra_cost_option_default(selection),
+                    flags=ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST,
+                ),
+                PracticeRow(
+                    SUPPORT_ROW_ID,
+                    ROW_SECTION_PLAYER,
+                    ROW_LOCAL_CUSTOM,
+                    2,
+                    support_default(selection),
+                    flags=ROW_FLAG_CUSTOM_SUPPORT,
+                ),
             )
         )
-    if not support_disabled:
-        rows.append(native_row(2))
-    if not ultimate_jutsu_contest_disabled:
-        rows.append(native_row(3))
-    if not support_disabled:
-        rows.append(native_row(4))
+    rows.append(native_row(2))
+    ultimate_jutsu = native_row(3)
+    if shared_settings:
+        ultimate_jutsu = replace(
+            ultimate_jutsu,
+            option_count=ULTIMATE_JUTSU_NATIVE_MODE_COUNT + 2,
+            default_value=ultimate_jutsu_default(selection),
+            flags=(
+                ultimate_jutsu.flags | ROW_FLAG_CUSTOM_ULTIMATE_JUTSU
+            ),
+        )
+    rows.append(ultimate_jutsu)
+    if shared_settings:
+        rows.extend(
+            (
+                PracticeRow(
+                    SHADOWBLUR_ROW_ID,
+                    ROW_SECTION_PLAYER,
+                    ROW_LOCAL_CUSTOM,
+                    2,
+                    shadowblur_default(selection),
+                    flags=ROW_FLAG_CUSTOM_SHADOWBLUR,
+                ),
+                PracticeRow(
+                    EXTRA_HIT_ROW_ID,
+                    ROW_SECTION_PLAYER,
+                    ROW_LOCAL_CUSTOM,
+                    2,
+                    extra_hit_default(selection),
+                    flags=ROW_FLAG_CUSTOM_EXTRA_HIT,
+                ),
+            )
+        )
+    rows.append(native_row(4))
     rows.extend(native_row(index) for index in range(5, 9))
     rows.extend(native_row(index) for index in range(9, 15))
-    if not support_disabled:
-        rows.append(native_row(15))
-    if not extra_hit_disabled:
-        rows.append(native_row(16))
+    rows.append(native_row(15))
+    rows.append(native_row(16))
     return tuple(rows)
 
 
@@ -299,67 +371,171 @@ def practice_settings_fragment(
     player_count = sum(row.section == ROW_SECTION_PLAYER for row in rows)
     opponent_count = sum(row.section == ROW_SECTION_OPPONENT for row in rows)
     configured_defaults = _configured_defaults(selection)
+    shared_settings_enabled = _node_enabled(selection, SHARED_SETTINGS_PATH)
+    ultimate_jutsu_default_value = (
+        ultimate_jutsu_default(selection)
+        if shared_settings_enabled
+        else DEFAULT_PRESERVE_NATIVE
+    )
     payload = bytearray(
         struct.pack(
-            "<3I4B2I",
+            "<3I8B16I",
             len(rows),
             player_count,
             opponent_count,
             *configured_defaults,
+            ultimate_jutsu_default_value,
             0,
             0,
+            0,
+            *([0] * 16),
         )
     )
     relocations: list[PayloadRelocation] = []
-    value_table_offset = SCHEMA_HEADER_SIZE + len(rows) * ROW_SIZE
-    if _node_enabled(selection, SUBSTITUTION_GAUGE_PATH):
+    appended_tables_offset = SCHEMA_HEADER_SIZE + len(rows) * ROW_SIZE
+    substitution_value_table_offset = appended_tables_offset
+    toggle_value_table_offset = substitution_value_table_offset + (
+        len(SUBSTITUTION_MODE_LABELS) * 4
+    )
+    sub_active_frames_value_table_offset = toggle_value_table_offset + (
+        len(TOGGLE_LABELS) * 4
+    )
+    xdash_chakra_cost_value_table_offset = (
+        sub_active_frames_value_table_offset + 17 * 4
+    )
+    text_pool_offset = xdash_chakra_cost_value_table_offset + 21 * 4
+    value_table_offsets = {
+        "substitution": substitution_value_table_offset,
+        "toggle": toggle_value_table_offset,
+        "sub_active_frames": sub_active_frames_value_table_offset,
+        "xdash_chakra_cost": xdash_chakra_cost_value_table_offset,
+    }
+    if shared_settings_enabled:
         relocations.extend(
             (
                 PayloadRelocation(
-                    offset=16,
+                    offset=20,
                     kind="abs32",
                     symbol="substitution_gauge_mode_get",
                 ),
                 PayloadRelocation(
-                    offset=20,
+                    offset=24,
                     kind="abs32",
                     symbol="substitution_gauge_mode_set",
+                ),
+            )
+        )
+    if shared_settings_enabled:
+        relocations.extend(
+            (
+                PayloadRelocation(
+                    offset=28,
+                    kind="abs32",
+                    symbol="ultimate_jutsu_mode_get",
+                ),
+                PayloadRelocation(
+                    offset=32,
+                    kind="abs32",
+                    symbol="ultimate_jutsu_mode_set",
+                ),
+                PayloadRelocation(
+                    offset=36,
+                    kind="abs32",
+                    symbol="ultimate_jutsu_no_contest_label",
+                ),
+                PayloadRelocation(
+                    offset=40,
+                    kind="abs32",
+                    symbol="ultimate_jutsu_no_hud_label",
+                ),
+                PayloadRelocation(
+                    offset=44,
+                    kind="abs32",
+                    symbol="shadowblur_get",
+                ),
+                PayloadRelocation(
+                    offset=48,
+                    kind="abs32",
+                    symbol="shadowblur_set",
+                ),
+                PayloadRelocation(
+                    offset=52,
+                    kind="abs32",
+                    symbol="extra_hit_get",
+                ),
+                PayloadRelocation(
+                    offset=56,
+                    kind="abs32",
+                    symbol="extra_hit_set",
+                ),
+                PayloadRelocation(
+                    offset=60,
+                    kind="abs32",
+                    symbol="sub_active_frames_get",
+                ),
+                PayloadRelocation(
+                    offset=64,
+                    kind="abs32",
+                    symbol="sub_active_frames_set",
+                ),
+                PayloadRelocation(
+                    offset=68,
+                    kind="abs32",
+                    symbol="xdash_chakra_cost_option_get",
+                ),
+                PayloadRelocation(
+                    offset=72,
+                    kind="abs32",
+                    symbol="xdash_chakra_cost_option_set",
+                ),
+                PayloadRelocation(
+                    offset=76,
+                    kind="abs32",
+                    symbol="support_get",
+                ),
+                PayloadRelocation(
+                    offset=80,
+                    kind="abs32",
+                    symbol="support_set",
                 ),
             )
         )
 
     for index, row in enumerate(rows):
         row_offset = SCHEMA_HEADER_SIZE + index * ROW_SIZE
-        if row.row_id == SUBSTITUTION_ROW_ID:
+        if row.row_id in CUSTOM_ROW_RESOURCES:
             fields = list(row.encoded_fields())
             fields[LABEL_REFERENCE_FIELD] = 0
             fields[HELP_REFERENCE_FIELD] = 0
             fields[VALUE_REFERENCE_FIELD] = 0
+            label_symbol, help_symbol, value_table = CUSTOM_ROW_RESOURCES[
+                row.row_id
+            ]
             payload.extend(struct.pack("<10I", *fields))
             relocations.extend(
                 (
                     PayloadRelocation(
                         offset=row_offset + LABEL_REFERENCE_FIELD * 4,
                         kind="abs32",
-                        symbol="practice_settings_substitution_label",
+                        symbol=label_symbol,
                     ),
                     PayloadRelocation(
                         offset=row_offset + HELP_REFERENCE_FIELD * 4,
                         kind="abs32",
-                        symbol="practice_settings_substitution_help",
+                        symbol=help_symbol,
                     ),
                     PayloadRelocation(
                         offset=row_offset + VALUE_REFERENCE_FIELD * 4,
                         kind="abs32",
                         symbol=symbol,
-                        addend=value_table_offset,
+                        addend=value_table_offsets[value_table],
                     ),
                 )
             )
         else:
             payload.extend(struct.pack("<10I", *row.encoded_fields()))
 
-    if _node_enabled(selection, SUBSTITUTION_GAUGE_PATH):
+    if shared_settings_enabled:
         for label in SUBSTITUTION_MODE_LABELS:
             relocations.append(
                 PayloadRelocation(
@@ -369,6 +545,47 @@ def practice_settings_fragment(
                 )
             )
             payload.extend(b"\0" * 4)
+
+    if shared_settings_enabled:
+        for label in TOGGLE_LABELS:
+            relocations.append(
+                PayloadRelocation(
+                    offset=len(payload),
+                    kind="abs32",
+                    symbol=label,
+                )
+            )
+            payload.extend(b"\0" * 4)
+
+        text_pool = bytearray()
+        next_text_offset = text_pool_offset
+        for value in range(17):
+            text = f"{value}".encode("ascii") + b"\0"
+            relocations.append(
+                PayloadRelocation(
+                    offset=len(payload),
+                    kind="abs32",
+                    symbol=symbol,
+                    addend=next_text_offset,
+                )
+            )
+            payload.extend(b"\0" * 4)
+            text_pool.extend(text)
+            next_text_offset += len(text)
+        for value in range(0, 101, 5):
+            text = f"{value}%".encode("ascii") + b"\0"
+            relocations.append(
+                PayloadRelocation(
+                    offset=len(payload),
+                    kind="abs32",
+                    symbol=symbol,
+                    addend=next_text_offset,
+                )
+            )
+            payload.extend(b"\0" * 4)
+            text_pool.extend(text)
+            next_text_offset += len(text)
+        payload.extend(text_pool)
 
     return PayloadFragment(
         owner=owner,

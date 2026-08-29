@@ -11,10 +11,17 @@ battle_logic_ultimate_jutsu_battle_hud_transition:
     sw $a0, 0x10($sp)
     sd $ra, 0x18($sp)
 
+    jal ultimate_jutsu_mode_get
+    nop
+
     lui $t0, 0x0060
     lw $t0, 0x7750($t0)
     lui $t1, %hi(battle_logic_ultimate_jutsu_hud_transition_active)
     lw $t2, %lo(battle_logic_ultimate_jutsu_hud_transition_active)($t1)
+    addiu $t3, $zero, 7
+    bne $v0, $t3, 2f
+    nop
+
     beqz $t0, 2f
     nop
 

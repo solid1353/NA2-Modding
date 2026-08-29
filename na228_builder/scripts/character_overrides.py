@@ -60,9 +60,9 @@ def character_override_fragment_feature(
 ) -> str | None:
     enabled_by_path = {node.path: node.enabled for node in selection.nodes}
     if enabled_by_path.get(
-        ("features", "battle", "character_overrides"), False
+        ("features", "general", "character_overrides"), False
     ):
-        return "battle"
+        return "general"
     if enabled_by_path.get(
         ("features", "character_select", "balance_overlay"), False
     ):

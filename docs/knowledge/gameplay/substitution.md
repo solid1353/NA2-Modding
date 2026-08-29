@@ -154,7 +154,7 @@ Character Select independently of the battle override setting. Its guarded
 hook at ELF offset `0x2B9B14` replaces the first native player-panel draw call
 with a wrapper that preserves that draw, resolves the selected character ID,
 and displays the row's `TIER` in the corresponding top-screen block. When
-`features.battle.character_overrides` is enabled, it also displays the resolved
+`features.general.character_overrides` is enabled, it also displays the resolved
 `SUB x%` value, omitting trailing decimal zeroes. With battle overrides
 disabled, the table remains available only to supply tier metadata and is not
 applied to gameplay. The overlay does not display player labels or numeric
@@ -668,35 +668,22 @@ transition gate while changing only window/probability policy. Bypassing the
 function's final return or forcing `FUN_002297d0` would incorrectly admit
 ineligible states and is not an equivalent control.
 
-The current unaccepted runtime candidate exposes timing under
-`features.battle.substitution`. `frames_before` accepts `0..16` and means the
-literal number of prior 30 FPS input-history records searched in addition to
-the current record. Its guarded eight-byte edit at clean ELF raw `0x1296C8`
-replaces `bgez s0,0x00229610; nop` (`1100010600000000`) with
-`b 0x00229620; li s0,frames_before`. Branching to `0x00229620` skips both the
-negative-timing modulo block and the native nonnegative clamp while preserving
-the history helper and all later gates. Base value `4` therefore emits
-`1500001004001024`.
+The runtime implementation exposes `sub_active_frames` under
+`features.settings.shared` and accepts `0..16`. It replaces the clean
+`bgez s0,0x00229610; nop` pair at virtual `0x002295C8` / ELF raw `0x1296C8`
+(`1100010600000000`) with a resident jump. The wrapper preserves the live
+Guard-age value in `v0`, loads the runtime setting into `s0`, and rejoins at
+`0x00229620`. This skips only the attack-authored negative random gate and the
+native positive clamp.
 
-`frames_after` independently accepts `0..16`. The clean per-action dispatcher
-calls the ordinary-response driver `FUN_00234DA0` at virtual `0x00249CF0` / ELF
-raw `0x149DF0` with `jal 0x00234DA0; nop`
-(`68D3080C00000000`). The candidate wraps only that call. The native state
-setter resets primary action cursor `fighter+0x1C4` on impact; the wrapper
-therefore retries the native substitution predicate only while the cursor is
-positive and at most `frames_after`. It supplies selector `5`, the current
-ordinary-response substate from `fighter+0x190`, resource validation `1`, and a
-null explicit attack so the predicate resolves the retained attack at
-`fighter+0xE54`. A successful predicate result enters the existing native
-ordinary substitution transition; otherwise the displaced ordinary-response
-driver runs exactly once. Base value `4` permits cursor frames `1..4`; `0`
-disables the post-impact opportunity without disabling pre-impact timing or the
-gauge.
-
-Both timing controls retain the native eligibility, resource, response,
-attack-flag, held-guard, and transition machinery. The post-impact wrapper is
-bounded to the active ordinary response and does not create a combo-long input
-latch. Runtime acceptance remains pending.
+The unchanged history helper searches the current input record plus exactly
+`sub_active_frames` prior records. Base value `4` therefore accepts a fresh
+Substitution edge from the current record or four earlier records; `0` accepts
+the current record only. The timing control retains the native eligibility,
+resource, response, attack-flag, held-Guard, history-search, and transition
+machinery. The retired `frames_after` hit-response retry is preserved only in
+[`../../designs/substitution_frames_after.patch`](../../designs/substitution_frames_after.patch).
+Runtime confirmation remains pending.
 
 Per-attack ownership, record sizing, offset calculation, clean-roster value
 distribution, and the exact Command Chart name join are now established.

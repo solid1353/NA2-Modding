@@ -1148,7 +1148,7 @@ def serialize_catalog(
     include_patches: bool,
 ) -> str:
     lines = ["{", "  features: {"]
-    for feature_id in sorted(features):
+    for feature_id in features:
         node_lines = _node_lines(
             features[feature_id], 4, include_patches=include_patches
         )

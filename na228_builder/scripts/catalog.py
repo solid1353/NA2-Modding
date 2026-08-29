@@ -165,7 +165,7 @@ def _read_catalog(
         _identifier(feature_id, "Catalog feature ID")
         if not isinstance(feature, catalog_format.ContainerNode):
             raise ValueError(f"Catalog feature must be an object: {feature_id}")
-    return dict(sorted(features.items())), (catalog_file.resolve(),)
+    return features, (catalog_file.resolve(),)
 
 
 def _identifier(value: str, label: str) -> str:
@@ -196,7 +196,7 @@ def _feature_root(
     return catalog_format.ContainerNode(
         tuple(
             catalog_format.ContainerField(feature_id, features[feature_id])
-            for feature_id in sorted(features)
+            for feature_id in features
         )
     )
 
@@ -1588,11 +1588,10 @@ def load_static_fragment(
     fragment_id: str,
     value: dict[str, object],
     label: str,
-) -> tuple[int, PayloadFragment]:
+) -> PayloadFragment:
     kind = value.get("kind")
     if kind not in FRAGMENT_KINDS:
         raise ValueError(f"{label}.kind is invalid: {kind!r}")
-    order = _parse_int(value.get("order"), f"{label}.order", minimum=1)
     alignment = _parse_int(value.get("alignment"), f"{label}.alignment", minimum=1)
     if alignment & (alignment - 1):
         raise ValueError(f"{label}.alignment must be a power of two")
@@ -1635,7 +1634,7 @@ def load_static_fragment(
                 addend=_parse_int(raw.get("addend", 0), f"{label}.relocations.{relocation_id}.addend", minimum=-0x80000000),
             )
         )
-    return order, PayloadFragment(
+    return PayloadFragment(
         owner=owner,
         symbol=fragment_id,
         kind=str(kind),
@@ -1652,7 +1651,7 @@ def _compile_source(
     source_id: str,
     value: dict[str, object],
     label: str,
-) -> list[tuple[int, PayloadFragment]]:
+) -> list[PayloadFragment]:
     language = value.get("kind")
     if language not in {"c", "asm"}:
         raise ValueError(f"{label}.kind is not a supported EE source language")
@@ -1682,17 +1681,14 @@ def _compile_source(
     raw_fragments = value.get("fragments")
     if not isinstance(raw_fragments, dict) or not raw_fragments:
         raise ValueError(f"{label}.fragments must be a non-empty object")
-    aliases: dict[str, tuple[int, str]] = {}
+    aliases: dict[str, str] = {}
     for fragment_id, raw in raw_fragments.items():
         if not runtime_injector.IDENTIFIER.fullmatch(fragment_id) or not isinstance(raw, dict):
             raise ValueError(f"{label}.fragments.{fragment_id} is invalid")
         object_fragment = raw.get("object")
         if not isinstance(object_fragment, str) or not runtime_injector.IDENTIFIER.fullmatch(object_fragment):
             raise ValueError(f"{label}.fragments.{fragment_id}.object is invalid")
-        aliases[object_fragment] = (
-            _parse_int(raw.get("order"), f"{label}.fragments.{fragment_id}.order", minimum=1),
-            fragment_id,
-        )
+        aliases[object_fragment] = fragment_id
     packaged_object = source_path.with_name(source_path.name + ".o")
     if packaged_object.is_file():
         extracted = ee_c_fragments.extract_ee_object(
@@ -1719,30 +1715,30 @@ def _compile_source(
             f"{label}: extracted fragments differ from declarations; "
             f"missing={sorted(set(aliases) - actual)}, extra={sorted(actual - set(aliases))}"
         )
-    result: list[tuple[int, PayloadFragment]] = []
-    symbol_aliases = {source: target[1] for source, target in aliases.items()}
-    for fragment in extracted.fragments:
-        order, fragment_id = aliases[fragment.symbol]
+    result: list[PayloadFragment] = []
+    symbol_aliases = dict(aliases)
+    extracted_by_symbol = {
+        fragment.symbol: fragment for fragment in extracted.fragments
+    }
+    for object_fragment, fragment_id in aliases.items():
+        fragment = extracted_by_symbol[object_fragment]
         result.append(
-            (
-                order,
-                PayloadFragment(
-                    owner=owner,
-                    symbol=fragment_id,
-                    kind=fragment.kind,
-                    alignment=fragment.alignment,
-                    payload=fragment.payload,
-                    relocations=tuple(
-                        PayloadRelocation(
-                            offset=item.offset,
-                            kind=item.kind,
-                            symbol=symbol_aliases.get(item.symbol, item.symbol),
-                            addend=item.addend,
-                        )
-                        for item in fragment.relocations
-                    ),
-                    init=fragment.init,
+            PayloadFragment(
+                owner=owner,
+                symbol=fragment_id,
+                kind=fragment.kind,
+                alignment=fragment.alignment,
+                payload=fragment.payload,
+                relocations=tuple(
+                    PayloadRelocation(
+                        offset=item.offset,
+                        kind=item.kind,
+                        symbol=symbol_aliases.get(item.symbol, item.symbol),
+                        addend=item.addend,
+                    )
+                    for item in fragment.relocations
                 ),
+                init=fragment.init,
             )
         )
     return result
@@ -1824,7 +1820,7 @@ def load_runtime_package(
                     ),
                 )
             )
-    declared: list[tuple[int, PayloadFragment]] = []
+    declared: list[PayloadFragment] = []
     for _, injection_id, payload_id, raw in payload_entries(selection, feature_id):
         label = f"injections.{injection_id}.payload.{payload_id}"
         if raw.get("kind") in {"c", "asm"}:
@@ -1833,10 +1829,7 @@ def load_runtime_package(
             declared.append(
                 load_static_fragment(repository, owner, payload_id, raw, label)
             )
-    orders = [item[0] for item in declared]
-    symbols = [item[1].symbol for item in declared]
-    if len(orders) != len(set(orders)):
-        raise ValueError(f"{feature_id}: payload orders must be unique")
+    symbols = [item.symbol for item in declared]
     if len(symbols) != len(set(symbols)):
         raise ValueError(f"{feature_id}: payload symbols must be unique")
     return runtime_injector.RuntimeInjectionPackage(
@@ -1845,7 +1838,7 @@ def load_runtime_package(
         targets={key: value for key, value in targets.items() if key in used_targets},
         groups=_groups(hook_nodes),
         patches=patches,
-        fragments=tuple(item[1] for item in sorted(declared, key=lambda item: item[0])),
+        fragments=tuple(declared),
         edits=tuple(edits),
     )
 

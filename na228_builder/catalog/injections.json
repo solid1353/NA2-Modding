@@ -28,14 +28,12 @@
         "imports": {},
         "fragments": {
           "control_settings_assign_action": {
-            "order": 145,
             "object": "battle.control.settings.text.control.settings.assign.action"
           }
         }
       },
       "control_settings_substitution_label": {
         "kind": "rodata",
-        "order": 132,
         "alignment": 1,
         "value": "537562737469747574696F6E00"
       }
@@ -64,11 +62,9 @@
         },
         "fragments": {
           "substitution_cost_for_fighter": {
-            "order": 110,
             "object": "battle.logic.substitution.cost.c.text.battle.logic.substitution.cost"
           },
           "substitution_cost_fraction_for_fighter": {
-            "order": 124,
             "object": "battle.logic.substitution.cost.c.text.battle.logic.substitution.cost.fraction"
           }
         }
@@ -82,7 +78,6 @@
         },
         "fragments": {
           "substitution_cost_shim": {
-            "order": 111,
             "object": "battle.logic.substitution.cost.asm.text.substitution.cost.shim"
           }
         }
@@ -112,7 +107,6 @@
         },
         "fragments": {
           "character_select_balance_overlay": {
-            "order": 112,
             "object": "battle.logic.character.select.balance.overlay.c.text.battle.logic.character.select.balance.overlay"
           }
         }
@@ -137,49 +131,46 @@
         "path": "src/battle_logic/xdash_chakra_cost.c",
         "namespace": "battle.logic.xdash.chakra.cost.c",
         "imports": {
-          "battle_logic_xdash_chakra_cost": "battle_logic_xdash_chakra_cost",
-          "battle_logic_xdash_charge_state": "battle_logic_xdash_charge_state"
+          "battle_logic_xdash_charge_state": "battle_logic_xdash_charge_state",
+          "xdash_chakra_cost_get": "xdash_chakra_cost_get"
         },
         "fragments": {
           "battle_logic_xdash_pre_fighter_update": {
-            "order": 113,
             "object": "battle.logic.xdash.chakra.cost.c.text.battle.logic.xdash.pre.fighter.update"
           },
           "xdash_pre_update_shim": {
-            "order": 114,
             "object": "battle.logic.xdash.chakra.cost.c.text.xdash.pre.update.shim"
           }
         }
       },
       "battle_logic_xdash_charge_state": {
         "kind": "data",
-        "order": 115,
         "alignment": 4,
         "value": "0000000000000000"
       }
     }
   },
   "i__battle__settings_rework": {
-    "description": "Map a feature-aware Battle Settings row list onto the native controller values, transactions, row renderer, arrows, help, and backing objects.",
+    "description": "Map a feature-aware Battle Settings row list onto the native controller values and transactions while scrolling overflow through seven ordinary rows in the native table footprint.",
     "hooks": {
       "initialize_active_rows_on_open": {
-        "description": "Run the native settings snapshot, resolve the active row resources, and stage the shared substitution resource mode.",
+        "description": "Run the native settings snapshot, resolve the active row resources, and stage all shared and battle-specific modes.",
         "target_id": "na2_btl",
         "offset": "0x1CBB04",
         "expected_hex": "1CFE210C00000000",
         "symbol": "battle_settings_snapshot",
         "encoding": "jal26"
       },
-      "commit_substitution_mode_on_confirm": {
-        "description": "Commit the staged substitution resource mode before the native settings transaction stores its own rows.",
+      "commit_active_modes_on_confirm": {
+        "description": "Commit the staged shared modes before the native settings transaction stores its own rows.",
         "target_id": "na2_btl",
         "offset": "0x1CBC30",
         "expected_hex": "885F070C00000000",
         "symbol": "battle_settings_confirm_sound",
         "encoding": "jal26"
       },
-      "reset_substitution_mode_to_configured_default": {
-        "description": "Stage the configured substitution resource default alongside the native Select reset.",
+      "reset_active_modes_to_configured_defaults": {
+        "description": "Stage the configured shared-mode defaults alongside the native Select reset.",
         "target_id": "na2_btl",
         "offset": "0x1CBD74",
         "expected_hex": "885F070C00000000",
@@ -195,7 +186,7 @@
         "encoding": "jal26"
       },
       "change_active_row_value": {
-        "description": "Change the selected mapped native value or staged substitution resource mode with its semantic bound.",
+        "description": "Change the selected mapped native value or staged shared mode with its semantic bound.",
         "target_id": "na2_btl",
         "offset": "0x1CBE34",
         "expected_hex": "98FF210C00000000",
@@ -203,7 +194,7 @@
         "encoding": "jal26"
       },
       "route_ultimate_jutsu_value_help": {
-        "description": "Run the native value-specific Ultimate Jutsu help only when the selected active row is Ultimate Jutsu.",
+        "description": "Run the native value-specific Ultimate Jutsu help only for the semantic Ultimate Jutsu row, using Command help for the two custom contest modes.",
         "target_id": "na2_btl",
         "offset": "0x1CBE44",
         "expected_hex": "4800038604000224",
@@ -243,8 +234,8 @@
         "symbol": "battle_settings_active_labels",
         "encoding": "lo16"
       },
-      "draw_active_label_count": {
-        "description": "Loop over the active schema count instead of six fixed labels.",
+      "draw_seven_label_rows": {
+        "description": "Draw all seven fixed-height Battle Settings label slots in the native table footprint.",
         "target_id": "na2_btl",
         "offset": "0x1CC378",
         "expected_hex": "0600432AE5FF6014",
@@ -252,17 +243,26 @@
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
       },
-      "route_handicap_draw": {
-        "description": "Use the native special Handicap renderer at its active semantic row rather than fixed row five.",
+      "route_visible_time_draw": {
+        "description": "Use the native Time renderer only when the visible slot contains the semantic Time row.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC390",
+        "expected_hex": "2F00401600000000",
+        "symbol": "battle_settings_draw_time_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "draw_all_rows_as_ordinary": {
+        "description": "Route every non-Time slot through the ordinary one-line value renderer, including Handicap.",
         "target_id": "na2_btl",
         "offset": "0x1CC450",
         "expected_hex": "0500032442004316",
-        "symbol": "battle_settings_draw_handicap_bridge",
+        "symbol": "battle_settings_draw_ordinary_bridge",
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
       },
       "draw_active_value": {
-        "description": "Load an ordinary active row through its mapped native slot or staged substitution resource mode.",
+        "description": "Load an ordinary visible row through its mapped native slot or staged custom mode.",
         "target_id": "na2_btl",
         "offset": "0x1CC560",
         "expected_hex": "80201200B243023C",
@@ -286,8 +286,8 @@
         "symbol": "battle_settings_active_value_tables",
         "encoding": "lo16"
       },
-      "draw_active_value_count": {
-        "description": "Loop over the active schema count instead of six fixed values.",
+      "draw_seven_value_rows": {
+        "description": "Draw all seven fixed-height Battle Settings value slots in the native table footprint.",
         "target_id": "na2_btl",
         "offset": "0x1CC5B8",
         "expected_hex": "0600432A74FF6014",
@@ -296,7 +296,7 @@
         "replacement_hex": "0000000800000000"
       },
       "resolve_helper_maximum": {
-        "description": "Give the native arrow helper the selected semantic row's maximum.",
+        "description": "Give the native arrow helper the selected visible row's semantic maximum.",
         "target_id": "na2_btl",
         "offset": "0x1CC654",
         "expected_hex": "801804008D00023C",
@@ -305,7 +305,7 @@
         "replacement_hex": "0000000800000000"
       },
       "resolve_helper_value": {
-        "description": "Give the native arrow helper the selected mapped value.",
+        "description": "Give the native arrow helper the selected visible row's mapped value.",
         "target_id": "na2_btl",
         "offset": "0x1CC69C",
         "expected_hex": "4800438680100300",
@@ -313,21 +313,46 @@
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
       },
-      "suppress_handicap_arrows": {
-        "description": "Suppress arrows for the semantic Handicap row rather than fixed row five.",
+      "draw_ordinary_arrows_for_every_row": {
+        "description": "Use the ordinary arrows for every selectable row, including Handicap.",
         "target_id": "na2_btl",
         "offset": "0x1CC6C8",
         "expected_hex": "0500022402006214",
-        "symbol": "battle_settings_helper_handicap_bridge",
+        "symbol": "battle_settings_helper_ordinary_bridge",
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
       },
-      "draw_active_backing_rows": {
-        "description": "Retain native row backings, suppress unused records, and clone the last native row only when seven active rows are present.",
+      "select_ordinary_cursor_object": {
+        "description": "Use the ordinary fixed-height cursor object for every selectable row, including Handicap.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC7D0",
+        "expected_hex": "0500022403006210",
+        "symbol": "battle_settings_cursor_ordinary_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "draw_seven_ordinary_backings": {
+        "description": "Replace the native double-height Handicap panel with two ordinary row strips so the unchanged table footprint contains seven uniform rows.",
         "target_id": "na2_btl",
         "offset": "0x1CC9AC",
         "expected_hex": "E4ED060C",
         "symbol": "battle_settings_draw_backing",
+        "encoding": "jal26"
+      },
+      "draw_visible_rows": {
+        "description": "Update the logical scroll window, remap its seven visible rows, and draw them through the unchanged native table footprint.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC9B8",
+        "expected_hex": "7800220C",
+        "symbol": "battle_settings_draw_rows",
+        "encoding": "jal26"
+      },
+      "draw_visible_cursor": {
+        "description": "Draw the native cursor and arrows at the selected row's visible slot while retaining the logical selection.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC9C4",
+        "expected_hex": "3C01220C",
+        "symbol": "battle_settings_draw_cursor",
         "encoding": "jal26"
       }
     },
@@ -340,68 +365,136 @@
           "battle_settings_schema": "battle_settings_schema"
         },
         "fragments": {
+          "battle_settings_active_controller": {
+            "object": "battle.settings.c.bss.battle.settings.active.controller"
+          },
           "battle_settings_active_labels": {
-            "order": 232,
             "object": "battle.settings.c.bss.battle.settings.active.labels"
           },
           "battle_settings_active_help": {
-            "order": 233,
             "object": "battle.settings.c.bss.battle.settings.active.help"
           },
           "battle_settings_active_value_tables": {
-            "order": 234,
             "object": "battle.settings.c.bss.battle.settings.active.value.tables"
           },
           "battle_settings_substitution_staged": {
-            "order": 235,
             "object": "battle.settings.c.bss.battle.settings.substitution.staged"
           },
+          "battle_settings_ultimate_jutsu_staged": {
+            "object": "battle.settings.c.bss.battle.settings.ultimate.jutsu.staged"
+          },
+          "battle_settings_shadowblur_staged": {
+            "object": "battle.settings.c.bss.battle.settings.shadowblur.staged"
+          },
+          "battle_settings_extra_hit_staged": {
+            "object": "battle.settings.c.bss.battle.settings.extra.hit.staged"
+          },
+          "battle_settings_sub_active_frames_staged": {
+            "object": "battle.settings.c.bss.battle.settings.sub.active.frames.staged"
+          },
+          "battle_settings_xdash_chakra_cost_staged": {
+            "object": "battle.settings.c.bss.battle.settings.xdash.chakra.cost.staged"
+          },
+          "battle_settings_support_staged": {
+            "object": "battle.settings.c.bss.battle.settings.support.staged"
+          },
+          "battle_settings_ultimate_jutsu_values": {
+            "object": "battle.settings.c.bss.battle.settings.ultimate.jutsu.values"
+          },
+          "battle_settings_handicap_values": {
+            "object": "battle.settings.c.bss.battle.settings.handicap.values"
+          },
+          "battle_settings_window_start": {
+            "object": "battle.settings.c.bss.battle.settings.window.start"
+          },
           "battle_settings_substitution_label": {
-            "order": 236,
             "object": "battle.settings.c.rodata.battle.settings.substitution.label"
           },
           "battle_settings_substitution_help": {
-            "order": 237,
             "object": "battle.settings.c.rodata.battle.settings.substitution.help"
           },
+          "battle_settings_sub_active_frames_label": {
+            "object": "battle.settings.c.rodata.battle.settings.sub.active.frames.label"
+          },
+          "battle_settings_sub_active_frames_help": {
+            "object": "battle.settings.c.rodata.battle.settings.sub.active.frames.help"
+          },
+          "battle_settings_xdash_chakra_cost_label": {
+            "object": "battle.settings.c.rodata.battle.settings.xdash.chakra.cost.label"
+          },
+          "battle_settings_xdash_chakra_cost_help": {
+            "object": "battle.settings.c.rodata.battle.settings.xdash.chakra.cost.help"
+          },
+          "battle_settings_support_label": {
+            "object": "battle.settings.c.rodata.battle.settings.support.label"
+          },
+          "battle_settings_support_help": {
+            "object": "battle.settings.c.rodata.battle.settings.support.help"
+          },
+          "battle_settings_shadowblur_label": {
+            "object": "battle.settings.c.rodata.battle.settings.shadowblur.label"
+          },
+          "battle_settings_shadowblur_help": {
+            "object": "battle.settings.c.rodata.battle.settings.shadowblur.help"
+          },
+          "battle_settings_extra_hit_label": {
+            "object": "battle.settings.c.rodata.battle.settings.extra.hit.label"
+          },
+          "battle_settings_extra_hit_help": {
+            "object": "battle.settings.c.rodata.battle.settings.extra.hit.help"
+          },
+          "battle_settings_off_label": {
+            "object": "battle.settings.c.rodata.battle.settings.off.label"
+          },
+          "battle_settings_on_label": {
+            "object": "battle.settings.c.rodata.battle.settings.on.label"
+          },
+          "battle_settings_handicap_text": {
+            "object": "battle.settings.c.rodata.battle.settings.handicap.text"
+          },
           "battle_settings_helpers": {
-            "order": 238,
             "object": "battle.settings.c.text"
           },
           "battle_settings_snapshot": {
-            "order": 239,
             "object": "battle.settings.c.text.battle.settings.snapshot"
           },
           "battle_settings_confirm_sound": {
-            "order": 240,
             "object": "battle.settings.c.text.battle.settings.confirm.sound"
           },
           "battle_settings_defaults_sound": {
-            "order": 241,
             "object": "battle.settings.c.text.battle.settings.defaults.sound"
           },
           "battle_settings_navigate": {
-            "order": 242,
             "object": "battle.settings.c.text.battle.settings.navigate"
           },
           "battle_settings_change_value": {
-            "order": 243,
             "object": "battle.settings.c.text.battle.settings.change.value"
           },
           "battle_settings_get_value": {
-            "order": 244,
             "object": "battle.settings.c.text.battle.settings.get.value"
           },
           "battle_settings_get_max_value": {
-            "order": 245,
             "object": "battle.settings.c.text.battle.settings.get.max.value"
           },
           "battle_settings_row_id": {
-            "order": 246,
             "object": "battle.settings.c.text.battle.settings.row.id"
           },
+          "battle_settings_visible_row_id": {
+            "object": "battle.settings.c.text.battle.settings.visible.row.id"
+          },
+          "battle_settings_get_visible_value": {
+            "object": "battle.settings.c.text.battle.settings.get.visible.value"
+          },
+          "battle_settings_get_visible_max_value": {
+            "object": "battle.settings.c.text.battle.settings.get.visible.max.value"
+          },
+          "battle_settings_draw_rows": {
+            "object": "battle.settings.c.text.battle.settings.draw.rows"
+          },
+          "battle_settings_draw_cursor": {
+            "object": "battle.settings.c.text.battle.settings.draw.cursor"
+          },
           "battle_settings_draw_backing": {
-            "order": 247,
             "object": "battle.settings.c.text.battle.settings.draw.backing"
           }
         }
@@ -414,69 +507,69 @@
           "battle_settings_schema": "battle_settings_schema",
           "battle_settings_row_id": "battle_settings_row_id",
           "battle_settings_get_value": "battle_settings_get_value",
-          "battle_settings_get_max_value": "battle_settings_get_max_value"
+          "battle_settings_visible_row_id": "battle_settings_visible_row_id",
+          "battle_settings_get_visible_value": "battle_settings_get_visible_value",
+          "battle_settings_get_visible_max_value": "battle_settings_get_visible_max_value"
         },
         "fragments": {
           "battle_settings_ultimate_help_bridge": {
-            "order": 248,
             "object": "battle.settings.asm.text.battle.settings.ultimate.help.bridge"
           },
-          "battle_settings_label_loop_bridge": {
-            "order": 249,
-            "object": "battle.settings.asm.text.battle.settings.label.loop.bridge"
+          "battle_settings_draw_time_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.draw.time.bridge"
           },
-          "battle_settings_draw_handicap_bridge": {
-            "order": 250,
-            "object": "battle.settings.asm.text.battle.settings.draw.handicap.bridge"
+          "battle_settings_draw_ordinary_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.draw.ordinary.bridge"
           },
           "battle_settings_draw_value_bridge": {
-            "order": 251,
             "object": "battle.settings.asm.text.battle.settings.draw.value.bridge"
           },
-          "battle_settings_value_loop_bridge": {
-            "order": 252,
-            "object": "battle.settings.asm.text.battle.settings.value.loop.bridge"
-          },
           "battle_settings_helper_max_bridge": {
-            "order": 253,
             "object": "battle.settings.asm.text.battle.settings.helper.max.bridge"
           },
           "battle_settings_helper_value_bridge": {
-            "order": 254,
             "object": "battle.settings.asm.text.battle.settings.helper.value.bridge"
           },
-          "battle_settings_helper_handicap_bridge": {
-            "order": 255,
-            "object": "battle.settings.asm.text.battle.settings.helper.handicap.bridge"
+          "battle_settings_helper_ordinary_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.helper.ordinary.bridge"
+          },
+          "battle_settings_cursor_ordinary_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.cursor.ordinary.bridge"
+          },
+          "battle_settings_label_loop_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.label.loop.bridge"
+          },
+          "battle_settings_value_loop_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.value.loop.bridge"
           }
         }
       }
     }
   },
-  "i__battle_logic__substitution__frames_after": {
-    "description": "Retry the native substitution predicate during the configured initial ordinary hit-response frames, then preserve the native response update when no substitution activates.",
+  "i__battle_logic__sub_active_frames": {
+    "description": "Use the runtime-selected deterministic pre-impact input-history window for otherwise eligible substitutions while preserving resource, response, state, and attack-block gates.",
     "hooks": {
-      "retry_substitution_during_initial_hit_response": {
-        "description": "Replace the ordinary-response driver call with a wrapper that retries native substitution only while the reset action cursor is from 1 through the configured post-impact frame limit.",
+      "select_substitution_active_history": {
+        "description": "Replace the native attack-authored random and clamped timing branch with a wrapper that loads the selected number of prior input-history frames and rejoins the unchanged guard-age and history checks.",
         "target_id": "na2_elf",
-        "offset": "0x149DF0",
-        "expected_hex": "68D3080C00000000",
-        "symbol": "battle_logic_substitution_update_ordinary_response",
-        "encoding": "jal26"
+        "offset": "0x1296C8",
+        "expected_hex": "1100010600000000",
+        "symbol": "battle_logic_substitution_select_active_history",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
       }
     },
     "payload": {
-      "substitution_timing_abi": {
+      "substitution_active_frames_abi": {
         "kind": "asm",
-        "path": "src/battle_logic/substitution_timing_abi.S",
-        "namespace": "battle.logic.substitution.timing.asm",
+        "path": "src/battle_logic/substitution_active_frames_abi.S",
+        "namespace": "battle.logic.substitution.active.frames.asm",
         "imports": {
-          "battle_logic_substitution_frames_after": "battle_logic_substitution_frames_after"
+          "sub_active_frames_get": "sub_active_frames_get"
         },
         "fragments": {
-          "battle_logic_substitution_update_ordinary_response": {
-            "order": 146,
-            "object": "battle.logic.substitution.timing.asm.text.battle.logic.substitution.update.ordinary.response"
+          "battle_logic_substitution_select_active_history": {
+            "object": "battle.logic.substitution.active.frames.asm.text.battle.logic.substitution.select.active.history"
           }
         }
       }
@@ -570,83 +663,63 @@
         },
         "fragments": {
           "substitution_gauge_reset_battle": {
-            "order": 116,
             "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.reset.battle"
           },
           "substitution_gauge_can_spend": {
-            "order": 117,
             "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.can.spend"
           },
           "substitution_gauge_route_spend": {
-            "order": 118,
             "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.route.spend"
           },
           "substitution_gauge_note_success": {
-            "order": 119,
             "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.note.success"
           },
           "substitution_gauge_sample_hp": {
-            "order": 120,
             "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.sample.hp"
           },
           "substitution_gauge_advance_counts": {
-            "order": 121,
             "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.advance.counts"
           },
           "substitution_gauge_advance_battle": {
-            "order": 122,
             "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.advance.battle"
           },
           "substitution_gauge_update_and_cache": {
-            "order": 123,
             "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.update.and.cache"
           },
           "substitution_gauge_draw_with_battle_hud": {
-            "order": 125,
             "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.draw.with.battle.hud"
           },
           "substitution_gauge_mode_default": {
-            "order": 139,
             "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.mode.default"
           },
           "substitution_gauge_mode_get": {
-            "order": 140,
             "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.mode.get"
           },
           "substitution_gauge_mode_set": {
-            "order": 141,
             "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.mode.set"
           },
           "substitution_gauge_adjust_battle_hud_character_name_y": {
-            "order": 147,
             "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.adjust.battle.hud.character.name.y"
           },
           "substitution_gauge_state": {
-            "order": 133,
             "object": "battle.logic.substitution.gauge.c.bss.substitution.gauge.state"
           },
           "substitution_gauge_cost_fraction": {
-            "order": 134,
             "object": "battle.logic.substitution.gauge.c.bss.substitution.gauge.cost.fraction"
           },
           "substitution_gauge_fill_fraction": {
-            "order": 135,
             "object": "battle.logic.substitution.gauge.c.bss.substitution.gauge.fill.fraction"
           },
           "substitution_gauge_runtime_state": {
-            "order": 136,
             "object": "battle.logic.substitution.gauge.c.bss.substitution.gauge.runtime.state"
           },
           "substitution_gauge_mode_chakra_label": {
-            "order": 256,
             "object": "battle.logic.substitution.gauge.c.rodata.substitution.gauge.mode.chakra.label"
           },
           "substitution_gauge_mode_gauge_label": {
-            "order": 257,
             "object": "battle.logic.substitution.gauge.c.rodata.substitution.gauge.mode.gauge.label"
           },
           "substitution_gauge_mode_free_label": {
-            "order": 258,
             "object": "battle.logic.substitution.gauge.c.rodata.substitution.gauge.mode.free.label"
           }
         }
@@ -666,46 +739,81 @@
         },
         "fragments": {
           "substitution_gauge_can_spend_shim": {
-            "order": 126,
             "object": "battle.logic.substitution.gauge.asm.text.substitution.gauge.can.spend.shim"
           },
           "substitution_gauge_spend_shim": {
-            "order": 127,
             "object": "battle.logic.substitution.gauge.asm.text.substitution.gauge.spend.shim"
           },
           "substitution_gauge_success_shim": {
-            "order": 128,
             "object": "battle.logic.substitution.gauge.asm.text.substitution.gauge.success.shim"
           },
           "substitution_gauge_hp_sample_shim": {
-            "order": 129,
             "object": "battle.logic.substitution.gauge.asm.text.substitution.gauge.hp.sample.shim"
           },
           "substitution_gauge_battle_clock_shim": {
-            "order": 130,
             "object": "battle.logic.substitution.gauge.asm.text.substitution.gauge.battle.clock.shim"
           },
           "substitution_gauge_reset_shim": {
-            "order": 131,
             "object": "battle.logic.substitution.gauge.asm.text.substitution.gauge.reset.shim"
           },
           "substitution_gauge_adjust_battle_hud_character_name_y_shim": {
-            "order": 149,
             "object": "battle.logic.substitution.gauge.asm.text.substitution.gauge.adjust.battle.hud.character.name.y.shim"
           }
         }
       }
     }
   },
-  "i__battle_logic__ultimate_jutsu__hud_hidden": {
-    "description": "Use the native ordinary-jutsu transition to hide and restore the complete Battle HUD with the retained Ultimate Jutsu contest lifecycle.",
+  "i__battle_logic__settings": {
+    "description": "Back shared Battle and Practice Settings selectors with runtime state and guarded gameplay behavior.",
     "hooks": {
+      "gate_contest_press_latch": {
+        "description": "Read the native contest press state for native modes and return zero for No Contest and No HUD.",
+        "target_id": "na2_btl",
+        "offset": "0xB6094",
+        "expected_hex": "6C66070C",
+        "symbol": "ultimate_jutsu_contest_input_state",
+        "encoding": "jal26"
+      },
+      "gate_contest_release_poll": {
+        "description": "Read the native contest release state for native modes and return zero for No Contest and No HUD.",
+        "target_id": "na2_btl",
+        "offset": "0xB62F0",
+        "expected_hex": "6C66070C",
+        "symbol": "ultimate_jutsu_contest_input_state",
+        "encoding": "jal26"
+      },
+      "gate_contest_render": {
+        "description": "Retain the contest object's lifecycle and render dispatch for native modes while suppressing its meter, prompts, and results for No Contest and No HUD.",
+        "target_id": "na2_elf",
+        "offset": "0xF0A40",
+        "expected_hex": "FCAF0D0C",
+        "symbol": "ultimate_jutsu_contest_render",
+        "encoding": "jal26"
+      },
       "transition_complete_battle_hud_during_contest": {
-        "description": "Observe the retained contest lifecycle from the common battlegauge updater and request the same all-HUD hide/show transition APIs used by ordinary jutsu; native update and rendering retain their exact motion, timing, visibility gates, and injected children.",
+        "description": "For No HUD only, observe the retained contest lifecycle and request the same all-HUD hide/show transition APIs used by ordinary jutsu.",
         "target_id": "na2_btl",
         "offset": "0x67030",
         "expected_hex": "E0FFBD271000BFFF",
         "symbol": "battle_logic_ultimate_jutsu_battle_hud_transition",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "select_shadowblur_extra_hit_path": {
+        "description": "Preserve the native predicate result while choosing whether the Shadowblur Extra Hit side-effect path runs.",
+        "target_id": "na2_elf",
+        "offset": "0x1458C8",
+        "expected_hex": "7A00401000000000",
+        "symbol": "shadowblur_extra_hit_branch_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "select_extra_hit_path": {
+        "description": "Preserve the surrounding native result branches while choosing whether the guarded Extra Hit call block runs.",
+        "target_id": "na2_elf",
+        "offset": "0x13B6E8",
+        "expected_hex": "0800431000000000",
+        "symbol": "extra_hit_branch_bridge",
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
       }
@@ -716,57 +824,143 @@
         "path": "src/battle_logic/ultimate_jutsu_hud.S",
         "namespace": "battle.logic.ultimate.jutsu.hud",
         "imports": {
-          "battle_logic_ultimate_jutsu_hud_transition_active": "ultimate_jutsu_hud_transition_active"
+          "battle_logic_ultimate_jutsu_hud_transition_active": "ultimate_jutsu_hud_transition_active",
+          "ultimate_jutsu_mode_get": "ultimate_jutsu_mode_get"
         },
         "fragments": {
           "battle_logic_ultimate_jutsu_battle_hud_transition": {
-            "order": 137,
             "object": "battle.logic.ultimate.jutsu.hud.text.battle.logic.ultimate.jutsu.battle.hud.transition"
           }
         }
       },
       "ultimate_jutsu_hud_transition_active": {
         "kind": "data",
-        "order": 138,
         "alignment": 4,
         "value": "00000000"
+      },
+      "battle_settings_runtime": {
+        "kind": "c",
+        "path": "src/battle_logic/battle_settings_runtime.c",
+        "namespace": "battle.logic.settings.runtime.c",
+        "imports": {
+          "battle_settings_runtime_config": "battle_settings_runtime_config"
+        },
+        "fragments": {
+          "battle_settings_runtime_initialize": {
+            "object": "battle.logic.settings.runtime.c.text.battle.settings.runtime.initialize"
+          },
+          "ultimate_jutsu_contest_input_state": {
+            "object": "battle.logic.settings.runtime.c.text.ultimate.jutsu.contest.input.state"
+          },
+          "ultimate_jutsu_contest_render": {
+            "object": "battle.logic.settings.runtime.c.text.ultimate.jutsu.contest.render"
+          },
+          "ultimate_jutsu_mode_default": {
+            "object": "battle.logic.settings.runtime.c.text.ultimate.jutsu.mode.default"
+          },
+          "ultimate_jutsu_mode_get": {
+            "object": "battle.logic.settings.runtime.c.text.ultimate.jutsu.mode.get"
+          },
+          "ultimate_jutsu_mode_set": {
+            "object": "battle.logic.settings.runtime.c.text.ultimate.jutsu.mode.set"
+          },
+          "shadowblur_get": {
+            "object": "battle.logic.settings.runtime.c.text.shadowblur.get"
+          },
+          "shadowblur_set": {
+            "object": "battle.logic.settings.runtime.c.text.shadowblur.set"
+          },
+          "extra_hit_get": {
+            "object": "battle.logic.settings.runtime.c.text.extra.hit.get"
+          },
+          "extra_hit_set": {
+            "object": "battle.logic.settings.runtime.c.text.extra.hit.set"
+          },
+          "sub_active_frames_get": {
+            "object": "battle.logic.settings.runtime.c.text.sub.active.frames.get"
+          },
+          "sub_active_frames_set": {
+            "object": "battle.logic.settings.runtime.c.text.sub.active.frames.set"
+          },
+          "xdash_chakra_cost_get": {
+            "object": "battle.logic.settings.runtime.c.text.xdash.chakra.cost.get"
+          },
+          "xdash_chakra_cost_option_get": {
+            "object": "battle.logic.settings.runtime.c.text.xdash.chakra.cost.option.get"
+          },
+          "xdash_chakra_cost_option_set": {
+            "object": "battle.logic.settings.runtime.c.text.xdash.chakra.cost.option.set"
+          },
+          "support_get": {
+            "object": "battle.logic.settings.runtime.c.text.support.get"
+          },
+          "support_set": {
+            "object": "battle.logic.settings.runtime.c.text.support.set"
+          },
+          "ultimate_jutsu_no_contest_label": {
+            "object": "battle.logic.settings.runtime.c.rodata.ultimate.jutsu.no.contest.label"
+          },
+          "ultimate_jutsu_no_hud_label": {
+            "object": "battle.logic.settings.runtime.c.rodata.ultimate.jutsu.no.hud.label"
+          },
+          "battle_settings_runtime_state": {
+            "object": "battle.logic.settings.runtime.c.bss.battle.settings.runtime.state"
+          }
+        }
+      },
+      "battle_settings_runtime_abi": {
+        "kind": "asm",
+        "path": "src/battle_logic/battle_settings_runtime_abi.S",
+        "namespace": "battle.logic.settings.runtime.asm",
+        "imports": {
+          "shadowblur_get": "shadowblur_get",
+          "extra_hit_get": "extra_hit_get"
+        },
+        "fragments": {
+          "shadowblur_extra_hit_branch_bridge": {
+            "object": "battle.logic.settings.runtime.asm.text.shadowblur.extra.hit.branch.bridge"
+          },
+          "extra_hit_branch_bridge": {
+            "object": "battle.logic.settings.runtime.asm.text.extra.hit.branch.bridge"
+          }
+        }
       }
     }
   },
-  "i__battle__support_disabled": {
-    "description": "Disable free-field support calls and hide the native battle support gauge without changing selected support data, Character Select behavior, or linked Jutsu.",
+  "i__battle__support": {
+    "description": "Route free-field support calls and the native support gauge through the shared Support runtime selector without changing selected support data, Character Select behavior, or linked Jutsu.",
     "hooks": {
-      "suppress_free_field_support_call": {
-        "description": "Replace the sole per-fighter support-button acceptance call with a no-op, preventing its linked-fighter signal without changing selected support data or linked Jutsu.",
+      "route_free_field_support_call": {
+        "description": "Wrap the sole per-fighter support-button acceptance call, preserving it while Support is On and suppressing it while Off.",
         "target_id": "na2_elf",
         "offset": "0x14DDA4",
         "expected_hex": "D0E0080C",
-        "symbol": "battle_support_disabled_suppress_field_call",
+        "symbol": "battle_support_route_field_call",
         "encoding": "jal26"
       },
-      "suppress_support_gauge_draw": {
-        "description": "Replace only the dedicated TEX_xgauge draw call with a no-op for both players while leaving the rest of the battle HUD native.",
+      "route_support_gauge_draw": {
+        "description": "Wrap only the dedicated TEX_xgauge draw call for both players, preserving it while Support is On and suppressing it while Off.",
         "target_id": "na2_btl",
         "offset": "0x69398",
         "expected_hex": "BC721C0C",
-        "symbol": "battle_support_disabled_hide_gauge",
+        "symbol": "battle_support_route_gauge_draw",
         "encoding": "jal26"
       }
     },
     "payload": {
-      "battle_support_disabled": {
+      "battle_support": {
         "kind": "c",
-        "path": "src/qol/battle_support_disabled.c",
-        "namespace": "battle.support.disabled",
-        "imports": {},
+        "path": "src/qol/battle_support.c",
+        "namespace": "battle.support",
+        "imports": {
+          "support_get": "support_get"
+        },
         "fragments": {
-          "battle_support_disabled_suppress_field_call": {
-            "order": 143,
-            "object": "battle.support.disabled.text.battle.support.disabled.suppress.field.call"
+          "battle_support_route_field_call": {
+            "object": "battle.support.text.battle.support.route.field.call"
           },
-          "battle_support_disabled_hide_gauge": {
-            "order": 144,
-            "object": "battle.support.disabled.text.battle.support.disabled.hide.gauge"
+          "battle_support_route_gauge_draw": {
+            "object": "battle.support.text.battle.support.route.gauge.draw"
           }
         }
       }
@@ -822,11 +1016,9 @@
         "imports": {},
         "fragments": {
           "glyph_normal_bottom_edge": {
-            "order": 152,
             "object": "localization.font.glyph.geometry.asm.text.glyph.normal.bottom.edge"
           },
           "glyph_secondary_cell_guard": {
-            "order": 151,
             "object": "localization.font.glyph.geometry.asm.text.glyph.secondary.cell.guard"
           }
         }
@@ -838,11 +1030,9 @@
         "imports": {},
         "fragments": {
           "glyph_metric_lookup": {
-            "order": 58,
             "object": "localization.font.glyph.c.text.font.glyph.metric.lookup"
           },
           "glyph_metric_apply": {
-            "order": 59,
             "object": "localization.font.glyph.c.text.font.glyph.metric.apply"
           }
         }
@@ -896,7 +1086,6 @@
         },
         "fragments": {
           "v2_character_choices_scope": {
-            "order": 105,
             "object": "localization.font.v2.character.select.modal.asm.text.v2.character.choices.scope"
           }
         }
@@ -1088,11 +1277,9 @@
         },
         "fragments": {
           "v2_command_icon_offset_adapter": {
-            "order": 63,
             "object": "localization.font.v2.command.relationships.asm.text.v2.command.icon.offset.adapter"
           },
           "v2_command_relationship_adapter": {
-            "order": 62,
             "object": "localization.font.v2.command.relationships.asm.text.v2.command.relationship.adapter",
             "abi": "command_relationship_native",
             "description": "Command Chart relationship row",
@@ -1169,23 +1356,18 @@
         },
         "fragments": {
           "v2_glyph_advance": {
-            "order": 56,
             "object": "localization.font.v2.core.asm.text.v2.glyph.advance"
           },
           "v2_half_space": {
-            "order": 47,
             "object": "localization.font.v2.core.asm.text.v2.half.space"
           },
           "v2_newline_advance": {
-            "order": 45,
             "object": "localization.font.v2.core.asm.text.v2.newline.advance"
           },
           "v2_plain_space": {
-            "order": 44,
             "object": "localization.font.v2.core.asm.text.v2.plain.space"
           },
           "v2_right_edge": {
-            "order": 46,
             "object": "localization.font.v2.core.asm.text.v2.right.edge"
           }
         }
@@ -1284,11 +1466,9 @@
         "imports": {},
         "fragments": {
           "v2_global_selected_record_draw": {
-            "order": 98,
             "object": "localization.font.v2.global.selected.style.asm.text.v2.global.selected.record.draw"
           },
           "v2_global_selected_style": {
-            "order": 97,
             "object": "localization.font.v2.global.selected.style.asm.text.v2.global.selected.style"
           }
         }
@@ -1300,7 +1480,6 @@
         "imports": {},
         "fragments": {
           "v2_global_two_choice_draw": {
-            "order": 99,
             "object": "localization.font.v2.selected.style.c.text.font.v2.global.two.choice.draw"
           }
         }
@@ -1421,7 +1600,6 @@
         },
         "fragments": {
           "v2_practice_adapter": {
-            "order": 43,
             "object": "localization.font.v2.practice.explanations.asm.text.v2.practice.adapter"
           }
         }
@@ -1476,7 +1654,6 @@
         },
         "fragments": {
           "v2_quit_selected_adapter": {
-            "order": 37,
             "object": "localization.font.v2.quit.confirmation.asm.text.v2.quit.selected.adapter"
           }
         }
@@ -1487,7 +1664,6 @@
     "payload": {
       "v2_ascii_widths": {
         "kind": "rodata",
-        "order": 3,
         "alignment": 1,
         "value": "0805090B0B0C0D0508080C0A0507050A0A080A0A0C0A0A0B0A0A05050A0A0A0A0E0C0B0D0B0B0A0C0C050A0B0A0E0C0C0B0C0B0B0C0C0D0E0D0D0B080C07060E050A0A0B0A0A080A0A05070A050E0A0B0A0A080A090A0A0D0A0A0906050608"
       },
@@ -1501,23 +1677,18 @@
         },
         "fragments": {
           "v2_pause_list_callback": {
-            "order": 33,
             "object": "localization.font.v2.runtime.asm.text.v2.pause.list.callback"
           },
           "v2_pause_list_selected_callback": {
-            "order": 34,
             "object": "localization.font.v2.runtime.asm.text.v2.pause.list.selected.callback"
           },
           "v2_quit_choices_scope": {
-            "order": 36,
             "object": "localization.font.v2.runtime.asm.text.v2.quit.choices.scope"
           },
           "v2_special_choice_selected_callback": {
-            "order": 96,
             "object": "localization.font.v2.runtime.asm.text.v2.special.choice.selected.callback"
           },
           "v2_title_callback": {
-            "order": 32,
             "object": "localization.font.v2.runtime.asm.text.v2.title.callback"
           }
         }
@@ -1532,19 +1703,15 @@
         },
         "fragments": {
           "v2_c_is_br": {
-            "order": 6,
             "object": "localization.font.v2.c.text"
           },
           "v2_measure": {
-            "order": 7,
             "object": "localization.font.v2.c.text.font.v2.measure"
           },
           "v2_prepare": {
-            "order": 8,
             "object": "localization.font.v2.c.text.font.v2.prepare"
           },
           "v2_adapter_call": {
-            "order": 9,
             "object": "localization.font.v2.c.text.font.v2.adapter.call"
           }
         }
@@ -1565,95 +1732,75 @@
         },
         "fragments": {
           "v2_controls_callback": {
-            "order": 31,
             "object": "localization.font.v2.c.text.font.v2.controls.callback"
           },
           "v2_controls_adapter": {
-            "order": 10,
             "object": "localization.font.v2.c.text.font.v2.controls.adapter",
             "abi": "text_style_center_x_draw_y",
             "description": "Controls and Special Controls one-line labels"
           },
           "v2_title_adapter": {
-            "order": 11,
             "object": "localization.font.v2.c.text.font.v2.title.adapter.common"
           },
           "v2_command_title_entry": {
-            "order": 12,
             "object": "localization.font.v2.c.text.font.v2.command.title.entry",
             "abi": "arg0_text_arg2_native_x_native_y",
             "description": "Command Chart title"
           },
           "v2_practice_title_entry": {
-            "order": 13,
             "object": "localization.font.v2.c.text.font.v2.practice.title.entry",
             "abi": "arg0_text_arg2_native_x_native_y",
             "description": "Practice title"
           },
           "v2_pause_list_adapter": {
-            "order": 14,
             "object": "localization.font.v2.c.text.font.v2.pause.list.adapter",
             "abi": "arg0_text_arg2_native_x_native_y",
             "description": "Pause-list row"
           },
           "v2_c_pause_list_selected_impl": {
-            "order": 15,
             "object": "localization.font.v2.c.text.font.v2.pause.list.selected.impl"
           },
           "v2_c_quit_scope_enter": {
-            "order": 16,
             "object": "localization.font.v2.c.text.font.v2.quit.scope.enter"
           },
           "v2_c_quit_scope_leave": {
-            "order": 17,
             "object": "localization.font.v2.c.text.font.v2.quit.scope.leave"
           },
           "v2_c_map_choice": {
-            "order": 18,
             "object": "localization.font.v2.c.text.font.v2.map.choice"
           },
           "v2_c_quit_selected_map": {
-            "order": 19,
             "object": "localization.font.v2.c.text.font.v2.quit.selected.map"
           },
           "v2_quit_unselected_adapter": {
-            "order": 20,
             "object": "localization.font.v2.c.text.font.v2.quit.unselected.adapter",
             "abi": "arg0_record_arg2_arg3",
             "description": "Quit choice not selected"
           },
           "v2_native_measure": {
-            "order": 21,
             "object": "localization.font.v2.c.text.font.v2.native.measure"
           },
           "v2_wrap_native": {
-            "order": 22,
             "object": "localization.font.v2.c.text.font.v2.wrap.native"
           },
           "v2_c_special_choice_session_init": {
-            "order": 94,
             "object": "localization.font.v2.c.text.font.v2.special.choice.session.init"
           },
           "v2_c_special_choice_selected_adapter": {
-            "order": 95,
             "object": "localization.font.v2.c.text.font.v2.special.choice.selected.adapter"
           },
           "v2_c_wrap_retry": {
-            "order": 101,
             "object": "localization.font.v2.c.text.font.v2.wrap.retry"
           },
           "v2_c_character_scope_enter": {
-            "order": 104,
             "object": "localization.font.v2.c.text.font.v2.character.scope.enter"
           },
           "v2_character_selected_adapter": {
-            "order": 65,
             "object": "localization.font.v2.c.text.font.v2.character.selected.adapter",
             "abi": "object_draw_x_draw_y_text",
             "description": "Character Select selected modal row"
           },
           "v2_character_unselected_adapter": {
-            "order": 70,
             "object": "localization.font.v2.c.text.font.v2.character.unselected.adapter"
           }
         }
@@ -1673,37 +1820,30 @@
         },
         "fragments": {
           "v2_c_wrapped_body_common": {
-            "order": 23,
             "object": "localization.font.v2.c.text.font.v2.wrapped.body.common"
           },
           "v2_quit_body_adapter": {
-            "order": 24,
             "object": "localization.font.v2.c.text.font.v2.quit.body.adapter",
             "abi": "arg0_text_arg2",
             "description": "Quit confirmation body"
           },
           "v2_special_controls_body_adapter": {
-            "order": 25,
             "object": "localization.font.v2.c.text.font.v2.special.controls.body.adapter",
             "abi": "arg0_text_arg2",
             "description": "Special Controls explanatory body"
           },
           "v2_character_confirmation_body_adapter": {
-            "order": 64,
             "object": "localization.font.v2.c.text.font.v2.character.confirmation.body.adapter",
             "abi": "arg0_text_arg2",
             "description": "Character Select return-confirmation body"
           },
           "v2_c_character_confirmation_body_callback": {
-            "order": 66,
             "object": "localization.font.v2.c.text.font.v2.character.confirmation.body.callback"
           },
           "v2_collection_body_adapter": {
-            "order": 69,
             "object": "localization.font.v2.c.text.font.v2.collection.body.adapter"
           },
           "v2_c_collection_body_callback": {
-            "order": 73,
             "object": "localization.font.v2.c.text.font.v2.collection.body.callback"
           }
         }
@@ -1722,31 +1862,24 @@
         },
         "fragments": {
           "v2_practice_append": {
-            "order": 26,
             "object": "localization.font.v2.c.text.font.v2.practice.append"
           },
           "v2_c_icon_record": {
-            "order": 27,
             "object": "localization.font.v2.c.text.font.v2.icon.record"
           },
           "v2_practice_icon_metric": {
-            "order": 28,
             "object": "localization.font.v2.c.text.font.v2.practice.icon.metric"
           },
           "v2_practice_icon_draw": {
-            "order": 29,
             "object": "localization.font.v2.c.text.font.v2.practice.icon.draw"
           },
           "v2_c_practice_adapter_impl": {
-            "order": 30,
             "object": "localization.font.v2.c.text.font.v2.practice.adapter.impl"
           },
           "v2_c_command_relationship_impl": {
-            "order": 60,
             "object": "localization.font.v2.c.text.font.v2.command.relationship.impl"
           },
           "v2_c_command_icon_offset": {
-            "order": 61,
             "object": "localization.font.v2.c.text.font.v2.command.icon.offset"
           }
         }
@@ -1763,61 +1896,49 @@
         },
         "fragments": {
           "v2_c_jutsu_draw_callback": {
-            "order": 67,
             "object": "localization.font.v2.c.text.font.v2.jutsu.draw.callback"
           },
           "v2_jutsu_draw_entry": {
-            "order": 68,
             "object": "localization.font.v2.c.text.font.v2.jutsu.draw.entry"
           },
           "v2_c_collection_list_callback": {
-            "order": 71,
             "object": "localization.font.v2.c.text.font.v2.collection.list.callback"
           },
           "v2_collection_list_entry": {
-            "order": 72,
             "object": "localization.font.v2.c.text.font.v2.collection.list.entry",
             "abi": "text_highlight_native_x_native_y",
             "description": "Shared Collection list row classifier"
           },
           "v2_c_collection_plaque_callback": {
-            "order": 100,
             "object": "localization.font.v2.c.text.font.v2.collection.plaque.callback"
           },
           "v2_c_collection_plaque_draw": {
-            "order": 110,
             "object": "localization.font.v2.c.text.font.v2.collection.plaque.draw"
           },
           "v2_collection_plaque_adapter": {
-            "order": 102,
             "object": "localization.font.v2.c.text.font.v2.collection.plaque.adapter",
             "abi": "native_x_native_y_text_style",
             "description": "Shared non-Figure Collection top-plaque boxed layout"
           },
           "v2_collection_diorama_title_adapter": {
-            "order": 116,
             "object": "localization.font.v2.c.text.font.v2.collection.diorama.title.adapter",
             "abi": "native_x_native_y_text_style",
             "description": "Collection Diorama title two-line centered plaque adapter"
           },
           "v2_c_collection_diorama_title_callback": {
-            "order": 117,
             "object": "localization.font.v2.c.text.font.v2.collection.diorama.title.callback"
           },
           "v2_collection_diorama_prompt_adapter": {
-            "order": 118,
             "object": "localization.font.v2.c.text.font.v2.collection.diorama.prompt.adapter",
             "abi": "native_x_native_y_renderer_atlas_record",
             "description": "Collection Diorama localized Controls and Hide prompt adapter"
           },
           "v2_collection_diorama_display_prompt_adapter": {
-            "order": 119,
             "object": "localization.font.v2.c.text.font.v2.collection.diorama.display.prompt.adapter",
             "abi": "native_x_native_y_renderer_atlas_record",
             "description": "Collection Diorama localized Display prompt adapter"
           },
           "v2_collection_diorama_prompt_records": {
-            "order": 120,
             "object": "localization.font.v2.c.rodata.font.v2.collection.diorama.prompt.records"
           }
         }
@@ -1833,57 +1954,46 @@
         },
         "fragments": {
           "v2_c_settings_label_callback": {
-            "order": 74,
             "object": "localization.font.v2.c.text.font.v2.settings.label.callback"
           },
           "v2_c_settings_heading_callback": {
-            "order": 75,
             "object": "localization.font.v2.c.text.font.v2.settings.heading.callback"
           },
           "v2_c_settings_value_callback": {
-            "order": 76,
             "object": "localization.font.v2.c.text.font.v2.settings.value.callback"
           },
           "v2_c_settings_row_common": {
-            "order": 77,
             "object": "localization.font.v2.c.text.font.v2.settings.row.common"
           },
           "v2_battle_settings_label_adapter": {
-            "order": 78,
             "object": "localization.font.v2.c.text.font.v2.battle.settings.label.adapter",
             "abi": "text_style_native_x_native_y",
             "description": "Battle Settings label row"
           },
           "v2_practice_settings_label_adapter": {
-            "order": 79,
             "object": "localization.font.v2.c.text.font.v2.practice.settings.label.adapter",
             "abi": "text_style_native_x_native_y",
             "description": "Practice Settings label row"
           },
           "v2_settings_value_adapter": {
-            "order": 80,
             "object": "localization.font.v2.c.text.font.v2.settings.value.adapter",
             "abi": "text_color_native_x_native_y",
             "description": "Practice Settings centered value"
           },
           "v2_practice_settings_heading_adapter": {
-            "order": 81,
             "object": "localization.font.v2.c.text.font.v2.practice.settings.heading.adapter",
             "abi": "text_color_native_x_native_y",
             "description": "Practice Settings section heading"
           },
           "v2_battle_settings_value_adapter": {
-            "order": 103,
             "object": "localization.font.v2.c.text.font.v2.battle.settings.value.adapter",
             "abi": "text_color_native_x_native_y",
             "description": "Ordinary Battle Settings centered value with caller-local raster phase"
           },
           "v2_c_settings_value_common": {
-            "order": 126,
             "object": "localization.font.v2.c.text.font.v2.settings.value.common"
           },
           "v2_battle_settings_alternate_value_adapter": {
-            "order": 127,
             "object": "localization.font.v2.c.text.font.v2.battle.settings.alternate.value.adapter",
             "abi": "text_color_native_x_native_y",
             "description": "Alternate Battle Settings centered value with caller-local raster phase"
@@ -1903,63 +2013,49 @@
         },
         "fragments": {
           "v2_c_ninja_text_callback": {
-            "order": 82,
             "object": "localization.font.v2.c.text.font.v2.ninja.text.callback"
           },
           "v2_c_ninja_text_common": {
-            "order": 83,
             "object": "localization.font.v2.c.text.font.v2.ninja.text.common"
           },
           "v2_ninja_compact_adapter": {
-            "order": 84,
             "object": "localization.font.v2.c.text.font.v2.ninja.compact.adapter"
           },
           "v2_ninja_unit_adapter": {
-            "order": 85,
             "object": "localization.font.v2.c.text.font.v2.ninja.unit.adapter"
           },
           "v2_ninja_equals_adapter": {
-            "order": 86,
             "object": "localization.font.v2.c.text.font.v2.ninja.equals.adapter"
           },
           "v2_ninja_total_adapter": {
-            "order": 87,
             "object": "localization.font.v2.c.text.font.v2.ninja.total.adapter"
           },
           "v2_ninja_empty_adapter": {
-            "order": 88,
             "object": "localization.font.v2.c.text.font.v2.ninja.empty.adapter"
           },
           "v2_c_ninja_objective_callback": {
-            "order": 89,
             "object": "localization.font.v2.c.text.font.v2.ninja.objective.callback"
           },
           "v2_c_ninja_objective_draw": {
-            "order": 90,
             "object": "localization.font.v2.c.text.font.v2.ninja.objective.draw"
           },
           "v2_ninja_arithmetic_template": {
-            "order": 91,
             "object": "localization.font.v2.c.text.font.v2.ninja.arithmetic.template",
             "abi": "native_x_native_y_row_set_row_index",
             "description": "Shared data-driven Ninja Song formula renderer for all fifteen rows"
           },
           "v2_ninja_objective_row_adapter": {
-            "order": 92,
             "object": "localization.font.v2.c.text.font.v2.ninja.objective.row.adapter",
             "abi": "page_row_record_display_index_row_y_bits",
             "description": "Shared Ninja Song visible objective-row renderer preserving the native index, marker, and prose strings"
           },
           "v2_c_ninja_bonus_label_draw": {
-            "order": 106,
             "object": "localization.font.v2.c.text.font.v2.ninja.bonus.label.draw"
           },
           "v2_c_ninja_bonus_total_draw": {
-            "order": 107,
             "object": "localization.font.v2.c.text.font.v2.ninja.bonus.total.draw"
           },
           "v2_ninja_bonus_template": {
-            "order": 108,
             "object": "localization.font.v2.c.text.font.v2.ninja.bonus.template",
             "abi": "native_x_native_y_row_set_row_index",
             "description": "Shared data-driven Ninja Song bonus renderer for every fight-dependent label and total"
@@ -1968,25 +2064,21 @@
       },
       "v2_practice_icon_map": {
         "kind": "rodata",
-        "order": 5,
         "alignment": 1,
         "value": "05040706090B0A0CFFFFFF00010302FFFF08"
       },
       "v2_practice_tokens": {
         "kind": "rodata",
-        "order": 4,
         "alignment": 1,
         "value": "3C69636F6E55503E00000000000000003C69636F6E444F574E3E0000000000003C69636F6E52494748543E00000000003C69636F6E4C4546543E0000000000003C69636F6E434952434C453E000000003C69636F6E545249414E474C453E00003C69636F6E5351554152453E000000003C69636F6E43524F53533E00000000003C69636F6E455443303E0000000000003C69636F6E4C313E00000000000000003C69636F6E52313E00000000000000003C69636F6E4C323E00000000000000003C69636F6E52323E00000000000000002000"
       },
       "v2_quit_active": {
         "kind": "data",
-        "order": 2,
         "alignment": 4,
         "value": "00000000"
       },
       "v2_session_pointer": {
         "kind": "data",
-        "order": 1,
         "alignment": 4,
         "value": "00000000"
       }
@@ -2213,11 +2305,9 @@
         "imports": {},
         "fragments": {
           "c_numeric_format_decimal": {
-            "order": 54,
             "object": "localization.font.numeric.asm.text.c.numeric.format.decimal"
           },
           "c_numeric_format_two_decimal": {
-            "order": 55,
             "object": "localization.font.numeric.asm.text.c.numeric.format.two.decimal"
           }
         }
@@ -2232,27 +2322,21 @@
         },
         "fragments": {
           "ninja_song_ascii_number": {
-            "order": 48,
             "object": "localization.font.numeric.c.text.font.ninja.song.ascii.number"
           },
           "save_load_day": {
-            "order": 49,
             "object": "localization.font.numeric.c.text.font.save.load.day"
           },
           "save_load_two": {
-            "order": 50,
             "object": "localization.font.numeric.c.text.font.save.load.two"
           },
           "save_load_year": {
-            "order": 51,
             "object": "localization.font.numeric.c.text.font.save.load.year"
           },
           "save_load_hour": {
-            "order": 52,
             "object": "localization.font.numeric.c.text.font.save.load.hour"
           },
           "battle_settings_time": {
-            "order": 53,
             "object": "localization.font.numeric.c.text.font.battle.settings.time"
           }
         }
@@ -2279,7 +2363,6 @@
         "imports": {},
         "fragments": {
           "localization_command_chart_name_draw": {
-            "order": 93,
             "object": "localization.ui.command.chart.text.localization.command.chart.name.draw"
           }
         }
@@ -2428,7 +2511,6 @@
         "imports": {},
         "fragments": {
           "localization_ui_battle_hud_fit_width": {
-            "order": 160,
             "object": "localization.ui.battle.hud.names.text.localization.ui.battle.hud.fit.width"
           }
         }
@@ -2442,23 +2524,18 @@
         },
         "fragments": {
           "localization_item_status_update_tail": {
-            "order": 168,
             "object": "localization.ui.item.status.c.text.localization.item.status.update.tail"
           },
           "localization_item_status_numeric_draw": {
-            "order": 169,
             "object": "localization.ui.item.status.c.text.localization.item.status.numeric.draw"
           },
           "localization_item_status_single_draw": {
-            "order": 170,
             "object": "localization.ui.item.status.c.text.localization.item.status.single.draw"
           },
           "localization_item_status_paired_draw": {
-            "order": 171,
             "object": "localization.ui.item.status.c.text.localization.item.status.paired.draw"
           },
           "localization_item_status_fixed_draw": {
-            "order": 172,
             "object": "localization.ui.item.status.c.text.localization.item.status.fixed.draw"
           }
         }
@@ -2470,7 +2547,6 @@
         "imports": {},
         "fragments": {
           "localization_item_status_foreground_draw": {
-            "order": 173,
             "object": "localization.ui.item.status.renderer.asm.text.localization.item.status.foreground.draw"
           }
         }
@@ -2484,7 +2560,6 @@
         },
         "fragments": {
           "localization_item_status_update_tail_bridge": {
-            "order": 174,
             "object": "localization.ui.item.status.update.asm.text.localization.item.status.update.tail.bridge"
           }
         }
@@ -2496,11 +2571,9 @@
         "imports": {},
         "fragments": {
           "localization_ui_jutsu_selector_arrow_draw_lower": {
-            "order": 166,
             "object": "localization.ui.jutsu.selector.arrows.text.localization.ui.jutsu.selector.arrow.draw.lower"
           },
           "localization_ui_jutsu_selector_arrow_draw_upper": {
-            "order": 165,
             "object": "localization.ui.jutsu.selector.arrows.text.localization.ui.jutsu.selector.arrow.draw.upper"
           }
         }
@@ -2512,7 +2585,6 @@
         "imports": {},
         "fragments": {
           "localization_ui_jutsu_selector_arrows_suppress_horizontal": {
-            "order": 167,
             "object": "localization.ui.jutsu.selector.arrows.abi.text.localization.ui.jutsu.selector.arrows.suppress.horizontal"
           }
         }
@@ -2524,7 +2596,6 @@
         "imports": {},
         "fragments": {
           "localization_ui_stage_select_name_draw": {
-            "order": 161,
             "object": "localization.ui.stage.select.text.localization.ui.stage.select.name.draw"
           }
         }
@@ -2538,15 +2609,12 @@
         },
         "fragments": {
           "localization_ui_battle_hud_fit_width_adapter": {
-            "order": 162,
             "object": "localization.ui.layout.abi.text.localization.ui.battle.hud.fit.width.adapter"
           },
           "localization_ui_common_prompt_x_offset": {
-            "order": 163,
             "object": "localization.ui.layout.abi.text.localization.ui.common.prompt.x.offset"
           },
           "localization_ui_vs_confirmation_jutsu_label_place": {
-            "order": 164,
             "object": "localization.ui.layout.abi.text.localization.ui.vs.confirmation.jutsu.label.place"
           }
         }
@@ -2727,51 +2795,39 @@
         },
         "fragments": {
           "character_select_support_selection_rework_buffers": {
-            "order": 116,
             "object": "character.select.support.selection.rework.bss.character.select.support.selection.rework.buffers"
           },
           "character_select_support_selection_rework_entries": {
-            "order": 106,
             "object": "character.select.support.selection.rework.rodata.character.select.support.selection.rework.entries"
           },
           "character_select_support_selection_rework_display_id": {
-            "order": 109,
             "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.display.id"
           },
           "character_select_support_selection_rework_draw_name_callback": {
-            "order": 115,
             "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.draw.name.callback"
           },
           "character_select_support_selection_rework_draw_selected_name": {
-            "order": 114,
             "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.draw.selected.name"
           },
           "character_select_support_selection_rework_draw_support_cell": {
-            "order": 117,
             "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.draw.support.cell"
           },
           "character_select_support_selection_rework_confirm_fighter": {
-            "order": 118,
             "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.confirm.fighter"
           },
           "character_select_support_selection_rework_finalize_support": {
-            "order": 121,
             "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.finalize.support"
           },
           "character_select_support_selection_rework_return_from_finalized": {
-            "order": 119,
             "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.return.from.finalized"
           },
           "character_select_support_selection_rework_is_compatible": {
-            "order": 108,
             "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.is.compatible"
           },
           "character_select_support_selection_rework_bounded_support_navigation": {
-            "order": 127,
             "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.bounded.support.navigation"
           },
           "character_select_support_selection_rework_prepend": {
-            "order": 107,
             "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.prepend"
           }
         }
@@ -2779,7 +2835,7 @@
     }
   },
   "i__practice__settings_rework": {
-    "description": "Map a compact feature-aware Practice Settings row list onto the native controller slots, transactions, row widgets, localized draw calls, sounds, animations, and scroll path, including the shared Chakra, Gauge, or Free substitution resource mode.",
+    "description": "Map a compact feature-aware Practice Settings row list onto the native controller slots, transactions, row widgets, localized draw calls, sounds, animations, and scroll path, including every shared runtime selector.",
     "hooks": {
       "apply_configured_defaults": {
         "description": "Preserve the native initializer tail, then apply only the configured Health, Commands, Guide Ninja Sound, and Linked Attack defaults.",
@@ -2791,7 +2847,7 @@
         "replacement_hex": "0000000800000000"
       },
       "apply_active_rows_on_confirm": {
-        "description": "Run the complete native Confirm transaction over its existing controller slots, then commit the shared substitution resource mode.",
+        "description": "Run the complete native Confirm transaction over its existing controller slots, then commit every staged shared runtime selector.",
         "target_id": "na2_btl",
         "offset": "0x1CD7F4",
         "expected_hex": "6804220C00000000",
@@ -2853,7 +2909,7 @@
         "replacement_hex": "0000000800000000"
       },
       "draw_compact_backing": {
-        "description": "Run the native backing renderer and draw the single additional native player-row backing only when the compact player section exceeds the animation's nine-row capacity.",
+        "description": "Run the native backing renderer and repeat the final native player-row backing for each compact row beyond the animation's nine-row capacity.",
         "target_id": "na2_btl",
         "offset": "0x1CE4D0",
         "expected_hex": "E4ED060C",
@@ -2861,7 +2917,7 @@
         "encoding": "jal26"
       },
       "initialize_active_rows_on_open": {
-        "description": "Run the native snapshot, resolve the compact row list's localized resources, and stage the shared substitution resource mode.",
+        "description": "Run the native snapshot, resolve the compact row list's localized resources, and stage every shared runtime selector.",
         "target_id": "na2_btl",
         "offset": "0x1CD078",
         "expected_hex": "EC03220C00000000",
@@ -2918,7 +2974,7 @@
         "encoding": "jal26"
       },
       "reset_active_rows_to_defaults": {
-        "description": "Run native Defaults, apply the configured native defaults to the controller slots, and reset the staged substitution resource mode without confirming.",
+        "description": "Run native Defaults, apply the configured native defaults to the controller slots, and reset every staged shared runtime selector without confirming.",
         "target_id": "na2_btl",
         "offset": "0x1CD83C",
         "expected_hex": "E404220C00000000",
@@ -2971,7 +3027,7 @@
         "replacement_hex": "0000000800000000"
       },
       "update_schema_help": {
-        "description": "Resolve running help from the selected semantic row, including the custom substitution explanation.",
+        "description": "Resolve running help from the selected semantic row, including every custom selector explanation.",
         "target_id": "na2_btl",
         "offset": "0x1CDE98",
         "expected_hex": "3C00038E09000224",
@@ -2999,83 +3055,78 @@
         },
         "fragments": {
           "practice_settings_active_labels": {
-            "order": 200,
             "object": "practice.settings.c.bss.practice.settings.active.labels"
           },
           "practice_settings_active_value_tables": {
-            "order": 201,
             "object": "practice.settings.c.bss.practice.settings.active.value.tables"
           },
           "practice_settings_substitution_staged": {
-            "order": 202,
             "object": "practice.settings.c.bss.practice.settings.substitution.staged"
           },
+          "practice_settings_ultimate_jutsu_staged": {
+            "object": "practice.settings.c.bss.practice.settings.ultimate.jutsu.staged"
+          },
+          "practice_settings_shadowblur_staged": {
+            "object": "practice.settings.c.bss.practice.settings.shadowblur.staged"
+          },
+          "practice_settings_extra_hit_staged": {
+            "object": "practice.settings.c.bss.practice.settings.extra.hit.staged"
+          },
+          "practice_settings_sub_active_frames_staged": {
+            "object": "practice.settings.c.bss.practice.settings.sub.active.frames.staged"
+          },
+          "practice_settings_xdash_chakra_cost_staged": {
+            "object": "practice.settings.c.bss.practice.settings.xdash.chakra.cost.staged"
+          },
+          "practice_settings_support_staged": {
+            "object": "practice.settings.c.bss.practice.settings.support.staged"
+          },
+          "practice_settings_ultimate_jutsu_values": {
+            "object": "practice.settings.c.bss.practice.settings.ultimate.jutsu.values"
+          },
           "practice_settings_backing_layout": {
-            "order": 228,
             "object": "practice.settings.c.bss.practice.settings.backing.layout"
           },
           "practice_settings_apply": {
-            "order": 203,
             "object": "practice.settings.c.text.practice.settings.apply"
           },
           "practice_settings_apply_configured_defaults": {
-            "order": 229,
             "object": "practice.settings.c.text.practice.settings.apply.configured.defaults"
           },
           "practice_settings_change_value": {
-            "order": 204,
             "object": "practice.settings.c.text.practice.settings.change.value"
           },
           "practice_settings_defaults": {
-            "order": 205,
             "object": "practice.settings.c.text.practice.settings.defaults"
           },
           "practice_settings_draw_backing": {
-            "order": 231,
             "object": "practice.settings.c.text.practice.settings.draw.backing"
           },
           "practice_settings_get_max_value": {
-            "order": 206,
             "object": "practice.settings.c.text.practice.settings.get.max.value"
           },
           "practice_settings_get_value": {
-            "order": 207,
             "object": "practice.settings.c.text.practice.settings.get.value"
           },
           "practice_settings_helpers": {
-            "order": 227,
             "object": "practice.settings.c.text"
           },
           "practice_settings_navigate": {
-            "order": 208,
             "object": "practice.settings.c.text.practice.settings.navigate"
           },
           "practice_settings_row_enabled": {
-            "order": 209,
             "object": "practice.settings.c.text.practice.settings.row.enabled"
           },
           "practice_settings_snapshot": {
-            "order": 210,
             "object": "practice.settings.c.text.practice.settings.snapshot"
           },
-          "practice_settings_substitution_help": {
-            "order": 211,
-            "object": "practice.settings.c.rodata.practice.settings.substitution.help"
-          },
-          "practice_settings_substitution_label": {
-            "order": 212,
-            "object": "practice.settings.c.rodata.practice.settings.substitution.label"
-          },
           "practice_settings_prepare_backing_and_compose": {
-            "order": 230,
             "object": "practice.settings.c.text.practice.settings.prepare.backing.and.compose"
           },
           "practice_settings_update_help": {
-            "order": 214,
             "object": "practice.settings.c.text.practice.settings.update.help"
           },
           "practice_settings_update_window": {
-            "order": 215,
             "object": "practice.settings.c.text.practice.settings.update.window"
           }
         }
@@ -3093,47 +3144,36 @@
         },
         "fragments": {
           "practice_settings_after_value_change_bridge": {
-            "order": 216,
             "object": "practice.settings.asm.text.practice.settings.after.value.change.bridge"
           },
           "practice_settings_cursor_section_bridge": {
-            "order": 217,
             "object": "practice.settings.asm.text.practice.settings.cursor.section.bridge"
           },
           "practice_settings_draw_loop_bridge": {
-            "order": 218,
             "object": "practice.settings.asm.text.practice.settings.draw.loop.bridge"
           },
           "practice_settings_draw_section_bridge": {
-            "order": 219,
             "object": "practice.settings.asm.text.practice.settings.draw.section.bridge"
           },
           "practice_settings_draw_value_bridge": {
-            "order": 220,
             "object": "practice.settings.asm.text.practice.settings.draw.value.bridge"
           },
           "practice_settings_geometry_bridge": {
-            "order": 221,
             "object": "practice.settings.asm.text.practice.settings.geometry.bridge"
           },
           "practice_settings_help_bridge": {
-            "order": 222,
             "object": "practice.settings.asm.text.practice.settings.help.bridge"
           },
           "practice_settings_helper_max_bridge": {
-            "order": 223,
             "object": "practice.settings.asm.text.practice.settings.helper.max.bridge"
           },
           "practice_settings_helper_value_bridge": {
-            "order": 224,
             "object": "practice.settings.asm.text.practice.settings.helper.value.bridge"
           },
           "practice_settings_scroll_flags_bridge": {
-            "order": 225,
             "object": "practice.settings.asm.text.practice.settings.scroll.flags.bridge"
           },
           "practice_settings_selected_is_player": {
-            "order": 226,
             "object": "practice.settings.asm.text.practice.settings.selected.is.player"
           }
         }
@@ -3160,7 +3200,6 @@
         "imports": {},
         "fragments": {
           "compatibility": {
-            "order": 126,
             "object": "qol.content.unlock.all.demon.wind.bomb.text.qol.demon.wind.bomb.compatibility",
             "abi": "character_id_jutsu_id",
             "description": "Admit Demon Wind Bomb only for Classic Naruto and retain the native special-compatibility result for every other pair."
@@ -3237,43 +3276,36 @@
         "imports": {},
         "fragments": {
           "character": {
-            "order": 100,
             "object": "qol.content.unlock.all.text.qol.unlock.all.character",
             "abi": "unused_save_data_character_id",
             "description": "Return available for one of the 94 character-status entries enabled by the fully unlocked reference save."
           },
           "character_form_progress": {
-            "order": 105,
             "object": "qol.content.unlock.all.text.qol.unlock.all.character.form.progress",
             "abi": "unused_save_data_unused_index",
             "description": "Return the fully unlocked saved-progress value used by Character Select's R1-form gate."
           },
           "secondary": {
-            "order": 101,
             "object": "qol.content.unlock.all.text.qol.unlock.all.secondary",
             "abi": "unused_save_data_content_id",
             "description": "Return availability for one bounded secondary-content ID."
           },
           "small_table": {
-            "order": 102,
             "object": "qol.content.unlock.all.text.qol.unlock.all.small.table",
             "abi": "unused_save_data_content_id",
             "description": "Return the fully unlocked value for one bounded small-table content ID."
           },
           "grouped": {
-            "order": 103,
             "object": "qol.content.unlock.all.text.qol.unlock.all.grouped",
             "abi": "unused_save_data_group_id_content_id",
             "description": "Return an unlocked value for one bounded grouped content ID, using the native stable value for Collection figures."
           },
           "jutsu": {
-            "order": 104,
             "object": "qol.content.unlock.all.text.qol.unlock.all.jutsu",
             "abi": "unused_character_record_character_id_jutsu_id",
             "description": "Return available for a character-and-jutsu pair already accepted by native metadata checks."
           },
           "ultimate_difficulty": {
-            "order": 124,
             "object": "qol.content.unlock.all.text.qol.unlock.all.ultimate.difficulty",
             "abi": "progress_base_progress_id",
             "description": "Report the Ultimate difficulty progress gate available while preserving native reads for every other progress ID."
@@ -3302,7 +3334,6 @@
         "imports": {},
         "fragments": {
           "display_only_first_save_update": {
-            "order": 125,
             "object": "qol.save.load.display.only.first.save.text.save.load.display.only.first.save.update"
           }
         }
@@ -3347,26 +3378,21 @@
         },
         "fragments": {
           "ensure": {
-            "order": 130,
             "object": "qol.startup.faster.loading.text.startup.voice.loading.ensure"
           },
           "initialize": {
-            "order": 120,
             "object": "qol.startup.faster.loading.text.startup.voice.loading.initialize"
           },
           "player": {
-            "order": 150,
             "object": "qol.startup.faster.loading.text.startup.voice.loading.player"
           },
           "rpg": {
-            "order": 140,
             "object": "qol.startup.faster.loading.text.startup.voice.loading.rpg"
           }
         }
       },
       "voice_state": {
         "kind": "data",
-        "order": 2,
         "alignment": 4,
         "value": "FFFFFFFF000000000000000000000000000000000000000000000000"
       }
@@ -3402,46 +3428,36 @@
         },
         "fragments": {
           "hook": {
-            "order": 10,
             "object": "qol.startup.loading.text.startup.loading.hook"
           },
           "constants": {
-            "order": 20,
             "object": "qol.startup.loading.rodata"
           },
           "vertex": {
-            "order": 30,
             "object": "qol.startup.loading.text.startup.loading.vertex"
           },
           "rect": {
-            "order": 40,
             "object": "qol.startup.loading.text.startup.loading.rect"
           },
           "color": {
-            "order": 50,
             "object": "qol.startup.loading.text.startup.loading.color"
           },
           "digit_mask": {
-            "order": 60,
             "object": "qol.startup.loading.text.startup.loading.digit.mask"
           },
           "digit": {
-            "order": 70,
             "object": "qol.startup.loading.text.startup.loading.digit"
           },
           "percent_sign": {
-            "order": 80,
             "object": "qol.startup.loading.text.startup.loading.percent.sign"
           },
           "draw": {
-            "order": 90,
             "object": "qol.startup.loading.text.startup.loading.draw"
           }
         }
       },
       "state": {
         "kind": "data",
-        "order": 1,
         "alignment": 4,
         "value": "0000000000000000"
       }
@@ -3477,22 +3493,18 @@
         },
         "fragments": {
           "automatic_save_loading_update": {
-            "order": 110,
             "object": "qol.startup.save.loading.automatic.text.startup.automatic.save.loading"
           },
           "savedata_notification_constants": {
-            "order": 111,
             "object": "qol.startup.save.loading.automatic.rodata"
           },
           "savedata_notification_draw": {
-            "order": 112,
             "object": "qol.startup.save.loading.automatic.text.startup.save.notification.draw"
           }
         }
       },
       "savedata_notification_state": {
         "kind": "data",
-        "order": 113,
         "alignment": 4,
         "value": "0000000000000000000000000000000000000000"
       }

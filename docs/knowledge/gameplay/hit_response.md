@@ -103,6 +103,30 @@ byte decoding of the exact clean binaries for response tables and native action
 identifiers. No live-memory capture was used, so frame-visible animation names
 and player-facing move labels remain unassigned.
 
+## Selectable extra-hit branch gates
+
+Two previously unconditional edits were traced to their clean resident control
+flow before being replaced by runtime selectors:
+
+- In `FUN_0023b280`, runtime `0x0023B5E8` (ELF file `0x0013B6E8`) is
+  `beq v0,1,0x0023B60C` with a `nop` delay slot. The `v0 == 1` path runs the
+  call block at `0x0023B60C..0x0023B638`; its former disabled edit instead
+  branched directly to `0x0023B910`. Other results continue at `0x0023B5F0`.
+  A runtime gate can therefore preserve the non-`1` branch and select either
+  the call block or its established disabled continuation only for result `1`.
+- In `FUN_002455b0`, runtime `0x002457C8` (ELF file `0x001458C8`) is
+  `beqz v0,0x002459B4` with a `nop` delay slot. A nonzero predicate normally
+  enters the side-effect path at `0x002457D0` and returns `1` through
+  `0x002459A8`; the former three-edit disabled form skipped those side effects
+  while preserving the zero/nonzero return through `0x002459B4` or
+  `0x002459A8`. A runtime gate can make the same choice without changing the
+  predicate's return value.
+
+The player-facing names `Extra Hit` and `Shadowblur Extra Hit` come from the
+pre-existing canonical patch IDs and descriptions. This static trace
+establishes the exact branch and continuation behavior, not those gameplay
+names. Runtime gameplay confirmation remains pending.
+
 ## Fighter fields used by the response machine
 
 These fields are statically confirmed by reads and writes in the routines

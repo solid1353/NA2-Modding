@@ -1,110 +1,60 @@
 {
   features: {
-    battle: {
-      description: "Runtime-proven battle behavior and substitution settings.",
-      shadowblur_extra_hit_disabled: setting {
-        description: "Shadowblur extra-hit behavior.",
-        patches: [
-          "e__battle_logic__disable_shadowblur_extra_hit",
-        ],
-      },
-      extra_hit_disabled_with_aura_punishment_for_initiator: setting {
-        description: "Apply aura punishment to the initiator without the native extra hit.",
-        patches: [
-          "e__battle_logic__disable_extra_hit_with_aura_punishment_for_initiator__retain_aura_punishment",
-        ],
-      },
-      character_overrides: setting {
-        description: "Load layered per-character battle overrides.",
-        patches: [
-          "i__battle_logic__character_overrides",
-        ],
-      },
-      control_settings_rework: setting {
+    settings: {
+      description: "In-game settings menus and shared defaults.",
+      controls: setting {
         description: "Expose Guard and Substitution as independent remappable actions and default both players to L1 Substitution, R1 Guard, L2 Item Select, and R2 Linked Attack.",
         patches: [
           "e__battle__control_settings_rework",
           "i__battle__control_settings_rework",
         ],
       },
-      simple_display: setting<"off" | "on"> {
-        description: "Choose whether battles start with the native Simple Display setting off or on.",
-        patches: [
-          "e__battle__simple_display",
-        ],
-      },
-      xdash_chakra_cost: setting<decimal & 0..100> {
-        description: "Normalized chakra percentage (x/100) spent when X-dash enters its committed dash phase.",
-        patches: [
-          "i__battle_logic__xdash_chakra_cost",
-        ],
-      },
-      substitution: {
-        description: "Independent substitution timing and resource settings.",
-        frames_before: setting<int & 0..16> {
-          description: "Number of 30 FPS input-history frames before impact accepted for otherwise eligible substitutions; replaces attack-authored random timing.",
-          patches: [
-            "e__battle_logic__substitution__frames_before",
-          ],
-        },
-        frames_after: setting<int & 0..16> {
-          description: "Number of 30 FPS ordinary hit-response frames after impact during which an otherwise eligible substitution can still activate.",
-          patches: [
-            "i__battle_logic__substitution__frames_after",
-          ],
-        },
-        gauge: setting<{
-          default: "chakra" | "gauge" | "free",
-          recovery_delay_seconds?: decimal & 0..60 & step 0.25,
-          refill_seconds_per_stock?: decimal & >0 & <=10 & step 0.05,
-          damage_recovery?: bool,
-          damage_percent_per_stock?: decimal & >0 & <=100 & step 0.25,
-        }> {
-          description: "Install a selectable Chakra, Gauge, or Free substitution resource mode in pre-battle and Practice Settings. Gauge uses a 100-point resource with optionally configurable recovery and each character's normalized substitution cost, displayed through an independent textured bar below each top chakra bar with a matching cost marker. Omitted recovery values use the parity defaults. Requires Character Overrides. Battle Support Disabled independently controls whether field support and its native lower gauge are available.",
-          patches: [
-            "i__battle__settings_rework",
-            "i__battle_logic__substitution__gauge",
-          ],
-        },
-      },
-      support_disabled: setting {
-        description: "Disable free-field support calls and hide the native battle support gauge without changing Character Select support rosters, selected supports, or linked Jutsu.",
-        patches: [
-          "i__battle__support_disabled",
-        ],
-      },
-      ultimate_jutsu: {
-        description: "Independent Ultimate Jutsu contest and battle-HUD behavior.",
-        contest_disabled: setting {
-          description: "Disable both players' inputs during the Ultimate Jutsu contest and suppress its meter, prompts, and result messages.",
-          patches: [
-            "e__battle_logic__ultimate_jutsu__contest_disabled",
-            "i__battle__settings_rework",
-          ],
-        },
-        hud_hidden: setting {
-          description: "Hide the complete battle HUD during the Ultimate Jutsu contest through the native ordinary-jutsu transition.",
-          patches: [
-            "i__battle_logic__ultimate_jutsu__hud_hidden",
-          ],
-        },
-      },
-    },
-    practice: {
-      description: "Practice-mode menu and default settings.",
-      settings_rework: setting<{
+      practice: setting<{
         health?: "full" | "half" | "critical",
         commands?: "off" | "on",
         guide_ninja_sound?: "off" | "on",
         linked_attack?: "off" | "on" | "random",
       }> {
-        description: "Own the compact native Practice Settings menu and optionally configure its Health, Commands, Guide Ninja Sound, and Linked Attack defaults; expose the shared Substitution Chakra, Gauge, or Free mode when the substitution gauge feature is enabled.",
+        description: "Own the compact native Practice Settings menu and optionally configure its Health, Commands, Guide Ninja Sound, and Linked Attack defaults; expose every shared runtime selector.",
         patches: [
           "i__practice__settings_rework",
         ],
       },
+      shared: setting<{
+        ultimate_jutsu: "no_use" | "random" | "command" | "timing" | "turn" | "combo" | "no_contest" | "no_hud",
+        shadowblur: "off" | "on",
+        extra_hit: "off" | "on",
+        sub_active_frames: int & 0..16,
+        xdash_chakra_cost: int & 0..100 & step 5,
+        support: "off" | "on",
+        simple_display: "off" | "on",
+        substitution: {
+          default: "chakra" | "gauge" | "free",
+          recovery_delay_seconds?: decimal & 0..60 & step 0.25,
+          refill_seconds_per_stock?: decimal & >0 & <=10 & step 0.05,
+          damage_recovery?: bool,
+          damage_percent_per_stock?: decimal & >0 & <=100 & step 0.25,
+        },
+      }> {
+        description: "Install the shared Ultimate Jutsu, Shadowblur Extra Hit, Extra Hit, pre-impact Substitution input-window, X-dash chakra-cost, Support, and Substitution selectors in Battle Settings and Practice Settings, choose their initial and reset values, and choose the initial Simple Display value. No Contest suppresses contest inputs and UI while retaining its lifecycle; No HUD includes No Contest and hides the complete battle HUD through the native transition. Gauge uses the configured recovery behavior and requires Character Overrides.",
+        patches: [
+          "e__battle__simple_display",
+          "i__battle__settings_rework",
+          "i__battle__support",
+          "i__battle_logic__sub_active_frames",
+          "i__battle_logic__settings",
+          "i__battle_logic__substitution__gauge",
+          "i__battle_logic__xdash_chakra_cost",
+        ],
+      },
     },
     general: {
+      character_overrides: setting {
+        description: "Load layered per-character battle overrides.",
+        patches: [
+          "i__battle_logic__character_overrides",
+        ],
+      },
       unlock_all: setting {
         description: "Expose the characters, supports, stages, jutsu, Shop items, and Collection entries present in a fully unlocked save without changing saved progress, currency, inventory, or settings.",
         patches: [

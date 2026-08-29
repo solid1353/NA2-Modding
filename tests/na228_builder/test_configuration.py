@@ -532,7 +532,6 @@ class ConfigurationTests(unittest.TestCase):
                     "imports": {},
                     "fragments": {
                         "runtime_code": {
-                            "order": 1,
                             "object": "runtime.asm.text",
                         }
                     },

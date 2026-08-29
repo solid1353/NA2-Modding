@@ -47,9 +47,12 @@ class SubstitutionGaugeTests(unittest.TestCase):
         gauge_node = next(
             node
             for node in selection.nodes
-            if node.path == ("features", "battle", "substitution", "gauge")
+            if node.path == ("features", "settings", "shared")
         )
-        self.assertEqual(gauge_node.configured_value, {"default": "gauge"})
+        self.assertEqual(
+            gauge_node.configured_value["substitution"],
+            {"default": "gauge"},
+        )
         self.assertIsNotNone(gauge)
         assert gauge is not None
         self.assertEqual(
@@ -59,7 +62,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_false_disables_gauge(self) -> None:
         features = self._base_features()
-        features["battle"]["substitution"]["gauge"] = False
+        features["settings"]["shared"] = False
         selection = catalog.load_selection(
             self.catalog_path,
             self._write_full_configuration(features),
@@ -73,10 +76,10 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_true_is_invalid_when_default_is_mandatory(self) -> None:
         features = self._base_features()
-        features["battle"]["substitution"]["gauge"] = True
+        features["settings"]["shared"] = True
         with self.assertRaisesRegex(
             catalog.ConfigurationError,
-            "features.battle.substitution.gauge",
+            "features.settings.shared",
         ):
             catalog.load_selection(
                 self.catalog_path,
@@ -84,7 +87,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
             )
     def test_advanced_configuration_encodes_exact_integer_counts(self) -> None:
         features = self._base_features()
-        features["battle"]["substitution"]["gauge"] = {
+        features["settings"]["shared"]["substitution"] = {
             "default": "chakra",
             "recovery_delay_seconds": 0.25,
             "refill_seconds_per_stock": 0.05,
@@ -108,7 +111,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_partial_configuration_inherits_omitted_defaults(self) -> None:
         features = self._base_features()
-        features["battle"]["substitution"]["gauge"] = {
+        features["settings"]["shared"]["substitution"] = {
             "default": "free",
             "recovery_delay_seconds": 10,
             "damage_recovery": False,
@@ -128,19 +131,20 @@ class SubstitutionGaugeTests(unittest.TestCase):
             (60, 240, 600, 20480, 0, 2),
         )
 
-    def test_gauge_can_coexist_with_native_support(self) -> None:
+    def test_gauge_can_coexist_with_support_on(self) -> None:
         features = self._base_features()
-        features["battle"]["substitution"]["gauge"] = {"default": "gauge"}
-        features["battle"]["support_disabled"] = False
+        features["settings"]["shared"]["substitution"] = {"default": "gauge"}
+        features["settings"]["shared"]["support"] = "on"
         selection = catalog.load_selection(
             self.catalog_path,
             self._write_full_configuration(features),
         )
-        self.assertFalse(
-            selection.node_enabled(
-                "features", "battle", "support_disabled"
-            )
+        shared = next(
+            node
+            for node in selection.nodes
+            if node.path == ("features", "settings", "shared")
         )
+        self.assertEqual(shared.configured_value["support"], "on")
         gauge = substitution_gauge_fragment(
             selection,
             owner="battle.runtime_injector",
@@ -203,8 +207,8 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_gauge_requires_character_overrides(self) -> None:
         features = self._base_features()
-        features["battle"]["substitution"]["gauge"] = {"default": "gauge"}
-        features["battle"]["character_overrides"] = False
+        features["settings"]["shared"]["substitution"] = {"default": "gauge"}
+        features["general"]["character_overrides"] = False
         selection = catalog.load_selection(
             self.catalog_path,
             self._write_full_configuration(features),
@@ -353,7 +357,6 @@ class SubstitutionGaugeTests(unittest.TestCase):
         self.assertEqual(
             gauge_payload["fragments"]["substitution_gauge_fill_fraction"],
             {
-                "order": 135,
                 "object": (
                     "battle.logic.substitution.gauge.c.bss."
                     "substitution.gauge.fill.fraction"
@@ -363,7 +366,6 @@ class SubstitutionGaugeTests(unittest.TestCase):
         self.assertEqual(
             gauge_payload["fragments"]["substitution_gauge_update_and_cache"],
             {
-                "order": 123,
                 "object": (
                     "battle.logic.substitution.gauge.c.text."
                     "substitution.gauge.update.and.cache"
@@ -375,7 +377,6 @@ class SubstitutionGaugeTests(unittest.TestCase):
                 "substitution_gauge_draw_with_battle_hud"
             ],
             {
-                "order": 125,
                 "object": (
                     "battle.logic.substitution.gauge.c.text."
                     "substitution.gauge.draw.with.battle.hud"
@@ -385,7 +386,6 @@ class SubstitutionGaugeTests(unittest.TestCase):
         self.assertEqual(
             gauge_payload["fragments"]["substitution_gauge_runtime_state"],
             {
-                "order": 136,
                 "object": (
                     "battle.logic.substitution.gauge.c.bss."
                     "substitution.gauge.runtime.state"
@@ -393,20 +393,23 @@ class SubstitutionGaugeTests(unittest.TestCase):
             },
         )
 
-    def test_support_features_are_independently_selectable(self) -> None:
+    def test_shared_support_and_character_select_rework_are_independent(self) -> None:
         cases = (
             (True, True),
             (True, False),
             (False, True),
             (False, False),
         )
-        for support_disabled, selection_rework in cases:
+        for shared_enabled, selection_rework in cases:
             with self.subTest(
-                support_disabled=support_disabled,
+                shared=shared_enabled,
                 selection_rework=selection_rework,
             ):
                 features = self._base_features()
-                features["battle"]["support_disabled"] = support_disabled
+                shared = features["settings"]["shared"]
+                features["settings"]["shared"] = (
+                    shared if shared_enabled else False
+                )
                 features["character_select"][
                     "support_selection_rework"
                 ] = selection_rework
@@ -414,9 +417,9 @@ class SubstitutionGaugeTests(unittest.TestCase):
                     self.catalog_path,
                     self._write_full_configuration(features),
                 )
-                battle_injections = {
+                settings_injections = {
                     injection_id
-                    for node in selection.feature_nodes("battle")
+                    for node in selection.feature_nodes("settings")
                     if node.enabled
                     for injection_id in node.injection_ids
                 }
@@ -427,8 +430,8 @@ class SubstitutionGaugeTests(unittest.TestCase):
                     for injection_id in node.injection_ids
                 }
                 self.assertEqual(
-                    "i__battle__support_disabled" in battle_injections,
-                    support_disabled,
+                    "i__battle__support" in settings_injections,
+                    shared_enabled,
                 )
                 self.assertEqual(
                     "i__character_select__support_selection_rework"
@@ -436,41 +439,41 @@ class SubstitutionGaugeTests(unittest.TestCase):
                     selection_rework,
                 )
 
-    def test_support_disabled_owns_only_battle_suppression(self) -> None:
+    def test_support_selector_owns_only_battle_routing(self) -> None:
         selection = catalog.load_selection(
             self.catalog_path,
             self.configurations / "base.json",
         )
-        injection = selection.injections["i__battle__support_disabled"]
+        injection = selection.injections["i__battle__support"]
         self.assertEqual(
             set(injection["hooks"]),
-            {"suppress_free_field_support_call", "suppress_support_gauge_draw"},
+            {"route_free_field_support_call", "route_support_gauge_draw"},
         )
         self.assertEqual(
-            injection["hooks"]["suppress_support_gauge_draw"],
+            injection["hooks"]["route_support_gauge_draw"],
             {
                 "description": (
-                    "Replace only the dedicated TEX_xgauge draw call with a "
-                    "no-op for both players while leaving the rest of the "
-                    "battle HUD native."
+                    "Wrap only the dedicated TEX_xgauge draw call for both "
+                    "players, preserving it while Support is On and "
+                    "suppressing it while Off."
                 ),
                 "target_id": "na2_btl",
                 "offset": "0x69398",
                 "expected_hex": "BC721C0C",
-                "symbol": "battle_support_disabled_hide_gauge",
+                "symbol": "battle_support_route_gauge_draw",
                 "encoding": "jal26",
             },
         )
-        support_payload = injection["payload"]["battle_support_disabled"]
-        self.assertEqual(support_payload["imports"], {})
+        support_payload = injection["payload"]["battle_support"]
+        self.assertEqual(support_payload["imports"], {"support_get": "support_get"})
 
         selection_rework = selection.injections[
             "i__character_select__support_selection_rework"
         ]
         self.assertNotIn(
-            "suppress_free_field_support_call", selection_rework["hooks"]
+            "route_free_field_support_call", selection_rework["hooks"]
         )
-        self.assertNotIn("suppress_support_gauge_draw", selection_rework["hooks"])
+        self.assertNotIn("route_support_gauge_draw", selection_rework["hooks"])
         self.assertEqual(
             set(selection_rework["payload"]),
             {"character_select_support_selection_rework"},

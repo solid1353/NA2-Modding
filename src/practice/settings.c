@@ -9,7 +9,7 @@ typedef unsigned int u32;
 #define PRACTICE_SETTINGS_USED_SECTION(name) \
     __attribute__((section(name), aligned(4), used))
 
-#define PRACTICE_SETTINGS_MAX_ROWS 18u
+#define PRACTICE_SETTINGS_MAX_ROWS 24u
 
 #define MANAGER_POINTER_ADDRESS 0x00607600u
 
@@ -64,7 +64,13 @@ typedef unsigned int u32;
 #define WINDOW_APPROACH_STEP 20.0f
 
 #define ROW_ID_STATUS 9u
+#define ROW_ID_ULTIMATE_JUTSU 3u
 #define ROW_ID_SUBSTITUTION 17u
+#define ROW_ID_SHADOWBLUR 18u
+#define ROW_ID_EXTRA_HIT 19u
+#define ROW_ID_SUB_ACTIVE_FRAMES 20u
+#define ROW_ID_XDASH_CHAKRA_COST 21u
+#define ROW_ID_SUPPORT 22u
 #define PROFILE_ULTIMATE_DIFFICULTY_SLOT 0x6Au
 
 #define ROW_AVAILABLE_ALWAYS 0u
@@ -78,6 +84,15 @@ typedef unsigned int u32;
 #define ROW_FLAG_VALUES_SLOT 0x08u
 #define ROW_FLAG_STRENGTH_LIMIT 0x10u
 #define ROW_FLAG_CUSTOM_SUBSTITUTION 0x20u
+#define ROW_FLAG_CUSTOM_ULTIMATE_JUTSU 0x40u
+#define ROW_FLAG_CUSTOM_SHADOWBLUR 0x80u
+#define ROW_FLAG_CUSTOM_EXTRA_HIT 0x100u
+#define ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES 0x200u
+#define ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST 0x400u
+#define ROW_FLAG_CUSTOM_SUPPORT 0x800u
+
+#define ULTIMATE_JUTSU_NATIVE_MODE_COUNT 6u
+#define ULTIMATE_JUTSU_NATIVE_DEFAULT 2u
 
 #define DEFAULT_PRESERVE_NATIVE 0xFFu
 #define SETTINGS_COMMANDS_MASK 0x01u
@@ -128,31 +143,54 @@ typedef struct PracticeSettingsSchema {
     u8 default_commands;
     u8 default_guide_ninja_sound;
     u8 default_linked_attack;
+    u8 default_ultimate_jutsu;
+    u8 reserved[3];
     u32 substitution_mode_get;
     u32 substitution_mode_set;
+    u32 ultimate_jutsu_mode_get;
+    u32 ultimate_jutsu_mode_set;
+    u32 ultimate_jutsu_no_contest_label;
+    u32 ultimate_jutsu_no_hud_label;
+    u32 shadowblur_get;
+    u32 shadowblur_set;
+    u32 extra_hit_get;
+    u32 extra_hit_set;
+    u32 sub_active_frames_get;
+    u32 sub_active_frames_set;
+    u32 xdash_chakra_cost_option_get;
+    u32 xdash_chakra_cost_option_set;
+    u32 support_get;
+    u32 support_set;
     PracticeSettingsRow rows[1];
 } PracticeSettingsSchema;
 
 extern const PracticeSettingsSchema practice_settings_schema;
-typedef u32 (*SubstitutionModeGet)(void);
-typedef void (*SubstitutionModeSet)(u32 mode);
-
-const u8 practice_settings_substitution_label[]
-    PRACTICE_SETTINGS_USED_SECTION(
-        ".rodata.practice_settings_substitution_label"
-    ) = "Substitution";
-
-const u8 practice_settings_substitution_help[]
-    PRACTICE_SETTINGS_USED_SECTION(
-        ".rodata.practice_settings_substitution_help"
-    ) = "Choose whether substitutions consume chakra, the gauge, or nothing.";
+typedef u32 (*UltimateJutsuModeGet)(void);
+typedef void (*UltimateJutsuModeSet)(u32 mode);
+typedef u32 (*ToggleModeGet)(void);
+typedef void (*ToggleModeSet)(u32 enabled);
 
 volatile u32 practice_settings_active_labels[PRACTICE_SETTINGS_MAX_ROWS]
     __attribute__((section(".bss.practice_settings_active_labels")));
 volatile u32 practice_settings_active_value_tables[PRACTICE_SETTINGS_MAX_ROWS]
     __attribute__((section(".bss.practice_settings_active_value_tables")));
+volatile u32 practice_settings_ultimate_jutsu_values[
+    ULTIMATE_JUTSU_NATIVE_MODE_COUNT + 2u
+] __attribute__((section(".bss.practice_settings_ultimate_jutsu_values")));
 volatile s32 practice_settings_substitution_staged
     __attribute__((section(".bss.practice_settings_substitution_staged")));
+volatile s32 practice_settings_ultimate_jutsu_staged
+    __attribute__((section(".bss.practice_settings_ultimate_jutsu_staged")));
+volatile s32 practice_settings_shadowblur_staged
+    __attribute__((section(".bss.practice_settings_shadowblur_staged")));
+volatile s32 practice_settings_extra_hit_staged
+    __attribute__((section(".bss.practice_settings_extra_hit_staged")));
+volatile s32 practice_settings_sub_active_frames_staged
+    __attribute__((section(".bss.practice_settings_sub_active_frames_staged")));
+volatile s32 practice_settings_xdash_chakra_cost_staged
+    __attribute__((section(".bss.practice_settings_xdash_chakra_cost_staged")));
+volatile s32 practice_settings_support_staged
+    __attribute__((section(".bss.practice_settings_support_staged")));
 
 typedef struct PracticeSettingsBackingLayout {
     u32 records;
@@ -169,6 +207,15 @@ PRACTICE_SETTINGS_SECTION(
 void practice_settings_apply_configured_defaults(u8 *settings)
 {
     settings[11] = 1u;
+    if (
+        practice_settings_schema.default_ultimate_jutsu !=
+        DEFAULT_PRESERVE_NATIVE
+    ) {
+        settings[2] = practice_settings_schema.default_ultimate_jutsu <
+            ULTIMATE_JUTSU_NATIVE_MODE_COUNT
+            ? practice_settings_schema.default_ultimate_jutsu
+            : ULTIMATE_JUTSU_NATIVE_DEFAULT;
+    }
 
     if (practice_settings_schema.default_health != DEFAULT_PRESERVE_NATIVE) {
         settings[1] = practice_settings_schema.default_health;
@@ -241,11 +288,35 @@ static void practice_settings_initialize_tables(void)
             row->label_reference,
             row->flags & ROW_FLAG_LABEL_SLOT
         );
-        practice_settings_active_value_tables[index] =
-            practice_settings_reference(
-                row->values_reference,
-                row->flags & ROW_FLAG_VALUES_SLOT
-            );
+        if ((row->flags & ROW_FLAG_CUSTOM_ULTIMATE_JUTSU) != 0u) {
+            const u32 *native_values = (const u32 *)
+                practice_settings_reference(
+                    row->values_reference,
+                    row->flags & ROW_FLAG_VALUES_SLOT
+                );
+            u32 value;
+
+            for (
+                value = 0u;
+                value < ULTIMATE_JUTSU_NATIVE_MODE_COUNT;
+                ++value
+            ) {
+                practice_settings_ultimate_jutsu_values[value] =
+                    native_values[value];
+            }
+            practice_settings_ultimate_jutsu_values[6] =
+                practice_settings_schema.ultimate_jutsu_no_contest_label;
+            practice_settings_ultimate_jutsu_values[7] =
+                practice_settings_schema.ultimate_jutsu_no_hud_label;
+            practice_settings_active_value_tables[index] =
+                (u32)practice_settings_ultimate_jutsu_values;
+        } else {
+            practice_settings_active_value_tables[index] =
+                practice_settings_reference(
+                    row->values_reference,
+                    row->flags & ROW_FLAG_VALUES_SLOT
+                );
+        }
     }
 }
 
@@ -301,6 +372,24 @@ s32 practice_settings_get_value(void *controller, s32 index)
     if ((row->flags & ROW_FLAG_CUSTOM_SUBSTITUTION) != 0u) {
         return practice_settings_substitution_staged;
     }
+    if ((row->flags & ROW_FLAG_CUSTOM_ULTIMATE_JUTSU) != 0u) {
+        return practice_settings_ultimate_jutsu_staged;
+    }
+    if ((row->flags & ROW_FLAG_CUSTOM_SHADOWBLUR) != 0u) {
+        return practice_settings_shadowblur_staged;
+    }
+    if ((row->flags & ROW_FLAG_CUSTOM_EXTRA_HIT) != 0u) {
+        return practice_settings_extra_hit_staged;
+    }
+    if ((row->flags & ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES) != 0u) {
+        return practice_settings_sub_active_frames_staged;
+    }
+    if ((row->flags & ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST) != 0u) {
+        return practice_settings_xdash_chakra_cost_staged;
+    }
+    if ((row->flags & ROW_FLAG_CUSTOM_SUPPORT) != 0u) {
+        return practice_settings_support_staged;
+    }
     return *(volatile s32 *)((u8 *)controller + row->local_offset);
 }
 
@@ -319,7 +408,56 @@ static void practice_settings_set_value(
         practice_settings_substitution_staged = value;
         return;
     }
+    if ((row->flags & ROW_FLAG_CUSTOM_ULTIMATE_JUTSU) != 0u) {
+        practice_settings_ultimate_jutsu_staged = value;
+        *(volatile s32 *)((u8 *)controller + row->local_offset) =
+            (u32)value < ULTIMATE_JUTSU_NATIVE_MODE_COUNT
+            ? value
+            : (s32)ULTIMATE_JUTSU_NATIVE_DEFAULT;
+        return;
+    }
+    if ((row->flags & ROW_FLAG_CUSTOM_SHADOWBLUR) != 0u) {
+        practice_settings_shadowblur_staged = value;
+        return;
+    }
+    if ((row->flags & ROW_FLAG_CUSTOM_EXTRA_HIT) != 0u) {
+        practice_settings_extra_hit_staged = value;
+        return;
+    }
+    if ((row->flags & ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES) != 0u) {
+        practice_settings_sub_active_frames_staged = value;
+        return;
+    }
+    if ((row->flags & ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST) != 0u) {
+        practice_settings_xdash_chakra_cost_staged = value;
+        return;
+    }
+    if ((row->flags & ROW_FLAG_CUSTOM_SUPPORT) != 0u) {
+        practice_settings_support_staged = value;
+        return;
+    }
     *(volatile s32 *)((u8 *)controller + row->local_offset) = value;
+}
+
+static void practice_settings_stage_runtime_mode(
+    void *controller,
+    u32 row_id,
+    u32 getter_address
+)
+{
+    s32 index;
+
+    if (getter_address == 0u) {
+        return;
+    }
+    index = practice_settings_index_for_id(row_id);
+    if (index >= 0) {
+        practice_settings_set_value(
+            controller,
+            index,
+            (s32)((ToggleModeGet)getter_address)()
+        );
+    }
 }
 
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_snapshot")
@@ -330,10 +468,63 @@ void practice_settings_snapshot(void *controller)
 
     native_snapshot(controller);
     practice_settings_initialize_tables();
-    if (practice_settings_schema.substitution_mode_get != 0u) {
-        practice_settings_substitution_staged = (s32)(
-            (SubstitutionModeGet)practice_settings_schema.substitution_mode_get
+    practice_settings_stage_runtime_mode(
+        controller,
+        ROW_ID_SUBSTITUTION,
+        practice_settings_schema.substitution_mode_get
+    );
+    if (practice_settings_schema.ultimate_jutsu_mode_get != 0u) {
+        s32 index = practice_settings_index_for_id(
+            ROW_ID_ULTIMATE_JUTSU
+        );
+        u32 mode = (
+            (UltimateJutsuModeGet)
+                practice_settings_schema.ultimate_jutsu_mode_get
         )();
+
+        if (index >= 0) {
+            practice_settings_set_value(controller, index, (s32)mode);
+        }
+    }
+    practice_settings_stage_runtime_mode(
+        controller,
+        ROW_ID_SHADOWBLUR,
+        practice_settings_schema.shadowblur_get
+    );
+    practice_settings_stage_runtime_mode(
+        controller,
+        ROW_ID_EXTRA_HIT,
+        practice_settings_schema.extra_hit_get
+    );
+    practice_settings_stage_runtime_mode(
+        controller,
+        ROW_ID_SUB_ACTIVE_FRAMES,
+        practice_settings_schema.sub_active_frames_get
+    );
+    practice_settings_stage_runtime_mode(
+        controller,
+        ROW_ID_XDASH_CHAKRA_COST,
+        practice_settings_schema.xdash_chakra_cost_option_get
+    );
+    practice_settings_stage_runtime_mode(
+        controller,
+        ROW_ID_SUPPORT,
+        practice_settings_schema.support_get
+    );
+}
+
+static void practice_settings_commit_runtime_mode(
+    void *controller,
+    u32 row_id,
+    u32 setter_address
+)
+{
+    s32 index = practice_settings_index_for_id(row_id);
+
+    if (index >= 0 && setter_address != 0u) {
+        ((ToggleModeSet)setter_address)(
+            (u32)practice_settings_get_value(controller, index)
+        );
     }
 }
 
@@ -344,9 +535,56 @@ void practice_settings_apply(void *controller)
         (NativeControllerCall)NATIVE_APPLY_ADDRESS;
 
     native_apply(controller);
-    if (practice_settings_index_for_id(ROW_ID_SUBSTITUTION) >= 0) {
-        ((SubstitutionModeSet)practice_settings_schema.substitution_mode_set)(
-            (u32)practice_settings_substitution_staged
+    practice_settings_commit_runtime_mode(
+        controller,
+        ROW_ID_SUBSTITUTION,
+        practice_settings_schema.substitution_mode_set
+    );
+    if (
+        practice_settings_schema.ultimate_jutsu_mode_set != 0u &&
+        practice_settings_index_for_id(ROW_ID_ULTIMATE_JUTSU) >= 0
+    ) {
+        ((UltimateJutsuModeSet)
+            practice_settings_schema.ultimate_jutsu_mode_set)(
+                (u32)practice_settings_ultimate_jutsu_staged
+            );
+    }
+    practice_settings_commit_runtime_mode(
+        controller,
+        ROW_ID_SHADOWBLUR,
+        practice_settings_schema.shadowblur_set
+    );
+    practice_settings_commit_runtime_mode(
+        controller,
+        ROW_ID_EXTRA_HIT,
+        practice_settings_schema.extra_hit_set
+    );
+    practice_settings_commit_runtime_mode(
+        controller,
+        ROW_ID_SUB_ACTIVE_FRAMES,
+        practice_settings_schema.sub_active_frames_set
+    );
+    practice_settings_commit_runtime_mode(
+        controller,
+        ROW_ID_XDASH_CHAKRA_COST,
+        practice_settings_schema.xdash_chakra_cost_option_set
+    );
+    practice_settings_commit_runtime_mode(
+        controller,
+        ROW_ID_SUPPORT,
+        practice_settings_schema.support_set
+    );
+}
+
+static void practice_settings_stage_default(void *controller, u32 row_id)
+{
+    s32 index = practice_settings_index_for_id(row_id);
+
+    if (index >= 0) {
+        practice_settings_set_value(
+            controller,
+            index,
+            (s32)practice_settings_schema.rows[index].default_value
         );
     }
 }
@@ -356,7 +594,7 @@ void practice_settings_defaults(void *controller)
 {
     NativeControllerCall native_defaults =
         (NativeControllerCall)NATIVE_DEFAULTS_ADDRESS;
-    s32 substitution_index;
+    s32 ultimate_jutsu_index;
 
     native_defaults(controller);
     if (practice_settings_schema.default_health != DEFAULT_PRESERVE_NATIVE) {
@@ -385,14 +623,30 @@ void practice_settings_defaults(void *controller)
             (u8 *)controller + CONTROLLER_LINKED_ATTACK_VALUE_OFFSET
         ) = (s32)practice_settings_schema.default_linked_attack;
     }
-    substitution_index = practice_settings_index_for_id(ROW_ID_SUBSTITUTION);
-    if (substitution_index >= 0) {
+    practice_settings_stage_default(controller, ROW_ID_SUBSTITUTION);
+    ultimate_jutsu_index = practice_settings_index_for_id(
+        ROW_ID_ULTIMATE_JUTSU
+    );
+    if (
+        ultimate_jutsu_index >= 0 &&
+        (
+            practice_settings_schema.rows[ultimate_jutsu_index].flags &
+            ROW_FLAG_CUSTOM_ULTIMATE_JUTSU
+        ) != 0u
+    ) {
         practice_settings_set_value(
             controller,
-            substitution_index,
-            (s32)practice_settings_schema.rows[substitution_index].default_value
+            ultimate_jutsu_index,
+            (s32)practice_settings_schema.rows[
+                ultimate_jutsu_index
+            ].default_value
         );
     }
+    practice_settings_stage_default(controller, ROW_ID_SHADOWBLUR);
+    practice_settings_stage_default(controller, ROW_ID_EXTRA_HIT);
+    practice_settings_stage_default(controller, ROW_ID_SUB_ACTIVE_FRAMES);
+    practice_settings_stage_default(controller, ROW_ID_XDASH_CHAKRA_COST);
+    practice_settings_stage_default(controller, ROW_ID_SUPPORT);
 }
 
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_row_enabled")

@@ -21,86 +21,109 @@ class PracticeSettingsTests(unittest.TestCase):
         cls.paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         cls.repository = cls.paths.repository
         cls.builder = cls.paths.path("builder")
+        cls.catalog_path = cls.builder / "catalog"
+        cls.configurations = cls.builder / "configurations"
         cls.selection = catalog.load_selection(
-            cls.builder / "catalog",
-            cls.builder / "configurations" / "base.json",
+            cls.catalog_path,
+            cls.configurations / "base.json",
         )
 
-    def test_base_schema_compacts_enabled_rows_without_empty_slots(self) -> None:
+    def _selection(self, mutate) -> catalog.CatalogSelection:
+        base = json.loads(
+            (self.configurations / "base.json").read_text(encoding="utf-8")
+        )
+        mutate(base["features"])
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        path = Path(directory.name) / "configuration.json"
+        path.write_text(json.dumps(base, indent=2) + "\n", encoding="utf-8")
+        return catalog.load_selection(self.catalog_path, path)
+
+    @staticmethod
+    def _rows(fragment) -> list[tuple[int, ...]]:
+        row_count = struct.unpack_from("<I", fragment.payload)[0]
+        return [
+            struct.unpack_from(
+                "<10I",
+                fragment.payload,
+                SCHEMA_HEADER_SIZE + index * ROW_SIZE,
+            )
+            for index in range(row_count)
+        ]
+
+    def test_base_schema_includes_every_shared_selector(self) -> None:
         fragment = practice_settings_fragment(
             self.selection,
-            owner="battle.runtime_injector",
+            owner="settings.runtime_injector",
         )
         self.assertIsNotNone(fragment)
         assert fragment is not None
-        (
-            row_count,
-            player_count,
-            opponent_count,
-            health,
-            commands,
-            guide_ninja_sound,
-            linked_attack,
-        ) = struct.unpack_from("<3I4B", fragment.payload)
-        self.assertEqual((row_count, player_count, opponent_count), (13, 7, 6))
+        row_count, player_count, opponent_count = struct.unpack_from(
+            "<3I", fragment.payload
+        )
+        self.assertEqual((row_count, player_count, opponent_count), (23, 15, 8))
         self.assertEqual(
-            (
-                health,
-                commands,
-                guide_ninja_sound,
-                linked_attack,
-            ),
+            struct.unpack_from("<4B", fragment.payload, 12),
             (0, 0, 0, 0),
         )
+
+        rows = self._rows(fragment)
         self.assertEqual(
+            [row[0] for row in rows],
             [
-                struct.unpack_from(
-                    "<I",
-                    fragment.payload,
-                    SCHEMA_HEADER_SIZE + index * ROW_SIZE,
-                )[0]
-                for index in range(row_count)
+                0,
+                1,
+                17,
+                20,
+                21,
+                22,
+                2,
+                3,
+                18,
+                19,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15,
+                16,
             ],
-            [0, 1, 17, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14],
         )
-        substitution = struct.unpack_from(
-            "<10I",
-            fragment.payload,
-            SCHEMA_HEADER_SIZE + 2 * ROW_SIZE,
-        )
-        self.assertEqual(substitution[6:8], (3, 1))
-        self.assertEqual(
-            [relocation.symbol for relocation in fragment.relocations],
-            [
+        by_id = {row[0]: row for row in rows}
+        self.assertEqual((by_id[17][6], by_id[17][7]), (3, 1))
+        self.assertEqual((by_id[20][6], by_id[20][7]), (17, 4))
+        self.assertEqual((by_id[21][6], by_id[21][7]), (21, 1))
+        self.assertEqual((by_id[22][6], by_id[22][7]), (2, 0))
+        self.assertEqual((by_id[3][6], by_id[3][7]), (8, 7))
+
+        relocation_symbols = {item.symbol for item in fragment.relocations}
+        self.assertTrue(
+            {
                 "substitution_gauge_mode_get",
-                "substitution_gauge_mode_set",
-                "practice_settings_substitution_label",
-                "practice_settings_substitution_help",
-                "practice_settings_schema",
-                "substitution_gauge_mode_chakra_label",
-                "substitution_gauge_mode_gauge_label",
-                "substitution_gauge_mode_free_label",
-            ],
+                "ultimate_jutsu_mode_get",
+                "shadowblur_get",
+                "extra_hit_get",
+                "sub_active_frames_get",
+                "xdash_chakra_cost_option_get",
+                "support_get",
+            }.issubset(relocation_symbols)
         )
 
-    def test_omitted_defaults_preserve_native_values(self) -> None:
-        base = json.loads(
-            (self.builder / "configurations" / "base.json").read_text(
-                encoding="utf-8"
-            )
+    def test_omitted_practice_defaults_preserve_native_values(self) -> None:
+        selection = self._selection(
+            lambda features: features["settings"].__setitem__("practice", {})
         )
-        base["features"]["practice"]["settings_rework"] = {}
-        with tempfile.TemporaryDirectory() as directory:
-            configuration = Path(directory) / "configuration.json"
-            configuration.write_text(json.dumps(base), encoding="utf-8")
-            selection = catalog.load_selection(
-                self.builder / "catalog", configuration
-            )
-            fragment = practice_settings_fragment(
-                selection,
-                owner="battle.runtime_injector",
-            )
-
+        fragment = practice_settings_fragment(
+            selection,
+            owner="settings.runtime_injector",
+        )
         self.assertIsNotNone(fragment)
         assert fragment is not None
         self.assertEqual(
@@ -109,138 +132,57 @@ class PracticeSettingsTests(unittest.TestCase):
         )
 
     def test_configured_defaults_use_native_enum_values(self) -> None:
-        base = json.loads(
-            (self.builder / "configurations" / "base.json").read_text(
-                encoding="utf-8"
+        selection = self._selection(
+            lambda features: features["settings"].__setitem__(
+                "practice",
+                {
+                    "health": "critical",
+                    "commands": "on",
+                    "guide_ninja_sound": "on",
+                    "linked_attack": "random",
+                },
             )
         )
-        base["features"]["practice"]["settings_rework"] = {
-            "health": "critical",
-            "commands": "on",
-            "guide_ninja_sound": "on",
-            "linked_attack": "random",
-        }
-        with tempfile.TemporaryDirectory() as directory:
-            configuration = Path(directory) / "configuration.json"
-            configuration.write_text(json.dumps(base), encoding="utf-8")
-            selection = catalog.load_selection(
-                self.builder / "catalog", configuration
-            )
-            fragment = practice_settings_fragment(
-                selection,
-                owner="battle.runtime_injector",
-            )
-
+        fragment = practice_settings_fragment(
+            selection,
+            owner="settings.runtime_injector",
+        )
         self.assertIsNotNone(fragment)
         assert fragment is not None
         self.assertEqual(
             struct.unpack_from("<4B", fragment.payload, 12),
             (2, 1, 1, 2),
         )
-        row_count = struct.unpack_from("<I", fragment.payload)[0]
-        defaults = {}
-        for index in range(row_count):
-            fields = struct.unpack_from(
-                "<10I",
-                fragment.payload,
-                SCHEMA_HEADER_SIZE + index * ROW_SIZE,
-            )
-            defaults[fields[0]] = fields[7]
+        defaults = {row[0]: row[7] for row in self._rows(fragment)}
         self.assertEqual(defaults[0], 2)
         self.assertEqual(defaults[6], 1)
         self.assertEqual(defaults[8], 1)
-
-    def test_linked_attack_configured_default_reaches_select_reset(self) -> None:
-        base = json.loads(
-            (self.builder / "configurations" / "base.json").read_text(
-                encoding="utf-8"
-            )
-        )
-        base["features"]["battle"]["support_disabled"] = False
-        base["features"]["practice"]["settings_rework"] = {
-            "linked_attack": "random"
-        }
-        with tempfile.TemporaryDirectory() as directory:
-            configuration = Path(directory) / "configuration.json"
-            configuration.write_text(json.dumps(base), encoding="utf-8")
-            selection = catalog.load_selection(
-                self.builder / "catalog", configuration
-            )
-            fragment = practice_settings_fragment(
-                selection,
-                owner="battle.runtime_injector",
-            )
-
-        self.assertIsNotNone(fragment)
-        assert fragment is not None
-        row_count = struct.unpack_from("<I", fragment.payload)[0]
-        defaults = {}
-        for index in range(row_count):
-            fields = struct.unpack_from(
-                "<10I",
-                fragment.payload,
-                SCHEMA_HEADER_SIZE + index * ROW_SIZE,
-            )
-            defaults[fields[0]] = fields[7]
         self.assertEqual(defaults[15], 2)
 
-    def test_ultimate_jutsu_row_follows_contest_disabled_only(self) -> None:
-        base = json.loads(
-            (self.builder / "configurations" / "base.json").read_text(
-                encoding="utf-8"
-            )
+    def test_disabling_shared_settings_keeps_the_native_practice_rows(self) -> None:
+        selection = self._selection(
+            lambda features: features["settings"].__setitem__("shared", False)
         )
-        base["features"]["battle"]["ultimate_jutsu"]["contest_disabled"] = False
-        base["features"]["battle"]["ultimate_jutsu"]["hud_hidden"] = True
-        with tempfile.TemporaryDirectory() as directory:
-            configuration = Path(directory) / "configuration.json"
-            configuration.write_text(json.dumps(base), encoding="utf-8")
-            selection = catalog.load_selection(
-                self.builder / "catalog", configuration
-            )
-            fragment = practice_settings_fragment(
-                selection,
-                owner="battle.runtime_injector",
-            )
-
+        fragment = practice_settings_fragment(
+            selection,
+            owner="settings.runtime_injector",
+        )
         self.assertIsNotNone(fragment)
         assert fragment is not None
-        row_count = struct.unpack_from("<I", fragment.payload)[0]
-        row_ids = [
-            struct.unpack_from(
-                "<I",
-                fragment.payload,
-                SCHEMA_HEADER_SIZE + index * ROW_SIZE,
-            )[0]
-            for index in range(row_count)
-        ]
-        self.assertIn(3, row_ids)
+        rows = self._rows(fragment)
+        self.assertEqual([row[0] for row in rows], list(range(17)))
+        self.assertEqual(struct.unpack_from("<3I", fragment.payload), (17, 9, 8))
+        self.assertEqual(fragment.relocations, ())
 
-    def test_backing_layout_runs_between_native_animation_and_draw(self) -> None:
+    def test_backing_repeats_for_every_player_row_beyond_native_capacity(self) -> None:
         injection = self.selection.injections["i__practice__settings_rework"]
-        self.assertEqual(
-            injection["hooks"]["prepare_compact_backing_layout"],
-            {
-                "description": (
-                    "After native animation advance and before native hierarchy "
-                    "composition, place the Opponent heading and row backings "
-                    "at the compact section boundary and suppress unused native "
-                    "records."
-                ),
-                "target_id": "na2_btl",
-                "offset": "0x1CDBEC",
-                "expected_hex": "BCED060C",
-                "symbol": "practice_settings_prepare_backing_and_compose",
-                "encoding": "jal26",
-            },
-        )
         self.assertEqual(
             injection["hooks"]["draw_compact_backing"],
             {
                 "description": (
-                    "Run the native backing renderer and draw the single "
-                    "additional native player-row backing only when the compact "
-                    "player section exceeds the animation's nine-row capacity."
+                    "Run the native backing renderer and repeat the final "
+                    "native player-row backing for each compact row beyond "
+                    "the animation's nine-row capacity."
                 ),
                 "target_id": "na2_btl",
                 "offset": "0x1CE4D0",
@@ -249,38 +191,35 @@ class PracticeSettingsTests(unittest.TestCase):
                 "encoding": "jal26",
             },
         )
-
-        c_source = injection["payload"]["practice_settings"]
-        compiled_c = dict(
-            catalog._compile_source(
+        source = injection["payload"]["practice_settings"]
+        compiled = {
+            fragment.symbol: fragment
+            for fragment in catalog._compile_source(
                 self.repository,
-                "battle.runtime_injector",
+                "settings.runtime_injector",
                 "practice_settings",
-                c_source,
+                source,
                 "practice_settings",
             )
-        )
-        self.assertEqual(compiled_c[228].symbol, "practice_settings_backing_layout")
-        self.assertEqual(
-            compiled_c[230].symbol,
-            "practice_settings_prepare_backing_and_compose",
-        )
-        self.assertEqual(compiled_c[231].symbol, "practice_settings_draw_backing")
+        }
+        self.assertIn("practice_settings_backing_layout", compiled)
+        self.assertIn("practice_settings_prepare_backing_and_compose", compiled)
+        self.assertIn("practice_settings_draw_backing", compiled)
 
     def test_scroll_flag_bridge_can_skip_the_native_up_arrow(self) -> None:
         injection = self.selection.injections["i__practice__settings_rework"]
         source = injection["payload"]["practice_settings_abi"]
-        compiled = dict(
-            catalog._compile_source(
+        compiled = {
+            fragment.symbol: fragment
+            for fragment in catalog._compile_source(
                 self.repository,
-                "battle.runtime_injector",
+                "settings.runtime_injector",
                 "practice_settings_abi",
                 source,
                 "practice_settings_abi",
             )
-        )
-        bridge = compiled[225]
-        self.assertEqual(bridge.symbol, "practice_settings_scroll_flags_bridge")
+        }
+        bridge = compiled["practice_settings_scroll_flags_bridge"]
         self.assertTrue(
             bridge.payload.hex().upper().endswith(
                 "8800193C802039370800200300000000"

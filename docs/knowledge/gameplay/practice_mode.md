@@ -829,7 +829,7 @@ preserve the native value; configured enum values are stored directly as
 Simple Display is independent of the Practice Settings rework. Its native
 initializer write is the `or v1,v1,a2` at live `0x001E7AAC` after masking byte
 `0` with `0xFFFFFFFD`, confirming that its native mask is `0x02`.
-`features.battle.simple_display` owns that guarded instruction directly:
+`features.settings.shared.simple_display` owns that guarded instruction directly:
 `"on"` retains it and `"off"` replaces it with a no-op.
 
 Resident `FUN_001F5960` is used by the Practice-controller startup/restart

@@ -27,7 +27,7 @@ typedef struct XdashChargeState {
 
 typedef void (*NativeFighterUpdate)(void *fighter);
 
-extern const float battle_logic_xdash_chakra_cost;
+extern u32 xdash_chakra_cost_get(void);
 extern volatile XdashChargeState battle_logic_xdash_charge_state;
 
 #define NATIVE_PRE_FIGHTER_UPDATE \
@@ -70,7 +70,8 @@ void battle_logic_xdash_pre_fighter_update(void *fighter)
     }
     if (*charged == 0u) {
         float *chakra = (float *)(bytes + FIGHTER_CHAKRA_OFFSET);
-        float remaining = *chakra - battle_logic_xdash_chakra_cost;
+        float cost = (float)xdash_chakra_cost_get() * 15.0f / 100.0f;
+        float remaining = *chakra - cost;
 
         *chakra = remaining > 0.0f ? remaining : 0.0f;
         *charged = 1u;

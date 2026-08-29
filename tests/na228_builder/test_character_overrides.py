@@ -91,8 +91,8 @@ class CharacterOverrideTests(unittest.TestCase):
         cases = (
             (False, False, None),
             (False, True, "character_select"),
-            (True, False, "battle"),
-            (True, True, "battle"),
+            (True, False, "general"),
+            (True, True, "general"),
         )
         for overrides_enabled, overlay_enabled, expected_feature in cases:
             with (
@@ -103,7 +103,7 @@ class CharacterOverrideTests(unittest.TestCase):
                 tempfile.TemporaryDirectory() as directory,
             ):
                 features = json.loads(json.dumps(base["features"]))
-                features["battle"]["character_overrides"] = overrides_enabled
+                features["general"]["character_overrides"] = overrides_enabled
                 features["character_select"]["balance_overlay"] = overlay_enabled
                 configuration_path = Path(directory) / "configuration.json"
                 configuration_path.write_text(
@@ -121,7 +121,7 @@ class CharacterOverrideTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     selection.node_enabled(
-                        "features", "battle", "character_overrides"
+                        "features", "general", "character_overrides"
                     ),
                     overrides_enabled,
                 )

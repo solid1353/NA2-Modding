@@ -22,9 +22,8 @@ from .character_overrides import (
 )
 from .battle_settings import battle_settings_fragment
 from .substitution_gauge import substitution_gauge_fragment
-from .substitution_timing import substitution_frames_after_fragment
 from .practice_settings import practice_settings_fragment
-from .xdash_chakra_cost import xdash_chakra_cost_fragment
+from .battle_settings_runtime import battle_settings_runtime_fragment
 
 
 @dataclass(frozen=True)
@@ -103,7 +102,7 @@ def prepare_module_pipeline(
     ] = {}
     title_policy = _selected_game_title_policy(configuration)
     character_overrides_enabled = configuration.selection.node_enabled(
-        "features", "battle", "character_overrides"
+        "features", "general", "character_overrides"
     )
     character_select_overlay_enabled = configuration.selection.node_enabled(
         "features", "character_select", "balance_overlay"
@@ -149,40 +148,40 @@ def prepare_module_pipeline(
                     *declaration.fragments,
                 ),
             )
-        if module.feature_id == "battle":
-            settings_schema_fragment = battle_settings_fragment(
+        if module.feature_id == "settings":
+            battle_schema_fragment = battle_settings_fragment(
                 configuration.selection,
                 owner=module.module_id,
             )
-            if settings_schema_fragment is not None:
+            if battle_schema_fragment is not None:
                 declaration = replace(
                     declaration,
                     fragments=(
-                        settings_schema_fragment,
+                        battle_schema_fragment,
                         *declaration.fragments,
                     ),
                 )
-            frames_after_fragment = substitution_frames_after_fragment(
+            practice_schema_fragment = practice_settings_fragment(
                 configuration.selection,
                 owner=module.module_id,
             )
-            if frames_after_fragment is not None:
+            if practice_schema_fragment is not None:
                 declaration = replace(
                     declaration,
                     fragments=(
-                        frames_after_fragment,
+                        practice_schema_fragment,
                         *declaration.fragments,
                     ),
                 )
-            xdash_cost_fragment = xdash_chakra_cost_fragment(
+            runtime_config_fragment = battle_settings_runtime_fragment(
                 configuration.selection,
                 owner=module.module_id,
             )
-            if xdash_cost_fragment is not None:
+            if runtime_config_fragment is not None:
                 declaration = replace(
                     declaration,
                     fragments=(
-                        xdash_cost_fragment,
+                        runtime_config_fragment,
                         *declaration.fragments,
                     ),
                 )
@@ -195,19 +194,6 @@ def prepare_module_pipeline(
                     declaration,
                     fragments=(
                         gauge_config_fragment,
-                        *declaration.fragments,
-                    ),
-                )
-        if module.feature_id == "practice":
-            settings_schema_fragment = practice_settings_fragment(
-                configuration.selection,
-                owner=module.module_id,
-            )
-            if settings_schema_fragment is not None:
-                declaration = replace(
-                    declaration,
-                    fragments=(
-                        settings_schema_fragment,
                         *declaration.fragments,
                     ),
                 )

@@ -3,15 +3,15 @@
 ## Balance overlay
 
 `features.character_select.balance_overlay` is independently selectable from
-`features.battle.character_overrides`. Its guarded hook replaces the first
+`features.general.character_overrides`. Its guarded hook replaces the first
 native player-panel draw call with a wrapper that preserves that draw, resolves
 the selected character ID, and reads the same complete generated character
 table used by battle.
 
 When enabled, the overlay always displays each selected character's `TIER` in
 the corresponding top-screen block. It additionally displays the resolved
-`SUB x%` value only when `features.battle.character_overrides` is enabled. If
-the battle setting is disabled, the table still supplies tier metadata to the
+`SUB x%` value only when `features.general.character_overrides` is enabled. If
+Character Overrides is disabled, the table still supplies tier metadata to the
 overlay but is not applied to gameplay. The builder links the complete table
 once whenever either consumer needs it; it does not generate a partial or
 alternate table.
@@ -94,7 +94,7 @@ both directions on 2026-08-15.
 
 The setting does not change field-support calls or the native battle support
 gauge. Those are controlled independently by
-`features.battle.support_disabled`; selected native supports and linked Jutsu
+`features.settings.shared.support`; selected native supports and linked Jutsu
 remain intact in every combination. The Character Select record is in
 [`../knowledge/game/character_select.md`](../knowledge/game/character_select.md),
 and the battle-path evidence is in

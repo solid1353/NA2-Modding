@@ -431,33 +431,10 @@ def configured_payload() -> dict[str, tuple[object, str, dict[str, object]]]:
 
 
 def production_sources() -> dict[str, dict[str, object]]:
-    values = [
-        (payload_id, node.feature_id, value)
-        for payload_id, (node, _injection_id, value) in configured_payload().items()
-        if value.get("kind") in {"c", "asm"}
-    ]
-
-    feature_order = {
-        feature_id: index
-        for index, feature_id in enumerate(CATALOG_SELECTION.feature_ids)
-    }
-
-    def source_order(
-        item: tuple[str, str, dict[str, object]],
-    ) -> tuple[int, int]:
-        fragments = item[2].get("fragments", {})
-        if not isinstance(fragments, dict):
-            return feature_order[item[1]], 1 << 30
-        orders = [
-            value.get("order")
-            for value in fragments.values()
-            if isinstance(value, dict) and isinstance(value.get("order"), int)
-        ]
-        return feature_order[item[1]], min(orders, default=1 << 30)
-
     return {
         payload_id: value
-        for payload_id, _feature_id, value in sorted(values, key=source_order)
+        for payload_id, (_node, _injection_id, value) in configured_payload().items()
+        if value.get("kind") in {"c", "asm"}
     }
 
 
@@ -469,8 +446,25 @@ def production_source_owner(source_id: str) -> str:
     return f"{node.feature_id}.runtime_injector"
 
 
-def _load_static_fragments() -> list[tuple[int, int, PayloadFragment]]:
-    result: list[tuple[int, int, PayloadFragment]] = []
+def fragment_declaration_positions() -> dict[str, int]:
+    positions: dict[str, int] = {}
+    for payload_id, (_node, _injection_id, value) in configured_payload().items():
+        if value.get("kind") in {"c", "asm"}:
+            fragments = value.get("fragments")
+            if not isinstance(fragments, dict):
+                continue
+            symbols = fragments
+        else:
+            symbols = (payload_id,)
+        for symbol in symbols:
+            if symbol in positions:
+                raise ValueError(f"Duplicate configured fragment: {symbol}")
+            positions[symbol] = len(positions)
+    return positions
+
+
+def _load_static_fragments() -> list[PayloadFragment]:
+    result: list[PayloadFragment] = []
     for payload_id, (node, injection_id, value) in configured_payload().items():
         if value.get("kind") == "c":
             continue
@@ -482,16 +476,17 @@ def _load_static_fragments() -> list[tuple[int, int, PayloadFragment]]:
                 value,
                 f"injections.{injection_id}.payload.{payload_id}",
             )
-            result.extend((order, 1, fragment) for order, fragment in compiled)
+            result.extend(compiled)
             continue
-        order, fragment = catalog_module.load_static_fragment(
-            REPOSITORY,
-            f"{node.feature_id}.runtime_injector",
-            payload_id,
-            value,
-            f"injections.{injection_id}.payload.{payload_id}",
+        result.append(
+            catalog_module.load_static_fragment(
+                REPOSITORY,
+                f"{node.feature_id}.runtime_injector",
+                payload_id,
+                value,
+                f"injections.{injection_id}.payload.{payload_id}",
+            )
         )
-        result.append((order, 1, fragment))
     return result
 
 
@@ -502,7 +497,7 @@ def load_source(
     str,
     str,
     dict[str, ee_c_fragments.SymbolReference],
-    list[tuple[int, str, str]],
+    list[tuple[str, str]],
 ]:
     if source_id == HOT_RELOAD_SOURCE:
         return (
@@ -511,9 +506,9 @@ def load_source(
             "project.hot_reload",
             {},
             [
-                (1, "project.hot_reload.text", HOT_RELOAD_ENTRY),
-                (2, "project.hot_reload.rodata", "project.hot_reload.rodata"),
-                (3, "project.hot_reload.bss", "project.hot_reload.bss"),
+                ("project.hot_reload.text", HOT_RELOAD_ENTRY),
+                ("project.hot_reload.rodata", "project.hot_reload.rodata"),
+                ("project.hot_reload.bss", "project.hot_reload.bss"),
             ],
         )
 
@@ -565,7 +560,7 @@ def load_source(
             addend=addend,
         )
 
-    mappings: list[tuple[int, str, str]] = []
+    mappings: list[tuple[str, str]] = []
     seen_objects: set[str] = set()
     seen_final: set[str] = set()
     raw_fragments = row.get("fragments")
@@ -574,10 +569,6 @@ def load_source(
     for fragment_id, fragment_row in raw_fragments.items():
         if not isinstance(fragment_row, dict):
             raise ValueError(f"Catalog source {source_id} fragment {fragment_id} is invalid")
-        order_value = fragment_row.get("order")
-        if isinstance(order_value, bool) or not isinstance(order_value, int):
-            raise ValueError(f"Catalog source {source_id} fragment {fragment_id} order is invalid")
-        order = order_value
         object_fragment = identifier(
             str(fragment_row.get("object", "")),
             f"catalog source {source_id} fragment object",
@@ -591,10 +582,9 @@ def load_source(
             )
         seen_objects.add(object_fragment)
         seen_final.add(fragment_id)
-        mappings.append((order, object_fragment, fragment_id))
+        mappings.append((object_fragment, fragment_id))
     if not mappings:
         raise ValueError(f"Production EE source {source_id!r} has no fragments")
-    mappings.sort()
     return source_path, language, namespace, imports, mappings
 
 
@@ -657,7 +647,7 @@ def compile_fragments(
     source_language: str,
     namespace: str,
     imports: dict[str, ee_c_fragments.SymbolReference],
-    mappings: list[tuple[int, str, str]],
+    mappings: list[tuple[str, str]],
     object_path: Path,
     hot_reload_label: str | None = None,
 ) -> list[PayloadFragment]:
@@ -681,7 +671,7 @@ def compile_fragments(
     )
     aliases = {
         object_fragment: fragment_id
-        for _order, object_fragment, fragment_id in mappings
+        for object_fragment, fragment_id in mappings
     }
     actual = {fragment.symbol for fragment in extracted.fragments}
     declared = set(aliases)
@@ -693,7 +683,7 @@ def compile_fragments(
         )
     by_symbol = {fragment.symbol: fragment for fragment in extracted.fragments}
     result: list[PayloadFragment] = []
-    for _order, object_fragment, fragment_id in mappings:
+    for object_fragment, fragment_id in mappings:
         fragment = by_symbol[object_fragment]
         result.append(
             replace(
@@ -716,27 +706,38 @@ def compile_fragments(
 def select_fragment_closure(
     entry_symbols: list[str],
     c_fragments: list[PayloadFragment],
-    mappings: list[tuple[int, str, str]],
+    mappings: list[tuple[str, str]],
     symbol_map: dict[str, dict[str, object]],
     current_payload: bytes,
     resident_symbol_overrides: dict[str, int],
     forced_symbols: set[str] | None = None,
 ) -> tuple[list[PayloadFragment], set[str]]:
-    c_orders = {
-        fragment_id: order
-        for order, _object_fragment, fragment_id in mappings
-    }
-    catalog: dict[str, tuple[int, int, PayloadFragment]] = {}
+    declaration_positions = fragment_declaration_positions()
+    next_position = len(declaration_positions)
+    mapping_positions: dict[str, int] = {}
+    for _object_fragment, fragment_id in mappings:
+        position = declaration_positions.get(fragment_id)
+        if position is None:
+            position = next_position
+            next_position += 1
+        mapping_positions[fragment_id] = position
+    catalog: dict[str, tuple[int, PayloadFragment]] = {}
     for fragment in c_fragments:
-        catalog[fragment.symbol] = (c_orders[fragment.symbol], 1, fragment)
-    for order, line, fragment in _load_static_fragments():
+        catalog[fragment.symbol] = (
+            mapping_positions[fragment.symbol],
+            fragment,
+        )
+    for fragment in _load_static_fragments():
         if fragment.symbol in catalog:
-            if catalog[fragment.symbol][2] != fragment:
+            if catalog[fragment.symbol][1] != fragment:
                 raise ValueError(
                     f"Conflicting canonical fragment symbol {fragment.symbol!r}"
                 )
             continue
-        catalog[fragment.symbol] = (order, line, fragment)
+        catalog[fragment.symbol] = (
+            declaration_positions[fragment.symbol],
+            fragment,
+        )
     for entry_symbol in entry_symbols:
         if entry_symbol not in catalog:
             raise ValueError(
@@ -761,7 +762,7 @@ def select_fragment_closure(
         if symbol in active:
             return False
         active.add(symbol)
-        fragment = catalog[symbol][2]
+        fragment = catalog[symbol][1]
         row = symbol_map.get(fragment.symbol)
         if (
             row is None
@@ -805,7 +806,7 @@ def select_fragment_closure(
         if symbol in selected:
             return
         selected.add(symbol)
-        fragment = catalog[symbol][2]
+        fragment = catalog[symbol][1]
         for relocation in fragment.relocations:
             if relocation.symbol in catalog:
                 if matches_current(relocation.symbol):
@@ -824,9 +825,9 @@ def select_fragment_closure(
         visit(root_symbol)
     ordered = sorted(
         (catalog[symbol] for symbol in selected),
-        key=lambda item: (item[0], item[1], item[2].symbol),
+        key=lambda item: (item[0], item[1].symbol),
     )
-    return [item[2] for item in ordered], external_symbols
+    return [item[1] for item in ordered], external_symbols
 
 
 def link_fragment(
@@ -1044,7 +1045,7 @@ def main() -> int:
         )
     entry_symbols = [entry["symbol"] for entry in entry_declarations]
 
-    mappings: list[tuple[int, str, str]] = []
+    mappings: list[tuple[str, str]] = []
     compiled_c_fragments: list[PayloadFragment] = []
     with tempfile.TemporaryDirectory(prefix="na228-injection-") as temporary:
         temporary_path = Path(temporary)
@@ -1059,19 +1060,6 @@ def main() -> int:
                 imports,
                 source_mappings,
             ) = load_source(selected_source_id)
-            if selected_source_id == HOT_RELOAD_SOURCE and mappings:
-                marker_order_base = max(
-                    (order for order, _object, _fragment in mappings),
-                    default=0,
-                )
-                source_mappings = [
-                    (
-                        marker_order_base + order,
-                        object_fragment,
-                        fragment_id,
-                    )
-                    for order, object_fragment, fragment_id in source_mappings
-                ]
             mappings.extend(source_mappings)
             compiled_c_fragments.extend(
                 compile_fragments(

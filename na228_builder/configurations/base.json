@@ -1,34 +1,28 @@
 {
   "features": {
-    "battle": {
-      "shadowblur_extra_hit_disabled": true,
-      "extra_hit_disabled_with_aura_punishment_for_initiator": true,
-      "character_overrides": true,
-      "control_settings_rework": true,
-      "simple_display": "off",
-      "xdash_chakra_cost": 5,
-      "substitution": {
-        "frames_before": 4,
-        "frames_after": 4,
-        "gauge": {
-          "default": "gauge"
-        }
-      },
-      "support_disabled": true,
-      "ultimate_jutsu": {
-        "contest_disabled": true,
-        "hud_hidden": true
-      }
-    },
-    "practice": {
-      "settings_rework": {
+    "settings": {
+      "controls": true,
+      "practice": {
         "health": "full",
         "commands": "off",
         "guide_ninja_sound": "off",
         "linked_attack": "off"
+      },
+      "shared": {
+        "ultimate_jutsu": "no_hud",
+        "shadowblur": "off",
+        "extra_hit": "off",
+        "sub_active_frames": 4,
+        "xdash_chakra_cost": 5,
+        "support": "off",
+        "simple_display": "off",
+        "substitution": {
+          "default": "gauge"
+        }
       }
     },
     "general": {
+      "character_overrides": true,
       "replace_imported_game_title": true,
       "unlock_all": true
     },

@@ -74,76 +74,7 @@
     "destination_target_id": "na2_elf",
     "destination_offset": "0xE7BAC",
     "expected_hex": "25186600",
-    "adapter": "mips_simple_display_default"
-  },
-  "e__battle_logic__disable_extra_hit_with_aura_punishment_for_initiator__retain_aura_punishment": {
-    "description": "Disable the extra hit while retaining aura punishment for the initiator.",
-    "operation": "replace",
-    "destination_target_id": "na2_elf",
-    "destination_offset": "0x13B6E8",
-    "expected_hex": "08004310",
-    "replacement_hex": "C9004310"
-  },
-  "e__battle_logic__disable_shadowblur_extra_hit": {
-    "description": "Disable the Shadowblur extra-hit path while preserving the surrounding native behavior.",
-    "edits": {
-      "change_condition_branch": {
-        "description": "Change the Shadowblur extra-hit condition branch.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0x1458C8",
-        "expected_hex": "7A004010",
-        "replacement_hex": "77004014"
-      },
-      "clear_branch_delay_slot": {
-        "description": "Clear the Shadowblur branch delay slot.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0x1458D4",
-        "expected_hex": "140B40A6",
-        "replacement_hex": "00000000"
-      },
-      "skip_extra_hit_path": {
-        "description": "Skip the Shadowblur extra-hit path.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0x1458D0",
-        "expected_hex": "120B40A6",
-        "replacement_hex": "78000010"
-      }
-    }
-  },
-  "e__battle_logic__substitution__frames_before": {
-    "description": "Use the configured deterministic pre-impact input-history frames for otherwise eligible substitutions while preserving resource, response, state, and attack-block gates.",
-    "operation": "replace",
-    "destination_target_id": "na2_elf",
-    "destination_offset": "0x1296C8",
-    "expected_hex": "1100010600000000",
-    "adapter": "mips_substitution_frames_before"
-  },
-  "e__battle_logic__ultimate_jutsu__contest_disabled": {
-    "description": "Disable contest input reads and rendering while retaining its native lifecycle.",
-    "edits": {
-      "block_press_state_reads": {
-        "description": "Ignore the contest controller's press-state reads while waiting to latch an input or observe release.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offsets": [
-          "0xB6094",
-          "0xB62F0"
-        ],
-        "expected_hex": "6C66070C",
-        "replacement_hex": "21100000"
-      },
-      "suppress_render_dispatch": {
-        "description": "Skip the resident contest object's common render dispatch while preserving its update, result, and completion lifecycle.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0xF0A40",
-        "expected_hex": "FCAF0D0C",
-        "replacement_hex": "00000000"
-      }
-    }
+    "adapter": "mips_shared_simple_display_default"
   },
   "e__general__dedicated_save_namespace__directory_references": {
     "description": "Use the dedicated NA228 save namespace at both memory-card directory references.",

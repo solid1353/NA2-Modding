@@ -17,8 +17,10 @@ else {
     [IO.Path]::GetFullPath($env:NA228_TASK_WORK_ROOT)
 }
 $workspaceExisted = Test-Path -LiteralPath $workspaceRoot -PathType Container
-$unitTestRoot = Join-Path $workspaceRoot 'unit-tests'
-$unitTestRunRoot = Join-Path $unitTestRoot ("run-$PID-$([Guid]::NewGuid().ToString('N'))")
+$unitTestRoot = Join-Path $workspaceRoot 'ut'
+$unitTestRunRoot = Join-Path $unitTestRoot (
+    "$PID-$([Guid]::NewGuid().ToString('N').Substring(0, 8))"
+)
 $originalTemp = [Environment]::GetEnvironmentVariable('TEMP', 'Process')
 $originalTmp = [Environment]::GetEnvironmentVariable('TMP', 'Process')
 $originalTestPowerShell = [Environment]::GetEnvironmentVariable(

@@ -1,0 +1,223 @@
+diff --git a/na228_builder/catalog/catalog.modcat b/na228_builder/catalog/catalog.modcat
+--- a/na228_builder/catalog/catalog.modcat
++++ b/na228_builder/catalog/catalog.modcat
+@@ -44,9 +44,15 @@
+         frames_before: setting<int & 0..16> {
+          description: "Number of 30 FPS input-history frames before impact accepted for otherwise eligible substitutions; replaces attack-authored random timing.",
+           patches: [
+             "e__battle_logic__substitution__frames_before",
+           ],
+         },
++        frames_after: setting<int & 0..16> {
++          description: "Number of 30 FPS ordinary hit-response frames after impact during which an otherwise eligible substitution can still activate.",
++          patches: [
++            "i__battle_logic__substitution__frames_after",
++          ],
++        },
+         gauge: setting<{
+           default: "chakra" | "gauge" | "free",
+           recovery_delay_seconds?: decimal & 0..60 & step 0.25,
+diff --git a/na228_builder/configurations/base.json b/na228_builder/configurations/base.json
+--- a/na228_builder/configurations/base.json
++++ b/na228_builder/configurations/base.json
+@@ -8,7 +8,8 @@
+       "simple_display": "off",
+       "xdash_chakra_cost": 5,
+       "substitution": {
+         "frames_before": 4,
++        "frames_after": 4,
+         "gauge": {
+           "default": "gauge"
+         }
+diff --git a/na228_builder/catalog/injections.json b/na228_builder/catalog/injections.json
+--- a/na228_builder/catalog/injections.json
++++ b/na228_builder/catalog/injections.json
+@@ -453,6 +453,35 @@
+       }
+     }
+   },
++  "i__battle_logic__substitution__frames_after": {
++    "description": "Retry the native substitution predicate during the configured initial ordinary hit-response frames, then preserve the native response update when no substitution activates.",
++    "hooks": {
++      "retry_substitution_during_initial_hit_response": {
++        "description": "Replace the ordinary-response driver call with a wrapper that retries native substitution only while the reset action cursor is from 1 through the configured post-impact frame limit.",
++        "target_id": "na2_elf",
++        "offset": "0x149DF0",
++        "expected_hex": "68D3080C00000000",
++        "symbol": "battle_logic_substitution_update_ordinary_response",
++        "encoding": "jal26"
++      }
++    },
++    "payload": {
++      "substitution_timing_abi": {
++        "kind": "asm",
++        "path": "src/battle_logic/substitution_timing_abi.S",
++        "namespace": "battle.logic.substitution.timing.asm",
++        "imports": {
++          "battle_logic_substitution_frames_after": "battle_logic_substitution_frames_after"
++        },
++        "fragments": {
++          "battle_logic_substitution_update_ordinary_response": {
++            "order": 146,
++            "object": "battle.logic.substitution.timing.asm.text.battle.logic.substitution.update.ordinary.response"
++          }
++        }
++      }
++    }
++  },
+   "i__battle_logic__substitution__gauge": {
+     "description": "Own ordinary substitution resource routing across selectable Chakra, Gauge, and Free modes; charge Gauge from the character override's normalized substitution cost, recover it on the native battle clock and committed HP loss, and draw its independent textured top-HUD bar without modifying the native support renderer.",
+     "hooks": {
+diff --git a/na228_builder/scripts/module_pipeline.py b/na228_builder/scripts/module_pipeline.py
+--- a/na228_builder/scripts/module_pipeline.py
++++ b/na228_builder/scripts/module_pipeline.py
+@@ -21,6 +21,7 @@
+     character_overrides_enabled_fragment,
+ )
+ from .battle_settings import battle_settings_fragment
+ from .substitution_gauge import substitution_gauge_fragment
++from .substitution_timing import substitution_frames_after_fragment
+ from .practice_settings import practice_settings_fragment
+ from .xdash_chakra_cost import xdash_chakra_cost_fragment
+@@ -156,11 +157,23 @@
+             if settings_schema_fragment is not None:
+                 declaration = replace(
+                     declaration,
+                     fragments=(
+                         settings_schema_fragment,
+                         *declaration.fragments,
+                     ),
+                 )
++            frames_after_fragment = substitution_frames_after_fragment(
++                configuration.selection,
++                owner=module.module_id,
++            )
++            if frames_after_fragment is not None:
++                declaration = replace(
++                    declaration,
++                    fragments=(
++                        frames_after_fragment,
++                        *declaration.fragments,
++                    ),
++                )
+             xdash_cost_fragment = xdash_chakra_cost_fragment(
+                 configuration.selection,
+                 owner=module.module_id,
+diff --git a/na228_builder/scripts/substitution_timing.py b/na228_builder/scripts/substitution_timing.py
+new file mode 100644
+--- /dev/null
++++ b/na228_builder/scripts/substitution_timing.py
+@@ -0,0 +1,54 @@
++from __future__ import annotations
++
++import struct
++from typing import TYPE_CHECKING
++
++from ..payload_builder.operations import PayloadFragment
++
++if TYPE_CHECKING:
++    from .catalog import CatalogSelection
++
++
++SUBSTITUTION_FRAMES_AFTER_PATH = (
++    "features",
++    "battle",
++    "substitution",
++    "frames_after",
++)
++
++
++def substitution_frames_after_fragment(
++    selection: CatalogSelection,
++    *,
++    owner: str,
++    symbol: str = "battle_logic_substitution_frames_after",
++) -> PayloadFragment | None:
++    """Encode the selected post-impact substitution window in game frames."""
++
++    matches = [
++        node
++        for node in selection.nodes
++        if node.path == SUBSTITUTION_FRAMES_AFTER_PATH
++    ]
++    if len(matches) != 1:
++        raise ValueError(
++            "Catalog selection has no unique substitution frames-after node"
++        )
++    node = matches[0]
++    if not node.enabled:
++        return None
++    value = node.configured_value
++    if (
++        not node.has_configured_value
++        or isinstance(value, bool)
++        or not isinstance(value, int)
++        or not 0 <= value <= 16
++    ):
++        raise ValueError("Substitution frames after requires 0 through 16")
++    return PayloadFragment(
++        owner=owner,
++        symbol=symbol,
++        kind="rodata",
++        alignment=4,
++        payload=struct.pack("<I", value),
++    )
+diff --git a/src/battle_logic/substitution_timing_abi.S b/src/battle_logic/substitution_timing_abi.S
+new file mode 100644
+--- /dev/null
++++ b/src/battle_logic/substitution_timing_abi.S
+@@ -0,0 +1,54 @@
++/* Native EE adapter for the bounded post-impact substitution window. */
++    .set noreorder
++    .set noat
++
++    .section .text.battle_logic_substitution_update_ordinary_response,"ax",@progbits
++    .balign 4
++    .globl battle_logic_substitution_update_ordinary_response
++    .type battle_logic_substitution_update_ordinary_response, @function
++battle_logic_substitution_update_ordinary_response:
++    addiu $sp, $sp, -32
++    sw $a0, 16($sp)
++    sd $ra, 24($sp)
++
++    lw $v0, 0x1c4($a0)
++    blez $v0, 1f
++    nop
++    lui $v1, %hi(battle_logic_substitution_frames_after)
++    lw $v1, %lo(battle_logic_substitution_frames_after)($v1)
++    slt $at, $v1, $v0
++    bnez $at, 1f
++    nop
++
++    move $a1, $zero
++    addiu $a2, $zero, 5
++    lh $a3, 0x190($a0)
++    addiu $t0, $zero, 1
++    lui $t9, 0x0022
++    ori $t9, $t9, 0x9130
++    jalr $t9
++    nop
++    beqz $v0, 1f
++    nop
++
++    lw $a0, 16($sp)
++    addiu $a1, $zero, 0x11
++    addiu $a2, $zero, 1
++    lui $t9, 0x0022
++    ori $t9, $t9, 0x97d0
++    jalr $t9
++    nop
++    ld $ra, 24($sp)
++    jr $ra
++    addiu $sp, $sp, 32
++
++1:
++    lw $a0, 16($sp)
++    lui $t9, 0x0023
++    ori $t9, $t9, 0x4da0
++    jalr $t9
++    nop
++    ld $ra, 24($sp)
++    jr $ra
++    addiu $sp, $sp, 32
++    .size battle_logic_substitution_update_ordinary_response, . - battle_logic_substitution_update_ordinary_response

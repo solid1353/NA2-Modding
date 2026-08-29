@@ -244,7 +244,7 @@ game's texture artwork.
 
 ### Control Settings and substitution input
 
-When `features.battle.control_settings_rework` is enabled, Control Settings action-map
+When `features.settings.controls` is enabled, Control Settings action-map
 index `7` is the dedicated **Substitution** action, replacing the second native
 Guard row. The feature redirects that row's label-pointer slot at raw ELF
 `0x4B26AC` from
@@ -961,7 +961,7 @@ it. The capture pair measures about 2.43 pixels per bar unit and 2.5 pixels per
 character-name-anchor unit, refining the anchors to bar Y `38` and character-name Y `55` while
 leaving X and every bar dimension unchanged.
 
-The feature depends only on `features.battle.character_overrides`, which
+The feature depends only on `features.general.character_overrides`, which
 provides the single normalized cost source. No Support remains independent and
 controls only native field support and its lower gauge. The supported build-time
 combinations are:
@@ -1121,52 +1121,51 @@ not introduce another schema.
 
 ### Catalog shape and defaults
 
-Add `features.battle.substitution.gauge` under the shared substitution group in
-`catalog/catalog.modcat` as an object-valued setting. This uses existing
-catalog semantics to support two build-time states:
+Declare `substitution` as the last required field of the typed
+`features.settings.shared` object in `catalog/catalog.modcat`. Its object has a
+required runtime default and optional advanced tuning values. Enabling the
+shared setting requires `features.settings.practice`; its Substitution mode
+also requires `features.general.character_overrides = true`.
+`features.settings.shared.support` is independent and must not be silently
+changed: `"on"` keeps native field support and its lower gauge, while `"off"`
+suppresses them. Do not create a second configuration field.
 
-- `false`: disabled;
-- an object: enabled with a required runtime default and optional advanced
-  tuning values.
-
-Every enabled form requires
-`features.battle.character_overrides = true`; reject an enabled gauge
-when that dependency is false. `features.battle.support_disabled` is not a
-dependency and must not be silently enabled: `false` keeps native field support
-and its lower gauge, while `true` suppresses them independently. Do not
-create a second configuration field.
-
-The Control Settings declaration is structurally equivalent to:
+The `features.settings.controls` declaration is structurally
+equivalent to:
 
 ```text
-control_settings_rework: setting {
+controls: setting {
   description: "Expose Guard and Substitution as independent remappable actions and default both players to L1 Substitution, R1 Guard, L2 Item Select, and R2 Linked Attack.",
   patches: ["e__battle__control_settings_rework", "i__battle__control_settings_rework"],
 },
 ```
 
-The gauge declaration is structurally equivalent to:
+The relevant shared fields are structurally equivalent to:
 
 ```text
-gauge: setting<{
-    default: "chakra" | "gauge" | "free",
-    recovery_delay_seconds?: decimal & 0..60 & step 0.25,
-    refill_seconds_per_stock?: decimal & >0 & <=10 & step 0.05,
-    damage_recovery?: bool,
-    damage_percent_per_stock?: decimal & >0 & <=100 & step 0.25,
-  }> {
-    description: "Install selectable Chakra, Gauge, and Free substitution resource modes with an independently rendered 100-point gauge.",
-    patches: ["i__battle__settings_rework", "i__battle_logic__substitution__gauge"],
-  },
+sub_active_frames: int & 0..16,
+// Other shared fields remain between these two fields.
+substitution: {
+  default: "chakra" | "gauge" | "free",
+  recovery_delay_seconds?: decimal & 0..60 & step 0.25,
+  refill_seconds_per_stock?: decimal & >0 & <=10 & step 0.05,
+  damage_recovery?: bool,
+  damage_percent_per_stock?: decimal & >0 & <=100 & step 0.25,
+},
 ```
 
 The simple release configuration is:
 
 ```json
-"substitution": {
-  "frames_before": 4,
-  "frames_after": 4,
-  "gauge": {
+"shared": {
+  "ultimate_jutsu": "no_hud",
+  "shadowblur": "off",
+  "extra_hit": "off",
+  "sub_active_frames": 4,
+  "xdash_chakra_cost": 5,
+  "support": "off",
+  "simple_display": "off",
+  "substitution": {
     "default": "gauge"
   }
 }
@@ -1175,10 +1174,15 @@ The simple release configuration is:
 The equivalent explicit configuration is:
 
 ```json
-"substitution": {
-  "frames_before": 4,
-  "frames_after": 4,
-  "gauge": {
+"shared": {
+  "ultimate_jutsu": "no_hud",
+  "shadowblur": "off",
+  "extra_hit": "off",
+  "sub_active_frames": 4,
+  "xdash_chakra_cost": 5,
+  "support": "off",
+  "simple_display": "off",
+  "substitution": {
     "default": "gauge",
     "recovery_delay_seconds": 14.0,
     "refill_seconds_per_stock": 1.0,
@@ -1191,11 +1195,12 @@ The equivalent explicit configuration is:
 Capacity `100`, recovery/damage award `25`, and per-character cost from the
 normalized override table stay fixed and do not appear as sliders. The base
 configuration selects `Gauge`; omitted recovery fields retain the parity
-defaults. Because `default` is mandatory, bare `true` is invalid.
+defaults. `substitution.default` is mandatory whenever the shared setting is
+enabled.
 
 ### Generated constants and resident ownership
 
-Follow the existing `xdash_chakra_cost.py` pattern rather than embedding
+Follow the existing `battle_settings_runtime.py` pattern rather than embedding
 configuration literals in assembly. A focused
 `@builder/scripts/substitution_gauge.py` reader should find exactly one
 selected catalog node, merge omitted object fields with the defaults above,
@@ -1306,13 +1311,13 @@ The minimal implementation touches these existing ownership points:
 
 | Purpose | Canonical location |
 | --- | --- |
-| Public setting and descriptions | `features.battle` in `@builder/catalog/catalog.modcat` |
+| Public setting and descriptions | `features.settings.shared` in `@builder/catalog/catalog.modcat` |
 | Guarded input routing edits | `@builder/catalog/edits.json` |
 | Hook and payload declarations | `@builder/catalog/injections.json` |
 | Default/profile selection | `@builder/configurations/*.json` |
 | Config-to-fragment encoder | `@builder/scripts/substitution_gauge.py` and `module_pipeline.py` |
 | Gameplay state, independent renderer, and native adapters | `src/battle_logic/substitution_gauge.c` and `substitution_gauge_abi.S` |
-| Independent battle-support suppression | `src/qol/battle_support_disabled.c` |
+| Runtime-selectable battle support | `src/qol/battle_support.c` |
 | Control Settings ownership and composition tests | `tests/na228_builder/test_control_settings.py` |
 | Gauge builder/state tests | `tests/na228_builder/test_substitution_gauge.py` and focused pure-C/state tests |
 | End-user explanation | `@scripts/release/README.md` |

@@ -487,7 +487,7 @@ the action map. `FUN_0071CAF0` calls `FUN_001F3F10(side + 1)` at live
 `0x69184`. The clean instruction bytes are `0A004484`; offset `+0x0A` selects
 action index `5`, Linked Attack, independently for each player. The current
 unaccepted substitution-gauge candidate leaves this entire renderer and all of
-its X/Y constants clean. `features.battle.support_disabled` independently
+its X/Y constants clean. `features.settings.shared.support` independently
 suppresses only its outer call at raw `0x69398`.
 
 The first independent-renderer candidate hooked the preceding controller-update

@@ -33,21 +33,20 @@ class ControlSettingsTests(unittest.TestCase):
         )
         return path
 
-    def test_control_settings_and_substitution_gauge_are_independently_selectable(
+    def test_controls_and_shared_settings_are_independently_selectable(
         self,
     ) -> None:
-        for controls_enabled, gauge_enabled in (
+        for controls_enabled, shared_enabled in (
             (False, False),
             (False, True),
             (True, False),
             (True, True),
         ):
-            with self.subTest(controls=controls_enabled, gauge=gauge_enabled):
+            with self.subTest(controls=controls_enabled, shared=shared_enabled):
                 features = self._base_features()
-                features["battle"]["control_settings_rework"] = controls_enabled
-                features["battle"]["substitution"]["gauge"] = (
-                    {"default": "gauge"} if gauge_enabled else False
-                )
+                features["settings"]["controls"] = controls_enabled
+                shared = features["settings"]["shared"]
+                features["settings"]["shared"] = shared if shared_enabled else False
                 selection = catalog.load_selection(
                     self.catalog_path,
                     self._write_full_configuration(features),
@@ -56,25 +55,25 @@ class ControlSettingsTests(unittest.TestCase):
                     node
                     for node in selection.nodes
                     if node.path
-                    == ("features", "battle", "control_settings_rework")
+                    == ("features", "settings", "controls")
                 )
-                gauge = next(
+                shared = next(
                     node
                     for node in selection.nodes
                     if node.path
-                    == ("features", "battle", "substitution", "gauge")
+                    == ("features", "settings", "shared")
                 )
                 self.assertEqual(controls.enabled, controls_enabled)
-                self.assertEqual(gauge.enabled, gauge_enabled)
+                self.assertEqual(shared.enabled, shared_enabled)
                 active_edits = {
                     edit_id
-                    for node in selection.feature_nodes("battle")
+                    for node in selection.feature_nodes("settings")
                     if node.enabled
                     for edit_id in node.edit_ids
                 }
                 active_injections = {
                     injection_id
-                    for node in selection.feature_nodes("battle")
+                    for node in selection.feature_nodes("settings")
                     if node.enabled
                     for injection_id in node.injection_ids
                 }
@@ -89,9 +88,9 @@ class ControlSettingsTests(unittest.TestCase):
                 self.assertEqual(
                     "i__battle_logic__substitution__gauge"
                     in active_injections,
-                    gauge_enabled,
+                    shared_enabled,
                 )
-                self.assertEqual(gauge.edit_ids, ())
+                self.assertEqual(shared.edit_ids, ("e__battle__simple_display",))
 
     def test_owned_default_layout_and_action_separation(self) -> None:
         selection = catalog.load_selection(
@@ -185,7 +184,6 @@ class ControlSettingsTests(unittest.TestCase):
             controls["payload"]["control_settings_substitution_label"],
             {
                 "kind": "rodata",
-                "order": 132,
                 "alignment": 1,
                 "value": "537562737469747574696F6E00",
             },
@@ -218,7 +216,6 @@ class ControlSettingsTests(unittest.TestCase):
                 "imports": {},
                 "fragments": {
                     "control_settings_assign_action": {
-                        "order": 145,
                         "object": (
                             "battle.control.settings.text.control.settings."
                             "assign.action"

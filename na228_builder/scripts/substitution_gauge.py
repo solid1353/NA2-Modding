@@ -5,26 +5,16 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import TYPE_CHECKING
 
 from ..payload_builder.operations import PayloadFragment
+from .battle_settings_runtime import PRACTICE_SETTINGS_PATH, SHARED_SETTINGS_PATH
 
 if TYPE_CHECKING:
     from .catalog import CatalogSelection
 
 
-SUBSTITUTION_GAUGE_PATH = (
-    "features",
-    "battle",
-    "substitution",
-    "gauge",
-)
 CHARACTER_OVERRIDES_PATH = (
     "features",
-    "battle",
+    "general",
     "character_overrides",
-)
-PRACTICE_SETTINGS_PATH = (
-    "features",
-    "practice",
-    "settings_rework",
 )
 DEFAULT_RECOVERY_DELAY_SECONDS = Decimal("14.0")
 DEFAULT_REFILL_SECONDS_PER_STOCK = Decimal("1.0")
@@ -85,43 +75,54 @@ def substitution_gauge_fragment(
 ) -> PayloadFragment | None:
     """Encode the selected native-30-FPS substitution-gauge configuration."""
 
-    node = _selected_node(selection, SUBSTITUTION_GAUGE_PATH)
+    node = _selected_node(selection, SHARED_SETTINGS_PATH)
     if not node.enabled:
         return None
     character_overrides = _selected_node(selection, CHARACTER_OVERRIDES_PATH)
     if not character_overrides.enabled:
         raise ValueError(
-            "features.battle.substitution.gauge requires "
-            "features.battle.character_overrides"
+            "features.settings.shared.substitution requires "
+            "features.general.character_overrides"
         )
     practice_settings = _selected_node(selection, PRACTICE_SETTINGS_PATH)
     if not practice_settings.enabled:
         raise ValueError(
-            "features.battle.substitution.gauge requires "
-            "features.practice.settings_rework"
+            "features.settings.shared.substitution requires "
+            "features.settings.practice"
         )
 
     value = node.configured_value
     if not node.has_configured_value or not isinstance(value, dict):
-        raise ValueError("Substitution gauge requires a settings object")
-    default = value.get("default")
+        raise ValueError("Shared settings requires an object value")
+    substitution = value.get("substitution")
+    if not isinstance(substitution, dict):
+        raise ValueError("Shared settings substitution requires an object value")
+    default = substitution.get("default")
     if default not in SUBSTITUTION_MODE_VALUES:
         raise ValueError(
             "Substitution-gauge default must be 'chakra', 'gauge', or 'free'"
         )
     recovery_delay = _decimal(
-        value.get("recovery_delay_seconds", DEFAULT_RECOVERY_DELAY_SECONDS),
+        substitution.get(
+            "recovery_delay_seconds", DEFAULT_RECOVERY_DELAY_SECONDS
+        ),
         "Substitution-gauge recovery delay",
     )
     refill_seconds = _decimal(
-        value.get("refill_seconds_per_stock", DEFAULT_REFILL_SECONDS_PER_STOCK),
+        substitution.get(
+            "refill_seconds_per_stock", DEFAULT_REFILL_SECONDS_PER_STOCK
+        ),
         "Substitution-gauge refill time",
     )
     damage_percent = _decimal(
-        value.get("damage_percent_per_stock", DEFAULT_DAMAGE_PERCENT_PER_STOCK),
+        substitution.get(
+            "damage_percent_per_stock", DEFAULT_DAMAGE_PERCENT_PER_STOCK
+        ),
         "Substitution-gauge damage threshold",
     )
-    damage_recovery = value.get("damage_recovery", DEFAULT_DAMAGE_RECOVERY)
+    damage_recovery = substitution.get(
+        "damage_recovery", DEFAULT_DAMAGE_RECOVERY
+    )
     if not isinstance(damage_recovery, bool):
         raise ValueError("Substitution-gauge damage recovery must be Boolean")
 

@@ -6,7 +6,6 @@ param(
     [Parameter(Mandatory)][string]$Suite,
     [Parameter(Mandatory)][string]$Transaction,
     [Parameter(Mandatory)][string]$CaptureRoot,
-    [string]$PublishedVariant,
     [string]$CapturedRoot
 )
 
@@ -20,11 +19,8 @@ $metadataPath = Join-Path $suiteStage 'postprocess.json'
 
 if ($Action -in @('CurrentPrepare', 'ReferencePrepare')) {
     if ($Action -ceq 'CurrentPrepare') {
-        if ([string]::IsNullOrWhiteSpace($PublishedVariant)) {
-            throw 'CurrentPrepare requires PublishedVariant.'
-        }
         $suiteJob = Join-Path `
-            (Join-Path (Join-Path (Join-Path $Transaction 'jobs') $PublishedVariant) 'suites') `
+            (Join-Path (Join-Path (Join-Path $Transaction 'jobs') 'current') 'suites') `
             $context.SuiteRelativePath
         $capturedRoot = Join-Path $suiteJob 'capture'
         $capturedScreenshots = Join-Path $capturedRoot 'screenshots'

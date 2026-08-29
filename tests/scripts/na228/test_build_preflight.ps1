@@ -77,14 +77,7 @@ exit $LASTEXITCODE
 '@)
     [IO.File]::WriteAllText((Join-Path $repository 'e2e\config.json'), @'
 {
-  "build_variants": [
-    {
-      "name": "normal",
-      "build": "e2e_test",
-      "payload_shift_bytes": 0,
-      "publish": true
-    }
-  ],
+  "build": "e2e_test",
   "memory_card": "templates/2_formatted.ps2"
 }
 '@)
@@ -105,8 +98,7 @@ exit $LASTEXITCODE
     "latest_iso": "@build/Synthetic Product - Latest.iso",
     "previous_iso": "@build/Synthetic Product - Previous.iso",
     "manual_iso": "@build/Synthetic Product - Manual.iso",
-    "e2e_test_iso": "@build/Synthetic Product - E2E Test.iso",
-    "e2e_test_shifted_iso": "@build/Synthetic Product - E2E Test Shifted.iso"
+    "e2e_test_iso": "@build/Synthetic Product - E2E Test.iso"
   }
 }
 '@)
@@ -139,7 +131,6 @@ iso`tbuild_record
 @build/Synthetic Product - Latest.iso`t@logs/na228/builds/existing
 @build/Synthetic Product - Previous.iso`t
 @build/Synthetic Product - E2E Test.iso`t
-@build/Synthetic Product - E2E Test Shifted.iso`t
 "@)
 
     $global:Na2RegistryEntries = @{}
@@ -299,10 +290,9 @@ iso`tbuild_record
     Assert-Na2PreflightTest (@(Get-ChildItem -LiteralPath (Join-Path $repository 'work\Project') -Recurse -Filter '*.iso' -File).Count -eq 0) 'Cache build materialized a task-owned ISO.'
     Assert-Na2PreflightTest ($global:Na2BuilderCalls.Count -eq 1) 'Cache reuse rebuilt the image.'
 
-    $e2e = & (Join-Path $scriptRoot 'build.ps1') -E2eVariant normal
+    $e2e = & (Join-Path $scriptRoot 'build.ps1') -E2e
     $e2eIso = Join-Path $repository 'build\Synthetic Product - E2E Test.iso'
     Assert-Na2PreflightTest ($e2e.Status -eq 'e2e-test') 'E2E build did not return e2e-test status.'
-    Assert-Na2PreflightTest ($e2e.E2eVariant -ceq 'normal') 'E2E build did not retain its variant.'
     Assert-Na2PreflightTest ($e2e.ConfigurationId -ceq 'test') 'E2E did not use its build target configuration.'
     Assert-Na2PreflightTest ($e2e.OutputIso -ceq $e2eIso) 'E2E build did not resolve the configured build selector to its ISO.'
     Assert-Na2PreflightTest (Test-Path -LiteralPath $e2eIso -PathType Leaf) 'E2E build did not publish its configured ISO.'

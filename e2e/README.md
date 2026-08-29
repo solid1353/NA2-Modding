@@ -40,10 +40,9 @@ attach a launch profile; `practice` uses the same generated configuration as
 `na228 <game> -l practice naruto`. Memory-card values use the shared
 launcher's path rules, and snapshot replay always discards memory-card writes.
 Defaults and overrides apply equally to reference and current replays.
-`config.json` also owns E2E-only variant properties and references build targets
-by name; build targets do not own E2E comparison or payload-shift settings.
+`config.json` also references the E2E build target by name.
 
-After a normal E2E run publishes successfully, it compares only the selected
+After an E2E run publishes successfully, it compares only the selected
 capture paths with `captures/` Git `HEAD`. The console reports `UNCHANGED` when
 they match or `CHANGED` with added, modified, and deleted counts for each
 changed suite and the total. Dirty capture paths outside the selection are
@@ -52,14 +51,11 @@ are the regression result and do not make successful
 execution fail. The returned object separates `Execution = completed` from
 `Regression = changed|unchanged` and includes the same counts.
 
-`-s` adds the shifted E2E Test build and replays the same suites against it.
-Every normal and shifted capture must match.
-
 `e2e create all` replaces all capture history except the nested capture
 repository's `.git` metadata. It processes every `.p2m2` recording below
 `@pcsx2_input_recordings/e2e/` except the inputs owned by the two generated
 character suites, prepares one build, and runs
-every suite's normal replay concurrently. NUN5 reference replays run
+every suite's Current replay concurrently. NUN5 reference replays run
 concurrently by default; use `-noref` to skip reference capture. A suite
 selector instead replaces only that suite; selecting either generated character
 suite rebuilds only that branch.
@@ -84,25 +80,25 @@ commit. Canonical recording changes remain ordinary main-repository changes.
 
 ## Execution and publication
 
-Build variants run concurrently. Each variant starts its suite replays as soon
-as that variant's build completes. Ready
-suite/variant comparisons and independent screenshot-grid, pair, blend, and
-diff branches share a bounded task queue; a failed task cancels its active
-siblings immediately. NUN5 capture overlaps the normal pipeline and its
-artifact publication uses the same bounded scheduling across suites.
+The Current build runs concurrently with reference capture and post-processing.
+Each selected suite starts its replay as soon as the build completes.
+Independent screenshot-grid, pair, blend, and diff branches share a bounded
+task queue; a failed task cancels its active siblings immediately. NUN5 capture
+overlaps the Current pipeline and its artifact publication uses the same bounded
+scheduling across suites.
 
 Each generated character lane batch-resolves its Practice cases, replays all
 required cases concurrently, and creates each grid as soon as its captures
 finish. Every PCSX2
-replay in one command—ordinary and generated suites, NUN5 and NA228, and normal,
-shifted, and reference work—draws dynamically from one transaction-scoped
+replay in one command—ordinary and generated suites plus NUN5 and NA228
+work—draws dynamically from one transaction-scoped
 16-process pool. Unfinished lanes immediately reuse capacity released by work
 that completes earlier. Independent commands use independent pools; builds and
 image-processing tasks do not consume PCSX2 permits.
 
 Typed artifacts are generated once and reused when their grids and aggregate
 hardlink views are staged. Aggregate preparation runs concurrently per suite.
-Canonical publication, rollback, and cleanup remain serial so normal
+Canonical publication, rollback, and cleanup remain serial so Current
 screenshots, reports, and aggregate views become
 visible atomically only after the complete command succeeds. Publication and
 rollback retry transient file-reader locks instead of leaving a partially
@@ -113,18 +109,13 @@ Transactions live under `.transactions/<create|run>-<uuid>/`. Active
 transactions record the owning PID/start time and the request identity. A failed
 command retains its complete and partial suite outputs. Rerunning the same
 command automatically continues the newest compatible transaction; suite
-selection, generated character range, shifted/reference mode, and recording or
+selection, generated character range, reference mode, and recording or
 generated-suite input hashes must match. Each build lane revalidates its ISO
 hash, completed suites are reused, and only unfinished or incompatible captures
 run again. Generated
 character grids also resume at the individual capture and completed-grid level.
-Superseded derived stages move under `.attempts/`, while mismatch evidence is
-added without removing replay output. The transaction is removed only after
-canonical publication succeeds.
-
-The optional shifted variant moves resident-payload layout internally while
-preserving the fixed reservation envelope and compares every capture with
-normal.
+Superseded derived stages move under `.attempts/` without removing replay
+output. The transaction is removed only after canonical publication succeeds.
 
 ## Review and acceptance
 

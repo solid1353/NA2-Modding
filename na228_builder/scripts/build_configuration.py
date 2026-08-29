@@ -448,10 +448,9 @@ def apply_configuration_modules(
     owners: dict[str, str],
     insertions: dict[str, bytes],
     insertion_owners: dict[str, str],
-    payload_shift: int = 0,
     texture_cache_root: Path | None = None,
 ) -> tuple[list[dict[str, object]], dict[str, object] | None]:
-    pipeline = prepare_module_pipeline(configuration, payload_shift=payload_shift)
+    pipeline = prepare_module_pipeline(configuration)
     ordered_modules = pipeline.ordered_modules
     import_plans = pipeline.import_plans
     derived_string_plans = pipeline.derived_string_plans
@@ -751,7 +750,6 @@ def compose_configuration_candidate(
     *,
     source_iso: Path,
     configuration: BuildConfiguration,
-    payload_shift: int = 0,
     texture_cache_root: Path | None = None,
 ) -> ConfigurationCompositionResult:
     """Compose and conflict-check one configuration without staging an image."""
@@ -773,7 +771,6 @@ def compose_configuration_candidate(
         owners=owners,
         insertions=insertions,
         insertion_owners=insertion_owners,
-        payload_shift=payload_shift,
         texture_cache_root=texture_cache_root,
     )
     composition = compose_assembly_plan(
@@ -799,7 +796,6 @@ def build_configuration_candidate(
     configuration: BuildConfiguration,
     workspace: Path,
     configuration_log_directory: Path | None,
-    payload_shift: int = 0,
     best_effort_metadata: bool = False,
     texture_cache_root: Path | None = None,
 ) -> ConfigurationBuildResult:
@@ -836,7 +832,6 @@ def build_configuration_candidate(
     composed = compose_configuration_candidate(
         source_iso=source_iso,
         configuration=configuration,
-        payload_shift=payload_shift,
         texture_cache_root=(
             texture_cache_root
             if texture_cache_root is not None
@@ -962,12 +957,6 @@ def main() -> int:
     parser.add_argument("--configuration", required=True, type=Path)
     parser.add_argument("--configuration-log-directory", type=Path)
     parser.add_argument(
-        "--payload-shift",
-        type=int,
-        default=0,
-        help="Test-only aligned resident-payload layout shift in bytes.",
-    )
-    parser.add_argument(
         "--compose-only",
         action="store_true",
         help="Compose and conflict-check the configuration without staging an ISO.",
@@ -998,7 +987,6 @@ def main() -> int:
         composed = compose_configuration_candidate(
             source_iso=source_iso,
             configuration=configuration,
-            payload_shift=args.payload_shift,
         )
         print_configuration_summary(
             configuration, composed.results, composed.payload_result
@@ -1034,7 +1022,6 @@ def main() -> int:
         configuration=configuration,
         workspace=workspace,
         configuration_log_directory=configuration_log_directory,
-        payload_shift=args.payload_shift,
         best_effort_metadata=args.best_effort_metadata,
     )
     configuration_results = build.results

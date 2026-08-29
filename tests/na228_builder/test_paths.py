@@ -264,7 +264,7 @@ class ProjectPathTests(unittest.TestCase):
                         "rotate_to": "previous",
                     },
                     "previous": {},
-                    "e2e_test_shifted": {"configuration": "test"},
+                    "e2e_test": {"configuration": "test"},
                 },
             }
             manifest_path = root / "paths.json"
@@ -299,9 +299,9 @@ class ProjectPathTests(unittest.TestCase):
                 root.resolve() / "pcsx2_files/games/NA228/NA228.ps2",
             )
             self.assertEqual(
-                paths.file("e2e_test_shifted_iso"),
+                paths.file("e2e_test_iso"),
                 root.resolve()
-                / "build/Narutimate Accel v2.28 - E2E Test Shifted.iso",
+                / "build/Narutimate Accel v2.28 - E2E Test.iso",
             )
             self.assertEqual(
                 paths.file("nun5_iso"),

@@ -50,7 +50,6 @@ try {
             latest_iso = Join-Path $build 'NA2.28 - Latest.iso'
             previous_iso = Join-Path $build 'NA2.28 - Previous.iso'
             e2e_test_iso = Join-Path $build 'NA2.28 - E2E Test.iso'
-            e2e_test_shifted_iso = Join-Path $build 'NA2.28 - E2E Test Shifted.iso'
         }
     }
     New-Item -ItemType Directory -Force -Path $logs, $build | Out-Null
@@ -260,8 +259,7 @@ function Get-Na2StartupFastForwardFrames {
     },
     "previous": { "aliases": ["p"] },
     "manual": { "aliases": ["m"], "configuration": "release" },
-    "e2e_test": { "configuration": "test" },
-    "e2e_test_shifted": { "configuration": "test" }
+    "e2e_test": { "configuration": "test" }
   }
 }
 '@
@@ -296,7 +294,6 @@ builds = {
     "previous": "Previous",
     "manual": "Manual",
     "e2e_test": "E2E Test",
-    "e2e_test_shifted": "E2E Test Shifted",
 }
 aliases = {"l": "latest", "p": "previous", "m": "manual"}
 name = aliases.get(name.casefold(), name)
@@ -443,7 +440,7 @@ Write-Output '[fake] unit tests'
         -Condition ($helpText -match '(?m)^\s*na228 test\s+') `
         -Message 'Root help omitted the unit-test command.'
     Assert-Na2Test `
-        -Condition ($helpText -match '(?m)^\s*na228 e2e <all\|suite \[args\.\.\.\] \.\.\.> \[-s\]\s+') `
+        -Condition ($helpText -match '(?m)^\s*na228 e2e <all\|suite \[args\.\.\.\] \.\.\.>\s+') `
         -Message 'Root help omitted explicit all or multi-suite E2E execution.'
     Assert-Na2Test `
         -Condition ($helpText -match '(?m)^\s*na228 e2e create <all\|suite \[args\.\.\.\] \.\.\.> \[-noref\]\s+') `
@@ -638,12 +635,10 @@ else {
             -Content 'recording'
     }
     Set-Na2Utf8FileAtomic -Path (Join-Path $fakeVisualScripts 'run.ps1') -Content @'
-param([string[]]$SelectionToken, [switch]$Shifted)
+param([string[]]$SelectionToken)
 Add-Content `
     -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') `
-    -Value (
-        "run selection=$($SelectionToken -join '|') shifted=$($Shifted.IsPresent)"
-    )
+    -Value "run selection=$($SelectionToken -join '|')"
 [pscustomobject]@{
     Execution = 'completed'
     Regression = 'unchanged'
@@ -712,7 +707,7 @@ Add-Content `
     }
     catch {
         $missingE2eSelectionRejected = $_.Exception.Message -ceq (
-            'Usage: na228 e2e <all|suite [args...] ...> [-s]'
+            'Usage: na228 e2e <all|suite [args...] ...>'
         )
     }
     Assert-Na2Test `
@@ -722,10 +717,9 @@ Add-Content `
     Assert-Na2Test `
         -Condition ($directE2eOutput.Count -eq 0) `
         -Message 'Direct E2E leaked its internal structured result into console output.'
-    & (Join-Path $fakeRepository 'na228.ps1') e2e all -s
     & (Join-Path $fakeRepository 'na228.ps1') e2e alpha
     & (Join-Path $fakeRepository 'na228.ps1') e2e movesets 8
-    & (Join-Path $fakeRepository 'na228.ps1') e2e movesets 8-18 characters/idle 20-30 -s
+    & (Join-Path $fakeRepository 'na228.ps1') e2e movesets 8-18 characters/idle 20-30
     & (Join-Path $fakeRepository 'na228.ps1') e2e characters/idle 8
     & (Join-Path $fakeRepository 'na228.ps1') e2e create font/character_select
     & (Join-Path $fakeRepository 'na228.ps1') e2e create font/no_reference -noref
@@ -740,24 +734,23 @@ Add-Content `
     & (Join-Path $fakeRepository 'na228.ps1') e2e commit -p
     $calls = @(Get-Content -LiteralPath $visualCalls)
     Assert-Na2Test `
-        -Condition ($calls.Count -eq 17 -and
-            $calls[0] -ceq 'run selection=all shifted=False' -and
-            $calls[1] -ceq 'run selection=all shifted=True' -and
-            $calls[2] -ceq 'run selection=alpha shifted=False' -and
-            $calls[3] -ceq 'run selection=movesets|8 shifted=False' -and
-            $calls[4] -ceq 'run selection=movesets|8-18|characters/idle|20-30 shifted=True' -and
-            $calls[5] -ceq 'run selection=characters/idle|8 shifted=False' -and
-            $calls[6] -ceq 'create selection=font/character_select noref=False' -and
-            $calls[7] -ceq 'create selection=font/no_reference noref=True' -and
-            $calls[8] -ceq 'create selection=all noref=False' -and
-            $calls[9] -ceq 'create selection=movesets|8 noref=False' -and
-            $calls[10] -ceq 'create selection=movesets|8-18|characters/idle|20-30 noref=True' -and
-            $calls[11] -ceq 'create selection=movesets/specials|8 noref=False' -and
-            $calls[12] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
-            $calls[13] -ceq 'delete selection=movesets|8|characters/idle|14-20' -and
-            $calls[14] -ceq 'delete selection=all' -and
-            $calls[15] -ceq 'commit preserve=False' -and
-            $calls[16] -ceq 'commit preserve=True') `
+        -Condition ($calls.Count -eq 16 -and
+            $calls[0] -ceq 'run selection=all' -and
+            $calls[1] -ceq 'run selection=alpha' -and
+            $calls[2] -ceq 'run selection=movesets|8' -and
+            $calls[3] -ceq 'run selection=movesets|8-18|characters/idle|20-30' -and
+            $calls[4] -ceq 'run selection=characters/idle|8' -and
+            $calls[5] -ceq 'create selection=font/character_select noref=False' -and
+            $calls[6] -ceq 'create selection=font/no_reference noref=True' -and
+            $calls[7] -ceq 'create selection=all noref=False' -and
+            $calls[8] -ceq 'create selection=movesets|8 noref=False' -and
+            $calls[9] -ceq 'create selection=movesets|8-18|characters/idle|20-30 noref=True' -and
+            $calls[10] -ceq 'create selection=movesets/specials|8 noref=False' -and
+            $calls[11] -ceq 'rename suite=font/character_select newSuite=font/characters' -and
+            $calls[12] -ceq 'delete selection=movesets|8|characters/idle|14-20' -and
+            $calls[13] -ceq 'delete selection=all' -and
+            $calls[14] -ceq 'commit preserve=False' -and
+            $calls[15] -ceq 'commit preserve=True') `
         -Message 'Selected/global E2E or lifecycle-command dispatch was incorrect.'
     $genericProfileOutput = (
         & (Join-Path $fakeRepository 'na228.ps1') `
@@ -1496,10 +1489,9 @@ Add-Content `
             "iso`tbuild_record`n" +
             "@build/NA2.28 - Latest.iso`t@logs/na228/builds/new-latest`n" +
             "@build/NA2.28 - Previous.iso`t@logs/na228/builds/old-latest`n" +
-            "@build/NA2.28 - E2E Test.iso`t`n" +
-            "@build/NA2.28 - E2E Test Shifted.iso`t`n"
+            "@build/NA2.28 - E2E Test.iso`t`n"
         )) `
-        -Message 'builds.tsv does not contain the exact atomic four-role mapping.'
+        -Message 'builds.tsv does not contain the exact atomic three-role mapping.'
     $remainingRecords = @(Get-ChildItem -LiteralPath $buildRecords -Directory).Name
     Assert-Na2Test -Condition ($remainingRecords.Count -eq 2) -Message 'Unreferenced build records were not pruned.'
     $buildResult = [IO.File]::ReadAllText((Join-Path $buildRecords 'new-latest\build_result.tsv'))

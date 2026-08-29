@@ -23,9 +23,6 @@
     },
     "e2e_test": {
       "configuration": "test"
-    },
-    "e2e_test_shifted": {
-      "configuration": "test"
     }
   }
 }

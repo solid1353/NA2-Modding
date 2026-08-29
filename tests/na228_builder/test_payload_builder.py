@@ -191,41 +191,6 @@ class PayloadBuilderTests(unittest.TestCase):
             [(patch.mapping_id, patch.replacement) for patch in large_patches],
         )
 
-    def test_layout_shift_moves_real_fragments_inside_the_fixed_envelope(self) -> None:
-        config = resident_payload_config()
-        fragments = (
-            PayloadFragment(
-                "feature.code",
-                "shared.code",
-                "code",
-                4,
-                b"\0" * 4,
-                (PayloadRelocation(0, "abs32", "shared.data"),),
-            ),
-            PayloadFragment("feature.data", "shared.data", "data", 16, b"DATA"),
-        )
-        normal = build_resident_payload(fragments, config=config)
-        shifted = build_resident_payload(fragments, config=config, layout_shift=32)
-
-        self.assertEqual(len(normal.payload), len(shifted.payload))
-        self.assertEqual(normal.memory_end, shifted.memory_end)
-        self.assertGreater(
-            shifted.symbols["shared.code"].runtime_address,
-            normal.symbols["shared.code"].runtime_address,
-        )
-        self.assertGreater(
-            shifted.symbols["shared.data"].runtime_address,
-            normal.symbols["shared.data"].runtime_address,
-        )
-        shifted_code = shifted.symbols["shared.code"]
-        shifted_data = shifted.symbols["shared.data"]
-        self.assertEqual(
-            shifted.payload[
-                shifted_code.file_offset : shifted_code.file_offset + 4
-            ],
-            shifted_data.runtime_address.to_bytes(4, "little"),
-        )
-
     def test_payload_starts_after_the_development_injection_range(self) -> None:
         config = resident_payload_config()
         build = build_resident_payload(

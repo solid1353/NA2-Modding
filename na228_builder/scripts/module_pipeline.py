@@ -79,14 +79,8 @@ def _selected_game_title_policy(
 
 def prepare_module_pipeline(
     configuration: BuildConfiguration,
-    *,
-    payload_shift: int = 0,
 ) -> PreparedModulePipeline:
     """Prepare artifacts and link all shared payload contributions once."""
-    if payload_shift < 0 or payload_shift > 0x10000 or payload_shift & 0xF:
-        raise ValueError(
-            "Payload shift must be a 16-byte multiple from 0 through 65536"
-        )
     ordered_modules = configuration.modules
     if any(module.module == "translation_importer" for module in ordered_modules):
         if "na2" not in configuration.roots:
@@ -254,7 +248,6 @@ def prepare_module_pipeline(
     payload_build = (
         payload_builder_module.build_resident_payload(
             fragments,
-            layout_shift=payload_shift,
         )
         if fragments
         else None

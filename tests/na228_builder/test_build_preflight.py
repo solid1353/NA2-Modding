@@ -227,10 +227,6 @@ class BuildPreflightTests(unittest.TestCase):
             initial = state_fingerprint(self.state(paths))
             self.assertEqual(initial, state_fingerprint(self.state(paths)))
 
-            self.assertNotEqual(
-                initial,
-                state_fingerprint(self.state(paths, payload_shift=32)),
-            )
             (paths["builder"] / "scripts" / "engine.py").write_text(
                 "ENGINE = 2\n", encoding="utf-8"
             )

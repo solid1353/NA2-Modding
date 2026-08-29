@@ -7,8 +7,6 @@
 - After implementation and earlier checks are complete, build changes that can
   affect built bytes as final validation. Any later byte-affecting change
   requires another build.
-- For output-preserving refactors, build identical pre-change baseline and
-  candidate inputs and compare their recorded SHA-256 hashes.
 - Agents build only through `na228 build -c <configuration>`, using `base` by
   default. Never use normal user build routes or alter their outputs and records.
 - Build or reuse the canonical cached ISO only when selected validation requires

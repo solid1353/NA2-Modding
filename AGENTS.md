@@ -39,7 +39,7 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 Immediately before beginning state-changing work in any workflow, state:
 
 ```text
-Mode: <Design mode or Interactive mode; omit when no mode is active>
+Interaction mode: <Design mode or Interactive mode; omit when no interaction mode is active>
 Changes: <what will be changed>
 Validation: <how the changes will be validated>
 Required user actions: <later user action or nothing>
@@ -66,11 +66,6 @@ validation and its result, remaining limitations or risks, and commit and push
 state. Keep the report concrete and concise; omit inapplicable items.
 
 ## Context and command routing
-
-Shifted E2E is user-only. Unless the current user request explicitly names it,
-treat it as nonexistent: do not search for, inspect, infer from, mention,
-propose, select, run, or report it. Ignore incidental tool output that exposes
-it.
 
 Fresh chats start with no interaction mode active. Before stating
 implementation intent or changing state, read the active
@@ -103,9 +98,10 @@ Read only routed policies whose triggers apply:
 | reverse engineering, disassembly, runtime investigation, knowledge, hypotheses | [`docs/policies/game.md`](docs/policies/game.md#research-and-knowledge) |
 
 On entering or resuming a task, read its directly linked documentation and
-relevant component documentation. Do not reload them for every message. Load
-other technical documents only when required, and read only relevant sections
-of large documents.
+relevant component documentation. After context compaction, reread all policies
+routed by unfinished work before continuing. Do not reload them for every
+message. Load other technical documents only when required, and read only
+relevant sections of large documents.
 
 Keep this file a small universal router. Add only rules that apply to nearly
 every task; expanding its purpose or scope requires explicit user approval.

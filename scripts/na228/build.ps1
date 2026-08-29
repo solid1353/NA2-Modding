@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [switch]$ManualOnly,
-    [ValidateSet('normal', 'shifted')][string]$E2eVariant,
+    [switch]$E2e,
     [string]$CacheConfiguration,
     [string]$CacheLogDirectory,
     [switch]$Force
@@ -17,21 +17,16 @@ $pythonRunner = Join-Path ([string]$paths.scripts) 'lib\run_python.ps1'
 $registryPath = Join-Path $paths.logs 'na228\preflight\registry.json'
 $isoCacheRoot = Join-Path $paths.cache 'isos'
 $incomingRoot = Join-Path $isoCacheRoot '.incoming'
-$e2eBuild = $null
 $cacheBuild = $PSBoundParameters.ContainsKey('CacheConfiguration')
-if (-not [string]::IsNullOrWhiteSpace($E2eVariant)) {
-    . (Join-Path $paths.repository 'e2e\scripts\config.ps1')
-    $e2eBuild = Get-E2eBuildVariant -Name $E2eVariant
-}
 
 if (@(
     $ManualOnly.IsPresent
-    $null -ne $e2eBuild
+    $E2e.IsPresent
     $cacheBuild
 ).Where({ $_ }).Count -gt 1) {
-    throw '-ManualOnly, -E2eVariant, and -CacheConfiguration are mutually exclusive.'
+    throw '-ManualOnly, -E2e, and -CacheConfiguration are mutually exclusive.'
 }
-if ($Force -and ($null -ne $e2eBuild -or $cacheBuild)) {
+if ($Force -and ($E2e -or $cacheBuild)) {
     throw '-Force is valid only for ordinary Latest or Manual builds.'
 }
 if ($cacheBuild -and $CacheConfiguration -cnotmatch '^[A-Za-z0-9][A-Za-z0-9_-]*$') {
@@ -80,17 +75,16 @@ function Write-Na2IsolatedResult {
         [Parameter(Mandatory)][string]$Configuration,
         [Parameter(Mandatory)][string]$OutputIso,
         [Parameter(Mandatory)][long]$Size,
-        [Parameter(Mandatory)][string]$Sha256,
-        [string]$Variant
+        [Parameter(Mandatory)][string]$Sha256
     )
     $configurationPortable = ConvertTo-Na2PortableText -Text $Configuration -Paths $paths
     $outputPortable = ConvertTo-Na2PortableText -Text $OutputIso -Paths $paths
     $recordPortable = ConvertTo-Na2PortableText -Text $RecordDirectory -Paths $paths
     $content = @(
-        'timestamp_utc`tresult`toutput_state`tvariant`tconfiguration`toutput_iso`toutput_size_bytes`toutput_sha256`tbuild_record'.Replace('`t', "`t")
+        'timestamp_utc`tresult`toutput_state`tconfiguration`toutput_iso`toutput_size_bytes`toutput_sha256`tbuild_record'.Replace('`t', "`t")
         (
             (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" +
-            "$Kind`t$State`t$Variant`t$configurationPortable`t$outputPortable`t" +
+            "$Kind`t$State`t$configurationPortable`t$outputPortable`t" +
             "$Size`t$Sha256`t$recordPortable"
         )
     ) -join "`n"
@@ -118,14 +112,13 @@ $previousTarget = Find-Na2BuildTarget `
 $latestIso = [IO.Path]::GetFullPath([string]$latestTarget.Entry.IsoPath)
 $previousIso = [IO.Path]::GetFullPath([string]$previousTarget.Entry.IsoPath)
 $manualIso = [IO.Path]::GetFullPath([string]$manualTarget.Entry.IsoPath)
-$payloadShift = if ($null -ne $e2eBuild) { [int]$e2eBuild.payload_shift_bytes } else { 0 }
 $buildTarget = if ($cacheBuild) {
     $null
 }
-elseif ($null -ne $e2eBuild) {
+elseif ($E2e) {
     Find-Na2BuildTarget `
         -Targets $buildTargets `
-        -Name ([string]$e2eBuild.build)
+        -Name 'e2e_test'
 }
 elseif ($ManualOnly) {
     $manualTarget
@@ -134,7 +127,7 @@ else {
     $latestTarget
 }
 if (-not $cacheBuild -and $null -eq $buildTarget) {
-    throw "E2E variant '$E2eVariant' references an unknown build target."
+    throw 'Unknown E2E build target: e2e_test'
 }
 if (-not $cacheBuild -and
     [string]::IsNullOrWhiteSpace([string]$buildTarget.Configuration)) {
@@ -165,7 +158,7 @@ if ($cacheBuild) {
     $recordRoot = Join-Path $cacheRecordBase 'builds'
     $recordAliasRoot = (ConvertTo-Na2PortableText -Text $recordRoot -Paths $paths).Replace('\', '/')
 }
-elseif ($null -ne $e2eBuild) {
+elseif ($E2e) {
     $kind = 'e2e-test'
     $role = [string]$buildTarget.Name
     $outputIso = [IO.Path]::GetFullPath([string]$buildTarget.Entry.IsoPath)
@@ -203,7 +196,6 @@ $lookupArguments = @{
     Na2Iso = $inputIso
     Nun5Iso = $nun5Iso
     Configuration = $configurationRelative
-    PayloadShift = $payloadShift
 }
 try {
     $verification = Invoke-Na2BuildRegistry @lookupArguments
@@ -263,7 +255,6 @@ else {
             '--output', $incomingIso
             '--configuration', $configurationRelative
             '--configuration-log-directory', $configurationLogRelative
-            '--payload-shift', [string]$payloadShift
         )
         if ($Force) { $builderArguments += '--best-effort-metadata' }
         Push-Location $paths.repository
@@ -294,7 +285,6 @@ else {
             Na2Iso = $inputIso
             Nun5Iso = $nun5Iso
             Configuration = $configurationRelative
-            PayloadShift = $payloadShift
             ExpectedFingerprint = $verification.fingerprint
             Provenance = $configurationLog
         }
@@ -431,8 +421,8 @@ if ($state -ne 'pending') {
         }
         elseif ($kind -eq 'e2e-test') {
             $buildRecord = Complete-Na2E2eBuildRecord -LogDirectory $sharedLogDirectory `
-                -BuildId $buildId -Variant $E2eVariant -OutputIso $outputIso `
-                -Configuration $configuration -PayloadShift $payloadShift -Paths $paths
+                -BuildId $buildId -OutputIso $outputIso `
+                -Configuration $configuration -Paths $paths
         }
         else {
             Write-Na2IsolatedResult -RecordDirectory $configurationLog -Kind $kind `
@@ -461,8 +451,7 @@ if ($state -ne 'pending') {
 else {
     Write-Na2IsolatedResult -RecordDirectory $configurationLog -Kind $kind `
         -State pending -Configuration $configuration -OutputIso $candidate `
-        -Size $size -Sha256 $sha256 `
-        -Variant $(if ($null -ne $e2eBuild) { $E2eVariant } else { '' })
+        -Size $size -Sha256 $sha256
     Remove-Item -LiteralPath $configurationLog -Recurse -Force
     if ($registered) {
         $buildRecord = [pscustomobject]@{
@@ -506,7 +495,6 @@ return [pscustomobject]@{
     OutputSizeBytes = $size
     OutputSha256 = $sha256
     ManualState = if ($kind -eq 'manual') { $state } else { $null }
-    E2eVariant = if ($kind -eq 'e2e-test') { $E2eVariant } else { $null }
     BuildId = if ($null -ne $buildRecord) { $buildRecord.BuildId } else { $buildId }
     ConfigurationLogDirectory = if ($null -ne $buildRecord) { $buildRecord.BuildRecord } else { "$recordAliasRoot/$buildId" }
     PreflightCacheHit = $cacheHit

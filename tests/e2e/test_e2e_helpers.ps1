@@ -701,10 +701,9 @@ exit 0
 '@
     )
     [IO.File]::WriteAllText(
-        (Join-Path $generatedRunScripts 'variant.ps1'),
+        (Join-Path $generatedRunScripts 'current.ps1'),
         @'
 param(
-    [string]$Variant,
     [string]$Transaction,
     [string]$SuiteRequestJson,
     [string]$ConcurrencyPoolRoot,
@@ -712,11 +711,11 @@ param(
 )
 $suiteRequests = @($SuiteRequestJson | ConvertFrom-Json)
 [IO.File]::WriteAllText(
-    (Join-Path $PSScriptRoot "command-pool-$Variant.txt"),
+    (Join-Path $PSScriptRoot 'command-pool-current.txt'),
     $ConcurrencyPoolRoot
 )
 [IO.File]::WriteAllText(
-    (Join-Path $PSScriptRoot "command-limit-$Variant.txt"),
+    (Join-Path $PSScriptRoot 'command-limit-current.txt'),
     [string]$ConcurrencyLimit
 )
 if ($suiteRequests.Count -eq 1 -and
@@ -731,7 +730,7 @@ foreach ($suiteRequest in $suiteRequests) {
     $suiteName = [string]$suiteRequest.Suite
     $movesetRange = [string]$suiteRequest.MovesetRange
     $suiteRoot = Join-Path `
-        (Join-Path (Join-Path (Join-Path $Transaction 'jobs') $Variant) 'suites') `
+        (Join-Path (Join-Path (Join-Path $Transaction 'jobs') 'current') 'suites') `
         $suiteName.Replace('/', [IO.Path]::DirectorySeparatorChar)
     $grids = Join-Path $suiteRoot 'capture\screenshots'
     [void](New-Item -ItemType Directory -Path $grids -Force)
@@ -748,7 +747,7 @@ foreach ($suiteRequest in $suiteRequests) {
         '{"screenshots":1}'
     )
 }
-$jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
+$jobRoot = Join-Path (Join-Path $Transaction 'jobs') 'current'
 [IO.File]::WriteAllText((Join-Path $jobRoot 'ready.json'), '{}')
 '@
     )
@@ -771,8 +770,7 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
     & git -C $generatedRunCaptureRepository add --all
     & git -C $generatedRunCaptureRepository commit -m 'Accepted captures' | Out-Null
     $generatedRunRecords = @(& (Join-Path $generatedRunScripts 'run.ps1') `
-        -SelectionToken 'movesets' `
-        -Shifted *>&1)
+        -SelectionToken 'movesets' *>&1)
     $generatedRunOutput = [string[]]@(
         $generatedRunRecords | ForEach-Object { [string]$_ }
     )
@@ -789,11 +787,8 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
         -Condition (
             [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002_naruto_base_a_reference.png')) -ceq 'accepted reference grid' -and
             [IO.File]::ReadAllText((Join-Path $generatedRunCapture '002_naruto_base_b_current.png')) -ceq 'identical current grid' -and
-            [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-pool-normal.txt')) -ceq
-                [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-pool-shifted.txt')) -and
-            -not [string]::IsNullOrWhiteSpace([IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-pool-normal.txt'))) -and
-            [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-limit-normal.txt')) -ceq '16' -and
-            [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-limit-shifted.txt')) -ceq '16' -and
+            -not [string]::IsNullOrWhiteSpace([IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-pool-current.txt'))) -and
+            [IO.File]::ReadAllText((Join-Path $generatedRunScripts 'command-limit-current.txt')) -ceq '16' -and
             (Test-Path -LiteralPath (Join-Path `
                 $generatedRunRoot `
                 'captures\movesets\pairs\002_naruto_base.png')) -and
@@ -820,10 +815,9 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
             )) -and
             $generatedProgressLines.Count -eq 1 -and
             $generatedProgressLines[0] -match (
-                '^E2E pipeline running: replays \d+/2 completed; ' +
+                '^E2E pipeline running: replays \d+/1 completed; ' +
                 'tasks \d+/\d+ completed, \d+ running, \d+ waiting$'
             ) -and
-            $generatedProgressLines[0] -notmatch 'normal=|shifted=' -and
             $generatedRunOutput[-1] -match (
                 '^E2E run elapsed: \d{2}:\d{2}:\d{2}\.\d{3}$'
             ) -and
@@ -835,7 +829,7 @@ $jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
             $generatedRunResult.Modified -eq 1 -and
             $generatedRunResult.Deleted -eq 0
         ) `
-        -Message 'Generated run output, comparison, or current-history publication regressed.'
+        -Message 'Generated run output or current-history publication regressed.'
     [IO.File]::WriteAllText(
         (Join-Path $generatedRunCapture '003_sakura_base_a_reference.png'),
         'preserved reference grid'
@@ -927,7 +921,7 @@ $grids = Join-Path $OutputRoot 'screenshots'
         ) `
         -Message 'Generated reference capture did not delegate to the moveset suite runner.'
 
-    foreach ($runnerName in @('run.ps1', 'variant.ps1', 'movesets.ps1')) {
+    foreach ($runnerName in @('run.ps1', 'current.ps1', 'movesets.ps1')) {
         $tokens = $null
         $parseErrors = $null
         $runnerPath = Join-Path $repository "e2e\scripts\$runnerName"
@@ -1071,26 +1065,13 @@ $grids = Join-Path $OutputRoot 'screenshots'
         ) `
         -Message 'The bounded E2E task graph did not fail fast with the exact failed task.'
 
-    $activeVariantRoot = Join-Path $testRoot 'active-variant-config'
-    [void](New-Item -ItemType Directory -Path $activeVariantRoot -Force)
+    $configurationRoot = Join-Path $testRoot 'e2e-config'
+    [void](New-Item -ItemType Directory -Path $configurationRoot -Force)
     [IO.File]::WriteAllText(
-        (Join-Path $activeVariantRoot 'config.json'),
+        (Join-Path $configurationRoot 'config.json'),
 @'
 {
-  "build_variants": [
-    {
-      "name": "baseline",
-      "build": "baseline_build",
-      "payload_shift_bytes": 0,
-      "publish": true
-    },
-    {
-      "name": "qualified",
-      "build": "qualified_build",
-      "payload_shift_bytes": 16,
-      "compare_against": "baseline"
-    }
-  ],
+  "build": "baseline_build",
   "memory_card": "templates/default.ps2",
   "suite_overrides": {
     "card-and-profile": {
@@ -1110,13 +1091,10 @@ $grids = Join-Path $OutputRoot 'screenshots'
 }
 '@
     )
-    $configuration = Get-E2eConfiguration -Root $activeVariantRoot
+    $configuration = Get-E2eConfiguration -Root $configurationRoot
     Assert-E2eHelperTest `
-        -Condition ((@($configuration.Variants.name) -join ',') -ceq 'baseline,qualified') `
-        -Message 'E2E configuration did not expose both active synthetic variants.'
-    Assert-E2eHelperTest `
-        -Condition ([string]$configuration.PublishedVariant.name -ceq 'baseline') `
-        -Message 'E2E configuration did not select the published synthetic variant.'
+        -Condition ([string]$configuration.Build -ceq 'baseline_build') `
+        -Message 'E2E configuration did not expose the configured build.'
     $defaultSuiteSettings = Resolve-E2eSuiteSettings `
         -Configuration $configuration `
         -Suite 'default'
@@ -1138,13 +1116,6 @@ $grids = Join-Path $OutputRoot 'screenshots'
             $profileOnlySettings.LaunchProfile.Name -ceq 'synthetic'
         ) `
         -Message 'E2E memory-card defaults or per-suite overrides were not resolved correctly.'
-    $qualifiedBuildVariant = Get-E2eBuildVariant `
-        -Name 'qualified' `
-        -Root $activeVariantRoot
-    Assert-E2eHelperTest `
-        -Condition ([string]$qualifiedBuildVariant.name -ceq 'qualified') `
-        -Message 'A configured build variant was unavailable to explicit build resolution.'
-
     $layoutRoot = Join-Path $testRoot ('capture-layout-' + ('x' * 128))
     $layoutPublish = Join-Path $layoutRoot 'publish'
     foreach ($directory in @(
@@ -1424,60 +1395,6 @@ $grids = Join-Path $OutputRoot 'screenshots'
         ) `
         -Message 'Superseded derived output was not preserved as a resumable attempt.'
 
-    $normal = Join-Path $testRoot 'normal'
-    $shifted = Join-Path $testRoot 'shifted'
-    $comparison = Join-Path $testRoot 'comparison'
-    [void](New-Item -ItemType Directory -Path $normal, $shifted -Force)
-    [IO.File]::WriteAllBytes((Join-Path $normal '0001.png'), [byte[]](1, 2, 3))
-    [IO.File]::WriteAllBytes((Join-Path $shifted '0001.png'), [byte[]](1, 2, 3))
-    [IO.File]::WriteAllBytes((Join-Path $normal '0002.png'), [byte[]](4))
-    [IO.File]::WriteAllBytes((Join-Path $shifted '0002.png'), [byte[]](5))
-    $failed = Compare-VisualRegressionVariants `
-        -Suite 'test/helpers' `
-        -BaselineDirectory $normal `
-        -CandidateDirectory $shifted `
-        -CandidateName 'shifted' `
-        -OutputRoot $comparison
-    Assert-E2eHelperTest `
-        -Condition ($failed.status -ceq 'failed') `
-        -Message 'A normal/shifted difference was not mandatory.'
-    Assert-E2eHelperTest `
-        -Condition (Test-Path -LiteralPath (Join-Path $comparison 'differences\normal\0002.png')) `
-        -Message 'Normal evidence for a failed variant comparison was not retained.'
-    Assert-E2eHelperTest `
-        -Condition (Test-Path -LiteralPath (Join-Path $comparison 'differences\shifted\0002.png')) `
-        -Message 'Shifted evidence for a failed variant comparison was not retained.'
-
-    $qualification = Join-Path $testRoot 'qualification'
-    $qualificationComparison = Join-Path `
-        $qualification `
-        'comparisons\shifted\test\helpers'
-    [void](New-Item -ItemType Directory -Path $qualificationComparison -Force)
-    Copy-Item -Path (Join-Path $comparison '*') `
-        -Destination $qualificationComparison `
-        -Recurse
-    [IO.File]::WriteAllText((Join-Path $qualification 'owner.json'), 'discarded')
-    $qualificationEvidence = Preserve-VisualRegressionMismatchEvidence `
-        -Transaction $qualification `
-        -ComparisonVariant @('shifted')
-    $qualificationFiles = @(
-        Get-ChildItem -LiteralPath $qualificationEvidence -Recurse -File |
-            ForEach-Object {
-                [IO.Path]::GetRelativePath($qualificationEvidence, $_.FullName).Replace('\', '/')
-            } |
-            Sort-Object
-    )
-    Assert-E2eHelperTest `
-        -Condition (
-            ($qualificationFiles -join ',') -ceq (
-                'shifted/test/helpers/report/result.json,' +
-                'shifted/test/helpers/screenshots/normal/0002.png,' +
-                'shifted/test/helpers/screenshots/shifted/0002.png'
-            ) -and
-            (Test-Path -LiteralPath (Join-Path $qualification 'owner.json') -PathType Leaf)
-        ) `
-        -Message 'Failed qualification did not preserve focused screenshot mismatch evidence.'
-
     $firstDestination = Join-Path $testRoot 'published\one\current'
     $secondDestination = Join-Path $testRoot 'published\two\current'
     $firstSource = Join-Path $testRoot 'sources\one\current'
@@ -1736,7 +1653,6 @@ param(
     [string[]]$SelectionToken,
     [string]$CaptureRoot,
     [string]$CaptureRepository,
-    [switch]$Shifted,
     [object[]]$SupervisedJob,
     [string]$ConcurrencyPoolRoot,
     [int]$ConcurrencyLimit
@@ -1772,7 +1688,7 @@ if ($hasReferenceSuite) {
     }
 }
 Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value (
-    "run suite=$($suites -join ',') shifted=$($Shifted.IsPresent)" +
+    "run suite=$($suites -join ',')" +
         $(if ($selection.Requests.Count -eq 1 -and
             -not [string]::IsNullOrWhiteSpace([string]$selection.Requests[0].MovesetRange)) {
             " range=$($selection.Requests[0].MovesetRange)"
@@ -1855,9 +1771,9 @@ foreach ($suiteName in $suites) {
     Assert-E2eHelperTest `
         -Condition (
             $newSuiteCalls.Count -eq 5 -and
-            $newSuiteCalls[0] -ceq 'run suite=test/no_reference shifted=False' -and
-            $newSuiteCalls[1] -ceq 'run suite=test/no_reference shifted=False' -and
-            $newSuiteCalls[2] -ceq 'run suite=test/with_reference shifted=False' -and
+            $newSuiteCalls[0] -ceq 'run suite=test/no_reference' -and
+            $newSuiteCalls[1] -ceq 'run suite=test/no_reference' -and
+            $newSuiteCalls[2] -ceq 'run suite=test/with_reference' -and
             $newSuiteCalls[3] -ceq 'reference-capture suite=test/with_reference game=nun5' -and
             $newSuiteCalls[4] -ceq 'reference-publish suite=test/with_reference'
         ) `
@@ -1991,7 +1907,7 @@ foreach ($suiteName in $suites) {
             ) -and
             [IO.File]::ReadAllText((Join-Path $fakeScripts 'run-throttle.txt')) -ceq '16' -and
             @(Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt'))[-1] -ceq (
-                'run suite=movesets,characters/idle shifted=False arguments=movesets=2;characters/idle=2'
+                'run suite=movesets,characters/idle arguments=movesets=2;characters/idle=2'
             )
         ) `
         -Message 'Multi-suite ranged creation did not preserve history or pass independent arguments to the run.'
@@ -2075,7 +1991,7 @@ foreach ($suiteName in $suites) {
         -Condition (
             ($bulkSuiteNames -join ',') -ceq 'characters/idle,movesets,nested/transient,orphan,renamed/with_reference,renamed/with_reference/child,test/no_reference' -and
             (Get-Content -LiteralPath (Join-Path $fakeScripts 'calls.txt') | Select-Object -Last 1) `
-                -ceq 'run suite=characters/idle,movesets,nested/transient,orphan,renamed/with_reference,renamed/with_reference/child,test/no_reference shifted=False' -and
+                -ceq 'run suite=characters/idle,movesets,nested/transient,orphan,renamed/with_reference,renamed/with_reference/child,test/no_reference' -and
             (Test-Path -LiteralPath (
                 Join-Path $fakeRepository 'e2e\captures\test\no_reference\current.txt'
             ) -PathType Leaf) -and

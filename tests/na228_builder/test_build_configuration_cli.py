@@ -107,7 +107,6 @@ class BuildConfigurationCliTests(unittest.TestCase):
             compose.assert_called_once_with(
                 source_iso=source_iso,
                 configuration=configuration,
-                payload_shift=0,
             )
             build.assert_not_called()
             self.assertIn("identity (1 edits)", output.getvalue())

@@ -45,7 +45,6 @@ function Invoke-Na2BuildRegistry {
         [string]$Na2Iso,
         [string]$Nun5Iso,
         [string]$Configuration,
-        [int]$PayloadShift = 0,
         [string]$ExpectedFingerprint,
         [string]$Image,
         [string]$Provenance,
@@ -63,7 +62,6 @@ function Invoke-Na2BuildRegistry {
             '--na2-iso', $Na2Iso
             '--nun5-iso', $Nun5Iso
             '--configuration', $Configuration
-            '--payload-shift', [string]$PayloadShift
         )
     }
     if ($Command -eq 'record') {

@@ -220,17 +220,12 @@ def collect_build_state(
     na2_iso: Path,
     nun5_iso: Path,
     configuration_path: Path,
-    payload_shift: int = 0,
     dependencies: dict[str, str] | None = None,
 ) -> dict[str, object]:
     workspace = workspace.resolve()
     na2_iso = na2_iso.resolve()
     nun5_iso = nun5_iso.resolve()
     configuration_path = configuration_path.resolve()
-    if payload_shift < 0 or payload_shift > 0x10000 or payload_shift & 0xF:
-        raise ValueError(
-            "Payload shift must be a 16-byte multiple from 0 through 65536"
-        )
     builder = load_paths(workspace).path("builder").resolve()
     try:
         configuration_name = configuration_path.relative_to(builder).as_posix()
@@ -248,7 +243,6 @@ def collect_build_state(
         "builder_tree": builder_tree_entry(builder),
         "configuration_resources": resources,
         "configuration": configuration_name,
-        "payload_shift": payload_shift,
         "dependencies": dependencies if dependencies is not None else dependency_versions(),
     }
     if resources["uses_ee_compiler"]:
@@ -806,7 +800,6 @@ def main() -> int:
         command.add_argument("--configuration", required=True, type=Path)
         command.add_argument("--registry", required=True, type=Path)
         command.add_argument("--cache-root", required=True, type=Path)
-        command.add_argument("--payload-shift", type=int, default=0)
         if name == "record":
             command.add_argument("--expected-fingerprint", required=True)
             command.add_argument("--image", required=True, type=Path)
@@ -826,7 +819,6 @@ def main() -> int:
             na2_iso=args.na2_iso,
             nun5_iso=args.nun5_iso,
             configuration_path=_configuration_path(args.configuration, workspace),
-            payload_shift=args.payload_shift,
         )
         if args.command == "lookup":
             result = lookup_registry(

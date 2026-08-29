@@ -51,10 +51,10 @@
 - Never use a system temporary directory or write outside repositories
   configured for the current task.
 - Write authorized project changes to their canonical project paths and
-  maintained workflow outputs to their configured repository paths. Put every
-  other task-created file—including temporary files, experiments, generated
-  artifacts, clones, and detached worktrees—under
+  maintained workflow outputs to their configured repository paths.
+- All other task files and clones are allowed only under
   `@work/<exact chat title>/`.
+- Never create or use an additional Git worktree.
 - Within `@work/`, a chat may write only in its own root. All other `@work`
   paths are read-only, regardless of tool or skill workspace conventions.
 - `docs/designs/` is read-only outside Design mode.

@@ -35,11 +35,8 @@ function Get-Na2ConfiguredIsoMapKeys {
         Previous = ConvertTo-Na2ProjectPath `
             -Path $Paths.files.previous_iso `
             -Paths $Paths
-        E2eTestNormal = ConvertTo-Na2ProjectPath `
+        E2eTest = ConvertTo-Na2ProjectPath `
             -Path $Paths.files.e2e_test_iso `
-            -Paths $Paths
-        E2eTestShifted = ConvertTo-Na2ProjectPath `
-            -Path $Paths.files.e2e_test_shifted_iso `
             -Paths $Paths
     }
 }
@@ -56,8 +53,7 @@ function Read-Na2BuildMap {
         return [pscustomobject]@{
             LatestBuildId = $null
             PreviousBuildId = $null
-            E2eTestNormalBuildId = $null
-            E2eTestShiftedBuildId = $null
+            E2eTestBuildId = $null
         }
     }
 
@@ -97,19 +93,14 @@ function Read-Na2BuildMap {
     ) {
         throw 'Latest and Previous ISOs cannot reference the same build record.'
     }
-    $normalRow = $rowsByIso[$isoKeys.E2eTestNormal]
-    $shiftedRow = $rowsByIso[$isoKeys.E2eTestShifted]
-    $normalBuildId = ConvertFrom-Na2BuildRecordPath `
-        -BuildRecord $(if ($null -ne $normalRow) { [string]$normalRow.build_record } else { '' }) `
-        -LogDirectory $LogDirectory
-    $shiftedBuildId = ConvertFrom-Na2BuildRecordPath `
-        -BuildRecord $(if ($null -ne $shiftedRow) { [string]$shiftedRow.build_record } else { '' }) `
+    $e2eRow = $rowsByIso[$isoKeys.E2eTest]
+    $e2eBuildId = ConvertFrom-Na2BuildRecordPath `
+        -BuildRecord $(if ($null -ne $e2eRow) { [string]$e2eRow.build_record } else { '' }) `
         -LogDirectory $LogDirectory
     return [pscustomobject]@{
         LatestBuildId = $latestBuildId
         PreviousBuildId = $previousBuildId
-        E2eTestNormalBuildId = $normalBuildId
-        E2eTestShiftedBuildId = $shiftedBuildId
+        E2eTestBuildId = $e2eBuildId
     }
 }
 
@@ -119,8 +110,7 @@ function Set-Na2BuildMap {
         [Parameter(Mandatory = $true)][string]$LogDirectory,
         [AllowNull()][string]$LatestBuildId,
         [AllowNull()][string]$PreviousBuildId,
-        [AllowNull()][string]$E2eTestNormalBuildId,
-        [AllowNull()][string]$E2eTestShiftedBuildId,
+        [AllowNull()][string]$E2eTestBuildId,
         [Parameter(Mandatory = $true)][psobject]$Paths
     )
 
@@ -130,8 +120,7 @@ function Set-Na2BuildMap {
     foreach ($buildId in @(
         $LatestBuildId,
         $PreviousBuildId,
-        $E2eTestNormalBuildId,
-        $E2eTestShiftedBuildId
+        $E2eTestBuildId
     )) {
         if ([string]::IsNullOrWhiteSpace($buildId)) {
             continue
@@ -155,8 +144,7 @@ function Set-Na2BuildMap {
         "iso`tbuild_record"
         "$($isoKeys.Latest)`t$(& $recordPath $LatestBuildId)"
         "$($isoKeys.Previous)`t$(& $recordPath $PreviousBuildId)"
-        "$($isoKeys.E2eTestNormal)`t$(& $recordPath $E2eTestNormalBuildId)"
-        "$($isoKeys.E2eTestShifted)`t$(& $recordPath $E2eTestShiftedBuildId)"
+        "$($isoKeys.E2eTest)`t$(& $recordPath $E2eTestBuildId)"
     ) -join "`n"
     Set-Na2Utf8FileAtomic `
         -Path (Join-Path $LogDirectory 'builds.tsv') `
@@ -203,10 +191,8 @@ function Write-Na2E2eBuildResult {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)][string]$RecordDirectory,
-        [Parameter(Mandatory = $true)][ValidateSet('normal', 'shifted')][string]$Variant,
         [Parameter(Mandatory = $true)][string]$OutputIso,
         [Parameter(Mandatory = $true)][string]$Configuration,
-        [Parameter(Mandatory = $true)][int]$PayloadShift,
         [Parameter(Mandatory = $true)][psobject]$Paths
     )
 
@@ -214,14 +200,10 @@ function Write-Na2E2eBuildResult {
     $configurationPortable = ConvertTo-Na2PortableText -Text $Configuration -Paths $Paths
     $recordPortable = ConvertTo-Na2PortableText -Text $RecordDirectory -Paths $Paths
     $content = @(
-        (
-            "timestamp_utc`tresult`tvariant`tconfiguration`toutput_iso`tpayload_shift`tbuild_record"
-        )
+        "timestamp_utc`tresult`tconfiguration`toutput_iso`tbuild_record"
         (
             (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ') + "`t" +
-            (
-                "built`t$Variant`t$configurationPortable`t$outputPortable`t$PayloadShift`t$recordPortable"
-            )
+            "built`t$configurationPortable`t$outputPortable`t$recordPortable"
         )
     ) -join "`n"
     $content += "`n"
@@ -265,8 +247,7 @@ function Remove-Na2UnreferencedBuildRecords {
         [Parameter(Mandatory = $true)][string]$LogDirectory,
         [AllowNull()][string]$LatestBuildId,
         [AllowNull()][string]$PreviousBuildId,
-        [AllowNull()][string]$E2eTestNormalBuildId,
-        [AllowNull()][string]$E2eTestShiftedBuildId
+        [AllowNull()][string]$E2eTestBuildId
     )
 
     $buildRoot = Join-Path $LogDirectory 'builds'
@@ -276,8 +257,7 @@ function Remove-Na2UnreferencedBuildRecords {
     $retained = @(
         $LatestBuildId,
         $PreviousBuildId,
-        $E2eTestNormalBuildId,
-        $E2eTestShiftedBuildId
+        $E2eTestBuildId
     ) |
         Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
         Select-Object -Unique
@@ -342,15 +322,13 @@ function Complete-Na2BuildRecord {
             -LogDirectory $LogDirectory `
             -LatestBuildId $BuildId `
             -PreviousBuildId $effectivePreviousBuildId `
-            -E2eTestNormalBuildId $buildMap.E2eTestNormalBuildId `
-            -E2eTestShiftedBuildId $buildMap.E2eTestShiftedBuildId `
+            -E2eTestBuildId $buildMap.E2eTestBuildId `
             -Paths $Paths
         Remove-Na2UnreferencedBuildRecords `
             -LogDirectory $LogDirectory `
             -LatestBuildId $BuildId `
             -PreviousBuildId $effectivePreviousBuildId `
-            -E2eTestNormalBuildId $buildMap.E2eTestNormalBuildId `
-            -E2eTestShiftedBuildId $buildMap.E2eTestShiftedBuildId
+            -E2eTestBuildId $buildMap.E2eTestBuildId
     }
     finally {
         $lock.Dispose()
@@ -367,10 +345,8 @@ function Complete-Na2E2eBuildRecord {
     param(
         [Parameter(Mandatory = $true)][string]$LogDirectory,
         [Parameter(Mandatory = $true)][string]$BuildId,
-        [Parameter(Mandatory = $true)][ValidateSet('normal', 'shifted')][string]$Variant,
         [Parameter(Mandatory = $true)][string]$OutputIso,
         [Parameter(Mandatory = $true)][string]$Configuration,
-        [Parameter(Mandatory = $true)][int]$PayloadShift,
         [Parameter(Mandatory = $true)][psobject]$Paths
     )
 
@@ -380,10 +356,8 @@ function Complete-Na2E2eBuildRecord {
     }
     Write-Na2E2eBuildResult `
         -RecordDirectory $recordDirectory `
-        -Variant $Variant `
         -OutputIso $OutputIso `
         -Configuration $Configuration `
-        -PayloadShift $PayloadShift `
         -Paths $Paths
 
     $lock = Enter-Na2BuildMapLock -LogDirectory $LogDirectory
@@ -391,31 +365,17 @@ function Complete-Na2E2eBuildRecord {
         $buildMap = Read-Na2BuildMap `
             -LogDirectory $LogDirectory `
             -Paths $Paths
-        $normalBuildId = if ($Variant -ceq 'normal') {
-            $BuildId
-        }
-        else {
-            $buildMap.E2eTestNormalBuildId
-        }
-        $shiftedBuildId = if ($Variant -ceq 'shifted') {
-            $BuildId
-        }
-        else {
-            $buildMap.E2eTestShiftedBuildId
-        }
         Set-Na2BuildMap `
             -LogDirectory $LogDirectory `
             -LatestBuildId $buildMap.LatestBuildId `
             -PreviousBuildId $buildMap.PreviousBuildId `
-            -E2eTestNormalBuildId $normalBuildId `
-            -E2eTestShiftedBuildId $shiftedBuildId `
+            -E2eTestBuildId $BuildId `
             -Paths $Paths
         Remove-Na2UnreferencedBuildRecords `
             -LogDirectory $LogDirectory `
             -LatestBuildId $buildMap.LatestBuildId `
             -PreviousBuildId $buildMap.PreviousBuildId `
-            -E2eTestNormalBuildId $normalBuildId `
-            -E2eTestShiftedBuildId $shiftedBuildId
+            -E2eTestBuildId $BuildId
     }
     finally {
         $lock.Dispose()

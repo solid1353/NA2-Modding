@@ -338,8 +338,8 @@ locks, so a later build can reclaim crash-orphaned incoming ISOs without
 touching live parallel builds.
 
 `@logs/na228/builds/<build-id>/` retains structured records only for the
-catalog-derived Latest, Previous, normal E2E Test, and shifted E2E Test images.
-`@logs/na228/builds.tsv` atomically maps those four roles to images and records;
+catalog-derived Latest, Previous, and E2E Test images.
+`@logs/na228/builds.tsv` atomically maps those three roles to images and records;
 an unavailable record leaves its role row empty. Parallel completion serializes
 replacement through `@logs/na228/.builds.lock` without deleting active unmapped
 records. An exact registry hit clones its provenance into the role record

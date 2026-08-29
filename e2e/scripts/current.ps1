@@ -1,6 +1,5 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)][ValidateSet('normal', 'shifted')][string]$Variant,
     [Parameter(Mandatory)][string]$Transaction,
     [Parameter(Mandatory)][string]$SuiteRequestJson,
     [Parameter(Mandatory)][string]$ConcurrencyPoolRoot,
@@ -15,20 +14,21 @@ $root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
 . (Join-Path $repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
-$buildVariant = Get-E2eBuildVariant -Name $Variant -Root $root
+$configuration = Get-E2eConfiguration -Root $root
+$jobName = 'current'
 $suiteRequests = @($SuiteRequestJson | ConvertFrom-Json)
 $suites = [string[]]@($suiteRequests.Suite)
 if ($suites.Count -eq 0) {
     throw 'No E2E suites are available.'
 }
 
-$jobRoot = Join-Path (Join-Path $Transaction 'jobs') $Variant
+$jobRoot = Join-Path (Join-Path $Transaction 'jobs') $jobName
 $buildPath = Join-Path $jobRoot 'build.json'
 $readyPath = Join-Path $jobRoot 'ready.json'
 $resultPath = Join-Path $jobRoot 'result.json'
 [void](New-Item -ItemType Directory -Path $jobRoot -Force)
 
-function Write-E2eVariantJson {
+function Write-E2eJobJson {
     param(
         [Parameter(Mandatory)][string]$Path,
         [Parameter(Mandatory)]$Value
@@ -51,16 +51,16 @@ function Write-E2eVariantJson {
     }
 }
 
-function Get-E2eVariantSuiteOutput {
+function Get-E2eSuiteOutput {
     param([Parameter(Mandatory)]$Context)
 
     return Join-Path (Join-Path $jobRoot 'suites') $Context.SuiteRelativePath
 }
 
-function Test-E2eVariantSuiteComplete {
+function Test-E2eSuiteComplete {
     param([Parameter(Mandatory)]$Context)
 
-    $suiteOutput = Get-E2eVariantSuiteOutput -Context $Context
+    $suiteOutput = Get-E2eSuiteOutput -Context $Context
     $completePath = Join-Path $suiteOutput 'complete.json'
     if (-not (Test-Path -LiteralPath $completePath -PathType Leaf)) {
         return $false
@@ -77,7 +77,6 @@ function Test-E2eVariantSuiteComplete {
     }
     $expectedArtifactType = if ($Context.Generated) { 'grids' } else { 'screenshots' }
     if ([string]$complete.suite -cne [string]$Context.Suite -or
-        [string]$complete.variant -cne $Variant -or
         [string]$complete.artifact_type -cne $expectedArtifactType) {
         return $false
     }
@@ -94,27 +93,25 @@ function Test-E2eVariantSuiteComplete {
     return $actualCount -eq $expectedCount
 }
 
-function Set-E2eVariantReady {
+function Set-E2eReady {
     param([string]$IsoSha256)
 
     $completedUtc = (Get-Date).ToUniversalTime().ToString('O')
-    Write-E2eVariantJson -Path $readyPath -Value ([ordered]@{
-        variant = $Variant
+    Write-E2eJobJson -Path $readyPath -Value ([ordered]@{
         iso_sha256 = $IsoSha256
         completed_utc = $completedUtc
     })
 }
 
-function Complete-E2eVariant {
+function Complete-E2eRun {
     $completedUtc = (Get-Date).ToUniversalTime().ToString('O')
     $result = [ordered]@{
-        variant = $Variant
         status = 'passed'
         suites = $suites.Count
         replays_per_suite = 1
         completed_utc = $completedUtc
     }
-    Write-E2eVariantJson -Path $resultPath -Value $result
+    Write-E2eJobJson -Path $resultPath -Value $result
     return [pscustomobject]$result
 }
 
@@ -133,43 +130,18 @@ $existingBuild = if (Test-Path -LiteralPath $buildPath -PathType Leaf) {
     catch { $null }
 }
 else { $null }
-$existingBuildMatchesVariant = $null -ne $existingBuild -and
-    [string]$existingBuild.variant -ceq $Variant
+$existingBuildMatches = $null -ne $existingBuild -and
+    [string]$existingBuild.build -ceq [string]$configuration.Build
 $allSuitesComplete = @(
-    $suiteContexts | Where-Object { -not (Test-E2eVariantSuiteComplete -Context $_) }
+    $suiteContexts | Where-Object { -not (Test-E2eSuiteComplete -Context $_) }
 ).Count -eq 0
-$previousIsoSha256 = if ($existingBuildMatchesVariant) {
+$previousIsoSha256 = if ($existingBuildMatches) {
     [string]$existingBuild.iso_sha256
 }
 else { '' }
-if ([string]::IsNullOrWhiteSpace($previousIsoSha256) -and $existingBuildMatchesVariant) {
-    $buildMapPath = Join-Path ([string]$paths.logs) 'na228\builds.tsv'
-    $mappedBuild = if (Test-Path -LiteralPath $buildMapPath -PathType Leaf) {
-        @(
-            Import-Csv -LiteralPath $buildMapPath -Delimiter "`t" |
-                Where-Object {
-                    [string]$_.build_record -ceq [string]$existingBuild.build_record
-                }
-        ) | Select-Object -First 1
-    }
-    else { $null }
-    $preflightPath = Join-Path `
-        ([string]$paths.logs) `
-        "na228\preflight\e2e_test_$Variant.json"
-    if ($null -ne $mappedBuild -and
-        (Test-Path -LiteralPath $preflightPath -PathType Leaf)) {
-        try {
-            $preflight = Get-Content -Raw -LiteralPath $preflightPath | ConvertFrom-Json
-            $previousIsoSha256 = [string]$preflight.output.sha256
-        }
-        catch {
-            $previousIsoSha256 = ''
-        }
-    }
-}
 
 $buildOutput = @(
-    & (Join-Path ([string]$paths.scripts) 'na228\build.ps1') -E2eVariant $Variant
+    & (Join-Path ([string]$paths.scripts) 'na228\build.ps1') -E2e
 )
 $build = @(
     $buildOutput | Where-Object {
@@ -177,29 +149,29 @@ $build = @(
         $_.Status -ceq 'e2e-test'
     }
 ) | Select-Object -Last 1
-if ($null -eq $build -or $build.E2eVariant -cne $Variant) {
-    throw "E2E Test $Variant build returned no valid result."
+if ($null -eq $build) {
+    throw 'E2E Test build returned no valid result.'
 }
 $isoSha256 = [string]$build.OutputSha256
 if ([string]::IsNullOrWhiteSpace($isoSha256)) {
-    throw "E2E Test $Variant build returned no ISO hash."
+    throw 'E2E Test build returned no ISO hash.'
 }
 
 $suiteOutputRoot = Join-Path $jobRoot 'suites'
 $hasExistingSuiteOutput = Test-Path -LiteralPath $suiteOutputRoot -PathType Container
-$buildIsCompatible = $existingBuildMatchesVariant -and
+$buildIsCompatible = $existingBuildMatches -and
     -not [string]::IsNullOrWhiteSpace($previousIsoSha256) -and
     $previousIsoSha256 -ceq $isoSha256
 if ($hasExistingSuiteOutput -and -not $buildIsCompatible) {
     Move-VisualRegressionTransactionItemsToAttempt `
         -Transaction $Transaction `
         -RelativePath @(
-            "jobs\$Variant\suites",
-            "jobs\$Variant\build.json",
-            "jobs\$Variant\result.json",
-            "jobs\$Variant\ready.json"
+            "jobs\$jobName\suites",
+            "jobs\$jobName\build.json",
+            "jobs\$jobName\result.json",
+            "jobs\$jobName\ready.json"
         ) `
-        -Label "$Variant-build" |
+        -Label 'current-build' |
         Out-Null
     $existingBuild = $null
 }
@@ -207,53 +179,51 @@ elseif ($null -ne $existingBuild -and -not $buildIsCompatible) {
     Move-VisualRegressionTransactionItemsToAttempt `
         -Transaction $Transaction `
         -RelativePath @(
-            "jobs\$Variant\build.json",
-            "jobs\$Variant\result.json",
-            "jobs\$Variant\ready.json"
+            "jobs\$jobName\build.json",
+            "jobs\$jobName\result.json",
+            "jobs\$jobName\ready.json"
         ) `
-        -Label "$Variant-build" |
+        -Label 'current-build' |
         Out-Null
     $existingBuild = $null
 }
 
 $buildResult = [ordered]@{
-    variant = $Variant
-    build = [string]$buildVariant.build
+    build = [string]$configuration.Build
     iso = [string]$build.OutputIso
     iso_sha256 = $isoSha256
     build_id = [string]$build.BuildId
     build_record = [string]$build.ConfigurationLogDirectory
     preflight_cache_hit = [bool]$build.PreflightCacheHit
 }
-Write-E2eVariantJson -Path $buildPath -Value $buildResult
-Set-E2eVariantReady -IsoSha256 $isoSha256
+Write-E2eJobJson -Path $buildPath -Value $buildResult
+Set-E2eReady -IsoSha256 $isoSha256
 if ($allSuitesComplete -and $buildIsCompatible) {
-    Write-Host "Continuing with completed $Variant E2E suite captures." -ForegroundColor Cyan
-    Complete-E2eVariant | Out-Null
+    Write-Host 'Continuing with completed E2E suite captures.' -ForegroundColor Cyan
+    Complete-E2eRun | Out-Null
     return
 }
 
 $replayJobs = [Collections.Generic.List[object]]::new()
 try {
     foreach ($context in $suiteContexts) {
-        if (Test-E2eVariantSuiteComplete -Context $context) {
-            Write-Host "Reusing completed $Variant/$($context.Suite) capture." -ForegroundColor Cyan
+        if (Test-E2eSuiteComplete -Context $context) {
+            Write-Host "Reusing completed E2E/$($context.Suite) capture." -ForegroundColor Cyan
             continue
         }
-        $suiteOutput = Get-E2eVariantSuiteOutput -Context $context
+        $suiteOutput = Get-E2eSuiteOutput -Context $context
         if (-not $context.Generated -and (Test-Path -LiteralPath $suiteOutput)) {
             Move-VisualRegressionTransactionItemsToAttempt `
                 -Transaction $Transaction `
                 -RelativePath @(
                     [IO.Path]::GetRelativePath($Transaction, $suiteOutput)
                 ) `
-                -Label "$Variant-incomplete" |
+                -Label 'current-incomplete' |
                 Out-Null
         }
         $recordingPath = $context.SuitePath
-        $replayName = $Variant
         $suiteName = $context.Suite
-        $replayJob = Start-ThreadJob -Name "$replayName/$suiteName" -ScriptBlock {
+        $replayJob = Start-ThreadJob -Name "current/$suiteName" -ScriptBlock {
                 param(
                     $SuiteScript,
                     $Repository,
@@ -263,7 +233,6 @@ try {
                     $CaptureRoot,
                     $SuiteOutput,
                     $Suite,
-                    $ReplayName,
                     $Generated,
                     $GeneratedScript,
                     $MemoryCard,
@@ -316,11 +285,10 @@ try {
                         -ErrorAction SilentlyContinue
                 ).Count
                 if ($artifactCount -eq 0) {
-                    throw "E2E suite $Suite completed without captured $artifactLabel for $ReplayName."
+                    throw "E2E suite $Suite completed without captured $artifactLabel."
                 }
                 $complete = [ordered]@{
                     suite = $Suite
-                    variant = $ReplayName
                     screenshots = $artifactCount
                     artifact_type = $artifactLabel
                     completed_utc = (Get-Date).ToUniversalTime().ToString('O')
@@ -338,8 +306,8 @@ try {
         } -ArgumentList (
             Join-Path $PSScriptRoot 'suite.ps1'
         ), $repository, $paths.pcsx2_input_recordings, $recordingPath, (
-            [string]$buildVariant.build
-        ), (Join-Path $suiteOutput 'capture'), $suiteOutput, $suiteName, $replayName, (
+            [string]$configuration.Build
+        ), (Join-Path $suiteOutput 'capture'), $suiteOutput, $suiteName, (
             [bool]$context.Generated
         ), $context.GeneratedScript, $context.MemoryCard, $context.LaunchProfile, (
             $ConcurrencyLimit
@@ -365,12 +333,12 @@ finally {
 }
 
 $incompleteSuites = @(
-    $suiteContexts | Where-Object { -not (Test-E2eVariantSuiteComplete -Context $_) }
+    $suiteContexts | Where-Object { -not (Test-E2eSuiteComplete -Context $_) }
 )
 if ($incompleteSuites.Count -gt 0) {
     throw (
-        "E2E Test $Variant did not complete suites: " +
+        'E2E Test did not complete suites: ' +
         (@($incompleteSuites.Suite) -join ', ')
     )
 }
-Complete-E2eVariant | Out-Null
+Complete-E2eRun | Out-Null

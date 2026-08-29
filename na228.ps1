@@ -113,7 +113,7 @@ if ($mode -eq 'help') {
         '  na228 build -c <configuration>  Build or reuse a cached ISO'
         '  na228 test                  Run unit tests'
         ''
-        '  na228 e2e <all|suite [args...] ...> [-s]  Run selected suites; -s adds shifted'
+        '  na228 e2e <all|suite [args...] ...>  Run selected suites'
         '  na228 e2e create <all|suite [args...] ...> [-noref]  Rebuild with NUN5 reference by default'
         '  suite args                  Passed to that suite; generated suites accept row or rows: 8 or 8-18'
         '  na228 e2e rename <suite> <new-suite>  Rename a recording-backed suite and its capture history'
@@ -161,7 +161,7 @@ if ($mode -eq 'e2e') {
         }
     }
 
-    $runUsage = 'Usage: na228 e2e <all|suite [args...] ...> [-s]'
+    $runUsage = 'Usage: na228 e2e <all|suite [args...] ...>'
     $createUsage = 'Usage: na228 e2e create <all|suite [args...] ...> [-noref]'
     $deleteUsage = 'Usage: na228 e2e delete <all|suite [args...] ...>'
     if ($arguments.Count -eq 0) {
@@ -169,18 +169,7 @@ if ($mode -eq 'e2e') {
     }
     $testCommand = $arguments[0].ToLowerInvariant()
     if ($testCommand -cnotin @('create', 'rename', 'delete', 'commit')) {
-        $shiftedCount = @($arguments | Where-Object { $_ -ceq '-s' }).Count
-        $runOperands = @($arguments | Where-Object { $_ -cne '-s' })
-        if ($shiftedCount -gt 1 -or $runOperands.Count -eq 0) {
-            throw $runUsage
-        }
-        $runArguments = @{
-            SelectionToken = [string[]]$runOperands
-        }
-        if ($shiftedCount -eq 1) {
-            $runArguments.Shifted = $true
-        }
-        $null = & $visualRun @runArguments
+        $null = & $visualRun -SelectionToken ([string[]]$arguments)
         return
     }
     if ($testCommand -ceq 'create') {
@@ -189,9 +178,6 @@ if ($mode -eq 'e2e') {
             $arguments | Select-Object -Skip 1 | Where-Object { $_ -cne '-noref' }
         )
         if ($noReferenceCount -gt 1 -or $createOperands.Count -eq 0) {
-            throw $createUsage
-        }
-        if (@($createOperands | Where-Object { $_ -ceq '-s' }).Count -gt 0) {
             throw $createUsage
         }
         $createArguments = @{
@@ -213,7 +199,7 @@ if ($mode -eq 'e2e') {
     if ($testCommand -ceq 'delete') {
         $deleteOperands = @($arguments | Select-Object -Skip 1)
         if ($deleteOperands.Count -eq 0 -or
-            @($deleteOperands | Where-Object { $_ -in @('-s', '-noref', '-p') }).Count -gt 0) {
+            @($deleteOperands | Where-Object { $_ -in @('-noref', '-p') }).Count -gt 0) {
             throw $deleteUsage
         }
         & $visualDelete -SelectionToken ([string[]]$deleteOperands)

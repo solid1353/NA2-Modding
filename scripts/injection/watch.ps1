@@ -5,7 +5,7 @@ param(
     [string]$Entry,
     [string]$OverlayPlan,
     [string]$Output,
-    [string]$LatestIso,
+    [string]$Iso,
     [ValidateRange(1, 65535)]
     [int]$PinePort,
     [ValidateRange(100, 10000)]
@@ -397,8 +397,8 @@ function Invoke-InjectionBuild([switch]$ExitOnFailure) {
         '--hot-reload-label',
         ('HOT RELOAD ' + (Get-Date -Format 'HH:mm:ss'))
     )
-    if ($LatestIso) {
-        $buildArguments += @('--iso', (Resolve-RepositoryPath $LatestIso))
+    if ($Iso) {
+        $buildArguments += @('--iso', (Resolve-RepositoryPath $Iso))
     }
 
     $timestamp = Get-Date -Format 'HH:mm:ss'

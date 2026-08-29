@@ -84,20 +84,26 @@ $gridScript = Join-Path `
     'research\localization\compare_font_capture_sets.ps1'
 $launcher = [string]$paths.files.pcsx2_game_launch_command
 
+$gameSelector = if ($Game.EndsWith('.iso', [StringComparison]::OrdinalIgnoreCase)) {
+    [IO.Path]::GetFileNameWithoutExtension($Game)
+}
+else { $Game }
 $gameTarget = if ($Tier -ieq 'reference') {
     [pscustomobject]@{
-        Selector = $Game
+        Selector = $gameSelector
+        LaunchTarget = $Game
         Suffix = 'a_reference'
         GridVariant = 'a_reference'
-        Label = "$Game reference"
+        Label = "$gameSelector reference"
     }
 }
 else {
     [pscustomobject]@{
-        Selector = $Game
+        Selector = $gameSelector
+        LaunchTarget = $Game
         Suffix = 'b_current'
         GridVariant = 'b_current'
-        Label = "$Game current"
+        Label = "$gameSelector current"
     }
 }
 $gameTargets = @($gameTarget)
@@ -378,7 +384,7 @@ $practiceCaseIds = [string[]]@(
         ForEach-Object { [string]$_.CaseId } |
         Sort-Object -Unique
 )
-$practiceGames = [string[]]@($gameTargets | ForEach-Object Selector)
+$practiceGames = [string[]]@($gameTargets | ForEach-Object LaunchTarget)
 $practiceByCaseId = @{}
 foreach ($practice in @(
     Get-VisualRegressionPracticeConfiguration `
@@ -436,7 +442,7 @@ foreach ($outputPlan in $selectedOutputPlans) {
                     $indexedMovesetsByCaseId[$capture.CaseId].CharacterName
                 )
                 Recording = $capture.Recording
-                Game = $gameTarget.Selector
+                Game = $gameTarget.LaunchTarget
                 GameLabel = $gameTarget.Label
                 InputRecordingsRoot = Join-Path ([string]$paths.pcsx2_input_recordings) 'e2e'
                 CaptureRoot = $captureRoot

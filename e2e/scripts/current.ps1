@@ -131,7 +131,7 @@ $existingBuild = if (Test-Path -LiteralPath $buildPath -PathType Leaf) {
 }
 else { $null }
 $existingBuildMatches = $null -ne $existingBuild -and
-    [string]$existingBuild.build -ceq [string]$configuration.Build
+    [string]$existingBuild.configuration -ceq [string]$configuration.Configuration
 $allSuitesComplete = @(
     $suiteContexts | Where-Object { -not (Test-E2eSuiteComplete -Context $_) }
 ).Count -eq 0
@@ -140,21 +140,20 @@ $previousIsoSha256 = if ($existingBuildMatches) {
 }
 else { '' }
 
-$buildOutput = @(
-    & (Join-Path ([string]$paths.scripts) 'na228\build.ps1') -E2e
-)
+$buildOutput = @(& (Join-Path ([string]$paths.scripts) 'na228\build.ps1') `
+    -Configuration ([string]$configuration.Configuration))
 $build = @(
     $buildOutput | Where-Object {
         $_.PSObject.Properties.Name -contains 'Status' -and
-        $_.Status -ceq 'e2e-test'
+        $_.Status -in @('built', 'reused')
     }
 ) | Select-Object -Last 1
 if ($null -eq $build) {
-    throw 'E2E Test build returned no valid result.'
+    throw 'E2E build returned no valid result.'
 }
 $isoSha256 = [string]$build.OutputSha256
 if ([string]::IsNullOrWhiteSpace($isoSha256)) {
-    throw 'E2E Test build returned no ISO hash.'
+    throw 'E2E build returned no ISO hash.'
 }
 
 $suiteOutputRoot = Join-Path $jobRoot 'suites'
@@ -189,7 +188,7 @@ elseif ($null -ne $existingBuild -and -not $buildIsCompatible) {
 }
 
 $buildResult = [ordered]@{
-    build = [string]$configuration.Build
+    configuration = [string]$configuration.Configuration
     iso = [string]$build.OutputIso
     iso_sha256 = $isoSha256
     build_id = [string]$build.BuildId
@@ -306,7 +305,7 @@ try {
         } -ArgumentList (
             Join-Path $PSScriptRoot 'suite.ps1'
         ), $repository, $paths.pcsx2_input_recordings, $recordingPath, (
-            [string]$configuration.Build
+            [string]$build.OutputIso
         ), (Join-Path $suiteOutput 'capture'), $suiteOutput, $suiteName, (
             [bool]$context.Generated
         ), $context.GeneratedScript, $context.MemoryCard, $context.LaunchProfile, (

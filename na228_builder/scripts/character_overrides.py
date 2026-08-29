@@ -534,10 +534,12 @@ def load_character_overrides(
         profile_path = override_root / (
             definition_path.stem + ".character_overrides.tsv"
         )
+        resolved_base = base_path.resolve()
+        resolved_profile = profile_path.resolve()
         paths = (
-            (base_path.resolve(),)
-            if profile_path.resolve() == base_path.resolve()
-            else (base_path.resolve(), profile_path.resolve())
+            (resolved_base,)
+            if resolved_profile == resolved_base or not resolved_profile.is_file()
+            else (resolved_base, resolved_profile)
         )
     else:
         paths = (definition_path.with_name("character_overrides.tsv").resolve(),)

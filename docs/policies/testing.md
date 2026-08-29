@@ -7,8 +7,8 @@
 - After implementation and earlier checks are complete, build changes that can
   affect built bytes as final validation. Any later byte-affecting change
   requires another build.
-- Agents build only through `na228 build -c <configuration>`, using `base` by
-  default. Never use normal user build routes or alter their outputs and records.
+- Agents build only through `na228 build <config>`, using `b` by default. Never
+  use build-and-launch commands for validation.
 - Build or reuse the canonical cached ISO only when selected validation requires
   assembly. An exact verified-registry hit is sufficient evidence; never create
   a task ISO or hardlink.

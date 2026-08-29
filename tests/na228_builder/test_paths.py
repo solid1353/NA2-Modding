@@ -28,8 +28,8 @@ class ProjectPathTests(unittest.TestCase):
                 {
                     "na2_iso": "@build/NA2.iso",
                     "nun5_iso": "@build/NUN5.iso",
-                    "latest_iso": "@build/NA2.28 - Latest.iso",
-                    "previous_iso": "@build/NA2.28 - Previous.iso",
+                    "first_output": "@build/first.iso",
+                    "second_output": "@build/second.iso",
                 },
             )
 
@@ -44,12 +44,12 @@ class ProjectPathTests(unittest.TestCase):
                 root.resolve() / "build" / "NUN5.iso",
             )
             self.assertEqual(
-                paths.file("latest_iso"),
-                root.resolve() / "build" / "NA2.28 - Latest.iso",
+                paths.file("first_output"),
+                root.resolve() / "build" / "first.iso",
             )
             self.assertEqual(
-                paths.file("previous_iso"),
-                root.resolve() / "build" / "NA2.28 - Previous.iso",
+                paths.file("second_output"),
+                root.resolve() / "build" / "second.iso",
             )
 
     def test_local_paths_do_not_load_missing_imported_projects(self) -> None:
@@ -76,7 +76,7 @@ class ProjectPathTests(unittest.TestCase):
             root = Path(directory)
             manifest = self.write_manifest(
                 root,
-                {"latest_iso": "../outside.iso"},
+                {"output_iso": "../outside.iso"},
             )
 
             with self.assertRaisesRegex(ValueError, "remain within the repository"):
@@ -153,7 +153,7 @@ class ProjectPathTests(unittest.TestCase):
             manifest = {
                 "existence_deferred_roots": ["missing"],
                 "roots": {"build": "build"},
-                "files": {"latest_iso": "Latest.iso"},
+                "files": {"output_iso": "output.iso"},
             }
             manifest_path = root / "paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
@@ -171,7 +171,7 @@ class ProjectPathTests(unittest.TestCase):
                     "first": "@second/child",
                     "second": "@first/child",
                 },
-                "files": {"latest_iso": "Latest.iso"},
+                "files": {"output_iso": "output.iso"},
             }
             manifest_path = root / "paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
@@ -184,7 +184,7 @@ class ProjectPathTests(unittest.TestCase):
             root = Path(directory)
             manifest = self.write_manifest(
                 root,
-                {"latest_iso": "@build/../outside.iso"},
+                {"output_iso": "@build/../outside.iso"},
             )
 
             with self.assertRaisesRegex(ValueError, "within configured root"):
@@ -195,7 +195,7 @@ class ProjectPathTests(unittest.TestCase):
             root = Path(directory)
             manifest = self.write_manifest(
                 root,
-                {"latest_iso": "@missing/Latest.iso"},
+                {"output_iso": "@missing/output.iso"},
             )
 
             with self.assertRaisesRegex(ValueError, "unknown project root"):
@@ -209,7 +209,7 @@ class ProjectPathTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "has no files"):
                 load_paths(manifest)
 
-    def test_game_catalog_derives_builds_and_sources(self) -> None:
+    def test_game_catalog_derives_sources(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             for path in (
@@ -220,7 +220,6 @@ class ProjectPathTests(unittest.TestCase):
                 "pcsx2/input_profiles",
                 "pcsx2/memory_cards",
                 "pcsx2_files/games/NA2",
-                "pcsx2_files/games/NA228",
                 "pcsx2_files/games/NUN5",
             ):
                 (root / path).mkdir(parents=True, exist_ok=True)
@@ -257,15 +256,7 @@ class ProjectPathTests(unittest.TestCase):
                     "startup_fast_forward_frames": 321,
                     "practice": {"startup_fast_forward_frames": 654},
                 },
-                "builds": {
-                    "latest": {
-                        "aliases": ["l"],
-                        "configuration": "base",
-                        "rotate_to": "previous",
-                    },
-                    "previous": {},
-                    "e2e_test": {"configuration": "test"},
-                },
+                "configurations": {"base": "b", "test": "t"},
             }
             manifest_path = root / "paths.json"
             manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
@@ -274,10 +265,6 @@ class ProjectPathTests(unittest.TestCase):
             )
             (root / "game.json").write_text(
                 json.dumps(settings), encoding="utf-8"
-            )
-            (root / "pcsx2_files/games/NA228/NA228.ini").write_text(
-                "[EmuCore]\nEnableCheats = true\n",
-                encoding="utf-8",
             )
             override_directory = (
                 root / "pcsx2/input_profiles/sources/overrides/games"
@@ -291,19 +278,6 @@ class ProjectPathTests(unittest.TestCase):
             paths = load_paths(manifest_path)
 
             self.assertEqual(
-                paths.file("latest_iso"),
-                root.resolve() / "build" / "Narutimate Accel v2.28 - Latest.iso",
-            )
-            self.assertEqual(
-                paths.file("latest_memory_card"),
-                root.resolve() / "pcsx2_files/games/NA228/NA228.ps2",
-            )
-            self.assertEqual(
-                paths.file("e2e_test_iso"),
-                root.resolve()
-                / "build/Narutimate Accel v2.28 - E2E Test.iso",
-            )
-            self.assertEqual(
                 paths.file("nun5_iso"),
                 root.resolve() / "source/NUN5.iso",
             )
@@ -313,13 +287,12 @@ class ProjectPathTests(unittest.TestCase):
             )
             self.assertEqual(
                 paths.file("input_profile"),
-                root.resolve() / "pcsx2/input_profiles/Default_Base.ini",
+                root.resolve() / "pcsx2/input_profiles/Default_NA2.ini",
             )
             catalog = {
                 "sources": source_catalog["sources"],
                 "title": settings["title"],
                 "serial": settings["serial"],
-                "builds": settings["builds"],
             }
             na2_paths = derive_game_paths(
                 "NA2",
@@ -353,14 +326,6 @@ class ProjectPathTests(unittest.TestCase):
             self.assertEqual(
                 na2_paths["memory_card"],
                 root.resolve() / "pcsx2_files/games/NA2/NA2.ps2",
-            )
-            self.assertEqual(
-                paths.file("cheat_template"),
-                root.resolve() / "pcsx2_files/games/NA228/NA228.pnach",
-            )
-            self.assertEqual(
-                paths.file("gamesettings_template"),
-                root.resolve() / "pcsx2_files/games/NA228/NA228.ini",
             )
 
 if __name__ == "__main__":

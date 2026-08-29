@@ -222,7 +222,7 @@ class StateArchiveTests(unittest.TestCase):
             serial="SLOP-NA228",
             crc="71ADE583",
             image_kind="project_file",
-            image_value="latest_iso",
+            image_value="output_iso",
             settings_file="unused.ini",
         )
         with tempfile.TemporaryDirectory() as raw_temp:
@@ -281,14 +281,14 @@ class StateArchiveTests(unittest.TestCase):
                     "build": build,
                     "work": work,
                 },
-                files={"latest_iso": image},
+                files={"output_iso": image},
             )
             target = ui_runtime.Target(
                 target_id="current",
                 serial="SLOP-NA228",
                 crc="71ADE583",
                 image_kind="project_file",
-                image_value="latest_iso",
+                image_value="output_iso",
                 settings_file="games/NA228/NA228.ini",
             )
 
@@ -444,7 +444,7 @@ class IdentityTests(unittest.TestCase):
             serial="SLOP-NA228",
             crc="71ADE583",
             image_kind="project_file",
-            image_value="latest_iso",
+            image_value="output_iso",
             settings_file="unused.ini",
         )
         identity = ui_runtime.LiveIdentity(

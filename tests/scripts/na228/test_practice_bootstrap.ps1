@@ -118,20 +118,23 @@ function Assert-PatchWords {
 
 $na228Profile = Join-Path $paths.repository 'launch_profiles\practice\NA228.pnach'
 $nun5Profile = Join-Path $paths.repository 'launch_profiles\practice\NUN5.pnach'
+$cachedIso = Get-ChildItem -LiteralPath $paths.build -File -Filter 'NA v2.28 - *.iso' |
+    Select-Object -First 1
+Assert-PracticeBootstrapTest ($null -ne $cachedIso) 'No cached NA2 build is available.'
+$cachedSelector = [IO.Path]::GetFileNameWithoutExtension($cachedIso.Name)
 $practice = & (Join-Path $repository 'launch_profiles\practice\launch.ps1') `
     -Arguments BNARUTO `
-    -Games @('manual', 'nun5') `
+    -Games @($cachedIso.FullName, 'nun5') `
     -ProjectRoot $repository
 Assert-PracticeBootstrapTest (
     $practice.MovesetCaseId -ceq 'bNaruto' -and
-    $practice.PnachByGame['manual'] -ceq $na228Profile -and
+    $practice.PnachByGame[$cachedSelector] -ceq $na228Profile -and
     $practice.PnachByGame['nun5'] -ceq $nun5Profile
 ) 'Practice launch configuration did not resolve PNACH files from its launch-profile assets.'
 $na228Patches = Read-ActivePatches -Path $na228Profile
 $nun5Patches = Read-ActivePatches -Path $nun5Profile
 
 foreach ($defaultPnach in @(
-    [string]$paths.files.cheat_template
     [string]$paths.games.Entries.PSObject.Properties['NUN5'].Value.Config.cheats
 )) {
     Assert-PracticeBootstrapTest (

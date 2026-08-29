@@ -7,12 +7,11 @@ exact agent procedures belong in the linked runbooks.
 ## Entry points
 
 - `../na228.ps1`: short user-facing NA2 parser/router.
-- `na228/run.ps1`: substantive build, launch, watch, test, worker, release, and
-  help dispatch.
-- `na228/build.ps1`: shared and worker-output build execution, verified-build
-  registry reuse, promotion, and provenance.
-- `na228/build_targets.ps1`: validates build-owned configurations and rotation
-  relationships and resolves retained-target configuration ownership.
+- `na228/run.ps1`: configuration build execution with operational logging.
+- `na228/build.ps1`: verified configuration builds, registry reuse, and
+  provenance.
+- `na228/build_configurations.ps1`: discovers builder configurations, validates
+  their optional aliases, and resolves command selectors.
 - `na228/launch_profile.ps1`: resolves configured launch profiles, invokes
   optional profile-local launch behavior, and merges its launch parameters.
 - `../launch_profiles/practice/launch.ps1`: resolves one
@@ -27,8 +26,7 @@ exact agent procedures belong in the linked runbooks.
 
 - `lib/`: NA2 path/configuration loading, Python runtime/package resolution,
   and build/run logging.
-- `na228/`: NA2 command implementation, build/promotion, identity, and worker
-  path handling.
+- `na228/`: NA2 command implementation, build identity, and task path handling.
 - `project/`: canonical source extraction, extraction verification, and
   configured read-only maintenance. The procedure is in
   [`../docs/runbooks/source-extraction.md`](../docs/runbooks/source-extraction.md).
@@ -51,7 +49,7 @@ Shared infrastructure is not duplicated here:
 
 - `@builder/` owns configuration composition and verified image assembly;
   see [`@builder/README.md`](../na228_builder/README.md).
-- `@scripts/na228/` owns the user-command implementation and output promotion.
+- `@scripts/na228/` owns the user-command implementation and cached builds.
 - `e2e/` owns emulator-driven test infrastructure; canonical recordings live
   under `@pcsx2_input_recordings/e2e/`; see
   [`../e2e/README.md`](../e2e/README.md).

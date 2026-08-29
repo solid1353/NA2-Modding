@@ -62,6 +62,39 @@ class Target:
             return resolve_alias(self.image_value, paths)
         if self.image_kind == "project_file":
             return paths.file(self.image_value)
+        if self.image_kind == "build_configuration":
+            registry_path = paths.path(
+                "logs", "na228", "preflight", "registry.json"
+            )
+            if not registry_path.is_file():
+                raise UiRuntimeError(
+                    f"No cached {self.image_value} build exists"
+                )
+            registry = json.loads(registry_path.read_text(encoding="utf-8"))
+            entries = registry.get("entries")
+            images = registry.get("images")
+            if not isinstance(entries, dict) or not isinstance(images, dict):
+                raise UiRuntimeError(f"Invalid build registry: {registry_path}")
+            candidates = sorted(
+                (
+                    entry
+                    for entry in entries.values()
+                    if isinstance(entry, dict)
+                    and entry.get("configuration") == self.image_value
+                ),
+                key=lambda entry: str(entry.get("verified_utc", "")),
+                reverse=True,
+            )
+            for entry in candidates:
+                image = images.get(entry.get("sha256"))
+                if not isinstance(image, dict) or not isinstance(
+                    image.get("path"), str
+                ):
+                    continue
+                candidate = (paths.repository / image["path"]).resolve()
+                if candidate.is_file():
+                    return candidate
+            raise UiRuntimeError(f"No cached {self.image_value} build exists")
         raise UiRuntimeError(
             f"Target {self.target_id!r} has unsupported image kind "
             f"{self.image_kind!r}"

@@ -33,19 +33,20 @@ integrated catalog data.
 - `catalog/string_patches.json` owns semantic transformations
   performed by the string patcher before inline and external string layout.
 - `configurations/base.json` contains the complete shared `features` tree and
-  is the canonical development configuration. `test.json` and `release.json`
-  contain concrete `overrides`. Each overrides object may be empty or partially mirror
-  the catalog's feature tree directly. The loader applies the concrete
-  configuration's `overrides` to `base.features`. Each buildable target in root
-  `game.json` selects its configuration; retained targets inherit their
-  rotation source's configuration. Cache builds use their explicitly selected
-  configuration; only release packaging uses `release.json`.
+  is the canonical development configuration. `test.json`, `e2e.json`, and
+  `release.json` contain concrete `overrides`. Each overrides object may be
+  empty or partially mirror the catalog's feature tree directly. The loader
+  applies the concrete configuration's `overrides` to `base.features`. Every
+  top-level configuration JSON is available to the development commands
+  automatically. Root `game.json` may map a configuration to a unique alias;
+  an aliased configuration is selected only by that alias. E2E selects
+  `e2e.json` internally; only release packaging uses `release.json`.
 - `configurations/overrides/base.character_overrides.tsv` contains the required
   `base` and `step` metadata rows and shared per-character overrides. These two
   rows are not characters, so their `base_id`, `character`, and `tier` cells
-  are empty. Matching `test` and `release` TSVs in that directory layer
-  nonempty cells over it by row identity. Empty cells inherit; numeric zero is
-  an explicit value. Release packaging materializes the resolved feature and
+  are empty. `release.character_overrides.tsv` layers nonempty cells over it by
+  row identity. Test and E2E use the base layer directly. Empty cells inherit;
+  numeric zero is an explicit value. Release packaging materializes the resolved feature and
   character-override layers into one external JSON configuration and one
   external character-override TSV.
 - `@resources/character_data.tsv` is the repository-owned ID/name and native-value
@@ -102,9 +103,9 @@ integrated catalog data.
   downstream module invocations or that it invokes none.
 - Root `release_manifest.json` owns release packaging metadata and remains
   outside the catalog.
-- Root `game.json` owns the product title, explicit output boot path, named
-  build targets, their configuration and rotation relationships, base launch
-  settings, and direct named launch-profile overrides. Each named override
+- Root `game.json` owns the product title, explicit output boot path, optional
+  configuration aliases, base launch settings, and direct named launch-profile
+  overrides. Each named override
   declares a profile; its matching `launch_profiles/<profile>/` directory owns
   optional profile behavior and assets.
 
@@ -123,9 +124,8 @@ a `LaunchParameters` dictionary.
 
 1. Put shared defaults and agreed character values in
    `configurations/overrides/base.character_overrides.tsv`.
-2. Put test-only values in `test.character_overrides.tsv` or release-only values
-   in `release.character_overrides.tsv` in the same directory. Only nonempty
-   cells replace the base layer.
+2. Put release-only values in `release.character_overrides.tsv` in the same
+   directory. Only nonempty cells replace the base layer.
 3. Keep each numeric `id` paired with the exact `character` name from
    `@resources/character_data.tsv`. `base_id` identifies a form's base
    character, and `tier` records the human-readable balance tier. Tier labels
@@ -284,27 +284,17 @@ than showing them in the user-facing window. Successful runs create no log.
 ## Build
 
 ```powershell
-& scripts/na228/build.ps1
+na228 build b
 ```
 
-`@scripts/na228/build.ps1` resolves the `builder` package set from
-`packages.json` and uses the configuration owned by the selected build target
-in root `game.json`. Cache builds select an explicit configuration with
-`na228 build -c <configuration>`.
-
-The public `-f` option applies to ordinary Latest and Manual build routes,
-including build-only and build-and-run commands. It keeps building when a
-non-critical validation or bookkeeping step fails: preflight and retained-record
-lookup, configuration/build-record metadata, registry updates, and obsolete
-Manual-record pruning. The default Latest build-and-run route may also launch a
-fully verified hash-named cached image when only promotion to the retained
-Latest path fails. Every bypassed failure remains visible as a warning.
-
-Force mode never bypasses checks required to construct a valid image. Catalog
-and configuration structure, compilation and linking, source and patch guards,
-edit conflicts, resident-payload layout, image layout, and final image-content
-verification remain fatal. `-f` is not valid for a pure launch, a cache build,
-E2E, unit tests, or release packaging.
+Every top-level JSON under `configurations/` is discovered automatically. A
+configuration without an alias uses its filename stem as its command selector.
+Root `game.json` assigns `b`, `t`, `r`, and `e` to the base, test, release, and
+E2E configurations; those configurations are selected only by their aliases.
+`na228 <config>` launches the newest cached build. Prefixing the selector with
+`b` builds or reuses it before launch, and `na228 build <config>` builds without
+launching. Selectors must not conflict with commands, sources, or another
+selector's build and watch forms. Bare `na228` is equivalent to `na228 bb`.
 
 The public `na228` development commands present configuration failures as one
 concise path/value/expectation message. Their existing `latest.log` and
@@ -315,55 +305,29 @@ errors and keep their existing presentation.
 Completed operational invocations maintain `@logs/na228/latest.log` and the
 newest 20 bounded sections in `@logs/na228/rolling.log`. Help output is not
 logged. Persistent command logs omit transcript boilerplate, normalize
-configured roots to aliases, and record mode, timing, outcome, ISO result or
-rotation, and the configuration record when applicable.
+configured roots to aliases, and record mode, timing, outcome, ISO result, and
+the configuration record when applicable.
 
-`na228 build -c <configuration>` reuses an exact verified registry identity or
-runs full composition and physical image verification, then returns the
-canonical hash-named cache image without publishing another output.
+All configurations share one byte-affecting fingerprint registry under
+`@logs/na228/preflight/`. A miss is assembled and verified at a unique path
+under `@build/.incoming/`, then moved to
+`@build/NA v2.28 - <local timestamp> - <12-character SHA-256 prefix>.iso` and
+registered. A later build removes stale incoming candidates left by interrupted
+processes without touching live builds.
 
-Latest, Manual, E2E, and cache builds share one byte-affecting
-fingerprint registry under `@logs/na228/preflight/`. A physical miss is assembled
-to a unique incoming path, verified, atomically registered as
-`@cache/isos/<SHA-256>.iso`, and is then available for role promotion.
-The hash-named image remains canonical; physical Latest, Previous, Manual, E2E,
-and other user-facing outputs are ordinary hardlinks to it. Distinct
-fingerprints that produce the same SHA-256 share that image identity and all
-verified locations.
-Latest rotation hardlinks the outgoing Latest identity to Previous and updates
-both image-location records. If a destination is locked, the invocation reports
-pending and retains the verified cached image; the next matching request retries
-promotion without rebuilding. Physical candidates hold exclusive activity
-locks, so a later build can reclaim crash-orphaned incoming ISOs without
-touching live parallel builds.
-
-`@logs/na228/builds/<build-id>/` retains structured records only for the
-catalog-derived Latest, Previous, and E2E Test images.
-`@logs/na228/builds.tsv` atomically maps those three roles to images and records;
-an unavailable record leaves its role row empty. Parallel completion serializes
-replacement through `@logs/na228/.builds.lock` without deleting active unmapped
-records. An exact registry hit clones its provenance into the role record
-without repeating assembly. `@logs/na228/manual/<build-id>/` independently
-retains only the latest successful Manual record and its `build_result.tsv`.
+Distinct fingerprints and configurations that produce the same full SHA-256
+reuse the existing ISO. The registry points every matching entry to that one
+file; it does not rename, copy, or hardlink the image.
 
 `@logs/na228/preflight/registry.json` stores byte-affecting fingerprint state,
-ISO SHA-256, verification time, verified image size, and portable locations;
+configuration, full ISO SHA-256, verification time, verified image size, and path;
 `preflight/records/<fingerprint>/` stores reusable structured provenance.
-Registry entries, provenance records, and cached images are capped at 15, and
-retained locations per image at 20. Pruning preserves configured Latest,
-Previous, and Manual images and hash-checks a verified role before relinking its
-missing canonical cache path. A missing or corrupt registry causes a complete
-verified build and is recreated only after success.
+The registry retains at most 10 unique ISOs. Pruning removes every fingerprint
+and provenance record that refers to an evicted image. A missing or corrupt
+registry causes a complete verified build and is recreated only after success.
 
-Manual-only builds require an exact fully verified composition, may reuse an
-exact registry hit, and report whether the Manual image changed while recording
-that rotation is disabled and PCSX2 remains running.
-
-When `NA228_TASK_WORK_ROOT` is set, cache builds keep their operational and
-structured records below the acting chat's `logs/` directory. They retain at
-most 20 completed structured records per chat and may be cleaned sooner under
-the repository retention policy. Cache builds neither write nor prune shared
-Test, Latest, or Previous role records.
+When `NA228_TASK_WORK_ROOT` is set, builds keep their operational and structured
+records below the acting chat's `logs/` directory.
 
 Preflight fingerprints both canonical source ISOs, ISO-composing Python code,
 the exact selected configuration resources, product/path configuration, active

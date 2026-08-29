@@ -306,7 +306,6 @@ def _load_paths(
                 "sources": source_catalog.get("sources"),
                 "title": project_settings.get("title"),
                 "serial": project_settings.get("serial"),
-                "builds": project_settings.get("builds"),
             }
         else:
             catalog = project_settings
@@ -335,17 +334,14 @@ def _load_paths(
             return result
 
         selectors: set[str] = set()
-        for category in ("builds", "sources"):
+        for category in ("sources",):
             section = catalog.get(category)
             if not isinstance(section, dict) or not section:
                 raise ValueError(
                     f"Game catalog has no non-empty {category!r} section"
                 )
             resolved_category_config: dict[str, object] = {}
-            if category == "builds":
-                definitions = section
-            else:
-                definitions = section
+            definitions = section
 
             for game_name, definition in definitions.items():
                 if (
@@ -416,24 +412,18 @@ def _load_paths(
                 memory_card_path = derived["memory_card"]
                 extracted_path = derived.get("extracted")
                 files.setdefault("input_profile", derived["input_profile"])
-                if category == "builds":
-                    files.setdefault("cheat_template", derived["cheats"])
-                    files.setdefault(
-                        "gamesettings_template", derived["game_settings"]
+                assert extracted_path is not None
+                if not allow_missing and not extracted_path.exists():
+                    raise FileNotFoundError(
+                        f"Configured source extraction for {game_name!r}: "
+                        f"{extracted_path}"
                     )
-                else:
-                    assert extracted_path is not None
-                    if not allow_missing and not extracted_path.exists():
-                        raise FileNotFoundError(
-                            f"Configured source extraction for {game_name!r}: "
-                            f"{extracted_path}"
-                        )
-                    root_name = f"source_{game_name.casefold()}"
-                    if root_name in roots:
-                        raise ValueError(
-                            f"Project root {root_name!r} duplicates game catalogs"
-                        )
-                    roots[root_name] = extracted_path
+                root_name = f"source_{game_name.casefold()}"
+                if root_name in roots:
+                    raise ValueError(
+                        f"Project root {root_name!r} duplicates game catalogs"
+                    )
+                roots[root_name] = extracted_path
 
                 file_name = f"{game_name.casefold()}_iso"
                 if file_name in files:
@@ -450,11 +440,10 @@ def _load_paths(
                         )
                     files[memory_card_file] = memory_card_path
 
-                if category == "sources":
-                    for alias in aliases:
-                        alias_name = alias.casefold()
-                        roots.setdefault(f"source_{alias_name}", extracted_path)
-                        files.setdefault(f"{alias_name}_iso", iso_path)
+                for alias in aliases:
+                    alias_name = alias.casefold()
+                    roots.setdefault(f"source_{alias_name}", extracted_path)
+                    files.setdefault(f"{alias_name}_iso", iso_path)
 
     return Paths(
         manifest_path,

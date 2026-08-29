@@ -8,21 +8,10 @@
       "startup_fast_forward_frames": 2500
     }
   },
-  "builds": {
-    "latest": {
-      "aliases": ["l"],
-      "configuration": "base",
-      "rotate_to": "previous"
-    },
-    "previous": {
-      "aliases": ["p"]
-    },
-    "manual": {
-      "aliases": ["m"],
-      "configuration": "test"
-    },
-    "e2e_test": {
-      "configuration": "test"
-    }
+  "configurations": {
+    "base": "b",
+    "test": "t",
+    "release": "r",
+    "e2e": "e"
   }
 }

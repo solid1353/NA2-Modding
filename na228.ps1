@@ -4,8 +4,10 @@ $paths = Get-Na2Paths
 . (Join-Path ([string]$paths.scripts) 'na228\task_paths.ps1')
 . (Join-Path ([string]$paths.scripts) 'na228\launch_settings.ps1')
 . (Join-Path ([string]$paths.scripts) 'na228\launch_profile.ps1')
-. (Join-Path ([string]$paths.scripts) 'na228\build_targets.ps1')
+. (Join-Path ([string]$paths.scripts) 'na228\build_configurations.ps1')
+. (Join-Path ([string]$paths.scripts) 'na228\build_registry.ps1')
 . (Join-Path ([string]$paths.pcsx2_scripts) 'launch_arguments.ps1')
+$buildConfigurations = Get-Na2BuildConfigurations -Paths $paths
 
 trap {
     if ([bool]$_.Exception.Data['Na2ConfigurationError']) {
@@ -16,16 +18,17 @@ trap {
     break
 }
 
-$gameAliases = @(
-    $paths.games.Aliases.PSObject.Properties |
-        Where-Object { [string]$_.Name -cne [string]$_.Value } |
-        ForEach-Object { "$($_.Name)=$($_.Value)" }
+$configurationSelectors = @(
+    foreach ($selector in $buildConfigurations.BySelector.Keys) {
+        $name = [string]$buildConfigurations.BySelector[$selector]
+        if ([string]$selector -ceq $name) {
+            $name
+        }
+        else {
+            "$selector=$name"
+        }
+    }
 )
-
-function Write-Na2Stage {
-    param([string]$Message)
-    Write-Host "[na228] $Message" -ForegroundColor Cyan
-}
 
 function Get-Na228WatchArguments {
     param([string]$Target)
@@ -42,13 +45,60 @@ function Get-Na228WatchArguments {
     return @{ SourcePath = $Target }
 }
 
-$commandTokens = @($args)
-$forceTokens = @($commandTokens | Where-Object { $_ -ieq '-f' })
-if ($forceTokens.Count -gt 1) {
-    throw '-f may be specified only once.'
+function Get-Na228ConfigurationSelection {
+    param([Parameter(Mandatory)][string]$Token)
+
+    $candidate = $Token.Trim().ToLowerInvariant()
+    $configurationName = $buildConfigurations.BySelector[$candidate]
+    if ($null -ne $configurationName) {
+        return [pscustomobject]@{
+            Configuration = [string]$configurationName
+            Build = $false
+            Watch = $false
+        }
+    }
+
+    $watch = $candidate.Length -gt 1 -and $candidate.EndsWith('w')
+    if ($watch) {
+        $candidate = $candidate.Substring(0, $candidate.Length - 1)
+        $configurationName = $buildConfigurations.BySelector[$candidate]
+        if ($null -ne $configurationName) {
+            return [pscustomobject]@{
+                Configuration = [string]$configurationName
+                Build = $false
+                Watch = $true
+            }
+        }
+    }
+
+    if ($candidate.Length -gt 1 -and $candidate.StartsWith('b')) {
+        $candidate = $candidate.Substring(1)
+        $configurationName = $buildConfigurations.BySelector[$candidate]
+        if ($null -ne $configurationName) {
+            return [pscustomobject]@{
+                Configuration = [string]$configurationName
+                Build = $true
+                Watch = $watch
+            }
+        }
+    }
+    return $null
 }
-$forceBuild = $forceTokens.Count -eq 1
-$commandTokens = @($commandTokens | Where-Object { $_ -ine '-f' })
+
+function Test-Na228GameToken {
+    param([Parameter(Mandatory)][string]$Token)
+
+    if ($null -ne (Get-Na228ConfigurationSelection -Token $Token)) {
+        return $true
+    }
+    $candidate = $Token.ToLowerInvariant()
+    if ($candidate.Length -gt 1 -and $candidate.EndsWith('w')) {
+        $candidate = $candidate.Substring(0, $candidate.Length - 1)
+    }
+    return $null -ne $paths.games.Aliases.PSObject.Properties[$candidate]
+}
+
+$commandTokens = @($args)
 $turboTokens = @($commandTokens | Where-Object { $_ -ieq '-t' })
 if ($turboTokens.Count -gt 1) {
     throw '-t may be specified only once.'
@@ -77,7 +127,7 @@ $arguments = @(
 )
 
 if ($mode -eq 'worker') {
-    throw 'Use na228 build -c <configuration>.'
+    throw 'Use na228 build <configuration>.'
 }
 
 if (($turbo -or $unlimited) -and $mode -in @(
@@ -98,42 +148,34 @@ if ($mode -eq 'help') {
     @(
         'NA2.28'
         ''
-        '  na228 [-f]                 Build and run Latest with accelerated startup'
-        '  na228 w [C path|plan]      Watch all registered C by default'
-        '  na228 w injection_test     Watch only the reload-message smoke test'
-        '  na228 <token> [token] [-l <profile> [args]]  Run one or two games'
-        '  l | p | m                  Latest | Previous | Manual'
-        '  bl | bm [-f]               Build and run Latest | Manual'
-        '  <token>w [C path|plan]     Watch that game; selection follows its token'
-        '  -f                          Bypass non-critical validation errors during an ordinary build'
-        '  -l <profile> [args]        Select a configured launch profile and its own arguments'
-        '  additional launch arguments  See workshop help'
+        '  na228                                                Build or reuse base configuration, then launch it'
+        '  na228 <token> [token]                                Launch one or two games through Workshop'
+        '                                                       token: <source>[w] | [b]<config>[w]'
+        '                                                       b = build or reuse before launch; w [C path|plan] = watch'
+        '  -l <profile> [args]                                  Select a configured launch profile and its own arguments'
+        '  other launch arguments                               See Workshop help'
         ''
-        '  na228 build l|m [-f]        Build Latest or Manual without running it'
-        '  na228 build -c <configuration>  Build or reuse a cached ISO'
-        '  na228 test                  Run unit tests'
+        '  na228 build <config>                                 Build or reuse a configuration without launching'
+        '  na228 test                                           Run unit tests'
         ''
-        '  na228 e2e <all|suite [args...] ...>  Run selected suites'
+        '  na228 e2e <all|suite [args...] ...>                  Run selected suites'
         '  na228 e2e create <all|suite [args...] ...> [-noref]  Rebuild with NUN5 reference by default'
-        '  suite args                  Passed to that suite; generated suites accept row or rows: 8 or 8-18'
-        '  na228 e2e rename <suite> <new-suite>  Rename a recording-backed suite and its capture history'
-        '  na228 e2e delete <all|suite [args...] ...>  Delete capture history'
-        '  na228 e2e commit [-p]                  Commit captures; -p preserves capture commits'
+        '  na228 e2e delete <all|suite [args...] ...>           Delete capture history'
+        '  suite args                                           Passed to that suite; generated suites accept row or rows: 8 or 8-18'
+        '  na228 e2e rename <suite> <new-suite>                 Rename a recording-backed suite and its capture history'
+        '  na228 e2e commit [-p]                                Commit captures; -p preserves capture commits'
         ''
-        '  na228 release [version]     Publish a GitHub release'
-        '  na228 help                  Show this help'
+        '  na228 release [version]                              Publish a GitHub release'
+        '  na228 help                                           Show this help'
         ''
-        "  games: $($paths.games.Names -join ', ')"
-        "  aliases: $($gameAliases -join ', ')"
+        "  sources: $($paths.games.Names -join ', ')"
+        "  configurations: $($configurationSelectors -join ', ')"
         ''
     ) | Write-Output
     return
 }
 
 if ($mode -eq 'test') {
-    if ($forceBuild) {
-        throw '-f is valid only for ordinary Latest or Manual builds.'
-    }
     if ($arguments.Count -gt 0) {
         throw 'Usage: na228 test'
     }
@@ -146,9 +188,6 @@ if ($mode -eq 'test') {
 }
 
 if ($mode -eq 'e2e') {
-    if ($forceBuild) {
-        throw '-f is valid only for ordinary Latest or Manual builds.'
-    }
     $visualScripts = Join-Path $PSScriptRoot 'e2e\scripts'
     $visualRun = Join-Path $visualScripts 'run.ps1'
     $visualCreate = Join-Path $visualScripts 'create_suite.ps1'
@@ -219,9 +258,6 @@ if ($mode -eq 'e2e') {
 }
 
 if ($mode -eq 'release') {
-    if ($forceBuild) {
-        throw '-f is valid only for ordinary Latest or Manual builds.'
-    }
     if ($arguments.Count -gt 1) {
         throw 'na228 release accepts at most one version argument.'
     }
@@ -234,69 +270,30 @@ if ($mode -eq 'release') {
 }
 
 if ($mode -eq 'build') {
-    if ($arguments.Count -eq 2 -and $arguments[0] -ceq '-c') {
-        if ($forceBuild) {
-            throw '-f is valid only for ordinary Latest or Manual builds.'
-        }
-        $configuration = $arguments[1]
-        if ($configuration -cnotmatch '^[A-Za-z0-9][A-Za-z0-9_-]*$') {
-            throw "Invalid configuration ID: $configuration"
-        }
-        $cacheArguments = @{
-            Action = 'cache-build'
-            CacheConfiguration = $configuration
-        }
-        if (-not [string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)) {
-            $task = Get-Na2TaskContext `
-                -TaskRoot $env:NA228_TASK_WORK_ROOT `
-                -Paths $paths
-            $cacheArguments.CacheLogDirectory = $task.Logs
-        }
-        $cacheResult = & (Join-Path $paths.scripts 'na228\run.ps1') @cacheArguments
-        if (-not $cacheResult -or $cacheResult.Status -ne 'cache') {
-            throw 'Cache build did not return a valid result.'
-        }
-        Write-Output $cacheResult.OutputIso
-        return
-    }
     if ($arguments.Count -ne 1) {
-        throw 'Usage: na228 build l|m [-f] | na228 build -c <configuration>'
+        throw 'Usage: na228 build <config>'
     }
-    $target = $arguments[0].ToLowerInvariant()
-    switch ($target) {
-        { $_ -in @('l', 'latest') } {
-            & (Join-Path $paths.scripts 'na228\run.ps1') `
-                -Action latest-build `
-                -Force:$forceBuild
-            return
-        }
-        { $_ -in @('m', 'manual') } {
-            & (Join-Path $paths.scripts 'na228\run.ps1') `
-                -Action manual-build `
-                -Force:$forceBuild
-            return
-        }
-        default {
-            throw 'Usage: na228 build l|m [-f] | na228 build -c <configuration>'
-        }
-    }
-}
-
-if (-not $mode) {
+    $configuration = Resolve-Na2BuildConfiguration `
+        -Selector $arguments[0] -Configurations $buildConfigurations
     $runArguments = @{
-        Action = 'latest-build-and-launch'
-        Force = $forceBuild
+        Action = 'configuration-build'
+        Configuration = [string]$configuration.Name
     }
-    if ($turbo) { $runArguments.Turbo = $true }
-    if ($unlimited) { $runArguments.Unlimited = $true }
-    & (Join-Path $paths.scripts 'na228\run.ps1') @runArguments
+    if (-not [string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)) {
+        $task = Get-Na2TaskContext -TaskRoot $env:NA228_TASK_WORK_ROOT -Paths $paths
+        $runArguments.LogDirectory = $task.Logs
+    }
+    $result = & (Join-Path $paths.scripts 'na228\run.ps1') @runArguments
+    Write-Output $result.OutputIso
     return
 }
 
+if (-not $mode) {
+    $mode = 'bb'
+    $commandTokens = @('bb')
+}
+
 if ($mode -eq 'w') {
-    if ($forceBuild) {
-        throw '-f is valid only for ordinary Latest or Manual builds.'
-    }
     if ($arguments.Count -gt 1) {
         throw 'na228 w accepts at most one watch target or overlay-plan path.'
     }
@@ -304,19 +301,6 @@ if ($mode -eq 'w') {
         -Target $(if ($arguments.Count -eq 1) { $arguments[0] } else { '' })
     & (Join-Path $paths.scripts 'injection\watch.ps1') @watchArguments
     return
-}
-
-function Test-Na228GameToken {
-    param([Parameter(Mandatory)][string]$Token)
-
-    $candidate = $Token.ToLowerInvariant()
-    if ($candidate.Length -gt 1 -and $candidate.EndsWith('w')) {
-        $candidate = $candidate.Substring(0, $candidate.Length - 1)
-    }
-    if ($candidate -in @('b', 'bl', 'bm', 'l', 'p', 'm')) {
-        return $true
-    }
-    return $null -ne $paths.games.Aliases.PSObject.Properties[$candidate]
 }
 
 $launchArgumentIndex = 0
@@ -336,38 +320,36 @@ $forwardedLaunchArguments = @(
         $commandTokens[$launchArgumentIndex..($commandTokens.Count - 1)]
     }
 )
-$games = [Collections.Generic.List[string]]::new()
-$buildActions = [Collections.Generic.List[string]]::new()
+$gameSelections = [Collections.Generic.List[object]]::new()
 $watchIndex = $null
 $watchTarget = ''
 for ($index = 0; $index -lt $runTokens.Count; $index++) {
     $token = $runTokens[$index].ToLowerInvariant()
-    $watch = $token.Length -gt 1 -and $token.EndsWith('w')
+    $configurationSelection = Get-Na228ConfigurationSelection -Token $token
+    $watch = if ($null -ne $configurationSelection) {
+        [bool]$configurationSelection.Watch
+    }
+    else {
+        $token.Length -gt 1 -and $token.EndsWith('w')
+    }
     if ($watch) {
         if ($null -ne $watchIndex) {
             throw 'Only one game token may request watching.'
         }
-        $watchIndex = $games.Count
-        $token = $token.Substring(0, $token.Length - 1)
+        $watchIndex = $gameSelections.Count
+        if ($null -eq $configurationSelection) {
+            $token = $token.Substring(0, $token.Length - 1)
+        }
     }
-    switch ($token) {
-        'b' {
-            $games.Add('latest')
-            $buildActions.Add('latest-build')
+    $gameSelections.Add([pscustomobject]@{
+        Token = $token
+        Configuration = if ($null -ne $configurationSelection) {
+            [string]$configurationSelection.Configuration
         }
-        'bl' {
-            $games.Add('latest')
-            $buildActions.Add('latest-build')
-        }
-        'bm' {
-            $games.Add('manual')
-            $buildActions.Add('manual-build')
-        }
-        'l' { $games.Add('latest') }
-        'p' { $games.Add('previous') }
-        'm' { $games.Add('manual') }
-        default { $games.Add($token) }
-    }
+        else { '' }
+        Build = $null -ne $configurationSelection -and
+            [bool]$configurationSelection.Build
+    })
     if (
         $watch -and
         $index + 1 -lt $runTokens.Count -and
@@ -377,19 +359,37 @@ for ($index = 0; $index -lt $runTokens.Count; $index++) {
         $index++
     }
 }
-if ($games.Count -gt 2) {
+if ($gameSelections.Count -gt 2) {
     throw 'na228 accepts at most two game tokens.'
 }
-if ($forceBuild -and $buildActions.Count -eq 0) {
-    throw '-f requires an ordinary Latest or Manual build token.'
+$games = [Collections.Generic.List[string]]::new()
+$launchConfigurations = [Collections.Generic.List[string]]::new()
+foreach ($selection in $gameSelections) {
+    if ([string]::IsNullOrWhiteSpace([string]$selection.Configuration)) {
+        $games.Add([string]$selection.Token)
+        continue
+    }
+    $configuration = [string]$selection.Configuration
+    $image = if ([bool]$selection.Build) {
+        $runArguments = @{
+            Action = 'configuration-build'
+            Configuration = $configuration
+        }
+        if (-not [string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)) {
+            $task = Get-Na2TaskContext `
+                -TaskRoot $env:NA228_TASK_WORK_ROOT -Paths $paths
+            $runArguments.LogDirectory = $task.Logs
+        }
+        $buildResult = & (Join-Path $paths.scripts 'na228\run.ps1') @runArguments
+        [string]$buildResult.OutputIso
+    }
+    else {
+        [string](Resolve-Na2CachedBuild `
+            -Configuration $configuration -Paths $paths).image
+    }
+    $games.Add($image)
+    $launchConfigurations.Add($configuration)
 }
-
-foreach ($buildAction in @($buildActions | Select-Object -Unique)) {
-    & (Join-Path $paths.scripts 'na228\run.ps1') `
-        -Action $buildAction `
-        -Force:$forceBuild
-}
-
 $launchParameters = @{
     Games = @($games)
     ProjectRoot = $paths.repository
@@ -474,50 +474,24 @@ elseif ($unlimited) {
     $launchParameters.Unlimited = $true
 }
 else {
-    $launchConfigurations = @(
-        $games | ForEach-Object {
-            $alias = $paths.games.Aliases.PSObject.Properties[[string]$_]
-            $canonical = if ($null -ne $alias) {
-                [string]$alias.Value
-            }
-            else {
-                [string]$_
-            }
-            $entry = $paths.games.Entries.PSObject.Properties[$canonical]
-            if ($null -ne $entry -and
-                [string]$entry.Value.Category -ceq 'builds') {
-                Get-Na2BuildTargetConfiguration `
-                    -Name $canonical `
-                    -Paths $paths
-            }
-        } | Select-Object -Unique
-    )
     $launchFrameCounts = @(
         @(
             if ($launchConfigurations.Count -eq 0) {
                 Get-Na2StartupFastForwardFrames `
                     -Paths $paths `
                     -LaunchProfile $(
-                        if ($null -eq $launchProfile) {
-                            $null
-                        }
-                        else {
-                            [string]$launchProfile.Name
-                        }
+                        if ($null -eq $launchProfile) { $null }
+                        else { [string]$launchProfile.Name }
                     )
             }
             else {
-                $launchConfigurations | ForEach-Object {
+                $launchConfigurations | Select-Object -Unique | ForEach-Object {
                     Get-Na2StartupFastForwardFrames `
                         -Configuration $_ `
                         -Paths $paths `
                         -LaunchProfile $(
-                            if ($null -eq $launchProfile) {
-                                $null
-                            }
-                            else {
-                                [string]$launchProfile.Name
-                            }
+                            if ($null -eq $launchProfile) { $null }
+                            else { [string]$launchProfile.Name }
                         )
                 }
             }

@@ -11,8 +11,8 @@ from na228_builder.scripts.build_preflight import (
     builder_tree_entry,
     collect_build_state,
     lookup_registry,
-    record_locations,
     record_registry,
+    resolve_registry,
     state_fingerprint,
 )
 from na228_builder.modules.binary_patcher import engine as binary_patcher
@@ -149,13 +149,7 @@ class BuildPreflightTests(unittest.TestCase):
                         "startup_fast_forward_frames": 321,
                         "practice": {"startup_fast_forward_frames": 654},
                     },
-                    "builds": {
-                        "latest": {
-                            "configuration": "base",
-                            "rotate_to": "previous",
-                        },
-                        "previous": {},
-                    },
+                    "configurations": {"release": "r"},
                 }
             ),
             encoding="utf-8",
@@ -165,20 +159,20 @@ class BuildPreflightTests(unittest.TestCase):
         na2_iso.parent.mkdir()
         na2_iso.write_bytes(b"clean na2")
         nun5_iso.write_bytes(b"clean nun5")
-        latest_iso = project_paths.path("build", "NA2.28 - Latest.iso")
-        latest_iso.parent.mkdir(exist_ok=True)
-        latest_iso.write_bytes(b"verified latest")
+        sample_iso = project_paths.path("build", "sample.iso")
+        sample_iso.parent.mkdir(exist_ok=True)
+        sample_iso.write_bytes(b"verified sample")
         return {
             "workspace": workspace,
             "builder": builder,
             "configuration": configuration,
             "na2_iso": na2_iso,
             "nun5_iso": nun5_iso,
-            "latest_iso": latest_iso,
+            "sample_iso": sample_iso,
             "registry": project_paths.path(
                 "logs", "na228", "preflight", "registry.json"
             ),
-            "cache": project_paths.path("cache", "isos"),
+            "cache": project_paths.path("build"),
         }
 
     def state(self, paths: dict[str, Path], **overrides: object) -> dict[str, object]:
@@ -207,7 +201,7 @@ class BuildPreflightTests(unittest.TestCase):
     ) -> dict[str, object]:
         incoming = paths["cache"] / ".incoming" / "candidate.iso"
         incoming.parent.mkdir(parents=True, exist_ok=True)
-        incoming.write_bytes(paths["latest_iso"].read_bytes())
+        incoming.write_bytes(paths["sample_iso"].read_bytes())
         provenance = paths["workspace"] / "provenance"
         provenance.mkdir(exist_ok=True)
         (provenance / "configuration.tsv").write_text("test\n", encoding="utf-8")
@@ -432,47 +426,24 @@ class BuildPreflightTests(unittest.TestCase):
             self.assertEqual(result["reason"], "inputs-changed-during-build")
             self.assertFalse(paths["registry"].exists())
 
-    def test_registry_contains_only_portable_locations(self) -> None:
+    def test_registry_paths_are_portable_and_provenance_is_retained(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             fingerprint = state_fingerprint(self.state(paths))
-            self.record(paths, fingerprint)
-            record_locations(
-                workspace=paths["workspace"],
-                registry_path=paths["registry"],
-                cache_root=paths["cache"],
-                fingerprint=fingerprint,
-                locations=[paths["latest_iso"]],
-            )
+            result = self.record(paths, fingerprint)
+
             text = paths["registry"].read_text(encoding="utf-8")
             self.assertNotIn(str(paths["workspace"]), text)
-            self.assertIn('"configuration": "configurations/release.json"', text)
-            self.assertIn('"locations": [', text)
+            self.assertIn('"configuration": "release"', text)
+            self.assertIn('"path": "build/NA v2.28 - ', text)
+            self.assertTrue(Path(str(result["provenance"])).is_dir())
 
-            cached = paths["cache"] / f"{self.check(paths)['output_sha256']}.iso"
-            self.assertTrue(cached.exists())
-            record_locations(
-                workspace=paths["workspace"],
-                registry_path=paths["registry"],
-                cache_root=paths["cache"],
-                fingerprint=fingerprint,
-                locations=[paths["latest_iso"]],
-            )
-            self.assertEqual(cached.read_bytes(), paths["latest_iso"].read_bytes())
-
-    def test_identical_outputs_share_physical_locations_across_fingerprints(self) -> None:
+    def test_identical_outputs_share_one_named_iso(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             first_state = self.state(paths)
             first_fingerprint = state_fingerprint(first_state)
-            recorded = self.record(paths, first_fingerprint)
-            record_locations(
-                workspace=paths["workspace"],
-                registry_path=paths["registry"],
-                cache_root=paths["cache"],
-                fingerprint=first_fingerprint,
-                locations=[paths["latest_iso"]],
-            )
+            first = self.record(paths, first_fingerprint)
 
             second_state = self.state(
                 paths,
@@ -481,8 +452,8 @@ class BuildPreflightTests(unittest.TestCase):
             second_fingerprint = state_fingerprint(second_state)
             second_image = paths["cache"] / ".incoming" / "same-output.iso"
             second_image.parent.mkdir(parents=True, exist_ok=True)
-            second_image.write_bytes(paths["latest_iso"].read_bytes())
-            record_registry(
+            second_image.write_bytes(paths["sample_iso"].read_bytes())
+            second = record_registry(
                 workspace=paths["workspace"],
                 registry_path=paths["registry"],
                 cache_root=paths["cache"],
@@ -491,193 +462,76 @@ class BuildPreflightTests(unittest.TestCase):
                 image=second_image,
                 provenance=None,
             )
-            Path(str(recorded["image"])).unlink()
 
-            reused = lookup_registry(
-                workspace=paths["workspace"],
-                registry_path=paths["registry"],
-                cache_root=paths["cache"],
-                state=second_state,
+            self.assertEqual(second["image"], first["image"])
+            self.assertFalse(second_image.exists())
+            self.assertEqual(
+                len(list(paths["cache"].glob("NA v2.28 - *.iso"))),
+                1,
             )
-            self.assertEqual(reused["status"], "hit")
-            self.assertEqual(Path(str(reused["image"])), paths["latest_iso"].resolve())
             registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
             self.assertEqual(len(registry["entries"]), 2)
             self.assertEqual(len(registry["images"]), 1)
 
-    def test_location_completion_tracks_latest_to_previous_rotation_by_image_hash(
-        self,
-    ) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            paths = self.create_workspace(Path(directory))
-            old_state = self.state(paths)
-            old_fingerprint = state_fingerprint(old_state)
-            old_record = self.record(paths, old_fingerprint)
-            record_locations(
-                workspace=paths["workspace"],
-                registry_path=paths["registry"],
-                cache_root=paths["cache"],
-                fingerprint=old_fingerprint,
-                locations=[paths["latest_iso"]],
-            )
-            Path(str(old_record["image"])).unlink()
-
-            new_state = self.state(
-                paths,
-                dependencies=dict(DEPENDENCIES, python_version="new-inputs"),
-            )
-            new_fingerprint = state_fingerprint(new_state)
-            incoming = paths["cache"] / ".incoming" / "new.iso"
-            incoming.parent.mkdir(parents=True, exist_ok=True)
-            incoming.write_bytes(b"new verified image")
-            new_record = record_registry(
-                workspace=paths["workspace"],
-                registry_path=paths["registry"],
-                cache_root=paths["cache"],
-                state=new_state,
-                expected_fingerprint=new_fingerprint,
-                image=incoming,
-                provenance=None,
-            )
-
-            previous_iso = paths["latest_iso"].with_name("NA2.28 - Previous.iso")
-            paths["latest_iso"].replace(previous_iso)
-            paths["latest_iso"].hardlink_to(Path(str(new_record["image"])))
-            record_locations(
-                workspace=paths["workspace"],
-                registry_path=paths["registry"],
-                cache_root=paths["cache"],
-                fingerprint=new_fingerprint,
-                locations=[paths["latest_iso"], previous_iso],
-            )
-
-            old_reuse = lookup_registry(
-                workspace=paths["workspace"],
-                registry_path=paths["registry"],
-                cache_root=paths["cache"],
-                state=old_state,
-            )
-            self.assertEqual(Path(str(old_reuse["image"])), previous_iso.resolve())
-            registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
-            old_sha256 = registry["entries"][old_fingerprint]["sha256"]
-            new_sha256 = registry["entries"][new_fingerprint]["sha256"]
-            self.assertEqual(
-                registry["images"][old_sha256]["locations"],
-                ["build/NA2.28 - Previous.iso"],
-            )
-            self.assertIn(
-                "build/NA2.28 - Latest.iso",
-                registry["images"][new_sha256]["locations"],
-            )
-
-    def test_registry_bounds_entries_and_locations(self) -> None:
+    def test_resolve_returns_the_newest_configuration_build(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             first_state = self.state(paths)
-            first_fingerprint = state_fingerprint(first_state)
-            self.record(paths, first_fingerprint)
-            for index in range(20):
-                state = self.state(
-                    paths,
-                    dependencies=dict(
-                        DEPENDENCIES,
-                        python_version=f"1.{index + 1}",
-                    ),
-                )
-                fingerprint = state_fingerprint(state)
-                image = paths["cache"] / ".incoming" / f"bounded-{index}.iso"
-                image.parent.mkdir(parents=True, exist_ok=True)
-                if index == 19:
-                    image.write_bytes(b"verified latest")
-                else:
-                    image.write_bytes(f"bounded-{index:02d}".encode("ascii"))
-                record_registry(
+            first = self.record(paths, state_fingerprint(first_state))
+            second_state = dict(first_state, variant="newer")
+            second_image = paths["cache"] / ".incoming" / "newer.iso"
+            second_image.parent.mkdir(parents=True, exist_ok=True)
+            second_image.write_bytes(b"newer output")
+            second = record_registry(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                state=second_state,
+                expected_fingerprint=state_fingerprint(second_state),
+                image=second_image,
+                provenance=None,
+            )
+
+            resolved = resolve_registry(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                configuration_id="release",
+            )
+            self.assertEqual(resolved["status"], "resolved")
+            self.assertEqual(resolved["image"], second["image"])
+            self.assertNotEqual(resolved["image"], first["image"])
+
+    def test_registry_retains_at_most_ten_unique_images(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self.create_workspace(Path(directory))
+            first_image: Path | None = None
+            for index in range(build_preflight.MAX_IMAGES + 1):
+                state = dict(self.state(paths), variant=index)
+                incoming = paths["cache"] / ".incoming" / f"image-{index}.iso"
+                incoming.parent.mkdir(parents=True, exist_ok=True)
+                incoming.write_bytes(f"image-{index}".encode("ascii"))
+                result = record_registry(
                     workspace=paths["workspace"],
                     registry_path=paths["registry"],
                     cache_root=paths["cache"],
                     state=state,
-                    expected_fingerprint=fingerprint,
-                    image=image,
+                    expected_fingerprint=state_fingerprint(state),
+                    image=incoming,
                     provenance=None,
                 )
+                if index == 0:
+                    first_image = Path(str(result["image"]))
 
             registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
-            self.assertEqual(len(registry["entries"]), 15)
-            self.assertNotIn(first_fingerprint, registry["entries"])
-
-            newest_fingerprint = fingerprint
-            for index in range(21):
-                location = paths["latest_iso"].parent / f"copy-{index}.iso"
-                location.write_bytes(b"verified latest")
-                record_locations(
-                    workspace=paths["workspace"],
-                    registry_path=paths["registry"],
-                    cache_root=paths["cache"],
-                    fingerprint=newest_fingerprint,
-                    locations=[location],
-                )
-
-            registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
-            newest_sha256 = registry["entries"][newest_fingerprint]["sha256"]
-            locations = registry["images"][newest_sha256]["locations"]
-            self.assertEqual(len(locations), 20)
-            self.assertNotIn("build/copy-0.iso", locations)
-
-    def test_pruning_keeps_and_repairs_configured_role_cache_hardlinks(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            paths = self.create_workspace(Path(directory))
-            first_state = self.state(paths)
-            first_fingerprint = state_fingerprint(first_state)
-            first_record = self.record(paths, first_fingerprint)
-            first_cache = Path(str(first_record["image"]))
-            paths["latest_iso"].unlink()
-            paths["latest_iso"].hardlink_to(first_cache)
-            record_locations(
-                workspace=paths["workspace"],
-                registry_path=paths["registry"],
-                cache_root=paths["cache"],
-                fingerprint=first_fingerprint,
-                locations=[paths["latest_iso"]],
+            self.assertEqual(len(registry["entries"]), build_preflight.MAX_IMAGES)
+            self.assertEqual(len(registry["images"]), build_preflight.MAX_IMAGES)
+            self.assertEqual(
+                len(list(paths["cache"].glob("NA v2.28 - *.iso"))),
+                build_preflight.MAX_IMAGES,
             )
-            first_cache.unlink()
-
-            with mock.patch.object(
-                build_preflight,
-                "_configured_role_paths",
-                return_value={
-                    "build/NA2.28 - Latest.iso": paths["latest_iso"],
-                },
-            ):
-                for index in range(16):
-                    state = self.state(
-                        paths,
-                        dependencies=dict(
-                            DEPENDENCIES,
-                            python_version=f"role-prune-{index}",
-                        ),
-                    )
-                    fingerprint = state_fingerprint(state)
-                    incoming = paths["cache"] / ".incoming" / f"role-{index}.iso"
-                    incoming.parent.mkdir(parents=True, exist_ok=True)
-                    incoming.write_bytes(f"role-prune-{index}".encode("ascii"))
-                    record_registry(
-                        workspace=paths["workspace"],
-                        registry_path=paths["registry"],
-                        cache_root=paths["cache"],
-                        state=state,
-                        expected_fingerprint=fingerprint,
-                        image=incoming,
-                        provenance=None,
-                    )
-
-            registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
-            first_sha256 = str(first_record["output_sha256"])
-            self.assertNotIn(first_fingerprint, registry["entries"])
-            self.assertIn(first_sha256, registry["images"])
-            self.assertLessEqual(len(registry["entries"]), 15)
-            self.assertLessEqual(len(registry["images"]), 15)
-            self.assertTrue(first_cache.is_file())
-            self.assertTrue(first_cache.samefile(paths["latest_iso"]))
+            self.assertIsNotNone(first_image)
+            self.assertFalse(first_image.exists())
 
 if __name__ == "__main__":
     unittest.main()

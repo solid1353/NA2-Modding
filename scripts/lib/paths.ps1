@@ -272,7 +272,6 @@ function Resolve-Na2PathManifest {
                 sources = $sourceCatalog.sources
                 title = $projectSettings.title
                 serial = $projectSettings.serial
-                builds = $projectSettings.builds
             }
         }
         else {
@@ -328,7 +327,7 @@ function Resolve-Na2PathManifest {
         $allSelectors = [Collections.Generic.HashSet[string]]::new(
             [StringComparer]::OrdinalIgnoreCase
         )
-        foreach ($category in @('builds', 'sources')) {
+        foreach ($category in @('sources')) {
             $categoryProperty = $catalog.PSObject.Properties[$category]
             if ($null -eq $categoryProperty) {
                 throw "Game catalog has no '$category' section."
@@ -403,45 +402,26 @@ function Resolve-Na2PathManifest {
                 if (-not $resolvedFiles.Contains('input_profile')) {
                     $resolvedFiles['input_profile'] = $resolvedGameConfig.input_profile
                 }
-                $postfix = if ($category -eq 'builds') {
-                    [string]$derived.postfix
+                $postfix = ''
+                $extractedPath = [IO.Path]::GetFullPath(
+                    [string]$derived.extracted
+                )
+                $resolvedGameConfig['cheats'] = [IO.Path]::GetFullPath(
+                    [string]$derived.cheats
+                )
+                $resolvedGameConfig['game_settings'] = [IO.Path]::GetFullPath(
+                    [string]$derived.game_settings
+                )
+                $resolvedGameConfig['memory_card'] = $memoryCardPath
+                if (-not $AllowMissing -and
+                    -not (Test-Path -LiteralPath $extractedPath)) {
+                    throw "Configured source extraction for '$gameName' does not exist: $extractedPath"
                 }
-                else { '' }
-                if ($category -eq 'builds') {
-                    $resolvedGameConfig['cheat_template'] = [IO.Path]::GetFullPath(
-                        [string]$derived.cheats
-                    )
-                    $resolvedGameConfig['gamesettings_template'] = [IO.Path]::GetFullPath(
-                        [string]$derived.game_settings
-                    )
-                    if (-not $resolvedFiles.Contains('cheat_template')) {
-                        $resolvedFiles['cheat_template'] = $resolvedGameConfig.cheat_template
-                    }
-                    if (-not $resolvedFiles.Contains('gamesettings_template')) {
-                        $resolvedFiles['gamesettings_template'] = $resolvedGameConfig.gamesettings_template
-                    }
+                $derivedRootName = "source_$($gameName.ToLowerInvariant())"
+                if ($resolved.Contains($derivedRootName)) {
+                    throw "Project root '$derivedRootName' duplicates game catalogs."
                 }
-                else {
-                    $extractedPath = [IO.Path]::GetFullPath(
-                        [string]$derived.extracted
-                    )
-                    $resolvedGameConfig['cheats'] = [IO.Path]::GetFullPath(
-                        [string]$derived.cheats
-                    )
-                    $resolvedGameConfig['game_settings'] = [IO.Path]::GetFullPath(
-                        [string]$derived.game_settings
-                    )
-                    $resolvedGameConfig['memory_card'] = $memoryCardPath
-                    if (-not $AllowMissing -and
-                        -not (Test-Path -LiteralPath $extractedPath)) {
-                        throw "Configured source extraction for '$gameName' does not exist: $extractedPath"
-                    }
-                    $derivedRootName = "source_$($gameName.ToLowerInvariant())"
-                    if ($resolved.Contains($derivedRootName)) {
-                        throw "Project root '$derivedRootName' duplicates game catalogs."
-                    }
-                    $resolved[$derivedRootName] = $extractedPath
-                }
+                $resolved[$derivedRootName] = $extractedPath
 
                 $aliasesProperty = $definition.PSObject.Properties['aliases']
                 $aliases = if ($null -eq $aliasesProperty) {
@@ -459,14 +439,12 @@ function Resolve-Na2PathManifest {
                         throw "Duplicate game selector or alias: $alias"
                     }
                     $resolvedGameAliases[$alias] = $gameName
-                    if ($category -eq 'sources') {
-                        $aliasName = $alias.ToLowerInvariant()
-                        if (-not $resolved.Contains("source_$aliasName")) {
-                            $resolved["source_$aliasName"] = $extractedPath
-                        }
-                        if (-not $resolvedFiles.Contains("${aliasName}_iso")) {
-                            $resolvedFiles["${aliasName}_iso"] = $isoPath
-                        }
+                    $aliasName = $alias.ToLowerInvariant()
+                    if (-not $resolved.Contains("source_$aliasName")) {
+                        $resolved["source_$aliasName"] = $extractedPath
+                    }
+                    if (-not $resolvedFiles.Contains("${aliasName}_iso")) {
+                        $resolvedFiles["${aliasName}_iso"] = $isoPath
                     }
                 }
 

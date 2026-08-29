@@ -11,8 +11,8 @@
     },
     "current": {
       "image": {
-        "kind": "project_file",
-        "value": "latest_iso"
+        "kind": "build_configuration",
+        "value": "base"
       },
       "serial": "SLOP-NA228",
       "crc": "6D94D5CC",

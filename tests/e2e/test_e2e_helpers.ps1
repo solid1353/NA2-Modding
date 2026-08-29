@@ -421,7 +421,7 @@ param(
         -Repository $replayRepository `
         -SharedRecordingRoot $replayRecordings `
         -RecordingPath $replayRecording `
-        -Game 'e2e_test' `
+        -Game 'current.iso' `
         -CaptureRoot $replayCapture `
         -ConcurrencyPoolRoot $replayPool `
         -ConcurrencyLimit 16
@@ -449,7 +449,7 @@ param(
         -Repository $replayRepository `
         -SharedRecordingRoot $replayRecordings `
         -RecordingPath $replayRecording `
-        -Game 'e2e_test' `
+        -Game 'current.iso' `
         -CaptureRoot $practiceCapture `
         -MemoryCard $practiceContext.MemoryCard `
         -LaunchProfile $practiceContext.LaunchProfile `
@@ -464,7 +464,7 @@ param(
         -Repository $replayRepository `
         -SharedRecordingRoot $replayRecordings `
         -RecordingPath $replayRecording `
-        -Game 'e2e_test' `
+        -Game 'current.iso' `
         -CaptureRoot $ninjaSongCapture `
         -MemoryCard $ninjaSongContext.MemoryCard `
         -ConcurrencyPoolRoot $replayPool `
@@ -1071,7 +1071,7 @@ $grids = Join-Path $OutputRoot 'screenshots'
         (Join-Path $configurationRoot 'config.json'),
 @'
 {
-  "build": "baseline_build",
+  "configuration": "baseline-build",
   "memory_card": "templates/default.ps2",
   "suite_overrides": {
     "card-and-profile": {
@@ -1093,8 +1093,8 @@ $grids = Join-Path $OutputRoot 'screenshots'
     )
     $configuration = Get-E2eConfiguration -Root $configurationRoot
     Assert-E2eHelperTest `
-        -Condition ([string]$configuration.Build -ceq 'baseline_build') `
-        -Message 'E2E configuration did not expose the configured build.'
+        -Condition ([string]$configuration.Configuration -ceq 'baseline-build') `
+        -Message 'E2E configuration did not expose the configured build configuration.'
     $defaultSuiteSettings = Resolve-E2eSuiteSettings `
         -Configuration $configuration `
         -Suite 'default'

@@ -1,5 +1,5 @@
 {
-  "build": "e2e_test",
+  "configuration": "e2e",
   "memory_card": "templates/2_formatted.ps2",
   "suite_overrides": {
     "practice": {

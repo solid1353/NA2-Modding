@@ -1,0 +1,7 @@
+{
+  "overrides": {
+    "startup": {
+      "faster_loading": false
+    }
+  }
+}

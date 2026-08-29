@@ -40,7 +40,7 @@ attach a launch profile; `practice` uses the same generated configuration as
 `na228 <game> -l practice naruto`. Memory-card values use the shared
 launcher's path rules, and snapshot replay always discards memory-card writes.
 Defaults and overrides apply equally to reference and current replays.
-`config.json` also references the E2E build target by name.
+`config.json` also references the E2E build configuration by name.
 
 After an E2E run publishes successfully, it compares only the selected
 capture paths with `captures/` Git `HEAD`. The console reports `UNCHANGED` when

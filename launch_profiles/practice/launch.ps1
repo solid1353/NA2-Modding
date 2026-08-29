@@ -197,25 +197,36 @@ $usesFullNativeAwakeningEntry = (
 $pnachByGame = @{}
 $pnachLinesByGame = @{}
 foreach ($requestedGame in $Games) {
-    $selector = $requestedGame.ToLowerInvariant()
-    $alias = @(
-        $paths.games.Aliases.PSObject.Properties |
-            Where-Object { $_.Name -ieq $selector }
-    ) | Select-Object -First 1
-    if ($null -eq $alias) {
-        throw "Unknown game selector: $requestedGame"
+    $isCachedBuild = $false
+    if ([IO.Path]::IsPathRooted($requestedGame)) {
+        $candidate = [IO.Path]::GetFullPath($requestedGame)
+        $isCachedBuild = (
+            (Test-Path -LiteralPath $candidate -PathType Leaf) -and
+            [IO.Path]::GetDirectoryName($candidate) -ieq
+                [IO.Path]::GetFullPath([string]$paths.build) -and
+            [IO.Path]::GetExtension($candidate) -ieq '.iso'
+        )
     }
-    $entry = $paths.games.Entries.PSObject.Properties[
-        [string]$alias.Value
-    ].Value
-    $catalogPnach = if ([string]$entry.Category -ceq 'builds') {
-        [string]$entry.Config.cheat_template
+    if ($isCachedBuild) {
+        $selector = [IO.Path]::GetFileNameWithoutExtension($candidate)
+        $entry = [pscustomobject]@{ Name = 'NA2.28' }
+        $pnachName = 'NA228.pnach'
     }
     else {
-        [string]$entry.Config.cheats
+        $selector = $requestedGame.ToLowerInvariant()
+        $alias = @(
+            $paths.games.Aliases.PSObject.Properties |
+                Where-Object { $_.Name -ieq $selector }
+        ) | Select-Object -First 1
+        if ($null -eq $alias) {
+            throw "Unknown game selector: $requestedGame"
+        }
+        $entry = $paths.games.Entries.PSObject.Properties[
+            [string]$alias.Value
+        ].Value
+        $pnachName = [IO.Path]::GetFileName([string]$entry.Config.cheats)
     }
-    $pnachName = [IO.Path]::GetFileName($catalogPnach)
-    if ([string]$entry.Category -ceq 'builds') {
+    if ($isCachedBuild) {
         $addresses = @('001ED600', '001ED604', '001ED608')
         $halfHpAddress = '001E7AE8'
         $gaaraMovesetAwakeningLines = @(

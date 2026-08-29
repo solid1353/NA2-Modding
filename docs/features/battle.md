@@ -429,7 +429,7 @@ verbal attack recipe can be converted to PINE inputs, but exact hold/release
 timing must be observed and corrected frame by frame, so a saved movie remains
 the stronger reusable regression artifact once the sequence works.
 
-The deterministic validation baseline is the exact Manual-cache Practice-row-9
+The deterministic validation baseline is the exact cached Practice-row-9
 replay documented in `battle.md`. Markers are capture checkpoints only; the
 movie supplies the full attack sequence frame by frame. Validation should
 prove all of the following:

@@ -17,12 +17,11 @@ from .configuration import configuration_resource_files, load_configuration
 from scripts.lib.paths import load_paths
 
 
-REGISTRY_SCHEMA_VERSION = 2
+REGISTRY_SCHEMA_VERSION = 3
 FINGERPRINT_SCHEMA_VERSION = 11
 SHA256_HEX_LENGTH = 64
-MAX_ENTRIES = 15
-MAX_LOCATIONS_PER_IMAGE = 20
-ROLE_FILE_NAMES = ("latest_iso", "previous_iso", "manual_iso")
+MAX_IMAGES = 10
+ISO_NAME_PREFIX = "NA v2.28"
 GENERATED_SUFFIXES = {".pyc", ".pyo"}
 NON_COMPOSING_BUILDER_FILES = {
     "scripts/app.py",
@@ -366,21 +365,14 @@ def _entry_image(
     size = image.get("size")
     if not isinstance(size, int) or size < 0:
         return None
-    cache_image = cache_root / f"{sha256}.iso"
-    if _valid_image(cache_image, size, sha256):
-        return cache_image.resolve()
-    locations = image.get("locations", [])
-    if not isinstance(locations, list):
+    relative = image.get("path")
+    if not isinstance(relative, str):
         return None
-    for raw_location in locations:
-        if not isinstance(raw_location, str):
-            continue
-        location = (workspace / raw_location).resolve()
-        if workspace.resolve() not in location.parents:
-            continue
-        if _valid_image(location, size, sha256):
-            return location
-    return None
+    location = (workspace / relative).resolve()
+    resolved_root = cache_root.resolve()
+    if location.parent != resolved_root:
+        return None
+    return location if _valid_image(location, size, sha256) else None
 
 
 def lookup_registry(
@@ -441,6 +433,63 @@ def lookup_registry(
     return result
 
 
+def resolve_registry(
+    *,
+    workspace: Path,
+    registry_path: Path,
+    cache_root: Path,
+    configuration_id: str,
+) -> dict[str, object]:
+    try:
+        registry = _read_registry(registry_path)
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        return {
+            "status": "missing",
+            "reason": "registry-invalid",
+            "detail": str(error),
+            "configuration": configuration_id,
+        }
+    candidates = sorted(
+        (
+            (fingerprint, entry)
+            for fingerprint, entry in registry["entries"].items()
+            if isinstance(entry, dict)
+            and entry.get("configuration") == configuration_id
+        ),
+        key=lambda item: str(item[1].get("verified_utc", "")),
+        reverse=True,
+    )
+    for fingerprint, entry in candidates:
+        image = _entry_image(
+            entry,
+            registry["images"],
+            workspace,
+            cache_root,
+        )
+        if image is None:
+            continue
+        sha256 = entry["sha256"]
+        image_record = registry["images"][sha256]
+        result: dict[str, object] = {
+            "status": "resolved",
+            "configuration": configuration_id,
+            "fingerprint": fingerprint,
+            "output_size_bytes": image_record["size"],
+            "output_sha256": sha256,
+            "image": str(image),
+            "verified_utc": entry["verified_utc"],
+        }
+        provenance = registry_path.parent / "records" / fingerprint
+        if provenance.is_dir():
+            result["provenance"] = str(provenance.resolve())
+        return result
+    return {
+        "status": "missing",
+        "reason": "configuration-build-missing",
+        "configuration": configuration_id,
+    }
+
+
 def _copy_provenance(source: Path, destination: Path) -> None:
     if not source.is_dir():
         raise FileNotFoundError(source)
@@ -453,143 +502,44 @@ def _copy_provenance(source: Path, destination: Path) -> None:
     os.replace(temporary, destination)
 
 
-def _replace_with_hardlink(source: Path, destination: Path) -> None:
-    source = source.resolve()
-    destination = destination.resolve()
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    temporary = destination.with_name(f".{destination.name}.{os.getpid()}.tmp")
-    try:
-        if temporary.exists():
-            temporary.unlink()
-        os.link(source, temporary)
-        os.replace(temporary, destination)
-    finally:
-        if temporary.exists():
-            temporary.unlink()
-
-
-def _configured_role_paths(workspace: Path) -> dict[str, Path]:
-    try:
-        paths = load_paths(workspace, allow_missing=True)
-    except (OSError, ValueError, KeyError):
-        return {}
-    result: dict[str, Path] = {}
-    for name in ROLE_FILE_NAMES:
-        try:
-            role_path = paths.file(name).resolve()
-            relative = _relative_workspace_path(role_path, workspace)
-        except (KeyError, ValueError):
-            continue
-        result[relative] = role_path
-    return result
-
-
-def _ensure_role_cache_hardlinks(
-    registry: dict[str, object], workspace: Path, cache_root: Path
-) -> set[str]:
-    images = registry["images"]
-    assert isinstance(images, dict)
-    role_paths = _configured_role_paths(workspace)
-    protected: set[str] = set()
-    for sha256, image in images.items():
-        if not _valid_sha256(sha256) or not isinstance(image, dict):
-            continue
-        size = image.get("size")
-        locations = image.get("locations")
-        if not isinstance(size, int) or size < 0 or not isinstance(locations, list):
-            continue
-        for relative, role_path in role_paths.items():
-            if relative not in locations or not role_path.is_file():
-                continue
-            cache_image = cache_root / f"{sha256}.iso"
-            try:
-                if cache_image.is_file() and os.path.samefile(role_path, cache_image):
-                    protected.add(sha256)
-                    break
-            except OSError:
-                pass
-            if not _valid_image(role_path, size, sha256):
-                continue
-            if cache_image.is_file():
-                if not _valid_image(cache_image, size, sha256):
-                    _replace_with_hardlink(role_path, cache_image)
-                _replace_with_hardlink(cache_image, role_path)
-            else:
-                _replace_with_hardlink(role_path, cache_image)
-            if not os.path.samefile(role_path, cache_image):
-                raise RuntimeError(
-                    f"Role ISO is not linked to its canonical cache image: {role_path}"
-                )
-            protected.add(sha256)
-            break
-    return protected
-
-
-def _prune_registry(
-    registry: dict[str, object], workspace: Path, cache_root: Path
-) -> list[tuple[str, dict[str, object]]]:
+def _prune_registry(registry: dict[str, object]) -> None:
     entries = registry["entries"]
     assert isinstance(entries, dict)
-    protected_hashes = _ensure_role_cache_hardlinks(
-        registry, workspace, cache_root
-    )
-    candidates = sorted(
-        (
-            (fingerprint, entry)
-            for fingerprint, entry in entries.items()
-            if isinstance(entry, dict)
-        ),
-        key=lambda item: str(item[1].get("verified_utc", "")),
-    )
-    removed: list[tuple[str, dict[str, object]]] = []
-    while len(entries) > MAX_ENTRIES and candidates:
-        fingerprint, entry = candidates.pop(0)
-        if fingerprint not in entries:
+    images = registry["images"]
+    assert isinstance(images, dict)
+    newest_by_hash: dict[str, str] = {}
+    for entry in entries.values():
+        if not isinstance(entry, dict):
             continue
-        del entries[fingerprint]
-        removed.append((fingerprint, entry))
-
-    def retained_hashes() -> set[str]:
-        return {
-            sha256
-            for entry in entries.values()
-            if isinstance(entry, dict)
-            and _valid_sha256(sha256 := entry.get("sha256"))
-        }
-
-    required_hashes = retained_hashes() | protected_hashes
-    while len(required_hashes) > MAX_ENTRIES:
-        candidate = next(
-            (
-                (fingerprint, entry)
-                for fingerprint, entry in candidates
-                if fingerprint in entries
-                and entry.get("sha256") not in protected_hashes
-            ),
-            None,
-        )
-        if candidate is None:
-            break
-        fingerprint, entry = candidate
-        del entries[fingerprint]
-        removed.append((fingerprint, entry))
-        required_hashes = retained_hashes() | protected_hashes
-
-    registry["images"] = {
-        sha256: image
-        for sha256, image in registry["images"].items()
-        if sha256 in required_hashes
+        sha256 = entry.get("sha256")
+        if not _valid_sha256(sha256):
+            continue
+        verified = str(entry.get("verified_utc", ""))
+        newest_by_hash[sha256] = max(newest_by_hash.get(sha256, ""), verified)
+    retained_hashes = {
+        sha256
+        for sha256, _ in sorted(
+            newest_by_hash.items(), key=lambda item: item[1], reverse=True
+        )[:MAX_IMAGES]
     }
-    return removed
+    for sha256 in list(images):
+        if sha256 not in retained_hashes:
+            del images[sha256]
+    for fingerprint in list(entries):
+        entry = entries[fingerprint]
+        if not isinstance(entry, dict) or entry.get("sha256") not in retained_hashes:
+            del entries[fingerprint]
 
 
 def _cleanup_registry_artifacts(
-    registry: dict[str, object], registry_path: Path, cache_root: Path
+    registry: dict[str, object],
+    registry_path: Path,
+    workspace: Path,
+    cache_root: Path,
 ) -> None:
     entries = registry["entries"]
     assert isinstance(entries, dict)
     retained_fingerprints = set(entries)
-    retained_hashes = set(registry["images"])
     records_root = registry_path.parent / "records"
     if records_root.is_dir():
         for record in records_root.iterdir():
@@ -598,13 +548,18 @@ def _cleanup_registry_artifacts(
                     shutil.rmtree(record)
                 except OSError:
                     pass
-    if cache_root.is_dir():
-        for image in cache_root.glob("*.iso"):
-            if image.stem not in retained_hashes:
-                try:
-                    image.unlink()
-                except OSError:
-                    pass
+    retained_images = {
+        (workspace / image["path"]).resolve()
+        for image in registry["images"].values()
+        if isinstance(image, dict) and isinstance(image.get("path"), str)
+    }
+    for image in cache_root.glob(f"{ISO_NAME_PREFIX} - *.iso"):
+        if image.resolve() in retained_images:
+            continue
+        try:
+            image.unlink()
+        except OSError:
+            pass
 
 
 def _cleanup_cache_temporaries(cache_root: Path) -> None:
@@ -646,21 +601,15 @@ def record_registry(
     with _registry_lock(registry_path):
         try:
             _cleanup_cache_temporaries(cache_root)
-            registry = _read_registry(registry_path)
+            try:
+                registry = _read_registry(registry_path)
+            except (OSError, ValueError, json.JSONDecodeError):
+                registry = _empty_registry()
             record_directory = registry_path.parent / "records" / fingerprint
             if provenance is not None:
                 record_directory.parent.mkdir(parents=True, exist_ok=True)
                 _copy_provenance(provenance.resolve(), record_directory)
             cache_root.mkdir(parents=True, exist_ok=True)
-            cache_image = cache_root / f"{sha256}.iso"
-            if cache_image.exists():
-                cache_image_preexisting = True
-                if not _valid_image(cache_image, size, sha256):
-                    raise RuntimeError(f"Cached ISO identity mismatch: {cache_image}")
-                image.unlink()
-            else:
-                os.replace(image, cache_image)
-            existing = registry["entries"].get(fingerprint)
             images = registry["images"]
             assert isinstance(images, dict)
             existing_image = images.get(sha256)
@@ -669,16 +618,53 @@ def record_registry(
                     raise RuntimeError(
                         f"Registry image identity has inconsistent sizes: {sha256}"
                     )
+                existing_path = existing_image.get("path")
+                if not isinstance(existing_path, str):
+                    raise RuntimeError(f"Registry image path is invalid: {sha256}")
+                cache_image = (workspace / existing_path).resolve()
+                if cache_image.parent != cache_root.resolve():
+                    raise RuntimeError(
+                        "Registry image path is outside the build directory: "
+                        f"{sha256}"
+                    )
+                if not _valid_image(cache_image, size, sha256):
+                    raise RuntimeError(f"Cached ISO identity mismatch: {cache_image}")
+                cache_image_preexisting = True
+                image.unlink()
             else:
-                images[sha256] = {"size": size, "locations": []}
+                local_timestamp = datetime.now().astimezone().strftime(
+                    "%Y-%m-%d %H.%M.%S"
+                )
+                cache_image = cache_root / (
+                    f"{ISO_NAME_PREFIX} - {local_timestamp} - {sha256[:12]}.iso"
+                )
+                if cache_image.exists():
+                    if not _valid_image(cache_image, size, sha256):
+                        raise RuntimeError(f"Cached ISO name collision: {cache_image}")
+                    cache_image_preexisting = True
+                    image.unlink()
+                else:
+                    os.replace(image, cache_image)
+                images[sha256] = {
+                    "size": size,
+                    "path": _relative_workspace_path(cache_image, workspace),
+                    "created_utc": datetime.now(timezone.utc).isoformat(),
+                }
+            configuration_value = state.get("configuration")
+            if not isinstance(configuration_value, str):
+                raise ValueError("Build state has no configuration path")
+            configuration_id = Path(configuration_value).stem
             registry["entries"][fingerprint] = {
                 "state": state,
+                "configuration": configuration_id,
                 "sha256": sha256,
                 "verified_utc": datetime.now(timezone.utc).isoformat(),
             }
-            _prune_registry(registry, workspace, cache_root)
+            _prune_registry(registry)
             _write_registry(registry_path, registry)
-            _cleanup_registry_artifacts(registry, registry_path, cache_root)
+            _cleanup_registry_artifacts(
+                registry, registry_path, workspace, cache_root
+            )
         except BaseException:
             if (
                 not image.exists()
@@ -709,77 +695,6 @@ def record_registry(
     return result
 
 
-def record_locations(
-    *,
-    workspace: Path,
-    registry_path: Path,
-    cache_root: Path,
-    fingerprint: str,
-    locations: list[Path],
-) -> dict[str, object]:
-    with _registry_lock(registry_path):
-        _cleanup_cache_temporaries(cache_root)
-        registry = _read_registry(registry_path)
-        entry = registry["entries"].get(fingerprint)
-        if not isinstance(entry, dict):
-            raise ValueError(f"Unknown verification fingerprint: {fingerprint}")
-        images = registry["images"]
-        assert isinstance(images, dict)
-        if not locations:
-            raise ValueError("At least one completed location is required")
-        target_sha256 = entry.get("sha256")
-        target_image = images.get(target_sha256)
-        if not _valid_sha256(target_sha256) or not isinstance(target_image, dict):
-            raise ValueError(f"Unknown registry image identity: {target_sha256}")
-        observed: list[tuple[str, int, str]] = []
-        for index, location in enumerate(locations):
-            relative = _relative_workspace_path(location, workspace)
-            if not location.is_file():
-                raise RuntimeError(f"Promoted ISO does not exist: {location}")
-            size = location.stat().st_size
-            sha256 = file_sha256(location)
-            if index == 0 and (
-                sha256 != target_sha256 or size != target_image.get("size")
-            ):
-                raise RuntimeError(f"Promoted ISO identity mismatch: {location}")
-            observed.append((relative, size, sha256))
-
-        for image in images.values():
-            if not isinstance(image, dict):
-                continue
-            image_locations = image.get("locations")
-            if not isinstance(image_locations, list):
-                continue
-            image_locations[:] = [
-                raw_location
-                for raw_location in image_locations
-                if isinstance(raw_location, str)
-                and (workspace / raw_location).is_file()
-                and all(raw_location != relative for relative, _, _ in observed)
-            ]
-
-        for relative, size, sha256 in observed:
-            image = images.get(sha256)
-            if not isinstance(image, dict):
-                continue
-            if image.get("size") != size:
-                raise RuntimeError(
-                    f"Registry image identity has inconsistent sizes: {sha256}"
-                )
-            image_locations = image.setdefault("locations", [])
-            if not isinstance(image_locations, list):
-                raise ValueError(f"Registry image locations are invalid: {sha256}")
-            if relative not in image_locations:
-                image_locations.append(relative)
-            if len(image_locations) > MAX_LOCATIONS_PER_IMAGE:
-                del image_locations[:-MAX_LOCATIONS_PER_IMAGE]
-        _write_registry(registry_path, registry)
-    return {
-        "status": "completed",
-        "fingerprint": fingerprint,
-    }
-
-
 def _configuration_path(value: Path, workspace: Path) -> Path:
     return value if value.is_absolute() else workspace / value
 
@@ -804,11 +719,10 @@ def main() -> int:
             command.add_argument("--expected-fingerprint", required=True)
             command.add_argument("--image", required=True, type=Path)
             command.add_argument("--provenance", type=Path)
-    command = subparsers.add_parser("complete")
+    command = subparsers.add_parser("resolve")
     command.add_argument("--registry", required=True, type=Path)
     command.add_argument("--cache-root", required=True, type=Path)
-    command.add_argument("--fingerprint", required=True)
-    command.add_argument("--location", required=True, action="append", type=Path)
+    command.add_argument("--configuration-id", required=True)
 
     args = parser.parse_args()
     paths = load_paths(Path(__file__).resolve(), allow_missing=True)
@@ -838,12 +752,11 @@ def main() -> int:
                 provenance=args.provenance,
             )
     else:
-        result = record_locations(
+        result = resolve_registry(
             workspace=workspace,
             registry_path=args.registry,
             cache_root=args.cache_root,
-            fingerprint=args.fingerprint.upper(),
-            locations=args.location,
+            configuration_id=args.configuration_id,
         )
     _emit(result)
     return 0

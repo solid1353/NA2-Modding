@@ -213,13 +213,7 @@ class ConfigurationTests(unittest.TestCase):
                         "startup_fast_forward_frames": 321,
                         "practice": {"startup_fast_forward_frames": 654},
                     },
-                    "builds": {
-                        "latest": {
-                            "configuration": configuration_id,
-                            "rotate_to": "previous",
-                        },
-                        "previous": {},
-                    },
+                    "configurations": {configuration_id: "t"},
                 },
                 indent=2,
             )
@@ -440,7 +434,7 @@ class ConfigurationTests(unittest.TestCase):
             loaded = load_configuration(configuration, root, root)
             self.assertEqual(loaded.configuration_id, configuration.stem)
 
-    def test_build_targets_require_composition_and_valid_rotation(self) -> None:
+    def test_configuration_aliases_are_optional_unique_selectors(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             builder, source, configurations = self.create_workspace(root)
@@ -454,32 +448,33 @@ class ConfigurationTests(unittest.TestCase):
             settings_path = root / "game.json"
             original = json.loads(settings_path.read_text(encoding="utf-8"))
 
-            missing_composition = json.loads(json.dumps(original))
-            del missing_composition["builds"]["latest"]["configuration"]
+            no_aliases = json.loads(json.dumps(original))
+            no_aliases["configurations"] = {}
             settings_path.write_text(
-                json.dumps(missing_composition, indent=2) + "\n",
+                json.dumps(no_aliases, indent=2) + "\n",
                 encoding="utf-8",
             )
-            with self.assertRaisesRegex(ValueError, "requires a configuration"):
+            self.assertEqual(
+                load_configuration(configuration, root, root).configuration_id,
+                "test",
+            )
+
+            duplicate_alias = json.loads(json.dumps(original))
+            duplicate_alias["configurations"] = {"base": "x", "test": "x"}
+            settings_path.write_text(
+                json.dumps(duplicate_alias, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "duplicate configuration alias"):
                 load_configuration(configuration, root, root)
 
-            unknown_rotation = json.loads(json.dumps(original))
-            unknown_rotation["builds"]["latest"]["rotate_to"] = "missing"
+            invalid_alias = json.loads(json.dumps(original))
+            invalid_alias["configurations"] = {"test": "not valid"}
             settings_path.write_text(
-                json.dumps(unknown_rotation, indent=2) + "\n",
+                json.dumps(invalid_alias, indent=2) + "\n",
                 encoding="utf-8",
             )
-            with self.assertRaisesRegex(ValueError, "rotates to unknown target"):
-                load_configuration(configuration, root, root)
-
-            unconfigured_rotation = json.loads(json.dumps(original))
-            del unconfigured_rotation["builds"]["latest"]["configuration"]
-            unconfigured_rotation["builds"]["previous"]["rotate_to"] = "latest"
-            settings_path.write_text(
-                json.dumps(unconfigured_rotation, indent=2) + "\n",
-                encoding="utf-8",
-            )
-            with self.assertRaisesRegex(ValueError, "requires a configuration"):
+            with self.assertRaisesRegex(ValueError, "invalid alias"):
                 load_configuration(configuration, root, root)
 
     def test_complete_resources_include_disabled_feature_inputs(self) -> None:

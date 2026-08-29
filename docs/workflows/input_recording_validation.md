@@ -16,7 +16,7 @@ current task.
 3. If the baseline does not exist, ask the user to create it. If multiple game
    directories make the intended baseline genuinely ambiguous, ask which one
    applies.
-4. The agent does not launch or copy the initial Latest or Manual ISO and does
+4. The agent does not launch or copy an initial cached ISO and does
    not need its build identity. The baseline captures are the evidence for the
    pre-change behavior.
 
@@ -25,7 +25,7 @@ current task.
 1. Inspect the task-relevant baseline screenshots and savestates, then
    implement the requested change.
 2. Finish all earlier selected checks, then run
-   `na228 build -c <configuration>`.
+   `na228 build <configuration>`.
 3. Replay the same recording against the ISO returned by that command:
 
    ```powershell

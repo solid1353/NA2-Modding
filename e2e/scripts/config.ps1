@@ -137,11 +137,11 @@ function Get-E2eConfiguration {
     catch {
         throw "Invalid E2E configuration JSON: $configurationPath"
     }
-    $buildProperty = $configuration.PSObject.Properties['build']
-    if ($null -eq $buildProperty -or
-        $buildProperty.Value -isnot [string] -or
-        [string]$buildProperty.Value -cnotmatch '^[a-z][a-z0-9_]*$') {
-        throw "E2E configuration requires a valid build selector: $configurationPath"
+    $configurationProperty = $configuration.PSObject.Properties['configuration']
+    if ($null -eq $configurationProperty -or
+        $configurationProperty.Value -isnot [string] -or
+        [string]$configurationProperty.Value -cnotmatch '^[a-z][a-z0-9_-]*$') {
+        throw "E2E requires a valid build configuration: $configurationPath"
     }
     $memoryCardProperty = $configuration.PSObject.Properties['memory_card']
     if ($null -eq $memoryCardProperty -or
@@ -154,7 +154,7 @@ function Get-E2eConfiguration {
         -ConfigurationPath $configurationPath
     return [pscustomobject]@{
         Path = $configurationPath
-        Build = [string]$buildProperty.Value
+        Configuration = [string]$configurationProperty.Value
         MemoryCard = [string]$memoryCardProperty.Value
         SuiteOverrides = $suiteOverrides
     }

@@ -70,7 +70,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--iso",
         type=Path,
-        default=load_paths(REPOSITORY).file("latest_iso"),
     )
     parser.add_argument("--output", type=Path)
     return parser.parse_args()
@@ -344,6 +343,35 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest().upper()
 
 
+def newest_cached_iso(configuration: str = "base") -> Path:
+    registry_path = PATHS.path("logs", "na228", "preflight", "registry.json")
+    if not registry_path.is_file():
+        raise ValueError(f"No cached {configuration} build exists")
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    entries = registry.get("entries")
+    images = registry.get("images")
+    if not isinstance(entries, dict) or not isinstance(images, dict):
+        raise ValueError(f"Invalid build registry: {registry_path}")
+    candidates = sorted(
+        (
+            entry
+            for entry in entries.values()
+            if isinstance(entry, dict)
+            and entry.get("configuration") == configuration
+        ),
+        key=lambda entry: str(entry.get("verified_utc", "")),
+        reverse=True,
+    )
+    for entry in candidates:
+        image = images.get(entry.get("sha256"))
+        if not isinstance(image, dict) or not isinstance(image.get("path"), str):
+            continue
+        path = (REPOSITORY / image["path"]).resolve()
+        if path.is_file():
+            return path
+    raise ValueError(f"No cached {configuration} build exists")
+
+
 def align(value: int, alignment: int) -> int:
     return (value + alignment - 1) & -alignment
 
@@ -354,7 +382,7 @@ def locate_build_record(
     required: bool = True,
 ) -> tuple[Path, dict[str, object]] | None:
     matches: list[tuple[Path, dict[str, object]]] = []
-    builds_root = PATHS.path("logs", "na228", "builds")
+    builds_root = PATHS.path("logs", "na228", "preflight", "records")
     for summary_path in builds_root.glob("*/payload_builder/payload_summary.json"):
         summary = json.loads(summary_path.read_text(encoding="utf-8"))
         if str(summary.get("sha256", "")).upper() == payload_sha256:
@@ -363,7 +391,7 @@ def locate_build_record(
         if not required:
             return None
         raise ValueError(
-            "No retained NA2 build record matches the exact Latest 228.BIN "
+            "No retained NA2 build record matches the cached 228.BIN "
             f"SHA-256 {payload_sha256}"
         )
     matches.sort(key=lambda item: item[0].name)
@@ -399,13 +427,13 @@ def load_symbol_map(
         size = integer(row["size"], f"symbol_map.tsv:{line} size")
         if offset < 0 or size <= 0 or offset + size > len(payload):
             raise ValueError(
-                f"symbol_map.tsv:{line}: {symbol} exceeds exact Latest 228.BIN"
+                f"symbol_map.tsv:{line}: {symbol} exceeds the cached 228.BIN"
             )
         actual_sha = sha256(payload[offset : offset + size])
         expected_sha = row["sha256"].upper()
         if actual_sha != expected_sha:
             raise ValueError(
-                f"symbol_map.tsv:{line}: exact Latest bytes do not match {symbol}"
+                f"symbol_map.tsv:{line}: cached bytes do not match {symbol}"
             )
         result[symbol] = {
             "offset": offset,
@@ -898,7 +926,7 @@ def resolve_external_addresses(
         row = symbol_map.get(symbol)
         if row is None:
             raise ValueError(
-                f"Exact Latest symbol map does not resolve import {symbol!r}"
+                f"Cached-build symbol map does not resolve import {symbol!r}"
             )
         result[symbol] = int(row["address"])
     return result
@@ -987,7 +1015,7 @@ def main() -> int:
         source_ids = [source_id]
         entry_symbol = identifier(args.entry, "entry")
         output_name = source_id
-    iso_path = resolved_path(args.iso)
+    iso_path = resolved_path(args.iso) if args.iso is not None else newest_cached_iso()
     output = resolved_path(
         args.output or PATHS.path("build", "injection", output_name)
     )
@@ -1187,7 +1215,7 @@ def main() -> int:
                         + bytes(4)
                     ).hex().upper(),
                     "reason": (
-                        "Redirect the Latest resident entry to the selected "
+                        "Redirect the cached-build resident entry to the selected "
                         "development EE sources."
                     ),
                 }
@@ -1197,7 +1225,7 @@ def main() -> int:
         resident_entry = symbol_map.get(entry_symbol)
         if resident_entry is None:
             raise ValueError(
-                f"Exact Latest symbol map does not contain entry {entry_symbol!r}; "
+                f"Cached-build symbol map does not contain entry {entry_symbol!r}; "
                 "a task-owned overlay plan is required to bootstrap a new entry"
             )
         if int(resident_entry["size"]) < 8:
@@ -1217,7 +1245,7 @@ def main() -> int:
                 ),
                 "expected_hex": expected.hex().upper(),
                 "replacement_hex": replacement.hex().upper(),
-                "reason": "Redirect the Latest resident entry to the fragment.",
+                "reason": "Redirect the cached-build resident entry to the fragment.",
             }
         )
     writes.append(

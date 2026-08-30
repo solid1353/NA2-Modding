@@ -42,7 +42,7 @@
 - A script may fail or discard its output only when validation shows the primary
   result is invalid, unsafe, or unusable. Report other validation failures as
   warnings; making them fatal requires explicit user approval.
-- Do not create or modify tests for a task result before user acceptance.
+- Before `ver`, do not propose, plan, create, or modify tests.
 - Keep candidate-specific documentation provisional until acceptance; retain
   only documentation for the accepted result.
 - Unit tests must detect a meaningful regression in accepted behavior or a

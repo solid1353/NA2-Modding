@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from .character_overrides import CharacterOverrideConfiguration
 
 
-BUILDER_TARGETS_FILE = Path("catalog") / "targets.tsv"
+BUILDER_TARGETS_FILE = Path("modules") / "targets.tsv"
 SOURCE_BOOT_PATH = "SLPS_258.37"
 SYSTEM_CNF_PATH = "SYSTEM.CNF"
 PRODUCT_ROOT_ALIASES = {
@@ -30,12 +30,6 @@ MODULE_TYPE_ORDER = (
 )
 MODULE_TYPES = frozenset(MODULE_TYPE_ORDER)
 UINT64_MAX = (1 << 64) - 1
-FEATURE_MODULE_INPUTS = {
-    "localization": (
-        ("translation_importer", ("localization", "translation_importer")),
-        ("texture_patcher", ("localization", "texture_patcher")),
-    ),
-}
 TRANSLATION_IMPORTER_CONTROL_FILES = (
     "mappings.tsv",
 )
@@ -281,14 +275,35 @@ def _resolved_roots(
 
 def _feature_module_inputs(
     builder_root: Path,
+    selection: CatalogSelection,
     feature_id: str,
 ) -> list[tuple[str, Path]]:
     inputs: list[tuple[str, Path]] = []
-    for module_type, relative_path in FEATURE_MODULE_INPUTS.get(feature_id, ()):
-        module_path = builder_root.joinpath(*relative_path).resolve()
-        if not module_path.is_dir():
-            raise FileNotFoundError(module_path)
-        inputs.append((module_type, module_path))
+    owners: dict[str, str] = {}
+    for node in selection.feature_nodes(feature_id):
+        for module_type in node.modules:
+            if module_type not in MODULE_TYPES:
+                raise ValueError(
+                    f"Catalog patch {node.patch!r} declares unsupported module "
+                    f"{module_type!r}"
+                )
+            if node.patch is None:
+                raise ValueError(
+                    f"Catalog node {node.node_id!r} declares module {module_type!r} without a patch"
+                )
+            previous = owners.get(module_type)
+            if previous is not None:
+                raise ValueError(
+                    f"Catalog feature {feature_id!r} declares module {module_type!r} "
+                    f"in both {previous!r} and {node.patch!r}"
+                )
+            owners[module_type] = node.patch
+            module_path = builder_root.joinpath(
+                "patches", *node.patch.split(".")
+            ).resolve()
+            if not module_path.is_dir():
+                raise FileNotFoundError(module_path)
+            inputs.append((module_type, module_path))
     return sorted(inputs, key=lambda item: MODULE_TYPE_ORDER.index(item[0]))
 
 
@@ -308,44 +323,16 @@ def _catalog_feature_sha256(
         raise ValueError(f"Catalog has no feature: {feature_id}")
     entries: list[tuple[str, bytes]] = [
         (
-            f"catalog/catalog.modcat#features.{feature_id}",
+            f"catalog.modcat#features.{feature_id}",
             catalog_format.serialize_feature(feature).encode("utf-8"),
         )
     ]
-    for edit_id in catalog_module.feature_reference_ids(
-        selection, feature_id, "edits"
-    ):
+    for patch_id in catalog_module.feature_patch_ids(selection, feature_id):
         entries.append(
             (
-                f"edits/{edit_id}.json",
+                f"patches/{patch_id}.json",
                 json.dumps(
-                    selection.edits[edit_id],
-                    ensure_ascii=False,
-                    separators=(",", ":"),
-                ).encode("utf-8"),
-            )
-        )
-    for injection_id in catalog_module.feature_reference_ids(
-        selection, feature_id, "injections"
-    ):
-        entries.append(
-            (
-                f"injections/{injection_id}.json",
-                json.dumps(
-                    selection.injections[injection_id],
-                    ensure_ascii=False,
-                    separators=(",", ":"),
-                ).encode("utf-8"),
-            )
-        )
-    for patch_id in catalog_module.feature_reference_ids(
-        selection, feature_id, "string_patches"
-    ):
-        entries.append(
-            (
-                f"string_patches/{patch_id}.json",
-                json.dumps(
-                    selection.string_patches[patch_id],
+                    selection.patches[patch_id],
                     ensure_ascii=False,
                     separators=(",", ":"),
                 ).encode("utf-8"),
@@ -392,7 +379,7 @@ def _load_configuration(
     configuration_id = definition_path.stem
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_. -]*", configuration_id):
         raise ValueError(f"Invalid configuration name: {configuration_id!r}")
-    catalog_path = builder_root / "catalog"
+    catalog_path = builder_root / "catalog.modcat"
     selection = catalog_module.load_selection(catalog_path, definition_path)
     paths = project_paths or load_paths(workspace, allow_missing=True)
     from .character_overrides import (
@@ -419,19 +406,7 @@ def _load_configuration(
     features: list[SelectedFeature] = []
     modules: list[ModuleInvocation] = []
     for feature_id in selection.feature_ids:
-        module_inputs = _feature_module_inputs(builder_root, feature_id)
-        declared_modules = {
-            module
-            for node in selection.feature_nodes(feature_id)
-            for module in node.modules
-        }
-        available_module_types = {module_type for module_type, _ in module_inputs}
-        unknown_modules = sorted(declared_modules - available_module_types)
-        if unknown_modules:
-            raise ValueError(
-                f"Catalog feature {feature_id!r} selects unavailable modules: "
-                + ", ".join(unknown_modules)
-            )
+        module_inputs = _feature_module_inputs(builder_root, selection, feature_id)
         selected_modules = {
             module
             for node in selection.feature_nodes(feature_id)
@@ -454,10 +429,7 @@ def _load_configuration(
         )
         available: dict[str, Path] = {}
         for module_type, module_path in module_inputs:
-            if selection.node_enabled("features", feature_id) and (
-                module_type not in declared_modules
-                or module_type in selected_modules
-            ):
+            if selection.node_enabled("features", feature_id) and module_type in selected_modules:
                 available[module_type] = module_path
         if catalog_module.feature_has(
             selection,
@@ -552,9 +524,7 @@ def configuration_resource_files(
         configuration.definition_path,
         configuration.settings_path,
         *configuration.selection.catalog_files,
-        configuration.selection.edits_path,
-        configuration.selection.injections_path,
-        configuration.selection.string_patches_path,
+        *configuration.selection.patch_files,
         configuration.targets_path,
     ]
     if configuration.selection.base_configuration_path is not None:
@@ -583,7 +553,7 @@ def configuration_resource_files(
         builder_root = configuration.selection.catalog_path.parent
         for feature in configuration.features:
             for module_type, module_path in _feature_module_inputs(
-                builder_root, feature.feature_id
+                builder_root, configuration.selection, feature.feature_id
             ):
                 files.extend(_module_content_files(module_path, module_type))
     else:
@@ -610,9 +580,9 @@ def load_configuration(
         raise ValueError(
             f"Configuration builder root must be inside the workspace: {builder_root}"
         ) from exc
-    if not definition_path.is_file() or definition_path.suffix.lower() != ".json":
+    if not definition_path.is_file() or definition_path.suffix.lower() != ".jsonc":
         raise FileNotFoundError(
-            f"Configuration definition is not a JSON file: {definition_path}"
+            f"Configuration definition is not a JSONC file: {definition_path}"
         )
     return _load_configuration(
         definition_path,

@@ -1,0 +1,88 @@
+{
+  "features": {
+    "settings": {
+      "new_controls": true,
+      "simple_display": "off",               // "off" | "on"
+      "character_overrides": true,
+      "in_game": {
+        "battle": {
+          "time": 99,                        // int 10..90 (step 10) | 99 | "unlimited" | false
+          "difficulty": "normal",            // "simple" | "easy" | "normal" | "hard" | "insane" | "ultimate" | false
+          "items": "normal",                 // "none" | "less" | "normal" | "more" | false
+          "chakra": "normal",                // "normal" | "unlimited" | false
+          "handicap": "5-5"                  // "0-10" | "1-9" | "2-8" | "3-7" | "4-6" | "5-5" | "6-4" | "7-3" | "8-2" | "9-1" | "10-0" | false
+        },
+        "practice": {
+          "general_settings": {
+            "health": "normal",              // "normal" | "half" | "almost" | false
+            "chakra": "unlimited",           // "normal" | "unlimited" | false
+            "linked_attack": "normal",       // "normal" | "unlimited" | false
+            "linked_mode": false,            // "manual" | "auto" | false
+            "items": "normal",               // "none" | "less" | "normal" | "more" | false
+            "commands": "off",               // "off" | "on" | false
+            "damage": "on",                  // "off" | "on" | false
+            "guide_ninja_sound": false       // "off" | "on" | false
+          },
+          "opponent_settings": {
+            "status": "com",                 // "manual" | "com" | "stand" | "jump" | "double_jump" | false
+            "strength": "normal",            // "simple" | "easy" | "normal" | "hard" | "insane" | "ultimate" | false
+            "attack": "no",                  // "no" | "single" | "combo" | "projectile" | "high_speed_move" | "ultimate_jutsu" | "jutsu" | false
+            "guard": "no",                   // "no" | "yes" | false
+            "move": "stay",                  // "stay" | "follow" | false
+            "substitution_jutsu": "normal",  // "normal" | "no" | false
+            "linked_attack": "dont_use",     // "dont_use" | "normal" | "random" | false
+            "extra_hit_counter": false       // "normal" | "return" | false
+          }
+        },
+        "shared": {
+          "ultimate_jutsu": "no_hud",        // "no_use" | "random" | "command" | "timing" | "turn" | "combo" | "no_contest" | "no_hud"
+          "shadowblur": "off",               // "off" | "on"
+          "extra_hit": "off",                // "off" | "on"
+          "sub_active_frames": 4,            // int 0..16
+          "xdash_chakra_cost": 5,            // int 0..100 (step 5)
+          "support": "off",                  // "off" | "on"
+          "substitution": {
+            "default": "gauge"               // "chakra" | "gauge" | "free"
+          }
+        }
+      }
+    },
+    "general": {
+      "replace_imported_game_title": true,
+      "unlock_all": {
+        "demon_wind_bomb": true
+      }
+    },
+    "memory_card": {
+      "display_only_first_save": true,
+      "dedicated_save_namespace": true,
+      "replace_memory_card_title": true
+    },
+    "startup": {
+      "faster_loading": true,
+      "auto_loading": true,
+      "loading_screen": true
+    },
+    "character_select": {
+      "balance_overlay": true,
+      "support_selection_rework": true
+    },
+    "mode_select": {
+      "remove_adventure": true,
+      "remove_shop": true
+    },
+    "rendering": {
+      "native_16_9_horizontal_scale": false
+    },
+    "localization": {
+      "font": {
+        "glyphs": true,
+        "layout": true,
+        "numeric_formatting": true
+      },
+      "ui": true,
+      "regional_input": true,
+      "strings": true
+    }
+  }
+}

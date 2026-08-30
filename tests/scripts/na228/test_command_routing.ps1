@@ -67,7 +67,7 @@ try {
 '@)
     foreach ($configuration in 'base', 'test', 'release', 'e2e', 'foo') {
         [IO.File]::WriteAllText(
-            (Join-Path $repository "na228_builder\configurations\$configuration.json"),
+            (Join-Path $repository "na228_builder\configurations\$configuration.jsonc"),
             '{}'
         )
         [IO.File]::WriteAllText((Join-Path $repository "build\$configuration.iso"), $configuration)
@@ -233,7 +233,7 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
             'Unit-test command did not retain precedence over the test configuration name.'
 
         [IO.File]::WriteAllText(
-            (Join-Path $repository 'na228_builder\configurations\bfoo.json'),
+            (Join-Path $repository 'na228_builder\configurations\bfoo.jsonc'),
             '{}'
         )
         $conflict = Invoke-FakeNa228 -ArgumentList @('help') -Failure

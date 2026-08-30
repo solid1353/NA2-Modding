@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.scripts import catalog
+from na228_builder.scripts import catalog, jsonc
 from scripts.lib.paths import load_local_paths
 
 
@@ -14,19 +14,19 @@ class ControlSettingsTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         cls.builder = cls.paths.path("builder")
-        cls.catalog_path = cls.builder / "catalog"
+        cls.catalog_path = cls.builder / "catalog.modcat"
         cls.configurations = cls.builder / "configurations"
 
     def _base_features(self) -> dict[str, object]:
-        base = json.loads(
-            (self.configurations / "base.json").read_text(encoding="utf-8")
+        base = jsonc.loads(
+            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
         )
         return base["features"]
 
     def _write_full_configuration(self, features: dict[str, object]) -> Path:
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
-        path = Path(directory.name) / "configuration.json"
+        path = Path(directory.name) / "configuration.jsonc"
         path.write_text(
             json.dumps({"features": features}, indent=2) + "\n",
             encoding="utf-8",
@@ -44,9 +44,9 @@ class ControlSettingsTests(unittest.TestCase):
         ):
             with self.subTest(controls=controls_enabled, shared=shared_enabled):
                 features = self._base_features()
-                features["settings"]["controls"] = controls_enabled
-                shared = features["settings"]["shared"]
-                features["settings"]["shared"] = shared if shared_enabled else False
+                features["settings"]["new_controls"] = controls_enabled
+                shared = features["settings"]["in_game"]["shared"]
+                features["settings"]["in_game"]["shared"] = shared if shared_enabled else False
                 selection = catalog.load_selection(
                     self.catalog_path,
                     self._write_full_configuration(features),
@@ -55,49 +55,46 @@ class ControlSettingsTests(unittest.TestCase):
                     node
                     for node in selection.nodes
                     if node.path
-                    == ("features", "settings", "controls")
+                    == ("features", "settings", "new_controls")
                 )
                 shared = next(
                     node
                     for node in selection.nodes
                     if node.path
-                    == ("features", "settings", "shared")
+                    == ("features", "settings", "in_game", "shared")
                 )
                 self.assertEqual(controls.enabled, controls_enabled)
                 self.assertEqual(shared.enabled, shared_enabled)
                 active_edits = {
-                    edit_id
+                    node.patch
                     for node in selection.feature_nodes("settings")
-                    if node.enabled
-                    for edit_id in node.edit_ids
+                    if node.enabled and node.patch in selection.edits
                 }
                 active_injections = {
-                    injection_id
+                    node.patch
                     for node in selection.feature_nodes("settings")
-                    if node.enabled
-                    for injection_id in node.injection_ids
+                    if node.enabled and node.patch in selection.injections
                 }
                 self.assertEqual(
-                    "e__battle__control_settings_rework" in active_edits,
+                    "settings.new_controls" in active_edits,
                     controls_enabled,
                 )
                 self.assertEqual(
-                    "i__battle__control_settings_rework" in active_injections,
+                    "settings.new_controls" in active_injections,
                     controls_enabled,
                 )
                 self.assertEqual(
-                    "i__battle_logic__substitution__gauge"
+                    "settings.shared.substitution"
                     in active_injections,
                     shared_enabled,
                 )
-                self.assertEqual(shared.edit_ids, ("e__battle__simple_display",))
 
     def test_owned_default_layout_and_action_separation(self) -> None:
         selection = catalog.load_selection(
             self.catalog_path,
-            self.configurations / "base.json",
+            self.configurations / "base.jsonc",
         )
-        route = selection.edits["e__battle__control_settings_rework"]["edits"]
+        route = selection.edits["settings.new_controls"]["edits"]
         self.assertEqual(
             {
                 name: (
@@ -171,9 +168,9 @@ class ControlSettingsTests(unittest.TestCase):
     def test_control_settings_injection_owns_label_and_assignment(self) -> None:
         selection = catalog.load_selection(
             self.catalog_path,
-            self.configurations / "base.json",
+            self.configurations / "base.jsonc",
         )
-        controls = selection.injections["i__battle__control_settings_rework"]
+        controls = selection.injections["settings.new_controls"]
         hook = controls["hooks"]["label_substitution_action"]
         self.assertEqual(hook["target_id"], "na2_elf")
         self.assertEqual(hook["offset"], "0x4B26AC")
@@ -226,7 +223,7 @@ class ControlSettingsTests(unittest.TestCase):
         )
 
         gauge = selection.injections[
-            "i__battle_logic__substitution__gauge"
+            "settings.shared.substitution"
         ]
         self.assertNotIn("label_substitution_action", gauge["hooks"])
         self.assertNotIn(

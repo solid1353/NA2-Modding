@@ -149,8 +149,8 @@ Re-reading `FUN_001FF8D0` established why: the per-character lists are
 exclusions. Finding selector `0x35` in Classic Naruto's list returns false, so
 the candidate explicitly rejected the requested pair.
 
-Candidate injection `i__qol__content__unlock_all__demon_wind_bomb` instead
-guards the native special-compatibility call at runtime `0x001F7254` / ELF
+The optional Demon Wind Bomb branch of `general.unlock_all` instead guards
+the native special-compatibility call at runtime `0x001F7254` / ELF
 offset `0xF7354` (clean call bytes `34FE070C`). Its wrapper returns true only
 for character `0x01` with selector `0x35`; every other pair delegates to clean
 `FUN_001FF8D0`. The existing downstream `features.general.unlock_all` Jutsu hook
@@ -202,7 +202,7 @@ also consumes grouped values.
 ## Read-only unlock override
 
 Catalog setting `features.general.unlock_all` selects injection
-`i__qol__content__unlock_all__availability`. Each guarded JAL replaces only the
+`general.unlock_all`. Each guarded JAL replaces only the
 saved-value read inside a resident wrapper and leaves the wrapper and its
 callers intact:
 

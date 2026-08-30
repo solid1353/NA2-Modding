@@ -23,7 +23,7 @@ try {
         Copy-Item -LiteralPath (Join-Path $sourceRepository "scripts\na228\$name") `
             -Destination (Join-Path $repository "scripts\na228\$name")
     }
-    [IO.File]::WriteAllText((Join-Path $repository 'na228_builder\configurations\base.json'), '{}')
+    [IO.File]::WriteAllText((Join-Path $repository 'na228_builder\configurations\base.jsonc'), '{}')
     [IO.File]::WriteAllText((Join-Path $repository 'source\na2.iso'), 'source')
     [IO.File]::WriteAllText((Join-Path $repository 'source\nun5.iso'), 'donor')
     [IO.File]::WriteAllText((Join-Path $repository 'scripts\lib\run_log.ps1'), '')

@@ -96,11 +96,9 @@ Read only routed policies whose triggers apply:
 | profiles, builder inputs, binaries, donor data, source media, PNACH | [`docs/policies/game.md`](docs/policies/game.md#modding) |
 | reverse engineering, disassembly, runtime investigation, knowledge, hypotheses | [`docs/policies/game.md`](docs/policies/game.md#research-and-knowledge) |
 
-On entering or resuming a task, read its directly linked documentation and
-relevant component documentation. After context compaction, reread all policies
-routed by unfinished work before continuing. Do not reload them for every
-message. Load other technical documents only when required, and read only
-relevant sections of large documents.
+On entering a task, read its directly linked documentation and relevant
+component documentation. Load other technical documents only when required,
+and read only relevant sections of large documents.
 
 Keep this file a small universal router. Add only rules that apply to nearly
 every task; expanding its purpose or scope requires explicit user approval.

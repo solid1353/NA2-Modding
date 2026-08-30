@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.scripts import catalog
+from na228_builder.scripts import catalog, jsonc
 from na228_builder.scripts.character_overrides import (
     OVERRIDE_FIELDS,
     REFERENCE_FIELDS,
@@ -82,17 +82,17 @@ class CharacterOverrideTests(unittest.TestCase):
     def test_table_routing_covers_all_override_and_overlay_combinations(self) -> None:
         repository = Path(__file__).resolve().parents[2]
         builder = repository / "na228_builder"
-        catalog_path = builder / "catalog"
-        base = json.loads(
-            (builder / "configurations" / "base.json").read_text(
+        catalog_path = builder / "catalog.modcat"
+        base = jsonc.loads(
+            (builder / "configurations" / "base.jsonc").read_text(
                 encoding="utf-8"
             )
         )
         cases = (
             (False, False, None),
             (False, True, "character_select"),
-            (True, False, "general"),
-            (True, True, "general"),
+            (True, False, "settings"),
+            (True, True, "settings"),
         )
         for overrides_enabled, overlay_enabled, expected_feature in cases:
             with (
@@ -103,9 +103,9 @@ class CharacterOverrideTests(unittest.TestCase):
                 tempfile.TemporaryDirectory() as directory,
             ):
                 features = json.loads(json.dumps(base["features"]))
-                features["general"]["character_overrides"] = overrides_enabled
+                features["settings"]["character_overrides"] = overrides_enabled
                 features["character_select"]["balance_overlay"] = overlay_enabled
-                configuration_path = Path(directory) / "configuration.json"
+                configuration_path = Path(directory) / "configuration.jsonc"
                 configuration_path.write_text(
                     json.dumps({"features": features}, indent=2) + "\n",
                     encoding="utf-8",
@@ -121,7 +121,7 @@ class CharacterOverrideTests(unittest.TestCase):
                 )
                 self.assertEqual(
                     selection.node_enabled(
-                        "features", "general", "character_overrides"
+                        "features", "settings", "character_overrides"
                     ),
                     overrides_enabled,
                 )

@@ -154,16 +154,10 @@ foreach ($address in 0x003D0FF0, 0x003D0FF4, 0x003D0FF8) {
     ) ("NUN5 PNACH retained inline-owned configuration word 0x{0:X8}." -f $address)
 }
 
-Assert-PracticeBootstrapTest (
-    @(
-        $na228Patches.Keys |
-            Where-Object { $_ -ge 0x001ED60C -and $_ -lt 0x001ED6C0 }
-    ).Count -eq 0
-) 'The NA2.28 PNACH crossed into the next native function.'
-
 $na228AbsoluteTargets = @{
     ([uint32]0x001ED4B4) = [uint32]0x001ED59C
     ([uint32]0x001ED4D4) = [uint32]0x001EDB70
+    ([uint32]0x001ED4DC) = [uint32]0x001ED60C
     ([uint32]0x001ED57C) = [uint32]0x001FE200
     ([uint32]0x001ED58C) = [uint32]0x0020DC40
     ([uint32]0x001ED594) = [uint32]0x0020DCF8
@@ -178,6 +172,20 @@ Assert-CodeBlock `
     -MutableState 0x001ED5FC `
     -ExpectedAbsoluteTargets $na228AbsoluteTargets `
     -Label 'NA2.28'
+
+$na228StatusAbsoluteTargets = @{
+    ([uint32]0x001ED660) = [uint32]0x008813B0
+}
+Assert-CodeBlock `
+    -Patches $na228Patches `
+    -Start 0x001ED60C `
+    -End 0x001ED698 `
+    -MutableState 0x001ED69C `
+    -ExpectedAbsoluteTargets $na228StatusAbsoluteTargets `
+    -Label 'NA2.28 Practice Status activation'
+Assert-PracticeBootstrapTest (
+    -not $na228Patches.ContainsKey([uint32]0x001ED5FC)
+) 'The NA2.28 PNACH made shared one-shot state an every-frame patch.'
 
 $nun5AbsoluteTargets = @{
     ([uint32]0x003D0EA4) = [uint32]0x003D0F8C

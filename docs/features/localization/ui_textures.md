@@ -65,7 +65,7 @@ Derive and verify every pinned production replacement from the repository root:
   -Module na228_builder.modules.texture_patcher.engine `
   -ArgumentList @(
     'verify',
-    '--package', 'na228_builder/localization/texture_patcher'
+    '--package', 'na228_builder/patches/localization/ui'
   )
 ```
 
@@ -83,7 +83,7 @@ Write a review-only generated extraction outside the source roots:
 
 ```powershell
 python -m na228_builder.modules.texture_patcher.engine preview `
-  --package na228_builder/localization/texture_patcher `
+  --package na228_builder/patches/localization/ui `
   --output "work/UI translation/temp/ui_texture_preview"
 ```
 

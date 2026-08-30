@@ -1,11 +1,9 @@
 # Localization feature documentation
 
 The selectable hierarchy lives under `features.localization` in
-`@builder/catalog/catalog.modcat`; its guarded edits and runtime units live
-in `@builder/catalog/edits.json` and
-`@builder/catalog/injections.json`. Non-inline assets and
-the remaining translation/texture TSV inputs live under
-`@builder/localization/`.
+`@builder/catalog.modcat`; its unified definitions live in
+`@builder/patches/*.json`. Patch-owned assets and module inputs live under
+the matching path in `@builder/patches/localization/`.
 
 Localization composes the accepted English translation, source-derived UI
 textures, guarded UI layout edits, the native NUN5-derived Font stack, compact
@@ -19,17 +17,16 @@ independently selectable.
 
 ## Canonical builder inputs
 
-`features.localization` in `@builder/catalog/catalog.modcat` owns
+`features.localization` in `@builder/catalog.modcat` owns
 localization's nested selection and leaf references.
-`@builder/catalog/edits.json` owns
-guarded binary edits;
-`@builder/catalog/injections.json` owns runtime hooks,
-resident sources and fragments, relocations, and ABI metadata. Files retained under
-`@builder/localization/` are only non-inline inputs:
+`@builder/patches/localization.json` owns guarded binary edits, runtime hooks,
+resident sources and fragments, relocations, ABI metadata, string
+transformations, and required module declarations. Non-inline inputs follow
+their owning patch IDs:
 
-- `assets/`: edit-referenced native Font assets;
-- `translation_importer/`: canonical text mappings and donor provenance;
-- `texture_patcher/`: source-derived English UI containers.
+- `patches/localization/font/glyphs/`: edit-referenced native Font assets;
+- `patches/localization/strings/`: canonical text mappings and donor provenance;
+- `patches/localization/ui/`: source-derived English UI containers.
 
 There are no separate binary-patcher or runtime-injector data directories.
 Those engines consume the selected definitions, and the translation importer invokes the

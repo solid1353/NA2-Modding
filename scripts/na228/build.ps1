@@ -17,7 +17,7 @@ $incomingRoot = Join-Path $buildRoot '.incoming'
 if ($Configuration -cnotmatch '^[a-z][a-z0-9_-]*$') {
     throw "Invalid build configuration: $Configuration"
 }
-$configurationPath = Join-Path $paths.builder "configurations\$Configuration.json"
+$configurationPath = Join-Path $paths.builder "configurations\$Configuration.jsonc"
 if (-not (Test-Path -LiteralPath $configurationPath -PathType Leaf)) {
     throw "Build configuration does not exist: $Configuration"
 }

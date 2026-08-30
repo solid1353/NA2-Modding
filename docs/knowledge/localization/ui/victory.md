@@ -8,7 +8,7 @@ character-name artwork, while NUN5 rendered the English equivalents. The
 canonical source members are under the configured `@source_na2/` and
 `@source_nun5/` extractions; exact identities for every selected member remain
 machine-verifiable in
-`@builder/localization/texture_patcher/containers.tsv`.
+`@builder/patches/localization/ui/containers.tsv`.
 
 The shared emblem and the two fixed-capacity character exceptions have these
 raw gzip identities:

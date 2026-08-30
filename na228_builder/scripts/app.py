@@ -10,6 +10,8 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from importlib import resources
 from pathlib import Path
+
+from . import jsonc
 from typing import Callable, Iterable
 
 
@@ -112,9 +114,9 @@ def _validate_configuration_name(value: str) -> str:
         or path.name != value
         or "/" in value
         or "\\" in value
-        or path.suffix.casefold() != ".json"
+        or path.suffix.casefold() != ".jsonc"
     ):
-        raise ReleaseError("Release configuration_name must be one .json filename")
+        raise ReleaseError("Release configuration_name must be one .jsonc filename")
     return value
 
 
@@ -466,13 +468,13 @@ def _validate_user_configuration(configuration_path: Path) -> None:
     if not configuration_path.is_file():
         raise ReleaseError(
             f"Configuration is missing: {configuration_path.name}. "
-            "Keep the JSON file supplied with this program beside the EXE."
+            "Keep the JSONC file supplied with this program beside the EXE."
         )
     try:
-        value = json.loads(configuration_path.read_text(encoding="utf-8"))
+        value = jsonc.loads(configuration_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ReleaseError(
-            f"{configuration_path.name} is not valid JSON at line {exc.lineno}, "
+            f"{configuration_path.name} is not valid JSONC at line {exc.lineno}, "
             f"column {exc.colno}: {exc.msg}"
         ) from exc
     except (OSError, UnicodeError) as exc:

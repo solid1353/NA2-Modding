@@ -13,6 +13,7 @@ from ..modules.binary_patcher import engine as binary_patcher
 from ..modules.runtime_injector import engine as runtime_injector
 from ..payload_builder import ee_c_fragments
 from . import catalog_format
+from . import jsonc
 from ..payload_builder.operations import (
     FRAGMENT_KINDS,
     RELOCATION_KINDS,
@@ -23,6 +24,7 @@ from ..payload_builder.operations import (
 
 
 IDENTIFIER = re.compile(r"[a-z][a-z0-9_]*\Z")
+PATCH_ID = re.compile(r"[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*\Z")
 OPERATION_FIELDS = ["field", "required", "type"]
 FIELD_TYPES = {"hex", "integer", "integer_list", "path", "sha256", "text"}
 UINT64_MAX = (1 << 64) - 1
@@ -36,7 +38,7 @@ class ConfigurationError(ValueError):
 class CatalogNode:
     path: tuple[str, ...]
     enabled: bool
-    patches: tuple[str, ...] = ()
+    patch: str | None = None
     description: str = ""
     configured_value: object = None
     has_configured_value: bool = False
@@ -57,29 +59,16 @@ class CatalogNode:
             return ".".join(self.path[1:])
         return ".".join(self.path)
 
-    @property
-    def edit_ids(self) -> tuple[str, ...]:
-        return tuple(item for item in self.patches if item.startswith("e__"))
-
-    @property
-    def injection_ids(self) -> tuple[str, ...]:
-        return tuple(item for item in self.patches if item.startswith("i__"))
-
-    @property
-    def string_patch_ids(self) -> tuple[str, ...]:
-        return tuple(item for item in self.patches if item.startswith("s__"))
-
-
 @dataclass(frozen=True)
 class CatalogSelection:
     catalog_path: Path
     catalog_files: tuple[Path, ...]
-    edits_path: Path
-    injections_path: Path
-    string_patches_path: Path
+    patches_path: Path
+    patch_files: tuple[Path, ...]
     base_configuration_path: Path | None
     configuration_path: Path
     catalog: dict[str, catalog_format.ContainerNode]
+    patches: dict[str, dict[str, object]]
     edits: dict[str, dict[str, object]]
     injections: dict[str, dict[str, object]]
     string_patches: dict[str, dict[str, object]]
@@ -144,13 +133,40 @@ def _read_json(
     return value
 
 
+def _read_jsonc(
+    path: Path,
+    label: str,
+    *,
+    allow_empty: bool = False,
+) -> dict[str, object]:
+    def unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+        value: dict[str, object] = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError(f"{label} contains duplicate key {key!r}")
+            value[key] = item
+        return value
+
+    try:
+        value = jsonc.loads(
+            path.read_text(encoding="utf-8"),
+            object_pairs_hook=unique_object,
+        )
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{label} is not valid JSONC: {path}") from exc
+    if not isinstance(value, dict) or (not value and not allow_empty):
+        qualifier = "an object" if allow_empty else "a non-empty object"
+        raise ValueError(f"{label} root must be {qualifier}")
+    return value
+
+
 def _read_catalog(
     path: Path,
 ) -> tuple[dict[str, catalog_format.ContainerNode], tuple[Path, ...]]:
     path = path.resolve()
-    if not path.is_dir():
+    if not path.is_file():
         raise FileNotFoundError(path)
-    catalog_file = path / "catalog.modcat"
+    catalog_file = path
     root = catalog_format.parse_catalog(catalog_file)
     root_fields = _container_fields(root)
     if set(root_fields) != {"features"}:
@@ -165,12 +181,31 @@ def _read_catalog(
         _identifier(feature_id, "Catalog feature ID")
         if not isinstance(feature, catalog_format.ContainerNode):
             raise ValueError(f"Catalog feature must be an object: {feature_id}")
+    patch_ids = [
+        patch_id
+        for feature in features.values()
+        for patch_id in _catalog_patches(feature)
+    ]
+    duplicate_patch_ids = sorted(
+        patch_id for patch_id in set(patch_ids) if patch_ids.count(patch_id) > 1
+    )
+    if duplicate_patch_ids:
+        raise ValueError(
+            "Catalog patch IDs must each be referenced exactly once: "
+            + ", ".join(duplicate_patch_ids)
+        )
     return features, (catalog_file.resolve(),)
 
 
 def _identifier(value: str, label: str) -> str:
     if not IDENTIFIER.fullmatch(value):
         raise ValueError(f"{label} must be a meaningful snake_case key: {value!r}")
+    return value
+
+
+def _patch_identifier(value: str, label: str) -> str:
+    if not PATCH_ID.fullmatch(value):
+        raise ValueError(f"{label} must be a dotted meaningful snake_case key: {value!r}")
     return value
 
 
@@ -205,12 +240,15 @@ def _catalog_patches(
     node: catalog_format.CatalogNodeExpression,
 ) -> tuple[str, ...]:
     if isinstance(node, catalog_format.SettingNode):
-        return node.patches
+        return (node.patch,) if node.patch else ()
     if isinstance(node, catalog_format.ContainerNode):
-        return tuple(
-            patch
-            for field in node.fields
-            for patch in _catalog_patches(field.node)
+        return (
+            *((node.patch,) if node.patch else ()),
+            *(
+                patch
+                for field in node.fields
+                for patch in _catalog_patches(field.node)
+            ),
         )
     if isinstance(node, catalog_format.UnionNode):
         return tuple(
@@ -266,6 +304,13 @@ def _setting_configured_value(
     return value
 
 
+def _setting_accepts_false(node: catalog_format.SettingNode) -> bool:
+    return (
+        node.value_type is not None
+        and catalog_format.matches_type(node.value_type, False)
+    )
+
+
 def _matches_configuration_node(
     node: catalog_format.CatalogNodeExpression,
     value: object,
@@ -284,7 +329,10 @@ def _validate_configuration_value(
     path: tuple[str, ...],
 ) -> None:
     label = ".".join(path)
-    if value is False:
+    if value is False and not (
+        isinstance(node, catalog_format.SettingNode)
+        and _setting_accepts_false(node)
+    ):
         return
     if isinstance(node, catalog_format.SettingNode):
         if node.value_type is None:
@@ -297,10 +345,13 @@ def _validate_configuration_value(
             expected = " ".join(catalog_format.type_text(node.value_type).split())
             if catalog_format.matches_type(node.value_type, {}):
                 expected += ", or true for an empty object"
+            disable_suffix = (
+                "" if _setting_accepts_false(node) else ", or false to disable it"
+            )
             raise _invalid_configuration_value(
                 path,
                 value,
-                f"{expected}, or false to disable it",
+                expected + disable_suffix,
             )
         return
     if isinstance(node, catalog_format.ContainerNode):
@@ -462,7 +513,10 @@ def _merge_configuration_value(
     path: tuple[str, ...],
 ) -> object:
     label = ".".join(path)
-    if override is False:
+    if override is False and not (
+        isinstance(node, catalog_format.SettingNode)
+        and _setting_accepts_false(node)
+    ):
         return False
     if isinstance(node, catalog_format.IntersectionNode):
         return _merge_intersection_configuration_value(node, base, override, path)
@@ -518,7 +572,10 @@ def _selected_nodes(
         configured: object,
         path: tuple[str, ...],
     ) -> bool:
-        if configured is False:
+        if configured is False and not (
+            isinstance(node, catalog_format.SettingNode)
+            and _setting_accepts_false(node)
+        ):
             description = (
                 node.description
                 if isinstance(
@@ -526,25 +583,19 @@ def _selected_nodes(
                 )
                 else ""
             )
-            patches = node.patches if isinstance(node, catalog_format.SettingNode) else ()
-            startup_frames = (
-                node.startup_fast_forward_frames
-                if isinstance(node, catalog_format.SettingNode)
+            patch = (
+                node.patch
+                if isinstance(
+                    node, (catalog_format.ContainerNode, catalog_format.SettingNode)
+                )
                 else None
-            )
-            modules = (
-                node.modules
-                if isinstance(node, catalog_format.SettingNode)
-                else ()
             )
             nodes.append(
                 CatalogNode(
                     path,
                     False,
-                    patches,
+                    patch,
                     description,
-                    startup_fast_forward_frames=startup_frames,
-                    modules=modules,
                 )
             )
             if isinstance(node, catalog_format.ContainerNode):
@@ -558,12 +609,10 @@ def _selected_nodes(
                 CatalogNode(
                     path,
                     True,
-                    node.patches,
+                    node.patch,
                     node.description,
                     configured if has_value else None,
                     has_value,
-                    node.startup_fast_forward_frames,
-                    node.modules,
                 )
             )
             return True
@@ -590,15 +639,61 @@ def _selected_nodes(
         if not isinstance(configured, dict):
             raise _invalid_configuration_value(path, configured, "an object")
         insertion = len(nodes)
-        nodes.append(CatalogNode(path, False, (), node.description))
+        nodes.append(
+            CatalogNode(
+                path,
+                False,
+                node.patch,
+                node.description,
+                configured,
+                True,
+            )
+        )
         enabled = False
         for field in node.fields:
             enabled = visit(field.node, configured[field.name], (*path, field.name)) or enabled
-        nodes[insertion] = CatalogNode(path, enabled, (), node.description)
+        enabled = enabled or bool(node.patch)
+        nodes[insertion] = CatalogNode(
+            path,
+            enabled,
+            node.patch,
+            node.description,
+            configured,
+            True,
+        )
         return enabled
 
     visit(root, value, ("features",))
     return tuple(nodes)
+
+
+def _apply_patch_metadata(
+    nodes: tuple[CatalogNode, ...],
+    patches: dict[str, dict[str, object]],
+) -> tuple[CatalogNode, ...]:
+    result: list[CatalogNode] = []
+    for node in nodes:
+        if node.patch is None:
+            result.append(node)
+            continue
+        definition = patches[node.patch]
+        raw_frames = definition.get("startup_fast_forward_frames")
+        frames = None
+        if isinstance(raw_frames, dict):
+            frames = catalog_format.StartupFastForwardFrames(
+                additive=raw_frames.get("additive"),
+                override=raw_frames.get("override"),
+            )
+        raw_modules = definition.get("modules", [])
+        assert isinstance(raw_modules, list)
+        result.append(
+            replace(
+                node,
+                startup_fast_forward_frames=frames,
+                modules=tuple(str(module) for module in raw_modules),
+            )
+        )
+    return tuple(result)
 
 
 def _startup_fast_forward_override(nodes: tuple[CatalogNode, ...]) -> int | None:
@@ -671,94 +766,36 @@ def _load_implementation(
     features: dict[str, catalog_format.ContainerNode],
 ) -> tuple[
     Path,
-    Path,
-    Path,
+    tuple[Path, ...],
+    dict[str, dict[str, object]],
     dict[str, dict[str, object]],
     dict[str, dict[str, object]],
     dict[str, dict[str, object]],
 ]:
-    edits_path = catalog_path / "edits.json"
-    injections_path = catalog_path / "injections.json"
-    string_patches_path = catalog_path / "string_patches.json"
-    raw_edits = _read_json(edits_path, "Edits", allow_empty=True)
-    raw_injections = _read_json(injections_path, "Injections", allow_empty=True)
-    raw_string_patches = _read_json(
-        string_patches_path, "String patches", allow_empty=True
-    )
+    patches_path = catalog_path.parent / "patches"
+    if not patches_path.is_dir():
+        raise FileNotFoundError(patches_path)
+    patch_files = tuple(sorted(patches_path.glob("*.json")))
+    if not patch_files:
+        raise ValueError(f"Patch directory contains no JSON definitions: {patches_path}")
+    patches: dict[str, dict[str, object]] = {}
+    for patch_file in patch_files:
+        raw = _read_json(patch_file, f"Patches in {patch_file.name}")
+        for patch_id, definition in raw.items():
+            _patch_identifier(patch_id, "Patch ID")
+            if patch_id.split(".", 1)[0] != patch_file.stem:
+                raise ValueError(
+                    f"Patch {patch_id!r} must be stored in {patch_id.split('.', 1)[0]}.json"
+                )
+            if patch_id in patches:
+                raise ValueError(f"Duplicate patch definition: {patch_id}")
+            if not isinstance(definition, dict):
+                raise ValueError(f"Patch {patch_id!r} must be an object")
+            patches[patch_id] = definition
+
     edits: dict[str, dict[str, object]] = {}
     injections: dict[str, dict[str, object]] = {}
     string_patches: dict[str, dict[str, object]] = {}
-    for edit_id, edit in raw_edits.items():
-        _identifier(edit_id, "Edit ID")
-        if not edit_id.startswith("e__"):
-            raise ValueError(f"Edit ID must start with 'e__': {edit_id!r}")
-        if not isinstance(edit, dict):
-            raise ValueError(f"Edit {edit_id!r} must be an object")
-        _description(edit.get("description"), f"Edit {edit_id!r}")
-        if "edits" in edit:
-            members = edit["edits"]
-            extra = sorted(set(edit) - {"description", "edits"})
-            if extra:
-                raise ValueError(
-                    f"Edit group {edit_id!r} has unknown fields: {extra}"
-                )
-            if not isinstance(members, dict) or not members:
-                raise ValueError(
-                    f"Edit group {edit_id!r}.edits must be a non-empty object"
-                )
-            for member_id, member in members.items():
-                _identifier(member_id, f"Edit group {edit_id!r} member ID")
-                if not isinstance(member, dict):
-                    raise ValueError(
-                        f"Edit group {edit_id!r} member {member_id!r} "
-                        "must be an object"
-                    )
-                if "edits" in member:
-                    raise ValueError(
-                        f"Edit group {edit_id!r} member {member_id!r} "
-                        "must be a primitive edit"
-                    )
-                _description(
-                    member.get("description"),
-                    f"Edit group {edit_id!r} member {member_id!r}",
-                )
-                if "adapter" in member:
-                    binary_adapters.validate_adapter_name(member["adapter"])
-        elif "adapter" in edit:
-            binary_adapters.validate_adapter_name(edit["adapter"])
-        edits[edit_id] = edit
-    for injection_id, injection in raw_injections.items():
-        _identifier(injection_id, "Injection ID")
-        if not injection_id.startswith("i__"):
-            raise ValueError(
-                f"Injection ID must start with 'i__': {injection_id!r}"
-            )
-        if not isinstance(injection, dict):
-            raise ValueError(f"Injection {injection_id!r} must be an object")
-        extra = sorted(set(injection) - {"description", "hooks", "payload"})
-        if extra:
-            raise ValueError(
-                f"Injection {injection_id!r} has unknown fields: {extra}"
-            )
-        if not injection:
-            raise ValueError(f"Injection {injection_id!r} must not be empty")
-        _description(injection.get("description"), f"Injection {injection_id!r}")
-        for field in ("hooks", "payload"):
-            if field in injection and not isinstance(injection[field], dict):
-                raise ValueError(f"Injection {injection_id!r}.{field} must be an object")
-        hooks = injection.get("hooks", {})
-        if isinstance(hooks, dict):
-            for hook_id, hook in hooks.items():
-                _identifier(hook_id, f"Injection {injection_id!r} hook ID")
-                if not isinstance(hook, dict):
-                    raise ValueError(
-                        f"Injection {injection_id!r} hook {hook_id!r} must be an object"
-                    )
-                _description(
-                    hook.get("description"),
-                    f"Injection {injection_id!r} hook {hook_id!r}",
-                )
-        injections[injection_id] = injection
     required_string_patch_fields = {
         "description",
         "operation",
@@ -766,81 +803,161 @@ def _load_implementation(
         "expected_mapping_count",
         "expected_occurrence_count",
     }
-    for patch_id, patch in raw_string_patches.items():
-        _identifier(patch_id, "String patch ID")
-        if not patch_id.startswith("s__"):
-            raise ValueError(f"String patch ID must start with 's__': {patch_id!r}")
-        if not isinstance(patch, dict):
-            raise ValueError(f"String patch {patch_id!r} must be an object")
-        if set(patch) != required_string_patch_fields:
-            missing = sorted(required_string_patch_fields - set(patch))
-            extra = sorted(set(patch) - required_string_patch_fields)
-            problems = []
-            if missing:
-                problems.append("missing fields: " + ", ".join(missing))
-            if extra:
-                problems.append("unknown fields: " + ", ".join(extra))
-            raise ValueError(
-                f"String patch {patch_id!r} is invalid: {'; '.join(problems)}"
-            )
-        _description(patch["description"], f"String patch {patch_id!r}")
-        if patch["operation"] != "replace_imported_game_title":
-            raise ValueError(
-                f"String patch {patch_id!r} has unsupported operation: "
-                f"{patch['operation']!r}"
-            )
-        expected_value = patch["expected_value"]
-        if (
-            not isinstance(expected_value, str)
-            or not expected_value
-            or "\0" in expected_value
-        ):
-            raise ValueError(
-                f"String patch {patch_id!r}.expected_value must be non-empty text "
-                "without an embedded NUL"
-            )
-        mapping_count = patch["expected_mapping_count"]
-        occurrence_count = patch["expected_occurrence_count"]
-        if (
-            isinstance(mapping_count, bool)
-            or not isinstance(mapping_count, int)
-            or mapping_count <= 0
-            or isinstance(occurrence_count, bool)
-            or not isinstance(occurrence_count, int)
-            or occurrence_count < mapping_count
-        ):
-            raise ValueError(
-                f"String patch {patch_id!r} has invalid expected coverage"
-            )
-        string_patches[patch_id] = patch
+    allowed_patch_fields = {
+        "description",
+        "edit",
+        "edits",
+        "hooks",
+        "payload",
+        "string_patch",
+        "modules",
+        "startup_fast_forward_frames",
+    }
+    for patch_id, patch in patches.items():
+        extra = sorted(set(patch) - allowed_patch_fields)
+        if extra:
+            raise ValueError(f"Patch {patch_id!r} has unknown fields: {extra}")
+        description = _description(patch.get("description"), f"Patch {patch_id!r}")
+        if not (set(patch) - {"description"}):
+            raise ValueError(f"Patch {patch_id!r} owns no implementation data")
+        if "edit" in patch and "edits" in patch:
+            raise ValueError(f"Patch {patch_id!r} cannot define both edit and edits")
+
+        edit: dict[str, object] | None = None
+        if "edit" in patch:
+            raw_edit = patch["edit"]
+            if not isinstance(raw_edit, dict) or not raw_edit:
+                raise ValueError(f"Patch {patch_id!r}.edit must be a non-empty object")
+            if "edits" in raw_edit:
+                raise ValueError(f"Patch {patch_id!r}.edit must be a primitive edit")
+            edit = raw_edit
+        elif "edits" in patch:
+            members = patch["edits"]
+            if not isinstance(members, dict) or not members:
+                raise ValueError(f"Patch {patch_id!r}.edits must be a non-empty object")
+            edit = {**({"description": description} if description else {}), "edits": members}
+
+        if edit is not None:
+            _description(edit.get("description"), f"Patch {patch_id!r} edit")
+            if "edits" in edit:
+                members = edit["edits"]
+                assert isinstance(members, dict)
+                for member_id, member in members.items():
+                    _identifier(member_id, f"Patch {patch_id!r} edit member ID")
+                    if not isinstance(member, dict):
+                        raise ValueError(
+                            f"Patch {patch_id!r} edit member {member_id!r} "
+                            "must be an object"
+                        )
+                    if "edits" in member:
+                        raise ValueError(
+                            f"Patch {patch_id!r} edit member {member_id!r} "
+                            "must be a primitive edit"
+                        )
+                    _description(
+                        member.get("description"),
+                        f"Patch {patch_id!r} edit member {member_id!r}",
+                    )
+                    if "adapter" in member:
+                        binary_adapters.validate_adapter_name(member["adapter"])
+            elif "adapter" in edit:
+                binary_adapters.validate_adapter_name(edit["adapter"])
+            edits[patch_id] = edit
+
+        injection_fields = {field: patch[field] for field in ("hooks", "payload") if field in patch}
+        if injection_fields:
+            injection: dict[str, object] = {
+                **({"description": description} if description else {}),
+                **injection_fields,
+            }
+        for field in ("hooks", "payload"):
+            if field in patch and not isinstance(patch[field], dict):
+                raise ValueError(f"Patch {patch_id!r}.{field} must be an object")
+        hooks = patch.get("hooks", {})
+        if isinstance(hooks, dict):
+            for hook_id, hook in hooks.items():
+                _identifier(hook_id, f"Patch {patch_id!r} hook ID")
+                if not isinstance(hook, dict):
+                    raise ValueError(f"Patch {patch_id!r} hook {hook_id!r} must be an object")
+                _description(hook.get("description"), f"Patch {patch_id!r} hook {hook_id!r}")
+        if injection_fields:
+            injections[patch_id] = injection
+
+        if "string_patch" in patch:
+            string_patch = patch["string_patch"]
+            if not isinstance(string_patch, dict):
+                raise ValueError(f"Patch {patch_id!r}.string_patch must be an object")
+            if set(string_patch) != required_string_patch_fields:
+                missing = sorted(required_string_patch_fields - set(string_patch))
+                extra = sorted(set(string_patch) - required_string_patch_fields)
+                problems = []
+                if missing:
+                    problems.append("missing fields: " + ", ".join(missing))
+                if extra:
+                    problems.append("unknown fields: " + ", ".join(extra))
+                raise ValueError(f"Patch {patch_id!r}.string_patch is invalid: {'; '.join(problems)}")
+            _description(string_patch["description"], f"Patch {patch_id!r}.string_patch")
+            if string_patch["operation"] != "replace_imported_game_title":
+                raise ValueError(
+                    f"Patch {patch_id!r}.string_patch has unsupported operation: "
+                    f"{string_patch['operation']!r}"
+                )
+            expected_value = string_patch["expected_value"]
+            if not isinstance(expected_value, str) or not expected_value or "\0" in expected_value:
+                raise ValueError(
+                    f"Patch {patch_id!r}.string_patch.expected_value must be non-empty text without an embedded NUL"
+                )
+            mapping_count = string_patch["expected_mapping_count"]
+            occurrence_count = string_patch["expected_occurrence_count"]
+            if (
+                isinstance(mapping_count, bool)
+                or not isinstance(mapping_count, int)
+                or mapping_count <= 0
+                or isinstance(occurrence_count, bool)
+                or not isinstance(occurrence_count, int)
+                or occurrence_count < mapping_count
+            ):
+                raise ValueError(f"Patch {patch_id!r}.string_patch has invalid expected coverage")
+            string_patches[patch_id] = string_patch
+
+        modules = patch.get("modules", [])
+        if not isinstance(modules, list) or any(not isinstance(module, str) for module in modules):
+            raise ValueError(f"Patch {patch_id!r}.modules must be an array of strings")
+        if len(modules) != len(set(modules)):
+            raise ValueError(f"Patch {patch_id!r}.modules must be unique")
+        for module in modules:
+            _identifier(module, f"Patch {patch_id!r} module")
+
+        if "startup_fast_forward_frames" in patch:
+            frames = patch["startup_fast_forward_frames"]
+            if not isinstance(frames, dict) or not frames:
+                raise ValueError(f"Patch {patch_id!r}.startup_fast_forward_frames must be a non-empty object")
+            extra_frames = sorted(set(frames) - {"additive", "override"})
+            if extra_frames:
+                raise ValueError(f"Patch {patch_id!r}.startup_fast_forward_frames has unknown fields: {extra_frames}")
+            for key, value in frames.items():
+                if isinstance(value, bool) or not isinstance(value, int):
+                    raise ValueError(f"Patch {patch_id!r}.startup_fast_forward_frames.{key} must be an integer")
+                if key == "override" and (value <= 0 or value > UINT64_MAX):
+                    raise ValueError(f"Patch {patch_id!r}.startup_fast_forward_frames.override must be a positive UInt64 integer")
+
     references = [
         patch
         for feature in features.values()
         for patch in _catalog_patches(feature)
     ]
     referenced = set(references)
-    for patch in references:
-        _identifier(patch, "Catalog patch ID")
-        if patch.startswith("e__"):
-            if patch not in edits:
-                raise ValueError(f"Catalog references unknown edit: {patch}")
-        elif patch.startswith("i__"):
-            if patch not in injections:
-                raise ValueError(f"Catalog references unknown injection: {patch}")
-        elif patch.startswith("s__"):
-            if patch not in string_patches:
-                raise ValueError(f"Catalog references unknown string patch: {patch}")
-        else:
-            raise ValueError(f"Catalog patch ID has invalid prefix: {patch!r}")
-    orphaned = sorted(
-        (set(edits) | set(injections) | set(string_patches)) - referenced
-    )
+    for patch_id in references:
+        _patch_identifier(patch_id, "Catalog patch ID")
+        if patch_id not in patches:
+            raise ValueError(f"Catalog references unknown patch: {patch_id}")
+    orphaned = sorted(set(patches) - referenced)
     if orphaned:
-        raise ValueError(f"Implementation definitions are not catalog-referenced: {orphaned}")
+        raise ValueError(f"Patch definitions are not catalog-referenced: {orphaned}")
     return (
-        edits_path,
-        injections_path,
-        string_patches_path,
+        patches_path,
+        patch_files,
+        patches,
         edits,
         injections,
         string_patches,
@@ -853,23 +970,23 @@ def _effective_configuration(
     features: dict[str, catalog_format.ContainerNode],
 ) -> tuple[Path | None, object]:
     try:
-        configuration = _read_json(configuration_path, "Configuration")
+        configuration = _read_jsonc(configuration_path, "Configuration")
     except ValueError as exc:
         raise ConfigurationError(str(exc)) from exc
     root = _feature_root(features)
     repository_configuration_root = (catalog_path.parent / "configurations").resolve()
     if (
         configuration_path.parent == repository_configuration_root
-        and configuration_path.name != "base.json"
+        and configuration_path.name != "base.jsonc"
         and set(configuration) != {"overrides"}
     ):
         raise ConfigurationError(
             "Repository configurations must contain only the overrides root key"
         )
     if set(configuration) == {"overrides"}:
-        base_path = (repository_configuration_root / "base.json").resolve()
+        base_path = (repository_configuration_root / "base.jsonc").resolve()
         try:
-            base = _read_json(base_path, "Base configuration")
+            base = _read_jsonc(base_path, "Base configuration")
         except ValueError as exc:
             raise ConfigurationError(str(exc)) from exc
         if set(base) != {"features"}:
@@ -908,9 +1025,9 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
     configuration_path = configuration_path.resolve()
     features, catalog_files = _read_catalog(catalog_path)
     (
-        edits_path,
-        injections_path,
-        string_patches_path,
+        patches_path,
+        patch_files,
+        patches,
         edits,
         injections,
         string_patches,
@@ -918,16 +1035,19 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
     base_path, effective = _effective_configuration(
         catalog_path, configuration_path, features
     )
-    nodes = _selected_nodes(_feature_root(features), effective)
+    nodes = _apply_patch_metadata(
+        _selected_nodes(_feature_root(features), effective),
+        patches,
+    )
     selection = CatalogSelection(
         catalog_path=catalog_path,
         catalog_files=catalog_files,
-        edits_path=edits_path,
-        injections_path=injections_path,
-        string_patches_path=string_patches_path,
+        patches_path=patches_path,
+        patch_files=patch_files,
         base_configuration_path=base_path,
         configuration_path=configuration_path,
         catalog=features,
+        patches=patches,
         edits=edits,
         injections=injections,
         string_patches=string_patches,
@@ -942,15 +1062,21 @@ def load_startup_fast_forward_frames(
     configuration_path: Path,
     baseline_frames: int,
 ) -> int:
-    """Resolve launch metadata without loading binary implementation definitions."""
+    """Resolve launch metadata from selected unified patches."""
 
     catalog_path = catalog_path.resolve()
     configuration_path = configuration_path.resolve()
     features, _catalog_files = _read_catalog(catalog_path)
+    _patches_path, _patch_files, patches, _edits, _injections, _strings = (
+        _load_implementation(catalog_path, features)
+    )
     _base_path, effective = _effective_configuration(
         catalog_path, configuration_path, features
     )
-    nodes = _selected_nodes(_feature_root(features), effective)
+    nodes = _apply_patch_metadata(
+        _selected_nodes(_feature_root(features), effective),
+        patches,
+    )
     return _startup_fast_forward_frames(nodes, baseline_frames)
 
 
@@ -1130,7 +1256,7 @@ def _internal_patch(node: CatalogNode) -> binary_patcher.Patch:
         status="approved_for_test",
         confidence="verified",
         name=node.path[-1],
-        description=_description(node.description, node.node_id),
+        description=node.description,
         evidence_id="",
         review_notes="",
     )
@@ -1344,7 +1470,7 @@ def load_binary_package(
     nodes = [
         node
         for node in selection.feature_nodes(feature_id)
-        if node.enabled and node.edit_ids
+        if node.enabled and node.patch in selection.edits
     ]
     targets = binary_patcher.load_targets(targets_path)
     contracts = load_operation_contracts(operations_path)
@@ -1353,7 +1479,8 @@ def load_binary_package(
     used_targets: set[str] = set()
     order = 0
     for node in nodes:
-        for edit_key in node.edit_ids:
+        for edit_key in ((node.patch,) if node.patch in selection.edits else ()):
+            assert edit_key is not None
             grouped_ranges: dict[str, list[tuple[int, int, str]]] = {}
             for member_id, raw_edit in _edit_members(
                 edit_key, selection.edits[edit_key]
@@ -1477,7 +1604,13 @@ def load_binary_package(
                             (destination_offset, destination_end, member_id)
                         )
                 used_targets.add(destination_id)
-                reason = _description(raw_edit.get("description"), label)
+                reason = _description(
+                    raw_edit.get(
+                        "description",
+                        selection.patches[edit_key].get("description"),
+                    ),
+                    label,
+                )
                 multiple_destinations = len(destination_offsets) > 1
                 for destination_offset in destination_offsets:
                     order += 1
@@ -1557,8 +1690,9 @@ def injection_entries(
     entries: list[tuple[CatalogNode, str, dict[str, object]]] = []
     references: dict[str, list[CatalogNode]] = {}
     for node in selection.feature_nodes(feature_id):
-        for injection_id in node.injection_ids:
-            references.setdefault(injection_id, []).append(node)
+        if node.patch in selection.injections:
+            assert node.patch is not None
+            references.setdefault(node.patch, []).append(node)
     for injection_id, nodes in references.items():
         representative = replace(
             nodes[0],
@@ -1797,7 +1931,7 @@ def load_runtime_package(
                 raise ValueError(f"{label}.encoding is invalid")
             order += 1
             used_targets.add(target_id)
-            mapping_id = f"{node.node_id}.{hook_key}"
+            mapping_id = f"{node.node_id}.{injection_id}.{hook_key}"
             edits.append(
                 runtime_injector.RuntimeSymbolicEdit(
                     edit_id=mapping_id,
@@ -1848,19 +1982,31 @@ def feature_reference_ids(
     feature_id: str,
     field: str,
 ) -> tuple[str, ...]:
-    prefixes = {"edits": "e__", "injections": "i__", "string_patches": "s__"}
-    if field not in prefixes:
+    implementations = {
+        "edits": selection.edits,
+        "injections": selection.injections,
+        "string_patches": selection.string_patches,
+    }
+    if field not in implementations:
         raise ValueError(f"Unsupported catalog implementation field: {field}")
     if feature_id not in selection.catalog:
         raise ValueError(f"Unknown catalog feature: {feature_id}")
-    prefix = prefixes[field]
     return tuple(
         dict.fromkeys(
             patch
             for patch in _catalog_patches(selection.catalog[feature_id])
-            if patch.startswith(prefix)
+            if patch in implementations[field]
         )
     )
+
+
+def feature_patch_ids(
+    selection: CatalogSelection,
+    feature_id: str,
+) -> tuple[str, ...]:
+    if feature_id not in selection.catalog:
+        raise ValueError(f"Unknown catalog feature: {feature_id}")
+    return tuple(dict.fromkeys(_catalog_patches(selection.catalog[feature_id])))
 
 
 def feature_has(
@@ -1873,10 +2019,9 @@ def feature_has(
     if field == "edits":
         references = (
             tuple(
-                edit_id
+                node.patch
                 for node in selection.feature_nodes(feature_id)
-                if node.enabled
-                for edit_id in node.edit_ids
+                if node.enabled and node.patch in selection.edits
             )
             if enabled_only
             else feature_reference_ids(selection, feature_id, "edits")
@@ -1885,10 +2030,9 @@ def feature_has(
     if field == "injections":
         references = (
             tuple(
-                injection_id
+                node.patch
                 for node in selection.feature_nodes(feature_id)
-                if node.enabled
-                for injection_id in node.injection_ids
+                if node.enabled and node.patch in selection.injections
             )
             if enabled_only
             else feature_reference_ids(selection, feature_id, "injections")
@@ -1901,10 +2045,9 @@ def feature_has(
     if field == "string_patches":
         references = (
             tuple(
-                patch_id
+                node.patch
                 for node in selection.feature_nodes(feature_id)
-                if node.enabled
-                for patch_id in node.string_patch_ids
+                if node.enabled and node.patch in selection.string_patches
             )
             if enabled_only
             else feature_reference_ids(selection, feature_id, "string_patches")
@@ -1921,8 +2064,9 @@ def selected_string_patches(
     return tuple(
         (node, patch_id, selection.string_patches[patch_id])
         for node in selection.nodes
-        if node.enabled
-        for patch_id in node.string_patch_ids
+        if node.enabled and node.patch in selection.string_patches
+        for patch_id in (node.patch,)
+        if patch_id is not None
         if selection.string_patches[patch_id]["operation"] == operation
     )
 

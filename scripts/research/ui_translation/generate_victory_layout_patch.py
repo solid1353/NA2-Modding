@@ -18,8 +18,9 @@ from scripts.lib.paths import load_paths  # noqa: E402
 
 
 PATCH_ID = "ui_layout_victory_names"
-EDIT_ROOT_ID = "e__localization__ui_layout__record_tables"
-TABLE_ID = "victory_name_descriptors"
+PATCH_ROOT_ID = "localization.ui"
+TABLE_ID = "record_tables__victory_name_descriptors"
+SOURCE_ID_PREFIX = "ui_layout__record_tables__victory_names_na2_btl_at_"
 CHARACTER_COUNT = 94
 NA2_BTL_EXPECTED_SIZE = 2_237_184
 NA2_BTL_EXPECTED_SHA256 = (
@@ -44,8 +45,8 @@ RECORD_STRIDE = 32
 MERGED_SOURCE_IDS = {
     frozenset(
         {
-            "e__localization__ui_layout__victory_names_na2_btl_at_00216610",
-            "e__localization__ui_layout__victory_names_na2_btl_at_00216c30",
+            SOURCE_ID_PREFIX + "00216610",
+            SOURCE_ID_PREFIX + "00216c30",
         }
     )
 }
@@ -167,8 +168,7 @@ def build_patch_rows() -> list[dict[str, str]]:
         edits.append(
             {
                 "edit_id": (
-                    "e__localization__ui_layout__victory_names_na2_btl_at_"
-                    f"{descriptor_offset:08x}"
+                    SOURCE_ID_PREFIX + f"{descriptor_offset:08x}"
                 ),
                 "patch_id": PATCH_ID,
                 "order": str((len(edits) + 1) * 10),
@@ -288,9 +288,9 @@ def main() -> int:
 
     generated_edits = build_patch_rows()
     generated = build_definitions(generated_edits)
-    edits_path = load_paths(REPOSITORY).path("builder", "catalog", "edits.json")
-    stored_edits = json.loads(edits_path.read_text(encoding="utf-8"))
-    stored_root = stored_edits.get(EDIT_ROOT_ID, {})
+    patches_path = load_paths(REPOSITORY).path("builder", "patches", "localization.json")
+    stored_patches = json.loads(patches_path.read_text(encoding="utf-8"))
+    stored_root = stored_patches.get(PATCH_ROOT_ID, {})
     stored_tables = stored_root.get("edits", {})
     stored = stored_tables.get(TABLE_ID)
     if stored != generated:

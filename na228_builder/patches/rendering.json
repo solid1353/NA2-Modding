@@ -1,0 +1,12 @@
+{
+  "rendering.native_16_9_horizontal_scale": {
+    "description": "Force 0.75f at the renderer's horizontal-scale store while preserving the caller-provided vertical scale.",
+    "edit": {
+      "operation": "replace",
+      "destination_target_id": "na2_elf",
+      "destination_offset": "0xEDC0",
+      "expected_hex": "74028CE478028DE40800E00300000000",
+      "replacement_hex": "403F023C740282AC0800E00378028DE4"
+    }
+  }
+}

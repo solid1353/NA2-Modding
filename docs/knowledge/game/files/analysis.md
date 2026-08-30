@@ -251,8 +251,8 @@ component separately.
 - `@scripts/research/menu_input/`: range disassembler, direct-call finder,
   address-reference finder, MIPS mask analyzer, and Ghidra-export comparison
   helpers for targeted EE work.
-- `@builder/catalog/*.json`: selectable overlay and boot-ELF feature nodes;
-  `@builder/catalog/edits.json`: their guarded edits.
+- `@builder/catalog.modcat`: selectable overlay and boot-ELF feature nodes;
+  `@builder/patches/*.json`: their unified definitions and guarded edits.
   Provenance and runtime
   conclusions are retained in feature/knowledge docs.
 - `docs/knowledge/gameplay/substitution.md`,

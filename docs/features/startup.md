@@ -1,6 +1,6 @@
 # Startup
 
-## Loading screen then first-save load
+## Loading screen and automatic first-save load
 
 The startup loading patch replaces the four splash screens with a boot-safe
 loading presentation while preserving the two native startup-loader checks.
@@ -25,46 +25,41 @@ state `3` instead of state `2` at virtual address `0x001E11CC` (file offset
 `0xE12CC`) and return native title result `2` (`Continue`) at virtual address
 `0x001E1240` (file offset `0xE1340`). The unchanged caller enters main state
 `4`, substate `2` and constructs the shared Save/Load controller in load mode.
-This route bypasses the CyberConnect2 intro and opening itself, so neither
-independent skip edit is selected with a save-loading branch.
+This route bypasses the CyberConnect2 intro and opening directly; no
+independent skip edits remain.
 
-The `features.startup` catalog node is a plain container. Its independent
-`faster_loading` setting is available with either startup flow. The nested
-`flow` node is a union of two closed shapes: the title branch contains
-`skip_cc2_intro` and `skip_opening`, which remain independent and may both be
-enabled; the direct-loading branch instead contains `savedata_loading` and
-`loading_screen`, so neither skip can be selected when either direct-loading
-control is present.
+The `features.startup` catalog node is a plain container that owns the direct
+Save/Load route. Its `faster_loading`, `auto_loading`, and `loading_screen`
+settings are direct children.
 
-Within the direct-loading branch, `savedata_loading: "manual"` retains the full
-Save/Load controller. With
+With `features.startup.auto_loading` disabled, the automatic-loading injection
+is absent and the full native Save/Load controller remains. With
 `features.memory_card.display_only_first_save`, it shows the native record-zero
 confirmation; Yes loads the save and No enters the menu without loading.
-`savedata_loading: "automatic"` instead replaces only Continue's per-frame
-visible-controller update with a silent generated-C driver for the same
-asynchronous memory-card worker. It scans port zero, requests record zero when
-present, internally resolves the native load confirmation as Yes, waits through
-checksum-verified load completion, and then lets Continue perform its unchanged
-cleanup, save-dependent setup, and main-menu loading. Its separate guarded
-no-op at file offset `0xEA0D0` prevents the Save/Load child from drawing.
+Enabling `auto_loading` selects one injection that replaces Continue's
+per-frame visible-controller update with a silent generated-C driver for the
+same asynchronous memory-card worker and redirects the Save/Load child draw at
+file offset `0xEA0D0` to an owned no-op. It scans port zero, requests record
+zero when present, internally resolves the native load confirmation as Yes,
+waits through checksum-verified load completion, and then lets Continue perform
+its unchanged cleanup, save-dependent setup, and main-menu loading.
 
-The automatic branch treats no card, a wrong card type, an unformatted card, no
+Automatic loading treats no card, a wrong card type, an unformatted card, no
 game directory, an empty first record, read/checksum failure, a card change, and
 every other non-success terminal worker result as no-load completion. In all of
 those cases the existing guarded result mapping enters the main menu without
 loaded data. It does not synthesize a timeout while the native worker reports a
 busy state.
 
-The base configuration enables `features.startup.faster_loading`, then selects
-`savedata_loading: "automatic"` and enables `loading_screen` inside
-`features.startup.flow`;
-`savedata_loading: "manual"` remains available as the confirmed visible
-fallback. The sequence bypasses the notice, Bandai Namco, Bandai, CRIWARE,
+The base configuration enables `features.startup.faster_loading`,
+`auto_loading`, and `loading_screen`. Disabling `auto_loading` preserves the
+user-confirmed native visible Save/Load flow. The enabled sequence bypasses the
+notice, Bandai Namco, Bandai, CRIWARE,
 opening, interactive title, Load list, card-status messages, and load
 confirmation before the main-menu loading screen. Full development build
 `20260811_065428_218_pid37624` succeeded, and user runtime validation on
 2026-08-11 confirmed the integrated automatic behavior before the loading-time
-patch was added. The manual branch also remains user-confirmed.
+patch was added. The native visible Save/Load flow also remains user-confirmed.
 
 The `faster_loading` setting keeps the four audio archives open and the 13
 general sound indexes initialized at boot, but defers all 82 RPG-voice and 93
@@ -82,6 +77,6 @@ The complete disassembly findings, worker layout, outcome matrix, and state
 machine are recorded in
 [`../knowledge/game/startup.md`](../knowledge/game/startup.md).
 
-`features.memory_card.display_only_first_save` remains an independent setting because
-it controls the visible Save/Load interface and is not used by the automatic
-startup driver.
+`features.memory_card.display_only_first_save` remains an independent setting
+because it controls the visible Save/Load interface and is not used by the
+automatic startup driver.

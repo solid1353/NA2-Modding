@@ -11,7 +11,8 @@ ISO.
 1. Extract the complete ZIP into one directory.
 2. Put the two supported clean ISOs in that directory. ISO filenames do not
    matter.
-3. Optionally edit `config.json`. A bare setting uses `true` or `false`; a
+3. Optionally edit `config.jsonc`. `//` and `/* ... */` comments and trailing
+   commas are accepted. A bare setting uses `true` or `false`; a
    typed setting uses the scalar or object value declared by `catalog.modcat`.
    `false` disables any node. Container objects merge recursively through
    `overrides`, while settings and unions are replaced atomically.
@@ -39,10 +40,10 @@ ISO.
    existing output when a build fails, removes its staging file after failure,
    and waits for Enter before closing.
 
-The ZIP contains exactly the versioned EXE, `config.json`,
+The ZIP contains exactly the versioned EXE, `config.jsonc`,
 `character_overrides.tsv`, `catalog.modcat`, and `README.md`. Release packaging
 applies `release.overrides` to `base.features` and writes the resulting complete
-`features` tree to `config.json`. It materializes the base and release
+`features` tree to `config.jsonc`. It materializes the base and release
 character-override layers into `character_overrides.tsv`, including every
 reference ID/name row for direct editing. It derives the
 external `catalog.modcat` from the canonical project catalog, strips every
@@ -126,7 +127,7 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
 
 The ordinary `na228`, `na228 b`, and `na228 m` workflows select the
 configuration owned by their root `game.json` build target. Cache builds use
-their explicitly selected configuration. `release.json` is used only by this
+their explicitly selected configuration. `release.jsonc` is used only by this
 release-packaging pipeline.
 
 ## GitHub releases

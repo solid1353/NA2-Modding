@@ -7,16 +7,17 @@ from typing import TYPE_CHECKING
 from ..payload_builder.operations import PayloadFragment, PayloadRelocation
 from .battle_settings_runtime import (
     PRACTICE_SETTINGS_PATH,
-    SHARED_SETTINGS_PATH,
     ULTIMATE_JUTSU_NATIVE_MODE_COUNT,
     extra_hit_default,
     shadowblur_default,
     sub_active_frames_default,
     substitution_default,
     support_default,
+    shared_setting_enabled,
     ultimate_jutsu_default,
     xdash_chakra_cost_option_default,
 )
+from .native_settings_defaults import practice_configured_row_defaults
 
 if TYPE_CHECKING:
     from .catalog import CatalogSelection
@@ -55,7 +56,7 @@ EXTRA_HIT_ROW_ID = 19
 SUB_ACTIVE_FRAMES_ROW_ID = 20
 XDASH_CHAKRA_COST_ROW_ID = 21
 SUPPORT_ROW_ID = 22
-SCHEMA_HEADER_SIZE = 84
+SCHEMA_HEADER_SIZE = 76
 ROW_FIELD_COUNT = 10
 ROW_SIZE = ROW_FIELD_COUNT * 4
 LABEL_REFERENCE_FIELD = 3
@@ -103,15 +104,6 @@ CUSTOM_ROW_RESOURCES = {
     ),
 }
 
-DEFAULT_PRESERVE_NATIVE = 0xFF
-DEFAULT_VALUE_MAPS = {
-    "health": {"full": 0, "half": 1, "critical": 2},
-    "commands": {"off": 0, "on": 1},
-    "guide_ninja_sound": {"off": 0, "on": 1},
-    "linked_attack": {"off": 0, "on": 1, "random": 2},
-}
-
-
 @dataclass(frozen=True)
 class PracticeRow:
     row_id: int
@@ -149,7 +141,7 @@ NATIVE_ROWS = {
     1: PracticeRow(1, ROW_SECTION_PLAYER, 0x70, 2, 0),
     2: PracticeRow(2, ROW_SECTION_PLAYER, 0x74, 2, 0),
     3: PracticeRow(3, ROW_SECTION_PLAYER, 0x78, 6, 2),
-    4: PracticeRow(4, ROW_SECTION_PLAYER, 0x7C, 2, 1),
+    4: PracticeRow(4, ROW_SECTION_PLAYER, 0x7C, 2, 0),
     5: PracticeRow(5, ROW_SECTION_PLAYER, 0x80, 4, 2),
     6: PracticeRow(6, ROW_SECTION_PLAYER, 0x84, 2, 1),
     7: PracticeRow(7, ROW_SECTION_PLAYER, 0x88, 2, 1),
@@ -238,123 +230,111 @@ def _node_enabled(selection: CatalogSelection, path: tuple[str, ...]) -> bool:
     return matches[0].enabled
 
 
-def _selected_node(selection: CatalogSelection, path: tuple[str, ...]):
+def _configured_value(selection: CatalogSelection, path: tuple[str, ...]):
     matches = [node for node in selection.nodes if node.path == path]
     if len(matches) != 1:
         raise ValueError(f"Catalog selection has no unique {'.'.join(path)} node")
-    return matches[0]
-
-
-def _configured_defaults(
-    selection: CatalogSelection,
-) -> tuple[int, int, int, int]:
-    node = _selected_node(selection, PRACTICE_SETTINGS_PATH)
-    configured = node.configured_value if node.has_configured_value else {}
-    if not isinstance(configured, dict):
-        raise ValueError("Practice Settings Rework requires an object value")
-    return tuple(
-        DEFAULT_PRESERVE_NATIVE
-        if name not in configured
-        else DEFAULT_VALUE_MAPS[name][configured[name]]
-        for name in DEFAULT_VALUE_MAPS
-    )
+    node = matches[0]
+    return node.configured_value if node.has_configured_value else None
 
 
 def _active_rows(selection: CatalogSelection) -> tuple[PracticeRow, ...]:
-    shared_settings = _node_enabled(selection, SHARED_SETTINGS_PATH)
-    health, commands, guide_ninja_sound, linked_attack = _configured_defaults(
-        selection
-    )
-    configured_defaults = {
-        0: health,
-        6: commands,
-        8: guide_ninja_sound,
-        15: linked_attack,
-    }
+    configured_defaults = practice_configured_row_defaults(selection)
 
     def native_row(row_id: int) -> PracticeRow:
         row = NATIVE_ROWS[row_id]
-        default_value = configured_defaults.get(row_id, DEFAULT_PRESERVE_NATIVE)
-        if default_value == DEFAULT_PRESERVE_NATIVE:
+        if row_id not in configured_defaults:
             return row
-        return replace(row, default_value=default_value)
+        return replace(row, default_value=configured_defaults[row_id])
 
-    rows = [native_row(0), native_row(1)]
-    if shared_settings:
-        rows.extend(
-            (
-                PracticeRow(
-                    SUBSTITUTION_ROW_ID,
-                    ROW_SECTION_PLAYER,
-                    ROW_LOCAL_CUSTOM,
-                    3,
-                    substitution_default(selection),
-                    flags=ROW_FLAG_CUSTOM_SUBSTITUTION,
-                ),
-                PracticeRow(
-                    SUB_ACTIVE_FRAMES_ROW_ID,
-                    ROW_SECTION_PLAYER,
-                    ROW_LOCAL_CUSTOM,
-                    17,
-                    sub_active_frames_default(selection),
-                    flags=ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES,
-                ),
-                PracticeRow(
-                    XDASH_CHAKRA_COST_ROW_ID,
-                    ROW_SECTION_PLAYER,
-                    ROW_LOCAL_CUSTOM,
-                    21,
-                    xdash_chakra_cost_option_default(selection),
-                    flags=ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST,
-                ),
-                PracticeRow(
-                    SUPPORT_ROW_ID,
-                    ROW_SECTION_PLAYER,
-                    ROW_LOCAL_CUSTOM,
-                    2,
-                    support_default(selection),
-                    flags=ROW_FLAG_CUSTOM_SUPPORT,
-                ),
-            )
-        )
-    rows.append(native_row(2))
-    ultimate_jutsu = native_row(3)
-    if shared_settings:
-        ultimate_jutsu = replace(
-            ultimate_jutsu,
+    general_fields = (
+        (0, "health"),
+        (1, "chakra"),
+        (2, "linked_attack"),
+    )
+    general_path = PRACTICE_SETTINGS_PATH + ("general_settings",)
+    rows = [
+        native_row(row_id)
+        for row_id, field in general_fields
+        if _configured_value(selection, general_path + (field,)) is not False
+    ]
+    linked_mode_path = PRACTICE_SETTINGS_PATH + (
+        "general_settings",
+        "linked_mode",
+    )
+    if _configured_value(selection, linked_mode_path) is not False:
+        rows.append(native_row(4))
+    trailing_general_fields = (
+        (5, "items"),
+        (6, "commands"),
+        (7, "damage"),
+        (8, "guide_ninja_sound"),
+    )
+    rows.extend(
+        native_row(row_id)
+        for row_id, field in trailing_general_fields
+        if _configured_value(selection, general_path + (field,)) is not False
+    )
+
+    custom_rows = {
+        "ultimate_jutsu": lambda: replace(
+            native_row(3),
             option_count=ULTIMATE_JUTSU_NATIVE_MODE_COUNT + 2,
             default_value=ultimate_jutsu_default(selection),
-            flags=(
-                ultimate_jutsu.flags | ROW_FLAG_CUSTOM_ULTIMATE_JUTSU
-            ),
-        )
-    rows.append(ultimate_jutsu)
-    if shared_settings:
-        rows.extend(
-            (
-                PracticeRow(
-                    SHADOWBLUR_ROW_ID,
-                    ROW_SECTION_PLAYER,
-                    ROW_LOCAL_CUSTOM,
-                    2,
-                    shadowblur_default(selection),
-                    flags=ROW_FLAG_CUSTOM_SHADOWBLUR,
-                ),
-                PracticeRow(
-                    EXTRA_HIT_ROW_ID,
-                    ROW_SECTION_PLAYER,
-                    ROW_LOCAL_CUSTOM,
-                    2,
-                    extra_hit_default(selection),
-                    flags=ROW_FLAG_CUSTOM_EXTRA_HIT,
-                ),
-            )
-        )
-    rows.append(native_row(4))
-    rows.extend(native_row(index) for index in range(5, 9))
-    rows.extend(native_row(index) for index in range(9, 15))
-    rows.append(native_row(15))
-    rows.append(native_row(16))
+            flags=native_row(3).flags | ROW_FLAG_CUSTOM_ULTIMATE_JUTSU,
+        ),
+        "shadowblur": lambda: PracticeRow(
+            SHADOWBLUR_ROW_ID, ROW_SECTION_PLAYER, ROW_LOCAL_CUSTOM, 2,
+            shadowblur_default(selection), flags=ROW_FLAG_CUSTOM_SHADOWBLUR,
+        ),
+        "extra_hit": lambda: PracticeRow(
+            EXTRA_HIT_ROW_ID, ROW_SECTION_PLAYER, ROW_LOCAL_CUSTOM, 2,
+            extra_hit_default(selection), flags=ROW_FLAG_CUSTOM_EXTRA_HIT,
+        ),
+        "sub_active_frames": lambda: PracticeRow(
+            SUB_ACTIVE_FRAMES_ROW_ID, ROW_SECTION_PLAYER, ROW_LOCAL_CUSTOM, 17,
+            sub_active_frames_default(selection),
+            flags=ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES,
+        ),
+        "xdash_chakra_cost": lambda: PracticeRow(
+            XDASH_CHAKRA_COST_ROW_ID, ROW_SECTION_PLAYER, ROW_LOCAL_CUSTOM, 21,
+            xdash_chakra_cost_option_default(selection),
+            flags=ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST,
+        ),
+        "support": lambda: PracticeRow(
+            SUPPORT_ROW_ID, ROW_SECTION_PLAYER, ROW_LOCAL_CUSTOM, 2,
+            support_default(selection), flags=ROW_FLAG_CUSTOM_SUPPORT,
+        ),
+        "substitution": lambda: PracticeRow(
+            SUBSTITUTION_ROW_ID, ROW_SECTION_PLAYER, ROW_LOCAL_CUSTOM, 3,
+            substitution_default(selection),
+            flags=ROW_FLAG_CUSTOM_SUBSTITUTION,
+        ),
+    }
+    for node in selection.nodes:
+        if (
+            len(node.path) == 5
+            and node.path[:4] == ("features", "settings", "in_game", "shared")
+            and node.enabled
+            and node.path[4] in custom_rows
+        ):
+            rows.append(custom_rows[node.path[4]]())
+    opponent_fields = (
+        (9, "status"),
+        (10, "strength"),
+        (11, "attack"),
+        (12, "guard"),
+        (13, "move"),
+        (14, "substitution_jutsu"),
+        (15, "linked_attack"),
+        (16, "extra_hit_counter"),
+    )
+    opponent_path = PRACTICE_SETTINGS_PATH + ("opponent_settings",)
+    rows.extend(
+        native_row(row_id)
+        for row_id, field in opponent_fields
+        if _configured_value(selection, opponent_path + (field,)) is not False
+    )
     return tuple(rows)
 
 
@@ -370,24 +350,12 @@ def practice_settings_fragment(
     rows = _active_rows(selection)
     player_count = sum(row.section == ROW_SECTION_PLAYER for row in rows)
     opponent_count = sum(row.section == ROW_SECTION_OPPONENT for row in rows)
-    configured_defaults = _configured_defaults(selection)
-    shared_settings_enabled = _node_enabled(selection, SHARED_SETTINGS_PATH)
-    ultimate_jutsu_default_value = (
-        ultimate_jutsu_default(selection)
-        if shared_settings_enabled
-        else DEFAULT_PRESERVE_NATIVE
-    )
     payload = bytearray(
         struct.pack(
-            "<3I8B16I",
+            "<19I",
             len(rows),
             player_count,
             opponent_count,
-            *configured_defaults,
-            ultimate_jutsu_default_value,
-            0,
-            0,
-            0,
             *([0] * 16),
         )
     )
@@ -410,96 +378,35 @@ def practice_settings_fragment(
         "sub_active_frames": sub_active_frames_value_table_offset,
         "xdash_chakra_cost": xdash_chakra_cost_value_table_offset,
     }
-    if shared_settings_enabled:
-        relocations.extend(
-            (
-                PayloadRelocation(
-                    offset=20,
-                    kind="abs32",
-                    symbol="substitution_gauge_mode_get",
-                ),
-                PayloadRelocation(
-                    offset=24,
-                    kind="abs32",
-                    symbol="substitution_gauge_mode_set",
-                ),
+    header_symbols = {
+        "substitution": (
+            (12, "substitution_gauge_mode_get"),
+            (16, "substitution_gauge_mode_set"),
+        ),
+        "ultimate_jutsu": (
+            (20, "ultimate_jutsu_mode_get"),
+            (24, "ultimate_jutsu_mode_set"),
+            (28, "ultimate_jutsu_no_contest_label"),
+            (32, "ultimate_jutsu_no_hud_label"),
+        ),
+        "shadowblur": ((36, "shadowblur_get"), (40, "shadowblur_set")),
+        "extra_hit": ((44, "extra_hit_get"), (48, "extra_hit_set")),
+        "sub_active_frames": (
+            (52, "sub_active_frames_get"),
+            (56, "sub_active_frames_set"),
+        ),
+        "xdash_chakra_cost": (
+            (60, "xdash_chakra_cost_option_get"),
+            (64, "xdash_chakra_cost_option_set"),
+        ),
+        "support": ((68, "support_get"), (72, "support_set")),
+    }
+    for field, symbols in header_symbols.items():
+        if shared_setting_enabled(selection, field):
+            relocations.extend(
+                PayloadRelocation(offset=offset, kind="abs32", symbol=name)
+                for offset, name in symbols
             )
-        )
-    if shared_settings_enabled:
-        relocations.extend(
-            (
-                PayloadRelocation(
-                    offset=28,
-                    kind="abs32",
-                    symbol="ultimate_jutsu_mode_get",
-                ),
-                PayloadRelocation(
-                    offset=32,
-                    kind="abs32",
-                    symbol="ultimate_jutsu_mode_set",
-                ),
-                PayloadRelocation(
-                    offset=36,
-                    kind="abs32",
-                    symbol="ultimate_jutsu_no_contest_label",
-                ),
-                PayloadRelocation(
-                    offset=40,
-                    kind="abs32",
-                    symbol="ultimate_jutsu_no_hud_label",
-                ),
-                PayloadRelocation(
-                    offset=44,
-                    kind="abs32",
-                    symbol="shadowblur_get",
-                ),
-                PayloadRelocation(
-                    offset=48,
-                    kind="abs32",
-                    symbol="shadowblur_set",
-                ),
-                PayloadRelocation(
-                    offset=52,
-                    kind="abs32",
-                    symbol="extra_hit_get",
-                ),
-                PayloadRelocation(
-                    offset=56,
-                    kind="abs32",
-                    symbol="extra_hit_set",
-                ),
-                PayloadRelocation(
-                    offset=60,
-                    kind="abs32",
-                    symbol="sub_active_frames_get",
-                ),
-                PayloadRelocation(
-                    offset=64,
-                    kind="abs32",
-                    symbol="sub_active_frames_set",
-                ),
-                PayloadRelocation(
-                    offset=68,
-                    kind="abs32",
-                    symbol="xdash_chakra_cost_option_get",
-                ),
-                PayloadRelocation(
-                    offset=72,
-                    kind="abs32",
-                    symbol="xdash_chakra_cost_option_set",
-                ),
-                PayloadRelocation(
-                    offset=76,
-                    kind="abs32",
-                    symbol="support_get",
-                ),
-                PayloadRelocation(
-                    offset=80,
-                    kind="abs32",
-                    symbol="support_set",
-                ),
-            )
-        )
 
     for index, row in enumerate(rows):
         row_offset = SCHEMA_HEADER_SIZE + index * ROW_SIZE
@@ -535,18 +442,18 @@ def practice_settings_fragment(
         else:
             payload.extend(struct.pack("<10I", *row.encoded_fields()))
 
-    if shared_settings_enabled:
+    if any(row.row_id in CUSTOM_ROW_RESOURCES for row in rows):
         for label in SUBSTITUTION_MODE_LABELS:
-            relocations.append(
-                PayloadRelocation(
-                    offset=len(payload),
-                    kind="abs32",
-                    symbol=label,
+            if shared_setting_enabled(selection, "substitution"):
+                relocations.append(
+                    PayloadRelocation(
+                        offset=len(payload),
+                        kind="abs32",
+                        symbol=label,
+                    )
                 )
-            )
             payload.extend(b"\0" * 4)
 
-    if shared_settings_enabled:
         for label in TOGGLE_LABELS:
             relocations.append(
                 PayloadRelocation(

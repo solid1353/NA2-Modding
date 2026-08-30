@@ -9,11 +9,11 @@ from pathlib import Path
 from unittest import mock
 
 from na228_builder.modules.binary_patcher import adapters
-from na228_builder.scripts import catalog, catalog_format
+from na228_builder.scripts import catalog, catalog_format, jsonc
 from scripts.lib.paths import load_local_paths
 
 
-PATCH_ID = re.compile(r'"((?:e|i|s)__[a-z0-9_]+)"')
+PATCH_ID = re.compile(r'patch:\s*"([a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*)"')
 
 
 class CatalogTests(unittest.TestCase):
@@ -30,56 +30,72 @@ class CatalogTests(unittest.TestCase):
         edits: dict[str, object] | None = None,
         injections: dict[str, object] | None = None,
         string_patches: dict[str, object] | None = None,
+        patch_definitions: dict[str, object] | None = None,
     ) -> tuple[Path, Path]:
-        catalog_path = root / "catalog"
-        catalog_path.mkdir(parents=True)
+        catalog_path = root / "catalog.modcat"
+        patches_path = root / "patches"
+        patches_path.mkdir(parents=True)
+        (root / "modules").mkdir()
         referenced = {
             patch for source in sources.values() for patch in PATCH_ID.findall(source)
         }
-        generated_edits = {
-            patch: {"description": f"Synthetic edit {patch}."}
+        patches: dict[str, dict[str, object]] = {
+            patch: {"modules": ["binary_patcher"]}
             for patch in sorted(referenced)
-            if patch.startswith("e__")
         }
-        generated_injections = {
-            patch: {"description": f"Synthetic injection {patch}."}
-            for patch in sorted(referenced)
-            if patch.startswith("i__")
-        }
-        generated_string_patches = {
-            patch: {
-                "description": f"Synthetic string patch {patch}.",
-                "operation": "replace_imported_game_title",
-                "expected_value": "Imported Game",
-                "expected_mapping_count": 1,
-                "expected_occurrence_count": 1,
-            }
-            for patch in sorted(referenced)
-            if patch.startswith("s__")
-        }
-        generated_edits.update(edits or {})
-        generated_injections.update(injections or {})
-        generated_string_patches.update(string_patches or {})
+        for patch_id, definition in (edits or {}).items():
+            assert isinstance(definition, dict)
+            target = patches.setdefault(patch_id, {})
+            description = definition.get("description")
+            if description:
+                target["description"] = description
+            if "edits" in definition:
+                target.update(
+                    {
+                        key: value
+                        for key, value in definition.items()
+                        if key != "description"
+                    }
+                )
+            else:
+                target["edit"] = {
+                    key: value
+                    for key, value in definition.items()
+                    if key != "description"
+                }
+        for patch_id, definition in (injections or {}).items():
+            assert isinstance(definition, dict)
+            target = patches.setdefault(patch_id, {})
+            for key in ("description", "hooks", "payload"):
+                if key in definition:
+                    target[key] = definition[key]
+        for patch_id, definition in (string_patches or {}).items():
+            assert isinstance(definition, dict)
+            target = patches.setdefault(patch_id, {})
+            target["string_patch"] = definition
+        for patch_id, definition in (patch_definitions or {}).items():
+            assert isinstance(definition, dict)
+            patches.setdefault(patch_id, {}).update(definition)
         parsed_features: dict[str, catalog_format.ContainerNode] = {}
         for feature_id, source in sources.items():
-            temporary = catalog_path / f".{feature_id}.modcat"
+            temporary = root / f".{feature_id}.modcat"
             temporary.write_text(source, encoding="utf-8")
             parsed_features[feature_id] = catalog_format.parse_catalog(temporary)
             temporary.unlink()
-        (catalog_path / "catalog.modcat").write_text(
+        catalog_path.write_text(
             catalog_format.serialize_catalog(parsed_features, include_patches=True),
             encoding="utf-8",
         )
-        self.write_json(catalog_path / "edits.json", generated_edits)
-        self.write_json(catalog_path / "injections.json", generated_injections)
+        by_file: dict[str, dict[str, object]] = {}
+        for patch_id, definition in patches.items():
+            by_file.setdefault(patch_id.split(".", 1)[0], {})[patch_id] = definition
+        for stem, definitions in by_file.items():
+            self.write_json(patches_path / f"{stem}.json", definitions)
         self.write_json(
-            catalog_path / "string_patches.json", generated_string_patches
-        )
-        self.write_json(
-            root / "configurations" / "base.json",
+            root / "configurations" / "base.jsonc",
             {"features": features},
         )
-        configuration_path = root / "configuration.json"
+        configuration_path = root / "configuration.jsonc"
         self.write_json(configuration_path, {"overrides": {}})
         return catalog_path, configuration_path
 
@@ -89,35 +105,30 @@ class CatalogTests(unittest.TestCase):
           // Plain switch.
           plain: setting {
             description: "Plain setting.",
-            startup_fast_forward_frames: {
-              additive: 25,
-              override: 100,
-            },
-            patches: ["e__feature__plain",],
+            patch: "feature.plain",
           },
           supplied_bool: setting<{ value: bool, label?: string, }> {
             description: "Boolean data wrapped in an object.",
-            patches: ["e__feature__supplied_bool"],
+            patch: "feature.supplied_bool",
           },
           patch_and_module: setting {
             description: "Patch-backed internal module.",
-            modules: ["texture_patcher"],
-            patches: ["e__feature__patch_and_module"],
+            patch: "feature.patch_and_module",
           },
           numeric: setting<(int & 1..15) | (decimal & >0 & <1)> {
             description: "Disjoint numeric union.",
-            patches: ["e__feature__numeric"],
+            patch: "feature.numeric",
           },
           alternative:
             setting<int> {
               description: "Direct integer.",
-              patches: ["e__feature__direct"],
+              patch: "feature.direct",
             }
             |
             {
               ratio: setting<{ numerator: int & >0, denominator: int & >0 }> {
                 description: "Named ratio.",
-                patches: ["e__feature__ratio"],
+                patch: "feature.ratio",
               },
             },
         }
@@ -128,16 +139,8 @@ class CatalogTests(unittest.TestCase):
             parsed = catalog_format.parse_catalog(path)
 
         fields = {field.name: field.node for field in parsed.fields}
-        self.assertEqual(fields["plain"].startup_fast_forward_frames.additive, 25)
-        self.assertEqual(fields["plain"].startup_fast_forward_frames.override, 100)
-        self.assertEqual(
-            fields["patch_and_module"].patches,
-            ("e__feature__patch_and_module",),
-        )
-        self.assertEqual(
-            fields["patch_and_module"].modules,
-            ("texture_patcher",),
-        )
+        self.assertEqual(fields["plain"].patch, "feature.plain")
+        self.assertEqual(fields["patch_and_module"].patch, "feature.patch_and_module")
         self.assertTrue(catalog_format.matches_type(fields["numeric"].value_type, 5))
         self.assertTrue(catalog_format.matches_type(fields["numeric"].value_type, 0.5))
         self.assertFalse(catalog_format.matches_type(fields["numeric"].value_type, 16))
@@ -155,9 +158,8 @@ class CatalogTests(unittest.TestCase):
             {"feature": parsed}, include_patches=True
         )
         self.assertIn("\n      |\n      {\n", rendered)
-        self.assertNotIn("startup_fast_forward_frames", rendered)
-        self.assertNotIn("modules:", rendered)
-        self.assertIn('modules: [\n          "texture_patcher",', embedded)
+        self.assertNotIn("patch:", rendered)
+        self.assertIn('patch: "feature.patch_and_module"', embedded)
 
     def test_startup_fast_forward_frames_combine_one_override_and_additives(
         self,
@@ -165,18 +167,15 @@ class CatalogTests(unittest.TestCase):
         source = '''{
           baseline: setting {
             description: "Baseline.",
-            startup_fast_forward_frames: { override: 100, additive: 5 },
-            patches: ["e__feature__baseline"],
+            patch: "feature.baseline",
           },
           extra: setting {
             description: "Extra.",
-            startup_fast_forward_frames: { additive: -20 },
-            patches: ["e__feature__extra"],
+            patch: "feature.extra",
           },
           disabled_override: setting {
             description: "Disabled override.",
-            startup_fast_forward_frames: { override: 999 },
-            patches: ["e__feature__disabled_override"],
+            patch: "feature.disabled_override",
           },
         }'''
         with tempfile.TemporaryDirectory() as directory:
@@ -190,6 +189,20 @@ class CatalogTests(unittest.TestCase):
                         "extra": True,
                         "disabled_override": False,
                     }
+                },
+                patch_definitions={
+                    "feature.baseline": {
+                        "startup_fast_forward_frames": {
+                            "override": 100,
+                            "additive": 5,
+                        }
+                    },
+                    "feature.extra": {
+                        "startup_fast_forward_frames": {"additive": -20}
+                    },
+                    "feature.disabled_override": {
+                        "startup_fast_forward_frames": {"override": 999}
+                    },
                 },
             )
             selection = catalog.load_selection(catalog_path, configuration_path)
@@ -205,7 +218,7 @@ class CatalogTests(unittest.TestCase):
             )
 
             self.write_json(
-                root / "configurations" / "base.json",
+                root / "configurations" / "base.jsonc",
                 {
                     "features": {
                         "feature": {
@@ -225,7 +238,7 @@ class CatalogTests(unittest.TestCase):
                 catalog.startup_fast_forward_frames(negative, 10)
 
             self.write_json(
-                root / "configurations" / "base.json",
+                root / "configurations" / "base.jsonc",
                 {
                     "features": {
                         "feature": {
@@ -249,20 +262,24 @@ class CatalogTests(unittest.TestCase):
         invalid_values = ("0", "-1", "1.5", str(1 << 64))
         for value in invalid_values:
             with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
-                path = Path(directory) / "feature.modcat"
-                path.write_text(
-                    '''{
-                      leaf: setting {
-                        description: "Leaf.",
-                        startup_fast_forward_frames: { override: %s },
-                        patches: ["e__feature__leaf"],
-                      },
-                    }'''
-                    % value,
-                    encoding="utf-8",
+                root = Path(directory)
+                catalog_path, configuration_path = self.write_project(
+                    root,
+                    {"feature": '{ leaf: setting { patch: "feature.leaf" } }'},
+                    {"feature": {"leaf": True}},
+                )
+                self.write_json(
+                    root / "patches" / "feature.json",
+                    {
+                        "feature.leaf": {
+                            "startup_fast_forward_frames": {
+                                "override": json.loads(value)
+                            }
+                        }
+                    },
                 )
                 with self.assertRaisesRegex(ValueError, "integer"):
-                    catalog_format.parse_catalog(path)
+                    catalog.load_selection(catalog_path, configuration_path)
 
     def test_object_intersection_shares_fields_across_union_branches(self) -> None:
         source = '''{
@@ -270,7 +287,7 @@ class CatalogTests(unittest.TestCase):
             {
               faster_loading: setting {
                 description: "Load faster.",
-                patches: ["i__feature__faster_loading"],
+                patch: "feature.faster_loading",
               },
             }
             &
@@ -278,14 +295,14 @@ class CatalogTests(unittest.TestCase):
               {
                 skip_opening: setting {
                   description: "Skip opening.",
-                  patches: ["e__feature__skip_opening"],
+                  patch: "feature.skip_opening",
                 },
               }
               |
               {
                 savedata_loading: setting<"automatic"> {
                   description: "Load save automatically.",
-                  patches: ["i__feature__savedata_loading"],
+                  patch: "feature.savedata_loading",
                 },
               }
             ),
@@ -317,7 +334,7 @@ class CatalogTests(unittest.TestCase):
             )
 
             self.write_json(
-                root / "configurations" / "base.json",
+                root / "configurations" / "base.jsonc",
                 {
                     "features": {
                         "feature": {
@@ -353,7 +370,7 @@ class CatalogTests(unittest.TestCase):
             {
               faster_loading: setting {
                 description: "Load faster.",
-                patches: ["e__feature__faster_loading"],
+                patch: "feature.faster_loading",
               },
             }
             &
@@ -361,22 +378,22 @@ class CatalogTests(unittest.TestCase):
               {
                 skip_intro: setting {
                   description: "Skip intro.",
-                  patches: ["e__feature__skip_intro"],
+                  patch: "feature.skip_intro",
                 },
                 skip_opening: setting {
                   description: "Skip opening.",
-                  patches: ["e__feature__skip_opening"],
+                  patch: "feature.skip_opening",
                 },
               }
               |
               {
                 savedata_loading: setting<"automatic"> {
                   description: "Load save automatically.",
-                  patches: ["e__feature__savedata_loading"],
+                  patch: "feature.savedata_loading",
                 },
                 loading_screen: setting {
                   description: "Show loading screen.",
-                  patches: ["e__feature__loading_screen"],
+                  patch: "feature.loading_screen",
                 },
               }
             ),
@@ -472,25 +489,21 @@ class CatalogTests(unittest.TestCase):
 
     def test_repository_configurations_select_startup_behavior(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
-        catalog_path = paths.path("builder", "catalog")
+        catalog_path = paths.path("builder", "catalog.modcat")
         configurations = paths.path("builder", "configurations")
 
         selections = {
             name: catalog.load_selection(
-                catalog_path, configurations / f"{name}.json"
+                catalog_path, configurations / f"{name}.jsonc"
             )
             for name in ("base", "test", "release")
         }
         test = selections["test"]
         self.assertTrue(
-            test.node_enabled(
-                "features", "startup", "flow", "savedata_loading"
-            )
+            test.node_enabled("features", "startup", "auto_loading")
         )
         self.assertTrue(
-            test.node_enabled(
-                "features", "startup", "flow", "loading_screen"
-            )
+            test.node_enabled("features", "startup", "loading_screen")
         )
         for name in ("base", "release"):
             with self.subTest(configuration=name):
@@ -513,64 +526,58 @@ class CatalogTests(unittest.TestCase):
     def test_repository_practice_defaults_are_owned_by_settings(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         builder = paths.path("builder")
-        catalog_path = builder / "catalog"
-        base = json.loads(
-            (builder / "configurations" / "base.json").read_text(encoding="utf-8")
+        catalog_path = builder / "catalog.modcat"
+        base = jsonc.loads(
+            (builder / "configurations" / "base.jsonc").read_text(encoding="utf-8")
         )
         self.assertEqual(
-            base["features"]["settings"]["practice"],
-            {
-                "health": "full",
-                "commands": "off",
-                "guide_ninja_sound": "off",
-                "linked_attack": "off",
-            },
+            base["features"]["settings"]["in_game"]["practice"]
+            ["general_settings"]["linked_mode"],
+            False,
         )
         selection = catalog.load_selection(
-            catalog_path, builder / "configurations" / "base.json"
+            catalog_path, builder / "configurations" / "base.jsonc"
         )
         package = catalog.load_binary_package(
             selection,
             "practice",
-            catalog_path / "targets.tsv",
+            builder / "modules" / "targets.tsv",
             paths.repository,
             builder / "modules" / "binary_patcher" / "operations",
         )
         self.assertEqual(package.edits, [])
-        self.assertIn("i__practice__settings_rework", selection.injections)
+        self.assertIn("settings.in_game", selection.injections)
 
-    def test_repository_simple_display_is_a_shared_setting(self) -> None:
+    def test_repository_simple_display_is_a_standalone_setting(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         builder = paths.path("builder")
-        catalog_path = builder / "catalog"
-        base = json.loads(
-            (builder / "configurations" / "base.json").read_text(encoding="utf-8")
+        catalog_path = builder / "catalog.modcat"
+        base = jsonc.loads(
+            (builder / "configurations" / "base.jsonc").read_text(encoding="utf-8")
         )
         self.assertEqual(
-            base["features"]["settings"]["shared"]["simple_display"],
+            base["features"]["settings"]["simple_display"],
             "off",
         )
 
         for value, replacement_hex in (("off", "00000000"), ("on", "25186600")):
             with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
-                configuration = Path(directory) / "configuration.json"
+                configuration = Path(directory) / "configuration.jsonc"
                 configured = json.loads(json.dumps(base))
-                configured["features"]["settings"]["shared"][
-                    "simple_display"
-                ] = value
+                configured["features"]["settings"]["simple_display"] = value
                 configuration.write_text(json.dumps(configured), encoding="utf-8")
                 selection = catalog.load_selection(catalog_path, configuration)
                 package = catalog.load_binary_package(
                     selection,
                     "settings",
-                    catalog_path / "targets.tsv",
+                    builder / "modules" / "targets.tsv",
                     paths.repository,
                     builder / "modules" / "binary_patcher" / "operations",
                 )
                 edit = next(
                     edit
                     for edit in package.edits
-                    if edit.edit_id.endswith(".e__battle__simple_display")
+                    if edit.edit_id.endswith(".settings.simple_display")
                 )
                 self.assertEqual(edit.destination_offset, 0xE7BAC)
                 self.assertEqual(edit.expected_hex, "25186600")
@@ -580,11 +587,11 @@ class CatalogTests(unittest.TestCase):
         source = '''{
           value:
             { duplicate: setting {
-              description: "First.", patches: ["e__feature__first"],
+              description: "First.", patch: "feature.first",
             } }
             &
             { duplicate: setting {
-              description: "Second.", patches: ["e__feature__second"],
+              description: "Second.", patch: "feature.second",
             } },
         }'''
         with tempfile.TemporaryDirectory() as directory:
@@ -600,7 +607,7 @@ class CatalogTests(unittest.TestCase):
         source = '''{
           value: setting<decimal & 0..15 & step 0.25> {
             description: "Quarter-step value.",
-            patches: ["e__feature__value"],
+            patch: "feature.value",
           },
         }'''
         with tempfile.TemporaryDirectory() as directory:
@@ -632,24 +639,24 @@ class CatalogTests(unittest.TestCase):
                 invalid.write_text(
                     "{ value: setting<"
                     + invalid_type
-                    + '> { description: "Invalid.", patches: ["e__x__y"] } }',
+                    + '> { description: "Invalid.", patch: "x.y" } }',
                     encoding="utf-8",
                 )
                 with self.assertRaises(ValueError):
                     catalog_format.parse_catalog(invalid)
 
-    def test_direct_boolean_setting_types_are_forbidden(self) -> None:
+    def test_direct_boolean_setting_types_are_supported(self) -> None:
         for value_type in ("bool", "true", "false", 'string | false'):
             with self.subTest(value_type=value_type), tempfile.TemporaryDirectory() as directory:
                 path = Path(directory) / "feature.modcat"
                 path.write_text(
                     "{ value: setting<"
                     + value_type
-                    + '> { description: "Invalid.", patches: ["e__x__y"] } }',
+                    + '> { patch: "x.y" } }',
                     encoding="utf-8",
                 )
-                with self.assertRaisesRegex(ValueError, "boolean setting types"):
-                    catalog_format.parse_catalog(path)
+                parsed = catalog_format.parse_catalog(path)
+                self.assertEqual(parsed.fields[0].node.patch, "x.y")
 
     def test_overlapping_unions_are_rejected_at_catalog_load(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -658,11 +665,11 @@ class CatalogTests(unittest.TestCase):
                 '''{
                   value:
                     setting<int> {
-                      description: "Any integer.", patches: ["e__x__any"],
+                      description: "Any integer.", patch: "x.any",
                     }
                     |
                     setting<int & 1..3> {
-                      description: "Small integer.", patches: ["e__x__small"],
+                      description: "Small integer.", patch: "x.small",
                     },
                 }''',
                 encoding="utf-8",
@@ -673,21 +680,21 @@ class CatalogTests(unittest.TestCase):
     def test_false_disables_every_node_and_bool_remains_object_data(self) -> None:
         source = '''{
           plain: setting {
-            description: "Plain.", patches: ["e__feature__plain"],
+            description: "Plain.", patch: "feature.plain",
           },
           integer: setting<int> {
-            description: "Integer.", patches: ["e__feature__integer"],
+            description: "Integer.", patch: "feature.integer",
           },
           supplied_bool: setting<{ value: bool }> {
-            description: "Supplied bool.", patches: ["e__feature__bool"],
+            description: "Supplied bool.", patch: "feature.bool",
           },
           alternative:
             setting<int> {
-              description: "Direct.", patches: ["e__feature__direct"],
+              description: "Direct.", patch: "feature.direct",
             }
             |
             { fixed: setting<int> {
-              description: "Fixed.", patches: ["e__feature__fixed"],
+              description: "Fixed.", patch: "feature.fixed",
             } },
         }'''
         with tempfile.TemporaryDirectory() as directory:
@@ -720,18 +727,18 @@ class CatalogTests(unittest.TestCase):
     ) -> None:
         source = '''{
           optional: setting<{ count?: int }> {
-            description: "Optional object.", patches: ["e__f__optional"],
+            description: "Optional object.", patch: "f.optional",
           },
           required: setting<{ count: int }> {
-            description: "Required object.", patches: ["e__f__required"],
+            description: "Required object.", patch: "f.required",
           },
           alternative:
             setting<{ count?: int }> {
-              description: "Optional branch.", patches: ["e__f__branch_object"],
+              description: "Optional branch.", patch: "f.branch_object",
             }
             |
             setting<"named"> {
-              description: "Named branch.", patches: ["e__f__branch_named"],
+              description: "Named branch.", patch: "f.branch_named",
             },
         }'''
         with tempfile.TemporaryDirectory() as directory:
@@ -757,7 +764,7 @@ class CatalogTests(unittest.TestCase):
             self.assertEqual(selected["feature.alternative"].configured_value, {})
 
             self.write_json(
-                root / "configurations" / "base.json",
+                root / "configurations" / "base.jsonc",
                 {
                     "features": {
                         "feature": {
@@ -777,24 +784,24 @@ class CatalogTests(unittest.TestCase):
     def test_containers_merge_recursively_but_settings_and_unions_are_atomic(self) -> None:
         source = '''{
           nested: {
-            first: setting { description: "First.", patches: ["e__f__first"] },
-            second: setting { description: "Second.", patches: ["e__f__second"] },
+            first: setting { description: "First.", patch: "f.first" },
+            second: setting { description: "Second.", patch: "f.second" },
           },
           scalar: setting<int> {
-            description: "Scalar.", patches: ["e__f__scalar"],
+            description: "Scalar.", patch: "f.scalar",
           },
           named:
             { pair: {
               left: setting<int> {
-                description: "Left.", patches: ["e__f__left"],
+                description: "Left.", patch: "f.left",
               },
               right: setting<int> {
-                description: "Right.", patches: ["e__f__right"],
+                description: "Right.", patch: "f.right",
               },
             } }
             |
             setting<string> {
-              description: "Text.", patches: ["e__f__text"],
+              description: "Text.", patch: "f.text",
             },
         }'''
         base = {
@@ -843,10 +850,10 @@ class CatalogTests(unittest.TestCase):
     def test_parent_true_and_invalid_typed_values_are_rejected(self) -> None:
         source = '''{
           nested: {
-            leaf: setting { description: "Leaf.", patches: ["e__f__leaf"] },
+            leaf: setting { description: "Leaf.", patch: "f.leaf" },
           },
           integer: setting<int> {
-            description: "Integer.", patches: ["e__f__integer"],
+            description: "Integer.", patch: "f.integer",
           },
         }'''
         with tempfile.TemporaryDirectory() as directory:
@@ -888,7 +895,7 @@ class CatalogTests(unittest.TestCase):
                 catalog.load_selection(catalog_path, configuration_path)
 
             self.write_json(
-                root / "configurations" / "base.json",
+                root / "configurations" / "base.jsonc",
                 {"features": False},
             )
             self.write_json(configuration_path, {"overrides": {}})
@@ -903,9 +910,9 @@ class CatalogTests(unittest.TestCase):
 
     def test_materialized_configuration_applies_repository_override(self) -> None:
         source = '''{
-          first: setting { description: "First.", patches: ["e__f__first"] },
-          second: setting { description: "Second.", patches: ["e__f__second"] },
-          third: setting { description: "Third.", patches: ["e__f__third"] },
+          first: setting { description: "First.", patch: "f.first" },
+          second: setting { description: "Second.", patch: "f.second" },
+          third: setting { description: "Third.", patch: "f.third" },
         }'''
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -939,23 +946,29 @@ class CatalogTests(unittest.TestCase):
                 catalog.load_selection(catalog_path, bundled).base_configuration_path
             )
 
-    def test_descriptions_and_patch_references_are_mandatory(self) -> None:
-        invalid_sources = (
-            '{ leaf: setting { patches: ["e__f__leaf"] } }',
-            '{ leaf: setting { description: "", patches: ["e__f__leaf"] } }',
-            '{ leaf: setting { description: "Leaf.", patches: [] } }',
-        )
-        for source in invalid_sources:
-            with self.subTest(source=source), tempfile.TemporaryDirectory() as directory:
-                path = Path(directory) / "feature.modcat"
-                path.write_text(source, encoding="utf-8")
-                with self.assertRaisesRegex(ValueError, "requires"):
-                    catalog_format.parse_catalog(path)
+    def test_descriptions_and_patch_references_are_optional(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "feature.modcat"
+            path.write_text(
+                '{ plain: setting {}, patched: setting { patch: "f.leaf" } }',
+                encoding="utf-8",
+            )
+            parsed = catalog_format.parse_catalog(path)
+            self.assertEqual(parsed.fields[0].node.description, "")
+            self.assertIsNone(parsed.fields[0].node.patch)
+            self.assertEqual(parsed.fields[1].node.patch, "f.leaf")
+
+            path.write_text(
+                '{ leaf: setting { description: "" } }',
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "description must be nonempty"):
+                catalog_format.parse_catalog(path)
 
     def test_unknown_and_orphaned_implementation_ids_are_rejected(self) -> None:
         source = '''{
           leaf: setting {
-            description: "Leaf.", patches: ["e__f__missing"],
+            description: "Leaf.", patch: "f.missing",
           },
         }'''
         with tempfile.TemporaryDirectory() as directory:
@@ -964,17 +977,17 @@ class CatalogTests(unittest.TestCase):
                 root,
                 {"feature": source},
                 {"feature": {"leaf": True}},
-                edits={"e__f__orphan": {"description": "Orphan."}},
             )
-            edits_path = catalog_path / "edits.json"
-            values = json.loads(edits_path.read_text(encoding="utf-8"))
-            values.pop("e__f__missing")
-            self.write_json(edits_path, values)
-            with self.assertRaisesRegex(ValueError, "unknown edit"):
+            patches_path = root / "patches" / "f.json"
+            values = json.loads(patches_path.read_text(encoding="utf-8"))
+            values.pop("f.missing")
+            values["f.orphan"] = {"modules": ["binary_patcher"]}
+            self.write_json(patches_path, values)
+            with self.assertRaisesRegex(ValueError, "unknown patch"):
                 catalog.load_selection(catalog_path, configuration_path)
 
-            values["e__f__missing"] = {"description": "Present."}
-            self.write_json(edits_path, values)
+            values["f.missing"] = {"modules": ["binary_patcher"]}
+            self.write_json(patches_path, values)
             with self.assertRaisesRegex(ValueError, "not catalog-referenced"):
                 catalog.load_selection(catalog_path, configuration_path)
 
@@ -982,14 +995,20 @@ class CatalogTests(unittest.TestCase):
         source = '''{
           value: setting<decimal & 0..15 & step 0.25> {
             description: "Bounded value.",
-            startup_fast_forward_frames: { additive: 12 },
-            patches: ["e__f__value"],
+            patch: "f.value",
           },
         }'''
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             catalog_path, _ = self.write_project(
-                root, {"feature": source}, {"feature": {"value": 5}}
+                root,
+                {"feature": source},
+                {"feature": {"value": 5}},
+                patch_definitions={
+                    "f.value": {
+                        "startup_fast_forward_frames": {"additive": 12}
+                    }
+                },
             )
             public = catalog.public_catalog(catalog_path)
         self.assertIn("features:", public)
@@ -997,7 +1016,7 @@ class CatalogTests(unittest.TestCase):
         self.assertIn('description: "Bounded value."', public)
         self.assertNotIn("patches", public)
         self.assertNotIn("startup_fast_forward_frames", public)
-        self.assertNotIn("e__f__value", public)
+        self.assertNotIn("f.value", public)
 
     def test_mips_lui_float32_adapter_preserves_instruction_and_rejects_bad_guards(self) -> None:
         replacements = {
@@ -1082,7 +1101,7 @@ class CatalogTests(unittest.TestCase):
         source = '''{
           replace_title: setting {
             description: "Replace title.",
-            patches: ["s__feature__replace_title"],
+            patch: "feature.replace_title",
           },
         }'''
         with tempfile.TemporaryDirectory() as directory:
@@ -1091,13 +1110,22 @@ class CatalogTests(unittest.TestCase):
                 root,
                 {"feature": source},
                 {"feature": {"replace_title": True}},
+                string_patches={
+                    "feature.replace_title": {
+                        "description": "Replace imported title.",
+                        "operation": "replace_imported_game_title",
+                        "expected_value": "Imported Game",
+                        "expected_mapping_count": 1,
+                        "expected_occurrence_count": 1,
+                    }
+                },
             )
             enabled = catalog.load_selection(catalog_path, configuration_path)
             self.assertEqual(
                 [item[1] for item in catalog.selected_string_patches(
                     enabled, "replace_imported_game_title"
                 )],
-                ["s__feature__replace_title"],
+                ["feature.replace_title"],
             )
             self.write_json(
                 configuration_path,
@@ -1136,10 +1164,10 @@ class CatalogTests(unittest.TestCase):
         del plural["destination_offset"]
 
         singular_member = catalog._edit_members(
-            "e__feature__singular", singular
+            "feature.singular", singular
         )[0][1]
         plural_member = catalog._edit_members(
-            "e__feature__plural", plural
+            "feature.plural", plural
         )[0][1]
 
         self.assertNotIn("destination_offset", singular_member)
@@ -1161,7 +1189,7 @@ class CatalogTests(unittest.TestCase):
             "exactly one of destination_offset or destination_offsets",
         ):
             catalog._edit_members(
-                "e__feature__ambiguous",
+                "feature.ambiguous",
                 {**definition, "destination_offsets": ["0x10", "0x20"]},
             )
         with self.assertRaisesRegex(
@@ -1170,18 +1198,18 @@ class CatalogTests(unittest.TestCase):
         ):
             missing = dict(definition)
             del missing["destination_offset"]
-            catalog._edit_members("e__feature__missing", missing)
+            catalog._edit_members("feature.missing", missing)
         with self.assertRaisesRegex(ValueError, "must contain at least two"):
             redundant = dict(definition)
             del redundant["destination_offset"]
             redundant["destination_offsets"] = ["0x10"]
-            catalog._edit_members("e__feature__redundant", redundant)
+            catalog._edit_members("feature.redundant", redundant)
 
     def test_grouped_edit_expands_named_primitive_edits(self) -> None:
         source = '''{
           grouped: setting {
             description: "Grouped edits.",
-            patches: ["e__feature__grouped"],
+            patch: "feature.grouped",
           },
         }'''
         grouped = {
@@ -1220,10 +1248,10 @@ class CatalogTests(unittest.TestCase):
                 root,
                 {"feature": source},
                 {"feature": {"grouped": True}},
-                edits={"e__feature__grouped": grouped},
+                edits={"feature.grouped": grouped},
             )
             (root / "asset.bin").write_bytes(b"\xAA\xBB")
-            (catalog_path / "targets.tsv").write_text(
+            (catalog_path.parent / "modules" / "targets.tsv").write_text(
                 "target_id\troot_id\trole\tpath\texpected_size\t"
                 "expected_sha256\n"
                 "test_target\ttest\tdestination\tdata.bin\t16\t"
@@ -1236,7 +1264,7 @@ class CatalogTests(unittest.TestCase):
             package = catalog.load_binary_package(
                 selection,
                 "feature",
-                catalog_path / "targets.tsv",
+                catalog_path.parent / "modules" / "targets.tsv",
                 root,
                 paths.path("builder", "modules", "binary_patcher", "operations"),
             )
@@ -1250,7 +1278,7 @@ class CatalogTests(unittest.TestCase):
             [edit.operation for edit in package.edits],
             ["replace", "blob", "replace", "replace"],
         )
-        self.assertTrue(all("e__feature__grouped" in edit.edit_id for edit in package.edits))
+        self.assertTrue(all("feature.grouped" in edit.edit_id for edit in package.edits))
         self.assertIn(".clear_flag", package.edits[0].edit_id)
         self.assertIn(".install_blob", package.edits[1].edit_id)
         self.assertIn(".set_values", package.edits[2].edit_id)
@@ -1263,7 +1291,7 @@ class CatalogTests(unittest.TestCase):
         source = '''{
           table: setting {
             description: "Table edit.",
-            patches: ["e__feature__table"],
+            patch: "feature.table",
           },
         }'''
         table = {
@@ -1292,9 +1320,9 @@ class CatalogTests(unittest.TestCase):
                 root,
                 {"feature": source},
                 {"feature": {"table": True}},
-                edits={"e__feature__table": table},
+                edits={"feature.table": table},
             )
-            (catalog_path / "targets.tsv").write_text(
+            (catalog_path.parent / "modules" / "targets.tsv").write_text(
                 "target_id\troot_id\trole\tpath\texpected_size\t"
                 "expected_sha256\n"
                 "test_target\ttest\tdestination\tdata.bin\t64\t"
@@ -1307,7 +1335,7 @@ class CatalogTests(unittest.TestCase):
             package = catalog.load_binary_package(
                 selection,
                 "feature",
-                catalog_path / "targets.tsv",
+                catalog_path.parent / "modules" / "targets.tsv",
                 root,
                 paths.path("builder", "modules", "binary_patcher", "operations"),
             )
@@ -1391,13 +1419,13 @@ class CatalogTests(unittest.TestCase):
         for definition, message in invalid:
             with self.subTest(message=message):
                 with self.assertRaisesRegex(ValueError, message):
-                    catalog._edit_members("e__feature__table", definition)
+                    catalog._edit_members("feature.table", definition)
 
     def test_grouped_edit_rejects_overlapping_child_destinations(self) -> None:
         source = '''{
           grouped: setting {
             description: "Grouped edits.",
-            patches: ["e__feature__grouped"],
+            patch: "feature.grouped",
           },
         }'''
         grouped = {
@@ -1425,9 +1453,9 @@ class CatalogTests(unittest.TestCase):
                 root,
                 {"feature": source},
                 {"feature": {"grouped": True}},
-                edits={"e__feature__grouped": grouped},
+                edits={"feature.grouped": grouped},
             )
-            (catalog_path / "targets.tsv").write_text(
+            (catalog_path.parent / "modules" / "targets.tsv").write_text(
                 "target_id\troot_id\trole\tpath\texpected_size\t"
                 "expected_sha256\n"
                 "test_target\ttest\tdestination\tdata.bin\t16\t"
@@ -1441,43 +1469,43 @@ class CatalogTests(unittest.TestCase):
                 catalog.load_binary_package(
                     selection,
                     "feature",
-                    catalog_path / "targets.tsv",
+                    catalog_path.parent / "modules" / "targets.tsv",
                     root,
                     paths.path("builder", "modules", "binary_patcher", "operations"),
                 )
 
     def test_repository_grouped_edit_maps_are_alphabetical(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
-        definitions = json.loads(
-            paths.path("builder", "catalog", "edits.json").read_text(
-                encoding="utf-8"
-            )
-        )
-        self.assertEqual(list(definitions), sorted(definitions))
-        for edit_id, definition in definitions.items():
-            with self.subTest(edit_id=edit_id):
-                if "edits" in definition:
-                    self.assertEqual(
-                        list(definition["edits"]),
-                        sorted(definition["edits"]),
-                    )
-                members = (
-                    definition["edits"].values()
-                    if "edits" in definition
-                    else (definition,)
-                )
-                for member in members:
-                    if member.get("operation") == "replace_table":
+        patch_files = sorted(paths.path("builder", "patches").glob("*.json"))
+        self.assertTrue(patch_files)
+        for patch_file in patch_files:
+            definitions = json.loads(patch_file.read_text(encoding="utf-8"))
+            for patch_id, definition in definitions.items():
+                if "edits" not in definition and "edit" not in definition:
+                    continue
+                with self.subTest(patch_id=patch_id):
+                    if "edits" in definition:
                         self.assertEqual(
-                            list(member["record_patches"]),
-                            sorted(member["record_patches"]),
+                            list(definition["edits"]),
+                            sorted(definition["edits"]),
                         )
+                    members = (
+                        definition["edits"].values()
+                        if "edits" in definition
+                        else (definition["edit"],)
+                    )
+                    for member in members:
+                        if member.get("operation") == "replace_table":
+                            self.assertEqual(
+                                list(member["record_patches"]),
+                                sorted(member["record_patches"]),
+                            )
 
     def test_grouped_edit_structure_fails_closed(self) -> None:
         source = '''{
           grouped: setting {
             description: "Grouped edits.",
-            patches: ["e__feature__grouped"],
+            patch: "feature.grouped",
           },
         }'''
         invalid_groups = (
@@ -1531,7 +1559,7 @@ class CatalogTests(unittest.TestCase):
                     root,
                     {"feature": source},
                     {"feature": {"grouped": True}},
-                    edits={"e__feature__grouped": grouped},
+                    edits={"feature.grouped": grouped},
                 )
                 with self.assertRaisesRegex(ValueError, message):
                     catalog.load_selection(catalog_path, configuration_path)
@@ -1686,7 +1714,7 @@ class CatalogTests(unittest.TestCase):
         source = '''{
           runtime: setting {
             description: "Assembly runtime.",
-            patches: ["i__feature__runtime"],
+            patch: "feature.runtime",
           },
         }'''
         with tempfile.TemporaryDirectory() as directory:
@@ -1699,7 +1727,7 @@ class CatalogTests(unittest.TestCase):
                 {"feature": source},
                 {"feature": {"runtime": True}},
                 injections={
-                    "i__feature__runtime": {
+                    "feature.runtime": {
                         "description": "Assembly runtime.",
                         "payload": {
                             "runtime_source": {

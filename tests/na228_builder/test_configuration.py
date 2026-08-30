@@ -25,17 +25,16 @@ def write_tsv(path: Path, fields: list[str], rows: list[dict[str, object]]) -> N
 
 class ConfigurationTests(unittest.TestCase):
     def create_workspace(self, root: Path) -> tuple[Path, Path, Path]:
-        localization = root / "localization"
         source = root / "source"
         configurations = root / "configurations"
         build = root / "build"
         pcsx2 = root / "pcsx2"
-        localization.mkdir()
         write_tsv(
-            root / "catalog" / "targets.tsv",
+            root / "modules" / "targets.tsv",
             binary_patcher.TARGET_FIELDS,
             [],
         )
+        localization = root / "patches" / "localization" / "enabled"
         self.create_module(localization, "translation_importer")
         self.create_module(localization, "texture_patcher")
         source.mkdir()
@@ -89,7 +88,7 @@ class ConfigurationTests(unittest.TestCase):
         return root, source, configurations
 
     def create_module(self, feature: Path, module_type: str) -> Path:
-        module = feature / module_type
+        module = feature
         module.mkdir(parents=True, exist_ok=True)
         if module_type == "translation_importer":
             (module / "mappings.tsv").write_text("id\n", encoding="utf-8")
@@ -103,8 +102,8 @@ class ConfigurationTests(unittest.TestCase):
     def create_feature_inputs(
         self, builder: Path, feature_id: str, *module_types: str
     ) -> Path:
-        feature = builder / feature_id
-        feature.mkdir(exist_ok=True)
+        feature = builder / "patches" / feature_id / "enabled"
+        feature.mkdir(parents=True, exist_ok=True)
         for module_type in module_types:
             self.create_module(feature, module_type)
         return feature
@@ -119,10 +118,10 @@ class ConfigurationTests(unittest.TestCase):
         configuration_id: str = "test",
     ) -> Path:
         root = configurations.parent
-        configuration = configurations / f"{configuration_id}.json"
-        catalog_root = root / "catalog"
-        catalog_root.mkdir(parents=True, exist_ok=True)
-        injections: dict[str, object] = {}
+        configuration = configurations / f"{configuration_id}.jsonc"
+        patches_root = root / "patches"
+        patches_root.mkdir(parents=True, exist_ok=True)
+        patches: dict[str, dict[str, object]] = {}
         parsed_features: dict[str, catalog_format.ContainerNode] = {}
         for feature_id, feature in catalog.items():
             if not isinstance(feature, dict):
@@ -131,20 +130,24 @@ class ConfigurationTests(unittest.TestCase):
             module_settings = feature.get("module_settings", {})
             if not isinstance(module_settings, dict):
                 raise ValueError("Test module settings must be an object")
-            injection_id = f"i__{feature_id}__enabled"
-            temporary = catalog_root / f".{feature_id}.modcat"
+            enabled_patch_id = f"{feature_id}.enabled"
+            temporary = root / f".{feature_id}.modcat"
             module_source_parts: list[str] = []
             for setting_id, module_type in module_settings.items():
-                module_injection_id = f"i__{feature_id}__{setting_id}"
+                module_patch_id = f"{feature_id}.{setting_id}"
                 module_source_parts.append(
                     f"  {setting_id}: setting {{\n"
                     f"    description: {json.dumps(f'Select {module_type}.')},\n"
-                    f"    modules: [{json.dumps(module_type)}],\n"
-                    f"    patches: [{json.dumps(module_injection_id)}],\n"
+                    f"    patch: {json.dumps(module_patch_id)},\n"
                     "  },\n"
                 )
-                injections[module_injection_id] = {
-                    "description": f"Synthetic {setting_id}."
+                self.create_module(
+                    patches_root / feature_id / setting_id,
+                    str(module_type),
+                )
+                patches[module_patch_id] = {
+                    "description": f"Synthetic {setting_id}.",
+                    "modules": [module_type],
                 }
             module_source = "".join(module_source_parts)
             temporary.write_text(
@@ -152,7 +155,7 @@ class ConfigurationTests(unittest.TestCase):
                 f"  description: {json.dumps(description)},\n"
                 "  enabled: setting {\n"
                 f"    description: {json.dumps(description)},\n"
-                f"    patches: [{json.dumps(injection_id)}],\n"
+                f"    patch: {json.dumps(enabled_patch_id)},\n"
                 "  },\n"
                 f"{module_source}"
                 "}\n",
@@ -160,19 +163,38 @@ class ConfigurationTests(unittest.TestCase):
             )
             parsed_features[feature_id] = catalog_format.parse_catalog(temporary)
             temporary.unlink()
-            injections[injection_id] = {"description": str(description)}
-        (catalog_root / "catalog.modcat").write_text(
+            enabled_inputs = patches_root / feature_id / "enabled"
+            enabled_modules: list[str] = []
+            if (enabled_inputs / "mappings.tsv").is_file():
+                enabled_modules.append("translation_importer")
+            if (enabled_inputs / "containers.tsv").is_file():
+                enabled_modules.append("texture_patcher")
+            enabled_modules = [
+                module
+                for module in enabled_modules
+                if module not in module_settings.values()
+            ]
+            patches[enabled_patch_id] = (
+                {"description": str(description), "modules": enabled_modules}
+                if enabled_modules
+                else {
+                    "description": str(description),
+                    "startup_fast_forward_frames": {"additive": 0},
+                }
+            )
+        (root / "catalog.modcat").write_text(
             catalog_format.serialize_catalog(parsed_features, include_patches=True),
             encoding="utf-8",
         )
-        (catalog_root / "edits.json").write_text("{}\n", encoding="utf-8")
-        (catalog_root / "injections.json").write_text(
-            json.dumps(injections, indent=2) + "\n", encoding="utf-8"
-        )
-        (catalog_root / "string_patches.json").write_text(
-            "{}\n", encoding="utf-8"
-        )
-        (configurations / "base.json").write_text(
+        by_file: dict[str, dict[str, object]] = {}
+        for patch_id, definition in patches.items():
+            by_file.setdefault(patch_id.split(".", 1)[0], {})[patch_id] = definition
+        for stem, definitions in by_file.items():
+            (patches_root / f"{stem}.json").write_text(
+                json.dumps(definitions, indent=2) + "\n",
+                encoding="utf-8",
+            )
+        (configurations / "base.jsonc").write_text(
             json.dumps(
                 {
                     "features": {
@@ -316,7 +338,7 @@ class ConfigurationTests(unittest.TestCase):
             feature = self.create_feature_inputs(
                 builder, "localization", "translation_importer"
             )
-            helper = feature / "translation_importer" / "helper.py"
+            helper = feature / "helper.py"
             helper.write_text("raise SystemExit\n", encoding="utf-8")
             configuration = self.create_configuration(
                 configurations,
@@ -327,26 +349,18 @@ class ConfigurationTests(unittest.TestCase):
             loaded = load_configuration(configuration, root, root)
             resources = set(configuration_resource_files(loaded))
             self.assertIn((root / "game.json").resolve(), resources)
-            self.assertIn((root / "catalog" / "catalog.modcat").resolve(), resources)
+            self.assertIn((root / "catalog.modcat").resolve(), resources)
             self.assertIn(
-                (root / "catalog" / "edits.json").resolve(),
+                (root / "patches" / "localization.json").resolve(),
                 resources,
             )
             self.assertIn(
-                (root / "catalog" / "injections.json").resolve(),
-                resources,
-            )
-            self.assertIn(
-                (root / "catalog" / "string_patches.json").resolve(),
-                resources,
-            )
-            self.assertIn(
-                (root / "configurations" / "base.json").resolve(), resources
+                (root / "configurations" / "base.jsonc").resolve(), resources
             )
             self.assertIn(configuration.resolve(), resources)
-            self.assertIn((feature / "translation_importer" / "mappings.tsv").resolve(), resources)
+            self.assertIn((feature / "mappings.tsv").resolve(), resources)
             self.assertIn(
-                (builder / "catalog" / "targets.tsv").resolve(),
+                (builder / "modules" / "targets.tsv").resolve(),
                 resources,
             )
             self.assertNotIn(helper.resolve(), resources)
@@ -355,7 +369,7 @@ class ConfigurationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             builder, source, configurations = self.create_workspace(root)
-            feature = builder / "localization"
+            feature = builder / "patches" / "localization" / "enabled"
             (feature / "unknown").mkdir()
             self.create_module(feature, "translation_importer")
             configuration = self.create_configuration(
@@ -497,7 +511,7 @@ class ConfigurationTests(unittest.TestCase):
                 configuration_resource_files(loaded, include_disabled=True)
             )
             optional_inputs = {
-                (builder / "localization" / "texture_patcher" / name).resolve()
+                (builder / "patches" / "localization" / "enabled" / name).resolve()
                 for name in ("containers.tsv", "mappings.tsv", "strategies.tsv")
             }
             self.assertTrue(optional_inputs.isdisjoint(selected))
@@ -516,10 +530,10 @@ class ConfigurationTests(unittest.TestCase):
             assembly = root / "src" / "runtime.S"
             assembly.parent.mkdir()
             assembly.write_text("nop\n", encoding="ascii")
-            injections_path = root / "catalog" / "injections.json"
-            injections = json.loads(injections_path.read_text(encoding="utf-8"))
-            injections["i__localization__enabled"]["hooks"] = {"runtime": {}}
-            injections["i__localization__enabled"]["payload"] = {
+            patches_path = root / "patches" / "localization.json"
+            patches = json.loads(patches_path.read_text(encoding="utf-8"))
+            patches["localization.enabled"]["hooks"] = {"runtime": {}}
+            patches["localization.enabled"]["payload"] = {
                 "runtime_asm": {
                     "kind": "asm",
                     "path": "src/runtime.S",
@@ -532,8 +546,8 @@ class ConfigurationTests(unittest.TestCase):
                     },
                 }
             }
-            injections_path.write_text(
-                json.dumps(injections, indent=2) + "\n", encoding="utf-8"
+            patches_path.write_text(
+                json.dumps(patches, indent=2) + "\n", encoding="utf-8"
             )
 
             disabled = load_configuration(configuration_path, root, builder)

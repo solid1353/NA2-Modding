@@ -6,9 +6,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.scripts import catalog
+from na228_builder.scripts import catalog, jsonc
 from na228_builder.scripts.battle_settings_runtime import (
-    battle_settings_runtime_fragment,
+    battle_settings_runtime_fragments,
 )
 from scripts.lib.paths import load_local_paths
 
@@ -19,31 +19,33 @@ class XdashChakraCostTests(unittest.TestCase):
         cls.paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         cls.repository = cls.paths.repository
         cls.builder = cls.paths.path("builder")
-        cls.catalog_path = cls.builder / "catalog"
+        cls.catalog_path = cls.builder / "catalog.modcat"
         cls.configurations = cls.builder / "configurations"
 
     def test_base_runtime_default_is_five_percent(self) -> None:
         selection = catalog.load_selection(
             self.catalog_path,
-            self.configurations / "base.json",
+            self.configurations / "base.jsonc",
         )
-        fragment = battle_settings_runtime_fragment(
-            selection,
-            owner="settings.runtime_injector",
+        fragments = battle_settings_runtime_fragments(
+            selection, owner="settings.runtime_injector"
         )
-        self.assertIsNotNone(fragment)
-        assert fragment is not None
-        self.assertEqual(struct.unpack("<6I", fragment.payload)[4], 5)
+        fragment = next(
+            item
+            for item in fragments
+            if item.symbol == "battle_settings_xdash_chakra_cost_default"
+        )
+        self.assertEqual(struct.unpack("<I", fragment.payload)[0], 5)
 
     def test_runtime_default_preserves_configured_percent(self) -> None:
-        base = json.loads(
-            (self.configurations / "base.json").read_text(encoding="utf-8")
+        base = jsonc.loads(
+            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
         )
         with tempfile.TemporaryDirectory() as directory:
-            configuration_path = Path(directory) / "normalized.json"
+            configuration_path = Path(directory) / "normalized.jsonc"
             for percent in (0, 50, 100):
                 with self.subTest(percent=percent):
-                    base["features"]["settings"]["shared"][
+                    base["features"]["settings"]["in_game"]["shared"][
                         "xdash_chakra_cost"
                     ] = percent
                     configuration_path.write_text(
@@ -54,24 +56,24 @@ class XdashChakraCostTests(unittest.TestCase):
                         self.catalog_path,
                         configuration_path,
                     )
-                    fragment = battle_settings_runtime_fragment(
-                        selection,
-                        owner="settings.runtime_injector",
+                    fragments = battle_settings_runtime_fragments(
+                        selection, owner="settings.runtime_injector"
                     )
-                    self.assertIsNotNone(fragment)
-                    assert fragment is not None
-                    self.assertEqual(
-                        struct.unpack("<6I", fragment.payload)[4],
-                        percent,
+                    fragment = next(
+                        item
+                        for item in fragments
+                        if item.symbol
+                        == "battle_settings_xdash_chakra_cost_default"
                     )
+                    self.assertEqual(struct.unpack("<I", fragment.payload)[0], percent)
 
     def test_false_disables_the_shared_runtime_fragment(self) -> None:
-        base = json.loads(
-            (self.configurations / "base.json").read_text(encoding="utf-8")
+        base = jsonc.loads(
+            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
         )
-        base["features"]["settings"]["shared"] = False
+        base["features"]["settings"]["in_game"]["shared"] = False
         with tempfile.TemporaryDirectory() as directory:
-            configuration_path = Path(directory) / "disabled.json"
+            configuration_path = Path(directory) / "disabled.jsonc"
             configuration_path.write_text(
                 json.dumps(base, indent=2) + "\n",
                 encoding="utf-8",
@@ -80,22 +82,22 @@ class XdashChakraCostTests(unittest.TestCase):
                 self.catalog_path,
                 configuration_path,
             )
-        self.assertIsNone(
-            battle_settings_runtime_fragment(
-                selection,
-                owner="settings.runtime_injector",
-            )
+        self.assertEqual(
+            battle_settings_runtime_fragments(
+                selection, owner="settings.runtime_injector"
+            ),
+            (),
         )
 
     def test_catalog_rejects_cost_outside_normalized_gauge(self) -> None:
-        base = json.loads(
-            (self.configurations / "base.json").read_text(encoding="utf-8")
+        base = jsonc.loads(
+            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
         )
         with tempfile.TemporaryDirectory() as directory:
-            configuration_path = Path(directory) / "invalid.json"
+            configuration_path = Path(directory) / "invalid.jsonc"
             for value in (-5, 4, 105):
                 with self.subTest(value=value):
-                    base["features"]["settings"]["shared"][
+                    base["features"]["settings"]["in_game"]["shared"][
                         "xdash_chakra_cost"
                     ] = value
                     configuration_path.write_text(
@@ -111,10 +113,10 @@ class XdashChakraCostTests(unittest.TestCase):
     def test_hook_charges_the_first_persisted_movement_update(self) -> None:
         selection = catalog.load_selection(
             self.catalog_path,
-            self.configurations / "base.json",
+            self.configurations / "base.jsonc",
         )
         injection = selection.injections[
-            "i__battle_logic__xdash_chakra_cost"
+            "settings.shared.xdash_chakra_cost"
         ]
         hooks = injection["hooks"]
         self.assertEqual(

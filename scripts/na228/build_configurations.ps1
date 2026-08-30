@@ -6,7 +6,7 @@ function Get-Na2BuildConfigurations {
 
     $configurationRoot = Join-Path ([string]$Paths.builder) 'configurations'
     $configurationFiles = @(
-        Get-ChildItem -LiteralPath $configurationRoot -Filter '*.json' -File |
+        Get-ChildItem -LiteralPath $configurationRoot -Filter '*.jsonc' -File |
             Sort-Object Name
     )
     if ($configurationFiles.Count -eq 0) {

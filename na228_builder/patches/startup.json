@@ -1,0 +1,215 @@
+{
+  "startup": {
+    "description": "Route startup directly into native Continue Save/Load.",
+    "edits": {
+      "enter_title_input_state_immediately": {
+        "description": "Enter the title-input state immediately after required startup loading and splash cleanup, bypassing the post-splash sequence.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE12CC",
+        "expected_hex": "02000324",
+        "replacement_hex": "03000324"
+      },
+      "return_native_continue_result": {
+        "description": "Return the native Continue result without constructing or displaying the title screen, selecting main-menu state 4 substate 2 through the existing caller.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE1340",
+        "expected_hex": "107A070C",
+        "replacement_hex": "02000224"
+      },
+      "treat_no_load_completion_as_menu_success": {
+        "description": "Treat the no-load completion as a successful Continue result so startup enters the main menu without loaded save data.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xEA0B8",
+        "expected_hex": "FFFF0224",
+        "replacement_hex": "01000224"
+      }
+    }
+  },
+  "startup.faster_loading": {
+    "description": "Keep sound and stream initialization at boot while loading each RPG or player voice-bank index on its first playback.",
+    "hooks": {
+      "initialize_audio_without_voice_indexes": {
+        "description": "Open every native audio archive and initialize sound indexes while preserving the allocated RPG and player voice tables for lazy loading.",
+        "target_id": "na2_elf",
+        "offset": "0xD9760",
+        "expected_hex": "5459070C",
+        "symbol": "initialize",
+        "encoding": "jal26"
+      },
+      "load_player_voice_index_before_playback": {
+        "description": "Load and cache the requested player voice-bank index before the resident voice queue starts its clip.",
+        "target_id": "na2_elf",
+        "offset": "0xD2DA0",
+        "expected_hex": "F465070C",
+        "symbol": "player",
+        "encoding": "jal26"
+      },
+      "load_rpg_voice_index_before_playback": {
+        "description": "Load and cache the requested RPG voice-bank index before the resident wrapper starts its clip.",
+        "target_id": "na2_elf",
+        "offset": "0xD611C",
+        "expected_hex": "F465070C",
+        "symbol": "rpg",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "startup_voice_loading": {
+        "kind": "c",
+        "path": "src/startup/faster_loading.c",
+        "namespace": "startup.faster.loading",
+        "imports": {
+          "startup_voice_loading_state": "voice_state"
+        },
+        "fragments": {
+          "ensure": {
+            "object": "startup.faster.loading.text.startup.voice.loading.ensure"
+          },
+          "initialize": {
+            "object": "startup.faster.loading.text.startup.voice.loading.initialize"
+          },
+          "player": {
+            "object": "startup.faster.loading.text.startup.voice.loading.player"
+          },
+          "rpg": {
+            "object": "startup.faster.loading.text.startup.voice.loading.rpg"
+          }
+        }
+      },
+      "voice_state": {
+        "kind": "data",
+        "alignment": 4,
+        "value": "FFFFFFFF000000000000000000000000000000000000000000000000"
+      }
+    },
+    "startup_fast_forward_frames": {
+      "additive": -600
+    }
+  },
+  "startup.loading_screen": {
+    "description": "Replace the boot splashes with a large primitive percentage and progress bar paced across a 6.5-second elapsed-time estimate while the original startup loaders run.",
+    "hooks": {
+      "initialize_hold_splash_controller_s_first": {
+        "description": "Initialize and hold the splash controller's first boot-safe draw slot while preserving the startup loop's real loader checks.",
+        "target_id": "na2_elf",
+        "offset": "0xE11A0",
+        "expected_hex": "6082070C",
+        "symbol": "hook",
+        "encoding": "jal26"
+      },
+      "replace_visible_splash_sprite_draw_independent": {
+        "description": "Replace the visible splash sprite draw with independent boot-safe primitives for a percentage and progress bar paced across a 6.5-second elapsed-time estimate.",
+        "target_id": "na2_elf",
+        "offset": "0xE11E0",
+        "expected_hex": "3880070C",
+        "symbol": "draw",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "loading_screen": {
+        "kind": "c",
+        "path": "src/startup/loading_screen.c",
+        "namespace": "startup.loading.screen",
+        "imports": {
+          "startup_loading_state": "state"
+        },
+        "fragments": {
+          "hook": {
+            "object": "startup.loading.screen.text.startup.loading.hook"
+          },
+          "constants": {
+            "object": "startup.loading.screen.rodata"
+          },
+          "vertex": {
+            "object": "startup.loading.screen.text.startup.loading.vertex"
+          },
+          "rect": {
+            "object": "startup.loading.screen.text.startup.loading.rect"
+          },
+          "color": {
+            "object": "startup.loading.screen.text.startup.loading.color"
+          },
+          "digit_mask": {
+            "object": "startup.loading.screen.text.startup.loading.digit.mask"
+          },
+          "digit": {
+            "object": "startup.loading.screen.text.startup.loading.digit"
+          },
+          "percent_sign": {
+            "object": "startup.loading.screen.text.startup.loading.percent.sign"
+          },
+          "draw": {
+            "object": "startup.loading.screen.text.startup.loading.draw"
+          }
+        }
+      },
+      "state": {
+        "kind": "data",
+        "alignment": 4,
+        "value": "0000000000000000"
+      }
+    }
+  },
+  "startup.auto_loading": {
+    "description": "Silently drive the native asynchronous memory-card worker through port-zero scan, record-zero selection, confirmation, and verified load completion before the normal main-menu loader, then report the outcome for ten seconds in the usable main menu.",
+    "hooks": {
+      "draw_savedata_outcome_in_main_menu_screen_context": {
+        "description": "Retain the native main-menu update, temporarily select its frame-wide screen context, draw a non-blocking right-aligned savedata outcome, and restore the prior context.",
+        "target_id": "na2_elf",
+        "offset": "0xE9CAC",
+        "expected_hex": "140F080C",
+        "symbol": "auto_loading_notification_draw",
+        "encoding": "jal26"
+      },
+      "replace_visible_save_load_controller_update": {
+        "description": "Replace only Continue's visible Save/Load controller update with the silent first-record state machine while retaining native allocation, cleanup, result handling, and post-load setup.",
+        "target_id": "na2_elf",
+        "offset": "0xEA084",
+        "expected_hex": "C08F070C",
+        "symbol": "auto_loading_update",
+        "encoding": "jal26"
+      },
+      "suppress_visible_save_load_child_draw": {
+        "description": "Replace the Save/Load child draw call with an owned no-op while the silent first-record state machine runs.",
+        "target_id": "na2_elf",
+        "offset": "0xEA0D0",
+        "expected_hex": "C095070C",
+        "symbol": "auto_loading_suppress_draw",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "auto_loading": {
+        "kind": "c",
+        "path": "src/startup/auto_loading.c",
+        "namespace": "startup.auto.loading",
+        "imports": {
+          "startup_save_notification_state": "notification_state"
+        },
+        "fragments": {
+          "auto_loading_update": {
+            "object": "startup.auto.loading.text.startup.auto.loading.update"
+          },
+          "auto_loading_suppress_draw": {
+            "object": "startup.auto.loading.text.startup.auto.loading.suppress.draw"
+          },
+          "notification_constants": {
+            "object": "startup.auto.loading.rodata"
+          },
+          "auto_loading_notification_draw": {
+            "object": "startup.auto.loading.text.startup.auto.loading.notification.draw"
+          }
+        }
+      },
+      "notification_state": {
+        "kind": "data",
+        "alignment": 4,
+        "value": "0000000000000000000000000000000000000000"
+      }
+    }
+  }
+}

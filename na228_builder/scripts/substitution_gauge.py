@@ -5,7 +5,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import TYPE_CHECKING
 
 from ..payload_builder.operations import PayloadFragment
-from .battle_settings_runtime import PRACTICE_SETTINGS_PATH, SHARED_SETTINGS_PATH
+from .battle_settings_runtime import PRACTICE_SETTINGS_PATH, shared_setting_path
 
 if TYPE_CHECKING:
     from .catalog import CatalogSelection
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 CHARACTER_OVERRIDES_PATH = (
     "features",
-    "general",
+    "settings",
     "character_overrides",
 )
 DEFAULT_RECOVERY_DELAY_SECONDS = Decimal("14.0")
@@ -75,27 +75,24 @@ def substitution_gauge_fragment(
 ) -> PayloadFragment | None:
     """Encode the selected native-30-FPS substitution-gauge configuration."""
 
-    node = _selected_node(selection, SHARED_SETTINGS_PATH)
+    node = _selected_node(selection, shared_setting_path("substitution"))
     if not node.enabled:
         return None
     character_overrides = _selected_node(selection, CHARACTER_OVERRIDES_PATH)
     if not character_overrides.enabled:
         raise ValueError(
-            "features.settings.shared.substitution requires "
-            "features.general.character_overrides"
+            "features.settings.in_game.shared.substitution requires "
+            "features.settings.character_overrides"
         )
     practice_settings = _selected_node(selection, PRACTICE_SETTINGS_PATH)
     if not practice_settings.enabled:
         raise ValueError(
-            "features.settings.shared.substitution requires "
-            "features.settings.practice"
+            "features.settings.in_game.shared.substitution requires "
+            "features.settings.in_game.practice"
         )
 
-    value = node.configured_value
-    if not node.has_configured_value or not isinstance(value, dict):
-        raise ValueError("Shared settings requires an object value")
-    substitution = value.get("substitution")
-    if not isinstance(substitution, dict):
+    substitution = node.configured_value
+    if not node.has_configured_value or not isinstance(substitution, dict):
         raise ValueError("Shared settings substitution requires an object value")
     default = substitution.get("default")
     if default not in SUBSTITUTION_MODE_VALUES:

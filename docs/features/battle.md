@@ -1,14 +1,40 @@
 # Battle
 
-Battle menu defaults live under `features.settings`; Character Overrides lives
-under `features.general.character_overrides`, loads layered TSV data, and emits
-one resident table shared by current and future per-character battle hooks.
+Battle menu defaults and Character Overrides live under `features.settings`.
+`features.settings.character_overrides` loads layered TSV data and emits one
+resident table shared by current and future per-character battle hooks.
 
 ## Battle Settings
 
-The `features.settings.shared` object owns the shared runtime
-defaults used by Battle Settings and Practice Settings, plus the initial Simple
-Display value. Its `ultimate_jutsu` selector accepts the six native values
+`features.settings.in_game.battle` defines defaults for every retained native Battle
+row:
+
+| Field | Values |
+| --- | --- |
+| `time` | `10`, `20`, `30`, `40`, `50`, `60`, `70`, `80`, `90`, `99`, `unlimited` |
+| `difficulty` | `simple`, `easy`, `normal`, `hard`, `insane`, `ultimate` |
+| `items` | `none`, `less`, `normal`, `more` |
+| `chakra` | `normal`, `unlimited` |
+| `handicap` | `0-10` through `10-0` |
+
+The complete base configuration supplies every field. These values initialize
+the Battle manager and replace the corresponding local values when Return to
+Defaults is used. Any native field may instead be `false`, which removes that
+row from the generated menu and leaves its native stored value unchanged.
+Ultimate Jutsu is an injected shared setting instead of a
+native Battle field, so Battle and Practice cannot configure conflicting
+defaults for it.
+
+The rendered rework keeps Time, Difficulty, Items, Chakra, and Handicap first.
+Every enabled setting declared under `features.settings.in_game.shared` follows that
+complete native block in catalog declaration order.
+
+The initial Battle pack is applied immediately after the native mode-2 manager
+assignment at clean ELF offset `0xEA7B4`. This is separate from the
+Practice-only startup/reset path.
+
+The `features.settings.in_game.shared` object owns runtime defaults used by Battle
+Settings and Practice Settings. Its `ultimate_jutsu` selector accepts the six native values
 `no_use`, `random`, `command`, `timing`, `turn`, and `combo`, followed by the
 custom values `no_contest` and `no_hud`. The configured value initializes the
 shared runtime enum and is restored by either menu's reset action; changing and
@@ -46,19 +72,19 @@ exceeds those seven slots; labels, values, row-specific rendering, arrows, and
 the cursor are remapped to the visible rows.
 
 With the base configuration, the logical order is Time, Difficulty, Items,
-Chakra, Substitution, Sub Active Frames, X-dash Chakra Cost, Support, Ultimate
-Jutsu, Shadowblur Extra Hit, Extra Hit, and Handicap. The twelve rows scroll
+Chakra, Handicap, Ultimate Jutsu, Shadowblur Extra Hit, Extra Hit, Sub Active
+Frames, X-dash Chakra Cost, Support, and Substitution. The twelve rows scroll
 through the seven physical slots; changing the schema's logical count does not
 change the table footprint.
 
-Handicap remains the final logical row and uses the ordinary row renderer with
+Handicap uses the ordinary row renderer with
 the text values `0-10`, `1-9`, `2-8`, `3-7`, `4-6`, `5-5`, `6-4`, `7-3`,
 `8-2`, `9-1`, and `10-0`. The native shuriken display and special Handicap
 cursor and arrow paths are not rendered.
 
 ## Control Settings
 
-`features.settings.controls` owns the Control Settings action split and
+`features.settings.new_controls` owns the Control Settings action split and
 default shoulder-button layout independently of the substitution gauge. Action
 index `6` remains Guard and is the sole source of the logical block bit. Action
 index `7` is labelled Substitution, is searched by both native substitution
@@ -77,14 +103,14 @@ owned layout.
 
 ## Simple Display
 
-`features.settings.shared.simple_display` selects whether battles start with
+`features.settings.simple_display` selects whether battles start with
 the native Simple Display setting `"off"` or `"on"`. The base configuration
 selects `"off"`. The setting owns only the guarded main-ELF initializer
 instruction at offset `0xE7BAC`.
 
 ## X-dash chakra cost
 
-`features.settings.shared.xdash_chakra_cost` is expressed as normalized
+`features.settings.in_game.shared.xdash_chakra_cost` is expressed as normalized
 percentage points on the inclusive `0..100` scale in 5-point steps. The menu
 therefore exposes `0%`, `5%`, through `100%`. The runtime consumer converts the
 selected `x/100` value to NA2's native 15-point chakra gauge as `x * 15 / 100`.
@@ -93,7 +119,7 @@ full native chakra gauge. The selector does not add an affordability gate.
 
 ## Substitution
 
-`features.settings.shared` owns two substitution settings:
+`features.settings.in_game.shared` owns two substitution settings:
 
 - `sub_active_frames` accepts `0..16` and selects how many prior input-history
   frames remain active for Substitution in addition to the current frame.
@@ -152,7 +178,7 @@ edited.
 `features.character_select.balance_overlay` independently reads the same
 complete table. It always draws `TIER` in separate left and right top-screen
 blocks. It draws the resolved `SUB x%` value only when
-`features.general.character_overrides` is enabled, omitting trailing decimal
+`features.settings.character_overrides` is enabled, omitting trailing decimal
 zeroes. It never draws player labels or numeric IDs.
 
 Every runtime consumer uses that normalized value. With the runtime mode set to
@@ -168,7 +194,7 @@ S++ `50`, and S+++ `55`, all over `100`.
 `tier` is consumed whenever the Character Select overlay is enabled.
 `substitution_cost` is consumed by the overlay only when character overrides
 are enabled, and by the native chakra-cost and substitution-gauge battle hooks.
-The gauge therefore requires `features.general.character_overrides`.
+The gauge therefore requires `features.settings.character_overrides`.
 `support` is independent: `"on"` keeps native field support and its lower
 gauge, while `"off"` suppresses only the native support gauge and field-support
 action.
@@ -177,7 +203,7 @@ have no runtime consumers.
 
 ## Battle support
 
-`features.settings.shared.support: "off" | "on"` directly chooses the initial
+`features.settings.in_game.shared.support: "off" | "on"` directly chooses the initial
 and reset value of the `Support: Off | On` row. `Off` suppresses free-field
 support calls and the native lower support gauge without changing selected
 support data, Character Select behavior, or linked Jutsu. A guarded main-ELF
@@ -332,9 +358,9 @@ could imply an ABI that has not been established.
 Implementation should stay inside the existing battle-logic mechanisms:
 
 - add the typed `combo_damage_scaling` object under `features.general` in
-  `@builder/catalog/catalog.modcat`, pointing to new injection ID
-  `i__battle_logic__combo_damage_scaling`, and select the accepted values in
-  `@builder/configurations/base.json` so existing profile overrides inherit
+  `@builder/catalog.modcat`, pointing to unified patch
+  `general.combo_damage_scaling`, and select the accepted values in
+  `@builder/configurations/base.jsonc` so existing profile overrides inherit
   them;
 - add `@builder/scripts/combo_damage_scaling.py`, following the focused runtime
   configuration-fragment pattern, to emit read-only symbol
@@ -343,7 +369,7 @@ Implementation should stay inside the existing battle-logic mechanisms:
 - add `src/battle_logic/combo_damage_scaling.c` with a multiplier entry that
   imports the curve symbol and reads the proven native combo state;
 - add the three guarded call-site hooks, compiled helper fragment, and one
-  shared ABI shim to `@builder/catalog/injections.json`;
+  shared ABI shim to the same unified patch in `@builder/patches/general.json`;
   the third hook at ELF `0x131734` remains a deployment gate until its natural
   `0.04` path has a positive capture (response target `0x42..0x47` with the
   applicable fighter `+0xBB0/+0xBBC/+0xBB4` bit `0x400` set). The clean-stage

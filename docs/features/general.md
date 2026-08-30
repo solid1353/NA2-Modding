@@ -2,12 +2,12 @@
 
 Project-wide selectable behavior that does not belong to gameplay, rendering,
 localization, or quality-of-life categories. Selectable nodes and guarded edits
-are owned by `features.general` in `@builder/catalog/catalog.modcat`.
+are owned by `features.general` in `@builder/catalog.modcat`.
 
 ## Unlock all content without loading a save
 
-`features.general.unlock_all` selects the resident injection
-`i__qol__content__unlock_all__availability`. Seven guarded hooks replace only the
+`features.general.unlock_all` selects unified patch
+`general.unlock_all`. Seven guarded hooks replace only the
 save-backed reads for characters, the Character Select R1-form gate, secondary
 content, the 32-entry small table, the six grouped tables, and metadata-valid
 jutsu, plus progress slot `0x6A`, which gates Ultimate difficulty. The injected
@@ -15,6 +15,10 @@ helpers reproduce bounded fully unlocked values and the native stable state for
 Collection figures; the progress helper returns available only for slot `0x6A`
 and preserves every other native progress read. Native wrappers, metadata
 checks, and callers remain intact.
+
+Its optional `demon_wind_bomb` boolean controls the same patch's guarded
+Classic Naruto assignment. Omitting it or setting it to `false` preserves native
+Jutsu compatibility; `true` admits selector `0x35` only for Classic Naruto.
 
 The feature performs no save-data writes. It therefore exposes characters and
 their R1 forms, supports, stages, jutsu, and Collection entries plus Ultimate

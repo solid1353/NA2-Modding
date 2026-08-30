@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.scripts import catalog
+from na228_builder.scripts import catalog, jsonc
 from na228_builder.scripts.practice_settings import (
     ROW_SIZE,
     SCHEMA_HEADER_SIZE,
@@ -21,21 +21,21 @@ class PracticeSettingsTests(unittest.TestCase):
         cls.paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         cls.repository = cls.paths.repository
         cls.builder = cls.paths.path("builder")
-        cls.catalog_path = cls.builder / "catalog"
+        cls.catalog_path = cls.builder / "catalog.modcat"
         cls.configurations = cls.builder / "configurations"
         cls.selection = catalog.load_selection(
             cls.catalog_path,
-            cls.configurations / "base.json",
+            cls.configurations / "base.jsonc",
         )
 
     def _selection(self, mutate) -> catalog.CatalogSelection:
-        base = json.loads(
-            (self.configurations / "base.json").read_text(encoding="utf-8")
+        base = jsonc.loads(
+            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
         )
         mutate(base["features"])
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
-        path = Path(directory.name) / "configuration.json"
+        path = Path(directory.name) / "configuration.jsonc"
         path.write_text(json.dumps(base, indent=2) + "\n", encoding="utf-8")
         return catalog.load_selection(self.catalog_path, path)
 
@@ -61,7 +61,7 @@ class PracticeSettingsTests(unittest.TestCase):
         row_count, player_count, opponent_count = struct.unpack_from(
             "<3I", fragment.payload
         )
-        self.assertEqual((row_count, player_count, opponent_count), (23, 15, 8))
+        self.assertEqual((row_count, player_count, opponent_count), (20, 13, 7))
         self.assertEqual(
             struct.unpack_from("<4B", fragment.payload, 12),
             (0, 0, 0, 0),
@@ -73,19 +73,17 @@ class PracticeSettingsTests(unittest.TestCase):
             [
                 0,
                 1,
-                17,
-                20,
-                21,
-                22,
                 2,
-                3,
-                18,
-                19,
-                4,
                 5,
                 6,
                 7,
-                8,
+                3,
+                18,
+                19,
+                20,
+                21,
+                22,
+                17,
                 9,
                 10,
                 11,
@@ -93,7 +91,6 @@ class PracticeSettingsTests(unittest.TestCase):
                 13,
                 14,
                 15,
-                16,
             ],
         )
         by_id = {row[0]: row for row in rows}
@@ -116,30 +113,31 @@ class PracticeSettingsTests(unittest.TestCase):
             }.issubset(relocation_symbols)
         )
 
-    def test_omitted_practice_defaults_preserve_native_values(self) -> None:
-        selection = self._selection(
-            lambda features: features["settings"].__setitem__("practice", {})
-        )
-        fragment = practice_settings_fragment(
-            selection,
-            owner="settings.runtime_injector",
-        )
-        self.assertIsNotNone(fragment)
-        assert fragment is not None
-        self.assertEqual(
-            struct.unpack_from("<4B", fragment.payload, 12),
-            (255,) * 4,
-        )
-
     def test_configured_defaults_use_native_enum_values(self) -> None:
         selection = self._selection(
-            lambda features: features["settings"].__setitem__(
+            lambda features: features["settings"]["in_game"].__setitem__(
                 "practice",
                 {
-                    "health": "critical",
-                    "commands": "on",
-                    "guide_ninja_sound": "on",
-                    "linked_attack": "random",
+                    "general_settings": {
+                        "health": "almost",
+                        "chakra": "unlimited",
+                        "linked_attack": "normal",
+                        "linked_mode": False,
+                        "items": "normal",
+                        "commands": "on",
+                        "damage": "on",
+                        "guide_ninja_sound": "on",
+                    },
+                    "opponent_settings": {
+                        "status": "com",
+                        "strength": "normal",
+                        "attack": "no",
+                        "guard": "no",
+                        "move": "stay",
+                        "substitution_jutsu": "normal",
+                        "linked_attack": "random",
+                        "extra_hit_counter": False,
+                    },
                 },
             )
         )
@@ -149,10 +147,6 @@ class PracticeSettingsTests(unittest.TestCase):
         )
         self.assertIsNotNone(fragment)
         assert fragment is not None
-        self.assertEqual(
-            struct.unpack_from("<4B", fragment.payload, 12),
-            (2, 1, 1, 2),
-        )
         defaults = {row[0]: row[7] for row in self._rows(fragment)}
         self.assertEqual(defaults[0], 2)
         self.assertEqual(defaults[6], 1)
@@ -161,7 +155,9 @@ class PracticeSettingsTests(unittest.TestCase):
 
     def test_disabling_shared_settings_keeps_the_native_practice_rows(self) -> None:
         selection = self._selection(
-            lambda features: features["settings"].__setitem__("shared", False)
+            lambda features: features["settings"]["in_game"].__setitem__(
+                "shared", False
+            )
         )
         fragment = practice_settings_fragment(
             selection,
@@ -170,14 +166,17 @@ class PracticeSettingsTests(unittest.TestCase):
         self.assertIsNotNone(fragment)
         assert fragment is not None
         rows = self._rows(fragment)
-        self.assertEqual([row[0] for row in rows], list(range(17)))
-        self.assertEqual(struct.unpack_from("<3I", fragment.payload), (17, 9, 8))
+        self.assertEqual(
+            [row[0] for row in rows],
+            [0, 1, 2, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15],
+        )
+        self.assertEqual(struct.unpack_from("<3I", fragment.payload), (13, 6, 7))
         self.assertEqual(fragment.relocations, ())
 
     def test_backing_repeats_for_every_player_row_beyond_native_capacity(self) -> None:
-        injection = self.selection.injections["i__practice__settings_rework"]
+        injection = self.selection.injections["settings.in_game"]
         self.assertEqual(
-            injection["hooks"]["draw_compact_backing"],
+            injection["hooks"]["practice_draw_compact_backing"],
             {
                 "description": (
                     "Run the native backing renderer and repeat the final "
@@ -207,7 +206,7 @@ class PracticeSettingsTests(unittest.TestCase):
         self.assertIn("practice_settings_draw_backing", compiled)
 
     def test_scroll_flag_bridge_can_skip_the_native_up_arrow(self) -> None:
-        injection = self.selection.injections["i__practice__settings_rework"]
+        injection = self.selection.injections["settings.in_game"]
         source = injection["payload"]["practice_settings_abi"]
         compiled = {
             fragment.symbol: fragment

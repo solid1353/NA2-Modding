@@ -35,8 +35,8 @@ class ReleaseAppTests(unittest.TestCase):
             product_version="v-test",
             executable_name="Narutimate Accel v2.28_test.exe",
             output_name="Narutimate Accel v2.28.iso",
-            configuration="builder/configurations/synthetic.json",
-            configuration_name="config.json",
+            configuration="builder/configurations/synthetic.jsonc",
+            configuration_name="config.jsonc",
             images=(
                 self.image("na2", "original NA2 ISO", na2),
                 self.image("nun5", "original NUN5 ISO", nun5),
@@ -44,7 +44,7 @@ class ReleaseAppTests(unittest.TestCase):
         )
 
     def write_configuration(self, root: Path, value: object | None = None) -> Path:
-        path = root / "config.json"
+        path = root / "config.jsonc"
         path.write_text(json.dumps({} if value is None else value), encoding="utf-8")
         return path
 
@@ -59,8 +59,8 @@ class ReleaseAppTests(unittest.TestCase):
     def test_manifest_parser_normalizes_and_validates_image_identities(self) -> None:
         data = {
             "product_version": "1.0.0",
-            "configuration": "builder/configurations/synthetic.json",
-            "configuration_name": "config.json",
+            "configuration": "builder/configurations/synthetic.jsonc",
+            "configuration_name": "config.jsonc",
             "images": [
                 {
                     "id": "NA2",
@@ -90,14 +90,14 @@ class ReleaseAppTests(unittest.TestCase):
         )
         self.assertEqual(
             manifest.configuration_name,
-            "config.json",
+            "config.jsonc",
         )
 
     def test_manifest_parser_rejects_unsafe_product_name(self) -> None:
         data = {
             "product_version": "1.0.0",
-            "configuration": "builder/configurations/synthetic.json",
-            "configuration_name": "config.json",
+            "configuration": "builder/configurations/synthetic.jsonc",
+            "configuration_name": "config.jsonc",
             "images": [
                 {
                     "id": "na2",
@@ -218,7 +218,7 @@ class ReleaseAppTests(unittest.TestCase):
 
     def test_runtime_config_validation_wraps_internal_details_for_users(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            configuration = Path(directory) / "config.json"
+            configuration = Path(directory) / "config.jsonc"
             self.write_configuration(configuration.parent)
             with mock.patch(
                 "na228_builder.scripts.release_runtime.validate_release_configuration",

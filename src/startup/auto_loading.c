@@ -1,4 +1,4 @@
-/* Silently load the first save and report its outcome in the main menu. */
+/* Automatically load the first save and report its outcome in the main menu. */
 
 typedef signed int s32;
 typedef unsigned char u8;
@@ -92,7 +92,7 @@ typedef unsigned int u32;
 #define NOTIFICATION_LINE_HEIGHT 24.0f
 #define COLOR_BLACK 0xFF000000u
 
-#define AUTOMATIC_SAVE_LOADING_SECTION(name) \
+#define AUTO_LOADING_SECTION(name) \
     __attribute__((section(name), noinline))
 #define ALWAYS_INLINE static inline __attribute__((always_inline))
 
@@ -302,8 +302,8 @@ ALWAYS_INLINE void capture_loaded_record(volatile u8 *worker)
     publish_notification(NOTIFICATION_LOADED);
 }
 
-AUTOMATIC_SAVE_LOADING_SECTION(".text.startup_automatic_save_loading")
-u32 startup_automatic_save_loading(void *controller, u32 mode)
+AUTO_LOADING_SECTION(".text.startup_auto_loading_update")
+u32 startup_auto_loading_update(void *controller, u32 mode)
 {
     void (*load_mode_preamble)(void *) =
         (void (*)(void *))LOAD_MODE_PREAMBLE_ADDRESS;
@@ -401,6 +401,11 @@ u32 startup_automatic_save_loading(void *controller, u32 mode)
 
     publish_notification(NOTIFICATION_LOAD_FAILED);
     return CONTINUE_WITHOUT_LOAD;
+}
+
+AUTO_LOADING_SECTION(".text.startup_auto_loading_suppress_draw")
+void startup_auto_loading_suppress_draw(void)
+{
 }
 
 ALWAYS_INLINE u8 *append_text(u8 *destination, const u8 *source)
@@ -537,8 +542,8 @@ ALWAYS_INLINE void draw_notification_line(const u8 *text, float y)
     draw_text(x, y, text, COLOR_BLACK);
 }
 
-AUTOMATIC_SAVE_LOADING_SECTION(".text.startup_save_notification_draw")
-void startup_save_notification_draw(void)
+AUTO_LOADING_SECTION(".text.startup_auto_loading_notification_draw")
+void startup_auto_loading_notification_draw(void)
 {
     void (*update_main_menu)(void) =
         (void (*)(void))MAIN_MENU_UPDATE_ADDRESS;

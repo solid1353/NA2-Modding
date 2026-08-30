@@ -2,8 +2,8 @@
 
 Feature contracts live here. The builder has no physical `features/`
 directory: selectable structure lives in
-`@builder/catalog/catalog.modcat`, while guarded edits, runtime units, and
-targets live beside it. Non-inline executable inputs and
+`@builder/catalog.modcat`; unified definitions live in `@builder/patches/`,
+and the shared target registry is `@builder/modules/targets.tsv`. Non-inline executable inputs and
 assets live under their concrete builder data area. Catalog-only features
 require no directory.
 

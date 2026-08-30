@@ -8,11 +8,12 @@ Ninja 5*.
 
 1. Extract all five release files into one directory.
 2. Put one supported clean NA2 ISO in that directory. If
-   `features.localization.ui` is enabled in `config.json`, also put one
+   `features.localization.ui` is enabled in `config.jsonc`, also put one
    supported clean Ultimate Ninja 5 ISO there. English UI textures and their
    matching layout/runtime patches are selected together. Their filenames do
    not matter. A build with UI disabled needs only NA2.
-3. Edit `config.json` if you want to change the selected features. Edit
+3. Edit `config.jsonc` if you want to change the selected features. Comments
+   and trailing commas are supported. Edit
    `character_overrides.tsv` if you want to change per-character battle values.
 4. Double-click the EXE.
 
@@ -21,7 +22,7 @@ selected changes, verifies the complete result, and then creates or replaces
 `Narutimate Accel v2.28.iso`. If the build fails, it preserves an existing
 output and removes only its temporary `.building` file.
 
-## `config.json`
+## `config.jsonc`
 
 `features` has the same hierarchy shown in `catalog.modcat`:
 
@@ -31,7 +32,7 @@ output and removes only its temporary `.building` file.
 - A named structured alternative is an object containing its selected named
   field. Object shapes and unions must match the catalog exactly.
 
-`config.json` contains the complete `features` tree; edit values in that tree
+`config.jsonc` contains the complete `features` tree; edit values in that tree
 directly. It has no separate overrides layer.
 
 Invalid keys, values, ranges, or ambiguous union values are rejected before

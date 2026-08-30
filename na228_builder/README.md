@@ -5,49 +5,43 @@ integrated catalog data.
 
 ## Canonical data
 
-- `catalog/catalog.modcat` owns the complete nested selectable hierarchy. Its
+- `catalog.modcat` owns the complete nested selectable hierarchy. Its
   `features` object contains every direct feature child. The custom
   declarative syntax uses JSON-like objects and TypeScript-like value types and
   is parsed directly by the Python builder.
-  [`CATALOG.md`](CATALOG.md) is the complete authoring and
+  [Catalog reference](../docs/catalog.md) is the complete authoring and
   configuration-semantics reference.
-- Catalog settings contain their descriptions, one `patches` array, and an
-  optional `modules` array. Patch IDs
-  beginning with `e__` resolve to guarded edits; IDs beginning with `i__`
-  resolve to injection units; IDs beginning with `s__` resolve to semantic
-  string patches. Implementation details never appear in the release catalog
-  reference.
-- `catalog/edits.json` is the direct root map of guarded binary edits. A root
-  may be one primitive edit, one fixed-stride `replace_table`, or a semantic
-  group whose `edits` map contains named primitive and table children. The
-  catalog loader expands table record patches into ordinary guarded
-  replacements before composition. A typed setting may feed its validated
-  value to a declared binary adapter instead of storing a fixed
-  `replacement_hex`. A bare setting may also select an adapter-backed fixed
-  edit whose readable expected and replacement values are encoded by the
-  adapter.
-- `catalog/injections.json` is the direct root map of runtime
-  injection units. Each unit contains `hooks`, `payload`, or both. Source
-  payloads declare `kind: "c"` with an exact `.c` path or `kind: "asm"` with
-  an exact `.S` path; both use the same namespace/import/fragment mapping.
-- `catalog/string_patches.json` owns semantic transformations
-  performed by the string patcher before inline and external string layout.
-- `configurations/base.json` contains the complete shared `features` tree and
-  is the canonical development configuration. `test.json`, `e2e.json`, and
-  `release.json` contain concrete `overrides`. Each overrides object may be
+- Catalog settings and structural blocks may contain one singular `patch`
+  reference. Dotted patch IDs describe catalog ownership; their implementation
+  capability is determined by the referenced definition, not by an ID prefix.
+  Implementation details never appear in the release catalog reference.
+- `patches/*.json` owns unified patch definitions, split by the first segment
+  of each dotted patch ID. One definition may contain a primitive `edit` or an
+  `edits` group, runtime `hooks` and `payload`, one semantic `string_patch`,
+  required `modules`, and launch metadata. This keeps one catalog identity for
+  one selected behavior while the existing executors continue to process each
+  mechanism. C and assembly sources remain separate files referenced by their
+  payload declarations.
+- The catalog loader expands fixed-stride `replace_table` records into ordinary
+  guarded replacements before composition. A typed setting may feed its
+  validated value to a declared binary adapter instead of storing fixed
+  replacement bytes.
+- `configurations/base.jsonc` contains the complete shared `features` tree and
+  is the canonical development configuration. `test.jsonc`, `e2e.jsonc`, and
+  `release.jsonc` contain concrete `overrides`. Each overrides object may be
   empty or partially mirror the catalog's feature tree directly. The loader
   applies the concrete configuration's `overrides` to `base.features`. Every
-  top-level configuration JSON is available to the development commands
+  top-level configuration JSONC is available to the development commands
   automatically. Root `game.json` may map a configuration to a unique alias;
   an aliased configuration is selected only by that alias. E2E selects
-  `e2e.json` internally; only release packaging uses `release.json`.
+  `e2e.jsonc` internally; only release packaging uses `release.jsonc`.
 - `configurations/overrides/base.character_overrides.tsv` contains the required
   `base` and `step` metadata rows and shared per-character overrides. These two
   rows are not characters, so their `base_id`, `character`, and `tier` cells
   are empty. `release.character_overrides.tsv` layers nonempty cells over it by
   row identity. Test and E2E use the base layer directly. Empty cells inherit;
   numeric zero is an explicit value. Release packaging materializes the resolved feature and
-  character-override layers into one external JSON configuration and one
+  character-override layers into one external JSONC configuration and one
   external character-override TSV.
 - `@resources/character_data.tsv` is the repository-owned ID/name and native-value
   reference used to validate character rows. Its
@@ -85,14 +79,15 @@ integrated catalog data.
   `base, parent-specials`. The last value belongs to `-2nd`: it captures
   that form in its own Base grid and the preceding primary form's Specials
   grid. The file is not a builder catalog input.
-- `catalog/targets.tsv` is the single target registry used by
+- `modules/targets.tsv` is the single builder-wide target registry used by
   edits and injection hooks.
 - `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.
-- `localization/assets/` owns edit-referenced localization binary assets.
-- Enabling `features.localization` includes the retained translation importer.
-  `features.localization.ui` atomically selects its layout patches and
-  the matching texture patcher. Both inputs live under `localization/` and are
-  real inputs, not empty selector nodes. Release builds always require the clean
+- `patches/localization/` owns localization patch inputs by patch ID:
+  Font assets under `font/glyphs/`, translations under `strings/`, and UI
+  texture inputs under `ui/`.
+- `features.localization.strings` selects the translation importer, while
+  `features.localization.ui` atomically selects its layout patches and the
+  matching texture patcher. Release builds always require the clean
   NA2 ISO and require the clean NUN5 ISO only when the resolved module list
   includes the texture patcher.
 - `@scripts/` contains every builder Python implementation file. Reusable
@@ -171,16 +166,22 @@ marker at the exact rounded executable cost. `Free` charges neither resource.
 ## Catalog nodes
 
 Catalog nodes may nest to any depth. A bare `setting` accepts `true` to apply
-its patches and `false` to disable it. `setting<T>` accepts a typed scalar or
+its patch and `false` to disable it. `setting<T>` accepts a typed scalar or
 closed object value; when `T` accepts `{}`, `true` is its empty-object shorthand
-and the selected value is normalized to `{}`. Direct boolean typed settings are
-forbidden so boolean data remains inside an object such as
-`setting<{ value: bool }>`.
+and the selected value is normalized to `{}`. Typed boolean settings accept
+`false` as data and remain selected.
 
-`false` disables any setting, union, or structural parent before type
-validation. Structural parents otherwise require explicit objects; `true`
-never expands a structural parent. Plain containers merge recursively through
-configuration overrides, while settings and node unions replace atomically.
+`false` disables a node only when its type does not accept `false`. Structural
+parents otherwise require explicit objects; `true` never expands a structural
+parent. A structural container may own one common patch for its nested tree; the
+patch receives the selected object and is applied once. Plain containers merge
+recursively through configuration overrides, while settings and node unions
+replace atomically.
+Patch IDs are unique across the complete catalog. Shared patches belong on the
+lowest common structural ancestor, and nested settings consumed by that patch
+may omit their own `patch` field.
+Structural-block and leaf-setting descriptions are optional and are retained
+only when they add meaning beyond the node name and type.
 Union branches must be provably disjoint and are never selected by order.
 Structural catalog objects may use `&` to declare fields shared by several
 object-union branches once; intersected fields must be disjoint. Unconditional
@@ -193,38 +194,36 @@ object intersections, numeric `&` comparisons, ranges, and steps,
 parentheses, `//` comments, and trailing commas. It rejects every unlisted
 construct, including `null`.
 
-An internal setting may declare startup launch timing as
-`startup_fast_forward_frames: { additive: N, override: N }`, with either key or
-both. Additives are signed integers; overrides are positive UInt64 frame
+An internal patch may declare startup launch timing as
+`startup_fast_forward_frames: { "additive": N, "override": N }`, with either
+key or both. Additives are signed integers; overrides are positive UInt64 frame
 counts. Resolution starts from the non-negative base value under `game.json`
 `launch_settings`, applies the selected direct profile override, then applies
 the selected build target's configuration metadata: the sole enabled catalog
 override replaces the baseline when present, and every enabled additive is
 summed. Source-only launches have no build configuration modifier. More than one
-enabled catalog override or a final result outside UInt64 is a configuration
+enabled patch override or a final result outside UInt64 is a configuration
 error. A zero result omits timed fast-forward. Disabled settings contribute
 nothing. This launch metadata is omitted from the public release catalog along
 with patch implementation references.
 
-Every binary edit contains an explicit `operation`. A grouped edit root
-contains only its optional description and a nonempty, one-level `edits` map;
+Every binary edit contains an explicit `operation`. A unified patch contains
+either one primitive `edit` or a nonempty, one-level `edits` map;
 each semantic child is either an ordinary primitive edit or a fixed-stride
 `replace_table`. Table records resolve to concrete `replace` edits before
-operation validation. Runtime target changes live under an injection unit's
+operation validation. Runtime target changes live under the same patch's
 `hooks` and therefore have no operation discriminator. Runtime sources,
-fragments, imports, relocations, and ABI metadata live under that unit's
-`payload`. Multiple catalog leaves may reference the same shared injection
-unit.
+fragments, imports, relocations, and ABI metadata live under its `payload`.
 
-Root edit and injection identities use `e__` and `i__` prefixes. Grouped edit
-children use concise semantic identities within their root; destination
+Unified patch identities use dotted catalog ownership paths. Grouped edit
+children use concise semantic identities within their patch; destination
 addresses remain data rather than identity. Genuinely unordered definition
 maps are serialized alphabetically. Feature declarations, payload source maps,
 and source fragment maps retain file declaration order; the injection builder
 derives fragment positions from that order instead of numeric `order` fields.
-Hook and payload fragment identities are concise within their owning injection.
+Hook and payload fragment identities are concise within their owning patch.
 Final resident-payload placement is deterministic by fragment kind, owner, and
-semantic symbol. Edit, injection, and hook descriptions are optional definition-local
+semantic symbol. Patch, edit, and hook descriptions are optional definition-local
 documentation; a present description must be nonempty and never affects
 execution.
 
@@ -263,7 +262,7 @@ execution within each feature remains derived from the stable internal engine
 order above.
 
 Release packaging applies `release.overrides` to `base.features`, then writes
-one editable JSON configuration named `config.json` containing only the
+one editable JSONC configuration named `config.jsonc` containing only the
 materialized `features` tree. It also materializes the layered base and release
 character values as editable `character_overrides.tsv` with every reference
 ID/name row present, and writes one
@@ -272,7 +271,7 @@ reference with the same public hierarchy, types, constraints, unions, and
 descriptions but no patch mappings or implementation details. `README.md`
 explains the editable files in simple terms.
 
-The packaged EXE validates `config.json` against its embedded complete catalog
+The packaged EXE validates `config.jsonc` against its embedded complete catalog
 and never reads the external catalog reference. It contains resources for every selectable
 catalog node, including nodes disabled by the default release selection.
 Catalog-owned runtime C and assembly sources have packaged objects, so end users do not need
@@ -341,5 +340,5 @@ The preflight dependency closure covers every input capable of changing the
 selected ISO. A build-affecting input or dependency change updates that closure
 and its existing invalidation coverage in the same change.
 
-The development injector reads the feature files under `catalog/` with
-`configurations/base.json` and `base.character_overrides.tsv`.
+The development injector reads unified definitions under `patches/` with
+`configurations/base.jsonc` and `base.character_overrides.tsv`.

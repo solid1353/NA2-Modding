@@ -2,6 +2,8 @@
 
 This first-class `na228_builder` module imports and validates strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
+The selectable `features.localization.strings` node owns the
+`localization.strings` patch and its translation-importer input.
 It never writes BIN or ELF payloads. Configuration builds pass its canonical in-memory
 artifact to `string_patcher`, which applies selected semantic string patches, derives
 inline versus linked placement from encoded fit and pointer availability, and
@@ -21,7 +23,7 @@ history and the builder's configuration-resource fingerprint own content identit
 `mappings.tsv` owns the canonical executable donor translations, user
 overrides, and optional pointer inventory. Normal builds import only
 `mappings.tsv`. Root
-`catalog/string_patches.json` owns the guarded imported-title
+`patches/general.json` owns the guarded imported-title
 declaration, while root `settings.title` supplies its replacement;
 `string_patcher` applies that selected operation to the normal translation path.
 
@@ -57,7 +59,8 @@ assets and their placement as one selection.
 
 ## Canonical mapping table
 
-`mappings.tsv` is the canonical mapping table used by normal builds.
+`@builder/patches/localization/strings/mappings.tsv` is the canonical mapping
+table selected by `features.localization.strings` and used by normal builds.
 `display_context` is its human-readable page/filter key; rows are sorted by
 that context, then by stable `id`.
 

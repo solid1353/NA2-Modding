@@ -245,7 +245,12 @@ user validation.
 
 ## Silent automatic first-save branch
 
-The automatic branch replaces only the per-frame call to
+`features.startup.auto_loading` selects one injection that owns the automatic
+update, draw suppression, and main-menu outcome notification hooks. Disabling
+the setting selects none of those hooks and leaves the native visible Save/Load
+flow intact.
+
+The automatic update replaces only the per-frame call to
 `FUN_001e3f00(parent, 1)` at virtual `0x001E9F84` (file `0xEA084`) with a small
 generated-C state machine. Continue still owns allocation, result handling,
 cleanup, the post-load save setup, and the main-menu loader. The injected state
@@ -278,9 +283,9 @@ unformatted-card case: it is returned for PS2 card type `2` with format flag
 | Record-zero read or checksum failure; card changes during the operation; any other non-success terminal status | status/result other than the accepted pairs above | Enter main menu without loading. |
 | Valid record zero | load success `0x13/1` | Continue with the native loaded save and its normal settings application. |
 
-The draw call at virtual `0x001E9FD0` (file `0xEA0D0`) is independently replaced
-with a no-op in the automatic branch. The native UI child may still be allocated
-and freed, but its Load list, card messages, confirmations, and acknowledgment
+The same injection redirects the draw call at virtual `0x001E9FD0` (file
+`0xEA0D0`) to its owned no-op. The native UI child may still be allocated and
+freed, but its Load list, card messages, confirmations, and acknowledgment
 screens are never drawn. The title and startup patches already enter Continue
 without showing the title, so the first user-visible screen after the boot
 loading presentation remains the main-menu loading screen.

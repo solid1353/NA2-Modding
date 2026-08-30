@@ -2,11 +2,11 @@
 
 The `localization.ui` catalog leaf atomically imports the matching English UI
 textures and applies the geometry, atlas selection, visibility, and draw
-behavior they require. Its texture-patcher input and layout/runtime patches
-cannot be selected independently. The exact selected edit IDs are owned by
-`features.localization` in `@builder/catalog/catalog.modcat`; guarded
-bytes and shared injection
-units are owned by the catalog implementation stores.
+behavior they require. Its texture-patcher input and layout/runtime mechanisms
+cannot be selected independently. `features.localization.ui` selects unified
+patch `localization.ui` in `@builder/catalog.modcat`; its guarded bytes, hooks,
+payloads, and `texture_patcher` module requirement are owned together by
+`@builder/patches/localization.json`.
 
 ## Contract
 
@@ -57,8 +57,8 @@ case is currently awaiting approval.
 ## Composition boundary
 
 Compatible records, tables, and isolated constants remain guarded binary
-edits. Source-owned runtime behavior is declared by
-`i__localization__ui_layout__runtime`; its fragments compose into the shared
+edits. Source-owned runtime behavior is declared inside `localization.ui`; its
+fragments compose into the shared
 `PRG/228.BIN` resident payload alongside Font contributions. Shared placement
 infrastructure does not transfer ownership to the Font feature. The UI
 selection remains responsible for matching graphical assets, rectangles,

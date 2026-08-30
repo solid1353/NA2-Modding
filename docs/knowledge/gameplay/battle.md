@@ -132,7 +132,10 @@ stage, calls `FUN_002005b0(1, 0)`, and enters state `10`. The NA2.28 PNACH leave
 the clean state-`7` call at runtime `0x001ECA2C` intact and replaces its
 `FUN_001ed450` callee instead. That wrapper writes the current and match-start
 identity fields, fixes the opponent and stage, sets the native three-frame
-countdown, calls `FUN_002005b0(1, 0)`, and enters state `10`. States `10`
+countdown, calls `FUN_002005b0(1, 0)`, and enters state `10`. Its battle-update
+wrapper waits for the dummy fighter, then calls the native Practice Status
+bridge once so launch-time defaults receive the same controller and AI
+initialization side effects as confirming Practice Settings. States `10`
 through `15` remain native, including both fighters' construction and stage
 loading.
 
@@ -141,8 +144,11 @@ owned only by this Practice state-`7` path. It begins at `0x001ED450`; the next
 native function begins at `0x001ED6C0`, leaving `0x270` bytes for a transport
 that intentionally bypasses Character Select. The PNACH uses a contiguous
 selection/battle wrapper through `0x001ED5F8`, mutable one-shot state at
-`0x001ED5FC`, and three configuration slots at `0x001ED600..0x001ED608`
-supplied only by process-local inline PNACH lines. It
+`0x001ED5FC`, three configuration slots at `0x001ED600..0x001ED608`, and a
+Status-activation helper at `0x001ED60C..0x001ED698`, all before the next native
+function. State bit `1` records native Status activation and bit `0` records
+awakening completion. The configuration slots are supplied only by process-local
+inline PNACH lines. It
 patches the clean state-`15` call at `0x001ECACC` from `FUN_001edb70` to the
 battle wrapper at `0x001ED4CC`; that wrapper calls `FUN_001edb70` first. No
 write reaches the next native function.
@@ -487,7 +493,7 @@ the action map. `FUN_0071CAF0` calls `FUN_001F3F10(side + 1)` at live
 `0x69184`. The clean instruction bytes are `0A004484`; offset `+0x0A` selects
 action index `5`, Linked Attack, independently for each player. The current
 unaccepted substitution-gauge candidate leaves this entire renderer and all of
-its X/Y constants clean. `features.settings.shared.support` independently
+its X/Y constants clean. `features.settings.in_game.shared.support` independently
 suppresses only its outer call at raw `0x69398`.
 
 The first independent-renderer candidate hooked the preceding controller-update

@@ -41,10 +41,10 @@ stored in `PRG/228.BIN`. Its SHA-256 is
 The single class retains the native uniform wrapper. No item-status executable
 payload is stored in a BTL or boot-ELF code cave.
 
-Two static catalog definitions remain: the `item_records` table under
-`e__localization__ui_layout__record_tables` patches seventeen sparse
-item-status entries in the resident 12-byte record table, and
-`e__localization__ui_layout__item_status_paired` patches the separate
+Two static catalog definitions remain under `localization.ui`: the
+`record_tables__item_records` child patches seventeen sparse item-status
+entries in the resident 12-byte record table, and the `item_status_paired`
+child patches the separate
 three-rank BTL offset table. The substitution-doll pickup record documented
 below remains behaviorally separate but shares the resident record-table
 definition as its eighteenth patched entry.
@@ -389,8 +389,8 @@ three pixels at the captured animation phase. After one updater pass, Current
 record `0x0A` supplies `(161,193,30,30)`, which selects the green `Recovery`
 artwork from the imported NUN5 atlas. NUN5 record `0x0A` supplies
 `(161,225,30,30)`, which selects the substitution doll.
-The `item_records` table under
-`e__localization__ui_layout__record_tables` therefore performs one guarded
+The `record_tables__item_records` child under
+`localization.ui` therefore performs one guarded
 same-index 12-byte replacement from NUN5 ELF file `0x4B80C8` to NA2 ELF file
 `0x4B0BD8`.
 

@@ -1,17 +1,15 @@
 # Binary patcher module
 
 This internal engine applies selected guarded edits to verified clean binaries.
-`@builder/catalog/edits.json` owns production edit roots; feature files under
-`@builder/catalog/` assign their IDs to selectable leaves. A root is either one
+`@builder/patches/*.json` owns production unified patches. A patch may contain
+one primitive `edit` or one semantic `edits` group. An edit is either one
 primitive edit, one fixed-stride table replacement, or a semantic group with
 named primitive and table children under its `edits` map. The catalog loader
 expands table records before this module receives them. The TSV files in
 `operations/` define each primitive operation's allowed fields and basic types.
-Root and child maps are serialized
-alphabetically. Every root identity uses the `e__` prefix and its catalog
-ownership path; grouped child identities name the semantic edit within
-that root. Catalog settings reference root identities through their single
-`patches` array.
+Root and child maps are serialized alphabetically. Dotted patch identities
+follow catalog ownership; grouped child identities name the semantic edit
+within that patch. Catalog nodes reference them through singular `patch`.
 
 A primitive edit may contain a nonempty `description` when concise purpose or
 provenance belongs specifically to that edit. Its description is logged as the

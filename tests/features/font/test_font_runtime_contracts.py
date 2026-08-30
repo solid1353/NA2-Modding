@@ -69,13 +69,13 @@ class FontRuntimeContractTests(unittest.TestCase):
     def setUpClass(cls) -> None:
         builder = PATHS.path("builder")
         selection = catalog.load_selection(
-            builder / "catalog",
-            builder / "configurations" / "release.json",
+            builder / "catalog.modcat",
+            builder / "configurations" / "release.jsonc",
         )
         cls.package = catalog.load_runtime_package(
             selection,
             "localization",
-            builder / "catalog" / "targets.tsv",
+            builder / "modules" / "targets.tsv",
             REPOSITORY,
             "localization.runtime_injector",
         )
@@ -385,7 +385,7 @@ class FontRuntimeContractTests(unittest.TestCase):
         )
 
         mapping_path = PATHS.path(
-            "builder", "localization", "translation_importer", "mappings.tsv"
+            "builder", "patches", "localization", "strings", "mappings.tsv"
         )
         with mapping_path.open("r", encoding="utf-8-sig", newline="") as handle:
             mapping = next(

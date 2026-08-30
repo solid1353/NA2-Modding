@@ -200,12 +200,12 @@ The settings path controls that nibble:
    | Object field | Manager key | Native setting | Values |
    | ---: | ---: | --- | --- |
    | `+0x90` | `0x0C` | Status | Manual, COM, Stand, Jump, Double-jump (`0..4`) |
-   | `+0x94` | `0x0B` | Strength | Easiest, Easy, Normal, Hard, Very hard, Ultimate (`0..5`) |
+   | `+0x94` | `0x0B` | Strength | Simple, Easy, Normal, Hard, Insane, Ultimate (`0..5`) |
    | `+0x98` | `0x0D` | Attack | No, Single, Combo, Projectile, High Speed Move, Ultimate Jutsu, Jutsu (`0..6`) |
-   | `+0x9C` | `0x0E` | Guard | No, Use (`0..1`) |
+   | `+0x9C` | `0x0E` | Guard | No, Yes (`0..1`) |
    | `+0xA0` | `0x0F` | Move | Stay, Follow (`0..1`) |
    | `+0xA8` | `0x12` | Linked Attack | Don't use, Normal, frequent/random (`0..2`) |
-   | `+0xAC` | `0x10` | Extra Hit Counter | Normal, Always return (`0..1`) |
+   | `+0xAC` | `0x10` | Extra Hit Counter | Normal, Return (`0..1`) |
 
    These ranges come from the clean count table at live `0x008D18C0`
    (actual bytes at `D/F 008D1880/21D9C0`). The omitted rows are outside this
@@ -428,7 +428,7 @@ FUN_006FF9C0    00705394   007053D4   0514D4
 ```
 
 The Practice-only `FUN_007024A0` consumes the scripted-dummy controls directly:
-Guard Use (`key 0x0E==1`) gates one state-18 reaction; Move Follow
+Guard Yes (`key 0x0E==1`) gates one state-18 reaction; Move Follow
 (`key 0x0F==1`) changes state-5 route retention; Status Stand (`key 0x0C==2`)
 has another state-5 retention rule, while Jump/Double-jump (`3/4`) control
 state-36 branches and their slot `+0x114` countdown; and any Attack other than

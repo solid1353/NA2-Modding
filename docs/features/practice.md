@@ -34,10 +34,14 @@ Clean NA2 is not supported yet.
 The bootstrap writes both current and match-start Player 1 fields, fixes Player
 2 to Naruto with Sakura support and the Practice stage to `6`, skips Character
 Select and Practice Settings, and retains the native battle-loading states.
-Its battle wrapper first runs the native update, then applies the requested
-awakening once after Player 1 exists. Every nonempty awakening ID reaches the
-native awakening function's exact-effect transition, so the requested effect,
-awakened controller state, transition actions, and sound are applied together.
+Its battle wrapper first runs the native update, then applies the configured
+Practice Status once after the dummy fighter exists and applies the requested
+awakening once after Player 1 exists. Status activation calls the native
+Practice bridge, including its dummy-control flag, fighter-controller state,
+and AI/Strength initialization side effects. Every nonempty awakening ID
+reaches the native awakening function's exact-effect transition, so the
+requested effect, awakened controller state, transition actions, and sound are
+applied together.
 Deidara `0x41` retains the complete native entry. Taijutsu Chiyo `0x4E` first
 enters her separate native moveset state, then uses the complete native entry to
 remove her constructor-owned `0x4D` effect and apply `0x4E`. Gaara's regular
@@ -53,52 +57,65 @@ in [`../knowledge/gameplay/battle.md`](../knowledge/gameplay/battle.md).
 
 ## Practice Settings rework
 
-`features.settings.practice` maps a compact
-Practice Settings row list onto the native menu and accepts four optional
-native defaults:
+`features.settings.in_game.practice` maps a compact Practice Settings row list onto the
+native menu. Its `general_settings` and `opponent_settings` objects follow the
+two native menu sections. The complete base configuration defines every
+retained native default:
 
-- `health`: `full`, `half`, or `critical`;
-- `commands`: `off` or `on`;
-- `guide_ninja_sound`: `off` or `on`;
-- `linked_attack`: `off`, `on`, or `random`.
+| Section | Field | Values |
+| --- | --- | --- |
+| `general_settings` | `health` | `normal`, `half`, `almost` |
+| `general_settings` | `chakra`, `linked_attack` | `normal`, `unlimited` |
+| `general_settings` | `linked_mode` | `manual`, `auto`, `false` |
+| `general_settings` | `items` | `none`, `less`, `normal`, `more` |
+| `general_settings` | `commands`, `damage`, `guide_ninja_sound` | `off`, `on` |
+| `opponent_settings` | `status` | `manual`, `com`, `stand`, `jump`, `double_jump` |
+| `opponent_settings` | `strength` | `simple`, `easy`, `normal`, `hard`, `insane`, `ultimate` |
+| `opponent_settings` | `attack` | `no`, `single`, `combo`, `projectile`, `high_speed_move`, `ultimate_jutsu`, `jutsu` |
+| `opponent_settings` | `guard` | `no`, `yes` |
+| `opponent_settings` | `move` | `stay`, `follow` |
+| `opponent_settings` | `substitution_jutsu` | `normal`, `no` |
+| `opponent_settings` | `linked_attack` | `dont_use`, `normal`, `random` |
+| `opponent_settings` | `extra_hit_counter` | `normal`, `return` |
 
-An omitted field preserves the game's native initializer value. The base
-configuration explicitly selects `full`, `off`, `off`, and `off` in the order
-above. Health reaches the native normalized live-HP targets `1.0`, `0.5`, and
-`0.1`; Linked Attack maps to the native dummy values Don't use, Normal, and
-`乱発`.
+Configured fields initialize the Practice manager and replace the corresponding
+local values when Return to Defaults is used. Health reaches normalized live-HP
+targets `1.0`, `0.5`, and `0.1`; opponent Linked Attack maps to Don't use,
+Normal, and `乱発`. Every native field accepts `false` to remove its row while
+leaving the corresponding native stored value unchanged. The base configuration
+uses this to remove Guide Ninja Sound and Extra Hit Counter.
+`linked_mode: false` removes the native Linked Mode row without changing its
+native Auto state. `manual` or `auto` retains the row and sets its initial and
+Return to Defaults value.
 
-The implementation builds the feature-aware row list. When
-`features.settings.shared` is enabled, it adds the same `Substitution: Chakra |
-Gauge | Free`, `Sub Active Frames: 0..16`, `X-dash Chakra Cost: 0% | 5% | ... |
-100%`, and `Support: Off | On` rows used by Battle Settings. `Chakra` uses
-native chakra and hides the gauge, `Gauge` uses and displays the independent
-resource, and `Free` consumes nothing and hides the gauge. Both menus stage and
-commit the same runtime values, and the shared configuration controls both
-reset actions directly.
+The implementation builds the feature-aware row list. Every enabled leaf under
+`features.settings.in_game.shared` adds its row after all retained native General
+Settings rows, in catalog declaration order. These rows use the same runtime
+values as Battle Settings, so both menus stage, reset, and commit the same
+state.
 
-The row list always retains Ultimate Jutsu. With the shared setting enabled,
-that row exposes its six
-native values plus `No Contest` and `No HUD`, stages and commits the same shared
-runtime enum as Battle Settings, and uses the Battle setting's configured value
-for its reset action. The row's underlying native slot receives the selected
-native value, or `Command` for either custom value. The same feature also adds
+The rendered rework keeps all retained native General Settings rows first. The
+shared rows then form one block before the native Opponent Settings section.
+
+Ultimate Jutsu is now an injected shared row rather than an always-retained
+native row. It exposes its six native values plus `No Contest` and `No HUD`,
+stages and commits the same shared runtime enum as Battle Settings, and uses
+the shared configured value for its reset action. The underlying native slot
+receives the selected native value, or `Command` for either custom value. The
+same shared block also adds
 ordinary `Shadowblur Extra Hit: Off | On` and `Extra Hit: Off | On` rows to the
 player section. They snapshot and commit the same shared runtime toggles as
-Battle Settings, and their reset values come from `features.settings.shared`.
+Battle Settings, and their reset values come from `features.settings.in_game.shared`.
 
-The native support-related Practice rows remain present because Support can be
-changed at runtime. The native Extra Hit Counter row remains independent of the
-shared Extra Hit selector. The intended presentation retains the native row
-widgets, localization, selection, scrolling, animation, and clipping paths.
-Runtime confirmation is pending.
+The native Extra Hit Counter row remains independent of the shared Extra Hit
+selector. The presentation retains the native row widgets, localization,
+selection, scrolling, animation, and clipping paths.
 
-The implementation uses one guarded tail hook in clean `SLPS_258.37` at ELF offset
-`0xE7C7C` (runtime `0x001E7B7C`) to replace the initializer's final
-store-and-return pair. The leaf first reproduces the displaced native Linked
-Attack default, then applies only configured fields from the resident Practice
-schema. The former standalone starting-HP, Commands, Guide Ninja Sound, and
-Linked Attack edit patches are not retained.
+The implementation guards the native manager-reset call site in clean
+`SLPS_258.37` at ELF offset `0xF5AD4` and applies the Practice default pack only
+after the native reset and Strength-mirror write complete. Menu-local Return to
+Defaults uses each feature-aware row schema, so startup and menu reset share the
+same configured values. The former initializer-tail override is not retained.
 
 Practice `-rev` cases override the initializer process-locally with
 `0x001E7AE8 = 0xA0850001` for NA228 or

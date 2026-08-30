@@ -3,7 +3,7 @@
 This reusable engine interprets feature-owned container, mapping, and strategy
 tables and derives fixed-size texture replacements from canonical sources. The
 active UI translation package lives under
-`@builder/localization/texture_patcher/`.
+`@builder/patches/localization/ui/`.
 
 `whole` strategies use the complete donor payload and may apply a guarded
 upward translation to one bounded region of an 8-bit indexed donor texture

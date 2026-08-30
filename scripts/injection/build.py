@@ -28,8 +28,8 @@ from scripts.lib.paths import load_paths
 
 
 PATHS = load_paths(REPOSITORY)
-CATALOG_PATH = PATHS.path("builder", "catalog")
-CONFIGURATION_PATH = PATHS.path("builder", "configurations", "base.json")
+CATALOG_PATH = PATHS.path("builder", "catalog.modcat")
+CONFIGURATION_PATH = PATHS.path("builder", "configurations", "base.jsonc")
 
 SYMBOL_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
 SYMBOL_MAP_FIELDS = [

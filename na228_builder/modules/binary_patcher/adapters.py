@@ -11,7 +11,7 @@ ADAPTER_NAMES = frozenset(
     {
         "ascii_fixed",
         "mips_lui_float32",
-        "mips_shared_simple_display_default",
+        "mips_simple_display_default",
         "nul_padded_text",
     }
 )
@@ -103,24 +103,19 @@ def _mips_lui_float32(expected: bytes, value: object) -> bytes:
     return replacement.to_bytes(4, "little")
 
 
-def _mips_shared_simple_display_default(expected: bytes, value: object) -> bytes:
+def _mips_simple_display_default(expected: bytes, value: object) -> bytes:
     native_simple_display_default = bytes.fromhex("25186600")
     if expected != native_simple_display_default:
         raise ValueError(
-            "mips_shared_simple_display_default requires the native "
+            "mips_simple_display_default requires the native "
             "or v1,v1,a2 instruction"
         )
-    if not isinstance(value, dict):
-        raise ValueError(
-            "mips_shared_simple_display_default requires a shared settings object"
-        )
-    simple_display = value.get("simple_display")
-    if simple_display == "on":
+    if value == "on":
         return expected
-    if simple_display == "off":
+    if value == "off":
         return bytes(4)
     raise ValueError(
-        "mips_shared_simple_display_default requires simple_display 'off' or 'on'"
+        "mips_simple_display_default requires 'off' or 'on'"
     )
 
 
@@ -129,6 +124,6 @@ def apply_adapter(name: object, expected_hex: str, value: object) -> str:
     expected = bytes.fromhex(expected_hex)
     if name == "mips_lui_float32":
         return _mips_lui_float32(expected, value).hex().upper()
-    if name == "mips_shared_simple_display_default":
-        return _mips_shared_simple_display_default(expected, value).hex().upper()
+    if name == "mips_simple_display_default":
+        return _mips_simple_display_default(expected, value).hex().upper()
     raise AssertionError(name)

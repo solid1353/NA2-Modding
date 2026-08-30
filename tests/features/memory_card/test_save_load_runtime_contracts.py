@@ -20,11 +20,8 @@ SOURCE = REPOSITORY / "src" / "qol" / "save_load_display_only_first_save.c"
 TOOLCHAIN_BIN = ee_c_fragments.default_toolchain_bin(REPOSITORY)
 COMPILER = TOOLCHAIN_BIN / "ee-gcc.exe"
 
-EDIT_ID = "e__qol__save_load__display_only_first_save"
-INJECTION_ID = "i__qol__save_load__display_only_first_save"
-AUTOMATIC_INJECTION_ID = (
-    "i__qol__startup__save_loading__automatic__first_save"
-)
+PATCH_ID = "memory_card.display_only_first_save"
+AUTOMATIC_PATCH_ID = "startup.auto_loading"
 ENTRY_SYMBOL = "display_only_first_save_update"
 OBJECT_SYMBOL = (
     "qol.save.load.display.only.first.save.text."
@@ -94,20 +91,20 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
             )
 
         cls.selection = catalog.load_selection(
-            BUILDER / "catalog",
-            BUILDER / "configurations" / "release.json",
+            BUILDER / "catalog.modcat",
+            BUILDER / "configurations" / "release.jsonc",
         )
         cls.package = catalog.load_runtime_package(
             cls.selection,
             "memory_card",
-            BUILDER / "catalog" / "targets.tsv",
+            BUILDER / "modules" / "targets.tsv",
             REPOSITORY,
             "memory_card.runtime_injector",
         )
         cls.startup_package = catalog.load_runtime_package(
             cls.selection,
             "startup",
-            BUILDER / "catalog" / "targets.tsv",
+            BUILDER / "modules" / "targets.tsv",
             REPOSITORY,
             "startup.runtime_injector",
         )
@@ -130,9 +127,9 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
             )
         )
         self.assertTrue(node.enabled)
-        self.assertEqual((EDIT_ID, INJECTION_ID), node.patches)
+        self.assertEqual(PATCH_ID, node.patch)
 
-        injection = self.selection.injections[INJECTION_ID]
+        injection = self.selection.injections[PATCH_ID]
         hook = injection["hooks"]["route_shared_save_load_update"]
         self.assertEqual("na2_elf", hook["target_id"])
         self.assertEqual("0xE4008", hook["offset"])
@@ -164,7 +161,7 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
         automatic = next(
             edit
             for edit in self.startup_package.active_edits
-            if edit.symbolic_patch.symbol == "automatic_save_loading_update"
+            if edit.symbolic_patch.symbol == "auto_loading_update"
         )
         self.assertEqual(0xE4008, visible.symbolic_patch.offset)
         self.assertEqual(0xEA084, automatic.symbolic_patch.offset)
@@ -173,7 +170,7 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
             automatic.symbolic_patch.offset,
         )
 
-        automatic_hook = self.selection.injections[AUTOMATIC_INJECTION_ID][
+        automatic_hook = self.selection.injections[AUTOMATIC_PATCH_ID][
             "hooks"
         ]["replace_visible_save_load_controller_update"]
         self.assertEqual("C08F070C", automatic_hook["expected_hex"])

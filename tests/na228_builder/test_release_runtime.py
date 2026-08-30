@@ -71,7 +71,7 @@ class ReleaseRuntimeTests(unittest.TestCase):
             assembly = workspace / "src" / "runtime.S"
             assembly.parent.mkdir()
             assembly.write_text("nop\n", encoding="ascii")
-            manifest = SimpleNamespace(configuration_name="release.json")
+            manifest = SimpleNamespace(configuration_name="release.jsonc")
             configuration = SimpleNamespace(
                 selection=SimpleNamespace(feature_ids=("feature",)),
                 modules=(object(),),

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.scripts import catalog
+from na228_builder.scripts import catalog, jsonc
 from na228_builder.scripts.battle_settings import (
     ROW_SIZE,
     SCHEMA_HEADER_SIZE,
@@ -21,21 +21,21 @@ class BattleSettingsTests(unittest.TestCase):
         cls.paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         cls.repository = cls.paths.repository
         cls.builder = cls.paths.path("builder")
-        cls.catalog_path = cls.builder / "catalog"
+        cls.catalog_path = cls.builder / "catalog.modcat"
         cls.configurations = cls.builder / "configurations"
         cls.selection = catalog.load_selection(
             cls.catalog_path,
-            cls.configurations / "base.json",
+            cls.configurations / "base.jsonc",
         )
 
     def _selection(self, mutate) -> catalog.CatalogSelection:
-        base = json.loads(
-            (self.configurations / "base.json").read_text(encoding="utf-8")
+        base = jsonc.loads(
+            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
         )
         mutate(base["features"])
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
-        path = Path(directory.name) / "configuration.json"
+        path = Path(directory.name) / "configuration.jsonc"
         path.write_text(json.dumps(base, indent=2) + "\n", encoding="utf-8")
         return catalog.load_selection(self.catalog_path, path)
 
@@ -51,7 +51,7 @@ class BattleSettingsTests(unittest.TestCase):
             for index in range(row_count)
         ]
 
-    def test_base_schema_includes_every_shared_selector_before_handicap(self) -> None:
+    def test_base_schema_keeps_native_rows_before_shared_rows(self) -> None:
         fragment = battle_settings_fragment(
             self.selection,
             owner="settings.runtime_injector",
@@ -61,7 +61,7 @@ class BattleSettingsTests(unittest.TestCase):
         rows = self._rows(fragment)
         self.assertEqual(
             [row[0] for row in rows],
-            [0, 1, 2, 3, 6, 9, 10, 11, 4, 7, 8, 5],
+            [0, 1, 2, 3, 5, 4, 7, 8, 9, 10, 11, 6],
         )
         by_id = {row[0]: row for row in rows}
         self.assertEqual((by_id[6][5], by_id[6][6]), (3, 1))
@@ -69,7 +69,7 @@ class BattleSettingsTests(unittest.TestCase):
         self.assertEqual((by_id[10][5], by_id[10][6]), (21, 1))
         self.assertEqual((by_id[11][5], by_id[11][6]), (2, 0))
         self.assertEqual((by_id[4][5], by_id[4][6]), (8, 7))
-        self.assertEqual((by_id[5][5], by_id[5][6]), (11, 0))
+        self.assertEqual((by_id[5][5], by_id[5][6]), (11, 5))
 
         relocation_symbols = {item.symbol for item in fragment.relocations}
         self.assertTrue(
@@ -86,7 +86,7 @@ class BattleSettingsTests(unittest.TestCase):
 
     def test_shared_defaults_drive_the_selectable_values(self) -> None:
         def configure(features) -> None:
-            shared = features["settings"]["shared"]
+            shared = features["settings"]["in_game"]["shared"]
             shared["ultimate_jutsu"] = "no_contest"
             shared["shadowblur"] = "on"
             shared["extra_hit"] = "on"
@@ -109,23 +109,26 @@ class BattleSettingsTests(unittest.TestCase):
 
     def test_disabling_shared_settings_removes_the_extended_battle_schema(self) -> None:
         selection = self._selection(
-            lambda features: features["settings"].__setitem__("shared", False)
-        )
-        self.assertIsNone(
-            battle_settings_fragment(
-                selection,
-                owner="settings.runtime_injector",
+            lambda features: features["settings"]["in_game"].__setitem__(
+                "shared", False
             )
         )
+        fragment = battle_settings_fragment(
+            selection,
+            owner="settings.runtime_injector",
+        )
+        self.assertIsNotNone(fragment)
+        assert fragment is not None
+        self.assertEqual([row[0] for row in self._rows(fragment)], [0, 1, 2, 3, 5])
 
     def test_handicap_is_an_ordinary_final_row_with_text_values(self) -> None:
-        injection = self.selection.injections["i__battle__settings_rework"]
+        injection = self.selection.injections["settings.in_game"]
         self.assertEqual(
-            injection["hooks"]["draw_all_rows_as_ordinary"]["symbol"],
+            injection["hooks"]["battle_draw_all_rows_as_ordinary"]["symbol"],
             "battle_settings_draw_ordinary_bridge",
         )
         self.assertEqual(
-            injection["hooks"]["select_ordinary_cursor_object"]["symbol"],
+            injection["hooks"]["battle_select_ordinary_cursor_object"]["symbol"],
             "battle_settings_cursor_ordinary_bridge",
         )
         source = injection["payload"]["battle_settings"]
@@ -160,15 +163,15 @@ class BattleSettingsTests(unittest.TestCase):
         )
 
     def test_scrolling_uses_seven_physical_rows_for_any_logical_count(self) -> None:
-        injection = self.selection.injections["i__battle__settings_rework"]
+        injection = self.selection.injections["settings.in_game"]
         hooks = injection["hooks"]
-        self.assertEqual(hooks["draw_seven_label_rows"]["symbol"], "battle_settings_label_loop_bridge")
-        self.assertEqual(hooks["draw_seven_value_rows"]["symbol"], "battle_settings_value_loop_bridge")
-        self.assertEqual(hooks["draw_visible_rows"]["symbol"], "battle_settings_draw_rows")
-        self.assertEqual(hooks["draw_visible_cursor"]["symbol"], "battle_settings_draw_cursor")
+        self.assertEqual(hooks["battle_draw_seven_label_rows"]["symbol"], "battle_settings_label_loop_bridge")
+        self.assertEqual(hooks["battle_draw_seven_value_rows"]["symbol"], "battle_settings_value_loop_bridge")
+        self.assertEqual(hooks["battle_draw_visible_rows"]["symbol"], "battle_settings_draw_rows")
+        self.assertEqual(hooks["battle_draw_visible_cursor"]["symbol"], "battle_settings_draw_cursor")
 
     def test_sources_compile_with_the_selected_runtime_package(self) -> None:
-        injection = self.selection.injections["i__battle__settings_rework"]
+        injection = self.selection.injections["settings.in_game"]
         c_fragments = catalog._compile_source(
             self.repository,
             "settings.runtime_injector",

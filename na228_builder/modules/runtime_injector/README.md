@@ -9,18 +9,17 @@ package. A feature never chooses an offset inside `PRG/228.BIN` or owns its
 loader, memory reservation, or final runtime address.
 
 Canonical production inputs are the shared
-`@builder/catalog/targets.tsv` registry, injection units from
-`@builder/catalog/injections.json`, and referenced
+`@builder/modules/targets.tsv` registry, hooks and payload declarations from
+`@builder/patches/*.json`, and referenced
 repository sources and assets.
-Catalog settings select injection units through `i__` patch IDs.
+Catalog nodes select unified dotted patch IDs.
 There is no separate runtime-injector data directory or standalone TSV package
 format; the catalog loader is the only declaration parser.
 
-Each root injection identity begins with `i__`, followed by its catalog
-ownership path and semantic unit identity. The root map and
+Each patch identity follows its catalog ownership path. The root map and
 unordered nested maps are serialized alphabetically. Hooks and named payload
 fragments use concise local semantic identities rather than repeating their
-owner's catalog prefix. Optional nonempty injection and hook descriptions hold
+owner's catalog path. Optional nonempty patch and hook descriptions hold
 only definition-local purpose or provenance and never affect execution.
 
 A `payload` declaration is either a C source, an assembly source, or a static
@@ -29,8 +28,8 @@ private imports, emitted fragment aliases, and optional ABI metadata. C uses
 `kind: "c"` with an exact `.c` suffix; preprocessed EE assembly uses
 `kind: "asm"` with an exact `.S` suffix. Static fragments contain their
 bytes or guarded blob, alignment, initialization marker, and private
-relocations. Shared declarations are stored once in an injection unit
-referenced by every consuming catalog leaf.
+relocations. Shared declarations are stored once in a unified patch at the
+lowest common catalog ancestor.
 
 Hooks and payload fragments are not one-to-one: several hooks may target one
 fragment, and one hook may depend on multiple fragments. Their guards,
@@ -38,7 +37,7 @@ relocations, and symbolic references remain together in the owning injection
 unit.
 
 Configuration selection controls hooks. A shared payload declaration
-contributes only when at least one selected leaf references its injection unit.
+contributes only when its owning patch is selected.
 When every hook in a feature is disabled, the internal runtime-injector
 invocation contributes no payload or target writes.
 

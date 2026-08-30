@@ -29,14 +29,14 @@ function Get-Na2StartupFastForwardFrames {
         throw "Invalid launch configuration ID: $Configuration"
     }
     $configurationPath = Join-Path $Paths.builder (
-        "configurations\$Configuration.json"
+        "configurations\$Configuration.jsonc"
     )
     if (-not (Test-Path -LiteralPath $configurationPath -PathType Leaf)) {
         throw "Launch configuration does not exist: $Configuration"
     }
     $pythonRunner = Join-Path ([string]$Paths.scripts) 'lib\run_python.ps1'
     $arguments = @(
-        '--catalog', (Join-Path $Paths.builder 'catalog'),
+        '--catalog', (Join-Path $Paths.builder 'catalog.modcat'),
         '--configuration', $configurationPath,
         '--baseline-frames', [string]$startupFrames
     )

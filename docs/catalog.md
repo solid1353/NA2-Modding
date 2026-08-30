@@ -5,34 +5,35 @@ declarative format with JSON-like objects and TypeScript-like value types. The
 Python builder parses it directly; there is no compiler, generated schema, or
 CUE, Go, Node, or TypeScript runtime.
 
-`catalog/catalog.modcat` defines the logical `features` root and all of its
-direct feature children. The project catalog contains both the user-facing
-contract and its `patches` and `modules` mappings. Release packaging writes an
-inert `catalog.modcat` reference with the mappings and every other implementation
-detail removed. The packaged executable uses its embedded complete catalog and
-never reads the external reference.
+`catalog.modcat` defines the logical `features` root and all of its direct
+feature children. The project catalog contains the user-facing contract and one
+singular `patch` reference wherever implementation is selected. Release
+packaging writes an inert `catalog.modcat` reference with patch references and
+every other implementation detail removed. The packaged executable uses its
+embedded complete catalog and never reads the external reference.
 
-A complete standalone or released configuration has one JSON root field:
+A complete standalone or released `.jsonc` configuration has one root field:
 `features` contains the complete selected tree. Repository build variants use
-an internal `overrides` root to customize `base.features`. A complete synthetic
+an internal `overrides` root to customize `base.features`. Line comments,
+block comments, and trailing commas are accepted. A complete synthetic
 configuration appears below.
 
 ## Nodes and configuration values
 
 A plain object is a structural container. Its fields are catalog nodes and may
-nest to any depth. `description` is reserved non-executable metadata: it is
-optional on a container and must be nonempty when present.
+nest to any depth. A container may own one patch shared by its nested tree. The
+patch receives the selected object value and is applied once whenever that
+container is selected.
 
 A bare `setting` is the static-patch form:
 
 ```text
-skip_opening: setting {
-  description: "Skip the opening sequence.",
-  patches: ["e__qol__startup__skip_opening__skip_opening"],
+replace_imported_game_title: setting {
+  patch: "general.replace_imported_game_title",
 },
 ```
 
-Its configuration value is `true` to select its patches or `false` to select
+Its configuration value is `true` to select its patch or `false` to select
 nothing. `true` never expands a structural container or recursively selects its
 children.
 
@@ -41,39 +42,35 @@ children.
 ```text
 camera_distance: setting<decimal & 0.5..2 & step 0.25> {
   description: "Camera distance setting.",
-  patches: ["e__example__camera_distance"],
+  patch: "example.camera_distance",
 },
 ```
 
 The selected value is validated against `T` and passed to any adapter declared
-by the referenced patch definition. A typed setting has no option-to-patches
-map; alternatives with different patches are complete setting branches.
+by the referenced patch definition. A typed setting has no option-to-patch map;
+alternatives with different patches are complete setting branches.
 When `T` accepts an empty object, `true` is shorthand for `{}` and the selected
 value exposed to adapters and resident-fragment encoders is normalized to `{}`.
 Typed settings with any required object field reject that shorthand.
 
-Every setting requires a nonempty `description` and a nonempty `patches` array.
-It may also declare a nonempty `modules` array. IDs within each array must be
-unique. Descriptions do not inherit and have no fallback behavior. Module
-mappings remain implementation details and are omitted from the public release
-catalog.
+Structural blocks and settings may omit `description`; include one only when it
+adds behavior or semantics that the name and type do not already make clear. A
+setting may also omit `patch` when a patch-owning structural ancestor consumes
+its value as part of the nested tree. Each patch ID appears only once in the
+entire catalog; a patch shared by nested settings belongs on their lowest common
+structural ancestor. Descriptions do not inherit and have no fallback behavior.
+Module mappings and launch metadata belong to patch definitions and are omitted
+from the public release catalog.
 
-The node-level value `false` disables any setting, union, or structural
-container before typed-value validation or union matching. It never reaches a
-patch adapter. Disabling a container disables its entire subtree. Strings such
-as `"false"`, `"enabled"`, `"disabled"`, and `""` remain ordinary data when
-accepted by the declared type.
-
-Direct boolean typed settings are forbidden: `setting<bool>`, `setting<true>`,
-and `setting<false>` are invalid because they overlap the node-level controls.
-Boolean data is supplied inside an object instead:
+The node-level value `false` disables a node only when its declared type does
+not accept `false`. It never reaches a patch adapter in that case. Disabling a
+container disables its entire subtree. A boolean typed setting treats `false`
+as its configured data and remains selected:
 
 ```text
-boolean_parameter: setting<{
-  value: bool,
-}> {
+boolean_parameter: setting<bool> {
   description: "Synthetic supplied-boolean setting.",
-  patches: ["e__example__boolean_parameter"],
+  patch: "example.boolean_parameter",
 },
 ```
 
@@ -120,13 +117,13 @@ construct. Named alternatives are closed-object branches:
 value_or_named_setting:
   setting<int> {
     description: "Synthetic direct integer setting.",
-    patches: ["e__example__direct_integer"],
+    patch: "example.direct_integer",
   }
   |
   {
     fixed_cost: setting<int & 1..15> {
       description: "Synthetic fixed-cost setting.",
-      patches: ["e__example__fixed_cost"],
+      patch: "example.fixed_cost",
     },
   }
   |
@@ -136,7 +133,7 @@ value_or_named_setting:
       denominator: int & >0,
     }> {
       description: "Synthetic ratio-cost setting.",
-      patches: ["e__example__ratio_cost"],
+      patch: "example.ratio_cost",
     },
   },
 ```
@@ -162,12 +159,12 @@ branches:
 layout_mode:
   setting<"compact"> {
     description: "Use the compact layout.",
-    patches: ["e__example__layout__compact"],
+    patch: "example.layout.compact",
   }
   |
   setting<"expanded"> {
     description: "Use the expanded layout.",
-    patches: ["e__example__layout__expanded"],
+    patch: "example.layout.expanded",
   },
 ```
 
@@ -177,7 +174,7 @@ simple bare setting:
 ```text
 simple_patch: setting {
   description: "Synthetic static patch.",
-  patches: ["e__example__simple_patch"],
+  patch: "example.simple_patch",
 },
 ```
 
@@ -216,22 +213,22 @@ startup:
   {
     faster_loading: setting {
       description: "Defer voice indexes until first use.",
-      patches: ["i__example__faster_loading"],
+      patch: "example.faster_loading",
     },
   }
   &
   (
     {
-      skip_opening: setting {
-        description: "Skip the opening.",
-        patches: ["e__example__skip_opening"],
+      title_screen: setting {
+        description: "Show the title screen.",
+        patch: "example.title_screen",
       },
     }
     |
     {
-      savedata_loading: setting<"automatic"> {
+      auto_loading: setting {
         description: "Load saved data automatically.",
-        patches: ["i__example__savedata_loading"],
+        patch: "example.auto_loading",
       },
     }
   ),
@@ -244,7 +241,7 @@ shapes, but keeps `faster_loading` declared once and leaves the JSON flat:
 {
   "startup": {
     "faster_loading": true,
-    "savedata_loading": "automatic"
+    "auto_loading": true
   }
 }
 ```
@@ -267,7 +264,7 @@ paths, assets, proof metadata, build data, and every other implementation
 detail.
 
 The executable embeds the parser, validator, complete project catalog, patch
-definitions, adapters, assets, and runtime objects. It validates `config.json`
+definitions, adapters, assets, and runtime objects. It validates `config.jsonc`
 against that embedded data. Editing, damaging, or deleting the external
 catalog reference cannot change validation or patching behavior.
 
@@ -294,22 +291,32 @@ children remain disabled.
 
 ## Patch mappings and validation
 
-Every setting has one `patches` array. Edit IDs use the `e__` prefix and must
-resolve to exactly one root in `catalog/edits.json`. A root is either one
-primitive guarded edit, one fixed-stride table replacement, or a semantic group
-containing a nonempty `edits` map of named primitive and table edits.
-Injection IDs use `i__` and must resolve to exactly one unit in
-`catalog/injections.json`. Semantic
-string-patch IDs use `s__` and must resolve to exactly one definition in
-`catalog/string_patches.json`. Every other prefix is invalid.
+A setting or structural block may own one singular dotted `patch` ID. Each ID
+must resolve to one definition in `patches/<first-segment>.json`, must appear
+exactly once in the catalog, and must match that file's first dotted segment.
+Orphan definitions are rejected.
 
-Multiple setting branches may share a patch ID. Every edit, injection, and
-string patch must be referenced by at least one catalog branch; orphan
-definitions are rejected. A setting's `modules` array names internal module
-types registered for its owning feature; unknown module types are rejected.
-Every target, adapter, asset, source, runtime object, and operation reachable
-through a referenced definition must also pass its owning component's normal
-validation.
+A unified patch may contain any compatible combination of these fields:
+
+- `edit` for one primitive guarded edit, or `edits` for one nonempty semantic
+  group of primitive and fixed-stride table edits;
+- `hooks` and `payload` for runtime injection;
+- `string_patch` for one supported semantic string transformation;
+- `modules` for additional internal executors required by the patch; and
+- `startup_fast_forward_frames` for launch-frame `additive` or `override`
+  metadata.
+
+A declared module reads its canonical input directory from the patch ID under
+`patches/`: `localization.strings` resolves to
+`patches/localization/strings/`. Module input ownership therefore lives with
+the patch instead of a separate feature-to-directory mapping.
+
+`edit` and `edits` are mutually exclusive. At least one implementation or
+metadata field is required. The optional patch `description` labels the unified
+behavior; component-local descriptions are retained only when they add distinct
+information. Every module, target, adapter, asset, source, runtime object, and
+operation reachable through a patch must also pass its owning component's
+normal validation.
 
 A grouped edit has only an optional `description` and its `edits` map. Child
 keys are stable snake-case semantic identities, not destination addresses.

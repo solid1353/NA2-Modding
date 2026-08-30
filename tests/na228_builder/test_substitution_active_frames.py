@@ -6,9 +6,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.scripts import catalog
+from na228_builder.scripts import catalog, jsonc
 from na228_builder.scripts.battle_settings_runtime import (
-    battle_settings_runtime_fragment,
+    battle_settings_runtime_fragments,
 )
 from scripts.lib.paths import load_local_paths
 
@@ -19,43 +19,49 @@ class SubstitutionActiveFramesTests(unittest.TestCase):
         cls.paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         cls.repository = cls.paths.repository
         cls.builder = cls.paths.path("builder")
-        cls.catalog_path = cls.builder / "catalog"
+        cls.catalog_path = cls.builder / "catalog.modcat"
         cls.configurations = cls.builder / "configurations"
 
     def _selection_with(self, value: object) -> catalog.CatalogSelection:
-        base = json.loads(
-            (self.configurations / "base.json").read_text(encoding="utf-8")
+        base = jsonc.loads(
+            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
         )
-        base["features"]["settings"]["shared"]["sub_active_frames"] = value
+        base["features"]["settings"]["in_game"]["shared"]["sub_active_frames"] = value
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
-        path = Path(directory.name) / "configuration.json"
+        path = Path(directory.name) / "configuration.jsonc"
         path.write_text(json.dumps(base, indent=2) + "\n", encoding="utf-8")
         return catalog.load_selection(self.catalog_path, path)
 
     def test_base_runtime_config_uses_four_active_frames(self) -> None:
         selection = catalog.load_selection(
             self.catalog_path,
-            self.configurations / "base.json",
+            self.configurations / "base.jsonc",
         )
-        fragment = battle_settings_runtime_fragment(
+        fragments = battle_settings_runtime_fragments(
             selection,
             owner="settings.runtime_injector",
         )
-        self.assertIsNotNone(fragment)
-        assert fragment is not None
-        self.assertEqual(struct.unpack("<6I", fragment.payload)[3], 4)
+        fragment = next(
+            item
+            for item in fragments
+            if item.symbol == "battle_settings_sub_active_frames_default"
+        )
+        self.assertEqual(struct.unpack("<I", fragment.payload)[0], 4)
 
     def test_catalog_accepts_the_active_frame_boundaries(self) -> None:
         for value in (0, 16):
             with self.subTest(value=value):
-                fragment = battle_settings_runtime_fragment(
+                fragments = battle_settings_runtime_fragments(
                     self._selection_with(value),
                     owner="settings.runtime_injector",
                 )
-                self.assertIsNotNone(fragment)
-                assert fragment is not None
-                self.assertEqual(struct.unpack("<6I", fragment.payload)[3], value)
+                fragment = next(
+                    item
+                    for item in fragments
+                    if item.symbol == "battle_settings_sub_active_frames_default"
+                )
+                self.assertEqual(struct.unpack("<I", fragment.payload)[0], value)
 
     def test_catalog_rejects_values_outside_the_active_frame_range(self) -> None:
         for value in (-1, 17):
@@ -66,10 +72,10 @@ class SubstitutionActiveFramesTests(unittest.TestCase):
     def test_hook_loads_the_runtime_window_at_the_pre_impact_branch(self) -> None:
         selection = catalog.load_selection(
             self.catalog_path,
-            self.configurations / "base.json",
+            self.configurations / "base.jsonc",
         )
         injection = selection.injections[
-            "i__battle_logic__sub_active_frames"
+            "settings.shared.sub_active_frames"
         ]
         self.assertEqual(
             injection["hooks"]["select_substitution_active_history"],

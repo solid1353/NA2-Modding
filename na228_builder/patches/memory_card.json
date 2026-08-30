@@ -1,0 +1,153 @@
+{
+  "memory_card.dedicated_save_namespace": {
+    "description": "Use the dedicated NA228 save namespace at both memory-card directory references.",
+    "edit": {
+      "operation": "replace",
+      "destination_target_id": "na2_elf",
+      "destination_offsets": [
+        "0x2FBAC1",
+        "0x2FBBF0"
+      ],
+      "expected_value": "BISLPS-25837NARUTO5",
+      "replacement_value": "BASLOP-NA228NARUTO6",
+      "adapter": "ascii_fixed"
+    }
+  },
+  "memory_card.replace_memory_card_title": {
+    "description": "Replace the original memory-card title with the dedicated NA228 title.",
+    "edit": {
+      "operation": "replace",
+      "destination_target_id": "na2_elf",
+      "destination_offset": "0x2FBAE0",
+      "expected_value": "ＮＡＲＵＴＯ－ナルト－　疾風伝ナルティメットアクセル２",
+      "replacement_value": "ＮＡ　ｖ２．２８",
+      "adapter": "nul_padded_text",
+      "encoding": "cp932",
+      "length": 64
+    }
+  },
+  "memory_card.display_only_first_save": {
+    "description": "Restrict the visible Save/Load slot UI to its first row and compact layout without changing save data or memory-card scans.",
+    "edits": {
+      "date_play_time_block_x": {
+        "description": "Center the date and play-time block at local X 45 inside the compact panel.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE6568",
+        "expected_hex": "D842033C",
+        "replacement_hex": "3442033C"
+      },
+      "disable_downward_slot_navigation": {
+        "description": "Ignore downward slot navigation before it changes selection or plays the navigation sound.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE6BA0",
+        "expected_hex": "00408230",
+        "replacement_hex": "2D100000"
+      },
+      "disable_upward_slot_navigation": {
+        "description": "Ignore upward slot navigation before it changes selection or plays the navigation sound.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE6BE0",
+        "expected_hex": "00108230",
+        "replacement_hex": "2D100000"
+      },
+      "hide_redundant_slot_number": {
+        "description": "Move the redundant slot-number record outside the viewport.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE65B8",
+        "expected_hex": "7042023C",
+        "replacement_hex": "7AC4023C"
+      },
+      "limit_shared_slot_row_renderer": {
+        "description": "Limit the shared Save/Load slot-row renderer to its first record.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE6A70",
+        "expected_hex": "0300432A",
+        "replacement_hex": "0100432A"
+      },
+      "single_record_y": {
+        "description": "Center the single save record at local Y 20 inside the compact panel.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE6584",
+        "expected_hex": "6041023C",
+        "replacement_hex": "A041023C"
+      },
+      "suppress_obsolete_slot_cursor": {
+        "description": "Suppress the obsolete independent save-slot cursor model draw.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE6DA4",
+        "expected_hex": "E4ED060C",
+        "replacement_hex": "00000000"
+      },
+      "suppress_single_record_separators": {
+        "description": "Suppress row separators when only one record is rendered.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE6888",
+        "expected_hex": "0200412A",
+        "replacement_hex": "0000412A"
+      },
+      "upper_panel_height": {
+        "description": "Shrink the upper Save/Load panel height from 224 to 96.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE59A4",
+        "expected_hex": "6043023C",
+        "replacement_hex": "C042023C"
+      },
+      "upper_panel_width": {
+        "description": "Shrink the upper Save/Load panel width from 400 to 224.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE599C",
+        "expected_hex": "C843023C",
+        "replacement_hex": "6043023C"
+      },
+      "upper_panel_x": {
+        "description": "Move the upper Save/Load panel to centered X 146.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE598C",
+        "expected_hex": "6842023C",
+        "replacement_hex": "1243023C"
+      },
+      "upper_panel_y": {
+        "description": "Move the upper Save/Load panel to detached Y 90 above the lower panel.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE5994",
+        "expected_hex": "2041023C",
+        "replacement_hex": "B442023C"
+      }
+    },
+    "hooks": {
+      "route_shared_save_load_update": {
+        "description": "Route every visible Save/Load update through the first-record controller while automatic startup remains on its independent caller hook.",
+        "target_id": "na2_elf",
+        "offset": "0xE4008",
+        "expected_hex": "C88F070C00000000",
+        "symbol": "display_only_first_save_update",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "display_only_first_save": {
+        "kind": "c",
+        "path": "src/qol/save_load_display_only_first_save.c",
+        "namespace": "qol.save.load.display.only.first.save",
+        "imports": {},
+        "fragments": {
+          "display_only_first_save_update": {
+            "object": "qol.save.load.display.only.first.save.text.save.load.display.only.first.save.update"
+          }
+        }
+      }
+    }
+  }
+}

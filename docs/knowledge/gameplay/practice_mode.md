@@ -32,7 +32,7 @@ following explicit boundaries:
 - the Practice child family was followed end to end through BTL live
   `0x008809E0..0x00882670`: allocation/resource construction, reset/snapshot,
   apply/defaults, input and repeat handling, phase update, row/window geometry,
-  drawing, destruction, and Link Mode access. Direct raw-`jal` enumeration of
+  drawing, destruction, and Linked Mode access. Direct raw-`jal` enumeration of
   the update and draw entries found the two documented caller families;
 - ownership was followed through the generic parent/UI-owner path at live
   `0x006BE810..0x006C12A0` and `0x00714164..0x00715D08`, and through the
@@ -44,7 +44,7 @@ following explicit boundaries:
 - manager storage/default/getter/setter behavior was bounded to resident
   `FUN_001E7A80`, `FUN_001F5910`, `FUN_001F5960`, `FUN_001F59F0`,
   `FUN_001F6420`, and `FUN_001F6D30/FUN_001F6D50`, plus the separately owned
-  dynamic-support manager whose side records also store Link Mode, including
+  dynamic-support manager whose side records also store Linked Mode, including
   its BTL setup/teardown and constructor at live `0x00885210`, `0x00885290`,
   and `0x00886CB0`;
 - dummy behavior was traced only far enough to establish every Practice row's
@@ -272,6 +272,37 @@ instead calls the owner reinitializer at live `0x00714700`. This is the first
 consumer of the parent's delayed result and keeps child completion, parent
 closure, and owner transition as three distinct state boundaries.
 
+## Battle Settings child
+
+The mode-2 Battle Settings child is `0x68` bytes. Native snapshot live
+`0x0087F870` reads the manager values into six local words:
+
+| Row | Local | Values | Manager key | Native default |
+| ---: | ---: | --- | ---: | ---: |
+| `0` | `+0x30` | Time: `10` through `90`, `99`, Unlimited (stored as `100`) | `6` | index `9` / value `99` |
+| `1` | `+0x34` | Difficulty: Simple, Easy, Normal, Hard, Insane, Ultimate | `0xB` | `2` |
+| `2` | `+0x38` | Items: None, Less, Normal, More | `7` | `2` |
+| `3` | `+0x3C` | Chakra: Normal, Unlimited | `2` | `0` |
+| `4` | `+0x40` | Ultimate Jutsu: No Use, Random, Command, Timing, Turn, Combo | `5` | `2` |
+| `5` | `+0x44` | Handicap: `0-10` through `10-0` | `8` | `5` |
+
+The time values are the 11 words at live `0x008D1850`; the six row counts
+`{11, 6, 4, 2, 6, 11}` are at live `0x008D1880`. Snapshot converts the
+manager's stored numeric time to its table index, then clamps all six local
+values by those counts. The sixth Difficulty option is limited by profile flag
+slot `0x6A`; without that flag the maximum index is `4`.
+
+The native Battle value-pointer table at live `0x008BE5C0` confirms exact
+resource reuse rather than merely similar labels: Difficulty points to the
+same `0x008BDBA0` table as Practice Strength, Items to the same `0x008BDBC0`
+table as Practice Items, Chakra to the same `0x00605A90` table as Practice
+Chakra, and Ultimate Jutsu to the same `0x008BDC10` table as its Practice row.
+
+The local Defaults action at live `0x0087FC08..0x0087FC78` finds the first time
+entry at least `99`, then writes `{9, 2, 2, 0, 2, 5}` to the six local words.
+Those values remain local until the ordinary Confirm transaction. This is
+separate from the manager-level reset described below.
+
 ## Practice child record
 
 The child is `0xB8` bytes. The following layout is established from its
@@ -319,21 +350,21 @@ help-text meanings. “Default” is what the menu's local Defaults action write
 | ---: | ---: | --- | ---: | --- | ---: |
 | `0` | `+0x6C` | Health: Normal, Half, Almost | 3 | key `4`, `+0x9F5` | `0` |
 | `1` | `+0x70` | Chakra: Normal, Unlimited | 2 | key `2`, `+0x9F4` bit 2 | `0` |
-| `2` | `+0x74` | Linked Attack / Link Gauge: Normal, Unlimited | 2 | key `3`, `+0x9F4` bit 3 | `0` |
+| `2` | `+0x74` | Linked Attack: Normal, Unlimited | 2 | key `3`, `+0x9F4` bit 3 | `0` |
 | `3` | `+0x78` | Ultimate Jutsu: No Use, Random, Command, Timing, Turn, Combo | 6 | key `5`, `+0x9F6` | `2` |
-| `4` | `+0x7C` | Link Mode: Manual, Auto | 2 | separate per-side configuration | `1` |
+| `4` | `+0x7C` | Linked Mode: Manual, Auto | 2 | separate per-side configuration | `1` |
 | `5` | `+0x80` | Items: None, Less, Normal, More | 4 | key `7`, `+0x9F8` | `2` |
-| `6` | `+0x84` | Command Display: OFF, ON | 2 | key `1`, `+0x9F4` bit 0 | `1` |
-| `7` | `+0x88` | Damage Display: OFF, ON | 2 | key `9`, `+0x9F4` bit 4 | `1` |
+| `6` | `+0x84` | Commands: OFF, ON | 2 | key `1`, `+0x9F4` bit 0 | `1` |
+| `7` | `+0x88` | Damage: OFF, ON | 2 | key `9`, `+0x9F4` bit 4 | `1` |
 | `8` | `+0x8C` | Guide Ninja Sound: OFF, ON | 2 | key `0xA`, `+0x9F4` bit 5 | `1` |
 | `9` | `+0x90` | Status: Manual, COM, Stand, Jump, Double-jump | 5 | key `0xC`, `+0x9FA` | `2` |
-| `10` | `+0x94` | Strength: Easiest, Easy, Normal, Hard, Very hard, Ultimate | 6 | key `0xB`, `+0x9FB` | `2` |
+| `10` | `+0x94` | Strength: Simple, Easy, Normal, Hard, Insane, Ultimate | 6 | key `0xB`, `+0x9FB` | `2` |
 | `11` | `+0x98` | Attack: No, Single, Combo, Projectile, High Speed Move, Ultimate Jutsu, Jutsu | 7 | key `0xD`, `+0x9FC` | `0` |
-| `12` | `+0x9C` | Guard: No, Use | 2 | key `0xE`, `+0x9FD` | `0` |
+| `12` | `+0x9C` | Guard: No, Yes | 2 | key `0xE`, `+0x9FD` | `0` |
 | `13` | `+0xA0` | Move: Stay, Follow | 2 | key `0xF`, `+0x9FE` | `0` |
-| `14` | `+0xA4` | Substitution Jutsu: Normal, Don't use | 2 | key `0x11`, `+0x9F4` bit 7 | `0` |
+| `14` | `+0xA4` | Substitution Jutsu: Normal, No | 2 | key `0x11`, `+0x9F4` bit 7 | `0` |
 | `15` | `+0xA8` | Linked Attack: Don't use, Normal, frequent/random (`乱発`) | 3 | key `0x12`, `+0x9FF` | `1` |
-| `16` | `+0xAC` | Extra Hit Counter: Normal, Always return | 2 | key `0x10`, `+0x9F4` bit 6 | `0` |
+| `16` | `+0xAC` | Extra Hit Counter: Normal, Return | 2 | key `0x10`, `+0x9F4` bit 6 | `0` |
 
 Rows `2` and `15` share an English-facing label but are different controls.
 The row-2 help describes how the player's Link Gauge charges; row 15 controls
@@ -344,7 +375,7 @@ and apply code: Status is key `0xC` at `+0x9FA`, while Strength is key `0xB`
 at `+0x9FB`. Resident `FUN_001F6D30` mirrors only key `0xB` (Strength) to
 manager `+0xA13`.
 
-Link Mode is not part of the manager's 12-byte settings pack. Live
+Linked Mode is not part of the manager's 12-byte settings pack. Live
 `0x00882630` reads, and live `0x00882670` writes, a byte in a per-side global
 record selected by `manager+0x18`. The effective record is
 `gp-0x3168 + side*3 + 0x0C` and the setting is its byte `+1`.
@@ -355,7 +386,7 @@ described in [Support mechanics](support_mechanics.md). BTL setup live
 `FUN_001EC7A0`, destroys any previous object, allocates a replacement, and
 constructs it through live `0x00886CB0`. The constructor lays out two
 three-byte side records at object `+0x0C` and `+0x0F`, initializing each as
-`{0, 1, 0}`; the middle byte is therefore the established Link Mode field and
+`{0, 1, 0}`; the middle byte is therefore the established Linked Mode field and
 starts as Auto. Resident outer-controller teardown reaches BTL live
 `0x00885290`, which destroys the object and clears the global. The roles of the
 other two bytes in each three-byte record are outside the established Practice
@@ -447,13 +478,13 @@ snapshots the manager again.
 ## Confirm/apply side effects
 
 Live `0x008811A0` writes all 16 manager-backed local values through resident
-`FUN_001F59F0(manager, key, value)` and writes Link Mode through live
+`FUN_001F59F0(manager, key, value)` and writes Linked Mode through live
 `0x00882670`. Resident `FUN_001F59F0` checks the battle mode, updates the
 packed bits/bytes above, then calls `FUN_001F6D30`; that final helper only
 mirrors Strength. It does not perform a general fighter or resource reset.
 
-The exact setter order is Command Display, Items, Health, Ultimate Jutsu,
-Link Gauge, Chakra, Damage Display, Guide Ninja Sound, Link Mode, Status,
+The exact setter order is Commands, Items, Health, Ultimate Jutsu,
+Linked Attack (gauge), Chakra, Damage, Guide Ninja Sound, Linked Mode, Status,
 Strength, Attack, Guard, Move, Extra Hit, Substitution, and Linked Attack. The
 dummy-status bridge runs only after that sequence. This ordering is material
 to the post-write Strength comparison below; there is no staged manager-side
@@ -510,7 +541,7 @@ Confirmed BTL consumers include:
 - preserved export `FUN_006F53D0` (live entry `0x006F5410`) tests
   `Status == COM` before taking COM-specific branches;
 - preserved export `FUN_006FA550` (live `0x006FA590`) reads Status and Guard
-  key `0xE` and uses Guard == Use in non-COM scripted decisions;
+  key `0xE` and uses Guard == Yes in non-COM scripted decisions;
 - preserved export `FUN_006FAA10` (live `0x006FAA50`) reads Status and Move
   key `0xF` and requires Move == Follow for the scripted movement path;
 - preserved export `FUN_006FB090` (live `0x006FB0D0`) reads Status and Attack
@@ -559,7 +590,7 @@ Live `0x007024A0` is the complementary controller for scripted Status values.
 It returns in Practice when Status is COM and otherwise integrates the three
 scripted rows rather than treating them as independent toggles:
 
-- Guard == Use builds three reaction predicates from range, action objects,
+- Guard == Yes builds three reaction predicates from range, action objects,
   and target state. A qualifying predicate can reset the current work, select
   controller code `0x12`, set `+0x90`, and write countdown `30` to `+0x94`;
 - Move == Follow maintains controller code `5` through its target/distance
@@ -601,35 +632,35 @@ The clean source profiles, split into groups of ten field indices, are:
 
 ~~~text
 fields 00..09
-Easiest:    50  0  0 240  0 20  0  0 60 10
+Simple:     50  0  0 240  0 20  0  0 60 10
 Easy:       45  0  0 210  0 30 25  0 40 15
 Normal:     30  0  0 180  0 35 35 25 40 30
 Hard:       20 10 20 150 25 40 35 35 40 40
-Very hard:  15 15 20 120 45 50 45 40 40 50
+Insane:     15 15 20 120 45 50 45 40 40 50
 Ultimate:   15 20 30  90 60 60 55 50 50 60
 
 fields 10..19
-Easiest:    60  0  0  0 10  0  0 180 180  0
+Simple:     60  0  0  0 10  0  0 180 180  0
 Easy:       60  0 30  0 30 35  0 150 150 30
 Normal:     70 40 40  0 65 45  0 120 100 40
 Hard:       70 50 60 45 60 55 50  90 100 50
-Very hard:  70 60 70 55 70 60 60  80  80 50
+Insane:     70 60 70 55 70 60 60  80  80 50
 Ultimate:   80 70 70 60 80 70 70  70  80 70
 
 fields 20..29
-Easiest:     0  0  0 50 0  0  0  0 20 40
+Simple:      0  0  0 50 0  0  0  0 20 40
 Easy:        0  0  0 15 0  0  0  0 35 55
 Normal:      0  0  0 50 0 35  0 30 40 60
 Hard:       10  0  0 50 0 35 40 40 40 60
-Very hard:  25 30 50 50 0 40 45 45 45 65
+Insane:     25 30 50 50 0 40 45 45 45 65
 Ultimate:   40 50 70 50 0 50 45 45 50 70
 
 fields 30..39
-Easiest:    0 380 60 240 40 8 0 1 200 30
+Simple:     0 380 60 240 40 8 0 1 200 30
 Easy:       0 360 45 180 35 6 0 2 170 25
 Normal:     0 300 60 150 35 6 0 3 150 20
 Hard:       3 300 50 120 35 5 0 3 120 15
-Very hard:  2 240 40  90 30 5 0 3 110 10
+Insane:     2 240 40  90 30 5 0 3 110 10
 Ultimate:   1 180 35  75 20 4 0 3  85  5
 ~~~
 
@@ -655,17 +686,17 @@ Linked Attack key `0x12` is consumed at multiple gates:
   the original field. It then requires `RNG(0..100) < threshold` before setting
   controller code `0x26`;
 - live `0x006FF410` likewise blocks value `0`. Value `1` (Normal) uses the
-  dummy Status, Link Mode, and partner availability to initialize the same
+  dummy Status, Linked Mode, and partner availability to initialize the same
   per-side timer. COM Status writes `30 + RNG(0..60)` and retains a separate
   threshold from Strength-profile field `21`; non-COM Normal writes `30` when
-  Link Mode is Manual and no partner is available, otherwise `90`, with
+  Linked Mode is Manual and no partner is available, otherwise `90`, with
   threshold `100`. Value `2`
   (`乱発`, frequent/random) writes `5` with threshold `100`. A final
   `RNG(0..100) < threshold` sets bit `0x00200000` in the side work flags.
   Another no-current-request branch initializes the timer to
-  `90 + RNG(0..30)` under its Link Mode/partner conditions.
+  `90 + RNG(0..30)` under its Linked Mode/partner conditions.
 
-The clean field-`21` values from Easiest through Ultimate Strength are
+The clean field-`21` values from Simple through Ultimate Strength are
 `0, 0, 0, 0, 30, 50`. Because `FUN_00180210(100)` is inclusive and the test
 is strict `<`, an unmodified field gives acceptance counts of `0/101`,
 `30/101`, or `50/101`, not `0%`, `30%`, and `50%` under a 100-outcome model.
@@ -673,14 +704,14 @@ Threshold `100` accepts `100/101` draws. The boosted formula produces `1350`
 or `3750` for the two nonzero clean fields and therefore accepts every
 `0..100` draw; a zero field remains zero.
 
-After live `0x006FE720` selects code `0x26`, Link Mode controls the handshake
+After live `0x006FE720` selects code `0x26`, Linked Mode controls the handshake
 at work `+0x150`. Auto writes `2`. Manual writes `1` when no partner object is
 available, writes `2` when the available partner's byte `+0xE6` is `1`, and
 leaves other partner states unchanged. Handshake value `1` shortens the same
 linked timer to `5`. Work byte `+0x14E` caches the partner selector/type used
 by these tests.
 
-This establishes why rows 4 and 15 interact without conflating them: Link Mode
+This establishes why rows 4 and 15 interact without conflating them: Linked Mode
 participates in scheduling and the partner handshake for an enabled linked
 attack, while row 15 can prevent that request family or select its
 short-countdown policy. Some partner-state and controller-code semantics remain
@@ -688,7 +719,7 @@ unnamed, but the setting-selected timers, thresholds, draws, and written fields
 are exact.
 
 Extra Hit key `0x10` is consumed by live `0x006FF650`. For hit-response flags
-`fighter+0xB00 & 0xFF00` equal to `0x0400`/`0x1000`, Always return (`1`)
+`fighter+0xB00 & 0xFF00` equal to `0x0400`/`0x1000`, Return (`1`)
 clears the normal cooldown and immediately selects response code `0x0D`; for
 flag `0x0100` it clears the corresponding cooldown and selects code `0x13`.
 It then commits that response and marks its per-side request active. Normal
@@ -738,11 +769,11 @@ dispatcher code or reconstructing general substitution mechanics.
 The three presentation settings are consumed outside the Practice menu rather
 than by its draw routine:
 
-- live `0x006BB590` begins the Damage Display renderer by reading key `9`.
+- live `0x006BB590` begins the Damage renderer by reading key `9`.
   OFF returns before building/drawing the damage object. ON still requires the
   object's `+0x4C` bit 0 and its side short `+0x0C` to match
   `manager+0x18`;
-- live `0x00728B00` updates the Command Display HUD and explicitly calls its
+- live `0x00728B00` updates the Commands HUD and explicitly calls its
   clear/hide helper at live `0x00728A80` when key `1` is OFF. The companion
   path at live `0x00728BF0` skips the command-display drawing work when OFF,
   and live `0x00729130` forces that HUD's internal byte `+3` into its closed
@@ -818,18 +849,36 @@ construction (`FUN_001F4200` / `FUN_001F5910`) applies it to
 `manager+0x9F4`, `+0xA00`, and `+0xA0C`. The visible Practice defaults match
 the local Defaults row values above.
 
-The Practice Settings rework hooks the initializer tail at live
-`0x001E7B7C`, replacing the native `sb a1,11(a0); jr ra` pair with a tail jump
-to an owned leaf. The leaf reproduces byte `11 = 1`, then optionally overrides
-Health byte `1`, Commands bit `0`, and Guide Ninja Sound bit `5` in byte `0`,
-plus Linked Attack byte `11`. The resident schema uses `0xFF` per field to
-preserve the native value; configured enum values are stored directly as
-`0..2`.
+The settings-default feature guards the `FUN_001F59F0` call at live
+`0x001F5AD4`. It first preserves the native Strength-mirror write, then applies
+one masked 12-byte configured pack to `manager+0x9F4`: the Battle pack in mode
+`2`, or the Practice pack in mode `3`. Omitted fields have zero masks and
+therefore preserve native bytes. Ultimate Jutsu is supplied only by the shared
+settings object; its two custom runtime modes store native Command (`2`) in the
+manager byte.
+
+Every native catalog leaf also accepts `false`. The generated schema omits that
+row and its default-pack mask remains zero, so exclusion does not overwrite the
+native stored field. The base configuration excludes Guide Ninja Sound, Linked
+Mode, and Extra Hit Counter this way.
+
+That reset function has one established caller, the Practice controller at
+live `0x001ED0E4`; it is not a Battle initializer. Battle defaults instead
+attach to the mode-selector's case-2 assignment at live
+`0x001EA7B4..0x001EA7C0`: the bridge reproduces `manager+0x0C = 2`, applies
+the Battle pack, and rejoins the common selector flow at live `0x001EA818`.
+
+Linked Mode is outside those packs. `features.settings.in_game.practice.general_settings`
+owns its row availability and default separately: `linked_mode: false` omits
+the row and leaves the native constructor's Auto state intact. `manual` or
+`auto` includes the row, supplies its menu-local Defaults value, and extends the
+Practice reset hook to write the selected value through the native per-side
+Linked Mode setter after the dynamic-support manager has been constructed.
 
 Simple Display is independent of the Practice Settings rework. Its native
 initializer write is the `or v1,v1,a2` at live `0x001E7AAC` after masking byte
 `0` with `0xFFFFFFFD`, confirming that its native mask is `0x02`.
-`features.settings.shared.simple_display` owns that guarded instruction directly:
+`features.settings.simple_display` owns that guarded instruction directly:
 `"on"` retains it and `"off"` replaces it with a no-op.
 
 Resident `FUN_001F5960` is used by the Practice-controller startup/restart
@@ -1089,10 +1138,11 @@ actual last player row, applies active record bits, and then calls the displaced
 native hierarchy composer. The draw call at live `0x008823D0` remains native
 except for a wrapper that draws one additional copy of the native final player
 backing when all ten possible player rows are present; the animation owns only
-nine player backings. Native controller slots remain authoritative for all 17
-native values. The compact list stores only resolved label/value-table pointers,
-and the custom Substitution value alone has staged state for Confirm/Cancel.
-Runtime confirmation of this replacement candidate is pending.
+nine player backings. Native controller slots remain authoritative for every
+retained native value. The generated list keeps the native General rows first,
+then enabled shared rows in catalog declaration order, then the native Opponent
+rows. Shared rows use independent staged runtime state for Confirm/Cancel; each
+behavioral payload is selected by its individual catalog leaf.
 
 The `+0x56` delay is draw-call-counted, not update-counted. Reset sets it to
 zero; once alpha is full, each invocation of live `0x00882250` increments it
@@ -1161,7 +1211,7 @@ Useful negative results:
 | generic parent update | `0x006C0F60` | `0x0000D060` | `0x006C0F20` |
 | generic parent renderer | `0x006C1120` | `0x0000D220` | `0x006C10E0` |
 | Practice row-offset easing helper | `0x006C12A0` | `0x0000D3A0` | `0x006C1260` |
-| Damage Display renderer/settings gate | `0x006BB590` | `0x00007690` | `0x006BB550` |
+| Damage renderer/settings gate | `0x006BB590` | `0x00007690` | `0x006BB550` |
 | Ultimate raw battle-rule-mode accessor | `0x006EE560` | `0x0003A660` | `0x006EE520` |
 | Ultimate Jutsu setting getter call site (inside general AI) | `0x006F8BD0` | `0x00044CD0` | `0x006F8B90` |
 | seven-way scripted Attack dispatcher | `0x006F95B0` | `0x000456B0` | `0x006F9570` |
@@ -1183,8 +1233,8 @@ Useful negative results:
 | battle UI owner parent-draw wrapper | `0x00715CC0` | `0x00061DC0` | `0x00715C80` |
 | ultimate skill-play creation function containing the raw-mode consumer | `0x00769790` | `0x000B5890` | `0x00769750` |
 | Ultimate raw-mode consumer call site | `0x0076A0CC` | `0x000B61CC` | `0x0076A08C` |
-| Command Display update/settings gate | `0x00728B00` | `0x00074C00` | `0x00728AC0` |
-| Command Display draw/settings gate | `0x00728BF0` | `0x00074CF0` | `0x00728BB0` |
+| Commands update/settings gate | `0x00728B00` | `0x00074C00` | `0x00728AC0` |
+| Commands draw/settings gate | `0x00728BF0` | `0x00074CF0` | `0x00728BB0` |
 | Guide Ninja Sound event/settings gate | `0x00728EA0` | `0x00074FA0` | `0x00728E60` |
 | Guide Ninja Sound scheduler/settings gate | `0x00728F80` | `0x00075080` | `0x00728F40` |
 | standalone Practice update wrapper | `0x00875B20` | `0x001C1C20` | `0x00875AE0` |
@@ -1195,6 +1245,9 @@ Useful negative results:
 | standalone host module update | `0x0087CB20` | `0x001C8C20` | `0x0087CAE0` |
 | standalone host draw | `0x0087D460` | `0x001C9560` | `0x0087D420` |
 | standalone wrapper child-destructor call site | `0x0087E538` | `0x001CA638` | `0x0087E4F8` |
+| Battle snapshot manager values | `0x0087F870` | `0x001CB970` | `0x0087F830` |
+| Battle child reset/snapshot | `0x0087F9D0` | `0x001CBAD0` | `0x0087F990` |
+| Battle local Defaults block | `0x0087FC08..0x0087FC78` | `0x001CBD08..0x001CBD78` | `0x0087FBC8..0x0087FC38` |
 | Practice child zero-initializer | `0x008809E0` | `0x001CCAE0` | `0x008809A0` |
 | Practice child destructor | `0x00880A20` | `0x001CCB20` | `0x008809E0` |
 | Practice child resource constructor | `0x00880BE0` | `0x001CCCE0` | `0x00880BA0` |
@@ -1212,11 +1265,11 @@ Useful negative results:
 | Practice child update | `0x00881AB0` | `0x001CDBB0` | `0x00881A70` |
 | Practice row draw helper | `0x00881E50` | `0x001CDF50` | `0x00881E10` |
 | Practice child draw | `0x00882250` | `0x001CE350` | `0x00882210` |
-| Link Mode getter | `0x00882630` | `0x001CE730` | `0x008825F0` |
-| Link Mode setter | `0x00882670` | `0x001CE770` | `0x00882630` |
-| Link Mode backing-object rebuild | `0x00885210` | `0x001D1310` | `0x008851D0` |
-| Link Mode backing-object teardown | `0x00885290` | `0x001D1390` | `0x00885250` |
-| Link Mode backing-object constructor | `0x00886CB0` | `0x001D2DB0` | `0x00886C70` |
+| Linked Mode getter | `0x00882630` | `0x001CE730` | `0x008825F0` |
+| Linked Mode setter | `0x00882670` | `0x001CE770` | `0x00882630` |
+| Linked Mode backing-object rebuild | `0x00885210` | `0x001D1310` | `0x008851D0` |
+| Linked Mode backing-object teardown | `0x00885290` | `0x001D1390` | `0x00885250` |
+| Linked Mode backing-object constructor | `0x00886CB0` | `0x001D2DB0` | `0x00886C70` |
 
 The last two entries demonstrate the symbol trap directly: the preserved
 export's `FUN_00882630` label is at the setter prologue, while a raw call to
@@ -1232,6 +1285,8 @@ encoded target `0x00882630` reaches the getter in live memory.
 | 17 value-array pointers | `0x008BF380` | `0x0020B480` | `0x008BF340` |
 | six Strength source profiles (`6 x 0x50`) | `0x008C3230` | `0x0020F330` | `0x008C31F0` |
 | 15-entry screen-selector module jump table | `0x008D1690` | `0x0021D790` | `0x008D1650` |
+| 11 Battle time values | `0x008D1850` | `0x0021D950` | `0x008D1810` |
+| six Battle value counts | `0x008D1880` | `0x0021D980` | `0x008D1840` |
 | 17 value counts | `0x008D18C0` | `0x0021D9C0` | `0x008D1880` |
 | per-side AI work record | `0x008D6590 + side*0x1E0` | BSS; nominal `0x00222690` is past EOF | `0x008D6550 + side*0x1E0` (nominal baseline) |
 | per-side effective Strength profile | `0x008D66F0 + side*0x1E0` | BSS; nominal `0x002227F0` is past EOF | `0x008D66B0 + side*0x1E0` (nominal baseline; Ghidra also creates same-number raw-reference symbols) |
@@ -1247,6 +1302,8 @@ High confidence:
 - address mapping and every live/file/export coordinate in the index;
 - ownership, allocations, parent/child state dispatch, input masks, and
   Confirm/Cancel/Defaults transaction;
+- all six native Battle rows, manager keys, counts, time values, and local
+  Defaults values;
 - all 17 local offsets, manager keys/storage, counts, defaults, and
   availability conditions;
 - dummy-status apply side effects, Strength-profile selection/hot reload, and

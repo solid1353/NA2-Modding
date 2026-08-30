@@ -23,7 +23,9 @@ from .character_overrides import (
 from .battle_settings import battle_settings_fragment
 from .substitution_gauge import substitution_gauge_fragment
 from .practice_settings import practice_settings_fragment
-from .battle_settings_runtime import battle_settings_runtime_fragment
+from .battle_settings_runtime import battle_settings_runtime_fragments
+from .native_settings_defaults import native_settings_defaults_fragment
+from .unlock_all import unlock_all_configuration_fragment
 
 
 @dataclass(frozen=True)
@@ -96,7 +98,7 @@ def prepare_module_pipeline(
     ] = {}
     title_policy = _selected_game_title_policy(configuration)
     character_overrides_enabled = configuration.selection.node_enabled(
-        "features", "general", "character_overrides"
+        "features", "settings", "character_overrides"
     )
     character_select_overlay_enabled = configuration.selection.node_enabled(
         "features", "character_select", "balance_overlay"
@@ -143,6 +145,18 @@ def prepare_module_pipeline(
                 ),
             )
         if module.feature_id == "settings":
+            native_defaults_fragment = native_settings_defaults_fragment(
+                configuration.selection,
+                owner=module.module_id,
+            )
+            if native_defaults_fragment is not None:
+                declaration = replace(
+                    declaration,
+                    fragments=(
+                        native_defaults_fragment,
+                        *declaration.fragments,
+                    ),
+                )
             battle_schema_fragment = battle_settings_fragment(
                 configuration.selection,
                 owner=module.module_id,
@@ -167,15 +181,15 @@ def prepare_module_pipeline(
                         *declaration.fragments,
                     ),
                 )
-            runtime_config_fragment = battle_settings_runtime_fragment(
+            runtime_config_fragments = battle_settings_runtime_fragments(
                 configuration.selection,
                 owner=module.module_id,
             )
-            if runtime_config_fragment is not None:
+            if runtime_config_fragments:
                 declaration = replace(
                     declaration,
                     fragments=(
-                        runtime_config_fragment,
+                        *runtime_config_fragments,
                         *declaration.fragments,
                     ),
                 )
@@ -188,6 +202,19 @@ def prepare_module_pipeline(
                     declaration,
                     fragments=(
                         gauge_config_fragment,
+                        *declaration.fragments,
+                    ),
+                )
+        if module.feature_id == "general":
+            unlock_all_fragment = unlock_all_configuration_fragment(
+                configuration.selection,
+                owner=module.module_id,
+            )
+            if unlock_all_fragment is not None:
+                declaration = replace(
+                    declaration,
+                    fragments=(
+                        unlock_all_fragment,
                         *declaration.fragments,
                     ),
                 )

@@ -57,34 +57,30 @@ class BuildPreflightTests(unittest.TestCase):
         project_paths = load_local_paths(workspace, allow_missing=True)
         project_paths.path("logs").mkdir()
         builder = project_paths.path("builder")
-        configuration = builder / "configurations" / "release.json"
+        configuration = builder / "configurations" / "release.jsonc"
         configuration.parent.mkdir(parents=True)
         scripts = builder / "scripts"
         scripts.mkdir()
         (scripts / "engine.py").write_text("ENGINE = 1\n", encoding="utf-8")
         (builder / "schema.tsv").write_text("schema\t1\n", encoding="utf-8")
-        feature = builder / "localization"
-        module = feature / "translation_importer"
-        module.mkdir(parents=True)
-        (module / "mappings.tsv").write_text("id\n", encoding="utf-8")
-        texture = feature / "texture_patcher"
-        texture.mkdir()
+        feature = builder / "patches" / "localization" / "enabled"
+        feature.mkdir(parents=True)
+        (feature / "mappings.tsv").write_text("id\n", encoding="utf-8")
         for name in ("containers.tsv", "mappings.tsv", "strategies.tsv"):
-            (texture / name).write_text("id\n", encoding="utf-8")
-        catalog_root = builder / "catalog"
-        catalog_root.mkdir(parents=True)
-        targets = catalog_root / "targets.tsv"
+            (feature / name).write_text("id\n", encoding="utf-8")
+        targets = builder / "modules" / "targets.tsv"
+        targets.parent.mkdir()
         targets.write_text(
             "\t".join(binary_patcher.TARGET_FIELDS) + "\n",
             encoding="utf-8",
         )
-        (catalog_root / "catalog.modcat").write_text(
+        (builder / "catalog.modcat").write_text(
             '''{
   features: {
     localization: {
       enabled: setting {
         description: "Localization.",
-        patches: ["i__localization__enabled"],
+        patch: "localization.enabled",
       },
     },
   },
@@ -92,22 +88,20 @@ class BuildPreflightTests(unittest.TestCase):
 ''',
             encoding="utf-8",
         )
-        (catalog_root / "edits.json").write_text("{}\n", encoding="utf-8")
-        (catalog_root / "string_patches.json").write_text(
-            "{}\n", encoding="utf-8"
-        )
-        (catalog_root / "injections.json").write_text(
+        (builder / "patches" / "localization.json").write_text(
             json.dumps(
                 {
-                    "i__localization__enabled": {
-                        "description": "Synthetic localization selector."
+                    "localization.enabled": {
+                        "description": "Synthetic localization selector.",
+                        "modules": ["translation_importer", "texture_patcher"],
                     }
-                }
+                },
+                indent=2,
             )
             + "\n",
             encoding="utf-8",
         )
-        (configuration.parent / "base.json").write_text(
+        (configuration.parent / "base.jsonc").write_text(
             json.dumps({"features": {"localization": {"enabled": True}}}),
             encoding="utf-8",
         )
@@ -252,9 +246,9 @@ class BuildPreflightTests(unittest.TestCase):
             assembly = workspace / "src" / "runtime.S"
             assembly.parent.mkdir()
             assembly.write_text("nop\n", encoding="ascii")
-            injections_path = paths["builder"] / "catalog" / "injections.json"
-            injections = json.loads(injections_path.read_text(encoding="utf-8"))
-            injections["i__localization__enabled"]["payload"] = {
+            patches_path = paths["builder"] / "patches" / "localization.json"
+            patches = json.loads(patches_path.read_text(encoding="utf-8"))
+            patches["localization.enabled"]["payload"] = {
                 "runtime_asm": {
                     "kind": "asm",
                     "path": "src/runtime.S",
@@ -267,8 +261,8 @@ class BuildPreflightTests(unittest.TestCase):
                     },
                 }
             }
-            injections_path.write_text(
-                json.dumps(injections, indent=2) + "\n", encoding="utf-8"
+            patches_path.write_text(
+                json.dumps(patches, indent=2) + "\n", encoding="utf-8"
             )
             toolchain = {"label": "ee_toolchain", "sha256": "A" * 64}
             with mock.patch.object(
@@ -318,7 +312,7 @@ class BuildPreflightTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             initial = state_fingerprint(self.state(paths))
-            feature = paths["builder"] / "localization"
+            feature = paths["builder"] / "patches" / "localization" / "enabled"
 
             documentation = paths["workspace"] / "docs" / "features" / "localization.md"
             documentation.parent.mkdir(parents=True)
@@ -327,7 +321,7 @@ class BuildPreflightTests(unittest.TestCase):
             )
             self.assertEqual(initial, state_fingerprint(self.state(paths)))
 
-            base_configuration = paths["builder"] / "configurations" / "base.json"
+            base_configuration = paths["builder"] / "configurations" / "base.jsonc"
             base_configuration.write_text(
                 json.dumps(
                     {
@@ -346,17 +340,17 @@ class BuildPreflightTests(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            (feature / "translation_importer" / "mappings.tsv").write_text(
+            (feature / "mappings.tsv").write_text(
                 "id\nchanged\n", encoding="utf-8"
             )
             self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
 
-            (feature / "translation_importer" / "mappings.tsv").write_text(
+            (feature / "mappings.tsv").write_text(
                 "id\n", encoding="utf-8"
             )
             targets = (
                 paths["builder"]
-                / "catalog"
+                / "modules"
                 / "targets.tsv"
             )
             targets.write_text(

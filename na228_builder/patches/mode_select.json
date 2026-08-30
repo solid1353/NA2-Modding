@@ -1,0 +1,22 @@
+{
+  "mode_select.remove_adventure": {
+    "description": "Mark the Adventure Mode Select entry unavailable.",
+    "edit": {
+      "operation": "replace",
+      "destination_target_id": "na2_elf",
+      "destination_offset": "0x4D52D0",
+      "expected_hex": "04000000",
+      "replacement_hex": "FFFFFFFF"
+    }
+  },
+  "mode_select.remove_shop": {
+    "description": "Mark the Shop Mode Select entry unavailable.",
+    "edit": {
+      "operation": "replace",
+      "destination_target_id": "na2_elf",
+      "destination_offset": "0x4D52E0",
+      "expected_hex": "05000000",
+      "replacement_hex": "FFFFFFFF"
+    }
+  }
+}

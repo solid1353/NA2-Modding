@@ -1,4 +1,4 @@
-/* Runtime branch adapters for selectable Battle Settings toggles. */
+/* Runtime branch adapter for selectable Shadowblur Extra Hit. */
     .set noreorder
     .set noat
 
@@ -73,26 +73,3 @@ shadowblur_extra_hit_branch_bridge:
     jump_absolute 0x0024, 0x57d0
     .size shadowblur_extra_hit_branch_bridge, \
         . - shadowblur_extra_hit_branch_bridge
-
-    .section .text.extra_hit_branch_bridge,"ax",@progbits
-    .balign 4
-    .globl extra_hit_branch_bridge
-    .type extra_hit_branch_bridge, @function
-extra_hit_branch_bridge:
-    save_volatile_state
-    jal extra_hit_get
-    nop
-    move $k0, $v0
-    restore_volatile_state
-
-    addiu $k1, $zero, 1
-    bne $v0, $k1, 1f
-    nop
-    bnez $k0, 2f
-    nop
-    jump_absolute 0x0023, 0xb910
-1:
-    jump_absolute 0x0023, 0xb5f0
-2:
-    jump_absolute 0x0023, 0xb60c
-    .size extra_hit_branch_bridge, . - extra_hit_branch_bridge

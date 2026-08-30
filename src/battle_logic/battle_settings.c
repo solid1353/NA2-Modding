@@ -625,63 +625,20 @@ void battle_settings_confirm_sound(u32 sound_id)
     ((NativeSound)NATIVE_SOUND_ADDRESS)(sound_id);
 }
 
-static void battle_settings_stage_default(void *controller, u32 flag)
-{
-    s32 index = battle_settings_index_with_flag(flag);
-
-    if (index >= 0 && controller != (void *)0) {
-        battle_settings_set_value(
-            controller,
-            index,
-            (s32)battle_settings_schema.rows[index].default_value
-        );
-    }
-}
-
 BATTLE_SETTINGS_SECTION(".text.battle_settings_defaults_sound")
 void battle_settings_defaults_sound(u32 sound_id)
 {
-    s32 ultimate_jutsu_index;
+    u32 index;
 
-    battle_settings_stage_default(
-        (void *)battle_settings_active_controller,
-        ROW_FLAG_CUSTOM_SUBSTITUTION
-    );
-    ultimate_jutsu_index = battle_settings_index_with_flag(
-        ROW_FLAG_CUSTOM_ULTIMATE_JUTSU
-    );
-    if (
-        ultimate_jutsu_index >= 0 &&
-        battle_settings_active_controller != (void *)0
-    ) {
-        battle_settings_set_value(
-            (void *)battle_settings_active_controller,
-            ultimate_jutsu_index,
-            (s32)battle_settings_schema.rows[
-                ultimate_jutsu_index
-            ].default_value
-        );
+    if (battle_settings_active_controller != (void *)0) {
+        for (index = 0u; index < battle_settings_schema.row_count; ++index) {
+            battle_settings_set_value(
+                (void *)battle_settings_active_controller,
+                (s32)index,
+                (s32)battle_settings_schema.rows[index].default_value
+            );
+        }
     }
-    battle_settings_stage_default(
-        (void *)battle_settings_active_controller,
-        ROW_FLAG_CUSTOM_SHADOWBLUR
-    );
-    battle_settings_stage_default(
-        (void *)battle_settings_active_controller,
-        ROW_FLAG_CUSTOM_EXTRA_HIT
-    );
-    battle_settings_stage_default(
-        (void *)battle_settings_active_controller,
-        ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES
-    );
-    battle_settings_stage_default(
-        (void *)battle_settings_active_controller,
-        ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST
-    );
-    battle_settings_stage_default(
-        (void *)battle_settings_active_controller,
-        ROW_FLAG_CUSTOM_SUPPORT
-    );
     ((NativeSound)NATIVE_SOUND_ADDRESS)(sound_id);
 }
 

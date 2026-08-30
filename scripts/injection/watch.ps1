@@ -23,11 +23,9 @@ $repository = [IO.Path]::GetFullPath(
 )
 . (Join-Path $repository 'scripts\lib\paths.ps1')
 $paths = Get-Na2Paths
-$injectionsPath = Join-Path ([string]$paths.builder) (
-    'catalog\injections.json'
-)
+$patchesPath = Join-Path ([string]$paths.builder) 'patches'
 $configurationPath = Join-Path ([string]$paths.builder) (
-    'configurations\base.json'
+    'configurations\base.jsonc'
 )
 $buildScript = Join-Path $PSScriptRoot 'build.py'
 $applyScript = Join-Path $PSScriptRoot 'apply.py'
@@ -42,16 +40,16 @@ function Resolve-RepositoryPath([string]$Path) {
     return [IO.Path]::GetFullPath((Join-Path $repository $Path))
 }
 
-function Get-InjectionPayloadEntry {
-    param([Parameter(Mandatory = $true)][Collections.IDictionary]$Injections)
+function Get-PatchPayloadEntry {
+    param([Parameter(Mandatory = $true)][Collections.IDictionary]$Patches)
 
-    foreach ($injectionId in $Injections.Keys) {
-        $injection = $Injections[$injectionId]
-        if ($injection.Contains('payload')) {
-            foreach ($payloadId in $injection['payload'].Keys) {
+    foreach ($patchId in $Patches.Keys) {
+        $patch = $Patches[$patchId]
+        if ($patch.Contains('payload')) {
+            foreach ($payloadId in $patch['payload'].Keys) {
                 [pscustomobject]@{
                     Id = [string]$payloadId
-                    Value = $injection['payload'][$payloadId]
+                    Value = $patch['payload'][$payloadId]
                 }
             }
         }
@@ -180,10 +178,19 @@ else {
         $canonicalSource = Join-Path $repository 'src\hot_reload_message.c'
     }
     else {
-        $injections = Get-Content -Raw -LiteralPath $injectionsPath |
-            ConvertFrom-Json -AsHashtable
+        $patches = [ordered]@{}
+        foreach ($patchFile in Get-ChildItem -LiteralPath $patchesPath -File -Filter '*.json') {
+            $definitions = Get-Content -Raw -LiteralPath $patchFile.FullName |
+                ConvertFrom-Json -AsHashtable
+            foreach ($patchId in $definitions.Keys) {
+                if ($patches.Contains($patchId)) {
+                    throw "Duplicate patch definition: $patchId"
+                }
+                $patches[$patchId] = $definitions[$patchId]
+            }
+        }
         $payloadEntries = @(
-            Get-InjectionPayloadEntry -Injections $injections
+            Get-PatchPayloadEntry -Patches $patches
         )
         $sourceRows = @(
             $payloadEntries |
@@ -308,7 +315,7 @@ if (-not $BuildOnly) {
 
 $watchPaths = @(
     $resolvedSourcePath,
-    $injectionsPath,
+    $patchesPath,
     $configurationPath
 )
 $markerPath = Join-Path $repository 'src\hot_reload_message.c'

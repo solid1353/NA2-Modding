@@ -154,7 +154,7 @@ Character Select independently of the battle override setting. Its guarded
 hook at ELF offset `0x2B9B14` replaces the first native player-panel draw call
 with a wrapper that preserves that draw, resolves the selected character ID,
 and displays the row's `TIER` in the corresponding top-screen block. When
-`features.general.character_overrides` is enabled, it also displays the resolved
+`features.settings.character_overrides` is enabled, it also displays the resolved
 `SUB x%` value, omitting trailing decimal zeroes. With battle overrides
 disabled, the table remains available only to supply tier metadata and is not
 applied to gameplay. The overlay does not display player labels or numeric
@@ -669,7 +669,7 @@ function's final return or forcing `FUN_002297d0` would incorrectly admit
 ineligible states and is not an equivalent control.
 
 The runtime implementation exposes `sub_active_frames` under
-`features.settings.shared` and accepts `0..16`. It replaces the clean
+`features.settings.in_game.shared` and accepts `0..16`. It replaces the clean
 `bgez s0,0x00229610; nop` pair at virtual `0x002295C8` / ELF raw `0x1296C8`
 (`1100010600000000`) with a resident jump. The wrapper preserves the live
 Guard-age value in `v0`, loads the runtime setting into `s0`, and rejoins at

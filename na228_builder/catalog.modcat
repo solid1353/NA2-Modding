@@ -1,0 +1,176 @@
+{
+  features: {
+    settings: {
+      new_controls: setting {
+        description: "Expose Guard and Substitution as independent remappable actions and default both players to L1 Substitution, R1 Guard, L2 Item Select, and R2 Linked Attack.",
+        patch: "settings.new_controls",
+      },
+      simple_display: setting<"off" | "on"> {
+        patch: "settings.simple_display",
+      },
+      character_overrides: setting {
+        description: "Load layered per-character battle overrides.",
+        patch: "settings.character_overrides",
+      },
+      in_game: {
+        description: "Configure which options are available in the Battle and Practice Settings menus and their default values.",
+        patch: "settings.in_game",
+        battle: {
+          time: setting<int & 10..90 & step 10 | 99 | "unlimited" | false> {},
+          difficulty: setting<"simple" | "easy" | "normal" | "hard" | "insane" | "ultimate" | false> {},
+          items: setting<"none" | "less" | "normal" | "more" | false> {},
+          chakra: setting<"normal" | "unlimited" | false> {},
+          handicap: setting<"0-10" | "1-9" | "2-8" | "3-7" | "4-6" | "5-5" | "6-4" | "7-3" | "8-2" | "9-1" | "10-0" | false> {},
+        },
+        practice: {
+          general_settings: {
+            health: setting<"normal" | "half" | "almost" | false> {},
+            chakra: setting<"normal" | "unlimited" | false> {},
+            linked_attack: setting<"normal" | "unlimited" | false> {},
+            linked_mode: setting<"manual" | "auto" | false> {},
+            items: setting<"none" | "less" | "normal" | "more" | false> {},
+            commands: setting<"off" | "on" | false> {},
+            damage: setting<"off" | "on" | false> {},
+            guide_ninja_sound: setting<"off" | "on" | false> {},
+          },
+          opponent_settings: {
+            status: setting<"manual" | "com" | "stand" | "jump" | "double_jump" | false> {},
+            strength: setting<"simple" | "easy" | "normal" | "hard" | "insane" | "ultimate" | false> {},
+            attack: setting<"no" | "single" | "combo" | "projectile" | "high_speed_move" | "ultimate_jutsu" | "jutsu" | false> {},
+            guard: setting<"no" | "yes" | false> {},
+            move: setting<"stay" | "follow" | false> {},
+            substitution_jutsu: setting<"normal" | "no" | false> {},
+            linked_attack: setting<"dont_use" | "normal" | "random" | false> {},
+            extra_hit_counter: setting<"normal" | "return" | false> {},
+          },
+        },
+        shared: {
+          ultimate_jutsu: setting<"no_use" | "random" | "command" | "timing" | "turn" | "combo" | "no_contest" | "no_hud"> {
+            patch: "settings.shared.ultimate_jutsu",
+          },
+          shadowblur: setting<"off" | "on"> {
+            patch: "settings.shared.shadowblur",
+          },
+          extra_hit: setting<"off" | "on"> {
+            patch: "settings.shared.extra_hit",
+          },
+          sub_active_frames: setting<int & 0..16> {
+            patch: "settings.shared.sub_active_frames",
+          },
+          xdash_chakra_cost: setting<int & 0..100 & step 5> {
+            patch: "settings.shared.xdash_chakra_cost",
+          },
+          support: setting<"off" | "on"> {
+            patch: "settings.shared.support",
+          },
+          substitution: setting<{
+              default: "chakra" | "gauge" | "free",
+              recovery_delay_seconds?: decimal & 0..60 & step 0.25,
+              refill_seconds_per_stock?: decimal & >0 & <=10 & step 0.05,
+              damage_recovery?: bool,
+              damage_percent_per_stock?: decimal & >0 & <=100 & step 0.25,
+            }> {
+            description: "Configures substitution payment and gauge recovery.",
+            patch: "settings.shared.substitution",
+          },
+        },
+      },
+    },
+    general: {
+      description: "General game-wide features.",
+      unlock_all: setting<{ demon_wind_bomb?: bool }> {
+        description: "Expose the characters, supports, stages, jutsu, Shop items, and Collection entries present in a fully unlocked save without changing saved progress, currency, inventory, or settings.",
+        patch: "general.unlock_all",
+      },
+      replace_imported_game_title: setting {
+        patch: "general.replace_imported_game_title",
+      },
+    },
+    memory_card: {
+      description: "Memory-card save presentation and isolation.",
+      display_only_first_save: setting {
+        description: "Select record zero directly in Save and Load flows while retaining the native memory-card scan, confirmation, load/save operations, and non-record status handling; No completes without reopening the removed record list.",
+        patch: "memory_card.display_only_first_save",
+      },
+      dedicated_save_namespace: setting {
+        patch: "memory_card.dedicated_save_namespace",
+      },
+      replace_memory_card_title: setting {
+        patch: "memory_card.replace_memory_card_title",
+      },
+    },
+    startup: {
+      description: "After required loaders and boot splashes, skip the CyberConnect2 intro, opening, and interactive title, then enter native Save/Load.",
+      patch: "startup",
+      faster_loading: setting {
+        description: "Shorten startup by loading RPG and player voice-bank indexes only when each bank is first played.",
+        patch: "startup.faster_loading",
+      },
+      auto_loading: setting {
+        description: "Silently load record zero when it exists, and otherwise proceed to the main menu without showing Save/Load UI or requiring input. Report the outcome in black for ten seconds in the top-right corner of the usable menu; successful loads also show play time and the saved date/time.",
+        patch: "startup.auto_loading",
+      },
+      loading_screen: setting {
+        description: "Replace the boot splashes with a large primitive percentage and progress bar paced across a 6.5-second elapsed-time estimate while the original startup loaders run.",
+        patch: "startup.loading_screen",
+      },
+    },
+    character_select: {
+      description: "Character Select behavior and overlays.",
+      balance_overlay: setting {
+        description: "Show each side's character tier on Character Select and include resolved substitution cost only when Character Overrides is enabled.",
+        patch: "character_select.balance_overlay",
+      },
+      support_selection_rework: setting {
+        description: "Build compact per-character support lists defaulting to No Support without wrapping across list edges and retain selected supports for linked Jutsu without changing battle support availability.",
+        patch: "character_select.support_selection_rework",
+      },
+    },
+    mode_select: {
+      description: "Configure which modes are available on Mode Select.",
+      remove_adventure: setting {
+        patch: "mode_select.remove_adventure",
+      },
+      remove_shop: setting {
+        patch: "mode_select.remove_shop",
+      },
+    },
+    rendering: {
+      description: "Game-wide rendering and output geometry.",
+      native_16_9_horizontal_scale: setting {
+        description: "Force the renderer's horizontal-scale field to 0.75 through its object pointer.",
+        patch: "rendering.native_16_9_horizontal_scale",
+      },
+    },
+    localization: {
+      description: "English localization and regional behavior.",
+      patch: "localization",
+      font: {
+        description: "English font rendering and formatting.",
+        glyphs: setting {
+          description: "Use the English glyph atlas, packed metrics, and renderer geometry.",
+          patch: "localization.font.glyphs",
+        },
+        layout: setting {
+          description: "Apply English text measurement, fitting, wrapping, selected styling, and screen-specific layout.",
+          patch: "localization.font.layout",
+        },
+        numeric_formatting: setting {
+          description: "Format dynamic numbers with the English renderer conventions.",
+          patch: "localization.font.numeric_formatting",
+        },
+      },
+      ui: setting {
+        description: "Apply matching English UI textures, rectangles, anchors, scaling, and screen-specific geometry.",
+        patch: "localization.ui",
+      },
+      regional_input: setting {
+        description: "Apply regional confirm, cancel, navigation, and related menu-input behavior consistently across the game.",
+        patch: "localization.regional_input",
+      },
+      strings: setting {
+        patch: "localization.strings",
+      },
+    },
+  },
+}

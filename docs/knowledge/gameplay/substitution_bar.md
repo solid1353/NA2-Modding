@@ -244,7 +244,7 @@ game's texture artwork.
 
 ### Control Settings and substitution input
 
-When `features.settings.controls` is enabled, Control Settings action-map
+When `features.settings.new_controls` is enabled, Control Settings action-map
 index `7` is the dedicated **Substitution** action, replacing the second native
 Guard row. The feature redirects that row's label-pointer slot at raw ELF
 `0x4B26AC` from
@@ -961,7 +961,7 @@ it. The capture pair measures about 2.43 pixels per bar unit and 2.5 pixels per
 character-name-anchor unit, refining the anchors to bar Y `38` and character-name Y `55` while
 leaving X and every bar dimension unchanged.
 
-The feature depends only on `features.general.character_overrides`, which
+The feature depends only on `features.settings.character_overrides`, which
 provides the single normalized cost source. No Support remains independent and
 controls only native field support and its lower gauge. The supported build-time
 combinations are:
@@ -1105,12 +1105,12 @@ battle state presents the native bar acceptably.
 ### Current user-facing surface
 
 NA2.28 does not currently have a graphical feature editor. The released
-builder is a console executable; the user edits `config.json`, while the inert
+builder is a console executable; the user edits `config.jsonc`, while the inert
 `catalog.modcat` beside it documents valid paths and values. Therefore this
 feature must not invent a second settings store or claim that a GUI exists.
 Its actual user interfaces are:
 
-1. the `config.json` selection used at build time; and
+1. the `config.jsonc` selection used at build time; and
 2. the shared `Substitution: Chakra | Gauge | Free` row in pre-battle and
    Practice Settings; and
 3. the independent textured bar rendered only while `Gauge` is selected.
@@ -1122,21 +1122,21 @@ not introduce another schema.
 ### Catalog shape and defaults
 
 Declare `substitution` as the last required field of the typed
-`features.settings.shared` object in `catalog/catalog.modcat`. Its object has a
+`features.settings.in_game.shared` object in `catalog.modcat`. Its object has a
 required runtime default and optional advanced tuning values. Enabling the
-shared setting requires `features.settings.practice`; its Substitution mode
-also requires `features.general.character_overrides = true`.
-`features.settings.shared.support` is independent and must not be silently
+shared setting requires `features.settings.in_game.practice`; its Substitution mode
+also requires `features.settings.character_overrides = true`.
+`features.settings.in_game.shared.support` is independent and must not be silently
 changed: `"on"` keeps native field support and its lower gauge, while `"off"`
 suppresses them. Do not create a second configuration field.
 
-The `features.settings.controls` declaration is structurally
+The `features.settings.new_controls` declaration is structurally
 equivalent to:
 
 ```text
-controls: setting {
+new_controls: setting {
   description: "Expose Guard and Substitution as independent remappable actions and default both players to L1 Substitution, R1 Guard, L2 Item Select, and R2 Linked Attack.",
-  patches: ["e__battle__control_settings_rework", "i__battle__control_settings_rework"],
+  patch: "settings.new_controls",
 },
 ```
 
@@ -1157,6 +1157,7 @@ substitution: {
 The simple release configuration is:
 
 ```json
+"simple_display": "off",
 "shared": {
   "ultimate_jutsu": "no_hud",
   "shadowblur": "off",
@@ -1164,7 +1165,6 @@ The simple release configuration is:
   "sub_active_frames": 4,
   "xdash_chakra_cost": 5,
   "support": "off",
-  "simple_display": "off",
   "substitution": {
     "default": "gauge"
   }
@@ -1174,6 +1174,7 @@ The simple release configuration is:
 The equivalent explicit configuration is:
 
 ```json
+"simple_display": "off",
 "shared": {
   "ultimate_jutsu": "no_hud",
   "shadowblur": "off",
@@ -1181,7 +1182,6 @@ The equivalent explicit configuration is:
   "sub_active_frames": 4,
   "xdash_chakra_cost": 5,
   "support": "off",
-  "simple_display": "off",
   "substitution": {
     "default": "gauge",
     "recovery_delay_seconds": 14.0,
@@ -1243,10 +1243,9 @@ exclusively native.
 
 ### Exact builder hook map
 
-Add `i__battle__control_settings_rework` and
-`i__battle_logic__substitution__gauge` definitions in
-`catalog/injections.json`. All targets already exist in
-`catalog/targets.tsv`; no new target registry or patching
+Use `settings.new_controls` and `settings.shared.substitution` in
+`patches/settings.json`. All targets already exist in
+`@builder/modules/targets.tsv`; no new target registry or patching
 mechanism is needed.
 
 | Hook | Target/offset | Clean guard | Replacement template | Adapter behavior |
@@ -1276,9 +1275,8 @@ and displaced target belongs in a symbolic relocation or a reviewed native-
 address constant; do not write final resident payload addresses into the
 catalog.
 
-The separate Control Settings injection owns the resident label and assignment
-implementation. Its guarded direct-edit patch `e__battle__control_settings_rework`
-owns the two construction defaults, the Select-reset table, and three isolated
+The separate `settings.new_controls` patch owns the resident label, assignment
+implementation, two construction defaults, Select-reset table, and isolated
 input changes:
 
 | Purpose | Target/offset | Clean guard | Replacement |
@@ -1294,11 +1292,11 @@ input changes:
 | Route the first substitution history arm from Guard 1 to Substitution | `na2_elf` `0x129740` | `06000524` (`li a1,6`) | `07000524` (`li a1,7`) |
 | Stop the second native Guard entry from also producing block | `na2_btl` `0x3C02C` | `0E002286` (`lh v0,0xE(s1)`) | `2D100000` (`move v0,zero`) |
 
-Keeping the direct replacements in `catalog/edits.json` makes their clean
-behavior independently auditable. The Control Settings injection independently
-owns the resident Substitution label, the replacement assignment helper, and
-their symbolic relocations. The gauge injection owns only the two character-
-name anchors and the gauge renderer that uses their layout.
+Keeping the direct replacements in `patches/settings.json` makes their clean
+behavior independently auditable. `settings.new_controls` owns the resident
+Substitution label, replacement assignment helper, and their symbolic
+relocations. `settings.shared.substitution` owns only the two character-name
+anchors and the gauge renderer that uses their layout.
 
 The new spend range ends at `0x1299BF`, immediately before the current
 character-override hook at `0x1299C0`. When enabled, its shim skips that later
@@ -1311,9 +1309,8 @@ The minimal implementation touches these existing ownership points:
 
 | Purpose | Canonical location |
 | --- | --- |
-| Public setting and descriptions | `features.settings.shared` in `@builder/catalog/catalog.modcat` |
-| Guarded input routing edits | `@builder/catalog/edits.json` |
-| Hook and payload declarations | `@builder/catalog/injections.json` |
+| Public setting and descriptions | `features.settings.in_game.shared` in `@builder/catalog.modcat` |
+| Unified settings patches | `@builder/patches/settings.json` |
 | Default/profile selection | `@builder/configurations/*.json` |
 | Config-to-fragment encoder | `@builder/scripts/substitution_gauge.py` and `module_pipeline.py` |
 | Gameplay state, independent renderer, and native adapters | `src/battle_logic/substitution_gauge.c` and `substitution_gauge_abi.S` |

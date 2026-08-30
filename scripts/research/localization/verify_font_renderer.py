@@ -34,8 +34,10 @@ from na228_builder.payload_builder import ee_c_fragments  # noqa: E402
 
 PACKED_METRICS_INPUT = load_paths(REPOSITORY).path(
     "builder",
+    "patches",
     "localization",
-    "assets",
+    "font",
+    "glyphs",
     "nun5_semantic_14x20_packed_map.bin",
 )
 C_CORE_SOURCE = REPOSITORY / "src" / "localization" / "font" / "font_v2_core.c"
@@ -1684,13 +1686,13 @@ def numeric_fragments() -> tuple[Fragment, ...]:
 def main() -> None:
     paths = load_paths(REPOSITORY)
     selection = catalog.load_selection(
-        paths.path("builder", "catalog"),
-        paths.path("builder", "configurations", "base.json"),
+        paths.path("builder", "catalog.modcat"),
+        paths.path("builder", "configurations", "base.jsonc"),
     )
     declaration = catalog.load_runtime_package(
         selection,
         "localization",
-        paths.path("builder", "catalog", "targets.tsv"),
+        paths.path("builder", "modules", "targets.tsv"),
         REPOSITORY,
         "localization.runtime_injector",
     )

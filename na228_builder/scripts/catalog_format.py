@@ -11,7 +11,6 @@ from typing import TypeAlias
 
 IDENTIFIER = re.compile(r"[a-z][a-z0-9_]*\Z")
 NUMBER = re.compile(r"-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?")
-UINT64_MAX = (1 << 64) - 1
 
 
 class CatalogSyntaxError(ValueError):
@@ -82,9 +81,7 @@ class StartupFastForwardFrames:
 class SettingNode:
     value_type: TypeExpression | None
     description: str
-    patches: tuple[str, ...]
-    startup_fast_forward_frames: StartupFastForwardFrames | None = None
-    modules: tuple[str, ...] = ()
+    patch: str | None
 
 
 @dataclass(frozen=True)
@@ -97,6 +94,7 @@ class ContainerField:
 class ContainerNode:
     fields: tuple[ContainerField, ...]
     description: str = ""
+    patch: str | None = None
 
 
 @dataclass(frozen=True)
@@ -324,10 +322,8 @@ class _Parser:
             value_type = self.type_expression()
             self.expect(">", "expected '>' after setting type")
         self.expect("{", "expected setting body")
-        description: str | None = None
-        patches: tuple[str, ...] | None = None
-        modules: tuple[str, ...] | None = None
-        startup_fast_forward_frames: StartupFastForwardFrames | None = None
+        description = ""
+        patch: str | None = None
         seen: set[str] = set()
         while self.current.kind != "}":
             key_token = self.current
@@ -340,12 +336,16 @@ class _Parser:
                 description = str(
                     self.expect("STRING", "setting description must be a string").value
                 )
-            elif key == "patches":
-                patches = self.string_array()
-            elif key == "modules":
-                modules = self.string_array()
-            elif key == "startup_fast_forward_frames":
-                startup_fast_forward_frames = self.startup_fast_forward_frames()
+                if not description.strip():
+                    raise _syntax(
+                        self.path, key_token, "setting description must be nonempty"
+                    )
+            elif key == "patch":
+                patch = str(
+                    self.expect("STRING", "setting patch must be a string").value
+                )
+                if not patch.strip():
+                    raise _syntax(self.path, key_token, "setting patch must be nonempty")
             else:
                 raise _syntax(
                     self.path,
@@ -355,106 +355,13 @@ class _Parser:
             if self.accept(",") is None and self.current.kind != "}":
                 raise _syntax(self.path, self.current, "expected ',' or '}'")
         self.expect("}")
-        if description is None or not description.strip():
-            raise _syntax(
-                self.path,
-                self.current,
-                "every setting requires a nonempty description",
-            )
-        modules = modules or ()
-        if patches is None or not patches:
-            raise _syntax(
-                self.path,
-                self.current,
-                "every setting requires a nonempty patches array",
-            )
-        if len(patches) != len(set(patches)):
-            raise _syntax(self.path, self.current, "setting patches must be unique")
-        if len(modules) != len(set(modules)):
-            raise _syntax(self.path, self.current, "setting modules must be unique")
-        for module in modules:
-            if not IDENTIFIER.fullmatch(module):
-                raise _syntax(
-                    self.path,
-                    self.current,
-                    f"setting module must be a meaningful snake_case key: {module!r}",
-                )
-        return SettingNode(
-            value_type,
-            description,
-            patches,
-            startup_fast_forward_frames,
-            modules,
-        )
-
-    def startup_fast_forward_frames(self) -> StartupFastForwardFrames:
-        self.expect("{", "startup_fast_forward_frames must be an object")
-        values: dict[str, int] = {}
-        while self.current.kind != "}":
-            key_token = self.current
-            key = self.key()
-            if key not in {"additive", "override"}:
-                raise _syntax(
-                    self.path,
-                    key_token,
-                    f"unsupported startup_fast_forward_frames field {key!r}",
-                )
-            if key in values:
-                raise _syntax(
-                    self.path,
-                    key_token,
-                    f"duplicate startup_fast_forward_frames field {key!r}",
-                )
-            self.expect(":")
-            token = self.expect(
-                "NUMBER",
-                f"startup_fast_forward_frames {key} must be an integer",
-            )
-            if not isinstance(token.value, int):
-                raise _syntax(
-                    self.path,
-                    token,
-                    f"startup_fast_forward_frames {key} must be an integer",
-                )
-            if key == "override" and (
-                token.value <= 0 or token.value > UINT64_MAX
-            ):
-                raise _syntax(
-                    self.path,
-                    token,
-                    "startup_fast_forward_frames override must be a positive UInt64 integer",
-                )
-            values[key] = token.value
-            if self.accept(",") is None and self.current.kind != "}":
-                raise _syntax(self.path, self.current, "expected ',' or '}'")
-        self.expect("}")
-        if not values:
-            raise _syntax(
-                self.path,
-                self.current,
-                "startup_fast_forward_frames must define additive, override, or both",
-            )
-        return StartupFastForwardFrames(
-            additive=values.get("additive"),
-            override=values.get("override"),
-        )
-
-    def string_array(self) -> tuple[str, ...]:
-        self.expect("[")
-        result: list[str] = []
-        while self.current.kind != "]":
-            result.append(
-                str(self.expect("STRING", "array items must be strings").value)
-            )
-            if self.accept(",") is None and self.current.kind != "]":
-                raise _syntax(self.path, self.current, "expected ',' or ']'")
-        self.expect("]")
-        return tuple(result)
+        return SettingNode(value_type, description, patch)
 
     def node_object(self) -> ContainerNode:
         self.expect("{")
         fields: list[ContainerField] = []
         description = ""
+        patch: str | None = None
         seen: set[str] = set()
         while self.current.kind != "}":
             key_token = self.current
@@ -471,6 +378,10 @@ class _Parser:
                     raise _syntax(
                         self.path, key_token, "description must be nonempty"
                     )
+            elif key == "patch":
+                patch = str(self.expect("STRING", "patch must be a string").value)
+                if not patch.strip():
+                    raise _syntax(self.path, key_token, "patch must be nonempty")
             else:
                 fields.append(ContainerField(key, self.node_expression()))
             if self.accept(",") is None and self.current.kind != "}":
@@ -482,7 +393,7 @@ class _Parser:
                 self.current,
                 "catalog object must contain at least one selectable field",
             )
-        return ContainerNode(tuple(fields), description)
+        return ContainerNode(tuple(fields), description, patch)
 
     def type_expression(self) -> TypeExpression:
         branches = [self.intersection_type()]
@@ -841,10 +752,6 @@ def _validate_type(value_type: TypeExpression, label: str) -> None:
     raise TypeError(type(value_type))
 
 
-def _accepts_top_level_boolean(value_type: TypeExpression) -> bool:
-    return types_overlap(value_type, PrimitiveType("bool"))
-
-
 def _merge_intersected_containers(
     left: ContainerNode,
     right: ContainerNode,
@@ -863,9 +770,14 @@ def _merge_intersected_containers(
         raise ValueError(
             f"{label}: intersected catalog objects both define description"
         )
+    if left.patch and right.patch:
+        raise ValueError(
+            f"{label}: intersected catalog objects both define patch"
+        )
     return ContainerNode(
         (*left.fields, *right.fields),
         left.description or right.description,
+        left.patch or right.patch,
     )
 
 
@@ -887,6 +799,7 @@ def expand_node(
                 for field in node.fields
             ),
             node.description,
+            node.patch,
         )
     if isinstance(node, UnionNode):
         branches: list[CatalogNodeExpression] = []
@@ -938,7 +851,15 @@ def active_type(node: CatalogNodeExpression) -> TypeExpression:
             tuple(
                 ObjectField(
                     field.name,
-                    UnionType((LiteralType(False), active_type(field.node))),
+                    (
+                        active_type(field.node)
+                        if types_overlap(
+                            active_type(field.node), LiteralType(False)
+                        )
+                        else UnionType(
+                            (LiteralType(False), active_type(field.node))
+                        )
+                    ),
                     False,
                 )
                 for field in node.fields
@@ -951,15 +872,13 @@ def active_type(node: CatalogNodeExpression) -> TypeExpression:
     raise TypeError(type(node))
 
 
-def validate_node(node: CatalogNodeExpression, label: str) -> None:
+def validate_node(
+    node: CatalogNodeExpression,
+    label: str,
+) -> None:
     if isinstance(node, SettingNode):
         if node.value_type is not None:
             _validate_type(node.value_type, label)
-            if _accepts_top_level_boolean(node.value_type):
-                raise ValueError(
-                    f"{label}: direct boolean setting types are forbidden; "
-                    "wrap bool in an object type"
-                )
         return
     if isinstance(node, ContainerNode):
         for field in node.fields:
@@ -968,7 +887,10 @@ def validate_node(node: CatalogNodeExpression, label: str) -> None:
                     f"{label}: catalog key must be meaningful snake_case: "
                     f"{field.name!r}"
                 )
-            validate_node(field.node, f"{label}.{field.name}")
+            validate_node(
+                field.node,
+                f"{label}.{field.name}",
+            )
         return
     if isinstance(node, UnionNode):
         for index, branch in enumerate(node.branches):
@@ -998,6 +920,12 @@ def _type_text(value_type: TypeExpression, indent: int, precedence: int = 0) -> 
             return "true" if value_type.value else "false"
         return str(value_type.value)
     if isinstance(value_type, ObjectType):
+        if len(value_type.fields) == 1:
+            field = value_type.fields[0]
+            optional = "?" if field.optional else ""
+            field_type = _type_text(field.value_type, indent + 2)
+            if "\n" not in field_type:
+                return f"{{ {field.name}{optional}: {field_type} }}"
         lines = ["{"]
         for field in value_type.fields:
             optional = "?" if field.optional else ""
@@ -1042,45 +970,23 @@ def _node_lines(
         if node.value_type is not None:
             setting += f"<{_type_text(node.value_type, indent + 2)}>"
         lines = [setting + " {"]
-        lines.append(
-            " " * (indent + 2)
-            + "description: "
-            + json.dumps(node.description, ensure_ascii=False)
-            + ","
-        )
+        if node.description:
+            lines.append(
+                " " * (indent + 2)
+                + "description: "
+                + json.dumps(node.description, ensure_ascii=False)
+                + ","
+            )
         if include_patches:
-            if node.startup_fast_forward_frames is not None:
-                frames = node.startup_fast_forward_frames
+            if node.patch:
                 lines.append(
-                    " " * (indent + 2) + "startup_fast_forward_frames: {"
+                    " " * (indent + 2)
+                    + "patch: "
+                    + json.dumps(node.patch, ensure_ascii=False)
+                    + ","
                 )
-                if frames.additive is not None:
-                    lines.append(
-                        " " * (indent + 4) + f"additive: {frames.additive},"
-                    )
-                if frames.override is not None:
-                    lines.append(
-                        " " * (indent + 4) + f"override: {frames.override},"
-                    )
-                lines.append(" " * (indent + 2) + "},")
-            if node.modules:
-                lines.append(" " * (indent + 2) + "modules: [")
-                for module in node.modules:
-                    lines.append(
-                        " " * (indent + 4)
-                        + json.dumps(module, ensure_ascii=False)
-                        + ","
-                    )
-                lines.append(" " * (indent + 2) + "],")
-            if node.patches:
-                lines.append(" " * (indent + 2) + "patches: [")
-                for patch in node.patches:
-                    lines.append(
-                        " " * (indent + 4)
-                        + json.dumps(patch, ensure_ascii=False)
-                        + ","
-                    )
-                lines.append(" " * (indent + 2) + "],")
+        if len(lines) == 1:
+            return [setting + " {}"]
         lines.append(prefix + "}")
         return lines
     if isinstance(node, ContainerNode):
@@ -1092,8 +998,23 @@ def _node_lines(
                 + json.dumps(node.description, ensure_ascii=False)
                 + ","
             )
+        if include_patches and node.patch:
+            lines.append(
+                " " * (indent + 2)
+                + "patch: "
+                + json.dumps(node.patch, ensure_ascii=False)
+                + ","
+            )
         for field in node.fields:
             child = _node_lines(field.node, indent + 2, include_patches=include_patches)
+            if len(child) == 1:
+                lines.append(
+                    " " * (indent + 2)
+                    + f"{field.name}: "
+                    + child[0]
+                    + ","
+                )
+                continue
             lines.append(" " * (indent + 2) + f"{field.name}: " + child[0])
             lines.extend(child[1:-1])
             lines.append(child[-1] + ",")

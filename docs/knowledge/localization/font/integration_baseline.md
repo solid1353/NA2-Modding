@@ -177,8 +177,8 @@ Damage, and Guide Ninja Sound. Each row pointer is redirected to the existing
 title-case table `0x00604658`, preserving the original Off-then-On index order.
 The user verified Practice Settings working. No string bytes, global glyph
 metrics, spacing logic, scale, or renderer calls change. The three guarded
-pointer edits are canonical under `e__localization__font__layout` in
-`@builder/catalog/edits.json`.
+pointer edits are canonical under `localization.font.layout` in
+`@builder/patches/*.json`.
 
 The supplied title-to-Load `ss1` has boot CRC `A8A3C694`, state SHA-256
 `B35AFFF69FDCDDF5478B6AE86DC9BF909469512F52E5268471FC9CF524EF1AF4`,

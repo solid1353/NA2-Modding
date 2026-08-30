@@ -1,7 +1,7 @@
 # Memory Card
 
 Memory-card save presentation and identity are owned by
-`features.memory_card` in `@builder/catalog/catalog.modcat`.
+`features.memory_card` in `@builder/catalog.modcat`.
 
 ## Display only the first save
 

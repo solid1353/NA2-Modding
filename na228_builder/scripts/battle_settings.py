@@ -6,15 +6,19 @@ from typing import TYPE_CHECKING
 
 from ..payload_builder.operations import PayloadFragment, PayloadRelocation
 from .battle_settings_runtime import (
-    SHARED_SETTINGS_PATH,
     ULTIMATE_JUTSU_NATIVE_MODE_COUNT,
     extra_hit_default,
     shadowblur_default,
     sub_active_frames_default,
     substitution_default,
     support_default,
+    shared_setting_enabled,
     ultimate_jutsu_default,
     xdash_chakra_cost_option_default,
+)
+from .native_settings_defaults import (
+    BATTLE_SETTINGS_PATH,
+    battle_configured_row_defaults,
 )
 
 if TYPE_CHECKING:
@@ -122,6 +126,7 @@ NATIVE_ROWS = {
         0x30,
         11,
         ROW_FLAG_LABEL_SLOT | ROW_FLAG_HELP_SLOT | ROW_FLAG_TIME,
+        9,
     ),
     1: BattleRow(
         1,
@@ -131,12 +136,14 @@ NATIVE_ROWS = {
         | ROW_FLAG_HELP_SLOT
         | ROW_FLAG_VALUES_SLOT
         | ROW_FLAG_DIFFICULTY_LIMIT,
+        2,
     ),
     2: BattleRow(
         2,
         0x38,
         4,
         ROW_FLAG_LABEL_SLOT | ROW_FLAG_HELP_SLOT | ROW_FLAG_VALUES_SLOT,
+        2,
     ),
     3: BattleRow(
         3,
@@ -152,12 +159,14 @@ NATIVE_ROWS = {
         | ROW_FLAG_HELP_SLOT
         | ROW_FLAG_VALUES_SLOT
         | ROW_FLAG_ULTIMATE_JUTSU,
+        2,
     ),
     5: BattleRow(
         5,
         0x44,
         11,
         ROW_FLAG_LABEL_SLOT | ROW_FLAG_HELP_SLOT | ROW_FLAG_HANDICAP,
+        5,
     ),
 }
 
@@ -169,73 +178,75 @@ def _selected_node(selection: CatalogSelection, path: tuple[str, ...]):
     return matches[0]
 
 
+def _configured_value(selection: CatalogSelection, path: tuple[str, ...]):
+    node = _selected_node(selection, path)
+    return node.configured_value if node.has_configured_value else None
+
+
 def _active_rows(selection: CatalogSelection) -> tuple[BattleRow, ...]:
-    shared_settings = _selected_node(selection, SHARED_SETTINGS_PATH)
-    rows = [NATIVE_ROWS[index] for index in range(4)]
-    if shared_settings.enabled:
-        rows.extend(
-            (
-                BattleRow(
-                    SUBSTITUTION_ROW_ID,
-                    ROW_LOCAL_CUSTOM,
-                    3,
-                    ROW_FLAG_CUSTOM_SUBSTITUTION,
-                    substitution_default(selection),
-                ),
-                BattleRow(
-                    SUB_ACTIVE_FRAMES_ROW_ID,
-                    ROW_LOCAL_CUSTOM,
-                    17,
-                    ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES,
-                    sub_active_frames_default(selection),
-                ),
-                BattleRow(
-                    XDASH_CHAKRA_COST_ROW_ID,
-                    ROW_LOCAL_CUSTOM,
-                    21,
-                    ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST,
-                    xdash_chakra_cost_option_default(selection),
-                ),
-                BattleRow(
-                    SUPPORT_ROW_ID,
-                    ROW_LOCAL_CUSTOM,
-                    2,
-                    ROW_FLAG_CUSTOM_SUPPORT,
-                    support_default(selection),
-                ),
-            )
-        )
-    ultimate_jutsu = NATIVE_ROWS[4]
-    if shared_settings.enabled:
-        ultimate_jutsu = replace(
-            ultimate_jutsu,
+    configured_defaults = battle_configured_row_defaults(selection)
+
+    def native_row(row_id: int) -> BattleRow:
+        row = NATIVE_ROWS[row_id]
+        if row_id not in configured_defaults:
+            return row
+        return replace(row, default_value=configured_defaults[row_id])
+
+    native_fields = (
+        (0, "time"),
+        (1, "difficulty"),
+        (2, "items"),
+        (3, "chakra"),
+        (5, "handicap"),
+    )
+    rows = [
+        native_row(row_id)
+        for row_id, field in native_fields
+        if _configured_value(selection, BATTLE_SETTINGS_PATH + (field,))
+        is not False
+    ]
+    custom_rows = {
+        "ultimate_jutsu": lambda: replace(
+            native_row(4),
             option_count=ULTIMATE_JUTSU_NATIVE_MODE_COUNT + 2,
             default_value=ultimate_jutsu_default(selection),
-            flags=(
-                ultimate_jutsu.flags | ROW_FLAG_CUSTOM_ULTIMATE_JUTSU
-            ),
-        )
-    rows.append(ultimate_jutsu)
-    if shared_settings.enabled:
-        rows.extend(
-            (
-                BattleRow(
-                    SHADOWBLUR_ROW_ID,
-                    ROW_LOCAL_CUSTOM,
-                    2,
-                    ROW_FLAG_CUSTOM_SHADOWBLUR,
-                    shadowblur_default(selection),
-                ),
-                BattleRow(
-                    EXTRA_HIT_ROW_ID,
-                    ROW_LOCAL_CUSTOM,
-                    2,
-                    ROW_FLAG_CUSTOM_EXTRA_HIT,
-                    extra_hit_default(selection),
-                ),
-            )
-        )
-    rows.append(NATIVE_ROWS[5])
+            flags=native_row(4).flags | ROW_FLAG_CUSTOM_ULTIMATE_JUTSU,
+        ),
+        "shadowblur": lambda: BattleRow(
+            SHADOWBLUR_ROW_ID, ROW_LOCAL_CUSTOM, 2,
+            ROW_FLAG_CUSTOM_SHADOWBLUR, shadowblur_default(selection),
+        ),
+        "extra_hit": lambda: BattleRow(
+            EXTRA_HIT_ROW_ID, ROW_LOCAL_CUSTOM, 2,
+            ROW_FLAG_CUSTOM_EXTRA_HIT, extra_hit_default(selection),
+        ),
+        "sub_active_frames": lambda: BattleRow(
+            SUB_ACTIVE_FRAMES_ROW_ID, ROW_LOCAL_CUSTOM, 17,
+            ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES,
+            sub_active_frames_default(selection),
+        ),
+        "xdash_chakra_cost": lambda: BattleRow(
+            XDASH_CHAKRA_COST_ROW_ID, ROW_LOCAL_CUSTOM, 21,
+            ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST,
+            xdash_chakra_cost_option_default(selection),
+        ),
+        "support": lambda: BattleRow(
+            SUPPORT_ROW_ID, ROW_LOCAL_CUSTOM, 2,
+            ROW_FLAG_CUSTOM_SUPPORT, support_default(selection),
+        ),
+        "substitution": lambda: BattleRow(
+            SUBSTITUTION_ROW_ID, ROW_LOCAL_CUSTOM, 3,
+            ROW_FLAG_CUSTOM_SUBSTITUTION, substitution_default(selection),
+        ),
+    }
+    for node in selection.nodes:
+        if (
+            len(node.path) == 5
+            and node.path[:4] == ("features", "settings", "in_game", "shared")
+            and node.enabled
+            and node.path[4] in custom_rows
+        ):
+            rows.append(custom_rows[node.path[4]]())
     return tuple(rows)
 
 
@@ -245,8 +256,8 @@ def battle_settings_fragment(
     owner: str,
     symbol: str = "battle_settings_schema",
 ) -> PayloadFragment | None:
-    shared_settings = _selected_node(selection, SHARED_SETTINGS_PATH)
-    if not shared_settings.enabled:
+    battle_settings = _selected_node(selection, BATTLE_SETTINGS_PATH)
+    if not battle_settings.enabled:
         return None
 
     rows = _active_rows(selection)
@@ -270,95 +281,35 @@ def battle_settings_fragment(
         "sub_active_frames": sub_active_frames_value_table_offset,
         "xdash_chakra_cost": xdash_chakra_cost_value_table_offset,
     }
-    relocations.extend(
-        (
-            PayloadRelocation(
-                offset=4,
-                kind="abs32",
-                symbol="substitution_gauge_mode_get",
-            ),
-            PayloadRelocation(
-                offset=8,
-                kind="abs32",
-                symbol="substitution_gauge_mode_set",
-            ),
-        )
-    )
-    if shared_settings.enabled:
-        relocations.extend(
-            (
-                PayloadRelocation(
-                    offset=12,
-                    kind="abs32",
-                    symbol="ultimate_jutsu_mode_get",
-                ),
-                PayloadRelocation(
-                    offset=16,
-                    kind="abs32",
-                    symbol="ultimate_jutsu_mode_set",
-                ),
-                PayloadRelocation(
-                    offset=20,
-                    kind="abs32",
-                    symbol="ultimate_jutsu_no_contest_label",
-                ),
-                PayloadRelocation(
-                    offset=24,
-                    kind="abs32",
-                    symbol="ultimate_jutsu_no_hud_label",
-                ),
-                PayloadRelocation(
-                    offset=28,
-                    kind="abs32",
-                    symbol="shadowblur_get",
-                ),
-                PayloadRelocation(
-                    offset=32,
-                    kind="abs32",
-                    symbol="shadowblur_set",
-                ),
-                PayloadRelocation(
-                    offset=36,
-                    kind="abs32",
-                    symbol="extra_hit_get",
-                ),
-                PayloadRelocation(
-                    offset=40,
-                    kind="abs32",
-                    symbol="extra_hit_set",
-                ),
-                PayloadRelocation(
-                    offset=44,
-                    kind="abs32",
-                    symbol="sub_active_frames_get",
-                ),
-                PayloadRelocation(
-                    offset=48,
-                    kind="abs32",
-                    symbol="sub_active_frames_set",
-                ),
-                PayloadRelocation(
-                    offset=52,
-                    kind="abs32",
-                    symbol="xdash_chakra_cost_option_get",
-                ),
-                PayloadRelocation(
-                    offset=56,
-                    kind="abs32",
-                    symbol="xdash_chakra_cost_option_set",
-                ),
-                PayloadRelocation(
-                    offset=60,
-                    kind="abs32",
-                    symbol="support_get",
-                ),
-                PayloadRelocation(
-                    offset=64,
-                    kind="abs32",
-                    symbol="support_set",
-                ),
+    header_symbols = {
+        "substitution": (
+            (4, "substitution_gauge_mode_get"),
+            (8, "substitution_gauge_mode_set"),
+        ),
+        "ultimate_jutsu": (
+            (12, "ultimate_jutsu_mode_get"),
+            (16, "ultimate_jutsu_mode_set"),
+            (20, "ultimate_jutsu_no_contest_label"),
+            (24, "ultimate_jutsu_no_hud_label"),
+        ),
+        "shadowblur": ((28, "shadowblur_get"), (32, "shadowblur_set")),
+        "extra_hit": ((36, "extra_hit_get"), (40, "extra_hit_set")),
+        "sub_active_frames": (
+            (44, "sub_active_frames_get"),
+            (48, "sub_active_frames_set"),
+        ),
+        "xdash_chakra_cost": (
+            (52, "xdash_chakra_cost_option_get"),
+            (56, "xdash_chakra_cost_option_set"),
+        ),
+        "support": ((60, "support_get"), (64, "support_set")),
+    }
+    for field, symbols in header_symbols.items():
+        if shared_setting_enabled(selection, field):
+            relocations.extend(
+                PayloadRelocation(offset=offset, kind="abs32", symbol=name)
+                for offset, name in symbols
             )
-        )
     for index, row in enumerate(rows):
         fields = list(row.encoded_fields())
         if row.row_id in CUSTOM_ROW_RESOURCES:
@@ -391,55 +342,57 @@ def battle_settings_fragment(
             )
         payload.extend(struct.pack("<8I", *fields))
 
-    for label in SUBSTITUTION_MODE_LABELS:
-        relocations.append(
-            PayloadRelocation(
-                offset=len(payload),
-                kind="abs32",
-                symbol=label,
-            )
-        )
-        payload.extend(b"\0" * 4)
+    if any(row.row_id in CUSTOM_ROW_RESOURCES for row in rows):
+        for label in SUBSTITUTION_MODE_LABELS:
+            if shared_setting_enabled(selection, "substitution"):
+                relocations.append(
+                    PayloadRelocation(
+                        offset=len(payload),
+                        kind="abs32",
+                        symbol=label,
+                    )
+                )
+            payload.extend(b"\0" * 4)
 
-    for label in TOGGLE_LABELS:
-        relocations.append(
-            PayloadRelocation(
-                offset=len(payload),
-                kind="abs32",
-                symbol=label,
+        for label in TOGGLE_LABELS:
+            relocations.append(
+                PayloadRelocation(
+                    offset=len(payload),
+                    kind="abs32",
+                    symbol=label,
+                )
             )
-        )
-        payload.extend(b"\0" * 4)
+            payload.extend(b"\0" * 4)
 
-    text_pool = bytearray()
-    next_text_offset = text_pool_offset
-    for value in range(17):
-        text = f"{value}".encode("ascii") + b"\0"
-        relocations.append(
-            PayloadRelocation(
-                offset=len(payload),
-                kind="abs32",
-                symbol=symbol,
-                addend=next_text_offset,
+        text_pool = bytearray()
+        next_text_offset = text_pool_offset
+        for value in range(17):
+            text = f"{value}".encode("ascii") + b"\0"
+            relocations.append(
+                PayloadRelocation(
+                    offset=len(payload),
+                    kind="abs32",
+                    symbol=symbol,
+                    addend=next_text_offset,
+                )
             )
-        )
-        payload.extend(b"\0" * 4)
-        text_pool.extend(text)
-        next_text_offset += len(text)
-    for value in range(0, 101, 5):
-        text = f"{value}%".encode("ascii") + b"\0"
-        relocations.append(
-            PayloadRelocation(
-                offset=len(payload),
-                kind="abs32",
-                symbol=symbol,
-                addend=next_text_offset,
+            payload.extend(b"\0" * 4)
+            text_pool.extend(text)
+            next_text_offset += len(text)
+        for value in range(0, 101, 5):
+            text = f"{value}%".encode("ascii") + b"\0"
+            relocations.append(
+                PayloadRelocation(
+                    offset=len(payload),
+                    kind="abs32",
+                    symbol=symbol,
+                    addend=next_text_offset,
+                )
             )
-        )
-        payload.extend(b"\0" * 4)
-        text_pool.extend(text)
-        next_text_offset += len(text)
-    payload.extend(text_pool)
+            payload.extend(b"\0" * 4)
+            text_pool.extend(text)
+            next_text_offset += len(text)
+        payload.extend(text_pool)
 
     return PayloadFragment(
         owner=owner,

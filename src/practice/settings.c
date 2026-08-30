@@ -94,10 +94,6 @@ typedef unsigned int u32;
 #define ULTIMATE_JUTSU_NATIVE_MODE_COUNT 6u
 #define ULTIMATE_JUTSU_NATIVE_DEFAULT 2u
 
-#define DEFAULT_PRESERVE_NATIVE 0xFFu
-#define SETTINGS_COMMANDS_MASK 0x01u
-#define SETTINGS_GUIDE_NINJA_SOUND_MASK 0x20u
-
 typedef void (*NativeControllerCall)(void *controller);
 typedef s32 (*NativeProfileFlag)(void *manager, s32 slot);
 typedef s32 (*NativeWindowUpdate)(
@@ -139,12 +135,6 @@ typedef struct PracticeSettingsSchema {
     u32 row_count;
     u32 player_row_count;
     u32 opponent_row_count;
-    u8 default_health;
-    u8 default_commands;
-    u8 default_guide_ninja_sound;
-    u8 default_linked_attack;
-    u8 default_ultimate_jutsu;
-    u8 reserved[3];
     u32 substitution_mode_get;
     u32 substitution_mode_set;
     u32 ultimate_jutsu_mode_get;
@@ -200,50 +190,6 @@ typedef struct PracticeSettingsBackingLayout {
 
 volatile PracticeSettingsBackingLayout practice_settings_backing_layout
     __attribute__((section(".bss.practice_settings_backing_layout")));
-
-PRACTICE_SETTINGS_SECTION(
-    ".text.practice_settings_apply_configured_defaults"
-)
-void practice_settings_apply_configured_defaults(u8 *settings)
-{
-    settings[11] = 1u;
-    if (
-        practice_settings_schema.default_ultimate_jutsu !=
-        DEFAULT_PRESERVE_NATIVE
-    ) {
-        settings[2] = practice_settings_schema.default_ultimate_jutsu <
-            ULTIMATE_JUTSU_NATIVE_MODE_COUNT
-            ? practice_settings_schema.default_ultimate_jutsu
-            : ULTIMATE_JUTSU_NATIVE_DEFAULT;
-    }
-
-    if (practice_settings_schema.default_health != DEFAULT_PRESERVE_NATIVE) {
-        settings[1] = practice_settings_schema.default_health;
-    }
-    if (practice_settings_schema.default_commands != DEFAULT_PRESERVE_NATIVE) {
-        if (practice_settings_schema.default_commands != 0u) {
-            settings[0] |= SETTINGS_COMMANDS_MASK;
-        } else {
-            settings[0] &= ~SETTINGS_COMMANDS_MASK;
-        }
-    }
-    if (
-        practice_settings_schema.default_guide_ninja_sound !=
-        DEFAULT_PRESERVE_NATIVE
-    ) {
-        if (practice_settings_schema.default_guide_ninja_sound != 0u) {
-            settings[0] |= SETTINGS_GUIDE_NINJA_SOUND_MASK;
-        } else {
-            settings[0] &= ~SETTINGS_GUIDE_NINJA_SOUND_MASK;
-        }
-    }
-    if (
-        practice_settings_schema.default_linked_attack !=
-        DEFAULT_PRESERVE_NATIVE
-    ) {
-        settings[11] = practice_settings_schema.default_linked_attack;
-    }
-}
 
 static const PracticeSettingsRow *practice_settings_row(s32 index)
 {
@@ -576,77 +522,21 @@ void practice_settings_apply(void *controller)
     );
 }
 
-static void practice_settings_stage_default(void *controller, u32 row_id)
-{
-    s32 index = practice_settings_index_for_id(row_id);
-
-    if (index >= 0) {
-        practice_settings_set_value(
-            controller,
-            index,
-            (s32)practice_settings_schema.rows[index].default_value
-        );
-    }
-}
-
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_defaults")
 void practice_settings_defaults(void *controller)
 {
     NativeControllerCall native_defaults =
         (NativeControllerCall)NATIVE_DEFAULTS_ADDRESS;
-    s32 ultimate_jutsu_index;
+    u32 index;
 
     native_defaults(controller);
-    if (practice_settings_schema.default_health != DEFAULT_PRESERVE_NATIVE) {
-        *(volatile s32 *)(
-            (u8 *)controller + CONTROLLER_HEALTH_VALUE_OFFSET
-        ) = (s32)practice_settings_schema.default_health;
-    }
-    if (practice_settings_schema.default_commands != DEFAULT_PRESERVE_NATIVE) {
-        *(volatile s32 *)(
-            (u8 *)controller + CONTROLLER_COMMANDS_VALUE_OFFSET
-        ) = (s32)practice_settings_schema.default_commands;
-    }
-    if (
-        practice_settings_schema.default_guide_ninja_sound !=
-        DEFAULT_PRESERVE_NATIVE
-    ) {
-        *(volatile s32 *)(
-            (u8 *)controller + CONTROLLER_GUIDE_NINJA_SOUND_VALUE_OFFSET
-        ) = (s32)practice_settings_schema.default_guide_ninja_sound;
-    }
-    if (
-        practice_settings_schema.default_linked_attack !=
-        DEFAULT_PRESERVE_NATIVE
-    ) {
-        *(volatile s32 *)(
-            (u8 *)controller + CONTROLLER_LINKED_ATTACK_VALUE_OFFSET
-        ) = (s32)practice_settings_schema.default_linked_attack;
-    }
-    practice_settings_stage_default(controller, ROW_ID_SUBSTITUTION);
-    ultimate_jutsu_index = practice_settings_index_for_id(
-        ROW_ID_ULTIMATE_JUTSU
-    );
-    if (
-        ultimate_jutsu_index >= 0 &&
-        (
-            practice_settings_schema.rows[ultimate_jutsu_index].flags &
-            ROW_FLAG_CUSTOM_ULTIMATE_JUTSU
-        ) != 0u
-    ) {
+    for (index = 0u; index < practice_settings_schema.row_count; ++index) {
         practice_settings_set_value(
             controller,
-            ultimate_jutsu_index,
-            (s32)practice_settings_schema.rows[
-                ultimate_jutsu_index
-            ].default_value
+            (s32)index,
+            (s32)practice_settings_schema.rows[index].default_value
         );
     }
-    practice_settings_stage_default(controller, ROW_ID_SHADOWBLUR);
-    practice_settings_stage_default(controller, ROW_ID_EXTRA_HIT);
-    practice_settings_stage_default(controller, ROW_ID_SUB_ACTIVE_FRAMES);
-    practice_settings_stage_default(controller, ROW_ID_XDASH_CHAKRA_COST);
-    practice_settings_stage_default(controller, ROW_ID_SUPPORT);
 }
 
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_row_enabled")

@@ -30,8 +30,8 @@ if ([string]::IsNullOrWhiteSpace($productName) -or
 }
 if ([string]::IsNullOrWhiteSpace([string]$manifest.configuration_name) -or
     [IO.Path]::GetFileName([string]$manifest.configuration_name) -cne [string]$manifest.configuration_name -or
-    -not ([string]$manifest.configuration_name).EndsWith('.json', [StringComparison]::OrdinalIgnoreCase)) {
-    throw 'Release configuration_name must be one .json filename.'
+    -not ([string]$manifest.configuration_name).EndsWith('.jsonc', [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Release configuration_name must be one .jsonc filename.'
 }
 foreach ($required in @(
     $requirementsPath,
@@ -231,7 +231,7 @@ from scripts.lib.paths import load_local_paths
 paths = load_local_paths(repository, allow_missing=True)
 
 print(json.dumps(materialized_configuration(
-    paths.path("builder", "catalog"),
+    paths.path("builder", "catalog.modcat"),
     Path(sys.argv[2]),
 ), indent=2))
 '@
@@ -287,7 +287,7 @@ from scripts.lib.paths import load_local_paths
 
 paths = load_local_paths(repository, allow_missing=True)
 
-print(public_catalog(paths.path("builder", "catalog")), end="")
+print(public_catalog(paths.path("builder", "catalog.modcat")), end="")
 '@
     $catalogText = @(& $python -B -c $catalogProbe $repository)
     if ($LASTEXITCODE -ne 0) {

@@ -29,6 +29,11 @@ $configurationSelectors = @(
         }
     }
 )
+$launchProfiles = @(
+    $paths.settings.launch_settings.PSObject.Properties |
+        Where-Object { $_.Value -is [pscustomobject] } |
+        ForEach-Object { [string]$_.Name }
+)
 
 function Get-Na228WatchArguments {
     param([string]$Target)
@@ -145,33 +150,14 @@ if ($mode -eq 'help') {
     if ($arguments.Count -gt 0) {
         throw 'na228 help accepts no arguments.'
     }
-    @(
-        'NA2.28'
-        ''
-        '  na228                     Build or reuse base configuration, then launch it'
-        '  na228 <token> [token]     Launch one or two games through Workshop'
-        '                            token: <source>[w] | [b]<config>[w]'
-        '                            b = build or reuse before launch; w [C path|plan] = watch'
-        '  -l <profile> [args]       Select a configured launch profile and its own arguments'
-        '  other launch arguments    See Workshop help'
-        ''
-        '  na228 build <config>      Build or reuse a configuration without launching'
-        '  na228 test                Run unit tests'
-        ''
-        '  na228 e2e <all|suite [args...] ...>                  Run selected suites'
-        '  na228 e2e create <all|suite [args...] ...> [-noref]  Rebuild with NUN5 reference by default'
-        '  na228 e2e delete <all|suite [args...] ...>           Delete capture history'
-        '  suite args                                           Passed to that suite; generated suites accept row or rows: 8 or 8-18'
-        '  na228 e2e rename <suite> <new-suite>                 Rename a recording-backed suite and its capture history'
-        '  na228 e2e commit [-p]                                Commit captures; -p preserves capture commits'
-        ''
-        '  na228 release [version]   Publish a GitHub release'
-        '  na228 help                Show this help'
-        ''
-        "  sources: $($paths.games.Names -join ', ')"
-        "  configurations: $($configurationSelectors -join ', ')"
-        ''
-    ) | Write-Output
+    . (Join-Path ([string]$paths.workshop) 'scripts\lib\console_help.ps1')
+    Get-UnConsoleHelp `
+        -Path (Join-Path $PSScriptRoot 'HELP.md') `
+        -Values @{
+            SOURCES = $paths.games.Names -join ', '
+            CONFIGURATIONS = $configurationSelectors -join ', '
+            PROFILES = $launchProfiles -join ', '
+        }
     return
 }
 

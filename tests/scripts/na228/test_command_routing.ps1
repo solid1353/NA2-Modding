@@ -3,6 +3,9 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $sourceRepository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..\..'))
+$workshopRepository = [IO.Path]::GetFullPath((
+    Join-Path $sourceRepository '..\UN Workshop'
+))
 $testRoot = Join-Path $env:TEMP ('na228-command-routing-' + [Guid]::NewGuid().ToString('N'))
 $repository = Join-Path $testRoot 'repository'
 $powershell = if ([string]::IsNullOrWhiteSpace($env:NA228_TEST_POWERSHELL)) {
@@ -36,12 +39,17 @@ function Invoke-FakeNa228 {
 try {
     foreach ($directory in @(
         'build', 'logs', 'recordings', 'scripts\lib', 'scripts\na228',
-        'scripts\injection', 'tests', 'workshop\scripts\pcsx2',
+        'scripts\injection', 'tests', 'workshop\scripts\lib',
+        'workshop\scripts\pcsx2',
         'na228_builder\configurations'
     )) {
         [void](New-Item -ItemType Directory -Path (Join-Path $repository $directory) -Force)
     }
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'na228.ps1') -Destination $repository
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'HELP.md') -Destination $repository
+    Copy-Item `
+        -LiteralPath (Join-Path $workshopRepository 'scripts\lib\console_help.ps1') `
+        -Destination (Join-Path $repository 'workshop\scripts\lib\console_help.ps1')
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\build_configurations.ps1') `
         -Destination (Join-Path $repository 'scripts\na228\build_configurations.ps1')
 
@@ -50,7 +58,10 @@ try {
   "title": "Synthetic",
   "serial": "TEST",
   "output_boot_path": "TEST",
-  "launch_settings": { "startup_fast_forward_frames": 120 },
+  "launch_settings": {
+    "startup_fast_forward_frames": 120,
+    "practice": { "startup_fast_forward_frames": 180 }
+  },
   "configurations": { "base": "b", "test": "t", "release": "r", "e2e": "e" }
 }
 '@)
@@ -72,6 +83,7 @@ function Get-Na2Paths {
         build = Join-Path $repository 'build'
         logs = Join-Path $repository 'logs'
         work = Join-Path $repository 'work'
+        workshop = Join-Path $repository 'workshop'
         pcsx2_scripts = Join-Path $repository 'workshop\scripts\pcsx2'
         pcsx2_input_recordings = Join-Path $repository 'recordings'
         settings = Get-Content -Raw -LiteralPath (Join-Path $repository 'game.json') | ConvertFrom-Json
@@ -167,6 +179,8 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
             'Help omitted the accepted token grammar.'
         Assert-CommandRouting ($helpText -match 'b=base, t=test, r=release, e=e2e, foo') `
             'Help did not list discovered configurations and aliases.'
+        Assert-CommandRouting ($helpText -match 'Profiles: practice') `
+            'Help did not list configured launch profiles.'
 
         $null = Invoke-FakeNa228 -ArgumentList @('build', 'b')
         $build = Get-Content -Raw -LiteralPath (Join-Path $repository 'build.json') | ConvertFrom-Json

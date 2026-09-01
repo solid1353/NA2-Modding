@@ -22,7 +22,10 @@ from .character_overrides import (
 )
 from .battle_settings import battle_settings_fragment
 from .substitution_gauge import substitution_gauge_fragment
-from .practice_settings import practice_settings_fragment
+from .practice_settings import (
+    practice_settings_fragment,
+    practice_settings_table_fragments,
+)
 from .battle_settings_runtime import battle_settings_runtime_fragments
 from .native_settings_defaults import native_settings_defaults_fragment
 from .unlock_all import unlock_all_configuration_fragment
@@ -174,10 +177,15 @@ def prepare_module_pipeline(
                 owner=module.module_id,
             )
             if practice_schema_fragment is not None:
+                practice_table_fragments = practice_settings_table_fragments(
+                    configuration.selection,
+                    owner=module.module_id,
+                )
                 declaration = replace(
                     declaration,
                     fragments=(
                         practice_schema_fragment,
+                        *practice_table_fragments,
                         *declaration.fragments,
                     ),
                 )

@@ -11,6 +11,7 @@ from na228_builder.scripts.practice_settings import (
     ROW_SIZE,
     SCHEMA_HEADER_SIZE,
     practice_settings_fragment,
+    practice_settings_table_fragments,
 )
 from scripts.lib.paths import load_local_paths
 
@@ -173,22 +174,60 @@ class PracticeSettingsTests(unittest.TestCase):
         self.assertEqual(struct.unpack_from("<3I", fragment.payload), (13, 6, 7))
         self.assertEqual(fragment.relocations, ())
 
-    def test_backing_repeats_for_every_player_row_beyond_native_capacity(self) -> None:
-        injection = self.selection.injections["settings.in_game"]
+    def test_runtime_tables_match_the_generated_schema_size(self) -> None:
+        fragment = practice_settings_fragment(
+            self.selection,
+            owner="settings.runtime_injector",
+        )
+        self.assertIsNotNone(fragment)
+        assert fragment is not None
+        row_count = struct.unpack_from("<I", fragment.payload)[0]
+        tables = practice_settings_table_fragments(
+            self.selection,
+            owner="settings.runtime_injector",
+        )
         self.assertEqual(
-            injection["hooks"]["practice_draw_compact_backing"],
             {
-                "description": (
-                    "Run the native backing renderer and repeat the final "
-                    "native player-row backing for each compact row beyond "
-                    "the animation's nine-row capacity."
+                table.symbol: (table.kind, len(table.payload))
+                for table in tables
+            },
+            {
+                "practice_settings_active_labels": ("data", row_count * 4),
+                "practice_settings_active_value_tables": (
+                    "data",
+                    row_count * 4,
                 ),
+            },
+        )
+
+    def test_count_driven_backing_and_cursor_payloads_are_linked(self) -> None:
+        injection = self.selection.injections["settings.in_game"]
+        backing_hook = injection["hooks"]["practice_draw_compact_backing"]
+        self.assertEqual(
+            {
+                key: backing_hook[key]
+                for key in (
+                    "target_id",
+                    "offset",
+                    "expected_hex",
+                    "symbol",
+                    "encoding",
+                )
+            },
+            {
                 "target_id": "na2_btl",
                 "offset": "0x1CE4D0",
                 "expected_hex": "E4ED060C",
                 "symbol": "practice_settings_draw_backing",
                 "encoding": "jal26",
             },
+        )
+        cursor_hook = injection["hooks"][
+            "practice_draw_dynamic_cursor_geometry"
+        ]
+        self.assertEqual(
+            cursor_hook["symbol"],
+            "practice_settings_cursor_geometry_bridge",
         )
         source = injection["payload"]["practice_settings"]
         compiled = {
@@ -204,6 +243,7 @@ class PracticeSettingsTests(unittest.TestCase):
         self.assertIn("practice_settings_backing_layout", compiled)
         self.assertIn("practice_settings_prepare_backing_and_compose", compiled)
         self.assertIn("practice_settings_draw_backing", compiled)
+        self.assertIn("practice_settings_cursor_y", compiled)
 
     def test_scroll_flag_bridge_can_skip_the_native_up_arrow(self) -> None:
         injection = self.selection.injections["settings.in_game"]

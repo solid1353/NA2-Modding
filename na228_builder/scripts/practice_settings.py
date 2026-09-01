@@ -502,3 +502,27 @@ def practice_settings_fragment(
         payload=bytes(payload),
         relocations=tuple(relocations),
     )
+
+
+def practice_settings_table_fragments(
+    selection: CatalogSelection,
+    *,
+    owner: str,
+) -> tuple[PayloadFragment, ...]:
+    if not _node_enabled(selection, PRACTICE_SETTINGS_PATH):
+        return ()
+
+    table_size = max(1, len(_active_rows(selection))) * 4
+    return tuple(
+        PayloadFragment(
+            owner=owner,
+            symbol=symbol,
+            kind="data",
+            alignment=4,
+            payload=b"\0" * table_size,
+        )
+        for symbol in (
+            "practice_settings_active_labels",
+            "practice_settings_active_value_tables",
+        )
+    )

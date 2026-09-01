@@ -1130,19 +1130,61 @@ load at live `0x00882368`. Resident `0x001BB790` reads the record draw bits
 directly, so suppression worked, but it drew the already-composed world
 transforms. Changing authored local Y at that point could not move them.
 
-The replacement source candidate removes that draw-time hook and leaves the
-native `lwc1 controller+0x44` / `neg.s` scroll pair intact. Its layout wrapper
-replaces only the compose call at live `0x00881AEC`: after native animation
-advance, it anchors the heading and opponent records to the compact section's
-actual last player row, applies active record bits, and then calls the displaced
-native hierarchy composer. The draw call at live `0x008823D0` remains native
-except for a wrapper that draws one additional copy of the native final player
-backing when all ten possible player rows are present; the animation owns only
-nine player backings. Native controller slots remain authoritative for every
-retained native value. The generated list keeps the native General rows first,
-then enabled shared rows in catalog declaration order, then the native Opponent
-rows. Shared rows use independent staged runtime state for Confirm/Cancel; each
-behavioral payload is selected by its individual catalog leaf.
+The current layout wrapper replaces the compose call at live `0x00881AEC`.
+After native animation advance, it assigns the animation's fixed cells by
+section role and then calls the displaced native hierarchy composer. Player
+record `1` is `EXT_prac_cel_a1`, records `10..16` are the reusable
+`EXT_prac_cel_a2..a8` middle cells, and record `17` is terminal cell
+`EXT_prac_cel_a9`. Record `0` is the Opponent Settings heading; opponent record
+`2` is `EXT_prac_cel_b1`, records `3..8` are reusable middle cells
+`EXT_prac_cel_b2..b7`, and record `9` is terminal cell `EXT_prac_cel_b8`.
+
+For either section with multiple rows, the actual row count selects one first
+cell, as many middle cells as needed, and one terminal cell on the actual final
+row; a one-row section uses its first cell. Counts beyond the native
+nine-player/eight-opponent capacities draw additional copies of the last middle
+cell before the terminal cell. Each added row advances by
+`28 * 0.96 = 26.88` in backing-local geometry, matching the scroll transform.
+The copy path calls resident `FUN_00190F40` with its native `(alpha, object)`
+argument order. This preserves the native bottom edge instead of exposing a
+middle-cell seam when a section is shorter or longer than the fixed animation.
+Native controller slots remain authoritative for every retained native value.
+The generated list keeps native General rows first, enabled shared rows in
+catalog declaration order, and native Opponent rows last. Its writable label
+and value-pointer tables are emitted at the exact generated row count; no
+separate fixed row ceiling remains in the injected controller.
+
+The 2026-09-01 `zhopa` input-recording baseline exposes the selected-row
+misalignment once the feature-aware player section scrolls beyond the native
+range. In NA228 state `0002`, the Practice controller is live `0x00CC2D00`:
+Support is selected at compact index `11`, scroll `+0x44` is settled at
+`-168.0`, and upper-window start `+0xB0` is `6`. The row and value geometry is
+still on the native 28-unit pitch, but the selection frame is visibly displaced
+downward and overlaps the next row.
+
+Live `0x00882168` constructs float `0.939` from instructions
+`3C023F70 3442624E` and applies it to the cursor's scroll component. Native
+cursor Y is `94 - 26.5*row - 0.939*scroll`, with another `-40` after the fixed
+nine-row player section. Substituting a `0.96` scroll coefficient for extended
+player rows was rejected: it aligns one accumulated-scroll state but does not
+preserve the distinct first, middle, and terminal raster phases as section
+counts change.
+
+The current hook at BTL offset `0x1CE25C` computes cursor Y from the selected
+row's section-local index and visible slot. It maps that row to the matching
+native first, middle, or terminal role, converts the actual section target to
+the corresponding canonical native target, and retains the live transition
+residual `scroll - actual_target`. Cursor easing therefore remains continuous
+while the result is independent of how many rows precede the selected one.
+
+The maximum current catalog layout provides 15 player rows and eight opponent
+rows. Replaying `zhopa` with all of them enabled produced cursor world Y values
+`-63.886017`, `-65.416000`, and `42.529999` in captures `0001..0003`; the NUN5
+reference produces the same three values. In opponent capture `0003`, both
+builds also place the heading and first-row backing at world Y `93.269` and
+`66.456`. The ordinary 13-player/seven-opponent configuration retains the same
+role-based geometry, including terminal cell `EXT_prac_cel_b8` on its seventh
+and final opponent row.
 
 The `+0x56` delay is draw-call-counted, not update-counted. Reset sets it to
 zero; once alpha is full, each invocation of live `0x00882250` increments it

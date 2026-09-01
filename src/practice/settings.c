@@ -9,8 +9,6 @@ typedef unsigned int u32;
 #define PRACTICE_SETTINGS_USED_SECTION(name) \
     __attribute__((section(name), aligned(4), used))
 
-#define PRACTICE_SETTINGS_MAX_ROWS 24u
-
 #define MANAGER_POINTER_ADDRESS 0x00607600u
 
 #define CONTROLLER_SELECTED_ROW_OFFSET 0x3Cu
@@ -34,8 +32,12 @@ typedef unsigned int u32;
 #define BACKING_PLAYER_REMAINING_FIRST_RECORD 10u
 #define BACKING_PLAYER_REMAINING_CAPACITY 8u
 #define BACKING_PLAYER_CAPACITY 9u
+#define BACKING_PLAYER_MIDDLE_LAST_RECORD 16u
+#define BACKING_PLAYER_TERMINAL_RECORD 17u
 #define BACKING_OPPONENT_FIRST_RECORD 2u
 #define BACKING_OPPONENT_CAPACITY 8u
+#define BACKING_OPPONENT_MIDDLE_LAST_RECORD 8u
+#define BACKING_OPPONENT_TERMINAL_RECORD 9u
 #define BACKING_OBJECT_ALPHA_OFFSET 0x88u
 #define BACKING_RECORD_WORLD_Y_OFFSET 0x38u
 
@@ -62,6 +64,11 @@ typedef unsigned int u32;
 #define ROW_DRAW_STEP 28.0f
 #define SECTION_HEADING_GAP 18.0f
 #define WINDOW_APPROACH_STEP 20.0f
+#define BACKING_SCROLL_SCALE 0.96f
+#define CURSOR_SCROLL_SCALE 0.939f
+#define CURSOR_ROW_STEP 26.5f
+#define CURSOR_BASE_Y 94.0f
+#define CURSOR_SECTION_OFFSET 40.0f
 
 #define ROW_ID_STATUS 9u
 #define ROW_ID_ULTIMATE_JUTSU 3u
@@ -116,7 +123,7 @@ typedef void (*NativeHelpSet)(
     s32 argument
 );
 typedef void (*NativeBackingCall)(void *backing);
-typedef void (*NativeSpriteDraw)(void *object, float alpha);
+typedef void (*NativeSpriteDraw)(float alpha, void *object);
 
 typedef struct PracticeSettingsRow {
     u32 id;
@@ -155,15 +162,13 @@ typedef struct PracticeSettingsSchema {
 } PracticeSettingsSchema;
 
 extern const PracticeSettingsSchema practice_settings_schema;
+extern volatile u32 practice_settings_active_labels[];
+extern volatile u32 practice_settings_active_value_tables[];
 typedef u32 (*UltimateJutsuModeGet)(void);
 typedef void (*UltimateJutsuModeSet)(u32 mode);
 typedef u32 (*ToggleModeGet)(void);
 typedef void (*ToggleModeSet)(u32 enabled);
 
-volatile u32 practice_settings_active_labels[PRACTICE_SETTINGS_MAX_ROWS]
-    __attribute__((section(".bss.practice_settings_active_labels")));
-volatile u32 practice_settings_active_value_tables[PRACTICE_SETTINGS_MAX_ROWS]
-    __attribute__((section(".bss.practice_settings_active_value_tables")));
 volatile u32 practice_settings_ultimate_jutsu_values[
     ULTIMATE_JUTSU_NATIVE_MODE_COUNT + 2u
 ] __attribute__((section(".bss.practice_settings_ultimate_jutsu_values")));
@@ -185,7 +190,7 @@ volatile s32 practice_settings_support_staged
 typedef struct PracticeSettingsBackingLayout {
     u32 records;
     u32 objects[BACKING_RECORD_COUNT];
-    float native_relative_y[BACKING_RECORD_COUNT];
+    float native_local_y[BACKING_RECORD_COUNT];
 } PracticeSettingsBackingLayout;
 
 volatile PracticeSettingsBackingLayout practice_settings_backing_layout
@@ -195,8 +200,7 @@ static const PracticeSettingsRow *practice_settings_row(s32 index)
 {
     if (
         index < 0 ||
-        (u32)index >= practice_settings_schema.row_count ||
-        practice_settings_schema.row_count > PRACTICE_SETTINGS_MAX_ROWS
+        (u32)index >= practice_settings_schema.row_count
     ) {
         return (const PracticeSettingsRow *)0;
     }
@@ -649,14 +653,6 @@ static u8 *practice_settings_backing_record_object(u8 *records, u32 index)
     );
 }
 
-static u32 practice_settings_player_record(u32 index)
-{
-    if (index == 0u) {
-        return BACKING_PLAYER_FIRST_RECORD;
-    }
-    return BACKING_PLAYER_REMAINING_FIRST_RECORD + index - 1u;
-}
-
 static u32 practice_settings_backing_layout_changed(u8 *records)
 {
     u32 index;
@@ -677,101 +673,205 @@ static u32 practice_settings_backing_layout_changed(u8 *records)
 
 static void practice_settings_capture_backing_layout(u8 *records)
 {
-    u8 *native_last = practice_settings_backing_record_object(
-        records,
-        practice_settings_player_record(BACKING_PLAYER_CAPACITY - 1u)
-    );
-    float native_last_y;
     u32 index;
 
-    if (native_last == (u8 *)0) {
-        practice_settings_backing_layout.records = 0u;
-        return;
-    }
-    native_last_y = *(volatile float *)(
-        native_last + BACKING_RECORD_LOCAL_Y_OFFSET
-    );
     practice_settings_backing_layout.records = (u32)records;
     for (index = 0u; index < BACKING_RECORD_COUNT; ++index) {
         u8 *object = practice_settings_backing_record_object(records, index);
 
         practice_settings_backing_layout.objects[index] = (u32)object;
-        practice_settings_backing_layout.native_relative_y[index] =
+        practice_settings_backing_layout.native_local_y[index] =
             object == (u8 *)0
                 ? 0.0f
-                : *(volatile float *)(
-                    object + BACKING_RECORD_LOCAL_Y_OFFSET
-                ) - native_last_y;
+                : *(volatile float *)(object + BACKING_RECORD_LOCAL_Y_OFFSET);
     }
 }
 
-static float practice_settings_player_anchor_y(
-    u8 *records,
-    u32 player_count
-)
+static float practice_settings_backing_step(void)
 {
-    u8 *native_last;
-    float native_last_y;
+    return ROW_SCROLL_STEP * BACKING_SCROLL_SCALE;
+}
 
-    if (player_count <= BACKING_PLAYER_CAPACITY) {
-        u8 *active_last = practice_settings_backing_record_object(
-            records,
-            practice_settings_player_record(player_count - 1u)
-        );
-
-        return *(volatile float *)(
-            active_last + BACKING_RECORD_LOCAL_Y_OFFSET
-        );
+static float practice_settings_player_grid_y(u32 index)
+{
+    if (index == 0u) {
+        return practice_settings_backing_layout.native_local_y[
+            BACKING_PLAYER_FIRST_RECORD
+        ];
     }
-    native_last = practice_settings_backing_record_object(
-        records,
-        practice_settings_player_record(BACKING_PLAYER_CAPACITY - 1u)
-    );
-    native_last_y = *(volatile float *)(
-        native_last + BACKING_RECORD_LOCAL_Y_OFFSET
-    );
-    return native_last_y +
+    if (index < BACKING_PLAYER_CAPACITY - 1u) {
+        return practice_settings_backing_layout.native_local_y[
+            BACKING_PLAYER_REMAINING_FIRST_RECORD + index - 1u
+        ];
+    }
+    return practice_settings_backing_layout.native_local_y[
+        BACKING_PLAYER_MIDDLE_LAST_RECORD
+    ] - practice_settings_backing_step() *
+        (float)(index - (BACKING_PLAYER_CAPACITY - 2u));
+}
+
+static float practice_settings_player_terminal_y(u32 index)
+{
+    float terminal_phase =
+        practice_settings_backing_layout.native_local_y[
+            BACKING_PLAYER_TERMINAL_RECORD
+        ] -
         (
-            native_last_y -
-            *(volatile float *)(
-                practice_settings_backing_record_object(
-                    records,
-                    practice_settings_player_record(
-                        BACKING_PLAYER_CAPACITY - 2u
-                    )
-                ) + BACKING_RECORD_LOCAL_Y_OFFSET
-            )
-        ) * (float)(player_count - BACKING_PLAYER_CAPACITY);
+            practice_settings_backing_layout.native_local_y[
+                BACKING_PLAYER_MIDDLE_LAST_RECORD
+            ] - practice_settings_backing_step()
+        );
+
+    return practice_settings_player_grid_y(index) + terminal_phase;
 }
 
-static void practice_settings_place_opponent_backing(
-    u8 *records,
-    u32 player_count
+static float practice_settings_opponent_delta(u32 player_count)
+{
+    return -practice_settings_backing_step() *
+        (float)((s32)player_count - (s32)BACKING_PLAYER_CAPACITY);
+}
+
+static float practice_settings_opponent_grid_y(u32 index, float delta)
+{
+    if (index < BACKING_OPPONENT_CAPACITY - 1u) {
+        return practice_settings_backing_layout.native_local_y[
+            BACKING_OPPONENT_FIRST_RECORD + index
+        ] + delta;
+    }
+    return practice_settings_backing_layout.native_local_y[
+        BACKING_OPPONENT_MIDDLE_LAST_RECORD
+    ] + delta - practice_settings_backing_step() *
+        (float)(index - (BACKING_OPPONENT_CAPACITY - 2u));
+}
+
+static float practice_settings_opponent_terminal_y(
+    u32 index,
+    float delta
 )
 {
-    float player_anchor_y;
+    float terminal_phase =
+        practice_settings_backing_layout.native_local_y[
+            BACKING_OPPONENT_TERMINAL_RECORD
+        ] -
+        (
+            practice_settings_backing_layout.native_local_y[
+                BACKING_OPPONENT_MIDDLE_LAST_RECORD
+            ] - practice_settings_backing_step()
+        );
+
+    return practice_settings_opponent_grid_y(index, delta) + terminal_phase;
+}
+
+static void practice_settings_restore_backing_y(u8 *records)
+{
     u32 index;
 
-    if (player_count == 0u) {
-        return;
-    }
-    player_anchor_y = practice_settings_player_anchor_y(
-        records,
-        player_count
-    );
-
-    for (index = 0u; index <= BACKING_OPPONENT_CAPACITY; ++index) {
-        u32 record = index == 0u
-            ? 0u
-            : BACKING_OPPONENT_FIRST_RECORD + index - 1u;
-        u8 *object = practice_settings_backing_record_object(records, record);
+    for (index = 0u; index < BACKING_RECORD_COUNT; ++index) {
+        u8 *object = practice_settings_backing_record_object(records, index);
 
         if (object != (u8 *)0) {
             *(volatile float *)(object + BACKING_RECORD_LOCAL_Y_OFFSET) =
-                player_anchor_y +
-                practice_settings_backing_layout.native_relative_y[record];
+                practice_settings_backing_layout.native_local_y[index];
         }
     }
+}
+
+static void practice_settings_place_backing(
+    u8 *records,
+    u32 player_count,
+    u32 opponent_count
+)
+{
+    float opponent_delta = practice_settings_opponent_delta(player_count);
+    u8 *object;
+    u32 index;
+
+    practice_settings_restore_backing_y(records);
+    if (player_count > 1u) {
+        object = practice_settings_backing_record_object(
+            records,
+            BACKING_PLAYER_TERMINAL_RECORD
+        );
+        if (object != (u8 *)0) {
+            *(volatile float *)(object + BACKING_RECORD_LOCAL_Y_OFFSET) =
+                practice_settings_player_terminal_y(player_count - 1u);
+        }
+    }
+    object = practice_settings_backing_record_object(records, 0u);
+    if (object != (u8 *)0) {
+        *(volatile float *)(object + BACKING_RECORD_LOCAL_Y_OFFSET) =
+            practice_settings_backing_layout.native_local_y[0] +
+            opponent_delta;
+    }
+    for (index = 0u; index < BACKING_OPPONENT_CAPACITY - 1u; ++index) {
+        object = practice_settings_backing_record_object(
+            records,
+            BACKING_OPPONENT_FIRST_RECORD + index
+        );
+        if (object != (u8 *)0) {
+            *(volatile float *)(object + BACKING_RECORD_LOCAL_Y_OFFSET) =
+                practice_settings_opponent_grid_y(index, opponent_delta);
+        }
+    }
+    if (opponent_count > 1u) {
+        object = practice_settings_backing_record_object(
+            records,
+            BACKING_OPPONENT_TERMINAL_RECORD
+        );
+        if (object != (u8 *)0) {
+            *(volatile float *)(object + BACKING_RECORD_LOCAL_Y_OFFSET) =
+                practice_settings_opponent_terminal_y(
+                    opponent_count - 1u,
+                    opponent_delta
+                );
+        }
+    }
+}
+
+static void practice_settings_select_backing_records(
+    u8 *records,
+    u32 player_count,
+    u32 opponent_count
+)
+{
+    u32 index;
+
+    practice_settings_set_backing_record(
+        records,
+        BACKING_PLAYER_FIRST_RECORD,
+        player_count != 0u
+    );
+    for (index = 0u; index < BACKING_PLAYER_REMAINING_CAPACITY - 1u; ++index) {
+        practice_settings_set_backing_record(
+            records,
+            BACKING_PLAYER_REMAINING_FIRST_RECORD + index,
+            index + 2u < player_count
+        );
+    }
+    practice_settings_set_backing_record(
+        records,
+        BACKING_PLAYER_TERMINAL_RECORD,
+        player_count > 1u
+    );
+    practice_settings_set_backing_record(
+        records,
+        0u,
+        opponent_count != 0u
+    );
+    for (index = 0u; index < BACKING_OPPONENT_CAPACITY - 1u; ++index) {
+        practice_settings_set_backing_record(
+            records,
+            BACKING_OPPONENT_FIRST_RECORD + index,
+            index == 0u
+                ? opponent_count != 0u
+                : index + 1u < opponent_count
+        );
+    }
+    practice_settings_set_backing_record(
+        records,
+        BACKING_OPPONENT_TERMINAL_RECORD,
+        opponent_count > 1u
+    );
 }
 
 PRACTICE_SETTINGS_SECTION(
@@ -782,7 +882,6 @@ void practice_settings_prepare_backing_and_compose(void *backing)
     NativeBackingCall compose =
         (NativeBackingCall)NATIVE_BACKING_COMPOSE_ADDRESS;
     u8 *records;
-    u32 index;
     u32 player_count = practice_settings_schema.player_row_count;
     u32 opponent_count = practice_settings_schema.opponent_row_count;
 
@@ -802,92 +901,160 @@ void practice_settings_prepare_backing_and_compose(void *backing)
         return;
     }
 
-    practice_settings_place_opponent_backing(records, player_count);
-
-    practice_settings_set_backing_record(
+    practice_settings_place_backing(records, player_count, opponent_count);
+    practice_settings_select_backing_records(
         records,
-        BACKING_PLAYER_FIRST_RECORD,
-        player_count != 0u
+        player_count,
+        opponent_count
     );
-    for (index = 0u; index < BACKING_PLAYER_REMAINING_CAPACITY; ++index) {
-        practice_settings_set_backing_record(
-            records,
-            BACKING_PLAYER_REMAINING_FIRST_RECORD + index,
-            index + 1u < player_count
-        );
-    }
-    for (index = 0u; index < BACKING_OPPONENT_CAPACITY; ++index) {
-        practice_settings_set_backing_record(
-            records,
-            BACKING_OPPONENT_FIRST_RECORD + index,
-            index < opponent_count
-        );
-    }
     compose(backing);
+}
+
+static void practice_settings_draw_backing_copy(
+    u8 *object,
+    u8 *anchor,
+    float local_y,
+    float alpha
+)
+{
+    NativeSpriteDraw draw_sprite =
+        (NativeSpriteDraw)NATIVE_SPRITE_DRAW_ADDRESS;
+    volatile float *object_local_y;
+    volatile float *object_world_y;
+    float native_local_y;
+    float native_world_y;
+
+    if (object == (u8 *)0 || anchor == (u8 *)0) {
+        return;
+    }
+    object_local_y = (volatile float *)(
+        object + BACKING_RECORD_LOCAL_Y_OFFSET
+    );
+    object_world_y = (volatile float *)(
+        object + BACKING_RECORD_WORLD_Y_OFFSET
+    );
+    native_local_y = *object_local_y;
+    native_world_y = *object_world_y;
+    *object_local_y = local_y;
+    *object_world_y = *(volatile float *)(
+        anchor + BACKING_RECORD_WORLD_Y_OFFSET
+    ) + local_y - *(volatile float *)(
+        anchor + BACKING_RECORD_LOCAL_Y_OFFSET
+    );
+    draw_sprite(alpha, object);
+    *object_local_y = native_local_y;
+    *object_world_y = native_world_y;
 }
 
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_draw_backing")
 void practice_settings_draw_backing(void *backing)
 {
     NativeBackingCall draw = (NativeBackingCall)NATIVE_BACKING_DRAW_ADDRESS;
-    NativeSpriteDraw draw_sprite =
-        (NativeSpriteDraw)NATIVE_SPRITE_DRAW_ADDRESS;
     u32 player_count = practice_settings_schema.player_row_count;
+    u32 opponent_count = practice_settings_schema.opponent_row_count;
     u8 *records;
-    u8 *last;
-    u8 *previous;
-    volatile float *last_local_y;
-    volatile float *last_world_y;
-    float native_local_y;
-    float native_world_y;
-    float local_step;
-    float world_step;
     float alpha;
+    float opponent_delta;
     u32 index;
 
-    draw(backing);
-    if (player_count <= BACKING_PLAYER_CAPACITY) {
+    if (backing == (void *)0) {
         return;
     }
     records = *(u8 **)((u8 *)backing + BACKING_RECORDS_POINTER_OFFSET);
     if (records == (u8 *)0) {
+        draw(backing);
         return;
     }
-    last = practice_settings_backing_record_object(
+    practice_settings_set_backing_record(
         records,
-        practice_settings_player_record(BACKING_PLAYER_CAPACITY - 1u)
+        BACKING_PLAYER_TERMINAL_RECORD,
+        0u
     );
-    previous = practice_settings_backing_record_object(
+    practice_settings_set_backing_record(
         records,
-        practice_settings_player_record(BACKING_PLAYER_CAPACITY - 2u)
+        BACKING_OPPONENT_TERMINAL_RECORD,
+        0u
     );
-    if (last == (u8 *)0 || previous == (u8 *)0) {
-        return;
-    }
-    last_local_y = (volatile float *)(last + BACKING_RECORD_LOCAL_Y_OFFSET);
-    last_world_y = (volatile float *)(last + BACKING_RECORD_WORLD_Y_OFFSET);
-    native_local_y = *last_local_y;
-    native_world_y = *last_world_y;
-    local_step = native_local_y - *(volatile float *)(
-        previous + BACKING_RECORD_LOCAL_Y_OFFSET
-    );
-    world_step = native_world_y - *(volatile float *)(
-        previous + BACKING_RECORD_WORLD_Y_OFFSET
-    );
+    draw(backing);
     alpha = *(volatile float *)((u8 *)backing + BACKING_OBJECT_ALPHA_OFFSET);
     for (
-        index = BACKING_PLAYER_CAPACITY;
-        index < player_count;
+        index = BACKING_PLAYER_CAPACITY - 1u;
+        index + 1u < player_count;
         ++index
     ) {
-        *last_local_y = native_local_y + local_step *
-            (float)(index - BACKING_PLAYER_CAPACITY + 1u);
-        *last_world_y = native_world_y + world_step *
-            (float)(index - BACKING_PLAYER_CAPACITY + 1u);
-        draw_sprite(last, alpha);
+        practice_settings_draw_backing_copy(
+            practice_settings_backing_record_object(
+                records,
+                BACKING_PLAYER_MIDDLE_LAST_RECORD
+            ),
+            practice_settings_backing_record_object(
+                records,
+                BACKING_PLAYER_FIRST_RECORD
+            ),
+            practice_settings_player_grid_y(index),
+            alpha
+        );
     }
-    *last_local_y = native_local_y;
-    *last_world_y = native_world_y;
+    if (player_count > 1u) {
+        practice_settings_draw_backing_copy(
+            practice_settings_backing_record_object(
+                records,
+                BACKING_PLAYER_TERMINAL_RECORD
+            ),
+            practice_settings_backing_record_object(
+                records,
+                BACKING_PLAYER_FIRST_RECORD
+            ),
+            practice_settings_player_terminal_y(player_count - 1u),
+            alpha
+        );
+    }
+    opponent_delta = practice_settings_opponent_delta(player_count);
+    for (
+        index = BACKING_OPPONENT_CAPACITY - 1u;
+        index + 1u < opponent_count;
+        ++index
+    ) {
+        practice_settings_draw_backing_copy(
+            practice_settings_backing_record_object(
+                records,
+                BACKING_OPPONENT_MIDDLE_LAST_RECORD
+            ),
+            practice_settings_backing_record_object(
+                records,
+                BACKING_OPPONENT_FIRST_RECORD
+            ),
+            practice_settings_opponent_grid_y(index, opponent_delta),
+            alpha
+        );
+    }
+    if (opponent_count > 1u) {
+        practice_settings_draw_backing_copy(
+            practice_settings_backing_record_object(
+                records,
+                BACKING_OPPONENT_TERMINAL_RECORD
+            ),
+            practice_settings_backing_record_object(
+                records,
+                BACKING_OPPONENT_FIRST_RECORD
+            ),
+            practice_settings_opponent_terminal_y(
+                opponent_count - 1u,
+                opponent_delta
+            ),
+            alpha
+        );
+    }
+    practice_settings_set_backing_record(
+        records,
+        BACKING_PLAYER_TERMINAL_RECORD,
+        player_count > 1u
+    );
+    practice_settings_set_backing_record(
+        records,
+        BACKING_OPPONENT_TERMINAL_RECORD,
+        opponent_count > 1u
+    );
 }
 
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_update_window")
@@ -942,6 +1109,74 @@ void practice_settings_update_window(void *controller)
         WINDOW_APPROACH_STEP,
         (volatile float *)((u8 *)controller + CONTROLLER_SCROLL_OFFSET)
     );
+}
+
+PRACTICE_SETTINGS_SECTION(".text.practice_settings_cursor_y")
+float practice_settings_cursor_y(void *controller)
+{
+    s32 selected = *(volatile s32 *)(
+        (u8 *)controller + CONTROLLER_SELECTED_ROW_OFFSET
+    );
+    s32 player_count = (s32)practice_settings_schema.player_row_count;
+    s32 opponent_count = (s32)practice_settings_schema.opponent_row_count;
+    float scroll = *(volatile float *)(
+        (u8 *)controller + CONTROLLER_SCROLL_OFFSET
+    );
+    s32 local_index;
+    s32 window_start;
+    s32 visible_slot;
+    s32 canonical_index;
+    s32 canonical_start;
+    float actual_target;
+    float canonical_target;
+
+    if (selected < player_count) {
+        local_index = selected;
+        window_start = *(volatile s32 *)(
+            (u8 *)controller + CONTROLLER_UPPER_WINDOW_OFFSET
+        );
+        visible_slot = local_index - window_start;
+        if (player_count > 1 && local_index == player_count - 1) {
+            canonical_index = (s32)BACKING_PLAYER_CAPACITY - 1;
+        } else if (local_index < (s32)BACKING_PLAYER_CAPACITY - 1) {
+            canonical_index = local_index;
+        } else {
+            canonical_index = (s32)BACKING_PLAYER_CAPACITY - 2;
+        }
+        canonical_start = canonical_index - visible_slot;
+        actual_target = -ROW_SCROLL_STEP * (float)window_start;
+        canonical_target = -ROW_SCROLL_STEP * (float)canonical_start;
+        scroll = canonical_target + scroll - actual_target;
+        return CURSOR_BASE_Y -
+            CURSOR_ROW_STEP * (float)canonical_index -
+            CURSOR_SCROLL_SCALE * scroll;
+    }
+
+    local_index = selected - player_count;
+    window_start = *(volatile s32 *)(
+        (u8 *)controller + CONTROLLER_LOWER_WINDOW_OFFSET
+    );
+    visible_slot = local_index - window_start;
+    if (opponent_count > 1 && local_index == opponent_count - 1) {
+        canonical_index = (s32)BACKING_OPPONENT_CAPACITY - 1;
+    } else if (local_index < (s32)BACKING_OPPONENT_CAPACITY - 1) {
+        canonical_index = local_index;
+    } else {
+        canonical_index = (s32)BACKING_OPPONENT_CAPACITY - 2;
+    }
+    canonical_start = canonical_index - visible_slot;
+    actual_target = -SECTION_HEADING_GAP -
+        ROW_DRAW_STEP * (float)player_count -
+        ROW_SCROLL_STEP * (float)window_start;
+    canonical_target = -SECTION_HEADING_GAP -
+        ROW_DRAW_STEP * (float)BACKING_PLAYER_CAPACITY -
+        ROW_SCROLL_STEP * (float)canonical_start;
+    scroll = canonical_target + scroll - actual_target;
+    return CURSOR_BASE_Y -
+        CURSOR_ROW_STEP *
+            (float)((s32)BACKING_PLAYER_CAPACITY + canonical_index) -
+        CURSOR_SCROLL_SCALE * scroll -
+        CURSOR_SECTION_OFFSET;
 }
 
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_update_help")

@@ -111,6 +111,14 @@ The native Extra Hit Counter row remains independent of the shared Extra Hit
 selector. The presentation retains the native row widgets, localization,
 selection, scrolling, animation, and clipping paths.
 
+Backing cells and selection-frame placement are derived from each section's
+enabled row count. Both sections retain the native first, middle, and terminal
+cell roles; extra rows repeat a native middle cell and keep the terminal cell on
+the actual final row. The cursor uses section-local visible geometry, so adding
+or removing options does not change row height, introduce seams, or require a
+new fixed-index layout patch. Runtime label and value tables are allocated from
+the generated schema's row count rather than a fixed menu capacity.
+
 The implementation guards the native manager-reset call site in clean
 `SLPS_258.37` at ELF offset `0xF5AD4` and applies the Practice default pack only
 after the native reset and Strength-mirror write complete. Menu-local Return to

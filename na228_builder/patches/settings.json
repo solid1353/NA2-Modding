@@ -479,14 +479,14 @@
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
       },
-      "practice_draw_dynamic_cursor_section": {
-        "description": "Apply the native opponent-section cursor offset at the compact player-row boundary instead of fixed row 9.",
+      "practice_draw_dynamic_cursor_geometry": {
+        "description": "Place the cursor from section-local visible geometry and native backing roles instead of fixed global row indices.",
         "target_id": "na2_btl",
-        "offset": "0x1CE2AC",
-        "expected_hex": "0900622806004014",
-        "symbol": "practice_settings_cursor_section_bridge",
+        "offset": "0x1CE25C",
+        "expected_hex": "5000A227000040F8440045C6",
+        "symbol": "practice_settings_cursor_geometry_bridge",
         "encoding": "j26",
-        "replacement_hex": "0000000800000000"
+        "replacement_hex": "000000080000000000000000"
       },
       "practice_draw_dynamic_row_count": {
         "description": "Loop over the compact schema count rather than the native constant 17.",
@@ -507,7 +507,7 @@
         "replacement_hex": "0000000800000000"
       },
       "practice_draw_compact_backing": {
-        "description": "Run the native backing renderer and repeat the final native player-row backing for each compact row beyond the animation's nine-row capacity.",
+        "description": "Draw count-derived first, middle, and terminal backing cells for both sections, repeating native middle cells beyond the animation's fixed capacities.",
         "target_id": "na2_btl",
         "offset": "0x1CE4D0",
         "expected_hex": "E4ED060C",
@@ -564,7 +564,7 @@
         "replacement_hex": "0000000800000000"
       },
       "practice_prepare_compact_backing_layout": {
-        "description": "After native animation advance and before native hierarchy composition, place the Opponent heading and row backings at the compact section boundary and suppress unused native records.",
+        "description": "After native animation advance and before hierarchy composition, assign first, middle, and terminal backing roles from each section's actual row count and place the Opponent heading at the resulting boundary.",
         "target_id": "na2_btl",
         "offset": "0x1CDBEC",
         "expected_hex": "BCED060C",
@@ -868,15 +868,11 @@
         "path": "src/practice/settings.c",
         "namespace": "practice.settings.c",
         "imports": {
+          "practice_settings_active_labels": "practice_settings_active_labels",
+          "practice_settings_active_value_tables": "practice_settings_active_value_tables",
           "practice_settings_schema": "practice_settings_schema"
         },
         "fragments": {
-          "practice_settings_active_labels": {
-            "object": "practice.settings.c.bss.practice.settings.active.labels"
-          },
-          "practice_settings_active_value_tables": {
-            "object": "practice.settings.c.bss.practice.settings.active.value.tables"
-          },
           "practice_settings_substitution_staged": {
             "object": "practice.settings.c.bss.practice.settings.substitution.staged"
           },
@@ -940,6 +936,9 @@
           "practice_settings_update_help": {
             "object": "practice.settings.c.text.practice.settings.update.help"
           },
+          "practice_settings_cursor_y": {
+            "object": "practice.settings.c.text.practice.settings.cursor.y"
+          },
           "practice_settings_update_window": {
             "object": "practice.settings.c.text.practice.settings.update.window"
           }
@@ -953,6 +952,7 @@
           "practice_settings_get_max_value": "practice_settings_get_max_value",
           "practice_settings_get_value": "practice_settings_get_value",
           "practice_settings_schema": "practice_settings_schema",
+          "practice_settings_cursor_y": "practice_settings_cursor_y",
           "practice_settings_update_help": "practice_settings_update_help",
           "practice_settings_update_window": "practice_settings_update_window"
         },
@@ -960,8 +960,8 @@
           "practice_settings_after_value_change_bridge": {
             "object": "practice.settings.asm.text.practice.settings.after.value.change.bridge"
           },
-          "practice_settings_cursor_section_bridge": {
-            "object": "practice.settings.asm.text.practice.settings.cursor.section.bridge"
+          "practice_settings_cursor_geometry_bridge": {
+            "object": "practice.settings.asm.text.practice.settings.cursor.geometry.bridge"
           },
           "practice_settings_draw_loop_bridge": {
             "object": "practice.settings.asm.text.practice.settings.draw.loop.bridge"

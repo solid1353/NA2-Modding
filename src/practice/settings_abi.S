@@ -200,27 +200,26 @@ practice_settings_draw_value_bridge:
     nop
     .size practice_settings_draw_value_bridge, . - practice_settings_draw_value_bridge
 
-    .section .text.practice_settings_cursor_section_bridge,"ax",@progbits
+    .section .text.practice_settings_cursor_geometry_bridge,"ax",@progbits
     .balign 4
-    .globl practice_settings_cursor_section_bridge
-    .type practice_settings_cursor_section_bridge, @function
-practice_settings_cursor_section_bridge:
-    lui $v0, %hi(practice_settings_schema)
-    addiu $v0, $v0, %lo(practice_settings_schema)
-    lw $v0, 4($v0)
-    slt $v0, $v1, $v0
-    beqz $v0, 1f
+    .globl practice_settings_cursor_geometry_bridge
+    .type practice_settings_cursor_geometry_bridge, @function
+practice_settings_cursor_geometry_bridge:
+    addiu $sp, $sp, -16
+    sd $ra, 0($sp)
+    move $a0, $s2
+    jal practice_settings_cursor_y
     nop
+    ld $ra, 0($sp)
+    addiu $sp, $sp, 16
+    addiu $v0, $sp, 0x50
+    sqc2 $vf0, 0($v0)
+    swc1 $f0, 0x58($sp)
     lui $t9, 0x0088
     ori $t9, $t9, 0x21cc
     jr $t9
     nop
-1:
-    lui $t9, 0x0088
-    ori $t9, $t9, 0x21b8
-    jr $t9
-    nop
-    .size practice_settings_cursor_section_bridge, . - practice_settings_cursor_section_bridge
+    .size practice_settings_cursor_geometry_bridge, . - practice_settings_cursor_geometry_bridge
 
     .section .text.practice_settings_draw_loop_bridge,"ax",@progbits
     .balign 4

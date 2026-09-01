@@ -31,6 +31,7 @@ $configurationSelectors = @(
 )
 $launchProfiles = @(
     $paths.settings.launch_settings.PSObject.Properties |
+        Where-Object { $_.Name -cne 'default' } |
         Where-Object { $_.Value -is [pscustomobject] } |
         ForEach-Object { [string]$_.Name }
 )
@@ -460,10 +461,10 @@ elseif ($unlimited) {
     $launchParameters.Unlimited = $true
 }
 else {
-    $launchFrameCounts = @(
+    $resolvedLaunchSettings = @(
         @(
             if ($launchConfigurations.Count -eq 0) {
-                Get-Na2StartupFastForwardFrames `
+                Get-Na2LaunchSettings `
                     -Paths $paths `
                     -LaunchProfile $(
                         if ($null -eq $launchProfile) { $null }
@@ -472,7 +473,7 @@ else {
             }
             else {
                 $launchConfigurations | Select-Object -Unique | ForEach-Object {
-                    Get-Na2StartupFastForwardFrames `
+                    Get-Na2LaunchSettings `
                         -Configuration $_ `
                         -Paths $paths `
                         -LaunchProfile $(
@@ -481,7 +482,10 @@ else {
                         )
                 }
             }
-        ) | Select-Object -Unique
+        )
+    )
+    $launchFrameCounts = @(
+        $resolvedLaunchSettings.StartupFastForwardFrames | Select-Object -Unique
     )
     if ($launchFrameCounts.Count -gt 1) {
         throw (
@@ -492,7 +496,16 @@ else {
     if ($launchFrameCounts.Count -eq 1 -and $launchFrameCounts[0] -gt 0) {
         $launchParameters.UnlimitedForFrames = [UInt64]$launchFrameCounts[0]
     }
-    if ($turbo) {
+    $speedsAfterStartup = @(
+        $resolvedLaunchSettings.SpeedAfterStartup | Select-Object -Unique
+    )
+    if ($speedsAfterStartup.Count -gt 1) {
+        throw (
+            'Selected games require different speeds after startup: ' +
+            ($speedsAfterStartup -join ', ')
+        )
+    }
+    if ($turbo -or $speedsAfterStartup[0] -ceq 'turbo') {
         $launchParameters.Turbo = $true
     }
 }

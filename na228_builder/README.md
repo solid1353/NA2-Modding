@@ -198,14 +198,15 @@ An internal patch may declare startup launch timing as
 `startup_fast_forward_frames: { "additive": N, "override": N }`, with either
 key or both. Additives are signed integers; overrides are positive UInt64 frame
 counts. Resolution starts from the non-negative base value under `game.json`
-`launch_settings`, applies the selected direct profile override, then applies
-the selected build target's configuration metadata: the sole enabled catalog
-override replaces the baseline when present, and every enabled additive is
-summed. Source-only launches have no build configuration modifier. More than one
-enabled patch override or a final result outside UInt64 is a configuration
+`launch_settings.default`, applies the selected direct profile override, then
+applies the selected build target's configuration metadata: the sole enabled
+catalog override replaces the baseline when present, and every enabled additive
+is summed. Source-only launches have no build configuration modifier. More than
+one enabled patch override or a final result outside UInt64 is a configuration
 error. A zero result omits timed fast-forward. Disabled settings contribute
 nothing. This launch metadata is omitted from the public release catalog along
-with patch implementation references.
+with patch implementation references. `speed_after_startup` selects `normal`
+or `turbo` after timed Unlimited ends; build configurations do not modify it.
 
 Every binary edit contains an explicit `operation`. A unified patch contains
 either one primitive `edit` or a nonempty, one-level `edits` map;

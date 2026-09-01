@@ -3,9 +3,13 @@
   "serial": "SLOP-NA228",
   "output_boot_path": "SLOP_NA2.28",
   "launch_settings": {
-    "startup_fast_forward_frames": 1800,
+    "default": {
+      "startup_fast_forward_frames": 1800,
+      "speed_after_startup": "turbo"
+    },
     "practice": {
-      "startup_fast_forward_frames": 2500
+      "startup_fast_forward_frames": 2500,
+      "speed_after_startup": "normal"
     }
   },
   "configurations": {

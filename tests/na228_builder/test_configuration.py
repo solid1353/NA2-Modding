@@ -232,8 +232,14 @@ class ConfigurationTests(unittest.TestCase):
                     "serial": "TEST-00000",
                     "output_boot_path": "SLOP_NA2.28",
                     "launch_settings": {
-                        "startup_fast_forward_frames": 321,
-                        "practice": {"startup_fast_forward_frames": 654},
+                        "default": {
+                            "startup_fast_forward_frames": 321,
+                            "speed_after_startup": "turbo",
+                        },
+                        "practice": {
+                            "startup_fast_forward_frames": 654,
+                            "speed_after_startup": "normal",
+                        },
                     },
                     "configurations": {configuration_id: "t"},
                 },
@@ -439,8 +445,11 @@ class ConfigurationTests(unittest.TestCase):
             settings_path = root / "game.json"
             settings = json.loads(settings_path.read_text(encoding="utf-8"))
             settings["launch_settings"] = {
-                "startup_fast_forward_frames": 321,
-                "tool_assisted": {},
+                "default": {
+                    "startup_fast_forward_frames": 321,
+                    "speed_after_startup": "turbo",
+                },
+                "tool_assisted": {"speed_after_startup": "normal"},
             }
             settings_path.write_text(
                 json.dumps(settings, indent=2) + "\n", encoding="utf-8"

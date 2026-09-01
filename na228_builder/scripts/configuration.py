@@ -93,6 +93,12 @@ def _startup_frames(value: object, label: str) -> int:
     return value
 
 
+def _speed_after_startup(value: object, label: str) -> str:
+    if not isinstance(value, str) or value not in {"normal", "turbo"}:
+        raise ValueError(f"Settings {label} must be 'normal' or 'turbo'")
+    return value
+
+
 def _validate_configurations(value: object) -> None:
     if not isinstance(value, dict):
         raise ValueError("Settings configurations must be an object")
@@ -127,21 +133,39 @@ def _read_settings(path: Path) -> tuple[str, str, tuple[int, ...]]:
     launch_settings = settings["launch_settings"]
     if not isinstance(launch_settings, dict):
         raise ValueError("Settings launch_settings must be an object")
-    if "startup_fast_forward_frames" not in launch_settings:
+    default_settings = launch_settings.get("default")
+    if not isinstance(default_settings, dict):
+        raise ValueError("Settings launch_settings.default must be an object")
+    allowed_launch_settings = {
+        "startup_fast_forward_frames",
+        "speed_after_startup",
+    }
+    unexpected = set(default_settings) - allowed_launch_settings
+    if unexpected:
+        keys = ", ".join(sorted(unexpected))
         raise ValueError(
-            "Settings launch_settings must define startup_fast_forward_frames"
+            f"Settings launch_settings.default has unsupported keys: {keys}"
         )
+    for required in sorted(allowed_launch_settings):
+        if required not in default_settings:
+            raise ValueError(
+                f"Settings launch_settings.default must define {required}"
+            )
     base_frames = _startup_frames(
-        launch_settings["startup_fast_forward_frames"],
-        "launch_settings.startup_fast_forward_frames",
+        default_settings["startup_fast_forward_frames"],
+        "launch_settings.default.startup_fast_forward_frames",
+    )
+    _speed_after_startup(
+        default_settings["speed_after_startup"],
+        "launch_settings.default.speed_after_startup",
     )
     startup_frames = [base_frames]
     for profile, raw_profile in launch_settings.items():
-        if profile == "startup_fast_forward_frames":
+        if profile == "default":
             continue
         if not isinstance(raw_profile, dict):
             raise ValueError(f"Settings launch_settings.{profile} must be an object")
-        unexpected = set(raw_profile) - {"startup_fast_forward_frames"}
+        unexpected = set(raw_profile) - allowed_launch_settings
         if unexpected:
             keys = ", ".join(sorted(unexpected))
             raise ValueError(
@@ -152,6 +176,11 @@ def _read_settings(path: Path) -> tuple[str, str, tuple[int, ...]]:
             frames = _startup_frames(
                 raw_profile["startup_fast_forward_frames"],
                 f"launch_settings.{profile}.startup_fast_forward_frames",
+            )
+        if "speed_after_startup" in raw_profile:
+            _speed_after_startup(
+                raw_profile["speed_after_startup"],
+                f"launch_settings.{profile}.speed_after_startup",
             )
         startup_frames.append(frames)
     _validate_configurations(settings["configurations"])

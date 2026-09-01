@@ -341,6 +341,10 @@ function Get-Na2Paths {
         scripts = '$($replayScripts.Replace("'", "''"))'
         settings = [pscustomobject]@{
             launch_settings = [pscustomobject]@{
+                default = [pscustomobject]@{
+                    startup_fast_forward_frames = 1800
+                    speed_after_startup = 'turbo'
+                }
                 practice = [pscustomobject]@{}
             }
         }

@@ -220,45 +220,65 @@ function Resolve-Na2PathManifest {
             $launchSettings.Value -isnot [pscustomobject]) {
             throw 'Project launch_settings must be an object.'
         }
-        $baseFrames = $launchSettings.Value.PSObject.Properties[
-            'startup_fast_forward_frames'
-        ]
-        if ($null -eq $baseFrames -or
-            $baseFrames.Value -isnot [long] -or
-            [long]$baseFrames.Value -lt 0) {
-            throw (
-                'Project launch_settings.startup_fast_forward_frames must be ' +
-                'a non-negative integer.'
-            )
+        $defaultSettings = $launchSettings.Value.PSObject.Properties['default']
+        if ($null -eq $defaultSettings -or
+            $defaultSettings.Value -isnot [pscustomobject]) {
+            throw 'Project launch_settings.default must be an object.'
         }
         $profileDefinitions = @(
             $launchSettings.Value.PSObject.Properties |
-                Where-Object { $_.Name -cne 'startup_fast_forward_frames' }
+                Where-Object { $_.Name -cne 'default' }
         )
-        foreach ($profile in $profileDefinitions) {
-            if ($profile.Value -isnot [pscustomobject]) {
-                throw "Project launch_settings.$($profile.Name) must be an object."
+        $launchDefinitions = @($defaultSettings) + $profileDefinitions
+        foreach ($definition in $launchDefinitions) {
+            if ($definition.Value -isnot [pscustomobject]) {
+                throw "Project launch_settings.$($definition.Name) must be an object."
             }
-            $profileSettings = @($profile.Value.PSObject.Properties)
+            $definitionSettings = @($definition.Value.PSObject.Properties)
             if (@(
-                $profileSettings |
-                    Where-Object { $_.Name -cne 'startup_fast_forward_frames' }
+                $definitionSettings |
+                    Where-Object {
+                        $_.Name -cnotin @(
+                            'startup_fast_forward_frames',
+                            'speed_after_startup'
+                        )
+                    }
             ).Count -gt 0) {
                 throw (
-                    "Project launch_settings.$($profile.Name) may define " +
-                    'only startup_fast_forward_frames.'
+                    "Project launch_settings.$($definition.Name) may define only " +
+                    'startup_fast_forward_frames and speed_after_startup.'
                 )
             }
-            $startupFrames = $profile.Value.PSObject.Properties[
+            $startupFrames = $definition.Value.PSObject.Properties[
                 'startup_fast_forward_frames'
             ]
             if ($null -ne $startupFrames -and
                 ($startupFrames.Value -isnot [long] -or
                     [long]$startupFrames.Value -lt 0)) {
                 throw (
-                    "Project launch_settings.$($profile.Name)." +
+                    "Project launch_settings.$($definition.Name)." +
                     'startup_fast_forward_frames must be a non-negative integer.'
                 )
+            }
+            $speedAfterStartup = $definition.Value.PSObject.Properties[
+                'speed_after_startup'
+            ]
+            if ($null -ne $speedAfterStartup -and
+                [string]$speedAfterStartup.Value -cnotin @('normal', 'turbo')) {
+                throw (
+                    "Project launch_settings.$($definition.Name)." +
+                    'speed_after_startup must be normal or turbo.'
+                )
+            }
+        }
+        foreach ($requiredSetting in @(
+            'startup_fast_forward_frames',
+            'speed_after_startup'
+        )) {
+            if ($null -eq $defaultSettings.Value.PSObject.Properties[
+                $requiredSetting
+            ]) {
+                throw "Project launch_settings.default must define $requiredSetting."
             }
         }
         if ($resolvedFiles.Contains('source_catalog')) {

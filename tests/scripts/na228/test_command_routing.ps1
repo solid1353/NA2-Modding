@@ -59,8 +59,14 @@ try {
   "serial": "TEST",
   "output_boot_path": "TEST",
   "launch_settings": {
-    "startup_fast_forward_frames": 120,
-    "practice": { "startup_fast_forward_frames": 180 }
+    "default": {
+      "startup_fast_forward_frames": 120,
+      "speed_after_startup": "turbo"
+    },
+    "practice": {
+      "startup_fast_forward_frames": 180,
+      "speed_after_startup": "normal"
+    }
   },
   "configurations": { "base": "b", "test": "t", "release": "r", "e2e": "e" }
 }
@@ -103,12 +109,27 @@ function Get-Na2Paths {
 function Get-Na2TaskContext { throw 'Task context was not expected.' }
 '@)
     [IO.File]::WriteAllText((Join-Path $repository 'scripts\na228\launch_settings.ps1'), @'
-function Get-Na2StartupFastForwardFrames { return [UInt64]120 }
+function Get-Na2LaunchSettings {
+    param([string]$Configuration, [psobject]$Paths, [string]$LaunchProfile)
+    if ($LaunchProfile -ceq 'practice') {
+        return [pscustomobject]@{
+            StartupFastForwardFrames = [UInt64]180
+            SpeedAfterStartup = 'normal'
+        }
+    }
+    [pscustomobject]@{
+        StartupFastForwardFrames = [UInt64]120
+        SpeedAfterStartup = 'turbo'
+    }
+}
 '@)
     [IO.File]::WriteAllText((Join-Path $repository 'scripts\na228\launch_profile.ps1'), @'
-function Resolve-Na2LaunchProfile { throw 'Launch profiles were not expected.' }
-function Invoke-Na2LaunchProfile { throw 'Launch profiles were not expected.' }
-function Merge-Na2LaunchProfileParameters { throw 'Launch profiles were not expected.' }
+function Resolve-Na2LaunchProfile {
+    param([string]$Name, [psobject]$Paths)
+    [pscustomobject]@{ Name = $Name }
+}
+function Invoke-Na2LaunchProfile {}
+function Merge-Na2LaunchProfileParameters { throw 'No profile result was expected.' }
 '@)
     [IO.File]::WriteAllText((Join-Path $repository 'scripts\na228\build_registry.ps1'), @'
 function Resolve-Na2CachedBuild {
@@ -198,8 +219,23 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 
         $null = Invoke-FakeNa228 -ArgumentList @('b')
         $launch = Get-Content -Raw -LiteralPath (Join-Path $repository 'launch.json') | ConvertFrom-Json
-        Assert-CommandRouting ($launch.games[0] -like '*\build\base.iso') `
-            'Configuration alias did not launch the cached ISO.'
+        Assert-CommandRouting (
+            $launch.games[0] -like '*\build\base.iso' -and
+            $launch.frames -eq 120 -and
+            $launch.turbo
+        ) 'Configuration alias did not launch with its configured Turbo fallback.'
+
+        $null = Invoke-FakeNa228 -ArgumentList @('b', '-l', 'practice')
+        $launch = Get-Content -Raw -LiteralPath (Join-Path $repository 'launch.json') | ConvertFrom-Json
+        Assert-CommandRouting (
+            $launch.frames -eq 180 -and
+            -not $launch.turbo
+        ) 'Practice profile did not retain Normal after timed Unlimited.'
+
+        $null = Invoke-FakeNa228 -ArgumentList @('b', '-l', 'practice', '-t')
+        $launch = Get-Content -Raw -LiteralPath (Join-Path $repository 'launch.json') | ConvertFrom-Json
+        Assert-CommandRouting ($launch.turbo) `
+            'Explicit Turbo did not override the practice profile fallback.'
 
         $null = Invoke-FakeNa228 -ArgumentList @('bb')
         $build = Get-Content -Raw -LiteralPath (Join-Path $repository 'build.json') | ConvertFrom-Json

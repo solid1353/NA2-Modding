@@ -11,7 +11,8 @@ function Resolve-Na2LaunchProfile {
         throw "Invalid launch profile name: $Name"
     }
     $property = $Paths.settings.launch_settings.PSObject.Properties[$Name]
-    if ($null -eq $property -or $property.Value -isnot [pscustomobject]) {
+    if ($null -eq $property -or $property.Name -ceq 'default' -or
+        $property.Value -isnot [pscustomobject]) {
         throw "Unknown launch profile: $Name"
     }
 

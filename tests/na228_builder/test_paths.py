@@ -253,8 +253,14 @@ class ProjectPathTests(unittest.TestCase):
                 "serial": "SLOP-NA228",
                 "output_boot_path": "SLOP_NA2.28",
                 "launch_settings": {
-                    "startup_fast_forward_frames": 321,
-                    "practice": {"startup_fast_forward_frames": 654},
+                    "default": {
+                        "startup_fast_forward_frames": 321,
+                        "speed_after_startup": "turbo",
+                    },
+                    "practice": {
+                        "startup_fast_forward_frames": 654,
+                        "speed_after_startup": "normal",
+                    },
                 },
                 "configurations": {"base": "b", "test": "t"},
             }

@@ -26,14 +26,16 @@ class SubstitutionActiveFramesTests(unittest.TestCase):
         base = jsonc.loads(
             (self.configurations / "base.jsonc").read_text(encoding="utf-8")
         )
-        base["features"]["settings"]["in_game"]["shared"]["sub_active_frames"] = value
+        base["features"]["settings"]["ingame"]["battle_mechanics"][
+            "sub_active_frames"
+        ] = value
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         path = Path(directory.name) / "configuration.jsonc"
         path.write_text(json.dumps(base, indent=2) + "\n", encoding="utf-8")
         return catalog.load_selection(self.catalog_path, path)
 
-    def test_base_runtime_config_uses_four_active_frames(self) -> None:
+    def test_base_runtime_config_uses_five_active_frames(self) -> None:
         selection = catalog.load_selection(
             self.catalog_path,
             self.configurations / "base.jsonc",
@@ -47,10 +49,10 @@ class SubstitutionActiveFramesTests(unittest.TestCase):
             for item in fragments
             if item.symbol == "battle_settings_sub_active_frames_default"
         )
-        self.assertEqual(struct.unpack("<I", fragment.payload)[0], 4)
+        self.assertEqual(struct.unpack("<I", fragment.payload)[0], 5)
 
     def test_catalog_accepts_the_active_frame_boundaries(self) -> None:
-        for value in (0, 16):
+        for value in ("default", 1, 15):
             with self.subTest(value=value):
                 fragments = battle_settings_runtime_fragments(
                     self._selection_with(value),
@@ -61,10 +63,11 @@ class SubstitutionActiveFramesTests(unittest.TestCase):
                     for item in fragments
                     if item.symbol == "battle_settings_sub_active_frames_default"
                 )
-                self.assertEqual(struct.unpack("<I", fragment.payload)[0], value)
+                expected = 0 if value == "default" else value
+                self.assertEqual(struct.unpack("<I", fragment.payload)[0], expected)
 
     def test_catalog_rejects_values_outside_the_active_frame_range(self) -> None:
-        for value in (-1, 17):
+        for value in (0, 16):
             with self.subTest(value=value):
                 with self.assertRaises(catalog.ConfigurationError):
                     self._selection_with(value)
@@ -75,16 +78,15 @@ class SubstitutionActiveFramesTests(unittest.TestCase):
             self.configurations / "base.jsonc",
         )
         injection = selection.injections[
-            "settings.shared.sub_active_frames"
+            "settings.battle_mechanics.sub_active_frames"
         ]
         self.assertEqual(
             injection["hooks"]["select_substitution_active_history"],
             {
                 "description": (
-                    "Replace the native attack-authored random and clamped "
-                    "timing branch with a wrapper that loads the selected "
-                    "number of prior input-history frames and rejoins the "
-                    "unchanged guard-age and history checks."
+                    "Resume native random and clamped timing for Default, or "
+                    "convert the selected total window to prior-history frames "
+                    "and rejoin the guard-age and history checks."
                 ),
                 "target_id": "na2_elf",
                 "offset": "0x1296C8",

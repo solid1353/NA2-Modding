@@ -12,66 +12,100 @@
         description: "Load layered per-character battle overrides.",
         patch: "settings.character_overrides",
       },
-      in_game: {
+      ingame: {
         description: "Configure which options are available in the Battle and Practice Settings menus and their default values.",
-        patch: "settings.in_game",
-        battle: {
-          time: setting<int & 10..90 & step 10 | 99 | "unlimited" | false> {},
-          difficulty: setting<"simple" | "easy" | "normal" | "hard" | "insane" | "ultimate" | false> {},
-          items: setting<"none" | "less" | "normal" | "more" | false> {},
-          chakra: setting<"normal" | "unlimited" | false> {},
-          handicap: setting<"0-10" | "1-9" | "2-8" | "3-7" | "4-6" | "5-5" | "6-4" | "7-3" | "8-2" | "9-1" | "10-0" | false> {},
+        patch: "settings.ingame",
+        battle_mode: {
+          battle_mechanics: setting {},
+          time: setting<int & 10..90 & step 10 | 99 | "unlimited"> {},
+          difficulty: setting<"simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"> {},
+          handicap: setting<int & 0..10> {},
         },
-        practice: {
-          general_settings: {
-            health: setting<"normal" | "half" | "almost" | false> {},
-            chakra: setting<"normal" | "unlimited" | false> {},
-            linked_attack: setting<"normal" | "unlimited" | false> {},
-            linked_mode: setting<"manual" | "auto" | false> {},
-            items: setting<"none" | "less" | "normal" | "more" | false> {},
-            commands: setting<"off" | "on" | false> {},
-            damage: setting<"off" | "on" | false> {},
-            guide_ninja_sound: setting<"off" | "on" | false> {},
-          },
+        practice_mode: {
+          battle_mechanics: setting {},
           opponent_settings: {
-            status: setting<"manual" | "com" | "stand" | "jump" | "double_jump" | false> {},
-            strength: setting<"simple" | "easy" | "normal" | "hard" | "insane" | "ultimate" | false> {},
-            attack: setting<"no" | "single" | "combo" | "projectile" | "high_speed_move" | "ultimate_jutsu" | "jutsu" | false> {},
-            guard: setting<"no" | "yes" | false> {},
-            move: setting<"stay" | "follow" | false> {},
-            substitution_jutsu: setting<"normal" | "no" | false> {},
-            linked_attack: setting<"dont_use" | "normal" | "random" | false> {},
-            extra_hit_counter: setting<"normal" | "return" | false> {},
+            status: setting<"manual" | "com" | "stand" | "jump" | "double_jump"> {},
+            strength: setting<"simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"> {},
+            attack: setting<"no" | "single" | "combo" | "projectile" | "high_speed_move" | "ultimate_jutsu" | "jutsu"> {},
+            guard: setting<"no" | "yes"> {},
+            move: setting<"stay" | "follow"> {},
+            substitution_jutsu: setting<"normal" | "no"> {},
+            linked_attack: setting<"dont_use" | "normal" | "random"> {},
+            extra_hit_counter: setting<"normal" | "return"> {},
           },
+          health: setting<"normal" | "half" | "almost"> {},
+          commands: setting<"off" | "on"> {},
+          damage: setting<"off" | "on"> {},
         },
-        shared: {
+        battle_mechanics: {
+          chakra: setting<"normal" | "unlimited" | decimal & 0.1..10 & step 0.1> {
+            patch: "settings.battle_mechanics.chakra",
+          },
           ultimate_jutsu: setting<"no_use" | "random" | "command" | "timing" | "turn" | "combo" | "no_contest" | "no_hud"> {
-            patch: "settings.shared.ultimate_jutsu",
+            patch: "settings.battle_mechanics.ultimate_jutsu",
           },
           shadowblur: setting<"off" | "on"> {
-            patch: "settings.shared.shadowblur",
+            patch: "settings.battle_mechanics.shadowblur",
           },
-          extra_hit: setting<"off" | "on"> {
-            patch: "settings.shared.extra_hit",
+          extra_hit: setting<"off" | "on" | int & -100..-5 & step 5> {
+            patch: "settings.battle_mechanics.extra_hit",
           },
-          sub_active_frames: setting<int & 0..16> {
-            patch: "settings.shared.sub_active_frames",
+          sub_active_frames: setting<"default" | int & 1..15> {
+            patch: "settings.battle_mechanics.sub_active_frames",
           },
           xdash_chakra_cost: setting<int & 0..100 & step 5> {
-            patch: "settings.shared.xdash_chakra_cost",
+            patch: "settings.battle_mechanics.xdash_chakra_cost",
           },
-          support: setting<"off" | "on"> {
-            patch: "settings.shared.support",
+          support: setting<"off" | "nerfed" | "normal" | "unlimited"> {
+            patch: "settings.battle_mechanics.support",
           },
           substitution: setting<{
-              default: "chakra" | "gauge" | "free",
-              recovery_delay_seconds?: decimal & 0..60 & step 0.25,
-              refill_seconds_per_stock?: decimal & >0 & <=10 & step 0.05,
-              damage_recovery?: bool,
-              damage_percent_per_stock?: decimal & >0 & <=100 & step 0.25,
+              value: "chakra" | "gauge" | "free",
+              chakra?: {
+                minimum_chakra?: "match_cost" | int & 5..100 & step 5,
+              },
+              gauge?: {
+                recovery_delay_seconds?: decimal & 0..60 & step 0.25,
+                refill_seconds_per_stock?: decimal & >0 & <=10 & step 0.05,
+                damage_recovery?: bool,
+                damage_percent_per_stock?: decimal & >0 & <=100 & step 0.25,
+              },
             }> {
             description: "Configures substitution payment and gauge recovery.",
-            patch: "settings.shared.substitution",
+            patch: "settings.battle_mechanics.substitution",
+          },
+          items: setting<{
+            value: "none" | "less" | "normal" | "more" | "custom",
+            custom: {
+              availability: "none" | "less" | "normal" | "more",
+              health_recovery: bool,
+              chakra_ball: bool,
+              shoes_of_jonin: bool,
+              food_pills: bool,
+              scroll_of_hidden_cloud: bool,
+              scroll_of_teleportation: bool,
+              scarecrow: bool,
+              tortoiseshell_pills: bool,
+              energy_pills: bool,
+              medical_pack: bool,
+              item_pouch: bool,
+              demon_wind_shuriken: bool,
+              weight_of_determination: bool,
+              exploding_kunai: bool,
+              poison_smoke_bomb: bool,
+              makibishi_spikes: bool,
+              paper_bomb: bool,
+              curse_tag_chakra_points_seal: bool,
+              curse_tag_armor_break: bool,
+              thousand_shadow_shuriken: bool,
+              burst_kunai: bool,
+              exploding_seal: bool,
+              toad_oil: bool,
+              random_ball: bool,
+              stun_ball: bool,
+            },
+          }> {
+            patch: "settings.battle_mechanics.items",
           },
         },
       },
@@ -106,6 +140,10 @@
         description: "Shorten startup by loading RPG and player voice-bank indexes only when each bank is first played.",
         patch: "startup.faster_loading",
       },
+      skip_initial_memory_card_check: setting {
+        description: "Skip the blocking memory-card check before boot loading, independently of automatic save loading.",
+        patch: "startup.skip_initial_memory_card_check",
+      },
       auto_loading: setting {
         description: "Silently load record zero when it exists, and otherwise proceed to the main menu without showing Save/Load UI or requiring input. Report the outcome in black for ten seconds in the top-right corner of the usable menu; successful loads also show play time and the saved date/time.",
         patch: "startup.auto_loading",
@@ -121,9 +159,9 @@
         description: "Show each side's character tier on Character Select and include resolved substitution cost only when Character Overrides is enabled.",
         patch: "character_select.balance_overlay",
       },
-      support_selection_rework: setting {
-        description: "Build compact per-character support lists defaulting to No Support without wrapping across list edges and retain selected supports for linked Jutsu without changing battle support availability.",
-        patch: "character_select.support_selection_rework",
+      support_selection: setting<"all" | "relevant" | "none"> {
+        description: "Control which supports are available during Character Select.",
+        patch: "character_select.support_selection",
       },
     },
     mode_select: {

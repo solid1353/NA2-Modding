@@ -23,8 +23,9 @@ owner's catalog path. Optional nonempty patch and hook descriptions hold
 only definition-local purpose or provenance and never affect execution.
 
 A `payload` declaration is either a C source, an assembly source, or a static
-data/rodata fragment. C and assembly sources contain their path, namespace,
-private imports, emitted fragment aliases, and optional ABI metadata. C uses
+data/rodata fragment. Unknown declaration and fragment fields are rejected. C
+and assembly sources contain their path, namespace, private imports, emitted
+fragment aliases, and optional ABI metadata. C uses
 `kind: "c"` with an exact `.c` suffix; preprocessed EE assembly uses
 `kind: "asm"` with an exact `.S` suffix. Static fragments contain their
 bytes or guarded blob, alignment, initialization marker, and private
@@ -36,10 +37,10 @@ fragment, and one hook may depend on multiple fragments. Their guards,
 relocations, and symbolic references remain together in the owning injection
 unit.
 
-Configuration selection controls hooks. A shared payload declaration
-contributes only when its owning patch is selected.
-When every hook in a feature is disabled, the internal runtime-injector
-invocation contributes no payload or target writes.
+The catalog places only selected hooks in the runtime package; the injector has
+no second selection layer. A shared payload declaration contributes only when
+its owning patch is selected. When every hook in a feature is disabled, the
+internal runtime-injector invocation contributes no payload or target writes.
 
 ## Game hook contract
 

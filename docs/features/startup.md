@@ -29,8 +29,19 @@ This route bypasses the CyberConnect2 intro and opening directly; no
 independent skip edits remain.
 
 The `features.startup` catalog node is a plain container that owns the direct
-Save/Load route. Its `faster_loading`, `auto_loading`, and `loading_screen`
-settings are direct children.
+Save/Load route. Its `faster_loading`, `skip_initial_memory_card_check`,
+`auto_loading`, and `loading_screen` settings are direct children.
+
+The `features.startup.skip_initial_memory_card_check` patch skips
+only the blocking card check before the splash and startup loaders. It replaces
+`jal 0x001E71B0` at boot-ELF virtual address `0x001E0FA0` (file offset
+`0xE10A0`, expected bytes `6C9C070C`) with a NOP. The persistent memory-card
+worker and save-data initialization remain intact. The later Continue flow
+still scans the card and loads save data through its own worker session.
+This Boolean is independent of `auto_loading`: disabling it restores the early
+native check, while disabling `auto_loading` restores the later visible
+Save/Load flow. Fresh-boot runtime validation with and without a card remains
+outstanding.
 
 With `features.startup.auto_loading` disabled, the automatic-loading injection
 is absent and the full native Save/Load controller remains. With
@@ -52,8 +63,8 @@ loaded data. It does not synthesize a timeout while the native worker reports a
 busy state.
 
 The base configuration enables `features.startup.faster_loading`,
-`auto_loading`, and `loading_screen`. Disabling `auto_loading` preserves the
-user-confirmed native visible Save/Load flow. The enabled sequence bypasses the
+`skip_initial_memory_card_check`, `auto_loading`, and `loading_screen`. Disabling
+`auto_loading` preserves the user-confirmed native visible Save/Load flow. The enabled sequence bypasses the
 notice, Bandai Namco, Bandai, CRIWARE,
 opening, interactive title, Load list, card-status messages, and load
 confirmation before the main-menu loading screen. A full development build

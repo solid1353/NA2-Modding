@@ -51,8 +51,10 @@ guarded file edits.
   slot length, requires room for a NUL terminator, and zero-pads both guarded
   and replacement values to that length.
 - Copy sources are covered by the complete source target's size and SHA-256.
-- Configuration selection determines which catalog nodes apply; the engine's
-  synthetic groups and patches are internal execution objects only.
+- Configuration selection determines which catalog nodes enter a package.
+  Every patch in that package is applied; the engine has no second selection or
+  approval layer. Its patch records retain only identity, grouping, and evidence
+  metadata needed for ordering and logs.
 - Patch ranges may overlap; ordered composition accepts compatible chains and rejects guard conflicts.
 - Concrete edits are simulated in deterministic order before output creation. Already-satisfied
   writes and guarded chains are allowed; incompatible staged bytes are rejected as conflicts.
@@ -68,5 +70,5 @@ The catalog loader expands grouped roots and fixed-stride tables, validates
 every resulting primitive against its operation manifest, resolves the shared
 target registry, and constructs the engine's in-memory package.
 Normal builds do not load separate binary-patcher TSV data packages. Build logs
-retain the selected edit inventory and before/after hashes beneath the
-configuration build record.
+retain a one-row patch inventory, concrete edit records, and before/after hashes
+beneath the configuration build record.

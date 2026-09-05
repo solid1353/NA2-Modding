@@ -38,6 +38,18 @@ MIPS payload blobs are not production inputs.
 
 ## Maintenance and validation
 
+The symbol mapping uses `NUN5_GLYPHS` in
+`scripts/research/localization/generate_font_assets.py` as the shared
+byte-to-donor-glyph mapping for both raster and metric generation. Literal
+`®` and `·` retain their imported bytes and select NUN5 cells `142` and `151`
+at NA2 destination cells `107` and `116`. Shared measurement uses the native
+decoder's `0x43` subtraction for extended bytes so it selects the same metric
+cell as drawing. Quotation markup, percent escaping, and controller-icon tokens
+remain the translation importer's responsibility.
+The generator writes the atlas and packed metrics under
+`na228_builder/patches/localization/font/glyphs/`. Runtime appearance remains
+unvalidated.
+
 - Broad Font layout analysis is complete. Repeat it only when new evidence
   proves the retained findings insufficient or indicates that a shared fix is
   better than separate caller corrections.

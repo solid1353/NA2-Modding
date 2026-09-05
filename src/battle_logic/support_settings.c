@@ -14,7 +14,7 @@ volatile u32 support_initialized
 static __attribute__((always_inline)) inline void support_initialize(void)
 {
     if (support_initialized == 0u) {
-        support_state = battle_settings_support_default != 0u;
+        support_state = battle_settings_support_default;
         support_initialized = 1u;
     }
 }
@@ -27,11 +27,11 @@ u32 support_get(void)
 }
 
 SETTINGS_SECTION(".text.support_set")
-void support_set(u32 enabled)
+void support_set(u32 mode)
 {
     support_initialize();
-    if (enabled > 1u) {
-        enabled = battle_settings_support_default != 0u;
+    if (mode > 3u) {
+        mode = battle_settings_support_default;
     }
-    support_state = enabled;
+    support_state = mode;
 }

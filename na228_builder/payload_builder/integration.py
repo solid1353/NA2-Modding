@@ -272,32 +272,15 @@ def build_integration_package(
         expected_size=len(clean_boot),
         expected_sha256=hashlib.sha256(clean_boot).hexdigest().upper(),
     )
-    groups: dict[str, binary_patcher.Group] = {}
     package_patches: dict[str, binary_patcher.Patch] = {}
     edits: list[binary_patcher.Edit] = []
     for index, patch in enumerate(patches, 1):
         group_id = patch.kind
-        groups.setdefault(
-            group_id,
-            binary_patcher.Group(
-                group_id=group_id,
-                enabled=True,
-                name=group_id.replace("_", " ").title(),
-                description="Shared resident-payload integration.",
-                review_notes="",
-            ),
-        )
         patch_id = patch.mapping_id
         package_patches[patch_id] = binary_patcher.Patch(
             patch_id=patch_id,
             group_id=group_id,
-            enabled=True,
-            status="runtime_proven",
-            confidence="verified",
-            name=patch_id,
-            description=patch.reason,
             evidence_id=patch.mapping_id,
-            review_notes="",
         )
         edits.append(
             binary_patcher.Edit(
@@ -326,7 +309,6 @@ def build_integration_package(
         directory=Path(__file__).resolve().parent,
         package_id="payload_builder",
         targets={target_id: target},
-        groups=groups,
         patches=package_patches,
         edits=edits,
     )

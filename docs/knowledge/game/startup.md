@@ -10,8 +10,8 @@ findings.
   audio initialization.
 - **Exploration depth:** the relevant resident call paths were traced and
   sampled across splash, title, Save/Load, loading, and main-menu states.
-- **Confirmed coverage:** splash ownership, the two asynchronous readiness
-  gates, Continue's shared Save/Load controller, record metadata, the native
+- **Confirmed coverage:** the initial blocking card check, splash ownership,
+  the two asynchronous readiness gates, Continue's shared Save/Load controller, record metadata, the native
   main-menu loading controller, and the eager audio bottleneck are established.
 - **Unresolved or untested:** every physical memory-card failure case, indirect
   voice consumers, and exact player-character-to-voice-bank mapping.
@@ -20,6 +20,25 @@ findings.
   identity belong to [Memory Card](../../features/memory_card.md).
 - **Evidence limitations:** sampled timing establishes ordering and observed
   bottlenecks, not a fixed duration on every host or storage device.
+
+## Initial memory-card check
+
+Before constructing the splash and starting the resource loaders,
+`FUN_001E0EE0` constructs the persistent memory-card worker and save-data
+object, then calls `FUN_001E71B0` at `0x001E0FA0` (ELF file offset `0xE10A0`).
+The call bytes are `6C9C070C`; its delay slot is a NOP.
+
+`FUN_001E71B0` creates a temporary controller and runs `FUN_001E72E0`.
+That routine starts the card worker in mode zero and waits one frame per loop.
+Worker statuses `0x24..0x27` display an initial confirmation through
+`FUN_001E74E0`; choosing Yes permits the loop to finish. Worker status `1`
+also completes it. The routine stops the worker before returning, and the
+temporary controller is destroyed. Continue later starts a separate worker
+session for loading through the same persistent worker object.
+
+A sampled no-card confirmation had worker status `0x24`, result class `3`,
+and mode zero, with no main-menu object constructed. This establishes that the
+initial blocking check is separate from the later Continue Save/Load screen.
 
 ## Splash controller
 

@@ -5,7 +5,7 @@
 - Documentation-only changes require no validation.
 - For code changes, run unit tests.
 - After implementation and earlier checks are complete, build changes that can
-  affect built bytes as final validation. Any later byte-affecting change
+  affect built bytes. Any later byte-affecting change
   requires another build.
 - Agents build only through `na228 build <config>`, using `b` by default. Never
   use build-and-launch commands for validation.
@@ -20,7 +20,8 @@
 
 - Agents must not directly launch, attach to, command, screenshot, probe, or
   close any PCSX2 process. Runtime execution is permitted only through the
-  maintained E2E and input-recording validation workflows; agents invoke their
+  maintained E2E and input-recording validation workflows and requires explicit
+  user instructions authorizing that validation. Agents invoke their
   entrypoints and inspect their outputs, while the workflows own emulator
   control.
 - When the user provides an input recording for the task, follow the

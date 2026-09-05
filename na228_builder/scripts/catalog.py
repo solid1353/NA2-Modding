@@ -28,6 +28,21 @@ PATCH_ID = re.compile(r"[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*\Z")
 OPERATION_FIELDS = ["field", "required", "type"]
 FIELD_TYPES = {"hex", "integer", "integer_list", "path", "sha256", "text"}
 UINT64_MAX = (1 << 64) - 1
+SOURCE_PAYLOAD_FIELDS = {"kind", "path", "namespace", "imports", "fragments"}
+SOURCE_FRAGMENT_FIELDS = {"object", "abi", "description"}
+STATIC_PAYLOAD_FIELDS = {
+    "kind",
+    "alignment",
+    "value",
+    "blob_path",
+    "blob_sha256",
+    "blob_offset",
+    "length",
+    "relocations",
+    "init",
+}
+IMPORT_FIELDS = {"symbol", "addend"}
+RELOCATION_FIELDS = {"offset", "encoding", "symbol", "addend"}
 
 
 class ConfigurationError(ValueError):
@@ -217,6 +232,26 @@ def _description(value: object, label: str) -> str:
     if not value.strip():
         raise ValueError(f"{label} description must be nonempty")
     return value
+
+
+def _validate_fields(
+    value: dict[str, object],
+    allowed: set[str],
+    label: str,
+    *,
+    required: set[str] | None = None,
+) -> None:
+    missing = sorted((required or set()) - set(value))
+    extra = sorted(set(value) - allowed)
+    if missing:
+        raise ValueError(f"{label} is missing fields: {missing}")
+    if extra:
+        raise ValueError(f"{label} has unknown fields: {extra}")
+
+
+def _optional_text(value: object, label: str) -> None:
+    if value is not None and (not isinstance(value, str) or not value.strip()):
+        raise ValueError(f"{label} must be nonempty text")
 
 
 def _container_fields(
@@ -883,6 +918,99 @@ def _load_implementation(
         if injection_fields:
             injections[patch_id] = injection
 
+        payload = patch.get("payload", {})
+        if isinstance(payload, dict):
+            for payload_id, declaration in payload.items():
+                _identifier(payload_id, f"Patch {patch_id!r} payload ID")
+                label = f"Patch {patch_id!r}.payload.{payload_id}"
+                if not isinstance(declaration, dict):
+                    raise ValueError(f"{label} must be an object")
+                kind = declaration.get("kind")
+                if kind in {"c", "asm"}:
+                    _validate_fields(
+                        declaration,
+                        SOURCE_PAYLOAD_FIELDS,
+                        label,
+                        required={"kind", "path", "namespace", "fragments"},
+                    )
+                    if not isinstance(declaration["path"], str):
+                        raise ValueError(f"{label}.path must be text")
+                    namespace = declaration["namespace"]
+                    if (
+                        not isinstance(namespace, str)
+                        or not runtime_injector.IDENTIFIER.fullmatch(namespace)
+                    ):
+                        raise ValueError(f"{label}.namespace is invalid")
+                    imports = declaration.get("imports", {})
+                    if not isinstance(imports, dict):
+                        raise ValueError(f"{label}.imports must be an object")
+                    for import_id, imported in imports.items():
+                        if not runtime_injector.IDENTIFIER.fullmatch(import_id):
+                            raise ValueError(f"{label}.imports key is invalid: {import_id!r}")
+                        if isinstance(imported, dict):
+                            _validate_fields(
+                                imported,
+                                IMPORT_FIELDS,
+                                f"{label}.imports.{import_id}",
+                                required={"symbol"},
+                            )
+                    fragments = declaration.get("fragments")
+                    if not isinstance(fragments, dict) or not fragments:
+                        raise ValueError(f"{label}.fragments must be a non-empty object")
+                    for fragment_id, fragment in fragments.items():
+                        if not runtime_injector.IDENTIFIER.fullmatch(fragment_id):
+                            raise ValueError(
+                                f"{label}.fragments key is invalid: {fragment_id!r}"
+                            )
+                        fragment_label = f"{label}.fragments.{fragment_id}"
+                        if not isinstance(fragment, dict):
+                            raise ValueError(f"{fragment_label} must be an object")
+                        _validate_fields(
+                            fragment,
+                            SOURCE_FRAGMENT_FIELDS,
+                            fragment_label,
+                            required={"object"},
+                        )
+                        object_fragment = fragment["object"]
+                        if (
+                            not isinstance(object_fragment, str)
+                            or not runtime_injector.IDENTIFIER.fullmatch(object_fragment)
+                        ):
+                            raise ValueError(f"{fragment_label}.object is invalid")
+                        _optional_text(fragment.get("abi"), f"{fragment_label}.abi")
+                        _description(fragment.get("description"), fragment_label)
+                elif kind in FRAGMENT_KINDS:
+                    _validate_fields(
+                        declaration,
+                        STATIC_PAYLOAD_FIELDS,
+                        label,
+                        required={"kind", "alignment"},
+                    )
+                    if ("value" in declaration) == ("blob_path" in declaration):
+                        raise ValueError(
+                            f"{label} requires exactly one of value or blob_path"
+                        )
+                    relocations = declaration.get("relocations", {})
+                    if not isinstance(relocations, dict):
+                        raise ValueError(f"{label}.relocations must be an object")
+                    for relocation_id, relocation in relocations.items():
+                        if not isinstance(relocation, dict):
+                            raise ValueError(
+                                f"{label}.relocations.{relocation_id} must be an object"
+                            )
+                        _validate_fields(
+                            relocation,
+                            RELOCATION_FIELDS,
+                            f"{label}.relocations.{relocation_id}",
+                            required={"offset", "encoding", "symbol"},
+                        )
+                    if "init" in declaration and not isinstance(
+                        declaration["init"], bool
+                    ):
+                        raise ValueError(f"{label}.init must be boolean")
+                else:
+                    raise ValueError(f"{label}.kind is invalid: {kind!r}")
+
         if "string_patch" in patch:
             string_patch = patch["string_patch"]
             if not isinstance(string_patch, dict):
@@ -1252,30 +1380,8 @@ def _internal_patch(node: CatalogNode) -> binary_patcher.Patch:
     return binary_patcher.Patch(
         patch_id=node.node_id,
         group_id=_group_id(node),
-        enabled=node.enabled,
-        status="approved_for_test",
-        confidence="verified",
-        name=node.path[-1],
-        description=node.description,
         evidence_id="",
-        review_notes="",
     )
-
-
-def _groups(nodes: list[CatalogNode]) -> dict[str, binary_patcher.Group]:
-    groups: dict[str, binary_patcher.Group] = {}
-    for node in nodes:
-        group_id = _group_id(node)
-        if group_id in groups:
-            continue
-        groups[group_id] = binary_patcher.Group(
-            group_id=group_id,
-            enabled=True,
-            name=node.path[-2] if len(node.path) > 1 else node.feature_id,
-            description="",
-            review_notes="",
-        )
-    return groups
 
 
 def _edit_members(
@@ -1646,7 +1752,6 @@ def load_binary_package(
         directory=repository,
         package_id=f"{feature_id}.binary_patcher",
         targets={key: value for key, value in targets.items() if key in used_targets},
-        groups=_groups(nodes),
         patches=patches,
         edits=edits,
     )
@@ -1970,7 +2075,6 @@ def load_runtime_package(
         directory=repository,
         owner=owner,
         targets={key: value for key, value in targets.items() if key in used_targets},
-        groups=_groups(hook_nodes),
         patches=patches,
         fragments=tuple(declared),
         edits=tuple(edits),

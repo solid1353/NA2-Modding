@@ -63,7 +63,7 @@ FONT_GLYPH_SECTION(".text.font.glyph.metric.lookup")
 u32 font_glyph_metric_lookup(void *context, u32 value)
 {
     u32 available;
-    u32 cell = value < 0xA0u ? value - 0x20u : value - 0x23u;
+    u32 cell = value < 0xA0u ? value - 0x20u : value - 0x43u;
     u16 packed;
 
     if (cell >= FONT_SECONDARY_CELL_COUNT) {

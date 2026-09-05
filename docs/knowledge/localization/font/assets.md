@@ -92,6 +92,15 @@ of a Y-only correction, stretching both axes by 16.7 percent while logical
 measurement stayed unchanged. Runtime captures showed damaged outlines and no
 useful alignment improvement.
 
+NA2's native secondary-byte decoder `FUN_001873E0` subtracts `0x20` below
+`0xA0` and `0x43` otherwise. Byte `0xAE` therefore selects cell `107`, the
+halfwidth small katakana yo (`ョ`), rather than the Windows-1252 registered
+sign. Inspection of the clean NUN5 GF4 raster identifies the registered sign
+at cell `142`, with metric bytes `00 04 00 03`, and the middle dot at cell
+`151`, with metric bytes `05 09 04 06`. The middle dot's Windows-1252 byte
+`0xB7` selects NA2 secondary cell `116`. These are static decoder and
+raster observations, not an in-game validation of a modified font.
+
 ## Rejected donor-raster and palette combinations
 
 Replacing NA2 GF4 with the exact NUN5 GF4, padded or unpadded, produced broad

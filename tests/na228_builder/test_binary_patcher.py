@@ -47,26 +47,11 @@ class BinaryPatcherTests(unittest.TestCase):
                     expected_sha256=sha256(source),
                 ),
             },
-            groups={
-                "fixture_group": patcher.Group(
-                    group_id="fixture_group",
-                    enabled=True,
-                    name="Fixture group",
-                    description="Fixture patches.",
-                    review_notes="",
-                )
-            },
             patches={
                 "test_patch": patcher.Patch(
                     patch_id="test_patch",
                     group_id="fixture_group",
-                    enabled=False,
-                    status="approved_for_test",
-                    confidence="verified",
-                    name="test patch",
-                    description="replace and copy",
                     evidence_id="",
-                    review_notes="",
                 )
             },
             edits=[
@@ -122,8 +107,7 @@ class BinaryPatcherTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             package, _, target_data = self.make_fixture(root)
-            selected = ["test_patch"]
-            edits = patcher.validate_selection(package, selected, for_apply=True)
+            edits = patcher.ordered_edits(package)
             buffers, patch_rows, before_hashes = patcher.compose_edits(
                 package,
                 target_data,
@@ -138,8 +122,6 @@ class BinaryPatcherTests(unittest.TestCase):
             write_binary_patch_log(
                 {
                     "package": package,
-                    "selected": selected,
-                    "selection_mode": "explicit",
                     "edits": edits,
                     "patch_rows": patch_rows,
                     "before_hashes": before_hashes,
@@ -157,15 +139,27 @@ class BinaryPatcherTests(unittest.TestCase):
                 summary = next(reader)
 
             self.assertEqual(summary["package_id"], package.package_id)
+            with (logs / "patch_inventory.tsv").open(
+                encoding="utf-8", newline=""
+            ) as handle:
+                inventory = list(csv.DictReader(handle, delimiter="\t"))
+            self.assertEqual(
+                inventory,
+                [{
+                    "group_id": "fixture_group",
+                    "patch_id": "test_patch",
+                    "evidence_id": "",
+                }],
+            )
 
-    def test_pending_patch_cannot_apply(self) -> None:
+    def test_edits_cannot_reference_a_patch_outside_the_package(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             package, _, _ = self.make_fixture(Path(temporary))
-            package.patches["test_patch"] = replace(
-                package.patches["test_patch"], status="pending"
+            package.edits[0] = replace(
+                package.edits[0], patch_id="missing_patch"
             )
-            with self.assertRaisesRegex(patcher.PatchError, "not approved"):
-                patcher.validate_selection(package, ["test_patch"], for_apply=True)
+            with self.assertRaisesRegex(patcher.PatchError, "unknown patches"):
+                patcher.ordered_edits(package)
 
     def test_expected_byte_mismatch_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -195,9 +189,7 @@ class BinaryPatcherTests(unittest.TestCase):
             ]
 
             target_data = patcher.verify_package_data(package, roots)
-            edits = patcher.validate_selection(
-                package, ["test_patch"], for_apply=True
-            )
+            edits = patcher.ordered_edits(package)
             buffers, _, _ = patcher.compose_edits(
                 package,
                 target_data,
@@ -214,9 +206,7 @@ class BinaryPatcherTests(unittest.TestCase):
     def test_composition_accepts_unrelated_prior_changes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             package, _, target_data = self.make_fixture(Path(temporary))
-            edits = patcher.validate_selection(
-                package, ["test_patch"], for_apply=True
-            )
+            edits = patcher.ordered_edits(package)
             staged = bytearray(target_data["destination"])
             staged[0] = 0xFE
             buffers, _, before_hashes = patcher.compose_edits(
@@ -234,9 +224,7 @@ class BinaryPatcherTests(unittest.TestCase):
     def test_composition_rejects_prior_change_in_patch_range(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             package, _, target_data = self.make_fixture(Path(temporary))
-            edits = patcher.validate_selection(
-                package, ["test_patch"], for_apply=True
-            )
+            edits = patcher.ordered_edits(package)
             staged = bytearray(target_data["destination"])
             staged[4] ^= 0xFF
             with self.assertRaisesRegex(patcher.PatchError, "staged destination"):
@@ -247,77 +235,13 @@ class BinaryPatcherTests(unittest.TestCase):
                     {"destination": staged},
                 )
 
-    def test_hierarchical_enabled_selection_and_explicit_override(self) -> None:
+    def test_package_applies_every_patch_in_declared_order(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             package, _, target_data = self.make_fixture(Path(temporary))
-            package.patches["test_patch"] = replace(
-                package.patches["test_patch"], enabled=True
-            )
-            selected = patcher.selected_patch_ids(package, [], enabled=True)
-            self.assertEqual(selected, ["test_patch"])
-
-            package.groups["fixture_group"] = replace(
-                package.groups["fixture_group"], enabled=False
-            )
-            self.assertEqual(
-                patcher.selected_patch_ids(package, [], enabled=True),
-                [],
-            )
-            self.assertEqual(
-                patcher.selected_patch_ids(
-                    package, ["test_patch"], enabled=False
-                ),
-                ["test_patch"],
-            )
-
-            package.groups["fixture_group"] = replace(
-                package.groups["fixture_group"], enabled=True
-            )
-            self.assertEqual(
-                patcher.selected_patch_ids(package, [], enabled=True),
-                ["test_patch"],
-            )
-            edits = patcher.validate_selection(package, selected, for_apply=True)
-            buffers, rows, _ = patcher.compose_edits(package, target_data, edits)
-            self.assertEqual(len(edits), 2)
-            self.assertEqual([row["outcome"] for row in rows], ["applied", "applied"])
-            self.assertEqual(buffers["destination"][4:8], bytes.fromhex("10203040"))
-
-    def test_incompatible_overlapping_patches_fail_during_composition(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            package, _, target_data = self.make_fixture(Path(temporary))
-            second_group = patcher.Group("second_group", True, "Second", "", "")
-            second_patch = replace(
-                package.patches["test_patch"],
+            package.patches["second_patch"] = patcher.Patch(
                 patch_id="second_patch",
                 group_id="second_group",
-            )
-            package.groups["second_group"] = second_group
-            package.patches["second_patch"] = second_patch
-            package.edits.append(
-                replace(
-                    package.edits[0],
-                    edit_id="conflicting_edit",
-                    patch_id="second_patch",
-                    replacement_hex="FFFFFFFF",
-                )
-            )
-            edits = patcher.validate_selection(
-                package, ["test_patch", "second_patch"], for_apply=True
-            )
-            with self.assertRaisesRegex(patcher.PatchError, "Conflicting edit"):
-                patcher.compose_edits(package, target_data, edits, feature_id="feature")
-
-    def test_intentional_overlapping_patch_chain_is_applied_in_order(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            package, _, target_data = self.make_fixture(Path(temporary))
-            package.groups["second_group"] = patcher.Group(
-                "second_group", True, "Second", "", ""
-            )
-            package.patches["second_patch"] = replace(
-                package.patches["test_patch"],
-                patch_id="second_patch",
-                group_id="second_group",
+                evidence_id="SECOND",
             )
             package.edits.append(
                 replace(
@@ -328,9 +252,54 @@ class BinaryPatcherTests(unittest.TestCase):
                     replacement_hex="55667788",
                 )
             )
-            edits = patcher.validate_selection(
-                package, ["test_patch", "second_patch"], for_apply=True
+            edits = patcher.ordered_edits(package)
+            buffers, rows, _ = patcher.compose_edits(package, target_data, edits)
+            self.assertEqual(len(edits), 3)
+            self.assertEqual(
+                [row["patch_id"] for row in rows[:2]],
+                ["test_patch", "second_patch"],
             )
+            self.assertEqual(buffers["destination"][4:8], bytes.fromhex("55667788"))
+
+    def test_incompatible_overlapping_patches_fail_during_composition(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            package, _, target_data = self.make_fixture(Path(temporary))
+            second_patch = patcher.Patch(
+                patch_id="second_patch",
+                group_id="second_group",
+                evidence_id="",
+            )
+            package.patches["second_patch"] = second_patch
+            package.edits.append(
+                replace(
+                    package.edits[0],
+                    edit_id="conflicting_edit",
+                    patch_id="second_patch",
+                    replacement_hex="FFFFFFFF",
+                )
+            )
+            edits = patcher.ordered_edits(package)
+            with self.assertRaisesRegex(patcher.PatchError, "Conflicting edit"):
+                patcher.compose_edits(package, target_data, edits, feature_id="feature")
+
+    def test_intentional_overlapping_patch_chain_is_applied_in_order(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            package, _, target_data = self.make_fixture(Path(temporary))
+            package.patches["second_patch"] = patcher.Patch(
+                patch_id="second_patch",
+                group_id="second_group",
+                evidence_id="",
+            )
+            package.edits.append(
+                replace(
+                    package.edits[0],
+                    edit_id="chained_edit",
+                    patch_id="second_patch",
+                    expected_hex="10203040",
+                    replacement_hex="55667788",
+                )
+            )
+            edits = patcher.ordered_edits(package)
             buffers, rows, _ = patcher.compose_edits(package, target_data, edits)
             self.assertEqual(buffers["destination"][4:8], bytes.fromhex("55667788"))
             self.assertEqual(rows[0]["outcome"], "applied")

@@ -28,63 +28,63 @@
       }
     }
   },
-  "character_select.support_selection_rework": {
-    "description": "Build compact per-player Character Select support lists containing declared special entries plus the directional native pairs declared by the injection, default to No Support without wrapping across list edges, retain selected supports for linked Jutsu, draw each compact entry once, resolve special display and name records, and retain native availability states and rendering without changing battle support availability.",
+  "character_select.support_selection": {
+    "description": "Build per-player lists beginning with No Support. All filters through native selection eligibility and retains the native carousel; relevant and none use compact lists and bounded navigation. Share the No Support default, Auto Linked Mode bypass, and special-entry display and name handling.",
     "hooks": {
       "route_default_support_compatibility": {
-        "description": "Apply the declared directional support whitelist to Character Select's default-support compatibility path while accepting declared special entries globally.",
+        "description": "Apply the selected support mode to Character Select's default-support compatibility path while accepting declared special entries globally.",
         "target_id": "na2_elf",
         "offset": "0x2B5088",
         "expected_hex": "3016220C",
-        "symbol": "character_select_support_selection_rework_is_compatible",
+        "symbol": "character_select_support_selection_is_compatible",
         "encoding": "jal26"
       },
       "route_initial_support_list_population": {
-        "description": "Route initial Character Select support-list population through the per-player compact-list wrapper.",
+        "description": "Route initial Character Select support-list population through the per-player list wrapper.",
         "target_id": "na2_elf",
         "offset": "0x2BB18C",
         "expected_hex": "84EC0E0C",
-        "symbol": "character_select_support_selection_rework_prepend",
+        "symbol": "character_select_support_selection_prepend",
         "encoding": "jal26"
       },
       "route_initial_transition_support_compatibility": {
-        "description": "Apply the declared directional support whitelist when Character Select first enters support selection while accepting declared special entries globally.",
+        "description": "Apply the selected support mode when Character Select first enters support selection while accepting declared special entries globally.",
         "target_id": "na2_elf",
         "offset": "0x2B56FC",
         "expected_hex": "3016220C",
-        "symbol": "character_select_support_selection_rework_is_compatible",
+        "symbol": "character_select_support_selection_is_compatible",
         "encoding": "jal26"
       },
       "route_primary_confirmation_support_compatibility": {
-        "description": "Apply the declared directional support whitelist to the primary support-confirmation check while accepting declared special entries globally.",
+        "description": "Apply the selected support mode to the primary support-confirmation check while accepting declared special entries globally.",
         "target_id": "na2_elf",
         "offset": "0x2B6BEC",
         "expected_hex": "3016220C",
-        "symbol": "character_select_support_selection_rework_is_compatible",
+        "symbol": "character_select_support_selection_is_compatible",
         "encoding": "jal26"
       },
       "route_refreshed_support_list_population": {
-        "description": "Route refreshed Character Select support-list population through the same per-player compact-list wrapper.",
+        "description": "Refresh each player's support list through the selected mode's eligibility rules.",
         "target_id": "na2_elf",
         "offset": "0x2BCBB0",
         "expected_hex": "84EC0E0C",
-        "symbol": "character_select_support_selection_rework_prepend",
+        "symbol": "character_select_support_selection_prepend",
         "encoding": "jal26"
       },
       "route_repeated_confirmation_support_compatibility": {
-        "description": "Apply the declared directional support whitelist to the repeated support-confirmation check while accepting declared special entries globally.",
+        "description": "Apply the selected support mode to the repeated support-confirmation check while accepting declared special entries globally.",
         "target_id": "na2_elf",
         "offset": "0x2B6F7C",
         "expected_hex": "3016220C",
-        "symbol": "character_select_support_selection_rework_is_compatible",
+        "symbol": "character_select_support_selection_is_compatible",
         "encoding": "jal26"
       },
       "route_primary_fighter_confirmation": {
-        "description": "Finalize a fighter in the confirmation frame when No Support is the compact roster's only entry, while retaining the complete native support flow for larger rosters.",
+        "description": "Select No Support after fighter confirmation, using the native carousel anchor in all mode and compact centering otherwise; finalize immediately when No Support is the only entry.",
         "target_id": "na2_elf",
         "offset": "0x2B5F74",
         "expected_hex": "B8D40E0C",
-        "symbol": "character_select_support_selection_rework_confirm_fighter",
+        "symbol": "character_select_support_selection_confirm_fighter",
         "encoding": "jal26"
       },
       "route_repeated_fighter_confirmation": {
@@ -92,23 +92,23 @@
         "target_id": "na2_elf",
         "offset": "0x2B610C",
         "expected_hex": "B8D40E0C",
-        "symbol": "character_select_support_selection_rework_confirm_fighter",
+        "symbol": "character_select_support_selection_confirm_fighter",
         "encoding": "jal26"
       },
       "route_support_confirmation_without_linked_mode": {
-        "description": "Finalize a selected support in Manual linked mode without opening the Linked Mode choice modal.",
+        "description": "Finalize a selected support in Auto linked mode without opening the Linked Mode choice modal.",
         "target_id": "na2_elf",
         "offset": "0x2B7E70",
         "expected_hex": "F0FFBD270000BFFF",
-        "symbol": "character_select_support_selection_rework_finalize_support",
+        "symbol": "character_select_support_selection_finalize_support",
         "encoding": "j26"
       },
       "route_no_support_only_return_to_fighter_selection": {
-        "description": "Return a finalized No-Support-only fighter directly to fighter selection, or a larger roster directly to support selection in Manual linked mode, without reopening the Linked Mode choice modal.",
+        "description": "Return a finalized No-Support-only fighter directly to fighter selection, or a larger roster directly to support selection in Auto linked mode, without reopening the Linked Mode choice modal.",
         "target_id": "na2_elf",
         "offset": "0x2B8150",
         "expected_hex": "F0FFBD270000BFFF",
-        "symbol": "character_select_support_selection_rework_return_from_finalized",
+        "symbol": "character_select_support_selection_return_from_finalized",
         "encoding": "j26"
       },
       "route_selected_support_display_id": {
@@ -116,7 +116,7 @@
         "target_id": "na2_elf",
         "offset": "0x2B8C6C",
         "expected_hex": "6816220C",
-        "symbol": "character_select_support_selection_rework_display_id",
+        "symbol": "character_select_support_selection_display_id",
         "encoding": "jal26"
       },
       "route_selected_support_name_draw": {
@@ -124,7 +124,7 @@
         "target_id": "na2_elf",
         "offset": "0x2B9C74",
         "expected_hex": "A4E20E0C",
-        "symbol": "character_select_support_selection_rework_draw_selected_name",
+        "symbol": "character_select_support_selection_draw_selected_name",
         "encoding": "jal26"
       },
       "route_selected_support_portrait_display_id": {
@@ -132,7 +132,7 @@
         "target_id": "na2_elf",
         "offset": "0x2B8ED4",
         "expected_hex": "6816220C",
-        "symbol": "character_select_support_selection_rework_display_id",
+        "symbol": "character_select_support_selection_display_id",
         "encoding": "jal26"
       },
       "route_support_cell_draw": {
@@ -140,15 +140,15 @@
         "target_id": "na2_elf",
         "offset": "0x2B88C0",
         "expected_hex": "10EF0D0C",
-        "symbol": "character_select_support_selection_rework_draw_support_cell",
+        "symbol": "character_select_support_selection_draw_support_cell",
         "encoding": "jal26"
       },
       "route_support_draw_compatibility": {
-        "description": "Apply the declared directional support whitelist to Character Select's draw eligibility while keeping declared special entries eligible.",
+        "description": "Apply the selected support mode to Character Select's draw eligibility while keeping declared special entries eligible.",
         "target_id": "na2_elf",
         "offset": "0x2B8A38",
         "expected_hex": "3016220C",
-        "symbol": "character_select_support_selection_rework_is_compatible",
+        "symbol": "character_select_support_selection_is_compatible",
         "encoding": "jal26"
       },
       "route_support_navigation_left_without_wrap": {
@@ -156,7 +156,7 @@
         "target_id": "na2_elf",
         "offset": "0x2B6D48",
         "expected_hex": "A0DC0E0C",
-        "symbol": "character_select_support_selection_rework_bounded_support_navigation",
+        "symbol": "character_select_support_selection_bounded_support_navigation",
         "encoding": "jal26"
       },
       "route_support_navigation_right_without_wrap": {
@@ -164,15 +164,15 @@
         "target_id": "na2_elf",
         "offset": "0x2B6D8C",
         "expected_hex": "A0DC0E0C",
-        "symbol": "character_select_support_selection_rework_bounded_support_navigation",
+        "symbol": "character_select_support_selection_bounded_support_navigation",
         "encoding": "jal26"
       },
       "route_support_navigation_compatibility": {
-        "description": "Apply the declared directional support whitelist to Character Select's navigation eligibility while keeping declared special entries eligible.",
+        "description": "Apply the selected support mode to Character Select's navigation eligibility while keeping declared special entries eligible.",
         "target_id": "na2_elf",
         "offset": "0x2B72B0",
         "expected_hex": "3016220C",
-        "symbol": "character_select_support_selection_rework_is_compatible",
+        "symbol": "character_select_support_selection_is_compatible",
         "encoding": "jal26"
       },
       "route_support_list_available_display_id": {
@@ -180,7 +180,7 @@
         "target_id": "na2_elf",
         "offset": "0x2B8874",
         "expected_hex": "6816220C",
-        "symbol": "character_select_support_selection_rework_display_id",
+        "symbol": "character_select_support_selection_display_id",
         "encoding": "jal26"
       },
       "route_support_list_primary_display_id": {
@@ -188,54 +188,55 @@
         "target_id": "na2_elf",
         "offset": "0x2B8824",
         "expected_hex": "6816220C",
-        "symbol": "character_select_support_selection_rework_display_id",
+        "symbol": "character_select_support_selection_display_id",
         "encoding": "jal26"
       }
     },
     "payload": {
-      "character_select_support_selection_rework": {
+      "character_select_support_selection": {
         "kind": "c",
-        "path": "src/qol/character_select_support_selection_rework.c",
-        "namespace": "character.select.support.selection.rework",
+        "path": "src/qol/character_select_support_selection.c",
+        "namespace": "character.select.support.selection",
         "imports": {
-          "font_v2_adapter_call": "v2_adapter_call"
+          "font_v2_adapter_call": "v2_adapter_call",
+          "character_select_support_selection_mode": "character_select_support_selection_mode"
         },
         "fragments": {
-          "character_select_support_selection_rework_buffers": {
-            "object": "character.select.support.selection.rework.bss.character.select.support.selection.rework.buffers"
+          "character_select_support_selection_buffers": {
+            "object": "character.select.support.selection.bss.character.select.support.selection.buffers"
           },
-          "character_select_support_selection_rework_entries": {
-            "object": "character.select.support.selection.rework.rodata.character.select.support.selection.rework.entries"
+          "character_select_support_selection_entries": {
+            "object": "character.select.support.selection.rodata.character.select.support.selection.entries"
           },
-          "character_select_support_selection_rework_display_id": {
-            "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.display.id"
+          "character_select_support_selection_display_id": {
+            "object": "character.select.support.selection.text.character.select.support.selection.display.id"
           },
-          "character_select_support_selection_rework_draw_name_callback": {
-            "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.draw.name.callback"
+          "character_select_support_selection_draw_name_callback": {
+            "object": "character.select.support.selection.text.character.select.support.selection.draw.name.callback"
           },
-          "character_select_support_selection_rework_draw_selected_name": {
-            "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.draw.selected.name"
+          "character_select_support_selection_draw_selected_name": {
+            "object": "character.select.support.selection.text.character.select.support.selection.draw.selected.name"
           },
-          "character_select_support_selection_rework_draw_support_cell": {
-            "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.draw.support.cell"
+          "character_select_support_selection_draw_support_cell": {
+            "object": "character.select.support.selection.text.character.select.support.selection.draw.support.cell"
           },
-          "character_select_support_selection_rework_confirm_fighter": {
-            "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.confirm.fighter"
+          "character_select_support_selection_confirm_fighter": {
+            "object": "character.select.support.selection.text.character.select.support.selection.confirm.fighter"
           },
-          "character_select_support_selection_rework_finalize_support": {
-            "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.finalize.support"
+          "character_select_support_selection_finalize_support": {
+            "object": "character.select.support.selection.text.character.select.support.selection.finalize.support"
           },
-          "character_select_support_selection_rework_return_from_finalized": {
-            "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.return.from.finalized"
+          "character_select_support_selection_return_from_finalized": {
+            "object": "character.select.support.selection.text.character.select.support.selection.return.from.finalized"
           },
-          "character_select_support_selection_rework_is_compatible": {
-            "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.is.compatible"
+          "character_select_support_selection_is_compatible": {
+            "object": "character.select.support.selection.text.character.select.support.selection.is.compatible"
           },
-          "character_select_support_selection_rework_bounded_support_navigation": {
-            "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.bounded.support.navigation"
+          "character_select_support_selection_bounded_support_navigation": {
+            "object": "character.select.support.selection.text.character.select.support.selection.bounded.support.navigation"
           },
-          "character_select_support_selection_rework_prepend": {
-            "object": "character.select.support.selection.rework.text.character.select.support.selection.rework.prepend"
+          "character_select_support_selection_prepend": {
+            "object": "character.select.support.selection.text.character.select.support.selection.prepend"
           }
         }
       }

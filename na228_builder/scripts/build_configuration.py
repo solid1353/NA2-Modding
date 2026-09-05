@@ -65,31 +65,19 @@ def apply_binary_patch_set(
     source: Iso9660,
     payloads: dict[str, bytearray],
     owners: dict[str, str],
-    allow_empty_enabled: bool = False,
+    allow_empty: bool = False,
 ) -> dict[str, object]:
     target_data = binary_patcher_module.verify_package_data(package, roots)
-    enabled_patch_ids = [
-        patch.patch_id
-        for patch in package.patches.values()
-        if binary_patcher_module.patch_is_enabled(package, patch)
-    ]
-    if not enabled_patch_ids and allow_empty_enabled:
+    if not package.patches and allow_empty:
         return {
             "package": package,
-            "selected": [],
-            "selection_mode": "enabled",
             "edits": [],
             "patch_rows": [],
             "before_hashes": {},
             "after_hashes": {},
             "patched_paths": [],
         }
-    selected = binary_patcher_module.selected_patch_ids(
-        package, [], enabled=True
-    )
-    edits = binary_patcher_module.validate_selection(
-        package, selected, for_apply=True
-    )
+    edits = binary_patcher_module.ordered_edits(package)
 
     initial_buffers: dict[str, bytes | bytearray] = {}
     target_paths: dict[str, str] = {}
@@ -124,8 +112,6 @@ def apply_binary_patch_set(
 
     return {
         "package": package,
-        "selected": selected,
-        "selection_mode": "enabled",
         "edits": edits,
         "patch_rows": patch_rows,
         "before_hashes": before_hashes,
@@ -182,12 +168,10 @@ def write_binary_patch_log(
     log_directory_text: str,
 ) -> None:
     package = result["package"]
-    selected = result["selected"]
     edits = result["edits"]
     before_hashes = result["before_hashes"]
     after_hashes = result["after_hashes"]
     assert isinstance(package, binary_patcher_module.Package)
-    assert isinstance(selected, list)
     assert isinstance(edits, list)
     assert isinstance(before_hashes, dict)
     assert isinstance(after_hashes, dict)
@@ -195,25 +179,16 @@ def write_binary_patch_log(
     binary_patcher_module.write_tsv(
         log_directory / "patch_log.tsv",
         [
-            "package_id", "feature_id", "group_id", "group_name",
-            "patch_id", "evidence_id",
+            "package_id", "feature_id", "group_id", "patch_id", "evidence_id",
             "edit_id", "target_id", "path",
             "offset", "length", "original_hex", "new_hex", "operation", "outcome", "reason",
         ],
         result["patch_rows"],
     )
     binary_patcher_module.write_tsv(
-        log_directory / "patch_selection.tsv",
-        [
-            "group_id", "group_name", "group_enabled", "patch_id",
-            "patch_enabled", "effective_selected", "selection_mode",
-            "evidence_id", "status", "confidence", "name",
-        ],
-        binary_patcher_module.patch_selection_rows(
-            package,
-            selected,
-            selection_mode=str(result["selection_mode"]),
-        ),
+        log_directory / "patch_inventory.tsv",
+        ["group_id", "patch_id", "evidence_id"],
+        binary_patcher_module.patch_inventory_rows(package),
     )
     binary_patcher_module.write_tsv(
         log_directory / "staged_file_hashes.tsv",
@@ -234,7 +209,7 @@ def write_binary_patch_log(
         [
             "timestamp_utc", "package_id",
             "output_iso", "log_directory", "group_count", "patch_count",
-            "unique_patch_count", "edit_count",
+            "edit_count",
         ],
         [{
             "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -243,12 +218,11 @@ def write_binary_patch_log(
             "log_directory": log_directory_text.replace("\\", "/"),
             "group_count": len(
                 {
-                    package.patches[patch_id].group_id
-                    for patch_id in selected
+                    patch.group_id
+                    for patch in package.patches.values()
                 }
             ),
-            "patch_count": len(selected),
-            "unique_patch_count": len(set(selected)),
+            "patch_count": len(package.patches),
             "edit_count": len(edits),
         }],
     )
@@ -478,7 +452,7 @@ def apply_configuration_modules(
                 source=source,
                 payloads=payloads,
                 owners=owners,
-                allow_empty_enabled=True,
+                allow_empty=True,
             )
             results.append(
                 {
@@ -497,7 +471,7 @@ def apply_configuration_modules(
                 source=source,
                 payloads=payloads,
                 owners=owners,
-                allow_empty_enabled=True,
+                allow_empty=True,
             )
             results.append(
                 {
@@ -525,7 +499,7 @@ def apply_configuration_modules(
                     source=source,
                     payloads=payloads,
                     owners=owners,
-                    allow_empty_enabled=False,
+                    allow_empty=False,
                 )
                 item["derived_string_patch_result"] = derived_result
                 item["string_patch_plan"] = derived

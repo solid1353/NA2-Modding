@@ -8,7 +8,7 @@ from .battle_settings_runtime import (
     PRACTICE_SETTINGS_PATH,
     ULTIMATE_JUTSU_NATIVE_DEFAULT,
     ULTIMATE_JUTSU_NATIVE_MODE_COUNT,
-    shared_setting_enabled,
+    battle_mechanic_enabled,
     ultimate_jutsu_default,
 )
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from .catalog import CatalogSelection
 
 
-BATTLE_SETTINGS_PATH = ("features", "settings", "in_game", "battle")
+BATTLE_SETTINGS_PATH = ("features", "settings", "ingame", "battle_mode")
 
 BATTLE_ROW_VALUE_MAPS: dict[str, dict[object, int]] = {
     "time": {
@@ -40,27 +40,18 @@ BATTLE_ROW_VALUE_MAPS: dict[str, dict[object, int]] = {
         "insane": 4,
         "ultimate": 5,
     },
-    "items": {"none": 0, "less": 1, "normal": 2, "more": 3},
-    "chakra": {"normal": 0, "unlimited": 1},
-    "handicap": {f"{left}-{10 - left}": left for left in range(11)},
+    "handicap": {value: value for value in range(11)},
 }
 BATTLE_ROW_IDS = {
     "time": 0,
     "difficulty": 1,
-    "items": 2,
-    "chakra": 3,
     "handicap": 5,
 }
 
 PRACTICE_GENERAL_ROW_VALUE_MAPS: dict[str, dict[object, int]] = {
     "health": {"normal": 0, "half": 1, "almost": 2},
-    "chakra": {"normal": 0, "unlimited": 1},
-    "linked_attack": {"normal": 0, "unlimited": 1},
-    "linked_mode": {"manual": 0, "auto": 1},
-    "items": {"none": 0, "less": 1, "normal": 2, "more": 3},
     "commands": {"off": 0, "on": 1},
     "damage": {"off": 0, "on": 1},
-    "guide_ninja_sound": {"off": 0, "on": 1},
 }
 PRACTICE_OPPONENT_ROW_VALUE_MAPS: dict[str, dict[object, int]] = {
     "status": {
@@ -88,13 +79,8 @@ PRACTICE_OPPONENT_ROW_VALUE_MAPS: dict[str, dict[object, int]] = {
 }
 PRACTICE_GENERAL_ROW_IDS = {
     "health": 0,
-    "chakra": 1,
-    "linked_attack": 2,
-    "linked_mode": 4,
-    "items": 5,
     "commands": 6,
     "damage": 7,
-    "guide_ninja_sound": 8,
 }
 PRACTICE_OPPONENT_ROW_IDS = {
     "status": 9,
@@ -118,18 +104,12 @@ class _StorageField:
 BATTLE_STORAGE_FIELDS = {
     "time": _StorageField(3, 0xFF),
     "difficulty": _StorageField(7, 0xFF),
-    "items": _StorageField(4, 0xFF),
-    "chakra": _StorageField(0, 0x04, 2),
     "handicap": _StorageField(5, 0xFF),
 }
 PRACTICE_GENERAL_STORAGE_FIELDS = {
     "health": _StorageField(1, 0xFF),
-    "chakra": _StorageField(0, 0x04, 2),
-    "linked_attack": _StorageField(0, 0x08, 3),
-    "items": _StorageField(4, 0xFF),
     "commands": _StorageField(0, 0x01),
     "damage": _StorageField(0, 0x10, 4),
-    "guide_ninja_sound": _StorageField(0, 0x20, 5),
 }
 PRACTICE_OPPONENT_STORAGE_FIELDS = {
     "status": _StorageField(6, 0xFF),
@@ -173,23 +153,23 @@ def battle_configured_row_defaults(
     return {
         BATTLE_ROW_IDS[name]: BATTLE_ROW_VALUE_MAPS[name][value]
         for name, value in configured.items()
-        if name in BATTLE_ROW_VALUE_MAPS and value is not False
+        if name in BATTLE_ROW_VALUE_MAPS
     }
 
 
 def practice_configured_row_defaults(
     selection: CatalogSelection,
 ) -> dict[int, int]:
-    configured = _practice_configured_sections(selection)
+    configured = _configured_object(selection, PRACTICE_SETTINGS_PATH, "Practice")
     defaults: dict[int, int] = {}
-    for section, row_maps, row_ids in (
+    for values, row_maps, row_ids in (
         (
-            "general_settings",
+            configured,
             PRACTICE_GENERAL_ROW_VALUE_MAPS,
             PRACTICE_GENERAL_ROW_IDS,
         ),
         (
-            "opponent_settings",
+            configured.get("opponent_settings", {}),
             PRACTICE_OPPONENT_ROW_VALUE_MAPS,
             PRACTICE_OPPONENT_ROW_IDS,
         ),
@@ -197,26 +177,11 @@ def practice_configured_row_defaults(
         defaults.update(
             {
                 row_ids[name]: row_maps[name][value]
-                for name, value in configured[section].items()
-                if name in row_maps and value is not False
+                for name, value in values.items()
+                if name in row_maps
             }
         )
     return defaults
-
-
-def _practice_configured_sections(
-    selection: CatalogSelection,
-) -> dict[str, dict[str, object]]:
-    configured = _configured_object(
-        selection, PRACTICE_SETTINGS_PATH, "Practice"
-    )
-    sections: dict[str, dict[str, object]] = {}
-    for section in ("general_settings", "opponent_settings"):
-        section_value = configured.get(section, {})
-        if not isinstance(section_value, dict):
-            raise ValueError(f"Practice {section} requires an object value")
-        sections[section] = section_value
-    return sections
 
 
 def _encode_storage(
@@ -227,7 +192,7 @@ def _encode_storage(
     values = bytearray(12)
     masks = bytearray(12)
     for name, raw_value in configured.items():
-        if name not in fields or raw_value is False:
+        if name not in fields:
             continue
         field = fields[name]
         encoded = (
@@ -253,7 +218,7 @@ def native_settings_defaults_fragment(
 ) -> PayloadFragment | None:
     battle_node = _selected_node(selection, BATTLE_SETTINGS_PATH)
     practice_node = _selected_node(selection, PRACTICE_SETTINGS_PATH)
-    ultimate_jutsu_enabled = shared_setting_enabled(
+    ultimate_jutsu_enabled = battle_mechanic_enabled(
         selection, "ultimate_jutsu"
     )
     if not (battle_node.enabled or practice_node.enabled or ultimate_jutsu_enabled):
@@ -262,17 +227,17 @@ def native_settings_defaults_fragment(
     battle_configured = _configured_object(
         selection, BATTLE_SETTINGS_PATH, "Battle"
     )
-    practice_configured = _practice_configured_sections(selection)
+    practice_configured = _configured_object(selection, PRACTICE_SETTINGS_PATH, "Practice")
     battle_values, battle_masks = _encode_storage(
         battle_configured, BATTLE_ROW_VALUE_MAPS, BATTLE_STORAGE_FIELDS
     )
     general_values, general_masks = _encode_storage(
-        practice_configured["general_settings"],
+        practice_configured,
         PRACTICE_GENERAL_ROW_VALUE_MAPS,
         PRACTICE_GENERAL_STORAGE_FIELDS,
     )
     opponent_values, opponent_masks = _encode_storage(
-        practice_configured["opponent_settings"],
+        practice_configured.get("opponent_settings", {}),
         PRACTICE_OPPONENT_ROW_VALUE_MAPS,
         PRACTICE_OPPONENT_STORAGE_FIELDS,
     )
@@ -282,15 +247,12 @@ def native_settings_defaults_fragment(
     practice_masks = bytearray(
         left | right for left, right in zip(general_masks, opponent_masks)
     )
-    linked_mode = practice_configured["general_settings"].get(
-        "linked_mode", False
-    )
-    linked_mode_value = (
-        PRACTICE_GENERAL_ROW_VALUE_MAPS["linked_mode"][linked_mode]
-        if linked_mode is not False
-        else 0
-    )
-    linked_mode_mask = 1 if linked_mode is not False else 0
+    battle_values[0] &= ~0x04
+    battle_masks[0] |= 0x04
+    practice_values[0] &= ~0x04
+    practice_masks[0] |= 0x04
+    practice_values[0] &= ~0x20
+    practice_masks[0] |= 0x20
 
     if ultimate_jutsu_enabled:
         ultimate_jutsu = ultimate_jutsu_default(selection)
@@ -309,7 +271,6 @@ def native_settings_defaults_fragment(
         + battle_masks
         + practice_values
         + practice_masks
-        + bytes((linked_mode_value, linked_mode_mask, 0, 0))
     )
     return PayloadFragment(
         owner=owner,

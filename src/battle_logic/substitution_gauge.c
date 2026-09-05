@@ -33,6 +33,8 @@ typedef unsigned long long u64;
 #define NATIVE_SPRITE_COMMIT_ADDRESS 0x001CC350u
 #define NATIVE_SPRITE_FLUSH_ADDRESS 0x001CC070u
 #define NATIVE_SPRITE_SCALED_DRAW_ADDRESS 0x0037BD00u
+#define NATIVE_SUPPORT_GAUGE_PALETTE_ADDRESS 0x00899DD0u
+#define NATIVE_SUPPORT_GAUGE_MARKER_TINT_ADDRESS 0x003FBFC8u
 
 #define SUPPORT_GAUGE_SIDE_OFFSET 0x00u
 #define SUPPORT_GAUGE_BAR_SPRITE_OFFSET 0x18u
@@ -98,6 +100,9 @@ typedef struct SubstitutionGaugeConfig {
     u32 damage_threshold_q16;
     u32 damage_recovery_enabled;
     u32 default_mode;
+    u32 minimum_chakra_option;
+    float (*chakra_cost)(void *fighter, u32 native_cost_bits);
+    float (*gauge_cost_fraction)(void *fighter);
 } SubstitutionGaugeConfig;
 
 typedef struct SubstitutionGaugeSlot {
@@ -127,7 +132,24 @@ typedef struct SubstitutionGaugeRuntimeState {
 } SubstitutionGaugeRuntimeState;
 
 extern const SubstitutionGaugeConfig substitution_gauge_config;
-extern float battle_logic_substitution_cost_fraction(void *fighter);
+volatile SubstitutionGaugeConfig substitution_gauge_live_config
+    __attribute__((section(".bss.substitution_gauge_live_config")));
+
+static ALWAYS_INLINE volatile SubstitutionGaugeConfig *gauge_config(void)
+{
+    if (substitution_gauge_live_config.stock_counts == 0u) {
+        substitution_gauge_live_config.stock_counts = substitution_gauge_config.stock_counts;
+        substitution_gauge_live_config.capacity_counts = substitution_gauge_config.capacity_counts;
+        substitution_gauge_live_config.recovery_delay_counts = substitution_gauge_config.recovery_delay_counts;
+        substitution_gauge_live_config.damage_threshold_q16 = substitution_gauge_config.damage_threshold_q16;
+        substitution_gauge_live_config.damage_recovery_enabled = substitution_gauge_config.damage_recovery_enabled;
+        substitution_gauge_live_config.default_mode = substitution_gauge_config.default_mode;
+        substitution_gauge_live_config.minimum_chakra_option = substitution_gauge_config.minimum_chakra_option;
+        substitution_gauge_live_config.chakra_cost = substitution_gauge_config.chakra_cost;
+        substitution_gauge_live_config.gauge_cost_fraction = substitution_gauge_config.gauge_cost_fraction;
+    }
+    return &substitution_gauge_live_config;
+}
 volatile float substitution_gauge_cost_fraction[SUBSTITUTION_SIDE_COUNT]
     __attribute__((section(".bss.substitution_gauge_cost_fraction")));
 volatile float substitution_gauge_fill_fraction[SUBSTITUTION_SIDE_COUNT]
@@ -137,18 +159,6 @@ volatile SubstitutionGaugeState substitution_gauge_state
 volatile SubstitutionGaugeRuntimeState substitution_gauge_runtime_state
     __attribute__((section(".bss.substitution_gauge_runtime_state")));
 
-const u8 substitution_gauge_mode_chakra_label[]
-    __attribute__((
-        section(".rodata.substitution_gauge_mode_chakra_label"),
-        aligned(4),
-        used
-    )) = "Chakra";
-const u8 substitution_gauge_mode_gauge_label[]
-    __attribute__((
-        section(".rodata.substitution_gauge_mode_gauge_label"),
-        aligned(4),
-        used
-    )) = "Gauge";
 const u8 substitution_gauge_mode_free_label[]
     __attribute__((
         section(".rodata.substitution_gauge_mode_free_label"),
@@ -156,10 +166,63 @@ const u8 substitution_gauge_mode_free_label[]
         used
     )) = "Free";
 
+SUBSTITUTION_GAUGE_SECTION(".text.substitution_gauge_option_get")
+u32 substitution_gauge_option_get(u32 option)
+{
+    volatile SubstitutionGaugeConfig *config = gauge_config();
+    switch (option) {
+    case 0u: return config->recovery_delay_counts / 15u;
+    case 1u: return config->stock_counts / 3u - 1u;
+    case 2u: return config->damage_recovery_enabled;
+    case 3u: return (config->damage_threshold_q16 * 400u + 32768u) / 65536u - 1u;
+    case 4u: return config->minimum_chakra_option;
+    default: return 0u;
+    }
+}
+
+SUBSTITUTION_GAUGE_SECTION(".text.substitution_gauge_option_set")
+void substitution_gauge_option_set(u32 option, u32 value)
+{
+    volatile SubstitutionGaugeConfig *config = gauge_config();
+    u32 side;
+    if (substitution_gauge_option_get(option) == value) {
+        return;
+    }
+    switch (option) {
+    case 0u:
+        if (value <= 240u) config->recovery_delay_counts = value * 15u;
+        break;
+    case 1u:
+        if (value >= 200u) return;
+        for (side = 0u; side < SUBSTITUTION_SIDE_COUNT; ++side) {
+            volatile SubstitutionGaugeSlot *slot = &substitution_gauge_state.player[side];
+            slot->meter_counts = (slot->meter_counts * ((value + 1u) * 12u) +
+                config->capacity_counts / 2u) / config->capacity_counts;
+            slot->damage_recovery_remainder = 0u;
+        }
+        config->stock_counts = (value + 1u) * 3u;
+        config->capacity_counts = config->stock_counts * 4u;
+        break;
+    case 2u:
+        if (value <= 1u) config->damage_recovery_enabled = value;
+        break;
+    case 3u:
+        if (value >= 400u) return;
+        config->damage_threshold_q16 = ((value + 1u) * 65536u + 200u) / 400u;
+        for (side = 0u; side < SUBSTITUTION_SIDE_COUNT; ++side) {
+            substitution_gauge_state.player[side].damage_recovery_remainder = 0u;
+        }
+        break;
+    case 4u:
+        if (value <= 20u) config->minimum_chakra_option = value;
+        break;
+    }
+}
+
 SUBSTITUTION_GAUGE_SECTION(".text.substitution_gauge_mode_default")
 u32 substitution_gauge_mode_default(void)
 {
-    return substitution_gauge_config.default_mode;
+    return gauge_config()->default_mode;
 }
 
 SUBSTITUTION_GAUGE_SECTION(".text.substitution_gauge_mode_get")
@@ -194,7 +257,7 @@ void substitution_gauge_mode_set(u32 mode)
         volatile SubstitutionGaugeSlot *slot =
             &substitution_gauge_state.player[side];
 
-        slot->meter_counts = substitution_gauge_config.capacity_counts;
+        slot->meter_counts = gauge_config()->capacity_counts;
         slot->recovery_delay_counts = 0u;
         slot->damage_recovery_remainder = 0u;
     }
@@ -221,8 +284,10 @@ static ALWAYS_INLINE void *manager_fighter(void *manager, u32 side)
 
 static ALWAYS_INLINE u32 substitution_gauge_cost_counts(void *fighter)
 {
-    float fraction = battle_logic_substitution_cost_fraction(fighter);
-    u32 capacity = substitution_gauge_config.capacity_counts;
+    volatile SubstitutionGaugeConfig *config = gauge_config();
+    float fraction = config->gauge_cost_fraction != 0
+        ? config->gauge_cost_fraction(fighter) : 1.0f / 15.0f;
+    u32 capacity = gauge_config()->capacity_counts;
     u32 cost;
 
     if (!(fraction >= 0.0f)) {
@@ -244,7 +309,7 @@ static ALWAYS_INLINE void substitution_gauge_publish(
     if (
         side >= SUBSTITUTION_SIDE_COUNT ||
         slot->fighter == (void *)0 ||
-        substitution_gauge_config.capacity_counts == 0u
+        gauge_config()->capacity_counts == 0u
     ) {
         if (side < SUBSTITUTION_SIDE_COUNT) {
             substitution_gauge_fill_fraction[side] = 0.0f;
@@ -253,11 +318,11 @@ static ALWAYS_INLINE void substitution_gauge_publish(
         return;
     }
     current = (float)(s32)slot->meter_counts /
-        (float)(s32)substitution_gauge_config.capacity_counts;
+        (float)(s32)gauge_config()->capacity_counts;
     substitution_gauge_fill_fraction[side] = current;
     substitution_gauge_cost_fraction[side] =
         (float)(s32)substitution_gauge_cost_counts(slot->fighter) /
-        (float)(s32)substitution_gauge_config.capacity_counts;
+        (float)(s32)gauge_config()->capacity_counts;
 }
 
 static ALWAYS_INLINE void substitution_gauge_invalidate(void)
@@ -339,9 +404,7 @@ static ALWAYS_INLINE float substitution_gauge_clamp_fraction(float value)
 
 static ALWAYS_INLINE void substitution_gauge_set_sprite_rgb(
     volatile u8 *sprite,
-    u32 red,
-    u32 green,
-    u32 blue
+    u32 color
 )
 {
     volatile u64 *rg =
@@ -349,8 +412,8 @@ static ALWAYS_INLINE void substitution_gauge_set_sprite_rgb(
     volatile u64 *bq =
         (volatile u64 *)(sprite + SPRITE_COLOR_BQ_OFFSET);
 
-    *rg = (u64)(red & 0xFFu) | ((u64)(green & 0xFFu) << 32);
-    *bq = (*bq & 0xFFFFFFFF00000000ull) | (u64)(blue & 0xFFu);
+    *rg = (u64)(color & 0xFFu) | ((u64)((color >> 8) & 0xFFu) << 32);
+    *bq = (*bq & 0xFFFFFFFF00000000ull) | (u64)((color >> 16) & 0xFFu);
 }
 
 static ALWAYS_INLINE void substitution_gauge_draw_piece(
@@ -398,6 +461,9 @@ static ALWAYS_INLINE void substitution_gauge_draw(
     const volatile SpriteRectangle *outer_rectangle;
     const volatile SpriteRectangle *inner_rectangle;
     const void *marker_rectangle;
+    const volatile u32 *fill_palette =
+        (const volatile u32 *)NATIVE_SUPPORT_GAUGE_PALETTE_ADDRESS;
+    u32 fill_color_index;
     float mirror;
     float base_x;
     float base_y;
@@ -423,7 +489,7 @@ static ALWAYS_INLINE void substitution_gauge_draw(
     if (
         side >= SUBSTITUTION_SIDE_COUNT ||
         substitution_gauge_state.manager == (void *)0 ||
-        substitution_gauge_config.capacity_counts == 0u
+        gauge_config()->capacity_counts == 0u
     ) {
         return;
     }
@@ -458,6 +524,10 @@ static ALWAYS_INLINE void substitution_gauge_draw(
     cost = substitution_gauge_clamp_fraction(
         substitution_gauge_cost_fraction[side]
     );
+    /* Use the spend gate's rounded counts, not the support controller's state. */
+    fill_color_index = slot->meter_counts < substitution_gauge_cost_counts(slot->fighter)
+        ? 0u
+        : (slot->meter_counts < gauge_config()->capacity_counts ? 1u : 2u);
 
     original_flags = *(volatile u32 *)(sprite + SPRITE_FLAGS_OFFSET);
     original_alpha = *(volatile u32 *)(sprite + SPRITE_ALPHA_OFFSET);
@@ -496,7 +566,7 @@ static ALWAYS_INLINE void substitution_gauge_draw(
     *(volatile u32 *)(sprite + SPRITE_OFFSET_X_OFFSET) = 0u;
     *(volatile u32 *)(sprite + SPRITE_OFFSET_Y_OFFSET) = 0u;
 
-    substitution_gauge_set_sprite_rgb(sprite, 0x7Fu, 0x7Fu, 0x7Fu);
+    substitution_gauge_set_sprite_rgb(sprite, 0x007F7F7Fu);
     substitution_gauge_draw_piece(
         sprite,
         (s32)outer_rectangle->x,
@@ -537,7 +607,7 @@ static ALWAYS_INLINE void substitution_gauge_draw(
     );
     *(volatile u32 *)(sprite + SPRITE_FLAGS_OFFSET) = original_flags;
 
-    substitution_gauge_set_sprite_rgb(sprite, 0x35u, 0x16u, 0x00u);
+    substitution_gauge_set_sprite_rgb(sprite, 0x007F7F7Fu);
     substitution_gauge_draw_piece(
         sprite,
         (s32)inner_rectangle->x,
@@ -550,7 +620,7 @@ static ALWAYS_INLINE void substitution_gauge_draw(
         SUBSTITUTION_GAUGE_FILL_HEIGHT * scale
     );
 
-    substitution_gauge_set_sprite_rgb(sprite, 0x8Bu, 0x7Fu, 0x33u);
+    substitution_gauge_set_sprite_rgb(sprite, fill_palette[fill_color_index]);
     substitution_gauge_draw_piece(
         sprite,
         (s32)inner_rectangle->x,
@@ -563,7 +633,10 @@ static ALWAYS_INLINE void substitution_gauge_draw(
         SUBSTITUTION_GAUGE_FILL_HEIGHT * scale
     );
 
-    substitution_gauge_set_sprite_rgb(sprite, 0x7Fu, 0x00u, 0x00u);
+    substitution_gauge_set_sprite_rgb(
+        sprite,
+        *(const volatile u32 *)NATIVE_SUPPORT_GAUGE_MARKER_TINT_ADDRESS
+    );
     draw_marker(
         base_x + (
             SUBSTITUTION_GAUGE_FILL_X +
@@ -685,7 +758,7 @@ void substitution_gauge_reset_battle(void *manager)
 
         substitution_gauge_runtime_state.controller[side] = (void *)0;
         slot->fighter = fighter;
-        slot->meter_counts = substitution_gauge_config.capacity_counts;
+        slot->meter_counts = gauge_config()->capacity_counts;
         slot->recovery_delay_counts = 0u;
         slot->damage_recovery_remainder = 0u;
         slot->last_hp_q16 = 0u;
@@ -708,8 +781,18 @@ int substitution_gauge_can_spend(void *fighter)
         return 1;
     }
     if (mode == SUBSTITUTION_MODE_CHAKRA) {
-        return fighter != (void *)0 &&
-            *(volatile float *)((u8 *)fighter + FIGHTER_CHAKRA_OFFSET) >= 1.0f;
+        volatile SubstitutionGaugeConfig *config = gauge_config();
+        float minimum;
+        if (fighter == (void *)0) {
+            return 0;
+        }
+        if (config->minimum_chakra_option != 0u) {
+            minimum = (float)(config->minimum_chakra_option * 5u) * 15.0f / 100.0f;
+        } else {
+            minimum = config->chakra_cost != 0
+                ? config->chakra_cost(fighter, 0x3F800000u) : 1.0f;
+        }
+        return *(volatile float *)((u8 *)fighter + FIGHTER_CHAKRA_OFFSET) >= minimum;
     }
     if (slot == (volatile SubstitutionGaugeSlot *)0) {
         return 0;
@@ -757,7 +840,7 @@ void substitution_gauge_note_success(void *fighter)
         slot != (volatile SubstitutionGaugeSlot *)0
     ) {
         slot->recovery_delay_counts =
-            substitution_gauge_config.recovery_delay_counts;
+            gauge_config()->recovery_delay_counts;
     }
 }
 
@@ -792,32 +875,32 @@ void substitution_gauge_sample_hp(void *fighter)
         : 0u;
     slot->last_hp_q16 = current_hp_q16;
     if (
-        substitution_gauge_config.damage_recovery_enabled == 0u ||
-        slot->meter_counts >= substitution_gauge_config.capacity_counts ||
-        substitution_gauge_config.damage_threshold_q16 == 0u
+        gauge_config()->damage_recovery_enabled == 0u ||
+        slot->meter_counts >= gauge_config()->capacity_counts ||
+        gauge_config()->damage_threshold_q16 == 0u
     ) {
         slot->damage_recovery_remainder = 0u;
         return;
     }
 
     recovery_numerator = slot->damage_recovery_remainder +
-        received_q16 * substitution_gauge_config.stock_counts;
+        received_q16 * gauge_config()->stock_counts;
     recovered_counts = recovery_numerator /
-        substitution_gauge_config.damage_threshold_q16;
+        gauge_config()->damage_threshold_q16;
     slot->damage_recovery_remainder = recovery_numerator %
-        substitution_gauge_config.damage_threshold_q16;
+        gauge_config()->damage_threshold_q16;
     if (recovered_counts != 0u) {
         if (
-            substitution_gauge_config.capacity_counts - slot->meter_counts <=
+            gauge_config()->capacity_counts - slot->meter_counts <=
                 recovered_counts
         ) {
-            slot->meter_counts = substitution_gauge_config.capacity_counts;
+            slot->meter_counts = gauge_config()->capacity_counts;
         } else {
             slot->meter_counts += recovered_counts;
         }
     }
-    if (slot->meter_counts >= substitution_gauge_config.capacity_counts) {
-        slot->meter_counts = substitution_gauge_config.capacity_counts;
+    if (slot->meter_counts >= gauge_config()->capacity_counts) {
+        slot->meter_counts = gauge_config()->capacity_counts;
         slot->damage_recovery_remainder = 0u;
     }
     side = slot == &substitution_gauge_state.player[0] ? 0u : 1u;
@@ -848,15 +931,15 @@ void substitution_gauge_advance_counts(u32 advance_counts)
         remaining -= consumed;
         if (
             remaining != 0u &&
-            slot->meter_counts < substitution_gauge_config.capacity_counts
+            slot->meter_counts < gauge_config()->capacity_counts
         ) {
             u32 available =
-                substitution_gauge_config.capacity_counts - slot->meter_counts;
+                gauge_config()->capacity_counts - slot->meter_counts;
 
             slot->meter_counts += remaining < available ? remaining : available;
         }
-        if (slot->meter_counts >= substitution_gauge_config.capacity_counts) {
-            slot->meter_counts = substitution_gauge_config.capacity_counts;
+        if (slot->meter_counts >= gauge_config()->capacity_counts) {
+            slot->meter_counts = gauge_config()->capacity_counts;
             slot->damage_recovery_remainder = 0u;
         }
     }

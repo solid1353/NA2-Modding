@@ -512,10 +512,10 @@ class CatalogTests(unittest.TestCase):
                         "features", "startup", "faster_loading"
                     )
                 )
-        self.assertFalse(
+        self.assertTrue(
             test.node_enabled("features", "startup", "faster_loading")
         )
-        expected_frames = {"base": 1160, "test": 1760, "release": 1160}
+        expected_frames = {"base": 1160, "test": 1160, "release": 1160}
         for name, selection in selections.items():
             with self.subTest(configuration=name):
                 self.assertEqual(
@@ -531,9 +531,9 @@ class CatalogTests(unittest.TestCase):
             (builder / "configurations" / "base.jsonc").read_text(encoding="utf-8")
         )
         self.assertEqual(
-            base["features"]["settings"]["in_game"]["practice"]
-            ["general_settings"]["linked_mode"],
-            False,
+            base["features"]["settings"]["ingame"]["practice_mode"]
+            ["opponent_settings"]["linked_attack"],
+            "dont_use",
         )
         selection = catalog.load_selection(
             catalog_path, builder / "configurations" / "base.jsonc"
@@ -546,7 +546,7 @@ class CatalogTests(unittest.TestCase):
             builder / "modules" / "binary_patcher" / "operations",
         )
         self.assertEqual(package.edits, [])
-        self.assertIn("settings.in_game", selection.injections)
+        self.assertIn("settings.ingame", selection.injections)
 
     def test_repository_simple_display_is_a_standalone_setting(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
@@ -1750,6 +1750,48 @@ class CatalogTests(unittest.TestCase):
                 (assembly.resolve(),),
                 catalog.referenced_files(selection, root, "feature"),
             )
+
+    def test_runtime_payload_and_fragment_fields_fail_closed(self) -> None:
+        source = '''{
+          runtime: setting {
+            description: "Runtime payload.",
+            patch: "feature.runtime",
+          },
+        }'''
+        invalid_fields = (
+            ("source", "payload.runtime_source"),
+            ("label", "fragments.runtime_code"),
+        )
+        for field, location in invalid_fields:
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                fragment = {"object": "runtime.text.entry"}
+                payload = {
+                    "kind": "c",
+                    "path": "runtime.c",
+                    "namespace": "runtime",
+                    "imports": {},
+                    "fragments": {"runtime_code": fragment},
+                }
+                if field == "source":
+                    payload[field] = "retired metadata"
+                else:
+                    fragment[field] = "retired metadata"
+                catalog_path, configuration_path = self.write_project(
+                    root,
+                    {"feature": source},
+                    {"feature": {"runtime": True}},
+                    injections={
+                        "feature.runtime": {
+                            "payload": {"runtime_source": payload},
+                        }
+                    },
+                )
+                with self.assertRaisesRegex(
+                    ValueError,
+                    rf"{re.escape(location)}.*unknown fields.*{field}",
+                ):
+                    catalog.load_selection(catalog_path, configuration_path)
 
 if __name__ == "__main__":
     unittest.main()

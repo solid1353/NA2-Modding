@@ -45,7 +45,7 @@ class XdashChakraCostTests(unittest.TestCase):
             configuration_path = Path(directory) / "normalized.jsonc"
             for percent in (0, 50, 100):
                 with self.subTest(percent=percent):
-                    base["features"]["settings"]["in_game"]["shared"][
+                    base["features"]["settings"]["ingame"]["battle_mechanics"][
                         "xdash_chakra_cost"
                     ] = percent
                     configuration_path.write_text(
@@ -67,11 +67,13 @@ class XdashChakraCostTests(unittest.TestCase):
                     )
                     self.assertEqual(struct.unpack("<I", fragment.payload)[0], percent)
 
-    def test_false_disables_the_shared_runtime_fragment(self) -> None:
+    def test_false_disables_the_xdash_runtime_fragment(self) -> None:
         base = jsonc.loads(
             (self.configurations / "base.jsonc").read_text(encoding="utf-8")
         )
-        base["features"]["settings"]["in_game"]["shared"] = False
+        base["features"]["settings"]["ingame"]["battle_mechanics"][
+            "xdash_chakra_cost"
+        ] = False
         with tempfile.TemporaryDirectory() as directory:
             configuration_path = Path(directory) / "disabled.jsonc"
             configuration_path.write_text(
@@ -82,11 +84,14 @@ class XdashChakraCostTests(unittest.TestCase):
                 self.catalog_path,
                 configuration_path,
             )
-        self.assertEqual(
-            battle_settings_runtime_fragments(
-                selection, owner="settings.runtime_injector"
-            ),
-            (),
+        self.assertNotIn(
+            "battle_settings_xdash_chakra_cost_default",
+            {
+                fragment.symbol
+                for fragment in battle_settings_runtime_fragments(
+                    selection, owner="settings.runtime_injector"
+                )
+            },
         )
 
     def test_catalog_rejects_cost_outside_normalized_gauge(self) -> None:
@@ -97,7 +102,7 @@ class XdashChakraCostTests(unittest.TestCase):
             configuration_path = Path(directory) / "invalid.jsonc"
             for value in (-5, 4, 105):
                 with self.subTest(value=value):
-                    base["features"]["settings"]["in_game"]["shared"][
+                    base["features"]["settings"]["ingame"]["battle_mechanics"][
                         "xdash_chakra_cost"
                     ] = value
                     configuration_path.write_text(
@@ -115,21 +120,34 @@ class XdashChakraCostTests(unittest.TestCase):
             self.catalog_path,
             self.configurations / "base.jsonc",
         )
-        injection = selection.injections[
-            "settings.shared.xdash_chakra_cost"
-        ]
+        injection = selection.injections["settings.ingame"]
         hooks = injection["hooks"]
         self.assertEqual(
-            set(hooks),
-            {"charge_noncancellable_xdash_before_interrupts"},
+            hooks["update_shared_fighter_settings"],
+            {
+                "description": (
+                    "Preserve the native per-fighter update while applying "
+                    "shared X-dash charging before it and the selected Chakra "
+                    "behavior after it."
+                ),
+                "target_id": "na2_elf",
+                "offset": "0x14DB80",
+                "expected_hex": "A038080C",
+                "symbol": "settings_fighter_update_shim",
+                "encoding": "jal26",
+            },
         )
-        hook = hooks["charge_noncancellable_xdash_before_interrupts"]
-        self.assertEqual(hook["target_id"], "na2_elf")
-        self.assertEqual(hook["offset"], "0x14DB80")
-        self.assertEqual(hook["expected_hex"], "A038080C")
-        self.assertEqual(hook["symbol"], "xdash_pre_update_shim")
 
-        source = injection["payload"]["xdash_chakra_cost"]
+        shared_update = injection["payload"]["fighter_update"]
+        self.assertEqual(
+            shared_update["imports"]["battle_logic_xdash_pre_fighter_update"],
+            "battle_logic_xdash_pre_fighter_update",
+        )
+
+        xdash = selection.injections[
+            "settings.battle_mechanics.xdash_chakra_cost"
+        ]
+        source = xdash["payload"]["xdash_chakra_cost"]
         self.assertEqual(
             source["path"],
             "src/battle_logic/xdash_chakra_cost.c",
@@ -143,7 +161,7 @@ class XdashChakraCostTests(unittest.TestCase):
             "battle_logic_xdash_charge_state",
         )
 
-        self.assertIn("xdash_pre_update_shim", source["fragments"])
+        self.assertIn("battle_logic_xdash_pre_fighter_update", source["fragments"])
         compiled = {
             fragment.symbol: fragment
             for fragment in catalog._compile_source(
@@ -154,22 +172,10 @@ class XdashChakraCostTests(unittest.TestCase):
                 "xdash_chakra_cost",
             )
         }
-        shim = compiled["xdash_pre_update_shim"]
+        function = compiled["battle_logic_xdash_pre_fighter_update"]
+        self.assertGreater(len(function.payload), 0)
         self.assertEqual(
-            shim.payload.hex().upper(),
-            "E0FFBD270000B0FF1000BFFF0000000C2D8080002000013C"
-            "80E2213409F820002D2000020000B0DF1000BFDF0800E003"
-            "2000BD2700000000",
-        )
-        self.assertEqual(
-            [(0xC, "jal26", "battle_logic_xdash_pre_fighter_update", 0)],
-            [
-                (item.offset, item.kind, item.symbol, item.addend)
-                for item in shim.relocations
-            ],
-        )
-        self.assertEqual(
-            injection["payload"]["battle_logic_xdash_charge_state"]["value"],
+            xdash["payload"]["battle_logic_xdash_charge_state"]["value"],
             "0000000000000000",
         )
 

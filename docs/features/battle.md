@@ -24,10 +24,10 @@ Battle and Practice cannot configure conflicting defaults for them.
 The Handicap number is also its native menu index: `3` displays `3-7`, and
 `10` displays `10-0`.
 
-The root page starts with `Battle Mechanics`, followed by every retained native row
-in its original order: Time, Difficulty, and Handicap.
+The base config places `Battle Mechanics` first, followed by Time, Difficulty,
+and Handicap. Moving those config entries changes their visible order.
 Square on the launcher opens a child page containing every enabled leaf under
-`features.settings.ingame.battle_mechanics`, in catalog declaration order; Confirm commits
+`features.settings.ingame.battle_mechanics`, in config key order; Confirm commits
 the complete Battle transaction and closes from the launcher as it does from
 every ordinary row. Cancel returns to the launcher; Cancel on the root retains
 the native close behavior. Entering or leaving the child page restarts the
@@ -47,7 +47,7 @@ assignment at clean ELF offset `0xEA7B4`. This is separate from the
 Practice-only startup/reset path.
 
 The `features.settings.ingame.battle_mechanics` object owns runtime defaults used by Battle
-Settings and Practice Settings. `chakra` is its first row and accepts `normal`,
+Settings and Practice Settings. The base config places `chakra` first; it accepts `normal`,
 `unlimited`, or a decimal regeneration rate from `0.1` through `10.0` in steps
 of `0.1`. `normal` preserves native spending and gain; `unlimited` restores both
 active fighters to the native `15.0` maximum after every fighter update; and a
@@ -84,14 +84,31 @@ uses native hide/show requests `0x001F1820(-1)` and `0x001F1A20(-1)`.
 Runtime testing confirmed hidden contest presentation, blocked input for both
 players, restored post-Ultimate-Jutsu awakening, and native HUD restoration.
 
-The same object accepts `shadowblur: "off" | "on"` and
-`extra_hit: "off" | "on"`. They initialize and reset Battle Settings rows
-labelled `Shadowblur Extra Hit` and `Extra Hit` with matching `Off` and `On`
-values. The same rows are available in Practice Settings. Confirming either
-menu commits both staged values to the shared runtime state. The Shadowblur
-Extra Hit gate preserves the native predicate result but skips its side effects
-while `Off`. The Extra Hit gate skips its selected native call block while
-`Off`.
+The same object accepts `shadowblur: "off" | "on"`. Its `Shadowblur Extra Hit`
+row appears in both menus. The gate preserves the native predicate result but
+skips its side effects while `Off`.
+
+Runtime validation of Extra Hit behavior remains outstanding:
+`extra_hit` accepts `"off"`, `"on"`, or integers `-100..-5` in steps of `5`.
+Both menus display `Off`, `On`, `-5% Chakra`, `-10% Chakra`, through
+`-100% Chakra`, in that order. The base value remains `"off"`. Confirm and
+Return to Defaults use the shared runtime value.
+
+Off blocks Extra Hit without charging chakra. On retains native behavior.
+Negative values block Extra Hit and charge the initiating fighter that
+percentage of the full `15.0` chakra capacity when the native eligibility
+check would accept the attempt. Remaining chakra is clamped to zero; low
+chakra does not exempt the attempt from the penalty. Repeated checks during
+one source attack cannot charge again; entering a new native attack resets
+that fighter's charge latch. The shared Unlimited Chakra mode still restores
+chakra after the fighter update.
+
+`src/battle_logic/extra_hit_settings.c` wraps native eligibility at ELF file
+`0x0013B6DC` and the attack initializer at `0x00117F28`. Off and penalty modes
+return native rejection instead of jumping past action-exit handling. The
+native recovery path therefore remains reachable after a blocked attempt.
+See [native Extra Hit control flow](../knowledge/gameplay/hit_response.md#extra-hit-eligibility-and-action-exit)
+for the traced branches and lifecycle boundary.
 
 The object also owns `sub_active_frames`, `xdash_chakra_cost`, `support`, and
 `substitution`. They appear as
@@ -110,11 +127,16 @@ derive from the generated page instead of a fixed root or child row count.
 
 ## Catalog-generated menu pages
 
-Candidate structure, pending runtime validation and acceptance:
+The generated menu structure is:
 `features.settings.ingame.battle_mode` and `practice_mode` define the two menu
-roots. Their catalog declaration order is the visible row order, and the base
-config follows it. Practice's Health, Commands, and Damage are root fields,
-after its Battle Mechanics and Opponent Settings launchers.
+roots. Config key order controls visible row order throughout these roots and
+their nested and shared pages. The catalog defines types, allowed values, and
+submenu structure. Move entries within a config object to reorder its page;
+no catalog edit is needed. Omitted optional fields retain default rows after
+the explicitly configured fields. Container overrides replace values without
+moving existing base keys; a complete object-setting replacement supplies its
+own nested key order. The base config places Practice's Health, Commands, and
+Damage after its Battle Mechanics and Opponent Settings launchers.
 
 The shared builder in `na228_builder/scripts/menu_pages.py` walks catalog
 containers and typed object fields. Scalars use registered value handlers.
@@ -125,8 +147,9 @@ directly under `ingame`; a missing target or a reference cycle is an error.
 `battle_mechanics: true` exposes that shared page in either mode, while `false`
 hides its launcher without disabling the shared gameplay settings.
 
-The same traversal discovers Gauge and Custom Items pages. Item toggles sit
-directly under `battle_mechanics.items.custom`, after `availability`.
+The same traversal discovers Chakra, Gauge, and Custom Items pages. Item
+toggles sit directly under `battle_mechanics.items.custom`; the base config
+places `availability` first.
 `menu_options.py` owns value presentation and runtime bindings, independently
 of page topology. Native row handlers, rendering, and transaction behavior
 remain shared with their existing consumers.
@@ -195,8 +218,9 @@ in [X-dash knowledge](../knowledge/gameplay/xdash.md).
   damage percentage per stock.
 
 The base configuration uses `5` and `{"value": "gauge"}`. `Chakra`
-retains native chakra eligibility, suppression, spending, and bookkeeping;
-`Gauge` uses the independent 100-point resource and displays its HUD; `Free`
+uses the configurable minimum described below and retains native suppression,
+spending, and bookkeeping; `Gauge` uses the independent 100-point resource and
+displays its HUD; `Free`
 uses no resource and hides the gauge. Both menus stage and commit the same
 runtime enum rather than separate visibility and unlimited flags. The active-
 frames setting changes only the timing policy inside the native eligibility
@@ -207,6 +231,27 @@ attack-flag, history-search, and transition gates.
 
 The active-frame limit and selected resource mode are independent runtime
 values. Runtime confirmation of the active-frame selector remains pending.
+
+## Minimum Chakra
+
+Runtime validation of the Minimum Chakra behavior remains outstanding:
+Square on `Substitution: Chakra` opens Chakra Settings in Battle and Practice.
+Its `Minimum Chakra` row accepts `Match Cost`, then `5%..100%` in steps of `5`.
+The config field is
+`features.settings.ingame.battle_mechanics.substitution.chakra.minimum_chakra`:
+`"match_cost"` (the default), or integers `5..100` in steps of `5`.
+
+Match Cost invokes the same per-fighter cost resolver used by spending when
+Character Overrides is enabled. With overrides disabled, it requires the
+native `1.0` out of `15.0` chakra. Numeric values independently set the required
+percentage of the full gauge; they do not change the amount deducted. Thus a
+minimum below the actual cost permits substitution and the native spend clamps
+remaining chakra to zero. A zero actual cost also has a zero Match Cost minimum.
+
+The generated resource configuration links override resolvers only when
+Character Overrides is enabled. Otherwise Chakra uses native cost, and Gauge
+uses its normalized `1/15` equivalent. The existing menu transaction handles
+the minimum alongside the other shared substitution options.
 
 ## Substitution cost
 
@@ -258,7 +303,8 @@ S++ `50`, and S+++ `55`, all over `100`.
 `tier` is consumed whenever the Character Select overlay is enabled.
 `substitution_cost` is consumed by the overlay only when character overrides
 are enabled, and by the native chakra-cost and substitution-gauge battle hooks.
-The gauge therefore requires `features.settings.character_overrides`.
+With Character Overrides disabled, substitution uses the native cost rather
+than the configured override table.
 `support` independently selects field-support behavior and its lower gauge;
 see [Battle support](#battle-support).
 `hp`, damage, and recovery columns have no runtime consumers.
@@ -269,7 +315,7 @@ see [Battle support](#battle-support).
 the shared `Support: Off | Nerfed | Normal | Unlimited` row in Battle and
 Practice Battle Mechanics. The base configuration remains `"off"`.
 
-Candidate behavior, pending runtime validation and acceptance:
+Runtime validation of Battle support behavior remains outstanding:
 
 | Value | Field support |
 | --- | --- |

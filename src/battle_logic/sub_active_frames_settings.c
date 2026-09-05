@@ -1,9 +1,9 @@
-/* Selectable pre-impact Substitution input window. */
+/* Zero selects native timing; 1..15 count the full Substitution input window. */
 
 typedef unsigned int u32;
 
 #define SETTINGS_SECTION(name) __attribute__((section(name), noinline))
-#define SUB_ACTIVE_FRAMES_MAX 16u
+#define SUB_ACTIVE_FRAMES_MAX 15u
 
 extern const u32 battle_settings_sub_active_frames_default;
 

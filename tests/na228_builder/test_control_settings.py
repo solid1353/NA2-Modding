@@ -33,20 +33,27 @@ class ControlSettingsTests(unittest.TestCase):
         )
         return path
 
-    def test_controls_and_shared_settings_are_independently_selectable(
+    def test_controls_and_substitution_settings_are_independently_selectable(
         self,
     ) -> None:
-        for controls_enabled, shared_enabled in (
+        for controls_enabled, substitution_enabled in (
             (False, False),
             (False, True),
             (True, False),
             (True, True),
         ):
-            with self.subTest(controls=controls_enabled, shared=shared_enabled):
+            with self.subTest(
+                controls=controls_enabled,
+                substitution=substitution_enabled,
+            ):
                 features = self._base_features()
                 features["settings"]["new_controls"] = controls_enabled
-                shared = features["settings"]["in_game"]["shared"]
-                features["settings"]["in_game"]["shared"] = shared if shared_enabled else False
+                substitution = features["settings"]["ingame"][
+                    "battle_mechanics"
+                ]["substitution"]
+                features["settings"]["ingame"]["battle_mechanics"][
+                    "substitution"
+                ] = substitution if substitution_enabled else False
                 selection = catalog.load_selection(
                     self.catalog_path,
                     self._write_full_configuration(features),
@@ -57,14 +64,17 @@ class ControlSettingsTests(unittest.TestCase):
                     if node.path
                     == ("features", "settings", "new_controls")
                 )
-                shared = next(
+                substitution = next(
                     node
                     for node in selection.nodes
                     if node.path
-                    == ("features", "settings", "in_game", "shared")
+                    == (
+                        "features", "settings", "ingame",
+                        "battle_mechanics", "substitution",
+                    )
                 )
                 self.assertEqual(controls.enabled, controls_enabled)
-                self.assertEqual(shared.enabled, shared_enabled)
+                self.assertEqual(substitution.enabled, substitution_enabled)
                 active_edits = {
                     node.patch
                     for node in selection.feature_nodes("settings")
@@ -84,9 +94,9 @@ class ControlSettingsTests(unittest.TestCase):
                     controls_enabled,
                 )
                 self.assertEqual(
-                    "settings.shared.substitution"
+                    "settings.battle_mechanics.substitution"
                     in active_injections,
-                    shared_enabled,
+                    substitution_enabled,
                 )
 
     def test_owned_default_layout_and_action_separation(self) -> None:
@@ -223,7 +233,7 @@ class ControlSettingsTests(unittest.TestCase):
         )
 
         gauge = selection.injections[
-            "settings.shared.substitution"
+            "settings.battle_mechanics.substitution"
         ]
         self.assertNotIn("label_substitution_action", gauge["hooks"])
         self.assertNotIn(

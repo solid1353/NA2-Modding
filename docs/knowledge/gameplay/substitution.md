@@ -672,9 +672,11 @@ The same predicate also rejects, among other conditions:
   resource validation.
 
 These are eligibility controls, not attack-specific reliability percentages.
-The existing per-character cost selector changes the amount deducted after
-acceptance and does not alter any of them. The effect-ID-9 path described above
-is also independent of the configured ordinary cost.
+Read-only GhidrAssist inspection confirms that `FUN_00229130` compares chakra
+with its own `1.0` constant, independently of the `1.0` subtraction in
+`FUN_002297D0`. The latter clamps the remaining resource to zero. Altering one
+constant therefore does not change the other. The effect-ID-9 route is separate
+from this ordinary eligibility and spending pair.
 
 The response test can be stated exactly. The predicate rejects selector
 argument `8`, then accepts only response values in this set:

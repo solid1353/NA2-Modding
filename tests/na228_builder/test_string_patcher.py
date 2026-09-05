@@ -15,7 +15,6 @@ class StringPatcherTests(unittest.TestCase):
         self.assertIsInstance(self.package, binary_patcher.Package)
         self.assertEqual(self.package.package_id, "derived.string_patcher")
         self.assertEqual(list(self.package.targets), [])
-        self.assertEqual(list(self.package.groups), [])
         self.assertEqual(list(self.package.patches), [])
         self.assertEqual(self.package.edits, [])
 
@@ -42,13 +41,8 @@ class StringPatcherTests(unittest.TestCase):
             },
         )
 
-        self.assertIn("BTL", package.groups)
         self.assertEqual(package.patches["BTL-I0001"].evidence_id, "BTL-M001")
-        self.assertTrue(package.patches["BTL-I0001"].enabled)
-        selected = ["BTL-I0001"]
-        edits = binary_patcher.validate_selection(
-            package, selected, for_apply=True
-        )
+        edits = binary_patcher.ordered_edits(package)
         imported_edit = edits[0]
         target_id = imported_edit.destination_target_id
         baseline = b"\0\0JP\0\0\0\0"

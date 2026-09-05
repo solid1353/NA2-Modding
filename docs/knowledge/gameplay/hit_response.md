@@ -86,29 +86,41 @@ byte decoding of the exact clean binaries for response tables and native action
 identifiers. No live-memory capture was used, so frame-visible animation names
 and player-facing move labels remain unassigned.
 
-## Selectable extra-hit branch gates
+## Extra Hit eligibility and action exit
 
-Two previously unconditional edits were traced to their clean resident control
-flow before being replaced by runtime selectors:
+Read-only GhidrAssist inspection of the clean resident ELF established these
+paths. All addresses in this section are live resident addresses.
 
-- In `FUN_0023b280`, runtime `0x0023B5E8` (ELF file `0x0013B6E8`) is
-  `beq v0,1,0x0023B60C` with a `nop` delay slot. The `v0 == 1` path runs the
-  call block at `0x0023B60C..0x0023B638`; its former disabled edit instead
-  branched directly to `0x0023B910`. Other results continue at `0x0023B5F0`.
-  A runtime gate can therefore preserve the non-`1` branch and select either
-  the call block or its established disabled continuation only for result `1`.
-- In `FUN_002455b0`, runtime `0x002457C8` (ELF file `0x001458C8`) is
-  `beqz v0,0x002459B4` with a `nop` delay slot. A nonzero predicate normally
-  enters the side-effect path at `0x002457D0` and returns `1` through
-  `0x002459A8`; the former three-edit disabled form skipped those side effects
-  while preserving the zero/nonzero return through `0x002459B4` or
-  `0x002459A8`. A runtime gate can make the same choice without changing the
-  predicate's return value.
+`FUN_0023B280` calls `FUN_00241A50(fighter, candidate_attack)` at `0x0023B5DC`
+when the candidate attack record's `+0x10` flags contain `0x1000`. Eligibility
+checks the two fighters' states, reaction timing, and geometry. It returns
+`1` for acceptance, `0` while waiting, and `-1` for rejection.
 
-The player-facing names `Extra Hit` and `Shadowblur Extra Hit` come from the
-pre-existing canonical patch IDs and descriptions. This static trace
-establishes the exact branch and continuation behavior, not those gameplay
-names. Runtime gameplay confirmation remains pending.
+The branch at `0x0023B5E8` sends result `1` to `0x0023B60C`, whose call block
+starts the paired sequence through `FUN_00241F10` at `0x0023B630`. That helper
+writes both fighters' `+0xB00` state, adjusts the opponent's timeline, and
+transitions the initiating fighter to the candidate attack.
+
+Results `0` and `-1` both continue at `0x0023B6DC`. This path examines the
+current attack record's `+0x14` completion flags and the action-completion
+argument, then uses native exit helpers including `FUN_0023BDC0`. That helper
+selects standing, falling, or recovery through `FUN_00217E40`. In contrast,
+`0x0023B910` is after this action-exit path; jumping there skips its work.
+
+Native attack entry provides a distinct lifecycle boundary. The major-action
+initializer `FUN_00217D30` calls `FUN_00238A70(fighter, attack_index)` at
+`0x00217E28` for major action `8`. `FUN_00238A70` installs the attack index at
+`+0xA3C` and record pointer at `+0xA4C`, clears pending candidate `+0xA3E` to
+`-1`, and resets attack-local state. Eligibility can be checked repeatedly
+between such entries.
+
+The separate branch in `FUN_002455B0` at `0x002457C8` sends a zero predicate
+to `0x002459B4`; a nonzero result enters the side-effect path at `0x002457D0`
+and returns `1` through `0x002459A8`.
+
+These are static control-flow findings. The observed instructions establish
+entry, eligibility, and exit ordering; they do not establish visible timing
+or exhaustive character-specific behavior.
 
 ## Fighter fields used by the response machine
 

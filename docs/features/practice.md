@@ -94,14 +94,16 @@ value and appears in its menu section. Linked Mode and Guide Ninja Sound are not
 configuration fields: both rows are always omitted, Linked Mode is fixed to
 Auto, and Guide Ninja Sound is fixed to Off.
 
-The root page starts with `Battle Mechanics`, then `Opponent Settings`, followed by
-every retained native General Settings row in its original order. Square on a
+The base config orders the root page as `Battle Mechanics`, `Opponent Settings`,
+then the retained native General Settings rows. Config key order controls the
+root and every child page; moving entries within an object reorders its rows.
+Square on a
 launcher opens its child page; Confirm applies and closes from launcher rows as
 it does from every ordinary row. Launcher rows retain the native row geometry,
 recolor only their label panel to the child-heading orange, and display
 `Open <iconSQUARE>` without native value arrows. `Battle Mechanics` contains every enabled leaf under
-`features.settings.ingame.battle_mechanics`, in catalog declaration order. `Opponent
-Settings` contains the retained native opponent rows in their original order.
+`features.settings.ingame.battle_mechanics`, in config key order. `Opponent
+Settings` likewise follows its config object's key order.
 Both child pages use the native orange section heading and opponent-style row
 backing, with their own page title. The count-derived backing and launcher-label
 renderer is shared with Battle Settings.
@@ -111,8 +113,9 @@ Mod rows use the same runtime values as Battle Settings, so both menus stage,
 reset, and commit the same state. Entering or leaving either child page restarts
 the selected row's help-text animation.
 
-Chakra is no longer a native General Settings row. It is the first Battle Mechanics
-row and shares `normal`, `unlimited`, or a `0.1..10.0%/s` regeneration rate with
+Chakra is no longer a native General Settings row. The base config places it
+first in Battle Mechanics. It shares `normal`, `unlimited`, or a
+`0.1..10.0%/s` regeneration rate with
 Battle Settings. Numeric values appear as `Regen N.N%/s`. The generated native
 default pack fixes the underlying Practice Chakra key to Normal; the shared
 runtime setting alone owns refilling.

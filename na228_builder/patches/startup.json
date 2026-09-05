@@ -28,6 +28,18 @@
       }
     }
   },
+  "startup.skip_initial_memory_card_check": {
+    "description": "Skip the initial blocking memory-card check while preserving worker and save-data initialization and the later Continue Save/Load flow.",
+    "edits": {
+      "skip_initial_check_call": {
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE10A0",
+        "expected_hex": "6C9C070C",
+        "replacement_hex": "00000000"
+      }
+    }
+  },
   "startup.faster_loading": {
     "description": "Keep sound and stream initialization at boot while loading each RPG or player voice-bank index on its first playback.",
     "hooks": {

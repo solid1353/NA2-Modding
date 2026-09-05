@@ -42,28 +42,7 @@ class RuntimeInjectorTests(unittest.TestCase):
                         ).hexdigest().upper(),
                     )
                 },
-                groups={
-                    "layout": binary_engine.Group(
-                        group_id="layout",
-                        enabled=True,
-                        name="Layout",
-                        description="Retained disabled layout.",
-                        review_notes="",
-                    )
-                },
-                patches={
-                    "layout_hook": binary_engine.Patch(
-                        patch_id="layout_hook",
-                        group_id="layout",
-                        enabled=False,
-                        status="runtime_proven",
-                        confidence="high",
-                        name="Layout hook",
-                        description="Retained disabled hook.",
-                        evidence_id="TEST-LAYOUT",
-                        review_notes="Runtime: resident",
-                    )
-                },
+                patches={},
                 edits=[],
             )
             payloads: dict[str, bytearray] = {}
@@ -76,10 +55,9 @@ class RuntimeInjectorTests(unittest.TestCase):
                 source=object(),
                 payloads=payloads,
                 owners=owners,
-                allow_empty_enabled=True,
+                allow_empty=True,
             )
 
-            self.assertEqual(result["selected"], [])
             self.assertEqual(result["edits"], [])
             self.assertEqual(result["patched_paths"], [])
             self.assertEqual(payloads, {})
@@ -95,23 +73,10 @@ class RuntimeInjectorTests(unittest.TestCase):
             expected_size=64,
             expected_sha256="1" * 64,
         )
-        group = binary_engine.Group(
-            group_id="layout",
-            enabled=True,
-            name="Layout",
-            description="Resident layout test.",
-            review_notes="",
-        )
         patch = binary_engine.Patch(
             patch_id="layout_hook",
             group_id="layout",
-            enabled=True,
-            status="approved_for_test",
-            confidence="high",
-            name="Layout hook",
-            description="Route one hook.",
             evidence_id="TEST-LAYOUT",
-            review_notes="Runtime: resident",
         )
         fragments = (
             PayloadFragment(
@@ -152,7 +117,6 @@ class RuntimeInjectorTests(unittest.TestCase):
             directory=Path.cwd(),
             owner=owner,
             targets={target.target_id: target},
-            groups={group.group_id: group},
             patches={patch.patch_id: patch},
             fragments=fragments,
             edits=(

@@ -94,7 +94,6 @@ def build_binary_package(
     imported_targets = imported_targets or {}
     targets: dict[str, binary_patcher.Target] = {}
     target_ids: dict[tuple[str, str], str] = {}
-    groups: dict[str, binary_patcher.Group] = {}
     patches: dict[str, binary_patcher.Patch] = {}
     edits: list[binary_patcher.Edit] = []
 
@@ -195,26 +194,10 @@ def build_binary_package(
             str(row.get("reason", "")).strip()
             or "Import official translation text."
         )
-        groups.setdefault(
-            group_id,
-            binary_patcher.Group(
-                group_id=group_id,
-                enabled=True,
-                name=group_id,
-                description="Imported string patch selection group.",
-                review_notes="",
-            ),
-        )
         patches[import_id] = binary_patcher.Patch(
             patch_id=import_id,
             group_id=group_id,
-            enabled=True,
-            status="approved_for_test",
-            confidence="verified",
-            name=import_id,
-            description=reason,
             evidence_id=source_mapping_id,
-            review_notes="",
         )
         edits.append(
             binary_patcher.Edit(
@@ -244,7 +227,6 @@ def build_binary_package(
         directory=package_directory,
         package_id="derived.string_patcher",
         targets=targets,
-        groups=groups,
         patches=patches,
         edits=edits,
     )

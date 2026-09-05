@@ -29,29 +29,19 @@ class RuntimeInjectionPackage:
     directory: Path
     owner: str
     targets: dict[str, binary_patcher.Target]
-    groups: dict[str, binary_patcher.Group]
     patches: dict[str, binary_patcher.Patch]
     fragments: tuple[PayloadFragment, ...]
     edits: tuple[RuntimeSymbolicEdit, ...]
 
     @property
-    def active_edits(self) -> tuple[RuntimeSymbolicEdit, ...]:
-        return tuple(
-            edit
-            for edit in self.edits
-            if self.patches[edit.patch_id].enabled
-            and self.groups[self.patches[edit.patch_id].group_id].enabled
-        )
-
-    @property
     def symbolic_patches(self) -> tuple[SymbolicPatch, ...]:
-        return tuple(edit.symbolic_patch for edit in self.active_edits)
+        return tuple(edit.symbolic_patch for edit in self.edits)
 
     @property
     def payload_fragments(self) -> tuple[PayloadFragment, ...]:
         # Fragments have package-wide symbolic dependencies. Retain and validate
-        # every declaration, but contribute none when every owning patch is off.
-        return self.fragments if self.active_edits else ()
+        # every declaration, but contribute none when the package has no hooks.
+        return self.fragments if self.edits else ()
 
 
 def build_binary_package(
@@ -63,8 +53,7 @@ def build_binary_package(
         raise ValueError(
             "resolved runtime-injector patches contain duplicate mapping IDs"
         )
-    active_edits = package.active_edits
-    expected_ids = {edit.edit_id for edit in active_edits}
+    expected_ids = {edit.edit_id for edit in package.edits}
     if set(resolved_by_id) != expected_ids:
         raise ValueError(
             "resolved runtime-injector patch set differs from its declarations; "
@@ -72,7 +61,7 @@ def build_binary_package(
             f"extra={sorted(resolved_by_id.keys() - expected_ids)}"
         )
     edits: list[binary_patcher.Edit] = []
-    for declaration in active_edits:
+    for declaration in package.edits:
         resolved = resolved_by_id[declaration.edit_id]
         target = package.targets[declaration.target_id]
         if resolved.owner != package.owner or resolved.path != target.path.as_posix():
@@ -106,7 +95,6 @@ def build_binary_package(
         directory=package.directory,
         package_id=package.owner,
         targets=package.targets,
-        groups=package.groups,
         patches=package.patches,
         edits=edits,
     )

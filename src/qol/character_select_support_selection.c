@@ -1,4 +1,4 @@
-/* Build compact per-player support lists with bounded navigation. */
+/* Build per-player support lists with native or compact navigation. */
 
 typedef unsigned char u8;
 typedef signed int s32;
@@ -24,7 +24,9 @@ typedef unsigned int u32;
 
 #define SUPPORT_STATE_AVAILABLE 4u
 #define NO_SUPPORT_ID 0x25u
-#define CHARACTER_SELECT_LINKED_MODE_MANUAL 0u
+#define SUPPORT_SELECTION_MODE_RELEVANT 1u
+#define SUPPORT_SELECTION_MODE_ALL 2u
+#define CHARACTER_SELECT_LINKED_MODE_AUTO 1u
 
 #define CHARACTER_SELECT_STATE_FIGHTER_SELECTION 1u
 #define CHARACTER_SELECT_STATE_ENTERING_SUPPORT_SELECTION 2u
@@ -36,9 +38,14 @@ typedef unsigned int u32;
 
 #define NATIVE_POPULATE_SUPPORT_LIST_ADDRESS 0x003BB210u
 #define NATIVE_SELECTED_CHARACTER_ID_ADDRESS 0x003B4A90u
+#define NATIVE_SELECT_SUPPORT_ID_ADDRESS 0x003B49C0u
 #define NATIVE_CONFIRM_FIGHTER_ADDRESS 0x003B52E0u
 #define NATIVE_SUPPORT_CELL_DRAW_ADDRESS 0x0037BC40u
 #define NATIVE_SUPPORT_DISPLAY_ID_ADDRESS 0x008859A0u
+#define NATIVE_SUPPORT_COMPATIBILITY_ADDRESS 0x008858C0u
+#define NATIVE_CHARACTER_UNAVAILABLE_ADDRESS 0x001F7AA0u
+#define NATIVE_CHARACTER_SECONDARY_ADDRESS 0x001F7BB0u
+#define NATIVE_RECOMMENDED_SUPPORT_ADDRESS 0x00885C30u
 #define NATIVE_SELECTED_SUPPORT_ID_ADDRESS 0x003B4D30u
 #define NATIVE_SELECTED_SUPPORT_NAME_DRAW_ADDRESS 0x003B8A90u
 #define NATIVE_SET_CHARACTER_SELECT_STATE_ADDRESS 0x003B5670u
@@ -75,11 +82,12 @@ typedef unsigned int u32;
 #define COLOR_BLACK 0xFF000000u
 #define COLOR_WHITE 0xFFFFFFFFu
 
-#define CHARACTER_SELECT_SUPPORT_SELECTION_REWORK_SECTION(name) \
+#define CHARACTER_SELECT_SUPPORT_SELECTION_SECTION(name) \
     __attribute__((section(name), noinline))
 
 typedef void (*NativePopulateSupportList)(void *character_select);
 typedef u32 (*NativeSelectedCharacterId)(void *player_select);
+typedef void (*NativeSelectSupportId)(void *player_select, u32 support_id);
 typedef void (*NativeSupportCellDraw)(
     float x,
     float y,
@@ -87,6 +95,9 @@ typedef void (*NativeSupportCellDraw)(
     const void *rectangle
 );
 typedef u32 (*NativeSupportDisplayId)(u32 support_id);
+typedef u32 (*NativeSupportCompatibility)(u32 support_id, u32 character_id);
+typedef u32 (*NativeCharacterPredicate)(u32 character_id);
+typedef u32 (*NativeRecommendedSupport)(u32 character_id, u32 index);
 typedef u32 (*NativeSelectedSupportId)(void *character_select);
 typedef void (*NativeSelectedSupportNameDraw)(void *character_select);
 typedef void (*NativeConfirmFighter)(void *player_select);
@@ -136,6 +147,7 @@ typedef char font_v2_session_size_must_be_0x6c[
 ];
 
 extern int font_v2_adapter_call(FontV2Session *session);
+extern const u32 character_select_support_selection_mode;
 
 typedef struct AdditionalSupportEntry {
     u8 support_id;
@@ -153,14 +165,14 @@ typedef struct SelectableSupportPair {
 
 static const u8 NO_SUPPORT_NAME[]
     __attribute__((
-        section(".rodata.character_select_support_selection_rework_entries"),
+        section(".rodata.character_select_support_selection_entries"),
         used
     )) = "NO SUPPORT";
 
 /* Entries declared here lead every compact per-player support list. */
 static const AdditionalSupportEntry ADDITIONAL_SUPPORT_ENTRIES[]
     __attribute__((
-        section(".rodata.character_select_support_selection_rework_entries"),
+        section(".rodata.character_select_support_selection_entries"),
         used
     )) = {
         {
@@ -180,7 +192,7 @@ static const AdditionalSupportEntry ADDITIONAL_SUPPORT_ENTRIES[]
  */
 static const SelectableSupportPair SELECTABLE_SUPPORT_PAIRS[]
     __attribute__((
-        section(".rodata.character_select_support_selection_rework_entries"),
+        section(".rodata.character_select_support_selection_entries"),
         used
     )) = {
         {0x39u, 0x01u}, /* Naruto -> Sakura */
@@ -203,12 +215,12 @@ static const SelectableSupportPair SELECTABLE_SUPPORT_PAIRS[]
 /*
  * Native Character Select points both players at one shared selector-data
  * block. Copy the complete block, including the character and support portrait
- * object tables, so each selector can retain a different compact roster.
+ * object tables, so each selector can retain its own filtered roster.
  */
 static u8 CHARACTER_SELECT_DATA_COPIES
     [CHARACTER_SELECT_PLAYER_COUNT][CHARACTER_SELECT_DATA_SIZE]
     __attribute__((
-        section(".bss.character_select_support_selection_rework_buffers"),
+        section(".bss.character_select_support_selection_buffers"),
         aligned(4),
         used
     ));
@@ -269,7 +281,37 @@ void copy_character_select_data(u8 *destination, const u8 *source)
 }
 
 static __attribute__((always_inline)) inline
-void populate_compact_support_list(u8 *data, u32 character_id)
+u32 is_native_support_selectable(u32 character_id, u32 support_id, u32 state)
+{
+    NativeSupportCompatibility native_compatible =
+        (NativeSupportCompatibility)NATIVE_SUPPORT_COMPATIBILITY_ADDRESS;
+    NativeCharacterPredicate unavailable =
+        (NativeCharacterPredicate)NATIVE_CHARACTER_UNAVAILABLE_ADDRESS;
+    NativeCharacterPredicate secondary =
+        (NativeCharacterPredicate)NATIVE_CHARACTER_SECONDARY_ADDRESS;
+    NativeRecommendedSupport recommended =
+        (NativeRecommendedSupport)NATIVE_RECOMMENDED_SUPPORT_ADDRESS;
+    u32 index;
+
+    /* Same eligibility gates as native confirmation and its unavailable marker. */
+    if (character_id < 1u || character_id > 0x5Du ||
+        unavailable(character_id) != 0u || secondary(character_id) != 0u ||
+        native_compatible(support_id, character_id) == 0u) {
+        return 0u;
+    }
+    if (state == SUPPORT_STATE_AVAILABLE) {
+        return 1u;
+    }
+    for (index = 0u; index < 3u; index = index + 1u) {
+        if ((u8)recommended(character_id, index) == (u8)support_id) {
+            return 1u;
+        }
+    }
+    return 0u;
+}
+
+static __attribute__((always_inline)) inline
+void populate_support_list(u8 *data, u32 character_id)
 {
     u32 *count =
         (u32 *)(data + CHARACTER_SELECT_DATA_SUPPORT_COUNT_OFFSET);
@@ -309,30 +351,47 @@ void populate_compact_support_list(u8 *data, u32 character_id)
         output_count = output_count + 1u;
     }
 
-    for (
-        index = 0u;
-        index < pair_count && output_count < CHARACTER_SELECT_SUPPORT_CAPACITY;
-        index = index + 1u
-    ) {
-        if (
-            (u8)character_id !=
-            SELECTABLE_SUPPORT_PAIRS[index].character_id
-        ) {
-            continue;
+    if (character_select_support_selection_mode == SUPPORT_SELECTION_MODE_ALL) {
+        for (index = 0u;
+             index < native_count && output_count < CHARACTER_SELECT_SUPPORT_CAPACITY;
+             index = index + 1u) {
+            if (is_native_support_selectable(
+                    character_id, native_ids[index], native_states[index])) {
+                support_ids[output_count] = native_ids[index];
+                support_states[output_count] = native_states[index];
+                output_count = output_count + 1u;
+            }
         }
+    } else if (
+        character_select_support_selection_mode ==
+        SUPPORT_SELECTION_MODE_RELEVANT
+    ) {
         for (
-            source_index = 0u;
-            source_index < native_count;
-            source_index = source_index + 1u
+            index = 0u;
+            index < pair_count &&
+                output_count < CHARACTER_SELECT_SUPPORT_CAPACITY;
+            index = index + 1u
         ) {
             if (
-                native_ids[source_index] ==
-                SELECTABLE_SUPPORT_PAIRS[index].support_id
+                (u8)character_id !=
+                SELECTABLE_SUPPORT_PAIRS[index].character_id
             ) {
-                support_ids[output_count] = native_ids[source_index];
-                support_states[output_count] = native_states[source_index];
-                output_count = output_count + 1u;
-                break;
+                continue;
+            }
+            for (
+                source_index = 0u;
+                source_index < native_count;
+                source_index = source_index + 1u
+            ) {
+                if (
+                    native_ids[source_index] ==
+                    SELECTABLE_SUPPORT_PAIRS[index].support_id
+                ) {
+                    support_ids[output_count] = native_ids[source_index];
+                    support_states[output_count] = native_states[source_index];
+                    output_count = output_count + 1u;
+                    break;
+                }
             }
         }
     }
@@ -366,6 +425,8 @@ void clamp_support_cursor(void *player_select, u32 support_count)
 static __attribute__((always_inline)) inline
 void select_no_support(void *player_select)
 {
+    NativeSelectSupportId native_select =
+        (NativeSelectSupportId)NATIVE_SELECT_SUPPORT_ID_ADDRESS;
     u8 *player = (u8 *)player_select;
     u8 *data = *(u8 **)(
         player + CHARACTER_SELECT_PLAYER_DATA_POINTER_OFFSET
@@ -376,6 +437,11 @@ void select_no_support(void *player_select)
     u32 center_index = support_count == 0u
         ? 0u
         : (support_count - 1u) / 2u;
+
+    if (character_select_support_selection_mode == SUPPORT_SELECTION_MODE_ALL) {
+        native_select(player_select, NO_SUPPORT_ID);
+        return;
+    }
 
     *(u32 *)(
         player + CHARACTER_SELECT_PLAYER_SUPPORT_INDEX_OFFSET
@@ -402,10 +468,10 @@ u32 has_only_no_support(void *player_select)
         data[CHARACTER_SELECT_DATA_SUPPORT_IDS_OFFSET] == NO_SUPPORT_ID;
 }
 
-CHARACTER_SELECT_SUPPORT_SELECTION_REWORK_SECTION(
-    ".text.character_select_support_selection_rework_prepend"
+CHARACTER_SELECT_SUPPORT_SELECTION_SECTION(
+    ".text.character_select_support_selection_prepend"
 )
-void character_select_support_selection_rework_prepend(void *character_select)
+void character_select_support_selection_prepend(void *character_select)
 {
     NativePopulateSupportList native_populate =
         (NativePopulateSupportList)NATIVE_POPULATE_SUPPORT_LIST_ADDRESS;
@@ -440,7 +506,7 @@ void character_select_support_selection_rework_prepend(void *character_select)
         ) = shared_data;
         character_id = selected_character_id(player_select);
         copy_character_select_data(player_data, shared_data);
-        populate_compact_support_list(player_data, character_id);
+        populate_support_list(player_data, character_id);
         support_count =
             *(u32 *)(
                 player_data + CHARACTER_SELECT_DATA_SUPPORT_COUNT_OFFSET
@@ -453,13 +519,13 @@ void character_select_support_selection_rework_prepend(void *character_select)
     }
 
     /* Newly constructed selectors use the shared block until the next refresh. */
-    populate_compact_support_list(shared_data, 0xFFu);
+    populate_support_list(shared_data, 0xFFu);
 }
 
-CHARACTER_SELECT_SUPPORT_SELECTION_REWORK_SECTION(
-    ".text.character_select_support_selection_rework_confirm_fighter"
+CHARACTER_SELECT_SUPPORT_SELECTION_SECTION(
+    ".text.character_select_support_selection_confirm_fighter"
 )
-void character_select_support_selection_rework_confirm_fighter(
+void character_select_support_selection_confirm_fighter(
     void *player_select
 )
 {
@@ -471,6 +537,9 @@ void character_select_support_selection_rework_confirm_fighter(
     u8 *player = (u8 *)player_select;
 
     native_confirm(player_select);
+    *(u32 *)(
+        player + CHARACTER_SELECT_PLAYER_LINKED_MODE_OFFSET
+    ) = CHARACTER_SELECT_LINKED_MODE_AUTO;
 
     if (
         *(u32 *)player != CHARACTER_SELECT_STATE_ENTERING_SUPPORT_SELECTION
@@ -483,16 +552,13 @@ void character_select_support_selection_rework_confirm_fighter(
         return;
     }
 
-    *(u32 *)(
-        player + CHARACTER_SELECT_PLAYER_LINKED_MODE_OFFSET
-    ) = CHARACTER_SELECT_LINKED_MODE_MANUAL;
     set_state(player_select, CHARACTER_SELECT_STATE_FINALIZED);
 }
 
-CHARACTER_SELECT_SUPPORT_SELECTION_REWORK_SECTION(
-    ".text.character_select_support_selection_rework_finalize_support"
+CHARACTER_SELECT_SUPPORT_SELECTION_SECTION(
+    ".text.character_select_support_selection_finalize_support"
 )
-void character_select_support_selection_rework_finalize_support(
+void character_select_support_selection_finalize_support(
     void *player_select
 )
 {
@@ -503,14 +569,14 @@ void character_select_support_selection_rework_finalize_support(
 
     *(u32 *)(
         player + CHARACTER_SELECT_PLAYER_LINKED_MODE_OFFSET
-    ) = CHARACTER_SELECT_LINKED_MODE_MANUAL;
+    ) = CHARACTER_SELECT_LINKED_MODE_AUTO;
     set_state(player_select, CHARACTER_SELECT_STATE_FINALIZED);
 }
 
-CHARACTER_SELECT_SUPPORT_SELECTION_REWORK_SECTION(
-    ".text.character_select_support_selection_rework_return_from_finalized"
+CHARACTER_SELECT_SUPPORT_SELECTION_SECTION(
+    ".text.character_select_support_selection_return_from_finalized"
 )
-void character_select_support_selection_rework_return_from_finalized(
+void character_select_support_selection_return_from_finalized(
     void *player_select
 )
 {
@@ -520,6 +586,9 @@ void character_select_support_selection_rework_return_from_finalized(
     u8 *player = (u8 *)player_select;
     u32 next_state;
 
+    *(u32 *)(
+        player + CHARACTER_SELECT_PLAYER_LINKED_MODE_OFFSET
+    ) = CHARACTER_SELECT_LINKED_MODE_AUTO;
     if (
         *(u32 *)(
             player + CHARACTER_SELECT_PLAYER_RETURN_READY_OFFSET
@@ -536,20 +605,19 @@ void character_select_support_selection_rework_return_from_finalized(
     ) {
         next_state = CHARACTER_SELECT_STATE_FIGHTER_SELECTION;
     } else {
-        select_no_support(player_select);
-        *(u32 *)(
-            player + CHARACTER_SELECT_PLAYER_LINKED_MODE_OFFSET
-        ) = CHARACTER_SELECT_LINKED_MODE_MANUAL;
+        if (character_select_support_selection_mode != SUPPORT_SELECTION_MODE_ALL) {
+            select_no_support(player_select);
+        }
         next_state = CHARACTER_SELECT_STATE_SUPPORT_SELECTION;
     }
 
     set_state(player_select, next_state);
 }
 
-CHARACTER_SELECT_SUPPORT_SELECTION_REWORK_SECTION(
-    ".text.character_select_support_selection_rework_bounded_support_navigation"
+CHARACTER_SELECT_SUPPORT_SELECTION_SECTION(
+    ".text.character_select_support_selection_bounded_support_navigation"
 )
-void character_select_support_selection_rework_bounded_support_navigation(
+void character_select_support_selection_bounded_support_navigation(
     void *player_select,
     u32 direction
 )
@@ -578,10 +646,10 @@ void character_select_support_selection_rework_bounded_support_navigation(
     native_navigate(player_select, direction);
 }
 
-CHARACTER_SELECT_SUPPORT_SELECTION_REWORK_SECTION(
-    ".text.character_select_support_selection_rework_draw_support_cell"
+CHARACTER_SELECT_SUPPORT_SELECTION_SECTION(
+    ".text.character_select_support_selection_draw_support_cell"
 )
-void character_select_support_selection_rework_draw_support_cell(
+void character_select_support_selection_draw_support_cell(
     float x,
     float y,
     void *draw_context,
@@ -630,14 +698,16 @@ void character_select_support_selection_rework_draw_support_cell(
     native_draw(x, y, draw_context, rectangle);
 }
 
-CHARACTER_SELECT_SUPPORT_SELECTION_REWORK_SECTION(
-    ".text.character_select_support_selection_rework_is_compatible"
+CHARACTER_SELECT_SUPPORT_SELECTION_SECTION(
+    ".text.character_select_support_selection_is_compatible"
 )
-u32 character_select_support_selection_rework_is_compatible(
+u32 character_select_support_selection_is_compatible(
     u32 support_id,
     u32 character_id
 )
 {
+    NativeSupportCompatibility native_compatible =
+        (NativeSupportCompatibility)NATIVE_SUPPORT_COMPATIBILITY_ADDRESS;
     const AdditionalSupportEntry *entry =
         find_additional_support_entry(support_id);
 
@@ -645,13 +715,24 @@ u32 character_select_support_selection_rework_is_compatible(
         return 1u;
     }
 
+    if (character_select_support_selection_mode == SUPPORT_SELECTION_MODE_ALL) {
+        return native_compatible(support_id, character_id);
+    }
+
+    if (
+        character_select_support_selection_mode !=
+        SUPPORT_SELECTION_MODE_RELEVANT
+    ) {
+        return 0u;
+    }
+
     return is_selectable_support_pair(character_id, support_id);
 }
 
-CHARACTER_SELECT_SUPPORT_SELECTION_REWORK_SECTION(
-    ".text.character_select_support_selection_rework_display_id"
+CHARACTER_SELECT_SUPPORT_SELECTION_SECTION(
+    ".text.character_select_support_selection_display_id"
 )
-u32 character_select_support_selection_rework_display_id(u32 support_id)
+u32 character_select_support_selection_display_id(u32 support_id)
 {
     NativeSupportDisplayId native_display_id =
         (NativeSupportDisplayId)NATIVE_SUPPORT_DISPLAY_ID_ADDRESS;
@@ -665,10 +746,10 @@ u32 character_select_support_selection_rework_display_id(u32 support_id)
     return native_display_id(support_id);
 }
 
-CHARACTER_SELECT_SUPPORT_SELECTION_REWORK_SECTION(
-    ".text.character_select_support_selection_rework_draw_name_callback"
+CHARACTER_SELECT_SUPPORT_SELECTION_SECTION(
+    ".text.character_select_support_selection_draw_name_callback"
 )
-int character_select_support_selection_rework_draw_name_callback(
+int character_select_support_selection_draw_name_callback(
     u32 unused0,
     u32 unused1,
     u32 unused2,
@@ -696,10 +777,10 @@ int character_select_support_selection_rework_draw_name_callback(
     return 0;
 }
 
-CHARACTER_SELECT_SUPPORT_SELECTION_REWORK_SECTION(
-    ".text.character_select_support_selection_rework_draw_selected_name"
+CHARACTER_SELECT_SUPPORT_SELECTION_SECTION(
+    ".text.character_select_support_selection_draw_selected_name"
 )
-void character_select_support_selection_rework_draw_selected_name(
+void character_select_support_selection_draw_selected_name(
     void *character_select
 )
 {
@@ -779,7 +860,7 @@ void character_select_support_selection_rework_draw_selected_name(
     session.line_limit = 1u;
     session.line_height = NAME_TEXT_LINE_HEIGHT;
     session.callback =
-        (u32)character_select_support_selection_rework_draw_name_callback;
+        (u32)character_select_support_selection_draw_name_callback;
     session.callback_arg0 = 0u;
     session.callback_arg1 = 0u;
     session.callback_arg2 = 0u;

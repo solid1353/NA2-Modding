@@ -25,7 +25,7 @@
         "destination_offset": "0xD9240",
         "expected_sha256": "0246A8275782ADFEEF80C7C88CD5B912741A7787F3519FFDD6A6AA60F6DE9810",
         "blob_path": "na228_builder/patches/localization/font/glyphs/nun5_semantic_14x20.bin",
-        "blob_sha256": "6E4B988E512568F0A91E0226A8A4046362C1A4EF078E50BBF630BEEF90333736"
+        "blob_sha256": "34FB6AFEEF7C62FAD008223F6154DC799E7249D52CA44843BC312993323ACE72"
       },
       "secondary_metric_hash_values": {
         "description": "Pack each NUN5-format secondary metric row into the value word of one ascending empty primary hash slot while preserving every key and every occupied primary entry.",
@@ -34,7 +34,7 @@
         "destination_offset": "0xD5318",
         "expected_sha256": "26563C6C773B372CB0DE4845FFBE83023DAD94526AB2990B72C55EF39A7D18EF",
         "blob_path": "na228_builder/patches/localization/font/glyphs/nun5_semantic_14x20_packed_map.bin",
-        "blob_sha256": "6F691015E5BA54EA87B2976970D828863E274BB543CC3D531D93800018EB7A5E"
+        "blob_sha256": "F092EA55B4AC3B486A62E443A8672C6E4227EA5F81C05391882474FD5EB13CF4"
       }
     },
     "hooks": {
@@ -133,14 +133,6 @@
         "destination_target_id": "na2_btl",
         "destination_offset": "0x20B49C",
         "expected_hex": "D05A6000",
-        "replacement_hex": "58466000"
-      },
-      "practice_guide_ninja_sound_on_off_table": {
-        "description": "Point the Practice Settings Guide Ninja Sound row at the existing title-case Off/On selector table.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offset": "0x20B4A0",
-        "expected_hex": "D85A6000",
         "replacement_hex": "58466000"
       }
     },
@@ -680,8 +672,7 @@
           "v2_command_relationship_adapter": {
             "object": "localization.font.v2.command.relationships.asm.text.v2.command.relationship.adapter",
             "abi": "command_relationship_native",
-            "description": "Command Chart relationship row",
-            "source": "font_v2_core"
+            "description": "Command Chart relationship row"
           }
         }
       },

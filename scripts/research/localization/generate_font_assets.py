@@ -26,7 +26,7 @@ if str(REPOSITORY) not in sys.path:
 from scripts.lib.paths import load_paths  # noqa: E402
 
 
-ASSETS = load_paths(REPOSITORY).path("builder", "localization", "assets")
+ASSETS = load_paths(REPOSITORY).path("builder", "patches", "localization", "font", "glyphs")
 ATLAS_OUTPUT = ASSETS / "nun5_semantic_14x20.bin"
 PACKED_MAP_OUTPUT = ASSETS / "nun5_semantic_14x20_packed_map.bin"
 
@@ -65,16 +65,27 @@ OUTPUT_METRICS_SIZE = OUTPUT_CELL_COUNT * 4
 EXPECTED_CLEAN_ATLAS_SHA256 = "0246A8275782ADFEEF80C7C88CD5B912741A7787F3519FFDD6A6AA60F6DE9810"
 EXPECTED_CLEAN_METRICS_SHA256 = "423D859444D28C397E52215376E3701472EB6F493995C66BD45FEFC1FE1C5090"
 EXPECTED_CLEAN_MAP_SHA256 = "26563C6C773B372CB0DE4845FFBE83023DAD94526AB2990B72C55EF39A7D18EF"
-OUTPUT_ATLAS_SHA256 = "6E4B988E512568F0A91E0226A8A4046362C1A4EF078E50BBF630BEEF90333736"
-OUTPUT_METRICS_SHA256 = "CE51A6033E1CF199E2B78D57F8A714FD83BA9251B19A2969B201C6C84FCA6B59"
-OUTPUT_PACKED_PAYLOAD_SHA256 = "19EDB008C3EB164117A461E75317BF7885890C72122599C4AE45344FB53761CB"
-OUTPUT_PACKED_MAP_SHA256 = "6F691015E5BA54EA87B2976970D828863E274BB543CC3D531D93800018EB7A5E"
-RESULT_GF4_SHA256 = "79BA614746E667A70A068A0A889085D028D8019884182E78041026A77971AA25"
+OUTPUT_ATLAS_SHA256 = "34FB6AFEEF7C62FAD008223F6154DC799E7249D52CA44843BC312993323ACE72"
+OUTPUT_METRICS_SHA256 = "DD2DC08A16AEAE49F41B6AC55F02042604DFC0980D5521375BFD4E74B008B1CD"
+OUTPUT_PACKED_PAYLOAD_SHA256 = "E65E411A8E536352F4ACC30F6D98F03BA51B233AA852FF7102CE4884A3B73451"
+OUTPUT_PACKED_MAP_SHA256 = "F092EA55B4AC3B486A62E443A8672C6E4227EA5F81C05391882474FD5EB13CF4"
+RESULT_GF4_SHA256 = "372ACAAE83A3D5DE9FCB1C8E399ACC7EC9A1B017380C3D5BEA03A4E2FEB97267"
 
-# NUN5 lacks several ASCII punctuation slots used by translated NA2. Import
-# only exact same-semantic cells and reconstruct every other reachable cell
-# from clean NA2. The at-sign is stored at NUN5 cell 63.
-DONOR_RANGES = ((0, 31), (33, 58), (65, 90))
+# One byte-to-donor-glyph mapping supplies both rasters and metrics. Keep
+# the existing relocated cell for byte 0x40 and preserve literal CP1252 symbols.
+NUN5_GLYPHS = {
+    **{value: value - 0x20 for value in (*range(0x20, 0x40),
+                                       *range(0x41, 0x5B),
+                                       *range(0x61, 0x7B))},
+    0x40: 63,
+    0xAE: 142,  # registered sign
+    0xB7: 151,  # middle dot
+}
+# NA2's native decoder determines the destination cell for each encoded byte.
+NUN5_SOURCE_CELLS = {
+    value - (0x20 if value < 0xA0 else 0x43): donor_cell
+    for value, donor_cell in NUN5_GLYPHS.items()
+}
 
 
 def sha256(data: bytes) -> str:
@@ -134,15 +145,6 @@ def pack_cell(pixels: list[int]) -> bytes:
     )
 
 
-def nun5_source_cell(destination_cell: int) -> int | None:
-    if destination_cell == 32:
-        return 63
-    for first, last in DONOR_RANGES:
-        if first <= destination_cell <= last:
-            return destination_cell
-    return None
-
-
 def convert_nun5_cell(
     data: bytes,
     source_cell: int,
@@ -190,7 +192,7 @@ def build_atlas(
 ) -> bytes:
     cells: list[bytes] = []
     for destination_cell in range(OUTPUT_CELL_COUNT):
-        source_cell = nun5_source_cell(destination_cell)
+        source_cell = NUN5_SOURCE_CELLS.get(destination_cell)
         if source_cell is None:
             cell = resample_clean_cell(clean_na2, destination_cell)
         else:
@@ -248,7 +250,7 @@ def build_metrics(
         raise ValueError("clean NA2 metric block does not match")
     result = bytearray()
     for destination_cell in range(OUTPUT_CELL_COUNT):
-        source_cell = nun5_source_cell(destination_cell)
+        source_cell = NUN5_SOURCE_CELLS.get(destination_cell)
         if source_cell is not None:
             source_offset = NUN5_METRICS_OFFSET + source_cell * 4
             result.extend(official_nun5[source_offset : source_offset + 4])

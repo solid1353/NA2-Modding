@@ -295,27 +295,6 @@ class TranslationImporterTests(unittest.TestCase):
                 ):
                     engine.resolve_replacement_text(row, "literal-percent")
 
-    def test_formula_symbol_transform_preserves_spacing(self) -> None:
-        expected = {
-            " * ": " * ",
-            " = ": " = ",
-            "·": ".",
-            "%": "%",
-        }
-        for donor, resolved in expected.items():
-            with self.subTest(donor=donor):
-                row = {
-                    "donor": donor,
-                    "prefix": "",
-                    "replacement": "",
-                    "transform": "normalize_formula_symbol",
-                    "arguments": {},
-                }
-                self.assertEqual(
-                    engine.resolve_replacement_text(row, "formula-symbol"),
-                    resolved,
-                )
-
     def test_fullwidth_ascii_is_normalized_only_in_resolved_output(self) -> None:
         row = {
             "donor": "ＭＡＸ　Ｄａｍａｇｅ！",

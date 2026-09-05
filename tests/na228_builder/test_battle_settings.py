@@ -8,8 +8,7 @@ from pathlib import Path
 
 from na228_builder.scripts import catalog, jsonc
 from na228_builder.scripts.battle_settings import (
-    ROW_SIZE,
-    SCHEMA_HEADER_SIZE,
+    _active_pages,
     battle_settings_fragment,
 )
 from scripts.lib.paths import load_local_paths
@@ -39,37 +38,35 @@ class BattleSettingsTests(unittest.TestCase):
         path.write_text(json.dumps(base, indent=2) + "\n", encoding="utf-8")
         return catalog.load_selection(self.catalog_path, path)
 
-    @staticmethod
-    def _rows(fragment) -> list[tuple[int, ...]]:
-        row_count = struct.unpack_from("<I", fragment.payload)[0]
-        return [
-            struct.unpack_from(
-                "<8I",
-                fragment.payload,
-                SCHEMA_HEADER_SIZE + index * ROW_SIZE,
-            )
-            for index in range(row_count)
-        ]
-
-    def test_base_schema_keeps_native_rows_before_shared_rows(self) -> None:
+    def test_base_schema_follows_configured_page_order(self) -> None:
         fragment = battle_settings_fragment(
             self.selection,
             owner="settings.runtime_injector",
         )
         self.assertIsNotNone(fragment)
         assert fragment is not None
-        rows = self._rows(fragment)
+        pages = _active_pages(self.selection)
+        self.assertEqual(len(pages), 5)
+        self.assertEqual(pages[0].rows[0].label, "Battle Mechanics")
         self.assertEqual(
-            [row[0] for row in rows],
-            [0, 1, 2, 3, 5, 4, 7, 8, 9, 10, 11, 6],
+            [row.row_id for row in pages[0].rows[1:]],
+            [0, 1, 5],
         )
-        by_id = {row[0]: row for row in rows}
-        self.assertEqual((by_id[6][5], by_id[6][6]), (3, 1))
-        self.assertEqual((by_id[9][5], by_id[9][6]), (17, 4))
-        self.assertEqual((by_id[10][5], by_id[10][6]), (21, 1))
-        self.assertEqual((by_id[11][5], by_id[11][6]), (2, 0))
-        self.assertEqual((by_id[4][5], by_id[4][6]), (8, 7))
-        self.assertEqual((by_id[5][5], by_id[5][6]), (11, 5))
+        self.assertEqual(
+            [row.row_id for row in pages[1].rows],
+            [3, 4, 7, 8, 9, 10, 11, 6, 2],
+        )
+        self.assertEqual(
+            [page.heading_text for page in pages[1:]],
+            ["Battle Mechanics", "Chakra Settings", "Gauge Settings", "Items Settings"],
+        )
+        by_id = {row.row_id: row for page in pages for row in page.rows}
+        self.assertEqual((by_id[6].option_count, by_id[6].default_value), (3, 1))
+        self.assertEqual((by_id[9].option_count, by_id[9].default_value), (16, 5))
+        self.assertEqual((by_id[10].option_count, by_id[10].default_value), (21, 1))
+        self.assertEqual((by_id[11].option_count, by_id[11].default_value), (4, 0))
+        self.assertEqual((by_id[4].option_count, by_id[4].default_value), (8, 7))
+        self.assertEqual((by_id[5].option_count, by_id[5].default_value), (11, 0))
 
         relocation_symbols = {item.symbol for item in fragment.relocations}
         self.assertTrue(
@@ -86,32 +83,37 @@ class BattleSettingsTests(unittest.TestCase):
 
     def test_shared_defaults_drive_the_selectable_values(self) -> None:
         def configure(features) -> None:
-            shared = features["settings"]["in_game"]["shared"]
-            shared["ultimate_jutsu"] = "no_contest"
-            shared["shadowblur"] = "on"
-            shared["extra_hit"] = "on"
-            shared["sub_active_frames"] = 16
-            shared["xdash_chakra_cost"] = 100
-            shared["support"] = "on"
-            shared["substitution"]["default"] = "free"
+            mechanics = features["settings"]["ingame"]["battle_mechanics"]
+            mechanics["ultimate_jutsu"] = "no_contest"
+            mechanics["shadowblur"] = "on"
+            mechanics["extra_hit"] = "on"
+            mechanics["sub_active_frames"] = 15
+            mechanics["xdash_chakra_cost"] = 100
+            mechanics["support"] = "normal"
+            mechanics["substitution"]["value"] = "free"
 
+        selection = self._selection(configure)
         fragment = battle_settings_fragment(
-            self._selection(configure),
+            selection,
             owner="settings.runtime_injector",
         )
         self.assertIsNotNone(fragment)
         assert fragment is not None
-        defaults = {row[0]: row[6] for row in self._rows(fragment)}
+        defaults = {
+            row.row_id: row.default_value
+            for page in _active_pages(selection)
+            for row in page.rows
+        }
         self.assertEqual(
             {row_id: defaults[row_id] for row_id in (6, 9, 10, 11, 4, 7, 8)},
-            {6: 2, 9: 16, 10: 20, 11: 1, 4: 6, 7: 1, 8: 1},
+            {6: 2, 9: 15, 10: 20, 11: 2, 4: 6, 7: 1, 8: 1},
         )
 
-    def test_disabling_shared_settings_removes_the_extended_battle_schema(self) -> None:
+    def test_disabling_battle_mechanics_launcher_keeps_native_root_rows(self) -> None:
         selection = self._selection(
-            lambda features: features["settings"]["in_game"].__setitem__(
-                "shared", False
-            )
+            lambda features: features["settings"]["ingame"][
+                "battle_mode"
+            ].__setitem__("battle_mechanics", False)
         )
         fragment = battle_settings_fragment(
             selection,
@@ -119,16 +121,52 @@ class BattleSettingsTests(unittest.TestCase):
         )
         self.assertIsNotNone(fragment)
         assert fragment is not None
-        self.assertEqual([row[0] for row in self._rows(fragment)], [0, 1, 2, 3, 5])
+        pages = _active_pages(selection)
+        self.assertEqual(len(pages), 1)
+        self.assertEqual([row.row_id for row in pages[0].rows], [0, 1, 5])
+
+    def test_config_key_order_controls_root_and_battle_mechanics_pages(self) -> None:
+        def configure(features) -> None:
+            ingame = features["settings"]["ingame"]
+            battle = ingame["battle_mode"]
+            ingame["battle_mode"] = {
+                key: battle[key]
+                for key in ("handicap", "difficulty", "battle_mechanics", "time")
+            }
+            mechanics = ingame["battle_mechanics"]
+            ingame["battle_mechanics"] = {
+                key: mechanics[key]
+                for key in (
+                    "items",
+                    "substitution",
+                    "support",
+                    "xdash_chakra_cost",
+                    "sub_active_frames",
+                    "extra_hit",
+                    "shadowblur",
+                    "ultimate_jutsu",
+                    "chakra",
+                )
+            }
+
+        pages = _active_pages(self._selection(configure))
+        self.assertEqual(
+            [row.label or row.row_id for row in pages[0].rows],
+            [5, 1, "Battle Mechanics", 0],
+        )
+        self.assertEqual(
+            [row.row_id for row in pages[1].rows],
+            [2, 6, 11, 10, 9, 8, 7, 4, 3],
+        )
 
     def test_handicap_is_an_ordinary_final_row_with_text_values(self) -> None:
-        injection = self.selection.injections["settings.in_game"]
+        injection = self.selection.injections["settings.ingame"]
         self.assertEqual(
-            injection["hooks"]["battle_draw_all_rows_as_ordinary"]["symbol"],
+            injection["hooks"]["battle_route_visible_handicap_draw"]["symbol"],
             "battle_settings_draw_ordinary_bridge",
         )
         self.assertEqual(
-            injection["hooks"]["battle_select_ordinary_cursor_object"]["symbol"],
+            injection["hooks"]["battle_select_page_appropriate_cursor"]["symbol"],
             "battle_settings_cursor_ordinary_bridge",
         )
         source = injection["payload"]["battle_settings"]
@@ -163,15 +201,15 @@ class BattleSettingsTests(unittest.TestCase):
         )
 
     def test_scrolling_uses_seven_physical_rows_for_any_logical_count(self) -> None:
-        injection = self.selection.injections["settings.in_game"]
+        injection = self.selection.injections["settings.ingame"]
         hooks = injection["hooks"]
-        self.assertEqual(hooks["battle_draw_seven_label_rows"]["symbol"], "battle_settings_label_loop_bridge")
-        self.assertEqual(hooks["battle_draw_seven_value_rows"]["symbol"], "battle_settings_value_loop_bridge")
+        self.assertEqual(hooks["battle_draw_visible_label_rows"]["symbol"], "battle_settings_label_loop_bridge")
+        self.assertEqual(hooks["battle_draw_visible_value_rows"]["symbol"], "battle_settings_value_loop_bridge")
         self.assertEqual(hooks["battle_draw_visible_rows"]["symbol"], "battle_settings_draw_rows")
         self.assertEqual(hooks["battle_draw_visible_cursor"]["symbol"], "battle_settings_draw_cursor")
 
     def test_sources_compile_with_the_selected_runtime_package(self) -> None:
-        injection = self.selection.injections["settings.in_game"]
+        injection = self.selection.injections["settings.ingame"]
         c_fragments = catalog._compile_source(
             self.repository,
             "settings.runtime_injector",

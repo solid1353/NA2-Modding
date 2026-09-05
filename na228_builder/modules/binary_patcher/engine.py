@@ -16,7 +16,6 @@ TARGET_FIELDS = [
     "expected_size",
     "expected_sha256",
 ]
-APPLICABLE_STATUSES = {"approved_for_test", "runtime_proven"}
 ROLES = {"destination", "source", "both"}
 
 
@@ -35,25 +34,10 @@ class Target:
 
 
 @dataclass(frozen=True)
-class Group:
-    group_id: str
-    enabled: bool
-    name: str
-    description: str
-    review_notes: str
-
-
-@dataclass(frozen=True)
 class Patch:
     patch_id: str
     group_id: str
-    enabled: bool
-    status: str
-    confidence: str
-    name: str
-    description: str
     evidence_id: str
-    review_notes: str
 
 
 @dataclass(frozen=True)
@@ -84,7 +68,6 @@ class Package:
     directory: Path
     package_id: str
     targets: dict[str, Target]
-    groups: dict[str, Group]
     patches: dict[str, Patch]
     edits: list[Edit]
 
@@ -316,66 +299,21 @@ def verify_package_data(package: Package, roots: dict[str, Path]) -> dict[str, b
     return target_data
 
 
-def patch_is_enabled(package: Package, patch: Patch) -> bool:
-    return package.groups[patch.group_id].enabled and patch.enabled
-
-
-def selected_patch_ids(package: Package, requested: list[str], enabled: bool) -> list[str]:
-    if requested and enabled:
-        raise PatchError("Use explicit --patch selections or --enabled, not both")
-    if enabled:
-        selected = [
-            patch.patch_id
-            for patch in package.patches.values()
-            if patch_is_enabled(package, patch)
-        ]
-    else:
-        selected = []
-        for patch_id in requested:
-            if patch_id not in package.patches:
-                raise PatchError(f"Unknown patch ID: {patch_id}")
-            selected.append(patch_id)
-    if not selected and not enabled:
-        raise PatchError("No patches selected")
-    return selected
-
-
-def validate_selection(package: Package, selected: list[str], *, for_apply: bool) -> list[Edit]:
-    if not selected:
-        raise PatchError("No patches selected")
-    for patch_id in selected:
-        if patch_id not in package.patches:
-            raise PatchError(f"Unknown patch ID: {patch_id}")
-    if for_apply:
-        blocked = [
-            patch_id
-            for patch_id in selected
-            if package.patches[patch_id].status not in APPLICABLE_STATUSES
-        ]
-        if blocked:
-            details = ", ".join(
-                f"{patch_id} ({package.patches[patch_id].status})"
-                for patch_id in blocked
-            )
-            raise PatchError(f"Selected patches are not approved for application: {details}")
-    edits_by_patch: dict[str, list[Edit]] = {}
-    for edit in package.edits:
-        edits_by_patch.setdefault(edit.patch_id, []).append(edit)
-    occurrences = {patch_id: index for index, patch_id in enumerate(selected)}
-    result: list[Edit] = [
-        edit
-        for patch_id in selected
-        for edit in sorted(
-            edits_by_patch[patch_id],
-            key=lambda item: (item.order, item.edit_id),
-        )
-    ]
+def ordered_edits(package: Package) -> list[Edit]:
+    if not package.patches:
+        raise PatchError("Package contains no patches")
+    unknown = sorted({edit.patch_id for edit in package.edits} - package.patches.keys())
+    if unknown:
+        raise PatchError("Edits reference unknown patches: " + ", ".join(unknown))
+    patch_order = {
+        patch_id: index for index, patch_id in enumerate(package.patches)
+    }
     return sorted(
-        result,
+        package.edits,
         key=lambda item: (
             item.destination_target_id,
             item.destination_offset,
-            occurrences[item.patch_id],
+            patch_order[item.patch_id],
             item.order,
             item.edit_id,
         ),
@@ -390,26 +328,12 @@ def write_tsv(path: Path, fields: list[str], rows: list[dict[str, object]]) -> N
         writer.writerows(rows)
 
 
-def patch_selection_rows(
-    package: Package,
-    selected: list[str],
-    *,
-    selection_mode: str,
-) -> list[dict[str, object]]:
-    selected_ids = set(selected)
+def patch_inventory_rows(package: Package) -> list[dict[str, object]]:
     return [
         {
             "group_id": patch.group_id,
-            "group_name": package.groups[patch.group_id].name,
-            "group_enabled": int(package.groups[patch.group_id].enabled),
             "patch_id": patch.patch_id,
-            "patch_enabled": int(patch.enabled),
-            "effective_selected": int(patch.patch_id in selected_ids),
-            "selection_mode": selection_mode,
             "evidence_id": patch.evidence_id,
-            "status": patch.status,
-            "confidence": patch.confidence,
-            "name": patch.name,
         }
         for patch in package.patches.values()
     ]
@@ -477,13 +401,11 @@ def compose_edits(
             outcome = "applied"
         target = package.targets[edit.destination_target_id]
         patch = package.patches[edit.patch_id]
-        group = package.groups[patch.group_id]
         patch_rows.append(
             {
                 "package_id": package.package_id,
                 "feature_id": feature_id,
-                "group_id": group.group_id,
-                "group_name": group.name,
+                "group_id": patch.group_id,
                 "patch_id": edit.patch_id,
                 "evidence_id": patch.evidence_id,
                 "edit_id": edit.edit_id,

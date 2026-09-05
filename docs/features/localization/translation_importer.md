@@ -16,7 +16,7 @@ in [translation importer knowledge](../../knowledge/localization/translation_imp
 ## Mapping metadata
 
 - Canonical `mappings.tsv` rows: `2,061`
-- Canonical `mappings.tsv` SHA-256: `71ED63B0A5E9BC703FD4426E17BAA7B22DB549158C3755EF292205FD34A61A37`
+- Canonical `mappings.tsv` SHA-256: `9B41B2DAB1502C034C5C29656BB37E54D958199248FA5F1DA36B115C82B36044`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the builder's configuration-resource fingerprint own content identity.
@@ -112,7 +112,8 @@ semantic `<iconOK>` token for the confirm icon. The importer normalizes those
 conventions centrally to ASCII quotation marks and NA2's `<iconCROSS>` token
 before transforms or placement and rejects row-level overrides for either
 family. T2194 declares literal-percent escaping for its printf-style consumer,
-and T2195-T2198 declare one formula-symbol normalization transform.
+and T2195-T2198 preserve their literal donor symbols. Their glyphs and metrics
+are supplied by [Font](font.md).
 The maintained Ninja Song suite establishes 40 exact objective, index,
 numeric/status, bonus, and formula-symbol rows. The paired Movie pass adds
 the locked-title placeholder. This is an evidence-scoped English table, not a
@@ -160,9 +161,9 @@ the prefix is applied to the first resulting fragment. Most rows require no
 transform. Paired `@...@` spans in official NUN5 donor text are decoded as
 quotation marks by the importer before those operations, and NUN5's semantic
 `<iconOK>` confirm token becomes NA2's `<iconCROSS>` token. The explicit
-`escape_literal_percent` and `normalize_formula_symbol` transforms handle the
-Ninja Song printf and formula consumers without changing their raw official
-donors. Raw `donor` and `donor_ref` values remain unchanged as provenance.
+`escape_literal_percent` transform handles the Ninja Song printf consumer.
+Formula symbols pass through unchanged to Font's shared glyph mapping.
+Raw `donor` and `donor_ref` values remain unchanged as provenance.
 
 `reference_refs` stores optional comma-separated pointer sites in the same
 `SOURCE@OFFSET` form. `parent_mapping_id` lets a continuation row reuse its

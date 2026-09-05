@@ -50,12 +50,6 @@ NUN5_QUOTED_SPAN = re.compile(r"@([^@\r\n]+)@")
 NUN5_MARKUP_EQUIVALENTS = {
     "<iconOK>": "<iconCROSS>",
 }
-NUN5_FORMULA_SYMBOLS = {
-    "*": "*",
-    "=": "=",
-    "·": ".",
-    "%": "%",
-}
 VALID_TRANSFORMS = {
     "",
     "empty",
@@ -74,7 +68,6 @@ VALID_TRANSFORMS = {
     "append_space",
     "flatten_br_slice",
     "escape_literal_percent",
-    "normalize_formula_symbol",
 }
 TARGET_RUNTIME_BASES = {
     "SLPS": 0x000FFF00,
@@ -580,18 +573,6 @@ def resolve_replacement_text(
                 "literal percent"
             )
         resolved = template.replace("%", "%%")
-    elif transform == "normalize_formula_symbol":
-        match = re.fullmatch(r"( *)([*=·%])( *)", template)
-        if match is None:
-            raise ValueError(
-                f"{label}: normalize_formula_symbol requires one supported "
-                "formula symbol with optional spaces"
-            )
-        resolved = (
-            match.group(1)
-            + NUN5_FORMULA_SYMBOLS[match.group(2)]
-            + match.group(3)
-        )
     else:
         raise ValueError(f"{label}: unsupported transform {transform!r}")
     return normalize_fullwidth_ascii(prefix + resolved)
@@ -788,7 +769,6 @@ def parse_mappings(
             "after_placeholder2",
             "append_space",
             "escape_literal_percent",
-            "normalize_formula_symbol",
         }:
             if arguments:
                 raise ValueError(f"{label}: {transform} does not accept arguments")

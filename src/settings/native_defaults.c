@@ -19,9 +19,6 @@ typedef struct NativeSettingsDefaults {
     u8 battle_masks[12];
     u8 practice_values[12];
     u8 practice_masks[12];
-    u8 practice_linked_mode_value;
-    u8 practice_linked_mode_mask;
-    u8 reserved[2];
 } NativeSettingsDefaults;
 
 extern const NativeSettingsDefaults native_settings_defaults;
@@ -66,12 +63,10 @@ void settings_apply_selected_defaults(void *manager)
             native_settings_defaults.practice_values,
             native_settings_defaults.practice_masks
         );
-        if (native_settings_defaults.practice_linked_mode_mask != 0u) {
-            ((NativeLinkedModeSet)NATIVE_LINKED_MODE_SET_ADDRESS)(
-                *(volatile u32 *)((u8 *)manager + MANAGER_SIDE_OFFSET),
-                native_settings_defaults.practice_linked_mode_value
-            );
-        }
+        ((NativeLinkedModeSet)NATIVE_LINKED_MODE_SET_ADDRESS)(
+            *(volatile u32 *)((u8 *)manager + MANAGER_SIDE_OFFSET),
+            1u
+        );
     }
 }
 

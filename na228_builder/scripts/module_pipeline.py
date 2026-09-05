@@ -20,8 +20,13 @@ from .character_overrides import (
     character_override_fragment_feature,
     character_overrides_enabled_fragment,
 )
-from .battle_settings import battle_settings_fragment
+from .support_selection import support_selection_runtime_package
+from .battle_settings import (
+    battle_settings_fragment,
+    battle_settings_table_fragments,
+)
 from .substitution_gauge import substitution_gauge_fragment
+from .items_settings import items_settings_fragment
 from .practice_settings import (
     practice_settings_fragment,
     practice_settings_table_fragments,
@@ -147,6 +152,11 @@ def prepare_module_pipeline(
                     *declaration.fragments,
                 ),
             )
+        if module.feature_id == "character_select":
+            declaration = support_selection_runtime_package(
+                configuration.selection,
+                declaration,
+            )
         if module.feature_id == "settings":
             native_defaults_fragment = native_settings_defaults_fragment(
                 configuration.selection,
@@ -165,10 +175,15 @@ def prepare_module_pipeline(
                 owner=module.module_id,
             )
             if battle_schema_fragment is not None:
+                battle_table_fragments = battle_settings_table_fragments(
+                    configuration.selection,
+                    owner=module.module_id,
+                )
                 declaration = replace(
                     declaration,
                     fragments=(
                         battle_schema_fragment,
+                        *battle_table_fragments,
                         *declaration.fragments,
                     ),
                 )
@@ -201,6 +216,9 @@ def prepare_module_pipeline(
                         *declaration.fragments,
                     ),
                 )
+            items_fragment = items_settings_fragment(configuration.selection, owner=module.module_id)
+            if items_fragment is not None:
+                declaration = replace(declaration, fragments=(items_fragment, *declaration.fragments))
             gauge_config_fragment = substitution_gauge_fragment(
                 configuration.selection,
                 owner=module.module_id,

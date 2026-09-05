@@ -2,7 +2,7 @@
   "imports": {
     "workshop": "../UN Workshop/paths.json"
   },
-  "existence_deferred_roots": ["build", "cache", "work", "task_logs"],
+  "existence_deferred_roots": ["build", "cache", "release", "work", "task_logs"],
   "roots": {
     "builder": "na228_builder",
     "resources": "resources",

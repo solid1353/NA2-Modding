@@ -18,6 +18,7 @@ does not document the `na228` or Workshop command-line interfaces; use
   proposal and include all agent-owned work required to deliver it.
   Only include work that will be done.
   Exclude completed tasks, unrelated state, and user-directed actions.
+  Omit any statement that has no corresponding pending agent action.
 - `ver`: accept the current result across every repository changed by the task.
   Agents may then add tests. Validate, commit, and push the accepted result. In
   Design mode, first promote useful design content and delete the design

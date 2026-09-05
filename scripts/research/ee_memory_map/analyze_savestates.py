@@ -5,11 +5,8 @@ import csv
 import hashlib
 import json
 import re
-import shutil
 import struct
-import subprocess
 import sys
-import zipfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, Sequence
@@ -78,9 +75,9 @@ SLOT_LABELS = {
 
 STATE_NAME_RE = re.compile(
     r"^(?P<serial>[A-Z0-9]{4}-[A-Z0-9]{5}) \((?P<crc>[0-9A-Fa-f]{8})\)\."
-    r"(?P<slot>\d{2})\.p2s$"
+    r"(?P<slot>\d{2})$"
 )
-NUMERIC_STATE_NAME_RE = re.compile(r"^(?P<slot>\d+)\.p2s$")
+NUMERIC_STATE_NAME_RE = re.compile(r"^(?P<slot>\d+)$")
 
 
 class MemoryMapError(RuntimeError):
@@ -228,39 +225,12 @@ def _capture_variant_for(path: Path) -> str | None:
     return _e2e_variant_for(path) or _recording_variant_for(path)
 
 
-def _extract_with_zipfile(path: Path, member: str) -> bytes | None:
-    try:
-        with zipfile.ZipFile(path) as archive:
-            try:
-                return archive.read(member)
-            except (NotImplementedError, RuntimeError):
-                return None
-    except (OSError, zipfile.BadZipFile) as exc:
-        raise MemoryMapError(f"Savestate is not a readable ZIP archive: {path}") from exc
-
-
 def extract_member(path: Path, member: str, *, expected_size: int | None = None) -> bytes:
-    data = _extract_with_zipfile(path, member)
-    if data is None:
-        tar = shutil.which("tar")
-        if tar is None:
-            raise MemoryMapError(
-                "Savestate compression is unsupported by Python and tar is unavailable"
-            )
-        result = subprocess.run(
-            [tar, "-xOf", str(path), member],
-            check=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        data = result.stdout
-        # Windows tar 3.7.7 can return a nonzero status and a harmless
-        # "Truncated zstd file body" warning after emitting the complete member.
-        if result.returncode != 0 and (
-            expected_size is None or len(data) != expected_size
-        ):
-            detail = result.stderr.decode("utf-8", errors="replace").strip()
-            raise MemoryMapError(f"Could not extract {member!r}: {detail}")
+    member_path = path / member
+    try:
+        data = member_path.read_bytes()
+    except OSError as exc:
+        raise MemoryMapError(f"Could not read {member!r} from {path}") from exc
 
     if expected_size is not None and len(data) != expected_size:
         raise MemoryMapError(
@@ -499,26 +469,31 @@ def analyze_state(path: Path) -> StateObservation:
     regions.append(
         observe_region(memory, "system_stack_tail", allocator.heap_end + 0x10, EE_MEMORY_SIZE)
     )
-    stat = path.stat()
+    source_size, source_sha256 = _measure_state(path)
     return StateObservation(
         variant=variant,
         identity=identity,
         screen=_screen_for(path, identity),
         source_name=path.name,
-        source_size=stat.st_size,
-        source_sha256=_hash_file(path),
+        source_size=source_size,
+        source_sha256=source_sha256,
         allocator=allocator,
         overlay=parse_overlay(memory),
         regions=tuple(regions),
     )
 
 
-def _hash_file(path: Path) -> str:
+def _measure_state(path: Path) -> tuple[int, str]:
     digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest().upper()
+    total_size = 0
+    for file_path in sorted(candidate for candidate in path.rglob("*") if candidate.is_file()):
+        digest.update(file_path.relative_to(path).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        total_size += file_path.stat().st_size
+        with file_path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+    return total_size, digest.hexdigest().upper()
 
 
 def analyze_states(paths: Iterable[Path]) -> list[StateObservation]:
@@ -684,13 +659,17 @@ def _resolve_argument(value: str, paths: Paths) -> Path:
 
 
 def _discover_inputs(root: Path) -> list[Path]:
-    if root.is_file():
-        return [root]
     if not root.is_dir():
         raise MemoryMapError(f"Input path does not exist: {root}")
-    result = sorted(path for path in root.rglob("*.p2s") if path.is_file())
+    if (root / "PCSX2 Savestate Version.id").is_file():
+        return [root]
+    result = sorted(
+        marker.parent
+        for marker in root.rglob("PCSX2 Savestate Version.id")
+        if marker.is_file()
+    )
     if not result:
-        raise MemoryMapError(f"No .p2s savestates found below: {root}")
+        raise MemoryMapError(f"No savestate directories found below: {root}")
     return result
 
 
@@ -700,10 +679,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "inputs",
-        nargs="*",
+        nargs="+",
         help=(
-            "Savestate files/directories or @root paths. Defaults to this task's "
-            "preserved 2026-07-22 capture set."
+            "Savestate directories, parent directories, or @root paths."
         ),
     )
     parser.add_argument(
@@ -716,15 +694,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     paths = load_paths(REPOSITORY_ROOT)
-    raw_inputs = args.inputs or [
-        str(
-            paths.path(
-                "work", "EE Runtime Memory Map", "savestates", "2026-07-22"
-            )
-        )
-    ]
     inputs: list[Path] = []
-    for value in raw_inputs:
+    for value in args.inputs:
         inputs.extend(_discover_inputs(_resolve_argument(value, paths)))
     observations = analyze_states(inputs)
 

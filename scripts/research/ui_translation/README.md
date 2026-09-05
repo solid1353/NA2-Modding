@@ -136,7 +136,7 @@ python scripts/research/ui_translation/ui_runtime.py capture `
 
 Each successful capture contains:
 
-- `state.p2s`: the exact savestate;
+- `state/`: the exact savestate directory;
 - `screenshot.png`: PCSX2's embedded savestate screenshot;
 - `manifest.json`: expected target identity, optional live PINE identity, ISO
   hash, rendering settings, state and screenshot hashes, dimensions, capture

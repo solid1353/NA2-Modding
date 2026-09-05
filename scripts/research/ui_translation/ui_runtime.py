@@ -12,11 +12,9 @@ import re
 import shutil
 import socket
 import struct
-import subprocess
 import sys
 import tempfile
 import time
-import zipfile
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -37,7 +35,7 @@ from scripts.lib.paths import (  # noqa: E402
 
 TARGETS_PATH = SCRIPT_DIR / "targets.json"
 CASE_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
-SLOT_STATE_RE = re.compile(r"^.+ \([0-9A-Fa-f]{8}\)\.\d{2}\.p2s$")
+SLOT_STATE_RE = re.compile(r"^.+ \([0-9A-Fa-f]{8}\)\.\d{2}$")
 
 
 class UiRuntimeError(RuntimeError):
@@ -457,6 +455,17 @@ def hash_file(path: Path) -> str:
     return _hash_file_cached(str(path.resolve()), stat.st_size, stat.st_mtime_ns)
 
 
+def hash_directory(path: Path) -> str:
+    digest = hashlib.sha256()
+    for file_path in sorted(candidate for candidate in path.rglob("*") if candidate.is_file()):
+        digest.update(file_path.relative_to(path).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        with file_path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+    return digest.hexdigest().upper()
+
+
 def resolve_runtime_input(value: str, paths: Paths) -> Path:
     if value.startswith("@"):
         try:
@@ -593,43 +602,48 @@ def logical_path(path: Path, paths: Paths) -> str:
     return f"@{root_name}/{suffix}" if suffix != "." else f"@{root_name}"
 
 
-def _slot_state_snapshot(state_root: Path) -> dict[Path, tuple[int, int]]:
-    result: dict[Path, tuple[int, int]] = {}
+def _state_signature(path: Path) -> tuple[int, int, int]:
+    files = [candidate for candidate in path.rglob("*") if candidate.is_file()]
+    stats = [candidate.stat() for candidate in files]
+    return (
+        max((stat.st_mtime_ns for stat in stats), default=path.stat().st_mtime_ns),
+        sum(stat.st_size for stat in stats),
+        len(files),
+    )
+
+
+def _slot_state_snapshot(state_root: Path) -> dict[Path, tuple[int, int, int]]:
+    result: dict[Path, tuple[int, int, int]] = {}
     if not state_root.is_dir():
         return result
     for path in state_root.iterdir():
-        if path.is_file() and SLOT_STATE_RE.fullmatch(path.name):
-            stat = path.stat()
-            result[path] = (stat.st_mtime_ns, stat.st_size)
+        if path.is_dir() and SLOT_STATE_RE.fullmatch(path.name):
+            result[path] = _state_signature(path)
     return result
 
 
 def _state_has_screenshot(path: Path) -> bool:
-    try:
-        with zipfile.ZipFile(path) as archive:
-            return "Screenshot.png" in archive.namelist()
-    except (OSError, zipfile.BadZipFile):
-        return False
+    return (path / "Screenshot.png").is_file()
 
 
 def wait_for_saved_state(
     state_root: Path,
     target: Target,
     slot: int,
-    before: dict[Path, tuple[int, int]],
+    before: dict[Path, tuple[int, int, int]],
     timeout: float,
 ) -> Path:
-    expected_name = f"{target.serial} ({target.crc}).{slot:02d}.p2s"
+    expected_name = f"{target.serial} ({target.crc}).{slot:02d}"
     expected_name_folded = expected_name.casefold()
     deadline = time.monotonic() + timeout
-    last_size: int | None = None
+    last_signature: tuple[int, int, int] | None = None
     stable_samples = 0
 
     while time.monotonic() < deadline:
         matches = [
             path
             for path in state_root.iterdir()
-            if path.is_file() and path.name.casefold() == expected_name_folded
+            if path.is_dir() and path.name.casefold() == expected_name_folded
         ]
         if len(matches) > 1:
             raise UiRuntimeError(
@@ -637,14 +651,14 @@ def wait_for_saved_state(
             )
         if matches:
             candidate = matches[0]
-            stat = candidate.stat()
+            signature = _state_signature(candidate)
             previous = before.get(candidate)
-            changed = previous is None or previous != (stat.st_mtime_ns, stat.st_size)
-            if changed and stat.st_size > 0:
-                if stat.st_size == last_size:
+            changed = previous is None or previous != signature
+            if changed and signature[1] > 0:
+                if signature == last_signature:
                     stable_samples += 1
                 else:
-                    last_size = stat.st_size
+                    last_signature = signature
                     stable_samples = 1
                 if stable_samples >= 3 and _state_has_screenshot(candidate):
                     return candidate
@@ -655,44 +669,20 @@ def wait_for_saved_state(
         for path, signature in _slot_state_snapshot(state_root).items()
         if before.get(path) != signature
     )
-    detail = f" Changed slot files: {changed_names}" if changed_names else ""
+    detail = f" Changed slot directories: {changed_names}" if changed_names else ""
     raise UiRuntimeError(
         f"Timed out waiting for {expected_name!r} after {timeout:.1f}s.{detail}"
     )
 
 
 def extract_embedded_screenshot(state_path: Path) -> bytes:
+    screenshot_path = state_path / "Screenshot.png"
     try:
-        with zipfile.ZipFile(state_path) as archive:
-            if "Screenshot.png" not in archive.namelist():
-                raise UiRuntimeError(
-                    f"Savestate has no embedded Screenshot.png: {state_path.name}"
-                )
-            try:
-                data = archive.read("Screenshot.png")
-            except (NotImplementedError, RuntimeError):
-                data = b""
-    except zipfile.BadZipFile as exc:
-        raise UiRuntimeError(f"Savestate is not a valid ZIP archive: {state_path}") from exc
-
-    if not data:
-        tar = shutil.which("tar")
-        if tar is None:
-            raise UiRuntimeError(
-                "Savestate uses unsupported ZIP compression and tar is unavailable"
-            )
-        result = subprocess.run(
-            [tar, "-xOf", str(state_path), "Screenshot.png"],
-            check=False,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if result.returncode != 0:
-            error = result.stderr.decode("utf-8", errors="replace").strip()
-            raise UiRuntimeError(
-                f"Could not extract embedded screenshot with tar: {error}"
-            )
-        data = result.stdout
+        data = screenshot_path.read_bytes()
+    except OSError as exc:
+        raise UiRuntimeError(
+            f"Savestate has no readable Screenshot.png: {state_path.name}"
+        ) from exc
     png_dimensions(data)
     return data
 
@@ -757,7 +747,7 @@ def _archive_state(
     consume_source: bool,
 ) -> dict[str, Any]:
     _validate_case_and_slot(case_id, slot)
-    if not source_state.is_file():
+    if not source_state.is_dir():
         raise UiRuntimeError(
             f"Savestate does not exist: {logical_path(source_state, paths)}"
         )
@@ -774,15 +764,15 @@ def _archive_state(
         )
     temp_dir = Path(tempfile.mkdtemp(prefix=".capture-", dir=parent))
     try:
-        archived_state = temp_dir / "state.p2s"
-        shutil.copy2(source_state, archived_state)
+        archived_state = temp_dir / "state"
+        shutil.copytree(source_state, archived_state)
         screenshot = extract_embedded_screenshot(archived_state)
         screenshot_path = temp_dir / "screenshot.png"
         screenshot_path.write_bytes(screenshot)
         width, height = png_dimensions(screenshot)
 
         image_stat = image_path.stat()
-        state_stat = archived_state.stat()
+        state_signature = _state_signature(archived_state)
         manifest = {
             "capture_id": capture_id,
             "captured_at_utc": captured_at,
@@ -802,10 +792,10 @@ def _archive_state(
             "rendering": rendering.to_json(),
             "state": {
                 "source_path": logical_path(source_state, paths),
-                "path": "state.p2s",
+                "path": "state",
                 "slot": slot,
-                "size": state_stat.st_size,
-                "sha256": hash_file(archived_state),
+                "size": state_signature[1],
+                "sha256": hash_directory(archived_state),
             },
             "screenshot": {
                 "path": "screenshot.png",
@@ -828,7 +818,7 @@ def _archive_state(
     removal_warning: str | None = None
     if consume_source:
         try:
-            source_state.unlink()
+            shutil.rmtree(source_state)
             source_state_removed = True
         except OSError as exc:
             removal_warning = str(exc)
@@ -892,7 +882,7 @@ def capture_state(
 def _manual_state_path(paths: Paths, target: Target, slot: int) -> Path:
     _validate_case_and_slot("manual", slot)
     return paths.path(
-        "pcsx2_dev", "sstates", f"{target.serial} ({target.crc}).{slot:02d}.p2s"
+        "pcsx2_dev", "sstates", f"{target.serial} ({target.crc}).{slot:02d}"
     )
 
 

@@ -3,6 +3,11 @@
 Native X-dash action states, cancellation boundary, movement transition, and
 chakra behavior.
 
+## Evidence basis and address conventions
+
+The clean resident and BTL identities and their shared address conversions
+follow [Retail game file identities](../game/files/file_identities.md).
+
 ## Research coverage
 
 - **Assigned scope:** establish the native X-dash action record, phase and

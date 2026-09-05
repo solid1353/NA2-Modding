@@ -18,9 +18,10 @@ vertical response motion, launch/contact transitions, timed downed recovery and
 get-up choices, conditional rehit protection, and guarded-reaction entry and
 exit. The investigation was static and bounded rather than globally exhaustive.
 
-- **Exploration depth:** coverage used the exact clean resident `SLPS_258.37` and `PRG/BTL.BIN` artifacts
-identified below, together with their maintained C and instruction exports. The
-resident trace followed the representative native chain through
+- **Exploration depth:** coverage used the exact clean resident `SLPS_258.37`
+and `PRG/BTL.BIN` artifacts identified below through maintained read-only
+analysis, C/instruction exports, and exact clean bytes. The resident trace
+followed the representative native chain through
 `FUN_002209A0`, `FUN_00231C60`, `FUN_00232B80`, `FUN_00233870`,
 `FUN_002346B0`, `FUN_00234DA0`, `FUN_00235510`, `FUN_00235690`, the general
 timeline/countdown drivers, guard routines `FUN_00228320`, `FUN_00228760`, and
@@ -39,8 +40,9 @@ The decoded authored-data coverage is exhaustive for these exact clean ranges:
 - all ten `0x1C`-byte guarded-response rows at resident runtime `0x00407550`
   (ELF file `0x00307650`).
 
-- **Confirmed coverage:** the ordinary/guarded accepted-hit
-split; exact native selector mappings and bounded overrides; descriptor phase
+- **Confirmed coverage:** the ordinary/guarded accepted-hit split and exact
+source-mode-specific rejection, interception, and paired-fighter side effects;
+exact native selector mappings and bounded overrides; descriptor phase
 conditions and non-default rates; table-driven response impulses and damping;
 ordered fighter-update pause and action-entry lock behavior; contact, held, and
 downed handoffs; exact timed/input recovery thresholds and exits; guard table
@@ -214,9 +216,46 @@ nonzero `+0x95A` to sentinel `-1` under the shown facing condition, and flag
 ordinary branch. Static code proves guard invalidation/bypass, but not the
 authoring names of those two flags.
 
-The router has four source-object modes (`0`, `1`, `2`, and `3`) that converge
-on the same ordinary-versus-guarded decision. This document does not assign
-gameplay names to those source modes.
+The complete resident router occupies `0x002209A0..0x0022111F`. Its
+decompilation and instructions establish four source-object modes (`0`, `1`,
+`2`, and `3`). Their normal paths converge on the
+same ordinary-versus-guarded decision, but their admission gates and side
+effects are not interchangeable:
+
+| Mode | Exact additional behavior before the response branch |
+| ---: | --- |
+| `0` | May replace the record returned by `FUN_00222B20` with `FUN_00222A40(fighter[+0x20])` when retained source `+0xE58` is non-null, source `+0x0C` is nonzero, original attack `+0x50` is zero, and the replacement is non-null. It rejects the hit when `FUN_002247A0(fighter)` is nonzero or `FUN_00222BD0(fighter)` is zero. |
+| `1` | Requires retained source `+0xE58`, source halfword `+0x02 == 0x474F`, source word `+0x0C == 1`, and a nonzero result from live overlay target `0x0072EDE0(source,fighter)`. It runs the interception predicate described below before invoking a source virtual callback at vtable `+0x58` and live overlay target `0x0072E5D0(1.0,source,fighter,attack)`. |
+| `2` | Requires retained source `+0xE58` and `FUN_002247A0(fighter) == 0`, then runs the same interception predicate. On its normal route it writes paired fighter `fighter[+0x20] + 0xB58` to `1` for ordinary response or `-1` for guarded response; its intercepted route writes `-2`. |
+| `3` | Requires retained source `+0xE58` and `FUN_002247A0(fighter) == 0`, then performs the common guard invalidation and ordinary/guarded branch without mode `0`'s replacement-record and positive-repeat gates. |
+
+`FUN_002247A0` is exactly the predicate `fighter[+0x230] > 0`.
+`FUN_00222BD0` returns positive retained repeat value `+0xE5C` while
+`+0xB00 == 0`, otherwise zero, and returns `1` while `+0xB00 != 0`; thus the
+mode-`0` admission test is specifically a nonzero expected-repeat requirement,
+not a generic validity check. `FUN_00222B20` itself selects retained attack
+`+0xE54`, then source-derived records, and finally the resident
+`PL_ATK_DUMMY` record, in that order.
+
+Modes `1` and `2` call
+`FUN_00229130(fighter,attack,5,selected_response,1)`. A zero result continues
+to ordinary or guarded response. A nonzero result diverts into
+`FUN_002297D0`: mode `1` supplies code `0x21`, while mode `2` supplies `0x41`.
+That diversion stores the code at fighter `+0x964`, clears the complete
+action-lock block and conditionally primes the secondary countdown to `-20`,
+brings planar and vertical response speeds toward zero, and force-enters
+`(major,substate) = (0,8)`. Subject to its internal gates, it also subtracts
+`1.0` from fighter float `+0x70`, clamps the result at zero, and writes `15.0`
+to `+0x1A0`. These are observed state mutations; the player-facing meaning of
+the interception, codes, and two float fields remains unresolved.
+
+The intercepted paths return `0` from `FUN_002209A0` without entering the
+ordinary/guarded response. A normally routed accepted hit returns `1` after
+the branch. On mode `2`, `FUN_00233540(fighter,1)` consumes the paired
+`+0xB58` marker after routing: among the three values written here, only
+ordinary marker `1` passes its notification condition; guarded `-1` and
+intercepted `-2` do not. This proves a mode-specific paired-fighter side effect
+without establishing names for the four source modes.
 
 ## Ordinary response selection
 

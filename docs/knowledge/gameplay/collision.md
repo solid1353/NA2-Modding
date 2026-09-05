@@ -25,7 +25,7 @@ the row says “sampled.”
 | --- | --- |
 | Overlay mapping | Complete for the two scoped clean assets and every overlay-local address cited here; encoded direct targets were normalized against raw bytes using the canonical address conversion. |
 | Manager and registries | Full bodies for manager allocation/init/destruction, two-primary and two-by-32 auxiliary registries, high/low auxiliary insertion, cleanup, selective removal, candidate aggregation, and the main frame consumer; constructor callers were sampled to prove both insertion variants without classifying every object type. |
-| Resident DD* interaction lists | Full relevant bodies from resident `0x001DCA40..0x001DE1C0`: 0x24 list heads, 0x34 registrations, 0x40 results, global activation chains, generation-safe resolution, all-pairs mask gating, sphere overlap, result emission, and cleanup. BTL registration/update callers were representative rather than exhaustive. |
+| Resident DD* interaction lists | Full relevant bodies from resident `0x001DCA40..0x001DE1C0`: 0x24 list heads, 0x34 registrations, 0x40 results, global activation chains, generation-safe resolution, all-pairs mask gating, sphere overlap, result emission, and cleanup. The canonical GP-relative reader/writer set and lifecycle of the shared acceptance gate at `0x00607674` were also traced. BTL registration/update callers were representative rather than exhaustive. |
 | Spherical volumes and proximity caches | Full 0x50 record initializer/resolver and direct DD* overlap math; full generic BTL snapshot builder/reset and all direct references recovered for the four cache-count fields. Three inline cache appenders and the two direct proximity consumers were inspected; callers reachable only through computed addresses were not exhaustively enumerated. |
 | Result snapshots and candidate masks | Full 0x40 result/snapshot copy and resolver, both bucket classifiers, primary and auxiliary mask producers, manager aggregation, and the three pair-filter families. Fixed loops, mask equations, backlink offsets, and generation checks were traced exactly. |
 | Active interaction records | Full resident base initializer, 0x44-definition to 0x68-runtime copy, primary/auxiliary descriptor builders, raw-only installers, and terminal removal blocks. Higher-level activation-wrapper invocation remains indirect/computed and was not recovered. |
@@ -40,18 +40,20 @@ separate spatial broad phase in the resident DD* all-pairs processor; the
 distinct hierarchical broad/narrow phases in resident environment queries;
 0x40 results and snapshots; fixed candidate-mask reductions and compatibility
 equations; 0x44/0x68 interaction records and parallel activation lifecycles;
-0x30 response packets and their common handoff; stage family-A/family-B segment
-chains, boundary records, builders, queries, and cleanup; and exact live/export/
-raw address conventions.
+0x30 response packets and their common handoff; the static set/clear lifecycle
+of the resident global acceptance gate; stage family-A/family-B segment chains,
+boundary records, builders, queries, and cleanup; and exact live/export/raw
+address conventions.
 
 - **Unresolved or untested:** original enum/class/field
 names, the semantic meaning of several opaque interaction-record fields,
-higher-level indirect callers of the activation wrappers, the writer and wider
-meaning of the resident global acceptance gate, any computed-only writers of
-the stage selected-index bytes, and the gameplay meaning of stage family and
-selector numbers. No direct ownership edge was proven between the BTL triangle
-cache and either the interaction manager or `ccBg*`; that negative result is
-not proof that no indirect engine-level relation exists.
+higher-level indirect callers of the activation wrappers, the original semantic
+name and full state-machine meaning of the resident global acceptance gate, any
+computed-only writers of the stage selected-index bytes, and the gameplay
+meaning of stage family and selector numbers. No direct ownership edge was
+proven between the BTL triangle cache and either the interaction manager or
+`ccBg*`; that negative result is not proof that no indirect engine-level
+relation exists.
 
 - **Deliberate exclusions and overlap:** Adventure mode; damage formulas or scaling;
 substitution; timing and animation; widescreen/camera; media and localization;
@@ -904,13 +906,28 @@ side-effect-free probe flag: special `0x100/0x200` cross-mask classes dispatch
 before consulting it. The only direct caller recovered for this dispatcher is
 the main frame consumer at live `0x0077D260`, which passes zero.
 
-All three pair filters reject while resident `0x001EC290()` returns 1. That
-resident body is exactly `return *(s32 *)0x00607674 != 0`: it reads no pair,
-mask, record, or geometry state. No writer for `0x00607674` was recovered in
-the inspected resident body, and the BTL export has no direct reference to
-that address. Its wider state-machine meaning is therefore unknown, but its
-collision-facing effect is an engine-global acceptance disable rather than a
-per-object filter.
+All three pair filters reject while resident `FUN_001EC290` at `0x001EC290`
+returns 1. That five-instruction body is exactly
+`return *(s32 *)0x00607674 != 0`: it reads no pair, mask, record, or geometry
+state. A canonical GP-relative access audit found two direct stores and two
+direct loads of the word:
+
+| Resident access | Operation and established context |
+| ---: | --- |
+| `0x001EEE6C` in `FUN_001EEE30` | Clears `0x00607674`. The same initializer rewrites control byte `0x006B28D0` with bit 0 set and bit 2 clear, stores `FUN_001F6420(global, 6) << 24` at `0x006B28D4`, and sets control-byte bit 2 when that shifted result is zero. |
+| `0x001F0BC4` in `FUN_001F0B10` | Stores 1 to `0x00607674` when control byte `0x006B28D0` bit 2 is set. The function does not clear the word on the opposite path, so the value remains latched until the initializer above clears it. |
+| `0x001EC290` in `FUN_001EC290` | Loads the word and canonicalizes it to boolean for the collision filters and two resident callers. |
+| `0x001EFB50` in `FUN_001EF9C0` | Loads the word directly in state 4; a set value selects state 10 and invokes resident operations with constants `0x0A`, `0x32`, and 0. |
+
+The getter's other resident callers reinforce that this is a shared phase latch,
+not collision-owned state. `FUN_001EBD90` includes it among four global guards
+that take an early coordination path. `FUN_0024E960` tests it on the first
+update of its state-0 branch: a set value advances that object to state 1 and
+resets its counter, while a clear value takes a participant-flag update path.
+These observations establish the writer and reuse topology without establishing
+the original state or gameplay names. The collision-facing effect remains an
+engine-global acceptance disable rather than a per-object filter. Computed
+accesses not represented by a GP-relative load/store remain possible.
 
 ### Primary versus primary
 

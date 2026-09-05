@@ -26,7 +26,10 @@ not by itself a class identity.
   RTTI/name descriptors, finalizers, and consumers. Important bounded paths
   included `FUN_001952F0` for composition children, `FUN_001AD240` for
   post-parse attachment, and `FUN_00197570` for concrete morph blending. This
-  was not an exhaustive whole-program call-graph audit.
+  was not an exhaustive whole-program call-graph audit. The exact parser-side
+  input and single-allocation runtime layout for unresolved route `0x1F00` were
+  recovered, and its direct literal-use audit was bounded to aligned resident
+  instructions.
   Eight exact clean CCS inputs listed below were decoded in
   memory for semantic payload checks. Separately, a chunk-boundary inventory
   exhaustively scanned the 1,732 extracted CCS files in the permitted corpus;
@@ -45,8 +48,8 @@ not by itself a class identity.
   tag `0x1000` while creating a shared `0x38`-byte owner through
   `FUN_0019E770`, `FUN_0019EDE0`, and `FUN_0019D2D0`; no direct relationship to
   file-block handler `FUN_001ADB70` was established, so those two uses are not
-  conflated or promoted. No direct consumer was recovered for the `0x1F00`
-  nested table.
+  conflated or promoted. The binary and runtime layouts of the `0x1F00` nested
+  table are confirmed below, but no direct semantic consumer was recovered.
 - **Deliberate exclusions and overlap:** the explicitly excluded mode/resource
   subtree, overlays, and overlay resource trees were not inspected.
 - **Evidence limitations:** static evidence is limited to the identified clean resident executable, its
@@ -208,6 +211,81 @@ File tag `0x0005` is the stream terminator handled inside `FUN_001AC8A0`, not
 an object-type mapping. An unrecognized file tag reaches the deliberate
 null-store failure path. The terminator's container-finalization behavior is
 documented in [Resident CCS runtime](ccs_runtime.md#parsing-type-dispatch-and-publication).
+
+### Unresolved `0x1F00` binary and runtime layouts
+
+**Observation:** `FUN_001B2930` is a two-pass parser. It first copies the complete payload to a
+temporary buffer and computes the exact output size, then makes one
+`FUN_00117700` allocation, resolves record IDs through `FUN_001AD8C0`, installs
+runtime tag `0x1F00` and the allocation pointer at record `+0x2A` and `+0x2C`,
+and frees the temporary buffer. Apart from resolved record pointers, every
+pointer written into the result targets that same allocation. The independent
+`FUN_001A9F10` teardown branch therefore frees only the allocation root through
+`FUN_00105650`.
+
+The input payload starts with this header; offsets are relative to the copied
+payload:
+
+| Offset | Width | Parser-observed role |
+| ---: | ---: | --- |
+| `+0x00` | `4` | Target record ID passed to `FUN_001AD8C0`. |
+| `+0x04` | `2` | Group count. |
+| `+0x06` | `2` | Record-ID table count; the parser advances past this many four-byte entries before reading the first group. |
+| `+0x08` | `4 * record-ID table count` | Record-ID table. Each group selects one entry by index and resolves it through `FUN_001AD8C0`. |
+
+Each group follows the record-ID table and the preceding variable-length
+group. Its input representation is:
+
+| Group-relative offset | Width | Parser-observed role |
+| ---: | ---: | --- |
+| `+0x00` | `2` | Index into the header's record-ID table. |
+| `+0x02` | `2` | Ignored by this parser; it is neither tested nor copied. |
+| `+0x04` | `2` | Four-byte-pair count. |
+| `+0x06` | `2` | Item count. |
+| `+0x08` | `4 * pair count` | Opaque pairs of two halfwords, copied without interpretation. |
+| variable | variable | `item count` consecutive items in the format below. |
+
+Each input item has a 12-byte fixed header followed by one required and one
+conditional array:
+
+| Item-relative offset | Width | Parser-observed role |
+| ---: | ---: | --- |
+| `+0x00` | `2` | Element count. |
+| `+0x02` | `2` | Flags. Bit `0x1000` alone is tested here. |
+| `+0x04` | `4` | Four opaque bytes copied individually. |
+| `+0x08` | `4` | Two opaque halfwords. |
+| `+0x0C` | `4 * element count` | Primary array, copied as two halfwords per element. |
+| following primary array | `2 * element count`, rounded up to a four-byte boundary | Conditional secondary halfword array, present only when flags include `0x1000`. |
+
+The single runtime allocation begins with two parallel group tables followed by
+the packed groups. For group count `N`, its root layout is:
+
+| Runtime offset | Width | Parser-observed role |
+| ---: | ---: | --- |
+| `+0x00` | `4` | Resolved target record pointer. |
+| `+0x04` | `2` | Group count `N`; `+0x06` is not written by this parser. |
+| `+0x08` | `4` | Pointer to the resolved-group-record array at `+0x0C + 4*N`. |
+| `+0x0C` | `4 * N` | Pointers to the `N` packed group descriptors. |
+| `+0x0C + 4*N` | `4 * N` | Resolved record pointer selected for each group. |
+| `+0x0C + 8*N` | variable | First packed group descriptor. |
+
+Each packed group starts with an eight-byte header and `0x10` bytes per item;
+its copied halfword-pair array follows the fixed item descriptors. Each item
+descriptor stores a pointer to its primary array, the element count and flags,
+the four opaque bytes, and the two opaque halfwords. If bit `0x1000` is set,
+the secondary halfword array immediately follows that item's primary array and
+the next region is four-byte aligned. These pointer and packing relationships
+are confirmed structure; what the pairs, flags other than `0x1000`, opaque
+fields, and arrays mean remains unknown.
+
+**Bounded negative result:** a byte search for the aligned MIPS `addiu`
+literal form of `0x1F00` found primary-resident instruction uses only in
+`FUN_001A9F10` at `0x001A9F98`, dispatcher `FUN_001AC8A0` at `0x001AC964`, and
+parser `FUN_001B2930` at `0x001B2A64`; the corresponding `ori` literal pattern
+had no match. This supports the absence of a direct literal-tag consumer, but
+does not exclude a table-driven consumer or code that constructs the value by
+another instruction sequence. The route therefore remains semantically
+unresolved rather than being assigned a class or resource name.
 
 ## Negative results and labels not promoted
 

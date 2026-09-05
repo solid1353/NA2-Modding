@@ -5,21 +5,89 @@ findings.
 
 ## Research coverage
 
-- **Assigned scope:** establish the clean startup state machine, readiness
-  barriers, Continue and Save/Load path, loading presentation, and serialized
-  audio initialization.
-- **Exploration depth:** the relevant resident call paths were traced and
-  sampled across splash, title, Save/Load, loading, and main-menu states.
-- **Confirmed coverage:** the initial blocking card check, splash ownership,
-  the two asynchronous readiness gates, Continue's shared Save/Load controller, record metadata, the native
-  main-menu loading controller, and the eager audio bottleneck are established.
-- **Unresolved or untested:** every physical memory-card failure case, indirect
-  voice consumers, and exact player-character-to-voice-bank mapping.
+- **Assigned scope:** establish the retail ELF bootstrap, resident startup state
+  machine, initial managers and tasks, readiness barriers, Continue and
+  Save/Load path, loading presentation, and handoff into the main menu.
+- **Exploration depth:** the ELF entry and first resident bootstrap layer have
+  direct static coverage. Deeper resident call paths were traced and sampled
+  across card check, splash, title, Save/Load, loading, and main-menu states.
+- **Confirmed coverage:** the ELF identity and entry-point side effects, initial
+  task handoff, blocking card check, splash ownership, the two asynchronous
+  readiness gates, Continue's shared Save/Load controller, record metadata, the
+  native main-menu loading controller, and the eager audio bottleneck are
+  established.
+- **Unresolved or untested:** semantic roles and manager ownership below several
+  early bootstrap calls, scheduler timing between the initial tasks, every
+  physical memory-card failure case, indirect voice consumers, and exact
+  player-character-to-voice-bank mapping.
 - **Deliberate exclusions and overlap:** NA228 startup behavior belongs to
   [Startup](../../features/startup.md); visible one-record presentation and save
   identity belong to [Memory Card](../../features/memory_card.md).
 - **Evidence limitations:** sampled timing establishes ordering and observed
-  bottlenecks, not a fixed duration on every host or storage device.
+  bottlenecks, not a fixed duration on every host or storage device. Read-only
+  static analysis cannot establish asynchronous completion timing or exact
+  visible-frame boundaries; all frame and duration interpretation uses 30 FPS.
+
+## Retail ELF entry and resident bootstrap
+
+The clean resident identity and address conversion follow
+[Retail game file identities](files/file_identities.md). Static analysis
+identifies its sole declared entry as `entry` at `0x00100008` and its loaded
+`SECTION4` as `0x00100000..0x0060737F`.
+
+`entry` performs these observed operations in order:
+
+1. It clears the integer, accumulator, and floating-point registers, executes
+   `sync 0x10`, and clears `FCSR`.
+2. It zeroes the upper-exclusive range
+   `0x00607380..0x008DD080`, beginning immediately after the loaded ELF block.
+3. It sets `gp` to `0x0060A9F0`, invokes raw EE syscalls `0x3C` and `0x3D`,
+   and takes the stack pointer returned by syscall `0x3C`. Syscall `0x3D`
+   receives `0x008DD080` and `-1`; their higher-level roles are unresolved.
+4. It calls `FUN_00168058`, whose observed call order is
+   `FUN_00167E08`, `FUN_00167F48`, `FUN_00168538`,
+   `FUN_001686B0(2)`, `FUN_001688F0`, `FUN_0015EAB8`,
+   `FUN_00168180`, `FUN_00167670`, and `FUN_00169D70`.
+5. It calls `FlushCache(0)`, enables interrupts, loads two startup arguments
+   from `0x00607A00` and `0x00607A04`, and passes them to `FUN_001C13F0`.
+6. If that function returns, `entry` tail-calls `FUN_001787B0` with its return
+   value. `FUN_001787B0` walks registered callback lists, invokes the callback
+   at context offset `+0x3C` when present, and calls
+   `thunk_FUN_00168458`. The ordinary path instead remains in
+   `FUN_001C13F0`'s permanent loop.
+
+`FUN_001C13F0` calls the following first-layer initializers before creating the
+initial tasks. Their semantic names remain unresolved, so the original symbols
+and exact order are retained:
+
+| Order | Original symbol/address | Observed side effect |
+| ---: | --- | --- |
+| 1 | `FUN_00118730` at `0x00118730` | No explicit argument. |
+| 2 | `FUN_00100230` at `0x00100230` | No explicit argument. |
+| 3 | `FUN_001BD2B0` at `0x001BD2B0` | No explicit argument. |
+| 4 | `FUN_00105FC0` at `0x00105FC0` | No explicit argument. |
+| 5 | `FUN_001DA0F0` at `0x001DA0F0` | No explicit argument. |
+| 6 | `FUN_001DA130` at `0x001DA130` | No explicit argument. |
+| 7 | `FUN_001C14F0` at `0x001C14F0` | No explicit argument. |
+| 8 | `GetThreadId` / `ChangeThreadPriority` | Stores the current thread ID at `gp-0x351C` and changes its priority to `0x78`. |
+| 9 | `FUN_001BD380` at `0x001BD380` | No explicit argument. |
+| 10 | `FUN_001D04F0` at `0x001D04F0` | No explicit argument. |
+
+It then creates a descriptor through
+`FUN_001D0090(0x00113530, 0x19, 0x800)`, sets bit `0x8` in its halfword at
+`+0x12`, and submits it through `FUN_001CFF00(descriptor, 0)`. It creates a
+second descriptor through `FUN_001D0090(0x001E0EE0, 0x23, 0xC000)`, copies the
+two arguments from `entry` to descriptor offsets `+0x28` and `+0x2C`, and
+submits it the same way. It thereafter loops over `FUN_001083A0` on the pointer
+at `gp-0x35F4` followed by `FUN_001D0560`.
+
+The descriptor interpretation is an inference with medium confidence:
+`FUN_001D0090` appears to create scheduler-owned task records from an entry
+address, priority-like value, and stack-size-like value, while
+`FUN_001CFF00` makes them runnable. Exact field meanings remain unresolved.
+The `0x001E0EE0` task is the startup game task with high confidence because its
+downstream flow constructs the persistent memory-card and save objects and
+reaches the splash/title state machine below.
 
 ## Initial memory-card check
 

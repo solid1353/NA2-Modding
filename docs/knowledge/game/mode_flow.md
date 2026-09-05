@@ -31,16 +31,19 @@ are also out of scope.
   `FUN_00384690`, `FUN_00384700`, `FUN_00384720`, `FUN_00384760`,
   `FUN_003849c0`, `FUN_00384cd0`, `FUN_00384d70`, `FUN_00384de0`, and
   `FUN_003854f0` was followed only through the state transitions relevant to
-  this scope. Title functions `FUN_001de840`/`FUN_001df690` and subordinate
-  allocators/helpers were **sampled** only far enough to prove their controller
-  contracts. Direct clean-binary anchors checked included result table
+  this scope. The complete `FUN_001df690` title switch and its title-local
+  control helpers `FUN_001deb50`, `FUN_001ded30`, `FUN_001df140`, and
+  `FUN_001df3b0` were enumerated; their resource/render callees were sampled
+  only far enough to prove the controller's completion signals. Direct
+  clean-binary anchors checked included result table
   `0x005D51D0`, filename table `0x004049E0`, default bindings `0x005C06A0`,
   BTL process table `0x005D9F98`, remembered slot `0x006045E0`, and the two
   resident hook seams documented below.
 - **Confirmed coverage:** the nested controller phases and result
   contracts; title-to-manager boundary; manager fields and object lifetimes;
-  numeric Mode Select mapping, input priority, confirmation/back routing,
-  remembered-slot behavior, allocator/failure edges, and unsupported states;
+  title initialization, idle-return, acceptance, and presentation-completion
+  gates; numeric Mode Select mapping, input priority, confirmation/back
+  routing, remembered-slot behavior, allocator/failure edges, and unsupported states;
   the synchronous selector/cache contract; BTL type/process selection, hook
   and return convergence; ETC Collection plus resident Options creation,
   teardown, and return behavior; and the resulting patch surfaces and
@@ -55,9 +58,10 @@ are also out of scope.
   battle, stage, outcome, support, pause, and profile-serialization mechanics
   belong outside this note or to the linked canonical documents. Layout and
   widescreen work, media, localization, timing, and PCSX2 are also excluded.
-- **Evidence limitations:** evidence is static against the exact clean ELF identity
-  and the Ghidra 12.1.2 C/listing exports. Direct bytes, tables, calls, and
-  state/result writers were cross-checked, but no emulator/game execution,
+- **Evidence limitations:** evidence is static against the exact clean ELF
+  identity and maintained read-only analysis, cross-checked against preserved
+  C/listing exports. Direct bytes, tables, calls, and state/result writers were
+  cross-checked, but no emulator/game execution,
   injected hook, forced allocation failure, corrupted state, or modified
   overlay was exercised. Addresses and resident control flow therefore have
   stronger support than user-facing semantic labels that depend on stock order
@@ -65,12 +69,10 @@ are also out of scope.
 
 ## Evidence and conventions
 
-The observations below come from static inspection of the clean resident ELF.
-Its identity and address conversion follow
-[Standard game file identities](files/file_identities.md). The
-decompiler and listing are the Ghidra 12.1.2 exports under
-`@disassembly/NA2/exports/SLPS_258.37/`; later BSS globals have runtime
-addresses but no corresponding file bytes.
+The observations below come from static inspection of the clean resident ELF
+through the maintained read-only analysis. Its identity and address conversion
+follow [Standard game file identities](files/file_identities.md). Later BSS
+globals have runtime addresses but no corresponding file bytes.
 
 The executable is stripped. Names such as `FUN_001e9980` and
 `DAT_005d51d0` are Ghidra labels, not recovered source identifiers. Literal
@@ -215,9 +217,44 @@ The title object's relevant fields are:
 | Field | Observed use |
 | --- | --- |
 | `+0x00` | Internal title state |
+| `+0x04` | Idle-return update counter: initialized to 570 and reset to 150 after cancelling an in-progress idle return |
 | `+0x08` | Terminal result |
 | `+0x0C` | Current two-item selection, initialized to 1 and clamped to 0 or 1 |
 | `+0x10` | Transition handle |
+| `+0x18` | Presentation phase: initialization advances 1 -> 2 -> 4; accepted selection writes 5 |
+| `+0x28` | OR-latched presentation-completion flag; state 6 waits for a nonzero value |
+
+The complete `FUN_001df690` controller graph is:
+
+| State | Directly observed action and transition |
+| ---: | --- |
+| 0 | Construct title-local presentation resources, initialize selection, start presentation phase 1, and enter state 1. |
+| 1 | Native Circle/Start (`0x0820`) selects state 2. Independently, presentation phase 4 selects state 3; because this test runs second, phase completion wins if both conditions hold in the same update. |
+| 2 | Reset the presentation surface, select presentation phase 4, then fall through states 3 and 4 in the same update. |
+| 3 | Enter state 4 and fall through to its active decoder in the same update. |
+| 4 | Decode the two title items. A nonzero item result starts presentation phase 5 and enters state 6. With no result, decrement `+0x04`; reaching zero creates the idle-return transition and enters state 5. |
+| 5 | Poll the idle-return transition. Completion stores result `-1` and enters state 8. While it remains active, native Circle/Cross/Start (`0x0860`) cancels the route, clears the result, resets `+0x04` to 150, and returns to state 4. |
+| 6 | Wait for presentation-completion flag `+0x28` to become nonzero, then create the accepted-result transition and enter state 7. |
+| 7 | Poll the accepted-result transition; completion enters state 9. |
+| 8 | Advance directly to state 9 on the next update. |
+| 9 | Reset the presentation surface and return `+0x08` to `FUN_001de840`. |
+
+`FUN_001deb50` writes presentation phase 1 during state-0 setup.
+`FUN_001ded30`, which runs after every switch case, advances phase 1 to 2 and
+phase 2 to 4 when the current presentation resource reports completion. This
+is the automatic state-1 route into active selection. Accepted input instead
+writes phase 5; common-tail helper `FUN_001df3b0` then OR-latches completion
+reports from the two title-item presentation objects into `+0x28`, which is
+the exact state-6 gate.
+
+`FUN_001dea30` initializes `+0x04` to `0x23A` (570), and state 4 decrements it
+once per controller update while no item has been accepted. If this controller
+updates once per 30 FPS game frame, the initial and reset windows correspond to
+19 and 5 seconds. Cancelling the state-5 return resets the counter to `0x96`
+(150).
+State 6 writes 570 again before entering state 7, but states 7 through 9 never
+read or decrement the field; no resident timing role for that final write is
+established.
 
 `FUN_001df140` changes `+0x0C` with input masks `0x1000` and `0x4000`.
 These are native Up and Down; a newly pressed native Circle or Start
@@ -1000,6 +1037,7 @@ phase 1 and transient `+0x04 = 3`, while every other result calls
 | Function | Sole/relevant caller | Key callees or reads | Proven side effect / result |
 | --- | --- | --- | --- |
 | `FUN_001de840` | `FUN_001e0ee0` at `0x001E1240` | `FUN_001df690`, `FUN_001dfab0` | Returns title result and destroys title object |
+| `FUN_001df690` | `FUN_001de840` | `FUN_001deb50`, `FUN_001ded30`, `FUN_001df140`, `FUN_001df3b0` | Owns the ten-state title graph and returns 1, 2, or `-1` through state 9 |
 | `FUN_001e9980` | `FUN_001e0ee0` at `0x001E12D0` | In-scope callback cases listed above | Owns manager phases and callback ID |
 | `FUN_001f3dc0` | manager constructor at `0x001F4584` | static defaults, three binding banks | Repopulates all resident battle-control bindings |
 | `FUN_001f45b0` | manager dispatcher at `0x001E99C4` | BTL filename, binding banks 1/2 | Selects BTL and synchronizes live profile bindings |

@@ -24,20 +24,24 @@ second canonical disassembly.
 publication and lifetime, its eight object slots, request/event-to-mode
 mapping, ownership switching, preset selection, stage-edge correction, and the
 camera-object vector and smoothing fields reachable from those paths.
-- **Exploration depth:** coverage is deep but bounded to the camera cluster and its resident owner. The
-controller constructor/destructor and publisher were followed through resident
-setup and teardown; all fixed slot loops and numeric mode-dispatch targets
-`0..18` were accounted for; the mode-1/2/3 `0xB0` preset families and fixed
-mode-4/5/6 records were decoded at their established fields; and raw bytes plus
-a disposable correctly based import were used to recover functions hidden by
-the maintained import's `0x40` displacement. Surrounding fighter, collision,
-and stage code was sampled only where it directly supplied camera inputs.
+- **Exploration depth:** coverage is deep but bounded to the camera cluster and
+  its resident owner. The controller constructor/destructor and publisher were
+  followed through resident setup and teardown; the update order, event-edge
+  gate, and no-new-event fallback were traced; all fixed slot loops and numeric
+  mode-dispatch targets `0..18` were accounted for; the mode-1/2/3 `0xB0`
+  preset families and fixed mode-4/5/6 records were decoded at their established
+  fields; and raw bytes plus a disposable correctly based import were used to
+  recover functions hidden by the maintained import's `0x40` displacement.
+  Surrounding fighter, collision, and stage code was sampled only where it
+  directly supplied camera inputs.
 - **Confirmed coverage:** resident publication/lifetime, all eight slots,
-  numeric mode dispatch `0..18`, decoded preset families, and the established
-  stage-edge correction path are documented from the scoped trace.
-- **Unresolved or untested:** numeric request/mode names, exact eye-versus-target/world-axis semantics,
-several preset fields, dynamic transition order, and visible behavior under
-stage orientation remain unresolved.
+  request derivation and commit order, numeric mode dispatch `0..18`, decoded
+  preset families, and the established stage-edge correction path are
+  documented from the scoped trace.
+- **Unresolved or untested:** numeric request/mode names, exact
+  eye-versus-target/world-axis semantics, several preset fields, controller
+  update cadence, dynamic transition timing, and visible behavior under stage
+  orientation remain unresolved.
 - **Deliberate exclusions and overlap:** Adventure, cutscene cameras,
   projection/render internals, and unproved player-visible policy were
   excluded. Surrounding fighter, collision, and stage code was sampled only
@@ -206,6 +210,53 @@ The per-update commit copies current to previous fields (`+0x04 -> +0x08`,
 `+0x0C -> +0x10`, `+0x14 -> +0x18`, `+0x1C -> +0x20`), clears the pending
 event, and either increments or clears `+0x2C` according to `+0x28` and a
 resident profile predicate.
+
+### Update order, event edges, and automatic requests
+
+The controller update at live `FUN_006DC3B0` has a fixed order. It first calls
+live `FUN_006DC450`, which invokes the pending-event resolver and overwrites
+request `+0x14` only when that resolver returns nonzero. It then compares the
+possibly updated request with previous request `+0x18`; only a change runs the
+request-to-mode mapping. Next, live `FUN_006DC900` dispatches the current
+numeric mode. Only after that handler returns does the update commit the current
+slot, mode, preset, request, and event fields to their previous-value fields and
+clear pending event `+0x1C` to zero. This ordering means a handler sees the
+previous snapshot from the preceding update, not values already committed by
+its own request.
+
+The explicit-event path is edge-gated: pending event `+0x1C` must be nonzero
+and differ from previous event `+0x20`. An identical event supplied on
+consecutive controller updates is therefore decoded only on the first update.
+Because an update with no supplied event commits zero into `+0x20`, the same
+event code can be decoded again after at least one zero-event update. The latter
+re-arming behavior is a static inference from the observed commit order; its
+caller-side timing has not been runtime traced.
+
+When there is no new explicit event, the resolver has two automatic request
+paths while camera ownership `+0x30` is nonzero and the derived mode is 1, 2,
+or 3:
+
+- if both fighter-side fields at `+0xB00` are zero, it returns request `-1`;
+- only in mode 1 with current request 3, it can return request 4 after comparing
+  one side-selected fighter's coordinate at `+0x38` with the result of resident
+  helper `0x001DC610` applied to that fighter's vector at `+0x30`. Controller
+  side value 1 selects the second fighter for this test; other values select the
+  first. The coordinate and helper semantics remain unresolved.
+
+Finally, flag `+0x28` and a nonzero result from resident predicate
+`FUN_001F4790(resident_owner, 0)` cause counter `+0x2C` to increment by exactly
+one; either condition failing clears the counter to zero. This is proven to be
+a controller-update counter, not yet a frame counter: the game runs at 30 FPS,
+but converting 30 increments to one second requires proving that this update is
+called exactly once per game frame.
+
+**Evidence and confidence:** static disassembly and decompilation of physical
+BTL functions `FUN_006dc370`, `FUN_006dc410`, and `FUN_006dc580` establish the
+call/write order, edge gate, field conditions, and counter increment with high
+confidence; live addresses are each `+0x40`. The request-4 comparison remains
+medium-confidence because
+the maintained import cannot reconstruct the resolver's indirect jump table;
+no world-axis meaning is assigned from that decompilation.
 
 ## Camera ownership switching
 

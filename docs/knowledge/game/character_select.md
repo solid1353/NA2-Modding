@@ -22,6 +22,11 @@
   evidence; the recommendation experiment establishes only that the changed
   unused byte did not alter the visible support list.
 
+## Binary identity and address conventions
+
+The clean resident and BTL identities and their shared address conversions
+follow [Retail game file identities](files/file_identities.md).
+
 ## Scrollable support roster
 
 NA2 `FUN_003bb210` populates the scrollable support list. Its two callers are

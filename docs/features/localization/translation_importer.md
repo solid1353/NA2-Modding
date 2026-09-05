@@ -101,7 +101,7 @@ T28 `Normal`, T1984 `Hard`, T29 `Insane`, and T50 `Difficulty`. The full T50
 label links through the exact pointer at `NA2_BTL@0x20A264`. T24 reuses the
 official Jump-mode help text. Paired screens correct T637 to `Hidden Leaf
 Village`, T638 to `Hidden Leaf Gate`, T744 to `Faint Unease`, and T767 to
-`Silent Confidence`. The paired Practice ss5 comparison corrects T1920's
+`Silent Confidence`. The paired Practice comparison corrects T1920's
 displayed title to the exact `Charge Chakra` donor at
 `NUN5_TEXTENG@0xFB8`; the separate Command Chart T1926 row correctly retains
 `Charge` at `NUN5_SLES@0x513EB0`. T30 uses the exact `Ultimate` donor at
@@ -114,7 +114,7 @@ before transforms or placement and rejects row-level overrides for either
 family. T2194 declares literal-percent escaping for its printf-style consumer,
 and T2195-T2198 declare one formula-symbol normalization transform.
 The maintained Ninja Song suite establishes 40 exact objective, index,
-numeric/status, bonus, and formula-symbol rows. The paired ss7 Movie pass adds
+numeric/status, bonus, and formula-symbol rows. The paired Movie pass adds
 the locked-title placeholder. This is an evidence-scoped English table, not a
 claim that uncaptured screens are covered.
 

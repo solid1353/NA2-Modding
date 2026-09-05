@@ -82,22 +82,9 @@ extreme allocator states remain unvalidated.
 
 ## Evidence identity and address conventions
 
-The static evidence is the read-only clean Japanese `SLPS-25837` extraction:
-
-| Image | Size | SHA-256 |
-| --- | ---: | --- |
-| `SLPS_258.37` | `5,273,256` (`0x5076A8`) | `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF` |
-| `PRG/BTL.BIN` | `2,237,184` (`0x222300`) | `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C` |
-
-The resident ELF maps file `0x100` to EE `0x00100000`, so its addresses below
-are live virtual addresses and `resident_file = live - 0x000FFF00`.
-
-The live BTL image retains its complete `0x40`-byte MWo3 header at
-`0x006B3F00`, so `btl_live = 0x006B3F00 + raw_file_offset`. The preserved
-Ghidra import omitted that header and displays every BTL-local byte or function
-`0x40` low: `btl_live = export_address + 0x40`. Encoded absolute pointers and
-`jal` targets are already live addresses. The maintained names are synthetic
-Ghidra labels, not original symbols.
+The clean resident and BTL inputs and their address conversions are defined in
+[Standard game file identities](../game/files/file_identities.md). The
+maintained names are synthetic Ghidra labels, not original symbols.
 
 Evidence used here is the maintained Ghidra C/listing export, checked against
 raw clean-file bytes where the omitted header caused missed or split functions.

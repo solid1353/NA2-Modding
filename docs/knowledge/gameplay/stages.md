@@ -88,27 +88,11 @@ limit.
 
 ## Evidence and address convention
 
-The primary evidence is the clean `PRG/BTL.BIN`, length `0x222300`, SHA-256
-`56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C`.
-Resident lifecycle evidence comes from clean `SLPS_258.37`, SHA-256
-`20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`.
+The clean resident and BTL inputs and their address conversions are defined in
+[Standard game file identities](../game/files/file_identities.md).
 The analysis was static; no new runtime capture was made for this document.
-
-The complete BTL file is loaded at EE `0x006B3F00`. The preserved Ghidra
-import omitted the first `0x40` file bytes and mapped file `0x40` to
-`0x006B3F00`. For a byte represented by a Ghidra address `g`:
-
-```text
-BTL file offset = g - 0x006B3EC0
-live EE address = g + 0x40
-```
-
-An absolute operand in the machine code is already a live address. Ghidra
-often attaches that operand to the item displayed at the same numeric address,
-which is `0x40` too late in the file. The correct displayed item for a live
-operand `T` is at `T - 0x40`. The same problem creates phantom function starts
-`0x40` inside real functions. Every BTL address below distinguishes the
-preserved Ghidra location, raw file offset, and live address where relevant.
+Every BTL address below distinguishes the preserved Ghidra location, raw file
+offset, and live address where relevant.
 
 Claims described as **confirmed** follow directly from raw bytes and control or
 data flow. **Supported** interpretations additionally use RTTI, resource names,

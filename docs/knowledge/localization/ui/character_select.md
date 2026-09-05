@@ -1,5 +1,19 @@
 # Character Select UI layout
 
+## Research coverage
+
+- **Assigned scope:** compare clean NA2 and NUN5 Character Select name records and footer geometry.
+- **Exploration depth:** the relevant binaries, native callers, records, and
+  paired screen states were examined.
+- **Confirmed coverage:** the documented owners, structures, and cross-game
+  differences are established.
+- **Unresolved or untested:** callers and states not explicitly covered below.
+- **Deliberate exclusions and overlap:** feature imports, hooks, and validation
+  belong to [UI layout](../../../features/localization/ui_layout.md) or
+  [UI textures](../../../features/localization/ui_textures.md).
+- **Evidence limitations:** bounded states do not cover every animation phase or
+  indirect caller.
+
 ## Binary identity and mapping
 
 This record compares the clean Japanese NA2 boot ELF
@@ -12,8 +26,8 @@ runtime-to-file mapping within the functions below:
 | NA2 | `FUN_003bc470` | `0x003BC470..0x003BC63C` | `0x2BC5B8`, `0x2BC5DC`, `0x2BC600`, `0x2BC624` |
 | NUN5 | `FUN_003cf0d0` | `0x003CF0D0..0x003CF290` | `0x2CF218`, `0x2CF24C`, `0x2CF300`, `0x2CF324` |
 
-The complete `CHARSEL1.CCS` payload is already imported from NUN5. Its
-localized artwork and model data are therefore not the remaining cause.
+`CHARSEL1.CCS` contains the localized artwork and model data, but the
+character-name renderers obtain their rectangles elsewhere.
 
 ## Shared character-name rectangle table
 
@@ -23,22 +37,10 @@ The character-name renderers do not obtain their rectangles from
 `FUN_0038c350` calls localized accessor `FUN_003d45d0`; English language index
 zero resolves to runtime `0x005DDC50` (ELF file `0x4DDDD0`).
 
-Each record is four signed 16-bit values `(u, v, width, height)`. Forty-four
-English records already match NA2; the other 52 change dimensions,
-coordinates, or blank sentinels. Copying the complete 768-byte NUN5 range is
-the minimal complete fix shared by Character Select, VS, the battle HUD, and
-Battle Set. `ui_layout_character_name_rectangles` owns that complete copy. The
-edit is source/destination range-hash guarded and preserves the ELF size.
-
-The nearby NUN5 range at ELF file `0x4DC120` is deliberately excluded. It is
-the separate uniform 38x46 portrait grid used by `FUN_0038c3a0`, not the
-localized name table. A rejected build copied it and produced stacked name
-fragments; the localized accessor and homologous call sites disprove that
-source selection.
-
-Confidence is **verified**: the table identity and accessor path are
-structurally proven, and the user verified the complete Character Select
-roster after the guarded donor copy.
+The nearby NUN5 range at ELF file `0x4DC120` is a separate uniform 38x46
+portrait grid used by `FUN_0038c3a0`, not the localized name table. The
+localized accessor and homologous call sites disprove using it as a source for
+character-name rectangles.
 
 ## Character Select footer compositor
 
@@ -57,51 +59,16 @@ void draw_character_select_footer(Screen *screen) {
 }
 ```
 
-NA2 uses `random_x=300.0f`, `select_color_x=160.0f`, `ok_x=400.0f`, and
-`back_x=470.0f`. NUN5 uses `random_x=260.0f` and
-`select_color_x=100.0f`; its OK/Back paths start from the same nominal
-`400.0f`/`470.0f` values and then add signed regional globals `-12`/`-8`.
-The artwork loads have the same destination register and equivalent call
-sites, so `ui_layout_character_select_footer` copies the official NUN5 instruction words directly:
-
 | Control | NA2 offset / bytes | NUN5 offset / bytes |
 | --- | --- | --- |
 | Random | `0x2BC600` / `9643023C` | `0x2CF300` / `8243023C` |
 | Select Color | `0x2BC624` / `2043023C` | `0x2CF324` / `C842023C` |
 
 The common OK and Back calls use separate code and resources. NUN5's added
-GP-relative global loads are not ABI-compatible with NA2, so copying only its
-nominal `lui` instructions would preserve the defect. Two authored
-same-register ports instead encode the official effective anchors:
-
-| Control | NA2 offset / original | Replacement | NUN5 behavior |
-| --- | --- | --- | --- |
-| OK | `0x2BC5B8` / `C843023C` | `C243023C` (X=`388`) | `400 + (-12)` |
-| Back | `0x2BC5DC` / `EB43023C` | `E743023C` (X=`462`) | `470 + (-8)` |
+GP-relative global loads are not ABI-compatible with NA2, so its nominal `lui`
+instructions do not by themselves express the effective prompt anchors.
 
 ## Relationships and evidence
-
-- Caller: NA2 Character Select parent draw path at `FUN_003bce90`; NUN5
-  homolog at `FUN_003cfaf0`.
-- Callees: NA2 `FUN_0037bc40` / NUN5 `FUN_0038ad00` draw the two
-  `CHARSEL1.CCS` records. The common-prompt callees are separate.
-- Side effects: the function submits footer sprites and temporarily adjusts
-  opacity for join-state feedback; the anchor instructions do not mutate game
-  state.
-- Runtime evidence before the patch: paired 640x480 captures show all four NA2
-  footer records displaced right.
-- Runtime evidence after the patch: a guarded task-owned savestate copy applied
-  the same two resident words before redraw. In the resulting hidden-clone
-  capture, the dark-pixel bounds were `48..199,442..462` for Select Color and
-  `262..386,439..465` for Random, versus NUN5 bounds
-  `47..198,441..461` and `261..385,438..465`. A second guarded Slot 4 capture
-  applies X=`388`/`462` to the separate OK/Back calls and aligns them with the
-  reference. The remaining one-pixel phase variance is normal prompt
-  pulsation; no label is clipped.
-- Negative result: importing the complete NUN5 `CHARSEL1.CCS` alone does not
-  change these anchors because they are supplied by executable code. Literal
-  NUN5 OK/Back instruction copies are also insufficient because the effective
-  offset is calculated by extra region-specific instructions absent from NA2.
 
 Confidence is **verified**: both complete functions are homologous, the exact
 source/destination words match the clean binaries, and the paired runtime

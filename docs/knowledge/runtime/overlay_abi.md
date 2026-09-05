@@ -116,11 +116,8 @@ the same base.
 
 ## Inputs and identity
 
-| Input | Size | SHA-256 |
-| --- | ---: | --- |
-| `@source_na2/SLPS_258.37` | `5,273,256` (`0x5076A8`) | `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF` |
-| `@source_na2/PRG/BTL.BIN` | `2,237,184` (`0x222300`) | `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C` |
-| `@source_na2/PRG/ETC.BIN` | `200,448` (`0x30F00`) | `8FF3C6E1ED5CE2B093B0934C898C40D1CEEA0C20778C49CDA5591AAD02375C74` |
+The resident, BTL, and 200,448-byte (`0x30F00`) ETC inputs follow
+[Standard game file identities](../game/files/file_identities.md).
 
 The resident ELF is stripped: its `.symtab` contains zero entries and its
 `.strtab` is empty. Names such as `FUN_001BE7F0`, `SUB_001CC350`, and
@@ -146,25 +143,10 @@ intervening reservation is outside this document's scope.
 
 ## File, runtime, and preserved-Ghidra addresses
 
-For the actual loader and live EE memory:
-
-```text
-runtime_address = 0x006B3F00 + raw_file_offset
-raw_file_offset = runtime_address - 0x006B3F00
-```
-
-The preserved baseline Ghidra projects used a different analysis convenience:
-they skipped raw `0x00-0x3F` and mapped raw `0x40` to displayed address
-`0x006B3F00`. Therefore, only for those imports:
-
-```text
-ghidra_display = 0x006B3F00 + raw_file_offset - 0x40
-runtime_address = ghidra_display + 0x40
-```
-
-This is not the runtime mapping. Encoded pointers and `j`/`jal` targets inside
-the files are already actual runtime addresses and must not be reduced by
-`0x40`.
+Shared BTL address conversion follows
+[Standard game file identities](../game/files/file_identities.md). The same
+header-omitting import convention applies to the scoped ETC project. Encoded
+pointers and `j`/`jal` targets inside either file are already runtime addresses.
 
 The complete-file read to destination slot 1 proves this mapping without a
 runtime-capture assumption. It is independently consistent with every decoded
@@ -291,8 +273,7 @@ the header.
 
 ## Resident loader and exact call graph
 
-Within the resident first `PT_LOAD`, file offsets follow
-`file_offset = runtime_address - 0x000FFF00`.
+Resident addresses use the conversion linked above.
 
 | Runtime | ELF file offset | Preserved label / recovered role | Direct callers | Principal callees |
 | ---: | ---: | --- | --- | --- |

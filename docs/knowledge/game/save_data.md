@@ -78,13 +78,8 @@ interfaces.
 
 ## Evidence, identity, and terminology
 
-Static analysis uses the canonical Ghidra 12.1.2 exports for clean
-`SLPS_258.37`:
-
-- size: `5,273,256` bytes;
-- SHA-256: `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`;
-- resident ELF mapping: file offset equals EE virtual address minus
-  `0x000FFF00`.
+Static analysis uses the clean resident ELF and conventions in
+[Standard game file identities](files/file_identities.md).
 
 Unless stated otherwise, offsets are absolute offsets from the start of one
 `0x2400`-byte record. Function names are the original export names and the
@@ -93,16 +88,9 @@ addresses beside them are EE virtual addresses. Statements called
 **inferences** are interpretations supported by multiple observations. Shapes
 such as an array length or aligned copy are not treated as field semantics.
 
-A read-only parse on 2026-08-20 also inspected the historical local card image
-`@pcsx2_files/games/NA2/NA2.ps2`:
-
-- size: `17,301,504` bytes;
-- SHA-256 before and after inspection:
-  `997CC8D779A29C426ED6543ADD2E5EF80248A5F9090104AECD58D91478E829C8`;
-- last-write time: 2026-08-14 20:52:53 local time.
-
-That image corroborates the static contracts but is not evidence of current
-runtime state. Its extracted-record hashes and relevant bytes are recorded in
+A read-only parse of one historical local card image corroborates the static
+contracts but is not evidence of current
+runtime state. Its relevant bytes are recorded in
 [Historical-card corroboration](#historical-card-corroboration).
 
 The related resident availability readers and their overlay consumers are
@@ -919,15 +907,7 @@ Other useful negative results:
 ## Historical-card corroboration
 
 The inspected card contained a 64-byte descriptor file and four exact
-`0x2400`-byte records. Extracted SHA-256 values were:
-
-| File | SHA-256 |
-| --- | --- |
-| Descriptor table | `cd1669918aabb4e00dda83509b40a03fbd76bc7157c49cdf3b8b4975fffeed8f` |
-| `data01` | `7521bbd17de879de551533a12ae1a42c98c65e9926c87a1fc60880a180b0b173` |
-| `data02` | `e781e89bd40d398dda741f920350558790137bf70773e91d5b376b29549bce7e` |
-| `data03` | `42eca5c5a9d6fb058200ee70c07a395731a09ceb1faed2d2ad9c31e125b8cb29` |
-| `data04` | same as `data01`, byte-for-byte |
+`0x2400`-byte records. `data01` and `data04` were byte-for-byte identical.
 
 The raw descriptor table was:
 
@@ -964,9 +944,8 @@ exactly:
 
 `data02` and `data03` differ only at record offsets `0x0002..0x0005`, covering
 the checksum and the low two bytes of their play-time values. Descriptor rows
-0 and 3 timestamp the byte-identical `data01`/`data04` payloads at
-2026-07-26 16:40:37 and 16:40:38 respectively, corroborating two separate file
-writes and timestamp queries.
+0 and 3 give the byte-identical `data01`/`data04` payloads distinct timestamps,
+corroborating two separate file writes and timestamp queries.
 
 The seven checksum-covered structured-copy gaps were:
 

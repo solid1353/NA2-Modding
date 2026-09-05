@@ -75,15 +75,10 @@ labels, not recovered original symbols.
 ## Evidence and scope
 
 The result is static-analysis evidence from the maintained Ghidra 12.1.2
-exports. Resident `SLPS_258.37` addresses are live EE virtual addresses. The
-live overlay loader retains the complete 0x40-byte `MWo3` header at the header
-base, while the preserved Ghidra BTL/ETC baseline omits that header. A physical
-code or data location in the preserved display is therefore 0x40 below its live
-location:
-
-```text
-live BTL/ETC byte location = preserved Ghidra/display location + 0x40
-```
+exports. Resident `SLPS_258.37` addresses are live EE virtual addresses. BTL
+address conversion follows the canonical reference below. The preserved ETC
+baseline likewise omits its `0x40`-byte header, so its displayed code and data
+are `0x40` below their live locations.
 
 Absolute pointers encoded inside the overlay payload are different: their
 stored values already target live addresses and must not receive another
@@ -93,11 +88,9 @@ Every overlay function body below is given as a preserved export/live pair;
 numeric data locations explicitly distinguish preserved bytes from live
 addresses.
 
-| Input | Size | SHA-256 | Evidence view |
-| --- | ---: | --- | --- |
-| `@source_na2/SLPS_258.37` | 5,273,256 | `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF` | `@disassembly/NA2/exports/SLPS_258.37/` |
-| `@source_na2/PRG/BTL.BIN` | 2,237,184 | `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C` | `@disassembly/NA2/exports/BTL.BIN/` |
-| `@source_na2/PRG/ETC.BIN` | 200,448 | `8FF3C6E1ED5CE2B093B0934C898C40D1CEEA0C20778C49CDA5591AAD02375C74` | `@disassembly/NA2/exports/ETC.BIN/` |
+The resident, BTL, and ETC inputs are identified in
+[Standard game file identities](file_identities.md). The ETC evidence view is
+`@disassembly/NA2/exports/ETC.BIN/`.
 
 The C export loses some argument types and occasionally splits a caller into
 adjacent functions. The ASCII listing was used to confirm control-flow details

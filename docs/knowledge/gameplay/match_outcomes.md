@@ -9,12 +9,8 @@ does not assign story-mode names to generic controller modes and does not cover
 damage calculation, substitution, frame-rate behavior, localization, or the
 layout/artwork of the Victory screen.
 
-The static inputs are:
-
-| Binary | Size | SHA-256 |
-| --- | ---: | --- |
-| `SLPS_258.37` | `5,273,256` (`0x5076A8`) | `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF` |
-| `PRG/BTL.BIN` | `2,237,184` (`0x222300`) | `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C` |
+The clean resident and BTL inputs are identified in
+[Standard game file identities](../game/files/file_identities.md).
 
 Both executables are stripped. `FUN_*`, `SUB_*`, and `func_0x*` names below are
 analysis labels, not original symbols. Findings were checked against the raw
@@ -93,39 +89,25 @@ table contents, hashes, and address arithmetic. No PCSX2 runtime trace,
 breakpoint session, savestate experiment, or gameplay replay was performed for
 this document, so dynamic confirmation is still outstanding.
 
-## BTL address convention
+## Game binary address conventions
 
-`BTL.BIN` is an `MWo3` image whose complete raw file, including the header, is
-loaded at EE `0x006B3F00`. Its header records:
+The clean BTL identity and shared address conversion follow
+[Standard game file identities](../game/files/file_identities.md). Its
+header additionally records:
 
 | Header field | Value |
 | --- | ---: |
 | Kind (`+0x04`) | `1` |
-| Full-file load base (`+0x08`) | `0x006B3F00` |
 | Text bytes (`+0x0C`) | `0x001DB6C0` |
 | Initialized-data bytes (`+0x10`) | `0x00046C00` |
 | BSS bytes (`+0x14`) | `0x00006E80` |
 | Constructor interval (`+0x18..+0x1C`) | `[0x008D6180, 0x008D61A4)` |
 | Product label (`+0x20`) | `BTL_product.bin` |
 
-The authoritative mapping is therefore:
-
-```text
-live EE address = 0x006B3F00 + raw BTL file offset
-```
-
-The preserved Ghidra baseline omitted raw header bytes `0x00..0x3F` and is
-`0x40` low:
-
-```text
-live EE address = preserved Ghidra/export address + 0x40
-```
-
 Encoded absolute pointers and `j`/`jal` targets in the raw overlay are already
 live addresses and must not be shifted. This matters for intra-overlay calls:
 Ghidra can attach an encoded live target to bytes `0x40` later than the bytes
-that execute at that target. The mapping is independently documented in
-[the MWo3 overlay ABI](../runtime/overlay_abi.md).
+that execute at that target.
 
 The result-code logic itself is resident and has no overlay adjustment. Useful
 BTL entries in this flow are:

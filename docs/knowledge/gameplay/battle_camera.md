@@ -6,12 +6,9 @@ every camera preset. It does not cover Adventure, cutscene cameras, rendering
 projection internals, or player-visible camera policy that has not been
 runtime-tested.
 
-The source is clean `PRG/BTL.BIN`, size `0x222300`, SHA-256
-`56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C`.
-The complete file, including its `0x40`-byte MWo3 header, loads at
-`0x006B3F00`. The preserved Ghidra baseline omitted that header, so a physical
-body displayed at address `g` executes at `g + 0x40`; absolute operands in the
-file are already live and must not be shifted again. This mismatch also causes
+The clean BTL input and its address conversion are defined in
+[Standard game file identities](../game/files/file_identities.md). The
+header mismatch also causes
 some direct-call targets to be attached to a false continuation symbol 0x40
 after the physical callee, so the findings below use instruction bytes and
 field behavior rather than trusting those synthetic call labels.

@@ -1,22 +1,18 @@
 # Battle-session and stage lifecycle
 
-Static ownership, construction, linking, and teardown evidence for the BTL
-overlay. This deliberately does not assign AI, status-effect, match-outcome,
+Static ownership, construction, linking, teardown, and update-cadence evidence
+for the BTL overlay. This deliberately does not assign AI, status-effect, match-outcome,
 Practice, or Adventure semantics to the structural objects.
 
-The source is clean `BTL.BIN`, size 2,237,184 bytes and SHA-256
-`56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C`.
-Its MWo3 header declares load base `0x006B3F00` and name `BTL_product.bin`.
-The preserved Ghidra overlay image omitted the retained `0x40`-byte header, so
-an overlay-local exported address is `0x40` below its live address. Encoded
-absolute JAL targets and pointers in the raw overlay are already live. Resident
-`SLPS_258.37` addresses are unaffected.
+The clean BTL input and its address conversion are defined in
+[Standard game file identities](../game/files/file_identities.md). Its
+internal name is `BTL_product.bin`.
 
 ## Research coverage
 
 - **Assigned scope:** structural BTL match-session ownership: resident entry
 layering, root and outer-graph construction, fixed child allocation, actor/side
-linkage, stage-owner/controller binding, and the matching destruction order.
+linkage, stage-owner/controller binding, update cadence, and the matching destruction order.
 - **Exploration depth:** the resident setup/teardown call sites and every direct BTL call to the root
 initializer, graph build/broadcast family, and constructor-only stage-owner
 reset were enumerated in the clean images. Fixed allocations, field links,
@@ -27,16 +23,23 @@ fixed-table boundaries, not for every virtual phase callback or semantic role
 inside the child objects.
 - **Confirmed coverage:** resident entry layering, root and outer-graph
   construction, fixed child allocation, actor/side linkage,
-  stage-owner/controller binding, and reverse destruction order are established
+  stage-owner/controller binding, nominal fighter-update cadence, and reverse destruction order are established
   within the direct-call and fixed-table boundaries.
 - **Unresolved or untested:** the original names of most root children, the meaning and writers of root byte
 `+0x21`, and any indirect per-round reset remain unresolved.
 - **Deliberate exclusions and overlap:** AI, statuses, outcomes, Practice,
   per-round gameplay, and Adventure were deliberately excluded.
 - **Evidence limitations:** no runtime allocation trace, stage swap, round
-  transition, or teardown capture was performed. Consequently the ownership
-  and address relationships are strong static results, while round-level
-  reachability beyond the documented match-session boundary remains unproven.
+transition, or teardown capture was performed. Consequently the ownership
+and address relationships are strong static results, while round-level
+reachability beyond the documented match-session boundary remains unproven.
+
+## Battle update cadence
+
+Native battle gameplay advances fighter updates at 30 Hz at nominal speed.
+PCSX2 can report 60 VPS while the game still advances those fighter updates at
+30 Hz; emulator turbo changes their wall-clock rate without changing the
+gameplay cadence expressed in updates.
 
 ## Address map
 

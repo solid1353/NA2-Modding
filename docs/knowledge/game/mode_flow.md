@@ -65,20 +65,12 @@ are also out of scope.
 
 ## Evidence and conventions
 
-The observations below come from static inspection of the clean Japanese
-`SLPS_258.37` executable:
-
-- input: `@source_na2/SLPS_258.37`
-- size: `5,273,256` bytes (`0x5076A8`)
-- SHA-256:
-  `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`
-- format: little-endian 32-bit MIPS EE ELF
-- decompiler/listing: Ghidra 12.1.2 exports at
-  `@disassembly/NA2/exports/SLPS_258.37/SLPS_258.37.{c,txt}`
-- resident file-backed mapping used here:
-  `runtime = ELF file offset + 0x000FFF00`; later BSS globals have runtime
-  addresses but no corresponding file bytes
-- analysis date: 2026-08-20
+The observations below come from static inspection of the clean resident ELF.
+Its identity and address conversion follow
+[Standard game file identities](files/file_identities.md). The
+decompiler and listing are the Ghidra 12.1.2 exports under
+`@disassembly/NA2/exports/SLPS_258.37/`; later BSS globals have runtime
+addresses but no corresponding file bytes.
 
 The executable is stripped. Names such as `FUN_001e9980` and
 `DAT_005d51d0` are Ghidra labels, not recovered source identifiers. Literal
@@ -89,7 +81,7 @@ Unless marked otherwise, a statement is a direct static observation with high
 confidence. “Inference” identifies a role derived from call order or state
 transitions. No new runtime validation was performed for this note. Two field
 names below explicitly reuse existing runtime evidence from
-[battle.md](../gameplay/battle.md#direct-practice-bootstrap), and the
+[Practice-mode architecture](../gameplay/practice_mode.md), and the
 synchronous overlay-call contract is cross-checked against the established
 [overlay ABI](../runtime/overlay_abi.md).
 
@@ -950,7 +942,8 @@ The deeper state meanings are intentionally not duplicated here. Resident
 states 1 through 6 prepare resources, states 7 and 9 own selection handoffs,
 states 10 through 15 load/construct the battle, and later states tear down or
 switch the graph. Their established behavior is maintained in
-[battle.md](../gameplay/battle.md) and [stages.md](../gameplay/stages.md); this
+[Practice-mode architecture](../gameplay/practice_mode.md) and
+[stages.md](../gameplay/stages.md); this
 note owns only the front-end entry/return boundary and dispatcher contract.
 
 ## ETC handoffs and returns

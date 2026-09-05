@@ -32,8 +32,9 @@ current task.
    na228 <iso-path> -s <recording> <task-owned-candidate-path>
    ```
 
-   Use an explicit task-owned candidate path; never use default
-   capture path.
+   Use an explicit
+   [task-owned candidate path](../policies/work_directories.md);
+   never use the default capture path.
 4. Compare the task-relevant candidate captures with the baseline and report
    the observed result.
 

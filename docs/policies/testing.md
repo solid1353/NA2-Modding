@@ -27,9 +27,9 @@
   [input-recording validation workflow](../workflows/input_recording_validation.md).
   Its agent replay is runtime validation, not user acceptance of the result.
 - A standalone savestate may support diagnosis but does not validate a change.
-- Before relying on an ISO as runtime evidence, verify its identity and
-  provenance from the available SHA-256, serial, CRC, build record, payload
-  hashes, and symbol map. Request any required missing metadata.
+- Before relying on an ISO as runtime evidence, verify that it is the intended
+  build using the minimum sufficient evidence. Do not request or record extra
+  identity metadata.
 - Extract `Screenshot.png` from an existing savestate when that frame is enough;
   do not create a complete state solely to obtain a screenshot.
 

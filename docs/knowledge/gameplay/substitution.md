@@ -1,95 +1,92 @@
 # Substitution Knowledge
 
-This document records the confirmed substitution-cost mechanism and the
-durable findings from the 2026-07-05 and 2026-08-20
-substitution-reliability investigations. It preserves the established
-behavior, tested negative results, and control-flow boundary so they are not
-investigated again without new evidence.
+This document records the confirmed substitution-cost mechanism and durable
+findings from the substitution-reliability investigations. It preserves the
+established behavior, tested negative results, and control-flow boundary so they
+are not investigated again without new evidence.
 
 ## Research coverage
 
-- **Assigned scope:** this investigation determined how substitution reliability
-is selected for different attacks, which native gates remain independent of
-that reliability setting, and what emulator control was needed to teach and
-exercise the game without input recordings. It covers the clean per-action
-data, the central predicate and its direct callers, user-facing move identity,
-runtime-owned exceptions, practical per-record and global control boundaries,
-and the PCSX2/PINE foundation used for exact paused-frame experiments.
+- **Assigned scope:** this investigation covers native substitution cost,
+  reliability, timing, reset, and HUD ownership. It also records the emulator
+  control used to exercise the game without input recordings.
 
 - **Exploration depth:** static coverage is exhaustive within the identified
-reliability surface: the complete control flow of `FUN_00229130`, all four
-direct clean-ELF call sites, its input-history, eligibility, response, resource,
-flag-conversion, and RNG paths, and the separate temporary-effect-ID-`9` route
-were traced. All 74 primary and four structurally proven auxiliary action-table
-owners were enumerated: 3,444 records in total, including all 1,065 admitted
-Command Chart mappings and their 1,110 record instances. Exact mapping
-multiplicity and mixed-profile titles were checked, and a targeted direct-writer
-audit identified the six records whose live timing can be replaced by fighter
-callbacks. Coverage outside those bounded tables, calls, and writers was
-gap-oriented rather than a whole-program semantic classification.
+  reliability surface: the complete control flow of `FUN_00229130`, all four
+  direct clean-ELF call sites, its input-history, eligibility, response,
+  resource, flag-conversion, and RNG paths, and the separate temporary-effect-
+  ID-`9` route were traced. All 74 primary and four structurally proven
+  auxiliary action-table owners were enumerated: 3,444 records in total,
+  including all 1,065 admitted Command Chart mappings and their 1,110 record
+  instances. Exact mapping multiplicity and mixed-profile titles were checked,
+  and a targeted direct-writer audit identified the six records whose live
+  timing can be replaced by fighter callbacks. Coverage outside those bounded
+  tables, calls, and writers was gap-oriented rather than a whole-program
+  semantic classification.
 
 - **Confirmed coverage:** the signed `+0x1A` timing semantics, positive history
-windows, exact negative modulo probabilities, `+0x10` zero-to-negative
-conversion, earlier `+0x14` rejection flags, response whitelist, guard-edge and
-age requirements, resource checks, owner/index recovery, and Command Chart name
-join are established. The document distinguishes deterministic window admission
-from guaranteed substitution and records the narrow per-record, runtime-writer,
-all-table, and central-normalization control choices. The no-recording runtime
-foundation is also covered: the 18-byte DS2 state contract, PINE set/step/get/
-release operations, exact-frame stepping evidence, neutralization behavior,
-catalog-to-live telemetry, and one autonomous Naruto attack plus defender
-guard-edge probe.
+  windows, exact negative modulo probabilities, `+0x10` zero-to-negative
+  conversion, earlier `+0x14` rejection flags, response whitelist, guard-edge
+  and age requirements, resource checks, owner/index recovery, and Command
+  Chart name join are established. The document distinguishes deterministic
+  window admission from guaranteed substitution and records the narrow per-
+  record, runtime-writer, all-table, and central-normalization control choices.
+  The no-recording runtime foundation is also covered: the 18-byte DS2 state
+  contract, PINE set/step/get/release operations, exact-frame stepping evidence,
+  neutralization behavior, catalog-to-live telemetry, and one autonomous Naruto
+  attack plus defender guard-edge probe. The native battle clock, battle reset
+  seam, support-gauge renderer, fill palette, shared top-HUD layout, and failed
+  custom-HUD placement and tint experiments are also established.
 
 - **Unresolved or untested:** the gameplay roles and predicate reachability of 298
-exceptional unnamed records remain unclassified. The negative-timing
-probabilities have not been measured as runtime distributions, every named,
-auxiliary, and callback-mutated record has not been exercised in battle, and
-the full gameplay meaning of the live tier fields used by some timing writers
-remains only partially resolved. No product choice has been made between
-per-record data and central normalization, and no reliability configuration,
-patch, or user interface has been implemented.
+  exceptional unnamed records remain unclassified. The negative-timing
+  probabilities have not been measured as runtime distributions, every named,
+  auxiliary, and callback-mutated record has not been exercised in battle, and
+  the full gameplay meaning of the live tier fields used by some timing writers
+  remains only partially resolved. Callback cadence, complete
+  new-battle reset coverage, cinematic clock suppression, COM behavior at zero
+  resource, and final HUD composition remain unconfirmed at runtime.
 
 - **Deliberate exclusions and overlap:** the already established substitution-cost
-mechanism is retained only to separate cost from reliability. Hit-response,
-status-effect, controller-input, and action-command internals remain with their
-own canonical documents except where a direct substitution gate required the
-connection. Item ID `9` is not conflated with temporary effect ID `9`; only the
-latter's Kurenai-specific substitution route is in scope. Practice/free-battle
-navigation, broad legacy dispatcher hacks, recordings, and implementation of
-the three known PCSX2 lifecycle hardening items were deliberately excluded.
+  mechanism is retained only to separate cost from reliability. Hit-response,
+  status-effect, controller-input, and action-command internals remain with
+  their own canonical documents except where a direct substitution gate
+  required the connection. Item ID `9` is not conflated with temporary effect
+  ID `9`; only the latter's Kurenai-specific substitution route is in scope.
+  Practice/free-battle navigation, broad legacy dispatcher hacks, recordings,
+  and implementation of the three known PCSX2 lifecycle hardening items were
+  deliberately excluded.
 
 - **Evidence limitations:** static conclusions use the hash-pinned clean
-`SLPS_258.37`, raw bytes, and preserved read-only Ghidra exports; `FUN_*` names
-are local generated labels, and a table entry does not itself prove gameplay
-reachability. The catalog represents clean templates plus the six confirmed
-direct timing-writer families, not every possible indirect live mutation. The
-runtime evidence is a bounded Practice sample whose defender was CPU-controlled,
-not a roster-wide campaign; it used neither an input recording nor a runtime
-memory patch. Agent experiments additionally require an already paused,
-agent-capable PCSX2 build and remain subject to the documented in-flight-step,
-PINE-reload, and legacy-packet lifecycle caveats.
+  `SLPS_258.37`, raw bytes, and preserved read-only Ghidra exports; `FUN_*`
+  names are local generated labels, and a table entry does not itself prove
+  gameplay reachability. The catalog represents clean templates plus the six
+  confirmed direct timing-writer families, not every possible indirect live
+  mutation. The runtime evidence is a bounded Practice sample whose defender
+  was CPU-controlled, not a roster-wide campaign; it used neither an input
+  recording nor a runtime memory patch. Agent experiments additionally require
+  an already paused, agent-capable PCSX2 build and remain subject to the
+  documented in-flight-step, PINE-reload, and legacy-packet lifecycle caveats.
+  The HUD color branches and one-call reset coverage remain statically
+  established rather than runtime-confirmed.
 
 ## Stable references
 
 - Target: *Naruto Shippuuden: Narutimate Accel 2*, `SLPS-25837`, boot ELF
   `SLPS_258.37`.
-- Clean source: `@source/NA2.iso.files/SLPS_258.37`, SHA-256
-  `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`.
-- Current serial-wide cheat file:
-  `@pcsx2_files/games/NA228/NA228.pnach`.
-- Historical CRC-alias file during the investigation: `pcsx2_files/cheats/SLPS-25837_E0F064C5.pnach`. The current workflow no longer generates CRC aliases.
+- Clean source and address convention:
+  [Standard game file identities](../game/files/file_identities.md).
 - Historical NA2 decompiler/Ghidra evidence remains available through Git
   history. Restore reusable analysis only under `@disassembly/NA2/`.
-- Original global substitution-cost site: ELF offset `0x1299BC` (legacy
-  evidence ID `ELF-S001`). The current implementation leaves this instruction clean
-  and sources overrides from the character configuration table.
+- Native substitution-cost site: ELF offset `0x1299BC` (legacy evidence ID
+  `ELF-S001`).
 
 Function names below are Ghidra-generated names for the NA2 boot ELF and are stable only within the preserved analysis project.
 
 ## Substitution-cost mechanism
 
-Clean bytes and the maintained Ghidra export confirmed this mechanism on
-2026-08-09. At EE address `0x202298BC` / ELF file offset `0x1299BC`,
+Clean bytes and the maintained Ghidra export confirmed this mechanism. At EE
+address `0x202298BC` / ELF file offset `0x1299BC`,
 `FUN_002297d0` contains `lui v0, 0x3F80`, represented by little-endian
 instruction bytes `80 3F 02 3C`. The function moves the resulting float32
 `1.0` to `f0`, subtracts it from the object's `+0x70` float field, and clamps
@@ -107,66 +104,147 @@ and destination register.
 | 5 | `0x40A0` | `A040023C` |
 | 15 | `0x4170` | `7041023C` |
 
-The historical 16-bit PNACH write changed the immediate bytes from `80 3F` to
-`40 40`, making the decrement cost `3`. That form is runtime-proven. It is no
-longer the maintained configuration mechanism: the clean instruction remains
-unchanged and supplies native cost `1.0` only when neither a character nor base
-table cell supplies an override.
+The historical 16-bit PNACH experiment changed the immediate bytes from
+`80 3F` to `40 40`, making the decrement cost `3`; that result is
+runtime-proven. The clean instruction supplies native cost `1.0`.
 
 The instruction site, float encoding, and decrement mechanism are confirmed,
 not hypotheses. Cost `3` is runtime-proven. Substitution cost is not the
 substitution-reliability gate.
 
-## Per-character implementation
+## Native gauge and HUD boundaries
 
-The current implementation leaves the clean `lui` at ELF offset `0x1299BC`
-unchanged. A guarded hook at ELF offset `0x1299C0` replaces only
-`mtc1 v0,f0; nop` (clean bytes `00 00 82 44 00 00 00 00`). Its shim passes the
-live fighter pointer from `s3`, preserves the native float bits from `v0`, and
-tail-calls the resident selector. The resident selector maps the incoming
-fighter pointer to Player 1 or Player 2 through manager `+0xDE4`/`+0xDE8`, then
-uses the corresponding match-start ID at manager `+0xC8`/`+0xF0`. Capture
-comparison confirms that a directly selected form retains ID 73 there, while
-Naruto transformed during the match retains base ID 57 there even though its
-live fighter ID becomes 73. Native subtraction and zero clamping resume
-unchanged at `0x202298C8`.
+### HP, battle-clock, and reset ownership
 
-The table is generated from
-`configurations/overrides/base.character_overrides.tsv` and the selected
-profile TSV in that directory. Its required `base` and `step` rows are metadata,
-not characters, and therefore have empty `base_id`, `character`, and `tier`
-cells. The base substitution cell is literal; the step cell is explicitly
-positive and signed. An empty character cost is inferred as
-`base + tier_index * step`: D `0`, C `1`, B `2`, A `3`, S `4`, S+ `5`, S++
-`6`, and S+++ `7`. An unsigned character cell is a literal override, while an
-explicitly signed character cell adjusts the tier-derived cost; empty profile
-cells inherit both value and mode. Costs are percentage points on an inclusive
-`0..100` scale. The native-chakra consumer converts the resolved value back to
-NA2's 15-point resource with `cost * 15 / 100`; the optional substitution-gauge
-consumer uses the same value against its full capacity. The current
-configuration uses base `20` and step `+5`, producing D `20`, C `25`, B `30`,
-A `35`, S `40`, S+ `45`, S++ `50`, and S+++ `55`, all over `100`. No IDs or
-values are compiled into the selector C. The configuration also reserves `hp`,
-damage, and recovery fields for later consumers.
+Normalized HP is stored at `fighter+0x6C`. The shared fighter-update path
+contains a native call at raw `0x14DB8C..0x14DB93`; immediately afterward,
+`fighter+0x20C` is checked as the actor hit-stop/pause counter. Sampling HP at
+this cadence is idempotent when HP is unchanged, but the seam is not an
+independent recovery clock.
 
-`features.character_select.balance_overlay` reads this same complete table from
-Character Select independently of the battle override setting. Its guarded
-hook at ELF offset `0x2B9B14` replaces the first native player-panel draw call
-with a wrapper that preserves that draw, resolves the selected character ID,
-and displays the row's `TIER` in the corresponding top-screen block. When
-`features.settings.character_overrides` is enabled, it also displays the resolved
-`SUB x%` value, omitting trailing decimal zeroes. With battle overrides
-disabled, the table remains available only to supply tier metadata and is not
-applied to gameplay. The overlay does not display player labels or numeric
-character IDs.
+The running battle controller calls its countdown accumulator only after
+scheduler suppression has been recomputed and the battle-state gates pass. At
+virtual `0x001F11B8` / raw ELF `0x0F12B8`, it calls
+`FUN_001EBA80(0x006B28D0)`. Timer flags have distinct native roles:
 
-The addresses, displaced instructions, and identity field are statically and
-capture-confirmed. The user runtime-confirmed the earlier selective selector in
-Practice: Naruto versus Naruto in save state 1, and Sakura versus Naruto in save
-state 2. The generated-table implementation was accepted through `ver` on
-2026-08-14. See
-[Character identity in battle](character_ids.md) for the selector and active
-fighter evidence.
+| Mask | Native meaning |
+| ---: | --- |
+| `0x01` | scheduler suppression |
+| `0x02` | countdown freeze, including Unlimited battle time |
+| `0x04` | expired or terminal timer state |
+
+System-context byte `+0x01` is the display-count increment; native battle uses
+`2`. System-context `+0x194` is the engine-update ordinal incremented by
+`FUN_001081B0`; zero is valid and the counter can wrap. `FUN_00307230` is a
+status-effect scalar used by chakra regeneration, not a time source.
+
+`FUN_001EF330`, virtual `0x001EF330` / raw ELF `0x0EF430`, constructs the
+battle graph when controller `+0x18` is null and publishes fighter pointers at
+manager `+0xDE4/+0xDE8`. Teardown clears those fields, destroys the bundle, and
+nulls the controller pointer. The call at virtual `0x001EF41C` / raw
+`0x0EF51C` occurs after both fighters are published and is a candidate
+once-per-new-battle observation seam; one-call coverage remains unconfirmed.
+
+
+### Native HUD ownership
+
+The per-side support-gauge wrapper first calls its native update, tests byte
+`+0x0A`, and calls `TEX_xgauge` only when that byte is nonzero. The
+complete-file update and draw calls are BTL `0x69380/0x69398`; exported
+addresses are `0x0071D240/0x0071D258`.
+
+| Controller field | Native role |
+| ---: | --- |
+| `+0x00` | side index |
+| `+0x04` | fighter pointer |
+| `+0x0A` | visibility state |
+| `+0x0B` | fill/animation state |
+| `+0x0C` | normalized support fill |
+| `+0x10` | prior fill |
+| `+0x18` | primary support-gauge render object |
+
+The native update copies fighter support value `+0x74` into controller
+`+0x0C`. The draw scales a 64-unit foreground by that value. Its side bases are
+`120.0/392.0` with shared Y `340.0`. The red marker is fixed at half bar: the
+fill begins at `20.0`, spans `64.0`, and the marker uses `52.0`.
+
+At Ghidra `0x0071CF5C..0x0071CF60`, `lui v0,0x40` followed by
+`ld a0,-0x4038(v0)` reads resident `0x003FBFC8`: the load displacement is
+signed, so the effective address is `0x00400000 - 0x4038`. Clean ELF bytes
+there are `80 80 80 80 00 00 00 00`. The packing sequence through Ghidra
+`0x0071CF9C` uses only the first three bytes as RGB `(0x80,0x80,0x80)` and
+preserves the sprite's Q field; it does not copy the fourth byte to alpha.
+This neutral tint preserves the marker texture's own color.
+
+The marker calls resident rectangle helper `0x0037BC40`. Its scaled counterpart
+`0x0037BD00` changes destination dimensions and centering using the supplied
+scales. Both set the same source rectangle/mode, preserve RGB and alpha, and
+submit through `0x001CC350`; neither supplies a different marker tint or
+texture. These helper bodies and the resident color bytes were checked through
+GhidrAssist.
+
+The fill tint is selected independently from the marker. In normal controller
+state (`+0x0A == 1`), the update assigns color index `+0x0B` from the half-gauge
+eligibility result and the full-gauge comparison:
+
+| Fill condition | Index | Native RGB tint |
+| --- | ---: | --- |
+| Below `0.5` | `0` | `(0x1E, 0x64, 0x78)` |
+| At least `0.5`, below `1.0` | `1` | `(0x7F, 0x50, 0x32)` |
+| At least `1.0` | `2` | `(0x7F, 0x78, 0x32)` |
+
+Controller state `+0x0A == 2` overrides the indexed tint with
+`(0x7F, 0x00, 0x00)`. The four packed colors are at live BTL `0x00899DD0`,
+Ghidra `0x00899D90`, complete-file `0x1E5ED0`:
+`1E 64 78 FF 7F 50 32 FF 7F 78 32 FF 7F 00 00 FF`.
+The draw loads this palette at Ghidra `0x0071CD5C..0x0071CD88`, selects by
+`+0x0B` at `0x0071CE44..0x0071CE94`, and applies the state-2 override at
+`0x0071CE98..0x0071CEDC` before committing the fill sprite.
+Before the foreground, Ghidra `0x0071CD90..0x0071CE40` draws the full-width
+inner background with RGB `(0x7F,0x7F,0x7F)`. Palette packing changes only RGB;
+the sprite retains its existing alpha and Q.
+
+The update's threshold helper is live BTL `0x0071C970`, Ghidra `0x0071C930`.
+It calls resident `0x002381E0`, which returns whether fighter `+0x74` is at
+least `0.5`; the update then compares controller `+0x0C` with `1.0` to choose
+index `1` or `2`. These instructions and palette bytes were read through
+GhidrAssist. The resident helper lacks a defined Ghidra function, so its
+comparison was checked from the MCP byte view at `0x002381E0..0x00238208`.
+
+The per-side top-HUD dispatcher begins at BTL raw `0x673E0`. Parent byte
+`+0x54` gates all child draws. Its primary child layout stores X, Y, scale, and
+side at `+0x00/+0x04/+0x08/+0x0C`; both the HP/chakra and character-name
+renderers consume those fields. Slide and Ultimate-Jutsu shake are shared
+parent transforms, not component-local state.
+
+The character-name renderer begins at BTL raw `0x67F20`.
+`0x67F60..0x67F67` loads its Y anchor, and `0x67F68..0x67F6F` performs native
+Y-scale multiplication and loads the side byte.
+
+### Gauge HUD experiments
+
+Drawing the custom gauge from the BTL `0x69380` support-controller update hook
+did not follow the top-HUD lifecycle: it remained visible while ordinary Jutsu
+hid HP and chakra, then disappeared while Ultimate Jutsu retained the ordinary
+top HUD. Moving the draw below the parent visibility gate fixed visibility, but
+fixed coordinates still failed to follow the shared slide-off and
+Ultimate-Jutsu shake.
+
+A raw 1244x933 capture measured the first test frame at `x=197..399,
+y=147..181`; the normalized reference was approximately `x=198..401,
+y=113..148`. After the first vertical correction, another capture placed the
+frame 4–5 pixels above the reference and the name about 13 pixels above it. The
+pair measured roughly 2.43 pixels per bar unit and 2.5 pixels per name-anchor
+unit. These captures constrain placement but do not validate the current HUD
+offsets.
+
+An early marker-color experiment used dark-red RGB `(0x12,0,0)` from an
+incorrectly decoded address. The signed load displacement instead resolves to
+the native neutral tint `(0x80,0x80,0x80)`.
+
+Static evidence does not establish callback cadence, complete new-battle reset
+coverage, cinematic clock suppression, COM behavior at zero resource, or final
+HUD composition. Those remain runtime-validation questions.
 
 ## Runtime tests that did not improve reliability
 
@@ -182,7 +260,7 @@ The first test appears to call `FUN_001921c0` with invalid context. These result
 
 ## Confirmed substitution-reliability gate
 
-Static tracing on 2026-08-20 identified `FUN_00229130` at boot-ELF virtual
+Static tracing identified `FUN_00229130` at boot-ELF virtual
 address `0x00229130` / file offset `0x129230` as the substitution acceptance
 predicate. The boot ELF has exactly four physical calls to it, at
 `0x0021F7D8`, `0x0021F81C`, `0x00220B28`, and `0x00220CE4`. The nearby
@@ -369,10 +447,8 @@ record index `i` is:
 character[+0x2C] + i * 0x54 + 0x1A
 ```
 
-The boot ELF's first load section begins at file offset `0x100` for virtual
-address `0x00100000`, so the corresponding file offset is `virtual - 0x0FFF00`.
-Any file-backed implementation must guard the original byte at that computed
-offset; a virtual address must not be mistaken for its file offset.
+Resident file offsets use the canonical conversion linked above. A virtual
+address must not be mistaken for its file offset.
 
 A complete read-only scan of the 74 primary-roster tables in
 `@resources/character_data.tsv` found 3,428 action records with these raw timing
@@ -642,15 +718,15 @@ that generally does not divide `2^32`, use the exact floor formula above when
 reproducible rates matter. Positive values above `3` do not create a wider
 window: they clamp to the same four-record search as `3`.
 
-The practical control surfaces are therefore:
+The practical control surfaces follow directly from that ownership:
 
 | Desired scope | Narrow control | What remains unchanged |
 | --- | --- | --- |
-| One non-mutated character action record | Guarded file edit of that record's signed `+0x1A` byte | All eligibility, resource, and transition rules |
-| One of the six runtime-mutated records | Change its template plus every applicable writer branch, or normalize that record after the writers | Other records remain independently selectable; dynamic block flags remain unless separately changed |
-| Every action with a stock table entry | Generate guarded edits from the hash-pinned catalog and explicitly handle the six writer-owned exceptions | Per-record values remain independently selectable |
-| Every attack reaching the predicate | Normalize the effective timing inside `FUN_00229130` after the flag conversion | Eligibility gates, held-guard rejection, resource checks, and commit behavior |
-| Kurenai awakened exception | Separately retain, alter, or suppress effect-`9` handling | Ordinary attack timing policy is not a complete control for this route |
+| One non-mutated character action record | Guarded edit of that record's signed `+0x1A` byte | All eligibility, resource, and transition rules |
+| One of the six runtime-mutated records | Change its template and every applicable writer, or normalize it after those writers | Other records remain independently selectable; dynamic block flags remain |
+| Every action with a stock table entry | Generate guarded edits from the hash-pinned catalog and handle the six writer-owned exceptions | Per-record values remain independently selectable |
+| Every attack reaching the predicate | Normalize effective timing inside `FUN_00229130` after flag conversion | Eligibility, held-guard rejection, resource checks, and commit behavior |
+| Kurenai awakened exception | Treat effect `9` separately | Ordinary attack timing policy remains independent |
 
 Deterministic timing means deterministic *window admission*, not guaranteed
 substitution. A fresh guard edge must still be present in the chosen history
@@ -661,29 +737,10 @@ effective zero. Raw zero is not effective zero on definitions carrying
 `0x000C0000`, so those records require a code-level post-conversion override or
 a positive table value.
 
-A global reliability option should normalize the timing value inside
-`FUN_00229130` after the special `0x000C0000` conversion and before the
-held-duration check. That location preserves every eligibility, resource, and
-transition gate while changing only window/probability policy. Bypassing the
-function's final return or forcing `FUN_002297d0` would incorrectly admit
-ineligible states and is not an equivalent control.
-
-The runtime implementation exposes `sub_active_frames` under
-`features.settings.in_game.shared` and accepts `0..16`. It replaces the clean
-`bgez s0,0x00229610; nop` pair at virtual `0x002295C8` / ELF raw `0x1296C8`
-(`1100010600000000`) with a resident jump. The wrapper preserves the live
-Guard-age value in `v0`, loads the runtime setting into `s0`, and rejoins at
-`0x00229620`. This skips only the attack-authored negative random gate and the
-native positive clamp.
-
-The unchanged history helper searches the current input record plus exactly
-`sub_active_frames` prior records. Base value `4` therefore accepts a fresh
-Substitution edge from the current record or four earlier records; `0` accepts
-the current record only. The timing control retains the native eligibility,
-resource, response, attack-flag, held-Guard, history-search, and transition
-machinery. The retired `frames_after` hit-response retry is preserved only in
-[`../../designs/substitution_frames_after.patch`](../../designs/substitution_frames_after.patch).
-Runtime confirmation remains pending.
+A global reliability control belongs inside `FUN_00229130`, after the special
+`0x000C0000` conversion and before the held-duration check. That boundary
+changes only window/probability policy. Forcing the function's final result or
+forcing `FUN_002297D0` would also admit ineligible states and is not equivalent.
 
 Per-attack ownership, record sizing, offset calculation, clean-roster value
 distribution, and the exact Command Chart name join are now established.
@@ -727,9 +784,7 @@ invalid requests, reset, shutdown, disconnect, and aborted stepping fail closed
 and neutralize controlled slots. The protocol therefore supports deterministic
 paused-frame experiments without leaving a held input behind.
 
-The deployed Devel AVX2 binary identifies exact PCSX2 commit `f351798d9` and
-has SHA-256
-`6E11A60CAE7555B9015E6B834089B3118410B366B13CDC8783FB2F8CD37BB8DC`.
+The deployed development PCSX2 binary supplied the runtime environment.
 Post-deployment trials completed synchronous steps of 1, 8, 20, and 120 frames;
 every reply satisfied `(end - start) mod 2^32 == requested`, and focused
 `PINEAgentControl*` tests passed. Rebuilding an exact commit-identifiable binary
@@ -789,8 +844,8 @@ static name join, and relevant telemetry paths no longer need recordings.
 
 ### First live autonomous probe
 
-The first no-recording probe used the handed-off paused Practice battle on
-2026-08-20. A complete P1 Circle state selected Naruto action record `21`; when
+The first no-recording probe used a paused Practice battle. A complete P1
+Circle state selected Naruto action record `21`; when
 the hit landed, P2 `+0xE54` changed to the relocated P1 record `21`, whose clean
 timing is `-1` and whose canonical Command Chart title is `Nindo Attack`. P2
 health changed from `1.0` to `0.98` and then regenerated under Practice rules.
@@ -803,7 +858,7 @@ released mask in word 2. The fighter's logical action and `+0x95C` nevertheless
 remained zero because this Practice opponent had non-player mode value
 `((fighter[+0x60] & 0x1FF) >> 5) == 1`; the suppression behavior matches the
 static input and predicate gates. No runtime memory patch was used. The VM was
-returned paused at exact frame `14802`, manager state/substate `4/3`, with both
+returned paused at manager state/substate `4/3`, with both
 controller slots uncontrolled and neutral.
 
 ## Established control flow

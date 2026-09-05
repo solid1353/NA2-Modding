@@ -40,8 +40,8 @@ entrypoints were not all individually audited.
 decoded BTL direct references to global support owner `0x00607888`; direct
 BTL call sites to the common transient creator and side-resolution helpers;
 direct decoded calls to the primary-fighter creator and resident publication
-lookups; and every address row in the exact BTL map against
-`live = 0x006B3F00 + raw` and `export = live - 0x40`. These scans establish
+  lookups; and every address row in the exact BTL map against the canonical
+  address conversion. These scans establish
 direct-reference coverage only; computed calls, data-driven dispatch, and code
 not recovered as instructions are not implied absent.
 
@@ -73,24 +73,10 @@ as static control flow.
 
 ## Evidence identity and address conventions
 
-The static evidence is the clean extracted game:
+The clean resident and BTL inputs are identified in
+[Standard game file identities](../game/files/file_identities.md).
 
-| Input | Size | SHA-256 |
-| --- | ---: | --- |
-| `PRG/BTL.BIN` | `2,237,184` (`0x222300`) | `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C` |
-| `SLPS_258.37` | `5,273,256` | `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF` |
-
-The `MWo3` header and loader mapping are established separately in
-[NA2 MWo3 overlay ABI](../runtime/overlay_abi.md). They are essential here:
-
-```text
-BTL live address = 0x006B3F00 + raw BTL file offset
-preserved Ghidra/export address = BTL live address - 0x40
-BTL live address = preserved Ghidra/export address + 0x40
-```
-
-The complete `0x40`-byte header remains live at `0x006B3F00`. The preserved
-Ghidra import omitted that header and mapped payload bytes `0x40` low. Encoded
+Encoded
 absolute pointers and `jal` targets inside the overlay are already **live**
 addresses. Consequently, those targets can make Ghidra create a symbol at the
 live numeric address even though the displayed payload at that address is
@@ -104,7 +90,7 @@ The generic node constructor begins at raw `0x055BA0`, live `0x00709AA0`, and
 displayed `0x00709A60`; Ghidra also creates a misleading `FUN_00709AA0` at an
 interior instruction because overlay calls encode the live target. All BTL
 addresses in this document are live addresses unless explicitly labeled
-`raw` or `export`. Resident ELF addresses have no `0x40` correction.
+`raw` or `export`.
 
 ## Ownership model
 
@@ -689,7 +675,7 @@ owned-child relationship rather than immediate recursive ownership.
 ## Dynamic support-object owner
 
 The resident manager fields `+0x68/+0x90` are the selected support IDs for
-sides 0/1, as established in [Battle behavior knowledge](battle.md). The
+sides 0/1, as established in [Battle damage](damage.md). The
 corresponding derived implementation selector is at
 `manager + 0x6C + side * 0x28`. None is consumed by the initial graph creator:
 
@@ -793,7 +779,7 @@ or fighter-list-count test. Its only direct resident caller is at
 `0x00885490(fighter_side)`, which follows global `0x00607888` and calls live
 `0x008872E0(owner, side)`. The resident function does not allocate directly;
 this BTL call is the class factory and publisher. The related behavioral path
-is summarized in [Support field-call and gauge paths](battle.md#support-field-call-and-gauge-paths).
+is documented in [Battle support mechanics](support_mechanics.md).
 
 For side `0/1`, the factory uses exact slot
 `owner + 0x04 + side * 4` and reads the derived class selector from resident

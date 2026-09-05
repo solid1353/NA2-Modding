@@ -70,25 +70,8 @@ resource, outcome, and mode-specific research.
 
 ## Evidence identity and address conventions
 
-The static evidence is the clean NA2 v2.28 resident executable and battle
-overlay preserved in the maintained read-only disassembly archive:
-
-| Artifact | Bytes | SHA-256 |
-| --- | ---: | --- |
-| `@source/NA2.iso.files/SLPS_258.37` | 5,273,256 | `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF` |
-| `@source/NA2.iso.files/PRG/BTL.BIN` | 2,237,184 | `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C` |
-
-Resident `SLPS_258.37` addresses in this document are EE runtime addresses.
-For the mapped resident segment used here, `ELF file = runtime - 0x000FFF00`.
-
-The clean `BTL.BIN` is an MWo3 image loaded with its complete `0x40`-byte
-header at live EE `0x006B3F00`. The preserved Ghidra/export baseline omitted
-that header, so an overlay-local byte or function has these relationships:
-
-```text
-live EE = preserved Ghidra/export + 0x40
-file offset = live EE - 0x006B3F00
-```
+The clean resident and BTL inputs and their address conversions are defined in
+[Standard game file identities](../game/files/file_identities.md).
 
 Raw encoded absolute pointers and JAL targets in the overlay are already live
 addresses. For example, the direct phase setter is preserved as
@@ -1129,6 +1112,12 @@ the rejected predicates only show that some non-combat consumers also treat
 downed/contact substates as ineligible. A runtime hit-attempt matrix would still
 be required to measure attacker-flag exceptions and to distinguish hurtbox,
 collision, and higher-level target-selection behavior frame by frame.
+
+## Unresolved extra-hit address lead
+
+An unresolved address note points to EE `0x20241F40` for a branch previously
+labelled “extra hit.” Its gameplay role and runtime effect are unproven; the
+clean branch must be rechecked before assigning either.
 
 ## Confidence and remaining limits
 

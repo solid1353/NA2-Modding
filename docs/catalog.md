@@ -1,22 +1,17 @@
 # Catalog format
 
-The builder's selectable feature contract is authored in `.modcat`, a custom
+The builder's selectable feature contract is authored in `.modcat`, a
 declarative format with JSON-like objects and TypeScript-like value types. The
-Python builder parses it directly; there is no compiler, generated schema, or
-CUE, Go, Node, or TypeScript runtime.
+builder parses it directly.
 
-`catalog.modcat` defines the logical `features` root and all of its direct
-feature children. The project catalog contains the user-facing contract and one
-singular `patch` reference wherever implementation is selected. Release
-packaging writes an inert `catalog.modcat` reference with patch references and
-every other implementation detail removed. The packaged executable uses its
-embedded complete catalog and never reads the external reference.
+`catalog.modcat` defines the logical `features` root and its selectable tree.
+The project catalog contains the user-facing contract and one singular `patch`
+reference wherever implementation is selected.
 
 A complete standalone or released `.jsonc` configuration has one root field:
 `features` contains the complete selected tree. Repository build variants use
 an internal `overrides` root to customize `base.features`. Line comments,
-block comments, and trailing commas are accepted. A complete synthetic
-configuration appears below.
+block comments, and trailing commas are accepted.
 
 ## Nodes and configuration values
 
@@ -64,15 +59,8 @@ from the public release catalog.
 
 The node-level value `false` disables a node only when its declared type does
 not accept `false`. It never reaches a patch adapter in that case. Disabling a
-container disables its entire subtree. A boolean typed setting treats `false`
-as its configured data and remains selected:
-
-```text
-boolean_parameter: setting<bool> {
-  description: "Synthetic supplied-boolean setting.",
-  patch: "example.boolean_parameter",
-},
-```
+container disables its entire subtree. A Boolean typed setting treats `false`
+as configured data and remains selected.
 
 ## Types
 
@@ -100,9 +88,8 @@ For example, `decimal & 0..15 & step 0.25` accepts `0`, `1`, `1.25`, and `15`,
 but rejects `0.1`, `1.1`, and values outside the inclusive range.
 
 The source syntax also supports quoted or identifier keys, JSON strings and
-numbers, `//` line comments, and trailing commas. Catalog keys and feature
-filenames must be meaningful `snake_case` identifiers. Empty objects and empty
-object types are invalid.
+numbers, `//` line comments, and trailing commas. Catalog keys must be meaningful
+`snake_case` identifiers. Empty objects and empty object types are invalid.
 
 `null`, imports, variables, functions, calculations, executable expressions,
 and every other unlisted construct are unsupported. The grammar is extended
@@ -185,9 +172,6 @@ their JSON configuration values look like this:
   "features": {
     "example": {
       "simple_patch": true,
-      "boolean_parameter": {
-        "value": false
-      },
       "value_or_named_setting": {
         "ratio_cost": {
           "numerator": 3,
@@ -249,10 +233,7 @@ shapes, but keeps `faster_loading` declared once and leaves the JSON flat:
 `&` binds more tightly than `|`; parentheses make the intended distribution
 explicit. Every operand must resolve to a structural object or a union of
 structural objects. Intersected objects must have disjoint selectable field
-names, and no two operands may both declare `description`. Fields declared by
-unconditional object operands remain recursive merge points in configuration
-overrides. If an override supplies any field belonging to a union operand, it
-must supply one complete branch of that union-specific portion.
+names, and no two operands may both declare `description`.
 
 ## Release projection
 
@@ -318,70 +299,14 @@ information. Every module, target, adapter, asset, source, runtime object, and
 operation reachable through a patch must also pass its owning component's
 normal validation.
 
-A grouped edit has only an optional `description` and its `edits` map. Child
-keys are stable snake-case semantic identities, not destination addresses.
-Each child retains its explicit `operation` and complete operation contract.
-Groups are one level only and may contain different operations or targets. The
-loader expands children by semantic key before ordinary operation validation
-and guarded composition. Existing single-operation roots remain primitive
-definitions; grouping adds no binary operation and does not change the binary
-patcher engine contract. Destination ranges belonging to different children
-in one group must not overlap; an ordered same-range chain remains separate
-primitive roots.
+The [binary patcher module](../na228_builder/modules/binary_patcher/README.md)
+owns edit grouping, fixed-stride table replacement, adapters, destination
+forms, guards, and concrete edit validation.
 
-`replace_table` is a catalog authoring operation for guarded fields repeated in
-one fixed-stride game table. It declares one `destination_target_id`,
-`table_offset`, positive `record_stride`, `field_offset`, and nonempty
-`record_patches` map. Each semantic record patch contains exactly one
-`record_index` or nonempty unique `record_indices` list, plus `expected_hex`
-and `replacement_hex`. All record patches in one table have the same nonzero
-byte length, both hex values have equal length, and the patched field must fit
-inside the stride. A record index resolves to:
-
-```text
-table_offset + record_index * record_stride + field_offset
-```
-
-Record indices must be unique across the table. The loader expands every
-semantic record patch into one ordinary `replace` definition with the resolved
-destination offsets before operation-manifest validation. The binary patcher
-therefore receives no table-specific operation, and its exact guards, conflict
-handling, logging, and output behavior remain unchanged. Tables may be dense
-or sparse; `record_indices` exists only to share identical guarded bytes across
-several records.
-
-A parameterized edit retains the ordinary `replace` operation, target, offset,
-and destination guard. It declares an adapter instead of `replacement_hex`;
-the adapter turns the validated setting value into concrete replacement bytes
-before normal guarded composition. Adapters are owned by
-`modules/binary_patcher/adapters.py`; there is no separate adapter operation.
-
-A bare setting may select a fixed-value adapter edit. For example,
-`ascii_fixed` accepts readable `expected_value` and `replacement_value` fields
-in the implementation definition, requires equal-length nonempty ASCII, and
-encodes both values before the same guarded composition. These fixed values are
-implementation details and do not appear in the release catalog reference.
-
-`nul_padded_text` additionally accepts an `encoding` and fixed byte `length`.
-It encodes each nonempty value, requires room for a terminating NUL, and pads
-the remaining bytes with zeroes. This keeps fixed text slots readable without
-weakening their exact byte guard.
-
-The currently supported semantic string operation is
-`replace_imported_game_title`. Its definition guards the imported text plus
-the expected mapping and occurrence counts; when selected, the string patcher
-replaces that text with root `settings.title` before choosing inline or linked
-external placement. Disabling its catalog setting leaves the imported text
-unchanged.
-
-Every primitive binary edit declares exactly one destination form:
-`destination_offset` for one integer address, or `destination_offsets` for a
-unique list of at least two addresses. The loader normalizes the singular form
-to its internal one-element list before operation-manifest validation. When the
-same guarded operation applies at multiple known locations in one target, one
-definition lists all of them. The loader expands the normalized list into
-independently guarded and logged concrete edits; it never searches the target
-or derives an occurrence count.
+The [runtime injector module](../na228_builder/modules/runtime_injector/README.md)
+owns hook and payload declarations. The
+[string patcher](../na228_builder/modules/string_patcher/README.md) owns
+semantic string transformations and their execution.
 
 The examples in this document are illustrative authoring fragments. A real
 catalog must provide implementation definitions for every shown patch ID.

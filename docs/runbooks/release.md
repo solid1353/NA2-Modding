@@ -36,9 +36,11 @@ ISO.
    `Narutimate Accel v2.28.iso.building`, verifies the complete staged image and
    its size, then atomically creates or replaces
    `Narutimate Accel v2.28.iso`.
-10. It never modifies either input, creates no runtime log files, preserves an
-   existing output when a build fails, removes its staging file after failure,
-   and waits for Enter before closing.
+10. It never modifies either input, preserves an existing output when a build
+    fails, removes its staging file after failure, and waits for Enter before
+    closing. A failed run creates or replaces `builder-error.log` with the
+    complete exception and traceback. Successful and cancelled runs create no
+    log.
 
 The ZIP contains exactly the versioned EXE, `config.jsonc`,
 `character_overrides.tsv`, `catalog.modcat`, and `README.md`. Release packaging

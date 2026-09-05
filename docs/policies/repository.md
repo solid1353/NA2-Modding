@@ -39,28 +39,10 @@
 - Git history is the recovery mechanism for tracked files. Preserve
   irreplaceable untracked inputs deliberately before deleting them.
 
-## Work ownership and external inputs
-
-- Set `NA228_TASK_WORK_ROOT` to the acting chat's work root before maintained
-  commands that create temporary files.
-- Copy changing external inputs to `@work/<chat title>/inputs/` with provenance
-  before relying on them. Keep baselines, modified copies, and analysis outputs
-  separate.
-- Before completion, remove disposable task artifacts and apply applicable
-  [research](game.md#research-and-knowledge) retention rules.
-
 ## File and folder management
 
 - `TASKS.md` is user-only. Agents must not read or modify it.
-- Never use a system temporary directory or write outside repositories
-  configured for the current task.
-- Write authorized project changes to their canonical project paths and
-  maintained workflow outputs to their configured repository paths.
-- All other task files and clones are allowed only under
-  `@work/<exact chat title>/`.
 - Never create or use an additional Git worktree.
-- Within `@work/`, a chat may write only in its own root. All other `@work`
-  paths are read-only, regardless of tool or skill workspace conventions.
 - `docs/designs/` is read-only outside Design mode.
 - Everything under `@source/`, including extracted views, is read-only unless
   the user authorizes an exact modification. Only original archives and
@@ -78,8 +60,8 @@
   [input-recording validation workflow](../workflows/input_recording_validation.md),
   savestates are read-only diagnostic evidence: do not create, modify, convert,
   patch, load, replay, or inject through them for validation.
-- Input-recording baselines under `@work/captures/<recording>/<game>/` are
-  read-only.
+- Before deleting anything, preserve any useful information it contains in the
+  appropriate project file.
 - After moving or deleting files, inspect affected parent directories with
   hidden and ignored entries included. Remove unintended empty parents and
   inspect them again; Git status cannot prove directory cleanup.
@@ -87,22 +69,6 @@
   clear structural, ownership, namespace, tooling, or future-extension purpose.
   Otherwise move the file to the nearest appropriate existing directory and
   remove the unnecessary folder.
-
-## Logs and retention
-
-- Write bounded shared workflow logs below `@logs/`, generated task records
-  below `@task_logs/<exact chat title>/`, and task-local build or runtime logs
-  below `@work/<exact chat title>/logs/`. Do not write files directly in
-  `@logs/` or `@task_logs/`.
-- Persist only repository-relative paths or configured aliases, never
-  machine-specific absolute paths.
-- Record only the inputs, selected configuration, result, validation, timing,
-  and failure detail needed to reproduce or diagnose the operation.
-- Generated logs are ignored by Git and disposable. Before completion, delete
-  task-owned logs and resulting empty directories. Retain a log only when an
-  existing tracked document already names a concrete future use and
-  regeneration is expensive or impractical.
-- Large inventories may remain only when they prevent expensive rediscovery.
 
 ## Scripts and dependencies
 
@@ -139,21 +105,27 @@
 
 ## Documentation layout
 
-Give each document one job and canonical authority:
+Give each document one job and canonical authority. Every paragraph must add
+useful information owned by that document; remove it otherwise.
 
 - `AGENT_COMMANDS.md` owns project-specific command definitions;
   `docs/interactions/` owns interaction modes, `docs/procedures/` owns command
   procedures, `docs/workflows/` owns multi-step task workflows, and runbooks own
   exact operational procedures.
-- The implementing repository or component owns user-facing CLI help and current
-  architecture, contracts, inputs, and outputs. Link to canonical source instead
-  of maintaining copied examples.
-- Knowledge and research docs own evidence, findings, hypotheses, and negative
-  results. Current operational docs describe the current system; historical docs
-  retain only non-current material with concrete continuing value. Delete
-  superseded policy, stale incident explanations, and obsolete retirement notes;
-  Git preserves history.
-- Substantial supporting documentation belongs under `docs/`. A code area may
-  retain one concise local `README.md` for nearby orientation or a component
-  contract; link to substantial documentation instead of accumulating Markdown
-  files beside code.
+- Feature docs own all information about this mod or any other mod, including
+  reference behavior, configuration, and implementation.
+- Knowledge docs contain only facts and research about unmodified retail games.
+  They must not describe any mod and must remain valid if the project mod is
+  removed or redesigned.
+- Link between feature and knowledge docs instead of copying content. If a
+  document contains both kinds of information, move each part to the document
+  where it belongs and preserve all useful evidence.
+- Current operational docs describe the current system; historical docs retain
+  only non-current material with concrete continuing value. Delete superseded
+  policy, stale incident explanations, and obsolete retirement notes; Git
+  preserves history.
+- Substantial supporting documentation belongs under `docs/`. A local
+  `README.md` must own a local contract that cannot be inferred from the
+  directory or found in canonical documentation.
+- Before completing a documentation change, review each affected document as a
+  whole and remove anything that violates this section.

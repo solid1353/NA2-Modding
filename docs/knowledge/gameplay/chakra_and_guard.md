@@ -37,8 +37,7 @@ Only clean read-only binaries and their existing Ghidra exports were inspected.
   for direct JALs to the documented add/subtract/affordability and guard-setter
   targets; and the resident image was directly scanned for the documented
   constructor/reset and canonical add/subtract call sites. All overlay address
-  triples recorded here were audited against `file = export - 0x006B3EC0` and
-  `live = export + 0x40`.
+  triples recorded here were audited against the canonical address conversion.
   **Bounded or sampled coverage:** all direct canonical-adder sites and all
   seven direct overlay simple-subtractor sites were followed far enough to
   recover their raw amounts or formulas and gate arguments. The 18 direct
@@ -83,28 +82,12 @@ Only clean read-only binaries and their existing Ghidra exports were inspected.
 
 ## Source identity and address model
 
-| Image | Size | SHA-256 |
-| --- | ---: | --- |
-| `SLPS_258.37` | `5,273,256` bytes | `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF` |
-| `PRG/BTL.BIN` | `2,237,184` bytes | `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C` |
+The clean resident and BTL inputs and their address conversions are defined in
+[Standard game file identities](../game/files/file_identities.md).
 
 Resident fighter/resource routines are in `SLPS_258.37`, even though the
-battle overlay calls them. For the first ELF load segment used here:
-
-```text
-ELF file offset = EE runtime address - 0x000FFF00
-```
-
-Live memory retains the complete `0x40`-byte `MWo3` header at header base
-`0x006B3F00`; payload therefore begins at `0x006B3F40`. The preserved Ghidra
-baseline omitted that header and placed payload bytes/functions `0x40` too
-low. For an overlay-local address in that export:
-
-```text
-BTL file offset       = Ghidra export address - 0x006B3EC0
-loaded EE address     = Ghidra export address + 0x40
-loaded EE address     = 0x006B3F00 + BTL file offset
-```
+battle overlay calls them. Addresses use the canonical conversions linked
+above.
 
 Imported resident targets such as `0x002254A0` are already EE runtime
 addresses and do **not** receive the overlay `+0x40` adjustment. Encoded

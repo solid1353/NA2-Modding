@@ -73,10 +73,8 @@ reach it.
 
 ## Evidence and scope
 
-| Artifact | Bytes | SHA-256 |
-| --- | ---: | --- |
-| `@source/NA2.iso.files/SLPS_258.37` | 5,273,256 | `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF` |
-| `@source/NA2.iso.files/PRG/BTL.BIN` | 2,237,184 | `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C` |
+The resident and BTL binary identities follow
+[Standard game file identities](../game/files/file_identities.md).
 
 The inspected exports are the Ghidra 12.1.2 `r5900:LE:32:default` projects at
 `@disassembly/NA2/exports/SLPS_258.37/` and
@@ -577,7 +575,7 @@ BTL call-site address `x`, the complete-file offset is
 `x - 0x006B3F00 + 0x40` and the archived live call site is `x + 0x40`.
 Absolute resident call targets are already live addresses and receive no
 adjustment. This is the same convention recorded in the
-[Battle UI address map](../localization/ui/battle/README.md#binary-identities-and-address-convention).
+[MWo3 overlay address mapping](overlay_abi.md#file-runtime-and-preserved-ghidra-addresses).
 
 Direct-call counts are below. The decoded columns count `jal FUN_...`
 instructions in the Ghidra listings, not abbreviated XREF headers or C

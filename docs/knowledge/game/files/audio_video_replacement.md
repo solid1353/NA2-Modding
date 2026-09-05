@@ -3,10 +3,8 @@
 This note records the current replacement constraints for the four AFS audio
 archives and ten PSS movies in *Narutimate Accel 2 v2.28*. It is a static
 research result, not a claim that the game has accepted a generated file at
-runtime. The protected files under `@source_na2/` were inspected read-only on
-2026-08-20. CriCodecs 1.2.0 was exercised from a checksum-verified release in a
-transient directory; no encoder, archive writer, or movie muxer was added to the
-maintained project.
+runtime. The protected files under `@source_na2/` were inspected read-only.
+CriCodecs 1.2.0 was exercised from a checksum-verified release.
 
 Evidence labels in this note have their usual knowledge-base meaning:
 
@@ -25,8 +23,8 @@ Evidence labels in this note have their usual knowledge-base meaning:
   across 170 AFS containers, 9,966 declared indices, all 9,068 AHX members and
   all 246 ADX members. All ten PSS files were length-driven through every
   pack/PES packet and their complete video and private-audio streams; the clean
-  ELF's 12-row descriptor table, direct selector calls, subtitle schedules, and
-  current image-assembler size guard were traced.
+  ELF's 12-row descriptor table, direct selector calls, and subtitle schedules
+  were traced.
 - **Confirmed coverage:** focused transient experiments exercised CriCodecs
   1.2.0 and FFmpeg 9.0.1, including an offline, exact-size
   synthetic `LOGO_C.PSS` whose 90-picture MPEG-2 stream, replacement PCM body,
@@ -60,29 +58,21 @@ Evidence labels in this note have their usual knowledge-base meaning:
   fields do not cover every observed profile. An AFS patcher and any chosen
   encoder still need validation against the game's CRI driver.
 - **Movie replacement is characterized but not production-ready.** A same-size
-  PSS donor can already pass the image assembler's whole-file size guard. New
-  content needs either an in-place packet-skeleton writer or a constrained PSS
-  muxer; neither exists in the maintained project today. Resident descriptors
+  PSS donor satisfies the established file contract. New content needs either
+  an in-place packet-skeleton writer or a constrained PSS muxer. Resident descriptors
   also retain per-movie geometry, transition frames, and six Japanese subtitle
   schedules, so changing only the PSS is not sufficient for arbitrary content.
-  The game obtains movie size dynamically from the disc directory; equal size
-  is a current builder/image-layout restriction, not a compiled movie limit.
+  The game obtains movie size dynamically from the disc directory and has no
+  separate compiled per-movie size table.
 - **The current extracted `.adx` suffix is not codec evidence.** Header scans
   show 9,068 CRI AHX voice/effect files and only 246 CRI ADX files.
 
-## Shared disc-image constraint
+## Disc-image integration boundary
 
-The current image assembler permits a replacement only when its byte length
-equals both the guarded expected file and the ISO record. See the
-[`FileReplacement` size check](../../../../na228_builder/image_assembler/assembler.py)
-and the [image assembler contract](../../../../na228_builder/image_assembler/README.md).
-Consequently, an audio archive or movie produced by the first implementation
-must have exactly the original outer-file size. This is a builder constraint;
-the resident movie path does not add a second per-movie size table.
-
-All generated media should be built outside `@source_na2/` and then supplied as
-a guarded whole-file replacement. The protected source extraction must remain
-unchanged.
+The native movie path obtains file length from the disc directory and adds no
+second per-movie size limit. Current replacement mechanics and their size rules
+belong to the
+[image assembler contract](../../../../na228_builder/image_assembler/README.md).
 
 ### Runtime movie path and size source
 
@@ -108,11 +98,8 @@ all program-stream packs and leaves the four-byte program-end code as the final
 unread remainder. Total movie size is not a decoder-buffer allocation.
 
 **Supported conclusion:** a different number of valid `0x4000` packs is not
-rejected by a resident hard-coded length. It would still require a new image
-operation that safely updates the ISO9660 directory size and, when needed, the
-extent/layout (plus any maintained UDF mirror), while retaining the four-byte
-tail convention. The current guarded `FileReplacement` intentionally does none
-of that, so same-size output remains the appropriate first implementation.
+rejected by a resident hard-coded length. The stream must retain the four-byte
+tail convention; disc-image integration is outside this native format finding.
 
 ## AFS audio
 
@@ -363,9 +350,8 @@ or trusted build dependencies.
 
 ### Resident selector and dormant descriptor rows
 
-The clean resident `SLPS_258.37` used for this trace has SHA-256
-`20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`.
-Its load segment maps file offset `0x100` to EE virtual address `0x00100000`.
+The clean resident ELF and its address conversion are identified in
+[Standard game file identities](file_identities.md).
 At ELF file offset `0x300BF0` (virtual `0x00400AF0`) it contains a 12-row movie
 descriptor table with a `0x2C`-byte stride. This is larger than the ten-file ISO
 population:
@@ -395,15 +381,11 @@ numeric ID 10 or 11. Its two wrappers and their direct callers trace as follows:
 - Resident startup wrapper `FUN_001DBA00` is called at virtual `0x001DE77C`
   (file `0x0DE87C`) with ID 0 and at virtual `0x001DE7CC` (file `0x0DE8CC`)
   with ID 2.
-- `ADV.BIN` SHA-256
-  `AD60D9C9D11811CE57A4E64F35226EBB366D580010761A0FD1300DFE621BC34D`
-  calls overlay wrapper `FUN_001DBAC0` from Ghidra address `0x007EFB78`
+- `ADV.BIN` calls overlay wrapper `FUN_001DBAC0` from Ghidra address `0x007EFB78`
   (complete-file offset `0x13BCB8`, live `0x007EFBB8`). Its recovered command
   map names `DA2255`, `DA3195`, `DA3210`, `DA3235`, `DA3250`, and `DA3999` and
   maps them to IDs 4 through 9.
-- `ETC.BIN` SHA-256
-  `8FF3C6E1ED5CE2B093B0934C898C40D1CEEA0C20778C49CDA5591AAD02375C74`
-  reaches the same wrapper through the call at Ghidra address `0x006C431C`
+- `ETC.BIN` reaches the same wrapper through the call at Ghidra address `0x006C431C`
   (complete-file offset `0x1045C`, live `0x006C435C`). The three parsed replay
   records supply IDs 7, 8, and 9.
 - No direct call to either wrapper was found in `BTL.BIN`, and no other direct
@@ -412,7 +394,7 @@ numeric ID 10 or 11. Its two wrappers and their direct callers trace as follows:
 **Observed:** `logo_cT.pss` and `openingT.pss` are real descriptor-table entries,
 not omitted members of the shipped ISO inventory, and no statically recovered
 direct path selects IDs 10 or 11. An exact-string search of the maintained
-NUN3, NUN5, and NUN6 disassembly exports found no counterpart.
+NUN3 and NUN5 disassembly exports found no counterpart.
 
 **Supported conclusion:** the two rows are dormant in the recovered direct-call
 graph, so the current replacement scope remains the ten present PSS files. The

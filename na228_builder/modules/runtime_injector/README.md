@@ -41,6 +41,25 @@ contributes only when its owning patch is selected.
 When every hook in a feature is disabled, the internal runtime-injector
 invocation contributes no payload or target writes.
 
+## Game hook contract
+
+The PS2 executes linked EE machine code, not C source. The builder compiles
+registered `.c` and `.S` sources into relocatable fragments, assigns their
+addresses in `PRG/228.BIN`, resolves their internal calls, and encodes each
+guarded game-file hook as a concrete `j` or `jal` instruction.
+
+C sources own ordinary logic. Assembly sources own register-sensitive entry
+contracts, displaced instructions, delay slots, tail calls, and rejoins. A
+`jal` hook behaves as an ordinary call and returns to the following game
+instruction. A `j` hook replaces a control-flow block and must declare its
+continuation explicitly.
+
+The boot-ELF loader enters through the constructor path at `0x00607314`, loads
+the shared `PRG/228.BIN`, calls its initialization entry, and resumes the native
+constructor. Individual features own their guarded call sites and resident
+symbols; this module owns their compilation and relocation contract, not their
+behavior.
+
 ## Invokes
 
 - `binary_patcher` for the resolved concrete guarded writes.

@@ -1,141 +1,107 @@
 # Practice-mode architecture
 
-This document owns the established architecture of clean NA2 Practice Settings
-and the battle-side policies that consume those settings. It deliberately does
-not duplicate the starting-HP savestate evidence and direct-Practice bootstrap
-owned by [`battle.md`](battle.md), or the localized layout measurements and
-string work owned by
+This document owns the established architecture of clean NA2 Practice Settings,
+its starting-HP selection, and the battle-side policies that consume those
+settings. It deliberately does not duplicate the localized layout measurements and string work owned by
 [`practice.md`](../localization/font/screen_layouts/practice.md) and
-[`settings_and_results.md`](../localization/ui/battle/settings_and_results.md).
+[`settings_presentation.md`](../localization/ui/battle/settings_presentation.md).
 
 The controller, object, table, and transaction findings below are static unless
-a runtime observation is stated explicitly. In particular, they do **not**
-establish the cause of the currently reported Practice Settings flicker.
+a runtime observation is stated explicitly.
 
 ## Research coverage
 
-- **Assigned scope:** clean-NA2 BTL Practice Settings architecture beyond the
-already-owned starting-HP work: menu/controller ownership, the option record,
-state and input transitions, Confirm/Cancel/Defaults and restart paths, dummy
-behavior settings, resource/gauge semantics, and the controller/render split
-needed for a later flicker trace. This document is the sole output of that
-lane.
+- **Assigned scope:** Clean-NA2 BTL Practice Settings architecture: menu and
+  controller ownership, the option record, state and input transitions,
+  Confirm/Cancel/Defaults and restart paths, dummy behavior settings,
+  starting-HP selection, resource and gauge semantics, and the controller/render split.
+- **Exploration depth:** Coverage was bounded but deep:
+  - the complete 17-row menu schema was recovered from the clean label, help,
+    value-pointer, count, snapshot, Defaults, enabled-row, and setter paths. All
+    17 local offsets, value bounds, local defaults, manager keys and storage,
+    availability predicates, and the menu's setter order were checked;
+  - the Practice child family was followed end to end through BTL live
+    `0x008809E0..0x00882670`: allocation and resource construction,
+    reset/snapshot, apply/defaults, input and repeat handling, phase update,
+    row/window geometry, drawing, destruction, and Linked Mode access. Direct
+    raw-`jal` enumeration found both documented update/draw caller families;
+  - ownership was followed through the generic parent/UI-owner path at live
+    `0x006BE810..0x006C12A0` and `0x00714164..0x00715D08`, and through the
+    standalone wrapper/selector-host path at live
+    `0x00875AB0..0x0087E538`. The type-`5` factory entry and 15-entry module
+    jump table were inspected. Direct static callers and the single-module-slot
+    relationships are exhaustive; runtime scheduling between the two top-level
+    owners was not traced;
+  - manager storage, defaults, getters, and setters were bounded to resident
+    `FUN_001E7A80`, `FUN_001F5910`, `FUN_001F5960`, `FUN_001F59F0`,
+    `FUN_001F6420`, and `FUN_001F6D30/FUN_001F6D50`, plus the dynamic-support
+    manager whose side records store Linked Mode, including its BTL
+    setup/teardown and constructor at live `0x00885210`, `0x00885290`, and
+    `0x00886CB0`;
+  - dummy behavior was traced far enough to establish every Practice row's
+    setting-specific gate or effect. The bounded BTL set includes live
+    `0x006F5410`, `0x006F95B0`, `0x006FA590`, `0x006FAA50`, `0x006FB0D0`,
+    `0x006FE720`, `0x006FF410`, `0x006FF650`, `0x007024A0`, `0x00704D40`, and
+    `0x00705D70`. The complete general-AI state machine, every downstream
+    action object, and every field in the 40-short Strength profile were not
+    reconstructed;
+  - reset and resource work covered the resident outer Practice controller
+    through `FUN_001EC960..FUN_001ED110`, both snapshot directions
+    `FUN_001ECC00/FUN_001ECDE0`, and the BTL item-cache entries at live
+    `0x0070F1E0`, `0x007109F0`, and `0x00710B00`. Every mask bit consumed by
+    the snapshot functions was enumerated; unrelated save and replay systems
+    were not surveyed; and
+  - the Ultimate row was followed from its zero/positive AI gate through BTL
+    live `0x006EE560`, the sole raw caller at `0x0076A0CC` in live function
+    `0x00769790`, and the resident mode-controller dispatcher. The four-pair
+    Random table at resident `0x005ACD70` was evaluated exactly. General
+    Ultimate-Jutsu gameplay mechanics were not investigated.
+- **Confirmed coverage:** Binary identity and address mapping; both ownership
+  chains; parent and child states; controller selection and input masks;
+  transactional menu behavior; manager and per-side record layouts; dummy
+  Status/Attack/Guard/Move routing; Strength profile copy and hot reload;
+  linked, extra-hit, item, substitution, and Ultimate branches; discrete
+  snapshot masks; starting-HP selection and consumption; continuous HP, chakra, and Link Gauge policies; resource
+  lifetime; and the update/draw gates.
+- **Unresolved or untested:** Runtime scheduling between the main and standalone
+  owners; full timing and naming of the general AI/controller graph; later
+  transitions and engine names for several linked-work fields; the semantics of
+  every Strength-profile field; and the producer or unlock event for manager
+  slot `0x6A`.
+- **Deliberate exclusions and overlap:** Localized text and layout remain in the linked Practice/UI
+  documents. Damage scaling, broad substitution mechanics, frame rate,
+  widescreen rendering, and emulator infrastructure are owned elsewhere.
+- **Evidence limitations:** Validation was static against the identified clean
+  `BTL.BIN` and `SLPS_258.37`. Raw bytes and disassembly corrected the preserved
+  Ghidra overlay's omitted-header coordinates, and tables and call sites were
+  checked against the complete raw overlay. No controller-input run,
+  breakpoint trace, or live ownership trace was performed. Exact static effects
+  remain distinct from inferred names.
 
-- **Exploration depth:** coverage was bounded but deep, with exhaustive treatment only inside the
-following explicit boundaries:
+Binary identities and the live/file/preserved-export address relationship used
+below are defined in
+[Standard game file identities](../game/files/file_identities.md).
 
-- the complete 17-row menu schema was exhaustively recovered from the clean
-  label, help, value-pointer, count, snapshot, Defaults, enabled-row, and setter
-  tables/paths. All 17 local offsets, value bounds, local defaults, manager
-  keys/storage, availability predicates, and the menu's setter order were
-  checked;
-- the Practice child family was followed end to end through BTL live
-  `0x008809E0..0x00882670`: allocation/resource construction, reset/snapshot,
-  apply/defaults, input and repeat handling, phase update, row/window geometry,
-  drawing, destruction, and Linked Mode access. Direct raw-`jal` enumeration of
-  the update and draw entries found the two documented caller families;
-- ownership was followed through the generic parent/UI-owner path at live
-  `0x006BE810..0x006C12A0` and `0x00714164..0x00715D08`, and through the
-  standalone wrapper/selector-host path at live
-  `0x00875AB0..0x0087E538`. The type-`5` factory entry and 15-entry module jump
-  table were inspected. This is exhaustive for the direct static caller and
-  single-module-slot relationships, but not for runtime scheduling between the
-  two top-level owners;
-- manager storage/default/getter/setter behavior was bounded to resident
-  `FUN_001E7A80`, `FUN_001F5910`, `FUN_001F5960`, `FUN_001F59F0`,
-  `FUN_001F6420`, and `FUN_001F6D30/FUN_001F6D50`, plus the separately owned
-  dynamic-support manager whose side records also store Linked Mode, including
-  its BTL setup/teardown and constructor at live `0x00885210`, `0x00885290`,
-  and `0x00886CB0`;
-- dummy behavior was traced only far enough to establish every Practice row's
-  setting-specific gate or effect. The bounded BTL set includes live
-  `0x006F5410`, `0x006F95B0`, `0x006FA590`, `0x006FAA50`, `0x006FB0D0`,
-  `0x006FE720`, `0x006FF410`, `0x006FF650`, `0x007024A0`, `0x00704D40`, and
-  `0x00705D70`. The complete general-AI state machine, every downstream action
-  object, and every field in the 40-short Strength profile were not
-  exhaustively reconstructed;
-- reset/resource work covered the resident outer Practice controller through
-  `FUN_001EC960..FUN_001ED110`, both snapshot directions
-  `FUN_001ECC00/FUN_001ECDE0`, and the BTL item-cache entries at live
-  `0x0070F1E0`, `0x007109F0`, and `0x00710B00`. All mask bits consumed by those
-  two snapshot functions were enumerated; unrelated save/replay systems were
-  not surveyed;
-- the Ultimate row was followed from its zero/positive AI gate through BTL live
-  `0x006EE560`, the sole raw caller at `0x0076A0CC` in live function
-  `0x00769790`, and the resident mode-controller dispatcher. The four-pair
-  Random table at resident `0x005ACD70` was evaluated exactly. This did not
-  expand into general Ultimate-Jutsu gameplay mechanics.
+## Starting-HP selector
 
-- **Confirmed coverage:** the live/file/preserved-export
-address convention, both ownership chains, parent and child states, controller
-selection and input masks, transactional menu behavior, manager and per-side
-record layouts, dummy Status/Attack/Guard/Move routing, Strength profile copy
-and hot reload, linked/extra-hit/item/substitution branches, Ultimate mode
-dispatch, discrete snapshot masks, continuous HP/chakra/Link Gauge policies,
-resource lifetime, and the exact update/draw gates useful as watchpoints.
+Practice Settings stores its native HP selection as an integer enum: `0` is
+Normal/full, `1` is Half, and `2` is Almost/critical. In immutable menu
+preselection runtime states, the only aligned 32-bit location following that
+pattern is EE `0x00EAFC8C`, inside the allocator block at `0x00EAFC10` offset
+`+0x7C`.
 
-- **Unresolved or untested:** the runtime cause of the
-reported flicker; whether the main and standalone owners coexist in a failing
-frame; full timing and naming of the general AI/controller graph; later
-transitions and engine names for several linked-work fields; semantics of every
-Strength-profile field; and the producer/unlock event for manager slot `0x6A`.
-- **Deliberate exclusions and overlap:** starting-HP/bootstrap evidence stays in `battle.md`; localization and layout
-stay in their existing Practice/UI documents. Adventure, damage-scaling
-formula work, broad substitution mechanics, 60-FPS work, widescreen,
-localization, and PCSX2 infrastructure were intentionally excluded to avoid
-the other scoped lanes.
+Paired post-selection states prove that battle setup consumes the enum for both
+fighters. Their live `float32` HP at fighter `+0x6C` is respectively `1.0`,
+`0.5`, and the float32 representation of `0.1`. The captured Player 1 fighter
+was at `0x00E36DA0` and Player 2 at `0x00E44BF0`; both sides held identical
+values in each state.
 
-- **Evidence limitations:** validation was static against the identified clean `BTL.BIN` and
-`SLPS_258.37`: raw bytes/disassembly were used to correct the preserved
-Ghidra overlay's omitted-header coordinates, and tables/call sites were checked
-against the complete raw overlay. No controller-input run, breakpoint trace,
-live ownership trace, or failing-flicker capture was performed. Consequently,
-the document distinguishes exact static effects from inferred names and does
-not assign a runtime flicker cause.
-
-## Evidence identity and address conventions
-
-The battle overlay is the clean `PRG/BTL.BIN` with:
-
-- size `2,237,184` bytes;
-- SHA-256
-  `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C`;
-- `MWo3` header base/live load address `0x006B3F00`.
-
-The resident executable is clean `SLPS_258.37`, SHA-256
-`20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`.
-Resident addresses such as `FUN_001F59F0` are ordinary EE runtime addresses
-and are not subject to the overlay-header correction.
-
-The complete BTL file and live memory both retain the `0x40`-byte `MWo3`
-header. The preserved Ghidra baseline omitted that header from its mapped
-payload. Therefore, for an overlay-local instruction or datum:
-
-~~~text
-complete file offset = live address - 0x006B3F00
-preserved export address = live address - 0x40
-live address = preserved export address + 0x40
-~~~
-
-The complete-file formula identifies a byte only when the result is below the
-file size `0x222300`. Higher nominal offsets are overlay BSS: they exist in
-live memory and in the preserved export's extended address space, but not as
-stored bytes in `BTL.BIN`.
-
-An absolute pointer or `jal` target encoded in the raw overlay is already a
-live address. It must **not** receive another `+0x40`. The preserved export can
-consequently create a misleading symbol at that numeric target, forty bytes
-into the actual function; the real prologue appears at `target - 0x40` in the
-export. This is why the tables below state live target, complete-file offset,
-and preserved-export prologue separately.
-
-The same warning applies to absolute data operands. For example, the Strength
-copy encodes source `0x008C3230` and destination `0x008D66F0`; those are the
-live addresses. Ghidra names symbols at those encoded numbers even though the
-preserved byte displayed at export `0x008C3230` is the complete-file byte that
-actually lives at `0x008C3270`. Static table contents must therefore be read
-at `complete offset = encoded live - 0x006B3F00`, not from the misleading
-same-number export symbol.
+Clean `SLPS_258.37` function `FUN_001E7A80` initializes three Practice settings
+blocks and is reused by native reset paths. At runtime `0x001E7AE8` (ELF
+offset `0xE7BE8`) it executes `sb zero,1(a0)` followed by `li t1,2`; the next
+instruction stores `t1` to settings byte `+2`. Settings byte `+1` is therefore
+the native starting-HP enum. The evidence combines clean static tracing and six
+runtime states covering all three selections before and after battle setup.
 
 ## Ownership chain
 
@@ -241,7 +207,7 @@ two selector children at parent `+0x30` and `+0x34` through live
 - return `3` opens the available settings child: it enters state `4` and calls
   the Battle child reset at live `0x0087F9D0`, or enters state `5` and calls
   the Practice reset/snapshot at live `0x00880F30`; sound `0x34` accompanies
-either open;
+  either open;
 - when both selector updates have reported completion, it closes the parent
   with result `1`, starts the same state-`1` transition, and plays `0x34`.
 
@@ -297,11 +263,23 @@ resource reuse rather than merely similar labels: Difficulty points to the
 same `0x008BDBA0` table as Practice Strength, Items to the same `0x008BDBC0`
 table as Practice Items, Chakra to the same `0x00605A90` table as Practice
 Chakra, and Ultimate Jutsu to the same `0x008BDC10` table as its Practice row.
+The Chakra table contains live string pointers `0x00605A80` for Normal and
+`0x00605A88` for Unlimited.
 
 The local Defaults action at live `0x0087FC08..0x0087FC78` finds the first time
 entry at least `99`, then writes `{9, 2, 2, 0, 2, 5}` to the six local words.
 Those values remain local until the ordinary Confirm transaction. This is
 separate from the manager-level reset described below.
+
+The native controller stores its selected row as a halfword at `+0x48`, its
+directional-repeat countdown at `+0x4A`, its phase at `+0x58`, newly pressed
+input at `+0x60`, and effective directional input at `+0x64`; the help-text
+object is at `+0x18`. The snapshot call site is live `0x0087FA04`. The Confirm
+arm at live `0x0087FB24` writes phase
+`1`, plays its sound, and starts the native apply transaction at live
+`0x0087FB38`. The Cancel arm at live `0x0087FBE0` performs the same phase write
+for closing. Both paths can return through the common epilogue at live
+`0x0087FDBC`.
 
 ## Practice child record
 
@@ -474,6 +452,11 @@ The interactive actions are transactional:
 Defaults remain local until Confirm. Cancel therefore discards both ordinary
 edits and a local Defaults action; reopening calls live `0x00880FB0` and
 snapshots the manager again.
+
+The native section-heading branch at live `0x008823B8` compares the drawn row
+with the section boundary, advances the row origin by `18.0`, loads the heading
+text at live `0x008823E0`, and calls its renderer at live `0x008823E8` with
+style `0x0F`.
 
 ## Confirm/apply side effects
 
@@ -736,10 +719,14 @@ path:
 - Normal (`2`) retains the caller's extra-spawn count;
 - More (`3`) changes an extra count below one to `2`, otherwise doubles it,
   and adds another base-style spawn when a `0..100` inclusive random draw is
-  below `80`.
+  below `80` (80 of 101 residues, nominally `79.21%`; the RNG's modulo bias is
+  documented with the identity selector below).
 
 Position randomization and the caller-provided spawn kind still affect the
 result; these setting branches do not themselves choose the item identity.
+The identity selector, its authored general and recovery pools, exact native
+weights, and its separation from spawn amount are documented
+in [Random field-item selection](battle_items_and_status_effects.md#random-field-item-selection).
 
 ### Substitution Jutsu
 
@@ -849,37 +836,15 @@ construction (`FUN_001F4200` / `FUN_001F5910`) applies it to
 `manager+0x9F4`, `+0xA00`, and `+0xA0C`. The visible Practice defaults match
 the local Defaults row values above.
 
-The settings-default feature guards the `FUN_001F59F0` call at live
-`0x001F5AD4`. It first preserves the native Strength-mirror write, then applies
-one masked 12-byte configured pack to `manager+0x9F4`: the Battle pack in mode
-`2`, or the Practice pack in mode `3`. Omitted fields have zero masks and
-therefore preserve native bytes. Ultimate Jutsu is supplied only by the shared
-settings object; its two custom runtime modes store native Command (`2`) in the
-manager byte.
-
-Every native catalog leaf also accepts `false`. The generated schema omits that
-row and its default-pack mask remains zero, so exclusion does not overwrite the
-native stored field. The base configuration excludes Guide Ninja Sound, Linked
-Mode, and Extra Hit Counter this way.
-
 That reset function has one established caller, the Practice controller at
 live `0x001ED0E4`; it is not a Battle initializer. Battle defaults instead
 attach to the mode-selector's case-2 assignment at live
-`0x001EA7B4..0x001EA7C0`: the bridge reproduces `manager+0x0C = 2`, applies
-the Battle pack, and rejoins the common selector flow at live `0x001EA818`.
+`0x001EA7B4..0x001EA7C0`, which assigns `manager+0x0C = 2` before the common
+selector flow rejoins at live `0x001EA818`.
 
-Linked Mode is outside those packs. `features.settings.in_game.practice.general_settings`
-owns its row availability and default separately: `linked_mode: false` omits
-the row and leaves the native constructor's Auto state intact. `manual` or
-`auto` includes the row, supplies its menu-local Defaults value, and extends the
-Practice reset hook to write the selected value through the native per-side
-Linked Mode setter after the dynamic-support manager has been constructed.
-
-Simple Display is independent of the Practice Settings rework. Its native
-initializer write is the `or v1,v1,a2` at live `0x001E7AAC` after masking byte
-`0` with `0xFFFFFFFD`, confirming that its native mask is `0x02`.
-`features.settings.simple_display` owns that guarded instruction directly:
-`"on"` retains it and `"off"` replaces it with a no-op.
+The Simple Display initializer write is the `or v1,v1,a2` at live
+`0x001E7AAC` after masking byte `0` with `0xFFFFFFFD`, confirming that its
+native mask is `0x02`.
 
 Resident `FUN_001F5960` is used by the Practice-controller startup/restart
 path. It resets `+0x9F4` and `+0xA00`, then in modes `2/3` re-applies Strength
@@ -991,7 +956,7 @@ Consequences:
 - No static evidence shows the menu's Confirm or local Defaults action directly
   resetting items, Link Gauge, or the item-slot cache at `0x008D6A60`.
 
-## Rendering/control split and flicker boundary
+## Rendering and control split
 
 ### Resource lifetime
 
@@ -1015,9 +980,8 @@ Opening Practice from parent state `2` calls only live `0x00880F30`. That reset
 does not replace or free any pointer at `+0x04..+0x34`; it clears presentation,
 input, and page state, re-snapshots manager values, and resets the help
 animation. The destructor is called from parent/wrapper teardown sites, not
-from the ordinary state `2 <-> 5` open/close transaction. Therefore a future
-flicker trace should distinguish pointer churn from content/draw gating rather
-than assuming resources are reloaded every time the child opens.
+from the ordinary state `2 <-> 5` open/close transaction. Ordinary open/close
+therefore reuses the constructed resources.
 
 The generic parent makes update and rendering distinct:
 
@@ -1041,202 +1005,95 @@ delay `+0x56`. It does not write the manager settings pack or apply local
 values. Input ownership remains in live `0x00881660` and phase ownership in
 live `0x00881AB0`.
 
-### Compact-schema presentation alignment
+### Native Practice Settings presentation geometry
 
-User-supplied, timestamp-matched NUN5 and NA228 savestate slots `1..3` from
-2026-08-27 preserve two distinct presentation faults in the compact Practice
-Settings implementation. Their extracted screenshots and source-state hashes
-are retained under
-`work/Battle mechanics/inputs/practice_settings_nun5_na228_ss1-3/`.
+The native upper window uses
+`FUN_0037D9C0(selection, +0xB0, 7, 2, 9)`; the lower window uses
+`FUN_0037D9C0(selection - 9, +0xB4, 6, 2, 8)`. Row geometry advances by
+`28.0`, and the lower-section target is
+`-18 - 28 * player_count - 28 * lower_start`.
 
-The NA228 controller is at `0x00EB1120` in all three captured EE-memory
-snapshots. The preserved states contain:
+The backing object at `controller+0x2C` owns 18 animation records through
+`object+0xFC`. Resident `FUN_001BB790` draws a record only when
+`record+0x0A & 0x04` is nonzero. Record `0` is the Opponent Settings
+heading. Player rows use record `1` and records `10..17`; opponent rows use
+records `2..9`. Each record points to a render object at `+0x00`; that
+object stores world Y at `+0x38` and authored local Y at `+0x78`.
 
-| Slot | Selected compact row | Scroll `+0x44` | Upper/lower starts |
-| --- | ---: | ---: | ---: |
-| `1` | `0` (Health) | `0.0` | `0 / 0` |
-| `2` | `13` (Substitution Jutsu) | `-242.0` | `0 / 0` |
-| `3` | `8` (Status) | `-242.0` | `0 / 0` |
+Live `0x00881AE0` advances the backing through resident `0x001BB210`, and
+live `0x00881AEC` immediately composes its hierarchy through resident
+`0x001BB6F0`. A later draw-time change to record-local Y cannot affect world
+transforms that have already been composed.
 
-The matching NUN5 controller is at `0x00DE4FA0`; slot `3` preserves native
-Status selection `9`, scroll `-270.0`, and starts `0 / 0`. Static disassembly
-explains the numeric difference: the native window update uses a `28.0` row
-step and computes the opponent target as `-18 - 28*9 - 28*lower_start`.
-The compact target generalizes that expression to
-`-18 - 28*player_count - 28*lower_start`. A separate `30.0` step has no native
-basis and is incorrect for any nonzero window start.
+Resident `FUN_00190F40` draws the type-`0x0100` model at object `+0x94`.
+The model stores its part count at `+0x16` and a pointer to `0x40`-byte part
+records at `+0x08`. Each part record stores its vertex count at `+0x04`, its
+vertex-color stream pointer at `+0x1C`, and its UV stream pointer at `+0x20`.
+Resident `FUN_00198230` copies those fields into render scratch state before
+`FUN_00193B50` emits the four-byte-per-vertex color stream. In clean
+`PRAC.CCS`, `MDL_prac_cel_a1`,
+`MDL_prac_cel_b1`, and `MDL_prac_title` share `MAT_char_prac` and neutral
+`0x80808080` vertex colors. Their yellow, olive, and orange appearances come
+from distinct `prac_t01` atlas regions: the first 18 row vertices use U
+coordinates `0/32/74` for player cells and `76/108/150` for opponent cells,
+while the title uses `162/206/246/254`. Vertices `0..17` form the label
+panel; vertices `18..61` form the divider and value panel. Clean
+`SETTING.CCS` uses the same 62-vertex player-row geometry with a separate
+`s_menu` atlas. That atlas contains the yellow row but no orange title or olive
+row region. The dominant opaque fill is RGBA `(230,195,43,255)` in both clean
+NA2 and NUN5 `prac_t01`; the orange title fill is `(245,134,32,255)` in both.
 
-The SS1 up-arrow fault is a control-flow error, not a bad window value. Native
-live `0x00882078` skips the up-arrow draw body at `0x00882080` when its flag is
-zero. The first compact bridge returned directly to `0x00882080`, bypassing
-that branch and drawing the arrow unconditionally even though the captured
-upper start is zero. The corrected bridge returns to `0x008820FC` when no rows
-exist above the current window and to `0x00882080` only when the flag is set.
+The Practice child constructor at Ghidra `0x00880BA0` calls resident
+`0x0037E1A0` at `0x00880BC0` with `prac.ccs`, stores the returned archive at
+child `+0x04`, and gives the child's leading byte to the loader as its ownership
+flag. Live `0x00880D70` creates the backing at child `+0x2C` by passing that
+archive and `ANM_prac_cel` to resident `0x0037D5B0`. The resident constructor
+allocates `0x120` bytes and performs an initial animation update and hierarchy
+composition when records exist. Native destruction releases animation objects
+through `0x001B7570` and releases an owned archive through `0x001A9790`.
 
-SS2/SS3 preserve a second, independent split: the row text loop inserts the
-Opponent Settings heading at the compact player count, but the native
-`ANM_setting01` row backing retains its fixed nine-player/eight-opponent row
-topology. The first candidate added `28 * (9 - player_count)` to the backing
-translation. Its section phase was correct, but the first unused backing row
-still left a thin edge after the final compact row in both sections.
+GhidrAssist exposed the resident calls and complete defined functions. The
+overlay's undefined gaps truncate the Practice resource constructor and parent
+destructor boundaries, so their exact clean-file call offsets and instruction
+bytes were cross-checked against the complete BTL image.
 
-A later candidate incorrectly divided that delta by the backing transform's
-`0.96` multiplier and used `29.166666` per omitted row. Current user-supplied
-states `SLOP-NA228 (0C8A0D9B).01.p2s` and `.02.p2s`, captured on 2026-08-28,
-reject that compensation. Slot 1 ends the seven-row player section at Guide
-Ninja Sound; slot 2 ends the six-row opponent section at Substitution Jutsu.
-Both retain the unused-row edge, while slot 2 and the supplied old/current
-comparison show that the compensated backing is `2.24` game units too far from
-the text. The correct section delta remains the native `28.0` units per omitted
-player row; the transform applies the same raster phase used by the untouched
-row renderer.
+Live `0x00882168` constructs float `0.939` and applies it to the cursor
+scroll component. Native cursor Y is
+`94 - 26.5 * row - 0.939 * scroll`, with another `-40` after the fixed
+nine-row player section.
 
-The same states expose the backing object's exact draw inventory. Object
-`controller+0x2C` points at an 18-record animation whose record list is at
-`object+0xFC`. Resident `FUN_001BB790` iterates the resource count and draws a
-record only when byte `record+0x0A` has bit `0x04` set. Record `0` is the
-Opponent Settings heading. Player rows use record `1` followed by records
-`10..17`; opponent rows use records `2..9`. Their settled transforms differ by
-the native row pitch. In the supplied seven/six-row schema, player records
-`16..17` and opponent records `8..9` are therefore unused; their first visible
-edges are the reported terminal lines.
-
-The selection-dependent global backing correction was invalid: selection
-changes immediately while controller scroll `+0x44` approaches its new target
-by `20.0` per update. Applying the complete compact-section correction as soon
-as selection crosses the boundary therefore jumps every backing while text,
-values, and cursor continue along the native eased path.
-
-Slot 2 also confirms the record-to-transform link needed to compact the
-animation locally. Each record's word at `+0x00` points to its render object.
-That object stores world Y at `+0x38` and authored local Y at `+0x78`; the
-native object draw composes the latter with the backing object's global
-translation to produce the former. In this state, player records `15` and `17`
-have local Y values `-66.612` and `-119.454`, while the heading and first
-opponent records have `-165.931` and `-192.744`. Anchoring the heading and
-opponent records to record `15` while preserving their native deltas from
-record `17` therefore removes exactly the two omitted player slots without a
-global phase correction.
-
-The subsequent draw-time candidate was also rejected by user runtime evidence.
-The supplied current slots `1..2`, retained with provenance under
-`work/Battle mechanics/inputs/practice_settings_current_ss1-2_20260828/`, show
-that unused terminal lines were suppressed but the compact backing geometry did
-not follow the text. Static control flow explains the split. Live
-`0x00881AE0` advances `controller+0x2C` through resident `0x001BB210`, and live
-`0x00881AEC` immediately composes its hierarchy through resident `0x001BB6F0`.
-The rejected hook changed record-local Y only later, at the draw-time scroll
-load at live `0x00882368`. Resident `0x001BB790` reads the record draw bits
-directly, so suppression worked, but it drew the already-composed world
-transforms. Changing authored local Y at that point could not move them.
-
-The current layout wrapper replaces the compose call at live `0x00881AEC`.
-After native animation advance, it assigns the animation's fixed cells by
-section role and then calls the displaced native hierarchy composer. Player
-record `1` is `EXT_prac_cel_a1`, records `10..16` are the reusable
-`EXT_prac_cel_a2..a8` middle cells, and record `17` is terminal cell
-`EXT_prac_cel_a9`. Record `0` is the Opponent Settings heading; opponent record
-`2` is `EXT_prac_cel_b1`, records `3..8` are reusable middle cells
-`EXT_prac_cel_b2..b7`, and record `9` is terminal cell `EXT_prac_cel_b8`.
-
-For either section with multiple rows, the actual row count selects one first
-cell, as many middle cells as needed, and one terminal cell on the actual final
-row; a one-row section uses its first cell. Counts beyond the native
-nine-player/eight-opponent capacities draw additional copies of the last middle
-cell before the terminal cell. Each added row advances by
-`28 * 0.96 = 26.88` in backing-local geometry, matching the scroll transform.
-The copy path calls resident `FUN_00190F40` with its native `(alpha, object)`
-argument order. This preserves the native bottom edge instead of exposing a
-middle-cell seam when a section is shorter or longer than the fixed animation.
-Native controller slots remain authoritative for every retained native value.
-The generated list keeps native General rows first, enabled shared rows in
-catalog declaration order, and native Opponent rows last. Its writable label
-and value-pointer tables are emitted at the exact generated row count; no
-separate fixed row ceiling remains in the injected controller.
-
-The 2026-09-01 `zhopa` input-recording baseline exposes the selected-row
-misalignment once the feature-aware player section scrolls beyond the native
-range. In NA228 state `0002`, the Practice controller is live `0x00CC2D00`:
-Support is selected at compact index `11`, scroll `+0x44` is settled at
-`-168.0`, and upper-window start `+0xB0` is `6`. The row and value geometry is
-still on the native 28-unit pitch, but the selection frame is visibly displaced
-downward and overlaps the next row.
-
-Live `0x00882168` constructs float `0.939` from instructions
-`3C023F70 3442624E` and applies it to the cursor's scroll component. Native
-cursor Y is `94 - 26.5*row - 0.939*scroll`, with another `-40` after the fixed
-nine-row player section. Substituting a `0.96` scroll coefficient for extended
-player rows was rejected: it aligns one accumulated-scroll state but does not
-preserve the distinct first, middle, and terminal raster phases as section
-counts change.
-
-The current hook at BTL offset `0x1CE25C` computes cursor Y from the selected
-row's section-local index and visible slot. It maps that row to the matching
-native first, middle, or terminal role, converts the actual section target to
-the corresponding canonical native target, and retains the live transition
-residual `scroll - actual_target`. Cursor easing therefore remains continuous
-while the result is independent of how many rows precede the selected one.
-
-The maximum current catalog layout provides 15 player rows and eight opponent
-rows. Replaying `zhopa` with all of them enabled produced cursor world Y values
-`-63.886017`, `-65.416000`, and `42.529999` in captures `0001..0003`; the NUN5
-reference produces the same three values. In opponent capture `0003`, both
-builds also place the heading and first-row backing at world Y `93.269` and
-`66.456`. The ordinary 13-player/seven-opponent configuration retains the same
-role-based geometry, including terminal cell `EXT_prac_cel_b8` on its seventh
-and final opponent row.
-
-The `+0x56` delay is draw-call-counted, not update-counted. Reset sets it to
-zero; once alpha is full, each invocation of live `0x00882250` increments it
-until `3` and returns without drawing rows. If rendering is skipped, the delay
-does not advance; multiple draw invocations advance it correspondingly. This
-is an intentional three-draw row reveal gate and a concrete counter to log in
-any frame-by-frame diagnosis.
-
-Raw `jal` enumeration finds exactly two direct BTL callers of each Practice
-child entry:
+The reveal delay at child `+0x56` is draw-call-counted. Reset clears it; once
+alpha is full, each call to live `0x00882250` increments it until `3` and
+returns without drawing rows. Raw `jal` enumeration finds exactly two direct
+caller families:
 
 | Caller family | Update call site -> target | Draw call site -> target |
 | --- | --- | --- |
 | main generic parent | `0x006C1014 -> 0x00881AB0` | `0x006C1250 -> 0x00882250` |
 | standalone wrapper | `0x00875B2C -> 0x00881AB0` | `0x00875B5C -> 0x00882250` |
 
-The main owner calls its parent update at live `0x00714CC4`; its draw wrapper
-calls the parent renderer at live `0x00715D08`. This establishes the complete
-static call split but does not establish that the main and standalone owners
-are simultaneously active. A runtime breakpoint should retain the caller
-address rather than treating every child-draw hit as the same source.
+### Layout constraints
 
-Within the standalone family, host factory live `0x0087BB10` replaces the
-single module pointer at host `+0x38` before the wrapper begins updating or
-drawing. Logging that host pointer and module slot alongside the main battle UI
-owner's `owner+0xA8` distinguishes cross-owner overlap from accidental
-duplication inside one owner.
+The row windows and the backing animation have separate fixed structures. The
+text windows use the native 28-unit row pitch and the lower-section target
+shown above, while the backing retains nine player cells, eight opponent cells,
+and the section heading. Changing a text-section boundary does not change that
+backing topology.
 
-Static analysis exposes the following useful runtime watchpoints for a future
-flicker trace:
+Live `0x00882078` skips the up-arrow body at `0x00882080` when the window-start
+flag is zero. Entering the body directly bypasses that native visibility test.
 
-- UI-owner state and `owner+0xA8`;
-- standalone host state, `host+0x38`, and update/draw entry counts at
-  `0x0087CB20` / `0x0087D460`;
-- parent `+0x00`, `+0x3C`, `+0x48`, and update/draw entry counts at
-  `0x006C0F60` / `0x006C1120`;
-- child `+0x38`, `+0x54`, `+0x56`, selection `+0x3C`, resource pointers
-  `+0x04..+0x34`, and update/draw entry counts at
-  `0x00881AB0` / `0x00882250`.
+Selection changes immediately, while controller scroll `+0x44` approaches its
+target by `20.0` per update. The animation hierarchy is composed before the
+draw path, so later changes to record-local coordinates cannot alter the world
+transforms used by that draw.
 
-No runtime trace currently establishes which, if any, of those gates or
-pointers oscillates during the reported flicker. A cause must not be assigned
-until such a trace identifies the first divergent state.
-
-Useful negative results:
+### Negative findings
 
 - live `0x006C0CC0` is a VS/Practice prompt renderer, not the Practice
   Settings controller;
 - live `0x00881E50` is a draw helper, not an input owner;
-- the Practice draw loop does not reset or apply manager option values;
-- misleading preserved-export symbols at encoded live call targets are an
-  artifact of the omitted-header baseline, not evidence of a second function.
+- the Practice draw loop does not reset or apply manager option values.
 
 ## Address index
 
@@ -1289,7 +1146,14 @@ Useful negative results:
 | standalone wrapper child-destructor call site | `0x0087E538` | `0x001CA638` | `0x0087E4F8` |
 | Battle snapshot manager values | `0x0087F870` | `0x001CB970` | `0x0087F830` |
 | Battle child reset/snapshot | `0x0087F9D0` | `0x001CBAD0` | `0x0087F990` |
+| Battle snapshot call site | `0x0087FA04` | `0x001CBB04` | `0x0087F9C4` |
+| Battle Confirm phase-write site | `0x0087FB24` | `0x001CBC24` | `0x0087FAE4` |
+| Battle Cancel phase-write site | `0x0087FBE0` | `0x001CBCE0` | `0x0087FBA0` |
 | Battle local Defaults block | `0x0087FC08..0x0087FC78` | `0x001CBD08..0x001CBD78` | `0x0087FBC8..0x0087FC38` |
+| Battle Handicap renderer branch | `0x00880350` | `0x001CC450` | `0x00880310` |
+| Battle Handicap arrow branch | `0x008805C8` | `0x001CC6C8` | `0x00880588` |
+| Battle Handicap cursor branch | `0x008806D0` | `0x001CC7D0` | `0x00880690` |
+| Battle backing draw call site | `0x008808AC` | `0x001CC9AC` | `0x0088086C` |
 | Practice child zero-initializer | `0x008809E0` | `0x001CCAE0` | `0x008809A0` |
 | Practice child destructor | `0x00880A20` | `0x001CCB20` | `0x008809E0` |
 | Practice child resource constructor | `0x00880BE0` | `0x001CCCE0` | `0x00880BA0` |
@@ -1313,10 +1177,6 @@ Useful negative results:
 | Linked Mode backing-object teardown | `0x00885290` | `0x001D1390` | `0x00885250` |
 | Linked Mode backing-object constructor | `0x00886CB0` | `0x001D2DB0` | `0x00886C70` |
 
-The last two entries demonstrate the symbol trap directly: the preserved
-export's `FUN_00882630` label is at the setter prologue, while a raw call to
-encoded target `0x00882630` reaches the getter in live memory.
-
 ### BTL data
 
 | Role | Live address | Complete file | Preserved-export byte location |
@@ -1336,38 +1196,3 @@ encoded target `0x00882630` reaches the getter in live memory.
 
 Absolute table pointers embedded in BTL point to the live addresses in the
 second column. BSS rows intentionally have no complete-file byte location.
-
-## Confidence and open questions
-
-High confidence:
-
-- address mapping and every live/file/export coordinate in the index;
-- ownership, allocations, parent/child state dispatch, input masks, and
-  Confirm/Cancel/Defaults transaction;
-- all six native Battle rows, manager keys, counts, time values, and local
-  Defaults values;
-- all 17 local offsets, manager keys/storage, counts, defaults, and
-  availability conditions;
-- dummy-status apply side effects, Strength-profile selection/hot reload, and
-  the concrete Items/Extra-Hit/Substitution setting branches;
-- discrete resident reset/snapshot calls and continuous HP/chakra/Link Gauge
-  consumers;
-- the role of fighter `+0x7C` and the complete capture/clear/restore lifecycle
-  of the two three-slot item-cache records.
-
-Medium confidence:
-
-- descriptive names for child presentation fields `+0x40..+0x5C`;
-- the high-level grouping of complex Attack/Guard/Move AI branches, whose key
-  gates are clear but whose complete timing behavior is not reconstructed;
-- the precise semantics of every field in the 40-short Strength profile and
-  every linked-action work/countdown field;
-- the manager-owned slot `0x6A` as the sixth/Ultimate-tier gate; its two
-  consumers are exact, but its producer/unlock condition is not known.
-
-Open:
-
-- the current flicker's runtime cause;
-- the engine-level names and later transitions for several linked-partner work
-  fields and controller codes;
-- the producer for difficulty-tier slot `0x6A`.

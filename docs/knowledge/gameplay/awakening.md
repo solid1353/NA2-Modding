@@ -4,8 +4,7 @@ This document records the clean NA2 awakening controller, persistent effect
 state, post-Ultimate-Jutsu form replacement, and cleanup boundaries. It is a
 static reverse-engineering result. No runtime replay was performed for this
 investigation. Existing replay-backed identity and combo findings are linked
-where they clarify a field, but animation internals and Adventure mode are out
-of scope.
+where they clarify a field, but animation internals are out of scope.
 
 The native implementation has three related but independent states:
 
@@ -20,8 +19,8 @@ with a protected effect node, rather than obtaining all of its state from the
 base fighter's controller. Treating these layers as one `is_awakened` value
 loses observable native distinctions.
 
-See [Battle systems](battle.md) for the broader effect-source union and
-replay-backed combo owner, and [Character identity in battle](character_ids.md)
+See [Battle damage](damage.md) for the replay-backed combo owner and
+[Character identity in battle](character_ids.md)
 for the current, match-start, and live-fighter identity fields.
 
 ## Research coverage
@@ -79,8 +78,9 @@ visible result of the Konohamaru class-7 mismatch remain unresolved.
 - **Deliberate exclusions and overlap:** Adventure mode, animation
 internals and timing/60-FPS evaluation, damage formulas, substitution,
 widescreen/rendering, media, and localization were excluded. Broader effect
-source aggregation and replay-backed combo ownership remain canonical in
-`battle.md`; identity terminology remains canonical in `character_ids.md`.
+  source aggregation and replay-backed combo ownership remain canonical in
+  [`damage.md`](damage.md); identity terminology remains canonical in
+  `character_ids.md`.
 Those adjacent subjects were consumed only far enough to support this file and
 were not re-investigated here.
 - **Evidence limitations:** this is primarily static evidence from the two
@@ -89,32 +89,15 @@ were not re-investigated here.
 
 ## Evidence identity and address mapping
 
-All resident observations come from clean `SLPS_258.37`:
-
-- size: `5,273,256` bytes;
-- SHA-256:
-  `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`;
-- mapping in the documented resident region:
-  `file offset = runtime address - 0x000FFF00`;
-- ELF `.reginfo` establishes resident `gp = 0x0060A9F0`; addresses derived
+The resident and BTL identities and address conversions follow
+[Standard game file identities](../game/files/file_identities.md).
+ELF `.reginfo` establishes resident `gp = 0x0060A9F0`; addresses derived
   from a `gp`-relative instruction use that value plus its sign-extended
   16-bit displacement.
 
-All overlay observations come from clean `PRG/BTL.BIN`:
-
-- size: `0x222300` (`2,237,184`) bytes;
-- SHA-256:
-  `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C`;
-- `MWo3` kind `1`, load base `0x006B3F00`, text span `0x001DB6C0`,
-  BSS size `0x6E80`, internal name `BTL_product.bin`;
-- loaded file end `0x008D6200` and effective end including BSS
-  `0x008DD080`;
-- raw file offset `x` is live address `0x006B3F00 + x`;
-- the preserved export omits the `0x40`-byte header, so its displayed code
-  address is the live address minus `0x40`.
-
-The last distinction prevents a common `0x40` address error. Direct operands
-in the BTL listing still contain runtime addresses.
+Additional BTL image metadata used here is text span `0x001DB6C0`, BSS size
+`0x6E80`, internal name `BTL_product.bin`, loaded file end `0x008D6200`, and
+effective end including BSS `0x008DD080`.
 
 Confidence labels used below are:
 
@@ -545,7 +528,7 @@ chakra for this route; `+0xB78` must not be labeled chakra.
 `FUN_0020C270` allocates each `0x3C`-byte per-side combo object.
 `FUN_0020C420` accumulates fighter pending-hit byte `+0xA45` into current count
 `+0x34` and clears the pending byte. Existing synchronized captures documented
-in [Battle systems](battle.md#native-combo-owner) establish `+0x34` as the
+in [Battle damage](damage.md#native-combo-owner) establish `+0x34` as the
 native current combo count. This route is not a chakra or awakening-gauge
 check.
 
@@ -925,7 +908,7 @@ state, but it does not isolate a single omitted field as the cause. The
 accepted correction keeps native contest-object creation and updates, retains
 the two BTL input-read suppressions, and NOPs only the sole resident call to
 `FUN_0036BFF0` at `0x001F0940` (clean ELF file offset `0xF0A40`). User runtime
-testing on 2026-08-21 confirmed that the corrected post-UJ awakening path
+testing confirmed that the corrected post-UJ awakening path
 executes while the contest remains invisible and unresponsive to both players.
 
 The final gate is a per-side UJ defeat latch, not a chakra or resource check.

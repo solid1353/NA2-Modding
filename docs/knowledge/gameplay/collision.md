@@ -23,7 +23,7 @@ the row says “sampled.”
 
 | Area actually explored | Coverage depth and concrete boundary |
 | --- | --- |
-| Overlay mapping | Complete for the two scoped clean assets and every overlay-local address cited here: full 0x40-byte `MWo3` header, `live = raw + 0x006B3F00`, and `live = preserved export + 0x40`. Encoded direct targets used in this document were normalized against raw bytes. |
+| Overlay mapping | Complete for the two scoped clean assets and every overlay-local address cited here; encoded direct targets were normalized against raw bytes using the canonical address conversion. |
 | Manager and registries | Full bodies for manager allocation/init/destruction, two-primary and two-by-32 auxiliary registries, high/low auxiliary insertion, cleanup, selective removal, candidate aggregation, and the main frame consumer; constructor callers were sampled to prove both insertion variants without classifying every object type. |
 | Resident DD* interaction lists | Full relevant bodies from resident `0x001DCA40..0x001DE1C0`: 0x24 list heads, 0x34 registrations, 0x40 results, global activation chains, generation-safe resolution, all-pairs mask gating, sphere overlap, result emission, and cleanup. BTL registration/update callers were representative rather than exhaustive. |
 | Spherical volumes and proximity caches | Full 0x50 record initializer/resolver and direct DD* overlap math; full generic BTL snapshot builder/reset and all direct references recovered for the four cache-count fields. Three inline cache appenders and the two direct proximity consumers were inspected; callers reachable only through computed addresses were not exhaustively enumerated. |
@@ -100,23 +100,12 @@ was performed for this research pass.
 
 ## Inputs and address conventions
 
-| Input | Size | SHA-256 |
-| --- | ---: | --- |
-| `@source_na2/PRG/BTL.BIN` | `2,237,184` (`0x222300`) | `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C` |
-| `@source_na2/SLPS_258.37` | `5,273,256` (`0x5076A8`) | `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF` |
+The clean resident and BTL inputs and their address conversions are defined in
+[Standard game file identities](../game/files/file_identities.md).
 
-The clean file is an `MWo3` image whose complete 0x40-byte header is loaded at
-live EE address `0x006B3F00`. Header words give text size `0x001DB6C0`, data
+Header words give text size `0x001DB6C0`, data
 size `0x00046C00`, BSS size `0x00006E80`, and constructor interval
 `0x008D6180-0x008D61A4`. The effective BTL reservation ends at `0x008DD080`.
-
-The preserved Ghidra import skipped the header and therefore displays every
-overlay payload byte 0x40 below its actual live address:
-
-```text
-raw_file_offset = live_address - 0x006B3F00
-live_address     = preserved_export_address + 0x40
-```
 
 Encoded absolute pointers and `j`/`jal` targets in BTL are already live
 addresses. Resident addresses are also unaffected. This distinction matters:

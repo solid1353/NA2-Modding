@@ -6,11 +6,9 @@ selection, state dispatch, logical-input synthesis, direct action queues, and
 random-number use. State names and physical button meanings are deliberately not
 invented where the binary only establishes raw IDs or masks.
 
-The findings below are static unless explicitly described otherwise. The main
-evidence is clean `BTL.BIN`, SHA-256
-`56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C`,
-and clean `SLPS_258.37`, SHA-256
-`20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`.
+The findings below are static unless explicitly described otherwise. The clean
+resident and BTL inputs are identified in
+[Standard game file identities](../game/files/file_identities.md).
 
 ## Research coverage
 
@@ -68,10 +66,9 @@ hypotheses rather than inferred names.
 
 - **Deliberate exclusions and overlap:** Adventure, substitution and its bar, damage
 formulas/scaling, 60-FPS or timing work, widescreen/camera projection, media,
-and localization. Shared command-mask meanings were taken only from the
-existing `action_commands.md` evidence; this document does not take ownership
-of that command system or of broader battle facts already owned by
-`battle.md`.
+  and localization. Shared command-mask meanings were taken only from the
+  existing `action_commands.md` evidence; this document does not take ownership
+  of that command system.
 
 - **Evidence limitations:** behavioral validation was static against the hashed clean files. The corrected
 full-file import, raw aligned instruction scans, loader mapping, and clean
@@ -83,36 +80,26 @@ by the limitations above.
 
 ## Address convention and corrected overlay mapping
 
-The complete 2,237,184-byte (`0x222300`) MWo3 file is retained in live memory at
-its header base. Its header reports:
+The clean BTL identity and shared address conversion follow
+[Standard game file identities](../game/files/file_identities.md). Its
+header additionally reports:
 
 | Header field | Value |
 | --- | ---: |
 | magic | `MWo3` |
-| load base | `0x006B3F00` |
 | text length | `0x001DB6C0` |
 | data length | `0x00046C00` |
 | BSS length | `0x00006E80` |
 
-The preserved Ghidra import omitted the `0x40`-byte header but placed the first
-payload byte at `0x006B3F00`. It therefore displays every file-backed byte and
-function `0x40` below its live address. This was independently established from
-the clean loader and a clean savestate, and a disposable full-file Ghidra import
-at the correct base recovered coherent function boundaries and call graphs.
+The preserved import discrepancy was independently established from the clean
+loader and a clean savestate, and a disposable full-file Ghidra import recovered
+coherent function boundaries and call graphs.
 
 This document uses these abbreviations:
 
 - `D`: address in the preserved Ghidra/export baseline.
 - `L`: live EE address.
 - `F`: byte offset in clean `BTL.BIN`.
-
-For file-backed BTL bytes:
-
-```text
-L = D + 0x40
-F = L - 0x006B3F00
-  = D - 0x006B3F00 + 0x40
-```
 
 The payload begins at `L 0x006B3F40`; the file-backed image ends and BSS begins
 at `L 0x008D6200`. Absolute pointers and `j`/`jal` operands encoded inside BTL

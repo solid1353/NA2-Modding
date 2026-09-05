@@ -1,22 +1,31 @@
 # Font assets
 
-This document owns durable raster, glyph-cell, descriptor, and palette
-findings for the native NUN5-derived secondary font. Renderer calculations and
-screen placement remain in their respective domain documents.
+This document records clean NA2 and NUN5 raster, glyph-cell, descriptor, and
+palette findings. Current feature behavior belongs to
+[Font](../../../features/localization/font.md).
 
-## Accepted asset boundary
+## Research coverage
 
-The accepted package imports NUN5 14x20 geometry and metrics only for
-same-semantic English cells, reconstructs unsupported punctuation from clean
-NA2, preserves printable-ASCII coverage, and keeps clean NA2 GF4C palette
-semantics. The shortened secondary atlas remains confined to its own parser
-path. Exact current integration and generation ownership are documented in the
-[integration baseline](integration_baseline.md).
+- **Assigned scope:** identify native font resources, loaders, atlas structures,
+  glyph semantics, and donor-compatibility constraints.
+- **Exploration depth:** all five clean NA2 font resources, their parsers,
+  selectors, descriptor counts, raster cells, and relevant palettes were
+  inspected; bounded NUN5 donor combinations were compared.
+- **Confirmed coverage:** GF4/SF1 raster ownership, GF4C/SF1C palette ownership,
+  GRF4 ruby-atlas behavior, and incompatible whole-donor semantics are
+  established.
+- **Unresolved or untested:** semantic names for every descriptor flag and the
+  visual value of two unused palette entries.
+- **Deliberate exclusions and overlap:** renderer math and screen placement
+  belong to neighboring knowledge documents; NA228 asset generation and
+  selection belong to the Font feature.
+- **Evidence limitations:** donor comparisons establish bounded raster and
+  palette effects, not a universal visual-quality measure.
 
 ## Resident loader and auxiliary ruby atlas
 
-Fresh static tracing against clean NA2 `SLPS_258.37`, SHA-256
-`20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`,
+Fresh static tracing against the clean resident ELF identified in
+[Standard game file identities](../../game/files/file_identities.md)
 resolves the complete five-file font load family. `FUN_00186050` queues
 `SF1.BIN`, `SF1C.BIN`, `GF4.BIN`, `GF4C.BIN`, and `GRF4.BIN` through
 `FUN_00184840`. The resident selector `FUN_00186510(renderer, mode)` installs
@@ -70,14 +79,12 @@ the allocation sizes in both parsers, the selector calls, and the annotation
 branch's positioning math. The semantic names of every type-1 descriptor flag
 remain unresolved; do not extrapolate those bits beyond the observed branches.
 
-## Superseded clean 10x22 baseline
+## Clean NA2 10x22 baseline
 
-An earlier clean-NA2 baseline established a coherent 10x22 bitmap font with 157
-cells and complete printable-ASCII coverage: 95 of 95 semantic slots existed
-and 94 of 94 non-space slots contained visible raster data. Its median visible
-glyph box was 6x14 pixels, with median top 4 and bottom 17. Matched runtime
-captures showed that the asset was serviceable, but the later native 14x20
-baseline superseded it.
+Clean NA2 contains a coherent 10x22 bitmap font with 157
+cells and complete printable-ASCII coverage: 95 of 95 semantic slots exist and
+94 of 94 non-space slots contain visible raster data. Its median visible glyph
+box is 6x14 pixels, with median top 4 and bottom 17.
 
 The isolated descriptor-height experiment at ELF file offset `0x88064` is
 rejected. Changing `0C 00 20 C6` to `10 00 20 C6` produced a 28x28 quad instead
@@ -104,20 +111,12 @@ the meaningful difference was palette interpretation.
 The coupled GF4C swap is unsafe for untouched NA2 raster data. Clean NA2's
 primary raster uses palette index 15 for 265,344 of 1,746,272 pixels
 (`15.194884%`). NA2 maps index 15 to opaque white while NUN5 maps it to black,
-so the swap reinterprets a large existing pixel population. Do not use the
-whole NUN5 GF4 or GF4C as an implementation parent. The accepted native
-baseline changes only bounded secondary GF4 data and leaves clean NA2 GF4C
-unchanged.
+so the swap reinterprets a large existing pixel population. A whole NUN5 GF4C
+swap is therefore incompatible with untouched NA2 raster data.
 
 ## Unresolved selective palette refinement
 
-Clean NA2's primary GF4 raster and the accepted secondary raster both use
-palette indices 13 and 14 zero times. Those two GF4C entries may therefore be
-candidates for exact NUN5 white-alpha levels without changing any currently
-referenced primary pixel. This remains a bounded asset lead only if a matched
-review still finds a halfwidth-Latin weight difference.
-
-No palette bytes or raster indices have been changed or runtime-tested for this
-lead. Any experiment must start from the accepted native package and remain a
-small, call-local or asset-local, script-generated change. A full NUN5 text
-renderer transplant is outside its scope.
+Clean NA2's primary GF4 raster uses palette indices 13 and 14 zero times. Those
+entries could change without reinterpreting a currently referenced primary
+pixel, but their visual usefulness has not been tested. This is a bounded asset
+observation, not a recommended palette change.

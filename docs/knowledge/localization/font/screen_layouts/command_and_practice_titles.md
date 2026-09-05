@@ -1,6 +1,17 @@
 # Command Chart and Practice title layouts
 
-Shared title-adapter evidence for Command Chart and Practice, including their distinct geometry, common metrics, guarded callers, and validation boundary.
+## Research coverage
+
+- **Assigned scope:** compare clean NA2 and NUN5 Command Chart and Practice title boxes.
+- **Exploration depth:** the relevant native callers, records, and coordinates
+  were inspected.
+- **Confirmed coverage:** the documented owners and cross-game geometry
+  differences are established.
+- **Unresolved or untested:** callers and states not explicitly covered below.
+- **Deliberate exclusions and overlap:** feature hooks and behavior belong to
+  [Font](../../../../features/localization/font.md).
+- **Evidence limitations:** bounded states do not cover every string or
+  animation phase.
 
 ## Command Chart and Practice title boxes
 
@@ -13,134 +24,22 @@ logic but not the same container geometry. NUN5 wrapper telemetry at caller
 - Practice explanations remain a separate caller family at X `40`, Y
   `42/142/242`, width `364`, height `48`, vertical alignment `1`.
 
-A guarded task-owned NUN5 state probe recorded `FUN_0018ca40`'s live horizontal
-denominators before scaling. `Susanoo's Blade` is `142`, `Reverse Halo` is
-`115`, and `Fire Style: Phoenix Flower Jutsu @Petal Shower@` is `440`.
-Those values exactly equal the sums from the 95-entry packed metric table.
-This runtime result rejects both the legacy NA2 results (`135`, `110`, `417`)
-and the temporary constant-eight interpretation. The resident helper now
-validates plain ASCII once, consumes the shared table, applies the caller's
-`box_width / measured_width` factor only on overflow, and restores scale after
-the draw.
-
-NA2 reaches the shared UI wrapper at return address `0x00382454`; exact outer
-return-address guards distinguish Command Chart `0x0087A930`, Practice title
-`0x00878AA0`, and the pre-existing character-body caller. The final current
-origins use a common `-0.8` logical-unit visible-ink compensation:
-Command Chart X `27.2` with Y offset `-3.8`, and Practice X `31.2` with Y
-offset `-6.8`. The width constants remain the exact NUN5 `288` and `352`.
-
-Matched 640x480 captures on worker CRC `D64F4D9F` show:
-
-| Title row | NUN5 ink bounds | Current ink bounds |
-| --- | --- | --- |
-| Command Chart: `Susanoo's Blade` | `(141,87)-(314,100)` | `(141,87)-(314,99)` |
-| Command Chart: `Reverse Halo` | `(141,212)-(279,225)` | `(140,212)-(279,224)` |
-| Command Chart: long Petal Shower title | `(141,337)-(488,353)` | `(141,337)-(496,353)` |
-| Practice: `Shadowbur Extra Hit` | `(96,83)-(326,96)` | `(96,83)-(325,96)` |
-| Practice: `Guard` | `(96,208)-(153,221)` | `(96,208)-(153,221)` |
-| Practice: `Linked Attack` | `(96,333)-(245,346)` | `(96,333)-(245,346)` |
-
 The long-title right-edge difference was a fit-denominator error rather than a
 container offset. NUN5 measures each raw byte-`0x40` quotation delimiter with
 the 14-unit `@` metric, then renders the delimiter as a visible quotation mark.
-The translation importer must materialize visible ASCII quotation marks because
-NA2 does not implement NUN5's delimiter parser, but the shared one-line title
-fitter must still measure each materialized quote with the original 14-unit
-delimiter advance rather than the ASCII quote's 9-unit advance. This preserves
-NUN5's two-stage markup semantics without changing the canonical donor or
-drawing literal at-signs. The occasional one-pixel short-title height or
-leading-bearing difference remains raster/metric residue. The NUN5
-reference screenshot hashes are
-`E602195AF1CC4EFD122735DD7F7D08A15ECCC38B88DB1FCF85C5CD966E70E9DE`
-and
-`983AC7C636C3F5CF47492E87795899592C2B4B50EFA1EE556AC4095052F4CF2E`;
-the matched current hashes are
-`FE37ABB125396BA6786230A6B580DE4C59EEF20527A4FD5B49B52D98BCC15598`
-and
-`D10643D42B96D0135C4E25F636EB517042C6ABE28822BEB56DFFD0AE5D084C8F`.
-
-The corrected denominator was exercised through the maintained Movesets suite
-on Sai's complete three-page Specials family. Reference and Current now share
-the exact 640x480 ink bounds for all affected quoted titles: `Wild Dog`
-`(142,213)-(481,229)`, `White Picture` `(142,338)-(489,354)`, and both
-`Dragon` captures `(142,338)-(488,354)`. The unquoted title remains
-`(143,88)-(490,104)` in every page. This isolates the correction to NUN5 quote
-markup width and confirms that it does not move ordinary Command Chart titles.
-
-NUN5's exact `Air Strike Palm` record at `TEXTENG.BIN` `0xB9A0` is the sole
-Command Chart move-title donor ending in byte `0x0A`. Its native single-line
-title path treats that terminal LF as an inert record terminator and displays
-the preceding text. The NA2 v2 title fitter instead rejected the control byte
-before reaching its callback, leaving the complete title blank. The Command
-Chart entrypoint now makes a bounded transient copy, removes only one terminal
-LF, and passes that copy through the same one-line fitter. Canonical donor bytes,
-translation provenance, all internal line breaks, and the separate Practice
-title entrypoint remain unchanged.
-The maintained Neji Movesets replay confirms the corrected Current title has
-the exact NUN5 ink bounds `(142,213)-(305,226)` and width `164`; all other
-base and Specials rows remain aligned in the same regenerated family.
+NA2 does not implement that delimiter parser. Measuring a materialized ASCII
+quotation mark with its ordinary 9-unit advance therefore does not reproduce
+NUN5's two-stage markup semantics.
 
 Move titles may also contain renderer-consumed color controls. Konohamaru's
 exact moveset donor is
-`<BLACK>Charge! Konohamaru <color0808C0>Ninja Squad<BLACK>!`; measuring those
-tags as visible ASCII reduced the rendered title to roughly half its intended
-width even though the native callback consumed them correctly. The shared
-title fitter now recognizes `<BLACK>`, `<WHITE>`, `<RED>`, and six-digit
-`<colorRRGGBB>` controls and excludes them only from width measurement. Their
-bytes remain intact for the native renderer, so visible text uses the same
-one-line `288`-unit fit as an untagged title while preserving color transitions.
+`<BLACK>Charge! Konohamaru <color0808C0>Ninja Squad<BLACK>!`. The native
+renderer consumes `<BLACK>`, `<WHITE>`, `<RED>`, and six-digit
+`<colorRRGGBB>` controls without drawing them, so they must not contribute to
+the visible-width measurement.
 
 Confidence is **high** for the denominators, caller guards, fit thresholds,
-origins, and separation from the unresolved Practice explanation family.
-
-The stage-by-stage v2 reimplementation no longer depends on those retained
-outer-return guards. Bounded BTL inspection identifies the actual title-only
-draw calls directly. The supplied states independently confirm that the live
-MWo3 image begins at `0x006B3F00`, so these file offsets map without the
-`-0x40` Ghidra-header adjustment:
+origins, and separation from the Practice explanation family.
 
 - Practice runtime `0x00878A98`, BTL file `0x1C4B98`;
 - Command Chart runtime `0x0087A928`, BTL file `0x1C6A28`.
-
-Both sites contain guarded bytes `C4080E0C00000000`, a `jal 0x00382310`
-followed by its NOP delay slot. The Practice call occurs before its separate
-explanation loop; the Command Chart call precedes two independently guarded
-auxiliary-string draws. The v2 implementation therefore redirects only those
-two calls to explicit mode entrypoints. Each entrypoint tail-calls one shared
-title adapter, which selects the proven geometry above, creates one
-single-line shrink-only v2 session, and invokes native `0x00382310` through a
-common callback. No Practice explanation or auxiliary Command Chart call is
-selected.
-
-The generated v2 resident asset with this adapter is 2,020 bytes and has
-SHA-256
-`9561B62AAD1E0139B920AED058B2ECB066A9EB7D64092992ECAD60BC1581C8F6`.
-Static tests decode both linked BTL hooks, both mode entrypoints, every title
-constant, the callback ABI, and the shared-adapter relocations.
-
-The first converted-state capture used the ELF/Ghidra mapping base
-`0x006B3EC0` as though it were the live MWo3 base. It therefore wrote each BTL
-edit `0x40` bytes too early and produced the hybrid Command word `0x4423D147`
-instead of the linked `jal` word `0x0C23D147`. Exact clean context around both
-supplied call sites proved that the complete live BTL image begins at
-`0x006B3F00`. Corrected guarded states contain `jal 0x008F451C` at
-`0x0087A928` and `jal 0x008F48B0` at `0x00878A98`; the failed capture was a
-state-conversion error, not a rejected renderer hypothesis.
-
-Hidden task-owned PCSX2 captures on boot CRC `A8A3C4FF` then covered preserved
-Command Chart slot 3, all six Practice command slots 2-7, and the accepted
-Controls regression. The worker ISO SHA-256 is
-`0396D02B559EFC964B05520CC539F074432A57C3796BC1CA3063C3533E32FF1F`;
-its 5,488-byte resident payload ends at `0x008F5270` and has SHA-256
-`4BD20BE93EA0D0A217A790774C4813863F1F8303FA49117889A6D59D664D097D`.
-The corrected Command capture reproduces the prior matched title bounds and
-has SHA-256
-`FE37ABB125396BA6786230A6B580DE4C59EEF20527A4FD5B49B52D98BCC15598`.
-Every Practice page retains the NUN5 title origins while its later explanation
-rows remain intentionally unchanged for their separate wrapping family.
-Confidence is **high** for the direct hooks, shared adapter, shrink-only
-behavior, distinct geometries, state restoration, and separation between
-titles and explanations. The user explicitly accepted the Command Chart result
-on 2026-07-27. The Practice title result remains agent-validated and awaiting
-user acceptance.

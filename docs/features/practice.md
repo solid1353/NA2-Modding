@@ -49,26 +49,31 @@ remove her constructor-owned `0x4D` effect and apply `0x4E`. Gaara's regular
 transition; his item awakening `0x3C` deliberately does not enter that moveset
 state. There is no raw-effect fallback.
 
+The native starting-HP enum is settings byte `+1` in `FUN_001E7A80`. At
+runtime `0x001E7AE8` (ELF offset `0xE7BE8`), the full-HP form retains the clean
+eight bytes, the half-HP form stores the existing `a1 == 1`, and the critical
+form reorders the existing `li t1,2` before storing `t1`. Every form preserves
+the following native store of `2` to settings byte `+2` and requires the exact
+clean eight-byte guard.
+
 The NA2 guards are runtime `0x001E9AF8` for the post-Continue route,
 `0x001ECA2C` for the unchanged state-`7` call into the replaced native
 `FUN_001ED450` range, and `0x001ECACC` for the state-`15` battle-update call.
-The reverse-engineering evidence, PNACH layout, and native field contract are
-in [`../knowledge/gameplay/battle.md`](../knowledge/gameplay/battle.md).
+The native Practice architecture and starting-HP evidence are in
+[Practice-mode knowledge](../knowledge/gameplay/practice_mode.md). Native
+effect-entry behavior is in [Awakening](../knowledge/gameplay/awakening.md).
 
 ## Practice Settings rework
 
-`features.settings.in_game.practice` maps a compact Practice Settings row list onto the
-native menu. Its `general_settings` and `opponent_settings` objects follow the
-two native menu sections. The complete base configuration defines every
-retained native default:
+`features.settings.ingame.practice_mode` maps a generated, paged Practice Settings
+schema onto the native menu. Its root options and `opponent_settings` submenu
+retain the native value handlers. The complete base configuration
+defines every retained native default:
 
 | Section | Field | Values |
 | --- | --- | --- |
-| `general_settings` | `health` | `normal`, `half`, `almost` |
-| `general_settings` | `chakra`, `linked_attack` | `normal`, `unlimited` |
-| `general_settings` | `linked_mode` | `manual`, `auto`, `false` |
-| `general_settings` | `items` | `none`, `less`, `normal`, `more` |
-| `general_settings` | `commands`, `damage`, `guide_ninja_sound` | `off`, `on` |
+| Root | `health` | `normal`, `half`, `almost` |
+| Root | `commands`, `damage` | `off`, `on` |
 | `opponent_settings` | `status` | `manual`, `com`, `stand`, `jump`, `double_jump` |
 | `opponent_settings` | `strength` | `simple`, `easy`, `normal`, `hard`, `insane`, `ultimate` |
 | `opponent_settings` | `attack` | `no`, `single`, `combo`, `projectile`, `high_speed_move`, `ultimate_jutsu`, `jutsu` |
@@ -78,46 +83,68 @@ retained native default:
 | `opponent_settings` | `linked_attack` | `dont_use`, `normal`, `random` |
 | `opponent_settings` | `extra_hit_counter` | `normal`, `return` |
 
+Field-support availability and Unlimited are configured through the shared
+[Support row](battle.md#battle-support) in Battle Mechanics.
+
 Configured fields initialize the Practice manager and replace the corresponding
 local values when Return to Defaults is used. Health reaches normalized live-HP
 targets `1.0`, `0.5`, and `0.1`; opponent Linked Attack maps to Don't use,
-Normal, and `乱発`. Every native field accepts `false` to remove its row while
-leaving the corresponding native stored value unchanged. The base configuration
-uses this to remove Guide Ninja Sound and Extra Hit Counter.
-`linked_mode: false` removes the native Linked Mode row without changing its
-native Auto state. `manual` or `auto` retains the row and sets its initial and
-Return to Defaults value.
+Normal, and `乱発`. Every retained Practice option has a concrete configured
+value and appears in its menu section. Linked Mode and Guide Ninja Sound are not
+configuration fields: both rows are always omitted, Linked Mode is fixed to
+Auto, and Guide Ninja Sound is fixed to Off.
 
-The implementation builds the feature-aware row list. Every enabled leaf under
-`features.settings.in_game.shared` adds its row after all retained native General
-Settings rows, in catalog declaration order. These rows use the same runtime
-values as Battle Settings, so both menus stage, reset, and commit the same
-state.
+The root page starts with `Battle Mechanics`, then `Opponent Settings`, followed by
+every retained native General Settings row in its original order. Square on a
+launcher opens its child page; Confirm applies and closes from launcher rows as
+it does from every ordinary row. Launcher rows retain the native row geometry,
+recolor only their label panel to the child-heading orange, and display
+`Open <iconSQUARE>` without native value arrows. `Battle Mechanics` contains every enabled leaf under
+`features.settings.ingame.battle_mechanics`, in catalog declaration order. `Opponent
+Settings` contains the retained native opponent rows in their original order.
+Both child pages use the native orange section heading and opponent-style row
+backing, with their own page title. The count-derived backing and launcher-label
+renderer is shared with Battle Settings.
+Cancel returns to the selected launcher's root row; Cancel on the root retains
+the native close behavior. With regional input enabled, Cancel is Triangle.
+Mod rows use the same runtime values as Battle Settings, so both menus stage,
+reset, and commit the same state. Entering or leaving either child page restarts
+the selected row's help-text animation.
 
-The rendered rework keeps all retained native General Settings rows first. The
-shared rows then form one block before the native Opponent Settings section.
+Chakra is no longer a native General Settings row. It is the first Battle Mechanics
+row and shares `normal`, `unlimited`, or a `0.1..10.0%/s` regeneration rate with
+Battle Settings. Numeric values appear as `Regen N.N%/s`. The generated native
+default pack fixes the underlying Practice Chakra key to Normal; the shared
+runtime setting alone owns refilling.
 
-Ultimate Jutsu is now an injected shared row rather than an always-retained
+Confirm on any ordinary row still applies and closes the complete Practice
+transaction. Return to Defaults resets every configured row, including rows on
+the page that is not currently visible. Closing from the root without
+confirming still discards all staged changes.
+
+Ultimate Jutsu is now an injected mod row rather than an always-retained
 native row. It exposes its six native values plus `No Contest` and `No HUD`,
 stages and commits the same shared runtime enum as Battle Settings, and uses
 the shared configured value for its reset action. The underlying native slot
 receives the selected native value, or `Command` for either custom value. The
-same shared block also adds
+same mod block also adds
 ordinary `Shadowblur Extra Hit: Off | On` and `Extra Hit: Off | On` rows to the
 player section. They snapshot and commit the same shared runtime toggles as
-Battle Settings, and their reset values come from `features.settings.in_game.shared`.
+Battle Settings, and their reset values come from `features.settings.ingame.battle_mechanics`.
 
-The native Extra Hit Counter row remains independent of the shared Extra Hit
+The native Extra Hit Counter row remains independent of the mod Extra Hit
 selector. The presentation retains the native row widgets, localization,
 selection, scrolling, animation, and clipping paths.
 
-Backing cells and selection-frame placement are derived from each section's
-enabled row count. Both sections retain the native first, middle, and terminal
-cell roles; extra rows repeat a native middle cell and keep the terminal cell on
-the actual final row. The cursor uses section-local visible geometry, so adding
-or removing options does not change row height, introduce seams, or require a
-new fixed-index layout patch. Runtime label and value tables are allocated from
-the generated schema's row count rather than a fixed menu capacity.
+Each generated page records its row range, section counts, parent page, and
+return row. Backing cells and selection-frame placement are derived from the
+active page's section counts. Both sections retain the native first, middle,
+and terminal cell roles; extra rows repeat a native middle cell and keep the
+terminal cell on the actual final row. The cursor uses section-local visible
+geometry, so adding or removing options does not change row height, introduce
+seams, or require a new fixed-index layout patch. Runtime label and value tables
+are allocated from the largest generated page rather than a fixed menu
+capacity.
 
 The implementation guards the native manager-reset call site in clean
 `SLPS_258.37` at ELF offset `0xF5AD4` and applies the Practice default pack only

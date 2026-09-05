@@ -5,107 +5,60 @@ integrated catalog data.
 
 ## Canonical data
 
-- `catalog.modcat` owns the complete nested selectable hierarchy. Its
-  `features` object contains every direct feature child. The custom
-  declarative syntax uses JSON-like objects and TypeScript-like value types and
-  is parsed directly by the Python builder.
-  [Catalog reference](../docs/catalog.md) is the complete authoring and
-  configuration-semantics reference.
-- Catalog settings and structural blocks may contain one singular `patch`
-  reference. Dotted patch IDs describe catalog ownership; their implementation
-  capability is determined by the referenced definition, not by an ID prefix.
-  Implementation details never appear in the release catalog reference.
+- `catalog.modcat` owns the nested selectable feature hierarchy and its patch
+  references. [Catalog format](../docs/catalog.md) owns the authoring grammar,
+  configuration semantics, patch mappings, and release projection.
 - `patches/*.json` owns unified patch definitions, split by the first segment
-  of each dotted patch ID. One definition may contain a primitive `edit` or an
-  `edits` group, runtime `hooks` and `payload`, one semantic `string_patch`,
-  required `modules`, and launch metadata. This keeps one catalog identity for
-  one selected behavior while the existing executors continue to process each
-  mechanism. C and assembly sources remain separate files referenced by their
-  payload declarations.
-- The catalog loader expands fixed-stride `replace_table` records into ordinary
-  guarded replacements before composition. A typed setting may feed its
-  validated value to a declared binary adapter instead of storing fixed
-  replacement bytes.
-- `configurations/base.jsonc` contains the complete shared `features` tree and
-  is the canonical development configuration. `test.jsonc`, `e2e.jsonc`, and
-  `release.jsonc` contain concrete `overrides`. Each overrides object may be
-  empty or partially mirror the catalog's feature tree directly. The loader
-  applies the concrete configuration's `overrides` to `base.features`. Every
-  top-level configuration JSONC is available to the development commands
-  automatically. Root `game.json` may map a configuration to a unique alias;
-  an aliased configuration is selected only by that alias. E2E selects
-  `e2e.jsonc` internally; only release packaging uses `release.jsonc`.
-- `configurations/overrides/base.character_overrides.tsv` contains the required
-  `base` and `step` metadata rows and shared per-character overrides. These two
-  rows are not characters, so their `base_id`, `character`, and `tier` cells
-  are empty. `release.character_overrides.tsv` layers nonempty cells over it by
-  row identity. Test and E2E use the base layer directly. Empty cells inherit;
-  numeric zero is an explicit value. Release packaging materializes the resolved feature and
-  character-override layers into one external JSONC configuration and one
-  external character-override TSV.
-- `@resources/character_data.tsv` is the repository-owned ID/name and native-value
-  reference used to validate character rows. Its
-  `support_id` cells contain the native support-roster ID corresponding to each
-  playable character, written in hexadecimal; an empty cell means that the
-  character has no native support entry. Its
-  `awakening_ids` cells contain comma-separated native IDs such as
-  `0x61,0x62`. They are the union of the character's fighter-controller effect
-  associations, nonempty Ultimate-Jutsu post-effects, hard-coded
+  of each dotted patch ID. Referenced C and assembly sources remain separate
+  files.
+- `configurations/base.jsonc` owns the complete shared `features` tree.
+  `test.jsonc`, `e2e.jsonc`, and `release.jsonc` contain partial
+  `overrides`. Root `game.json` may assign a unique command alias; E2E and
+  release packaging select their dedicated configurations internally.
+- `configurations/overrides/base.character_overrides.tsv` owns shared
+  per-character values and the required `base` and `step` metadata rows.
+  Profile TSVs layer nonempty cells over the base by row identity. Empty cells
+  inherit, while numeric zero is explicit. The editing contract is documented
+  below.
+- `@resources/character_data.tsv` owns the repository ID/name and native-value
+  reference used to validate character rows. `support_id` stores the native
+  support-roster ID. `awakening_ids` stores the union of fighter-controller
+  effect associations, nonempty Ultimate-Jutsu post-effects, hard-coded
   transformed-form initialization effects, and character-specific direct or
-  successor effect applications, so membership does not imply a particular
-  activation route; an empty cell means none of those native sources supplies
-  an effect. `linked_uj` and `linked_jutsu` contain the native
-  support IDs associated with each character by the corresponding BTL tables;
-  empty cells mean no relationship of that type. These metadata columns are
-  not builder catalog inputs. The file is not an override file.
-- `@repository/launch_profiles/practice/movesets.tsv` contains ordered
-  moveset-test metadata. `case_id` is the stable Practice launcher selector;
-  input lookup is case-insensitive and table spelling is canonical. Physical
-  row numbers are not an interface. Each character block starts with its plain
-  primary ID or its `-2nd` case. A primary form's `-rev` case follows the plain
-  ID immediately, then any `-awk-N`, `-luj-N`, and `-lj-N` cases.
-  Primary IDs use the short character stem, Classic IDs use `bName`, and second
-  forms append `-2nd`. Other cases append `-rev`, `-awk-N`, `-luj-N`, or
-  `-lj-N`; numbered slots are append-only. Runtime IDs belong only in their
-  dedicated columns.
-  `character_id`, `awakening_id`, and `support_id` are runtime inputs. E2E
-  resolves each display name from `@resources/character_data.tsv` by
-  `character_id`. Empty `awakening_id` and `support_id` cells mean no starting
-  awakening and No Support. Nonempty cells record hexadecimal awakening or
-  support IDs.
-  A `-rev` suffix selects the native Half starting-HP mode. Every case has an
-  authoritative E2E `capture_policy`: an empty cell means no capture; populated
-  values are `base`, `specials`, `base, specials`, or
-  `base, parent-specials`. The last value belongs to `-2nd`: it captures
-  that form in its own Base grid and the preceding primary form's Specials
-  grid. The file is not a builder catalog input.
-- `modules/targets.tsv` is the single builder-wide target registry used by
-  edits and injection hooks.
-- `modules/binary_patcher/operations/*.tsv` defines the allowed fields and basic types for each binary operation.
-- `patches/localization/` owns localization patch inputs by patch ID:
-  Font assets under `font/glyphs/`, translations under `strings/`, and UI
-  texture inputs under `ui/`.
-- `features.localization.strings` selects the translation importer, while
-  `features.localization.ui` atomically selects its layout patches and the
-  matching texture patcher. Release builds always require the clean
-  NA2 ISO and require the clean NUN5 ISO only when the resolved module list
-  includes the texture patcher.
-- `@scripts/` contains every builder Python implementation file. Reusable
-  engines and their code-only contracts remain under `modules/`; non-inline
-  feature inputs remain with their owning feature. Do not use placeholder
-  engine directories, identity manifests, `.gitkeep`, or header-only files
-  merely to register an engine. Each reusable module README states its
-  downstream module invocations or that it invokes none.
-- Root `release_manifest.json` owns release packaging metadata and remains
-  outside the catalog.
-- Root `game.json` owns the product title, explicit output boot path, optional
-  configuration aliases, base launch settings, and direct named launch-profile
-  overrides. Each named override
-  declares a profile; its matching `launch_profiles/<profile>/` directory owns
-  optional profile behavior and assets.
+  successor effect applications; membership does not imply one activation
+  route. `linked_uj` and `linked_jutsu` store the corresponding BTL
+  relationship-table support IDs. Empty cells mean no recorded value. These
+  columns are references, not catalog or override inputs.
+- `@repository/launch_profiles/practice/movesets.tsv` owns ordered Practice
+  test cases. `case_id` is the stable case-insensitive launcher selector;
+  physical row numbers are not an interface. Each character block starts with
+  its plain primary ID or `-2nd` case; a primary form's `-rev` case follows the
+  plain ID, then any `-awk-N`, `-luj-N`, and `-lj-N` cases. Primary IDs use the
+  short character stem, Classic IDs use `bName`, second forms append `-2nd`,
+  and numbered slots are append-only. `character_id`, `awakening_id`, and
+  `support_id` are runtime inputs; E2E resolves display names from
+  `@resources/character_data.tsv`. Empty awakening and support IDs mean no
+  starting awakening and No Support. A `-rev` case selects native Half
+  starting HP. `capture_policy` is empty for no capture or contains `base`,
+  `specials`, `base, specials`, or `base, parent-specials`; the last value
+  captures a `-2nd` case in its own Base grid and its primary form's Specials
+  grid. The file is test metadata, not a catalog input.
+- `modules/targets.tsv` is the builder-wide target registry.
+  `modules/binary_patcher/operations/*.tsv` defines primitive binary
+  operations.
+- `patches/localization/` owns Font assets under `font/glyphs/`,
+  translations under `strings/`, and UI texture inputs under `ui/`.
+  `features.localization.ui` selects its layout and texture work atomically.
+- `@scripts/` owns builder implementation. Reusable engines and their
+  code-only contracts live under `modules/`; each reusable module README
+  states its downstream invocation or that it invokes none. Do not create
+  placeholder engine directories or files merely to register an engine.
+- `release_manifest.json` owns release packaging metadata. `game.json` owns
+  the product title, boot path, configuration aliases, base launch settings,
+  and named launch-profile overrides.
 
-JSON configurations select features. The paired character-override TSVs are
-the separate per-character build inputs for battle values.
+JSON configurations select features. Character-override TSVs are separate
+per-character build inputs.
 
 The `-l <profile>` launcher option is optional. Without it, the base fields
 apply. A selected direct profile inherits every base field it does not override.
@@ -157,76 +110,16 @@ step				+5
 The builder rejects unknown IDs, invalid base IDs, mismatched names, duplicate
 rows, malformed columns, non-finite numbers, and negative literal values before
 composition. Signed per-character adjustments may be negative, but every
-resolved substitution cost must remain inside `0..100`. With the gauge feature
-disabled, or with its runtime setting on `Chakra`, the runtime charges
-`cost / 100` of NA2's 15-point chakra capacity. `Gauge` charges the same
-fraction of the independent resource and places the top-HUD textured bar's red
-marker at the exact rounded executable cost. `Free` charges neither resource.
+resolved substitution cost must remain inside `0..100`.
 
-## Catalog nodes
+Runtime consumption of the resolved values and Chakra, Gauge, and Free behavior
+are documented in the [Battle feature](../docs/features/battle.md#substitution-cost).
 
-Catalog nodes may nest to any depth. A bare `setting` accepts `true` to apply
-its patch and `false` to disable it. `setting<T>` accepts a typed scalar or
-closed object value; when `T` accepts `{}`, `true` is its empty-object shorthand
-and the selected value is normalized to `{}`. Typed boolean settings accept
-`false` as data and remain selected.
+## Catalog
 
-`false` disables a node only when its type does not accept `false`. Structural
-parents otherwise require explicit objects; `true` never expands a structural
-parent. A structural container may own one common patch for its nested tree; the
-patch receives the selected object and is applied once. Plain containers merge
-recursively through configuration overrides, while settings and node unions
-replace atomically.
-Patch IDs are unique across the complete catalog. Shared patches belong on the
-lowest common structural ancestor, and nested settings consumed by that patch
-may omit their own `patch` field.
-Structural-block and leaf-setting descriptions are optional and are retained
-only when they add meaning beyond the node name and type.
-Union branches must be provably disjoint and are never selected by order.
-Structural catalog objects may use `&` to declare fields shared by several
-object-union branches once; intersected fields must be disjoint. Unconditional
-object fields remain recursive merge points in overrides, while the
-branch-specific part of an intersected union remains atomic.
-
-The grammar supports `bool`, `int`, `decimal`, and `string`, literal types,
-closed object types with optional fields, disjoint `|` unions, structural
-object intersections, numeric `&` comparisons, ranges, and steps,
-parentheses, `//` comments, and trailing commas. It rejects every unlisted
-construct, including `null`.
-
-An internal patch may declare startup launch timing as
-`startup_fast_forward_frames: { "additive": N, "override": N }`, with either
-key or both. Additives are signed integers; overrides are positive UInt64 frame
-counts. Resolution starts from the non-negative base value under `game.json`
-`launch_settings.default`, applies the selected direct profile override, then
-applies the selected build target's configuration metadata: the sole enabled
-catalog override replaces the baseline when present, and every enabled additive
-is summed. Source-only launches have no build configuration modifier. More than
-one enabled patch override or a final result outside UInt64 is a configuration
-error. A zero result omits timed fast-forward. Disabled settings contribute
-nothing. This launch metadata is omitted from the public release catalog along
-with patch implementation references. `speed_after_startup` selects `normal`
-or `turbo` after timed Unlimited ends; build configurations do not modify it.
-
-Every binary edit contains an explicit `operation`. A unified patch contains
-either one primitive `edit` or a nonempty, one-level `edits` map;
-each semantic child is either an ordinary primitive edit or a fixed-stride
-`replace_table`. Table records resolve to concrete `replace` edits before
-operation validation. Runtime target changes live under the same patch's
-`hooks` and therefore have no operation discriminator. Runtime sources,
-fragments, imports, relocations, and ABI metadata live under its `payload`.
-
-Unified patch identities use dotted catalog ownership paths. Grouped edit
-children use concise semantic identities within their patch; destination
-addresses remain data rather than identity. Genuinely unordered definition
-maps are serialized alphabetically. Feature declarations, payload source maps,
-and source fragment maps retain file declaration order; the injection builder
-derives fragment positions from that order instead of numeric `order` fields.
-Hook and payload fragment identities are concise within their owning patch.
-Final resident-payload placement is deterministic by fragment kind, owner, and
-semantic symbol. Patch, edit, and hook descriptions are optional definition-local
-documentation; a present description must be nonempty and never affects
-execution.
+[Catalog format](../docs/catalog.md) is the canonical reference for node types,
+configuration merging, constraints, patch mappings, launch metadata, definition
+validation, and public release projection.
 
 ## Internal execution
 
@@ -240,8 +133,9 @@ order:
 3. `texture_patcher`
 4. `binary_patcher`
 
-The localization importer derives its in-memory string-patcher plan directly;
-there is no separate string-patcher module invocation or data interface.
+The configuration pipeline derives an in-memory string-patcher plan from the
+localization importer's output. `string_patcher` is a derived stage, not a
+separately selected module or file-backed interface.
 Selected injection payload declarations are compiled and linked into the shared
 resident `PRG/228.BIN`; resolved hooks then become guarded in-memory binary
 replacements. The binary patcher applies selected edits last.
@@ -256,30 +150,11 @@ selected localization TSV inputs. Release packaging inventories the same
 closure for every selectable catalog node, including disabled nodes.
 Documentation is not an executable builder input.
 
-## Current release configuration
+## Release configuration
 
-Features are read from `catalog.modcat` in declaration order. Module
-execution within each feature remains derived from the stable internal engine
-order above.
-
-Release packaging applies `release.overrides` to `base.features`, then writes
-one editable JSONC configuration named `config.jsonc` containing only the
-materialized `features` tree. It also materializes the layered base and release
-character values as editable `character_overrides.tsv` with every reference
-ID/name row present, and writes one
-consolidated, inert `catalog.modcat`
-reference with the same public hierarchy, types, constraints, unions, and
-descriptions but no patch mappings or implementation details. `README.md`
-explains the editable files in simple terms.
-
-The packaged EXE validates `config.jsonc` against its embedded complete catalog
-and never reads the external catalog reference. It contains resources for every selectable
-catalog node, including nodes disabled by the default release selection.
-Catalog-owned runtime C and assembly sources have packaged objects, so end users do not need
-the project PS2 toolchain. Invalid configuration errors identify the exact path,
-supplied value, and expected type or shape. After a failure, the EXE creates or
-replaces `builder-error.log` with full exception details and stack traces rather
-than showing them in the user-facing window. Successful runs create no log.
+The [release process](../docs/runbooks/release.md) owns package contents,
+external configuration and character overrides, embedded resources, end-user
+validation and error behavior, and production publication.
 
 ## Build
 
@@ -326,8 +201,9 @@ The registry retains at most 10 unique ISOs. Pruning removes every fingerprint
 and provenance record that refers to an evicted image. A missing or corrupt
 registry causes a complete verified build and is recreated only after success.
 
-When `NA228_TASK_WORK_ROOT` is set, builds keep their operational and structured
-records below the acting chat's `logs/` directory.
+When [`NA228_TASK_WORK_ROOT`](../docs/policies/work_directories.md)
+is set, builds keep their operational and structured records below the acting
+chat's `logs/` directory.
 
 Preflight fingerprints both canonical source ISOs, ISO-composing Python code,
 the exact selected configuration resources, product/path configuration, active

@@ -77,22 +77,8 @@ itself was not modified.
 
 ## Evidence identity and address conventions
 
-| Input | Size | SHA-256 | Evidence |
-| --- | ---: | --- | --- |
-| `@source_na2/SLPS_258.37` | 5,273,256 | `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF` | `@disassembly/NA2/exports/SLPS_258.37/` |
-| `@source_na2/PRG/BTL.BIN` | 2,237,184 | `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C` | `@disassembly/NA2/exports/BTL.BIN/` |
-
-Resident ELF addresses in the exports are live EE virtual addresses. For an
-ELF address in the first load segment, `file = resident - 0x00100000 + 0x100`.
-
-The live loader retains the complete 0x40-byte `MWo3` header at BTL base
-`0x006B3F00`, but the preserved Ghidra import omitted that header. For BTL:
-
-```text
-live = 0x006B3F00 + raw_file_offset
-live = Ghidra/export + 0x40
-raw_file_offset = Ghidra/export - 0x006B3F00 + 0x40
-```
+The clean resident and BTL inputs and their address conversions are defined in
+[Standard game file identities](../game/files/file_identities.md).
 
 Encoded absolute pointers and `j`/`jal` targets in the raw overlay already use
 live addresses. They must not receive another `+0x40`; instead, their physical

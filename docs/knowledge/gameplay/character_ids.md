@@ -4,6 +4,27 @@ This document records the first confirmed Character Select-to-battle identity
 mapping. It intentionally lists only names supported by both selector and live
 battle evidence; extend it as additional IDs are verified.
 
+## Research coverage
+
+- **Assigned scope:** Character identity from Character Select through the
+  battle manager and active fighter, including the distinction between
+  match-start selection and transformed state.
+- **Exploration depth:** Four Practice captures cover Naruto, Sakura, direct
+  selection of Nine-Tailed Fourth Awakened State, and an in-match Naruto
+  transformation.
+- **Confirmed coverage:** IDs 57, 58, and 73; the relevant manager and fighter
+  fields; reciprocal fighter pointers; and the match-start versus current-ID
+  distinction are established below.
+- **Unresolved or untested:** The remaining character IDs have not been
+  confirmed by both selector and live-battle evidence in this document.
+- **Deliberate exclusions and overlap:** Save-backed availability belongs to
+  [Content availability](../game/content_availability.md); the complete
+  character-data table is a reference and does not expand this document's
+  runtime-confirmed set.
+- **Evidence limitations:** The findings are bounded to the four stated
+  Practice captures; heap pointers are capture-specific, while only the global
+  and field offsets are treated as reusable.
+
 ## Confirmed IDs
 
 | ID | Character | Character Select | Active Practice fighter |
@@ -17,16 +38,14 @@ Select's playable-entry checks use `1..93`; ID 0 is a special/non-playable
 stored entry. See [Content availability](../game/content_availability.md) for
 the save-backed domain and unlock-reader contract.
 
-The complete builder reference is
+The complete character reference is
 [`@resources/character_data.tsv`](../../../resources/character_data.tsv).
-Its names and IDs validate per-character configuration. Its `awakening_ids`
-column records the union of the fighter-controller association list and every
-non-`0xFFFF` post-effect in that character's Ultimate-Jutsu records, plus effects
-applied by hard-coded transformed-form initialization and character-specific
-direct or successor paths. The union records compatible active states for
-fixed Practice test matrices and does not imply how the game normally enters
-each state. The runtime Practice launcher does not read this table or infer
-cases from it.
+Its `awakening_ids` column records the union of the fighter-controller
+association list and every non-`0xFFFF` post-effect in that character's
+Ultimate-Jutsu records, plus effects applied by hard-coded transformed-form
+initialization and character-specific direct or successor paths. The union
+records compatible active states for each character and does not imply how the
+game normally enters each state.
 `support_id` maps a playable character to its
 separate native support-roster ID, with a blank cell when no native support
 entry maps to that character. `linked_uj` and `linked_jutsu` record the support
@@ -61,8 +80,8 @@ fields were:
 | fighter `+0x68` | Active character ID (`u32`) |
 | fighter `+0x70` | Current chakra resource (`float32`); native substitution also spends it |
 
-SS1 was Naruto versus Naruto: manager choices were 57/57 and both live fighter
-IDs were 57. SS2 was Sakura versus Naruto: manager choices were 58/57 and the
+In Naruto versus Naruto, manager choices were 57/57 and both live fighter IDs
+were 57. In Sakura versus Naruto, manager choices were 58/57 and the
 live fighter IDs were 58/57. The heap pointers themselves are capture-specific;
 the global, manager offsets, and fighter offsets are the reusable contracts.
 
@@ -75,24 +94,5 @@ live-fighter IDs became 73/57. The `+0xC8`/`+0xF0` pair is therefore the
 selection-time identity source for overrides that must not change during a
 transformation.
 
-## Capture provenance
-
-Both user-supplied states are for `SLOP-NA228`, CRC `7E5D178F`, and were copied
-read-only into the task workspace before extraction.
-
-| Capture | Practice matchup | State SHA-256 | Extracted EE-memory SHA-256 |
-| --- | --- | --- | --- |
-| SS1 | Naruto vs Naruto | `CFC03F62D3E3DB47495736C06CD1705EA3A0CC7E5F46D1830AF968FA65CD88B0` | `04C3EF55C2067C9C7A1ABC602CE717E51AD0A217FFE7BFFCAC07D8871E5FECBA` |
-| SS2 | Sakura vs Naruto | `D6C3DEE11CDABBA12F936F52CBF03784113D78B9837B60876464C249500066C8` | `C10DA137A53CA1B52683CD61540D9B8246FEDA377FB1F1ED6841516CB75B7E25` |
-
-The state screenshots establish the active matchups; the extracted EE memory
+Runtime screenshots establish the active matchups; extracted EE memory
 establishes the selector, manager, pointer, character-ID, and resource values.
-
-The direct-versus-transformed pair is for `SLOP-NA228`, CRC `3755A94A`. It was
-copied read-only from the active PCSX2 `sstates` folder into
-`@work/Battle mechanics/inputs/savestates` before extraction.
-
-| Capture | Meaning | State SHA-256 | Extracted EE-memory SHA-256 |
-| --- | --- | --- | --- |
-| SS1 | Form ID 73 selected directly for both sides | `4BCB2A8514BF62A27B77E611E415D1FCD34425CF5FA997CA46AE0DD7D604A350` | `ABEE961C109C0CBD3FD74CFCC6878BC2FC0688D4D379D0460E741F74C75840E5` |
-| SS2 | Base ID 57 selected for both sides; Player 1 transformed to ID 73 | `77DF55EC2B6AB7066A5823A2E437CD58C9A68ACCD05ACCA171DD2332A9A604B7` | `2ED6B60D178B1371229720D8053661BCCC2758F0922DB198A74673CE86031C8B` |

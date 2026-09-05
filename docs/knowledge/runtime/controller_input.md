@@ -84,22 +84,10 @@ effects of latent counter/queue edges remain unverified dynamically.
 
 ## Binary and evidence identity
 
-| Item | Value |
-| --- | --- |
-| Game | *Naruto Shippuuden: Narutimate Accel 2* v2.28 |
-| Serial / resident binary | `SLPS-25837` / `@source_na2/SLPS_258.37` |
-| Size | `5,273,256` bytes |
-| SHA-256 | `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF` |
-| Preserved evidence | `@disassembly/NA2/exports/SLPS_258.37/SLPS_258.37.c` and `.txt` |
-| Export | Ghidra `12.1.2`, R5900 little-endian, 8,427 functions |
-| Research date | 2026-08-20 |
-
-The ELF's first load segment maps file `0x00000100` to EE runtime
-`0x00100000`; for addresses in that segment:
-
-```text
-file offset = runtime address - 0x000FFF00
-```
+Binary identity and resident address conversion follow
+[Standard game file identities](../game/files/file_identities.md). The preserved
+evidence is the Ghidra `12.1.2` R5900 little-endian export under
+`@disassembly/NA2/exports/SLPS_258.37/`.
 
 The binary contains the library tag `PsIIlibpad  3000` and diagnostic strings
 from `libpad`. The disassembly manifest independently records the same source
@@ -109,16 +97,16 @@ disc extraction:
 | Supporting IOP evidence | Value |
 | --- | --- |
 | Container | `@source_na2/MODULES/MODULES.BIN` |
-| Container size / SHA-256 | `315,392` bytes / `0CDEA9EF15E3FFE8B70B6305A67F9A37015FF12B08815EE4CA16358A4C93BA9D` |
+| Container size | `315,392` bytes |
 | Embedded module | container `0x00002000..0x0000CFFF`, `45,056` bytes |
 | Embedded-module SHA-256 | `0DFC9FCBE832D10B172CAAE862920561EB919426307EEE671A1679A9D138CD64` |
 | Module identity | ELF32 little-endian MIPS R3000 IRX, module `padman`, entry `0x3304`, tag `PsIIpadman  3000` |
 
 The embedded-module range includes its alignment padding through the next IRX
 at container offset `0xD000`; its hash therefore identifies the exact bytes
-used for this analysis. It was extracted only to a task-local temporary
-directory and analyzed as a relocatable IOP image. Addresses stated for that
-module below are IRX link-relative, not its eventual IOP load addresses.
+used for this analysis. It was analyzed as a relocatable IOP image. Addresses
+stated for that module below are IRX link-relative, not its eventual IOP load
+addresses.
 
 ### Confidence guide
 
@@ -1125,11 +1113,11 @@ still pass the wrapper's ready gate while the close-retry loop no longer runs
 the actuator machine, so they only modify/age the local stack. No occurrence
 was runtime-observed.
 
-As static cross-game corroboration, the clean NUN5 `SLES_556.05` and NUN6
-`SLUS_556.06` residents contain the same tag and an instruction-identical
-`libpad` function sequence shifted by `+0xDC0` (for example, NA2
+As static cross-game corroboration, the clean NUN5 `SLES_556.05` resident
+contains the same tag and an instruction-identical `libpad` function sequence
+shifted by `+0xDC0` (for example, NA2
 `0x00174098` corresponds to `0x00174E58`). This corroborates the library
-identity; it does not establish that those games use the same higher-level
+identity; it does not establish that NUN5 uses the same higher-level
 wrapper behavior.
 
 ### Matching IOP PADMAN function map

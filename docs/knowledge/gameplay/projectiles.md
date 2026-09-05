@@ -1,6 +1,6 @@
 # Projectile gameplay lifecycle
 
-Status: clean static baseline, 2026-08-20. The spawn, configuration, manager,
+Status: clean static baseline. The spawn, configuration, manager,
 callback, transition/removal, and destruction paths are established from the clean
 NA2 battle overlay. Class identity is additionally tied through the clean
 resident vtables. No runtime trace was used.
@@ -100,33 +100,20 @@ to the explicitly stated assets, ranges, and paths.
 
 ## Evidence and address convention
 
-The principal artifact is the clean on-disc overlay:
-
-| Artifact | Size | SHA-256 |
-| --- | ---: | --- |
-| `@source_na2/PRG/BTL.BIN` | 2,237,184 (`0x222300`) | `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C` |
+The clean BTL identity and address conversion are defined in
+[Standard game file identities](../game/files/file_identities.md).
 
 The class vtable words were read from the matching clean
 `@source_na2/SLPS_258.37`. The maintained Ghidra C and listing exports under
 `@disassembly/NA2/exports/BTL.BIN/` were used as navigation aids, then critical
 ranges were decoded again from the raw overlay bytes.
 
-### The `0x40`-byte MWo3 shift
+### Preserved-import limitation
 
-Live memory retains the complete MWo3 file at header base `0x006B3F00`.
-Consequently, for this overlay:
-
-```text
-live EE address = 0x006B3F00 + raw file offset
-live EE address = maintained Ghidra/export address + 0x40
-```
-
-The maintained Ghidra import omitted the `0x40`-byte header and mapped file
-offset `0x40` at `0x006B3F00`. Embedded absolute pointers and JAL targets in
+Embedded absolute pointers and JAL targets in
 the raw overlay are already live addresses. Ghidra may therefore resolve an
 intra-overlay call to a label `0x40` after the physical function body or show
-the wrong bytes for an embedded data pointer. Resident addresses below the
-overlay are unaffected.
+the wrong bytes for an embedded data pointer.
 
 The most important mappings are:
 

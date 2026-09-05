@@ -70,21 +70,8 @@ unvalidated unless explicitly stated otherwise below.
 
 ## Evidence identity and address convention
 
-The static evidence is the clean NA2 disc extraction:
-
-- `SLPS_258.37`, SHA-256
-  `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`;
-- `PRG/BTL.BIN`, size `0x222300`, SHA-256
-  `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C`.
-
-`BTL.BIN` is an `MWo3` overlay whose complete 0x40-byte header remains in
-loaded memory at `0x006B3F00`. The preserved Ghidra baseline omitted that
-header and placed every payload byte 0x40 too low. Consequently:
-
-```text
-live address = Ghidra/export address + 0x40
-live address = 0x006B3F00 + raw file offset
-```
+The clean resident and BTL inputs are identified in
+[Standard game file identities](../game/files/file_identities.md).
 
 Absolute pointers and JAL targets encoded in the overlay already contain live
 addresses. Ghidra can therefore attach an intra-overlay call to a label 0x40

@@ -39,12 +39,10 @@ knowledge, tests, and release behavior.
 - Policies:
   [repository](docs/policies/repository.md),
   [validation](docs/policies/testing.md),
-  [game modding and research](docs/policies/game.md), and
+  [modding](docs/policies/modding.md),
+  [research](docs/policies/research.md), and
   [path configuration](docs/policies/paths.md).
 - Runbooks: [source extraction](docs/runbooks/source-extraction.md).
-- [Feature documentation](docs/features/README.md) and
-  [knowledge index](docs/knowledge/README.md) for current contracts and durable
-  technical findings.
 - [Tasks](TASKS.md), the user's selective coordination and decision tracker.
 - [E2E infrastructure](e2e/README.md) and
   [E2E validation workflow](docs/workflows/e2e_validation.md).

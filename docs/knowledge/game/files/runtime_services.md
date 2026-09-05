@@ -4,8 +4,8 @@ Static evidence for the resident file-location cache, ROFS mount and directory
 index, `GZLIST.TXT`, resource-path routing, sector I/O wrappers, and the
 memory-card use of `ICON.BIN`.
 
-The trace uses clean NA2 `SLPS_258.37`, size 5,273,256 bytes and SHA-256
-`20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`,
+The trace uses the clean resident ELF identified in
+[Standard game file identities](file_identities.md)
 through the maintained Ghidra 12.1.2 exports. Its GP is `0x0060A9F0`.
 The clean extracted `FLIST.DIR`, `GZLIST.TXT`, and `ICON.BIN` were checked
 directly. Findings below are static unless stated otherwise.
@@ -66,9 +66,8 @@ the public-side wrapper at `FUN_00143CB8`.
 Normalization is deliberately broader than the later ROFS tree lookup:
 `FUN_00142A08` uppercases ASCII and converts `/` to `\`, while
 `FUN_001434F0` and `FUN_00143580` compare case-insensitively and accept either
-slash style. The clean 124-byte file has SHA-256
-`4F500B226613858648E2502F04FA84E04D3420DBE066B86E019EC7E10E90AA0C` and
-eight lines, leaving 32 unused table slots. More than 40 lines are not parsed.
+slash style. The clean 124-byte file has eight lines, leaving 32 unused table
+slots. More than 40 lines are not parsed.
 A name longer than 32 characters is not rejected before copying and can cross
 the reserved per-name stride, so the spare capacity does not make long entries
 safe.
@@ -106,8 +105,7 @@ embedded, so their narrower roles are kept descriptive rather than guessed.
 
 `FUN_001BDA50`, called by the startup controller at `0x001E0F20`, reads all of
 `gzlist.txt` and builds an in-memory directory/file tree. The clean file is
-103,848 bytes with SHA-256
-`40912F3C8999BCC7754757271CFF35F8C22FB9797EE5D008B10AB60FE48B97CE`.
+103,848 bytes.
 
 The first section contains 21 directory records: the root plus 20 child
 directories. Their listed counts sum to 2,332, representing 2,312 files and 20
@@ -204,8 +202,7 @@ through `FUN_001BE450`, reads the sector-rounded `0xF000` bytes, opens the
 memory-card destination with mode `0x203`, writes exactly `0xE920`, and closes
 it.
 
-The clean source is 61,440 bytes (`0xF000`) with SHA-256
-`80D7F62704FC9F59DEF83ED8AF68C0A26609215C2C398F2CA2EBBB99057CF017`.
+The clean source is 61,440 bytes (`0xF000`).
 The final 1,760 bytes, `0xE920..0xEFFF`, are all `0xFF` padding, exactly
 matching the rounded-read and short-write behavior.
 

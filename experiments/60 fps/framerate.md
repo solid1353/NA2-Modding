@@ -1448,7 +1448,7 @@ its own logical counter happens to match the clean numeric value.
 
 The disc contains ten PSS files. They are MPEG program streams at approximately
 29.97 encoded frames per second; their resolutions and durations are catalogued
-in [game/files/README.md](../../docs/knowledge/game/files/README.md#pss-video).
+in [the game-file reference](../../docs/knowledge/game/files/disc_files.md#pss-full-motion-video).
 
 PSS playback has its own resident timing ownership:
 

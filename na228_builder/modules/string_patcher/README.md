@@ -9,8 +9,9 @@ symbolic pointer writes; `payload_builder` assigns their offsets and constructs
 guarded writes and conflict validation. The engine never owns the shared file,
 loader, memory reservation, or final runtime addresses.
 
-The translation importer invokes this engine directly with validated in-memory
-rows. There is no physical `string_patcher/` module or `strings.tsv` interface.
+The configuration pipeline passes this engine the translation importer's
+validated in-memory rows. It has no feature-owned data directory or file-backed
+interface.
 
 The importer supplies replacement message families only after proving complete
 `<br>`-part coverage. When a family member overflows, the patcher materializes

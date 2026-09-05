@@ -23,14 +23,8 @@ payloads, and `texture_patcher` module requirement are owned together by
 - Treat the catalog and implementation stores as the executable definition;
   this document does not duplicate offsets or patch rows.
 
-## Maintenance and validation
+## Validation
 
-- Broad UI analysis is complete. Repeat it only when new evidence proves the
-  retained findings insufficient or indicates that a broader shared fix may be
-  better than separate screen corrections.
-- The user has standing authorization for exact-target deletion of confirmed
-  disposable UI artifacts. Verify every target and keep protected sources,
-  user-owned PCSX2 files, and unrelated task work out of scope.
 - Compare official NUN5 with current NA2.28 under matching game and emulator
   conditions. Treat ordinary pulse-phase differences as capture noise, but
   treat semantic mismatch, clipping, artwork, ordering, visibility, animation,
@@ -38,21 +32,62 @@ payloads, and `texture_patcher` module requirement are owned together by
 - Runtime-injected output remains candidate evidence until reproduced through
   the integrated build.
 
-The declared UI Translation comparison work is complete, and no comparison
-case is currently awaiting approval.
-
 ## Current behavior groups
 
 | Domain | Shipped behavior | Knowledge |
 | --- | --- | --- |
+| Battle HUD names | Official NUN5 rectangles, mirrored X anchor, and shrink-only width fitting | [Character names](../../knowledge/localization/ui/battle/character_names.md) |
 | Battle selectors and prompts | Ultimate-Jutsu label, VS confirmation, Round label, Jutsu-selector arrows, and command-list scroll arrows | [Selectors and prompts](../../knowledge/localization/ui/battle/selectors_and_prompts.md) |
 | Battle items | Paired, numeric, single, fixed, and substitution-doll item-status presentation | [Item status](../../knowledge/localization/ui/battle/item_status.md) |
-| Battle settings and results | Mash prompts, settings footers, summary geometry, title behavior, clouds, and rank stamps | [Settings and results](../../knowledge/localization/ui/battle/settings_and_results.md) |
+| Battle Mash prompts | Complete official NUN5 English main-prompt rectangles | [Mash prompts](../../knowledge/localization/ui/battle/mash_prompts.md) |
+| Battle settings | Footer legends, Battle row and Handicap geometry, and the VS Practice Settings prompt | [Settings presentation](../../knowledge/localization/ui/battle/settings_presentation.md) |
+| Battle Results | Summary geometry, moving clouds, rank stamps, details footers, objectives, and totals | [Battle Results](../../knowledge/localization/ui/battle/battle_results.md) |
 | Stage Select | English stage rectangles, width fitting, thumbnails, labels, Random prompt, and footer | [Stage Select](../../knowledge/localization/ui/stage_select.md) |
 | Character Select | Character-name rectangles, Select Color/Random placement, and footer anchors | [Character Select](../../knowledge/localization/ui/character_select.md) |
 | Collection | Category titles, page prompts, Play/Stop, viewer controls, common prompts, and submenu geometry | [Collection](../../knowledge/localization/ui/collection.md) |
 | Options and shared frontend prompts | Localized labels, difficulty routing, Controls Vibration, common Cancel records, and Options/Settings footer anchors | [Options](../../knowledge/localization/ui/options.md) |
 | Victory | Complete localized winner-name layout set | [Victory](../../knowledge/localization/ui/victory.md) |
+
+## Battle item-status presentation
+
+The Battle item-status implementation covers paired, numeric, single, and
+fixed foregrounds plus the substitution-doll pickup. Compatible official NUN5
+item records and paired-rank offsets remain guarded data imports. NA2-specific
+resident code owns the common update tail and the four class draw entries
+because the NUN5 object layouts and renderer calling conventions cannot be
+copied directly.
+
+Numeric, paired, and fixed foregrounds share the resident anisotropic renderer;
+single foregrounds retain the native uniform wrapper. The implementation keeps
+the shared renderer and class entries in `PRG/228.BIN`, preserves NA2 object
+links and lifetimes, and does not change item selection, values, effects, or
+timing. Exact source and donor relationships are documented in
+[Battle item-status presentation](../../knowledge/localization/ui/battle/item_status.md).
+
+## Battle prompts, settings, and results
+
+Mash prompts use the complete seven-record NUN5 English main-prompt table while
+retaining NA2's renderer, object layout, and separate controller-glyph table.
+Battle and Practice Settings use NA2-compatible effective prompt anchors; their
+menu state, input, and animation behavior remain native.
+
+Battle Results uses the official NUN5 label, cloud, and rank geometry with
+NA2-compatible placement code where regional helpers are not ABI-compatible.
+The implementation preserves result values, rank selection, reveal timing,
+input, sound, and animation behavior. Exact cross-game mappings and negative
+findings are recorded in [Mash prompts](../../knowledge/localization/ui/battle/mash_prompts.md),
+[Settings presentation](../../knowledge/localization/ui/battle/settings_presentation.md),
+and [Battle Results](../../knowledge/localization/ui/battle/battle_results.md).
+
+The VS confirmation prompt uses effective NA2 anchors X=`388` for OK and
+X=`462` for Back. Collection's character viewer selects Controls or Hide at the
+shared visible-state call and Display at the separate hidden-state call; it
+does not route all three suffix labels through one shared selection.
+
+The Jutsu-selector arrow helper enables sprite mode 10 for the draw, applies
+the signed quarter-turn and lower-arrow flip, flushes the sprite, and restores
+mode 10 to its native disabled state. The NUN5 mode fields are never left active
+across the shared sprite object's lifetime.
 
 ## Composition boundary
 

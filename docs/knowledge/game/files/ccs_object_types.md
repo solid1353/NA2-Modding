@@ -57,26 +57,22 @@ not by itself a class identity.
 
 ## Evidence identity and address spaces
 
-The static evidence is from the clean resident executable and its maintained
-read-only Ghidra exports:
-
-| Input | Size | SHA-256 | Evidence view |
-| --- | ---: | --- | --- |
-| `@source_na2/SLPS_258.37` | 5,273,256 | `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF` | `@disassembly/NA2/exports/SLPS_258.37/SLPS_258.37.c` and `.txt` |
+The clean resident and CCS input identities and resident address conversion are
+defined in [Standard game file identities](file_identities.md).
 
 Eight clean, read-only NA2 CCS files were decompressed and parsed in memory for
 corroboration. No data was written back to these files:
 
-| Input below `@source_na2/DATA/DATA.CVM.files/DATA.CVM.iso.files` | Compressed size | Decompressed size | SHA-256 |
-| --- | ---: | ---: | --- |
-| `PL/1KHWBOD1.CCS` | 87,260 | 542,528 | `C7AC6C0B723727C7D8BD58EEA87F1EC16DDF1241A697454D3FCC652B6084BA54` |
-| `PL/2DDRBOD1.CCS` | 826,268 | 1,687,292 | `CF002388614403169B7681969DCBDC2C4212CABC42D56E41E722E0BCA3B92789` |
-| `PL/2HKGCHA1.CCS` | 36,040 | 83,568 | `B05EDA70F5519F83F7A4740ABAED569152431CE6EB9D281CB5AE0EBD728E438C` |
-| `PL/2TEWCHA1.CCS` | 29,591 | 66,632 | `06D11D0D46CFCDBB42F67739082C5B023E282CC71A26D70533000F672F36AF2D` |
-| `BUDDY/2ASWBDY0.CCS` | 49,569 | 78,376 | `1E681EF47C9AC55155F868F3F69E7EB7F4A5D58A743C14C534627F44CE40A029` |
-| `SCENE/PPT2310_ST00.CCS` | 385,282 | 1,499,860 | `5E6D69FD8E5098121D0325486E92323A1E8BE129F738E92DBC6EA78E262ED6B1` |
-| `SCENE/PPTS04.CCS` | 440,211 | 1,240,424 | `0AB4D80EDBF6231DBD13208ABC6335BE3981EEDE5F2898274762C52040E4E15B` |
-| `XNINKA.CCS` | 68,535 | 273,172 | `DE2ADA4D3EAA54D8DE64DCDEDDEDB5CDB77A34145B8BD073A8E199B5136932E1` |
+| Input below `@source_na2/DATA/DATA.CVM.files/DATA.CVM.iso.files` | Compressed size | Decompressed size |
+| --- | ---: | ---: |
+| `PL/1KHWBOD1.CCS` | 87,260 | 542,528 |
+| `PL/2DDRBOD1.CCS` | 826,268 | 1,687,292 |
+| `PL/2HKGCHA1.CCS` | 36,040 | 83,568 |
+| `PL/2TEWCHA1.CCS` | 29,591 | 66,632 |
+| `BUDDY/2ASWBDY0.CCS` | 49,569 | 78,376 |
+| `SCENE/PPT2310_ST00.CCS` | 385,282 | 1,499,860 |
+| `SCENE/PPTS04.CCS` | 440,211 | 1,240,424 |
+| `XNINKA.CCS` | 68,535 | 273,172 |
 
 The first sample contains `OBJ_`, `MAT_`, `TEX_`, `CLT_`, `MDL_`, `CMP_`,
 and `BOX_` records on the numeric routes reported below. The two additional

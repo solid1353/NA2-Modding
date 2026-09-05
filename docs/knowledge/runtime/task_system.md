@@ -1,19 +1,13 @@
 # Resident task system
 
-## Scope and binary identity
+## Scope
 
 This record covers the resident task framework in the clean NA2 boot ELF,
 centered on `FUN_001cfe50` through `FUN_001d0590`. It is a static-analysis
 result, not a timing trace. Adventure-mode code was deliberately excluded.
 
-| Property | Value |
-| --- | --- |
-| Game / executable | *Naruto Shippuuden: Narutimate Accel 2*, `SLPS-25837` / `SLPS_258.37` |
-| Clean source | `@source_na2/SLPS_258.37` |
-| Size | 5,273,256 bytes |
-| SHA-256 | `20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF` |
-| Disassembly | Ghidra 12.1.2 `r5900:LE:32:default` exports under `@disassembly/NA2/exports/SLPS_258.37/` |
-| Executable mapping | ELF file `0x100` -> EE VA `0x00100000`; resident file offset = VA `- 0x000FFF00` |
+Binary identity and resident address conversion follow
+[Standard game file identities](../game/files/file_identities.md).
 
 The framework is a coordinator for real EE kernel threads. A task record does
 not contain per-pass update and draw callbacks. Its function pointer at
@@ -74,8 +68,8 @@ callers. The output scope was this document only; the clean binaries and
   direct calls and static address references to this family. BTL contributes
   none; ETC contributes the two documented `FUN_001d0340(1)` calls. Their
   feature logic was not otherwise reverse engineered for this task.
-  **Sampled cross-version corroboration:** the homologous NUN5/NUN6 core
-  families were checked for record shape, state transitions, the skip-first
+  **Sampled cross-version corroboration:** the homologous NUN5 core family was
+  checked for record shape, state transitions, the skip-first
   immediate-removal behavior, and manager structure. The older NUN3 family
   was inspected only where its shifted record, gate predicates, and explicit
   suspend/pending-resume helper clarify inherited states. This was not a
@@ -153,7 +147,7 @@ no direct use of `+0x44`, `+0x48`, or `+0x4A` was found outside constructor
 initialization. This is a scoped negative result rather than proof against an
 indirect alias or excluded overlay.
 
-NUN5/NUN6 preserve the same `+0x48` halfword and `+0x4A` byte zeroing, while
+NUN5 preserves the same `+0x48` halfword and `+0x4A` byte zeroing, while
 the older NUN3 layout preserves the pattern at shifted offsets `+0x4C/+0x4E`.
 The fields are therefore deliberate inherited storage, but no framework-level
 meaning is established; byte `+0x4B` (and NUN3 `+0x4F`) remains untouched.
@@ -525,7 +519,7 @@ overlays could still hide a producer.
 This comparison asymmetry is inherited rather than an NA2 decompiler accident.
 The older NUN3 `0x50`-byte record keeps the same field at shifted offset
 `+0x10`: its wait accepts signed values below one and its manager wakes only on
-exact zero. NUN5/NUN6 preserve the NA2 `+0x14` layout and predicates. None of
+exact zero. NUN5 preserves the NA2 `+0x14` layout and predicates. None of
 that establishes a unit or producer, so “wake/hold gate” remains deliberately
 neutral terminology.
 
@@ -693,10 +687,10 @@ categories are not claims that an entry has only one possible requester.
 
 ## Cross-version corroboration and overlay boundary
 
-The clean NUN5 `SLES_556.05` and NUN6 `SLUS_556.06` residents retain an
+The clean NUN5 `SLES_556.05` resident retains an
 instruction-shape-identical family at these corresponding addresses:
 
-| Role | NUN5 / NUN6 EE VA |
+| Role | NUN5 EE VA |
 | --- | ---: |
 | Constructor | `0x001D5050` |
 | Start | `0x001D5100` |
@@ -706,7 +700,7 @@ instruction-shape-identical family at these corresponding addresses:
 | Force wake / current-task wait / name lookup | `0x001D54F0` / `0x001D5540` / `0x001D5640` |
 | Manager init / wake / entry | `0x001D56F0` / `0x001D5760` / `0x001D5790` |
 
-Both later residents also preserve the immediate-removal search beginning at
+The NUN5 resident also preserves the immediate-removal search beginning at
 `(manager->next)->next`. The skipped-first-record behavior is therefore not an
 NA2 decompiler artifact or a one-build instruction accident, although its
 source-level design name remains unknown.

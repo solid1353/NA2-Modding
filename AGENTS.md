@@ -28,6 +28,8 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 
 - Treat a later request as a new task unless it explicitly modifies, cancels,
   replaces, reorders, or asks about existing work, or supplies requested input.
+- Treat a user-aborted turn as cancellation of its unfinished work. Resume that
+  work only after a new operative command.
 - Keep unfinished tasks in arrival order. Work only on the oldest task's next
   unfinished instruction; do not inspect, prepare, or start later work. A
   correction does not alter or reorder other unfinished work.
@@ -72,6 +74,8 @@ implementation intent or changing state, read the active
 [Interactive](docs/interactions/interactive_mode.md) mode document and policies
 routed by the request.
 
+Read a routed workflow before describing its execution.
+
 ### Commands and interaction modes
 
 Only the exact indexed commands change the active interaction mode. The active
@@ -91,10 +95,12 @@ Read only routed policies whose triggers apply:
 
 | Work | Read |
 | --- | --- |
-| Git, paths, protected files and directories, work directories, source media, disassembly, savestates, input recordings, PCSX2, elevation, cleanup, scripts, logs, documentation layout | [`docs/policies/repository.md`](docs/policies/repository.md) |
+| Work directories, task-owned files, external inputs, temporary files, workflow outputs, task logs | [`docs/policies/work_directories.md`](docs/policies/work_directories.md) |
+| Path configuration, configured roots, manifests, path loaders | [`docs/policies/paths.md`](docs/policies/paths.md) |
+| Git, protected files and directories, source media, disassembly, savestates, input recordings, PCSX2, elevation, repository cleanup, scripts, documentation layout | [`docs/policies/repository.md`](docs/policies/repository.md) |
 | validation, tests, builds, PCSX2, runtime injection, E2E | [`docs/policies/testing.md`](docs/policies/testing.md) |
-| profiles, builder inputs, binaries, donor data, source media, PNACH | [`docs/policies/game.md`](docs/policies/game.md#modding) |
-| reverse engineering, disassembly, runtime investigation, knowledge, hypotheses | [`docs/policies/game.md`](docs/policies/game.md#research-and-knowledge) |
+| profiles, builder inputs, binaries, donor data, source media, PNACH | [`docs/policies/modding.md`](docs/policies/modding.md) |
+| reverse engineering, disassembly, runtime investigation, knowledge, hypotheses | [`docs/policies/research.md`](docs/policies/research.md) |
 
 On entering a task, read its directly linked documentation and relevant
 component documentation. Load other technical documents only when required,

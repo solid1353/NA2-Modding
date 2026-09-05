@@ -1,338 +1,105 @@
 # Font renderer metrics and spacing
 
-## 2026-07-24 weight and spacing refinement
+Clean NA2 and NUN5 secondary-font geometry, tracking, spacing, measurement, and
+selected-row behavior.
 
-The accepted native baseline remains canonical. The task-local bitmap
-stretch/gamma candidate that presented the halfwidth-Latin cells at `1.20`
-around the established 15-pixel baseline and applied alpha gamma `1.65` is
-runtime-rejected. Although its aggregate bounds and density moved numerically
-closer to NUN5, matched zoom review showed worse letterforms and outlines. It
-must not be used as an implementation parent. Fullwidth Shift-JIS Save/Load
-digits remain outside the halfwidth-Latin comparison.
+## Research coverage
 
-Several task-local spacing tests have already ruled out or constrained
-candidates:
+- **Assigned scope:** explain the measurable NA2/NUN5 differences in glyph
+  height, advance, spaces, fitted labels, and selected-row position.
+- **Exploration depth:** the clean initializers, metric decoder, glyph emitter,
+  string renderer, selected-row helpers, and representative Controls labels
+  were compared statically and through bounded runtime probes.
+- **Confirmed coverage:** output-height handling, native selected-row offset,
+  tracking and plain-space formulas, boxed-width reconstruction, and
+  leading-bearing scaling are established.
+- **Unresolved or untested:** exact reconstruction of every NUN5 measurement
+  path outside the examined secondary-font callers.
+- **Deliberate exclusions and overlap:** current NA228 renderer changes belong
+  to [Font](../../../features/localization/font.md); asset and screen-specific
+  findings remain in neighboring documents.
+- **Evidence limitations:** representative labels establish the documented
+  formulas but do not prove identical behavior for every markup or vertical
+  writing path.
 
-- increasing every printable glyph's integer metric advance by one unit is too
-  coarse. It moves the median width from two pixels short to three pixels wide;
-  `Item Select` and `Linked Attack` overshoot by 12 and 13 pixels;
-- reducing the packed metric row for the blank cell by 6, 10, or 12 units
-  changes centered placement but does not reduce the drawn inter-word gap by
-  the corresponding amount. The current secondary measurement and draw paths
-  therefore do not share a usable blank-advance control through that row;
-- the earlier task-local tracking candidates `0.5`, `1.0`, and `1.5` are
-  inconclusive rather than evidence that secondary tracking is ineffective.
-  Their state generator changed the active context temporarily and patched
-  runtime `0x00186694`, which is the `param_2 == 0` primary-font initializer.
-  The next secondary-font setup overwrote the active field from the untouched
-  `param_2 != 0` initializer at `0x001865E0`. Their identical screenshots are
-  therefore explained by the wrong branch and must not reject a guarded
-  secondary-tracking test.
+## Glyph geometry
 
-Focused decoding of the installed 316-byte helper gives reusable boundaries.
-Runtime `0x00187274..0x00187330` walks the packed metric payload for the current
-secondary cell, subtracts the selected leading bearing from the active draw
-coordinate, and stores the trailing trim in the font context. Runtime
-`0x00187330..0x00187390` bounds a plain secondary byte to cells `0..122`,
-retrieves the same packed row, and returns its expanded measurement pair.
-These results explain why integer glyph metrics affect both placement and
-measurement strongly, while the blank-cell experiments do not provide the
-required fractional letter-spacing correction.
-
-
-### Renderer-geometry root cause
-
-Fresh static comparison uses clean `@source_na2/SLPS_258.37`, SHA-256
-`20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`,
-and clean `@source_nun5/SLES_556.05`, SHA-256
-`20A43677397731A2A20899336D1165ACE5B436906B9B89BE90FB10F4558DD19D`.
-The preserved Ghidra exports under `@disassembly/NA2/` and
-`@disassembly/NUN5/` were reused; neither binary was disassembled
-again.
-
-NA2 glyph emitter `FUN_00187cc0`
-`[0x00187CC0,0x00188140)` computes the normal quad at
-`0x00187F64..0x00187F7C` (ELF file offsets
-`0x88064..0x8807C`). It loads descriptor field `+0x0C` for both axes:
+NA2 `FUN_00187CC0` computes the normal quad at
+`0x00187F64..0x00187F7C` by loading descriptor field `+0x0C` for both axes:
 
 ```c
-right  = x + (float)descriptor->output_width;
-bottom = y + (float)descriptor->output_width;
+right  = x + descriptor->output_width;
+bottom = y + descriptor->output_width;
 ```
 
-NUN5 counterpart `FUN_001891a0`
-`[0x001891A0,0x00189640)` instead reconstructs:
+NUN5 `FUN_001891A0` instead uses width for X and height for Y, each multiplied
+by its axis scale. A 24x28 secondary descriptor is therefore presented as
+24x24 by NA2 and 24x28 by NUN5. Changing NA2's shared width load from 24 to 28
+produces 28x28 and damages horizontal geometry; the cross-game difference is
+specifically secondary vertical extent.
 
-```c
-right  = x + (float)descriptor->output_width  * scale_x;
-bottom = y + (float)descriptor->output_height * scale_y;
-```
+The compared donor cells do not become heavier when mapped through clean NA2's
+palette. Across 85 cells and 23,800 source samples, alpha mass changes by a
+ratio of `0.993762`, making it fractionally lighter. The observed height deficit
+comes from quad geometry, not palette weight.
 
-The accepted NA2 secondary descriptor retains its original 24x28 output quad,
-as recorded by `localization__font__glyphs__native_data_gf4_bin_at_0000004e`, but NA2 therefore presents its normal
-glyph as 24x24. NUN5 uses all 28 vertical pixels. This matches the reviewed
-median two-to-three pixel height deficit and explains why the rejected
-file-offset `0x88064` experiment was wrong: changing the shared width load from
-24 to 28 produced 28x28 and stretched both axes. The evidence supports a
-secondary-only Y correction that leaves horizontal metrics unchanged and
-continues using the original width field on the primary/fullwidth path.
-Confidence is **high** for the function ranges, field use, and cross-game
-difference.
+## Native selected-row offset
 
-The guarded task-local Y-only precursor is
-`@work/Font/artifacts/font_match_v1/renderer_geometry_v1_secondary_24x28.p2s`
-(SHA-256
-`629180D28C75881CF7D7E5149AE38B935BD3F322160AB9D706DF94B06A7168F2`).
-It changes only copied savestate memory through
-`@work/Font/analysis/font_match_v1/prepare_renderer_geometry_state.py`. The
-accepted 32-byte helper body is now byte-exact resident assembly in
-`font_glyph_geometry_abi.S`. A guarded symbolic jump at ELF file `0x88078`
-retains the displaced secondary-mode load in its delay slot and targets that
-payload fragment; no helper remains in fixed-ELF zero padding.
+NA2 `FUN_00379040` draws the gray shade at the caller origin, then draws the red
+foreground one local X unit left and two local Y units up. NUN5
+`FUN_00389B30` enables shadow state and draws the foreground without changing
+the input geometry. The selected-row jump is therefore native NA2 behavior,
+not a font metric or caller-position defect.
 
-The helper reads the existing secondary-font mode bit, selects descriptor
-`+0x10` height only for secondary glyphs or `+0x0C` width otherwise, computes
-the normal quad bottom edge, and rejoins the untouched path at runtime
-`0x00187F80`. It leaves X geometry, primary/fullwidth glyphs, spaces, logical
-measurement, and row positions unchanged. Focused source tests also compare the
-compiled helper bytes with the accepted body before catalog resolution.
+## Tracking and ordinary spaces
 
-Final guarded runtime validation on the matched Control Settings state confirms
-the canonical result. Exact reads matched the secondary-only hook and helper,
-the accepted bearing helper, the Controls fit helper, the ordinary-space hook,
-and the restored `1.0` local scale before capture. Across `Attack`, `Ultimate
-Jutsu Prep`, `Item Use`, `Jump`, `Guard`, `Item Select`, and `Linked Attack`,
-the median width, height, and center-Y deltas against NUN5 are all zero; median
-center-X delta remains the accepted -1.5 pixels. Three labels are one native
-raster pixel shorter, so no speculative per-row or per-glyph positioning was
-added. The user accepted the font itself as almost pixel-for-pixel. The fresh
-capture, structured operation result, and nearest-neighbor comparison are
-retained under
-`@work/Font/artifacts/font_match_v1/renderer_runtime_v1/`.
+NA2 `FUN_00186510` initializes secondary tracking to `-1.0` at context `+0x3C`.
+NUN5 `FUN_001878E0` initializes tracking to `0.0`, scale X/Y to `1.0`, and extra
+spacing to `0.0`.
 
-The accepted palette conversion is not the source of the heavier appearance.
-Across the 85 exact NUN5 donor cells used by the accepted atlas, containing
-23,800 source samples, NUN5 alpha mass maps to clean NA2 GF4C at a ratio of
-`0.993762` (mean alpha `19.170336` becomes `19.050756`). The conversion is
-therefore fractionally lighter in aggregate, not bolder. This further isolates
-the compact 24-pixel presentation as the first weight-related behavior to test.
-After the Y-only correction, median visible-ink density is `0.993682` times
-NUN5, while visible-ink mass is `0.965854`; the remaining horizontal deficit
-is therefore advance/spacing behavior rather than excess palette weight.
-Confidence is **high** for the byte-level palette and guarded runtime results.
-
-### Native NA2 selected-row offset behavior
-
-Using the same clean NA2 and NUN5 ELF identities and preserved exports above,
-the shared selected-row paths intentionally differ. NA2 `FUN_00379040` first
-draws the gray shade at the caller's input origin, then draws the red foreground
-after subtracting one local X unit and two local Y units. Selection therefore
-changes the apparent text position for every caller that uses this helper.
-NUN5 counterpart `FUN_00389B30` instead enables the renderer's shadow state and
-draws the red foreground without changing its input geometry.
-
-The resulting NA2 text jump is native game behavior, not a localization,
-font-asset, autofit, or positioning regression. It is accepted as a known
-NA2/NUN5 presentation difference and requires no correction. Do not compensate
-for it in caller layout or classify it as an unresolved Font defect unless the
-user explicitly selects a separate NUN5-parity change. This conclusion is
-bounded to callers using these shared helpers; other selected-text paths retain
-their own verified behavior. Confidence is **high** from the cross-game
-function comparison and matching runtime presentation.
-
-
-### Ordinary tracking and plain-space root cause
-
-NA2 initializer `FUN_00186510`
-`[0x00186510,0x001866D0)` stores secondary tracking `-1.0` at context
-`+0x3C`. NUN5 counterpart `FUN_001878e0`
-`[0x001878E0,0x00187AE0)` stores tracking `0.0`, horizontal and vertical
-scales `1.0` at `+0x80/+0x84`, and extra spacing `0.0` at `+0x88`.
-
-In NA2 string renderer `FUN_00188140`
-`[0x00188140,0x00189740)`, the actual horizontal plain-space case is
-`0x001892C0..0x00189300` (ELF file offsets
-`0x893C0..0x89400`). With the accepted secondary width 14 and tracking -1,
-its ordinary formula advances a space by 13 units. NUN5 renderer
-`FUN_00189640` `[0x00189640,0x0018AAE0)` uses
-`0x0018A3CC..0x0018A434`:
+NA2's horizontal plain-space branch at `0x001892C0..0x00189300` advances the
+14-unit secondary cell by 13 units. NUN5's branch at
+`0x0018A3CC..0x0018A434` computes:
 
 ```c
 x += scale_x * (extra_spacing + cell_width + tracking - 6.0f);
 ```
 
-At the initialized secondary values, NUN5 therefore advances a plain space by
-8 units. NUN5 also applies `scale_x` to the ordinary glyph-advance path at
-`0x0018AA48..0x0018AAA8`; NA2's corresponding path is
-`0x001896A0..0x001896E8`. Accepted NA2 telemetry records tracking `-1.0` and
-ordinary secondary advance `(14 - trailing_trim) - 0.5`. NUN5's tracking zero
-adds 0.5 per visible glyph, while its five-unit narrower space compensates most
-of that expansion. For `Linked Attack`, twelve visible glyphs gain six units
-and its one space loses five, predicting a net one-unit width increase while
-correcting the visibly compressed letters and oversized word gap.
+At the native secondary values, NUN5 advances a plain space by eight units.
+NUN5's zero tracking adds half a unit per visible glyph relative to NA2, while
+its narrower spaces compensate most of that expansion. The inline-markup
+half-space path at NA2 `0x00188A20..0x00188A84` is a different branch and does
+not control ordinary spaces.
 
-The existing `route_inline_markup_half_space_advance` hook at ELF offset `0x88B7C`
-(runtime `0x00188A7C`) is not this branch. It lies in the inline-markup
-half-space case at `0x00188A20..0x00188A84`, so it does not scale ordinary
-Control Settings spaces. This is a confirmed classification error in the
-accepted patch description. The historical v23 edit did change the correct
-secondary initializer at runtime `0x001865E0`, so it remains a valid negative
-result when applied alone; the newly justified hypothesis is the inseparable
-NUN5 pair of tracking zero plus the real eight-unit, per-call-scaled
-plain-space branch.
+## Boxed measurement and leading bearings
 
-The guarded combined state is
-`@work/Font/artifacts/font_match_v1/renderer_geometry_spacing_v1_nun5.p2s`
-(SHA-256
-`6C4D5EA11A0D22A8763EAF26394844A61EA0FEDBF9D297D3896A7927539499CF`).
-It was generated by
-`@work/Font/analysis/font_match_v1/prepare_renderer_geometry_spacing_state.py`
-and uses the documented Current-only fixed gap only as a short-lived
-savestate hypothesis. That address is explicitly not a canonical placement.
-The primary/fullwidth path is guarded out.
-
-Guarded runtime comparison confirms the ordinary-spacing part of the
-hypothesis. At native screenshot scale, NUN5 and the combined candidate have
-these visible widths:
-
-| Label | NUN5 | Combined candidate |
-| --- | ---: | ---: |
-| `Attack` | 72 | 72 |
-| `Item Use` | 94 | 94 |
-| `Jump` | 51 | 51 |
-| `Guard` | 58 | 59 |
-| `Item Select` | 123 | 123 |
-| `Linked Attack` | 150 | 150 |
-
-Median width, height, and center-Y deltas are all zero. The visible word gaps
-also agree to within one pixel: `Item Use` is 14/14, `Item Select` is 14/13,
-and `Linked Attack` is 14/14 for NUN5/candidate. This establishes tracking zero
-plus the real plain-space path as the correct ordinary horizontal behavior.
-It does not yet make the complete Controls path correct: the existing local
-auto-fit helper shrinks `Ultimate Jutsu Prep` to 139 visible pixels while NUN5
-renders it at 157.
-
-Exact guarded NA2/NUN5 advance telemetry isolates that remaining discrepancy.
-For `Ultimate Jutsu Prep`, NUN5 uses horizontal scale `0.719101`, exactly
-`128 / 178`, while accepted NA2 uses `0.705234`, exactly `128 / 181.5`.
-NUN5 begins the fitted draw at local X `59.280899`; accepted NA2 begins at
-`61.0`. Ordinary labels confirm the paired renderer-state difference:
-accepted NA2 records tracking `-1.0`, whereas NUN5 records tracking `0.0`.
-The telemetry parser's contextual space discontinuities are about `11.5` or
-`12.5` in accepted NA2 and `6` or `7` in NUN5; these values include surrounding
-bearing semantics and are not direct replacements for the static eight-unit
-plain-space formula.
-
-The accepted helper's `9.5 * byte_count + 1` approximation is therefore not a
-NUN5-equivalent measurement function. Its 181.5-unit denominator happened to
-fit the old presentation but becomes visibly too narrow after ordinary
-tracking and spacing are corrected. The next implementation step is to
-reproduce NUN5's 178-unit logical measurement and centering for the overflowing
-boxed label, while keeping ordinary labels unscaled. Confidence is **high**
-for the runtime widths, scales, tracking values, and fit-denominator
-discrepancy; the exact per-character reconstruction of NUN5 measurement remains
-under analysis.
-
-
-### Exact boxed measurement and missing leading-bearing scale
-
-Static reconstruction now removes the approximate denominator. With secondary
-tracking zero, patched NA2 measurement already returns the same trimmed visible
-glyph widths as NUN5. Its remaining difference is ordinary ASCII space:
-the legacy path counts the full 14-unit cell, whereas NUN5 advances eight
-units. The equivalent NUN5 logical width is therefore:
+With secondary tracking zero, NA2's trimmed visible-glyph widths match NUN5.
+The remaining ordinary-space difference gives the equivalent NUN5 width:
 
 ```text
-patched_NA2_width_at_tracking_zero - 6 * ordinary_ASCII_space_count
+NA2 width at zero tracking - 6 * ordinary ASCII space count
 ```
 
-For `Ultimate Jutsu Prep`, patched NA2 returns 190 and the two spaces subtract
-12, producing the exact NUN5 width 178 and scale `128 / 178 =
-0.7191011236`. A guarded v2 state used that scale and kept every ordinary label
-at scale 1.0.
+For `Ultimate Jutsu Prep`, NA2 returns 190; subtracting 12 for two spaces gives
+NUN5's exact logical width 178 and shrink scale `128 / 178 = 0.7191011236`.
 
-Per-glyph telemetry then isolated a second, independent renderer omission. The
-v2 and NUN5 fitted calls have the same scale (`0.719101`) and the same sum of
-scaled visible-glyph advances (`145.977525`). Nevertheless, v2 begins at local
-X `59.0` instead of `59.280899`, and its recorded span is `117.483110`
-instead of NUN5's `128.719072`. Each origin-step deficit is an integer glyph
-bearing multiplied by `1 - scale`, proving that the glyph widths are correct
-but the leading-bearing displacement remains unscaled.
-
-The disassembly agrees exactly. The imported NA2 semantic metric decoder at
-runtime `0x0018731C` subtracts the decoded bearing directly:
-
-```c
-coordinate -= leading_bearing;
-```
-
-NUN5's ordinary secondary loader `FUN_00188270`, at
-`0x001887B0..0x001887D8`, instead performs the horizontal operation:
+A separate difference affects fitted glyph origins. NA2's semantic metric
+decoder at `0x0018731C` subtracts the leading bearing directly, whereas NUN5's
+secondary loader at `0x001887B0..0x001887D8` performs:
 
 ```c
 x -= leading_bearing * scale_x;
 ```
 
-Its vertical and alternate-glyph paths remain separate. This missing
-horizontal multiply explains both the `0.280899` first-origin difference and
-the accumulated fitted-label narrowing without implicating the donor raster,
-palette, ordinary tracking, or the now-exact width calculation. Confidence is
-**high** because the static instruction difference predicts the exact guarded
-telemetry deltas.
+The missing horizontal multiply explains the fitted-label origin and span
+difference without implicating raster data, palette, or the width formula.
+Vertical and alternate-glyph paths are separate.
 
-The register-safe v4 state is retained at
-`@work/Font/artifacts/font_match_v1/renderer_geometry_spacing_fit_v4_nun5.p2s`.
-Its guarded runtime run loaded the state, matched every expected code byte,
-captured slot 95, and closed only the authenticated task-owned PCSX2 instance.
-`Ultimate Jutsu Prep` then matched NUN5's visible `157x17` bounds and center
-exactly. A deterministic replay of every accepted metric row predicts total
-advance `128.719070` versus NUN5 `128.719072`, with maximum per-glyph origin
-error `0.000002`.
+## Rejected isolated changes
 
-The runtime-proven correction now lives inside the deterministic 316-byte
-semantic metric decoder. Its formerly unused final 32 bytes hold the
-register-safe helper, so no temporary runtime gap or separately placed payload
-is retained. The helper scales only the decoder's horizontal leading-bearing
-path through the existing local renderer factor, preserves the vertical path
-and live `v0` return value, and leaves the factor at `1.0` outside fitted calls.
-The follow-up guarded v5 run on worker ISO CRC `6FD5D698` read back the exact
-hook at runtime `0x0018731C`, the exact helper at `0x00187390`, a zeroed former
-task-local gap at `0x008DD1D0`, and the initialized `1.0` scale word at
-`0x0060737C`; its matched Controls measurements were identical to v4.
-The preceding v3 helper remains rejected because it clobbered that return
-register and produced no usable capture.
-
-
-## Rejected tracking and threshold-only fitting
-
-### Global zero-tracking edit
-
-A historical test changed `SLPS_258.37` file offset `0x866E0` from
-`80 BF 02 3C` to `00 00 02 3C`, matching NUN5's ASCII-mode horizontal-tracking
-initialization of `0.0` instead of NA2's `-1.0`. It produced no meaningful
-visual improvement: text remained oversized, spacing remained inconsistent,
-and long Control Settings labels still clipped.
-
-Do not repeat this single-field edit. It does not prove tracking or
-`FUN_00186510` irrelevant; later analysis established that tracking must remain
-coupled to ordinary-space and boxed-measurement behavior. Relevant static
-counterparts are NA2 `FUN_00186510`, NUN5 `FUN_001878e0`, NUN5 boxed-fit
-`FUN_00389df0` and `FUN_0018b1b0`, and NA2 menu path `FUN_003885b0`.
-
-### Threshold-only Control Settings fit
-
-A size-preserving experiment applied NUN5's shrink-only
-`128 / measured_width` rule to the two NA2 `FUN_003885b0` text calls through a
-Controls-only wrapper and shared horizontal renderer hooks. Runtime comparison
-rejected it because it narrowed `Linked Attack`, which remains full width in
-NUN5.
-
-NUN5 routes its first eight action labels through
-`FUN_00399df0 -> FUN_00389df0 -> FUN_0018b1b0 -> FUN_0018ca40` and measures
-through `FUN_0018b7f0`; the rejected NA2 wrapper used the legacy
-`FUN_003798e0 -> FUN_001859a0 -> FUN_00184e60` measurement path. Copying only
-the box threshold and scale formula therefore made a different fit decision,
-and it incorrectly routed the final `OFF` row through the wrapper. The accepted
-implementation uses the current measurement path, preserves the 13-byte
-full-width decision, scales only the required draw surfaces, and restores the
-factor immediately. Do not reinstate the threshold-only wrapper.
+Changing only secondary tracking from `-1.0` to `0.0` leaves spacing and boxed
+measurement inconsistent; tracking must be considered with the ordinary-space
+and fit paths. Applying only NUN5's `128 / measured_width` threshold to the NA2
+legacy measurement path also makes different fit decisions, including
+incorrectly shrinking `Linked Attack`. Neither isolated change represents the
+NUN5 renderer contract.

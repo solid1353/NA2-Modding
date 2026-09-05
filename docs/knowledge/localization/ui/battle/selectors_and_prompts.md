@@ -1,6 +1,21 @@
 # Battle UI selectors and prompts
 
-Binary identities and address conventions are defined in the [Battle UI index](README.md#binary-identities-and-address-convention).
+## Research coverage
+
+- **Assigned scope:** compare clean NA2 and NUN5 battle selectors, prompts, indicators, and labels.
+- **Exploration depth:** the relevant binaries, native callers, records, and
+  paired screen states were examined.
+- **Confirmed coverage:** the documented owners, structures, and cross-game
+  differences are established.
+- **Unresolved or untested:** callers and states not explicitly covered below.
+- **Deliberate exclusions and overlap:** feature imports, hooks, and validation
+  belong to [UI layout](../../../../features/localization/ui_layout.md) or
+  [UI textures](../../../../features/localization/ui_textures.md).
+- **Evidence limitations:** bounded states do not cover every animation phase or
+  indirect caller.
+
+Binary identities and address conventions are defined in the
+[Standard game file identities](../../../game/files/file_identities.md).
 
 ## Ordinary awakening-label composition
 
@@ -50,27 +65,12 @@ resource lookups `FUN_001e8920` / `FUN_001ee750`, texture lookups
 `FUN_001a8f00` / `FUN_001ac950`, and the final texture-copy helpers
 `FUN_001988d0` / `FUN_0019be20`.
 
-The complete canonical CVM inventory contains 61 character
-`3EYE/3???3PCT.CCS` containers with 72 ordinary awakening textures: 50
-containers have one `TEX_mode1name` texture and 11 have two. No third texture
-is present in the current inventory, although both executables support
-`TEX_mode1name3`. Every used NA2/NUN5 TEX/CLT component signature is compatible.
-Three equivalent donor entries use different internal path names:
-
 - NA2 `x\mode1\tex\hnt\mode1name1.bmp` maps to NUN5
   `x\mode1\tex\hnw\mode1name1.bmp`;
 - NA2 `x\mode1\tex\row\mode1name1.bmp` maps to NUN5
   `x\mode1\tex\roc\mode1name1.bmp`;
 - NA2 `x\mode1\tex\tnd\mode1name2.bmp` maps to NUN5
   `x\mode1\tex\tnw\mode1name2.bmp`.
-
-`MODENAME/MODE1CMN.CCS` supplies the shared animation, model, and placeholder
-material. Its NA2 and NUN5 non-texture sections are byte-identical; only the
-placeholder TEX/CLT data differs. The game already substitutes the
-character-specific texture at runtime, so the localized implementation imports
-only the 72 official NUN5 TEX/CLT component ranges into their 61 fixed-size NA2
-containers. No stored texture blobs, whole-container replacement, executable
-layout patch, or `MODE1CMN.CCS` replacement is required.
 
 Evidence: the exact boot-ELF identities above, the preserved C/TXT exports at
 `@disassembly/NA2/exports/SLPS_258.37/` and
@@ -136,15 +136,7 @@ NA2 differs in three related ways:
    localized accessor `FUN_003d4760(0)` resolves to the official English ELF
    record `(145,385,22,38)` at file offset `0x4DE0F0`.
 
-The original NA2 atlas coordinate contains a vertical green triangle. After
-the complete official NUN5 `VS.CCS` import, that coordinate samples lettering;
-NUN5's replacement record points right and relies on opposite rotations.
-
-### Rejected unscoped ports
-
-The first port copied the NUN5 rectangle and angle loads, redirected both draws
-through a reset wrapper, and wrote the angle in each call delay slot. Guarded
-live-memory reconstruction proved why that was insufficient:
+### Arrow-state negative findings
 
 - NA2's active arrow sprite was at `0x00C7B820`; its rotation field at
   `+0x4C` (`0x00C7B86C`) read back the exact `-pi/2` bit pattern after the
@@ -155,66 +147,10 @@ live-memory reconstruction proved why that was insufficient:
   sampling;
 - disabling the rotation reset did not change the rendered direction.
 
-These are useful negative results: writing a valid rotation float is not enough
-to enable rotation while the NA2 sprite remains in mode 0, and NUN5's mode
-fields cannot safely remain enabled across the shared object lifetime. A
-temporary texture graft that restored NA2's old vertical pixels rendered the
-arrows but deliberately diverged from the canonical NUN5 asset, so it was also
-rejected rather than retained as a special texture-engine transform.
-
-### Accepted draw-scoped compatibility port
-
-`UI-VS-001` remains a byte-for-byte whole NUN5 donor. `ui_layout_jutsu_selector_arrows` replaces the
-the unwanted horizontal draws through a guarded jump at BTL file `0x9ABC` to
-resident exact-ABI trampoline
-`localization_ui_jutsu_selector_arrows_suppress_horizontal`. The trampoline
-rejoins the accepted native bit-`0x40` clearing block at live `0x006BDA38`,
-which is BTL file `0x9B38` and Ghidra `0x006BD9F8`. Guarded call hooks at file
-`0x9BA0` and `0x9BFC` route the upper and lower draws to resident C entries
-`localization_ui_jutsu_selector_arrow_draw_upper` and
-`localization_ui_jutsu_selector_arrow_draw_lower`. The exact NUN5 record
-`(145,385,22,38)` remains a data copy from ELF `0x4DE0F0` to BTL `0x20C9E0`.
-
-The helper's practical reconstruction is:
-
-```cpp
-void drawLocalizedSelectorArrow(Sprite *sprite, Rect *rectangle,
-                                float rotation, bool lower) {
-    configureSpriteMode(sprite, 10, 1);       // NA2 FUN_001cbe40
-    sprite->rotation = rotation;              // exact +/-pi/2 bits
-    if (lower)
-        sprite->flags |= 0x40;                // lower-arrow flip
-    drawSpriteRecord(sprite, rectangle);      // FUN_0037bc40
-    flushSprite(sprite);                      // FUN_001cc070
-    configureSpriteMode(sprite, 10, 0);
-}
-```
-
-The crucial behavior is the flush while mode 1 is still active; restoring mode
-0 before flushing loses or corrupts the queued rotated primitive. The two C
-entries preserve the accepted mode-enable, exact rotation/flip, draw, flush,
-and mode-disable order without storing executable code in the retired draw
-blocks. Their only lasting state change is the existing lower-arrow flip
-expected by the surrounding method. The closed sibling `FUN_006bd0f0` and
-every other VS object remain untouched.
-
-The final hidden, muted isolated run produced correct upper and lower arrows,
-no horizontal arrows, and no bottom fragment. The user accepted the paired
-screen as perfect. The NUN5 screenshot SHA-256 is
-`46A1A578B45019A0A59FD00DA559AD666637A7BAFB288D5D652FC78CDB7A3FFD`;
-the corrected NA2 screenshot SHA-256 is
-`230102B88B21B3AFB9CB9BF75E0D6BD017F64B56F4756427E204DA7C051962A8`.
-Evidence also includes paired EE memory, exact Ghidra structural comparison,
-canonical file-byte guards, decoded atlases, and guarded PINE readback.
-Confidence and runtime acceptance are **verified**.
-
-That runtime acceptance applies to the integrated NA228 behavior. The
-resident-storage refactor is uncommitted and has only static validation: the
-two C entries preserve the exact scoped call order, the suppression trampoline
-compiles to `8EF61A0800000000`, and all three guarded hooks passed focused
-contracts, catalog tests, and production payload/hook resolution. No runtime
-or E2E run has validated the refactored storage path; that validation remains
-user-only.
+These results establish that writing a valid rotation float is insufficient
+while the NA2 sprite remains in mode 0, and that NUN5's mode fields cannot stay
+enabled across the shared object lifetime. Reusing NA2's vertical arrow pixels
+also diverges from the NUN5 atlas rather than reproducing its state behavior.
 
 ## VS confirmation prompts and bottom legends
 
@@ -227,46 +163,10 @@ drawOk(anchorOk, 356.0f, promptSprite, 0);
 drawBack(anchorBack, 356.0f, promptSprite, 1);
 ```
 
-NUN5's boot-ELF table at file `0x4DE9F0` (runtime `0x005DE870`) contains the
-complete Cross/OK `(1,1,56,22)` and Triangle/Back `(1,25,64,22)` records. NA2's
-homologous table at file `0x4D4790` (runtime `0x005D4690`) instead contains two
-70x22 regional records and `FUN_0037c980` optionally draws a separate input
-glyph before each label. `ui_layout_vs_confirmation` copies the complete 16-byte NUN5 table and
-sets the two call-site glyph arguments to zero at BTL `0xD014` and `0xD038`.
-
 The wrapper implementations are not byte-equivalent: their queued-sprite
-advancement makes NUN5's nominal anchors `400/470` render differently when
-inserted unchanged into NA2. Two measured NA2 calibrations established the
-exact compatible anchors. `400/470` rendered the imported records 15/10 pixels
-right of the reference; `384/460` rendered them 5/3 pixels left. The converged
-NA2 constants `388/462`, at BTL `0xCFFC` and `0xD020`, match both NUN5 legends
-at `dx=0, dy=0`.
-
-The same patch now copies only the X-immediate halfword of NUN5's X=`260`
-Customize Jutsu instruction from BTL `0xD6A8` into NA2 `0xCF70`, retaining
-NA2's destination register. Contrary to the earlier provisional conclusion,
-X=`260` does not wrap once the selector state is corrected; it places the full
-Circle prompt exactly like NUN5. Text and font rendering are not modified.
-
-The accepted Jutsu-label placement arithmetic is now owned by resident
-`PRG/228.BIN` exact-ABI shim
-`localization_ui_vs_confirmation_jutsu_label_place`. A guarded call hook at
-BTL file `0x9188` replaces the native `mov.s f12,f21`; the shim loads `26.0f`,
-returns, and performs `f12 = f21 + 26.0f` in its return delay slot. It compiles
-to the exact 16 bytes previously stored in the BTL file `0x30` zero-padding
-cave, which is no longer modified. All VS-confirmation rectangles, input-glyph
-instructions, anchors, and glyph-suppression edits remain data/code-site edits.
-
-Evidence: complete-function comparison, boot-ELF `PT_LOAD` mapping, guarded
-live records and instructions, v19/v20/v21 paired raster calibration, and the
-same accepted screenshot hashes above. Confidence and runtime acceptance are
-**verified**.
-
-Those behavior and acceptance claims predate the uncommitted resident-storage
-refactor. The exact shim bytes, guarded `0x9188` call, source/ABI contracts,
-catalog tests, and production payload/hook resolution passed static validation.
-No runtime or E2E run has validated the refactored storage path; that
-validation remains user-only.
+advancement makes NUN5's nominal anchors `400/470` differ from NA2's effective
+coordinates. Paired measurements establish corresponding NA2 anchors
+`388/462`.
 
 ## Command Menu and Command Chart scroll indicators
 
@@ -278,9 +178,9 @@ validation remains user-only.
 | NUN5 | `FUN_00894f60` | `0x1CE2A0..0x1CEC1F` | `0x00894F60..0x008958DF` | `0x00894FA0..0x0089591F` | file `0x2214D8`, live `0x008E81D8` |
 
 These methods are draw callbacks beneath the shared Practice/Free Battle
-command controller (`ccStartMenuPrivateCmd`, tracked as `BTL-N001`). Their
-direct caller is indirect in the exported state-object dispatch. Important
-callees are the row/text compositors, texture-layer accessor
+command controller (`ccStartMenuPrivateCmd`, NA2 `FUN_0087c370` / NUN5
+`FUN_008d8be0`). Their direct caller is indirect in the exported state-object
+dispatch. Important callees are the row/text compositors, texture-layer accessor
 `FUN_0087c3d0` / `FUN_00898c40`, native sprite draw
 `func_0x0037bc40` / `func_0x0038ad00`, and sprite release helper
 `func_0x001cc070` / `func_0x001d1180`.
@@ -301,20 +201,6 @@ NA2 and NUN5 already agree on this behavior. Only the shared rectangle differs:
 - NA2: `(194,195,20,20)`, bytes `C200C30014001400`;
 - NUN5: `(1,225,20,22)`, bytes `0100E10014001600`.
 
-With the imported NUN5 `TEX_xselect`, the NA2 rectangle selects green text
-fragments, while the NUN5 rectangle selects the orange vertical-scroll
-triangle. Paired Slots 5 and 6 reuse the same Current object at `0x00E6A500`
-and the same NUN5 object at `0x00DEA000`; only their pulse-dependent Y position
-differs. `ui_layout_command_scroll_arrows` therefore performs one exact eight-byte NUN5 BTL copy.
-No code, position, pulse, command text, or font data is changed.
-
-Evidence: paired Slots 5 and 6 screenshots and EE memory, identical live object
-identity across both views, unique rectangle-byte searches in both canonical
-BTL files, decoded `TEX_xselect` crops, and complete-function comparison.
-The user then verified the integrated Current build on both Command Menu and
-Command Chart and accepted both screens as good. Confidence is **verified** and
-the shared correction is **runtime-proven**.
-
 ## Unresolved Jutsu-name display lead
 
 An old note near EE `0x001F64A4` proposes forcing part or all of `v0` to zero
@@ -323,27 +209,12 @@ behavior are unspecified.
 
 ## Ultimate Jutsu one-part label
 
-NA2's Ultimate Jutsu banner uses two 64x64 label halves. Official NUN5 and
-Brazilian NUN6 both use one 128x64 label and one-part construction behavior.
-The whole-container `OUGI.CCS` import supplies the one-part model, UV, texture,
-and animation layout.
-
-At BTL file offset `0xB5E80`, NA2 contains `02 00 42 2A`
-(`slti v0,s2,2`). `ui_layout_ultimate_jutsu_label` replaces it with
-`01 00 42 2A` (`slti v0,s2,1`) to port the donor behavior into NA2's loop.
-The canonical NUN5 executables do not contain that exact instruction, so this
-is an authored semantic port rather than an arbitrary donor copy. It preserves
-BTL size and is runtime-proven with the imported one-part container.
+NA2's Ultimate Jutsu banner uses two 64x64 label halves. Official NUN5 uses one
+128x64 label and one-part construction behavior; its `OUGI.CCS` contains the
+corresponding model, UV, texture, and animation layout.
 
 ## Round label
 
 NA2 constructs `Round` from two Japanese 38x38 glyph rectangles at X=`216`,
 Y=`44`, and scale `1.4`. NUN5 uses one English 94x30 rectangle at X=`256`,
 Y=`24`, with scale `1.2` and a Y=`64` render constant.
-
-`ui_layout_round_label` copies the exact NUN5 rectangle from ELF file offset
-`0x4DE110`, zeros the unused second-glyph record, ports the differently stored
-X/Y fields, and copies four structurally equivalent scale/render instruction
-ranges into NA2 BTL offsets `0xCCB4`, `0xCD5C`, `0xCD64`, and `0xCDA4`. Eight
-guarded live writes were read back exactly, and the one-part result matched the
-paired NUN5 capture apart from normal pulse-phase differences.

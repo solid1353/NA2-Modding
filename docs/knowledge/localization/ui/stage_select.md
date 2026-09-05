@@ -1,28 +1,26 @@
 # Stage Select UI
 
-This record preserves the reusable NA2/NUN5 Stage Select analysis behind
-`ui_layout_stage_select`. It covers graphical layout and texture selection only; string and
-font behavior are outside this patch.
+## Research coverage
+
+- **Assigned scope:** compare clean NA2 and NUN5 Stage Select records, draw paths, and geometry.
+- **Exploration depth:** the relevant binaries, native callers, records, and
+  paired screen states were examined.
+- **Confirmed coverage:** the documented owners, structures, and cross-game
+  differences are established.
+- **Unresolved or untested:** callers and states not explicitly covered below.
+- **Deliberate exclusions and overlap:** feature imports, hooks, and validation
+  belong to [UI layout](../../../features/localization/ui_layout.md) or
+  [UI textures](../../../features/localization/ui_textures.md).
+- **Evidence limitations:** bounded states do not cover every animation phase or
+  indirect caller.
 
 ## Binary identity and address mapping
-
-- NA2 / SLPS-25837 `PRG/BTL.BIN`: 2,237,184 bytes, SHA-256
-  `56FD042740221E3CC91417194F147142799D51FE70642273F4E97BD389D5D63C`.
-- NUN5 / SLES-55605 `PRG/BTL.BIN`: 2,253,184 bytes, SHA-256
-  `7E8518DA7BD4957AF18CB0ABABE67F0E9B37C42C6551375201B15997F0A3DFE3`.
-- In paired Slot 3 memory, the complete files start at EE `0x006B3F00` for
-  Current and `0x006C6D00` for NUN5. Runtime addresses are therefore file start
-  plus file offset.
-- The preserved Ghidra exports omit the files' first `0x40` bytes. Their labels
-  are consequently `0x40` lower than paired live-memory addresses. File offsets
-  in canonical patch data remain authoritative.
 
 Evidence was obtained from the clean extracted files under `@source_na2` and
 `@source_nun5`, the preserved Ghidra C/TXT exports under
 `@disassembly/NA2/exports/BTL.BIN/` and
-`@disassembly/NUN5/exports/BTL.BIN/`, Capstone 5 disassembly of ranges
-omitted by Ghidra, and the paired archived Slot 3 memory/screenshots under
-`@work/UI translation/runtime_cases/remaining_03_stage_select_total_mismatch/`.
+`@disassembly/NUN5/exports/BTL.BIN/`, Capstone 5 disassembly of ranges omitted
+by Ghidra, and paired runtime memory and screenshots.
 
 ## Stage records and preview construction
 
@@ -45,14 +43,6 @@ struct Nun5StageRecord {
 };
 ```
 
-Every stage ID and preview index matches by row, and every preview index equals
-its row number `0..23`. NA2's selected-preview path is represented by Ghidra
-`FUN_007144e0`; NUN5's structural twin is `FUN_00729f00`. Their relevant
-function boundaries in the exports are `0x007144E0..0x007146BC` and
-`0x00729F00..0x0072A0E0`. `ui_layout_stage_select` retains the native
-`preview_index` word and the selected-preview read at NA2 file offset
-`0x606BC` unchanged.
-
 Ghidra omitted a second, structurally matched preview-construction range. Its
 relevant NA2 file range is `0x60378..0x60428`; the NUN5 twin is
 `0x62F78..0x63028`. Both compute a row byte offset before choosing a preview
@@ -67,23 +57,9 @@ build_preview_atlas_cell(preview_index);
 ```
 
 Both native preview consumers continue to load that word directly, including
-the second consumer at NA2 file offset `0x603B8`. No preview-construction
-instruction or atlas-index source is changed.
+the second consumer at NA2 file offset `0x603B8`.
 
 ## Localized stage names
-
-NUN5 obtains 24 English rectangles from boot-ELF file range
-`0x4DDB90..0x4DDC4F` and applies `min(1.0f, 214.0f / width)` horizontally.
-`ui_layout_stage_select` copies those rectangles into the NA2 inline records.
-At draw time, the resident C entry
-`localization_ui_stage_select_name_draw` reads the selected rectangle width and
-derives the shrink-only horizontal scale as
-`min(1.0f, 214.0f / width)`. A guarded call hook at BTL file offset `0x61580`
-routes the native draw through that entry while preserving X, Y, vertical
-scale, the fifth-argument context, the sixth-argument rectangle, and the
-native NOP delay slot. The entry then calls NA2's existing compositor at
-`0x0037BD00`. Static calculation reproduced every one of the 24 previously
-accepted single-precision scale bit patterns exactly.
 
 The carousel transform functions, NA2 `FUN_00714D40` and NUN5
 `FUN_0072A7A0`, are structural twins apart from relocated engine calls. Their
@@ -97,58 +73,7 @@ dispatchers. Their export boundaries are `0x00715C80..0x00715E9C` and
 `0x0072B770..0x0072B9AC`. They call the carousel, selected-stage, and
 stage-name draw routines, then submit the bottom prompt objects.
 
-NA2 uses X=`300.0f` for prompt item 3 and its companion sprite. NUN5 uses
-X=`260.0f` for both. `ui_layout_stage_select` copies the exact NUN5 `lui v0,0x4382`
-instructions from NUN5 BTL file offsets `0x64C50` and `0x64C78` into NA2 file
-offsets `0x61F40` and `0x61F64`.
-
-The same dispatcher builds the OK and Back objects from nominal X anchors
-`400.0f` and `470.0f`. NUN5 then applies regional offsets `-12.0f` and `-8.0f`,
-so its effective screen anchors are X=`388.0f` and X=`462.0f`. NA2 omits those
-regional additions. The corresponding NUN5 global-offset loads are not safe
-donor instructions for NA2 because the two executables use different global
-pointer layouts. `ui_layout_stage_select` therefore uses two authored, same-register
-constant adaptations at NA2 BTL file offsets `0x61EF8` and `0x61F1C`:
-
 ```cpp
 ok_x = 388.0f;   // NUN5 400.0f - 12.0f
 back_x = 462.0f; // NUN5 470.0f - 8.0f
 ```
-
-Their loaded-overlay runtime addresses are `0x00715DF8` and `0x00715E1C`.
-Guarded live-memory writes against the paired Slot 5 state moved only the two
-labels; the retained Current screenshot then matched the NUN5 footer.
-
-## Side effects, callers, and negative results
-
-- The preview constructors create/configure the selected preview and carousel
-  sprites from `MAPSEL1.CCS`; the patch leaves their atlas-index source and
-  `preview_index` data unchanged.
-- The draw dispatcher updates presentation objects and submits prompt sprites;
-  the patch changes four X constants: two exact donor copies for Random and
-  two effective-anchor adaptations for OK/Back.
-- Whole NUN5 `MAPSEL1.CCS` is necessary because picture association, models,
-  UVs, and layout are coupled, but it is not sufficient: BTL still controls the
-  preview index and bottom-prompt position.
-- The large selected image and localized stage-name plaque already match the
-  reference and receive no additional edit.
-- A NUN5-only extra argument found near a generic position setter lies on a
-  failure path, not the successful stage draw path, and is unrelated.
-- Copying the NUN5 regional-offset loads was rejected because their global
-  pointers are not ABI-compatible with NA2. The two effective constants are
-  the bounded equivalent and do not alter control flow.
-- Stage-name fitting is owned by one resident C entry and one guarded call
-  hook. No BTL code cave, file growth, text change, or font change is used.
-
-Confidence is **high** for record topology, file/runtime mapping, both preview
-consumers, stage-name scale behavior, the Random constants, and the effective
-OK/Back anchors. The user compared the integrated stage layout with NUN5 and
-accepted it on 2026-07-22; the later paired Slot 5 footer proof independently
-verifies the two added anchor adaptations.
-
-Those behavior and acceptance claims apply to the integrated NA228 result.
-The resident-storage refactor described above is uncommitted and has only
-static validation: EE source/ABI contracts, exact 24-width float-bit
-comparison, catalog tests, and production payload/hook resolution passed. No
-runtime or E2E run has validated the refactored storage path; that validation
-remains user-only.

@@ -25,7 +25,9 @@ paths, never the source tree.
 
 ## Canonical ISO extraction
 
-Use:
+Resolve the
+[current exact chat title](../policies/work_directories.md)
+and use:
 
 ```powershell
 scripts/project/extract_source_iso.ps1 `
@@ -33,11 +35,11 @@ scripts/project/extract_source_iso.ps1 `
   -TaskTitle <exact chat title>
 ```
 
-The command stages under
-`@work/<chat title>/temp/source_extraction/`, recursively expands CVM, inner ISO, AFS,
-and nested AFS containers, verifies file sets/bytes, normalizes timestamps, and
-promotes one complete `<ISO filename>.files` tree. It refuses to merge into an
-existing extraction.
+The command stages under `temp/source_extraction/` in the
+[acting task's work root](../policies/work_directories.md),
+recursively expands CVM, inner ISO, AFS, and nested AFS containers, verifies file
+sets/bytes, normalizes timestamps, and promotes one complete
+`<ISO filename>.files` tree. It refuses to merge into an existing extraction.
 
 Recheck an existing tree with:
 
@@ -69,7 +71,9 @@ The command refuses the whole source root and `@source/__old/`.
 Confirmed ROFS/CVM passwords:
 
 - NA2, NUN3, NUN5: `cc2fuku`
-- NUN6: `Iruka`
+
+Reference-mod source details are documented with their owning feature; see the
+[NUN6 source identity](../features/nun6/source.md#source-identity).
 
 Use `@media_scripts/split_cvm_rofs.ps1` to split encrypted CVM safely. Do not use
 the historical `@tools/old/CVM Parser/cvm_tool.exe` workflow.

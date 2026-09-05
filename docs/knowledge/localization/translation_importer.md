@@ -1,87 +1,25 @@
-# Translation importer knowledge
+# Translation mapping evidence
 
-This document owns durable evidence and negative results behind the current
-translation-importer contract. The current schema, inputs, output, and failure
-behavior remain in the [feature document](../../features/localization/translation_importer.md).
+Clean NA2 source ownership and official NUN5 donor relationships used by the
+translation feature.
 
-## Mapping admission and evidence
+## Research coverage
 
-Executable mappings are admitted only when their clean NA2 source, official
-NUN5 donor, and display ownership are established. `display_context` identifies
-the concrete screen and field. `display_basis` distinguishes rows exercised by
-an exact maintained E2E suite (`e2e:<suite-name>`), directly seen rows without
-maintained-suite coverage, hidden members inferred from a proven shared table,
-and character-family rows established through matching structures.
+- **Assigned scope:** establish exact source/donor relationships, shared record
+  families, display ownership, and semantic boundaries for translated text.
+- **Exploration depth:** maintained capture families and their executable
+  selectors were compared against clean NA2 and official NUN5 data.
+- **Confirmed coverage:** the documented menu, Practice, Ninja Song, Collection,
+  Jutsu, Moveset, packed-message, and confirmation relationships are established.
+- **Unresolved or untested:** uncaptured records and any row without an exact
+  source, donor, structural-family, or displayed-owner basis.
+- **Deliberate exclusions and overlap:** executable mapping schema, admission,
+  placement, transforms, counts, and guards belong to the
+  [translation importer feature](../../features/localization/translation_importer.md).
+- **Evidence limitations:** membership in a shared table or matching visible
+  text does not prove that a particular executable record is selected.
 
-An `e2e:` entry requires both exact executable-family ownership and selection
-of that exact record by the accepted capture plan. Matching English, membership
-in a larger family, or visibility of a different record with the same text does
-not transfer E2E coverage between Collection, Movesets, or any other consumer.
-
-An evidence-scoped rebuild removed unvisited alternate-mode, inventory,
-generic-choice, and unmatched voice-title rows instead of treating historical
-coverage as proof. Clean Japanese bytes remain authoritative when no verified
-official source or display location exists.
-
-The completed Collection batch records every proven owning suite when a row is
-visible in more than one suite. Multiple `display_basis` entries use `|`, and
-the importer counts each entry independently. Coverage counts can therefore
-overlap without hiding a shared row from any suite. Generic shared text does
-not receive Collection coverage unless its exact executable instance is
-proven; the Collection confirmation telemetry establishes the exact modal
-`No` and `Yes` slots used by the accepted Misc captures.
-
-The accepted generated Movesets suite contains 147 grids: 74 base-character,
-62 specials, and 11 unique-mode grids. A complete audit of those grids and
-their executable selectors proves `e2e:movesets` for 1,062 of the 1,065 mapped
-Command Chart titles, all 154 metadata-selected Ultimate/Jutsu titles, and 20
-exact shared relationship/control records. The remaining three Command Chart
-titles belong to the same record family but are not selected by the accepted
-capture plan. The character-name plaque and controller icons are localized
-rectangles or textures rather than translation-table rows, so they are outside
-this mapping count.
-
-The maintained Jutsus suite selects 26 exact Command Chart title records. Its
-three paired pages establish `e2e:jutsus` for those records only: 25 are also
-selected by Movesets, while T260 is selected by Jutsus but not Movesets.
-
-The maintained Menus suite selects 30 exact rows across Character Select,
-Battle Settings, the Battle pause list, and both quit-confirmation destinations.
-Its three paired pages distinguish the boot-ELF shared-modal slots from the
-separate Collection choices and distinguish selected rows from ordinary rows.
-
-The maintained Ninja Song suite selects 40 exact rows across its five capture
-states. It covers the displayed objective prose, indices, timer label, N/A and
-bonus strings, and formula symbols without transferring coverage to unseen
-bonus siblings or unused unit slots.
-
-The maintained Practice suite selects 55 exact non-helper rows across its 16
-capture states. Fourteen are shared with Menus; the remaining 41 receive their
-first maintained-suite basis here. Long status, explanation, and running-help
-rows are deliberately outside this batch and retain their prior evidence.
-
-| Display basis | Covered rows | Proven family |
-| --- | ---: | --- |
-| `e2e:collection/characters` | 31 | Character-plaque names selected by the Characters captures |
-| `e2e:collection/figures` | 132 | 31 character-plaque names, 89 Figure animation titles, and 12 Diorama titles |
-| `e2e:collection/misc` | 61 | 12 Diorama titles, 47 Movie/Music/quit rows, and the exact `No`/`Yes` modal slots |
-| `e2e:collection/opponents` | 78 | 74 roster names, the selector label, and the displayed three-title Ultimate set |
-| `e2e:collection/ultimates` | 221 | 60 selected plaque names and 161 Collection-owned Ultimate Jutsu titles |
-| `e2e:collection/voice` | 184 | 31 character-plaque names and 153 Collection-owned Voice titles or aliases |
-| `e2e:jutsus` | 26 | Exact Command Chart title records selected by the three Jutsus pages |
-| `e2e:menus` | 30 | Exact Character Select, Battle Settings, Pause, and quit-confirmation records selected by the three Menus pages |
-| `e2e:movesets` | 1,236 | 1,062 selected Command Chart titles, 154 selected metadata-owned Ultimate/Jutsu titles, and 20 selected shared relationship/control records |
-| `e2e:ninja_song` | 40 | Exact objective, index, unit/status, bonus, and formula records selected by the five Ninja Song states |
-| `e2e:practice` | 55 | Exact Pause, Control Settings, Practice-title, selector, Settings, and quit records selected by the 16 Practice states |
-
-These suite counts total 2,094 `e2e:` entries on 1,887 unique rows. The six
-Collection suites own 707 entries on 539 unique rows because exact records can
-be selected by several Collection paths. The 1,236 Movesets rows are separate
-executable records even where the visible English is equal. Jutsus overlaps
-Movesets on 25 rows and adds T260 as one newly selected row. Menus adds 30
-previously non-E2E rows, Ninja Song adds 40, and Practice adds 41 while sharing
-14 with Menus. Of the 2,061 canonical rows, 174 have no maintained-suite E2E
-basis.
+## Observed selection boundaries
 
 ### Menus capture-selection boundary
 
@@ -231,12 +169,9 @@ at `+0x08`. The NUN5 homolog follows `FUN_006CFE30` through `FUN_008A2E60`,
 accessor `0x00312630`, and `FUN_00259290`. This trace distinguishes the
 selector from both Collection strings and the metadata-owned `0x14` family.
 
-The audit used clean NA2 `SLPS_258.37` SHA-256
-`20C0A40D70EA412CD431993A2E189B37ECB6054D63AE93BE545470016E1627AF`,
-clean NUN5 `SLES_556.05` SHA-256
-`20A43677397731A2A20899336D1165ACE5B436906B9B89BE90FB10F4558DD19D`,
-and clean NUN5 `PRG/TEXTENG.BIN` SHA-256
-`3E42D2DDFFE770B05DD41E2C5937380133E255C9CE32CA2F037E34C65A8E571E`.
+The audit used the clean NA2 resident ELF, NUN5 `SLES_556.05`, and NUN5
+`PRG/TEXTENG.BIN` identified in
+[Standard game file identities](../game/files/file_identities.md).
 For each displayed row, bytes `+0x0C..+0x53` of the NA2 record identify its
 NUN5 homolog independently of the localized pointer. T1434 is the sole
 duplicate: two NA2 records share its exact source slot and match two NUN5
@@ -343,7 +278,7 @@ moveset record family and its own homologous NUN5 selection first.
 Collection Characters uses another Collection-owned title table for the
 Ultimate Jutsu names shown beside the opponent list. It is separate from the
 boot-ELF moveset records even when both records select identical English text.
-Paired Opponents capture `0001` proves the first displayed triple through the
+The paired Opponents capture proves the first displayed triple through the
 instantiated screen records:
 
 | Title | NA2 ETC source | NA2 live record | NUN5 live record | Exact NUN5 donor |
@@ -468,30 +403,14 @@ Mapping only pointer field `0x25A68` to the exact secondary donor preserves both
 official forms without a renderer string test or a global overwrite of the
 shared NA2 slot.
 
-## Packed message blocks
+## Packed message structure
 
 Some dialogs contain consecutive NUL-terminated fragments inside one fixed
-region. Treating each fragment as an independent slot zero-filled the remainder
-of the Japanese fragment and could insert an early empty string that hid later
-parts. `sequence` mappings therefore write the selected official parts
-consecutively, terminate each part, add one final NUL, and zero-fill only the
-unused tail of the verified whole block. They never resize the target or write
-outside that block.
-
-## Placement and semantic guards
-
-- A fitting slot is written inline.
-- An overflowing slot is linked externally only when that same mapping owns
-  validated pointer references; otherwise compilation fails.
-- Sequence mappings must fit their declared block.
-- Placeholder donor text such as `unknown`, `placeholder`, or `dummy` cannot
-  overwrite identifier-like NA2 data.
-- Source, donor, references, transforms, override, and prefix stay on the same
-  stable mapping row. Generated logs derive their reasons from its stable ID.
-- The official donor is executable by default. A replacement is present only
-  for an intentional user-owned override.
-- The project-title policy is hash- and coverage-pinned and replaces only its
-  declared official donor token with `Narutimate Accel v2.28`.
+region. Each visible part must remain reachable in order, followed by the
+verified block terminator. Treating each fragment as an independent zero-filled
+slot can insert an early empty string and hide later parts. The executable
+sequence-writing contract belongs to the
+[translation importer feature](../../features/localization/translation_importer.md).
 
 ## Content and layout boundary
 

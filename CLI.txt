@@ -1,0 +1,25 @@
+NA2.28
+
+  na228                     Build or reuse base, then launch
+  na228 <token> [token]     Launch one or two games through Workshop
+                            token: <source>[w] | [b]<config>[w]
+                            b = build or reuse; w [C path|plan] = watch
+  -l <profile> [args]       Launch a configured profile
+  other launch arguments    See ws help
+
+  na228 build <config>      Build or reuse without launching
+  na228 test                Run unit tests
+
+  na228 e2e <all|suite [args...] ...>                  Run selected suites
+  na228 e2e create <all|suite [args...] ...> [-noref]  Rebuild with NUN5 reference by default
+  na228 e2e delete <all|suite [args...] ...>           Delete capture history
+  na228 e2e rename <suite> <new-suite>                 Rename a suite and its capture history
+  na228 e2e commit [-p]                                Commit captures; -p preserves capture commits
+  suite arguments                                      Generated suites accept 8 or 8-18
+
+  na228 release [version]   Publish a GitHub release
+  na228 help                Show this help
+
+  sources: {{SOURCES}}
+  configurations: {{CONFIGURATIONS}}
+  profiles: {{PROFILES}}

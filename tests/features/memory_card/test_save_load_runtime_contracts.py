@@ -155,12 +155,12 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
     def test_visible_and_automatic_hooks_are_selected_and_disjoint(self) -> None:
         visible = next(
             edit
-            for edit in self.package.active_edits
+            for edit in self.package.edits
             if edit.symbolic_patch.symbol == ENTRY_SYMBOL
         )
         automatic = next(
             edit
-            for edit in self.startup_package.active_edits
+            for edit in self.startup_package.edits
             if edit.symbolic_patch.symbol == "auto_loading_update"
         )
         self.assertEqual(0xE4008, visible.symbolic_patch.offset)
@@ -188,7 +188,7 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
     def test_production_hook_links_to_jal_and_preserves_the_delay_nop(self) -> None:
         declaration = next(
             edit
-            for edit in self.package.active_edits
+            for edit in self.package.edits
             if edit.symbolic_patch.symbol == ENTRY_SYMBOL
         )
         fragment = next(

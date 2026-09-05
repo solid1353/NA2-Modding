@@ -153,7 +153,7 @@ if ($mode -eq 'help') {
     }
     . (Join-Path ([string]$paths.workshop) 'scripts\lib\console_help.ps1')
     Get-UnConsoleHelp `
-        -Path (Join-Path $PSScriptRoot 'HELP.md') `
+        -Path (Join-Path $PSScriptRoot 'CLI.txt') `
         -Values @{
             SOURCES = $paths.games.Names -join ', '
             CONFIGURATIONS = $configurationSelectors -join ', '

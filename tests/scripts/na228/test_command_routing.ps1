@@ -46,7 +46,7 @@ try {
         [void](New-Item -ItemType Directory -Path (Join-Path $repository $directory) -Force)
     }
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'na228.ps1') -Destination $repository
-    Copy-Item -LiteralPath (Join-Path $sourceRepository 'HELP.md') -Destination $repository
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'CLI.txt') -Destination $repository
     Copy-Item `
         -LiteralPath (Join-Path $workshopRepository 'scripts\lib\console_help.ps1') `
         -Destination (Join-Path $repository 'workshop\scripts\lib\console_help.ps1')
@@ -200,7 +200,7 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
             'Help omitted the accepted token grammar.'
         Assert-CommandRouting ($helpText -match 'b=base, t=test, r=release, e=e2e, foo') `
             'Help did not list discovered configurations and aliases.'
-        Assert-CommandRouting ($helpText -match 'Profiles: practice') `
+        Assert-CommandRouting ($helpText -match 'profiles: practice') `
             'Help did not list configured launch profiles.'
 
         $null = Invoke-FakeNa228 -ArgumentList @('build', 'b')

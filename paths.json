@@ -2,7 +2,7 @@
   "imports": {
     "workshop": "../UN Workshop/paths.json"
   },
-  "existence_deferred_roots": ["cache", "task_logs"],
+  "existence_deferred_roots": ["build", "cache", "work", "task_logs"],
   "roots": {
     "builder": "na228_builder",
     "resources": "resources",
@@ -17,8 +17,8 @@
     "pcsx2_input_recordings": "@pcsx2_files/input_recordings"
   },
   "files": {
-    "practice_movesets": "launch_profiles/practice/movesets.tsv",
     "project_settings": "game.json",
+    "practice_movesets": "launch_profiles/practice/movesets.tsv",
     "publish_release_command": "@scripts/release/publish_release.ps1"
   }
 }

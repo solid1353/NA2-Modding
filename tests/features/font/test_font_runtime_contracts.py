@@ -97,7 +97,7 @@ class FontRuntimeContractTests(unittest.TestCase):
         }
         edits = tuple(
             edit
-            for edit in self.package.active_edits
+            for edit in self.package.edits
             if edit.symbolic_patch.symbol in symbols
         )
         self.assertEqual(len(edits), 7)
@@ -202,7 +202,7 @@ class FontRuntimeContractTests(unittest.TestCase):
         }
         edits = tuple(
             edit
-            for edit in self.package.active_edits
+            for edit in self.package.edits
             if edit.symbolic_patch.symbol in accepted_hooks
         )
         self.assertEqual(len(edits), len(accepted_hooks))
@@ -254,7 +254,7 @@ class FontRuntimeContractTests(unittest.TestCase):
             )
     def test_pause_selected_hook_targets_c_without_forwarding_wrapper(self) -> None:
         hook_symbols = {
-            edit.symbolic_patch.symbol for edit in self.package.active_edits
+            edit.symbolic_patch.symbol for edit in self.package.edits
         }
         self.assertIn("v2_c_pause_list_selected_impl", hook_symbols)
         self.assertNotIn("v2_pause_list_selected_adapter", hook_symbols)

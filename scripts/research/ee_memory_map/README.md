@@ -10,12 +10,12 @@ It also accepts numeric savestate names retained in
 deriving the phase and marker number from that structure.
 
 Analyze a savestate directory and write disposable reports below the owning
-task's shared log root:
+task's work root:
 
 ```powershell
 python scripts/research/ee_memory_map/analyze_savestates.py `
   '@pcsx2_savestates/SLOP-NA228 (31D4DD8D).01' `
-  --output-dir '@task_logs/EE Runtime Memory Map/<run-id>'
+  --output-dir '@work/EE Runtime Memory Map/logs/ee_memory_map/<run-id>'
 ```
 
 Run the focused unit tests with:

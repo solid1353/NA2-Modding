@@ -2,7 +2,7 @@
   "imports": {
     "workshop": "../UN Workshop/paths.json"
   },
-  "existence_deferred_roots": ["build", "cache", "release", "work", "task_logs"],
+  "existence_deferred_roots": ["build", "cache", "release", "work"],
   "roots": {
     "builder": "na228_builder",
     "resources": "resources",
@@ -12,7 +12,6 @@
     "release": "release",
     "work": "work",
     "logs": "logs",
-    "task_logs": "@logs/tasks",
     "pcsx2_files": "pcsx2_files",
     "pcsx2_input_recordings": "@pcsx2_files/input_recordings"
   },

@@ -7,8 +7,9 @@
   settings.
 - Workshop must not depend on NA2. NA2 may override an imported entry only by
   defining the same name in its own manifest.
-- Roots and files use repository-relative paths or `@root/child` references.
-  Resolve each manifest relative to its own directory, never the caller's
+- Persist only repository-relative paths or configured aliases, never
+  machine-specific absolute paths.
+- Resolve each manifest relative to its own directory, never the caller's
   working directory.
 - Loaders inject `repository`; manifests do not define it.
 - Define parent roots before entries derived from them and keep related entries

@@ -137,6 +137,98 @@ and the shared selected-style paths proven by those callers.
   `Granny Chiyo ` donor string and uses the shared top-plaque layout family;
   other references to the primary string remain unchanged.
 
+## Running-help integration
+
+`localization.font.layout` routes the in-scope native menu
+set/draw calls through `font_v2_running_help.c`. Its shared adapter selects GF4,
+uses zero tracking and the existing layout session's narrower ordinary spaces,
+and restores the preceding renderer, scale, icon selector, and layout session.
+Native help-strip geometry, movement, initial hold, queue ownership, and resets
+remain with the native component described in
+[Running help](../../knowledge/localization/ui/running_help.md).
+
+Measurement uses the native token classifier and per-glyph width calculation,
+consumes complete formatting tags, and obtains icon advances from the installed
+native metric callback. It measures only when the queue can accept a node.
+The reserved extent is measured width plus `unit * gap_count`; an extent below
+the viewport width becomes viewport width plus one unit, following NUN5's
+short-string rule. Text drawing uses the same scoped glyph/space advances.
+
+Both custom menu schemas select this setter when Font layout is enabled and
+the original native setter when it is disabled. Their internal header is 84
+bytes, with the selected function pointer at `+0x50`. Battle and Practice retain
+unit `20.0`, gap count `8`, borrowed text, and their native page-change resets.
+The integration covers the caller families in the linked knowledge document
+without replacing the global native entry used by consumers outside scope.
+
+### Supplied-state comparison before the correction
+
+The supplied NA228 BF8401D4 slots 1 and 2 show Mode Select / Free Battle and
+Practice Settings / Gauge Settings / Refill Time per Stock. The supplied
+NUN5 C071D4C1 slot 1 shows the matching Free Battle selection. Offline memory
+inspection identifies these horizontal help queues:
+
+| Saved case | Help object | Text node | Reserved extent |
+| --- | --- | --- | ---: |
+| NA228 Free Battle | `0x00CC4430` | `0x00CC37A0` | 1628 |
+| NUN5 Free Battle | `0x00BF83F0` | `0x00BF2600` | 788 |
+| NA228 Refill Time per Stock | `0x00CC7170` | `0x00CC42E0` | 920 |
+
+The Free Battle strings contain identical visible wording, 66 characters and
+12 ordinary spaces; only their white-color markup differs. The custom help
+is `Automatic recovery time for one stock.`, 38 characters and five spaces.
+The saved NA228 setter instructions retain the native count-based formula:
+`22 * (66 + 8) = 1628` and `20 * (38 + 8) = 920`.
+
+All three objects have viewport `512x48`, speed `2`, displacement about
+`460.8`, a 30-update initial hold, and a single queued node. Their saved
+text origins are `(51,20)`, after native integer positioning. These states
+establish matching initial local placement, not matching glyph spacing or
+screen-space ink bounds. Renderer font selection is restored after drawing;
+the final selected descriptor cannot stand in for the help draw's descriptor.
+
+### Spacing, alignment, and blank travel
+
+The supplied Free Battle glyphs have identical decoded margins in NA228's
+packed primary-map values and NUN5's GF4 metric table. Their drawing rules
+differ: NA228 uses native tracking `-1`, giving a half-unit reduction per
+visible glyph and a 13.5-unit ordinary space; NUN5 uses zero tracking and
+eight-unit spaces. The saved NA228 selector retains the native tracking
+instructions, and the ordinary-space hook retains native advancement without
+an active layout session.
+
+For Free Battle, the complete pen advance is therefore 641 in NA228 and 602
+in NUN5. Both are reproduced from saved metrics and independently match the
+renderer start/end fields: `51 -> 692` and `51 -> 653`. The 39-unit difference
+is `12 * 5.5 - 54 * 0.5`. For the custom Refill Time string, NA228's advance
+is 372 (`51 -> 423`); the same glyphs with donor spacing would advance 361.
+These are logical advances, not screenshot pixel widths.
+
+Both Mode Select text/background viewports retain logical rectangle
+`(0,300,512,48)` and identical saved clip bounds. In their 640x480 screenshots,
+the yellow Free Battle text occupies thresholded bounds `(66,407)..(188,419)`
+in NA228 and `(66,407)..(186,419)` in NUN5 (RGB red/green above 140, blue below
+110). This supports matching left/vertical placement in this pair while word
+positions diverge through accumulated spacing. It does not establish that all
+reported alignment differences are the same issue. The Practice state's strip
+is at logical Y=290, matching its separate native style; there is no supplied
+matching NUN5 Practice frame for a pixel comparison.
+
+Using logical advance as the text extent and ignoring edge bearings and update
+quantization, the documented queue geometry predicts about 237.5 completely
+blank updates for NA228 Free Battle: `(1628 - 641 - 512) / 2`. The custom
+Refill Time string predicts 18: `(920 - 372 - 512) / 2`. NUN5 Free Battle
+predicts none: `788 - 602 - 512 < 0`. These derived intervals explain the
+string-dependent absence; they are not measured elapsed timings. The retail
+NUN5 measurement/markup discrepancy is documented in the linked knowledge
+document.
+
+The supplied frames and memory establish the scrolling and spacing mechanisms
+and the matched Mode Select placement. Other menus have static caller/style
+coverage; their complete visual alignment and icon-bearing cases remain
+unconfirmed. The correction retains those structural positions; it does not
+apply a universal X/Y shift. Its runtime appearance remains unverified.
+
 ## Knowledge
 
 - [Font assets](../../knowledge/localization/font/assets.md)
@@ -149,6 +241,7 @@ and the shared selected-style paths proven by those callers.
 - [Collection](../../knowledge/localization/font/screen_layouts/collection.md)
 - [Character Select](../../knowledge/localization/font/screen_layouts/character_select.md)
 - [Shared style](../../knowledge/localization/font/screen_layouts/shared_style.md)
+- [Running help](../../knowledge/localization/ui/running_help.md)
 
 Those documents contain clean NA2/NUN5 renderer, metric, ABI, asset, and layout
 findings. The catalog and implementation stores remain the executable

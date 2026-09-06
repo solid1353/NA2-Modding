@@ -252,6 +252,19 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
         Assert-CommandRouting ($build.configuration -ceq 'base') `
             'Build-and-launch alias did not build base.'
 
+        $null = Invoke-FakeNa228 -ArgumentList @('bb', '-f')
+        $build = Get-Content -Raw -LiteralPath (Join-Path $repository 'build.json') | ConvertFrom-Json
+        $launch = Get-Content -Raw -LiteralPath (Join-Path $repository 'launch.json') | ConvertFrom-Json
+        Assert-CommandRouting (
+            $build.configuration -ceq 'base' -and
+            $build.force -and
+            $launch.games[0] -like '*\build\base.iso'
+        ) 'Forced build-and-launch did not rebuild and launch base.'
+
+        $rejected = Invoke-FakeNa228 -ArgumentList @('b', '-f') -Failure
+        Assert-CommandRouting (($rejected.Output -join "`n") -match '-f requires a build-and-launch token') `
+            'A cached-only launch accepted -f.'
+
         $null = Invoke-FakeNa228 -ArgumentList @('foo')
         $launch = Get-Content -Raw -LiteralPath (Join-Path $repository 'launch.json') | ConvertFrom-Json
         Assert-CommandRouting ($launch.games[0] -like '*\build\foo.iso') `

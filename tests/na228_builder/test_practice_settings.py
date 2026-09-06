@@ -92,7 +92,15 @@ class PracticeSettingsTests(unittest.TestCase):
                 "sub_active_frames_get",
                 "xdash_chakra_cost_option_get",
                 "support_get",
+                "v2_help_set",
             }.issubset(relocation_symbols)
+        )
+        help_relocations = [
+            item for item in fragment.relocations if item.symbol == "v2_help_set"
+        ]
+        self.assertEqual(
+            [(item.offset, item.kind) for item in help_relocations],
+            [(80, "abs32")],
         )
 
     def test_configured_defaults_use_native_enum_values(self) -> None:

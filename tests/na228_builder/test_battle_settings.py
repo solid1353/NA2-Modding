@@ -78,8 +78,34 @@ class BattleSettingsTests(unittest.TestCase):
                 "sub_active_frames_get",
                 "xdash_chakra_cost_option_get",
                 "support_get",
+                "v2_help_set",
             }.issubset(relocation_symbols)
         )
+        help_relocations = [
+            item for item in fragment.relocations if item.symbol == "v2_help_set"
+        ]
+        self.assertEqual(
+            [(item.offset, item.kind) for item in help_relocations],
+            [(80, "abs32")],
+        )
+
+    def test_disabling_font_layout_uses_the_native_help_setter(self) -> None:
+        selection = self._selection(
+            lambda features: features["localization"]["font"].__setitem__(
+                "layout", False
+            )
+        )
+        fragment = battle_settings_fragment(
+            selection,
+            owner="settings.runtime_injector",
+        )
+        self.assertIsNotNone(fragment)
+        assert fragment is not None
+        self.assertNotIn(
+            "v2_help_set",
+            {item.symbol for item in fragment.relocations},
+        )
+        self.assertEqual(struct.unpack_from("<I", fragment.payload, 80)[0], 0x0037F760)
 
     def test_shared_defaults_drive_the_selectable_values(self) -> None:
         def configure(features) -> None:

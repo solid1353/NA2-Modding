@@ -2,10 +2,9 @@
 
 ### In Progress
 
--   Fix help text
+-   Fix practice menu flickering for big menus
 -   Implement general menu
 -   Store settings in the save
--   Practice menu flickers for big menus
 
 ### General
 

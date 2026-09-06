@@ -37,7 +37,6 @@ typedef unsigned int u32;
 #define NATIVE_DEFAULTS_ADDRESS 0x00881390u
 #define NATIVE_PROFILE_FLAG_ADDRESS 0x001F7780u
 #define NATIVE_HELP_RESET_ADDRESS 0x0037EEE0u
-#define NATIVE_HELP_SET_ADDRESS 0x0037F760u
 #define NATIVE_SOUND_ADDRESS 0x001D7E20u
 
 
@@ -123,6 +122,7 @@ typedef struct PracticeSettingsSchema {
     u32 xdash_chakra_cost_option_set;
     u32 support_get;
     u32 support_set;
+    u32 help_set;
 } PracticeSettingsSchema;
 
 extern const PracticeSettingsSchema practice_settings_schema;
@@ -891,7 +891,7 @@ void practice_settings_update_window(void *controller)
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_update_help")
 void practice_settings_update_help(void *controller)
 {
-    NativeHelpSet set_help = (NativeHelpSet)NATIVE_HELP_SET_ADDRESS;
+    NativeHelpSet set_help = (NativeHelpSet)practice_settings_schema.help_set;
     s32 index = *(volatile s32 *)(
         (u8 *)controller + CONTROLLER_SELECTED_ROW_OFFSET
     );

@@ -13,6 +13,17 @@ INGAME_PATH = ("features", "settings", "ingame")
 SUBMENU_FLAG = 0x4000
 
 
+def bind_help_setter(selection, payload, relocations, offset):
+    """Select the help implementation while composing a custom menu schema."""
+    layout = ("features", "localization", "font", "layout")
+    if any(node.path == layout and node.enabled for node in selection.nodes):
+        relocations.append(PayloadRelocation(
+            offset=offset, kind="abs32", symbol="v2_help_set",
+        ))
+    else:
+        struct.pack_into("<I", payload, offset, 0x0037F760)
+
+
 def menu_title(name):
     return name.replace("_", " ").title()
 

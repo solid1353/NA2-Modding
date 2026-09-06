@@ -87,6 +87,39 @@ class FontRuntimeContractTests(unittest.TestCase):
             ),
         )
 
+    def test_running_help_hooks_link_to_the_shared_adapters(self) -> None:
+        fragment_symbols = {fragment.symbol for fragment in self.package.fragments}
+        self.assertTrue(
+            {
+                "v2_help_begin",
+                "v2_help_end",
+                "v2_help_measure",
+                "v2_help_set",
+                "v2_help_draw",
+                "v2_help_font",
+            }.issubset(fragment_symbols)
+        )
+        edits = tuple(
+            edit
+            for edit in self.package.edits
+            if edit.symbolic_patch.symbol in {"v2_help_set", "v2_help_draw"}
+        )
+        self.assertTrue(edits)
+        self.assertEqual(
+            {edit.symbolic_patch.symbol for edit in edits},
+            {"v2_help_set", "v2_help_draw"},
+        )
+        resolved = {
+            patch.mapping_id: patch
+            for patch in resolve_symbolic_patches(
+                self.build,
+                tuple(edit.symbolic_patch for edit in edits),
+            )
+        }
+        self.assertEqual(len(resolved), len(edits))
+        for patch in resolved.values():
+            self.assertEqual(int.from_bytes(patch.replacement[:4], "little") >> 26, 0x03)
+
     def test_numeric_hooks_link_and_save_load_day_preserves_year(self) -> None:
         symbols = {
             "save_load_hour",

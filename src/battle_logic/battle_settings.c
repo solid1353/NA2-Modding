@@ -34,7 +34,6 @@ typedef unsigned int u32;
 #define NATIVE_PROFILE_FLAG_ADDRESS 0x001F7780u
 #define NATIVE_WINDOW_UPDATE_ADDRESS 0x0037D9C0u
 #define NATIVE_HELP_RESET_ADDRESS 0x0037EEE0u
-#define NATIVE_HELP_SET_ADDRESS 0x0037F760u
 #define NATIVE_ROWS_DRAW_ADDRESS 0x008801E0u
 #define NATIVE_CURSOR_DRAW_ADDRESS 0x008804F0u
 #define NATIVE_BACKING_DRAW_ADDRESS 0x001BB790u
@@ -151,6 +150,7 @@ typedef struct BattleSettingsSchema {
     u32 xdash_chakra_cost_option_set;
     u32 support_get;
     u32 support_set;
+    u32 help_set;
 } BattleSettingsSchema;
 
 extern const BattleSettingsSchema battle_settings_schema;
@@ -678,7 +678,7 @@ static s32 battle_settings_select_page(
 
 static void battle_settings_update_help(void *controller)
 {
-    NativeHelpSet set_help = (NativeHelpSet)NATIVE_HELP_SET_ADDRESS;
+    NativeHelpSet set_help = (NativeHelpSet)battle_settings_schema.help_set;
     s32 index = *(volatile short *)(
         (u8 *)controller + CONTROLLER_SELECTED_ROW_OFFSET
     );

@@ -170,9 +170,10 @@ E2E configurations; those configurations are selected only by their aliases.
 `b` builds or reuses it before launch, and `na228 build <config>` builds without
 launching. Selectors must not conflict with commands, sources, or another
 selector's build and watch forms. Bare `na228` is equivalent to `na228 bb`.
-Passing `-f` to `na228 build` ignores a reusable registry hit, performs a fresh
-verified build, and replaces the matching cached image with a newly timestamped
-artifact even when its bytes are unchanged.
+Passing `-f` to `na228 build` or a launch containing a build token ignores each
+applicable reusable registry hit, performs a fresh verified build, and replaces
+the matching cached image with a newly timestamped artifact even when its bytes
+are unchanged. A launch without a build token rejects `-f`.
 
 The public `na228` development commands present configuration failures as one
 concise path/value/expectation message. Their existing `latest.log` and

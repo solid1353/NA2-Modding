@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from ..payload_builder.operations import PayloadFragment, PayloadRelocation
 from .menu_options import items_mode_option, MenuOption
-from .menu_pages import build_menu_pages, append_row_extensions, page_resource_fragments
+from .menu_pages import build_menu_pages, append_row_extensions, page_resource_fragments, bind_help_setter
 from .battle_settings_runtime import (
     BATTLE_MECHANICS_PATH,
     CHAKRA_OPTION_COUNT,
@@ -62,7 +62,7 @@ EXTRA_HIT_ROW_ID = 8
 SUB_ACTIVE_FRAMES_ROW_ID = 9
 XDASH_CHAKRA_COST_ROW_ID = 10
 SUPPORT_ROW_ID = 11
-SCHEMA_HEADER_SIZE = 80
+SCHEMA_HEADER_SIZE = 84
 PAGE_FIELD_COUNT = 7
 PAGE_SIZE = PAGE_FIELD_COUNT * 4
 ROW_FIELD_COUNT = 10
@@ -282,12 +282,12 @@ def battle_settings_fragment(
     rows = tuple(row for page in pages for row in page.rows)
     payload = bytearray(
         struct.pack(
-            "<20I",
+            "<21I",
             len(rows),
             len(pages),
             0,
             0,
-            *([0] * 16),
+            *([0] * 17),
         )
     )
     relocations: list[PayloadRelocation] = [
@@ -304,6 +304,7 @@ def battle_settings_fragment(
             addend=SCHEMA_HEADER_SIZE + len(pages) * PAGE_SIZE,
         ),
     ]
+    bind_help_setter(selection, payload, relocations, 80)
     row_start = 0
     for page in pages:
         page_offset = len(payload)

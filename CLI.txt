@@ -3,10 +3,11 @@ NA2.28
   na228 [token] [token] [options]       Launch one or two games through Workshop; defaults to bb
                                         token: <source>[w] | [b]<config>[w]
                                         b = build or reuse; w [C path|plan] = watch
+  -f                                    Force every requested build before launch
   -l <profile> [args]                   Launch a configured profile
-  options                               See ws help
+  other options                         See ws help
 
-  na228 build [config] [-f]  Build or reuse without launching; defaults to b; -f forces a build
+  na228 build [config] [-f]  Build or reuse without launching; defaults to b
   na228 test                 Run unit tests
 
   na228 e2e <all|suite [args...] ...>                  Run selected suites

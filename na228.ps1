@@ -120,6 +120,12 @@ $commandTokens = @($commandTokens | Where-Object { $_ -ine '-u' })
 if ($turbo -and $unlimited) {
     throw 'Use only one of -t or -u.'
 }
+$forceTokens = @($commandTokens | Where-Object { $_ -ceq '-f' })
+if ($forceTokens.Count -gt 1) {
+    throw '-f may be specified only once.'
+}
+$force = $forceTokens.Count -eq 1
+$commandTokens = @($commandTokens | Where-Object { $_ -cne '-f' })
 $mode = if ($commandTokens.Count -gt 0) {
     $commandTokens[0].ToLowerInvariant()
 }
@@ -145,6 +151,9 @@ if (($turbo -or $unlimited) -and $mode -in @(
     'w'
 )) {
     throw '-t and -u are valid only when launching one or two games.'
+}
+if ($force -and $mode -in @('help', 'test', 'e2e', 'release', 'w')) {
+    throw '-f is valid only for builds and build-and-launch tokens.'
 }
 
 if ($mode -eq 'help') {
@@ -257,19 +266,17 @@ if ($mode -eq 'release') {
 }
 
 if ($mode -eq 'build') {
-    $forceCount = @($arguments | Where-Object { $_ -ceq '-f' }).Count
-    $buildOperands = @($arguments | Where-Object { $_ -cne '-f' })
-    if ($forceCount -gt 1 -or $buildOperands.Count -gt 1) {
+    if ($arguments.Count -gt 1) {
         throw 'Usage: na228 build [config] [-f]'
     }
-    $selector = if ($buildOperands.Count -eq 1) { $buildOperands[0] } else { 'b' }
+    $selector = if ($arguments.Count -eq 1) { $arguments[0] } else { 'b' }
     $configuration = Resolve-Na2BuildConfiguration `
         -Selector $selector -Configurations $buildConfigurations
     $runArguments = @{
         Action = 'configuration-build'
         Configuration = [string]$configuration.Name
     }
-    if ($forceCount -eq 1) {
+    if ($force) {
         $runArguments.Force = $true
     }
     if (-not [string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)) {
@@ -355,6 +362,9 @@ for ($index = 0; $index -lt $runTokens.Count; $index++) {
 if ($gameSelections.Count -gt 2) {
     throw 'na228 accepts at most two game tokens.'
 }
+if ($force -and -not @($gameSelections | Where-Object Build).Count) {
+    throw '-f requires a build-and-launch token.'
+}
 $games = [Collections.Generic.List[string]]::new()
 $launchConfigurations = [Collections.Generic.List[string]]::new()
 foreach ($selection in $gameSelections) {
@@ -367,6 +377,9 @@ foreach ($selection in $gameSelections) {
         $runArguments = @{
             Action = 'configuration-build'
             Configuration = $configuration
+        }
+        if ($force) {
+            $runArguments.Force = $true
         }
         if (-not [string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)) {
             $task = Get-Na2TaskContext `

@@ -13,7 +13,8 @@
   - **Unresolved or untested:** what remains incomplete or unknown.
   - **Deliberate exclusions and overlap:** the document's ownership boundaries.
   - **Evidence limitations:** what the available evidence cannot establish.
-- Record reverse-engineering findings and only the evidence needed to assess
+- During any investigation that requires disassembly inspection record
+  reverse-engineering findings and only the evidence needed to assess
   them in the relevant knowledge document. Do not record temporary file names
   or other details that do not affect the finding.
 - `@tools/CCSFileExplorerMSF` is the default CCS explorer.

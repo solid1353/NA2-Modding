@@ -137,6 +137,335 @@
       }
     },
     "hooks": {
+      "help_draw_battle_01": {
+        "target_id": "na2_btl",
+        "offset": "0x1CC9D0",
+        "expected_hex": "40FE0D0C",
+        "symbol": "v2_help_draw",
+        "encoding": "jal26"
+      },
+      "help_draw_continue_01": {
+        "target_id": "na2_elf",
+        "offset": "0xFC938",
+        "expected_hex": "40FE0D0C",
+        "symbol": "v2_help_draw",
+        "encoding": "jal26"
+      },
+      "help_draw_controls_01": {
+        "target_id": "na2_elf",
+        "offset": "0x288E30",
+        "expected_hex": "40FE0D0C",
+        "symbol": "v2_help_draw",
+        "encoding": "jal26"
+      },
+      "help_draw_mode_select_01": {
+        "target_id": "na2_elf",
+        "offset": "0x285EA4",
+        "expected_hex": "40FE0D0C",
+        "symbol": "v2_help_draw",
+        "encoding": "jal26"
+      },
+      "help_draw_options_01": {
+        "target_id": "na2_elf",
+        "offset": "0x28C844",
+        "expected_hex": "40FE0D0C",
+        "symbol": "v2_help_draw",
+        "encoding": "jal26"
+      },
+      "help_draw_practice_01": {
+        "target_id": "na2_btl",
+        "offset": "0x1CE6F8",
+        "expected_hex": "40FE0D0C",
+        "symbol": "v2_help_draw",
+        "encoding": "jal26"
+      },
+      "help_draw_sound_01": {
+        "target_id": "na2_elf",
+        "offset": "0x28A630",
+        "expected_hex": "40FE0D0C",
+        "symbol": "v2_help_draw",
+        "encoding": "jal26"
+      },
+      "help_draw_spbattle_01": {
+        "target_id": "na2_btl",
+        "offset": "0x341F4",
+        "expected_hex": "40FE0D0C",
+        "symbol": "v2_help_draw",
+        "encoding": "jal26"
+      },
+      "help_draw_ultimate_menu_01": {
+        "target_id": "na2_btl",
+        "offset": "0x2ACA0",
+        "expected_hex": "40FE0D0C",
+        "symbol": "v2_help_draw",
+        "encoding": "jal26"
+      },
+      "help_draw_ultimate_rank_01": {
+        "target_id": "na2_btl",
+        "offset": "0x2C878",
+        "expected_hex": "40FE0D0C",
+        "symbol": "v2_help_draw",
+        "encoding": "jal26"
+      },
+      "help_set_battle_01": {
+        "target_id": "na2_btl",
+        "offset": "0x1CBDA0",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_battle_02": {
+        "target_id": "na2_btl",
+        "offset": "0x1CBEA0",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_battle_03": {
+        "target_id": "na2_btl",
+        "offset": "0x1CC2A0",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_continue_01": {
+        "target_id": "na2_elf",
+        "offset": "0xFBCE0",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_controls_01": {
+        "target_id": "na2_elf",
+        "offset": "0x288154",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_controls_02": {
+        "target_id": "na2_elf",
+        "offset": "0x28822C",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_controls_03": {
+        "target_id": "na2_elf",
+        "offset": "0x288B9C",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_mode_select_01": {
+        "target_id": "na2_elf",
+        "offset": "0x285CC0",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_options_01": {
+        "target_id": "na2_elf",
+        "offset": "0x28BF0C",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_options_02": {
+        "target_id": "na2_elf",
+        "offset": "0x28C124",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_options_03": {
+        "target_id": "na2_elf",
+        "offset": "0x28C200",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_practice_01": {
+        "target_id": "na2_btl",
+        "offset": "0x1CD874",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_practice_02": {
+        "target_id": "na2_btl",
+        "offset": "0x1CD990",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_practice_03": {
+        "target_id": "na2_btl",
+        "offset": "0x1CD9D8",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_practice_04": {
+        "target_id": "na2_btl",
+        "offset": "0x1CDEDC",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_practice_05": {
+        "target_id": "na2_btl",
+        "offset": "0x1CDF14",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_sound_01": {
+        "target_id": "na2_elf",
+        "offset": "0x289864",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_sound_02": {
+        "target_id": "na2_elf",
+        "offset": "0x289B80",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_spbattle_01": {
+        "target_id": "na2_btl",
+        "offset": "0x34140",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_menu_01": {
+        "target_id": "na2_btl",
+        "offset": "0x2ADB0",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_menu_02": {
+        "target_id": "na2_btl",
+        "offset": "0x2AE0C",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_menu_03": {
+        "target_id": "na2_btl",
+        "offset": "0x2AF40",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_menu_04": {
+        "target_id": "na2_btl",
+        "offset": "0x2B024",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_menu_05": {
+        "target_id": "na2_btl",
+        "offset": "0x2B2BC",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_menu_06": {
+        "target_id": "na2_btl",
+        "offset": "0x2B4D8",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_menu_07": {
+        "target_id": "na2_btl",
+        "offset": "0x2B518",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_menu_08": {
+        "target_id": "na2_btl",
+        "offset": "0x2B6D0",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_menu_09": {
+        "target_id": "na2_btl",
+        "offset": "0x2B704",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_menu_10": {
+        "target_id": "na2_btl",
+        "offset": "0x3AAC8",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_menu_11": {
+        "target_id": "na2_btl",
+        "offset": "0x3AB5C",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_menu_12": {
+        "target_id": "na2_btl",
+        "offset": "0x3ABD0",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_rank_01": {
+        "target_id": "na2_btl",
+        "offset": "0x2CA80",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_rank_02": {
+        "target_id": "na2_btl",
+        "offset": "0x2CC3C",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_rank_03": {
+        "target_id": "na2_btl",
+        "offset": "0x2CF0C",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_rank_04": {
+        "target_id": "na2_btl",
+        "offset": "0x2CF70",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_rank_05": {
+        "target_id": "na2_btl",
+        "offset": "0x2D0A0",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
+      "help_set_ultimate_rank_06": {
+        "target_id": "na2_btl",
+        "offset": "0x3ACE4",
+        "expected_hex": "D8FD0D0C",
+        "symbol": "v2_help_set",
+        "encoding": "jal26"
+      },
       "publish_character_confirmation_scope_around_yes": {
         "description": "Publish a Character-only confirmation scope around its Yes/No list so both draw states receive the container's shared one-pixel Y correction without changing Mode Select or Collection.",
         "target_id": "na2_elf",
@@ -673,6 +1002,34 @@
       }
     },
     "payload": {
+      "v2_running_help": {
+        "kind": "c",
+        "path": "src/localization/font/font_v2_running_help.c",
+        "namespace": "localization.font.v2.c",
+        "imports": {
+          "font_v2_active_session": "v2_session_pointer"
+        },
+        "fragments": {
+          "v2_help_begin": {
+            "object": "localization.font.v2.c.text.font.v2.help.begin"
+          },
+          "v2_help_end": {
+            "object": "localization.font.v2.c.text.font.v2.help.end"
+          },
+          "v2_help_measure": {
+            "object": "localization.font.v2.c.text.font.v2.help.measure"
+          },
+          "v2_help_set": {
+            "object": "localization.font.v2.c.text.font.v2.help.set"
+          },
+          "v2_help_draw": {
+            "object": "localization.font.v2.c.text.font.v2.help.draw"
+          },
+          "v2_help_font": {
+            "object": "localization.font.v2.c.rodata.font.v2.help.font"
+          }
+        }
+      },
       "font_v2_character_select_modal_abi": {
         "kind": "asm",
         "path": "src/localization/font/font_v2_character_select_modal_abi.S",

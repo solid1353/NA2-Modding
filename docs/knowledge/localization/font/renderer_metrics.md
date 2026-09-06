@@ -66,11 +66,12 @@ NUN5 `FUN_001878E0` initializes tracking to `0.0`, scale X/Y to `1.0`, and extra
 spacing to `0.0`.
 
 NA2's horizontal plain-space branch at `0x001892C0..0x00189300` advances the
-14-unit secondary cell by 13 units. NUN5's branch at
+14-unit secondary cell by 13.5 units: the one-byte branch multiplies tracking
+by `0.5` before adding the cell width. NUN5's branch at
 `0x0018A3CC..0x0018A434` computes:
 
 ```c
-x += scale_x * (extra_spacing + cell_width + tracking - 6.0f);
+x += scale_x * (extra_spacing + cell_width + tracking * 0.5f - 6.0f);
 ```
 
 At the native secondary values, NUN5 advances a plain space by eight units.

@@ -49,8 +49,9 @@ Required user actions: <later user action or nothing>
 Include every setting defined by the active workflow.
 
 If user input is required or would materially improve efficiency or quality,
-request it before beginning or continuing work; do not substitute arbitrary
-inputs. Present the action boundary only when work can begin.
+request it before beginning or continuing work;
+Never search for inputs or determine that existing inputs are appropriate by yourself.
+Present the action boundary only when work can begin.
 
 ## Evidence and completion
 

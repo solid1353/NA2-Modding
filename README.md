@@ -37,11 +37,9 @@ knowledge, tests, and release behavior.
 - [Agent commands](AGENT_COMMANDS.md): commands interpreted by project
   agents.
 - Policies:
-  [repository](docs/policies/repository.md),
-  [validation](docs/policies/testing.md),
-  [modding](docs/policies/modding.md),
-  [research](docs/policies/research.md), and
-  [path configuration](docs/policies/paths.md).
+  [repository and paths](docs/policies/repository.md),
+  [validation](docs/policies/testing.md), and
+  [modding and research](docs/policies/modding.md).
 - Runbooks: [source extraction](docs/runbooks/source-extraction.md).
 - [Tasks](TASKS.md), the user's selective coordination and decision tracker.
 - [E2E infrastructure](e2e/README.md) and

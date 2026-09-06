@@ -6,7 +6,7 @@ MWo3 overlay, and records the task's fixed reservation and upper-memory regions.
 It accepts either filesystem paths or configured `@root/...` paths.
 It also accepts numeric savestate names retained in
 `captures/<recording>/<phase>/sstates/` below the
-[owning task's work root](../../../docs/policies/work_directories.md),
+[owning task's work root](../../../docs/policies/repository.md#file-and-folder-management),
 deriving the phase and marker number from that structure.
 
 Analyze a savestate directory and write disposable reports below the owning

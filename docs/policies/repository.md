@@ -2,8 +2,24 @@
 
 ## Paths and repository boundaries
 
-- Canonical path ownership, configured-root syntax, maintained loaders, and
-  migration validation are defined in [`paths.md`](paths.md).
+- Workshop owns shared path configuration and source-game identities. NA2
+  imports that configuration and defines only project-specific paths and
+  settings.
+- Workshop must not depend on NA2. NA2 may override an imported entry only by
+  defining the same name in its own manifest.
+- Persist only repository-relative paths or configured aliases, never
+  machine-specific absolute paths.
+- Resolve each manifest relative to its own directory, never the caller's
+  working directory.
+- Loaders inject `repository`; manifests do not define it.
+- Define parent roots before entries derived from them and keep related entries
+  together.
+- `existence_deferred_roots` contains only generated roots that may be absent
+  while loading the manifest.
+- Runtime consumers resolve configured paths through a maintained loader; do
+  not hard-code their backing paths.
+- Each registered game's alias-owned PCSX2 bundle must exist in exactly one
+  configured `pcsx2_files` root.
 - For a requested `from <source> to <destination>` link, preserve the source and
   create the link at the destination. Do not redesign ownership unless asked.
 - `@pcsx2_fork` is build output, not a runnable installation. Runtime
@@ -26,14 +42,7 @@
 - If the user requests further changes to a task whose changes are staged,
   unstage only that task's changes before editing. Do not commit incomplete work
   merely to clean the tree; report its task-owned dirty state.
-- When a remote exists, immediately push each task-owned commit. For a coherent
-  multi-repository delivery, create all intended commits before pushing any; if
-  a commit fails, push none. Then push every remote-backed repository without
-  unrelated intervening work. If a push fails, report the exact partial delivery
-  and do not rewrite or roll back published history. Report each participating
-  repository's commit, push, and dirty state. Normal pushes to the current
-  branch/origin have standing authorization; changing remotes, force-pushing, or
-  rewriting published history requires explicit instruction.
+- When a remote exists, immediately push each task-owned commit.
 - Never modify persistent Git identity configuration. The shared Git policy
   guard owns per-command identity and subject validation.
 - Git history is the recovery mechanism for tracked files. Preserve
@@ -41,6 +50,25 @@
 
 ## File and folder management
 
+- Before using a task work root, resolve the current exact chat title from
+  Codex. Use only `@work/<exact chat title>/`. Treat every other `@work` path
+  as read-only except for input moves required by this policy.
+  Set `NA228_TASK_WORK_ROOT` to the task root before maintained
+  commands create temporary files.
+- Never use a system temporary directory or write outside repositories
+  configured for the current task.
+- Write authorized project changes to their canonical project paths and
+  maintained workflow outputs to their configured repository paths.
+- Write task-owned generated records below `@work/<exact chat title>/logs/`.
+- Copy changing external inputs to `@work/<exact chat title>/inputs/` before relying on them.
+- New savestates are stored in Workshop's `@pcsx2_savestates/`.
+  Before inspecting a savestate supplied for the task, move it to
+  `@work/<exact chat title>/inputs/` instead of copying it.
+- Before inspecting an input-recording baseline, move it from
+  `@work/captures/<recording>/<game>/` to
+  `@work/<exact chat title>/inputs/captures/<recording>/<game>/`.
+  Treat its contents as read-only.
+- Before completion, remove disposable task artifacts.
 - `TASKS.md` is user-only. Agents must not read or modify it.
 - Never create or use an additional Git worktree.
 - `docs/designs/` is read-only outside Design mode.

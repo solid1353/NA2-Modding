@@ -45,7 +45,7 @@ only their corresponding recording marker numbers through PCSX2 using
 `-input-recording-capture-markers <markers>`.
 
 Write the diagnostic savestates only within the
-[acting task's work root](../policies/work_directories.md).
+[acting task's work root](../policies/repository.md#file-and-folder-management).
 Confirm each state's embedded screenshot corresponds to the requested picture.
 Use savestates only to inspect runtime state: their embedded screenshots cannot
 establish visual parity or replace screenshot-mode E2E evidence. Never publish

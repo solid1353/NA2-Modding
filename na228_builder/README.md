@@ -207,7 +207,7 @@ The registry retains at most 10 unique ISOs. Pruning removes every fingerprint
 and provenance record that refers to an evicted image. A missing or corrupt
 registry causes a complete verified build and is recreated only after success.
 
-When [`NA228_TASK_WORK_ROOT`](../docs/policies/work_directories.md)
+When [`NA228_TASK_WORK_ROOT`](../docs/policies/repository.md#file-and-folder-management)
 is set, builds keep their operational and structured records below the acting
 chat's `logs/` directory.
 

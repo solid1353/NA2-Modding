@@ -91,16 +91,23 @@ Command index: `des mode`, `design mode`, `int mode`, `interactive mode`,
 
 ### Policy routing
 
-Read only routed policies whose triggers apply:
+Read every section whose work trigger applies, in full. Follow section links
+without loading the rest of the file unless another trigger applies. Check
+for additional matching sections as the work changes.
 
 | Work | Read |
 | --- | --- |
-| Work directories, task-owned files, external inputs, temporary files, workflow outputs, task logs | [`docs/policies/work_directories.md`](docs/policies/work_directories.md) |
-| Path configuration, configured roots, manifests, path loaders | [`docs/policies/paths.md`](docs/policies/paths.md) |
-| Git, protected files and directories, source media, disassembly, savestates, input recordings, PCSX2, elevation, repository cleanup, scripts, documentation layout | [`docs/policies/repository.md`](docs/policies/repository.md) |
-| validation, tests, builds, PCSX2, runtime injection, E2E | [`docs/policies/testing.md`](docs/policies/testing.md) |
-| profiles, builder inputs, binaries, donor data, source media, PNACH | [`docs/policies/modding.md`](docs/policies/modding.md) |
-| reverse engineering, disassembly, runtime investigation, knowledge, hypotheses | [`docs/policies/research.md`](docs/policies/research.md) |
+| Path configuration, roots, manifests, loaders, links, PCSX2 installations | [Paths and repository boundaries](docs/policies/repository.md#paths-and-repository-boundaries) |
+| Git, concurrent edits, staging, commits, pushes, deployment | [Git and concurrent work](docs/policies/repository.md#git-and-concurrent-work) |
+| Files, directories, task artifacts, external inputs, protected data, cleanup | [File and folder management](docs/policies/repository.md#file-and-folder-management) |
+| Scripts, tooling, dependencies, manifests | [Scripts and dependencies](docs/policies/repository.md#scripts-and-dependencies) |
+| Documentation | [Documentation layout](docs/policies/repository.md#documentation-layout) |
+| Implementation, validation, tests, builds | [Default validation](docs/policies/testing.md#default-validation) |
+| PCSX2, savestates, runtime injection, E2E | [Runtime validation](docs/policies/testing.md#runtime-validation) |
+| Implementation, acceptance, validation, tests, candidate documentation | [Validation behavior and tests](docs/policies/testing.md#validation-behavior-and-tests) |
+| Profiles, builder inputs, binary changes, donor data, source media | [Builder, binary, and donor changes](docs/policies/modding.md#builder-binary-and-donor-changes) |
+| PNACH, runtime patch writes | [PNACH](docs/policies/modding.md#pnach) |
+| Research, reverse engineering, disassembly, runtime investigation, knowledge, hypotheses | [Research and evidence](docs/policies/modding.md#research-and-evidence) |
 
 On entering a task, read its directly linked documentation and relevant
 component documentation. Load other technical documents only when required,

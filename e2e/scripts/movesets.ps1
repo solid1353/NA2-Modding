@@ -461,7 +461,7 @@ foreach ($outputPlan in $selectedOutputPlans) {
                 $outputPlan.Name,
                 $gameTarget.GridVariant,
                 $captureIndex
-            $capturedScreenshots = Join-Path $taskContext.CaptureRoot 'screenshots'
+            $capturedScreenshots = $taskContext.CaptureRoot
             $captureComplete = (
                 (Test-Path -LiteralPath $taskContext.CompletePath -PathType Leaf) -and
                 @(
@@ -533,7 +533,7 @@ foreach ($outputPlan in $selectedOutputPlans) {
                             $permit.Dispose()
                         }
 
-                        $screenshots = Join-Path $Context.CaptureRoot 'screenshots'
+                        $screenshots = $Context.CaptureRoot
                         $screenshotCount = @(
                             Get-ChildItem `
                                 -LiteralPath $screenshots `
@@ -620,7 +620,7 @@ $gridJobScript = {
                     $slot = 0
                     $singleScreenshot = $null
                     foreach ($capture in $Context.Captures) {
-                        $screenshots = Join-Path $capture.CaptureRoot 'screenshots'
+                        $screenshots = $capture.CaptureRoot
                         $captureScreenshots = @(
                             Get-ChildItem `
                                 -LiteralPath $screenshots `

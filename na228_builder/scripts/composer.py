@@ -89,49 +89,57 @@ def compose_assembly_plan(
     owners: Mapping[str, str],
     insertions: Mapping[str, bytes],
     insertion_owners: Mapping[str, str],
+    identity_owner: str = "image_assembler",
 ) -> CompositionResult:
     """Close composed module payloads plus the product output identity."""
     composed_payloads = {
         normalize_iso_path(path): bytearray(data) for path, data in payloads.items()
     }
     identity_edits: list[dict[str, object]] = []
+    renames: tuple[FileRename, ...] = ()
     system_path = SYSTEM_CNF_PATH
-    system_record = source.by_path.get(system_path)
-    if system_record is None or system_record.is_dir:
-        raise RuntimeError(f"Product composition requires source file: {system_path}")
-    system_data = composed_payloads.get(
-        system_path,
-        bytearray(source.read_file(system_record)),
-    )
-    source_boot = SOURCE_BOOT_PATH.encode("ascii")
-    output_boot = output_boot_path.encode("ascii")
-    if len(source_boot) != len(output_boot):
-        raise ValueError("Output boot path must preserve the source boot-path length")
-    if bytes(system_data).count(source_boot) != 1:
-        raise RuntimeError(
-            f"{system_path} must contain {SOURCE_BOOT_PATH} exactly once"
+    boot_reason = "Apply the selected disc identity"
+    if output_boot_path != SOURCE_BOOT_PATH:
+        system_record = source.by_path.get(system_path)
+        if system_record is None or system_record.is_dir:
+            raise RuntimeError(f"Disc identity patch requires source file: {system_path}")
+        system_data = composed_payloads.get(
+            system_path,
+            bytearray(source.read_file(system_record)),
         )
-    offset = bytes(system_data).index(source_boot)
-    system_data[offset:offset + len(source_boot)] = output_boot
-    composed_payloads[system_path] = system_data
-
-    boot_reason = "Apply the product's declared output boot path"
-    identity_edits.append({
-        "target": system_path,
-        "offset": f"0x{offset:X}",
-        "length": len(source_boot),
-        "original_hex": source_boot.hex().upper(),
-        "new_hex": output_boot.hex().upper(),
-        "reason": boot_reason,
-        "owner": "settings.output_boot_path",
-    })
+        source_boot = SOURCE_BOOT_PATH.encode("ascii")
+        output_boot = output_boot_path.encode("ascii")
+        if len(source_boot) != len(output_boot):
+            raise ValueError("Output boot path must preserve the source boot-path length")
+        if bytes(system_data).count(source_boot) != 1:
+            raise RuntimeError(
+                f"{system_path} must contain {SOURCE_BOOT_PATH} exactly once"
+            )
+        offset = bytes(system_data).index(source_boot)
+        system_data[offset:offset + len(source_boot)] = output_boot
+        composed_payloads[system_path] = system_data
+        identity_edits.append({
+            "target": system_path,
+            "offset": f"0x{offset:X}",
+            "length": len(source_boot),
+            "original_hex": source_boot.hex().upper(),
+            "new_hex": output_boot.hex().upper(),
+            "reason": boot_reason,
+            "owner": identity_owner,
+        })
+        renames = (FileRename(
+            source_path=SOURCE_BOOT_PATH,
+            replacement_path=output_boot_path,
+            owner=identity_owner,
+            reason=boot_reason,
+        ),)
 
     replacements = tuple(
         FileReplacement(
             path=path,
             expected=source.read_file(source.by_path[path]),
             replacement=bytes(composed_payloads[path]),
-            owner=owners.get(path, "settings.output_boot_path"),
+            owner=owners.get(path, identity_owner),
             reason=(
                 boot_reason
                 if path == system_path and path not in payloads
@@ -149,13 +157,7 @@ def compose_assembly_plan(
         )
         for path, payload in sorted(insertions.items())
     )
-    rename = FileRename(
-        source_path=SOURCE_BOOT_PATH,
-        replacement_path=output_boot_path,
-        owner="settings.output_boot_path",
-        reason=boot_reason,
-    )
     return CompositionResult(
-        plan=AssemblyPlan(replacements, insertion_operations, (rename,)),
+        plan=AssemblyPlan(replacements, insertion_operations, renames),
         identity_edits=tuple(identity_edits),
     )

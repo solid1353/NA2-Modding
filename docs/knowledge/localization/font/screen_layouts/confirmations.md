@@ -2,9 +2,9 @@
 
 ## Research coverage
 
-- **Assigned scope:** compare clean NA2 and NUN5 Battle, Mode Select, and Collection confirmation text layout.
+- **Assigned scope:** compare clean NA2 and NUN5 Battle, Mode Select, and Collection confirmation text layout, and identify NA2's memory-card message layout.
 - **Exploration depth:** the relevant native callers, records, and coordinates
-  were inspected.
+  were inspected, including the complete NA2 memory-card body loop and window constructor.
 - **Confirmed coverage:** the documented owners and cross-game geometry
   differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
@@ -46,3 +46,25 @@ builds a four-word draw record from constants `DAT_005B1810` X `24` and
   renderer for object `+8`; its guard is `800D0E0C00000000`;
 - the render-state path repeats the body draw at clean address `0x006C8788`,
   file `0x148C8`, with the same `6C090E0C00000000` native-call guard.
+
+## NA2 memory-card message body
+
+`FUN_001E57B0` constructs the lower message window at `(18,235)` with size
+`476x130`. `FUN_00382110` derives its inner size by subtracting twice the
+signed border widths at window `+0x30/+0x32` from size `+0x0C/+0x10`.
+
+`FUN_001E5BA0` calls `FUN_001E6060(controller, 4)`. The latter checks the
+window at controller `+0x1C` and the body-enabled byte at `+1`, then reads
+the message sequence at `+0x40`. Its draw record at `0x004049B0` supplies
+local X/Y `22/18` and indexed color `15`.
+
+The loop at `0x001E6174..0x001E61DC` draws each NUL-terminated fragment
+through `FUN_003821D0`, advances past its terminator, and adds `30` to Y.
+It does not perform paragraph wrapping. `FUN_003821D0` retains window
+visibility and bounds checks before delegating to `FUN_00379A20` with the
+window's drawing object and context. Selector handling begins separately
+at `0x001E61F0`.
+
+`FUN_001E5DC0` places the Next widget using the same window's inner height
+minus `12`, independently of the body loop. These findings cover the NA2
+memory-card body; no NUN5 counterpart was traced for this section.

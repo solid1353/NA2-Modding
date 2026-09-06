@@ -750,6 +750,7 @@ def compose_configuration_candidate(
     composition = compose_assembly_plan(
         source=source,
         output_boot_path=configuration.output_boot_path,
+        identity_owner=configuration.identity_patch_id or "image_assembler",
         payloads=payloads,
         owners=owners,
         insertions=insertions,
@@ -820,8 +821,8 @@ def build_configuration_candidate(
             "length": len(rename.original_identifier),
             "original_hex": rename.original_identifier.hex().upper(),
             "new_hex": rename.replacement_identifier.hex().upper(),
-            "reason": "Mirror the product boot-path rename in the UDF tree",
-            "owner": "settings.output_boot_path",
+            "reason": "Mirror the selected disc identity in the UDF tree",
+            "owner": configuration.identity_patch_id,
         }
         for rename in assembly.udf_renames
     )

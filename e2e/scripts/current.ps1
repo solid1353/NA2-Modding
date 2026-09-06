@@ -80,9 +80,10 @@ function Test-E2eSuiteComplete {
         [string]$complete.artifact_type -cne $expectedArtifactType) {
         return $false
     }
-    $artifactDirectory = Join-Path `
-        (Join-Path $suiteOutput 'capture') `
-        'screenshots'
+    $artifactDirectory = Join-Path $suiteOutput 'capture'
+    if ($Context.Generated) {
+        $artifactDirectory = Join-Path $artifactDirectory 'screenshots'
+    }
     $actualCount = @(
         Get-ChildItem `
             -LiteralPath $artifactDirectory `
@@ -273,7 +274,7 @@ try {
                         -LaunchProfile $LaunchProfile `
                         -ConcurrencyPoolRoot $ConcurrencyPoolRoot `
                         -ConcurrencyLimit $ConcurrencyLimit
-                    $artifactDirectory = Join-Path $CaptureRoot 'screenshots'
+                    $artifactDirectory = $CaptureRoot
                     $artifactLabel = 'screenshots'
                 }
                 $artifactCount = @(

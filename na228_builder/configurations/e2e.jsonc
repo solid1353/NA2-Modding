@@ -1,7 +1,15 @@
 {
   "overrides": {
-    "startup": {
-      "faster_loading": false
+    "settings": {
+      "ingame": {
+        "battle_mode": {
+          "battle_mechanics": false,
+          "handicap": 5                           // int 0..10 (Player 1; Player 2 is 10 minus this value)
+        }
+      }
+    },
+    "character_select": {
+      "support_selection": "all"             // "all" | "relevant" | "none"
     }
   }
 }

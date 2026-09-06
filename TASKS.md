@@ -1,23 +1,23 @@
 # Tasks
 
+# In Progress
+
+-   Approve remaining translations
+
 ### General
 
--   Damage scaling
--   Extend items to 5
--   Approve remaining translations
+-   Implement general menu
+-   Store settings in the save
 
 ### Bugs
 
--   Practice/commands
--   Font: ninja song long line
--   Font: practice - opponent settings misalignment
--   String translation: save message
--   Textures: chakra seal tag applied bubble
+-   Fix help text
 -   Practice menu flickers for big menus
--   4TK/Orochimaru texture stretching
 
 ### Backlog
 
+-   Damage scaling
+-   Extend items to 5
 -   Replace some music
 -   Proper startup
 -   Proper widescreen

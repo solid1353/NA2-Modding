@@ -257,14 +257,20 @@ if ($mode -eq 'release') {
 }
 
 if ($mode -eq 'build') {
-    if ($arguments.Count -ne 1) {
-        throw 'Usage: na228 build <config>'
+    $forceCount = @($arguments | Where-Object { $_ -ceq '-f' }).Count
+    $buildOperands = @($arguments | Where-Object { $_ -cne '-f' })
+    if ($forceCount -gt 1 -or $buildOperands.Count -gt 1) {
+        throw 'Usage: na228 build [config] [-f]'
     }
+    $selector = if ($buildOperands.Count -eq 1) { $buildOperands[0] } else { 'b' }
     $configuration = Resolve-Na2BuildConfiguration `
-        -Selector $arguments[0] -Configurations $buildConfigurations
+        -Selector $selector -Configurations $buildConfigurations
     $runArguments = @{
         Action = 'configuration-build'
         Configuration = [string]$configuration.Name
+    }
+    if ($forceCount -eq 1) {
+        $runArguments.Force = $true
     }
     if (-not [string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)) {
         $task = Get-Na2TaskContext -TaskRoot $env:NA228_TASK_WORK_ROOT -Paths $paths
@@ -275,9 +281,9 @@ if ($mode -eq 'build') {
     return
 }
 
-if (-not $mode) {
+if (-not $mode -or $mode.StartsWith('-')) {
     $mode = 'bb'
-    $commandTokens = @('bb')
+    $commandTokens = @('bb') + $commandTokens
 }
 
 if ($mode -eq 'w') {

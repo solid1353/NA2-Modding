@@ -15,7 +15,8 @@ function Invoke-Na2BuildRegistry {
         [string]$ConfigurationId,
         [string]$ExpectedFingerprint,
         [string]$Image,
-        [string]$Provenance
+        [string]$Provenance,
+        [switch]$Force
     )
 
     $arguments = @($Command, '--registry', $Registry, '--cache-root', $BuildRoot)
@@ -33,6 +34,9 @@ function Invoke-Na2BuildRegistry {
         )
         if (-not [string]::IsNullOrWhiteSpace($Provenance)) {
             $arguments += @('--provenance', $Provenance)
+        }
+        if ($Force) {
+            $arguments += '--force'
         }
     }
     elseif ($Command -eq 'resolve') {

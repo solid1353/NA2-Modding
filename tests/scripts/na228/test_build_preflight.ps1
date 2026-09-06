@@ -82,6 +82,10 @@ if ($command -ceq 'lookup') {
 }
 if ($command -ceq 'record') {
     $image = Get-ArgumentValue '--image'
+    [IO.File]::WriteAllText(
+        (Join-Path $repository 'record-arguments.json'),
+        ($ArgumentList | ConvertTo-Json -Compress)
+    )
     Move-Item -LiteralPath $image -Destination $cached -Force
     [ordered]@{
         status = 'recorded'; image = $cached; output_size_bytes = 11
@@ -110,6 +114,18 @@ exit 4
         'Cache hit did not report a reused ISO.'
     Assert-BuildPreflight (-not (Test-Path -LiteralPath (Join-Path $repository 'builder-called.txt'))) `
         'Cache hit invoked the builder.'
+
+    $forced = & $buildScript -Configuration base -Force
+    $recordArguments = @(
+        Get-Content -Raw -LiteralPath (Join-Path $repository 'record-arguments.json') |
+            ConvertFrom-Json
+    )
+    Assert-BuildPreflight ($forced.Status -ceq 'built' -and -not $forced.PreflightCacheHit) `
+        'Forced build reused a cache hit.'
+    Assert-BuildPreflight (Test-Path -LiteralPath (Join-Path $repository 'builder-called.txt')) `
+        'Forced build did not invoke the builder.'
+    Assert-BuildPreflight ($recordArguments -ccontains '--force') `
+        'Forced build did not forward --force to the registry.'
 
     $missingRejected = $false
     try { $null = & $buildScript -Configuration missing }

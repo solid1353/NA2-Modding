@@ -50,6 +50,12 @@ NUN5_QUOTED_SPAN = re.compile(r"@([^@\r\n]+)@")
 NUN5_MARKUP_EQUIVALENTS = {
     "<iconOK>": "<iconCROSS>",
 }
+NUN5_FORMULA_SYMBOLS = {
+    "*": "*",
+    "=": "=",
+    "·": ".",
+    "%": "%",
+}
 VALID_TRANSFORMS = {
     "",
     "empty",
@@ -67,7 +73,9 @@ VALID_TRANSFORMS = {
     "insert_br_after_words",
     "append_space",
     "flatten_br_slice",
+    "memory_card_space",
     "escape_literal_percent",
+    "normalize_formula_symbol",
 }
 TARGET_RUNTIME_BASES = {
     "SLPS": 0x000FFF00,
@@ -561,6 +569,26 @@ def resolve_replacement_text(
                 f"{len(flattened)}"
             )
         resolved = flattened[start:end]
+    elif transform == "memory_card_space":
+        flattened = " ".join(template.replace("<br>", " ").split())
+        warning, separator, requirement = flattened.partition(". ")
+        if not separator or not requirement:
+            raise ValueError(f"{label}: memory-card donor requires two sentences")
+        if arguments["part"] == "0":
+            resolved = warning + "."
+        else:
+            source = normalize_fullwidth_ascii(str(row["source"]))
+            source_sizes = re.findall(r"([0-9]+)\s*KB\b", source)
+            donor_sizes = tuple(re.finditer(r"[0-9]+\s+KB\b", requirement))
+            if len(source_sizes) != 1 or len(donor_sizes) != 1:
+                raise ValueError(
+                    f"{label}: memory-card requirement needs one source and donor KB value"
+                )
+            size = donor_sizes[0]
+            resolved = (
+                requirement[:size.start()] + source_sizes[0] + " KB"
+                + requirement[size.end():]
+            )
     elif transform == "escape_literal_percent":
         if (
             "%" not in template
@@ -573,6 +601,18 @@ def resolve_replacement_text(
                 "literal percent"
             )
         resolved = template.replace("%", "%%")
+    elif transform == "normalize_formula_symbol":
+        match = re.fullmatch(r"( *)([*=·%])( *)", template)
+        if match is None:
+            raise ValueError(
+                f"{label}: normalize_formula_symbol requires one supported "
+                "formula symbol with optional spaces"
+            )
+        resolved = (
+            match.group(1)
+            + NUN5_FORMULA_SYMBOLS[match.group(2)]
+            + match.group(3)
+        )
     else:
         raise ValueError(f"{label}: unsupported transform {transform!r}")
     return normalize_fullwidth_ascii(prefix + resolved)
@@ -729,6 +769,9 @@ def parse_mappings(
             if set(arguments) != {"part"}:
                 raise ValueError(f"{label}: split_br requires only part=<index>")
             parse_int(arguments["part"], label)
+        elif transform == "memory_card_space":
+            if set(arguments) != {"part"} or arguments["part"] not in {"0", "1"}:
+                raise ValueError(f"{label}: memory_card_space requires only part=0 or part=1")
         elif transform == "split_br_sequence":
             if set(arguments) != {"parts"}:
                 raise ValueError(
@@ -769,6 +812,7 @@ def parse_mappings(
             "after_placeholder2",
             "append_space",
             "escape_literal_percent",
+            "normalize_formula_symbol",
         }:
             if arguments:
                 raise ValueError(f"{label}: {transform} does not accept arguments")
@@ -793,9 +837,11 @@ def parse_mappings(
                 )
             parse_int(arguments["start"], label)
             parse_int(arguments["end"], label)
-        if mode == "sequence" and transform not in {"", "split_br_sequence"}:
+        if mode == "sequence" and transform not in {
+            "", "split_br_sequence", "memory_card_space",
+        }:
             raise ValueError(
-                f"{label}: sequence mappings require blank or split_br_sequence transform"
+                f"{label}: unsupported sequence transform {transform!r}"
             )
         donor_ref = row["donor_ref"]
         if donor_ref:
@@ -967,7 +1013,9 @@ def resolve_text_materializations(
         donor_texts[mapping_id] = str(row["donor"])
         materialized_templates[mapping_id] = materialized
         if row["mode"] == "sequence":
-            if row["transform"] == "split_br_sequence":
+            if row["transform"] == "memory_card_space":
+                sequence = (resolve_replacement_text(row, mapping_id, donor_by_ref),)
+            elif row["transform"] == "split_br_sequence":
                 arguments = dict(row["arguments"])
                 parts = [
                     parse_int(value, mapping_id)

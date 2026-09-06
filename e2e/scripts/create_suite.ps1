@@ -132,7 +132,10 @@ function Test-E2eCreateRawCaptureComplete {
         [Parameter(Mandatory)][string]$CaptureRoot
     )
 
-    $artifactDirectory = Join-Path $CaptureRoot 'screenshots'
+    $artifactDirectory = $CaptureRoot
+    if ($Context.Generated) {
+        $artifactDirectory = Join-Path $artifactDirectory 'screenshots'
+    }
     return @(
         Get-ChildItem `
             -LiteralPath $artifactDirectory `

@@ -408,7 +408,7 @@ int font_v2_practice_settings_heading_adapter(
         0.0f,
         0.0f,
         FONT_V2_ALIGN_START,
-        0u,
+        1u,
         (u32)font_v2_settings_heading_callback
     );
 }

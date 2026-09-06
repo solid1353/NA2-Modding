@@ -251,5 +251,14 @@ bank `0x4E`. Player voices use category `3` through `FUN_001D2C20`. Its 93-entry
 table matches character IDs `1..0x5D`, suggesting one bank per identity, but
 that mapping remains unconfirmed.
 
+NUN5 retains the same manager layout and eager-loading sequence. Its audio
+manager pointer is at `0x00617C58`; `FUN_001DBB50` opens the four archives and
+walks the same count and buffer-pointer fields, while `FUN_001DC270` performs
+one blocking index load. The RPG and player index tables are at `0x00415BD0`
+and `0x00415E70`, and their archive handles are at `0x006101A4` and
+`0x006101A6`. The shared clip routine is `FUN_001DF0C0`. The category-3 player
+call is at `0x001D8070`, the category-2 RPG call is at `0x001DB60C`, and the
+startup caller invokes the eager initializer at `0x001DEF50`.
+
 Feature use of these clean hook and data boundaries is documented in
 [Startup](../../features/startup.md).

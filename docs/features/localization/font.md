@@ -38,17 +38,10 @@ MIPS payload blobs are not production inputs.
 
 ## Maintenance and validation
 
-The symbol mapping uses `NUN5_GLYPHS` in
-`scripts/research/localization/generate_font_assets.py` as the shared
-byte-to-donor-glyph mapping for both raster and metric generation. Literal
-`®` and `·` retain their imported bytes and select NUN5 cells `142` and `151`
-at NA2 destination cells `107` and `116`. Shared measurement uses the native
-decoder's `0x43` subtraction for extended bytes so it selects the same metric
-cell as drawing. Quotation markup, percent escaping, and controller-icon tokens
-remain the translation importer's responsibility.
-The generator writes the atlas and packed metrics under
-`na228_builder/patches/localization/font/glyphs/`. Runtime appearance remains
-unvalidated.
+Pending acceptance: `nun5_source_cell` owns donor glyph selection for both
+atlas and metrics. It supplies NUN5's `®` cell 142 at NA2 cell 107, selected
+by byte `0xAE`. All other glyphs and ASCII measurement retain the pre-change
+baseline. Extend this existing lookup; do not add a separate symbol renderer.
 
 - Broad Font layout analysis is complete. Repeat it only when new evidence
   proves the retained findings insufficient or indicates that a shared fix is
@@ -103,6 +96,28 @@ the Jutsu selector; Practice explanations; Settings rows; Ninja Song details;
 and the shared selected-style paths proven by those callers.
 
 ## Caller-specific contracts
+
+- Pending acceptance: memory-card message bodies assemble their native source
+  fragments into one paragraph and use the existing shared body-layout helper.
+  The adapter retains local origin `(22,18)`, derives its width from the window
+  interior with equal side margins, and keeps shared body spacing above a
+  reserved 30-unit button row. Its hook replaces only the body-fragment loop.
+
+- Pending acceptance: Practice Settings section headings use the shared donor
+  metrics to fit their existing 158-unit box. The correction applies to every
+  heading through the shared adapter and preserves its X/Y placement.
+
+- Pending acceptance: the Jutsu display and Practice completion plate share a
+  two-line, individually centered title adapter. The Jutsu display uses the
+  donor 208x30 box at its animated origin. The Practice plate retains its
+  original 208-unit wrapping and fitting width and centers each line on the
+  complete plate at X=256. It preserves its 28-unit glyph height and centers
+  the visible text bounds on
+  the plate's Y=300 center using existing top/bottom glyph metrics and line
+  advances. Native shake is preserved. An offline check
+  against raster bounds covered 1,065 enabled move-title entries and 2,992
+  one/two-line arrangements; native integer positioning leaves at most a
+  half-unit center error at rest. Runtime appearance remains unverified.
 
 - Character Select centers the five player-mode rows in a shrink-only
   `(8, *, 240, 20)` box. Its selected helper receives an integer X; the

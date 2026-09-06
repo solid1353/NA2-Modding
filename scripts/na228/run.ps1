@@ -2,6 +2,7 @@
 param(
     [Parameter(Mandatory)][ValidateSet('configuration-build')][string]$Action,
     [Parameter(Mandatory)][string]$Configuration,
+    [switch]$Force,
     [string]$LogDirectory
 )
 
@@ -31,6 +32,9 @@ $runTechnicalDetails = ''
 try {
     $buildArguments = @{
         Configuration = $Configuration
+    }
+    if ($Force) {
+        $buildArguments.Force = $true
     }
     if (-not [string]::IsNullOrWhiteSpace($LogDirectory)) {
         $buildArguments.LogDirectory = $LogDirectory

@@ -23,13 +23,16 @@ form's Specials grid. ID suffixes do not implicitly select a capture family.
 
 `@repository/launch_profiles/practice/NA228.pnach` and
 `@repository/launch_profiles/practice/NUN5.pnach` contain the
-complete game-specific bootstraps. Each selected game receives its own file and
-three ordinary inline PNACH lines at that game's character, support, and
-awakening configuration addresses. Those process-local lines are the sole case
-values and do not modify or regenerate either file. The normal
-PNACHs at `@pcsx2_files/games/NA228/NA228.pnach` and
-`@pcsx2_files/games/NUN5/NUN5.pnach` contain no Practice bootstrap.
-Clean NA2 is not supported yet.
+complete game-specific bootstraps. Each selected game receives its normal PNACH
+first and its Practice PNACH as an overlay, followed by three ordinary inline
+PNACH lines at that game's character, support, and awakening configuration
+addresses. Those process-local lines are the sole case values and do not modify
+or regenerate either file. The normal PNACHs at
+`@pcsx2_files/games/NA228/NA228.pnach` and
+`@pcsx2_files/games/NUN5/NUN5.pnach` contain no Practice bootstrap. Shared NUN5
+behavior, including automatic startup and Faster Loading, remains in the normal
+PNACH and is inherited by Practice without duplication. Clean NA2 is not
+supported yet.
 
 The bootstrap writes both current and match-start Player 1 fields, fixes Player
 2 to Naruto with Sakura support and the Practice stage to `6`, skips Character

@@ -1,4 +1,10 @@
 {
+  "general.disc_identity": {
+    "description": "Apply the selected disc identity to SYSTEM.CNF and the ISO9660/UDF boot-file entries.",
+    "image_patch": {
+      "operation": "select_disc_identity"
+    }
+  },
   "general.unlock_all": {
     "description": "Expose fully unlocked content and optionally assign the dormant Demon Wind Bomb selector only to Classic Naruto without changing live save data.",
     "hooks": {
@@ -133,8 +139,8 @@
       "description": "Replace the imported NUN5 game title with the configured product title before string layout.",
       "operation": "replace_imported_game_title",
       "expected_value": "Naruto Shippuden: Ultimate Ninja 5",
-      "expected_mapping_count": 6,
-      "expected_occurrence_count": 7
+      "expected_mapping_count": 7,
+      "expected_occurrence_count": 8
     }
   }
 }

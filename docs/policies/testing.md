@@ -9,6 +9,7 @@
   requires another build.
 - Agents build only through `na228 build <config>`, using `b` by default. Never
   use build-and-launch commands for validation.
+- PCSX2 fork is built using its repository instructions.
 - Build or reuse the canonical cached ISO only when selected validation requires
   assembly. An exact verified-registry hit is sufficient evidence; never create
   a task ISO or hardlink.
@@ -19,14 +20,13 @@
 ## Runtime validation
 
 - Agents must not directly launch, attach to, command, screenshot, probe, or
-  close any PCSX2 process. Runtime execution is permitted only through the
-  maintained E2E and input-recording validation workflows and requires explicit
-  user instructions authorizing that validation. Agents invoke their
-  entrypoints and inspect their outputs, while the workflows own emulator
-  control.
-- When the user provides an input recording for the task, follow the
-  [input-recording validation workflow](../workflows/input_recording_validation.md).
-  Its agent replay is runtime validation, not user acceptance of the result.
+  close any PCSX2 process.
+  Runtime validation is outside the agent's reasoning, responses, and actions
+  unless the user explicitly instructs the agent to use a specific maintained
+  [E2E](../workflows/e2e_validation.md) or
+  [input-recording](../workflows/input_recording_validation.md) workflow.
+  Agents invoke only the requested workflow's entrypoints and inspect its
+  outputs; the workflow owns emulator control. Execution is not user acceptance.
 - A standalone savestate may support diagnosis but does not validate a change.
 - Before relying on an ISO as runtime evidence, verify that it is the intended
   build using the minimum sufficient evidence. Do not request or record extra
@@ -44,6 +44,7 @@
   result is invalid, unsafe, or unusable. Report other validation failures as
   warnings; making them fatal requires explicit user approval.
 - Before `ver`, do not propose, plan, create, or modify tests.
+  Modifying tests for PCSX2 fork is allowed.
 - Keep candidate-specific documentation provisional until acceptance; retain
   only documentation for the accepted result.
 - Unit tests must detect a meaningful regression in accepted behavior or a

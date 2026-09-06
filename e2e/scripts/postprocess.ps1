@@ -23,7 +23,6 @@ if ($Action -in @('CurrentPrepare', 'ReferencePrepare')) {
             (Join-Path (Join-Path (Join-Path $Transaction 'jobs') 'current') 'suites') `
             $context.SuiteRelativePath
         $capturedRoot = Join-Path $suiteJob 'capture'
-        $capturedScreenshots = Join-Path $capturedRoot 'screenshots'
         $capturedTier = 'Current'
     }
     else {
@@ -31,8 +30,11 @@ if ($Action -in @('CurrentPrepare', 'ReferencePrepare')) {
             throw 'ReferencePrepare requires CapturedRoot.'
         }
         $capturedRoot = [IO.Path]::GetFullPath($CapturedRoot)
-        $capturedScreenshots = Join-Path $capturedRoot 'screenshots'
         $capturedTier = 'Reference'
+    }
+    $capturedScreenshots = $capturedRoot
+    if ($context.Generated) {
+        $capturedScreenshots = Join-Path $capturedScreenshots 'screenshots'
     }
 
     New-VisualRegressionPagedScreenshotGridStage `

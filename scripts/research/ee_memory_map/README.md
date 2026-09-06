@@ -14,7 +14,7 @@ task's shared log root:
 
 ```powershell
 python scripts/research/ee_memory_map/analyze_savestates.py `
-  '@pcsx2_dev/sstates/SLOP-NA228 (31D4DD8D).01' `
+  '@pcsx2_savestates/SLOP-NA228 (31D4DD8D).01' `
   --output-dir '@task_logs/EE Runtime Memory Map/<run-id>'
 ```
 

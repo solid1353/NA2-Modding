@@ -845,6 +845,7 @@ def _load_implementation(
         "hooks",
         "payload",
         "string_patch",
+        "image_patch",
         "modules",
         "startup_fast_forward_frames",
     }
@@ -1047,6 +1048,14 @@ def _load_implementation(
             ):
                 raise ValueError(f"Patch {patch_id!r}.string_patch has invalid expected coverage")
             string_patches[patch_id] = string_patch
+
+        if "image_patch" in patch:
+            image_patch = patch["image_patch"]
+            if image_patch != {"operation": "select_disc_identity"}:
+                raise ValueError(
+                    f"Patch {patch_id!r}.image_patch must declare "
+                    "operation 'select_disc_identity'"
+                )
 
         modules = patch.get("modules", [])
         if not isinstance(modules, list) or any(not isinstance(module, str) for module in modules):
@@ -2090,6 +2099,11 @@ def feature_reference_ids(
         "edits": selection.edits,
         "injections": selection.injections,
         "string_patches": selection.string_patches,
+        "image_patches": {
+            patch_id: definition["image_patch"]
+            for patch_id, definition in selection.patches.items()
+            if "image_patch" in definition
+        },
     }
     if field not in implementations:
         raise ValueError(f"Unsupported catalog implementation field: {field}")
@@ -2146,6 +2160,12 @@ def feature_has(
             and selection.injections[injection_id]["hooks"]
             for injection_id in references
         )
+    if field == "image_patches":
+        references = set(feature_reference_ids(selection, feature_id, field))
+        return any(
+            node.patch in references and (node.enabled or not enabled_only)
+            for node in selection.feature_nodes(feature_id)
+        )
     if field == "string_patches":
         references = (
             tuple(
@@ -2158,6 +2178,18 @@ def feature_has(
         )
         return bool(references)
     raise ValueError(f"Unsupported catalog implementation field: {field}")
+
+
+def selected_image_patches(
+    selection: CatalogSelection,
+) -> tuple[tuple[CatalogNode, str, dict[str, object]], ...]:
+    """Return selected image operations for the configuration composer."""
+    return tuple(
+        (node, node.patch, selection.patches[node.patch]["image_patch"])
+        for node in selection.nodes
+        if node.enabled and node.patch is not None
+        and "image_patch" in selection.patches[node.patch]
+    )
 
 
 def selected_string_patches(

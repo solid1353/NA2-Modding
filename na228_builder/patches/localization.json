@@ -25,7 +25,7 @@
         "destination_offset": "0xD9240",
         "expected_sha256": "0246A8275782ADFEEF80C7C88CD5B912741A7787F3519FFDD6A6AA60F6DE9810",
         "blob_path": "na228_builder/patches/localization/font/glyphs/nun5_semantic_14x20.bin",
-        "blob_sha256": "34FB6AFEEF7C62FAD008223F6154DC799E7249D52CA44843BC312993323ACE72"
+        "blob_sha256": "066EE3C6C0890A05631E5D74885B3E84FD604EC506F90CE29745EB05E05A20D4"
       },
       "secondary_metric_hash_values": {
         "description": "Pack each NUN5-format secondary metric row into the value word of one ascending empty primary hash slot while preserving every key and every occupied primary entry.",
@@ -34,7 +34,7 @@
         "destination_offset": "0xD5318",
         "expected_sha256": "26563C6C773B372CB0DE4845FFBE83023DAD94526AB2990B72C55EF39A7D18EF",
         "blob_path": "na228_builder/patches/localization/font/glyphs/nun5_semantic_14x20_packed_map.bin",
-        "blob_sha256": "F092EA55B4AC3B486A62E443A8672C6E4227EA5F81C05391882474FD5EB13CF4"
+        "blob_sha256": "704A3585932882FF4A0A4E57B14B5CDFD781E6B2C4E07973EC75B57A5A56FF67"
       }
     },
     "hooks": {
@@ -473,6 +473,16 @@
         "symbol": "v2_quit_choices_scope",
         "encoding": "jal26"
       },
+      "route_memory_card_body_paragraph": {
+        "description": "Replace the memory-card body fragment loop with one wrapped paragraph using the native window interior, body origin, and reserved button row; retain surrounding visibility, input, and selector handling.",
+        "target_id": "na2_elf",
+        "offset": "0xE6274",
+        "expected_hex": "9800A2AF2D88000014000010000000001C00848E9000A527FFFF062474080E0C000000009800A48F2D2800002AF0050C00000000010042249800A2AF9400A1C7F041023C0000824400000000000800469400A0E701003126000000002A103302EBFF40140000000000000000",
+        "symbol": "v2_memory_card_body_adapter",
+        "encoding": "jal26",
+        "replacement_hex": "1C00848E2D2840002D306002000000000000000078980708000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "relocation_offset": "0xC"
+      },
       "route_dedicated_return_title_screen_body": {
         "description": "Route the dedicated Return to Title Screen body call through the shared native body adapter; exact text selects the Mode Select 420x40 box at local (24,12) without publishing Collection choice scope.",
         "target_id": "na2_elf",
@@ -640,6 +650,26 @@
         "expected_hex": "C4080E0C00000000",
         "symbol": "v2_practice_title_entry",
         "encoding": "jal26"
+      },
+      "route_jutsu_display_text": {
+        "description": "Center and wrap every Jutsu display title in the NUN5 208x30 box, retaining the native moving origin and input-icon rendering.",
+        "target_id": "na2_btl",
+        "offset": "0x3E9C",
+        "expected_hex": "040042260000824400000000200380460000904400000000600380460070804480CA848FC673004606A40046001A060C0000000080CA848FF402258E5020060C00000000",
+        "symbol": "v2_jutsu_display_entry",
+        "encoding": "jal26",
+        "replacement_hex": "00009244000000002003804600009044000000006003804680CA848FF402258E000000000000000000000000000000000000000000000000000000000000000000000000",
+        "relocation_offset": "0x20"
+      },
+      "route_practice_completed_plate_text": {
+        "description": "Wrap and fit completed-move text in its original 208-unit width, center each line on the complete plate at X=256, and preserve glyph height, vertical alignment, native shake, alpha, and lifetime.",
+        "target_id": "na2_btl",
+        "offset": "0x745A8",
+        "expected_hex": "0800028E0800448C2D28000038E60D0C000000000000824400000000E000804600BF023C001082447843023C000882440000804400000000180001461C10034600AB00469343023C00008244000000004003144680CA848FC019060C000000000800028E80CA848F0800458C5020060C00000000",
+        "symbol": "v2_practice_completed_plate_entry",
+        "encoding": "jal26",
+        "replacement_hex": "0800028E80CA848F0800458C06AB004646A30046000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "relocation_offset": "0x14"
       }
     },
     "payload": {
@@ -914,6 +944,11 @@
           "v2_c_wrapped_body_common": {
             "object": "localization.font.v2.c.text.font.v2.wrapped.body.common"
           },
+          "v2_memory_card_body_adapter": {
+            "object": "localization.font.v2.c.text.font.v2.memory.card.body.adapter",
+            "abi": "arg0_text_arg2",
+            "description": "Memory-card message paragraph"
+          },
           "v2_quit_body_adapter": {
             "object": "localization.font.v2.c.text.font.v2.quit.body.adapter",
             "abi": "arg0_text_arg2",
@@ -1173,6 +1208,31 @@
         "kind": "data",
         "alignment": 4,
         "value": "00000000"
+      },
+      "v2_move_displays": {
+        "kind": "c",
+        "path": "src/localization/font/font_v2_move_displays.c",
+        "namespace": "localization.font.v2.c",
+        "imports": {
+          "font_glyph_metric_lookup": "glyph_metric_lookup",
+          "font_v2_adapter_call": "v2_adapter_call",
+          "font_v2_wrap_retry": "v2_c_wrap_retry",
+          "font_v2_native_measure": "v2_native_measure"
+        },
+        "fragments": {
+          "v2_move_display_callback": {
+            "object": "localization.font.v2.c.text.font.v2.move.display.callback"
+          },
+          "v2_move_display_draw": {
+            "object": "localization.font.v2.c.text.font.v2.move.display.draw"
+          },
+          "v2_jutsu_display_entry": {
+            "object": "localization.font.v2.c.text.font.v2.jutsu.display.entry"
+          },
+          "v2_practice_completed_plate_entry": {
+            "object": "localization.font.v2.c.text.font.v2.practice.completed.plate.entry"
+          }
+        }
       }
     }
   },
@@ -2213,6 +2273,22 @@
         "expected_hex": "010045002A001600",
         "replacement_hex": "4000580040001400"
       },
+      "practice_completed_plate_ok_rectangle": {
+        "description": "Import the complete NUN5 English OK-stamp atlas rectangle selected by SLES_556.05 at 0x005DDC48 for the gameplay completed-move plate.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x504E58",
+        "expected_hex": "D10001002E003E00",
+        "replacement_hex": "5000000030004000"
+      },
+      "practice_completed_plate_ok_rotation": {
+        "description": "Use the NUN5 stamp rotation bits 0x3FA2A974 from BTL 0x0073E88C, encoded in the existing NA2 v0 register; preserve its scale and shake-relative anchor.",
+        "operation": "replace",
+        "destination_target_id": "na2_btl",
+        "destination_offset": "0x7458C",
+        "expected_hex": "99BE023C9A994234",
+        "replacement_hex": "A23F023C74A94234"
+      },
       "practice_settings_prompt": {
         "description": "Copy the structurally equivalent official NUN5 Practice Settings X=100 instruction.",
         "operation": "replace",
@@ -3113,6 +3189,22 @@
         "expected_hex": "9643023C",
         "replacement_hex": "8243023C"
       },
+      "ultimate_jutsu_damage_rectangles": {
+        "description": "Use NUN5 English damage-label rectangles from SLES_556.05 live 0x005DDC30, converted to NA2's 20-byte sprite records in native record order.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x4AC2E4",
+        "expected_hex": "200032000000000000000000000000420000484210003C00000000420000000000008041000070421000400000000000000080420000804100008042",
+        "replacement_hex": "3C001C000000000000008041000070420000E04140001000000000000000000000008042000080413C001C00000000000000C842000070420000E041"
+      },
+      "ultimate_jutsu_input_result_rectangles": {
+        "description": "Use the complete NUN5 Success! and Failed rectangles from SLES_556.05 0x005DDBF0, converted to NA2's 20-byte sprite records.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x4ACD50",
+        "expected_hex": "380018000000C0410000D042000060420000C041300018000000A0420000D042000040420000C041",
+        "replacement_hex": "60001800000000420000D0420000C0420000C04118004C0000000000000000000000C04100009842"
+      },
       "ultimate_jutsu_label": {
         "description": "Match the one-part English OUGI label layout used by both NUN5 and NUN6.",
         "operation": "replace",
@@ -3120,6 +3212,14 @@
         "destination_offset": "0xB5E80",
         "expected_hex": "0200422A",
         "replacement_hex": "0100422A"
+      },
+      "ultimate_jutsu_result_rectangles": {
+        "description": "Use the complete NUN5 English OK/ERROR rectangles from SLES_556.05 live 0x005DDC20, converted to NA2's 20-byte sprite records.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x4AC2A0",
+        "expected_hex": "20004000000000420000000000000042000080422000400000000000000000000000004200008042",
+        "replacement_hex": "40002000000000000000004200008042000000424000200000000000000000000000804200000042"
       },
       "vs_confirmation__battle_settings_x_94": {
         "description": "Move Battle Settings from X=60 to the official NUN5 X=94 anchor so the localized 160-pixel prompt is not clipped.",
@@ -3233,6 +3333,30 @@
         "offset": "0x9BA0",
         "expected_hex": "10EF0D0C00000000",
         "symbol": "localization_ui_jutsu_selector_arrow_draw_upper",
+        "encoding": "jal26"
+      },
+      "draw_ultimate_jutsu_damage_bubble": {
+        "description": "Match NUN5's quarter-turn damage bubble and X=60/452 anchors while retaining native animation and sprite lifetime.",
+        "target_id": "na2_elf",
+        "offset": "0x25FF04",
+        "expected_hex": "28991D0C00000000",
+        "symbol": "localization_ui_ultimate_jutsu_damage_draw",
+        "encoding": "jal26"
+      },
+      "draw_ultimate_jutsu_damage_label": {
+        "description": "Draw the English damage label upright at NUN5's X=60/452 anchors through the same sprite helper.",
+        "target_id": "na2_elf",
+        "offset": "0x25FF3C",
+        "expected_hex": "28991D0C00000000",
+        "symbol": "localization_ui_ultimate_jutsu_damage_draw",
+        "encoding": "jal26"
+      },
+      "draw_ultimate_jutsu_input_result": {
+        "description": "Match NUN5's per-label rotation for every animated Success! and Failed sprite while preserving native position, scale, and opacity.",
+        "target_id": "na2_elf",
+        "offset": "0x26B278",
+        "expected_hex": "28991D0C00000000",
+        "symbol": "localization_ui_ultimate_jutsu_input_result_draw",
         "encoding": "jal26"
       },
       "fit_battle_hud_name_width": {
@@ -3438,6 +3562,20 @@
           },
           "localization_ui_vs_confirmation_jutsu_label_place": {
             "object": "localization.ui.layout.abi.text.localization.ui.vs.confirmation.jutsu.label.place"
+          }
+        }
+      },
+      "ultimate_jutsu": {
+        "kind": "c",
+        "path": "src/localization/ui/ultimate_jutsu.c",
+        "namespace": "localization.ui.ultimate.jutsu",
+        "imports": {},
+        "fragments": {
+          "localization_ui_ultimate_jutsu_damage_draw": {
+            "object": "localization.ui.ultimate.jutsu.text.localization.ui.ultimate.jutsu.damage.draw"
+          },
+          "localization_ui_ultimate_jutsu_input_result_draw": {
+            "object": "localization.ui.ultimate.jutsu.text.localization.ui.ultimate.jutsu.input.result.draw"
           }
         }
       }

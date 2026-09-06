@@ -70,6 +70,7 @@ class BuildConfiguration:
     modules: tuple[ModuleInvocation, ...]
     selection: CatalogSelection
     character_overrides: CharacterOverrideConfiguration | None = None
+    identity_patch_id: str | None = None
 
 
 def _settings_object(value: object, keys: set[str], label: str) -> dict[str, object]:
@@ -263,8 +264,6 @@ def _validated_settings(
         raise ValueError(
             f"Settings output_boot_path must be normalized: {output_boot_path!r}"
         )
-    if output_boot_path == SOURCE_BOOT_PATH:
-        raise ValueError("Settings output_boot_path must differ from the source boot path")
     if len(SOURCE_BOOT_PATH.encode("ascii")) != len(output_boot_path.encode("ascii")):
         raise ValueError(
             "Settings output_boot_path must have the source boot path's byte length"
@@ -426,6 +425,19 @@ def _load_configuration(
         )
     settings_path = paths.file("project_settings").resolve()
     output_boot_path, product_title, startup_frames = _validated_settings(settings_path)
+    image_patches = catalog_module.selected_image_patches(selection)
+    if len(image_patches) > 1:
+        raise ValueError("Configuration selects multiple boot-path replacements")
+    identity_patch_id = image_patches[0][1] if image_patches else None
+    if identity_patch_id is None:
+        output_boot_path = SOURCE_BOOT_PATH
+    else:
+        identity_node = image_patches[0][0]
+        output_boot_path = {
+            "NA2": SOURCE_BOOT_PATH,
+            "NUN5": "SLES_556.05",
+            "NA228": output_boot_path,
+        }[identity_node.configured_value]
     for frames in startup_frames:
         catalog_module.startup_fast_forward_frames(selection, frames)
     roots = _resolved_roots(paths, root_overrides)
@@ -505,6 +517,12 @@ def _load_configuration(
                 "string_patches",
                 enabled_only=True,
             )
+            and not catalog_module.feature_has(
+                selection,
+                feature_id,
+                "image_patches",
+                enabled_only=True,
+            )
         ):
             raise ValueError(f"Catalog feature owns no executable data: {feature_id}")
         features.append(
@@ -538,6 +556,7 @@ def _load_configuration(
         modules=tuple(modules),
         selection=selection,
         character_overrides=character_overrides,
+        identity_patch_id=identity_patch_id,
     )
 
 

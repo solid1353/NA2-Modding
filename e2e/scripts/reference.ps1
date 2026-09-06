@@ -146,7 +146,7 @@ if ($PSCmdlet.ParameterSetName -ceq 'Capture') {
         -LaunchProfile $context.LaunchProfile `
         -ConcurrencyPoolRoot $ConcurrencyPoolRoot `
         -ConcurrencyLimit $ConcurrencyLimit
-    $capturedScreenshots = Join-Path $CaptureOutputRoot 'screenshots'
+    $capturedScreenshots = $CaptureOutputRoot
     if (@(Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File).Count -eq 0) {
         throw 'Reference replay completed without captured screenshots.'
     }
@@ -187,7 +187,7 @@ try {
             -ConcurrencyPoolRoot $ConcurrencyPoolRoot `
             -ConcurrencyLimit $ConcurrencyLimit
     }
-    $capturedScreenshots = Join-Path $runtimeCapture 'screenshots'
+    $capturedScreenshots = $runtimeCapture
     if (@(Get-ChildItem -LiteralPath $capturedScreenshots -Filter '*.png' -File).Count -eq 0) {
         throw 'Reference replay completed without captured screenshots.'
     }

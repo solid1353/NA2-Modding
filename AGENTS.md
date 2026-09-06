@@ -42,7 +42,6 @@ Immediately before beginning state-changing work in any workflow, state:
 
 ```text
 Changes: <what will be changed>
-Validation: <how the changes will be validated>
 Required user actions: <later user action or nothing>
 <workflow-specific settings>
 ```

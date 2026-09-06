@@ -13,6 +13,9 @@ A complete standalone or released `.jsonc` configuration has one root field:
 an internal `overrides` root to customize `base.features`. Line comments,
 block comments, and trailing commas are accepted.
 
+Document each non-Boolean scalar JSONC setting's allowed values and constraints
+in an inline comment synchronized with the catalog.
+
 ## Nodes and configuration values
 
 A plain object is a structural container. Its fields are catalog nodes and may

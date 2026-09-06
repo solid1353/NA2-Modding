@@ -849,7 +849,7 @@ def capture_state(
         raise UiRuntimeError("Capture timeout must be positive")
 
     rendering, image_path = _validated_target_context(paths, target)
-    state_root = paths.path("pcsx2_dev", "sstates")
+    state_root = paths.path("pcsx2_savestates")
     state_root.mkdir(parents=True, exist_ok=True)
     before = _slot_state_snapshot(state_root)
 
@@ -882,7 +882,7 @@ def capture_state(
 def _manual_state_path(paths: Paths, target: Target, slot: int) -> Path:
     _validate_case_and_slot("manual", slot)
     return paths.path(
-        "pcsx2_dev", "sstates", f"{target.serial} ({target.crc}).{slot:02d}"
+        "pcsx2_savestates", f"{target.serial} ({target.crc}).{slot:02d}"
     )
 
 

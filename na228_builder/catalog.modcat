@@ -112,6 +112,10 @@
     },
     general: {
       description: "General game-wide features.",
+      disc_identity: setting<"NA2" | "NUN5" | "NA228"> {
+        description: "Select the disc identity used for emulator recognition and compatibility fixes.",
+        patch: "general.disc_identity",
+      },
       unlock_all: setting<{ demon_wind_bomb?: bool }> {
         description: "Expose the characters, supports, stages, jutsu, Shop items, and Collection entries present in a fully unlocked save without changing saved progress, currency, inventory, or settings.",
         patch: "general.unlock_all",

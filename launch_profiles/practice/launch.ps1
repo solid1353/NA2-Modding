@@ -210,7 +210,11 @@ foreach ($requestedGame in $Games) {
     if ($isCachedBuild) {
         $selector = [IO.Path]::GetFileNameWithoutExtension($candidate)
         $entry = [pscustomobject]@{ Name = 'NA2.28' }
-        $pnachName = 'NA228.pnach'
+        $basePnachPath = [IO.Path]::GetFullPath((Join-Path `
+            $paths.pcsx2_files `
+            'games\NA228\NA228.pnach' `
+        ))
+        $practicePnachName = 'NA228.pnach'
     }
     else {
         $selector = $requestedGame.ToLowerInvariant()
@@ -224,7 +228,10 @@ foreach ($requestedGame in $Games) {
         $entry = $paths.games.Entries.PSObject.Properties[
             [string]$alias.Value
         ].Value
-        $pnachName = [IO.Path]::GetFileName([string]$entry.Config.cheats)
+        $basePnachPath = [IO.Path]::GetFullPath([string]$entry.Config.cheats)
+        $practicePnachName = [IO.Path]::GetFileName(
+            [string]$entry.Config.cheats
+        )
     }
     if ($isCachedBuild) {
         $addresses = @('001ED600', '001ED604', '001ED608')
@@ -315,11 +322,20 @@ foreach ($requestedGame in $Games) {
         )
     }
 
-    $pnachPath = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot $pnachName))
-    if (-not (Test-Path -LiteralPath $pnachPath -PathType Leaf)) {
-        throw "Practice launch profile PNACH does not exist: $pnachPath"
+    if (-not (Test-Path -LiteralPath $basePnachPath -PathType Leaf)) {
+        throw "Base game PNACH does not exist: $basePnachPath"
     }
-    $pnachByGame[$selector] = $pnachPath
+    $practicePnachPath = [IO.Path]::GetFullPath((Join-Path `
+        $PSScriptRoot `
+        $practicePnachName `
+    ))
+    if (-not (Test-Path -LiteralPath $practicePnachPath -PathType Leaf)) {
+        throw "Practice launch profile PNACH does not exist: $practicePnachPath"
+    }
+    $pnachByGame[$selector] = [string[]]@(
+        $basePnachPath
+        $practicePnachPath
+    )
     $pnachLinesByGame[$selector] = [string[]]@(
         for ($index = 0; $index -lt $addresses.Count; $index++) {
             (

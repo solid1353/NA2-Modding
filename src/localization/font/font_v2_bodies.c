@@ -69,6 +69,14 @@
 /* Mode Select bottom body is intentionally limited to one line. */
 #define FONT_MODE_SELECT_BODY_LINE_LIMIT 1u
 
+/* Native memory-card body origin, with equal left and right insets. */
+#define FONT_MEMORY_CARD_BODY_X 22.0f
+#define FONT_MEMORY_CARD_BODY_Y 18.0f
+
+/* Reserve one native 30-unit row at the bottom for the existing buttons. */
+#define FONT_MEMORY_CARD_BODY_FOOTER_HEIGHT 30.0f
+#define FONT_MEMORY_CARD_BODY_LINE_HEIGHT 20.0f
+
 /* Fixed runtime pointer identifying Special Controls ON. */
 #define FONT_SPECIAL_ON_TEXT 0x006059F0u
 
@@ -241,6 +249,68 @@ int font_v2_wrapped_body_common(
     frame.session.callback_arg2 = arg2;
     frame.session.callback_arg3 = (u32)&frame.session;
     return font_v2_adapter_call(&frame.session);
+}
+
+FONT_V2_SECTION(".text.font_v2_memory_card_body_adapter")
+int font_v2_memory_card_body_adapter(
+    u32 window,
+    const u8 *text,
+    u32 fragment_limit
+) {
+    volatile u8 *window_bytes = (volatile u8 *)window;
+    u8 paragraph[FONT_BODY_BUFFER_SIZE];
+    u32 length = 0u;
+    u32 fragment;
+    float width;
+    float height;
+
+    if (!window || !text || !fragment_limit || !window_bytes[0x62]) {
+        return 0;
+    }
+
+    width = *(volatile float *)(window_bytes + 0x0c) -
+        2.0f * (float)*(volatile s16 *)(window_bytes + 0x30) -
+        2.0f * FONT_MEMORY_CARD_BODY_X;
+    height = *(volatile float *)(window_bytes + 0x10) -
+        2.0f * (float)*(volatile s16 *)(window_bytes + 0x32) -
+        FONT_MEMORY_CARD_BODY_Y - FONT_MEMORY_CARD_BODY_FOOTER_HEIGHT;
+    if (width < 1.0f || height < FONT_MEMORY_CARD_BODY_LINE_HEIGHT) {
+        return -1;
+    }
+
+    for (fragment = 0u; fragment < fragment_limit && *text; fragment++) {
+        if (length) {
+            if (length >= sizeof(paragraph) - 1u) {
+                return -1;
+            }
+            paragraph[length++] = ' ';
+        }
+        while (*text) {
+            if (length >= sizeof(paragraph) - 1u) {
+                return -1;
+            }
+            paragraph[length++] = *text++;
+        }
+        text++;
+    }
+    if (!length) {
+        return 0;
+    }
+    paragraph[length] = 0u;
+
+    return font_v2_wrapped_body_common(
+        window,
+        paragraph,
+        15u,
+        FONT_MEMORY_CARD_BODY_X,
+        FONT_MEMORY_CARD_BODY_Y,
+        (u32)width,
+        (u32)height,
+        FONT_MEMORY_CARD_BODY_LINE_HEIGHT,
+        (u32)(height / FONT_MEMORY_CARD_BODY_LINE_HEIGHT),
+        (u32)font_v2_collection_body_callback,
+        0.0f
+    );
 }
 
 FONT_V2_SECTION(".text.font_v2_quit_body_adapter")

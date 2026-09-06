@@ -35,25 +35,25 @@ DOCUMENTED_MWO3_MAGIC = 0x336F574D
 
 class IdentityTests(unittest.TestCase):
     def test_parses_pcsx2_state_name(self) -> None:
-        identity = parse_state_identity(Path("SLPS-25837 (c0659ad1).03.p2s"))
+        identity = parse_state_identity(Path("SLPS-25837 (c0659ad1).03"))
         self.assertEqual(identity.serial, "SLPS-25837")
         self.assertEqual(identity.crc, "C0659AD1")
         self.assertEqual(identity.slot, 3)
 
     def test_parses_project_state_name(self) -> None:
-        identity = parse_state_identity(Path("SLOP-NA228 (7db97f53).06.p2s"))
+        identity = parse_state_identity(Path("SLOP-NA228 (7db97f53).06"))
         self.assertEqual(identity.serial, "SLOP-NA228")
         self.assertEqual(identity.crc, "7DB97F53")
         self.assertEqual(identity.slot, 6)
 
     def test_rejects_unrecognized_name(self) -> None:
         with self.assertRaises(MemoryMapError):
-            parse_state_identity(Path("state.p2s"))
+            parse_state_identity(Path("state"))
 
     def test_parses_e2e_transaction_state(self) -> None:
         path = Path(
             "e2e/.transactions/run-example/jobs/padded/suites/collection/"
-            "capture/sstates/0039.p2s"
+            "capture/sstates/0039"
         )
         identity = parse_state_identity(path)
         self.assertEqual(identity.serial, "SLOP-NA228")
@@ -63,7 +63,7 @@ class IdentityTests(unittest.TestCase):
 
     def test_parses_user_recording_capture_state(self) -> None:
         path = Path(
-            "work/E2E/captures/bootstrap/baseline/sstates/0001.p2s"
+            "work/E2E/captures/bootstrap/baseline/sstates/0001"
         )
         identity = parse_state_identity(path)
         self.assertEqual(identity.serial, "SLOP-NA228")
@@ -74,7 +74,7 @@ class IdentityTests(unittest.TestCase):
 
     def test_rejects_numeric_name_outside_e2e_transaction(self) -> None:
         with self.assertRaises(MemoryMapError):
-            parse_state_identity(Path("0039.p2s"))
+            parse_state_identity(Path("0039"))
 
 
 class AllocatorTests(unittest.TestCase):

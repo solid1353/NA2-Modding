@@ -148,13 +148,17 @@ function ConvertFrom-UnWorkshopLaunchArguments {
 }
 '@)
     [IO.File]::WriteAllText((Join-Path $repository 'scripts\na228\run.ps1'), @'
-param([string]$Action, [string]$Configuration, [string]$LogDirectory)
+param([string]$Action, [string]$Configuration, [string]$LogDirectory, [switch]$Force)
 $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $image = Join-Path $repository "build\$Configuration.iso"
 [IO.File]::WriteAllText($image, "built-$Configuration")
 [IO.File]::WriteAllText(
     (Join-Path $repository 'build.json'),
-    ([ordered]@{ action = $Action; configuration = $Configuration } | ConvertTo-Json -Compress)
+    ([ordered]@{
+        action = $Action
+        configuration = $Configuration
+        force = $Force.IsPresent
+    } | ConvertTo-Json -Compress)
 )
 [pscustomobject]@{ OutputIso = $image }
 '@)
@@ -208,6 +212,12 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
         Assert-CommandRouting ($build.configuration -ceq 'base') 'Build alias did not resolve to base.'
         Assert-CommandRouting (-not (Test-Path -LiteralPath (Join-Path $repository 'launch.json'))) `
             'Build-only command launched a game.'
+
+        $null = Invoke-FakeNa228 -ArgumentList @('build', '-f')
+        $build = Get-Content -Raw -LiteralPath (Join-Path $repository 'build.json') | ConvertFrom-Json
+        Assert-CommandRouting (
+            $build.configuration -ceq 'base' -and $build.force
+        ) 'Forced build did not default to base or forward -f.'
 
         $null = Invoke-FakeNa228 -ArgumentList @('build', 'foo')
         $build = Get-Content -Raw -LiteralPath (Join-Path $repository 'build.json') | ConvertFrom-Json

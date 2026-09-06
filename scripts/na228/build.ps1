@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string]$Configuration,
+    [switch]$Force,
     [string]$LogDirectory
 )
 
@@ -83,7 +84,7 @@ $registryArguments = @{
     Configuration = $configurationRelative
 }
 $verification = Invoke-Na2BuildRegistry -Command lookup @registryArguments
-$cacheHit = $verification.status -eq 'hit'
+$cacheHit = -not $Force -and $verification.status -eq 'hit'
 
 if ($cacheHit) {
     Write-Host (
@@ -124,7 +125,7 @@ else {
         }
         $recorded = Invoke-Na2BuildRegistry -Command record @registryArguments `
             -ExpectedFingerprint ([string]$verification.fingerprint) `
-            -Image $incomingIso -Provenance $configurationLog
+            -Image $incomingIso -Provenance $configurationLog -Force:$Force
         if ($recorded.status -ne 'recorded') {
             throw "Verified build was not registered: $($recorded.reason)"
         }

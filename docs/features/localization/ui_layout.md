@@ -66,6 +66,12 @@ timing. Exact source and donor relationships are documented in
 
 ## Battle prompts, settings, and results
 
+Pending acceptance: the Practice completed-move plate uses the official NUN5
+English OK-stamp rectangle and rotation with the existing imported atlas.
+Its native anchor, animated scale, alpha, and lifetime remain unchanged.
+Runtime appearance remains unverified. The paired title layouts and donor
+evidence are recorded in [Practice layouts](../../knowledge/localization/font/screen_layouts/practice.md).
+
 Mash prompts use the complete seven-record NUN5 English main-prompt table while
 retaining NA2's renderer, object layout, and separate controller-glyph table.
 Battle and Practice Settings use NA2-compatible effective prompt anchors; their

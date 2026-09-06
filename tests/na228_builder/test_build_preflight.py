@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
@@ -198,6 +199,8 @@ class BuildPreflightTests(unittest.TestCase):
         self,
         paths: dict[str, Path],
         expected_fingerprint: str,
+        *,
+        force: bool = False,
     ) -> dict[str, object]:
         incoming = paths["cache"] / ".incoming" / "candidate.iso"
         incoming.parent.mkdir(parents=True, exist_ok=True)
@@ -213,6 +216,7 @@ class BuildPreflightTests(unittest.TestCase):
             expected_fingerprint=expected_fingerprint,
             image=incoming,
             provenance=provenance,
+            force=force,
         )
 
     def test_fingerprint_is_deterministic_and_invalidates_every_declared_input(self) -> None:
@@ -472,6 +476,43 @@ class BuildPreflightTests(unittest.TestCase):
             registry = json.loads(paths["registry"].read_text(encoding="utf-8"))
             self.assertEqual(len(registry["entries"]), 2)
             self.assertEqual(len(registry["images"]), 1)
+
+    def test_forced_identical_output_gets_a_fresh_timestamped_iso(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self.create_workspace(Path(directory))
+            fingerprint = state_fingerprint(self.state(paths))
+            local_timezone = datetime.now().astimezone().tzinfo
+            first_time = datetime(2026, 9, 6, 14, 31, 47, tzinfo=local_timezone)
+            second_time = datetime(2026, 9, 6, 14, 31, 48, tzinfo=local_timezone)
+
+            with (
+                mock.patch.object(build_preflight, "datetime") as clock,
+                mock.patch.object(build_preflight.time, "sleep") as sleep,
+            ):
+                clock.now.side_effect = [
+                    first_time,
+                    first_time,
+                    first_time,
+                    first_time,
+                    second_time,
+                    second_time,
+                    second_time,
+                ]
+                first = self.record(paths, fingerprint)
+                second = self.record(paths, fingerprint, force=True)
+
+            first_image = Path(str(first["image"]))
+            second_image = Path(str(second["image"]))
+            self.assertNotEqual(first_image, second_image)
+            self.assertIn("2026-09-06 14.31.47", first_image.name)
+            self.assertIn("2026-09-06 14.31.48", second_image.name)
+            sleep.assert_called_once_with(0.01)
+            self.assertFalse(first_image.exists())
+            self.assertTrue(second_image.is_file())
+            self.assertEqual(
+                len(list(paths["cache"].glob("NA v2.28 - *.iso"))),
+                1,
+            )
 
     def test_resolve_returns_the_newest_configuration_build(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

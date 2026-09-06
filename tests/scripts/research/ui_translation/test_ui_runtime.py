@@ -9,7 +9,6 @@ import tempfile
 import threading
 import time
 import unittest
-import zipfile
 from pathlib import Path
 from unittest import mock
 
@@ -206,9 +205,9 @@ class StateArchiveTests(unittest.TestCase):
     def test_extract_embedded_screenshot(self) -> None:
         screenshot = minimal_png(512, 448)
         with tempfile.TemporaryDirectory() as raw_temp:
-            state = Path(raw_temp) / "state.p2s"
-            with zipfile.ZipFile(state, "w", zipfile.ZIP_DEFLATED) as archive:
-                archive.writestr("Screenshot.png", screenshot)
+            state = Path(raw_temp) / "state"
+            state.mkdir()
+            (state / "Screenshot.png").write_bytes(screenshot)
 
             extracted = ui_runtime.extract_embedded_screenshot(state)
 
@@ -227,12 +226,12 @@ class StateArchiveTests(unittest.TestCase):
         )
         with tempfile.TemporaryDirectory() as raw_temp:
             root = Path(raw_temp)
-            state = root / "SLOP-NA228 (71ADE583).09.p2s"
+            state = root / "SLOP-NA228 (71ADE583).09"
 
             def create_state() -> None:
                 time.sleep(0.05)
-                with zipfile.ZipFile(state, "w", zipfile.ZIP_DEFLATED) as archive:
-                    archive.writestr("Screenshot.png", screenshot)
+                state.mkdir()
+                (state / "Screenshot.png").write_bytes(screenshot)
 
             worker = threading.Thread(target=create_state)
             worker.start()
@@ -250,6 +249,7 @@ class StateArchiveTests(unittest.TestCase):
             repository = root / "repository"
             source = root / "source"
             pcsx2 = root / "pcsx2"
+            savestates = repository / "pcsx2_files" / "sstates"
             build = repository / "build"
             work = repository / "work"
             for directory in (
@@ -257,7 +257,7 @@ class StateArchiveTests(unittest.TestCase):
                 source,
                 pcsx2 / "inis",
                 repository / "pcsx2_files" / "games" / "NA228",
-                pcsx2 / "sstates",
+                savestates,
                 build,
                 work,
             ):
@@ -278,6 +278,7 @@ class StateArchiveTests(unittest.TestCase):
                     "source": source,
                     "pcsx2_dev": pcsx2,
                     "pcsx2_files": repository / "pcsx2_files",
+                    "pcsx2_savestates": savestates,
                     "build": build,
                     "work": work,
                 },
@@ -310,15 +311,9 @@ class StateArchiveTests(unittest.TestCase):
                     )
 
                 def save_state(self, slot: int) -> None:
-                    state = (
-                        pcsx2
-                        / "sstates"
-                        / f"{target.serial} ({target.crc}).{slot:02d}.p2s"
-                    )
-                    with zipfile.ZipFile(
-                        state, "w", zipfile.ZIP_DEFLATED
-                    ) as archive:
-                        archive.writestr("Screenshot.png", screenshot)
+                    state = savestates / f"{target.serial} ({target.crc}).{slot:02d}"
+                    state.mkdir()
+                    (state / "Screenshot.png").write_bytes(screenshot)
 
             with mock.patch.object(
                 ui_runtime.PineClient, "connect", return_value=FakeClient()
@@ -343,7 +338,7 @@ class StateArchiveTests(unittest.TestCase):
             self.assertEqual(manifest["screenshot"]["width"], 640)
             self.assertEqual(manifest["screenshot"]["height"], 448)
             self.assertTrue(result["slot_state_removed"])
-            self.assertEqual(list((pcsx2 / "sstates").iterdir()), [])
+            self.assertEqual(list(savestates.iterdir()), [])
 
     def test_manual_f1_import_preserves_source_state(self) -> None:
         screenshot = minimal_png(512, 448)
@@ -352,6 +347,7 @@ class StateArchiveTests(unittest.TestCase):
             repository = root / "repository"
             source = root / "source"
             pcsx2 = root / "pcsx2"
+            savestates = repository / "pcsx2_files" / "sstates"
             build = repository / "build"
             work = repository / "work"
             for directory in (
@@ -359,7 +355,7 @@ class StateArchiveTests(unittest.TestCase):
                 source,
                 pcsx2 / "inis",
                 repository / "pcsx2_files" / "games" / "NUN5",
-                pcsx2 / "sstates",
+                savestates,
                 build,
                 work,
             ):
@@ -380,6 +376,7 @@ class StateArchiveTests(unittest.TestCase):
                     "source": source,
                     "pcsx2_dev": pcsx2,
                     "pcsx2_files": repository / "pcsx2_files",
+                    "pcsx2_savestates": savestates,
                     "build": build,
                     "work": work,
                 },
@@ -393,9 +390,9 @@ class StateArchiveTests(unittest.TestCase):
                 image_value="nun5_iso",
                 settings_file="games/NUN5/NUN5.ini",
             )
-            state = pcsx2 / "sstates" / "SLES-55605 (C071D4C1).01.p2s"
-            with zipfile.ZipFile(state, "w", zipfile.ZIP_DEFLATED) as archive:
-                archive.writestr("Screenshot.png", screenshot)
+            state = savestates / "SLES-55605 (C071D4C1).01"
+            state.mkdir()
+            (state / "Screenshot.png").write_bytes(screenshot)
 
             result = ui_runtime.import_state(
                 paths,
@@ -419,9 +416,9 @@ class StateArchiveTests(unittest.TestCase):
             )
             self.assertEqual(
                 manifest["state"]["source_path"],
-                "@pcsx2_dev/sstates/SLES-55605 (C071D4C1).01.p2s",
+                "@pcsx2_savestates/SLES-55605 (C071D4C1).01",
             )
-            self.assertTrue(state.is_file())
+            self.assertTrue(state.is_dir())
             self.assertFalse(result["slot_state_removed"])
 
 

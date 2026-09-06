@@ -82,6 +82,7 @@
       }
     },
     "general": {
+      "disc_identity": "NUN5",                   // "NA2" | "NUN5" | "NA228"
       "replace_imported_game_title": true,
       "unlock_all": {
         "demon_wind_bomb": true
@@ -100,7 +101,7 @@
     },
     "character_select": {
       "balance_overlay": true,
-      "support_selection": "all"                  // "all" | "relevant" | "none"
+      "support_selection": "none"                  // "all" | "relevant" | "none"
     },
     "mode_select": {
       "remove_adventure": true,

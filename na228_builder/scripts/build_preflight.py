@@ -582,6 +582,7 @@ def record_registry(
     expected_fingerprint: str,
     image: Path,
     provenance: Path | None,
+    force: bool = False,
 ) -> dict[str, object]:
     fingerprint = state_fingerprint(state)
     if fingerprint != expected_fingerprint:
@@ -612,7 +613,7 @@ def record_registry(
             cache_root.mkdir(parents=True, exist_ok=True)
             images = registry["images"]
             assert isinstance(images, dict)
-            existing_image = images.get(sha256)
+            existing_image = None if force else images.get(sha256)
             if isinstance(existing_image, dict):
                 if existing_image.get("size") != size:
                     raise RuntimeError(
@@ -632,12 +633,16 @@ def record_registry(
                 cache_image_preexisting = True
                 image.unlink()
             else:
-                local_timestamp = datetime.now().astimezone().strftime(
-                    "%Y-%m-%d %H.%M.%S"
-                )
-                cache_image = cache_root / (
-                    f"{ISO_NAME_PREFIX} - {local_timestamp} - {sha256[:12]}.iso"
-                )
+                while True:
+                    local_timestamp = datetime.now().astimezone().strftime(
+                        "%Y-%m-%d %H.%M.%S"
+                    )
+                    cache_image = cache_root / (
+                        f"{ISO_NAME_PREFIX} - {local_timestamp} - {sha256[:12]}.iso"
+                    )
+                    if not force or not cache_image.exists():
+                        break
+                    time.sleep(0.01)
                 if cache_image.exists():
                     if not _valid_image(cache_image, size, sha256):
                         raise RuntimeError(f"Cached ISO name collision: {cache_image}")
@@ -719,6 +724,7 @@ def main() -> int:
             command.add_argument("--expected-fingerprint", required=True)
             command.add_argument("--image", required=True, type=Path)
             command.add_argument("--provenance", type=Path)
+            command.add_argument("--force", action="store_true")
     command = subparsers.add_parser("resolve")
     command.add_argument("--registry", required=True, type=Path)
     command.add_argument("--cache-root", required=True, type=Path)
@@ -750,6 +756,7 @@ def main() -> int:
                 expected_fingerprint=args.expected_fingerprint.upper(),
                 image=args.image,
                 provenance=args.provenance,
+                force=args.force,
             )
     else:
         result = resolve_registry(

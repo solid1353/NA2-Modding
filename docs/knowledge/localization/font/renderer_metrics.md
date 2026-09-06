@@ -38,6 +38,14 @@ by its axis scale. A 24x28 secondary descriptor is therefore presented as
 produces 28x28 and damages horizontal geometry; the cross-game difference is
 specifically secondary vertical extent.
 
+NA2 `FUN_00186F90` copies the secondary cell into a padded glyph texture;
+`FUN_00187CC0` uses the descriptor's output height for the texture's V extent,
+including transparent rows beyond the cell's ink. At matching texture and quad
+heights, an ink row
+maps to one local Y unit. Centering the whole quad or the cell's line advance
+does not by itself center the visible letters. The four metric bytes describe
+left, top, right, and bottom transparent margins minus one, clamped to zero.
+
 The compared donor cells do not become heavier when mapped through clean NA2's
 palette. Across 85 cells and 23,800 source samples, alpha mass changes by a
 ratio of `0.993762`, making it fractionally lighter. The observed height deficit

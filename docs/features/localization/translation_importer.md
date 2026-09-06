@@ -112,8 +112,7 @@ semantic `<iconOK>` token for the confirm icon. The importer normalizes those
 conventions centrally to ASCII quotation marks and NA2's `<iconCROSS>` token
 before transforms or placement and rejects row-level overrides for either
 family. T2194 declares literal-percent escaping for its printf-style consumer,
-and T2195-T2198 preserve their literal donor symbols. Their glyphs and metrics
-are supplied by [Font](font.md).
+and T2195-T2198 use the restored formula-symbol normalization transform.
 The maintained Ninja Song suite establishes 40 exact objective, index,
 numeric/status, bonus, and formula-symbol rows. The paired Movie pass adds
 the locked-title placeholder. This is an evidence-scoped English table, not a
@@ -124,6 +123,12 @@ T2011/T2041/T2042 cover all four save-progress message parts, while
 T2014/T2015 cover both overwrite-confirmation parts. Import fails closed on
 missing, duplicate, out-of-range, or inconsistent structured parts so a linked
 first line cannot continue into an unrelated resident-payload string.
+
+### Symbol handling
+
+Donor symbols use the importer's existing normalization before ordinary font
+rendering. `NUN5_FORMULA_SYMBOLS` preserves `*`, `=`, `%`, and maps `·` to `.`.
+`®` remains literal and uses the [existing donor-font import](font.md#maintenance-and-validation).
 
 ### Modes
 
@@ -162,7 +167,7 @@ transform. Paired `@...@` spans in official NUN5 donor text are decoded as
 quotation marks by the importer before those operations, and NUN5's semantic
 `<iconOK>` confirm token becomes NA2's `<iconCROSS>` token. The explicit
 `escape_literal_percent` transform handles the Ninja Song printf consumer.
-Formula symbols pass through unchanged to Font's shared glyph mapping.
+Formula symbols use the shared [symbol mapping](#symbol-handling).
 Raw `donor` and `donor_ref` values remain unchanged as provenance.
 
 `reference_refs` stores optional comma-separated pointer sites in the same

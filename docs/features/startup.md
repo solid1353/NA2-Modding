@@ -119,3 +119,27 @@ This port deliberately omits NA228's loading presentation, savedata
 notification, and resident-payload system. Runtime validation confirmed the
 PNACH startup path; the exact memory-card case used in that check was not
 recorded.
+
+## NUN5 faster-loading PNACH
+
+`pcsx2_files/games/NUN5/NUN5.pnach` ports the NA228 lazy voice-index behavior
+to NUN5. The Practice launch profile layers its game-specific PNACH on top of
+this normal file, so `-l practice` inherits the payload without duplicating it.
+The payload keeps all four audio archives and the 13 ordinary sound indexes
+initialized at boot, temporarily hides the RPG and player counts from the
+native eager initializer, and loads each requested voice-bank index once under
+a semaphore before native playback.
+
+| Runtime hook | Clean call | Replacement |
+| ---: | --- | --- |
+| `0x001DEF50` | NUN5 eager audio initialization | Initialize archives and ordinary sound indexes only. |
+| `0x001D8070` | Category-3 player playback | Ensure the requested player index, then call native playback. |
+| `0x001DB60C` | Category-2 RPG playback | Ensure the requested RPG index, then call native playback. |
+
+The compiled code and 28-byte mutable state occupy
+`0x01FF53E0..0x01FF57B3` inside the PNACH's existing guarded
+`0x01FF4000..0x01FF5FFF` allocator-tail reservation. A missing manager or
+semaphore-creation failure retains native eager loading; an invalid first-use
+request fails without starting native playback. Static hook, relocation, and
+placement validation passed. NUN5 runtime timing and first-use playback
+validation remain outstanding.

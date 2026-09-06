@@ -80,6 +80,9 @@ commit. Canonical recording changes remain ordinary main-repository changes.
 
 ## Execution and publication
 
+Raw replays write `001.png`, `002.png`, and subsequent marker captures directly
+in their capture directory. Each replay replaces that directory before launch.
+
 The Current build runs concurrently with reference capture and post-processing.
 Each selected suite starts its replay as soon as the build completes.
 Independent screenshot-grid, pair, blend, and diff branches share a bounded

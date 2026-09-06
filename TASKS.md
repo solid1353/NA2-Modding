@@ -1,6 +1,6 @@
 # Tasks
 
-# In Progress
+### In Progress
 
 -   Approve remaining translations
 

@@ -173,19 +173,18 @@ class InjectionBuildTests(unittest.TestCase):
     def test_direct_source_scope_selects_registered_root_and_file(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             repository = Path(temporary).resolve()
-            source_root = repository / "src"
+            source_root = repository / "na228_builder" / "patches"
             nested = source_root / "nested"
             nested.mkdir(parents=True)
-            hot_reload = source_root / "hot_reload_message.c"
             first = source_root / "first.c"
             second = nested / "second.c"
             third = nested / "third.S"
-            for path in (hot_reload, first, second, third):
+            for path in (first, second, third):
                 path.write_text("void entry(void) {}\n", encoding="ascii")
             sources = {
                 "first": {
                     "kind": "c",
-                    "path": "src/first.c",
+                    "path": "na228_builder/patches/first.c",
                     "namespace": "test.first",
                     "imports": {},
                     "fragments": {
@@ -194,7 +193,7 @@ class InjectionBuildTests(unittest.TestCase):
                 },
                 "second": {
                     "kind": "c",
-                    "path": "src/nested/second.c",
+                    "path": "na228_builder/patches/nested/second.c",
                     "namespace": "test.second",
                     "imports": {},
                     "fragments": {
@@ -203,7 +202,7 @@ class InjectionBuildTests(unittest.TestCase):
                 },
                 "third": {
                     "kind": "asm",
-                    "path": "src/nested/third.S",
+                    "path": "na228_builder/patches/nested/third.S",
                     "namespace": "test.third",
                     "imports": {},
                     "fragments": {
@@ -216,19 +215,22 @@ class InjectionBuildTests(unittest.TestCase):
             ), mock.patch.object(
                 build_injection, "production_sources", return_value=sources
             ):
-                root, root_sources = build_injection.source_ids_for_path(Path("src"))
+                root, root_sources = build_injection.source_ids_for_path(
+                    Path("na228_builder/patches")
+                )
                 selected, selected_sources = build_injection.source_ids_for_path(
-                    Path("src/nested/second.c")
+                    Path("na228_builder/patches/nested/second.c")
                 )
                 selected_asm, selected_asm_sources = (
-                    build_injection.source_ids_for_path(Path("src/nested/third.S"))
+                    build_injection.source_ids_for_path(
+                        Path("na228_builder/patches/nested/third.S")
+                    )
                 )
 
                 self.assertEqual(root, source_root)
                 self.assertEqual(
                     root_sources,
                     [
-                        build_injection.HOT_RELOAD_SOURCE,
                         "first",
                         "second",
                         "third",
@@ -245,7 +247,9 @@ class InjectionBuildTests(unittest.TestCase):
                 with self.assertRaisesRegex(
                     ValueError, "unregistered EE source files"
                 ):
-                    build_injection.source_ids_for_path(Path("src/nested"))
+                    build_injection.source_ids_for_path(
+                        Path("na228_builder/patches/nested")
+                    )
 
     def test_static_loader_compiles_assembly_but_not_c_sources(self) -> None:
         node = SimpleNamespace(feature_id="feature")

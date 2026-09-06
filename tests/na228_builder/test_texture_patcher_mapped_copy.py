@@ -7,7 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from na228_builder.modules.texture_patcher import engine
+from na228_builder.infrastructure.modules.texture_patcher import engine
 
 
 def _write_name(buffer: bytearray, offset: int, value: str, size: int) -> None:

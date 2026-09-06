@@ -7,8 +7,8 @@ import unittest
 from dataclasses import replace
 from pathlib import Path, PurePosixPath
 
-from na228_builder.modules.binary_patcher import engine as patcher
-from na228_builder.scripts.build_configuration import write_binary_patch_log
+from na228_builder.infrastructure.modules.binary_patcher import engine as patcher
+from na228_builder.infrastructure.orchestration.build_configuration import write_binary_patch_log
 
 
 def sha256(data: bytes) -> str:

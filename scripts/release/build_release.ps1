@@ -111,7 +111,7 @@ from pathlib import Path
 
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
-from na228_builder.scripts.configuration import configuration_resource_files, load_configuration
+from na228_builder.infrastructure.orchestration.configuration import configuration_resource_files, load_configuration
 from scripts.lib.paths import load_local_paths
 
 marker = Path(sys.argv[3]).resolve()
@@ -147,7 +147,7 @@ print(json.dumps([
         [IO.Path]::GetRelativePath($repository, $manifestPath).Replace('\', '/'),
         [IO.Path]::GetRelativePath(
             $repository,
-            (Join-Path $paths.builder 'payload_builder\config.tsv')
+            (Join-Path $paths.builder 'infrastructure\modules\payload_builder\config.tsv')
         ).Replace('\', '/')
     )
     foreach ($relative in @($resources | Sort-Object -Unique)) {
@@ -163,7 +163,7 @@ from pathlib import Path
 
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
-from na228_builder.payload_builder.ee_c_fragments import (
+from na228_builder.infrastructure.modules.payload_builder.ee_c_fragments import (
     compile_ee_source,
     default_toolchain_bin,
 )
@@ -193,12 +193,12 @@ compile_ee_source(
 import os
 
 if os.environ.get("NA2_RELEASE_SELF_TEST") == "1":
-    from na228_builder.scripts.release_runtime import validate_packaged_release
+    from na228_builder.infrastructure.orchestration.release_runtime import validate_packaged_release
     count = validate_packaged_release()
     print(f"Release package self-test: OK ({count} module invocations)")
     raise SystemExit(0)
 
-from na228_builder.scripts.app import main
+from na228_builder.infrastructure.orchestration.app import main
 
 raise SystemExit(main())
 '@
@@ -207,7 +207,7 @@ raise SystemExit(main())
     $env:PYINSTALLER_CONFIG_DIR = $cacheRoot
     $baseName = [IO.Path]::GetFileNameWithoutExtension($executableName)
     $addData = "${resourceRoot}:."
-    & $python -B -m PyInstaller --noconfirm --clean --onefile --console --noupx --name $baseName --icon $iconPath --paths $repository --add-data $addData --collect-all zopfli --hidden-import na228_builder.scripts.release_runtime --distpath $distRoot --workpath (Join-Path $workRoot 'work') --specpath $specRoot $bootstrap
+    & $python -B -m PyInstaller --noconfirm --clean --onefile --console --noupx --name $baseName --icon $iconPath --paths $repository --add-data $addData --collect-all zopfli --hidden-import na228_builder.infrastructure.orchestration.release_runtime --distpath $distRoot --workpath (Join-Path $workRoot 'work') --specpath $specRoot $bootstrap
     if ($LASTEXITCODE -ne 0) { throw 'PyInstaller failed.' }
 
     $built = Join-Path $distRoot $executableName
@@ -225,7 +225,7 @@ from pathlib import Path
 
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
-from na228_builder.scripts.catalog import materialized_configuration
+from na228_builder.infrastructure.orchestration.catalog import materialized_configuration
 from scripts.lib.paths import load_local_paths
 
 paths = load_local_paths(repository, allow_missing=True)
@@ -250,7 +250,7 @@ from pathlib import Path
 
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
-from na228_builder.scripts.character_overrides import (
+from na228_builder.patches.settings.character_overrides.character_overrides import (
     load_character_overrides,
     render_character_overrides,
 )
@@ -282,7 +282,7 @@ from pathlib import Path
 
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
-from na228_builder.scripts.catalog import public_catalog
+from na228_builder.infrastructure.orchestration.catalog import public_catalog
 from scripts.lib.paths import load_local_paths
 
 paths = load_local_paths(repository, allow_missing=True)

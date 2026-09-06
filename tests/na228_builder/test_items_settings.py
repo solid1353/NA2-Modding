@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.scripts import catalog, jsonc
-from na228_builder.scripts.items_settings import (
+from na228_builder.infrastructure.orchestration import catalog, jsonc
+from na228_builder.patches.settings.ingame.battle_mechanics.items.items_settings import (
     FIELD_ITEMS,
     items_option_defaults,
     items_settings_fragment,

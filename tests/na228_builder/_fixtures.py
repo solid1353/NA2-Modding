@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from pathlib import Path
 
-from na228_builder.payload_builder.builder import ResidentPayloadConfig
+from na228_builder.infrastructure.modules.payload_builder.builder import ResidentPayloadConfig
 
 
 def resident_payload_config(

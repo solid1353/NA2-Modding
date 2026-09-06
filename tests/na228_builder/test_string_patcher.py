@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import unittest
 
-from na228_builder.modules.binary_patcher import engine as binary_patcher
-from na228_builder.modules.string_patcher import engine as string_patcher
+from na228_builder.infrastructure.modules.binary_patcher import engine as binary_patcher
+from na228_builder.infrastructure.modules.string_patcher import engine as string_patcher
 
 
 class StringPatcherTests(unittest.TestCase):

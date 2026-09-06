@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.image_assembler.assembler import _write_exact, output_image_candidate
+from na228_builder.infrastructure.modules.image_assembler.assembler import _write_exact, output_image_candidate
 
 
 class PartialWriter:

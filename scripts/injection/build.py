@@ -16,14 +16,14 @@ SCRIPT_ROOT = Path(__file__).resolve().parent
 REPOSITORY = SCRIPT_ROOT.parents[1]
 sys.path.insert(0, str(REPOSITORY))
 
-from na228_builder.scripts import catalog as catalog_module
-from na228_builder.payload_builder import ee_c_fragments
-from na228_builder.payload_builder.operations import (
+from na228_builder.infrastructure.orchestration import catalog as catalog_module
+from na228_builder.infrastructure.modules.payload_builder import ee_c_fragments
+from na228_builder.infrastructure.modules.payload_builder.operations import (
     PayloadFragment,
     PayloadRelocation,
     encode_symbol_reference,
 )
-from na228_builder.image_assembler.iso9660 import Iso9660
+from na228_builder.infrastructure.modules.image_assembler.iso9660 import Iso9660
 from scripts.lib.paths import load_paths
 
 
@@ -44,6 +44,7 @@ SYMBOL_MAP_FIELDS = [
 ]
 HOT_RELOAD_SOURCE = "hot_reload_message"
 HOT_RELOAD_ENTRY = "project.hot_reload_message"
+HOT_RELOAD_SOURCE_PATH = SCRIPT_ROOT / "hot_reload_message.c"
 FIXED_EXTERNAL_ADDRESSES: dict[str, int] = {}
 CATALOG_SELECTION = catalog_module.load_selection(
     CATALOG_PATH,
@@ -529,7 +530,7 @@ def load_source(
 ]:
     if source_id == HOT_RELOAD_SOURCE:
         return (
-            REPOSITORY / "src" / "hot_reload_message.c",
+            HOT_RELOAD_SOURCE_PATH,
             "c",
             "project.hot_reload",
             {},
@@ -938,18 +939,20 @@ def resolved_path(value: Path) -> Path:
 
 def source_ids_for_path(value: Path) -> tuple[Path, list[str]]:
     scope = resolved_path(value)
-    source_root = (REPOSITORY / "src").resolve()
-    try:
-        scope.relative_to(source_root)
-    except ValueError as exc:
-        raise ValueError(f"Source scope must be inside {source_root}: {scope}") from exc
+    source_roots = (
+        (REPOSITORY / "na228_builder" / "patches").resolve(),
+        SCRIPT_ROOT.resolve(),
+    )
+    if not any(scope.is_relative_to(source_root) for source_root in source_roots):
+        roots = ", ".join(str(source_root) for source_root in source_roots)
+        raise ValueError(f"Source scope must be inside one of {roots}: {scope}")
     if not scope.exists():
         raise ValueError(f"Source scope was not found: {scope}")
     if not scope.is_dir() and scope.suffix not in {".c", ".S"}:
         raise ValueError(f"Source scope must be an EE C/.S file or folder: {scope}")
 
     registered: list[tuple[str, Path]] = [
-        (HOT_RELOAD_SOURCE, (source_root / "hot_reload_message.c").resolve())
+        (HOT_RELOAD_SOURCE, HOT_RELOAD_SOURCE_PATH.resolve())
     ]
     for source_id in production_sources():
         source_id = identifier(source_id, "catalog EE source ID")

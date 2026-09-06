@@ -7,8 +7,8 @@ from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
-from na228_builder.scripts import build_preflight
-from na228_builder.scripts.build_preflight import (
+from na228_builder.infrastructure.orchestration import build_preflight
+from na228_builder.infrastructure.orchestration.build_preflight import (
     builder_tree_entry,
     collect_build_state,
     lookup_registry,
@@ -16,7 +16,7 @@ from na228_builder.scripts.build_preflight import (
     resolve_registry,
     state_fingerprint,
 )
-from na228_builder.modules.binary_patcher import engine as binary_patcher
+from na228_builder.infrastructure.modules.binary_patcher import engine as binary_patcher
 from scripts.lib.paths import load_local_paths
 
 
@@ -60,17 +60,17 @@ class BuildPreflightTests(unittest.TestCase):
         builder = project_paths.path("builder")
         configuration = builder / "configurations" / "release.jsonc"
         configuration.parent.mkdir(parents=True)
-        scripts = builder / "scripts"
-        scripts.mkdir()
-        (scripts / "engine.py").write_text("ENGINE = 1\n", encoding="utf-8")
+        orchestration = builder / "infrastructure" / "orchestration"
+        orchestration.mkdir(parents=True)
+        (orchestration / "engine.py").write_text("ENGINE = 1\n", encoding="utf-8")
         (builder / "schema.tsv").write_text("schema\t1\n", encoding="utf-8")
         feature = builder / "patches" / "localization" / "enabled"
         feature.mkdir(parents=True)
         (feature / "mappings.tsv").write_text("id\n", encoding="utf-8")
         for name in ("containers.tsv", "mappings.tsv", "strategies.tsv"):
             (feature / name).write_text("id\n", encoding="utf-8")
-        targets = builder / "modules" / "targets.tsv"
-        targets.parent.mkdir()
+        targets = builder / "infrastructure" / "modules" / "targets.tsv"
+        targets.parent.mkdir(parents=True)
         targets.write_text(
             "\t".join(binary_patcher.TARGET_FIELDS) + "\n",
             encoding="utf-8",
@@ -89,7 +89,7 @@ class BuildPreflightTests(unittest.TestCase):
 ''',
             encoding="utf-8",
         )
-        (builder / "patches" / "localization.json").write_text(
+        (builder / "patches" / "localization" / "localization.json").write_text(
             json.dumps(
                 {
                     "localization.enabled": {
@@ -225,11 +225,11 @@ class BuildPreflightTests(unittest.TestCase):
             initial = state_fingerprint(self.state(paths))
             self.assertEqual(initial, state_fingerprint(self.state(paths)))
 
-            (paths["builder"] / "scripts" / "engine.py").write_text(
+            (paths["builder"] / "infrastructure" / "orchestration" / "engine.py").write_text(
                 "ENGINE = 2\n", encoding="utf-8"
             )
             self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
-            (paths["builder"] / "scripts" / "engine.py").write_text(
+            (paths["builder"] / "infrastructure" / "orchestration" / "engine.py").write_text(
                 "ENGINE = 1\n", encoding="utf-8"
             )
 
@@ -253,15 +253,15 @@ class BuildPreflightTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             workspace = paths["workspace"]
-            assembly = workspace / "src" / "runtime.S"
-            assembly.parent.mkdir()
+            assembly = workspace / "na228_builder" / "patches" / "localization" / "runtime.S"
+            assembly.parent.mkdir(parents=True, exist_ok=True)
             assembly.write_text("nop\n", encoding="ascii")
-            patches_path = paths["builder"] / "patches" / "localization.json"
+            patches_path = paths["builder"] / "patches" / "localization" / "localization.json"
             patches = json.loads(patches_path.read_text(encoding="utf-8"))
             patches["localization.enabled"]["payload"] = {
                 "runtime_asm": {
                     "kind": "asm",
-                    "path": "src/runtime.S",
+                    "path": "na228_builder/patches/localization/runtime.S",
                     "namespace": "runtime.asm",
                     "imports": {},
                     "fragments": {
@@ -294,7 +294,7 @@ class BuildPreflightTests(unittest.TestCase):
             with_documentation = builder_tree_entry(paths["builder"])
             self.assertEqual(initial["sha256"], with_documentation["sha256"])
 
-            (paths["builder"] / "scripts" / "release_runtime.py").write_text(
+            (paths["builder"] / "infrastructure" / "orchestration" / "release_runtime.py").write_text(
                 "RELEASE_ONLY = True\n", encoding="utf-8"
             )
             self.assertEqual(
@@ -360,6 +360,7 @@ class BuildPreflightTests(unittest.TestCase):
             )
             targets = (
                 paths["builder"]
+                / "infrastructure"
                 / "modules"
                 / "targets.tsv"
             )
@@ -395,7 +396,7 @@ class BuildPreflightTests(unittest.TestCase):
             cached.write_bytes(b"X" * cached.stat().st_size)
             self.assertEqual(self.check(paths)["reason"], "physical-image-missing")
 
-            paths["builder"].joinpath("scripts", "engine.py").write_text(
+            paths["builder"].joinpath("infrastructure", "orchestration", "engine.py").write_text(
                 "ENGINE = 3\n", encoding="utf-8"
             )
             self.assertEqual(self.check(paths)["reason"], "fingerprint-missing")
@@ -423,7 +424,7 @@ class BuildPreflightTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             fingerprint = state_fingerprint(self.state(paths))
-            paths["builder"].joinpath("scripts", "engine.py").write_text(
+            paths["builder"].joinpath("infrastructure", "orchestration", "engine.py").write_text(
                 "ENGINE = 4\n", encoding="utf-8"
             )
             result = self.record(paths, fingerprint)

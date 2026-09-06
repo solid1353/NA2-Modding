@@ -6,9 +6,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.payload_builder import build_resident_payload
-from na228_builder.payload_builder import ee_c_fragments
-from na228_builder.payload_builder.operations import PayloadFragment
+from na228_builder.infrastructure.modules.payload_builder import build_resident_payload
+from na228_builder.infrastructure.modules.payload_builder import ee_c_fragments
+from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment
 from tests.na228_builder._fixtures import resident_payload_config
 
 

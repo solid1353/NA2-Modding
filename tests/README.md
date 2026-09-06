@@ -1,6 +1,7 @@
 # Tests
 
-Production utilities live under `@scripts/`; injected C lives under `src/`.
+Production utilities live under `@scripts/`; injected C and assembly live with
+their owning manifests under `@builder/patches/`.
 Tests live here and are grouped by the responsibility they verify:
 
 - `@builder/`: builder, compositor, module, profile, and image tests.

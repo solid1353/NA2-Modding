@@ -9,7 +9,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from na228_builder.scripts import build_configuration
+from na228_builder.infrastructure.orchestration import build_configuration
 
 
 class BuildConfigurationCliTests(unittest.TestCase):

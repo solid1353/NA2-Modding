@@ -13,9 +13,6 @@
 - Build or reuse the canonical cached ISO only when selected validation requires
   assembly. An exact verified-registry hit is sufficient evidence; never create
   a task ISO or hardlink.
-- Runtime execution of the cached ISO is limited to the
-  [input-recording validation workflow](../workflows/input_recording_validation.md);
-  E2E is separately selected.
 
 ## Runtime validation
 

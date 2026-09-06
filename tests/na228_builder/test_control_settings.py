@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.scripts import catalog, jsonc
+from na228_builder.infrastructure.orchestration import catalog, jsonc
 from scripts.lib.paths import load_local_paths
 
 
@@ -218,7 +218,7 @@ class ControlSettingsTests(unittest.TestCase):
             controls["payload"]["control_settings"],
             {
                 "kind": "c",
-                "path": "src/battle_logic/control_settings.c",
+                "path": "na228_builder/patches/settings/new_controls/control_settings.c",
                 "namespace": "battle.control.settings",
                 "imports": {},
                 "fragments": {

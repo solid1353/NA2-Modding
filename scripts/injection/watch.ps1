@@ -134,7 +134,7 @@ if ($OverlayPlan) {
 $directScope = -not $resolvedOverlayPlan -and -not $SourceId -and -not $Entry
 if ($directScope) {
     if (-not $SourcePath) {
-        $SourcePath = 'src'
+        $SourcePath = 'na228_builder\patches'
     }
     $resolvedSourcePath = Resolve-RepositoryPath $SourcePath
     $sourceItem = Get-Item -LiteralPath $resolvedSourcePath -Force `
@@ -142,22 +142,32 @@ if ($directScope) {
     if (-not $sourceItem) {
         throw "Source path was not found: $resolvedSourcePath"
     }
-    $sourceRoot = [IO.Path]::GetFullPath((Join-Path $repository 'src'))
-    $sourcePrefix = $sourceRoot.TrimEnd(
-        [IO.Path]::DirectorySeparatorChar,
-        [IO.Path]::AltDirectorySeparatorChar
-    ) + [IO.Path]::DirectorySeparatorChar
-    if (
-        -not $resolvedSourcePath.Equals(
-            $sourceRoot,
-            [StringComparison]::OrdinalIgnoreCase
-        ) -and
-        -not $resolvedSourcePath.StartsWith(
-            $sourcePrefix,
-            [StringComparison]::OrdinalIgnoreCase
-        )
-    ) {
-        throw "Source path must be inside $sourceRoot"
+    $sourceRoots = @(
+        [IO.Path]::GetFullPath($patchesPath),
+        [IO.Path]::GetFullPath((Join-Path $repository 'scripts\injection'))
+    )
+    $insideSourceRoot = $false
+    foreach ($sourceRoot in $sourceRoots) {
+        $sourcePrefix = $sourceRoot.TrimEnd(
+            [IO.Path]::DirectorySeparatorChar,
+            [IO.Path]::AltDirectorySeparatorChar
+        ) + [IO.Path]::DirectorySeparatorChar
+        if (
+            $resolvedSourcePath.Equals(
+                $sourceRoot,
+                [StringComparison]::OrdinalIgnoreCase
+            ) -or
+            $resolvedSourcePath.StartsWith(
+                $sourcePrefix,
+                [StringComparison]::OrdinalIgnoreCase
+            )
+        ) {
+            $insideSourceRoot = $true
+            break
+        }
+    }
+    if (-not $insideSourceRoot) {
+        throw "Source path must be inside $($sourceRoots -join ' or ')"
     }
     if (
         -not $sourceItem.PSIsContainer -and
@@ -175,11 +185,20 @@ else {
         if ($Entry -cne $hotReloadEntry) {
             throw "Source '$hotReloadSourceId' requires entry '$hotReloadEntry'."
         }
-        $canonicalSource = Join-Path $repository 'src\hot_reload_message.c'
+        $canonicalSource = Join-Path $repository 'scripts\injection\hot_reload_message.c'
     }
     else {
         $patches = [ordered]@{}
-        foreach ($patchFile in Get-ChildItem -LiteralPath $patchesPath -File -Filter '*.json') {
+        $patchFiles = @(
+            Get-ChildItem -LiteralPath $patchesPath -Directory |
+                ForEach-Object {
+                    $patchFile = Join-Path $_.FullName "$($_.Name).json"
+                    if (Test-Path -LiteralPath $patchFile -PathType Leaf) {
+                        Get-Item -LiteralPath $patchFile
+                    }
+                }
+        )
+        foreach ($patchFile in $patchFiles) {
             $definitions = Get-Content -Raw -LiteralPath $patchFile.FullName |
                 ConvertFrom-Json -AsHashtable
             foreach ($patchId in $definitions.Keys) {
@@ -318,7 +337,7 @@ $watchPaths = @(
     $patchesPath,
     $configurationPath
 )
-$markerPath = Join-Path $repository 'src\hot_reload_message.c'
+$markerPath = Join-Path $repository 'scripts\injection\hot_reload_message.c'
 if (
     -not $resolvedSourcePath.Equals(
         $markerPath,

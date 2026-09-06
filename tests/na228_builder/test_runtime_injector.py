@@ -5,17 +5,17 @@ import tempfile
 import unittest
 from pathlib import Path, PurePosixPath
 
-from na228_builder.modules.binary_patcher import engine as binary_engine
-from na228_builder.modules.runtime_injector import engine
-from na228_builder.payload_builder.builder import build_resident_payload
-from na228_builder.payload_builder.operations import (
+from na228_builder.infrastructure.modules.binary_patcher import engine as binary_engine
+from na228_builder.infrastructure.modules.runtime_injector import engine
+from na228_builder.infrastructure.modules.payload_builder.builder import build_resident_payload
+from na228_builder.infrastructure.modules.payload_builder.operations import (
     PayloadFragment,
     PayloadRelocation,
     SymbolicPatch,
     encode_symbol_reference,
 )
-from na228_builder.scripts.build_configuration import apply_binary_patch_set
-from na228_builder.scripts.composer import resolve_symbolic_patches
+from na228_builder.infrastructure.orchestration.build_configuration import apply_binary_patch_set
+from na228_builder.infrastructure.orchestration.composer import resolve_symbolic_patches
 from tests.na228_builder._fixtures import resident_payload_config
 
 

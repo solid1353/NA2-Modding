@@ -7,7 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from na228_builder.modules.translation_importer import engine
+from na228_builder.infrastructure.modules.translation_importer import engine
 
 
 class TranslationImporterTests(unittest.TestCase):

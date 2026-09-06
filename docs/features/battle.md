@@ -103,7 +103,8 @@ one source attack cannot charge again; entering a new native attack resets
 that fighter's charge latch. The shared Unlimited Chakra mode still restores
 chakra after the fighter update.
 
-`src/battle_logic/extra_hit_settings.c` wraps native eligibility at ELF file
+`@builder/patches/settings/ingame/battle_mechanics/extra_hit/extra_hit_settings.c`
+wraps native eligibility at ELF file
 `0x0013B6DC` and the attack initializer at `0x00117F28`. Off and penalty modes
 return native rejection instead of jumping past action-exit handling. The
 native recovery path therefore remains reachable after a blocked attempt.
@@ -138,7 +139,7 @@ moving existing base keys; a complete object-setting replacement supplies its
 own nested key order. The base config places Practice's Health, Commands, and
 Damage after its Battle Mechanics and Opponent Settings launchers.
 
-The shared builder in `na228_builder/scripts/menu_pages.py` walks catalog
+The shared builder in `na228_builder/patches/settings/ingame/shared/menu_pages.py` walks catalog
 containers and typed object fields. Scalars use registered value handlers.
 Objects without `value` form submenus. Objects with `value` use the selector's
 literal choices; child objects named after those choices form Square submenus.
@@ -153,6 +154,10 @@ places `availability` first.
 `menu_options.py` owns value presentation and runtime bindings, independently
 of page topology. Native row handlers, rendering, and transaction behavior
 remain shared with their existing consumers.
+
+In both Battle and Practice Settings, Back from any submenu returns to its
+parent page with the option-switch sound (`0x35`), matching submenu opening.
+Back at the root closes without applying and uses the cancel sound (`0x33`).
 
 ## Control Settings
 
@@ -338,7 +343,8 @@ The native gauge's readiness test uses the selected mode's threshold. The
 half-gauge marker appears only in Normal; Nerfed and Unlimited hide it.
 No replacement palette is used.
 
-`src/qol/battle_support.c` owns the mode routing. The guarded hooks replace
+`@builder/patches/settings/ingame/battle_mechanics/support/battle_support.c`
+owns the mode routing. The guarded hooks replace
 the fighter's support-request and gauge-update calls, the active-drain call,
 the HUD readiness predicate, the marker draw, and the support-gauge draw.
 The separate Practice key-`3` refill block is bypassed, so its stored native

@@ -110,8 +110,10 @@ Settings` likewise follows its config object's key order.
 Both child pages use the native orange section heading and opponent-style row
 backing, with their own page title. The count-derived backing and launcher-label
 renderer is shared with Battle Settings.
-Cancel returns to the selected launcher's root row; Cancel on the root retains
-the native close behavior. With regional input enabled, Cancel is Triangle.
+Cancel returns to the selected launcher's row on the parent page; Cancel on
+the root retains the native close behavior. Navigation sounds follow the
+shared [menu-page behavior](battle.md#catalog-generated-menu-pages).
+With regional input enabled, Cancel is Triangle.
 Mod rows use the same runtime values as Battle Settings, so both menus stage,
 reset, and commit the same state. Entering or leaving either child page restarts
 the selected row's help-text animation.

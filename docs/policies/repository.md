@@ -56,10 +56,8 @@
 - `@pcsx2_dev` is protected and user-owned. Agents may read it or copy
   individual evidence from it, but must not create, modify, move, delete, or
   link anything inside it unless the user authorizes that exact action.
-- Outside maintained E2E and the
-  [input-recording validation workflow](../workflows/input_recording_validation.md),
-  savestates are read-only diagnostic evidence: do not create, modify, convert,
-  patch, load, replay, or inject through them for validation.
+- Savestates are read-only diagnostic evidence: do not modify them
+  or use them for validation.
 - Before deleting anything, preserve any useful information it contains in the
   appropriate project file.
 - After moving or deleting files, inspect affected parent directories with

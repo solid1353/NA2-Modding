@@ -106,7 +106,7 @@ else {
         Push-Location $paths.repository
         try {
             $execution = Invoke-Na2BuilderModule `
-                -Module 'na228_builder.scripts.build_configuration' `
+                -Module 'na228_builder.infrastructure.orchestration.build_configuration' `
                 -ArgumentList $builderArguments
         }
         finally {

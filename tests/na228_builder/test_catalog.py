@@ -8,8 +8,8 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from na228_builder.modules.binary_patcher import adapters
-from na228_builder.scripts import catalog, catalog_format, jsonc
+from na228_builder.infrastructure.modules.binary_patcher import adapters
+from na228_builder.infrastructure.orchestration import catalog, catalog_format, jsonc
 from scripts.lib.paths import load_local_paths
 
 
@@ -34,8 +34,8 @@ class CatalogTests(unittest.TestCase):
     ) -> tuple[Path, Path]:
         catalog_path = root / "catalog.modcat"
         patches_path = root / "patches"
-        patches_path.mkdir(parents=True)
-        (root / "modules").mkdir()
+        patches_path.mkdir(parents=True, exist_ok=True)
+        (root / "infrastructure" / "modules").mkdir(parents=True)
         referenced = {
             patch for source in sources.values() for patch in PATCH_ID.findall(source)
         }
@@ -90,7 +90,7 @@ class CatalogTests(unittest.TestCase):
         for patch_id, definition in patches.items():
             by_file.setdefault(patch_id.split(".", 1)[0], {})[patch_id] = definition
         for stem, definitions in by_file.items():
-            self.write_json(patches_path / f"{stem}.json", definitions)
+            self.write_json(patches_path / stem / f"{stem}.json", definitions)
         self.write_json(
             root / "configurations" / "base.jsonc",
             {"features": features},
@@ -269,7 +269,7 @@ class CatalogTests(unittest.TestCase):
                     {"feature": {"leaf": True}},
                 )
                 self.write_json(
-                    root / "patches" / "feature.json",
+                    root / "patches" / "feature" / "feature.json",
                     {
                         "feature.leaf": {
                             "startup_fast_forward_frames": {
@@ -541,9 +541,9 @@ class CatalogTests(unittest.TestCase):
         package = catalog.load_binary_package(
             selection,
             "practice",
-            builder / "modules" / "targets.tsv",
+            builder / "infrastructure" / "modules" / "targets.tsv",
             paths.repository,
-            builder / "modules" / "binary_patcher" / "operations",
+            builder / "infrastructure" / "modules" / "binary_patcher" / "operations",
         )
         self.assertEqual(package.edits, [])
         self.assertIn("settings.ingame", selection.injections)
@@ -570,9 +570,9 @@ class CatalogTests(unittest.TestCase):
                 package = catalog.load_binary_package(
                     selection,
                     "settings",
-                    builder / "modules" / "targets.tsv",
+                    builder / "infrastructure" / "modules" / "targets.tsv",
                     paths.repository,
-                    builder / "modules" / "binary_patcher" / "operations",
+                    builder / "infrastructure" / "modules" / "binary_patcher" / "operations",
                 )
                 edit = next(
                     edit
@@ -978,7 +978,7 @@ class CatalogTests(unittest.TestCase):
                 {"feature": source},
                 {"feature": {"leaf": True}},
             )
-            patches_path = root / "patches" / "f.json"
+            patches_path = root / "patches" / "f" / "f.json"
             values = json.loads(patches_path.read_text(encoding="utf-8"))
             values.pop("f.missing")
             values["f.orphan"] = {"modules": ["binary_patcher"]}
@@ -1251,7 +1251,7 @@ class CatalogTests(unittest.TestCase):
                 edits={"feature.grouped": grouped},
             )
             (root / "asset.bin").write_bytes(b"\xAA\xBB")
-            (catalog_path.parent / "modules" / "targets.tsv").write_text(
+            (catalog_path.parent / "infrastructure" / "modules" / "targets.tsv").write_text(
                 "target_id\troot_id\trole\tpath\texpected_size\t"
                 "expected_sha256\n"
                 "test_target\ttest\tdestination\tdata.bin\t16\t"
@@ -1264,9 +1264,9 @@ class CatalogTests(unittest.TestCase):
             package = catalog.load_binary_package(
                 selection,
                 "feature",
-                catalog_path.parent / "modules" / "targets.tsv",
+                catalog_path.parent / "infrastructure" / "modules" / "targets.tsv",
                 root,
-                paths.path("builder", "modules", "binary_patcher", "operations"),
+                paths.path("builder", "infrastructure", "modules", "binary_patcher", "operations"),
             )
             referenced = catalog.referenced_files(selection, root, "feature")
 
@@ -1322,7 +1322,7 @@ class CatalogTests(unittest.TestCase):
                 {"feature": {"table": True}},
                 edits={"feature.table": table},
             )
-            (catalog_path.parent / "modules" / "targets.tsv").write_text(
+            (catalog_path.parent / "infrastructure" / "modules" / "targets.tsv").write_text(
                 "target_id\troot_id\trole\tpath\texpected_size\t"
                 "expected_sha256\n"
                 "test_target\ttest\tdestination\tdata.bin\t64\t"
@@ -1335,9 +1335,9 @@ class CatalogTests(unittest.TestCase):
             package = catalog.load_binary_package(
                 selection,
                 "feature",
-                catalog_path.parent / "modules" / "targets.tsv",
+                catalog_path.parent / "infrastructure" / "modules" / "targets.tsv",
                 root,
-                paths.path("builder", "modules", "binary_patcher", "operations"),
+                paths.path("builder", "infrastructure", "modules", "binary_patcher", "operations"),
             )
 
         self.assertEqual(
@@ -1455,7 +1455,7 @@ class CatalogTests(unittest.TestCase):
                 {"feature": {"grouped": True}},
                 edits={"feature.grouped": grouped},
             )
-            (catalog_path.parent / "modules" / "targets.tsv").write_text(
+            (catalog_path.parent / "infrastructure" / "modules" / "targets.tsv").write_text(
                 "target_id\troot_id\trole\tpath\texpected_size\t"
                 "expected_sha256\n"
                 "test_target\ttest\tdestination\tdata.bin\t16\t"
@@ -1469,14 +1469,14 @@ class CatalogTests(unittest.TestCase):
                 catalog.load_binary_package(
                     selection,
                     "feature",
-                    catalog_path.parent / "modules" / "targets.tsv",
+                    catalog_path.parent / "infrastructure" / "modules" / "targets.tsv",
                     root,
-                    paths.path("builder", "modules", "binary_patcher", "operations"),
+                    paths.path("builder", "infrastructure", "modules", "binary_patcher", "operations"),
                 )
 
     def test_repository_grouped_edit_maps_are_alphabetical(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
-        patch_files = sorted(paths.path("builder", "patches").glob("*.json"))
+        patch_files = sorted(paths.path("builder", "patches").glob("*/*.json"))
         self.assertTrue(patch_files)
         for patch_file in patch_files:
             definitions = json.loads(patch_file.read_text(encoding="utf-8"))
@@ -1719,8 +1719,8 @@ class CatalogTests(unittest.TestCase):
         }'''
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            assembly = root / "src" / "runtime.S"
-            assembly.parent.mkdir()
+            assembly = root / "patches" / "feature" / "runtime.S"
+            assembly.parent.mkdir(parents=True)
             assembly.write_text("nop\n", encoding="ascii")
             catalog_path, configuration_path = self.write_project(
                 root,
@@ -1732,7 +1732,7 @@ class CatalogTests(unittest.TestCase):
                         "payload": {
                             "runtime_source": {
                                 "kind": "asm",
-                                "path": "src/runtime.S",
+                                "path": "patches/feature/runtime.S",
                                 "namespace": "runtime",
                                 "imports": {},
                                 "fragments": {

@@ -6,7 +6,7 @@ behavior they require. Its texture-patcher input and layout/runtime mechanisms
 cannot be selected independently. `features.localization.ui` selects unified
 patch `localization.ui` in `@builder/catalog.modcat`; its guarded bytes, hooks,
 payloads, and `texture_patcher` module requirement are owned together by
-`@builder/patches/localization.json`.
+`@builder/patches/localization/localization.json`.
 
 ## Contract
 

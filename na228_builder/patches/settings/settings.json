@@ -1,0 +1,2024 @@
+{
+  "settings.new_controls": {
+    "description": "Expose Guard and Substitution as independent remappable actions and own the default shoulder-button layout for both players.",
+    "edits": {
+      "allow_substitution_while_guard_is_held": {
+        "description": "Bypass the native 16-frame held-Guard rejection before the independent Substitution input search.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x129720",
+        "expected_hex": "10004228",
+        "replacement_hex": "01000224"
+      },
+      "default_battle_overlay_bindings": {
+        "description": "Initialize the battle overlay with Substitution on L1, Guard on R1, Item Select on L2, and Linked Attack on R2.",
+        "operation": "replace",
+        "destination_target_id": "na2_btl",
+        "destination_offset": "0x1E4250",
+        "expected_hex": "10002000400080000400080001000200",
+        "replacement_hex": "10002000400080000100020008000400"
+      },
+      "default_control_settings_reset_selections": {
+        "description": "Make the Control Settings Select-button reset assign Substitution to L1, Guard to R1, Item Select to L2, and Linked Attack to R2 for either player.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x4D5350",
+        "expected_hex": "010000000000000003000000020000000400000005000000060000000700000001000000",
+        "replacement_hex": "010000000000000003000000020000000700000006000000040000000500000001000000"
+      },
+      "default_resident_bindings": {
+        "description": "Reset every resident controller bank to Substitution on L1, Guard on R1, Item Select on L2, and Linked Attack on R2.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x4C07A0",
+        "expected_hex": "10002000400080000400080001000200",
+        "replacement_hex": "10002000400080000100020008000400"
+      },
+      "include_substitution_in_shoulder_assignment_selector": {
+        "description": "Extend the Control Settings shoulder-action selector through action index 7 so Substitution can be chosen independently.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x2883FC",
+        "expected_hex": "06000324",
+        "replacement_hex": "07000324"
+      },
+      "preserve_substitution_when_opening_assignment": {
+        "description": "Stop the native editor from rewriting action index 7 to Guard index 6 when its assignment selector opens.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x287FBC",
+        "expected_hex": "0000A3AC",
+        "replacement_hex": "00000000"
+      },
+      "remove_substitution_action_from_logical_block_mask": {
+        "description": "Remove action-map index 7 from the held Guard translation while preserving index 6 as the sole source of the logical block bit.",
+        "operation": "replace",
+        "destination_target_id": "na2_btl",
+        "destination_offset": "0x3C02C",
+        "expected_hex": "0E002286",
+        "replacement_hex": "2D100000"
+      },
+      "search_substitution_action_in_first_input_history_arm": {
+        "description": "Search configured action-map index 7 instead of Guard at index 6, matching the predicate's unchanged second arm.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x129740",
+        "expected_hex": "06000524",
+        "replacement_hex": "07000524"
+      }
+    },
+    "hooks": {
+      "label_substitution_action": {
+        "description": "Point Control Settings action-map index 7 at the resident Substitution label instead of the second Guard label.",
+        "target_id": "na2_elf",
+        "offset": "0x4B26AC",
+        "expected_hex": "40466000",
+        "symbol": "control_settings_substitution_label",
+        "encoding": "abs32"
+      },
+      "replace_paired_action_assignment": {
+        "description": "Replace the native Guard-pair assignment helper with an owned one-action swap so Guard, Substitution, Item Select, and Linked Attack remain independently assignable.",
+        "target_id": "na2_elf",
+        "offset": "0x287C90",
+        "expected_hex": "8030050001000324",
+        "symbol": "control_settings_assign_action",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      }
+    },
+    "payload": {
+      "control_settings": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/new_controls/control_settings.c",
+        "namespace": "battle.control.settings",
+        "imports": {},
+        "fragments": {
+          "control_settings_assign_action": {
+            "object": "battle.control.settings.text.control.settings.assign.action"
+          }
+        }
+      },
+      "control_settings_substitution_label": {
+        "kind": "rodata",
+        "alignment": 1,
+        "value": "537562737469747574696F6E00"
+      }
+    }
+  },
+  "settings.simple_display": {
+    "description": "Choose the native battle Simple Display default.",
+    "edit": {
+      "operation": "replace",
+      "destination_target_id": "na2_elf",
+      "destination_offset": "0xE7BAC",
+      "expected_hex": "25186600",
+      "adapter": "mips_simple_display_default"
+    }
+  },
+  "settings.character_overrides": {
+    "description": "Select per-character battle values from the generated character-override table.",
+    "hooks": {
+      "select_cost_for_live_fighter": {
+        "description": "Replace the native cost transfer and delay slot with a guarded call that passes the live fighter while preserving the following subtraction and clamp.",
+        "target_id": "na2_elf",
+        "offset": "0x1299C0",
+        "expected_hex": "0000824400000000",
+        "symbol": "substitution_cost_shim",
+        "encoding": "jal26",
+        "replacement_hex": "0000000C2D206002"
+      }
+    },
+    "payload": {
+      "substitution_cost": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/character_overrides/substitution_cost.c",
+        "namespace": "battle.logic.substitution.cost.c",
+        "imports": {
+          "battle_logic_character_overrides": "character_overrides"
+        },
+        "fragments": {
+          "substitution_cost_for_fighter": {
+            "object": "battle.logic.substitution.cost.c.text.battle.logic.substitution.cost"
+          },
+          "substitution_cost_fraction_for_fighter": {
+            "object": "battle.logic.substitution.cost.c.text.battle.logic.substitution.cost.fraction"
+          }
+        }
+      },
+      "substitution_cost_abi": {
+        "kind": "asm",
+        "path": "na228_builder/patches/settings/character_overrides/substitution_cost_abi.S",
+        "namespace": "battle.logic.substitution.cost.asm",
+        "imports": {
+          "substitution_cost_for_fighter": "substitution_cost_for_fighter"
+        },
+        "fragments": {
+          "substitution_cost_shim": {
+            "object": "battle.logic.substitution.cost.asm.text.substitution.cost.shim"
+          }
+        }
+      }
+    }
+  },
+  "settings.battle_mechanics.chakra": {
+    "description": "Share one selectable Chakra behavior between Battle Settings and Practice Settings.",
+    "payload": {
+      "chakra_settings": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/chakra/chakra_settings.c",
+        "namespace": "battle.logic.settings.chakra",
+        "imports": {
+          "battle_settings_chakra_default": "battle_settings_chakra_default"
+        },
+        "fragments": {
+          "chakra_mode_get": {
+            "object": "battle.logic.settings.chakra.text.chakra.mode.get"
+          },
+          "chakra_mode_set": {
+            "object": "battle.logic.settings.chakra.text.chakra.mode.set"
+          },
+          "chakra_mode_apply": {
+            "object": "battle.logic.settings.chakra.text.chakra.mode.apply"
+          },
+          "chakra_mode_state": {
+            "object": "battle.logic.settings.chakra.bss.chakra.mode.state"
+          },
+          "chakra_mode_initialized": {
+            "object": "battle.logic.settings.chakra.bss.chakra.mode.initialized"
+          },
+          "chakra_normal_label": {
+            "object": "battle.logic.settings.chakra.rodata.chakra.normal.label"
+          },
+          "chakra_unlimited_label": {
+            "object": "battle.logic.settings.chakra.rodata.chakra.unlimited.label"
+          }
+        }
+      }
+    }
+  },
+  "settings.battle_mechanics.xdash_chakra_cost": {
+    "description": "Spend the configured chakra cost on the first fighter update after X-dash becomes non-cancellable.",
+    "payload": {
+      "xdash_chakra_cost_settings": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/xdash_chakra_cost/xdash_chakra_cost_settings.c",
+        "namespace": "battle.logic.settings.xdash.chakra.cost",
+        "imports": {
+          "battle_settings_xdash_chakra_cost_default": "battle_settings_xdash_chakra_cost_default"
+        },
+        "fragments": {
+          "xdash_chakra_cost_get": {
+            "object": "battle.logic.settings.xdash.chakra.cost.text.xdash.chakra.cost.get"
+          },
+          "xdash_chakra_cost_option_get": {
+            "object": "battle.logic.settings.xdash.chakra.cost.text.xdash.chakra.cost.option.get"
+          },
+          "xdash_chakra_cost_option_set": {
+            "object": "battle.logic.settings.xdash.chakra.cost.text.xdash.chakra.cost.option.set"
+          },
+          "xdash_chakra_cost_state": {
+            "object": "battle.logic.settings.xdash.chakra.cost.bss.xdash.chakra.cost.state"
+          },
+          "xdash_chakra_cost_initialized": {
+            "object": "battle.logic.settings.xdash.chakra.cost.bss.xdash.chakra.cost.initialized"
+          }
+        }
+      },
+      "xdash_chakra_cost": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/xdash_chakra_cost/xdash_chakra_cost.c",
+        "namespace": "battle.logic.xdash.chakra.cost.c",
+        "imports": {
+          "battle_logic_xdash_charge_state": "battle_logic_xdash_charge_state",
+          "xdash_chakra_cost_get": "xdash_chakra_cost_get"
+        },
+        "fragments": {
+          "battle_logic_xdash_pre_fighter_update": {
+            "object": "battle.logic.xdash.chakra.cost.c.text.battle.logic.xdash.pre.fighter.update"
+          }
+        }
+      },
+      "battle_logic_xdash_charge_state": {
+        "kind": "data",
+        "alignment": 4,
+        "value": "0000000000000000"
+      }
+    }
+  },
+  "settings.ingame": {
+    "description": "Apply independent configured native defaults to Battle and Practice manager state.",
+    "hooks": {
+      "update_shared_fighter_settings": {
+        "description": "Preserve the native per-fighter update while applying shared X-dash charging before it and the selected Chakra behavior after it.",
+        "target_id": "na2_elf",
+        "offset": "0x14DB80",
+        "expected_hex": "A038080C",
+        "symbol": "settings_fighter_update_shim",
+        "encoding": "jal26"
+      },
+      "native_defaults_apply_battle_defaults_when_mode_is_selected": {
+        "description": "Preserve the mode-2 manager assignment, apply the configured Battle default pack, and rejoin the native mode-selection flow.",
+        "target_id": "na2_elf",
+        "offset": "0xEA7B4",
+        "expected_hex": "0200042410CC838F",
+        "symbol": "settings_select_battle_defaults_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "native_defaults_apply_mode_defaults_after_native_reset": {
+        "description": "Preserve the native Strength mirror write, then apply the configured default pack for the active Battle or Practice mode.",
+        "target_id": "na2_elf",
+        "offset": "0xF5AD4",
+        "expected_hex": "7CD6070C00000000",
+        "symbol": "settings_apply_native_defaults",
+        "encoding": "jal26"
+      },
+      "battle_initialize_active_rows_on_open": {
+        "description": "Run the native settings snapshot, activate the Battle root page, resolve its row resources, and stage every battle mechanic selector.",
+        "target_id": "na2_btl",
+        "offset": "0x1CBB04",
+        "expected_hex": "1CFE210C00000000",
+        "symbol": "battle_settings_snapshot",
+        "encoding": "jal26"
+      },
+      "battle_release_submenu_style_resources": {
+        "description": "Release the Practice child-page style resources before the native Battle controller free.",
+        "target_id": "na2_btl",
+        "offset": "0xC060",
+        "expected_hex": "005C040C00000000",
+        "symbol": "battle_settings_free_bridge",
+        "encoding": "jal26"
+      },
+      "battle_confirm_active_row": {
+        "description": "Commit every staged battle mechanic selector and close from every row, including submenu launchers, before the native settings transaction stores its own rows.",
+        "target_id": "na2_btl",
+        "offset": "0x1CBC24",
+        "expected_hex": "01000224580002A6",
+        "symbol": "battle_settings_confirm_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "battle_handle_page_cancel": {
+        "description": "Return from the Battle Battle Mechanics page or retain the native root-page cancel behavior.",
+        "target_id": "na2_btl",
+        "offset": "0x1CBCE0",
+        "expected_hex": "01000224580002A6",
+        "symbol": "battle_settings_cancel_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "battle_reset_active_modes_to_configured_defaults": {
+        "description": "Stage every configured native and battle mechanic default alongside the native Select reset.",
+        "target_id": "na2_btl",
+        "offset": "0x1CBD74",
+        "expected_hex": "885F070C00000000",
+        "symbol": "battle_settings_defaults_sound",
+        "encoding": "jal26"
+      },
+      "battle_navigate_active_rows": {
+        "description": "Wrap navigation over the active Battle page count.",
+        "target_id": "na2_btl",
+        "offset": "0x1CBDF8",
+        "expected_hex": "74FF210C00000000",
+        "symbol": "battle_settings_navigate",
+        "encoding": "jal26"
+      },
+      "battle_change_active_row_value": {
+        "description": "Open a submenu launcher on Square or change the selected mapped native value or staged battle mechanic selector within its semantic bound.",
+        "target_id": "na2_btl",
+        "offset": "0x1CBE34",
+        "expected_hex": "98FF210C00000000",
+        "symbol": "battle_settings_change_value",
+        "encoding": "jal26"
+      },
+      "battle_route_ultimate_jutsu_value_help": {
+        "description": "Run the native value-specific Ultimate Jutsu help only for the semantic Ultimate Jutsu row, using Command help for the two custom contest modes.",
+        "target_id": "na2_btl",
+        "offset": "0x1CBE44",
+        "expected_hex": "4800038604000224",
+        "symbol": "battle_settings_ultimate_help_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "battle_load_active_help_table_high": {
+        "description": "Point the native help refresh at the resolved active help table.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC27C",
+        "expected_hex": "8C00",
+        "symbol": "battle_settings_active_help",
+        "encoding": "hi16"
+      },
+      "battle_load_active_help_table_low": {
+        "description": "Complete the active help-table address.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC280",
+        "expected_hex": "60E5",
+        "symbol": "battle_settings_active_help",
+        "encoding": "lo16"
+      },
+      "battle_load_active_label_table_high": {
+        "description": "Point the native label loop at the resolved active label table.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC34C",
+        "expected_hex": "8C00",
+        "symbol": "battle_settings_active_labels",
+        "encoding": "hi16"
+      },
+      "battle_load_active_label_table_low": {
+        "description": "Complete the active label-table address.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC350",
+        "expected_hex": "60E1",
+        "symbol": "battle_settings_active_labels",
+        "encoding": "lo16"
+      },
+      "battle_draw_visible_label_rows": {
+        "description": "Draw the active Battle page's current visible label count.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC378",
+        "expected_hex": "0600432AE5FF6014",
+        "symbol": "battle_settings_label_loop_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "battle_route_visible_time_draw": {
+        "description": "Use the native Time renderer only when the visible slot contains the semantic Time row.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC390",
+        "expected_hex": "2F00401600000000",
+        "symbol": "battle_settings_draw_time_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "battle_route_visible_handicap_draw": {
+        "description": "Use the native Handicap renderer only for the visible semantic Handicap row.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC450",
+        "expected_hex": "0500032442004316",
+        "symbol": "battle_settings_draw_ordinary_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "battle_position_visible_handicap_red_values": {
+        "description": "Move the native red Handicap value graphics to the active visible row.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC49C",
+        "expected_hex": "8043023C00804234",
+        "symbol": "battle_settings_handicap_red_value_y_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "battle_position_visible_handicap_blue_values": {
+        "description": "Move the native blue Handicap value graphics to the active visible row.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC514",
+        "expected_hex": "8043023C00804234",
+        "symbol": "battle_settings_handicap_blue_value_y_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "battle_draw_active_value": {
+        "description": "Load an ordinary visible row through its mapped native slot or staged custom mode.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC560",
+        "expected_hex": "80201200B243023C",
+        "symbol": "battle_settings_draw_value_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "battle_draw_visible_value_rows": {
+        "description": "Draw the active Battle page's current visible value count.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC5B8",
+        "expected_hex": "0600432A74FF6014",
+        "symbol": "battle_settings_value_loop_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "battle_resolve_helper_maximum": {
+        "description": "Give the native arrow helper the selected visible row's semantic maximum.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC654",
+        "expected_hex": "801804008D00023C",
+        "symbol": "battle_settings_helper_max_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "battle_resolve_helper_value": {
+        "description": "Give the native arrow helper the selected visible row's mapped value.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC69C",
+        "expected_hex": "4800438680100300",
+        "symbol": "battle_settings_helper_value_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "battle_route_native_handicap_arrows": {
+        "description": "Use the native Handicap arrows only for the visible semantic Handicap row.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC6C8",
+        "expected_hex": "0500022402006214",
+        "symbol": "battle_settings_helper_ordinary_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "battle_select_page_appropriate_cursor": {
+        "description": "Use the native Handicap cursor object only for the visible semantic Handicap row.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC7D0",
+        "expected_hex": "0500022403006210",
+        "symbol": "battle_settings_cursor_ordinary_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "battle_draw_page_backing": {
+        "description": "Compose the exact active row backing and position the native Handicap panel at its visible slot.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC9AC",
+        "expected_hex": "E4ED060C",
+        "symbol": "battle_settings_draw_backing",
+        "encoding": "jal26"
+      },
+      "battle_draw_visible_rows": {
+        "description": "Update the logical scroll window, remap its visible rows, and draw them through the native table footprint.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC9B8",
+        "expected_hex": "7800220C",
+        "symbol": "battle_settings_draw_rows",
+        "encoding": "jal26"
+      },
+      "battle_draw_visible_cursor": {
+        "description": "Draw the native cursor and arrows at the selected row's visible slot while retaining the logical selection.",
+        "target_id": "na2_btl",
+        "offset": "0x1CC9C4",
+        "expected_hex": "3C01220C",
+        "symbol": "battle_settings_draw_cursor",
+        "encoding": "jal26"
+      },
+      "practice_confirm_active_row": {
+        "description": "Apply the complete Practice transaction and close from every row, including submenu launchers.",
+        "target_id": "na2_btl",
+        "offset": "0x1CD7F4",
+        "expected_hex": "6804220C00000000",
+        "symbol": "practice_settings_confirm",
+        "encoding": "jal26"
+      },
+      "practice_handle_page_cancel": {
+        "description": "Return from a Practice submenu or retain the native root-page cancel behavior.",
+        "target_id": "na2_btl",
+        "offset": "0x1CD810",
+        "expected_hex": "01000224380002AE",
+        "symbol": "practice_settings_cancel_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "practice_bypass_fixed_special_row_help": {
+        "description": "Skip the obsolete fixed-index Health, Ultimate Jutsu, and Status help refresh after a value change; the schema-driven refresh later in the same update owns it.",
+        "target_id": "na2_btl",
+        "offset": "0x1CD92C",
+        "expected_hex": "3C00048E09000324",
+        "symbol": "practice_settings_after_value_change_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "practice_change_active_row_value": {
+        "description": "Open a submenu launcher on Square or change the selected active-page row through its mapped native controller slot or custom staged value within its schema-defined bound.",
+        "target_id": "na2_btl",
+        "offset": "0x1CDA90",
+        "expected_hex": "D0FFBD272000BFFF",
+        "symbol": "practice_settings_change_value",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "practice_draw_active_value": {
+        "description": "Load the selected compact-table value while preserving the native value table, color, localized value adapter, and row position.",
+        "target_id": "na2_btl",
+        "offset": "0x1CE5A0",
+        "expected_hex": "80201000B243023C",
+        "symbol": "settings_menu_draw_value_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "practice_draw_dynamic_cursor_geometry": {
+        "description": "Place the cursor from section-local visible geometry and native backing roles instead of fixed global row indices.",
+        "target_id": "na2_btl",
+        "offset": "0x1CE25C",
+        "expected_hex": "5000A227000040F8440045C6",
+        "symbol": "settings_menu_cursor_geometry_bridge",
+        "encoding": "j26",
+        "replacement_hex": "000000080000000000000000"
+      },
+      "practice_draw_dynamic_row_count": {
+        "description": "Loop over the active page count rather than the native constant 17.",
+        "target_id": "na2_btl",
+        "offset": "0x1CE5F0",
+        "expected_hex": "1100022AC0FF4014",
+        "symbol": "settings_menu_draw_loop_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "practice_draw_dynamic_section_boundary": {
+        "description": "Draw the native Opponent Settings heading at the active page's player-to-opponent boundary.",
+        "target_id": "na2_btl",
+        "offset": "0x1CE4F8",
+        "expected_hex": "0900022410000216",
+        "symbol": "settings_menu_draw_section_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "practice_load_active_page_heading": {
+        "description": "Load the active child page's title for the native orange Practice section heading while preserving its native text style.",
+        "target_id": "na2_btl",
+        "offset": "0x1CE520",
+        "expected_hex": "E4B1848F0F000524",
+        "symbol": "settings_menu_heading_text_bridge",
+        "encoding": "jal26"
+      },
+      "practice_draw_compact_backing": {
+        "description": "Draw count-derived first, middle, and terminal backing cells for both sections, repeating native middle cells beyond the animation's fixed capacities.",
+        "target_id": "na2_btl",
+        "offset": "0x1CE4D0",
+        "expected_hex": "E4ED060C",
+        "symbol": "settings_menu_draw_backing",
+        "encoding": "jal26"
+      },
+      "practice_initialize_active_rows_on_open": {
+        "description": "Run the native snapshot, activate the root page, resolve its localized resources, and stage every battle mechanic selector.",
+        "target_id": "na2_btl",
+        "offset": "0x1CD078",
+        "expected_hex": "EC03220C00000000",
+        "symbol": "practice_settings_snapshot",
+        "encoding": "jal26"
+      },
+      "practice_initialize_active_row_help": {
+        "description": "Clear the native Practice help object, then show help for the generated root page's selected row.",
+        "target_id": "na2_btl",
+        "offset": "0x1CD08C",
+        "expected_hex": "B8FB0D0C00000000",
+        "symbol": "practice_settings_initialize_help_bridge",
+        "encoding": "jal26"
+      },
+      "practice_navigate_active_rows": {
+        "description": "Wrap navigation over the active page count instead of the native constant 17.",
+        "target_id": "na2_btl",
+        "offset": "0x1CDA10",
+        "expected_hex": "6800838C00106230",
+        "symbol": "practice_settings_navigate",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "practice_prepare_compact_backing_layout": {
+        "description": "After native animation advance and before hierarchy composition, assign first, middle, and terminal backing roles from each section's actual row count and place the Opponent heading at the resulting boundary.",
+        "target_id": "na2_btl",
+        "offset": "0x1CDBEC",
+        "expected_hex": "BCED060C",
+        "symbol": "practice_settings_prepare_backing_and_compose",
+        "encoding": "jal26"
+      },
+      "practice_reset_active_rows_to_defaults": {
+        "description": "Run native Defaults, apply the configured defaults to every retained or shared row, and preserve the native reset message.",
+        "target_id": "na2_btl",
+        "offset": "0x1CD83C",
+        "expected_hex": "E404220C00000000",
+        "symbol": "practice_settings_defaults",
+        "encoding": "jal26"
+      },
+      "practice_resolve_helper_maximum": {
+        "description": "Give the native arrow helper the selected schema row's dynamic maximum.",
+        "target_id": "na2_btl",
+        "offset": "0x1CDFEC",
+        "expected_hex": "3C00448E80180400",
+        "symbol": "settings_menu_helper_max_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "practice_resolve_helper_value": {
+        "description": "Give the native arrow helper the selected schema row's active value.",
+        "target_id": "na2_btl",
+        "offset": "0x1CE038",
+        "expected_hex": "3C00428E80100200",
+        "symbol": "settings_menu_helper_value_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "practice_route_row_availability": {
+        "description": "Evaluate enabled and grey states by semantic row behavior rather than fixed display indices.",
+        "target_id": "na2_btl",
+        "offset": "0x1CD5F0",
+        "expected_hex": "9000848CFDFFA224",
+        "symbol": "practice_settings_row_enabled",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "practice_update_dynamic_scroll_flags": {
+        "description": "Derive upper and lower scroll indicators from each compact section's actual count.",
+        "target_id": "na2_btl",
+        "offset": "0x1CE12C",
+        "expected_hex": "2D1800002D800000",
+        "symbol": "settings_menu_scroll_flags_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "practice_update_dynamic_windows": {
+        "description": "Update the two native animated row windows from the compact player and opponent counts and their dynamic boundary.",
+        "target_id": "na2_btl",
+        "offset": "0x1CDCD8",
+        "expected_hex": "3C00048E09008128",
+        "symbol": "practice_settings_geometry_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "practice_update_schema_help": {
+        "description": "Resolve running help from the selected semantic row, including every custom selector explanation.",
+        "target_id": "na2_btl",
+        "offset": "0x1CDE98",
+        "expected_hex": "3C00038E09000224",
+        "symbol": "practice_settings_help_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "practice_update_selected_row_section": {
+        "description": "Keep the native selected-row arrow Y calculation but compare against the compact player-section count.",
+        "target_id": "na2_btl",
+        "offset": "0x1CDFA8",
+        "expected_hex": "0900A2280500401400000000",
+        "symbol": "settings_menu_selected_is_player",
+        "encoding": "jal26",
+        "replacement_hex": "0000000C0000000004004014"
+      },
+      "practice_draw_shared_content": {
+        "description": "practice draw shared content.",
+        "target_id": "na2_btl",
+        "offset": "0x1ce458",
+        "expected_hex": "1000228E04CA82AF",
+        "symbol": "practice_settings_content_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "shared_content_return": {
+        "description": "shared content return.",
+        "target_id": "na2_btl",
+        "offset": "0x1ce608",
+        "expected_hex": "993F023C9A994234",
+        "symbol": "settings_menu_content_return",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "shared_content_label": {
+        "description": "shared content label.",
+        "target_id": "na2_btl",
+        "offset": "0x1ce540",
+        "expected_hex": "80181000C842023C",
+        "symbol": "settings_menu_draw_label_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "shared_content_row_availability": {
+        "description": "shared content row availability.",
+        "target_id": "na2_btl",
+        "offset": "0x1ce57c",
+        "expected_hex": "3C05220C",
+        "symbol": "settings_menu_enabled",
+        "encoding": "jal26"
+      },
+      "shared_content_arrow_availability": {
+        "description": "shared content arrow availability.",
+        "target_id": "na2_btl",
+        "offset": "0x1cdfd8",
+        "expected_hex": "3C05220C",
+        "symbol": "settings_menu_enabled",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "fighter_update": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/shared/fighter_update.c",
+        "namespace": "settings.fighter.update.c",
+        "imports": {
+          "battle_logic_xdash_pre_fighter_update": "battle_logic_xdash_pre_fighter_update",
+          "chakra_mode_apply": "chakra_mode_apply"
+        },
+        "fragments": {
+          "settings_fighter_update_shim": {
+            "object": "settings.fighter.update.c.text.settings.fighter.update.shim"
+          }
+        }
+      },
+      "native_defaults": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/shared/native_defaults.c",
+        "namespace": "settings.native.defaults.c",
+        "imports": {
+          "native_settings_defaults": "native_settings_defaults"
+        },
+        "fragments": {
+          "settings_native_defaults_helpers": {
+            "object": "settings.native.defaults.c.text.settings.native.defaults.helpers"
+          },
+          "settings_apply_selected_defaults": {
+            "object": "settings.native.defaults.c.text.settings.apply.selected.defaults"
+          },
+          "settings_apply_native_defaults": {
+            "object": "settings.native.defaults.c.text.settings.apply.native.defaults"
+          }
+        }
+      },
+      "native_defaults_abi": {
+        "kind": "asm",
+        "path": "na228_builder/patches/settings/ingame/shared/native_defaults_abi.S",
+        "namespace": "settings.native.defaults.asm",
+        "imports": {
+          "settings_apply_selected_defaults": "settings_apply_selected_defaults"
+        },
+        "fragments": {
+          "settings_select_battle_defaults_bridge": {
+            "object": "settings.native.defaults.asm.text.settings.select.battle.defaults.bridge"
+          }
+        }
+      },
+      "settings_menu_pages": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/shared/menu_pages.c",
+        "namespace": "settings.menu.pages.c",
+        "fragments": {
+          "settings_open_label": {
+            "object": "settings.menu.pages.c.rodata.settings.open.label"
+          },
+          "settings_menu_open_values": {
+            "object": "settings.menu.pages.c.bss.settings.menu.open.values"
+          },
+          "settings_menu_value_page": {
+            "object": "settings.menu.pages.c.text.settings.menu.value.page"
+          },
+          "settings_menu_page": {
+            "object": "settings.menu.pages.c.text.settings.menu.page"
+          },
+          "settings_menu_select_page": {
+            "object": "settings.menu.pages.c.text.settings.menu.select.page"
+          },
+          "settings_menu_model_index": {
+            "object": "settings.menu.pages.c.text.settings.menu.model.index"
+          },
+          "settings_menu_initialize_open_values": {
+            "object": "settings.menu.pages.c.text.settings.menu.initialize.open.values"
+          },
+          "settings_menu_backing_layout": {
+            "object": "settings.menu.pages.c.bss.settings.menu.backing.layout"
+          },
+          "settings_menu_helpers": {
+            "object": "settings.menu.pages.c.text"
+          },
+          "settings_menu_prepare_practice_backing": {
+            "object": "settings.menu.pages.c.text.settings.menu.prepare.practice.backing"
+          },
+          "settings_menu_draw_practice_backing": {
+            "object": "settings.menu.pages.c.text.settings.menu.draw.practice.backing"
+          },
+          "settings_menu_draw_tinted_label": {
+            "object": "settings.menu.pages.c.text.settings.menu.draw.tinted.label"
+          }
+        }
+      },
+      "battle_settings": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/battle_mode/battle_settings.c",
+        "namespace": "battle.settings.c",
+        "imports": {
+          "battle_settings_schema": "battle_settings_schema",
+          "battle_settings_active_help": "battle_settings_active_help",
+          "settings_menu_value_page": "settings_menu_value_page",
+          "settings_menu_page": "settings_menu_page",
+          "settings_menu_select_page": "settings_menu_select_page",
+          "settings_menu_model_index": "settings_menu_model_index",
+          "settings_menu_initialize_open_values": "settings_menu_initialize_open_values",
+          "settings_menu_open_values": "settings_menu_open_values",
+          "settings_menu_prepare_practice_backing": "settings_menu_prepare_practice_backing",
+          "settings_menu_draw_tinted_label": "settings_menu_draw_tinted_label",
+          "chakra_mode_get": "chakra_mode_get",
+          "chakra_mode_set": "chakra_mode_set",
+          "settings_menu_draw_content": "settings_menu_draw_content",
+          "settings_menu_initialize_window": "settings_menu_initialize_window",
+          "settings_menu_update_window": "settings_menu_update_window"
+        },
+        "fragments": {
+          "battle_settings_active_controller": {
+            "object": "battle.settings.c.bss.battle.settings.active.controller"
+          },
+          "battle_settings_active_labels": {
+            "object": "battle.settings.c.bss.battle.settings.active.labels"
+          },
+          "battle_settings_active_value_tables": {
+            "object": "battle.settings.c.bss.battle.settings.active.value.tables"
+          },
+          "battle_settings_active_page_index": {
+            "object": "battle.settings.c.bss.battle.settings.active.page.index"
+          },
+          "battle_settings_active_page": {
+            "object": "battle.settings.c.bss.battle.settings.active.page"
+          },
+          "battle_settings_chakra_staged": {
+            "object": "battle.settings.c.bss.battle.settings.chakra.staged"
+          },
+          "battle_settings_substitution_staged": {
+            "object": "battle.settings.c.bss.battle.settings.substitution.staged"
+          },
+          "battle_settings_ultimate_jutsu_staged": {
+            "object": "battle.settings.c.bss.battle.settings.ultimate.jutsu.staged"
+          },
+          "battle_settings_shadowblur_staged": {
+            "object": "battle.settings.c.bss.battle.settings.shadowblur.staged"
+          },
+          "battle_settings_extra_hit_staged": {
+            "object": "battle.settings.c.bss.battle.settings.extra.hit.staged"
+          },
+          "battle_settings_sub_active_frames_staged": {
+            "object": "battle.settings.c.bss.battle.settings.sub.active.frames.staged"
+          },
+          "battle_settings_xdash_chakra_cost_staged": {
+            "object": "battle.settings.c.bss.battle.settings.xdash.chakra.cost.staged"
+          },
+          "battle_settings_support_staged": {
+            "object": "battle.settings.c.bss.battle.settings.support.staged"
+          },
+          "battle_settings_ultimate_jutsu_values": {
+            "object": "battle.settings.c.bss.battle.settings.ultimate.jutsu.values"
+          },
+          "battle_settings_handicap_values": {
+            "object": "battle.settings.c.bss.battle.settings.handicap.values"
+          },
+          "battle_settings_window_start": {
+            "object": "battle.settings.c.bss.battle.settings.window.start"
+          },
+          "battle_settings_visible_count": {
+            "object": "battle.settings.c.bss.battle.settings.visible.count"
+          },
+          "battle_settings_handicap_value_y": {
+            "object": "battle.settings.c.bss.battle.settings.handicap.value.y"
+          },
+          "battle_settings_practice_archive": {
+            "object": "battle.settings.c.bss.battle.settings.practice.archive"
+          },
+          "battle_settings_practice_archive_owned": {
+            "object": "battle.settings.c.bss.battle.settings.practice.archive.owned"
+          },
+          "battle_settings_practice_backing": {
+            "object": "battle.settings.c.bss.battle.settings.practice.backing"
+          },
+          "battle_settings_practice_arrows": {
+            "object": "battle.settings.c.bss.battle.settings.practice.arrows"
+          },
+          "battle_settings_practice_archive_path": {
+            "object": "battle.settings.c.rodata.battle.settings.practice.archive.path"
+          },
+          "battle_settings_practice_backing_name": {
+            "object": "battle.settings.c.rodata.battle.settings.practice.backing.name"
+          },
+          "battle_settings_practice_texture_name": {
+            "object": "battle.settings.c.rodata.battle.settings.practice.texture.name"
+          },
+          "battle_settings_substitution_label": {
+            "object": "battle.settings.c.rodata.battle.settings.substitution.label"
+          },
+          "battle_settings_substitution_help": {
+            "object": "battle.settings.c.rodata.battle.settings.substitution.help"
+          },
+          "battle_settings_sub_active_frames_label": {
+            "object": "battle.settings.c.rodata.battle.settings.sub.active.frames.label"
+          },
+          "battle_settings_sub_active_frames_help": {
+            "object": "battle.settings.c.rodata.battle.settings.sub.active.frames.help"
+          },
+          "battle_settings_xdash_chakra_cost_label": {
+            "object": "battle.settings.c.rodata.battle.settings.xdash.chakra.cost.label"
+          },
+          "battle_settings_xdash_chakra_cost_help": {
+            "object": "battle.settings.c.rodata.battle.settings.xdash.chakra.cost.help"
+          },
+          "battle_settings_support_label": {
+            "object": "battle.settings.c.rodata.battle.settings.support.label"
+          },
+          "battle_settings_support_help": {
+            "object": "battle.settings.c.rodata.battle.settings.support.help"
+          },
+          "battle_settings_shadowblur_label": {
+            "object": "battle.settings.c.rodata.battle.settings.shadowblur.label"
+          },
+          "battle_settings_shadowblur_help": {
+            "object": "battle.settings.c.rodata.battle.settings.shadowblur.help"
+          },
+          "battle_settings_extra_hit_label": {
+            "object": "battle.settings.c.rodata.battle.settings.extra.hit.label"
+          },
+          "battle_settings_extra_hit_help": {
+            "object": "battle.settings.c.rodata.battle.settings.extra.hit.help"
+          },
+          "battle_settings_off_label": {
+            "object": "battle.settings.c.rodata.battle.settings.off.label"
+          },
+          "battle_settings_on_label": {
+            "object": "battle.settings.c.rodata.battle.settings.on.label"
+          },
+          "battle_settings_handicap_text": {
+            "object": "battle.settings.c.rodata.battle.settings.handicap.text"
+          },
+          "battle_settings_helpers": {
+            "object": "battle.settings.c.text"
+          },
+          "battle_settings_snapshot": {
+            "object": "battle.settings.c.text.battle.settings.snapshot"
+          },
+          "battle_settings_confirm": {
+            "object": "battle.settings.c.text.battle.settings.confirm"
+          },
+          "battle_settings_cancel": {
+            "object": "battle.settings.c.text.battle.settings.cancel"
+          },
+          "battle_settings_defaults_sound": {
+            "object": "battle.settings.c.text.battle.settings.defaults.sound"
+          },
+          "battle_settings_navigate": {
+            "object": "battle.settings.c.text.battle.settings.navigate"
+          },
+          "battle_settings_change_value": {
+            "object": "battle.settings.c.text.battle.settings.change.value"
+          },
+          "battle_settings_get_value": {
+            "object": "battle.settings.c.text.battle.settings.get.value"
+          },
+          "battle_settings_get_max_value": {
+            "object": "battle.settings.c.text.battle.settings.get.max.value"
+          },
+          "battle_settings_row_id": {
+            "object": "battle.settings.c.text.battle.settings.row.id"
+          },
+          "battle_settings_visible_row_id": {
+            "object": "battle.settings.c.text.battle.settings.visible.row.id"
+          },
+          "battle_settings_use_native_handicap": {
+            "object": "battle.settings.c.text.battle.settings.use.native.handicap"
+          },
+          "battle_settings_get_visible_value": {
+            "object": "battle.settings.c.text.battle.settings.get.visible.value"
+          },
+          "battle_settings_get_visible_max_value": {
+            "object": "battle.settings.c.text.battle.settings.get.visible.max.value"
+          },
+          "battle_settings_draw_rows": {
+            "object": "battle.settings.c.text.battle.settings.draw.rows"
+          },
+          "battle_settings_draw_cursor": {
+            "object": "battle.settings.c.text.battle.settings.draw.cursor"
+          },
+          "battle_settings_draw_backing": {
+            "object": "battle.settings.c.text.battle.settings.draw.backing"
+          },
+          "battle_settings_free_bridge": {
+            "object": "battle.settings.c.text.battle.settings.free.bridge"
+          },
+          "battle_settings_presentation_controller": {
+            "object": "battle.settings.c.bss.battle.settings.presentation.controller"
+          },
+          "battle_settings_content_context": {
+            "object": "battle.settings.c.bss.battle.settings.content.context"
+          },
+          "battle_settings_arrow_context": {
+            "object": "battle.settings.c.bss.battle.settings.arrow.context"
+          },
+          "battle_settings_practice_cursor": {
+            "object": "battle.settings.c.bss.battle.settings.practice.cursor"
+          },
+          "battle_settings_practice_cursor_name": {
+            "object": "battle.settings.c.rodata.battle.settings.practice.cursor.name"
+          }
+        }
+      },
+      "battle_settings_abi": {
+        "kind": "asm",
+        "path": "na228_builder/patches/settings/ingame/battle_mode/battle_settings_abi.S",
+        "namespace": "battle.settings.asm",
+        "imports": {
+          "battle_settings_confirm": "battle_settings_confirm",
+          "battle_settings_cancel": "battle_settings_cancel",
+          "battle_settings_row_id": "battle_settings_row_id",
+          "battle_settings_get_value": "battle_settings_get_value",
+          "battle_settings_visible_count": "battle_settings_visible_count",
+          "battle_settings_handicap_value_y": "battle_settings_handicap_value_y",
+          "battle_settings_active_value_tables": "battle_settings_active_value_tables",
+          "battle_settings_visible_row_id": "battle_settings_visible_row_id",
+          "battle_settings_use_native_handicap": "battle_settings_use_native_handicap",
+          "battle_settings_get_visible_value": "battle_settings_get_visible_value",
+          "battle_settings_get_visible_max_value": "battle_settings_get_visible_max_value"
+        },
+        "fragments": {
+          "battle_settings_confirm_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.confirm.bridge"
+          },
+          "battle_settings_cancel_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.cancel.bridge"
+          },
+          "battle_settings_ultimate_help_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.ultimate.help.bridge"
+          },
+          "battle_settings_draw_time_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.draw.time.bridge"
+          },
+          "battle_settings_draw_ordinary_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.draw.ordinary.bridge"
+          },
+          "battle_settings_handicap_red_value_y_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.handicap.red.value.y.bridge"
+          },
+          "battle_settings_handicap_blue_value_y_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.handicap.blue.value.y.bridge"
+          },
+          "battle_settings_draw_value_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.draw.value.bridge"
+          },
+          "battle_settings_helper_max_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.helper.max.bridge"
+          },
+          "battle_settings_helper_value_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.helper.value.bridge"
+          },
+          "battle_settings_helper_ordinary_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.helper.ordinary.bridge"
+          },
+          "battle_settings_cursor_ordinary_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.cursor.ordinary.bridge"
+          },
+          "battle_settings_label_loop_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.label.loop.bridge"
+          },
+          "battle_settings_value_loop_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.value.loop.bridge"
+          }
+        }
+      },
+      "practice_settings": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/practice_mode/settings.c",
+        "namespace": "practice.settings.c",
+        "imports": {
+          "practice_settings_active_labels": "practice_settings_active_labels",
+          "practice_settings_active_value_tables": "practice_settings_active_value_tables",
+          "practice_settings_schema": "practice_settings_schema",
+          "settings_menu_value_page": "settings_menu_value_page",
+          "settings_menu_page": "settings_menu_page",
+          "settings_menu_select_page": "settings_menu_select_page",
+          "settings_menu_model_index": "settings_menu_model_index",
+          "settings_menu_initialize_open_values": "settings_menu_initialize_open_values",
+          "settings_menu_open_values": "settings_menu_open_values",
+          "settings_menu_prepare_practice_backing": "settings_menu_prepare_practice_backing",
+          "chakra_mode_get": "chakra_mode_get",
+          "chakra_mode_set": "chakra_mode_set",
+          "settings_menu_draw_content": "settings_menu_draw_content",
+          "settings_menu_initialize_window": "settings_menu_initialize_window",
+          "settings_menu_update_window": "settings_menu_update_window"
+        },
+        "fragments": {
+          "practice_settings_chakra_staged": {
+            "object": "practice.settings.c.bss.practice.settings.chakra.staged"
+          },
+          "practice_settings_substitution_staged": {
+            "object": "practice.settings.c.bss.practice.settings.substitution.staged"
+          },
+          "practice_settings_ultimate_jutsu_staged": {
+            "object": "practice.settings.c.bss.practice.settings.ultimate.jutsu.staged"
+          },
+          "practice_settings_shadowblur_staged": {
+            "object": "practice.settings.c.bss.practice.settings.shadowblur.staged"
+          },
+          "practice_settings_extra_hit_staged": {
+            "object": "practice.settings.c.bss.practice.settings.extra.hit.staged"
+          },
+          "practice_settings_sub_active_frames_staged": {
+            "object": "practice.settings.c.bss.practice.settings.sub.active.frames.staged"
+          },
+          "practice_settings_xdash_chakra_cost_staged": {
+            "object": "practice.settings.c.bss.practice.settings.xdash.chakra.cost.staged"
+          },
+          "practice_settings_support_staged": {
+            "object": "practice.settings.c.bss.practice.settings.support.staged"
+          },
+          "practice_settings_ultimate_jutsu_values": {
+            "object": "practice.settings.c.bss.practice.settings.ultimate.jutsu.values"
+          },
+          "practice_settings_active_page_index": {
+            "object": "practice.settings.c.bss.practice.settings.active.page.index"
+          },
+          "practice_settings_active_page": {
+            "object": "practice.settings.c.bss.practice.settings.active.page"
+          },
+          "practice_settings_apply": {
+            "object": "practice.settings.c.text.practice.settings.apply"
+          },
+          "practice_settings_change_value": {
+            "object": "practice.settings.c.text.practice.settings.change.value"
+          },
+          "practice_settings_defaults": {
+            "object": "practice.settings.c.text.practice.settings.defaults"
+          },
+          "practice_settings_cancel": {
+            "object": "practice.settings.c.text.practice.settings.cancel"
+          },
+          "practice_settings_confirm": {
+            "object": "practice.settings.c.text.practice.settings.confirm"
+          },
+          "practice_settings_get_max_value": {
+            "object": "practice.settings.c.text.practice.settings.get.max.value"
+          },
+          "practice_settings_get_value": {
+            "object": "practice.settings.c.text.practice.settings.get.value"
+          },
+          "practice_settings_helpers": {
+            "object": "practice.settings.c.text"
+          },
+          "practice_settings_navigate": {
+            "object": "practice.settings.c.text.practice.settings.navigate"
+          },
+          "practice_settings_row_enabled": {
+            "object": "practice.settings.c.text.practice.settings.row.enabled"
+          },
+          "practice_settings_snapshot": {
+            "object": "practice.settings.c.text.practice.settings.snapshot"
+          },
+          "practice_settings_prepare_backing_and_compose": {
+            "object": "practice.settings.c.text.practice.settings.prepare.backing.and.compose"
+          },
+          "practice_settings_update_help": {
+            "object": "practice.settings.c.text.practice.settings.update.help"
+          },
+          "practice_settings_update_window": {
+            "object": "practice.settings.c.text.practice.settings.update.window"
+          },
+          "practice_settings_draw_content": {
+            "object": "practice.settings.c.text.practice.settings.draw.content"
+          }
+        }
+      },
+      "practice_settings_abi": {
+        "kind": "asm",
+        "path": "na228_builder/patches/settings/ingame/practice_mode/settings_abi.S",
+        "namespace": "practice.settings.asm",
+        "imports": {
+          "practice_settings_cancel": "practice_settings_cancel",
+          "practice_settings_get_value": "practice_settings_get_value",
+          "practice_settings_update_help": "practice_settings_update_help",
+          "practice_settings_update_window": "practice_settings_update_window"
+        },
+        "fragments": {
+          "practice_settings_cancel_bridge": {
+            "object": "practice.settings.asm.text.practice.settings.cancel.bridge"
+          },
+          "practice_settings_initialize_help_bridge": {
+            "object": "practice.settings.asm.text.practice.settings.initialize.help.bridge"
+          },
+          "practice_settings_after_value_change_bridge": {
+            "object": "practice.settings.asm.text.practice.settings.after.value.change.bridge"
+          },
+          "practice_settings_geometry_bridge": {
+            "object": "practice.settings.asm.text.practice.settings.geometry.bridge"
+          },
+          "practice_settings_help_bridge": {
+            "object": "practice.settings.asm.text.practice.settings.help.bridge"
+          }
+        }
+      },
+      "settings_menu_presentation": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/shared/menu_presentation.c",
+        "namespace": "settings.menu.presentation.c",
+        "imports": {
+          "settings_menu_draw_practice_backing": "settings_menu_draw_practice_backing",
+          "settings_menu_native_content": "settings_menu_native_content"
+        },
+        "fragments": {
+          "settings_menu_render_page": {
+            "object": "settings.menu.presentation.c.bss.settings.menu.render.page"
+          },
+          "settings_menu_presentation": {
+            "object": "settings.menu.presentation.c.bss.settings.menu.presentation"
+          },
+          "settings_menu_draw_content": {
+            "object": "settings.menu.presentation.c.text.settings.menu.draw.content"
+          },
+          "settings_menu_draw_backing": {
+            "object": "settings.menu.presentation.c.text.settings.menu.draw.backing"
+          },
+          "settings_menu_label": {
+            "object": "settings.menu.presentation.c.text.settings.menu.label"
+          },
+          "settings_menu_value": {
+            "object": "settings.menu.presentation.c.text.settings.menu.value"
+          },
+          "settings_menu_value_text": {
+            "object": "settings.menu.presentation.c.text.settings.menu.value.text"
+          },
+          "settings_menu_maximum": {
+            "object": "settings.menu.presentation.c.text.settings.menu.maximum"
+          },
+          "settings_menu_enabled": {
+            "object": "settings.menu.presentation.c.text.settings.menu.enabled"
+          },
+          "settings_menu_initialize_window": {
+            "object": "settings.menu.presentation.c.text.settings.menu.initialize.window"
+          },
+          "settings_menu_update_window": {
+            "object": "settings.menu.presentation.c.text.settings.menu.update.window"
+          },
+          "settings_menu_cursor_y": {
+            "object": "settings.menu.presentation.c.text.settings.menu.cursor.y"
+          }
+        }
+      },
+      "settings_menu_presentation_abi": {
+        "kind": "asm",
+        "path": "na228_builder/patches/settings/ingame/shared/menu_presentation_abi.S",
+        "namespace": "settings.menu.presentation.asm",
+        "imports": {
+          "settings_menu_render_page": "settings_menu_render_page",
+          "settings_menu_maximum": "settings_menu_maximum",
+          "settings_menu_value": "settings_menu_value",
+          "settings_menu_value_text": "settings_menu_value_text",
+          "settings_menu_label": "settings_menu_label",
+          "settings_menu_cursor_y": "settings_menu_cursor_y",
+          "practice_settings_draw_content": "practice_settings_draw_content"
+        },
+        "fragments": {
+          "settings_menu_selected_is_player": {
+            "object": "settings.menu.presentation.asm.text.settings.menu.selected.is.player"
+          },
+          "settings_menu_helper_max_bridge": {
+            "object": "settings.menu.presentation.asm.text.settings.menu.helper.max.bridge"
+          },
+          "settings_menu_helper_value_bridge": {
+            "object": "settings.menu.presentation.asm.text.settings.menu.helper.value.bridge"
+          },
+          "settings_menu_scroll_flags_bridge": {
+            "object": "settings.menu.presentation.asm.text.settings.menu.scroll.flags.bridge"
+          },
+          "settings_menu_draw_section_bridge": {
+            "object": "settings.menu.presentation.asm.text.settings.menu.draw.section.bridge"
+          },
+          "settings_menu_heading_text_bridge": {
+            "object": "settings.menu.presentation.asm.text.settings.menu.heading.text.bridge"
+          },
+          "settings_menu_draw_value_bridge": {
+            "object": "settings.menu.presentation.asm.text.settings.menu.draw.value.bridge"
+          },
+          "settings_menu_cursor_geometry_bridge": {
+            "object": "settings.menu.presentation.asm.text.settings.menu.cursor.geometry.bridge"
+          },
+          "settings_menu_draw_loop_bridge": {
+            "object": "settings.menu.presentation.asm.text.settings.menu.draw.loop.bridge"
+          },
+          "settings_menu_draw_label_bridge": {
+            "object": "settings.menu.presentation.asm.text.settings.menu.draw.label.bridge"
+          },
+          "practice_settings_content_bridge": {
+            "object": "settings.menu.presentation.asm.text.practice.settings.content.bridge"
+          },
+          "settings_menu_native_content": {
+            "object": "settings.menu.presentation.asm.text.settings.menu.native.content"
+          },
+          "settings_menu_content_return": {
+            "object": "settings.menu.presentation.asm.text.settings.menu.content.return"
+          }
+        }
+      }
+    }
+  },
+  "settings.battle_mechanics.items": {
+    "description": "Shared Items presets and a configurable weighted Custom item pool.",
+    "hooks": {
+      "choose_custom_field_item_0": {
+        "description": "Filter the native field-item distribution through the shared Custom selection.",
+        "target_id": "na2_btl",
+        "offset": "0x10b80",
+        "expected_hex": "24BA0E0C",
+        "symbol": "items_settings_select",
+        "encoding": "jal26"
+      },
+      "choose_custom_field_item_1": {
+        "description": "Filter the native field-item distribution through the shared Custom selection.",
+        "target_id": "na2_btl",
+        "offset": "0x11c10",
+        "expected_hex": "24BA0E0C",
+        "symbol": "items_settings_select",
+        "encoding": "jal26"
+      },
+      "choose_custom_field_item_2": {
+        "description": "Filter the native field-item distribution through the shared Custom selection.",
+        "target_id": "na2_btl",
+        "offset": "0x12ec0",
+        "expected_hex": "24BA0E0C",
+        "symbol": "items_settings_select",
+        "encoding": "jal26"
+      },
+      "choose_custom_field_item_3": {
+        "description": "Filter the native field-item distribution through the shared Custom selection.",
+        "target_id": "na2_btl",
+        "offset": "0x1e29c",
+        "expected_hex": "24BA0E0C",
+        "symbol": "items_settings_select",
+        "encoding": "jal26"
+      },
+      "spawn_selected_field_item_0": {
+        "description": "Skip the complete spawn request when Custom has no enabled outcome in this distribution.",
+        "target_id": "na2_btl",
+        "offset": "0x10ba4",
+        "expected_hex": "BCBA0E0C",
+        "symbol": "items_settings_spawn_bridge",
+        "encoding": "jal26"
+      },
+      "spawn_selected_field_item_1": {
+        "description": "Skip the complete spawn request when Custom has no enabled outcome in this distribution.",
+        "target_id": "na2_btl",
+        "offset": "0x11c34",
+        "expected_hex": "BCBA0E0C",
+        "symbol": "items_settings_spawn_bridge",
+        "encoding": "jal26"
+      },
+      "spawn_selected_field_item_2": {
+        "description": "Skip the complete spawn request when Custom has no enabled outcome in this distribution.",
+        "target_id": "na2_btl",
+        "offset": "0x12ee4",
+        "expected_hex": "BCBA0E0C",
+        "symbol": "items_settings_spawn_bridge",
+        "encoding": "jal26"
+      },
+      "spawn_selected_field_item_3": {
+        "description": "Skip the complete spawn request when Custom has no enabled outcome in this distribution.",
+        "target_id": "na2_btl",
+        "offset": "0x1e2c0",
+        "expected_hex": "BCBA0E0C",
+        "symbol": "items_settings_spawn_bridge",
+        "encoding": "jal26"
+      },
+      "shared_items_amount": {
+        "description": "Resolve the shared Items selection for the native amount branches.",
+        "target_id": "na2_elf",
+        "offset": "0x2AECA0",
+        "expected_hex": "90DB070C",
+        "symbol": "items_settings_availability",
+        "encoding": "jal26"
+      },
+      "custom_small_chakra_pickups": {
+        "description": "Apply the Chakra Ball choice to the small chakra pickups emitted by native amount handling.",
+        "target_id": "na2_elf",
+        "offset": "0x2AEE48",
+        "expected_hex": "ECCF0D0C",
+        "symbol": "items_settings_extra_spawn_bridge",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "items_settings": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/items/items_settings.c",
+        "namespace": "battle.items.c",
+        "imports": {
+          "items_settings_config": "items_settings_config"
+        },
+        "fragments": {
+          "items_settings_option_get": {
+            "object": "battle.items.c.text.items.settings.option.get"
+          },
+          "items_settings_option_set": {
+            "object": "battle.items.c.text.items.settings.option.set"
+          },
+          "items_settings_availability": {
+            "object": "battle.items.c.text.items.settings.availability"
+          },
+          "items_settings_extra_enabled": {
+            "object": "battle.items.c.text.items.settings.extra.enabled"
+          },
+          "items_settings_select": {
+            "object": "battle.items.c.text.items.settings.select"
+          },
+          "items_settings_state": {
+            "object": "battle.items.c.bss.items.settings.state"
+          },
+          "items_settings_helpers": {
+            "object": "battle.items.c.text"
+          }
+        }
+      },
+      "items_settings_abi": {
+        "kind": "asm",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/items/items_settings_abi.S",
+        "namespace": "battle.items.asm",
+        "imports": {
+          "items_settings_extra_enabled": "items_settings_extra_enabled"
+        },
+        "fragments": {
+          "items_settings_spawn_bridge": {
+            "object": "battle.items.asm.text.items.settings.spawn.bridge"
+          },
+          "items_settings_extra_spawn_bridge": {
+            "object": "battle.items.asm.text.items.settings.extra.spawn.bridge"
+          }
+        }
+      }
+    }
+  },
+  "settings.battle_mechanics.sub_active_frames": {
+    "description": "Select vanilla attack timing or a total pre-impact input window of 1 through 15 frames while preserving resource, response, state, and attack-block gates.",
+    "hooks": {
+      "select_substitution_active_history": {
+        "description": "Resume native random and clamped timing for Default, or convert the selected total window to prior-history frames and rejoin the guard-age and history checks.",
+        "target_id": "na2_elf",
+        "offset": "0x1296C8",
+        "expected_hex": "1100010600000000",
+        "symbol": "battle_logic_substitution_select_active_history",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      }
+    },
+    "payload": {
+      "sub_active_frames_settings": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/sub_active_frames/sub_active_frames_settings.c",
+        "namespace": "battle.logic.settings.sub.active.frames",
+        "imports": {
+          "battle_settings_sub_active_frames_default": "battle_settings_sub_active_frames_default"
+        },
+        "fragments": {
+          "sub_active_frames_get": {
+            "object": "battle.logic.settings.sub.active.frames.text.sub.active.frames.get"
+          },
+          "sub_active_frames_set": {
+            "object": "battle.logic.settings.sub.active.frames.text.sub.active.frames.set"
+          },
+          "sub_active_frames_state": {
+            "object": "battle.logic.settings.sub.active.frames.bss.sub.active.frames.state"
+          },
+          "sub_active_frames_initialized": {
+            "object": "battle.logic.settings.sub.active.frames.bss.sub.active.frames.initialized"
+          }
+        }
+      },
+      "substitution_active_frames_abi": {
+        "kind": "asm",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/sub_active_frames/substitution_active_frames_abi.S",
+        "namespace": "battle.logic.substitution.active.frames.asm",
+        "imports": {
+          "sub_active_frames_get": "sub_active_frames_get"
+        },
+        "fragments": {
+          "battle_logic_substitution_select_active_history": {
+            "object": "battle.logic.substitution.active.frames.asm.text.battle.logic.substitution.select.active.history"
+          }
+        }
+      }
+    }
+  },
+  "settings.battle_mechanics.substitution": {
+    "description": "Own ordinary substitution resource routing across selectable Chakra, Gauge, and Free modes; charge Gauge from the character override's normalized substitution cost, recover it on the native battle clock and committed HP loss, and draw its independent textured top-HUD bar without modifying the native support renderer.",
+    "hooks": {
+      "adjust_battle_hud_character_name_y": {
+        "description": "Add the gauge-only vertical offset after the native renderer has resolved the Battle HUD character-name Y anchor, then retain its scale multiplication and side load.",
+        "target_id": "na2_btl",
+        "offset": "0x67F68",
+        "expected_hex": "820001460C00A290",
+        "symbol": "substitution_gauge_adjust_battle_hud_character_name_y_shim",
+        "encoding": "jal26"
+      },
+      "gate_ordinary_substitution_with_stock": {
+        "description": "Route the native resource comparison through the selected Chakra, Gauge, or Free predicate, then rejoin the unchanged normalized acceptance branch.",
+        "target_id": "na2_elf",
+        "offset": "0x129810",
+        "expected_hex": "700081C6803F023C",
+        "symbol": "substitution_gauge_can_spend_shim",
+        "encoding": "jal26",
+        "replacement_hex": "000000002D208002"
+      },
+      "spend_stock_without_chakra": {
+        "description": "After native charged-transition setup, retain the complete native chakra path in Chakra mode, spend the resolved gauge cost in Gauge mode, or spend nothing in Free mode.",
+        "target_id": "na2_elf",
+        "offset": "0x129984",
+        "expected_hex": "3C1D0C0C00000000",
+        "symbol": "substitution_gauge_spend_shim",
+        "encoding": "jal26"
+      },
+      "restart_delay_after_every_success": {
+        "description": "Restart recovery after charged and deliberately free substitution transitions, then call the displaced native success helper once and preserve its return value.",
+        "target_id": "na2_elf",
+        "offset": "0x1299F4",
+        "expected_hex": "6CB5080C00000000",
+        "symbol": "substitution_gauge_success_shim",
+        "encoding": "jal26"
+      },
+      "sample_committed_fighter_hp": {
+        "description": "Sample normalized HP once on the shared active-fighter path, then call the adjacent displaced native update exactly once without overlapping the X-dash hook.",
+        "target_id": "na2_elf",
+        "offset": "0x14DB8C",
+        "expected_hex": "7012090C00000000",
+        "symbol": "substitution_gauge_hp_sample_shim",
+        "encoding": "jal26"
+      },
+      "advance_on_native_battle_clock": {
+        "description": "Advance both slots once per native 30-FPS update when scheduler and terminal flags permit, then retain the displaced countdown call and return value.",
+        "target_id": "na2_elf",
+        "offset": "0x0F12B8",
+        "expected_hex": "A0AE070C00000000",
+        "symbol": "substitution_gauge_battle_clock_shim",
+        "encoding": "jal26"
+      },
+      "reset_on_new_battle_construction": {
+        "description": "Initialize both manager-owned slots after the two fighter pointers are published in the one-time battle-graph construction branch, then retain the displaced native call.",
+        "target_id": "na2_elf",
+        "offset": "0x0EF51C",
+        "expected_hex": "B8251C0C00000000",
+        "symbol": "substitution_gauge_reset_shim",
+        "encoding": "jal26"
+      },
+      "cache_substitution_gauge_render_source": {
+        "description": "Retain the native support-controller update, then cache its initialized per-side sprite and BTL rendering context without drawing through the support-controller lifecycle.",
+        "target_id": "na2_btl",
+        "offset": "0x69380",
+        "expected_hex": "04721C0C",
+        "symbol": "substitution_gauge_update_and_cache",
+        "encoding": "jal26"
+      },
+      "draw_independent_substitution_gauge_with_battle_hud": {
+        "description": "Retain the primary per-side Battle HUD draw, then draw the independent substitution bar only after the native parent visibility gate accepts that HUD side, using the same live layout transform and primary-sprite alpha.",
+        "target_id": "na2_btl",
+        "offset": "0x67434",
+        "expected_hex": "C86D1C0C",
+        "symbol": "substitution_gauge_draw_with_battle_hud",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "substitution_gauge": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge.c",
+        "namespace": "battle.logic.substitution.gauge.c",
+        "imports": {
+          "substitution_gauge_config": "substitution_gauge_config"
+        },
+        "fragments": {
+          "substitution_gauge_reset_battle": {
+            "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.reset.battle"
+          },
+          "substitution_gauge_can_spend": {
+            "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.can.spend"
+          },
+          "substitution_gauge_route_spend": {
+            "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.route.spend"
+          },
+          "substitution_gauge_note_success": {
+            "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.note.success"
+          },
+          "substitution_gauge_sample_hp": {
+            "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.sample.hp"
+          },
+          "substitution_gauge_advance_counts": {
+            "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.advance.counts"
+          },
+          "substitution_gauge_advance_battle": {
+            "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.advance.battle"
+          },
+          "substitution_gauge_update_and_cache": {
+            "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.update.and.cache"
+          },
+          "substitution_gauge_draw_with_battle_hud": {
+            "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.draw.with.battle.hud"
+          },
+          "substitution_gauge_mode_default": {
+            "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.mode.default"
+          },
+          "substitution_gauge_mode_get": {
+            "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.mode.get"
+          },
+          "substitution_gauge_mode_set": {
+            "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.mode.set"
+          },
+          "substitution_gauge_adjust_battle_hud_character_name_y": {
+            "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.adjust.battle.hud.character.name.y"
+          },
+          "substitution_gauge_constants": {
+            "object": "battle.logic.substitution.gauge.c.rodata"
+          },
+          "substitution_gauge_option_get": {
+            "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.option.get"
+          },
+          "substitution_gauge_option_set": {
+            "object": "battle.logic.substitution.gauge.c.text.substitution.gauge.option.set"
+          },
+          "substitution_gauge_live_config": {
+            "object": "battle.logic.substitution.gauge.c.bss.substitution.gauge.live.config"
+          },
+          "substitution_gauge_state": {
+            "object": "battle.logic.substitution.gauge.c.bss.substitution.gauge.state"
+          },
+          "substitution_gauge_cost_fraction": {
+            "object": "battle.logic.substitution.gauge.c.bss.substitution.gauge.cost.fraction"
+          },
+          "substitution_gauge_fill_fraction": {
+            "object": "battle.logic.substitution.gauge.c.bss.substitution.gauge.fill.fraction"
+          },
+          "substitution_gauge_runtime_state": {
+            "object": "battle.logic.substitution.gauge.c.bss.substitution.gauge.runtime.state"
+          },
+          "substitution_gauge_mode_free_label": {
+            "object": "battle.logic.substitution.gauge.c.rodata.substitution.gauge.mode.free.label"
+          }
+        }
+      },
+      "substitution_gauge_abi": {
+        "kind": "asm",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge_abi.S",
+        "namespace": "battle.logic.substitution.gauge.asm",
+        "imports": {
+          "substitution_gauge_can_spend": "substitution_gauge_can_spend",
+          "substitution_gauge_route_spend": "substitution_gauge_route_spend",
+          "substitution_gauge_note_success": "substitution_gauge_note_success",
+          "substitution_gauge_sample_hp": "substitution_gauge_sample_hp",
+          "substitution_gauge_advance_battle": "substitution_gauge_advance_battle",
+          "substitution_gauge_reset_battle": "substitution_gauge_reset_battle",
+          "substitution_gauge_adjust_battle_hud_character_name_y": "substitution_gauge_adjust_battle_hud_character_name_y"
+        },
+        "fragments": {
+          "substitution_gauge_can_spend_shim": {
+            "object": "battle.logic.substitution.gauge.asm.text.substitution.gauge.can.spend.shim"
+          },
+          "substitution_gauge_spend_shim": {
+            "object": "battle.logic.substitution.gauge.asm.text.substitution.gauge.spend.shim"
+          },
+          "substitution_gauge_success_shim": {
+            "object": "battle.logic.substitution.gauge.asm.text.substitution.gauge.success.shim"
+          },
+          "substitution_gauge_hp_sample_shim": {
+            "object": "battle.logic.substitution.gauge.asm.text.substitution.gauge.hp.sample.shim"
+          },
+          "substitution_gauge_battle_clock_shim": {
+            "object": "battle.logic.substitution.gauge.asm.text.substitution.gauge.battle.clock.shim"
+          },
+          "substitution_gauge_reset_shim": {
+            "object": "battle.logic.substitution.gauge.asm.text.substitution.gauge.reset.shim"
+          },
+          "substitution_gauge_adjust_battle_hud_character_name_y_shim": {
+            "object": "battle.logic.substitution.gauge.asm.text.substitution.gauge.adjust.battle.hud.character.name.y.shim"
+          }
+        }
+      }
+    }
+  },
+  "settings.battle_mechanics.ultimate_jutsu": {
+    "description": "Back the shared Ultimate Jutsu selector with runtime state and guarded contest and HUD behavior.",
+    "hooks": {
+      "gate_contest_press_latch": {
+        "description": "Read the native contest press state for native modes and return zero for No Contest and No HUD.",
+        "target_id": "na2_btl",
+        "offset": "0xB6094",
+        "expected_hex": "6C66070C",
+        "symbol": "ultimate_jutsu_contest_input_state",
+        "encoding": "jal26"
+      },
+      "gate_contest_release_poll": {
+        "description": "Read the native contest release state for native modes and return zero for No Contest and No HUD.",
+        "target_id": "na2_btl",
+        "offset": "0xB62F0",
+        "expected_hex": "6C66070C",
+        "symbol": "ultimate_jutsu_contest_input_state",
+        "encoding": "jal26"
+      },
+      "gate_contest_render": {
+        "description": "Retain the contest object's lifecycle and render dispatch for native modes while suppressing its meter, prompts, and results for No Contest and No HUD.",
+        "target_id": "na2_elf",
+        "offset": "0xF0A40",
+        "expected_hex": "FCAF0D0C",
+        "symbol": "ultimate_jutsu_contest_render",
+        "encoding": "jal26"
+      },
+      "transition_complete_battle_hud_during_contest": {
+        "description": "For No HUD only, observe the retained contest lifecycle and request the same all-HUD hide/show transition APIs used by ordinary jutsu.",
+        "target_id": "na2_btl",
+        "offset": "0x67030",
+        "expected_hex": "E0FFBD271000BFFF",
+        "symbol": "battle_logic_ultimate_jutsu_battle_hud_transition",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      }
+    },
+    "payload": {
+      "ultimate_jutsu_hud": {
+        "kind": "asm",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/ultimate_jutsu/ultimate_jutsu_hud.S",
+        "namespace": "battle.logic.ultimate.jutsu.hud",
+        "imports": {
+          "battle_logic_ultimate_jutsu_hud_transition_active": "ultimate_jutsu_hud_transition_active",
+          "ultimate_jutsu_mode_get": "ultimate_jutsu_mode_get"
+        },
+        "fragments": {
+          "battle_logic_ultimate_jutsu_battle_hud_transition": {
+            "object": "battle.logic.ultimate.jutsu.hud.text.battle.logic.ultimate.jutsu.battle.hud.transition"
+          }
+        }
+      },
+      "ultimate_jutsu_hud_transition_active": {
+        "kind": "data",
+        "alignment": 4,
+        "value": "00000000"
+      },
+      "ultimate_jutsu_settings": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/ultimate_jutsu/ultimate_jutsu_settings.c",
+        "namespace": "battle.logic.settings.ultimate.jutsu",
+        "imports": {
+          "battle_settings_ultimate_jutsu_default": "battle_settings_ultimate_jutsu_default"
+        },
+        "fragments": {
+          "ultimate_jutsu_contest_input_state": {
+            "object": "battle.logic.settings.ultimate.jutsu.text.ultimate.jutsu.contest.input.state"
+          },
+          "ultimate_jutsu_contest_render": {
+            "object": "battle.logic.settings.ultimate.jutsu.text.ultimate.jutsu.contest.render"
+          },
+          "ultimate_jutsu_mode_default": {
+            "object": "battle.logic.settings.ultimate.jutsu.text.ultimate.jutsu.mode.default"
+          },
+          "ultimate_jutsu_mode_get": {
+            "object": "battle.logic.settings.ultimate.jutsu.text.ultimate.jutsu.mode.get"
+          },
+          "ultimate_jutsu_mode_set": {
+            "object": "battle.logic.settings.ultimate.jutsu.text.ultimate.jutsu.mode.set"
+          },
+          "ultimate_jutsu_no_contest_label": {
+            "object": "battle.logic.settings.ultimate.jutsu.rodata.ultimate.jutsu.no.contest.label"
+          },
+          "ultimate_jutsu_no_hud_label": {
+            "object": "battle.logic.settings.ultimate.jutsu.rodata.ultimate.jutsu.no.hud.label"
+          },
+          "ultimate_jutsu_mode_state": {
+            "object": "battle.logic.settings.ultimate.jutsu.bss.ultimate.jutsu.mode.state"
+          },
+          "ultimate_jutsu_mode_initialized": {
+            "object": "battle.logic.settings.ultimate.jutsu.bss.ultimate.jutsu.mode.initialized"
+          }
+        }
+      }
+    }
+  },
+  "settings.battle_mechanics.shadowblur": {
+    "description": "Back the shared Shadowblur Extra Hit selector with independent runtime state and its guarded native branch.",
+    "hooks": {
+      "select_shadowblur_extra_hit_path": {
+        "description": "Preserve the native predicate result while choosing whether the Shadowblur Extra Hit side-effect path runs.",
+        "target_id": "na2_elf",
+        "offset": "0x1458C8",
+        "expected_hex": "7A00401000000000",
+        "symbol": "shadowblur_extra_hit_branch_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      }
+    },
+    "payload": {
+      "shadowblur_settings": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/shadowblur/shadowblur_settings.c",
+        "namespace": "battle.logic.settings.shadowblur",
+        "imports": {
+          "battle_settings_shadowblur_default": "battle_settings_shadowblur_default"
+        },
+        "fragments": {
+          "shadowblur_get": {
+            "object": "battle.logic.settings.shadowblur.text.shadowblur.get"
+          },
+          "shadowblur_set": {
+            "object": "battle.logic.settings.shadowblur.text.shadowblur.set"
+          },
+          "shadowblur_state": {
+            "object": "battle.logic.settings.shadowblur.bss.shadowblur.state"
+          },
+          "shadowblur_initialized": {
+            "object": "battle.logic.settings.shadowblur.bss.shadowblur.initialized"
+          }
+        }
+      },
+      "shadowblur_settings_abi": {
+        "kind": "asm",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/shadowblur/shadowblur_settings_abi.S",
+        "namespace": "battle.logic.settings.shadowblur.asm",
+        "imports": {
+          "shadowblur_get": "shadowblur_get"
+        },
+        "fragments": {
+          "shadowblur_extra_hit_branch_bridge": {
+            "object": "battle.logic.settings.shadowblur.asm.text.shadowblur.extra.hit.branch.bridge"
+          }
+        }
+      }
+    }
+  },
+  "settings.battle_mechanics.extra_hit": {
+    "description": "Shared Extra Hit selection with native rejection recovery and a once-per-attack chakra penalty.",
+    "hooks": {
+      "check_extra_hit": {
+        "description": "Apply the selector after native eligibility; rejection keeps native action-exit handling.",
+        "target_id": "na2_elf",
+        "offset": "0x13B6DC",
+        "expected_hex": "9406090C",
+        "symbol": "extra_hit_check",
+        "encoding": "jal26",
+        "replacement_hex": "0000000C"
+      },
+      "begin_extra_hit_attack": {
+        "description": "Reset initiation charging at the native generic-attack initializer.",
+        "target_id": "na2_elf",
+        "offset": "0x117F28",
+        "expected_hex": "9CE2080C",
+        "symbol": "extra_hit_begin_attack",
+        "encoding": "jal26",
+        "replacement_hex": "0000000C"
+      }
+    },
+    "payload": {
+      "extra_hit_settings": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/extra_hit/extra_hit_settings.c",
+        "namespace": "battle.logic.settings.extra.hit",
+        "imports": {
+          "battle_settings_extra_hit_default": "battle_settings_extra_hit_default"
+        },
+        "fragments": {
+          "extra_hit_get": {
+            "object": "battle.logic.settings.extra.hit.text.extra.hit.get"
+          },
+          "extra_hit_set": {
+            "object": "battle.logic.settings.extra.hit.text.extra.hit.set"
+          },
+          "extra_hit_state": {
+            "object": "battle.logic.settings.extra.hit.bss.extra.hit.state"
+          },
+          "extra_hit_initialized": {
+            "object": "battle.logic.settings.extra.hit.bss.extra.hit.initialized"
+          },
+          "extra_hit_begin_attack": {
+            "object": "battle.logic.settings.extra.hit.text.extra.hit.begin.attack"
+          },
+          "extra_hit_check": {
+            "object": "battle.logic.settings.extra.hit.text.extra.hit.check"
+          },
+          "extra_hit_charged": {
+            "object": "battle.logic.settings.extra.hit.bss.extra.hit.charged"
+          }
+        }
+      }
+    }
+  },
+  "settings.battle_mechanics.support": {
+    "description": "Shared Off, Nerfed, Normal, and Unlimited support in Battle and Practice.",
+    "hooks": {
+      "route_free_field_support_call": {
+        "description": "Route manual support input and Nerfed summon-to-attack transition.",
+        "target_id": "na2_elf",
+        "offset": "0x14DDA4",
+        "expected_hex": "D0E0080C",
+        "symbol": "battle_support_route_field_call",
+        "encoding": "jal26"
+      },
+      "route_support_gauge_drain": {
+        "target_id": "na2_elf",
+        "offset": "0x1386C8",
+        "expected_hex": "C8E1080C",
+        "symbol": "battle_support_route_gauge_drain",
+        "encoding": "jal26"
+      },
+      "route_support_gauge_draw": {
+        "description": "Suppress the dedicated native support gauge only while Off.",
+        "target_id": "na2_btl",
+        "offset": "0x69398",
+        "expected_hex": "BC721C0C",
+        "symbol": "battle_support_route_gauge_draw",
+        "encoding": "jal26"
+      },
+      "route_support_gauge_update": {
+        "target_id": "na2_elf",
+        "offset": "0x14DDB0",
+        "expected_hex": "50E1080C",
+        "symbol": "battle_support_route_gauge_update",
+        "encoding": "jal26"
+      },
+      "support_gauge_marker": {
+        "target_id": "na2_btl",
+        "offset": "0x69110",
+        "expected_hex": "10EF0D0C",
+        "symbol": "battle_support_draw_marker",
+        "encoding": "jal26"
+      },
+      "support_gauge_readiness": {
+        "target_id": "na2_btl",
+        "offset": "0x68A7C",
+        "expected_hex": "78E0080C",
+        "symbol": "battle_support_gauge_ready",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "battle_support": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/support/battle_support.c",
+        "namespace": "battle.support",
+        "imports": {
+          "support_get": "support_get"
+        },
+        "fragments": {
+          "battle_support_draw_marker": {
+            "object": "battle.support.text.battle.support.draw.marker"
+          },
+          "battle_support_gauge_ready": {
+            "object": "battle.support.text.battle.support.gauge.ready"
+          },
+          "battle_support_route_field_call": {
+            "object": "battle.support.text.battle.support.route.field.call"
+          },
+          "battle_support_route_gauge_drain": {
+            "object": "battle.support.text.battle.support.route.gauge.drain"
+          },
+          "battle_support_route_gauge_draw": {
+            "object": "battle.support.text.battle.support.route.gauge.draw"
+          },
+          "battle_support_route_gauge_update": {
+            "object": "battle.support.text.battle.support.route.gauge.update"
+          }
+        }
+      },
+      "support_settings": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/support/support_settings.c",
+        "namespace": "battle.logic.settings.support",
+        "imports": {
+          "battle_settings_support_default": "battle_settings_support_default"
+        },
+        "fragments": {
+          "support_get": {
+            "object": "battle.logic.settings.support.text.support.get"
+          },
+          "support_initialized": {
+            "object": "battle.logic.settings.support.bss.support.initialized"
+          },
+          "support_set": {
+            "object": "battle.logic.settings.support.text.support.set"
+          },
+          "support_state": {
+            "object": "battle.logic.settings.support.bss.support.state"
+          }
+        }
+      }
+    },
+    "edits": {
+      "remove_practice_link_gauge_refill": {
+        "description": "Remove the separate Practice General Link Gauge refill; shared Support owns Unlimited.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x14CD48",
+        "expected_hex": "10CC848F03000524",
+        "replacement_hex": "2B33090800000000"
+      }
+    }
+  }
+}

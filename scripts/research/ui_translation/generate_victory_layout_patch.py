@@ -288,7 +288,9 @@ def main() -> int:
 
     generated_edits = build_patch_rows()
     generated = build_definitions(generated_edits)
-    patches_path = load_paths(REPOSITORY).path("builder", "patches", "localization.json")
+    patches_path = load_paths(REPOSITORY).path(
+        "builder", "patches", "localization", "localization.json"
+    )
     stored_patches = json.loads(patches_path.read_text(encoding="utf-8"))
     stored_root = stored_patches.get(PATCH_ROOT_ID, {})
     stored_tables = stored_root.get("edits", {})

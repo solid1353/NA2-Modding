@@ -270,12 +270,12 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
         Assert-CommandRouting ($launch.games[0] -like '*\build\foo.iso') `
             'Alias-free configuration did not launch.'
 
-        $null = Invoke-FakeNa228 -ArgumentList @('bew', 'src\candidate.c')
+        $null = Invoke-FakeNa228 -ArgumentList @('bew', 'na228_builder\patches\settings\candidate.c')
         $build = Get-Content -Raw -LiteralPath (Join-Path $repository 'build.json') | ConvertFrom-Json
         $watch = Get-Content -Raw -LiteralPath (Join-Path $repository 'watch.json') | ConvertFrom-Json
         Assert-CommandRouting (
             $build.configuration -ceq 'e2e' -and
-            $watch.source -ceq 'src\candidate.c' -and
+            $watch.source -ceq 'na228_builder\patches\settings\candidate.c' -and
             $watch.port -eq 28011
         ) 'Combined build/watch selector did not route configuration, target, and PINE port.'
 

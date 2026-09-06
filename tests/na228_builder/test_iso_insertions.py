@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.image_assembler.iso9660 import (
+from na228_builder.infrastructure.modules.image_assembler.iso9660 import (
     SECTOR,
     Iso9660,
     compose_filesystems,

@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from types import SimpleNamespace
 
-from na228_builder.scripts.composer import compose_assembly_plan
+from na228_builder.infrastructure.orchestration.composer import compose_assembly_plan
 
 
 class ComposerTests(unittest.TestCase):

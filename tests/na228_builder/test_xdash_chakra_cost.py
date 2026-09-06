@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.scripts import catalog, jsonc
-from na228_builder.scripts.battle_settings_runtime import (
+from na228_builder.infrastructure.orchestration import catalog, jsonc
+from na228_builder.patches.settings.ingame.battle_mechanics.battle_settings_runtime import (
     battle_settings_runtime_fragments,
 )
 from scripts.lib.paths import load_local_paths
@@ -150,7 +150,7 @@ class XdashChakraCostTests(unittest.TestCase):
         source = xdash["payload"]["xdash_chakra_cost"]
         self.assertEqual(
             source["path"],
-            "src/battle_logic/xdash_chakra_cost.c",
+            "na228_builder/patches/settings/ingame/battle_mechanics/xdash_chakra_cost/xdash_chakra_cost.c",
         )
         self.assertEqual(
             source["imports"]["xdash_chakra_cost_get"],

@@ -47,7 +47,7 @@ function Invoke-Na2BuildRegistry {
     try {
         $output = @(
             & $PythonRunner -PackageSet builder `
-                -Module 'na228_builder.scripts.build_preflight' `
+                -Module 'na228_builder.infrastructure.orchestration.build_preflight' `
                 -ArgumentList $arguments -NoBytecode 2>&1
         )
         $exitCode = $LASTEXITCODE

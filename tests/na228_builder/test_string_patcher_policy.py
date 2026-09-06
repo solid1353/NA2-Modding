@@ -3,9 +3,9 @@ from __future__ import annotations
 import unittest
 from types import SimpleNamespace
 
-from na228_builder.modules.string_patcher import engine as string_patcher
-from na228_builder.modules.translation_importer import engine as translation_importer
-from na228_builder.scripts import catalog, module_pipeline
+from na228_builder.infrastructure.modules.string_patcher import engine as string_patcher
+from na228_builder.infrastructure.modules.translation_importer import engine as translation_importer
+from na228_builder.infrastructure.orchestration import catalog, module_pipeline
 
 
 def synthetic_plan() -> translation_importer.TranslationImportPlan:

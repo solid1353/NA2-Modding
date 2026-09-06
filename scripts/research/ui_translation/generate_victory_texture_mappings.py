@@ -14,7 +14,7 @@ REPOSITORY = Path(__file__).resolve().parents[3]
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
-from na228_builder.modules.texture_patcher import engine  # noqa: E402
+from na228_builder.infrastructure.modules.texture_patcher import engine  # noqa: E402
 from scripts.lib.paths import load_paths  # noqa: E402
 
 

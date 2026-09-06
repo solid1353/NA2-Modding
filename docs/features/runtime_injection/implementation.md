@@ -32,7 +32,7 @@ A guarded game instruction is replaced by `j` or `jal` to a linked resident
 symbol. C owns ordinary logic. Assembly owns register-sensitive entry, displaced
 instructions, delay slots, tail calls, and rejoins. The runtime-injector module
 contract is documented in
-[`na228_builder/modules/runtime_injector/README.md`](../../../na228_builder/modules/runtime_injector/README.md).
+[`na228_builder/infrastructure/modules/runtime_injector/README.md`](../../../na228_builder/infrastructure/modules/runtime_injector/README.md).
 
 ## Development injection
 

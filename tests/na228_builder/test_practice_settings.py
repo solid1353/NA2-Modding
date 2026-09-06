@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.scripts import catalog, jsonc
-from na228_builder.scripts.practice_settings import (
+from na228_builder.infrastructure.orchestration import catalog, jsonc
+from na228_builder.patches.settings.ingame.practice_mode.practice_settings import (
     _active_pages,
     practice_settings_fragment,
     practice_settings_table_fragments,

@@ -7,8 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.image_assembler.iso9660 import Iso9660, SECTOR, compose_filesystems
-from na228_builder.image_assembler.udf import Udf
+from na228_builder.infrastructure.modules.image_assembler.iso9660 import Iso9660, SECTOR, compose_filesystems
+from na228_builder.infrastructure.modules.image_assembler.udf import Udf
 
 
 SECTORS = 400

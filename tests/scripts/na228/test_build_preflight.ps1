@@ -56,7 +56,7 @@ function Get-ArgumentValue([string]$Name) {
     if ($index -lt 0) { return '' }
     return $ArgumentList[$index + 1]
 }
-if ($Module -ceq 'na228_builder.scripts.build_configuration') {
+if ($Module -ceq 'na228_builder.infrastructure.orchestration.build_configuration') {
     $output = Get-ArgumentValue '--output'
     $provenance = Join-Path $repository (Get-ArgumentValue '--configuration-log-directory')
     [void](New-Item -ItemType Directory -Path $provenance -Force)
@@ -65,7 +65,7 @@ if ($Module -ceq 'na228_builder.scripts.build_configuration') {
     Write-Output 'builder complete'
     exit 0
 }
-if ($Module -cne 'na228_builder.scripts.build_preflight') { exit 3 }
+if ($Module -cne 'na228_builder.infrastructure.orchestration.build_preflight') { exit 3 }
 $command = $ArgumentList[0]
 $cached = Join-Path $repository 'build\cached.iso'
 if ($command -ceq 'lookup') {

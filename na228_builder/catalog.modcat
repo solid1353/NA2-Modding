@@ -123,6 +123,15 @@
       replace_imported_game_title: setting {
         patch: "general.replace_imported_game_title",
       },
+      mode_availability: {
+        description: "Configure which game modes are available.",
+        remove_adventure: setting {
+          patch: "general.mode_availability.remove_adventure",
+        },
+        remove_shop: setting {
+          patch: "general.mode_availability.remove_shop",
+        },
+      },
     },
     memory_card: {
       description: "Memory-card save presentation and isolation.",
@@ -166,15 +175,6 @@
       support_selection: setting<"all" | "relevant" | "none"> {
         description: "Control which supports are available during Character Select.",
         patch: "character_select.support_selection",
-      },
-    },
-    mode_select: {
-      description: "Configure which modes are available on Mode Select.",
-      remove_adventure: setting {
-        patch: "mode_select.remove_adventure",
-      },
-      remove_shop: setting {
-        patch: "mode_select.remove_shop",
       },
     },
     rendering: {

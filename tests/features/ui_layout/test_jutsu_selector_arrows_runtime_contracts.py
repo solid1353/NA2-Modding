@@ -6,13 +6,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.payload_builder import ee_c_fragments
+from na228_builder.infrastructure.modules.payload_builder import ee_c_fragments
 
 
 REPOSITORY = Path(__file__).resolve().parents[3]
 TOOLCHAIN_BIN = ee_c_fragments.default_toolchain_bin(REPOSITORY)
 COMPILER = TOOLCHAIN_BIN / "ee-gcc.exe"
-SOURCE_ROOT = REPOSITORY / "src" / "localization" / "ui"
+SOURCE_ROOT = REPOSITORY / "na228_builder" / "patches" / "localization" / "ui"
 
 
 def words(payload: bytes) -> tuple[int, ...]:

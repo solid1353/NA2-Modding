@@ -72,7 +72,7 @@ Evidence labels in this note have their usual knowledge-base meaning:
 The native movie path obtains file length from the disc directory and adds no
 second per-movie size limit. Current replacement mechanics and their size rules
 belong to the
-[image assembler contract](../../../../na228_builder/image_assembler/README.md).
+[image assembler contract](../../../../na228_builder/infrastructure/modules/image_assembler/README.md).
 
 ### Runtime movie path and size source
 

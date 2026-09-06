@@ -6,17 +6,17 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.payload_builder import build_resident_payload
-from na228_builder.payload_builder import ee_c_fragments
-from na228_builder.payload_builder.operations import encode_symbol_reference
-from na228_builder.scripts import catalog
-from na228_builder.scripts.composer import resolve_symbolic_patches
+from na228_builder.infrastructure.modules.payload_builder import build_resident_payload
+from na228_builder.infrastructure.modules.payload_builder import ee_c_fragments
+from na228_builder.infrastructure.modules.payload_builder.operations import encode_symbol_reference
+from na228_builder.infrastructure.orchestration import catalog
+from na228_builder.infrastructure.orchestration.composer import resolve_symbolic_patches
 from tests.na228_builder._fixtures import resident_payload_config
 
 
 REPOSITORY = Path(__file__).resolve().parents[3]
 BUILDER = REPOSITORY / "na228_builder"
-SOURCE = REPOSITORY / "src" / "qol" / "save_load_display_only_first_save.c"
+SOURCE = REPOSITORY / "na228_builder" / "patches" / "memory_card" / "display_only_first_save" / "save_load_display_only_first_save.c"
 TOOLCHAIN_BIN = ee_c_fragments.default_toolchain_bin(REPOSITORY)
 COMPILER = TOOLCHAIN_BIN / "ee-gcc.exe"
 
@@ -97,14 +97,14 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
         cls.package = catalog.load_runtime_package(
             cls.selection,
             "memory_card",
-            BUILDER / "modules" / "targets.tsv",
+            BUILDER / "infrastructure" / "modules" / "targets.tsv",
             REPOSITORY,
             "memory_card.runtime_injector",
         )
         cls.startup_package = catalog.load_runtime_package(
             cls.selection,
             "startup",
-            BUILDER / "modules" / "targets.tsv",
+            BUILDER / "infrastructure" / "modules" / "targets.tsv",
             REPOSITORY,
             "startup.runtime_injector",
         )
@@ -140,7 +140,7 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
         source = injection["payload"]["display_only_first_save"]
         self.assertEqual("c", source["kind"])
         self.assertEqual(
-            "src/qol/save_load_display_only_first_save.c",
+            "na228_builder/patches/memory_card/display_only_first_save/save_load_display_only_first_save.c",
             source["path"],
         )
         self.assertEqual(

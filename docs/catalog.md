@@ -276,7 +276,8 @@ children remain disabled.
 ## Patch mappings and validation
 
 A setting or structural block may own one singular dotted `patch` ID. Each ID
-must resolve to one definition in `patches/<first-segment>.json`, must appear
+must resolve to one definition in
+`patches/<first-segment>/<first-segment>.json`, must appear
 exactly once in the catalog, and must match that file's first dotted segment.
 Orphan definitions are rejected.
 
@@ -302,13 +303,13 @@ information. Every module, target, adapter, asset, source, runtime object, and
 operation reachable through a patch must also pass its owning component's
 normal validation.
 
-The [binary patcher module](../na228_builder/modules/binary_patcher/README.md)
+The [binary patcher module](../na228_builder/infrastructure/modules/binary_patcher/README.md)
 owns edit grouping, fixed-stride table replacement, adapters, destination
 forms, guards, and concrete edit validation.
 
-The [runtime injector module](../na228_builder/modules/runtime_injector/README.md)
+The [runtime injector module](../na228_builder/infrastructure/modules/runtime_injector/README.md)
 owns hook and payload declarations. The
-[string patcher](../na228_builder/modules/string_patcher/README.md) owns
+[string patcher](../na228_builder/infrastructure/modules/string_patcher/README.md) owns
 semantic string transformations and their execution.
 
 The examples in this document are illustrative authoring fragments. A real

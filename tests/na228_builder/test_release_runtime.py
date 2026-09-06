@@ -6,7 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from na228_builder.scripts import release_runtime
+from na228_builder.infrastructure.orchestration import release_runtime
 from scripts.lib.paths import load_local_paths
 
 
@@ -68,8 +68,8 @@ class ReleaseRuntimeTests(unittest.TestCase):
                 '"files":{"project_settings":"game.json"}}',
                 encoding="utf-8",
             )
-            assembly = workspace / "src" / "runtime.S"
-            assembly.parent.mkdir()
+            assembly = workspace / "na228_builder" / "patches" / "feature" / "runtime.S"
+            assembly.parent.mkdir(parents=True)
             assembly.write_text("nop\n", encoding="ascii")
             manifest = SimpleNamespace(configuration_name="release.jsonc")
             configuration = SimpleNamespace(

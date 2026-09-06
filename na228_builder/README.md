@@ -8,9 +8,9 @@ integrated catalog data.
 - `catalog.modcat` owns the nested selectable feature hierarchy and its patch
   references. [Catalog format](../docs/catalog.md) owns the authoring grammar,
   configuration semantics, patch mappings, and release projection.
-- `patches/*.json` owns unified patch definitions, split by the first segment
-  of each dotted patch ID. Referenced C and assembly sources remain separate
-  files.
+- `patches/<feature>/<feature>.json` owns unified patch definitions, split by
+  the first segment of each dotted patch ID. Feature-owned Python, C, and
+  assembly implementation lives in the same `patches/` feature tree.
 - `configurations/base.jsonc` owns the complete shared `features` tree.
   `test.jsonc`, `e2e.jsonc`, and `release.jsonc` contain partial
   `overrides`. Root `game.json` may assign a unique command alias; E2E and
@@ -43,16 +43,18 @@ integrated catalog data.
   `specials`, `base, specials`, or `base, parent-specials`; the last value
   captures a `-2nd` case in its own Base grid and its primary form's Specials
   grid. The file is test metadata, not a catalog input.
-- `modules/targets.tsv` is the builder-wide target registry.
-  `modules/binary_patcher/operations/*.tsv` defines primitive binary
+- `infrastructure/modules/targets.tsv` is the builder-wide target registry.
+  `infrastructure/modules/binary_patcher/operations/*.tsv` defines primitive binary
   operations.
 - `patches/localization/` owns Font assets under `font/glyphs/`,
   translations under `strings/`, and UI texture inputs under `ui/`.
   `features.localization.ui` selects its layout and texture work atomically.
-- `@scripts/` owns builder implementation. Reusable engines and their
-  code-only contracts live under `modules/`; each reusable module README
-  states its downstream invocation or that it invokes none. Do not create
-  placeholder engine directories or files merely to register an engine.
+- `infrastructure/orchestration/` owns builder orchestration and shared builder
+  utilities. Reusable engines and their code-only contracts live under
+  `infrastructure/modules/`; each
+  reusable module README states its downstream invocation or that it invokes
+  none. Do not create placeholder engine directories or files merely to
+  register an engine.
 - `release_manifest.json` owns release packaging metadata. `game.json` owns
   the product title, boot path, configuration aliases, base launch settings,
   and named launch-profile overrides.
@@ -123,7 +125,7 @@ validation, and public release projection.
 
 ## Internal execution
 
-Reusable engines remain internal under `modules/`. Catalog settings may select
+Reusable engines remain internal under `infrastructure/modules/`. Catalog settings may select
 an engine by module type without exposing its implementation in the public
 release catalog. The builder derives internal engine invocations in this stable
 order:
@@ -212,10 +214,11 @@ chat's `logs/` directory.
 Preflight fingerprints both canonical source ISOs, ISO-composing Python code,
 the exact selected configuration resources, product/path configuration, active
 Python/Zlib/Zopfli versions, and the EE compiler components whenever selected C
-sources require them. `@scripts/module_pipeline.py` prepares internal invocations
-and shared payload contributions; `@scripts/build_configuration.py` composes
-them; `@scripts/composer.py` closes typed image operations; and
-`image_assembler/` alone stages and verifies the ISO.
+sources require them. `infrastructure/orchestration/module_pipeline.py` prepares
+internal invocations and shared payload contributions;
+`infrastructure/orchestration/build_configuration.py` composes them;
+`infrastructure/orchestration/composer.py` closes typed image operations; and
+`infrastructure/modules/image_assembler/` alone stages and verifies the ISO.
 
 The preflight dependency closure covers every input capable of changing the
 selected ISO. A build-affecting input or dependency change updates that closure

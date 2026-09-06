@@ -6,10 +6,10 @@ import csv
 import unittest
 from pathlib import Path
 
-from na228_builder.payload_builder import build_resident_payload
-from na228_builder.payload_builder import mips
-from na228_builder.scripts import catalog
-from na228_builder.scripts.composer import resolve_symbolic_patches
+from na228_builder.infrastructure.modules.payload_builder import build_resident_payload
+from na228_builder.infrastructure.modules.payload_builder import mips
+from na228_builder.infrastructure.orchestration import catalog
+from na228_builder.infrastructure.orchestration.composer import resolve_symbolic_patches
 from scripts.research.localization.verify_font_renderer import (
     ASCII_FIRST,
     build_ascii_widths,
@@ -75,7 +75,7 @@ class FontRuntimeContractTests(unittest.TestCase):
         cls.package = catalog.load_runtime_package(
             selection,
             "localization",
-            builder / "modules" / "targets.tsv",
+            builder / "infrastructure" / "modules" / "targets.tsv",
             REPOSITORY,
             "localization.runtime_injector",
         )

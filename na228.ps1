@@ -40,10 +40,10 @@ function Get-Na228WatchArguments {
     param([string]$Target)
 
     if ([string]::IsNullOrWhiteSpace($Target)) {
-        return @{ SourcePath = 'src' }
+        return @{ SourcePath = 'na228_builder/patches' }
     }
     if ($Target -ceq 'injection_test') {
-        return @{ SourcePath = 'src/hot_reload_message.c' }
+        return @{ SourcePath = 'scripts/injection/hot_reload_message.c' }
     }
     if ([IO.Path]::GetExtension($Target) -ieq '.json') {
         return @{ OverlayPlan = $Target }

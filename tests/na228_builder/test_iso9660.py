@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from datetime import datetime, timedelta, timezone
 
-from na228_builder.image_assembler.iso9660 import Iso9660
+from na228_builder.infrastructure.modules.image_assembler.iso9660 import Iso9660
 
 
 def directory_record(recorded_at: bytes) -> bytes:

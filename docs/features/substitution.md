@@ -774,7 +774,7 @@ damage-recovery remainder, latest quantized HP sample, battle generation, and
 validity state. Shared state stores the manager, generation, last processed
 battle-clock ordinal, cached BTL render sources, and runtime mode. The exact
 layout and exported functions are canonical in
-[`src/battle_logic/substitution_gauge.c`](../../src/battle_logic/substitution_gauge.c).
+[`substitution_gauge.c`](../../na228_builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge.c).
 
 Fighters map to slots through live manager `0x00607600` and manager fields
 `+0xDE4`/`+0xDE8`, matching the X-dash and per-character selector code.
@@ -1012,7 +1012,7 @@ and the native lower support gauge.
 
 ### Generated constants and resident ownership
 
-`@builder/scripts/substitution_gauge.py` follows the
+`@builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge.py` follows the
 `battle_settings_runtime.py` pattern rather than embedding configuration
 literals in assembly. It finds exactly one selected catalog node, merges
 omitted object fields with the defaults above, validates the resolved values,
@@ -1052,8 +1052,8 @@ exclusively native.
 ### Exact builder hook map
 
 Use `settings.new_controls` and `settings.battle_mechanics.substitution` in
-`patches/settings.json`. All targets already exist in
-`@builder/modules/targets.tsv`; no new target registry or patching
+`patches/settings/settings.json`. All targets already exist in
+`@builder/infrastructure/modules/targets.tsv`; no new target registry or patching
 mechanism is needed.
 
 | Hook | Target/offset | Clean guard | Replacement template | Adapter behavior |
@@ -1100,7 +1100,7 @@ input changes:
 | Route the first substitution history arm from Guard 1 to Substitution | `na2_elf` `0x129740` | `06000524` (`li a1,6`) | `07000524` (`li a1,7`) |
 | Stop the second native Guard entry from also producing block | `na2_btl` `0x3C02C` | `0E002286` (`lh v0,0xE(s1)`) | `2D100000` (`move v0,zero`) |
 
-Keeping the direct replacements in `patches/settings.json` makes their clean
+Keeping the direct replacements in `patches/settings/settings.json` makes their clean
 behavior independently auditable. `settings.new_controls` owns the resident
 Substitution label, replacement assignment helper, and their symbolic
 relocations. `settings.battle_mechanics.substitution` owns resource routing, recovery,
@@ -1119,11 +1119,11 @@ The minimal implementation touches these existing ownership points:
 | Purpose | Canonical location |
 | --- | --- |
 | Public setting and descriptions | `features.settings.ingame.battle_mechanics.substitution` in `@builder/catalog.modcat` |
-| Unified settings patches | `@builder/patches/settings.json` |
+| Unified settings patches | `@builder/patches/settings/settings.json` |
 | Default/profile selection | `@builder/configurations/*.jsonc` |
-| Config-to-fragment encoder | `@builder/scripts/substitution_gauge.py` and `module_pipeline.py` |
-| Gameplay state, independent renderer, and native adapters | `src/battle_logic/substitution_gauge.c` and `substitution_gauge_abi.S` |
-| Runtime-selectable battle support | `src/qol/battle_support.c` |
+| Config-to-fragment encoder | `@builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge.py` and `module_pipeline.py` |
+| Gameplay state, independent renderer, and native adapters | `@builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge.c` and `substitution_gauge_abi.S` |
+| Runtime-selectable battle support | `@builder/patches/settings/ingame/battle_mechanics/support/battle_support.c` |
 | Control Settings ownership and composition tests | `tests/na228_builder/test_control_settings.py` |
 | Gauge builder tests | `tests/na228_builder/test_substitution_gauge.py` |
 | End-user explanation | `@scripts/release/README.md` |

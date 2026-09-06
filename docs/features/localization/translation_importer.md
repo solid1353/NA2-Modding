@@ -23,7 +23,7 @@ history and the builder's configuration-resource fingerprint own content identit
 `mappings.tsv` owns the canonical executable donor translations, user
 overrides, and optional pointer inventory. Normal builds import only
 `mappings.tsv`. Root
-`patches/general.json` owns the guarded imported-title
+`patches/general/general.json` owns the guarded imported-title
 declaration, while root `settings.title` supplies its replacement;
 `string_patcher` applies that selected operation to the normal translation path.
 
@@ -258,7 +258,7 @@ The original NA2 target is authoritative for renderer-specific color forms:
 
 ## Integration expectations
 
-- The reusable engine lives in `@builder/modules/translation_importer/`; this feature-owned directory contains the live mappings and their documentation.
+- The reusable engine lives in `@builder/infrastructure/modules/translation_importer/`; this feature-owned directory contains the live mappings and their documentation.
 - Do not replace the integrated module by extracting a legacy builder archive over the project.
 - Do not copy generated configuration-log plans back into the module.
 - Do not add patched `BTL.BIN`, `ETC.BIN`, or `SLPS_258.37` payloads to the importer or checkpoint commits; binary deliverables belong only in the frozen release archive.

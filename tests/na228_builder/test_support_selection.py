@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.scripts import catalog, jsonc
-from na228_builder.scripts.support_selection import (
+from na228_builder.infrastructure.orchestration import catalog, jsonc
+from na228_builder.patches.character_select.support_selection.support_selection import (
     COMPACT_SUPPORT_SYMBOLS,
     SUPPORT_SELECTION_MODES,
     support_selection_runtime_package,
@@ -23,7 +23,7 @@ class SupportSelectionTests(unittest.TestCase):
         cls.builder = cls.paths.path("builder")
         cls.catalog_path = cls.builder / "catalog.modcat"
         cls.configurations = cls.builder / "configurations"
-        cls.targets = cls.builder / "modules" / "targets.tsv"
+        cls.targets = cls.builder / "infrastructure" / "modules" / "targets.tsv"
 
     def _selection(self, mode: str) -> catalog.CatalogSelection:
         base = jsonc.loads(

@@ -50,7 +50,7 @@ function Get-Na2LaunchSettings {
         try {
             $output = @(
                 & $pythonRunner -PackageSet builder `
-                    -Module 'na228_builder.scripts.launch_settings' `
+                    -Module 'na228_builder.infrastructure.orchestration.launch_settings' `
                     -ArgumentList $arguments -NoBytecode 2>&1
             )
             $exitCode = $LASTEXITCODE

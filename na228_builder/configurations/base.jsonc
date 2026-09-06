@@ -86,6 +86,10 @@
       "replace_imported_game_title": true,
       "unlock_all": {
         "demon_wind_bomb": true
+      },
+      "mode_availability": {
+        "remove_adventure": true,
+        "remove_shop": true
       }
     },
     "memory_card": {
@@ -102,10 +106,6 @@
     "character_select": {
       "balance_overlay": true,
       "support_selection": "none"                  // "all" | "relevant" | "none"
-    },
-    "mode_select": {
-      "remove_adventure": true,
-      "remove_shop": true
     },
     "rendering": {
       "native_16_9_horizontal_scale": false

@@ -6,10 +6,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.modules.binary_patcher import engine as binary_patcher
-from na228_builder.scripts import catalog as catalog_module
-from na228_builder.scripts import catalog_format
-from na228_builder.scripts.configuration import (
+from na228_builder.infrastructure.modules.binary_patcher import engine as binary_patcher
+from na228_builder.infrastructure.orchestration import catalog as catalog_module
+from na228_builder.infrastructure.orchestration import catalog_format
+from na228_builder.infrastructure.orchestration.configuration import (
     load_configuration,
     configuration_resource_files,
 )
@@ -30,7 +30,7 @@ class ConfigurationTests(unittest.TestCase):
         build = root / "build"
         pcsx2 = root / "pcsx2"
         write_tsv(
-            root / "modules" / "targets.tsv",
+            root / "infrastructure" / "modules" / "targets.tsv",
             binary_patcher.TARGET_FIELDS,
             [],
         )
@@ -190,7 +190,9 @@ class ConfigurationTests(unittest.TestCase):
         for patch_id, definition in patches.items():
             by_file.setdefault(patch_id.split(".", 1)[0], {})[patch_id] = definition
         for stem, definitions in by_file.items():
-            (patches_root / f"{stem}.json").write_text(
+            manifest = patches_root / stem / f"{stem}.json"
+            manifest.parent.mkdir(parents=True, exist_ok=True)
+            manifest.write_text(
                 json.dumps(definitions, indent=2) + "\n",
                 encoding="utf-8",
             )
@@ -357,7 +359,7 @@ class ConfigurationTests(unittest.TestCase):
             self.assertIn((root / "game.json").resolve(), resources)
             self.assertIn((root / "catalog.modcat").resolve(), resources)
             self.assertIn(
-                (root / "patches" / "localization.json").resolve(),
+                (root / "patches" / "localization" / "localization.json").resolve(),
                 resources,
             )
             self.assertIn(
@@ -366,7 +368,7 @@ class ConfigurationTests(unittest.TestCase):
             self.assertIn(configuration.resolve(), resources)
             self.assertIn((feature / "mappings.tsv").resolve(), resources)
             self.assertIn(
-                (builder / "modules" / "targets.tsv").resolve(),
+                (builder / "infrastructure" / "modules" / "targets.tsv").resolve(),
                 resources,
             )
             self.assertNotIn(helper.resolve(), resources)
@@ -536,16 +538,16 @@ class ConfigurationTests(unittest.TestCase):
                 {"localization": {"description": "Optional localization"}},
                 {"localization": False},
             )
-            assembly = root / "src" / "runtime.S"
-            assembly.parent.mkdir()
+            assembly = root / "patches" / "localization" / "runtime.S"
+            assembly.parent.mkdir(exist_ok=True)
             assembly.write_text("nop\n", encoding="ascii")
-            patches_path = root / "patches" / "localization.json"
+            patches_path = root / "patches" / "localization" / "localization.json"
             patches = json.loads(patches_path.read_text(encoding="utf-8"))
             patches["localization.enabled"]["hooks"] = {"runtime": {}}
             patches["localization.enabled"]["payload"] = {
                 "runtime_asm": {
                     "kind": "asm",
-                    "path": "src/runtime.S",
+                    "path": "patches/localization/runtime.S",
                     "namespace": "runtime.asm",
                     "imports": {},
                     "fragments": {

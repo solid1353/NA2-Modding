@@ -5,8 +5,8 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-from na228_builder.scripts.cvm import CvmError, CvmIso, _crypt_sector, _rofs_key
-from na228_builder.image_assembler.iso9660 import IsoRecord, SECTOR
+from na228_builder.infrastructure.orchestration.cvm import CvmError, CvmIso, _crypt_sector, _rofs_key
+from na228_builder.infrastructure.modules.image_assembler.iso9660 import IsoRecord, SECTOR
 
 
 PASSWORD = "cc2fuku"

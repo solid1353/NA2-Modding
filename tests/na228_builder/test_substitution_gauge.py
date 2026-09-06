@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.scripts import catalog, jsonc
-from na228_builder.scripts.substitution_gauge import substitution_gauge_fragment
+from na228_builder.infrastructure.orchestration import catalog, jsonc
+from na228_builder.patches.settings.ingame.battle_mechanics.substitution.substitution_gauge import substitution_gauge_fragment
 from scripts.lib.paths import load_local_paths
 
 
@@ -205,8 +205,12 @@ class SubstitutionGaugeTests(unittest.TestCase):
         )
         assembly = (
             self.builder.parent
-            / "src"
-            / "battle_logic"
+            / "na228_builder"
+            / "patches"
+            / "settings"
+            / "ingame"
+            / "battle_mechanics"
+            / "substitution"
             / "substitution_gauge_abi.S"
         ).read_text(encoding="utf-8")
         start = assembly.index("substitution_gauge_spend_shim:")
@@ -291,8 +295,12 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
         assembly = (
             self.builder.parent
-            / "src"
-            / "battle_logic"
+            / "na228_builder"
+            / "patches"
+            / "settings"
+            / "ingame"
+            / "battle_mechanics"
+            / "substitution"
             / "substitution_gauge_abi.S"
         ).read_text(encoding="utf-8")
         start = assembly.index(f"{shim}:")
@@ -316,8 +324,12 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
         source = (
             self.builder.parent
-            / "src"
-            / "battle_logic"
+            / "na228_builder"
+            / "patches"
+            / "settings"
+            / "ingame"
+            / "battle_mechanics"
+            / "substitution"
             / "substitution_gauge.c"
         ).read_text(encoding="utf-8")
         self.assertIn("BATTLE_HUD_CHARACTER_NAME_Y_OFFSET 11.0f", source)

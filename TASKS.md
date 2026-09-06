@@ -2,17 +2,14 @@
 
 ### In Progress
 
--   Approve remaining translations
+-   Fix help text
+-   Implement general menu
+-   Store settings in the save
+-   Practice menu flickers for big menus
 
 ### General
 
--   Implement general menu
--   Store settings in the save
-
 ### Bugs
-
--   Fix help text
--   Practice menu flickers for big menus
 
 ### Backlog
 

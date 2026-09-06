@@ -4,13 +4,12 @@ This reusable engine reads the feature-owned canonical `mappings.tsv`,
 validates the clean NA2 targets and the table's folded pointer inventory, and
 produces one in-memory translation artifact. `source_ref` and `donor_ref`
 identify the paired NA2 and NUN5 locations; `source` and `donor` retain their
-decoded text together. Every executable row also declares a concrete
-`display_context` and one or more `display_basis` entries beginning with
-`seen:`, `e2e:`, `inferred:`, or `character:`. Multiple entries are separated
-by `|`. `e2e:<suite-name>` records each exact maintained suite that exercised a
-row, including every proven suite for shared strings. The engine rejects rows
-without that evidence metadata and rejects a declared `source` that differs
-from the clean target bytes.
+decoded text together. Every executable row declares a concrete
+`display_context`. `display_basis` is user-maintained metadata; the engine
+accepts it as free text, splits `|`-separated values for reporting, and permits
+it to be blank. By project convention, only an `e2e:` entry records validation
+by an exact maintained suite. The engine rejects a declared `source` that
+differs from the clean target bytes.
 
 Canonical imports validate complete structured message families. Active
 `split_br` and `join_br_parts` rows sharing a donor reference must use one

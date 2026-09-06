@@ -15,8 +15,8 @@ in [translation importer knowledge](../../knowledge/localization/translation_imp
 
 ## Mapping metadata
 
-- Canonical `mappings.tsv` rows: `2,061`
-- Canonical `mappings.tsv` SHA-256: `9B41B2DAB1502C034C5C29656BB37E54D958199248FA5F1DA36B115C82B36044`
+- Canonical `mappings.tsv` rows: `2,063`
+- Canonical `mappings.tsv` SHA-256: `C170405AA2F818BF3B4844B6FD9D178E03312066719FFDF98F012DFE51D861F8`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the builder's configuration-resource fingerprint own content identity.
@@ -67,8 +67,8 @@ that context, then by stable `id`.
 The 16 columns are:
 
 `id`, `enabled`, `display_context`, `source`, `donor`, `prefix`,
-`replacement`, `display_basis`, `source_ref`, `donor_ref`, `mode`,
-`capacity`, `transform`, `arguments`, `reference_refs`, `parent_mapping_id`
+`replacement`, `display_basis`, `source_ref`, `reference_refs`, `donor_ref`,
+`mode`, `capacity`, `transform`, `arguments`, `parent_mapping_id`
 
 ### Stable IDs and enabled state
 
@@ -83,15 +83,20 @@ The 16 columns are:
   current rows are enabled. Unconfirmed rows are absent instead of retained as
   disabled inventory.
 
-Canonical `mappings.tsv` contains 2,061 enabled `T#` rows admitted by exact
-display evidence or a documented structural-family basis, sorted by
+Canonical `mappings.tsv` contains 2,063 enabled `T#` rows, sorted by
 `display_context` and numeric ID. Exact source, source reference, mode, and
 capacity are guarded by the canonical row declarations. The current maintained
-E2E suites exercise 1,887 unique rows; 174 rows retain a non-E2E basis. The
+E2E suites validate 1,887 unique rows. The remaining 176 rows have a blank
+`display_basis`: they remain executable because they are established working
+mappings, but they are explicitly unvalidated. Earlier screenshot, inference,
+and structural-family labels were removed because only maintained E2E execution
+validates a row. Every `prefix` and `replacement` value is blank. The
 Jutsus suite selects 26 exact Command Chart records, including T260 plus 25
 records also selected by Movesets. The Menus suite selects 30 exact Battle
 Settings, Pause, confirmation, and Character Select rows. T2042, T2045, and
 T2050 use canonical parent IDs `T2011`, `T2043`, and `T2048`.
+The pointer inventory includes the overflowing settings labels and values; T2039 and
+T2040 share T2038's loading-message pointer at `NA2_SLPS@0x5030A4`.
 Paired screenshots correct three reference-table errors: T1956 uses `Off` at
 `NUN5_SLES@0x513EF8`, T1957 uses `On` at `NUN5_SLES@0x513EFC`, and T2158 uses
 `Warning` at `NUN5_SLES@0x513F38`.
@@ -144,16 +149,17 @@ There is no `shorten` or `pool` mapping mode. External placement is a
 
 ### References, text, overrides, and transforms
 
-`source_ref` and `donor_ref` are adjacent provenance fields using
+`source_ref` and `donor_ref` are provenance fields using
 `SOURCE@OFFSET`, for example `NA2_BTL@0x1E2130` and
 `NUN5_TEXTENG@0x29430`. `source` and `donor` are adjacent text fields: `source`
 records the exact guarded clean NA2 text, while `donor` records the verified
 official translation and is executable by default. `display_context` names the
-screen and field where the row appears. `display_basis` contains one or more
-`|`-separated entries beginning with `seen:`, `e2e:`, `inferred:`, or
-`character:` and records why that row is admitted to the executable table.
-`e2e:<suite-name>` identifies each exact maintained E2E suite that exercised
-the row, for example `e2e:collection/voice`. It requires both ownership by the
+screen and field where the row appears. `display_basis` is a user-maintained
+free-text column; the importer accepts blank or `|`-separated values without
+assigning them validation semantics. By project convention, only an
+`e2e:<suite-name>` entry records validation by an exact maintained E2E suite,
+for example `e2e:collection/voice`. A blank value records that the row is
+unvalidated. An E2E basis requires both ownership by the
 exact executable family consumed by that suite and selection of that exact
 record by the accepted capture plan; equal text or family membership alone is
 not coverage. Coverage summaries count every entry independently, so a shared

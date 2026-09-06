@@ -7,8 +7,8 @@ canonical translation table contains no placement markers. T30's complete
 `Ultimate` text is externalized through `NA2_BTL@0x209CB4`. The pipeline never
 reads or patches `ADV.bin`.
 
-The feature contributes 30 distinct external string fragments to the shared
-resident payload selected by the current translation.
+The current base configuration contributes 36 distinct fit-derived external
+string fragments to the shared resident payload.
 
 The translation importer resolves and validates the canonical mapping data and
 pointer inventory once.
@@ -30,10 +30,10 @@ payload is stored in Git.
 
 ## Canonical inputs
 
-- `translation_importer/mappings.tsv` contains guarded source locations and
-  text, executable official donor translations, optional user prefixes and
+- `@builder/patches/localization/strings/mappings.tsv` contains guarded source
+  locations and text, executable official donor translations, optional user
   overrides, and every optional pointer reference.
-  Three continuation rows deliberately reuse their containing full-message
+  Five continuation rows deliberately reuse their containing full-message
   pointer.
 Only `mappings.tsv` is covered by the translation importer's contribution to
 the configuration-resource fingerprint.
@@ -48,11 +48,11 @@ Comparative loader and payload-layout evidence is documented in
 
 Strings are resolved through the importer, encoded as CP1252 plus a terminator,
 deduplicated by exact encoded bytes, and contributed by symbol. No feature owns
-its final payload offsets. The selected external strings contain 1,475 encoded
-bytes; T364 and T117 deliberately share one identical symbol.
-Structured save-progress families preserve their original consecutive
-NUL-terminated slots plus an empty terminator, preventing traversal into the
-next payload message. The generated payload has no constructor range; the
+its final payload offsets. The selected external strings contain 1,521 encoded
+bytes.
+Structured loading, saving, formatting, and data-creation messages preserve
+their original consecutive NUL-terminated slots plus an empty terminator,
+preventing traversal into the next payload message. The generated payload has no constructor range; the
 infrastructure bootstrap loads it once and calls its documented return-only
 entry.
 

@@ -203,7 +203,9 @@ def _materialized_strings(
                 for row in translation_plan.text_mappings
                 if str(row["donor_ref"]) == donor_ref
                 and str(row["target"]) == target
-                and str(row["transform"]) in {"split_br", "join_br_parts"}
+                and str(row["transform"]) in {
+                    "split_br", "join_br_parts", "flatten_br_slice",
+                }
             ),
             key=lambda row: int(row["target_offset"]),
         )

@@ -79,7 +79,7 @@ admitted rows retain blank `prefix` and `replacement` fields.
 The five Ninja Song states select these exact mapping groups:
 
 - objective prose T70-T82 and T84-T86; T83 `Fulfill special objectives` is not
-  selected by the plan and retains its earlier `seen:` evidence;
+  selected by the plan and remains without E2E validation;
 - item bonus T88 and health bonus T2194; the other bonus-template siblings are
   not displayed and do not inherit Ninja Song coverage;
 - timer label T97 and objective indices T2174-T2189;
@@ -141,7 +141,8 @@ label comes from `HOME.CCS`; it retains structural Figure-identifier evidence
 instead of `e2e:`. The short character-grid labels corresponding to T496-T521
 are also texture artwork rather than those translation rows. T2200 is a valid
 locked Movie placeholder seen in an earlier paired pass, but every accepted
-Misc Movie capture is unlocked, so it retains `seen:` rather than Misc E2E.
+Misc Movie capture is unlocked, so the locked placeholder remains without Misc
+E2E validation.
 
 ## Structural mapping families
 
@@ -219,9 +220,9 @@ or direct binary edit.
 ### Movesets capture-selection boundary
 
 The accepted Movesets plans select 1,062 Command Chart title records. Three
-valid `0x54` records remain mapped through `character:command-record-index` but
-do not own `e2e:movesets`: T260, T2210, and T2211. T260 owns `e2e:jutsus`;
-T2210 and T2211 retain only structural family evidence. The added Granny Chiyo
+valid `0x54` records remain mapped but do not own `e2e:movesets`: T260, T2210,
+and T2211. T260 owns `e2e:jutsus`; T2210 and T2211 remain without E2E
+validation. The added Granny Chiyo
 (Taijutsu) `0x4E` unique-mode grid selects T1651-T1660 from her alternate
 ordinary-move block. T2210, T2211, and T260 belong to structurally valid extra
 four-record arrays, but the accepted plans select other sibling records rather
@@ -405,12 +406,36 @@ shared NA2 slot.
 
 ## Packed message structure
 
+The clean loading-progress message starts at boot-ELF file `0x303E10`.
+Its three consecutive source fragments occupy `0x303E10..0x303E22`,
+`0x303E23..0x303E6B`, and `0x303E6C..0x303E8F`. The memory-card message
+table contains one pointer to the first fragment at file `0x5030A4`, whose
+value is runtime `0x00403D10`. An aligned pointer-word scan of the clean ELF,
+BTL, and ETC files finds no direct pointers to the two continuation starts.
+
 Some dialogs contain consecutive NUL-terminated fragments inside one fixed
 region. Each visible part must remain reachable in order, followed by the
 verified block terminator. Treating each fragment as an independent zero-filled
 slot can insert an early empty string and hide later parts. The executable
 sequence-writing contract belongs to the
 [translation importer feature](../../features/localization/translation_importer.md).
+
+## Settings string references
+
+Battle Settings draw helper Ghidra `FUN_008801E0` loads labels through
+runtime table `0x008BE160` (BTL file `0x20A260`) and values through an
+indexed table of string-pointer arrays. Practice Settings draw
+`FUN_00882250` uses runtime label table `0x008BE6C0` (file `0x20A7C0`)
+and value-array table `0x008BF380` (file `0x20B480`). The latter selects
+both BTL-owned arrays and resident ELF arrays, including the three OFF/ON
+pairs at ELF file `0x505BC0`, `0x505BD0`, and `0x505BD8`.
+
+The Linked Mode selector in resident `FUN_003B8F40` reads the two pointer
+words at runtime `0x00604810` and `0x00604814`; the latter is ELF file
+`0x504914` and selects the Auto string at file `0x504908`. These pointer
+fields are distinct from the source text slots themselves. Raw overlay
+offsets include the header; preserved Ghidra locations follow the
+[shared address conventions](../game/files/file_identities.md#address-conventions).
 
 ## Content and layout boundary
 

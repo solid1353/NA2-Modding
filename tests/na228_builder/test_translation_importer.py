@@ -36,7 +36,7 @@ class TranslationImporterTests(unittest.TestCase):
             "id": "MTEST",
             "enabled": "1",
             "display_context": "Test screen > value",
-            "display_basis": "seen:test-fixture",
+            "display_basis": "",
             "mode": "unresolved",
             "source_ref": "NA2_SLPS@0",
             "donor_ref": "NUN5_SLES@0",
@@ -53,7 +53,7 @@ class TranslationImporterTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported mode"):
             engine.parse_mappings([row])
 
-    def test_rejects_missing_display_metadata(self) -> None:
+    def test_requires_display_context_and_allows_unvalidated_rows(self) -> None:
         row = {
             "id": "MTEST",
             "enabled": "1",
@@ -75,8 +75,8 @@ class TranslationImporterTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "display_context is required"):
             engine.parse_mappings([row])
         row["display_context"] = "Test screen > value"
-        with self.assertRaisesRegex(ValueError, "display_basis entries must each begin"):
-            engine.parse_mappings([row])
+        parsed = engine.parse_mappings([row])
+        self.assertEqual(parsed["text"][0]["display_basis"], ())
 
     def test_accepts_e2e_display_basis(self) -> None:
         row = {
@@ -137,12 +137,12 @@ class TranslationImporterTests(unittest.TestCase):
             },
         )
 
-    def test_rejects_invalid_entry_in_multiple_display_bases(self) -> None:
+    def test_accepts_user_display_basis(self) -> None:
         row = {
             "id": "MTEST",
             "enabled": "1",
             "display_context": "Collection > shared character name",
-            "display_basis": "e2e:collection/characters|unsupported:source",
+            "display_basis": "review later|custom note",
             "mode": "slot",
             "source_ref": "NA2_SLPS@0",
             "donor_ref": "NUN5_SLES@0",
@@ -156,10 +156,11 @@ class TranslationImporterTests(unittest.TestCase):
             "reference_refs": "",
             "parent_mapping_id": "",
         }
-        with self.assertRaisesRegex(
-            ValueError, "display_basis entries must each begin"
-        ):
-            engine.parse_mappings([row])
+        parsed = engine.parse_mappings([row])
+        self.assertEqual(
+            parsed["text"][0]["display_basis"],
+            ("review later", "custom note"),
+        )
 
     def test_rejects_placeholder_donor_for_identifier_target(self) -> None:
         with self.assertRaisesRegex(ValueError, "placeholder donor text"):
@@ -392,7 +393,7 @@ class TranslationImporterTests(unittest.TestCase):
             "id": "MTEST",
             "enabled": "1",
             "display_context": "Options > instructions",
-            "display_basis": "seen:test-fixture",
+            "display_basis": "",
             "mode": "slot",
             "source_ref": "NA2_SLPS@0",
             "donor_ref": "NUN5_TEXTENG@0x10",

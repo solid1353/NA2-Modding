@@ -28,8 +28,8 @@ SOURCE_IDS = {
 }
 MAPPING_FIELDS = [
     "id", "enabled", "display_context", "source", "donor", "prefix",
-    "replacement", "display_basis", "source_ref", "donor_ref", "mode",
-    "capacity", "transform", "arguments", "reference_refs",
+    "replacement", "display_basis", "source_ref", "reference_refs", "donor_ref",
+    "mode", "capacity", "transform", "arguments",
     "parent_mapping_id",
 ]
 EXPECTED_SHA1 = {
@@ -38,7 +38,6 @@ EXPECTED_SHA1 = {
     "NA2_SLPS": "bbe206bbf4da0ee815b437226ceb6a533c95833e",
 }
 VALID_MODES = {"slot", "sequence"}
-DISPLAY_BASIS_PREFIXES = ("seen:", "e2e:", "inferred:", "character:")
 PLACEHOLDER_TEXT = frozenset({"unknown", "placeholder", "dummy", "test", "todo", "temp"})
 IDENTIFIER_TEXT = re.compile(r"[a-z][a-z0-9_./-]{3,}\Z")
 POSITIONAL_FORMAT_TOKEN = re.compile(r"%([1-9][0-9]*)")
@@ -247,22 +246,8 @@ def parse_arguments(value: str, label: str) -> dict[str, str]:
 
 
 def parse_display_basis(value: str, label: str) -> tuple[str, ...]:
-    if not value.strip():
-        raise ValueError(
-            f"{label}: display_basis entries must each begin with "
-            + ", ".join(DISPLAY_BASIS_PREFIXES)
-        )
-    bases = tuple(item.strip() for item in value.split("|"))
-    if any(not item for item in bases):
-        raise ValueError(f"{label}: display_basis contains an empty entry")
-    if any(not item.startswith(DISPLAY_BASIS_PREFIXES) for item in bases):
-        raise ValueError(
-            f"{label}: display_basis entries must each begin with "
-            + ", ".join(DISPLAY_BASIS_PREFIXES)
-        )
-    if len(bases) != len(set(bases)):
-        raise ValueError(f"{label}: display_basis contains duplicate entries")
-    return bases
+    del label
+    return tuple(item.strip() for item in value.split("|") if item.strip())
 
 
 def count_display_bases(

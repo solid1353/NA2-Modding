@@ -1,7 +1,7 @@
 # Agent E2E validation workflow
 
 Use this workflow after E2E has been selected for the current work under
-the [runtime validation policy](../policies/modding.md#runtime-validation). The
+the [runtime validation policy](../../AGENTS.md#runtime-validation). The
 command and infrastructure own build, replay, capture, transaction retention,
 and report generation; do not reproduce those steps manually.
 
@@ -45,7 +45,7 @@ only their corresponding recording marker numbers through PCSX2 using
 `-input-recording-capture-markers <markers>`.
 
 Write the diagnostic savestates only within the
-[acting task's work root](../policies/repository.md#file-and-folder-management).
+[acting task's work root](../../AGENTS.md#file-and-folder-management).
 Confirm each state's embedded screenshot corresponds to the requested picture.
 Use savestates only to inspect runtime state: their embedded screenshots cannot
 establish visual parity or replace screenshot-mode E2E evidence. Never publish

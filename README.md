@@ -32,12 +32,10 @@ knowledge, tests, and release behavior.
 
 ## Documentation
 
-- [Agent entrypoint](AGENTS.md): universal and shared interaction rules plus
-  scoped-document routing.
-- [Agent commands](AGENT_COMMANDS.md): commands interpreted by project
-  agents.
-- Policies: [repository and paths](docs/policies/repository.md) and
-  [modding, validation, and research](docs/policies/modding.md).
+- [Agent instructions](AGENTS.md): project policies, interaction rules, and
+  technical-document routing.
+- [Agent commands](AGENTS.md#commands-and-interaction-modes): commands
+  interpreted by project agents.
 - Runbooks: [source extraction](docs/runbooks/source-extraction.md).
 - [Tasks](TASKS.md), the user's selective coordination and decision tracker.
 - [E2E infrastructure](e2e/README.md) and

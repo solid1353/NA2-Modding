@@ -31,7 +31,7 @@ exact agent procedures belong in the linked runbooks.
   configured read-only maintenance. The procedure is in
   [`../docs/runbooks/source-extraction.md`](../docs/runbooks/source-extraction.md).
 - `injection/`: direct-PINE candidate build/apply tooling. Agent use is defined
-  by [runtime validation](../docs/policies/modding.md#runtime-validation).
+  by [runtime validation](../AGENTS.md#runtime-validation).
 - `@release/`: self-contained release construction and publication.
 - `research/menu_input/`, `research/ee_memory_map/`,
   `research/localization/`, and `research/ui_translation/`: reusable preserved
@@ -57,7 +57,7 @@ Shared infrastructure is not duplicated here:
   documentation may expose narrower existing unit-test invocations where they
   are supported.
 - Agent PCSX2 runtime rules are in
-  [runtime validation](../docs/policies/modding.md#runtime-validation).
+  [runtime validation](../AGENTS.md#runtime-validation).
 
 Do not reproduce CLI syntax or workflow procedures in this index. Link to the
 owning command help, component document, or runbook instead.

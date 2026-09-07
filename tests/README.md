@@ -23,7 +23,7 @@ the lesser of 8 workers and the available logical processors. Set
 for serial debugging. Output is buffered per module or script and reported in
 deterministic path order.
 
-When [`NA228_TASK_WORK_ROOT`](../docs/policies/repository.md#file-and-folder-management)
+When [`NA228_TASK_WORK_ROOT`](../AGENTS.md#file-and-folder-management)
 is unset, the runner uses the ignored
 `@work/unit-tests/` technical root. Every run removes its run directory and the
 empty technical root on success or failure.

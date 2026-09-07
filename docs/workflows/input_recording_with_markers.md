@@ -12,7 +12,7 @@ markers for baseline or candidate validation.
    ```
 
 2. The user gives the agent the recording name. Locate the baseline
-   using the [input placement policy](../policies/repository.md#file-and-folder-management),
+   using the [input placement policy](../../AGENTS.md#file-and-folder-management),
    checking the task's input folder before the capture output folder.
 3. If the baseline does not exist, ask the user to create it. If multiple game
    directories make the intended baseline genuinely ambiguous, ask which one
@@ -34,7 +34,7 @@ markers for baseline or candidate validation.
    ```
 
    Use an explicit
-   [task-owned candidate path](../policies/repository.md#file-and-folder-management);
+   [task-owned candidate path](../../AGENTS.md#file-and-folder-management);
    never use the default capture path.
 4. Compare the task-relevant candidate captures with the baseline and report
    the observed result.

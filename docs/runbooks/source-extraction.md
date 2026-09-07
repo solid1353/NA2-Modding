@@ -2,7 +2,7 @@
 
 This runbook owns the canonical extraction layout and procedures for original
 source media. Source protection remains canonical in
-[`repository.md`](../policies/repository.md#file-and-folder-management).
+[`AGENTS.md`](../../AGENTS.md#file-and-folder-management).
 
 ## Layout
 
@@ -26,7 +26,7 @@ paths, never the source tree.
 ## Canonical ISO extraction
 
 Resolve the
-[current exact chat title](../policies/repository.md#file-and-folder-management)
+[current exact chat title](../../AGENTS.md#file-and-folder-management)
 and use:
 
 ```powershell
@@ -36,7 +36,7 @@ scripts/project/extract_source_iso.ps1 `
 ```
 
 The command stages under `temp/source_extraction/` in the
-[acting task's work root](../policies/repository.md#file-and-folder-management),
+[acting task's work root](../../AGENTS.md#file-and-folder-management),
 recursively expands CVM, inner ISO, AFS, and nested AFS containers, verifies file
 sets/bytes, normalizes timestamps, and promotes one complete
 `<ISO filename>.files` tree. It refuses to merge into an existing extraction.

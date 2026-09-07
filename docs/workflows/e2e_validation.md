@@ -1,9 +1,9 @@
 # Agent E2E validation workflow
 
 Use this workflow after E2E has been selected for the current work under
-[`../policies/testing.md`](../policies/testing.md). The command and
-infrastructure own build, replay, capture, transaction retention, and report
-generation; do not reproduce those steps manually.
+the [runtime validation policy](../policies/modding.md#runtime-validation). The
+command and infrastructure own build, replay, capture, transaction retention,
+and report generation; do not reproduce those steps manually.
 
 ## Requested evidence
 

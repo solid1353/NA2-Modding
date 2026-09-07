@@ -24,7 +24,7 @@
   create the link at the destination. Do not redesign ownership unless asked.
 - `@pcsx2_fork` is build output, not a runnable installation. Runtime
   procedures are in
-  [`testing.md`](testing.md#runtime-validation).
+  [runtime validation](modding.md#runtime-validation).
 
 ## Git and concurrent work
 

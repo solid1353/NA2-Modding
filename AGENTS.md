@@ -104,9 +104,9 @@ for additional matching sections as the work changes.
 | Files, directories, task artifacts, external inputs, protected data, cleanup | [File and folder management](docs/policies/repository.md#file-and-folder-management) |
 | Scripts, tooling, dependencies, manifests | [Scripts and dependencies](docs/policies/repository.md#scripts-and-dependencies) |
 | Documentation | [Documentation layout](docs/policies/repository.md#documentation-layout) |
-| Implementation, validation, tests, builds | [Default validation](docs/policies/testing.md#default-validation) |
-| PCSX2, savestates, runtime injection, E2E | [Runtime validation](docs/policies/testing.md#runtime-validation) |
-| Implementation, acceptance, validation, tests, candidate documentation | [Validation behavior and tests](docs/policies/testing.md#validation-behavior-and-tests) |
+| Implementation, validation, tests, builds | [Default validation](docs/policies/modding.md#default-validation) |
+| PCSX2, savestates, runtime injection, E2E | [Runtime validation](docs/policies/modding.md#runtime-validation) |
+| Implementation, acceptance, validation, tests, candidate documentation | [Validation behavior and tests](docs/policies/modding.md#validation-behavior-and-tests) |
 | Profiles, builder inputs, binary changes, donor data, source media | [Builder, binary, and donor changes](docs/policies/modding.md#builder-binary-and-donor-changes) |
 | PNACH, runtime patch writes | [PNACH](docs/policies/modding.md#pnach) |
 | Research, reverse engineering, disassembly, runtime investigation, knowledge, hypotheses | [Research and evidence](docs/policies/modding.md#research-and-evidence) |

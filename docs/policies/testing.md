@@ -20,8 +20,9 @@
   close any PCSX2 process.
   Runtime validation is outside the agent's reasoning, responses, and actions
   unless the user explicitly instructs the agent to use a specific maintained
-  [E2E](../workflows/e2e_validation.md) or
-  [input-recording](../workflows/input_recording_validation.md) workflow.
+  [E2E](../workflows/e2e_validation.md),
+  [input-recording with markers](../workflows/input_recording_with_markers.md), or
+  [input-recording without markers](../workflows/input_recording_without_markers.md) workflow.
   Agents invoke only the requested workflow's entrypoints and inspect its
   outputs; the workflow owns emulator control. Execution is not user acceptance.
 - A standalone savestate may support diagnosis but does not validate a change.

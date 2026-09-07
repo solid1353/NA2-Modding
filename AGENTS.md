@@ -48,8 +48,10 @@ Required user actions: <later user action or nothing>
 
 Include every setting defined by the active workflow.
 
-If user input is required or would materially improve efficiency or quality,
-request it before beginning or continuing work;
+Before starting or continuing work, identify the best practical approach.
+If you lack what would materially improve quality or efficiency, stop and
+request it. Do not settle for an inferior approach merely because you can
+make it work.
 Never search for inputs or determine that existing inputs are appropriate by yourself.
 Present the action boundary only when work can begin.
 

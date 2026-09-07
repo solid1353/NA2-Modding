@@ -25,6 +25,8 @@ a runtime observation is stated explicitly.
     reset/snapshot, apply/defaults, input and repeat handling, phase update,
     row/window geometry, drawing, destruction, and Linked Mode access. Direct
     raw-`jal` enumeration found both documented update/draw caller families;
+  - the resident label/value helpers were followed through the font renderer
+    and its transient GS-packet allocator;
   - ownership was followed through the generic parent/UI-owner path at live
     `0x006BE810..0x006C12A0` and `0x00714164..0x00715D08`, and through the
     standalone wrapper/selector-host path at live
@@ -62,21 +64,23 @@ a runtime observation is stated explicitly.
   Status/Attack/Guard/Move routing; Strength profile copy and hot reload;
   linked, extra-hit, item, substitution, and Ultimate branches; discrete
   snapshot masks; starting-HP selection and consumption; continuous HP, chakra, and Link Gauge policies; resource
-  lifetime; and the update/draw gates.
+  lifetime; the update/draw gates; and the font renderer's allocation-failure
+  behavior.
 - **Unresolved or untested:** Runtime scheduling between the main and standalone
   owners; full timing and naming of the general AI/controller graph; later
   transitions and engine names for several linked-work fields; the semantics of
-  every Strength-profile field; and the producer or unlock event for manager
-  slot `0x6A`.
+  every Strength-profile field; the producer or unlock event for manager slot
+  `0x6A`; and physical-PS2 reproduction of the render-packet exhaustion.
 - **Deliberate exclusions and overlap:** Localized text and layout remain in the linked Practice/UI
   documents. Damage scaling, broad substitution mechanics, frame rate,
   widescreen rendering, and emulator infrastructure are owned elsewhere.
-- **Evidence limitations:** Validation was static against the identified clean
-  `BTL.BIN` and `SLPS_258.37`. Raw bytes and disassembly corrected the preserved
-  Ghidra overlay's omitted-header coordinates, and tables and call sites were
-  checked against the complete raw overlay. No controller-input run,
-  breakpoint trace, or live ownership trace was performed. Exact static effects
-  remain distinct from inferred names.
+- **Evidence limitations:** The architecture was validated statically against
+  the identified clean `BTL.BIN` and `SLPS_258.37`. Raw bytes and disassembly
+  corrected the preserved Ghidra overlay's omitted-header coordinates, and
+  tables and call sites were checked against the complete raw overlay. The
+  base-game corruption is a user runtime observation; no corresponding input
+  capture, physical-hardware run, breakpoint trace, or live ownership trace was
+  inspected. Exact static effects remain distinct from inferred names.
 
 Binary identities and the live/file/preserved-export address relationship used
 below are defined in
@@ -1004,6 +1008,28 @@ The renderer is therefore not completely read-only: it advances presentation
 delay `+0x56`. It does not write the manager settings pack or apply local
 values. Input ownership remains in live `0x00881660` and phase ownership in
 live `0x00881AB0`.
+
+### Render-packet allocation failure
+
+The Practice draw routine submits all 17 rows after the reveal delay, including
+rows outside the visible window. Its label and value helpers ultimately reach
+resident `FUN_00188140`. For each glyph, resident `FUN_00187CC0` requests
+transient GS-packet storage through `FUN_00182E60`; a null allocation skips that
+glyph. `FUN_00182E60` obtains the storage from the render pool through
+`FUN_001104A0`, which returns null when no suitable free block remains. The pool
+occupies `0x00951480..0x00B51480`, exactly 2 MiB. `FUN_001104A0` links each
+allocation into the list passed in `$a1` and records that list address in the
+allocation header at `+0x04`.
+
+This establishes that render-pool exhaustion can selectively remove Practice
+text. Static analysis alone does not establish which runtime state exhausts the
+pool first.
+
+The same visual corruption was observed by the user in unmodified NA2. The
+failure path is in the game's EE-side packet construction, before the resulting
+GS stream reaches the renderer. A physical PS2 is therefore expected to
+reproduce the defect when the pool exhausts, although its appearance has not
+been confirmed on physical hardware.
 
 ### Native Practice Settings presentation geometry
 

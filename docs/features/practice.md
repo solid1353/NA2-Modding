@@ -154,6 +154,17 @@ seams, or require a new fixed-index layout patch. Runtime label and value tables
 are allocated from the largest generated page rather than a fixed menu
 capacity.
 
+Generated pages retain the native behavior of submitting every active-page row,
+including rows outside the visible window, to the transient render-packet pool.
+The 26-row Items Settings page amplifies that native allocation pressure: it
+grows each of the two alternating packet lists from about 321 KiB to 874 KiB.
+Together with the other render allocations, they exhaust the native 2 MiB pool
+and cause later glyph and draw-packet allocations to fail. The resulting
+incomplete GS stream produces missing text and screen-wide corruption after this
+page opens; changing the PCSX2 renderer cannot restore packets the game did not
+submit. The native behavior and base-game observation are documented in
+[Practice-mode knowledge](../knowledge/gameplay/practice_mode.md#render-packet-allocation-failure).
+
 The implementation guards the native manager-reset call site in clean
 `SLPS_258.37` at ELF offset `0xF5AD4` and applies the Practice default pack only
 after the native reset and Strength-mirror write complete. Menu-local Return to

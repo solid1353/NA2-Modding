@@ -1,7 +1,7 @@
-# Input-recording validation workflow
+# Input-recording workflow with markers
 
-This workflow applies when the user provides an input-recording name for the
-current task.
+This workflow applies when the user supplies an input recording with capture
+markers for baseline or candidate validation.
 
 ## Baseline handoff
 

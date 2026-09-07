@@ -581,7 +581,8 @@ void settings_menu_draw_practice_backing(
     void *backing,
     u32 primary_row_count,
     u32 secondary_row_count,
-    u32 submenu_rows
+    u32 submenu_rows,
+    u32 visible_rows
 )
 {
     NativeBackingCall draw = (NativeBackingCall)NATIVE_BACKING_DRAW_ADDRESS;
@@ -608,48 +609,19 @@ void settings_menu_draw_practice_backing(
             record
         );
     }
-    settings_menu_set_backing_record(
-        records,
-        PRACTICE_BACKING_PLAYER_TERMINAL_RECORD,
-        0u
-    );
-    settings_menu_set_backing_record(
-        records,
-        PRACTICE_BACKING_SECONDARY_TERMINAL_RECORD,
-        0u
-    );
-    for (index = 0u; index < primary_row_count; ++index) {
-        if ((submenu_rows & (1u << index)) != 0u) {
-            record = settings_menu_player_record(index, primary_row_count);
-            if (record != PRACTICE_BACKING_PLAYER_MIDDLE_LAST_RECORD ||
-                index < PRACTICE_BACKING_PLAYER_CAPACITY - 1u) {
-                settings_menu_set_backing_record(records, record, 0u);
-            }
-        }
-    }
-    for (index = 0u; index < secondary_row_count; ++index) {
-        if ((submenu_rows & (1u << (primary_row_count + index))) != 0u) {
-            record = settings_menu_secondary_record(index, secondary_row_count);
-            if (record != PRACTICE_BACKING_SECONDARY_MIDDLE_LAST_RECORD ||
-                index < PRACTICE_BACKING_SECONDARY_CAPACITY - 1u) {
-                settings_menu_set_backing_record(records, record, 0u);
-            }
-        }
+    for (record = 1u; record < PRACTICE_BACKING_RECORD_COUNT; ++record) {
+        settings_menu_set_backing_record(records, record, 0u);
     }
     draw(backing);
     alpha = *(volatile float *)(
         (u8 *)backing + PRACTICE_BACKING_OBJECT_ALPHA_OFFSET
     );
     for (index = 0u; index < primary_row_count; ++index) {
+        if (index >= 32u || (visible_rows & (1u << index)) == 0u) {
+            continue;
+        }
         u32 tinted = submenu_rows & (1u << index);
 
-        if (tinted == 0u && index < PRACTICE_BACKING_PLAYER_CAPACITY - 1u &&
-            index + 1u < primary_row_count) {
-            continue;
-        }
-        if (tinted == 0u && index == 0u && primary_row_count == 1u) {
-            continue;
-        }
         record = settings_menu_player_record(index, primary_row_count);
         settings_menu_draw_backing_copy(
             settings_menu_backing_record_object(records, record),
@@ -667,16 +639,15 @@ void settings_menu_draw_practice_backing(
     secondary_delta = settings_menu_secondary_delta(primary_row_count);
     for (index = 0u; index < secondary_row_count; ++index) {
         u32 page_index = primary_row_count + index;
+
+        if (
+            page_index >= 32u ||
+            (visible_rows & (1u << page_index)) == 0u
+        ) {
+            continue;
+        }
         u32 tinted = submenu_rows & (1u << page_index);
 
-        if (tinted == 0u &&
-            index < PRACTICE_BACKING_SECONDARY_CAPACITY - 1u &&
-            index + 1u < secondary_row_count) {
-            continue;
-        }
-        if (tinted == 0u && index == 0u && secondary_row_count == 1u) {
-            continue;
-        }
         record = settings_menu_secondary_record(index, secondary_row_count);
         settings_menu_draw_backing_copy(
             settings_menu_backing_record_object(records, record),

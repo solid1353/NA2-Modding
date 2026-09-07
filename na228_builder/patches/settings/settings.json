@@ -1237,8 +1237,14 @@
           "settings_menu_render_page": {
             "object": "settings.menu.presentation.c.bss.settings.menu.render.page"
           },
+          "settings_menu_visible_rows": {
+            "object": "settings.menu.presentation.c.bss.settings.menu.visible.rows"
+          },
           "settings_menu_presentation": {
             "object": "settings.menu.presentation.c.bss.settings.menu.presentation"
+          },
+          "settings_menu_visible_rows_for_draw": {
+            "object": "settings.menu.presentation.c.text.settings.menu.visible.rows.for.draw"
           },
           "settings_menu_draw_content": {
             "object": "settings.menu.presentation.c.text.settings.menu.draw.content"
@@ -1278,6 +1284,7 @@
         "namespace": "settings.menu.presentation.asm",
         "imports": {
           "settings_menu_render_page": "settings_menu_render_page",
+          "settings_menu_visible_rows": "settings_menu_visible_rows",
           "settings_menu_maximum": "settings_menu_maximum",
           "settings_menu_value": "settings_menu_value",
           "settings_menu_value_text": "settings_menu_value_text",

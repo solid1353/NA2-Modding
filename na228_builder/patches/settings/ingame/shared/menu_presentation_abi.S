@@ -204,6 +204,22 @@ settings_menu_draw_loop_bridge:
     .globl settings_menu_draw_label_bridge
     .type settings_menu_draw_label_bridge, @function
 settings_menu_draw_label_bridge:
+    sltiu $t0, $s0, 32
+    beqz $t0, 1f
+    nop
+    lui $t0, %hi(settings_menu_visible_rows)
+    addiu $t0, $t0, %lo(settings_menu_visible_rows)
+    lw $t0, 0($t0)
+    srlv $t0, $t0, $s0
+    andi $t0, $t0, 1
+    bnez $t0, 2f
+    nop
+1:
+    lui $t9, 0x0088
+    ori $t9, $t9, 0x24dc
+    jr $t9
+    nop
+2:
     addiu $sp, $sp, -16
     sd $ra, 0($sp)
     move $a0, $s0

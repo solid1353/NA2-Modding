@@ -68,7 +68,8 @@ void settings_menu_draw_practice_backing(
     void *backing,
     unsigned int primary_row_count,
     unsigned int secondary_row_count,
-    unsigned int submenu_rows
+    unsigned int submenu_rows,
+    unsigned int visible_rows
 );
 void settings_menu_draw_tinted_label(
     float alpha,

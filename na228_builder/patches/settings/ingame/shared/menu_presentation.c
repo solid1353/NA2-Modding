@@ -15,8 +15,13 @@ typedef signed int s32;
 #define PLAYER_VISIBLE_ROWS 7
 #define OPPONENT_VISIBLE_ROWS 6
 #define WINDOW_MARGIN_ROWS 2
+#define VISIBLE_ROW_MASK_CAPACITY 32u
 #define ROW_SCROLL_STEP 28.0f
 #define ROW_DRAW_STEP 28.0f
+#define ROW_DRAW_BASE_Y 14.0f
+#define ROW_DRAW_MIN_Y (ROW_DRAW_BASE_Y - ROW_DRAW_STEP * 2.0f)
+#define ROW_DRAW_MAX_Y \
+    (ROW_DRAW_BASE_Y + ROW_DRAW_STEP * ((float)PLAYER_VISIBLE_ROWS + 1.0f))
 #define SECTION_HEADING_GAP 18.0f
 #define WINDOW_APPROACH_STEP 20.0f
 #define CURSOR_SCROLL_SCALE 0.939f
@@ -27,9 +32,42 @@ typedef int (*NativeWindowUpdate)(int,int,int,int,int);
 typedef void (*NativeApproachFloat)(float,float,volatile float *);
 volatile SettingsMenuActivePage settings_menu_render_page
     __attribute__((section(".bss.settings_menu_render_page")));
+volatile u32 settings_menu_visible_rows
+    __attribute__((section(".bss.settings_menu_visible_rows")));
 const SettingsMenuPresentation *settings_menu_presentation
     __attribute__((section(".bss.settings_menu_presentation")));
 extern void settings_menu_native_content(void *controller);
+
+SETTINGS_MENU_SECTION(".text.settings_menu_visible_rows_for_draw")
+static u32 settings_menu_visible_rows_for_draw(
+    void *controller,
+    const volatile SettingsMenuActivePage *page
+)
+{
+    float y = *(volatile float *)(
+        (u8 *)controller + CONTROLLER_SCROLL_OFFSET
+    ) + ROW_DRAW_BASE_Y;
+    u32 row_count = page->row_count;
+    u32 rows = 0u;
+    u32 row;
+
+    if (row_count > VISIBLE_ROW_MASK_CAPACITY) {
+        row_count = VISIBLE_ROW_MASK_CAPACITY;
+    }
+    for (row = 0u; row < row_count; ++row) {
+        if (
+            row == page->primary_row_count &&
+            page->secondary_row_count != 0u
+        ) {
+            y += SECTION_HEADING_GAP;
+        }
+        if (y >= ROW_DRAW_MIN_Y && y <= ROW_DRAW_MAX_Y) {
+            rows |= 1u << row;
+        }
+        y += ROW_DRAW_STEP;
+    }
+    return rows;
+}
 
 SETTINGS_MENU_SECTION(".text.settings_menu_draw_content")
 void settings_menu_draw_content(void *controller, const SettingsMenuPresentation *view)
@@ -39,6 +77,10 @@ void settings_menu_draw_content(void *controller, const SettingsMenuPresentation
     ((void (*)(void *,void *))0x001866D0u)(renderer,
         *(void **)((u8 *)controller + 0x14u));
     settings_menu_render_page = *view->page;
+    settings_menu_visible_rows = settings_menu_visible_rows_for_draw(
+        controller,
+        &settings_menu_render_page
+    );
     settings_menu_presentation = view;
     settings_menu_native_content(controller);
     settings_menu_presentation = (const SettingsMenuPresentation *)0;
@@ -49,7 +91,9 @@ void settings_menu_draw_backing(void *backing)
 {
     settings_menu_draw_practice_backing(backing,
         settings_menu_render_page.primary_row_count,
-        settings_menu_render_page.secondary_row_count, settings_menu_presentation->submenu_rows);
+        settings_menu_render_page.secondary_row_count,
+        settings_menu_presentation->submenu_rows,
+        settings_menu_visible_rows);
 }
 
 SETTINGS_MENU_SECTION(".text.settings_menu_label")

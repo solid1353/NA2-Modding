@@ -2,7 +2,6 @@
 
 ### In Progress
 
--   Fix practice menu flickering for big menus
 -   Implement general menu
 -   Store settings in the save
 

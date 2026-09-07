@@ -15,6 +15,8 @@ integrated catalog data.
   `test.jsonc`, `e2e.jsonc`, and `release.jsonc` contain partial
   `overrides`. Root `game.json` may assign a unique command alias; E2E and
   release packaging select their dedicated configurations internally.
+  Keep its trailing `//` comments aligned to the same column. Realign all of
+  them when an edit changes the required width.
 - `configurations/overrides/base.character_overrides.tsv` owns shared
   per-character values and the required `base` and `step` metadata rows.
   Profile TSVs layer nonempty cells over the base by row identity. Empty cells

@@ -38,7 +38,7 @@
           "substitution": {
             "value": "gauge",                     // "chakra" | "gauge" | "free"
             "chakra": {
-              "minimum_chakra": "match_cost"       // "match_cost" | int 5..100 (step 5, % chakra)
+              "minimum_chakra": "match_cost"      // "match_cost" | int 5..100 (step 5, % chakra)
             },
             "gauge": {
               "recovery_delay_seconds": 14.0,     // decimal 0..60 (step 0.25, seconds)
@@ -82,7 +82,7 @@
       }
     },
     "general": {
-      "disc_identity": "NUN5",                   // "NA2" | "NUN5" | "NA228"
+      "disc_identity": "NUN5",                    // "NA2" | "NUN5" | "NA228"
       "replace_imported_game_title": true,
       "unlock_all": {
         "demon_wind_bomb": true
@@ -105,7 +105,7 @@
     },
     "character_select": {
       "balance_overlay": true,
-      "support_selection": "none"                  // "all" | "relevant" | "none"
+      "support_selection": "none"                 // "all" | "relevant" | "none"
     },
     "rendering": {
       "native_16_9_horizontal_scale": false

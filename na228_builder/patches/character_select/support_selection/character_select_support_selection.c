@@ -51,13 +51,9 @@ typedef unsigned int u32;
 #define NATIVE_SET_CHARACTER_SELECT_STATE_ADDRESS 0x003B5670u
 #define NATIVE_SUPPORT_NAVIGATION_ADDRESS 0x003B7280u
 
-#define FRAME_POINTER_ADDRESS 0x006073FCu
 #define FONT_RENDERER_POINTER_ADDRESS 0x00607470u
-#define FONT_SET_CONTEXT_ADDRESS 0x001866D0u
 #define TEXT_DRAW_ADDRESS 0x00378F50u
 
-#define FRAME_SCREEN_CONTEXT_OFFSET 0x150u
-#define FONT_RENDERER_CONTEXT_OFFSET 0x6Cu
 #define FONT_RENDERER_FLAGS_OFFSET 0x70u
 #define FONT_RENDERER_ASCII_MODE_FLAG 0x08u
 
@@ -109,7 +105,6 @@ typedef void (*NativeSupportNavigation)(
     void *player_select,
     u32 direction
 );
-typedef void (*NativeFontSetContext)(void *renderer, void *context);
 typedef void (*NativeTextDraw)(float x, float y, const u8 *text, u32 color);
 
 typedef struct FontV2Session {
@@ -789,14 +784,10 @@ void character_select_support_selection_draw_selected_name(
             NATIVE_SELECTED_SUPPORT_NAME_DRAW_ADDRESS;
     NativeSelectedSupportId selected_support_id =
         (NativeSelectedSupportId)NATIVE_SELECTED_SUPPORT_ID_ADDRESS;
-    NativeFontSetContext set_font_context =
-        (NativeFontSetContext)FONT_SET_CONTEXT_ADDRESS;
     volatile u8 *base = (volatile u8 *)character_select;
-    volatile u8 *frame;
     volatile u8 *renderer;
     const AdditionalSupportEntry *entry;
     FontV2Session session;
-    void *previous_context;
     u32 phase;
     u32 state;
     u32 side;
@@ -826,19 +817,13 @@ void character_select_support_selection_draw_selected_name(
         return;
     }
 
-    frame = *(volatile u8 **)FRAME_POINTER_ADDRESS;
+    /* Retain the Character Select font context set before both player draws. */
     renderer = *(volatile u8 **)FONT_RENDERER_POINTER_ADDRESS;
-    if (frame == (volatile u8 *)0 || renderer == (volatile u8 *)0) {
+    if (renderer == (volatile u8 *)0) {
         return;
     }
 
-    previous_context =
-        *(void **)(renderer + FONT_RENDERER_CONTEXT_OFFSET);
     previous_flags = renderer[FONT_RENDERER_FLAGS_OFFSET];
-    set_font_context(
-        (void *)renderer,
-        (void *)(frame + FRAME_SCREEN_CONTEXT_OFFSET)
-    );
     renderer[FONT_RENDERER_FLAGS_OFFSET] =
         previous_flags | (u8)FONT_RENDERER_ASCII_MODE_FLAG;
 
@@ -868,5 +853,4 @@ void character_select_support_selection_draw_selected_name(
     font_v2_adapter_call(&session);
 
     renderer[FONT_RENDERER_FLAGS_OFFSET] = previous_flags;
-    set_font_context((void *)renderer, previous_context);
 }

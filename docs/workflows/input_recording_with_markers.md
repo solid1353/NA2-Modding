@@ -11,13 +11,16 @@ markers for baseline or candidate validation.
    na228 <game> -s <recording>
    ```
 
-2. The user gives the agent the recording name. Locate the baseline
-   using the [input placement policy](../../AGENTS.md#file-and-folder-management),
-   checking the task's input folder before the capture output folder.
+2. The user gives the agent the recording name. Locate the baseline at
+   `@work/captures/<recording>/<game>/`.
 3. If the baseline does not exist, ask the user to create it. If multiple game
    directories make the intended baseline genuinely ambiguous, ask which one
    applies.
-4. The agent does not launch or copy an initial cached ISO and does
+4. Before inspecting the baseline, move it from
+   `@work/captures/<recording>/<game>/` to
+   `@work/<exact chat title>/inputs/captures/<recording>/<game>/`.
+   Treat its contents as read-only.
+5. The agent does not launch or copy an initial cached ISO and does
    not need its build identity. The baseline captures are the evidence for the
    pre-change behavior.
 
@@ -36,8 +39,11 @@ markers for baseline or candidate validation.
    Use an explicit
    [task-owned candidate path](../../AGENTS.md#file-and-folder-management);
    never use the default capture path.
-4. Compare the task-relevant candidate captures with the baseline and report
-   the observed result.
+4. Compare the task-relevant candidate captures with the baseline and the
+   intended result at each marker.
+5. If the markers do not show the intended result, correct the implementation
+   and repeat the checks, build, replay, and comparison until they do.
+6. Report the result with the marker evidence.
 
 The candidate replay is agent validation, not user acceptance. Report the
 result under the active interaction mode; the user reviews or tests it and

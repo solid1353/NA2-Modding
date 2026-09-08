@@ -186,10 +186,6 @@ and read only relevant sections of large documents.
 - Write authorized project changes to their canonical project paths and
   maintained workflow outputs to their configured repository paths.
 - Copy changing external inputs to `@work/<exact chat title>/inputs/` before relying on them.
-- Before inspecting an input-recording baseline, move it from
-  `@work/captures/<recording>/<game>/` to
-  `@work/<exact chat title>/inputs/captures/<recording>/<game>/`.
-  Treat its contents as read-only.
 - Before completion, remove disposable task artifacts.
 - `TASKS.md` is user-only. Agents must not read or modify it.
 - Never create or use an additional Git worktree.

@@ -368,10 +368,3 @@ useful information owned by that document; remove it otherwise.
   only documentation for the accepted result.
 - Before completing a documentation change, review each affected document as a
   whole and remove anything that violates this section.
-
-## Completion
-
-Before reporting completion, review the actual final diff and validation results.
-Report the achieved outcome, material deviations or user-visible changes, exact
-validation and its result, remaining limitations or risks, and commit and push
-state. Keep the report concrete and concise; omit inapplicable items.

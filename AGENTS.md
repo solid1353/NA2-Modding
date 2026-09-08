@@ -110,8 +110,11 @@ owning component documentation.
   `Interactive mode`, whichever applies. It does not change the mode or grant
   authority. Do not trigger it from a longer message, quoted text, or supplied
   context.
-- `ss`, `ss<number>`: identify a savestate or numbered savestate slot. The
-  surrounding request determines the authorized action.
+- `ss`, `ss<number>`: shorthand for `savestate` / `savestate<number>`.
+- `new ss<number>`: move the savestate to `@work/<exact chat title>/inputs/`
+  and follow the current context on how you should inspect it.
+  New savestates are stored in Workshop's `@pcsx2_savestates/`.
+  The command supplies all input identification needed for the move.
 
 ## Context and workflows
 
@@ -132,8 +135,9 @@ and read only relevant sections of large documents.
   defining the same name in its own manifest.
 - Persist only repository-relative paths or configured aliases, never
   machine-specific absolute paths.
-- Resolve each manifest relative to its own directory, never the caller's
-  working directory.
+- Resolve each path from the manifest that defines it. Relative paths and alias
+  references use that manifest's directory and entries, never the importing
+  manifest or caller's working directory.
 - Loaders inject `repository`; manifests do not define it.
 - Define parent roots before entries derived from them and keep related entries
   together.
@@ -181,11 +185,7 @@ and read only relevant sections of large documents.
 - Never use a system temporary directory.
 - Write authorized project changes to their canonical project paths and
   maintained workflow outputs to their configured repository paths.
-- Write task-owned generated records below `@work/<exact chat title>/logs/`.
 - Copy changing external inputs to `@work/<exact chat title>/inputs/` before relying on them.
-- New savestates are stored in Workshop's `@pcsx2_savestates/`.
-  Before inspecting a savestate supplied for the task, move it to
-  `@work/<exact chat title>/inputs/` instead of copying it.
 - Before inspecting an input-recording baseline, move it from
   `@work/captures/<recording>/<game>/` to
   `@work/<exact chat title>/inputs/captures/<recording>/<game>/`.
@@ -310,8 +310,8 @@ and read only relevant sections of large documents.
 
 - Agents must not directly launch, attach to, command, screenshot, probe, or
   close any PCSX2 process.
-  Runtime validation is outside the agent's reasoning, responses, and actions
-  unless the user explicitly instructs the agent to use a specific maintained
+  Unless the user explicitly requests a specific maintained workflow below,
+  runtime validation must not appear in the agent's reasoning, responses, or actions:
   [E2E](docs/workflows/e2e_validation.md),
   [input-recording with markers](docs/workflows/input_recording_with_markers.md), or
   [input-recording without markers](docs/workflows/input_recording_without_markers.md) workflow.

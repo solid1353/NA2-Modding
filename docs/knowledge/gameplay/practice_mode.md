@@ -64,8 +64,8 @@ a runtime observation is stated explicitly.
   Status/Attack/Guard/Move routing; Strength profile copy and hot reload;
   linked, extra-hit, item, substitution, and Ultimate branches; discrete
   snapshot masks; starting-HP selection and consumption; continuous HP, chakra, and Link Gauge policies; resource
-  lifetime; the update/draw gates; and the font renderer's allocation-failure
-  behavior.
+  lifetime; the update/draw gates; the Practice title's animation-record and
+  model boundary; and the font renderer's allocation-failure behavior.
 - **Unresolved or untested:** Runtime scheduling between the main and standalone
   owners; full timing and naming of the general AI/controller graph; later
   transitions and engine names for several linked-work fields; the semantics of
@@ -1039,12 +1039,22 @@ The native upper window uses
 `28.0`, and the lower-section target is
 `-18 - 28 * player_count - 28 * lower_start`.
 
+The separate draw call for child `+0x18` uses rectangle `(1,1,126,30)` from
+`TEX_prac_t01`. That region contains panel and arrow imagery, not the Practice
+Settings title.
+
 The backing object at `controller+0x2C` owns 18 animation records through
 `object+0xFC`. Resident `FUN_001BB790` draws a record only when
-`record+0x0A & 0x04` is nonzero. Record `0` is the Opponent Settings
-heading. Player rows use record `1` and records `10..17`; opponent rows use
-records `2..9`. Each record points to a render object at `+0x00`; that
-object stores world Y at `+0x38` and authored local Y at `+0x78`.
+`record+0x0A & 0x04` is nonzero. Record `0` targets `OBJ_prac_title`, whose
+internal object links to `MDL_prac_title`; it is the visible Practice Settings
+title. Player rows use record `1` and records `10..17`; opponent rows use
+records `2..9`. Each record points to a render object at `+0x00`; that object
+stores world Y at `+0x38` and authored local Y at `+0x78`. The title therefore
+has its own record-level draw boundary, separate from every row cell.
+
+`MDL_prac_title` has one rigid 28-vertex mesh. Its authored bounds, after the
+model's `1/16` coordinate scale, are X `-179.9375..4.25` and vertical
+`-13.5..13.5625`, for a `184.1875` by `27.0625` local-unit footprint.
 
 Live `0x00881AE0` advances the backing through resident `0x001BB210`, and
 live `0x00881AEC` immediately composes its hierarchy through resident
@@ -1102,9 +1112,9 @@ caller families:
 
 The row windows and the backing animation have separate fixed structures. The
 text windows use the native 28-unit row pitch and the lower-section target
-shown above, while the backing retains nine player cells, eight opponent cells,
-and the section heading. Changing a text-section boundary does not change that
-backing topology.
+shown above, while the backing retains the Practice Settings title, nine player
+cells, and eight opponent cells. Changing a text-section boundary does not
+change that backing topology.
 
 Live `0x00882078` skips the up-arrow body at `0x00882080` when the window-start
 flag is zero. Entering the body directly bypasses that native visibility test.

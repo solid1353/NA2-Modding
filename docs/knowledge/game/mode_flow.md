@@ -29,6 +29,7 @@ are also out of scope.
   `FUN_001ec960`. The resident callback subset at `FUN_003839e0`,
   `FUN_00383db0`, `FUN_00384570`, `FUN_003845d0`, `FUN_00384620`,
   `FUN_00384690`, `FUN_00384700`, `FUN_00384720`, `FUN_00384760`,
+  `FUN_00382ef0`, `FUN_003832c0`, `FUN_00383340`, `FUN_003835c0`,
   `FUN_003849c0`, `FUN_00384cd0`, `FUN_00384d70`, `FUN_00384de0`, and
   `FUN_003854f0` was followed only through the state transitions relevant to
   this scope. The complete `FUN_001df690` title switch and its title-local
@@ -43,7 +44,8 @@ are also out of scope.
   contracts; title-to-manager boundary; manager fields and object lifetimes;
   title initialization, idle-return, acceptance, and presentation-completion
   gates; numeric Mode Select mapping, input priority, confirmation/back
-  routing, remembered-slot behavior, allocator/failure edges, and unsupported states;
+  routing, the state-3 two-choice modal's exact navigation and decision
+  contract, remembered-slot behavior, allocator/failure edges, and unsupported states;
   the synchronous selector/cache contract; BTL type/process selection, hook
   and return convergence; ETC Collection plus resident Options creation,
   teardown, and return behavior; and the resulting patch surfaces and
@@ -680,6 +682,26 @@ The state-3 decision is mechanically exact even though the child fields lack
 source names: it exits only when child halfword `+0x12 != 2` and child word
 `+0x18 == 0`; otherwise it returns to active selection. Consequently an
 action-5 press is not by itself proof that the controller will return `-1`.
+
+The nested modal's input and result path is also exact. `FUN_003832c0` merges
+new/repeat input from both controller ports before calling `FUN_00383340`:
+
+- effective Up (`0x1000`) and Down (`0x4000`) change selection word `+0x18`
+  within the count at `+0x14`;
+- Circle (`0x20`) writes result halfword `1` at `+0x12` and sets event flag
+  `0x02` at `+0x28`;
+- Cross (`0x40`), when cancellation is allowed, writes result halfword `2`
+  and sets event flag `0x04`;
+- a selection change sets event flag `0x01`.
+
+`FUN_003854f0` maps those flags to the same native sounds used elsewhere:
+`0x35` for navigation, `0x34` for confirmation, and `0x33` for cancellation.
+After `FUN_00382ef0(child, 3)` completes, `FUN_003835c0` accepts the exit only
+for selection 0 with a result other than 2. Circle on selection 0 therefore
+commits the return-to-title route; Circle on selection 1 resumes Mode Select;
+Cross resumes Mode Select regardless of the current selection. This is a
+two-choice modal layered inside Mode Select state 3, not a reusable top-level
+mode callback.
 
 ## Mode Select callback and result routing
 

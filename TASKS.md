@@ -3,7 +3,6 @@
 ### In Progress
 
 -   Store settings in the save
--   Replace main menu and charsel music
 
 ### General
 

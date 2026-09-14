@@ -27,7 +27,11 @@ class ItemsSettingsTests(unittest.TestCase):
         base = jsonc.loads(
             (self.configurations / "base.jsonc").read_text(encoding="utf-8")
         )
-        mutate(base["features"]["settings"]["ingame"]["battle_mechanics"])
+        mutate(
+            base["features"]["settings"]["submenus"][
+                "battle_mechanics_submenu"
+            ]
+        )
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         path = Path(directory.name) / "configuration.jsonc"

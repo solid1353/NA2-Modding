@@ -3,7 +3,6 @@
 #include "menu_pages.h"
 
 typedef unsigned char u8;
-typedef unsigned short u16;
 typedef signed int s32;
 typedef unsigned int u32;
 
@@ -36,13 +35,6 @@ typedef unsigned int u32;
 #define PRACTICE_BACKING_SECONDARY_MIDDLE_LAST_RECORD 8u
 #define PRACTICE_BACKING_SECONDARY_TERMINAL_RECORD 9u
 #define PRACTICE_BACKING_ROW_STEP 26.88f
-
-#define SPRITE_MODEL_POINTER_OFFSET 0x94u
-#define MODEL_PART_COUNT_OFFSET 0x16u
-#define MODEL_PART_RECORDS_POINTER_OFFSET 0x08u
-#define MODEL_PART_VERTEX_COUNT_OFFSET 0x04u
-#define MODEL_PART_COLORS_POINTER_OFFSET 0x1Cu
-#define ROW_LABEL_VERTEX_COUNT 18u
 
 typedef void (*NativeBackingCall)(void *backing);
 typedef void (*NativeSpriteDraw)(float alpha, void *object);
@@ -446,69 +438,11 @@ void settings_menu_prepare_practice_backing(
     compose(backing);
 }
 
-static volatile u32 *settings_menu_object_colors(void *object)
-{
-    u8 *model;
-    u8 *part_records;
-
-    if (object == (void *)0) {
-        return (volatile u32 *)0;
-    }
-    model = *(u8 **)((u8 *)object + SPRITE_MODEL_POINTER_OFFSET);
-    if (model == (u8 *)0) {
-        return (volatile u32 *)0;
-    }
-    if (*(volatile u16 *)(model + MODEL_PART_COUNT_OFFSET) == 0u) {
-        return (volatile u32 *)0;
-    }
-    part_records = *(u8 **)(model + MODEL_PART_RECORDS_POINTER_OFFSET);
-    if (part_records == (u8 *)0) {
-        return (volatile u32 *)0;
-    }
-    if (
-        *(volatile u32 *)(
-            part_records + MODEL_PART_VERTEX_COUNT_OFFSET
-        ) < ROW_LABEL_VERTEX_COUNT
-    ) {
-        return (volatile u32 *)0;
-    }
-    return *(volatile u32 **)(
-        part_records + MODEL_PART_COLORS_POINTER_OFFSET
-    );
-}
-
-SETTINGS_MENU_SECTION(".text.settings_menu_draw_tinted_label")
-void settings_menu_draw_tinted_label(float alpha, void *object, u32 color)
-{
-    NativeSpriteDraw draw_sprite =
-        (NativeSpriteDraw)NATIVE_SPRITE_DRAW_ADDRESS;
-    volatile u32 *colors = settings_menu_object_colors(object);
-    u32 saved_colors[ROW_LABEL_VERTEX_COUNT];
-    u32 index;
-
-    if (object == (void *)0) {
-        return;
-    }
-    if (colors == (volatile u32 *)0) {
-        draw_sprite(alpha, object);
-        return;
-    }
-    for (index = 0u; index < ROW_LABEL_VERTEX_COUNT; ++index) {
-        saved_colors[index] = colors[index];
-        colors[index] = color;
-    }
-    draw_sprite(alpha, object);
-    for (index = 0u; index < ROW_LABEL_VERTEX_COUNT; ++index) {
-        colors[index] = saved_colors[index];
-    }
-}
-
 static void settings_menu_draw_backing_copy(
     u8 *object,
     u8 *anchor,
     float local_y,
-    float alpha,
-    u32 tinted
+    float alpha
 )
 {
     NativeSpriteDraw draw_sprite =
@@ -535,15 +469,7 @@ static void settings_menu_draw_backing_copy(
     ) + local_y - *(volatile float *)(
         anchor + PRACTICE_BACKING_RECORD_LOCAL_Y_OFFSET
     );
-    if (tinted != 0u) {
-        settings_menu_draw_tinted_label(
-            alpha,
-            object,
-            SETTINGS_MENU_HEADER_ORANGE_TINT
-        );
-    } else {
-        draw_sprite(alpha, object);
-    }
+    draw_sprite(alpha, object);
     *object_local_y = native_local_y;
     *object_world_y = native_world_y;
 }
@@ -581,7 +507,6 @@ void settings_menu_draw_practice_backing(
     void *backing,
     u32 primary_row_count,
     u32 secondary_row_count,
-    u32 submenu_rows,
     u32 visible_rows
 )
 {
@@ -620,8 +545,6 @@ void settings_menu_draw_practice_backing(
         if (index >= 32u || (visible_rows & (1u << index)) == 0u) {
             continue;
         }
-        u32 tinted = submenu_rows & (1u << index);
-
         record = settings_menu_player_record(index, primary_row_count);
         settings_menu_draw_backing_copy(
             settings_menu_backing_record_object(records, record),
@@ -632,8 +555,7 @@ void settings_menu_draw_practice_backing(
             (index + 1u == primary_row_count && primary_row_count > 1u
                 ? settings_menu_player_terminal_y(index)
                 : settings_menu_player_grid_y(index)),
-            alpha,
-            tinted
+            alpha
         );
     }
     secondary_delta = settings_menu_secondary_delta(primary_row_count);
@@ -646,8 +568,6 @@ void settings_menu_draw_practice_backing(
         ) {
             continue;
         }
-        u32 tinted = submenu_rows & (1u << page_index);
-
         record = settings_menu_secondary_record(index, secondary_row_count);
         settings_menu_draw_backing_copy(
             settings_menu_backing_record_object(records, record),
@@ -658,8 +578,7 @@ void settings_menu_draw_practice_backing(
             (index + 1u == secondary_row_count && secondary_row_count > 1u
                 ? settings_menu_secondary_terminal_y(index, secondary_delta)
                 : settings_menu_secondary_grid_y(index, secondary_delta)),
-            alpha,
-            tinted
+            alpha
         );
     }
     for (record = 0u; record < PRACTICE_BACKING_RECORD_COUNT; ++record) {

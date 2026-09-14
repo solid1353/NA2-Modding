@@ -1,15 +1,7 @@
 {
   "settings.new_controls": {
-    "description": "Expose Guard and Substitution as independent remappable actions and own the default shoulder-button layout for both players.",
+    "description": "Expose Guard and Substitution as independent remappable actions, accept a current Substitution hold after timing admission in Updated controls, and own the default shoulder-button layout for both players.",
     "edits": {
-      "allow_substitution_while_guard_is_held": {
-        "description": "Bypass the native 16-frame held-Guard rejection before the independent Substitution input search.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0x129720",
-        "expected_hex": "10004228",
-        "replacement_hex": "01000224"
-      },
       "default_battle_overlay_bindings": {
         "description": "Initialize the battle overlay with Substitution on L1, Guard on R1, Item Select on L2, and Linked Attack on R2.",
         "operation": "replace",
@@ -49,25 +41,36 @@
         "destination_offset": "0x287FBC",
         "expected_hex": "0000A3AC",
         "replacement_hex": "00000000"
-      },
-      "remove_substitution_action_from_logical_block_mask": {
-        "description": "Remove action-map index 7 from the held Guard translation while preserving index 6 as the sole source of the logical block bit.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offset": "0x3C02C",
-        "expected_hex": "0E002286",
-        "replacement_hex": "2D100000"
-      },
-      "search_substitution_action_in_first_input_history_arm": {
-        "description": "Search configured action-map index 7 instead of Guard at index 6, matching the predicate's unchanged second arm.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0x129740",
-        "expected_hex": "06000524",
-        "replacement_hex": "07000524"
       }
     },
     "hooks": {
+      "select_held_guard_behavior": {
+        "description": "Use the native held-Guard rejection in Classic; in Updated, accept a current Substitution hold after timing admission or continue to the buffered press search.",
+        "target_id": "na2_elf",
+        "offset": "0x129720",
+        "expected_hex": "1000422804004014",
+        "symbol": "control_scheme_held_guard_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "select_substitution_history_action": {
+        "description": "Search Guard in Classic and the independent Substitution action in Updated.",
+        "target_id": "na2_elf",
+        "offset": "0x129740",
+        "expected_hex": "06000524FCBD1B0C",
+        "symbol": "control_settings_history_action",
+        "encoding": "jal26",
+        "replacement_hex": "0000000C00000000"
+      },
+      "select_logical_block_source": {
+        "description": "Retain native action 7 as a block source in Classic and use only action 6 in Updated.",
+        "target_id": "na2_btl",
+        "offset": "0x3C02C",
+        "expected_hex": "0E00228624106200",
+        "symbol": "control_scheme_logical_block_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
       "label_substitution_action": {
         "description": "Point Control Settings action-map index 7 at the resident Substitution label instead of the second Guard label.",
         "target_id": "na2_elf",
@@ -91,10 +94,35 @@
         "kind": "c",
         "path": "na228_builder/patches/settings/new_controls/control_settings.c",
         "namespace": "battle.control.settings",
-        "imports": {},
+        "imports": {
+          "mod_settings_option_get": "mod_settings_option_get"
+        },
         "fragments": {
+          "control_settings_history_action": {
+            "object": "battle.control.settings.text.control.settings.history.action"
+          },
+          "control_settings_substitution_held": {
+            "object": "battle.control.settings.text.control.settings.substitution.held"
+          },
           "control_settings_assign_action": {
             "object": "battle.control.settings.text.control.settings.assign.action"
+          }
+        }
+      },
+      "control_scheme_abi": {
+        "kind": "asm",
+        "path": "na228_builder/patches/settings/new_controls/control_scheme_abi.S",
+        "namespace": "battle.control.scheme.asm",
+        "imports": {
+          "mod_settings_state": "mod_settings_state",
+          "control_settings_substitution_held": "control_settings_substitution_held"
+        },
+        "fragments": {
+          "control_scheme_held_guard_bridge": {
+            "object": "battle.control.scheme.asm.text.control.scheme.held.guard.bridge"
+          },
+          "control_scheme_logical_block_bridge": {
+            "object": "battle.control.scheme.asm.text.control.scheme.logical.block.bridge"
           }
         }
       },
@@ -105,14 +133,137 @@
       }
     }
   },
+  "settings.mod_settings": {
+    "description": "Host the shared Mod Settings child over Mode Select and own its session-wide runtime state.",
+    "hooks": {
+      "prepare_during_mode_select_construction": {
+        "description": "Construct Mode Select normally, then prepare the Mod Settings backdrop, child, and title before the first Mode Select draw.",
+        "target_id": "na2_elf",
+        "offset": "0xEA528",
+        "expected_hex": "6C0F0E0C00000000",
+        "symbol": "mod_settings_mode_select_construct",
+        "encoding": "jal26"
+      },
+      "open_and_update_from_mode_select": {
+        "description": "Open Mod Settings on Square, update its shared Practice child, and suppress Mode Select input while it is active.",
+        "target_id": "na2_elf",
+        "offset": "0x284AD0",
+        "expected_hex": "78130E0C00000000",
+        "symbol": "mod_settings_mode_select_update",
+        "encoding": "jal26"
+      },
+      "draw_over_mode_select": {
+        "description": "Draw Mode Select normally until Mod Settings replaces it with the Options backdrop and shared Practice child.",
+        "target_id": "na2_elf",
+        "offset": "0xEA69C",
+        "expected_hex": "00170E0C00000000",
+        "symbol": "mod_settings_mode_select_draw",
+        "encoding": "jal26"
+      },
+      "draw_mode_select_footer_prompt": {
+        "description": "Retain the native START prompt draw and append the Mode Select-only Square Mod prompt before the label sprite is finalized.",
+        "target_id": "na2_elf",
+        "offset": "0x285F40",
+        "expected_hex": "10EF0D0C00000000",
+        "symbol": "mod_settings_draw_mode_select_footer",
+        "encoding": "jal26"
+      },
+      "cleanup_before_accept": {
+        "description": "Destroy an active Mod Settings child before the accepted Mode Select controller is released.",
+        "target_id": "na2_elf",
+        "offset": "0xEA628",
+        "expected_hex": "A80E0E0C00000000",
+        "symbol": "mod_settings_mode_select_cleanup",
+        "encoding": "jal26"
+      },
+      "cleanup_before_back": {
+        "description": "Destroy an active Mod Settings child before the cancelled Mode Select controller is released.",
+        "target_id": "na2_elf",
+        "offset": "0xEA66C",
+        "expected_hex": "A80E0E0C00000000",
+        "symbol": "mod_settings_mode_select_cleanup",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "mod_settings": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/mod_settings/mod_settings.c",
+        "namespace": "mod.settings.c",
+        "resources": [
+          "na228_builder/patches/settings/mod_settings/mod_settings_title.png",
+          "na228_builder/patches/settings/mod_settings/mod_settings_prompt_label.png"
+        ],
+        "imports": {
+          "mod_settings_state": "mod_settings_state",
+          "mod_settings_title_pixels": "mod_settings_title_pixels",
+          "mod_settings_prompt_label_pixels": "mod_settings_prompt_label_pixels"
+        },
+        "fragments": {
+          "mod_settings_helpers": {
+            "object": "mod.settings.c.text"
+          },
+          "mod_settings_rodata": {
+            "object": "mod.settings.c.rodata"
+          },
+          "mod_settings_child": {
+            "object": "mod.settings.c.bss.mod.settings.child"
+          },
+          "mod_settings_backdrop": {
+            "object": "mod.settings.c.bss.mod.settings.backdrop"
+          },
+          "mod_settings_mode_select_construct": {
+            "object": "mod.settings.c.text.mod.settings.mode.select.construct"
+          },
+          "mod_settings_mode_select_update": {
+            "object": "mod.settings.c.text.mod.settings.mode.select.update"
+          },
+          "mod_settings_mode_select_draw": {
+            "object": "mod.settings.c.text.mod.settings.mode.select.draw"
+          },
+          "mod_settings_draw_mode_select_footer": {
+            "object": "mod.settings.c.text.mod.settings.draw.mode.select.footer"
+          },
+          "mod_settings_mode_select_cleanup": {
+            "object": "mod.settings.c.text.mod.settings.mode.select.cleanup"
+          },
+          "mod_settings_option_get": {
+            "object": "mod.settings.c.text.mod.settings.option.get"
+          },
+          "mod_settings_option_set": {
+            "object": "mod.settings.c.text.mod.settings.option.set"
+          }
+        }
+      }
+    }
+  },
   "settings.simple_display": {
-    "description": "Choose the native battle Simple Display default.",
-    "edit": {
-      "operation": "replace",
-      "destination_target_id": "na2_elf",
-      "destination_offset": "0xE7BAC",
-      "expected_hex": "25186600",
-      "adapter": "mips_simple_display_default"
+    "description": "Apply the selected Simple Display state during native settings-pack initialization and live changes.",
+    "hooks": {
+      "apply_simple_display_state": {
+        "description": "Store the runtime-selected Simple Display bit during native manager-pack initialization.",
+        "target_id": "na2_elf",
+        "offset": "0xE7BAC",
+        "expected_hex": "25186600000083A0",
+        "symbol": "mod_settings_simple_display_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      }
+    },
+    "payload": {
+      "simple_display_abi": {
+        "kind": "asm",
+        "path": "na228_builder/patches/settings/mod_settings/simple_display_abi.S",
+        "namespace": "mod.settings.simple.display.asm",
+        "imports": {
+          "mod_settings_state": "mod_settings_state"
+        },
+        "fragments": {
+          "mod_settings_simple_display_bridge": {
+            "object": "mod.settings.simple.display.asm.text.mod.settings.simple.display.bridge"
+          }
+        }
+      }
     }
   },
   "settings.character_overrides": {
@@ -134,7 +285,8 @@
         "path": "na228_builder/patches/settings/character_overrides/substitution_cost.c",
         "namespace": "battle.logic.substitution.cost.c",
         "imports": {
-          "battle_logic_character_overrides": "character_overrides"
+          "battle_logic_character_overrides": "character_overrides",
+          "mod_settings_option_get": "mod_settings_option_get"
         },
         "fragments": {
           "substitution_cost_for_fighter": {
@@ -781,6 +933,9 @@
         "kind": "c",
         "path": "na228_builder/patches/settings/ingame/shared/menu_pages.c",
         "namespace": "settings.menu.pages.c",
+        "imports": {
+          "mod_settings_child": "mod_settings_child"
+        },
         "fragments": {
           "settings_open_label": {
             "object": "settings.menu.pages.c.rodata.settings.open.label"
@@ -814,9 +969,6 @@
           },
           "settings_menu_draw_practice_backing": {
             "object": "settings.menu.pages.c.text.settings.menu.draw.practice.backing"
-          },
-          "settings_menu_draw_tinted_label": {
-            "object": "settings.menu.pages.c.text.settings.menu.draw.tinted.label"
           }
         }
       },
@@ -834,7 +986,6 @@
           "settings_menu_initialize_open_values": "settings_menu_initialize_open_values",
           "settings_menu_open_values": "settings_menu_open_values",
           "settings_menu_prepare_practice_backing": "settings_menu_prepare_practice_backing",
-          "settings_menu_draw_tinted_label": "settings_menu_draw_tinted_label",
           "chakra_mode_get": "chakra_mode_get",
           "chakra_mode_set": "chakra_mode_set",
           "settings_menu_draw_content": "settings_menu_draw_content",
@@ -1103,6 +1254,8 @@
           "practice_settings_active_labels": "practice_settings_active_labels",
           "practice_settings_active_value_tables": "practice_settings_active_value_tables",
           "practice_settings_schema": "practice_settings_schema",
+          "mod_settings_schema": "mod_settings_schema",
+          "mod_settings_child": "mod_settings_child",
           "settings_menu_value_page": "settings_menu_value_page",
           "settings_menu_page": "settings_menu_page",
           "settings_menu_select_page": "settings_menu_select_page",

@@ -205,7 +205,7 @@ file; it does not rename, copy, or hardlink the image.
 `@logs/na228/preflight/registry.json` stores byte-affecting fingerprint state,
 configuration, full ISO SHA-256, verification time, verified image size, and path;
 `preflight/records/<fingerprint>/` stores reusable structured provenance.
-The registry retains at most 10 unique ISOs. Pruning removes every fingerprint
+The registry retains at most 15 unique ISOs. Pruning removes every fingerprint
 and provenance record that refers to an evicted image. A missing or corrupt
 registry causes a complete verified build and is recreated only after success.
 

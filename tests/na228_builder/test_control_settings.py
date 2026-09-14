@@ -47,13 +47,16 @@ class ControlSettingsTests(unittest.TestCase):
                 substitution=substitution_enabled,
             ):
                 features = self._base_features()
-                features["settings"]["new_controls"] = controls_enabled
-                substitution = features["settings"]["ingame"][
-                    "battle_mechanics"
-                ]["substitution"]
-                features["settings"]["ingame"]["battle_mechanics"][
-                    "substitution"
-                ] = substitution if substitution_enabled else False
+                features["settings"]["mod_settings"][
+                    "new_controls"
+                ] = controls_enabled
+                mechanics = features["settings"]["submenus"][
+                    "battle_mechanics_submenu"
+                ]
+                substitution = mechanics["substitution"]
+                mechanics["substitution"] = (
+                    substitution if substitution_enabled else False
+                )
                 selection = catalog.load_selection(
                     self.catalog_path,
                     self._write_full_configuration(features),
@@ -62,18 +65,21 @@ class ControlSettingsTests(unittest.TestCase):
                     node
                     for node in selection.nodes
                     if node.path
-                    == ("features", "settings", "new_controls")
+                    == (
+                        "features", "settings", "mod_settings", "new_controls"
+                    )
                 )
                 substitution = next(
                     node
                     for node in selection.nodes
                     if node.path
                     == (
-                        "features", "settings", "ingame",
-                        "battle_mechanics", "substitution",
+                        "features", "settings", "submenus",
+                        "battle_mechanics_submenu", "substitution",
                     )
                 )
-                self.assertEqual(controls.enabled, controls_enabled)
+                self.assertTrue(controls.enabled)
+                self.assertEqual(controls.configured_value, controls_enabled)
                 self.assertEqual(substitution.enabled, substitution_enabled)
                 active_edits = {
                     node.patch
@@ -87,11 +93,11 @@ class ControlSettingsTests(unittest.TestCase):
                 }
                 self.assertEqual(
                     "settings.new_controls" in active_edits,
-                    controls_enabled,
+                    True,
                 )
                 self.assertEqual(
                     "settings.new_controls" in active_injections,
-                    controls_enabled,
+                    True,
                 )
                 self.assertEqual(
                     "settings.battle_mechanics.substitution"
@@ -116,12 +122,6 @@ class ControlSettingsTests(unittest.TestCase):
                 for name, edit in route.items()
             },
             {
-                "allow_substitution_while_guard_is_held": (
-                    "na2_elf",
-                    "0x129720",
-                    "10004228",
-                    "01000224",
-                ),
                 "default_battle_overlay_bindings": (
                     "na2_btl",
                     "0x1E4250",
@@ -159,18 +159,6 @@ class ControlSettingsTests(unittest.TestCase):
                     "0x287FBC",
                     "0000A3AC",
                     "00000000",
-                ),
-                "remove_substitution_action_from_logical_block_mask": (
-                    "na2_btl",
-                    "0x3C02C",
-                    "0E002286",
-                    "2D100000",
-                ),
-                "search_substitution_action_in_first_input_history_arm": (
-                    "na2_elf",
-                    "0x129740",
-                    "06000524",
-                    "07000524",
                 ),
             },
         )
@@ -220,8 +208,22 @@ class ControlSettingsTests(unittest.TestCase):
                 "kind": "c",
                 "path": "na228_builder/patches/settings/new_controls/control_settings.c",
                 "namespace": "battle.control.settings",
-                "imports": {},
+                "imports": {
+                    "mod_settings_option_get": "mod_settings_option_get",
+                },
                 "fragments": {
+                    "control_settings_history_action": {
+                        "object": (
+                            "battle.control.settings.text.control.settings."
+                            "history.action"
+                        ),
+                    },
+                    "control_settings_substitution_held": {
+                        "object": (
+                            "battle.control.settings.text.control.settings."
+                            "substitution.held"
+                        ),
+                    },
                     "control_settings_assign_action": {
                         "object": (
                             "battle.control.settings.text.control.settings."
@@ -229,6 +231,13 @@ class ControlSettingsTests(unittest.TestCase):
                         ),
                     },
                 },
+            },
+        )
+        self.assertEqual(
+            set(controls["payload"]["control_scheme_abi"]["fragments"]),
+            {
+                "control_scheme_held_guard_bridge",
+                "control_scheme_logical_block_bridge",
             },
         )
 

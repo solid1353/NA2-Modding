@@ -18,9 +18,7 @@ from .configuration import BuildConfiguration, ModuleInvocation
 from ...patches.settings.character_overrides.character_overrides import (
     character_override_fragment,
     character_override_fragment_feature,
-    character_overrides_enabled_fragment,
 )
-from ...patches.character_select.support_selection.support_selection import support_selection_runtime_package
 from ...patches.settings.ingame.battle_mode.battle_settings import (
     battle_settings_fragment,
     battle_settings_table_fragments,
@@ -33,6 +31,12 @@ from ...patches.settings.ingame.practice_mode.practice_settings import (
 )
 from ...patches.settings.ingame.battle_mechanics.battle_settings_runtime import battle_settings_runtime_fragments
 from ...patches.settings.ingame.shared.native_settings_defaults import native_settings_defaults_fragment
+from ...patches.settings.mod_settings.mod_settings import (
+    mod_settings_graphics_fragments,
+    mod_settings_resource_fragments,
+    mod_settings_schema_fragment,
+    mod_settings_state_fragment,
+)
 from ...patches.general.unlock_all.unlock_all import unlock_all_configuration_fragment
 
 
@@ -105,12 +109,6 @@ def prepare_module_pipeline(
         str, runtime_injector_module.RuntimeInjectionPackage
     ] = {}
     title_policy = _selected_game_title_policy(configuration)
-    character_overrides_enabled = configuration.selection.node_enabled(
-        "features", "settings", "character_overrides"
-    )
-    character_select_overlay_enabled = configuration.selection.node_enabled(
-        "features", "character_select", "balance_overlay"
-    )
     character_override_feature = character_override_fragment_feature(
         configuration.selection
     )
@@ -138,26 +136,26 @@ def prepare_module_pipeline(
                     *declaration.fragments,
                 ),
             )
-        if (
-            module.feature_id == "character_select"
-            and character_select_overlay_enabled
-        ):
+        if module.feature_id == "settings":
             declaration = replace(
                 declaration,
                 fragments=(
-                    character_overrides_enabled_fragment(
-                        character_overrides_enabled,
+                    mod_settings_state_fragment(
+                        configuration.selection,
+                        owner=module.module_id,
+                    ),
+                    *mod_settings_graphics_fragments(owner=module.module_id),
+                    mod_settings_schema_fragment(
+                        configuration.selection,
+                        owner=module.module_id,
+                    ),
+                    *mod_settings_resource_fragments(
+                        configuration.selection,
                         owner=module.module_id,
                     ),
                     *declaration.fragments,
                 ),
             )
-        if module.feature_id == "character_select":
-            declaration = support_selection_runtime_package(
-                configuration.selection,
-                declaration,
-            )
-        if module.feature_id == "settings":
             native_defaults_fragment = native_settings_defaults_fragment(
                 configuration.selection,
                 owner=module.module_id,

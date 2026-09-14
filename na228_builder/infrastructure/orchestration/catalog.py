@@ -28,7 +28,14 @@ PATCH_ID = re.compile(r"[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*\Z")
 OPERATION_FIELDS = ["field", "required", "type"]
 FIELD_TYPES = {"hex", "integer", "integer_list", "path", "sha256", "text"}
 UINT64_MAX = (1 << 64) - 1
-SOURCE_PAYLOAD_FIELDS = {"kind", "path", "namespace", "imports", "fragments"}
+SOURCE_PAYLOAD_FIELDS = {
+    "kind",
+    "path",
+    "namespace",
+    "imports",
+    "fragments",
+    "resources",
+}
 SOURCE_FRAGMENT_FIELDS = {"object", "abi", "description"}
 STATIC_PAYLOAD_FIELDS = {
     "kind",
@@ -957,6 +964,18 @@ def _load_implementation(
                                 f"{label}.imports.{import_id}",
                                 required={"symbol"},
                             )
+                    resources = declaration.get("resources", [])
+                    if (
+                        not isinstance(resources, list)
+                        or any(
+                            not isinstance(resource, str)
+                            for resource in resources
+                        )
+                        or len(resources) != len(set(resources))
+                    ):
+                        raise ValueError(
+                            f"{label}.resources must be a list of unique paths"
+                        )
                     fragments = declaration.get("fragments")
                     if not isinstance(fragments, dict) or not fragments:
                         raise ValueError(f"{label}.fragments must be a non-empty object")
@@ -2240,6 +2259,15 @@ def referenced_files(selection: CatalogSelection, repository: Path, feature_id: 
                         f"injections.{injection_id}.payload.{payload_id}.path",
                     )
                 )
+                for index, resource in enumerate(raw.get("resources", [])):
+                    files.add(
+                        _source_path(
+                            repository,
+                            resource,
+                            f"injections.{injection_id}.payload."
+                            f"{payload_id}.resources[{index}]",
+                        )
+                    )
             elif "blob_path" in raw:
                 files.add(
                     _source_path(

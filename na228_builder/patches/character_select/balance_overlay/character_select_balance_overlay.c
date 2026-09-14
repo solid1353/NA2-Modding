@@ -35,7 +35,7 @@ typedef struct CharacterOverrideTable {
 } CharacterOverrideTable;
 
 extern const CharacterOverrideTable battle_logic_character_overrides;
-extern const u32 battle_logic_character_overrides_enabled;
+extern u32 mod_settings_option_get(u32 argument);
 
 #define CHARACTER_OVERRIDE_SUBSTITUTION_COST_PRESENT (1u << 0)
 #define CHARACTER_OVERRIDE_SUBSTITUTION_COST_DELTA (1u << 16)
@@ -176,11 +176,14 @@ void battle_logic_character_select_balance_overlay(u32 selector)
     u8 text[24];
 
     draw_character_select(selector);
+    if (mod_settings_option_get(3u) == 0u) {
+        return;
+    }
     character_id = selected_id(selector);
     cost_present = resolved_substitution_cost(character_id, &character, &cost);
     format_tier(text, character);
     draw_text(x, 8.0f, text, 0xFF000000u);
-    if (battle_logic_character_overrides_enabled != 0u) {
+    if (mod_settings_option_get(2u) != 0u) {
         format_substitution_cost(text, cost_present, cost);
         draw_text(x, 28.0f, text, 0xFF000000u);
     }

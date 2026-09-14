@@ -18,7 +18,7 @@
         "namespace": "battle.logic.character.select.balance.overlay.c",
         "imports": {
           "battle_logic_character_overrides": "character_overrides",
-          "battle_logic_character_overrides_enabled": "character_overrides_enabled"
+          "mod_settings_option_get": "mod_settings_option_get"
         },
         "fragments": {
           "character_select_balance_overlay": {
@@ -199,7 +199,7 @@
         "namespace": "character.select.support.selection",
         "imports": {
           "font_v2_adapter_call": "v2_adapter_call",
-          "character_select_support_selection_mode": "character_select_support_selection_mode"
+          "mod_settings_option_get": "mod_settings_option_get"
         },
         "fragments": {
           "character_select_support_selection_buffers": {

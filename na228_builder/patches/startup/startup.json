@@ -1,6 +1,6 @@
 {
   "startup": {
-    "description": "Route startup directly into native Continue Save/Load.",
+    "description": "Route startup directly into native Continue Save/Load, and route a completed Mode Select exit through a repeating opening movie before returning through Continue.",
     "edits": {
       "enter_title_input_state_immediately": {
         "description": "Enter the title-input state immediately after required startup loading and splash cleanup, bypassing the post-splash sequence.",
@@ -10,14 +10,6 @@
         "expected_hex": "02000324",
         "replacement_hex": "03000324"
       },
-      "return_native_continue_result": {
-        "description": "Return the native Continue result without constructing or displaying the title screen, selecting main-menu state 4 substate 2 through the existing caller.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0xE1340",
-        "expected_hex": "107A070C",
-        "replacement_hex": "02000224"
-      },
       "treat_no_load_completion_as_menu_success": {
         "description": "Treat the no-load completion as a successful Continue result so startup enters the main menu without loaded save data.",
         "operation": "replace",
@@ -25,6 +17,69 @@
         "destination_offset": "0xEA0B8",
         "expected_hex": "FFFF0224",
         "replacement_hex": "01000224"
+      }
+    },
+    "hooks": {
+      "control_opening_replay_completion": {
+        "description": "Repeat the opening after natural completion, or finish its native sequence after native movie input requests termination.",
+        "target_id": "na2_elf",
+        "offset": "0xE1318",
+        "expected_hex": "BC79070C",
+        "symbol": "opening_update",
+        "encoding": "jal26"
+      },
+      "observe_native_opening_input": {
+        "description": "Retain the native movie-input update and record when it requests termination during the Mode Select opening loop.",
+        "target_id": "na2_elf",
+        "offset": "0xDC1F8",
+        "expected_hex": "B815040C",
+        "symbol": "movie_input",
+        "encoding": "jal26"
+      },
+      "redirect_mode_select_exit_to_opening": {
+        "description": "Retain the native return-to-title result after front-end manager cleanup and arm the hidden title-to-opening handoff for a completed Mode Select exit.",
+        "target_id": "na2_elf",
+        "offset": "0xE13D0",
+        "expected_hex": "60A6070C",
+        "symbol": "manager_update",
+        "encoding": "jal26"
+      },
+      "route_title_result": {
+        "description": "Return Continue normally, or drive the native title controller without drawing it until its return-to-opening result completes.",
+        "target_id": "na2_elf",
+        "offset": "0xE1340",
+        "expected_hex": "107A070C",
+        "symbol": "title_update",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "runtime": {
+        "kind": "c",
+        "path": "na228_builder/patches/startup/startup.c",
+        "namespace": "startup.runtime",
+        "imports": {
+          "startup_opening_replay_state": "opening_replay_state"
+        },
+        "fragments": {
+          "manager_update": {
+            "object": "startup.runtime.text.startup.manager.update"
+          },
+          "movie_input": {
+            "object": "startup.runtime.text.startup.movie.input"
+          },
+          "opening_update": {
+            "object": "startup.runtime.text.startup.opening.update"
+          },
+          "title_update": {
+            "object": "startup.runtime.text.startup.title.update"
+          }
+        }
+      },
+      "opening_replay_state": {
+        "kind": "data",
+        "alignment": 4,
+        "value": "000000000000000000000000"
       }
     }
   },

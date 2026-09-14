@@ -9,6 +9,9 @@ from ..battle_mechanics.substitution.substitution_gauge import gauge_option_defa
 from ..battle_mechanics.items.items_settings import FIELD_ITEMS, ITEM_VALUE_LABELS, items_configuration, items_option_defaults
 
 
+MOD_SETTINGS_PATH = ("features", "settings", "mod_settings")
+
+
 @dataclass(frozen=True)
 class MenuOption:
     label: str
@@ -36,6 +39,40 @@ def items_mode_option(selection):
 def menu_option_bindings(selection):
     """Bind leaf paths to existing gameplay handlers; page topology lives in the catalog."""
     options = {}
+    selected = {node.path: node for node in selection.nodes}
+
+    def configured_index(path, values):
+        value = selected[path].configured_value
+        try:
+            return values.index(value)
+        except ValueError as error:
+            raise ValueError(
+                f"Invalid Mod Settings value for {'.'.join(path)}: {value!r}"
+            ) from error
+
+    mod_rows = (
+        ("new_controls", "Control Scheme",
+         "Choose the gameplay control interpretation.",
+         (False, True), ("Classic", "Updated")),
+        ("simple_display", "Simple Display",
+         "Choose the battle Simple Display state.",
+         ("off", "on"), ("Off", "On")),
+        ("character_overrides", "Character Balance",
+         "Choose original or configured character balance.",
+         (False, True), ("Original", "Overrides")),
+        ("balance_overlay", "Balance Overlay",
+         "Show character balance information on Character Select.",
+         (False, True), ("Off", "On")),
+        ("support_selection", "Support Selection",
+         "Choose which supports are available on Character Select.",
+         ("none", "relevant", "all"), ("None", "Relevant", "All")),
+    )
+    for argument, (key, label, help_text, values, labels) in enumerate(mod_rows):
+        path = MOD_SETTINGS_PATH + (key,)
+        options[path] = MenuOption(
+            label, help_text, labels, configured_index(path, values),
+            "mod_settings_option_get", "mod_settings_option_set", argument,
+        )
     if battle_mechanic_enabled(selection, "substitution"):
         options[BATTLE_MECHANICS_PATH + ("substitution", "chakra", "minimum_chakra")] = MenuOption(
             "Minimum Chakra", "Required chakra to substitute. Match Cost follows the actual cost.",

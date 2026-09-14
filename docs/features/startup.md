@@ -20,13 +20,37 @@ than treating repeated startup-poll iterations as displayed frames. It caps at
 `99%`; the real loader flags, not the displayed estimate, determine when
 startup may continue.
 
-After the required startup loaders complete, the common file-backed edits write
+After the required startup loaders complete, the common file-backed edit writes
 state `3` instead of state `2` at virtual address `0x001E11CC` (file offset
-`0xE12CC`) and return native title result `2` (`Continue`) at virtual address
-`0x001E1240` (file offset `0xE1340`). The unchanged caller enters main state
-`4`, substate `2` and constructs the shared Save/Load controller in load mode.
-This route bypasses the CyberConnect2 intro and opening directly; no
-independent skip edits remain.
+`0xE12CC`). The title-call hook at virtual address `0x001E1240` (file offset
+`0xE1340`) normally returns native title result `2` (`Continue`). The unchanged
+caller enters main state `4`, substate `2` and constructs the shared Save/Load
+controller in load mode. This route bypasses the CyberConnect2 intro and
+opening directly.
+
+After Mode Select completes its native back-exit cleanup, the same `startup`
+patch preserves the front-end manager's native return-to-title result `1` and
+arms a hidden title-to-opening handoff. The confirmation prompt reads `View the
+movie?`. The title-call hook constructs the native title controller, starts it
+directly in the idle-return transition before its first update, and masks title
+input while the handoff is active. Skipping the controller's state-0 title
+presentation setup prevents title-screen audio from starting.
+When that controller returns `-1`, the unchanged outer loop enters its opening
+state and the patch initializes the post-splash sequence directly at
+`OPENING.PSS`.
+Natural movie completion resets that sequence to the opening again. The native
+movie-input update remains responsible for its accepted buttons and decoder
+termination; the patch only records its stop request. After an input-driven
+termination completes the native opening cleanup, the existing title-result
+replacement selects Continue and returns through the same Save/Load path to
+Mode Select.
+
+Four guarded call hooks implement this route. File offset `0xE13D0` wraps the
+front-end manager update, `0xE1340` selects Continue or drives the hidden native
+title handoff, `0xDC1F8` wraps the native movie-input update, and `0xE1318`
+wraps the opening-sequence update. Three resident words distinguish an active
+Mode Select replay from ordinary startup, track the hidden title handoff, and
+distinguish an input-driven stop from natural movie completion.
 
 The `features.startup` catalog node is a plain container that owns the direct
 Save/Load route. Its `faster_loading`, `skip_initial_memory_card_check`,

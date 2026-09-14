@@ -2,11 +2,12 @@
 
 ## Research coverage
 
-- **Assigned scope:** compare clean NA2 and NUN5 shared frontend prompts, Options labels, and Controls footer behavior.
+- **Assigned scope:** compare clean NA2 and NUN5 shared frontend prompts,
+  Options labels and backdrop ownership, and Controls footer behavior.
 - **Exploration depth:** the relevant binaries, native callers, records, and
   paired screen states were examined.
-- **Confirmed coverage:** the documented owners, structures, and cross-game
-  differences are established.
+- **Confirmed coverage:** the documented owners, structures, backdrop resource
+  set, and cross-game differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
 - **Deliberate exclusions and overlap:** feature imports, hooks, and validation
   belong to [UI layout](../../../features/localization/ui_layout.md) or
@@ -99,6 +100,28 @@ regional globals, and adds `-12` for OK and `-8` for Back before calling
 `FUN_0038bb10`. Those additions do not exist in the NA2 caller, so copying the
 nominal donor loads would not move either prompt.
 
+## Options backdrop resources
+
+NA2 `FUN_0038afb0` loads `option.ccs` and delegates its common resource setup
+to `FUN_0038b140`. That setup creates the render context at object offset
+`0x08`, loads `ANM_option_ca` at `0x14`, and loads `ANM_option_back` at `0x18`.
+The remaining resources belong to Options labels, prompts, selection, or its
+individual submenus rather than the shared backdrop.
+
+The archive acquisition helper at `FUN_0037e1a0` takes the archive name and an
+ownership-output byte. It clears that byte, returns the existing archive when
+one is already registered, or loads the archive and sets the byte to `1`.
+Options stores the returned archive at controller `+0x04` and uses controller
+`+0x00` as the ownership byte. A caller may destroy the returned archive only
+when that byte is nonzero.
+
+`FUN_0038c5f0` begins every Options draw by selecting the context at `0x08`,
+drawing `ANM_option_ca`, and binding its camera. Screen-position state 7 then
+enters `FUN_0038c5b0`, which draws `ANM_option_back` before the screen-position
+controller. The minimal native full-frame backdrop is therefore the archive,
+render context, camera animation, and background animation; it does not require
+construction of the Options controller or any Options submenu.
+
 ## Shared Controls and Music footer anchors
 
 The Controls and Music Options footer functions have the same regional
@@ -172,6 +195,14 @@ companion through `FUN_0037bc40`/`FUN_0038ad00`, and finally commit the prompt
 sprite objects through `FUN_001cc070`/`FUN_001d1180`. They update transient
 sprite geometry and draw queues only; the selected mode, input state, and menu
 controller transitions are untouched.
+
+NA2 `FUN_00383f80` binds the Mode Select archive's `TEX_modesel02` texture to
+the controller's label sprite at `+0x70`. The clean 256-by-512 indexed NA2
+atlas is transparent from UV Y `419` through the bottom edge; the homologous
+NUN5 atlas is transparent from UV Y `416`. The large description rectangle and
+START rectangle do not enter that shared transparent region. In
+`FUN_00385c00`, START uses rectangle `(1,397,206,22)`, and the label sprite is
+finalized only after that draw.
 
 ## Relationships and evidence
 

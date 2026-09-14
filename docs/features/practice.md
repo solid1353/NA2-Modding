@@ -68,7 +68,7 @@ effect-entry behavior is in [Awakening](../knowledge/gameplay/awakening.md).
 
 ## Practice Settings rework
 
-`features.settings.ingame.practice_mode` maps a generated, paged Practice Settings
+`features.settings.practice_settings` maps a generated, paged Practice Settings
 schema onto the native menu. Its root options and `opponent_settings` submenu
 retain the native value handlers. The complete base configuration
 defines every retained native default:
@@ -102,14 +102,14 @@ then the retained native General Settings rows. Config key order controls the
 root and every child page; moving entries within an object reorders its rows.
 Square on a
 launcher opens its child page; Confirm applies and closes from launcher rows as
-it does from every ordinary row. Launcher rows retain the native row geometry,
-recolor only their label panel to the child-heading orange, and display
-`Open <iconSQUARE>` without native value arrows. `Battle Mechanics` contains every enabled leaf under
-`features.settings.ingame.battle_mechanics`, in config key order. `Opponent
+it does from every ordinary row. Launcher rows retain the native row
+presentation and display `Open <iconSQUARE>` without native value arrows.
+`Battle Mechanics` contains every enabled leaf under
+`features.settings.submenus.battle_mechanics_submenu`, in config key order. `Opponent
 Settings` likewise follows its config object's key order.
 Both child pages use the native orange section heading and opponent-style row
 backing, with their own page title. The count-derived backing and launcher-label
-renderer is shared with Battle Settings.
+presentation are shared with Battle Settings.
 Cancel returns to the selected launcher's row on the parent page; Cancel on
 the root retains the native close behavior. Navigation sounds follow the
 shared [menu-page behavior](battle.md#catalog-generated-menu-pages).
@@ -138,7 +138,8 @@ receives the selected native value, or `Command` for either custom value. The
 same mod block also adds
 ordinary `Shadowblur Extra Hit: Off | On` and `Extra Hit: Off | On` rows to the
 player section. They snapshot and commit the same shared runtime toggles as
-Battle Settings, and their reset values come from `features.settings.ingame.battle_mechanics`.
+Battle Settings, and their reset values come from
+`features.settings.submenus.battle_mechanics_submenu`.
 
 The native Extra Hit Counter row remains independent of the mod Extra Hit
 selector. The presentation retains the native row widgets, localization,

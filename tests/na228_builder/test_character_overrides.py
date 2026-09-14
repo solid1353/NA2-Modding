@@ -16,7 +16,6 @@ from na228_builder.patches.settings.character_overrides.character_overrides impo
     TIER_WIDTH,
     character_override_fragment,
     character_override_fragment_feature,
-    character_overrides_enabled_fragment,
     load_character_overrides as _load_character_overrides,
     render_character_overrides,
 )
@@ -89,12 +88,12 @@ class CharacterOverrideTests(unittest.TestCase):
             )
         )
         cases = (
-            (False, False, None),
-            (False, True, "character_select"),
-            (True, False, "settings"),
-            (True, True, "settings"),
+            (False, False),
+            (False, True),
+            (True, False),
+            (True, True),
         )
-        for overrides_enabled, overlay_enabled, expected_feature in cases:
+        for overrides_enabled, overlay_enabled in cases:
             with (
                 self.subTest(
                     overrides=overrides_enabled,
@@ -103,8 +102,9 @@ class CharacterOverrideTests(unittest.TestCase):
                 tempfile.TemporaryDirectory() as directory,
             ):
                 features = json.loads(json.dumps(base["features"]))
-                features["settings"]["character_overrides"] = overrides_enabled
-                features["character_select"]["balance_overlay"] = overlay_enabled
+                mod_settings = features["settings"]["mod_settings"]
+                mod_settings["character_overrides"] = overrides_enabled
+                mod_settings["balance_overlay"] = overlay_enabled
                 configuration_path = Path(directory) / "configuration.jsonc"
                 configuration_path.write_text(
                     json.dumps({"features": features}, indent=2) + "\n",
@@ -117,29 +117,26 @@ class CharacterOverrideTests(unittest.TestCase):
 
                 self.assertEqual(
                     character_override_fragment_feature(selection),
-                    expected_feature,
+                    "settings",
                 )
-                self.assertEqual(
-                    selection.node_enabled(
-                        "features", "settings", "character_overrides"
-                    ),
-                    overrides_enabled,
-                )
-                self.assertEqual(
-                    selection.node_enabled(
-                        "features", "character_select", "balance_overlay"
-                    ),
-                    overlay_enabled,
-                )
-                if overlay_enabled:
-                    enabled_fragment = character_overrides_enabled_fragment(
-                        overrides_enabled,
-                        owner="character_select.runtime_injector",
+                overrides = next(
+                    node for node in selection.nodes
+                    if node.path == (
+                        "features", "settings", "mod_settings",
+                        "character_overrides",
                     )
-                    self.assertEqual(
-                        struct.unpack("<I", enabled_fragment.payload),
-                        (int(overrides_enabled),),
+                )
+                overlay = next(
+                    node for node in selection.nodes
+                    if node.path == (
+                        "features", "settings", "mod_settings",
+                        "balance_overlay",
                     )
+                )
+                self.assertTrue(overrides.enabled)
+                self.assertEqual(overrides.configured_value, overrides_enabled)
+                self.assertTrue(overlay.enabled)
+                self.assertEqual(overlay.configured_value, overlay_enabled)
 
     def test_canonical_tiers_preserve_native_costs_through_x_over_100(self) -> None:
         repository = Path(__file__).resolve().parents[2]

@@ -1,43 +1,56 @@
 {
   features: {
     settings: {
-      new_controls: setting {
-        description: "Expose Guard and Substitution as independent remappable actions and default both players to L1 Substitution, R1 Guard, L2 Item Select, and R2 Linked Attack.",
-        patch: "settings.new_controls",
-      },
-      simple_display: setting<"off" | "on"> {
-        patch: "settings.simple_display",
-      },
-      character_overrides: setting {
-        description: "Load layered per-character battle overrides.",
-        patch: "settings.character_overrides",
-      },
-      ingame: {
-        description: "Configure which options are available in the Battle and Practice Settings menus and their default values.",
-        patch: "settings.ingame",
-        battle_mode: {
-          battle_mechanics: setting {},
-          time: setting<int & 10..90 & step 10 | 99 | "unlimited"> {},
-          difficulty: setting<"simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"> {},
-          handicap: setting<int & 0..10> {},
+      description: "Configure the Mod, Battle, and Practice Settings menus and their shared submenus.",
+      patch: "settings.ingame",
+      mod_settings: {
+        description: "Configure the session-wide Mod Settings menu and its runtime-selectable behavior.",
+        patch: "settings.mod_settings",
+        battle_mechanics_submenu: setting {},
+        new_controls: setting<bool> {
+          description: "Select the Classic or Updated control scheme while retaining the extended Control Settings editor.",
+          patch: "settings.new_controls",
         },
-        practice_mode: {
-          battle_mechanics: setting {},
-          opponent_settings: {
-            status: setting<"manual" | "com" | "stand" | "jump" | "double_jump"> {},
-            strength: setting<"simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"> {},
-            attack: setting<"no" | "single" | "combo" | "projectile" | "high_speed_move" | "ultimate_jutsu" | "jutsu"> {},
-            guard: setting<"no" | "yes"> {},
-            move: setting<"stay" | "follow"> {},
-            substitution_jutsu: setting<"normal" | "no"> {},
-            linked_attack: setting<"dont_use" | "normal" | "random"> {},
-            extra_hit_counter: setting<"normal" | "return"> {},
-          },
-          health: setting<"normal" | "half" | "almost"> {},
-          commands: setting<"off" | "on"> {},
-          damage: setting<"off" | "on"> {},
+        simple_display: setting<"off" | "on"> {
+          patch: "settings.simple_display",
         },
-        battle_mechanics: {
+        character_overrides: setting<bool> {
+          description: "Select original character balance or the generated override table.",
+          patch: "settings.character_overrides",
+        },
+        balance_overlay: setting<bool> {
+          description: "Show character balance information on Character Select.",
+          patch: "character_select.balance_overlay",
+        },
+        support_selection: setting<"none" | "relevant" | "all"> {
+          description: "Control which supports are available during Character Select.",
+          patch: "character_select.support_selection",
+        },
+      },
+      battle_settings: {
+        battle_mechanics_submenu: setting {},
+        time: setting<int & 10..90 & step 10 | 99 | "unlimited"> {},
+        difficulty: setting<"simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"> {},
+        handicap: setting<int & 0..10> {},
+      },
+      practice_settings: {
+        battle_mechanics_submenu: setting {},
+        opponent_settings: {
+          status: setting<"manual" | "com" | "stand" | "jump" | "double_jump"> {},
+          strength: setting<"simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"> {},
+          attack: setting<"no" | "single" | "combo" | "projectile" | "high_speed_move" | "ultimate_jutsu" | "jutsu"> {},
+          guard: setting<"no" | "yes"> {},
+          move: setting<"stay" | "follow"> {},
+          substitution_jutsu: setting<"normal" | "no"> {},
+          linked_attack: setting<"dont_use" | "normal" | "random"> {},
+          extra_hit_counter: setting<"normal" | "return"> {},
+        },
+        health: setting<"normal" | "half" | "almost"> {},
+        commands: setting<"off" | "on"> {},
+        damage: setting<"off" | "on"> {},
+      },
+      submenus: {
+        battle_mechanics_submenu: {
           chakra: setting<"normal" | "unlimited" | decimal & 0.1..10 & step 0.1> {
             patch: "settings.battle_mechanics.chakra",
           },
@@ -164,17 +177,6 @@
       loading_screen: setting {
         description: "Replace the boot splashes with a large primitive percentage and progress bar paced across a 6.5-second elapsed-time estimate while the original startup loaders run.",
         patch: "startup.loading_screen",
-      },
-    },
-    character_select: {
-      description: "Character Select behavior and overlays.",
-      balance_overlay: setting {
-        description: "Show each side's character tier on Character Select and include resolved substitution cost only when Character Overrides is enabled.",
-        patch: "character_select.balance_overlay",
-      },
-      support_selection: setting<"all" | "relevant" | "none"> {
-        description: "Control which supports are available during Character Select.",
-        patch: "character_select.support_selection",
       },
     },
     rendering: {

@@ -16,7 +16,7 @@ in [translation importer knowledge](../../knowledge/localization/translation_imp
 ## Mapping metadata
 
 - Canonical `mappings.tsv` rows: `2,063`
-- Canonical `mappings.tsv` SHA-256: `C170405AA2F818BF3B4844B6FD9D178E03312066719FFDF98F012DFE51D861F8`
+- Canonical `mappings.tsv` SHA-256: `BE7487EC56094E3B2C367B7395658A577D38E7CD9C281EA7E4668AF201F26E9B`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the builder's configuration-resource fingerprint own content identity.
@@ -39,11 +39,10 @@ NUN5 donor references and donor text are retained in the table for review,
 provenance, and executable translation. Normal builds do not read donor
 binaries: the verified `donor` text in the table is the default translation.
 A nonempty `replacement` is reserved for a direct user override, and `prefix`
-is a user-editable string prepended to the selected translation. Agents leave
-`replacement` blank. If a translation cannot be expressed through a verified
-donor and centralized importer behavior, report that limitation to the user.
-The current table uses verified official donors and contains no row-level
-replacements. T30 uses the exact `Ultimate` donor at `NUN5_TEXTENG@0xF208` and
+is a user-editable string prepended to the selected translation. T1933 directly
+overrides the Mode Select return confirmation with `View the movie?`; all other
+rows use their verified official donors. T30 uses the exact `Ultimate` donor at
+`NUN5_TEXTENG@0xF208` and
 the validated pointer at `NA2_BTL@0x209CB4`; encoded fit therefore externalizes
 it automatically.
 
@@ -90,7 +89,8 @@ E2E suites validate 1,887 unique rows. The remaining 176 rows have a blank
 `display_basis`: they remain executable because they are established working
 mappings, but they are explicitly unvalidated. Earlier screenshot, inference,
 and structural-family labels were removed because only maintained E2E execution
-validates a row. Every `prefix` and `replacement` value is blank. The
+validates a row. Every `prefix` value is blank, and T1933 is the only row with
+a nonempty `replacement`. The
 Jutsus suite selects 26 exact Command Chart records, including T260 plus 25
 records also selected by Movesets. The Menus suite selects 30 exact Battle
 Settings, Pause, confirmation, and Character Select rows. T2042, T2045, and
@@ -110,8 +110,8 @@ Village`, T638 to `Hidden Leaf Gate`, T744 to `Faint Unease`, and T767 to
 displayed title to the exact `Charge Chakra` donor at
 `NUN5_TEXTENG@0xFB8`; the separate Command Chart T1926 row correctly retains
 `Charge` at `NUN5_SLES@0x513EB0`. T30 uses the exact `Ultimate` donor at
-`NUN5_TEXTENG@0xF208`, externalized through `NA2_BTL@0x209CB4`. All rows leave
-`replacement` blank and execute independently validated official donor text.
+`NUN5_TEXTENG@0xF208`, externalized through `NA2_BTL@0x209CB4`. Except for the
+direct T1933 override, rows execute independently validated official donor text.
 NUN5 stores visible quotation spans as paired `@...@` delimiters and uses the
 semantic `<iconOK>` token for the confirm icon. The importer normalizes those
 conventions centrally to ASCII quotation marks and NA2's `<iconCROSS>` token

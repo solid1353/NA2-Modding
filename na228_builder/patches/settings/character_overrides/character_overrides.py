@@ -60,13 +60,9 @@ def character_override_fragment_feature(
 ) -> str | None:
     enabled_by_path = {node.path: node.enabled for node in selection.nodes}
     if enabled_by_path.get(
-        ("features", "settings", "character_overrides"), False
+        ("features", "settings", "mod_settings"), False
     ):
         return "settings"
-    if enabled_by_path.get(
-        ("features", "character_select", "balance_overlay"), False
-    ):
-        return "character_select"
     return None
 
 
@@ -726,19 +722,4 @@ def character_override_fragment(
         kind="rodata",
         alignment=4,
         payload=payload,
-    )
-
-
-def character_overrides_enabled_fragment(
-    enabled: bool,
-    *,
-    owner: str,
-    symbol: str = "character_overrides_enabled",
-) -> PayloadFragment:
-    return PayloadFragment(
-        owner=owner,
-        symbol=symbol,
-        kind="rodata",
-        alignment=4,
-        payload=struct.pack("<I", int(enabled)),
     )

@@ -81,15 +81,16 @@ owning component documentation.
 - `int mode`, `interactive mode`: enter
   [Interactive mode](docs/interactions/interactive_mode.md).
 
-### Task control and validation
+### Task control
 
 - `snap`: consolidate the active task's discussed work into an implementation
   proposal and include all agent-owned work required to deliver it.
   Only include work that will be done.
   Exclude completed tasks, unrelated state, and user-directed actions.
   Omit any statement that has no corresponding pending agent action.
+  "Do not..." and the such are not valid lines and should not appear in the proposal.
 - `ver`: accept the current result across every repository changed by the task.
-  Agents may then add tests. Validate, commit, and push the accepted result. In
+  Agents may then add tests. Commit and push the accepted result. In
   Design mode, first promote useful design content and delete the design
   document, then exit after pushing.
 - `exit`: exit Design mode or Interactive mode without accepting the result
@@ -274,17 +275,20 @@ and read only relevant sections of large documents.
   lifetime. Runtime overlay tests require a proven load-state or signature
   guard; never make unguarded overlay or dynamic-heap writes.
 
+### Required builds
+
+- Building an ISO is the final step of implementation.
+- Build only when the changes affect build bytes or byte parity is
+  needed to be proven.
+- Documentation changes and the like should not produce builds.
+- Build NA2 only through `na228 build`.
+- The PCSX2 fork is built according to its repository instructions.
+
 ## Validation
 
 ### Default validation
 
-- Documentation-only changes require no validation.
 - For code changes, run unit tests.
-- After implementation and earlier checks are complete, build changes that can
-  affect built bytes. Any later byte-affecting change requires another build.
-- Agents build only through `na228 build <config>`, using `b` by default. Never
-  use build-and-launch commands for validation.
-- PCSX2 fork is built using its repository instructions.
 
 ### Validation behavior and tests
 
@@ -295,7 +299,7 @@ and read only relevant sections of large documents.
 - A script may fail or discard its output only when validation shows the primary
   result is invalid, unsafe, or unusable. Report other validation failures as
   warnings; making them fatal requires explicit user approval.
-- Before `ver`, do not propose, plan, create, or modify tests.
+- Before `ver`, do not discuss, propose, plan, create, or modify tests.
   Modifying tests for PCSX2 fork is allowed.
 - Unit tests must detect a meaningful regression in accepted behavior or a
   documented safety contract using the smallest practical isolated inputs. Do

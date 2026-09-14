@@ -260,7 +260,11 @@ def _node_enabled(selection: CatalogSelection, path: tuple[str, ...]) -> bool:
     return matches[0].enabled
 
 
-def _active_pages(selection: CatalogSelection) -> tuple[PracticePage, ...]:
+def practice_settings_row_bindings(
+    selection: CatalogSelection,
+    *,
+    include_native_rows: bool = True,
+) -> dict[tuple[str, ...], object]:
     configured_defaults = practice_configured_row_defaults(selection)
 
     def native_row(row_id: int) -> PracticeRow:
@@ -317,31 +321,37 @@ def _active_pages(selection: CatalogSelection) -> tuple[PracticePage, ...]:
         ),
     }
     row_bindings = {
-        PRACTICE_SETTINGS_PATH + (field,): (lambda row_id=row_id: native_row(row_id))
-        for field, row_id in PRACTICE_GENERAL_ROW_IDS.items()
+        BATTLE_MECHANICS_PATH + (field,): factory
+        for field, factory in custom_rows.items()
     }
-    row_bindings.update({
-        PRACTICE_SETTINGS_PATH + ("opponent_settings", field):
-            (lambda row_id=row_id: native_row(row_id))
-        for field, row_id in PRACTICE_OPPONENT_ROW_IDS.items()
-    })
-    row_bindings.update({BATTLE_MECHANICS_PATH + (field,): factory
-                         for field, factory in custom_rows.items()})
+    if include_native_rows:
+        row_bindings.update({
+            PRACTICE_SETTINGS_PATH + (field,):
+                (lambda row_id=row_id: native_row(row_id))
+            for field, row_id in PRACTICE_GENERAL_ROW_IDS.items()
+        })
+        row_bindings.update({
+            PRACTICE_SETTINGS_PATH + ("opponent_settings", field):
+                (lambda row_id=row_id: native_row(row_id))
+            for field, row_id in PRACTICE_OPPONENT_ROW_IDS.items()
+        })
+    return row_bindings
+
+
+def _active_pages(selection: CatalogSelection) -> tuple[PracticePage, ...]:
+    row_bindings = practice_settings_row_bindings(selection)
     return build_menu_pages(selection, PRACTICE_SETTINGS_PATH, row_bindings,
                             PracticeRow, PracticePage, ("player_row_count", "opponent_row_count"),
                             "practice_settings_schema", SUPPORT_ROW_ID + 1)
 
 
-def practice_settings_fragment(
+def settings_menu_schema_fragment(
     selection: CatalogSelection,
+    pages: tuple[PracticePage, ...],
     *,
     owner: str,
-    symbol: str = "practice_settings_schema",
-) -> PayloadFragment | None:
-    if not _node_enabled(selection, PRACTICE_SETTINGS_PATH):
-        return None
-
-    pages = _active_pages(selection)
+    symbol: str,
+) -> PayloadFragment:
     rows = tuple(row for page in pages for row in page.rows)
     payload = bytearray(
         struct.pack(
@@ -605,6 +615,22 @@ def practice_settings_fragment(
         alignment=4,
         payload=bytes(payload),
         relocations=tuple(relocations),
+    )
+
+
+def practice_settings_fragment(
+    selection: CatalogSelection,
+    *,
+    owner: str,
+    symbol: str = "practice_settings_schema",
+) -> PayloadFragment | None:
+    if not _node_enabled(selection, PRACTICE_SETTINGS_PATH):
+        return None
+    return settings_menu_schema_fragment(
+        selection,
+        _active_pages(selection),
+        owner=owner,
+        symbol=symbol,
     )
 
 

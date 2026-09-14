@@ -1,34 +1,39 @@
 {
   "features": {
     "settings": {
-      "new_controls": true,
-      "simple_display": "off",                    // "off" | "on"
-      "character_overrides": true,
-      "ingame": {
-        "battle_mode": {
-          "battle_mechanics": true,
-          "time": 99,                             // int 10..90 (step 10) | 99 | "unlimited"
-          "difficulty": "ultimate",               // "simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"
-          "handicap": 0                           // int 0..10 (Player 1; Player 2 is 10 minus this value)
+      "mod_settings": {
+        "battle_mechanics_submenu": true,
+        "new_controls": true,
+        "simple_display": "off",                  // "off" | "on"
+        "character_overrides": true,
+        "balance_overlay": true,
+        "support_selection": "none"               // "none" | "relevant" | "all"
+      },
+      "battle_settings": {
+        "battle_mechanics_submenu": true,
+        "time": 99,                               // int 10..90 (step 10) | 99 | "unlimited"
+        "difficulty": "ultimate",                 // "simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"
+        "handicap": 0                             // int 0..10 (Player 1; Player 2 is 10 minus this value)
+      },
+      "practice_settings": {
+        "battle_mechanics_submenu": true,
+        "opponent_settings": {
+          "status": "manual",                     // "manual" | "com" | "stand" | "jump" | "double_jump"
+          "strength": "normal",                   // "simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"
+          "attack": "no",                         // "no" | "single" | "combo" | "projectile" | "high_speed_move" | "ultimate_jutsu" | "jutsu"
+          "guard": "no",                          // "no" | "yes"
+          "move": "stay",                         // "stay" | "follow"
+          "substitution_jutsu": "normal",         // "normal" | "no"
+          "linked_attack": "dont_use",            // "dont_use" | "normal" | "random"
+          "extra_hit_counter": "normal"           // "normal" | "return"
         },
-        "practice_mode": {
-          "battle_mechanics": true,
-          "opponent_settings": {
-            "status": "manual",                   // "manual" | "com" | "stand" | "jump" | "double_jump"
-            "strength": "normal",                 // "simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"
-            "attack": "no",                       // "no" | "single" | "combo" | "projectile" | "high_speed_move" | "ultimate_jutsu" | "jutsu"
-            "guard": "no",                        // "no" | "yes"
-            "move": "stay",                       // "stay" | "follow"
-            "substitution_jutsu": "normal",       // "normal" | "no"
-            "linked_attack": "dont_use",          // "dont_use" | "normal" | "random"
-            "extra_hit_counter": "normal"         // "normal" | "return"
-          },
-          "health": "normal",                     // "normal" | "half" | "almost"
-          "commands": "off",                      // "off" | "on"
-          "damage": "on"                          // "off" | "on"
-        },
-        "battle_mechanics": {
-          "chakra": 0.5,                          // "normal" | "unlimited" | decimal 0.1..10 (step 0.1, %/s)
+        "health": "normal",                       // "normal" | "half" | "almost"
+        "commands": "off",                        // "off" | "on"
+        "damage": "on"                            // "off" | "on"
+      },
+      "submenus": {
+        "battle_mechanics_submenu": {
+          "chakra": "normal",                     // "normal" | "unlimited" | decimal 0.1..10 (step 0.1, %/s)
           "ultimate_jutsu": "no_hud",             // "no_use" | "random" | "command" | "timing" | "turn" | "combo" | "no_contest" | "no_hud"
           "shadowblur": "off",                    // "off" | "on"
           "extra_hit": "off",                     // "off" | "on" | int -100..-5 (step 5, % chakra penalty)
@@ -102,10 +107,6 @@
       "skip_initial_memory_card_check": true,
       "auto_loading": true,
       "loading_screen": true
-    },
-    "character_select": {
-      "balance_overlay": true,
-      "support_selection": "none"                 // "all" | "relevant" | "none"
     },
     "rendering": {
       "native_16_9_horizontal_scale": false

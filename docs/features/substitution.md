@@ -170,7 +170,7 @@ behavior, not another game's texture artwork.
 
 ### Control Settings and substitution input
 
-When `features.settings.new_controls` is enabled, Control Settings action-map
+When `features.settings.mod_settings.new_controls` is enabled, Control Settings action-map
 index `7` is the dedicated **Substitution** action, replacing the second native
 Guard row. The feature redirects that row's label-pointer slot at raw ELF
 `0x4B26AC` from
@@ -833,7 +833,7 @@ complete native support renderer, including its coordinates, button badge, and
 support decorations, remains byte-clean and is independently controlled by No
 Support.
 
-The feature depends only on `features.settings.character_overrides`, which
+The feature depends only on `features.settings.mod_settings.character_overrides`, which
 provides the single normalized cost source. No Support remains independent and
 controls only native field support and its lower gauge. The supported build-time
 combinations are:
@@ -983,7 +983,7 @@ battle state presents the native bar acceptably.
 ## Configuration and builder integration
 
 The build-time setting is
-`features.settings.ingame.battle_mechanics.substitution`. Its required `value` selects
+`features.settings.submenus.battle_mechanics_submenu.substitution`. Its required `value` selects
 `chakra`, `gauge`, or `free`. Gauge tuning is optional and nested under
 `gauge`:
 
@@ -1003,10 +1003,10 @@ Omitting `gauge` retains those defaults. Capacity `100`, stock size `25`,
 and per-character cost remain fixed. The catalog owns the accepted ranges and
 steps; `config.jsonc` owns the selected values.
 
-The gauge requires `features.settings.character_overrides` and
-`features.settings.ingame.practice_mode`. `features.settings.new_controls`
+The gauge requires `features.settings.mod_settings.character_overrides` and
+`features.settings.practice_settings`. `features.settings.mod_settings.new_controls`
 independently exposes separate Guard and Substitution actions.
-`features.settings.ingame.battle_mechanics.support` independently controls field support
+`features.settings.submenus.battle_mechanics_submenu.support` independently controls field support
 and the native lower support gauge.
 
 
@@ -1118,7 +1118,7 @@ The minimal implementation touches these existing ownership points:
 
 | Purpose | Canonical location |
 | --- | --- |
-| Public setting and descriptions | `features.settings.ingame.battle_mechanics.substitution` in `@builder/catalog.modcat` |
+| Public setting and descriptions | `features.settings.submenus.battle_mechanics_submenu.substitution` in `@builder/catalog.modcat` |
 | Unified settings patches | `@builder/patches/settings/settings.json` |
 | Default/profile selection | `@builder/configurations/*.jsonc` |
 | Config-to-fragment encoder | `@builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge.py` and `module_pipeline.py` |

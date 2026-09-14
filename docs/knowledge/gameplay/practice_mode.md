@@ -64,8 +64,9 @@ a runtime observation is stated explicitly.
   Status/Attack/Guard/Move routing; Strength profile copy and hot reload;
   linked, extra-hit, item, substitution, and Ultimate branches; discrete
   snapshot masks; starting-HP selection and consumption; continuous HP, chakra, and Link Gauge policies; resource
-  lifetime; the update/draw gates; the Practice title's animation-record and
-  model boundary; and the font renderer's allocation-failure behavior.
+  lifetime; the update/draw gates and backdrop variant; the Practice title's
+  animation-record, model, and referenced color-stream boundaries; and the
+  font renderer's allocation-failure behavior.
 - **Unresolved or untested:** Runtime scheduling between the main and standalone
   owners; full timing and naming of the general AI/controller graph; later
   transitions and engine names for several linked-work fields; the semantics of
@@ -977,8 +978,11 @@ destructor. Live `0x00880BE0` performs the one-time construction:
   opens.
 
 The main parent passes constructor variant `1`; the smaller standalone wrapper
-passes `0`. In draw, only nonzero `+0x48` emits the full-screen backdrop whose
-opacity is derived from child alpha `+0x54`.
+passes `0`. In draw, only nonzero `+0x48` submits the full-frame Practice
+Settings backdrop rectangle. Its RGB is `0x86A8BE` and its opacity comes from
+child alpha `+0x54`, which live `0x00881AB0` advances for the open and close
+phases. The backdrop is independent of the backing animation at child `+0x2C`,
+the row renderer, and the input owner.
 
 Opening Practice from parent state `2` calls only live `0x00880F30`. That reset
 does not replace or free any pointer at `+0x04..+0x34`; it clears presentation,
@@ -1078,6 +1082,13 @@ panel; vertices `18..61` form the divider and value panel. Clean
 `s_menu` atlas. That atlas contains the yellow row but no orange title or olive
 row region. The dominant opaque fill is RGBA `(230,195,43,255)` in both clean
 NA2 and NUN5 `prac_t01`; the orange title fill is `(245,134,32,255)` in both.
+
+`FUN_00198230` copies the vertex-color stream pointer, not the pointed-to
+colors, into render scratch at `+0x238`. `FUN_00193B50` then emits DMA
+references to that source stream in batches of up to 48 vertices. A submitted
+draw therefore continues to depend on the source colors until the DMA transfer
+consumes them; changing and restoring a shared color stream around the draw
+call does not give that draw an independent color snapshot.
 
 The Practice child constructor at Ghidra `0x00880BA0` calls resident
 `0x0037E1A0` at `0x00880BC0` with `prac.ccs`, stores the returned archive at

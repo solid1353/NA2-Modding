@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 CHARACTER_OVERRIDES_PATH = (
     "features",
     "settings",
+    "mod_settings",
     "character_overrides",
 )
 DEFAULT_RECOVERY_DELAY_SECONDS = Decimal("14.0")
@@ -82,8 +83,8 @@ def substitution_gauge_fragment(
     practice_settings = _selected_node(selection, PRACTICE_SETTINGS_PATH)
     if not practice_settings.enabled:
         raise ValueError(
-            "features.settings.ingame.battle_mechanics.substitution requires "
-            "features.settings.ingame.practice_mode"
+            "features.settings.submenus.battle_mechanics_submenu.substitution "
+            "requires features.settings.practice_settings"
         )
 
     substitution = node.configured_value
@@ -116,7 +117,7 @@ def substitution_gauge_fragment(
         relocations=(
             PayloadRelocation(offset=28, kind="abs32", symbol="substitution_cost_for_fighter"),
             PayloadRelocation(offset=32, kind="abs32", symbol="substitution_cost_fraction_for_fighter"),
-        ) if character_overrides.enabled else (),
+        ),
     )
 
 

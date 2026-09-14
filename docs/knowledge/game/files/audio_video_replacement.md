@@ -23,8 +23,8 @@ Evidence labels in this note have their usual knowledge-base meaning:
   across 170 AFS containers, 9,966 declared indices, all 9,068 AHX members and
   all 246 ADX members. All ten PSS files were length-driven through every
   pack/PES packet and their complete video and private-audio streams; the clean
-  ELF's 12-row descriptor table, direct selector calls, and subtitle schedules
-  were traced.
+  ELF's 12-row descriptor table, direct selector calls, subtitle schedules,
+  and native movie-input path were traced.
 - **Confirmed coverage:** focused transient experiments exercised CriCodecs
   1.2.0 and FFmpeg 9.0.1, including an offline, exact-size
   synthetic `LOGO_C.PSS` whose 90-picture MPEG-2 stream, replacement PCM body,
@@ -413,6 +413,16 @@ filename at `+0x00`, and repeatedly compares the decoder's current frame from
 frame at `+0x1C` and uses twice the duration at `+0x20`; the second begins at or
 after the frame at `+0x24` and uses twice the duration at `+0x28`. A value of
 `-1` disables the corresponding startup-movie transition path.
+
+For movie IDs outside `3..9`, including startup movie ID 2 `opening`, the
+blocking playback loop calls `FUN_001056E0` at virtual `0x001DC0F8` before its
+per-frame yield and decoder-completion poll. `FUN_001056E0` intersects the live
+input word with three masks returned by the native movie-input helpers. The
+first accepted mask sets byte `+0x34` of the movie-player object reached through
+global pointer `0x0060743C`; the other two set and clear byte `+0x35`.
+Consequently, a `0` to `1` transition of player byte `+0x34` across that native
+call identifies a native input-driven stop request without replacing the
+game's accepted-button policy.
 
 The complete clean-row values are:
 

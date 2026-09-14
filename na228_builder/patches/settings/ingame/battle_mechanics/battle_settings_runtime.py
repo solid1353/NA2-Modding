@@ -10,8 +10,10 @@ if TYPE_CHECKING:
     from na228_builder.infrastructure.orchestration.catalog import CatalogSelection
 
 
-BATTLE_MECHANICS_PATH = ("features", "settings", "ingame", "battle_mechanics")
-PRACTICE_SETTINGS_PATH = ("features", "settings", "ingame", "practice_mode")
+BATTLE_MECHANICS_PATH = (
+    "features", "settings", "submenus", "battle_mechanics_submenu"
+)
+PRACTICE_SETTINGS_PATH = ("features", "settings", "practice_settings")
 SUB_ACTIVE_FRAMES_LABELS = ("Default", *(str(value) for value in range(1, 16)))
 
 CHAKRA_MODE_VALUES = {

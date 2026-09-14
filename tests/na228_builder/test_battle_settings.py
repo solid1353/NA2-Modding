@@ -109,7 +109,9 @@ class BattleSettingsTests(unittest.TestCase):
 
     def test_shared_defaults_drive_the_selectable_values(self) -> None:
         def configure(features) -> None:
-            mechanics = features["settings"]["ingame"]["battle_mechanics"]
+            mechanics = features["settings"]["submenus"][
+                "battle_mechanics_submenu"
+            ]
             mechanics["ultimate_jutsu"] = "no_contest"
             mechanics["shadowblur"] = "on"
             mechanics["extra_hit"] = "on"
@@ -137,9 +139,9 @@ class BattleSettingsTests(unittest.TestCase):
 
     def test_disabling_battle_mechanics_launcher_keeps_native_root_rows(self) -> None:
         selection = self._selection(
-            lambda features: features["settings"]["ingame"][
-                "battle_mode"
-            ].__setitem__("battle_mechanics", False)
+            lambda features: features["settings"]["battle_settings"].__setitem__(
+                "battle_mechanics_submenu", False
+            )
         )
         fragment = battle_settings_fragment(
             selection,
@@ -153,14 +155,19 @@ class BattleSettingsTests(unittest.TestCase):
 
     def test_config_key_order_controls_root_and_battle_mechanics_pages(self) -> None:
         def configure(features) -> None:
-            ingame = features["settings"]["ingame"]
-            battle = ingame["battle_mode"]
-            ingame["battle_mode"] = {
+            settings = features["settings"]
+            battle = settings["battle_settings"]
+            settings["battle_settings"] = {
                 key: battle[key]
-                for key in ("handicap", "difficulty", "battle_mechanics", "time")
+                for key in (
+                    "handicap",
+                    "difficulty",
+                    "battle_mechanics_submenu",
+                    "time",
+                )
             }
-            mechanics = ingame["battle_mechanics"]
-            ingame["battle_mechanics"] = {
+            mechanics = settings["submenus"]["battle_mechanics_submenu"]
+            settings["submenus"]["battle_mechanics_submenu"] = {
                 key: mechanics[key]
                 for key in (
                     "items",

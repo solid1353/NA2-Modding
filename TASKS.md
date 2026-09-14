@@ -2,8 +2,8 @@
 
 ### In Progress
 
--   Implement general menu
 -   Store settings in the save
+-   Replace main menu and charsel music
 
 ### General
 
@@ -13,7 +13,6 @@
 
 -   Damage scaling
 -   Extend items to 5
--   Replace some music
 -   Proper startup
 -   Proper widescreen
 -   Cross-platform deployment

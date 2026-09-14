@@ -25,7 +25,9 @@ only definition-local purpose or provenance and never affect execution.
 A `payload` declaration is either a C source, an assembly source, or a static
 data/rodata fragment. Unknown declaration and fragment fields are rejected. C
 and assembly sources contain their path, namespace, private imports, emitted
-fragment aliases, and optional ABI metadata. C uses
+fragment aliases, optional ABI metadata, and any additional source assets in
+`resources`. Those assets join the build fingerprint and release package but
+do not become payload fragments themselves. C uses
 `kind: "c"` with an exact `.c` suffix; preprocessed EE assembly uses
 `kind: "asm"` with an exact `.S` suffix. Static fragments contain their
 bytes or guarded blob, alignment, initialization marker, and private

@@ -43,7 +43,8 @@ are also out of scope.
 - **Confirmed coverage:** the nested controller phases and result
   contracts; title-to-manager boundary; manager fields and object lifetimes;
   title initialization, idle-return, acceptance, and presentation-completion
-  gates; numeric Mode Select mapping, input priority, confirmation/back
+  gates; numeric Mode Select mapping, input priority, footer prompt composition,
+  confirmation/back
   routing, the state-3 two-choice modal's exact navigation and decision
   contract, remembered-slot behavior, allocator/failure edges, and unsupported states;
   the synchronous selector/cache contract; BTL type/process selection, hook
@@ -240,6 +241,11 @@ The complete `FUN_001df690` controller graph is:
 | 7 | Poll the accepted-result transition; completion enters state 9. |
 | 8 | Advance directly to state 9 on the next update. |
 | 9 | Reset the presentation surface and return `+0x08` to `FUN_001de840`. |
+
+The state-5 completion branch is the only resident caller of `FUN_001d95a0`.
+It resets transition slot 0 after the idle-return transition finishes and
+before storing result `-1`, making that call part of the native
+title-to-opening handoff.
 
 `FUN_001deb50` writes presentation phase 1 during state-0 setup.
 `FUN_001ded30`, which runs after every switch case, advances phase 1 to 2 and
@@ -493,8 +499,9 @@ whereas the controller, visuals, and remembered selection use physical slots.
 
 ## Mode Select controller
 
-Mode callback 1 (`FUN_001ea240`) allocates a `0xD4`-byte controller and stores
-it at global `0x00607610` (`iGpffffcc20`). The construction call sequence is:
+Mode callback 1 (`FUN_001ea240`) allocates a `0xD4`-byte controller. It runs
+both construction calls before storing the pointer at global `0x00607610`
+(`iGpffffcc20`) at `0x001EA430`. The construction call sequence is:
 
 ```text
 0x001EA41C  FUN_003839e0   clear/initialize owned fields
@@ -504,8 +511,23 @@ it at global `0x00607610` (`iGpffffcc20`). The construction call sequence is:
               FUN_00384570 apply manager-side initialization
 ```
 
+The callback first updates the constructed controller at `0x001EA438` and
+first draws it at `0x001EA59C`; neither operation can occur before the global
+pointer store.
+
 `FUN_00383aa0` is the matching cleanup routine and is called from
 `FUN_001ea240` on accepted selection, back/exit, and final callback cleanup.
+
+Mode Select draw `FUN_00385c00` submits Cross and Triangle through the shared
+button-icon compositor `FUN_0037c980`, then submits the START legend and
+finalizes both prompt sprites. The controller owns the legend sprite at `+0x70`
+and the button-icon sprite at `+0x74`. Compositor entry `3` selects Square from
+the existing button texture and submits it through the same icon sprite.
+
+Resource constructor `FUN_00383f80` creates render contexts at `+0x68` and
+`+0x6C` with kinds `0x40` and `0x60`, respectively. It constructs the footer
+legend sprite with arguments `10, 1` and the button-icon sprite with arguments
+`10, 0`; both sprites are bound to the prompt context at `+0x6C`.
 
 ### Relevant object fields
 
@@ -527,6 +549,10 @@ it at global `0x00607610` (`iGpffffcc20`). The construction call sequence is:
 | `+0x58` | 1 | Input source: 0 direct masks, nonzero scripted target |
 | `+0x5C` | 4 | Scripted physical target/action |
 | `+0x60` | 4 | Save/load child pointer; branch excluded |
+| `+0x68` | 4 | Render context created with kind `0x40` |
+| `+0x6C` | 4 | Prompt render context created with kind `0x60` |
+| `+0x70` | 4 | Footer legend sprite |
+| `+0x74` | 4 | Footer button-icon sprite |
 | `+0xBC` | 4 | Last physical slot sent to the selection visual |
 | `+0xC0` | 4 | Selection visual child |
 | `+0xC4` | 4 | Modal/branch type |

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from na228_builder.infrastructure.orchestration.catalog import CatalogSelection
 
 
-BATTLE_SETTINGS_PATH = ("features", "settings", "ingame", "battle_mode")
+BATTLE_SETTINGS_PATH = ("features", "settings", "battle_settings")
 
 BATTLE_ROW_VALUE_MAPS: dict[str, dict[object, int]] = {
     "time": {

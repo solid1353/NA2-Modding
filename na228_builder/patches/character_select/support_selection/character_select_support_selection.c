@@ -24,6 +24,7 @@ typedef unsigned int u32;
 
 #define SUPPORT_STATE_AVAILABLE 4u
 #define NO_SUPPORT_ID 0x25u
+#define SUPPORT_SELECTION_MODE_NONE 0u
 #define SUPPORT_SELECTION_MODE_RELEVANT 1u
 #define SUPPORT_SELECTION_MODE_ALL 2u
 #define CHARACTER_SELECT_LINKED_MODE_AUTO 1u
@@ -142,7 +143,12 @@ typedef char font_v2_session_size_must_be_0x6c[
 ];
 
 extern int font_v2_adapter_call(FontV2Session *session);
-extern const u32 character_select_support_selection_mode;
+extern u32 mod_settings_option_get(u32 argument);
+
+static __attribute__((always_inline)) inline u32 support_selection_mode(void)
+{
+    return mod_settings_option_get(4u);
+}
 
 typedef struct AdditionalSupportEntry {
     u8 support_id;
@@ -346,7 +352,7 @@ void populate_support_list(u8 *data, u32 character_id)
         output_count = output_count + 1u;
     }
 
-    if (character_select_support_selection_mode == SUPPORT_SELECTION_MODE_ALL) {
+    if (support_selection_mode() == SUPPORT_SELECTION_MODE_ALL) {
         for (index = 0u;
              index < native_count && output_count < CHARACTER_SELECT_SUPPORT_CAPACITY;
              index = index + 1u) {
@@ -358,7 +364,7 @@ void populate_support_list(u8 *data, u32 character_id)
             }
         }
     } else if (
-        character_select_support_selection_mode ==
+        support_selection_mode() ==
         SUPPORT_SELECTION_MODE_RELEVANT
     ) {
         for (
@@ -433,7 +439,7 @@ void select_no_support(void *player_select)
         ? 0u
         : (support_count - 1u) / 2u;
 
-    if (character_select_support_selection_mode == SUPPORT_SELECTION_MODE_ALL) {
+    if (support_selection_mode() == SUPPORT_SELECTION_MODE_ALL) {
         native_select(player_select, NO_SUPPORT_ID);
         return;
     }
@@ -600,7 +606,7 @@ void character_select_support_selection_return_from_finalized(
     ) {
         next_state = CHARACTER_SELECT_STATE_FIGHTER_SELECTION;
     } else {
-        if (character_select_support_selection_mode != SUPPORT_SELECTION_MODE_ALL) {
+        if (support_selection_mode() != SUPPORT_SELECTION_MODE_ALL) {
             select_no_support(player_select);
         }
         next_state = CHARACTER_SELECT_STATE_SUPPORT_SELECTION;
@@ -710,12 +716,12 @@ u32 character_select_support_selection_is_compatible(
         return 1u;
     }
 
-    if (character_select_support_selection_mode == SUPPORT_SELECTION_MODE_ALL) {
+    if (support_selection_mode() == SUPPORT_SELECTION_MODE_ALL) {
         return native_compatible(support_id, character_id);
     }
 
     if (
-        character_select_support_selection_mode !=
+        support_selection_mode() !=
         SUPPORT_SELECTION_MODE_RELEVANT
     ) {
         return 0u;

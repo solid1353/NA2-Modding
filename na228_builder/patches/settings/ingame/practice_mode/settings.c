@@ -126,6 +126,8 @@ typedef struct PracticeSettingsSchema {
 } PracticeSettingsSchema;
 
 extern const PracticeSettingsSchema practice_settings_schema;
+extern const PracticeSettingsSchema mod_settings_schema;
+extern volatile u32 mod_settings_child;
 extern volatile u32 practice_settings_active_labels[];
 extern volatile u32 practice_settings_active_value_tables[];
 extern u32 chakra_mode_get(void);
@@ -161,44 +163,87 @@ volatile s32 practice_settings_xdash_chakra_cost_staged
 volatile s32 practice_settings_support_staged
     __attribute__((section(".bss.practice_settings_support_staged")));
 
-static const SettingsMenuPage *practice_settings_page(u32 index)
+static u32 practice_settings_is_mod(void *controller)
 {
+    return controller != (void *)0 && (u32)controller == mod_settings_child;
+}
+
+static const PracticeSettingsSchema *practice_settings_schema_for(
+    void *controller
+)
+{
+    return practice_settings_is_mod(controller) != 0u
+        ? &mod_settings_schema
+        : &practice_settings_schema;
+}
+
+static const SettingsMenuPage *practice_settings_page(
+    void *controller,
+    u32 index
+)
+{
+    const PracticeSettingsSchema *schema = practice_settings_schema_for(
+        controller
+    );
+
     return settings_menu_page(
-        (const SettingsMenuPage *)practice_settings_schema.pages_reference,
-        practice_settings_schema.page_count,
+        (const SettingsMenuPage *)schema->pages_reference,
+        schema->page_count,
         index
     );
 }
 
-static const PracticeSettingsRow *practice_settings_model_row(u32 index)
+static const PracticeSettingsRow *practice_settings_model_row(
+    void *controller,
+    u32 index
+)
 {
-    if (index >= practice_settings_schema.row_count) {
+    const PracticeSettingsSchema *schema = practice_settings_schema_for(
+        controller
+    );
+
+    if (index >= schema->row_count) {
         return (const PracticeSettingsRow *)0;
     }
     return &((const PracticeSettingsRow *)
-        practice_settings_schema.rows_reference)[index];
+        schema->rows_reference)[index];
 }
 
-static const PracticeSettingsRow *practice_settings_row(s32 index)
+static const PracticeSettingsRow *practice_settings_row(
+    void *controller,
+    s32 index
+)
 {
+    const PracticeSettingsSchema *schema = practice_settings_schema_for(
+        controller
+    );
     s32 model_index = settings_menu_model_index(
         &practice_settings_active_page,
         index,
-        practice_settings_schema.row_count
+        schema->row_count
     );
 
     if (model_index < 0) {
         return (const PracticeSettingsRow *)0;
     }
-    return practice_settings_model_row((u32)model_index);
+    return practice_settings_model_row(controller, (u32)model_index);
 }
 
-static const PracticeSettingsRow *practice_settings_row_for_id(u32 id)
+static const PracticeSettingsRow *practice_settings_row_for_id(
+    void *controller,
+    u32 id
+)
 {
+    const PracticeSettingsSchema *schema = practice_settings_schema_for(
+        controller
+    );
     u32 index;
 
-    for (index = 0u; index < practice_settings_schema.row_count; ++index) {
-        const PracticeSettingsRow *row = practice_settings_model_row(index);
+    for (index = 0u; index < schema->row_count; ++index) {
+        const PracticeSettingsRow *row = practice_settings_model_row(
+            controller,
+            index
+        );
 
         if (row != (const PracticeSettingsRow *)0 && row->id == id) {
             return row;
@@ -215,8 +260,11 @@ static u32 practice_settings_reference(u32 reference, u32 indirect)
     return *(volatile u32 *)reference;
 }
 
-static void practice_settings_initialize_tables(void)
+static void practice_settings_initialize_tables(void *controller)
 {
+    const PracticeSettingsSchema *schema = practice_settings_schema_for(
+        controller
+    );
     u32 index;
 
     settings_menu_initialize_open_values();
@@ -225,7 +273,10 @@ static void practice_settings_initialize_tables(void)
         index < practice_settings_active_page.row_count;
         ++index
     ) {
-        const PracticeSettingsRow *row = practice_settings_row((s32)index);
+        const PracticeSettingsRow *row = practice_settings_row(
+            controller,
+            (s32)index
+        );
 
         practice_settings_active_labels[index] = practice_settings_reference(
             row->label_reference,
@@ -251,9 +302,9 @@ static void practice_settings_initialize_tables(void)
                     native_values[value];
             }
             practice_settings_ultimate_jutsu_values[6] =
-                practice_settings_schema.ultimate_jutsu_no_contest_label;
+                schema->ultimate_jutsu_no_contest_label;
             practice_settings_ultimate_jutsu_values[7] =
-                practice_settings_schema.ultimate_jutsu_no_hud_label;
+                schema->ultimate_jutsu_no_hud_label;
             practice_settings_active_value_tables[index] =
                 (u32)practice_settings_ultimate_jutsu_values;
         } else {
@@ -272,14 +323,20 @@ static void practice_settings_select_page(
     u32 selected_row
 )
 {
-    const SettingsMenuPage *page = practice_settings_page(page_index);
+    const PracticeSettingsSchema *schema = practice_settings_schema_for(
+        controller
+    );
+    const SettingsMenuPage *page = practice_settings_page(
+        controller,
+        page_index
+    );
     u32 active_selected = selected_row;
 
     if (
         settings_menu_select_page(
-            (const SettingsMenuPage *)practice_settings_schema.pages_reference,
-            practice_settings_schema.page_count,
-            practice_settings_schema.row_count,
+            (const SettingsMenuPage *)schema->pages_reference,
+            schema->page_count,
+            schema->row_count,
             page_index,
             selected_row,
             &practice_settings_active_page_index,
@@ -295,7 +352,7 @@ static void practice_settings_select_page(
         (u8 *)controller + CONTROLLER_REPEAT_COUNTDOWN_OFFSET
     ) = 0;
     settings_menu_initialize_window(controller, &practice_settings_active_page, active_selected);
-    practice_settings_initialize_tables();
+    practice_settings_initialize_tables(controller);
 }
 
 static void practice_settings_reset_help(void *controller)
@@ -321,6 +378,7 @@ static void practice_settings_recompose_backing(void *controller)
 static s32 practice_settings_status(void *controller)
 {
     const PracticeSettingsRow *row = practice_settings_row_for_id(
+        controller,
         ROW_ID_STATUS
     );
 
@@ -335,7 +393,7 @@ static s32 practice_settings_status(void *controller)
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_get_max_value")
 s32 practice_settings_get_max_value(void *controller, s32 index)
 {
-    const PracticeSettingsRow *row = practice_settings_row(index);
+    const PracticeSettingsRow *row = practice_settings_row(controller, index);
     void *manager;
     s32 maximum;
 
@@ -413,7 +471,7 @@ s32 practice_settings_get_value(void *controller, s32 index)
 {
     return practice_settings_get_row_value(
         controller,
-        practice_settings_row(index)
+        practice_settings_row(controller, index)
     );
 }
 
@@ -480,7 +538,7 @@ static void practice_settings_set_value(
 {
     practice_settings_set_row_value(
         controller,
-        practice_settings_row(index),
+        practice_settings_row(controller, index),
         value
     );
 }
@@ -496,7 +554,7 @@ static void practice_settings_stage_runtime_mode(
     if (getter_address == 0u) {
         return;
     }
-    row = practice_settings_row_for_id(row_id);
+    row = practice_settings_row_for_id(controller, row_id);
     if (row != (const PracticeSettingsRow *)0) {
         practice_settings_set_row_value(
             controller,
@@ -506,12 +564,15 @@ static void practice_settings_stage_runtime_mode(
     }
 }
 
-static void practice_settings_runtime_options(u32 commit)
+static void practice_settings_runtime_options(void *controller, u32 commit)
 {
+    const PracticeSettingsSchema *schema = practice_settings_schema_for(
+        controller
+    );
     u32 index;
-    for (index = 0u; index < practice_settings_schema.row_count; ++index) {
+    for (index = 0u; index < schema->row_count; ++index) {
         volatile SettingsMenuOption *option =
-            practice_settings_model_row(index)->runtime_option;
+            practice_settings_model_row(controller, index)->runtime_option;
         if (option == (volatile SettingsMenuOption *)0) {
             continue;
         }
@@ -526,11 +587,16 @@ static void practice_settings_runtime_options(u32 commit)
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_snapshot")
 void practice_settings_snapshot(void *controller)
 {
+    const PracticeSettingsSchema *schema = practice_settings_schema_for(
+        controller
+    );
     NativeControllerCall native_snapshot =
         (NativeControllerCall)NATIVE_SNAPSHOT_ADDRESS;
 
-    native_snapshot(controller);
-    practice_settings_runtime_options(0u);
+    if (practice_settings_is_mod(controller) == 0u) {
+        native_snapshot(controller);
+    }
+    practice_settings_runtime_options(controller, 0u);
     practice_settings_select_page(controller, 0u, 0u);
     practice_settings_stage_runtime_mode(
         controller,
@@ -540,15 +606,16 @@ void practice_settings_snapshot(void *controller)
     practice_settings_stage_runtime_mode(
         controller,
         ROW_ID_SUBSTITUTION,
-        practice_settings_schema.substitution_mode_get
+        schema->substitution_mode_get
     );
-    if (practice_settings_schema.ultimate_jutsu_mode_get != 0u) {
+    if (schema->ultimate_jutsu_mode_get != 0u) {
         const PracticeSettingsRow *row = practice_settings_row_for_id(
+            controller,
             ROW_ID_ULTIMATE_JUTSU
         );
         u32 mode = (
             (UltimateJutsuModeGet)
-                practice_settings_schema.ultimate_jutsu_mode_get
+                schema->ultimate_jutsu_mode_get
         )();
 
         if (row != (const PracticeSettingsRow *)0) {
@@ -558,27 +625,27 @@ void practice_settings_snapshot(void *controller)
     practice_settings_stage_runtime_mode(
         controller,
         ROW_ID_SHADOWBLUR,
-        practice_settings_schema.shadowblur_get
+        schema->shadowblur_get
     );
     practice_settings_stage_runtime_mode(
         controller,
         ROW_ID_EXTRA_HIT,
-        practice_settings_schema.extra_hit_get
+        schema->extra_hit_get
     );
     practice_settings_stage_runtime_mode(
         controller,
         ROW_ID_SUB_ACTIVE_FRAMES,
-        practice_settings_schema.sub_active_frames_get
+        schema->sub_active_frames_get
     );
     practice_settings_stage_runtime_mode(
         controller,
         ROW_ID_XDASH_CHAKRA_COST,
-        practice_settings_schema.xdash_chakra_cost_option_get
+        schema->xdash_chakra_cost_option_get
     );
     practice_settings_stage_runtime_mode(
         controller,
         ROW_ID_SUPPORT,
-        practice_settings_schema.support_get
+        schema->support_get
     );
 }
 
@@ -588,7 +655,10 @@ static void practice_settings_commit_runtime_mode(
     u32 setter_address
 )
 {
-    const PracticeSettingsRow *row = practice_settings_row_for_id(row_id);
+    const PracticeSettingsRow *row = practice_settings_row_for_id(
+        controller,
+        row_id
+    );
 
     if (row != (const PracticeSettingsRow *)0 && setter_address != 0u) {
         ((ToggleModeSet)setter_address)(
@@ -600,11 +670,16 @@ static void practice_settings_commit_runtime_mode(
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_apply")
 void practice_settings_apply(void *controller)
 {
+    const PracticeSettingsSchema *schema = practice_settings_schema_for(
+        controller
+    );
     NativeControllerCall native_apply =
         (NativeControllerCall)NATIVE_APPLY_ADDRESS;
 
-    native_apply(controller);
-    practice_settings_runtime_options(1u);
+    if (practice_settings_is_mod(controller) == 0u) {
+        native_apply(controller);
+    }
+    practice_settings_runtime_options(controller, 1u);
     practice_settings_commit_runtime_mode(
         controller,
         ROW_ID_CHAKRA,
@@ -613,55 +688,63 @@ void practice_settings_apply(void *controller)
     practice_settings_commit_runtime_mode(
         controller,
         ROW_ID_SUBSTITUTION,
-        practice_settings_schema.substitution_mode_set
+        schema->substitution_mode_set
     );
     if (
-        practice_settings_schema.ultimate_jutsu_mode_set != 0u &&
-        practice_settings_row_for_id(ROW_ID_ULTIMATE_JUTSU) !=
+        schema->ultimate_jutsu_mode_set != 0u &&
+        practice_settings_row_for_id(controller, ROW_ID_ULTIMATE_JUTSU) !=
             (const PracticeSettingsRow *)0
     ) {
         ((UltimateJutsuModeSet)
-            practice_settings_schema.ultimate_jutsu_mode_set)(
+            schema->ultimate_jutsu_mode_set)(
                 (u32)practice_settings_ultimate_jutsu_staged
             );
     }
     practice_settings_commit_runtime_mode(
         controller,
         ROW_ID_SHADOWBLUR,
-        practice_settings_schema.shadowblur_set
+        schema->shadowblur_set
     );
     practice_settings_commit_runtime_mode(
         controller,
         ROW_ID_EXTRA_HIT,
-        practice_settings_schema.extra_hit_set
+        schema->extra_hit_set
     );
     practice_settings_commit_runtime_mode(
         controller,
         ROW_ID_SUB_ACTIVE_FRAMES,
-        practice_settings_schema.sub_active_frames_set
+        schema->sub_active_frames_set
     );
     practice_settings_commit_runtime_mode(
         controller,
         ROW_ID_XDASH_CHAKRA_COST,
-        practice_settings_schema.xdash_chakra_cost_option_set
+        schema->xdash_chakra_cost_option_set
     );
     practice_settings_commit_runtime_mode(
         controller,
         ROW_ID_SUPPORT,
-        practice_settings_schema.support_set
+        schema->support_set
     );
 }
 
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_defaults")
 void practice_settings_defaults(void *controller)
 {
+    const PracticeSettingsSchema *schema = practice_settings_schema_for(
+        controller
+    );
     NativeControllerCall native_defaults =
         (NativeControllerCall)NATIVE_DEFAULTS_ADDRESS;
     u32 index;
 
-    native_defaults(controller);
-    for (index = 0u; index < practice_settings_schema.row_count; ++index) {
-        const PracticeSettingsRow *row = practice_settings_model_row(index);
+    if (practice_settings_is_mod(controller) == 0u) {
+        native_defaults(controller);
+    }
+    for (index = 0u; index < schema->row_count; ++index) {
+        const PracticeSettingsRow *row = practice_settings_model_row(
+            controller,
+            index
+        );
 
         practice_settings_set_row_value(
             controller,
@@ -690,7 +773,8 @@ static s32 practice_settings_open_submenu(
         row->value_pages, row->option_count,
         (u32)practice_settings_get_row_value(controller, row)
     );
-    if (practice_settings_page(child) == (const SettingsMenuPage *)0) {
+    if (practice_settings_page(controller, child) ==
+        (const SettingsMenuPage *)0) {
         return 0;
     }
     *(volatile u32 *)(
@@ -711,6 +795,7 @@ void practice_settings_cancel(void *controller)
 {
     NativeSound play_sound = (NativeSound)NATIVE_SOUND_ADDRESS;
     const SettingsMenuPage *page = practice_settings_page(
+        controller,
         practice_settings_active_page_index
     );
 
@@ -737,7 +822,7 @@ void practice_settings_cancel(void *controller)
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_row_enabled")
 s32 practice_settings_row_enabled(void *controller, s32 index)
 {
-    const PracticeSettingsRow *row = practice_settings_row(index);
+    const PracticeSettingsRow *row = practice_settings_row(controller, index);
     s32 status;
 
     if (row == (const PracticeSettingsRow *)0) {
@@ -802,7 +887,7 @@ s32 practice_settings_change_value(void *controller)
     u32 new_input = *(volatile u32 *)(
         (u8 *)controller + CONTROLLER_NEW_INPUT_OFFSET
     );
-    const PracticeSettingsRow *row = practice_settings_row(index);
+    const PracticeSettingsRow *row = practice_settings_row(controller, index);
     s32 value;
     s32 maximum;
 
@@ -855,23 +940,6 @@ PRACTICE_SETTINGS_SECTION(".text.practice_settings_draw_content")
 void practice_settings_draw_content(void *controller)
 {
     SettingsMenuPresentation view;
-    u32 submenu_rows = 0u;
-    u32 index;
-
-    for (
-        index = 0u;
-        index < practice_settings_active_page.row_count && index < 32u;
-        ++index
-    ) {
-        const PracticeSettingsRow *row = practice_settings_row((s32)index);
-
-        if (
-            row != (const PracticeSettingsRow *)0 &&
-            (row->flags & ROW_FLAG_SUBMENU) != 0u
-        ) {
-            submenu_rows |= 1u << index;
-        }
-    }
     view.page = &practice_settings_active_page;
     view.owner = controller;
     view.label = practice_settings_presentation_label;
@@ -879,7 +947,6 @@ void practice_settings_draw_content(void *controller)
     view.value = practice_settings_get_value;
     view.maximum = practice_settings_get_max_value;
     view.enabled = practice_settings_row_enabled;
-    view.submenu_rows = submenu_rows;
     settings_menu_draw_content(controller, &view);
 }
 
@@ -892,11 +959,14 @@ void practice_settings_update_window(void *controller)
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_update_help")
 void practice_settings_update_help(void *controller)
 {
-    NativeHelpSet set_help = (NativeHelpSet)practice_settings_schema.help_set;
+    const PracticeSettingsSchema *schema = practice_settings_schema_for(
+        controller
+    );
+    NativeHelpSet set_help = (NativeHelpSet)schema->help_set;
     s32 index = *(volatile s32 *)(
         (u8 *)controller + CONTROLLER_SELECTED_ROW_OFFSET
     );
-    const PracticeSettingsRow *row = practice_settings_row(index);
+    const PracticeSettingsRow *row = practice_settings_row(controller, index);
     const u8 *text;
     u32 reference;
 

@@ -1246,16 +1246,6 @@ static s32 battle_settings_visible_handicap_slot(void)
     return -1;
 }
 
-static u32 battle_settings_visible_row_is_submenu(u32 slot)
-{
-    const BattleSettingsRow *row = battle_settings_row(
-        battle_settings_window_start + (s32)slot
-    );
-
-    return row != (const BattleSettingsRow *)0 &&
-        (row->flags & ROW_FLAG_SUBMENU) != 0u;
-}
-
 static void battle_settings_update_view(void *controller);
 
 BATTLE_SETTINGS_SECTION(".text.battle_settings_draw_backing")
@@ -1339,15 +1329,6 @@ void battle_settings_draw_backing(void *backing)
             record <= ordinary_count
         );
     }
-    for (
-        row = 0u;
-        row < ordinary_count && row < BACKING_LAST_ORDINARY_RECORD;
-        ++row
-    ) {
-        if (battle_settings_visible_row_is_submenu(row) != 0u) {
-            battle_settings_set_backing_record(records, row + 1u, 0u);
-        }
-    }
     last_local_y = (volatile float *)(
         last + BACKING_OBJECT_LOCAL_Y_OFFSET
     );
@@ -1381,31 +1362,10 @@ void battle_settings_draw_backing(void *backing)
     alpha = *(volatile float *)(
         (u8 *)backing + BACKING_OBJECT_ALPHA_OFFSET
     );
-    for (
-        row = 0u;
-        row < ordinary_count && row < BACKING_LAST_ORDINARY_RECORD;
-        ++row
-    ) {
-        if (battle_settings_visible_row_is_submenu(row) != 0u) {
-            settings_menu_draw_tinted_label(
-                alpha,
-                battle_settings_backing_object(records, row + 1u),
-                SETTINGS_MENU_HEADER_ORANGE_TINT
-            );
-        }
-    }
     for (row = 5u; row < ordinary_count; ++row) {
         *last_local_y = native_local_y + local_step * (float)(row - 4u);
         *last_world_y = native_world_y + world_step * (float)(row - 4u);
-        if (battle_settings_visible_row_is_submenu(row) != 0u) {
-            settings_menu_draw_tinted_label(
-                alpha,
-                last,
-                SETTINGS_MENU_HEADER_ORANGE_TINT
-            );
-        } else {
-            draw_sprite(alpha, last);
-        }
+        draw_sprite(alpha, last);
     }
     *last_local_y = native_local_y;
     *last_world_y = native_world_y;
@@ -1512,7 +1472,6 @@ static void battle_settings_draw_child(void *controller)
     view.value = battle_settings_get_value;
     view.maximum = battle_settings_get_max_value;
     view.enabled = battle_settings_presentation_enabled;
-    view.submenu_rows = 0u;
     settings_menu_draw_content(native, &view);
     ((NativeControllerCall)NATIVE_SPRITE_UPDATE_ADDRESS)((void *)battle_settings_practice_arrows);
 }

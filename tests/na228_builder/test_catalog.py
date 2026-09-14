@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import struct
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,6 +11,9 @@ from unittest import mock
 
 from na228_builder.infrastructure.modules.binary_patcher import adapters
 from na228_builder.infrastructure.orchestration import catalog, catalog_format, jsonc
+from na228_builder.patches.settings.mod_settings.mod_settings import (
+    mod_settings_state_fragment,
+)
 from scripts.lib.paths import load_local_paths
 
 
@@ -523,6 +527,19 @@ class CatalogTests(unittest.TestCase):
                     expected_frames[name],
                 )
 
+    def test_repository_base_configuration_aligns_trailing_comments(self) -> None:
+        paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
+        base_configuration = (
+            paths.path("builder") / "configurations" / "base.jsonc"
+        )
+        comment_columns = {
+            line.index("//")
+            for line in base_configuration.read_text(encoding="utf-8").splitlines()
+            if "//" in line
+        }
+
+        self.assertEqual(len(comment_columns), 1, comment_columns)
+
     def test_repository_practice_defaults_are_owned_by_settings(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         builder = paths.path("builder")
@@ -531,7 +548,7 @@ class CatalogTests(unittest.TestCase):
             (builder / "configurations" / "base.jsonc").read_text(encoding="utf-8")
         )
         self.assertEqual(
-            base["features"]["settings"]["ingame"]["practice_mode"]
+            base["features"]["settings"]["practice_settings"]
             ["opponent_settings"]["linked_attack"],
             "dont_use",
         )
@@ -548,7 +565,7 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(package.edits, [])
         self.assertIn("settings.ingame", selection.injections)
 
-    def test_repository_simple_display_is_a_standalone_setting(self) -> None:
+    def test_repository_simple_display_sets_mod_settings_runtime_default(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         builder = paths.path("builder")
         catalog_path = builder / "catalog.modcat"
@@ -556,32 +573,26 @@ class CatalogTests(unittest.TestCase):
             (builder / "configurations" / "base.jsonc").read_text(encoding="utf-8")
         )
         self.assertEqual(
-            base["features"]["settings"]["simple_display"],
+            base["features"]["settings"]["mod_settings"]["simple_display"],
             "off",
         )
 
-        for value, replacement_hex in (("off", "00000000"), ("on", "25186600")):
+        for value, encoded in (("off", 0), ("on", 1)):
             with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
                 configuration = Path(directory) / "configuration.jsonc"
                 configured = json.loads(json.dumps(base))
-                configured["features"]["settings"]["simple_display"] = value
+                configured["features"]["settings"]["mod_settings"][
+                    "simple_display"
+                ] = value
                 configuration.write_text(json.dumps(configured), encoding="utf-8")
                 selection = catalog.load_selection(catalog_path, configuration)
-                package = catalog.load_binary_package(
+                state = mod_settings_state_fragment(
                     selection,
-                    "settings",
-                    builder / "infrastructure" / "modules" / "targets.tsv",
-                    paths.repository,
-                    builder / "infrastructure" / "modules" / "binary_patcher" / "operations",
+                    owner="settings.runtime_injector",
                 )
-                edit = next(
-                    edit
-                    for edit in package.edits
-                    if edit.edit_id.endswith(".settings.simple_display")
-                )
-                self.assertEqual(edit.destination_offset, 0xE7BAC)
-                self.assertEqual(edit.expected_hex, "25186600")
-                self.assertEqual(edit.replacement_hex, replacement_hex)
+                values = struct.unpack("<10I", state.payload)
+                self.assertEqual(values[1], encoded)
+                self.assertEqual(values[6], encoded)
 
     def test_object_intersection_rejects_duplicate_fields(self) -> None:
         source = '''{

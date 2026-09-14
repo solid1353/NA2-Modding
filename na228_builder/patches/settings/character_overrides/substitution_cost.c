@@ -31,6 +31,7 @@ typedef struct CharacterOverrideTable {
 } CharacterOverrideTable;
 
 extern const CharacterOverrideTable battle_logic_character_overrides;
+extern u32 mod_settings_option_get(u32 argument);
 
 #define BATTLE_MANAGER_POINTER_ADDRESS 0x00607600u
 #define BATTLE_MANAGER_P1_SELECTED_ID_OFFSET 0xC8u
@@ -103,6 +104,9 @@ float battle_logic_substitution_cost(void *fighter, u32 default_cost_bits)
     float cost_percent;
 
     default_cost.bits = default_cost_bits;
+    if (mod_settings_option_get(2u) == 0u) {
+        return default_cost.value;
+    }
     cost_percent = resolved_substitution_cost_percent(
         fighter,
         default_cost.value * NORMALIZED_COST_CAPACITY / NATIVE_CHAKRA_CAPACITY
@@ -113,6 +117,9 @@ float battle_logic_substitution_cost(void *fighter, u32 default_cost_bits)
 SUBSTITUTION_COST_SECTION(".text.battle_logic_substitution_cost_fraction")
 float battle_logic_substitution_cost_fraction(void *fighter)
 {
+    if (mod_settings_option_get(2u) == 0u) {
+        return 1.0f / NATIVE_CHAKRA_CAPACITY;
+    }
     float cost_percent = resolved_substitution_cost_percent(
         fighter,
         NORMALIZED_COST_CAPACITY / NATIVE_CHAKRA_CAPACITY

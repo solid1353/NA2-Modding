@@ -4,7 +4,6 @@
 #define SETTINGS_MENU_ROW_FLAG_SUBMENU 0x4000u
 #define SETTINGS_MENU_SUBMENU_MAX_VALUE 0
 #define SETTINGS_MENU_INPUT_OPEN_SUBMENU 0x0080u
-#define SETTINGS_MENU_HEADER_ORANGE_TINT 0x805F5888u
 #define SETTINGS_MENU_NO_PAGE 0xFFFFFFFFu
 
 typedef struct SettingsMenuOption {
@@ -68,13 +67,7 @@ void settings_menu_draw_practice_backing(
     void *backing,
     unsigned int primary_row_count,
     unsigned int secondary_row_count,
-    unsigned int submenu_rows,
     unsigned int visible_rows
-);
-void settings_menu_draw_tinted_label(
-    float alpha,
-    void *object,
-    unsigned int color
 );
 
 /* Menu-owned data consumed by the native Practice content renderer. */
@@ -86,7 +79,6 @@ typedef struct SettingsMenuPresentation {
     int (*value)(void *owner, int row);
     int (*maximum)(void *owner, int row);
     int (*enabled)(void *owner, int row);
-    unsigned int submenu_rows;
 } SettingsMenuPresentation;
 void settings_menu_draw_content(void *controller, const SettingsMenuPresentation *view);
 void settings_menu_update_window(void *controller, const volatile SettingsMenuActivePage *page);

@@ -1,15 +1,13 @@
 {
   "overrides": {
     "settings": {
-      "ingame": {
-        "battle_mode": {
-          "battle_mechanics": false,
-          "handicap": 5                           // int 0..10 (Player 1; Player 2 is 10 minus this value)
-        }
+      "battle_settings": {
+        "battle_mechanics_submenu": false,
+        "handicap": 5                           // int 0..10 (Player 1; Player 2 is 10 minus this value)
+      },
+      "mod_settings": {
+        "support_selection": "all"               // "none" | "relevant" | "all"
       }
-    },
-    "character_select": {
-      "support_selection": "all"             // "all" | "relevant" | "none"
     }
   }
 }

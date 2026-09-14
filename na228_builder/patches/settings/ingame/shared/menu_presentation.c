@@ -92,7 +92,6 @@ void settings_menu_draw_backing(void *backing)
     settings_menu_draw_practice_backing(backing,
         settings_menu_render_page.primary_row_count,
         settings_menu_render_page.secondary_row_count,
-        settings_menu_presentation->submenu_rows,
         settings_menu_visible_rows);
 }
 

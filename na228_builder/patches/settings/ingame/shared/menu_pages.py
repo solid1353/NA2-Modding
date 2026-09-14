@@ -9,7 +9,7 @@ from na228_builder.infrastructure.orchestration.catalog_format import ContainerN
 from .menu_options import PAGE_TITLES, menu_option_bindings
 
 
-INGAME_PATH = ("features", "settings", "ingame")
+SUBMENUS_PATH = ("features", "settings", "submenus")
 SUBMENU_FLAG = 0x4000
 
 
@@ -25,17 +25,20 @@ def bind_help_setter(selection, payload, relocations, offset):
 
 
 def menu_title(name):
-    return name.replace("_", " ").title()
+    return name.removesuffix("_submenu").replace("_", " ").title()
 
 
 def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
                      section_fields, prefix, first_generated_id):
     """Discover topology independently of native row and gameplay bindings."""
-    ingame = next(field.node for field in selection.catalog["settings"].fields
-                  if field.name == "ingame")
-    definitions = {field.name: field.node for field in ingame.fields}
+    submenus = next(field.node for field in selection.catalog["settings"].fields
+                    if field.name == "submenus")
+    submenu_definitions = {field.name: field.node for field in submenus.fields}
+    definition = selection.catalog["settings"]
+    for name in root_path[2:]:
+        definition = next(field.node for field in definition.fields
+                          if field.name == name)
     selected = {node.path: node for node in selection.nodes}
-    configuration = selected[INGAME_PATH].configured_value
     options = menu_option_bindings(selection)
     pages = []
     next_id = first_generated_id
@@ -68,10 +71,23 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
 
     def ordered_fields(definition, path):
         fields = dict(fields_of(definition))
-        configured = configuration
-        for key in path[len(INGAME_PATH):]:
-            configured = configured.get(key, {})
-        names = tuple(configured)
+        target = selected.get(path)
+        if target is not None and isinstance(target.configured_value, dict):
+            configured = target.configured_value
+        else:
+            configured = {}
+            for length in range(len(path) - 1, 1, -1):
+                ancestor = selected.get(path[:length])
+                if ancestor is None:
+                    continue
+                configured = ancestor.configured_value
+                for key in path[length:]:
+                    if not isinstance(configured, dict):
+                        configured = {}
+                        break
+                    configured = configured.get(key, {})
+                break
+        names = tuple(configured) if isinstance(configured, dict) else ()
         # Omitted optional values still expose their existing default rows.
         names += tuple(name for name in fields if name not in configured)
         return tuple((name, fields[name]) for name in names)
@@ -97,13 +113,15 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
             child_path = path + (name,)
             target = selected.get(child_path)
             reference = isinstance(child, SettingNode) and child.value_type is None
-            if reference and (name not in definitions or name.endswith("_mode")):
-                raise ValueError(f"No shared ingame definition for {'.'.join(child_path)}")
+            if reference and name not in submenu_definitions:
+                raise ValueError(
+                    f"No shared submenu definition for {'.'.join(child_path)}"
+                )
             if target is not None and not target.enabled:
                 continue
             if reference:
-                child_path = INGAME_PATH + (name,)
-                child = definitions[name]
+                child_path = SUBMENUS_PATH + (name,)
+                child = submenu_definitions[name]
                 if not selected[child_path].enabled:
                     continue
             fields = fields_of(child)
@@ -140,7 +158,7 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
                section_fields[1]: len(rows) if page_index != 0 else 0})
         return page_index
 
-    add_page(definitions[root_path[-1]], root_path)
+    add_page(definition, root_path)
     return tuple(pages)
 
 

@@ -1,4 +1,57 @@
 {
+  "general.music_override": {
+    "description": "Select existing SOUND.AFS music tracks for Mode Select and Character Select.",
+    "edits": {
+      "select_character_music_track": {
+        "description": "Pass SOUND.AFS/000 track 68 to the Character Select music command.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xD3954",
+        "expected_hex": "01000424",
+        "replacement_hex": "44000424"
+      },
+      "select_mode_music_track": {
+        "description": "Pass SOUND.AFS/000 track 62 to the Mode Select music command.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xD38D0",
+        "expected_hex": "01000424",
+        "replacement_hex": "3E000424"
+      }
+    },
+    "hooks": {
+      "route_mode_music_through_native_replacement_sequence": {
+        "description": "Replace the fixed track-1 preset with the selected Mode Select track while retaining native stop-before-replace behavior.",
+        "target_id": "na2_elf",
+        "offset": "0xD38D8",
+        "expected_hex": "8C66070C",
+        "symbol": "select",
+        "encoding": "jal26"
+      },
+      "route_character_music_through_native_replacement_sequence": {
+        "description": "Replace the fixed track-1 preset with the selected Character Select track while retaining native stop-before-replace behavior.",
+        "target_id": "na2_elf",
+        "offset": "0xD395C",
+        "expected_hex": "8C66070C",
+        "symbol": "select",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "music_override": {
+        "kind": "c",
+        "path": "na228_builder/patches/general/music_override.c",
+        "namespace": "general.music.override",
+        "imports": {},
+        "fragments": {
+          "select": {
+            "object": "general.music.override.text.general.music.override.select",
+            "description": "Select one existing streamed-music track while preserving the native current-track check and replacement order."
+          }
+        }
+      }
+    }
+  },
   "general.mode_availability.remove_adventure": {
     "description": "Mark the Adventure Mode Select entry unavailable.",
     "edit": {

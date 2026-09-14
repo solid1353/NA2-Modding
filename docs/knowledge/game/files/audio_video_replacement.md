@@ -18,18 +18,20 @@ Evidence labels in this note have their usual knowledge-base meaning:
 - **Assigned scope:** replacement feasibility for the four top-level AFS audio
   archives and ten shipped PSS movies in NA2 v2.28, including only the disc-image
   size rule, nested archive/codec contracts, PSS stream contract, and resident
-  movie selectors needed to bound a safe replacement workflow.
+  movie and front-end music selectors needed to bound safe replacement or reuse.
 - **Exploration depth:** the clean corpus was parsed exhaustively
   across 170 AFS containers, 9,966 declared indices, all 9,068 AHX members and
   all 246 ADX members. All ten PSS files were length-driven through every
   pack/PES packet and their complete video and private-audio streams; the clean
   ELF's 12-row descriptor table, direct selector calls, subtitle schedules,
-  and native movie-input path were traced.
+  native movie-input path, and front-end music command dispatcher were traced.
 - **Confirmed coverage:** focused transient experiments exercised CriCodecs
   1.2.0 and FFmpeg 9.0.1, including an offline, exact-size
   synthetic `LOGO_C.PSS` whose 90-picture MPEG-2 stream, replacement PCM body,
   packet lattice, timestamps, padding, and complete decode all passed static
-  checks. No generated media or tool was retained as a project dependency.
+  checks. Two supplied savestates also matched both Mode Select and Character
+  Select playback to `SOUND.AFS/000` track 1. No generated media or tool was
+  retained as a project dependency.
 - **Unresolved or untested:** no generated AFS or PSS has been played by the
   game's bundled CRI/movie drivers in PCSX2 or on hardware. A fitting adaptive
   type-`0x11` AHX encoder, the correct ADX version-4 history and loop-padding
@@ -39,15 +41,20 @@ Evidence labels in this note have their usual knowledge-base meaning:
 - **Deliberate exclusions and overlap:** this task did not implement a writer,
   alter protected source media, enable variable-size ISO/UDF relocation, or
   patch resident subtitles/transitions. Resident movie data was followed only
-  far enough to establish replacement constraints; broader subtitle, image
-  builder, runtime, and executable-patching work remains with their owning
-  tasks. The absent `logo_cT.pss` and `openingT.pss` names are documented only
-  to the extent established by the selector/table trace.
+  far enough to establish replacement constraints, and resident music data only
+  far enough to identify the two menu commands and their shared playback preset;
+  mod behavior remains with [Music override](../../../features/music_override.md).
+  Broader subtitle, image
+  builder, runtime, and executable-patching work remains with their owning tasks.
+  The absent `logo_cT.pss` and `openingT.pss` names are documented only to the
+  extent established by the selector/table trace.
 - **Evidence limitations:** results are based on one clean `SLPS_258.37` and its
   read-only extracted media, static disassembly/direct-call evidence, corpus
   parsers, and bounded host-side codec/decoder experiments. Those establish file
   structure and offline feasibility, not runtime acceptance, streaming
-  bandwidth tolerance, or the absence of unobserved indirect consumers.
+  bandwidth tolerance, or the absence of unobserved indirect consumers. The
+  menu-music trace additionally relies on two user-supplied savestates and the
+  clean resident command paths reached by those screens.
 
 ## Result
 
@@ -121,6 +128,29 @@ The one rate outlier is
 `DATA/RPGVOICE.AFS.files/028.afs.files/015.adx`: its header reports AHX type
 `0x10`, mono, 48,000 Hz, and 183,798 samples. Its `.adx` name came from the
 extractor and does not change the header classification.
+
+### Resident menu-music selection
+
+The supplied Mode Select and Character Select savestates each contain coded
+data from `SOUND.AFS.files/000.afs.files/001.adx` in EE and IOP memory. The
+resident dispatcher `FUN_001D37A0`, reached through `FUN_001D94B0`, keeps the
+two screen commands separate even though both clean commands select the same
+track-1 preset:
+
+- Mode Select callback `FUN_001EA240` submits command 0 at virtual
+  `0x001EA3DC`. Its dispatcher entry begins at virtual `0x001D37D0` (file
+  `0xD38D0`).
+- BTL handoff state 6, immediately before the resident Character Select child,
+  submits command 6 in `FUN_001ED400` at virtual `0x001ED428`. Its dispatcher
+  entry begins at virtual `0x001D3854` (file `0xD3954`).
+
+Both entries call `FUN_001D9A30(1, 0)`. Subcommand 1 checks the current track,
+stops channel 0 through `FUN_001D9760` only when it differs, then selects track
+1 through `FUN_001D9680(0, 1, 0)`. The second argument to `FUN_001D9680` is the
+leaf index in `SOUND.AFS/000`, as corroborated by the track-1 coded data in both
+savestates. The separate command entries therefore provide independent,
+fixed-size executable patch points for reusing other existing tracks without
+changing `SOUND.AFS`.
 
 **Observed codec contracts:**
 

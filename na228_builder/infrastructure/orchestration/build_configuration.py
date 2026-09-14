@@ -48,11 +48,6 @@ class ConfigurationCompositionResult:
     insertion_owners: dict[str, str]
 
 
-def _default_texture_cache_root(start: Path) -> Path:
-    paths = PATHS or load_paths(start, allow_missing=True)
-    return paths.path("cache", "texture_patcher")
-
-
 def normalize(path: str) -> str:
     return normalize_iso_path(path)
 
@@ -124,39 +119,18 @@ def apply_texture_patch_package(
     package_directory: Path,
     *,
     module_id: str,
-    roots: dict[str, Path],
-    source: Iso9660,
-    payloads: dict[str, bytearray],
-    owners: dict[str, str],
-    cache_root: Path | None,
-) -> tuple[texture_patcher_module.TexturePatchPlan, str]:
-    if "na2" not in roots or "nun5" not in roots:
-        raise ValueError("Texture-patcher module requires na2 and nun5 configuration roots")
-    if not all(
-        root.is_dir() or root.is_file()
-        for root in (roots["na2"], roots["nun5"])
-    ):
-        raise ValueError("Texture-patcher module roots must be extractions or ISOs")
+    insertions: dict[str, bytes],
+    insertion_owners: dict[str, str],
+) -> tuple[texture_patcher_module.ExternalTexturePackPlan, str]:
     if not package_directory.is_dir():
         raise ValueError(f"Texture-patcher module input must be a directory: {package_directory}")
 
-    plan = texture_patcher_module.build_texture_patch_plan(
-        na2_root=roots["na2"],
-        nun5_root=roots["nun5"],
-        data_root=package_directory,
-        selection=(),
-        cache_root=cache_root,
-    )
-    path = "DATA/DATA.CVM"
-    record = source.by_path.get(path)
-    if record is None or record.is_dir:
-        raise RuntimeError("Texture-patcher module requires DATA/DATA.CVM in the source ISO")
-    data = payloads.get(path)
-    if data is None:
-        data = bytearray(source.read_file(record))
-    plan.apply_to_cvm(data)
-    payloads[path] = data
-    owners[path] = module_id
+    plan = texture_patcher_module.build_external_texture_pack(package_directory)
+    path = texture_patcher_module.EXTERNAL_PACK_PATH
+    if path in insertions:
+        raise RuntimeError(f"Duplicate image insertion: {path}")
+    insertions[path] = plan.payload
+    insertion_owners[path] = module_id
     return plan, path
 
 
@@ -229,34 +203,27 @@ def write_binary_patch_log(
 
 
 def write_texture_patch_log(
-    plan: texture_patcher_module.TexturePatchPlan,
+    plan: texture_patcher_module.ExternalTexturePackPlan,
     log_directory: Path,
+    insertion: IsoInsertion,
 ) -> None:
     log_directory.mkdir(parents=True, exist_ok=True)
     binary_patcher_module.write_tsv(
         log_directory / "patch_log.tsv",
         [
-            "file",
+            "pack",
             "member",
-            "offset",
+            "sector",
             "length",
-            "original_sha256",
-            "derivation",
-            "new_sha256",
-            "mapping_ids",
-            "reason",
+            "asset_sha256",
         ],
         [
             {
-                "file": "DATA/DATA.CVM",
+                "pack": texture_patcher_module.EXTERNAL_PACK_PATH,
                 "member": result.spec.path,
-                "offset": f"0x{result.outer_cvm_offset:X}",
+                "sector": result.pack_sector,
                 "length": len(result.replacement),
-                "original_sha256": texture_patcher_module.sha256(result.original),
-                "derivation": f"canonical_nun5_{result.strategy.strategy}",
-                "new_sha256": texture_patcher_module.sha256(result.replacement),
-                "mapping_ids": ",".join(result.mapping_ids),
-                "reason": result.strategy.reason,
+                "asset_sha256": texture_patcher_module.sha256(result.replacement),
             }
             for result in plan.containers
         ],
@@ -265,30 +232,26 @@ def write_texture_patch_log(
         log_directory / "container_summary.tsv",
         [
             "container_id",
-            "strategy",
             "fixed_size",
             "compressed_stream_size",
             "zero_padding",
-            "target_sha256",
-            "donor_sha256",
-            "replacement_sha256",
+            "asset_sha256",
             "payload_sha256",
-            "cache_result",
+            "pack_sector",
+            "pack_sectors",
         ],
         [
             {
                 key: row[key]
                 for key in (
                     "container_id",
-                    "strategy",
                     "fixed_size",
                     "compressed_stream_size",
                     "zero_padding",
-                    "target_sha256",
-                    "donor_sha256",
-                    "replacement_sha256",
+                    "asset_sha256",
                     "payload_sha256",
-                    "cache_result",
+                    "pack_sector",
+                    "pack_sectors",
                 )
             }
             for row in texture_patcher_module.result_rows(plan)
@@ -298,22 +261,20 @@ def write_texture_patch_log(
         log_directory / "run_summary.tsv",
         [
             "container_count",
-            "mapping_count",
             "fixed_bytes",
-            "worker_count",
-            "cache_reused",
-            "cache_derived",
+            "pack_bytes",
+            "pack_sha256",
+            "pack_extent",
         ],
         [
             {
                 "container_count": len(plan.containers),
-                "mapping_count": plan.mapping_count,
                 "fixed_bytes": sum(
                     len(result.replacement) for result in plan.containers
                 ),
-                "worker_count": plan.worker_count,
-                "cache_reused": plan.cache_reused_count,
-                "cache_derived": plan.cache_derived_count,
+                "pack_bytes": len(plan.payload),
+                "pack_sha256": insertion.sha256,
+                "pack_extent": insertion.extent,
             }
         ],
     )
@@ -422,7 +383,6 @@ def apply_configuration_modules(
     owners: dict[str, str],
     insertions: dict[str, bytes],
     insertion_owners: dict[str, str],
-    texture_cache_root: Path | None = None,
 ) -> tuple[list[dict[str, object]], dict[str, object] | None]:
     pipeline = prepare_module_pipeline(configuration)
     ordered_modules = pipeline.ordered_modules
@@ -511,11 +471,8 @@ def apply_configuration_modules(
             plan, path = apply_texture_patch_package(
                 module.input_path,
                 module_id=module.module_id,
-                roots=configuration.roots,
-                source=source,
-                payloads=payloads,
-                owners=owners,
-                cache_root=texture_cache_root,
+                insertions=insertions,
+                insertion_owners=insertion_owners,
             )
             results.append(
                 {
@@ -627,8 +584,18 @@ def write_configuration_log(
             )
         if "texture_patch_plan" in item:
             plan = item["texture_patch_plan"]
-            assert isinstance(plan, texture_patcher_module.TexturePatchPlan)
-            write_texture_patch_log(plan, module_log)
+            assert isinstance(
+                plan, texture_patcher_module.ExternalTexturePackPlan
+            )
+            insertion_results = item.get("insertion_results")
+            if not isinstance(insertion_results, tuple) or len(insertion_results) != 1:
+                raise RuntimeError(
+                    "Texture pack is missing its verified image insertion"
+                )
+            insertion = insertion_results[0]
+            if not isinstance(insertion, IsoInsertion):
+                raise RuntimeError("Texture pack insertion result has an invalid type")
+            write_texture_patch_log(plan, module_log, insertion)
         if item.get("string_patch_plan") is not None:
             plan = item["string_patch_plan"]
             assert isinstance(plan, string_patcher_module.StringPatchPlan)
@@ -725,15 +692,11 @@ def compose_configuration_candidate(
     *,
     source_iso: Path,
     configuration: BuildConfiguration,
-    texture_cache_root: Path | None = None,
 ) -> ConfigurationCompositionResult:
     """Compose and conflict-check one configuration without staging an image."""
     source_iso = source_iso.resolve()
     if not source_iso.is_file():
         raise FileNotFoundError(source_iso)
-    if texture_cache_root is None:
-        texture_cache_root = _default_texture_cache_root(Path(__file__).resolve())
-
     source = Iso9660(source_iso)
     payloads: dict[str, bytearray] = {}
     owners: dict[str, str] = {}
@@ -746,7 +709,6 @@ def compose_configuration_candidate(
         owners=owners,
         insertions=insertions,
         insertion_owners=insertion_owners,
-        texture_cache_root=texture_cache_root,
     )
     composition = compose_assembly_plan(
         source=source,
@@ -772,7 +734,6 @@ def build_configuration_candidate(
     configuration: BuildConfiguration,
     workspace: Path,
     configuration_log_directory: Path | None,
-    texture_cache_root: Path | None = None,
 ) -> ConfigurationBuildResult:
     """Compose and verify one physical configuration image."""
     source_iso = source_iso.resolve()
@@ -788,11 +749,6 @@ def build_configuration_candidate(
     composed = compose_configuration_candidate(
         source_iso=source_iso,
         configuration=configuration,
-        texture_cache_root=(
-            texture_cache_root
-            if texture_cache_root is not None
-            else _default_texture_cache_root(workspace)
-        ),
     )
     configuration_results = list(composed.results)
     payload_result = composed.payload_result
@@ -873,11 +829,12 @@ def print_configuration_summary(
             detail = f", {item['translation_import_rows']} imports"
         elif "texture_patch_plan" in item:
             plan = item["texture_patch_plan"]
-            assert isinstance(plan, texture_patcher_module.TexturePatchPlan)
+            assert isinstance(
+                plan, texture_patcher_module.ExternalTexturePackPlan
+            )
             detail = (
-                f", {len(plan.containers)} containers, {plan.mapping_count} mappings, "
-                f"texture cache {plan.cache_reused_count} reused/"
-                f"{plan.cache_derived_count} derived"
+                f", {len(plan.containers)} containers, "
+                f"{len(plan.payload)} external bytes"
             )
         if "derived_string_patch_result" in item:
             detail += (

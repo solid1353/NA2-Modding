@@ -14,8 +14,8 @@ REPOSITORY = Path(__file__).resolve().parents[3]
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
-from na228_builder.infrastructure.modules.texture_patcher import engine  # noqa: E402
 from scripts.lib.paths import load_paths  # noqa: E402
+from scripts.research.ui_translation import texture_derivation as engine  # noqa: E402
 
 
 MODE1_PATH = re.compile(r"3EYE/3([A-Z0-9]{3})3PCT\.CCS")
@@ -123,7 +123,7 @@ def build_rows() -> tuple[
     list[tuple[str, int]],
 ]:
     paths = load_paths(REPOSITORY)
-    data_root = paths.path("builder") / "localization" / "texture_patcher"
+    data_root = Path(__file__).resolve().parent / "ui_texture_data"
     container_path = data_root / "containers.tsv"
     mapping_path = data_root / "mappings.tsv"
     strategy_path = data_root / "strategies.tsv"
@@ -164,7 +164,7 @@ def build_rows() -> tuple[
     container_by_id = {row["container_id"]: row for row in containers}
     strategy_by_id = {row["container_id"]: row for row in strategies}
 
-    target_iso, donor_iso, _ = engine.source_members(
+    target_iso, donor_iso = engine.source_members(
         paths.path("source_na2"),
         paths.path("source_nun5"),
     )
@@ -471,16 +471,12 @@ def main() -> int:
     parser.add_argument(
         "--write",
         action="store_true",
-        help="Rewrite the canonical texture-patcher TSVs after validation.",
+        help="Rewrite the research texture-authoring TSVs after validation.",
     )
     args = parser.parse_args()
 
     containers, mappings, strategies, capacities = build_rows()
-    data_root = (
-        load_paths(REPOSITORY).path("builder")
-        / "localization"
-        / "texture_patcher"
-    )
+    data_root = Path(__file__).resolve().parent / "ui_texture_data"
     if args.write:
         write_rows(data_root / "containers.tsv", engine.CONTAINER_FIELDS, containers)
         write_rows(data_root / "mappings.tsv", engine.MAPPING_FIELDS, mappings)

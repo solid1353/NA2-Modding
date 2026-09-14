@@ -13,14 +13,10 @@ from na228_builder.infrastructure.orchestration import build_configuration
 
 
 class BuildConfigurationCliTests(unittest.TestCase):
-    def test_texture_summary_reports_cache_reuse(self) -> None:
-        plan = build_configuration.texture_patcher_module.TexturePatchPlan(
-            package=SimpleNamespace(),
-            containers=(
-                SimpleNamespace(mapping_ids=("a",), cache_reused=True),
-                SimpleNamespace(mapping_ids=("b", "c"), cache_reused=False),
-            ),
-            target_header=b"",
+    def test_texture_summary_reports_external_pack_size(self) -> None:
+        plan = build_configuration.texture_patcher_module.ExternalTexturePackPlan(
+            containers=(SimpleNamespace(), SimpleNamespace()),
+            payload=b"pack",
         )
         module = build_configuration.ModuleInvocation(
             module_id="localization.texture_patcher",
@@ -38,7 +34,7 @@ class BuildConfigurationCliTests(unittest.TestCase):
                 None,
             )
         self.assertIn(
-            "texture cache 1 reused/1 derived",
+            "2 containers, 4 external bytes",
             output.getvalue(),
         )
 
@@ -244,7 +240,6 @@ class BuildConfigurationCliTests(unittest.TestCase):
                     configuration=configuration,
                     workspace=workspace,
                     configuration_log_directory=workspace / "logs" / "configuration",
-                    texture_cache_root=workspace / "texture-cache",
                 )
 
             self.assertFalse(output_iso.exists())

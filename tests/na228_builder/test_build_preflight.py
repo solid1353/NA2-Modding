@@ -25,7 +25,6 @@ DEPENDENCIES = {
     "python_version": "1.0",
     "zlib_compile_version": "1.0",
     "zlib_runtime_version": "1.0",
-    "zopfli_version": "0.4.3",
 }
 
 
@@ -67,8 +66,10 @@ class BuildPreflightTests(unittest.TestCase):
         feature = builder / "patches" / "localization" / "enabled"
         feature.mkdir(parents=True)
         (feature / "mappings.tsv").write_text("id\n", encoding="utf-8")
-        for name in ("containers.tsv", "mappings.tsv", "strategies.tsv"):
-            (feature / name).write_text("id\n", encoding="utf-8")
+        (feature / "assets.tsv").write_text("id\n", encoding="utf-8")
+        assets = feature / "assets"
+        assets.mkdir()
+        (assets / "sample.ccs.gz").write_bytes(b"asset")
         targets = builder / "infrastructure" / "modules" / "targets.tsv"
         targets.parent.mkdir(parents=True)
         targets.write_text(
@@ -113,7 +114,6 @@ class BuildPreflightTests(unittest.TestCase):
         source_roots = project_paths.path("source")
         source_roots.mkdir(parents=True)
         (source_roots / "NA2.iso.files").mkdir()
-        (source_roots / "NUN5.iso.files").mkdir()
         shared = project_paths.path("pcsx2_files")
         for name in (
             "cheats",
@@ -128,7 +128,6 @@ class BuildPreflightTests(unittest.TestCase):
                 {
                     "sources": {
                         "NA2": {"serial": "SLPS-25837", "crc": "C0659AD1"},
-                        "NUN5": {"serial": "SLES-55605", "crc": "C071D4C1"},
                     },
                 }
             ),
@@ -156,10 +155,8 @@ class BuildPreflightTests(unittest.TestCase):
             encoding="utf-8",
         )
         na2_iso = root / "source" / "NA2.iso"
-        nun5_iso = root / "source" / "NUN5.iso"
         na2_iso.parent.mkdir()
         na2_iso.write_bytes(b"clean na2")
-        nun5_iso.write_bytes(b"clean nun5")
         sample_iso = project_paths.path("build", "sample.iso")
         sample_iso.parent.mkdir(exist_ok=True)
         sample_iso.write_bytes(b"verified sample")
@@ -168,7 +165,6 @@ class BuildPreflightTests(unittest.TestCase):
             "builder": builder,
             "configuration": configuration,
             "na2_iso": na2_iso,
-            "nun5_iso": nun5_iso,
             "sample_iso": sample_iso,
             "registry": project_paths.path(
                 "logs", "na228", "preflight", "registry.json"
@@ -180,7 +176,6 @@ class BuildPreflightTests(unittest.TestCase):
         arguments: dict[str, object] = {
             "workspace": paths["workspace"],
             "na2_iso": paths["na2_iso"],
-            "nun5_iso": paths["nun5_iso"],
             "configuration_path": paths["configuration"],
             "dependencies": DEPENDENCIES,
         }
@@ -236,10 +231,6 @@ class BuildPreflightTests(unittest.TestCase):
             paths["na2_iso"].write_bytes(b"changed na2")
             self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
             paths["na2_iso"].write_bytes(b"clean na2")
-
-            paths["nun5_iso"].write_bytes(b"changed nun5")
-            self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
-            paths["nun5_iso"].write_bytes(b"clean nun5")
 
             changed_dependencies = dict(DEPENDENCIES, zlib_runtime_version="2.0")
             self.assertNotEqual(

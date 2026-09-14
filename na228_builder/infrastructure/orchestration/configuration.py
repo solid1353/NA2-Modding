@@ -20,7 +20,6 @@ SOURCE_BOOT_PATH = "SLPS_258.37"
 SYSTEM_CNF_PATH = "SYSTEM.CNF"
 PRODUCT_ROOT_ALIASES = {
     "na2": "source_na2",
-    "nun5": "source_nun5",
 }
 MODULE_TYPE_ORDER = (
     "translation_importer",
@@ -34,9 +33,7 @@ TRANSLATION_IMPORTER_CONTROL_FILES = (
     "mappings.tsv",
 )
 TEXTURE_PATCHER_CONTROL_FILES = (
-    "containers.tsv",
-    "mappings.tsv",
-    "strategies.tsv",
+    "assets.tsv",
 )
 
 
@@ -240,7 +237,16 @@ def _module_content_files(path: Path, module_type: str) -> list[Path]:
         "translation_importer": TRANSLATION_IMPORTER_CONTROL_FILES,
         "texture_patcher": TEXTURE_PATCHER_CONTROL_FILES,
     }[module_type]
-    return _required_files(path, names, f"{module_type} module")
+    files = _required_files(path, names, f"{module_type} module")
+    if module_type == "texture_patcher":
+        asset_root = path / "assets"
+        assets = sorted(asset_root.glob("*.ccs.gz"))
+        if not assets:
+            raise FileNotFoundError(
+                f"texture_patcher module has no localized CCS assets: {asset_root}"
+            )
+        files.extend(assets)
+    return files
 
 
 def module_content_sha256(path: Path, module_type: str) -> str:

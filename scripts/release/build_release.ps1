@@ -121,7 +121,7 @@ configuration = load_configuration(
     repository,
     paths.path("builder"),
     project_paths=paths,
-    root_overrides={"na2": marker, "nun5": marker},
+    root_overrides={"na2": marker},
 )
 excluded = {Path(sys.argv[2]).resolve()}
 if configuration.selection.base_configuration_path is not None:
@@ -207,7 +207,7 @@ raise SystemExit(main())
     $env:PYINSTALLER_CONFIG_DIR = $cacheRoot
     $baseName = [IO.Path]::GetFileNameWithoutExtension($executableName)
     $addData = "${resourceRoot}:."
-    & $python -B -m PyInstaller --noconfirm --clean --onefile --console --noupx --name $baseName --icon $iconPath --paths $repository --add-data $addData --collect-all zopfli --hidden-import na228_builder.infrastructure.orchestration.release_runtime --distpath $distRoot --workpath (Join-Path $workRoot 'work') --specpath $specRoot $bootstrap
+    & $python -B -m PyInstaller --noconfirm --clean --onefile --console --noupx --name $baseName --icon $iconPath --paths $repository --add-data $addData --hidden-import na228_builder.infrastructure.orchestration.release_runtime --distpath $distRoot --workpath (Join-Path $workRoot 'work') --specpath $specRoot $bootstrap
     if ($LASTEXITCODE -ne 0) { throw 'PyInstaller failed.' }
 
     $built = Join-Path $distRoot $executableName

@@ -49,7 +49,8 @@ integrated catalog data.
   `infrastructure/modules/binary_patcher/operations/*.tsv` defines primitive binary
   operations.
 - `patches/localization/` owns Font assets under `font/glyphs/`,
-  translations under `strings/`, and UI texture inputs under `ui/`.
+  translations under `strings/`, and the reviewed compressed UI texture assets
+  and pack metadata under `ui/`.
   `features.localization.ui` selects its layout and texture work atomically.
 - `infrastructure/orchestration/` owns builder orchestration and shared builder
   utilities. Reusable engines and their code-only contracts live under
@@ -143,6 +144,8 @@ separately selected module or file-backed interface.
 Selected injection payload declarations are compiled and linked into the shared
 resident `PRG/228.BIN`; resolved hooks then become guarded in-memory binary
 replacements. The binary patcher applies selected edits last.
+The texture-patcher verifies the selected checked-in CCS assets and inserts one
+indexed `PRG/UI228.BIN`; it does not alter the source `DATA/DATA.CVM`.
 
 ## Resource fingerprinting
 
@@ -213,9 +216,9 @@ When [`NA228_TASK_WORK_ROOT`](../AGENTS.md#file-and-folder-management)
 is set, builds keep their operational and structured records below the acting
 chat's `logs/` directory.
 
-Preflight fingerprints both canonical source ISOs, ISO-composing Python code,
+Preflight fingerprints the canonical NA2 source ISO, ISO-composing Python code,
 the exact selected configuration resources, product/path configuration, active
-Python/Zlib/Zopfli versions, and the EE compiler components whenever selected C
+Python/Zlib versions, and the EE compiler components whenever selected C
 sources require them. `infrastructure/orchestration/module_pipeline.py` prepares
 internal invocations and shared payload contributions;
 `infrastructure/orchestration/build_configuration.py` composes them;

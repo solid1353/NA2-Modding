@@ -80,7 +80,6 @@ $registryArguments = @{
     Repository = $paths.repository
     PythonRunner = $pythonRunner
     Na2Iso = $paths.files.na2_iso
-    Nun5Iso = $paths.files.nun5_iso
     Configuration = $configurationRelative
 }
 $verification = Invoke-Na2BuildRegistry -Command lookup @registryArguments

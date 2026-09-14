@@ -1,23 +1,19 @@
 # Narutimate Accel v2.28
 
-This builder creates `Narutimate Accel v2.28.iso` from supported clean copies
-of *Naruto Shippuuden: Narutimate Accel 2* and *Naruto Shippuden: Ultimate
-Ninja 5*.
+This builder creates `Narutimate Accel v2.28.iso` from a supported clean copy
+of *Naruto Shippuuden: Narutimate Accel 2*.
 
 ## Use it
 
 1. Extract all five release files into one directory.
-2. Put one supported clean NA2 ISO in that directory. If
-   `features.localization.ui` is enabled in `config.jsonc`, also put one
-   supported clean Ultimate Ninja 5 ISO there. English UI textures and their
-   matching layout/runtime patches are selected together. Their filenames do
-   not matter. A build with UI disabled needs only NA2.
+2. Put one supported clean NA2 ISO in that directory. Its filename does not
+   matter. The reviewed English UI textures are embedded in the builder.
 3. Edit `config.jsonc` if you want to change the selected features. Comments
    and trailing commas are supported. Edit
    `character_overrides.tsv` if you want to change per-character battle values.
 4. Double-click the EXE.
 
-The builder identifies both source ISOs by size and SHA-256, applies the
+The builder identifies the source ISO by size and SHA-256, applies the
 selected changes, verifies the complete result, and then creates or replaces
 `Narutimate Accel v2.28.iso`. If the build fails, it preserves an existing
 output and removes only its temporary `.building` file.

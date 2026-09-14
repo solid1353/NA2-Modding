@@ -7,58 +7,15 @@ from types import SimpleNamespace
 from unittest import mock
 
 from na228_builder.infrastructure.orchestration import release_runtime
-from scripts.lib.paths import load_local_paths
 
 
 class ReleaseRuntimeTests(unittest.TestCase):
-    def test_required_images_follow_texture_patcher_selection(self) -> None:
-        without_textures = SimpleNamespace(
-            modules=(SimpleNamespace(module="translation_importer"),)
-        )
-        with_textures = SimpleNamespace(
-            modules=(
-                SimpleNamespace(module="translation_importer"),
-                SimpleNamespace(module="texture_patcher"),
-            )
-        )
-
+    def test_required_images_are_na2_only(self) -> None:
+        configuration = SimpleNamespace(modules=(SimpleNamespace(),))
         self.assertEqual(
             ("na2",),
-            release_runtime.required_release_image_ids(without_textures),
+            release_runtime.required_release_image_ids(configuration),
         )
-        self.assertEqual(
-            ("na2", "nun5"),
-            release_runtime.required_release_image_ids(with_textures),
-        )
-
-    def test_application_cache_root_uses_configured_root(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            workspace = root / "workspace"
-            application = root / "application"
-            workspace.mkdir()
-            application.mkdir()
-            (workspace / "paths.json").write_text(
-                '{"roots":{"build":"build","cache":"@build/cache"},'
-                '"files":{"project_settings":"game.json"}}',
-                encoding="utf-8",
-            )
-            configured = load_local_paths(workspace, allow_missing=True)
-            expected = application / configured.path("cache").relative_to(
-                configured.repository
-            )
-
-            with (
-                mock.patch.object(
-                    release_runtime, "packaged_workspace", return_value=workspace
-                ),
-                mock.patch.object(
-                    release_runtime,
-                    "application_directory",
-                    return_value=application,
-                ),
-            ):
-                self.assertEqual(expected, release_runtime.application_cache_root())
 
     def test_packaged_release_requires_precompiled_assembly_object(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

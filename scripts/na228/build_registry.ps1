@@ -10,7 +10,6 @@ function Invoke-Na2BuildRegistry {
         [Parameter(Mandatory)][string]$Repository,
         [Parameter(Mandatory)][string]$PythonRunner,
         [string]$Na2Iso,
-        [string]$Nun5Iso,
         [string]$Configuration,
         [string]$ConfigurationId,
         [string]$ExpectedFingerprint,
@@ -23,7 +22,6 @@ function Invoke-Na2BuildRegistry {
     if ($Command -in @('lookup', 'record')) {
         $arguments += @(
             '--na2-iso', $Na2Iso,
-            '--nun5-iso', $Nun5Iso,
             '--configuration', $Configuration
         )
     }

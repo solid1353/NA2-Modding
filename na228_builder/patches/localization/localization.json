@@ -3632,6 +3632,62 @@
     },
     "description": "Use the official NUN5 Command Chart character-name width cap and center while retaining NA2's selected localized name rectangle.",
     "hooks": {
+      "external_texture_persistent_open": {
+        "description": "Open localized persistent CCS requests from the external texture pack while preserving native DATA.CVM handling for every other path.",
+        "target_id": "na2_elf",
+        "offset": "0xCE168",
+        "expected_hex": "14F9060C",
+        "symbol": "localization_ui_texture_open",
+        "encoding": "jal26"
+      },
+      "external_texture_persistent_gzip_size": {
+        "description": "Supply the checked-in localized CCS decompressed size to the persistent loader.",
+        "target_id": "na2_elf",
+        "offset": "0xCE18C",
+        "expected_hex": "6CFA060C",
+        "symbol": "localization_ui_texture_gzip_size",
+        "encoding": "jal26"
+      },
+      "external_texture_persistent_file_size": {
+        "description": "Limit each persistent external-pack read to its indexed CCS member.",
+        "target_id": "na2_elf",
+        "offset": "0xCE20C",
+        "expected_hex": "F0F9060C",
+        "symbol": "localization_ui_texture_file_size",
+        "encoding": "jal26"
+      },
+      "external_texture_one_shot_open": {
+        "description": "Open localized one-shot CCS requests from the external texture pack while preserving native DATA.CVM handling for every other path.",
+        "target_id": "na2_elf",
+        "offset": "0xCF574",
+        "expected_hex": "14F9060C",
+        "symbol": "localization_ui_texture_open",
+        "encoding": "jal26"
+      },
+      "external_texture_one_shot_gzip_size": {
+        "description": "Supply the checked-in localized CCS decompressed size to the one-shot loader.",
+        "target_id": "na2_elf",
+        "offset": "0xCF584",
+        "expected_hex": "6CFA060C",
+        "symbol": "localization_ui_texture_gzip_size",
+        "encoding": "jal26"
+      },
+      "external_texture_read_worker_file_size": {
+        "description": "Limit the one-shot read worker to the indexed CCS member instead of the complete external pack.",
+        "target_id": "na2_elf",
+        "offset": "0xCF1AC",
+        "expected_hex": "F0F9060C",
+        "symbol": "localization_ui_texture_file_size",
+        "encoding": "jal26"
+      },
+      "external_texture_one_shot_file_size": {
+        "description": "Preserve correct raw-size handling when the one-shot loader falls back to native files.",
+        "target_id": "na2_elf",
+        "offset": "0xCF790",
+        "expected_hex": "F0F9060C",
+        "symbol": "localization_ui_texture_file_size",
+        "encoding": "jal26"
+      },
       "draw_localized_command_chart_name": {
         "description": "Scale names wider than 172 pixels and center every localized name at NUN5's X=150 anchor.",
         "target_id": "na2_btl",
@@ -3796,6 +3852,41 @@
       }
     },
     "payload": {
+      "external_textures": {
+        "kind": "c",
+        "path": "na228_builder/patches/localization/ui/external_textures.c",
+        "namespace": "localization.ui.external.textures",
+        "imports": {},
+        "fragments": {
+          "localization_ui_texture_runtime": {
+            "object": "localization.ui.external.textures.text"
+          },
+          "localization_ui_texture_pack_path": {
+            "object": "localization.ui.external.textures.rodata.localization.ui.texture.pack.path"
+          },
+          "localization_ui_texture_pack_index": {
+            "object": "localization.ui.external.textures.bss.localization.ui.texture.pack.index"
+          },
+          "localization_ui_texture_pack_state": {
+            "object": "localization.ui.external.textures.bss.localization.ui.texture.pack.state"
+          },
+          "localization_ui_texture_pack_count": {
+            "object": "localization.ui.external.textures.bss.localization.ui.texture.pack.count"
+          },
+          "localization_ui_texture_pack_handles": {
+            "object": "localization.ui.external.textures.bss.localization.ui.texture.pack.handles"
+          },
+          "localization_ui_texture_open": {
+            "object": "localization.ui.external.textures.text.localization.ui.texture.open"
+          },
+          "localization_ui_texture_gzip_size": {
+            "object": "localization.ui.external.textures.text.localization.ui.texture.gzip.size"
+          },
+          "localization_ui_texture_file_size": {
+            "object": "localization.ui.external.textures.text.localization.ui.texture.file.size"
+          }
+        }
+      },
       "command_chart_layout": {
         "kind": "c",
         "path": "na228_builder/patches/localization/ui/command_chart_layout.c",

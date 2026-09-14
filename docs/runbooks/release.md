@@ -3,13 +3,12 @@
 The release process produces one Windows x64 ZIP containing the console EXE,
 an editable default configuration, editable character overrides, an inert
 catalog reference, and end-user instructions. End users need no Python
-installation and supply only one exact clean NA2 ISO and one exact clean NUN5
-ISO.
+installation and supply one exact clean NA2 ISO.
 
 ## End-user contract
 
 1. Extract the complete ZIP into one directory.
-2. Put the two supported clean ISOs in that directory. ISO filenames do not
+2. Put the supported clean NA2 ISO in that directory. Its filename does not
    matter.
 3. Optionally edit `config.jsonc`. `//` and `/* ... */` comments and trailing
    commas are accepted. A bare setting uses `true` or `false`; a
@@ -26,17 +25,17 @@ ISO.
    overrides against its embedded catalog and character reference before
    hashing either ISO.
 6. The program scans sibling `*.iso` files non-recursively, excluding the
-   reserved output and staging names, then identifies NA2 and NUN5 by size and
-   streaming SHA-256.
+   reserved output and staging names, then identifies NA2 by size and streaming
+   SHA-256.
 7. It refuses missing or duplicate supported source images, modified inputs,
    unsupported hashes, or an existing
    `Narutimate Accel v2.28.iso.building`.
-8. It locks both inputs read-only and hashes them again after locking.
+8. It locks the input read-only and hashes it again after locking.
 9. It applies the selected configuration, creates
    `Narutimate Accel v2.28.iso.building`, verifies the complete staged image and
    its size, then atomically creates or replaces
    `Narutimate Accel v2.28.iso`.
-10. It never modifies either input, preserves an existing output when a build
+10. It never modifies the input, preserves an existing output when a build
     fails, removes its staging file after failure, and waits for Enter before
     closing. A failed run creates or replaces `builder-error.log` with the
     complete exception and traceback. Successful and cancelled runs create no
@@ -53,9 +52,10 @@ patch and implementation detail, and distributes it only as a readable reference
 executable never reads that external reference. The executable embeds the
 interpreter, builder engines, catalog, resources for the complete selectable
 catalog rather than only the default selection, payload-builder configuration,
-precompiled objects for injection-owned runtime C and assembly sources, and Zopfli runtime.
-It does not embed the project PS2 toolchain, source ISOs, extracted source trees,
-or derived game payloads.
+precompiled objects for injection-owned runtime C and assembly sources, and the
+reviewed localized CCS assets used to construct
+`PRG/UI228.BIN`. It does not embed the project PS2 toolchain, source ISOs, or
+extracted source trees.
 
 ## Developer build
 
@@ -94,8 +94,6 @@ output image is `<product>.iso`. The pinned source identities are:
 
 - NA2: 1,928,429,568 bytes,
   SHA-256 `CA105F7BDBEEAA3275F871C9702B9C77ED985CE140FAE8EAC28CB153E263D0C3`
-- NUN5: 1,926,234,112 bytes,
-  SHA-256 `2E1B9A885F4E94E6B8C4204F139C53ABD568FE49D6521D4D8921FE9460C07BFF`
 
 The maintained publication command performs the version update and complete
 Git/tag sequence:
@@ -116,8 +114,8 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
   discovery, hashing, locking, staging cleanup, atomic output replacement,
   console messages, and the Enter pause.
 - `@builder/infrastructure/orchestration/release_runtime.py` loads the sibling configuration against the
-  embedded catalog with the two verified source ISOs as root overrides and calls
-  the ordinary configuration builder without runtime logs.
+  embedded catalog with the verified NA2 source ISO as its root override and
+  calls the ordinary configuration builder without runtime logs.
 - `@builder/infrastructure/orchestration/source_media.py` gives engines one read-only boundary for files
   from either extracted roots or original ISOs.
 - `@builder/infrastructure/orchestration/cvm.py` reads encrypted `DATA.CVM` members directly using the

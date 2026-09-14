@@ -39,7 +39,6 @@ class ConfigurationTests(unittest.TestCase):
         self.create_module(localization, "texture_patcher")
         source.mkdir()
         (source / "NA2.iso.files").mkdir()
-        (source / "NUN5.iso.files").mkdir()
         configurations.mkdir()
         build.mkdir()
         for directory in (
@@ -76,10 +75,6 @@ class ConfigurationTests(unittest.TestCase):
                             "serial": "SLPS-25837",
                             "crc": "C0659AD1",
                         },
-                        "NUN5": {
-                            "serial": "SLES-55605",
-                            "crc": "C071D4C1",
-                        },
                     },
                 }
             ),
@@ -93,8 +88,10 @@ class ConfigurationTests(unittest.TestCase):
         if module_type == "translation_importer":
             (module / "mappings.tsv").write_text("id\n", encoding="utf-8")
         elif module_type == "texture_patcher":
-            for name in ("containers.tsv", "mappings.tsv", "strategies.tsv"):
-                (module / name).write_text("id\n", encoding="utf-8")
+            (module / "assets.tsv").write_text("id\n", encoding="utf-8")
+            assets = module / "assets"
+            assets.mkdir(exist_ok=True)
+            (assets / "sample.ccs.gz").write_bytes(b"asset")
         else:
             self.fail(f"unsupported test module {module_type}")
         return module
@@ -167,7 +164,7 @@ class ConfigurationTests(unittest.TestCase):
             enabled_modules: list[str] = []
             if (enabled_inputs / "mappings.tsv").is_file():
                 enabled_modules.append("translation_importer")
-            if (enabled_inputs / "containers.tsv").is_file():
+            if (enabled_inputs / "assets.tsv").is_file():
                 enabled_modules.append("texture_patcher")
             enabled_modules = [
                 module
@@ -523,7 +520,7 @@ class ConfigurationTests(unittest.TestCase):
             )
             optional_inputs = {
                 (builder / "patches" / "localization" / "enabled" / name).resolve()
-                for name in ("containers.tsv", "mappings.tsv", "strategies.tsv")
+                for name in ("assets.tsv", "assets/sample.ccs.gz")
             }
             self.assertTrue(optional_inputs.isdisjoint(selected))
             self.assertTrue(optional_inputs <= complete)

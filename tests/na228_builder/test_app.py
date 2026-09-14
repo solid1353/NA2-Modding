@@ -29,7 +29,7 @@ class ReleaseAppTests(unittest.TestCase):
             hashlib.sha256(data).hexdigest().upper(),
         )
 
-    def manifest(self, na2: bytes, nun5: bytes) -> ReleaseManifest:
+    def manifest(self, na2: bytes) -> ReleaseManifest:
         return ReleaseManifest(
             product_name="Narutimate Accel v2.28",
             product_version="v-test",
@@ -37,10 +37,7 @@ class ReleaseAppTests(unittest.TestCase):
             output_name="Narutimate Accel v2.28.iso",
             configuration="builder/configurations/synthetic.jsonc",
             configuration_name="config.jsonc",
-            images=(
-                self.image("na2", "original NA2 ISO", na2),
-                self.image("nun5", "original NUN5 ISO", nun5),
-            ),
+            images=(self.image("na2", "original NA2 ISO", na2),),
         )
 
     def write_configuration(self, root: Path, value: object | None = None) -> Path:
@@ -67,12 +64,6 @@ class ReleaseAppTests(unittest.TestCase):
                     "label": "original NA2 ISO",
                     "size": 10,
                     "sha256": "ab" * 32,
-                },
-                {
-                    "id": "nun5",
-                    "label": "original NUN5 ISO",
-                    "size": 11,
-                    "sha256": "cd" * 32,
                 },
             ],
         }
@@ -105,12 +96,6 @@ class ReleaseAppTests(unittest.TestCase):
                     "size": 1,
                     "sha256": "11" * 32,
                 },
-                {
-                    "id": "nun5",
-                    "label": "NUN5",
-                    "size": 2,
-                    "sha256": "22" * 32,
-                },
             ],
         }
         with self.assertRaisesRegex(ReleaseError, "executable_name"):
@@ -118,11 +103,9 @@ class ReleaseAppTests(unittest.TestCase):
 
     def test_discovery_is_nonrecursive_case_insensitive_and_hash_pinned(self) -> None:
         na2 = b"clean-na2"
-        nun5 = b"clean-nun5"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "renamed.ISO").write_bytes(na2)
-            (root / "donor.iSo").write_bytes(nun5)
             (root / "unrelated.iso").write_bytes(b"wrong size")
             nested = root / "nested"
             nested.mkdir()
@@ -131,53 +114,46 @@ class ReleaseAppTests(unittest.TestCase):
             messages: list[str] = []
             selected = identify_supported_images(
                 root,
-                self.manifest(na2, nun5).images,
+                self.manifest(na2).images,
                 emit=messages.append,
             )
 
             self.assertEqual(selected["na2"].name, "renamed.ISO")
-            self.assertEqual(selected["nun5"].name, "donor.iSo")
             self.assertTrue(any("[OK] original NA2 ISO" in line for line in messages))
 
     def test_same_size_wrong_hash_is_rejected(self) -> None:
         na2 = b"clean-na2"
-        nun5 = b"clean-nun5"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "NA2.iso").write_bytes(b"dirty-na2")
-            (root / "NUN5.iso").write_bytes(nun5)
 
             with self.assertRaisesRegex(ReleaseError, "supported original NA2 ISO"):
                 identify_supported_images(
                     root,
-                    self.manifest(na2, nun5).images,
+                    self.manifest(na2).images,
                     emit=lambda _message: None,
                 )
 
     def test_duplicate_supported_iso_is_rejected(self) -> None:
         na2 = b"clean-na2"
-        nun5 = b"clean-nun5"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "NA2 A.iso").write_bytes(na2)
             (root / "NA2 B.ISO").write_bytes(na2)
-            (root / "NUN5.iso").write_bytes(nun5)
 
             with self.assertRaisesRegex(ReleaseError, "multiple copies"):
                 identify_supported_images(
                     root,
-                    self.manifest(na2, nun5).images,
+                    self.manifest(na2).images,
                     emit=lambda _message: None,
                 )
 
     def test_configuration_failures_happen_before_iso_hashing(self) -> None:
         na2 = b"clean-na2"
-        nun5 = b"clean-nun5"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "NA2.iso").write_bytes(na2)
-            (root / "NUN5.iso").write_bytes(nun5)
-            manifest = self.manifest(na2, nun5)
+            manifest = self.manifest(na2)
 
             with mock.patch("na228_builder.infrastructure.orchestration.app.file_sha256") as hash_file:
                 with self.assertRaisesRegex(ReleaseError, "Configuration is missing"):
@@ -236,29 +212,25 @@ class ReleaseAppTests(unittest.TestCase):
 
     def test_success_promotes_building_iso_and_preserves_inputs(self) -> None:
         na2 = b"clean-na2"
-        nun5 = b"clean-nun5"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             na2_path = root / "anything.iso"
-            nun5_path = root / "something.ISO"
             na2_path.write_bytes(na2)
-            nun5_path.write_bytes(nun5)
             configuration_path = self.write_configuration(root)
-            calls: list[tuple[Path, Path, Path, Path]] = []
+            calls: list[tuple[Path, Path, Path]] = []
 
             def builder(
                 source_na2: Path,
-                source_nun5: Path,
                 configuration: Path,
                 building: Path,
                 _emit,
             ) -> None:
-                calls.append((source_na2, source_nun5, configuration, building))
+                calls.append((source_na2, configuration, building))
                 building.write_bytes(na2)
 
             output = run_release(
                 root,
-                self.manifest(na2, nun5),
+                self.manifest(na2),
                 builder,
                 emit=lambda _message: None,
             )
@@ -272,62 +244,24 @@ class ReleaseAppTests(unittest.TestCase):
                 (root / "Narutimate Accel v2.28.iso.building").exists()
             )
             self.assertEqual(na2_path.read_bytes(), na2)
-            self.assertEqual(nun5_path.read_bytes(), nun5)
             self.assertEqual(
-                calls[0][:2],
-                (na2_path.resolve(), nun5_path.resolve()),
+                calls[0][0],
+                na2_path.resolve(),
             )
-            self.assertEqual(calls[0][2], configuration_path.resolve())
-
-    def test_nun5_is_not_required_without_texture_patcher(self) -> None:
-        na2 = b"clean-na2"
-        nun5 = b"clean-nun5"
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            na2_path = root / "NA2.iso"
-            na2_path.write_bytes(na2)
-            configuration_path = self.write_configuration(root)
-            calls: list[tuple[Path, Path | None, Path]] = []
-
-            def builder(
-                source_na2: Path,
-                source_nun5: Path | None,
-                configuration: Path,
-                building: Path,
-                _emit,
-            ) -> None:
-                calls.append((source_na2, source_nun5, configuration))
-                building.write_bytes(na2)
-
-            output = run_release(
-                root,
-                self.manifest(na2, nun5),
-                builder,
-                configuration_validator=lambda _path: ("na2",),
-                emit=lambda _message: None,
-            )
-
-            self.assertEqual(output.read_bytes(), na2)
-            self.assertEqual(
-                calls,
-                [(na2_path.resolve(), None, configuration_path.resolve())],
-            )
+            self.assertEqual(calls[0][1], configuration_path.resolve())
 
     def test_existing_output_is_replaced_and_ignored_during_source_discovery(self) -> None:
         na2 = b"clean-na2"
-        nun5 = b"clean-nun5"
         replacement = b"built-na2"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "NA2.iso").write_bytes(na2)
-            (root / "NUN5.iso").write_bytes(nun5)
             output = root / "Narutimate Accel v2.28.iso"
             output.write_bytes(na2)
             self.write_configuration(root)
 
             def builder(
                 _na2: Path,
-                _nun5: Path,
                 _configuration: Path,
                 building: Path,
                 _emit,
@@ -336,7 +270,7 @@ class ReleaseAppTests(unittest.TestCase):
 
             result = run_release(
                 root,
-                self.manifest(na2, nun5),
+                self.manifest(na2),
                 builder,
                 emit=lambda _message: None,
             )
@@ -348,11 +282,9 @@ class ReleaseAppTests(unittest.TestCase):
 
     def test_existing_building_path_is_refused_before_builder(self) -> None:
         na2 = b"clean-na2"
-        nun5 = b"clean-nun5"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "NA2.iso").write_bytes(na2)
-            (root / "NUN5.iso").write_bytes(nun5)
             building = root / "Narutimate Accel v2.28.iso.building"
             building.write_bytes(b"keep")
             self.write_configuration(root)
@@ -365,7 +297,7 @@ class ReleaseAppTests(unittest.TestCase):
             with self.assertRaisesRegex(ReleaseError, "already exists"):
                 run_release(
                     root,
-                    self.manifest(na2, nun5),
+                    self.manifest(na2),
                     builder,
                     emit=lambda _message: None,
                 )
@@ -374,18 +306,15 @@ class ReleaseAppTests(unittest.TestCase):
 
     def test_builder_failure_removes_only_new_temporary_output(self) -> None:
         na2 = b"clean-na2"
-        nun5 = b"clean-nun5"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "NA2.iso").write_bytes(na2)
-            (root / "NUN5.iso").write_bytes(nun5)
             output = root / "Narutimate Accel v2.28.iso"
             output.write_bytes(b"previous")
             self.write_configuration(root)
 
             def builder(
                 _na2: Path,
-                _nun5: Path,
                 _configuration: Path,
                 building: Path,
                 _emit,
@@ -396,7 +325,7 @@ class ReleaseAppTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "synthetic failure"):
                 run_release(
                     root,
-                    self.manifest(na2, nun5),
+                    self.manifest(na2),
                     builder,
                     emit=lambda _message: None,
                 )
@@ -408,11 +337,9 @@ class ReleaseAppTests(unittest.TestCase):
 
     def test_selected_inputs_are_rechecked_after_locking(self) -> None:
         na2 = b"clean-na2"
-        nun5 = b"clean-nun5"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "NA2.iso").write_bytes(na2)
-            (root / "NUN5.iso").write_bytes(nun5)
             self.write_configuration(root)
             real_identify = identify_supported_images
             called = False
@@ -433,7 +360,7 @@ class ReleaseAppTests(unittest.TestCase):
                 with self.assertRaisesRegex(ReleaseError, "changed after identification"):
                     run_release(
                         root,
-                        self.manifest(na2, nun5),
+                        self.manifest(na2),
                         builder,
                         emit=lambda _message: None,
                     )
@@ -441,16 +368,13 @@ class ReleaseAppTests(unittest.TestCase):
 
     def test_wrong_size_build_is_rejected_and_cleaned(self) -> None:
         na2 = b"clean-na2"
-        nun5 = b"clean-nun5"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "NA2.iso").write_bytes(na2)
-            (root / "NUN5.iso").write_bytes(nun5)
             self.write_configuration(root)
 
             def builder(
                 _na2: Path,
-                _nun5: Path,
                 _configuration: Path,
                 building: Path,
                 _emit,
@@ -460,7 +384,7 @@ class ReleaseAppTests(unittest.TestCase):
             with self.assertRaisesRegex(ReleaseError, "wrong size"):
                 run_release(
                     root,
-                    self.manifest(na2, nun5),
+                    self.manifest(na2),
                     builder,
                     emit=lambda _message: None,
                 )
@@ -471,37 +395,32 @@ class ReleaseAppTests(unittest.TestCase):
 
     def test_missing_build_output_is_reported(self) -> None:
         na2 = b"clean-na2"
-        nun5 = b"clean-nun5"
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             (root / "NA2.iso").write_bytes(na2)
-            (root / "NUN5.iso").write_bytes(nun5)
             self.write_configuration(root)
 
             with self.assertRaisesRegex(ReleaseError, "did not produce"):
                 run_release(
                     root,
-                    self.manifest(na2, nun5),
+                    self.manifest(na2),
                     lambda *_args: None,
                     emit=lambda _message: None,
                 )
 
     def test_main_writes_failure_log_and_keeps_traceback_out_of_console(self) -> None:
         na2 = b"clean-na2"
-        nun5 = b"clean-nun5"
         for should_fail in (False, True):
             with self.subTest(should_fail=should_fail):
                 with tempfile.TemporaryDirectory() as directory:
                     root = Path(directory)
                     (root / "NA2.iso").write_bytes(na2)
-                    (root / "NUN5.iso").write_bytes(nun5)
                     self.write_configuration(root)
                     prompts: list[str] = []
                     messages: list[str] = []
 
                     def builder(
                         _na2: Path,
-                        _nun5: Path,
                         _configuration: Path,
                         building: Path,
                         _emit,
@@ -512,7 +431,7 @@ class ReleaseAppTests(unittest.TestCase):
 
                     code = main(
                         directory=root,
-                        manifest=self.manifest(na2, nun5),
+                        manifest=self.manifest(na2),
                         builder=builder,
                         emit=messages.append,
                         read=lambda prompt: prompts.append(prompt) or "",

@@ -3,7 +3,6 @@ from __future__ import annotations
 import argparse
 import contextlib
 import hashlib
-import importlib.metadata
 import json
 import os
 import platform
@@ -18,7 +17,7 @@ from scripts.lib.paths import load_paths
 
 
 REGISTRY_SCHEMA_VERSION = 3
-FINGERPRINT_SCHEMA_VERSION = 11
+FINGERPRINT_SCHEMA_VERSION = 12
 SHA256_HEX_LENGTH = 64
 MAX_IMAGES = 15
 ISO_NAME_PREFIX = "NA v2.28"
@@ -200,16 +199,11 @@ def ee_toolchain_entry(workspace: Path) -> dict[str, object]:
 
 
 def dependency_versions() -> dict[str, str]:
-    try:
-        zopfli_version = importlib.metadata.version("zopfli")
-    except importlib.metadata.PackageNotFoundError:
-        zopfli_version = "missing"
     return {
         "python_implementation": platform.python_implementation(),
         "python_version": platform.python_version(),
         "zlib_compile_version": zlib.ZLIB_VERSION,
         "zlib_runtime_version": zlib.ZLIB_RUNTIME_VERSION,
-        "zopfli_version": zopfli_version,
     }
 
 
@@ -217,13 +211,11 @@ def collect_build_state(
     *,
     workspace: Path,
     na2_iso: Path,
-    nun5_iso: Path,
     configuration_path: Path,
     dependencies: dict[str, str] | None = None,
 ) -> dict[str, object]:
     workspace = workspace.resolve()
     na2_iso = na2_iso.resolve()
-    nun5_iso = nun5_iso.resolve()
     configuration_path = configuration_path.resolve()
     builder = load_paths(workspace).path("builder").resolve()
     try:
@@ -237,7 +229,6 @@ def collect_build_state(
         "fingerprint_schema_version": FINGERPRINT_SCHEMA_VERSION,
         "source_isos": [
             _file_entry(f"source/{na2_iso.name}", na2_iso),
-            _file_entry(f"source/{nun5_iso.name}", nun5_iso),
         ],
         "builder_tree": builder_tree_entry(builder),
         "configuration_resources": resources,
@@ -716,7 +707,6 @@ def main() -> int:
     for name in ("lookup", "record"):
         command = subparsers.add_parser(name)
         command.add_argument("--na2-iso", required=True, type=Path)
-        command.add_argument("--nun5-iso", required=True, type=Path)
         command.add_argument("--configuration", required=True, type=Path)
         command.add_argument("--registry", required=True, type=Path)
         command.add_argument("--cache-root", required=True, type=Path)
@@ -737,7 +727,6 @@ def main() -> int:
         state = collect_build_state(
             workspace=workspace,
             na2_iso=args.na2_iso,
-            nun5_iso=args.nun5_iso,
             configuration_path=_configuration_path(args.configuration, workspace),
         )
         if args.command == "lookup":

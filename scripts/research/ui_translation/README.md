@@ -177,3 +177,20 @@ python scripts/research/ui_translation/match_assembly_function.py `
   FUN_006bcfd0 `
   "work/UI translation/disassembly_refs/NUN5/BTL/BTL.BIN.txt"
 ```
+
+## UI texture authoring
+
+`texture_derivation.py` owns the source-game CCS parser, mapped texture
+derivation, exact-size compression, and preview output used when intentionally
+authoring new localized UI assets. It is research tooling and is never imported
+by the builder. Run it through the maintained Python wrapper:
+
+```powershell
+& scripts/lib/run_python.ps1 `
+  -PackageSet ui_texture_research `
+  -Module scripts.research.ui_translation.texture_derivation `
+  -ArgumentList @(
+    'verify',
+    '--package', 'scripts/research/ui_translation/ui_texture_data'
+  )
+```

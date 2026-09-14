@@ -17,12 +17,12 @@ from typing import Callable, Iterable
 
 RELEASE_MANIFEST_NAME = "release_manifest.json"
 SETTINGS_NAME = "game.json"
-REQUIRED_IMAGE_IDS = ("na2", "nun5")
+REQUIRED_IMAGE_IDS = ("na2",)
 HASH_CHUNK_SIZE = 8 * 1024 * 1024
 ERROR_LOG_NAME = "builder-error.log"
 
 Emit = Callable[[str], None]
-ReleaseBuilder = Callable[[Path, Path | None, Path, Path, Emit], None]
+ReleaseBuilder = Callable[[Path, Path, Path, Emit], None]
 ReleaseConfigurationValidator = Callable[[Path], Iterable[str] | None]
 
 
@@ -177,7 +177,7 @@ def parse_release_manifest(text: str, *, product_name: str) -> ReleaseManifest:
         if extra:
             details.append("unexpected " + ", ".join(extra))
         raise ReleaseError(
-            "Release manifest must define exactly NA2 and NUN5 ("
+            "Release manifest must define exactly NA2 ("
             + "; ".join(details)
             + ")"
         )
@@ -443,14 +443,13 @@ def _remove_staging(path: Path) -> OSError | None:
 
 def _runtime_builder(
     na2_iso: Path,
-    nun5_iso: Path | None,
     configuration_path: Path,
     building_iso: Path,
     emit: Emit,
 ) -> None:
     from .release_runtime import build_release_iso
 
-    build_release_iso(na2_iso, nun5_iso, configuration_path, building_iso, emit)
+    build_release_iso(na2_iso, configuration_path, building_iso, emit)
 
 
 def _runtime_configuration_validator(configuration_path: Path) -> tuple[str, ...]:
@@ -544,7 +543,6 @@ def run_release(
             emit(f"Building {manifest.output_name}...")
             builder(
                 selected["na2"],
-                selected.get("nun5"),
                 configuration_path,
                 building_iso,
                 emit,

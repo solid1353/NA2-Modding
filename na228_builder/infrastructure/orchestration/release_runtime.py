@@ -18,17 +18,9 @@ def packaged_workspace() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def application_cache_root() -> Path:
-    """Map the configured cache root onto the release application directory."""
-    paths = load_local_paths(packaged_workspace(), allow_missing=True)
-    relative_cache = paths.path("cache").relative_to(paths.repository)
-    return application_directory() / relative_cache
-
-
 def load_release_configuration(
     configuration_path: Path,
     na2_iso: Path,
-    nun5_iso: Path | None,
 ) -> tuple[Path, BuildConfiguration]:
     workspace = packaged_workspace()
     paths = load_local_paths(workspace, allow_missing=True)
@@ -45,8 +37,6 @@ def load_release_configuration(
         )
 
     root_overrides = {"na2": na2_iso}
-    if nun5_iso is not None:
-        root_overrides["nun5"] = nun5_iso
     configuration = load_configuration(
         configuration_path,
         workspace,
@@ -64,10 +54,7 @@ def load_release_configuration(
 def required_release_image_ids(
     configuration: BuildConfiguration,
 ) -> tuple[str, ...]:
-    image_ids = ["na2"]
-    if any(module.module == "texture_patcher" for module in configuration.modules):
-        image_ids.append("nun5")
-    return tuple(image_ids)
+    return ("na2",)
 
 
 def validate_release_configuration(configuration_path: Path) -> tuple[str, ...]:
@@ -76,7 +63,7 @@ def validate_release_configuration(configuration_path: Path) -> tuple[str, ...]:
     marker = load_local_paths(workspace, allow_missing=True).path(
         "builder", "release_manifest.json"
     )
-    _, configuration = load_release_configuration(configuration_path, marker, marker)
+    _, configuration = load_release_configuration(configuration_path, marker)
     if not configuration.modules:
         raise RuntimeError("Release configuration has no module invocations")
     return required_release_image_ids(configuration)
@@ -92,7 +79,6 @@ def validate_packaged_release() -> int:
     )
     workspace, configuration = load_release_configuration(
         configuration_path,
-        marker,
         marker,
     )
     if configuration.selection is None:
@@ -116,7 +102,6 @@ def validate_packaged_release() -> int:
 
 def build_release_iso(
     na2_iso: Path,
-    nun5_iso: Path | None,
     configuration_path: Path,
     building_iso: Path,
     emit: Emit,
@@ -128,7 +113,6 @@ def build_release_iso(
     workspace, configuration = load_release_configuration(
         configuration_path,
         na2_iso,
-        nun5_iso,
     )
     emit("Applying modules and assembling the output image...")
     build = build_configuration_candidate(
@@ -137,7 +121,6 @@ def build_release_iso(
         configuration=configuration,
         workspace=workspace,
         configuration_log_directory=None,
-        texture_cache_root=application_cache_root() / "texture_patcher",
     )
     if build.output_iso != building_iso.resolve():
         raise RuntimeError("Build engine produced an unexpected staging path")

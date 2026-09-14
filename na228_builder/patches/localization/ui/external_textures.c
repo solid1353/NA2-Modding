@@ -1,4 +1,4 @@
-/* Route localized CCS reads through the external PRG/UI228.BIN pack. */
+/* Route localized CCS reads through the external PRG/228_UI.BIN pack. */
 
 typedef signed int s32;
 typedef unsigned char u8;
@@ -42,7 +42,7 @@ typedef struct ActiveTextureHandle {
 
 static const u8 texture_pack_path[]
     __attribute__((section(".rodata.localization_ui_texture_pack_path"))) =
-        "CDV:PRG/UI228.BIN";
+        "CDV:PRG/228_UI.BIN";
 
 static u8 texture_pack_index[PACK_SECTOR_SIZE]
     __attribute__((

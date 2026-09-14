@@ -21,7 +21,7 @@ class SupportSelectionTests(unittest.TestCase):
         cls.builder = cls.paths.path("builder")
         cls.catalog_path = cls.builder / "catalog.modcat"
         cls.configurations = cls.builder / "configurations"
-        cls.targets = cls.builder / "infrastructure" / "modules" / "targets.tsv"
+        cls.targets = cls.builder / "infrastructure" / "targets.tsv"
 
     def _selection(self, mode: str) -> catalog.CatalogSelection:
         base = jsonc.loads(

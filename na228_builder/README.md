@@ -45,7 +45,7 @@ integrated catalog data.
   `specials`, `base, specials`, or `base, parent-specials`; the last value
   captures a `-2nd` case in its own Base grid and its primary form's Specials
   grid. The file is test metadata, not a catalog input.
-- `infrastructure/modules/targets.tsv` is the builder-wide target registry.
+- `infrastructure/targets.tsv` is the builder-wide target registry.
   `infrastructure/modules/binary_patcher/operations/*.tsv` defines primitive binary
   operations.
 - `patches/localization/` owns Font assets under `font/glyphs/`,
@@ -145,7 +145,7 @@ Selected injection payload declarations are compiled and linked into the shared
 resident `PRG/228.BIN`; resolved hooks then become guarded in-memory binary
 replacements. The binary patcher applies selected edits last.
 The texture-patcher verifies the selected checked-in CCS assets and inserts one
-indexed `PRG/UI228.BIN`; it does not alter the source `DATA/DATA.CVM`.
+indexed `PRG/228_UI.BIN`; it does not alter the source `DATA/DATA.CVM`.
 
 ## Resource fingerprinting
 

@@ -97,14 +97,14 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
         cls.package = catalog.load_runtime_package(
             cls.selection,
             "memory_card",
-            BUILDER / "infrastructure" / "modules" / "targets.tsv",
+            BUILDER / "infrastructure" / "targets.tsv",
             REPOSITORY,
             "memory_card.runtime_injector",
         )
         cls.startup_package = catalog.load_runtime_package(
             cls.selection,
             "startup",
-            BUILDER / "infrastructure" / "modules" / "targets.tsv",
+            BUILDER / "infrastructure" / "targets.tsv",
             REPOSITORY,
             "startup.runtime_injector",
         )

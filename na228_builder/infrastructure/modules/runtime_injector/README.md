@@ -9,7 +9,7 @@ package. A feature never chooses an offset inside `PRG/228.BIN` or owns its
 loader, memory reservation, or final runtime address.
 
 Canonical production inputs are the shared
-`@builder/infrastructure/modules/targets.tsv` registry, hooks and payload declarations from
+`@builder/infrastructure/targets.tsv` registry, hooks and payload declarations from
 `@builder/patches/<feature>/<feature>.json`, and referenced
 repository sources and assets.
 Catalog nodes select unified dotted patch IDs.

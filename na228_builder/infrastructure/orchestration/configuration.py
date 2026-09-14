@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from ...patches.settings.character_overrides.character_overrides import CharacterOverrideConfiguration
 
 
-BUILDER_TARGETS_FILE = Path("infrastructure") / "modules" / "targets.tsv"
+BUILDER_TARGETS_FILE = Path("infrastructure") / "targets.tsv"
 SOURCE_BOOT_PATH = "SLPS_258.37"
 SYSTEM_CNF_PATH = "SYSTEM.CNF"
 PRODUCT_ROOT_ALIASES = {

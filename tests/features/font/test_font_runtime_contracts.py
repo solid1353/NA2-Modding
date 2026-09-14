@@ -75,7 +75,7 @@ class FontRuntimeContractTests(unittest.TestCase):
         cls.package = catalog.load_runtime_package(
             selection,
             "localization",
-            builder / "infrastructure" / "modules" / "targets.tsv",
+            builder / "infrastructure" / "targets.tsv",
             REPOSITORY,
             "localization.runtime_injector",
         )

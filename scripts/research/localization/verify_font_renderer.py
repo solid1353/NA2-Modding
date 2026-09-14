@@ -1692,7 +1692,7 @@ def main() -> None:
     declaration = catalog.load_runtime_package(
         selection,
         "localization",
-        paths.path("builder", "infrastructure", "modules", "targets.tsv"),
+        paths.path("builder", "infrastructure", "targets.tsv"),
         REPOSITORY,
         "localization.runtime_injector",
     )

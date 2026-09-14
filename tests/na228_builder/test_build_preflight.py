@@ -70,8 +70,8 @@ class BuildPreflightTests(unittest.TestCase):
         assets = feature / "assets"
         assets.mkdir()
         (assets / "sample.ccs.gz").write_bytes(b"asset")
-        targets = builder / "infrastructure" / "modules" / "targets.tsv"
-        targets.parent.mkdir(parents=True)
+        targets = builder / "infrastructure" / "targets.tsv"
+        targets.parent.mkdir(parents=True, exist_ok=True)
         targets.write_text(
             "\t".join(binary_patcher.TARGET_FIELDS) + "\n",
             encoding="utf-8",
@@ -352,7 +352,6 @@ class BuildPreflightTests(unittest.TestCase):
             targets = (
                 paths["builder"]
                 / "infrastructure"
-                / "modules"
                 / "targets.tsv"
             )
             targets.write_text(

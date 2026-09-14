@@ -7,19 +7,19 @@ matching layout/runtime patches; neither side can be enabled alone.
 The 108 reviewed compressed CCS replacements are maintained individually under
 `@builder/patches/localization/ui/assets/`. A build verifies each asset against
 the compressed and decompressed hashes in `assets.tsv`, then packs
-them deterministically into the inserted `PRG/UI228.BIN`. It does not modify
+them deterministically into the inserted `PRG/228_UI.BIN`. It does not modify
 `DATA/DATA.CVM`, read NUN5, or use a derivation cache.
 
 ## Runtime routing
 
-`PRG/UI228.BIN` begins with one sector containing a fixed-size index. Each row
+`PRG/228_UI.BIN` begins with one sector containing a fixed-size index. Each row
 stores a normalized logical-path hash, the member's starting sector, its sector
 count, and its decompressed size. Every compressed CCS member begins on a sector
 boundary and retains its reviewed fixed-size gzip stream.
 
 The resident localization payload intercepts the native open, gzip-size, and
 file-size calls in both CCS loading coordinators. A path present in the pack
-index opens `CDV:PRG/UI228.BIN`, seeks to the indexed member, and supplies that
+index opens `CDV:PRG/228_UI.BIN`, seeks to the indexed member, and supplies that
 member's sizes to the unchanged native read, gzip, task, parser, publication,
 and cleanup pipeline. A path absent from the index uses the original
 `DATA.CVM` open and metadata functions unchanged.

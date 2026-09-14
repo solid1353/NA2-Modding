@@ -558,7 +558,7 @@ class CatalogTests(unittest.TestCase):
         package = catalog.load_binary_package(
             selection,
             "practice",
-            builder / "infrastructure" / "modules" / "targets.tsv",
+            builder / "infrastructure" / "targets.tsv",
             paths.repository,
             builder / "infrastructure" / "modules" / "binary_patcher" / "operations",
         )
@@ -1262,7 +1262,7 @@ class CatalogTests(unittest.TestCase):
                 edits={"feature.grouped": grouped},
             )
             (root / "asset.bin").write_bytes(b"\xAA\xBB")
-            (catalog_path.parent / "infrastructure" / "modules" / "targets.tsv").write_text(
+            (catalog_path.parent / "infrastructure" / "targets.tsv").write_text(
                 "target_id\troot_id\trole\tpath\texpected_size\t"
                 "expected_sha256\n"
                 "test_target\ttest\tdestination\tdata.bin\t16\t"
@@ -1275,7 +1275,7 @@ class CatalogTests(unittest.TestCase):
             package = catalog.load_binary_package(
                 selection,
                 "feature",
-                catalog_path.parent / "infrastructure" / "modules" / "targets.tsv",
+                catalog_path.parent / "infrastructure" / "targets.tsv",
                 root,
                 paths.path("builder", "infrastructure", "modules", "binary_patcher", "operations"),
             )
@@ -1333,7 +1333,7 @@ class CatalogTests(unittest.TestCase):
                 {"feature": {"table": True}},
                 edits={"feature.table": table},
             )
-            (catalog_path.parent / "infrastructure" / "modules" / "targets.tsv").write_text(
+            (catalog_path.parent / "infrastructure" / "targets.tsv").write_text(
                 "target_id\troot_id\trole\tpath\texpected_size\t"
                 "expected_sha256\n"
                 "test_target\ttest\tdestination\tdata.bin\t64\t"
@@ -1346,7 +1346,7 @@ class CatalogTests(unittest.TestCase):
             package = catalog.load_binary_package(
                 selection,
                 "feature",
-                catalog_path.parent / "infrastructure" / "modules" / "targets.tsv",
+                catalog_path.parent / "infrastructure" / "targets.tsv",
                 root,
                 paths.path("builder", "infrastructure", "modules", "binary_patcher", "operations"),
             )
@@ -1466,7 +1466,7 @@ class CatalogTests(unittest.TestCase):
                 {"feature": {"grouped": True}},
                 edits={"feature.grouped": grouped},
             )
-            (catalog_path.parent / "infrastructure" / "modules" / "targets.tsv").write_text(
+            (catalog_path.parent / "infrastructure" / "targets.tsv").write_text(
                 "target_id\troot_id\trole\tpath\texpected_size\t"
                 "expected_sha256\n"
                 "test_target\ttest\tdestination\tdata.bin\t16\t"
@@ -1480,7 +1480,7 @@ class CatalogTests(unittest.TestCase):
                 catalog.load_binary_package(
                     selection,
                     "feature",
-                    catalog_path.parent / "infrastructure" / "modules" / "targets.tsv",
+                    catalog_path.parent / "infrastructure" / "targets.tsv",
                     root,
                     paths.path("builder", "infrastructure", "modules", "binary_patcher", "operations"),
                 )

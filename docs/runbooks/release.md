@@ -54,7 +54,7 @@ interpreter, builder engines, catalog, resources for the complete selectable
 catalog rather than only the default selection, payload-builder configuration,
 precompiled objects for injection-owned runtime C and assembly sources, and the
 reviewed localized CCS assets used to construct
-`PRG/UI228.BIN`. It does not embed the project PS2 toolchain, source ISOs, or
+`PRG/228_UI.BIN`. It does not embed the project PS2 toolchain, source ISOs, or
 extracted source trees.
 
 ## Developer build

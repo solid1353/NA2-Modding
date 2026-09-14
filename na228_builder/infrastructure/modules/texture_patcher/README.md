@@ -2,7 +2,7 @@
 
 This engine verifies the checked-in localized CCS assets owned by
 `@builder/patches/localization/ui/` and composes the deterministic external
-`PRG/UI228.BIN` texture pack. The pack index and every member are sector-aligned
+`PRG/228_UI.BIN` texture pack. The pack index and every member are sector-aligned
 for the resident CCS-loader redirect. An ordinary build reads no donor image,
 does not rewrite `DATA/DATA.CVM`, and uses no texture cache.
 

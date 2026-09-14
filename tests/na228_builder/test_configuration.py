@@ -30,7 +30,7 @@ class ConfigurationTests(unittest.TestCase):
         build = root / "build"
         pcsx2 = root / "pcsx2"
         write_tsv(
-            root / "infrastructure" / "modules" / "targets.tsv",
+            root / "infrastructure" / "targets.tsv",
             binary_patcher.TARGET_FIELDS,
             [],
         )
@@ -365,7 +365,7 @@ class ConfigurationTests(unittest.TestCase):
             self.assertIn(configuration.resolve(), resources)
             self.assertIn((feature / "mappings.tsv").resolve(), resources)
             self.assertIn(
-                (builder / "infrastructure" / "modules" / "targets.tsv").resolve(),
+                (builder / "infrastructure" / "targets.tsv").resolve(),
                 resources,
             )
             self.assertNotIn(helper.resolve(), resources)

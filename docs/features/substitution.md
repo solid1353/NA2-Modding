@@ -1053,7 +1053,7 @@ exclusively native.
 
 Use `settings.new_controls` and `settings.battle_mechanics.substitution` in
 `patches/settings/settings.json`. All targets already exist in
-`@builder/infrastructure/modules/targets.tsv`; no new target registry or patching
+`@builder/infrastructure/targets.tsv`; no new target registry or patching
 mechanism is needed.
 
 | Hook | Target/offset | Clean guard | Replacement template | Adapter behavior |

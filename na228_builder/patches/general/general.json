@@ -1,6 +1,6 @@
 {
   "general.music_override": {
-    "description": "Select existing SOUND.AFS music tracks for Mode Select and Character Select.",
+    "description": "Select existing SOUND.AFS music tracks for Mode Select and Character Select, with reduced Character Select gain.",
     "edits": {
       "select_character_music_track": {
         "description": "Pass SOUND.AFS/000 track 68 to the Character Select music command.",
@@ -29,7 +29,7 @@
         "encoding": "jal26"
       },
       "route_character_music_through_native_replacement_sequence": {
-        "description": "Replace the fixed track-1 preset with the selected Character Select track while retaining native stop-before-replace behavior.",
+        "description": "Replace the fixed track-1 preset with the selected Character Select track, retain native stop-before-replace behavior, and apply gain -40.",
         "target_id": "na2_elf",
         "offset": "0xD395C",
         "expected_hex": "8C66070C",
@@ -46,7 +46,7 @@
         "fragments": {
           "select": {
             "object": "general.music.override.text.general.music.override.select",
-            "description": "Select one existing streamed-music track while preserving the native current-track check and replacement order."
+            "description": "Select one existing streamed-music track while preserving the native current-track check, replacement order, global volume scaling, and Character Select gain adjustment."
           }
         }
       }

@@ -152,6 +152,13 @@ savestates. The separate command entries therefore provide independent,
 fixed-size executable patch points for reusing other existing tracks without
 changing `SOUND.AFS`.
 
+The track-gain table read by `FUN_001D9D70` stores `-40` for track 62 and `0`
+for track 68. During streamed-music selection, `FUN_001D6CF0` combines that
+track gain with the global volume, stores the effective gain for the selected
+channel, and passes it to `FUN_00135458`. The resident wrapper `FUN_001D9D40`
+provides an independent streamed-music channel-gain update through the same
+storage and low-level function.
+
 **Observed codec contracts:**
 
 - AHX files use CRI's `(c)CRI` marker, version `0x06`, one channel, and type

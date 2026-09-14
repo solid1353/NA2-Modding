@@ -14,6 +14,7 @@ PATCH_ID = "general.music_override"
 SELECT_SYMBOL = "select"
 STOP_ADDRESS = 0x001D9760
 SELECT_ADDRESS = 0x001D95D0
+VOLUME_ADDRESS = 0x001D9D40
 
 
 def words(payload: bytes) -> tuple[int, ...]:
@@ -164,7 +165,7 @@ class MusicOverrideTests(unittest.TestCase):
             },
         )
 
-    def test_wrapper_keeps_native_stop_then_select_calls(self) -> None:
+    def test_wrapper_keeps_native_selection_and_channel_gain_calls(self) -> None:
         source = self.selection.injections[PATCH_ID]["payload"][
             "music_override"
         ]
@@ -187,6 +188,10 @@ class MusicOverrideTests(unittest.TestCase):
         self.assertEqual(
             1,
             calls_materialized_address(payload_words, SELECT_ADDRESS),
+        )
+        self.assertEqual(
+            1,
+            calls_materialized_address(payload_words, VOLUME_ADDRESS),
         )
 
 

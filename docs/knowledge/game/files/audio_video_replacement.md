@@ -31,7 +31,8 @@ Evidence labels in this note have their usual knowledge-base meaning:
   packet lattice, timestamps, padding, and complete decode all passed static
   checks. Two supplied savestates also matched both Mode Select and Character
   Select playback to `SOUND.AFS/000` track 1. No generated media or tool was
-  retained as a project dependency.
+  retained as a project dependency. The front-end track metadata, stream-mode
+  setter, and streamed-audio completion state were also traced.
 - **Unresolved or untested:** no generated AFS or PSS has been played by the
   game's bundled CRI/movie drivers in PCSX2 or on hardware. A fitting adaptive
   type-`0x11` AHX encoder, the correct ADX version-4 history and loop-padding
@@ -158,6 +159,29 @@ track gain with the global volume, stores the effective gain for the selected
 channel, and passes it to `FUN_00135458`. The resident wrapper `FUN_001D9D40`
 provides an independent streamed-music channel-gain update through the same
 storage and low-level function.
+
+The resident audio globals are two distinct adjacent pointers. `0x00607558`
+points to the stream manager: channel 0's stream handle is at manager offset
+`+0x08`, and its selected-track record is at `+0x70C`. `0x0060755C` points to
+the control object: global volume is at `+0x00`, and the current music track is
+at `+0xC0`. A stream-state consumer must resolve the handle through the first
+pointer rather than treating the control object as the stream manager.
+
+Track 62 has a version-4 ADX loop block; track 68 uses the short version-4
+header with no loop block. The ordinary streamed-music selector
+`FUN_001D9680` passes `0` as the final argument to `FUN_001D6CF0`. That routine
+forwards the argument to `FUN_001363E0` before starting the stream. The separate
+resident caller `FUN_001D5C90` passes `1` through the same path, and
+`FUN_00136420` stores that mode at stream offset `+0x72` while updating the
+underlying type-3/type-4 ADX driver. This mode does not add loop points to a
+short-header ADX.
+
+The audio engine updates every live stream through `FUN_00138C58`. State 4 runs
+`FUN_001385C0`, which continues draining decoded audio. Once no buffered samples
+remain, that function stops the driver and writes stream state 5. The state-5
+handler `FUN_001387C8` is a no-op, so the finished state persists until another
+audio command changes the stream. This is the resident polling surface for
+detecting full-file completion when an ADX has no authored loop block.
 
 **Observed codec contracts:**
 

@@ -15,6 +15,9 @@ SELECT_SYMBOL = "select"
 STOP_ADDRESS = 0x001D9760
 SELECT_ADDRESS = 0x001D95D0
 VOLUME_ADDRESS = 0x001D9D40
+CHARACTER_SELECT_UPDATE_ADDRESS = 0x003BCDA0
+CONTROL_POINTER_ADDRESS = 0x0060755C
+STREAMS_POINTER_ADDRESS = 0x00607558
 
 
 def words(payload: bytes) -> tuple[int, ...]:
@@ -51,6 +54,25 @@ def calls_materialized_address(payload_words: tuple[int, ...], value: int) -> in
         ):
             calls += 1
     return calls
+
+
+def loads_pointer_at_address(payload_words: tuple[int, ...], value: int) -> int:
+    upper = value >> 16
+    lower = value & 0xFFFF
+    loads = 0
+    for index in range(len(payload_words) - 1):
+        first = payload_words[index]
+        second = payload_words[index + 1]
+        if first >> 26 != 0x0F or first & 0xFFFF != upper:
+            continue
+        register = (first >> 16) & 0x1F
+        if (
+            second >> 26 == 0x23
+            and (second >> 21) & 0x1F == register
+            and second & 0xFFFF == lower
+        ):
+            loads += 1
+    return loads
 
 
 class MusicOverrideTests(unittest.TestCase):
@@ -162,6 +184,11 @@ class MusicOverrideTests(unittest.TestCase):
                     "8C66070C",
                     SELECT_SYMBOL,
                 ),
+                "restart_character_music_after_completion": (
+                    "0xED73C",
+                    "68F30E0C",
+                    SELECT_SYMBOL,
+                ),
             },
         )
 
@@ -192,6 +219,21 @@ class MusicOverrideTests(unittest.TestCase):
         self.assertEqual(
             1,
             calls_materialized_address(payload_words, VOLUME_ADDRESS),
+        )
+        self.assertEqual(
+            1,
+            calls_materialized_address(
+                payload_words,
+                CHARACTER_SELECT_UPDATE_ADDRESS,
+            ),
+        )
+        self.assertEqual(
+            1,
+            loads_pointer_at_address(payload_words, CONTROL_POINTER_ADDRESS),
+        )
+        self.assertEqual(
+            1,
+            loads_pointer_at_address(payload_words, STREAMS_POINTER_ADDRESS),
         )
 
 

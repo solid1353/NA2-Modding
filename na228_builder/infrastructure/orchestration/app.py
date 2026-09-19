@@ -212,7 +212,7 @@ def load_release_manifest() -> ReleaseManifest:
         raise ReleaseError(
             f"Packaged release data is missing: {RELEASE_MANIFEST_NAME}"
         ) from exc
-    settings_path = Path(__file__).resolve().parents[2] / SETTINGS_NAME
+    settings_path = Path(__file__).resolve().parents[3] / SETTINGS_NAME
     try:
         settings = json.loads(settings_path.read_text(encoding="utf-8"))
     except (FileNotFoundError, OSError, json.JSONDecodeError) as exc:

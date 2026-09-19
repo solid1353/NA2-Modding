@@ -15,7 +15,7 @@ Emit = Callable[[str], None]
 
 def packaged_workspace() -> Path:
     """Return the checkout or PyInstaller extraction root containing release data."""
-    return Path(__file__).resolve().parents[2]
+    return Path(__file__).resolve().parents[3]
 
 
 def load_release_configuration(

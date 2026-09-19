@@ -1,6 +1,8 @@
 {
   "sets": {
-    "builder": [],
+    "builder": [
+      "PIL"
+    ],
     "ui_texture_research": [
       "zopfli==0.4.3"
     ],

@@ -68,7 +68,7 @@ foreach ($field in @('platform', 'architecture', 'python_version')) {
 }
 
 $releaseRoot = if ($Development) {
-    Join-Path $paths.work 'release\development'
+    Join-Path $paths.release 'development'
 }
 else {
     $paths.release
@@ -338,5 +338,11 @@ finally {
             throw "Refusing to clean release staging outside its configured root: $resolvedRun"
         }
         Remove-Item -LiteralPath $resolvedRun -Recurse -Force
+    }
+    if (Test-Path -LiteralPath $releaseTemp -PathType Container) {
+        $remainingStaging = @(Get-ChildItem -LiteralPath $releaseTemp -Force)
+        if ($remainingStaging.Count -eq 0) {
+            Remove-Item -LiteralPath $releaseTemp -Force
+        }
     }
 }

@@ -46,7 +46,7 @@ payloads, and `texture_patcher` module requirement are owned together by
 | Character Select | Character-name rectangles, Select Color/Random placement, and footer anchors | [Character Select](../../knowledge/localization/ui/character_select.md) |
 | Collection | Category titles, page prompts, Play/Stop, viewer controls, common prompts, and submenu geometry | [Collection](../../knowledge/localization/ui/collection.md) |
 | Options and shared frontend prompts | Localized labels, difficulty routing, Controls Vibration, common Cancel records, and Options/Settings footer anchors | [Options](../../knowledge/localization/ui/options.md) |
-| Victory | Complete localized winner-name layout set | [Victory](../../knowledge/localization/ui/victory.md) |
+| Victory | Coupled NUN5 WINNER artwork and width-driven character-name construction | [Victory](../../knowledge/localization/ui/victory.md) |
 
 ## Battle item-status presentation
 
@@ -63,6 +63,20 @@ the shared renderer and class entries in `PRG/228.BIN`, preserves NA2 object
 links and lifetimes, and does not change item selection, values, effects, or
 timing. Exact source and donor relationships are documented in
 [Battle item-status presentation](../../knowledge/localization/ui/battle/item_status.md).
+
+## Victory presentation
+
+The large WINNER emblem imports NUN5's matching texture,
+two meshes, and two animation records into the fixed-size ENDDEMO asset.
+Object references are remapped to NA2; unrelated scene resources stay native.
+The separate small win-count renderer is unchanged.
+
+Character names use NUN5's complete 94-row English width set and its empty,
+first-frame, and second-frame template rules. Both the resident draw helper
+and the battle scene initializer use that provider. The battle hook replaces
+the inlined Japanese rectangle lookup before the native combined-width
+centering code. A zero width produces an empty frame for that character;
+no character-specific position adjustment or shared-descriptor edit is used.
 
 ## Battle prompts, settings, and results
 

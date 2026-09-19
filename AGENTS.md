@@ -90,7 +90,7 @@ owning component documentation.
   Omit any statement that has no corresponding pending agent action.
   "Do not..." and the such are not valid lines and should not appear in the proposal.
 - `ver`: accept the current result across every repository changed by the task.
-  Agents may then add tests. Commit and push the accepted result. In
+  Agents may then add tests (if they are needed). Commit and push the accepted result. In
   Design mode, first promote useful design content and delete the design
   document, then exit after pushing.
 - `exit`: exit Design mode or Interactive mode without accepting the result

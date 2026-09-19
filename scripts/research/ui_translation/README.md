@@ -45,11 +45,12 @@ CCS or binary blobs:
 python scripts/research/ui_translation/generate_victory_texture_mappings.py --write
 ```
 
-It classifies and derives the 62 Victory CCS recipes. The internal read-only
-Victory layout check separately verifies both games' exact ELF/BTL identities,
-derives NUN5's localized frame templates and character-width table for NA2's
-prebuilt rectangle ABI, and checks them against the stored grouped Victory edit
-and its semantic descriptor children without rewriting them.
+It classifies the Victory CCS recipes. `texture_derivation.py` keeps the
+ENDDEMO emblem's donor meshes and animations with its atlas, remapping object
+references to NA2 while retaining the fixed compressed capacity. Character-name
+rectangle construction is owned by the injected Victory implementation, not
+shared descriptor edits. See [Victory evidence](../../../docs/knowledge/localization/ui/victory.md)
+and [UI integration](../../../docs/features/localization/ui_layout.md).
 
 The normal comparison has two targets:
 

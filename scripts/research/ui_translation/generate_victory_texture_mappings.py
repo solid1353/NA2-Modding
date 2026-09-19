@@ -280,8 +280,8 @@ def build_rows() -> tuple[
             "donor_texture": r"x\enddemo\tex\enddemo01.bmp",
             "transform": "copy",
             "reason": (
-                "Official English Winner emblem; preserve the unrelated NA2 "
-                "background textures and CCS structure."
+                "Official English Winner atlas, coupled to its meshes and "
+                "animations by the Victory derivation; preserve unrelated NA2 objects."
             ),
         }
     ]
@@ -381,8 +381,9 @@ def build_rows() -> tuple[
         "replacement_sha256": "0" * 64,
         "payload_sha256": "0" * 64,
         "reason": (
-            "Import only the official English Winner emblem; preserve the "
-            "unrelated NA2 background textures and target CCS structure."
+            "Import the official English Winner atlas, both emblem meshes, "
+            "and both emblem animations; preserve unrelated NA2 objects and "
+            "the fixed compressed size."
         ),
     }
     new_mappings.sort(

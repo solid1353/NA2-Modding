@@ -142,7 +142,7 @@ UI-TITLE-001	1	title	m\t\tex\mtttl02.bmp	m\t\tex\mtttl02.bmp	copy	Official Engli
 UI-VS-001	1	vs	m\vs\tex\vs_t01.bmp	m\vs\tex\vs_t01.bmp	copy	English versus-screen labels.
 UI-VS-002	1	vs	m\vs\tex\vs_t02.bmp	m\vs\tex\vs_t02.bmp	copy	English versus settings labels.
 UI-NINKA-001	1	xninka	m\ninka\tex\xninka.bmp	m\ninka\tex\xninka.bmp	copy	Import the complete official English result-label texture without the rejected packed-column translation so matched rank baselines retain the donor atlas unchanged.
-UI-VICTORY-001	1	enddemo	x\enddemo\tex\enddemo01.bmp	x\enddemo\tex\enddemo01.bmp	copy	Official English Winner emblem; preserve the unrelated NA2 background textures and CCS structure.
+UI-VICTORY-001	1	enddemo	x\enddemo\tex\enddemo01.bmp	x\enddemo\tex\enddemo01.bmp	copy	Official English Winner atlas, coupled to its meshes and animations by the Victory derivation; preserve unrelated NA2 objects.
 UI-VICTORY-002	1	mode1_ank	x\name\ank\name.bmp	x\name\ank\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
 UI-VICTORY-003	1	mode1_asw	x\name\asm\name.bmp	x\name\asw\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.
 UI-VICTORY-004	1	mode1_chy	x\name\chy\name.bmp	x\name\chy\name.bmp	whole	Official English victory character-name artwork imported with the complete NUN5 character resource.

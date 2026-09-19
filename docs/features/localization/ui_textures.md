@@ -39,6 +39,11 @@ Victory container remain bounded mapped replacements. `CMN/GAUGE.CCS` supplies
 the shared regional prompt atlas, and the NUN5 one-part `OUGI.CCS` remains
 paired with the Ultimate Jutsu layout patch in the same catalog leaf.
 
+ENDDEMO's mapped replacement includes the English emblem's
+`MDL_win`, `MDL_win_f`, `ANM_end_win01`, and `ANM_end_win02` alongside its
+atlas. The derivation remaps donor object references by filename and object
+name while preserving unrelated NA2 sections and the compressed member size.
+
 ## Research authoring
 
 Research tooling under `@scripts/research/ui_translation/` can rederive the

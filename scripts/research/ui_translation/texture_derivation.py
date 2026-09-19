@@ -947,6 +947,83 @@ def selected_container_ids(package: Package, selection: tuple[str, ...]) -> list
     return sorted(selected or package.containers.keys())
 
 
+def victory_emblem_payload(target_payload: bytes, donor_payload: bytes) -> bytes:
+    """Keep the English emblem's meshes and animation together in NA2's CCS."""
+    selected = {
+        "MDL_win": SECTION_MODEL,
+        "MDL_win_f": SECTION_MODEL,
+        "ANM_end_win01": 0xCCCC0700,
+        "ANM_end_win02": 0xCCCC0700,
+    }
+
+    def inventory(payload: bytes):
+        sections = []
+        cursor = 0
+        identities = None
+        while cursor < len(payload):
+            section_type, words = struct.unpack_from("<II", payload, cursor)
+            size = section_total_size(payload, cursor, section_type, words)
+            if size < 8 or cursor + size > len(payload):
+                raise ValueError("Invalid Victory CCS section")
+            if section_type == SECTION_TOC:
+                _, files, names, indexes = parse_toc(payload, cursor)
+                identities = {
+                    object_id: (files[file_index - 1], name)
+                    for object_id, (name, file_index)
+                    in enumerate(zip(names, indexes), 1)
+                }
+            sections.append((cursor, size, section_type))
+            cursor += size
+        if identities is None:
+            raise ValueError("Victory CCS has no object table")
+        return identities, sections
+
+    target_ids, target_sections = inventory(target_payload)
+    donor_ids, donor_sections = inventory(donor_payload)
+    target_by_identity = {identity: key for key, identity in target_ids.items()}
+    replacements = {}
+    for offset, size, section_type in donor_sections:
+        if section_type not in selected.values():
+            continue
+        object_id = read_u32(donor_payload, offset + 8)
+        identity = donor_ids[object_id]
+        if selected.get(identity[1]) != section_type:
+            continue
+        section = bytearray(donor_payload[offset:offset + size])
+        references = [8]
+        if section_type == SECTION_MODEL:
+            if size != 140 or read_u32(section, 44) != 5:
+                raise ValueError("Expected the NUN5 five-vertex Victory mesh")
+            references.extend((36, 40))
+        else:
+            cursor = 20
+            while cursor < size:
+                child_type, child_words = struct.unpack_from("<II", section, cursor)
+                child_size = 8 + child_words * 4
+                if child_type == 0xCCCC0102:
+                    references.append(cursor + 8)
+                elif child_type != 0xCCCCFF01:
+                    raise ValueError("Unexpected Victory animation track")
+                if child_size < 12 or cursor + child_size > size:
+                    raise ValueError("Invalid Victory animation track size")
+                cursor += child_size
+        for reference in references:
+            donor_id = read_u32(section, reference)
+            target_id = target_by_identity[donor_ids[donor_id]]
+            struct.pack_into("<I", section, reference, target_id)
+        replacements[(section_type, target_by_identity[identity])] = bytes(section)
+    if len(replacements) != len(selected):
+        raise ValueError("Incomplete NUN5 Victory emblem")
+
+    result = []
+    for offset, size, section_type in target_sections:
+        key = (section_type, read_u32(target_payload, offset + 8)) if size >= 12 else None
+        result.append(replacements.pop(key, target_payload[offset:offset + size]))
+    if replacements:
+        raise ValueError("NUN5 Victory object has no NA2 destination")
+    return b"".join(result)
+
+
 def expected_payload(
     strategy: Strategy,
     target_payload: bytes,
@@ -992,6 +1069,8 @@ def expected_payload(
             payload = copy_mapping_payload(payload, donor_payload, mapping)
         else:
             payload = transparent_top_left_crop_payload(payload, donor_payload, mapping)
+    if strategy.container_id == "enddemo":
+        payload = victory_emblem_payload(payload, donor_payload)
     return payload
 
 

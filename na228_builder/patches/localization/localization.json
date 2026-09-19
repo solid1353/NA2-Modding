@@ -3090,404 +3090,6 @@
           }
         }
       },
-      "record_tables__victory_name_descriptors": {
-        "description": "Patch behavior-equivalent localized Victory name descriptors.",
-        "operation": "replace_table",
-        "destination_target_id": "na2_btl",
-        "table_offset": "0x2161B0",
-        "record_stride": 32,
-        "field_offset": 0,
-        "record_patches": {
-          "character_ids_01_47_57_73_frame_0": {
-            "record_index": 0,
-            "expected_hex": "01000100EC003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010001009A003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_01_47_57_73_frame_1": {
-            "record_index": 1,
-            "expected_hex": "01004100AD003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100BE003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_02_48_93_frame_0": {
-            "record_index": 2,
-            "expected_hex": "01000100AE003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100A2003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_02_48_93_frame_1": {
-            "record_index": 3,
-            "expected_hex": "01004100B3003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010041009E003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_03_49_67_frame_0": {
-            "record_index": 4,
-            "expected_hex": "01000100C5003E00000000000000F8C10000000000000000",
-            "replacement_hex": "0100010076003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_03_49_67_frame_1": {
-            "record_index": 5,
-            "expected_hex": "0100410074003E00000000000000F8C10000000000000000",
-            "replacement_hex": "0100410056003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_04_50_frame_0": {
-            "record_index": 6,
-            "expected_hex": "01000100B3003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100BE003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_04_50_frame_1": {
-            "record_index": 7,
-            "expected_hex": "01004100B4003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100CA003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_05_68_frame_0": {
-            "record_index": 8,
-            "expected_hex": "0100010078003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100EA003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_05_68_frame_1": {
-            "record_index": 9,
-            "expected_hex": "01004100ED003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010041006E003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_06_65_frame_0": {
-            "record_index": 10,
-            "expected_hex": "0100010076003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010001005A003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_06_65_frame_1": {
-            "record_index": 11,
-            "expected_hex": "010041007C003E00000000000000F8C10000000000000000",
-            "replacement_hex": "0100410092003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_07_58_frame_0": {
-            "record_index": 12,
-            "expected_hex": "010001007B003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010001009E003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_07_58_frame_1": {
-            "record_index": 13,
-            "expected_hex": "01004100B3003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100A6003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_10_frame_0": {
-            "record_index": 18,
-            "expected_hex": "010001003C003E00000000000000F8C10000000000000000",
-            "replacement_hex": "0100010076003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_11_frame_0": {
-            "record_index": 19,
-            "expected_hex": "010001007A003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100A6003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_11_frame_1": {
-            "record_index": 20,
-            "expected_hex": "01004100B6003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100CA003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_12_80_frame_0": {
-            "record_index": 21,
-            "expected_hex": "0100010076003E00000000000000F8C10000000000000000",
-            "replacement_hex": "0100010092003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_12_80_frame_1": {
-            "record_index": 22,
-            "expected_hex": "01004100AD003E00000000000000F8C10000000000000000",
-            "replacement_hex": "0100410092003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_13_66_frame_0": {
-            "record_index": 23,
-            "expected_hex": "0100010080003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010001009E003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_14_51_81_frame_0": {
-            "record_index": 25,
-            "expected_hex": "010001007D003E00000000000000F8C10000000000000000",
-            "replacement_hex": "0100010076003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_14_51_81_frame_1": {
-            "record_index": 26,
-            "expected_hex": "01004100F0003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100C2003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_15_82_frame_0": {
-            "record_index": 27,
-            "expected_hex": "0100010080003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010001004A003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_15_82_frame_1": {
-            "record_index": 28,
-            "expected_hex": "010041007F003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100E2003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_16_78_frame_0": {
-            "record_index": 29,
-            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-            "replacement_hex": "0100010066003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_16_78_frame_1": {
-            "record_index": 30,
-            "expected_hex": "0100410080003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100AE003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_17_79_frame_0": {
-            "record_index": 31,
-            "expected_hex": "010001007C003E00000000000000F8C10000000000000000",
-            "replacement_hex": "0100010082003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_17_79_frame_1": {
-            "record_index": 32,
-            "expected_hex": "010041007A003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100CA003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_18_60_frame_0": {
-            "record_index": 33,
-            "expected_hex": "01000100B0003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100B6003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_19_61_86_frame_0": {
-            "record_indices": [
-              35,
-              84
-            ],
-            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010001009A003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_22_frame_1": {
-            "record_index": 42,
-            "expected_hex": "010041008D003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100C6003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_34_52_frame_0": {
-            "record_index": 64,
-            "expected_hex": "01000100B6003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100EA003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_34_52_frame_1": {
-            "record_index": 65,
-            "expected_hex": "01004100B8003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100D2003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_35_53_frame_0": {
-            "record_index": 66,
-            "expected_hex": "01000100B5003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100E2003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_35_53_frame_1": {
-            "record_index": 67,
-            "expected_hex": "01004100B5003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100FE003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_36_54_frame_0": {
-            "record_index": 68,
-            "expected_hex": "01000100B6003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100BA003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_36_54_frame_1": {
-            "record_index": 69,
-            "expected_hex": "01004100B6003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100CE003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_37_55_frame_0": {
-            "record_index": 70,
-            "expected_hex": "01000100B5003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100EA003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_37_55_frame_1": {
-            "record_index": 71,
-            "expected_hex": "010041007D003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100C2003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_38_56_frame_0": {
-            "record_index": 72,
-            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100CE003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_39_frame_0": {
-            "record_index": 74,
-            "expected_hex": "01000100B9003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100F2003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_39_frame_1": {
-            "record_index": 75,
-            "expected_hex": "010041007D003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010041007A003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_40_frame_0": {
-            "record_index": 76,
-            "expected_hex": "01000100EF003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100EA003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_40_frame_1": {
-            "record_index": 77,
-            "expected_hex": "010041007E003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100E2003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_41_frame_0": {
-            "record_index": 78,
-            "expected_hex": "0100010078003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010001009A003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_41_frame_1": {
-            "record_index": 79,
-            "expected_hex": "01004100B8003E00000000000000F8C10000000000000000",
-            "replacement_hex": "0100410092003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_42_frame_0": {
-            "record_index": 80,
-            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100CA003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_42_frame_1": {
-            "record_index": 81,
-            "expected_hex": "010041007C003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100AA003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_43_frame_0": {
-            "record_index": 82,
-            "expected_hex": "01000100B4003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100F6003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_43_frame_1": {
-            "record_index": 83,
-            "expected_hex": "010041007E003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010041009E003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_46_frame_0": {
-            "record_index": 88,
-            "expected_hex": "01000100E5003E00000000000000F8C10000000000000000",
-            "replacement_hex": "0100010076003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_46_frame_1": {
-            "record_index": 89,
-            "expected_hex": "01004100AF003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100CE003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_59_frame_1": {
-            "record_index": 91,
-            "expected_hex": "01004100C5003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100B2003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_62_77_frame_0": {
-            "record_index": 92,
-            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100A2003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_62_77_frame_1": {
-            "record_index": 93,
-            "expected_hex": "0100410070003E00000000000000F8C10000000000000000",
-            "replacement_hex": "0100410082003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_63_75_76_frame_0": {
-            "record_index": 94,
-            "expected_hex": "01000100B7003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100EA003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_63_75_76_frame_1": {
-            "record_index": 95,
-            "expected_hex": "01004100AD003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100BA003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_64_frame_0": {
-            "record_index": 96,
-            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100AE003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_69_frame_0": {
-            "record_index": 37,
-            "expected_hex": "01000100C5003E00000000000000F8C10000000000000000",
-            "replacement_hex": "0100010082003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_69_frame_1": {
-            "record_index": 38,
-            "expected_hex": "010041007F003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010041005E003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_70_frame_0": {
-            "record_index": 14,
-            "expected_hex": "01000100B2003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100AE003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_70_frame_1": {
-            "record_index": 15,
-            "expected_hex": "01004100B0003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010041009E003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_71_frame_0": {
-            "record_index": 43,
-            "expected_hex": "01000100B6003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010001007E003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_71_frame_1": {
-            "record_index": 44,
-            "expected_hex": "01004100B7003F00000000000000FCC10000000000000000",
-            "replacement_hex": "010041009E003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_72_frame_0": {
-            "record_index": 98,
-            "expected_hex": "010001007D003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100A2003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_72_frame_1": {
-            "record_index": 99,
-            "expected_hex": "010041007D003F00000000000000FCC10000000000000000",
-            "replacement_hex": "01004100DA003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_83_frame_0": {
-            "record_index": 39,
-            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-            "replacement_hex": "0100010096003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_84_frame_0": {
-            "record_index": 47,
-            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100C2003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_85_frame_0": {
-            "record_index": 50,
-            "expected_hex": "0100010080003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100B6003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_86_frame_1": {
-            "record_index": 85,
-            "expected_hex": "01004100B5003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100BE003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_87_frame_0": {
-            "record_index": 86,
-            "expected_hex": "010001007F003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100AA003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_87_frame_1": {
-            "record_index": 87,
-            "expected_hex": "0100410036003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010041006A003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_89_frame_0": {
-            "record_index": 16,
-            "expected_hex": "010001007E003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01000100FE003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_90_frame_0": {
-            "record_index": 52,
-            "expected_hex": "010001007D003E00000000000000F8C10000000000000000",
-            "replacement_hex": "010001009E003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_90_frame_1": {
-            "record_index": 53,
-            "expected_hex": "01004100AE003E00000000000000F8C10000000000000000",
-            "replacement_hex": "01004100B2003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_91_frame_0": {
-            "record_index": 100,
-            "expected_hex": "010001007F003F00000000000000FCC10000000000000000",
-            "replacement_hex": "01000100AA003E00000000000000F8C10000000000000000"
-          },
-          "character_ids_92_frame_0": {
-            "record_index": 102,
-            "expected_hex": "0100010078003F00000000000000FCC10000000000000000",
-            "replacement_hex": "010001004A003E00000000000000F8C10000000000000000"
-          }
-        }
-      },
       "round_label__base_x_256": {
         "description": "Move the Round label base X from 216 to the official NUN5 X=256.",
         "operation": "replace",
@@ -3789,6 +3391,31 @@
         "symbol": "localization_ui_stage_select_name_draw",
         "encoding": "jal26"
       },
+      "provide_victory_name_frame_0": {
+        "description": "Construct the first Victory name frame from NUN5's exact English width row and frame template.",
+        "target_id": "na2_elf",
+        "offset": "0x103100",
+        "expected_hex": "7CAE1D0C00000000",
+        "symbol": "localization_ui_victory_name_rectangle",
+        "encoding": "jal26"
+      },
+      "initialize_victory_name": {
+        "description": "Use NUN5's per-character rectangle construction in the battle Victory initializer before native combined-width centering.",
+        "target_id": "na2_btl",
+        "offset": "0xB8F8C",
+        "expected_hex": "5E00622E27004014",
+        "symbol": "localization_ui_victory_initialize_name_adapter",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "provide_victory_name_frame_1": {
+        "description": "Construct the second Victory name frame from NUN5's exact English width row and empty-frame behavior.",
+        "target_id": "na2_elf",
+        "offset": "0x103124",
+        "expected_hex": "7CAE1D0C00000000",
+        "symbol": "localization_ui_victory_name_rectangle",
+        "encoding": "jal26"
+      },
       "render_fixed_item_status": {
         "description": "Render the accepted fixed two-label item-status layout from resident C while preserving the current foreground renderer bytes.",
         "target_id": "na2_btl",
@@ -4024,6 +3651,39 @@
           },
           "localization_ui_ultimate_jutsu_input_result_draw": {
             "object": "localization.ui.ultimate.jutsu.text.localization.ui.ultimate.jutsu.input.result.draw"
+          }
+        }
+      },
+      "victory_abi": {
+        "kind": "asm",
+        "path": "na228_builder/patches/localization/ui/victory_abi.S",
+        "namespace": "localization.ui.victory.abi",
+        "imports": {
+          "localization_ui_victory_initialize_name": "localization_ui_victory_initialize_name"
+        },
+        "fragments": {
+          "localization_ui_victory_initialize_name_adapter": {
+            "object": "localization.ui.victory.abi.text.localization.ui.victory.initialize.name.adapter"
+          }
+        }
+      },
+      "victory": {
+        "kind": "c",
+        "path": "na228_builder/patches/localization/ui/victory.c",
+        "namespace": "localization.ui.victory",
+        "imports": {},
+        "fragments": {
+          "localization_ui_victory_initialize_name": {
+            "object": "localization.ui.victory.text.localization.ui.victory.initialize.name"
+          },
+          "localization_ui_victory_name_rectangle": {
+            "object": "localization.ui.victory.text.localization.ui.victory.name.rectangle"
+          },
+          "localization_ui_victory_name_rectangles": {
+            "object": "localization.ui.victory.bss.localization.ui.victory.name.rectangles"
+          },
+          "localization_ui_victory_name_widths": {
+            "object": "localization.ui.victory.rodata.localization.ui.victory.name.widths"
           }
         }
       }

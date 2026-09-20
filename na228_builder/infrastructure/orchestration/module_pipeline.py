@@ -37,6 +37,7 @@ from ...patches.settings.mod_settings.mod_settings import (
     mod_settings_schema_fragment,
     mod_settings_state_fragment,
 )
+from ...patches.general.battle_results_rematch import rematch_label_fragment
 from ...patches.general.unlock_all.unlock_all import unlock_all_configuration_fragment
 
 
@@ -230,6 +231,18 @@ def prepare_module_pipeline(
                     ),
                 )
         if module.feature_id == "general":
+            if any(
+                node.path == ("features", "general", "battle_results_rematch")
+                and node.enabled
+                for node in configuration.selection.nodes
+            ):
+                declaration = replace(
+                    declaration,
+                    fragments=(
+                        rematch_label_fragment(owner=module.module_id),
+                        *declaration.fragments,
+                    ),
+                )
             unlock_all_fragment = unlock_all_configuration_fragment(
                 configuration.selection,
                 owner=module.module_id,

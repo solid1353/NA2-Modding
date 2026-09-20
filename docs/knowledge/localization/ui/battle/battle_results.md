@@ -12,7 +12,8 @@ Addresses use the
   five ranks and multiple Ninja Song result variants were inspected.
 - **Confirmed coverage:** Cloud geometry, both rank paths, the visible rank
   selector table, footer ownership and anchors, objective layout, arithmetic
-  routing, bonus rows, and unchanged controller clamping.
+  routing, bonus rows, unchanged controller clamping, and the summary footer
+  sprite's batch capacity.
 - **Unresolved or untested:** The purpose of the hidden shared-rank sprite and
   every possible Ninja Song descriptor or bonus row were not exhaustively
   established.
@@ -80,6 +81,17 @@ the visible rotated stamp.
 `FUN_00716E90` owns row reveal and rank-sprite state. The NA2 and NUN5 title
 controllers use the same pulse algorithm, so independently timed still frames
 can show different title sizes without a different static layout.
+
+### Summary footer batching
+
+The summary object's `+0x140` sprite uses `TEX_xninka` for Display details;
+`+0x144` supplies the common Next prompt. Both use its `+0x118` render context.
+The label sprite has capacity one at sprite `+0x24`. The native Display details
+draw consumes that rectangle before the Next call at BTL raw `0x062B6C`.
+Resident submission helper `FUN_001CC3A0` stops when the count at `+0x20`
+reaches the capacity. A second rectangle cannot be appended to this batch.
+`FUN_001CC070` submits the batch and resets its count and packet pointer,
+allowing a later rectangle to use a separate batch on the same sprite.
 
 ## Visible rotated rank stamps
 

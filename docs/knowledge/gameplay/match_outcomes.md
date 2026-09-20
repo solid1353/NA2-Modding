@@ -57,6 +57,9 @@ the BTL overlay where it owns metric import and result presentation.
   region at raw `0x0651D0..0x066480`. The importer descriptors, bucket tables,
   tier thresholds, accumulator writes, and resident handoff calls used by that
   region were decoded. This was not a whole-overlay audit.
+  **Selection return boundary:** states 3 through 10 were traced through the
+  selection clear, resource acquisition, transition readiness, and battle-load
+  handoff, including the manager's saved setup block.
 
 - **Confirmed coverage:** the exact result-code classifier for
 ordinary KO/time states `1..4`, the condition-derived result `5`, pause-derived
@@ -549,6 +552,47 @@ the idle object at global `piGpffffCCC0` and sets request byte `+0x2C`.
 interface boundary only. The rendering/layout behavior belongs to the Victory
 UI documentation.
 
+### Selection reset and battle-load boundary
+
+The native post-results loop is not an immediate repeat of the same matchup.
+State 3 also calls `FUN_001F4D70(manager)`, which clears the three selection
+records and stage bytes at manager `+0x20..+0x9A` through `FUN_001F4B60`.
+It resets the outer controller's side resource snapshots and calls live BTL
+`0x0070F1E0`. The six-word session outcome block is separate and is not cleared.
+
+State 4 (`FUN_001ED230`) queues selection resources when controller `+0x18`
+is zero. State 5 (`FUN_001ED300`) waits for the resource fence, adopts the
+Character Select, Stage Select, and Settings archives, and enters state 6.
+State 6 (`FUN_001ED400`) waits for `FUN_00200670()` before entering Character
+Select state 7. That readiness function returns `1` only when the transition
+object at `0x006076A0` exists and its first word is zero. Successful Stage
+Select state 9 stores the selected stage,
+calls `FUN_002005B0(1,0)`, sets the three-count delay, and enters state 10.
+
+State 10 (`FUN_001ED880`) releases those selection archives after the delay,
+calls `FUN_001F4DD0(manager)`, requests battle loading with `FUN_001E9520(1)`,
+and enters state 11. `FUN_001F4DD0` normalizes the configured jutsu/support
+records, resolves equal-character costume conflicts, and saves the three
+`0x28`-byte records from `+0x20..+0x97` to `+0x9C..+0x113`, followed by the
+three stage bytes at `+0x114..+0x116`. The state-3 clear does not overwrite this
+saved block. These paths establish distinct selection-reset, saved-setup,
+session-score, and fresh-battle initialization boundaries.
+
+### Results resource loading
+
+In the score-qualified state-`0x12` branch, `FUN_001EE060` queues `xninka.ccs`
+through `FUN_001CF9E0` when it is absent, then starts the queue through
+`FUN_001CFCD0(0)` at resident `0x001EE160`. State `0x13` waits for
+`FUN_001CFD70`, constructs the result presentation, and only then starts its
+entrance transition and enters state `0x14`. Result initialization at live
+`0x00719ED0` runs inside the subsequent presentation dispatcher.
+
+The resident archive helper `FUN_0037E1A0` first checks `FUN_001AA450`. A cache
+miss calls `FUN_00116DE0` and enters the synchronous loader `FUN_001CF3F0`,
+which yields to the scheduler until its read/decode flags complete. Calling
+this helper after the entrance has started can therefore interrupt the first
+results update. The earlier queued-load boundary precedes that transition.
+
 ## Session outcome and streak counters
 
 `FUN_001ED000` zeroes all six words at `0x006B2900..0x006B2914` once during
@@ -939,6 +983,16 @@ of the function's exact contract. The code proves a capped manager point
 accumulator and its result-screen commit. It does not prove that the value is
 currency, an item unlock, or a persistent reward. No direct item/reward grant
 was found in this handoff.
+
+The summary dispatcher at live `0x0071A0A0` calls that acceptance function only
+once its summary child byte `+0x18` permits acceptance. Before that, native
+Circle can accelerate the tally in child states 2 and 3. The details dispatcher
+at live `0x0071A1D0` also calls the same acceptance function. The predicate reads
+the newly pressed input word at `input_context + 0x84 + selected_side * 0x78`,
+where the result object's `+0x02` halfword is the zero-based selected side.
+GhidrAssist omits parts of the acceptance body and misidentifies its predicate
+boundary; the complete bytes at raw `0x0663C0..0x06648F` establish the call,
+input mask, and commit stores.
 
 The surrounding result object has halfword state at `+0x00`, selected-side
 halfword at `+0x02`, total at `+0x04`, pre-result accumulator at `+0x08`, tier

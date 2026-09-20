@@ -1,4 +1,86 @@
 {
+  "general.battle_results_rematch": {
+    "description": "Offer Circle Rematch on Free Battle results while retaining the saved matchup and session outcome counters.",
+    "hooks": {
+      "queue_prompt_resources": {
+        "target_id": "na2_elf",
+        "offset": "0xEE260",
+        "expected_hex": "343F070C00000000",
+        "symbol": "rematch_queue_resources",
+        "encoding": "jal26"
+      },
+      "initialize_prompt": {
+        "target_id": "na2_btl",
+        "offset": "0x65F2C",
+        "expected_hex": "B4671C0C00000000",
+        "symbol": "rematch_initialize",
+        "encoding": "jal26"
+      },
+      "draw_prompt": {
+        "target_id": "na2_btl",
+        "offset": "0x62B6C",
+        "expected_hex": "60F20D0C00000000",
+        "symbol": "rematch_draw",
+        "encoding": "jal26"
+      },
+      "accept_rematch": {
+        "target_id": "na2_btl",
+        "offset": "0x663D0",
+        "expected_hex": "E0681C0C00000000",
+        "symbol": "rematch_accept",
+        "encoding": "jal26"
+      },
+      "cleanup_completed_results": {
+        "target_id": "na2_elf",
+        "offset": "0xEEB28",
+        "expected_hex": "50641C0C00000000",
+        "symbol": "rematch_cleanup",
+        "encoding": "jal26"
+      },
+      "cleanup_battle_controller": {
+        "target_id": "na2_elf",
+        "offset": "0xECA1C",
+        "expected_hex": "50641C0C00000000",
+        "symbol": "rematch_cleanup",
+        "encoding": "jal26"
+      },
+      "restore_matchup_after_results": {
+        "target_id": "na2_elf",
+        "offset": "0xECC44",
+        "expected_hex": "A0BA070C00000000",
+        "symbol": "rematch_restart",
+        "encoding": "jal26"
+      },
+      "begin_rematch_after_loading": {
+        "target_id": "na2_elf",
+        "offset": "0xECB18",
+        "expected_hex": "00B5070C00000000",
+        "symbol": "rematch_begin_battle",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "rematch": {
+        "kind": "c",
+        "path": "na228_builder/patches/general/battle_results_rematch.c",
+        "namespace": "general.rematch",
+        "resources": ["na228_builder/patches/general/rematch_label.png"],
+        "imports": {"rematch_label_pixels": "rematch_label_pixels"},
+        "fragments": {
+          "rematch_helpers": {"object": "general.rematch.text"},
+          "rematch_rodata": {"object": "general.rematch.rodata"},
+          "rematch_state": {"object": "general.rematch.bss.rematch"},
+          "rematch_queue_resources": {"object": "general.rematch.text.rematch.queue.resources"},
+          "rematch_initialize": {"object": "general.rematch.text.rematch.initialize"},
+          "rematch_draw": {"object": "general.rematch.text.rematch.draw"},
+          "rematch_accept": {"object": "general.rematch.text.rematch.accept"},
+          "rematch_cleanup": {"object": "general.rematch.text.rematch.cleanup"},
+          "rematch_restart": {"object": "general.rematch.text.rematch.restart"},
+          "rematch_begin_battle": {"object": "general.rematch.text.rematch.begin.battle"}
+        }
+      }
+    }
+  },
   "general.music_override": {
     "description": "Select existing SOUND.AFS music tracks for Mode Select and Character Select, with repeating and reduced-gain Character Select music.",
     "edits": {

@@ -139,6 +139,10 @@
       music_override: setting {
         patch: "general.music_override",
       },
+      battle_results_rematch: setting {
+        description: "Add Circle Rematch to Battle Results and retain the matchup and session match score.",
+        patch: "general.battle_results_rematch",
+      },
       mode_availability: {
         description: "Configure which game modes are available.",
         remove_adventure: setting {

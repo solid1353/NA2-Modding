@@ -90,6 +90,7 @@
       "disc_identity": "NUN5",                    // "NA2" | "NUN5" | "NA228"
       "replace_imported_game_title": true,
       "music_override": true,
+      "battle_results_rematch": true,
       "unlock_all": {
         "demon_wind_bomb": true
       },

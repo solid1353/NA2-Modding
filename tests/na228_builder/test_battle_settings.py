@@ -66,7 +66,7 @@ class BattleSettingsTests(unittest.TestCase):
         self.assertEqual((by_id[10].option_count, by_id[10].default_value), (21, 1))
         self.assertEqual((by_id[11].option_count, by_id[11].default_value), (4, 0))
         self.assertEqual((by_id[4].option_count, by_id[4].default_value), (8, 7))
-        self.assertEqual((by_id[5].option_count, by_id[5].default_value), (11, 0))
+        self.assertEqual((by_id[5].option_count, by_id[5].default_value), (11, 5))
 
         relocation_symbols = {item.symbol for item in fragment.relocations}
         self.assertTrue(

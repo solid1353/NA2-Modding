@@ -172,6 +172,38 @@
         "symbol": "v2_help_draw",
         "encoding": "jal26"
       },
+      "screen_position_x_label_nun5_font_state": {
+        "description": "Render the Screen Settings X label through NUN5's secondary ASCII font state while retaining the native anchor and color.",
+        "target_id": "na2_elf",
+        "offset": "0x28AF30",
+        "expected_hex": "C4080E0C00000000",
+        "symbol": "screen_position_text_draw",
+        "encoding": "jal26"
+      },
+      "screen_position_x_value_nun5_font_state": {
+        "description": "Render the Screen Settings X value through NUN5's secondary ASCII font state while retaining native formatting, anchor, and color.",
+        "target_id": "na2_elf",
+        "offset": "0x28AF54",
+        "expected_hex": "C4080E0C00000000",
+        "symbol": "screen_position_text_draw",
+        "encoding": "jal26"
+      },
+      "screen_position_y_label_nun5_font_state": {
+        "description": "Render the Screen Settings Y label through NUN5's secondary ASCII font state while retaining the native anchor and color.",
+        "target_id": "na2_elf",
+        "offset": "0x28AF94",
+        "expected_hex": "C4080E0C00000000",
+        "symbol": "screen_position_text_draw",
+        "encoding": "jal26"
+      },
+      "screen_position_y_value_nun5_font_state": {
+        "description": "Render the Screen Settings Y value through NUN5's secondary ASCII font state while retaining native formatting, anchor, and color.",
+        "target_id": "na2_elf",
+        "offset": "0x28AFB8",
+        "expected_hex": "C4080E0C00000000",
+        "symbol": "screen_position_text_draw",
+        "encoding": "jal26"
+      },
       "help_draw_practice_01": {
         "target_id": "na2_btl",
         "offset": "0x1CE6F8",
@@ -1169,6 +1201,20 @@
           },
           "v2_title_callback": {
             "object": "localization.font.v2.runtime.asm.text.v2.title.callback"
+          }
+        }
+      },
+      "font_screen_position_abi": {
+        "kind": "asm",
+        "path": "na228_builder/patches/localization/font/layout/font_screen_position_abi.S",
+        "namespace": "localization.font.screen.position.asm",
+        "imports": {
+          "v2_session_pointer": "v2_session_pointer"
+        },
+        "fragments": {
+          "screen_position_text_draw": {
+            "object": "localization.font.screen.position.asm.text.screen.position.text.draw",
+            "description": "Screen Settings text draw with scoped NUN5 secondary ASCII renderer state"
           }
         }
       },

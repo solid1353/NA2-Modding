@@ -42,6 +42,37 @@ English-language records 4, 5, and 6 are at file offsets `0x4DEA10`,
 `0x4DEA18`, and `0x4DEA20`, selected at runtime addresses `0x005DE890`,
 `0x005DE898`, and `0x005DE8A0`.
 
+## Screen-position modal text
+
+The two screen-position draw functions use the same four logical anchors and
+color index. The X label and value use `(40,12)` and `(72,12)`; the Y label and
+value use `(40,40)` and `(72,40)`; every draw uses color `15`. Both games format
+the signed numeric values through their homologous native integer formatter.
+With width `3`, zero is emitted as `"   0"` and negative one as `"  -1"`.
+
+The label source differs. NA2 reads direct pointers at `0x006046C8` and
+`0x006046CC` to the eight-byte slots at ELF file offsets `0x5047B8` and
+`0x5047C0`. Those slots contain Shift-JIS `Ｘ ：` and `Ｙ ：`. NUN5 instead
+requests localized records 4 and 5 through `FUN_003D1580`; the selected English
+records at SLES file offsets `0x513DE0` and `0x513DE4` contain ASCII `X:` and
+`Y:`.
+
+The surrounding text objects are not binary-compatible. NA2 allocates an
+`0x80`-byte object and a `0x24`-byte renderer record, while NUN5 allocates
+`0x88` and `0x424` bytes and uses shifted renderer and descriptor fields.
+NUN5's secondary renderer also initializes tracking to zero, whereas clean NA2
+initializes it to `-1.0`. NUN5 initializes extra spacing at renderer offset
+`+0x40` to `0.0`, while NA2 initializes it to `2.0`. The shared caller
+coordinates therefore are not the source of the regional modal-text
+difference, and the complete NUN5 object or draw function cannot be copied into
+NA2 unchanged.
+
+The numeric formatter's leading ordinary spaces expose another renderer
+difference. NUN5 advances each of those spaces by eight units; NA2 advances a
+secondary-font space by fourteen units when tracking is zero. Retaining NA2's
+space formula therefore moves zero 18 logical units right and negative one 12
+units right even though the caller anchors are identical.
+
 ## Shared Cancel compositor
 
 Both screen-position callers request common-prompt case 4 at logical center

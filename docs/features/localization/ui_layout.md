@@ -48,6 +48,16 @@ payloads, and `texture_patcher` module requirement are owned together by
 | Options and shared frontend prompts | Localized labels, difficulty routing, Controls Vibration, common Cancel records, and Options/Settings footer anchors | [Options](../../knowledge/localization/ui/options.md) |
 | Victory | Coupled NUN5 WINNER artwork and width-driven character-name construction | [Victory](../../knowledge/localization/ui/victory.md) |
 
+## Screen Settings text
+
+The Screen Settings modal imports NUN5's ASCII `X:` and `Y:` records. Its two
+labels and two formatted numeric values draw through one scoped wrapper that
+selects the secondary ASCII font mode, zero tracking, and zero extra spacing
+used by NUN5. It also scopes the existing NUN5 eight-unit ordinary-space
+advance needed by the formatter's leading spaces, then restores the prior
+renderer state. The native four anchors, numeric formatter, color, modal
+object, and every unrelated text draw remain unchanged.
+
 ## Battle item-status presentation
 
 The Battle item-status implementation covers paired, numeric, single, and

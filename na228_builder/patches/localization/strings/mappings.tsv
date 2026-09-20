@@ -1964,6 +1964,8 @@ T1945	1	Options > category help or reset result	ボタン<r操作|そうさ>の<
 T1946	1	Options > category help or reset result	<r音量|おんりょう>や<r音|おと>の<r出力設定|しゅつりょくせってい>ができます。	Change volume and audio output settings.				NA2_SLPS@0x4b2ae0		NUN5_TEXTENG@0x1190	slot	80			
 T1947	1	Options > category help or reset result	<r画面|がめん>の<r位置|いち>の<r調整|ちょうせい>ができます。	Adjust screen position.				NA2_SLPS@0x4b2b30		NUN5_TEXTENG@0x11c0	slot	64			
 T1948	1	Options > category help or reset result	<r難易度|なんいど>をデフォルトに<r戻|もど>します。	Return to default difficulty.				NA2_SLPS@0x4b2b70		NUN5_TEXTENG@0x11e0	slot	64			
+T2229	1	Options > Screen Settings > X axis label	Ｘ ：	X:				NA2_SLPS@0x5047B8		NUN5_SLES@0x513DE0	slot	8			
+T2230	1	Options > Screen Settings > Y axis label	Ｙ ：	Y:				NA2_SLPS@0x5047C0		NUN5_SLES@0x513DE4	slot	8			
 T1949	1	Options > Control Settings > action label	奥義準備	Ultimate Jutsu Prep			e2e:practice	NA2_SLPS@0x4B2640	NA2_SLPS@0x4B2690	NUN5_TEXTENG@0x1450	slot	16			
 T1950	1	Options > Control Settings > action label	ジャンプ	Jump			e2e:practice	NA2_SLPS@0x4B2650		NUN5_SLES@0x513ED0	slot	16			
 T1951	1	Options > Control Settings > action label	アイテム使用	Item Use			e2e:practice	NA2_SLPS@0x4B2660		NUN5_TEXTENG@0xF28	slot	16			

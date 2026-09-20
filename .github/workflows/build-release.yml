@@ -18,12 +18,24 @@ jobs:
     name: Build Windows package
     runs-on: windows-latest
     timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: "NA2 Modding"
 
     steps:
       - name: Check out the tagged source
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+          path: "NA2 Modding"
+          persist-credentials: false
+
+      - name: Check out the shared Workshop
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          repository: solid1353/UN-Workshop
+          ref: 42f25e242d88500c6c6a64aabbd786f61e1df5f1
+          path: "UN Workshop"
           persist-credentials: false
 
       - name: Read the pinned Python toolchain

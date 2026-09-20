@@ -2,6 +2,7 @@
 
 ### In Progress
 
+- Practice stage cancel is broken
 - Move captures and restructure stuff
 - Consolidate difficulty
 - Screen settings

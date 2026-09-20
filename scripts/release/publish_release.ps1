@@ -16,6 +16,8 @@ $manifestRelative = [string]$toolchain.release_manifest
 $manifestPath = [IO.Path]::GetFullPath((Join-Path $repository $manifestRelative))
 $builderPath = Join-Path $PSScriptRoot 'build_release.ps1'
 $settingsPath = [IO.Path]::GetFullPath($paths.files.project_settings)
+$gitHub = (Get-Command gh -CommandType Application -ErrorAction Stop |
+    Select-Object -First 1).Path
 
 function Invoke-ReleaseGit {
     param(
@@ -70,10 +72,26 @@ if ($status.Count -ne 0) {
 $remoteTag = @(& git -C $repository ls-remote --exit-code --tags origin "refs/tags/$tag" 2>&1)
 $remoteTagExit = $LASTEXITCODE
 if ($remoteTagExit -eq 0) {
-    Write-Host "[release] $tag already exists on origin; nothing was published." -ForegroundColor Yellow
-    return
+    & $gitHub release view $tag --repo solid1353/NA2-Modding *> $null
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "[release] $tag is already published." -ForegroundColor Yellow
+        return
+    }
+
+    $remoteCommit = @(& git -C $repository ls-remote --exit-code --tags origin "refs/tags/$tag^{}" 2>&1)
+    if ($LASTEXITCODE -ne 0 -or $remoteCommit.Count -ne 1) {
+        throw "Remote $tag is not an annotated tag."
+    }
+    $remoteCommit = ([string]$remoteCommit[0]).Split("`t", 2)[0]
+    $headCommit = (Invoke-ReleaseGit -GitArguments @(
+        'rev-parse', 'HEAD'
+    ) -Capture | Select-Object -First 1).ToString().Trim()
+    if ($remoteCommit -cne $headCommit) {
+        throw "Remote $tag does not point at the release commit."
+    }
+    Write-Host "[release] Resuming unpublished $tag." -ForegroundColor Cyan
 }
-if ($remoteTagExit -ne 2) {
+elseif ($remoteTagExit -ne 2) {
     $details = ($remoteTag | ForEach-Object { [string]$_ }) -join "`n"
     throw "Could not check origin for $tag.`n$details"
 }
@@ -156,4 +174,33 @@ else {
 }
 
 Invoke-ReleaseGit -GitArguments @('push', 'origin', "refs/tags/$tag")
-Write-Host "[release] Published $tag. GitHub Actions will create the GitHub Release." -ForegroundColor Green
+
+$executableName = "${productName}_$targetVersion.exe"
+$packageName = [IO.Path]::ChangeExtension($executableName, '.zip')
+$packagePath = Join-Path $paths.release $packageName
+if (-not (Test-Path -LiteralPath $packagePath -PathType Leaf)) {
+    throw "Release package is missing: $packagePath"
+}
+$checksumPath = "$packagePath.sha256"
+$hash = (Get-FileHash -LiteralPath $packagePath -Algorithm SHA256).Hash.ToLowerInvariant()
+$checksumLine = "$hash  $packageName`n"
+[IO.File]::WriteAllText(
+    $checksumPath,
+    $checksumLine,
+    [Text.UTF8Encoding]::new($false)
+)
+
+$releaseArguments = @(
+    'release', 'create', $tag,
+    $packagePath, $checksumPath,
+    '--repo', 'solid1353/NA2-Modding',
+    '--verify-tag', '--notes-from-tag'
+)
+if ($targetVersion.Contains('-')) {
+    $releaseArguments += '--prerelease'
+}
+& $gitHub @releaseArguments
+if ($LASTEXITCODE -ne 0) {
+    throw "GitHub Release publication failed (exit $LASTEXITCODE)."
+}
+Write-Host "[release] Published $tag to GitHub." -ForegroundColor Green

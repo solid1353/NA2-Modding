@@ -74,16 +74,16 @@ uncommitted release work:
 
 The toolchain is pinned by `@scripts/release/toolchain.json` and
 `@scripts/release/requirements.txt`. The builder creates an isolated virtual
-environment under `@release/temp/`, runs the complete
-builder test suite, inventories the full definition resource closure, builds a
+environment under `@release/temp/`, runs the release application and packaged-runtime
+tests, inventories the full definition resource closure, builds a
 precompiled object for each injection-owned runtime C or `.S` source, builds a PyInstaller
 one-file console EXE, self-tests the packaged data with the derived default
 configuration, and atomically updates the configured ZIP
 candidate. Temporary packaging state is removed afterward.
 
 Development ZIPs are placed under `@release/development/`; clean
-production packages use `@release/`. Published packages are created by the
-GitHub release workflow from a tagged commit.
+production packages use `@release/`. The publication command uploads the exact
+validated production ZIP and its SHA-256 sidecar to GitHub.
 
 ## Release manifest
 
@@ -103,10 +103,11 @@ na228 release 0.1.0
 ```
 
 Omitting the argument publishes the version already declared by the manifest.
-The command requires a clean tree, refuses an existing remote version tag,
+The command requires a clean tree, refuses a conflicting remote version tag,
 updates and commits the manifest when necessary, runs the production builder,
-pushes the current branch, creates an annotated `v<product_version>` tag, and
-pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
+pushes the current branch, creates and pushes an annotated
+`v<product_version>` tag, and uploads the package to GitHub. A matching tag
+without a release resumes publication.
 
 ## Architecture
 
@@ -122,8 +123,8 @@ pushes the tag. The tagged GitHub workflow then creates the GitHub Release.
   confirmed `cc2fuku` password; it does not extract or modify the container.
 - `@builder/infrastructure/orchestration/build_configuration.py` exposes the same staged-image composition used
   by the normal CLI and the release adapter.
-- `@scripts/release/build_release.ps1` owns packaging; the GitHub workflow calls
-  that same script rather than implementing another packager.
+- `@scripts/release/build_release.ps1` owns packaging;
+  `@scripts/release/publish_release.ps1` publishes that exact package.
 
 The ordinary `na228`, `na228 b`, and `na228 m` workflows select the
 configuration owned by their root `game.json` build target. Cache builds use
@@ -132,11 +133,10 @@ release-packaging pipeline.
 
 ## GitHub releases
 
-`.github/workflows/build-release.yml` supports manual dispatch and annotated
-`v*` tags. Both paths run the pinned PowerShell builder on
-`windows-latest`, calculate a SHA-256 sidecar, and upload the ZIP plus checksum.
-A tag must be annotated and exactly equal `v<product_version>`; tagged runs
-publish a GitHub Release and mark SemVer suffixes as prereleases.
+`na228 release` builds and validates the production package locally, writes its
+SHA-256 sidecar, creates and pushes the annotated version tag, and uploads both
+files to the corresponding GitHub Release. SemVer suffixes are published as
+prereleases. GitHub does not rebuild the package.
 
 A production publication sequence, automated by `na228 release [version]`, is:
 
@@ -145,8 +145,8 @@ A production publication sequence, automated by `na228 release [version]`, is:
 3. perform any desired clean-machine/runtime acceptance;
 4. create an annotated `v<product_version>` tag;
 5. push the commit and tag;
-6. verify the workflow artifact or GitHub Release.
+6. upload the validated ZIP and checksum to the GitHub Release.
 
-The workflow never receives copyrighted game ISOs. Its validation covers the
-packaged product and full selectable resource closure; output-image validation
-remains a controlled local gate using the canonical source media.
+The publication command never uploads copyrighted game ISOs. Package validation
+covers the packaged product and full selectable resource closure; output-image
+validation remains a controlled local gate using the canonical source media.

@@ -2,6 +2,8 @@
 
 ### In Progress
 
+- Consolidate menus
+- UJ damage
 - Practice stage cancel is broken
 - Move captures and restructure stuff
 - Consolidate difficulty

@@ -5,7 +5,7 @@
 - Consolidate difficulty
 - Screen settings
 - Save translations alignment
-- Practice settings returned to defaults
+- Practice settings returned to defaults in mod settings
 - Pre-release testing
 
 ### General
@@ -14,12 +14,11 @@
 
 ### Backlog
 
-- Damage scaling
 - Extend items to 5
+- Damage scaling
 - Proper startup
 - Proper widescreen
 - Cross-platform deployment
-- Proper widescreen patch
 - Upscaled texture pack for pcsx2
 - Port stages/characters
 - 60 FPS

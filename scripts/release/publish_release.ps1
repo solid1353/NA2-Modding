@@ -194,7 +194,7 @@ $releaseArguments = @(
     'release', 'create', $tag,
     $packagePath, $checksumPath,
     '--repo', 'solid1353/NA2-Modding',
-    '--verify-tag', '--notes-from-tag'
+    '--verify-tag', '--notes', "$productName $targetVersion"
 )
 if ($targetVersion.Contains('-')) {
     $releaseArguments += '--prerelease'

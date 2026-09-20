@@ -7,7 +7,6 @@
 - Practice stage cancel is broken
 - Move captures and restructure stuff
 - Consolidate difficulty
-- Screen settings
 - Save translations alignment
 - Practice settings returned to defaults in mod settings
 - Pre-release testing

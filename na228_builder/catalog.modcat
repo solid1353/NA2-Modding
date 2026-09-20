@@ -139,6 +139,14 @@
       music_override: setting {
         patch: "general.music_override",
       },
+      practice_stage_select: setting {
+        description: "Open the native Stage Select in Practice with the training field initially selected.",
+        patch: "general.practice_stage_select",
+      },
+      free_battle_stage_persistence: setting {
+        description: "Restore the last highlighted Free Battle stage when Stage Select opens again during the current session.",
+        patch: "general.free_battle_stage_persistence",
+      },
       battle_results_rematch: setting {
         description: "Add Circle Rematch to Battle Results and retain the matchup and session match score.",
         patch: "general.battle_results_rematch",

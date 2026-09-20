@@ -142,6 +142,68 @@
       }
     }
   },
+  "general.practice_stage_select": {
+    "description": "Open the native Stage Select in Practice while retaining the training field as its initial choice.",
+    "hooks": {
+      "initialize_interactive_practice_stage_select": {
+        "description": "Pass the native interactive sentinel only for Practice and preserve every other battle entry's initializer argument.",
+        "target_id": "na2_elf",
+        "offset": "0xED844",
+        "expected_hex": "704F1C0C00000000",
+        "symbol": "practice_stage_select_initialize",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "practice_stage_select": {
+        "kind": "c",
+        "path": "na228_builder/patches/general/practice_stage_select.c",
+        "namespace": "general.practice.stage.select",
+        "imports": {},
+        "fragments": {
+          "practice_stage_select_initialize": {
+            "object": "general.practice.stage.select.text.practice.stage.select.initialize",
+            "description": "Initialize Practice Stage Select interactively and delegate other battle entries unchanged."
+          }
+        }
+      }
+    }
+  },
+  "general.free_battle_stage_persistence": {
+    "description": "Restore the last highlighted Free Battle stage when the native Stage Select opens again during the current session.",
+    "edit": {
+      "description": "Keep the selector initializer's saved-stage choice when the active stage has been cleared instead of replacing it with slot zero.",
+      "operation": "replace",
+      "destination_target_id": "na2_elf",
+      "destination_offset": "0xED864",
+      "expected_hex": "2D800000",
+      "replacement_hex": "04000010"
+    },
+    "hooks": {
+      "remember_cancelled_stage_selection": {
+        "description": "Save the highlighted Free Battle stage before the cancelled selector is destroyed.",
+        "target_id": "na2_elf",
+        "offset": "0xED884",
+        "expected_hex": "0C561C0C00000000",
+        "symbol": "free_battle_stage_persistence_update",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "free_battle_stage_persistence": {
+        "kind": "c",
+        "path": "na228_builder/patches/general/free_battle_stage_persistence.c",
+        "namespace": "general.free.battle.stage.persistence",
+        "imports": {},
+        "fragments": {
+          "free_battle_stage_persistence_update": {
+            "object": "general.free.battle.stage.persistence.text.free.battle.stage.persistence.update",
+            "description": "Run the native selector update and remember the highlighted stage when Free Battle cancels it."
+          }
+        }
+      }
+    }
+  },
   "general.mode_availability.remove_adventure": {
     "description": "Mark the Adventure Mode Select entry unavailable.",
     "edit": {

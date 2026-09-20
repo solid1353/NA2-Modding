@@ -1,5 +1,20 @@
 # Practice
 
+## Stage Select
+
+`features.general.practice_stage_select` opens the native 24-stage selector
+after the Practice team-versus confirmation. The training field remains the
+initial choice. Confirm writes the selected native load slot through the
+ordinary battle-manager handoff, while Cancel returns to Character Select.
+
+The resident hook replaces only the shared call to the BTL selector
+initializer. For Practice entry type `2`, its wrapper passes the native `-1`
+interactive sentinel. Every other entry type receives the original initializer
+argument unchanged. The following native selection setter still receives slot
+`6`, so the selector opens on the training field without forcing it. Stage-list
+construction, input, drawing, selection, cleanup, and battle loading remain
+native.
+
 ## Practice bootstrap PNACH
 
 Practice bootstrap is runtime-only and has no builder catalog node, builder

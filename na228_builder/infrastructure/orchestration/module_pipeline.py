@@ -37,8 +37,8 @@ from ...patches.settings.mod_settings.mod_settings import (
     mod_settings_schema_fragment,
     mod_settings_state_fragment,
 )
-from ...patches.general.battle_results_rematch import rematch_label_fragment
 from ...patches.general.unlock_all.unlock_all import unlock_all_configuration_fragment
+from ...patches.general.battle_results_rematch import rematch_label_fragment
 from ...patches.memory_card.save_appendix import (
     save_appendix_load_status_fragment,
     save_appendix_next_update_fragment,

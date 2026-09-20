@@ -2,7 +2,11 @@
 
 ### In Progress
 
--   Store settings in the save
+- Consolidate difficulty
+- Screen settings
+- Save translations alignment
+- Practice settings returned to defaults
+- Pre-release testing
 
 ### General
 
@@ -10,12 +14,12 @@
 
 ### Backlog
 
--   Damage scaling
--   Extend items to 5
--   Proper startup
--   Proper widescreen
--   Cross-platform deployment
--   Proper widescreen patch
--   Upscaled texture pack for pcsx2
--   Port stages/characters
--   60 FPS
+- Damage scaling
+- Extend items to 5
+- Proper startup
+- Proper widescreen
+- Cross-platform deployment
+- Proper widescreen patch
+- Upscaled texture pack for pcsx2
+- Port stages/characters
+- 60 FPS

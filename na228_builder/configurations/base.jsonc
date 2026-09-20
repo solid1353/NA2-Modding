@@ -12,8 +12,8 @@
       "battle_settings": {
         "battle_mechanics_submenu": true,
         "time": 99,                               // int 10..90 (step 10) | 99 | "unlimited"
-        "difficulty": "ultimate",                 // "simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"
-        "handicap": 0                             // int 0..10 (Player 1; Player 2 is 10 minus this value)
+        "difficulty": "normal",                   // "simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"
+        "handicap": 5                             // int 0..10 (Player 1; Player 2 is 10 minus this value)
       },
       "practice_settings": {
         "battle_mechanics_submenu": true,

@@ -2,6 +2,7 @@
 
 ### In Progress
 
+- Move captures and restructure stuff
 - Consolidate difficulty
 - Screen settings
 - Save translations alignment

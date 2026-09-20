@@ -13,9 +13,13 @@ Defaults values for the session-wide Mod Settings menu:
 | `support_selection` | Support Selection | `none`, `relevant`, `all` |
 
 The builder always includes the five runtime implementations. Their configured
-values initialize one writable runtime state when the game starts; changes made
-through the menu last until the game process ends and are not written to the
-memory card.
+values initialize one writable runtime state when the game starts. With
+`features.memory_card.dedicated_save_namespace` enabled, the existing save flow
+writes these values and every other runtime-editable value below
+`features.settings` to the dedicated record appendix. A valid loaded record
+overrides configured defaults; a setting absent from an older record keeps its
+configured default. With the dedicated namespace disabled, the retail save
+format does not store these values.
 
 Square on Mode Select opens an existing Practice Settings child as a modal
 surface. Each Mode Select controller prepares the Options backdrop, Practice
@@ -69,9 +73,12 @@ The Square badge is centered at `(294, 362)` and the Mod label at `(327, 362)`,
 using the same vertical anchor as the native footer prompts.
 
 Control Scheme selects the held-input guard, action-history lookup, and logical
-block source at runtime. Simple Display updates the three live settings packs
-when changed. Character Balance selects the original data or generated
-character-override table. Balance Overlay gates its Character Select renderer
+block source at runtime. Simple Display has one shared value for Mod Settings,
+the battle/Practice pause menu, and the save appendix. The native Simple Display
+getter and setter use the same Mod Settings getter and setter as the menu and
+save flow. The shared setter updates the three native settings packs, which
+carry the value for native gameplay. Character Balance selects the original
+data or generated character-override table. Balance Overlay gates its Character Select renderer
 and shows substitution cost only with Character Balance set to Overrides.
 Support Selection applies its three-state filter to the always-present
 Character Select hooks.

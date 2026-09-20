@@ -41,6 +41,16 @@ typedef unsigned int u32;
 
 
 #define ROW_ID_STATUS 9u
+#define ROW_ID_HEALTH 0u
+#define ROW_ID_COMMANDS 6u
+#define ROW_ID_DAMAGE 7u
+#define ROW_ID_STRENGTH 10u
+#define ROW_ID_ATTACK 11u
+#define ROW_ID_GUARD 12u
+#define ROW_ID_MOVE 13u
+#define ROW_ID_SUBSTITUTION_JUTSU 14u
+#define ROW_ID_LINKED_ATTACK 15u
+#define ROW_ID_EXTRA_HIT_COUNTER 16u
 #define ROW_ID_ULTIMATE_JUTSU 3u
 #define ROW_ID_CHAKRA 1u
 #define ROW_ID_SUBSTITUTION 17u
@@ -132,6 +142,7 @@ extern volatile u32 practice_settings_active_labels[];
 extern volatile u32 practice_settings_active_value_tables[];
 extern u32 chakra_mode_get(void);
 extern void chakra_mode_set(u32 mode);
+extern void save_native_setting_set(u32 argument, u32 value);
 void practice_settings_prepare_backing_and_compose(void *backing);
 void practice_settings_update_help(void *controller);
 typedef u32 (*UltimateJutsuModeGet)(void);
@@ -667,6 +678,24 @@ static void practice_settings_commit_runtime_mode(
     }
 }
 
+static void practice_settings_commit_native_setting(
+    void *controller,
+    u32 row_id
+)
+{
+    const PracticeSettingsRow *row = practice_settings_row_for_id(
+        controller,
+        row_id
+    );
+
+    if (row != (const PracticeSettingsRow *)0) {
+        save_native_setting_set(
+            0x200u | row_id,
+            (u32)practice_settings_get_row_value(controller, row)
+        );
+    }
+}
+
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_apply")
 void practice_settings_apply(void *controller)
 {
@@ -678,6 +707,26 @@ void practice_settings_apply(void *controller)
 
     if (practice_settings_is_mod(controller) == 0u) {
         native_apply(controller);
+        practice_settings_commit_native_setting(controller, ROW_ID_HEALTH);
+        practice_settings_commit_native_setting(controller, ROW_ID_COMMANDS);
+        practice_settings_commit_native_setting(controller, ROW_ID_DAMAGE);
+        practice_settings_commit_native_setting(controller, ROW_ID_STATUS);
+        practice_settings_commit_native_setting(controller, ROW_ID_STRENGTH);
+        practice_settings_commit_native_setting(controller, ROW_ID_ATTACK);
+        practice_settings_commit_native_setting(controller, ROW_ID_GUARD);
+        practice_settings_commit_native_setting(controller, ROW_ID_MOVE);
+        practice_settings_commit_native_setting(
+            controller,
+            ROW_ID_SUBSTITUTION_JUTSU
+        );
+        practice_settings_commit_native_setting(
+            controller,
+            ROW_ID_LINKED_ATTACK
+        );
+        practice_settings_commit_native_setting(
+            controller,
+            ROW_ID_EXTRA_HIT_COUNTER
+        );
     }
     practice_settings_runtime_options(controller, 1u);
     practice_settings_commit_runtime_mode(

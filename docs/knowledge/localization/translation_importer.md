@@ -420,6 +420,23 @@ slot can insert an early empty string and hide later parts. The executable
 sequence-writing contract belongs to the
 [translation importer feature](../../features/localization/translation_importer.md).
 
+The clean repair-confirmation prompt uses the same packed form. Its two NA2
+fragments start at boot-ELF file offsets `0x3044F0` and `0x30451E`, and the
+message-table pointer at `0x5030F0` contains runtime address `0x004043F0` for
+the first fragment. NUN5 stores the matching official English message at
+`TEXTENG.BIN` `0x298C0`: `The Naruto Shippuden: Ultimate Ninja 5` and `data on
+memory card (PS2)  in` form the corrupt-data statement, followed by `MEMORY
+CARD slot 1 is corrupt!` and `Recover the data?`.
+
+The surrounding clean save-error family uses the same tables. NA2's corrupt
+notice at `0x304470` and load-failure notice at `0x3044B0` use pointer words
+`0x5030E8` and `0x5030EC`; NUN5 supplies their English at `TEXTENG.BIN`
+`0x29800` and `0x298B0`. Recovery progress occupies the consecutive NA2 slots
+at `0x304550`, `0x304586`, and `0x3045CF`, reached through pointer word
+`0x5030F4`, and matches NUN5 `TEXTENG.BIN` `0x29940`. The recovery-failed and
+recovery-completed notices at NA2 `0x304600` and `0x304650` use pointer words
+`0x5030F8` and `0x5030FC` and match NUN5 offsets `0x299E0` and `0x299F0`.
+
 ## Settings string references
 
 Battle Settings draw helper Ghidra `FUN_008801E0` loads labels through
@@ -439,8 +456,10 @@ offsets include the header; preserved Ghidra locations follow the
 
 ## Content and layout boundary
 
-Canonical mappings preserve official wording. They do not insert authored line
-breaks or shorten correct text merely to compensate for a renderer defect.
+Canonical donor evidence preserves official wording. It does not insert
+authored line breaks or shorten correct text merely to compensate for a
+renderer defect. Direct user overrides remain separate in the `replacement`
+field and do not change the recorded donor.
 Collection Movie line breaks added to four exact NUN5 titles were rejected and
 removed; wrapping belongs to the Font caller path. Likewise, the correct
 `Flying Thunder God Jutsu` mapping remains unchanged even if a particular

@@ -204,7 +204,9 @@ and read only relevant sections of large documents.
   individual evidence from it, but must not create, modify, move, delete, or
   link anything inside it unless the user authorizes that exact action.
 - Savestates are read-only diagnostic evidence: do not modify them
-  or use them for validation.
+  or use them for validation. The user never loads savestates to test changes.
+  Do not suggest that a reported failure came from doing so or ask whether
+  they did.
 - Before deleting anything, preserve any useful information it contains in the
   appropriate project file.
 - After moving or deleting files, inspect affected parent directories with
@@ -281,7 +283,8 @@ and read only relevant sections of large documents.
 - Build only when the changes affect build bytes or byte parity is
   needed to be proven.
 - Documentation changes and the like should not produce builds.
-- Build NA2 only through `na228 build`.
+- Build NA2 only through `na228 build`. Whenever reporting a completed NA2
+  build, state the output ISO's exact filename.
 - The PCSX2 fork is built according to its repository instructions.
 
 ## Validation

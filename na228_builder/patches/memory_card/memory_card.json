@@ -1,16 +1,214 @@
 {
   "memory_card.dedicated_save_namespace": {
-    "description": "Use the dedicated NA228 save namespace at both memory-card directory references.",
-    "edit": {
-      "operation": "replace",
-      "destination_target_id": "na2_elf",
-      "destination_offsets": [
-        "0x2FBAC1",
-        "0x2FBBF0"
-      ],
-      "expected_value": "BISLPS-25837NARUTO5",
-      "replacement_value": "BASLOP-NA228NARUTO6",
-      "adapter": "ascii_fixed"
+    "description": "Use the dedicated NA228 save namespace and its versioned settings appendix.",
+    "edits": {
+      "create_allocate_extended_record": {
+        "description": "Allocate a complete 0x2600-byte record while creating the save set.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xC1980",
+        "expected_hex": "00240424",
+        "replacement_hex": "00260424"
+      },
+      "create_fill_extended_record": {
+        "description": "Initialize the complete 0x2600-byte erased record during save-set creation.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xC1998",
+        "expected_hex": "00240624",
+        "replacement_hex": "00260624"
+      },
+      "create_write_extended_record": {
+        "description": "Write each complete erased record during save-set creation.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xC19C4",
+        "expected_hex": "00240924",
+        "replacement_hex": "00260924"
+      },
+      "dedicated_directory_names": {
+        "description": "Address both memory-card directory references through the dedicated NA228 namespace.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offsets": [
+          "0x2FBAC1",
+          "0x2FBBF0"
+        ],
+        "expected_value": "BISLPS-25837NARUTO5",
+        "replacement_value": "BASLOP-NA228NARUTO6",
+        "adapter": "ascii_fixed"
+      },
+      "increase_required_memory_card_blocks": {
+        "description": "Account for four extra 1 KiB card blocks: each record grows from nine blocks to ten.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xC1668",
+        "expected_hex": "67000424",
+        "replacement_hex": "6B000424"
+      },
+      "load_allocate_extended_record": {
+        "description": "Allocate a complete temporary record for normal load.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE2710",
+        "expected_hex": "00240424",
+        "replacement_hex": "00260424"
+      },
+      "load_read_extended_record": {
+        "description": "Request the complete temporary record during normal load.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE2734",
+        "expected_hex": "00240924",
+        "replacement_hex": "00260924"
+      },
+      "repair_allocate_backup_record": {
+        "description": "Allocate a complete record while restoring a missing primary from data04.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xC3218",
+        "expected_hex": "00240424",
+        "replacement_hex": "00260424"
+      },
+      "repair_allocate_descriptor_record": {
+        "description": "Allocate a complete record while reconstructing descriptor metadata.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xC3470",
+        "expected_hex": "00240424",
+        "replacement_hex": "00260424"
+      },
+      "repair_read_backup_record": {
+        "description": "Read the complete data04 record for missing-primary restoration.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xC323C",
+        "expected_hex": "00240924",
+        "replacement_hex": "00260924"
+      },
+      "repair_read_descriptor_record": {
+        "description": "Read each complete record while reconstructing descriptor metadata.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xC349C",
+        "expected_hex": "00240924",
+        "replacement_hex": "00260924"
+      },
+      "repair_write_primary_record": {
+        "description": "Preserve the complete data04 record when restoring a missing primary.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xC33D4",
+        "expected_hex": "00240924",
+        "replacement_hex": "00260924"
+      },
+      "save_allocate_extended_record": {
+        "description": "Allocate a complete temporary record for normal save.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE2928",
+        "expected_hex": "00240424",
+        "replacement_hex": "00260424"
+      },
+      "save_write_backup_record": {
+        "description": "Write the complete rolling data04 record.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE2A10",
+        "expected_hex": "00240924",
+        "replacement_hex": "00260924"
+      },
+      "save_write_primary_record": {
+        "description": "Write the complete selected primary record.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xE29EC",
+        "expected_hex": "00240924",
+        "replacement_hex": "00260924"
+      }
+    },
+    "hooks": {
+      "classify_appendix_during_card_scan": {
+        "description": "Route incompatible versions away from native recovery and perform an approved older-save upgrade on the card worker.",
+        "target_id": "na2_elf",
+        "offset": "0xE22F8",
+        "expected_hex": "2808070C",
+        "symbol": "save_appendix_check_card",
+        "encoding": "jal26"
+      },
+      "handle_incompatible_save_dialog": {
+        "description": "Offer a supported older-save upgrade, then resume the existing load or save flow; leave newer and unknown versions untouched.",
+        "target_id": "na2_elf",
+        "offset": "0xE4008",
+        "expected_hex": "C88F070C00000000",
+        "symbol": "save_appendix_update",
+        "encoding": "jal26"
+      },
+      "apply_extended_record_on_load": {
+        "description": "Apply the validated setting values after the native checksum succeeds and before native profile state is copied.",
+        "target_id": "na2_elf",
+        "offset": "0xE27C8",
+        "expected_hex": "3C8C070C",
+        "symbol": "save_appendix_load_profile",
+        "encoding": "jal26"
+      },
+      "serialize_extended_record_on_save": {
+        "description": "Serialize every runtime setting into the appendix while preserving the native header copy.",
+        "target_id": "na2_elf",
+        "offset": "0xE2944",
+        "expected_hex": "3C8C070C",
+        "symbol": "save_appendix_serialize_profile",
+        "encoding": "jal26"
+      },
+      "validate_extended_record_on_load": {
+        "description": "Clear the appendix destination, read the complete record, and reject an invalid or unsupported appendix before native validation.",
+        "target_id": "na2_elf",
+        "offset": "0xE273C",
+        "expected_hex": "9807070C",
+        "symbol": "save_appendix_read_profile",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "save_appendix": {
+        "kind": "c",
+        "path": "na228_builder/patches/memory_card/save_appendix.c",
+        "namespace": "memory.card.save.appendix",
+        "imports": {
+          "save_appendix_schema": "save_appendix_schema",
+          "save_appendix_load_status": "save_appendix_load_status",
+          "save_appendix_next_update": "save_appendix_next_update"
+        },
+        "resources": [
+          "na228_builder/save_appendix.tsv"
+        ],
+        "fragments": {
+          "save_appendix_dialog_state": {
+            "object": "memory.card.save.appendix.bss"
+          },
+          "save_appendix_dialog_text": {
+            "object": "memory.card.save.appendix.rodata"
+          },
+          "save_appendix_check_card": {
+            "object": "memory.card.save.appendix.text.save.appendix.check.card"
+          },
+          "save_appendix_helpers": {
+            "object": "memory.card.save.appendix.text.save.appendix.helpers"
+          },
+          "save_appendix_load_profile": {
+            "object": "memory.card.save.appendix.text.save.appendix.load.profile"
+          },
+          "save_appendix_read_profile": {
+            "object": "memory.card.save.appendix.text.save.appendix.read.profile"
+          },
+          "save_appendix_serialize_profile": {
+            "object": "memory.card.save.appendix.text.save.appendix.serialize.profile"
+          },
+          "save_appendix_update": {
+            "object": "memory.card.save.appendix.text.save.appendix.update"
+          }
+        }
+      }
     }
   },
   "memory_card.replace_memory_card_title": {

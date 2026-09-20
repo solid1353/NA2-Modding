@@ -48,6 +48,8 @@ typedef unsigned int u32;
 #define NATIVE_SPRITE_UPDATE_ADDRESS 0x001CC070u
 
 #define PROFILE_ULTIMATE_DIFFICULTY_SLOT 0x6Au
+#define TIME_ROW_ID 0u
+#define DIFFICULTY_ROW_ID 1u
 #define HANDICAP_ROW_ID 5u
 #define HANDICAP_NATIVE_VISIBLE_SLOT 5
 #define HANDICAP_NATIVE_VALUE_Y 257.0f
@@ -157,6 +159,7 @@ extern const BattleSettingsSchema battle_settings_schema;
 extern volatile u32 battle_settings_active_help[];
 extern u32 chakra_mode_get(void);
 extern void chakra_mode_set(u32 mode);
+extern void save_native_setting_set(u32 argument, u32 value);
 typedef u32 (*UltimateJutsuModeGet)(void);
 typedef void (*UltimateJutsuModeSet)(u32 mode);
 typedef u32 (*ToggleModeGet)(void);
@@ -1052,12 +1055,31 @@ static void battle_settings_commit_runtime_modes(void)
     );
 }
 
+static void battle_settings_commit_native_setting(void *controller, u32 row_id)
+{
+    u32 index;
+
+    for (index = 0u; index < battle_settings_schema.row_count; ++index) {
+        const BattleSettingsRow *row = battle_settings_model_row(index);
+        if (row != (const BattleSettingsRow *)0 && row->id == row_id) {
+            save_native_setting_set(
+                0x100u | row_id,
+                (u32)battle_settings_get_row_value(controller, row)
+            );
+            return;
+        }
+    }
+}
+
 BATTLE_SETTINGS_SECTION(".text.battle_settings_confirm")
 s32 battle_settings_confirm(void *controller)
 {
     NativeSound play_sound = (NativeSound)NATIVE_SOUND_ADDRESS;
 
     *(volatile short *)((u8 *)controller + CONTROLLER_PHASE_OFFSET) = 1;
+    battle_settings_commit_native_setting(controller, TIME_ROW_ID);
+    battle_settings_commit_native_setting(controller, DIFFICULTY_ROW_ID);
+    battle_settings_commit_native_setting(controller, HANDICAP_ROW_ID);
     battle_settings_commit_runtime_modes();
     play_sound(0x34u);
     return 0;

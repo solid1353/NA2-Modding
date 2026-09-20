@@ -40,6 +40,9 @@ and BTL binaries identified below and their maintained read-only exports.
   construction/update/result range `0x0087B0D0..0x0087D940`, its command-list
   tables, command factory, child-result propagation, and exact Shift-JIS prompt
   fragments for commands `0xA`, `0xB`, and `0xE`.
+- The Simple Display child's initial selection and completion path were traced
+  through its initializer, list state, and resident setting getter/setter,
+  including the separate selected-row and automatic-completion fields.
 - Complete direct-pattern scans within the two exact binaries covered immediate
   route-`8` stores, direct constant-offset stores to auxiliary `+0xA50`, and
   direct stores to controller `+0x694`. These exhaustive claims apply only to
@@ -619,6 +622,51 @@ The parent result dispatcher at live `0x0087D330` (preserved export
 Live wrapper `0x0087D940` calls that dispatcher, calls live draw/update target
 `0x0087D460`, and preserves the dispatch result for the resident owner. This
 closes the result chain without assigning speculative menu labels.
+
+### Simple Display selection
+
+Command `6`'s `ccStartMenuSimpleDisp` initializer is live BTL `0x00877870`
+(preserved address `0x00877830`, raw file `0x001C3970`). The child owns its
+selection window at `+0x0C`; that window owns the list at `+0x7C`. Instruction
+`sh zero, 0x10(v0)` at live `0x00877904` (preserved `0x008778C4`, raw
+`0x001C3A04`, bytes `100040A4`) disables automatic completion. It does not
+select a row. The preceding resident list initializer `FUN_00382a20` clears
+the selected row, a 32-bit field at list `+0x18`, to `0`. The Simple Display
+initializer does not read the current Simple Display setting.
+
+Resident input handler `FUN_00383340` changes list `+0x18` for cursor movement.
+Result getter `0x00383590` returns that field unless completion state `+0x12`
+is `2`, in which case it returns `-1` for cancellation. Its bytes were read
+through GhidrAssist because no function is defined at that address.
+
+List `+0x10` is a 16-bit automatic-completion mode. `FUN_003834e0` recognizes
+`1` as confirmation and `2` as cancellation. Once counter `+0x22` reaches
+threshold `+0x20`, it copies the mode into completion state `+0x12` and sets
+event bit `0x08` at `+0x28`. Both counter and threshold initialize to zero,
+so enabling mode `1` without a delay immediately enters confirmation when
+the window becomes ready. `FUN_00382ef0` then calls `FUN_00383240`, whose
+confirmation animation advances the `+0x24/+0x26` counters, followed by
+`FUN_003831c0` to close the window. Cursor selection must not be written to
+the automatic-completion mode.
+
+The completion updater is live `0x00877A10` (preserved `0x008779D0`). It
+reads the selected row through resident `0x00383590`: row `0` passes enabled
+to `FUN_001f6d80`, while row `1` passes disabled. The order is therefore
+On, Off. `FUN_001f6d80` delegates to `FUN_001f59f0(manager, 0, value)`, which
+writes bit `0x02` of the active settings pack.
+
+The corresponding getter is `FUN_001f6db0`, delegating to
+`FUN_001f6420(manager, 0)`. Its case at `0x001F6448` selects
+`manager+0x9F4` in modes `2/3` and `manager+0xA00` otherwise, then returns
+bit `0x02` as a Boolean. The menu's initial row and the active value are
+independent: its fixed initial On selection does not establish that the
+setting is On.
+
+GhidrAssist's function boundary for the initializer stops after its first
+allocation call. The complete initializer bytes were therefore read through
+GhidrAssist `get_data_at` over preserved `0x00877830..0x008779CF`; the
+maintained analysis was not changed. The getter's jump-table case was likewise
+read as bytes because its decompiler did not recover the switch body.
 
 ## Battle teardown and reconstruction
 

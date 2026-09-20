@@ -233,7 +233,7 @@
         "encoding": "jal26"
       },
       "replace_visible_save_load_controller_update": {
-        "description": "Replace only Continue's visible Save/Load controller update with the silent first-record state machine while retaining native allocation, cleanup, result handling, and post-load setup.",
+        "description": "Drive silent first-record loading, entering the shared visible controller only for a supported older-save upgrade, while retaining native allocation, cleanup, and post-load setup.",
         "target_id": "na2_elf",
         "offset": "0xEA084",
         "expected_hex": "C08F070C",
@@ -241,7 +241,7 @@
         "encoding": "jal26"
       },
       "suppress_visible_save_load_child_draw": {
-        "description": "Replace the Save/Load child draw call with an owned no-op while the silent first-record state machine runs.",
+        "description": "Suppress the Save/Load child during silent loading and draw it while the shared older-save upgrade flow is active.",
         "target_id": "na2_elf",
         "offset": "0xEA0D0",
         "expected_hex": "C095070C",
@@ -255,7 +255,8 @@
         "path": "na228_builder/patches/startup/auto_loading/auto_loading.c",
         "namespace": "startup.auto.loading",
         "imports": {
-          "startup_save_notification_state": "notification_state"
+          "startup_save_notification_state": "notification_state",
+          "save_appendix_load_status": "save_appendix_load_status"
         },
         "fragments": {
           "auto_loading_update": {
@@ -275,7 +276,7 @@
       "notification_state": {
         "kind": "data",
         "alignment": 4,
-        "value": "0000000000000000000000000000000000000000"
+        "value": "00000000000000000000000000000000000000000000000000000000"
       }
     }
   }

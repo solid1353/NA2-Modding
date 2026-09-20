@@ -1,0 +1,61 @@
+# schema_version: 1
+id	key	label	values
+0101	mod.new_controls	Control Scheme	Classic | Updated
+0102	mod.simple_display	Simple Display	Off | On
+0103	mod.character_overrides	Character Balance	Original | Overrides
+0104	mod.balance_overlay	Balance Overlay	Off | On
+0105	mod.support_selection	Support Selection	None | Relevant | All
+0201	battle.time	Time	10s to 90s by 10s | 99s | Unlimited
+0202	battle.difficulty	Difficulty	Simple | Easy | Normal | Hard | Insane | Ultimate
+0203	battle.handicap	Handicap	0 to 10 by 1
+0301	practice.health	Health	Normal | Half | Almost
+0302	practice.commands	Commands	Off | On
+0303	practice.damage	Damage	Off | On
+0304	practice.opponent.status	Opponent Status	Manual | COM | Stand | Jump | Double Jump
+0305	practice.opponent.strength	Opponent Strength	Simple | Easy | Normal | Hard | Insane | Ultimate
+0306	practice.opponent.attack	Opponent Attack	No | Single | Combo | Projectile | High Speed Move | Ultimate Jutsu | Jutsu
+0307	practice.opponent.guard	Opponent Guard	No | Yes
+0308	practice.opponent.move	Opponent Move	Stay | Follow
+0309	practice.opponent.substitution_jutsu	Opponent Substitution Jutsu	Normal | No
+030A	practice.opponent.linked_attack	Opponent Linked Attack	Don't Use | Normal | Random
+030B	practice.opponent.extra_hit_counter	Opponent Extra Hit Counter	Normal | Return
+0401	mechanics.chakra	Chakra	Normal | Unlimited | Regen 0.1%/s to 10.0%/s by 0.1%/s
+0402	mechanics.ultimate_jutsu	Ultimate Jutsu	No Use | Random | Command | Timing | Turn | Combo | No Contest | No HUD
+0403	mechanics.shadowblur	Shadowblur	Off | On
+0404	mechanics.extra_hit	Extra Hit	Off | On | -5% to -100% by -5%
+0405	mechanics.sub_active_frames	Substitution Active Frames	Default | 1 frame to 15 frames by 1 frame
+0406	mechanics.xdash_chakra_cost	X-Dash Chakra Cost	0% to 100% by 5%
+0407	mechanics.support	Support	Off | Nerfed | Normal | Unlimited
+0408	mechanics.substitution	Substitution	Chakra | Gauge | Free
+0409	mechanics.items	Items	None | Less | Normal | More | Custom
+0501	mechanics.substitution.chakra.minimum_chakra	Minimum Chakra	Match Cost | 5% to 100% by 5%
+0502	mechanics.substitution.gauge.recovery_delay_seconds	Recovery Delay	0.00s to 60.00s by 0.25s
+0503	mechanics.substitution.gauge.refill_seconds_per_stock	Refill Time per Stock	0.05s to 10.00s by 0.05s
+0504	mechanics.substitution.gauge.damage_recovery	Damage Recovery	Off | On
+0505	mechanics.substitution.gauge.damage_percent_per_stock	Damage Percent per Stock	0.25% to 100.00% by 0.25%
+0601	mechanics.items.custom.availability	Item Availability	None | Less | Normal | More
+0602	mechanics.items.custom.health_recovery	Health Recovery	Off | On
+0603	mechanics.items.custom.chakra_ball	Chakra Ball	Off | On
+0604	mechanics.items.custom.shoes_of_jonin	Shoes of Jonin	Off | On
+0605	mechanics.items.custom.food_pills	Food Pills	Off | On
+0606	mechanics.items.custom.scroll_of_hidden_cloud	Scroll of Hidden Cloud	Off | On
+0607	mechanics.items.custom.scroll_of_teleportation	Scroll of Teleportation	Off | On
+0608	mechanics.items.custom.scarecrow	Scarecrow	Off | On
+0609	mechanics.items.custom.tortoiseshell_pills	Tortoiseshell Pills	Off | On
+060A	mechanics.items.custom.energy_pills	Energy Pills	Off | On
+060B	mechanics.items.custom.medical_pack	Medical Pack	Off | On
+060C	mechanics.items.custom.item_pouch	Item Pouch	Off | On
+060D	mechanics.items.custom.demon_wind_shuriken	Demon Wind Shuriken	Off | On
+060E	mechanics.items.custom.weight_of_determination	Weight of Determination	Off | On
+060F	mechanics.items.custom.exploding_kunai	Exploding Kunai	Off | On
+0610	mechanics.items.custom.poison_smoke_bomb	Poison Smoke Bomb	Off | On
+0611	mechanics.items.custom.makibishi_spikes	Makibishi Spikes	Off | On
+0612	mechanics.items.custom.paper_bomb	Paper Bomb	Off | On
+0613	mechanics.items.custom.curse_tag_chakra_points_seal	Curse Tag: Chakra Points Seal	Off | On
+0614	mechanics.items.custom.curse_tag_armor_break	Curse Tag: Armor Break	Off | On
+0615	mechanics.items.custom.thousand_shadow_shuriken	1000-Shadow Shuriken	Off | On
+0616	mechanics.items.custom.burst_kunai	Burst Kunai	Off | On
+0617	mechanics.items.custom.exploding_seal	Exploding Seal	Off | On
+0618	mechanics.items.custom.toad_oil	Toad Oil	Off | On
+0619	mechanics.items.custom.random_ball	Random Ball	Off | On
+061A	mechanics.items.custom.stun_ball	Stun Ball	Off | On

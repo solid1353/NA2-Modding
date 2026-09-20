@@ -187,8 +187,17 @@ owned layout.
 
 `features.settings.mod_settings.simple_display` selects whether battles start with
 the native Simple Display setting `"off"` or `"on"`. The base configuration
-selects `"off"`. The setting owns only the guarded main-ELF initializer
+selects `"off"`. The setting owns the guarded main-ELF initializer
 instruction at offset `0xE7BAC`.
+
+The pause-menu Simple Display selector opens on the active value. Its BTL hook
+at file offset `0x1C3A04` reads the shared value through the native getter and
+selects On for enabled or Off for disabled, then resumes the native initializer.
+The native getter and setter entries at ELF offsets `0xF6EB0` and `0xF6E80`
+delegate to the shared [Mod Settings](mod_settings.md) accessors. Confirmation
+therefore commits the same value used by the main menu and save appendix;
+cancellation retains the current value. The native menu and getter are
+documented in [Simple Display selection](../knowledge/gameplay/pause_and_replay.md#simple-display-selection).
 
 ## X-dash chakra cost
 

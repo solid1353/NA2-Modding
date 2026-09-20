@@ -275,7 +275,7 @@ def native_settings_defaults_fragment(
     return PayloadFragment(
         owner=owner,
         symbol=symbol,
-        kind="rodata",
+        kind="data",
         alignment=4,
         payload=payload,
     )

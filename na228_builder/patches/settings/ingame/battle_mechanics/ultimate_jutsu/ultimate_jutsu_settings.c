@@ -9,6 +9,7 @@ typedef unsigned int u32;
 
 #define NATIVE_INPUT_STATE_ADDRESS 0x001D99B0u
 #define NATIVE_CONTEST_RENDER_ADDRESS 0x0036BFF0u
+#define ULTIMATE_JUTSU_NATIVE_DEFAULT 2u
 #define ULTIMATE_JUTSU_MODE_NO_CONTEST 6u
 #define ULTIMATE_JUTSU_MODE_NO_HUD 7u
 
@@ -16,6 +17,7 @@ typedef u32 (*NativeInputState)(u32 bank, u32 slot);
 typedef void (*NativeContestRender)(void *contest);
 
 extern const u32 battle_settings_ultimate_jutsu_default;
+extern void save_native_setting_set(u32 argument, u32 value);
 
 volatile u32 ultimate_jutsu_mode_state
     __attribute__((section(".bss.ultimate_jutsu_mode_state")));
@@ -53,11 +55,18 @@ u32 ultimate_jutsu_mode_get(void)
 SETTINGS_SECTION(".text.ultimate_jutsu_mode_set")
 void ultimate_jutsu_mode_set(u32 mode)
 {
+    u32 native_mode;
+
     ultimate_jutsu_mode_initialize();
     if (mode > ULTIMATE_JUTSU_MODE_NO_HUD) {
         mode = ultimate_jutsu_mode_default();
     }
     ultimate_jutsu_mode_state = mode;
+    native_mode = mode < ULTIMATE_JUTSU_MODE_NO_CONTEST
+        ? mode
+        : ULTIMATE_JUTSU_NATIVE_DEFAULT;
+    save_native_setting_set(0x103u, native_mode);
+    save_native_setting_set(0x203u, native_mode);
 }
 
 SETTINGS_SECTION(".text.ultimate_jutsu_contest_input_state")

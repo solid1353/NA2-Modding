@@ -39,6 +39,11 @@ from ...patches.settings.mod_settings.mod_settings import (
 )
 from ...patches.general.battle_results_rematch import rematch_label_fragment
 from ...patches.general.unlock_all.unlock_all import unlock_all_configuration_fragment
+from ...patches.memory_card.save_appendix import (
+    save_appendix_load_status_fragment,
+    save_appendix_next_update_fragment,
+    save_appendix_schema_fragment,
+)
 
 
 @dataclass(frozen=True)
@@ -252,6 +257,63 @@ def prepare_module_pipeline(
                     declaration,
                     fragments=(
                         unlock_all_fragment,
+                        *declaration.fragments,
+                    ),
+                )
+        if module.feature_id == "memory_card":
+            dedicated_namespace = next(
+                node
+                for node in configuration.selection.nodes
+                if node.path == (
+                    "features",
+                    "memory_card",
+                    "dedicated_save_namespace",
+                )
+            )
+            if dedicated_namespace.enabled:
+                declaration = replace(
+                    declaration,
+                    edits=tuple(
+                        edit for edit in declaration.edits
+                        if edit.symbolic_patch.symbol != "display_only_first_save_update"
+                    ),
+                    fragments=(
+                        save_appendix_next_update_fragment(
+                            configuration.selection,
+                            owner=module.module_id,
+                        ),
+                        save_appendix_load_status_fragment(
+                            owner=module.module_id,
+                        ),
+                        save_appendix_schema_fragment(
+                            configuration.selection,
+                            owner=module.module_id,
+                        ),
+                        *declaration.fragments,
+                    ),
+                )
+        if module.feature_id == "startup":
+            dedicated_namespace_enabled = any(
+                node.path == (
+                    "features",
+                    "memory_card",
+                    "dedicated_save_namespace",
+                )
+                and node.enabled
+                for node in configuration.selection.nodes
+            )
+            auto_loading_enabled = any(
+                node.path == ("features", "startup", "auto_loading")
+                and node.enabled
+                for node in configuration.selection.nodes
+            )
+            if auto_loading_enabled and not dedicated_namespace_enabled:
+                declaration = replace(
+                    declaration,
+                    fragments=(
+                        save_appendix_load_status_fragment(
+                            owner=module.module_id,
+                        ),
                         *declaration.fragments,
                     ),
                 )

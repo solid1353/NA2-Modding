@@ -238,7 +238,7 @@
     }
   },
   "settings.simple_display": {
-    "description": "Apply the selected Simple Display state during native settings-pack initialization and live changes.",
+    "description": "Use one Simple Display value for native gameplay, both menus, and saves.",
     "hooks": {
       "apply_simple_display_state": {
         "description": "Store the runtime-selected Simple Display bit during native manager-pack initialization.",
@@ -248,6 +248,33 @@
         "symbol": "mod_settings_simple_display_bridge",
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
+      },
+      "select_current_simple_display_value": {
+        "description": "Initialize the selected row from the active native Simple Display value while keeping automatic completion disabled.",
+        "target_id": "na2_btl",
+        "offset": "0x1C3A04",
+        "expected_hex": "100040A40C00028E",
+        "symbol": "mod_settings_simple_display_selection_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "shared_simple_display_get": {
+        "description": "Read the shared Mod Settings value through the native Simple Display getter.",
+        "target_id": "na2_elf",
+        "offset": "0xF6EB0",
+        "expected_hex": "F0FFBD270000BFFF",
+        "symbol": "mod_settings_option_get",
+        "encoding": "j26",
+        "replacement_hex": "0000000801000424"
+      },
+      "shared_simple_display_set": {
+        "description": "Commit native Simple Display changes through the shared setter used by Mod Settings and saves.",
+        "target_id": "na2_elf",
+        "offset": "0xF6E80",
+        "expected_hex": "F0FFBD270000BFFF",
+        "symbol": "mod_settings_option_set",
+        "encoding": "j26",
+        "replacement_hex": "0000000801000424"
       }
     },
     "payload": {
@@ -261,6 +288,9 @@
         "fragments": {
           "mod_settings_simple_display_bridge": {
             "object": "mod.settings.simple.display.asm.text.mod.settings.simple.display.bridge"
+          },
+          "mod_settings_simple_display_selection_bridge": {
+            "object": "mod.settings.simple.display.asm.text.mod.settings.simple.display.selection.bridge"
           }
         }
       }
@@ -913,6 +943,12 @@
           },
           "settings_apply_native_defaults": {
             "object": "settings.native.defaults.c.text.settings.apply.native.defaults"
+          },
+          "save_native_setting_get": {
+            "object": "settings.native.defaults.c.text.save.native.setting.get"
+          },
+          "save_native_setting_set": {
+            "object": "settings.native.defaults.c.text.save.native.setting.set"
           }
         }
       },
@@ -990,7 +1026,8 @@
           "chakra_mode_set": "chakra_mode_set",
           "settings_menu_draw_content": "settings_menu_draw_content",
           "settings_menu_initialize_window": "settings_menu_initialize_window",
-          "settings_menu_update_window": "settings_menu_update_window"
+          "settings_menu_update_window": "settings_menu_update_window",
+          "save_native_setting_set": "save_native_setting_set"
         },
         "fragments": {
           "battle_settings_active_controller": {
@@ -1267,7 +1304,8 @@
           "chakra_mode_set": "chakra_mode_set",
           "settings_menu_draw_content": "settings_menu_draw_content",
           "settings_menu_initialize_window": "settings_menu_initialize_window",
-          "settings_menu_update_window": "settings_menu_update_window"
+          "settings_menu_update_window": "settings_menu_update_window",
+          "save_native_setting_set": "save_native_setting_set"
         },
         "fragments": {
           "practice_settings_chakra_staged": {
@@ -1929,7 +1967,8 @@
         "path": "na228_builder/patches/settings/ingame/battle_mechanics/ultimate_jutsu/ultimate_jutsu_settings.c",
         "namespace": "battle.logic.settings.ultimate.jutsu",
         "imports": {
-          "battle_settings_ultimate_jutsu_default": "battle_settings_ultimate_jutsu_default"
+          "battle_settings_ultimate_jutsu_default": "battle_settings_ultimate_jutsu_default",
+          "save_native_setting_set": "save_native_setting_set"
         },
         "fragments": {
           "ultimate_jutsu_contest_input_state": {

@@ -157,6 +157,53 @@ selected localization TSV inputs. Release packaging inventories the same
 closure for every selectable catalog node, including disabled nodes.
 Documentation is not an executable builder input.
 
+## Save appendix
+
+[`save_appendix.tsv`](save_appendix.tsv) is the readable list of values stored
+after the native profile record when
+`features.memory_card.dedicated_save_namespace` is enabled. It contains every
+runtime-editable setting below `features.settings`; submenu inclusion flags are
+build configuration and are not saved.
+
+The first line declares `schema_version`. The table has four columns:
+
+| Column | Meaning |
+| --- | --- |
+| `id` | Permanent, nonzero, four-digit hexadecimal field ID written to the save |
+| `key` | Setting path resolved by the builder to its existing getter, setter, and configured default |
+| `label` | Human-readable setting name |
+| `values` | Zero-based saved-value order, written as ` | ` choices or an inclusive `start to end by step` range |
+
+IDs are grouped by Mod, Battle, Practice, Battle Mechanics, Substitution, and
+Items. Never reuse or renumber an ID. The builder rejects duplicate IDs or
+keys, unresolved or omitted settings, malformed value sequences, defaults
+outside their declared values, and maps that exceed the fixed appendix
+capacity. The TSV is a referenced build resource, so its exact contents are
+included in the configuration fingerprint.
+
+Each `dataNN` file is `0x2600` bytes: the native `0x2400`-byte profile followed
+by a `0x200`-byte appendix. The appendix header contains the `NA2S` identifier,
+physical format version, schema version, entry count, and CRC-32. Each entry is
+a four-byte ID/value pair. Unused bytes are zero. The native descriptor checksum
+continues to cover only the native record; the appendix CRC-32 covers the whole
+appendix with its checksum field treated as zero.
+
+Configuration values are defaults. A valid loaded save resets all settings to
+those defaults, then applies every stored value. This lets a setting added to
+the current schema use its configured default when an older save does not
+contain its ID. A reader rejects unknown or duplicate IDs, out-of-range values,
+malformed padding or checksums, unsupported versions, and native-only
+`0x2400`-byte records in the dedicated namespace. Native-only records may be
+loaded after the user accepts the explicit version `0` to `1` upgrade described
+in [Memory Card](../docs/features/memory_card.md#dedicated-save-namespace).
+
+Increase `format_version` only when the physical appendix header, entry, or
+checksum layout becomes incompatible. Increase `schema_version` only when an
+existing ID changes meaning or encoding incompatibly. Adding a new ID does not
+increase it. Before increasing `save_appendix.tsv`'s `schema_version`, the
+agent must explicitly explain why the current schema cannot represent the
+change, ask the user for approval, and stop until approval is given.
+
 ## Release configuration
 
 The [release process](../docs/runbooks/release.md) owns package contents,

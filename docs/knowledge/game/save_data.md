@@ -764,13 +764,59 @@ the intermediate save-confirm transition. This establishes the function as
 save-backed settings change/dirty detection; only the descriptive name is
 inferred.
 
+## Save/Load dialog text and confirmations
+
+`FUN_001e3f00` calls visible controller `FUN_001e3f20` at `0x001E3F08`.
+The controller's word at `+0x24` points to its UI object. The UI's `+0x40`
+field is a text pointer, not an animation state: `FUN_001e5b20` obtains it
+through the status lookup `FUN_001e34d0` and stores it there.
+
+`FUN_001e5ba0` invokes `FUN_001e6060(ui, 4)`. When UI byte `+1` is set,
+that renderer draws four consecutive NUL-terminated strings, advancing past
+each terminator. The first line uses local X/Y `22/18`; subsequent lines add
+30 to Y. It does not split one long string into lines.
+
+`FUN_001e6ce0` draws and updates Yes/No at local Y `80`. UI word `+0x14`
+selects Yes (`0`) or No (`1`). It returns `1` for Yes, `2` for No, `3` for
+the back button, `0` while waiting, and `-1` while the panel is not ready.
+It clears UI byte `+2`, avoiding duplicate choice handling by the later
+renderer. `FUN_001e5dc0(ui, 0)` draws Next and returns `1` on acknowledgment.
+These text and choice layouts were established from the clean resident code
+and its fixed position records, not from a modified dialog capture.
+
 ## Creation, repair, and negative results
+
+`FUN_001c20a0` checks the complete directory allocation before descriptor scan
+or profile read. It sums `(file_size + 0x3FF) >> 10` for every returned entry,
+then adds `(entry_count - 1) / 2 + 2` blocks. The expected total is stored at
+card context `+0x434`; `FUN_001c14f0` initializes it to 103. A mismatch returns
+`0x0B` when there is enough free space, or `3` when the deficit exceeds free
+space. `FUN_001e2140` calls this check at `0x001E21F8` before dispatching the
+requested operation. Result `0x0B` can produce worker status `0x2C`, result `3`,
+and return without reading either the descriptor table or a profile. Thus a
+directory-size failure cannot be diagnosed solely at the indexed record reader.
+The directory entries begin at `0x0061F740`, have stride `0x40`, and store
+file length at `+0x10` and filename at `+0x20`.
+
+The preflight call reloads operation, status, and result from the worker after
+returning. Operation `1` is idle; it prevents the following operation switch
+from running. The recovery branch is not limited to load mode: an initial
+directory mismatch in save mode also produces status `0x2C`/result `3`.
+`FUN_001e3120` accepts that confirmation by scheduling operation `0x0E`.
+After a failed repair, the retained repair flag changes the next mismatch to
+status `0x2A`/result `1`.
 
 `FUN_001c17c0` (`0x001C17C0`) creates all four record files filled with
 `0xFF`, obtains timestamps, and writes the descriptor table. Worker operation
 `0x0C` then explicitly resets all four descriptors to empty and writes the
 table again. The all-`0xFF` header supplies repair's `u16 +0x0000 == 0xFFFF`
 empty-file sentinel.
+
+The creation routine also accepts the directory-create result `-4` (directory
+already exists) and proceeds to rewrite its files. The indexed writer
+`FUN_001c19e0` opens the named record with flags `0x203`, writes the requested
+byte count, and closes it. Creation can therefore rewrite an existing set;
+it does not require the directory to be deleted first.
 
 The all-`0xFF` file is deliberately not a checksum-valid profile. After its
 checksum bytes are forced to zero, the additive formula yields `0xDA02`, while
@@ -835,6 +881,17 @@ issue. Conversely, `FUN_001c2910` treats every nonnegative asynchronous write
 result as success and does not verify that the requested record or table length
 was written. These are static malformed/partial-I/O behaviors; short successful
 transfers were not induced on a card at runtime.
+
+The lower interface exposes the exact count that these wrappers discard.
+`FUN_00175e70(handle, destination, size)` submits a read and
+`FUN_00175f88(handle, source, size)` submits a write; submission result zero
+means queued. `FUN_001c2b70(context, result_pointer)` waits through
+`FUN_00176100(0, 0, result_pointer)`. The completed result is the byte count or
+a negative error. After a nonnegative write, the native wrapper submits
+`FUN_00176920(handle)` and waits again, requiring the flush result to be zero.
+`FUN_001c2ad0(context, handle)` closes the handle. The indexed read and write
+wrappers return `-777` on success, `6` for read failure, and `7` for write
+failure; these success codes do not prove a full transfer.
 
 Restoration is gated by `data04` file presence/nonzero size, not by descriptor
 3 being occupied. A structurally valid empty descriptor 3 can therefore be

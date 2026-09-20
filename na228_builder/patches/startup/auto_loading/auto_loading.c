@@ -23,6 +23,7 @@ typedef unsigned int u32;
 #define TEXT_MEASURE_ADDRESS 0x003798E0u
 
 #define CONTROLLER_PHASE_WORD 2u
+#define VISIBLE_VERSION_DIALOG_PHASE 0x100u
 #define MAIN_MENU_STATE_WORD 2u
 #define MAIN_MENU_MODE_WORD 3u
 #define FRAME_SCREEN_CONTEXT_OFFSET 0x150u
@@ -66,6 +67,10 @@ typedef unsigned int u32;
 #define NOTIFICATION_UNFORMATTED_CARD 5u
 #define NOTIFICATION_UNSUPPORTED_CARD 6u
 #define NOTIFICATION_LOAD_FAILED 7u
+#define NOTIFICATION_INCOMPATIBLE_SAVE 8u
+
+#define SAVE_APPENDIX_LOAD_STATUS_NONE 0u
+#define SAVE_APPENDIX_LOAD_STATUS_INCOMPATIBLE_SCHEMA 1u
 
 #define USABLE_MAIN_MENU_STATE 4u
 #define USABLE_MAIN_MENU_MODE 1u
@@ -102,9 +107,18 @@ typedef struct StartupSaveNotificationState {
     volatile u32 play_ticks;
     volatile u32 saved_date;
     volatile u32 saved_time;
+    volatile u32 found_version;
+    volatile u32 required_version;
 } StartupSaveNotificationState;
 
+typedef struct SaveAppendixLoadStatus {
+    volatile u32 outcome;
+    volatile u16 found_version;
+    volatile u16 required_version;
+} SaveAppendixLoadStatus;
+
 extern volatile StartupSaveNotificationState startup_save_notification_state;
+extern volatile SaveAppendixLoadStatus save_appendix_load_status;
 
 static const u8 MESSAGE_LOADED[] = "Save data loaded";
 static const u8 MESSAGE_NO_SAVE_DATA[] = "No save data found";
@@ -113,6 +127,10 @@ static const u8 MESSAGE_NO_CARD[] = "No memory card detected";
 static const u8 MESSAGE_UNFORMATTED_CARD[] = "Memory card is not formatted";
 static const u8 MESSAGE_UNSUPPORTED_CARD[] = "Unsupported memory card";
 static const u8 MESSAGE_LOAD_FAILED[] = "Save data could not be loaded";
+static const u8 INCOMPATIBLE_SAVE_HEADING[] = "The existing save data";
+static const u8 INCOMPATIBLE_SAVE_PREFIX[] = "uses version ";
+static const u8 INCOMPATIBLE_SAVE_REQUIRED[] = "Version ";
+static const u8 INCOMPATIBLE_SAVE_SUFFIX[] = " is required.";
 static const u8 PLAY_TIME_PREFIX[] = "Play Time ";
 static const u8 SAVED_PREFIX[] = "Saved ";
 
@@ -123,12 +141,31 @@ ALWAYS_INLINE void reset_notification(void)
     startup_save_notification_state.play_ticks = 0u;
     startup_save_notification_state.saved_date = 0u;
     startup_save_notification_state.saved_time = 0u;
+    startup_save_notification_state.found_version = 0u;
+    startup_save_notification_state.required_version = 0u;
+    save_appendix_load_status.outcome = SAVE_APPENDIX_LOAD_STATUS_NONE;
+    save_appendix_load_status.found_version = 0u;
+    save_appendix_load_status.required_version = 0u;
 }
 
 ALWAYS_INLINE void publish_notification(u32 outcome)
 {
     startup_save_notification_state.start_ticks = 0u;
     startup_save_notification_state.outcome = outcome;
+}
+
+ALWAYS_INLINE void publish_load_failure(u32 fallback)
+{
+    if (save_appendix_load_status.outcome ==
+        SAVE_APPENDIX_LOAD_STATUS_INCOMPATIBLE_SCHEMA) {
+        startup_save_notification_state.found_version =
+            save_appendix_load_status.found_version;
+        startup_save_notification_state.required_version =
+            save_appendix_load_status.required_version;
+        publish_notification(NOTIFICATION_INCOMPATIBLE_SAVE);
+    } else {
+        publish_notification(fallback);
+    }
 }
 
 ALWAYS_INLINE u32 classify_scan_failure(u32 status)
@@ -330,6 +367,17 @@ u32 startup_auto_loading_update(void *controller, u32 mode)
     }
 
     phase = controller_words[CONTROLLER_PHASE_WORD];
+    if (phase >= VISIBLE_VERSION_DIALOG_PHASE) {
+        /* Keep native controller states distinct from the silent driver's phases. */
+        controller_words[CONTROLLER_PHASE_WORD] -= VISIBLE_VERSION_DIALOG_PHASE;
+        result = ((u32 (*)(void *, u32))0x001E3F00u)(controller, mode);
+        if (result == CONTINUE_PENDING) {
+            controller_words[CONTROLLER_PHASE_WORD] += VISIBLE_VERSION_DIALOG_PHASE;
+        } else if (result == CONTINUE_LOADED) {
+            capture_loaded_record(worker);
+        }
+        return result;
+    }
     if (phase == 0u) {
         reset_notification();
         *(volatile u32 *)(worker + WORKER_MODE_OFFSET) = 1u;
@@ -342,6 +390,15 @@ u32 startup_auto_loading_update(void *controller, u32 mode)
 
     status = *(volatile u32 *)(worker + WORKER_STATUS_OFFSET);
     result = *(volatile u32 *)(worker + WORKER_RESULT_OFFSET);
+
+    if (save_appendix_load_status.outcome == SAVE_APPENDIX_LOAD_STATUS_INCOMPATIBLE_SCHEMA &&
+        save_appendix_load_status.found_version == 0u &&
+        save_appendix_load_status.required_version == 1u &&
+        (status == 0x30u || status == 0x14u)) {
+        controller_words[CONTROLLER_PHASE_WORD] = VISIBLE_VERSION_DIALOG_PHASE + 2u;
+        controller_words[4] = 2u;
+        return CONTINUE_PENDING;
+    }
 
     if (phase == 1u) {
         if (status == WORKER_STATUS_BUSY) {
@@ -359,7 +416,7 @@ u32 startup_auto_loading_update(void *controller, u32 mode)
             return CONTINUE_PENDING;
         }
 
-        publish_notification(classify_scan_failure(status));
+        publish_load_failure(classify_scan_failure(status));
         return CONTINUE_WITHOUT_LOAD;
     }
 
@@ -372,7 +429,7 @@ u32 startup_auto_loading_update(void *controller, u32 mode)
             return CONTINUE_PENDING;
         }
         if (status != WORKER_STATUS_LOAD_CONFIRMATION) {
-            publish_notification(NOTIFICATION_LOAD_FAILED);
+            publish_load_failure(NOTIFICATION_LOAD_FAILED);
             return CONTINUE_WITHOUT_LOAD;
         }
 
@@ -395,7 +452,7 @@ u32 startup_auto_loading_update(void *controller, u32 mode)
             return CONTINUE_PENDING;
         }
 
-        publish_notification(NOTIFICATION_LOAD_FAILED);
+        publish_load_failure(NOTIFICATION_LOAD_FAILED);
         return CONTINUE_WITHOUT_LOAD;
     }
 
@@ -404,8 +461,11 @@ u32 startup_auto_loading_update(void *controller, u32 mode)
 }
 
 AUTO_LOADING_SECTION(".text.startup_auto_loading_suppress_draw")
-void startup_auto_loading_suppress_draw(void)
+void startup_auto_loading_suppress_draw(void *controller)
 {
+    if (((volatile u32 *)controller)[CONTROLLER_PHASE_WORD] >= VISIBLE_VERSION_DIALOG_PHASE) {
+        ((void (*)(void *))0x001E5700u)(controller);
+    }
 }
 
 ALWAYS_INLINE u8 *append_text(u8 *destination, const u8 *source)
@@ -502,6 +562,24 @@ ALWAYS_INLINE void format_saved_time(
     *destination = 0u;
 }
 
+ALWAYS_INLINE void format_incompatible_save(
+    u8 *destination,
+    u8 *required_line,
+    u32 found_version,
+    u32 required_version
+)
+{
+    destination = append_text(destination, INCOMPATIBLE_SAVE_PREFIX);
+    destination = append_unpadded_number(destination, found_version);
+    *destination++ = '.';
+    *destination = 0u;
+    destination = required_line;
+    destination = append_text(destination, INCOMPATIBLE_SAVE_REQUIRED);
+    destination = append_unpadded_number(destination, required_version);
+    destination = append_text(destination, INCOMPATIBLE_SAVE_SUFFIX);
+    *destination = 0u;
+}
+
 ALWAYS_INLINE const u8 *notification_message(u32 outcome)
 {
     if (outcome == NOTIFICATION_NO_SAVE_DATA) {
@@ -559,6 +637,7 @@ void startup_auto_loading_notification_draw(void)
     u32 now;
     u8 play_time[24];
     u8 saved_time[24];
+    u8 incompatible_save[2][48];
 
     update_main_menu();
 
@@ -620,6 +699,22 @@ void startup_auto_loading_notification_draw(void)
         );
         draw_notification_line(
             saved_time,
+            NOTIFICATION_TOP_Y + NOTIFICATION_LINE_HEIGHT * 2.0f
+        );
+    } else if (outcome == NOTIFICATION_INCOMPATIBLE_SAVE) {
+        format_incompatible_save(
+            incompatible_save[0],
+            incompatible_save[1],
+            startup_save_notification_state.found_version,
+            startup_save_notification_state.required_version
+        );
+        draw_notification_line(INCOMPATIBLE_SAVE_HEADING, NOTIFICATION_TOP_Y);
+        draw_notification_line(
+            incompatible_save[0],
+            NOTIFICATION_TOP_Y + NOTIFICATION_LINE_HEIGHT
+        );
+        draw_notification_line(
+            incompatible_save[1],
             NOTIFICATION_TOP_Y + NOTIFICATION_LINE_HEIGHT * 2.0f
         );
     } else {

@@ -15,8 +15,8 @@ in [translation importer knowledge](../../knowledge/localization/translation_imp
 
 ## Mapping metadata
 
-- Canonical `mappings.tsv` rows: `2,063`
-- Canonical `mappings.tsv` SHA-256: `BE7487EC56094E3B2C367B7395658A577D38E7CD9C281EA7E4668AF201F26E9B`
+- Canonical `mappings.tsv` rows: `2,072`
+- Canonical `mappings.tsv` SHA-256: `F4AD57E7E52380A49638A927AA8ED81EB4A5EE72B66A80CD3C1A662B56CA5575`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the builder's configuration-resource fingerprint own content identity.
@@ -40,9 +40,9 @@ provenance, and executable translation. Normal builds do not read donor
 binaries: the verified `donor` text in the table is the default translation.
 A nonempty `replacement` is reserved for a direct user override, and `prefix`
 is a user-editable string prepended to the selected translation. T1933 directly
-overrides the Mode Select return confirmation with `View the movie?`; all other
-rows use their verified official donors. T30 uses the exact `Ultimate` donor at
-`NUN5_TEXTENG@0xF208` and
+overrides the Mode Select return confirmation with `View the movie?`. All other
+rows use their verified official donors. T30 uses the
+exact `Ultimate` donor at `NUN5_TEXTENG@0xF208` and
 the validated pointer at `NA2_BTL@0x209CB4`; encoded fit therefore externalizes
 it automatically.
 
@@ -82,19 +82,20 @@ The 16 columns are:
   current rows are enabled. Unconfirmed rows are absent instead of retained as
   disabled inventory.
 
-Canonical `mappings.tsv` contains 2,063 enabled `T#` rows, sorted by
+Canonical `mappings.tsv` contains 2,072 enabled `T#` rows, sorted by
 `display_context` and numeric ID. Exact source, source reference, mode, and
 capacity are guarded by the canonical row declarations. The current maintained
-E2E suites validate 1,887 unique rows. The remaining 176 rows have a blank
+E2E suites validate 1,887 unique rows. The remaining 185 rows have a blank
 `display_basis`: they remain executable because they are established working
 mappings, but they are explicitly unvalidated. Earlier screenshot, inference,
 and structural-family labels were removed because only maintained E2E execution
-validates a row. Every `prefix` value is blank, and T1933 is the only row with
-a nonempty `replacement`. The
+validates a row. Every `prefix` value is blank; T1933 is the only row with a
+nonempty `replacement` value. The
 Jutsus suite selects 26 exact Command Chart records, including T260 plus 25
 records also selected by Movesets. The Menus suite selects 30 exact Battle
-Settings, Pause, confirmation, and Character Select rows. T2042, T2045, and
-T2050 use canonical parent IDs `T2011`, `T2043`, and `T2048`.
+Settings, Pause, confirmation, and Character Select rows. T2042, T2045, T2050,
+T2221, and T2226 use canonical parent IDs `T2011`, `T2043`, `T2048`, `T2220`,
+and `T2224`.
 The pointer inventory includes the overflowing settings labels and values; T2039 and
 T2040 share T2038's loading-message pointer at `NA2_SLPS@0x5030A4`.
 Paired screenshots correct three reference-table errors: T1956 uses `Off` at
@@ -125,7 +126,8 @@ claim that uncaptured screens are covered.
 
 The canonical table closes every admitted multi-slot `<br>` message family.
 T2011/T2041/T2042 cover all four save-progress message parts, while
-T2014/T2015 cover both overwrite-confirmation parts. Import fails closed on
+T2014/T2015 cover both overwrite-confirmation parts and T2224/T2225/T2226
+cover the recovery-progress message. Import fails closed on
 missing, duplicate, out-of-range, or inconsistent structured parts so a linked
 first line cannot continue into an unrelated resident-payload string.
 

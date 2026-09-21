@@ -7,7 +7,7 @@
 - Save translations alignment
 - Deal with temp directories
 - Blocky notification text
-- Pre-release testing
+- Pre-release testing and tuning
 
 ### General
 

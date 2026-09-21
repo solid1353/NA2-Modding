@@ -6,6 +6,7 @@
 - UJ damage
 - Save translations alignment
 - Deal with temp directories
+- Blocky notification text
 - Pre-release testing
 
 ### General

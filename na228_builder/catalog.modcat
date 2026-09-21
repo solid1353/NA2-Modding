@@ -143,9 +143,9 @@
         description: "Open the native Stage Select in Practice with the training field initially selected.",
         patch: "general.practice_stage_select",
       },
-      free_battle_stage_persistence: setting {
-        description: "Restore the last highlighted Free Battle stage when Stage Select opens again during the current session.",
-        patch: "general.free_battle_stage_persistence",
+      stage_selection_persistence: setting {
+        description: "Restore the last highlighted stage when Free Battle or Practice Stage Select opens again during the current session.",
+        patch: "general.stage_selection_persistence",
       },
       battle_results_rematch: setting {
         description: "Add Circle Rematch to Battle Results and retain the matchup and session match score.",

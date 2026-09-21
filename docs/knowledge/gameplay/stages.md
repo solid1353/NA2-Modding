@@ -58,7 +58,8 @@ were not investigated.
   numeric effect, list selector, route type, or model resource.
 
 - **Confirmed coverage:** the load-slot/logical-ID distinction;
-stage and `n_rash` ownership; raw selection handoff; `BIN_bgdata` framing,
+stage and `n_rash` ownership; raw selection initialization and handoff;
+`BIN_bgdata` framing,
 factory routing, and per-stage census; scene ownership; boundary/floor lines;
 surface-effect classification; proximity transitions; navigation data;
 breakable, reborn, deformable, and reactive props; the two explicit
@@ -208,6 +209,13 @@ runtime `0x00607688` from the exact byte sequence `0..23`, and no decoded clear
 path exists; consequently the clean choice list is all 24 raw slots in order
 and mode 2 hands off slot 6. Mechanically, an externally altered bitset that
 omitted 6 would make the setter fall back to the first choice.
+
+The initializer itself reads manager snapshot byte `+0x114` and preselects that
+slot. State 9 then calls the selection setter again at runtime `0x001ED770`.
+For entry type 2 it passes fixed slot `6`, so this second call replaces the
+initializer's restored snapshot selection. Other entry types obtain the second
+call's argument from active slot `+0x98`; when that byte is `0xFF`, resident
+code changes the argument to slot `0` before calling the setter.
 
 The corresponding resident callsites are `0x001ED734`, `0x001ED744`,
 `0x001ED770`, `0x001ED784`, `0x001ED7C4`, `0x001ED80C`, and `0x001ED7E8`.

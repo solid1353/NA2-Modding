@@ -91,7 +91,7 @@
       "replace_imported_game_title": true,
       "music_override": true,
       "practice_stage_select": true,
-      "free_battle_stage_persistence": true,
+      "stage_selection_persistence": true,
       "battle_results_rematch": true,
       "unlock_all": {
         "demon_wind_bomb": true

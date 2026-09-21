@@ -169,8 +169,8 @@
       }
     }
   },
-  "general.free_battle_stage_persistence": {
-    "description": "Restore the last highlighted Free Battle stage when the native Stage Select opens again during the current session.",
+  "general.stage_selection_persistence": {
+    "description": "Restore the last highlighted stage when the native Stage Select opens again in Free Battle or Practice during the current session.",
     "edit": {
       "description": "Keep the selector initializer's saved-stage choice when the active stage has been cleared instead of replacing it with slot zero.",
       "operation": "replace",
@@ -181,24 +181,36 @@
     },
     "hooks": {
       "remember_cancelled_stage_selection": {
-        "description": "Save the highlighted Free Battle stage before the cancelled selector is destroyed.",
+        "description": "Save the highlighted Free Battle or Practice stage before the cancelled selector is destroyed.",
         "target_id": "na2_elf",
         "offset": "0xED884",
         "expected_hex": "0C561C0C00000000",
-        "symbol": "free_battle_stage_persistence_update",
+        "symbol": "stage_selection_persistence_update",
+        "encoding": "jal26"
+      },
+      "apply_saved_practice_stage": {
+        "description": "Apply the saved Practice stage after selector initialization, falling back to the native training-field default when no saved stage exists.",
+        "target_id": "na2_elf",
+        "offset": "0xED870",
+        "expected_hex": "F0511C0C00000000",
+        "symbol": "stage_selection_persistence_apply_initial",
         "encoding": "jal26"
       }
     },
     "payload": {
-      "free_battle_stage_persistence": {
+      "stage_selection_persistence": {
         "kind": "c",
-        "path": "na228_builder/patches/general/free_battle_stage_persistence.c",
-        "namespace": "general.free.battle.stage.persistence",
+        "path": "na228_builder/patches/general/stage_selection_persistence.c",
+        "namespace": "general.stage.selection.persistence",
         "imports": {},
         "fragments": {
-          "free_battle_stage_persistence_update": {
-            "object": "general.free.battle.stage.persistence.text.free.battle.stage.persistence.update",
-            "description": "Run the native selector update and remember the highlighted stage when Free Battle cancels it."
+          "stage_selection_persistence_update": {
+            "object": "general.stage.selection.persistence.text.stage.selection.persistence.update",
+            "description": "Run the native selector update and remember the highlighted stage when Free Battle or Practice cancels it."
+          },
+          "stage_selection_persistence_apply_initial": {
+            "object": "general.stage.selection.persistence.text.stage.selection.persistence.apply.initial",
+            "description": "Use a saved Practice stage when present and otherwise apply the native initial stage."
           }
         }
       }

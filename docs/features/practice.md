@@ -15,6 +15,13 @@ argument unchanged. The following native selection setter still receives slot
 construction, input, drawing, selection, cleanup, and battle loading remain
 native.
 
+When `features.general.stage_selection_persistence` is enabled, cancelling Stage Select
+retains the highlighted stage for the next Practice Stage Select opening during
+the current game session. Its post-initialization selection wrapper applies a
+valid saved slot instead of the caller's fixed slot `6`; the initial `0xFF`
+snapshot retains slot `6`, so the first Practice setup still opens on the
+training field.
+
 ## Practice bootstrap PNACH
 
 Practice bootstrap is runtime-only and has no builder catalog node, builder

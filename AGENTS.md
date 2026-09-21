@@ -187,7 +187,8 @@ and read only relevant sections of large documents.
 - Write authorized project changes to their canonical project paths and
   maintained workflow outputs to their configured repository paths.
 - Copy changing external inputs to `@work/<exact chat title>/inputs/` before relying on them.
-- Before completion, remove disposable task artifacts.
+- Remove disposable task artifacts before completion. Code that creates
+  temporary directories must always remove every directory it created.
 - `TASKS.md` is user-only. Agents must not read or modify it.
 - Never create or use an additional Git worktree.
 - `docs/designs/` is read-only outside Design mode.

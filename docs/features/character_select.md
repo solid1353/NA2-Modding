@@ -135,7 +135,7 @@ confirmed both directions.
 
 The setting does not change field-support calls or the native battle support
 gauge. Those are controlled independently by
-`features.settings.submenus.battle_mechanics_submenu.support`; selected native supports and linked Jutsu
+`features.settings.battle_mechanics.support`; selected native supports and linked Jutsu
 remain intact in every combination. The Character Select record is in
 [`../knowledge/game/character_select.md`](../knowledge/game/character_select.md),
 and the battle-path evidence is in

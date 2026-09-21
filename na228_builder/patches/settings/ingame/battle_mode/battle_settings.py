@@ -390,9 +390,16 @@ def battle_settings_fragment(
         fields = list(row.encoded_fields())
         row_offset = rows_offset + index * ROW_SIZE
         if row.runtime_option is not None or row.label is not None:
-            fields[LABEL_REFERENCE_FIELD] = 0
-            fields[HELP_REFERENCE_FIELD] = 0
-            fields[VALUE_REFERENCE_FIELD] = 0
+            option = row.runtime_option
+            fields[LABEL_REFERENCE_FIELD] = (
+                option.label_reference if option is not None else 0
+            ) or 0
+            fields[HELP_REFERENCE_FIELD] = (
+                option.help_reference if option is not None else 0
+            ) or 0
+            fields[VALUE_REFERENCE_FIELD] = (
+                option.values_reference if option is not None else 0
+            ) or 0
         elif (row.flags & ROW_FLAG_CUSTOM_CHAKRA) != 0:
             fields[VALUE_REFERENCE_FIELD] = 0
             relocations.append(

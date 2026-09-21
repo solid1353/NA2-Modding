@@ -587,7 +587,9 @@ Options, `FUN_0038b710` writes this manager-local byte and only then calls
 `FUN_001f7920`, whose comparison is confined to record offsets
 `0x0008..0x23FF`. A difficulty-only change therefore does not make the save
 payload dirty, and no difficulty value is serialized by the native record
-path. The byte can remain active for the manager's lifetime, but manager
+path. The mirror setter has exactly two callers: the general settings setter at
+live `0x001F63EC` and the Options controller at live `0x0038B81C`. The byte can
+remain active for the manager's lifetime, but manager
 construction resets it independently of an on-card load.
 
 `FUN_001f45b0` copies two default controller maps into `0x0012..0x0031`.

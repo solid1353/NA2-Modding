@@ -109,9 +109,7 @@ class BattleSettingsTests(unittest.TestCase):
 
     def test_shared_defaults_drive_the_selectable_values(self) -> None:
         def configure(features) -> None:
-            mechanics = features["settings"]["submenus"][
-                "battle_mechanics_submenu"
-            ]
+            mechanics = features["settings"]["battle_mechanics"]
             mechanics["ultimate_jutsu"] = "no_contest"
             mechanics["shadowblur"] = "on"
             mechanics["extra_hit"] = "on"
@@ -166,8 +164,8 @@ class BattleSettingsTests(unittest.TestCase):
                     "time",
                 )
             }
-            mechanics = settings["submenus"]["battle_mechanics_submenu"]
-            settings["submenus"]["battle_mechanics_submenu"] = {
+            mechanics = settings["battle_mechanics"]
+            settings["battle_mechanics"] = {
                 key: mechanics[key]
                 for key in (
                     "items",

@@ -1,35 +1,143 @@
 from __future__ import annotations
 
 import struct
+from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from PIL import Image
 
 from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment
+from ..ingame.battle_mode.battle_settings import NATIVE_ROWS as BATTLE_NATIVE_ROWS
 from ..ingame.practice_mode.practice_settings import (
+    NATIVE_ROWS as PRACTICE_NATIVE_ROWS,
+    ROW_FLAG_HELP_SLOT,
+    ROW_FLAG_LABEL_SLOT,
+    ROW_FLAG_VALUES_SLOT,
+    ROW_LOCAL_CUSTOM,
     PracticePage,
     PracticeRow,
     practice_settings_row_bindings,
     settings_menu_schema_fragment,
 )
-from ..ingame.shared.menu_options import MOD_SETTINGS_PATH
+from ..ingame.battle_mechanics.battle_settings_runtime import PRACTICE_SETTINGS_PATH
+from ..ingame.shared.menu_options import MOD_SETTINGS_PATH, MenuOption
 from ..ingame.shared.menu_pages import build_menu_pages, page_resource_fragments
+from ..ingame.shared.native_settings_defaults import (
+    BATTLE_ROW_IDS,
+    BATTLE_SETTINGS_PATH,
+    PRACTICE_GENERAL_ROW_IDS,
+    PRACTICE_OPPONENT_ROW_IDS,
+    battle_configured_row_defaults,
+    practice_configured_row_defaults,
+)
 
 if TYPE_CHECKING:
     from na228_builder.infrastructure.orchestration.catalog import CatalogSelection
+
+
+def _native_option(
+    row,
+    *,
+    default: int,
+    argument: int,
+    reference_fields: slice,
+    values: tuple[str, ...] = (),
+) -> MenuOption:
+    label_reference, help_reference, values_reference = (
+        row.encoded_fields()[reference_fields]
+    )
+    return MenuOption(
+        None,
+        None,
+        values,
+        default,
+        "save_native_setting_get",
+        "save_native_setting_set",
+        argument,
+        label_reference=label_reference,
+        help_reference=help_reference,
+        values_reference=None if values else values_reference,
+        option_count=row.option_count,
+    )
+
+
+def _native_row_bindings(selection: CatalogSelection):
+    bindings = practice_settings_row_bindings(selection, include_native_rows=False)
+    battle_defaults = battle_configured_row_defaults(selection)
+    for key, row_id in BATTLE_ROW_IDS.items():
+        source = BATTLE_NATIVE_ROWS[row_id]
+        default = battle_defaults.get(row_id, source.default_value)
+        values = (
+            tuple(str(value) for value in range(10, 100, 10))
+            + ("99", "Unlimited")
+            if key == "time"
+            else tuple(f"{value}-{10 - value}" for value in range(11))
+            if key == "handicap"
+            else ()
+        )
+        option = _native_option(
+            source,
+            default=default,
+            argument=0x100 | row_id,
+            reference_fields=slice(2, 5),
+            values=values,
+        )
+        flags = ROW_FLAG_LABEL_SLOT | ROW_FLAG_HELP_SLOT
+        if not values:
+            flags |= ROW_FLAG_VALUES_SLOT
+        row = PracticeRow(
+            row_id,
+            1,
+            ROW_LOCAL_CUSTOM,
+            source.option_count,
+            default,
+            flags=flags,
+            runtime_option=option,
+        )
+        bindings[BATTLE_SETTINGS_PATH + (key,)] = lambda row=row: row
+
+    practice_defaults = practice_configured_row_defaults(selection)
+    for parent, row_ids in (
+        ((), PRACTICE_GENERAL_ROW_IDS),
+        (("opponent_settings",), PRACTICE_OPPONENT_ROW_IDS),
+    ):
+        for key, row_id in row_ids.items():
+            source = PRACTICE_NATIVE_ROWS[row_id]
+            default = practice_defaults.get(row_id, source.default_value)
+            option = _native_option(
+                source,
+                default=default,
+                argument=0x200 | row_id,
+                reference_fields=slice(3, 6),
+            )
+            row = replace(
+                source,
+                section=1,
+                local_offset=ROW_LOCAL_CUSTOM,
+                default_value=default,
+                runtime_option=option,
+            )
+            bindings[PRACTICE_SETTINGS_PATH + parent + (key,)] = (
+                lambda row=row: row
+            )
+    return bindings
 
 
 def _pages(selection: CatalogSelection) -> tuple[PracticePage, ...]:
     return build_menu_pages(
         selection,
         MOD_SETTINGS_PATH,
-        practice_settings_row_bindings(selection, include_native_rows=False),
+        _native_row_bindings(selection),
         PracticeRow,
         PracticePage,
         ("player_row_count", "opponent_row_count"),
         "mod_settings_schema",
         0,
+        excluded_paths=(
+            BATTLE_SETTINGS_PATH + ("battle_mechanics_submenu",),
+            PRACTICE_SETTINGS_PATH + ("battle_mechanics_submenu",),
+        ),
     )
 
 

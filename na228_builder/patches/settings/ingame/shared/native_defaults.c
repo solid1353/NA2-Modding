@@ -5,6 +5,8 @@ typedef unsigned int u32;
 #define MANAGER_SIDE_OFFSET 0x18u
 #define MANAGER_BATTLE_SETTINGS_OFFSET 0x9F4u
 #define MANAGER_POINTER_ADDRESS 0x00607600u
+#define NATIVE_DIFFICULTY_KEY 0x0Bu
+#define BATTLE_DIFFICULTY_OFFSET 7u
 
 #define SAVE_NATIVE_BATTLE 0x100u
 #define SAVE_NATIVE_PRACTICE 0x200u
@@ -12,12 +14,14 @@ typedef unsigned int u32;
 #define SAVE_NATIVE_ROW_MASK 0x0FFu
 
 #define NATIVE_MANAGER_SET_ADDRESS 0x001F59F0u
+#define NATIVE_DIFFICULTY_MIRROR_SET_ADDRESS 0x001F6D30u
 #define NATIVE_LINKED_MODE_SET_ADDRESS 0x00882670u
 
 #define SETTINGS_DEFAULTS_SECTION(name) \
     __attribute__((section(name), used))
 
 typedef void (*NativeManagerSet)(void *manager, u32 key, u32 value);
+typedef void (*NativeDifficultyMirrorSet)(void *manager, u32 key, u32 value);
 typedef void (*NativeLinkedModeSet)(u32 side, u32 value);
 
 typedef struct NativeSettingsDefaults {
@@ -28,6 +32,20 @@ typedef struct NativeSettingsDefaults {
 } NativeSettingsDefaults;
 
 extern NativeSettingsDefaults native_settings_defaults;
+
+SETTINGS_DEFAULTS_SECTION(".text.settings_sync_battle_difficulty")
+void settings_sync_battle_difficulty(void *manager, u32 key, u32 value)
+{
+    ((NativeDifficultyMirrorSet)NATIVE_DIFFICULTY_MIRROR_SET_ADDRESS)(
+        manager,
+        key,
+        value
+    );
+    if (key == NATIVE_DIFFICULTY_KEY) {
+        native_settings_defaults.battle_values[BATTLE_DIFFICULTY_OFFSET] =
+            (u8)value;
+    }
+}
 
 static void settings_apply_default_block(
     u8 *settings,
@@ -233,6 +251,16 @@ void save_native_setting_set(u32 argument, u32 value)
     manager = *(u8 **)MANAGER_POINTER_ADDRESS;
     if (manager == (u8 *)0) {
         return;
+    }
+    if (
+        (argument & SAVE_NATIVE_SCOPE_MASK) == SAVE_NATIVE_BATTLE &&
+        (argument & SAVE_NATIVE_ROW_MASK) == 1u
+    ) {
+        settings_sync_battle_difficulty(
+            manager,
+            NATIVE_DIFFICULTY_KEY,
+            value
+        );
     }
     mode = *(volatile u32 *)(manager + MANAGER_MODE_OFFSET);
     if (

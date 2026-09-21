@@ -59,6 +59,7 @@ ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES = 0x200
 ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST = 0x400
 ROW_FLAG_CUSTOM_SUPPORT = 0x800
 ROW_FLAG_CUSTOM_CHAKRA = 0x1000
+ROW_FLAG_STATUS_SOURCE = 0x2000
 
 NATIVE_LABEL_TABLE = 0x008BE6C0
 NATIVE_HELP_TABLE = 0x008BEF70
@@ -186,6 +187,7 @@ NATIVE_ROWS = {
             ROW_FLAG_LABEL_SLOT
             | ROW_FLAG_HELP_BY_VALUE
             | ROW_FLAG_VALUES_SLOT
+            | ROW_FLAG_STATUS_SOURCE
         ),
     ),
     10: PracticeRow(
@@ -464,9 +466,16 @@ def settings_menu_schema_fragment(
         row_offset = rows_offset + index * ROW_SIZE
         if row.runtime_option is not None or row.label is not None:
             fields = list(row.encoded_fields())
-            fields[LABEL_REFERENCE_FIELD] = 0
-            fields[HELP_REFERENCE_FIELD] = 0
-            fields[VALUE_REFERENCE_FIELD] = 0
+            option = row.runtime_option
+            fields[LABEL_REFERENCE_FIELD] = (
+                option.label_reference if option is not None else 0
+            ) or 0
+            fields[HELP_REFERENCE_FIELD] = (
+                option.help_reference if option is not None else 0
+            ) or 0
+            fields[VALUE_REFERENCE_FIELD] = (
+                option.values_reference if option is not None else 0
+            ) or 0
             payload.extend(struct.pack("<12I", *fields))
         elif (row.flags & ROW_FLAG_CUSTOM_CHAKRA) != 0:
             fields = list(row.encoded_fields())

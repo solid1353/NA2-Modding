@@ -103,6 +103,19 @@ double-height Handicap panel. The cursor and arrows derive their Y positions
 from the selected slot, but the Handicap values and backing remain at the fixed
 sixth position.
 
+The Handicap value is a ten-segment graphic rather than text. The first loop
+draws the selected Player 1 count with rectangle `0x008D18B0`; the second fills
+the remaining segments with rectangle `0x008D18B8`. Both call resident
+`0x0037BD00` at `X = 128 + 28 * segment`, scale `0.9`, and `Y = 257`. The
+selected value therefore controls the red-to-blue boundary while the total
+always remains ten segments.
+
+The Battle Settings controller loads `setting.ccs` and creates its value sprite
+at `+0x08` from `ANM_setting01` through resident `0x0037B670`, with capacity
+`0x14`, enabled flag `1`, and the controller's `+0x14` render context. The
+Handicap loops pass that sprite to `0x0037BD00`. Practice's controller `+0x08`
+is a different object and cannot render these Battle Settings regions.
+
 The ordinary value loop retains row Y in `$f20`. Ghidra `0x00880434..0x00880448`
 resolves the row's string, and `0x0088044C` copies `$f20` to `$f13` immediately
 before drawing. Earlier changes to `$f13` cannot affect the final value Y. The

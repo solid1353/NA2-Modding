@@ -27,7 +27,7 @@ The Handicap number is also its native menu index: `3` displays `3-7`, and
 The base config places `Battle Mechanics` first, followed by Time, Difficulty,
 and Handicap. Moving those config entries changes their visible order.
 Square on the launcher opens a child page containing every enabled leaf under
-`features.settings.submenus.battle_mechanics_submenu`, in config key order; Confirm commits
+`features.settings.battle_mechanics`, in config key order; Confirm commits
 the complete Battle transaction and closes from the launcher as it does from
 every ordinary row. Cancel returns to the launcher; Cancel on the root retains
 the native close behavior. Entering or leaving the child page restarts the
@@ -46,7 +46,7 @@ The initial Battle pack is applied immediately after the native mode-2 manager
 assignment at clean ELF offset `0xEA7B4`. This is separate from the
 Practice-only startup/reset path.
 
-The `features.settings.submenus.battle_mechanics_submenu` object owns runtime defaults used by Battle
+The `features.settings.battle_mechanics` object owns runtime defaults used by Battle
 Settings and Practice Settings. The base config places `chakra` first; it accepts `normal`,
 `unlimited`, or a decimal regeneration rate from `0.1` through `10.0` in steps
 of `0.1`. `normal` preserves native spending and gain; `unlimited` restores both
@@ -201,7 +201,7 @@ documented in [Simple Display selection](../knowledge/gameplay/pause_and_replay.
 
 ## X-dash chakra cost
 
-`features.settings.submenus.battle_mechanics_submenu.xdash_chakra_cost` is expressed as normalized
+`features.settings.battle_mechanics.xdash_chakra_cost` is expressed as normalized
 percentage points on the inclusive `0..100` scale in 5-point steps. The menu
 therefore exposes `0%`, `5%`, through `100%`. The runtime consumer converts the
 selected `x/100` value to NA2's native 15-point chakra gauge as `x * 15 / 100`.
@@ -224,7 +224,7 @@ in [X-dash knowledge](../knowledge/gameplay/xdash.md).
 
 ## Substitution
 
-`features.settings.submenus.battle_mechanics_submenu` owns two substitution settings:
+`features.settings.battle_mechanics` owns two substitution settings:
 
 - `sub_active_frames` accepts `"default" | 1..15`. `"default"` preserves vanilla
   per-attack timing, including its random checks. A number selects the total
@@ -259,7 +259,7 @@ Runtime validation of the Minimum Chakra behavior remains outstanding:
 Square on `Substitution: Chakra` opens Chakra Settings in Battle and Practice.
 Its `Minimum Chakra` row accepts `Match Cost`, then `5%..100%` in steps of `5`.
 The config field is
-`features.settings.submenus.battle_mechanics_submenu.substitution.chakra.minimum_chakra`:
+`features.settings.battle_mechanics.substitution.chakra.minimum_chakra`:
 `"match_cost"` (the default), or integers `5..100` in steps of `5`.
 
 Match Cost invokes the same per-fighter cost resolver used by spending when
@@ -332,7 +332,7 @@ see [Battle support](#battle-support).
 
 ## Battle support
 
-`features.settings.submenus.battle_mechanics_submenu.support` selects the initial and reset value of
+`features.settings.battle_mechanics.support` selects the initial and reset value of
 the shared `Support: Off | Nerfed | Normal | Unlimited` row in Battle and
 Practice Battle Mechanics. The base configuration remains `"off"`.
 

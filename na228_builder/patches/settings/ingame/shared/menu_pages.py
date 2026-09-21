@@ -9,7 +9,6 @@ from na228_builder.infrastructure.orchestration.catalog_format import ContainerN
 from .menu_options import PAGE_TITLES, menu_option_bindings
 
 
-SUBMENUS_PATH = ("features", "settings", "submenus")
 SUBMENU_FLAG = 0x4000
 
 
@@ -29,17 +28,18 @@ def menu_title(name):
 
 
 def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
-                     section_fields, prefix, first_generated_id):
+                     section_fields, prefix, first_generated_id,
+                     excluded_paths=()):
     """Discover topology independently of native row and gameplay bindings."""
-    submenus = next(field.node for field in selection.catalog["settings"].fields
-                    if field.name == "submenus")
-    submenu_definitions = {field.name: field.node for field in submenus.fields}
-    definition = selection.catalog["settings"]
+    settings = selection.catalog["settings"]
+    settings_definitions = {field.name: field.node for field in settings.fields}
+    definition = settings
     for name in root_path[2:]:
         definition = next(field.node for field in definition.fields
                           if field.name == name)
     selected = {node.path: node for node in selection.nodes}
     options = menu_option_bindings(selection)
+    excluded_paths = set(excluded_paths)
     pages = []
     next_id = first_generated_id
 
@@ -57,8 +57,15 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
         if path not in options:
             raise ValueError(f"No menu value handler for {'.'.join(path)}")
         option = options[path]
-        return allocate_row(option_count=len(option.values), default_value=option.default,
-                            flags=0, runtime_option=option)
+        row = {
+            "option_count": option.count,
+            "default_value": option.default,
+            "flags": option.flags,
+            "runtime_option": option,
+        }
+        if "availability" in row_type.__dataclass_fields__:
+            row["availability"] = option.availability
+        return allocate_row(**row)
 
     def fields_of(definition):
         if isinstance(definition, ContainerNode):
@@ -111,17 +118,24 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
         rows = []
         for name, child in ordered_fields(definition, path):
             child_path = path + (name,)
+            if child_path in excluded_paths:
+                continue
             target = selected.get(child_path)
             reference = isinstance(child, SettingNode) and child.value_type is None
-            if reference and name not in submenu_definitions:
-                raise ValueError(
-                    f"No shared submenu definition for {'.'.join(child_path)}"
-                )
             if target is not None and not target.enabled:
                 continue
             if reference:
-                child_path = SUBMENUS_PATH + (name,)
-                child = submenu_definitions[name]
+                settings_name = name.removesuffix("_submenu")
+                if (
+                    settings_name == name
+                    or settings_name not in settings_definitions
+                ):
+                    raise ValueError(
+                        "No referenced settings definition for "
+                        f"{'.'.join(child_path)}"
+                    )
+                child_path = ("features", "settings", settings_name)
+                child = settings_definitions[settings_name]
                 if not selected[child_path].enabled:
                     continue
             fields = fields_of(child)
@@ -185,14 +199,23 @@ def append_row_extensions(payload, relocations, rows, rows_offset, row_size,
             pointer(offset + help_field * 4, addend=text(row.help))
         if row.runtime_option is not None:
             option = row.runtime_option
-            pointer(offset + label_field * 4, addend=text(option.label))
-            pointer(offset + help_field * 4, addend=text(option.help))
-            align()
-            table = len(payload)
-            payload.extend(b"\0" * (len(option.values) * 4))
-            pointer(offset + value_field * 4, addend=table)
-            for value, label in enumerate(option.values):
-                pointer(table + value * 4, addend=text(label))
+            if option.label_reference is None:
+                if option.label is None:
+                    raise ValueError("A generated menu label requires text")
+                pointer(offset + label_field * 4, addend=text(option.label))
+            if option.help_reference is None:
+                if option.help is None:
+                    raise ValueError("Generated menu help requires text")
+                pointer(offset + help_field * 4, addend=text(option.help))
+            if option.values_reference is None:
+                if len(option.values) != option.count:
+                    raise ValueError("Generated menu values require one label per option")
+                align()
+                table = len(payload)
+                payload.extend(b"\0" * (option.count * 4))
+                pointer(offset + value_field * 4, addend=table)
+                for value, label in enumerate(option.values):
+                    pointer(table + value * 4, addend=text(label))
             pointer(offset + row_size - 4, target=f"{symbol}_option_{index}")
 
         if links:

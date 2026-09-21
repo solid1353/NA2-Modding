@@ -4,7 +4,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal
 
-from ..battle_mechanics.battle_settings_runtime import BATTLE_MECHANICS_PATH, battle_mechanic_enabled
+from ..battle_mechanics.battle_settings_runtime import (
+    BATTLE_MECHANICS_PATH,
+    battle_mechanic_enabled,
+)
 from ..battle_mechanics.substitution.substitution_gauge import gauge_option_defaults, chakra_minimum_option_default
 from ..battle_mechanics.items.items_settings import FIELD_ITEMS, ITEM_VALUE_LABELS, items_configuration, items_option_defaults
 
@@ -14,13 +17,23 @@ MOD_SETTINGS_PATH = ("features", "settings", "mod_settings")
 
 @dataclass(frozen=True)
 class MenuOption:
-    label: str
-    help: str
+    label: str | None
+    help: str | None
     values: tuple[str, ...]
     default: int
     getter: str
     setter: str
     argument: int
+    availability: int = 0
+    flags: int = 0
+    label_reference: int | None = None
+    help_reference: int | None = None
+    values_reference: int | None = None
+    option_count: int | None = None
+
+    @property
+    def count(self) -> int:
+        return self.option_count if self.option_count is not None else len(self.values)
 
 
 PAGE_TITLES = {
@@ -73,6 +86,7 @@ def menu_option_bindings(selection):
             label, help_text, labels, configured_index(path, values),
             "mod_settings_option_get", "mod_settings_option_set", argument,
         )
+
     if battle_mechanic_enabled(selection, "substitution"):
         options[BATTLE_MECHANICS_PATH + ("substitution", "chakra", "minimum_chakra")] = MenuOption(
             "Minimum Chakra", "Required chakra to substitute. Match Cost follows the actual cost.",

@@ -2,6 +2,31 @@
     .set noreorder
     .set noat
 
+    .section .rodata.practice_settings_defaults_text,"a",@progbits
+    .balign 4
+    .globl practice_settings_defaults_text
+practice_settings_defaults_text:
+    .asciz "Settings returned to defaults."
+
+    .section .text.practice_settings_defaults_text_bridge,"ax",@progbits
+    .balign 4
+    .globl practice_settings_defaults_text_bridge
+    .type practice_settings_defaults_text_bridge, @function
+practice_settings_defaults_text_bridge:
+    lui $t9, %hi(mod_settings_child)
+    lw $t9, %lo(mod_settings_child)($t9)
+    bne $s0, $t9, 1f
+    nop
+    lui $a1, %hi(practice_settings_defaults_text)
+    addiu $a1, $a1, %lo(practice_settings_defaults_text)
+    jr $ra
+    nop
+1:
+    lw $a1, -0x4e18($gp)
+    jr $ra
+    nop
+    .size practice_settings_defaults_text_bridge, . - practice_settings_defaults_text_bridge
+
     .section .text.practice_settings_initialize_help_bridge,"ax",@progbits
     .balign 4
     .globl practice_settings_initialize_help_bridge

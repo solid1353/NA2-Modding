@@ -79,6 +79,7 @@ typedef unsigned int u32;
 #define ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST 0x400u
 #define ROW_FLAG_CUSTOM_SUPPORT 0x800u
 #define ROW_FLAG_CUSTOM_CHAKRA 0x1000u
+#define ROW_FLAG_STATUS_SOURCE 0x2000u
 #define ROW_FLAG_SUBMENU SETTINGS_MENU_ROW_FLAG_SUBMENU
 
 #define ULTIMATE_JUTSU_NATIVE_MODE_COUNT 6u
@@ -386,19 +387,32 @@ static void practice_settings_recompose_backing(void *controller)
     );
 }
 
+static s32 practice_settings_get_row_value(
+    void *controller,
+    const PracticeSettingsRow *row
+);
+
 static s32 practice_settings_status(void *controller)
 {
-    const PracticeSettingsRow *row = practice_settings_row_for_id(
-        controller,
-        ROW_ID_STATUS
+    const PracticeSettingsSchema *schema = practice_settings_schema_for(
+        controller
     );
+    u32 index;
 
-    if (row == (const PracticeSettingsRow *)0) {
-        return 0;
+    for (index = 0u; index < schema->row_count; ++index) {
+        const PracticeSettingsRow *row = practice_settings_model_row(
+            controller,
+            index
+        );
+
+        if (
+            row != (const PracticeSettingsRow *)0 &&
+            (row->flags & ROW_FLAG_STATUS_SOURCE) != 0u
+        ) {
+            return practice_settings_get_row_value(controller, row);
+        }
     }
-    return *(volatile s32 *)(
-        (u8 *)controller + row->local_offset
-    );
+    return 0;
 }
 
 PRACTICE_SETTINGS_SECTION(".text.practice_settings_get_max_value")

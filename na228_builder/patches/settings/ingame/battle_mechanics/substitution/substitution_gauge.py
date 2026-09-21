@@ -83,7 +83,7 @@ def substitution_gauge_fragment(
     practice_settings = _selected_node(selection, PRACTICE_SETTINGS_PATH)
     if not practice_settings.enabled:
         raise ValueError(
-            "features.settings.submenus.battle_mechanics_submenu.substitution "
+            "features.settings.battle_mechanics.substitution "
             "requires features.settings.practice_settings"
         )
 

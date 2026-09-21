@@ -7,6 +7,8 @@
         description: "Configure the session-wide Mod Settings menu and its runtime-selectable behavior.",
         patch: "settings.mod_settings",
         battle_mechanics_submenu: setting {},
+        battle_settings_submenu: setting {},
+        practice_settings_submenu: setting {},
         new_controls: setting<bool> {
           description: "Select the Classic or Updated control scheme while retaining the extended Control Settings editor.",
           patch: "settings.new_controls",
@@ -25,6 +27,77 @@
         support_selection: setting<"none" | "relevant" | "all"> {
           description: "Control which supports are available during Character Select.",
           patch: "character_select.support_selection",
+        },
+      },
+      battle_mechanics: {
+        chakra: setting<"normal" | "unlimited" | decimal & 0.1..10 & step 0.1> {
+          patch: "settings.battle_mechanics.chakra",
+        },
+        ultimate_jutsu: setting<"no_use" | "random" | "command" | "timing" | "turn" | "combo" | "no_contest" | "no_hud"> {
+          patch: "settings.battle_mechanics.ultimate_jutsu",
+        },
+        shadowblur: setting<"off" | "on"> {
+          patch: "settings.battle_mechanics.shadowblur",
+        },
+        extra_hit: setting<"off" | "on" | int & -100..-5 & step 5> {
+          patch: "settings.battle_mechanics.extra_hit",
+        },
+        sub_active_frames: setting<"default" | int & 1..15> {
+          patch: "settings.battle_mechanics.sub_active_frames",
+        },
+        xdash_chakra_cost: setting<int & 0..100 & step 5> {
+          patch: "settings.battle_mechanics.xdash_chakra_cost",
+        },
+        support: setting<"off" | "nerfed" | "normal" | "unlimited"> {
+          patch: "settings.battle_mechanics.support",
+        },
+        substitution: setting<{
+            value: "chakra" | "gauge" | "free",
+            chakra?: {
+              minimum_chakra?: "match_cost" | int & 5..100 & step 5,
+            },
+            gauge?: {
+              recovery_delay_seconds?: decimal & 0..60 & step 0.25,
+              refill_seconds_per_stock?: decimal & >0 & <=10 & step 0.05,
+              damage_recovery?: bool,
+              damage_percent_per_stock?: decimal & >0 & <=100 & step 0.25,
+            },
+          }> {
+          description: "Configures substitution payment and gauge recovery.",
+          patch: "settings.battle_mechanics.substitution",
+        },
+        items: setting<{
+          value: "none" | "less" | "normal" | "more" | "custom",
+          custom: {
+            availability: "none" | "less" | "normal" | "more",
+            health_recovery: bool,
+            chakra_ball: bool,
+            shoes_of_jonin: bool,
+            food_pills: bool,
+            scroll_of_hidden_cloud: bool,
+            scroll_of_teleportation: bool,
+            scarecrow: bool,
+            tortoiseshell_pills: bool,
+            energy_pills: bool,
+            medical_pack: bool,
+            item_pouch: bool,
+            demon_wind_shuriken: bool,
+            weight_of_determination: bool,
+            exploding_kunai: bool,
+            poison_smoke_bomb: bool,
+            makibishi_spikes: bool,
+            paper_bomb: bool,
+            curse_tag_chakra_points_seal: bool,
+            curse_tag_armor_break: bool,
+            thousand_shadow_shuriken: bool,
+            burst_kunai: bool,
+            exploding_seal: bool,
+            toad_oil: bool,
+            random_ball: bool,
+            stun_ball: bool,
+          },
+        }> {
+          patch: "settings.battle_mechanics.items",
         },
       },
       battle_settings: {
@@ -48,79 +121,6 @@
         health: setting<"normal" | "half" | "almost"> {},
         commands: setting<"off" | "on"> {},
         damage: setting<"off" | "on"> {},
-      },
-      submenus: {
-        battle_mechanics_submenu: {
-          chakra: setting<"normal" | "unlimited" | decimal & 0.1..10 & step 0.1> {
-            patch: "settings.battle_mechanics.chakra",
-          },
-          ultimate_jutsu: setting<"no_use" | "random" | "command" | "timing" | "turn" | "combo" | "no_contest" | "no_hud"> {
-            patch: "settings.battle_mechanics.ultimate_jutsu",
-          },
-          shadowblur: setting<"off" | "on"> {
-            patch: "settings.battle_mechanics.shadowblur",
-          },
-          extra_hit: setting<"off" | "on" | int & -100..-5 & step 5> {
-            patch: "settings.battle_mechanics.extra_hit",
-          },
-          sub_active_frames: setting<"default" | int & 1..15> {
-            patch: "settings.battle_mechanics.sub_active_frames",
-          },
-          xdash_chakra_cost: setting<int & 0..100 & step 5> {
-            patch: "settings.battle_mechanics.xdash_chakra_cost",
-          },
-          support: setting<"off" | "nerfed" | "normal" | "unlimited"> {
-            patch: "settings.battle_mechanics.support",
-          },
-          substitution: setting<{
-              value: "chakra" | "gauge" | "free",
-              chakra?: {
-                minimum_chakra?: "match_cost" | int & 5..100 & step 5,
-              },
-              gauge?: {
-                recovery_delay_seconds?: decimal & 0..60 & step 0.25,
-                refill_seconds_per_stock?: decimal & >0 & <=10 & step 0.05,
-                damage_recovery?: bool,
-                damage_percent_per_stock?: decimal & >0 & <=100 & step 0.25,
-              },
-            }> {
-            description: "Configures substitution payment and gauge recovery.",
-            patch: "settings.battle_mechanics.substitution",
-          },
-          items: setting<{
-            value: "none" | "less" | "normal" | "more" | "custom",
-            custom: {
-              availability: "none" | "less" | "normal" | "more",
-              health_recovery: bool,
-              chakra_ball: bool,
-              shoes_of_jonin: bool,
-              food_pills: bool,
-              scroll_of_hidden_cloud: bool,
-              scroll_of_teleportation: bool,
-              scarecrow: bool,
-              tortoiseshell_pills: bool,
-              energy_pills: bool,
-              medical_pack: bool,
-              item_pouch: bool,
-              demon_wind_shuriken: bool,
-              weight_of_determination: bool,
-              exploding_kunai: bool,
-              poison_smoke_bomb: bool,
-              makibishi_spikes: bool,
-              paper_bomb: bool,
-              curse_tag_chakra_points_seal: bool,
-              curse_tag_armor_break: bool,
-              thousand_shadow_shuriken: bool,
-              burst_kunai: bool,
-              exploding_seal: bool,
-              toad_oil: bool,
-              random_ball: bool,
-              stun_ball: bool,
-            },
-          }> {
-            patch: "settings.battle_mechanics.items",
-          },
-        },
       },
     },
     general: {

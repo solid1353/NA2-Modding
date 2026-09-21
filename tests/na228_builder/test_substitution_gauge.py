@@ -48,8 +48,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
             node
             for node in selection.nodes
             if node.path == (
-                "features", "settings", "submenus",
-                "battle_mechanics_submenu", "substitution",
+                "features", "settings", "battle_mechanics", "substitution",
             )
         )
         self.assertEqual(
@@ -65,7 +64,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_false_disables_gauge(self) -> None:
         features = self._base_features()
-        features["settings"]["submenus"]["battle_mechanics_submenu"][
+        features["settings"]["battle_mechanics"][
             "substitution"
         ] = False
         selection = catalog.load_selection(
@@ -81,12 +80,12 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_true_is_invalid_when_default_is_mandatory(self) -> None:
         features = self._base_features()
-        features["settings"]["submenus"]["battle_mechanics_submenu"][
+        features["settings"]["battle_mechanics"][
             "substitution"
         ] = True
         with self.assertRaisesRegex(
             catalog.ConfigurationError,
-            "features.settings.submenus.battle_mechanics_submenu.substitution",
+            "features.settings.battle_mechanics.substitution",
         ):
             catalog.load_selection(
                 self.catalog_path,
@@ -94,7 +93,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
             )
     def test_advanced_configuration_encodes_exact_integer_counts(self) -> None:
         features = self._base_features()
-        features["settings"]["submenus"]["battle_mechanics_submenu"][
+        features["settings"]["battle_mechanics"][
             "substitution"
         ] = {
             "value": "chakra",
@@ -122,7 +121,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_partial_configuration_inherits_omitted_defaults(self) -> None:
         features = self._base_features()
-        features["settings"]["submenus"]["battle_mechanics_submenu"][
+        features["settings"]["battle_mechanics"][
             "substitution"
         ] = {
             "value": "free",
@@ -148,9 +147,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_gauge_can_coexist_with_support_on(self) -> None:
         features = self._base_features()
-        mechanics = features["settings"]["submenus"][
-            "battle_mechanics_submenu"
-        ]
+        mechanics = features["settings"]["battle_mechanics"]
         mechanics["substitution"]["value"] = "gauge"
         mechanics["support"] = "normal"
         selection = catalog.load_selection(
@@ -161,8 +158,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
             node
             for node in selection.nodes
             if node.path == (
-                "features", "settings", "submenus",
-                "battle_mechanics_submenu", "support",
+                "features", "settings", "battle_mechanics", "support",
             )
         )
         self.assertEqual(support.configured_value, "normal")
@@ -232,7 +228,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_gauge_always_links_runtime_cost_providers(self) -> None:
         features = self._base_features()
-        features["settings"]["submenus"]["battle_mechanics_submenu"][
+        features["settings"]["battle_mechanics"][
             "substitution"
         ]["value"] = "gauge"
         features["settings"]["mod_settings"]["character_overrides"] = False
@@ -449,9 +445,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
                 support_selection=selection_enabled,
             ):
                 features = self._base_features()
-                mechanics = features["settings"]["submenus"][
-                    "battle_mechanics_submenu"
-                ]
+                mechanics = features["settings"]["battle_mechanics"]
                 support = mechanics["support"]
                 mechanics["support"] = (
                     support if battle_support_enabled else False

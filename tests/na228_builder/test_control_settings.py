@@ -50,9 +50,7 @@ class ControlSettingsTests(unittest.TestCase):
                 features["settings"]["mod_settings"][
                     "new_controls"
                 ] = controls_enabled
-                mechanics = features["settings"]["submenus"][
-                    "battle_mechanics_submenu"
-                ]
+                mechanics = features["settings"]["battle_mechanics"]
                 substitution = mechanics["substitution"]
                 mechanics["substitution"] = (
                     substitution if substitution_enabled else False
@@ -74,8 +72,8 @@ class ControlSettingsTests(unittest.TestCase):
                     for node in selection.nodes
                     if node.path
                     == (
-                        "features", "settings", "submenus",
-                        "battle_mechanics_submenu", "substitution",
+                        "features", "settings", "battle_mechanics",
+                        "substitution",
                     )
                 )
                 self.assertTrue(controls.enabled)

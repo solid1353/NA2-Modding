@@ -983,7 +983,7 @@ battle state presents the native bar acceptably.
 ## Configuration and builder integration
 
 The build-time setting is
-`features.settings.submenus.battle_mechanics_submenu.substitution`. Its required `value` selects
+`features.settings.battle_mechanics.substitution`. Its required `value` selects
 `chakra`, `gauge`, or `free`. Gauge tuning is optional and nested under
 `gauge`:
 
@@ -1006,7 +1006,7 @@ steps; `config.jsonc` owns the selected values.
 The gauge requires `features.settings.mod_settings.character_overrides` and
 `features.settings.practice_settings`. `features.settings.mod_settings.new_controls`
 independently exposes separate Guard and Substitution actions.
-`features.settings.submenus.battle_mechanics_submenu.support` independently controls field support
+`features.settings.battle_mechanics.support` independently controls field support
 and the native lower support gauge.
 
 
@@ -1118,7 +1118,7 @@ The minimal implementation touches these existing ownership points:
 
 | Purpose | Canonical location |
 | --- | --- |
-| Public setting and descriptions | `features.settings.submenus.battle_mechanics_submenu.substitution` in `@builder/catalog.modcat` |
+| Public setting and descriptions | `features.settings.battle_mechanics.substitution` in `@builder/catalog.modcat` |
 | Unified settings patches | `@builder/patches/settings/settings.json` |
 | Default/profile selection | `@builder/configurations/*.jsonc` |
 | Config-to-fragment encoder | `@builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge.py` and `module_pipeline.py` |

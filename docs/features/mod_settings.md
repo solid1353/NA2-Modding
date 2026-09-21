@@ -6,6 +6,8 @@ Defaults values for the session-wide Mod Settings menu:
 | Field | Menu row | Values |
 | --- | --- | --- |
 | `battle_mechanics_submenu` | Battle Mechanics | `true` includes the submenu launcher; `false` omits it |
+| `battle_settings_submenu` | Battle Settings | `true` includes the submenu launcher; `false` omits it |
+| `practice_settings_submenu` | Practice Settings | `true` includes the submenu launcher; `false` omits it |
 | `new_controls` | Control Scheme | `false` = Classic, `true` = Updated |
 | `simple_display` | Simple Display | `off`, `on` |
 | `character_overrides` | Character Balance | `false` = Original, `true` = Overrides |
@@ -37,13 +39,25 @@ cleared before native Mode Select handling continues. The child retains the
 native Practice Settings input, sound, defaults, submenu, and backing behavior
 while using the shared generated pages and rows. Cross applies the staged
 values and closes. Triangle returns from a submenu or discards the root
-transaction and closes. Select stages the configured defaults, and Square
-opens a configured submenu. Opening plays the same sound as native Practice
-Settings.
+transaction and closes. Select stages the configured defaults and shows
+**Settings returned to defaults.** Square opens a configured submenu.
+Opening plays the same sound as native Practice Settings.
 
-`battle_mechanics_submenu` is the first configured row and opens
-`features.settings.submenus.battle_mechanics_submenu`, the same generated
-submenu used by Battle Settings and Practice Settings.
+The root menu lists Battle Mechanics, Battle Settings, and Practice Settings
+before the five Mod Settings values. Battle Mechanics opens
+`features.settings.battle_mechanics`. The Battle Settings and
+Practice Settings pages expose their existing stored values without repeating
+Battle Mechanics. Changes made through these pages also appear in the existing
+in-game Battle Settings and Practice Settings menus.
+
+Battle Difficulty and Options Difficulty share the same selected value.
+Changing either control updates the native Options mirror and the persisted
+Battle Difficulty value.
+
+Both pages use the generated Practice-style submenu renderer. Their labels,
+selector values, and help messages reference the same translated resources as
+the original Battle Settings and Practice Settings menus. Handicap remains a
+normal text-value row in this shared presentation.
 
 Before publishing the child, the runtime acquires `option.ccs` through the
 native archive helper and constructs only its `ANM_option_ca` camera and

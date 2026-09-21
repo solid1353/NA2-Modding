@@ -45,9 +45,9 @@ class XdashChakraCostTests(unittest.TestCase):
             configuration_path = Path(directory) / "normalized.jsonc"
             for percent in (0, 50, 100):
                 with self.subTest(percent=percent):
-                    base["features"]["settings"]["submenus"][
-                        "battle_mechanics_submenu"
-                    ]["xdash_chakra_cost"] = percent
+                    base["features"]["settings"]["battle_mechanics"][
+                        "xdash_chakra_cost"
+                    ] = percent
                     configuration_path.write_text(
                         json.dumps(base, indent=2) + "\n",
                         encoding="utf-8",
@@ -71,9 +71,9 @@ class XdashChakraCostTests(unittest.TestCase):
         base = jsonc.loads(
             (self.configurations / "base.jsonc").read_text(encoding="utf-8")
         )
-        base["features"]["settings"]["submenus"][
-            "battle_mechanics_submenu"
-        ]["xdash_chakra_cost"] = False
+        base["features"]["settings"]["battle_mechanics"][
+            "xdash_chakra_cost"
+        ] = False
         with tempfile.TemporaryDirectory() as directory:
             configuration_path = Path(directory) / "disabled.jsonc"
             configuration_path.write_text(
@@ -102,9 +102,9 @@ class XdashChakraCostTests(unittest.TestCase):
             configuration_path = Path(directory) / "invalid.jsonc"
             for value in (-5, 4, 105):
                 with self.subTest(value=value):
-                    base["features"]["settings"]["submenus"][
-                        "battle_mechanics_submenu"
-                    ]["xdash_chakra_cost"] = value
+                    base["features"]["settings"]["battle_mechanics"][
+                        "xdash_chakra_cost"
+                    ] = value
                     configuration_path.write_text(
                         json.dumps(base, indent=2) + "\n",
                         encoding="utf-8",

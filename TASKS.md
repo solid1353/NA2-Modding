@@ -2,9 +2,10 @@
 
 ### In Progress
 
-- UJ damage
 - Practice stage cancel is broken
+- UJ damage
 - Save translations alignment
+- Deal with temp directories
 - Pre-release testing
 
 ### General

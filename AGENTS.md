@@ -286,6 +286,7 @@ and read only relevant sections of large documents.
 - Documentation changes and the like should not produce builds.
 - Build NA2 only through `na228 build`. Whenever reporting a completed NA2
   build, state the output ISO's exact filename.
+- Never delete an ISO created by `na228 build`.
 - The PCSX2 fork is built according to its repository instructions.
 
 ## Validation

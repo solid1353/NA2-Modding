@@ -45,6 +45,12 @@ request plus its header to 16 bytes. Two segregated-bin families at
 a general ordered list serves larger gaps, with fallback to the cached largest
 gap. Flag bit `0x4` controls whether a block contributes to tracked bytes.
 
+Each indexed free gap stores its next link, previous link, gap size, and
+preceding allocated node in the first 16 bytes of the gap. The general-list
+sentinels are `0x00608350` for the first bin family and `0x00608B60` for the
+second. `FUN_00118B20` follows the selected sentinel's next links until it
+finds a gap large enough for the request.
+
 Complete list walks in every sampled state established that:
 
 - forward and backward links are consistent and acyclic;

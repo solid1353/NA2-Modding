@@ -10,10 +10,21 @@ typedef unsigned int u32;
 #define CHARACTER_SELECT_DRAW_ADDRESS 0x003B9160u
 #define CHARACTER_SELECT_ID_ADDRESS 0x003B4A90u
 #define FONT_BODY_DRAW_ADDRESS 0x00378F50u
+#define FONT_BODY_MEASURE_ADDRESS 0x003798E0u
+#define BALANCE_OVERLAY_DIGIT_SLOT_WIDTH 12.0f
+#define CHARACTER_SELECT_CENTER_X 256.0f
+#define BALANCE_OVERLAY_OUTER_EDGE_OFFSET_X 90.0f
+#define BALANCE_OVERLAY_BLOCK_WIDTH 84.0f
+#define BALANCE_OVERLAY_LEFT_X \
+    (CHARACTER_SELECT_CENTER_X - BALANCE_OVERLAY_OUTER_EDGE_OFFSET_X)
+#define BALANCE_OVERLAY_RIGHT_X \
+    (CHARACTER_SELECT_CENTER_X + BALANCE_OVERLAY_OUTER_EDGE_OFFSET_X - \
+     BALANCE_OVERLAY_BLOCK_WIDTH)
 
 typedef void (*CharacterSelectDraw)(u32 selector);
 typedef u32 (*CharacterSelectId)(u32 selector);
 typedef void (*FontBodyDraw)(float x, float y, const u8 *text, u32 color);
+typedef u32 (*FontBodyMeasure)(const u8 *text, u32 mode);
 
 typedef struct CharacterOverrideRow {
     u32 flags;
@@ -33,6 +44,46 @@ typedef struct CharacterOverrideTable {
     CharacterOverrideRow base;
     CharacterOverrideRow characters[1];
 } CharacterOverrideTable;
+
+static __attribute__((always_inline)) inline void draw_substitution_cost(
+    FontBodyDraw draw_text,
+    FontBodyMeasure measure_text,
+    float x,
+    float y,
+    const u8 *text,
+    u32 color
+)
+{
+    u8 run[24];
+    u8 digit[2];
+    u32 index = 0u;
+    u32 run_length = 0u;
+    float cursor = x;
+
+    for (;;) {
+        u8 value = text[index++];
+        u32 is_digit = value >= (u8)'0' && value <= (u8)'9';
+
+        if (value != 0u && is_digit == 0u) {
+            run[run_length++] = value;
+            continue;
+        }
+        if (run_length != 0u) {
+            run[run_length] = 0u;
+            draw_text(cursor, y, run, color);
+            cursor += (float)measure_text(run, 0u);
+            run_length = 0u;
+        }
+        if (value == 0u) {
+            return;
+        }
+
+        digit[0] = value;
+        digit[1] = 0u;
+        draw_text(cursor, y, digit, color);
+        cursor += BALANCE_OVERLAY_DIGIT_SLOT_WIDTH;
+    }
+}
 
 extern const CharacterOverrideTable battle_logic_character_overrides;
 extern u32 mod_settings_option_get(u32 argument);
@@ -167,13 +218,17 @@ void battle_logic_character_select_balance_overlay(u32 selector)
     CharacterSelectId selected_id =
         (CharacterSelectId)CHARACTER_SELECT_ID_ADDRESS;
     FontBodyDraw draw_text = (FontBodyDraw)FONT_BODY_DRAW_ADDRESS;
+    FontBodyMeasure measure_text =
+        (FontBodyMeasure)FONT_BODY_MEASURE_ADDRESS;
     u32 side = *(u32 *)(selector + 0x0Cu) != 0u;
     u32 character_id;
     u32 cost_present;
+    u32 show_substitution;
     float cost = 0.0f;
-    float x = side ? 332.0f : 166.0f;
+    float x = side != 0u ? BALANCE_OVERLAY_RIGHT_X : BALANCE_OVERLAY_LEFT_X;
     const CharacterOverrideRow *character;
-    u8 text[24];
+    u8 tier_text[24];
+    u8 substitution_text[24];
 
     draw_character_select(selector);
     if (mod_settings_option_get(3u) == 0u) {
@@ -181,10 +236,20 @@ void battle_logic_character_select_balance_overlay(u32 selector)
     }
     character_id = selected_id(selector);
     cost_present = resolved_substitution_cost(character_id, &character, &cost);
-    format_tier(text, character);
-    draw_text(x, 8.0f, text, 0xFF000000u);
-    if (mod_settings_option_get(2u) != 0u) {
-        format_substitution_cost(text, cost_present, cost);
-        draw_text(x, 28.0f, text, 0xFF000000u);
+    show_substitution = mod_settings_option_get(2u) != 0u;
+    format_tier(tier_text, character);
+    if (show_substitution != 0u) {
+        format_substitution_cost(substitution_text, cost_present, cost);
+    }
+    draw_text(x, 8.0f, tier_text, 0xFF000000u);
+    if (show_substitution != 0u) {
+        draw_substitution_cost(
+            draw_text,
+            measure_text,
+            x,
+            28.0f,
+            substitution_text,
+            0xFF000000u
+        );
     }
 }

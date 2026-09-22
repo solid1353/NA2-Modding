@@ -17,7 +17,7 @@
         "shadowblur": "off",                      // "off" | "on"
         "extra_hit": "off",                       // "off" | "on" | int -100..-5 (step 5, % chakra penalty)
         "sub_active_frames": 5,                   // "default" | int 1..15 (total frames)
-        "xdash_chakra_cost": 5,                   // int 0..100 (step 5, % chakra)
+        "xdash_chakra_cost": 10,                  // int 0..100 (step 5, % chakra)
         "support": "off",                         // "off" | "nerfed" | "normal" | "unlimited"
         "substitution": {
           "value": "gauge",                       // "chakra" | "gauge" | "free"

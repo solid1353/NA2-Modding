@@ -9,7 +9,10 @@ the selected character ID, and reads the same complete generated character
 table used by battle.
 
 When enabled, the overlay always displays each selected character's `TIER` in
-the corresponding top-screen block. It additionally displays the resolved
+the corresponding top-screen block. Both lines in each block share one left
+edge. The two fixed-width blocks have mirrored outer and inner edges around the
+screen center, so changing either character cannot move its block. It
+additionally displays the resolved
 `SUB x%` value only when `features.settings.mod_settings.character_overrides` is enabled. If
 Character Overrides is disabled, the table still supplies tier metadata to the
 overlay but is not applied to gameplay. The builder links the complete table

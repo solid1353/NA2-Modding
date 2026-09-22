@@ -82,7 +82,7 @@
     }
   },
   "general.music_override": {
-    "description": "Select existing SOUND.AFS music tracks for Mode Select and Character Select, with repeating and reduced-gain Character Select music.",
+    "description": "Select existing SOUND.AFS music tracks for Mode Select and Character Select, repeating track 68 while it remains active and applying reduced gain.",
     "edits": {
       "select_character_music_track": {
         "description": "Pass SOUND.AFS/000 track 68 to the Character Select music command.",
@@ -118,12 +118,12 @@
         "symbol": "select",
         "encoding": "jal26"
       },
-      "restart_character_music_after_completion": {
-        "description": "Preserve the native Character Select update and restart non-looping track 68 after its final buffered audio drains.",
+      "restart_active_character_music_after_completion": {
+        "description": "Preserve the shared battle-process pause update and restart finished channel-0 track 68 across battle setup screens.",
         "target_id": "na2_elf",
-        "offset": "0xED73C",
-        "expected_hex": "68F30E0C",
-        "symbol": "select",
+        "offset": "0xECA78",
+        "expected_hex": "64AF070C",
+        "symbol": "update",
         "encoding": "jal26"
       }
     },
@@ -136,7 +136,11 @@
         "fragments": {
           "select": {
             "object": "general.music.override.text.general.music.override.select",
-            "description": "Select one existing streamed-music track or run the native Character Select update, preserving native replacement and global-volume behavior while restarting track 68 from its finished stream state with its configured gain."
+            "description": "Select one existing streamed-music track while preserving native replacement and global-volume behavior."
+          },
+          "update": {
+            "object": "general.music.override.text.general.music.override.update",
+            "description": "Run the shared battle-process pause update, then restart channel-0 track 68 only when its selected stream has finished."
           }
         }
       }

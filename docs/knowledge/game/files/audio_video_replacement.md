@@ -183,6 +183,12 @@ handler `FUN_001387C8` is a no-op, so the finished state persists until another
 audio command changes the stream. This is the resident polling surface for
 detecting full-file completion when an ADX has no authored loop block.
 
+The common update `FUN_00135EC0` visits the 16 stream slots and calls
+`FUN_00138C28` for each active slot. Its wrapper `FUN_00135E98` is called by
+the registered callback `FUN_0012D140` and also synchronously from
+`FUN_00136818` and `FUN_00137830` during stream operations. The finished-state
+handler therefore runs from more than one call path.
+
 **Observed codec contracts:**
 
 - AHX files use CRI's `(c)CRI` marker, version `0x06`, one channel, and type

@@ -2,7 +2,6 @@
 
 ### In Progress
 
-- Music loop
 - Rematch draw
 - Practice stage cancel is broken
 - UJ damage

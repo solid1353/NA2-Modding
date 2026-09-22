@@ -46,25 +46,6 @@ class UiLayoutRuntimeContractTests(unittest.TestCase):
                 external_symbols=external_symbols,
             )
 
-    def test_ui_c_entries_export_expected_fragments(self) -> None:
-        battle = self.compile_source(
-            "battle_hud_names.c",
-            "test.ui.battle.hud",
-        )
-        stage = self.compile_source(
-            "stage_select.c",
-            "test.ui.stage.select",
-        )
-
-        self.assertEqual(
-            "test.ui.battle.hud.text.localization.ui.battle.hud.fit.width",
-            battle.symbols["localization_ui_battle_hud_fit_width"].symbol,
-        )
-        self.assertEqual(
-            "test.ui.stage.select.text.localization.ui.stage.select.name.draw",
-            stage.symbols["localization_ui_stage_select_name_draw"].symbol,
-        )
-
     def test_exact_ui_abi_shims_and_battle_helper_bridge(self) -> None:
         battle_symbol = "test.ui.battle.hud.fit.width"
         assembly = self.compile_source(

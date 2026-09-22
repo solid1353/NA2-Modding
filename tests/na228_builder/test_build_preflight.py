@@ -534,7 +534,7 @@ class BuildPreflightTests(unittest.TestCase):
             self.assertEqual(resolved["image"], second["image"])
             self.assertNotEqual(resolved["image"], first["image"])
 
-    def test_registry_retains_at_most_ten_unique_images(self) -> None:
+    def test_registry_retains_only_latest_unique_images(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             first_image: Path | None = None

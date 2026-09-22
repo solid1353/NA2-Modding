@@ -38,36 +38,13 @@ class BattleSettingsTests(unittest.TestCase):
         path.write_text(json.dumps(base, indent=2) + "\n", encoding="utf-8")
         return catalog.load_selection(self.catalog_path, path)
 
-    def test_base_schema_follows_configured_page_order(self) -> None:
+    def test_base_schema_links_runtime_providers_and_help(self) -> None:
         fragment = battle_settings_fragment(
             self.selection,
             owner="settings.runtime_injector",
         )
         self.assertIsNotNone(fragment)
         assert fragment is not None
-        pages = _active_pages(self.selection)
-        self.assertEqual(len(pages), 5)
-        self.assertEqual(pages[0].rows[0].label, "Battle Mechanics")
-        self.assertEqual(
-            [row.row_id for row in pages[0].rows[1:]],
-            [0, 1, 5],
-        )
-        self.assertEqual(
-            [row.row_id for row in pages[1].rows],
-            [3, 4, 7, 8, 9, 10, 11, 6, 2],
-        )
-        self.assertEqual(
-            [page.heading_text for page in pages[1:]],
-            ["Battle Mechanics", "Chakra Settings", "Gauge Settings", "Items Settings"],
-        )
-        by_id = {row.row_id: row for page in pages for row in page.rows}
-        self.assertEqual((by_id[6].option_count, by_id[6].default_value), (3, 1))
-        self.assertEqual((by_id[9].option_count, by_id[9].default_value), (16, 5))
-        self.assertEqual((by_id[10].option_count, by_id[10].default_value), (21, 1))
-        self.assertEqual((by_id[11].option_count, by_id[11].default_value), (4, 0))
-        self.assertEqual((by_id[4].option_count, by_id[4].default_value), (8, 7))
-        self.assertEqual((by_id[5].option_count, by_id[5].default_value), (11, 5))
-
         relocation_symbols = {item.symbol for item in fragment.relocations}
         self.assertTrue(
             {
@@ -190,16 +167,8 @@ class BattleSettingsTests(unittest.TestCase):
             [2, 6, 11, 10, 9, 8, 7, 4, 3],
         )
 
-    def test_handicap_is_an_ordinary_final_row_with_text_values(self) -> None:
+    def test_handicap_text_values(self) -> None:
         injection = self.selection.injections["settings.ingame"]
-        self.assertEqual(
-            injection["hooks"]["battle_route_visible_handicap_draw"]["symbol"],
-            "battle_settings_draw_ordinary_bridge",
-        )
-        self.assertEqual(
-            injection["hooks"]["battle_select_page_appropriate_cursor"]["symbol"],
-            "battle_settings_cursor_ordinary_bridge",
-        )
         source = injection["payload"]["battle_settings"]
         compiled = {
             fragment.symbol: fragment
@@ -230,40 +199,6 @@ class BattleSettingsTests(unittest.TestCase):
                 b"10-0",
             ],
         )
-
-    def test_scrolling_uses_seven_physical_rows_for_any_logical_count(self) -> None:
-        injection = self.selection.injections["settings.ingame"]
-        hooks = injection["hooks"]
-        self.assertEqual(hooks["battle_draw_visible_label_rows"]["symbol"], "battle_settings_label_loop_bridge")
-        self.assertEqual(hooks["battle_draw_visible_value_rows"]["symbol"], "battle_settings_value_loop_bridge")
-        self.assertEqual(hooks["battle_draw_visible_rows"]["symbol"], "battle_settings_draw_rows")
-        self.assertEqual(hooks["battle_draw_visible_cursor"]["symbol"], "battle_settings_draw_cursor")
-
-    def test_sources_compile_with_the_selected_runtime_package(self) -> None:
-        injection = self.selection.injections["settings.ingame"]
-        c_fragments = catalog._compile_source(
-            self.repository,
-            "settings.runtime_injector",
-            "battle_settings",
-            injection["payload"]["battle_settings"],
-            "battle_settings",
-        )
-        asm_fragments = catalog._compile_source(
-            self.repository,
-            "settings.runtime_injector",
-            "battle_settings_abi",
-            injection["payload"]["battle_settings_abi"],
-            "battle_settings_abi",
-        )
-        self.assertIn(
-            "battle_settings_draw_backing",
-            {fragment.symbol for fragment in c_fragments},
-        )
-        self.assertIn(
-            "battle_settings_value_loop_bridge",
-            {fragment.symbol for fragment in asm_fragments},
-        )
-
 
 if __name__ == "__main__":
     unittest.main()

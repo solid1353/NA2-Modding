@@ -83,7 +83,6 @@ class ItemStatusRuntimeContractTests(unittest.TestCase):
             },
         )
 
-        self.assertNotIn("localization_item_status_update", c_source.symbols)
         self.assertEqual(
             TAIL_REFERENCE,
             c_source.symbols["localization_item_status_update_tail"].symbol,

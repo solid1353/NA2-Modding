@@ -32,7 +32,6 @@ class ExternalTexturePackTests(unittest.TestCase):
             plan = engine.build_external_texture_pack(root)
 
             self.assertEqual(1, len(plan.containers))
-            self.assertEqual(engine.EXTERNAL_PACK_MAGIC, plan.payload[:8])
             self.assertEqual(0, len(plan.payload) % engine.EXTERNAL_PACK_SECTOR_SIZE)
             path_hash, sector, sector_count, decompressed_size = struct.unpack_from(
                 "<IIII", plan.payload, 16

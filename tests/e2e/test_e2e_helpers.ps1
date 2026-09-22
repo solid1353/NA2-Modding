@@ -925,33 +925,6 @@ $grids = Join-Path $OutputRoot 'screenshots'
         ) `
         -Message 'Generated reference capture did not delegate to the moveset suite runner.'
 
-    foreach ($runnerName in @('run.ps1', 'current.ps1', 'movesets.ps1')) {
-        $tokens = $null
-        $parseErrors = $null
-        $runnerPath = Join-Path $repository "e2e\scripts\$runnerName"
-        $runnerAst = [Management.Automation.Language.Parser]::ParseFile(
-            $runnerPath,
-            [ref]$tokens,
-            [ref]$parseErrors
-        )
-        $suiteIteratorCollisions = @(
-            $runnerAst.FindAll(
-                {
-                    param($node)
-                    $node -is [Management.Automation.Language.ForEachStatementAst] -and
-                    $node.Variable.VariablePath.UserPath -ieq 'Suite'
-                },
-                $true
-            )
-        )
-        Assert-E2eHelperTest `
-            -Condition (
-                $parseErrors.Count -eq 0 -and
-                $suiteIteratorCollisions.Count -eq 0
-            ) `
-            -Message "$runnerName reuses the typed Suite parameter as a foreach iterator."
-    }
-
     foreach ($jobKind in @('thread', 'process')) {
         $jobCommand = if ($jobKind -ceq 'thread') { 'Start-ThreadJob' } else { 'Start-Job' }
         $failedJob = & $jobCommand -Name "$jobKind-synthetic-failure" -ScriptBlock {

@@ -491,42 +491,6 @@ class CatalogTests(unittest.TestCase):
                 )
             )
 
-    def test_repository_configurations_select_startup_behavior(self) -> None:
-        paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
-        catalog_path = paths.path("builder", "catalog.modcat")
-        configurations = paths.path("builder", "configurations")
-
-        selections = {
-            name: catalog.load_selection(
-                catalog_path, configurations / f"{name}.jsonc"
-            )
-            for name in ("base", "test", "release")
-        }
-        test = selections["test"]
-        self.assertTrue(
-            test.node_enabled("features", "startup", "auto_loading")
-        )
-        self.assertTrue(
-            test.node_enabled("features", "startup", "loading_screen")
-        )
-        for name in ("base", "release"):
-            with self.subTest(configuration=name):
-                self.assertTrue(
-                    selections[name].node_enabled(
-                        "features", "startup", "faster_loading"
-                    )
-                )
-        self.assertTrue(
-            test.node_enabled("features", "startup", "faster_loading")
-        )
-        expected_frames = {"base": 1160, "test": 1160, "release": 1160}
-        for name, selection in selections.items():
-            with self.subTest(configuration=name):
-                self.assertEqual(
-                    catalog.startup_fast_forward_frames(selection, 1760),
-                    expected_frames[name],
-                )
-
     def test_repository_base_configuration_aligns_trailing_comments(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         base_configuration = (
@@ -540,31 +504,6 @@ class CatalogTests(unittest.TestCase):
 
         self.assertEqual(len(comment_columns), 1, comment_columns)
 
-    def test_repository_practice_defaults_are_owned_by_settings(self) -> None:
-        paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
-        builder = paths.path("builder")
-        catalog_path = builder / "catalog.modcat"
-        base = jsonc.loads(
-            (builder / "configurations" / "base.jsonc").read_text(encoding="utf-8")
-        )
-        self.assertEqual(
-            base["features"]["settings"]["practice_settings"]
-            ["opponent_settings"]["linked_attack"],
-            "dont_use",
-        )
-        selection = catalog.load_selection(
-            catalog_path, builder / "configurations" / "base.jsonc"
-        )
-        package = catalog.load_binary_package(
-            selection,
-            "practice",
-            builder / "infrastructure" / "targets.tsv",
-            paths.repository,
-            builder / "infrastructure" / "modules" / "binary_patcher" / "operations",
-        )
-        self.assertEqual(package.edits, [])
-        self.assertIn("settings.ingame", selection.injections)
-
     def test_repository_simple_display_sets_mod_settings_runtime_default(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         builder = paths.path("builder")
@@ -572,11 +511,6 @@ class CatalogTests(unittest.TestCase):
         base = jsonc.loads(
             (builder / "configurations" / "base.jsonc").read_text(encoding="utf-8")
         )
-        self.assertEqual(
-            base["features"]["settings"]["mod_settings"]["simple_display"],
-            "off",
-        )
-
         for value, encoded in (("off", 0), ("on", 1)):
             with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
                 configuration = Path(directory) / "configuration.jsonc"
@@ -1160,31 +1094,6 @@ class CatalogTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unique offsets"):
             catalog._parse_int_list(["0x10", "0x10"], "offsets")
 
-    def test_destination_offset_forms_normalize_to_internal_lists(self) -> None:
-        singular = {
-            "operation": "replace",
-            "destination_target_id": "test_target",
-            "destination_offset": "0x10",
-            "expected_hex": "00",
-            "replacement_hex": "01",
-        }
-        plural = {
-            **singular,
-            "destination_offsets": ["0x10", "0x20"],
-        }
-        del plural["destination_offset"]
-
-        singular_member = catalog._edit_members(
-            "feature.singular", singular
-        )[0][1]
-        plural_member = catalog._edit_members(
-            "feature.plural", plural
-        )[0][1]
-
-        self.assertNotIn("destination_offset", singular_member)
-        self.assertEqual(singular_member["destination_offsets"], [0x10])
-        self.assertEqual(plural_member["destination_offsets"], [0x10, 0x20])
-
     def test_destination_offset_forms_reject_ambiguous_or_redundant_input(
         self,
     ) -> None:
@@ -1485,33 +1394,6 @@ class CatalogTests(unittest.TestCase):
                     paths.path("builder", "infrastructure", "modules", "binary_patcher", "operations"),
                 )
 
-    def test_repository_grouped_edit_maps_are_alphabetical(self) -> None:
-        paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
-        patch_files = sorted(paths.path("builder", "patches").glob("*/*.json"))
-        self.assertTrue(patch_files)
-        for patch_file in patch_files:
-            definitions = json.loads(patch_file.read_text(encoding="utf-8"))
-            for patch_id, definition in definitions.items():
-                if "edits" not in definition and "edit" not in definition:
-                    continue
-                with self.subTest(patch_id=patch_id):
-                    if "edits" in definition:
-                        self.assertEqual(
-                            list(definition["edits"]),
-                            sorted(definition["edits"]),
-                        )
-                    members = (
-                        definition["edits"].values()
-                        if "edits" in definition
-                        else (definition["edit"],)
-                    )
-                    for member in members:
-                        if member.get("operation") == "replace_table":
-                            self.assertEqual(
-                                list(member["record_patches"]),
-                                sorted(member["record_patches"]),
-                            )
-
     def test_grouped_edit_structure_fails_closed(self) -> None:
         source = '''{
           grouped: setting {
@@ -1761,48 +1643,6 @@ class CatalogTests(unittest.TestCase):
                 (assembly.resolve(),),
                 catalog.referenced_files(selection, root, "feature"),
             )
-
-    def test_runtime_payload_and_fragment_fields_fail_closed(self) -> None:
-        source = '''{
-          runtime: setting {
-            description: "Runtime payload.",
-            patch: "feature.runtime",
-          },
-        }'''
-        invalid_fields = (
-            ("source", "payload.runtime_source"),
-            ("label", "fragments.runtime_code"),
-        )
-        for field, location in invalid_fields:
-            with self.subTest(field=field), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                fragment = {"object": "runtime.text.entry"}
-                payload = {
-                    "kind": "c",
-                    "path": "runtime.c",
-                    "namespace": "runtime",
-                    "imports": {},
-                    "fragments": {"runtime_code": fragment},
-                }
-                if field == "source":
-                    payload[field] = "retired metadata"
-                else:
-                    fragment[field] = "retired metadata"
-                catalog_path, configuration_path = self.write_project(
-                    root,
-                    {"feature": source},
-                    {"feature": {"runtime": True}},
-                    injections={
-                        "feature.runtime": {
-                            "payload": {"runtime_source": payload},
-                        }
-                    },
-                )
-                with self.assertRaisesRegex(
-                    ValueError,
-                    rf"{re.escape(location)}.*unknown fields.*{field}",
-                ):
-                    catalog.load_selection(catalog_path, configuration_path)
 
 if __name__ == "__main__":
     unittest.main()

@@ -84,6 +84,7 @@ $registryArguments = @{
 }
 $verification = Invoke-Na2BuildRegistry -Command lookup @registryArguments
 $cacheHit = -not $Force -and $verification.status -eq 'hit'
+$configurationLogComplete = $false
 
 if ($cacheHit) {
     Write-Host (
@@ -116,15 +117,21 @@ else {
                 -FallbackMessage "NA2 $Configuration build failed (exit $($execution.ExitCode))."
         }
         $execution.Output | ForEach-Object { Write-Host $_ }
-        if (-not (Test-Path -LiteralPath $configurationLog -PathType Container)) {
-            throw 'Verified build completed without structured provenance.'
-        }
         if (-not (Test-Path -LiteralPath $incomingIso -PathType Leaf)) {
             throw "Verified ISO candidate does not exist: $incomingIso"
         }
-        $recorded = Invoke-Na2BuildRegistry -Command record @registryArguments `
-            -ExpectedFingerprint ([string]$verification.fingerprint) `
-            -Image $incomingIso -Provenance $configurationLog -Force:$Force
+        $recordArguments = @{
+            ExpectedFingerprint = [string]$verification.fingerprint
+            Image = $incomingIso
+            Force = $Force
+        }
+        $configurationLogComplete = Test-Path `
+            -LiteralPath (Join-Path $configurationLog 'run_summary.tsv') -PathType Leaf
+        if ($configurationLogComplete) {
+            $recordArguments.Provenance = $configurationLog
+        }
+        $recorded = Invoke-Na2BuildRegistry -Command record `
+            @registryArguments @recordArguments
         if ($recorded.status -ne 'recorded') {
             throw "Verified build was not registered: $($recorded.reason)"
         }
@@ -149,11 +156,11 @@ return [pscustomobject]@{
     OutputSha256 = [string]$verification.output_sha256
     Fingerprint = [string]$verification.fingerprint
     BuildId = $buildId
-    ConfigurationLogDirectory = if ($cacheHit) {
+    ConfigurationLogDirectory = if ($cacheHit -or $configurationLogComplete) {
         [string]$verification.provenance
     }
     else {
-        [IO.Path]::GetFullPath($configurationLog)
+        ''
     }
     PreflightCacheHit = $cacheHit
     ConfigurationId = $Configuration

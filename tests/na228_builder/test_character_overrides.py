@@ -138,56 +138,6 @@ class CharacterOverrideTests(unittest.TestCase):
                 self.assertTrue(overlay.enabled)
                 self.assertEqual(overlay.configured_value, overlay_enabled)
 
-    def test_canonical_tiers_preserve_native_costs_through_x_over_100(self) -> None:
-        repository = Path(__file__).resolve().parents[2]
-        builder = repository / "na228_builder"
-        configuration = load_character_overrides(
-            builder / "configurations" / "base.json",
-            builder,
-        )
-        base_table = (
-            builder
-            / "configurations"
-            / "overrides"
-            / "base.character_overrides.tsv"
-        ).resolve()
-        self.assertEqual(configuration.resource_files.count(base_table), 1)
-        base_cost = configuration.base.values[0]
-        assert base_cost is not None
-        expected_native_costs = {
-            "D": 3.0,
-            "C": 3.75,
-            "B": 4.5,
-            "A": 5.25,
-            "S": 6.0,
-            "S+": 6.75,
-            "S+++": 8.25,
-        }
-        def f32(value: float) -> float:
-            return struct.unpack("<f", struct.pack("<f", value))[0]
-
-        fragment = character_override_fragment(configuration, owner="battle_logic")
-        row_size = struct.calcsize("<I4s5f")
-        observed: dict[str, float] = {}
-        for row in configuration.characters:
-            assert row.character_id is not None
-            offset = 16 + row_size + row.character_id * row_size
-            flags = struct.unpack_from("<I", fragment.payload, offset)[0]
-            encoded_cost = struct.unpack_from("<f", fragment.payload, offset + 8)[0]
-            if flags & SUBSTITUTION_COST_DELTA_FLAG:
-                resolved = f32(base_cost + encoded_cost)
-            else:
-                resolved = encoded_cost
-            native_cost = f32(f32(resolved * 15.0) / 100.0)
-            if row.tier in observed:
-                self.assertEqual(observed[row.tier], native_cost)
-            else:
-                observed[row.tier] = native_cost
-
-        self.assertEqual(set(observed), set(expected_native_costs))
-        for tier, expected in expected_native_costs.items():
-            self.assertEqual(observed[tier], expected)
-
     def test_layered_values_merge_by_character_and_generate_dense_table(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             builder = self.create_builder(Path(directory))

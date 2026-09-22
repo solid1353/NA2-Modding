@@ -10,21 +10,6 @@ from na228_builder.infrastructure.orchestration import release_runtime
 
 
 class ReleaseRuntimeTests(unittest.TestCase):
-    def test_packaged_workspace_contains_release_inputs(self) -> None:
-        workspace = release_runtime.packaged_workspace()
-
-        self.assertTrue((workspace / "game.json").is_file())
-        self.assertTrue(
-            (workspace / "na228_builder" / "release_manifest.json").is_file()
-        )
-
-    def test_required_images_are_na2_only(self) -> None:
-        configuration = SimpleNamespace(modules=(SimpleNamespace(),))
-        self.assertEqual(
-            ("na2",),
-            release_runtime.required_release_image_ids(configuration),
-        )
-
     def test_packaged_release_requires_precompiled_assembly_object(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             workspace = Path(temporary)

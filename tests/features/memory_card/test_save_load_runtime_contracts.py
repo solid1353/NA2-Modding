@@ -20,13 +20,7 @@ SOURCE = REPOSITORY / "na228_builder" / "patches" / "memory_card" / "display_onl
 TOOLCHAIN_BIN = ee_c_fragments.default_toolchain_bin(REPOSITORY)
 COMPILER = TOOLCHAIN_BIN / "ee-gcc.exe"
 
-PATCH_ID = "memory_card.display_only_first_save"
-AUTOMATIC_PATCH_ID = "startup.auto_loading"
 ENTRY_SYMBOL = "display_only_first_save_update"
-OBJECT_SYMBOL = (
-    "qol.save.load.display.only.first.save.text."
-    "save.load.display.only.first.save.update"
-)
 NATIVE_UPDATE_ADDRESS = 0x001E3F20
 LIVE_ACCEPT_INSTRUCTION_ADDRESS = 0x001E451C
 
@@ -116,42 +110,6 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
                 toolchain_bin=TOOLCHAIN_BIN,
             )
 
-    def test_catalog_selects_one_wrapper_beside_the_retained_edits(self) -> None:
-        node = next(
-            node
-            for node in self.selection.nodes
-            if node.path == (
-                "features",
-                "memory_card",
-                "display_only_first_save",
-            )
-        )
-        self.assertTrue(node.enabled)
-        self.assertEqual(PATCH_ID, node.patch)
-
-        injection = self.selection.injections[PATCH_ID]
-        hook = injection["hooks"]["route_shared_save_load_update"]
-        self.assertEqual("na2_elf", hook["target_id"])
-        self.assertEqual("0xE4008", hook["offset"])
-        self.assertEqual("C88F070C00000000", hook["expected_hex"])
-        self.assertEqual(ENTRY_SYMBOL, hook["symbol"])
-        self.assertEqual("jal26", hook["encoding"])
-
-        source = injection["payload"]["display_only_first_save"]
-        self.assertEqual("c", source["kind"])
-        self.assertEqual(
-            "na228_builder/patches/memory_card/display_only_first_save/save_load_display_only_first_save.c",
-            source["path"],
-        )
-        self.assertEqual(
-            "qol.save.load.display.only.first.save",
-            source["namespace"],
-        )
-        self.assertEqual(
-            OBJECT_SYMBOL,
-            source["fragments"][ENTRY_SYMBOL]["object"],
-        )
-
     def test_visible_and_automatic_hooks_are_selected_and_disjoint(self) -> None:
         visible = next(
             edit
@@ -168,21 +126,6 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
         self.assertLess(
             visible.symbolic_patch.offset + len(visible.symbolic_patch.expected),
             automatic.symbolic_patch.offset,
-        )
-
-        automatic_hook = self.selection.injections[AUTOMATIC_PATCH_ID][
-            "hooks"
-        ]["replace_visible_save_load_controller_update"]
-        self.assertEqual("C08F070C", automatic_hook["expected_hex"])
-
-    def test_c_entry_exports_directly_without_an_abi_shim(self) -> None:
-        self.assertEqual(1, len(self.compiled.fragments))
-        fragment = self.compiled.fragments[0]
-        self.assertEqual(OBJECT_SYMBOL, fragment.symbol)
-        self.assertEqual((), fragment.relocations)
-        self.assertEqual(
-            ee_c_fragments.SymbolReference(OBJECT_SYMBOL, 0),
-            self.compiled.symbols[ENTRY_SYMBOL],
         )
 
     def test_production_hook_links_to_jal_and_preserves_the_delay_nop(self) -> None:

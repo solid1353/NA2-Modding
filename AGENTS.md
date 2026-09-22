@@ -306,10 +306,12 @@ and read only relevant sections of large documents.
   warnings; making them fatal requires explicit user approval.
 - Before `ver`, do not discuss, propose, plan, create, or modify tests.
   Modifying tests for PCSX2 fork is allowed.
-- Unit tests must detect a meaningful regression in accepted behavior or a
-  documented safety contract using the smallest practical isolated inputs. Do
-  not restate source data, freeze incidental implementation details, mirror the
-  implementation, or rerun the production pipeline.
+- Add a unit test only when it detects a concrete regression in accepted
+  behavior or a documented safety contract that existing tests would miss.
+  Assert the outcome with the smallest practical isolated input. Do not add a
+  test just because code changed or `ver` was given. Do not restate source
+  data, freeze incidental implementation details, mirror the implementation,
+  or rerun the production pipeline.
 
 ### Runtime validation
 

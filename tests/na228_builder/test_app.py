@@ -14,7 +14,6 @@ from na228_builder.infrastructure.orchestration.app import (
     _runtime_configuration_validator,
     application_directory,
     identify_supported_images,
-    load_release_manifest,
     main,
     parse_release_manifest,
     run_release,
@@ -53,15 +52,6 @@ class ReleaseAppTests(unittest.TestCase):
                 application_directory(executable=executable),
                 executable.resolve().parent,
             )
-
-    def test_release_manifest_uses_project_title(self) -> None:
-        settings = json.loads(
-            (Path(__file__).resolve().parents[2] / "game.json").read_text(
-                encoding="utf-8"
-            )
-        )
-
-        self.assertEqual(settings["title"], load_release_manifest().product_name)
 
     def test_manifest_parser_normalizes_and_validates_image_identities(self) -> None:
         data = {

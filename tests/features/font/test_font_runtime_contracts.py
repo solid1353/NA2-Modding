@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import csv
 import unittest
 from pathlib import Path
 
@@ -285,17 +284,6 @@ class FontRuntimeContractTests(unittest.TestCase):
                 (),
                 f"{symbol} lost the centered Character-modal contract",
             )
-    def test_pause_selected_hook_targets_c_without_forwarding_wrapper(self) -> None:
-        hook_symbols = {
-            edit.symbolic_patch.symbol for edit in self.package.edits
-        }
-        self.assertIn("v2_c_pause_list_selected_impl", hook_symbols)
-        self.assertNotIn("v2_pause_list_selected_adapter", hook_symbols)
-
-        fragment_symbols = {
-            fragment.symbol for fragment in self.package.fragments
-        }
-        self.assertNotIn("v2_pause_list_selected_adapter", fragment_symbols)
 
     def test_command_relationship_uses_live_nun5_wrap_width(self) -> None:
         fragments = {
@@ -306,44 +294,6 @@ class FontRuntimeContractTests(unittest.TestCase):
         )
         self.assertIn(mips.i_type(0x09, 0, 5, 272), relationship)
         self.assertIn(mips.i_type(0x09, 0, 2, 272), relationship)
-
-        widths = build_ascii_widths()
-
-        def measure(text: str) -> int:
-            return sum(
-                widths[ord(character) - ASCII_FIRST]
-                for character in text
-            )
-
-        def wrap(text: str) -> list[str]:
-            lines: list[str] = []
-            current = ""
-            for word in text.split(" "):
-                candidate = f"{current} {word}" if current else word
-                if current and measure(candidate) > 272:
-                    lines.append(current)
-                    current = word
-                else:
-                    current = candidate
-            lines.append(current)
-            return lines
-
-        self.assertEqual(
-            wrap("Consume Chakra/Charge/Jump OK"),
-            ["Consume Chakra/Charge/Jump", "OK"],
-        )
-        self.assertEqual(
-            wrap("Chakra Gauge 1+/Nor. Ultimate Jutsu"),
-            ["Chakra Gauge 1+/Nor.", "Ultimate Jutsu"],
-        )
-        self.assertEqual(
-            wrap("Chakra Gauge 2+/Awk. Ultimate Jutsu"),
-            ["Chakra Gauge 2+/Awk.", "Ultimate Jutsu"],
-        )
-        self.assertEqual(
-            wrap("Chakra Gauge 3/Rev. Ultimate Jutsu"),
-            ["Chakra Gauge 3/Rev. Ultimate", "Jutsu"],
-        )
 
     def test_title_fit_preserves_nun5_quote_delimiter_width(self) -> None:
         fragments = {
@@ -416,19 +366,6 @@ class FontRuntimeContractTests(unittest.TestCase):
             ),
             "the transient Command title copy must receive a NUL terminator",
         )
-
-        mapping_path = PATHS.path(
-            "builder", "patches", "localization", "strings", "mappings.tsv"
-        )
-        with mapping_path.open("r", encoding="utf-8-sig", newline="") as handle:
-            mapping = next(
-                row
-                for row in csv.DictReader(handle, delimiter="\t")
-                if row["id"] == "T1486"
-            )
-        self.assertEqual(mapping["donor_ref"], "NUN5_TEXTENG@0xB9A0")
-        self.assertEqual(mapping["donor"], "Air Strike Palm\n")
-        self.assertEqual(mapping["replacement"], "")
 
 
 if __name__ == "__main__":

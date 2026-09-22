@@ -260,6 +260,7 @@ class BinaryPatcherTests(unittest.TestCase):
                 ["test_patch", "second_patch"],
             )
             self.assertEqual(buffers["destination"][4:8], bytes.fromhex("55667788"))
+            self.assertEqual([row["outcome"] for row in rows[:2]], ["applied", "applied"])
 
     def test_incompatible_overlapping_patches_fail_during_composition(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -282,27 +283,5 @@ class BinaryPatcherTests(unittest.TestCase):
             with self.assertRaisesRegex(patcher.PatchError, "Conflicting edit"):
                 patcher.compose_edits(package, target_data, edits, feature_id="feature")
 
-    def test_intentional_overlapping_patch_chain_is_applied_in_order(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            package, _, target_data = self.make_fixture(Path(temporary))
-            package.patches["second_patch"] = patcher.Patch(
-                patch_id="second_patch",
-                group_id="second_group",
-                evidence_id="",
-            )
-            package.edits.append(
-                replace(
-                    package.edits[0],
-                    edit_id="chained_edit",
-                    patch_id="second_patch",
-                    expected_hex="10203040",
-                    replacement_hex="55667788",
-                )
-            )
-            edits = patcher.ordered_edits(package)
-            buffers, rows, _ = patcher.compose_edits(package, target_data, edits)
-            self.assertEqual(buffers["destination"][4:8], bytes.fromhex("55667788"))
-            self.assertEqual(rows[0]["outcome"], "applied")
-            self.assertEqual(rows[1]["outcome"], "applied")
 if __name__ == "__main__":
     unittest.main()

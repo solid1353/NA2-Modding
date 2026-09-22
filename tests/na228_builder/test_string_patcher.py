@@ -7,17 +7,6 @@ from na228_builder.infrastructure.modules.string_patcher import engine as string
 
 
 class StringPatcherTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.package = string_patcher.build_binary_package()
-
-    def test_allows_import_only_derived_consumer(self) -> None:
-        self.assertIsInstance(self.package, binary_patcher.Package)
-        self.assertEqual(self.package.package_id, "derived.string_patcher")
-        self.assertEqual(list(self.package.targets), [])
-        self.assertEqual(list(self.package.patches), [])
-        self.assertEqual(self.package.edits, [])
-
     def test_compiles_imported_strings_as_default_binary_patches(self) -> None:
         package = string_patcher.build_binary_package(
             imported_rows=(

@@ -670,22 +670,34 @@ def write_configuration_log(
         ],
         module_rows,
     )
-    binary_patcher_module.write_tsv(
-        log_directory / "run_summary.tsv",
-        [
-            "timestamp_utc", "configuration_id", "output_iso", "feature_count",
-            "module_count",
-        ],
-        [
-            {
-                "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "configuration_id": configuration.configuration_id,
-                "output_iso": output_iso_text.replace("\\", "/"),
-                "feature_count": len(configuration.features),
-                "module_count": len(results),
-            }
-        ],
-    )
+    summary = log_directory / "run_summary.tsv"
+    pending_summary = log_directory / "run_summary.pending.tsv"
+    try:
+        binary_patcher_module.write_tsv(
+            pending_summary,
+            [
+                "timestamp_utc", "configuration_id", "output_iso", "feature_count",
+                "module_count",
+            ],
+            [
+                {
+                    "timestamp_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    "configuration_id": configuration.configuration_id,
+                    "output_iso": output_iso_text.replace("\\", "/"),
+                    "feature_count": len(configuration.features),
+                    "module_count": len(results),
+                }
+            ],
+        )
+        pending_summary.replace(summary)
+    finally:
+        try:
+            pending_summary.unlink(missing_ok=True)
+        except OSError as error:
+            print(
+                f"WARNING: Pending configuration summary could not be removed: {error}",
+                file=sys.stderr,
+            )
 
 
 def compose_configuration_candidate(
@@ -783,12 +795,12 @@ def build_configuration_candidate(
         }
         for rename in assembly.udf_renames
     )
-    try:
-        if configuration_log_directory is not None:
-            try:
-                output_iso_text = output_iso.relative_to(workspace).as_posix()
-            except ValueError:
-                output_iso_text = output_iso.name
+    if configuration_log_directory is not None:
+        try:
+            output_iso_text = output_iso.relative_to(workspace).as_posix()
+        except ValueError:
+            output_iso_text = output_iso.name
+        try:
             write_configuration_log(
                 configuration,
                 configuration_results,
@@ -798,10 +810,11 @@ def build_configuration_candidate(
                 output_iso_text=output_iso_text,
                 identity_edits=tuple(identity_edits),
             )
-    except BaseException:
-        if output_iso.exists() or output_iso.is_symlink():
-            output_iso.unlink()
-        raise
+        except OSError as error:
+            print(
+                f"WARNING: Configuration log could not be written: {error}",
+                file=sys.stderr,
+            )
 
     return ConfigurationBuildResult(
         results=tuple(configuration_results),

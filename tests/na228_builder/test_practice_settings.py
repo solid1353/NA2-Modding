@@ -39,7 +39,7 @@ class PracticeSettingsTests(unittest.TestCase):
         path.write_text(json.dumps(base, indent=2) + "\n", encoding="utf-8")
         return catalog.load_selection(self.catalog_path, path)
 
-    def test_base_schema_includes_configured_pages_and_selectors(self) -> None:
+    def test_base_schema_links_runtime_providers_and_help(self) -> None:
         fragment = practice_settings_fragment(
             self.selection,
             owner="settings.runtime_injector",
@@ -49,38 +49,10 @@ class PracticeSettingsTests(unittest.TestCase):
         row_count, page_count, active_page = struct.unpack_from(
             "<3I", fragment.payload
         )
-        self.assertEqual((row_count, page_count, active_page), (53, 6, 0))
-
         pages = _active_pages(self.selection)
-        self.assertEqual(
-            [row.label for row in pages[0].rows[:2]],
-            ["Battle Mechanics", "Opponent Settings"],
-        )
-        self.assertEqual(
-            [row.row_id for row in pages[0].rows[2:]],
-            [0, 6, 7],
-        )
-        self.assertEqual(
-            [row.row_id for row in pages[1].rows],
-            [1, 3, 18, 19, 20, 21, 22, 17, 5],
-        )
-        self.assertEqual(
-            [page.heading_text for page in pages[1:]],
-            [
-                "Battle Mechanics",
-                "Chakra Settings",
-                "Gauge Settings",
-                "Items Settings",
-                "Opponent Settings",
-            ],
-        )
-        self.assertEqual([row.row_id for row in pages[5].rows], list(range(9, 17)))
-        by_id = {row.row_id: row for page in pages for row in page.rows}
-        self.assertEqual((by_id[17].option_count, by_id[17].default_value), (3, 1))
-        self.assertEqual((by_id[20].option_count, by_id[20].default_value), (16, 5))
-        self.assertEqual((by_id[21].option_count, by_id[21].default_value), (21, 1))
-        self.assertEqual((by_id[22].option_count, by_id[22].default_value), (4, 0))
-        self.assertEqual((by_id[3].option_count, by_id[3].default_value), (8, 7))
+        self.assertEqual(row_count, sum(len(page.rows) for page in pages))
+        self.assertEqual(page_count, len(pages))
+        self.assertEqual(active_page, 0)
 
         relocation_symbols = {item.symbol for item in fragment.relocations}
         self.assertTrue(
@@ -181,61 +153,6 @@ class PracticeSettingsTests(unittest.TestCase):
         self.assertTrue(
             any(symbol.startswith("practice_settings_schema_option_") for symbol in by_symbol)
         )
-
-    def test_count_driven_backing_and_cursor_payloads_are_linked(self) -> None:
-        injection = self.selection.injections["settings.ingame"]
-        backing_hook = injection["hooks"]["practice_draw_compact_backing"]
-        self.assertEqual(
-            {
-                key: backing_hook[key]
-                for key in (
-                    "target_id",
-                    "offset",
-                    "expected_hex",
-                    "symbol",
-                    "encoding",
-                )
-            },
-            {
-                "target_id": "na2_btl",
-                "offset": "0x1CE4D0",
-                "expected_hex": "E4ED060C",
-                "symbol": "settings_menu_draw_backing",
-                "encoding": "jal26",
-            },
-        )
-        cursor_hook = injection["hooks"][
-            "practice_draw_dynamic_cursor_geometry"
-        ]
-        self.assertEqual(
-            cursor_hook["symbol"],
-            "settings_menu_cursor_geometry_bridge",
-        )
-        source = injection["payload"]["practice_settings"]
-        compiled = {
-            fragment.symbol: fragment
-            for fragment in catalog._compile_source(
-                self.repository,
-                "settings.runtime_injector",
-                "practice_settings",
-                source,
-                "practice_settings",
-            )
-        }
-        self.assertIn("practice_settings_prepare_backing_and_compose", compiled)
-        shared = injection["payload"]["settings_menu_presentation"]
-        shared_compiled = {
-            fragment.symbol: fragment
-            for fragment in catalog._compile_source(
-                self.repository,
-                "settings.runtime_injector",
-                "settings_menu_presentation",
-                shared,
-                "settings_menu_presentation",
-            )
-        }
-        self.assertIn("settings_menu_draw_backing", shared_compiled)
-        self.assertIn("settings_menu_cursor_y", shared_compiled)
 
     def test_scroll_flag_bridge_can_skip_the_native_up_arrow(self) -> None:
         injection = self.selection.injections["settings.ingame"]

@@ -48,13 +48,6 @@ class SupportSelectionTests(unittest.TestCase):
                 self.assertEqual(values[4], encoded)
                 self.assertEqual(values[9], encoded)
 
-                declaration = selection.injections[
-                    "character_select.support_selection"
-                ]["payload"]["character_select_support_selection"]
-                self.assertEqual(
-                    declaration["imports"]["mod_settings_option_get"],
-                    "mod_settings_option_get",
-                )
 
 
 if __name__ == "__main__":

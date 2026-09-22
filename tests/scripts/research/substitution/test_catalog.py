@@ -283,24 +283,6 @@ class SubstitutionCatalogTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unknown Command Chart"):
             CATALOG._mapping_filter("Missing", records)
 
-    def test_known_runtime_mutation_inventory(self) -> None:
-        mutations = CATALOG.RUNTIME_TIMING_MUTATIONS
-        self.assertEqual(
-            set(mutations),
-            {
-                (0x40, 0x2B),
-                (0x40, 0x2C),
-                (0x40, 0x2D),
-                (0x43, 0x27),
-                (0x45, 0x2A),
-                (0x4C, 0x1E),
-            },
-        )
-        self.assertEqual(
-            sum(bool(item["block_mutated"]) for item in mutations.values()),
-            4,
-        )
-
     def test_timing_policy_clamps_only_positive_history_distance(self) -> None:
         self.assertEqual(
             CATALOG._timing_policy(7, 0),

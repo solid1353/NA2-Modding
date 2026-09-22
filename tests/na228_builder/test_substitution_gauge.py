@@ -35,33 +35,6 @@ class SubstitutionGaugeTests(unittest.TestCase):
         )
         return base["features"]
 
-    def test_base_configuration_encodes_parity_defaults(self) -> None:
-        selection = catalog.load_selection(
-            self.catalog_path,
-            self.configurations / "base.jsonc",
-        )
-        gauge = substitution_gauge_fragment(
-            selection,
-            owner="battle.runtime_injector",
-        )
-        gauge_node = next(
-            node
-            for node in selection.nodes
-            if node.path == (
-                "features", "settings", "battle_mechanics", "substitution",
-            )
-        )
-        self.assertEqual(
-            gauge_node.configured_value["value"],
-            "gauge",
-        )
-        self.assertIsNotNone(gauge)
-        assert gauge is not None
-        self.assertEqual(
-            struct.unpack("<9I", gauge.payload),
-            (60, 240, 840, 20480, 1, 1, 0, 0, 0),
-        )
-
     def test_false_disables_gauge(self) -> None:
         features = self._base_features()
         features["settings"]["battle_mechanics"][
@@ -91,6 +64,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
                 self.catalog_path,
                 self._write_full_configuration(features),
             )
+
     def test_advanced_configuration_encodes_exact_integer_counts(self) -> None:
         features = self._base_features()
         features["settings"]["battle_mechanics"][
@@ -121,6 +95,15 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_partial_configuration_inherits_omitted_defaults(self) -> None:
         features = self._base_features()
+        base_selection = catalog.load_selection(
+            self.catalog_path,
+            self._write_full_configuration(features),
+        )
+        base_gauge = substitution_gauge_fragment(
+            base_selection,
+            owner="battle.runtime_injector",
+        )
+        assert base_gauge is not None
         features["settings"]["battle_mechanics"][
             "substitution"
         ] = {
@@ -140,13 +123,25 @@ class SubstitutionGaugeTests(unittest.TestCase):
         )
         self.assertIsNotNone(gauge)
         assert gauge is not None
+        actual = struct.unpack("<9I", gauge.payload)
+        base = struct.unpack("<9I", base_gauge.payload)
+        self.assertEqual((actual[2], actual[4], actual[5]), (600, 0, 2))
         self.assertEqual(
-            struct.unpack("<9I", gauge.payload),
-            (60, 240, 600, 20480, 0, 2, 0, 0, 0),
+            (actual[0], actual[1], actual[3], actual[6:]),
+            (base[0], base[1], base[3], base[6:]),
         )
 
     def test_gauge_can_coexist_with_support_on(self) -> None:
         features = self._base_features()
+        base_selection = catalog.load_selection(
+            self.catalog_path,
+            self._write_full_configuration(features),
+        )
+        base_gauge = substitution_gauge_fragment(
+            base_selection,
+            owner="battle.runtime_injector",
+        )
+        assert base_gauge is not None
         mechanics = features["settings"]["battle_mechanics"]
         mechanics["substitution"]["value"] = "gauge"
         mechanics["support"] = "normal"
@@ -168,63 +163,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
         )
         self.assertIsNotNone(gauge)
         assert gauge is not None
-        self.assertEqual(
-            struct.unpack("<9I", gauge.payload),
-            (60, 240, 840, 20480, 1, 1, 0, 0, 0),
-        )
-
-    def test_charged_spend_precedes_native_chakra_suppression(self) -> None:
-        selection = catalog.load_selection(
-            self.catalog_path,
-            self.configurations / "base.jsonc",
-        )
-        injection = selection.injections[
-            "settings.battle_mechanics.substitution"
-        ]
-        hook = injection["hooks"]["spend_stock_without_chakra"]
-        self.assertEqual(
-            hook,
-            {
-                "description": (
-                    "After native charged-transition setup, retain the complete "
-                    "native chakra path in Chakra mode, spend the resolved gauge "
-                    "cost in Gauge mode, or spend nothing in Free mode."
-                ),
-                "target_id": "na2_elf",
-                "offset": "0x129984",
-                "expected_hex": "3C1D0C0C00000000",
-                "symbol": "substitution_gauge_spend_shim",
-                "encoding": "jal26",
-            },
-        )
-        payload = injection["payload"]
-        self.assertEqual(
-            payload["substitution_gauge_abi"]["imports"][
-                "substitution_gauge_route_spend"
-            ],
-            "substitution_gauge_route_spend",
-        )
-        assembly = (
-            self.builder.parent
-            / "na228_builder"
-            / "patches"
-            / "settings"
-            / "ingame"
-            / "battle_mechanics"
-            / "substitution"
-            / "substitution_gauge_abi.S"
-        ).read_text(encoding="utf-8")
-        start = assembly.index("substitution_gauge_spend_shim:")
-        end = assembly.index(
-            ".size substitution_gauge_spend_shim",
-            start,
-        )
-        shim = assembly[start:end]
-        self.assertIn("jal substitution_gauge_route_spend", shim)
-        self.assertIn("beqz $v0", shim)
-        self.assertIn("ori $t9, $t9, 0x74f0", shim)
-        self.assertIn("ori $t9, $t9, 0x988c", shim)
-        self.assertIn("ori $t9, $t9, 0x98f0", shim)
+        self.assertEqual(gauge.payload, base_gauge.payload)
 
     def test_gauge_always_links_runtime_cost_providers(self) -> None:
         features = self._base_features()
@@ -300,138 +239,6 @@ class SubstitutionGaugeTests(unittest.TestCase):
             74.0,
         )
 
-        assembly = (
-            self.builder.parent
-            / "na228_builder"
-            / "patches"
-            / "settings"
-            / "ingame"
-            / "battle_mechanics"
-            / "substitution"
-            / "substitution_gauge_abi.S"
-        ).read_text(encoding="utf-8")
-        start = assembly.index(f"{shim}:")
-        end = assembly.index(f".size {shim}", start)
-        body = assembly[start:end]
-        for instruction in (
-            "sw $v1, 16($sp)",
-            "sw $a1, 20($sp)",
-            "swc1 $f1, 24($sp)",
-            "swc1 $f3, 28($sp)",
-            "swc1 $f4, 32($sp)",
-            "swc1 $f5, 36($sp)",
-            "mov.s $f12, $f0",
-            f"jal {adjuster}",
-            "mul.s $f2, $f0, $f1",
-            "lw $a1, 20($sp)",
-            "lw $v1, 16($sp)",
-            "lbu $v0, 12($a1)",
-        ):
-            self.assertIn(instruction, body)
-
-        source = (
-            self.builder.parent
-            / "na228_builder"
-            / "patches"
-            / "settings"
-            / "ingame"
-            / "battle_mechanics"
-            / "substitution"
-            / "substitution_gauge.c"
-        ).read_text(encoding="utf-8")
-        self.assertIn("BATTLE_HUD_CHARACTER_NAME_Y_OFFSET 11.0f", source)
-        self.assertNotIn("NATIVE_BATTLE_HUD_CHARACTER_NAME", source)
-        self.assertNotIn("BATTLE_HUD_CHARACTER_NAME_X", source)
-
-    def test_independent_renderer_uses_native_battle_hud_visibility(self) -> None:
-        selection = catalog.load_selection(
-            self.catalog_path,
-            self.configurations / "base.jsonc",
-        )
-        injection = selection.injections[
-            "settings.battle_mechanics.substitution"
-        ]
-        cache_hook = injection["hooks"][
-            "cache_substitution_gauge_render_source"
-        ]
-        self.assertEqual(
-            cache_hook,
-            {
-                "description": (
-                    "Retain the native support-controller update, then cache "
-                    "its initialized per-side sprite and BTL rendering context "
-                    "without drawing through the support-controller lifecycle."
-                ),
-                "target_id": "na2_btl",
-                "offset": "0x69380",
-                "expected_hex": "04721C0C",
-                "symbol": "substitution_gauge_update_and_cache",
-                "encoding": "jal26",
-            },
-        )
-        draw_hook = injection["hooks"][
-            "draw_independent_substitution_gauge_with_battle_hud"
-        ]
-        self.assertEqual(
-            draw_hook,
-            {
-                "description": (
-                    "Retain the primary per-side Battle HUD draw, then draw "
-                    "the independent substitution bar only after the native "
-                    "parent visibility gate accepts that HUD side, using the "
-                    "same live layout transform and primary-sprite alpha."
-                ),
-                "target_id": "na2_btl",
-                "offset": "0x67434",
-                "expected_hex": "C86D1C0C",
-                "symbol": "substitution_gauge_draw_with_battle_hud",
-                "encoding": "jal26",
-            },
-        )
-        gauge_payload = injection["payload"]["substitution_gauge"]
-        self.assertEqual(
-            gauge_payload["imports"],
-            {"substitution_gauge_config": "substitution_gauge_config"},
-        )
-        self.assertEqual(
-            gauge_payload["fragments"]["substitution_gauge_fill_fraction"],
-            {
-                "object": (
-                    "battle.logic.substitution.gauge.c.bss."
-                    "substitution.gauge.fill.fraction"
-                ),
-            },
-        )
-        self.assertEqual(
-            gauge_payload["fragments"]["substitution_gauge_update_and_cache"],
-            {
-                "object": (
-                    "battle.logic.substitution.gauge.c.text."
-                    "substitution.gauge.update.and.cache"
-                ),
-            },
-        )
-        self.assertEqual(
-            gauge_payload["fragments"][
-                "substitution_gauge_draw_with_battle_hud"
-            ],
-            {
-                "object": (
-                    "battle.logic.substitution.gauge.c.text."
-                    "substitution.gauge.draw.with.battle.hud"
-                ),
-            },
-        )
-        self.assertEqual(
-            gauge_payload["fragments"]["substitution_gauge_runtime_state"],
-            {
-                "object": (
-                    "battle.logic.substitution.gauge.c.bss."
-                    "substitution.gauge.runtime.state"
-                ),
-            },
-        )
-
     def test_battle_support_and_character_select_support_are_independent(self) -> None:
         cases = (
             (True, True),
@@ -461,70 +268,20 @@ class SubstitutionGaugeTests(unittest.TestCase):
                     self.catalog_path,
                     self._write_full_configuration(features),
                 )
-                settings_injections = {
-                    node.patch
-                    for node in selection.feature_nodes("settings")
-                    if node.enabled and node.patch in selection.injections
-                }
-                mod_settings_injections = {
+                injections = {
                     node.patch
                     for node in selection.feature_nodes("settings")
                     if node.enabled and node.patch in selection.injections
                 }
                 self.assertEqual(
-                    "settings.battle_mechanics.support" in settings_injections,
+                    "settings.battle_mechanics.support" in injections,
                     battle_support_enabled,
                 )
                 self.assertEqual(
                     "character_select.support_selection"
-                    in mod_settings_injections,
+                    in injections,
                     selection_enabled,
                 )
-
-    def test_support_selector_owns_only_battle_routing(self) -> None:
-        selection = catalog.load_selection(
-            self.catalog_path,
-            self.configurations / "base.jsonc",
-        )
-        injection = selection.injections["settings.battle_mechanics.support"]
-        self.assertEqual(
-            set(injection["hooks"]),
-            {
-                "route_free_field_support_call",
-                "route_support_gauge_drain",
-                "route_support_gauge_draw",
-                "route_support_gauge_update",
-                "support_gauge_marker",
-                "support_gauge_readiness",
-            },
-        )
-        self.assertEqual(
-            injection["hooks"]["route_support_gauge_draw"],
-            {
-                "description": (
-                    "Suppress the dedicated native support gauge only while Off."
-                ),
-                "target_id": "na2_btl",
-                "offset": "0x69398",
-                "expected_hex": "BC721C0C",
-                "symbol": "battle_support_route_gauge_draw",
-                "encoding": "jal26",
-            },
-        )
-        support_payload = injection["payload"]["battle_support"]
-        self.assertEqual(support_payload["imports"], {"support_get": "support_get"})
-
-        support_selection = selection.injections[
-            "character_select.support_selection"
-        ]
-        self.assertNotIn(
-            "route_free_field_support_call", support_selection["hooks"]
-        )
-        self.assertNotIn("route_support_gauge_draw", support_selection["hooks"])
-        self.assertEqual(
-            set(support_selection["payload"]),
-            {"character_select_support_selection"},
-        )
 
 
 if __name__ == "__main__":

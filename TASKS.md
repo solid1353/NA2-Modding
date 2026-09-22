@@ -2,6 +2,8 @@
 
 ### In Progress
 
+- Make localization patches independent
+- Look through patch tree (independence)
 - Rematch draw
 - Practice stage cancel is broken
 - UJ damage

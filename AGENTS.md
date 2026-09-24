@@ -264,6 +264,10 @@ and read only relevant sections of large documents.
 - Prefer one injection over multiple binary edits when they implement one
   behavior and a stable guarded hook can express it clearly in C or assembly.
   Keep isolated constant or instruction replacements as direct edits.
+- Before adding content to a screen, check how that screen draws and changes
+  to the next screen, and whether another patch already changes the code you
+  plan to use. Make the addition behave like the rest of the screen without
+  changing how other content is drawn.
 - Preserve file sizes unless the user explicitly approves expansion of the
   affected DATA.CVM, ELF, BIN, AFS, CCS, or ISO structure.
 - Prefer verified canonical NUN5 data/bytes when suitable. When donor data is

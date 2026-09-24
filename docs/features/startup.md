@@ -105,6 +105,13 @@ after the first sentence, with 24 units between lines.
 The same version result is consumed on scan, confirmation, and read failures,
 including a directory-size rejection before the normal record read begins.
 
+The main-menu notification is drawn after Mode Select's presentation, using its
+prompt render context. It keeps a unit horizontal font scale for its
+measurement and text draws, restores the previous scale and font context, and
+remains in the menu's layer during the shared exit transition. The notification
+ends when the Mode Select controller reaches its terminal state or its
+ten-second display time expires.
+
 The base configuration enables `features.startup.faster_loading`,
 `skip_initial_memory_card_check`, `auto_loading`, and `loading_screen`. Disabling
 `auto_loading` preserves the user-confirmed native visible Save/Load flow. The enabled sequence bypasses the

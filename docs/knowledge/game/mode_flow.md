@@ -529,6 +529,14 @@ Resource constructor `FUN_00383f80` creates render contexts at `+0x68` and
 legend sprite with arguments `10, 1` and the button-icon sprite with arguments
 `10, 0`; both sprites are bound to the prompt context at `+0x6C`.
 
+In callback phase 4, `FUN_001ea240` calls `FUN_00385c00` while the controller
+update returns zero. The draw routine skips controller state 6, but draws
+through state 1 while the exit transition is pending. After the front-end
+callback, `FUN_001e9980` calls `FUN_00203c50`; the later frame path
+`FUN_00108490` calls `FUN_00186000`, which submits the shared transition
+manager's primitives. Mode Select and Character Select both start their
+screen transitions through `FUN_00183f10` on that manager.
+
 ### Relevant object fields
 
 | Offset | Size | Observed role |

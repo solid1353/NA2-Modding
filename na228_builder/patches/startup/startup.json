@@ -224,8 +224,8 @@
   "startup.auto_loading": {
     "description": "Silently drive the native asynchronous memory-card worker through port-zero scan, record-zero selection, confirmation, and verified load completion before the normal main-menu loader, then report the outcome for ten seconds in the usable main menu.",
     "hooks": {
-      "draw_savedata_outcome_in_main_menu_screen_context": {
-        "description": "Retain the native main-menu update, temporarily select its frame-wide screen context, draw a non-blocking right-aligned savedata outcome, and restore the prior context.",
+      "draw_savedata_outcome_in_mode_select_context": {
+        "description": "Retain the native main-menu update, render the right-aligned savedata outcome in Mode Select's prompt context beneath the shared screen transition, and restore the prior font state.",
         "target_id": "na2_elf",
         "offset": "0xE9CAC",
         "expected_hex": "140F080C",

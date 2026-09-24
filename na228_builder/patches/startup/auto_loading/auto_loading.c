@@ -7,9 +7,10 @@ typedef unsigned int u32;
 
 #define MEMORY_CARD_WORKER_POINTER_ADDRESS 0x006075F4u
 #define MAIN_MENU_CONTROLLER_POINTER_ADDRESS 0x00607600u
-#define MODE_SELECT_CONTROLLER_POINTER_ADDRESS 0x0060760Cu
-#define FRAME_POINTER_ADDRESS 0x006073FCu
+#define MODE_SELECT_TRANSIENT_POINTER_ADDRESS 0x0060760Cu
+#define MODE_SELECT_CONTROLLER_POINTER_ADDRESS 0x00607610u
 #define FONT_RENDERER_POINTER_ADDRESS 0x00607470u
+#define FONT_HORIZONTAL_SCALE_ADDRESS 0x0060737Cu
 
 #define LOAD_MODE_PREAMBLE_ADDRESS 0x001E1D80u
 #define LOAD_MODE_PREPARE_ADDRESS 0x001D9600u
@@ -26,8 +27,9 @@ typedef unsigned int u32;
 #define VISIBLE_VERSION_DIALOG_PHASE 0x100u
 #define MAIN_MENU_STATE_WORD 2u
 #define MAIN_MENU_MODE_WORD 3u
-#define FRAME_SCREEN_CONTEXT_OFFSET 0x150u
 #define FONT_RENDERER_CONTEXT_OFFSET 0x6Cu
+#define MODE_SELECT_PROMPT_CONTEXT_OFFSET 0x6Cu
+#define MODE_SELECT_TERMINAL_STATE 6u
 
 #define WORKER_RECORD_ZERO_PRESENT_OFFSET 0x00u
 #define WORKER_RECORD_ZERO_PLAY_TICKS_OFFSET 0x04u
@@ -629,9 +631,10 @@ void startup_auto_loading_notification_draw(void)
         (void (*)(void *, void *))FONT_SET_CONTEXT_ADDRESS;
     volatile u32 *menu;
     volatile u32 *mode_select;
-    volatile u8 *frame;
+    volatile u8 *controller;
     volatile u8 *renderer;
     void *previous_context;
+    u32 previous_scale;
     u32 outcome;
     u32 start_ticks;
     u32 now;
@@ -647,16 +650,21 @@ void startup_auto_loading_notification_draw(void)
     }
 
     menu = *(volatile u32 **)MAIN_MENU_CONTROLLER_POINTER_ADDRESS;
-    mode_select =
-        *(volatile u32 **)MODE_SELECT_CONTROLLER_POINTER_ADDRESS;
+    mode_select = *(volatile u32 **)MODE_SELECT_TRANSIENT_POINTER_ADDRESS;
+    controller = *(volatile u8 **)MODE_SELECT_CONTROLLER_POINTER_ADDRESS;
     if (menu == (volatile u32 *)0 ||
         menu[MAIN_MENU_STATE_WORD] != USABLE_MAIN_MENU_STATE ||
         menu[MAIN_MENU_MODE_WORD] != USABLE_MAIN_MENU_MODE ||
         mode_select == (volatile u32 *)0 ||
-        mode_select[0] != MODE_SELECT_VISIBLE_STATE) {
+        mode_select[0] != MODE_SELECT_VISIBLE_STATE ||
+        controller == (volatile u8 *)0) {
         if (startup_save_notification_state.start_ticks != 0u) {
             reset_notification();
         }
+        return;
+    }
+    if (*(volatile u32 *)controller == MODE_SELECT_TERMINAL_STATE) {
+        reset_notification();
         return;
     }
 
@@ -670,17 +678,18 @@ void startup_auto_loading_notification_draw(void)
         return;
     }
 
-    frame = *(volatile u8 **)FRAME_POINTER_ADDRESS;
     renderer = *(volatile u8 **)FONT_RENDERER_POINTER_ADDRESS;
-    if (frame == (volatile u8 *)0 || renderer == (volatile u8 *)0) {
+    if (renderer == (volatile u8 *)0) {
         return;
     }
 
     previous_context = *(void **)(renderer + FONT_RENDERER_CONTEXT_OFFSET);
+    previous_scale = *(volatile u32 *)FONT_HORIZONTAL_SCALE_ADDRESS;
     set_font_context(
         (void *)renderer,
-        (void *)(frame + FRAME_SCREEN_CONTEXT_OFFSET)
+        *(void **)(controller + MODE_SELECT_PROMPT_CONTEXT_OFFSET)
     );
+    *(volatile float *)FONT_HORIZONTAL_SCALE_ADDRESS = 1.0f;
 
     if (outcome == NOTIFICATION_LOADED) {
         format_play_time(
@@ -724,5 +733,6 @@ void startup_auto_loading_notification_draw(void)
         );
     }
 
+    *(volatile u32 *)FONT_HORIZONTAL_SCALE_ADDRESS = previous_scale;
     set_font_context((void *)renderer, previous_context);
 }

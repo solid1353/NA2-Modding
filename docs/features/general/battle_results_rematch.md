@@ -46,6 +46,9 @@ The prompt follows [Mode Select's Mod prompt](../mod_settings.md):
   Rematch; the results renderer then finalizes Rematch normally. Cleanup
   releases the badge before the native results contexts, and releases the VS
   archive only when this prompt queued it.
+- The summary remains drawn beneath the Ninja Song details transition. Rematch
+  stays visible there alongside Next and Display details; input still accepts
+  Rematch only on the summary.
 
 The native acceptance predicate remains the first check. A fresh Circle press
 from the result's selected controller requests Rematch only on the summary.

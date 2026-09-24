@@ -132,8 +132,7 @@ void rematch_draw(float x, float y, void *sprite, u32 prompt, u32 backing)
     u8 *summary;
     void *label;
     CALL(0x0037C980u, DrawPrompt)(x, y, sprite, prompt, backing);
-    if (rematch.result == (u8 *)0 || rematch.badge == (void *)0 ||
-        *(u16 *)rematch.result != 1u) {
+    if (rematch.result == (u8 *)0 || rematch.badge == (void *)0) {
         return;
     }
     summary = *(u8 **)(rematch.result + 0x164);

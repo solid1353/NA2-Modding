@@ -2,14 +2,11 @@
 
 ### In Progress
 
+- UJ damage and 2nd mode transition kill bug
+- Practice stage cancel is broken
 - Make localization patches independent
 - Look through patch tree (independence)
-- Rematch draw
-- Practice stage cancel is broken
-- UJ damage
 - Save translations alignment
-- Deal with temp directories
-- Blocky notification text
 - Pre-release testing and tuning
 
 ### General

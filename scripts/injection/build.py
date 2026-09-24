@@ -5,6 +5,7 @@ import argparse
 import csv
 import hashlib
 import json
+import os
 import re
 import sys
 import tempfile
@@ -24,7 +25,7 @@ from na228_builder.infrastructure.modules.payload_builder.operations import (
     encode_symbol_reference,
 )
 from na228_builder.infrastructure.modules.image_assembler.iso9660 import Iso9660
-from scripts.lib.paths import load_paths
+from scripts.lib.paths import load_paths, task_work_root
 
 
 PATHS = load_paths(REPOSITORY)
@@ -1078,8 +1079,16 @@ def main() -> int:
 
     mappings: list[tuple[str, str]] = []
     compiled_c_fragments: list[PayloadFragment] = []
-    with tempfile.TemporaryDirectory(prefix="na228-injection-") as temporary:
-        temporary_path = Path(temporary)
+    if output.is_relative_to(PATHS.path("work")):
+        temporary_root = task_work_root(PATHS)
+        if not output.is_relative_to(temporary_root):
+            raise ValueError("Injection output must belong to the current chat")
+    else:
+        temporary_root = PATHS.path("build")
+    root_existed = temporary_root.is_dir()
+    temporary_root.mkdir(parents=True, exist_ok=True)
+    temporary_objects: list[Path] = []
+    try:
         compiled_source_ids = list(source_ids)
         if HOT_RELOAD_SOURCE not in compiled_source_ids:
             compiled_source_ids.append(HOT_RELOAD_SOURCE)
@@ -1092,6 +1101,14 @@ def main() -> int:
                 source_mappings,
             ) = load_source(selected_source_id)
             mappings.extend(source_mappings)
+            handle, object_name = tempfile.mkstemp(
+                prefix=f"na228-injection-{selected_source_id}-",
+                suffix=".o",
+                dir=temporary_root,
+            )
+            object_path = Path(object_name)
+            temporary_objects.append(object_path)
+            os.close(handle)
             compiled_c_fragments.extend(
                 compile_fragments(
                     selected_source_id,
@@ -1100,10 +1117,15 @@ def main() -> int:
                     namespace,
                     imports,
                     source_mappings,
-                    temporary_path / f"{selected_source_id}.o",
+                    object_path,
                     args.hot_reload_label,
                 )
             )
+    finally:
+        for object_path in temporary_objects:
+            object_path.unlink(missing_ok=True)
+        if not root_existed and not any(temporary_root.iterdir()):
+            temporary_root.rmdir()
     if direct_scope:
         root_symbols = [
             fragment.symbol

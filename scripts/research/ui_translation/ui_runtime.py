@@ -30,6 +30,7 @@ from scripts.lib.paths import (  # noqa: E402
     Paths,
     load_paths,
     resolve_alias,
+    task_work_root,
 )
 
 
@@ -753,9 +754,7 @@ def _archive_state(
         )
 
     capture_id, captured_at = _utc_capture_id()
-    parent = paths.path(
-        "work", "UI translation", "runtime_cases", case_id, target.target_id
-    )
+    parent = task_work_root(paths) / "runtime_cases" / case_id / target.target_id
     parent.mkdir(parents=True, exist_ok=True)
     final_dir = parent / capture_id
     if final_dir.exists():

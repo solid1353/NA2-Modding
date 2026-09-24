@@ -74,12 +74,12 @@ uncommitted release work:
 
 The toolchain is pinned by `@scripts/release/toolchain.json` and
 `@scripts/release/requirements.txt`. The builder creates an isolated virtual
-environment under `@release/temp/`, runs the release application and packaged-runtime
-tests, inventories the full definition resource closure, builds a
-precompiled object for each injection-owned runtime C or `.S` source, builds a PyInstaller
-one-file console EXE, self-tests the packaged data with the derived default
-configuration, and atomically updates the configured ZIP
-candidate. Temporary packaging state is removed afterward.
+environment in a temporary `@release/.build-*` directory, runs the release
+application and packaged-runtime tests, inventories the full definition
+resource closure, builds a precompiled object for each injection-owned runtime
+C or `.S` source, builds a PyInstaller one-file console EXE, self-tests the
+packaged data with the derived default configuration, and atomically updates
+the configured ZIP candidate. Temporary packaging state is removed afterward.
 
 Development ZIPs are placed under `@release/development/`; clean
 production packages use `@release/`. The publication command uploads the exact

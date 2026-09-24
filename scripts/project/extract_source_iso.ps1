@@ -92,7 +92,8 @@ if (Test-Path -LiteralPath $finalRoot) {
 $runId = Get-Date -Format "yyyyMMdd_HHmmss_fff"
 $runId = $runId + "_pid" + $PID + "_" + $isoItem.BaseName
 $taskWorkRoot = Join-Path $paths.work $TaskTitle
-$stageParent = Join-Path $taskWorkRoot 'temp\source_extraction'
+$tempRoot = Join-Path $taskWorkRoot 'temp'
+$stageParent = Join-Path $tempRoot 'source_extraction'
 $stageRun = Join-Path $stageParent $runId
 $stageRoot = Join-Path $stageRun ($isoItem.Name + '.files')
 $logDir = Join-Path $taskWorkRoot ("logs\source_extraction\" + $runId)
@@ -266,5 +267,11 @@ finally {
     }
     if ($failed -and -not $KeepFailedWork -and (Test-Path -LiteralPath $logDir)) {
         Remove-Item -LiteralPath $logDir -Recurse -Force
+    }
+    foreach ($parent in @($stageParent, $tempRoot)) {
+        if ((Test-Path -LiteralPath $parent -PathType Container) -and
+            @(Get-ChildItem -LiteralPath $parent -Force).Count -eq 0) {
+            Remove-Item -LiteralPath $parent -Force
+        }
     }
 }

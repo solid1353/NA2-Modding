@@ -38,87 +38,122 @@ if ($VerifyOnly) {
     exit 0
 }
 
-$runtimeRoot = Join-Path $paths.work 'temp\ghidra_import'
-$ghidra = Initialize-GhidraRuntime `
-    -RuntimeRoot $runtimeRoot `
-    -ToolsRoot $paths.utils
-$headless = $ghidra.Headless
-$sharedScriptPath = $ghidra.ScriptPath
+if ([string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)) {
+    throw 'NA228_TASK_WORK_ROOT must name the current chat work directory.'
+}
+. (Join-Path $PSScriptRoot '..\..\na228\task_paths.ps1')
+$taskContext = Get-Na2TaskContext `
+    -TaskRoot $env:NA228_TASK_WORK_ROOT `
+    -Paths $paths
+$tempRoot = Join-Path $taskContext.Root 'temp'
+$runtimeRoot = Join-Path $tempRoot (
+    'ghidra_import-' + [Guid]::NewGuid().ToString('N')
+)
+$runtimeEnvironment = @{}
+foreach ($name in @(
+    'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'JAVA_HOME', 'PATH',
+    'GHIDRA_HEADLESS_MAXMEM'
+)) {
+    $runtimeEnvironment[$name] = [Environment]::GetEnvironmentVariable(
+        $name, 'Process'
+    )
+}
+try {
+    $ghidra = Initialize-GhidraRuntime `
+        -RuntimeRoot $runtimeRoot `
+        -ToolsRoot $paths.utils
+    $headless = $ghidra.Headless
+    $sharedScriptPath = $ghidra.ScriptPath
 
-foreach ($item in $targets) {
-    $analysisDirectory = if ($item.target -eq 'shared') { 'shared' } else { $item.target }
-    $analysisRoot = Join-Path $paths.disassembly $analysisDirectory
-    $projectRoot = Join-Path $analysisRoot 'ghidra'
-    $artifactRoot = if ($item.target -eq 'shared') { Join-Path $analysisRoot $item.shared_scope } else { $analysisRoot }
-    $summaryPath = Join-Path $artifactRoot "summaries\$($item.program).tsv"
-    if ($ReanalyzeExisting) {
-        if (-not (Test-Path -LiteralPath $projectRoot -PathType Container)) {
-            throw "Ghidra project is missing: $($item.target)"
-        }
-        $inputPath = Resolve-SourceAlias $item.source
-        $loadBase = '-'
-        if ($item.format -eq 'mwo3') {
-            $stream = [IO.File]::OpenRead($inputPath)
-            try {
-                $header = New-Object byte[] 12
-                [void]$stream.Read($header, 0, $header.Length)
+    foreach ($item in $targets) {
+        $analysisDirectory = if ($item.target -eq 'shared') { 'shared' } else { $item.target }
+        $analysisRoot = Join-Path $paths.disassembly $analysisDirectory
+        $projectRoot = Join-Path $analysisRoot 'ghidra'
+        $artifactRoot = if ($item.target -eq 'shared') { Join-Path $analysisRoot $item.shared_scope } else { $analysisRoot }
+        $summaryPath = Join-Path $artifactRoot "summaries\$($item.program).tsv"
+        if ($ReanalyzeExisting) {
+            if (-not (Test-Path -LiteralPath $projectRoot -PathType Container)) {
+                throw "Ghidra project is missing: $($item.target)"
             }
-            finally { $stream.Dispose() }
-            if ([Text.Encoding]::ASCII.GetString($header, 0, 4) -ne 'MWo3') { throw "Invalid MWo3 input: $($item.source)" }
-            $loadBase = '0x{0:X8}' -f [BitConverter]::ToUInt32($header, 8)
+            $inputPath = Resolve-SourceAlias $item.source
+            $loadBase = '-'
+            if ($item.format -eq 'mwo3') {
+                $stream = [IO.File]::OpenRead($inputPath)
+                try {
+                    $header = New-Object byte[] 12
+                    [void]$stream.Read($header, 0, $header.Length)
+                }
+                finally { $stream.Dispose() }
+                if ([Text.Encoding]::ASCII.GetString($header, 0, 4) -ne 'MWo3') { throw "Invalid MWo3 input: $($item.source)" }
+                $loadBase = '0x{0:X8}' -f [BitConverter]::ToUInt32($header, 8)
+            }
+            $arguments = @(
+                $projectRoot, $item.target, '-process', $item.program,
+                '-scriptPath', $sharedScriptPath,
+                '-postScript', 'WriteAnalysisSummary.java', $summaryPath, $item.source,
+                $item.expected_sha256, $item.format, $loadBase
+            )
+            & $headless @arguments
+            if ($LASTEXITCODE -ne 0) { throw "Ghidra reanalysis failed: $($item.target)/$($item.program)" }
+            continue
         }
-        $arguments = @(
-            $projectRoot, $item.target, '-process', $item.program,
+        if (Test-Path -LiteralPath $summaryPath) {
+            Write-Host "Skip existing:" "$($item.target)/$($item.program)"
+            continue
+        }
+        New-Item -ItemType Directory -Force -Path $projectRoot, (Split-Path $summaryPath -Parent) | Out-Null
+        $inputPath = Resolve-SourceAlias $item.source
+        $arguments = @($projectRoot, $item.target, '-import', $inputPath)
+        $loadBase = '-'
+        switch ($item.format) {
+            'ee_elf' { $arguments += @('-processor', 'r5900:LE:32:default', '-cspec', 'default', '-loader', 'ElfLoader') }
+            'iop_elf' { $arguments += @('-processor', 'MIPS:LE:32:default', '-cspec', 'default', '-loader', 'ElfLoader') }
+            'mwo3' {
+                $stream = [IO.File]::OpenRead($inputPath)
+                try {
+                    $header = New-Object byte[] 20
+                    [void]$stream.Read($header, 0, $header.Length)
+                }
+                finally { $stream.Dispose() }
+                if ([Text.Encoding]::ASCII.GetString($header, 0, 4) -ne 'MWo3') { throw "Invalid MWo3 input: $($item.source)" }
+                $base = [BitConverter]::ToUInt32($header, 8)
+                $textLength = [BitConverter]::ToUInt32($header, 12)
+                $loadBase = '0x{0:X8}' -f $base
+                $entry = '-'
+                if ($item.entry_file_offset) {
+                    $entryOffset = [Convert]::ToInt64($item.entry_file_offset.Substring(2), 16)
+                    $entry = '0x{0:X8}' -f ($base + $entryOffset - 0x40)
+                }
+                $arguments += @(
+                    '-processor', 'r5900:LE:32:default', '-cspec', 'default',
+                    '-loader', 'BinaryLoader', '-loader-baseAddr', $loadBase,
+                    '-loader-fileOffset', '0x40', '-loader-length', [string]((Get-Item $inputPath).Length - 0x40),
+                    '-loader-blockName', 'image', '-scriptPath', $sharedScriptPath,
+                    '-preScript', 'PrepareMwo3.java', $loadBase, ('0x{0:X8}' -f $textLength), $entry
+                )
+            }
+            default { throw "Unsupported target format: $($item.format)" }
+        }
+        $arguments += @(
             '-scriptPath', $sharedScriptPath,
             '-postScript', 'WriteAnalysisSummary.java', $summaryPath, $item.source,
             $item.expected_sha256, $item.format, $loadBase
         )
         & $headless @arguments
-        if ($LASTEXITCODE -ne 0) { throw "Ghidra reanalysis failed: $($item.target)/$($item.program)" }
-        continue
+        if ($LASTEXITCODE -ne 0) { throw "Ghidra import failed: $($item.target)/$($item.program)" }
     }
-    if (Test-Path -LiteralPath $summaryPath) {
-        Write-Host "Skip existing:" "$($item.target)/$($item.program)"
-        continue
+}
+finally {
+    foreach ($name in $runtimeEnvironment.Keys) {
+        [Environment]::SetEnvironmentVariable(
+            $name, $runtimeEnvironment[$name], 'Process'
+        )
     }
-    New-Item -ItemType Directory -Force -Path $projectRoot, (Split-Path $summaryPath -Parent) | Out-Null
-    $inputPath = Resolve-SourceAlias $item.source
-    $arguments = @($projectRoot, $item.target, '-import', $inputPath)
-    $loadBase = '-'
-    switch ($item.format) {
-        'ee_elf' { $arguments += @('-processor', 'r5900:LE:32:default', '-cspec', 'default', '-loader', 'ElfLoader') }
-        'iop_elf' { $arguments += @('-processor', 'MIPS:LE:32:default', '-cspec', 'default', '-loader', 'ElfLoader') }
-        'mwo3' {
-            $stream = [IO.File]::OpenRead($inputPath)
-            try {
-                $header = New-Object byte[] 20
-                [void]$stream.Read($header, 0, $header.Length)
-            }
-            finally { $stream.Dispose() }
-            if ([Text.Encoding]::ASCII.GetString($header, 0, 4) -ne 'MWo3') { throw "Invalid MWo3 input: $($item.source)" }
-            $base = [BitConverter]::ToUInt32($header, 8)
-            $textLength = [BitConverter]::ToUInt32($header, 12)
-            $loadBase = '0x{0:X8}' -f $base
-            $entry = '-'
-            if ($item.entry_file_offset) {
-                $entryOffset = [Convert]::ToInt64($item.entry_file_offset.Substring(2), 16)
-                $entry = '0x{0:X8}' -f ($base + $entryOffset - 0x40)
-            }
-            $arguments += @(
-                '-processor', 'r5900:LE:32:default', '-cspec', 'default',
-                '-loader', 'BinaryLoader', '-loader-baseAddr', $loadBase,
-                '-loader-fileOffset', '0x40', '-loader-length', [string]((Get-Item $inputPath).Length - 0x40),
-                '-loader-blockName', 'image', '-scriptPath', $sharedScriptPath,
-                '-preScript', 'PrepareMwo3.java', $loadBase, ('0x{0:X8}' -f $textLength), $entry
-            )
-        }
-        default { throw "Unsupported target format: $($item.format)" }
+    if (Test-Path -LiteralPath $runtimeRoot -PathType Container) {
+        Remove-Item -LiteralPath $runtimeRoot -Recurse -Force
     }
-    $arguments += @(
-        '-scriptPath', $sharedScriptPath,
-        '-postScript', 'WriteAnalysisSummary.java', $summaryPath, $item.source,
-        $item.expected_sha256, $item.format, $loadBase
-    )
-    & $headless @arguments
-    if ($LASTEXITCODE -ne 0) { throw "Ghidra import failed: $($item.target)/$($item.program)" }
+    if ((Test-Path -LiteralPath $tempRoot -PathType Container) -and
+        @(Get-ChildItem -LiteralPath $tempRoot -Force).Count -eq 0) {
+        Remove-Item -LiteralPath $tempRoot -Force
+    }
 }

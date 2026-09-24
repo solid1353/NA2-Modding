@@ -103,9 +103,9 @@ exit 4
         'Cache miss did not return the registered ISO.'
     Assert-BuildPreflight (Test-Path -LiteralPath (Join-Path $repository 'builder-called.txt')) `
         'Cache miss did not invoke the builder.'
-    Assert-BuildPreflight (
-        @(Get-ChildItem -LiteralPath (Join-Path $repository 'build\.incoming') -Force).Count -eq 0
-    ) 'Completed build left an incoming ISO or lock.'
+    Assert-BuildPreflight (-not (
+        Test-Path -LiteralPath (Join-Path $repository 'build\.incoming')
+    )) 'Completed build left the incoming directory behind.'
 
     Remove-Item -LiteralPath (Join-Path $repository 'builder-called.txt') -Force
     [IO.File]::WriteAllText((Join-Path $repository 'cache-hit.txt'), 'yes')
@@ -134,6 +134,7 @@ exit 4
 
     . (Join-Path $repository 'scripts\na228\build_registry.ps1')
     $incomingRoot = Join-Path $repository 'build\.incoming'
+    [void](New-Item -ItemType Directory -Path $incomingRoot)
     $staleImage = Join-Path $incomingRoot 'stale.iso'
     [IO.File]::WriteAllText($staleImage, 'stale')
     $activeLock = Enter-Na2IncomingImage -Image $staleImage

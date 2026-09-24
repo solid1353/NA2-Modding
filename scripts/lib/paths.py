@@ -71,6 +71,19 @@ class Paths:
             raise KeyError(f"Unknown project file: {name}") from exc
 
 
+def task_work_root(paths: Paths) -> Path:
+    configured = os.environ.get("NA228_TASK_WORK_ROOT")
+    if not configured:
+        raise ValueError("NA228_TASK_WORK_ROOT must name the current chat work directory")
+    root = Path(configured)
+    if not root.is_absolute():
+        root = paths.repository / root
+    root = root.resolve()
+    if root.parent != paths.path("work").resolve():
+        raise ValueError("NA228_TASK_WORK_ROOT must name an immediate child of work/")
+    return root
+
+
 def _find_manifest(start: Path) -> Path:
     current = start.resolve()
     if current.is_file():

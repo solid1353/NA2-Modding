@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import os
 import re
 import tempfile
 from dataclasses import dataclass, replace
@@ -1967,17 +1968,33 @@ def _compile_source(
             external_symbols=imports,
         )
     else:
+        from scripts.lib.paths import load_paths
+
         toolchain = ee_c_fragments.default_toolchain_bin(repository)
-        with tempfile.TemporaryDirectory(prefix="na2-catalog-ee-") as temporary:
+        build_root = load_paths(repository).path("build")
+        root_existed = build_root.is_dir()
+        build_root.mkdir(parents=True, exist_ok=True)
+        object_path = None
+        try:
+            handle, object_name = tempfile.mkstemp(
+                prefix=f"na2-catalog-ee-{source_id}-", suffix=".o", dir=build_root
+            )
+            object_path = Path(object_name)
+            os.close(handle)
             extracted = ee_c_fragments.compile_and_extract(
                 source_path,
-                Path(temporary) / f"{source_id}.o",
+                object_path,
                 namespace=namespace,
                 language=str(language),
                 toolchain_bin=toolchain,
                 owner=owner,
                 external_symbols=imports,
             )
+        finally:
+            if object_path is not None:
+                object_path.unlink(missing_ok=True)
+            if not root_existed and not any(build_root.iterdir()):
+                build_root.rmdir()
     actual = {fragment.symbol for fragment in extracted.fragments}
     if actual != set(aliases):
         raise ValueError(

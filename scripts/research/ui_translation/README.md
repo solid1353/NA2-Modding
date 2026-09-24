@@ -72,8 +72,9 @@ cannot be explained from NUN5 and Current plus the unpacked static sources.
 - `import-pairs` validates matching NUN5 and Current filenames for every slot,
   copies the F1 states by default, and records `manual_f1_import` rather than
   claiming a live PINE identity. `--consume-states` is explicit and destructive.
-- A capture is first copied and verified under
-  [`@work/UI translation/runtime_cases/`](../../../AGENTS.md#file-and-folder-management).
+- A capture is first copied and verified under the current chat's
+  `@work/<chat title>/runtime_cases/`. Set `NA228_TASK_WORK_ROOT` to that chat's
+  work directory before running the capture command.
   Only after that succeeds is the newly generated slot state removed from
   `@pcsx2_savestates/`; pass
   `--keep-slot-state` to retain it there.

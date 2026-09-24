@@ -5,7 +5,6 @@
   "requirements": "scripts/release/requirements.txt",
   "entry_point": "na228_builder/infrastructure/orchestration/app.py",
   "release_manifest": "na228_builder/release_manifest.json",
-  "temporary_root": "@release/temp",
   "icon": "assets/icons/detailed/NA2.28.ico",
   "instructions": "scripts/release/README.md"
 }

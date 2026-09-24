@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import struct
 import tempfile
 import threading
@@ -252,6 +253,7 @@ class StateArchiveTests(unittest.TestCase):
             savestates = repository / "pcsx2_files" / "sstates"
             build = repository / "build"
             work = repository / "work"
+            task_root = work / "capture_case"
             for directory in (
                 repository,
                 source,
@@ -317,6 +319,8 @@ class StateArchiveTests(unittest.TestCase):
 
             with mock.patch.object(
                 ui_runtime.PineClient, "connect", return_value=FakeClient()
+            ), mock.patch.dict(
+                os.environ, {"NA228_TASK_WORK_ROOT": str(task_root)}
             ):
                 result = ui_runtime.capture_state(
                     paths,
@@ -328,7 +332,7 @@ class StateArchiveTests(unittest.TestCase):
                 )
 
             captures = list(
-                (work / "UI translation" / "runtime_cases").rglob(
+                (task_root / "runtime_cases").rglob(
                     "manifest.json"
                 )
             )
@@ -350,6 +354,7 @@ class StateArchiveTests(unittest.TestCase):
             savestates = repository / "pcsx2_files" / "sstates"
             build = repository / "build"
             work = repository / "work"
+            task_root = work / "import_case"
             for directory in (
                 repository,
                 source,
@@ -394,15 +399,18 @@ class StateArchiveTests(unittest.TestCase):
             state.mkdir()
             (state / "Screenshot.png").write_bytes(screenshot)
 
-            result = ui_runtime.import_state(
-                paths,
-                target,
-                "mode_select",
-                slot=1,
-            )
+            with mock.patch.dict(
+                os.environ, {"NA228_TASK_WORK_ROOT": str(task_root)}
+            ):
+                result = ui_runtime.import_state(
+                    paths,
+                    target,
+                    "mode_select",
+                    slot=1,
+                )
 
             captures = list(
-                (work / "UI translation" / "runtime_cases").rglob(
+                (task_root / "runtime_cases").rglob(
                     "manifest.json"
                 )
             )

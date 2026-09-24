@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import struct
 import sys
 import tempfile
@@ -28,11 +29,12 @@ if str(REPOSITORY) not in sys.path:
 
 from na228_builder.infrastructure.orchestration import catalog  # noqa: E402
 from na228_builder.infrastructure.modules.payload_builder import mips  # noqa: E402
-from scripts.lib.paths import load_paths  # noqa: E402
+from scripts.lib.paths import load_paths, task_work_root  # noqa: E402
 from na228_builder.infrastructure.modules.payload_builder import ee_c_fragments  # noqa: E402
 
 
-PACKED_METRICS_INPUT = load_paths(REPOSITORY).path(
+PATHS = load_paths(REPOSITORY)
+PACKED_METRICS_INPUT = PATHS.path(
     "builder",
     "patches",
     "localization",
@@ -40,7 +42,8 @@ PACKED_METRICS_INPUT = load_paths(REPOSITORY).path(
     "glyphs",
     "nun5_semantic_14x20_packed_map.bin",
 )
-C_CORE_SOURCE = REPOSITORY / "src" / "localization" / "font" / "font_v2_core.c"
+FONT_ROOT = PATHS.path("builder", "patches", "localization", "font")
+C_CORE_SOURCE = FONT_ROOT / "layout" / "font_v2_core.c"
 C_V2_SOURCES = {
     "core": C_CORE_SOURCE,
     "menus": C_CORE_SOURCE.with_name("font_v2_menus.c"),
@@ -51,7 +54,7 @@ C_V2_SOURCES = {
     "ninja_song": C_CORE_SOURCE.with_name("font_v2_ninja_song.c"),
     "selected_style": C_CORE_SOURCE.with_name("font_v2_selected_style.c"),
 }
-C_NUMERIC_SOURCE = C_CORE_SOURCE.with_name("font_numeric.c")
+C_NUMERIC_SOURCE = FONT_ROOT / "numeric_formatting" / "font_numeric.c"
 C_TOOLCHAIN_BIN = ee_c_fragments.default_toolchain_bin(REPOSITORY)
 
 PREFIX = "localization.font"
@@ -147,6 +150,7 @@ V2_SPECIAL_CONTROLS_BODY_ADAPTER = (
     f"{V2_PREFIX}.special_controls_body_adapter"
 )
 V2_COLLECTION_BODY_ADAPTER = f"{V2_PREFIX}.collection_body_adapter"
+V2_MEMORY_CARD_BODY_ADAPTER = f"{V2_PREFIX}.memory_card_body_adapter"
 V2_NATIVE_MEASURE = f"{V2_PREFIX}.native_measure"
 V2_NATIVE_MEASURE_CALLBACK = f"{V2_PREFIX}.c.native_measure_callback"
 V2_WRAP_NATIVE = f"{V2_PREFIX}.wrap_native"
@@ -489,7 +493,10 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
             f"{V2_PREFIX}.c.text", 72
         ),
     }
-    with tempfile.TemporaryDirectory(prefix="na2-font-v2-c-") as temporary:
+    work_root = task_work_root(PATHS)
+    work_root_existed = work_root.is_dir()
+    work_root.mkdir(parents=True, exist_ok=True)
+    try:
         common_external_symbols = {
             "font_v2_ascii_widths": ee_c_fragments.SymbolReference(
                 V2_ASCII_WIDTHS
@@ -560,13 +567,21 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
                     )
                 else:
                     external_symbols[c_name] = target
-            compiled = ee_c_fragments.compile_and_extract(
-                source_path,
-                Path(temporary) / f"font_v2_{source_name}.o",
-                namespace=f"{V2_PREFIX}.c",
-                toolchain_bin=C_TOOLCHAIN_BIN,
-                external_symbols=external_symbols,
+            handle, object_name = tempfile.mkstemp(
+                prefix=f"font_v2_{source_name}-", suffix=".o", dir=work_root
             )
+            object_path = Path(object_name)
+            try:
+                os.close(handle)
+                compiled = ee_c_fragments.compile_and_extract(
+                    source_path,
+                    object_path,
+                    namespace=f"{V2_PREFIX}.c",
+                    toolchain_bin=C_TOOLCHAIN_BIN,
+                    external_symbols=external_symbols,
+                )
+            finally:
+                object_path.unlink(missing_ok=True)
             for fragment in compiled.fragments:
                 if fragment.symbol in shared_fragments:
                     raise ValueError(
@@ -580,6 +595,9 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
                         f"Font v2 C sources export duplicate symbol {name!r}"
                     )
                 shared_symbols[name] = reference
+    finally:
+        if not work_root_existed and not any(work_root.iterdir()):
+            work_root.rmdir()
 
     extracted = ee_c_fragments.ExtractedEeObject(
         fragments=tuple(shared_fragments.values()),
@@ -608,6 +626,7 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         "font_v2_quit_body_adapter",
         "font_v2_special_controls_body_adapter",
         "font_v2_collection_body_adapter",
+        "font_v2_memory_card_body_adapter",
         "font_v2_practice_append",
         "font_v2_command_relationship_impl",
         "font_v2_command_icon_offset",
@@ -692,6 +711,9 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         ].symbol: V2_SPECIAL_CONTROLS_BODY_ADAPTER,
         extracted.symbols["font_v2_collection_body_adapter"].symbol: (
             V2_COLLECTION_BODY_ADAPTER
+        ),
+        extracted.symbols["font_v2_memory_card_body_adapter"].symbol: (
+            V2_MEMORY_CARD_BODY_ADAPTER
         ),
         extracted.symbols["font_v2_practice_append"].symbol: (
             V2_PRACTICE_APPEND
@@ -928,6 +950,7 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
         V2_QUIT_BODY_ADAPTER,
         V2_SPECIAL_CONTROLS_BODY_ADAPTER,
         V2_COLLECTION_BODY_ADAPTER,
+        V2_MEMORY_CARD_BODY_ADAPTER,
         V2_PRACTICE_APPEND,
         V2_COMMAND_RELATIONSHIP_IMPL,
         V2_COMMAND_ICON_OFFSET,
@@ -985,10 +1008,19 @@ def build_v2_c_sources() -> tuple[Fragment, ...]:
 
 @lru_cache(maxsize=1)
 def build_numeric_c_core() -> tuple[Fragment, ...]:
-    with tempfile.TemporaryDirectory(prefix="na2-font-numeric-c-") as temporary:
+    work_root = task_work_root(PATHS)
+    work_root_existed = work_root.is_dir()
+    work_root.mkdir(parents=True, exist_ok=True)
+    object_path = None
+    try:
+        handle, object_name = tempfile.mkstemp(
+            prefix="font_numeric-", suffix=".o", dir=work_root
+        )
+        object_path = Path(object_name)
+        os.close(handle)
         extracted = ee_c_fragments.compile_and_extract(
             C_NUMERIC_SOURCE,
-            Path(temporary) / "font_numeric.o",
+            object_path,
             namespace=f"{PREFIX}.numeric.c",
             toolchain_bin=C_TOOLCHAIN_BIN,
             external_symbols={
@@ -1004,6 +1036,11 @@ def build_numeric_c_core() -> tuple[Fragment, ...]:
                 ),
             },
         )
+    finally:
+        if object_path is not None:
+            object_path.unlink(missing_ok=True)
+        if not work_root_existed and not any(work_root.iterdir()):
+            work_root.rmdir()
 
     expected_exports = {
         "font_ninja_song_ascii_number": NINJA_SONG_ASCII_NUMBER,

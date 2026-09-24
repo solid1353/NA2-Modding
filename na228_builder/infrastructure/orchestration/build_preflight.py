@@ -487,10 +487,14 @@ def _copy_provenance(source: Path, destination: Path) -> None:
     temporary = destination.with_name(f".{destination.name}.{os.getpid()}.tmp")
     if temporary.exists():
         shutil.rmtree(temporary)
-    shutil.copytree(source, temporary)
-    if destination.exists():
-        shutil.rmtree(destination)
-    os.replace(temporary, destination)
+    try:
+        shutil.copytree(source, temporary)
+        if destination.exists():
+            shutil.rmtree(destination)
+        os.replace(temporary, destination)
+    finally:
+        if temporary.exists():
+            shutil.rmtree(temporary)
 
 
 def _prune_registry(registry: dict[str, object]) -> None:

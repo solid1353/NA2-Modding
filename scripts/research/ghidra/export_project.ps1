@@ -14,14 +14,34 @@ $paths = Get-Na2Paths
 $analysisDirectory = if ($Target -eq 'shared') { 'shared' } else { $Target }
 $analysisRoot = Join-Path $paths.disassembly $analysisDirectory
 $projectRoot = Join-Path $analysisRoot 'ghidra'
-$runtimeRoot = Join-Path $paths.work "temp\ghidra_export\$Target"
-$ghidra = Initialize-GhidraRuntime `
-    -RuntimeRoot $runtimeRoot `
-    -ToolsRoot $paths.utils
-$headless = $ghidra.Headless
-$sharedScriptPath = $ghidra.ScriptPath
+if ([string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)) {
+    throw 'NA228_TASK_WORK_ROOT must name the current chat work directory.'
+}
+. (Join-Path $PSScriptRoot '..\..\na228\task_paths.ps1')
+$taskContext = Get-Na2TaskContext `
+    -TaskRoot $env:NA228_TASK_WORK_ROOT `
+    -Paths $paths
+$tempRoot = Join-Path $taskContext.Root 'temp'
+$runtimeRoot = Join-Path $tempRoot (
+    "ghidra_export_$Target-" + [Guid]::NewGuid().ToString('N')
+)
+$runtimeEnvironment = @{}
+foreach ($name in @(
+    'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'JAVA_HOME', 'PATH',
+    'GHIDRA_HEADLESS_MAXMEM'
+)) {
+    $runtimeEnvironment[$name] = [Environment]::GetEnvironmentVariable(
+        $name, 'Process'
+    )
+}
 
 try {
+    $ghidra = Initialize-GhidraRuntime `
+        -RuntimeRoot $runtimeRoot `
+        -ToolsRoot $paths.utils
+    $headless = $ghidra.Headless
+    $sharedScriptPath = $ghidra.ScriptPath
+
     if ($Target -eq 'shared') {
         $targets = @(Import-Csv -LiteralPath (Join-Path $PSScriptRoot 'targets.tsv') -Delimiter "`t" |
             Where-Object target -eq 'shared')
@@ -54,9 +74,18 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Ghidra export failed with exit code $LASTEXITCODE" }
     }
     & (Join-Path $PSScriptRoot 'build_manifest.ps1') -Target $Target
-    Set-Content -LiteralPath (Join-Path $runtimeRoot 'worker.complete') -Value 'complete' -Encoding utf8
 }
-catch {
-    Set-Content -LiteralPath (Join-Path $runtimeRoot 'worker.failed') -Value $_.Exception.Message -Encoding utf8
-    throw
+finally {
+    foreach ($name in $runtimeEnvironment.Keys) {
+        [Environment]::SetEnvironmentVariable(
+            $name, $runtimeEnvironment[$name], 'Process'
+        )
+    }
+    if (Test-Path -LiteralPath $runtimeRoot -PathType Container) {
+        Remove-Item -LiteralPath $runtimeRoot -Recurse -Force
+    }
+    if ((Test-Path -LiteralPath $tempRoot -PathType Container) -and
+        @(Get-ChildItem -LiteralPath $tempRoot -Force).Count -eq 0) {
+        Remove-Item -LiteralPath $tempRoot -Force
+    }
 }

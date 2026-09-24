@@ -22,7 +22,6 @@ $entryPoint = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.entry_poi
 $iconPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.icon))
 $instructionsPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.instructions))
 $configurationPath = [IO.Path]::GetFullPath((Join-Path $repository $manifest.configuration))
-$releaseTemp = Resolve-Na2ProjectPathAlias -Alias $toolchain.temporary_root -Paths $paths
 
 if ([string]::IsNullOrWhiteSpace($productName) -or
     [IO.Path]::GetFileName($executableName) -cne $executableName) {
@@ -74,8 +73,7 @@ else {
     $paths.release
 }
 New-Item -ItemType Directory -Force -Path $releaseRoot | Out-Null
-New-Item -ItemType Directory -Force -Path $releaseTemp | Out-Null
-$runRoot = Join-Path $releaseTemp ('build_' + [Guid]::NewGuid().ToString('N'))
+$runRoot = Join-Path $paths.release ('.build-' + [Guid]::NewGuid().ToString('N'))
 $resourceRoot = Join-Path $runRoot 'resources'
 $venvRoot = Join-Path $runRoot 'venv'
 $workRoot = Join-Path $runRoot 'pyinstaller'
@@ -86,8 +84,11 @@ $bootstrap = Join-Path $runRoot 'release_bootstrap.py'
 $packageName = [IO.Path]::ChangeExtension($executableName, '.zip')
 $packagePath = Join-Path $releaseRoot $packageName
 $oldPyInstallerConfig = $env:PYINSTALLER_CONFIG_DIR
+$runRootCreated = $false
 
 try {
+    New-Item -ItemType Directory -Path $runRoot | Out-Null
+    $runRootCreated = $true
     New-Item -ItemType Directory -Path $resourceRoot -Force | Out-Null
     & $hostPython -B -m venv $venvRoot
     if ($LASTEXITCODE -ne 0) { throw 'Could not create the release virtual environment.' }
@@ -333,18 +334,12 @@ print(public_catalog(paths.path("builder", "catalog.modcat")), end="")
 finally {
     $env:PYINSTALLER_CONFIG_DIR = $oldPyInstallerConfig
     Remove-Item Env:NA2_RELEASE_SELF_TEST -ErrorAction SilentlyContinue
-    if (Test-Path -LiteralPath $runRoot) {
+    if ($runRootCreated -and (Test-Path -LiteralPath $runRoot)) {
         $resolvedRun = [IO.Path]::GetFullPath($runRoot)
-        $resolvedParent = [IO.Path]::GetFullPath($releaseTemp).TrimEnd('\') + '\'
+        $resolvedParent = [IO.Path]::GetFullPath($paths.release).TrimEnd('\') + '\'
         if (-not $resolvedRun.StartsWith($resolvedParent, [StringComparison]::OrdinalIgnoreCase)) {
             throw "Refusing to clean release staging outside its configured root: $resolvedRun"
         }
         Remove-Item -LiteralPath $resolvedRun -Recurse -Force
-    }
-    if (Test-Path -LiteralPath $releaseTemp -PathType Container) {
-        $remainingStaging = @(Get-ChildItem -LiteralPath $releaseTemp -Force)
-        if ($remainingStaging.Count -eq 0) {
-            Remove-Item -LiteralPath $releaseTemp -Force
-        }
     }
 }

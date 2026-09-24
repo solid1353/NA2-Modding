@@ -9,13 +9,14 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $paths = Get-Na2Paths
 $pythonRunner = Join-Path ([string]$paths.scripts) 'lib\run_python.ps1'
 $powershell = (Get-Process -Id $PID).Path
-$usesSharedTestRoot = [string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)
-$workspaceRoot = if ($usesSharedTestRoot) {
-    [string]$paths.work
+if ([string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)) {
+    throw 'NA228_TASK_WORK_ROOT must name the current chat work directory.'
 }
-else {
-    [IO.Path]::GetFullPath($env:NA228_TASK_WORK_ROOT)
-}
+. (Join-Path $repository 'scripts\na228\task_paths.ps1')
+$taskContext = Get-Na2TaskContext `
+    -TaskRoot $env:NA228_TASK_WORK_ROOT `
+    -Paths $paths
+$workspaceRoot = $taskContext.Root
 $workspaceExisted = Test-Path -LiteralPath $workspaceRoot -PathType Container
 $unitTestRoot = Join-Path $workspaceRoot 'ut'
 $unitTestRunRoot = Join-Path $unitTestRoot (
@@ -28,13 +29,14 @@ $originalTestPowerShell = [Environment]::GetEnvironmentVariable(
     'Process'
 )
 
-[void](New-Item -ItemType Directory -Path $unitTestRunRoot -Force)
-$env:TEMP = $unitTestRunRoot
-$env:TMP = $unitTestRunRoot
-$env:NA228_TEST_POWERSHELL = $powershell
-
-Push-Location $repository
+$locationPushed = $false
 try {
+    [void](New-Item -ItemType Directory -Path $unitTestRunRoot -Force)
+    $env:TEMP = $unitTestRunRoot
+    $env:TMP = $unitTestRunRoot
+    $env:NA228_TEST_POWERSHELL = $powershell
+    Push-Location $repository
+    $locationPushed = $true
     & $powershell -NoProfile -File $pythonRunner `
         -PackageSet builder `
         -Script (Join-Path $PSScriptRoot 'run.py') `
@@ -44,7 +46,9 @@ try {
     }
 }
 finally {
-    Pop-Location
+    if ($locationPushed) {
+        Pop-Location
+    }
     if ($null -eq $originalTemp) {
         Remove-Item Env:TEMP -ErrorAction SilentlyContinue
     }
@@ -71,8 +75,7 @@ finally {
         @(Get-ChildItem -LiteralPath $unitTestRoot -Force).Count -eq 0) {
         Remove-Item -LiteralPath $unitTestRoot -Force
     }
-    if ($usesSharedTestRoot -and
-        -not $workspaceExisted -and
+    if (-not $workspaceExisted -and
         (Test-Path -LiteralPath $workspaceRoot -PathType Container) -and
         @(Get-ChildItem -LiteralPath $workspaceRoot -Force).Count -eq 0) {
         Remove-Item -LiteralPath $workspaceRoot -Force

@@ -72,6 +72,7 @@ function Throw-Na2BuilderFailure {
     throw $FallbackMessage
 }
 
+try {
 [void](New-Item -ItemType Directory -Path $incomingRoot -Force)
 Remove-Na2StaleIncomingImages -IncomingRoot $incomingRoot
 $registryArguments = @{
@@ -164,4 +165,16 @@ return [pscustomobject]@{
     }
     PreflightCacheHit = $cacheHit
     ConfigurationId = $Configuration
+}
+}
+finally {
+    try {
+        if ((Test-Path -LiteralPath $incomingRoot -PathType Container) -and
+            @(Get-ChildItem -LiteralPath $incomingRoot -Force).Count -eq 0) {
+            Remove-Item -LiteralPath $incomingRoot -Force
+        }
+    }
+    catch {
+        Write-Warning "Could not remove empty incoming build directory: $incomingRoot"
+    }
 }

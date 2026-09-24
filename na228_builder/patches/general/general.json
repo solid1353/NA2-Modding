@@ -156,6 +156,22 @@
         "expected_hex": "704F1C0C00000000",
         "symbol": "practice_stage_select_initialize",
         "encoding": "jal26"
+      },
+      "reset_initial_preparation": {
+        "description": "Restore one-controller Practice preparation before the selector's initial preparation reset.",
+        "target_id": "na2_btl",
+        "offset": "0x60844",
+        "expected_hex": "E0001B0C00000000",
+        "symbol": "practice_stage_select_reset_preparation",
+        "encoding": "jal26"
+      },
+      "reset_selected_stage_preparation": {
+        "description": "Restore one-controller Practice preparation each time a stage is confirmed, including after cancellation and reselection.",
+        "target_id": "na2_btl",
+        "offset": "0x61AB8",
+        "expected_hex": "E0001B0C00000000",
+        "symbol": "practice_stage_select_reset_preparation",
+        "encoding": "jal26"
       }
     },
     "payload": {
@@ -168,6 +184,10 @@
           "practice_stage_select_initialize": {
             "object": "general.practice.stage.select.text.practice.stage.select.initialize",
             "description": "Initialize Practice Stage Select interactively and delegate other battle entries unchanged."
+          },
+          "practice_stage_select_reset_preparation": {
+            "object": "general.practice.stage.select.text.practice.stage.select.reset.preparation",
+            "description": "Set Practice preparation to 1P versus COM before the native reset without changing its saved Status setting."
           }
         }
       }

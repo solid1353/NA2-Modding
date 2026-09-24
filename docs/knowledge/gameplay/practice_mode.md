@@ -36,7 +36,7 @@ a runtime observation is stated explicitly.
     owners was not traced;
   - manager storage, defaults, getters, and setters were bounded to resident
     `FUN_001E7A80`, `FUN_001F5910`, `FUN_001F5960`, `FUN_001F59F0`,
-    `FUN_001F6420`, and `FUN_001F6D30/FUN_001F6D50`, plus the dynamic-support
+    `FUN_001F6420`, `FUN_001F48F0`, and `FUN_001F6D30/FUN_001F6D50`, plus the dynamic-support
     manager whose side records store Linked Mode, including its BTL
     setup/teardown and constructor at live `0x00885210`, `0x00885290`, and
     `0x00886CB0`;
@@ -197,9 +197,13 @@ Live `0x006C0F60` dispatches on parent `+0x00`:
 | `5` | update Practice child `+0x3C` through live `0x00881AB0`; return to `2` when the child completes |
 
 The parent reset entry is live `0x006C0380`. It resets shared parent/child
-presentation state and starts the parent's transition resource. UI-owner paths
-whose preserved-export prologues are `0x007146C0` and `0x00714700` (live
-entries `0x00714700` and `0x00714740`) call this entry on `owner+0xA8`.
+presentation state and starts the parent's transition resource. The two direct
+BTL calls are live `0x00714744` (file `0x60844`) in owner initialization and
+live `0x007159B8` (file `0x61AB8`) when the stage-confirm transition completes.
+Both pass `owner+0xA8`. The latter enters owner state `4` before resetting the
+parent. GhidrAssist exposes its bytes at preserved address `0x00715978`, but
+its truncated update-function disassembly omits that call; a complete-file
+aligned `jal` scan confirms both sites and no other direct BTL callers.
 
 Live `0x006C07C0` owns the parent state's selector/open transaction. It updates
 two selector children at parent `+0x30` and `+0x34` through live
@@ -234,6 +238,14 @@ Status is Manual, otherwise argument `1` when `manager+0x18 == 0` or argument
 returns the recorded `+0x4C` result. This manager-side update belongs to
 closing the overall settings parent, not to the Practice child's Confirm
 apply routine.
+
+The close transition does not check whether the parent result is Confirm or
+Cancel before applying that controller mode. `FUN_001F48F0` writes
+`manager+0x1C` and updates bit `0x02` in both side records (`+0x48` and
+`+0x70`): mode `0` clears both COM bits, mode `1` sets only Player 2's COM
+bit, and mode `2` sets only Player 1's. Manual therefore applies mode `0`
+even on preparation cancellation. This changes controller assignment without
+changing the saved Practice Status option.
 
 The battle UI owner's update wrapper is live `0x00714CB0` (preserved prologue
 `0x00714C70`). It forwards `owner+0xA8` to the parent update. Parent result

@@ -7,13 +7,22 @@ after the Practice team-versus confirmation. The training field remains the
 initial choice. Confirm writes the selected native load slot through the
 ordinary battle-manager handoff, while Cancel returns to Character Select.
 
-The resident hook replaces only the shared call to the BTL selector
+The selector-initialization hook replaces the shared call to the BTL selector
 initializer. For Practice entry type `2`, its wrapper passes the native `-1`
 interactive sentinel. Every other entry type receives the original initializer
 argument unchanged. The following native selection setter still receives slot
 `6`, so the selector opens on the training field without forcing it. Stage-list
 construction, input, drawing, selection, cleanup, and battle loading remain
 native.
+
+Both selector-owned preparation-reset calls, at BTL file offsets `0x60844`
+and `0x61AB8`, use the same Practice-only wrapper. Before the native reset,
+it calls `FUN_001F48F0(manager, 1)` to restore 1P versus COM. Preparation
+therefore needs only Player 1 confirmation on every entry, including after
+cancelling preparation and reselecting a stage with Status set to Manual.
+The Status setting remains unchanged; the native close routine applies it
+when starting practice. The native controller transition is documented in
+[Practice-mode knowledge](../knowledge/gameplay/practice_mode.md#generic-parent-states).
 
 When `features.general.stage_selection_persistence` is enabled, cancelling Stage Select
 retains the highlighted stage for the next Practice Stage Select opening during

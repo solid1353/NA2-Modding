@@ -3,7 +3,8 @@
 ### In Progress
 
 - Proper startup
-- Add ISO path to release EXE
+- Add input/output args to release, make subsequent runs override the patched ISO
+- Add version postfix to the ISO name
 - Pre-release testing and tuning
 
 ### General

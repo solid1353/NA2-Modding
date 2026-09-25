@@ -20,5 +20,6 @@
 - No-rebound meter or whatever
 - Proper widescreen
 - Port stages/characters
+- Autosave?
 - Upscaled texture pack for pcsx2
 - 60 FPS

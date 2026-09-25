@@ -2,7 +2,6 @@
 
 ### In Progress
 
-- Restructure patch tree
 - UJ damage and 2nd mode transition kill bug
 - Save translations alignment
 - Pre-release testing and tuning

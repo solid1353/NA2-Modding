@@ -2,10 +2,7 @@
 
 ### In Progress
 
-- Proper startup
-- Cross-platform deployment
-- Add input/output args to release, make subsequent runs override the patched ISO
-- Add version postfix to the ISO name
+- Update release docs
 - Pre-release testing and tuning
 
 ### General
@@ -14,6 +11,7 @@
 
 ### Backlog
 
+- Cross-platform deployment
 - Extend controls
 - Extend items to 5
 - Damage scaling

@@ -15,7 +15,6 @@ $toolchain = Get-Content -Raw -LiteralPath $toolchainPath | ConvertFrom-Json
 $manifestRelative = [string]$toolchain.release_manifest
 $manifestPath = [IO.Path]::GetFullPath((Join-Path $repository $manifestRelative))
 $builderPath = Join-Path $PSScriptRoot 'build_release.ps1'
-$settingsPath = [IO.Path]::GetFullPath($paths.files.project_settings)
 $gitHub = (Get-Command gh -CommandType Application -ErrorAction Stop |
     Select-Object -First 1).Path
 
@@ -48,8 +47,7 @@ if (-not (Test-Path -LiteralPath $builderPath -PathType Leaf)) {
 }
 
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
-$settings = Get-Content -Raw -LiteralPath $settingsPath | ConvertFrom-Json
-$productName = [string]$settings.title
+$productName = [string]$manifest.title
 $targetVersion = if ([string]::IsNullOrWhiteSpace($Version)) {
     [string]$manifest.product_version
 }

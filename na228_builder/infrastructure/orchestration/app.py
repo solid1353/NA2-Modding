@@ -12,11 +12,11 @@ from importlib import resources
 from pathlib import Path
 
 from . import jsonc
+from .configuration import validate_product_title
 from typing import Callable, Iterable
 
 
 RELEASE_MANIFEST_NAME = "release_manifest.json"
-SETTINGS_NAME = "game.json"
 REQUIRED_IMAGE_IDS = ("na2",)
 HASH_CHUNK_SIZE = 8 * 1024 * 1024
 ERROR_LOG_NAME = "builder-error.log"
@@ -121,7 +121,7 @@ def _validate_configuration_name(value: str) -> str:
     return value
 
 
-def parse_release_manifest(text: str, *, product_name: str) -> ReleaseManifest:
+def parse_release_manifest(text: str) -> ReleaseManifest:
     try:
         data = json.loads(text)
     except (TypeError, json.JSONDecodeError) as exc:
@@ -183,9 +183,10 @@ def parse_release_manifest(text: str, *, product_name: str) -> ReleaseManifest:
             + ")"
         )
 
-    if not isinstance(product_name, str) or not product_name.strip():
-        raise ReleaseError("Product title must be non-empty text")
-    product_name = product_name.strip()
+    try:
+        product_name = validate_product_title(data.get("title"))
+    except ValueError as exc:
+        raise ReleaseError(str(exc)) from exc
     product_version = _required_text(data, "product_version")
 
     from .release_configuration import validate_layout
@@ -221,16 +222,7 @@ def load_release_manifest() -> ReleaseManifest:
         raise ReleaseError(
             f"Packaged release data is missing: {RELEASE_MANIFEST_NAME}"
         ) from exc
-    settings_path = Path(__file__).resolve().parents[3] / SETTINGS_NAME
-    try:
-        settings = json.loads(settings_path.read_text(encoding="utf-8"))
-    except (FileNotFoundError, OSError, json.JSONDecodeError) as exc:
-        raise ReleaseError(
-            f"Packaged release data is missing or invalid: {SETTINGS_NAME}"
-        ) from exc
-    if not isinstance(settings, dict):
-        raise ReleaseError("Settings root must be an object")
-    return parse_release_manifest(text, product_name=settings.get("title"))
+    return parse_release_manifest(text)
 
 
 def iso_candidates(

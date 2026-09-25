@@ -18,9 +18,9 @@ are in the [build runbook](../docs/runbooks/build.md).
 | `infrastructure/modules/binary_patcher/operations/*.tsv` | Primitive binary operations |
 | `resources/mod_strings.tsv` | Mod-authored localized text |
 | `resources/save_appendix.tsv` | Persistent setting IDs and saved-value encodings |
-| `release_manifest.json` | Release packaging metadata and public configuration layout |
+| `release_manifest.json` | Product title and version, release packaging metadata, and public configuration layout |
 | `../resources/character_data.tsv` | Character identity and native-value reference; not an override input |
-| `../game.json` | Product title, configuration aliases, and launch settings |
+| `../project.json` | Configuration aliases and launch settings |
 
 Release packaging uses the base configuration for defaults. The release manifest
 selects public settings and their names, order, and groups; development

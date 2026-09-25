@@ -56,6 +56,7 @@ class ReleaseAppTests(unittest.TestCase):
 
     def test_manifest_parser_normalizes_and_validates_image_identities(self) -> None:
         data = {
+            "title": "Narutimate Accel v2.28",
             "product_version": "1.0.0",
             "configuration": "builder/configurations/synthetic.jsonc",
             "configuration_name": "config.jsonc",
@@ -70,9 +71,7 @@ class ReleaseAppTests(unittest.TestCase):
             ],
         }
 
-        manifest = parse_release_manifest(
-            json.dumps(data), product_name="Narutimate Accel v2.28"
-        )
+        manifest = parse_release_manifest(json.dumps(data))
 
         self.assertEqual(manifest.images[0].image_id, "na2")
         self.assertEqual(manifest.images[0].sha256, "AB" * 32)
@@ -88,6 +87,7 @@ class ReleaseAppTests(unittest.TestCase):
 
     def test_manifest_parser_rejects_unsafe_product_name(self) -> None:
         data = {
+            "title": "build/Product",
             "product_version": "1.0.0",
             "configuration": "builder/configurations/synthetic.jsonc",
             "configuration_name": "config.jsonc",
@@ -102,7 +102,7 @@ class ReleaseAppTests(unittest.TestCase):
             ],
         }
         with self.assertRaisesRegex(ReleaseError, "executable_name"):
-            parse_release_manifest(json.dumps(data), product_name="build/Product")
+            parse_release_manifest(json.dumps(data))
 
     def test_discovery_is_nonrecursive_case_insensitive_and_hash_pinned(self) -> None:
         na2 = b"clean-na2"

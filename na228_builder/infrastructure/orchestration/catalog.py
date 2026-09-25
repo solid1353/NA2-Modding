@@ -917,6 +917,7 @@ def _load_implementation(
         "payload",
         "string_patch",
         "image_patch",
+        "image_file",
         "modules",
         "startup_fast_forward_frames",
     }
@@ -935,6 +936,18 @@ def _load_implementation(
                 _patch_identifier(reference, f"Patch {patch_id!r}.includes")
             if len(set(includes)) != len(includes):
                 raise ValueError(f"Patch {patch_id!r}.includes contains duplicate references")
+        if "image_file" in patch:
+            image_file = patch["image_file"]
+            label = f"Patch {patch_id!r}.image_file"
+            if not isinstance(image_file, dict):
+                raise ValueError(f"{label} must be an object")
+            _validate_fields(image_file, {"path", "asset", "sha256"}, label,
+                             required={"path", "asset", "sha256"})
+            _relative_path(image_file["path"], f"{label}.path")
+            _relative_path(image_file["asset"], f"{label}.asset")
+            digest = image_file["sha256"]
+            if not isinstance(digest, str) or not re.fullmatch(r"[0-9A-F]{64}", digest):
+                raise ValueError(f"{label}.sha256 must be an uppercase SHA-256")
         if not (set(patch) - {"description"}):
             raise ValueError(f"Patch {patch_id!r} owns no implementation data")
         if "edit" in patch and "edits" in patch:
@@ -2320,6 +2333,18 @@ def selected_image_patches(
     )
 
 
+def selected_image_files(
+    selection: CatalogSelection,
+) -> tuple[tuple[CatalogNode, str, dict[str, object]], ...]:
+    """Return enabled files that must be inserted into the final image."""
+    return tuple(
+        (node, node.patch, selection.patches[node.patch]["image_file"])
+        for node in selection.patch_nodes
+        if node.enabled and node.patch is not None
+        and "image_file" in selection.patches[node.patch]
+    )
+
+
 def selected_string_patches(
     selection: CatalogSelection,
     operation: str,
@@ -2337,6 +2362,11 @@ def selected_string_patches(
 
 def referenced_files(selection: CatalogSelection, repository: Path, feature_id: str) -> tuple[Path, ...]:
     files: set[Path] = set()
+    for patch_id in feature_patch_ids(selection, feature_id):
+        image_file = selection.patches[patch_id].get("image_file")
+        if image_file is not None:
+            files.add(_source_path(repository, image_file["asset"],
+                                   f"patches.{patch_id}.image_file.asset"))
     for edit_id in feature_reference_ids(selection, feature_id, "edits"):
         for member_id, raw in _edit_members(edit_id, selection.edits[edit_id]):
             if "blob_path" in raw:

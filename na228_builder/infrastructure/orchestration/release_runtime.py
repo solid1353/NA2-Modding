@@ -46,10 +46,6 @@ def load_release_configuration(
         release_defaults_path=builder_root / "configurations" / "base.jsonc",
         configuration_layout=manifest.configuration_layout,
     )
-    if configuration.product_title != manifest.product_name:
-        raise RuntimeError(
-            "Packaged product name does not match the product title"
-        )
     return workspace, configuration
 
 

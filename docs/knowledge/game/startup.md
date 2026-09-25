@@ -113,6 +113,33 @@ initial blocking check is separate from the later Continue Save/Load screen.
 The boot-ELF identity and address conversion follow
 [Standard game file identities](files/file_identities.md).
 
+`FUN_001E7E30` loads `logo.ccs` through `FUN_00116DE0` before the
+splash loop. `FUN_001E7EB0` retrieves that loaded container through
+`FUN_001AA450`. The filename pointer is at `0x00603060` and points to
+`0x004049F0`. The root `LOGO.CCS` member occupies 53,973 compressed bytes
+and expands to 921,452 bytes. It contains four 512×512 indexed textures:
+the notice uses 16 colors, while the Bandai, Bandai Namco, and CRIWARE
+textures each use 256 colors.
+
+The resource loader opens the name through `FUN_001BE450` and obtains its
+decompressed size through `FUN_001BE9B0`. The former accepts device paths
+through `FUN_001BE1F0`; the latter looks up size metadata in the mounted
+ROFS tree through `FUN_001BCA00`. A direct-disc file outside that tree therefore
+needs its decompressed size supplied separately before it can use the same
+native CCS decode path.
+
+`FUN_001E00E0` draws the selected splash object's texture pointer at `+0x1C`
+through the resident renderer. It covers coordinates `(0, 0)` to
+`(512, 384)` with vertically reversed texture coordinates spanning
+`1..512`; the object's float at `+0x18` controls opacity. State `7` skips
+drawing. This path does not require the later main-menu resources.
+
+The native solid-rectangle path in `FUN_001DC1A0` calls `FUN_0010D6A0`
+before setting up primitive type `5`. With argument zero, that renderer reset
+clears the manager's bound texture pointer at `+0x128`. A solid rectangle
+drawn after `FUN_001E00E0` therefore needs the same reset to avoid retaining
+the splash texture state.
+
 `FUN_001E0390` constructs four splash objects using, in order,
 `TEX_logo_notice_pss`, `TEX_logo_bn_pss`, `TEX_logo_b_pss`, and
 `TEX_logo_adx_pss`. `FUN_001E0980` advances them. Its caller at `0x001E10A0`

@@ -61,7 +61,7 @@ class ConfigurationTests(unittest.TestCase):
                     "files": {
                         "placeholder": "placeholder",
                         "source_catalog": "games.json",
-                        "project_settings": "game.json",
+                        "project_settings": "project.json",
                     },
                 }
             ),
@@ -224,11 +224,13 @@ class ConfigurationTests(unittest.TestCase):
             json.dumps({"overrides": normalized_selection}, indent=2) + "\n",
             encoding="utf-8",
         )
-        (root / "game.json").write_text(
+        (root / "release_manifest.json").write_text(
+            json.dumps({"title": "Test Product"}),
+            encoding="utf-8",
+        )
+        (root / "project.json").write_text(
             json.dumps(
                 {
-                    "title": "Test Product",
-                    "serial": "TEST-00000",
                     "launch_settings": {
                         "default": {
                             "startup_fast_forward_frames": 321,
@@ -352,7 +354,8 @@ class ConfigurationTests(unittest.TestCase):
             )
             loaded = load_configuration(configuration, root, root)
             resources = set(configuration_resource_files(loaded))
-            self.assertIn((root / "game.json").resolve(), resources)
+            self.assertIn((root / "project.json").resolve(), resources)
+            self.assertIn((root / "release_manifest.json").resolve(), resources)
             self.assertIn((root / "catalog.modcat").resolve(), resources)
             self.assertIn(
                 (root / "patches" / "localization" / "localization.json").resolve(),
@@ -420,7 +423,7 @@ class ConfigurationTests(unittest.TestCase):
                 {"localization": {"description": "Localization"}},
                 {"localization": True},
             )
-            settings_path = root / "game.json"
+            settings_path = root / "project.json"
             settings = json.loads(settings_path.read_text(encoding="utf-8"))
             settings["launch_settings"] = {
                 "default": {
@@ -446,7 +449,7 @@ class ConfigurationTests(unittest.TestCase):
                 {"localization": {"description": "Localization"}},
                 {"localization": True},
             )
-            settings_path = root / "game.json"
+            settings_path = root / "project.json"
             original = json.loads(settings_path.read_text(encoding="utf-8"))
 
             no_aliases = json.loads(json.dumps(original))

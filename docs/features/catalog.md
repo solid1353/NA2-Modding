@@ -138,6 +138,7 @@ on the lowest common container. Internal patches may instead be reached through
 | `edit` or `edits` | One guarded edit or a nonempty semantic group of primitive/fixed-stride table edits; mutually exclusive |
 | `hooks`, `payload` | Runtime injection |
 | `string_patch` | Semantic string transformation |
+| `image_file` | Hash-checked asset inserted as a separate ISO file when the patch is enabled |
 | `modules` | Additional internal executors |
 | `includes` | Nonempty list of reusable patch IDs |
 | `startup_fast_forward_frames` | Additive or override launch-frame metadata |
@@ -152,6 +153,11 @@ references, cycles, and duplicate IDs within one list are invalid. Included
 patches receive no configured value; they implement static behavior or read
 the complete selection through their adapter. They participate in module
 selection, resource hashing, and release assets.
+
+`image_file` declares an ISO `path`, repository-relative `asset`, and uppercase
+SHA-256. Its bytes are included in configuration fingerprints and checked
+before composition. The image assembler inserts the file into verified free
+space and mirrors it in ISO9660 and UDF without resizing existing files.
 
 A declared module's input directory follows its patch ID: `localization.strings`
 resolves to `patches/localization/strings/`, without a separate feature-directory

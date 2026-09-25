@@ -1,10 +1,21 @@
-/* Display a boot-safe timed loading counter through solid GS primitives. */
+/* Draw a standalone boot splash with a timed loading bar. */
 
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
 
 #define SPLASH_UPDATE_ADDRESS 0x001E0980u
+#define SPLASH_LOAD_FILE_ADDRESS 0x00116DE0u
+#define SPLASH_RESOURCE_LOOKUP_ADDRESS 0x001AA450u
+#define SPLASH_TEXTURE_LOOKUP_ADDRESS 0x001A8F00u
+#define SPLASH_NATIVE_DRAW_ADDRESS 0x001E00E0u
+#define RENDER_RESET_ADDRESS 0x0010D6A0u
+#define RESOURCE_METADATA_LOOKUP_ADDRESS 0x001BCA00u
+#define LOGO_PATH_POINTER_ADDRESS 0x00603060u
+#define RESOURCE_METADATA_ROOT_ADDRESS 0x0061EA60u
+#define SPLASH_TEXTURE_NAME_ADDRESS 0x00400DD0u
+#define SPLASH_DECOMPRESSED_SIZE 921452u
+#define RENDER_MANAGER_POINTER_ADDRESS 0x006073D4u
 #define RENDER_CONTEXT_POINTER_ADDRESS 0x0060745Cu
 #define PRIMITIVE_SETUP_ADDRESS 0x001830A0u
 #define COLOR_SETUP_ADDRESS 0x00182A20u
@@ -23,6 +34,7 @@ typedef unsigned int u32;
 
 #define COLOR_WHITE 0xFFFFFFFFu
 #define COLOR_TRACK 0xFF303030u
+#define ROUNDED_BAR_STEPS 32u
 
 #define STARTUP_LOADING_SECTION(name) \
     __attribute__((section(name), noinline))
@@ -30,9 +42,45 @@ typedef unsigned int u32;
 typedef struct StartupLoadingState {
     volatile u32 start_ticks;
     volatile u32 percent;
+    volatile u32 splash_texture;
 } StartupLoadingState;
 
 extern volatile StartupLoadingState startup_loading_state;
+
+static const u8 startup_splash_path[]
+    __attribute__((section(".rodata.startup_loading_splash_path"))) =
+        "CDV:PRG/228SPL.CCS";
+
+static const float startup_loading_cap_profile[16]
+    __attribute__((section(".rodata.startup_loading_cap_profile"))) = {
+        0.5000000f, 0.3260074f, 0.2579385f, 0.2085194f,
+        0.1692811f, 0.1369078f, 0.1096876f, 0.0866014f,
+        0.0669873f, 0.0503908f, 0.0364876f, 0.0250411f,
+        0.0158771f, 0.0088677f, 0.0039216f, 0.0009775f
+    };
+
+STARTUP_LOADING_SECTION(".text.startup_loading_load")
+void startup_loading_load(void)
+{
+    void (*load)(const u8 *, u32) =
+        (void (*)(const u8 *, u32))SPLASH_LOAD_FILE_ADDRESS;
+
+    load(startup_splash_path, 0u);
+}
+
+STARTUP_LOADING_SECTION(".text.startup_loading_gzip_size")
+u32 startup_loading_gzip_size(const u8 *path)
+{
+    u32 (*metadata_lookup)(u32, const u8 *) =
+        (u32 (*)(u32, const u8 *))RESOURCE_METADATA_LOOKUP_ADDRESS;
+    u32 entry;
+
+    if (path == startup_splash_path) {
+        return SPLASH_DECOMPRESSED_SIZE;
+    }
+    entry = metadata_lookup(RESOURCE_METADATA_ROOT_ADDRESS, path);
+    return entry == 0u ? 0u : *(volatile u32 *)(entry + 0x24u);
+}
 
 STARTUP_LOADING_SECTION(".text.startup_loading_hook")
 u32 startup_loading_hook(void *controller)
@@ -83,10 +131,17 @@ static void startup_loading_rect(
     u32 color
 )
 {
+    void (*reset)(void *, u32) =
+        (void (*)(void *, u32))RENDER_RESET_ADDRESS;
     void (*setup)(u32, u32) = (void (*)(u32, u32))PRIMITIVE_SETUP_ADDRESS;
     void (*flush)(void) = (void (*)(void))PRIMITIVE_FLUSH_ADDRESS;
+    void *manager = *(void * volatile *)RENDER_MANAGER_POINTER_ADDRESS;
     volatile u8 *context;
 
+    if (manager == (void *)0) {
+        return;
+    }
+    reset(manager, 0u);
     setup(5u, 0u);
     context = *(volatile u8 **)RENDER_CONTEXT_POINTER_ADDRESS;
     if (context == (volatile u8 *)0) {
@@ -103,79 +158,75 @@ static void startup_loading_rect(
     flush();
 }
 
-STARTUP_LOADING_SECTION(".text.startup_loading_digit_mask")
-static u32 startup_loading_digit_mask(u32 digit)
-{
-    switch (digit) {
-    case 0u: return 0x3Fu;
-    case 1u: return 0x06u;
-    case 2u: return 0x5Bu;
-    case 3u: return 0x4Fu;
-    case 4u: return 0x66u;
-    case 5u: return 0x6Du;
-    case 6u: return 0x7Du;
-    case 7u: return 0x07u;
-    case 8u: return 0x7Fu;
-    default: return 0x6Fu;
-    }
-}
-
-STARTUP_LOADING_SECTION(".text.startup_loading_digit")
-static void startup_loading_digit(
-    float x,
-    float y,
-    u32 digit
+STARTUP_LOADING_SECTION(".text.startup_loading_rounded_rect")
+static void startup_loading_rounded_rect(
+    float left,
+    float top,
+    float right,
+    float bottom,
+    u32 color
 )
 {
-    const float width = 40.0f;
-    const float height = 72.0f;
-    const float thickness = 7.0f;
-    const float middle = y + height * 0.5f;
-    const u32 mask = startup_loading_digit_mask(digit);
+    const float height = bottom - top;
+    const float step = height / (float)ROUNDED_BAR_STEPS;
+    u32 row;
 
-    if ((mask & 0x01u) != 0u)
-        startup_loading_rect(x + thickness, y, x + width - thickness, y + thickness, COLOR_WHITE);
-    if ((mask & 0x02u) != 0u)
-        startup_loading_rect(x + width - thickness, y + thickness, x + width, middle, COLOR_WHITE);
-    if ((mask & 0x04u) != 0u)
-        startup_loading_rect(x + width - thickness, middle, x + width, y + height - thickness, COLOR_WHITE);
-    if ((mask & 0x08u) != 0u)
-        startup_loading_rect(x + thickness, y + height - thickness, x + width - thickness, y + height, COLOR_WHITE);
-    if ((mask & 0x10u) != 0u)
-        startup_loading_rect(x, middle, x + thickness, y + height - thickness, COLOR_WHITE);
-    if ((mask & 0x20u) != 0u)
-        startup_loading_rect(x, y + thickness, x + thickness, middle, COLOR_WHITE);
-    if ((mask & 0x40u) != 0u)
-        startup_loading_rect(x + thickness, middle - thickness * 0.5f, x + width - thickness, middle + thickness * 0.5f, COLOR_WHITE);
-}
+    for (row = 0u; row < ROUNDED_BAR_STEPS; ++row) {
+        u32 edge = row < 16u ? row : 31u - row;
+        float inset = startup_loading_cap_profile[edge] * height;
 
-STARTUP_LOADING_SECTION(".text.startup_loading_percent_sign")
-static void startup_loading_percent_sign(
-    float x,
-    float y
-)
-{
-    u32 step;
-
-    startup_loading_rect(x, y, x + 8.0f, y + 8.0f, COLOR_WHITE);
-    startup_loading_rect(x + 28.0f, y + 52.0f, x + 36.0f, y + 60.0f, COLOR_WHITE);
-    for (step = 0u; step < 6u; ++step) {
-        float dx = (float)step * 5.0f;
-        startup_loading_rect(x + 25.0f - dx, y + 8.0f + dx * 1.6f,
-                             x + 31.0f - dx, y + 14.0f + dx * 1.6f,
-                             COLOR_WHITE);
+        if (right - left > inset * 2.0f) {
+            startup_loading_rect(
+                left + inset,
+                top + (float)row * step,
+                right - inset,
+                row == 31u ? bottom : top + (float)(row + 1u) * step,
+                color
+            );
+        }
     }
 }
 
 STARTUP_LOADING_SECTION(".text.startup_loading_draw")
 void startup_loading_draw(void *unused_sprite)
 {
+    u32 (*lookup_resource)(const u8 *) =
+        (u32 (*)(const u8 *))SPLASH_RESOURCE_LOOKUP_ADDRESS;
+    u32 (*lookup_texture)(u32, const u8 *, u32) =
+        (u32 (*)(u32, const u8 *, u32))SPLASH_TEXTURE_LOOKUP_ADDRESS;
+    void (*draw_splash)(void *) =
+        (void (*)(void *))SPLASH_NATIVE_DRAW_ADDRESS;
+    struct {
+        u32 flags;
+        u32 state;
+        u8 unused[16];
+        float opacity;
+        u32 texture;
+    } splash;
     u32 now;
     u32 start_ticks;
     u32 elapsed_ticks;
     u32 percent;
 
     (void)unused_sprite;
+    if (startup_loading_state.splash_texture == 0u) {
+        u32 resource = lookup_resource(
+            *(const u8 * volatile *)LOGO_PATH_POINTER_ADDRESS
+        );
+        if (resource != 0u) {
+            startup_loading_state.splash_texture = lookup_texture(
+                resource, (const u8 *)SPLASH_TEXTURE_NAME_ADDRESS, 0u
+            );
+        }
+    }
+    if (startup_loading_state.splash_texture != 0u) {
+        splash.flags = 0u;
+        splash.state = 0u;
+        splash.opacity = 1.0f;
+        splash.texture = startup_loading_state.splash_texture;
+        draw_splash(&splash);
+    }
+
     percent = startup_loading_state.percent;
     if (percent < MAX_DISPLAY_PERCENT) {
         __asm__ volatile("mfc0\t%0, $9\n" : "=r"(now));
@@ -195,18 +246,22 @@ void startup_loading_draw(void *unused_sprite)
         startup_loading_state.percent = percent;
     }
 
-    startup_loading_digit(196.0f, 142.0f, percent / 10u);
-    startup_loading_digit(246.0f, 142.0f, percent % 10u);
-    startup_loading_percent_sign(298.0f, 148.0f);
+    {
+        /* Edit these three values to position and size the bar. */
+        const float top = 242.0f;
+        const float height = 9.0f;
+        const float width = 95.0f;
 
-    startup_loading_rect(96.0f, 260.0f, 416.0f, 272.0f, COLOR_TRACK);
-    if (percent != 0u) {
-        startup_loading_rect(
-            96.0f,
-            260.0f,
-            96.0f + (float)percent * 3.2f,
-            272.0f,
-            COLOR_WHITE
+        const float left = 256.0f - width * 0.5f;
+        const float bottom = top + height;
+
+        startup_loading_rounded_rect(
+            left, top, left + width, bottom, COLOR_TRACK
         );
+        if (percent != 0u) {
+            const float right = left + width * (float)percent / 100.0f;
+
+            startup_loading_rounded_rect(left, top, right, bottom, COLOR_WHITE);
+        }
     }
 }

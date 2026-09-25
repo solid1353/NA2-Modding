@@ -290,8 +290,6 @@ function Resolve-Na2PathManifest {
                 ConvertFrom-Json
             $catalog = [pscustomobject][ordered]@{
                 sources = $sourceCatalog.sources
-                title = $projectSettings.title
-                serial = $projectSettings.serial
             }
         }
         else {

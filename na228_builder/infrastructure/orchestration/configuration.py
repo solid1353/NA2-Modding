@@ -59,6 +59,7 @@ class BuildConfiguration:
     definition_path: Path
     configuration_id: str
     settings_path: Path
+    release_manifest_path: Path
     product_title: str
     output_boot_path: str
     targets_path: Path
@@ -77,9 +78,15 @@ def _settings_object(value: object, keys: set[str], label: str) -> dict[str, obj
     return value
 
 
-def _settings_text(value: object, label: str) -> str:
-    if not isinstance(value, str) or not value:
-        raise ValueError(f"Settings {label} must be non-empty text")
+def validate_product_title(value: object) -> str:
+    if not isinstance(value, str) or not value.strip():
+        raise ValueError("Release manifest title must be non-empty text")
+    if "\0" in value:
+        raise ValueError("Product title contains an embedded NUL")
+    try:
+        value.encode("cp1252")
+    except UnicodeEncodeError as exc:
+        raise ValueError("Product title must be CP1252") from exc
     return value
 
 
@@ -112,7 +119,7 @@ def _validate_configurations(value: object) -> None:
         aliases.add(folded)
 
 
-def _read_settings(path: Path) -> tuple[str, tuple[int, ...]]:
+def _read_settings(path: Path) -> tuple[int, ...]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
@@ -120,8 +127,6 @@ def _read_settings(path: Path) -> tuple[str, tuple[int, ...]]:
     settings = _settings_object(
         data,
         {
-            "title",
-            "serial",
             "launch_settings",
             "configurations",
         },
@@ -181,8 +186,7 @@ def _read_settings(path: Path) -> tuple[str, tuple[int, ...]]:
             )
         startup_frames.append(frames)
     _validate_configurations(settings["configurations"])
-    product_title = _settings_text(settings["title"], "title")
-    return product_title, tuple(startup_frames)
+    return tuple(startup_frames)
 
 
 def _tree_digest(
@@ -254,19 +258,6 @@ def module_content_sha256(path: Path, module_type: str) -> str:
         raise FileNotFoundError(path)
     files = _module_content_files(path, module_type)
     return _tree_digest(path, files)
-
-
-def _validated_settings(
-    settings_path: Path,
-) -> tuple[str, tuple[int, ...]]:
-    product_title, startup_frames = _read_settings(settings_path)
-    if "\0" in product_title:
-        raise ValueError("Product title contains an embedded NUL")
-    try:
-        product_title.encode("cp1252")
-    except UnicodeEncodeError as exc:
-        raise ValueError("Product title must be CP1252") from exc
-    return product_title, startup_frames
 
 
 def _resolved_roots(
@@ -436,7 +427,12 @@ def _load_configuration(
             paths.path("resources", "character_data.tsv"),
         )
     settings_path = paths.file("project_settings").resolve()
-    product_title, startup_frames = _validated_settings(settings_path)
+    startup_frames = _read_settings(settings_path)
+    release_manifest_path = builder_root / "release_manifest.json"
+    manifest = json.loads(release_manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict):
+        raise ValueError("Release manifest root must be an object")
+    product_title = validate_product_title(manifest.get("title"))
     image_patches = catalog_module.selected_image_patches(selection)
     if len(image_patches) > 1:
         raise ValueError("Configuration selects multiple boot-path replacements")
@@ -553,6 +549,7 @@ def _load_configuration(
         definition_path=definition_path,
         configuration_id=configuration_id,
         settings_path=settings_path,
+        release_manifest_path=release_manifest_path,
         product_title=product_title,
         output_boot_path=output_boot_path,
         targets_path=targets_path,
@@ -576,6 +573,7 @@ def configuration_resource_files(
     files = [
         configuration.definition_path,
         configuration.settings_path,
+        configuration.release_manifest_path,
         *configuration.selection.catalog_files,
         *configuration.selection.patch_files,
         configuration.targets_path,

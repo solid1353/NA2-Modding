@@ -25,7 +25,6 @@ GENERATED_SUFFIXES = {".pyc", ".pyo"}
 NON_COMPOSING_BUILDER_FILES = {
     "infrastructure/orchestration/app.py",
     "infrastructure/orchestration/build_preflight.py",
-    "release_manifest.json",
     "infrastructure/orchestration/release_runtime.py",
     "infrastructure/orchestration/release_configuration.py",
 }
@@ -142,7 +141,12 @@ def configuration_resources_entry(
             raise ValueError(
                 f"Configuration resource is outside the repository: {path}"
             ) from error
-        if path.suffix.casefold() == ".md":
+        if path.resolve() == configuration.release_manifest_path.resolve():
+            title_data = canonical_json({"title": configuration.product_title})
+            size = len(title_data)
+            content_hash = bytes_sha256(title_data)
+            total_size += size
+        elif path.suffix.casefold() == ".md":
             size = 0
             content_hash = "STRUCTURAL-PRESENCE-ONLY"
         else:

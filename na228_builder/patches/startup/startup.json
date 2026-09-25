@@ -145,8 +145,30 @@
     }
   },
   "startup.loading_screen": {
-    "description": "Replace the boot splashes with a large primitive percentage and progress bar paced across a 6.5-second elapsed-time estimate while the original startup loaders run.",
+    "description": "Draw the standalone NA2.28 artwork and a short white loading bar while the original startup loaders run.",
+    "image_file": {
+      "path": "PRG/228SPL.CCS",
+      "asset": "na228_builder/patches/startup/loading_screen/228SPL.ccs.gz",
+      "sha256": "78A2DCACA318FD11ED3A81F2F20E1A0728643C16126230B68BB34C202AE7CA13"
+    },
     "hooks": {
+      "load_standalone_splash": {
+        "description": "Load the standalone CCS through the native boot-splash resource path.",
+        "target_id": "na2_elf",
+        "offset": "0xE10F0",
+        "expected_hex": "8C9F070C",
+        "symbol": "load",
+        "encoding": "jal26"
+      },
+      "supply_standalone_splash_size": {
+        "description": "Give the direct-disc splash CCS its decompressed size while retaining native metadata for other resources.",
+        "target_id": "na2_elf",
+        "offset": "0xBEAB0",
+        "expected_hex": "F0FFBD270000BFFF",
+        "replacement_hex": "0000000800000000",
+        "symbol": "gzip_size",
+        "encoding": "j26"
+      },
       "initialize_hold_splash_controller_s_first": {
         "description": "Initialize and hold the splash controller's first boot-safe draw slot while preserving the startup loop's real loader checks.",
         "target_id": "na2_elf",
@@ -155,8 +177,8 @@
         "symbol": "hook",
         "encoding": "jal26"
       },
-      "replace_visible_splash_sprite_draw_independent": {
-        "description": "Replace the visible splash sprite draw with independent boot-safe primitives for a percentage and progress bar paced across a 6.5-second elapsed-time estimate.",
+      "replace_visible_splash_sprite_draw": {
+        "description": "Draw the standalone splash and a short white loading bar paced across a 6.5-second elapsed-time estimate.",
         "target_id": "na2_elf",
         "offset": "0xE11E0",
         "expected_hex": "3880070C",
@@ -173,11 +195,20 @@
           "startup_loading_state": "state"
         },
         "fragments": {
+          "load": {
+            "object": "startup.loading.screen.text.startup.loading.load"
+          },
+          "gzip_size": {
+            "object": "startup.loading.screen.text.startup.loading.gzip.size"
+          },
+          "splash_path": {
+            "object": "startup.loading.screen.rodata.startup.loading.splash.path"
+          },
+          "cap_profile": {
+            "object": "startup.loading.screen.rodata.startup.loading.cap.profile"
+          },
           "hook": {
             "object": "startup.loading.screen.text.startup.loading.hook"
-          },
-          "constants": {
-            "object": "startup.loading.screen.rodata"
           },
           "vertex": {
             "object": "startup.loading.screen.text.startup.loading.vertex"
@@ -185,17 +216,11 @@
           "rect": {
             "object": "startup.loading.screen.text.startup.loading.rect"
           },
+          "rounded_rect": {
+            "object": "startup.loading.screen.text.startup.loading.rounded.rect"
+          },
           "color": {
             "object": "startup.loading.screen.text.startup.loading.color"
-          },
-          "digit_mask": {
-            "object": "startup.loading.screen.text.startup.loading.digit.mask"
-          },
-          "digit": {
-            "object": "startup.loading.screen.text.startup.loading.digit"
-          },
-          "percent_sign": {
-            "object": "startup.loading.screen.text.startup.loading.percent.sign"
           },
           "draw": {
             "object": "startup.loading.screen.text.startup.loading.draw"
@@ -205,7 +230,7 @@
       "state": {
         "kind": "data",
         "alignment": 4,
-        "value": "0000000000000000"
+        "value": "000000000000000000000000"
       }
     }
   }

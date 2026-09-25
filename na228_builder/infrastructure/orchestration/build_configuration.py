@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -714,6 +715,24 @@ def compose_configuration_candidate(
     owners: dict[str, str] = {}
     insertions: dict[str, bytes] = {}
     insertion_owners: dict[str, str] = {}
+    for _node, patch_id, image_file in catalog_module.selected_image_files(
+        configuration.selection
+    ):
+        path = normalize_iso_path(image_file["path"])
+        asset = (
+            configuration.selection.catalog_path.parent.parent / image_file["asset"]
+        ).resolve()
+        payload = asset.read_bytes()
+        digest = hashlib.sha256(payload).hexdigest().upper()
+        if digest != image_file["sha256"]:
+            raise ValueError(
+                f"{patch_id}: image file {asset} SHA-256 {digest} "
+                f"does not match {image_file['sha256']}"
+            )
+        if path in insertions:
+            raise ValueError(f"Duplicate image insertion: {path}")
+        insertions[path] = payload
+        insertion_owners[path] = patch_id
     configuration_results, payload_result = apply_configuration_modules(
         configuration,
         source=source,

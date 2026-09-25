@@ -16,7 +16,7 @@
     "pcsx2_input_recordings": "@pcsx2_files/input_recordings"
   },
   "files": {
-    "project_settings": "game.json",
+    "project_settings": "project.json",
     "practice_movesets": "launch_profiles/practice/movesets.tsv",
     "publish_release_command": "@scripts/release/publish_release.ps1"
   }

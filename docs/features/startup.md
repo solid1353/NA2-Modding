@@ -2,23 +2,35 @@
 
 ## Loading screen and startup route
 
-The startup loading patch replaces the four splash screens with a boot-safe
-loading presentation while preserving the two native startup-loader checks.
+The startup loading patch replaces the four splash screens with the NA2.28
+artwork and a boot-safe loading presentation while preserving the two native
+startup-loader checks.
+The artwork is derived from `assets/artwork/splash.png` into
+`@builder/patches/startup/loading_screen/228SPL.ccs.gz` by
+`@builder/patches/startup/loading_screen/generate_splash.py`. The builder verifies the asset's
+hash and inserts it as `PRG/228SPL.CCS` without changing `DATA.CVM` or the
+original `LOGO.CCS`. The 4:3 source is encoded as a 512×512 texture for the
+native 512×384 draw area, preserving its appearance on screen.
+
+At boot, the patch loads that inserted file through the native CCS loader. Its
+internal resource name remains `logo`, so the native splash controller can find
+it without changing the original logo path. A resident metadata hook supplies
+its decompressed size; all other CCS requests keep native metadata lookup. The
+resident draw hook submits the custom texture first, then resets the
+renderer and draws a dark track with a white loading fill and rounded ends below
+the NA2.28 title.
 The startup runtime-injector hook replaces the splash update call at boot-ELF virtual
 address `0x001E10A0` (file offset `0xE11A0`). It initializes the existing
 boot-safe splash controller, holds its first draw slot active, and returns
 splash completion to the unchanged startup loop.
 
-A second guarded hook replaces the splash sprite draw call at virtual address
-`0x001E10E0` (file offset `0xE11E0`). It suppresses the original logo sprite
-and uses the same boot-safe solid-primitive renderer to draw a large two-digit
-percentage, percent sign, and progress bar. Each rectangle is submitted as an
-independent primitive so separate digit segments cannot be joined by the
-renderer's triangle strip. The counter reads the EE Count register and maps
-elapsed emulated time across the observed 6-7-second visible interval, rather
-than treating repeated startup-poll iterations as displayed frames. It caps at
-`99%`; the real loader flags, not the displayed estimate, determine when
-startup may continue.
+A guarded hook replaces the splash sprite draw call at virtual address
+`0x001E10E0` (file offset `0xE11E0`). It draws the inserted artwork through
+the native splash renderer and solid primitives for the loading bar.
+The bar reads the EE Count register and maps elapsed emulated time across the
+observed 6-7-second visible interval, rather than treating repeated
+startup-poll iterations as displayed frames. Its fill caps at 99%; the real
+loader flags, not the displayed estimate, determine when startup may continue.
 
 After the required startup loaders complete, the common file-backed edit writes
 state `3` instead of state `2` at virtual address `0x001E11CC` (file offset

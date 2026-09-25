@@ -11,7 +11,7 @@ na228 build [config] [-f]
 
 Every top-level JSON under `configurations/` is discovered automatically. A
 configuration without an alias uses its filename stem as its command selector.
-Root `game.json` assigns `b`, `j`, `t`, and `e` to the base, Japanese, test, and
+Root `project.json` assigns `b`, `j`, `t`, and `e` to the base, Japanese, test, and
 E2E configurations; those configurations are selected only by their aliases.
 `na228 <config>` launches the newest cached build. Prefixing the selector with
 `b` builds or reuses it before launch, and `na228 build <config>` builds without
@@ -79,6 +79,8 @@ referenced assets and sources, and selected localization TSV inputs.
 Release packaging inventories the same
 closure for every selectable catalog node, including disabled nodes.
 Documentation is not an executable builder input.
+The release manifest's `title` is included in the ordinary build fingerprint;
+its release version and packaging fields do not affect that fingerprint.
 
 Preflight fingerprints the canonical NA2 source ISO, ISO-composing Python code,
 the exact selected configuration resources, product/path configuration, active

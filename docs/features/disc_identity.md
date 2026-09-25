@@ -54,8 +54,9 @@ NUL-terminated and zero-padded through the slot. The base configuration enables
 it; setting it to `false` leaves the original title intact.
 
 The English [string localization](localization/translation_importer.md) replaces
-the imported game title with root `game.json`'s `title`. It is selected by
-`features.localization: "en"` and is independent of both memory-card settings.
+the imported game title with `na228_builder/release_manifest.json`'s `title`.
+It is selected by `features.localization: "en"` and is independent of both
+memory-card settings.
 
 The full-width title form follows the official NUN5 memory-card convention. A
 half-width ASCII test copied into a new save correctly but rendered as a blank

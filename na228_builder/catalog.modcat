@@ -48,7 +48,7 @@
         patch: "startup.faster_loading",
       },
       loading_screen: setting {
-        description: "Replace the startup logos with a percentage and progress bar. Progress is estimated; the game continues when loading finishes.",
+        description: "Show NA2.28 artwork with a short white loading bar beneath its title. The bar estimates progress; the game continues when loading finishes.",
         patch: "startup.loading_screen",
       },
     },

@@ -95,10 +95,11 @@ validated production ZIP and its SHA-256 sidecar to GitHub.
 
 ## Release manifest
 
-`game.json` owns the product name. `na228_builder/release_manifest.json`
-owns the version, base configuration path, external configuration filename,
-public configuration layout, and supported source identities. The base
-configuration path is relative to the manifest directory. The executable name
+`na228_builder/release_manifest.json` owns the product `title`,
+`product_version`, base configuration path, external configuration filename,
+public configuration layout, and supported source identities. Ordinary builds
+read the same `title` for localized game text. The base configuration path is
+relative to the manifest directory. The executable name
 is `<product>_<version>.exe`, and the output image is `<product>.iso`.
 The pinned source identities are:
 
@@ -137,11 +138,6 @@ without a release resumes publication.
   by the normal CLI and the release adapter.
 - `@scripts/release/build_release.ps1` owns packaging;
   `@scripts/release/publish_release.ps1` publishes that exact package.
-
-The ordinary `na228`, `na228 b`, and `na228 m` workflows select the
-configuration owned by their root `game.json` build target. Cache builds use
-their explicitly selected configuration. Release presentation is applied only
-when exporting or loading a public configuration.
 
 ## Configuration layout
 

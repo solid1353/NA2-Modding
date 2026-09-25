@@ -47,7 +47,7 @@ class BuildPreflightTests(unittest.TestCase):
                         "pcsx2_memory_cards": "@pcsx2_files/memory_cards",
                     },
                     "files": {
-                        "project_settings": "game.json",
+                        "project_settings": "project.json",
                         "source_catalog": "games.json",
                     },
                 }
@@ -133,11 +133,13 @@ class BuildPreflightTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        (workspace / "game.json").write_text(
+        (builder / "release_manifest.json").write_text(
+            json.dumps({"title": "Test Product"}),
+            encoding="utf-8",
+        )
+        (workspace / "project.json").write_text(
             json.dumps(
                 {
-                    "title": "Test Product",
-                    "serial": "TEST-00000",
                     "launch_settings": {
                         "default": {
                             "startup_fast_forward_frames": 321,
@@ -366,9 +368,9 @@ class BuildPreflightTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             paths = self.create_workspace(Path(directory))
             initial = state_fingerprint(self.state(paths))
-            settings = paths["workspace"] / "game.json"
+            settings = paths["workspace"] / "project.json"
             document = json.loads(settings.read_text(encoding="utf-8"))
-            document["title"] = "Changed Product"
+            document["launch_settings"]["default"]["startup_fast_forward_frames"] = 322
             settings.write_text(json.dumps(document), encoding="utf-8")
             self.assertNotEqual(initial, state_fingerprint(self.state(paths)))
 

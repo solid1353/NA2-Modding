@@ -317,8 +317,6 @@ def _load_paths(
             )
             catalog = {
                 "sources": source_catalog.get("sources"),
-                "title": project_settings.get("title"),
-                "serial": project_settings.get("serial"),
             }
         else:
             catalog = project_settings

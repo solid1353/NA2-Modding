@@ -149,7 +149,7 @@
     "image_file": {
       "path": "PRG/228SPL.CCS",
       "asset": "na228_builder/patches/startup/loading_screen/228SPL.ccs.gz",
-      "sha256": "78A2DCACA318FD11ED3A81F2F20E1A0728643C16126230B68BB34C202AE7CA13"
+      "sha256": "7C9C2D1191B79B520A024F6CF752FB0D6181A8D5AE183F79D7A4E50CF312075C"
     },
     "hooks": {
       "load_standalone_splash": {

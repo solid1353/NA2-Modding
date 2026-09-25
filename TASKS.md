@@ -2,8 +2,9 @@
 
 ### In Progress
 
-- Update release docs
-- Pre-release testing and tuning
+- Polish docs
+- Tune sub values
+- Release version 1.0
 
 ### General
 

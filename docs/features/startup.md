@@ -6,9 +6,9 @@ The startup loading patch replaces the four splash screens with the NA2.28
 artwork and a boot-safe loading presentation while preserving the two native
 startup-loader checks.
 The artwork is derived from `assets/artwork/splash.png` into
-`@builder/patches/startup/loading_screen/228SPL.ccs.gz` by
+`@builder/patches/startup/loading_screen/228_SPL.ccs.gz` by
 `@builder/patches/startup/loading_screen/generate_splash.py`. The builder verifies the asset's
-hash and inserts it as `PRG/228SPL.CCS` without changing `DATA.CVM` or the
+hash and inserts it as `PRG/228_SPL.CCS` without changing `DATA.CVM` or the
 original `LOGO.CCS`. The 4:3 source is sampled at 1024×768 and packed into
 the three existing 512×512, 256-color texture slots as twelve 256×256 tiles.
 The decompressed CCS size stays unchanged.

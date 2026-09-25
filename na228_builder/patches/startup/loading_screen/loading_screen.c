@@ -53,7 +53,7 @@ extern volatile StartupLoadingState startup_loading_state;
 
 static const u8 startup_splash_path[]
     __attribute__((section(".rodata.startup_loading_splash_path"))) =
-        "CDV:PRG/228SPL.CCS";
+        "CDV:PRG/228_SPL.CCS";
 
 static const float startup_loading_cap_profile[16]
     __attribute__((section(".rodata.startup_loading_cap_profile"))) = {

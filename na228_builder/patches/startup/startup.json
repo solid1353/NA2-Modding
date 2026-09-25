@@ -147,8 +147,8 @@
   "startup.loading_screen": {
     "description": "Draw the standalone NA2.28 artwork and a short white loading bar while the original startup loaders run.",
     "image_file": {
-      "path": "PRG/228SPL.CCS",
-      "asset": "na228_builder/patches/startup/loading_screen/228SPL.ccs.gz",
+      "path": "PRG/228_SPL.CCS",
+      "asset": "na228_builder/patches/startup/loading_screen/228_SPL.ccs.gz",
       "sha256": "91A6BFB7FB0DE58A36813705373C83A12D3338D755FB5DE1E8340D6D8283C7D3"
     },
     "hooks": {

@@ -19,7 +19,7 @@ TARGET_TEXTURES = (
     "d\\logo\\tex\\logo_b_pss.bmp",
     "x\\logo\\logo_adx_pss.bmp",
 )
-OUTPUT_PATH = Path("na228_builder/patches/startup/loading_screen/228SPL.ccs.gz")
+OUTPUT_PATH = Path("na228_builder/patches/startup/loading_screen/228_SPL.ccs.gz")
 
 
 def main() -> None:

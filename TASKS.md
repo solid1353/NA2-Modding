@@ -2,7 +2,7 @@
 
 ### In Progress
 
-- UJ damage and 2nd mode transition kill bug
+- UJ damage
 - Save translations alignment
 - Pre-release testing and tuning
 

@@ -2,6 +2,7 @@
 
 ### In Progress
 
+- Fix classic control scheme
 - Polish docs
 - Tune sub values
 - Release version 1.0

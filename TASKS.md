@@ -3,6 +3,7 @@
 ### In Progress
 
 - Proper startup
+- Cross-platform deployment
 - Add input/output args to release, make subsequent runs override the patched ISO
 - Add version postfix to the ISO name
 - Pre-release testing and tuning
@@ -13,10 +14,11 @@
 
 ### Backlog
 
+- Extend controls
 - Extend items to 5
 - Damage scaling
+- No-rebound meter or whatever
 - Proper widescreen
-- Cross-platform deployment
-- Upscaled texture pack for pcsx2
 - Port stages/characters
+- Upscaled texture pack for pcsx2
 - 60 FPS

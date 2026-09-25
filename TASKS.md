@@ -2,6 +2,7 @@
 
 ### In Progress
 
+- Add ISO path to release EXE
 - Pre-release testing and tuning
 
 ### General

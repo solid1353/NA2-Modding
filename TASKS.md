@@ -2,7 +2,6 @@
 
 ### In Progress
 
-- Save translations alignment
 - Pre-release testing and tuning
 
 ### General

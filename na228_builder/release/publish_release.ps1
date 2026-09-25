@@ -7,7 +7,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-. (Join-Path $PSScriptRoot '..\lib\paths.ps1')
+. (Join-Path $PSScriptRoot '..\..\scripts\lib\paths.ps1')
 $paths = Get-Na2LocalPaths -AllowMissing
 $repository = [IO.Path]::GetFullPath($paths.repository)
 $toolchainPath = Join-Path $PSScriptRoot 'toolchain.json'

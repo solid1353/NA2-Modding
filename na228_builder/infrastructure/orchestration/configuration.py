@@ -428,7 +428,7 @@ def _load_configuration(
         )
     settings_path = paths.file("project_settings").resolve()
     startup_frames = _read_settings(settings_path)
-    release_manifest_path = builder_root / "release_manifest.json"
+    release_manifest_path = builder_root / "release" / "release_manifest.json"
     manifest = json.loads(release_manifest_path.read_text(encoding="utf-8"))
     if not isinstance(manifest, dict):
         raise ValueError("Release manifest root must be an object")

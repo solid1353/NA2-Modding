@@ -116,9 +116,9 @@ partially re-enabling a container leaves unspecified children disabled.
 ## Release configuration
 
 The catalog defines settings independently of their release presentation.
-`na228_builder/release_manifest.json` maps public configuration names and groups
-to catalog paths. The generated public reference retains the mapped settings'
-types, descriptions, constraints, and unions, without patch bindings.
+`na228_builder/release/release_manifest.json` maps public configuration names
+and groups to catalog paths. The generated public reference retains the mapped
+settings' types, descriptions, constraints, and unions, without patch bindings.
 The release loader validates public values against that reference's embedded
 schema, maps edits back to internal paths, and validates the complete config.
 

@@ -1,7 +1,7 @@
 # Source extraction runbook
 
-This runbook owns the canonical extraction layout and procedures for original
-source media. Source protection remains canonical in
+This runbook gives the NA2 invocation of Workshop's shared source extraction
+tools. Source protection remains canonical in
 [`AGENTS.md`](../../AGENTS.md#file-and-folder-management).
 
 ## Layout
@@ -30,7 +30,9 @@ Resolve the
 and use:
 
 ```powershell
-scripts/project/extract_source_iso.ps1 `
+. scripts/lib/paths.ps1
+$paths = Get-Na2Paths
+& (Join-Path $paths.media_scripts 'extract_source_iso.ps1') `
   -IsoPath <path> `
   -TaskTitle <exact chat title>
 ```
@@ -46,7 +48,7 @@ Recheck an existing tree with:
 ```powershell
 & .\scripts\lib\run_python.ps1 `
   -PackageSet builder `
-  -Script scripts/project/verify_source_extraction.py `
+  -Script (Join-Path $paths.media_scripts 'verify_source_extraction.py') `
   -NoBytecode `
   -ArgumentList @(
     '--iso', '<original-iso>',
@@ -61,7 +63,7 @@ Restore Windows read-only attributes for one explicit active ISO extraction
 with:
 
 ```powershell
-scripts/project/set_source_readonly.ps1 -SourceDir <tree>
+& (Join-Path $paths.media_scripts 'set_source_readonly.ps1') -SourceDir <tree>
 ```
 
 The command refuses the whole source root and `@source/__old/`.

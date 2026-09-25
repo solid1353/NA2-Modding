@@ -105,7 +105,7 @@ def _validate_executable_name(value: str) -> str:
 def _validate_configuration(value: str) -> str:
     path = Path(value)
     if path.is_absolute() or ".." in path.parts:
-        raise ReleaseError("Release configuration must be relative to the manifest directory")
+        raise ReleaseError("Release configuration must be relative to the builder root")
     return value.replace("\\", "/")
 
 
@@ -217,7 +217,9 @@ def parse_release_manifest(text: str) -> ReleaseManifest:
 
 def load_release_manifest() -> ReleaseManifest:
     try:
-        resource = resources.files("na228_builder").joinpath(RELEASE_MANIFEST_NAME)
+        resource = resources.files("na228_builder").joinpath(
+            "release", RELEASE_MANIFEST_NAME
+        )
         text = resource.read_text(encoding="utf-8")
     except (FileNotFoundError, ModuleNotFoundError, OSError) as exc:
         raise ReleaseError(

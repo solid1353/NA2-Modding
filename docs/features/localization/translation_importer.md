@@ -26,7 +26,7 @@ overrides, and optional pointer inventory. Normal builds import only
 `mappings.tsv`. The `localization.strings` patch in
 `patches/localization/localization.json` also replaces the imported
 `Naruto Shippuden: Ultimate Ninja 5` title with
-`na228_builder/release_manifest.json`'s `title`.
+`na228_builder/release/release_manifest.json`'s `title`.
 Its guards require nine mappings and eleven occurrences. `string_patcher` applies
 this operation before deciding inline or linked placement. It is independent
 of the memory-card title and save-namespace settings.

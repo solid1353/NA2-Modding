@@ -1132,12 +1132,7 @@ The minimal implementation touches these existing ownership points:
 | Runtime-selectable battle support | `@builder/patches/settings/ingame/battle_mechanics/support/battle_support.c` |
 | Control Settings ownership and composition tests | `tests/na228_builder/test_control_settings.py` |
 | Gauge builder tests | `tests/na228_builder/test_substitution_gauge.py` |
-| End-user explanation | `@scripts/release/README.md` |
-
-The release README and catalog descriptions state the observable
-consequences: one setting selects Chakra, Gauge, or Free resource behavior;
-Gauge uses the resolved normalized `character_overrides.tsv` cost for spending
-and the red threshold; and only Gauge draws the independent bar.
+| Packaged user instructions | `@builder/release/package_readme.md` |
 
 ## Remaining runtime validation
 

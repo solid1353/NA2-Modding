@@ -2,9 +2,9 @@
   "platform": "win32",
   "architecture": "64bit",
   "python_version": "3.14.6",
-  "requirements": "scripts/release/requirements.txt",
+  "requirements": "na228_builder/release/requirements.txt",
   "entry_point": "na228_builder/infrastructure/orchestration/app.py",
-  "release_manifest": "na228_builder/release_manifest.json",
+  "release_manifest": "na228_builder/release/release_manifest.json",
   "icon": "assets/artwork/icon.ico",
-  "instructions": "scripts/release/README.md"
+  "instructions": "na228_builder/release/package_readme.md"
 }

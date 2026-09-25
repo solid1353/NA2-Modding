@@ -18,21 +18,14 @@ exact agent procedures belong in the linked runbooks.
   `@repository/launch_profiles/practice/movesets.tsv` case ID into game-specific
   Practice PNACH files and process-local inline bootstrap values for the normal
   launcher.
-- `@release/build_release.ps1` and `@release/publish_release.ps1`: release
-  candidate construction and publication; see
-  [`../docs/runbooks/release.md`](../docs/runbooks/release.md).
 
 ## Responsibility directories
 
 - `lib/`: NA2 path/configuration loading, Python runtime/package resolution,
   and build/run logging.
 - `na228/`: NA2 command implementation, build identity, and task path handling.
-- `project/`: canonical source extraction, extraction verification, and
-  configured read-only maintenance. The procedure is in
-  [`../docs/runbooks/source-extraction.md`](../docs/runbooks/source-extraction.md).
 - `injection/`: direct-PINE candidate build/apply tooling. Agent use is defined
   by [runtime validation](../AGENTS.md#runtime-validation).
-- `@release/`: self-contained release construction and publication.
 - `research/menu_input/`, `research/ee_memory_map/`,
   `research/localization/`, and `research/ui_translation/`: reusable preserved
   analysis tools owned by those technical areas.
@@ -41,13 +34,17 @@ Shared infrastructure is not duplicated here:
 
 - `@pcsx2_scripts/`: Workshop PCSX2 launch, worker copying, PINE, input-profile,
   savestate, disc-identity, and CRC utilities.
-- `@media_scripts/`: Workshop ISO, AFS, and encrypted-CVM extraction tools.
-- `@ghidra_scripts/`: shared headless-Ghidra Java scripts and runtime
-  setup.
+- `@media_scripts/`: Workshop ISO, AFS, and encrypted-CVM extraction,
+  recursive source extraction, verification, and source read-only tooling.
+  The NA2 procedure is in
+  [`../docs/runbooks/source-extraction.md`](../docs/runbooks/source-extraction.md).
+- `@ghidra_scripts/`: shared cross-game import, export, manifest, read-only,
+  Java scripts, and runtime setup.
 
 ## Build and validation ownership
 
-- `@builder/` owns configuration composition and verified image assembly;
+- `@builder/` owns configuration composition, verified image assembly, and
+  release packaging and publication;
   see [`@builder/README.md`](../na228_builder/README.md).
 - `@scripts/na228/` owns the user-command implementation and cached builds;
   see the [build runbook](../docs/runbooks/build.md).

@@ -72,18 +72,18 @@ catalog, restores hidden defaults, and validates the complete configuration.
 The sole developer and CI entry point is:
 
 ```powershell
-& scripts/release/build_release.ps1
+& na228_builder/release/build_release.ps1
 ```
 
 A production build requires a clean Git tree. For local validation of
 uncommitted release work:
 
 ```powershell
-& scripts/release/build_release.ps1 -Development
+& na228_builder/release/build_release.ps1 -Development
 ```
 
-The toolchain is pinned by `@scripts/release/toolchain.json` and
-`@scripts/release/requirements.txt`. The builder creates an isolated virtual
+The toolchain is pinned by `@builder/release/toolchain.json` and
+`@builder/release/requirements.txt`. The builder creates an isolated virtual
 environment in a temporary `@release/.build-*` directory, runs the release
 application and packaged-runtime tests, inventories the full definition
 resource closure, builds a precompiled object for each injection-owned runtime
@@ -97,12 +97,12 @@ validated production ZIP and its SHA-256 sidecar to GitHub.
 
 ## Release manifest
 
-`na228_builder/release_manifest.json` owns the product `title`,
+`na228_builder/release/release_manifest.json` owns the product `title`,
 `product_version`, base configuration path, external configuration filename,
 public configuration layout, and supported source identities. Ordinary builds
 read the same `title` for localized game text. The base configuration path is
-relative to the manifest directory. The executable name
-is `<product>_<version>.exe`, and the output image is `<product>_<version>.iso`.
+relative to the builder root. The executable name is `<product>_<version>.exe`,
+and the output image is `<product>_<version>.iso`.
 The pinned source identities are:
 
 - NA2: 1,928,429,568 bytes,
@@ -138,12 +138,12 @@ without a release resumes publication.
   confirmed `cc2fuku` password; it does not extract or modify the container.
 - `@builder/infrastructure/orchestration/build_configuration.py` exposes the same staged-image composition used
   by the normal CLI and the release adapter.
-- `@scripts/release/build_release.ps1` owns packaging;
-  `@scripts/release/publish_release.ps1` publishes that exact package.
+- `@builder/release/build_release.ps1` owns packaging;
+  `@builder/release/publish_release.ps1` publishes that exact package.
 
 ## Configuration layout
 
-`configuration_layout` in `na228_builder/release_manifest.json` controls which
+`configuration_layout` in `na228_builder/release/release_manifest.json` controls which
 settings appear in the release config, their public names, order, and grouping.
 Each string references a catalog setting or complete container. Nested objects
 define public groups independently of the internal feature tree.

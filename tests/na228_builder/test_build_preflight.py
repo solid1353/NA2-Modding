@@ -133,7 +133,8 @@ class BuildPreflightTests(unittest.TestCase):
             ),
             encoding="utf-8",
         )
-        (builder / "release_manifest.json").write_text(
+        (builder / "release").mkdir()
+        (builder / "release" / "release_manifest.json").write_text(
             json.dumps({"title": "Test Product"}),
             encoding="utf-8",
         )

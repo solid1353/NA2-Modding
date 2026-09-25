@@ -224,7 +224,8 @@ class ConfigurationTests(unittest.TestCase):
             json.dumps({"overrides": normalized_selection}, indent=2) + "\n",
             encoding="utf-8",
         )
-        (root / "release_manifest.json").write_text(
+        (root / "release").mkdir()
+        (root / "release" / "release_manifest.json").write_text(
             json.dumps({"title": "Test Product"}),
             encoding="utf-8",
         )
@@ -355,7 +356,9 @@ class ConfigurationTests(unittest.TestCase):
             loaded = load_configuration(configuration, root, root)
             resources = set(configuration_resource_files(loaded))
             self.assertIn((root / "project.json").resolve(), resources)
-            self.assertIn((root / "release_manifest.json").resolve(), resources)
+            self.assertIn(
+                (root / "release" / "release_manifest.json").resolve(), resources
+            )
             self.assertIn((root / "catalog.modcat").resolve(), resources)
             self.assertIn(
                 (root / "patches" / "localization" / "localization.json").resolve(),

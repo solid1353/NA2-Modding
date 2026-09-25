@@ -22,8 +22,8 @@ message placement for callers whose mappings describe separate source slots.
 Catalog-selected semantic string patches are applied after import and before
 this placement decision. `replace_imported_game_title` guards the imported
 title's mapping and occurrence coverage, then substitutes
-`na228_builder/release_manifest.json`'s `title`. The English strings patch
-selects this operation with its importer.
+`na228_builder/release/release_manifest.json`'s `title`. The English strings
+patch selects this operation with its importer.
 
 ## Invokes
 

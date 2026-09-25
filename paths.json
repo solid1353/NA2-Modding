@@ -18,6 +18,6 @@
   "files": {
     "project_settings": "project.json",
     "practice_movesets": "launch_profiles/practice/movesets.tsv",
-    "publish_release_command": "@scripts/release/publish_release.ps1"
+    "publish_release_command": "@builder/release/publish_release.ps1"
   }
 }

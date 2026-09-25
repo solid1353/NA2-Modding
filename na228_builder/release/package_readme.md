@@ -44,9 +44,6 @@ Values follow the types shown in `catalog.modcat`:
 - A named structured alternative is an object containing its selected named
   field. Object shapes and unions must match the catalog exactly.
 
-Edit these values directly. The release config has no `features` wrapper or
-separate overrides layer.
-
 Invalid keys, values, ranges, or ambiguous union values are rejected before
 the builder modifies an ISO. The error names the invalid configuration path,
 shows the supplied value, and states the expected type or shape.
@@ -87,21 +84,11 @@ step				+5
 58		Sakura Haruno	A	25
 ```
 
-Save the file as UTF-8 TSV and run the builder normally. With the gauge feature
-disabled, or with its shared runtime setting on `Chakra`, the runtime charges
-`substitution_cost / 100` of NA2's 15-point chakra capacity. `Gauge` charges
-the same fraction of the independent resource and places the red marker at the
-exact rounded executable cost. `Free` charges neither resource. The Gauge mode
-requires Character Overrides. Battle Support Disabled independently
-controls whether field support and its native lower gauge remain available. The other columns
-are reserved for later per-character battle hooks and may be left empty.
-
 ## `catalog.modcat`
 
 `catalog.modcat` is a readable reference for the available configuration. It
-shows descriptions, setting types, ranges, object shapes, and unions. It has no
-patch addresses or other implementation details.
+shows descriptions, setting types, ranges, object shapes, and unions.
 
 The EXE contains and uses its own complete catalog. It never reads the external
-`catalog.modcat`, so editing or deleting that reference file cannot change how
+`catalog.modcat`, so editing or deleting that reference file will not change how
 the builder validates or patches the game.

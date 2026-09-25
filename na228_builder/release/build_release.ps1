@@ -6,7 +6,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-. (Join-Path $PSScriptRoot '..\lib\paths.ps1')
+. (Join-Path $PSScriptRoot '..\..\scripts\lib\paths.ps1')
 $paths = Get-Na2LocalPaths -AllowMissing
 $repository = [IO.Path]::GetFullPath($paths.repository)
 $toolchainPath = Join-Path $PSScriptRoot 'toolchain.json'
@@ -20,7 +20,7 @@ $requirementsPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.req
 $entryPoint = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.entry_point))
 $iconPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.icon))
 $instructionsPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.instructions))
-$configurationPath = [IO.Path]::GetFullPath((Join-Path (Split-Path -Parent $manifestPath) $manifest.configuration))
+$configurationPath = [IO.Path]::GetFullPath((Join-Path $paths.builder $manifest.configuration))
 
 if ([string]::IsNullOrWhiteSpace($productName) -or
     [IO.Path]::GetFileName($executableName) -cne $executableName) {

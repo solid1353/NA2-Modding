@@ -1,0 +1,1 @@
+../../codex-utils/AGENTS_G.md

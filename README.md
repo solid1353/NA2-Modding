@@ -36,7 +36,8 @@ knowledge, tests, and release behavior.
   technical-document routing.
 - [Agent commands](AGENTS.md#commands-and-interaction-modes): commands
   interpreted by project agents.
-- Runbooks: [source extraction](docs/runbooks/source-extraction.md).
+- Runbooks: [build and launch](docs/runbooks/build.md),
+  [source extraction](docs/runbooks/source-extraction.md).
 - [Tasks](TASKS.md), the user's selective coordination and decision tracker.
 - [E2E infrastructure](e2e/README.md) and
   [E2E validation workflow](docs/workflows/e2e_validation.md).

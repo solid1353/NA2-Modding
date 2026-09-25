@@ -46,11 +46,8 @@ Empty `support_id` and `awakening_id` cells select No Support `0x25` and the
 `FFFFFFFF` no-effect awakening sentinel. A nonempty hexadecimal support or
 awakening ID overrides its default. A `-rev` case adds a fourth, game-specific
 inline PNACH line that selects the native Half starting-HP mode; all other cases
-retain normal starting HP. Every case has an authoritative E2E
-`capture_policy`: an empty cell means no capture; populated values are `base`,
-`specials`, `base, specials`, or `base, parent-specials`. The last value records
-a second form in its own Base grid and appends it to the preceding primary
-form's Specials grid. ID suffixes do not implicitly select a capture family.
+retain normal starting HP. Case naming, ordering, and capture metadata are
+documented in the [E2E case-table contract](../../e2e/README.md#practice-case-table).
 
 `@repository/launch_profiles/practice/NA228.pnach` and
 `@repository/launch_profiles/practice/NUN5.pnach` contain the

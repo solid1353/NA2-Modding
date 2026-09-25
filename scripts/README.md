@@ -49,7 +49,8 @@ Shared infrastructure is not duplicated here:
 
 - `@builder/` owns configuration composition and verified image assembly;
   see [`@builder/README.md`](../na228_builder/README.md).
-- `@scripts/na228/` owns the user-command implementation and cached builds.
+- `@scripts/na228/` owns the user-command implementation and cached builds;
+  see the [build runbook](../docs/runbooks/build.md).
 - `e2e/` owns emulator-driven test infrastructure; canonical recordings live
   under `@pcsx2_input_recordings/e2e/`; see
   [`../e2e/README.md`](../e2e/README.md).

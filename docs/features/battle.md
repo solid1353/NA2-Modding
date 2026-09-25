@@ -285,13 +285,16 @@ the minimum alongside the other shared substitution options.
 `configurations/overrides/base.character_overrides.tsv` supplies the required
 `base` and `step` metadata rows plus the shared character rows. `base` and
 `step` are not characters: their `base_id`, `character`, and `tier` cells are
-empty. The selected profile's matching TSV in that directory layers nonempty
-cells over it. Numeric character IDs and names are validated against
+empty. The selected profile's `<name>.character_overrides.tsv` in that directory
+layers nonempty cells over it. Release packaging uses the base character values.
+Numeric character IDs and names are validated against
 `@resources/character_data.tsv`. `base_id` records form relationships as
 human-readable configuration metadata. `tier` records the balancing tier and
 is serialized as fixed-width table metadata for
 `features.default_settings.mod_settings.balance_overlay`. Empty cells inherit, while zero
-remains an explicit value.
+remains an explicit value. Tier labels use at most four ASCII characters. Rows
+retain the base TSV order so forms can stay directly below their base characters.
+Save the file as UTF-8 TSV and run the normal build for that profile.
 
 All substitution costs are percentage points on the inclusive `0..100` scale.
 The `base` row is a literal cost and the explicitly positive, signed `step` row
@@ -300,9 +303,24 @@ tier as `base + tier_index * step`, using D `0`, C `1`, B `2`, A `3`, S `4`,
 S+ `5`, S++ `6`, and S+++ `7`. An unsigned character value such as `30` is a
 literal per-character override. An explicitly signed character value such as
 `+5` or `-5` adjusts that character's tier-derived cost. Profile layers inherit
-the character cell and its literal-or-signed mode when empty. The builder
-rejects an invalid metadata row or resolved result outside `0..100`. Other
-numeric fields remain nonnegative literal float32 values.
+the character cell and its literal-or-signed mode when empty. `0` is a literal
+zero-cost override; `+0.0` is a zero adjustment. The builder rejects unknown IDs,
+invalid base IDs, mismatched names, duplicate rows, malformed columns, invalid
+metadata, non-finite numbers, negative literal values, and resolved costs outside
+`0..100` before composition. Other numeric fields remain nonnegative literal
+float32 values.
+
+For example, these rows set base `20` and step `+5`. Naruto's empty cost is
+inferred from tier S as `40/100`; Sakura's unsigned `25` is a literal
+per-character override:
+
+```tsv
+id	base_id	character	tier	substitution_cost	hp	damage_multiplier	health_recovery_multiplier	chakra_recovery_multiplier
+base				20
+step				+5
+57		Naruto Uzumaki	S
+58		Sakura Haruno	A	25
+```
 
 The builder serializes four-byte tier labels, presence and delta flags, and
 float32 values into a dense ID-indexed resident table. The

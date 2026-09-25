@@ -15,7 +15,7 @@ installation and supply one exact clean NA2 ISO.
    typed setting uses the scalar or object value declared by `catalog.modcat`.
    `false` disables any node. The root contains `localization`, `music_override`,
    `auto_loading`, `native_16_9_horizontal_scale`, and `default_settings`.
-   The default settings retain their menu groups.
+   There is no `features` wrapper. The default settings retain their menu groups.
 4. Optionally edit `character_overrides.tsv`: the `base` substitution cost and
    unsigned character values are literal, explicitly signed character values
    are deltas from the base, and an empty cell inherits its packaged value and
@@ -54,13 +54,17 @@ into `character_overrides.tsv`, including every
 reference ID/name row for direct editing. It derives the
 external `catalog.modcat` from the canonical project catalog, strips every
 patch and implementation detail, and distributes it only as a readable reference. The
-executable never reads that external reference. The executable embeds the
-interpreter, builder engines, catalog, resources for the complete selectable
-catalog rather than only the default selection, payload-builder configuration,
+executable never reads that external reference. Its public shape matches
+`config.jsonc`; changing or deleting it cannot change validation or patching.
+The executable embeds the interpreter, parser, validator, builder engines,
+complete catalog, and resources for every selectable node, including all
+available languages regardless of the packaged default. It also embeds
+payload-builder configuration,
 precompiled objects for injection-owned runtime C and assembly sources, and the
 reviewed localized CCS assets used to construct
 `PRG/228_UI.BIN`. It does not embed the project PS2 toolchain, source ISOs, or
-extracted source trees.
+extracted source trees. The loader validates public fields against the embedded
+catalog, restores hidden defaults, and validates the complete configuration.
 
 ## Developer build
 

@@ -78,6 +78,27 @@ capture set remains represented by one empty `Initial commit`. With `-p`, it
 instead preserves the existing capture commits and adds an `Update captures`
 commit. Canonical recording changes remain ordinary main-repository changes.
 
+## Practice case table
+
+`@repository/launch_profiles/practice/movesets.tsv` owns the ordered Practice
+cases. `case_id` is the stable, case-insensitive launcher selector; physical
+row numbers are not a case-selection interface. Each character block starts
+with its plain primary ID or `-2nd` case. A primary form's `-rev` case follows
+the plain ID, then any `-awk-N`, `-luj-N`, and `-lj-N` cases. Primary IDs use
+the short character stem, Classic IDs use `bName`, second forms append `-2nd`,
+and numbered slots are append-only.
+
+`character_id`, `awakening_id`, and `support_id` are runtime inputs. E2E resolves
+display names from `@resources/character_data.tsv`. The table is test metadata,
+not a catalog input; the [Practice bootstrap](../docs/features/practice.md#practice-bootstrap-pnach)
+owns empty-ID defaults and the Half starting-HP behavior of `-rev` cases.
+
+Each case has an authoritative `capture_policy`: an empty cell means no
+capture; populated values are `base`, `specials`, `base, specials`, or
+`base, parent-specials`. The last value records a second form in its own Base
+grid and appends it to the preceding primary form's Specials grid. ID suffixes
+do not implicitly select a capture family.
+
 ## Execution and publication
 
 Raw replays write `001.png`, `002.png`, and subsequent marker captures directly

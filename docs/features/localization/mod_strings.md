@@ -34,6 +34,5 @@ Character Select measures non-ASCII custom support names through the native
 renderer before applying its existing text box. Japanese menu help uses the
 native help setter. English retains the selected English font layout.
 
-A future language needs its own column, translations, and catalog language
-choice with the matching font and texture components. Adding a column alone
-does not supply those graphical components.
+See [Localization](../localization.md) for adding a language and its matching
+components.

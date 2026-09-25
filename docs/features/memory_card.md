@@ -118,9 +118,7 @@ its native descriptor checksum. Card I/O uses a temporary record with a fixed
 `0x200`-byte settings appendix described by
 [`@builder/resources/save_appendix.tsv`](../../na228_builder/resources/save_appendix.tsv). The
 appendix stores every runtime-editable Mod, Battle, Practice, Battle Mechanics,
-Substitution, and Items setting as a stable ID and zero-based value. Its header
-identifies the format and schema and protects the complete appendix with
-CRC-32.
+Substitution, and Items setting as a stable ID and zero-based value.
 
 The existing save operation serializes the appendix while writing the selected
 primary and the rolling `data04` backup. Creation, free-space accounting,
@@ -133,7 +131,8 @@ therefore uses ten blocks instead of nine, making the complete save-set
 requirement 107 blocks instead of 103.
 
 Load validates the complete appendix before copying native profile state or
-applying setting values. It rejects malformed records, unsupported versions,
+applying setting values. It rejects malformed records, padding or checksums,
+unsupported versions,
 unknown or duplicate IDs, invalid values, and earlier native-only records in
 the dedicated namespace. A native-only record reports schema version `0`, and
 a readable unsupported appendix reports its stored schema version. The worker's
@@ -181,10 +180,45 @@ has two, leaving room for the native Yes/No row. The dedicated namespace owns
 the wrapper; no second overlapping hook is emitted.
 
 Other invalid appendix failures retain the generic load-failure message.
-Configuration values initialize every setting; a valid save then
-overrides the stored IDs, while an absent newly introduced ID keeps its
-configured default. There is no migration between the retail and dedicated
+A valid loaded save resets all settings to their configured defaults, then
+applies every stored value. An absent newly introduced ID keeps its configured
+default. There is no migration between the retail and dedicated
 namespaces.
+
+### Save appendix schema
+
+The appendix contains every runtime-editable setting below
+`features.default_settings`. The submenu switches in `features.menu_composition`
+are build configuration and are not saved.
+
+The first line declares `schema_version`. The table has four columns:
+
+| Column | Meaning |
+| --- | --- |
+| `id` | Permanent, nonzero, four-digit hexadecimal field ID written to the save |
+| `key` | Setting path resolved by the builder to its existing getter, setter, and configured default |
+| `label` | Human-readable setting name |
+| `values` | Zero-based saved-value order, written as ` \| ` choices or an inclusive `start to end by step` range |
+
+IDs are grouped by Mod, Battle, Practice, Battle Mechanics, Substitution, and
+Items. Never reuse or renumber an ID. The builder rejects duplicate IDs or
+keys, unresolved or omitted settings, malformed value sequences, defaults
+outside their declared values, and maps that exceed the fixed appendix
+capacity. The TSV is a referenced build resource, so its exact contents are
+included in the configuration fingerprint.
+
+The appendix header contains the `NA2S` identifier, physical format version,
+schema version, entry count, and CRC-32. Each entry is a four-byte ID/value
+pair. Unused bytes are zero. The native descriptor checksum covers only the
+native record; the appendix CRC-32 covers the whole appendix with its checksum
+field treated as zero.
+
+Increase `format_version` only when the physical appendix header, entry, or
+checksum layout becomes incompatible. Increase `schema_version` only when an
+existing ID changes meaning or encoding incompatibly. Adding a new ID does not
+increase it. Before increasing `save_appendix.tsv`'s `schema_version`, the
+agent must explicitly explain why the current schema cannot represent the
+change, ask the user for approval, and stop until approval is given.
 
 ## Memory-card title
 

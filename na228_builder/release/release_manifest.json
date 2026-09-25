@@ -1,6 +1,6 @@
 {
   "title": "Narutimate Accel v2.28",
-  "product_version": "0.9.1-beta.1",
+  "product_version": "0.9.1-beta.2",
   "configuration": "configurations/base.jsonc",
   "configuration_name": "config.jsonc",
   "configuration_layout": {

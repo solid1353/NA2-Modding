@@ -21,7 +21,7 @@ $requirementsPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.req
 $entryPoint = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.entry_point))
 $iconPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.icon))
 $instructionsPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.instructions))
-$configurationPath = [IO.Path]::GetFullPath((Join-Path $repository $manifest.configuration))
+$configurationPath = [IO.Path]::GetFullPath((Join-Path (Split-Path -Parent $manifestPath) $manifest.configuration))
 
 if ([string]::IsNullOrWhiteSpace($productName) -or
     [IO.Path]::GetFileName($executableName) -cne $executableName) {
@@ -125,7 +125,6 @@ configuration = load_configuration(
     paths.path("builder"),
     project_paths=paths,
     root_overrides={"na2": marker},
-    for_release=True,
 )
 excluded = {Path(sys.argv[2]).resolve()}
 if configuration.selection.base_configuration_path is not None:
@@ -169,6 +168,7 @@ from pathlib import Path
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
 from na228_builder.infrastructure.orchestration.catalog import materialized_configuration
+from na228_builder.infrastructure.orchestration.app import load_release_manifest
 from scripts.lib.paths import load_local_paths
 
 paths = load_local_paths(repository, allow_missing=True)
@@ -176,8 +176,8 @@ paths = load_local_paths(repository, allow_missing=True)
 print(json.dumps(materialized_configuration(
     paths.path("builder", "catalog.modcat"),
     Path(sys.argv[2]),
-    public=sys.argv[3] == "public",
-    for_release=True,
+    configuration_layout=(load_release_manifest().configuration_layout
+                          if sys.argv[3] == "public" else None),
 ), indent=2))
 '@
     $embeddedConfiguration = Join-Path $resourceRoot ([IO.Path]::GetRelativePath(
@@ -300,11 +300,13 @@ from pathlib import Path
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
 from na228_builder.infrastructure.orchestration.catalog import public_catalog
+from na228_builder.infrastructure.orchestration.app import load_release_manifest
 from scripts.lib.paths import load_local_paths
 
 paths = load_local_paths(repository, allow_missing=True)
 
-print(public_catalog(paths.path("builder", "catalog.modcat")), end="")
+print(public_catalog(paths.path("builder", "catalog.modcat"),
+                     load_release_manifest().configuration_layout), end="")
 '@
     $catalogText = @(& $python -B -c $catalogProbe $repository)
     if ($LASTEXITCODE -ne 0) {

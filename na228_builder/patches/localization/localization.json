@@ -1031,6 +1031,52 @@
         "encoding": "jal26",
         "replacement_hex": "0800028E80CA848F0800458C06AB004646A30046000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
         "relocation_offset": "0x14"
+      },
+      "route_memory_card_save_question": {
+        "description": "Fit the fixed memory-card question in the same body area as status messages.",
+        "target_id": "na2_elf",
+        "offset": "0xE7204",
+        "expected_hex": "74080E0C00000000",
+        "symbol": "v2_memory_card_question_adapter",
+        "encoding": "jal26"
+      },
+      "route_memory_card_return_question": {
+        "description": "Fit the fixed memory-card question in the same body area as status messages.",
+        "target_id": "na2_elf",
+        "offset": "0xE7284",
+        "expected_hex": "74080E0C00000000",
+        "symbol": "v2_memory_card_question_adapter",
+        "encoding": "jal26"
+      },
+      "route_memory_card_startup_body": {
+        "description": "Wrap the startup card-check body while preserving its seven-fragment limit and separate choices.",
+        "target_id": "na2_elf",
+        "offset": "0xe76c8",
+        "expected_hex": "9800A2AF2D880000270000100000000080CA848F50868527D025060C0000000080CA848F0700052401000624B01A060C000000004842023C000882449000A0C7000B0046C842023C000882449400A0C7400B004680CA848FC019060C000000009800B08F80CA848F2D2800025020060C000000002D2000022D2800002AF0050C00000000010042249800A2AF9400A1C7F041023C0000824400000000000800469400A0E7010031262A103302D8FF40140000000000000000",
+        "symbol": "v2_memory_card_body_adapter",
+        "encoding": "jal26",
+        "replacement_hex": "2D2000002D2840002D3060020000000000000000A09D070800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "relocation_offset": "0xC"
+      },
+      "layout_memory_card_status_choices": {
+        "description": "Center the complete Yes/No group and bottom-align it inside the NUN5 padded content rectangle before native selection styling.",
+        "target_id": "na2_elf",
+        "offset": "0xe6208",
+        "expected_hex": "5C00023C600642788000A27F5C00023C700643C45C00023C740642C45C00023C780641C45C00023C7C0640C47000A3E77400A2E77800A1E77C00A0E7",
+        "symbol": "v2_memory_card_choice_records",
+        "encoding": "jal26",
+        "replacement_hex": "1C00848E8000A5277000A627000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "relocation_offset": "0xC"
+      },
+      "layout_memory_card_confirmation_choices": {
+        "description": "Center the complete Yes/No group and bottom-align it inside the NUN5 padded content rectangle before native selection styling.",
+        "target_id": "na2_elf",
+        "offset": "0xe6f40",
+        "expected_hex": "5C00023C600642786000A27F5C00023C700643C45C00023C740642C45C00023C780641C45C00023C7C0640C45000A3E75400A2E75800A1E75C00A0E7",
+        "symbol": "v2_memory_card_choice_records",
+        "encoding": "jal26",
+        "replacement_hex": "1C00648E6000A5275000A627000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "relocation_offset": "0xC"
       }
     },
     "payload": {
@@ -1313,7 +1359,8 @@
           "font_v2_is_mode_select_body": {
             "symbol": "v2_c_is_br",
             "addend": 72
-          }
+          },
+          "font_v2_native_measure": "v2_native_measure"
         },
         "fragments": {
           "v2_c_wrapped_body_common": {
@@ -1347,6 +1394,15 @@
           },
           "v2_c_collection_body_callback": {
             "object": "localization.font.v2.c.text.font.v2.collection.body.callback"
+          },
+          "v2_memory_card_body_callback": {
+            "object": "localization.font.v2.c.text.font.v2.memory.card.body.callback"
+          },
+          "v2_memory_card_question_adapter": {
+            "object": "localization.font.v2.c.text.font.v2.memory.card.question.adapter"
+          },
+          "v2_memory_card_choice_records": {
+            "object": "localization.font.v2.c.text.font.v2.memory.card.choice.records"
           }
         }
       },
@@ -3246,6 +3302,38 @@
         "length": 4,
         "expected_hex": "00008044",
         "replacement_hex": "2042033C"
+      },
+      "memory_card_lower_window_x": {
+        "description": "Use the NUN5 lower message window geometry (8,230,496,144).",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xe5924",
+        "expected_hex": "9041023C",
+        "replacement_hex": "0041023C"
+      },
+      "memory_card_lower_window_y": {
+        "description": "Use the NUN5 lower message window geometry (8,230,496,144).",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xe592c",
+        "expected_hex": "6B43023C",
+        "replacement_hex": "6643023C"
+      },
+      "memory_card_lower_window_width": {
+        "description": "Use the NUN5 lower message window geometry (8,230,496,144).",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xe5934",
+        "expected_hex": "EE43023C",
+        "replacement_hex": "F843023C"
+      },
+      "memory_card_lower_window_height": {
+        "description": "Use the NUN5 lower message window geometry (8,230,496,144).",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0xe593c",
+        "expected_hex": "0243023C",
+        "replacement_hex": "1043023C"
       }
     },
     "description": "Use the official NUN5 Command Chart character-name width cap and center while retaining NA2's selected localized name rectangle.",
@@ -3717,7 +3805,7 @@
       "operation": "replace_imported_game_title",
       "expected_value": "Naruto Shippuden: Ultimate Ninja 5",
       "expected_mapping_count": 9,
-      "expected_occurrence_count": 10
+      "expected_occurrence_count": 11
     }
   },
   "localization": {

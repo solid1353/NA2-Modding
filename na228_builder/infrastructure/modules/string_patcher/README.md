@@ -13,16 +13,11 @@ The configuration pipeline passes this engine the translation importer's
 validated in-memory rows. It has no feature-owned data directory or file-backed
 interface.
 
-The importer supplies replacement message families only after proving complete
-`<br>`-part coverage. When a family member overflows, the patcher materializes
-the complete parent family once and redirects the validated parent/message
-pointer rather than linking an isolated line beside unrelated payload data.
-This also covers contiguous `flatten_br_slice` loading-message fragments that
-declare their shared parent pointer. Each transformed source slot remains a
-separate NUL-terminated fragment in original offset order, followed by an empty
-terminator; only line breaks that belong inside one source slot remain `<br>`.
-This preserves NA2's multi-slot message traversal and prevents it from falling
-through into the next payload fragment.
+A sequence is placed as one complete block, inline when it fits or externally
+through its validated pointer inventory. Both forms keep a NUL after every
+fragment and a final empty terminator. A sequence without pointer references
+must fit its source block. Structured parent families use the same complete-
+message placement for callers whose mappings describe separate source slots.
 
 Catalog-selected semantic string patches are applied after import and before
 this placement decision. `replace_imported_game_title` guards the imported

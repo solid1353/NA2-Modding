@@ -40,9 +40,9 @@ from ...patches.settings.mod_settings.mod_settings import (
 )
 from ...patches.general.unlock_all.unlock_all import unlock_all_configuration_fragment
 from ...patches.general.battle_results_rematch import rematch_label_fragment
+from ...patches.memory_card.save_load import save_load_continuation_fragments
 from ...patches.memory_card.save_appendix import (
     save_appendix_load_status_fragment,
-    save_appendix_next_update_fragment,
     save_appendix_schema_fragment,
 )
 
@@ -262,6 +262,30 @@ def prepare_module_pipeline(
                     ),
                 )
         if module.feature_id == "memory_card":
+            visible_updates = (
+                "save_appendix_update",
+                "dialogs_rework_update",
+                "display_only_first_save_update",
+            )
+            selected_update = next((
+                symbol for symbol in visible_updates
+                if any(edit.symbolic_patch.symbol == symbol for edit in declaration.edits)
+            ), None)
+            declaration = replace(
+                declaration,
+                edits=tuple(
+                    edit for edit in declaration.edits
+                    if edit.symbolic_patch.symbol not in visible_updates
+                    or edit.symbolic_patch.symbol == selected_update
+                ),
+                fragments=(
+                    *save_load_continuation_fragments(
+                        configuration.selection,
+                        owner=module.module_id,
+                    ),
+                    *declaration.fragments,
+                ),
+            )
             dedicated_namespace = next(
                 node
                 for node in configuration.selection.nodes
@@ -274,15 +298,7 @@ def prepare_module_pipeline(
             if dedicated_namespace.enabled:
                 declaration = replace(
                     declaration,
-                    edits=tuple(
-                        edit for edit in declaration.edits
-                        if edit.symbolic_patch.symbol != "display_only_first_save_update"
-                    ),
                     fragments=(
-                        save_appendix_next_update_fragment(
-                            configuration.selection,
-                            owner=module.module_id,
-                        ),
                         save_appendix_load_status_fragment(
                             owner=module.module_id,
                         ),

@@ -36,6 +36,10 @@ member's sizes to the unchanged native read, gzip, task, parser, publication,
 and cleanup pipeline. A path absent from the index uses the original
 `DATA.CVM` open and metadata functions unchanged.
 
+The localized memory-card lower panel uses NUN5's `(8,230,496,144)`
+geometry. Body and choice placement belong to
+[Font](font.md#caller-specific-contracts).
+
 ## Maintained inputs
 
 - `assets.tsv` records each packed path and its accepted compressed and

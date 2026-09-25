@@ -113,32 +113,17 @@ portion. Shared-only overrides cannot re-enable a disabled intersection
 because no branch is selected. An override of `false` disables its node;
 partially re-enabling a container leaves unspecified children disabled.
 
-## Release projection
+## Release configuration
 
-| Metadata | Effect |
-| --- | --- |
-| Omitted `release` | Hidden unless inclusion is inherited from a marked container |
-| `release: true` | Include the setting or container and its descendants |
-| `release: false` | Hide the entry and its entire subtree, even under an included container |
-| `release_value` | Override the base value during release packaging only |
+The catalog defines settings independently of their release presentation.
+`na228_builder/release_manifest.json` maps public configuration names and groups
+to catalog paths. The generated public reference retains the mapped settings'
+types, descriptions, constraints, and unions, without patch bindings.
+The release loader validates public values against that reference's embedded
+schema, maps edits back to internal paths, and validates the complete config.
 
-A marked container includes future children too. Export lifts entries through
-unmarked parent containers to the release root; marked containers retain their
-nested structure. Public root names must be unique. Unions and intersections
-follow the same visibility rules. Development configs keep their full tree.
-
-Release values use the configuration override types and merge rules above.
-Without `release_value`, the base value is inherited. Child overrides apply
-after their parent; a disabled parent keeps its subtree disabled. For a union,
-overrides belong to the branch selected by the base value. Release values are
-resolved before visibility filtering and are not reapplied to users' edits.
-
-The public catalog matches the exported config shape and retains descriptions,
-node forms, types, constraints, and unions, without configured values or
-implementation metadata. The loader maps public keys back to internal paths,
-restores hidden values from embedded defaults, then validates the complete
-configuration. See the [release process](../runbooks/release.md) for the current
-public options and packaged executable behavior.
+The [release process](../runbooks/release.md#configuration-layout) owns the
+mapping syntax, exported layout, and packaged defaults.
 
 ## Patch mappings and validation
 

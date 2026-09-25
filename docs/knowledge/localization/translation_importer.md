@@ -8,9 +8,13 @@ translation feature.
 - **Assigned scope:** establish exact source/donor relationships, shared record
   families, display ownership, and semantic boundaries for translated text.
 - **Exploration depth:** maintained capture families and their executable
-  selectors were compared against clean NA2 and official NUN5 data.
+  selectors were compared against clean NA2 and official NUN5 data. Memory-card
+  source blocks, pointer entries, and English counterparts were inspected;
+  supplied screenshots cover the format and creation failures and create-data
+  confirmation. Other error and startup strings have static coverage only.
 - **Confirmed coverage:** the documented menu, Practice, Ninja Song, Collection,
-  Jutsu, Moveset, packed-message, and confirmation relationships are established.
+  Jutsu, Moveset, packed-message, confirmation, and memory-card failure-message
+  relationships are established.
 - **Unresolved or untested:** uncaptured records and any row without an exact
   source, donor, structural-family, or displayed-owner basis.
 - **Deliberate exclusions and overlap:** executable mapping schema, admission,
@@ -453,6 +457,69 @@ words at runtime `0x00604810` and `0x00604814`; the latter is ELF file
 fields are distinct from the source text slots themselves. Raw overlay
 offsets include the header; preserved Ghidra locations follow the
 [shared address conventions](../game/files/file_identities.md#address-conventions).
+
+## Memory-card failure messages
+
+NA2's format-failure message is at ELF file `0x304220` (runtime `0x00404120`),
+referenced by the pointer at file `0x5030D0`. Its exact CP932 text is
+`フォーマットに<ruby失敗|しっぱい>しました。`; the string and its zero padding occupy
+48 bytes. NUN5's official English equivalent is `Format failed!` at
+`TEXTENG.BIN` file `0x29528` (Ghidra `0x0091D1E8`).
+
+NA2's save-data-creation failure is at ELF file `0x304360` (runtime
+`0x00404260`), referenced by file `0x5030DC`. Its exact text is
+`セーブ<ruby領域|りょういき>の<ruby作成|さくせい>に<ruby失敗|しっぱい>しました。` in a
+96-byte padded slot. NUN5 stores `Creation of save data has failed.` at
+`TEXTENG.BIN` file `0x29670` (Ghidra `0x0091D330`).
+
+User screenshots identify both Japanese messages in the lower message panel.
+GhidrAssist byte views and cross-references establish the corresponding source
+slots and pointers; the English byte views establish the official wording.
+Both English strings fit their respective slots. This evidence does not
+establish the cause of either operation's failure or the blank upper dialog.
+
+### Other memory-card messages
+
+NA2's wrong-card-type block at ELF file `0x303A80` has two adjacent strings
+within 96 bytes; it says the inserted card is not a PlayStation 2 memory card.
+Its message pointer is at file `0x503084`, selected by worker status `7`.
+NA2's classifier `FUN_001C20A0` returns `1` when the card-type field is neither
+`0` nor `2`; worker `FUN_001E2140` turns that result into status `7`.
+NUN5's classifier `FUN_001C6C10` has the same card-type branch, and worker
+`FUN_001E7DF0` likewise chooses status `7`, except when worker field `+0x54`
+is `2`, where it chooses status `6`.
+
+NUN5's English message table at runtime `0x006C6890` is initialized from
+fixed pointers. Instructions at `0x005E6810..0x005E682C` copy the pointer
+at `0x0061480C` into status entries `5` and `6`, and the pointer at
+`0x00614810` into entry `7`. Both pointers contain `0x0091CD60`, the runtime
+address of `TEXTENG.BIN` file `0x29060` (Ghidra `0x0091CD20`). Getter
+`FUN_003D3800` selects `table + language * 0xC0 + status * 4`.
+The exact English donor is `No memory card (PS2) is inserted in <br>MEMORY
+CARD slot 1.<br>Please insert a memory card (PS2) in<br>MEMORY CARD slot 1.`
+Thus the native English game shares this message between absent
+and unsupported cards, although the Japanese wording distinguishes them.
+GhidrAssist decompilation establishes the classification and lookup paths;
+its byte views establish the initializer and donor bytes. The initializer
+has no defined function in the preserved analysis, so its instructions were
+decoded from the MCP byte view. This establishes the static message selection;
+it does not add screen coverage for the wrong-card condition.
+
+NA2's card-slot selection at `0x303D50` occupies 80 bytes. NUN5's English
+counterpart at `TEXTENG.BIN` `0x29230` is `Please select MEMORY CARD slot to save to.`
+Ordinary load and save failures at NA2 `0x303ED0/0x304010` occupy 64 bytes
+each; the corresponding NUN5 strings are `Load failed!` at `0x29320` and
+`Save failed! ` at `0x29400`.
+
+The insufficient-space/start-anyway block at NA2 `0x3047F0` contains six
+fragments through `0x304955`, with zero padding through `0x304957`.
+NUN5's complete counterpart is at `TEXTENG.BIN` `0x29AF0`. Both this message
+and the absent-card startup message state a requirement of **103 KB** in NA2
+and **102 KB** in NUN5. Copying the donor number would change the stated
+source-game requirement. The ordinary lower notices and separate startup
+caller are described in [confirmation layouts](font/screen_layouts/confirmations.md#message-boundaries).
+These exact clean-byte comparisons establish text and storage, not complete
+screen coverage.
 
 ## Content and layout boundary
 

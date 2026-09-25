@@ -1,0 +1,20 @@
+{
+  "product_version": "0.9.0-beta.1",
+  "configuration": "configurations/base.jsonc",
+  "configuration_name": "config.jsonc",
+  "configuration_layout": {
+    "localization": "features.localization",
+    "music_override": "features.general.music_override",
+    "auto_loading": "features.memory_card.auto_loading",
+    "widescreen": "features.rendering.native_16_9_horizontal_scale",
+    "default_settings": "features.default_settings"
+  },
+  "images": [
+    {
+      "id": "na2",
+      "label": "Naruto Shippuuden: Narutimate Accel 2 (SLPS-25837)",
+      "size": 1928429568,
+      "sha256": "CA105F7BDBEEAA3275F871C9702B9C77ED985CE140FAE8EAC28CB153E263D0C3"
+    }
+  ]
+}

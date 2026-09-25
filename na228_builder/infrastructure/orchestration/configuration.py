@@ -409,7 +409,7 @@ def _load_configuration(
     project_paths: Paths | None,
     root_overrides: Mapping[str, Path] | None,
     release_defaults_path: Path | None,
-    for_release: bool,
+    configuration_layout: dict[str, object] | None,
 ) -> BuildConfiguration:
     from . import catalog as catalog_module
 
@@ -419,7 +419,7 @@ def _load_configuration(
     catalog_path = builder_root / "catalog.modcat"
     selection = catalog_module.load_selection(
         catalog_path, definition_path, release_defaults_path=release_defaults_path,
-        for_release=for_release,
+        configuration_layout=configuration_layout,
     )
     paths = project_paths or load_paths(workspace, allow_missing=True)
     from ...patches.settings.character_overrides.character_overrides import (
@@ -626,7 +626,7 @@ def load_configuration(
     project_paths: Paths | None = None,
     root_overrides: Mapping[str, Path] | None = None,
     release_defaults_path: Path | None = None,
-    for_release: bool = False,
+    configuration_layout: dict[str, object] | None = None,
 ) -> BuildConfiguration:
     workspace = workspace.resolve()
     definition_path = definition_path.resolve()
@@ -648,5 +648,5 @@ def load_configuration(
         project_paths=project_paths,
         root_overrides=root_overrides,
         release_defaults_path=release_defaults_path,
-        for_release=for_release,
+        configuration_layout=configuration_layout,
     )

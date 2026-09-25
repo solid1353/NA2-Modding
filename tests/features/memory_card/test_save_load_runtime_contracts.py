@@ -1,4 +1,4 @@
-"""Static contracts for the visible first-record Save/Load controller."""
+"""Static contracts for the Save/Load controllers."""
 
 from __future__ import annotations
 
@@ -102,6 +102,16 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
                 namespace="qol.save.load.display.only.first.save",
                 toolchain_bin=TOOLCHAIN_BIN,
             )
+            cls.dialogs = ee_c_fragments.compile_and_extract(
+                BUILDER / "patches" / "memory_card" / "dialogs_rework.c",
+                Path(temporary) / "dialogs_rework.c.o",
+                namespace="memory.card.dialogs",
+                external_symbols={
+                    "dialogs_rework_next_update":
+                        ee_c_fragments.SymbolReference("next_update"),
+                },
+                toolchain_bin=TOOLCHAIN_BIN,
+            )
 
     def test_visible_and_automatic_hooks_are_selected_and_disjoint(self) -> None:
         visible = next(
@@ -151,7 +161,7 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
         instruction = int.from_bytes(resolved.replacement[:4], "little")
         self.assertEqual(0x03, instruction >> 26)
 
-    def test_wrapper_has_one_native_delegate_and_reads_the_live_accept_mask(
+    def test_first_slot_delegates_once_and_dialogs_read_the_live_accept_mask(
         self,
     ) -> None:
         payload_words = words(self.compiled.fragments[0].payload)
@@ -160,7 +170,10 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
             calls_materialized_address(payload_words, NATIVE_UPDATE_ADDRESS),
         )
         self.assertGreaterEqual(
-            len(materializations(payload_words, LIVE_ACCEPT_INSTRUCTION_ADDRESS)),
+            len(materializations(
+                words(self.dialogs.fragments[0].payload),
+                LIVE_ACCEPT_INSTRUCTION_ADDRESS,
+            )),
             1,
         )
 

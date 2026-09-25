@@ -101,11 +101,20 @@ and the shared selected-style paths proven by those callers.
 
 ## Caller-specific contracts
 
-- Pending acceptance: memory-card message bodies assemble their native source
-  fragments into one paragraph and use the existing shared body-layout helper.
-  The adapter retains local origin `(22,18)`, derives its width from the window
-  interior with equal side margins, and keeps shared body spacing above a
-  reserved 30-unit button row. Its hook replaces only the body-fragment loop.
+- Pending acceptance: memory-card status messages, fixed Save/Return questions,
+  and custom save-version/upgrade messages share paragraph fitting. The localized
+  lower window uses NUN5's `(8,230,496,144)` geometry, with body origin `(16,12)`,
+  width `448`, and an 85-unit body box with a five-line limit. Short paragraphs
+  retain 20-unit line spacing; taller blocks shrink their spacing and glyph
+  height together to fit. The complete Yes/No group is centered with NUN5's
+  five-space gap and bottom-aligned inside the padded content rectangle, giving
+  local Y `96` for this panel. Next follows the window height. Explicit breaks are preserved,
+  words wrap at spaces, and overflow widens the wrapping width before horizontal
+  shrink-to-fit. Each resulting line is drawn at an explicit Y so native line
+  advance cannot change the block height. The separate startup card check uses
+  its original `(50,100)` origin and seven-fragment input limit; its choices
+  remain at their native position. The ordinary lower caller retains four
+  fragments. Neither adapter changes dialog transitions.
 
 - Pending acceptance: Practice Settings section headings use the shared donor
   metrics to fit their existing 158-unit box. The correction applies to every

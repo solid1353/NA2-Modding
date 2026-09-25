@@ -16,8 +16,8 @@ in [translation importer knowledge](../../knowledge/localization/translation_imp
 
 ## Mapping metadata
 
-- Canonical `mappings.tsv` rows: `2,072`
-- Canonical `mappings.tsv` SHA-256: `F4AD57E7E52380A49638A927AA8ED81EB4A5EE72B66A80CD3C1A662B56CA5575`
+- Canonical `mappings.tsv` rows: `2,067`
+- Canonical `mappings.tsv` SHA-256: `2720E276A595D86C78BF6BC063D5328874E9C824DE8832181407C74A03EC7FA0`
 
 The hashes above are documentation, not a second executable manifest. Git
 history and the builder's configuration-resource fingerprint own content identity.
@@ -26,7 +26,7 @@ overrides, and optional pointer inventory. Normal builds import only
 `mappings.tsv`. The `localization.strings` patch in
 `patches/localization/localization.json` also replaces the imported
 `Naruto Shippuden: Ultimate Ninja 5` title with root `game.json`'s `title`.
-Its guards require nine mappings and ten occurrences. `string_patcher` applies
+Its guards require nine mappings and eleven occurrences. `string_patcher` applies
 this operation before deciding inline or linked placement. It is independent
 of the memory-card title and save-namespace settings.
 
@@ -43,8 +43,11 @@ provenance, and executable translation. Normal builds do not read donor
 binaries: the verified `donor` text in the table is the default translation.
 A nonempty `replacement` is reserved for a direct user override, and `prefix`
 is a user-editable string prepended to the selected translation. T1933 directly
-overrides the Mode Select return confirmation with `View the movie?`. All other
-rows use their verified official donors. T30 uses the
+overrides the Mode Select return confirmation with `View the movie?`.
+T2233 uses NUN5's verified status-7 donor, which shares the absent-card
+warning used by T2035. T2055 and T2237 retain NA2's 103 KB requirement in
+place of the donor's 102 KB. Other rows use verified donors.
+T30 uses the
 exact `Ultimate` donor at `NUN5_TEXTENG@0xF208` and
 the validated pointer at `NA2_BTL@0x209CB4`; encoded fit therefore externalizes
 it automatically.
@@ -85,22 +88,28 @@ The 16 columns are:
   current rows are enabled. Unconfirmed rows are absent instead of retained as
   disabled inventory.
 
-Canonical `mappings.tsv` contains 2,072 enabled `T#` rows, sorted by
+Canonical `mappings.tsv` contains 2,067 enabled `T#` rows, sorted by
 `display_context` and numeric ID. Exact source, source reference, mode, and
 capacity are guarded by the canonical row declarations. The current maintained
-E2E suites validate 1,887 unique rows. The remaining 185 rows have a blank
+E2E suites validate 1,887 unique rows. The remaining 180 rows have a blank
 `display_basis`: they remain executable because they are established working
 mappings, but they are explicitly unvalidated. Earlier screenshot, inference,
 and structural-family labels were removed because only maintained E2E execution
-validates a row. Every `prefix` value is blank; T1933 is the only row with a
-nonempty `replacement` value. The
-Jutsus suite selects 26 exact Command Chart records, including T260 plus 25
+validates a row. Every `prefix` value is blank. The nonempty `replacement`
+rows are T1933, T2055, and T2237.
+The Jutsus suite selects 26 exact Command Chart records, including T260 plus 25
 records also selected by Movesets. The Menus suite selects 30 exact Battle
-Settings, Pause, confirmation, and Character Select rows. T2042, T2045, T2050,
-T2221, and T2226 use canonical parent IDs `T2011`, `T2043`, `T2048`, `T2220`,
-and `T2224`.
-The pointer inventory includes the overflowing settings labels and values; T2039 and
-T2040 share T2038's loading-message pointer at `NA2_SLPS@0x5030A4`.
+Settings, Pause, confirmation, and Character Select rows.
+
+Memory-card mappings store each native state's complete message as one
+sequence. When a sequence exceeds its guarded source block, the patcher links
+all its fragments together and redirects the declared message pointer. Its
+final empty terminator prevents traversal into unrelated payload text.
+T2052 includes the create-data question. T2036/T2037 and T2218/T2219 retain
+NA2's separate unformatted-card and insufficient-space steps. T2231-T2237 cover
+the additional failure, card-type, slot-selection, and start-anyway messages;
+see the [source and donor evidence](../../knowledge/localization/translation_importer.md#memory-card-failure-messages).
+Their `display_basis` remains blank because they lack maintained E2E coverage.
 Paired screenshots correct three reference-table errors: T1956 uses `Off` at
 `NUN5_SLES@0x513EF8`, T1957 uses `On` at `NUN5_SLES@0x513EFC`, and T2158 uses
 `Warning` at `NUN5_SLES@0x513F38`.
@@ -114,8 +123,8 @@ Village`, T638 to `Hidden Leaf Gate`, T744 to `Faint Unease`, and T767 to
 displayed title to the exact `Charge Chakra` donor at
 `NUN5_TEXTENG@0xFB8`; the separate Command Chart T1926 row correctly retains
 `Charge` at `NUN5_SLES@0x513EB0`. T30 uses the exact `Ultimate` donor at
-`NUN5_TEXTENG@0xF208`, externalized through `NA2_BTL@0x209CB4`. Except for the
-direct T1933 override, rows execute independently validated official donor text.
+`NUN5_TEXTENG@0xF208`, externalized through `NA2_BTL@0x209CB4`.
+Donor text remains separate from the explicit overrides described above.
 NUN5 stores visible quotation spans as paired `@...@` delimiters and uses the
 semantic `<iconOK>` token for the confirm icon. The importer normalizes those
 conventions centrally to ASCII quotation marks and NA2's `<iconCROSS>` token
@@ -127,12 +136,10 @@ numeric/status, bonus, and formula-symbol rows. The paired Movie pass adds
 the locked-title placeholder. This is an evidence-scoped English table, not a
 claim that uncaptured screens are covered.
 
-The canonical table closes every admitted multi-slot `<br>` message family.
-T2011/T2041/T2042 cover all four save-progress message parts, while
-T2014/T2015 cover both overwrite-confirmation parts and T2224/T2225/T2226
-cover the recovery-progress message. Import fails closed on
-missing, duplicate, out-of-range, or inconsistent structured parts so a linked
-first line cannot continue into an unrelated resident-payload string.
+Structured `<br>` transforms validate complete donor-part coverage. The
+unformatted-card notice and format question share one donor while preserving
+separate source states. Whole-message sequences avoid splitting a relocated
+message from its continuation.
 
 ### Symbol handling
 
@@ -145,7 +152,8 @@ rendering. `NUN5_FORMULA_SYMBOLS` preserves `*`, `=`, `%`, and maps `·` to `.`.
 - `slot`: compile one replacement as a NUL-terminated string, inline when it
   fits or externally when it overflows and has validated pointer references.
 - `sequence`: pack the `<NUL>`-delimited replacement fragments into one
-  verified NA2 multi-string block. Sequences must fit inline.
+  verified NA2 multi-string block. Overflowing sequences link as a complete
+  block when their message-pointer references are declared.
 
 Unresolved research does not belong in accepted executable `mappings.tsv`.
 

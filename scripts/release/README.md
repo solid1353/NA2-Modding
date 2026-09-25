@@ -26,7 +26,7 @@ The root contains four feature options and the grouped in-game defaults:
 - `music_override`: enable or disable the replacement menu music.
 - `auto_loading`: automatically load the first save and use that slot for
   saving and loading. Disable to load manually and choose among all save slots.
-- `native_16_9_horizontal_scale`: enable basic widescreen scaling.
+- `widescreen`: enable basic widescreen scaling.
 - `default_settings`: initial and Return to Defaults values, grouped by menu.
 
 Values follow the types shown in `catalog.modcat`:

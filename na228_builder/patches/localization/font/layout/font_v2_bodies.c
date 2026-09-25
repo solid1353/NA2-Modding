@@ -70,12 +70,16 @@
 #define FONT_MODE_SELECT_BODY_LINE_LIMIT 1u
 
 /* Native memory-card body origin, with equal left and right insets. */
-#define FONT_MEMORY_CARD_BODY_X 22.0f
-#define FONT_MEMORY_CARD_BODY_Y 18.0f
+#define FONT_MEMORY_CARD_BODY_X 16.0f
+#define FONT_MEMORY_CARD_BODY_Y 12.0f
 
-/* Reserve one native 30-unit row at the bottom for the existing buttons. */
-#define FONT_MEMORY_CARD_BODY_FOOTER_HEIGHT 30.0f
+/* NUN5's paragraph box and native secondary-font line advance. */
+#define FONT_MEMORY_CARD_BODY_HEIGHT 85.0f
 #define FONT_MEMORY_CARD_BODY_LINE_HEIGHT 20.0f
+#define FONT_MEMORY_CARD_BODY_LINE_LIMIT 5u
+
+/* NUN5 separates Yes/No with five ordinary eight-unit spaces. */
+#define FONT_MEMORY_CARD_CHOICE_GAP 40.0f
 
 /* Fixed runtime pointer identifying Special Controls ON. */
 #define FONT_SPECIAL_ON_TEXT 0x006059F0u
@@ -251,66 +255,168 @@ int font_v2_wrapped_body_common(
     return font_v2_adapter_call(&frame.session);
 }
 
+/* Each line is drawn separately so wrapping and native <br> handling cannot
+ * disagree about the vertical advance or the footer's reserved space. */
+static FONT_V2_SECTION(".text.font_v2_memory_card_body_callback")
+int font_v2_memory_card_body_callback(
+    u32 window, const u8 *text, u32 color, FontV2Session *session
+) {
+    u8 *line = (u8 *)text;
+    u8 *cursor = line;
+    float y = session->draw_y;
+    for (;;) {
+        if (!*cursor || *cursor == '\n') {
+            u8 saved = *cursor;
+            *cursor = 0;
+            session->draw_y = y;
+            if (window) {
+                font_v2_collection_body_callback(window, line, color, session);
+            } else {
+                u32 renderer = *(volatile u32 *)FONT_RENDERER_POINTER_ADDRESS;
+                ((FontV2NativeSetColor)FONT_SET_INDEXED_COLOR_ADDRESS)(
+                    renderer, color, 1u);
+                ((FontV2NativeSetPosition)FONT_SET_POSITION_ADDRESS)(
+                    session->draw_x, y, renderer);
+                ((FontV2NativeTextDraw)FONT_JUTSU_DRAW_ADDRESS)(renderer, line);
+            }
+            *cursor = saved;
+            if (!saved) break;
+            line = cursor + 1;
+            y += session->line_height;
+        }
+        cursor++;
+    }
+    return 0;
+}
+
 FONT_V2_SECTION(".text.font_v2_memory_card_body_adapter")
 int font_v2_memory_card_body_adapter(
-    u32 window,
-    const u8 *text,
-    u32 fragment_limit
+    u32 window, const u8 *text, u32 fragment_limit
 ) {
     volatile u8 *window_bytes = (volatile u8 *)window;
-    u8 paragraph[FONT_BODY_BUFFER_SIZE];
+    u8 paragraph[512];
+    u8 wrapped[512];
+    FontV2Session session;
     u32 length = 0u;
     u32 fragment;
-    float width;
-    float height;
+    u32 hard_lines = 1u;
+    u32 wrap_width;
+    u32 line_limit;
+    float width = 412.0f;
+    float height = 190.0f;
+    float line_height = 20.0f;
+    float x = 50.0f;
+    float y = 100.0f;
 
-    if (!window || !text || !fragment_limit || !window_bytes[0x62]) {
-        return 0;
+    if (!text || !fragment_limit || (window && !window_bytes[0x62])) return 0;
+    if (window) {
+        x = FONT_MEMORY_CARD_BODY_X;
+        y = FONT_MEMORY_CARD_BODY_Y;
+        width = *(volatile float *)(window_bytes + 0x0c) -
+            2.0f * (float)*(volatile s16 *)(window_bytes + 0x30) - 2.0f * x;
+        height = FONT_MEMORY_CARD_BODY_HEIGHT;
+        line_height = FONT_MEMORY_CARD_BODY_LINE_HEIGHT;
     }
+    if (width < 1.0f || height < 1.0f) return -1;
 
-    width = *(volatile float *)(window_bytes + 0x0c) -
-        2.0f * (float)*(volatile s16 *)(window_bytes + 0x30) -
-        2.0f * FONT_MEMORY_CARD_BODY_X;
-    height = *(volatile float *)(window_bytes + 0x10) -
-        2.0f * (float)*(volatile s16 *)(window_bytes + 0x32) -
-        FONT_MEMORY_CARD_BODY_Y - FONT_MEMORY_CARD_BODY_FOOTER_HEIGHT;
-    if (width < 1.0f || height < FONT_MEMORY_CARD_BODY_LINE_HEIGHT) {
-        return -1;
-    }
-
+    /* Double NUL terminates a packed message. The caller still owns the
+     * fragment limit: four for the lower modal, seven for the startup check. */
     for (fragment = 0u; fragment < fragment_limit && *text; fragment++) {
         if (length) {
-            if (length >= sizeof(paragraph) - 1u) {
-                return -1;
-            }
-            paragraph[length++] = ' ';
+            if (length >= sizeof(paragraph) - 1u) return -1;
+            paragraph[length++] = '\n';
+            hard_lines++;
         }
         while (*text) {
-            if (length >= sizeof(paragraph) - 1u) {
-                return -1;
+            u8 value = *text++;
+            if (value == '<' && text[0] == 'b' && text[1] == 'r' && text[2] == '>') {
+                value = '\n';
+                text += 3;
             }
-            paragraph[length++] = *text++;
+            if (value == '\n') {
+                /* Donor lines sometimes have a trailing space before <br>. */
+                while (length && paragraph[length - 1u] == ' ') length--;
+                hard_lines++;
+            } else if (value == ' ' && (!length || paragraph[length - 1u] == '\n')) {
+                continue;
+            }
+            if (length >= sizeof(paragraph) - 1u) return -1;
+            paragraph[length++] = value;
         }
         text++;
     }
-    if (!length) {
-        return 0;
+    if (!length) return 0;
+    paragraph[length] = 0;
+    line_limit = window ? FONT_MEMORY_CARD_BODY_LINE_LIMIT :
+        (u32)(height / line_height);
+    if (line_limit < hard_lines) line_limit = hard_lines;
+    wrap_width = (u32)width;
+    for (;;) {
+        u32 i;
+        for (i = 0; i <= length; i++) wrapped[i] = paragraph[i];
+        if (font_v2_wrap_native(wrapped, wrap_width, 0u,
+                &session.measured_width, &session.line_count) != 0) return -1;
+        if (session.line_count <= line_limit) break;
+        wrap_width += wrap_width / 8u + 1u;
     }
-    paragraph[length] = 0u;
+    if (line_height * (float)session.line_count > height)
+        line_height = height / (float)session.line_count;
+    session.text = wrapped;
+    session.box_x = x;
+    session.box_y = y;
+    session.box_width = (u32)width;
+    session.box_height = (u32)height;
+    session.horizontal_alignment = FONT_V2_ALIGN_START;
+    session.vertical_alignment = FONT_V2_ALIGN_START;
+    session.flags = FONT_V2_FLAG_NEWLINE_BYTES | FONT_V2_FLAG_PREMEASURED |
+        FONT_V2_FLAG_SHRINK_X;
+    if (line_height < FONT_MEMORY_CARD_BODY_LINE_HEIGHT) {
+        session.flags |= FONT_V2_FLAG_GLYPH_HEIGHT;
+        session.glyph_height = line_height;
+    }
+    session.line_limit = line_limit;
+    session.line_height = line_height;
+    session.callback = (u32)font_v2_memory_card_body_callback;
+    session.callback_arg0 = window;
+    session.callback_arg1 = (u32)wrapped;
+    session.callback_arg2 = window ? 15u : 7u;
+    session.callback_arg3 = (u32)&session;
+    return font_v2_adapter_call(&session);
+}
 
-    return font_v2_wrapped_body_common(
-        window,
-        paragraph,
-        15u,
-        FONT_MEMORY_CARD_BODY_X,
-        FONT_MEMORY_CARD_BODY_Y,
-        (u32)width,
-        (u32)height,
-        FONT_MEMORY_CARD_BODY_LINE_HEIGHT,
-        (u32)(height / FONT_MEMORY_CARD_BODY_LINE_HEIGHT),
-        (u32)font_v2_collection_body_callback,
-        0.0f
-    );
+FONT_V2_SECTION(".text.font_v2_memory_card_question_adapter")
+int font_v2_memory_card_question_adapter(
+    u32 window, const FontV2UiDrawRecord *record, u32 arg2
+) {
+    (void)arg2;
+    return font_v2_memory_card_body_adapter(window, record->text, 1u);
+}
+
+FONT_V2_SECTION(".text.font_v2_memory_card_choice_records")
+void font_v2_memory_card_choice_records(
+    u32 window, FontV2UiDrawRecord *yes, FontV2UiDrawRecord *no
+) {
+    volatile u8 *bytes = (volatile u8 *)window;
+    FontV2NativeInitialize initialize =
+        (FontV2NativeInitialize)FONT_INITIALIZE_ADDRESS;
+    float width = *(volatile float *)(bytes + 0x0c) - 16.0f -
+        2.0f * FONT_MEMORY_CARD_BODY_X;
+    float height = *(volatile float *)(bytes + 0x10) - 16.0f -
+        2.0f * FONT_MEMORY_CARD_BODY_Y;
+    float yes_width;
+    float no_width;
+
+    *yes = *(const FontV2UiDrawRecord *)0x005C0660u;
+    *no = *(const FontV2UiDrawRecord *)0x005C0670u;
+    initialize(*(volatile u32 *)FONT_RENDERER_POINTER_ADDRESS, 1u);
+    yes_width = (float)font_v2_native_measure(yes->text);
+    no_width = (float)font_v2_native_measure(no->text);
+    yes->draw_x = FONT_MEMORY_CARD_BODY_X +
+        (width - yes_width - FONT_MEMORY_CARD_CHOICE_GAP - no_width) * 0.5f;
+    no->draw_x = yes->draw_x + yes_width + FONT_MEMORY_CARD_CHOICE_GAP;
+    yes->draw_y = FONT_MEMORY_CARD_BODY_Y + height -
+        FONT_MEMORY_CARD_BODY_LINE_HEIGHT;
+    no->draw_y = yes->draw_y;
 }
 
 FONT_V2_SECTION(".text.font_v2_quit_body_adapter")

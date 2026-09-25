@@ -823,7 +823,7 @@ def parse_mappings(
             parse_int(arguments["start"], label)
             parse_int(arguments["end"], label)
         if mode == "sequence" and transform not in {
-            "", "split_br_sequence", "memory_card_space",
+            "", "split_br_sequence", "memory_card_space", "join_br_parts",
         }:
             raise ValueError(
                 f"{label}: unsupported sequence transform {transform!r}"
@@ -998,7 +998,7 @@ def resolve_text_materializations(
         donor_texts[mapping_id] = str(row["donor"])
         materialized_templates[mapping_id] = materialized
         if row["mode"] == "sequence":
-            if row["transform"] == "memory_card_space":
+            if row["transform"] in {"memory_card_space", "join_br_parts"}:
                 sequence = (resolve_replacement_text(row, mapping_id, donor_by_ref),)
             elif row["transform"] == "split_br_sequence":
                 arguments = dict(row["arguments"])

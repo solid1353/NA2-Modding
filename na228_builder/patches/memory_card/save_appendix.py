@@ -411,25 +411,3 @@ def save_appendix_load_status_fragment(*, owner: str) -> PayloadFragment:
         alignment=4,
         payload=bytes(8),
     )
-
-
-def save_appendix_next_update_fragment(selection, *, owner: str) -> PayloadFragment:
-    first_save_only = any(
-        node.path == ("features", "memory_card", "auto_loading")
-        and node.enabled
-        for node in selection.nodes
-    )
-    return PayloadFragment(
-        owner=owner,
-        symbol="save_appendix_next_update",
-        kind="rodata",
-        alignment=4,
-        payload=struct.pack("<I", 0 if first_save_only else 0x001E3F20),
-        relocations=(
-            PayloadRelocation(
-                offset=0,
-                kind="abs32",
-                symbol="display_only_first_save_update",
-            ),
-        ) if first_save_only else (),
-    )

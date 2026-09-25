@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import math
 import re
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from fractions import Fraction
 from pathlib import Path
 from typing import TypeAlias
@@ -82,8 +82,6 @@ class SettingNode:
     value_type: TypeExpression | None
     description: str
     patch: str | None
-    release: bool | None = None
-    release_value: object = None
 
 
 @dataclass(frozen=True)
@@ -97,8 +95,6 @@ class ContainerNode:
     fields: tuple[ContainerField, ...]
     description: str = ""
     patch: str | None = None
-    release: bool | None = None
-    release_value: object = None
 
 
 @dataclass(frozen=True)
@@ -319,25 +315,6 @@ class _Parser:
             "expected setting, object, or parenthesized catalog node",
         )
 
-    def configured_value(self) -> object:
-        if self.current.kind in {"BOOL", "NUMBER", "STRING"}:
-            value = self.current.value
-            self.index += 1
-            return value
-        self.expect("{", "release_value must be a Boolean, number, string, or object")
-        result = {}
-        while self.current.kind != "}":
-            key_token = self.current
-            key = self.key()
-            if key in result:
-                raise _syntax(self.path, key_token, f"duplicate value key {key!r}")
-            self.expect(":")
-            result[key] = self.configured_value()
-            if self.accept(",") is None and self.current.kind != "}":
-                raise _syntax(self.path, self.current, "expected ',' or '}'")
-        self.expect("}")
-        return result
-
     def setting(self) -> SettingNode:
         self.expect("IDENT")
         value_type: TypeExpression | None = None
@@ -347,8 +324,6 @@ class _Parser:
         self.expect("{", "expected setting body")
         description = ""
         patch: str | None = None
-        release = None
-        release_value = None
         seen: set[str] = set()
         while self.current.kind != "}":
             key_token = self.current
@@ -365,10 +340,6 @@ class _Parser:
                     raise _syntax(
                         self.path, key_token, "setting description must be nonempty"
                     )
-            elif key == "release":
-                release = self.expect("BOOL", "release must be a Boolean").value
-            elif key == "release_value":
-                release_value = self.configured_value()
             elif key == "patch":
                 patch = str(
                     self.expect("STRING", "setting patch must be a string").value
@@ -384,15 +355,13 @@ class _Parser:
             if self.accept(",") is None and self.current.kind != "}":
                 raise _syntax(self.path, self.current, "expected ',' or '}'")
         self.expect("}")
-        return SettingNode(value_type, description, patch, release, release_value)
+        return SettingNode(value_type, description, patch)
 
     def node_object(self) -> ContainerNode:
         self.expect("{")
         fields: list[ContainerField] = []
         description = ""
         patch: str | None = None
-        release = None
-        release_value = None
         seen: set[str] = set()
         while self.current.kind != "}":
             key_token = self.current
@@ -409,10 +378,6 @@ class _Parser:
                     raise _syntax(
                         self.path, key_token, "description must be nonempty"
                     )
-            elif key == "release":
-                release = self.expect("BOOL", "release must be a Boolean").value
-            elif key == "release_value":
-                release_value = self.configured_value()
             elif key == "patch":
                 patch = str(self.expect("STRING", "patch must be a string").value)
                 if not patch.strip():
@@ -428,7 +393,7 @@ class _Parser:
                 self.current,
                 "catalog object must contain at least one selectable field",
             )
-        return ContainerNode(tuple(fields), description, patch, release, release_value)
+        return ContainerNode(tuple(fields), description, patch)
 
     def type_expression(self) -> TypeExpression:
         branches = [self.intersection_type()]
@@ -809,19 +774,10 @@ def _merge_intersected_containers(
         raise ValueError(
             f"{label}: intersected catalog objects both define patch"
         )
-    release_value = left.release_value
-    if release_value is None:
-        release_value = right.release_value
-    elif right.release_value is not None:
-        release_value = (False if release_value is False or right.release_value is False
-                         else {**release_value, **right.release_value})
     return ContainerNode(
         (*left.fields, *right.fields),
         left.description or right.description,
         left.patch or right.patch,
-        (False if left.release is False or right.release is False
-         else True if left.release is True or right.release is True else None),
-        release_value,
     )
 
 
@@ -844,8 +800,6 @@ def expand_node(
             ),
             node.description,
             node.patch,
-            node.release,
-            node.release_value,
         )
     if isinstance(node, UnionNode):
         branches: list[CatalogNodeExpression] = []
@@ -927,9 +881,6 @@ def validate_node(
             _validate_type(node.value_type, label)
         return
     if isinstance(node, ContainerNode):
-        if (node.release_value is not None and node.release_value is not False
-                and not isinstance(node.release_value, dict)):
-            raise ValueError(f"{label}: container release_value must be an object or false")
         for field in node.fields:
             if not IDENTIFIER.fullmatch(field.name):
                 raise ValueError(
@@ -1026,32 +977,19 @@ def _node_lines(
                 + json.dumps(node.description, ensure_ascii=False)
                 + ","
             )
-        if include_patches:
-            if node.release_value is not None:
-                lines.append(" " * (indent + 2) + "release_value: "
-                             + json.dumps(node.release_value, ensure_ascii=False) + ",")
-            if node.release is not None:
-                lines.append(" " * (indent + 2) + "release: "
-                             + json.dumps(node.release) + ",")
-            if node.patch:
-                lines.append(
-                    " " * (indent + 2)
-                    + "patch: "
-                    + json.dumps(node.patch, ensure_ascii=False)
-                    + ","
-                )
+        if include_patches and node.patch:
+            lines.append(
+                " " * (indent + 2)
+                + "patch: "
+                + json.dumps(node.patch, ensure_ascii=False)
+                + ","
+            )
         if len(lines) == 1:
             return [setting + " {}"]
         lines.append(prefix + "}")
         return lines
     if isinstance(node, ContainerNode):
         lines = ["{"]
-        if include_patches and node.release_value is not None:
-            lines.append(" " * (indent + 2) + "release_value: "
-                         + json.dumps(node.release_value, ensure_ascii=False) + ",")
-        if include_patches and node.release is not None:
-            lines.append(" " * (indent + 2) + "release: "
-                         + json.dumps(node.release) + ",")
         if node.description:
             lines.append(
                 " " * (indent + 2)
@@ -1121,36 +1059,6 @@ def _node_lines(
             else:
                 lines.extend(operand_lines)
         return lines
-    raise TypeError(type(node))
-
-
-def release_projection(
-    node: CatalogNodeExpression, *, inherited: bool = False,
-) -> CatalogNodeExpression | None:
-    """Keep opted-in entries and the containers needed to reach them."""
-    if isinstance(node, (SettingNode, ContainerNode)):
-        if node.release is False:
-            return None
-        inherited = inherited if node.release is None else node.release
-    if isinstance(node, SettingNode):
-        return node if inherited else None
-    if isinstance(node, ContainerNode):
-        fields = tuple(
-            ContainerField(field.name, projected)
-            for field in node.fields
-            if (projected := release_projection(field.node, inherited=inherited)) is not None
-        )
-        return replace(node, fields=fields) if fields else None
-    if isinstance(node, IntersectionNode):
-        expanded = expand_node(node)
-        projected = release_projection(expanded, inherited=inherited)
-        return node if projected == expanded else projected
-    if isinstance(node, UnionNode):
-        branches = tuple(projected for branch in node.branches
-                         if (projected := release_projection(branch, inherited=inherited)) is not None)
-        if not branches:
-            return None
-        return branches[0] if len(branches) == 1 else UnionNode(branches)
     raise TypeError(type(node))
 
 

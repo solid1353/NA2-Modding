@@ -1,7 +1,56 @@
 {
+  "memory_card.dialogs_rework": {
+    "description": "Use the shared format and create-data confirmation flow and close declined dialogues through the native panel animation.",
+    "hooks": {
+      "route_shared_save_load_update": {
+        "description": "Route shared memory-card confirmations through the dialogue controller before optional single-slot handling.",
+        "target_id": "na2_elf",
+        "offset": "0xE4008",
+        "expected_hex": "C88F070C00000000",
+        "symbol": "dialogs_rework_update",
+        "encoding": "jal26"
+      }
+    },
+    "payload": {
+      "dialogs_rework": {
+        "kind": "c",
+        "path": "na228_builder/patches/memory_card/dialogs_rework.c",
+        "namespace": "memory.card.dialogs.rework",
+        "imports": {
+          "dialogs_rework_next_update": "dialogs_rework_next_update"
+        },
+        "resources": [
+          "na228_builder/patches/memory_card/save_load.h"
+        ],
+        "fragments": {
+          "dialogs_rework_update": {
+            "object": "memory.card.dialogs.rework.text.dialogs.rework.update"
+          }
+        }
+      }
+    }
+  },
   "memory_card.auto_loading": {
     "description": "Automatically load the first save, restrict the visible Save/Load interface to that slot, and report the load outcome in the main menu.",
     "hooks": {
+      "route_first_slot_save_load_update": {
+        "description": "Route visible Save/Load updates through the single-slot controller.",
+        "target_id": "na2_elf",
+        "offset": "0xE4008",
+        "expected_hex": "C88F070C00000000",
+        "symbol": "display_only_first_save_update",
+        "encoding": "jal26"
+      },
+      "center_empty_slot_label": {
+        "description": "Center the empty-slot label in the compact panel before native selected-row drawing.",
+        "target_id": "na2_elf",
+        "offset": "0xE6870",
+        "expected_hex": "3C86828FB800A2AF48868227C800A2AFB400A0E700000000",
+        "symbol": "display_only_first_save_center_empty",
+        "encoding": "jal26",
+        "replacement_hex": "2D208002B000A527C000A627000000000000000000000000",
+        "relocation_offset": "0xC"
+      },
       "draw_savedata_outcome_in_mode_select_context": {
         "description": "Retain the native main-menu update, render the right-aligned savedata outcome in Mode Select's prompt context beneath the shared screen transition, and restore the prior font state.",
         "target_id": "na2_elf",
@@ -24,14 +73,6 @@
         "offset": "0xEA0D0",
         "expected_hex": "C095070C",
         "symbol": "auto_loading_suppress_draw",
-        "encoding": "jal26"
-      },
-      "route_shared_save_load_update": {
-        "description": "Route every visible Save/Load update through the first-record controller while automatic startup remains on its independent caller hook.",
-        "target_id": "na2_elf",
-        "offset": "0xE4008",
-        "expected_hex": "C88F070C00000000",
-        "symbol": "display_only_first_save_update",
         "encoding": "jal26"
       }
     },
@@ -84,10 +125,16 @@
         "namespace": "qol.save.load.display.only.first.save",
         "imports": {},
         "fragments": {
+          "display_only_first_save_center_empty": {
+            "object": "qol.save.load.display.only.first.save.text.save.load.center.empty"
+          },
           "display_only_first_save_update": {
             "object": "qol.save.load.display.only.first.save.text.save.load.display.only.first.save.update"
           }
-        }
+        },
+        "resources": [
+          "na228_builder/patches/memory_card/save_load.h"
+        ]
       }
     },
     "edits": {
@@ -380,7 +427,6 @@
           "mod_number_glyphs": "mod_number_glyphs",
           "save_appendix_schema": "save_appendix_schema",
           "save_appendix_load_status": "save_appendix_load_status",
-          "save_appendix_next_update": "save_appendix_next_update",
           "mod_text_save__upgrade_confirm": "mod_text_save__upgrade_confirm",
           "mod_text_save__unsupported_format": "mod_text_save__unsupported_format",
           "mod_text_save__existing_version": "mod_text_save__existing_version",
@@ -388,7 +434,8 @@
           "mod_text_save__newer_game_required": "mod_text_save__newer_game_required",
           "mod_text_save__cannot_upgrade": "mod_text_save__cannot_upgrade",
           "mod_text_save__upgrade_failed": "mod_text_save__upgrade_failed",
-          "mod_text_save__upgrading": "mod_text_save__upgrading"
+          "mod_text_save__upgrading": "mod_text_save__upgrading",
+          "save_appendix_next_update": "save_appendix_next_update"
         },
         "resources": [
           "na228_builder/resources/save_appendix.tsv",
@@ -430,8 +477,8 @@
       "operation": "replace",
       "destination_target_id": "na2_elf",
       "destination_offset": "0x2FBAE0",
-      "expected_value": "\uff2e\uff21\uff32\uff35\uff34\uff2f\uff0d\u30ca\u30eb\u30c8\uff0d\u3000\u75be\u98a8\u4f1d\u30ca\u30eb\u30c6\u30a3\u30e1\u30c3\u30c8\u30a2\u30af\u30bb\u30eb\uff12",
-      "replacement_value": "\uff2e\uff21\u3000\uff56\uff12\uff0e\uff12\uff18",
+      "expected_value": "ＮＡＲＵＴＯ－ナルト－　疾風伝ナルティメットアクセル２",
+      "replacement_value": "ＮＡ　ｖ２．２８",
       "adapter": "nul_padded_text",
       "encoding": "cp932",
       "length": 64

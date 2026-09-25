@@ -104,7 +104,7 @@ function Test-Na228GameToken {
     return $null -ne $paths.games.Aliases.PSObject.Properties[$candidate]
 }
 
-$commandTokens = @($args)
+[string[]]$commandTokens = @($args)
 $turboTokens = @($commandTokens | Where-Object { $_ -ieq '-t' })
 if ($turboTokens.Count -gt 1) {
     throw '-t may be specified only once.'

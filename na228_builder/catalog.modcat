@@ -2,19 +2,16 @@
   features: {
     localization:
       setting<"en"> {
-        release: true,
         description: "English text, font, UI, and matching button conventions.",
         patch: "localization.en",
       }
       |
       setting<"jp"> {
-        release: true,
         description: "Japanese text, UI, and button conventions. Experimental; some custom graphics and controls do not work correctly.",
       },
     general: {
       description: "General game-wide features.",
       music_override: setting {
-        release: true,
         patch: "general.music_override",
       },
       practice_stage_select: setting {
@@ -58,9 +55,12 @@
     memory_card: {
       description: "Memory-card save storage and save-menu appearance.",
       auto_loading: setting {
-        release: true,
         description: "Automatically load the first save and use only that slot for saving and loading. Show the load result in the main menu and ask before upgrading an older save. Disable to load manually and choose among all save slots.",
         patch: "memory_card.auto_loading",
+      },
+      dialogs_rework: setting {
+        description: "Streamline memory-card confirmations and close declined dialogs with the normal shrinking animation.",
+        patch: "memory_card.dialogs_rework",
       },
       skip_initial_check: setting {
         description: "Skip the early memory-card check at startup. Automatic save loading is controlled separately.",
@@ -76,7 +76,6 @@
     rendering: {
       description: "Screen proportions and display settings.",
       native_16_9_horizontal_scale: setting {
-        release: true,
         description: "Apply basic horizontal scaling for a 16:9 display. Menus and other graphics are not fully adapted for widescreen.",
         patch: "rendering.native_16_9_horizontal_scale",
       },
@@ -96,7 +95,6 @@
       },
     },
     default_settings: {
-      release: true,
       description: "Set initial values and Return to Defaults values for in-game options. Loaded save settings override initial values.",
       patch: "settings.ingame",
       mod_settings: {

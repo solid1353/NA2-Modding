@@ -14,7 +14,7 @@ installation and supply one exact clean NA2 ISO.
    commas are accepted. A bare setting uses `true` or `false`; a
    typed setting uses the scalar or object value declared by `catalog.modcat`.
    `false` disables any node. The root contains `localization`, `music_override`,
-   `auto_loading`, `native_16_9_horizontal_scale`, and `default_settings`.
+   `auto_loading`, `widescreen`, and `default_settings`.
    There is no `features` wrapper. The default settings retain their menu groups.
 4. Optionally edit `character_overrides.tsv`: the `base` substitution cost and
    unsigned character values are literal, explicitly signed character values
@@ -44,12 +44,11 @@ installation and supply one exact clean NA2 ISO.
 
 The ZIP contains exactly the versioned EXE, `config.jsonc`,
 `character_overrides.tsv`, `catalog.modcat`, and `README.md`. Release packaging
-applies catalog `release_value` overrides to `base.features`, embeds the complete result as
-the packaged `configurations/base.jsonc`, and exports its public fields to
-`config.jsonc`. Only entries included through catalog `release: true` metadata
-appear in the external config and catalog. Export flattens unmarked parent
-groups; the release loader maps public keys back to their internal paths and restores hidden
-embedded values before building. It materializes the base character values
+embeds the base configuration as `configurations/base.jsonc` and exports
+`config.jsonc` through the manifest's `configuration_layout`. The same mapping
+sets the public catalog's names, order, and groups. The release loader maps
+public edits back to internal paths and restores hidden embedded values before
+building. It materializes the base character values
 into `character_overrides.tsv`, including every
 reference ID/name row for direct editing. It derives the
 external `catalog.modcat` from the canonical project catalog, strips every
@@ -96,10 +95,12 @@ validated production ZIP and its SHA-256 sidecar to GitHub.
 
 ## Release manifest
 
-`game.json` owns the product name. `na228_builder/resources/release_manifest.json`
-owns the version, canonical default configuration, external configuration filename, and supported
-source identities. The executable name is `<product>_<version>.exe`, and the
-output image is `<product>.iso`. The pinned source identities are:
+`game.json` owns the product name. `na228_builder/release_manifest.json`
+owns the version, base configuration path, external configuration filename,
+public configuration layout, and supported source identities. The base
+configuration path is relative to the manifest directory. The executable name
+is `<product>_<version>.exe`, and the output image is `<product>.iso`.
+The pinned source identities are:
 
 - NA2: 1,928,429,568 bytes,
   SHA-256 `CA105F7BDBEEAA3275F871C9702B9C77ED985CE140FAE8EAC28CB153E263D0C3`
@@ -123,6 +124,8 @@ without a release resumes publication.
 - `@builder/infrastructure/orchestration/app.py` owns external configuration preflight, end-user source
   discovery, hashing, locking, staging cleanup, atomic output replacement,
   console messages, and the Enter pause.
+- `@builder/infrastructure/orchestration/release_configuration.py` resolves the manifest layout for
+  public configuration export, its catalog reference, and incoming user edits.
 - `@builder/infrastructure/orchestration/release_runtime.py` loads the sibling configuration against the
   embedded catalog with the verified NA2 source ISO as its root override and
   calls the ordinary configuration builder without runtime logs.
@@ -137,8 +140,37 @@ without a release resumes publication.
 
 The ordinary `na228`, `na228 b`, and `na228 m` workflows select the
 configuration owned by their root `game.json` build target. Cache builds use
-their explicitly selected configuration. Catalog `release_value` overrides
-apply only in the release-packaging pipeline.
+their explicitly selected configuration. Release presentation is applied only
+when exporting or loading a public configuration.
+
+## Configuration layout
+
+`configuration_layout` in `na228_builder/release_manifest.json` controls which
+settings appear in the release config, their public names, order, and grouping.
+Each string references a catalog setting or complete container. Nested objects
+define public groups independently of the internal feature tree.
+
+```json
+"configuration_layout": {
+  "localization": "features.localization",
+  "music_override": "features.general.music_override",
+  "auto_loading": "features.memory_card.auto_loading",
+  "widescreen": "features.rendering.native_16_9_horizontal_scale",
+  "default_settings": "features.default_settings"
+}
+```
+
+References to containers include their complete subtrees, including future
+children. Explicit child mappings allow a different public layout or narrower
+exposure. Paths must resolve through structural containers; a setting or union
+is referenced as a whole. Duplicate or overlapping internal paths are invalid.
+Public names use the catalog's naming rules; `description` and `patch` are
+reserved by the catalog reference format.
+
+Defaults come directly from the base configuration. Unmapped settings retain
+the packaged base values. Public edits replace the mapped values, then the
+complete internal configuration is validated against the catalog. Types,
+descriptions, and constraints remain defined only in the catalog.
 
 ## GitHub releases
 

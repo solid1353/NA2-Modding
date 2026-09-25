@@ -18,13 +18,13 @@ are in the [build runbook](../docs/runbooks/build.md).
 | `infrastructure/modules/binary_patcher/operations/*.tsv` | Primitive binary operations |
 | `resources/mod_strings.tsv` | Mod-authored localized text |
 | `resources/save_appendix.tsv` | Persistent setting IDs and saved-value encodings |
-| `resources/release_manifest.json` | Release packaging metadata |
+| `release_manifest.json` | Release packaging metadata and public configuration layout |
 | `../resources/character_data.tsv` | Character identity and native-value reference; not an override input |
 | `../game.json` | Product title, configuration aliases, and launch settings |
 
-Release packaging derives its defaults from the base configuration and optional
-catalog `release_value` overrides. The exported configuration contains only
-public settings; development configurations retain the full feature tree.
+Release packaging uses the base configuration for defaults. The release manifest
+selects public settings and their names, order, and groups; development
+configurations retain the full feature tree.
 
 ## Build pipeline
 

@@ -3,14 +3,35 @@
 Memory-card save presentation and identity are owned by
 `features.memory_card` in `@builder/catalog.modcat`.
 
+## Dialogue flow
+
+`features.memory_card.dialogs_rework` enables the shared format/create-data
+confirmation flow regardless of `auto_loading`: Save skips the separate
+unformatted-card notice, formatting starts with No selected, and the native
+confirmation handlers retain the localized controls.
+
+Declining formatting, save-data creation, or overwrite enters native closing
+state `9`. The controller waits for the visible panels to finish their normal
+shrinking animation before returning completion through state `11`.
+
+One hook at virtual `0x001E3F08` (file `0xE4008`) routes visible Save/Load
+updates through the shared controller. The dedicated save namespace wraps it
+when enabled to handle version and upgrade prompts. Unhandled frames continue
+to the single-slot controller when `auto_loading` is enabled, or directly to
+native `FUN_001E3F20` otherwise. Disabling `dialogs_rework` bypasses the shared
+dialogue controller while retaining the selected automatic-loading and save
+namespace behavior. Each frame advances only one controller path.
+Text translation, font layout, and regional buttons remain localization-owned.
+
 ## Automatic loading
 
 `features.memory_card.auto_loading` selects one patch for automatic first-save
 loading and the single-slot Save/Load interface. `true` enables both behaviors;
 `false` restores manual loading and the complete save-slot selection. The base
 configuration enables it. This option remains editable in release configs.
-`skip_initial_check`, `dedicated_save_namespace`, and `replace_memory_card_title`
-are hidden from release exports and retain their embedded release values.
+`dialogs_rework`, `skip_initial_check`, `dedicated_save_namespace`, and
+`replace_memory_card_title` are hidden from release exports and retain their
+embedded release values.
 
 The automatic-loading part replaces Continue's per-frame visible-controller
 update with a silent generated-C driver for the
@@ -72,17 +93,21 @@ record moves outside the viewport, the row-separator condition is disabled, and
 the now-meaningless independent slot-cursor model is not drawn. The lower
 instruction panel and all of its contents remain unchanged.
 
-The controller behavior is implemented by one generated-C wrapper at virtual
-`0x001E3F08` (file `0xE4008`), the sole call from `FUN_001e3f00` to the clean
-visible-controller update `FUN_001e3f20`. It handles only the state-machine
-branches needed to select record zero and bypass the removed list, retaining
-the native scan, status UI, confirmations, load/save requests, result
-resolution, and frame-counter tails. Every unaffected frame delegates exactly
-once to `FUN_001e3f20`. When the dedicated namespace is enabled, its version
-dialog wraps this controller through the same single hook. The automatic
-startup hook at file `0xEA084` replaces the outer call to `FUN_001e3f00`. Its
-ordinary silent loading bypasses this wrapper; a supported older save enters
-the shared visible flow to obtain upgrade consent.
+The empty-slot label uses a separate centered position within the upper panel's
+interior. Its width is measured from the current localized text. The selected
+label starts 24 units to the right of center, and the native slide brings it
+to the centered resting position. Date/play-time placement and
+the existing selected colors and shadow remain unchanged.
+
+The single-slot controller handles only the branches needed to select record
+zero and bypass the removed list. It retains the native scan, status UI,
+load/save requests, result resolution, and frame-counter tails. When enabled,
+the shared [dialogue controller](#dialogue-flow) handles confirmations first;
+other frames reach native `FUN_001E3F20` exactly once.
+
+The automatic startup hook at file `0xEA084` replaces the outer call to
+`FUN_001E3F00`. Ordinary silent loading bypasses the visible controllers; a
+supported older save enters their shared flow to obtain upgrade consent.
 
 The native `Load this data?` confirmation remains visible. Yes continues the
 record-zero load; No enters Save/Load completion state `8` instead of
@@ -173,9 +198,10 @@ is not atomic: a write failure may leave some records upgraded, and no rollback
 is provided. A mixture of complete old and current records can be retried.
 
 The visible wrapper shares the existing hook at ELF offset `0xE4008`. It
-delegates other frames to the first-save controller when selected, or directly
-to the native controller otherwise. Dialog text uses four NUL-terminated line
-slots. The version notice uses up to three text lines and the upgrade question
+delegates other frames to the shared dialogue controller when enabled, then
+the single-slot controller when enabled, and finally the native controller.
+Dialog text uses four NUL-terminated line slots. The version notice uses up to
+three text lines and the upgrade question
 has two, leaving room for the native Yes/No row. The dedicated namespace owns
 the wrapper; no second overlapping hook is emitted.
 
@@ -228,5 +254,5 @@ encodes both the original Japanese title and `ＮＡ　ｖ２．２８` as CP932
 requires a terminating NUL, and pads the remainder of the fixed slot with
 zeroes. Setting it to `false` leaves the original title intact.
 
-All four memory-card settings are enabled by the base configuration. Only
+All five memory-card settings are enabled by the base configuration. Only
 `auto_loading` is exposed in the release config.

@@ -97,8 +97,7 @@ extern const u8 mod_text_save__upgrading[];
 extern const SaveAppendixSchema save_appendix_schema;
 extern volatile SaveAppendixLoadStatus save_appendix_load_status;
 
-typedef u32 (*SaveLoadUpdate)(void *, u32);
-extern const SaveLoadUpdate save_appendix_next_update;
+extern u32 (*const save_appendix_next_update)(void *, u32);
 
 static struct {
     u32 ui;

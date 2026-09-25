@@ -15,7 +15,7 @@ from . import jsonc
 from typing import Callable, Iterable
 
 
-RELEASE_MANIFEST_NAME = "resources/release_manifest.json"
+RELEASE_MANIFEST_NAME = "release_manifest.json"
 SETTINGS_NAME = "game.json"
 REQUIRED_IMAGE_IDS = ("na2",)
 HASH_CHUNK_SIZE = 8 * 1024 * 1024
@@ -47,6 +47,7 @@ class ReleaseManifest:
     configuration: str
     configuration_name: str
     images: tuple[SupportedImage, ...]
+    configuration_layout: dict[str, object]
 
 
 def application_directory(
@@ -103,7 +104,7 @@ def _validate_executable_name(value: str) -> str:
 def _validate_configuration(value: str) -> str:
     path = Path(value)
     if path.is_absolute() or ".." in path.parts:
-        raise ReleaseError("Release configuration must be a repository-relative path")
+        raise ReleaseError("Release configuration must be relative to the manifest directory")
     return value.replace("\\", "/")
 
 
@@ -187,6 +188,13 @@ def parse_release_manifest(text: str, *, product_name: str) -> ReleaseManifest:
     product_name = product_name.strip()
     product_version = _required_text(data, "product_version")
 
+    from .release_configuration import validate_layout
+
+    try:
+        configuration_layout = validate_layout(data.get("configuration_layout"))
+    except ValueError as exc:
+        raise ReleaseError(str(exc)) from exc
+
     return ReleaseManifest(
         product_name=product_name,
         product_version=product_version,
@@ -201,6 +209,7 @@ def parse_release_manifest(text: str, *, product_name: str) -> ReleaseManifest:
             _required_text(data, "configuration_name")
         ),
         images=tuple(images),
+        configuration_layout=configuration_layout,
     )
 
 

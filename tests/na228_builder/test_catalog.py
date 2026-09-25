@@ -314,7 +314,6 @@ class CatalogTests(unittest.TestCase):
 
     def test_object_intersection_shares_fields_across_union_branches(self) -> None:
         source = '''{
-          release: true,
           startup:
             {
               faster_loading: setting {
@@ -390,9 +389,21 @@ class CatalogTests(unittest.TestCase):
                 )
             )
 
-            public = catalog.public_catalog(catalog_path)
-            self.assertIn("\n    &\n", public)
-            self.assertEqual(public.count("faster_loading:"), 1)
+            public = catalog.public_catalog(
+                catalog_path, {"startup": "features.feature.startup"},
+            )
+            reference = root / "public.modcat"
+            reference.write_text(public, encoding="utf-8")
+            public_schema = catalog_format.parse_catalog(reference)
+            for branch in ({"skip_opening": True}, {"savedata_loading": "automatic"}):
+                catalog._validate_configuration_value(
+                    public_schema,
+                    {"startup": {"faster_loading": True, **branch}}, (),
+                )
+                with self.assertRaises(catalog.ConfigurationError):
+                    catalog._validate_configuration_value(
+                        public_schema, {"startup": branch}, (),
+                    )
 
     def test_intersection_shared_overrides_merge_but_branch_overrides_are_atomic(
         self,
@@ -967,7 +978,6 @@ class CatalogTests(unittest.TestCase):
     def test_public_catalog_keeps_contract_and_strips_implementation(self) -> None:
         source = '''{
           value: setting<decimal & 0..15 & step 0.25> {
-            release: true,
             description: "Bounded value.",
             patch: "f.value",
           },
@@ -984,7 +994,9 @@ class CatalogTests(unittest.TestCase):
                     }
                 },
             )
-            public = catalog.public_catalog(catalog_path)
+            public = catalog.public_catalog(
+                catalog_path, {"value": "features.feature.value"},
+            )
         self.assertIn("value:", public)
         self.assertIn("setting<decimal & 0..15 & step 0.25>", public)
         self.assertIn('description: "Bounded value."', public)
@@ -992,21 +1004,21 @@ class CatalogTests(unittest.TestCase):
         self.assertNotIn("startup_fast_forward_frames", public)
         self.assertNotIn("f.value", public)
 
-    def test_flat_release_roundtrip_preserves_hidden_values_and_user_edits(self) -> None:
+    def test_release_layout_roundtrip_preserves_hidden_values_and_user_edits(self) -> None:
         source = '''{
           group: {
-            speed: setting<int> { release: true, release_value: 7, },
+            speed: setting<int> {},
             internal: setting { patch: "f.internal", },
           },
           defaults: {
-            release: true,
             mode: setting<"a" | "b"> {},
-            private: {
-              release: false,
-              flag: setting { release: true, },
-            },
+            private: { flag: setting {} },
           },
         }'''
+        layout = {
+            "preferences": {"tempo": "features.feature.group.speed"},
+            "mode": "features.feature.defaults.mode",
+        }
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             original = {"feature": {
@@ -1014,25 +1026,27 @@ class CatalogTests(unittest.TestCase):
                 "defaults": {"mode": "a", "private": {"flag": True}},
             }}
             schema, configured = self.write_project(root, {"feature": source}, original)
-            public = catalog.materialized_configuration(schema, configured, public=True)
-            self.assertEqual(public, {"speed": 7, "defaults": {"mode": "a"}})
-            self.assertEqual(
-                catalog.materialized_configuration(schema, configured),
-                {"features": original},
+            public = catalog.materialized_configuration(
+                schema, configured, configuration_layout=layout,
             )
+            self.assertEqual(public, {"preferences": {"tempo": 5}, "mode": "a"})
+            embedded = catalog.materialized_configuration(schema, configured)
+            self.assertEqual(embedded, {"features": original})
             reference = root / "public.modcat"
-            reference.write_text(catalog.public_catalog(schema), encoding="utf-8")
+            reference.write_text(catalog.public_catalog(schema, layout), encoding="utf-8")
             catalog._validate_configuration_value(
                 catalog_format.parse_catalog(reference), public, (),
             )
-            embedded = catalog.materialized_configuration(schema, configured, for_release=True)
             defaults_path = root / "embedded.jsonc"
             self.write_json(defaults_path, embedded)
             external = root / "config.jsonc"
-            public["speed"] = 9
-            public["defaults"]["mode"] = "b"
+            public["preferences"]["tempo"] = 9
+            public["mode"] = "b"
             self.write_json(external, public)
-            selection = catalog.load_selection(schema, external, release_defaults_path=defaults_path)
+            selection = catalog.load_selection(
+                schema, external, release_defaults_path=defaults_path,
+                configuration_layout=layout,
+            )
             values = {node.path: node.configured_value for node in selection.nodes}
             self.assertEqual(values[("features", "feature", "group", "speed")], 9)
             self.assertTrue(selection.node_enabled("features", "feature", "group", "internal"))
@@ -1040,17 +1054,23 @@ class CatalogTests(unittest.TestCase):
             self.assertTrue(selection.node_enabled("features", "feature", "defaults", "private", "flag"))
             self.write_json(external, {**public, "internal": False})
             with self.assertRaisesRegex(catalog.ConfigurationError, "unknown keys: internal"):
-                catalog.load_selection(schema, external, release_defaults_path=defaults_path)
+                catalog.load_selection(
+                    schema, external, release_defaults_path=defaults_path,
+                    configuration_layout=layout,
+                )
 
-    def test_release_inherits_unoverridden_base_values(self) -> None:
+    def test_release_inherits_base_values(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             schema, configured = self.write_project(
-                root, {"feature": '{ option: setting { release: true, }, }'},
+                root, {"feature": '{ option: setting {}, }'},
                 {"feature": {"option": False}},
             )
             self.assertEqual(
-                catalog.materialized_configuration(schema, configured, public=True),
+                catalog.materialized_configuration(
+                    schema, configured,
+                    configuration_layout={"option": "features.feature.option"},
+                ),
                 {"option": False},
             )
 

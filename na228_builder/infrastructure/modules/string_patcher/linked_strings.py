@@ -129,10 +129,12 @@ def _external_mapping_ids(
                 + 1
             )
             if encoded_size > capacity:
-                raise ValueError(
-                    f"{label}: replacement sequence is {encoded_size} bytes "
-                    f"but inline block allows {capacity}; sequences cannot be externalized"
-                )
+                if mapping_id not in reference_ids:
+                    raise ValueError(
+                        f"{label}: replacement sequence is {encoded_size} bytes "
+                        f"but inline block allows {capacity}, and no pointer reference is declared"
+                    )
+                external.add(mapping_id)
             continue
         target_text, _ = translation_importer.read_target_slot(
             translation_plan.clean_targets[target],
@@ -250,7 +252,22 @@ def _materialized_strings(
     rows: list[dict[str, object]] = []
     for mapping_id in sorted(effective_ids):
         mapping = text_by_id[mapping_id]
-        if mapping_id in parent_ids:
+        if mapping["mode"] == "sequence":
+            target = str(mapping["target"])
+            source, _ = translation_importer.read_target_sequence(
+                translation_plan.clean_targets[target],
+                int(mapping["target_offset"]),
+                int(mapping["capacity"]),
+                mapping_id,
+            )
+            context = "<NUL>".join(source)
+            encoded = b"".join(
+                translation_importer.adapt_source_markup(text, context, mapping_id)
+                .encode("cp1252") + b"\0"
+                for text in translation_plan.resolved_sequences[mapping_id]
+            ) + b"\0"
+            materialization = "packed_sequence"
+        elif mapping_id in parent_ids:
             encoded = structured_family_payload(mapping_id)
             materialization = "packed_structured_family"
         else:

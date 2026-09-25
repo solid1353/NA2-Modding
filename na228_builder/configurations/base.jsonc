@@ -20,6 +20,7 @@
     },
     "memory_card": {
       "auto_loading": true,
+      "dialogs_rework": true,
       "skip_initial_check": true,
       "dedicated_save_namespace": true,
       "replace_memory_card_title": true

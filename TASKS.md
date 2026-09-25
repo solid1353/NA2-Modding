@@ -2,6 +2,7 @@
 
 ### In Progress
 
+- Proper startup
 - Add ISO path to release EXE
 - Pre-release testing and tuning
 
@@ -13,7 +14,6 @@
 
 - Extend items to 5
 - Damage scaling
-- Proper startup
 - Proper widescreen
 - Cross-platform deployment
 - Upscaled texture pack for pcsx2

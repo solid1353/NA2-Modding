@@ -1,6 +1,6 @@
 # Startup
 
-## Loading screen and automatic first-save load
+## Loading screen and startup route
 
 The startup loading patch replaces the four splash screens with a boot-safe
 loading presentation while preserving the two native startup-loader checks.
@@ -52,74 +52,10 @@ wraps the opening-sequence update. Three resident words distinguish an active
 Mode Select replay from ordinary startup, track the hidden title handoff, and
 distinguish an input-driven stop from natural movie completion.
 
-The `features.startup` catalog node is a plain container that owns the direct
-Save/Load route. Its `faster_loading`, `skip_initial_memory_card_check`,
-`auto_loading`, and `loading_screen` settings are direct children.
-
-The `features.startup.skip_initial_memory_card_check` patch skips
-only the blocking card check before the splash and startup loaders. It replaces
-`jal 0x001E71B0` at boot-ELF virtual address `0x001E0FA0` (file offset
-`0xE10A0`, expected bytes `6C9C070C`) with a NOP. The persistent memory-card
-worker and save-data initialization remain intact. The later Continue flow
-still scans the card and loads save data through its own worker session.
-This Boolean is independent of `auto_loading`: disabling it restores the early
-native check, while disabling `auto_loading` restores the later visible
-Save/Load flow. Fresh-boot runtime validation with and without a card remains
-outstanding.
-
-With `features.startup.auto_loading` disabled, the automatic-loading injection
-is absent and the full native Save/Load controller remains. With
-`features.memory_card.display_only_first_save`, it shows the native record-zero
-confirmation; Yes loads the save and No enters the menu without loading.
-Enabling `auto_loading` selects one injection that replaces Continue's
-per-frame visible-controller update with a silent generated-C driver for the
-same asynchronous memory-card worker and redirects the Save/Load child draw at
-file offset `0xEA0D0` to a wrapper that suppresses ordinary silent loading. It scans port zero, requests record
-zero when present, internally resolves the native load confirmation as Yes,
-waits through checksum-verified load completion, and then lets Continue perform
-its unchanged cleanup, save-dependent setup, and main-menu loading.
-
-Automatic loading treats no card, a wrong card type, an unformatted card, no
-game directory, an empty first record, read/checksum failure, a card change, and
-other non-success terminal worker results as no-load completion, except for a
-supported older save awaiting upgrade consent. In those no-load cases,
-the existing guarded result mapping enters the main menu without
-loaded data. It does not synthesize a timeout while the native worker reports a
-busy state.
-
-For a supported version `0` save, automatic loading switches to the shared
-visible Save/Load controller and enables its child draw. That controller owns
-the upgrade confirmation and subsequent load flow described in
-[Memory Card](memory_card.md#dedicated-save-namespace). The silent driver's
-phase word marks visible-controller states with `0x100`; the marker is removed
-before each native update and restored while it is pending. A successful load
-publishes the ordinary loaded notification. Declining or failing the upgrade
-closes through the native no-load result without a duplicate notification.
-
-When the dedicated save has a readable but unsupported schema, automatic
-loading reports `The existing save data uses version {found}. Version
-{required} is required.` A native-only record reports version `0`. Other load
-failures retain `Save data could not be loaded`.
-The version warning uses three right-aligned lines, breaking after `data` and
-after the first sentence, with 24 units between lines.
-The same version result is consumed on scan, confirmation, and read failures,
-including a directory-size rejection before the normal record read begins.
-
-The main-menu notification is drawn after Mode Select's presentation, using its
-prompt render context. It keeps a unit horizontal font scale for its
-measurement and text draws, restores the previous scale and font context, and
-remains in the menu's layer during the shared exit transition. The notification
-ends when the Mode Select controller reaches its terminal state or its
-ten-second display time expires.
-
-The base configuration enables `features.startup.faster_loading`,
-`skip_initial_memory_card_check`, `auto_loading`, and `loading_screen`. Disabling
-`auto_loading` preserves the user-confirmed native visible Save/Load flow. The enabled sequence bypasses the
-notice, Bandai Namco, Bandai, CRIWARE,
-opening, interactive title, Load list, card-status messages, and load
-confirmation before the main-menu loading screen. A full development build
-succeeded, and user runtime validation confirmed the integrated automatic behavior before the loading-time
-patch was added. The native visible Save/Load flow also remains user-confirmed.
+The `features.startup` catalog node owns the direct Save/Load route. Its
+`faster_loading` and `loading_screen` settings are direct children. Automatic
+loading and the initial card check are configured under
+[`features.memory_card`](memory_card.md#automatic-loading).
 
 The `faster_loading` setting keeps the four audio archives open and the 13
 general sound indexes initialized at boot, but defers all 82 RPG-voice and 93
@@ -131,15 +67,10 @@ observation in the current launch setup measured the visible loading screen at
 about 6-7 seconds. Runtime validation confirmed the integrated patch and elapsed-time
 counter; first-use voice delay and repeated or concurrent
 first-use playback were not separately isolated during acceptance.
-Development and release inherit `faster_loading` from the base configuration.
-The test and E2E configurations disable it.
+The build configurations inherit `faster_loading` from the base configuration.
 The complete disassembly findings, worker layout, outcome matrix, and state
 machine are recorded in
 [`../knowledge/game/startup.md`](../knowledge/game/startup.md).
-
-`features.memory_card.display_only_first_save` remains an independent setting
-because it controls the visible Save/Load interface, including the upgrade
-flow when automatic loading encounters a supported older save.
 
 ## NUN5 E2E PNACH
 

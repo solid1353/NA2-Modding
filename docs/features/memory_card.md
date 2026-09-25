@@ -3,9 +3,60 @@
 Memory-card save presentation and identity are owned by
 `features.memory_card` in `@builder/catalog.modcat`.
 
-## Display only the first save
+## Automatic loading
 
-`features.memory_card.display_only_first_save` retains 12 guarded direct edits
+`features.memory_card.auto_loading` selects one patch for automatic first-save
+loading and the single-slot Save/Load interface. `true` enables both behaviors;
+`false` restores manual loading and the complete save-slot selection. The base
+configuration enables it. This option remains editable in release configs.
+`skip_initial_check`, `dedicated_save_namespace`, and `replace_memory_card_title`
+are hidden from release exports and retain their embedded release values.
+
+The automatic-loading part replaces Continue's per-frame visible-controller
+update with a silent generated-C driver for the
+same asynchronous memory-card worker and redirects the Save/Load child draw at
+file offset `0xEA0D0` to a wrapper that suppresses ordinary silent loading.
+It scans port zero, requests record
+zero when present, internally resolves the native load confirmation as Yes,
+waits through checksum-verified load completion, and then lets Continue perform
+its unchanged cleanup, save-dependent setup, and main-menu loading.
+
+Automatic loading treats no card, a wrong card type, an unformatted card, no
+game directory, an empty first record, read/checksum failure, a card change, and
+other non-success terminal worker results as no-load completion, except for a
+supported older save awaiting upgrade consent. In those no-load cases,
+the existing guarded result mapping enters the main menu without
+loaded data. It does not synthesize a timeout while the native worker reports a
+busy state.
+
+For a supported version `0` save, automatic loading switches to the shared
+visible Save/Load controller and enables its child draw. That controller owns
+the upgrade confirmation and subsequent load flow described in
+[Dedicated save namespace](#dedicated-save-namespace). The silent driver's
+phase word marks visible-controller states with `0x100`; the marker is removed
+before each native update and restored while it is pending. A successful load
+publishes the ordinary loaded notification. Declining or failing the upgrade
+closes through the native no-load result without a duplicate notification.
+
+When the dedicated save has a readable but unsupported schema, automatic
+loading reports `The existing save data uses version {found}. Version
+{required} is required.` A native-only record reports version `0`. Other load
+failures retain `Save data could not be loaded`.
+The version warning uses three right-aligned lines, breaking after `data` and
+after the first sentence, with 24 units between lines.
+The same version result is consumed on scan, confirmation, and read failures,
+including a directory-size rejection before the normal record read begins.
+
+The main-menu notification is drawn after Mode Select's presentation, using its
+prompt render context. It keeps a unit horizontal font scale for its
+measurement and text draws, restores the previous scale and font context, and
+remains in the menu's layer during the shared exit transition. The notification
+ends when the Mode Select controller reaches its terminal state or its
+ten-second display time expires.
+
+### First-slot Save/Load interface
+
+The same patch retains 12 guarded direct edits
 for presentation and navigation. They change the shared Save/Load slot-row
 renderer's loop limit from three records to one at boot-ELF virtual address
 `0x001E6970` (file offset `0xE6A70`) and replace the handler's Down and Up
@@ -38,6 +89,19 @@ record-zero load; No enters Save/Load completion state `8` instead of
 reconstructing the removed record list. The startup Continue result mapping at
 runtime `0x001E9FB8` (file offset `0xEA0B8`) then uses the existing success path
 to enter the main menu without loaded save data.
+
+## Skip the initial check
+
+The `features.memory_card.skip_initial_check` patch skips
+only the blocking card check before the splash and startup loaders. It replaces
+`jal 0x001E71B0` at boot-ELF virtual address `0x001E0FA0` (file offset
+`0xE10A0`, expected bytes `6C9C070C`) with a NOP. The persistent memory-card
+worker and save-data initialization remain intact. The later Continue flow
+still scans the card and loads save data through its own worker session.
+This Boolean is independent of `auto_loading`: disabling it restores the early
+native check, while disabling `auto_loading` restores manual loading and all
+save slots. Fresh-boot runtime validation with and without a card remains
+outstanding.
 
 ## Dedicated save namespace
 
@@ -130,5 +194,5 @@ encodes both the original Japanese title and `ＮＡ　ｖ２．２８` as CP932
 requires a terminating NUL, and pads the remainder of the fixed slot with
 zeroes. Setting it to `false` leaves the original title intact.
 
-The three settings are enabled by the base configuration and remain
-independently selectable.
+All four memory-card settings are enabled by the base configuration. Only
+`auto_loading` is exposed in the release config.

@@ -48,10 +48,10 @@ class ControlSettingsTests(unittest.TestCase):
                 substitution=substitution_enabled,
             ):
                 features = self._base_features()
-                features["settings"]["mod_settings"][
-                    "new_controls"
-                ] = controls_enabled
-                mechanics = features["settings"]["battle_mechanics"]
+                features["default_settings"]["mod_settings"][
+                    "controls"
+                ] = "updated" if controls_enabled else "classic"
+                mechanics = features["default_settings"]["battle_mechanics"]
                 substitution = mechanics["substitution"]
                 mechanics["substitution"] = (
                     substitution if substitution_enabled else False
@@ -65,7 +65,7 @@ class ControlSettingsTests(unittest.TestCase):
                     for node in selection.nodes
                     if node.path
                     == (
-                        "features", "settings", "mod_settings", "new_controls"
+                        "features", "default_settings", "mod_settings", "controls"
                     )
                 )
                 substitution = next(
@@ -73,21 +73,21 @@ class ControlSettingsTests(unittest.TestCase):
                     for node in selection.nodes
                     if node.path
                     == (
-                        "features", "settings", "battle_mechanics",
+                        "features", "default_settings", "battle_mechanics",
                         "substitution",
                     )
                 )
                 self.assertTrue(controls.enabled)
-                self.assertEqual(controls.configured_value, controls_enabled)
+                self.assertEqual(controls.configured_value, "updated" if controls_enabled else "classic")
                 self.assertEqual(substitution.enabled, substitution_enabled)
                 active_edits = {
                     node.patch
-                    for node in selection.feature_nodes("settings")
+                    for node in selection.feature_nodes("default_settings")
                     if node.enabled and node.patch in selection.edits
                 }
                 active_injections = {
                     node.patch
-                    for node in selection.feature_nodes("settings")
+                    for node in selection.feature_nodes("default_settings")
                     if node.enabled and node.patch in selection.injections
                 }
                 self.assertEqual(

@@ -99,7 +99,7 @@ effect-entry behavior is in [Awakening](../knowledge/gameplay/awakening.md).
 
 ## Practice Settings rework
 
-`features.settings.practice_settings` maps a generated, paged Practice Settings
+`features.default_settings.practice_settings` maps a generated, paged Practice Settings
 schema onto the native menu. Its root options and `opponent_settings` submenu
 retain the native value handlers. The complete base configuration
 defines every retained native default:
@@ -129,14 +129,16 @@ configuration fields: both rows are always omitted, Linked Mode is fixed to
 Auto, and Guide Ninja Sound is fixed to Off.
 
 The base config orders the root page as `Battle Mechanics`, `Opponent Settings`,
-then the retained native General Settings rows. Config key order controls the
-root and every child page; moving entries within an object reorders its rows.
+then the retained native General Settings rows.
+`features.menu_composition.practice_settings` controls the shared launchers
+before the rows ordered by `features.default_settings.practice_settings`.
+Moving entries within a default-settings object reorders its rows.
 Square on a
 launcher opens its child page; Confirm applies and closes from launcher rows as
 it does from every ordinary row. Launcher rows retain the native row
 presentation and display `Open <iconSQUARE>` without native value arrows.
 `Battle Mechanics` contains every enabled leaf under
-`features.settings.battle_mechanics`, in config key order. `Opponent
+`features.default_settings.battle_mechanics`, in config key order. `Opponent
 Settings` likewise follows its config object's key order.
 Both child pages use the native orange section heading and opponent-style row
 backing, with their own page title. The count-derived backing and launcher-label
@@ -170,7 +172,7 @@ same mod block also adds
 ordinary `Shadowblur Extra Hit: Off | On` and `Extra Hit: Off | On` rows to the
 player section. They snapshot and commit the same shared runtime toggles as
 Battle Settings, and their reset values come from
-`features.settings.battle_mechanics`.
+`features.default_settings.battle_mechanics`.
 
 The native Extra Hit Counter row remains independent of the mod Extra Hit
 selector. The presentation retains the native row widgets, localization,

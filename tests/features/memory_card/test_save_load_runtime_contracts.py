@@ -86,7 +86,7 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
 
         cls.selection = catalog.load_selection(
             BUILDER / "catalog.modcat",
-            BUILDER / "configurations" / "release.jsonc",
+            BUILDER / "configurations" / "base.jsonc",
         )
         cls.package = catalog.load_runtime_package(
             cls.selection,
@@ -94,13 +94,6 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
             BUILDER / "infrastructure" / "targets.tsv",
             REPOSITORY,
             "memory_card.runtime_injector",
-        )
-        cls.startup_package = catalog.load_runtime_package(
-            cls.selection,
-            "startup",
-            BUILDER / "infrastructure" / "targets.tsv",
-            REPOSITORY,
-            "startup.runtime_injector",
         )
         with tempfile.TemporaryDirectory() as temporary:
             cls.compiled = ee_c_fragments.compile_and_extract(
@@ -118,7 +111,7 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
         )
         automatic = next(
             edit
-            for edit in self.startup_package.edits
+            for edit in self.package.edits
             if edit.symbolic_patch.symbol == "auto_loading_update"
         )
         self.assertEqual(0xE4008, visible.symbolic_patch.offset)

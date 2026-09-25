@@ -27,7 +27,7 @@ class SupportSelectionTests(unittest.TestCase):
         base = jsonc.loads(
             (self.configurations / "base.jsonc").read_text(encoding="utf-8")
         )
-        base["features"]["settings"]["mod_settings"][
+        base["features"]["default_settings"]["mod_settings"][
             "support_selection"
         ] = mode
         directory = tempfile.TemporaryDirectory()

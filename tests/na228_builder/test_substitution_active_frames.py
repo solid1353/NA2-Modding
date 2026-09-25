@@ -25,7 +25,7 @@ class SubstitutionActiveFramesTests(unittest.TestCase):
         base = jsonc.loads(
             (self.configurations / "base.jsonc").read_text(encoding="utf-8")
         )
-        base["features"]["settings"]["battle_mechanics"][
+        base["features"]["default_settings"]["battle_mechanics"][
             "sub_active_frames"
         ] = value
         directory = tempfile.TemporaryDirectory()

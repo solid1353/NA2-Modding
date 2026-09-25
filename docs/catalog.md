@@ -9,10 +9,11 @@ The project catalog contains the user-facing contract and one singular `patch`
 reference wherever implementation is selected. Top-level features accept the
 same node forms as nested settings, including literal language choices.
 
-A complete standalone or released `.jsonc` configuration has one root field:
+A complete standalone development `.jsonc` configuration has one root field:
 `features` contains the complete selected tree. Repository build variants use
 an internal `overrides` root to customize `base.features`. Line comments,
-block comments, and trailing commas are accepted.
+block comments, and trailing commas are accepted. Release configurations use
+the flat public shape described under Release projection.
 
 Document each non-Boolean scalar JSONC setting's allowed values and constraints
 in an inline comment synchronized with the catalog.
@@ -241,22 +242,55 @@ names, and no two operands may both declare `description`.
 
 ## Release projection
 
-The consolidated release `catalog.modcat` retains the complete public feature
-hierarchy, descriptions, node forms, value types, constraints, and unions. It
+Settings and containers accept optional `release: true` metadata to include
+them in the exported config and catalog. Unmarked entries are hidden unless
+they inherit inclusion from a marked container. Marking a container includes
+its children, including new children added later. Release export lifts included
+entries through unmarked parent containers to the configuration root. A marked
+container retains its nested structure; public root names must be unique.
+Explicit `release: false` hides an entry and its entire subtree, even under
+an included container. Union branches and intersected objects use the same
+visibility rules.
+
+Hidden entries retain their resolved release values inside the executable;
+these values are restored before full configuration validation.
+`menu_composition` is unmarked and hidden; `default_settings` is marked once
+to include its complete subtree.
+
+The release config has five root keys: `localization`, `music_override`,
+`auto_loading`, `native_16_9_horizontal_scale`, and `default_settings`.
+There is no `features` wrapper. The public catalog has the same shape. The
+loader maps these keys back to their internal catalog paths before restoring
+hidden values. Development catalogs and configurations keep their nested tree.
+
+Optional `release_value` metadata overrides a node's base value only while
+packaging. Without it, the base value is inherited. It uses the same types and
+merge rules as configuration overrides: scalar and object-valued settings are
+replaced, while structural container objects merge. Child release values apply
+after their parent's override; a disabled parent keeps its subtree disabled.
+For a union, overrides belong to the branch selected by the base value.
+Release packaging applies these values before separating public and hidden
+entries. Public values remain editable in the distributed `config.jsonc`;
+catalog release values are not reapplied to users' edits.
+
+The consolidated release `catalog.modcat` retains the public configuration
+shape, descriptions, node forms, value types, constraints, and unions. It
 contains no configured selections or `overrides` and is not a configuration.
 It also removes patch IDs, adapters, targets, offsets, module ownership, source
 paths, assets, proof metadata, build data, and every other implementation
 detail.
 
 The executable embeds the parser, validator, complete project catalog, patch
-definitions, adapters, assets, and runtime objects. It validates `config.jsonc`
-against that embedded data. Editing, damaging, or deleting the external
+definitions, adapters, assets, runtime objects, and resolved release defaults.
+It validates the public fields in `config.jsonc`, restores excluded entries,
+then validates the complete configuration against that embedded data.
+Editing, damaging, or deleting the external
 catalog reference cannot change validation or patching behavior.
 
 ## Overrides
 
 The base and standalone configurations contain only the complete `features`
-object. Repository development, test, and release variants contain an
+object. Repository configuration variants contain an
 `overrides` object that may partially mirror that hierarchy. Overrides merge
 recursively through plain structural containers and unconditional object fields
 of an intersection. When an override reaches a setting or a catalog-node union,

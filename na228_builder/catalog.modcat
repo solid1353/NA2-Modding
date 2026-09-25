@@ -2,24 +2,23 @@
   features: {
     localization:
       setting<"en"> {
+        release: true,
         description: "English text, font, UI, and matching button conventions.",
         patch: "localization.en",
       }
       |
       setting<"jp"> {
+        release: true,
         description: "Japanese text, UI, and button conventions. Experimental; some custom graphics and controls do not work correctly.",
       },
     general: {
       description: "General game-wide features.",
-      unlock_all: setting<{ demon_wind_bomb?: bool }> {
-        description: "Expose the characters, supports, stages, jutsu, Shop items, and Collection entries present in a fully unlocked save without changing saved progress, currency, inventory, or settings.",
-        patch: "general.unlock_all",
-      },
       music_override: setting {
+        release: true,
         patch: "general.music_override",
       },
       practice_stage_select: setting {
-        description: "Open the native Stage Select in Practice with the training field initially selected.",
+        description: "Choose a stage before Practice, with the training field selected initially.",
         patch: "general.practice_stage_select",
       },
       stage_selection_persistence: setting {
@@ -29,6 +28,10 @@
       battle_results_rematch: setting {
         description: "Add Circle Rematch to Battle Results and retain the matchup and session match score.",
         patch: "general.battle_results_rematch",
+      },
+      unlock_all: setting<{ demon_wind_bomb?: bool }> {
+        description: "Expose the characters, supports, stages, jutsu, Shop items, and Collection entries present in a fully unlocked save without changing saved progress, currency, inventory, or settings.",
+        patch: "general.unlock_all",
       },
       mode_availability: {
         description: "Configure which game modes are available.",
@@ -41,30 +44,27 @@
       },
     },
     startup: {
-      description: "After required loaders and boot splashes, skip the CyberConnect2 intro, opening, and interactive title, then enter native Save/Load.",
+      description: "Skip the intro movies and title screen, then continue to save loading.",
       patch: "startup",
       faster_loading: setting {
-        description: "Shorten startup by loading RPG and player voice-bank indexes only when each bank is first played.",
+        description: "Shorten startup by delaying voice setup until the voices are first needed.",
         patch: "startup.faster_loading",
       },
-      skip_initial_memory_card_check: setting {
-        description: "Skip the blocking memory-card check before boot loading, independently of automatic save loading.",
-        patch: "startup.skip_initial_memory_card_check",
-      },
-      auto_loading: setting {
-        description: "Silently load record zero when it exists, and otherwise proceed to the main menu without showing Save/Load UI or requiring input. Report the outcome in black for ten seconds in the top-right corner of the usable menu; successful loads also show play time and the saved date/time.",
-        patch: "startup.auto_loading",
-      },
       loading_screen: setting {
-        description: "Replace the boot splashes with a large primitive percentage and progress bar paced across a 6.5-second elapsed-time estimate while the original startup loaders run.",
+        description: "Replace the startup logos with a percentage and progress bar. Progress is estimated; the game continues when loading finishes.",
         patch: "startup.loading_screen",
       },
     },
     memory_card: {
-      description: "Memory-card save presentation and isolation.",
-      display_only_first_save: setting {
-        description: "Select record zero directly in Save and Load flows while retaining the native memory-card scan, confirmation, load/save operations, and non-record status handling; No completes without reopening the removed record list.",
-        patch: "memory_card.display_only_first_save",
+      description: "Memory-card save storage and save-menu appearance.",
+      auto_loading: setting {
+        release: true,
+        description: "Automatically load the first save and use only that slot for saving and loading. Show the load result in the main menu and ask before upgrading an older save. Disable to load manually and choose among all save slots.",
+        patch: "memory_card.auto_loading",
+      },
+      skip_initial_check: setting {
+        description: "Skip the early memory-card check at startup. Automatic save loading is controlled separately.",
+        patch: "memory_card.skip_initial_check",
       },
       dedicated_save_namespace: setting {
         patch: "memory_card.dedicated_save_namespace",
@@ -74,35 +74,48 @@
       },
     },
     rendering: {
-      description: "Game-wide rendering and output geometry.",
+      description: "Screen proportions and display settings.",
       native_16_9_horizontal_scale: setting {
-        description: "Force the renderer's horizontal-scale field to 0.75 through its object pointer.",
+        release: true,
+        description: "Apply basic horizontal scaling for a 16:9 display. Menus and other graphics are not fully adapted for widescreen.",
         patch: "rendering.native_16_9_horizontal_scale",
       },
     },
-    settings: {
-      description: "Configure the Mod, Battle, and Practice Settings menus and their shared submenus.",
+    menu_composition: {
+      description: "Choose which submenus are available and their order before the default-setting rows.",
+      mod_settings: {
+        battle_mechanics: setting {},
+        battle_settings: setting {},
+        practice_settings: setting {},
+      },
+      battle_settings: {
+        battle_mechanics: setting {},
+      },
+      practice_settings: {
+        battle_mechanics: setting {},
+      },
+    },
+    default_settings: {
+      release: true,
+      description: "Set initial values and Return to Defaults values for in-game options. Loaded save settings override initial values.",
       patch: "settings.ingame",
       mod_settings: {
-        description: "Configure the session-wide Mod Settings menu and its runtime-selectable behavior.",
+        description: "Configure the options available in the in-game Mod Settings menu.",
         patch: "settings.mod_settings",
-        battle_mechanics_submenu: setting {},
-        battle_settings_submenu: setting {},
-        practice_settings_submenu: setting {},
-        new_controls: setting<bool> {
-          description: "Select the Classic or Updated control scheme while retaining the extended Control Settings editor.",
+        controls: setting<"classic" | "updated"> {
+          description: "Set the default control scheme. Both modes keep the extended Control Settings editor.",
           patch: "settings.new_controls",
+        },
+        character_balance: setting<"original" | "overrides"> {
+          description: "Choose between original character balance and the configured balance changes.",
+          patch: "settings.character_overrides",
+        },
+        balance_overlay: setting<"off" | "on"> {
+          description: "Show character balance information on Character Select.",
+          patch: "character_select.balance_overlay",
         },
         simple_display: setting<"off" | "on"> {
           patch: "settings.simple_display",
-        },
-        character_overrides: setting<bool> {
-          description: "Select original character balance or the generated override table.",
-          patch: "settings.character_overrides",
-        },
-        balance_overlay: setting<bool> {
-          description: "Show character balance information on Character Select.",
-          patch: "character_select.balance_overlay",
         },
         support_selection: setting<"none" | "relevant" | "all"> {
           description: "Control which supports are available during Character Select.",
@@ -139,11 +152,11 @@
             gauge?: {
               recovery_delay_seconds?: decimal & 0..60 & step 0.25,
               refill_seconds_per_stock?: decimal & >0 & <=10 & step 0.05,
-              damage_recovery?: bool,
+              damage_recovery?: "off" | "on",
               damage_percent_per_stock?: decimal & >0 & <=100 & step 0.25,
             },
           }> {
-          description: "Configures substitution payment and gauge recovery.",
+          description: "Choose whether substitution uses chakra, uses a gauge, or is free, and configure gauge recovery.",
           patch: "settings.battle_mechanics.substitution",
         },
         items: setting<{
@@ -181,13 +194,11 @@
         },
       },
       battle_settings: {
-        battle_mechanics_submenu: setting {},
         time: setting<int & 10..90 & step 10 | 99 | "unlimited"> {},
         difficulty: setting<"simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"> {},
         handicap: setting<int & 0..10> {},
       },
       practice_settings: {
-        battle_mechanics_submenu: setting {},
         opponent_settings: {
           status: setting<"manual" | "com" | "stand" | "jump" | "double_jump"> {},
           strength: setting<"simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"> {},

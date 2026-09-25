@@ -1122,6 +1122,9 @@ s32 battle_settings_change_value(void *controller)
     if (row == (const BattleSettingsRow *)0) {
         return 0;
     }
+    if (settings_menu_option_enabled(row->runtime_option) == 0) {
+        return 0;
+    }
     if ((new_input & SETTINGS_MENU_INPUT_OPEN_SUBMENU) != 0u &&
         battle_settings_open_submenu(controller, row) != 0) {
         return 1;
@@ -1360,9 +1363,10 @@ static u32 battle_settings_presentation_values(s32 index)
 }
 static s32 battle_settings_presentation_enabled(void *controller, s32 index)
 {
+    const BattleSettingsRow *row = battle_settings_row(index);
     (void)controller;
-    (void)index;
-    return 1;
+    return row != (const BattleSettingsRow *)0 &&
+        settings_menu_option_enabled(row->runtime_option);
 }
 static void battle_settings_draw_child(void *controller)
 {

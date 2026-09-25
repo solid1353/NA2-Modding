@@ -69,7 +69,7 @@ class FontRuntimeContractTests(unittest.TestCase):
         builder = PATHS.path("builder")
         selection = catalog.load_selection(
             builder / "catalog.modcat",
-            builder / "configurations" / "release.jsonc",
+            builder / "configurations" / "base.jsonc",
         )
         cls.package = catalog.load_runtime_package(
             selection,

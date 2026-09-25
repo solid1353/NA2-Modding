@@ -136,10 +136,6 @@ def _pages(selection: CatalogSelection) -> tuple[PracticePage, ...]:
         ("player_row_count", "opponent_row_count"),
         "mod_settings_schema",
         0,
-        excluded_paths=(
-            BATTLE_SETTINGS_PATH + ("battle_mechanics_submenu",),
-            PRACTICE_SETTINGS_PATH + ("battle_mechanics_submenu",),
-        ),
     )
 
 
@@ -172,10 +168,10 @@ def mod_settings_state_fragment(
 ) -> PayloadFragment:
     selected = {node.path: node for node in selection.nodes}
     values = (
-        int(bool(selected[MOD_SETTINGS_PATH + ("new_controls",)].configured_value)),
+        int(selected[MOD_SETTINGS_PATH + ("controls",)].configured_value == "updated"),
         int(selected[MOD_SETTINGS_PATH + ("simple_display",)].configured_value == "on"),
-        int(bool(selected[MOD_SETTINGS_PATH + ("character_overrides",)].configured_value)),
-        int(bool(selected[MOD_SETTINGS_PATH + ("balance_overlay",)].configured_value)),
+        int(selected[MOD_SETTINGS_PATH + ("character_balance",)].configured_value == "overrides"),
+        int(selected[MOD_SETTINGS_PATH + ("balance_overlay",)].configured_value == "on"),
         {"none": 0, "relevant": 1, "all": 2}[
             selected[MOD_SETTINGS_PATH + ("support_selection",)].configured_value
         ],

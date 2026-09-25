@@ -170,7 +170,7 @@ behavior, not another game's texture artwork.
 
 ### Control Settings and substitution input
 
-When `features.settings.mod_settings.new_controls` is enabled, Control Settings action-map
+With either `features.default_settings.mod_settings.controls` mode, Control Settings action-map
 index `7` is the dedicated **Substitution** action, replacing the second native
 Guard row. The feature redirects that row's label-pointer slot at raw ELF
 `0x4B26AC` from
@@ -833,7 +833,7 @@ complete native support renderer, including its coordinates, button badge, and
 support decorations, remains byte-clean and is independently controlled by No
 Support.
 
-The feature depends only on `features.settings.mod_settings.character_overrides`, which
+The feature depends only on the implementation selected by `features.default_settings.mod_settings.character_balance`, which
 provides the single normalized cost source. No Support remains independent and
 controls only native field support and its lower gauge. The supported build-time
 combinations are:
@@ -983,7 +983,7 @@ battle state presents the native bar acceptably.
 ## Configuration and builder integration
 
 The build-time setting is
-`features.settings.battle_mechanics.substitution`. Its required `value` selects
+`features.default_settings.battle_mechanics.substitution`. Its required `value` selects
 `chakra`, `gauge`, or `free`. Gauge tuning is optional and nested under
 `gauge`:
 
@@ -993,7 +993,7 @@ The build-time setting is
   "gauge": {
     "recovery_delay_seconds": 14.0,
     "refill_seconds_per_stock": 1.0,
-    "damage_recovery": true,
+    "damage_recovery": "on",
     "damage_percent_per_stock": 31.25
   }
 }
@@ -1003,10 +1003,16 @@ Omitting `gauge` retains those defaults. Capacity `100`, stock size `25`,
 and per-character cost remain fixed. The catalog owns the accepted ranges and
 steps; `config.jsonc` owns the selected values.
 
-The gauge requires `features.settings.mod_settings.character_overrides` and
-`features.settings.practice_settings`. `features.settings.mod_settings.new_controls`
+`damage_recovery` accepts `"off"` or `"on"`. In Mod, Battle, and Practice
+settings, Damage per Stock stays visible but is greyed out and cannot be changed
+while Damage Recovery is Off. Availability follows the menu's staged value
+immediately; switching it back On restores editing without resetting the stored
+threshold. Apply, cancel, and Return to Defaults use the existing menu transaction.
+
+The gauge requires the implementation selected by `features.default_settings.mod_settings.character_balance` and
+`features.default_settings.practice_settings`. `features.default_settings.mod_settings.controls`
 independently exposes separate Guard and Substitution actions.
-`features.settings.battle_mechanics.support` independently controls field support
+`features.default_settings.battle_mechanics.support` independently controls field support
 and the native lower support gauge.
 
 
@@ -1118,7 +1124,7 @@ The minimal implementation touches these existing ownership points:
 
 | Purpose | Canonical location |
 | --- | --- |
-| Public setting and descriptions | `features.settings.battle_mechanics.substitution` in `@builder/catalog.modcat` |
+| Public setting and descriptions | `features.default_settings.battle_mechanics.substitution` in `@builder/catalog.modcat` |
 | Unified settings patches | `@builder/patches/settings/settings.json` |
 | Default/profile selection | `@builder/configurations/*.jsonc` |
 | Config-to-fragment encoder | `@builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge.py` and `module_pipeline.py` |

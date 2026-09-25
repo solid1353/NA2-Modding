@@ -168,10 +168,10 @@ def _selected_values(selection) -> dict[tuple[str, ...], object]:
 def _bindings(selection) -> dict[str, SettingBinding]:
     selected = _selected_values(selection)
     mod_values = (
-        int(bool(selected[MOD_SETTINGS_PATH + ("new_controls",)])),
+        int(selected[MOD_SETTINGS_PATH + ("controls",)] == "updated"),
         int(selected[MOD_SETTINGS_PATH + ("simple_display",)] == "on"),
-        int(bool(selected[MOD_SETTINGS_PATH + ("character_overrides",)])),
-        int(bool(selected[MOD_SETTINGS_PATH + ("balance_overlay",)])),
+        int(selected[MOD_SETTINGS_PATH + ("character_balance",)] == "overrides"),
+        int(selected[MOD_SETTINGS_PATH + ("balance_overlay",)] == "on"),
         {"none": 0, "relevant": 1, "all": 2}[
             selected[MOD_SETTINGS_PATH + ("support_selection",)]
         ],
@@ -415,7 +415,7 @@ def save_appendix_load_status_fragment(*, owner: str) -> PayloadFragment:
 
 def save_appendix_next_update_fragment(selection, *, owner: str) -> PayloadFragment:
     first_save_only = any(
-        node.path == ("features", "memory_card", "display_only_first_save")
+        node.path == ("features", "memory_card", "auto_loading")
         and node.enabled
         for node in selection.nodes
     )

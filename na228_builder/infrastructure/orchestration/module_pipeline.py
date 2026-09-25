@@ -143,7 +143,7 @@ def prepare_module_pipeline(
                     *declaration.fragments,
                 ),
             )
-        if module.feature_id == "settings":
+        if module.feature_id == "default_settings":
             declaration = replace(
                 declaration,
                 fragments=(
@@ -293,22 +293,11 @@ def prepare_module_pipeline(
                         *declaration.fragments,
                     ),
                 )
-        if module.feature_id == "startup":
-            dedicated_namespace_enabled = any(
-                node.path == (
-                    "features",
-                    "memory_card",
-                    "dedicated_save_namespace",
-                )
+            elif any(
+                node.path == ("features", "memory_card", "auto_loading")
                 and node.enabled
                 for node in configuration.selection.nodes
-            )
-            auto_loading_enabled = any(
-                node.path == ("features", "startup", "auto_loading")
-                and node.enabled
-                for node in configuration.selection.nodes
-            )
-            if auto_loading_enabled and not dedicated_namespace_enabled:
+            ):
                 declaration = replace(
                     declaration,
                     fragments=(

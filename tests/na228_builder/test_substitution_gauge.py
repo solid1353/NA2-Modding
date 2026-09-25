@@ -37,7 +37,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_false_disables_gauge(self) -> None:
         features = self._base_features()
-        features["settings"]["battle_mechanics"][
+        features["default_settings"]["battle_mechanics"][
             "substitution"
         ] = False
         selection = catalog.load_selection(
@@ -53,12 +53,12 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_true_is_invalid_when_default_is_mandatory(self) -> None:
         features = self._base_features()
-        features["settings"]["battle_mechanics"][
+        features["default_settings"]["battle_mechanics"][
             "substitution"
         ] = True
         with self.assertRaisesRegex(
             catalog.ConfigurationError,
-            "features.settings.battle_mechanics.substitution",
+            "features.default_settings.battle_mechanics.substitution",
         ):
             catalog.load_selection(
                 self.catalog_path,
@@ -67,14 +67,14 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_advanced_configuration_encodes_exact_integer_counts(self) -> None:
         features = self._base_features()
-        features["settings"]["battle_mechanics"][
+        features["default_settings"]["battle_mechanics"][
             "substitution"
         ] = {
             "value": "chakra",
             "gauge": {
                 "recovery_delay_seconds": 0.25,
                 "refill_seconds_per_stock": 0.05,
-                "damage_recovery": False,
+                "damage_recovery": "off",
                 "damage_percent_per_stock": 31.25,
             },
         }
@@ -104,13 +104,13 @@ class SubstitutionGaugeTests(unittest.TestCase):
             owner="battle.runtime_injector",
         )
         assert base_gauge is not None
-        features["settings"]["battle_mechanics"][
+        features["default_settings"]["battle_mechanics"][
             "substitution"
         ] = {
             "value": "free",
             "gauge": {
                 "recovery_delay_seconds": 10,
-                "damage_recovery": False,
+                "damage_recovery": "off",
             },
         }
         selection = catalog.load_selection(
@@ -142,7 +142,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
             owner="battle.runtime_injector",
         )
         assert base_gauge is not None
-        mechanics = features["settings"]["battle_mechanics"]
+        mechanics = features["default_settings"]["battle_mechanics"]
         mechanics["substitution"]["value"] = "gauge"
         mechanics["support"] = "normal"
         selection = catalog.load_selection(
@@ -153,7 +153,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
             node
             for node in selection.nodes
             if node.path == (
-                "features", "settings", "battle_mechanics", "support",
+                "features", "default_settings", "battle_mechanics", "support",
             )
         )
         self.assertEqual(support.configured_value, "normal")
@@ -167,10 +167,10 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_gauge_always_links_runtime_cost_providers(self) -> None:
         features = self._base_features()
-        features["settings"]["battle_mechanics"][
+        features["default_settings"]["battle_mechanics"][
             "substitution"
         ]["value"] = "gauge"
-        features["settings"]["mod_settings"]["character_overrides"] = False
+        features["default_settings"]["mod_settings"]["character_balance"] = "original"
         selection = catalog.load_selection(
             self.catalog_path,
             self._write_full_configuration(features),
@@ -252,12 +252,12 @@ class SubstitutionGaugeTests(unittest.TestCase):
                 support_selection=selection_enabled,
             ):
                 features = self._base_features()
-                mechanics = features["settings"]["battle_mechanics"]
+                mechanics = features["default_settings"]["battle_mechanics"]
                 support = mechanics["support"]
                 mechanics["support"] = (
                     support if battle_support_enabled else False
                 )
-                mod_settings = features["settings"]["mod_settings"]
+                mod_settings = features["default_settings"]["mod_settings"]
                 support_selection = mod_settings[
                     "support_selection"
                 ]
@@ -270,7 +270,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
                 )
                 injections = {
                     node.patch
-                    for node in selection.feature_nodes("settings")
+                    for node in selection.feature_nodes("default_settings")
                     if node.enabled and node.patch in selection.injections
                 }
                 self.assertEqual(

@@ -14,7 +14,7 @@ from ..battle_mechanics.substitution.substitution_gauge import gauge_option_defa
 from ..battle_mechanics.items.items_settings import FIELD_ITEMS, ITEM_VALUE_LABELS, items_configuration, items_option_defaults
 
 
-MOD_SETTINGS_PATH = ("features", "settings", "mod_settings")
+MOD_SETTINGS_PATH = ("features", "default_settings", "mod_settings")
 
 
 @dataclass(frozen=True)
@@ -32,6 +32,7 @@ class MenuOption:
     help_reference: int | None = None
     values_reference: int | None = None
     option_count: int | None = None
+    enabled_by: tuple[str, int] | None = None
 
     @property
     def count(self) -> int:
@@ -66,18 +67,18 @@ def menu_option_bindings(selection):
             ) from error
 
     mod_rows = (
-        ("new_controls", message("settings.control_scheme.label"),
+        ("controls", message("settings.control_scheme.label"),
          message("settings.control_scheme.help"),
-         (False, True), (message("common.classic"), message("common.updated"))),
+         ("classic", "updated"), (message("common.classic"), message("common.updated"))),
         ("simple_display", message("settings.simple_display.label"),
          message("settings.simple_display.help"),
          ("off", "on"), (message("common.off"), message("common.on"))),
-        ("character_overrides", message("settings.character_balance.label"),
+        ("character_balance", message("settings.character_balance.label"),
          message("settings.character_balance.help"),
-         (False, True), (message("common.original"), message("common.overrides"))),
+         ("original", "overrides"), (message("common.original"), message("common.overrides"))),
         ("balance_overlay", message("settings.balance_overlay.label"),
          message("settings.balance_overlay.help"),
-         (False, True), (message("common.off"), message("common.on"))),
+         ("off", "on"), (message("common.off"), message("common.on"))),
         ("support_selection", message("settings.support_selection.label"),
          message("settings.support_selection.help"),
          ("none", "relevant", "all"), (message("common.none"), message("common.relevant"), message("common.all"))),
@@ -108,7 +109,9 @@ def menu_option_bindings(selection):
         for index, (key, label, help_text, values) in enumerate(rows):
             options[BATTLE_MECHANICS_PATH + ("substitution", "gauge", key)] = MenuOption(
                 label, help_text, values, defaults[index],
-                "substitution_gauge_option_get", "substitution_gauge_option_set", index)
+                "substitution_gauge_option_get", "substitution_gauge_option_set", index,
+                enabled_by=("substitution_gauge_option_get", 2)
+                if key == "damage_percent_per_stock" else None)
     if items_configuration(selection) is not None:
         defaults = items_option_defaults(selection)
         custom_path = BATTLE_MECHANICS_PATH + ("items", "custom")
@@ -119,5 +122,6 @@ def menu_option_bindings(selection):
         for index, (_code, key, label) in enumerate(FIELD_ITEMS):
             options[custom_path + (key,)] = MenuOption(
                 label, message("settings.item.help", item=label), (message("common.off"), message("common.on")), defaults[index + 2],
-                "items_settings_option_get", "items_settings_option_set", index + 2)
+                "items_settings_option_get", "items_settings_option_set", index + 2,
+                enabled_by=("items_settings_option_get", 1))
     return options

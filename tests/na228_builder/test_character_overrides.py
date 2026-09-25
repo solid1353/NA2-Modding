@@ -102,9 +102,9 @@ class CharacterOverrideTests(unittest.TestCase):
                 tempfile.TemporaryDirectory() as directory,
             ):
                 features = json.loads(json.dumps(base["features"]))
-                mod_settings = features["settings"]["mod_settings"]
-                mod_settings["character_overrides"] = overrides_enabled
-                mod_settings["balance_overlay"] = overlay_enabled
+                mod_settings = features["default_settings"]["mod_settings"]
+                mod_settings["character_balance"] = "overrides" if overrides_enabled else "original"
+                mod_settings["balance_overlay"] = "on" if overlay_enabled else "off"
                 configuration_path = Path(directory) / "configuration.jsonc"
                 configuration_path.write_text(
                     json.dumps({"features": features}, indent=2) + "\n",
@@ -117,26 +117,26 @@ class CharacterOverrideTests(unittest.TestCase):
 
                 self.assertEqual(
                     character_override_fragment_feature(selection),
-                    "settings",
+                    "default_settings",
                 )
                 overrides = next(
                     node for node in selection.nodes
                     if node.path == (
-                        "features", "settings", "mod_settings",
-                        "character_overrides",
+                        "features", "default_settings", "mod_settings",
+                        "character_balance",
                     )
                 )
                 overlay = next(
                     node for node in selection.nodes
                     if node.path == (
-                        "features", "settings", "mod_settings",
+                        "features", "default_settings", "mod_settings",
                         "balance_overlay",
                     )
                 )
                 self.assertTrue(overrides.enabled)
-                self.assertEqual(overrides.configured_value, overrides_enabled)
+                self.assertEqual(overrides.configured_value, "overrides" if overrides_enabled else "original")
                 self.assertTrue(overlay.enabled)
-                self.assertEqual(overlay.configured_value, overlay_enabled)
+                self.assertEqual(overlay.configured_value, "on" if overlay_enabled else "off")
 
     def test_layered_values_merge_by_character_and_generate_dense_table(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

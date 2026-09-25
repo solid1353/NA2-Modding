@@ -60,9 +60,9 @@ def character_override_fragment_feature(
 ) -> str | None:
     enabled_by_path = {node.path: node.enabled for node in selection.nodes}
     if enabled_by_path.get(
-        ("features", "settings", "mod_settings"), False
+        ("features", "default_settings", "mod_settings"), False
     ):
-        return "settings"
+        return "default_settings"
     return None
 
 

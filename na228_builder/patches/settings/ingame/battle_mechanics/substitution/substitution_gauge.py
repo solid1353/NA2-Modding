@@ -11,16 +11,10 @@ if TYPE_CHECKING:
     from na228_builder.infrastructure.orchestration.catalog import CatalogSelection
 
 
-CHARACTER_OVERRIDES_PATH = (
-    "features",
-    "settings",
-    "mod_settings",
-    "character_overrides",
-)
 DEFAULT_RECOVERY_DELAY_SECONDS = Decimal("14.0")
 DEFAULT_REFILL_SECONDS_PER_STOCK = Decimal("1.0")
 DEFAULT_DAMAGE_PERCENT_PER_STOCK = Decimal("31.25")
-DEFAULT_DAMAGE_RECOVERY = True
+DEFAULT_DAMAGE_RECOVERY = "on"
 COUNTS_PER_SECOND = Decimal(60)
 STOCK_COUNT = 4
 Q16_ONE = Decimal(65536)
@@ -79,12 +73,11 @@ def substitution_gauge_fragment(
     node = _selected_node(selection, battle_mechanic_path("substitution"))
     if not node.enabled:
         return None
-    character_overrides = _selected_node(selection, CHARACTER_OVERRIDES_PATH)
     practice_settings = _selected_node(selection, PRACTICE_SETTINGS_PATH)
     if not practice_settings.enabled:
         raise ValueError(
-            "features.settings.battle_mechanics.substitution "
-            "requires features.settings.practice_settings"
+            "features.default_settings.battle_mechanics.substitution "
+            "requires features.default_settings.practice_settings"
         )
 
     substitution = node.configured_value
@@ -158,8 +151,8 @@ def gauge_config_values(selection: CatalogSelection) -> tuple[int, int, int, int
     damage_recovery = gauge.get(
         "damage_recovery", DEFAULT_DAMAGE_RECOVERY
     )
-    if not isinstance(damage_recovery, bool):
-        raise ValueError("Substitution-gauge damage recovery must be Boolean")
+    if damage_recovery not in ("off", "on"):
+        raise ValueError("Substitution-gauge damage recovery must be 'off' or 'on'")
 
     if not Decimal(0) <= recovery_delay <= Decimal(60):
         raise ValueError("Substitution-gauge recovery delay must be from 0 through 60")
@@ -184,7 +177,7 @@ def gauge_config_values(selection: CatalogSelection) -> tuple[int, int, int, int
     if damage_threshold_q16 <= 0 or damage_threshold_q16 > int(Q16_ONE):
         raise ValueError("Substitution-gauge damage threshold is outside Q16 range")
 
-    return stock_counts, capacity_counts, delay_counts, damage_threshold_q16, damage_recovery
+    return stock_counts, capacity_counts, delay_counts, damage_threshold_q16, damage_recovery == "on"
 
 
 def gauge_option_defaults(selection: CatalogSelection) -> tuple[int, ...]:

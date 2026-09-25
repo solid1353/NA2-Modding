@@ -2,26 +2,26 @@
 
 ## Balance overlay
 
-`features.settings.mod_settings.balance_overlay` is independently selectable from
-`features.settings.mod_settings.character_overrides`. Its guarded hook replaces the first
+`features.default_settings.mod_settings.balance_overlay` is independently selectable from
+`features.default_settings.mod_settings.character_balance`. Its guarded hook replaces the first
 native player-panel draw call with a wrapper that preserves that draw, resolves
 the selected character ID, and reads the same complete generated character
 table used by battle.
 
-When enabled, the overlay always displays each selected character's `TIER` in
+When set to `"on"`, the overlay always displays each selected character's `TIER` in
 the corresponding top-screen block. Both lines in each block share one left
 edge. The two fixed-width blocks have mirrored outer and inner edges around the
 screen center, so changing either character cannot move its block. It
 additionally displays the resolved
-`SUB x%` value only when `features.settings.mod_settings.character_overrides` is enabled. If
-Character Overrides is disabled, the table still supplies tier metadata to the
+`SUB x%` value only when `features.default_settings.mod_settings.character_balance` is `"overrides"`. With
+`"original"` balance, the table still supplies tier metadata to the
 overlay but is not applied to gameplay. The builder links the complete table
 once whenever either consumer needs it; it does not generate a partial or
 alternate table.
 
 ## Support selection
 
-`features.settings.mod_settings.support_selection` accepts `"all"`, `"relevant"`,
+`features.default_settings.mod_settings.support_selection` accepts `"all"`, `"relevant"`,
 or `"none"`. Each mode builds one support roster per player, beginning with
 **No Support**:
 
@@ -138,7 +138,7 @@ confirmed both directions.
 
 The setting does not change field-support calls or the native battle support
 gauge. Those are controlled independently by
-`features.settings.battle_mechanics.support`; selected native supports and linked Jutsu
+`features.default_settings.battle_mechanics.support`; selected native supports and linked Jutsu
 remain intact in every combination. The Character Select record is in
 [`../knowledge/game/character_select.md`](../knowledge/game/character_select.md),
 and the battle-path evidence is in

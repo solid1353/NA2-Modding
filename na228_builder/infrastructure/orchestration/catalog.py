@@ -1192,10 +1192,103 @@ def _load_implementation(
     )
 
 
+def _apply_release_values(node, value, path):
+    """Apply catalog release overrides using the normal configuration merge rules."""
+    node = catalog_format.expand_node(node)
+    if isinstance(node, catalog_format.UnionNode):
+        if value is False:
+            return value
+        branch = next(branch for branch in node.branches
+                      if _matches_configuration_node(branch, value))
+        return _apply_release_values(branch, value, path)
+    if node.release_value is not None:
+        value = _merge_configuration_value(node, value, node.release_value, path)
+        _validate_configuration_value(node, value, path)
+    if isinstance(node, catalog_format.ContainerNode) and isinstance(value, dict):
+        fields = _container_fields(node)
+        return {name: _apply_release_values(fields[name], child, (*path, name))
+                for name, child in value.items()}
+    return value
+
+
+def _release_configuration_value(
+    node, value, defaults=None, *, restore=False, inherited=False,
+):
+    """Project selected values, or restore hidden entries from packaged defaults."""
+    node = catalog_format.expand_node(node)
+    if value is False or isinstance(node, catalog_format.SettingNode):
+        return value
+    if isinstance(node, catalog_format.UnionNode):
+        for branch in node.branches:
+            candidate = (catalog_format.release_projection(branch, inherited=inherited)
+                         if restore else branch)
+            if candidate is not None and _matches_configuration_node(candidate, value):
+                return _release_configuration_value(
+                    branch, value, defaults, restore=restore, inherited=inherited,
+                )
+        raise ConfigurationError("Release configuration does not match a catalog branch")
+    if isinstance(node, catalog_format.ContainerNode):
+        inherited = inherited if node.release is None else node.release
+        result = dict(value)
+        for field in node.fields:
+            if catalog_format.release_projection(field.node, inherited=inherited) is None:
+                if restore:
+                    result[field.name] = defaults[field.name]
+                else:
+                    result.pop(field.name, None)
+            else:
+                result[field.name] = _release_configuration_value(
+                    field.node, value[field.name],
+                    defaults.get(field.name) if isinstance(defaults, dict) else None,
+                    restore=restore, inherited=inherited,
+                )
+        return result
+    raise TypeError(type(node))
+
+
+def _release_fields(features):
+    """Map public names to internal paths and their visible catalog nodes."""
+    result = {}
+
+    def collect(node, path):
+        if isinstance(node, catalog_format.ContainerNode) and node.release is not True:
+            for field in node.fields:
+                collect(field.node, (*path, field.name))
+            return
+        name = path[-1]
+        if name in result:
+            raise ConfigurationError(f"Duplicate release setting name: {name}")
+        result[name] = (path, node)
+
+    for name, node in features.items():
+        visible = catalog_format.release_projection(node)
+        if visible is not None:
+            collect(visible, (name,))
+    return result
+
+
+def _expand_release_configuration(features, configuration, defaults):
+    fields = _release_fields(features)
+    public_root = _feature_root({name: node for name, (_path, node) in fields.items()})
+    _validate_configuration_value(public_root, configuration, ())
+    nested = {}
+    for name, (path, _node) in fields.items():
+        target = nested
+        for part in path[:-1]:
+            target = target.setdefault(part, {})
+        target[path[-1]] = configuration[name]
+    return _release_configuration_value(
+        _feature_root(features), nested, defaults, restore=True,
+    )
+
+
 def _effective_configuration(
     catalog_path: Path,
     configuration_path: Path,
     features: dict[str, catalog_format.CatalogNodeExpression],
+    *,
+    release_defaults_path: Path | None = None,
+    for_release: bool = False,
 ) -> tuple[Path | None, object]:
     try:
         configuration = _read_jsonc(configuration_path, "Configuration")
@@ -1204,14 +1297,20 @@ def _effective_configuration(
     root = _feature_root(features)
     repository_configuration_root = (catalog_path.parent / "configurations").resolve()
     if (
-        configuration_path.parent == repository_configuration_root
+        release_defaults_path is None
+        and configuration_path.parent == repository_configuration_root
         and configuration_path.name != "base.jsonc"
         and set(configuration) != {"overrides"}
     ):
         raise ConfigurationError(
             "Repository configurations must contain only the overrides root key"
         )
-    if set(configuration) == {"overrides"}:
+    if release_defaults_path is not None:
+        base_path = release_defaults_path
+        defaults = _read_jsonc(release_defaults_path, "Packaged defaults")["features"]
+        _validate_configuration_value(root, defaults, ("features",))
+        effective = _expand_release_configuration(features, configuration, defaults)
+    elif set(configuration) == {"overrides"}:
         base_path = (repository_configuration_root / "base.jsonc").resolve()
         try:
             base = _read_jsonc(base_path, "Base configuration")
@@ -1231,7 +1330,6 @@ def _effective_configuration(
         )
     elif set(configuration) == {"features"}:
         base_path = None
-        _validate_configuration_value(root, configuration["features"], ("features",))
         effective = configuration["features"]
     else:
         expected = {"features"}
@@ -1245,10 +1343,15 @@ def _effective_configuration(
             problems.append("unknown keys: " + ", ".join(extra))
         raise ConfigurationError(f"Invalid config root: {'; '.join(problems)}")
     _validate_configuration_value(root, effective, ("features",))
+    if for_release:
+        effective = _apply_release_values(root, effective, ("features",))
+        _validate_configuration_value(root, effective, ("features",))
     return base_path, effective
 
 
-def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelection:
+def load_selection(catalog_path: Path, configuration_path: Path, *,
+                   release_defaults_path: Path | None = None,
+                   for_release: bool = False) -> CatalogSelection:
     catalog_path = catalog_path.resolve()
     configuration_path = configuration_path.resolve()
     features, catalog_files = _read_catalog(catalog_path)
@@ -1261,7 +1364,9 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
         string_patches,
     ) = _load_implementation(catalog_path, features)
     base_path, effective = _effective_configuration(
-        catalog_path, configuration_path, features
+        catalog_path, configuration_path, features,
+        release_defaults_path=release_defaults_path,
+        for_release=for_release,
     )
     nodes = _apply_patch_metadata(
         _selected_nodes(_feature_root(features), effective),
@@ -1311,21 +1416,36 @@ def load_startup_fast_forward_frames(
 def materialized_configuration(
     catalog_path: Path,
     configuration_path: Path,
+    *,
+    public: bool = False,
+    for_release: bool = False,
 ) -> dict[str, object]:
-    """Return one complete standalone configuration with repository overrides applied."""
+    """Resolve configuration values, optionally applying release overrides and visibility."""
     catalog_path = catalog_path.resolve()
     configuration_path = configuration_path.resolve()
     features, _catalog_files = _read_catalog(catalog_path)
     _base_path, effective = _effective_configuration(
-        catalog_path, configuration_path, features
+        catalog_path, configuration_path, features, for_release=for_release or public
     )
+    if public:
+        effective = _release_configuration_value(_feature_root(features), effective)
+        flattened = {}
+        for name, (path, _node) in _release_fields(features).items():
+            value = effective
+            for part in path:
+                if value is False:
+                    break
+                value = value[part]
+            flattened[name] = value
+        return flattened
     return {"features": effective}
 
 
 def public_catalog(catalog_path: Path) -> str:
     """Return the consolidated inert release reference without implementation data."""
     features, _catalog_files = _read_catalog(catalog_path)
-    return catalog_format.serialize_catalog(features, include_patches=False)
+    projected = {name: node for name, (_path, node) in _release_fields(features).items()}
+    return catalog_format.serialize_feature(_feature_root(projected), include_patches=False)
 
 
 def _parse_int(value: object, label: str, *, minimum: int = 0) -> int:

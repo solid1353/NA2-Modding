@@ -125,6 +125,7 @@ configuration = load_configuration(
     paths.path("builder"),
     project_paths=paths,
     root_overrides={"na2": marker},
+    for_release=True,
 )
 excluded = {Path(sys.argv[2]).resolve()}
 if configuration.selection.base_configuration_path is not None:
@@ -159,6 +160,36 @@ print(json.dumps([
         New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
         Copy-Item -LiteralPath $source -Destination $destination
     }
+
+    $configurationProbe = @'
+import json
+import sys
+from pathlib import Path
+
+repository = Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(repository))
+from na228_builder.infrastructure.orchestration.catalog import materialized_configuration
+from scripts.lib.paths import load_local_paths
+
+paths = load_local_paths(repository, allow_missing=True)
+
+print(json.dumps(materialized_configuration(
+    paths.path("builder", "catalog.modcat"),
+    Path(sys.argv[2]),
+    public=sys.argv[3] == "public",
+    for_release=True,
+), indent=2))
+'@
+    $embeddedConfiguration = Join-Path $resourceRoot ([IO.Path]::GetRelativePath(
+        $repository, (Join-Path $paths.builder 'configurations/base.jsonc')
+    ))
+    $embeddedText = @(& $python -B -c $configurationProbe $repository $configurationPath embedded)
+    if ($LASTEXITCODE -ne 0) { throw 'Could not construct embedded release defaults.' }
+    [IO.File]::WriteAllText(
+        $embeddedConfiguration,
+        ($embeddedText -join "`n") + "`n",
+        [Text.UTF8Encoding]::new($false)
+    )
 
     $compileRuntimeSource = @'
 import sys
@@ -221,24 +252,7 @@ raise SystemExit(main())
     $packagedCharacterOverrides = Join-Path $distRoot 'character_overrides.tsv'
     $packagedInstructions = Join-Path $distRoot 'README.md'
     $packagedCatalog = Join-Path $distRoot 'catalog.modcat'
-    $configurationProbe = @'
-import json
-import sys
-from pathlib import Path
-
-repository = Path(sys.argv[1]).resolve()
-sys.path.insert(0, str(repository))
-from na228_builder.infrastructure.orchestration.catalog import materialized_configuration
-from scripts.lib.paths import load_local_paths
-
-paths = load_local_paths(repository, allow_missing=True)
-
-print(json.dumps(materialized_configuration(
-    paths.path("builder", "catalog.modcat"),
-    Path(sys.argv[2]),
-), indent=2))
-'@
-    $configurationText = @(& $python -B -c $configurationProbe $repository $configurationPath)
+    $configurationText = @(& $python -B -c $configurationProbe $repository $configurationPath public)
     if ($LASTEXITCODE -ne 0) {
         throw 'Could not construct the merged release configuration.'
     }

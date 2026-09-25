@@ -43,6 +43,7 @@ def load_release_configuration(
         builder_root,
         project_paths=paths,
         root_overrides=root_overrides,
+        release_defaults_path=builder_root / "configurations" / "base.jsonc",
     )
     if configuration.product_title != manifest.product_name:
         raise RuntimeError(

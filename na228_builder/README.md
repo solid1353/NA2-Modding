@@ -12,9 +12,9 @@ integrated catalog data.
   the first segment of each dotted patch ID. Feature-owned Python, C, and
   assembly implementation lives in the same `patches/` feature tree.
 - `configurations/base.jsonc` owns the complete shared `features` tree.
-  `test.jsonc`, `e2e.jsonc`, and `release.jsonc` contain partial
-  `overrides`. Root `game.json` may assign a unique command alias; E2E and
-  release packaging select their dedicated configurations internally.
+  `test.jsonc`, `e2e.jsonc`, and `jp.jsonc` contain partial `overrides`.
+  Root `game.json` may assign a unique command alias. Release packaging uses
+  the base configuration with optional catalog `release_value` overrides.
   Keep its trailing `//` comments aligned to the same column. Realign all of
   them when an edit changes the required width.
 - `configurations/overrides/base.character_overrides.tsv` owns shared
@@ -83,8 +83,9 @@ a `LaunchParameters` dictionary.
 
 1. Put shared defaults and agreed character values in
    `configurations/overrides/base.character_overrides.tsv`.
-2. Put release-only values in `release.character_overrides.tsv` in the same
-   directory. Only nonempty cells replace the base layer.
+2. For another configuration, use its matching `<name>.character_overrides.tsv`
+   in the same directory. Only nonempty cells replace the base layer. Release
+   packaging uses the base character values.
 3. Keep each numeric `id` paired with the exact `character` name from
    `@resources/character_data.tsv`. `base_id` identifies a form's base
    character, and `tier` records the human-readable balance tier. Tier labels
@@ -168,8 +169,8 @@ Documentation is not an executable builder input.
 [`resources/save_appendix.tsv`](resources/save_appendix.tsv) is the readable list of values stored
 after the native profile record when
 `features.memory_card.dedicated_save_namespace` is enabled. It contains every
-runtime-editable setting below `features.settings`; submenu inclusion flags are
-build configuration and are not saved.
+runtime-editable setting below `features.default_settings`. The submenu switches
+in `features.menu_composition` are build configuration and are not saved.
 
 The first line declares `schema_version`. The table has four columns:
 
@@ -224,7 +225,7 @@ na228 build [config] [-f]
 
 Every top-level JSON under `configurations/` is discovered automatically. A
 configuration without an alias uses its filename stem as its command selector.
-Root `game.json` assigns `b`, `t`, `r`, and `e` to the base, test, release, and
+Root `game.json` assigns `b`, `j`, `t`, and `e` to the base, Japanese, test, and
 E2E configurations; those configurations are selected only by their aliases.
 `na228 <config>` launches the newest cached build. Prefixing the selector with
 `b` builds or reuses it before launch, and `na228 build <config>` builds without

@@ -25,14 +25,13 @@ def bind_help_setter(selection, payload, relocations, offset):
 
 
 def menu_title(name):
-    return message(f"page.{name.removesuffix('_submenu')}.title")
+    return message(f"page.{name}.title")
 
 
 def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
-                     section_fields, prefix, first_generated_id,
-                     excluded_paths=()):
+                     section_fields, prefix, first_generated_id):
     """Discover topology independently of native row and gameplay bindings."""
-    settings = selection.catalog["settings"]
+    settings = selection.catalog["default_settings"]
     settings_definitions = {field.name: field.node for field in settings.fields}
     definition = settings
     for name in root_path[2:]:
@@ -40,7 +39,6 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
                           if field.name == name)
     selected = {node.path: node for node in selection.nodes}
     options = menu_option_bindings(selection)
-    excluded_paths = set(excluded_paths)
     pages = []
     next_id = first_generated_id
 
@@ -117,28 +115,26 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
             heading_symbol=f"{prefix}_page_{page_index}_heading" if page_index else None,
             heading_text=heading if page_index else None))
         rows = []
-        for name, child in ordered_fields(definition, path):
-            child_path = path + (name,)
-            if child_path in excluded_paths:
-                continue
-            target = selected.get(child_path)
-            reference = isinstance(child, SettingNode) and child.value_type is None
-            if target is not None and not target.enabled:
-                continue
-            if reference:
-                settings_name = name.removesuffix("_submenu")
-                if (
-                    settings_name == name
-                    or settings_name not in settings_definitions
-                ):
-                    raise ValueError(
-                        "No referenced settings definition for "
-                        f"{'.'.join(child_path)}"
-                    )
-                child_path = ("features", "settings", settings_name)
-                child = settings_definitions[settings_name]
+        if page_index == 0:
+            menu_path = ("features", "menu_composition", root_path[-1])
+            menu_definition = next(field.node for field in selection.catalog["menu_composition"].fields
+                                   if field.name == root_path[-1])
+            for name, _child in ordered_fields(menu_definition, menu_path):
+                if not selected[menu_path + (name,)].enabled:
+                    continue
+                child_path = ("features", "default_settings", name)
                 if not selected[child_path].enabled:
                     continue
+                subpage = add_page(settings_definitions[name], child_path, page_index,
+                                   len(rows), ancestors + (path,))
+                rows.append(allocate_row(option_count=1, default_value=0, flags=SUBMENU_FLAG,
+                    label=menu_title(name), help=message(f"page.{name}.help"),
+                    value_pages=((0, subpage, None),)))
+        for name, child in ordered_fields(definition, path):
+            child_path = path + (name,)
+            target = selected.get(child_path)
+            if target is not None and not target.enabled:
+                continue
             fields = fields_of(child)
             if fields is None:
                 rows.append(leaf_row(child_path))
@@ -164,7 +160,7 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
                 subpage = add_page(child, child_path, page_index, len(rows), ancestors + (path,))
                 label = menu_title(name)
                 rows.append(allocate_row(option_count=1, default_value=0, flags=SUBMENU_FLAG,
-                    label=label, help=message(f"page.{name.removesuffix('_submenu')}.help"),
+                    label=label, help=message(f"page.{name}.help"),
                     value_pages=((0, subpage, None),)))
         if page_index == 0 and "section" in row_type.__dataclass_fields__:
             rows = [replace(row, section=0) for row in rows]
@@ -245,14 +241,23 @@ def page_resource_fragments(pages, owner, symbol, selection):
         if page.heading_text is not None:
             fragments.append(PayloadFragment(owner=owner, symbol=page.heading_symbol,
                 kind="rodata", alignment=4, payload=strings.encode(page.heading_text) + b"\0"))
-    for index, row in enumerate(row for page in pages for row in page.rows):
+    rows = tuple(row for page in pages for row in page.rows)
+    option_symbols = {
+        (row.runtime_option.getter, row.runtime_option.argument): f"{symbol}_option_{index}"
+        for index, row in enumerate(rows) if row.runtime_option is not None
+    }
+    for index, row in enumerate(rows):
         option = row.runtime_option
         if option is not None:
+            relocations = [
+                PayloadRelocation(offset=0, kind="abs32", symbol=option.getter),
+                PayloadRelocation(offset=4, kind="abs32", symbol=option.setter),
+            ]
+            if option.enabled_by is not None:
+                relocations.append(PayloadRelocation(
+                    offset=16, kind="abs32", symbol=option_symbols[option.enabled_by]))
             fragments.append(PayloadFragment(owner=owner, symbol=f"{symbol}_option_{index}",
                 kind="data", alignment=4,
-                payload=struct.pack("<4I", 0, 0, option.argument, option.default),
-                relocations=(
-                    PayloadRelocation(offset=0, kind="abs32", symbol=option.getter),
-                    PayloadRelocation(offset=4, kind="abs32", symbol=option.setter),
-                )))
+                payload=struct.pack("<5I", 0, 0, option.argument, option.default, 0),
+                relocations=tuple(relocations)))
     return tuple(fragments)

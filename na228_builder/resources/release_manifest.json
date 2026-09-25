@@ -1,6 +1,6 @@
 {
   "product_version": "0.9.0-beta.1",
-  "configuration": "na228_builder/configurations/release.jsonc",
+  "configuration": "na228_builder/configurations/base.jsonc",
   "configuration_name": "config.jsonc",
   "images": [
     {

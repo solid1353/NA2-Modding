@@ -16,27 +16,36 @@
     },
     "startup": {
       "faster_loading": true,
-      "skip_initial_memory_card_check": true,
-      "auto_loading": true,
       "loading_screen": true
     },
     "memory_card": {
-      "display_only_first_save": true,
+      "auto_loading": true,
+      "skip_initial_check": true,
       "dedicated_save_namespace": true,
       "replace_memory_card_title": true
     },
     "rendering": {
       "native_16_9_horizontal_scale": false
     },
-    "settings": {
+    "menu_composition": {
       "mod_settings": {
-        "battle_mechanics_submenu": true,
-        "battle_settings_submenu": true,
-        "practice_settings_submenu": true,
-        "new_controls": true,
+        "battle_mechanics": true,
+        "battle_settings": true,
+        "practice_settings": true
+      },
+      "battle_settings": {
+        "battle_mechanics": true
+      },
+      "practice_settings": {
+        "battle_mechanics": true
+      }
+    },
+    "default_settings": {
+      "mod_settings": {
+        "controls": "updated",                    // "classic" | "updated"
+        "character_balance": "overrides",         // "original" | "overrides"
+        "balance_overlay": "on",                  // "off" | "on"
         "simple_display": "off",                  // "off" | "on"
-        "character_overrides": true,
-        "balance_overlay": true,
         "support_selection": "none"               // "none" | "relevant" | "all"
       },
       "battle_mechanics": {
@@ -55,7 +64,7 @@
           "gauge": {
             "recovery_delay_seconds": 14.0,       // decimal 0..60 (step 0.25, seconds)
             "refill_seconds_per_stock": 1.0,      // decimal >0..10 (step 0.05, seconds)
-            "damage_recovery": true,
+            "damage_recovery": "on",              // "off" | "on"
             "damage_percent_per_stock": 31.25     // decimal >0..100 (step 0.25, %)
           }
         },
@@ -92,13 +101,11 @@
         }
       },
       "battle_settings": {
-        "battle_mechanics_submenu": true,
         "time": 99,                               // int 10..90 (step 10) | 99 | "unlimited"
         "difficulty": "normal",                   // "simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"
         "handicap": 5                             // int 0..10 (Player 1; Player 2 is 10 minus this value)
       },
       "practice_settings": {
-        "battle_mechanics_submenu": true,
         "opponent_settings": {
           "status": "manual",                     // "manual" | "com" | "stand" | "jump" | "double_jump"
           "strength": "normal",                   // "simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"

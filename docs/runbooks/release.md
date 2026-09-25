@@ -13,8 +13,9 @@ installation and supply one exact clean NA2 ISO.
 3. Optionally edit `config.jsonc`. `//` and `/* ... */` comments and trailing
    commas are accepted. A bare setting uses `true` or `false`; a
    typed setting uses the scalar or object value declared by `catalog.modcat`.
-   `false` disables any node. Container objects merge recursively through
-   `overrides`, while settings and unions are replaced atomically.
+   `false` disables any node. The root contains `localization`, `music_override`,
+   `auto_loading`, `native_16_9_horizontal_scale`, and `default_settings`.
+   The default settings retain their menu groups.
 4. Optionally edit `character_overrides.tsv`: the `base` substitution cost and
    unsigned character values are literal, explicitly signed character values
    are deltas from the base, and an empty cell inherits its packaged value and
@@ -43,9 +44,13 @@ installation and supply one exact clean NA2 ISO.
 
 The ZIP contains exactly the versioned EXE, `config.jsonc`,
 `character_overrides.tsv`, `catalog.modcat`, and `README.md`. Release packaging
-applies `release.overrides` to `base.features` and writes the resulting complete
-`features` tree to `config.jsonc`. It materializes the base and release
-character-override layers into `character_overrides.tsv`, including every
+applies catalog `release_value` overrides to `base.features`, embeds the complete result as
+the packaged `configurations/base.jsonc`, and exports its public fields to
+`config.jsonc`. Only entries included through catalog `release: true` metadata
+appear in the external config and catalog. Export flattens unmarked parent
+groups; the release loader maps public keys back to their internal paths and restores hidden
+embedded values before building. It materializes the base character values
+into `character_overrides.tsv`, including every
 reference ID/name row for direct editing. It derives the
 external `catalog.modcat` from the canonical project catalog, strips every
 patch and implementation detail, and distributes it only as a readable reference. The
@@ -128,8 +133,8 @@ without a release resumes publication.
 
 The ordinary `na228`, `na228 b`, and `na228 m` workflows select the
 configuration owned by their root `game.json` build target. Cache builds use
-their explicitly selected configuration. `release.jsonc` is used only by this
-release-packaging pipeline.
+their explicitly selected configuration. Catalog `release_value` overrides
+apply only in the release-packaging pipeline.
 
 ## GitHub releases
 

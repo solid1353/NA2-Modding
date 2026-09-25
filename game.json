@@ -15,7 +15,6 @@
     "base": "b",
     "jp": "j",
     "test": "t",
-    "release": "r",
     "e2e": "e"
   }
 }

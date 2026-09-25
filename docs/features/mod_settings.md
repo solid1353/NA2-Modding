@@ -1,24 +1,21 @@
 # Mod Settings
 
-`features.settings.mod_settings` defines the initial values and Return to
+`features.default_settings.mod_settings` defines the initial values and Return to
 Defaults values for the session-wide Mod Settings menu:
 
 | Field | Menu row | Values |
 | --- | --- | --- |
-| `battle_mechanics_submenu` | Battle Mechanics | `true` includes the submenu launcher; `false` omits it |
-| `battle_settings_submenu` | Battle Settings | `true` includes the submenu launcher; `false` omits it |
-| `practice_settings_submenu` | Practice Settings | `true` includes the submenu launcher; `false` omits it |
-| `new_controls` | Control Scheme | `false` = Classic, `true` = Updated |
+| `controls` | Control Scheme | `classic`, `updated` |
+| `character_balance` | Character Balance | `original`, `overrides` |
+| `balance_overlay` | Balance Overlay | `off`, `on` |
 | `simple_display` | Simple Display | `off`, `on` |
-| `character_overrides` | Character Balance | `false` = Original, `true` = Overrides |
-| `balance_overlay` | Balance Overlay | `false` = Off, `true` = On |
 | `support_selection` | Support Selection | `none`, `relevant`, `all` |
 
 The builder always includes the five runtime implementations. Their configured
 values initialize one writable runtime state when the game starts. With
 `features.memory_card.dedicated_save_namespace` enabled, the existing save flow
 writes these values and every other runtime-editable value below
-`features.settings` to the dedicated record appendix. A valid loaded record
+`features.default_settings` to the dedicated record appendix. A valid loaded record
 overrides configured defaults; a setting absent from an older record keeps its
 configured default. With the dedicated namespace disabled, the retail save
 format does not store these values.
@@ -43,9 +40,13 @@ transaction and closes. Select stages the configured defaults and shows
 **Settings returned to defaults.** Square opens a configured submenu.
 Opening plays the same sound as native Practice Settings.
 
-The root menu lists Battle Mechanics, Battle Settings, and Practice Settings
-before the five Mod Settings values. Battle Mechanics opens
-`features.settings.battle_mechanics`. The Battle Settings and
+`features.menu_composition.mod_settings` controls the Battle Mechanics, Battle
+Settings, and Practice Settings launchers. Each Boolean includes or omits its
+launcher, and their config order determines their order before the five Mod
+Settings values. The value rows follow `features.default_settings.mod_settings`
+order. `menu_composition` is omitted from release config and catalog exports;
+the packaged builder retains its resolved release values. Battle Mechanics opens
+`features.default_settings.battle_mechanics`. The Battle Settings and
 Practice Settings pages expose their existing stored values without repeating
 Battle Mechanics. Changes made through these pages also appear in the existing
 in-game Battle Settings and Practice Settings menus.

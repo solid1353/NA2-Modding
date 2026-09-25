@@ -20,16 +20,25 @@ output and removes only its temporary `.building` file.
 
 ## `config.jsonc`
 
-`features` has the same hierarchy shown in `catalog.modcat`:
+The root contains four feature options and the grouped in-game defaults:
+
+- `localization`: `"en"` or `"jp"`.
+- `music_override`: enable or disable the replacement menu music.
+- `auto_loading`: automatically load the first save and use that slot for
+  saving and loading. Disable to load manually and choose among all save slots.
+- `native_16_9_horizontal_scale`: enable basic widescreen scaling.
+- `default_settings`: initial and Return to Defaults values, grouped by menu.
+
+Values follow the types shown in `catalog.modcat`:
 
 - `true` enables a plain on/off setting.
 - `false` disables any setting or complete branch.
-- A scalar setting uses its value directly, such as `"manual"` or an integer.
+- A scalar setting uses its value directly, such as `"classic"` or an integer.
 - A named structured alternative is an object containing its selected named
   field. Object shapes and unions must match the catalog exactly.
 
-`config.jsonc` contains the complete `features` tree; edit values in that tree
-directly. It has no separate overrides layer.
+Edit these values directly. The release config has no `features` wrapper or
+separate overrides layer.
 
 Invalid keys, values, ranges, or ambiguous union values are rejected before
 the builder modifies an ISO. The error names the invalid configuration path,

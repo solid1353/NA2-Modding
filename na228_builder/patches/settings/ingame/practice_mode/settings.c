@@ -891,6 +891,9 @@ s32 practice_settings_row_enabled(void *controller, s32 index)
     if (row == (const PracticeSettingsRow *)0) {
         return 0;
     }
+    if (settings_menu_option_enabled(row->runtime_option) == 0) {
+        return 0;
+    }
     status = practice_settings_status(controller);
     if (row->availability == ROW_AVAILABLE_ALWAYS) {
         return 1;

@@ -1,7 +1,7 @@
 /* Automatically load the first save and report its outcome in the main menu. */
 
 typedef signed int s32;
-#include "../../localization/mod_strings.h"
+#include "../localization/mod_strings.h"
 
 typedef unsigned char u8;
 typedef unsigned short u16;

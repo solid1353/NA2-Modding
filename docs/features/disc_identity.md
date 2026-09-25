@@ -10,8 +10,7 @@
 | `"en"` and future non-Japanese languages | `SLES-55605` | `SLES_556.05` |
 
 The [base configuration](../../na228_builder/configurations/base.jsonc) selects
-`"en"`. The [release configuration](../../na228_builder/configurations/release.jsonc)
-inherits it, so consumers see an English game title and a
+`"en"`. Release packaging inherits this value, so consumers see an English game title and a
 **Playable** compatibility rating in PCSX2. NUN5 and NA2 receive identical
 automatic compatibility fixes. The rating is a database label, not evidence
 of different compatibility between these identity choices.

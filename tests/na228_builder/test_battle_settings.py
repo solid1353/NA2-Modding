@@ -5,6 +5,7 @@ import struct
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 from na228_builder.infrastructure.orchestration import catalog, jsonc
 from na228_builder.patches.localization.mod_strings import ModStrings
@@ -13,6 +14,8 @@ from na228_builder.patches.settings.ingame.battle_mode.battle_settings import (
     battle_settings_fragment,
 )
 from scripts.lib.paths import load_local_paths
+from na228_builder.patches.settings.ingame.shared.menu_options import MenuOption
+from na228_builder.patches.settings.ingame.shared.menu_pages import page_resource_fragments
 
 
 class BattleSettingsTests(unittest.TestCase):
@@ -85,7 +88,7 @@ class BattleSettingsTests(unittest.TestCase):
 
     def test_shared_defaults_drive_the_selectable_values(self) -> None:
         def configure(features) -> None:
-            mechanics = features["settings"]["battle_mechanics"]
+            mechanics = features["default_settings"]["battle_mechanics"]
             mechanics["ultimate_jutsu"] = "no_contest"
             mechanics["shadowblur"] = "on"
             mechanics["extra_hit"] = "on"
@@ -113,8 +116,8 @@ class BattleSettingsTests(unittest.TestCase):
 
     def test_disabling_battle_mechanics_launcher_keeps_native_root_rows(self) -> None:
         selection = self._selection(
-            lambda features: features["settings"]["battle_settings"].__setitem__(
-                "battle_mechanics_submenu", False
+            lambda features: features["menu_composition"]["battle_settings"].__setitem__(
+                "battle_mechanics", False
             )
         )
         fragment = battle_settings_fragment(
@@ -129,14 +132,13 @@ class BattleSettingsTests(unittest.TestCase):
 
     def test_config_key_order_controls_root_and_battle_mechanics_pages(self) -> None:
         def configure(features) -> None:
-            settings = features["settings"]
+            settings = features["default_settings"]
             battle = settings["battle_settings"]
             settings["battle_settings"] = {
                 key: battle[key]
                 for key in (
                     "handicap",
                     "difficulty",
-                    "battle_mechanics_submenu",
                     "time",
                 )
             }
@@ -160,12 +162,25 @@ class BattleSettingsTests(unittest.TestCase):
         self.assertEqual(
             [ModStrings(self.selection).resolve(row.label) if row.label else row.row_id
              for row in pages[0].rows],
-            [5, 1, "Battle Mechanics", 0],
+            ["Battle Mechanics", 5, 1, 0],
         )
         self.assertEqual(
             [row.row_id for row in pages[1].rows],
             [2, 6, 11, 10, 9, 8, 7, 4, 3],
         )
+
+    def test_dependent_option_keeps_its_controller_when_rows_move(self) -> None:
+        controller = MenuOption(None, None, ("off", "on"), 1, "get", "set", 2)
+        dependent = MenuOption(None, None, ("low", "high"), 0, "get", "set", 3,
+                               enabled_by=("get", 2))
+        for options in ((controller, dependent), (dependent, controller)):
+            with self.subTest(controller_index=options.index(controller)):
+                page = SimpleNamespace(heading_text=None, rows=tuple(
+                    SimpleNamespace(runtime_option=option) for option in options))
+                fragments = page_resource_fragments((page,), "settings", "menu", self.selection)
+                link = next(relocation for relocation in fragments[options.index(dependent)].relocations
+                            if relocation.offset == 16)
+                self.assertEqual(link.symbol, fragments[options.index(controller)].symbol)
 
     def test_handicap_text_values(self) -> None:
         values = ModStrings(self.selection).native_payload(

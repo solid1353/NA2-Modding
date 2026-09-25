@@ -11,7 +11,17 @@ typedef struct SettingsMenuOption {
     void (*set)(unsigned int argument, unsigned int value);
     unsigned int argument;
     unsigned int staged;
+    const volatile struct SettingsMenuOption *enabled_by;
 } SettingsMenuOption;
+
+static __attribute__((always_inline)) inline int settings_menu_option_enabled(
+    const volatile SettingsMenuOption *option
+)
+{
+    return option == (const volatile SettingsMenuOption *)0 ||
+        option->enabled_by == (const volatile SettingsMenuOption *)0 ||
+        option->enabled_by->staged != 0u;
+}
 
 unsigned int settings_menu_value_page(
     const unsigned int *pages, unsigned int count, unsigned int value

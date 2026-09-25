@@ -54,11 +54,13 @@ typedef unsigned int u32;
 
 #define FONT_RENDERER_POINTER_ADDRESS 0x00607470u
 #define TEXT_DRAW_ADDRESS 0x00378F50u
+#define TEXT_MEASURE_ADDRESS 0x003798E0u
 
 #define FONT_RENDERER_FLAGS_OFFSET 0x70u
 #define FONT_RENDERER_ASCII_MODE_FLAG 0x08u
 
 #define FONT_V2_FLAG_SHRINK_X 0x01u
+#define FONT_V2_FLAG_PREMEASURED 0x10u
 #define FONT_V2_ALIGN_START 0u
 #define FONT_V2_ALIGN_CENTER 1u
 
@@ -164,11 +166,7 @@ typedef struct SelectableSupportPair {
     u8 support_id;
 } SelectableSupportPair;
 
-static const u8 NO_SUPPORT_NAME[]
-    __attribute__((
-        section(".rodata.character_select_support_selection_entries"),
-        used
-    )) = "NO SUPPORT";
+extern const u8 NO_SUPPORT_NAME[];
 
 /* Entries declared here lead every compact per-player support list. */
 static const AdditionalSupportEntry ADDITIONAL_SUPPORT_ENTRIES[]
@@ -848,6 +846,16 @@ void character_select_support_selection_draw_selected_name(
     session.horizontal_alignment = FONT_V2_ALIGN_CENTER;
     session.vertical_alignment = FONT_V2_ALIGN_START;
     session.flags = FONT_V2_FLAG_SHRINK_X;
+    {
+        const u8 *text = entry->name;
+        while (*text != 0u && *text < 0x80u) ++text;
+        if (*text != 0u) {
+            s32 width = ((s32 (*)(const u8 *, s32))TEXT_MEASURE_ADDRESS)(entry->name, 0);
+            session.flags |= FONT_V2_FLAG_PREMEASURED;
+            session.measured_width = width > 0 ? (u32)width : 0u;
+            session.line_count = 1u;
+        }
+    }
     session.line_limit = 1u;
     session.line_height = NAME_TEXT_LINE_HEIGHT;
     session.callback =

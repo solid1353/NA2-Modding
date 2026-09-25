@@ -1064,7 +1064,7 @@ def _node_lines(
 
 
 def serialize_catalog(
-    features: dict[str, ContainerNode],
+    features: dict[str, CatalogNodeExpression],
     *,
     include_patches: bool,
 ) -> str:
@@ -1081,7 +1081,7 @@ def serialize_catalog(
 
 
 def serialize_feature(
-    feature: ContainerNode,
+    feature: CatalogNodeExpression,
     *,
     include_patches: bool = True,
 ) -> str:

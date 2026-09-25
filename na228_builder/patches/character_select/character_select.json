@@ -17,14 +17,21 @@
         "path": "na228_builder/patches/character_select/balance_overlay/character_select_balance_overlay.c",
         "namespace": "battle.logic.character.select.balance.overlay.c",
         "imports": {
+          "mod_number_glyphs": "mod_number_glyphs",
           "battle_logic_character_overrides": "character_overrides",
-          "mod_settings_option_get": "mod_settings_option_get"
+          "mod_settings_option_get": "mod_settings_option_get",
+          "mod_text_character_select__tier": "mod_text_character_select__tier",
+          "mod_text_character_select__substitution": "mod_text_character_select__substitution"
         },
         "fragments": {
           "character_select_balance_overlay": {
             "object": "battle.logic.character.select.balance.overlay.c.text.battle.logic.character.select.balance.overlay"
           }
-        }
+        },
+        "resources": [
+          "na228_builder/resources/mod_strings.tsv",
+          "na228_builder/patches/localization/mod_strings.h"
+        ]
       }
     }
   },
@@ -199,7 +206,8 @@
         "namespace": "character.select.support.selection",
         "imports": {
           "font_v2_adapter_call": "v2_adapter_call",
-          "mod_settings_option_get": "mod_settings_option_get"
+          "mod_settings_option_get": "mod_settings_option_get",
+          "NO_SUPPORT_NAME": "mod_text_character_select__no_support"
         },
         "fragments": {
           "character_select_support_selection_buffers": {
@@ -238,8 +246,14 @@
           "character_select_support_selection_prepend": {
             "object": "character.select.support.selection.text.character.select.support.selection.prepend"
           }
-        }
+        },
+        "resources": [
+          "na228_builder/resources/mod_strings.tsv"
+        ]
       }
-    }
+    },
+    "includes": [
+      "localization.font.core"
+    ]
   }
 }

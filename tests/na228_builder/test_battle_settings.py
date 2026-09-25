@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from na228_builder.infrastructure.orchestration import catalog, jsonc
+from na228_builder.patches.localization.mod_strings import ModStrings
 from na228_builder.patches.settings.ingame.battle_mode.battle_settings import (
     _active_pages,
     battle_settings_fragment,
@@ -66,11 +67,9 @@ class BattleSettingsTests(unittest.TestCase):
             [(80, "abs32")],
         )
 
-    def test_disabling_font_layout_uses_the_native_help_setter(self) -> None:
+    def test_japanese_uses_the_native_help_setter(self) -> None:
         selection = self._selection(
-            lambda features: features["localization"]["font"].__setitem__(
-                "layout", False
-            )
+            lambda features: features.__setitem__("localization", "jp")
         )
         fragment = battle_settings_fragment(
             selection,
@@ -159,7 +158,8 @@ class BattleSettingsTests(unittest.TestCase):
 
         pages = _active_pages(self._selection(configure))
         self.assertEqual(
-            [row.label or row.row_id for row in pages[0].rows],
+            [ModStrings(self.selection).resolve(row.label) if row.label else row.row_id
+             for row in pages[0].rows],
             [5, 1, "Battle Mechanics", 0],
         )
         self.assertEqual(
@@ -168,21 +168,9 @@ class BattleSettingsTests(unittest.TestCase):
         )
 
     def test_handicap_text_values(self) -> None:
-        injection = self.selection.injections["settings.ingame"]
-        source = injection["payload"]["battle_settings"]
-        compiled = {
-            fragment.symbol: fragment
-            for fragment in catalog._compile_source(
-                self.repository,
-                "settings.runtime_injector",
-                "battle_settings",
-                source,
-                "battle_settings",
-            )
-        }
-        values = compiled["battle_settings_handicap_text"].payload.rstrip(
-            b"\0"
-        ).split(b"\0")
+        values = ModStrings(self.selection).native_payload(
+            "mod_number_handicap"
+        ).rstrip(b"\0").split(b"\0")
         self.assertEqual(
             values,
             [

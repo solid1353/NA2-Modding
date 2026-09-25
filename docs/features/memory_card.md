@@ -52,7 +52,7 @@ An enabled dedicated save extends each `dataNN` record from `0x2400` to
 `0x2600` bytes. The native profile remains `0x2400` bytes in memory and keeps
 its native descriptor checksum. Card I/O uses a temporary record with a fixed
 `0x200`-byte settings appendix described by
-[`@builder/save_appendix.tsv`](../../na228_builder/save_appendix.tsv). The
+[`@builder/resources/save_appendix.tsv`](../../na228_builder/resources/save_appendix.tsv). The
 appendix stores every runtime-editable Mod, Battle, Practice, Battle Mechanics,
 Substitution, and Items setting as a stable ID and zero-based value. Its header
 identifies the format and schema and protects the complete appendix with

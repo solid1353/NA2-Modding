@@ -48,10 +48,7 @@ typedef struct SettingsMenuBackingLayout {
 volatile SettingsMenuBackingLayout settings_menu_backing_layout
     __attribute__((section(".bss.settings_menu_backing_layout")));
 
-static const unsigned char settings_open_label[]
-    SETTINGS_MENU_USED_SECTION(
-        ".rodata.settings_open_label"
-    ) = "Open <iconSQUARE>";
+extern const unsigned char settings_open_label[];
 
 volatile unsigned int settings_menu_open_values[1]
     __attribute__((section(".bss.settings_menu_open_values")));

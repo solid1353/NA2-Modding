@@ -138,7 +138,6 @@ class BuildPreflightTests(unittest.TestCase):
                 {
                     "title": "Test Product",
                     "serial": "TEST-00000",
-                    "output_boot_path": "SLOP_NA2.28",
                     "launch_settings": {
                         "default": {
                             "startup_fast_forward_frames": 321,

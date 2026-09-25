@@ -1,10 +1,10 @@
 # English UI integration
 
-The `localization.ui` catalog leaf atomically imports the matching English UI
+The internal `localization.ui` patch atomically imports the matching English UI
 textures and applies the geometry, atlas selection, visibility, and draw
 behavior they require. Its texture-patcher input and layout/runtime mechanisms
-cannot be selected independently. `features.localization.ui` selects unified
-patch `localization.ui` in `@builder/catalog.modcat`; its guarded bytes, hooks,
+are included together by `localization.en`, selected through
+`features.localization: "en"`; its guarded bytes, hooks,
 payloads, and `texture_patcher` module requirement are owned together by
 `@builder/patches/localization/localization.json`.
 

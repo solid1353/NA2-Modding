@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from na228_builder.patches.localization.mod_strings import message
+
 import struct
 from dataclasses import replace
 from pathlib import Path
@@ -70,7 +72,7 @@ def _native_row_bindings(selection: CatalogSelection):
         default = battle_defaults.get(row_id, source.default_value)
         values = (
             tuple(str(value) for value in range(10, 100, 10))
-            + ("99", "Unlimited")
+            + ("99", message("common.unlimited"))
             if key == "time"
             else tuple(f"{value}-{10 - value}" for value in range(11))
             if key == "handicap"
@@ -160,7 +162,7 @@ def mod_settings_resource_fragments(
     *,
     owner: str,
 ) -> tuple[PayloadFragment, ...]:
-    return page_resource_fragments(_pages(selection), owner, "mod_settings_schema")
+    return page_resource_fragments(_pages(selection), owner, "mod_settings_schema", selection)
 
 
 def mod_settings_state_fragment(

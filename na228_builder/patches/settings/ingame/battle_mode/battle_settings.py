@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import struct
+from na228_builder.patches.localization.mod_strings import Message, ModStrings
 from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
@@ -73,41 +74,41 @@ VALUE_REFERENCE_FIELD = 4
 SUBSTITUTION_MODE_LABELS = (
     None,  # Supplied by the value-linked child page.
     None,  # Supplied by the value-linked child page.
-    "substitution_gauge_mode_free_label",
+    "mod_text_common__free",
 )
 TOGGLE_LABELS = (
-    "battle_settings_off_label",
-    "battle_settings_on_label",
+    "mod_text_common__off",
+    "mod_text_common__on",
 )
 CUSTOM_ROW_RESOURCES = {
     SUBSTITUTION_ROW_ID: (
-        "battle_settings_substitution_label",
-        "battle_settings_substitution_help",
+        "mod_text_settings__substitution__label",
+        "mod_text_settings__substitution__help",
         "substitution",
     ),
     SHADOWBLUR_ROW_ID: (
-        "battle_settings_shadowblur_label",
-        "battle_settings_shadowblur_help",
+        "mod_text_settings__shadowblur__label",
+        "mod_text_settings__shadowblur__help",
         "toggle",
     ),
     EXTRA_HIT_ROW_ID: (
-        "battle_settings_extra_hit_label",
-        "battle_settings_extra_hit_help",
+        "mod_text_settings__extra_hit__label",
+        "mod_text_settings__extra_hit__help",
         "extra_hit",
     ),
     SUB_ACTIVE_FRAMES_ROW_ID: (
-        "battle_settings_sub_active_frames_label",
-        "battle_settings_sub_active_frames_help",
+        "mod_text_settings__sub_active_frames__label",
+        "mod_text_settings__sub_active_frames__help",
         "sub_active_frames",
     ),
     XDASH_CHAKRA_COST_ROW_ID: (
-        "battle_settings_xdash_chakra_cost_label",
-        "battle_settings_xdash_chakra_cost_help",
+        "mod_text_settings__xdash_chakra_cost__label",
+        "mod_text_settings__xdash_chakra_cost__help",
         "xdash_chakra_cost",
     ),
     SUPPORT_ROW_ID: (
-        "battle_settings_support_label",
-        "battle_settings_support_help",
+        "mod_text_settings__support__label",
+        "mod_text_settings__support__help",
         "support",
     ),
 }
@@ -120,10 +121,10 @@ class BattleRow:
     flags: int
     default_value: int = 0
 
-    value_pages: tuple[tuple[int, int, str | None], ...] = ()
+    value_pages: tuple[tuple[int, int, Message | str | None], ...] = ()
     runtime_option: MenuOption | None = None
-    label: str | None = None
-    help: str | None = None
+    label: Message | str | None = None
+    help: Message | str | None = None
 
     def encoded_fields(self) -> tuple[int, ...]:
         return (
@@ -148,7 +149,7 @@ class BattlePage:
     parent_page: int = 0
     parent_row: int = 0
     heading_symbol: str | None = None
-    heading_text: str | None = None
+    heading_text: Message | str | None = None
 
 
 NATIVE_ROWS = {
@@ -279,6 +280,7 @@ def battle_settings_fragment(
         return None
 
     pages = _active_pages(selection)
+    strings = ModStrings(selection)
     rows = tuple(row for page in pages for row in page.rows)
     payload = bytearray(
         struct.pack(
@@ -365,8 +367,8 @@ def battle_settings_fragment(
         "ultimate_jutsu": (
             (24, "ultimate_jutsu_mode_get"),
             (28, "ultimate_jutsu_mode_set"),
-            (32, "ultimate_jutsu_no_contest_label"),
-            (36, "ultimate_jutsu_no_hud_label"),
+            (32, "mod_text_settings__no_contest"),
+            (36, "mod_text_settings__no_hud"),
         ),
         "shadowblur": ((40, "shadowblur_get"), (44, "shadowblur_set")),
         "extra_hit": ((48, "extra_hit_get"), (52, "extra_hit_set")),
@@ -466,7 +468,7 @@ def battle_settings_fragment(
                 )
             )
             payload.extend(b"\0" * 4)
-            text = text_value.encode("ascii") + b"\0"
+            text = strings.encode(text_value) + b"\0"
             text_pool.extend(text)
             next_text_offset += len(text)
 
@@ -492,7 +494,7 @@ def battle_settings_fragment(
             payload.extend(b"\0" * 4)
 
         for label in SUB_ACTIVE_FRAMES_LABELS:
-            text = label.encode("ascii") + b"\0"
+            text = strings.encode(label) + b"\0"
             relocations.append(
                 PayloadRelocation(
                     offset=len(payload),
@@ -505,7 +507,7 @@ def battle_settings_fragment(
             text_pool.extend(text)
             next_text_offset += len(text)
         for value in range(0, 101, 5):
-            text = f"{value}%".encode("ascii") + b"\0"
+            text = strings.encode(f"{value}%") + b"\0"
             relocations.append(
                 PayloadRelocation(
                     offset=len(payload),
@@ -518,7 +520,7 @@ def battle_settings_fragment(
             text_pool.extend(text)
             next_text_offset += len(text)
         for label in (*SUPPORT_LABELS, *EXTRA_HIT_LABELS):
-            text = label.encode("ascii") + b"\0"
+            text = strings.encode(label) + b"\0"
             relocations.append(
                 PayloadRelocation(
                     offset=len(payload),
@@ -533,7 +535,7 @@ def battle_settings_fragment(
         payload.extend(text_pool)
 
     append_row_extensions(payload, relocations, rows, rows_offset, ROW_SIZE,
-                          2, 3, 4, symbol)
+                          2, 3, 4, symbol, selection)
 
     return PayloadFragment(
         owner=owner,
@@ -556,7 +558,7 @@ def battle_settings_table_fragments(
 
     pages = _active_pages(selection)
     table_size = max(1, *(len(page.rows) for page in pages)) * 4
-    return page_resource_fragments(pages, owner, "battle_settings_schema") + (
+    return page_resource_fragments(pages, owner, "battle_settings_schema", selection) + (
         PayloadFragment(
             owner=owner,
             symbol="battle_settings_active_help",

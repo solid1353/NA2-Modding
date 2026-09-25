@@ -342,7 +342,7 @@ def save_appendix_schema_fragment(
     owner: str,
     path: Path | None = None,
 ) -> PayloadFragment:
-    source = path if path is not None else Path(__file__).resolve().parents[2] / "save_appendix.tsv"
+    source = path if path is not None else Path(__file__).resolve().parents[2] / "resources" / "save_appendix.tsv"
     schema_version, rows = load_save_appendix(source)
     bindings = _bindings(selection)
     row_keys = {row.key for row in rows}

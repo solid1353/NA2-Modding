@@ -87,8 +87,8 @@ validated production ZIP and its SHA-256 sidecar to GitHub.
 
 ## Release manifest
 
-`game.json` owns the product name. The release manifest owns the version,
-canonical default configuration, external configuration filename, and supported
+`game.json` owns the product name. `na228_builder/resources/release_manifest.json`
+owns the version, canonical default configuration, external configuration filename, and supported
 source identities. The executable name is `<product>_<version>.exe`, and the
 output image is `<product>.iso`. The pinned source identities are:
 

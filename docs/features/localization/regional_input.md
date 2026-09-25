@@ -1,7 +1,9 @@
 # Regional input
 
-`features.localization.regional_input` selects the guarded menu-input ports that
-make the imported English interface use its intended confirm and cancel buttons.
+`features.localization: "en"` includes the `localization.regional_input` patch
+to make the imported English interface use its intended confirm and cancel buttons.
+The `"jp"` choice retains native regional input. Button labels and input behavior
+are selected together.
 The catalog and localization patch store own selection and exact writes.
 
 ## Save/Load handlers

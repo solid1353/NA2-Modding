@@ -1,6 +1,8 @@
 """Shared Items configuration and field-item identities."""
 from __future__ import annotations
 
+from na228_builder.patches.localization.mod_strings import message
+
 import struct
 
 from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment
@@ -9,33 +11,33 @@ from ..battle_settings_runtime import battle_mechanic_path
 
 ITEM_AVAILABILITY = ("none", "less", "normal", "more")
 ITEM_MODES = (*ITEM_AVAILABILITY, "custom")
-ITEM_VALUE_LABELS = ("None", "Less", "Normal", "More", "Custom")
+ITEM_VALUE_LABELS = (message("common.none"), message("common.less"), message("common.normal"), message("common.more"), message("common.custom"))
 FIELD_ITEMS = (
-    (0x02, "health_recovery", "Health Recovery"),
-    (0x03, "chakra_ball", "Chakra Ball"),
-    (0x06, "shoes_of_jonin", "Shoes of Jonin"),
-    (0x07, "food_pills", "Food Pills"),
-    (0x08, "scroll_of_hidden_cloud", "Scroll of Hidden Cloud"),
-    (0x09, "scroll_of_teleportation", "Scroll of Teleportation"),
-    (0x0A, "scarecrow", "Scarecrow"),
-    (0x0B, "tortoiseshell_pills", "Tortoiseshell Pills"),
-    (0x0C, "energy_pills", "Energy Pills"),
-    (0x0D, "medical_pack", "Medical Pack"),
-    (0x0E, "item_pouch", "Item Pouch"),
-    (0x23, "demon_wind_shuriken", "Demon Wind Shuriken"),
-    (0x24, "weight_of_determination", "Weight of Determination"),
-    (0x25, "exploding_kunai", "Exploding Kunai"),
-    (0x26, "poison_smoke_bomb", "Poison Smoke Bomb"),
-    (0x27, "makibishi_spikes", "Makibishi Spikes"),
-    (0x28, "paper_bomb", "Paper Bomb"),
-    (0x29, "curse_tag_chakra_points_seal", "Curse Tag: Chakra Points Seal"),
-    (0x2A, "curse_tag_armor_break", "Curse Tag: Armor Break"),
-    (0x2B, "thousand_shadow_shuriken", "1000-Shadow Shuriken"),
-    (0x2C, "burst_kunai", "Burst Kunai"),
-    (0x2E, "exploding_seal", "Exploding Seal"),
-    (0x2F, "toad_oil", "Toad Oil"),
-    (0x30, "random_ball", "Random Ball"),
-    (0x31, "stun_ball", "Stun Ball"),
+    (0x02, "health_recovery", message("item.health_recovery")),
+    (0x03, "chakra_ball", message("item.chakra_ball")),
+    (0x06, "shoes_of_jonin", message("item.shoes_of_jonin")),
+    (0x07, "food_pills", message("item.food_pills")),
+    (0x08, "scroll_of_hidden_cloud", message("item.scroll_of_hidden_cloud")),
+    (0x09, "scroll_of_teleportation", message("item.scroll_of_teleportation")),
+    (0x0A, "scarecrow", message("item.scarecrow")),
+    (0x0B, "tortoiseshell_pills", message("item.tortoiseshell_pills")),
+    (0x0C, "energy_pills", message("item.energy_pills")),
+    (0x0D, "medical_pack", message("item.medical_pack")),
+    (0x0E, "item_pouch", message("item.item_pouch")),
+    (0x23, "demon_wind_shuriken", message("item.demon_wind_shuriken")),
+    (0x24, "weight_of_determination", message("item.weight_of_determination")),
+    (0x25, "exploding_kunai", message("item.exploding_kunai")),
+    (0x26, "poison_smoke_bomb", message("item.poison_smoke_bomb")),
+    (0x27, "makibishi_spikes", message("item.makibishi_spikes")),
+    (0x28, "paper_bomb", message("item.paper_bomb")),
+    (0x29, "curse_tag_chakra_points_seal", message("item.curse_tag_chakra_points_seal")),
+    (0x2A, "curse_tag_armor_break", message("item.curse_tag_armor_break")),
+    (0x2B, "thousand_shadow_shuriken", message("item.thousand_shadow_shuriken")),
+    (0x2C, "burst_kunai", message("item.burst_kunai")),
+    (0x2E, "exploding_seal", message("item.exploding_seal")),
+    (0x2F, "toad_oil", message("item.toad_oil")),
+    (0x30, "random_ball", message("item.random_ball")),
+    (0x31, "stun_ball", message("item.stun_ball")),
 )
 
 

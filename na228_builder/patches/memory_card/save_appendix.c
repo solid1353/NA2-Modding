@@ -1,5 +1,7 @@
 /* Versioned settings appendix for dedicated NA228 memory-card records. */
 
+#include "../localization/mod_strings.h"
+
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef signed int s32;
@@ -82,6 +84,15 @@ typedef struct SaveAppendixLoadStatus {
     volatile u16 found_version;
     volatile u16 required_version;
 } SaveAppendixLoadStatus;
+
+extern const u8 mod_text_save__upgrade_confirm[];
+extern const u8 mod_text_save__unsupported_format[];
+extern const u8 mod_text_save__existing_version[];
+extern const u8 mod_text_save__required_version[];
+extern const u8 mod_text_save__newer_game_required[];
+extern const u8 mod_text_save__cannot_upgrade[];
+extern const u8 mod_text_save__upgrade_failed[];
+extern const u8 mod_text_save__upgrading[];
 
 extern const SaveAppendixSchema save_appendix_schema;
 extern volatile SaveAppendixLoadStatus save_appendix_load_status;
@@ -671,12 +682,15 @@ s32 save_appendix_check_card(void *context, u32 port, u32 slot)
 }
 
 static SAVE_APPENDIX_SECTION(".text.save_appendix_helpers")
-u8 *save_appendix_text(u8 *destination, const char *source)
+u8 *save_appendix_text(u8 *destination, const u8 *source)
 {
-    while (*source != 0) {
-        *destination++ = (u8)*source++;
+    u32 offset = (u32)(destination - save_appendix_dialog.message);
+    if (offset >= sizeof(save_appendix_dialog.message)) {
+        return save_appendix_dialog.message + sizeof(save_appendix_dialog.message) - 1u;
     }
-    return destination;
+    return mod_string_format(destination,
+        sizeof(save_appendix_dialog.message) - offset,
+        source, (const u8 *)"");
 }
 
 static SAVE_APPENDIX_SECTION(".text.save_appendix_helpers")
@@ -698,27 +712,25 @@ static SAVE_APPENDIX_SECTION(".text.save_appendix_helpers")
 void save_appendix_message(u32 confirmation)
 {
     u8 *text = save_appendix_dialog.message;
-    /* The native panel reads four consecutive NUL-terminated lines. */
+    u8 number[6];
     save_appendix_clear(text, sizeof(save_appendix_dialog.message));
     if (confirmation != 0u) {
-        text = save_appendix_text(text, "Upgrade the existing save data?");
-        text = save_appendix_text(text + 1, "Your progress will be kept.");
+        save_appendix_text(text, mod_text_save__upgrade_confirm);
     } else if (save_appendix_load_status.outcome == LOAD_STATUS_UNSUPPORTED_FORMAT) {
-        text = save_appendix_text(text, "The existing save data");
-        text = save_appendix_text(text + 1, "uses an unsupported format.");
-        text = save_appendix_text(text + 1, "It cannot be loaded or changed.");
+        save_appendix_text(text, mod_text_save__unsupported_format);
     } else {
-        text = save_appendix_text(text, "The existing save data uses version ");
-        text = save_appendix_number(text, save_appendix_load_status.found_version);
-        text = save_appendix_text(text, ".");
-        text = save_appendix_text(text + 1, "Version ");
-        text = save_appendix_number(text, save_appendix_load_status.required_version);
-        text = save_appendix_text(text, " is required.");
+        *save_appendix_number(number, save_appendix_load_status.found_version) = 0u;
+        text = mod_string_format(text, sizeof(save_appendix_dialog.message),
+            mod_text_save__existing_version, number) + 1;
+        *save_appendix_number(number, save_appendix_load_status.required_version) = 0u;
+        text = mod_string_format(text,
+            sizeof(save_appendix_dialog.message) - (u32)(text - save_appendix_dialog.message),
+            mod_text_save__required_version, number);
         if (save_appendix_load_status.found_version > save_appendix_schema.schema_version) {
-            text = save_appendix_text(text + 1, "A newer game version is needed.");
+            save_appendix_text(text + 1, mod_text_save__newer_game_required);
         } else if (save_appendix_load_status.found_version != 0u ||
                    save_appendix_schema.schema_version != 1u) {
-            text = save_appendix_text(text + 1, "This version cannot be upgraded.");
+            save_appendix_text(text + 1, mod_text_save__cannot_upgrade);
         }
     }
 }
@@ -749,7 +761,7 @@ u32 save_appendix_update(void *controller_pointer, u32 mode)
         }
         save_appendix_dialog.phase = 4u;
         save_appendix_clear(save_appendix_dialog.message, sizeof(save_appendix_dialog.message));
-        save_appendix_text(save_appendix_dialog.message, "The save data could not be upgraded.");
+        save_appendix_text(save_appendix_dialog.message, mod_text_save__upgrade_failed);
     }
 
     if (save_appendix_dialog.phase != 4u && (worker == (volatile u32 *)0 ||
@@ -803,7 +815,7 @@ u32 save_appendix_update(void *controller_pointer, u32 mode)
             save_appendix_dialog.approved = 1u;
             save_appendix_dialog.phase = 3u;
             save_appendix_clear(save_appendix_dialog.message, sizeof(save_appendix_dialog.message));
-            save_appendix_text(save_appendix_dialog.message, "Upgrading the existing save data...");
+            save_appendix_text(save_appendix_dialog.message, mod_text_save__upgrading);
             worker[0x4Cu / 4u] = 4u;
             worker[0x50u / 4u] = 0u;
             worker[0x48u / 4u] = WORKER_OPERATION_UPGRADE;

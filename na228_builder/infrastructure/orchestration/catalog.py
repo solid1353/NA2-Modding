@@ -90,12 +90,19 @@ class CatalogSelection:
     patch_files: tuple[Path, ...]
     base_configuration_path: Path | None
     configuration_path: Path
-    catalog: dict[str, catalog_format.ContainerNode]
+    catalog: dict[str, catalog_format.CatalogNodeExpression]
     patches: dict[str, dict[str, object]]
     edits: dict[str, dict[str, object]]
     injections: dict[str, dict[str, object]]
     string_patches: dict[str, dict[str, object]]
     nodes: tuple[CatalogNode, ...]
+
+    @property
+    def patch_nodes(self) -> tuple[CatalogNode, ...]:
+        return _included_patch_nodes(self.nodes, self.patches)
+
+    def feature_patch_nodes(self, feature_id: str) -> tuple[CatalogNode, ...]:
+        return tuple(node for node in self.patch_nodes if node.feature_id == feature_id)
 
     @property
     def configuration_id(self) -> str:
@@ -185,7 +192,7 @@ def _read_jsonc(
 
 def _read_catalog(
     path: Path,
-) -> tuple[dict[str, catalog_format.ContainerNode], tuple[Path, ...]]:
+) -> tuple[dict[str, catalog_format.CatalogNodeExpression], tuple[Path, ...]]:
     path = path.resolve()
     if not path.is_file():
         raise FileNotFoundError(path)
@@ -200,10 +207,8 @@ def _read_catalog(
     features = _container_fields(feature_root)
     if not features:
         raise ValueError(f"Catalog contains no features: {catalog_file}")
-    for feature_id, feature in features.items():
+    for feature_id in features:
         _identifier(feature_id, "Catalog feature ID")
-        if not isinstance(feature, catalog_format.ContainerNode):
-            raise ValueError(f"Catalog feature must be an object: {feature_id}")
     patch_ids = [
         patch_id
         for feature in features.values()
@@ -269,7 +274,7 @@ def _container_fields(
 
 
 def _feature_root(
-    features: dict[str, catalog_format.ContainerNode],
+    features: dict[str, catalog_format.CatalogNodeExpression],
 ) -> catalog_format.ContainerNode:
     return catalog_format.ContainerNode(
         tuple(
@@ -739,6 +744,61 @@ def _apply_patch_metadata(
     return tuple(result)
 
 
+def _patch_closure(
+    references: tuple[str, ...],
+    patches: dict[str, dict[str, object]],
+) -> tuple[str, ...]:
+    result: list[str] = []
+    active: list[str] = []
+    seen: set[str] = set()
+
+    def visit(patch_id: str) -> None:
+        if patch_id in active:
+            raise ValueError("Patch include cycle: " + " -> ".join((*active, patch_id)))
+        if patch_id in seen:
+            return
+        if patch_id not in patches:
+            raise ValueError(f"Catalog references unknown patch: {patch_id}")
+        active.append(patch_id)
+        result.append(patch_id)
+        for included in patches[patch_id].get("includes", []):
+            visit(included)
+        active.pop()
+        seen.add(patch_id)
+
+    for reference in references:
+        visit(reference)
+    return tuple(result)
+
+
+def _included_patch_nodes(
+    nodes: tuple[CatalogNode, ...],
+    patches: dict[str, dict[str, object]],
+) -> tuple[CatalogNode, ...]:
+    selected: dict[str, CatalogNode] = {}
+    priorities: dict[str, tuple[bool, bool, bool]] = {}
+    for node in nodes:
+        if node.patch is None:
+            continue
+        for patch_id in _patch_closure((node.patch,), patches):
+            # Prefer an active direct reference, then the patch's own feature.
+            priority = (
+                node.enabled,
+                patch_id == node.patch,
+                node.feature_id == patch_id.split(".", 1)[0],
+            )
+            if patch_id in priorities and priorities[patch_id] >= priority:
+                continue
+            priorities[patch_id] = priority
+            selected[patch_id] = node if patch_id == node.patch else CatalogNode(
+                path=("features", node.feature_id, "includes", *patch_id.split(".")),
+                enabled=node.enabled,
+                patch=patch_id,
+                description=str(patches[patch_id].get("description", "")),
+            )
+    return _apply_patch_metadata(tuple(selected.values()), patches)
+
+
 def _startup_fast_forward_override(nodes: tuple[CatalogNode, ...]) -> int | None:
     enabled = [
         node
@@ -801,12 +861,12 @@ def startup_fast_forward_frames(
 ) -> int:
     """Return the selected startup fast-forward frame count."""
 
-    return _startup_fast_forward_frames(selection.nodes, baseline_frames)
+    return _startup_fast_forward_frames(selection.patch_nodes, baseline_frames)
 
 
 def _load_implementation(
     catalog_path: Path,
-    features: dict[str, catalog_format.ContainerNode],
+    features: dict[str, catalog_format.CatalogNodeExpression],
 ) -> tuple[
     Path,
     tuple[Path, ...],
@@ -850,6 +910,7 @@ def _load_implementation(
     }
     allowed_patch_fields = {
         "description",
+        "includes",
         "edit",
         "edits",
         "hooks",
@@ -864,6 +925,16 @@ def _load_implementation(
         if extra:
             raise ValueError(f"Patch {patch_id!r} has unknown fields: {extra}")
         description = _description(patch.get("description"), f"Patch {patch_id!r}")
+        if "includes" in patch:
+            includes = patch["includes"]
+            if not isinstance(includes, list) or not includes:
+                raise ValueError(f"Patch {patch_id!r}.includes must be a non-empty list")
+            for reference in includes:
+                if not isinstance(reference, str):
+                    raise ValueError(f"Patch {patch_id!r}.includes must contain patch IDs")
+                _patch_identifier(reference, f"Patch {patch_id!r}.includes")
+            if len(set(includes)) != len(includes):
+                raise ValueError(f"Patch {patch_id!r}.includes contains duplicate references")
         if not (set(patch) - {"description"}):
             raise ValueError(f"Patch {patch_id!r} owns no implementation data")
         if "edit" in patch and "edits" in patch:
@@ -1073,10 +1144,10 @@ def _load_implementation(
 
         if "image_patch" in patch:
             image_patch = patch["image_patch"]
-            if image_patch != {"operation": "select_disc_identity"}:
+            if image_patch != {"operation": "use_nun5_disc_identity"}:
                 raise ValueError(
                     f"Patch {patch_id!r}.image_patch must declare "
-                    "operation 'select_disc_identity'"
+                    "operation 'use_nun5_disc_identity'"
                 )
 
         modules = patch.get("modules", [])
@@ -1105,11 +1176,9 @@ def _load_implementation(
         for feature in features.values()
         for patch in _catalog_patches(feature)
     ]
-    referenced = set(references)
     for patch_id in references:
         _patch_identifier(patch_id, "Catalog patch ID")
-        if patch_id not in patches:
-            raise ValueError(f"Catalog references unknown patch: {patch_id}")
+    referenced = set(_patch_closure(tuple(references), patches))
     orphaned = sorted(set(patches) - referenced)
     if orphaned:
         raise ValueError(f"Patch definitions are not catalog-referenced: {orphaned}")
@@ -1126,7 +1195,7 @@ def _load_implementation(
 def _effective_configuration(
     catalog_path: Path,
     configuration_path: Path,
-    features: dict[str, catalog_format.ContainerNode],
+    features: dict[str, catalog_format.CatalogNodeExpression],
 ) -> tuple[Path | None, object]:
     try:
         configuration = _read_jsonc(configuration_path, "Configuration")
@@ -1212,7 +1281,7 @@ def load_selection(catalog_path: Path, configuration_path: Path) -> CatalogSelec
         string_patches=string_patches,
         nodes=nodes,
     )
-    _startup_fast_forward_override(selection.nodes)
+    _startup_fast_forward_override(selection.patch_nodes)
     return selection
 
 
@@ -1236,7 +1305,7 @@ def load_startup_fast_forward_frames(
         _selected_nodes(_feature_root(features), effective),
         patches,
     )
-    return _startup_fast_forward_frames(nodes, baseline_frames)
+    return _startup_fast_forward_frames(_included_patch_nodes(nodes, patches), baseline_frames)
 
 
 def materialized_configuration(
@@ -1606,7 +1675,7 @@ def load_binary_package(
 ) -> binary_patcher.Package:
     nodes = [
         node
-        for node in selection.feature_nodes(feature_id)
+        for node in selection.feature_patch_nodes(feature_id)
         if node.enabled and node.patch in selection.edits
     ]
     targets = binary_patcher.load_targets(targets_path)
@@ -1825,7 +1894,7 @@ def injection_entries(
 ) -> list[tuple[CatalogNode, str, dict[str, object]]]:
     entries: list[tuple[CatalogNode, str, dict[str, object]]] = []
     references: dict[str, list[CatalogNode]] = {}
-    for node in selection.feature_nodes(feature_id):
+    for node in selection.feature_patch_nodes(feature_id):
         if node.patch in selection.injections:
             assert node.patch is not None
             references.setdefault(node.patch, []).append(node)
@@ -2150,7 +2219,7 @@ def feature_reference_ids(
     return tuple(
         dict.fromkeys(
             patch
-            for patch in _catalog_patches(selection.catalog[feature_id])
+            for patch in feature_patch_ids(selection, feature_id)
             if patch in implementations[field]
         )
     )
@@ -2162,7 +2231,7 @@ def feature_patch_ids(
 ) -> tuple[str, ...]:
     if feature_id not in selection.catalog:
         raise ValueError(f"Unknown catalog feature: {feature_id}")
-    return tuple(dict.fromkeys(_catalog_patches(selection.catalog[feature_id])))
+    return _patch_closure(_catalog_patches(selection.catalog[feature_id]), selection.patches)
 
 
 def feature_has(
@@ -2176,7 +2245,7 @@ def feature_has(
         references = (
             tuple(
                 node.patch
-                for node in selection.feature_nodes(feature_id)
+                for node in selection.feature_patch_nodes(feature_id)
                 if node.enabled and node.patch in selection.edits
             )
             if enabled_only
@@ -2187,7 +2256,7 @@ def feature_has(
         references = (
             tuple(
                 node.patch
-                for node in selection.feature_nodes(feature_id)
+                for node in selection.feature_patch_nodes(feature_id)
                 if node.enabled and node.patch in selection.injections
             )
             if enabled_only
@@ -2202,13 +2271,13 @@ def feature_has(
         references = set(feature_reference_ids(selection, feature_id, field))
         return any(
             node.patch in references and (node.enabled or not enabled_only)
-            for node in selection.feature_nodes(feature_id)
+            for node in selection.feature_patch_nodes(feature_id)
         )
     if field == "string_patches":
         references = (
             tuple(
                 node.patch
-                for node in selection.feature_nodes(feature_id)
+                for node in selection.feature_patch_nodes(feature_id)
                 if node.enabled and node.patch in selection.string_patches
             )
             if enabled_only
@@ -2224,7 +2293,7 @@ def selected_image_patches(
     """Return selected image operations for the configuration composer."""
     return tuple(
         (node, node.patch, selection.patches[node.patch]["image_patch"])
-        for node in selection.nodes
+        for node in selection.patch_nodes
         if node.enabled and node.patch is not None
         and "image_patch" in selection.patches[node.patch]
     )
@@ -2237,7 +2306,7 @@ def selected_string_patches(
     """Return enabled semantic string patches for one supported operation."""
     return tuple(
         (node, patch_id, selection.string_patches[patch_id])
-        for node in selection.nodes
+        for node in selection.patch_nodes
         if node.enabled and node.patch in selection.string_patches
         for patch_id in (node.patch,)
         if patch_id is not None

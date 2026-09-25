@@ -15,6 +15,7 @@ from ..modules.payload_builder.operations import (
     ResolvedPatch,
 )
 from .configuration import BuildConfiguration, ModuleInvocation
+from ...patches.localization.mod_strings import ModStrings
 from ...patches.settings.character_overrides.character_overrides import (
     character_override_fragment,
     character_override_fragment_feature,
@@ -371,6 +372,7 @@ def prepare_module_pipeline(
         for declaration in runtime_injection_declarations.values()
         for patch in declaration.symbolic_patches
     )
+    fragments += ModStrings(configuration.selection).fragments(fragments, symbolic_patches)
     payload_build = (
         payload_builder_module.build_resident_payload(
             fragments,

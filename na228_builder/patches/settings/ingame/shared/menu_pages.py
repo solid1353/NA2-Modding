@@ -7,6 +7,7 @@ from dataclasses import replace
 from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment, PayloadRelocation
 from na228_builder.infrastructure.orchestration.catalog_format import ContainerNode, SettingNode, ObjectType, LiteralType, UnionType
 from .menu_options import PAGE_TITLES, menu_option_bindings
+from na228_builder.patches.localization.mod_strings import ModStrings, message
 
 
 SUBMENU_FLAG = 0x4000
@@ -14,8 +15,8 @@ SUBMENU_FLAG = 0x4000
 
 def bind_help_setter(selection, payload, relocations, offset):
     """Select the help implementation while composing a custom menu schema."""
-    layout = ("features", "localization", "font", "layout")
-    if any(node.path == layout and node.enabled for node in selection.nodes):
+    if any(node.patch == "localization.font.layout" and node.enabled
+           for node in selection.patch_nodes):
         relocations.append(PayloadRelocation(
             offset=offset, kind="abs32", symbol="v2_help_set",
         ))
@@ -24,7 +25,7 @@ def bind_help_setter(selection, payload, relocations, offset):
 
 
 def menu_title(name):
-    return name.removesuffix("_submenu").replace("_", " ").title()
+    return message(f"page.{name.removesuffix('_submenu')}.title")
 
 
 def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
@@ -163,7 +164,7 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
                 subpage = add_page(child, child_path, page_index, len(rows), ancestors + (path,))
                 label = menu_title(name)
                 rows.append(allocate_row(option_count=1, default_value=0, flags=SUBMENU_FLAG,
-                    label=label, help=f"Configure {label.lower()}.",
+                    label=label, help=message(f"page.{name.removesuffix('_submenu')}.help"),
                     value_pages=((0, subpage, None),)))
         if page_index == 0 and "section" in row_type.__dataclass_fields__:
             rows = [replace(row, section=0) for row in rows]
@@ -177,7 +178,8 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
 
 
 def append_row_extensions(payload, relocations, rows, rows_offset, row_size,
-                          label_field, help_field, value_field, symbol):
+                          label_field, help_field, value_field, symbol, selection):
+    strings = ModStrings(selection)
     def pointer(offset, target=None, addend=0):
         struct.pack_into("<I", payload, offset, 0)
         relocations.append(PayloadRelocation(offset=offset, kind="abs32",
@@ -185,7 +187,7 @@ def append_row_extensions(payload, relocations, rows, rows_offset, row_size,
 
     def text(value):
         offset = len(payload)
-        payload.extend(value.encode("ascii") + b"\0")
+        payload.extend(strings.encode(value) + b"\0")
         return offset
 
     def align():
@@ -233,15 +235,16 @@ def append_row_extensions(payload, relocations, rows, rows_offset, row_size,
                               if r.offset == offset + value_field * 4)
                 entry = values.addend + value * 4
                 relocations[:] = [r for r in relocations if r.offset != entry]
-                pointer(entry, addend=text(f"{label} <iconSQUARE>"))
+                pointer(entry, addend=text(message("menu.open_value", label=label)))
 
 
-def page_resource_fragments(pages, owner, symbol):
+def page_resource_fragments(pages, owner, symbol, selection):
+    strings = ModStrings(selection)
     fragments = []
     for page in pages:
         if page.heading_text is not None:
             fragments.append(PayloadFragment(owner=owner, symbol=page.heading_symbol,
-                kind="rodata", alignment=4, payload=page.heading_text.encode("ascii") + b"\0"))
+                kind="rodata", alignment=4, payload=strings.encode(page.heading_text) + b"\0"))
     for index, row in enumerate(row for page in pages for row in page.rows):
         option = row.runtime_option
         if option is not None:

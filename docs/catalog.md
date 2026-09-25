@@ -6,7 +6,8 @@ builder parses it directly.
 
 `catalog.modcat` defines the logical `features` root and its selectable tree.
 The project catalog contains the user-facing contract and one singular `patch`
-reference wherever implementation is selected.
+reference wherever implementation is selected. Top-level features accept the
+same node forms as nested settings, including literal language choices.
 
 A complete standalone or released `.jsonc` configuration has one root field:
 `features` contains the complete selected tree. Repository build variants use
@@ -26,8 +27,8 @@ container is selected.
 A bare `setting` is the static-patch form:
 
 ```text
-replace_imported_game_title: setting {
-  patch: "general.replace_imported_game_title",
+practice_stage_select: setting {
+  patch: "general.practice_stage_select",
 },
 ```
 
@@ -53,8 +54,8 @@ Typed settings with any required object field reject that shorthand.
 
 Structural blocks and settings may omit `description`; include one only when it
 adds behavior or semantics that the name and type do not already make clear. A
-setting may also omit `patch` when a patch-owning structural ancestor consumes
-its value as part of the nested tree. Each patch ID appears only once in the
+setting may also omit `patch` when it selects no changes, or when a patch-owning
+structural ancestor consumes its value. Each patch ID appears only once in the
 entire catalog; a patch shared by nested settings belongs on their lowest common
 structural ancestor. Descriptions do not inherit and have no fallback behavior.
 Module mappings and launch metadata belong to patch definitions and are omitted
@@ -277,9 +278,9 @@ children remain disabled.
 
 A setting or structural block may own one singular dotted `patch` ID. Each ID
 must resolve to one definition in
-`patches/<first-segment>/<first-segment>.json`, must appear
-exactly once in the catalog, and must match that file's first dotted segment.
-Orphan definitions are rejected.
+`patches/<first-segment>/<first-segment>.json` and match that file's first dotted
+segment. Direct catalog references are unique. Internal definitions may instead
+be reached through another patch's `includes`; unreachable definitions are rejected.
 
 A unified patch may contain any compatible combination of these fields:
 
@@ -287,9 +288,25 @@ A unified patch may contain any compatible combination of these fields:
   group of primitive and fixed-stride table edits;
 - `hooks` and `payload` for runtime injection;
 - `string_patch` for one supported semantic string transformation;
-- `modules` for additional internal executors required by the patch; and
+- `modules` for additional internal executors required by the patch;
+- `includes` for a nonempty list of reusable patch IDs; and
 - `startup_fast_forward_frames` for launch-frame `additive` or `override`
   metadata.
+
+Included patches are expanded recursively and applied once across the selected
+configuration. Missing references, cycles, and duplicate IDs within one include
+list are invalid. An included patch receives no configured value; it owns static
+implementation or reads the complete selection through its existing adapter.
+Includes participate in module selection, resource hashing, and release assets.
+Release packaging includes resources for every available language, even when the
+packaged configuration selects Japanese.
+
+`features.localization` accepts `"en"` or `"jp"`. English selects
+`localization.en`, which includes the existing font, numeric, UI, regional-input,
+and string components, plus the NUN5 disc identity. Japanese retains the NA2
+disc identity and selects no localization replacements. Future
+languages can add a literal branch and a patch that includes shared components
+alongside its own string and texture inputs.
 
 A declared module reads its canonical input directory from the patch ID under
 `patches/`: `localization.strings` resolves to

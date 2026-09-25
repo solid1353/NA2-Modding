@@ -2,12 +2,6 @@
     .set noreorder
     .set noat
 
-    .section .rodata.practice_settings_defaults_text,"a",@progbits
-    .balign 4
-    .globl practice_settings_defaults_text
-practice_settings_defaults_text:
-    .asciz "Settings returned to defaults."
-
     .section .text.practice_settings_defaults_text_bridge,"ax",@progbits
     .balign 4
     .globl practice_settings_defaults_text_bridge

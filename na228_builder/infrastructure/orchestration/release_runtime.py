@@ -61,7 +61,7 @@ def validate_release_configuration(configuration_path: Path) -> tuple[str, ...]:
     """Validate one external configuration without requiring copyrighted ISOs."""
     workspace = packaged_workspace()
     marker = load_local_paths(workspace, allow_missing=True).path(
-        "builder", "release_manifest.json"
+        "builder", "resources", "release_manifest.json"
     )
     _, configuration = load_release_configuration(configuration_path, marker)
     if not configuration.modules:
@@ -75,7 +75,7 @@ def validate_packaged_release() -> int:
     configuration_path = application_directory() / manifest.configuration_name
     workspace = packaged_workspace()
     marker = load_local_paths(workspace, allow_missing=True).path(
-        "builder", "release_manifest.json"
+        "builder", "resources", "release_manifest.json"
     )
     workspace, configuration = load_release_configuration(
         configuration_path,

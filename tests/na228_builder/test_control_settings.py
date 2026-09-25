@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from na228_builder.infrastructure.orchestration import catalog, jsonc
+from na228_builder.patches.localization.mod_strings import ModStrings
 from scripts.lib.paths import load_local_paths
 
 
@@ -111,9 +112,8 @@ class ControlSettingsTests(unittest.TestCase):
         controls = selection.injections["settings.new_controls"]
         self.assertIn("label_substitution_action", controls["hooks"])
         self.assertEqual(
-            bytes.fromhex(
-                controls["payload"]["control_settings_substitution_label"]["value"]
-            ),
+            ModStrings(selection).native_payload(
+                controls["hooks"]["label_substitution_action"]["symbol"]),
             b"Substitution\0",
         )
 
@@ -121,10 +121,6 @@ class ControlSettingsTests(unittest.TestCase):
             "settings.battle_mechanics.substitution"
         ]
         self.assertNotIn("label_substitution_action", gauge["hooks"])
-        self.assertNotIn(
-            "control_settings_substitution_label",
-            gauge["payload"],
-        )
 
 
 if __name__ == "__main__":

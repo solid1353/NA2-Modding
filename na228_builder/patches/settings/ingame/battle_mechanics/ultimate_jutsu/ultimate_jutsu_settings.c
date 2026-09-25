@@ -24,11 +24,6 @@ volatile u32 ultimate_jutsu_mode_state
 volatile u32 ultimate_jutsu_mode_initialized
     __attribute__((section(".bss.ultimate_jutsu_mode_initialized")));
 
-const u8 ultimate_jutsu_no_contest_label[]
-    SETTINGS_USED_SECTION(".rodata.ultimate_jutsu_no_contest_label") =
-        "No Contest";
-const u8 ultimate_jutsu_no_hud_label[]
-    SETTINGS_USED_SECTION(".rodata.ultimate_jutsu_no_hud_label") = "No HUD";
 
 static __attribute__((always_inline)) inline void
 ultimate_jutsu_mode_initialize(void)

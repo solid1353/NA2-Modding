@@ -2,32 +2,29 @@
 
 ## Decision
 
-`features.general.disc_identity` selects the built disc's identity:
+`features.localization` determines the built disc's identity:
 
-| Value | Disc serial | Boot filename |
+| Language | Disc serial | Boot filename |
 | --- | --- | --- |
-| `"NA2"` | `SLPS-25837` | `SLPS_258.37` |
-| `"NUN5"` | `SLES-55605` | `SLES_556.05` |
-| `"NA228"` | `SLOP-NA228` | `SLOP_NA2.28` |
+| `"jp"` | `SLPS-25837` | `SLPS_258.37` |
+| `"en"` and future non-Japanese languages | `SLES-55605` | `SLES_556.05` |
 
 The [base configuration](../../na228_builder/configurations/base.jsonc) selects
-`"NA228"`. The [release configuration](../../na228_builder/configurations/release.jsonc)
-overrides it with `"NUN5"` so consumers see an English game title and a
+`"en"`. The [release configuration](../../na228_builder/configurations/release.jsonc)
+inherits it, so consumers see an English game title and a
 **Playable** compatibility rating in PCSX2. NUN5 and NA2 receive identical
 automatic compatibility fixes. The rating is a database label, not evidence
 of different compatibility between these identity choices.
 
-The clean NA2 source remains unchanged. Selecting a disc identity does not
-change NA228's in-game title, content, or NTSC video output.
+The clean NA2 source remains unchanged. Disc identity does not determine
+NA228's in-game title or NTSC video output.
 
 ## Reproducible implementation
 
-The catalog setting selects patch `general.disc_identity`, whose image
-operation is `select_disc_identity`. The configuration loader resolves its
-value to the output boot filename. `"NA228"` uses root `game.json`'s
-`output_boot_path`; `"NA2"` retains the source filename and emits no identity
-edits. Disabling the setting with `false` also retains the source identity,
-following the catalog's standard disabling behavior.
+The English patch includes `localization.disc_identity`, whose image operation
+is `use_nun5_disc_identity`. The configuration loader resolves it to
+`SLES_556.05`. Each future non-Japanese language includes the same patch.
+Japanese retains the source boot filename and emits no identity edits.
 
 For a changed identity, the product composer emits a guarded replacement of
 the boot filename in `SYSTEM.CNF` and an equal-length boot-file rename. The
@@ -57,12 +54,9 @@ original Japanese title and replaces it with `ＮＡ　ｖ２．２８`, with bo
 NUL-terminated and zero-padded through the slot. The base configuration enables
 it; setting it to `false` leaves the original title intact.
 
-`general.replace_imported_game_title` owns the semantic replacement of
-`Naruto Shippuden: Ultimate Ninja 5` in imported strings. Its catalog definition
-guards the expected coverage declared in the patch, and the string patcher
-substitutes root `game.json`'s `title` before inline or linked-external placement. The
-base configuration enables it; setting it to `false` leaves the imported title
-unchanged. It is independent of both memory-card settings.
+The English [string localization](localization/translation_importer.md) replaces
+the imported game title with root `game.json`'s `title`. It is selected by
+`features.localization: "en"` and is independent of both memory-card settings.
 
 The full-width title form follows the official NUN5 memory-card convention. A
 half-width ASCII test copied into a new save correctly but rendered as a blank
@@ -100,11 +94,6 @@ were checked on 2026-09-06. Both retail identities declare exactly these fixes:
 The VU1 clamp entry addresses character polygon spikes. PCSX2 selects these
 database settings by disc serial; the NUN5 identity therefore supplies the
 same fixes as NA2 for an NA2-based build, with automatic game fixes enabled.
-
-The synthetic `"NA228"` identity has no database entry and does not inherit
-these fixes automatically. Its Game List title falls back to the scanned ISO
-filename unless the user assigns a custom title. Build filenames are owned by
-the [builder's build contract](../../na228_builder/README.md#build).
 
 The project will **never install, modify, or maintain a custom PCSX2 GameDB
 entry** to override this title or copy the stock compatibility entry. Directly

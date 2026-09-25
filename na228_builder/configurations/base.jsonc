@@ -1,5 +1,33 @@
 {
   "features": {
+    "localization": "en",                         // "en" | "jp"
+    "general": {
+      "music_override": true,
+      "practice_stage_select": true,
+      "stage_selection_persistence": true,
+      "battle_results_rematch": true,
+      "unlock_all": {
+        "demon_wind_bomb": true
+      },
+      "mode_availability": {
+        "remove_adventure": true,
+        "remove_shop": true
+      }
+    },
+    "startup": {
+      "faster_loading": true,
+      "skip_initial_memory_card_check": true,
+      "auto_loading": true,
+      "loading_screen": true
+    },
+    "memory_card": {
+      "display_only_first_save": true,
+      "dedicated_save_namespace": true,
+      "replace_memory_card_title": true
+    },
+    "rendering": {
+      "native_16_9_horizontal_scale": false
+    },
     "settings": {
       "mod_settings": {
         "battle_mechanics_submenu": true,
@@ -85,45 +113,6 @@
         "commands": "off",                        // "off" | "on"
         "damage": "on"                            // "off" | "on"
       }
-    },
-    "general": {
-      "disc_identity": "NUN5",                    // "NA2" | "NUN5" | "NA228"
-      "replace_imported_game_title": true,
-      "music_override": true,
-      "practice_stage_select": true,
-      "stage_selection_persistence": true,
-      "battle_results_rematch": true,
-      "unlock_all": {
-        "demon_wind_bomb": true
-      },
-      "mode_availability": {
-        "remove_adventure": true,
-        "remove_shop": true
-      }
-    },
-    "memory_card": {
-      "display_only_first_save": true,
-      "dedicated_save_namespace": true,
-      "replace_memory_card_title": true
-    },
-    "startup": {
-      "faster_loading": true,
-      "skip_initial_memory_card_check": true,
-      "auto_loading": true,
-      "loading_screen": true
-    },
-    "rendering": {
-      "native_16_9_horizontal_scale": false
-    },
-    "localization": {
-      "font": {
-        "glyphs": true,
-        "layout": true,
-        "numeric_formatting": true
-      },
-      "ui": true,
-      "regional_input": true,
-      "strings": true
     }
   }
 }

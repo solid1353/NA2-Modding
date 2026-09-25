@@ -51,16 +51,22 @@ integrated catalog data.
 - `patches/localization/` owns Font assets under `font/glyphs/`,
   translations under `strings/`, and the reviewed compressed UI texture assets
   and pack metadata under `ui/`.
-  `features.localization.ui` selects its layout and texture work atomically.
+  `features.localization: "en"` selects these components together with numeric
+  formatting and matching regional input; `"jp"` retains the native localization.
+  Internal patch `includes` keep reusable components separate from this choice.
 - `infrastructure/orchestration/` owns builder orchestration and shared builder
   utilities. Reusable engines and their code-only contracts live under
   `infrastructure/modules/`; each
   reusable module README states its downstream invocation or that it invokes
   none. Do not create placeholder engine directories or files merely to
   register an engine.
-- `release_manifest.json` owns release packaging metadata. `game.json` owns
-  the product title, boot path, configuration aliases, base launch settings,
+- `resources/release_manifest.json` owns release packaging metadata. `game.json` owns
+  the product title, configuration aliases, base launch settings,
   and named launch-profile overrides.
+- `resources/mod_strings.tsv` owns mod-authored in-game text in English and
+  Japanese. The selected localization chooses its language column; Python menu
+  builders and native payloads reference stable string IDs. See
+  [mod strings](../docs/features/localization/mod_strings.md).
 
 JSON configurations select features. Character-override TSVs are separate
 per-character build inputs.
@@ -159,7 +165,7 @@ Documentation is not an executable builder input.
 
 ## Save appendix
 
-[`save_appendix.tsv`](save_appendix.tsv) is the readable list of values stored
+[`resources/save_appendix.tsv`](resources/save_appendix.tsv) is the readable list of values stored
 after the native profile record when
 `features.memory_card.dedicated_save_namespace` is enabled. It contains every
 runtime-editable setting below `features.settings`; submenu inclusion flags are

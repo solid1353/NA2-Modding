@@ -1,13 +1,12 @@
 # Native NUN5-derived Font
 
-The `localization.font` catalog subtree provides the English secondary-font
+The internal `localization.font` patches provide the English secondary-font
 asset, proportional measurement, fitted and wrapped layout, caller-family
-adapters, and numeric formatting. Exact edit and injection membership is owned
-by `features.localization` in `@builder/catalog.modcat` and the
-catalog implementation
-stores.
+adapters, and numeric formatting. `features.localization: "en"` selects them
+together through `localization.en`; `"jp"` selects no localized font replacements.
+Exact edit and injection membership belongs to the localization patch store.
 
-## Selectable contract
+## Internal components
 
 | Component | Current responsibility |
 | --- | --- |
@@ -15,7 +14,12 @@ stores.
 | `layout` | Provide the shared v2 measurement/layout session, selected style, fitting, wrapping, alignment, renderer-state restoration, and ABI adapters for proven caller families. |
 | `numeric_formatting` | Render Ninja Song, Save/Load, and Battle Settings values through their accepted native-compatible formatting paths. |
 
-These components compose through `localization__shared_font_payload`. The
+The payload-only `localization.font.core` contains the shared layout session,
+ASCII widths, and measurement helpers. Both layout and Character Select support
+selection include it, so mod-added support labels do not depend on selecting
+English. It installs no native screen hooks by itself.
+
+These components compose into the shared resident payload. The
 payload builder assigns final addresses in `PRG/228.BIN`; catalog injections
 declare fragments, relocations, symbols, and ABI metadata. Checked-in aggregate
 MIPS payload blobs are not production inputs.

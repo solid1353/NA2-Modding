@@ -24,13 +24,6 @@ volatile u32 chakra_mode_state
 volatile u32 chakra_mode_initialized
     __attribute__((section(".bss.chakra_mode_initialized")));
 
-const u8 chakra_normal_label[]
-    __attribute__((section(".rodata.chakra_normal_label"), used)) =
-        "Normal";
-
-const u8 chakra_unlimited_label[]
-    __attribute__((section(".rodata.chakra_unlimited_label"), used)) =
-        "Unlimited";
 
 static __attribute__((always_inline)) inline void chakra_mode_initialize(void)
 {

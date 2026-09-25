@@ -255,8 +255,21 @@
         "path": "na228_builder/patches/startup/auto_loading/auto_loading.c",
         "namespace": "startup.auto.loading",
         "imports": {
+          "mod_number_glyphs": "mod_number_glyphs",
           "startup_save_notification_state": "notification_state",
-          "save_appendix_load_status": "save_appendix_load_status"
+          "save_appendix_load_status": "save_appendix_load_status",
+          "MESSAGE_LOADED": "mod_text_startup__loaded",
+          "MESSAGE_NO_SAVE_DATA": "mod_text_startup__no_save_data",
+          "MESSAGE_NO_GAME_DATA": "mod_text_startup__no_game_data",
+          "MESSAGE_NO_CARD": "mod_text_startup__no_card",
+          "MESSAGE_UNFORMATTED_CARD": "mod_text_startup__unformatted_card",
+          "MESSAGE_UNSUPPORTED_CARD": "mod_text_startup__unsupported_card",
+          "MESSAGE_LOAD_FAILED": "mod_text_startup__load_failed",
+          "INCOMPATIBLE_SAVE_HEADING": "mod_text_startup__incompatible_heading",
+          "mod_text_startup__incompatible_version": "mod_text_startup__incompatible_version",
+          "mod_text_save__required_version": "mod_text_save__required_version",
+          "mod_text_startup__play_time": "mod_text_startup__play_time",
+          "mod_text_startup__saved_time": "mod_text_startup__saved_time"
         },
         "fragments": {
           "auto_loading_update": {
@@ -265,13 +278,14 @@
           "auto_loading_suppress_draw": {
             "object": "startup.auto.loading.text.startup.auto.loading.suppress.draw"
           },
-          "notification_constants": {
-            "object": "startup.auto.loading.rodata"
-          },
           "auto_loading_notification_draw": {
             "object": "startup.auto.loading.text.startup.auto.loading.notification.draw"
           }
-        }
+        },
+        "resources": [
+          "na228_builder/resources/mod_strings.tsv",
+          "na228_builder/patches/localization/mod_strings.h"
+        ]
       },
       "notification_state": {
         "kind": "data",

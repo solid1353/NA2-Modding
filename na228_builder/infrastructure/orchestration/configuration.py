@@ -112,7 +112,7 @@ def _validate_configurations(value: object) -> None:
         aliases.add(folded)
 
 
-def _read_settings(path: Path) -> tuple[str, str, tuple[int, ...]]:
+def _read_settings(path: Path) -> tuple[str, tuple[int, ...]]:
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
@@ -122,7 +122,6 @@ def _read_settings(path: Path) -> tuple[str, str, tuple[int, ...]]:
         {
             "title",
             "serial",
-            "output_boot_path",
             "launch_settings",
             "configurations",
         },
@@ -183,10 +182,7 @@ def _read_settings(path: Path) -> tuple[str, str, tuple[int, ...]]:
         startup_frames.append(frames)
     _validate_configurations(settings["configurations"])
     product_title = _settings_text(settings["title"], "title")
-    output_boot_path = _settings_text(
-        settings["output_boot_path"], "output_boot_path"
-    )
-    return output_boot_path, product_title, tuple(startup_frames)
+    return product_title, tuple(startup_frames)
 
 
 def _tree_digest(
@@ -262,25 +258,15 @@ def module_content_sha256(path: Path, module_type: str) -> str:
 
 def _validated_settings(
     settings_path: Path,
-) -> tuple[str, str, tuple[int, ...]]:
-    output_boot_path, product_title, startup_frames = _read_settings(settings_path)
-    from ..modules.image_assembler.iso9660 import normalize_iso_path
-
-    if normalize_iso_path(output_boot_path) != output_boot_path:
-        raise ValueError(
-            f"Settings output_boot_path must be normalized: {output_boot_path!r}"
-        )
-    if len(SOURCE_BOOT_PATH.encode("ascii")) != len(output_boot_path.encode("ascii")):
-        raise ValueError(
-            "Settings output_boot_path must have the source boot path's byte length"
-        )
+) -> tuple[str, tuple[int, ...]]:
+    product_title, startup_frames = _read_settings(settings_path)
     if "\0" in product_title:
         raise ValueError("Product title contains an embedded NUL")
     try:
         product_title.encode("cp1252")
     except UnicodeEncodeError as exc:
         raise ValueError("Product title must be CP1252") from exc
-    return output_boot_path, product_title, startup_frames
+    return product_title, startup_frames
 
 
 def _resolved_roots(
@@ -311,29 +297,37 @@ def _feature_module_inputs(
     builder_root: Path,
     selection: CatalogSelection,
     feature_id: str,
+    *,
+    include_disabled: bool = False,
 ) -> list[tuple[str, Path]]:
+    from . import catalog as catalog_module
+
     inputs: list[tuple[str, Path]] = []
     owners: dict[str, str] = {}
-    for node in selection.feature_nodes(feature_id):
-        for module_type in node.modules:
+    patch_ids = (
+        catalog_module.feature_patch_ids(selection, feature_id)
+        if include_disabled
+        else tuple(
+            node.patch for node in selection.feature_patch_nodes(feature_id)
+            if node.enabled and node.patch is not None
+        )
+    )
+    for patch_id in patch_ids:
+        for module_type in selection.patches[patch_id].get("modules", ()):
             if module_type not in MODULE_TYPES:
                 raise ValueError(
-                    f"Catalog patch {node.patch!r} declares unsupported module "
+                    f"Catalog patch {patch_id!r} declares unsupported module "
                     f"{module_type!r}"
                 )
-            if node.patch is None:
-                raise ValueError(
-                    f"Catalog node {node.node_id!r} declares module {module_type!r} without a patch"
-                )
             previous = owners.get(module_type)
-            if previous is not None:
+            if previous is not None and not include_disabled:
                 raise ValueError(
                     f"Catalog feature {feature_id!r} declares module {module_type!r} "
-                    f"in both {previous!r} and {node.patch!r}"
+                    f"in both {previous!r} and {patch_id!r}"
                 )
-            owners[module_type] = node.patch
+            owners[module_type] = patch_id
             module_path = builder_root.joinpath(
-                "patches", *node.patch.split(".")
+                "patches", *patch_id.split(".")
             ).resolve()
             if not module_path.is_dir():
                 raise FileNotFoundError(module_path)
@@ -437,20 +431,12 @@ def _load_configuration(
             paths.path("resources", "character_data.tsv"),
         )
     settings_path = paths.file("project_settings").resolve()
-    output_boot_path, product_title, startup_frames = _validated_settings(settings_path)
+    product_title, startup_frames = _validated_settings(settings_path)
     image_patches = catalog_module.selected_image_patches(selection)
     if len(image_patches) > 1:
         raise ValueError("Configuration selects multiple boot-path replacements")
     identity_patch_id = image_patches[0][1] if image_patches else None
-    if identity_patch_id is None:
-        output_boot_path = SOURCE_BOOT_PATH
-    else:
-        identity_node = image_patches[0][0]
-        output_boot_path = {
-            "NA2": SOURCE_BOOT_PATH,
-            "NUN5": "SLES_556.05",
-            "NA228": output_boot_path,
-        }[identity_node.configured_value]
+    output_boot_path = "SLES_556.05" if identity_patch_id is not None else SOURCE_BOOT_PATH
     for frames in startup_frames:
         catalog_module.startup_fast_forward_frames(selection, frames)
     roots = _resolved_roots(paths, root_overrides)
@@ -463,7 +449,7 @@ def _load_configuration(
         module_inputs = _feature_module_inputs(builder_root, selection, feature_id)
         selected_modules = {
             module
-            for node in selection.feature_nodes(feature_id)
+            for node in selection.feature_patch_nodes(feature_id)
             if node.enabled
             for module in node.modules
         }
@@ -523,6 +509,7 @@ def _load_configuration(
             )
         if (
             selection.node_enabled("features", feature_id)
+            and any(node.enabled for node in selection.feature_patch_nodes(feature_id))
             and not module_ids
             and not catalog_module.feature_has(
                 selection,
@@ -615,7 +602,8 @@ def configuration_resource_files(
         builder_root = configuration.selection.catalog_path.parent
         for feature in configuration.features:
             for module_type, module_path in _feature_module_inputs(
-                builder_root, configuration.selection, feature.feature_id
+                builder_root, configuration.selection, feature.feature_id,
+                include_disabled=True,
             ):
                 files.extend(_module_content_files(module_path, module_type))
     else:

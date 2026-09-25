@@ -1,6 +1,8 @@
 /* Automatically load the first save and report its outcome in the main menu. */
 
 typedef signed int s32;
+#include "../../localization/mod_strings.h"
+
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
@@ -122,19 +124,18 @@ typedef struct SaveAppendixLoadStatus {
 extern volatile StartupSaveNotificationState startup_save_notification_state;
 extern volatile SaveAppendixLoadStatus save_appendix_load_status;
 
-static const u8 MESSAGE_LOADED[] = "Save data loaded";
-static const u8 MESSAGE_NO_SAVE_DATA[] = "No save data found";
-static const u8 MESSAGE_NO_GAME_DATA[] = "No game data found";
-static const u8 MESSAGE_NO_CARD[] = "No memory card detected";
-static const u8 MESSAGE_UNFORMATTED_CARD[] = "Memory card is not formatted";
-static const u8 MESSAGE_UNSUPPORTED_CARD[] = "Unsupported memory card";
-static const u8 MESSAGE_LOAD_FAILED[] = "Save data could not be loaded";
-static const u8 INCOMPATIBLE_SAVE_HEADING[] = "The existing save data";
-static const u8 INCOMPATIBLE_SAVE_PREFIX[] = "uses version ";
-static const u8 INCOMPATIBLE_SAVE_REQUIRED[] = "Version ";
-static const u8 INCOMPATIBLE_SAVE_SUFFIX[] = " is required.";
-static const u8 PLAY_TIME_PREFIX[] = "Play Time ";
-static const u8 SAVED_PREFIX[] = "Saved ";
+extern const u8 MESSAGE_LOADED[];
+extern const u8 MESSAGE_NO_SAVE_DATA[];
+extern const u8 MESSAGE_NO_GAME_DATA[];
+extern const u8 MESSAGE_NO_CARD[];
+extern const u8 MESSAGE_UNFORMATTED_CARD[];
+extern const u8 MESSAGE_UNSUPPORTED_CARD[];
+extern const u8 MESSAGE_LOAD_FAILED[];
+extern const u8 INCOMPATIBLE_SAVE_HEADING[];
+extern const u8 mod_text_startup__incompatible_version[];
+extern const u8 mod_text_save__required_version[];
+extern const u8 mod_text_startup__play_time[];
+extern const u8 mod_text_startup__saved_time[];
 
 ALWAYS_INLINE void reset_notification(void)
 {
@@ -470,16 +471,6 @@ void startup_auto_loading_suppress_draw(void *controller)
     }
 }
 
-ALWAYS_INLINE u8 *append_text(u8 *destination, const u8 *source)
-{
-    while (*source != 0u) {
-        *destination = *source;
-        ++destination;
-        ++source;
-    }
-    return destination;
-}
-
 ALWAYS_INLINE u8 *append_two_digits(u8 *destination, u32 value)
 {
     value %= 100u;
@@ -522,7 +513,9 @@ ALWAYS_INLINE void format_play_time(u8 *destination, u32 ticks)
     u32 minutes;
     u32 seconds;
 
-    destination = append_text(destination, PLAY_TIME_PREFIX);
+    u8 value[16];
+    u8 *output = destination;
+    destination = value;
     if (ticks >= MAX_PLAY_TIME_TICKS) {
         hours = 999u;
         minutes = 59u;
@@ -543,6 +536,7 @@ ALWAYS_INLINE void format_play_time(u8 *destination, u32 ticks)
     *destination++ = ':';
     destination = append_two_digits(destination, seconds);
     *destination = 0u;
+    mod_string_format(output, 64u, mod_text_startup__play_time, value);
 }
 
 ALWAYS_INLINE void format_saved_time(
@@ -551,7 +545,9 @@ ALWAYS_INLINE void format_saved_time(
     u32 saved_time
 )
 {
-    destination = append_text(destination, SAVED_PREFIX);
+    u8 value[20];
+    u8 *output = destination;
+    destination = value;
     destination = append_two_digits(destination, saved_date & 0xFFu);
     *destination++ = '/';
     destination = append_two_digits(destination, (saved_date >> 8) & 0xFFu);
@@ -562,6 +558,7 @@ ALWAYS_INLINE void format_saved_time(
     *destination++ = ':';
     destination = append_two_digits(destination, saved_time & 0xFFu);
     *destination = 0u;
+    mod_string_format(output, 64u, mod_text_startup__saved_time, value);
 }
 
 ALWAYS_INLINE void format_incompatible_save(
@@ -571,15 +568,11 @@ ALWAYS_INLINE void format_incompatible_save(
     u32 required_version
 )
 {
-    destination = append_text(destination, INCOMPATIBLE_SAVE_PREFIX);
-    destination = append_unpadded_number(destination, found_version);
-    *destination++ = '.';
-    *destination = 0u;
-    destination = required_line;
-    destination = append_text(destination, INCOMPATIBLE_SAVE_REQUIRED);
-    destination = append_unpadded_number(destination, required_version);
-    destination = append_text(destination, INCOMPATIBLE_SAVE_SUFFIX);
-    *destination = 0u;
+    u8 value[11];
+    *append_unpadded_number(value, found_version) = 0u;
+    mod_string_format(destination, 96u, mod_text_startup__incompatible_version, value);
+    *append_unpadded_number(value, required_version) = 0u;
+    mod_string_format(required_line, 96u, mod_text_save__required_version, value);
 }
 
 ALWAYS_INLINE const u8 *notification_message(u32 outcome)
@@ -638,9 +631,9 @@ void startup_auto_loading_notification_draw(void)
     u32 outcome;
     u32 start_ticks;
     u32 now;
-    u8 play_time[24];
-    u8 saved_time[24];
-    u8 incompatible_save[2][48];
+    u8 play_time[64];
+    u8 saved_time[64];
+    u8 incompatible_save[2][96];
 
     update_main_menu();
 

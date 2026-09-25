@@ -1,14 +1,26 @@
 # UI texture translation
 
-This document covers the texture-patcher side of the `localization.ui` catalog
-leaf. That leaf atomically selects the localized UI containers and their
-matching layout/runtime patches; neither side can be enabled alone.
+This document covers the texture-patcher side of the internal `localization.ui`
+patch and custom artwork compatibility with Japanese. The English language
+choice includes the localized UI containers and their matching layout/runtime
+patches together.
 
 The 108 reviewed compressed CCS replacements are maintained individually under
 `@builder/patches/localization/ui/assets/`. A build verifies each asset against
 the compressed and decompressed hashes in `assets.tsv`, then packs
 them deterministically into the inserted `PRG/228_UI.BIN`. It does not modify
 `DATA/DATA.CVM`, read NUN5, or use a derivation cache.
+
+## Known JP issues
+
+`features.localization: "jp"` is experimental. These issues remain unresolved:
+
+- Mod Settings custom graphics have incorrect colors and transparency because
+  their pixel indices do not match the Japanese palettes.
+- Rematch artwork overwrites parts of the Japanese results labels and has
+  incorrect colors and transparency. Its prompt shows Triangle, while its
+  Circle binding conflicts with the native Japanese confirm action.
+- Custom texture text remains English.
 
 ## Runtime routing
 
@@ -37,7 +49,7 @@ or regions described by their strategy and mapping rows. In particular,
 `3EYE/ENDDEMO.CCS`, `MODE2KDV.CCS`, Haku's Victory container, and Shikamaru's
 Victory container remain bounded mapped replacements. `CMN/GAUGE.CCS` supplies
 the shared regional prompt atlas, and the NUN5 one-part `OUGI.CCS` remains
-paired with the Ultimate Jutsu layout patch in the same catalog leaf.
+paired with the Ultimate Jutsu layout work in the same internal patch.
 
 ENDDEMO's mapped replacement includes the English emblem's
 `MDL_win`, `MDL_win_f`, `ANM_end_win01`, and `ANM_end_win02` alongside its

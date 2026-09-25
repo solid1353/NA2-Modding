@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from na228_builder.infrastructure.orchestration import catalog, jsonc
+from na228_builder.patches.localization.mod_strings import ModStrings
 from na228_builder.patches.settings.ingame.practice_mode.practice_settings import (
     _active_pages,
     practice_settings_fragment,
@@ -117,7 +118,7 @@ class PracticeSettingsTests(unittest.TestCase):
         assert fragment is not None
         pages = _active_pages(selection)
         self.assertEqual(len(pages), 2)
-        self.assertEqual(pages[0].rows[0].label, "Opponent Settings")
+        self.assertEqual(ModStrings(selection).resolve(pages[0].rows[0].label), "Opponent Settings")
         self.assertEqual(
             [row.row_id for row in pages[0].rows[1:]],
             [0, 6, 7],

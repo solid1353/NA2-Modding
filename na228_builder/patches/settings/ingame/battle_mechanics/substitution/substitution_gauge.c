@@ -159,12 +159,6 @@ volatile SubstitutionGaugeState substitution_gauge_state
 volatile SubstitutionGaugeRuntimeState substitution_gauge_runtime_state
     __attribute__((section(".bss.substitution_gauge_runtime_state")));
 
-const u8 substitution_gauge_mode_free_label[]
-    __attribute__((
-        section(".rodata.substitution_gauge_mode_free_label"),
-        aligned(4),
-        used
-    )) = "Free";
 
 SUBSTITUTION_GAUGE_SECTION(".text.substitution_gauge_option_get")
 u32 substitution_gauge_option_get(u32 option)

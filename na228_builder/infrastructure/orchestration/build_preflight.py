@@ -25,7 +25,7 @@ GENERATED_SUFFIXES = {".pyc", ".pyo"}
 NON_COMPOSING_BUILDER_FILES = {
     "infrastructure/orchestration/app.py",
     "infrastructure/orchestration/build_preflight.py",
-    "release_manifest.json",
+    "resources/release_manifest.json",
     "infrastructure/orchestration/release_runtime.py",
 }
 

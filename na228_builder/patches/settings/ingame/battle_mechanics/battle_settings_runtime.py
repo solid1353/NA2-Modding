@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from na228_builder.patches.localization.mod_strings import message
+
 import struct
 from decimal import Decimal
 from typing import TYPE_CHECKING
@@ -12,7 +14,7 @@ if TYPE_CHECKING:
 
 BATTLE_MECHANICS_PATH = ("features", "settings", "battle_mechanics")
 PRACTICE_SETTINGS_PATH = ("features", "settings", "practice_settings")
-SUB_ACTIVE_FRAMES_LABELS = ("Default", *(str(value) for value in range(1, 16)))
+SUB_ACTIVE_FRAMES_LABELS = (message("common.default"), *(str(value) for value in range(1, 16)))
 
 CHAKRA_MODE_VALUES = {
     "normal": 0,
@@ -24,11 +26,11 @@ CHAKRA_REGEN_STEP = Decimal("0.1")
 CHAKRA_REGEN_OPTION_OFFSET = 1
 CHAKRA_OPTION_COUNT = 102
 CHAKRA_STATIC_LABELS = (
-    "chakra_normal_label",
-    "chakra_unlimited_label",
+    "mod_text_common__normal",
+    "mod_text_common__unlimited",
 )
 CHAKRA_REGEN_LABELS = tuple(
-    f"Regen {tenths // 10}.{tenths % 10}%/s"
+    message("settings.chakra.regen", rate=f"{tenths // 10}.{tenths % 10}")
     for tenths in range(1, 101)
 )
 
@@ -46,8 +48,8 @@ ULTIMATE_JUTSU_NATIVE_DEFAULT = ULTIMATE_JUTSU_MODE_VALUES["command"]
 ULTIMATE_JUTSU_NATIVE_MODE_COUNT = 6
 
 SUPPORT_MODE_VALUES = {"off": 0, "nerfed": 1, "normal": 2, "unlimited": 3}
-SUPPORT_LABELS = ("Off", "Nerfed", "Normal", "Unlimited")
-EXTRA_HIT_LABELS = ("Off", "On", *(f"-{value}% Chakra" for value in range(5, 101, 5)))
+SUPPORT_LABELS = (message("common.off"), message("common.nerfed"), message("common.normal"), message("common.unlimited"))
+EXTRA_HIT_LABELS = (message("common.off"), message("common.on"), *(message("settings.extra_hit.cost", cost=value) for value in range(5, 101, 5)))
 
 TOGGLE_MODE_VALUES = {
     "off": 0,

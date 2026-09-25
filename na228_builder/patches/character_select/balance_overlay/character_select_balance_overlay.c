@@ -1,5 +1,7 @@
 /* Character Select overlay for per-character balance values. */
 
+#include "../../localization/mod_strings.h"
+
 typedef unsigned char u8;
 typedef signed int s32;
 typedef unsigned int u32;
@@ -54,7 +56,7 @@ static __attribute__((always_inline)) inline void draw_substitution_cost(
     u32 color
 )
 {
-    u8 run[24];
+    u8 run[48];
     u8 digit[2];
     u32 index = 0u;
     u32 run_length = 0u;
@@ -85,6 +87,8 @@ static __attribute__((always_inline)) inline void draw_substitution_cost(
     }
 }
 
+extern const u8 mod_text_character_select__tier[];
+extern const u8 mod_text_character_select__substitution[];
 extern const CharacterOverrideTable battle_logic_character_overrides;
 extern u32 mod_settings_option_get(u32 argument);
 
@@ -118,11 +122,9 @@ static __attribute__((always_inline)) inline void format_tier(
     u32 cursor = 0u;
     u32 index;
 
-    text[cursor++] = (u8)'T';
-    text[cursor++] = (u8)'I';
-    text[cursor++] = (u8)'E';
-    text[cursor++] = (u8)'R';
-    text[cursor++] = (u8)' ';
+    u8 value[5];
+    u8 *output = text;
+    text = value;
     if (character == 0 || character->tier[0] == 0u) {
         text[cursor++] = (u8)'-';
     } else {
@@ -131,6 +133,7 @@ static __attribute__((always_inline)) inline void format_tier(
         }
     }
     text[cursor] = 0u;
+    mod_string_format(output, 48u, mod_text_character_select__tier, value);
 }
 
 static __attribute__((always_inline)) inline void format_substitution_cost(
@@ -144,13 +147,13 @@ static __attribute__((always_inline)) inline void format_substitution_cost(
     u32 fractional;
     s32 scaled;
 
-    text[cursor++] = (u8)'S';
-    text[cursor++] = (u8)'U';
-    text[cursor++] = (u8)'B';
-    text[cursor++] = (u8)' ';
+    u8 value[20];
+    u8 *output = text;
+    text = value;
     if (present == 0u || cost < -21474836.0f || cost > 21474836.0f) {
         text[cursor++] = (u8)'-';
         text[cursor] = 0u;
+        mod_string_format(output, 48u, mod_text_character_select__substitution, value);
         return;
     }
 
@@ -172,6 +175,7 @@ static __attribute__((always_inline)) inline void format_substitution_cost(
     }
     text[cursor++] = (u8)'%';
     text[cursor] = 0u;
+    mod_string_format(output, 48u, mod_text_character_select__substitution, value);
 }
 
 static __attribute__((always_inline)) inline u32 resolved_substitution_cost(
@@ -227,8 +231,8 @@ void battle_logic_character_select_balance_overlay(u32 selector)
     float cost = 0.0f;
     float x = side != 0u ? BALANCE_OVERLAY_RIGHT_X : BALANCE_OVERLAY_LEFT_X;
     const CharacterOverrideRow *character;
-    u8 tier_text[24];
-    u8 substitution_text[24];
+    u8 tier_text[48];
+    u8 substitution_text[48];
 
     draw_character_select(selector);
     if (mod_settings_option_get(3u) == 0u) {

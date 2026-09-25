@@ -15,7 +15,7 @@ from . import jsonc
 from typing import Callable, Iterable
 
 
-RELEASE_MANIFEST_NAME = "release_manifest.json"
+RELEASE_MANIFEST_NAME = "resources/release_manifest.json"
 SETTINGS_NAME = "game.json"
 REQUIRED_IMAGE_IDS = ("na2",)
 HASH_CHUNK_SIZE = 8 * 1024 * 1024

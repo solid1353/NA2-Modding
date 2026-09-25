@@ -76,7 +76,7 @@
         "target_id": "na2_elf",
         "offset": "0x4B26AC",
         "expected_hex": "40466000",
-        "symbol": "control_settings_substitution_label",
+        "symbol": "mod_text_settings__substitution__label",
         "encoding": "abs32"
       },
       "replace_paired_action_assignment": {
@@ -107,7 +107,10 @@
           "control_settings_assign_action": {
             "object": "battle.control.settings.text.control.settings.assign.action"
           }
-        }
+        },
+        "resources": [
+          "na228_builder/resources/mod_strings.tsv"
+        ]
       },
       "control_scheme_abi": {
         "kind": "asm",
@@ -125,11 +128,6 @@
             "object": "battle.control.scheme.asm.text.control.scheme.logical.block.bridge"
           }
         }
-      },
-      "control_settings_substitution_label": {
-        "kind": "rodata",
-        "alignment": 1,
-        "value": "537562737469747574696F6E00"
       }
     }
   },
@@ -367,14 +365,11 @@
           },
           "chakra_mode_initialized": {
             "object": "battle.logic.settings.chakra.bss.chakra.mode.initialized"
-          },
-          "chakra_normal_label": {
-            "object": "battle.logic.settings.chakra.rodata.chakra.normal.label"
-          },
-          "chakra_unlimited_label": {
-            "object": "battle.logic.settings.chakra.rodata.chakra.unlimited.label"
           }
-        }
+        },
+        "resources": [
+          "na228_builder/resources/mod_strings.tsv"
+        ]
       }
     }
   },
@@ -997,12 +992,10 @@
         "path": "na228_builder/patches/settings/ingame/shared/menu_pages.c",
         "namespace": "settings.menu.pages.c",
         "imports": {
-          "mod_settings_child": "mod_settings_child"
+          "mod_settings_child": "mod_settings_child",
+          "settings_open_label": "mod_text_menu__open"
         },
         "fragments": {
-          "settings_open_label": {
-            "object": "settings.menu.pages.c.rodata.settings.open.label"
-          },
           "settings_menu_open_values": {
             "object": "settings.menu.pages.c.bss.settings.menu.open.values"
           },
@@ -1033,13 +1026,17 @@
           "settings_menu_draw_practice_backing": {
             "object": "settings.menu.pages.c.text.settings.menu.draw.practice.backing"
           }
-        }
+        },
+        "resources": [
+          "na228_builder/resources/mod_strings.tsv"
+        ]
       },
       "battle_settings": {
         "kind": "c",
         "path": "na228_builder/patches/settings/ingame/battle_mode/battle_settings.c",
         "namespace": "battle.settings.c",
         "imports": {
+          "battle_settings_handicap_text": "mod_number_handicap",
           "battle_settings_schema": "battle_settings_schema",
           "battle_settings_active_help": "battle_settings_active_help",
           "settings_menu_value_page": "settings_menu_value_page",
@@ -1132,51 +1129,6 @@
           "battle_settings_practice_texture_name": {
             "object": "battle.settings.c.rodata.battle.settings.practice.texture.name"
           },
-          "battle_settings_substitution_label": {
-            "object": "battle.settings.c.rodata.battle.settings.substitution.label"
-          },
-          "battle_settings_substitution_help": {
-            "object": "battle.settings.c.rodata.battle.settings.substitution.help"
-          },
-          "battle_settings_sub_active_frames_label": {
-            "object": "battle.settings.c.rodata.battle.settings.sub.active.frames.label"
-          },
-          "battle_settings_sub_active_frames_help": {
-            "object": "battle.settings.c.rodata.battle.settings.sub.active.frames.help"
-          },
-          "battle_settings_xdash_chakra_cost_label": {
-            "object": "battle.settings.c.rodata.battle.settings.xdash.chakra.cost.label"
-          },
-          "battle_settings_xdash_chakra_cost_help": {
-            "object": "battle.settings.c.rodata.battle.settings.xdash.chakra.cost.help"
-          },
-          "battle_settings_support_label": {
-            "object": "battle.settings.c.rodata.battle.settings.support.label"
-          },
-          "battle_settings_support_help": {
-            "object": "battle.settings.c.rodata.battle.settings.support.help"
-          },
-          "battle_settings_shadowblur_label": {
-            "object": "battle.settings.c.rodata.battle.settings.shadowblur.label"
-          },
-          "battle_settings_shadowblur_help": {
-            "object": "battle.settings.c.rodata.battle.settings.shadowblur.help"
-          },
-          "battle_settings_extra_hit_label": {
-            "object": "battle.settings.c.rodata.battle.settings.extra.hit.label"
-          },
-          "battle_settings_extra_hit_help": {
-            "object": "battle.settings.c.rodata.battle.settings.extra.hit.help"
-          },
-          "battle_settings_off_label": {
-            "object": "battle.settings.c.rodata.battle.settings.off.label"
-          },
-          "battle_settings_on_label": {
-            "object": "battle.settings.c.rodata.battle.settings.on.label"
-          },
-          "battle_settings_handicap_text": {
-            "object": "battle.settings.c.rodata.battle.settings.handicap.text"
-          },
           "battle_settings_helpers": {
             "object": "battle.settings.c.text"
           },
@@ -1246,7 +1198,10 @@
           "battle_settings_practice_cursor_name": {
             "object": "battle.settings.c.rodata.battle.settings.practice.cursor.name"
           }
-        }
+        },
+        "resources": [
+          "na228_builder/resources/mod_strings.tsv"
+        ]
       },
       "battle_settings_abi": {
         "kind": "asm",
@@ -1424,14 +1379,12 @@
           "practice_settings_cancel": "practice_settings_cancel",
           "practice_settings_get_value": "practice_settings_get_value",
           "practice_settings_update_help": "practice_settings_update_help",
-          "practice_settings_update_window": "practice_settings_update_window"
+          "practice_settings_update_window": "practice_settings_update_window",
+          "practice_settings_defaults_text": "mod_text_settings__reset"
         },
         "fragments": {
           "practice_settings_cancel_bridge": {
             "object": "practice.settings.asm.text.practice.settings.cancel.bridge"
-          },
-          "practice_settings_defaults_text": {
-            "object": "practice.settings.asm.rodata.practice.settings.defaults.text"
           },
           "practice_settings_defaults_text_bridge": {
             "object": "practice.settings.asm.text.practice.settings.defaults.text.bridge"
@@ -1448,7 +1401,10 @@
           "practice_settings_help_bridge": {
             "object": "practice.settings.asm.text.practice.settings.help.bridge"
           }
-        }
+        },
+        "resources": [
+          "na228_builder/resources/mod_strings.tsv"
+        ]
       },
       "settings_menu_presentation": {
         "kind": "c",
@@ -1894,11 +1850,11 @@
           },
           "substitution_gauge_runtime_state": {
             "object": "battle.logic.substitution.gauge.c.bss.substitution.gauge.runtime.state"
-          },
-          "substitution_gauge_mode_free_label": {
-            "object": "battle.logic.substitution.gauge.c.rodata.substitution.gauge.mode.free.label"
           }
-        }
+        },
+        "resources": [
+          "na228_builder/resources/mod_strings.tsv"
+        ]
       },
       "substitution_gauge_abi": {
         "kind": "asm",
@@ -2020,19 +1976,16 @@
           "ultimate_jutsu_mode_set": {
             "object": "battle.logic.settings.ultimate.jutsu.text.ultimate.jutsu.mode.set"
           },
-          "ultimate_jutsu_no_contest_label": {
-            "object": "battle.logic.settings.ultimate.jutsu.rodata.ultimate.jutsu.no.contest.label"
-          },
-          "ultimate_jutsu_no_hud_label": {
-            "object": "battle.logic.settings.ultimate.jutsu.rodata.ultimate.jutsu.no.hud.label"
-          },
           "ultimate_jutsu_mode_state": {
             "object": "battle.logic.settings.ultimate.jutsu.bss.ultimate.jutsu.mode.state"
           },
           "ultimate_jutsu_mode_initialized": {
             "object": "battle.logic.settings.ultimate.jutsu.bss.ultimate.jutsu.mode.initialized"
           }
-        }
+        },
+        "resources": [
+          "na228_builder/resources/mod_strings.tsv"
+        ]
       }
     }
   },

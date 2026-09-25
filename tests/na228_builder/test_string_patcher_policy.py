@@ -72,11 +72,11 @@ def text_mapping(
 
 class StringPatcherPolicyTests(unittest.TestCase):
     def test_catalog_policy_uses_settings_product_title(self) -> None:
-        patch_id = "general.replace_imported_game_title"
+        patch_id = "localization.strings"
         selection = SimpleNamespace(
-            nodes=(
+            patch_nodes=(
                 catalog.CatalogNode(
-                    path=("features", "general", "replace_imported_game_title"),
+                    path=("features", "localization", "strings"),
                     enabled=True,
                     patch=patch_id,
                 ),

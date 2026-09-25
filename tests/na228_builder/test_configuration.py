@@ -229,7 +229,6 @@ class ConfigurationTests(unittest.TestCase):
                 {
                     "title": "Test Product",
                     "serial": "TEST-00000",
-                    "output_boot_path": "SLOP_NA2.28",
                     "launch_settings": {
                         "default": {
                             "startup_fast_forward_frames": 321,
@@ -409,26 +408,6 @@ class ConfigurationTests(unittest.TestCase):
             loaded = load_configuration(configuration, root, root)
             resources = set(configuration_resource_files(loaded))
             self.assertNotIn((feature / "manifest.tsv").resolve(), resources)
-
-    def test_output_boot_path_must_preserve_source_length(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            builder, source, configurations = self.create_workspace(root)
-            self.create_feature_inputs(builder, "localization", "translation_importer")
-            configuration = self.create_configuration(
-                configurations,
-                source,
-                {"localization": {"description": "Localization"}},
-                {"localization": True},
-            )
-            settings_path = root / "game.json"
-            settings = json.loads(settings_path.read_text(encoding="utf-8"))
-            settings["output_boot_path"] = "BOOT.ELF"
-            settings_path.write_text(
-                json.dumps(settings, indent=2) + "\n", encoding="utf-8"
-            )
-            with self.assertRaisesRegex(ValueError, "byte length"):
-                load_configuration(configuration, root, root)
 
     def test_launch_settings_accept_open_direct_profile_overrides(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

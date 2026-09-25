@@ -2,8 +2,9 @@
 
 This first-class `na228_builder` module imports and validates strings for
 **Narutimate Accel v2.28**, based on *Naruto Shippuuden: Narutimate Accel 2*.
-The selectable `features.localization.strings` node owns the
-`localization.strings` patch and its translation-importer input.
+The internal `localization.strings` patch owns its translation-importer input
+and imported-title replacement. `features.localization: "en"` includes this
+patch; `"jp"` does not import translated strings.
 It never writes BIN or ELF payloads. Configuration builds pass its canonical in-memory
 artifact to `string_patcher`, which applies selected semantic string patches, derives
 inline versus linked placement from encoded fit and pointer availability, and
@@ -22,10 +23,12 @@ The hashes above are documentation, not a second executable manifest. Git
 history and the builder's configuration-resource fingerprint own content identity.
 `mappings.tsv` owns the canonical executable donor translations, user
 overrides, and optional pointer inventory. Normal builds import only
-`mappings.tsv`. Root
-`patches/general/general.json` owns the guarded imported-title
-declaration, while root `settings.title` supplies its replacement;
-`string_patcher` applies that selected operation to the normal translation path.
+`mappings.tsv`. The `localization.strings` patch in
+`patches/localization/localization.json` also replaces the imported
+`Naruto Shippuden: Ultimate Ninja 5` title with root `game.json`'s `title`.
+Its guards require nine mappings and ten occurrences. `string_patcher` applies
+this operation before deciding inline or linked placement. It is independent
+of the memory-card title and save-namespace settings.
 
 ## Source and target scope
 
@@ -59,7 +62,7 @@ assets and their placement as one selection.
 ## Canonical mapping table
 
 `@builder/patches/localization/strings/mappings.tsv` is the canonical mapping
-table selected by `features.localization.strings` and used by normal builds.
+table included by the English language choice and used by normal English builds.
 `display_context` is its human-readable page/filter key; rows are sorted by
 that context, then by stable `id`.
 
@@ -270,4 +273,4 @@ The original NA2 target is authoritative for renderer-specific color forms:
   the in-memory string-patcher plan directly from the importer output.
 
 The module has no standalone CLI. Mapping `enabled` flags determine imported
-targets, and enabling the Localization feature invokes the complete importer.
+targets, and selecting English invokes the complete importer.

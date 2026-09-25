@@ -175,18 +175,29 @@
         "path": "na228_builder/patches/memory_card/save_appendix.c",
         "namespace": "memory.card.save.appendix",
         "imports": {
+          "mod_number_glyphs": "mod_number_glyphs",
           "save_appendix_schema": "save_appendix_schema",
           "save_appendix_load_status": "save_appendix_load_status",
-          "save_appendix_next_update": "save_appendix_next_update"
+          "save_appendix_next_update": "save_appendix_next_update",
+          "mod_text_save__upgrade_confirm": "mod_text_save__upgrade_confirm",
+          "mod_text_save__unsupported_format": "mod_text_save__unsupported_format",
+          "mod_text_save__existing_version": "mod_text_save__existing_version",
+          "mod_text_save__required_version": "mod_text_save__required_version",
+          "mod_text_save__newer_game_required": "mod_text_save__newer_game_required",
+          "mod_text_save__cannot_upgrade": "mod_text_save__cannot_upgrade",
+          "mod_text_save__upgrade_failed": "mod_text_save__upgrade_failed",
+          "mod_text_save__upgrading": "mod_text_save__upgrading"
         },
         "resources": [
-          "na228_builder/save_appendix.tsv"
+          "na228_builder/resources/save_appendix.tsv",
+          "na228_builder/resources/mod_strings.tsv",
+          "na228_builder/patches/localization/mod_strings.h"
         ],
         "fragments": {
           "save_appendix_dialog_state": {
             "object": "memory.card.save.appendix.bss"
           },
-          "save_appendix_dialog_text": {
+          "save_appendix_dialog_constants": {
             "object": "memory.card.save.appendix.rodata"
           },
           "save_appendix_check_card": {

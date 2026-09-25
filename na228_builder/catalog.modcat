@@ -1,5 +1,85 @@
 {
   features: {
+    localization:
+      setting<"en"> {
+        description: "English text, font, UI, and matching button conventions.",
+        patch: "localization.en",
+      }
+      |
+      setting<"jp"> {
+        description: "Japanese text, UI, and button conventions. Experimental; some custom graphics and controls do not work correctly.",
+      },
+    general: {
+      description: "General game-wide features.",
+      unlock_all: setting<{ demon_wind_bomb?: bool }> {
+        description: "Expose the characters, supports, stages, jutsu, Shop items, and Collection entries present in a fully unlocked save without changing saved progress, currency, inventory, or settings.",
+        patch: "general.unlock_all",
+      },
+      music_override: setting {
+        patch: "general.music_override",
+      },
+      practice_stage_select: setting {
+        description: "Open the native Stage Select in Practice with the training field initially selected.",
+        patch: "general.practice_stage_select",
+      },
+      stage_selection_persistence: setting {
+        description: "Restore the last highlighted stage when Free Battle or Practice Stage Select opens again during the current session.",
+        patch: "general.stage_selection_persistence",
+      },
+      battle_results_rematch: setting {
+        description: "Add Circle Rematch to Battle Results and retain the matchup and session match score.",
+        patch: "general.battle_results_rematch",
+      },
+      mode_availability: {
+        description: "Configure which game modes are available.",
+        remove_adventure: setting {
+          patch: "general.mode_availability.remove_adventure",
+        },
+        remove_shop: setting {
+          patch: "general.mode_availability.remove_shop",
+        },
+      },
+    },
+    startup: {
+      description: "After required loaders and boot splashes, skip the CyberConnect2 intro, opening, and interactive title, then enter native Save/Load.",
+      patch: "startup",
+      faster_loading: setting {
+        description: "Shorten startup by loading RPG and player voice-bank indexes only when each bank is first played.",
+        patch: "startup.faster_loading",
+      },
+      skip_initial_memory_card_check: setting {
+        description: "Skip the blocking memory-card check before boot loading, independently of automatic save loading.",
+        patch: "startup.skip_initial_memory_card_check",
+      },
+      auto_loading: setting {
+        description: "Silently load record zero when it exists, and otherwise proceed to the main menu without showing Save/Load UI or requiring input. Report the outcome in black for ten seconds in the top-right corner of the usable menu; successful loads also show play time and the saved date/time.",
+        patch: "startup.auto_loading",
+      },
+      loading_screen: setting {
+        description: "Replace the boot splashes with a large primitive percentage and progress bar paced across a 6.5-second elapsed-time estimate while the original startup loaders run.",
+        patch: "startup.loading_screen",
+      },
+    },
+    memory_card: {
+      description: "Memory-card save presentation and isolation.",
+      display_only_first_save: setting {
+        description: "Select record zero directly in Save and Load flows while retaining the native memory-card scan, confirmation, load/save operations, and non-record status handling; No completes without reopening the removed record list.",
+        patch: "memory_card.display_only_first_save",
+      },
+      dedicated_save_namespace: setting {
+        patch: "memory_card.dedicated_save_namespace",
+      },
+      replace_memory_card_title: setting {
+        patch: "memory_card.replace_memory_card_title",
+      },
+    },
+    rendering: {
+      description: "Game-wide rendering and output geometry.",
+      native_16_9_horizontal_scale: setting {
+        description: "Force the renderer's horizontal-scale field to 0.75 through its object pointer.",
+        patch: "rendering.native_16_9_horizontal_scale",
+      },
+    },
     settings: {
       description: "Configure the Mod, Battle, and Practice Settings menus and their shared submenus.",
       patch: "settings.ingame",
@@ -121,114 +201,6 @@
         health: setting<"normal" | "half" | "almost"> {},
         commands: setting<"off" | "on"> {},
         damage: setting<"off" | "on"> {},
-      },
-    },
-    general: {
-      description: "General game-wide features.",
-      disc_identity: setting<"NA2" | "NUN5" | "NA228"> {
-        description: "Select the disc identity used for emulator recognition and compatibility fixes.",
-        patch: "general.disc_identity",
-      },
-      unlock_all: setting<{ demon_wind_bomb?: bool }> {
-        description: "Expose the characters, supports, stages, jutsu, Shop items, and Collection entries present in a fully unlocked save without changing saved progress, currency, inventory, or settings.",
-        patch: "general.unlock_all",
-      },
-      replace_imported_game_title: setting {
-        patch: "general.replace_imported_game_title",
-      },
-      music_override: setting {
-        patch: "general.music_override",
-      },
-      practice_stage_select: setting {
-        description: "Open the native Stage Select in Practice with the training field initially selected.",
-        patch: "general.practice_stage_select",
-      },
-      stage_selection_persistence: setting {
-        description: "Restore the last highlighted stage when Free Battle or Practice Stage Select opens again during the current session.",
-        patch: "general.stage_selection_persistence",
-      },
-      battle_results_rematch: setting {
-        description: "Add Circle Rematch to Battle Results and retain the matchup and session match score.",
-        patch: "general.battle_results_rematch",
-      },
-      mode_availability: {
-        description: "Configure which game modes are available.",
-        remove_adventure: setting {
-          patch: "general.mode_availability.remove_adventure",
-        },
-        remove_shop: setting {
-          patch: "general.mode_availability.remove_shop",
-        },
-      },
-    },
-    memory_card: {
-      description: "Memory-card save presentation and isolation.",
-      display_only_first_save: setting {
-        description: "Select record zero directly in Save and Load flows while retaining the native memory-card scan, confirmation, load/save operations, and non-record status handling; No completes without reopening the removed record list.",
-        patch: "memory_card.display_only_first_save",
-      },
-      dedicated_save_namespace: setting {
-        patch: "memory_card.dedicated_save_namespace",
-      },
-      replace_memory_card_title: setting {
-        patch: "memory_card.replace_memory_card_title",
-      },
-    },
-    startup: {
-      description: "After required loaders and boot splashes, skip the CyberConnect2 intro, opening, and interactive title, then enter native Save/Load.",
-      patch: "startup",
-      faster_loading: setting {
-        description: "Shorten startup by loading RPG and player voice-bank indexes only when each bank is first played.",
-        patch: "startup.faster_loading",
-      },
-      skip_initial_memory_card_check: setting {
-        description: "Skip the blocking memory-card check before boot loading, independently of automatic save loading.",
-        patch: "startup.skip_initial_memory_card_check",
-      },
-      auto_loading: setting {
-        description: "Silently load record zero when it exists, and otherwise proceed to the main menu without showing Save/Load UI or requiring input. Report the outcome in black for ten seconds in the top-right corner of the usable menu; successful loads also show play time and the saved date/time.",
-        patch: "startup.auto_loading",
-      },
-      loading_screen: setting {
-        description: "Replace the boot splashes with a large primitive percentage and progress bar paced across a 6.5-second elapsed-time estimate while the original startup loaders run.",
-        patch: "startup.loading_screen",
-      },
-    },
-    rendering: {
-      description: "Game-wide rendering and output geometry.",
-      native_16_9_horizontal_scale: setting {
-        description: "Force the renderer's horizontal-scale field to 0.75 through its object pointer.",
-        patch: "rendering.native_16_9_horizontal_scale",
-      },
-    },
-    localization: {
-      description: "English localization and regional behavior.",
-      patch: "localization",
-      font: {
-        description: "English font rendering and formatting.",
-        glyphs: setting {
-          description: "Use the English glyph atlas, packed metrics, and renderer geometry.",
-          patch: "localization.font.glyphs",
-        },
-        layout: setting {
-          description: "Apply English text measurement, fitting, wrapping, selected styling, and screen-specific layout.",
-          patch: "localization.font.layout",
-        },
-        numeric_formatting: setting {
-          description: "Format dynamic numbers with the English renderer conventions.",
-          patch: "localization.font.numeric_formatting",
-        },
-      },
-      ui: setting {
-        description: "Apply matching English UI textures, rectangles, anchors, scaling, and screen-specific geometry.",
-        patch: "localization.ui",
-      },
-      regional_input: setting {
-        description: "Apply regional confirm, cancel, navigation, and related menu-input behavior consistently across the game.",
-        patch: "localization.regional_input",
-      },
-      strings: setting {
-        patch: "localization.strings",
       },
     },
   },

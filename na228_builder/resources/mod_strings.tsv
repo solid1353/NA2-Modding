@@ -1,0 +1,133 @@
+id	en	jp
+common.off	Off	オフ
+common.on	On	オン
+common.normal	Normal	通常
+common.unlimited	Unlimited	無制限
+common.none	None	なし
+common.less	Less	少ない
+common.more	More	多い
+common.custom	Custom	カスタム
+common.default	Default	標準
+common.free	Free	消費なし
+common.nerfed	Nerfed	弱体化
+common.all	All	すべて
+common.relevant	Relevant	関連のみ
+common.classic	Classic	従来
+common.updated	Updated	変更版
+common.original	Original	原作
+common.overrides	Overrides	調整版
+settings.control_scheme.label	Control Scheme	操作設定
+settings.control_scheme.help	Choose the gameplay control interpretation.	バトル中の操作方式を選択します。
+settings.simple_display.label	Simple Display	簡易表示
+settings.simple_display.help	Choose the battle Simple Display state.	バトル中の簡易表示を設定します。
+settings.character_balance.label	Character Balance	キャラ性能
+settings.character_balance.help	Choose original or configured character balance.	原作の性能か調整後の性能を選択します。
+settings.balance_overlay.label	Balance Overlay	性能情報表示
+settings.balance_overlay.help	Show character balance information on Character Select.	キャラクター選択画面に性能情報を表示します。
+settings.support_selection.label	Support Selection	サポート選択
+settings.support_selection.help	Choose which supports are available on Character Select.	選択できるサポートキャラクターを設定します。
+settings.items.label	Items	アイテム
+settings.items.help	Choose item availability. Square opens Custom settings.	アイテムの出現を設定します。<iconSQUARE>でカスタム設定を開きます。
+settings.minimum_chakra.label	Minimum Chakra	必要チャクラ
+settings.minimum_chakra.help	Required chakra to substitute. Match Cost follows the actual cost.	変わり身に必要なチャクラ量です。「消費量と同じ」は実際の消費量に合わせます。
+settings.minimum_chakra.match_cost	Match Cost	消費量と同じ
+settings.recovery_delay.label	Recovery Delay	回復開始時間
+settings.recovery_delay.help	Delay after substitution before automatic recovery.	変わり身の後、自動回復が始まるまでの時間です。
+settings.refill_time.label	Refill Time per Stock	１回分の回復時間
+settings.refill_time.help	Automatic recovery time for one stock.	ゲージ１回分が自動回復するまでの時間です。
+settings.damage_recovery.label	Damage Recovery	被ダメージ回復
+settings.damage_recovery.help	Recover gauge when taking damage.	ダメージを受けるとゲージが回復します。
+settings.damage_percent.label	Damage Percent per Stock	１回分のダメージ
+settings.damage_percent.help	Damage required to recover one stock.	ゲージ１回分の回復に必要なダメージ量です。
+settings.availability.label	Availability	出現量
+settings.availability.help	Choose the amount of items in Custom mode.	カスタム設定でのアイテムの出現量を選択します。
+settings.item.help	Allow {item} in Custom mode.	カスタム設定で「{item}」を出現させます。
+settings.substitution.label	Substitution	変わり身
+settings.substitution.help	Choose whether substitutions consume chakra, the gauge, or nothing.	変わり身でチャクラを消費するか、ゲージを消費するか、消費なしかを選択します。
+settings.sub_active_frames.label	Sub Active Frames	変わり身受付時間
+settings.sub_active_frames.help	Choose the total input window. Default uses vanilla attack timing.	入力の受付時間を選択します。「標準」は原作の判定を使用します。
+settings.xdash_chakra_cost.label	X-dash Chakra Cost	Ｘダッシュ消費量
+settings.xdash_chakra_cost.help	Choose the chakra percentage spent when X-dash commits.	Ｘダッシュ時に消費するチャクラの割合を選択します。
+settings.support.label	Support	サポート
+settings.support.help	Nerfed: full gauge, immediate attack. Normal or Unlimited: standard support.	弱体化は満タンのゲージで即攻撃します。通常と無制限は通常のサポートです。
+settings.shadowblur.label	Shadowblur Extra Hit	残像追加攻撃
+settings.shadowblur.help	Choose whether Shadowblur Extra Hit is enabled.	残像からの追加攻撃を有効にするか選択します。
+settings.extra_hit.label	Extra Hit	追加攻撃
+settings.extra_hit.help	Enable Extra Hit, disable it, or charge chakra for attempting it.	追加攻撃の有効・無効、または試行時のチャクラ消費を設定します。
+settings.no_contest	No Contest	競り合いなし
+settings.no_hud	No HUD	表示なし
+settings.chakra.regen	Regen {rate}%/s	毎秒{rate}％回復
+settings.extra_hit.cost	-{cost}% Chakra	チャクラ－{cost}％
+settings.seconds	{seconds}s	{seconds}秒
+menu.open	Open <iconSQUARE>	開く <iconSQUARE>
+menu.open_value	{label} <iconSQUARE>	{label} <iconSQUARE>
+page.chakra.heading	Chakra Settings	チャクラ設定
+page.gauge.heading	Gauge Settings	ゲージ設定
+page.items.heading	Items Settings	アイテム設定
+page.mod_settings.title	Mod Settings	ＭＯＤ設定
+page.battle_mechanics.title	Battle Mechanics	バトルシステム
+page.battle_mechanics.help	Configure battle mechanics.	バトルシステムを設定します。
+page.battle_settings.title	Battle Settings	バトル設定
+page.battle_settings.help	Configure battle settings.	バトルのルールを設定します。
+page.practice_settings.title	Practice Settings	演習設定
+page.practice_settings.help	Configure practice settings.	演習の設定を変更します。
+page.substitution.title	Substitution	変わり身
+page.substitution.help	Configure substitution.	変わり身を設定します。
+page.chakra.help	Configure chakra.	チャクラを設定します。
+page.gauge.help	Configure gauge.	ゲージを設定します。
+page.items.help	Configure items.	アイテムを設定します。
+page.custom.title	Custom	カスタム
+page.custom.help	Configure custom.	カスタム設定を変更します。
+page.opponent_settings.title	Opponent Settings	相手の設定
+page.opponent_settings.help	Configure opponent settings.	相手の動作を設定します。
+character_select.no_support	NO SUPPORT	サポートなし
+startup.loaded	Save data loaded	セーブデータを読み込みました
+startup.no_save_data	No save data found	セーブデータがありません
+startup.no_game_data	No game data found	ゲームデータがありません
+startup.no_card	No memory card detected	メモリーカードがありません
+startup.unformatted_card	Memory card is not formatted	メモリーカードが未フォーマットです
+startup.unsupported_card	Unsupported memory card	対応していないメモリーカードです
+startup.load_failed	Save data could not be loaded	セーブデータを読み込めませんでした
+startup.incompatible_heading	The existing save data	既存のセーブデータは
+startup.incompatible_version	uses version {0}.	バージョン{0}です。
+save.required_version	Version {0} is required.	バージョン{0}が必要です。
+startup.play_time	Play Time {0}	プレイ時間 {0}
+startup.saved_time	Saved {0}	保存日時 {0}
+save.upgrade_confirm	Upgrade the existing save data?\nYour progress will be kept.	セーブデータを更新しますか？\n進行状況は引き継がれます。
+save.unsupported_format	The existing save data\nuses an unsupported format.\nIt cannot be loaded or changed.	既存のセーブデータは\n対応していない形式です。\n読み込みや変更はできません。
+save.existing_version	The existing save data uses version {0}.	既存のセーブデータはバージョン{0}です。
+save.newer_game_required	A newer game version is needed.	新しいゲームバージョンが必要です。
+save.cannot_upgrade	This version cannot be upgraded.	このバージョンは更新できません。
+save.upgrade_failed	The save data could not be upgraded.	セーブデータを更新できませんでした。
+save.upgrading	Upgrading the existing save data...	セーブデータを更新しています…
+item.health_recovery	Health Recovery	体力回復
+item.chakra_ball	Chakra Ball	チャクラ玉
+item.shoes_of_jonin	Shoes of Jonin	上忍の靴
+item.food_pills	Food Pills	兵糧丸
+item.scroll_of_hidden_cloud	Scroll of Hidden Cloud	隠れ雲の巻物
+item.scroll_of_teleportation	Scroll of Teleportation	瞬身の巻物
+item.scarecrow	Scarecrow	かかし
+item.tortoiseshell_pills	Tortoiseshell Pills	亀甲丸
+item.energy_pills	Energy Pills	増力丸
+item.medical_pack	Medical Pack	救急セット
+item.item_pouch	Item Pouch	道具袋
+item.demon_wind_shuriken	Demon Wind Shuriken	風魔手裏剣
+item.weight_of_determination	Weight of Determination	根性の重り
+item.exploding_kunai	Exploding Kunai	爆発クナイ
+item.poison_smoke_bomb	Poison Smoke Bomb	毒煙玉
+item.makibishi_spikes	Makibishi Spikes	まきびし
+item.paper_bomb	Paper Bomb	起爆札
+item.curse_tag_chakra_points_seal	Curse Tag: Chakra Points Seal	呪札・点穴封印
+item.curse_tag_armor_break	Curse Tag: Armor Break	呪札・防御崩し
+item.thousand_shadow_shuriken	1000-Shadow Shuriken	千影手裏剣
+item.burst_kunai	Burst Kunai	連発クナイ
+item.exploding_seal	Exploding Seal	爆発封印
+item.toad_oil	Toad Oil	ガマ油
+item.random_ball	Random Ball	ランダム玉
+item.stun_ball	Stun Ball	しびれ玉
+character_select.tier	TIER {0}	ランク {0}
+character_select.substitution	SUB {0}	変わり身 {0}
+page.chakra.title	Chakra	チャクラ
+page.gauge.title	Gauge	ゲージ
+page.items.title	Items	アイテム
+settings.reset	Settings returned to defaults.	設定を初期状態に戻しました。

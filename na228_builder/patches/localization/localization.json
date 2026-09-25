@@ -1173,11 +1173,6 @@
           }
         }
       },
-      "v2_ascii_widths": {
-        "kind": "rodata",
-        "alignment": 1,
-        "value": "0805090B0B0C0D0508080C0A0507050A0A080A0A0C0A0A0B0A0A05050A0A0A0A0E0C0B0D0B0B0A0C0C050A0B0A0E0C0C0B0C0B0B0C0C0D0E0D0D0B080C07060E050A0A0B0A0A080A0A05070A050E0A0B0A0A080A090A0A0D0A0A0906050608"
-      },
       "font_v2_runtime_abi": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/font/layout/font_v2_runtime_abi.S",
@@ -1215,29 +1210,6 @@
           "screen_position_text_draw": {
             "object": "localization.font.screen.position.asm.text.screen.position.text.draw",
             "description": "Screen Settings text draw with scoped NUN5 secondary ASCII renderer state"
-          }
-        }
-      },
-      "v2_core": {
-        "kind": "c",
-        "path": "na228_builder/patches/localization/font/layout/font_v2_core.c",
-        "namespace": "localization.font.v2.c",
-        "imports": {
-          "font_v2_active_session": "v2_session_pointer",
-          "font_v2_ascii_widths": "v2_ascii_widths"
-        },
-        "fragments": {
-          "v2_c_is_br": {
-            "object": "localization.font.v2.c.text"
-          },
-          "v2_measure": {
-            "object": "localization.font.v2.c.text.font.v2.measure"
-          },
-          "v2_prepare": {
-            "object": "localization.font.v2.c.text.font.v2.prepare"
-          },
-          "v2_adapter_call": {
-            "object": "localization.font.v2.c.text.font.v2.adapter.call"
           }
         }
       },
@@ -1607,11 +1579,6 @@
         "alignment": 4,
         "value": "00000000"
       },
-      "v2_session_pointer": {
-        "kind": "data",
-        "alignment": 4,
-        "value": "00000000"
-      },
       "v2_move_displays": {
         "kind": "c",
         "path": "na228_builder/patches/localization/font/layout/font_v2_move_displays.c",
@@ -1637,7 +1604,10 @@
           }
         }
       }
-    }
+    },
+    "includes": [
+      "localization.font.core"
+    ]
   },
   "localization.font.numeric_formatting": {
     "description": "Replace the Save/Load-only fullwidth colon constant with ASCII colon for the now-ASCII time fields.",
@@ -3741,7 +3711,14 @@
   "localization.strings": {
     "modules": [
       "translation_importer"
-    ]
+    ],
+    "string_patch": {
+      "description": "Replace the imported NUN5 game title with the configured product title before string layout.",
+      "operation": "replace_imported_game_title",
+      "expected_value": "Naruto Shippuden: Ultimate Ninja 5",
+      "expected_mapping_count": 9,
+      "expected_occurrence_count": 10
+    }
   },
   "localization": {
     "payload": {
@@ -3787,6 +3764,63 @@
             "object": "localization.font.numeric.c.text.font.battle.settings.time"
           }
         }
+      }
+    }
+  },
+  "localization.en": {
+    "description": "Apply the complete English localization.",
+    "includes": [
+      "localization.disc_identity",
+      "localization",
+      "localization.font.glyphs",
+      "localization.font.layout",
+      "localization.font.numeric_formatting",
+      "localization.ui",
+      "localization.regional_input",
+      "localization.strings"
+    ]
+  },
+  "localization.disc_identity": {
+    "description": "Use the NUN5 disc identity for non-Japanese localization.",
+    "image_patch": {
+      "operation": "use_nun5_disc_identity"
+    }
+  },
+  "localization.font.core": {
+    "description": "Shared font measurement and layout sessions used by localized and mod-owned text.",
+    "payload": {
+      "v2_core": {
+        "kind": "c",
+        "path": "na228_builder/patches/localization/font/layout/font_v2_core.c",
+        "namespace": "localization.font.v2.c",
+        "imports": {
+          "font_v2_active_session": "v2_session_pointer",
+          "font_v2_ascii_widths": "v2_ascii_widths"
+        },
+        "fragments": {
+          "v2_c_is_br": {
+            "object": "localization.font.v2.c.text"
+          },
+          "v2_measure": {
+            "object": "localization.font.v2.c.text.font.v2.measure"
+          },
+          "v2_prepare": {
+            "object": "localization.font.v2.c.text.font.v2.prepare"
+          },
+          "v2_adapter_call": {
+            "object": "localization.font.v2.c.text.font.v2.adapter.call"
+          }
+        }
+      },
+      "v2_ascii_widths": {
+        "kind": "rodata",
+        "alignment": 1,
+        "value": "0805090B0B0C0D0508080C0A0507050A0A080A0A0C0A0A0B0A0A05050A0A0A0A0E0C0B0D0B0B0A0C0C050A0B0A0E0C0C0B0C0B0B0C0C0D0E0D0D0B080C07060E050A0A0B0A0A080A0A05070A050E0A0B0A0A080A090A0A0D0A0A0906050608"
+      },
+      "v2_session_pointer": {
+        "kind": "data",
+        "alignment": 4,
+        "value": "00000000"
       }
     }
   }

@@ -182,23 +182,30 @@ if (-not (Test-Path -LiteralPath $packagePath -PathType Leaf)) {
 $checksumPath = "$packagePath.sha256"
 $hash = (Get-FileHash -LiteralPath $packagePath -Algorithm SHA256).Hash.ToLowerInvariant()
 $checksumLine = "$hash  $packageName`n"
-[IO.File]::WriteAllText(
-    $checksumPath,
-    $checksumLine,
-    [Text.UTF8Encoding]::new($false)
-)
+try {
+    [IO.File]::WriteAllText(
+        $checksumPath,
+        $checksumLine,
+        [Text.UTF8Encoding]::new($false)
+    )
 
-$releaseArguments = @(
-    'release', 'create', $tag,
-    $packagePath, $checksumPath,
-    '--repo', 'solid1353/NA2-Modding',
-    '--verify-tag', '--notes', "$productName $targetVersion"
-)
-if ($targetVersion.Contains('-')) {
-    $releaseArguments += '--prerelease'
+    $releaseArguments = @(
+        'release', 'create', $tag,
+        $packagePath, $checksumPath,
+        '--repo', 'solid1353/NA2-Modding',
+        '--verify-tag', '--notes', "$productName $targetVersion"
+    )
+    if ($targetVersion.Contains('-')) {
+        $releaseArguments += '--prerelease'
+    }
+    & $gitHub @releaseArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "GitHub Release publication failed (exit $LASTEXITCODE)."
+    }
 }
-& $gitHub @releaseArguments
-if ($LASTEXITCODE -ne 0) {
-    throw "GitHub Release publication failed (exit $LASTEXITCODE)."
+finally {
+    if (Test-Path -LiteralPath $checksumPath) {
+        Remove-Item -LiteralPath $checksumPath -Force
+    }
 }
 Write-Host "[release] Published $tag to GitHub." -ForegroundColor Green

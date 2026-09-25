@@ -75,7 +75,7 @@ class ReleaseAppTests(unittest.TestCase):
 
         self.assertEqual(manifest.images[0].image_id, "na2")
         self.assertEqual(manifest.images[0].sha256, "AB" * 32)
-        self.assertEqual(manifest.output_name, "Narutimate Accel v2.28.iso")
+        self.assertEqual(manifest.output_name, "Narutimate Accel v2.28_1.0.0.iso")
         self.assertEqual(
             manifest.executable_name,
             "Narutimate Accel v2.28_1.0.0.exe",
@@ -252,6 +252,73 @@ class ReleaseAppTests(unittest.TestCase):
                 na2_path.resolve(),
             )
             self.assertEqual(calls[0][1], configuration_path.resolve())
+
+    def test_missing_sibling_source_prompts_for_iso_path(self) -> None:
+        na2 = b"clean-na2"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            application = root / "application"
+            application.mkdir()
+            self.write_configuration(application)
+            source = root / "clean.iso"
+            source.write_bytes(na2)
+            prompts: list[str] = []
+
+            def builder(
+                selected: Path, _configuration: Path, building: Path, _emit
+            ) -> None:
+                self.assertEqual(selected, source.resolve())
+                building.write_bytes(na2)
+
+            result = run_release(
+                application,
+                self.manifest(na2),
+                builder,
+                emit=lambda _message: None,
+                read=lambda prompt: prompts.append(prompt) or f'"{source}"',
+            )
+
+            self.assertEqual(prompts, ["Path to the clean NA2 ISO: "])
+            self.assertEqual(result.read_bytes(), na2)
+            self.assertEqual(source.read_bytes(), na2)
+
+    def test_cli_input_and_output_replace_existing_patched_iso(self) -> None:
+        na2 = b"clean-na2"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            application = root / "application"
+            application.mkdir()
+            configuration = self.write_configuration(application)
+            source = root / "clean.iso"
+            source.write_bytes(na2)
+            output_directory = root / "output"
+            versions = iter((b"built-na2", b"newer-na2"))
+            prompts: list[str] = []
+
+            def builder(
+                selected: Path, selected_configuration: Path, building: Path, _emit
+            ) -> None:
+                self.assertEqual(selected, source.resolve())
+                self.assertEqual(selected_configuration, configuration.resolve())
+                building.write_bytes(next(versions))
+
+            for expected in (b"built-na2", b"newer-na2"):
+                code = main(
+                    argv=("--input", str(source), "--output", str(output_directory)),
+                    directory=application,
+                    manifest=self.manifest(na2),
+                    builder=builder,
+                    emit=lambda _message: None,
+                    read=prompts.append,
+                )
+                self.assertEqual(code, 0)
+                self.assertEqual(
+                    (output_directory / self.manifest(na2).output_name).read_bytes(),
+                    expected,
+                )
+
+            self.assertEqual(prompts, [])
+            self.assertEqual(source.read_bytes(), na2)
 
     def test_existing_output_is_replaced_and_ignored_during_source_discovery(self) -> None:
         na2 = b"clean-na2"

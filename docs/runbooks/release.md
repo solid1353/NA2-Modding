@@ -8,8 +8,8 @@ installation and supply one exact clean NA2 ISO.
 ## End-user contract
 
 1. Extract the complete ZIP into one directory.
-2. Put the supported clean NA2 ISO in that directory. Its filename does not
-   matter.
+2. Put the supported clean NA2 ISO in that directory, or supply its path at
+   the prompt or with `--input ISO`. Its filename does not matter.
 3. Optionally edit `config.jsonc`. `//` and `/* ... */` comments and trailing
    commas are accepted. A bare setting uses `true` or `false`; a
    typed setting uses the scalar or object value declared by `catalog.modcat`.
@@ -24,21 +24,23 @@ installation and supply one exact clean NA2 ISO.
    row; an in-match transformation retains the selected base character's row.
 5. Double-click the EXE. It validates the external configuration and character
    overrides against its embedded catalog and character reference before
-   hashing either ISO.
-6. The program scans sibling `*.iso` files non-recursively, excluding the
-   reserved output and staging names, then identifies NA2 by size and streaming
-   SHA-256.
-7. It refuses missing or duplicate supported source images, modified inputs,
-   unsupported hashes, or an existing
-   `Narutimate Accel v2.28.iso.building`.
+   hashing the source ISO.
+6. Without `--input`, the program scans sibling `*.iso` files non-recursively,
+   excluding the reserved output and staging names. If it finds no supported
+   NA2 ISO, it prompts for a path. `--input ISO` selects a source directly.
+   In either case, the source is identified by size and streaming SHA-256.
+7. It refuses duplicate supported source images, modified inputs,
+   unsupported hashes, or an existing output staging file.
 8. It locks the input read-only and hashes it again after locking.
 9. It applies the selected configuration, creates
-   `Narutimate Accel v2.28.iso.building`, verifies the complete staged image and
-   its size, then atomically creates or replaces
-   `Narutimate Accel v2.28.iso`.
+   `Narutimate Accel v2.28_<version>.iso.building`, verifies the complete staged
+   image and its size, then atomically creates or replaces
+   `Narutimate Accel v2.28_<version>.iso`. `--output FOLDER` chooses or creates
+   the destination folder; the default is the EXE's folder.
 10. It never modifies the input, preserves an existing output when a build
-    fails, removes its staging file after failure, and waits for Enter before
-    closing. A failed run creates or replaces `builder-error.log` with the
+    fails, and removes its staging file after failure. Double-clicked runs wait
+    for Enter before closing; runs with CLI arguments do not. A failed run
+    creates or replaces `builder-error.log` with the
     complete exception and traceback. Successful and cancelled runs create no
     log.
 
@@ -100,7 +102,7 @@ validated production ZIP and its SHA-256 sidecar to GitHub.
 public configuration layout, and supported source identities. Ordinary builds
 read the same `title` for localized game text. The base configuration path is
 relative to the manifest directory. The executable name
-is `<product>_<version>.exe`, and the output image is `<product>.iso`.
+is `<product>_<version>.exe`, and the output image is `<product>_<version>.iso`.
 The pinned source identities are:
 
 - NA2: 1,928,429,568 bytes,
@@ -170,10 +172,11 @@ descriptions, and constraints remain defined only in the catalog.
 
 ## GitHub releases
 
-`na228 release` builds and validates the production package locally, writes its
-SHA-256 sidecar, creates and pushes the annotated version tag, and uploads both
-files to the corresponding GitHub Release. SemVer suffixes are published as
-prereleases. GitHub does not rebuild the package.
+`na228 release` builds and validates the production package locally, creates
+and pushes the annotated version tag, and uploads the ZIP and its SHA-256
+sidecar to the corresponding GitHub Release. It removes the local sidecar after
+the upload attempt. SemVer suffixes are published as prereleases. GitHub does
+not rebuild the package.
 
 A production publication sequence, automated by `na228 release [version]`, is:
 

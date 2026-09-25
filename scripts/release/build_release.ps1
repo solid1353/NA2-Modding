@@ -224,6 +224,7 @@ compile_ee_source(
 
     $bootstrapText = @'
 import os
+import sys
 
 if os.environ.get("NA2_RELEASE_SELF_TEST") == "1":
     from na228_builder.infrastructure.orchestration.release_runtime import validate_packaged_release
@@ -233,7 +234,7 @@ if os.environ.get("NA2_RELEASE_SELF_TEST") == "1":
 
 from na228_builder.infrastructure.orchestration.app import main
 
-raise SystemExit(main())
+raise SystemExit(main(argv=sys.argv[1:]))
 '@
     [IO.File]::WriteAllText($bootstrap, $bootstrapText, [Text.UTF8Encoding]::new($false))
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -10,10 +11,10 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from importlib import resources
 from pathlib import Path
+from typing import Callable, Iterable, Sequence
 
 from . import jsonc
 from .configuration import validate_product_title
-from typing import Callable, Iterable
 
 
 RELEASE_MANIFEST_NAME = "release_manifest.json"
@@ -202,7 +203,7 @@ def parse_release_manifest(text: str) -> ReleaseManifest:
         executable_name=_validate_executable_name(
             f"{product_name}_{product_version}.exe"
         ),
-        output_name=_validate_output_name(f"{product_name}.iso"),
+        output_name=_validate_output_name(f"{product_name}_{product_version}.iso"),
         configuration=_validate_configuration(
             _required_text(data, "configuration")
         ),
@@ -284,6 +285,7 @@ def identify_supported_images(
     images: Iterable[SupportedImage],
     *,
     ignored_names: Iterable[str] = (),
+    allow_missing: bool = False,
     emit: Emit = print,
 ) -> dict[str, Path]:
     specs = tuple(images)
@@ -321,7 +323,8 @@ def identify_supported_images(
     for image in specs:
         paths = matches[image.image_id]
         if not paths:
-            problems.append(f"Could not find the supported {image.label}.")
+            if not allow_missing:
+                problems.append(f"Could not find the supported {image.label}.")
         elif len(paths) > 1:
             names = ", ".join(path.name for path in paths)
             problems.append(
@@ -341,6 +344,32 @@ def identify_supported_images(
             + f" Place exactly one supported {required} beside this program."
         )
     return selected
+
+
+def identify_input_iso(path: Path, image: SupportedImage, *, emit: Emit) -> Path:
+    path = path.expanduser().resolve()
+    if not path.is_file():
+        raise ReleaseError(f"Source ISO does not exist: {path}")
+    try:
+        size = path.stat().st_size
+    except OSError as exc:
+        raise ReleaseError(f"Could not inspect source ISO: {exc}") from exc
+    if size != image.size:
+        raise ReleaseError(f"{path.name} is not the supported {image.label} (wrong size)")
+    emit(f"Checking {path.name}...")
+    if file_sha256(path, expected_size=size, emit=emit) != image.sha256:
+        raise ReleaseError(f"{path.name} is not the supported {image.label} (wrong hash)")
+    emit(f"[OK] {image.label}: {path}")
+    return path
+
+
+def _prompt_source_iso(read: Callable[[str], str]) -> Path:
+    supplied = read("Path to the clean NA2 ISO: ").strip()
+    if len(supplied) >= 2 and supplied[0] == supplied[-1] == '"':
+        supplied = supplied[1:-1]
+    if not supplied:
+        raise ReleaseError("No source ISO was provided")
+    return Path(supplied)
 
 
 @contextmanager
@@ -494,13 +523,19 @@ def run_release(
     builder: ReleaseBuilder,
     *,
     configuration_validator: ReleaseConfigurationValidator | None = None,
+    input_iso: Path | None = None,
+    output_directory: Path | None = None,
     emit: Emit = print,
+    read: Callable[[str], str] = input,
 ) -> Path:
     directory = directory.resolve()
     if not directory.is_dir():
         raise ReleaseError("The application directory is unavailable")
 
-    output_iso = directory / manifest.output_name
+    destination = (output_directory or directory).expanduser().resolve()
+    if destination.exists() and not destination.is_dir():
+        raise ReleaseError(f"Output folder is not a directory: {destination}")
+    output_iso = destination / manifest.output_name
     building_iso = output_iso.with_name(output_iso.name + ".building")
     configuration_path = directory / manifest.configuration_name
     if _occupied(building_iso):
@@ -531,16 +566,28 @@ def run_release(
             + ", ".join(unknown_ids)
         )
     required_images = tuple(images_by_id[image_id] for image_id in required_image_ids)
-    emit("Scanning for supported ISO files...")
-    selected = identify_supported_images(
-        directory,
-        required_images,
-        ignored_names=(manifest.output_name, building_iso.name),
-        emit=emit,
-    )
+    if input_iso is None:
+        emit("Scanning for supported ISO files...")
+        selected = identify_supported_images(
+            directory,
+            required_images,
+            ignored_names=(manifest.output_name, building_iso.name),
+            allow_missing=True,
+            emit=emit,
+        )
+        if "na2" not in selected:
+            emit("No supported NA2 ISO was found beside this program.")
+            input_iso = _prompt_source_iso(read)
+    else:
+        selected = {}
+    if input_iso is not None:
+        selected["na2"] = identify_input_iso(input_iso, images_by_id["na2"], emit=emit)
+    if selected["na2"] == output_iso.resolve():
+        raise ReleaseError("The source and output ISO paths must differ")
     try:
         with locked_input_files(selected.values()):
             verify_locked_images(selected, required_images, emit=emit)
+            destination.mkdir(parents=True, exist_ok=True)
             emit(f"Building {manifest.output_name}...")
             builder(
                 selected["na2"],
@@ -603,6 +650,7 @@ def _write_error_log(
 
 def main(
     *,
+    argv: Sequence[str] = (),
     directory: Path | None = None,
     manifest: ReleaseManifest | None = None,
     builder: ReleaseBuilder | None = None,
@@ -610,6 +658,19 @@ def main(
     emit: Emit = print,
     read: Callable[[str], str] = input,
 ) -> int:
+    parser = argparse.ArgumentParser(
+        description="Build a patched ISO from a supported clean NA2 ISO."
+    )
+    parser.add_argument(
+        "--input", type=Path, metavar="ISO", help="path to the clean NA2 ISO"
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        metavar="FOLDER",
+        help="folder for the patched ISO (default: folder containing the EXE)",
+    )
+    arguments = parser.parse_args(argv)
     exit_code = 0
     failure: BaseException | None = None
     outcome = "success"
@@ -631,7 +692,10 @@ def main(
             release_manifest,
             selected_builder,
             configuration_validator=selected_validator,
+            input_iso=arguments.input,
+            output_directory=arguments.output,
             emit=report,
+            read=read,
         )
     except KeyboardInterrupt as exc:
         failure = exc
@@ -655,9 +719,10 @@ def main(
             else:
                 report(f"Technical details: {ERROR_LOG_NAME}")
         report("")
-        _pause(read)
+        if not argv:
+            _pause(read)
     return exit_code
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(argv=sys.argv[1:]))

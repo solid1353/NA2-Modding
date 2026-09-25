@@ -1,13 +1,14 @@
 # Narutimate Accel v2.28
 
-This builder creates `Narutimate Accel v2.28.iso` from a supported clean copy
-of *Naruto Shippuuden: Narutimate Accel 2*.
+This builder creates `Narutimate Accel v2.28_<version>.iso` from a supported
+clean copy of *Naruto Shippuuden: Narutimate Accel 2*.
 
 ## Use it
 
 1. Extract all five release files into one directory.
-2. Put one supported clean NA2 ISO in that directory. Its filename does not
-   matter. The reviewed English UI textures are embedded in the builder.
+2. Put one supported clean NA2 ISO in that directory, or enter its path when
+   prompted. Its filename does not matter. The reviewed English UI textures
+   are embedded in the builder.
 3. Edit `config.jsonc` if you want to change the selected features. Comments
    and trailing commas are supported. Edit
    `character_overrides.tsv` if you want to change per-character battle values.
@@ -15,8 +16,14 @@ of *Naruto Shippuuden: Narutimate Accel 2*.
 
 The builder identifies the source ISO by size and SHA-256, applies the
 selected changes, verifies the complete result, and then creates or replaces
-`Narutimate Accel v2.28.iso`. If the build fails, it preserves an existing
-output and removes only its temporary `.building` file.
+`Narutimate Accel v2.28_<version>.iso`. If the build fails, it preserves an
+existing output and removes only its temporary `.building` file.
+
+From a terminal, run `<release-exe> --input "C:\path\to\NA2.iso" --output
+"C:\path\to\output-folder"`. Both arguments are optional: without `--input`,
+the builder scans beside the EXE and prompts for an ISO path if it finds none;
+without `--output`, it writes beside the EXE. The output folder is created if
+needed. Run `<release-exe> --help` for CLI help.
 
 ## `config.jsonc`
 

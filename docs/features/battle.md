@@ -72,17 +72,26 @@ motion, timing, visibility, and restoration apply to the existing HUD and
 injected children, including the substitution bar. Both custom values retain
 `command` as the underlying native selector value.
 
+In `no_hud`, the native HP damage trail is held through the hidden animation
+and the HUD's return slide. Current HP continues updating normally. Once the
+bar is back onscreen, its usual countdown and shrink animation resume, showing
+the accumulated damage in the existing colored segment. An already-visible
+damage trail is retained too. Other Ultimate Jutsu modes keep native behavior.
+
 The comparative no-object behavior is documented in
 [NUN6 battle mechanics](nun6/gameplay/battle.md#ultimate-jutsu-contest).
 
 The implementation preserves native contest allocation and updates while
-replacing the resident call at ELF offset `0xF0A40` with a NOP to skip the
-common contest renderer. The input calls at BTL offsets `0xB6094` and
+wrapping the resident call at ELF offset `0xF0A40` to suppress the common
+contest renderer in the two custom modes. The input calls at BTL offsets `0xB6094` and
 `0xB62F0` are routed through zero-returning helpers. The complete-HUD mode
 edge-detects the contest object around the BTL call at offset `0x67030` and
 uses native hide/show requests `0x001F1820(-1)` and `0x001F1A20(-1)`.
-Runtime testing confirmed hidden contest presentation, blocked input for both
-players, restored post-Ultimate-Jutsu awakening, and native HUD restoration.
+Before the displaced HUD update, it keeps each HP child's damage-trail delay
+at its native `100` while held. Per-side ownership prevents carrying a hold
+to a different HP child or fighter. The trail uses cached HP from before the
+native update samples the current frame's damage. The native field and timing
+evidence is in [Ultimate Jutsu](../knowledge/gameplay/ultimate_jutsu.md#hp-damage-trail-and-hud-transitions).
 
 The same object accepts `shadowblur: "off" | "on"`. Its `Shadowblur Extra Hit`
 row appears in both menus. The gate preserves the native predicate result but

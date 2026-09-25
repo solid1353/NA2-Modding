@@ -1923,7 +1923,7 @@
         "encoding": "jal26"
       },
       "transition_complete_battle_hud_during_contest": {
-        "description": "For No HUD only, observe the retained contest lifecycle and request the same all-HUD hide/show transition APIs used by ordinary jutsu.",
+        "description": "For No HUD only, request native all-HUD transitions and retain the HP damage trail until the HUD returns.",
         "target_id": "na2_btl",
         "offset": "0x67030",
         "expected_hex": "E0FFBD271000BFFF",
@@ -1938,8 +1938,7 @@
         "path": "na228_builder/patches/settings/ingame/battle_mechanics/ultimate_jutsu/ultimate_jutsu_hud.S",
         "namespace": "battle.logic.ultimate.jutsu.hud",
         "imports": {
-          "battle_logic_ultimate_jutsu_hud_transition_active": "ultimate_jutsu_hud_transition_active",
-          "ultimate_jutsu_mode_get": "ultimate_jutsu_mode_get"
+          "ultimate_jutsu_hud_update": "ultimate_jutsu_hud_update"
         },
         "fragments": {
           "battle_logic_ultimate_jutsu_battle_hud_transition": {
@@ -1947,10 +1946,21 @@
           }
         }
       },
-      "ultimate_jutsu_hud_transition_active": {
-        "kind": "data",
-        "alignment": 4,
-        "value": "00000000"
+      "ultimate_jutsu_hud_runtime": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/ultimate_jutsu/ultimate_jutsu_hud.c",
+        "namespace": "battle.logic.ultimate.jutsu.hud.runtime",
+        "imports": {
+          "ultimate_jutsu_mode_get": "ultimate_jutsu_mode_get"
+        },
+        "fragments": {
+          "ultimate_jutsu_hud_state": {
+            "object": "battle.logic.ultimate.jutsu.hud.runtime.bss.ultimate.jutsu.hud.state"
+          },
+          "ultimate_jutsu_hud_update": {
+            "object": "battle.logic.ultimate.jutsu.hud.runtime.text.ultimate.jutsu.hud.update"
+          }
+        }
       },
       "ultimate_jutsu_settings": {
         "kind": "c",

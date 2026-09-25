@@ -6,23 +6,31 @@ in clean NA2.
 ## Research coverage
 
 - **Assigned scope:** the battle-side contest object, its common update and
-  render dispatchers, contest input calls, and related unresolved chakra leads.
+  render dispatchers, contest input calls, HP damage-trail presentation, and
+  related unresolved chakra leads.
 - **Exploration depth:** the clean BTL controller was traced through the
   resident contest factory, common manager dispatch, contest input accessor,
-  and candidate presentation owners used by the tested contest path.
+  and candidate presentation owners used by the tested contest path. The HP
+  controller and parent hide/show paths were inspected through GhidrAssist
+  decompilation, disassembly, and byte views where function boundaries split
+  the native routines.
 - **Confirmed coverage:** contest type `0` allocates no object; allocated
   contests share common update and render dispatchers; the two controller calls
   use input bank `1`, slot `0`; and the renderer is distinct from input and
-  lifecycle ownership.
+  lifecycle ownership. The HP trail has an independent 100-update delay and
+  continues updating while its parent is hidden.
 - **Unresolved or untested:** the physical-controller mapping of the logical
   input slot and the individual lifecycle field required by post-contest
   awakening remain unresolved. Historical chakra-address leads are unverified.
+  The precise first-damage timing relative to contest allocation has not been
+  established for every Ultimate Jutsu.
 - **Deliberate exclusions and overlap:** feature behavior belongs to
   [Battle](../../features/battle.md); general awakening behavior belongs to
   [Awakening](awakening.md); other battle systems are not covered here.
 - **Evidence limitations:** static conclusions use the identified clean BTL and
   resident images. Runtime observations cover the tested contest path rather
-  than every contest type.
+  than every contest type. HP-trail conclusions are static; they do not establish
+  behavior across every character's cinematic or end-of-round transition.
 
 ## Contest object and dispatch
 
@@ -63,6 +71,36 @@ return at BTL file offset `0x17E0` also had no effect because that renderer
 belongs to the command-list interface; returning from the controller render
 entry at `0xB69E0` likewise left the contest interface visible. These negative
 results exclude all three as presentation owners.
+
+## HP damage trail and HUD transitions
+
+In the clean BTL image, runtime `0x0071AF30` (Ghidra `0x0071AEF0`, file
+`0x67030`) updates each side's HUD children before its slide transition.
+The HP child pointer is parent `+0x24`; its update call at file `0x67060`
+targets runtime `0x0071C000` (Ghidra `0x0071BFC0`). This call has no parent
+visibility gate. The draw dispatcher at runtime `0x0071B2E0` skips its children
+when parent byte `+0x54` is `1`.
+
+The parent stores side `0` or `1` at `+0x0C` and the fighter pointer at
+`+0x14`. The HP child stores its parent at `+0x00`, current normalized HP at
+`+0x08`, trailing HP at `+0x0C`, and an integer delay at `+0x10`. Its constructor
+at Ghidra `0x0071BF20` initializes trailing HP from fighter `+0x6C` and clears
+the delay. Each native update samples that fighter field into current HP.
+When current and trailing HP are equal, it sets the delay to `100`; otherwise
+it decrements a positive delay. Once the delay reaches zero, trailing HP moves
+toward current HP by `0.01` per update, clamped at current HP.
+
+The HP renderer at runtime `0x0071C0E0` (entry Ghidra `0x0071C0A0`) draws a
+separate segment only when trailing HP exceeds current HP. The segment covers
+their difference and uses RGB `(0x4A, 0x04, 0x09)`. Current HP and the trail are
+display fields; their updates do not write fighter health.
+
+Resident `0x001F1820(-1)` requests hiding by setting each parent `+0x48` to
+`0`; `0x001F1A20(-1)` requests showing with value `1`. The hide update moves
+parent Y offset `+0x3C` to `-120.0`, then sets visibility byte `+0x54` to `1`.
+The show update clears that byte while sliding toward Y offset `-2.0`, then
+clamps there. Visibility alone therefore does not establish that the bar has
+finished returning onscreen.
 
 ## Unresolved chakra leads
 

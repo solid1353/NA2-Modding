@@ -133,6 +133,11 @@ through the resident renderer. It covers coordinates `(0, 0)` to
 `(512, 384)` with vertically reversed texture coordinates spanning
 `1..512`; the object's float at `+0x18` controls opacity. State `7` skips
 drawing. This path does not require the later main-menu resources.
+The routine binds the texture at render-manager offset `+0x128`, enables
+texturing through `FUN_0010CAA0(manager, 1)` and
+`FUN_0010C9E0(manager, 0)`, and submits a type-5 quad. The draw context
+stores texture coordinates at `+0x130` and `+0x134`, marks them active with
+flag `0x80000` at `+0x170`, and submits each vertex through `FUN_001822B0`.
 
 The native solid-rectangle path in `FUN_001DC1A0` calls `FUN_0010D6A0`
 before setting up primitive type `5`. With argument zero, that renderer reset

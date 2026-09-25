@@ -149,7 +149,7 @@
     "image_file": {
       "path": "PRG/228SPL.CCS",
       "asset": "na228_builder/patches/startup/loading_screen/228SPL.ccs.gz",
-      "sha256": "7C9C2D1191B79B520A024F6CF752FB0D6181A8D5AE183F79D7A4E50CF312075C"
+      "sha256": "91A6BFB7FB0DE58A36813705373C83A12D3338D755FB5DE1E8340D6D8283C7D3"
     },
     "hooks": {
       "load_standalone_splash": {
@@ -213,6 +213,9 @@
           "vertex": {
             "object": "startup.loading.screen.text.startup.loading.vertex"
           },
+          "tile": {
+            "object": "startup.loading.screen.text.startup.loading.tile"
+          },
           "rect": {
             "object": "startup.loading.screen.text.startup.loading.rect"
           },
@@ -230,7 +233,7 @@
       "state": {
         "kind": "data",
         "alignment": 4,
-        "value": "000000000000000000000000"
+        "value": "0000000000000000000000000000000000000000"
       }
     }
   }

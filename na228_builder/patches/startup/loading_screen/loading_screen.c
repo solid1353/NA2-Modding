@@ -8,8 +8,9 @@ typedef unsigned int u32;
 #define SPLASH_LOAD_FILE_ADDRESS 0x00116DE0u
 #define SPLASH_RESOURCE_LOOKUP_ADDRESS 0x001AA450u
 #define SPLASH_TEXTURE_LOOKUP_ADDRESS 0x001A8F00u
-#define SPLASH_NATIVE_DRAW_ADDRESS 0x001E00E0u
 #define RENDER_RESET_ADDRESS 0x0010D6A0u
+#define RENDER_ENABLE_TEXTURE_ADDRESS 0x0010CAA0u
+#define RENDER_TEXTURE_MODE_ADDRESS 0x0010C9E0u
 #define RESOURCE_METADATA_LOOKUP_ADDRESS 0x001BCA00u
 #define LOGO_PATH_POINTER_ADDRESS 0x00603060u
 #define RESOURCE_METADATA_ROOT_ADDRESS 0x0061EA60u
@@ -31,6 +32,9 @@ typedef unsigned int u32;
 #define CONTEXT_Y_OFFSET 0xE4u
 #define CONTEXT_DEPTH_OFFSET 0xE8u
 #define CONTEXT_FLAGS_OFFSET 0x170u
+#define CONTEXT_U_OFFSET 0x130u
+#define CONTEXT_V_OFFSET 0x134u
+#define MANAGER_TEXTURE_OFFSET 0x128u
 
 #define COLOR_WHITE 0xFFFFFFFFu
 #define COLOR_TRACK 0xFF303030u
@@ -42,7 +46,7 @@ typedef unsigned int u32;
 typedef struct StartupLoadingState {
     volatile u32 start_ticks;
     volatile u32 percent;
-    volatile u32 splash_texture;
+    volatile u32 splash_textures[3];
 } StartupLoadingState;
 
 extern volatile StartupLoadingState startup_loading_state;
@@ -158,6 +162,60 @@ static void startup_loading_rect(
     flush();
 }
 
+STARTUP_LOADING_SECTION(".text.startup_loading_tile")
+static void startup_loading_tile(
+    u32 texture, float left, float top, float u, float v
+)
+{
+    void (*reset)(void *, u32) =
+        (void (*)(void *, u32))RENDER_RESET_ADDRESS;
+    void (*enable_texture)(void *, u32) =
+        (void (*)(void *, u32))RENDER_ENABLE_TEXTURE_ADDRESS;
+    void (*texture_mode)(void *, u32) =
+        (void (*)(void *, u32))RENDER_TEXTURE_MODE_ADDRESS;
+    void (*setup)(u32, u32) = (void (*)(u32, u32))PRIMITIVE_SETUP_ADDRESS;
+    void (*flush)(void) = (void (*)(void))PRIMITIVE_FLUSH_ADDRESS;
+    void *manager = *(void * volatile *)RENDER_MANAGER_POINTER_ADDRESS;
+    volatile u8 *context;
+    /* The atlas is stored bottom-up, so its logical top tile uses high V. */
+    const float texture_top = 511.5f - v;
+    const float texture_bottom = 256.5f - v;
+
+    if (manager == (void *)0) {
+        return;
+    }
+    reset(manager, 0u);
+    *(volatile u32 *)((volatile u8 *)manager + MANAGER_TEXTURE_OFFSET) = texture;
+    enable_texture(manager, 1u);
+    texture_mode(manager, 0u);
+    setup(5u, 0u);
+    context = *(volatile u8 **)RENDER_CONTEXT_POINTER_ADDRESS;
+    if (context == (volatile u8 *)0) {
+        return;
+    }
+
+    *(volatile float *)(context + CONTEXT_DEPTH_OFFSET) = 1.0f;
+    *(volatile u32 *)(context + CONTEXT_FLAGS_OFFSET) |= 2u;
+    startup_loading_color(context, COLOR_WHITE);
+    *(volatile u32 *)(context + CONTEXT_FLAGS_OFFSET) |= 0x80000u;
+    *(volatile float *)(context + CONTEXT_U_OFFSET) = u + 0.5f;
+    *(volatile float *)(context + CONTEXT_V_OFFSET) = texture_top;
+    startup_loading_vertex(context, left, top);
+    *(volatile u32 *)(context + CONTEXT_FLAGS_OFFSET) |= 0x80000u;
+    *(volatile float *)(context + CONTEXT_U_OFFSET) = u + 255.5f;
+    *(volatile float *)(context + CONTEXT_V_OFFSET) = texture_top;
+    startup_loading_vertex(context, left + 128.0f, top);
+    *(volatile u32 *)(context + CONTEXT_FLAGS_OFFSET) |= 0x80000u;
+    *(volatile float *)(context + CONTEXT_U_OFFSET) = u + 0.5f;
+    *(volatile float *)(context + CONTEXT_V_OFFSET) = texture_bottom;
+    startup_loading_vertex(context, left, top + 128.0f);
+    *(volatile u32 *)(context + CONTEXT_FLAGS_OFFSET) |= 0x80000u;
+    *(volatile float *)(context + CONTEXT_U_OFFSET) = u + 255.5f;
+    *(volatile float *)(context + CONTEXT_V_OFFSET) = texture_bottom;
+    startup_loading_vertex(context, left + 128.0f, top + 128.0f);
+    flush();
+}
+
 STARTUP_LOADING_SECTION(".text.startup_loading_rounded_rect")
 static void startup_loading_rounded_rect(
     float left,
@@ -194,37 +252,42 @@ void startup_loading_draw(void *unused_sprite)
         (u32 (*)(const u8 *))SPLASH_RESOURCE_LOOKUP_ADDRESS;
     u32 (*lookup_texture)(u32, const u8 *, u32) =
         (u32 (*)(u32, const u8 *, u32))SPLASH_TEXTURE_LOOKUP_ADDRESS;
-    void (*draw_splash)(void *) =
-        (void (*)(void *))SPLASH_NATIVE_DRAW_ADDRESS;
-    struct {
-        u32 flags;
-        u32 state;
-        u8 unused[16];
-        float opacity;
-        u32 texture;
-    } splash;
+    u32 row;
     u32 now;
     u32 start_ticks;
     u32 elapsed_ticks;
     u32 percent;
 
     (void)unused_sprite;
-    if (startup_loading_state.splash_texture == 0u) {
+    if (startup_loading_state.splash_textures[0] == 0u) {
         u32 resource = lookup_resource(
             *(const u8 * volatile *)LOGO_PATH_POINTER_ADDRESS
         );
         if (resource != 0u) {
-            startup_loading_state.splash_texture = lookup_texture(
-                resource, (const u8 *)SPLASH_TEXTURE_NAME_ADDRESS, 0u
-            );
+            for (row = 0u; row < 3u; ++row) {
+                startup_loading_state.splash_textures[row] = lookup_texture(
+                    resource,
+                    (const u8 *)(SPLASH_TEXTURE_NAME_ADDRESS + row * 16u),
+                    0u
+                );
+            }
         }
     }
-    if (startup_loading_state.splash_texture != 0u) {
-        splash.flags = 0u;
-        splash.state = 0u;
-        splash.opacity = 1.0f;
-        splash.texture = startup_loading_state.splash_texture;
-        draw_splash(&splash);
+    if (startup_loading_state.splash_textures[0] != 0u &&
+        startup_loading_state.splash_textures[1] != 0u &&
+        startup_loading_state.splash_textures[2] != 0u) {
+        for (row = 0u; row < 3u; ++row) {
+            u32 column;
+
+            for (column = 0u; column < 4u; ++column) {
+                startup_loading_tile(
+                    startup_loading_state.splash_textures[row],
+                    (float)(column * 128u), (float)(row * 128u),
+                    (float)((column % 2u) * 256u),
+                    (float)((column / 2u) * 256u)
+                );
+            }
+        }
     }
 
     percent = startup_loading_state.percent;

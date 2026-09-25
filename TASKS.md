@@ -2,7 +2,6 @@
 
 ### In Progress
 
-- UJ damage
 - Save translations alignment
 - Pre-release testing and tuning
 

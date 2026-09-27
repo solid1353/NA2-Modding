@@ -21,6 +21,8 @@ $entryPoint = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.entry_poi
 $iconPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.icon))
 $instructionsPath = [IO.Path]::GetFullPath((Join-Path $repository $toolchain.instructions))
 $configurationPath = [IO.Path]::GetFullPath((Join-Path $paths.builder $manifest.configuration))
+$baseConfigurationPath = Join-Path $paths.builder 'configurations/base.jsonc'
+$characterReferencePath = Join-Path $paths.resources 'character_data.tsv'
 
 if ([string]::IsNullOrWhiteSpace($productName) -or
     [IO.Path]::GetFileName($executableName) -cne $executableName) {
@@ -38,7 +40,9 @@ foreach ($required in @(
     $manifestPath,
     $settingsPath,
     $instructionsPath,
-    $configurationPath
+    $configurationPath,
+    $baseConfigurationPath,
+    $characterReferencePath
 )) {
     if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
         throw "Required release input is missing: $required"
@@ -141,12 +145,14 @@ print(json.dumps([
     if path.resolve() not in excluded
 ]))
 '@
-    $resourceText = & $python -B -c $resourceProbe $repository $configurationPath $manifestPath
+    $resourceText = & $python -B -c $resourceProbe $repository $baseConfigurationPath $manifestPath
     if ($LASTEXITCODE -ne 0) { throw 'Could not inventory packaged configuration resources.' }
     $resources = @($resourceText | ConvertFrom-Json)
     $resources += @(
         [IO.Path]::GetRelativePath($repository, $paths.ManifestPath).Replace('\', '/'),
         [IO.Path]::GetRelativePath($repository, $manifestPath).Replace('\', '/'),
+        [IO.Path]::GetRelativePath($repository, $configurationPath).Replace('\', '/'),
+        [IO.Path]::GetRelativePath($repository, $characterReferencePath).Replace('\', '/'),
         [IO.Path]::GetRelativePath(
             $repository,
             (Join-Path $paths.builder 'infrastructure\modules\payload_builder\config.tsv')
@@ -166,23 +172,26 @@ from pathlib import Path
 
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
-from na228_builder.infrastructure.orchestration.catalog import materialized_configuration
-from na228_builder.infrastructure.orchestration.app import load_release_manifest
+from na228_builder.infrastructure.orchestration.catalog import (
+    materialized_configuration,
+    release_configuration_values,
+)
 from scripts.lib.paths import load_local_paths
 
 paths = load_local_paths(repository, allow_missing=True)
 
-print(json.dumps(materialized_configuration(
-    paths.path("builder", "catalog.modcat"),
-    Path(sys.argv[2]),
-    configuration_layout=(load_release_manifest().configuration_layout
-                          if sys.argv[3] == "public" else None),
-), indent=2))
+catalog = paths.path("builder", "catalog.modcat")
+configuration = Path(sys.argv[2])
+if sys.argv[3] == "public":
+    values = release_configuration_values(catalog, configuration)
+else:
+    values = materialized_configuration(catalog, configuration)
+print(json.dumps(values, indent=2))
 '@
     $embeddedConfiguration = Join-Path $resourceRoot ([IO.Path]::GetRelativePath(
-        $repository, (Join-Path $paths.builder 'configurations/base.jsonc')
+        $repository, $baseConfigurationPath
     ))
-    $embeddedText = @(& $python -B -c $configurationProbe $repository $configurationPath embedded)
+    $embeddedText = @(& $python -B -c $configurationProbe $repository $baseConfigurationPath embedded)
     if ($LASTEXITCODE -ne 0) { throw 'Could not construct embedded release defaults.' }
     [IO.File]::WriteAllText(
         $embeddedConfiguration,
@@ -278,11 +287,11 @@ paths = load_local_paths(repository, allow_missing=True)
 configuration = load_character_overrides(
     Path(sys.argv[2]),
     paths.path("builder"),
-    paths.path("resources", "character_data.tsv"),
+    Path(sys.argv[3]),
 )
 print(render_character_overrides(configuration), end="")
 '@
-    $characterOverrideText = @(& $python -B -c $characterOverrideProbe $repository $configurationPath)
+    $characterOverrideText = @(& $python -B -c $characterOverrideProbe $repository $baseConfigurationPath $characterReferencePath)
     if ($LASTEXITCODE -ne 0) {
         throw 'Could not construct the merged release character overrides.'
     }
@@ -300,15 +309,13 @@ from pathlib import Path
 repository = Path(sys.argv[1]).resolve()
 sys.path.insert(0, str(repository))
 from na228_builder.infrastructure.orchestration.catalog import public_catalog
-from na228_builder.infrastructure.orchestration.app import load_release_manifest
 from scripts.lib.paths import load_local_paths
 
 paths = load_local_paths(repository, allow_missing=True)
 
-print(public_catalog(paths.path("builder", "catalog.modcat"),
-                     load_release_manifest().configuration_layout), end="")
+print(public_catalog(paths.path("builder", "catalog.modcat"), Path(sys.argv[2])), end="")
 '@
-    $catalogText = @(& $python -B -c $catalogProbe $repository)
+    $catalogText = @(& $python -B -c $catalogProbe $repository $configurationPath)
     if ($LASTEXITCODE -ne 0) {
         throw 'Could not construct the consolidated release catalog.'
     }

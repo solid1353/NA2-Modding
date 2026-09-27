@@ -390,9 +390,15 @@ class CatalogTests(unittest.TestCase):
                 )
             )
 
-            public = catalog.public_catalog(
-                catalog_path, {"startup": "features.feature.startup"},
-            )
+            release_path = root / "release.jsonc"
+            self.write_json(release_path, {
+                "startup": {
+                    "faster_loading": True,
+                    "savedata_loading": "automatic",
+                },
+                "configuration_layout": {"startup": "feature.startup"},
+            })
+            public = catalog.public_catalog(catalog_path, release_path)
             reference = root / "public.modcat"
             reference.write_text(public, encoding="utf-8")
             public_schema = catalog_format.parse_catalog(reference)
@@ -993,9 +999,12 @@ class CatalogTests(unittest.TestCase):
                     }
                 },
             )
-            public = catalog.public_catalog(
-                catalog_path, {"value": "features.feature.value"},
-            )
+            release_path = root / "release.jsonc"
+            self.write_json(release_path, {
+                "value": 5,
+                "configuration_layout": {"value": "feature.value"},
+            })
+            public = catalog.public_catalog(catalog_path, release_path)
         self.assertIn("value:", public)
         self.assertIn("setting<decimal & 0..15 & step 0.25>", public)
         self.assertIn('description: "Bounded value."', public)
@@ -1014,10 +1023,6 @@ class CatalogTests(unittest.TestCase):
             private: { flag: setting {} },
           },
         }'''
-        layout = {
-            "preferences": {"tempo": "features.feature.group.speed"},
-            "mode": "features.feature.defaults.mode",
-        }
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             original = {"feature": {
@@ -1025,14 +1030,22 @@ class CatalogTests(unittest.TestCase):
                 "defaults": {"mode": "a", "private": {"flag": True}},
             }}
             schema, configured = self.write_project(root, {"feature": source}, original)
-            public = catalog.materialized_configuration(
-                schema, configured, configuration_layout=layout,
-            )
+            release_path = root / "release.jsonc"
+            self.write_json(release_path, {
+                "preferences": {"tempo": 5},
+                "mode": "a",
+                "configuration_layout": {
+                    "preferences": "feature.group",
+                    "preferences.tempo": "feature.group.speed",
+                    "mode": "feature.defaults.mode",
+                },
+            })
+            public = catalog.release_configuration_values(schema, release_path)
             self.assertEqual(public, {"preferences": {"tempo": 5}, "mode": "a"})
             embedded = catalog.materialized_configuration(schema, configured)
             self.assertEqual(embedded, {"features": original})
             reference = root / "public.modcat"
-            reference.write_text(catalog.public_catalog(schema, layout), encoding="utf-8")
+            reference.write_text(catalog.public_catalog(schema, release_path), encoding="utf-8")
             catalog._validate_configuration_value(
                 catalog_format.parse_catalog(reference), public, (),
             )
@@ -1044,7 +1057,7 @@ class CatalogTests(unittest.TestCase):
             self.write_json(external, public)
             selection = catalog.load_selection(
                 schema, external, release_defaults_path=defaults_path,
-                configuration_layout=layout,
+                release_definition_path=release_path,
             )
             values = {node.path: node.configured_value for node in selection.nodes}
             self.assertEqual(values[("features", "feature", "group", "speed")], 9)
@@ -1055,23 +1068,36 @@ class CatalogTests(unittest.TestCase):
             with self.assertRaisesRegex(catalog.ConfigurationError, "unknown keys: internal"):
                 catalog.load_selection(
                     schema, external, release_defaults_path=defaults_path,
-                    configuration_layout=layout,
+                    release_definition_path=release_path,
                 )
 
-    def test_release_inherits_base_values(self) -> None:
+    def test_release_public_defaults_are_independent_of_hidden_base_values(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            schema, configured = self.write_project(
-                root, {"feature": '{ option: setting {}, }'},
-                {"feature": {"option": False}},
+            schema, _ = self.write_project(
+                root,
+                {"feature": '{ option: setting {}, private: setting { patch: "f.private" }, }'},
+                {"feature": {"option": False, "private": True}},
             )
+            release_path = root / "release.jsonc"
+            self.write_json(release_path, {
+                "option": True,
+                "configuration_layout": {"option": "feature.option"},
+            })
             self.assertEqual(
-                catalog.materialized_configuration(
-                    schema, configured,
-                    configuration_layout={"option": "features.feature.option"},
-                ),
-                {"option": False},
+                catalog.release_configuration_values(schema, release_path),
+                {"option": True},
             )
+            external = root / "config.jsonc"
+            self.write_json(external, {"option": True})
+            selection = catalog.load_selection(
+                schema,
+                external,
+                release_defaults_path=root / "configurations" / "base.jsonc",
+                release_definition_path=release_path,
+            )
+            self.assertTrue(selection.node_enabled("features", "feature", "option"))
+            self.assertTrue(selection.node_enabled("features", "feature", "private"))
 
     def test_mips_lui_float32_adapter_preserves_instruction_and_rejects_bad_guards(self) -> None:
         replacements = {

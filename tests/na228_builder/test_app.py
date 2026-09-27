@@ -37,7 +37,6 @@ class ReleaseAppTests(unittest.TestCase):
             output_name="Narutimate Accel v2.28.iso",
             configuration="builder/configurations/synthetic.jsonc",
             configuration_name="config.jsonc",
-            configuration_layout={"option": "features.option"},
             images=(self.image("na2", "original NA2 ISO", na2),),
         )
 
@@ -60,7 +59,6 @@ class ReleaseAppTests(unittest.TestCase):
             "product_version": "1.0.0",
             "configuration": "builder/configurations/synthetic.jsonc",
             "configuration_name": "config.jsonc",
-            "configuration_layout": {"option": "features.option"},
             "images": [
                 {
                     "id": "NA2",
@@ -91,7 +89,6 @@ class ReleaseAppTests(unittest.TestCase):
             "product_version": "1.0.0",
             "configuration": "builder/configurations/synthetic.jsonc",
             "configuration_name": "config.jsonc",
-            "configuration_layout": {"option": "features.option"},
             "images": [
                 {
                     "id": "na2",

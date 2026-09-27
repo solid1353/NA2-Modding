@@ -1,15 +1,8 @@
 {
   "title": "Narutimate Accel v2.28",
   "product_version": "0.9.2-beta",
-  "configuration": "configurations/base.jsonc",
+  "configuration": "configurations/release.jsonc",
   "configuration_name": "config.jsonc",
-  "configuration_layout": {
-    "localization": "features.localization",
-    "music_override": "features.general.music_override",
-    "auto_loading": "features.memory_card.auto_loading",
-    "widescreen": "features.rendering.native_16_9_horizontal_scale",
-    "default_settings": "features.default_settings"
-  },
   "images": [
     {
       "id": "na2",

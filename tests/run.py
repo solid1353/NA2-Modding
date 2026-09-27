@@ -289,12 +289,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             "Python tests failed: " + ", ".join(python_failures),
             file=sys.stderr,
         )
-        return 1
-    print(
-        f"[tests] Python passed: {len(python_results)} modules, "
-        f"{_python_test_count(python_results)} tests.",
-        flush=True,
-    )
+    else:
+        print(
+            f"[tests] Python passed: {len(python_results)} modules, "
+            f"{_python_test_count(python_results)} tests.",
+            flush=True,
+        )
 
     powershell_paths = discover_powershell_tests()
     powershell_shards = tuple(
@@ -324,12 +324,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             "PowerShell tests failed: " + ", ".join(powershell_failures),
             file=sys.stderr,
         )
-        return 1
-    print(
-        f"[tests] PowerShell passed: {len(powershell_results)} scripts.",
-        flush=True,
-    )
-    return 0
+    else:
+        print(
+            f"[tests] PowerShell passed: {len(powershell_results)} scripts.",
+            flush=True,
+        )
+    return 1 if python_failures or powershell_failures else 0
 
 
 if __name__ == "__main__":

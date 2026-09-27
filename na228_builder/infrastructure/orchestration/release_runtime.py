@@ -44,7 +44,7 @@ def load_release_configuration(
         project_paths=paths,
         root_overrides=root_overrides,
         release_defaults_path=builder_root / "configurations" / "base.jsonc",
-        configuration_layout=manifest.configuration_layout,
+        release_definition_path=builder_root / manifest.configuration,
     )
     return workspace, configuration
 

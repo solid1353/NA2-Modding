@@ -1,14 +1,40 @@
 from __future__ import annotations
 
+import io
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from unittest import mock
 
 from tests import run
 
 
 class ParallelRunnerTests(unittest.TestCase):
+    def test_main_reports_both_phase_failures(self) -> None:
+        python = run.ProcessResult("tests.python", 1, "Python failure", 0.1)
+        powershell = run.ProcessResult("tests/script.ps1", 1, "PowerShell failure", 0.1)
+        output = io.StringIO()
+        errors = io.StringIO()
+        with (
+            mock.patch.object(run, "discover_python_test_modules", return_value=(python.name,)),
+            mock.patch.object(
+                run,
+                "discover_powershell_tests",
+                return_value=(run.REPOSITORY / powershell.name,),
+            ),
+            mock.patch.object(run, "_run_phase", side_effect=((python,), (powershell,))) as phases,
+            redirect_stdout(output),
+            redirect_stderr(errors),
+        ):
+            result = run.main(["--powershell", "pwsh"])
+
+        self.assertEqual(result, 1)
+        self.assertEqual([call.args[0] for call in phases.call_args_list], ["Python", "PowerShell"])
+        self.assertIn("Python tests failed: tests.python", errors.getvalue())
+        self.assertIn("PowerShell tests failed: tests/script.ps1", errors.getvalue())
+
     def test_worker_count_validates_overrides(self) -> None:
         self.assertEqual(run.resolve_worker_count("1", processor_count=16), 1)
         self.assertEqual(run.resolve_worker_count("24", processor_count=16), 24)

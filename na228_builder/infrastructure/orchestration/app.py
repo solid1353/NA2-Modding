@@ -48,7 +48,6 @@ class ReleaseManifest:
     configuration: str
     configuration_name: str
     images: tuple[SupportedImage, ...]
-    configuration_layout: dict[str, object]
 
 
 def application_directory(
@@ -190,13 +189,6 @@ def parse_release_manifest(text: str) -> ReleaseManifest:
         raise ReleaseError(str(exc)) from exc
     product_version = _required_text(data, "product_version")
 
-    from .release_configuration import validate_layout
-
-    try:
-        configuration_layout = validate_layout(data.get("configuration_layout"))
-    except ValueError as exc:
-        raise ReleaseError(str(exc)) from exc
-
     return ReleaseManifest(
         product_name=product_name,
         product_version=product_version,
@@ -211,7 +203,6 @@ def parse_release_manifest(text: str) -> ReleaseManifest:
             _required_text(data, "configuration_name")
         ),
         images=tuple(images),
-        configuration_layout=configuration_layout,
     )
 
 

@@ -9,7 +9,8 @@ paths. Use `na228 help` for the complete command syntax.
 na228 build [config] [-f]
 ```
 
-Every top-level JSON under `configurations/` is discovered automatically. A
+Every top-level development JSONC under `configurations/` is discovered
+automatically; `release.jsonc` defines the packaged public configuration. A
 configuration without an alias uses its filename stem as its command selector.
 Root `project.json` assigns `b`, `j`, `t`, and `e` to the base, Japanese, test, and
 E2E configurations; those configurations are selected only by their aliases.

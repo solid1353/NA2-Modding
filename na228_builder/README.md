@@ -11,6 +11,7 @@ are in the [build runbook](../docs/runbooks/build.md).
 | `catalog.modcat` | Selectable feature tree, value types, and patch references |
 | `configurations/base.jsonc` | Complete shared development configuration |
 | `configurations/{jp,test,e2e}.jsonc` | Partial overrides of the base configuration |
+| `configurations/release.jsonc` | Independent public release defaults, shape, and path exceptions |
 | `configurations/overrides/*.character_overrides.tsv` | Separate per-character build inputs |
 | `patches/<feature>/<feature>.json` | Patch definitions grouped by the first segment of each patch ID |
 | `patches/<feature>/` | Feature-owned Python, C, assembly, and assets |
@@ -18,13 +19,13 @@ are in the [build runbook](../docs/runbooks/build.md).
 | `infrastructure/modules/binary_patcher/operations/*.tsv` | Primitive binary operations |
 | `resources/mod_strings.tsv` | Mod-authored localized text |
 | `resources/save_appendix.tsv` | Persistent setting IDs and saved-value encodings |
-| `release/release_manifest.json` | Product title and version, release packaging metadata, and public configuration layout |
+| `release/release_manifest.json` | Product title and version, release packaging metadata, and source identities |
 | `../resources/character_data.tsv` | Character identity and native-value reference; not an override input |
 | `../project.json` | Configuration aliases and launch settings |
 
-Release packaging uses the base configuration for defaults. The release manifest
-selects public settings and their names, order, and groups; development
-configurations retain the full feature tree.
+Release packaging uses the base configuration for hidden defaults.
+`configurations/release.jsonc` owns the public setting values, names, order,
+and groups; development configurations retain the full feature tree.
 
 `release/` owns packaging, publication, and the packaged end-user instructions.
 

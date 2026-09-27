@@ -13,7 +13,8 @@ installation and supply one exact clean NA2 ISO.
 3. Optionally edit `config.jsonc`. `//` and `/* ... */` comments and trailing
    commas are accepted. A bare setting uses `true` or `false`; a
    typed setting uses the scalar or object value declared by `catalog.modcat`.
-   `false` disables any node. The root contains `localization`, `music_override`,
+   `false` disables a node unless its declared type accepts `false` as a value.
+   The root contains `localization`, `music_override`,
    `auto_loading`, `widescreen`, and `default_settings`.
    There is no `features` wrapper. The default settings retain their menu groups.
 4. Optionally edit `character_overrides.tsv`: the `base` substitution cost and
@@ -46,16 +47,17 @@ installation and supply one exact clean NA2 ISO.
 
 The ZIP contains exactly the versioned EXE, `config.jsonc`,
 `character_overrides.tsv`, `catalog.modcat`, and `README.md`. Release packaging
-embeds the base configuration as `configurations/base.jsonc` and exports
-`config.jsonc` through the manifest's `configuration_layout`. The same mapping
-sets the public catalog's names, order, and groups. The release loader maps
-public edits back to internal paths and restores hidden embedded values before
-building. It materializes the base character values
-into `character_overrides.tsv`, including every
-reference ID/name row for direct editing. It derives the
-external `catalog.modcat` from the canonical project catalog, strips every
-patch and implementation detail, and distributes it only as a readable reference. The
-executable never reads that external reference. Its public shape matches
+embeds the base configuration as `configurations/base.jsonc` for hidden defaults
+and `configurations/release.jsonc` for the public schema and path exceptions.
+It exports that release file's public values as `config.jsonc`, excluding
+`configuration_layout`. Their presence, nesting, and order also select the
+public catalog. The release loader maps public edits back to internal paths
+and restores hidden embedded values before building. It materializes the base
+character values into `character_overrides.tsv`, including every reference
+ID/name row for direct editing. It derives the external `catalog.modcat` from
+the canonical project catalog, strips every patch and implementation detail,
+and distributes it only as a readable reference. The executable never reads
+that external reference. Its public shape matches
 `config.jsonc`; changing or deleting it cannot change validation or patching.
 The executable embeds the interpreter, parser, validator, builder engines,
 complete catalog, and resources for every selectable node, including all
@@ -98,9 +100,9 @@ validated production ZIP and its SHA-256 sidecar to GitHub.
 ## Release manifest
 
 `na228_builder/release/release_manifest.json` owns the product `title`,
-`product_version`, base configuration path, external configuration filename,
-public configuration layout, and supported source identities. Ordinary builds
-read the same `title` for localized game text. The base configuration path is
+`product_version`, release configuration path, external configuration filename,
+and supported source identities. Ordinary builds read the same `title` for
+localized game text. The release configuration path is
 relative to the builder root. The executable name is `<product>_<version>.exe`,
 and the output image is `<product>_<version>.iso`.
 The pinned source identities are:
@@ -127,8 +129,9 @@ without a release resumes publication.
 - `@builder/infrastructure/orchestration/app.py` owns external configuration preflight, end-user source
   discovery, hashing, locking, staging cleanup, atomic output replacement,
   console messages, and the Enter pause.
-- `@builder/infrastructure/orchestration/release_configuration.py` resolves the manifest layout for
-  public configuration export, its catalog reference, and incoming user edits.
+- `@builder/infrastructure/orchestration/release_configuration.py` derives the
+  public schema and catalog paths from the release definition for packaging
+  and incoming user edits.
 - `@builder/infrastructure/orchestration/release_runtime.py` loads the sibling configuration against the
   embedded catalog with the verified NA2 source ISO as its root override and
   calls the ordinary configuration builder without runtime logs.
@@ -143,32 +146,33 @@ without a release resumes publication.
 
 ## Configuration layout
 
-`configuration_layout` in `na228_builder/release/release_manifest.json` controls which
-settings appear in the release config, their public names, order, and grouping.
-Each string references a catalog setting or complete container. Nested objects
-define public groups independently of the internal feature tree.
+`na228_builder/configurations/release.jsonc` contains the public defaults in
+their shipped structure. Setting presence, nesting, order, and values determine
+the exported configuration. A `configuration_layout` object at the bottom maps
+only public paths that differ from their relative catalog paths:
 
 ```json
 "configuration_layout": {
-  "localization": "features.localization",
-  "music_override": "features.general.music_override",
-  "auto_loading": "features.memory_card.auto_loading",
-  "widescreen": "features.rendering.native_16_9_horizontal_scale",
-  "default_settings": "features.default_settings"
+  "music_override": "general.music_override",
+  "auto_loading": "memory_card.auto_loading",
+  "widescreen": "rendering.native_16_9_horizontal_scale"
 }
 ```
 
-References to containers include their complete subtrees, including future
-children. Explicit child mappings allow a different public layout or narrower
-exposure. Paths must resolve through structural containers; a setting or union
-is referenced as a whole. Duplicate or overlapping internal paths are invalid.
-Public names use the catalog's naming rules; `description` and `patch` are
-reserved by the catalog reference format.
+Unmapped public names resolve to matching relative catalog paths. The catalog
+distinguishes structural groups from typed object settings. Public paths may
+select individual children of a structural group; adding a catalog child does
+not expose it until it appears in the release file. Paths must resolve through
+structural containers, while a setting or union is selected as a whole.
+Duplicate or overlapping internal paths are invalid. Public names follow the
+catalog's naming rules; `description`, `patch`, and `configuration_layout` are
+reserved.
 
-Defaults come directly from the base configuration. Unmapped settings retain
-the packaged base values. Public edits replace the mapped values, then the
-complete internal configuration is validated against the catalog. Types,
-descriptions, and constraints remain defined only in the catalog.
+Public defaults are maintained independently of development defaults. Hidden
+settings retain the packaged base values. Public edits replace the selected
+values, then the complete internal configuration is validated against the
+catalog. Types, descriptions, and constraints remain defined only in the
+catalog. The packaged `config.jsonc` omits the mapping metadata.
 
 ## GitHub releases
 

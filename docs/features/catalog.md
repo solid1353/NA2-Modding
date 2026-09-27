@@ -116,11 +116,12 @@ partially re-enabling a container leaves unspecified children disabled.
 ## Release configuration
 
 The catalog defines settings independently of their release presentation.
-`na228_builder/release/release_manifest.json` maps public configuration names
-and groups to catalog paths. The generated public reference retains the mapped
+`na228_builder/configurations/release.jsonc` selects public settings by their
+presence, nesting, and order. Its `configuration_layout` maps only public paths
+whose catalog paths differ. The generated public reference retains the selected
 settings' types, descriptions, constraints, and unions, without patch bindings.
-The release loader validates public values against that reference's embedded
-schema, maps edits back to internal paths, and validates the complete config.
+The release loader derives the same schema from the embedded catalog and release
+definition, maps edits back to internal paths, and validates the complete config.
 
 The [release process](../runbooks/release.md#configuration-layout) owns the
 mapping syntax, exported layout, and packaged defaults.

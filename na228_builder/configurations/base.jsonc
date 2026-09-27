@@ -1,6 +1,6 @@
 {
   "features": {
-    "localization": "en",                         // "en" | "jp"
+    "localization": "en",                                   // "en" | "jp"
     "general": {
       "new_controls": true,
       "music_override": true,
@@ -44,35 +44,35 @@
     },
     "default_settings": {
       "mod_settings": {
-        "support_selection": "none",              // "none" | "relevant" | "all"
-        "character_balance": "overrides",         // "original" | "overrides"
-        "balance_overlay": "on",                  // "off" | "on"
-        "simple_display": "off"                   // "off" | "on"
+        "support_selection": "none",                        // "none" | "relevant" | "all"
+        "character_balance": "overrides",                   // "original" | "overrides"
+        "balance_overlay": "on",                            // "off" | "on"
+        "simple_display": "off"                             // "off" | "on"
       },
       "battle_mechanics": {
-        "chakra": "normal",                       // "normal" | "unlimited" | decimal 0.1..10 (step 0.1, %/s)
-        "ultimate_jutsu": "no_hud",               // "no_use" | "random" | "command" | "timing" | "turn" | "combo" | "no_contest" | "no_hud"
-        "shadowblur": "off",                      // "off" | "on"
-        "extra_hit": "off",                       // "off" | "on" | int -100..-5 (step 5, % chakra penalty)
-        "sub_active_frames": 5,                   // "default" | int 1..15 (total frames)
-        "xdash_chakra_cost": 10,                  // int 0..100 (step 5, % chakra)
-        "support": "off",                         // "off" | "nerfed" | "normal" | "unlimited"
+        "chakra": "normal",                                 // "normal" | "unlimited" | decimal 0.1..10 (step 0.1, %/s)
+        "ultimate_jutsu": "no_hud",                         // "no_use" | "random" | "command" | "timing" | "turn" | "combo" | "no_contest" | "no_hud"
+        "shadowblur": "off",                                // "off" | "on"
+        "extra_hit": "off",                                 // "off" | "on" | int -100..-5 (step 5, % chakra penalty)
+        "sub_active_frames": 5,                             // "default" | int 1..15 (total frames)
+        "xdash_chakra_cost": 10,                            // int 0..100 (step 5, % chakra)
+        "support": "off",                                   // "off" | "nerfed" | "normal" | "unlimited"
         "substitution": {
-          "value": "gauge",                       // "chakra" | "gauge" | "free"
+          "value": "gauge",                                 // "chakra" | "gauge" | "free"
           "chakra": {
-            "minimum_chakra": "match_cost"        // "match_cost" | int 5..100 (step 5, % chakra)
+            "minimum_chakra": "match_cost"                  // "match_cost" | int 5..100 (step 5, % chakra)
           },
           "gauge": {
-            "recovery_delay_seconds": 15.0,       // decimal 0..60 (step 0.25, seconds)
-            "refill_seconds_per_stock": 5.0,      // decimal >0..10 (step 0.05, seconds)
-            "damage_recovery": "on",              // "off" | "on"
-            "damage_percent_for_full_refill": 140 // integer 5..400 (step 5, %)
+            "recovery_delay_seconds": 15.0,                 // decimal 0..60 (step 0.25, seconds)
+            "refill_seconds_per_stock": 5.0,                // decimal >0..10 (step 0.05, seconds)
+            "damage_recovery": "on",                        // "off" | "on"
+            "damage_percent_for_full_refill": 140           // integer 5..400 (step 5, %)
           }
         },
         "items": {
-          "value": "custom",                      // "none" | "less" | "normal" | "more" | "custom"
+          "value": "custom",                                // "none" | "less" | "normal" | "more" | "custom"
           "custom": {
-            "availability": "normal",             // "none" | "less" | "normal" | "more"
+            "availability": "normal",                       // "none" | "less" | "normal" | "more"
             "health_recovery": true,
             "chakra_ball": true,
             "shoes_of_jonin": true,
@@ -102,24 +102,24 @@
         }
       },
       "battle_settings": {
-        "time": 99,                               // int 10..90 (step 10) | 99 | "unlimited"
-        "difficulty": "normal",                   // "simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"
-        "handicap": 5                             // int 0..10 (Player 1; Player 2 is 10 minus this value)
+        "time": 99,                                         // int 10..90 (step 10) | 99 | "unlimited"
+        "difficulty": "normal",                             // "simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"
+        "handicap": 5                                       // int 0..10 (Player 1; Player 2 is 10 minus this value)
       },
       "practice_settings": {
         "opponent_settings": {
-          "status": "manual",                     // "manual" | "com" | "stand" | "jump" | "double_jump"
-          "strength": "normal",                   // "simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"
-          "attack": "no",                         // "no" | "single" | "combo" | "projectile" | "high_speed_move" | "ultimate_jutsu" | "jutsu"
-          "guard": "no",                          // "no" | "yes"
-          "move": "stay",                         // "stay" | "follow"
-          "substitution_jutsu": "normal",         // "normal" | "no"
-          "linked_attack": "dont_use",            // "dont_use" | "normal" | "random"
-          "extra_hit_counter": "normal"           // "normal" | "return"
+          "status": "manual",                               // "manual" | "com" | "stand" | "jump" | "double_jump"
+          "strength": "normal",                             // "simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"
+          "attack": "no",                                   // "no" | "single" | "combo" | "projectile" | "high_speed_move" | "ultimate_jutsu" | "jutsu"
+          "guard": "no",                                    // "no" | "yes"
+          "move": "stay",                                   // "stay" | "follow"
+          "substitution_jutsu": "normal",                   // "normal" | "no"
+          "linked_attack": "dont_use",                      // "dont_use" | "normal" | "random"
+          "extra_hit_counter": "normal"                     // "normal" | "return"
         },
-        "health": "normal",                       // "normal" | "half" | "almost"
-        "commands": "off",                        // "off" | "on"
-        "damage": "on"                            // "off" | "on"
+        "health": "normal",                                 // "normal" | "half" | "almost"
+        "commands": "off",                                  // "off" | "on"
+        "damage": "on"                                      // "off" | "on"
       }
     }
   }

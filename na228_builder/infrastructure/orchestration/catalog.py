@@ -1211,7 +1211,7 @@ def _effective_configuration(
     features: dict[str, catalog_format.CatalogNodeExpression],
     *,
     release_defaults_path: Path | None = None,
-    configuration_layout: dict[str, object] | None = None,
+    release_definition_path: Path | None = None,
 ) -> tuple[Path | None, object]:
     try:
         configuration = _read_jsonc(configuration_path, "Configuration")
@@ -1232,9 +1232,12 @@ def _effective_configuration(
         base_path = release_defaults_path
         defaults = _read_jsonc(release_defaults_path, "Packaged defaults")["features"]
         _validate_configuration_value(root, defaults, ("features",))
-        from .release_configuration import expand_configuration
+        from .release_configuration import expand_configuration, load_release_definition
 
-        effective = expand_configuration(features, configuration, defaults, configuration_layout)
+        if release_definition_path is None:
+            raise ValueError("Release definition path is required with packaged defaults")
+        release_values, layout = load_release_definition(release_definition_path)
+        effective = expand_configuration(features, configuration, defaults, release_values, layout)
     elif set(configuration) == {"overrides"}:
         base_path = (repository_configuration_root / "base.jsonc").resolve()
         try:
@@ -1273,7 +1276,7 @@ def _effective_configuration(
 
 def load_selection(catalog_path: Path, configuration_path: Path, *,
                    release_defaults_path: Path | None = None,
-                   configuration_layout: dict[str, object] | None = None) -> CatalogSelection:
+                   release_definition_path: Path | None = None) -> CatalogSelection:
     catalog_path = catalog_path.resolve()
     configuration_path = configuration_path.resolve()
     features, catalog_files = _read_catalog(catalog_path)
@@ -1288,7 +1291,7 @@ def load_selection(catalog_path: Path, configuration_path: Path, *,
     base_path, effective = _effective_configuration(
         catalog_path, configuration_path, features,
         release_defaults_path=release_defaults_path,
-        configuration_layout=configuration_layout,
+        release_definition_path=release_definition_path,
     )
     nodes = _apply_patch_metadata(
         _selected_nodes(_feature_root(features), effective),
@@ -1338,27 +1341,32 @@ def load_startup_fast_forward_frames(
 def materialized_configuration(
     catalog_path: Path,
     configuration_path: Path,
-    *,
-    configuration_layout: dict[str, object] | None = None,
 ) -> dict[str, object]:
-    """Resolve configuration values, optionally exporting the release layout."""
+    """Resolve a development configuration's complete feature values."""
     catalog_path = catalog_path.resolve()
     configuration_path = configuration_path.resolve()
     features, _catalog_files = _read_catalog(catalog_path)
     _base_path, effective = _effective_configuration(catalog_path, configuration_path, features)
-    if configuration_layout is not None:
-        from .release_configuration import project_configuration
-
-        return project_configuration(features, effective, configuration_layout)
     return {"features": effective}
 
 
-def public_catalog(catalog_path: Path, configuration_layout: dict[str, object]) -> str:
-    """Return the release reference in the manifest's public layout."""
-    from .release_configuration import resolve_layout
+def release_configuration_values(catalog_path: Path, release_definition_path: Path) -> dict[str, object]:
+    """Return the validated public defaults without release metadata."""
+    from .release_configuration import load_release_definition, resolve_layout
 
     features, _catalog_files = _read_catalog(catalog_path)
-    projected, _mappings = resolve_layout(features, configuration_layout)
+    values, layout = load_release_definition(release_definition_path)
+    resolve_layout(features, values, layout)
+    return values
+
+
+def public_catalog(catalog_path: Path, release_definition_path: Path) -> str:
+    """Return the release reference selected by public setting presence."""
+    from .release_configuration import load_release_definition, resolve_layout
+
+    features, _catalog_files = _read_catalog(catalog_path)
+    values, layout = load_release_definition(release_definition_path)
+    projected, _paths = resolve_layout(features, values, layout)
     return catalog_format.serialize_feature(projected, include_patches=False)
 
 

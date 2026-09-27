@@ -68,7 +68,7 @@ try {
       "speed_after_startup": "normal"
     }
   },
-  "configurations": { "base": "b", "test": "t", "release": "r", "e2e": "e" }
+  "configurations": { "base": "b", "test": "t", "e2e": "e" }
 }
 '@)
     foreach ($configuration in 'base', 'test', 'release', 'e2e', 'foo') {
@@ -202,8 +202,10 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
         $helpText = $help.Output -join "`n"
         Assert-CommandRouting ($helpText -match 'token: <source>\[w\] \| \[b\]<config>\[w\]') `
             'Help omitted the accepted token grammar.'
-        Assert-CommandRouting ($helpText -match 'b=base, t=test, r=release, e=e2e, foo') `
+        Assert-CommandRouting ($helpText -match 'b=base, t=test, e=e2e, foo') `
             'Help did not list discovered configurations and aliases.'
+        Assert-CommandRouting ($helpText -notmatch 'r=release') `
+            'Release configuration appeared as a development selector.'
         Assert-CommandRouting ($helpText -match 'profiles: practice') `
             'Help did not list configured launch profiles.'
 

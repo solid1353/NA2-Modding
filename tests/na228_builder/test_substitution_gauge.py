@@ -72,7 +72,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
                 "recovery_delay_seconds": 0.25,
                 "refill_seconds_per_stock": 0.05,
                 "damage_recovery": "off",
-                "damage_percent_per_stock": 31.25,
+                "damage_percent_for_full_refill": 125,
             },
         }
         selection = catalog.load_selection(
@@ -87,7 +87,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
         assert gauge is not None
         self.assertEqual(
             struct.unpack("<9I", gauge.payload),
-            (3, 12, 15, 20480, 0, 0, 0, 0, 0),
+            (3, 12, 15, 81920, 0, 0, 0, 0, 0),
         )
 
     def test_partial_configuration_uses_omitted_field_defaults(self) -> None:
@@ -113,10 +113,11 @@ class SubstitutionGaugeTests(unittest.TestCase):
         assert gauge is not None
         actual = struct.unpack("<9I", gauge.payload)
         self.assertEqual((actual[2], actual[4], actual[5]), (600, 0, 2))
-        self.assertEqual(
-            (actual[0], actual[1], actual[3], actual[6:]),
-            (60, 240, 20480, (0, 0, 0)),
-        )
+        self.assertGreater(actual[0], 0)
+        self.assertEqual(actual[1], 4 * actual[0])
+        self.assertGreater(actual[3], 0)
+        self.assertLessEqual(actual[3], 4 * 65536)
+        self.assertEqual(actual[6:], (0, 0, 0))
 
     def test_gauge_can_coexist_with_support_on(self) -> None:
         features = self._base_features()

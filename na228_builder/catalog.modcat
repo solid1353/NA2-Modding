@@ -151,7 +151,7 @@
               recovery_delay_seconds?: decimal & 0..60 & step 0.25,
               refill_seconds_per_stock?: decimal & >0 & <=10 & step 0.05,
               damage_recovery?: "off" | "on",
-              damage_percent_per_stock?: decimal & >0 & <=100 & step 0.25,
+              damage_percent_for_full_refill?: decimal & 5..400 & step 5,
             },
           }> {
           description: "Choose whether substitution uses chakra, uses a gauge, or is free, and configure gauge recovery.",

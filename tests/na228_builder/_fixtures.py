@@ -62,7 +62,7 @@ def test_features() -> dict[str, object]:
                         "recovery_delay_seconds": 14.0,
                         "refill_seconds_per_stock": 1.0,
                         "damage_recovery": "on",
-                        "damage_percent_per_stock": 31.25,
+                        "damage_percent_for_full_refill": 125,
                     },
                 },
                 "items": {

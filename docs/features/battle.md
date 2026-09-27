@@ -243,7 +243,7 @@ in [X-dash knowledge](../knowledge/gameplay/xdash.md).
   both the pre-battle and Practice menus. Its required `value` field selects
   the value used initially and by each menu's reset action. Optional object
   fields configure recovery delay, refill time per stock, damage recovery, and
-  damage percentage per stock.
+  damage for a full refill in 5% steps.
 
 The base configuration uses `5` and `{"value": "gauge"}`. `Chakra`
 uses the configurable minimum described below and retains native suppression,

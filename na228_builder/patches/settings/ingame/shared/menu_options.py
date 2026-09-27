@@ -100,15 +100,15 @@ def menu_option_bindings(selection):
             ("refill_seconds_per_stock", message("settings.refill_time.label"), message("settings.refill_time.help"),
              tuple(message("settings.seconds", seconds=f"{Decimal(i) / 20:.2f}") for i in range(1, 201))),
             ("damage_recovery", message("settings.damage_recovery.label"), message("settings.damage_recovery.help"), (message("common.off"), message("common.on"))),
-            ("damage_percent_per_stock", message("settings.damage_percent.label"), message("settings.damage_percent.help"),
-             tuple(f"{Decimal(i) / 4:.2f}%" for i in range(1, 401))),
+            ("damage_percent_for_full_refill", message("settings.damage_full_refill.label"), message("settings.damage_full_refill.help"),
+             tuple(f"{i * 5}%" for i in range(1, 81))),
         )
         for index, (key, label, help_text, values) in enumerate(rows):
             options[BATTLE_MECHANICS_PATH + ("substitution", "gauge", key)] = MenuOption(
                 label, help_text, values, defaults[index],
                 "substitution_gauge_option_get", "substitution_gauge_option_set", index,
                 enabled_by=("substitution_gauge_option_get", 2)
-                if key == "damage_percent_per_stock" else None)
+                if key == "damage_percent_for_full_refill" else None)
     if items_configuration(selection) is not None:
         defaults = items_option_defaults(selection)
         custom_path = BATTLE_MECHANICS_PATH + ("items", "custom")

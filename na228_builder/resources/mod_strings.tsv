@@ -35,8 +35,8 @@ settings.refill_time.label	Refill Time per Stock	１回分の回復時間
 settings.refill_time.help	Automatic recovery time for one stock.	ゲージ１回分が自動回復するまでの時間です。
 settings.damage_recovery.label	Damage Recovery	被ダメージ回復
 settings.damage_recovery.help	Recover gauge when taking damage.	ダメージを受けるとゲージが回復します。
-settings.damage_percent.label	Damage Percent per Stock	１回分のダメージ
-settings.damage_percent.help	Damage required to recover one stock.	ゲージ１回分の回復に必要なダメージ量です。
+settings.damage_full_refill.label	Damage for Full Refill	全回復に必要なダメージ
+settings.damage_full_refill.help	Damage equal to this percentage of maximum HP restores a full gauge.	最大体力に対するこの割合のダメージで、ゲージ全体が回復します。
 settings.availability.label	Availability	出現量
 settings.availability.help	Choose the amount of items in Custom mode.	カスタム設定でのアイテムの出現量を選択します。
 settings.item.help	Allow {item} in Custom mode.	カスタム設定で「{item}」を出現させます。

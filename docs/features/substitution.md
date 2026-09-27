@@ -30,7 +30,7 @@ When the feature is enabled, one shared runtime enum is exposed as
   executable cost, including continuous partial recovery.
 
 Natural recovery uses four equal stock intervals, while damage recovery is
-proportional to the configured damage-per-stock value.
+proportional to the configured damage for a full refill.
 Spending deliberately uses NA2's existing per-character balance values. The
 chosen UI adaptation uses one independent continuous textured bar per side
 rather than reproducing the later games' four-cell artwork.
@@ -220,7 +220,7 @@ The runtime implementation uses these defaults:
 | Successful-use cost | Character `substitution_cost / 100` | Shared normalized balance source |
 | Post-use recovery delay | `14.0 s` | Repeatedly measured in the series |
 | Natural recovery | `25.0/s` | Console-era baseline of one stock per second |
-| Damage recovery scale | `0.3125` normalized HP per stock | Provisional mapping of `31.25/100` |
+| Damage for full refill | `125%` of maximum HP | Four times the provisional `31.25%` recovery interval |
 | Starting value | `100.0` | Four stocks |
 
 All numeric values are generated configuration data rather than literals inside
@@ -230,11 +230,11 @@ The character table stores `substitution_cost` as percentage points in
 `0..100`. Authoritative gauge state remains integer counts, and one rounded
 integer cost is shared by eligibility, spending, and the visible marker.
 
-The `0.3125` damage-recovery scale is deliberately provisional. NA2 stores fighter
-HP as a normalized float at `fighter + 0x6C`, so it is a sensible first mapping
-of the measured later-game value. Runtime comparison must establish whether it
-feels and behaves like the intended title before the value becomes accepted
-balance data.
+The `125%` full-refill damage value is deliberately provisional. NA2 stores
+fighter HP as a normalized float at `fighter + 0x6C`, so it is a first mapping
+of four measured later-game recovery intervals. The base configuration selects
+`140%` for the mod. Comparison with the intended series behavior remains
+necessary before treating the provisional value as accepted balance data.
 
 ### State machine
 
@@ -245,7 +245,7 @@ configuration generation time compute:
 stock_counts = refill_seconds_per_stock * 60
 capacity_counts = 4 * stock_counts
 delay_total_counts = recovery_delay_seconds * 60
-damage_threshold_q16 = round((damage_percent_per_stock / 100) * 65536)
+damage_full_refill_q16 = round((damage_percent_for_full_refill / 100) * 65536)
 cost_counts = round(capacity_counts * resolved_substitution_cost / 100)
 ```
 
@@ -276,9 +276,9 @@ on fighter update:
     received_q16 = max(0, last_hp_q16 - current_hp_q16)
     last_hp_q16 = current_hp_q16
     if damage recovery is on and meter_counts < capacity_counts:
-        numerator = damage_recovery_remainder + received_q16 * stock_counts
-        recovered_counts = numerator / damage_threshold_q16
-        damage_recovery_remainder = numerator % damage_threshold_q16
+        numerator = damage_recovery_remainder + received_q16 * capacity_counts
+        recovered_counts = numerator / damage_full_refill_q16
+        damage_recovery_remainder = numerator % damage_full_refill_q16
         meter_counts = min(capacity_counts, meter_counts + recovered_counts)
 
     if meter_counts == capacity_counts:
@@ -931,7 +931,7 @@ The build-time setting is
     "recovery_delay_seconds": 14.0,
     "refill_seconds_per_stock": 1.0,
     "damage_recovery": "on",
-    "damage_percent_per_stock": 31.25
+    "damage_percent_for_full_refill": 125
   }
 }
 ```
@@ -941,10 +941,13 @@ and per-character cost remain fixed. The catalog owns the accepted ranges and
 steps; `config.jsonc` owns the selected values.
 
 `damage_recovery` accepts `"off"` or `"on"`. In Mod, Battle, and Practice
-settings, Damage per Stock stays visible but is greyed out and cannot be changed
-while Damage Recovery is Off. Availability follows the menu's staged value
+settings, Damage for Full Refill stays visible but is greyed out and cannot be
+changed while Damage Recovery is Off. Availability follows the menu's staged value
 immediately; switching it back On restores editing without resetting the stored
 threshold. Apply, cancel, and Return to Defaults use the existing menu transaction.
+The save appendix keeps schema version `1` and field ID `0505`. An older mod
+save must be deleted before using this setting because its saved value index
+has a different meaning.
 
 The gauge requires the implementation selected by `features.default_settings.mod_settings.character_balance` and
 `features.default_settings.practice_settings`. `features.general.new_controls`
@@ -966,7 +969,7 @@ typedef struct SubstitutionGaugeConfig {
     unsigned int stock_counts;          /* seconds-per-stock * 60 */
     unsigned int capacity_counts;       /* 4 * stock_counts */
     unsigned int recovery_delay_counts; /* configured seconds * 60 */
-    unsigned int damage_threshold_q16;  /* normalized HP */
+    unsigned int damage_full_refill_q16; /* normalized HP */
     unsigned int damage_recovery_enabled;
     unsigned int default_mode;          /* Chakra 0, Gauge 1, Free 2 */
 } SubstitutionGaugeConfig;
@@ -977,10 +980,10 @@ and performs validation and packing with `Decimal`. It requires
 `refill_seconds_per_stock * 60` and
 `recovery_delay_seconds * 60` to be integral after catalog-step validation;
 reject instead of silently truncating. Compute the Q16 threshold as
-`ROUND_HALF_UP((damage_percent_per_stock / 100) * 65536)` and range-check every
+`ROUND_HALF_UP((damage_percent_for_full_refill / 100) * 65536)` and range-check every
 result before packing it as little-endian `u32`. Bare `true` and an explicit
 empty object are invalid because they omit `value`; the base object must emit
-exact words `(60, 240, 840, 20480, 1, 1)` in the structure order above.
+exact words `(60, 240, 840, 81920, 1, 1)` in the structure order above.
 
 `module_pipeline.py` adds that fragment to the selected battle-logic runtime
 package just as it adds the X-dash scalar. The battle-logic injection owns
@@ -1096,7 +1099,7 @@ COM/P2:
 | Empty-gauge attempt | Native transition rejected; no chakra change |
 | Natural recovery | No movement before delay, then continuous textured-bar fill to full |
 | Use during recovery | Spend the resolved character cost and restart delay |
-| Damage received | Gauge recovery proportional to net HP loss and the configured damage-per-stock value |
+| Damage received | Gauge recovery proportional to net HP loss and the configured damage for a full refill |
 | Multi-hit damage | Recovery from combined net HP loss without duplicate counting |
 | Jutsu/X-dash | Native chakra spending remains correct |
 | Transformation | Gauge preserved |

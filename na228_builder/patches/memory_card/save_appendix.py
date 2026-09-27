@@ -327,7 +327,7 @@ def _bindings(selection) -> dict[str, SettingBinding]:
         ),
         ("mechanics.substitution.gauge.damage_recovery", 2, gauge_defaults[2]),
         (
-            "mechanics.substitution.gauge.damage_percent_per_stock",
+            "mechanics.substitution.gauge.damage_percent_for_full_refill",
             3,
             gauge_defaults[3],
         ),

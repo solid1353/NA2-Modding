@@ -35,7 +35,7 @@ id	key	label	values
 0502	mechanics.substitution.gauge.recovery_delay_seconds	Recovery Delay	0.00s to 60.00s by 0.25s
 0503	mechanics.substitution.gauge.refill_seconds_per_stock	Refill Time per Stock	0.05s to 10.00s by 0.05s
 0504	mechanics.substitution.gauge.damage_recovery	Damage Recovery	Off | On
-0505	mechanics.substitution.gauge.damage_percent_per_stock	Damage Percent per Stock	0.25% to 100.00% by 0.25%
+0505	mechanics.substitution.gauge.damage_percent_for_full_refill	Damage for Full Refill	5% to 400% by 5%
 0601	mechanics.items.custom.availability	Item Availability	None | Less | Normal | More
 0602	mechanics.items.custom.health_recovery	Health Recovery	Off | On
 0603	mechanics.items.custom.chakra_ball	Chakra Ball	Off | On

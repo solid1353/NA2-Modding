@@ -97,7 +97,7 @@ typedef struct SubstitutionGaugeConfig {
     u32 stock_counts;
     u32 capacity_counts;
     u32 recovery_delay_counts;
-    u32 damage_threshold_q16;
+    u32 damage_full_refill_q16;
     u32 damage_recovery_enabled;
     u32 default_mode;
     u32 minimum_chakra_option;
@@ -141,7 +141,7 @@ static ALWAYS_INLINE volatile SubstitutionGaugeConfig *gauge_config(void)
         substitution_gauge_live_config.stock_counts = substitution_gauge_config.stock_counts;
         substitution_gauge_live_config.capacity_counts = substitution_gauge_config.capacity_counts;
         substitution_gauge_live_config.recovery_delay_counts = substitution_gauge_config.recovery_delay_counts;
-        substitution_gauge_live_config.damage_threshold_q16 = substitution_gauge_config.damage_threshold_q16;
+        substitution_gauge_live_config.damage_full_refill_q16 = substitution_gauge_config.damage_full_refill_q16;
         substitution_gauge_live_config.damage_recovery_enabled = substitution_gauge_config.damage_recovery_enabled;
         substitution_gauge_live_config.default_mode = substitution_gauge_config.default_mode;
         substitution_gauge_live_config.minimum_chakra_option = substitution_gauge_config.minimum_chakra_option;
@@ -168,7 +168,7 @@ u32 substitution_gauge_option_get(u32 option)
     case 0u: return config->recovery_delay_counts / 15u;
     case 1u: return config->stock_counts / 3u - 1u;
     case 2u: return config->damage_recovery_enabled;
-    case 3u: return (config->damage_threshold_q16 * 400u + 32768u) / 65536u - 1u;
+    case 3u: return (config->damage_full_refill_q16 * 20u + 32768u) / 65536u - 1u;
     case 4u: return config->minimum_chakra_option;
     default: return 0u;
     }
@@ -201,8 +201,8 @@ void substitution_gauge_option_set(u32 option, u32 value)
         if (value <= 1u) config->damage_recovery_enabled = value;
         break;
     case 3u:
-        if (value >= 400u) return;
-        config->damage_threshold_q16 = ((value + 1u) * 65536u + 200u) / 400u;
+        if (value >= 80u) return;
+        config->damage_full_refill_q16 = ((value + 1u) * 65536u + 10u) / 20u;
         for (side = 0u; side < SUBSTITUTION_SIDE_COUNT; ++side) {
             substitution_gauge_state.player[side].damage_recovery_remainder = 0u;
         }
@@ -871,18 +871,18 @@ void substitution_gauge_sample_hp(void *fighter)
     if (
         gauge_config()->damage_recovery_enabled == 0u ||
         slot->meter_counts >= gauge_config()->capacity_counts ||
-        gauge_config()->damage_threshold_q16 == 0u
+        gauge_config()->damage_full_refill_q16 == 0u
     ) {
         slot->damage_recovery_remainder = 0u;
         return;
     }
 
     recovery_numerator = slot->damage_recovery_remainder +
-        received_q16 * gauge_config()->stock_counts;
+        received_q16 * gauge_config()->capacity_counts;
     recovered_counts = recovery_numerator /
-        gauge_config()->damage_threshold_q16;
+        gauge_config()->damage_full_refill_q16;
     slot->damage_recovery_remainder = recovery_numerator %
-        gauge_config()->damage_threshold_q16;
+        gauge_config()->damage_full_refill_q16;
     if (recovered_counts != 0u) {
         if (
             gauge_config()->capacity_counts - slot->meter_counts <=

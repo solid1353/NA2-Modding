@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 DEFAULT_RECOVERY_DELAY_SECONDS = Decimal("14.0")
 DEFAULT_REFILL_SECONDS_PER_STOCK = Decimal("1.0")
-DEFAULT_DAMAGE_PERCENT_PER_STOCK = Decimal("31.25")
+DEFAULT_DAMAGE_PERCENT_FOR_FULL_REFILL = Decimal("125")
 DEFAULT_DAMAGE_RECOVERY = "on"
 COUNTS_PER_SECOND = Decimal(60)
 STOCK_COUNT = 4
@@ -88,7 +88,7 @@ def substitution_gauge_fragment(
         raise ValueError(
             "Substitution-gauge value must be 'chakra', 'gauge', or 'free'"
         )
-    stock_counts, capacity_counts, delay_counts, damage_threshold_q16, damage_recovery = gauge_config_values(selection)
+    stock_counts, capacity_counts, delay_counts, damage_full_refill_q16, damage_recovery = gauge_config_values(selection)
 
     return PayloadFragment(
         owner=owner,
@@ -100,7 +100,7 @@ def substitution_gauge_fragment(
             stock_counts,
             capacity_counts,
             delay_counts,
-            damage_threshold_q16,
+            damage_full_refill_q16,
             int(damage_recovery),
             SUBSTITUTION_MODE_VALUES[mode],
             chakra_minimum_option_default(selection),
@@ -144,9 +144,9 @@ def gauge_config_values(selection: CatalogSelection) -> tuple[int, int, int, int
     )
     damage_percent = _decimal(
         gauge.get(
-            "damage_percent_per_stock", DEFAULT_DAMAGE_PERCENT_PER_STOCK
+            "damage_percent_for_full_refill", DEFAULT_DAMAGE_PERCENT_FOR_FULL_REFILL
         ),
-        "Substitution-gauge damage threshold",
+        "Substitution-gauge damage for full refill",
     )
     damage_recovery = gauge.get(
         "damage_recovery", DEFAULT_DAMAGE_RECOVERY
@@ -158,28 +158,28 @@ def gauge_config_values(selection: CatalogSelection) -> tuple[int, int, int, int
         raise ValueError("Substitution-gauge recovery delay must be from 0 through 60")
     if not Decimal(0) < refill_seconds <= Decimal(10):
         raise ValueError("Substitution-gauge refill time must be above 0 through 10")
-    if not Decimal(0) < damage_percent <= Decimal(100):
+    if not Decimal(5) <= damage_percent <= Decimal(400):
         raise ValueError(
-            "Substitution-gauge damage threshold must be above 0 through 100"
+            "Substitution-gauge damage for full refill must be from 5 through 400"
         )
     _require_step(recovery_delay, Decimal("0.25"), "Recovery delay")
     _require_step(refill_seconds, Decimal("0.05"), "Refill time")
-    _require_step(damage_percent, Decimal("0.25"), "Damage threshold")
+    _require_step(damage_percent, Decimal(5), "Damage for full refill")
 
     stock_counts = _integral_counts(refill_seconds, "Refill time")
     delay_counts = _integral_counts(recovery_delay, "Recovery delay")
     capacity_counts = stock_counts * STOCK_COUNT
-    damage_threshold_q16 = int(
+    damage_full_refill_q16 = int(
         (
             damage_percent * Q16_ONE / Decimal(100)
         ).to_integral_value(rounding=ROUND_HALF_UP)
     )
-    if damage_threshold_q16 <= 0 or damage_threshold_q16 > int(Q16_ONE):
-        raise ValueError("Substitution-gauge damage threshold is outside Q16 range")
+    if damage_full_refill_q16 <= 0 or damage_full_refill_q16 > 4 * int(Q16_ONE):
+        raise ValueError("Substitution-gauge damage for full refill is outside Q16 range")
 
-    return stock_counts, capacity_counts, delay_counts, damage_threshold_q16, damage_recovery == "on"
+    return stock_counts, capacity_counts, delay_counts, damage_full_refill_q16, damage_recovery == "on"
 
 
 def gauge_option_defaults(selection: CatalogSelection) -> tuple[int, ...]:
     stock, _capacity, delay, threshold, damage = gauge_config_values(selection)
-    return delay // 15, stock // 3 - 1, int(damage), (threshold * 400 + 32768) // 65536 - 1
+    return delay // 15, stock // 3 - 1, int(damage), (threshold * 20 + 32768) // 65536 - 1

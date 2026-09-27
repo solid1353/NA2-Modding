@@ -9,11 +9,14 @@ paths. Use `na228 help` for the complete command syntax.
 na228 build [config] [-f]
 ```
 
-Every top-level development JSONC under `configurations/` is discovered
-automatically; `release.jsonc` defines the packaged public configuration. A
+Every top-level JSONC under `configurations/` is discovered automatically. A
 configuration without an alias uses its filename stem as its command selector.
-Root `project.json` assigns `b`, `j`, `t`, and `e` to the base, Japanese, test, and
-E2E configurations; those configurations are selected only by their aliases.
+Root `project.json` assigns `b`, `r`, `j`, `t`, and `e` to the base, release,
+Japanese, test, and E2E configurations; those configurations are selected only
+by their aliases. `na228 build r` uses the public values in `release.jsonc` and
+the hidden defaults in `base.jsonc`, as release packaging does. `na228 r`
+selects its cached build, and `na228 br` builds or reuses it before launch.
+`na228 release` remains the packaging command.
 `na228 <config>` launches the newest cached build. Prefixing the selector with
 `b` builds or reuses it before launch, and `na228 build <config>` builds without
 launching. Selectors must not conflict with commands, sources, or another

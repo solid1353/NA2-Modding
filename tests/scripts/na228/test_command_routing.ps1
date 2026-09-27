@@ -21,7 +21,7 @@ function Assert-CommandRouting {
 function Invoke-FakeNa228 {
     param([string[]]$ArgumentList, [switch]$Failure)
 
-    foreach ($name in 'build.json', 'launch.json', 'watch.json', 'tests.txt') {
+    foreach ($name in 'build.json', 'launch.json', 'watch.json', 'tests.txt', 'release.txt') {
         $path = Join-Path $repository $name
         if (Test-Path -LiteralPath $path) { Remove-Item -LiteralPath $path -Force }
     }
@@ -68,7 +68,7 @@ try {
       "speed_after_startup": "normal"
     }
   },
-  "configurations": { "base": "b", "test": "t", "e2e": "e" }
+  "configurations": { "base": "b", "release": "r", "test": "t", "e2e": "e" }
 }
 '@)
     foreach ($configuration in 'base', 'test', 'release', 'e2e', 'foo') {
@@ -193,7 +193,9 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
     [IO.File]::WriteAllText((Join-Path $repository 'tests\run.ps1'), @'
 [IO.File]::WriteAllText((Join-Path $PSScriptRoot '..\tests.txt'), 'ran')
 '@)
-    [IO.File]::WriteAllText((Join-Path $repository 'fake_release.ps1'), "throw 'Release was not expected.'")
+    [IO.File]::WriteAllText((Join-Path $repository 'fake_release.ps1'), @'
+[IO.File]::WriteAllText((Join-Path $PSScriptRoot 'release.txt'), 'published')
+'@)
 
     $originalTaskRoot = $env:NA228_TASK_WORK_ROOT
     Remove-Item Env:NA228_TASK_WORK_ROOT -ErrorAction SilentlyContinue
@@ -202,10 +204,8 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
         $helpText = $help.Output -join "`n"
         Assert-CommandRouting ($helpText -match 'token: <source>\[w\] \| \[b\]<config>\[w\]') `
             'Help omitted the accepted token grammar.'
-        Assert-CommandRouting ($helpText -match 'b=base, t=test, e=e2e, foo') `
+        Assert-CommandRouting ($helpText -match 'b=base, r=release, t=test, e=e2e, foo') `
             'Help did not list discovered configurations and aliases.'
-        Assert-CommandRouting ($helpText -notmatch 'r=release') `
-            'Release configuration appeared as a development selector.'
         Assert-CommandRouting ($helpText -match 'profiles: practice') `
             'Help did not list configured launch profiles.'
 
@@ -214,6 +214,35 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
         Assert-CommandRouting ($build.configuration -ceq 'base') 'Build alias did not resolve to base.'
         Assert-CommandRouting (-not (Test-Path -LiteralPath (Join-Path $repository 'launch.json'))) `
             'Build-only command launched a game.'
+
+        $null = Invoke-FakeNa228 -ArgumentList @('build', 'r')
+        $build = Get-Content -Raw -LiteralPath (Join-Path $repository 'build.json') | ConvertFrom-Json
+        Assert-CommandRouting ($build.configuration -ceq 'release') `
+            'Release alias did not route to a release configuration build.'
+        Assert-CommandRouting (-not (Test-Path -LiteralPath (Join-Path $repository 'launch.json'))) `
+            'Release build-only command launched a game.'
+
+        $null = Invoke-FakeNa228 -ArgumentList @('r')
+        $launch = Get-Content -Raw -LiteralPath (Join-Path $repository 'launch.json') | ConvertFrom-Json
+        Assert-CommandRouting (
+            $launch.games[0] -like '*\build\release.iso' -and
+            -not (Test-Path -LiteralPath (Join-Path $repository 'build.json'))
+        ) 'Release alias did not launch its cached build.'
+
+        $null = Invoke-FakeNa228 -ArgumentList @('br')
+        $build = Get-Content -Raw -LiteralPath (Join-Path $repository 'build.json') | ConvertFrom-Json
+        $launch = Get-Content -Raw -LiteralPath (Join-Path $repository 'launch.json') | ConvertFrom-Json
+        Assert-CommandRouting (
+            $build.configuration -ceq 'release' -and
+            $launch.games[0] -like '*\build\release.iso'
+        ) 'Release build-and-launch alias did not route its build and image.'
+
+        $null = Invoke-FakeNa228 -ArgumentList @('release')
+        Assert-CommandRouting (
+            (Test-Path -LiteralPath (Join-Path $repository 'release.txt')) -and
+            -not (Test-Path -LiteralPath (Join-Path $repository 'build.json')) -and
+            -not (Test-Path -LiteralPath (Join-Path $repository 'launch.json'))
+        ) 'Release command did not retain packaging precedence.'
 
         $null = Invoke-FakeNa228 -ArgumentList @('build', '-f')
         $build = Get-Content -Raw -LiteralPath (Join-Path $repository 'build.json') | ConvertFrom-Json

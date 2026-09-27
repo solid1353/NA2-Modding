@@ -96,9 +96,9 @@ the config value; they do not add another selector field.
 ## Configuration and overrides
 
 Standalone development configs contain the complete `features` object.
-Repository variants contain only `overrides`, partially mirroring
-`base.features`. JSONC accepts line comments, block comments, and trailing
-commas. Document each non-Boolean scalar setting's allowed values and
+Repository variants other than `release.jsonc` contain only `overrides`,
+partially mirroring `base.features`. JSONC accepts line comments, block comments,
+and trailing commas. Document each non-Boolean scalar setting's allowed values and
 constraints in an inline comment synchronized with the catalog. Keep trailing
 `//` comments aligned; realign them when an edit changes the required width.
 

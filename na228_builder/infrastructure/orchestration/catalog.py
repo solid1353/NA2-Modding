@@ -1213,12 +1213,25 @@ def _effective_configuration(
     release_defaults_path: Path | None = None,
     release_definition_path: Path | None = None,
 ) -> tuple[Path | None, object]:
+    repository_configuration_root = (catalog_path.parent / "configurations").resolve()
+    if (
+        release_defaults_path is None
+        and configuration_path.parent == repository_configuration_root
+    ):
+        manifest_path = catalog_path.parent / "release" / "release_manifest.json"
+        if manifest_path.is_file():
+            manifest = _read_json(manifest_path, "Release manifest")
+            release_name = manifest.get("configuration")
+            if isinstance(release_name, str):
+                release_path = (catalog_path.parent / release_name).resolve()
+                if configuration_path == release_path:
+                    release_defaults_path = repository_configuration_root / "base.jsonc"
+                    release_definition_path = release_path
     try:
         configuration = _read_jsonc(configuration_path, "Configuration")
     except ValueError as exc:
         raise ConfigurationError(str(exc)) from exc
     root = _feature_root(features)
-    repository_configuration_root = (catalog_path.parent / "configurations").resolve()
     if (
         release_defaults_path is None
         and configuration_path.parent == repository_configuration_root
@@ -1237,6 +1250,8 @@ def _effective_configuration(
         if release_definition_path is None:
             raise ValueError("Release definition path is required with packaged defaults")
         release_values, layout = load_release_definition(release_definition_path)
+        if configuration_path == release_definition_path:
+            configuration = release_values
         effective = expand_configuration(features, configuration, defaults, release_values, layout)
     elif set(configuration) == {"overrides"}:
         base_path = (repository_configuration_root / "base.jsonc").resolve()

@@ -11,6 +11,7 @@
   },
   "configurations": {
     "base": "b",
+    "release": "r",
     "jp": "j",
     "test": "t",
     "e2e": "e"

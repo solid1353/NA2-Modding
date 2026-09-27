@@ -23,9 +23,11 @@ are in the [build runbook](../docs/runbooks/build.md).
 | `../resources/character_data.tsv` | Character identity and native-value reference; not an override input |
 | `../project.json` | Configuration aliases and launch settings |
 
-Release packaging uses the base configuration for hidden defaults.
+Release packaging and the `r` build selector use the base configuration for
+hidden defaults.
 `configurations/release.jsonc` owns the public setting values, names, order,
-and groups; development configurations retain the full feature tree.
+and groups. The base configuration supplies the complete development tree;
+the other development configurations supply overrides.
 
 `release/` owns packaging, publication, and the packaged end-user instructions.
 

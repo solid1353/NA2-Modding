@@ -1079,7 +1079,7 @@ class CatalogTests(unittest.TestCase):
                 {"feature": '{ option: setting {}, private: setting { patch: "f.private" }, }'},
                 {"feature": {"option": False, "private": True}},
             )
-            release_path = root / "release.jsonc"
+            release_path = root / "configurations" / "release.jsonc"
             self.write_json(release_path, {
                 "option": True,
                 "configuration_layout": {"option": "feature.option"},
@@ -1098,6 +1098,16 @@ class CatalogTests(unittest.TestCase):
             )
             self.assertTrue(selection.node_enabled("features", "feature", "option"))
             self.assertTrue(selection.node_enabled("features", "feature", "private"))
+            self.write_json(root / "release" / "release_manifest.json", {
+                "configuration": "configurations/release.jsonc",
+            })
+            repository_selection = catalog.load_selection(schema, release_path)
+            self.assertEqual(
+                repository_selection.base_configuration_path,
+                root / "configurations" / "base.jsonc",
+            )
+            self.assertTrue(repository_selection.node_enabled("features", "feature", "option"))
+            self.assertTrue(repository_selection.node_enabled("features", "feature", "private"))
 
     def test_mips_lui_float32_adapter_preserves_instruction_and_rejects_bad_guards(self) -> None:
         replacements = {

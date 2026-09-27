@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -536,6 +537,19 @@ def write_configuration_log(
     identity_edits: tuple[dict[str, object], ...],
 ) -> None:
     log_directory.mkdir(parents=True, exist_ok=False)
+    (log_directory / "configuration.json").write_text(
+        json.dumps(
+            {
+                "supplied_overrides": configuration.selection.supplied_overrides,
+                "effective_configuration": {
+                    "features": configuration.selection.effective_configuration
+                },
+            },
+            indent=2,
+            sort_keys=True,
+        ) + "\n",
+        encoding="utf-8",
+    )
     module_rows: list[dict[str, object]] = []
     for item in results:
         module = item["module"]
@@ -894,6 +908,7 @@ def main() -> int:
     parser.add_argument("--source", required=True, type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--configuration", required=True, type=Path)
+    parser.add_argument("--overrides-json")
     parser.add_argument("--configuration-log-directory", type=Path)
     parser.add_argument(
         "--compose-only",
@@ -916,6 +931,7 @@ def main() -> int:
         configuration_path,
         workspace,
         paths.path("builder"),
+        overrides=catalog_module.parse_build_overrides(args.overrides_json),
     )
     if args.compose_only:
         composed = compose_configuration_candidate(

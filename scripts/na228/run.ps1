@@ -3,7 +3,9 @@ param(
     [Parameter(Mandatory)][ValidateSet('configuration-build')][string]$Action,
     [Parameter(Mandatory)][string]$Configuration,
     [switch]$Force,
-    [string]$LogDirectory
+    [string]$LogDirectory,
+    [string]$Postfix,
+    [string]$OverridesJson
 )
 
 $ErrorActionPreference = 'Stop'
@@ -35,6 +37,12 @@ try {
     }
     if ($Force) {
         $buildArguments.Force = $true
+    }
+    if ($PSBoundParameters.ContainsKey('Postfix')) {
+        $buildArguments.Postfix = $Postfix
+    }
+    if ($PSBoundParameters.ContainsKey('OverridesJson')) {
+        $buildArguments.OverridesJson = $OverridesJson
     }
     if (-not [string]::IsNullOrWhiteSpace($LogDirectory)) {
         $buildArguments.LogDirectory = $LogDirectory

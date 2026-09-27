@@ -6,7 +6,7 @@ paths. Use `na228 help` for the complete command syntax.
 ## Commands
 
 ```powershell
-na228 build [config] [-f]
+na228 build [config] [-f] [-postfix name] [-overrides hashtable]
 ```
 
 Every top-level JSONC under `configurations/` is discovered automatically. A
@@ -25,6 +25,19 @@ Passing `-f` to `na228 build` or a launch containing a build token ignores each
 applicable reusable registry hit, performs a fresh verified build, and replaces
 the matching cached image with a newly timestamped artifact even when its bytes
 are unchanged. A launch without a build token rejects `-f`.
+
+`na228 build` accepts dotted feature paths in a PowerShell hashtable. Values
+override the selected configuration after its base or release values are
+resolved, without editing configuration files:
+
+```powershell
+na228 build r -postfix import-manual -overrides @{ 'memory_card.auto_loading' = $false }
+```
+
+`-postfix` names the ISO and does not change its bytes. A tagged build is named
+`NA v2.28 - <local timestamp> - <postfix>.iso`; an identical tagged request
+reuses that named image. The ordinary `na228 r` cache selection remains separate
+from builds using either option.
 
 ## Launch profiles
 
@@ -57,18 +70,20 @@ under `@build/.incoming/`, then moved to
 registered. A later build removes stale incoming candidates left by interrupted
 processes without touching live builds.
 
-Distinct fingerprints and configurations that produce the same full SHA-256
-reuse the existing ISO. The registry points every matching entry to that one
-file; it does not rename, copy, or hardlink the image.
+Untagged builds with distinct fingerprints and configurations that produce the
+same full SHA-256 reuse the existing ISO. Tagged builds retain their requested
+name even when their bytes match another image.
 
 `@logs/na228/preflight/registry.json` stores byte-affecting fingerprint state,
 configuration, full ISO SHA-256, verification time, verified image size, and path;
-`preflight/records/<fingerprint>/` stores reusable structured provenance when
+variant records also retain supplied overrides and the effective feature values.
+`preflight/records/<registry key>/` stores reusable structured provenance when
 configuration logging succeeds. A log write failure is reported as a warning;
 it does not invalidate a verified ISO.
-The registry retains at most 15 unique ISOs. Pruning removes every fingerprint
-and provenance record that refers to an evicted image. A missing or corrupt
-registry causes a complete verified build and is recreated only after success.
+The registry retains at most 15 image records. Pruning removes every fingerprint
+and provenance record that refers to an evicted image; built ISO files remain
+on disk. A missing or corrupt registry causes a complete verified build and is
+recreated only after success.
 
 When [`NA228_TASK_WORK_ROOT`](../../AGENTS.md#file-and-folder-management)
 is set, builds keep their operational and structured records below the acting

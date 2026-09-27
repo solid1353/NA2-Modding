@@ -7,8 +7,10 @@ NA2.28
   -l <profile> [args]                   Launch a configured profile
   other options                         See ws help
 
-  na228 build [config] [-f]  Build or reuse without launching; defaults to b
-  na228 test                 Run unit tests
+  na228 build [config] [-f]             Build or reuse without launching; defaults to b
+              [-postfix name]
+              [-overrides hashtable]
+  na228 test                            Run unit tests
 
   na228 e2e <all|suite [args...] ...>                  Run selected suites
   na228 e2e create <all|suite [args...] ...> [-noref]  Rebuild with NUN5 reference by default

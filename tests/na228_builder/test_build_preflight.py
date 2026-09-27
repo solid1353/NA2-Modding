@@ -500,11 +500,11 @@ class BuildPreflightTests(unittest.TestCase):
             self.assertIn("2026-09-06 14.31.47", first_image.name)
             self.assertIn("2026-09-06 14.31.48", second_image.name)
             sleep.assert_called_once_with(0.01)
-            self.assertFalse(first_image.exists())
+            self.assertTrue(first_image.is_file())
             self.assertTrue(second_image.is_file())
             self.assertEqual(
                 len(list(paths["cache"].glob("NA v2.28 - *.iso"))),
-                1,
+                2,
             )
 
     def test_resolve_returns_the_newest_configuration_build(self) -> None:
@@ -562,10 +562,49 @@ class BuildPreflightTests(unittest.TestCase):
             self.assertEqual(len(registry["images"]), build_preflight.MAX_IMAGES)
             self.assertEqual(
                 len(list(paths["cache"].glob("NA v2.28 - *.iso"))),
-                build_preflight.MAX_IMAGES,
+                build_preflight.MAX_IMAGES + 1,
             )
             self.assertIsNotNone(first_image)
-            self.assertFalse(first_image.exists())
+            self.assertTrue(first_image.is_file())
+
+    def test_tagged_override_keeps_its_name_and_the_ordinary_cache_target(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self.create_workspace(Path(directory))
+            ordinary_state = self.state(paths)
+            ordinary = self.record(paths, state_fingerprint(ordinary_state))
+            override_state = self.state(
+                paths, overrides={"localization.enabled": False}
+            )
+            candidate = paths["cache"] / ".incoming" / "tagged.iso"
+            candidate.write_bytes(paths["sample_iso"].read_bytes())
+            tagged = record_registry(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                state=override_state,
+                expected_fingerprint=state_fingerprint(override_state),
+                image=candidate,
+                provenance=None,
+                postfix="import-manual",
+            )
+
+            self.assertNotEqual(tagged["image"], ordinary["image"])
+            self.assertRegex(Path(str(tagged["image"])).name, r" - import-manual\.iso$")
+            hit = lookup_registry(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                state=override_state,
+                postfix="import-manual",
+            )
+            self.assertEqual(hit["image"], tagged["image"])
+            resolved = resolve_registry(
+                workspace=paths["workspace"],
+                registry_path=paths["registry"],
+                cache_root=paths["cache"],
+                configuration_id="release",
+            )
+            self.assertEqual(resolved["image"], ordinary["image"])
 
 if __name__ == "__main__":
     unittest.main()

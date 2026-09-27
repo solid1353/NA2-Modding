@@ -2,7 +2,9 @@
 param(
     [Parameter(Mandatory)][string]$Configuration,
     [switch]$Force,
-    [string]$LogDirectory
+    [string]$LogDirectory,
+    [string]$Postfix,
+    [string]$OverridesJson
 )
 
 $ErrorActionPreference = 'Stop'
@@ -83,6 +85,12 @@ $registryArguments = @{
     Na2Iso = $paths.files.na2_iso
     Configuration = $configurationRelative
 }
+if ($PSBoundParameters.ContainsKey('Postfix')) {
+    $registryArguments.Postfix = $Postfix
+}
+if ($PSBoundParameters.ContainsKey('OverridesJson')) {
+    $registryArguments.OverridesJson = $OverridesJson
+}
 $verification = Invoke-Na2BuildRegistry -Command lookup @registryArguments
 $cacheHit = -not $Force -and $verification.status -eq 'hit'
 $configurationLogComplete = $false
@@ -104,6 +112,9 @@ else {
             '--configuration', $configurationRelative,
             '--configuration-log-directory', $configurationLogRelative
         )
+        if ($PSBoundParameters.ContainsKey('OverridesJson')) {
+            $builderArguments += @('--overrides-json', $OverridesJson)
+        }
         Push-Location $paths.repository
         try {
             $execution = Invoke-Na2BuilderModule `

@@ -52,6 +52,8 @@ try {
         -Destination (Join-Path $repository 'workshop\scripts\lib\console_help.ps1')
     Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\build_configurations.ps1') `
         -Destination (Join-Path $repository 'scripts\na228\build_configurations.ps1')
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\na228\build_options.ps1') `
+        -Destination (Join-Path $repository 'scripts\na228\build_options.ps1')
 
     [IO.File]::WriteAllText((Join-Path $repository 'game.json'), @'
 {
@@ -148,7 +150,8 @@ function ConvertFrom-UnWorkshopLaunchArguments {
 }
 '@)
     [IO.File]::WriteAllText((Join-Path $repository 'scripts\na228\run.ps1'), @'
-param([string]$Action, [string]$Configuration, [string]$LogDirectory, [switch]$Force)
+param([string]$Action, [string]$Configuration, [string]$LogDirectory,
+      [string]$Postfix, [string]$OverridesJson, [switch]$Force)
 $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $image = Join-Path $repository "build\$Configuration.iso"
 [IO.File]::WriteAllText($image, "built-$Configuration")
@@ -158,6 +161,8 @@ $image = Join-Path $repository "build\$Configuration.iso"
         action = $Action
         configuration = $Configuration
         force = $Force.IsPresent
+        postfix = $Postfix
+        overrides_json = $OverridesJson
     } | ConvertTo-Json -Compress)
 )
 [pscustomobject]@{ OutputIso = $image }
@@ -221,6 +226,17 @@ $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
             'Release alias did not route to a release configuration build.'
         Assert-CommandRouting (-not (Test-Path -LiteralPath (Join-Path $repository 'launch.json'))) `
             'Release build-only command launched a game.'
+
+        $null = & (Join-Path $repository 'na228.ps1') build r -postfix import-manual `
+            -overrides @{ 'memory_card.auto_loading' = $false }
+        $build = Get-Content -Raw -LiteralPath (Join-Path $repository 'build.json') |
+            ConvertFrom-Json
+        $overrides = $build.overrides_json | ConvertFrom-Json
+        Assert-CommandRouting (
+            $build.configuration -ceq 'release' -and
+            $build.postfix -ceq 'import-manual' -and
+            $overrides.'memory_card.auto_loading' -ceq $false
+        ) 'Build options did not preserve the hashtable value and postfix.'
 
         $null = Invoke-FakeNa228 -ArgumentList @('r')
         $launch = Get-Content -Raw -LiteralPath (Join-Path $repository 'launch.json') | ConvertFrom-Json

@@ -15,6 +15,8 @@ function Invoke-Na2BuildRegistry {
         [string]$ExpectedFingerprint,
         [string]$Image,
         [string]$Provenance,
+        [string]$Postfix,
+        [string]$OverridesJson,
         [switch]$Force
     )
 
@@ -24,6 +26,12 @@ function Invoke-Na2BuildRegistry {
             '--na2-iso', $Na2Iso,
             '--configuration', $Configuration
         )
+        if ($PSBoundParameters.ContainsKey('Postfix')) {
+            $arguments += @('--postfix', $Postfix)
+        }
+        if ($PSBoundParameters.ContainsKey('OverridesJson')) {
+            $arguments += @('--overrides-json', $OverridesJson)
+        }
     }
     if ($Command -eq 'record') {
         $arguments += @(

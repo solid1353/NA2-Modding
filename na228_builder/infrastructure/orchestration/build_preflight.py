@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import shutil
 import time
 import zlib
@@ -13,6 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .configuration import configuration_resource_files, load_configuration
+from .catalog import parse_build_overrides
 from scripts.lib.paths import load_paths
 
 
@@ -53,6 +55,20 @@ def canonical_json(value: object) -> bytes:
 
 def state_fingerprint(state: dict[str, object]) -> str:
     return bytes_sha256(canonical_json(state))
+
+
+def _variant_key(fingerprint: str, postfix: str | None) -> str:
+    if postfix is None:
+        return fingerprint
+    return bytes_sha256(canonical_json({"fingerprint": fingerprint, "postfix": postfix}))
+
+
+def _validate_postfix(postfix: str | None) -> None:
+    if postfix is None:
+        return
+    if (not postfix or postfix != postfix.strip(" .") or
+        re.search(r'[<>:"/\\|?*\x00-\x1f]', postfix)):
+        raise ValueError("Invalid ISO filename postfix")
 
 
 def _valid_sha256(value: object) -> bool:
@@ -118,6 +134,7 @@ def builder_tree_entry(builder: Path) -> dict[str, object]:
 def configuration_resources_entry(
     workspace: Path,
     configuration_path: Path,
+    overrides: dict[str, object] | None = None,
 ) -> dict[str, object]:
     paths = load_paths(workspace)
     configuration = load_configuration(
@@ -125,6 +142,7 @@ def configuration_resources_entry(
         workspace,
         paths.path("builder"),
         project_paths=paths,
+        overrides=overrides,
     )
     files = sorted(
         set(configuration_resource_files(configuration)) | {paths.manifest},
@@ -159,13 +177,19 @@ def configuration_resources_entry(
         digest.update(b"\0")
         digest.update(content_hash.encode("ascii"))
         digest.update(b"\n")
-    return {
+    result = {
         "label": "configuration_resources",
         "file_count": len(files),
         "size": total_size,
         "sha256": digest.hexdigest().upper(),
         "uses_ee_compiler": any(path.suffix in {".c", ".S"} for path in files),
     }
+    if overrides is not None:
+        result["supplied_overrides"] = overrides
+        result["effective_configuration"] = {
+            "features": configuration.selection.effective_configuration
+        }
+    return result
 
 
 def ee_toolchain_entry(workspace: Path) -> dict[str, object]:
@@ -218,6 +242,7 @@ def collect_build_state(
     na2_iso: Path,
     configuration_path: Path,
     dependencies: dict[str, str] | None = None,
+    overrides: dict[str, object] | None = None,
 ) -> dict[str, object]:
     workspace = workspace.resolve()
     na2_iso = na2_iso.resolve()
@@ -229,7 +254,7 @@ def collect_build_state(
         raise ValueError("Configuration must be inside na228_builder") from error
     if not configuration_path.is_file():
         raise FileNotFoundError(configuration_path)
-    resources = configuration_resources_entry(workspace, configuration_path)
+    resources = configuration_resources_entry(workspace, configuration_path, overrides)
     state = {
         "fingerprint_schema_version": FINGERPRINT_SCHEMA_VERSION,
         "source_isos": [
@@ -355,7 +380,7 @@ def _entry_image(
     sha256 = entry.get("sha256")
     if not _valid_sha256(sha256):
         return None
-    image = images.get(sha256)
+    image = images.get(entry.get("image_key", sha256))
     if not isinstance(image, dict):
         return None
     size = image.get("size")
@@ -377,8 +402,10 @@ def lookup_registry(
     registry_path: Path,
     cache_root: Path,
     state: dict[str, object],
+    postfix: str | None = None,
 ) -> dict[str, object]:
     fingerprint = state_fingerprint(state)
+    entry_key = _variant_key(fingerprint, postfix)
     try:
         registry = _read_registry(registry_path)
     except (OSError, ValueError, json.JSONDecodeError) as error:
@@ -388,7 +415,7 @@ def lookup_registry(
             "detail": str(error),
             "fingerprint": fingerprint,
         }
-    entry = registry["entries"].get(fingerprint)
+    entry = registry["entries"].get(entry_key)
     if not isinstance(entry, dict) or entry.get("state") != state:
         return {
             "status": "miss",
@@ -397,7 +424,7 @@ def lookup_registry(
         }
     sha256 = entry.get("sha256")
     images = registry["images"]
-    image_record = images.get(sha256) if isinstance(images, dict) else None
+    image_record = images.get(entry.get("image_key", sha256)) if isinstance(images, dict) else None
     size = image_record.get("size") if isinstance(image_record, dict) else None
     if not isinstance(size, int) or size < 0 or not _valid_sha256(sha256):
         return {
@@ -414,7 +441,7 @@ def lookup_registry(
             "output_size_bytes": size,
             "output_sha256": sha256,
         }
-    provenance = registry_path.parent / "records" / fingerprint
+    provenance = registry_path.parent / "records" / entry_key
     result: dict[str, object] = {
         "status": "hit",
         "reason": "verified-build-match",
@@ -451,6 +478,7 @@ def resolve_registry(
             for fingerprint, entry in registry["entries"].items()
             if isinstance(entry, dict)
             and entry.get("configuration") == configuration_id
+            and not entry.get("variant")
         ),
         key=lambda item: str(item[1].get("verified_utc", "")),
         reverse=True,
@@ -465,7 +493,7 @@ def resolve_registry(
         if image is None:
             continue
         sha256 = entry["sha256"]
-        image_record = registry["images"][sha256]
+        image_record = registry["images"][entry.get("image_key", sha256)]
         result: dict[str, object] = {
             "status": "resolved",
             "configuration": configuration_id,
@@ -507,35 +535,36 @@ def _prune_registry(registry: dict[str, object]) -> None:
     assert isinstance(entries, dict)
     images = registry["images"]
     assert isinstance(images, dict)
-    newest_by_hash: dict[str, str] = {}
+    newest_by_image: dict[str, str] = {}
     for entry in entries.values():
         if not isinstance(entry, dict):
             continue
         sha256 = entry.get("sha256")
         if not _valid_sha256(sha256):
             continue
+        image_key = entry.get("image_key", sha256)
+        if not isinstance(image_key, str):
+            continue
         verified = str(entry.get("verified_utc", ""))
-        newest_by_hash[sha256] = max(newest_by_hash.get(sha256, ""), verified)
-    retained_hashes = {
-        sha256
-        for sha256, _ in sorted(
-            newest_by_hash.items(), key=lambda item: item[1], reverse=True
+        newest_by_image[image_key] = max(newest_by_image.get(image_key, ""), verified)
+    retained_images = {
+        image_key
+        for image_key, _ in sorted(
+            newest_by_image.items(), key=lambda item: item[1], reverse=True
         )[:MAX_IMAGES]
     }
-    for sha256 in list(images):
-        if sha256 not in retained_hashes:
-            del images[sha256]
+    for image_key in list(images):
+        if image_key not in retained_images:
+            del images[image_key]
     for fingerprint in list(entries):
         entry = entries[fingerprint]
-        if not isinstance(entry, dict) or entry.get("sha256") not in retained_hashes:
+        if not isinstance(entry, dict) or entry.get("image_key", entry.get("sha256")) not in retained_images:
             del entries[fingerprint]
 
 
-def _cleanup_registry_artifacts(
+def _cleanup_registry_records(
     registry: dict[str, object],
     registry_path: Path,
-    workspace: Path,
-    cache_root: Path,
 ) -> None:
     entries = registry["entries"]
     assert isinstance(entries, dict)
@@ -548,20 +577,6 @@ def _cleanup_registry_artifacts(
                     shutil.rmtree(record)
                 except OSError:
                     pass
-    retained_images = {
-        (workspace / image["path"]).resolve()
-        for image in registry["images"].values()
-        if isinstance(image, dict) and isinstance(image.get("path"), str)
-    }
-    for image in cache_root.glob(f"{ISO_NAME_PREFIX} - *.iso"):
-        if image.resolve() in retained_images:
-            continue
-        try:
-            image.unlink()
-        except OSError:
-            pass
-
-
 def _cleanup_cache_temporaries(cache_root: Path) -> None:
     if not cache_root.is_dir():
         return
@@ -583,8 +598,10 @@ def record_registry(
     image: Path,
     provenance: Path | None,
     force: bool = False,
+    postfix: str | None = None,
 ) -> dict[str, object]:
     fingerprint = state_fingerprint(state)
+    entry_key = _variant_key(fingerprint, postfix)
     if fingerprint != expected_fingerprint:
         return {
             "status": "skipped",
@@ -606,14 +623,15 @@ def record_registry(
                 registry = _read_registry(registry_path)
             except (OSError, ValueError, json.JSONDecodeError):
                 registry = _empty_registry()
-            record_directory = registry_path.parent / "records" / fingerprint
+            record_directory = registry_path.parent / "records" / entry_key
             if provenance is not None:
                 record_directory.parent.mkdir(parents=True, exist_ok=True)
                 _copy_provenance(provenance.resolve(), record_directory)
             cache_root.mkdir(parents=True, exist_ok=True)
             images = registry["images"]
             assert isinstance(images, dict)
-            existing_image = None if force else images.get(sha256)
+            image_key = entry_key if postfix is not None else sha256
+            existing_image = None if force or postfix is not None else images.get(image_key)
             if isinstance(existing_image, dict):
                 if existing_image.get("size") != size:
                     raise RuntimeError(
@@ -637,20 +655,16 @@ def record_registry(
                     local_timestamp = datetime.now().astimezone().strftime(
                         "%Y-%m-%d %H.%M.%S"
                     )
+                    suffix = postfix if postfix is not None else sha256[:12]
                     cache_image = cache_root / (
-                        f"{ISO_NAME_PREFIX} - {local_timestamp} - {sha256[:12]}.iso"
+                        f"{ISO_NAME_PREFIX} - {local_timestamp} - {suffix}.iso"
                     )
-                    if not force or not cache_image.exists():
+                    if not cache_image.exists():
                         break
                     time.sleep(0.01)
-                if cache_image.exists():
-                    if not _valid_image(cache_image, size, sha256):
-                        raise RuntimeError(f"Cached ISO name collision: {cache_image}")
-                    cache_image_preexisting = True
-                    image.unlink()
-                else:
-                    os.replace(image, cache_image)
-                images[sha256] = {
+                os.link(image, cache_image)
+                image.unlink()
+                images[image_key] = {
                     "size": size,
                     "path": _relative_workspace_path(cache_image, workspace),
                     "created_utc": datetime.now(timezone.utc).isoformat(),
@@ -659,17 +673,34 @@ def record_registry(
             if not isinstance(configuration_value, str):
                 raise ValueError("Build state has no configuration path")
             configuration_id = Path(configuration_value).stem
-            registry["entries"][fingerprint] = {
+            resources = state.get("configuration_resources")
+            assert isinstance(resources, dict)
+            effective_configuration = resources.get("effective_configuration")
+            if effective_configuration is None:
+                paths = load_paths(workspace)
+                selected = load_configuration(
+                    paths.path("builder") / configuration_value,
+                    workspace,
+                    paths.path("builder"),
+                    project_paths=paths,
+                )
+                effective_configuration = {
+                    "features": selected.selection.effective_configuration
+                }
+            registry["entries"][entry_key] = {
                 "state": state,
                 "configuration": configuration_id,
+                "supplied_overrides": resources.get("supplied_overrides"),
+                "effective_configuration": effective_configuration,
                 "sha256": sha256,
+                "image_key": image_key,
+                "variant": postfix is not None or "supplied_overrides" in state.get("configuration_resources", {}),
+                "postfix": postfix,
                 "verified_utc": datetime.now(timezone.utc).isoformat(),
             }
             _prune_registry(registry)
             _write_registry(registry_path, registry)
-            _cleanup_registry_artifacts(
-                registry, registry_path, workspace, cache_root
-            )
+            _cleanup_registry_records(registry, registry_path)
         except BaseException:
             if (
                 not image.exists()
@@ -693,9 +724,9 @@ def record_registry(
     }
     if cache_image is not None:
         result["image"] = str(cache_image.resolve())
-    if (registry_path.parent / "records" / fingerprint).is_dir():
+    if (registry_path.parent / "records" / entry_key).is_dir():
         result["provenance"] = str(
-            (registry_path.parent / "records" / fingerprint).resolve()
+            (registry_path.parent / "records" / entry_key).resolve()
         )
     return result
 
@@ -719,6 +750,8 @@ def main() -> int:
         command.add_argument("--configuration", required=True, type=Path)
         command.add_argument("--registry", required=True, type=Path)
         command.add_argument("--cache-root", required=True, type=Path)
+        command.add_argument("--postfix")
+        command.add_argument("--overrides-json")
         if name == "record":
             command.add_argument("--expected-fingerprint", required=True)
             command.add_argument("--image", required=True, type=Path)
@@ -733,10 +766,13 @@ def main() -> int:
     paths = load_paths(Path(__file__).resolve(), allow_missing=True)
     workspace = paths.repository
     if args.command in {"lookup", "record"}:
+        _validate_postfix(args.postfix)
+        overrides = parse_build_overrides(args.overrides_json)
         state = collect_build_state(
             workspace=workspace,
             na2_iso=args.na2_iso,
             configuration_path=_configuration_path(args.configuration, workspace),
+            overrides=overrides,
         )
         if args.command == "lookup":
             result = lookup_registry(
@@ -744,6 +780,7 @@ def main() -> int:
                 registry_path=args.registry,
                 cache_root=args.cache_root,
                 state=state,
+                postfix=args.postfix,
             )
         else:
             result = record_registry(
@@ -755,6 +792,7 @@ def main() -> int:
                 image=args.image,
                 provenance=args.provenance,
                 force=args.force,
+                postfix=args.postfix,
             )
     else:
         result = resolve_registry(

@@ -6,6 +6,7 @@ $paths = Get-Na2Paths
 . (Join-Path ([string]$paths.scripts) 'na228\launch_profile.ps1')
 . (Join-Path ([string]$paths.scripts) 'na228\build_configurations.ps1')
 . (Join-Path ([string]$paths.scripts) 'na228\build_registry.ps1')
+. (Join-Path ([string]$paths.scripts) 'na228\build_options.ps1')
 . (Join-Path ([string]$paths.pcsx2_scripts) 'launch_arguments.ps1')
 $buildConfigurations = Get-Na2BuildConfigurations -Paths $paths
 
@@ -104,7 +105,14 @@ function Test-Na228GameToken {
     return $null -ne $paths.games.Aliases.PSObject.Properties[$candidate]
 }
 
-[string[]]$commandTokens = @($args)
+$buildOptions = $null
+if ($args.Count -gt 0 -and [string]$args[0] -ieq 'build') {
+    $buildOptions = Get-Na2BuildOptions -Tokens ([object[]]@($args))
+    [string[]]$commandTokens = @($buildOptions.Tokens)
+}
+else {
+    [string[]]$commandTokens = @($args)
+}
 $turboTokens = @($commandTokens | Where-Object { $_ -ieq '-t' })
 if ($turboTokens.Count -gt 1) {
     throw '-t may be specified only once.'
@@ -267,7 +275,7 @@ if ($mode -eq 'release') {
 
 if ($mode -eq 'build') {
     if ($arguments.Count -gt 1) {
-        throw 'Usage: na228 build [config] [-f]'
+        throw 'Usage: na228 build [config] [-f] [-postfix name] [-overrides hashtable]'
     }
     $selector = if ($arguments.Count -eq 1) { $arguments[0] } else { 'b' }
     $configuration = Resolve-Na2BuildConfiguration `
@@ -278,6 +286,12 @@ if ($mode -eq 'build') {
     }
     if ($force) {
         $runArguments.Force = $true
+    }
+    if ($null -ne $buildOptions.Postfix) {
+        $runArguments.Postfix = $buildOptions.Postfix
+    }
+    if ($null -ne $buildOptions.OverridesJson) {
+        $runArguments.OverridesJson = $buildOptions.OverridesJson
     }
     if (-not [string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)) {
         $task = Get-Na2TaskContext -TaskRoot $env:NA228_TASK_WORK_ROOT -Paths $paths

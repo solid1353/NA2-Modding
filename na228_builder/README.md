@@ -1,8 +1,9 @@
 # NA2.28 builder
 
 The builder composes the selected configuration and patch data into a verified
-NA2.28 ISO. Use `na228 build [config] [-f]`; command details and cache behavior
-are in the [build runbook](../docs/runbooks/build.md).
+NA2.28 ISO. Use `na228 build [config] [-f] [-postfix name]
+[-overrides hashtable]`; command details and cache behavior are in the
+[build runbook](../docs/runbooks/build.md).
 
 ## Inputs
 

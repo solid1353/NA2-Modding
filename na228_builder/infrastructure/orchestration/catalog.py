@@ -57,6 +57,15 @@ class ConfigurationError(ValueError):
     """A user-supplied configuration does not satisfy the catalog contract."""
 
 
+def parse_build_overrides(value: str | None) -> dict[str, object] | None:
+    if value is None:
+        return None
+    parsed = json.loads(value)
+    if not isinstance(parsed, dict):
+        raise ConfigurationError("Build overrides must be a JSON object")
+    return parsed
+
+
 @dataclass(frozen=True)
 class CatalogNode:
     path: tuple[str, ...]
@@ -96,6 +105,8 @@ class CatalogSelection:
     injections: dict[str, dict[str, object]]
     string_patches: dict[str, dict[str, object]]
     nodes: tuple[CatalogNode, ...]
+    effective_configuration: object
+    supplied_overrides: dict[str, object] | None
 
     @property
     def patch_nodes(self) -> tuple[CatalogNode, ...]:
@@ -1212,6 +1223,7 @@ def _effective_configuration(
     *,
     release_defaults_path: Path | None = None,
     release_definition_path: Path | None = None,
+    overrides: dict[str, object] | None = None,
 ) -> tuple[Path | None, object]:
     repository_configuration_root = (catalog_path.parent / "configurations").resolve()
     if (
@@ -1286,12 +1298,41 @@ def _effective_configuration(
             problems.append("unknown keys: " + ", ".join(extra))
         raise ConfigurationError(f"Invalid config root: {'; '.join(problems)}")
     _validate_configuration_value(root, effective, ("features",))
+    if overrides:
+        nested: dict[str, object] = {}
+        assigned_paths: list[str] = []
+        for dotted_path, value in overrides.items():
+            if not isinstance(dotted_path, str) or not dotted_path or any(
+                not IDENTIFIER.fullmatch(part) for part in dotted_path.split(".")
+            ):
+                raise ConfigurationError(f"Invalid config override path: {dotted_path!r}")
+            if any(
+                dotted_path == previous
+                or dotted_path.startswith(previous + ".")
+                or previous.startswith(dotted_path + ".")
+                for previous in assigned_paths
+            ):
+                raise ConfigurationError(f"Overlapping config override: {dotted_path}")
+            assigned_paths.append(dotted_path)
+            branch = nested
+            parts = dotted_path.split(".")
+            for part in parts[:-1]:
+                previous = branch.setdefault(part, {})
+                if not isinstance(previous, dict):
+                    raise ConfigurationError(f"Overlapping config override: {dotted_path}")
+                branch = previous
+            if parts[-1] in branch:
+                raise ConfigurationError(f"Overlapping config override: {dotted_path}")
+            branch[parts[-1]] = value
+        effective = _merge_configuration_value(root, effective, nested, ("features",))
+        _validate_configuration_value(root, effective, ("features",))
     return base_path, effective
 
 
 def load_selection(catalog_path: Path, configuration_path: Path, *,
                    release_defaults_path: Path | None = None,
-                   release_definition_path: Path | None = None) -> CatalogSelection:
+                   release_definition_path: Path | None = None,
+                   overrides: dict[str, object] | None = None) -> CatalogSelection:
     catalog_path = catalog_path.resolve()
     configuration_path = configuration_path.resolve()
     features, catalog_files = _read_catalog(catalog_path)
@@ -1307,6 +1348,7 @@ def load_selection(catalog_path: Path, configuration_path: Path, *,
         catalog_path, configuration_path, features,
         release_defaults_path=release_defaults_path,
         release_definition_path=release_definition_path,
+        overrides=overrides,
     )
     nodes = _apply_patch_metadata(
         _selected_nodes(_feature_root(features), effective),
@@ -1325,6 +1367,8 @@ def load_selection(catalog_path: Path, configuration_path: Path, *,
         injections=injections,
         string_patches=string_patches,
         nodes=nodes,
+        effective_configuration=effective,
+        supplied_overrides=overrides,
     )
     _startup_fast_forward_override(selection.patch_nodes)
     return selection

@@ -1,6 +1,6 @@
 # Save-data record format and lifecycle
 
-This document describes the resident-ELF save implementation for NA2.28. It
+This document describes the resident-ELF save implementation for retail NA2. It
 covers the on-card file set, the `0x2400`-byte profile record, validation and
 copy behavior, profile defaults, and the relationship between the three
 visible slots and the UI-hidden fourth record. Adventure-mode field consumers are
@@ -793,6 +793,17 @@ These text and choice layouts were established from the clean resident code
 and its fixed position records, not from a modified dialog capture.
 
 ## Creation, repair, and negative results
+
+Before checking file allocation, `FUN_001c20a0` queries the directory path
+stored at the start of the card context and compares returned names with that
+path without its leading slash. A missing match returns `4` when free space
+meets the expected allocation, or `3` otherwise. The same results can follow
+a nonpositive directory-query result other than the separately handled card
+errors; result `4` alone does not establish why the directory was not found.
+In load mode, `FUN_001e2140` maps either `3` or `4` to status `0x29`, result
+`1`, and idle operation `1`, returning before descriptor or profile reads.
+These branches were confirmed through read-only GhidrAssist decompilation of
+both functions.
 
 `FUN_001c20a0` checks the complete directory allocation before descriptor scan
 or profile read. It sums `(file_size + 0x3FF) >> 10` for every returned entry,

@@ -5,9 +5,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.infrastructure.orchestration import catalog, jsonc
-from na228_builder.patches.localization.mod_strings import ModStrings
+from na228_builder.infrastructure.orchestration import catalog
 from scripts.lib.paths import load_local_paths
+from tests.na228_builder._fixtures import test_features
 
 
 class ControlSettingsTests(unittest.TestCase):
@@ -16,13 +16,8 @@ class ControlSettingsTests(unittest.TestCase):
         cls.paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         cls.builder = cls.paths.path("builder")
         cls.catalog_path = cls.builder / "catalog.modcat"
-        cls.configurations = cls.builder / "configurations"
-
     def _base_features(self) -> dict[str, object]:
-        base = jsonc.loads(
-            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
-        )
-        return base["features"]
+        return test_features()
 
     def _write_full_configuration(self, features: dict[str, object]) -> Path:
         directory = tempfile.TemporaryDirectory()
@@ -48,9 +43,7 @@ class ControlSettingsTests(unittest.TestCase):
                 substitution=substitution_enabled,
             ):
                 features = self._base_features()
-                features["default_settings"]["mod_settings"][
-                    "controls"
-                ] = "updated" if controls_enabled else "classic"
+                features["general"]["new_controls"] = controls_enabled
                 mechanics = features["default_settings"]["battle_mechanics"]
                 substitution = mechanics["substitution"]
                 mechanics["substitution"] = (
@@ -65,7 +58,7 @@ class ControlSettingsTests(unittest.TestCase):
                     for node in selection.nodes
                     if node.path
                     == (
-                        "features", "default_settings", "mod_settings", "controls"
+                        "features", "general", "new_controls"
                     )
                 )
                 substitution = next(
@@ -77,50 +70,31 @@ class ControlSettingsTests(unittest.TestCase):
                         "substitution",
                     )
                 )
-                self.assertTrue(controls.enabled)
-                self.assertEqual(controls.configured_value, "updated" if controls_enabled else "classic")
+                self.assertEqual(controls.enabled, controls_enabled)
                 self.assertEqual(substitution.enabled, substitution_enabled)
                 active_edits = {
                     node.patch
-                    for node in selection.feature_nodes("default_settings")
+                    for node in selection.nodes
                     if node.enabled and node.patch in selection.edits
                 }
                 active_injections = {
                     node.patch
-                    for node in selection.feature_nodes("default_settings")
+                    for node in selection.nodes
                     if node.enabled and node.patch in selection.injections
                 }
                 self.assertEqual(
-                    "settings.new_controls" in active_edits,
-                    True,
+                    "general.new_controls" in active_edits,
+                    controls_enabled,
                 )
                 self.assertEqual(
-                    "settings.new_controls" in active_injections,
-                    True,
+                    "general.new_controls" in active_injections,
+                    controls_enabled,
                 )
                 self.assertEqual(
                     "settings.battle_mechanics.substitution"
                     in active_injections,
                     substitution_enabled,
                 )
-
-    def test_control_settings_owns_substitution_label(self) -> None:
-        selection = catalog.load_selection(
-            self.catalog_path,
-            self.configurations / "base.jsonc",
-        )
-        controls = selection.injections["settings.new_controls"]
-        self.assertIn("label_substitution_action", controls["hooks"])
-        self.assertEqual(
-            ModStrings(selection).native_payload(
-                controls["hooks"]["label_substitution_action"]["symbol"]),
-            b"Substitution\0",
-        )
-
-        gauge = selection.injections[
-            "settings.battle_mechanics.substitution"
-        ]
-        self.assertNotIn("label_substitution_action", gauge["hooks"])
 
 
 if __name__ == "__main__":

@@ -7,7 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.infrastructure.orchestration import catalog, jsonc
+from na228_builder.infrastructure.orchestration import catalog
+from tests.na228_builder._fixtures import test_features
 from na228_builder.patches.settings.character_overrides.character_overrides import (
     OVERRIDE_FIELDS,
     REFERENCE_FIELDS,
@@ -82,11 +83,6 @@ class CharacterOverrideTests(unittest.TestCase):
         repository = Path(__file__).resolve().parents[2]
         builder = repository / "na228_builder"
         catalog_path = builder / "catalog.modcat"
-        base = jsonc.loads(
-            (builder / "configurations" / "base.jsonc").read_text(
-                encoding="utf-8"
-            )
-        )
         cases = (
             (False, False),
             (False, True),
@@ -101,7 +97,7 @@ class CharacterOverrideTests(unittest.TestCase):
                 ),
                 tempfile.TemporaryDirectory() as directory,
             ):
-                features = json.loads(json.dumps(base["features"]))
+                features = test_features()
                 mod_settings = features["default_settings"]["mod_settings"]
                 mod_settings["character_balance"] = "overrides" if overrides_enabled else "original"
                 mod_settings["balance_overlay"] = "on" if overlay_enabled else "off"

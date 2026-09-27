@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-from na228_builder.infrastructure.orchestration import catalog, jsonc
+from na228_builder.infrastructure.orchestration import catalog
 from na228_builder.patches.localization.mod_strings import ModStrings
 from na228_builder.patches.settings.ingame.battle_mode.battle_settings import (
     _active_pages,
@@ -16,6 +16,7 @@ from na228_builder.patches.settings.ingame.battle_mode.battle_settings import (
 from scripts.lib.paths import load_local_paths
 from na228_builder.patches.settings.ingame.shared.menu_options import MenuOption
 from na228_builder.patches.settings.ingame.shared.menu_pages import page_resource_fragments
+from tests.na228_builder._fixtures import test_features
 
 
 class BattleSettingsTests(unittest.TestCase):
@@ -25,16 +26,19 @@ class BattleSettingsTests(unittest.TestCase):
         cls.repository = cls.paths.repository
         cls.builder = cls.paths.path("builder")
         cls.catalog_path = cls.builder / "catalog.modcat"
-        cls.configurations = cls.builder / "configurations"
+        directory = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(directory.cleanup)
+        configuration = Path(directory.name) / "configuration.jsonc"
+        configuration.write_text(
+            json.dumps({"features": test_features()}), encoding="utf-8"
+        )
         cls.selection = catalog.load_selection(
             cls.catalog_path,
-            cls.configurations / "base.jsonc",
+            configuration,
         )
 
     def _selection(self, mutate) -> catalog.CatalogSelection:
-        base = jsonc.loads(
-            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
-        )
+        base = {"features": test_features()}
         mutate(base["features"])
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)

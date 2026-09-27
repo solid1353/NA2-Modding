@@ -6,9 +6,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.infrastructure.orchestration import catalog, jsonc
+from na228_builder.infrastructure.orchestration import catalog
 from na228_builder.patches.settings.ingame.battle_mechanics.substitution.substitution_gauge import substitution_gauge_fragment
 from scripts.lib.paths import load_local_paths
+from tests.na228_builder._fixtures import test_features
 
 
 class SubstitutionGaugeTests(unittest.TestCase):
@@ -17,7 +18,6 @@ class SubstitutionGaugeTests(unittest.TestCase):
         cls.paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         cls.builder = cls.paths.path("builder")
         cls.catalog_path = cls.builder / "catalog.modcat"
-        cls.configurations = cls.builder / "configurations"
 
     def _write_full_configuration(self, features: dict[str, object]) -> Path:
         directory = tempfile.TemporaryDirectory()
@@ -30,10 +30,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
         return path
 
     def _base_features(self) -> dict[str, object]:
-        base = jsonc.loads(
-            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
-        )
-        return base["features"]
+        return test_features()
 
     def test_false_disables_gauge(self) -> None:
         features = self._base_features()
@@ -93,17 +90,8 @@ class SubstitutionGaugeTests(unittest.TestCase):
             (3, 12, 15, 20480, 0, 0, 0, 0, 0),
         )
 
-    def test_partial_configuration_inherits_omitted_defaults(self) -> None:
+    def test_partial_configuration_uses_omitted_field_defaults(self) -> None:
         features = self._base_features()
-        base_selection = catalog.load_selection(
-            self.catalog_path,
-            self._write_full_configuration(features),
-        )
-        base_gauge = substitution_gauge_fragment(
-            base_selection,
-            owner="battle.runtime_injector",
-        )
-        assert base_gauge is not None
         features["default_settings"]["battle_mechanics"][
             "substitution"
         ] = {
@@ -124,11 +112,10 @@ class SubstitutionGaugeTests(unittest.TestCase):
         self.assertIsNotNone(gauge)
         assert gauge is not None
         actual = struct.unpack("<9I", gauge.payload)
-        base = struct.unpack("<9I", base_gauge.payload)
         self.assertEqual((actual[2], actual[4], actual[5]), (600, 0, 2))
         self.assertEqual(
             (actual[0], actual[1], actual[3], actual[6:]),
-            (base[0], base[1], base[3], base[6:]),
+            (60, 240, 20480, (0, 0, 0)),
         )
 
     def test_gauge_can_coexist_with_support_on(self) -> None:
@@ -194,7 +181,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
     ) -> None:
         selection = catalog.load_selection(
             self.catalog_path,
-            self.configurations / "base.jsonc",
+            self._write_full_configuration(self._base_features()),
         )
         gauge = selection.injections[
             "settings.battle_mechanics.substitution"

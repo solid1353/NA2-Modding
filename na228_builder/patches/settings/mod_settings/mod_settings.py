@@ -168,7 +168,6 @@ def mod_settings_state_fragment(
 ) -> PayloadFragment:
     selected = {node.path: node for node in selection.nodes}
     values = (
-        int(selected[MOD_SETTINGS_PATH + ("controls",)].configured_value == "updated"),
         int(selected[MOD_SETTINGS_PATH + ("simple_display",)].configured_value == "on"),
         int(selected[MOD_SETTINGS_PATH + ("character_balance",)].configured_value == "overrides"),
         int(selected[MOD_SETTINGS_PATH + ("balance_overlay",)].configured_value == "on"),
@@ -181,7 +180,7 @@ def mod_settings_state_fragment(
         symbol="mod_settings_state",
         kind="data",
         alignment=4,
-        payload=struct.pack("<10I", *values, *values),
+        payload=struct.pack("<8I", *values, *values),
     )
 
 

@@ -136,12 +136,11 @@ typedef void (*DrawSpriteRect)(
     const u16 *rectangle
 );
 typedef struct ModSettingsState {
-    u32 control_scheme;
     u32 simple_display;
     u32 character_balance;
     u32 balance_overlay;
     u32 support_selection;
-    u32 defaults[5];
+    u32 defaults[4];
 } ModSettingsState;
 
 typedef struct ModSettingsBackdrop {
@@ -197,7 +196,7 @@ static const u16 mod_settings_square_rectangle[4]
 
 static u32 *mod_settings_field(u32 argument)
 {
-    if (argument >= 5u) {
+    if (argument >= 4u) {
         return (u32 *)0;
     }
     return &((u32 *)&mod_settings_state)[argument];
@@ -205,7 +204,7 @@ static u32 *mod_settings_field(u32 argument)
 
 static u32 mod_settings_maximum(u32 argument)
 {
-    return argument == 4u ? 2u : 1u;
+    return argument == 3u ? 2u : 1u;
 }
 
 MOD_SETTINGS_SECTION(".text.mod_settings_option_get")
@@ -540,7 +539,7 @@ void mod_settings_option_set(u32 argument, u32 value)
         return;
     }
     *field = value;
-    if (argument == 1u) {
+    if (argument == 0u) {
         mod_settings_apply_simple_display(value);
     }
 }

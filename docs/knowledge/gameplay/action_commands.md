@@ -313,6 +313,9 @@ The matcher examines `a3 + 1` records, newest to oldest from the post-skip
 start, and wraps through index zero. It first applies `candidate &= t2`.
 Subset mode accepts `(candidate & requested) == requested`; exact mode accepts
 `candidate == requested`.
+The binding accessor at live `0x006EF7F0` returns a zero binding unchanged.
+Such a binding satisfies the subset comparison for every candidate, so a caller
+cannot use zero to represent an unbound action without an additional guard.
 
 There is one direction-specific repair for newly pressed words. If the request
 contains diagonal nibble `0x3000`, `0x6000`, `0xC000`, or `0x9000`, and the
@@ -370,6 +373,10 @@ new-press path.
 ## Logical-mask translation
 
 The translator reads the current history record and writes object `+0xAC`.
+During its two Guard-binding checks, `a0` holds the logical bits accumulated
+from the earlier actions. The second check at live `0x006EFF2C` adds its result
+to that same `a0` value before storing the logical mask; losing `a0` there
+corrupts the translated input.
 The confirmed binding-to-logical mapping is:
 
 | Native condition | Logical output |

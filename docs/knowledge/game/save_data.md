@@ -656,6 +656,12 @@ or more editor selections at `-1`; the confirmation loop later uses those
 selection values as indices into an eight-halfword stack array. This malformed-
 map path was not exercised at runtime, so no stronger consequence is claimed.
 
+The editor's shoulder selector `FUN_003881F0` cycles action indices `4..6`.
+Its label renderer `FUN_003885B0` indexes the eight-pointer table at
+`0x005B2590`; the first entry points to the Ultimate Jutsu Prep string.
+On confirmation, `FUN_00387E10` uses each selected action index to fill the
+eight-halfword save map. Its array size follows the eight native actions.
+
 Character status reset zeroes all 94 bytes, then writes `0x03` for exactly 22
 IDs from `DAT_005C06C0`:
 

@@ -12,12 +12,10 @@ common.free	Free	消費なし
 common.nerfed	Nerfed	弱体化
 common.all	All	すべて
 common.relevant	Relevant	関連のみ
-common.classic	Classic	従来
-common.updated	Updated	変更版
 common.original	Original	原作
 common.overrides	Overrides	調整版
-settings.control_scheme.label	Control Scheme	操作設定
-settings.control_scheme.help	Choose the gameplay control interpretation.	バトル中の操作方式を選択します。
+controls.guard_sub_1.label	Guard/Sub 1	ガード/変わり身1
+controls.guard_sub_2.label	Guard/Sub 2	ガード/変わり身2
 settings.simple_display.label	Simple Display	簡易表示
 settings.simple_display.help	Choose the battle Simple Display state.	バトル中の簡易表示を設定します。
 settings.character_balance.label	Character Balance	キャラ性能

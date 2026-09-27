@@ -149,7 +149,7 @@ extern u32 mod_settings_option_get(u32 argument);
 
 static __attribute__((always_inline)) inline u32 support_selection_mode(void)
 {
-    return mod_settings_option_get(4u);
+    return mod_settings_option_get(3u);
 }
 
 typedef struct AdditionalSupportEntry {

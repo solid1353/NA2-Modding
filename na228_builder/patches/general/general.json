@@ -1,4 +1,211 @@
 {
+  "general.new_controls": {
+    "description": "Expose separate Guard and Substitution actions plus two Guard/Sub choices without the native editor's eight-action permutation restriction.",
+    "edits": {
+      "default_battle_overlay_bindings": {
+        "description": "Leave the two native Guard/Sub actions unbound while retaining Item Select on L2 and Linked Attack on R2.",
+        "operation": "replace",
+        "destination_target_id": "na2_btl",
+        "destination_offset": "0x1E4250",
+        "expected_hex": "10002000400080000400080001000200",
+        "replacement_hex": "10002000400080000100020000000000"
+      },
+      "default_control_settings_reset_selections": {
+        "description": "Make the Control Settings Select-button reset assign Substitution to L1, Guard to R1, Item Select to L2, and Linked Attack to R2 for either player.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x4D5350",
+        "expected_hex": "010000000000000003000000020000000400000005000000060000000700000001000000",
+        "replacement_hex": "010000000000000003000000020000000900000008000000040000000500000001000000"
+      },
+      "default_resident_bindings": {
+        "description": "Leave the two native Guard/Sub actions unbound while retaining Item Select on L2 and Linked Attack on R2 in every resident controller bank.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x4C07A0",
+        "expected_hex": "10002000400080000400080001000200",
+        "replacement_hex": "10002000400080000100020000000000"
+      },
+      "include_substitution_in_shoulder_assignment_selector": {
+        "description": "Extend the shoulder-action selector through the added Guard and Substitution choices at indices 8 and 9.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x2883FC",
+        "expected_hex": "06000324",
+        "replacement_hex": "09000324"
+      },
+      "preserve_substitution_when_opening_assignment": {
+        "description": "Stop the native editor from rewriting Guard/Sub 2 at index 7 to Guard/Sub 1 at index 6 when its assignment selector opens.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x287FBC",
+        "expected_hex": "0000A3AC",
+        "replacement_hex": "00000000"
+      }
+    },
+    "hooks": {
+      "select_held_guard_behavior": {
+        "description": "Accept the added Substitution binding after timing admission; otherwise preserve the vanilla held-Guard limit for native Guard/Sub input.",
+        "target_id": "na2_elf",
+        "offset": "0x129720",
+        "expected_hex": "1000422804004014",
+        "symbol": "control_settings_held_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "select_substitution_history_action": {
+        "description": "Search both native Guard/Sub bindings and the added Substitution binding independently in buffered input.",
+        "target_id": "na2_elf",
+        "offset": "0x12973C",
+        "expected_hex": "2D20200206000524",
+        "symbol": "control_settings_history_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "select_logical_block_source": {
+        "description": "Keep native Guard/Sub 2 and the added Guard binding as logical Guard sources.",
+        "target_id": "na2_btl",
+        "offset": "0x3C02C",
+        "expected_hex": "0E00228624106200",
+        "symbol": "control_settings_block_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "load_extended_action_labels_high": {
+        "description": "Point the Control Settings renderer at the ten-action label table.",
+        "target_id": "na2_elf",
+        "offset": "0x288830",
+        "expected_hex": "5B00",
+        "symbol": "control_settings_labels",
+        "encoding": "hi16"
+      },
+      "load_extended_action_labels_low": {
+        "description": "Complete the extended action-label table address.",
+        "target_id": "na2_elf",
+        "offset": "0x288834",
+        "expected_hex": "9025",
+        "symbol": "control_settings_labels",
+        "encoding": "lo16"
+      },
+      "open_extended_bindings": {
+        "description": "Read the native bindings plus added Guard and Substitution into the eight physical-button rows.",
+        "target_id": "na2_elf",
+        "offset": "0x287A50",
+        "expected_hex": "D0FFBD272000BFFF",
+        "symbol": "control_settings_open",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "commit_extended_bindings": {
+        "description": "Write the native bindings plus added Guard and Substitution without indexing past the native eight-action table.",
+        "target_id": "na2_elf",
+        "offset": "0x288044",
+        "expected_hex": "2D8000002B000010",
+        "symbol": "control_settings_commit_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "skip_zero_native_binding": {
+        "description": "Keep an unbound native action from matching a buffered button press.",
+        "target_id": "na2_btl",
+        "offset": "0x3B8F0",
+        "expected_hex": "4010050021104400",
+        "symbol": "control_settings_binding_nonzero",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "replace_paired_action_assignment": {
+        "description": "Replace the native Guard-pair assignment helper with an owned one-action swap so both Guard/Sub slots and the added actions remain independently assignable.",
+        "target_id": "na2_elf",
+        "offset": "0x287C90",
+        "expected_hex": "8030050001000324",
+        "symbol": "control_settings_assign_action",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      }
+    },
+    "payload": {
+      "control_settings": {
+        "kind": "c",
+        "path": "na228_builder/patches/general/new_controls/control_settings.c",
+        "namespace": "general.controls",
+        "imports": {
+          "mod_text_settings__substitution__label": "mod_text_settings__substitution__label",
+          "mod_text_controls__guard_sub_1__label": "mod_text_controls__guard_sub_1__label",
+          "mod_text_controls__guard_sub_2__label": "mod_text_controls__guard_sub_2__label"
+        },
+        "fragments": {
+          "control_settings_helpers": {
+            "object": "general.controls.text.control.settings.helpers"
+          },
+          "control_settings_constants": {
+            "object": "general.controls.rodata"
+          },
+          "control_settings_labels": {
+            "object": "general.controls.data.control.settings.labels"
+          },
+          "control_settings_extra_bindings": {
+            "object": "general.controls.data.control.settings.extra.bindings"
+          },
+          "control_settings_extra_get": {
+            "object": "general.controls.text.control.settings.extra.get"
+          },
+          "control_settings_extra_set": {
+            "object": "general.controls.text.control.settings.extra.set"
+          },
+          "control_settings_binding_nonzero": {
+            "object": "general.controls.text.control.settings.binding.nonzero"
+          },
+          "control_settings_history_any": {
+            "object": "general.controls.text.control.settings.history.any"
+          },
+          "control_settings_substitution_held": {
+            "object": "general.controls.text.control.settings.substitution.held"
+          },
+          "control_settings_guard_pressed": {
+            "object": "general.controls.text.control.settings.guard.pressed"
+          },
+          "control_settings_open": {
+            "object": "general.controls.text.control.settings.open"
+          },
+          "control_settings_commit": {
+            "object": "general.controls.text.control.settings.commit"
+          },
+          "control_settings_assign_action": {
+            "object": "general.controls.text.control.settings.assign.action"
+          }
+        },
+        "resources": [
+          "na228_builder/resources/mod_strings.tsv"
+        ]
+      },
+      "control_settings_abi": {
+        "kind": "asm",
+        "path": "na228_builder/patches/general/new_controls/control_settings_abi.S",
+        "namespace": "general.controls.asm",
+        "imports": {
+          "control_settings_substitution_held": "control_settings_substitution_held",
+          "control_settings_history_any": "control_settings_history_any",
+          "control_settings_guard_pressed": "control_settings_guard_pressed",
+          "control_settings_commit": "control_settings_commit"
+        },
+        "fragments": {
+          "control_settings_held_bridge": {
+            "object": "general.controls.asm.text.control.settings.held.bridge"
+          },
+          "control_settings_history_bridge": {
+            "object": "general.controls.asm.text.control.settings.history.bridge"
+          },
+          "control_settings_block_bridge": {
+            "object": "general.controls.asm.text.control.settings.block.bridge"
+          },
+          "control_settings_commit_bridge": {
+            "object": "general.controls.asm.text.control.settings.commit.bridge"
+          }
+        }
+      }
+    }
+  },
   "general.battle_results_rematch": {
     "description": "Offer Circle Rematch on Free Battle results while retaining the saved matchup and session outcome counters.",
     "hooks": {

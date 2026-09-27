@@ -1,10 +1,13 @@
 # schema_version: 1
 id	key	label	values
-0101	mod.new_controls	Control Scheme	Classic | Updated
 0102	mod.simple_display	Simple Display	Off | On
 0103	mod.character_overrides	Character Balance	Original | Overrides
 0104	mod.balance_overlay	Balance Overlay	Off | On
 0105	mod.support_selection	Support Selection	None | Relevant | All
+0106	controls.p1.guard	P1 Guard	Unbound | L2 | R2 | L1 | R1
+0107	controls.p1.substitution	P1 Substitution	Unbound | L2 | R2 | L1 | R1
+0108	controls.p2.guard	P2 Guard	Unbound | L2 | R2 | L1 | R1
+0109	controls.p2.substitution	P2 Substitution	Unbound | L2 | R2 | L1 | R1
 0201	battle.time	Time	10s to 90s by 10s | 99s | Unlimited
 0202	battle.difficulty	Difficulty	Simple | Easy | Normal | Hard | Insane | Ultimate
 0203	battle.handicap	Handicap	0 to 10 by 1

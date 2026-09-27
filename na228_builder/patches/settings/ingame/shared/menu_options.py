@@ -67,9 +67,6 @@ def menu_option_bindings(selection):
             ) from error
 
     mod_rows = (
-        ("controls", message("settings.control_scheme.label"),
-         message("settings.control_scheme.help"),
-         ("classic", "updated"), (message("common.classic"), message("common.updated"))),
         ("simple_display", message("settings.simple_display.label"),
          message("settings.simple_display.help"),
          ("off", "on"), (message("common.off"), message("common.on"))),

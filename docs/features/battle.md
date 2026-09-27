@@ -177,26 +177,20 @@ Back at the root closes without applying and uses the cancel sound (`0x33`).
 
 ## Control Settings
 
-`features.default_settings.mod_settings.controls` owns the Control Settings action split and
-default shoulder-button layout independently of the substitution gauge. Action
-index `6` remains Guard and is the sole source of the logical block bit. Action
-index `7` is labelled Substitution, is searched by both native substitution
-history arms, and does not contribute to block. Under Updated controls, the
-Substitution input gate accepts either a press from the active history window
-or the currently held action. The held check runs after the selected attack's
-native timing and random gate for `Sub Active Frames: Default`; numeric values
-replace that timing policy before the same check. Guard can therefore remain
-held without requesting a substitution, while the separately assigned
-Substitution button may be held through an admitted hit.
+`features.general.new_controls` keeps the two native actions as Guard/Sub 1 and
+Guard/Sub 2 and adds separate Guard and Substitution actions. Either combined
+action blocks and substitutes; the added Guard action only blocks, and the
+added Substitution action only substitutes. Substitution accepts a buffered
+press or the held added binding after the attack's timing gate. An unbound
+action cannot count as a press.
 
-The setting owns both clean default-binding tables. Their shared action-order
-map defaults both players to L1 Substitution, R1 Guard, L2 Item Select, and R2
-Linked Attack. An owned assignment helper replaces the native editor's hard-
-coded coupling of the two Guard rows. Changing any action performs one ordinary
-permutation swap, so Guard, Substitution, Item Select, and Linked Attack remain
-separate actions. Saved per-player maps retain the resulting assignments. The
-Select action uses an independently guarded reset table and restores the same
-owned layout.
+The feature's default map binds L1 to Substitution, R1 to Guard, L2 to Item
+Select, and R2 to Linked Attack for both players. In Control Settings, each
+shoulder button can also choose either Guard/Sub action. Choosing a bound
+action swaps assignments; choosing an unbound action leaves the displaced
+action unbound. Guard/Sub 1 and 2 remain in the native per-player map; the
+added Guard and Substitution bindings use the save appendix. Select restores
+the default map and leaves both Guard/Sub actions unbound.
 
 ## Simple Display
 
@@ -264,7 +258,7 @@ The hook rejoins the held-Guard, response-state, resource,
 attack-flag, history-search, and transition gates.
 
 The active-frame limit and selected resource mode are independent runtime
-values. The Updated-controls hold path reads only the current input state;
+values. The held-action path reads only the current input state;
 `sub_active_frames` continues to define the buffered press window. Runtime
 confirmation of the active-frame selector remains pending.
 

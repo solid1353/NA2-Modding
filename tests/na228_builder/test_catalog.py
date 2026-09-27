@@ -15,6 +15,7 @@ from na228_builder.patches.settings.mod_settings.mod_settings import (
     mod_settings_state_fragment,
 )
 from scripts.lib.paths import load_local_paths
+from tests.na228_builder._fixtures import test_features
 
 
 PATCH_ID = re.compile(r'patch:\s*"([a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*)"')
@@ -547,9 +548,7 @@ class CatalogTests(unittest.TestCase):
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         builder = paths.path("builder")
         catalog_path = builder / "catalog.modcat"
-        base = jsonc.loads(
-            (builder / "configurations" / "base.jsonc").read_text(encoding="utf-8")
-        )
+        base = {"features": test_features()}
         for value, encoded in (("off", 0), ("on", 1)):
             with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
                 configuration = Path(directory) / "configuration.jsonc"
@@ -563,9 +562,9 @@ class CatalogTests(unittest.TestCase):
                     selection,
                     owner="settings.runtime_injector",
                 )
-                values = struct.unpack("<10I", state.payload)
-                self.assertEqual(values[1], encoded)
-                self.assertEqual(values[6], encoded)
+                values = struct.unpack("<8I", state.payload)
+                self.assertEqual(values[0], encoded)
+                self.assertEqual(values[4], encoded)
 
     def test_object_intersection_rejects_duplicate_fields(self) -> None:
         source = '''{

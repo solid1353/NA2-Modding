@@ -2,9 +2,9 @@
 
 ### In Progress
 
-- Fix classic control scheme
+- Cut down configs
+- Deal with save migration
 - Polish docs
-- Tune sub values
 - Release version 1.0
 
 ### General
@@ -14,7 +14,6 @@
 ### Backlog
 
 - Cross-platform deployment
-- Extend controls
 - Extend items to 5
 - Damage scaling
 - No-rebound meter or whatever

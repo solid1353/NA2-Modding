@@ -235,12 +235,12 @@ void battle_logic_character_select_balance_overlay(u32 selector)
     u8 substitution_text[48];
 
     draw_character_select(selector);
-    if (mod_settings_option_get(3u) == 0u) {
+    if (mod_settings_option_get(2u) == 0u) {
         return;
     }
     character_id = selected_id(selector);
     cost_present = resolved_substitution_cost(character_id, &character, &cost);
-    show_substitution = mod_settings_option_get(2u) != 0u;
+    show_substitution = mod_settings_option_get(1u) != 0u;
     format_tier(tier_text, character);
     if (show_substitution != 0u) {
         format_substitution_cost(substitution_text, cost_present, cost);

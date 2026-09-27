@@ -104,7 +104,7 @@ float battle_logic_substitution_cost(void *fighter, u32 default_cost_bits)
     float cost_percent;
 
     default_cost.bits = default_cost_bits;
-    if (mod_settings_option_get(2u) == 0u) {
+    if (mod_settings_option_get(1u) == 0u) {
         return default_cost.value;
     }
     cost_percent = resolved_substitution_cost_percent(
@@ -117,7 +117,7 @@ float battle_logic_substitution_cost(void *fighter, u32 default_cost_bits)
 SUBSTITUTION_COST_SECTION(".text.battle_logic_substitution_cost_fraction")
 float battle_logic_substitution_cost_fraction(void *fighter)
 {
-    if (mod_settings_option_get(2u) == 0u) {
+    if (mod_settings_option_get(1u) == 0u) {
         return 1.0f / NATIVE_CHAKRA_CAPACITY;
     }
     float cost_percent = resolved_substitution_cost_percent(

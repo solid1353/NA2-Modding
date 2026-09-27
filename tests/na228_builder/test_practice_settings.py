@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.infrastructure.orchestration import catalog, jsonc
+from na228_builder.infrastructure.orchestration import catalog
 from na228_builder.patches.localization.mod_strings import ModStrings
 from na228_builder.patches.settings.ingame.practice_mode.practice_settings import (
     _active_pages,
@@ -14,6 +14,7 @@ from na228_builder.patches.settings.ingame.practice_mode.practice_settings impor
     practice_settings_table_fragments,
 )
 from scripts.lib.paths import load_local_paths
+from tests.na228_builder._fixtures import test_features
 
 
 class PracticeSettingsTests(unittest.TestCase):
@@ -23,16 +24,19 @@ class PracticeSettingsTests(unittest.TestCase):
         cls.repository = cls.paths.repository
         cls.builder = cls.paths.path("builder")
         cls.catalog_path = cls.builder / "catalog.modcat"
-        cls.configurations = cls.builder / "configurations"
+        directory = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(directory.cleanup)
+        configuration = Path(directory.name) / "configuration.jsonc"
+        configuration.write_text(
+            json.dumps({"features": test_features()}), encoding="utf-8"
+        )
         cls.selection = catalog.load_selection(
             cls.catalog_path,
-            cls.configurations / "base.jsonc",
+            configuration,
         )
 
     def _selection(self, mutate) -> catalog.CatalogSelection:
-        base = jsonc.loads(
-            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
-        )
+        base = {"features": test_features()}
         mutate(base["features"])
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)

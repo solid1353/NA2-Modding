@@ -8,7 +8,7 @@ mod_settings_simple_display_bridge:
     addiu $sp, $sp, -16
     sd $t9, 0($sp)
     lui $t9, %hi(mod_settings_state)
-    lw $t9, %lo(mod_settings_state + 4)($t9)
+    lw $t9, %lo(mod_settings_state)($t9)
     beqz $t9, 1f
     nop
     ori $v1, $v1, 2

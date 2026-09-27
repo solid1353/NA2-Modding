@@ -6,11 +6,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.infrastructure.orchestration import catalog, jsonc
+from na228_builder.infrastructure.orchestration import catalog
 from na228_builder.patches.settings.ingame.battle_mechanics.battle_settings_runtime import (
     battle_settings_runtime_fragments,
 )
 from scripts.lib.paths import load_local_paths
+from tests.na228_builder._fixtures import test_features
 
 
 class XdashChakraCostTests(unittest.TestCase):
@@ -19,12 +20,9 @@ class XdashChakraCostTests(unittest.TestCase):
         cls.paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         cls.builder = cls.paths.path("builder")
         cls.catalog_path = cls.builder / "catalog.modcat"
-        cls.configurations = cls.builder / "configurations"
 
     def test_runtime_default_preserves_configured_percent(self) -> None:
-        base = jsonc.loads(
-            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
-        )
+        base = {"features": test_features()}
         with tempfile.TemporaryDirectory() as directory:
             configuration_path = Path(directory) / "normalized.jsonc"
             for percent in (0, 50, 100):
@@ -52,9 +50,7 @@ class XdashChakraCostTests(unittest.TestCase):
                     self.assertEqual(struct.unpack("<I", fragment.payload)[0], percent)
 
     def test_false_disables_the_xdash_runtime_fragment(self) -> None:
-        base = jsonc.loads(
-            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
-        )
+        base = {"features": test_features()}
         base["features"]["default_settings"]["battle_mechanics"][
             "xdash_chakra_cost"
         ] = False
@@ -79,9 +75,7 @@ class XdashChakraCostTests(unittest.TestCase):
         )
 
     def test_catalog_rejects_cost_outside_normalized_gauge(self) -> None:
-        base = jsonc.loads(
-            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
-        )
+        base = {"features": test_features()}
         with tempfile.TemporaryDirectory() as directory:
             configuration_path = Path(directory) / "invalid.jsonc"
             for value in (-5, 4, 105):

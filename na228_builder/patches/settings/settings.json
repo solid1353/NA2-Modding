@@ -1,136 +1,4 @@
 {
-  "settings.new_controls": {
-    "description": "Expose Guard and Substitution as independent remappable actions, accept a current Substitution hold after timing admission in Updated controls, and own the default shoulder-button layout for both players.",
-    "edits": {
-      "default_battle_overlay_bindings": {
-        "description": "Initialize the battle overlay with Substitution on L1, Guard on R1, Item Select on L2, and Linked Attack on R2.",
-        "operation": "replace",
-        "destination_target_id": "na2_btl",
-        "destination_offset": "0x1E4250",
-        "expected_hex": "10002000400080000400080001000200",
-        "replacement_hex": "10002000400080000100020008000400"
-      },
-      "default_control_settings_reset_selections": {
-        "description": "Make the Control Settings Select-button reset assign Substitution to L1, Guard to R1, Item Select to L2, and Linked Attack to R2 for either player.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0x4D5350",
-        "expected_hex": "010000000000000003000000020000000400000005000000060000000700000001000000",
-        "replacement_hex": "010000000000000003000000020000000700000006000000040000000500000001000000"
-      },
-      "default_resident_bindings": {
-        "description": "Reset every resident controller bank to Substitution on L1, Guard on R1, Item Select on L2, and Linked Attack on R2.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0x4C07A0",
-        "expected_hex": "10002000400080000400080001000200",
-        "replacement_hex": "10002000400080000100020008000400"
-      },
-      "include_substitution_in_shoulder_assignment_selector": {
-        "description": "Extend the Control Settings shoulder-action selector through action index 7 so Substitution can be chosen independently.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0x2883FC",
-        "expected_hex": "06000324",
-        "replacement_hex": "07000324"
-      },
-      "preserve_substitution_when_opening_assignment": {
-        "description": "Stop the native editor from rewriting action index 7 to Guard index 6 when its assignment selector opens.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0x287FBC",
-        "expected_hex": "0000A3AC",
-        "replacement_hex": "00000000"
-      }
-    },
-    "hooks": {
-      "select_held_guard_behavior": {
-        "description": "Use the native held-Guard rejection in Classic; in Updated, accept a current Substitution hold after timing admission or continue to the buffered press search.",
-        "target_id": "na2_elf",
-        "offset": "0x129720",
-        "expected_hex": "1000422804004014",
-        "symbol": "control_scheme_held_guard_bridge",
-        "encoding": "j26",
-        "replacement_hex": "0000000800000000"
-      },
-      "select_substitution_history_action": {
-        "description": "Search Guard in Classic and the independent Substitution action in Updated.",
-        "target_id": "na2_elf",
-        "offset": "0x129740",
-        "expected_hex": "06000524FCBD1B0C",
-        "symbol": "control_settings_history_action",
-        "encoding": "jal26",
-        "replacement_hex": "0000000C00000000"
-      },
-      "select_logical_block_source": {
-        "description": "Retain native action 7 as a block source in Classic and use only action 6 in Updated.",
-        "target_id": "na2_btl",
-        "offset": "0x3C02C",
-        "expected_hex": "0E00228624106200",
-        "symbol": "control_scheme_logical_block_bridge",
-        "encoding": "j26",
-        "replacement_hex": "0000000800000000"
-      },
-      "label_substitution_action": {
-        "description": "Point Control Settings action-map index 7 at the resident Substitution label instead of the second Guard label.",
-        "target_id": "na2_elf",
-        "offset": "0x4B26AC",
-        "expected_hex": "40466000",
-        "symbol": "mod_text_settings__substitution__label",
-        "encoding": "abs32"
-      },
-      "replace_paired_action_assignment": {
-        "description": "Replace the native Guard-pair assignment helper with an owned one-action swap so Guard, Substitution, Item Select, and Linked Attack remain independently assignable.",
-        "target_id": "na2_elf",
-        "offset": "0x287C90",
-        "expected_hex": "8030050001000324",
-        "symbol": "control_settings_assign_action",
-        "encoding": "j26",
-        "replacement_hex": "0000000800000000"
-      }
-    },
-    "payload": {
-      "control_settings": {
-        "kind": "c",
-        "path": "na228_builder/patches/settings/new_controls/control_settings.c",
-        "namespace": "battle.control.settings",
-        "imports": {
-          "mod_settings_option_get": "mod_settings_option_get"
-        },
-        "fragments": {
-          "control_settings_history_action": {
-            "object": "battle.control.settings.text.control.settings.history.action"
-          },
-          "control_settings_substitution_held": {
-            "object": "battle.control.settings.text.control.settings.substitution.held"
-          },
-          "control_settings_assign_action": {
-            "object": "battle.control.settings.text.control.settings.assign.action"
-          }
-        },
-        "resources": [
-          "na228_builder/resources/mod_strings.tsv"
-        ]
-      },
-      "control_scheme_abi": {
-        "kind": "asm",
-        "path": "na228_builder/patches/settings/new_controls/control_scheme_abi.S",
-        "namespace": "battle.control.scheme.asm",
-        "imports": {
-          "mod_settings_state": "mod_settings_state",
-          "control_settings_substitution_held": "control_settings_substitution_held"
-        },
-        "fragments": {
-          "control_scheme_held_guard_bridge": {
-            "object": "battle.control.scheme.asm.text.control.scheme.held.guard.bridge"
-          },
-          "control_scheme_logical_block_bridge": {
-            "object": "battle.control.scheme.asm.text.control.scheme.logical.block.bridge"
-          }
-        }
-      }
-    }
-  },
   "settings.mod_settings": {
     "description": "Host the shared Mod Settings child over Mode Select and own its session-wide runtime state.",
     "hooks": {
@@ -263,7 +131,7 @@
         "expected_hex": "F0FFBD270000BFFF",
         "symbol": "mod_settings_option_get",
         "encoding": "j26",
-        "replacement_hex": "0000000801000424"
+        "replacement_hex": "0000000800000424"
       },
       "shared_simple_display_set": {
         "description": "Commit native Simple Display changes through the shared setter used by Mod Settings and saves.",
@@ -272,7 +140,7 @@
         "expected_hex": "F0FFBD270000BFFF",
         "symbol": "mod_settings_option_set",
         "encoding": "j26",
-        "replacement_hex": "0000000801000424"
+        "replacement_hex": "0000000800000424"
       }
     },
     "payload": {

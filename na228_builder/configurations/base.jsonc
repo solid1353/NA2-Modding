@@ -2,6 +2,7 @@
   "features": {
     "localization": "en",                         // "en" | "jp"
     "general": {
+      "new_controls": true,
       "music_override": true,
       "practice_stage_select": true,
       "stage_selection_persistence": true,
@@ -43,11 +44,10 @@
     },
     "default_settings": {
       "mod_settings": {
-        "controls": "updated",                    // "classic" | "updated"
+        "support_selection": "none",              // "none" | "relevant" | "all"
         "character_balance": "overrides",         // "original" | "overrides"
         "balance_overlay": "on",                  // "off" | "on"
-        "simple_display": "off",                  // "off" | "on"
-        "support_selection": "none"               // "none" | "relevant" | "all"
+        "simple_display": "off"                   // "off" | "on"
       },
       "battle_mechanics": {
         "chakra": "normal",                       // "normal" | "unlimited" | decimal 0.1..10 (step 0.1, %/s)
@@ -63,10 +63,10 @@
             "minimum_chakra": "match_cost"        // "match_cost" | int 5..100 (step 5, % chakra)
           },
           "gauge": {
-            "recovery_delay_seconds": 14.0,       // decimal 0..60 (step 0.25, seconds)
-            "refill_seconds_per_stock": 1.0,      // decimal >0..10 (step 0.05, seconds)
+            "recovery_delay_seconds": 15.0,       // decimal 0..60 (step 0.25, seconds)
+            "refill_seconds_per_stock": 5.0,      // decimal >0..10 (step 0.05, seconds)
             "damage_recovery": "on",              // "off" | "on"
-            "damage_percent_per_stock": 31.25     // decimal >0..100 (step 0.25, %)
+            "damage_percent_per_stock": 35.00     // decimal >0..100 (step 0.25, %)
           }
         },
         "items": {

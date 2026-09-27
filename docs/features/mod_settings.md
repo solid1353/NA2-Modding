@@ -5,13 +5,12 @@ Defaults values for the session-wide Mod Settings menu:
 
 | Field | Menu row | Values |
 | --- | --- | --- |
-| `controls` | Control Scheme | `classic`, `updated` |
+| `support_selection` | Support Selection | `none`, `relevant`, `all` |
 | `character_balance` | Character Balance | `original`, `overrides` |
 | `balance_overlay` | Balance Overlay | `off`, `on` |
 | `simple_display` | Simple Display | `off`, `on` |
-| `support_selection` | Support Selection | `none`, `relevant`, `all` |
 
-The builder always includes the five runtime implementations. Their configured
+The builder always includes the four runtime implementations. Their configured
 values initialize one writable runtime state when the game starts. With
 `features.memory_card.dedicated_save_namespace` enabled, the existing save flow
 writes these values and every other runtime-editable value below
@@ -42,7 +41,7 @@ Opening plays the same sound as native Practice Settings.
 
 `features.menu_composition.mod_settings` controls the Battle Mechanics, Battle
 Settings, and Practice Settings launchers. Each Boolean includes or omits its
-launcher, and their config order determines their order before the five Mod
+launcher, and their config order determines their order before the four Mod
 Settings values. The value rows follow `features.default_settings.mod_settings`
 order. `menu_composition` is omitted from release config and catalog exports;
 the packaged builder retains its resolved release values. Battle Mechanics opens
@@ -87,8 +86,7 @@ batches are finalized; other menus and shared prompt textures are unchanged.
 The Square badge is centered at `(294, 362)` and the Mod label at `(327, 362)`,
 using the same vertical anchor as the native footer prompts.
 
-Control Scheme selects the held-input guard, action-history lookup, and logical
-block source at runtime. Simple Display has one shared value for Mod Settings,
+Simple Display has one shared value for Mod Settings,
 the battle/Practice pause menu, and the save appendix. The native Simple Display
 getter and setter use the same Mod Settings getter and setter as the menu and
 save flow. The shared setter updates the three native settings packs, which

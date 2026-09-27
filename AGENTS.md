@@ -89,10 +89,8 @@ owning component documentation.
   Exclude completed tasks, unrelated state, and user-directed actions.
   Omit any statement that has no corresponding pending agent action.
   "Do not..." and the such are not valid lines and should not appear in the proposal.
-- `ver`: accept the current result across every repository changed by the task.
-  Agents may then add tests (if they are needed). Commit and push the accepted result. In
-  Design mode, first promote useful design content and delete the design
-  document, then exit after pushing.
+- `ver`: accept the current result across every repository changed by the task
+  and follow the [verification procedure](docs/procedures/verification.md).
 - `exit`: exit Design mode or Interactive mode without accepting the result
   or authorizing a commit. It has no effect when no mode is active.
 - `zxc`: follow the
@@ -297,29 +295,13 @@ and read only relevant sections of large documents.
 
 ## Validation
 
-### Default validation
-
-- For code changes, run unit tests with `na228 test`. Set
-  `NA228_TEST_WORKERS` to a positive integer to override the worker count;
-  use `1` for serial debugging.
-
 ### Validation behavior and tests
 
-- After user acceptance, fix every failing maintained test discovered during
-  the work before committing, unless evidence shows that a concurrent task or
-  another task's uncommitted changes caused it. In that case, leave it unchanged
-  and report the conflicting ownership.
 - A script may fail or discard its output only when validation shows the primary
   result is invalid, unsafe, or unusable. Report other validation failures as
   warnings; making them fatal requires explicit user approval.
-- Before `ver`, do not discuss, propose, plan, create, or modify tests.
+- Before `ver`, do not run unit tests or discuss, propose, plan, create, or modify tests.
   Modifying tests for PCSX2 fork is allowed.
-- Add a unit test only when it detects a concrete regression in accepted
-  behavior or a documented safety contract that existing tests would miss.
-  Assert the outcome with the smallest practical isolated input. Do not add a
-  test just because code changed or `ver` was given. Do not restate source
-  data, freeze incidental implementation details, mirror the implementation,
-  or rerun the production pipeline.
 
 ### Runtime validation
 

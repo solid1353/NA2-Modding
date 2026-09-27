@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -11,7 +12,7 @@ from na228_builder.infrastructure.modules.payload_builder import ee_c_fragments
 from na228_builder.infrastructure.modules.payload_builder.operations import encode_symbol_reference
 from na228_builder.infrastructure.orchestration import catalog
 from na228_builder.infrastructure.orchestration.composer import resolve_symbolic_patches
-from tests.na228_builder._fixtures import resident_payload_config
+from tests.na228_builder._fixtures import resident_payload_config, test_features
 
 
 REPOSITORY = Path(__file__).resolve().parents[3]
@@ -84,9 +85,15 @@ class SaveLoadRuntimeContractTests(unittest.TestCase):
                 f"local EE compiler is unavailable: {COMPILER}"
             )
 
+        directory = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(directory.cleanup)
+        configuration = Path(directory.name) / "configuration.jsonc"
+        configuration.write_text(
+            json.dumps({"features": test_features()}), encoding="utf-8"
+        )
         cls.selection = catalog.load_selection(
             BUILDER / "catalog.modcat",
-            BUILDER / "configurations" / "base.jsonc",
+            configuration,
         )
         cls.package = catalog.load_runtime_package(
             cls.selection,

@@ -6,6 +6,91 @@ from dataclasses import asdict
 from pathlib import Path
 
 from na228_builder.infrastructure.modules.payload_builder.builder import ResidentPayloadConfig
+from na228_builder.patches.settings.ingame.battle_mechanics.items.items_settings import FIELD_ITEMS
+
+
+def test_features() -> dict[str, object]:
+    """A complete test input independent of the user's base configuration."""
+    return {
+        "localization": "en",
+        "general": {
+            "new_controls": True,
+            "music_override": True,
+            "practice_stage_select": True,
+            "stage_selection_persistence": True,
+            "battle_results_rematch": True,
+            "unlock_all": {"demon_wind_bomb": True},
+            "mode_availability": {"remove_adventure": True, "remove_shop": True},
+        },
+        "startup": {"faster_loading": True, "loading_screen": True},
+        "memory_card": {
+            "auto_loading": True,
+            "dialogs_rework": True,
+            "skip_initial_check": True,
+            "dedicated_save_namespace": True,
+            "replace_memory_card_title": True,
+        },
+        "rendering": {"native_16_9_horizontal_scale": False},
+        "menu_composition": {
+            "mod_settings": {
+                "battle_mechanics": True,
+                "battle_settings": True,
+                "practice_settings": True,
+            },
+            "battle_settings": {"battle_mechanics": True},
+            "practice_settings": {"battle_mechanics": True},
+        },
+        "default_settings": {
+            "mod_settings": {
+                "support_selection": "none",
+                "character_balance": "overrides",
+                "balance_overlay": "on",
+                "simple_display": "off",
+            },
+            "battle_mechanics": {
+                "chakra": "normal",
+                "ultimate_jutsu": "no_hud",
+                "shadowblur": "off",
+                "extra_hit": "off",
+                "sub_active_frames": 5,
+                "xdash_chakra_cost": 10,
+                "support": "off",
+                "substitution": {
+                    "value": "gauge",
+                    "chakra": {"minimum_chakra": "match_cost"},
+                    "gauge": {
+                        "recovery_delay_seconds": 14.0,
+                        "refill_seconds_per_stock": 1.0,
+                        "damage_recovery": "on",
+                        "damage_percent_per_stock": 31.25,
+                    },
+                },
+                "items": {
+                    "value": "custom",
+                    "custom": {
+                        "availability": "normal",
+                        **{key: True for _code, key, _label in FIELD_ITEMS},
+                    },
+                },
+            },
+            "battle_settings": {"time": 99, "difficulty": "normal", "handicap": 5},
+            "practice_settings": {
+                "opponent_settings": {
+                    "status": "manual",
+                    "strength": "normal",
+                    "attack": "no",
+                    "guard": "no",
+                    "move": "stay",
+                    "substitution_jutsu": "normal",
+                    "linked_attack": "dont_use",
+                    "extra_hit_counter": "normal",
+                },
+                "health": "normal",
+                "commands": "off",
+                "damage": "on",
+            },
+        },
+    }
 
 
 def resident_payload_config(

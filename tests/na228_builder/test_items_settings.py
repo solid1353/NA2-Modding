@@ -6,12 +6,13 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.infrastructure.orchestration import catalog, jsonc
+from na228_builder.infrastructure.orchestration import catalog
 from na228_builder.patches.settings.ingame.battle_mechanics.items.items_settings import (
     FIELD_ITEMS,
     items_settings_fragment,
 )
 from scripts.lib.paths import load_local_paths
+from tests.na228_builder._fixtures import test_features
 
 
 class ItemsSettingsTests(unittest.TestCase):
@@ -20,12 +21,9 @@ class ItemsSettingsTests(unittest.TestCase):
         cls.paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
         cls.builder = cls.paths.path("builder")
         cls.catalog_path = cls.builder / "catalog.modcat"
-        cls.configurations = cls.builder / "configurations"
 
     def _selection(self, mutate) -> catalog.CatalogSelection:
-        base = jsonc.loads(
-            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
-        )
+        base = {"features": test_features()}
         mutate(base["features"]["default_settings"]["battle_mechanics"])
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)

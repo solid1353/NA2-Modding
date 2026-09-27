@@ -47,6 +47,13 @@ SCHEMA_HEADER_SIZE = 8
 DESCRIPTOR_SIZE = 24
 CALL_WITH_ARGUMENT = 0
 CALL_WITH_VALUE = 1
+EXTRA_CONTROL_KEYS = (
+    "controls.p1.guard",
+    "controls.p1.substitution",
+    "controls.p2.guard",
+    "controls.p2.substitution",
+)
+EXTRA_CONTROL_DEFAULTS = (4, 3, 4, 3)
 RANGE_PATTERN = re.compile(
     r"^(.*?)(-?\d+(?:\.\d+)?)([^\d]*) to "
     r"(-?\d+(?:\.\d+)?)([^\d]*) by "
@@ -165,10 +172,18 @@ def _selected_values(selection) -> dict[tuple[str, ...], object]:
     }
 
 
+def _new_controls_enabled(selection) -> bool:
+    if selection is None:
+        return False
+    return any(
+        node.path == ("features", "general", "new_controls") and node.enabled
+        for node in selection.nodes
+    )
+
+
 def _bindings(selection) -> dict[str, SettingBinding]:
     selected = _selected_values(selection)
     mod_values = (
-        int(selected[MOD_SETTINGS_PATH + ("controls",)] == "updated"),
         int(selected[MOD_SETTINGS_PATH + ("simple_display",)] == "on"),
         int(selected[MOD_SETTINGS_PATH + ("character_balance",)] == "overrides"),
         int(selected[MOD_SETTINGS_PATH + ("balance_overlay",)] == "on"),
@@ -186,7 +201,6 @@ def _bindings(selection) -> dict[str, SettingBinding]:
         )
         for argument, key in enumerate(
             (
-                "mod.new_controls",
                 "mod.simple_display",
                 "mod.character_overrides",
                 "mod.balance_overlay",
@@ -194,6 +208,15 @@ def _bindings(selection) -> dict[str, SettingBinding]:
             )
         )
     }
+    if _new_controls_enabled(selection):
+        for argument, key in enumerate(EXTRA_CONTROL_KEYS):
+            bindings[key] = SettingBinding(
+                "control_settings_extra_get",
+                "control_settings_extra_set",
+                argument,
+                CALL_WITH_ARGUMENT,
+                EXTRA_CONTROL_DEFAULTS[argument],
+            )
 
     battle_defaults = battle_configured_row_defaults(selection)
     for key, row_id in (
@@ -344,6 +367,8 @@ def save_appendix_schema_fragment(
 ) -> PayloadFragment:
     source = path if path is not None else Path(__file__).resolve().parents[2] / "resources" / "save_appendix.tsv"
     schema_version, rows = load_save_appendix(source)
+    if not _new_controls_enabled(selection):
+        rows = tuple(row for row in rows if row.key not in EXTRA_CONTROL_KEYS)
     bindings = _bindings(selection)
     row_keys = {row.key for row in rows}
     unresolved = sorted(row_keys - bindings.keys())

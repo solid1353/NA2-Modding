@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -14,7 +16,7 @@ from scripts.research.localization.verify_font_renderer import (
     build_ascii_widths,
 )
 from scripts.lib.paths import load_paths
-from tests.na228_builder._fixtures import resident_payload_config
+from tests.na228_builder._fixtures import resident_payload_config, test_features
 
 
 REPOSITORY = Path(__file__).resolve().parents[3]
@@ -67,9 +69,15 @@ class FontRuntimeContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         builder = PATHS.path("builder")
+        directory = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(directory.cleanup)
+        configuration = Path(directory.name) / "configuration.jsonc"
+        configuration.write_text(
+            json.dumps({"features": test_features()}), encoding="utf-8"
+        )
         selection = catalog.load_selection(
             builder / "catalog.modcat",
-            builder / "configurations" / "base.jsonc",
+            configuration,
         )
         cls.package = catalog.load_runtime_package(
             selection,

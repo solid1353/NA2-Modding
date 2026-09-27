@@ -11,6 +11,10 @@
       },
     general: {
       description: "General game-wide features.",
+      new_controls: setting {
+        description: "Allow separate Guard and Substitution bindings, plus two Guard/Sub bindings.",
+        patch: "general.new_controls",
+      },
       music_override: setting {
         patch: "general.music_override",
       },
@@ -100,9 +104,9 @@
       mod_settings: {
         description: "Configure the options available in the in-game Mod Settings menu.",
         patch: "settings.mod_settings",
-        controls: setting<"classic" | "updated"> {
-          description: "Set the default control scheme. Both modes keep the extended Control Settings editor.",
-          patch: "settings.new_controls",
+        support_selection: setting<"none" | "relevant" | "all"> {
+          description: "Control which supports are available during Character Select.",
+          patch: "character_select.support_selection",
         },
         character_balance: setting<"original" | "overrides"> {
           description: "Choose between original character balance and the configured balance changes.",
@@ -114,10 +118,6 @@
         },
         simple_display: setting<"off" | "on"> {
           patch: "settings.simple_display",
-        },
-        support_selection: setting<"none" | "relevant" | "all"> {
-          description: "Control which supports are available during Character Select.",
-          patch: "character_select.support_selection",
         },
       },
       battle_mechanics: {

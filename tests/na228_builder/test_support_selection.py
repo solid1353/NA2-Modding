@@ -6,11 +6,12 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.infrastructure.orchestration import catalog, jsonc
+from na228_builder.infrastructure.orchestration import catalog
 from na228_builder.patches.settings.mod_settings.mod_settings import (
     mod_settings_state_fragment,
 )
 from scripts.lib.paths import load_local_paths
+from tests.na228_builder._fixtures import test_features
 
 
 class SupportSelectionTests(unittest.TestCase):
@@ -20,13 +21,10 @@ class SupportSelectionTests(unittest.TestCase):
         cls.repository = cls.paths.repository
         cls.builder = cls.paths.path("builder")
         cls.catalog_path = cls.builder / "catalog.modcat"
-        cls.configurations = cls.builder / "configurations"
         cls.targets = cls.builder / "infrastructure" / "targets.tsv"
 
     def _selection(self, mode: str) -> catalog.CatalogSelection:
-        base = jsonc.loads(
-            (self.configurations / "base.jsonc").read_text(encoding="utf-8")
-        )
+        base = {"features": test_features()}
         base["features"]["default_settings"]["mod_settings"][
             "support_selection"
         ] = mode
@@ -44,9 +42,9 @@ class SupportSelectionTests(unittest.TestCase):
                     selection,
                     owner="settings.runtime_injector",
                 )
-                values = struct.unpack("<10I", state.payload)
-                self.assertEqual(values[4], encoded)
-                self.assertEqual(values[9], encoded)
+                values = struct.unpack("<8I", state.payload)
+                self.assertEqual(values[3], encoded)
+                self.assertEqual(values[7], encoded)
 
 
 

@@ -143,7 +143,10 @@ its native descriptor checksum. Card I/O uses a temporary record with a fixed
 `0x200`-byte settings appendix described by
 [`@builder/resources/save_appendix.tsv`](../../na228_builder/resources/save_appendix.tsv). The
 appendix stores every runtime-editable Mod, Battle, Practice, Battle Mechanics,
-Substitution, and Items setting as a stable ID and zero-based value.
+Substitution, and Items setting as a stable ID and zero-based value. With
+`features.general.new_controls` enabled, it also stores the added Guard and
+Substitution binding for each player; both native Guard/Sub actions remain in
+the native profile.
 
 The existing save operation serializes the appendix while writing the selected
 primary and the rolling `data04` backup. Creation, free-space accounting,
@@ -214,8 +217,9 @@ namespaces.
 ### Save appendix schema
 
 The appendix contains every runtime-editable setting below
-`features.default_settings`. The submenu switches in `features.menu_composition`
-are build configuration and are not saved.
+`features.default_settings` and the added Guard and Substitution binding for
+each player when `features.general.new_controls` is enabled. The submenu switches in
+`features.menu_composition` are build configuration and are not saved.
 
 The first line declares `schema_version`. The table has four columns:
 

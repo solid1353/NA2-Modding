@@ -66,7 +66,7 @@
             "recovery_delay_seconds": 15.0,                 // decimal 0..60 (step 0.25, seconds)
             "refill_seconds_per_stock": 5.0,                // decimal >0..10 (step 0.05, seconds)
             "damage_recovery": "on",                        // "off" | "on"
-            "damage_percent_for_full_refill": 140           // integer 5..400 (step 5, %)
+            "damage_percent_for_full_refill": 150           // integer 5..400 (step 5, %)
           }
         },
         "items": {

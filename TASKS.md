@@ -2,7 +2,6 @@
 
 ### In Progress
 
-- Cut down configs
 - Deal with save migration
 - Polish docs
 - Release version 1.0

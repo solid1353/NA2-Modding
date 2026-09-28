@@ -2,7 +2,6 @@
 
 ### In Progress
 
-- Add control settings
 - Polish docs
 - Release version 1.0
 

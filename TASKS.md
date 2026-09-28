@@ -1,22 +1,34 @@
 # Tasks
 
-### In Progress
+## In Progress
 
-- Polish docs
 - Release version 1.0
 
-### General
+## Backlog
 
-### Bugs
+### Controls
 
-### Backlog
-
-- Cross-platform deployment
 - Extend items to 5
+
+### Battle mechanics
+
 - Damage scaling
+- Chakra recovery speed setting
 - No-rebound meter or whatever
-- Proper widescreen
+
+### Practice
+
+- Item generator
+- Infinite character items
+
+### Long-term
+
 - Port stages/characters
-- Autosave?
-- Upscaled texture pack for pcsx2
+- Proper widescreen
 - 60 FPS
+
+### Questionable
+
+- Autosave
+- Cross-platform deployment
+- Upscaled texture pack for pcsx2

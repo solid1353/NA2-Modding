@@ -168,15 +168,15 @@ and read only relevant sections of large documents.
   unstage only that task's changes before editing. Do not commit incomplete work
   merely to clean the tree; report its task-owned dirty state.
 - When a remote exists, immediately push each task-owned commit.
-- Never modify persistent Git identity configuration. The shared Git policy
-  guard owns per-command identity and subject validation.
+- Never modify persistent Git identity configuration. The global policy owns
+  per-command identity.
 - Git history is the recovery mechanism for tracked files. Preserve
   irreplaceable untracked inputs deliberately before deleting them.
 
 ### File and folder management
 
 - Before using a task work root, resolve the current exact chat title from
-  Codex. Use only `@work/<exact chat title>/`. Treat every other `@work` path
+  the agent's app. Use only `@work/<exact chat title>/`. Treat every other `@work` path
   as read-only except for input moves required by this policy.
   Set `NA228_TASK_WORK_ROOT` to the task root before maintained
   commands create temporary files.

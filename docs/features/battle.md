@@ -1,7 +1,7 @@
 # Battle
 
 Battle menu defaults and Character Overrides live under `features.default_settings`.
-`features.default_settings.mod_settings.character_balance` loads layered TSV data and emits one
+`features.default_settings.mod_settings.character_selection.character_balance` loads layered TSV data and emits one
 resident table shared by its current per-character battle consumers.
 
 ## Battle Settings
@@ -155,11 +155,13 @@ The shared builder in `na228_builder/patches/settings/ingame/shared/menu_pages.p
 containers and typed object fields. Scalars use registered value handlers.
 Objects without `value` form submenus. Objects with `value` use the selector's
 literal choices; child objects named after those choices form Square submenus.
-Root launchers in `menu_composition` reference the named group under
-`default_settings`. `battle_mechanics: true` exposes that shared page in either
+Root launchers in `menu_composition` reference either a named group under
+`default_settings` or a nested group of the current root. The nested group
+appears only at its launcher position. `battle_mechanics: true` exposes that shared page in either
 mode, while `false` hides its launcher without disabling the shared gameplay
 settings. Mod Settings exposes Battle and Practice defaults without repeating
-their Battle Mechanics launchers.
+their Battle Mechanics launchers; its Character Selection group follows Battle
+Mechanics in the base launcher order.
 
 The same traversal discovers Chakra, Gauge, and Custom Items pages. Item
 toggles sit directly under `battle_mechanics.items.custom`; the base config
@@ -294,7 +296,7 @@ Numeric character IDs and names are validated against
 `@resources/character_data.tsv`. `base_id` records form relationships as
 human-readable configuration metadata. `tier` records the balancing tier and
 is serialized as fixed-width table metadata for
-`features.default_settings.mod_settings.balance_overlay`. Empty cells inherit, while zero
+`features.default_settings.mod_settings.character_selection.balance_overlay`. Empty cells inherit, while zero
 remains an explicit value. Tier labels use at most four ASCII characters. Rows
 retain the base TSV order so forms can stay directly below their base characters.
 Save the file as UTF-8 TSV and run the normal build for that profile.
@@ -332,10 +334,10 @@ player slot and reads that slot's match-start character ID. A directly selected
 form therefore uses its form row, while a base character transformed during
 the match keeps its base row.
 
-`features.default_settings.mod_settings.balance_overlay` independently reads the same
+`features.default_settings.mod_settings.character_selection.balance_overlay` independently reads the same
 complete table. It always draws `TIER` in separate left and right top-screen
 blocks. It draws the resolved `SUB x%` value only when
-`features.default_settings.mod_settings.character_balance` is `"overrides"`, omitting trailing decimal
+`features.default_settings.mod_settings.character_selection.character_balance` is `"overrides"`, omitting trailing decimal
 zeroes. It never draws player labels or numeric IDs.
 
 Every runtime consumer uses that normalized value. With the runtime mode set to
@@ -397,5 +399,5 @@ bit cannot override the shared mode. General Settings no longer exposes
 Selected support data and linked Jutsu retain their existing behavior.
 
 The setting is independent of
-`features.default_settings.mod_settings.support_selection`. Either feature may be enabled
+`features.default_settings.mod_settings.character_selection.support_selection`. Either feature may be enabled
 without the other.

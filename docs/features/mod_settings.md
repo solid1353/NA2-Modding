@@ -1,23 +1,26 @@
 # Mod Settings
 
 `features.default_settings.mod_settings` defines the initial values and Return to
-Defaults values for the session-wide Mod Settings menu:
+Defaults values for the session-wide Mod Settings menu. The Character Selection
+submenu contains these values:
 
 | Field | Menu row | Values |
 | --- | --- | --- |
 | `support_selection` | Support Selection | `none`, `relevant`, `all` |
 | `character_balance` | Character Balance | `original`, `overrides` |
 | `balance_overlay` | Balance Overlay | `off`, `on` |
-| `simple_display` | Simple Display | `off`, `on` |
+
+`simple_display` (`off` or `on`) remains on the Mod Settings root.
 
 The builder always includes the four runtime implementations. Their configured
 values initialize one writable runtime state when the game starts. With
-`features.memory_card.dedicated_save_namespace` enabled, the existing save flow
+`features.memory_card.extended_save_data` enabled, the existing save flow
 writes these values and every other runtime-editable value below
 `features.default_settings` to the dedicated record appendix. A valid loaded record
-overrides configured defaults; a setting absent from an older record keeps its
-configured default. With the dedicated namespace disabled, the retail save
-format does not store these values.
+overrides configured defaults; a missing setting keeps its configured default.
+When the appendix schema changes, all mod settings return to configured defaults
+while native progress and controls load. With extended save data disabled, the
+retail save format does not store these values.
 
 Square on Mode Select opens an existing Practice Settings child as a modal
 surface. Each Mode Select controller prepares the Options backdrop, Practice
@@ -39,11 +42,12 @@ transaction and closes. Select stages the configured defaults and shows
 **Settings returned to defaults.** Square opens a configured submenu.
 Opening plays the same sound as native Practice Settings.
 
-`features.menu_composition.mod_settings` controls the Battle Mechanics, Battle
-Settings, and Practice Settings launchers. Each Boolean includes or omits its
-launcher, and their config order determines their order before the four Mod
-Settings values. The value rows follow `features.default_settings.mod_settings`
-order. `menu_composition` is omitted from release config and catalog exports;
+`features.menu_composition.mod_settings` controls the Battle Mechanics,
+Character Selection, Battle Settings, and Practice Settings launchers. Their
+config order places Character Selection immediately after Battle Mechanics in
+the base menu, followed by Battle Settings, Practice Settings, and the root
+Simple Display row. The existing launcher switches and ordering remain
+configurable. `menu_composition` is omitted from release config and catalog exports;
 the packaged builder retains its resolved release values. Battle Mechanics opens
 `features.default_settings.battle_mechanics`. The Battle Settings and
 Practice Settings pages expose their existing stored values without repeating
@@ -54,7 +58,7 @@ Battle Difficulty and Options Difficulty share the same selected value.
 Changing either control updates the native Options mirror and the persisted
 Battle Difficulty value.
 
-Both pages use the generated Practice-style submenu renderer. Their labels,
+These pages use the generated Practice-style submenu renderer. Their labels,
 selector values, and help messages reference the same translated resources as
 the original Battle Settings and Practice Settings menus. Handicap remains a
 normal text-value row in this shared presentation.

@@ -30,7 +30,7 @@ from ..settings.ingame.battle_mechanics.substitution.substitution_gauge import (
     chakra_minimum_option_default,
     gauge_option_defaults,
 )
-from ..settings.ingame.shared.menu_options import MOD_SETTINGS_PATH
+from ..settings.ingame.shared.menu_options import MOD_SETTINGS_PATH, CHARACTER_SELECTION_PATH
 from ..settings.ingame.shared.native_settings_defaults import (
     BATTLE_ROW_IDS,
     PRACTICE_GENERAL_ROW_IDS,
@@ -40,7 +40,7 @@ from ..settings.ingame.shared.native_settings_defaults import (
 )
 
 
-APPENDIX_SIZE = 0x200
+APPENDIX_SIZE = 0x1000
 APPENDIX_HEADER_SIZE = 0x10
 APPENDIX_ENTRY_SIZE = 4
 SCHEMA_HEADER_SIZE = 8
@@ -160,7 +160,7 @@ def load_save_appendix(path: Path) -> tuple[int, tuple[AppendixRow, ...]]:
             AppendixRow(setting_id, key, label, _option_count(raw["values"]))
         )
     if APPENDIX_HEADER_SIZE + len(rows) * APPENDIX_ENTRY_SIZE > APPENDIX_SIZE:
-        raise ValueError("save_appendix.tsv exceeds the 0x200-byte appendix capacity")
+        raise ValueError("save_appendix.tsv exceeds the 0x1000-byte appendix capacity")
     return schema_version, tuple(rows)
 
 
@@ -185,10 +185,10 @@ def _bindings(selection) -> dict[str, SettingBinding]:
     selected = _selected_values(selection)
     mod_values = (
         int(selected[MOD_SETTINGS_PATH + ("simple_display",)] == "on"),
-        int(selected[MOD_SETTINGS_PATH + ("character_balance",)] == "overrides"),
-        int(selected[MOD_SETTINGS_PATH + ("balance_overlay",)] == "on"),
+        int(selected[CHARACTER_SELECTION_PATH + ("character_balance",)] == "overrides"),
+        int(selected[CHARACTER_SELECTION_PATH + ("balance_overlay",)] == "on"),
         {"none": 0, "relevant": 1, "all": 2}[
-            selected[MOD_SETTINGS_PATH + ("support_selection",)]
+            selected[CHARACTER_SELECTION_PATH + ("support_selection",)]
         ],
     )
     bindings = {
@@ -434,5 +434,5 @@ def save_appendix_load_status_fragment(*, owner: str) -> PayloadFragment:
         symbol="save_appendix_load_status",
         kind="data",
         alignment=4,
-        payload=bytes(8),
+        payload=bytes(4),
     )

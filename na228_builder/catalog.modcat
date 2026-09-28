@@ -59,7 +59,7 @@
     memory_card: {
       description: "Memory-card save storage and save-menu appearance.",
       auto_loading: setting {
-        description: "Automatically load the first save and use only that slot for saving and loading. Show the load result in the main menu and ask before upgrading an older save. Disable to load manually and choose among all save slots.",
+        description: "Automatically load the first save and use only that slot for saving and loading. Show the load result in the main menu. Disable to load manually and choose among all save slots.",
         patch: "memory_card.auto_loading",
       },
       dialogs_rework: setting {
@@ -70,11 +70,8 @@
         description: "Skip the early memory-card check at startup. Automatic save loading is controlled separately.",
         patch: "memory_card.skip_initial_check",
       },
-      dedicated_save_namespace: setting {
-        patch: "memory_card.dedicated_save_namespace",
-      },
-      replace_memory_card_title: setting {
-        patch: "memory_card.replace_memory_card_title",
+      extended_save_data: setting {
+        patch: "memory_card.extended_save_data",
       },
     },
     rendering: {
@@ -88,6 +85,7 @@
       description: "Choose which submenus are available and their order before the default-setting rows.",
       mod_settings: {
         battle_mechanics: setting {},
+        character_selection: setting {},
         battle_settings: setting {},
         practice_settings: setting {},
       },
@@ -104,17 +102,19 @@
       mod_settings: {
         description: "Configure the options available in the in-game Mod Settings menu.",
         patch: "settings.mod_settings",
-        support_selection: setting<"none" | "relevant" | "all"> {
-          description: "Control which supports are available during Character Select.",
-          patch: "character_select.support_selection",
-        },
-        character_balance: setting<"original" | "overrides"> {
-          description: "Choose between original character balance and the configured balance changes.",
-          patch: "settings.character_overrides",
-        },
-        balance_overlay: setting<"off" | "on"> {
-          description: "Show character balance information on Character Select.",
-          patch: "character_select.balance_overlay",
+        character_selection: {
+          support_selection: setting<"none" | "relevant" | "all"> {
+            description: "Control which supports are available during Character Select.",
+            patch: "character_select.support_selection",
+          },
+          character_balance: setting<"original" | "overrides"> {
+            description: "Choose between original character balance and the configured balance changes.",
+            patch: "settings.character_overrides",
+          },
+          balance_overlay: setting<"off" | "on"> {
+            description: "Show character balance information on Character Select.",
+            patch: "character_select.balance_overlay",
+          },
         },
         simple_display: setting<"off" | "on"> {
           patch: "settings.simple_display",

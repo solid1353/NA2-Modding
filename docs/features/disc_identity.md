@@ -37,17 +37,16 @@ The European region label from the NUN5 identity does not convert the game to
 PAL. This conclusion is based on code and built-byte inspection, not a
 runtime test of the NUN5-labelled build.
 
-## Independent save and title settings
+## Extended save data identity
 
-The separate `memory_card.dedicated_save_namespace` catalog setting owns the clean
+The `memory_card.extended_save_data` catalog setting owns the clean
 boot ELF's two 19-byte memory-card directory fields at `0x2FBAC1` and
 `0x2FBBF0`. When enabled, its guarded binary edits change
 `BISLPS-25837NARUTO5` to `BASLOP-NA228NARUTO6`. It is enabled in the base
-configuration. Setting it to `false` leaves the stock name intact, so NA228
-shares NA2's save data. Existing `.ps2` memory cards and data remain untouched,
-and changing the setting does not migrate data between the two names.
+configuration. Setting it to `false` leaves the stock name and native save
+format intact. Existing `.ps2` memory cards and data remain untouched.
 
-The separate `memory_card.replace_memory_card_title` setting owns the clean boot
+The same setting owns the clean boot
 ELF's 64-byte CP932 title slot at `0x2FBAE0`. Its fixed-value adapter guards the
 original Japanese title and replaces it with `ＮＡ　ｖ２．２８`, with both values
 NUL-terminated and zero-padded through the slot. The base configuration enables
@@ -56,8 +55,8 @@ it; setting it to `false` leaves the original title intact.
 The English [string localization](localization/translation_importer.md) replaces
 the imported game title with
 `na228_builder/release/release_manifest.json`'s `title`.
-It is selected by `features.localization: "en"` and is independent of both
-memory-card settings.
+It is selected by `features.localization: "en"` and is independent of the
+memory-card setting.
 
 The full-width title form follows the official NUN5 memory-card convention. A
 half-width ASCII test copied into a new save correctly but rendered as a blank

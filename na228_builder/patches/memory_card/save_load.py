@@ -18,7 +18,7 @@ def save_load_continuation_fragments(selection, *, owner: str) -> tuple[PayloadF
     fragments = []
     for setting, symbol in (
         ("dialogs_rework", "dialogs_rework"),
-        ("dedicated_save_namespace", "save_appendix"),
+        ("extended_save_data", "save_appendix"),
     ):
         if setting not in enabled:
             continue

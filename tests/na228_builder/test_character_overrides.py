@@ -99,8 +99,9 @@ class CharacterOverrideTests(unittest.TestCase):
             ):
                 features = test_features()
                 mod_settings = features["default_settings"]["mod_settings"]
-                mod_settings["character_balance"] = "overrides" if overrides_enabled else "original"
-                mod_settings["balance_overlay"] = "on" if overlay_enabled else "off"
+                character_selection = mod_settings["character_selection"]
+                character_selection["character_balance"] = "overrides" if overrides_enabled else "original"
+                character_selection["balance_overlay"] = "on" if overlay_enabled else "off"
                 configuration_path = Path(directory) / "configuration.jsonc"
                 configuration_path.write_text(
                     json.dumps({"features": features}, indent=2) + "\n",
@@ -118,14 +119,14 @@ class CharacterOverrideTests(unittest.TestCase):
                 overrides = next(
                     node for node in selection.nodes
                     if node.path == (
-                        "features", "default_settings", "mod_settings",
+                        "features", "default_settings", "mod_settings", "character_selection",
                         "character_balance",
                     )
                 )
                 overlay = next(
                     node for node in selection.nodes
                     if node.path == (
-                        "features", "default_settings", "mod_settings",
+                        "features", "default_settings", "mod_settings", "character_selection",
                         "balance_overlay",
                     )
                 )

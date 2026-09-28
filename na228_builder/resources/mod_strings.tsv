@@ -65,6 +65,8 @@ page.items.heading	Items Settings	アイテム設定
 page.mod_settings.title	Mod Settings	ＭＯＤ設定
 page.battle_mechanics.title	Battle Mechanics	バトルシステム
 page.battle_mechanics.help	Configure battle mechanics.	バトルシステムを設定します。
+page.character_selection.title	Character Selection	キャラクター選択
+page.character_selection.help	Configure character selection.	キャラクター選択を設定します。
 page.battle_settings.title	Battle Settings	バトル設定
 page.battle_settings.help	Configure battle settings.	バトルのルールを設定します。
 page.practice_settings.title	Practice Settings	演習設定
@@ -81,23 +83,13 @@ page.opponent_settings.help	Configure opponent settings.	相手の動作を設�
 character_select.no_support	NO SUPPORT	サポートなし
 startup.loaded	Save data loaded	セーブデータを読み込みました
 startup.no_save_data	No save data found	セーブデータがありません
-startup.no_game_data	No game data found	ゲームデータがありません
 startup.no_card	No memory card detected	メモリーカードがありません
 startup.unformatted_card	Memory card is not formatted	メモリーカードが未フォーマットです
 startup.unsupported_card	Unsupported memory card	対応していないメモリーカードです
 startup.load_failed	Save data could not be loaded	セーブデータを読み込めませんでした
-startup.incompatible_heading	The existing save data	既存のセーブデータは
-startup.incompatible_version	uses version {0}.	バージョン{0}です。
-save.required_version	Version {0} is required.	バージョン{0}が必要です。
 startup.play_time	Play Time {0}	プレイ時間 {0}
 startup.saved_time	Saved {0}	保存日時 {0}
-save.upgrade_confirm	Upgrade the existing save data?\nYour progress will be kept.	セーブデータを更新しますか？\n進行状況は引き継がれます。
-save.unsupported_format	The existing save data\nuses an unsupported format.\nIt cannot be loaded or changed.	既存のセーブデータは\n対応していない形式です。\n読み込みや変更はできません。
-save.existing_version	The existing save data uses version {0}.	既存のセーブデータはバージョン{0}です。
-save.newer_game_required	A newer game version is needed.	新しいゲームバージョンが必要です。
-save.cannot_upgrade	This version cannot be upgraded.	このバージョンは更新できません。
-save.upgrade_failed	The save data could not be upgraded.	セーブデータを更新できませんでした。
-save.upgrading	Upgrading the existing save data...	セーブデータを更新しています…
+save.settings_reset	Mod settings were reset because their format changed.	設定の形式が変更されたため、Mod設定を初期化しました。
 item.health_recovery	Health Recovery	体力回復
 item.chakra_ball	Chakra Ball	チャクラ玉
 item.shoes_of_jonin	Shoes of Jonin	上忍の靴

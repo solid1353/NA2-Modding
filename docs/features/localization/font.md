@@ -101,8 +101,8 @@ and the shared selected-style paths proven by those callers.
 
 ## Caller-specific contracts
 
-- Pending acceptance: memory-card status messages, fixed Save/Return questions,
-  and custom save-version/upgrade messages share paragraph fitting. The localized
+- Pending acceptance: memory-card status messages and fixed Save/Return
+  questions share paragraph fitting. The localized
   lower window uses NUN5's `(8,230,496,144)` geometry, with body origin `(16,12)`,
   width `448`, and an 85-unit body box with a five-line limit. Short paragraphs
   retain 20-unit line spacing; taller blocks shrink their spacing and glyph

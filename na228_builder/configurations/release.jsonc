@@ -5,9 +5,11 @@
   "widescreen": false,
   "default_settings": {
     "mod_settings": {
-      "support_selection": "none",                          // "none" | "relevant" | "all"
-      "character_balance": "overrides",                     // "original" | "overrides"
-      "balance_overlay": "on",                              // "off" | "on"
+      "character_selection": {
+        "support_selection": "none",                        // "none" | "relevant" | "all"
+        "character_balance": "overrides",                   // "original" | "overrides"
+        "balance_overlay": "on"                            // "off" | "on"
+      },
       "simple_display": "off"                               // "off" | "on"
     },
     "battle_mechanics": {

@@ -770,7 +770,7 @@ complete native support renderer, including its coordinates, button badge, and
 support decorations, remains byte-clean and is independently controlled by No
 Support.
 
-The feature depends only on the implementation selected by `features.default_settings.mod_settings.character_balance`, which
+The feature depends only on the implementation selected by `features.default_settings.mod_settings.character_selection.character_balance`, which
 provides the single normalized cost source. No Support remains independent and
 controls only native field support and its lower gauge. The supported build-time
 combinations are:
@@ -949,7 +949,7 @@ The save appendix keeps schema version `1` and field ID `0505`. An older mod
 save must be deleted before using this setting because its saved value index
 has a different meaning.
 
-The gauge requires the implementation selected by `features.default_settings.mod_settings.character_balance` and
+The gauge requires the implementation selected by `features.default_settings.mod_settings.character_selection.character_balance` and
 `features.default_settings.practice_settings`. `features.general.new_controls`
 independently exposes separate Guard and Substitution actions.
 `features.default_settings.battle_mechanics.support` independently controls field support

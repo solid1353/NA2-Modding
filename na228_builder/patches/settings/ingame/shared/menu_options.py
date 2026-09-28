@@ -15,6 +15,7 @@ from ..battle_mechanics.items.items_settings import FIELD_ITEMS, ITEM_VALUE_LABE
 
 
 MOD_SETTINGS_PATH = ("features", "default_settings", "mod_settings")
+CHARACTER_SELECTION_PATH = MOD_SETTINGS_PATH + ("character_selection",)
 
 
 @dataclass(frozen=True)
@@ -81,7 +82,8 @@ def menu_option_bindings(selection):
          ("none", "relevant", "all"), (message("common.none"), message("common.relevant"), message("common.all"))),
     )
     for argument, (key, label, help_text, values, labels) in enumerate(mod_rows):
-        path = MOD_SETTINGS_PATH + (key,)
+        path = (MOD_SETTINGS_PATH if key == "simple_display"
+                else CHARACTER_SELECTION_PATH) + (key,)
         options[path] = MenuOption(
             label, help_text, labels, configured_index(path, values),
             "mod_settings_option_get", "mod_settings_option_set", argument,

@@ -23,8 +23,7 @@
       "auto_loading": true,
       "dialogs_rework": true,
       "skip_initial_check": true,
-      "dedicated_save_namespace": true,
-      "replace_memory_card_title": true
+      "extended_save_data": true
     },
     "rendering": {
       "native_16_9_horizontal_scale": false
@@ -32,6 +31,7 @@
     "menu_composition": {
       "mod_settings": {
         "battle_mechanics": true,
+        "character_selection": true,
         "battle_settings": true,
         "practice_settings": true
       },
@@ -44,9 +44,11 @@
     },
     "default_settings": {
       "mod_settings": {
-        "support_selection": "none",                        // "none" | "relevant" | "all"
-        "character_balance": "overrides",                   // "original" | "overrides"
-        "balance_overlay": "on",                            // "off" | "on"
+        "character_selection": {
+          "support_selection": "none",                      // "none" | "relevant" | "all"
+          "character_balance": "overrides",                 // "original" | "overrides"
+          "balance_overlay": "on"                           // "off" | "on"
+        },
         "simple_display": "off"                             // "off" | "on"
       },
       "battle_mechanics": {

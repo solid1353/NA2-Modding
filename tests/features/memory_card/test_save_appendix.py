@@ -37,10 +37,10 @@ class SaveAppendixTests(unittest.TestCase):
     def test_fixed_appendix_capacity_is_enforced(self) -> None:
         rows = [
             f"{index:04X}\tsetting{index}\tSetting {index}\tOff | On"
-            for index in range(1, 126)
+            for index in range(1, 1022)
         ]
-        self.write_rows(rows[:124])
-        self.assertEqual(124, len(save_appendix.load_save_appendix(self.path)[1]))
+        self.write_rows(rows[:1020])
+        self.assertEqual(1020, len(save_appendix.load_save_appendix(self.path)[1]))
         self.write_rows(rows)
         with self.assertRaisesRegex(ValueError, "capacity"):
             save_appendix.load_save_appendix(self.path)

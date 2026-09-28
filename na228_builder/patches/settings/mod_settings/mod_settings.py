@@ -23,7 +23,7 @@ from ..ingame.practice_mode.practice_settings import (
     settings_menu_schema_fragment,
 )
 from ..ingame.battle_mechanics.battle_settings_runtime import PRACTICE_SETTINGS_PATH
-from ..ingame.shared.menu_options import MOD_SETTINGS_PATH, MenuOption
+from ..ingame.shared.menu_options import MOD_SETTINGS_PATH, CHARACTER_SELECTION_PATH, MenuOption
 from ..ingame.shared.menu_pages import build_menu_pages, page_resource_fragments
 from ..ingame.shared.native_settings_defaults import (
     BATTLE_ROW_IDS,
@@ -169,10 +169,10 @@ def mod_settings_state_fragment(
     selected = {node.path: node for node in selection.nodes}
     values = (
         int(selected[MOD_SETTINGS_PATH + ("simple_display",)].configured_value == "on"),
-        int(selected[MOD_SETTINGS_PATH + ("character_balance",)].configured_value == "overrides"),
-        int(selected[MOD_SETTINGS_PATH + ("balance_overlay",)].configured_value == "on"),
+        int(selected[CHARACTER_SELECTION_PATH + ("character_balance",)].configured_value == "overrides"),
+        int(selected[CHARACTER_SELECTION_PATH + ("balance_overlay",)].configured_value == "on"),
         {"none": 0, "relevant": 1, "all": 2}[
-            selected[MOD_SETTINGS_PATH + ("support_selection",)].configured_value
+            selected[CHARACTER_SELECTION_PATH + ("support_selection",)].configured_value
         ],
     )
     return PayloadFragment(

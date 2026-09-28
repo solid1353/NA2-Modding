@@ -60,7 +60,7 @@
         "encoding": "jal26"
       },
       "replace_visible_save_load_controller_update": {
-        "description": "Drive silent first-record loading, entering the shared visible controller only for a supported older-save upgrade, while retaining native allocation, cleanup, and post-load setup.",
+        "description": "Drive silent first-record loading while retaining native allocation, cleanup, and post-load setup.",
         "target_id": "na2_elf",
         "offset": "0xEA084",
         "expected_hex": "C08F070C",
@@ -68,7 +68,7 @@
         "encoding": "jal26"
       },
       "suppress_visible_save_load_child_draw": {
-        "description": "Suppress the Save/Load child during silent loading and draw it while the shared older-save upgrade flow is active.",
+        "description": "Suppress the Save/Load child during silent loading.",
         "target_id": "na2_elf",
         "offset": "0xEA0D0",
         "expected_hex": "C095070C",
@@ -87,14 +87,11 @@
           "save_appendix_load_status": "save_appendix_load_status",
           "MESSAGE_LOADED": "mod_text_startup__loaded",
           "MESSAGE_NO_SAVE_DATA": "mod_text_startup__no_save_data",
-          "MESSAGE_NO_GAME_DATA": "mod_text_startup__no_game_data",
           "MESSAGE_NO_CARD": "mod_text_startup__no_card",
           "MESSAGE_UNFORMATTED_CARD": "mod_text_startup__unformatted_card",
           "MESSAGE_UNSUPPORTED_CARD": "mod_text_startup__unsupported_card",
           "MESSAGE_LOAD_FAILED": "mod_text_startup__load_failed",
-          "INCOMPATIBLE_SAVE_HEADING": "mod_text_startup__incompatible_heading",
-          "mod_text_startup__incompatible_version": "mod_text_startup__incompatible_version",
-          "mod_text_save__required_version": "mod_text_save__required_version",
+          "mod_text_save__settings_reset": "mod_text_save__settings_reset",
           "mod_text_startup__play_time": "mod_text_startup__play_time",
           "mod_text_startup__saved_time": "mod_text_startup__saved_time"
         },
@@ -117,7 +114,7 @@
       "notification_state": {
         "kind": "data",
         "alignment": 4,
-        "value": "00000000000000000000000000000000000000000000000000000000"
+        "value": "0000000000000000000000000000000000000000"
       },
       "display_only_first_save": {
         "kind": "c",
@@ -248,24 +245,24 @@
       }
     }
   },
-  "memory_card.dedicated_save_namespace": {
-    "description": "Use the dedicated NA228 save namespace and its versioned settings appendix.",
+  "memory_card.extended_save_data": {
+    "description": "Use the dedicated NA228 save directory, title, and extended settings appendix.",
     "edits": {
       "create_allocate_extended_record": {
-        "description": "Allocate a complete 0x2600-byte record while creating the save set.",
+        "description": "Allocate a complete 0x3400-byte record while creating the save set.",
         "operation": "replace",
         "destination_target_id": "na2_elf",
         "destination_offset": "0xC1980",
         "expected_hex": "00240424",
-        "replacement_hex": "00260424"
+        "replacement_hex": "00340424"
       },
       "create_fill_extended_record": {
-        "description": "Initialize the complete 0x2600-byte erased record during save-set creation.",
+        "description": "Initialize the complete 0x3400-byte erased record during save-set creation.",
         "operation": "replace",
         "destination_target_id": "na2_elf",
         "destination_offset": "0xC1998",
         "expected_hex": "00240624",
-        "replacement_hex": "00260624"
+        "replacement_hex": "00340624"
       },
       "create_write_extended_record": {
         "description": "Write each complete erased record during save-set creation.",
@@ -273,7 +270,7 @@
         "destination_target_id": "na2_elf",
         "destination_offset": "0xC19C4",
         "expected_hex": "00240924",
-        "replacement_hex": "00260924"
+        "replacement_hex": "00340924"
       },
       "dedicated_directory_names": {
         "description": "Address both memory-card directory references through the dedicated NA228 namespace.",
@@ -287,13 +284,24 @@
         "replacement_value": "BASLOP-NA228NARUTO6",
         "adapter": "ascii_fixed"
       },
+      "memory_card_title": {
+        "description": "Use the NA228 title in the dedicated memory-card directory.",
+        "operation": "replace",
+        "destination_target_id": "na2_elf",
+        "destination_offset": "0x2FBAE0",
+        "expected_value": "ＮＡＲＵＴＯ－ナルト－　疾風伝ナルティメットアクセル２",
+        "replacement_value": "ＮＡ　ｖ２．２８",
+        "adapter": "nul_padded_text",
+        "encoding": "cp932",
+        "length": 64
+      },
       "increase_required_memory_card_blocks": {
-        "description": "Account for four extra 1 KiB card blocks: each record grows from nine blocks to ten.",
+        "description": "Account for sixteen extra 1 KiB card blocks: each record grows from nine blocks to thirteen.",
         "operation": "replace",
         "destination_target_id": "na2_elf",
         "destination_offset": "0xC1668",
         "expected_hex": "67000424",
-        "replacement_hex": "6B000424"
+        "replacement_hex": "77000424"
       },
       "load_allocate_extended_record": {
         "description": "Allocate a complete temporary record for normal load.",
@@ -301,7 +309,7 @@
         "destination_target_id": "na2_elf",
         "destination_offset": "0xE2710",
         "expected_hex": "00240424",
-        "replacement_hex": "00260424"
+        "replacement_hex": "00340424"
       },
       "load_read_extended_record": {
         "description": "Request the complete temporary record during normal load.",
@@ -309,7 +317,7 @@
         "destination_target_id": "na2_elf",
         "destination_offset": "0xE2734",
         "expected_hex": "00240924",
-        "replacement_hex": "00260924"
+        "replacement_hex": "00340924"
       },
       "repair_allocate_backup_record": {
         "description": "Allocate a complete record while restoring a missing primary from data04.",
@@ -317,7 +325,7 @@
         "destination_target_id": "na2_elf",
         "destination_offset": "0xC3218",
         "expected_hex": "00240424",
-        "replacement_hex": "00260424"
+        "replacement_hex": "00340424"
       },
       "repair_allocate_descriptor_record": {
         "description": "Allocate a complete record while reconstructing descriptor metadata.",
@@ -325,7 +333,7 @@
         "destination_target_id": "na2_elf",
         "destination_offset": "0xC3470",
         "expected_hex": "00240424",
-        "replacement_hex": "00260424"
+        "replacement_hex": "00340424"
       },
       "repair_read_backup_record": {
         "description": "Read the complete data04 record for missing-primary restoration.",
@@ -333,7 +341,7 @@
         "destination_target_id": "na2_elf",
         "destination_offset": "0xC323C",
         "expected_hex": "00240924",
-        "replacement_hex": "00260924"
+        "replacement_hex": "00340924"
       },
       "repair_read_descriptor_record": {
         "description": "Read each complete record while reconstructing descriptor metadata.",
@@ -341,7 +349,7 @@
         "destination_target_id": "na2_elf",
         "destination_offset": "0xC349C",
         "expected_hex": "00240924",
-        "replacement_hex": "00260924"
+        "replacement_hex": "00340924"
       },
       "repair_write_primary_record": {
         "description": "Preserve the complete data04 record when restoring a missing primary.",
@@ -349,7 +357,7 @@
         "destination_target_id": "na2_elf",
         "destination_offset": "0xC33D4",
         "expected_hex": "00240924",
-        "replacement_hex": "00260924"
+        "replacement_hex": "00340924"
       },
       "save_allocate_extended_record": {
         "description": "Allocate a complete temporary record for normal save.",
@@ -357,7 +365,7 @@
         "destination_target_id": "na2_elf",
         "destination_offset": "0xE2928",
         "expected_hex": "00240424",
-        "replacement_hex": "00260424"
+        "replacement_hex": "00340424"
       },
       "save_write_backup_record": {
         "description": "Write the complete rolling data04 record.",
@@ -365,7 +373,7 @@
         "destination_target_id": "na2_elf",
         "destination_offset": "0xE2A10",
         "expected_hex": "00240924",
-        "replacement_hex": "00260924"
+        "replacement_hex": "00340924"
       },
       "save_write_primary_record": {
         "description": "Write the complete selected primary record.",
@@ -373,20 +381,12 @@
         "destination_target_id": "na2_elf",
         "destination_offset": "0xE29EC",
         "expected_hex": "00240924",
-        "replacement_hex": "00260924"
+        "replacement_hex": "00340924"
       }
     },
     "hooks": {
-      "classify_appendix_during_card_scan": {
-        "description": "Route incompatible versions away from native recovery and perform an approved older-save upgrade on the card worker.",
-        "target_id": "na2_elf",
-        "offset": "0xE22F8",
-        "expected_hex": "2808070C",
-        "symbol": "save_appendix_check_card",
-        "encoding": "jal26"
-      },
-      "handle_incompatible_save_dialog": {
-        "description": "Offer a supported older-save upgrade, then resume the existing load or save flow; leave newer and unknown versions untouched.",
+      "show_reset_notice_after_load": {
+        "description": "Add the settings reset notice to a successful manual load when the appendix schema differs.",
         "target_id": "na2_elf",
         "offset": "0xE4008",
         "expected_hex": "C88F070C00000000",
@@ -410,7 +410,7 @@
         "encoding": "jal26"
       },
       "validate_extended_record_on_load": {
-        "description": "Clear the appendix destination, read the complete record, and reject an invalid or unsupported appendix before native validation.",
+        "description": "Read the complete record and validate its physical appendix before native validation.",
         "target_id": "na2_elf",
         "offset": "0xE273C",
         "expected_hex": "9807070C",
@@ -424,17 +424,9 @@
         "path": "na228_builder/patches/memory_card/save_appendix.c",
         "namespace": "memory.card.save.appendix",
         "imports": {
-          "mod_number_glyphs": "mod_number_glyphs",
           "save_appendix_schema": "save_appendix_schema",
           "save_appendix_load_status": "save_appendix_load_status",
-          "mod_text_save__upgrade_confirm": "mod_text_save__upgrade_confirm",
-          "mod_text_save__unsupported_format": "mod_text_save__unsupported_format",
-          "mod_text_save__existing_version": "mod_text_save__existing_version",
-          "mod_text_save__required_version": "mod_text_save__required_version",
-          "mod_text_save__newer_game_required": "mod_text_save__newer_game_required",
-          "mod_text_save__cannot_upgrade": "mod_text_save__cannot_upgrade",
-          "mod_text_save__upgrade_failed": "mod_text_save__upgrade_failed",
-          "mod_text_save__upgrading": "mod_text_save__upgrading",
+          "mod_text_save__settings_reset": "mod_text_save__settings_reset",
           "save_appendix_next_update": "save_appendix_next_update"
         },
         "resources": [
@@ -443,14 +435,8 @@
           "na228_builder/patches/localization/mod_strings.h"
         ],
         "fragments": {
-          "save_appendix_dialog_state": {
+          "save_appendix_notice_state": {
             "object": "memory.card.save.appendix.bss"
-          },
-          "save_appendix_dialog_constants": {
-            "object": "memory.card.save.appendix.rodata"
-          },
-          "save_appendix_check_card": {
-            "object": "memory.card.save.appendix.text.save.appendix.check.card"
           },
           "save_appendix_helpers": {
             "object": "memory.card.save.appendix.text.save.appendix.helpers"
@@ -469,19 +455,6 @@
           }
         }
       }
-    }
-  },
-  "memory_card.replace_memory_card_title": {
-    "description": "Replace the original memory-card title with the dedicated NA228 title.",
-    "edit": {
-      "operation": "replace",
-      "destination_target_id": "na2_elf",
-      "destination_offset": "0x2FBAE0",
-      "expected_value": "ＮＡＲＵＴＯ－ナルト－　疾風伝ナルティメットアクセル２",
-      "replacement_value": "ＮＡ　ｖ２．２８",
-      "adapter": "nul_padded_text",
-      "encoding": "cp932",
-      "length": 64
     }
   }
 }

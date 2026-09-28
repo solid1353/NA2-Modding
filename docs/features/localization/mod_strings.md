@@ -2,7 +2,7 @@
 
 `na228_builder/resources/mod_strings.tsv` owns text added by the mod: settings
 labels, help, option names, submenu headings, reset messages, Character Select
-labels, startup notices, and save-upgrade dialogs. Its columns are `id`, `en`,
+labels, startup notices, and the save settings reset notice. Its columns are `id`, `en`,
 and `jp`. `features.localization` selects the language column. Retail string
 replacements remain in the [translation importer](translation_importer.md).
 Text drawn into texture images remains with its graphical assets.

@@ -286,16 +286,16 @@ def prepare_module_pipeline(
                     *declaration.fragments,
                 ),
             )
-            dedicated_namespace = next(
+            extended_save_data = next(
                 node
                 for node in configuration.selection.nodes
                 if node.path == (
                     "features",
                     "memory_card",
-                    "dedicated_save_namespace",
+                    "extended_save_data",
                 )
             )
-            if dedicated_namespace.enabled:
+            if extended_save_data.enabled:
                 declaration = replace(
                     declaration,
                     fragments=(

@@ -115,22 +115,31 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
             heading_symbol=f"{prefix}_page_{page_index}_heading" if page_index else None,
             heading_text=heading if page_index else None))
         rows = []
+        local_launchers = set()
         if page_index == 0:
             menu_path = ("features", "menu_composition", root_path[-1])
             menu_definition = next(field.node for field in selection.catalog["menu_composition"].fields
                                    if field.name == root_path[-1])
+            local_fields = dict(fields_of(definition))
             for name, _child in ordered_fields(menu_definition, menu_path):
+                if name in local_fields:
+                    local_launchers.add(name)
                 if not selected[menu_path + (name,)].enabled:
                     continue
-                child_path = ("features", "default_settings", name)
+                child_path = (root_path + (name,) if name in local_fields
+                              else ("features", "default_settings", name))
                 if not selected[child_path].enabled:
                     continue
-                subpage = add_page(settings_definitions[name], child_path, page_index,
+                child_definition = (local_fields[name] if name in local_fields
+                                    else settings_definitions[name])
+                subpage = add_page(child_definition, child_path, page_index,
                                    len(rows), ancestors + (path,))
                 rows.append(allocate_row(option_count=1, default_value=0, flags=SUBMENU_FLAG,
                     label=menu_title(name), help=message(f"page.{name}.help"),
                     value_pages=((0, subpage, None),)))
         for name, child in ordered_fields(definition, path):
+            if name in local_launchers:
+                continue
             child_path = path + (name,)
             target = selected.get(child_path)
             if target is not None and not target.enabled:

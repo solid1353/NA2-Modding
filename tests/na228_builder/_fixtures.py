@@ -27,13 +27,13 @@ def test_features() -> dict[str, object]:
             "auto_loading": True,
             "dialogs_rework": True,
             "skip_initial_check": True,
-            "dedicated_save_namespace": True,
-            "replace_memory_card_title": True,
+            "extended_save_data": True,
         },
         "rendering": {"native_16_9_horizontal_scale": False},
         "menu_composition": {
             "mod_settings": {
                 "battle_mechanics": True,
+                "character_selection": True,
                 "battle_settings": True,
                 "practice_settings": True,
             },
@@ -42,9 +42,11 @@ def test_features() -> dict[str, object]:
         },
         "default_settings": {
             "mod_settings": {
-                "support_selection": "none",
-                "character_balance": "overrides",
-                "balance_overlay": "on",
+                "character_selection": {
+                    "support_selection": "none",
+                    "character_balance": "overrides",
+                    "balance_overlay": "on",
+                },
                 "simple_display": "off",
             },
             "battle_mechanics": {

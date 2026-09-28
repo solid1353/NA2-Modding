@@ -176,6 +176,7 @@ from na228_builder.infrastructure.orchestration.catalog import (
     materialized_configuration,
     release_configuration_values,
 )
+from na228_builder.infrastructure.orchestration.release_configuration import public_configuration_text
 from scripts.lib.paths import load_local_paths
 
 paths = load_local_paths(repository, allow_missing=True)
@@ -184,9 +185,10 @@ catalog = paths.path("builder", "catalog.modcat")
 configuration = Path(sys.argv[2])
 if sys.argv[3] == "public":
     values = release_configuration_values(catalog, configuration)
+    print(public_configuration_text(configuration, values), end="")
 else:
     values = materialized_configuration(catalog, configuration)
-print(json.dumps(values, indent=2))
+    print(json.dumps(values, indent=2))
 '@
     $embeddedConfiguration = Join-Path $resourceRoot ([IO.Path]::GetRelativePath(
         $repository, $baseConfigurationPath

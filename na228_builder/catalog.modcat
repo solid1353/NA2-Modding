@@ -59,7 +59,7 @@
     memory_card: {
       description: "Memory-card save storage and save-menu appearance.",
       auto_loading: setting {
-        description: "Automatically load the first save and use only that slot for saving and loading. Show the load result in the main menu. Disable to load manually and choose among all save slots.",
+        description: "Automatically load the first save and use only that slot for saving and loading. Show the load result in the main menu. Disable to load manually and choose among all save slots. Manual loading works, but it is not fully supported or tested.",
         patch: "memory_card.auto_loading",
       },
       dialogs_rework: setting {
@@ -77,7 +77,7 @@
     rendering: {
       description: "Screen proportions and display settings.",
       native_16_9_horizontal_scale: setting {
-        description: "Apply basic horizontal scaling for a 16:9 display. Menus and other graphics are not fully adapted for widescreen.",
+        description: "Apply basic horizontal scaling for a 16:9 display. Experimental: the interface does not scale properly.",
         patch: "rendering.native_16_9_horizontal_scale",
       },
     },

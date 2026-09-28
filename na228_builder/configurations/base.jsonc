@@ -1,6 +1,6 @@
 {
   "features": {
-    "localization": "en",                                   // "en" | "jp"
+    "localization": "en",                                   // "en" | "jp" (experimental: some custom graphics and controls do not work correctly)
     "general": {
       "new_controls": true,
       "music_override": true,
@@ -20,13 +20,13 @@
       "loading_screen": true
     },
     "memory_card": {
-      "auto_loading": true,
+      "auto_loading": true,                                 // false: works, but is not fully supported or tested
       "dialogs_rework": true,
       "skip_initial_check": true,
       "extended_save_data": true
     },
     "rendering": {
-      "native_16_9_horizontal_scale": false
+      "native_16_9_horizontal_scale": false                 // true: experimental; the interface does not scale properly
     },
     "menu_composition": {
       "mod_settings": {

@@ -1,8 +1,8 @@
 {
-  "localization": "en",                                     // "en" | "jp"
+  "localization": "en",                                     // "en" | "jp" (experimental: some custom graphics and controls do not work correctly)
   "music_override": true,
-  "auto_loading": true,
-  "widescreen": false,
+  "auto_loading": true,                                     // false: works, but is not fully supported or tested
+  "widescreen": false,                                      // true: experimental; the interface does not scale properly
   "default_settings": {
     "mod_settings": {
       "character_selection": {
@@ -85,7 +85,7 @@
       "damage": "on"                                        // "off" | "on"
     }
   },
-  "configuration_layout": {
+  "configuration_mapping": {
     "music_override": "general.music_override",
     "auto_loading": "memory_card.auto_loading",
     "widescreen": "rendering.native_16_9_horizontal_scale"

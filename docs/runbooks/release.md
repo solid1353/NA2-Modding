@@ -49,9 +49,9 @@ The ZIP contains exactly the versioned EXE, `config.jsonc`,
 `character_overrides.tsv`, `catalog.modcat`, and `README.md`. Release packaging
 embeds the base configuration as `configurations/base.jsonc` for hidden defaults
 and `configurations/release.jsonc` for the public schema and path exceptions.
-It exports that release file's public values as `config.jsonc`, excluding
-`configuration_layout`. Their presence, nesting, and order also select the
-public catalog. The release loader maps public edits back to internal paths
+It exports that release file's public values and comments as `config.jsonc`,
+excluding `configuration_mapping`. Their presence, nesting, and order also select
+the public catalog. The release loader maps public edits back to internal paths
 and restores hidden embedded values before building. It materializes the base
 character values into `character_overrides.tsv`, including every reference
 ID/name row for direct editing. It derives the external `catalog.modcat` from
@@ -144,15 +144,15 @@ without a release resumes publication.
 - `@builder/release/build_release.ps1` owns packaging;
   `@builder/release/publish_release.ps1` publishes that exact package.
 
-## Configuration layout
+## Configuration mapping
 
 `na228_builder/configurations/release.jsonc` contains the public defaults in
 their shipped structure. Setting presence, nesting, order, and values determine
-the exported configuration. A `configuration_layout` object at the bottom maps
+the exported configuration. A `configuration_mapping` object at the bottom maps
 only public paths that differ from their relative catalog paths:
 
 ```json
-"configuration_layout": {
+"configuration_mapping": {
   "music_override": "general.music_override",
   "auto_loading": "memory_card.auto_loading",
   "widescreen": "rendering.native_16_9_horizontal_scale"
@@ -165,7 +165,7 @@ select individual children of a structural group; adding a catalog child does
 not expose it until it appears in the release file. Paths must resolve through
 structural containers, while a setting or union is selected as a whole.
 Duplicate or overlapping internal paths are invalid. Public names follow the
-catalog's naming rules; `description`, `patch`, and `configuration_layout` are
+catalog's naming rules; `description`, `patch`, and `configuration_mapping` are
 reserved.
 
 Public defaults are maintained independently of development defaults. Hidden

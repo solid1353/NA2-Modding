@@ -1261,10 +1261,10 @@ def _effective_configuration(
 
         if release_definition_path is None:
             raise ValueError("Release definition path is required with packaged defaults")
-        release_values, layout = load_release_definition(release_definition_path)
+        release_values, mapping = load_release_definition(release_definition_path)
         if configuration_path == release_definition_path:
             configuration = release_values
-        effective = expand_configuration(features, configuration, defaults, release_values, layout)
+        effective = expand_configuration(features, configuration, defaults, release_values, mapping)
     elif set(configuration) == {"overrides"}:
         base_path = (repository_configuration_root / "base.jsonc").resolve()
         try:
@@ -1414,8 +1414,8 @@ def release_configuration_values(catalog_path: Path, release_definition_path: Pa
     from .release_configuration import load_release_definition, resolve_layout
 
     features, _catalog_files = _read_catalog(catalog_path)
-    values, layout = load_release_definition(release_definition_path)
-    resolve_layout(features, values, layout)
+    values, mapping = load_release_definition(release_definition_path)
+    resolve_layout(features, values, mapping)
     return values
 
 
@@ -1424,8 +1424,8 @@ def public_catalog(catalog_path: Path, release_definition_path: Path) -> str:
     from .release_configuration import load_release_definition, resolve_layout
 
     features, _catalog_files = _read_catalog(catalog_path)
-    values, layout = load_release_definition(release_definition_path)
-    projected, _paths = resolve_layout(features, values, layout)
+    values, mapping = load_release_definition(release_definition_path)
+    projected, _paths = resolve_layout(features, values, mapping)
     return catalog_format.serialize_feature(projected, include_patches=False)
 
 

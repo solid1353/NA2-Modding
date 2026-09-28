@@ -11,6 +11,7 @@ from unittest import mock
 
 from na228_builder.infrastructure.modules.binary_patcher import adapters
 from na228_builder.infrastructure.orchestration import catalog, catalog_format, jsonc
+from na228_builder.infrastructure.orchestration.release_configuration import public_configuration_text
 from na228_builder.patches.settings.mod_settings.mod_settings import (
     mod_settings_state_fragment,
 )
@@ -396,7 +397,7 @@ class CatalogTests(unittest.TestCase):
                     "faster_loading": True,
                     "savedata_loading": "automatic",
                 },
-                "configuration_layout": {"startup": "feature.startup"},
+                "configuration_mapping": {"startup": "feature.startup"},
             })
             public = catalog.public_catalog(catalog_path, release_path)
             reference = root / "public.modcat"
@@ -548,6 +549,86 @@ class CatalogTests(unittest.TestCase):
                     if "//" in line
                 }
                 self.assertLessEqual(len(comment_columns), 1, comment_columns)
+
+    def test_release_comments_match_base_configuration(self) -> None:
+        paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
+        configurations = paths.path("builder") / "configurations"
+        base_text = (configurations / "base.jsonc").read_text(encoding="utf-8")
+        release_text = (configurations / "release.jsonc").read_text(encoding="utf-8")
+        base_values = jsonc.loads(base_text)["features"]
+        release_values = jsonc.loads(release_text)
+        mapping = release_values.pop("configuration_mapping")
+
+        def comments_by_path(text: str) -> dict[tuple[str, ...], str]:
+            parents: dict[int, str] = {}
+            comments = {}
+            for line in text.splitlines():
+                entry = re.match(r'^(\s*)"([^"]+)":\s*(.*)$', line)
+                if entry is None:
+                    continue
+                indent, key, value = entry.groups()
+                column = len(indent)
+                parents = {depth: name for depth, name in parents.items() if depth < column}
+                path = (*parents.values(), key)
+                if value.startswith("{"):
+                    parents[column] = key
+                comment = re.match(
+                    r'(?:true|false|null|-?\d+(?:\.\d+)?|"(?:\\.|[^"\\])*")'
+                    r',?\s*//\s*(.*)$', value,
+                )
+                if comment is not None:
+                    comments[path] = comment.group(1)
+            return comments
+
+        def leaf_paths(value: object, path: tuple[str, ...] = ()):
+            if isinstance(value, dict):
+                for key, child in value.items():
+                    yield from leaf_paths(child, (*path, key))
+            else:
+                yield path
+
+        base_comments = comments_by_path(base_text)
+        release_comments = comments_by_path(release_text)
+        base_paths = set(leaf_paths(base_values))
+        for public_path in leaf_paths(release_values):
+            internal_path = public_path
+            for length in range(len(public_path), 0, -1):
+                mapped = mapping.get(".".join(public_path[:length]))
+                if mapped is not None:
+                    internal_path = (*mapped.split("."), *public_path[length:])
+                    break
+            with self.subTest(setting=".".join(public_path)):
+                self.assertIn(internal_path, base_paths)
+                self.assertEqual(
+                    release_comments.get(public_path),
+                    base_comments.get(("features", *internal_path)),
+                )
+
+    def test_release_export_keeps_public_comments_and_omits_mapping(self) -> None:
+        source = (
+            '{\n'
+            '  "localization": "en", // "en" | "jp"\n'
+            '  "auto_loading": true,\n'
+            '  "configuration_mapping": {\n'
+            '    "auto_loading": "memory_card.auto_loading"\n'
+            '  }\n'
+            '}\n'
+        )
+        expected = (
+            '{\n'
+            '  "localization": "en", // "en" | "jp"\n'
+            '  "auto_loading": true\n'
+            '}\n'
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            definition = Path(directory) / "release.jsonc"
+            definition.write_text(source, encoding="utf-8")
+            self.assertEqual(
+                public_configuration_text(
+                    definition, {"localization": "en", "auto_loading": True}
+                ),
+                expected,
+            )
 
     def test_repository_simple_display_sets_mod_settings_runtime_default(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
@@ -1001,7 +1082,7 @@ class CatalogTests(unittest.TestCase):
             release_path = root / "release.jsonc"
             self.write_json(release_path, {
                 "value": 5,
-                "configuration_layout": {"value": "feature.value"},
+                "configuration_mapping": {"value": "feature.value"},
             })
             public = catalog.public_catalog(catalog_path, release_path)
         self.assertIn("value:", public)
@@ -1033,7 +1114,7 @@ class CatalogTests(unittest.TestCase):
             self.write_json(release_path, {
                 "preferences": {"tempo": 5},
                 "mode": "a",
-                "configuration_layout": {
+                "configuration_mapping": {
                     "preferences": "feature.group",
                     "preferences.tempo": "feature.group.speed",
                     "mode": "feature.defaults.mode",
@@ -1081,7 +1162,7 @@ class CatalogTests(unittest.TestCase):
             release_path = root / "configurations" / "release.jsonc"
             self.write_json(release_path, {
                 "option": True,
-                "configuration_layout": {"option": "feature.option"},
+                "configuration_mapping": {"option": "feature.option"},
             })
             self.assertEqual(
                 catalog.release_configuration_values(schema, release_path),

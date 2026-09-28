@@ -1,28 +1,46 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
-from . import catalog_format
+from . import catalog_format, jsonc
 
 
 def load_release_definition(path: Path) -> tuple[dict[str, object], dict[str, str]]:
     from .catalog import _read_jsonc
 
     definition = _read_jsonc(path, "Release configuration")
-    layout = definition.pop("configuration_layout", None)
-    if not definition or not isinstance(layout, dict):
-        raise ValueError("Release configuration needs public settings and a layout object")
-    return definition, layout
+    mapping = definition.pop("configuration_mapping", None)
+    if not definition or not isinstance(mapping, dict):
+        raise ValueError("Release configuration needs public settings and a mapping object")
+    return definition, mapping
 
 
-def resolve_layout(features, values, layout):
+def public_configuration_text(path: Path, values: dict[str, object]) -> str:
+    """Keep the release definition's public text and comments without its mapping."""
+    source = path.read_text(encoding="utf-8")
+    mapping_fields = list(re.finditer(
+        r'(?m)^[ \t]*"configuration_mapping"[ \t]*:', source
+    ))
+    if len(mapping_fields) != 1:
+        raise ValueError("Release configuration needs one trailing configuration_mapping")
+    public_prefix = source[:mapping_fields[0].start()].rstrip()
+    if not public_prefix.endswith(","):
+        raise ValueError("Release configuration_mapping must follow the public values")
+    public_text = public_prefix[:-1] + "\n}\n"
+    if jsonc.loads(public_text) != values:
+        raise ValueError("Release configuration_mapping must be the final root field")
+    return public_text
+
+
+def resolve_layout(features, values, mapping):
     """Derive the public schema and mappings from the release values."""
     root = catalog_format.ContainerNode(tuple(
         catalog_format.ContainerField(name, node) for name, node in features.items()
     ))
-    if not isinstance(layout, dict):
-        raise ValueError("configuration_layout must be an object")
-    for public, target in layout.items():
+    if not isinstance(mapping, dict):
+        raise ValueError("configuration_mapping must be an object")
+    for public, target in mapping.items():
         if (not isinstance(public, str) or not public
                 or any(not catalog_format.IDENTIFIER.fullmatch(part)
                        for part in public.split("."))
@@ -32,7 +50,7 @@ def resolve_layout(features, values, layout):
             raise ValueError(f"Invalid release mapping: {public!r}: {target!r}")
     mappings = []
     paths = {}
-    used_layout = set()
+    used_mapping = set()
 
     def resolve(path):
         node = root
@@ -56,16 +74,16 @@ def resolve_layout(features, values, layout):
             fields = []
             for name, value in group.items():
                 if (not isinstance(name, str) or not catalog_format.IDENTIFIER.fullmatch(name)
-                        or name in {"description", "patch", "configuration_layout"}):
+                        or name in {"description", "patch", "configuration_mapping"}):
                     raise ValueError(f"Invalid public setting name: {name!r}")
                 path = (*public_path, name)
-                layout_key = ".".join(path)
-                target = layout.get(layout_key)
+                mapping_key = ".".join(path)
+                target = mapping.get(mapping_key)
                 if target is None:
                     child_path = (*internal_path, name)
                 else:
                     child_path = tuple(target.split("."))
-                    used_layout.add(layout_key)
+                    used_mapping.add(mapping_key)
                 child = visit(value, path, child_path)
                 fields.append(catalog_format.ContainerField(name, child))
             return catalog_format.ContainerNode(tuple(fields), expanded.description)
@@ -73,7 +91,7 @@ def resolve_layout(features, values, layout):
         return node
 
     schema = visit(values, (), ())
-    unused = set(layout) - used_layout
+    unused = set(mapping) - used_mapping
     if unused:
         raise ValueError(f"Unused release mappings: {', '.join(sorted(unused))}")
     for index, (_, path) in enumerate(mappings):
@@ -95,10 +113,10 @@ def _set_value(result, path, value):
     result[path[-1]] = value
 
 
-def expand_configuration(features, values, defaults, release_values, layout):
+def expand_configuration(features, values, defaults, release_values, mapping):
     from .catalog import _feature_root, _merge_configuration_value, _validate_configuration_value
 
-    schema, paths = resolve_layout(features, release_values, layout)
+    schema, paths = resolve_layout(features, release_values, mapping)
     _validate_configuration_value(schema, values, ())
     overrides = {}
 

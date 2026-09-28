@@ -36,6 +36,11 @@ The root contains four feature options and the grouped in-game defaults:
 - `widescreen`: enable basic widescreen scaling.
 - `default_settings`: initial and Return to Defaults values, grouped by menu.
 
+`localization: "jp"` is experimental: some custom graphics and controls do
+not work correctly. `widescreen: true` is experimental because the interface
+does not scale properly. `auto_loading: false` works with no known bugs, but
+is not fully supported or tested.
+
 Values follow the types shown in `catalog.modcat`:
 
 - `true` enables a plain on/off setting.

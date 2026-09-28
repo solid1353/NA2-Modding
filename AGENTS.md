@@ -13,7 +13,7 @@ based on *Naruto Shippuuden: Narutimate Accel 2* / `SLPS-25837`.
 - `NA2-Modding`, `UN-Workshop`, maintained subrepositories such as the PCSX2
   fork, and future repositories added to this maintained project may be changed
   together when the task requires it. Cross-repository work needs no separate
-  approval.
+  approval. This file's rules apply to all of them.
 - Master Mode and Shop are globally out of scope. Do not work on or document
   them.
 - After replacing or removing behavior, delete its retired code and tests.

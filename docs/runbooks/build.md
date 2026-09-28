@@ -80,10 +80,10 @@ variant records also retain supplied overrides and the effective feature values.
 `preflight/records/<registry key>/` stores reusable structured provenance when
 configuration logging succeeds. A log write failure is reported as a warning;
 it does not invalidate a verified ISO.
-The registry retains at most 15 image records. Pruning removes every fingerprint
-and provenance record that refers to an evicted image; built ISO files remain
-on disk. A missing or corrupt registry causes a complete verified build and is
-recreated only after success.
+The registry retains at most 15 image records. Each valid build lookup and
+record cleanup removes stale provenance and build ISOs no longer referenced by
+the registry. A missing or corrupt registry causes a complete verified build
+and is recreated only after success.
 
 When [`NA228_TASK_WORK_ROOT`](../../AGENTS.md#file-and-folder-management)
 is set, builds keep their operational and structured records below the acting

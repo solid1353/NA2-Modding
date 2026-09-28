@@ -500,11 +500,11 @@ class BuildPreflightTests(unittest.TestCase):
             self.assertIn("2026-09-06 14.31.47", first_image.name)
             self.assertIn("2026-09-06 14.31.48", second_image.name)
             sleep.assert_called_once_with(0.01)
-            self.assertTrue(first_image.is_file())
+            self.assertFalse(first_image.exists())
             self.assertTrue(second_image.is_file())
             self.assertEqual(
                 len(list(paths["cache"].glob("NA v2.28 - *.iso"))),
-                2,
+                1,
             )
 
     def test_resolve_returns_the_newest_configuration_build(self) -> None:
@@ -562,10 +562,30 @@ class BuildPreflightTests(unittest.TestCase):
             self.assertEqual(len(registry["images"]), build_preflight.MAX_IMAGES)
             self.assertEqual(
                 len(list(paths["cache"].glob("NA v2.28 - *.iso"))),
-                build_preflight.MAX_IMAGES + 1,
+                build_preflight.MAX_IMAGES,
             )
             self.assertIsNotNone(first_image)
-            self.assertTrue(first_image.is_file())
+            self.assertFalse(first_image.exists())
+
+    def test_cache_hit_removes_unreferenced_build_iso(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self.create_workspace(Path(directory))
+            recorded = self.record(paths, state_fingerprint(self.state(paths)))
+            stale_image = paths["cache"] / "NA v2.28 - stale.iso"
+            stale_image.write_bytes(b"stale")
+
+            self.assertEqual(self.check(paths)["status"], "hit")
+            self.assertFalse(stale_image.exists())
+            self.assertTrue(Path(str(recorded["image"])).is_file())
+
+    def test_missing_registry_does_not_remove_build_iso_on_lookup(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            paths = self.create_workspace(Path(directory))
+            existing_image = paths["cache"] / "NA v2.28 - existing.iso"
+            existing_image.write_bytes(b"existing")
+
+            self.assertEqual(self.check(paths)["reason"], "fingerprint-missing")
+            self.assertTrue(existing_image.is_file())
 
     def test_tagged_override_keeps_its_name_and_the_ordinary_cache_target(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

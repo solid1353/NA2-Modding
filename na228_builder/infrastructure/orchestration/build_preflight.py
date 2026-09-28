@@ -407,7 +407,12 @@ def lookup_registry(
     fingerprint = state_fingerprint(state)
     entry_key = _variant_key(fingerprint, postfix)
     try:
-        registry = _read_registry(registry_path)
+        with _registry_lock(registry_path):
+            registry = _read_registry(registry_path)
+            if registry_path.is_file():
+                _cleanup_registry_artifacts(
+                    registry, registry_path, workspace, cache_root
+                )
     except (OSError, ValueError, json.JSONDecodeError) as error:
         return {
             "status": "miss",
@@ -562,9 +567,11 @@ def _prune_registry(registry: dict[str, object]) -> None:
             del entries[fingerprint]
 
 
-def _cleanup_registry_records(
+def _cleanup_registry_artifacts(
     registry: dict[str, object],
     registry_path: Path,
+    workspace: Path,
+    cache_root: Path,
 ) -> None:
     entries = registry["entries"]
     assert isinstance(entries, dict)
@@ -577,6 +584,20 @@ def _cleanup_registry_records(
                     shutil.rmtree(record)
                 except OSError:
                     pass
+    retained_images = {
+        (workspace / image["path"]).resolve()
+        for image in registry["images"].values()
+        if isinstance(image, dict) and isinstance(image.get("path"), str)
+    }
+    for image in cache_root.glob(f"{ISO_NAME_PREFIX} - *.iso"):
+        if image.resolve() in retained_images:
+            continue
+        try:
+            image.unlink()
+        except OSError:
+            pass
+
+
 def _cleanup_cache_temporaries(cache_root: Path) -> None:
     if not cache_root.is_dir():
         return
@@ -700,7 +721,9 @@ def record_registry(
             }
             _prune_registry(registry)
             _write_registry(registry_path, registry)
-            _cleanup_registry_records(registry, registry_path)
+            _cleanup_registry_artifacts(
+                registry, registry_path, workspace, cache_root
+            )
         except BaseException:
             if (
                 not image.exists()

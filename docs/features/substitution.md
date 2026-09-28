@@ -1030,11 +1030,12 @@ and displaced target belongs in a symbolic relocation or a reviewed native-
 address constant; do not write final resident payload addresses into the
 catalog.
 
-The `general.new_controls` patch owns the editor, input, and default-binding
-changes. Its guarded entries are:
+The `general.new_controls` patch owns the editor, input, default-binding, and
+Controls help timing changes. Its guarded entries are:
 
 | Purpose | Target/offset | Behavior |
 | --- | --- | --- |
+| Controls entry help | ELF `0x287C5C` | Queue the instruction during the shared Controls reset, before the banner's first draw |
 | Resident and BTL defaults | ELF `0x4C07A0`, BTL `0x1E4250` | L1 Substitution, R1 Guard, L2 Item Select, R2 Linked Attack |
 | Select reset | ELF `0x4D5350` | Restore the same editor assignments |
 | Open and commit | ELF `0x287A50`, `0x288044` | Read/write native masks and both Guard/Sub masks for each player |

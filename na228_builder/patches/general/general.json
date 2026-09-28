@@ -44,6 +44,14 @@
       }
     },
     "hooks": {
+      "queue_control_settings_help_on_reset": {
+        "description": "Queue the Controls help instruction during the shared reset, before the first Controls draw.",
+        "target_id": "na2_elf",
+        "offset": "0x287C5C",
+        "expected_hex": "E01E0E0C00000000",
+        "symbol": "control_settings_reset_with_help",
+        "encoding": "jal26"
+      },
       "select_held_guard_behavior": {
         "description": "Accept the added Substitution binding after timing admission; otherwise preserve the vanilla held-Guard limit for native Guard/Sub input.",
         "target_id": "na2_elf",
@@ -135,6 +143,9 @@
           "mod_text_controls__guard_sub_2__label": "mod_text_controls__guard_sub_2__label"
         },
         "fragments": {
+          "control_settings_reset_with_help": {
+            "object": "general.controls.text.control.settings.reset.with.help"
+          },
           "control_settings_helpers": {
             "object": "general.controls.text.control.settings.helpers"
           },

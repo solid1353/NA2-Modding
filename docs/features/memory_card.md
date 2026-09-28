@@ -47,8 +47,11 @@ found`; failed reads report `Save data could not be loaded`.
 After a successful load, a right-aligned main-menu notice shows the load
 result, play time, and saved time. When the appendix schema differs, it also
 shows `Mod settings were reset because their format changed.` The notice uses
-Mode Select's prompt render context, restores the prior scale and context,
-and ends when Mode Select terminates or ten seconds pass.
+Mode Select's prompt render context and draws light text with a dark shadow
+over a translucent teal panel sized to the longest line. It restores the prior
+scale and context and ends when Mode Select terminates or ten seconds pass.
+It is hidden while Mod Settings or its Control Settings child replaces Mode
+Select; its timer continues, so it can reappear on return before expiry.
 
 ### First-slot Save/Load interface
 

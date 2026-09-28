@@ -36,6 +36,7 @@ def test_features() -> dict[str, object]:
                 "character_selection": True,
                 "battle_settings": True,
                 "practice_settings": True,
+                "control_settings": True,
             },
             "battle_settings": {"battle_mechanics": True},
             "practice_settings": {"battle_mechanics": True},

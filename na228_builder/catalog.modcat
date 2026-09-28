@@ -88,6 +88,7 @@
         character_selection: setting {},
         battle_settings: setting {},
         practice_settings: setting {},
+        control_settings: setting {},
       },
       battle_settings: {
         battle_mechanics: setting {},

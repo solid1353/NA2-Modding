@@ -43,22 +43,31 @@ transaction and closes. Select stages the configured defaults and shows
 Opening plays the same sound as native Practice Settings.
 
 `features.menu_composition.mod_settings` controls the Battle Mechanics,
-Character Selection, Battle Settings, and Practice Settings launchers. Their
-config order places Character Selection immediately after Battle Mechanics in
-the base menu, followed by Battle Settings, Practice Settings, and the root
-Simple Display row. The existing launcher switches and ordering remain
-configurable. `menu_composition` is omitted from release config and catalog exports;
-the packaged builder retains its resolved release values. Battle Mechanics opens
+Character Selection, Battle Settings, Practice Settings, and Control Settings
+launchers. Their config order places Control Settings after Practice Settings
+in the base menu, before the root Simple Display row. The launcher switches and
+order remain configurable. `menu_composition` is omitted from release config
+and catalog exports; the packaged builder retains its resolved release values.
+Battle Mechanics opens
 `features.default_settings.battle_mechanics`. The Battle Settings and
 Practice Settings pages expose their existing stored values without repeating
 Battle Mechanics. Changes made through these pages also appear in the existing
 in-game Battle Settings and Practice Settings menus.
 
+Control Settings opens the native Options Controls screen and controller over
+the Mod Settings menu. Its binding and vibration edits, defaults, confirmation,
+and cancellation use the native Controls behavior. Mod Settings keeps its
+selected row and staged values while Controls is open. Closing Controls returns
+to its launcher; confirmed control changes are independent of the Mod Settings
+transaction. The Mod Settings handoff clears the native Options white
+transition when Controls opens and closes; opening Options normally retains
+its native transition.
+
 Battle Difficulty and Options Difficulty share the same selected value.
 Changing either control updates the native Options mirror and the persisted
 Battle Difficulty value.
 
-These pages use the generated Practice-style submenu renderer. Their labels,
+The settings pages use the generated Practice-style submenu renderer. Their labels,
 selector values, and help messages reference the same translated resources as
 the original Battle Settings and Practice Settings menus. Handicap remains a
 normal text-value row in this shared presentation.

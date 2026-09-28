@@ -78,6 +78,9 @@
           "mod_settings_backdrop": {
             "object": "mod.settings.c.bss.mod.settings.backdrop"
           },
+          "mod_settings_replaces_mode_select": {
+            "object": "mod.settings.c.text.mod.settings.replaces.mode.select"
+          },
           "mod_settings_mode_select_construct": {
             "object": "mod.settings.c.text.mod.settings.mode.select.construct"
           },
@@ -98,6 +101,9 @@
           },
           "mod_settings_option_set": {
             "object": "mod.settings.c.text.mod.settings.option.set"
+          },
+          "mod_settings_open_controls": {
+            "object": "mod.settings.c.text.mod.settings.open.controls"
           }
         }
       }
@@ -1143,6 +1149,7 @@
           "practice_settings_schema": "practice_settings_schema",
           "mod_settings_schema": "mod_settings_schema",
           "mod_settings_child": "mod_settings_child",
+          "mod_settings_open_controls": "mod_settings_open_controls",
           "settings_menu_value_page": "settings_menu_value_page",
           "settings_menu_page": "settings_menu_page",
           "settings_menu_select_page": "settings_menu_select_page",

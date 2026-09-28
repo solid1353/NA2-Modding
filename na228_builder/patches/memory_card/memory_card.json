@@ -85,6 +85,7 @@
           "mod_number_glyphs": "mod_number_glyphs",
           "startup_save_notification_state": "notification_state",
           "save_appendix_load_status": "save_appendix_load_status",
+          "mod_settings_replaces_mode_select": "mod_settings_replaces_mode_select",
           "MESSAGE_LOADED": "mod_text_startup__loaded",
           "MESSAGE_NO_SAVE_DATA": "mod_text_startup__no_save_data",
           "MESSAGE_NO_CARD": "mod_text_startup__no_card",

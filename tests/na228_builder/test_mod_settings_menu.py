@@ -38,6 +38,7 @@ class ModSettingsMenuTests(unittest.TestCase):
                 "Character Selection",
                 "Battle Settings",
                 "Practice Settings",
+                "Control Settings",
                 "Simple Display",
             ],
         )

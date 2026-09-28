@@ -89,8 +89,7 @@ owning component documentation.
   Exclude completed tasks, unrelated state, and user-directed actions.
   Omit any statement that has no corresponding pending agent action.
   "Do not..." and the such are not valid lines and should not appear in the proposal.
-- `ver`: accept the current result across every repository changed by the task
-  and follow the [verification procedure](docs/procedures/verification.md).
+- `ver`: follow the [verification procedure](docs/procedures/verification.md).
 - `exit`: exit Design mode or Interactive mode without accepting the result
   or authorizing a commit. It has no effect when no mode is active.
 - `zxc`: follow the

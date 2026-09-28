@@ -29,7 +29,8 @@ def menu_title(name):
 
 
 def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
-                     section_fields, prefix, first_generated_id):
+                     section_fields, prefix, first_generated_id,
+                     external_launchers=None):
     """Discover topology independently of native row and gameplay bindings."""
     settings = selection.catalog["default_settings"]
     settings_definitions = {field.name: field.node for field in settings.fields}
@@ -41,6 +42,7 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
     options = menu_option_bindings(selection)
     pages = []
     next_id = first_generated_id
+    external_launchers = external_launchers or {}
 
     def allocate_row(**kwargs):
         nonlocal next_id
@@ -125,6 +127,13 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
                 if name in local_fields:
                     local_launchers.add(name)
                 if not selected[menu_path + (name,)].enabled:
+                    continue
+                if name in external_launchers:
+                    rows.append(allocate_row(
+                        option_count=1, default_value=0,
+                        flags=SUBMENU_FLAG | external_launchers[name],
+                        label=menu_title(name), help=message(f"page.{name}.help"),
+                    ))
                     continue
                 child_path = (root_path + (name,) if name in local_fields
                               else ("features", "default_settings", name))

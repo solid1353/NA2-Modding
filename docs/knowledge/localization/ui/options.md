@@ -3,7 +3,7 @@
 ## Research coverage
 
 - **Assigned scope:** compare clean NA2 and NUN5 shared frontend prompts,
-  Options labels and backdrop ownership, and Controls footer behavior.
+  Options labels and backdrop ownership, and Controls lifecycle and footer behavior.
 - **Exploration depth:** the relevant binaries, native callers, records, and
   paired screen states were examined.
 - **Confirmed coverage:** the documented owners, structures, backdrop resource
@@ -152,6 +152,46 @@ enters `FUN_0038c5b0`, which draws `ANM_option_back` before the screen-position
 controller. The minimal native full-frame backdrop is therefore the archive,
 render context, camera animation, and background animation; it does not require
 construction of the Options controller or any Options submenu.
+
+## Native Controls lifecycle
+
+NA2's Options owner `FUN_001eb440` allocates a `0x5C` controller and calls
+`FUN_0038afb0`. The latter acquires `option.ccs`, allocates the Controls child
+at controller `+0x44`, and calls `FUN_00387650` and `FUN_003890f0` to initialize
+its data and graphics. The Controls child is `0xA0` bytes. Its construction
+loads resources from the registered archives and initializes both players'
+bindings through `FUN_00387950`.
+
+Selecting Controls in Options calls `FUN_0038b970`, which sets the Options phase
+at `+0x38` to `5` and resets the Controls child's interaction state through
+`FUN_00387a40`. `FUN_0038bbf0` handles phase `5` by updating that child for both
+players. When the child finishes, the Options phase returns to `0`.
+`FUN_0038c5f0` draws phase `5` with the Options backdrop and the child's
+`FUN_00388b90` renderer. The child handles assignment, defaults, vibration,
+confirmation, and cancellation within that path.
+
+The Controls help banner is drawn before its text is queued. On the first
+phase-`5` update, `FUN_0038bbf0` changes the child's state from `0` to `2`
+without queuing help text. On the next update, state `2` calls `FUN_0037f760`
+with `PTR_DAT_005b2520` to queue the instruction. The child renderer calls
+`FUN_0037f900`, which draws the banner independently of the text queue and
+then draws queued text. When the first item is queued, `FUN_0037f590` starts
+its horizontal offset at 90% of the banner width, so the renderer initially
+places the text 10% into the banner. The configured 30-frame timer in
+`FUN_0037f7f0` holds that position before scrolling; it does not delay the
+text's first appearance. The empty banner on entry follows from the first
+update's missing queue operation.
+
+`FUN_0038afb0` clears the shared transition manager and queues a white
+`FUN_00183f10` transition, storing its slot at Options `+0x34`. When phase `5`
+ends, `FUN_0038bbf0` clears that manager and queues a white
+`FUN_00183df0` transition before returning to phase `0`. The manager pointer
+is held at `0x00607464`; `FUN_00183610` clears its four transition slots.
+
+On Options teardown, `FUN_0038b370` calls `FUN_003874c0` for the Controls
+resources and frees its child. It releases the Options archive only when the
+controller's acquisition byte at `+0x00` indicates ownership. These functions
+were inspected in the maintained NA2 Ghidra program through GhidrAssistMCP.
 
 ## Shared Controls and Music footer anchors
 

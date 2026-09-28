@@ -159,6 +159,12 @@ X, Y, width, and height. The saved NUN5 text viewport at `0x00BF87A0` holds
 `(0,300,512,48)`; text starts at local `(51,20)`. These are structural
 positions, distinct from glyph ink bearings and accumulated word spacing.
 
+When the NA2 help style has no background object, draw `0x0037F900` calls
+`0x00353F40` for an untextured rectangle. That function takes integer X/Y,
+short width/height, and a packed color; `0x00182A20` reads its low three bytes
+as red, green, and blue and its high byte as alpha. The native style-3 color is
+`0xBF2F2807`, a translucent dark teal.
+
 ## Initial hold and short first entries
 
 The constructor initializes the hold limit and counter to zero. The Mode Select,

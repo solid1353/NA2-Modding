@@ -136,6 +136,7 @@ def _pages(selection: CatalogSelection) -> tuple[PracticePage, ...]:
         ("player_row_count", "opponent_row_count"),
         "mod_settings_schema",
         0,
+        external_launchers={"control_settings": 0x8000},
     )
 
 

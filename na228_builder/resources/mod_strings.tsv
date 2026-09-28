@@ -67,6 +67,8 @@ page.battle_mechanics.title	Battle Mechanics	バトルシステム
 page.battle_mechanics.help	Configure battle mechanics.	バトルシステムを設定します。
 page.character_selection.title	Character Selection	キャラクター選択
 page.character_selection.help	Configure character selection.	キャラクター選択を設定します。
+page.control_settings.title	Control Settings	操作設定
+page.control_settings.help	Configure controller bindings and vibration.	ボタンの割り当てと振動を設定します。
 page.battle_settings.title	Battle Settings	バトル設定
 page.battle_settings.help	Configure battle settings.	バトルのルールを設定します。
 page.practice_settings.title	Practice Settings	演習設定

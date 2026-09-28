@@ -24,6 +24,7 @@ typedef unsigned int u32;
 #define FONT_SET_CONTEXT_ADDRESS 0x001866D0u
 #define TEXT_DRAW_ADDRESS 0x00378F50u
 #define TEXT_MEASURE_ADDRESS 0x003798E0u
+#define FLAT_RECTANGLE_DRAW_ADDRESS 0x00353F40u
 
 #define CONTROLLER_PHASE_WORD 2u
 #define MAIN_MENU_STATE_WORD 2u
@@ -96,7 +97,13 @@ typedef unsigned int u32;
 #define NOTIFICATION_LEFT_X 12.0f
 #define NOTIFICATION_TOP_Y 12.0f
 #define NOTIFICATION_LINE_HEIGHT 24.0f
-#define COLOR_BLACK 0xFF000000u
+#define NOTIFICATION_PANEL_LEFT_MIN 4
+#define NOTIFICATION_PANEL_RIGHT 508
+#define NOTIFICATION_PANEL_TOP 4
+#define NOTIFICATION_PANEL_PADDING 8
+#define NOTIFICATION_PANEL_COLOR 0xBF2F2807u
+#define NOTIFICATION_TEXT_COLOR 0xFFDDEFFFu
+#define NOTIFICATION_SHADOW_COLOR 0xFF100C08u
 
 #define AUTO_LOADING_SECTION(name) \
     __attribute__((section(name), noinline))
@@ -116,6 +123,7 @@ typedef struct SaveAppendixLoadStatus {
 
 extern volatile StartupSaveNotificationState startup_save_notification_state;
 extern volatile SaveAppendixLoadStatus save_appendix_load_status;
+extern u32 mod_settings_replaces_mode_select(void);
 
 extern const u8 MESSAGE_LOADED[];
 extern const u8 MESSAGE_NO_SAVE_DATA[];
@@ -528,24 +536,19 @@ ALWAYS_INLINE const u8 *notification_message(u32 outcome)
     return MESSAGE_LOAD_FAILED;
 }
 
-ALWAYS_INLINE void draw_notification_line(const u8 *text, float y)
+ALWAYS_INLINE void draw_notification_line(const u8 *text, float y, s32 width)
 {
     void (*draw_text)(float, float, const u8 *, u32) =
         (void (*)(float, float, const u8 *, u32))TEXT_DRAW_ADDRESS;
-    s32 (*measure_text)(const u8 *, s32) =
-        (s32 (*)(const u8 *, s32))TEXT_MEASURE_ADDRESS;
-    s32 width = measure_text(text, 0);
     float x;
 
-    if (width < 0) {
-        width = 0;
-    }
     x = NOTIFICATION_RIGHT_X - (float)width;
     if (x < NOTIFICATION_LEFT_X) {
         x = NOTIFICATION_LEFT_X;
     }
 
-    draw_text(x, y, text, COLOR_BLACK);
+    draw_text(x + 1.0f, y + 1.0f, text, NOTIFICATION_SHADOW_COLOR);
+    draw_text(x, y, text, NOTIFICATION_TEXT_COLOR);
 }
 
 AUTO_LOADING_SECTION(".text.startup_auto_loading_notification_draw")
@@ -555,6 +558,10 @@ void startup_auto_loading_notification_draw(void)
         (void (*)(void))MAIN_MENU_UPDATE_ADDRESS;
     void (*set_font_context)(void *, void *) =
         (void (*)(void *, void *))FONT_SET_CONTEXT_ADDRESS;
+    void (*draw_rectangle)(s32, s32, short, short, u32) =
+        (void (*)(s32, s32, short, short, u32))FLAT_RECTANGLE_DRAW_ADDRESS;
+    s32 (*measure_text)(const u8 *, s32) =
+        (s32 (*)(const u8 *, s32))TEXT_MEASURE_ADDRESS;
     volatile u32 *menu;
     volatile u32 *mode_select;
     volatile u8 *controller;
@@ -564,6 +571,12 @@ void startup_auto_loading_notification_draw(void)
     u32 outcome;
     u32 start_ticks;
     u32 now;
+    const u8 *lines[4];
+    s32 widths[4];
+    u32 line_count = 0u;
+    u32 line_index;
+    s32 max_width = 0;
+    s32 panel_left;
     u8 play_time[64];
     u8 saved_time[64];
 
@@ -603,6 +616,10 @@ void startup_auto_loading_notification_draw(void)
         return;
     }
 
+    if (mod_settings_replaces_mode_select() != 0u) {
+        return;
+    }
+
     renderer = *(volatile u8 **)FONT_RENDERER_POINTER_ADDRESS;
     if (renderer == (volatile u8 *)0) {
         return;
@@ -626,24 +643,46 @@ void startup_auto_loading_notification_draw(void)
             startup_save_notification_state.saved_date,
             startup_save_notification_state.saved_time
         );
-        draw_notification_line(MESSAGE_LOADED, NOTIFICATION_TOP_Y);
-        draw_notification_line(
-            play_time,
-            NOTIFICATION_TOP_Y + NOTIFICATION_LINE_HEIGHT
-        );
-        draw_notification_line(
-            saved_time,
-            NOTIFICATION_TOP_Y + NOTIFICATION_LINE_HEIGHT * 2.0f
-        );
+        lines[line_count++] = MESSAGE_LOADED;
+        lines[line_count++] = play_time;
+        lines[line_count++] = saved_time;
         if (save_appendix_load_status.outcome ==
             SAVE_APPENDIX_LOAD_STATUS_SETTINGS_RESET) {
-            draw_notification_line(mod_text_save__settings_reset,
-                NOTIFICATION_TOP_Y + NOTIFICATION_LINE_HEIGHT * 3.0f);
+            lines[line_count++] = mod_text_save__settings_reset;
         }
     } else {
+        lines[line_count++] = notification_message(outcome);
+    }
+
+    for (line_index = 0u; line_index < line_count; ++line_index) {
+        widths[line_index] = measure_text(lines[line_index], 0);
+        if (widths[line_index] < 0) {
+            widths[line_index] = 0;
+        }
+        if (widths[line_index] > max_width) {
+            max_width = widths[line_index];
+        }
+    }
+
+    panel_left = (s32)NOTIFICATION_RIGHT_X - max_width -
+        NOTIFICATION_PANEL_PADDING;
+    if (panel_left < NOTIFICATION_PANEL_LEFT_MIN) {
+        panel_left = NOTIFICATION_PANEL_LEFT_MIN;
+    }
+    draw_rectangle(
+        panel_left,
+        NOTIFICATION_PANEL_TOP,
+        (short)(NOTIFICATION_PANEL_RIGHT - panel_left),
+        (short)(line_count * (u32)NOTIFICATION_LINE_HEIGHT +
+            NOTIFICATION_PANEL_PADDING),
+        NOTIFICATION_PANEL_COLOR
+    );
+    for (line_index = 0u; line_index < line_count; ++line_index) {
         draw_notification_line(
-            notification_message(outcome),
-            NOTIFICATION_TOP_Y
+            lines[line_index],
+            NOTIFICATION_TOP_Y + NOTIFICATION_LINE_HEIGHT *
+                (float)line_index,
+            widths[line_index]
         );
     }
 

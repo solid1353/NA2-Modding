@@ -81,6 +81,7 @@ typedef unsigned int u32;
 #define ROW_FLAG_CUSTOM_CHAKRA 0x1000u
 #define ROW_FLAG_STATUS_SOURCE 0x2000u
 #define ROW_FLAG_SUBMENU SETTINGS_MENU_ROW_FLAG_SUBMENU
+#define ROW_FLAG_CONTROL_SETTINGS 0x8000u
 
 #define ULTIMATE_JUTSU_NATIVE_MODE_COUNT 6u
 #define ULTIMATE_JUTSU_NATIVE_DEFAULT 2u
@@ -139,6 +140,7 @@ typedef struct PracticeSettingsSchema {
 extern const PracticeSettingsSchema practice_settings_schema;
 extern const PracticeSettingsSchema mod_settings_schema;
 extern volatile u32 mod_settings_child;
+extern s32 mod_settings_open_controls(void);
 extern volatile u32 practice_settings_active_labels[];
 extern volatile u32 practice_settings_active_value_tables[];
 extern u32 chakra_mode_get(void);
@@ -831,6 +833,12 @@ static s32 practice_settings_open_submenu(
     u32 child;
     if (row == (const PracticeSettingsRow *)0) {
         return 0;
+    }
+    if (
+        practice_settings_is_mod(controller) != 0u &&
+        (row->flags & ROW_FLAG_CONTROL_SETTINGS) != 0u
+    ) {
+        return mod_settings_open_controls();
     }
     child = settings_menu_value_page(
         row->value_pages, row->option_count,

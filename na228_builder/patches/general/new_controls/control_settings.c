@@ -16,6 +16,7 @@ typedef u32 (*VibrationGet)(u32);
 typedef void (*BindingsSet)(u32, const u16 *);
 typedef void (*VibrationSet)(u32, u32);
 typedef s32 (*HistoryMatch)(void *, u32, u32, u32, u32, u32, s32);
+typedef void (*HelpQueue)(float, void *, const u8 *, s32, s32);
 
 extern const u8 mod_text_settings__substitution__label[];
 extern const u8 mod_text_controls__guard_sub_1__label[];
@@ -41,6 +42,16 @@ static const u16 physical_masks[8] = {
 };
 static const u16 shoulder_masks[5] = {0u, 0x01u, 0x02u, 0x04u, 0x08u};
 static const s32 reset_actions[8] = {1, 0, 3, 2, 9, 8, 4, 5};
+
+SECTION(".text.control_settings_reset_with_help")
+void control_settings_reset_with_help(void *controls)
+{
+    void *help = *(void **)((u8 *)controls + 0x90u);
+    const u8 *message = *(const u8 **)0x005B2520u;
+
+    *(u32 *)controls = 0u;
+    ((HelpQueue)0x0037F760u)(20.0f, help, message, 8, 0);
+}
 
 static SECTION(".text.control_settings_helpers") u32 input_side(void *input)
 {

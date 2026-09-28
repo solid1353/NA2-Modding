@@ -22,7 +22,14 @@ typedef unsigned int u32;
 #define PRACTICE_CHILD_RESET_ADDRESS 0x00880F30u
 #define PRACTICE_CHILD_UPDATE_ADDRESS 0x00881AB0u
 #define PRACTICE_CHILD_DRAW_ADDRESS 0x00882250u
+#define OPTIONS_CONSTRUCT_ADDRESS 0x0038AFB0u
+#define OPTIONS_UPDATE_ADDRESS 0x0038BBF0u
+#define OPTIONS_DRAW_ADDRESS 0x0038C5F0u
+#define OPTIONS_DESTROY_ADDRESS 0x0038B370u
+#define CONTROLS_RESET_ADDRESS 0x00387A40u
+#define NATIVE_TRANSITION_CLEAR_ADDRESS 0x00183610u
 #define INPUT_CONTEXT_POINTER_ADDRESS 0x006073FCu
+#define TRANSITION_MANAGER_POINTER_ADDRESS 0x00607464u
 #define MANAGER_POINTER_ADDRESS 0x00607600u
 #define NATIVE_SOUND_ADDRESS 0x001D7E20u
 #define CCS_FIND_OBJECT_ADDRESS 0x001A8F00u
@@ -54,6 +61,10 @@ typedef unsigned int u32;
 #define INPUT_RECORD_NEW_OFFSET 0x84u
 #define MANAGER_ACTIVE_SIDE_OFFSET 0x18u
 #define PRACTICE_CHILD_SIZE 0xB8u
+#define OPTIONS_CONTROLLER_SIZE 0x5Cu
+#define OPTIONS_CONTROLS_OFFSET 0x44u
+#define OPTIONS_PHASE_OFFSET 0x38u
+#define OPTIONS_CONTROLS_PHASE 5u
 #define INPUT_SQUARE 0x0080u
 #define PRACTICE_CHILD_PHASE_OFFSET 0x38u
 #define OPTIONS_CONTEXT_SIZE 0x40u
@@ -77,6 +88,7 @@ typedef unsigned int u32;
 #define MOD_SETTINGS_INACTIVE 0u
 #define MOD_SETTINGS_OPENING 1u
 #define MOD_SETTINGS_ACTIVE 2u
+#define MOD_SETTINGS_CONTROLS 3u
 #define TEXTURE_MIPMAPS_OFFSET 0x28u
 #define TEXTURE_WIDTH_LOG2_OFFSET 0x36u
 #define TEXTURE_HEIGHT_LOG2_OFFSET 0x37u
@@ -150,6 +162,7 @@ typedef struct ModSettingsBackdrop {
     void *background;
     void *footer_archive;
     void *footer_sprite;
+    void *controls;
     u32 state;
     u8 archive_owned;
     u8 footer_archive_owned;
@@ -193,6 +206,13 @@ static const u16 mod_settings_square_rectangle[4]
         22u,
         22u,
     };
+
+MOD_SETTINGS_SECTION(".text.mod_settings_replaces_mode_select")
+u32 mod_settings_replaces_mode_select(void)
+{
+    return mod_settings_backdrop.state == MOD_SETTINGS_ACTIVE ||
+        mod_settings_backdrop.state == MOD_SETTINGS_CONTROLS;
+}
 
 static u32 *mod_settings_field(u32 argument)
 {
@@ -549,6 +569,11 @@ static void mod_settings_destroy_child(void)
     void *child = (void *)mod_settings_child;
 
     mod_settings_backdrop.state = MOD_SETTINGS_INACTIVE;
+    if (mod_settings_backdrop.controls != (void *)0) {
+        ((ObjectCall)OPTIONS_DESTROY_ADDRESS)(mod_settings_backdrop.controls);
+        ((Free)RESIDENT_FREE_ADDRESS)(mod_settings_backdrop.controls);
+        mod_settings_backdrop.controls = (void *)0;
+    }
     if (child != (void *)0) {
         ((ObjectCall)PRACTICE_CHILD_DESTROY_ADDRESS)(child);
         ((Free)RESIDENT_FREE_ADDRESS)(child);
@@ -598,6 +623,42 @@ static s32 mod_settings_open_child(void)
     }
     ((ObjectCall)PRACTICE_CHILD_RESET_ADDRESS)(child);
     mod_settings_backdrop.state = MOD_SETTINGS_OPENING;
+    return 1;
+}
+
+static void mod_settings_clear_controls_transition(void)
+{
+    void *manager = *(void * volatile *)TRANSITION_MANAGER_POINTER_ADDRESS;
+
+    if (manager != (void *)0) {
+        ((ObjectCall)NATIVE_TRANSITION_CLEAR_ADDRESS)(manager);
+    }
+}
+
+MOD_SETTINGS_SECTION(".text.mod_settings_open_controls")
+s32 mod_settings_open_controls(void)
+{
+    void *controls;
+
+    if (
+        mod_settings_backdrop.state != MOD_SETTINGS_ACTIVE ||
+        mod_settings_child == 0u
+    ) {
+        return 0;
+    }
+    controls = ((Allocate)RESIDENT_ALLOCATE_ADDRESS)(OPTIONS_CONTROLLER_SIZE);
+    if (controls == (void *)0) {
+        return 0;
+    }
+    ((ObjectCall)OPTIONS_CONSTRUCT_ADDRESS)(controls);
+    mod_settings_clear_controls_transition();
+    *(u16 *)((u8 *)controls + OPTIONS_PHASE_OFFSET) =
+        OPTIONS_CONTROLS_PHASE;
+    ((ObjectCall)CONTROLS_RESET_ADDRESS)(
+        *(void **)((u8 *)controls + OPTIONS_CONTROLS_OFFSET)
+    );
+    mod_settings_backdrop.controls = controls;
+    mod_settings_backdrop.state = MOD_SETTINGS_CONTROLS;
     return 1;
 }
 
@@ -651,7 +712,11 @@ static void mod_settings_clear_mode_select_input(void *controller)
     *(volatile u32 *)((u8 *)controller + MODE_SELECT_P1_INPUT_OFFSET) = 0u;
 }
 
-static s32 mod_settings_update_child(void *child, void *controller)
+static s32 mod_settings_route_update(
+    void *child,
+    void *controller,
+    u32 address
+)
 {
     u8 *input_context = *(u8 **)INPUT_CONTEXT_POINTER_ADDRESS;
     u8 *manager = *(u8 **)MANAGER_POINTER_ADDRESS;
@@ -662,7 +727,7 @@ static s32 mod_settings_update_child(void *child, void *controller)
     s32 result;
 
     if (input_context == (u8 *)0) {
-        return ((ObjectUpdate)PRACTICE_CHILD_UPDATE_ADDRESS)(child);
+        return ((ObjectUpdate)address)(child);
     }
     if (manager != (u8 *)0) {
         input_context +=
@@ -679,7 +744,7 @@ static s32 mod_settings_update_child(void *child, void *controller)
     *pressed = *(volatile u32 *)(
         (u8 *)controller + MODE_SELECT_NEW_INPUT_OFFSET
     );
-    result = ((ObjectUpdate)PRACTICE_CHILD_UPDATE_ADDRESS)(child);
+    result = ((ObjectUpdate)address)(child);
     *held = saved_held;
     *pressed = saved_pressed;
     return result;
@@ -702,8 +767,34 @@ void mod_settings_mode_select_update(void *controller)
         ) {
             suppress_input = 1u;
         }
+    } else if (state == MOD_SETTINGS_CONTROLS) {
+        void *controls = mod_settings_backdrop.controls;
+
+        if (controls != (void *)0) {
+            mod_settings_route_update(
+                controls,
+                controller,
+                OPTIONS_UPDATE_ADDRESS
+            );
+            if (
+                *(u16 *)((u8 *)controls + OPTIONS_PHASE_OFFSET) !=
+                OPTIONS_CONTROLS_PHASE
+            ) {
+                mod_settings_clear_controls_transition();
+                ((ObjectCall)OPTIONS_DESTROY_ADDRESS)(controls);
+                ((Free)RESIDENT_FREE_ADDRESS)(controls);
+                mod_settings_backdrop.controls = (void *)0;
+                mod_settings_backdrop.state = MOD_SETTINGS_ACTIVE;
+            }
+        } else {
+            mod_settings_backdrop.state = MOD_SETTINGS_ACTIVE;
+        }
     } else if (child != (void *)0) {
-        if (mod_settings_update_child(child, controller) != 0) {
+        if (mod_settings_route_update(
+            child,
+            controller,
+            PRACTICE_CHILD_UPDATE_ADDRESS
+        ) != 0) {
             mod_settings_backdrop.state = MOD_SETTINGS_INACTIVE;
         } else if (
             state == MOD_SETTINGS_OPENING &&
@@ -726,7 +817,9 @@ void mod_settings_mode_select_update(void *controller)
 MOD_SETTINGS_SECTION(".text.mod_settings_mode_select_draw")
 void mod_settings_mode_select_draw(void *controller)
 {
-    if (mod_settings_backdrop.state == MOD_SETTINGS_ACTIVE) {
+    if (mod_settings_backdrop.state == MOD_SETTINGS_CONTROLS) {
+        ((ObjectCall)OPTIONS_DRAW_ADDRESS)(mod_settings_backdrop.controls);
+    } else if (mod_settings_backdrop.state == MOD_SETTINGS_ACTIVE) {
         mod_settings_draw_backdrop();
         ((ObjectCall)PRACTICE_CHILD_DRAW_ADDRESS)((void *)mod_settings_child);
     } else {

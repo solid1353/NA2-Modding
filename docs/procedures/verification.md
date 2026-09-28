@@ -1,6 +1,6 @@
 # Verification
 
-`ver` accepts the current result across every repository changed by the task
+`ver` verifies all changes made by this chat across all tasks and repositories
 and starts one verification-and-delivery operation. Continue it until commit
 and push, explicit cancellation, or a hard blocker. Resolve findings
 independently without waiting for the user's review or approval.
@@ -31,7 +31,7 @@ operation. Resolve new findings in the same way.
 
 When verification is complete, commit and push. Report the findings and changes
 together, explaining test removals and what any new tests detect. Identify
-failures caused by another task's uncommitted changes.
+failures caused by changes made outside this chat.
 
 In Design mode, first promote useful design content and delete the design
 document, then exit after pushing.

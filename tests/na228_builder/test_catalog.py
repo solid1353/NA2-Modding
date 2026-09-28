@@ -537,18 +537,17 @@ class CatalogTests(unittest.TestCase):
                 )
             )
 
-    def test_repository_base_configuration_aligns_trailing_comments(self) -> None:
+    def test_repository_configurations_align_trailing_comments(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
-        base_configuration = (
-            paths.path("builder") / "configurations" / "base.jsonc"
-        )
-        comment_columns = {
-            line.index("//")
-            for line in base_configuration.read_text(encoding="utf-8").splitlines()
-            if "//" in line
-        }
-
-        self.assertEqual(len(comment_columns), 1, comment_columns)
+        configurations = paths.path("builder") / "configurations"
+        for configuration in sorted(configurations.glob("*.jsonc")):
+            with self.subTest(configuration=configuration.name):
+                comment_columns = {
+                    line.index("//")
+                    for line in configuration.read_text(encoding="utf-8").splitlines()
+                    if "//" in line
+                }
+                self.assertLessEqual(len(comment_columns), 1, comment_columns)
 
     def test_repository_simple_display_sets_mod_settings_runtime_default(self) -> None:
         paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)

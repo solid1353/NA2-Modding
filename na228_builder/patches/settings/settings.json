@@ -298,6 +298,16 @@
   },
   "settings.ingame": {
     "description": "Apply independent configured native defaults to Battle and Practice manager state.",
+    "edits": {
+      "skip_native_battle_select_defaults": {
+        "description": "Continue the Battle Select action at its sound and notice after skipping native writes to the entire root page.",
+        "operation": "replace",
+        "destination_target_id": "na2_btl",
+        "destination_offset": "0x1CBD08",
+        "expected_hex": "2D2000000C000010",
+        "replacement_hex": "1CFF210800000000"
+      }
+    },
     "hooks": {
       "update_shared_fighter_settings": {
         "description": "Preserve the native per-fighter update while applying shared X-dash charging before it and the selected Chakra behavior after it.",
@@ -375,11 +385,19 @@
         "replacement_hex": "0000000800000000"
       },
       "battle_reset_active_modes_to_configured_defaults": {
-        "description": "Stage every configured native and battle mechanic default alongside the native Select reset.",
+        "description": "Stage configured defaults only for rows on the active Battle page and play the native Select sound.",
         "target_id": "na2_btl",
         "offset": "0x1CBD74",
         "expected_hex": "885F070C00000000",
         "symbol": "battle_settings_defaults_sound",
+        "encoding": "jal26"
+      },
+      "battle_select_defaults_message": {
+        "description": "Show the active Battle page name in the Select reset notice.",
+        "target_id": "na2_btl",
+        "offset": "0x1CBD94",
+        "expected_hex": "88B1858F",
+        "symbol": "battle_settings_defaults_text_bridge",
         "encoding": "jal26"
       },
       "battle_navigate_active_rows": {
@@ -683,7 +701,7 @@
         "encoding": "jal26"
       },
       "practice_reset_active_rows_to_defaults": {
-        "description": "Run native Defaults, apply the configured defaults to every retained or shared row, and preserve the menu-specific reset message.",
+        "description": "Stage configured defaults only for rows on the active Practice or Mod page.",
         "target_id": "na2_btl",
         "offset": "0x1CD83C",
         "expected_hex": "E404220C00000000",
@@ -691,7 +709,7 @@
         "encoding": "jal26"
       },
       "practice_select_defaults_message": {
-        "description": "Show the Mod Settings reset message for the shared Mod Settings child and retain the native message for Practice Settings.",
+        "description": "Show the active Practice or Mod page name in the Select reset notice.",
         "target_id": "na2_btl",
         "offset": "0x1CD868",
         "expected_hex": "E8B1858F",
@@ -1082,6 +1100,7 @@
         "path": "na228_builder/patches/settings/ingame/battle_mode/battle_settings_abi.S",
         "namespace": "battle.settings.asm",
         "imports": {
+          "battle_settings_active_page": "battle_settings_active_page",
           "battle_settings_confirm": "battle_settings_confirm",
           "battle_settings_cancel": "battle_settings_cancel",
           "battle_settings_row_id": "battle_settings_row_id",
@@ -1095,6 +1114,9 @@
           "battle_settings_get_visible_max_value": "battle_settings_get_visible_max_value"
         },
         "fragments": {
+          "battle_settings_defaults_text_bridge": {
+            "object": "battle.settings.asm.text.battle.settings.defaults.text.bridge"
+          },
           "battle_settings_confirm_bridge": {
             "object": "battle.settings.asm.text.battle.settings.confirm.bridge"
           },
@@ -1250,12 +1272,11 @@
         "path": "na228_builder/patches/settings/ingame/practice_mode/settings_abi.S",
         "namespace": "practice.settings.asm",
         "imports": {
-          "mod_settings_child": "mod_settings_child",
+          "practice_settings_active_page": "practice_settings_active_page",
           "practice_settings_cancel": "practice_settings_cancel",
           "practice_settings_get_value": "practice_settings_get_value",
           "practice_settings_update_help": "practice_settings_update_help",
-          "practice_settings_update_window": "practice_settings_update_window",
-          "practice_settings_defaults_text": "mod_text_settings__reset"
+          "practice_settings_update_window": "practice_settings_update_window"
         },
         "fragments": {
           "practice_settings_cancel_bridge": {

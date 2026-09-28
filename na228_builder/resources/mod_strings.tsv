@@ -122,4 +122,4 @@ character_select.substitution	SUB {0}	変わり身 {0}
 page.chakra.title	Chakra	チャクラ
 page.gauge.title	Gauge	ゲージ
 page.items.title	Items	アイテム
-settings.reset	Settings returned to defaults.	設定を初期状態に戻しました。
+settings.reset	Defaults restored for {menu}.	{menu}を初期状態に戻しました。

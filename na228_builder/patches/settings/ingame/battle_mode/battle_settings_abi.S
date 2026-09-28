@@ -3,6 +3,19 @@
     .set noat
 
 
+    .section .text.battle_settings_defaults_text_bridge,"ax",@progbits
+    .balign 4
+    .globl battle_settings_defaults_text_bridge
+    .type battle_settings_defaults_text_bridge, @function
+battle_settings_defaults_text_bridge:
+    lui $a1, %hi(battle_settings_active_page)
+    addiu $a1, $a1, %lo(battle_settings_active_page)
+    lw $a1, 20($a1)
+    jr $ra
+    nop
+    .size battle_settings_defaults_text_bridge, . - battle_settings_defaults_text_bridge
+
+
     .section .text.battle_settings_confirm_bridge,"ax",@progbits
     .balign 4
     .globl battle_settings_confirm_bridge

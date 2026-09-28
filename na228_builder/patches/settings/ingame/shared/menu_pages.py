@@ -115,7 +115,9 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
         pages.append(page_type(rows=(), **{field: 0 for field in section_fields},
             parent_page=parent_page, parent_row=parent_row,
             heading_symbol=f"{prefix}_page_{page_index}_heading" if page_index else None,
-            heading_text=heading if page_index else None))
+            heading_text=heading if page_index else None,
+            reset_symbol=f"{prefix}_page_{page_index}_reset",
+            reset_text=message("settings.reset", menu=heading)))
         rows = []
         local_launchers = set()
         if page_index == 0:
@@ -259,6 +261,8 @@ def page_resource_fragments(pages, owner, symbol, selection):
         if page.heading_text is not None:
             fragments.append(PayloadFragment(owner=owner, symbol=page.heading_symbol,
                 kind="rodata", alignment=4, payload=strings.encode(page.heading_text) + b"\0"))
+        fragments.append(PayloadFragment(owner=owner, symbol=page.reset_symbol,
+            kind="rodata", alignment=4, payload=strings.encode(page.reset_text) + b"\0"))
     rows = tuple(row for page in pages for row in page.rows)
     option_symbols = {
         (row.runtime_option.getter, row.runtime_option.argument): f"{symbol}_option_{index}"

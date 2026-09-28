@@ -34,7 +34,6 @@ typedef unsigned int u32;
 
 #define NATIVE_SNAPSHOT_ADDRESS 0x00880FB0u
 #define NATIVE_APPLY_ADDRESS 0x008811A0u
-#define NATIVE_DEFAULTS_ADDRESS 0x00881390u
 #define NATIVE_PROFILE_FLAG_ADDRESS 0x001F7780u
 #define NATIVE_HELP_RESET_ADDRESS 0x0037EEE0u
 #define NATIVE_SOUND_ADDRESS 0x001D7E20u
@@ -798,17 +797,17 @@ void practice_settings_defaults(void *controller)
     const PracticeSettingsSchema *schema = practice_settings_schema_for(
         controller
     );
-    NativeControllerCall native_defaults =
-        (NativeControllerCall)NATIVE_DEFAULTS_ADDRESS;
-    u32 index;
+    u32 first = practice_settings_active_page.row_start;
+    u32 count = practice_settings_active_page.row_count;
+    u32 page_row;
 
-    if (practice_settings_is_mod(controller) == 0u) {
-        native_defaults(controller);
+    if (first > schema->row_count || count > schema->row_count - first) {
+        return;
     }
-    for (index = 0u; index < schema->row_count; ++index) {
+    for (page_row = 0u; page_row < count; ++page_row) {
         const PracticeSettingsRow *row = practice_settings_model_row(
             controller,
-            index
+            first + page_row
         );
 
         practice_settings_set_row_value(

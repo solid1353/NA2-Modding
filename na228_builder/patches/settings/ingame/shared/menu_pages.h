@@ -35,6 +35,7 @@ typedef struct SettingsMenuPage {
     unsigned int parent_page;
     unsigned int parent_row;
     unsigned int heading_reference;
+    unsigned int reset_reference;
 } SettingsMenuPage;
 
 typedef struct SettingsMenuActivePage {
@@ -43,6 +44,7 @@ typedef struct SettingsMenuActivePage {
     unsigned int primary_row_count;
     unsigned int secondary_row_count;
     unsigned int heading_reference;
+    unsigned int reset_reference;
 } SettingsMenuActivePage;
 
 extern volatile unsigned int settings_menu_open_values[1];

@@ -74,7 +74,7 @@ SUB_ACTIVE_FRAMES_ROW_ID = 20
 XDASH_CHAKRA_COST_ROW_ID = 21
 SUPPORT_ROW_ID = 22
 SCHEMA_HEADER_SIZE = 84
-PAGE_FIELD_COUNT = 7
+PAGE_FIELD_COUNT = 8
 PAGE_SIZE = PAGE_FIELD_COUNT * 4
 ROW_FIELD_COUNT = 12
 ROW_SIZE = ROW_FIELD_COUNT * 4
@@ -170,6 +170,8 @@ class PracticePage:
     parent_row: int = 0
     heading_symbol: str | None = None
     heading_text: Message | str | None = None
+    reset_symbol: str = ""
+    reset_text: Message | str = ""
 
 
 NATIVE_ROWS = {
@@ -387,13 +389,14 @@ def settings_menu_schema_fragment(
         page_offset = len(payload)
         payload.extend(
             struct.pack(
-                "<7I",
+                "<8I",
                 row_start,
                 len(page.rows),
                 page.player_row_count,
                 page.opponent_row_count,
                 page.parent_page,
                 page.parent_row,
+                0,
                 0,
             )
         )
@@ -405,6 +408,11 @@ def settings_menu_schema_fragment(
                     symbol=page.heading_symbol,
                 )
             )
+        relocations.append(PayloadRelocation(
+            offset=page_offset + 7 * 4,
+            kind="abs32",
+            symbol=page.reset_symbol,
+        ))
         row_start += len(page.rows)
 
     rows_offset = SCHEMA_HEADER_SIZE + len(pages) * PAGE_SIZE

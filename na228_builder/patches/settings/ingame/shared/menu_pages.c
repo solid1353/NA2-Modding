@@ -110,6 +110,7 @@ signed int settings_menu_select_page(
     active_page->primary_row_count = page->primary_row_count;
     active_page->secondary_row_count = page->secondary_row_count;
     active_page->heading_reference = page->heading_reference;
+    active_page->reset_reference = page->reset_reference;
     *selected_row = requested_row < page->row_count ? requested_row : 0u;
     return 1;
 }

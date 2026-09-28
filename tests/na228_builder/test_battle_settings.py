@@ -134,6 +134,17 @@ class BattleSettingsTests(unittest.TestCase):
         self.assertEqual(len(pages), 1)
         self.assertEqual([row.row_id for row in pages[0].rows], [0, 1, 5])
 
+    def test_select_reset_rejoins_the_native_sound_path(self) -> None:
+        manifest = json.loads(
+            (self.builder / "patches/settings/settings.json").read_text(encoding="utf-8")
+        )
+        edit = manifest["settings.ingame"]["edits"]["skip_native_battle_select_defaults"]
+        self.assertEqual(int(edit["destination_offset"], 16), 0x1CBD08)
+        jump, delay_slot = struct.unpack("<II", bytes.fromhex(edit["replacement_hex"]))
+        self.assertEqual(jump >> 26, 2)
+        self.assertEqual((jump & 0x03FFFFFF) << 2, 0x0087FC70)
+        self.assertEqual(delay_slot, 0)
+
     def test_config_key_order_controls_root_and_battle_mechanics_pages(self) -> None:
         def configure(features) -> None:
             settings = features["default_settings"]
@@ -179,12 +190,19 @@ class BattleSettingsTests(unittest.TestCase):
                                enabled_by=("get", 2))
         for options in ((controller, dependent), (dependent, controller)):
             with self.subTest(controller_index=options.index(controller)):
-                page = SimpleNamespace(heading_text=None, rows=tuple(
-                    SimpleNamespace(runtime_option=option) for option in options))
+                page = SimpleNamespace(
+                    heading_text=None,
+                    reset_symbol="menu_reset",
+                    reset_text="Defaults restored.",
+                    rows=tuple(SimpleNamespace(runtime_option=option) for option in options),
+                )
                 fragments = page_resource_fragments((page,), "settings", "menu", self.selection)
-                link = next(relocation for relocation in fragments[options.index(dependent)].relocations
+                by_symbol = {fragment.symbol: fragment for fragment in fragments}
+                dependent_fragment = by_symbol[f"menu_option_{options.index(dependent)}"]
+                controller_fragment = by_symbol[f"menu_option_{options.index(controller)}"]
+                link = next(relocation for relocation in dependent_fragment.relocations
                             if relocation.offset == 16)
-                self.assertEqual(link.symbol, fragments[options.index(controller)].symbol)
+                self.assertEqual(link.symbol, controller_fragment.symbol)
 
     def test_handicap_text_values(self) -> None:
         values = ModStrings(self.selection).native_payload(

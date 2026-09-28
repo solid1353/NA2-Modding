@@ -31,7 +31,11 @@ Square on the launcher opens a child page containing every enabled leaf under
 the complete Battle transaction and closes from the launcher as it does from
 every ordinary row. Cancel returns to the launcher; Cancel on the root retains
 the native close behavior. Entering or leaving the child page restarts the
-selected row's help-text animation.
+selected row's help-text animation. Select restores configured defaults for
+every setting on the current page, including rows outside the visible scroll
+window, and names that page in the reset notice. Resetting the Battle Settings
+root leaves its Battle Mechanics child values intact; each nested page also
+resets independently.
 
 Battle and Practice use the same page descriptor, page-selection, logical-row,
 `Open <iconSQUARE>` value, normal launcher-label presentation, and scalable
@@ -61,8 +65,8 @@ runtime setting owns the behavior.
 Its `ultimate_jutsu` selector accepts the six native values
 `no_use`, `random`, `command`, `timing`, `turn`, and `combo`, followed by the
 custom values `no_contest` and `no_hud`. The configured value initializes the
-shared runtime enum and is restored by either menu's reset action; changing and
-confirming it in either menu updates the other menu.
+shared runtime enum and is restored when its page is reset in either menu;
+changing and confirming it in either menu updates the other menu.
 
 `no_contest` blocks both players' contest inputs and suppresses the contest
 meter, prompts, and result messages while retaining the native contest
@@ -126,6 +130,9 @@ The object also owns `sub_active_frames`, `xdash_chakra_cost`, `support`, and
 `X-dash Chakra Cost: 0% | 5% | ... | 100%`, plus `Support: Off | Nerfed | Normal | Unlimited`. Each
 configuration value is the direct initial and reset value shown by both menus;
 both menus snapshot, stage, reset, and commit the same runtime values.
+
+Practice Settings uses the same page-scoped Select reset and notice. Its root
+reset leaves Opponent Settings and Battle Mechanics child values intact.
 
 Battle pages render the exact active visible row count. Root pages without
 Handicap use up to seven rows; child pages use the shared six-row Practice

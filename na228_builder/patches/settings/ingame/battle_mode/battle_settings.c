@@ -1056,11 +1056,19 @@ void battle_settings_cancel(void *controller)
 BATTLE_SETTINGS_SECTION(".text.battle_settings_defaults_sound")
 void battle_settings_defaults_sound(u32 sound_id)
 {
-    u32 index;
+    u32 first = battle_settings_active_page.row_start;
+    u32 count = battle_settings_active_page.row_count;
+    u32 page_row;
 
-    if (battle_settings_active_controller != (void *)0) {
-        for (index = 0u; index < battle_settings_schema.row_count; ++index) {
-            const BattleSettingsRow *row = battle_settings_model_row(index);
+    if (
+        battle_settings_active_controller != (void *)0 &&
+        first <= battle_settings_schema.row_count &&
+        count <= battle_settings_schema.row_count - first
+    ) {
+        for (page_row = 0u; page_row < count; ++page_row) {
+            const BattleSettingsRow *row = battle_settings_model_row(
+                first + page_row
+            );
 
             battle_settings_set_row_value(
                 (void *)battle_settings_active_controller,

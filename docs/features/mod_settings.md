@@ -35,12 +35,14 @@ Mode Select; a newly constructed Mode Select controller prepares a new set.
 
 Mode Select input is routed through the child while the menu is open and is
 cleared before native Mode Select handling continues. The child retains the
-native Practice Settings input, sound, defaults, submenu, and backing behavior
+native Practice Settings input, sound, submenu, and backing behavior
 while using the shared generated pages and rows. Cross applies the staged
 values and closes. Triangle returns from a submenu or discards the root
-transaction and closes. Select stages the configured defaults and shows
-**Settings returned to defaults.** Square opens a configured submenu.
-Opening plays the same sound as native Practice Settings.
+transaction and closes. Select stages configured defaults for every setting on
+the current page, including rows outside the visible scroll window, and names
+that page in the reset notice. On the root page, this resets Simple Display;
+child pages retain their own values until reset separately. Square opens a
+configured submenu. Opening plays the same sound as native Practice Settings.
 
 `features.menu_composition.mod_settings` controls the Battle Mechanics,
 Character Selection, Battle Settings, Practice Settings, and Control Settings

@@ -287,6 +287,10 @@ The local Defaults action at live `0x0087FC08..0x0087FC78` finds the first time
 entry at least `99`, then writes `{9, 2, 2, 0, 2, 5}` to the six local words.
 Those values remain local until the ordinary Confirm transaction. This is
 separate from the manager-level reset described below.
+After these writes, live `0x0087FC74` plays sound `0x33`, and
+`0x0087FC7C..0x0087FCA0` resets the help object and queues the native Defaults
+notice through `FUN_0037F760`. The notice pointer is loaded from
+`-0x4E18(gp)` at `0x0087FC94`.
 
 The native controller stores its selected row as a halfword at `+0x48`, its
 directional-repeat countdown at `+0x4A`, its phase at `+0x58`, newly pressed

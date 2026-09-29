@@ -72,7 +72,7 @@ The command refuses the whole source root and `@source/__old/`.
 
 Confirmed ROFS/CVM passwords:
 
-- NA2, NUN3, NUN5: `cc2fuku`
+- NA2, NUN3, NUN4, NUN5: `cc2fuku`
 
 Reference-mod source details are documented with their owning feature; see the
 [NUN6 source identity](../features/nun6/source.md#source-identity).

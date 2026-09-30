@@ -2,9 +2,8 @@
 
 ## In Progress
 
-- Port handicap bar
 - Rework sub options
-- Fix support bar
+- Fix support bar UI
 - Release version 1.0
 
 ## Backlog

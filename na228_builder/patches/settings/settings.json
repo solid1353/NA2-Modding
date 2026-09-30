@@ -78,6 +78,12 @@
           "mod_settings_backdrop": {
             "object": "mod.settings.c.bss.mod.settings.backdrop"
           },
+          "mod_settings_handicap": {
+            "object": "mod.settings.c.bss.mod.settings.handicap"
+          },
+          "mod_settings_handicap_cap": {
+            "object": "mod.settings.c.bss.mod.settings.handicap.cap"
+          },
           "mod_settings_replaces_mode_select": {
             "object": "mod.settings.c.text.mod.settings.replaces.mode.select"
           },
@@ -815,11 +821,11 @@
         "encoding": "jal26"
       },
       "shared_content_arrow_availability": {
-        "description": "shared content arrow availability.",
+        "description": "Show value arrows only on enabled rows other than a native-style Handicap row.",
         "target_id": "na2_btl",
         "offset": "0x1cdfd8",
         "expected_hex": "3C05220C",
-        "symbol": "settings_menu_enabled",
+        "symbol": "settings_menu_arrows_enabled",
         "encoding": "jal26"
       }
     },
@@ -1171,6 +1177,7 @@
           "practice_settings_schema": "practice_settings_schema",
           "mod_settings_schema": "mod_settings_schema",
           "mod_settings_child": "mod_settings_child",
+          "mod_settings_handicap": "mod_settings_handicap",
           "mod_settings_open_controls": "mod_settings_open_controls",
           "settings_menu_value_page": "settings_menu_value_page",
           "settings_menu_page": "settings_menu_page",
@@ -1343,6 +1350,12 @@
           },
           "settings_menu_enabled": {
             "object": "settings.menu.presentation.c.text.settings.menu.enabled"
+          },
+          "settings_menu_arrows_enabled": {
+            "object": "settings.menu.presentation.c.text.settings.menu.arrows.enabled"
+          },
+          "settings_menu_handicap_rodata": {
+            "object": "settings.menu.presentation.c.rodata.settings.menu.handicap.rodata"
           },
           "settings_menu_initialize_window": {
             "object": "settings.menu.presentation.c.text.settings.menu.initialize.window"

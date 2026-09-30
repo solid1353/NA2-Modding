@@ -144,7 +144,7 @@ settings_menu_draw_value_bridge:
     sd $a1, 8($sp)
     move $a0, $s0
     jal settings_menu_value_text
-    nop
+    mov.s $f12, $f20
     move $a0, $v0
     lui $t0, 0x43b2
     mtc1 $t0, $f12

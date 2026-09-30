@@ -11,7 +11,8 @@ Addresses below use the
   constructors, animation updates, and live objects were inspected; the Battle
   row layout was also checked with a reduced visible row set.
 - **Confirmed coverage:** Practice content scrolling and clipping, text context,
-  backing, cursor, arrows, and VS prompt; Battle row and Handicap geometry; and
+  backing, cursor, arrows, and VS prompt; Battle row and Handicap geometry,
+  resources, and cursor; and
   both screens' footer legends.
 - **Unresolved or untested:** The complete menu lifecycle and every animation
   phase were not exhaustively investigated.
@@ -104,17 +105,35 @@ from the selected slot, but the Handicap values and backing remain at the fixed
 sixth position.
 
 The Handicap value is a ten-segment graphic rather than text. The first loop
-draws the selected Player 1 count with rectangle `0x008D18B0`; the second fills
-the remaining segments with rectangle `0x008D18B8`. Both call resident
-`0x0037BD00` at `X = 128 + 28 * segment`, scale `0.9`, and `Y = 257`. The
-selected value therefore controls the red-to-blue boundary while the total
-always remains ten segments.
+draws the selected Player 1 count with rectangle `0x008D18B0`
+`(33,61,23,23)`; the second fills the remaining segments with rectangle
+`0x008D18B8` `(57,61,23,23)`. Both call resident `0x0037BD00(x, y, scale_x,
+scale_y, sprite, rectangle)` at `X = 128 + 28 * segment`, scale `0.9`, and
+`Y = 257`, which is 38 below the Handicap label's `Y = 219`. The selected value
+therefore controls the red-to-blue boundary while the total always remains ten
+segments.
 
-The Battle Settings controller loads `setting.ccs` and creates its value sprite
-at `+0x08` from `ANM_setting01` through resident `0x0037B670`, with capacity
-`0x14`, enabled flag `1`, and the controller's `+0x14` render context. The
-Handicap loops pass that sprite to `0x0037BD00`. Practice's controller `+0x08`
-is a different object and cannot render these Battle Settings regions.
+The Battle Settings constructor, Ghidra `FUN_0087F690`, uses the `setting.ccs`
+archive at controller `+0x00`. It creates the value sprite at `+0x08` from
+`TEX_s_menu` through resident `0x0037B670`, with capacity `0x14`, enabled flag
+`1`, and the controller's `+0x14` render context. Through resident
+`0x0037D5B0` it creates `ANM_setting01` at `+0x20`, `ANM_setting_ca` at
+`+0x24`, `ANM_carsol01_a` at `+0x28`, and `ANM_carsol02_a` at `+0x2C`. The
+Handicap loops pass the `+0x08` sprite to `0x0037BD00`. Practice's controller
+`+0x08` is a different object and cannot render these Battle Settings regions.
+
+`ANM_setting01` is the row backing: record `0` is the double-height Handicap
+panel and records `1..5` are the ordinary strips for slots `0..4`. A composed
+instance's objects carry their vertical translation at local `+0x78`: `0.0`
+for the panel and `99.03`, `72.42`, `45.80`, `19.18`, and `-7.43` for records
+`1..5`. The panel's geometry is therefore modeled `34.04` above the translation
+a sixth ordinary strip would have. The animation's root matrix keeps its vertical
+translation at `+0x78`; object `+0x38` held `0.0` for these records rather than
+a composed position. The cursor
+draw, Ghidra `FUN_008804B0`, places either cursor at
+`Y = 100 - 26.5 * slot`. It uses `ANM_carsol02_a`, which frames only the label,
+when slot `5` is selected, and `ANM_carsol01_a` otherwise. It draws no value
+arrows for slot `5`.
 
 The ordinary value loop retains row Y in `$f20`. Ghidra `0x00880434..0x00880448`
 resolves the row's string, and `0x0088044C` copies `$f20` to `$f13` immediately

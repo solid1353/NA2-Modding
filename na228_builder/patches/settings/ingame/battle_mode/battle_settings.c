@@ -1423,6 +1423,8 @@ static void battle_settings_draw_child(void *controller)
     view.value = battle_settings_get_value;
     view.maximum = battle_settings_get_max_value;
     view.enabled = battle_settings_presentation_enabled;
+    view.handicap = (const volatile SettingsMenuHandicap *)0;
+    view.handicap_row = -1;
     settings_menu_draw_content(native, &view);
     ((NativeControllerCall)NATIVE_SPRITE_UPDATE_ADDRESS)((void *)battle_settings_practice_arrows);
 }

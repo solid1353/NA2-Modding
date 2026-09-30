@@ -35,6 +35,9 @@ typedef unsigned int u32;
 #define PRACTICE_BACKING_SECONDARY_MIDDLE_LAST_RECORD 8u
 #define PRACTICE_BACKING_SECONDARY_TERMINAL_RECORD 9u
 #define PRACTICE_BACKING_ROW_STEP 26.88f
+#define ANIMATION_ROOT_Y_OFFSET 0x78u
+#define HANDICAP_BACKING_PANEL_RECORD 0u
+#define HANDICAP_BACKING_LAST_ROW_RECORD 5u
 
 typedef void (*NativeBackingCall)(void *backing);
 typedef void (*NativeSpriteDraw)(float alpha, void *object);
@@ -500,12 +503,74 @@ static u32 settings_menu_secondary_record(u32 index, u32 row_count)
     return PRACTICE_BACKING_SECONDARY_MIDDLE_LAST_RECORD;
 }
 
+/* Place the native Handicap panel where the row's Practice strip would be. */
+static void settings_menu_draw_handicap_panel(
+    void *handicap_backing,
+    void *practice_backing,
+    float strip_local_y,
+    float alpha
+)
+{
+    NativeSpriteDraw draw_sprite =
+        (NativeSpriteDraw)NATIVE_SPRITE_DRAW_ADDRESS;
+    u8 *records;
+    u8 *panel;
+    u8 *last;
+    u8 *previous;
+    volatile float *panel_local_y;
+    float native_local_y;
+    float native_strip_local_y;
+
+    if (handicap_backing == (void *)0) {
+        return;
+    }
+    records = *(u8 **)(
+        (u8 *)handicap_backing + PRACTICE_BACKING_RECORDS_POINTER_OFFSET
+    );
+    if (records == (u8 *)0) {
+        return;
+    }
+    panel = settings_menu_backing_record_object(
+        records,
+        HANDICAP_BACKING_PANEL_RECORD
+    );
+    last = settings_menu_backing_record_object(
+        records,
+        HANDICAP_BACKING_LAST_ROW_RECORD
+    );
+    previous = settings_menu_backing_record_object(
+        records,
+        HANDICAP_BACKING_LAST_ROW_RECORD - 1u
+    );
+    if (panel == (u8 *)0 || last == (u8 *)0 || previous == (u8 *)0) {
+        return;
+    }
+    panel_local_y = (volatile float *)(
+        panel + PRACTICE_BACKING_RECORD_LOCAL_Y_OFFSET
+    );
+    native_local_y = *panel_local_y;
+    /* The native panel sits in the slot after the last ordinary row. */
+    native_strip_local_y = 2.0f * *(volatile float *)(
+        last + PRACTICE_BACKING_RECORD_LOCAL_Y_OFFSET
+    ) - *(volatile float *)(
+        previous + PRACTICE_BACKING_RECORD_LOCAL_Y_OFFSET
+    );
+    /* Carry the Practice root's scroll translation into the panel's own root. */
+    *panel_local_y = native_local_y - native_strip_local_y + strip_local_y +
+        *(volatile float *)((u8 *)practice_backing + ANIMATION_ROOT_Y_OFFSET) -
+        *(volatile float *)((u8 *)handicap_backing + ANIMATION_ROOT_Y_OFFSET);
+    draw_sprite(alpha, panel);
+    *panel_local_y = native_local_y;
+}
+
 SETTINGS_MENU_SECTION(".text.settings_menu_draw_practice_backing")
 void settings_menu_draw_practice_backing(
     void *backing,
     u32 primary_row_count,
     u32 secondary_row_count,
-    u32 visible_rows
+    u32 visible_rows,
+    const volatile SettingsMenuHandicap *handicap,
+    s32 handicap_row
 )
 {
     NativeBackingCall draw = (NativeBackingCall)NATIVE_BACKING_DRAW_ADDRESS;
@@ -540,7 +605,11 @@ void settings_menu_draw_practice_backing(
         (u8 *)backing + PRACTICE_BACKING_OBJECT_ALPHA_OFFSET
     );
     for (index = 0u; index < primary_row_count; ++index) {
-        if (index >= 32u || (visible_rows & (1u << index)) == 0u) {
+        if (
+            index >= 32u ||
+            (visible_rows & (1u << index)) == 0u ||
+            (s32)index == handicap_row
+        ) {
             continue;
         }
         record = settings_menu_player_record(index, primary_row_count);
@@ -562,7 +631,8 @@ void settings_menu_draw_practice_backing(
 
         if (
             page_index >= 32u ||
-            (visible_rows & (1u << page_index)) == 0u
+            (visible_rows & (1u << page_index)) == 0u ||
+            (s32)page_index == handicap_row
         ) {
             continue;
         }
@@ -578,6 +648,33 @@ void settings_menu_draw_practice_backing(
                 : settings_menu_secondary_grid_y(index, secondary_delta)),
             alpha
         );
+    }
+    if (
+        handicap != (const volatile SettingsMenuHandicap *)0 &&
+        handicap_row >= 0 &&
+        handicap_row < 32 &&
+        (visible_rows & (1u << handicap_row)) != 0u
+    ) {
+        u32 handicap_index = (u32)handicap_row;
+
+        if (handicap_index < primary_row_count) {
+            settings_menu_draw_handicap_panel(
+                handicap->backing,
+                backing,
+                settings_menu_player_grid_y(handicap_index),
+                alpha
+            );
+        } else {
+            settings_menu_draw_handicap_panel(
+                handicap->backing,
+                backing,
+                settings_menu_secondary_grid_y(
+                    handicap_index - primary_row_count,
+                    secondary_delta
+                ),
+                alpha
+            );
+        }
     }
     for (record = 0u; record < PRACTICE_BACKING_RECORD_COUNT; ++record) {
         *settings_menu_backing_record_flags(records, record) =

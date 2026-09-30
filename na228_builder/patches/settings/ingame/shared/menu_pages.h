@@ -75,11 +75,20 @@ void settings_menu_prepare_practice_backing(
     unsigned int primary_row_count,
     unsigned int secondary_row_count
 );
+/* Native Battle Settings resources for a double-height Handicap row. */
+typedef struct SettingsMenuHandicap {
+    void *backing;
+    void *cursor;
+    void *gauge;
+} SettingsMenuHandicap;
+
 void settings_menu_draw_practice_backing(
     void *backing,
     unsigned int primary_row_count,
     unsigned int secondary_row_count,
-    unsigned int visible_rows
+    unsigned int visible_rows,
+    const volatile SettingsMenuHandicap *handicap,
+    signed int handicap_row
 );
 
 /* Menu-owned data consumed by the native Practice content renderer. */
@@ -91,6 +100,8 @@ typedef struct SettingsMenuPresentation {
     int (*value)(void *owner, int row);
     int (*maximum)(void *owner, int row);
     int (*enabled)(void *owner, int row);
+    const volatile SettingsMenuHandicap *handicap;
+    int handicap_row;
 } SettingsMenuPresentation;
 void settings_menu_draw_content(void *controller, const SettingsMenuPresentation *view);
 void settings_menu_update_window(void *controller, const volatile SettingsMenuActivePage *page);

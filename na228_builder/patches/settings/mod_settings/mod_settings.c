@@ -1,5 +1,7 @@
 /* Mode Select host and session-wide state for the shared Mod Settings menu. */
 
+#include "../ingame/shared/menu_pages.h"
+
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef signed int s32;
@@ -81,6 +83,8 @@ typedef unsigned int u32;
 #define MANAGER_SETTINGS_PACK_1 0xA00u
 #define MANAGER_SETTINGS_PACK_2 0xA0Cu
 #define PRACTICE_ARCHIVE_OFFSET 0x04u
+#define PRACTICE_CONTENT_CONTEXT_OFFSET 0x14u
+#define HANDICAP_GAUGE_CAPACITY 0x14u
 #define PRACTICE_BACKDROP_ENABLED_OFFSET 0x48u
 #define PRACTICE_CHILD_REVEAL_DELAY_OFFSET 0x56u
 #define PRACTICE_CHILD_PHASE_INTERACTIVE 2u
@@ -94,6 +98,14 @@ typedef unsigned int u32;
 #define TEXTURE_HEIGHT_LOG2_OFFSET 0x37u
 #define MIPMAP_PIXELS_OFFSET 0x04u
 #define MIPMAP_QWORD_COUNT_OFFSET 0x08u
+#define TEXTURE_CLUT_OFFSET 0x3Cu
+#define CLUT_BLOCK_OFFSET 0x10u
+#define CLUT_ENTRY_COUNT 256u
+#define HANDICAP_TEXTURE_WIDTH 128u
+#define HANDICAP_TEXTURE_BYTES     (HANDICAP_TEXTURE_WIDTH * HANDICAP_TEXTURE_WIDTH)
+#define HANDICAP_CAP_WIDTH 38u
+#define HANDICAP_CAP_HEIGHT 39u
+#define HANDICAP_CAP_SOURCE_X 38u
 #define MOD_SETTINGS_TITLE_WIDTH 128u
 #define MOD_SETTINGS_TITLE_HEIGHT 32u
 #define MOD_SETTINGS_TITLE_BYTES \
@@ -164,8 +176,10 @@ typedef struct ModSettingsBackdrop {
     void *footer_sprite;
     void *controls;
     u32 state;
+    void *setting_archive;
     u8 archive_owned;
     u8 footer_archive_owned;
+    u8 setting_archive_owned;
 } ModSettingsBackdrop;
 
 extern volatile ModSettingsState mod_settings_state;
@@ -177,6 +191,9 @@ volatile u32 mod_settings_child
 
 static ModSettingsBackdrop mod_settings_backdrop
     __attribute__((section(".bss.mod_settings_backdrop")));
+
+volatile SettingsMenuHandicap mod_settings_handicap
+    __attribute__((section(".bss.mod_settings_handicap")));
 
 static const u8 mod_settings_options_archive_name[]
     __attribute__((section(".rodata"))) = "option.ccs";
@@ -192,6 +209,14 @@ static const u8 mod_settings_mode_select_texture_name[]
     __attribute__((section(".rodata"))) = "TEX_modesel02";
 static const u8 mod_settings_practice_texture_name[]
     __attribute__((section(".rodata"))) = "TEX_prac_t01";
+static const u8 mod_settings_battle_settings_archive_name[]
+    __attribute__((section(".rodata"))) = "setting.ccs";
+static const u8 mod_settings_handicap_backing_name[]
+    __attribute__((section(".rodata"))) = "ANM_setting01";
+static const u8 mod_settings_handicap_cursor_name[]
+    __attribute__((section(".rodata"))) = "ANM_carsol02_a";
+static const u8 mod_settings_handicap_texture_name[]
+    __attribute__((section(".rodata"))) = "TEX_s_menu";
 static const u16 mod_settings_prompt_label_rectangle[4]
     __attribute__((section(".rodata"))) = {
         MODE_SELECT_PROMPT_LABEL_X,
@@ -277,6 +302,221 @@ static u8 *mod_settings_texture_pixels(
     }
     *mipmap_out = mipmap;
     return *(u8 **)(mipmap + MIPMAP_PIXELS_OFFSET);
+}
+
+/* The shared TEX_s_menu state replaced by the olive cap, restored on release. */
+typedef struct ModSettingsHandicapCap {
+    u8 *pixels;
+    void *mipmap;
+    u32 *clut;
+    void *clut_block;
+    u32 saved_clut[CLUT_ENTRY_COUNT];
+    u8 saved_pixels[HANDICAP_CAP_WIDTH * HANDICAP_CAP_HEIGHT];
+} ModSettingsHandicapCap;
+
+static ModSettingsHandicapCap mod_settings_handicap_cap
+    __attribute__((section(".bss.mod_settings_handicap_cap")));
+
+/* 8-bit CLUTs are resident in CSM1 order: index bits 3 and 4 are swapped. */
+static u32 mod_settings_clut_slot(u32 index)
+{
+    return (index & 0xE7u) | ((index & 0x08u) << 1) | ((index & 0x10u) >> 1);
+}
+
+static u32 *mod_settings_texture_clut(
+    void *archive,
+    const u8 *texture_name,
+    void **block_out
+)
+{
+    u8 *texture;
+    u8 *clut;
+    u8 *block;
+
+    texture = ((FindObject)CCS_FIND_OBJECT_ADDRESS)(archive, texture_name, 1u);
+    if (texture == (u8 *)0) {
+        return (u32 *)0;
+    }
+    clut = *(u8 **)(texture + TEXTURE_CLUT_OFFSET);
+    if (clut == (u8 *)0) {
+        return (u32 *)0;
+    }
+    block = *(u8 **)(clut + CLUT_BLOCK_OFFSET);
+    if (
+        block == (u8 *)0 ||
+        *(u32 *)(block + MIPMAP_QWORD_COUNT_OFFSET) * 16u <
+            CLUT_ENTRY_COUNT * 4u
+    ) {
+        return (u32 *)0;
+    }
+    *block_out = block;
+    return *(u32 **)(block + MIPMAP_PIXELS_OFFSET);
+}
+
+static u32 mod_settings_color_distance(u32 left, u32 right)
+{
+    u32 distance = 0u;
+    u32 shift;
+
+    for (shift = 0u; shift < 32u; shift += 8u) {
+        s32 delta = (s32)((left >> shift) & 0xFFu) -
+            (s32)((right >> shift) & 0xFFu);
+
+        distance += (u32)(delta * delta);
+    }
+    return distance;
+}
+
+/*
+ * Give the native Handicap panel the olive Practice label cap. The cap cell is
+ * copied from TEX_prac_t01; its colors take palette entries that only the old
+ * cap used, most frequent first, and any remaining colors use the nearest entry.
+ */
+static void mod_settings_recolor_handicap_cap(
+    void *setting_archive,
+    void *practice_archive
+)
+{
+    void *setting_mipmap;
+    void *practice_mipmap;
+    void *setting_clut_block;
+    void *practice_clut_block;
+    u8 *setting_pixels = mod_settings_texture_pixels(
+        setting_archive,
+        mod_settings_handicap_texture_name,
+        7u,
+        7u,
+        HANDICAP_TEXTURE_BYTES,
+        &setting_mipmap
+    );
+    u8 *practice_pixels = mod_settings_texture_pixels(
+        practice_archive,
+        mod_settings_practice_texture_name,
+        7u,
+        7u,
+        HANDICAP_TEXTURE_BYTES,
+        &practice_mipmap
+    );
+    u32 *setting_clut;
+    u32 *practice_clut;
+    u8 used[CLUT_ENTRY_COUNT];
+    u8 mapping[CLUT_ENTRY_COUNT];
+    u16 count[CLUT_ENTRY_COUNT];
+    u32 x;
+    u32 y;
+    u32 index;
+
+    if (setting_pixels == (u8 *)0 || practice_pixels == (u8 *)0) {
+        return;
+    }
+    setting_clut = mod_settings_texture_clut(
+        setting_archive,
+        mod_settings_handicap_texture_name,
+        &setting_clut_block
+    );
+    practice_clut = mod_settings_texture_clut(
+        practice_archive,
+        mod_settings_practice_texture_name,
+        &practice_clut_block
+    );
+    if (setting_clut == (u32 *)0 || practice_clut == (u32 *)0) {
+        return;
+    }
+    mod_settings_handicap_cap.pixels = setting_pixels;
+    mod_settings_handicap_cap.mipmap = setting_mipmap;
+    mod_settings_handicap_cap.clut = setting_clut;
+    mod_settings_handicap_cap.clut_block = setting_clut_block;
+    for (index = 0u; index < CLUT_ENTRY_COUNT; ++index) {
+        mod_settings_handicap_cap.saved_clut[index] = setting_clut[index];
+        used[index] = 0u;
+        count[index] = 0u;
+    }
+    for (y = 0u; y < HANDICAP_CAP_HEIGHT; ++y) {
+        for (x = 0u; x < HANDICAP_CAP_WIDTH; ++x) {
+            mod_settings_handicap_cap.saved_pixels[
+                y * HANDICAP_CAP_WIDTH + x
+            ] = setting_pixels[y * HANDICAP_TEXTURE_WIDTH + x];
+        }
+    }
+    for (y = 0u; y < HANDICAP_TEXTURE_WIDTH; ++y) {
+        for (x = 0u; x < HANDICAP_TEXTURE_WIDTH; ++x) {
+            if (x >= HANDICAP_CAP_WIDTH || y >= HANDICAP_CAP_HEIGHT) {
+                used[setting_pixels[y * HANDICAP_TEXTURE_WIDTH + x]] = 1u;
+            }
+        }
+    }
+    for (y = 0u; y < HANDICAP_CAP_HEIGHT; ++y) {
+        for (x = 0u; x < HANDICAP_CAP_WIDTH; ++x) {
+            ++count[practice_pixels[
+                y * HANDICAP_TEXTURE_WIDTH + HANDICAP_CAP_SOURCE_X + x
+            ]];
+        }
+    }
+    for (;;) {
+        u32 source = 0u;
+        u32 color;
+        u32 best = CLUT_ENTRY_COUNT;
+        u32 best_distance = 0xFFFFFFFFu;
+
+        for (index = 1u; index < CLUT_ENTRY_COUNT; ++index) {
+            if (count[index] > count[source]) {
+                source = index;
+            }
+        }
+        if (count[source] == 0u) {
+            break;
+        }
+        count[source] = 0u;
+        color = practice_clut[mod_settings_clut_slot(source)];
+        for (index = 0u; index < CLUT_ENTRY_COUNT; ++index) {
+            if (
+                used[index] != 0u &&
+                setting_clut[mod_settings_clut_slot(index)] == color
+            ) {
+                best = index;
+                break;
+            }
+        }
+        if (best == CLUT_ENTRY_COUNT) {
+            for (index = 0u; index < CLUT_ENTRY_COUNT; ++index) {
+                if (used[index] == 0u) {
+                    setting_clut[mod_settings_clut_slot(index)] = color;
+                    used[index] = 1u;
+                    best = index;
+                    break;
+                }
+            }
+        }
+        if (best == CLUT_ENTRY_COUNT) {
+            for (index = 0u; index < CLUT_ENTRY_COUNT; ++index) {
+                u32 distance;
+
+                if (used[index] == 0u) {
+                    continue;
+                }
+                distance = mod_settings_color_distance(
+                    setting_clut[mod_settings_clut_slot(index)],
+                    color
+                );
+                if (distance < best_distance) {
+                    best_distance = distance;
+                    best = index;
+                }
+            }
+        }
+        mapping[source] = (u8)best;
+    }
+    for (y = 0u; y < HANDICAP_CAP_HEIGHT; ++y) {
+        for (x = 0u; x < HANDICAP_CAP_WIDTH; ++x) {
+            setting_pixels[y * HANDICAP_TEXTURE_WIDTH + x] = mapping[
+                practice_pixels[
+                    y * HANDICAP_TEXTURE_WIDTH + HANDICAP_CAP_SOURCE_X + x
+                ]
+            ];
+        }
+    }
+    ((ObjectCall)TEXTURE_UPLOAD_ADDRESS)(setting_mipmap);
+    ((ObjectCall)TEXTURE_UPLOAD_ADDRESS)(setting_clut_block);
 }
 
 static void mod_settings_copy_rows(
@@ -564,11 +804,118 @@ void mod_settings_option_set(u32 argument, u32 value)
     }
 }
 
+static void mod_settings_restore_handicap_cap(void)
+{
+    u32 index;
+    u32 x;
+    u32 y;
+
+    if (mod_settings_handicap_cap.pixels == (u8 *)0) {
+        return;
+    }
+    for (index = 0u; index < CLUT_ENTRY_COUNT; ++index) {
+        mod_settings_handicap_cap.clut[index] =
+            mod_settings_handicap_cap.saved_clut[index];
+    }
+    for (y = 0u; y < HANDICAP_CAP_HEIGHT; ++y) {
+        for (x = 0u; x < HANDICAP_CAP_WIDTH; ++x) {
+            mod_settings_handicap_cap.pixels[
+                y * HANDICAP_TEXTURE_WIDTH + x
+            ] = mod_settings_handicap_cap.saved_pixels[
+                y * HANDICAP_CAP_WIDTH + x
+            ];
+        }
+    }
+    ((ObjectCall)TEXTURE_UPLOAD_ADDRESS)(mod_settings_handicap_cap.mipmap);
+    ((ObjectCall)TEXTURE_UPLOAD_ADDRESS)(mod_settings_handicap_cap.clut_block);
+    mod_settings_handicap_cap.pixels = (u8 *)0;
+}
+
+static void mod_settings_destroy_handicap(void)
+{
+    mod_settings_restore_handicap_cap();
+    if (mod_settings_handicap.gauge != (void *)0) {
+        ((DestroyResource)SPRITE_DESTROY_ADDRESS)(
+            mod_settings_handicap.gauge,
+            1u
+        );
+        mod_settings_handicap.gauge = (void *)0;
+    }
+    if (mod_settings_handicap.cursor != (void *)0) {
+        ((DestroyResource)OPTIONS_ANIMATION_DESTROY_ADDRESS)(
+            mod_settings_handicap.cursor,
+            1u
+        );
+        mod_settings_handicap.cursor = (void *)0;
+    }
+    if (mod_settings_handicap.backing != (void *)0) {
+        ((DestroyResource)OPTIONS_ANIMATION_DESTROY_ADDRESS)(
+            mod_settings_handicap.backing,
+            1u
+        );
+        mod_settings_handicap.backing = (void *)0;
+    }
+    if (
+        mod_settings_backdrop.setting_archive != (void *)0 &&
+        mod_settings_backdrop.setting_archive_owned != 0u
+    ) {
+        ((DestroyResource)OPTIONS_ARCHIVE_DESTROY_ADDRESS)(
+            mod_settings_backdrop.setting_archive,
+            1u
+        );
+    }
+    mod_settings_backdrop.setting_archive = (void *)0;
+    mod_settings_backdrop.setting_archive_owned = 0u;
+}
+
+/* Native Battle Settings panel, cursor, and gauge for the Handicap row. */
+static s32 mod_settings_create_handicap(void *child)
+{
+    void *context = *(void **)((u8 *)child + PRACTICE_CONTENT_CONTEXT_OFFSET);
+
+    ((ArchiveLoad)OPTIONS_ARCHIVE_LOAD_ADDRESS)(
+        mod_settings_battle_settings_archive_name,
+        &mod_settings_backdrop.setting_archive_owned
+    );
+    mod_settings_backdrop.setting_archive =
+        ((FindArchive)ARCHIVE_FIND_ADDRESS)(
+            mod_settings_battle_settings_archive_name
+        );
+    if (mod_settings_backdrop.setting_archive == (void *)0 || context == (void *)0) {
+        return 0;
+    }
+    mod_settings_recolor_handicap_cap(
+        mod_settings_backdrop.setting_archive,
+        *(void **)((u8 *)child + PRACTICE_ARCHIVE_OFFSET)
+    );
+    mod_settings_handicap.backing =
+        ((LoadAnimation)OPTIONS_ANIMATION_LOAD_ADDRESS)(
+            mod_settings_backdrop.setting_archive,
+            mod_settings_handicap_backing_name
+        );
+    mod_settings_handicap.cursor =
+        ((LoadAnimation)OPTIONS_ANIMATION_LOAD_ADDRESS)(
+            mod_settings_backdrop.setting_archive,
+            mod_settings_handicap_cursor_name
+        );
+    mod_settings_handicap.gauge = ((CreateSprite)SPRITE_CREATE_ADDRESS)(
+        mod_settings_backdrop.setting_archive,
+        mod_settings_handicap_texture_name,
+        HANDICAP_GAUGE_CAPACITY,
+        1u,
+        context
+    );
+    return mod_settings_handicap.backing != (void *)0 &&
+        mod_settings_handicap.cursor != (void *)0 &&
+        mod_settings_handicap.gauge != (void *)0;
+}
+
 static void mod_settings_destroy_child(void)
 {
     void *child = (void *)mod_settings_child;
 
     mod_settings_backdrop.state = MOD_SETTINGS_INACTIVE;
+    mod_settings_destroy_handicap();
     if (mod_settings_backdrop.controls != (void *)0) {
         ((ObjectCall)OPTIONS_DESTROY_ADDRESS)(mod_settings_backdrop.controls);
         ((Free)RESIDENT_FREE_ADDRESS)(mod_settings_backdrop.controls);
@@ -611,7 +958,7 @@ static s32 mod_settings_create_child(void *controller)
     ((ObjectConstruct)PRACTICE_CHILD_CONSTRUCT_ADDRESS)(child, 1u);
     *((u8 *)child + PRACTICE_BACKDROP_ENABLED_OFFSET) = 0u;
     mod_settings_install_graphics(child, controller);
-    return 1;
+    return mod_settings_create_handicap(child);
 }
 
 static s32 mod_settings_open_child(void)

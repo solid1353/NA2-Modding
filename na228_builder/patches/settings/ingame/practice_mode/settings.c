@@ -81,6 +81,7 @@ typedef unsigned int u32;
 #define ROW_FLAG_STATUS_SOURCE 0x2000u
 #define ROW_FLAG_SUBMENU SETTINGS_MENU_ROW_FLAG_SUBMENU
 #define ROW_FLAG_CONTROL_SETTINGS 0x8000u
+#define ROW_FLAG_HANDICAP 0x10000u
 
 #define ULTIMATE_JUTSU_NATIVE_MODE_COUNT 6u
 #define ULTIMATE_JUTSU_NATIVE_DEFAULT 2u
@@ -139,6 +140,7 @@ typedef struct PracticeSettingsSchema {
 extern const PracticeSettingsSchema practice_settings_schema;
 extern const PracticeSettingsSchema mod_settings_schema;
 extern volatile u32 mod_settings_child;
+extern volatile SettingsMenuHandicap mod_settings_handicap;
 extern s32 mod_settings_open_controls(void);
 extern volatile u32 practice_settings_active_labels[];
 extern volatile u32 practice_settings_active_value_tables[];
@@ -1020,6 +1022,26 @@ void practice_settings_draw_content(void *controller)
     view.value = practice_settings_get_value;
     view.maximum = practice_settings_get_max_value;
     view.enabled = practice_settings_row_enabled;
+    view.handicap = (const volatile SettingsMenuHandicap *)0;
+    view.handicap_row = -1;
+    if (practice_settings_is_mod(controller) != 0u) {
+        u32 row;
+
+        view.handicap = &mod_settings_handicap;
+        for (row = 0u; row < practice_settings_active_page.row_count; ++row) {
+            const PracticeSettingsRow *entry = practice_settings_row(
+                controller,
+                (s32)row
+            );
+
+            if (
+                entry != (const PracticeSettingsRow *)0 &&
+                (entry->flags & ROW_FLAG_HANDICAP) != 0u
+            ) {
+                view.handicap_row = (s32)row;
+            }
+        }
+    }
     settings_menu_draw_content(controller, &view);
 }
 

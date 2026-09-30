@@ -73,8 +73,17 @@ Battle Difficulty value.
 
 The settings pages use the generated Practice-style submenu renderer. Their labels,
 selector values, and help messages reference the same translated resources as
-the original Battle Settings and Practice Settings menus. Handicap remains a
-normal text-value row in this shared presentation.
+the original Battle Settings and Practice Settings menus.
+
+Handicap uses the native Battle Settings presentation from
+[Battle rows and Handicap](../knowledge/localization/ui/battle/settings_presentation.md#battle-rows-and-handicap).
+Its row draws the native double-height panel in place of its Practice strip,
+aligned to the ordinary strip it replaces. The ten-segment gauge sits 38 units
+below the label at scale `0.9`; the selected count is red and the rest blue.
+While Handicap is selected, the label-only cursor replaces the Practice cursor
+and no value arrows are shown. Handicap must be the last row on its page
+because the panel's second line has no room for a following row; the builder
+rejects any other placement.
 
 Before publishing the child, the runtime acquires `option.ccs` through the
 native archive helper and constructs only its `ANM_option_ca` camera and
@@ -82,7 +91,16 @@ native archive helper and constructs only its `ANM_option_ca` camera and
 archive or returned an existing one, and destroys the archive only when the
 menu owns it. The context and animation instances are always released with
 Mode Select or after failed construction. The Mod Settings child then loads its
-own `PRAC.CCS` instance. Its native full-screen Practice backdrop tint is
+own `PRAC.CCS` instance. After the child is constructed, the runtime acquires
+`setting.ccs` the same way and creates the Handicap panel animation, cursor,
+and a `TEX_s_menu` gauge sprite in the child's text context. They are released
+before the child, and Mod Settings is unavailable if any of them fails. The
+runtime replaces the panel's yellow label cap in `TEX_s_menu` with the olive cap
+the Practice rows use from the child's `TEX_prac_t01`, then re-uploads the
+texture and palette. The palette is full, so the cap's most frequent colors
+take the entries only the old cap used and the rest use the nearest existing
+color. The archive can already be resident and shared, so the original cap
+pixels and palette are saved first and restored and re-uploaded before release. Its native full-screen Practice backdrop tint is
 disabled so the Options artwork supplies the complete background. After
 construction, the runtime replaces only the title strip of that instance's
 `TEX_prac_t01` pixels with the bundled 128-by-32 indexed

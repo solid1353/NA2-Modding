@@ -13,6 +13,7 @@ from na228_builder.infrastructure.modules.payload_builder.operations import Payl
 from ..ingame.battle_mode.battle_settings import NATIVE_ROWS as BATTLE_NATIVE_ROWS
 from ..ingame.practice_mode.practice_settings import (
     NATIVE_ROWS as PRACTICE_NATIVE_ROWS,
+    ROW_FLAG_HANDICAP,
     ROW_FLAG_HELP_SLOT,
     ROW_FLAG_LABEL_SLOT,
     ROW_FLAG_VALUES_SLOT,
@@ -75,8 +76,6 @@ def _native_row_bindings(selection: CatalogSelection):
             tuple(str(value) for value in range(10, 100, 10))
             + ("99", message("common.unlimited"))
             if key == "time"
-            else tuple(f"{value}-{10 - value}" for value in range(11))
-            if key == "handicap"
             else ()
         )
         option = _native_option(
@@ -89,6 +88,8 @@ def _native_row_bindings(selection: CatalogSelection):
         flags = ROW_FLAG_LABEL_SLOT | ROW_FLAG_HELP_SLOT
         if not values:
             flags |= ROW_FLAG_VALUES_SLOT
+        if key == "handicap":
+            flags |= ROW_FLAG_HANDICAP
         row = PracticeRow(
             row_id,
             1,
@@ -128,7 +129,7 @@ def _native_row_bindings(selection: CatalogSelection):
 
 
 def _pages(selection: CatalogSelection) -> tuple[PracticePage, ...]:
-    return build_menu_pages(
+    pages = build_menu_pages(
         selection,
         MOD_SETTINGS_PATH,
         _native_row_bindings(selection),
@@ -140,6 +141,15 @@ def _pages(selection: CatalogSelection) -> tuple[PracticePage, ...]:
         SUPPORT_ROW_ID + 1,
         external_launchers={"control_settings": 0x8000},
     )
+    for page in pages:
+        handicap_rows = [
+            index for index, row in enumerate(page.rows)
+            if row.flags & ROW_FLAG_HANDICAP
+        ]
+        # The double-height Handicap panel has no room for a following row.
+        if handicap_rows and handicap_rows != [len(page.rows) - 1]:
+            raise ValueError("Handicap must be the last row on its Mod Settings page")
+    return pages
 
 
 def mod_settings_schema_fragment(

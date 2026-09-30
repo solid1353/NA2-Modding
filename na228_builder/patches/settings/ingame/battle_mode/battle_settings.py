@@ -13,14 +13,14 @@ from ..battle_mechanics.battle_settings_runtime import (
     CHAKRA_OPTION_COUNT,
     CHAKRA_REGEN_LABELS,
     CHAKRA_STATIC_LABELS,
-    SUB_ACTIVE_FRAMES_LABELS,
+    SUBSTITUTION_INPUT_LABELS,
     SUPPORT_LABELS,
     ULTIMATE_JUTSU_NATIVE_MODE_COUNT,
     chakra_default,
     EXTRA_HIT_LABELS,
     extra_hit_default,
     shadowblur_default,
-    sub_active_frames_default,
+    substitution_input_default,
     substitution_default,
     support_default,
     battle_mechanic_enabled,
@@ -49,7 +49,7 @@ ROW_FLAG_ULTIMATE_JUTSU = 0x80
 ROW_FLAG_CUSTOM_ULTIMATE_JUTSU = 0x100
 ROW_FLAG_CUSTOM_SHADOWBLUR = 0x200
 ROW_FLAG_CUSTOM_EXTRA_HIT = 0x400
-ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES = 0x800
+ROW_FLAG_CUSTOM_SUBSTITUTION_INPUT = 0x800
 ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST = 0x1000
 ROW_FLAG_CUSTOM_SUPPORT = 0x2000
 ROW_FLAG_CUSTOM_CHAKRA = 0x8000
@@ -60,7 +60,7 @@ NATIVE_VALUE_TABLE = 0x008BE5C0
 SUBSTITUTION_ROW_ID = 6
 SHADOWBLUR_ROW_ID = 7
 EXTRA_HIT_ROW_ID = 8
-SUB_ACTIVE_FRAMES_ROW_ID = 9
+SUBSTITUTION_INPUT_ROW_ID = 9
 XDASH_CHAKRA_COST_ROW_ID = 10
 SUPPORT_ROW_ID = 11
 SCHEMA_HEADER_SIZE = 84
@@ -82,8 +82,8 @@ TOGGLE_LABELS = (
 )
 CUSTOM_ROW_RESOURCES = {
     SUBSTITUTION_ROW_ID: (
-        "mod_text_settings__substitution__label",
-        "mod_text_settings__substitution__help",
+        "mod_text_settings__substitution_resource__label",
+        "mod_text_settings__substitution_resource__help",
         "substitution",
     ),
     SHADOWBLUR_ROW_ID: (
@@ -96,10 +96,10 @@ CUSTOM_ROW_RESOURCES = {
         "mod_text_settings__extra_hit__help",
         "extra_hit",
     ),
-    SUB_ACTIVE_FRAMES_ROW_ID: (
-        "mod_text_settings__sub_active_frames__label",
-        "mod_text_settings__sub_active_frames__help",
-        "sub_active_frames",
+    SUBSTITUTION_INPUT_ROW_ID: (
+        "mod_text_settings__substitution_input__label",
+        "mod_text_settings__substitution_input__help",
+        "substitution_input",
     ),
     XDASH_CHAKRA_COST_ROW_ID: (
         "mod_text_settings__xdash_chakra_cost__label",
@@ -241,10 +241,10 @@ def _active_pages(selection: CatalogSelection) -> tuple[BattlePage, ...]:
             EXTRA_HIT_ROW_ID, ROW_LOCAL_CUSTOM, len(EXTRA_HIT_LABELS),
             ROW_FLAG_CUSTOM_EXTRA_HIT, extra_hit_default(selection),
         ),
-        "sub_active_frames": lambda: BattleRow(
-            SUB_ACTIVE_FRAMES_ROW_ID, ROW_LOCAL_CUSTOM, len(SUB_ACTIVE_FRAMES_LABELS),
-            ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES,
-            sub_active_frames_default(selection),
+        "substitution_input": lambda: BattleRow(
+            SUBSTITUTION_INPUT_ROW_ID, ROW_LOCAL_CUSTOM, len(SUBSTITUTION_INPUT_LABELS),
+            ROW_FLAG_CUSTOM_SUBSTITUTION_INPUT,
+            substitution_input_default(selection),
         ),
         "xdash_chakra_cost": lambda: BattleRow(
             XDASH_CHAKRA_COST_ROW_ID, ROW_LOCAL_CUSTOM, 21,
@@ -255,7 +255,7 @@ def _active_pages(selection: CatalogSelection) -> tuple[BattlePage, ...]:
             SUPPORT_ROW_ID, ROW_LOCAL_CUSTOM, len(SUPPORT_LABELS),
             ROW_FLAG_CUSTOM_SUPPORT, support_default(selection),
         ),
-        "substitution": lambda: BattleRow(
+        "substitution_resource": lambda: BattleRow(
             SUBSTITUTION_ROW_ID, ROW_LOCAL_CUSTOM, 3,
             ROW_FLAG_CUSTOM_SUBSTITUTION, substitution_default(selection),
         ),
@@ -349,11 +349,11 @@ def battle_settings_fragment(
     toggle_value_table_offset = substitution_value_table_offset + (
         len(SUBSTITUTION_MODE_LABELS) * 4
     )
-    sub_active_frames_value_table_offset = toggle_value_table_offset + (
+    substitution_input_value_table_offset = toggle_value_table_offset + (
         len(TOGGLE_LABELS) * 4
     )
     xdash_chakra_cost_value_table_offset = (
-        sub_active_frames_value_table_offset + len(SUB_ACTIVE_FRAMES_LABELS) * 4
+        substitution_input_value_table_offset + len(SUBSTITUTION_INPUT_LABELS) * 4
     )
     support_value_table_offset = xdash_chakra_cost_value_table_offset + 21 * 4
     extra_hit_value_table_offset = support_value_table_offset + len(SUPPORT_LABELS) * 4
@@ -362,13 +362,13 @@ def battle_settings_fragment(
         "chakra": chakra_value_table_offset,
         "substitution": substitution_value_table_offset,
         "toggle": toggle_value_table_offset,
-        "sub_active_frames": sub_active_frames_value_table_offset,
+        "substitution_input": substitution_input_value_table_offset,
         "xdash_chakra_cost": xdash_chakra_cost_value_table_offset,
         "support": support_value_table_offset,
         "extra_hit": extra_hit_value_table_offset,
     }
     header_symbols = {
-        "substitution": (
+        "substitution_resource": (
             (16, "substitution_gauge_mode_get"),
             (20, "substitution_gauge_mode_set"),
         ),
@@ -380,9 +380,9 @@ def battle_settings_fragment(
         ),
         "shadowblur": ((40, "shadowblur_get"), (44, "shadowblur_set")),
         "extra_hit": ((48, "extra_hit_get"), (52, "extra_hit_set")),
-        "sub_active_frames": (
-            (56, "sub_active_frames_get"),
-            (60, "sub_active_frames_set"),
+        "substitution_input": (
+            (56, "substitution_input_get"),
+            (60, "substitution_input_set"),
         ),
         "xdash_chakra_cost": (
             (64, "xdash_chakra_cost_option_get"),
@@ -481,7 +481,7 @@ def battle_settings_fragment(
             next_text_offset += len(text)
 
         for label in SUBSTITUTION_MODE_LABELS:
-            if label is not None and battle_mechanic_enabled(selection, "substitution"):
+            if label is not None and battle_mechanic_enabled(selection, "substitution_resource"):
                 relocations.append(
                     PayloadRelocation(
                         offset=len(payload),
@@ -501,7 +501,7 @@ def battle_settings_fragment(
             )
             payload.extend(b"\0" * 4)
 
-        for label in SUB_ACTIVE_FRAMES_LABELS:
+        for label in SUBSTITUTION_INPUT_LABELS:
             text = strings.encode(label) + b"\0"
             relocations.append(
                 PayloadRelocation(

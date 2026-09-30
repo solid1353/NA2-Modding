@@ -35,6 +35,9 @@ extern const u8 mod_text_controls__guard_sub_2__label[];
 extern const u8 mod_text_controls__item_select_l__label[];
 extern const u8 mod_text_controls__item_select_r__label[];
 extern const u8 mod_text_controls__unbound__label[];
+/* Substitution Input getter, or null when that setting is not built. */
+extern u32 (*const control_settings_substitution_input_get)(void);
+#define SUBSTITUTION_INPUT_HOLD 1u
 
 const u8 *control_settings_labels[ACTIONS]
     __attribute__((section(".data.control_settings_labels"))) = {
@@ -141,15 +144,26 @@ s32 control_settings_history_any(void *input, u32 frames)
         history_match(input, substitution, frames);
 }
 
-SECTION(".text.control_settings_substitution_held")
-u32 control_settings_substitution_held(void *input)
+/*
+ * Accept the added Substitution button before the held-Guard age limit: a held
+ * button with Substitution Input set to Hold, otherwise a fresh press in the window.
+ */
+SECTION(".text.control_settings_substitution_accepted")
+u32 control_settings_substitution_accepted(void *input, u32 frames)
 {
     u8 *records = *(u8 **)((u8 *)input + 0x94u);
     u32 index = *(u32 *)((u8 *)input + 0x9cu);
     u32 held = *(u32 *)(records + index * 0x18u);
     u32 side = input_side(input);
     u32 substitution = control_settings_extra_bindings[extra_index(side, SUBSTITUTION)];
-    return substitution != 0u && (held & substitution) == substitution;
+    if (substitution == 0u) return 0u;
+    if (
+        control_settings_substitution_input_get != (u32 (*)(void))0 &&
+        control_settings_substitution_input_get() == SUBSTITUTION_INPUT_HOLD
+    ) {
+        return (held & substitution) == substitution;
+    }
+    return history_match(input, substitution, frames);
 }
 
 SECTION(".text.control_settings_guard_pressed")

@@ -46,9 +46,11 @@ settings.availability.label	Availability	出現量
 settings.availability.help	Choose the amount of items in Custom mode.	カスタム設定でのアイテムの出現量を選択します。
 settings.item.help	Allow {item} in Custom mode.	カスタム設定で「{item}」を出現させます。
 settings.substitution.label	Substitution	変わり身
-settings.substitution.help	Choose whether substitutions consume chakra, the gauge, or nothing.	変わり身でチャクラを消費するか、ゲージを消費するか、消費なしかを選択します。
-settings.sub_active_frames.label	Sub Active Frames	変わり身受付時間
-settings.sub_active_frames.help	Choose the total input window. Default uses vanilla attack timing.	入力の受付時間を選択します。「標準」は原作の判定を使用します。
+settings.substitution_resource.label	Substitution Resource	変わり身消費
+settings.substitution_resource.help	Choose whether substitutions consume chakra, the gauge, or nothing.	変わり身でチャクラを消費するか、ゲージを消費するか、消費なしかを選択します。
+settings.substitution_input.label	Substitution Input	変わり身受付時間
+settings.substitution_input.help	Choose the Substitution input window. Default uses vanilla timing; Hold substitutes while the button is held.	変わり身の入力受付時間を選択します。「標準」は原作の判定、「ホールド」はボタンを押している間変わり身します。
+settings.substitution_input.hold	Hold	ホールド
 settings.xdash_chakra_cost.label	X-dash Chakra Cost	Ｘダッシュ消費量
 settings.xdash_chakra_cost.help	Choose the chakra percentage spent when X-dash commits.	Ｘダッシュ時に消費するチャクラの割合を選択します。
 settings.support.label	Support	サポート
@@ -62,6 +64,8 @@ settings.no_hud	No HUD	表示なし
 settings.chakra.regen	Regen {rate}%/s	毎秒{rate}％回復
 settings.extra_hit.cost	-{cost}% Chakra	チャクラ－{cost}％
 settings.seconds	{seconds}s	{seconds}秒
+settings.frame	{frames} frame	{frames}フレーム
+settings.frames	{frames} frames	{frames}フレーム
 menu.open	Open <iconSQUARE>	開く <iconSQUARE>
 menu.open_value	{label} <iconSQUARE>	{label} <iconSQUARE>
 page.chakra.heading	Chakra Settings	チャクラ設定

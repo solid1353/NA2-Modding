@@ -14,7 +14,7 @@ from scripts.lib.paths import load_local_paths
 from tests.na228_builder._fixtures import test_features
 
 
-class SubstitutionActiveFramesTests(unittest.TestCase):
+class SubstitutionInputTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.paths = load_local_paths(Path(__file__).resolve(), allow_missing=True)
@@ -24,7 +24,7 @@ class SubstitutionActiveFramesTests(unittest.TestCase):
     def _selection_with(self, value: object) -> catalog.CatalogSelection:
         base = {"features": test_features()}
         base["features"]["default_settings"]["battle_mechanics"][
-            "sub_active_frames"
+            "substitution_input"
         ] = value
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
@@ -32,8 +32,8 @@ class SubstitutionActiveFramesTests(unittest.TestCase):
         path.write_text(json.dumps(base, indent=2) + "\n", encoding="utf-8")
         return catalog.load_selection(self.catalog_path, path)
 
-    def test_catalog_accepts_the_active_frame_boundaries(self) -> None:
-        for value in ("default", 1, 15):
+    def test_values_encode_default_hold_and_frame_windows(self) -> None:
+        for value, expected in (("default", 0), ("hold", 1), (1, 2), (15, 16)):
             with self.subTest(value=value):
                 fragments = battle_settings_runtime_fragments(
                     self._selection_with(value),
@@ -42,12 +42,11 @@ class SubstitutionActiveFramesTests(unittest.TestCase):
                 fragment = next(
                     item
                     for item in fragments
-                    if item.symbol == "battle_settings_sub_active_frames_default"
+                    if item.symbol == "battle_settings_substitution_input_default"
                 )
-                expected = 0 if value == "default" else value
                 self.assertEqual(struct.unpack("<I", fragment.payload)[0], expected)
 
-    def test_catalog_rejects_values_outside_the_active_frame_range(self) -> None:
+    def test_catalog_rejects_frame_windows_outside_1_to_15(self) -> None:
         for value in (0, 16):
             with self.subTest(value=value):
                 with self.assertRaises(catalog.ConfigurationError):

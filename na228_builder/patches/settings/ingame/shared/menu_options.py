@@ -14,7 +14,7 @@ from ..battle_mechanics.battle_settings_runtime import (
     extended_items_enabled,
     extended_items_option_default,
 )
-from ..battle_mechanics.substitution.substitution_gauge import gauge_option_defaults, chakra_minimum_option_default
+from ..battle_mechanics.substitution_resource.substitution_gauge import gauge_option_defaults, chakra_minimum_option_default
 from ..battle_mechanics.items.items_settings import FIELD_ITEMS, ITEM_VALUE_LABELS, items_configuration, items_option_defaults
 
 
@@ -44,8 +44,8 @@ class MenuOption:
 
 
 PAGE_TITLES = {
-    BATTLE_MECHANICS_PATH + ("substitution", "chakra"): message("page.chakra.heading"),
-    BATTLE_MECHANICS_PATH + ("substitution", "gauge"): message("page.gauge.heading"),
+    BATTLE_MECHANICS_PATH + ("substitution_resource", "chakra"): message("page.chakra.heading"),
+    BATTLE_MECHANICS_PATH + ("substitution_resource", "gauge"): message("page.gauge.heading"),
     BATTLE_MECHANICS_PATH + ("items", "custom"): message("page.items.heading"),
 }
 
@@ -92,8 +92,8 @@ def menu_option_bindings(selection):
             "mod_settings_option_get", "mod_settings_option_set", argument,
         )
 
-    if battle_mechanic_enabled(selection, "substitution"):
-        options[BATTLE_MECHANICS_PATH + ("substitution", "chakra", "minimum_chakra")] = MenuOption(
+    if battle_mechanic_enabled(selection, "substitution_resource"):
+        options[BATTLE_MECHANICS_PATH + ("substitution_resource", "chakra", "minimum_chakra")] = MenuOption(
             message("settings.minimum_chakra.label"), message("settings.minimum_chakra.help"),
             (message("settings.minimum_chakra.match_cost"), *(f"{value}%" for value in range(5, 101, 5))),
             chakra_minimum_option_default(selection),
@@ -109,7 +109,7 @@ def menu_option_bindings(selection):
              tuple(f"{i * 5}%" for i in range(1, 81))),
         )
         for index, (key, label, help_text, values) in enumerate(rows):
-            options[BATTLE_MECHANICS_PATH + ("substitution", "gauge", key)] = MenuOption(
+            options[BATTLE_MECHANICS_PATH + ("substitution_resource", "gauge", key)] = MenuOption(
                 label, help_text, values, defaults[index],
                 "substitution_gauge_option_get", "substitution_gauge_option_set", index,
                 enabled_by=("substitution_gauge_option_get", 2)

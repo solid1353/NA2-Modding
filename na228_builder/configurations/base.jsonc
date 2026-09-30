@@ -58,10 +58,10 @@
         "ultimate_jutsu": "no_hud",                         // "no_use" | "random" | "command" | "timing" | "turn" | "combo" | "no_contest" | "no_hud"
         "shadowblur": "off",                                // "off" | "on"
         "extra_hit": "off",                                 // "off" | "on" | int -100..-5 (step 5, % chakra penalty)
-        "sub_active_frames": 5,                             // "default" | int 1..15 (total frames)
         "xdash_chakra_cost": 10,                            // int 0..100 (step 5, % chakra)
         "support": "off",                                   // "off" | "nerfed" | "normal" | "unlimited"
-        "substitution": {
+        "substitution_input": "hold",                       // "default" | "hold" | int 1..15 (total frames)
+        "substitution_resource": {
           "value": "gauge",                                 // "chakra" | "gauge" | "free"
           "chakra": {
             "minimum_chakra": "match_cost"                  // "match_cost" | int 5..100 (step 5, % chakra)

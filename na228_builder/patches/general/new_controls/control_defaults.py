@@ -5,7 +5,10 @@ import csv
 import struct
 from pathlib import Path
 
-from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment
+from na228_builder.infrastructure.modules.payload_builder.operations import (
+    PayloadFragment,
+    PayloadRelocation,
+)
 
 
 TABLE_PATH = Path(__file__).resolve().parents[3] / "resources" / "default_controls.tsv"
@@ -76,7 +79,9 @@ def added_binding_save_defaults(layout: dict[str, int]) -> tuple[int, ...]:
     return tuple(SHOULDER_MASKS.index(mask) for mask in added_binding_masks(layout))
 
 
-def control_default_fragments(*, owner: str) -> tuple[PayloadFragment, ...]:
+def control_default_fragments(
+    *, owner: str, substitution_input: bool
+) -> tuple[PayloadFragment, ...]:
     layout = load_default_controls()
     native = struct.pack("<8H", *(_mask_of(layout, action) for action in range(NATIVE_ACTIONS)))
     reset = struct.pack(
@@ -92,4 +97,17 @@ def control_default_fragments(*, owner: str) -> tuple[PayloadFragment, ...]:
                         kind="rodata", alignment=4, payload=reset),
         PayloadFragment(owner=owner, symbol="control_settings_extra_bindings",
                         kind="data", alignment=4, payload=added),
+        # The Hold value lives in Substitution Input, which may be left out.
+        PayloadFragment(
+            owner=owner,
+            symbol="control_settings_substitution_input_get",
+            kind="rodata",
+            alignment=4,
+            payload=bytes(4),
+            relocations=(
+                (PayloadRelocation(offset=0, kind="abs32", symbol="substitution_input_get"),)
+                if substitution_input
+                else ()
+            ),
+        ),
     )

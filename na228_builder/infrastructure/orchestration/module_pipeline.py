@@ -24,7 +24,7 @@ from ...patches.settings.ingame.battle_mode.battle_settings import (
     battle_settings_fragment,
     battle_settings_table_fragments,
 )
-from ...patches.settings.ingame.battle_mechanics.substitution.substitution_gauge import substitution_gauge_fragment
+from ...patches.settings.ingame.battle_mechanics.substitution_resource.substitution_gauge import substitution_gauge_fragment
 from ...patches.settings.ingame.battle_mechanics.items.items_settings import items_settings_fragment
 from ...patches.settings.ingame.practice_mode.practice_settings import (
     practice_settings_fragment,
@@ -258,7 +258,19 @@ def prepare_module_pipeline(
                 declaration = replace(
                     declaration,
                     fragments=(
-                        *control_default_fragments(owner=module.module_id),
+                        *control_default_fragments(
+                            owner=module.module_id,
+                            substitution_input=any(
+                                node.path == (
+                                    "features",
+                                    "default_settings",
+                                    "battle_mechanics",
+                                    "substitution_input",
+                                )
+                                and node.enabled
+                                for node in configuration.selection.nodes
+                            ),
+                        ),
                         *declaration.fragments,
                     ),
                 )

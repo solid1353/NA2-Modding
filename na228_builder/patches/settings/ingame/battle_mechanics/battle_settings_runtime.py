@@ -16,7 +16,12 @@ BATTLE_MECHANICS_PATH = ("features", "default_settings", "battle_mechanics")
 PRACTICE_SETTINGS_PATH = ("features", "default_settings", "practice_settings")
 MATCH_SETUP_PATH = ("features", "default_settings", "mod_settings", "match_setup")
 EXTENDED_ITEMS_PATH = MATCH_SETUP_PATH + ("extended_items",)
-SUB_ACTIVE_FRAMES_LABELS = (message("common.default"), *(str(value) for value in range(1, 16)))
+SUBSTITUTION_INPUT_LABELS = (
+    message("common.default"),
+    message("settings.substitution_input.hold"),
+    message("settings.frame", frames=1),
+    *(message("settings.frames", frames=value) for value in range(2, 16)),
+)
 
 CHAKRA_MODE_VALUES = {
     "normal": 0,
@@ -145,19 +150,21 @@ def extra_hit_default(selection: CatalogSelection) -> int:
     return 1 - value // 5
 
 
-def sub_active_frames_default(selection: CatalogSelection) -> int:
-    value = _battle_mechanic_value(selection, "sub_active_frames")
+def substitution_input_default(selection: CatalogSelection) -> int:
+    value = _battle_mechanic_value(selection, "substitution_input")
     if value == "default":
         return 0
+    if value == "hold":
+        return 1
     if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 15:
         raise ValueError(
-            "Mod settings sub_active_frames must be 'default' or 1 through 15"
+            "Mod settings substitution_input must be 'default', 'hold', or 1 through 15"
         )
-    return value
+    return value + 1
 
 
 def substitution_default(selection: CatalogSelection) -> int:
-    value = _battle_mechanic_value(selection, "substitution")
+    value = _battle_mechanic_value(selection, "substitution_resource")
     if not isinstance(value, dict):
         raise ValueError("Mod settings substitution requires an object value")
     mode = value.get("value")
@@ -220,9 +227,9 @@ def battle_settings_runtime_fragments(
         ("shadowblur", "battle_settings_shadowblur_default", shadowblur_default),
         ("extra_hit", "battle_settings_extra_hit_default", extra_hit_default),
         (
-            "sub_active_frames",
-            "battle_settings_sub_active_frames_default",
-            sub_active_frames_default,
+            "substitution_input",
+            "battle_settings_substitution_input_default",
+            substitution_input_default,
         ),
         (
             "xdash_chakra_cost",

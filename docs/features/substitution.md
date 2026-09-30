@@ -10,7 +10,7 @@ and reliability are documented in
 ## Outcome
 
 When the feature is enabled, one shared runtime enum is exposed as
-`Substitution: Chakra | Gauge | Free` in both pre-battle and Practice Settings:
+`Substitution Resource: Chakra | Gauge | Free` in both pre-battle and Practice Settings:
 
 - `Chakra` retains the native chakra gate, spend-suppression call, subtraction,
   and bookkeeping, and does not draw the substitution gauge;
@@ -676,7 +676,7 @@ damage-recovery remainder, latest quantized HP sample, battle generation, and
 validity state. Shared state stores the manager, generation, last processed
 battle-clock ordinal, cached BTL render sources, and runtime mode. The exact
 layout and exported functions are canonical in
-[`substitution_gauge.c`](../../na228_builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge.c).
+[`substitution_gauge.c`](../../na228_builder/patches/settings/ingame/battle_mechanics/substitution_resource/substitution_gauge.c).
 
 Fighters map to slots through live manager `0x00607600` and manager fields
 `+0xDE4`/`+0xDE8`, matching the X-dash and per-character selector code.
@@ -885,12 +885,12 @@ battle state presents the native bar acceptably.
 ## Configuration and builder integration
 
 The build-time setting is
-`features.default_settings.battle_mechanics.substitution`. Its required `value` selects
+`features.default_settings.battle_mechanics.substitution_resource`. Its required `value` selects
 `chakra`, `gauge`, or `free`. Gauge tuning is optional and nested under
 `gauge`:
 
 ```json
-"substitution": {
+"substitution_resource": {
   "value": "gauge",
   "gauge": {
     "recovery_delay_seconds": 14.0,
@@ -921,7 +921,7 @@ and the native lower support gauge.
 
 ### Generated constants and resident ownership
 
-`@builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge.py` follows the
+`@builder/patches/settings/ingame/battle_mechanics/substitution_resource/substitution_gauge.py` follows the
 `battle_settings_runtime.py` pattern rather than embedding configuration
 literals in assembly. It finds exactly one selected catalog node, merges
 omitted object fields with the defaults above, validates the resolved values,
@@ -960,7 +960,7 @@ exclusively native.
 
 ### Exact builder hook map
 
-Use `settings.battle_mechanics.substitution` in `patches/settings/settings.json`.
+Use `settings.battle_mechanics.substitution_resource` in `patches/settings/settings.json`.
 The controls hooks are listed in [Controls](controls.md#builder-hook-map).
 All targets already exist in
 `@builder/infrastructure/targets.tsv`; no new target registry or patching
@@ -1004,11 +1004,11 @@ The minimal implementation touches these existing ownership points:
 
 | Purpose | Canonical location |
 | --- | --- |
-| Public setting and descriptions | `features.default_settings.battle_mechanics.substitution` in `@builder/catalog.modcat` |
+| Public setting and descriptions | `features.default_settings.battle_mechanics.substitution_resource` in `@builder/catalog.modcat` |
 | Unified settings patches | `@builder/patches/settings/settings.json` |
 | Default/profile selection | `@builder/configurations/*.jsonc` |
-| Config-to-fragment encoder | `@builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge.py` and `module_pipeline.py` |
-| Gameplay state, independent renderer, and native adapters | `@builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge.c` and `substitution_gauge_abi.S` |
+| Config-to-fragment encoder | `@builder/patches/settings/ingame/battle_mechanics/substitution_resource/substitution_gauge.py` and `module_pipeline.py` |
+| Gameplay state, independent renderer, and native adapters | `@builder/patches/settings/ingame/battle_mechanics/substitution_resource/substitution_gauge.c` and `substitution_gauge_abi.S` |
 | Runtime-selectable battle support | `@builder/patches/settings/ingame/battle_mechanics/support/battle_support.c` |
 | Gauge builder tests | `tests/na228_builder/test_substitution_gauge.py` |
 | Packaged user instructions | `@builder/release/package_readme.md` |
@@ -1023,7 +1023,7 @@ COM/P2:
 | Guard input only | The remaining Guard action blocks normally and never substitutes |
 | Substitution input | A valid new press inside the native reaction window requests substitution; pressing it alone does not block or invoke field support |
 | Substitution while blocking | After holding Guard for longer than 16 frames, a fresh Substitution press is still accepted without releasing Guard |
-| Shared settings row | Pre-battle and Practice Settings each show one `Substitution: Chakra | Gauge | Free` row and no separate visibility or unlimited row |
+| Shared settings row | Pre-battle and Practice Settings each show one `Substitution Resource: Chakra | Gauge | Free` row and no separate visibility or unlimited row |
 | Chakra mode | Gauge hidden; ordinary substitutions retain native chakra eligibility, suppression, subtraction, and bookkeeping |
 | Gauge mode | Gauge shown; ordinary substitutions use only the independent resource |
 | Free mode | Gauge hidden; ordinary substitutions pass the resource gate and spend neither chakra nor gauge |

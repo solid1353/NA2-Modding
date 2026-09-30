@@ -66,7 +66,7 @@ class PracticeSettingsTests(unittest.TestCase):
                 "ultimate_jutsu_mode_get",
                 "shadowblur_get",
                 "extra_hit_get",
-                "sub_active_frames_get",
+                "substitution_input_get",
                 "xdash_chakra_cost_option_get",
                 "support_get",
                 "v2_help_set",

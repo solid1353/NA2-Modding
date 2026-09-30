@@ -11,8 +11,8 @@ control_settings_held_bridge:
     sd $t9, 8($sp)
     sd $ra, 16($sp)
     lw $a0, 0x24($s4)
-    jal control_settings_substitution_held
-    nop
+    jal control_settings_substitution_accepted
+    move $a1, $s0
     beqz $v0, 1f
     nop
     ld $ra, 16($sp)

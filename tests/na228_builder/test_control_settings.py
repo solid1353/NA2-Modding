@@ -45,8 +45,8 @@ class ControlSettingsTests(unittest.TestCase):
                 features = self._base_features()
                 features["general"]["new_controls"] = controls_enabled
                 mechanics = features["default_settings"]["battle_mechanics"]
-                substitution = mechanics["substitution"]
-                mechanics["substitution"] = (
+                substitution = mechanics["substitution_resource"]
+                mechanics["substitution_resource"] = (
                     substitution if substitution_enabled else False
                 )
                 selection = catalog.load_selection(
@@ -67,7 +67,7 @@ class ControlSettingsTests(unittest.TestCase):
                     if node.path
                     == (
                         "features", "default_settings", "battle_mechanics",
-                        "substitution",
+                        "substitution_resource",
                     )
                 )
                 self.assertEqual(controls.enabled, controls_enabled)
@@ -91,7 +91,7 @@ class ControlSettingsTests(unittest.TestCase):
                     controls_enabled,
                 )
                 self.assertEqual(
-                    "settings.battle_mechanics.substitution"
+                    "settings.battle_mechanics.substitution_resource"
                     in active_injections,
                     substitution_enabled,
                 )

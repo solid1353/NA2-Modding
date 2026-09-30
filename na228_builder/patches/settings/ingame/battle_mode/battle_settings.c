@@ -78,7 +78,7 @@ typedef unsigned int u32;
 #define ROW_FLAG_CUSTOM_ULTIMATE_JUTSU 0x100u
 #define ROW_FLAG_CUSTOM_SHADOWBLUR 0x200u
 #define ROW_FLAG_CUSTOM_EXTRA_HIT 0x400u
-#define ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES 0x800u
+#define ROW_FLAG_CUSTOM_SUBSTITUTION_INPUT 0x800u
 #define ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST 0x1000u
 #define ROW_FLAG_CUSTOM_SUPPORT 0x2000u
 #define ROW_FLAG_SUBMENU SETTINGS_MENU_ROW_FLAG_SUBMENU
@@ -146,8 +146,8 @@ typedef struct BattleSettingsSchema {
     u32 shadowblur_set;
     u32 extra_hit_get;
     u32 extra_hit_set;
-    u32 sub_active_frames_get;
-    u32 sub_active_frames_set;
+    u32 substitution_input_get;
+    u32 substitution_input_set;
     u32 xdash_chakra_cost_option_get;
     u32 xdash_chakra_cost_option_set;
     u32 support_get;
@@ -191,8 +191,8 @@ volatile s32 battle_settings_shadowblur_staged
     __attribute__((section(".bss.battle_settings_shadowblur_staged")));
 volatile s32 battle_settings_extra_hit_staged
     __attribute__((section(".bss.battle_settings_extra_hit_staged")));
-volatile s32 battle_settings_sub_active_frames_staged
-    __attribute__((section(".bss.battle_settings_sub_active_frames_staged")));
+volatile s32 battle_settings_substitution_input_staged
+    __attribute__((section(".bss.battle_settings_substitution_input_staged")));
 volatile s32 battle_settings_xdash_chakra_cost_staged
     __attribute__((section(".bss.battle_settings_xdash_chakra_cost_staged")));
 volatile s32 battle_settings_support_staged
@@ -718,8 +718,8 @@ static s32 battle_settings_get_row_value(
     if ((row->flags & ROW_FLAG_CUSTOM_EXTRA_HIT) != 0u) {
         return battle_settings_extra_hit_staged;
     }
-    if ((row->flags & ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES) != 0u) {
-        return battle_settings_sub_active_frames_staged;
+    if ((row->flags & ROW_FLAG_CUSTOM_SUBSTITUTION_INPUT) != 0u) {
+        return battle_settings_substitution_input_staged;
     }
     if ((row->flags & ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST) != 0u) {
         return battle_settings_xdash_chakra_cost_staged;
@@ -797,8 +797,8 @@ static void battle_settings_set_row_value(
         battle_settings_extra_hit_staged = value;
         return;
     }
-    if ((row->flags & ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES) != 0u) {
-        battle_settings_sub_active_frames_staged = value;
+    if ((row->flags & ROW_FLAG_CUSTOM_SUBSTITUTION_INPUT) != 0u) {
+        battle_settings_substitution_input_staged = value;
         return;
     }
     if ((row->flags & ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST) != 0u) {
@@ -896,8 +896,8 @@ void battle_settings_snapshot(void *controller)
     );
     battle_settings_stage_runtime_mode(
         controller,
-        ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES,
-        battle_settings_schema.sub_active_frames_get
+        ROW_FLAG_CUSTOM_SUBSTITUTION_INPUT,
+        battle_settings_schema.substitution_input_get
     );
     battle_settings_stage_runtime_mode(
         controller,
@@ -959,8 +959,8 @@ static void battle_settings_commit_runtime_modes(void)
         battle_settings_schema.extra_hit_set
     );
     battle_settings_commit_runtime_mode(
-        ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES,
-        battle_settings_schema.sub_active_frames_set
+        ROW_FLAG_CUSTOM_SUBSTITUTION_INPUT,
+        battle_settings_schema.substitution_input_set
     );
     battle_settings_commit_runtime_mode(
         ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST,

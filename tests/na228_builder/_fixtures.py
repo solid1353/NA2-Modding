@@ -56,10 +56,10 @@ def test_features() -> dict[str, object]:
                 "ultimate_jutsu": "no_hud",
                 "shadowblur": "off",
                 "extra_hit": "off",
-                "sub_active_frames": 5,
                 "xdash_chakra_cost": 10,
                 "support": "off",
-                "substitution": {
+                "substitution_input": 5,
+                "substitution_resource": {
                     "value": "gauge",
                     "chakra": {"minimum_chakra": "match_cost"},
                     "gauge": {

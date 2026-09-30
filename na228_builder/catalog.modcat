@@ -138,16 +138,16 @@
         extra_hit: setting<"off" | "on" | int & -100..-5 & step 5> {
           patch: "settings.battle_mechanics.extra_hit",
         },
-        sub_active_frames: setting<"default" | int & 1..15> {
-          patch: "settings.battle_mechanics.sub_active_frames",
-        },
         xdash_chakra_cost: setting<int & 0..100 & step 5> {
           patch: "settings.battle_mechanics.xdash_chakra_cost",
         },
         support: setting<"off" | "nerfed" | "normal" | "unlimited"> {
           patch: "settings.battle_mechanics.support",
         },
-        substitution: setting<{
+        substitution_input: setting<"default" | "hold" | int & 1..15> {
+          patch: "settings.battle_mechanics.substitution_input",
+        },
+        substitution_resource: setting<{
             value: "chakra" | "gauge" | "free",
             chakra?: {
               minimum_chakra?: "match_cost" | int & 5..100 & step 5,
@@ -160,7 +160,7 @@
             },
           }> {
           description: "Choose whether substitution uses chakra, uses a gauge, or is free, and configure gauge recovery.",
-          patch: "settings.battle_mechanics.substitution",
+          patch: "settings.battle_mechanics.substitution_resource",
         },
         items: setting<{
           value: "none" | "less" | "normal" | "more" | "custom",

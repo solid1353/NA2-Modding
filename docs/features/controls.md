@@ -68,10 +68,12 @@ translation importer.
 
 ## Battle input
 
-After the attack's native timing admission, the held-input shortcut checks only
-the added Substitution binding. Both native Guard/Sub bindings preserve the
-vanilla 16-frame held-Guard limit and enter through the buffered input-history
-search. Zero bindings are skipped so an unbound action cannot pass the history
+After the attack's native timing admission, the added Substitution binding is
+checked before the vanilla 16-frame held-Guard limit, so it works while Guard
+is held. With [Substitution Input](battle.md#substitution) set to Hold, the
+button is accepted whenever it is down; otherwise it needs a fresh press in the
+selected window. Both native Guard/Sub bindings preserve the held-Guard limit
+and enter through the buffered input-history search. Zero bindings are skipped so an unbound action cannot pass the history
 match. The BTL translator retains both native Guard/Sub actions as block sources
 and adds the separate Guard binding. The added Guard action cannot substitute;
 the added Substitution action cannot block.
@@ -130,7 +132,7 @@ guarded entries are:
 | Assignment | ELF `0x287C90`, `0x287FBC` | Make the button that held the chosen action Unbound; keep Guard/Sub 2 when the selector opens |
 | Selector order | ELF `0x2883DC`, `0x2883F8` | Step face and shoulder rows through their fixed action orders |
 | Action labels | ELF `0x288830`, `0x288834` | Draw from the thirteen-action localized label table |
-| Held and buffered substitution | ELF `0x129720`, `0x12973C` | Give added Substitution its held-input shortcut; apply the vanilla held-Guard limit to both native Guard/Sub bindings |
+| Held and buffered substitution | ELF `0x129720`, `0x12973C` | Check added Substitution, held for Hold or freshly pressed otherwise, before the vanilla held-Guard limit that both native Guard/Sub bindings keep |
 | Logical Guard and zero bindings | BTL `0x3C02C`, `0x3B8F0` | Add separate Guard alongside both native Guard/Sub bindings and prevent unbound matches |
 | Item Select L and R input | BTL `0x3C6AC` | Set fighter input `0x02000000` for an Item Select L press and `0x04000000` for an Item Select R press, then reproduce the displaced `0x40000000` step |
 | Reverse item select | ELF `0x275670` | Replace resident `0x00375570` with the reverse step |

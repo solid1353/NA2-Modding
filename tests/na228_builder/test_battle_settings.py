@@ -60,7 +60,7 @@ class BattleSettingsTests(unittest.TestCase):
                 "ultimate_jutsu_mode_get",
                 "shadowblur_get",
                 "extra_hit_get",
-                "sub_active_frames_get",
+                "substitution_input_get",
                 "xdash_chakra_cost_option_get",
                 "support_get",
                 "v2_help_set",
@@ -96,10 +96,10 @@ class BattleSettingsTests(unittest.TestCase):
             mechanics["ultimate_jutsu"] = "no_contest"
             mechanics["shadowblur"] = "on"
             mechanics["extra_hit"] = "on"
-            mechanics["sub_active_frames"] = 15
+            mechanics["substitution_input"] = 15
             mechanics["xdash_chakra_cost"] = 100
             mechanics["support"] = "normal"
-            mechanics["substitution"]["value"] = "free"
+            mechanics["substitution_resource"]["value"] = "free"
 
         selection = self._selection(configure)
         fragment = battle_settings_fragment(
@@ -115,7 +115,7 @@ class BattleSettingsTests(unittest.TestCase):
         }
         self.assertEqual(
             {row_id: defaults[row_id] for row_id in (6, 9, 10, 11, 4, 7, 8)},
-            {6: 2, 9: 15, 10: 20, 11: 2, 4: 6, 7: 1, 8: 1},
+            {6: 2, 9: 16, 10: 20, 11: 2, 4: 6, 7: 1, 8: 1},
         )
 
     def test_disabling_battle_mechanics_launcher_keeps_native_root_rows(self) -> None:
@@ -162,10 +162,10 @@ class BattleSettingsTests(unittest.TestCase):
                 key: mechanics[key]
                 for key in (
                     "items",
-                    "substitution",
+                    "substitution_resource",
                     "support",
                     "xdash_chakra_cost",
-                    "sub_active_frames",
+                    "substitution_input",
                     "extra_hit",
                     "shadowblur",
                     "ultimate_jutsu",

@@ -55,7 +55,7 @@ typedef unsigned int u32;
 #define ROW_ID_SUBSTITUTION 17u
 #define ROW_ID_SHADOWBLUR 18u
 #define ROW_ID_EXTRA_HIT 19u
-#define ROW_ID_SUB_ACTIVE_FRAMES 20u
+#define ROW_ID_SUBSTITUTION_INPUT 20u
 #define ROW_ID_XDASH_CHAKRA_COST 21u
 #define ROW_ID_SUPPORT 22u
 #define PROFILE_ULTIMATE_DIFFICULTY_SLOT 0x6Au
@@ -74,7 +74,7 @@ typedef unsigned int u32;
 #define ROW_FLAG_CUSTOM_ULTIMATE_JUTSU 0x40u
 #define ROW_FLAG_CUSTOM_SHADOWBLUR 0x80u
 #define ROW_FLAG_CUSTOM_EXTRA_HIT 0x100u
-#define ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES 0x200u
+#define ROW_FLAG_CUSTOM_SUBSTITUTION_INPUT 0x200u
 #define ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST 0x400u
 #define ROW_FLAG_CUSTOM_SUPPORT 0x800u
 #define ROW_FLAG_CUSTOM_CHAKRA 0x1000u
@@ -128,8 +128,8 @@ typedef struct PracticeSettingsSchema {
     u32 shadowblur_set;
     u32 extra_hit_get;
     u32 extra_hit_set;
-    u32 sub_active_frames_get;
-    u32 sub_active_frames_set;
+    u32 substitution_input_get;
+    u32 substitution_input_set;
     u32 xdash_chakra_cost_option_get;
     u32 xdash_chakra_cost_option_set;
     u32 support_get;
@@ -171,8 +171,8 @@ volatile s32 practice_settings_shadowblur_staged
     __attribute__((section(".bss.practice_settings_shadowblur_staged")));
 volatile s32 practice_settings_extra_hit_staged
     __attribute__((section(".bss.practice_settings_extra_hit_staged")));
-volatile s32 practice_settings_sub_active_frames_staged
-    __attribute__((section(".bss.practice_settings_sub_active_frames_staged")));
+volatile s32 practice_settings_substitution_input_staged
+    __attribute__((section(".bss.practice_settings_substitution_input_staged")));
 volatile s32 practice_settings_xdash_chakra_cost_staged
     __attribute__((section(".bss.practice_settings_xdash_chakra_cost_staged")));
 volatile s32 practice_settings_support_staged
@@ -482,8 +482,8 @@ static s32 practice_settings_get_row_value(
     if ((row->flags & ROW_FLAG_CUSTOM_EXTRA_HIT) != 0u) {
         return practice_settings_extra_hit_staged;
     }
-    if ((row->flags & ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES) != 0u) {
-        return practice_settings_sub_active_frames_staged;
+    if ((row->flags & ROW_FLAG_CUSTOM_SUBSTITUTION_INPUT) != 0u) {
+        return practice_settings_substitution_input_staged;
     }
     if ((row->flags & ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST) != 0u) {
         return practice_settings_xdash_chakra_cost_staged;
@@ -543,8 +543,8 @@ static void practice_settings_set_row_value(
         practice_settings_extra_hit_staged = value;
         return;
     }
-    if ((row->flags & ROW_FLAG_CUSTOM_SUB_ACTIVE_FRAMES) != 0u) {
-        practice_settings_sub_active_frames_staged = value;
+    if ((row->flags & ROW_FLAG_CUSTOM_SUBSTITUTION_INPUT) != 0u) {
+        practice_settings_substitution_input_staged = value;
         return;
     }
     if ((row->flags & ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST) != 0u) {
@@ -662,8 +662,8 @@ void practice_settings_snapshot(void *controller)
     );
     practice_settings_stage_runtime_mode(
         controller,
-        ROW_ID_SUB_ACTIVE_FRAMES,
-        schema->sub_active_frames_get
+        ROW_ID_SUBSTITUTION_INPUT,
+        schema->substitution_input_get
     );
     practice_settings_stage_runtime_mode(
         controller,
@@ -778,8 +778,8 @@ void practice_settings_apply(void *controller)
     );
     practice_settings_commit_runtime_mode(
         controller,
-        ROW_ID_SUB_ACTIVE_FRAMES,
-        schema->sub_active_frames_set
+        ROW_ID_SUBSTITUTION_INPUT,
+        schema->substitution_input_set
     );
     practice_settings_commit_runtime_mode(
         controller,

@@ -29,7 +29,7 @@
         "encoding": "jal26"
       },
       "select_held_guard_behavior": {
-        "description": "Accept the added Substitution binding after timing admission; otherwise preserve the vanilla held-Guard limit for native Guard/Sub input.",
+        "description": "After timing admission, accept the added Substitution binding before the held-Guard limit: held with Substitution Input set to Hold, otherwise freshly pressed in the window; native Guard/Sub input keeps the vanilla limit.",
         "target_id": "na2_elf",
         "offset": "0x129720",
         "expected_hex": "1000422804004014",
@@ -237,7 +237,8 @@
           "mod_text_controls__item_select_l__label": "mod_text_controls__item_select_l__label",
           "mod_text_controls__item_select_r__label": "mod_text_controls__item_select_r__label",
           "mod_text_controls__unbound__label": "mod_text_controls__unbound__label",
-          "control_settings_extra_bindings": "control_settings_extra_bindings"
+          "control_settings_extra_bindings": "control_settings_extra_bindings",
+          "control_settings_substitution_input_get": "control_settings_substitution_input_get"
         },
         "fragments": {
           "control_settings_reset_with_help": {
@@ -267,8 +268,8 @@
           "control_settings_history_any": {
             "object": "general.controls.text.control.settings.history.any"
           },
-          "control_settings_substitution_held": {
-            "object": "general.controls.text.control.settings.substitution.held"
+          "control_settings_substitution_accepted": {
+            "object": "general.controls.text.control.settings.substitution.accepted"
           },
           "control_settings_guard_pressed": {
             "object": "general.controls.text.control.settings.guard.pressed"
@@ -305,7 +306,7 @@
         "path": "na228_builder/patches/general/new_controls/control_settings_abi.S",
         "namespace": "general.controls.asm",
         "imports": {
-          "control_settings_substitution_held": "control_settings_substitution_held",
+          "control_settings_substitution_accepted": "control_settings_substitution_accepted",
           "control_settings_history_any": "control_settings_history_any",
           "control_settings_guard_pressed": "control_settings_guard_pressed",
           "control_settings_commit": "control_settings_commit",

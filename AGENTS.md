@@ -272,9 +272,11 @@ and read only relevant sections of large documents.
 - Prefer verified canonical NUN5 data/bytes when suitable. When donor data is
   unsuitable, document the intended NA2 behavior and evidence for replacement
   bytes.
-- Save compatibility matters only between official releases. Do not handle or
-  discuss it for changes no official release contains, including betas and
-  pre-releases.
+- Save compatibility and the contents of old saves matter only between
+  official releases. Do not handle or discuss them for changes no official
+  release contains, including betas and pre-releases.
+- When describing player-facing behavior, consider only states the release
+  configuration can produce.
 
 ### PNACH
 

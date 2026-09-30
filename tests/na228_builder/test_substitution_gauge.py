@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 from na228_builder.infrastructure.orchestration import catalog
-from na228_builder.patches.settings.ingame.battle_mechanics.substitution.substitution_gauge import substitution_gauge_fragment
+from na228_builder.patches.settings.ingame.battle_mechanics.substitution_resource.substitution_gauge import substitution_gauge_fragment
 from scripts.lib.paths import load_local_paths
 from tests.na228_builder._fixtures import test_features
 
@@ -35,7 +35,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
     def test_false_disables_gauge(self) -> None:
         features = self._base_features()
         features["default_settings"]["battle_mechanics"][
-            "substitution"
+            "substitution_resource"
         ] = False
         selection = catalog.load_selection(
             self.catalog_path,
@@ -51,11 +51,11 @@ class SubstitutionGaugeTests(unittest.TestCase):
     def test_true_is_invalid_when_default_is_mandatory(self) -> None:
         features = self._base_features()
         features["default_settings"]["battle_mechanics"][
-            "substitution"
+            "substitution_resource"
         ] = True
         with self.assertRaisesRegex(
             catalog.ConfigurationError,
-            "features.default_settings.battle_mechanics.substitution",
+            "features.default_settings.battle_mechanics.substitution_resource",
         ):
             catalog.load_selection(
                 self.catalog_path,
@@ -65,7 +65,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
     def test_advanced_configuration_encodes_exact_integer_counts(self) -> None:
         features = self._base_features()
         features["default_settings"]["battle_mechanics"][
-            "substitution"
+            "substitution_resource"
         ] = {
             "value": "chakra",
             "gauge": {
@@ -93,7 +93,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
     def test_partial_configuration_uses_omitted_field_defaults(self) -> None:
         features = self._base_features()
         features["default_settings"]["battle_mechanics"][
-            "substitution"
+            "substitution_resource"
         ] = {
             "value": "free",
             "gauge": {
@@ -131,7 +131,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
         )
         assert base_gauge is not None
         mechanics = features["default_settings"]["battle_mechanics"]
-        mechanics["substitution"]["value"] = "gauge"
+        mechanics["substitution_resource"]["value"] = "gauge"
         mechanics["support"] = "normal"
         selection = catalog.load_selection(
             self.catalog_path,
@@ -156,7 +156,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
     def test_gauge_always_links_runtime_cost_providers(self) -> None:
         features = self._base_features()
         features["default_settings"]["battle_mechanics"][
-            "substitution"
+            "substitution_resource"
         ]["value"] = "gauge"
         features["default_settings"]["mod_settings"]["match_setup"]["character_balance"] = "original"
         selection = catalog.load_selection(
@@ -185,7 +185,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
             self._write_full_configuration(self._base_features()),
         )
         gauge = selection.injections[
-            "settings.battle_mechanics.substitution"
+            "settings.battle_mechanics.substitution_resource"
         ]
         self.assertNotIn(
             "load_battle_hud_character_name_x_anchor",

@@ -70,13 +70,13 @@ def substitution_gauge_fragment(
 ) -> PayloadFragment | None:
     """Encode the selected native-30-FPS substitution-gauge configuration."""
 
-    node = _selected_node(selection, battle_mechanic_path("substitution"))
+    node = _selected_node(selection, battle_mechanic_path("substitution_resource"))
     if not node.enabled:
         return None
     practice_settings = _selected_node(selection, PRACTICE_SETTINGS_PATH)
     if not practice_settings.enabled:
         raise ValueError(
-            "features.default_settings.battle_mechanics.substitution "
+            "features.default_settings.battle_mechanics.substitution_resource "
             "requires features.default_settings.practice_settings"
         )
 
@@ -115,7 +115,7 @@ def substitution_gauge_fragment(
 
 
 def chakra_minimum_option_default(selection: CatalogSelection) -> int:
-    substitution = _selected_node(selection, battle_mechanic_path("substitution")).configured_value
+    substitution = _selected_node(selection, battle_mechanic_path("substitution_resource")).configured_value
     value = substitution.get("chakra", {}).get("minimum_chakra", "match_cost")
     if value == "match_cost":
         return 0
@@ -128,7 +128,7 @@ def chakra_minimum_option_default(selection: CatalogSelection) -> int:
 
 
 def gauge_config_values(selection: CatalogSelection) -> tuple[int, int, int, int, bool]:
-    substitution = _selected_node(selection, battle_mechanic_path("substitution")).configured_value
+    substitution = _selected_node(selection, battle_mechanic_path("substitution_resource")).configured_value
     gauge = substitution.get("gauge", {})
     recovery_delay = _decimal(
         gauge.get(

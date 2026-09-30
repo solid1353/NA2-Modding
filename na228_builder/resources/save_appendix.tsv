@@ -9,16 +9,16 @@ id	key	label	values
 0007	mechanics.ultimate_jutsu	Ultimate Jutsu	No Use | Random | Command | Timing | Turn | Combo | No Contest | No HUD
 0008	mechanics.shadowblur	Shadowblur	Off | On
 0009	mechanics.extra_hit	Extra Hit	Off | On | -5% to -100% by -5%
-000A	mechanics.sub_active_frames	Substitution Active Frames	Default | 1 frame to 15 frames by 1 frame
 000B	mechanics.xdash_chakra_cost	X-Dash Chakra Cost	0% to 100% by 5%
 000C	mechanics.support	Support	Off | Nerfed | Normal | Unlimited
-000D	mechanics.substitution	Substitution	Chakra | Gauge | Free
+000A	mechanics.substitution_input	Substitution Input	Default | Hold | 1 frame to 15 frames by 1 frame
+000D	mechanics.substitution_resource	Substitution Resource	Chakra | Gauge | Free
 000E	mechanics.items	Items	None | Less | Normal | More | Custom
-000F	mechanics.substitution.chakra.minimum_chakra	Minimum Chakra	Match Cost | 5% to 100% by 5%
-0010	mechanics.substitution.gauge.recovery_delay_seconds	Recovery Delay	0.00s to 60.00s by 0.25s
-0011	mechanics.substitution.gauge.refill_seconds_per_stock	Refill Time per Stock	0.05s to 10.00s by 0.05s
-0012	mechanics.substitution.gauge.damage_recovery	Damage Recovery	Off | On
-0013	mechanics.substitution.gauge.damage_percent_for_full_refill	Damage for Full Refill	5% to 400% by 5%
+000F	mechanics.substitution_resource.chakra.minimum_chakra	Minimum Chakra	Match Cost | 5% to 100% by 5%
+0010	mechanics.substitution_resource.gauge.recovery_delay_seconds	Recovery Delay	0.00s to 60.00s by 0.25s
+0011	mechanics.substitution_resource.gauge.refill_seconds_per_stock	Refill Time per Stock	0.05s to 10.00s by 0.05s
+0012	mechanics.substitution_resource.gauge.damage_recovery	Damage Recovery	Off | On
+0013	mechanics.substitution_resource.gauge.damage_percent_for_full_refill	Damage for Full Refill	5% to 400% by 5%
 0014	mechanics.items.custom.availability	Item Availability	None | Less | Normal | More
 0015	mechanics.items.custom.health_recovery	Health Recovery	Off | On
 0016	mechanics.items.custom.chakra_ball	Chakra Ball	Off | On

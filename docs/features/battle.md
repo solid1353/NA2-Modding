@@ -128,9 +128,9 @@ native recovery path therefore remains reachable after a blocked attempt.
 See [native Extra Hit control flow](../knowledge/gameplay/hit_response.md#extra-hit-eligibility-and-action-exit)
 for the traced branches and lifecycle boundary.
 
-The object also owns `sub_active_frames`, `xdash_chakra_cost`, `support`, and
-`substitution`. They appear as
-`Sub Active Frames: Default | 1..15`, `Substitution: Chakra | Gauge | Free`, and
+The object also owns `substitution_input`, `xdash_chakra_cost`, `support`, and
+`substitution_resource`. They appear as
+`Substitution Input: Default | Hold | 1..15 frames`, `Substitution Resource: Chakra | Gauge | Free`, and
 `X-dash Chakra Cost: 0% | 5% | ... | 100%`, plus `Support: Off | Nerfed | Normal | Unlimited`. Each
 configuration value is the direct initial and reset value shown by both menus;
 both menus snapshot, stage, reset, and commit the same runtime values.
@@ -350,40 +350,42 @@ in [X-dash knowledge](../knowledge/gameplay/xdash.md).
 
 `features.default_settings.battle_mechanics` owns two substitution settings:
 
-- `sub_active_frames` accepts `"default" | 1..15`. `"default"` preserves vanilla
-  per-attack timing, including its random checks. A number selects the total
-  input-history window: `1` checks only the current frame, and `N` checks it
-  plus `N - 1` earlier frames. The maximum total window is 15 frames.
-- `substitution` installs one shared `Substitution: Chakra | Gauge | Free` setting in
+- `substitution_input` accepts `"default" | "hold" | 1..15` and appears in the
+  menus as Default, Hold, and 1 to 15 frames. `"default"` uses vanilla logic:
+  per-attack timing, including its random checks, and a fresh press. A number
+  `N` accepts a fresh press on the hit's frame or the `N - 1` frames before it,
+  without random checks. `"hold"` accepts the Substitution button whenever it
+  is down when the hit lands, also without random checks. Only Hold accepts a
+  held button.
+- `substitution_resource` installs one shared `Substitution Resource: Chakra | Gauge | Free` setting in
   both the pre-battle and Practice menus. Its required `value` field selects
   the value used initially and by each menu's reset action. Optional object
   fields configure recovery delay, refill time per stock, damage recovery, and
   damage for a full refill in 5% steps.
 
-The base configuration uses `5` and `{"value": "gauge"}`. `Chakra`
+The base configuration uses `"hold"` and `{"value": "gauge"}`. `Chakra`
 uses the configurable minimum described below and retains native suppression,
 spending, and bookkeeping; `Gauge` uses the independent 100-point resource and
 displays its HUD; `Free`
 uses no resource and hides the gauge. Both menus stage and commit the same
-runtime enum rather than separate visibility and unlimited flags. The active-
-frames setting changes only the timing policy inside the native eligibility
-predicate. Numeric values bypass attack-authored random and clamped timing;
-`Default` resumes those native branches with the original attack timing value.
-The hook rejoins the held-Guard, response-state, resource,
-attack-flag, history-search, and transition gates.
+runtime enum rather than separate visibility and unlimited flags. Substitution
+Input changes only the timing policy inside the native eligibility predicate. Numeric values and Hold bypass attack-authored random and clamped
+timing; `Default` resumes those native branches with the original attack timing
+value. The hook rejoins the held-Guard, response-state, resource,
+attack-flag, history-search, and transition gates. The Substitution button's
+check, described in [Controls](controls.md#battle-input), comes before the
+held-Guard limit, so it also works while Guard is held.
 
-The active-frame limit and selected resource mode are independent runtime
-values. The held-action path reads only the current input state;
-`sub_active_frames` continues to define the buffered press window. Runtime
-confirmation of the active-frame selector remains pending.
+The Substitution Input value and selected resource mode are independent runtime
+values. Runtime confirmation of the Substitution Input selector remains pending.
 
 ## Minimum Chakra
 
 Runtime validation of the Minimum Chakra behavior remains outstanding:
-Square on `Substitution: Chakra` opens Chakra Settings in Battle and Practice.
+Square on `Substitution Resource: Chakra` opens Chakra Settings in Battle and Practice.
 Its `Minimum Chakra` row accepts `Match Cost`, then `5%..100%` in steps of `5`.
 The config field is
-`features.default_settings.battle_mechanics.substitution.chakra.minimum_chakra`:
+`features.default_settings.battle_mechanics.substitution_resource.chakra.minimum_chakra`:
 `"match_cost"` (the default), or integers `5..100` in steps of `5`.
 
 Match Cost invokes the same per-fighter cost resolver used by spending when

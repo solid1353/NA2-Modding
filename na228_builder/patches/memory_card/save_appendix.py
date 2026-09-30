@@ -19,7 +19,7 @@ from ..settings.ingame.battle_mechanics.battle_settings_runtime import (
     extended_items_enabled,
     extended_items_option_default,
     shadowblur_default,
-    sub_active_frames_default,
+    substitution_input_default,
     substitution_default,
     support_default,
     ultimate_jutsu_default,
@@ -33,7 +33,7 @@ from ..settings.ingame.battle_mechanics.items.items_settings import (
     FIELD_ITEMS,
     items_option_defaults,
 )
-from ..settings.ingame.battle_mechanics.substitution.substitution_gauge import (
+from ..settings.ingame.battle_mechanics.substitution_resource.substitution_gauge import (
     chakra_minimum_option_default,
     gauge_option_defaults,
 )
@@ -288,10 +288,10 @@ def _bindings(selection) -> dict[str, SettingBinding]:
         ("mechanics.shadowblur", "shadowblur_get", "shadowblur_set", shadowblur_default, 0),
         ("mechanics.extra_hit", "extra_hit_get", "extra_hit_set", extra_hit_default, 0),
         (
-            "mechanics.sub_active_frames",
-            "sub_active_frames_get",
-            "sub_active_frames_set",
-            sub_active_frames_default,
+            "mechanics.substitution_input",
+            "substitution_input_get",
+            "substitution_input_set",
+            substitution_input_default,
             0,
         ),
         (
@@ -303,7 +303,7 @@ def _bindings(selection) -> dict[str, SettingBinding]:
         ),
         ("mechanics.support", "support_get", "support_set", support_default, 0),
         (
-            "mechanics.substitution",
+            "mechanics.substitution_resource",
             "substitution_gauge_mode_get",
             "substitution_gauge_mode_set",
             substitution_default,
@@ -338,19 +338,19 @@ def _bindings(selection) -> dict[str, SettingBinding]:
     gauge_defaults = gauge_option_defaults(selection)
     substitution_children = (
         (
-            "mechanics.substitution.chakra.minimum_chakra",
+            "mechanics.substitution_resource.chakra.minimum_chakra",
             4,
             chakra_minimum_option_default(selection),
         ),
-        ("mechanics.substitution.gauge.recovery_delay_seconds", 0, gauge_defaults[0]),
+        ("mechanics.substitution_resource.gauge.recovery_delay_seconds", 0, gauge_defaults[0]),
         (
-            "mechanics.substitution.gauge.refill_seconds_per_stock",
+            "mechanics.substitution_resource.gauge.refill_seconds_per_stock",
             1,
             gauge_defaults[1],
         ),
-        ("mechanics.substitution.gauge.damage_recovery", 2, gauge_defaults[2]),
+        ("mechanics.substitution_resource.gauge.damage_recovery", 2, gauge_defaults[2]),
         (
-            "mechanics.substitution.gauge.damage_percent_for_full_refill",
+            "mechanics.substitution_resource.gauge.damage_percent_for_full_refill",
             3,
             gauge_defaults[3],
         ),

@@ -982,8 +982,8 @@
           "battle_settings_extra_hit_staged": {
             "object": "battle.settings.c.bss.battle.settings.extra.hit.staged"
           },
-          "battle_settings_sub_active_frames_staged": {
-            "object": "battle.settings.c.bss.battle.settings.sub.active.frames.staged"
+          "battle_settings_substitution_input_staged": {
+            "object": "battle.settings.c.bss.battle.settings.substitution.input.staged"
           },
           "battle_settings_xdash_chakra_cost_staged": {
             "object": "battle.settings.c.bss.battle.settings.xdash.chakra.cost.staged"
@@ -1209,8 +1209,8 @@
           "practice_settings_extra_hit_staged": {
             "object": "practice.settings.c.bss.practice.settings.extra.hit.staged"
           },
-          "practice_settings_sub_active_frames_staged": {
-            "object": "practice.settings.c.bss.practice.settings.sub.active.frames.staged"
+          "practice_settings_substitution_input_staged": {
+            "object": "practice.settings.c.bss.practice.settings.substitution.input.staged"
           },
           "practice_settings_xdash_chakra_cost_staged": {
             "object": "practice.settings.c.bss.practice.settings.xdash.chakra.cost.staged"
@@ -2070,58 +2070,58 @@
       }
     }
   },
-  "settings.battle_mechanics.sub_active_frames": {
-    "description": "Select vanilla attack timing or a total pre-impact input window of 1 through 15 frames while preserving resource, response, state, and attack-block gates.",
+  "settings.battle_mechanics.substitution_input": {
+    "description": "Select vanilla attack timing, Hold, or a total pre-impact input window of 1 through 15 frames while preserving resource, response, state, and attack-block gates.",
     "hooks": {
-      "select_substitution_active_history": {
-        "description": "Resume native random and clamped timing for Default, or convert the selected total window to prior-history frames and rejoin the guard-age and history checks.",
+      "select_substitution_input_window": {
+        "description": "Resume native random and clamped timing for Default; otherwise search the current record for Hold or convert the selected total window to prior-history frames, and rejoin the guard-age and history checks.",
         "target_id": "na2_elf",
         "offset": "0x1296C8",
         "expected_hex": "1100010600000000",
-        "symbol": "battle_logic_substitution_select_active_history",
+        "symbol": "battle_logic_substitution_select_input_window",
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
       }
     },
     "payload": {
-      "sub_active_frames_settings": {
+      "substitution_input_settings": {
         "kind": "c",
-        "path": "na228_builder/patches/settings/ingame/battle_mechanics/sub_active_frames/sub_active_frames_settings.c",
-        "namespace": "battle.logic.settings.sub.active.frames",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/substitution_input/substitution_input_settings.c",
+        "namespace": "battle.logic.settings.substitution.input",
         "imports": {
-          "battle_settings_sub_active_frames_default": "battle_settings_sub_active_frames_default"
+          "battle_settings_substitution_input_default": "battle_settings_substitution_input_default"
         },
         "fragments": {
-          "sub_active_frames_get": {
-            "object": "battle.logic.settings.sub.active.frames.text.sub.active.frames.get"
+          "substitution_input_get": {
+            "object": "battle.logic.settings.substitution.input.text.substitution.input.get"
           },
-          "sub_active_frames_set": {
-            "object": "battle.logic.settings.sub.active.frames.text.sub.active.frames.set"
+          "substitution_input_set": {
+            "object": "battle.logic.settings.substitution.input.text.substitution.input.set"
           },
-          "sub_active_frames_state": {
-            "object": "battle.logic.settings.sub.active.frames.bss.sub.active.frames.state"
+          "substitution_input_state": {
+            "object": "battle.logic.settings.substitution.input.bss.substitution.input.state"
           },
-          "sub_active_frames_initialized": {
-            "object": "battle.logic.settings.sub.active.frames.bss.sub.active.frames.initialized"
+          "substitution_input_initialized": {
+            "object": "battle.logic.settings.substitution.input.bss.substitution.input.initialized"
           }
         }
       },
-      "substitution_active_frames_abi": {
+      "substitution_input_abi": {
         "kind": "asm",
-        "path": "na228_builder/patches/settings/ingame/battle_mechanics/sub_active_frames/substitution_active_frames_abi.S",
-        "namespace": "battle.logic.substitution.active.frames.asm",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/substitution_input/substitution_input_abi.S",
+        "namespace": "battle.logic.substitution.input.asm",
         "imports": {
-          "sub_active_frames_get": "sub_active_frames_get"
+          "substitution_input_get": "substitution_input_get"
         },
         "fragments": {
-          "battle_logic_substitution_select_active_history": {
-            "object": "battle.logic.substitution.active.frames.asm.text.battle.logic.substitution.select.active.history"
+          "battle_logic_substitution_select_input_window": {
+            "object": "battle.logic.substitution.input.asm.text.battle.logic.substitution.select.input.window"
           }
         }
       }
     }
   },
-  "settings.battle_mechanics.substitution": {
+  "settings.battle_mechanics.substitution_resource": {
     "description": "Own ordinary substitution resource routing across selectable Chakra, Gauge, and Free modes; charge Gauge from the character override's normalized substitution cost, recover it on the native battle clock and committed HP loss, and draw its independent textured top-HUD bar without modifying the native support renderer.",
     "hooks": {
       "adjust_battle_hud_character_name_y": {
@@ -2201,7 +2201,7 @@
     "payload": {
       "substitution_gauge": {
         "kind": "c",
-        "path": "na228_builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge.c",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/substitution_resource/substitution_gauge.c",
         "namespace": "battle.logic.substitution.gauge.c",
         "imports": {
           "substitution_gauge_config": "substitution_gauge_config"
@@ -2277,7 +2277,7 @@
       },
       "substitution_gauge_abi": {
         "kind": "asm",
-        "path": "na228_builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge_abi.S",
+        "path": "na228_builder/patches/settings/ingame/battle_mechanics/substitution_resource/substitution_gauge_abi.S",
         "namespace": "battle.logic.substitution.gauge.asm",
         "imports": {
           "substitution_gauge_can_spend": "substitution_gauge_can_spend",

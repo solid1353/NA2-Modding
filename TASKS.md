@@ -2,13 +2,12 @@
 
 ## In Progress
 
+- Port handicap bar
+- Rework sub options
+- Fix support bar
 - Release version 1.0
 
 ## Backlog
-
-### Controls
-
-- Extend items to 5
 
 ### Battle mechanics
 
@@ -18,6 +17,7 @@
 
 ### Practice
 
+- Status generator
 - Item generator
 - Infinite character items
 

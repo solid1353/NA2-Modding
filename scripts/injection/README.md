@@ -4,7 +4,7 @@ The maintained development injector rebuilds selected EE C or assembly,
 pauses PCSX2 through PINE, verifies and writes one guarded transaction into the
 reserved `0x008F0000..0x008F3D00` range, clears translated-code state, reads the
 writes back, and restores the VM's prior running or paused state. It does not
-modify the release `PRG/228.BIN`.
+modify the release `228/228.BIN`.
 
 Existing file-backed callers normally continue to target their resident
 symbols. Development application may redirect an allowlisted resident entry to

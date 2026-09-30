@@ -14,13 +14,20 @@ from na228_builder.infrastructure.modules.payload_builder.operations import (
 )
 from ..settings.ingame.battle_mechanics.battle_settings_runtime import (
     chakra_default,
+    MATCH_SETUP_PATH,
     extra_hit_default,
+    extended_items_enabled,
+    extended_items_option_default,
     shadowblur_default,
     sub_active_frames_default,
     substitution_default,
     support_default,
     ultimate_jutsu_default,
     xdash_chakra_cost_option_default,
+)
+from ..general.new_controls.control_defaults import (
+    added_binding_save_defaults,
+    load_default_controls,
 )
 from ..settings.ingame.battle_mechanics.items.items_settings import (
     FIELD_ITEMS,
@@ -30,7 +37,7 @@ from ..settings.ingame.battle_mechanics.substitution.substitution_gauge import (
     chakra_minimum_option_default,
     gauge_option_defaults,
 )
-from ..settings.ingame.shared.menu_options import MOD_SETTINGS_PATH, CHARACTER_SELECTION_PATH
+from ..settings.ingame.shared.menu_options import MOD_SETTINGS_PATH
 from ..settings.ingame.shared.native_settings_defaults import (
     BATTLE_ROW_IDS,
     PRACTICE_GENERAL_ROW_IDS,
@@ -50,10 +57,13 @@ CALL_WITH_VALUE = 1
 EXTRA_CONTROL_KEYS = (
     "controls.p1.guard",
     "controls.p1.substitution",
+    "controls.p1.item_select_l",
+    "controls.p1.item_select_r",
     "controls.p2.guard",
     "controls.p2.substitution",
+    "controls.p2.item_select_l",
+    "controls.p2.item_select_r",
 )
-EXTRA_CONTROL_DEFAULTS = (4, 3, 4, 3)
 RANGE_PATTERN = re.compile(
     r"^(.*?)(-?\d+(?:\.\d+)?)([^\d]*) to "
     r"(-?\d+(?:\.\d+)?)([^\d]*) by "
@@ -181,14 +191,18 @@ def _new_controls_enabled(selection) -> bool:
     )
 
 
+def _extended_items_enabled(selection) -> bool:
+    return selection is not None and extended_items_enabled(selection)
+
+
 def _bindings(selection) -> dict[str, SettingBinding]:
     selected = _selected_values(selection)
     mod_values = (
         int(selected[MOD_SETTINGS_PATH + ("simple_display",)] == "on"),
-        int(selected[CHARACTER_SELECTION_PATH + ("character_balance",)] == "overrides"),
-        int(selected[CHARACTER_SELECTION_PATH + ("balance_overlay",)] == "on"),
+        int(selected[MATCH_SETUP_PATH + ("character_balance",)] == "overrides"),
+        int(selected[MATCH_SETUP_PATH + ("balance_overlay",)] == "on"),
         {"none": 0, "relevant": 1, "all": 2}[
-            selected[CHARACTER_SELECTION_PATH + ("support_selection",)]
+            selected[MATCH_SETUP_PATH + ("support_selection",)]
         ],
     )
     bindings = {
@@ -209,13 +223,14 @@ def _bindings(selection) -> dict[str, SettingBinding]:
         )
     }
     if _new_controls_enabled(selection):
+        control_defaults = added_binding_save_defaults(load_default_controls())
         for argument, key in enumerate(EXTRA_CONTROL_KEYS):
             bindings[key] = SettingBinding(
                 "control_settings_extra_get",
                 "control_settings_extra_set",
                 argument,
                 CALL_WITH_ARGUMENT,
-                EXTRA_CONTROL_DEFAULTS[argument],
+                control_defaults[argument],
             )
 
     battle_defaults = battle_configured_row_defaults(selection)
@@ -312,6 +327,14 @@ def _bindings(selection) -> dict[str, SettingBinding]:
         CALL_WITH_ARGUMENT,
         item_defaults[0],
     )
+    if _extended_items_enabled(selection):
+        bindings["mod.extended_items"] = SettingBinding(
+            "extended_items_option_get",
+            "extended_items_option_set",
+            0,
+            CALL_WITH_ARGUMENT,
+            extended_items_option_default(selection),
+        )
     gauge_defaults = gauge_option_defaults(selection)
     substitution_children = (
         (
@@ -369,6 +392,8 @@ def save_appendix_schema_fragment(
     schema_version, rows = load_save_appendix(source)
     if not _new_controls_enabled(selection):
         rows = tuple(row for row in rows if row.key not in EXTRA_CONTROL_KEYS)
+    if not _extended_items_enabled(selection):
+        rows = tuple(row for row in rows if row.key != "mod.extended_items")
     bindings = _bindings(selection)
     row_keys = {row.key for row in rows}
     unresolved = sorted(row_keys - bindings.keys())

@@ -23,6 +23,14 @@ def _lui(rt: int, immediate: int) -> int:
     return _encode_i(0x0F, 0, rt, immediate)
 
 
+def _ori(rt: int, rs: int, immediate: int) -> int:
+    return _encode_i(0x0D, rs, rt, immediate)
+
+
+def _sw(rt: int, base: int, offset: int) -> int:
+    return _encode_i(0x2B, base, rt, offset)
+
+
 def _sd(rt: int, base: int, offset: int) -> int:
     return _encode_i(0x3F, base, rt, offset)
 
@@ -204,26 +212,50 @@ def build_integration_patches(
         )
     )
 
-    cave_string_address = config.cave_runtime_address + 17 * 4
+    # The generic loader prefixes cdrom0:\PRG\. Swap its PRG\ for the payload's
+    # directory while it loads, and restore it before the payload entrypoint runs.
+    directory_offset = config.loader_directory_address - (
+        config.cave_runtime_address - config.cave_file_offset
+    )
+    original_directory = clean_boot[directory_offset:directory_offset + 4]
+    if original_directory != b"PRG\\":
+        raise ValueError(
+            f"Loader directory text is not PRG\\ at 0x{config.loader_directory_address:X}"
+        )
+    payload_directory = PurePosixPath(build.output_path).parent.name.encode("ascii") + b"\\"
+    directory_high = (config.loader_directory_address + 0x8000) >> 16
+    directory_low = config.loader_directory_address - (directory_high << 16)
+
+    def directory_word(text: bytes) -> tuple[int, int]:
+        value = int.from_bytes(text, "little")
+        return value >> 16, value & 0xFFFF
+
+    payload_high, payload_low = directory_word(payload_directory)
+    original_high, original_low = directory_word(original_directory)
+    cave_string_address = config.cave_runtime_address + 21 * 4
     cave_code = _words(
         (
             _addiu(29, 29, -0x20),
             _sd(31, 29, 0x10),
             _sd(4, 29, 0),
+            _lui(8, directory_high),
+            _lui(9, payload_high),
+            _ori(9, 9, payload_low),
             _addiu(4, 0, 2),
             _lui(5, cave_string_address >> 16),
             _addiu(5, 5, cave_string_address & 0xFFFF),
             _jal(config.loader_function),
-            0,
+            _sw(9, 8, directory_low),
+            _lui(8, directory_high),
+            _lui(9, original_high),
+            _ori(9, 9, original_low),
             _jal(build.entrypoint),
-            0,
-            _ld(4, 29, 0),
+            _sw(9, 8, directory_low),
             _jal(config.original_constructor_function),
-            0,
+            _ld(4, 29, 0),
             _ld(31, 29, 0x10),
-            _addiu(29, 29, 0x20),
             0x03E00008,
-            0,
+            _addiu(29, 29, 0x20),
         )
     )
     cave_payload = cave_code + filename
@@ -237,8 +269,8 @@ def build_integration_patches(
             mapping_id="ELF-RP-BOOTSTRAP",
             kind="loader",
             reason=(
-                f"Load {filename[:-1].decode('ascii')}, invoke the shared resident "
-                "entrypoint, then preserve the original constructor call."
+                f"Load {build.output_path} through the PRG loader, invoke the shared "
+                "resident entrypoint, then preserve the original constructor call."
             ),
         )
     )

@@ -69,7 +69,7 @@ copied directly.
 
 Numeric, paired, and fixed foregrounds share the resident anisotropic renderer;
 single foregrounds retain the native uniform wrapper. The implementation keeps
-the shared renderer and class entries in `PRG/228.BIN`, preserves NA2 object
+the shared renderer and class entries in `228/228.BIN`, preserves NA2 object
 links and lifetimes, and does not change item selection, values, effects, or
 timing. Exact source and donor relationships are documented in
 [Battle item-status presentation](../../knowledge/localization/ui/battle/item_status.md).
@@ -124,7 +124,7 @@ across the shared sprite object's lifetime.
 Compatible records, tables, and isolated constants remain guarded binary
 edits. Source-owned runtime behavior is declared inside `localization.ui`; its
 fragments compose into the shared
-`PRG/228.BIN` resident payload alongside Font contributions. Shared placement
+`228/228.BIN` resident payload alongside Font contributions. Shared placement
 infrastructure does not transfer ownership to the Font feature. The UI
 selection remains responsible for matching graphical assets, rectangles,
 anchors, visibility, ordering, and ABI-safe draw-path adaptations. Text content

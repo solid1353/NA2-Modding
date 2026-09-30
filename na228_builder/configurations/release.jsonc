@@ -5,10 +5,11 @@
   "widescreen": false,                                      // true: experimental; the interface does not scale properly
   "default_settings": {
     "mod_settings": {
-      "character_selection": {
+      "match_setup": {
         "support_selection": "none",                        // "none" | "relevant" | "all"
         "character_balance": "overrides",                   // "original" | "overrides"
-        "balance_overlay": "on"                             // "off" | "on"
+        "balance_overlay": "on",                            // "off" | "on"
+        "extended_items": true
       },
       "simple_display": "off"                               // "off" | "on"
     },

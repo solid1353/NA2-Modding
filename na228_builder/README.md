@@ -48,10 +48,10 @@ The selected engines run in this order:
 
 The pipeline derives the in-memory string-patcher plan from imported text;
 `string_patcher` is not a separately selected module or file-backed interface.
-Injection payloads compile and link into the shared resident `PRG/228.BIN`.
+Injection payloads compile and link into the shared resident `228/228.BIN`.
 Their resolved hooks become guarded binary replacements, applied with the
 selected direct edits by the binary patcher last. The texture patcher verifies
-checked-in CCS assets and inserts indexed `PRG/228_UI.BIN` without changing
+checked-in CCS assets and inserts indexed `228/UI.BIN` without changing
 source `DATA/DATA.CVM`. The image assembler stages and verifies the final ISO.
 
 ## Documentation

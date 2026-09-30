@@ -32,8 +32,8 @@ def test_features() -> dict[str, object]:
         "rendering": {"native_16_9_horizontal_scale": False},
         "menu_composition": {
             "mod_settings": {
+                "match_setup": True,
                 "battle_mechanics": True,
-                "character_selection": True,
                 "battle_settings": True,
                 "practice_settings": True,
                 "control_settings": True,
@@ -43,10 +43,11 @@ def test_features() -> dict[str, object]:
         },
         "default_settings": {
             "mod_settings": {
-                "character_selection": {
+                "match_setup": {
                     "support_selection": "none",
                     "character_balance": "overrides",
                     "balance_overlay": "on",
+                    "extended_items": True,
                 },
                 "simple_display": "off",
             },
@@ -102,13 +103,14 @@ def resident_payload_config(
     maximum_end: int = 0x00900000,
 ) -> ResidentPayloadConfig:
     return ResidentPayloadConfig(
-        output_path="PRG/TST.BIN",
+        output_path="228/TST.BIN",
         load_base=0x008F3D00,
         entry_offset=0x40,
         minimum_data_offset=0x100,
         maximum_end=maximum_end,
         reservation_end=reservation_end,
         loader_function=0x001BDA50,
+        loader_directory_address=0x00200100,
         original_constructor_function=0x001B1230,
         hook_file_offset=0x1000,
         cave_file_offset=0x1200,

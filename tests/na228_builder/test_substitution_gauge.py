@@ -158,7 +158,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
         features["default_settings"]["battle_mechanics"][
             "substitution"
         ]["value"] = "gauge"
-        features["default_settings"]["mod_settings"]["character_selection"]["character_balance"] = "original"
+        features["default_settings"]["mod_settings"]["match_setup"]["character_balance"] = "original"
         selection = catalog.load_selection(
             self.catalog_path,
             self._write_full_configuration(features),
@@ -245,11 +245,11 @@ class SubstitutionGaugeTests(unittest.TestCase):
                 mechanics["support"] = (
                     support if battle_support_enabled else False
                 )
-                character_selection = features["default_settings"]["mod_settings"]["character_selection"]
-                support_selection = character_selection[
+                match_setup = features["default_settings"]["mod_settings"]["match_setup"]
+                support_selection = match_setup[
                     "support_selection"
                 ]
-                character_selection["support_selection"] = (
+                match_setup["support_selection"] = (
                     support_selection if selection_enabled else False
                 )
                 selection = catalog.load_selection(

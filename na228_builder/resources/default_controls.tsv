@@ -1,0 +1,9 @@
+button	action
+circle	attack
+triangle	ultimate_jutsu_prep
+square	item_use
+cross	jump
+l1	substitution
+r1	guard
+l2	item_select_l
+r2	item_select_r

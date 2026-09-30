@@ -188,7 +188,7 @@ and read only relevant sections of large documents.
   script to create one. Remove disposable task artifacts before completion.
   Code that creates temporary directories must always remove every directory
   it created.
-- `TASKS.md` is user-only. Agents must not read or modify it.
+- `TASKS.md` is the user's task list. Ignore it unless the user brings it up.
 - Never create or use an additional Git worktree.
 - `docs/designs/` is read-only outside Design mode.
 - Everything under `@source/`, including extracted views, is read-only unless
@@ -272,6 +272,9 @@ and read only relevant sections of large documents.
 - Prefer verified canonical NUN5 data/bytes when suitable. When donor data is
   unsuitable, document the intended NA2 behavior and evidence for replacement
   bytes.
+- Save compatibility matters only between official releases. Do not handle or
+  discuss it for changes no official release contains, including betas and
+  pre-releases.
 
 ### PNACH
 
@@ -308,7 +311,8 @@ and read only relevant sections of large documents.
 - Agents must not directly launch, attach to, command, screenshot, probe, or
   close any PCSX2 process.
   Unless the user explicitly requests a specific maintained workflow below,
-  runtime validation must not appear in the agent's reasoning, responses, or actions:
+  runtime validation, including the user's own testing, must not appear in the
+  agent's reasoning, responses, or actions:
   [E2E](docs/workflows/e2e_validation.md),
   [input-recording with markers](docs/workflows/input_recording_with_markers.md), or
   [input-recording without markers](docs/workflows/input_recording_without_markers.md) workflow.

@@ -30,8 +30,8 @@
     },
     "menu_composition": {
       "mod_settings": {
+        "match_setup": true,
         "battle_mechanics": true,
-        "character_selection": true,
         "battle_settings": true,
         "practice_settings": true,
         "control_settings": true
@@ -45,10 +45,11 @@
     },
     "default_settings": {
       "mod_settings": {
-        "character_selection": {
+        "match_setup": {
           "support_selection": "none",                      // "none" | "relevant" | "all"
           "character_balance": "overrides",                 // "original" | "overrides"
-          "balance_overlay": "on"                           // "off" | "on"
+          "balance_overlay": "on",                          // "off" | "on"
+          "extended_items": true
         },
         "simple_display": "off"                             // "off" | "on"
       },

@@ -1547,6 +1547,516 @@
       }
     }
   },
+  "settings.extended_items": {
+    "description": "Keep the native three-slot inventory when off, or enable five slots with a mirrored item-wheel sweep.",
+    "hooks": {
+      "latch_panel_extended_items": {
+        "description": "Latch Extended Items and clear the side's added slots before the panel constructor seeds items.",
+        "target_id": "na2_btl",
+        "offset": "0x5B840",
+        "expected_hex": "A0FFBD274000BFFF",
+        "symbol": "extended_items_constructor_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "finish_panel_layout": {
+        "description": "Move the wheel origin and item-select badge after construction when Extended Items is on.",
+        "target_id": "na2_btl",
+        "offset": "0x5BBBC",
+        "expected_hex": "74421C0C",
+        "symbol": "extended_items_finish_panel",
+        "encoding": "jal26"
+      },
+      "route_full_test": {
+        "description": "Treat the inventory as full only when every configured slot is occupied.",
+        "target_id": "na2_btl",
+        "offset": "0x5BD80",
+        "expected_hex": "F0FFBD270000BFFF",
+        "symbol": "extended_items_full_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_selected_count": {
+        "description": "Read the count of the occupied slot at a selection step.",
+        "target_id": "na2_btl",
+        "offset": "0x5BDB0",
+        "expected_hex": "E0FFBD271000BFFF",
+        "symbol": "extended_items_selected_count_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_find_code": {
+        "description": "Search every configured slot for an item code.",
+        "target_id": "na2_btl",
+        "offset": "0x5BE40",
+        "expected_hex": "2D3800000C000010",
+        "symbol": "extended_items_find_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_code_at_step": {
+        "description": "Read the item code of the occupied slot at a selection step.",
+        "target_id": "na2_btl",
+        "offset": "0x5BE90",
+        "expected_hex": "E0FFBD271000BFFF",
+        "symbol": "extended_items_code_at_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_selected_code": {
+        "description": "Read the selected item code.",
+        "target_id": "na2_btl",
+        "offset": "0x5BEE0",
+        "expected_hex": "E0FFBD271000BFFF",
+        "symbol": "extended_items_selected_code_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_count_copy": {
+        "description": "Count occupied slots for the full test.",
+        "target_id": "na2_btl",
+        "offset": "0x5BF70",
+        "expected_hex": "2D1000002D300000",
+        "symbol": "extended_items_count_copy_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_room": {
+        "description": "Report how many more of an item fit across the configured slots.",
+        "target_id": "na2_btl",
+        "offset": "0x5BFF0",
+        "expected_hex": "D0FFBD272000BFFF",
+        "symbol": "extended_items_room_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_add": {
+        "description": "Stack or place items across the configured slots.",
+        "target_id": "na2_btl",
+        "offset": "0x5C140",
+        "expected_hex": "C0FFBD273000BFFF",
+        "symbol": "extended_items_add_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_consume_code": {
+        "description": "Consume an item by code across the configured slots.",
+        "target_id": "na2_btl",
+        "offset": "0x5C3D0",
+        "expected_hex": "C0FFBD273000BFFF",
+        "symbol": "extended_items_consume_code_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_consume_selected": {
+        "description": "Consume the item at a selection step across the configured slots.",
+        "target_id": "na2_btl",
+        "offset": "0x5C570",
+        "expected_hex": "C0FFBD273000BFFF",
+        "symbol": "extended_items_consume_selected_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_clear": {
+        "description": "Clear every configured non-special slot.",
+        "target_id": "na2_btl",
+        "offset": "0x5C6C0",
+        "expected_hex": "C0FFBD273000BFFF",
+        "symbol": "extended_items_clear_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_step_occupied": {
+        "description": "Step through occupied slots across the configured count.",
+        "target_id": "na2_btl",
+        "offset": "0x5C7D0",
+        "expected_hex": "C0FFBD273000BFFF",
+        "symbol": "extended_items_step_occupied_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_step_empty": {
+        "description": "Step through empty slots across the configured count.",
+        "target_id": "na2_btl",
+        "offset": "0x5C950",
+        "expected_hex": "C0FFBD273000BFFF",
+        "symbol": "extended_items_step_empty_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_cache_build": {
+        "description": "Capture every configured slot for Practice restore.",
+        "target_id": "na2_btl",
+        "offset": "0x5CAF0",
+        "expected_hex": "90FFBD276000BFFF",
+        "symbol": "extended_items_cache_build_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_cache_restore": {
+        "description": "Restore every configured slot from the Practice capture.",
+        "target_id": "na2_btl",
+        "offset": "0x5CC00",
+        "expected_hex": "A0FFBD275000BFFF",
+        "symbol": "extended_items_cache_restore_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_count": {
+        "description": "Count occupied configured slots.",
+        "target_id": "na2_btl",
+        "offset": "0x5CD70",
+        "expected_hex": "2D1000002D300000",
+        "symbol": "extended_items_count_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_relation": {
+        "description": "Classify a configured slot relative to the selection.",
+        "target_id": "na2_btl",
+        "offset": "0x5CDF0",
+        "expected_hex": "C0FFBD273000BFFF",
+        "symbol": "extended_items_relation_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_category": {
+        "description": "Read the category of a configured slot.",
+        "target_id": "na2_btl",
+        "offset": "0x5CF20",
+        "expected_hex": "F0FFBD270000BFFF",
+        "symbol": "extended_items_category_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_use_code": {
+        "description": "Resolve the selected item for the use input across the configured slots.",
+        "target_id": "na2_btl",
+        "offset": "0x5D2C0",
+        "expected_hex": "C0FFBD273000BFFF",
+        "symbol": "extended_items_use_code_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_two_occupied": {
+        "description": "Allow selection changes when at least two configured slots are occupied.",
+        "target_id": "na2_btl",
+        "offset": "0x5DBC0",
+        "expected_hex": "2D2800002D300000",
+        "symbol": "extended_items_has_two_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_draw": {
+        "description": "Draw five slots along a mirrored sweep through the selection.",
+        "target_id": "na2_btl",
+        "offset": "0x5DF50",
+        "expected_hex": "70FFBD276000BFFF",
+        "symbol": "extended_items_draw_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "route_cache_clear": {
+        "description": "Clear the configured Practice capture together with the native cache.",
+        "target_id": "na2_btl",
+        "offset": "0x5B2E0",
+        "expected_hex": "2D30000014000010",
+        "symbol": "extended_items_cache_clear_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "activation_occupied_count": {
+        "description": "Count occupied configured slots before activation.",
+        "target_id": "na2_btl",
+        "offset": "0x5D4D8",
+        "expected_hex": "2D2800002D300000",
+        "symbol": "extended_items_activation_count_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "activation_selected_slot": {
+        "description": "Resolve the selected configured slot during activation.",
+        "target_id": "na2_btl",
+        "offset": "0x5D6FC",
+        "expected_hex": "2400028E80100200",
+        "symbol": "extended_items_activation_slot_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "update_occupied_count": {
+        "description": "Capture signed selection steps, advance the blend, and count configured slots before native animation clamping.",
+        "target_id": "na2_btl",
+        "offset": "0x5E4A0",
+        "expected_hex": "280041C680BF023C",
+        "symbol": "extended_items_update_count_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "update_selected_code": {
+        "description": "Read the selected code from a configured slot for the panel icon.",
+        "target_id": "na2_btl",
+        "offset": "0x5E840",
+        "expected_hex": "0700400400000000",
+        "symbol": "extended_items_update_code_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "draw_selection_arrows": {
+        "description": "Count configured slots when choosing the panel's selection indicator.",
+        "target_id": "na2_btl",
+        "offset": "0x5E8D4",
+        "expected_hex": "2D2000002D280000",
+        "symbol": "extended_items_root_two_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      }
+    },
+    "payload": {
+      "extended_items": {
+        "kind": "c",
+        "path": "na228_builder/patches/settings/extended_items/extended_items.c",
+        "namespace": "battle.extended.items.c",
+        "imports": {
+          "extended_items_default": "extended_items_default"
+        },
+        "fragments": {
+          "extended_items_option_get": {
+            "object": "battle.extended.items.c.text.extended.items.option.get"
+          },
+          "extended_items_option_set": {
+            "object": "battle.extended.items.c.text.extended.items.option.set"
+          },
+          "extended_items_helpers": {
+            "object": "battle.extended.items.c.text.extended.items.helpers"
+          },
+          "extended_items_begin_panel": {
+            "object": "battle.extended.items.c.text.extended.items.begin.panel"
+          },
+          "extended_items_finish_panel": {
+            "object": "battle.extended.items.c.text.extended.items.finish.panel"
+          },
+          "extended_items_count": {
+            "object": "battle.extended.items.c.text.extended.items.count"
+          },
+          "extended_items_update_count": {
+            "object": "battle.extended.items.c.text.extended.items.update.count"
+          },
+          "extended_items_full": {
+            "object": "battle.extended.items.c.text.extended.items.full"
+          },
+          "extended_items_has_two": {
+            "object": "battle.extended.items.c.text.extended.items.has.two"
+          },
+          "extended_items_step_occupied": {
+            "object": "battle.extended.items.c.text.extended.items.step.occupied"
+          },
+          "extended_items_step_empty": {
+            "object": "battle.extended.items.c.text.extended.items.step.empty"
+          },
+          "extended_items_slot_of": {
+            "object": "battle.extended.items.c.text.extended.items.slot.of"
+          },
+          "extended_items_selected_slot": {
+            "object": "battle.extended.items.c.text.extended.items.selected.slot"
+          },
+          "extended_items_code_of": {
+            "object": "battle.extended.items.c.text.extended.items.code.of"
+          },
+          "extended_items_selected_count": {
+            "object": "battle.extended.items.c.text.extended.items.selected.count"
+          },
+          "extended_items_code_at": {
+            "object": "battle.extended.items.c.text.extended.items.code.at"
+          },
+          "extended_items_selected_code": {
+            "object": "battle.extended.items.c.text.extended.items.selected.code"
+          },
+          "extended_items_find": {
+            "object": "battle.extended.items.c.text.extended.items.find"
+          },
+          "extended_items_room": {
+            "object": "battle.extended.items.c.text.extended.items.room"
+          },
+          "extended_items_add": {
+            "object": "battle.extended.items.c.text.extended.items.add"
+          },
+          "extended_items_consume_code": {
+            "object": "battle.extended.items.c.text.extended.items.consume.code"
+          },
+          "extended_items_consume_selected": {
+            "object": "battle.extended.items.c.text.extended.items.consume.selected"
+          },
+          "extended_items_clear": {
+            "object": "battle.extended.items.c.text.extended.items.clear"
+          },
+          "extended_items_relation": {
+            "object": "battle.extended.items.c.text.extended.items.relation"
+          },
+          "extended_items_category": {
+            "object": "battle.extended.items.c.text.extended.items.category"
+          },
+          "extended_items_use_code": {
+            "object": "battle.extended.items.c.text.extended.items.use.code"
+          },
+          "extended_items_cache_build": {
+            "object": "battle.extended.items.c.text.extended.items.cache.build"
+          },
+          "extended_items_cache_restore": {
+            "object": "battle.extended.items.c.text.extended.items.cache.restore"
+          },
+          "extended_items_cache_clear": {
+            "object": "battle.extended.items.c.text.extended.items.cache.clear"
+          },
+          "extended_items_draw": {
+            "object": "battle.extended.items.c.text.extended.items.draw"
+          },
+          "extended_items_rodata": {
+            "object": "battle.extended.items.c.rodata"
+          },
+          "extended_items_state": {
+            "object": "battle.extended.items.c.bss.extended.items.state"
+          },
+          "extended_items_initialized": {
+            "object": "battle.extended.items.c.bss.extended.items.initialized"
+          },
+          "extended_items_active": {
+            "object": "battle.extended.items.c.bss.extended.items.active"
+          },
+          "extended_items_extra": {
+            "object": "battle.extended.items.c.bss.extended.items.extra"
+          },
+          "extended_items_cache": {
+            "object": "battle.extended.items.c.bss.extended.items.cache"
+          },
+          "extended_items_order": {
+            "object": "battle.extended.items.c.bss.extended.items.order"
+          },
+          "extended_items_history": {
+            "object": "battle.extended.items.c.bss.extended.items.history"
+          }
+        }
+      },
+      "extended_items_abi": {
+        "kind": "asm",
+        "path": "na228_builder/patches/settings/extended_items/extended_items_abi.S",
+        "namespace": "battle.extended.items.asm",
+        "imports": {
+          "extended_items_active": "extended_items_active",
+          "extended_items_begin_panel": "extended_items_begin_panel",
+          "extended_items_count": "extended_items_count",
+          "extended_items_update_count": "extended_items_update_count",
+          "extended_items_full": "extended_items_full",
+          "extended_items_has_two": "extended_items_has_two",
+          "extended_items_step_occupied": "extended_items_step_occupied",
+          "extended_items_step_empty": "extended_items_step_empty",
+          "extended_items_selected_slot": "extended_items_selected_slot",
+          "extended_items_code_of": "extended_items_code_of",
+          "extended_items_selected_count": "extended_items_selected_count",
+          "extended_items_code_at": "extended_items_code_at",
+          "extended_items_selected_code": "extended_items_selected_code",
+          "extended_items_find": "extended_items_find",
+          "extended_items_room": "extended_items_room",
+          "extended_items_add": "extended_items_add",
+          "extended_items_consume_code": "extended_items_consume_code",
+          "extended_items_consume_selected": "extended_items_consume_selected",
+          "extended_items_clear": "extended_items_clear",
+          "extended_items_relation": "extended_items_relation",
+          "extended_items_category": "extended_items_category",
+          "extended_items_use_code": "extended_items_use_code",
+          "extended_items_cache_build": "extended_items_cache_build",
+          "extended_items_cache_restore": "extended_items_cache_restore",
+          "extended_items_cache_clear": "extended_items_cache_clear",
+          "extended_items_draw": "extended_items_draw"
+        },
+        "fragments": {
+          "extended_items_full_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.full.bridge"
+          },
+          "extended_items_selected_count_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.selected.count.bridge"
+          },
+          "extended_items_code_at_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.code.at.bridge"
+          },
+          "extended_items_selected_code_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.selected.code.bridge"
+          },
+          "extended_items_count_copy_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.count.copy.bridge"
+          },
+          "extended_items_room_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.room.bridge"
+          },
+          "extended_items_add_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.add.bridge"
+          },
+          "extended_items_consume_code_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.consume.code.bridge"
+          },
+          "extended_items_consume_selected_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.consume.selected.bridge"
+          },
+          "extended_items_clear_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.clear.bridge"
+          },
+          "extended_items_step_occupied_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.step.occupied.bridge"
+          },
+          "extended_items_step_empty_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.step.empty.bridge"
+          },
+          "extended_items_cache_build_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.cache.build.bridge"
+          },
+          "extended_items_cache_restore_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.cache.restore.bridge"
+          },
+          "extended_items_count_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.count.bridge"
+          },
+          "extended_items_relation_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.relation.bridge"
+          },
+          "extended_items_category_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.category.bridge"
+          },
+          "extended_items_use_code_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.use.code.bridge"
+          },
+          "extended_items_has_two_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.has.two.bridge"
+          },
+          "extended_items_find_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.find.bridge"
+          },
+          "extended_items_cache_clear_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.cache.clear.bridge"
+          },
+          "extended_items_constructor_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.constructor.bridge"
+          },
+          "extended_items_activation_count_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.activation.count.bridge"
+          },
+          "extended_items_activation_slot_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.activation.slot.bridge"
+          },
+          "extended_items_update_count_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.update.count.bridge"
+          },
+          "extended_items_update_code_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.update.code.bridge"
+          },
+          "extended_items_root_two_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.root.two.bridge"
+          },
+          "extended_items_draw_bridge": {
+            "object": "battle.extended.items.asm.text.extended.items.draw.bridge"
+          }
+        }
+      }
+    }
+  },
   "settings.battle_mechanics.sub_active_frames": {
     "description": "Select vanilla attack timing or a total pre-impact input window of 1 through 15 frames while preserving resource, response, state, and attack-block gates.",
     "hooks": {

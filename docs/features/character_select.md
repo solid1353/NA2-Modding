@@ -2,8 +2,8 @@
 
 ## Balance overlay
 
-`features.default_settings.mod_settings.character_selection.balance_overlay` is independently selectable from
-`features.default_settings.mod_settings.character_selection.character_balance`. Its guarded hook replaces the first
+`features.default_settings.mod_settings.match_setup.balance_overlay` is independently selectable from
+`features.default_settings.mod_settings.match_setup.character_balance`. Its guarded hook replaces the first
 native player-panel draw call with a wrapper that preserves that draw, resolves
 the selected character ID, and reads the same complete generated character
 table used by battle.
@@ -13,7 +13,7 @@ the corresponding top-screen block. Both lines in each block share one left
 edge. The two fixed-width blocks have mirrored outer and inner edges around the
 screen center, so changing either character cannot move its block. It
 additionally displays the resolved
-`SUB x%` value only when `features.default_settings.mod_settings.character_selection.character_balance` is `"overrides"`. With
+`SUB x%` value only when `features.default_settings.mod_settings.match_setup.character_balance` is `"overrides"`. With
 `"original"` balance, the table still supplies tier metadata to the
 overlay but is not applied to gameplay. The builder links the complete table
 once whenever either consumer needs it; it does not generate a partial or
@@ -21,7 +21,7 @@ alternate table.
 
 ## Support selection
 
-`features.default_settings.mod_settings.character_selection.support_selection` accepts `"all"`, `"relevant"`,
+`features.default_settings.mod_settings.match_setup.support_selection` accepts `"all"`, `"relevant"`,
 or `"none"`. Each mode builds one support roster per player, beginning with
 **No Support**:
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from typing import Mapping, Sequence
 
@@ -17,6 +18,28 @@ from ..modules.payload_builder.operations import (
     SymbolicPatch,
     encode_symbol_reference,
 )
+
+
+# Files the build adds live in this disc directory, with a manifest of changed source files.
+MOD_DIRECTORY = "228"
+MANIFEST_PATH = f"{MOD_DIRECTORY}/MANIFEST.TSV"
+
+
+def changed_source_manifest(
+    replacements: Sequence[FileReplacement],
+    renames: Sequence[FileRename],
+) -> bytes:
+    """Tab-separated list of changed source files with their source and output hashes."""
+    output_paths = {rename.source_path: rename.replacement_path for rename in renames}
+    lines = ["source_path\toutput_path\tsource_sha256\toutput_sha256"]
+    for replacement in sorted(replacements, key=lambda item: item.path):
+        lines.append("\t".join((
+            replacement.path,
+            output_paths.get(replacement.path, replacement.path),
+            hashlib.sha256(replacement.expected).hexdigest().upper(),
+            hashlib.sha256(replacement.replacement).hexdigest().upper(),
+        )))
+    return ("\r\n".join(lines) + "\r\n").encode("ascii")
 
 
 @dataclass(frozen=True)
@@ -156,6 +179,13 @@ def compose_assembly_plan(
             reason="Insert a module-declared image file",
         )
         for path, payload in sorted(insertions.items())
+    ) + (
+        FileInsertion(
+            path=MANIFEST_PATH,
+            payload=changed_source_manifest(replacements, renames),
+            owner=identity_owner,
+            reason="List the changed source files",
+        ),
     )
     return CompositionResult(
         plan=AssemblyPlan(replacements, insertion_operations, renames),

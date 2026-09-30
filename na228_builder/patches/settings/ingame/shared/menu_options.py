@@ -8,14 +8,17 @@ from decimal import Decimal
 
 from ..battle_mechanics.battle_settings_runtime import (
     BATTLE_MECHANICS_PATH,
+    EXTENDED_ITEMS_PATH,
+    MATCH_SETUP_PATH,
     battle_mechanic_enabled,
+    extended_items_enabled,
+    extended_items_option_default,
 )
 from ..battle_mechanics.substitution.substitution_gauge import gauge_option_defaults, chakra_minimum_option_default
 from ..battle_mechanics.items.items_settings import FIELD_ITEMS, ITEM_VALUE_LABELS, items_configuration, items_option_defaults
 
 
 MOD_SETTINGS_PATH = ("features", "default_settings", "mod_settings")
-CHARACTER_SELECTION_PATH = MOD_SETTINGS_PATH + ("character_selection",)
 
 
 @dataclass(frozen=True)
@@ -83,7 +86,7 @@ def menu_option_bindings(selection):
     )
     for argument, (key, label, help_text, values, labels) in enumerate(mod_rows):
         path = (MOD_SETTINGS_PATH if key == "simple_display"
-                else CHARACTER_SELECTION_PATH) + (key,)
+                else MATCH_SETUP_PATH) + (key,)
         options[path] = MenuOption(
             label, help_text, labels, configured_index(path, values),
             "mod_settings_option_get", "mod_settings_option_set", argument,
@@ -111,6 +114,11 @@ def menu_option_bindings(selection):
                 "substitution_gauge_option_get", "substitution_gauge_option_set", index,
                 enabled_by=("substitution_gauge_option_get", 2)
                 if key == "damage_percent_for_full_refill" else None)
+    if extended_items_enabled(selection):
+        options[EXTENDED_ITEMS_PATH] = MenuOption(
+            message("settings.extended_items.label"), message("settings.extended_items.help"),
+            (message("common.off"), message("common.on")), extended_items_option_default(selection),
+            "extended_items_option_get", "extended_items_option_set", 0)
     if items_configuration(selection) is not None:
         defaults = items_option_defaults(selection)
         custom_path = BATTLE_MECHANICS_PATH + ("items", "custom")

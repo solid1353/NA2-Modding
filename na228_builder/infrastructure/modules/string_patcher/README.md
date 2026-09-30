@@ -5,7 +5,7 @@ linked external placement, and compiles
 all concrete file-backed edits into one in-memory binary-patcher package.
 External strings are contributed as named read-only-data fragments with
 symbolic pointer writes; `payload_builder` assigns their offsets and constructs
-`PRG/228.BIN`, the composer resolves the pointers, and `binary_patcher` performs
+`228/228.BIN`, the composer resolves the pointers, and `binary_patcher` performs
 guarded writes and conflict validation. The engine never owns the shared file,
 loader, memory reservation, or final runtime addresses.
 

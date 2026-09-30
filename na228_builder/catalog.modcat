@@ -84,8 +84,8 @@
     menu_composition: {
       description: "Choose which submenus are available and their order before the default-setting rows.",
       mod_settings: {
+        match_setup: setting {},
         battle_mechanics: setting {},
-        character_selection: setting {},
         battle_settings: setting {},
         practice_settings: setting {},
         control_settings: setting {},
@@ -103,7 +103,7 @@
       mod_settings: {
         description: "Configure the options available in the in-game Mod Settings menu.",
         patch: "settings.mod_settings",
-        character_selection: {
+        match_setup: {
           support_selection: setting<"none" | "relevant" | "all"> {
             description: "Control which supports are available during Character Select.",
             patch: "character_select.support_selection",
@@ -115,6 +115,10 @@
           balance_overlay: setting<"off" | "on"> {
             description: "Show character balance information on Character Select.",
             patch: "character_select.balance_overlay",
+          },
+          extended_items: setting<bool> {
+            description: "Enable five battle-item slots instead of the native three.",
+            patch: "settings.extended_items",
           },
         },
         simple_display: setting<"off" | "on"> {

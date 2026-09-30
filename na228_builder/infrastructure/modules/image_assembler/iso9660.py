@@ -14,6 +14,7 @@ from .udf import Udf, UdfPlan
 SECTOR = 2048
 _ZERO_SECTOR = b"\0" * SECTOR
 _ISO_FILE_NAME = re.compile(r"[A-Z0-9_]+(?:\.[A-Z0-9_]+)?")
+_ISO_DIRECTORY_NAME = re.compile(r"[A-Z0-9_]{1,8}")
 
 
 def _flush_image(handle: object) -> None:
@@ -280,8 +281,12 @@ def normalize_iso_path(path: str) -> str:
     return normalized
 
 
-def _identifier_for_path(path: str) -> bytes:
+def _identifier_for_path(path: str, *, is_dir: bool = False) -> bytes:
     name = path.rsplit("/", 1)[-1]
+    if is_dir:
+        if not _ISO_DIRECTORY_NAME.fullmatch(name):
+            raise ValueError(f"Unsupported ISO9660 directory name: {name!r}")
+        return name.encode("ascii")
     if not _ISO_FILE_NAME.fullmatch(name):
         raise ValueError(f"Unsupported ISO9660 file name: {name!r}")
     identifier = f"{name};1".encode("ascii")
@@ -351,6 +356,7 @@ def _file_record(
     size: int,
     recorded_at: bytes,
     volume_sequence: bytes,
+    is_dir: bool = False,
 ) -> bytes:
     padding = 1 if len(identifier) % 2 == 0 else 0
     length = 33 + len(identifier) + padding
@@ -361,7 +367,7 @@ def _file_record(
     _set_both_endian_u32(raw, 2, extent)
     _set_both_endian_u32(raw, 10, size)
     raw[18:25] = recorded_at
-    raw[25] = 0
+    raw[25] = 0x02 if is_dir else 0
     raw[28:32] = volume_sequence
     raw[32] = len(identifier)
     raw[33:33 + len(identifier)] = identifier
@@ -402,8 +408,8 @@ def _directory_metadata_writes(
     handle,
     *,
     parent: IsoRecord,
-    entries: list[tuple[str, int, int]],
-) -> tuple[list[tuple[int, bytes]], dict[str, int]]:
+    entries: list[tuple[str, int, int, bool]],
+) -> tuple[list[tuple[int, bytes]], dict[str, int], int]:
     if parent.size <= 0:
         raise RuntimeError(f"Cannot append to empty ISO directory: {parent.path or '/'}")
     allocated_size = ((parent.size + SECTOR - 1) // SECTOR) * SECTOR
@@ -426,14 +432,15 @@ def _directory_metadata_writes(
     cursor = parent.size
     entry_offsets: dict[str, int] = {}
     appended: list[tuple[int, bytes]] = []
-    for path, extent, size in entries:
-        identifier = _identifier_for_path(path)
+    for path, extent, size, is_dir in entries:
+        identifier = _identifier_for_path(path, is_dir=is_dir)
         record = _file_record(
             identifier=identifier,
             extent=extent,
             size=size,
             recorded_at=bytes(self_record[18:25]),
             volume_sequence=bytes(self_record[28:32]),
+            is_dir=is_dir,
         )
         sector_remaining = SECTOR - (cursor % SECTOR)
         if len(record) > sector_remaining:
@@ -531,7 +538,143 @@ def _directory_metadata_writes(
             )
         )
 
-    return writes, entry_offsets
+    return writes, entry_offsets, new_size
+
+
+def _new_directory_data(
+    *,
+    extent: int,
+    parent: IsoRecord,
+    parent_size: int,
+    handle,
+    entries: list[tuple[str, int, int]],
+) -> tuple[bytes, dict[str, int]]:
+    """One-sector directory: self and parent records, then its file records."""
+    handle.seek(parent.byte_offset)
+    parent_self = _read_record_at(handle, parent.byte_offset, f"{parent.path or '/'} self record")
+    recorded_at = bytes(parent_self[18:25])
+    volume_sequence = bytes(parent_self[28:32])
+    records = [
+        _file_record(identifier=b"\x00", extent=extent, size=0, recorded_at=recorded_at,
+                     volume_sequence=volume_sequence, is_dir=True),
+        _file_record(identifier=b"\x01", extent=parent.extent, size=parent_size,
+                     recorded_at=recorded_at, volume_sequence=volume_sequence, is_dir=True),
+    ]
+    offsets: dict[str, int] = {}
+    cursor = sum(len(record) for record in records)
+    for path, file_extent, size in entries:
+        record = _file_record(identifier=_identifier_for_path(path), extent=file_extent,
+                              size=size, recorded_at=recorded_at,
+                              volume_sequence=volume_sequence)
+        offsets[path] = extent * SECTOR + cursor
+        records.append(record)
+        cursor += len(record)
+    if cursor > SECTOR:
+        raise RuntimeError(f"New ISO directory does not fit one sector: {entries}")
+    data = bytearray(b"".join(records))
+    _set_both_endian_u32(data, 10, len(data))
+    return bytes(data), offsets
+
+
+def _path_table_order(table: bytes) -> dict[str, int]:
+    """Rank each directory path by its row in an existing little-endian path table."""
+    paths = [""]
+    ranks: dict[str, int] = {}
+    offset = 0
+    while offset < len(table) and table[offset]:
+        length = table[offset]
+        parent = int.from_bytes(table[offset + 6:offset + 8], "little")
+        identifier = table[offset + 8:offset + 8 + length]
+        if paths[1:] or identifier != b"\x00":
+            if not 1 <= parent <= len(paths):
+                raise RuntimeError("ISO path table has an invalid parent number")
+            name = identifier.decode("ascii").upper()
+            parent_path = paths[parent - 1]
+            path = f"{parent_path}/{name}" if parent_path else name
+            paths.append(path)
+        ranks[paths[-1]] = len(ranks)
+        offset += 8 + length + (length & 1)
+    return ranks
+
+
+def _path_table(
+    directories: Mapping[str, int],
+    *,
+    big_endian: bool,
+    ranks: Mapping[str, int],
+) -> bytes:
+    """ISO9660 path table by depth and parent, keeping existing rows in their order.
+
+    Directories without a rank follow the existing ones at their level, by name.
+    """
+    order = "big" if big_endian else "little"
+    numbers: dict[str, int] = {"": 1}
+    rows = [("", b"\x00", 1)]
+    depth = 0
+    while True:
+        level = [path for path in directories if path and path.count("/") == depth]
+        if not level:
+            break
+        level.sort(key=lambda path: (
+            numbers[path.rpartition("/")[0]],
+            ranks.get(path, len(ranks)),
+            path.rpartition("/")[2].encode("ascii"),
+        ))
+        for path in level:
+            rows.append((path, path.rpartition("/")[2].encode("ascii"),
+                         numbers[path.rpartition("/")[0]]))
+            numbers[path] = len(rows)
+        depth += 1
+    table = bytearray()
+    for path, identifier, parent_number in rows:
+        table += bytes((len(identifier), 0))
+        table += directories[path].to_bytes(4, order)
+        table += parent_number.to_bytes(2, order)
+        table += identifier
+        if len(identifier) % 2:
+            table.append(0)
+    return bytes(table)
+
+
+def _path_table_writes(
+    image: Iso9660,
+    handle,
+    directories: Mapping[str, int],
+) -> list[_PlannedWrite]:
+    """Rewrite every path table copy and the table size for a changed directory set."""
+    handle.seek(image.primary_volume_descriptor_offset)
+    primary = handle.read(SECTOR)
+    old_size = _both_endian_u32(primary, 132, "path table size")
+    current = {record.path: record.extent for record in image.records if record.is_dir}
+    handle.seek(int.from_bytes(primary[140:144], "little") * SECTOR)
+    ranks = _path_table_order(handle.read(old_size))
+    new_size = len(_path_table(directories, big_endian=False, ranks=ranks))
+    writes: list[_PlannedWrite] = []
+    for field, big_endian in ((140, False), (144, False), (148, True), (152, True)):
+        location = int.from_bytes(primary[field:field + 4], "big" if big_endian else "little")
+        if location == 0:
+            continue
+        handle.seek(location * SECTOR)
+        existing = handle.read(max(old_size, new_size))
+        if existing[:old_size] != _path_table(current, big_endian=big_endian, ranks=ranks):
+            raise RuntimeError(f"ISO path table at sector {location} does not match its tree")
+        capacity = ((old_size + SECTOR - 1) // SECTOR) * SECTOR
+        if new_size > capacity or any(existing[old_size:]):
+            raise RuntimeError(f"ISO path table at sector {location} has no room to grow")
+        replacement = _path_table(directories, big_endian=big_endian, ranks=ranks)
+        if replacement != existing:
+            writes.append(_PlannedWrite(
+                location * SECTOR, existing, replacement.ljust(len(existing), b"\0"),
+                f"ISO9660 path table at sector {location}",
+            ))
+    size_field = bytearray(8)
+    _set_both_endian_u32(size_field, 0, new_size)
+    if bytes(size_field) != primary[132:140]:
+        writes.append(_PlannedWrite(
+            image.primary_volume_descriptor_offset + 132, bytes(primary[132:140]),
+            bytes(size_field), "ISO9660 path table size",
+        ))
+    return writes
 
 
 def _normalized_renames(renames: Mapping[str, str]) -> dict[str, str]:
@@ -633,6 +776,7 @@ def compose_filesystems(
 
     normalized_payloads: dict[str, bytes] = {}
     parents: dict[str, IsoRecord] = {}
+    new_directories: set[str] = set()
     for supplied_path, supplied_data in payloads.items():
         path = normalize_iso_path(supplied_path)
         if path in normalized_payloads:
@@ -647,12 +791,22 @@ def compose_filesystems(
         _identifier_for_path(path)
         parent_path = path.rpartition("/")[0]
         parent = source.by_path.get(parent_path)
-        if parent is None or not parent.is_dir:
-            raise RuntimeError(
-                f"ISO insertion parent directory does not exist: {parent_path or '/'}"
-            )
+        if parent is None:
+            # A missing parent becomes one new directory under an existing directory.
+            grandparent_path = parent_path.rpartition("/")[0]
+            grandparent = source.by_path.get(grandparent_path)
+            if grandparent is None or not grandparent.is_dir:
+                raise RuntimeError(
+                    f"ISO insertion parent directory does not exist: {parent_path or '/'}"
+                )
+            _identifier_for_path(parent_path, is_dir=True)
+            new_directories.add(parent_path)
+            parents[grandparent_path] = grandparent
+        elif not parent.is_dir:
+            raise RuntimeError(f"ISO insertion parent is not a directory: {parent_path}")
+        else:
+            parents[parent_path] = parent
         normalized_payloads[path] = data
-        parents[parent_path] = parent
 
     occupied_end = max(
         record.extent + ((record.size + SECTOR - 1) // SECTOR)
@@ -677,7 +831,30 @@ def compose_filesystems(
             allocation[path] = extent
             search_sector = extent + sector_count
 
+        directory_extents: dict[str, int] = {}
+        for directory_path in sorted(new_directories):
+            extent = _find_zero_extent(
+                handle,
+                start_sector=search_sector,
+                sector_count=1,
+                volume_space_size=source.volume_space_size,
+                path=f"ISO directory {directory_path}",
+            )
+            directory_extents[directory_path] = extent
+            search_sector = extent + 1
+
+        udf_directory_sectors: dict[str, tuple[int, int]] = {}
         if udf is not None:
+            for directory_path in sorted(new_directories):
+                entry_sector = _find_zero_extent(
+                    handle,
+                    start_sector=search_sector,
+                    sector_count=2,
+                    volume_space_size=source.volume_space_size,
+                    path=f"UDF directory {directory_path}",
+                )
+                udf_directory_sectors[directory_path] = (entry_sector, entry_sector + 1)
+                search_sector = entry_sector + 2
             for path in sorted(normalized_payloads):
                 sector = _find_zero_extent(
                     handle,
@@ -689,14 +866,35 @@ def compose_filesystems(
                 udf_file_entry_sectors[path] = sector
                 search_sector = sector + 1
 
-        metadata_writes: list[tuple[int, bytes]] = []
-        for parent_path in sorted(parents):
-            entries = [
+        def files_in(directory_path: str) -> list[tuple[str, int, int]]:
+            return [
                 (path, allocation[path], len(normalized_payloads[path]))
                 for path in sorted(normalized_payloads)
-                if path.rpartition("/")[0] == parent_path
+                if path.rpartition("/")[0] == directory_path
             ]
-            writes, offsets = _directory_metadata_writes(
+
+        # A new directory's length depends only on its entries, not its parent's size.
+        new_directory_sizes = {
+            directory_path: len(_new_directory_data(
+                extent=directory_extents[directory_path],
+                parent=parents[directory_path.rpartition("/")[0]],
+                parent_size=0,
+                handle=handle,
+                entries=files_in(directory_path),
+            )[0])
+            for directory_path in new_directories
+        }
+        metadata_writes: list[tuple[int, bytes]] = []
+        parent_sizes: dict[str, int] = {}
+        for parent_path in sorted(parents):
+            entries = [
+                (path, directory_extents[path], new_directory_sizes[path], True)
+                for path in sorted(new_directories)
+                if path.rpartition("/")[0] == parent_path
+            ] + [
+                (path, extent, size, False) for path, extent, size in files_in(parent_path)
+            ]
+            writes, offsets, parent_sizes[parent_path] = _directory_metadata_writes(
                 source,
                 handle,
                 parent=parents[parent_path],
@@ -704,6 +902,34 @@ def compose_filesystems(
             )
             metadata_writes.extend(writes)
             directory_offsets.update(offsets)
+
+        for directory_path in sorted(new_directories):
+            parent_path = directory_path.rpartition("/")[0]
+            data, offsets = _new_directory_data(
+                extent=directory_extents[directory_path],
+                parent=parents[parent_path],
+                parent_size=parent_sizes[parent_path],
+                handle=handle,
+                entries=files_in(directory_path),
+            )
+            directory_offsets.update(offsets)
+            extent = directory_extents[directory_path]
+            handle.seek(extent * SECTOR)
+            if handle.read(SECTOR) != _ZERO_SECTOR:
+                raise RuntimeError(f"ISO directory extent changed: {directory_path}")
+            planned_writes.append(_PlannedWrite(
+                extent * SECTOR,
+                _ZERO_SECTOR,
+                data + b"\0" * (SECTOR - len(data)),
+                f"ISO9660 directory {directory_path}",
+            ))
+
+        if new_directories:
+            directories = {
+                record.path: record.extent for record in source.records if record.is_dir
+            }
+            directories.update(directory_extents)
+            planned_writes.extend(_path_table_writes(source, handle, directories))
 
         for path in sorted(normalized_payloads):
             extent = allocation[path]
@@ -740,6 +966,7 @@ def compose_filesystems(
             },
             file_entry_sectors=udf_file_entry_sectors,
             renames=renames,
+            new_directories=udf_directory_sectors,
         )
         planned_writes.extend(
             _PlannedWrite(write.offset, write.expected, write.replacement, write.reason)
@@ -759,9 +986,16 @@ def compose_filesystems(
     result = Iso9660(image)
     expected_tree = {(record.path, record.is_dir) for record in source.records}
     expected_tree.update((path, False) for path in normalized_payloads)
+    expected_tree.update((path, True) for path in new_directories)
     result_tree = {(record.path, record.is_dir) for record in result.records}
     if result_tree != expected_tree:
         raise RuntimeError("ISO composition changed the file tree beyond declared additions")
+    if new_directories:
+        with image.open("rb") as handle:
+            if _path_table_writes(result, handle, {
+                record.path: record.extent for record in result.records if record.is_dir
+            }):
+                raise RuntimeError("Final ISO path tables do not match the directory tree")
 
     result_udf: Udf | None = None
     udf_insertions = {}

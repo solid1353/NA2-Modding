@@ -576,8 +576,9 @@ class Udf:
         icb_length: int,
         icb_lbn: int,
         tag_location: int,
+        characteristics: int = 0,
     ) -> bytes:
-        identifier = _encode_cs0(name)
+        identifier = _encode_cs0(name) if name else b""
         length = (38 + len(identifier) + 3) & ~3
         raw = bytearray(length)
         _set_u16(raw, 0, 257)
@@ -586,7 +587,7 @@ class Udf:
         _set_u16(raw, 10, length - 16)
         _set_u32(raw, 12, tag_location)
         _set_u16(raw, 16, 1)
-        raw[18] = 0
+        raw[18] = characteristics
         raw[19] = len(identifier)
         _set_u32(raw, 20, icb_length)
         _set_u32(raw, 24, icb_lbn)
@@ -602,6 +603,7 @@ class Udf:
         insertion_extents: Mapping[str, tuple[int, int]],
         file_entry_sectors: Mapping[str, int],
         renames: Mapping[str, str],
+        new_directories: Mapping[str, tuple[int, int]] | None = None,
     ) -> UdfPlan:
         normalized_insertions = {
             _normalize_path(path): value for path, value in insertion_extents.items()
@@ -687,24 +689,93 @@ class Udf:
 
         insertion_results: list[UdfInsertion] = []
         next_unique_id = max(record.unique_id for record in self.records) + 1
+        new_directory_sectors = {
+            _normalize_path(path): sectors for path, sectors in (new_directories or {}).items()
+        }
         insertions_by_parent: dict[str, list[str]] = {}
         for path in sorted(normalized_insertions):
             if path in self.by_path:
                 raise RuntimeError(f"UDF insertion path already exists: {path}")
             parent_path = path.rpartition("/")[0]
             parent = self.by_path.get(parent_path)
-            if parent is None or not parent.is_dir:
+            if parent_path not in new_directory_sectors and (parent is None or not parent.is_dir):
                 raise RuntimeError(f"UDF insertion parent does not exist: {parent_path}")
             insertions_by_parent.setdefault(parent_path, []).append(path)
 
         new_file_entry_writes: list[UdfWrite] = []
+        cursors: dict[str, int] = {}
+        new_directory_data: dict[str, tuple[int, bytearray]] = {}
+
+        def partition_lbn(sector: int, context: str) -> int:
+            if not self.partition_start <= sector < self.partition_start + self.partition_length:
+                raise RuntimeError(f"UDF {context} is outside the partition")
+            if any(self._read_absolute_block(sector)):
+                raise RuntimeError(f"UDF {context} sector is not zero")
+            return sector - self.partition_start
+
+        def append_identifier(parent_path: str, identifier_for) -> int:
+            """Append one FID to a directory buffer; return its absolute offset."""
+            if parent_path in new_directory_data:
+                data_lbn, directory = new_directory_data[parent_path]
+            else:
+                parent, directory = directory_buffer(parent_path)
+                data_lbn = parent.data_lbn
+                cursors.setdefault(parent_path, parent.information_length)
+            cursor = cursors[parent_path]
+            identifier = identifier_for(data_lbn + cursor // BLOCK_SIZE)
+            remaining = BLOCK_SIZE - cursor % BLOCK_SIZE
+            if len(identifier) > remaining:
+                cursor += remaining
+            end = cursor + len(identifier)
+            if end > len(directory):
+                raise RuntimeError(
+                    f"UDF directory has no FID capacity: {parent_path or '/'} "
+                    f"needs {end}/{len(directory)} bytes"
+                )
+            if any(directory[cursor:end]):
+                raise RuntimeError(f"UDF directory append area is not zero: {parent_path or '/'}")
+            directory[cursor:end] = identifier
+            cursors[parent_path] = end
+            return (self.partition_start + data_lbn) * BLOCK_SIZE + cursor
+
+        directory_templates = [record for record in self.records if record.is_dir and record.path]
+        if new_directory_sectors and not directory_templates:
+            raise RuntimeError("UDF has no directory File Entry template")
+        new_directory_entries: dict[str, tuple[int, int]] = {}
+        for directory_path in sorted(new_directory_sectors):
+            if directory_path in self.by_path:
+                raise RuntimeError(f"UDF directory already exists: {directory_path}")
+            parent_path = directory_path.rpartition("/")[0]
+            parent = self.by_path.get(parent_path)
+            if parent is None or not parent.is_dir:
+                raise RuntimeError(f"UDF directory parent does not exist: {parent_path or '/'}")
+            entry_sector, data_sector = new_directory_sectors[directory_path]
+            entry_lbn = partition_lbn(entry_sector, f"directory ICB {directory_path}")
+            data_lbn = partition_lbn(data_sector, f"directory data {directory_path}")
+            template = directory_templates[-1]
+            entry_length = template.file_entry_length
+            new_directory_entries[directory_path] = (entry_lbn, entry_length)
+            append_identifier(parent_path, lambda location: self._file_identifier(
+                name=directory_path.rsplit("/", 1)[-1], icb_length=entry_length,
+                icb_lbn=entry_lbn, tag_location=location, characteristics=0x02,
+            ))
+            # The new directory's parent FID adds one link to the parent directory.
+            _, parent_entry = file_entry_buffer(parent_path)
+            _set_u16(parent_entry, 48, _u16(parent_entry, 48) + 1)
+            new_directory_data[directory_path] = (data_lbn, bytearray(BLOCK_SIZE))
+            cursors[directory_path] = 0
+            append_identifier(directory_path, lambda location: self._file_identifier(
+                name="", icb_length=parent.icb_length, icb_lbn=parent.icb_lbn,
+                tag_location=location, characteristics=0x0A,
+            ))
+
+        file_templates = [record for record in self.records if not record.is_dir]
         for parent_path in sorted(insertions_by_parent):
-            parent, directory = directory_buffer(parent_path)
             template_candidates = [
                 self.by_path[path]
-                for path in self.children[parent_path]
+                for path in self.children.get(parent_path, [])
                 if not self.by_path[path].is_dir
-            ]
+            ] or file_templates
             if not template_candidates:
                 raise RuntimeError(
                     f"UDF insertion directory lacks a file-entry template: {parent_path}"
@@ -713,7 +784,6 @@ class Udf:
             template_data = self._read_range(
                 template.file_entry_offset, template.file_entry_length
             )
-            cursor = parent.information_length
             for path in insertions_by_parent[parent_path]:
                 absolute_extent, size = normalized_insertions[path]
                 file_entry_sector = normalized_entries[path]
@@ -755,47 +825,66 @@ class Udf:
                     )
                 )
 
-                identifier = self._file_identifier(
-                    name=path.rsplit("/", 1)[-1],
-                    icb_length=len(file_entry),
-                    icb_lbn=file_entry_lbn,
-                    tag_location=parent.data_lbn + cursor // BLOCK_SIZE,
+                directory_record_offset = append_identifier(
+                    parent_path,
+                    lambda location, file_entry=file_entry, file_entry_lbn=file_entry_lbn:
+                        self._file_identifier(
+                            name=path.rsplit("/", 1)[-1],
+                            icb_length=len(file_entry),
+                            icb_lbn=file_entry_lbn,
+                            tag_location=location,
+                        ),
                 )
-                remaining = BLOCK_SIZE - cursor % BLOCK_SIZE
-                if len(identifier) > remaining:
-                    cursor += remaining
-                end = cursor + len(identifier)
-                if end > len(directory):
-                    raise RuntimeError(
-                        f"UDF directory has no FID capacity for {path}: "
-                        f"{parent_path or '/'} uses {parent.information_length}/"
-                        f"{len(directory)} bytes"
-                    )
-                if any(directory[cursor:end]):
-                    raise RuntimeError(f"UDF directory append area is not zero: {path}")
-                directory[cursor:end] = identifier
                 insertion_results.append(
                     UdfInsertion(
                         path=path,
                         file_entry_offset=file_entry_sector * BLOCK_SIZE,
-                        directory_record_offset=(
-                            self.partition_start + parent.data_lbn
-                        ) * BLOCK_SIZE + cursor,
+                        directory_record_offset=directory_record_offset,
                     )
                 )
-                cursor = end
                 next_unique_id += 1
 
+        for parent_path in sorted(path for path in cursors if path not in new_directory_data):
+            parent = self.by_path[parent_path]
             _, parent_entry = file_entry_buffer(parent_path)
-            updated_parent = self._updated_file_entry(
+            parent_entry[:] = self._updated_file_entry(
                 bytes(parent_entry),
-                information_length=cursor,
+                information_length=cursors[parent_path],
                 logical_blocks=parent.logical_blocks_recorded,
                 data_lbn=parent.data_lbn,
                 unique_id=parent.unique_id,
                 tag_location=parent.icb_lbn,
             )
-            parent_entry[:] = updated_parent
+
+        for directory_path in sorted(new_directory_data):
+            data_lbn, directory = new_directory_data[directory_path]
+            entry_lbn, _entry_length = new_directory_entries[directory_path]
+            template = directory_templates[-1]
+            template_data = bytearray(self._read_range(
+                template.file_entry_offset, template.file_entry_length
+            ))
+            _set_u16(template_data, 48, 1)
+            file_entry = self._updated_file_entry(
+                bytes(template_data),
+                information_length=cursors[directory_path],
+                logical_blocks=1,
+                data_lbn=data_lbn,
+                unique_id=next_unique_id,
+                tag_location=entry_lbn,
+            )
+            next_unique_id += 1
+            new_file_entry_writes.append(UdfWrite(
+                (self.partition_start + entry_lbn) * BLOCK_SIZE,
+                b"\0" * BLOCK_SIZE,
+                file_entry + b"\0" * (BLOCK_SIZE - len(file_entry)),
+                f"UDF File Entry for directory {directory_path}",
+            ))
+            new_file_entry_writes.append(UdfWrite(
+                (self.partition_start + data_lbn) * BLOCK_SIZE,
+                b"\0" * BLOCK_SIZE,
+                bytes(directory),
+                f"UDF directory data for {directory_path}",
+            ))
 
         writes: list[UdfWrite] = []
         for path in sorted(directory_buffers):
@@ -824,7 +913,7 @@ class Udf:
                 )
         writes.extend(new_file_entry_writes)
 
-        if normalized_insertions:
+        if normalized_insertions or new_directory_sectors:
             actual_file_count = sum(not record.is_dir for record in self.records)
             actual_directory_count = sum(record.is_dir for record in self.records)
             integrity = bytearray(self.integrity)
@@ -836,7 +925,13 @@ class Udf:
                 )
             elif self.recorded_file_count != 0:
                 raise RuntimeError("UDF integrity file count is stale")
-            if self.recorded_directory_count not in (0, actual_directory_count):
+            if self.recorded_directory_count == actual_directory_count:
+                _set_u32(
+                    integrity,
+                    self.integrity_implementation_offset + 36,
+                    actual_directory_count + len(new_directory_sectors),
+                )
+            elif self.recorded_directory_count != 0:
                 raise RuntimeError("UDF integrity directory count is stale")
             _refresh_tag(integrity, 0)
             if bytes(integrity) != self.integrity:

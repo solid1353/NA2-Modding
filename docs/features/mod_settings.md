@@ -1,18 +1,20 @@
 # Mod Settings
 
 `features.default_settings.mod_settings` defines the initial values and Return to
-Defaults values for the session-wide Mod Settings menu. The Character Selection
-submenu contains these values:
+Defaults values for the session-wide Mod Settings menu. The Match Setup
+submenu holds settings that apply from the next battle:
 
 | Field | Menu row | Values |
 | --- | --- | --- |
 | `support_selection` | Support Selection | `none`, `relevant`, `all` |
 | `character_balance` | Character Balance | `original`, `overrides` |
 | `balance_overlay` | Balance Overlay | `off`, `on` |
+| `extended_items` | Extended Items | `false`, `true`; see [Extended Items](battle.md#extended-items) |
 
 `simple_display` (`off` or `on`) remains on the Mod Settings root.
 
-The builder always includes the four runtime implementations. Their configured
+The builder always includes the runtime implementations of Simple Display and
+the first three Match Setup rows. Their configured
 values initialize one writable runtime state when the game starts. With
 `features.memory_card.extended_save_data` enabled, the existing save flow
 writes these values and every other runtime-editable value below
@@ -44,10 +46,10 @@ that page in the reset notice. On the root page, this resets Simple Display;
 child pages retain their own values until reset separately. Square opens a
 configured submenu. Opening plays the same sound as native Practice Settings.
 
-`features.menu_composition.mod_settings` controls the Battle Mechanics,
-Character Selection, Battle Settings, Practice Settings, and Control Settings
-launchers. Their config order places Control Settings after Practice Settings
-in the base menu, before the root Simple Display row. The launcher switches and
+`features.menu_composition.mod_settings` controls the Match Setup,
+Battle Mechanics, Battle Settings, Practice Settings, and Control Settings
+launchers. Their config order places Match Setup first and Control Settings
+after Practice Settings in the base menu, before the root Simple Display row. The launcher switches and
 order remain configurable. `menu_composition` is omitted from release config
 and catalog exports; the packaged builder retains its resolved release values.
 Battle Mechanics opens

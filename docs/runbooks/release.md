@@ -65,7 +65,7 @@ available languages regardless of the packaged default. It also embeds
 payload-builder configuration,
 precompiled objects for injection-owned runtime C and assembly sources, and the
 reviewed localized CCS assets used to construct
-`PRG/228_UI.BIN`. It does not embed the project PS2 toolchain, source ISOs, or
+`228/UI.BIN`. It does not embed the project PS2 toolchain, source ISOs, or
 extracted source trees. The loader validates public fields against the embedded
 catalog, restores hidden defaults, and validates the complete configuration.
 
@@ -185,6 +185,9 @@ not rebuild the package.
 A production publication sequence, automated by `na228 release [version]`, is:
 
 1. update and validate the release configuration, catalog, and release manifest;
+   for an official release (not a beta or prerelease), check whether changes
+   since the previous official release need a save schema bump; if so, tell the
+   user why and wait for their answer;
 2. run the production builder from a clean committed tree;
 3. perform any desired clean-machine/runtime acceptance;
 4. create an annotated `v<product_version>` tag;

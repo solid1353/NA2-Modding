@@ -230,6 +230,12 @@ def _apply_and_verify_assembly(
         for record in source.records
     }
     expected_tree.update((path, False) for path in insertions)
+    # Insertions may create one new directory under an existing one.
+    expected_tree.update(
+        (path.rpartition("/")[0], True)
+        for path in insertions
+        if path.rpartition("/")[0] not in source.by_path
+    )
     result_tree = {(record.path, record.is_dir) for record in result.records}
     if result_tree != expected_tree:
         raise RuntimeError("Final image file tree differs from the assembly plan")

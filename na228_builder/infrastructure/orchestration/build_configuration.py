@@ -800,8 +800,9 @@ def build_configuration_candidate(
     composition = composed.composition
     assembly = assemble_image(source_iso, output_iso, composition.plan)
     results_by_owner: dict[str, list[IsoInsertion]] = {}
+    planned_owners = {item.path: item.owner for item in composition.plan.insertions}
     for insertion in assembly.insertions:
-        owner = composed.insertion_owners[insertion.path]
+        owner = planned_owners[insertion.path]
         results_by_owner.setdefault(owner, []).append(insertion)
     for item in configuration_results:
         module = item["module"]

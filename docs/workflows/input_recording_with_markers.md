@@ -33,7 +33,7 @@ markers for baseline or candidate validation.
 3. Replay the same recording against the ISO returned by that command:
 
    ```powershell
-   na228 <iso-path> -s <recording> <task-owned-candidate-path>
+   na228 <iso-path> -s <recording> -o <task-owned-candidate-path>
    ```
 
    Use an explicit

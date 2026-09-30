@@ -25,6 +25,7 @@ CONFIG_KEYS = {
     "maximum_end",
     "reservation_end",
     "loader_function",
+    "loader_directory_address",
     "original_constructor_function",
     "hook_file_offset",
     "cave_file_offset",
@@ -47,6 +48,7 @@ class ResidentPayloadConfig:
     maximum_end: int
     reservation_end: int
     loader_function: int
+    loader_directory_address: int
     original_constructor_function: int
     hook_file_offset: int
     cave_file_offset: int
@@ -92,9 +94,16 @@ def load_config(path: Path | None = None) -> ResidentPayloadConfig:
             f"extra={sorted(values.keys() - CONFIG_KEYS)}"
         )
     output_path = values["output_path"]
-    output_name = Path(output_path).name
-    if output_path != f"PRG/{output_name}" or output_name != output_name.upper():
-        raise ValueError("resident payload must be an uppercase file directly under PRG")
+    output_directory, _, output_name = output_path.rpartition("/")
+    # The loader's four-byte "PRG\" directory text is swapped for this directory.
+    if (
+        len(output_directory) != 3
+        or "/" in output_directory
+        or output_path != output_path.upper()
+    ):
+        raise ValueError(
+            "resident payload must be an uppercase file in a three-character root directory"
+        )
     if len(output_name.encode("ascii") + b"\0") != 8:
         raise ValueError("resident-payload filename must encode to seven ASCII bytes")
     parsed = {

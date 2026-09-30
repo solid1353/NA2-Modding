@@ -20,7 +20,7 @@ selection include it, so mod-added support labels do not depend on selecting
 English. It installs no native screen hooks by itself.
 
 These components compose into the shared resident payload. The
-payload builder assigns final addresses in `PRG/228.BIN`; catalog injections
+payload builder assigns final addresses in `228/228.BIN`; catalog injections
 declare fragments, relocations, symbols, and ABI metadata. Checked-in aggregate
 MIPS payload blobs are not production inputs.
 
@@ -72,7 +72,7 @@ bonus renderers are runtime-proven.
 ## Resident implementation
 
 All executable Font helpers and trampolines are feature-owned
-`runtime_injector` fragments linked into the shared `PRG/228.BIN`. The feature
+`runtime_injector` fragments linked into the shared `228/228.BIN`. The feature
 declares symbols, relocations, ABI metadata, and guarded hooks but no final
 payload offsets. C owns layout policy and formatting; small assembly bridges
 remain only where a native entry contract, displaced instruction, delay slot,

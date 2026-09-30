@@ -165,6 +165,7 @@ class PayloadBuilderTests(unittest.TestCase):
             (0x4D690C, 0x2463D080),
         ):
             struct.pack_into("<I", clean, offset, word)
+        clean[0x1300:0x1304] = b"PRG\\"
         struct.pack_into("<I", clean, 0x2F79F4, config.old_memory_boundary)
         struct.pack_into("<I", clean, 0x50763C, config.old_memory_boundary)
         struct.pack_into(

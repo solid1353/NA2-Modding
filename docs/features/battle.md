@@ -1,7 +1,7 @@
 # Battle
 
 Battle menu defaults and Character Overrides live under `features.default_settings`.
-`features.default_settings.mod_settings.character_selection.character_balance` loads layered TSV data and emits one
+`features.default_settings.mod_settings.match_setup.character_balance` loads layered TSV data and emits one
 resident table shared by its current per-character battle consumers.
 
 ## Battle Settings
@@ -68,9 +68,12 @@ custom values `no_contest` and `no_hud`. The configured value initializes the
 shared runtime enum and is restored when its page is reset in either menu;
 changing and confirming it in either menu updates the other menu.
 
-`no_contest` blocks both players' contest inputs and suppresses the contest
-meter, prompts, and result messages while retaining the native contest
-lifecycle. `no_hud` includes that behavior and hides and restores the complete
+`no_contest` keeps the native contest object's creation, updates, and teardown
+but never draws it, so neither player sees a meter, prompt, or result. The
+native render path also advances the contest timer and result display, so the
+contest never resolves: no input changes the outcome, and the jutsu deals its
+full record damage. The intro also runs its full countdown instead of ending
+early when the Ultimate Jutsu voice line stops. `no_hud` includes that behavior and hides and restores the complete
 battle HUD through the same native transition used by ordinary Jutsu. Native
 motion, timing, visibility, and restoration apply to the existing HUD and
 injected children, including the substitution bar. Both custom values retain
@@ -86,9 +89,10 @@ The comparative no-object behavior is documented in
 [NUN6 battle mechanics](nun6/gameplay/battle.md#ultimate-jutsu-contest).
 
 The implementation preserves native contest allocation and updates while
-wrapping the resident call at ELF offset `0xF0A40` to suppress the common
-contest renderer in the two custom modes. The input calls at BTL offsets `0xB6094` and
-`0xB62F0` are routed through zero-returning helpers. The complete-HUD mode
+wrapping the resident call at ELF offset `0xF0A40` to skip the contest render
+dispatcher in the two custom modes. The presentation's two voice-stream status
+reads at BTL offsets `0xB6094` and `0xB62F0` are routed through zero-returning
+helpers, so its voice-started latch stays clear. The complete-HUD mode
 edge-detects the contest object around the BTL call at offset `0x67030` and
 uses native hide/show requests `0x001F1820(-1)` and `0x001F1A20(-1)`.
 Before the displaced HUD update, it keeps each HP child's damage-trail delay
@@ -167,8 +171,8 @@ Root launchers in `menu_composition` reference either a named group under
 appears only at its launcher position. `battle_mechanics: true` exposes that shared page in either
 mode, while `false` hides its launcher without disabling the shared gameplay
 settings. Mod Settings exposes Battle and Practice defaults without repeating
-their Battle Mechanics launchers; its Character Selection group follows Battle
-Mechanics in the base launcher order.
+their Battle Mechanics launchers; its Match Setup group comes first in the base
+launcher order.
 
 The same traversal discovers Chakra, Gauge, and Custom Items pages. Item
 toggles sit directly under `battle_mechanics.items.custom`; the base config
@@ -186,20 +190,122 @@ Back at the root closes without applying and uses the cancel sound (`0x33`).
 
 ## Control Settings
 
-`features.general.new_controls` keeps the two native actions as Guard/Sub 1 and
-Guard/Sub 2 and adds separate Guard and Substitution actions. Either combined
-action blocks and substitutes; the added Guard action only blocks, and the
-added Substitution action only substitutes. Substitution accepts a buffered
-press or the held added binding after the attack's timing gate. An unbound
-action cannot count as a press.
+Control bindings, including Item Select L and R, are documented in
+[Controls](controls.md).
 
-The feature's default map binds L1 to Substitution, R1 to Guard, L2 to Item
-Select, and R2 to Linked Attack for both players. In Control Settings, each
-shoulder button can also choose either Guard/Sub action. Choosing a bound
-action swaps assignments; choosing an unbound action leaves the displaced
-action unbound. Guard/Sub 1 and 2 remain in the native per-player map; the
-added Guard and Substitution bindings use the save appendix. Select restores
-the default map and leaves both Guard/Sub actions unbound.
+## Extended Items
+
+`features.default_settings.mod_settings.match_setup.extended_items` accepts
+`false` or `true`; the base and release configurations use `true`. Its
+`Extended Items: Off | On` row appears only on the Mod Settings Match Setup
+page, so it cannot change during a battle or a Practice session. Save appendix
+field `0005` stores it.
+
+When off, every inventory routine runs the native three-slot code, and the
+wheel origin, item alignment, selection-badge offsets, and count placement stay
+native. When on, each fighter holds five item slots:
+
+- pickups stack up to nine per slot and fill an empty inventory slot. Each new
+  item enters the cyclic wheel order at the next alternating arm;
+- used or lost items leave inventory gaps while the surviving items retain
+  their cyclic order;
+- the HUD wheel keeps the selection in the middle and fills the remaining
+  positions in occupied-item order along a mirrored sweep, with empty frames
+  for unused positions;
+- Practice captures and restores every configured slot.
+
+CPU item use keeps the native rule that only the selected item and the items
+one step away are reachable.
+
+The panel constructor latches the toggle before it seeds starting items,
+so a changed value applies from the next battle. Native inventory
+behavior, addresses, and the HUD formula are documented in
+[Battle item inventory](../knowledge/gameplay/battle_item_inventory.md).
+
+### Implementation
+
+`@builder/patches/settings/extended_items/extended_items.c`
+owns the setting state, the latched toggle, the added slots, and the five-slot
+routines. The panel keeps its three native slot objects as slots
+`0..2`; slots `3` and `4` are two resident 8-byte slots per side with the
+native layout. A per-side permutation of the five slot indexes owns the cyclic
+order without moving item codes or counts between physical slots. Selection,
+item relations, and automatic reselection walk that same order, skipping empty
+slots. New items enter at forward rank `(occupied_count + 2) / 2` from the
+selection, so pickups fill inner left, inner right, outer left, then outer
+right for P1, mirrored for P2, while existing items keep their positions.
+The Practice capture stores items in the alternating insertion sequence, so
+restore reproduces their cyclic order. It uses a resident two-side, five-entry
+cache and clears the native cache with it.
+
+`extended_items_abi.S` holds two kinds of guarded BTL hooks, all declared under
+`settings.extended_items` in
+`@builder/patches/settings/settings.json`:
+
+- Entry hooks on every slot routine test the latched toggle. When off they
+  replay the displaced native instructions and continue into the native routine;
+  when on they tail-call the C routine with the native arguments.
+- Site hooks replace the native three-slot loops and selected-slot loads inside
+  activation, the panel update, and the selection-indicator choice. They call
+  the same C helpers, which use only the native slots when the latched toggle is
+  off.
+
+The five-slot wheel draw retains the native background, foreground, empty-frame,
+and count calls. Occupied items use NUN4's spacing, height interpolation, scale,
+and edge-opacity formula with NA2's item sprites.
+Five slots use positions `-2..2` around the selection. The next `count / 2`
+occupied items take positive positions, and the remaining items take negative
+positions in the same cyclic order. This keeps the forward neighbor on P1's
+left and the reverse neighbor on its right; P2 mirrors those directions.
+With two items, the one other item is shared by both selection directions and
+appears on P1's left or P2's right. Empty inventory slots are skipped:
+
+- positions `1` and `2` rise at offsets `(42, -9)` and `(60, -25)` from the
+  selection; positions `-1` and `-2` extend below it at `(43, 8)` and `(70, 7)`.
+  Positive positions are on P1's left and P2's right. These are the empty-frame
+  points; their placement and scale remain unchanged;
+- occupied items use horizontal distances `35.2` and `64`. Their height is
+  interpolated by horizontal distance through the NUN4 layout points, including
+  P2's `-50` far rising point. Item scale is `1.2 - 0.6|x| / 96`. Opacity is
+  full inside the count-dependent inner boundary and falls linearly to zero at
+  the outer boundary. Distances up to `0.5` past the inner boundary count as
+  inside, because NUN4's `35` boundaries round the `35.2` step; resting items
+  one step away therefore stay fully opaque. The NUN4 fade bands are mirrored for P1's even occupied
+  counts to preserve the alternating population's extra item on its forward
+  arm. A one-item cycle fades to zero at one step on either side;
+- selection animation blends positions by physical slot identity in cyclic
+  order. Signed steps are captured before the native offset is clamped. Each
+  new press restarts the blend from its current positions, retaining complete
+  turns and both fading wrap copies, including with two occupied items. The
+  blend advances by `0.2` per panel update independently of the native offset.
+  Removal also blends the occupied span and its fade bands so surviving items
+  keep their preceding positions and fades while the shorter cycle takes shape.
+  The auxiliary NA2 model draw, which adds the special item's highlight, has no
+  opacity input and runs only for fully opaque item copies, so it cannot cover
+  a fading sprite with an opaque model. Like retail, it appears on the special
+  item in any resting position, not only when selected.
+
+When on, a constructor-tail hook moves the wheel origin from the native
+`x = 66` and `446` to `77.4` and `434.6`, mirrored in the 512-unit HUD space.
+It moves the Item Select L badge from its native `(-38, 16)` to `(-50, 30)`
+for both players; the Item Select R badge mirrors it. The draw raises the
+entire wheel, including the selected item and frame, side items, empty
+frames, and quantity indicator and its frame, by `6` HUD units. The badges
+retain their positions; the count stays `27` units below the wheel center.
+The sweep uses NUN4's recorded layout points, documented in
+[Battle item inventory](../knowledge/gameplay/battle_item_inventory.md#nun4-item-wheel).
+
+| Hook kind | BTL file offsets |
+| --- | --- |
+| Constructor latch, wheel origin, and badge position | `0x5B840`, `0x5BBBC` |
+| Entry: full, selected count, find, code at step, selected code, count copy, room | `0x5BD80`, `0x5BDB0`, `0x5BE40`, `0x5BE90`, `0x5BEE0`, `0x5BF70`, `0x5BFF0` |
+| Entry: add, consume by code, consume selected, clear | `0x5C140`, `0x5C3D0`, `0x5C570`, `0x5C6C0` |
+| Entry: occupied and empty steps, cache build and restore | `0x5C7D0`, `0x5C950`, `0x5CAF0`, `0x5CC00` |
+| Entry: count, relation, category, use code, two occupied, cache clear | `0x5CD70`, `0x5CDF0`, `0x5CF20`, `0x5D2C0`, `0x5DBC0`, `0x5B2E0` |
+| Site: activation count and selected slot | `0x5D4D8`, `0x5D6FC` |
+| Site: panel update blend/count and selected code | `0x5E4A0`, `0x5E840` |
+| Entry: wheel draw | `0x5DF50` |
+| Site: selection indicator | `0x5E8D4` |
 
 ## Simple Display
 
@@ -303,7 +409,7 @@ Numeric character IDs and names are validated against
 `@resources/character_data.tsv`. `base_id` records form relationships as
 human-readable configuration metadata. `tier` records the balancing tier and
 is serialized as fixed-width table metadata for
-`features.default_settings.mod_settings.character_selection.balance_overlay`. Empty cells inherit, while zero
+`features.default_settings.mod_settings.match_setup.balance_overlay`. Empty cells inherit, while zero
 remains an explicit value. Tier labels use at most four ASCII characters. Rows
 retain the base TSV order so forms can stay directly below their base characters.
 Save the file as UTF-8 TSV and run the normal build for that profile.
@@ -341,10 +447,10 @@ player slot and reads that slot's match-start character ID. A directly selected
 form therefore uses its form row, while a base character transformed during
 the match keeps its base row.
 
-`features.default_settings.mod_settings.character_selection.balance_overlay` independently reads the same
+`features.default_settings.mod_settings.match_setup.balance_overlay` independently reads the same
 complete table. It always draws `TIER` in separate left and right top-screen
 blocks. It draws the resolved `SUB x%` value only when
-`features.default_settings.mod_settings.character_selection.character_balance` is `"overrides"`, omitting trailing decimal
+`features.default_settings.mod_settings.match_setup.character_balance` is `"overrides"`, omitting trailing decimal
 zeroes. It never draws player labels or numeric IDs.
 
 Every runtime consumer uses that normalized value. With the runtime mode set to
@@ -406,5 +512,5 @@ bit cannot override the shared mode. General Settings no longer exposes
 Selected support data and linked Jutsu retain their existing behavior.
 
 The setting is independent of
-`features.default_settings.mod_settings.character_selection.support_selection`. Either feature may be enabled
+`features.default_settings.mod_settings.match_setup.support_selection`. Either feature may be enabled
 without the other.

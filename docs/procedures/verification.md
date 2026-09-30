@@ -3,7 +3,8 @@
 `ver` verifies all changes made by this chat across all tasks and repositories
 and starts one verification-and-delivery operation. Continue it until commit
 and push, explicit cancellation, or a hard blocker. Resolve findings
-independently without waiting for the user's review or approval.
+independently without waiting for the user's review or approval. `ver` also
+means the user knows the result and accepts it.
 
 For code changes, run `na228 test`. Set `NA228_TEST_WORKERS` to a positive
 integer to override the worker count; use `1` for serial debugging. Inspect

@@ -6,7 +6,7 @@ Feature modules contribute named code, read-only-data, or writable-data
 fragments plus symbolic references. External strings contribute read-only data;
 the generic `runtime_injector` contributes feature-owned custom logic and
 guarded hooks. The builder assigns deterministic aligned offsets, resolves
-internal relocations, produces the one resident MWO3 `PRG/228.BIN`, and records
+internal relocations, produces the one resident MWO3 `228/228.BIN`, and records
 a complete symbol map.
 
 `module_pipeline.py` gathers every contribution before invoking the builder, so

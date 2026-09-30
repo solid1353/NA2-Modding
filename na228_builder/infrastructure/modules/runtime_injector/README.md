@@ -5,7 +5,7 @@ their internal symbolic relocations, and guarded symbolic game-file hooks.
 It contributes fragments to the shared `payload_builder`; after the builder
 assigns final addresses, the composer resolves each hook template and this
 engine compiles the concrete writes into an in-memory `binary_patcher`
-package. A feature never chooses an offset inside `PRG/228.BIN` or owns its
+package. A feature never chooses an offset inside `228/228.BIN` or owns its
 loader, memory reservation, or final runtime address.
 
 Canonical production inputs are the shared
@@ -48,7 +48,7 @@ internal runtime-injector invocation contributes no payload or target writes.
 
 The PS2 executes linked EE machine code, not C source. The builder compiles
 registered `.c` and `.S` sources into relocatable fragments, assigns their
-addresses in `PRG/228.BIN`, resolves their internal calls, and encodes each
+addresses in `228/228.BIN`, resolves their internal calls, and encodes each
 guarded game-file hook as a concrete `j` or `jal` instruction.
 
 C sources own ordinary logic. Assembly sources own register-sensitive entry
@@ -58,8 +58,10 @@ instruction. A `j` hook replaces a control-flow block and must declare its
 continuation explicitly.
 
 The boot-ELF loader enters through the constructor path at `0x00607314`, loads
-the shared `PRG/228.BIN`, calls its initialization entry, and resumes the native
-constructor. Individual features own their guarded call sites and resident
+the shared `228/228.BIN`, calls its initialization entry, and resumes the native
+constructor. It loads through the generic PRG loader, switching that loader's
+`PRG\` directory text at `0x003FB9A0` to `228\` for this one load and restoring
+it before the initialization entry runs. Individual features own their guarded call sites and resident
 symbols; this module owns their compilation and relocation contract, not their
 behavior.
 

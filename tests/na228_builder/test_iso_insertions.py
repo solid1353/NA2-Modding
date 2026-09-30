@@ -53,6 +53,7 @@ def make_iso(
     prg_size: int = 264,
     dirty_tail_sectors: tuple[int, ...] = (),
     dirty_append_area: bool = False,
+    path_tables: bool = False,
 ) -> bytes:
     image = bytearray(sectors * SECTOR)
     root_extent = 20
@@ -119,6 +120,19 @@ def make_iso(
         image[sector * SECTOR] = 0xA5
     if dirty_append_area:
         image[prg_extent * SECTOR + prg_size] = 0xA5
+    if path_tables:
+        # Root and PRG, little-endian at sector 18 and big-endian at sector 19.
+        rows = ((b"\x00", root_extent), (b"PRG", prg_extent))
+        for sector, order in ((18, "little"), (19, "big")):
+            table = b"".join(
+                bytes((len(name), 0)) + extent.to_bytes(4, order)
+                + (1).to_bytes(2, order) + name + b"\0" * (len(name) % 2)
+                for name, extent in rows
+            )
+            image[sector * SECTOR:sector * SECTOR + len(table)] = table
+        set_both_u32(image, 16 * SECTOR + 132, len(table))
+        image[16 * SECTOR + 140:16 * SECTOR + 144] = (18).to_bytes(4, "little")
+        image[16 * SECTOR + 148:16 * SECTOR + 152] = (19).to_bytes(4, "big")
     image[-14:] = b"TAIL-SENTINEL!"
     data = bytes(image)
     path.write_bytes(data)
@@ -226,9 +240,28 @@ class IsoInsertionTests(unittest.TestCase):
             image = Path(directory) / "image.iso"
             make_iso(image)
             with self.assertRaisesRegex(RuntimeError, "parent directory"):
-                compose_filesystems(image, {"MISSING/MOD.BIN": b"data"})
+                compose_filesystems(image, {"MISSING/DEEPER/MOD.BIN": b"data"})
             with self.assertRaisesRegex(ValueError, "Unsupported ISO9660"):
                 compose_filesystems(image, {"PRG/BAD-NAME.BIN": b"data"})
+
+    def test_missing_parent_becomes_a_directory_listed_in_both_path_tables(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "image.iso"
+            make_iso(image, path_tables=True)
+            compose_filesystems(image, {"228/MOD.BIN": b"data"})
+            result = Iso9660(image)
+            self.assertTrue(result.by_path["228"].is_dir)
+            self.assertEqual(result.read_file(result.by_path["228/MOD.BIN"]), b"data")
+            new_extent = result.by_path["228"].extent
+            data = image.read_bytes()
+            for sector, order in ((18, "little"), (19, "big")):
+                table = data[sector * SECTOR:sector * SECTOR + 40]
+                third = table[22:34]
+                self.assertEqual(third[0], 3)
+                self.assertEqual(int.from_bytes(third[2:6], order), new_extent)
+                self.assertEqual(int.from_bytes(third[6:8], order), 1)
+                self.assertEqual(third[8:11], b"228")
+            self.assertEqual(int.from_bytes(data[16 * SECTOR + 132:16 * SECTOR + 136], "little"), 34)
 
     def test_rejects_directory_capacity_and_nonzero_append_area(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

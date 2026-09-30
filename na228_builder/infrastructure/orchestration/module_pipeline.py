@@ -40,6 +40,7 @@ from ...patches.settings.mod_settings.mod_settings import (
 )
 from ...patches.general.unlock_all.unlock_all import unlock_all_configuration_fragment
 from ...patches.general.battle_results_rematch import rematch_label_fragment
+from ...patches.general.new_controls.control_defaults import control_default_fragments
 from ...patches.memory_card.save_load import save_load_continuation_fragments
 from ...patches.memory_card.save_appendix import (
     save_appendix_load_status_fragment,
@@ -246,6 +247,18 @@ def prepare_module_pipeline(
                     declaration,
                     fragments=(
                         rematch_label_fragment(owner=module.module_id),
+                        *declaration.fragments,
+                    ),
+                )
+            if any(
+                node.path == ("features", "general", "new_controls")
+                and node.enabled
+                for node in configuration.selection.nodes
+            ):
+                declaration = replace(
+                    declaration,
+                    fragments=(
+                        *control_default_fragments(owner=module.module_id),
                         *declaration.fragments,
                     ),
                 )

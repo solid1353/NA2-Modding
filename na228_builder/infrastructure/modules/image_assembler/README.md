@@ -13,14 +13,29 @@ donor file/range references. `assembler.py` owns candidate creation and final im
 verification. `iso9660.py` and `udf.py` implement the physical filesystem
 metadata work. Feature packages never own or enable this infrastructure.
 
-## Resident payload insertion
+## Mod directory
 
-The current assembly plan inserts generated `PRG/228.BIN` into a verified-zero
-extent without increasing the image size. The ISO9660 `PRG` directory occupies
-one sector at extent 265; its logical size grows from 264 to 306 bytes when the
-42-byte `228.BIN;1` record is added. The assembler mirrors the entry in UDF,
-preserves nonzero tail bytes, and reparses both filesystems to verify matching
-paths, extents, sizes, and payload hashes.
+Every file the build adds lives in the root `228` directory: the resident
+payload `228/228.BIN`, the texture pack `228/UI.BIN`, the loading splash
+`228/SPL.CCS`, and `228/MANIFEST.TSV`. The composer writes the manifest
+from the assembly plan as tab-separated `source_path`, `output_path`,
+`source_sha256`, and `output_sha256` rows, one per changed source file; the
+output path differs only for the renamed boot ELF.
 
-`FLIST` is unchanged. The boot-ELF loader requests `cdrom0:\\PRG\\228.BIN`
-directly, and the native cache-miss path performs an ordinary disc lookup.
+An insertion whose parent directory does not exist creates that directory under
+an existing one. The assembler places the new directory in one verified-zero
+sector, appends its record to the parent, and rebuilds every path-table copy and
+the path-table size. Existing path-table rows keep their order, which in NA2 is
+disc order rather than name order; new directories follow the existing rows at
+their level. In UDF it adds a directory File Entry and a data block with the
+parent FID, appends the directory FID to its parent, increments the parent's
+link count, and updates the integrity directory and file counts. New files are
+placed in verified-zero extents without increasing the image size, and both
+filesystems are reparsed to verify matching paths, extents, sizes, hashes, and
+path tables.
+
+`FLIST` is unchanged. The boot-ELF bootstrap loads the payload through the
+generic PRG loader, whose `cdrom0:\PRG\` prefix it switches to `228\` for that
+one load and restores before the payload entrypoint runs. The texture pack and
+splash are opened through explicit `CDV:228/` paths, which bypass the cached
+directory list.

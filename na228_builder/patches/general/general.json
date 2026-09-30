@@ -1,38 +1,14 @@
 {
   "general.new_controls": {
-    "description": "Expose separate Guard and Substitution actions plus two Guard/Sub choices without the native editor's eight-action permutation restriction.",
+    "description": "Expose separate Guard, Substitution, Item Select L and R actions and an Unbound choice in ordered selectors without the native editor's eight-action permutation restriction.",
     "edits": {
-      "default_battle_overlay_bindings": {
-        "description": "Leave the two native Guard/Sub actions unbound while retaining Item Select on L2 and Linked Attack on R2.",
+      "skip_native_item_select_badge": {
+        "description": "Branch past the native item-select badge draw, which reads P1's binding for both panels and draws an empty frame for an unbound action.",
         "operation": "replace",
         "destination_target_id": "na2_btl",
-        "destination_offset": "0x1E4250",
-        "expected_hex": "10002000400080000400080001000200",
-        "replacement_hex": "10002000400080000100020000000000"
-      },
-      "default_control_settings_reset_selections": {
-        "description": "Make the Control Settings Select-button reset assign Substitution to L1, Guard to R1, Item Select to L2, and Linked Attack to R2 for either player.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0x4D5350",
-        "expected_hex": "010000000000000003000000020000000400000005000000060000000700000001000000",
-        "replacement_hex": "010000000000000003000000020000000900000008000000040000000500000001000000"
-      },
-      "default_resident_bindings": {
-        "description": "Leave the two native Guard/Sub actions unbound while retaining Item Select on L2 and Linked Attack on R2 in every resident controller bank.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0x4C07A0",
-        "expected_hex": "10002000400080000400080001000200",
-        "replacement_hex": "10002000400080000100020000000000"
-      },
-      "include_substitution_in_shoulder_assignment_selector": {
-        "description": "Extend the shoulder-action selector through the added Guard and Substitution choices at indices 8 and 9.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0x2883FC",
-        "expected_hex": "06000324",
-        "replacement_hex": "09000324"
+        "destination_offset": "0x5E950",
+        "expected_hex": "2700401000000000",
+        "replacement_hex": "4C00001000000000"
       },
       "preserve_substitution_when_opening_assignment": {
         "description": "Stop the native editor from rewriting Guard/Sub 2 at index 7 to Guard/Sub 1 at index 6 when its assignment selector opens.",
@@ -80,7 +56,7 @@
         "replacement_hex": "0000000800000000"
       },
       "load_extended_action_labels_high": {
-        "description": "Point the Control Settings renderer at the ten-action label table.",
+        "description": "Point the Control Settings renderer at the eleven-action label table.",
         "target_id": "na2_elf",
         "offset": "0x288830",
         "expected_hex": "5B00",
@@ -96,7 +72,7 @@
         "encoding": "lo16"
       },
       "open_extended_bindings": {
-        "description": "Read the native bindings plus added Guard and Substitution into the eight physical-button rows.",
+        "description": "Read the native bindings plus added Guard, Substitution, and Item Select R into the eight physical-button rows.",
         "target_id": "na2_elf",
         "offset": "0x287A50",
         "expected_hex": "D0FFBD272000BFFF",
@@ -105,7 +81,7 @@
         "replacement_hex": "0000000800000000"
       },
       "commit_extended_bindings": {
-        "description": "Write the native bindings plus added Guard and Substitution without indexing past the native eight-action table.",
+        "description": "Write the native bindings plus added Guard, Substitution, and Item Select R without indexing past the native eight-action table.",
         "target_id": "na2_elf",
         "offset": "0x288044",
         "expected_hex": "2D8000002B000010",
@@ -122,12 +98,129 @@
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
       },
+      "select_item_select_r": {
+        "description": "Deliver Item Select L and R presses through the native item-select and reverse item-select input bits.",
+        "target_id": "na2_btl",
+        "offset": "0x3C6AC",
+        "expected_hex": "0300E01200000000",
+        "symbol": "control_settings_item_select_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "draw_item_select_badges": {
+        "description": "Draw the bound Item Select L and R badges from the panel's own side before the item wheel.",
+        "target_id": "na2_btl",
+        "offset": "0x5EA88",
+        "expected_hex": "94471C0C",
+        "symbol": "control_settings_item_badges",
+        "encoding": "jal26"
+      },
+      "reverse_item_select": {
+        "description": "Step the selected battle item backward when the reverse item-select input arrives.",
+        "target_id": "na2_elf",
+        "offset": "0x275670",
+        "expected_hex": "F0FFBD270000BFFF",
+        "symbol": "control_settings_item_select_reverse",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
       "replace_paired_action_assignment": {
         "description": "Replace the native Guard-pair assignment helper with an owned one-action swap so both Guard/Sub slots and the added actions remain independently assignable.",
         "target_id": "na2_elf",
         "offset": "0x287C90",
         "expected_hex": "8030050001000324",
         "symbol": "control_settings_assign_action",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "order_face_actions": {
+        "description": "Step face rows through Unbound, Attack, Ultimate Jutsu Prep, Item Use, and Jump.",
+        "target_id": "na2_elf",
+        "offset": "0x2883DC",
+        "expected_hex": "2D20000003000324",
+        "symbol": "control_settings_step_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "order_shoulder_actions": {
+        "description": "Step shoulder rows through Unbound, Substitution, Guard, Item Select L, Item Select R, and Linked Attack.",
+        "target_id": "na2_elf",
+        "offset": "0x2883F8",
+        "expected_hex": "0400042406000324",
+        "symbol": "control_settings_step_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "load_default_bindings_for_profile_init_high": {
+        "description": "Read the generated default layout when initializing the controller banks.",
+        "target_id": "na2_elf",
+        "offset": "0xE7B2C",
+        "expected_hex": "5C00",
+        "symbol": "control_default_native_bindings",
+        "encoding": "hi16"
+      },
+      "load_default_bindings_for_profile_init_low": {
+        "description": "Complete the generated default-binding table address.",
+        "target_id": "na2_elf",
+        "offset": "0xE7B30",
+        "expected_hex": "A006",
+        "symbol": "control_default_native_bindings",
+        "encoding": "lo16"
+      },
+      "load_default_bindings_for_bank_reset_high": {
+        "description": "Read the generated default layout when resetting every controller bank.",
+        "target_id": "na2_elf",
+        "offset": "0xF3EF4",
+        "expected_hex": "5C00",
+        "symbol": "control_default_native_bindings",
+        "encoding": "hi16"
+      },
+      "load_default_bindings_for_bank_reset_low": {
+        "description": "Complete the generated default-binding table address.",
+        "target_id": "na2_elf",
+        "offset": "0xF3EF8",
+        "expected_hex": "A006",
+        "symbol": "control_default_native_bindings",
+        "encoding": "lo16"
+      },
+      "load_default_bindings_for_player_reset_high": {
+        "description": "Read the generated default layout when resetting one player's bindings.",
+        "target_id": "na2_elf",
+        "offset": "0xF3F54",
+        "expected_hex": "5C00",
+        "symbol": "control_default_native_bindings",
+        "encoding": "hi16"
+      },
+      "load_default_bindings_for_player_reset_low": {
+        "description": "Complete the generated default-binding table address.",
+        "target_id": "na2_elf",
+        "offset": "0xF3F58",
+        "expected_hex": "A006",
+        "symbol": "control_default_native_bindings",
+        "encoding": "lo16"
+      },
+      "load_default_bindings_for_battle_input_high": {
+        "description": "Read the generated default layout when a battle input object has no profile.",
+        "target_id": "na2_btl",
+        "offset": "0x3B888",
+        "expected_hex": "8A00",
+        "symbol": "control_default_native_bindings",
+        "encoding": "hi16"
+      },
+      "load_default_bindings_for_battle_input_low": {
+        "description": "Complete the generated default-binding table address.",
+        "target_id": "na2_btl",
+        "offset": "0x3B88C",
+        "expected_hex": "5081",
+        "symbol": "control_default_native_bindings",
+        "encoding": "lo16"
+      },
+      "reset_rows_from_default_layout": {
+        "description": "Fill the Control Settings Select reset rows from the generated default layout.",
+        "target_id": "na2_elf",
+        "offset": "0x28818C",
+        "expected_hex": "5D00023C505243C4",
+        "symbol": "control_settings_reset_rows_bridge",
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
       }
@@ -140,7 +233,11 @@
         "imports": {
           "mod_text_settings__substitution__label": "mod_text_settings__substitution__label",
           "mod_text_controls__guard_sub_1__label": "mod_text_controls__guard_sub_1__label",
-          "mod_text_controls__guard_sub_2__label": "mod_text_controls__guard_sub_2__label"
+          "mod_text_controls__guard_sub_2__label": "mod_text_controls__guard_sub_2__label",
+          "mod_text_controls__item_select_l__label": "mod_text_controls__item_select_l__label",
+          "mod_text_controls__item_select_r__label": "mod_text_controls__item_select_r__label",
+          "mod_text_controls__unbound__label": "mod_text_controls__unbound__label",
+          "control_settings_extra_bindings": "control_settings_extra_bindings"
         },
         "fragments": {
           "control_settings_reset_with_help": {
@@ -155,8 +252,8 @@
           "control_settings_labels": {
             "object": "general.controls.data.control.settings.labels"
           },
-          "control_settings_extra_bindings": {
-            "object": "general.controls.data.control.settings.extra.bindings"
+          "control_settings_item_badge_state": {
+            "object": "general.controls.data.control.settings.item.badge.state"
           },
           "control_settings_extra_get": {
             "object": "general.controls.text.control.settings.extra.get"
@@ -184,10 +281,23 @@
           },
           "control_settings_assign_action": {
             "object": "general.controls.text.control.settings.assign.action"
+          },
+          "control_settings_item_select_bits": {
+            "object": "general.controls.text.control.settings.item.select.bits"
+          },
+          "control_settings_item_select_reverse": {
+            "object": "general.controls.text.control.settings.item.select.reverse"
+          },
+          "control_settings_item_badges": {
+            "object": "general.controls.text.control.settings.item.badges"
+          },
+          "control_settings_action_step": {
+            "object": "general.controls.text.control.settings.action.step"
           }
         },
         "resources": [
-          "na228_builder/resources/mod_strings.tsv"
+          "na228_builder/resources/mod_strings.tsv",
+          "na228_builder/resources/default_controls.tsv"
         ]
       },
       "control_settings_abi": {
@@ -198,7 +308,10 @@
           "control_settings_substitution_held": "control_settings_substitution_held",
           "control_settings_history_any": "control_settings_history_any",
           "control_settings_guard_pressed": "control_settings_guard_pressed",
-          "control_settings_commit": "control_settings_commit"
+          "control_settings_commit": "control_settings_commit",
+          "control_settings_item_select_bits": "control_settings_item_select_bits",
+          "control_settings_action_step": "control_settings_action_step",
+          "control_default_reset_actions": "control_default_reset_actions"
         },
         "fragments": {
           "control_settings_held_bridge": {
@@ -212,6 +325,15 @@
           },
           "control_settings_commit_bridge": {
             "object": "general.controls.asm.text.control.settings.commit.bridge"
+          },
+          "control_settings_item_select_bridge": {
+            "object": "general.controls.asm.text.control.settings.item.select.bridge"
+          },
+          "control_settings_step_bridge": {
+            "object": "general.controls.asm.text.control.settings.step.bridge"
+          },
+          "control_settings_reset_rows_bridge": {
+            "object": "general.controls.asm.text.control.settings.reset.rows.bridge"
           }
         }
       }

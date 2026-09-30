@@ -13,7 +13,7 @@ from tests.na228_builder._fixtures import test_features
 
 
 class ModSettingsMenuTests(unittest.TestCase):
-    def test_character_selection_follows_battle_mechanics(self) -> None:
+    def test_match_setup_comes_first(self) -> None:
         builder = load_local_paths(Path(__file__).resolve(), allow_missing=True).path("builder")
         with tempfile.TemporaryDirectory() as directory:
             configuration = Path(directory) / "configuration.jsonc"
@@ -34,19 +34,19 @@ class ModSettingsMenuTests(unittest.TestCase):
         self.assertEqual(
             labels(pages[0]),
             [
+                "Match Setup",
                 "Battle Mechanics",
-                "Character Selection",
                 "Battle Settings",
                 "Practice Settings",
                 "Control Settings",
                 "Simple Display",
             ],
         )
-        character_page = pages[pages[0].rows[1].value_pages[0][1]]
-        self.assertEqual((character_page.parent_page, character_page.parent_row), (0, 1))
+        match_page = pages[pages[0].rows[0].value_pages[0][1]]
+        self.assertEqual((match_page.parent_page, match_page.parent_row), (0, 0))
         self.assertEqual(
-            labels(character_page),
-            ["Support Selection", "Character Balance", "Balance Overlay"],
+            labels(match_page),
+            ["Support Selection", "Character Balance", "Balance Overlay", "Extended Items"],
         )
 
 

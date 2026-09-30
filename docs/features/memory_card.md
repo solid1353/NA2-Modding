@@ -96,9 +96,10 @@ Each mod `dataNN` record is `0x3400` bytes: the native `0x2400`-byte profile
 and a fixed `0x1000`-byte settings appendix. The native profile and its
 descriptor checksum are unchanged. The appendix stores runtime-editable Mod,
 Battle, Practice, Battle Mechanics, Substitution, and Items settings as stable
-IDs and zero-based values. With `features.general.new_controls` enabled, it
-also stores the Guard and Substitution bindings for each player; native
-Guard/Sub actions remain in the native profile.
+IDs and zero-based values. With [Controls](controls.md) enabled, it also
+stores the Guard, Substitution, Item Select L, and Item Select R bindings for
+each player; the native actions, including native Item Select, Guard/Sub, and
+Linked Attack, remain in the native profile.
 
 Normal saves serialize the appendix for the selected primary and rolling
 `data04` backup. Creation, free-space accounting, missing-primary restoration,
@@ -117,7 +118,7 @@ bounds fail validation.
 
 A physically valid appendix with a different schema loads the native profile,
 including progress, preferences, and control mappings, but resets **all**
-appendix settings, including Guard and Substitution bindings, to configured
+appendix settings, including the added control bindings, to configured
 defaults. The ordinary successful-load notice is followed by `Mod settings
 were reset because their format changed.` No load path writes the card; the
 current format is written on the next ordinary save.
@@ -125,13 +126,13 @@ current format is written on the next ordinary save.
 ### Save appendix schema
 
 [`@builder/resources/save_appendix.tsv`](../../na228_builder/resources/save_appendix.tsv)
-lists every saved setting. Submenu switches in `features.menu_composition` are
+lists every saved setting, in menu order. Submenu switches in `features.menu_composition` are
 build configuration and are not saved. The first line declares
 `schema_version`; the table has these columns:
 
 | Column | Meaning |
 | --- | --- |
-| `id` | Permanent, nonzero, four-digit hexadecimal field ID written to the save |
+| `id` | Permanent, nonzero, four-digit hexadecimal field ID written to the save; a new setting takes the next unused ID |
 | `key` | Setting path resolved to its getter, setter, and configured default |
 | `label` | Human-readable setting name |
 | `values` | Zero-based saved-value order |
@@ -148,6 +149,4 @@ with the checksum field treated as zero.
 Increase `format_version` only for an incompatible physical layout. Increase
 `schema_version` only when an existing ID changes meaning or encoding
 incompatibly; adding an ID does not require a bump. A bump resets all appendix
-settings on load. Before changing `save_appendix.tsv`'s `schema_version`,
-explain why the current schema cannot represent the change and ask for the
-user's approval. It remains at version `1` for this implementation.
+settings on load. It remains at version `1` for this implementation.

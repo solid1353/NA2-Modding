@@ -168,47 +168,12 @@ behavior, not another game's texture artwork.
 
 ## Gameplay contract
 
-### Control Settings and substitution input
+### Substitution input
 
-`features.general.new_controls` owns the default binding map and the extended
-Control Settings editor independently of the substitution gauge. Its native
-actions retain Item Select at index `4` and Linked Attack at `5`; the two native
-combined actions become Guard/Sub 1 at `6` and Guard/Sub 2 at `7`. Added Guard
-and Substitution actions occupy editor indices `8` and `9`. The shoulder
-selector offers all six actions, while face-button choices remain unchanged.
-The default map binds L1 to Substitution, R1 to Guard, L2 to Item Select, and R2
-to Linked Attack. Both native Guard/Sub actions start unbound.
+Separate Guard and Substitution actions and their bindings are owned by
+[Controls](controls.md). With that feature, the added Substitution action only
+substitutes and the added Guard action only blocks.
 
-The clean resident and BTL default tables are replaced with this map, and the
-Control Settings Select reset table restores the same assignments. The native
-assignment helper couples its two Guard choices, so the feature replaces it
-with a single-choice swap. Selecting an unbound action gives it the chosen
-button and leaves the displaced action unbound. The editor reconstructs its
-eight button rows from the native action masks and the two added masks for each
-player. Confirmation writes the original eight actions, including both
-Guard/Sub bindings, to the native profile and stores the added Guard and
-Substitution masks in the save appendix. This avoids
-the native confirmation loop, which indexes an eight-entry array by action ID.
-
-The native action-label table holds only eight pointers. The feature redirects
-its renderer to a ten-pointer table and supplies localized labels for the
-three replacement and added actions. On opening Control Settings, the new
-table takes its first pointer from the native table, whose Ultimate Jutsu Prep
-entry may be redirected by the English translation importer. The native
-Substitution label at index `7` no longer needs a direct pointer edit.
-
-After the attack's native timing admission, the held-input shortcut checks only
-the added Substitution binding. Both native Guard/Sub bindings preserve the
-vanilla 16-frame held-Guard limit and enter through the buffered input-history
-search. Zero bindings are skipped so an unbound action cannot pass the history
-match. The BTL translator retains both native Guard/Sub actions as block sources
-and adds the separate Guard binding. The added Guard action cannot substitute;
-the added Substitution action cannot block.
-
-The native support-bar draw uses Linked Attack at index `5`. The independent
-substitution gauge draws no button prompt, so it does not need an additional
-mapping. This controls patch can be enabled without the gauge, while the gauge
-can retain its separate resource and support behavior.
 ### Baseline values
 
 The runtime implementation uses these defaults:
@@ -770,7 +735,7 @@ complete native support renderer, including its coordinates, button badge, and
 support decorations, remains byte-clean and is independently controlled by No
 Support.
 
-The feature depends only on the implementation selected by `features.default_settings.mod_settings.character_selection.character_balance`, which
+The feature depends only on the implementation selected by `features.default_settings.mod_settings.match_setup.character_balance`, which
 provides the single normalized cost source. No Support remains independent and
 controls only native field support and its lower gauge. The supported build-time
 combinations are:
@@ -945,12 +910,10 @@ settings, Damage for Full Refill stays visible but is greyed out and cannot be
 changed while Damage Recovery is Off. Availability follows the menu's staged value
 immediately; switching it back On restores editing without resetting the stored
 threshold. Apply, cancel, and Return to Defaults use the existing menu transaction.
-The save appendix keeps schema version `1` and field ID `0505`. An older mod
-save must be deleted before using this setting because its saved value index
-has a different meaning.
+Save appendix field `0013` stores the threshold.
 
-The gauge requires the implementation selected by `features.default_settings.mod_settings.character_selection.character_balance` and
-`features.default_settings.practice_settings`. `features.general.new_controls`
+The gauge requires the implementation selected by `features.default_settings.mod_settings.match_setup.character_balance` and
+`features.default_settings.practice_settings`. [Controls](controls.md)
 independently exposes separate Guard and Substitution actions.
 `features.default_settings.battle_mechanics.support` independently controls field support
 and the native lower support gauge.
@@ -997,8 +960,8 @@ exclusively native.
 
 ### Exact builder hook map
 
-Use `general.new_controls` in `patches/general/general.json` and
-`settings.battle_mechanics.substitution` in `patches/settings/settings.json`.
+Use `settings.battle_mechanics.substitution` in `patches/settings/settings.json`.
+The controls hooks are listed in [Controls](controls.md#builder-hook-map).
 All targets already exist in
 `@builder/infrastructure/targets.tsv`; no new target registry or patching
 mechanism is needed.
@@ -1030,26 +993,6 @@ and displaced target belongs in a symbolic relocation or a reviewed native-
 address constant; do not write final resident payload addresses into the
 catalog.
 
-The `general.new_controls` patch owns the editor, input, default-binding, and
-Controls help timing changes. Its guarded entries are:
-
-| Purpose | Target/offset | Behavior |
-| --- | --- | --- |
-| Controls entry help | ELF `0x287C5C` | Queue the instruction during the shared Controls reset, before the banner's first draw |
-| Resident and BTL defaults | ELF `0x4C07A0`, BTL `0x1E4250` | L1 Substitution, R1 Guard, L2 Item Select, R2 Linked Attack |
-| Select reset | ELF `0x4D5350` | Restore the same editor assignments |
-| Open and commit | ELF `0x287A50`, `0x288044` | Read/write native masks and both Guard/Sub masks for each player |
-| Assignment and selector | ELF `0x287C90`, `0x2883FC` | Swap a bound action or assign an unbound one; offer actions `4..9` |
-| Action labels | ELF `0x288830`, `0x288834` | Draw from the ten-action localized label table |
-| Held and buffered substitution | ELF `0x129720`, `0x12973C` | Give added Substitution its held-input shortcut; apply the vanilla held-Guard limit to both native Guard/Sub bindings |
-| Logical Guard and zero bindings | BTL `0x3C02C`, `0x3B8F0` | Add separate Guard alongside both native Guard/Sub bindings and prevent unbound matches |
-
-The logical-Guard bridge preserves the translator's accumulated input mask
-while it checks native Guard/Sub 2 and the added Guard binding.
-The original eight action masks, including Guard/Sub 1 and 2, remain in the
-native profile. Four appendix values store added Guard and Substitution for each
-player. The save schema remains version `1`; there is no conversion for a prior
-mod save.
 The new spend range ends at `0x1299BF`, immediately before the current
 character-override hook at `0x1299C0`. When enabled, its shim skips that later
 code; when disabled, no new hook exists. The focused builder tests cover the
@@ -1067,7 +1010,6 @@ The minimal implementation touches these existing ownership points:
 | Config-to-fragment encoder | `@builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge.py` and `module_pipeline.py` |
 | Gameplay state, independent renderer, and native adapters | `@builder/patches/settings/ingame/battle_mechanics/substitution/substitution_gauge.c` and `substitution_gauge_abi.S` |
 | Runtime-selectable battle support | `@builder/patches/settings/ingame/battle_mechanics/support/battle_support.c` |
-| Control Settings ownership and composition tests | `tests/na228_builder/test_control_settings.py` |
 | Gauge builder tests | `tests/na228_builder/test_substitution_gauge.py` |
 | Packaged user instructions | `@builder/release/package_readme.md` |
 
@@ -1078,7 +1020,6 @@ COM/P2:
 
 | Scenario | Expected observation |
 | --- | --- |
-| Control Settings | Separate `Substitution` and `Guard` rows remain remappable; Select restores L1 Substitution, R1 Guard, L2 Item Select, and R2 Linked Attack for both players |
 | Guard input only | The remaining Guard action blocks normally and never substitutes |
 | Substitution input | A valid new press inside the native reaction window requests substitution; pressing it alone does not block or invoke field support |
 | Substitution while blocking | After holding Guard for longer than 16 frames, a fresh Substitution press is still accepted without releasing Guard |

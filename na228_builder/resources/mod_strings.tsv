@@ -16,6 +16,9 @@ common.original	Original	原作
 common.overrides	Overrides	調整版
 controls.guard_sub_1.label	Guard/Sub 1	ガード/変わり身1
 controls.guard_sub_2.label	Guard/Sub 2	ガード/変わり身2
+controls.item_select_l.label	Item Select L	アイテム選択Ｌ
+controls.item_select_r.label	Item Select R	アイテム選択Ｒ
+controls.unbound.label	Unbound	未設定
 settings.simple_display.label	Simple Display	簡易表示
 settings.simple_display.help	Choose the battle Simple Display state.	バトル中の簡易表示を設定します。
 settings.character_balance.label	Character Balance	キャラ性能
@@ -26,6 +29,8 @@ settings.support_selection.label	Support Selection	サポート選択
 settings.support_selection.help	Choose which supports are available on Character Select.	選択できるサポートキャラクターを設定します。
 settings.items.label	Items	アイテム
 settings.items.help	Choose item availability. Square opens Custom settings.	アイテムの出現を設定します。<iconSQUARE>でカスタム設定を開きます。
+settings.extended_items.label	Extended Items	拡張アイテム
+settings.extended_items.help	Enable five item slots. Off keeps the original three-slot layout.	アイテム枠を５つに増やします。オフでは元の３枠の配置を使用します。
 settings.minimum_chakra.label	Minimum Chakra	必要チャクラ
 settings.minimum_chakra.help	Required chakra to substitute. Match Cost follows the actual cost.	変わり身に必要なチャクラ量です。「消費量と同じ」は実際の消費量に合わせます。
 settings.minimum_chakra.match_cost	Match Cost	消費量と同じ
@@ -65,8 +70,8 @@ page.items.heading	Items Settings	アイテム設定
 page.mod_settings.title	Mod Settings	ＭＯＤ設定
 page.battle_mechanics.title	Battle Mechanics	バトルシステム
 page.battle_mechanics.help	Configure battle mechanics.	バトルシステムを設定します。
-page.character_selection.title	Character Selection	キャラクター選択
-page.character_selection.help	Configure character selection.	キャラクター選択を設定します。
+page.match_setup.title	Match Setup	マッチ設定
+page.match_setup.help	Configure settings that apply from the next battle.	次のバトルから使用される設定を行います。
 page.control_settings.title	Control Settings	操作設定
 page.control_settings.help	Configure controller bindings and vibration.	ボタンの割り当てと振動を設定します。
 page.battle_settings.title	Battle Settings	バトル設定

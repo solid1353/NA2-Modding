@@ -1,7 +1,7 @@
 # Runtime injection
 
 NA228 links every selected resident code and data fragment into one generated
-`PRG/228.BIN`. Features declare symbols, relocations, and guarded hooks; they do
+`228/228.BIN`. Features declare symbols, relocations, and guarded hooks; they do
 not choose final payload offsets. The runtime injector compiles those
 declarations, the payload builder assigns addresses, and the image assembler
 installs the shared file and loader.

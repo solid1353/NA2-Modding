@@ -26,13 +26,19 @@ paths in clean NA2.
   consumption, and the complete 3,620-record controller stream. The static
   `.04` contact path and its post-damage callback are structurally mapped, and
   `S08` is confirmed as the only clean stage containing authored environment
-  triangles with the required `0x400` flag.
+  triangles with the required `0x400` flag. Static analysis also established
+  the calculator's per-flag factors and their order, the temporary-effect
+  folds, the Handicap factors, damage application and knockout, the
+  ordinary-hit damage gates, attack-record resolution, and guarded-hit chip
+  damage.
 - **Unresolved or untested:** no natural runtime event has yet entered the
   `.04` contact call at `0x00231634`; the `S08` control proves the resource is
   present but the existing side-0 movie never reaches its upper/side-1 flagged
   geometry or qualifying response states. The five-hit recording does not
-  exercise the eight-hit `0.30` floor boundary. Coverage is also still open for
-  other characters, guard outcomes, throws, projectiles, specials, linked or
+  exercise the eight-hit `0.30` floor boundary. The guarded-hit, Handicap, and
+  temporary-effect findings are static and were not replayed. Runtime coverage
+  is also still open for other characters, guard outcomes, throws, projectiles,
+  specials, linked or
   support attacks, transformations, and any caller dormant in this movie.
 - **Deliberate exclusions and overlap:** combo-damage design belongs to
   [`combo_damage_scaling.md`](../../designs/combo_damage_scaling.md). Collision,
@@ -256,22 +262,181 @@ other damage categories still need isolated path classification.
 Two similar consumers, `FUN_00228b50(defender)` and
 `FUN_002346b0(defender)`, resolve an active attack record, read normalized
 damage from record `+0x24`, and divide by the signed short at record `+0x2E`
-when that field is nonzero. Both combine that value with a temporary attacker
-factor from `FUN_003071c0`, select native flags `0x133` or `0x122` from
-attack-record bits, call `FUN_00224e30(raw_damage, defender, flags)`, and pass
-its returned normalized damage to `FUN_00225050` for bookkeeping, Practice
-damage display, HP subtraction, and the zero clamp. Their state roles differ:
-`FUN_00228b50` is called by guarded-hit initializer `FUN_00228760`, while
-`FUN_002346b0` is the ordinary hit-response consumer. The recorded Sakura
-string used the latter; it did not exercise guarded-hit damage.
+when that field is nonzero. Record `+0x2E` is the same value that
+[`hit_response.md`](hit_response.md) records as the expected repeat count
+copied to fighter `+0xE5C`, so an authored multi-sample hit divides its
+`+0x24` total across its samples. Both consumers select native flags `0x133`
+or `0x122` from attack-record bits, call
+`FUN_00224e30(raw_damage, defender, flags)`, and pass its returned normalized
+damage to `FUN_00225050` for bookkeeping, the damage-counter display, HP
+subtraction, and the zero clamp. Their state roles differ: `FUN_00228b50` is
+called by guarded-hit initializer `FUN_00228760`, while `FUN_002346b0` is the
+ordinary hit-response consumer. Only the guarded consumer multiplies raw damage
+by the temporary factor from `FUN_003071c0`; the ordinary consumer's
+instructions at `0x002349D4..0x00234A94` load record `+0x24`, divide by
+`+0x2E`, and pass the result directly to the calculator. The recorded Sakura
+string used the ordinary consumer; it did not exercise guarded-hit damage.
+
+Attack records are resolved identically by both consumers: fighter `+0xE54`
+first; otherwise `FUN_002179f0` on retained source `+0xE58`, then on `+0xC74`;
+otherwise the resident `PL_ATK_DUMMY` record at `0x00407C00`, whose `+0x24`
+damage is `0`, `+0x2E` is `1`, and `+0x50` is zero. `FUN_002179f0` accepts only
+source objects carrying marker `0x474F` at `+0x02` and selects by source word
+`+0x0C`: `0` returns a fighter source's current record `+0xA4C` only while that
+fighter is in major state `8`; `1` asks live BTL `0x00734300`; `2` asks live
+`0x00886850` with a side argument. Any other or missing result falls back to
+the dummy record.
+
+### Calculator formula
 
 The calculator `FUN_00224e30` receives raw damage in `f12`, defender in `a0`,
 flags in `a1`, and returns damage in `f0`. Defender `+0x20` points to the
-attacker. According to the enabled flag bits it applies attacker offense
-`+0x148`, the defender durability curve at `+0x14C`, a `1.5` defender-state
-factor, temporary attacker and defender factors, and attacker/defender fields
-`+0x16C/+0x170`; it finally clamps the result to `[0, 1]`. It does not read the
-native combo manager or hit count.
+attacker. It does not read the native combo manager or hit count. Each flag bit
+enables one multiplicative factor, applied in this order:
+
+| Flag | Factor | Source |
+| ---: | --- | --- |
+| `0x001` | attacker `+0x148` | Character-record offense multiplier |
+| `0x002` | `m(defender +0x14C)` from the durability curve above, then `1.5` more when defender `s16 +0x80` is nonzero | Character-record durability; chakra-reservation class index |
+| `0x010` | `A = FUN_00306bd0(attacker)` | Attacker temporary effects |
+| `0x020` | `max(0.1, 2.0 - D)` with `D = FUN_00306c80(defender)` | Defender temporary effects |
+| `0x100` | attacker `+0x16C` times defender `+0x170` | Handicap |
+
+The result is finally clamped to `[0.0, 1.0]`. Bits `0x004`, `0x008`, `0x040`,
+and `0x080` have no consumer in the calculator. The four native flag words in
+clean callers are therefore:
+
+- `0x133`: every factor;
+- `0x122`: durability/reservation, defender effects, and handicap, but no
+  attacker offense and no attacker effects;
+- `0x100`: handicap only;
+- none of the callers passes a word without `0x100`.
+
+Defender `+0x80` is the signed reservation class index that
+[`chakra_and_guard.md`](chakra_and_guard.md) shows is set to `1..3` while a
+staged chakra reservation exists and cleared on release. Consequently a
+defender holding a reservation takes `1.5` times the `0x2`-enabled damage.
+The reservation's player-facing name is not established here.
+
+Both temporary-effect folds walk the fighter's active-effect list
+(`+0x8C4` count, `+0x8C8` head, next pointer at node `+0x1C`) and include only
+nodes whose countdown `+0x6C` is nonzero:
+
+```text
+A = 1 + sum(node[+0x74] - 1)     then clamped to at most 2.0 when A != 1
+D = 1 + sum(node[+0x78] - 1)     then clamped to at least 0.25 when D != 1
+defender factor = max(0.1, 2.0 - D)
+```
+
+Node `+0x74/+0x78` are copied from effect-definition record `+0x14/+0x18`
+([`battle_items_and_status_effects.md`](battle_items_and_status_effects.md#resident-effect-definitions)).
+Several concurrent effects therefore add their deviations from `1.0` rather
+than multiply. The defender fold is inverted: a node `+0x78` above `1.0`
+reduces incoming damage and one below `1.0` increases it, with the combined
+incoming factor bounded to `[0.1, 1.75]`. The attacker factor is bounded to
+`[0, 2.0]` only by its upper clamp.
+
+### Handicap factors
+
+Fighter `+0x16C` and `+0x170` are initialized to `1.0` by `FUN_00216440`
+(called by base fighter initialization at `0x00214CA0`) and rewritten by
+`FUN_00216460`, which is called by character configuration `FUN_002151e0` and,
+for both live fighters, when the pause flow `FUN_001ebd90` closes with result
+`1`. `FUN_00216460` reads setting key `8` through `FUN_001f6e70` and computes:
+
+```text
+s = h / 10            for side 0 (fighter +0x60 bit 0 clear)
+s = 1 - h / 10        for side 1
+f = s * 0.5 - 0.25
+fighter +0x16C = 1 + f     outgoing handicap factor
+fighter +0x170 = 1 - f     incoming handicap factor
+```
+
+The key-`8` accessor case at `0x001F67F8` returns the signed byte at manager
+`+0x9F9` (settings pack `+0x9F4`, byte `5`) only when manager `+0x0C` is `2`,
+Free Battle; for every other mode it returns the neutral `5`. This is the
+Battle Settings Handicap row documented in
+[`practice_mode.md`](practice_mode.md#battle-settings-child). Neutral `5` gives
+`1.0` for all four fields. At the extremes the side-0 fighter's outgoing and the
+side-1 fighter's incoming factor are both `1.25` (`h = 10`) or `0.75`
+(`h = 0`), so a flag-`0x100` hit is multiplied by `(1 + f_attacker) *
+(1 - f_defender)`: `1.5625` in the favoured direction and `0.5625` in the
+other.
+
+### Damage application
+
+`FUN_00225050(damage, fighter, display)` returns `1` only when this damage
+knocks the fighter out:
+
+1. Fighter byte `+0x62` bit `0` makes the whole call a no-op returning `0`.
+2. When `display` is nonzero and the fighter's retained attack record `+0x7CC`
+   is null or has none of record `+0x10` bits `0x00100000`, `0x00200000`, or
+   `0x00400000`, it adds `damage * 100` to the damage-counter object returned
+   by live BTL `0x006B4000(side)` for the **attacker's** side (defender side 0
+   selects object 1 and vice versa). Live `0x006BB9A0` ignores non-positive
+   values, accumulates the percentage at object `+0x10` with a `999.0` cap,
+   and tracks its maximum at `+0x14`.
+3. `FUN_00238830(damage, fighter)` adds the damage to the fighter's own
+   support gauge `+0x74`, clamps it to `[0, 1]`, and requests effect `0x2D`
+   at the fighter position when the gauge first reaches `1.0`, subject to
+   halfword `+0x60` bits `5..8` being zero and an optional global object being
+   absent. This is skipped entirely when live `0x008854D0(side)` returns
+   nonzero.
+4. In Practice (manager `+0x0C == 3`) it subtracts from HP `+0x6C` and raises
+   any result at or below `0.01` to exactly `0.01`; it always returns `0`, so
+   Practice damage cannot knock out.
+5. In every other mode it subtracts only when byte `+0x62` bit `1` is clear.
+   If HP is then at or below zero it stores `0`, clears byte `+0x61` bit `3`,
+   and returns `1`.
+
+The `+0x61` bit `3` cleared on knockout is the same bit that gates
+ordinary-hit damage below, chakra gain, and timed downed recovery. The
+attacker-side support-gauge gain is separate: the attack-record consumers call
+`FUN_00238950(raw, defender)` with the pre-calculator raw damage, and that
+routine adds to the gauge of the fighter at defender `+0x20`.
+
+### Ordinary-hit damage gates
+
+`FUN_002346b0` applies damage only when all of these hold:
+
+- defender byte `+0x61` bit `3` is set;
+- attack record `+0x10` bit `0x01000000` is clear;
+- attack record `+0x14` bit `0x02000000` is clear;
+- the defender is not in response `(5, 0x42..0x49)`; those contact-stage
+  substates receive their fixed damage from `FUN_002312b0` instead;
+- coordinator state `FUN_00250820()` is not `6`;
+- the per-sample raw value is nonzero.
+
+It uses `0x133` when record `+0x10 & 0x000C0000` is zero **and** record word
+`+0x50` is nonzero; otherwise it uses `0x122`. Therefore attacks with either
+`+0x10` bit `0x40000`/`0x80000` or a zero `+0x50` ignore the attacker's
+character offense and temporary attack effects.
+
+### Guarded-hit damage
+
+`FUN_00228b50` ignores record `+0x10` bit `0x01000000` hits entirely. Otherwise
+it computes a guard factor:
+
+```text
+base  = 0.5 when attack record +0x14 bit 0x01000000 is set, else 0.0
+G     = max(base, FUN_003071c0(attacker))
+```
+
+`FUN_003071c0` returns the largest node `+0x90` among the attacker's active
+temporary effects, starting from `0.0`; node `+0x90` is effect-definition
+record `+0x30`. When `G` is zero no guard damage occurs. Otherwise it calls
+`FUN_00238950` with the per-sample raw value, then applies
+`G * raw / record[+0x2E]` through the calculator with `0x133` when record
+`+0x10 & 0x000C0000` is zero, else `0x122`, unless the coordinator state is
+`6`. Unlike the ordinary path it does not test record `+0x50`. Consequently a
+blocked ordinary attack deals no HP damage unless its record sets `+0x14` bit
+`0x01000000` (half damage) or the attacker has an effect granting a guard
+factor; the larger of the two applies. After damage it increments defender
+halfword `+0x53C`, saturating at `9999`, and raises `+0x53E` to that maximum
+unless defender byte `+0x62` bit `0` is set. This identifies attack flag
+`0x01000000` in record `+0x14`, left unnamed in
+[`chakra_and_guard.md`](chakra_and_guard.md), as the static half-chip-damage
+selector.
 
 The positive-control replay below separated the synchronized Sakura string's
 calculator inputs. Its first two hits used exact raw values `0.02` and `0.03`

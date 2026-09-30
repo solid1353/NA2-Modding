@@ -61,7 +61,8 @@ identified as representative.
 clean trigger/association data; ordinary, class-7, and Naruto-specific entry
 paths; proven HP, combo, item/projectile, and action-progress predicates; the
 independence of controller marker, effect-list state, and live character form;
-class-3 creation/persistence/removal behavior; all 12 native UJ
+class-3 creation/persistence/removal behavior; the Deidara/Gaara
+stick-sector override of the `ccCommand` input interpreter; all 12 native UJ
 effect-to-character mappings; the UJ completion gates; the state-`0x17`
 resource replacement route; saved-identity restoration; BTL's adjacent but
 non-owning role; and the reserved/incomplete `0x4A` slot.
@@ -71,9 +72,9 @@ and rebuilt-object changes remains uncaptured. Generic UJ input and resource
 admission before record execution was not exhaustively traced, nor was every
 arbitrary indirect BTL computation; the negative BTL ownership result is
 therefore limited to the explicit scan families above. The user-facing name of
-BTL outcome value `2`, the concrete subsystem behind the Deidara/Gaara
-component float pair, insertion-failure behavior at ordinary entry, and the
-visible result of the Konohamaru class-7 mismatch remain unresolved.
+BTL outcome value `2`, which moves consume the Deidara/Gaara-widened stick
+directions, insertion-failure behavior at ordinary entry, and the visible
+result of the Konohamaru class-7 mismatch remain unresolved.
 
 - **Deliberate exclusions and overlap:** Adventure mode, animation
 internals and timing/60-FPS evaluation, damage formulas, substitution,
@@ -160,15 +161,16 @@ header-omitting baseline, not the encoded value:
 
 | Observed use | Export baseline | Live target | Complete-file offset |
 | --- | ---: | ---: | ---: |
-| Set component float pair | `0x006F0990` | `0x006F09D0` | `0x0003CAD0` |
-| Restore component float-pair defaults | `0x006F09A0` | `0x006F09E0` | `0x0003CAE0` |
+| Set command stick-sector widths | `0x006F0990` | `0x006F09D0` | `0x0003CAD0` |
+| Restore default stick-sector widths | `0x006F09A0` | `0x006F09E0` | `0x0003CAE0` |
 | Per-side event-counter read wrapper | `0x00716010` | `0x00716050` | `0x00062150` |
 
 The setter is 16 bytes: it stores `f12` to component `+0xA8`, stores `f13` to
 component `+0xA4`, and returns. The restorer is 32 bytes: it writes raw float
-bits `0x3FC90FDB` to `+0xA8` and `0x40278B7F` to `+0xA4`, then returns. Neither
-calls another function. The resident awakening paths pass the component
-pointer from fighter `+0x24`; activation supplies `0x40060723` to both fields.
+bits `0x3FC90FDB` (`pi/2`, 90 degrees) to `+0xA8` and `0x40278B7F` (`5*pi/6`,
+150 degrees) to `+0xA4`, then returns. Neither calls another function. The
+resident awakening paths pass the component pointer from fighter `+0x24`;
+activation supplies `0x40060723` (`2*pi/3`, 120 degrees) to both fields.
 
 An exhaustive aligned BTL `jal` scan found no BTL caller of the setter and one
 caller of the restorer. Its call instruction is export `0x006EF4E0`, live
@@ -177,8 +179,66 @@ caller of the restorer. Its call instruction is export `0x006EF4E0`, live
 live bounds `[0x006EF4E0,0x006EF554)`. It initializes the component, installs
 vtable `0x005DDD30` at `+0x50`, clears `+0x60/+0x64/+0x84/+0x88`, restores the
 float defaults, and continues generic initialization. The restore function is
-therefore demonstrably generic component initialization reused by awakening
-cleanup. The component's concrete gameplay subsystem remains unknown.
+therefore generic component initialization reused by awakening cleanup.
+
+### The fighter `+0x24` component is the command-input interpreter
+
+The component is the side's `ccCommand` object, the interpreter that turns
+controller state into per-frame command bits. Evidence, all from raw live BTL
+addresses:
+
+- The vtable at resident `0x005DDD30` begins with type-info word `0x008C3048`,
+  whose name pointer resolves to the BTL string `ccCommand` at `0x008981E0`.
+- Its allocator at live `0x00709780` allocates `0xC0` bytes and calls the
+  initializer above. Battle setup at live `0x00709480` creates one for each
+  side through that allocator, creates both fighters through live `0x00709860`,
+  and links them: fighter `+0x24` = own `ccCommand`, `ccCommand +0x20` = own
+  fighter, and `ccCommand +0x24` = opposing fighter.
+- The initializer's continuation at live `0x006EF600` sets `ccCommand +0x64`
+  to the resident pad manager (`gp-0x35F4`, runtime `0x006073FC`) plus
+  `side*0x78 + 0x1C`, and allocates a ring of 24-byte input snapshots at
+  `+0x94` (write index `+0x9C`, previous index `+0x98`, length `+0xA0`, sized
+  `300 / manager byte +1`).
+- Its per-frame update at live `0x006F0EA0` copies the pad record's button
+  words, left-stick angle, and left-stick magnitude into the ring, recomputes
+  opponent/camera-relative angles at `+0x84/+0x88/+0x90`, and then calls the
+  command builder at live `0x006EFDC0`. The builder stores the command word at
+  `+0xAC`, the normalized stick magnitude (`byte / 255`) at `+0xB0`, and the
+  raw stick angle at `+0xB4`.
+
+The resident pad routine at `0x00114B40` derives that angle from the left
+stick as `atan2(-(x-0x80), y-0x80)` after a dead zone, so down is `0`, up is
+`pi`, left is `+pi/2`, and right is `-pi/2`. The builder tests the stick
+against each direction through live `0x006EF810`, whose final comparison in
+resident `FUN_00180D10` accepts when the wrapped angular distance is less than
+half the supplied sector width. The width source for each built command bit
+is:
+
+| Command bit | Direction | Sector width |
+| ---: | --- | --- |
+| `0x01` | right (`-pi/2`) | `+0xA4` |
+| `0x02` | left (`+pi/2`) | `+0xA4` |
+| `0x04` | up (`pi`) | `+0xA8` |
+| `0x08` | down (`0`) | `+0xA8` |
+| `0x10` | up | fixed `pi/2` |
+| `0x20` | down | fixed `pi/2` |
+| `0x40/0x80` | toward/away along `+0x88` | fixed `5*pi/6` |
+| `0x100/0x200` | toward/away along `+0x84` | fixed `5*pi/6` |
+
+No other BTL instruction in the `ccCommand` implementation range reads or
+writes `+0xA4` or `+0xA8`.
+
+**Conclusion, high confidence:** in retail play the four absolute stick
+commands use 150-degree left/right sectors and 90-degree up/down sectors. A
+stick within 15 degrees of vertical sets only the vertical bit, 15 to 45
+degrees sets both a vertical and a horizontal bit, and beyond 45 degrees sets
+only the horizontal bit. Awakened Deidara `0x40` and Gaara `0x3B` switch the
+variable pair to 120 degrees each, moving those boundaries to 30 and 60
+degrees: up/down recognition widens by 15 degrees on each side and left/right
+narrows by the same amount; the
+fixed-width bits `0x10..0x200` are unaffected. Cleanup restores the 150/90
+split. Which moves consume bits `0x04/0x08` rather than `0x10/0x20`, and
+therefore which awakened actions are affected, was not traced.
 
 The event-counter read wrapper demonstrates the intra-overlay `jal` labeling
 hazard directly. Its call instruction is export `0x0071602C`, live
@@ -466,9 +526,11 @@ boundary for awakening event counters across reconstructed-form re-entry.
 For Deidara `0x40`, detecting `0x41` additionally sets `+0x63:0x10` and calls
 the encoded live BTL target `SUB_006F09D0` (export baseline `0x006F0990`, live
 `0x006F09D0`, file `0x0003CAD0`) with fighter `+0x24` and duplicated
-`0x40060723` float arguments. The matching cleanup target `SUB_006F09E0`
-(export baseline `0x006F09A0`, live `0x006F09E0`, file `0x0003CAE0`) is
-the generic component float-pair default restorer documented above.
+`0x40060723` float arguments, setting both variable stick-sector widths of
+its [`ccCommand` interpreter](#the-fighter-0x24-component-is-the-command-input-interpreter)
+to 120 degrees. The matching cleanup target `SUB_006F09E0` (export baseline
+`0x006F09A0`, live `0x006F09E0`, file `0x0003CAE0`) restores the default
+150/90-degree widths.
 
 ### Proven HP and counter prerequisites
 
@@ -898,18 +960,18 @@ Thus gate value `2` is a BTL-produced UJ outcome/state, but its exact
 user-facing name remains open. The resident consumer's behavior is exact:
 value `2` diverts to side event slot `0x0E` and suppresses the form request.
 
-The former Ultimate-Jutsu type-`0` candidate left the resident contest-object
-global at `0x00607750` empty, so the main manager skips both the object's update
-dispatcher `FUN_0036BF10` and render dispatcher `FUN_0036BFF0`. The user
-established at runtime that enabling this implementation prevents post-UJ
-awakening. Static analysis establishes that object suppression removes the
-shared nonvisual contest lifecycle used alongside the BTL-produced completion
-state, but it does not isolate a single omitted field as the cause. The
-accepted correction keeps native contest-object creation and updates, retains
-the two BTL input-read suppressions, and NOPs only the sole resident call to
-`FUN_0036BFF0` at `0x001F0940` (clean ELF file offset `0xF0A40`). User runtime
-testing confirmed that the corrected post-UJ awakening path
-executes while the contest remains invisible and unresponsive to both players.
+When the resident contest-object global at `0x00607750` is empty, the main
+manager skips both the object's update dispatcher `FUN_0036BF10` and render
+dispatcher `FUN_0036BFF0`. In a runtime experiment that left the global empty
+by forcing contest type `0`, post-UJ awakening no longer occurred. Static
+analysis shows that removing the object also removes the nonvisual contest
+lifecycle used alongside the BTL-produced completion state, but it does not
+isolate a single missing field as the cause. In a second experiment that kept
+the contest object and removed only the sole resident call to `FUN_0036BFF0`
+at `0x001F0940` (ELF file offset `0xF0A40`), the post-UJ awakening path still
+ran. That call also advances the contest timer and result display, as
+described in [Ultimate Jutsu](ultimate_jutsu.md#contest-objects), so the
+contest stayed invisible and never resolved.
 
 The final gate is a per-side UJ defeat latch, not a chakra or resource check.
 `FUN_001FDB40(side,index)` reads a `3 * 0x5D` state matrix at `0x006B2B40`,
@@ -1114,6 +1176,8 @@ BTL.
 | `0x0020DDC0` | `FUN_0020DDC0` | Reconcile marked state and associations |
 | `0x0020E280` | `FUN_0020E280` | Per-fighter descriptor dispatcher |
 | `0x0020EA90` | `FUN_0020EA90` | Deidara/Gaara exception to root suppression |
+| `0x00114B40` | `FUN_00114B40` | Convert a pad stick to angle and magnitude |
+| `0x00180D10` | `FUN_00180D10` | Test angle within half a sector width of a target |
 | `0x00211770` | `FUN_00211770` | Initialize/reset scalar progress tracker |
 | `0x002117A0` | `FUN_002117A0` | Set all progress positions to one value |
 | `0x002118A0` | `FUN_002118A0` | Test position with tracker crossing bit `0x01` |
@@ -1192,6 +1256,10 @@ BTL.
 | `0x005AFDB0` | default UJ-record index table | Per-character default selection |
 | `0x005C1B50` | trigger descriptor table | 94 records, stride `4` |
 | `0x005C1D30` | association table | 94 records, stride `8` |
+| `0x005DDD30` | `ccCommand` vtable | Fighter `+0x24` command-input interpreter |
+| BTL `0x006EF810` | direction test | Map a direction code to a target angle and test the stick against a sector width |
+| BTL `0x006EFDC0` | command builder | Build command word `+0xAC` from the stick and button history |
+| BTL `0x006F0EA0` | `ccCommand` update | Snapshot pad input, refresh relative angles, build commands |
 
 ## Negative results and open questions
 
@@ -1223,8 +1291,11 @@ BTL.
   not an awakening resource. Its native outer-object writers use only `0`, `1`,
   and `2`; the dispatcher also tolerates `-1`, but no BTL outer `-1` writer was
   found.
-- **Open:** the concrete component subsystem whose float pair is overridden by
-  `SUB_006F09D0`. The action-state tuple and `+0x1DC` progress predicate are
+- **High:** the Deidara/Gaara float pair is the variable left/right and
+  up/down stick-sector width pair of the side's `ccCommand` input interpreter.
+- **Open:** which moves consume the variable-width direction bits, and
+  therefore which awakened Deidara/Gaara actions the wider up/down sectors
+  affect. The action-state tuple and `+0x1DC` progress predicate are
   structurally resolved, but their exact user-visible transition moment was
   not runtime-captured.
 - **High:** clean Konohamaru data reaches the class-7 apply-before-membership

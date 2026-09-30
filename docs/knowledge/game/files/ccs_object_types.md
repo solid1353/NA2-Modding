@@ -34,27 +34,52 @@ not by itself a class identity.
   memory for semantic payload checks. Separately, a chunk-boundary inventory
   exhaustively scanned the 1,732 extracted CCS files in the permitted corpus;
   it established tag presence and the reported absences, but did not decode
-  every payload semantically. The maintained explorer executable was inspected
-  statically only for independent `0x0800` and `0x2400` corroboration.
+  every payload semantically. A later pass rechecked those absences with an
+  aligned-word superset search of 1,731 non-excluded files. It also walked
+  texture blocks by the resident parser's own per-level counts to inventory
+  texture and CLUT group references. That pass also followed the
+  texture/CLUT group node to its resident consumer and traced the `0x1800`
+  constructor and its per-frame draw path. It ran bounded zero-register
+  literal searches for `0x1100`, `0x1200`, and `0x1F00` in the resident
+  executable and the NA2 `BTL.BIN` and `ETC.BIN` overlays. It compared the
+  `0x1F00` parser and the `0x1000`–`0x1200` handlers with NUN3, and counted
+  literal matches in NUN5 and NUN6. The maintained explorer executable was
+  inspected statically for independent `0x0800` and `0x2400` corroboration.
+  Its IL name-to-tag table was also read for unpromoted labels.
 - **Confirmed coverage:** 29 numeric routes have a confirmed resident resource
-  identity or block role in the table below. Exact embedded class names are
+  identity or block role in the table below. File tag `0x0003` is confirmed as
+  the object-section marker. Runtime tag `0x1000` created by texture and CLUT
+  construction is confirmed as a shared GS image-transfer group with a
+  resident consumer. Most `0x1800` descriptor fields are mapped to
+  off-screen render-target, depth-region, size, and composite-pass
+  parameters. Exact embedded class names are
   promoted only for the texture, light, generator, morpher, and stream draw-
   environment families whose constructor/vtable/name chains were recovered.
   The remaining resource labels describe proved layouts and consumers, not
   speculative C++ class names.
-- **Unresolved or untested:** file routes `0x0003`, `0x1000`, `0x1100`, `0x1200`, and
-  `0x1F00` remain unresolved for the reasons recorded in the ledger. A final
-  bounded check found that texture and CLUT construction also assign runtime
-  tag `0x1000` while creating a shared `0x38`-byte owner through
-  `FUN_0019E770`, `FUN_0019EDE0`, and `FUN_0019D2D0`; no direct relationship to
-  file-block handler `FUN_001ADB70` was established, so those two uses are not
-  conflated or promoted. The binary and runtime layouts of the `0x1F00` nested
-  table are confirmed below, but no direct semantic consumer was recovered.
+- **Unresolved or untested:** file routes `0x1000`, `0x1100`, `0x1200`, and
+  `0x1F00` remain unresolved for the reasons recorded in the ledger. Runtime
+  tag `0x1000` from texture and CLUT construction is resolved as an
+  image-transfer group, but its relationship to file-block handler
+  `FUN_001ADB70` is only an inference. Whether same-name groups merge across
+  containers is untested. The binary and runtime layouts of the `0x1F00`
+  nested table are confirmed below, but no direct semantic consumer was
+  recovered. The explorer labels `FrameBuffer_Page`, `FrameBuffer_Rect`, and
+  `Sprite2Tbl` remain unverified leads for `0x1100`, `0x1200`, and `0x1F00`.
+  The `0x1800` trailing word, the code that queues `0x1800` draws, and the
+  suspected shadow role are unresolved. The `0x2200` packet command language
+  and ring consumer are also unresolved; the explorer labels that route
+  `PCM_Audio`.
 - **Deliberate exclusions and overlap:** the explicitly excluded mode/resource
-  subtree, overlays, and overlay resource trees were not inspected.
+  subtree, including `ADV.BIN`, and overlay resource trees were not inspected.
+  `BTL.BIN` and `ETC.BIN` were searched only for the literal tag forms named
+  above, and the `BLT_item` string table was followed only to its data
+  reference.
 - **Evidence limitations:** static evidence is limited to the identified clean resident executable, its
-  maintained read-only exports, the listed clean assets, and the identified
-  tool build. No emulator execution, runtime injection, or live-memory
+  maintained read-only exports, the listed clean assets, the identified tool
+  build, and the maintained NUN3, NUN5, and NUN6 analyses used only for
+  comparison. Literal searches cannot see a tag built by table lookup or
+  arithmetic. No emulator execution, runtime injection, or live-memory
   observation validated these mappings; clean assets provide file-level
   corroboration only.
 
@@ -127,7 +152,7 @@ teardown branch only when `FUN_001A9F10` explicitly tests that runtime value.
 | `0x1300` | Position-only dummy marker resource | File-tag dispatch calls `FUN_001B36A0`, which allocates a `0x20`-byte descriptor, publishes tag `0x1300`, and stores the three input floats as a homogeneous XYZ position at descriptor `+0x10`. The independent teardown branch directly frees that descriptor. In clean `PPTS04.CCS`, every block on this route has exactly four payload dwords: a target record followed by XYZ; examples include `DMY_tyo_r0` at `(0, 2000, 1030)` and `DMY_dummy_010` at `(-300, 1100, 660)`. The parser shape, lifetime, and clean records establish a position-only dummy marker, but no C++ class name or downstream specialized object was found. | **High** |
 | `0x1400` | Position-and-Euler dummy marker resource | File-tag dispatch calls `FUN_001B3730`, which allocates a `0x30`-byte descriptor, publishes tag `0x1400`, stores a homogeneous XYZ position at `+0x10`, and converts three following Euler components from degrees to radians into the homogeneous vector at `+0x20`. The teardown branch directly frees the descriptor. Clean `PPTS04.CCS` blocks have exactly seven payload dwords; `DMY_dummy_100` carries position `(-785.9584, -229.4614, 235)` and Euler degrees `(0, 0, 60)`. The parser conversion, lifetime, and clean records establish the transform-marker role without a C++ class name. | **High** |
 | `0x1700` | Lightweight ordered-controller binding | File-tag dispatch calls `FUN_001B2220`, which builds one shared controller table at container `+0x5C`. Kind-zero entries assign referenced records runtime tag `0x1700` and an eight-byte descriptor whose `+0x04` halfword is the table slot; a default slot is built when the entry has no record. `FUN_001A0B80` materializes each tagged record as a `0x40`-byte controller, initializes its list storage through `FUN_00110340`, and calls `FUN_0010A1D0` with that exact slot and the shared playback context. `FUN_0010A1D0` registers the controller in the ordered list processed by `FUN_00109D50`; cleanup uses `FUN_0010A0F0`. Clean `PPT2310_ST00.CCS` binds this form to `LYR_sky`, `LYR_bg`, `LYR_clr`, `LYR_clr01`, and `LYR_board`. This proves a lightweight scheduled-controller binding without proving an embedded C++ class name. | **High** |
-| `0x1800` | Extended parameterized ordered-controller binding | Kind-one entries in `FUN_001B2220` create `0x1800` controller slots in the same shared table, and direct file-tag parser `FUN_001B1FF0` fills either a referenced record's `0x18`-byte descriptor or the default slot with six halfwords, two bytes, and a trailing word. `FUN_001A0B80` materializes that descriptor as a `0x180`-byte runtime object through `FUN_0018B570`. The constructor embeds the same `FUN_0010A1D0` ordered-controller base, registers an additional global controller node, and passes four descriptor halfwords to `FUN_0018B410`; cleanup calls `FUN_0018B4C0` and frees the allocation. Clean `PPT2310_ST00.CCS` supplies a default descriptor with halfwords `960, 0, 256, 256, 896, 0`, bytes `3, 0`, and trailing word `0x447A0000`. This establishes an extended parameterized controller binding; the individual parameter meanings and a C++ class name remain unresolved. | **High** |
+| `0x1800` | Extended parameterized ordered-controller binding | Kind-one entries in `FUN_001B2220` create `0x1800` controller slots in the same shared table, and direct file-tag parser `FUN_001B1FF0` fills either a referenced record's `0x18`-byte descriptor or the default slot with six halfwords, two bytes, and a trailing word. `FUN_001A0B80` materializes that descriptor as a `0x180`-byte runtime object through `FUN_0018B570`. The constructor embeds the same `FUN_0010A1D0` ordered-controller base, registers an additional global controller node, and passes four descriptor halfwords to `FUN_0018B410`; cleanup calls `FUN_0018B4C0` and frees the allocation. Clean `PPT2310_ST00.CCS` supplies a default descriptor with halfwords `960, 0, 256, 256, 896, 0`, bytes `3, 0`, and trailing word `0x447A0000`. This establishes an extended parameterized controller binding with an off-screen GS render pass. The [parameter fields](#0x1800-descriptor-fields-and-off-screen-pass) below are now largely mapped. The trailing word and a C++ class name remain unresolved. | **High** |
 | `0x1900` | `ccMorpher`, derived from `ccModifier` | File-tag dispatch calls `FUN_001B2190`, which builds an eight-byte descriptor from a target record and a linked record and publishes runtime tag `0x1900`. `FUN_001A0B80` directly tests that tag, allocates `0x114` bytes, first installs descriptor `0x005D9DF0` at object `+0x0C`, and then replaces it with `0x005D9E10`. The first descriptor resolves through `0x005BF7F8` to embedded `ccModifier` at `0x003FB580`; the concrete descriptor resolves through `0x005BF810` to `ccMorpher` at `0x003FB590`. In the clean executable, concrete vtable slot `+0x0C` at resident `0x005D9E1C` is `FUN_00197570`; it applies the weighted source list installed through `FUN_00197B20` and `FUN_00197B30` to blend packed vertex positions into model geometry. `FUN_001B56E0` and the `0x1902` command branch in `FUN_001B8410` populate that list from materialized playback objects. Playback cleanup in `FUN_001A2520` calls the concrete object's virtual destructor through object `+0x0C`, slot `+0x08`. | **High** |
 | `0x1A00` | `ccStreamOutlineParam`, derived from `ccDrawEnvCtrl` | The direct parser publishes runtime tag `0x1A00`. `FUN_001A0B80` tests that tag, allocates `0x40` bytes, installs the `ccDrawEnvCtrl` base descriptor and then concrete descriptor `0x005D9EF0` at object `+0x04`; the descriptor resolves through `0x005BF980` to embedded `ccStreamOutlineParam` at `0x003FB6F0`. | **High** |
 | `0x1B00` | `ccStreamCelShadeParam`, derived from `ccDrawEnvCtrl` | The direct parser publishes runtime tag `0x1B00`. `FUN_001A0B80` tests that tag, allocates `0x40` bytes, installs the same base and then concrete descriptor `0x005D9EE0` at object `+0x04`; it resolves through `0x005BF968` to embedded `ccStreamCelShadeParam` at `0x003FB6D0`. | **High** |
@@ -172,7 +197,7 @@ runtime class/resource name is not.
 
 | File tag | Direct parser | Runtime-record teardown branch | Identity status |
 | ---: | --- | --- | --- |
-| `0x0003` | `FUN_001ADA90` | None | Unresolved control block; handler is empty, consumes no payload, and publishes no record in the inspected code. |
+| `0x0003` | `FUN_001ADA90` | None | **Object-section marker; a repeated marker is a header-only no-op. See [the section marker](#file-tag-0x0003-object-section-marker).** |
 | `0x0100` | `FUN_001B2670` | `FUN_001A9390` | **Confirmed model-instance/object descriptor; see above.** |
 | `0x0200` | `FUN_001B3450` | free `+0x30`, then `FUN_001A9290` | **Confirmed material resource; see above.** |
 | `0x0300` | `FUN_001B3C70` | virtual destructor at object `+0x40`, slot `+0x08` | **Confirmed texture-chunk family; see above.** |
@@ -189,7 +214,7 @@ runtime class/resource name is not.
 | `0x0D80` | `FUN_001B1920` | `FUN_001A93D0` | **Confirmed animation-attached effect-generator action packet; see above.** |
 | `0x0D90` | `FUN_001B1B30` | `FUN_001A93B0` | **Confirmed `ccGenerator2` particle/effect-generator definition; see above.** |
 | `0x0E00` | `FUN_001B2E50` | `FUN_001A9370` | **Confirmed animated textured-effect resource; see above.** |
-| `0x1000` | `FUN_001ADB70` | pointer clear only | Unresolved legacy marker: publishes the numeric tag with a null descriptor and consumes, but does not preserve, the counted dwords. |
+| `0x1000` | `FUN_001ADB70` | pointer clear only | Unresolved file block: publishes the numeric tag with a null descriptor and consumes, but does not preserve, the counted dwords. The same runtime tag written by texture/CLUT construction is the [image-transfer group](#runtime-tag-0x1000-from-texture-and-clut-construction-image-transfer-group). |
 | `0x1100` | `FUN_001ADB20` | No explicit branch | Unresolved legacy marker: reads 16 bytes, uses only the target record to publish the numeric tag, and creates no descriptor. |
 | `0x1200` | `FUN_001ADAA0` | No explicit branch | Unresolved legacy marker: publishes the numeric tag and consumes, but does not preserve, the counted eight-byte entries. |
 | `0x1300` | `FUN_001B36A0` | direct free through `FUN_00105650` | **Confirmed position-only dummy marker; see above.** |
@@ -211,6 +236,68 @@ File tag `0x0005` is the stream terminator handled inside `FUN_001AC8A0`, not
 an object-type mapping. An unrecognized file tag reaches the deliberate
 null-store failure path. The terminator's container-finalization behavior is
 documented in [Resident CCS runtime](ccs_runtime.md#parsing-type-dispatch-and-publication).
+
+### `0x1800` descriptor fields and off-screen pass
+
+**Observation:** constructor `FUN_0018B570` consumes the `0x18`-byte
+descriptor as follows:
+
+| Descriptor offset | Width | Use |
+| ---: | ---: | --- |
+| `+0x04` | `2` | Ordered-controller slot passed to `FUN_0010A1D0`. |
+| `+0x06`, `+0x08` | `2` each | VRAM X/Y. `FUN_0018B410` passes them to `FUN_00112AE0` with pixel format `0` (`PSMCT32`) and stores the result at object `+0x156`. |
+| `+0x0A`, `+0x0C` | `2` each | Width and height. `FUN_0018B410` stores their base-2 logarithms at object `+0x15A` and `+0x15B`. |
+| `+0x0E`, `+0x10` | `2` each | Second VRAM X/Y. They are passed to `FUN_00112950` with format `0x31` (`PSMZ24`), shifted left by five, and stored at `+0x158`. |
+| `+0x12` | `1` | Copied to `+0x15E`: the number of composite passes in `FUN_0018BF90`. |
+| `+0x13` | `1` | Copied to `+0x15F`: the multiplier for the per-pass offsets from table `0x003FB500` in `FUN_0018BF90`. |
+| `+0x14` | `4` | Not read by the constructor. |
+
+The constructor also links the object into a global list at `gp-0x356C`.
+`FUN_0018B8E0` walks that list and calls `FUN_0018B930` for each object with
+queued draw packets at `+0x150`. `FUN_0018B930` first builds GS setup through
+`FUN_0018C800`, using the `+0x158` address with format `0x31` and the logarithmic
+size. It then runs `FUN_0018C4C0` and `FUN_0018CC00` with the `+0x156` address
+in format `0`, and splices each queued packet into the object's DMA chain.
+`FUN_0018BF90` then uses the `+0x156` target as `TEX0_1` and draws textured
+rectangles through `UV` and `XYZ2` vertex pairs. It draws one rectangle per
+composite pass. Mode byte `+0x15C` values `2` and `3` use one neutral-gray
+pass. In other modes, the `RGBAQ` color is black with alpha `0x80` or has
+alpha from object byte `+0x15D`, initialized to `0x20`.
+
+Clean `PPT2310_ST00.CCS` values therefore describe a 256×256 `PSMCT32` target
+at VRAM coordinates `(960, 0)`, a `PSMZ24` region at `(896, 0)`, three
+composite passes, and offset multiplier `0`.
+
+**Inference:** `0x1800` renders its queued draws into a small off-screen
+target. It then composites that target back as darkened, alpha-blended
+rectangles, which fits a soft shadow or silhouette overlay. The
+[explorer label](#negative-results-and-labels-not-promoted) `Shadow` agrees.
+No resident type name or caller that queues particular geometry was traced,
+so the shadow role is not promoted.
+
+### File tag `0x0003`: object-section marker
+
+**Observation:** `FUN_001A9060` reads a three-part header for chunk 3: the
+16-bit ID, a discarded halfword, and a discarded length dword. It requires the
+ID to be `3` and then calls `FUN_001AC8A0`. The dispatcher reads the same
+three-part header for each block and ignores both the high halfword and the
+length. Its `0x0003` branch calls `FUN_001ADA90`, which is only `jr ra`. A
+second `0x0003` header inside the object stream therefore consumes exactly its
+eight header bytes. It publishes nothing and leaves the parser in object-block
+state.
+
+**Clean-file observation:** every one of the 1,731 non-excluded NA2 CCS files
+has exactly one section-3 header immediately after chunk 2, and each has length
+`0`. In 1,683 files the high halfword is `0x0000`, and in 48 it is `0xCCCC`.
+An aligned-word scan found nine other `0xCCCC0003` words. None is followed by a
+valid block chain, and each lies inside another block's payload. Walks that
+followed block lengths found no in-stream repeat of the marker where the walk
+remained synchronized.
+
+**Confirmed identity:** file tag `0x0003` is the object-section marker. Its
+dispatcher route makes a repeated marker a harmless no-op. Why the route exists
+is not established; tolerance of repeated or concatenated section markers is
+only a hypothesis.
 
 ### Unresolved `0x1F00` binary and runtime layouts
 
@@ -284,8 +371,103 @@ literal form of `0x1F00` found primary-resident instruction uses only in
 parser `FUN_001B2930` at `0x001B2A64`; the corresponding `ori` literal pattern
 had no match. This supports the absence of a direct literal-tag consumer, but
 does not exclude a table-driven consumer or code that constructs the value by
-another instruction sequence. The route therefore remains semantically
-unresolved rather than being assigned a class or resource name.
+another instruction sequence. The same zero-register `addiu` and `ori` search
+found no match in the NA2 `BTL.BIN` or `ETC.BIN` overlays. `ADV.BIN` is
+excluded. NUN5 and NUN6 each have exactly three aligned matches in their boot
+ELFs. NUN3 has five aligned matches. Three are teardown `FUN_00160000`,
+dispatcher `FUN_00162CA0`, and parser `FUN_00167F50`, which has the same
+two-pass layout. The other two NUN3 matches, `FUN_001AF1E0` and
+`FUN_001B3860`, use `0x1F00` as an unrelated numeric argument. No related game
+supplied a consumer. The route therefore remains semantically unresolved
+rather than being assigned a class or resource name.
+
+### Runtime tag `0x1000` from texture and CLUT construction: image-transfer group
+
+This subsection concerns runtime tag `0x1000` written by texture and CLUT
+construction. File-block handler `FUN_001ADB70` also writes that runtime value;
+the relationship between the two is covered at the end.
+
+**Observation — stream field.** When container version `+0xAC` is at least
+`0x92`, both texture parser `FUN_001B3C70` and CLUT parser `FUN_001B3810` read
+one extra record ID after their own target (and, for textures, after the CLUT
+ID). If that record resolves to a record with a non-empty name, the texture
+path calls `FUN_0019E770(texture, record)` and the CLUT path calls
+`FUN_0019EDE0(clut, record)`.
+
+**Observation — group node.** Both helpers act only when the record's runtime
+pointer `+0x2C` is still the unmaterialized sentinel `4`. They first search a
+global singly linked list rooted at `gp-0x3570` for a node whose bytes
+`+0x08..+0x25` equal the record's first 30 name bytes. Without a match they
+allocate `0x38` bytes, construct the node with `FUN_0019D2D0`, store it at
+record `+0x2C`, and write runtime tag `0x1000` at record `+0x2A`. With a match,
+or when the record is already materialized, they reuse the existing pointer.
+The node layout used by the resident code is:
+
+| Node offset | Role |
+| ---: | --- |
+| `+0x08` | Name comparison key. `FUN_0019D2D0` writes only the record name's first byte here. |
+| `+0x28` | List of member textures; eight-byte links added by `FUN_0019D180`. |
+| `+0x2C` | List of member CLUTs; eight-byte links added by `FUN_0019D130`. |
+| `+0x30` | Next node in the `gp-0x3570` global list. |
+
+The texture stores the node at texture `+0x2C` and sets texture byte `+0x3B`
+bit `0x02`. The CLUT stores it at CLUT `+0x14` and sets CLUT byte `+0x20` bit
+`0x02`. Texture destructor `FUN_0019E9C0`, the concrete `ccTexChunk` vtable
+slot `+0x08`, tests that bit and calls `FUN_0019D0A0` to unlink the texture.
+The CLUT counterpart is `FUN_0019D010`. When both member lists are empty,
+either unlink path frees the node through `FUN_0019D200`. The record-teardown
+branch in `FUN_001A9F10` only clears the record pointer. The members therefore
+own the node's lifetime through a reference-counting pattern.
+
+**Observation — consumer.** Resident `FUN_00372DF0` resolves the record
+`BLT_strbreak` through `FUN_001A8F00`, which returns record `+0x2C`, and stores
+the result at `gp-0x3288`. `FUN_003730C0` then uses that node in this order:
+
+1. `FUN_0019CE00(node, context)` calls every member texture's virtual slot
+   `+0x10`, which is `FUN_001190D0` in the `ccTexChunk` vtable at
+   `0x005D9E90`. For every member CLUT it calls `FUN_0010F9B0` on that CLUT's
+   transfer descriptor at `+0x10`.
+2. `FUN_0019CF60(node)` sets bit `0x02` of byte `+0x0E` in every member
+   texture's `0x20`-byte per-level transfer descriptors at texture `+0x28`.
+   It sets the same bit in every member CLUT's descriptor.
+3. `FUN_001BB790` runs the draw path.
+4. `FUN_0019CEB0(node)` clears those bits.
+
+`FUN_0010F940` and `FUN_0010F9B0` submit a descriptor only while bit `0x02` is
+clear. Submission path `FUN_0010FA10` builds a GS packet that writes registers
+`0x50`, `0x51`, `0x52`, and `0x53` (`BITBLTBUF`, `TRXPOS`, `TRXREG`, and
+`TRXDIR`) before the image data transfer.
+
+**Confirmed identity (high confidence):** when texture or CLUT construction
+assigns runtime tag `0x1000`, the record owns a shared GS image-transfer group.
+The group collects every texture and CLUT that names the record, so their
+uploads can be submitted together and then suppressed as a set. No embedded C++
+class name or vtable was found for the node.
+
+**Clean-file corroboration:** a walk of the non-excluded NA2 CCS corpus that
+decodes texture blocks with the parser's per-level counts found 3,631 non-zero
+group references. They occur in texture/CLUT pairs, except for one texture-only
+group. Every referenced record name begins with `BLT_`, for example
+`BLT_obj`, `BLT_bg`, and `BLT_item`. Clean `STRMCMN.CCS` contains the
+texture-only group `BLT_strbreak` that `FUN_00372DF0` resolves, with member
+`TEX_strbreak`. In GS terminology, `BLT_` matches the `BITBLTBUF` transfer
+that the consumer submits. This name correspondence is corroboration only.
+
+**Relationship to file tag `0x1000` (inference, not established):**
+`FUN_001ADB70` writes the same runtime tag but sets record `+0x2C` to `0`, not to
+a node. A later texture or CLUT naming that record would therefore take the
+reuse branch with a null node, and `FUN_0019D180` or `FUN_0019D130` would
+dereference address `0x28` or `0x2C`. The file block therefore cannot safely
+precede group members in the same stream. It may be a legacy placeholder for
+the same group record. No clean non-excluded NA2 block uses file tag `0x1000`.
+The shared number and the pointer-only teardown are consistent with that
+reading, but they do not prove it.
+
+**Untested:** because `FUN_0019D2D0` initializes only the first byte of the
+30-byte comparison key, the static evidence does not establish whether
+same-name groups from different containers are actually merged. A match
+requires the other 29 key bytes to already equal the name, which depends on
+allocator contents that were not examined.
 
 ## Negative results and labels not promoted
 
@@ -313,10 +495,33 @@ unresolved rather than being assigned a class or resource name.
   `0x0D00`, `0x1000`, `0x1100`, `0x1200`, `0x1F00`, or `0x2200`. This is a
   useful absence result for the inspected non-excluded corpus, not proof that
   the resident parser branches are unreachable in every release or input.
+  Block lengths are not a reliable walk key for every type. For example,
+  texture blocks can declare more words than `FUN_001B3C70` consumes. The
+  parser follows its own per-level counts instead. The absence was therefore
+  rechecked with a superset search of every four-byte-aligned word in the 1,731
+  non-excluded decompressed files. That search found no `0xCCCC` word for
+  `0x0D00`, `0x1100`, `0x1200`, or `0x1F00`. The only `0x1000` and `0x2200`
+  matches were 30 and 20 words inside texture pixel data in `HOME.CCS`,
+  `HOME/IFKKW.CCS`, `SCENE/PPT6000_1DDR.CCS`, `STR/D64_25E.CCS`, and
+  `STR/D70_20E.CCS`. Their length fields are implausible, such as
+  `0xCCCCCCCC`, and none starts a valid block chain. The search cannot see a
+  block whose high halfword is not `0xCCCC`, which the dispatcher would also
+  accept. Where length-following walks remained synchronized, the only block
+  in that form was the chunk-3 header.
 - The three legacy markers `0x1000`, `0x1100`, and `0x1200` publish numeric
   record tags but preserve no payload object. No consumer, materializer, or
   class-name chain was recovered for them, so assigning semantic names from
-  their sizes or adjacency would be speculative.
+  their sizes or adjacency would be speculative. Zero-register `addiu`
+  literal searches for `0x1100` and `0x1200` found CCS uses only in the NA2
+  dispatcher and parsers. The other resident matches inspected were
+  unrelated. They include random-number seeding in `FUN_0017FD90` and
+  `FUN_00180060`, and IOP RPC code in `FUN_001406E0` and `FUN_00162E38`. The
+  remaining `0x1100` matches from `0x00162F08` through `0x00164B98` are in the
+  RPC wrapper block beside `FUN_00162E38`, but were not decompiled
+  individually. `BTL.BIN` has one aligned match: a `0x1100`-byte allocation. `ETC.BIN` had no match. NUN3's
+  dispatcher `FUN_00162CA0` routes all three tags to handlers,
+  `FUN_001643C0`, `FUN_00164370`, and `FUN_001642E0`, with the same stub
+  behavior, so the older game supplies no fuller form.
 - `0x1F00` is adjacent to `0x1900` in neither the dispatcher nor any proved
   runtime relationship. A raw clean-binary audit of the complete
   `ccMorpher` vtable identified its concrete blend method `FUN_00197570`, and
@@ -331,6 +536,31 @@ unresolved rather than being assigned a class or resource name.
   generic blob identity is promoted. The tool's script label remains a useful
   unpromoted lead. Its independent model/geometry decoding of `0x0800` is only
   corroboration for the resident parser and consumer evidence cited above.
+- The same tool build has a name-to-tag table. In its IL, each `ldstr` label is
+  followed by an `ldc.i4` block tag. Relevant entries include:
+
+  | Tag | Tool label |
+  | ---: | --- |
+  | `0x0003` | `Setup` |
+  | `0x0D00` | `Particle` |
+  | `0x1000` | `Blit_Group` |
+  | `0x1100` | `FrameBuffer_Page` |
+  | `0x1200` | `FrameBuffer_Rect` |
+  | `0x1800` | `Shadow` |
+  | `0x1F00` | `Sprite2Tbl` |
+  | `0x2000` | `AnimationObject` |
+  | `0x2200` | `PCM_Audio` |
+  | `0x2300` | `Dynamics` |
+
+  The tool also contains the literal record names `BLT_bg` and `BLT_obj`. None
+  of these label strings exists in the resident executable. `Setup` and
+  `Blit_Group` agree with the resident section-marker and image-transfer-group
+  findings above. The other labels are only leads. The resident
+  shapes fit some of them without proving them. `0x1200` consumes counted
+  eight-byte entries, which could hold four halfword rectangle fields.
+  `0x1000` consumes a counted dword list. `0x1F00` holds groups of
+  halfword-pair arrays. `0x0D00` is a transform-only composition node rather
+  than a proven particle object.
 - Object-name prefixes such as `OBJ_`, `MAT_`, `TEX_`, `CLT_`, `ANM_`,
   `HIT_`, `PAC_`, `PGE_`, `EFF_`, and `EXT_` are lookup/name conventions.
   Only `EXT_` participates directly in type-sensitive code. The other prefixes

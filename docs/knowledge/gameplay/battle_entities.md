@@ -53,9 +53,8 @@ linked-state contracts, deferred manager-owned children, support fixed-slot
 publication and removal, generation/counter namespaces, selector-driven class
 allocation, common support ownership, callback-enable flags, and non-owning
 support-lineage tokens.
-- **Unresolved or untested:** original semantic
-names for registry A and the shared node, the meaning of registry-A key
-`+0xA8`, support selectors and per-side scalar records, ownership of common
+- **Unresolved or untested:** support selectors and per-side scalar records,
+ownership of common
 support words `+0x80..+0x90`, the middle support counter's nonzero writer, the
 full concrete primary-fighter factory/destructor universe, indirect creation
 or registry-mutation routes not exposed by direct-call scans, and whether
@@ -419,6 +418,14 @@ manager `+0xDF0/+0xDF4`. These pointers are control/input-history objects, not
 support fighters.
 
 ## Registry-A current-node semantics
+
+Registry A is the `ccCameraCtrl` camera registry, and its initial `0x1D0`
+node is the `ccCamera01` main camera; node key `+0xA8` is the camera's output
+object. The per-side control registry is `ccCommandCtrl`, the fighter registry
+is `ccPlayerCtrl`, and the shared-match registry is `ccFieldCtrl`, whose node
+is the `ccField` stage owner. The four hub registries are named from RTTI in
+[Battle lifecycle](battle_lifecycle.md), and the camera classes are described
+in [Battle camera](battle_camera.md).
 
 The `0x18`-byte container at hub `+0x00` extends the generic list prefix with:
 

@@ -14,14 +14,17 @@ battle evidence; extend it as additional IDs are verified.
   selection of Nine-Tailed Fourth Awakened State, and an in-match Naruto
   transformation. Static resident-ELF analysis covers the complete hard-coded
   Character Select base/form mapping and its immediate eligibility helpers.
+  All 94 rows of the character-definition table were read, and the clean NUN3
+  table was compared row by row.
 - **Confirmed coverage:** IDs 57, 58, and 73; the relevant manager and fighter
   fields; reciprocal fighter pointers; the match-start versus current-ID
-  distinction; all 13 forward selector form pairs; the 12 inverse pairs; and
-  the selector's fixed excluded-ID set are established below.
+  distinction; all 13 forward selector form pairs; the 12 inverse pairs; the
+  selector's fixed excluded-ID set; the filler and jutsu-bearing definition
+  rows; and the NUN3 origin of the excluded IDs are established below.
 - **Unresolved or untested:** The remaining character IDs have not been
   confirmed by both selector and live-battle evidence. The retail identity and
-  intended use of ID 74, and the wider roles of several direct helper callers,
-  remain unresolved.
+  intended use of ID 74, the use of the jutsu-bearing rows 29..31, and
+  the wider roles of several direct helper callers remain unresolved.
 - **Deliberate exclusions and overlap:** Save-backed availability belongs to
   [Content availability](../game/content_availability.md); the complete
   character-data table is a reference and does not expand this document's
@@ -30,7 +33,8 @@ battle evidence; extend it as additional IDs are verified.
   Practice captures; heap pointers are capture-specific, while only the global
   and field offsets are treated as reusable. Static mappings prove code paths
   and numeric relationships, not that every pair is reachable or selectable in
-  ordinary play.
+  ordinary play. NUN3 comparisons are static reads of its clean boot ELF and
+  say nothing about NUN3 runtime behavior.
 
 ## Evidence identity and address conventions
 
@@ -139,6 +143,70 @@ selection-return site. `FUN_001f7c80` is directly called by `FUN_001f5500`,
 `FUN_001f7e70` is directly called by `FUN_001d4400`, `FUN_001d5a40`,
 `FUN_003b3db0`, `FUN_003bacd0`, and `FUN_003bb3a0`. Their precise per-caller
 semantics remain a research frontier rather than an inferred shared role.
+
+## Character-definition table
+
+The resident table at `0x005A2900` holds 94 eight-byte rows indexed by
+character ID: a factory function at `+0x00` and a static character-record
+pointer at `+0x04`. Battle dispatch through the factory word is documented in
+[Battle entities](battle_entities.md#primary-fighter-factory-and-lookup);
+record fields with known battle consumers are in
+[Damage](damage.md#confirmed-character-record-fields).
+
+**Observation:** Every populated row's record stores its own row index at
+record `+0x00`. Row 0 is `{0, 0}`. The rows below do not describe a playable
+character of their own:
+
+| IDs | Factory | Record | Content |
+| --- | ---: | ---: | --- |
+| 8, 9, 20, 21, 23..25, 27, 28, 32, 33, 44, 45, 74, 88 | `0x00250C00` | `0x0040DB70` | Filler copy of the ID 1 row (Naruto Uzumaki (Classic)). All four character-filename tables in [Character asset tables](../game/character_assets.md) are null for these IDs. |
+| 26, 29, 30, 31 | `0x00250C00` | `0x0059C7A0`, `0x0059CF80`, `0x0059D750`, `0x0059DF20` | Distinct records whose `+0x00` is their own ID, with empty body-file and name strings, 4 action records, 12 `0x4C`-byte rows, and 78 empty animation-name slots (record layout in [Character asset tables](../game/character_assets.md#character-records)). Their action records `1` and `3` carry jutsu names, for example ID 29's `二人の切り札` and `砂塵舞う螺旋丸`. The filename tables are null for these IDs. |
+
+These are exactly the IDs `1..93` that `FUN_001f7aa0` excludes from the
+selector, so the excluded set is the set of rows that lack a dedicated
+fighter. ID 26's record is the auxiliary Jutsu metadata owner `0x1A` for
+selectors `0x34` and `0x35`; see
+[Content availability](../game/content_availability.md#auxiliary-jutsu-selectors-0x34-and-0x35).
+How rows 29..31 are used is unresolved.
+
+### NUN3 ID lineage
+
+NUN3 `SLUS_217.27` has the homologous table at resident `0x00476730`, with the
+same `{factory, record}` row format. Rows `1..56` are populated and row 57 is
+zero. Its records keep a Shift-JIS character name at `+0x04` and the body
+filename at `+0x08`, as NA2's do.
+
+**Observation:** Every ID that has a dedicated fighter in both games names the
+same character: IDs 1..7, 10..19, 22, and 34..56 have the same body-file code
+in both tables. NUN3's rows at NA2's excluded IDs are:
+
+| ID | NUN3 name | NUN3 code | NA2 row |
+| ---: | --- | --- | --- |
+| 8 | カカシ | `kks` | Filler |
+| 9 | 大蛇丸 | `orc` | Filler |
+| 20 | ガイ | `guy` | Filler |
+| 21 | 自来也 | `jry` | Filler |
+| 23 | イタチ | `itc` | Filler |
+| 24 | 鬼鮫 | `ksm` | Filler |
+| 25 | 綱手 | `tnd` | Filler |
+| 26 | *(none; 4 action records)* | *(none)* | Jutsu-bearing record |
+| 27 | シズネ | `szn` | Filler |
+| 28 | カブト | `kbt` | Filler |
+| 29, 31, 33 | *(filler copy of ID 1 in NUN3 too)* | — | 29 and 31 jutsu-bearing; 33 filler |
+| 30 | 暗部 | `anb` | Jutsu-bearing record |
+| 32 | ナルトＺ | `nrz` | Filler |
+| 44 | アスマ | `asm` | Filler |
+| 45 | 紅 | `krn` | Filler |
+
+NA2 adds IDs 57..93 after the NUN3 range. Its later versions of several NUN3
+characters use new IDs and new codes, for example Kakashi `70`/`kkw`, Might
+Guy `69`/`guw`, and Orochimaru `89`/`orw`, rather than reusing the NUN3 slot.
+
+**Inference (high confidence):** NA2's ID space is an extension of NUN3's.
+The vacated NUN3 fighter slots were kept as filler rows and excluded by the
+selector rather than renumbered, so shared characters keep their NUN3 IDs and
+NUN3-only characters have no dedicated NA2 row, filename entry, or selector
+eligibility.
 
 ## Active-battle identity
 

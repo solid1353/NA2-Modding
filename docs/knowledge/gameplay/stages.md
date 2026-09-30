@@ -12,7 +12,8 @@ mode.
 stage-authored geometry/configuration, background transitions and reactive or
 damaging objects, and unload/cleanup. Stage Select presentation was in scope
 only where needed to prove the raw-slot handoff; its UI layout and rendering
-were not investigated.
+were not investigated. The scope also covers the clean NUN3 battle-stage
+archives and `BATTLE.BIN` stage tables as a comparison with NA2.
 
 - **Exploration depth:** coverage depth was as follows:
 
@@ -56,6 +57,15 @@ were not investigated.
   representative unique records rather than every string from every stage.
   Visual/material names were not assigned when static code supplied only a
   numeric effect, list selector, route type, or model resource.
+  **Resident factories:** classes for the resident `BIN_bgdata` factories were
+  named by an RTTI heuristic; factories 10, 17, 31, 33, and 34 were read in
+  full, and all 24 archives' records were counted per factory.
+  **NUN3 comparison:** all 28 NUN3 stage archives and all 24 NA2 archives were
+  decompressed and section-walked; all 27 NUN3 stage tables were decoded; the
+  NUN3 scene constructor, its jump table, and the category 0, 1, 2, 10, 11, 13,
+  and 14 handlers were read. The other NUN3 category handlers were located but
+  not traced. Shared content was measured by section comparison for every
+  NA2/NUN3 archive pair.
 
 - **Confirmed coverage:** the load-slot/logical-ID distinction;
 stage and `n_rash` ownership; raw selection initialization and handoff;
@@ -63,7 +73,11 @@ stage and `n_rash` ownership; raw selection initialization and handoff;
 factory routing, and per-stage census; scene ownership; boundary/floor lines;
 surface-effect classification; proximity transitions; navigation data;
 breakable, reborn, deformable, and reactive props; the two explicit
-stage-object-to-HP paths; and normal/switch/emergency teardown behavior.
+stage-object-to-HP paths; normal/switch/emergency teardown behavior; the
+mandatory per-archive records and player-node factories; and, for NUN3, the
+archive set, CCS format compatibility, stage table and record layout, the
+fog/line/player/lighting categories, required-node availability, and the NA2
+stages that reuse NUN3 stage content.
 
 - **Unresolved or untested:** whether the
 line-route planner is CPU-only or shared, the exact downstream meaning of line
@@ -71,17 +85,25 @@ record `+0x2C`, semantic naming of the other factory-table entries and numeric
 route/effect codes, and runtime-visible confirmation of the statically derived
 behaviors. The separate `0x6C0` aggregate was bounded as a non-polymorphic
 battle special-sequence/presentation owner with only a stored stage tag; no
-unsupported original class name was assigned.
+unsupported original class name was assigned. The consumers of the
+`DMY_pp*_010` vectors and of the factory-10/17 values were not traced. For
+NUN3, the handlers of categories 3 through 9, the use of the summon-scene
+archives, and exact equivalence of any NUN3 category with its supported NA2
+counterpart remain open. The heap cost of a stage archive and the free heap at
+battle start were not measured.
 
 - **Deliberate exclusions and overlap:** Adventure mode, Stage Select presentation beyond
 the slot handoff, camera/projection/layout work, localization, media
 replacement, damage-scaling modifications, substitution, and 60-FPS work.
+NUN3 RPG-mode stages (`RPGSTAGE/`) and the NUN3 stage-select presentation were
+not examined.
 Generic fighter mechanics were entered only to prove the downstream effect of
 the two stage-owned hit sources. No other task's canonical document or index
 was edited.
 
 - **Evidence limitations:** validation was static against the exact clean `BTL.BIN`, resident
-`SLPS_258.37`, and 24 clean CCS archives identified below. No runtime capture,
+`SLPS_258.37`, NUN3 `SLUS_217.27` and `BATTLE.BIN`, and the clean `STAGE/`
+archives of both games, whose sizes match their `GZLIST.TXT` entries. No runtime capture,
 instrumented play session, or emulator-visible validation was performed. The
 BTL `+0x40` import defect was audited against raw bytes and encoded live
 targets, but indirect runtime behavior remains subject to that static-analysis
@@ -500,6 +522,53 @@ RTTI. Table words are live BTL pointers; the preserved Ghidra entry is always
 `ccGrassInfluence`, `ccWireHitModel`, and `ccBgAttackHit` do not occur as
 top-level named entries in this factory linkage and are likely embedded/helper
 types. That is a construction fact, not proof that they are unused.
+
+### Resident generic factories and mandatory records
+
+Factory indices 0 through 32 and several later indices point into the
+resident ELF rather than BTL. They belong to a resident `ccBg*` scene-object
+library whose class names are embedded near runtime `0x005B3330..0x005B3BF0`.
+**Supported:** the class installed by each resident factory, identified by the
+last RTTI-named vtable address loaded before the factory's
+`FUN_003AC4D0` registration call, is:
+
+| Factory indices | Class |
+| --- | --- |
+| 0 / 1 / 2 / 3 / 4 | `ccBgDrawObject` / `ccBgDrawClump` / `ccBgDrawAnm` / `ccBgDrawEff` / `ccBgDrawEffAnm` |
+| 5 / 6 / 7 / 8 | `ccBgSwingTree` / `ccBgClothFlag` / `ccBgSwingGrass` / `ccBgRotateSky` |
+| 11 / 12 / 18 | `ccBgGlareFilter` / `ccBgColorFilter` / `ccBgLightDistant` |
+| 23 / 24 / 25 | `ccBgCurtain` / `ccBgClutAnmAlpha` / `ccBgClutAnmIndex` |
+| 27 / 28 / 29 / 30 | `ccBgDrawShadowAnm` / `ccBgCelShadeAnm` / `ccBgUVAnm` / `ccBgWindBell` |
+| 45 / 56 / 66 / 73 | `ccBgLantern` / `ccBgFloatingLightCtrl` / `ccBgDrawAnimationSpc1` / `ccBirdFly` |
+| 57 / 58 / 59 / 60 / 61 / 62 | `ccBgDrawObjectGroup` / `ccBgDrawClumpGroup` / `ccBgDrawAnmGroup` / `ccBgSwingTreeGroup` / `ccBgSwingGrassGroup` / `ccBgSwingLeaf` |
+| 85 / 86 / 87 / 88 / 114 | `ccBgCameraTraceObject` / `Clump` / `Animation` / `Eff` / `UVAnm` |
+| 89 / 90 / 91 / 92 | `ccBgExtDrawObject` / `Clump` / `Anm` / `Eff` |
+| 96 / 108 / 111 / 112 / 113 | `ccBgS13Effect` / `ccBgCamFallLeaf` / `ccBgEventProgDrawObj` / `Clump` / `Anm` |
+
+The same heuristic names BTL entries 50, 84, and 102 as the embedded helper
+`ccBgAttackHit` rather than the classes in the preceding table, so it can
+select an embedded helper. The rows above are therefore supported class
+identities, not decoded constructors.
+
+The following non-class records are confirmed from their factory bodies:
+
+| Factory | Confirmed behavior | Clean use |
+| ---: | --- | --- |
+| 10 (`0x00398A90`) | Packs tokens 0..2 as an RGB byte triple, converts token 3 through `FUN_001771B8`/`FUN_00171F00` and tokens 4..6 to floats, and stores five words at scene `+0xD4..+0xE4` through `FUN_003ACFE0`. | one per archive, e.g. `S01`: `125,200,190,0,40,0,100000` |
+| 17 (`0x00399340`) | Converts two float tokens and stores them to globals `0x00618EE8` and `0x00618EE4`. | 21 archives, e.g. `0.45,0.35` |
+| 31 (`0x0039D2B0`) | Resolves the configuration string in the scene archive through `FUN_001A8F00` and, when the result is neither 0 nor 4, stores it at `+0x08` of the selector owner `scene+0x44 + 4 * list_selector`. | every archive has `BLT_bg` and `BLT_obj`; `S03`, `S04`, `S10`, `S18`, and `S19` add `BLT_bg2`, `BLT_efe`, `BLT_hnd`, or `BLT_obj2` |
+| 33 / 34 (BTL live `0x006C44C0` / `0x006C4520`) | Through live `0x006C3EE0`, resolve `DMY_pp1_010` / `DMY_pp2_010` (names at live `0x00890BE8` / `0x00890BF8`) and copy the node's position `vec4` to `ccBgControl+0xAB0` / `+0xAC0`. The lookup result is dereferenced without a null or sentinel check. | every archive, string `-1` |
+
+Every clean archive has one record each for factories 10, 18, 33, 34, 35, 36,
+37, and 38, at least the two factory-31 records above, and one factory-11
+record (`S10` has two); 21 of 24 also have factory 17. Factory 18's configuration names the light animation
+and light, for example `ANM_stalig00,255,255,255,LGT_dis_0`. The stored
+`DMY_pp*_010` vectors are named like player placement nodes; their consumer was
+not traced.
+
+In clean `S01`, `BLT_bg` and `BLT_obj` are object-table names with no typed
+section of their own, so the factory-31 store depends on what the resident
+lookup returns for a section-less record; that value was not traced.
 
 ### Per-stage `BIN_bgdata` factory census
 
@@ -1463,6 +1532,231 @@ tears down its child/container
 contents, and frees it. The observed path is full destruction after borrowed
 lookups, not a reference-count decrement.
 
+## NUN3 battle stages compared with NA2
+
+This section compares the clean NUN3 (`SLUS-21727`) battle-stage
+implementation with the NA2 implementation above. NUN3 inputs are identified in
+[Standard game file identities](../game/files/file_identities.md); the stage
+archives are the clean NUN3 `DATA.CVM` extraction's `STAGE/` directory. NUN3
+`BATTLE.BIN` addresses below are live addresses; the preserved Ghidra address
+is live `- 0x40` and the file offset is live `- 0x007BB800`.
+
+### Archive set and CCS format
+
+**Observations:**
+
+- NUN3 `STAGE/` holds `S01.CCS` through `S20.CCS` and eight summon archives,
+  `KTYS_BNT`, `KTYS_KTY`, `KTYS_MND`, `KTYS_SKK`, `KTYS_SKK2`, `KTYS_SKR`,
+  `KTYS_STR`, and `KTYS_TYO`. NA2 `STAGE/` holds only `S01` through `S24`.
+- Every archive in both directories is a gzip CCS stream whose compressed and
+  decompressed sizes equal that game's `GZLIST.TXT` entry, whose chunk-2
+  version halfword is `0x123`, and whose section walk ends at the type-5
+  terminator.
+- The section tags used by NUN3 `S01` through `S20` are a subset of the
+  resident dispatcher documented in
+  [Resident CCS object-type identities](../game/files/ccs_object_types.md):
+  `0x0100..0x0400`, `0x0600..0x0B00`, `0x0C00`, `0x0E00`, `0x1300`, `0x1400`,
+  `0x1900`, `0x2000`, plus one `0x0500` camera in `S12` and
+  `0x0D80`/`0x0D90` generator records in `S10` and `S17`. NUN3 `S05` has three
+  `0x0600` lights; every other `Sxx` archive in both games has exactly one,
+  `LGT_dis_0`. No NUN3 stage archive contains a
+  `0x2400` section or a `BIN_bgdata` object; every NA2 stage archive does.
+- Decompressed sizes: NA2 `S01..S24` range from 531,692 bytes (`S17`) to
+  1,323,828 bytes (`S24`). NUN3 `S01..S20` range from 1,032,152 bytes (`S13`)
+  to 1,412,076 bytes (`S08`); 13 of the 20 exceed NA2's largest archive
+  (`S01`, `S03`, `S04`, `S07`, `S08`, `S09`, `S12`, `S14`, `S15`, `S17`,
+  `S18`, `S19`, `S20`).
+
+| NUN3 archive | Compressed | Decompressed | NUN3 archive | Compressed | Decompressed |
+| --- | ---: | ---: | --- | ---: | ---: |
+| `S01` | 574,632 | 1,352,844 | `S11` | 495,333 | 1,149,440 |
+| `S02` | 600,237 | 1,266,532 | `S12` | 801,730 | 1,367,924 |
+| `S03` | 638,320 | 1,375,380 | `S13` | 459,399 | 1,032,152 |
+| `S04` | 626,606 | 1,355,476 | `S14` | 730,753 | 1,399,060 |
+| `S05` | 431,639 | 1,187,584 | `S15` | 559,613 | 1,388,844 |
+| `S06` | 599,084 | 1,273,552 | `S16` | 530,068 | 1,083,280 |
+| `S07` | 601,986 | 1,386,132 | `S17` | 616,814 | 1,394,120 |
+| `S08` | 675,392 | 1,412,076 | `S18` | 591,845 | 1,360,832 |
+| `S09` | 457,467 | 1,344,808 | `S19` | 617,828 | 1,351,304 |
+| `S10` | 409,507 | 1,177,460 | `S20` | 671,990 | 1,404,100 |
+
+NA2 loads stage archives through the flag-0 streamed loader (see
+[Resident CCS runtime](../game/files/ccs_runtime.md)), which does not keep a
+decompressed copy. Decompressed size is therefore only a proxy for the
+resident heap cost of a stage; the actual allocation total and the free heap
+at battle start were not measured.
+
+**Confirmed shared encoding:** for NA2/NUN3 archive pairs that carry the same
+stage content (next table), same-named `0x0800` model, `0x0100` object, and
+`0x1300` dummy sections are frequently byte-identical, or identical in length
+with differences only in words below `0x4000` (object-table indices, which
+differ because the two archives number their objects differently). For
+example, 198 of the 223 `MDL_` sections in NA2 `S14` match NUN3 `S16` this
+way, and 209 of 223 `0x0100` sections do. Model, object, and dummy sections
+therefore use the same payload encoding in both games; only index references
+need renumbering between archives.
+
+### Stage content already shared with NA2
+
+Comparing hit-mesh payloads (ignoring their first four words), same-named
+model sections, and dummy positions gives these pairs:
+
+| NA2 archive (slot / logical ID) | NUN3 archive (table index, name) | Evidence |
+| --- | --- | --- |
+| `S08` (7 / 8) | `S07` (6, 木ノ葉の森, Konoha forest) | 38 identical and 36 index-only-different of 137 models; 3 of 7 hit meshes |
+| `S09` (8 / 9) | `S03` (2, 第４４演習場死の森, Forest of Death) | 5 of 5 hit meshes; 65 identical of 68 dummies; line counts below |
+| `S10` (9 / 10) | `S14` (13, 終末の谷, Valley of the End) | 5 of 6 hit meshes; 45 identical dummies |
+| `S13` (12 / 13) | `S10` (9, ナルト大橋, Great Naruto Bridge) | 7 of 11 hit meshes; 48 index-only-different models |
+| `S14` (13 / 14) | `S16` (15, 中忍試験会場, Chunin exam arena) | 198 of 223 models, 209 of 223 objects |
+| `S15` (14 / 15) | `S18` (17, 短冊街のはずれ, Tanzaku outskirts) | 72 of 102 models; 35 identical dummies |
+| `S16` (15 / 16) | `S13` (12, 君麻呂戦の草原, Kimimaro battle field) | 5 of 5 hit meshes; 132 identical dummies |
+| `S23` (22 / 3) | `S15` (14, 物見やぐら, watchtower) | 60 of 78 models; 55 identical dummies |
+| `S24` (23 / 4) | `S09` (8, 短冊街, Tanzaku Town) | 5 of 5 hit meshes; 83 identical dummies; line counts below |
+
+These are reworked versions, not copies: every pair also has differing
+models, animations, and dummies. Texture sections were compared only by raw
+payload hash, and none matched; whether texture pixels are shared was not
+established. No match of
+this kind was found for NUN3 `S01`, `S02`, `S04`, `S05`, `S06`, `S08`, `S11`,
+`S12`, `S17`, `S19`, or `S20`, nor for NA2 `S01..S07`, `S11`, `S12`, or
+`S17..S22`.
+
+### NUN3 stage table and scene records
+
+**Confirmed:** NUN3 has no `BIN_bgdata` parser, no `takaCreateBackGround`
+string, and no `ccBg*`, `ccField`, or `ccBgControl` class names in either
+`SLUS_217.27` or `BATTLE.BIN`. Its per-stage scene configuration is compiled
+into `BATTLE.BIN` as record tables.
+
+The stage table is 27 pointers at live `0x00913450` (file `0x157C50`),
+terminated by a zero word. Each pointer addresses a zero-terminated array of
+`0x20`-byte records:
+
+| Offset | Field |
+| ---: | --- |
+| `+0x00` | Shift-JIS label pointer (an empty string for unlabeled records) |
+| `+0x04` | record type: category in bits 8..15, subtype in bits 0..7 |
+| `+0x08`, `+0x0C`, `+0x10` | resource-name pointers (for example `ANM_..._n1`, `_d1`, `_n2`), or zero |
+| `+0x14` | configuration: consecutive NUL-terminated tokens read by resident `0x0018F190(string, n)`, which returns the `n`th token |
+| `+0x18`, `+0x1C` | two signed integers, `-1` when unused |
+
+Record 0 of every table is type 1; its label is the stage name and `+0x08` is
+the archive path. The table indices are:
+
+| Index | Archive | Label |
+| ---: | --- | --- |
+| 0 | `stage/s01.ccs` | ラーメン一楽 |
+| 1 | `stage/s02.ccs` | 歴代火影の顔岩 |
+| 2 | `stage/s03.ccs` | 第４４演習場死の森 |
+| 3 | `stage/s04.ccs` | 英雄の慰霊碑 |
+| 4 | `stage/s05.ccs` | 桔梗城天守閣 |
+| 5 | `stage/s06.ccs` | 木ノ葉温泉 |
+| 6 | `stage/s07.ccs` | 木ノ葉の森 |
+| 7 | `stage/s08.ccs` | 風影の屋敷 |
+| 8 | `stage/s09.ccs` | 短冊街 |
+| 9 | `stage/s10.ccs` | ナルト大橋 |
+| 10 | `stage/s11.ccs` | 砂肝亭と仏像 |
+| 11 | `stage/s12.ccs` | 音忍戦の森 |
+| 12 | `stage/s13.ccs` | 君麻呂戦の草原 |
+| 13 | `stage/s14.ccs` | 終末の谷 |
+| 14 | `stage/s15.ccs` | 物見やぐら |
+| 15 | `stage/s16.ccs` | 中忍試験会場 |
+| 16 | `stage/s17.ccs` | サバイバル演習場 |
+| 17 | `stage/s18.ccs` | 短冊街のはずれ |
+| 18 | `stage/s19.ccs` | ザブザの隠れ家 |
+| 19 | `stage/s20.ccs` | 修練の崖 |
+| 20..26 | `stage/ktys_skk/str/bnt/kty/mnd/skr/tyo.ccs` | 口寄せ（…）summon scenes |
+
+`stage/ktys_skk2.ccs` is present as a `BATTLE.BIN` string but not in this
+table. The consumers of the table were not traced beyond archive handling:
+live `0x007D1FC0` passes the record-0 path to resident `0x0018EE90(path, 0)`,
+live `0x007D2010` and `0x007D1E20` look it up by basename through
+`0x00160870`/`0x00160800` and store the handle at `0x00945910`, and resident
+`0x0028AC30` also indexes the overlay table directly. None of these helpers
+range-checks the index; only a null table entry is rejected.
+
+### NUN3 scene-record dispatch
+
+The scene constructor begins at live `0x007C26C0` (preserved `FUN_007c2680`,
+file `0x006EC0`) and takes the control object and the table index. It writes
+the index to two optional global objects, then walks the records and jumps
+through the 15-entry table at live `0x00929B90` (file `0x16E390`) using
+`type >> 8`. After the walk it runs fixed setup calls. **Confirmed** handler
+behavior:
+
+| Category | Handler (live) | Confirmed behavior |
+| ---: | --- | --- |
+| 0 | inline | Strip the path to its basename, adopt the archive through `0x00160870` into control `+0x22C`, resolve `BLT_bg` and `BLT_obj` through `0x0015F440` into `+0x21C`/`+0x220`, and store the index at `+0x8C`. |
+| 1 | `0x007C7180` | Parse seven tokens: RGB into `+0x1B8`, then four floats into `+0x1BC..+0x1C8`, and call resident `FUN_0010BF80`, which stores near/far distances and converts the two percentages to fog coefficients `(100 - p) * 2.55` with a linear ramp between the distances. This is the fog setup. |
+| 2 | `0x007C7300` | Empty (`jr ra`); its clean tokens such as `0,-2750,800` have no effect. |
+| 10 | `0x007C6870` | Player records `プレイヤー１/２`; token 3 is `DMY_pp1_010` / `DMY_pp2_010`, resolved through `0x0015F440`. |
+| 11 | `0x007C6910` | Front/back (`前`/`後`) line family; token 3 is `DMY_line_010` / `DMY_line_020` and token 5 is that family's node count. |
+| 12 | none | Skipped by this constructor (type `0xC0A` in three stages). |
+| 13 | `0x007C7310` | Lighting: record `+0x08` names the light animation (`ANM_stalig00` in every stage) and the handler formats `LGT_dis_%d` names. |
+| 14 | `0x007C7870` | Front/back records whose token 5 is the number of `DMY_{f,b}_cl_N_*` lines. |
+
+Categories 3, 4, 5, 6, 7, 8, and 9 dispatch to live `0x007C7CC0` (followed by
+`0x007C3A40(index)`), `0x007C8900`, `0x007C8A10`, `0x007CF7E0`, `0x007CC810`,
+`0x007CDCC0`, and `0x007CF7D0`; their internals were not traced, and no clean
+record uses category 9.
+
+The node-count tokens were checked against the archives: category 11 gives 2
+and 18 `DMY_line_0x0` nodes for index 0, matching `S01`'s node counts, and
+index 3's category 14 back count of 3 matches `S04`'s `DMY_b_cl_1_ewr`,
+`DMY_b_cl_2_ewr`, and `DMY_b_cl_3_nor`. NUN3 `BATTLE.BIN` contains the same
+`DMY_linemin01/02`, `DMY_linemax01/02`, and `DMY_%scl_%d_nor/ewr/mov` strings
+as NA2 BTL.
+
+The labels and resources of the uninterpreted categories identify their
+content, but not their implementation:
+
+| Type | Stages | Example label (gloss) and resources |
+| --- | ---: | --- |
+| `0x301`, `0x38A`, `0x390`, `0x392` | 20, 8, 4, 3 | sky/far animations; `回る空` (rotating sky), `最遠景グレア` (far-view glare) |
+| `0x401` | 20 | main stage animation `ANM_*are00` |
+| `0x502` | 5 | `電線` (electric wire) with `DMY_dummy_010`/`020` endpoints |
+| `0x526`, `0x528`, `0x582`, `0x583` | 8, 3, 9, 1 | swaying grass, leaves, and trees (`OBJ_eda_*`, `CMP_ki_*`) |
+| `0x52B`, `0x52D`, `0x51B` | 8, 3, 6 | falling, rising, and blowing leaves (`CMP_*efe*`) |
+| `0x579`, `0x57B`, `0x57D`, `0x587` | 1 each | water surface, rowing boat, mangrove, suspension bridge |
+| `0x578` | 1 | `足跡` (footprints) |
+| `0x595..0x59E` and other `0x5xx` | 1..2 | stage-specific effects (memorial water, hot-spring steam, waterfalls) |
+| `0x601`, `0x690` | 7, 8 | `透過柱` transparent pillars with `DMY_*has*_hit` and a radius; frame animations |
+| `0x7xx` | 1..2 | stage creatures and props (toad, snake, spiders, fish, flags) |
+| `0x81C`, `0x81D` | 20 | `訓練君` / `うっきー君` training dolls with `DMY_dd_010`/`DMY_pg_*` and break objects |
+| `0x801..0x87C` | 1..5 | breakable props with `_n1`/`_d1`/`_n2` animations and `OBJ_bre_*` debris |
+
+### Correspondence with NA2 records
+
+**Confirmed:** every one of NUN3 `S01..S20` contains all node and resource
+names that NA2's mandatory records and line builders request: `DMY_pp1_010`,
+`DMY_pp2_010`, both `DMY_line_010`/`DMY_line_020` pairs, the four
+`DMY_linemin/max` nodes, `LGT_dis_0`, `ANM_stalig00`, `BLT_bg`, `BLT_obj`, and
+`DMY_{f,b}_cl_N_{nor,ewr,mov}` lines using the same naming scheme.
+
+**Supported:** NUN3 categories map onto NA2 factories by shared node names,
+resource names, and token shapes:
+
+| NUN3 record | NA2 record |
+| --- | --- |
+| category 0 archive and `BLT_bg`/`BLT_obj` | slot path table and factory 31 |
+| category 1 fog | factory 10 (RGB plus four numbers; token order and units differ) |
+| category 10 players | factories 33/34 |
+| category 11 line nodes, token 5 | factories `0x23`/`0x24` (node count) |
+| category 14 `cl` lines, token 5 | factories `0x25`/`0x26` (line count) |
+| category 13 lighting | factory 18 `ccBgLightDistant` |
+| rotating sky, glare | factories 8 `ccBgRotateSky`, 11 `ccBgGlareFilter` |
+| swaying tree / grass, flags, wind bell, falling leaves | factories 5, 7, 6, 30, 108 |
+| `0x601` transparent pillars | factory 40 `ccBgTransObject` |
+| `0x81C` training doll, `0x8xx` breakables | factories 41 `ccBgBreakDollBattle`, 50/78/80/102 |
+| electric wire, rowing boat, mangrove, suspension bridge, footprints, crane truck | factories 43, 82, 95, 68, 93, 83 |
+
+The line-count correspondence is exact where the stage is shared: NUN3
+index 8 (Tanzaku) has 14/14 `DMY_line` nodes and 8/9 `cl` lines, and NA2 `S24`
+has 7/7 second-family records and 8/9 first-family records; NUN3 index 2
+(Forest of Death) has 10/10 and 5/5, and NA2 `S09` has 5/5/5/5. The individual
+NUN3 handlers for the remaining categories were not compared with the NA2
+classes, so their token formats are not assumed to be interchangeable.
+
 ## Address index
 
 ### BTL functions
@@ -1578,3 +1872,9 @@ Important resident callsites are stage enqueue at runtime/ELF
   section crossing.
 - Resolve the exact semantic role of line record `+0x2C` after the midpoint
   raycast.
+- Trace the consumers of `ccBgControl+0xAB0/+0xAC0` (`DMY_pp*_010`) and of the
+  factory-10 scene words and factory-17 globals.
+- Trace NUN3 scene categories 3 through 9 and compare their token formats with
+  the supported NA2 factory counterparts.
+- Measure the heap consumed by a loaded stage archive and the free heap at
+  battle start.

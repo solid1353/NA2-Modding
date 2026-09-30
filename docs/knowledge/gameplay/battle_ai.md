@@ -53,16 +53,18 @@ settings and six Strength profiles; deterministic primary-opponent binding;
 ordered, random-gated alternate target sources; the complete dispatcher and
 direct constructor map; selector, resident queue, and four-category queue
 lifecycle; the continue-screen modifier input; and the shared resident
-MT19937-derived RNG, phase cursors, tables, and audited AI call sites.
+MT19937-derived RNG, phase cursors, tables, and audited AI call sites; the
+single direct Confirm-branch caller of settings apply; and the per-pass
+command-triple clear that precedes the AI tick.
 
 - **Unresolved or untested:** player-facing
 names for most raw states and action-record classes; exhaustive semantics for
 every branch of the large decision/reaction helpers; the role of the seventh
-profile row and profile parameters 24 and 31; the external or indirect caller
-of settings apply; exact labels for continue-result values and the session
-mode that bypasses the secondary modifier; and whether early-return paths can
-expose a stale controller triple at runtime. These are recorded as negatives or
-hypotheses rather than inferred names.
+profile row and profile parameters 24 and 31; exact labels for
+continue-result values and the session mode that bypasses the secondary
+modifier; and whether the unaudited session-local update-mask overrides can
+run the fighter phase without the command phase. These are recorded as
+negatives or hypotheses rather than inferred names.
 
 - **Deliberate exclusions and overlap:** Adventure, substitution and its bar, damage
 formulas/scaling, 60-FPS or timing work, widescreen/camera projection, media,
@@ -216,9 +218,17 @@ destructor or free routine. The next Manual fighter tick simply stops entering
 the AI; selecting a non-Manual Status again initializes when the controller
 nibble was zero.
 
-No direct BTL caller of `FUN_00881160` was found. Its caller is external or
-indirect. No heap allocation, per-AI object constructor, AI destructor, or AI
-free path was found: controller state is two static BSS slots.
+Settings apply is reached directly, not indirectly. An aligned raw-JAL scan of
+clean BTL finds exactly one call to live `0x008811A0`, at
+`D/L/F 008816B4/008816F4/1CD7F4`, in the Practice settings child's input
+handler (live `0x00881660`). It runs only on that handler's new-press bit
+`0x20` (Confirm) branch; the Cancel branch closes without applying. The AI
+therefore sees Practice Status and Strength changes only when the settings
+menu is confirmed. The menu's input, staging, and apply ordering are owned by
+[Practice mode](practice_mode.md#confirmapply-side-effects).
+
+No heap allocation, per-AI object constructor, AI destructor, or AI free path
+was found: controller state is two static BSS slots.
 
 ## Per-side state block
 
@@ -331,8 +341,37 @@ threshold in the mode-1 and mode-2 alternate-target searches described below.
 The returns in steps 1, 2, and 5 branch to the epilogue before both the output
 clear and final command-controller stores. Step 2 clears the internal slot via
 the reset helper first; the null-graph, inactive-fighter, and terminal-marker
-paths do not. Static code does not establish whether another subsystem clears
-the already-stored command-controller triple on those paths.
+paths do not.
+
+These early returns do not leave the previous update's command triple in
+place. The AI's command controller is the fighter's own `ccCommand` input
+object: battle setup live `0x00709480` stores each input object at its
+fighter's `+0x24` and the fighter at the input's `+0x20` (stores at live
+`0x0070951C/0x00709520` for side 0 and `0x00709540/0x00709544` for side 1).
+The `ccCommand` update at live `0x006F0EA0` passes a suppression flag to the
+logical translator whenever that fighter's controller nibble (`+0x60` bits
+5..8) is nonzero, and the translator (live `0x006EFDC0`) then stores zero to
+`+0xAC/+0xB0/+0xB4` at live `0x006EFE18..0x006EFE20` instead of translating
+the pad. The AI never needs to clear the controller itself for this reason.
+
+The ordering is fixed by the resident phase dispatcher `FUN_001F03E0`. The
+four-part battle owner built at live `0x00709240` holds `ccCommandCtrl` at
+`+0x04` and `ccPlayerCtrl` at `+0x08` (constructor `FUN_0024E0B0` at live call
+`0x00709350`; the class table `0x005D9FC0` names RTTI `ccPlayerCtrl`, and its
+slot `+0x0C` is fighter-list update `FUN_002504B0`, the caller of
+`FUN_0024FD80`). In the first phase the dispatcher updates owner `+0x04`
+before owner `+0x08`. For a COM fighter, one pass is therefore: zero the
+triple, run the AI tick, and copy the triple to the fighter in the bridge. An
+early AI return leaves zeros, which the bridge copies as no input.
+
+This guarantee holds when both phase bits run together. Owner `+0x04` runs
+when allowed-mask bit `0x0002` is set or auxiliary byte `+0xA50==1`; owner
+`+0x08` runs on bit `0x0004`. Every suppression producer documented in
+[Pause and replay](pause_and_replay.md#proven-btl-suppression-writers)
+allows or suppresses those two bits together, and the `+0xA50` override
+suppresses the fighter phase while allowing the command phase. Session-local
+override fields `+0x06/+0x08` were not audited, so a combination that runs
+the fighter phase without the command phase remains statically unexcluded.
 
 The principal decision-call sequence in corrected live naming is:
 
@@ -618,7 +657,7 @@ mean slot `+0x1C` and `+0x20`. Masks remain deliberately numeric.
 | `22` | `006FBFB8/006FBFF8/480F8` | emit `4`, reset when slot `+0x94` expires |
 | `23` | `006FBE50/006FBE90/47F90` | resident `FUN_0021DF60(actor,1,0x02000000,-2)` chooses an index; if valid and no action is queued, queue it with `FUN_0021D380` |
 | `24` | `006FBFF4/006FC034/48134` | call live `FUN_006F4C10`, which validates the mode-1 handle and maintains/replans its route |
-| `25` | `006FC004/006FC044/48144` | call live `FUN_006F4F10` |
+| `25` | `006FC004/006FC044/48144` | call live `FUN_006F4F10`, the [item-use handler](battle_item_inventory.md#na2-cpu-item-use) |
 | `26` | `006FC1BC/006FC1FC/482FC` | call live `FUN_006F4260`, which refreshes the mode-2 point, enforces near/far deadlines, and maintains/replans its route |
 | `27` | `006FC014/006FC054/48154` | decrement slot `+0x110`; on expiry reset, test live `FUN_006FC7F0(120.0)`, and on success set active, source mode 1, state 24, then invoke the route planner |
 | `28` | `006FC12C/006FC16C/4826C` | call live `FUN_006F5CB0` |
@@ -1180,7 +1219,6 @@ Confirmed negative results:
   `ccCommandCtrl`, not an AI-specific class name.
 - There is no BTL-internal call to the main tick. Resident character wrappers
   own 74 direct calls.
-- There is no direct BTL call to the settings-apply entry.
 - Ordinary primary-opponent binding performs no search and uses no RNG.
 - COM disable performs no state reset, destructor, free, or deallocation.
 - No AI heap allocation was identified; the two state blocks are static BSS.

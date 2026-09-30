@@ -1232,9 +1232,8 @@ status. It calls BTL inventory-add file/Ghidra/live
 Each of the 19 row-backed codes adds one. Code `0x6A` is the sole special
 pickup that adds three, but it has no row in this status table.
 
-The panel holds three slot pointers at `+0/+4/+8`, side at `+0x20`, and the
-selected slot index at `+0x24`. A slot stores item code at `+0` and signed count
-at `+4`; count is capped at nine.
+The per-side inventory panel, its slot routines, selection, and HUD are
+documented in [Battle item inventory](battle_item_inventory.md).
 
 Fighter input gate `FUN_002366F0` (`0x002366F0/0x1367F0`) checks fighter
 `+0x338` bit `0x01000000`. At `0x00236988/0x136A88` it calls

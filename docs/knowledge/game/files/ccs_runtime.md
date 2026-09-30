@@ -7,12 +7,13 @@ identities, not recovered original symbols.
 
 ## Research coverage
 
-- **Assigned scope:** this pass covered the resident CCS/resource-object runtime
-centered on container lookup `FUN_001aa450`, object lookup `FUN_001a8f00`, and
-their load, publication, reference, and release families. The requested outputs
-were reusable handle identities, name/ID lookup behavior, proven special-object
-traversal, ownership/lifecycle rules, async behavior, and representative
-BTL/ETC callers rather than a static inventory of CCS files.
+- **Assigned scope:** the resident CCS/resource-object runtime centered on
+container lookup `FUN_001aa450`, object lookup `FUN_001a8f00`, and their load,
+parse, publication, reference, playback, and release families: handle
+identities, name/ID lookup, special-object traversal, ownership and lifecycle,
+async behavior, battle use, container-owned memory, and what a foreign CCS
+(such as one from NUN3) must match to load. It is not a static inventory of CCS
+files.
 
 - **Exploration depth:** coverage is **bounded**, not exhaustive. It is
 instruction-level for the functions listed in the identity table below and
@@ -25,8 +26,21 @@ clusters:
   functions in `0x001A8C80..0x001AD9C0`, plus the type-`0x0A00` constructor
   `FUN_001b2800` and streamed-block functions
   `FUN_001b4c60..FUN_001b52c0`;
-- load-wrapper and queue functions `FUN_001cf060..FUN_001cfd90`; and
-- residency-manager functions `FUN_003b2ed0..FUN_003b37f0`.
+- load-wrapper and queue functions `FUN_001cf060..FUN_001cfd90`;
+- residency-manager functions `FUN_003b2ed0..FUN_003b37f0`;
+- the stream player and play loop: `FUN_0035cf00`, `FUN_0035cc20`,
+  `FUN_0035c930`, `FUN_001ce8a0`, `FUN_001ce410`, `FUN_001cdc20`,
+  `FUN_001a0890`, `FUN_001a0120`, `FUN_001a00c0`, `FUN_0019ffc0`,
+  `FUN_001a0b80`, `FUN_001a2280`, `FUN_001b4c60`, and `FUN_001b4f80`; and
+- every resident halfword load of container version `+0xac`, and the NUN3
+  parser entry, header parser, dispatcher, terminator, and model-header parser
+  for comparison.
+
+`jal` encodings were searched in the resident ELF and all three NA2 overlays
+for `FUN_001a0b80`, `FUN_001ce8a0`, and `FUN_0035cf00`. The chunk-1 version of
+every extracted `.CCS` file in NA2, NUN3, NUN4, NUN5, and NUN6 was read. Two
+decompressed files (`HOME.CCS` and `STR/D01_10.CCS`) and the namespace tables
+of NA2 and NUN3 `1NRTBOD1.CCS` were inspected by hand.
 
 The overlay caller audit was sampled deliberately rather than treated as a full
 xref census. BTL coverage includes the stage family
@@ -51,23 +65,40 @@ pipeline gate; residency states and its registry-only use count; conditional
 container teardown; streamed checkpoint constraints; and concrete BTL/ETC
 borrowed/owned caller patterns. The overlay section also distinguishes function
 body export/live pairs from encoded absolute data pointers, which are already
-live.
+live. Later work established the exact file framing and the unused length and
+marker fields; the version gates and the retail version census; NUN3 framing
+and dispatch parity; the foreign-file matching requirements; that the ultimate
+jutsu stream player is the only battle user of the play runtime, with its
+request, per-request, play-loop, and teardown lifecycle; the frame-stream tag
+set and end/loop markers; the roles of container `+0x24` bit 1, `+0x58`,
+`+0x5c`, the playback bits of `+0xa6`, and the play bits of `+0xae`; and the
+container-owned allocations.
 
 - **Unresolved or untested:** this pass did not exhaust all resident or
 overlay xrefs, reconstruct every type-specific runtime object, or prove every
-container/manager field and flag. In particular, container `+0x24` bit 1,
-container work-list `+0x58`, the exact semantic owner at `+0x5c`, runtime flag
-bits outside the milestones used here, and residency-manager counter `+0xb18`
-  remain unresolved or only bounded by negative results.
+container/manager field and flag. Still open: residency-manager counter
+`+0xb18` (read, no writer found); the frame-tag payload layouts and the version
+gates inside track parser `FUN_001a6e00`; a byte-for-byte comparison of the
+NUN3 and NA2 tag parsers other than the model header, so NUN3-to-NA2
+compatibility is not proven for every tag; whether a real NUN3 file loads and
+plays in NA2; the resident cost of a container relative to its decompressed
+size; the ultimate jutsu table that supplies the request paths; and what player
+flags `+0x27c` and bytes `+0x281`/`+0x2da` are set to by the skill-play owner.
 - **Deliberate exclusions and overlap:** the full tag/destructor ledger belongs
   to `ccs_object_types.md`; ROFS/GZLIST path routing, ring transport, and general
-  gzip/file services belong to `runtime_services.md`. Adventure, static file
+  gzip/file services belong to `runtime_services.md`; allocator placement,
+  load transients, and sampled capacity belong to
+  `../../runtime/ee_memory_map/allocator_and_capacity.md`; the ultimate jutsu
+  presentation and contest belong to `../../gameplay/ultimate_jutsu.md`.
+  Adventure, static file
   inventory, media replacement, localization renderer/layout, widescreen,
   60-FPS, damage, and substitution work were deliberately excluded to avoid
   overlap with other scoped tasks.
 - **Evidence limitations:** all conclusions are static. No live-memory trace,
 runtime injection, cancellation/concurrency stress test, malformed-CCS fuzzing,
-or end-to-end game execution was performed. Raw binary checks validate selected
+or end-to-end game execution was performed, and no foreign CCS was loaded.
+The retail file census reads headers only; block-level walks cannot be
+complete because retail length fields are not exact. Raw binary checks validate selected
 overlay operands, strings, hashes, and address translation, but not live RAM
 state or higher-level caller serialization. Working identities remain semantic
 labels, not recovered original symbols.
@@ -90,7 +121,10 @@ addresses.
 
 The resident, BTL, and ETC inputs are identified in
 [Standard game file identities](file_identities.md). The ETC evidence view is
-`@disassembly/NA2/exports/ETC.BIN/`.
+`@disassembly/NA2/exports/ETC.BIN/`. NUN3 comparisons use the maintained
+`SLUS_217.27` analysis through GhidrAssist MCP; NUN3 addresses are its own
+resident addresses. Retail CCS files were read from the read-only extractions
+and decompressed in memory only.
 
 The C export loses some argument types and occasionally splits a caller into
 adjacent functions. The ASCII listing was used to confirm control-flow details
@@ -180,6 +214,16 @@ representative rather than an exhaustive xref dump.
 | `FUN_001cfcd0` / `0x001CFCD0` | `ccs_start_load_queue` | Creates the queue worker only when none is active. Its byte argument enables file-size/progress accounting; it does not change container ownership. | High |
 | `FUN_001cfd70` / `0x001CFD70` | `ccs_load_queue_worker_active` | Returns whether the global worker-task pointer is nonzero, not whether queued nodes still exist. | High |
 | `FUN_001cfd90` / `0x001CFD90` | `ccs_clear_load_queue` | Cleans retained embedded wrappers and frees every queue node. In the only resident-start mode observed it detaches published containers and leaves them resident. | High |
+| `FUN_0019ffc0` / `0x0019FFC0` | `ccs_play_restart` | Rewinds a played container to checkpoint 0, restarts `0x0E00` effects, and reinstantiates `+0x58` generator actions. Called by the play loop and by the `-2` frame marker. | High |
+| `FUN_001a00c0` / `0x001A00C0` | `ccs_play_request_stop` | Releases the ring manager when bit 7 is set, sets `+0xa4` stop bit `0x10` when a play task exists, clears `+0x40`, and clears `+0xa6` bit 3. | High |
+| `FUN_001a0120` / `0x001A0120` | `ccs_play_loop` | Per-step frame advance, action update, callbacks, and scene submission; on stop, tears down through `FUN_001a2280` and sets `+0xa6` bit 5. | High behavior; medium name |
+| `FUN_001a0890` / `0x001A0890` | `ccs_play_start` | Creates the play task at `0x001A0980` and its `PlayLock` companion. Only caller: `FUN_001ce410`. | High |
+| `FUN_001b5290` / `0x001B5290` | `ccs_parse_terminator` | Reads one dword and stores it minus one at `+0x94`. | High |
+| `FUN_001ce410` / `0x001CE410` | `ccs_play_decode_worker` | `PlayDecode` task: parses each streamed request, builds its play runtime, plays it, and destroys containers by retention count. | High behavior; medium name |
+| `FUN_001ce8a0` / `0x001CE8A0` | `ccs_stream_player_run` | Preloads `0x1000` requests, runs the three play tasks under gate value 2, then destroys the containers it loaded. | High behavior; medium name |
+| `FUN_0035cf00` / `0x0035CF00` | `sp_skill_play_start` | Builds the stream player and request list for an ultimate jutsu and starts task `SP_Skill_Play`. Called from BTL and ETC. | High |
+| `FUN_001e80f0` / `0x001E80F0` | `battle_queue_fighter_ccs` | Builds and loads or queues up to nine per-side fighter paths. | High |
+| `FUN_001e86c0` / `0x001E86C0` | `battle_adopt_fighter_ccs` | Fills empty per-side handle slots by name lookup. | High |
 | `FUN_003b2fe0` / `0x003B2FE0` | `ccs_residency_acquire` | Finds/creates a name entry, increments its use count, and links it into the manager list. | High |
 | `FUN_003b3140` / `0x003B3140` | `ccs_residency_release` | Decrements or forces release, cancels/tears down the container, unlinks, and recycles the entry. | High |
 | `FUN_003b3420` / `0x003B3420` | `ccs_residency_not_pending` | For a name, returns true when absent or state 3 and false for an existing non-3 entry. Its null-name branch reports manager/worker activity instead. | High |
@@ -198,30 +242,35 @@ destruction. Unlisted fields remain type-specific or unresolved.
 | ---: | ---: | --- |
 | `+0x00` | 4 | Next container in global singly linked list `puGpffffca98` / `piGpffffca98`. |
 | `+0x04` | 0x20 | Inline container name read from the CCS header. `FUN_001aa450` compares its normalized key here. |
-| `+0x24` | flags | Bit 0 is initialized as a cross-reference eligibility/unresolved hint. A new container's final value reflects its own unresolved records, but the bit is not reliably cleared on older containers after later resolution. Bit 1 participates in later dependency finalization; its full meaning is not proven. |
+| `+0x24` | flags | Bit 0 is initialized as a cross-reference eligibility/unresolved hint. A new container's final value reflects its own unresolved records, but the bit is not reliably cleared on older containers after later resolution. Bit 1 gates the global dependency-group reconciliation pass in `FUN_001ad240`, which revisits every published container's `+0x48` groups. `FUN_001aa7c0` sets it on every container and no resident writer clears it, so the gate is always open in the resident code. |
 | `+0x28` | 4 | Hash-bucket array, built by `FUN_001acdb0`. |
 | `+0x2c` | 4 | Pointer to the 0x20-byte namespace/file-string table. |
 | `+0x30` | 4 | Pointer to the contiguous 0x38-byte object-record array. |
 | `+0x34` | 4 | Namespace/file-string count. |
 | `+0x38` | 4 | Object-record count and hash-bucket modulus. |
 | `+0x3c` | 4 | Optional streamed-block checkpoint table with `+0x98` entries. Built by `FUN_001a0b80`, consumed by `FUN_001b4c60`/`FUN_001b4f80`, and freed by `FUN_001a2280`. |
+| `+0x40` | 4 | Play task created by `FUN_001a0890`; cleared by a stop request (`FUN_001a00c0`). |
 | `+0x44` | 4 | Head of temporary copy/fixup nodes. `FUN_001ad240` consumes and frees every node, clears each source record's `+0x2c`, and then clears this head. |
 | `+0x48` | 4 | Head of retained dependency/group nodes. `FUN_001ad240` allocates each node's `+0x10` index map and participates in later global link reconciliation; record teardown removes and frees the nodes. |
 | `+0x4c` | 4 | Head of retained nodes whose source-record secondary value is built by `FUN_001ad9c0` through `FUN_0019b240`. |
 | `+0x50` | 4 | Head of retained nodes whose source-record secondary value is built by `FUN_001ad9c0` as an allocated 0x1c-byte object through `FUN_001ada60`. |
 | `+0x54` | 4 | Head of retained reference/link nodes scanned by `FUN_001ad240`; when a target record is resolved, its runtime object's `+0x04` receives the node's source record. |
-| `+0x58` | 4 | Head written by `FUN_001b1920` only for nodes whose referenced record ID is zero. No resident reader of this head was found; the source records still own and free the nodes. |
-| `+0x5c` | 4 | Auxiliary lifetime handle; destroyed by `FUN_001b2110(handle,1)`. No task ownership is proven. |
+| `+0x58` | 4 | Container-level `0x0D80` generator-action packets: `FUN_001b1920` links a packet here when its animation record ID is zero. Playback reads the list: `FUN_001a0b80` and the restart routine `FUN_0019ffc0` pass it to `FUN_001abbe0`, which instantiates one action runner per packet in the play context's `+0x114` manager. The source records still own and free the nodes. |
+| `+0x5c` | 4 | Ordered-controller table built by the `0x1700` parser `FUN_001b2220` (a second table in one container traps). Its `+0x0c` default lightweight slot and `+0x08` default extended descriptor are materialized by `FUN_001a0b80`; `FUN_001b2110(handle,1)` frees both and the table. |
 | `+0x60` | 4 | Per-record play-runtime table built by `FUN_001a0b80`. `FUN_001a8c80`/`FUN_001a8e10` select it when `+0xa6` bit 3 is set. Entries are 0x10 bytes; `FUN_001a2520` destroys and clears it. |
 | `+0x68` | 4 | Input reader/stream object. It may be borrowed or container-owned. |
 | `+0x6c` | 0x0c | Vector of owned temporary relation-block pointers. `FUN_001ad240` converts them into runtime-object `+0x18` structures, frees every block, and clears the vector. Generic destruction also frees any blocks left by an interrupted parse. |
-| `+0x94` | 4 | Type-5 payload dword minus one, written by `FUN_001b5290`. |
-| `+0x98` | 4 | Header dword written by `FUN_001ac290`; later used as the streamed-checkpoint count. It is cleared after parsing when `+0x94` is zero. |
+| `+0x78` | 4 | Play context allocated (0x120 bytes) by `FUN_001a0b80` and freed by `FUN_001a2280`. |
+| `+0x90` | 4 | Current frame index during playback. |
+| `+0x94` | 4 | Type-5 payload dword minus one, written by `FUN_001b5290`: the last frame index of a playback file. |
+| `+0x98` | 4 | Header dword written by `FUN_001ac290`, used as the streamed-checkpoint count. In the playback file `STR/D01_10.CCS` it equals the tag-5 payload (`0x13F`), one more than the last frame marker index. It is cleared after parsing when `+0x94` is zero. |
+| `+0x9c` / `+0x9e` | 2 each | Signed 8.8 playback rate (`0x100` is one frame per step) and its fractional accumulator. |
+| `+0xa4` | 2 | Playback control flags (seek, restart, and stop requests consumed by the play loop and `FUN_001b4c60`). |
 | `+0xa0` | 4 | Type-5 block-start reader position, retained for reader states 1 or 2. |
-| `+0xa6` | 2 | Runtime flags. Bits 0/1 are parse milestones and bit 3 selects the alternate `+0x60` table. Other resident paths also use bits 2, 4, 5, and 7; their meanings are outside this slice. |
+| `+0xa6` | 2 | Runtime flags. Bits 0/1 are parse milestones and bit 3 selects the alternate `+0x60` table. During playback, bits 2 and 4 are set together when the frame stream reaches an end marker, and bit 5 is set after the play loop has torn its play state down. Bit 7 marks a container holding a `0x2200` ring batch. |
 | `+0xaa` | 2 | Parser state: 1 while object blocks are being consumed, 2 after the type-5 terminator is finalized. |
 | `+0xac` | 2 | Format/header value. It begins at `0x80`, is replaced by a stream value, and must be at least `0x90`. |
-| `+0xae` | 2 | Ownership flags. Bit 1 means the container allocated and owns the reader at `+0x68`. |
+| `+0xae` | 2 | Ownership flags. Bit 1 means the container allocated and owns the reader at `+0x68`. Bits 0, 2, and 3 are set by `FUN_001a0b80` when the play context owns its scene environment (`+0x110`), default controller (`+0xf4`), and default extended controller (`+0xf8`); `FUN_001a2280` destroys those and clears the three bits. |
 | `+0xb0` | 1 | Cancellation byte. A nonzero value stops object parsing and prevents global-list insertion. |
 
 `FUN_001aa7c0` allocates a 0x40-byte reader through `FUN_001aa940` only when
@@ -263,16 +312,19 @@ target runtime is absent, and the vector is empty on return. The numeric object
 tag identities and payload schemas remain owned by `ccs_object_types.md`; the
 facts here are only the shared container-lifecycle behavior.
 
-`FUN_001b1920` at `0x001B1920` divides another node family by referenced record
-ID. A nonzero ID becomes a record pointer and puts the node on global pending
-list `iGpffffcaa4`, from which `FUN_001ad240` moves it into a resolved runtime
-object's `+0x04` chain. ID zero instead puts the node on container `+0x58`.
-Searches of the resident binary found no read of that container head after the
-write; `FUN_001ad230`, positioned where another finalization pass might have
-handled it, is a true no-op. Record destruction still frees each node through
-`FUN_001a93d0`, which searches the global list and then frees even on a miss.
-The `+0x58` head can consequently become stale during teardown, but it is never
-consulted before the container itself is freed. It is not a proven retry queue.
+`FUN_001b1920` at `0x001B1920` divides the `0x0D80` generator-action packets by
+their animation record ID. A nonzero ID becomes a record pointer and puts the
+packet on global pending list `iGpffffcaa4`, from which `FUN_001ad240` moves it
+into the resolved animation runtime's `+0x04` chain. ID zero instead links the
+packet on container `+0x58` through packet `+0x04`. Finalization does not touch
+that list (`FUN_001ad230` is a true no-op); it is read only by playback.
+`FUN_001a0b80` and the restart routine `FUN_0019ffc0` hand it to
+`FUN_001abbe0`, which allocates one 0x10-byte runner per packet through
+`FUN_001ab0b0` in the play context's `+0x114` action manager. These are
+generator actions that belong to the whole playback file rather than to one
+animation. Record destruction still frees each packet through `FUN_001a93d0`,
+which searches the global list and then frees even on a miss, so `+0x58` can
+become stale during teardown; nothing reads it after playback has ended.
 
 ### Object record fields
 
@@ -494,9 +546,9 @@ The alternate table is not parser-owned directory data. `FUN_001a0b80` at
 
 During construction, the provider record's `+0x34` temporarily points back to
 its table row. The builder clears those transient links, clears container
-`+0xa6` bit 5, sets bit 3, then stores the table at `+0x60`. `FUN_001a00c0`
-only clears bit 3 (switching secondary lookup back to record `+0x30`); it does
-not free the table. Full play-state teardown reaches `FUN_001a2520` through
+`+0xa6` bit 5, sets bit 3, then stores the table at `+0x60`. The stop request
+`FUN_001a00c0` clears bit 3 (switching secondary lookup back to record `+0x30`)
+and asks the play loop to stop; it does not free the table. Full play-state teardown reaches `FUN_001a2520` through
 `FUN_001a2280`, destroys owned rows by recorded type, frees the allocation, and
 zeros `+0x60`.
 
@@ -584,27 +636,35 @@ at `+0x2a`.
 ## Parsing, type dispatch, and publication
 
 `FUN_001a9060` at `0x001A9060` is the synchronous container parser used by the
-decode worker. Its observed framing is:
+decode worker. It reads the decompressed stream strictly in order:
 
-1. chunk ID 1 and the `CCSF` header payload;
-2. chunk ID 2, parsed by `FUN_001ac290` and `FUN_001ac6c0` into the container
-   name, namespace table, and record directory;
-3. chunk ID 3, followed by typed object blocks parsed by `FUN_001ac8a0`;
-4. block type 5 as the terminator/finalization record.
+| Part | What `FUN_001a9060` and its helpers read |
+| --- | --- |
+| Chunk 1 | A dword whose low halfword must be `1` (a first dword equal to `CCSF` traps), a discarded length dword, the discarded `CCSF` dword, then `FUN_001ac290`: 0x20-byte container name, version halfword `+0xac`, one discarded halfword, dword `+0x98`, an extension count, and that many discarded dwords. |
+| Chunk 2 | Low halfword `2`, discarded halfword and length, then `FUN_001ac6c0`: namespace count, record count, 0x20-byte namespace rows, and one 0x20-byte row per record (0x1e-byte name plus 16-bit namespace index). |
+| Chunk 3 | Low halfword `3`, discarded halfword and length. |
+| Object blocks | `FUN_001ac8a0`: repeated 8-byte headers (16-bit tag, discarded halfword, discarded length dword) and tag-specific payloads until tag 5. |
+| Tag 5 | `FUN_001b5290` reads one payload dword `n` and stores `n - 1` at `+0x94`; the directory is then finalized and published. |
+| Frame stream | Present only in playback files; read later by `FUN_001b4f80`, see [Streamed playback](#streamed-playback-sp-skill-play). |
 
-`CCSF` is observed payload, not a signature validated by this routine. For the
-first chunk, it requires only the low 16 bits of the first dword to be 1,
-consumes the length and following `CCSF` dword, and does not compare that
-payload dword. For chunks 2 and 3 it validates only the 16-bit IDs after
-discarding each marker halfword and length dword. High marker and length
-validation is not visible in this parser.
+`CCSF` is observed payload, not a signature validated by this routine. The
+version check `version >= 0x90` is the only header value test; the extension
+words are consumed but not retained.
 
-Within chunk 2, `FUN_001ac290` reads the 0x20-byte container name, reads version
-halfword `+0xac`, discards the following halfword, and requires only
-`version >= 0x90`. It then stores one dword at `+0x98`, reads another dword as a
-count, and consumes that many trailing dwords without retaining or validating
-them in this layer. Thus the extension-word list is length-driven input, not a
-set of framing assertions here.
+Neither the parser nor the dispatcher uses a block's length dword or its high
+marker halfword. Each tag parser must consume exactly its own payload, because
+the next header is read from wherever that parser stopped. There is no
+skip-by-length path, so an unknown tag, or a known tag whose payload layout
+differs from what the NA2 parser expects, cannot be stepped over.
+
+**Retail-file observation.** Retail NA2 files do not keep the unused fields
+exact. In the decompressed `HOME.CCS`, the `0x0800` block at offset `0x2383C`
+declares `0x386` payload dwords, but the next block header starts four bytes
+before the offset that length implies. Walks that follow declared lengths
+across the NA2 CCS files lose synchronization after some `0x0300` and `0x0800`
+blocks. Chunk-3 and tag-5 headers often carry high halfword `0x0000` instead of
+`0xCCCC`. All 2,310 retail NA2 files have one extension dword, which gives a
+chunk-1 length of `0x0D` dwords.
 
 `FUN_001ac8a0` at `0x001AC8A0` dispatches the typed blocks. The complete
 tag-to-parser/destructor ledger and the separately proven object identities are
@@ -612,6 +672,9 @@ owned by [Resident CCS object-type identities](ccs_object_types.md); they are
 not duplicated here. An unrecognized tag takes the same deliberate null-store
 failure path used by required lookups. This runtime pass relies only on the
 special traversal behavior proved for type `0x0A00` above.
+
+After the dispatcher returns, `FUN_001a9060` clears `+0x98` when `+0x94` is
+zero, so a file whose tag-5 payload is `1` keeps no checkpoint count.
 
 At the terminator, `FUN_001acdb0` at `0x001ACDB0` computes every record hash,
 sorts temporary `(hash,index)` values, builds collision chains, installs the
@@ -679,6 +742,106 @@ falls inside the departing container's record array, the surviving record is
 reset to runtime sentinel `4`, its type is cleared to zero, and unresolved
 state is propagated. This prevents a cross-container record from retaining a
 live-looking pointer into freed record storage.
+
+## Format versions and foreign CCS files
+
+### Version gates in the NA2 parsers
+
+Container `+0xac` holds the chunk-1 version halfword. Besides the header check,
+these resident parsers read it and change what they consume or how they
+interpret it. Thresholds are the first version that takes the newer path.
+
+| Parser | File tag | Version thresholds |
+| --- | --- | --- |
+| `FUN_001ac290` | chunk 1 | `0x90` required; lower traps |
+| `FUN_001b2670` | `0x0100` | `0x96`, `0x122` |
+| `FUN_001b3450` | `0x0200` | `0x120` |
+| `FUN_001b3c70` | `0x0300` | `0x90`, `0x92` |
+| `FUN_001b3810` | `0x0400` | `0x90`, `0x92` |
+| `FUN_001a29d0` | `0x0700` | passes the version to track parser `FUN_001a6e00`; its internal gates were not enumerated |
+| `FUN_001b0c40` | `0x0800` | `0x100`, `0x111`, `0x121`, `0x122`, `0x123` |
+| `FUN_001b1560` | `0x0900` | `0x110` |
+| `FUN_001b1b30` | `0x0D90` | `0x123` |
+| `FUN_001b2e50` | `0x0E00` | `0x122` |
+| `FUN_001b5400` | frame tag `0x0201` | `0x120` |
+| `FUN_001b6e40` | frame tag `0x1A01` | `0x111` |
+
+The list comes from every resident halfword load of container `+0xac` plus the
+comparisons that reuse the loaded value in `FUN_001b0c40`. The per-type meaning
+of each gated field belongs to
+[Resident CCS object-type identities](ccs_object_types.md).
+
+**Inference:** NA2 accepts every version from `0x90` through at least `0x123`
+and reads older layouts on purpose. No gate above `0x123` exists, so a newer
+version would be parsed with the `0x123` layout.
+
+### Versions in the retail files
+
+Chunk-1 versions of every `.CCS` file in each extracted retail disc:
+
+| Game | Files | Versions |
+| --- | ---: | --- |
+| NA2 | 2,310 | `0x123` except `STR/ATTENTION.CCS` (`0x120`) |
+| NUN3 | 2,400 | 2,348 `0x123`; 41 `0x111` (card images and `XLANGUAGE.CCS`); 10 `0x120` (`1CMNBOD1.CCS`, eight `RPGF/FRPG*.CCS`, `STR/ATTENTION.CCS`); 1 `0x122` (`RPGF/FRPGPKN.CCS`) |
+| NUN4 | 4,031 | 4,029 `0x123`, 2 `0x120` |
+| NUN5 | 3,552 | 3,551 `0x123`, 1 `0x120` |
+| NUN6 | 1,320 | 1,310 `0x123`; 9 `0x111` (the `DTU`, `FOR`, and `HNX` `3EYE`/`BOD1` files); 1 `0x120` |
+
+Every file in all five games falls inside the range NA2 accepts.
+
+### NUN3's parser compared with NA2's
+
+The NUN3 resident parser `FUN_0015F680` (SLUS_217.27) reads the same chunk-1,
+chunk-2, and chunk-3 framing, with the same `CCSF` trap, `version >= 0x90`
+check, and ignored length and marker fields. Its block dispatcher `FUN_00162CA0`
+has exactly the same 34 object/control routes and terminator `5` as NA2's
+`FUN_001ac8a0`, and traps on any other tag. Its terminator handler
+`FUN_0016AAF0` reads one dword and stores it minus one, as NA2's does. NUN3's
+container is a different, larger structure (version at `+0x20c`), so only the
+file format is shared, not the runtime layout.
+
+NUN3's parsers test the version at the same thresholds as the NA2 table above
+(`0x90`/`0x92` for textures and palettes, `0x96`/`0x122` for objects, `0x120`
+for materials, `0x110` for compositions, `0x123` for generators, `0x122` for
+effects, and `0x100`/`0x111`/`0x121`/`0x122` for models). For the `0x0800`
+model header, both games read the same fields under the same gates; NA2
+additionally decodes more of the flag bits it reads (for example a 2-bit field
+from the second extra byte at version `0x123`), which changes interpretation,
+not the number of bytes consumed.
+
+**Inference (medium confidence):** a NUN3 CCS is readable by the NA2 parser at
+the framing and dispatch level. This comparison covered the dispatchers, the
+header parser, the terminator, and the model-header parser; the other tag
+parsers and every sub-parser were compared only by their version gates, not
+byte for byte. The retail-length inaccuracy above means a length-walking tool
+cannot prove byte compatibility either; only a parser that consumes each
+payload the way NA2 does can.
+
+### What a foreign file must match
+
+These requirements follow from the runtime behavior documented elsewhere in
+this file:
+
+- **Load path.** The file must be listed in `GZLIST.TXT` with its decompressed
+  size, or the resident file directory rejects it; see
+  [Resident file directory](../../runtime/ee_memory_map/allocator_and_capacity.md#resident-file-directory).
+- **Container name.** Lookup compares the path's extensionless basename with
+  the 0x20-byte name inside chunk 1, not with the file name on disc. A file
+  loaded under one path but carrying another header name is published under the
+  header name, and later path-based lookups miss it.
+- **Cross-container references.** A `#` record resolves only when a published
+  container holds a record with the same object name and a namespace string
+  that matches after the first byte. Retail files write the source path there,
+  for example ` c\1nrt\max\1nrtbod1.max` in `PL/1NRTBOD1.CCS`. NA2's ultimate
+  jutsu stream `STR/D01_10.CCS` refers to `#c\1nrt\max\1nrtbod1.max`,
+  `#c\2nrt\max\2nrtbod1.max`, and `#c\1cmn\max\1cmnbod1.max`. NUN3's
+  `1NRTBOD1.CCS` carries the same body namespace strings as NA2's, plus an extra
+  ` x\name\nrt\name.bmp` row.
+- **Object names.** Game code finds objects by exact, case-sensitive record name
+  (`FUN_001a8f00`), with no type check. A replacement must keep every name the
+  consuming code or stream asks for, with a type that consumer can use.
+- **Memory.** Every parsed object stays in the arena until the container is
+  destroyed; see [CCS memory](#ccs-memory).
 
 ## Loading and cancellation
 
@@ -978,7 +1141,207 @@ container drops the reference without destroying the provider's object. The
 dispatch uses type-specific destructors, direct frees, and virtual destructors;
 there is no generic object-level refcount visible in this family.
 
+## Streamed playback (SP Skill Play)
+
+### Who plays CCS files
+
+The play-runtime builder `FUN_001a0b80` has exactly one caller in the resident
+executable and none in `BTL.BIN`, `ETC.BIN`, or `ADV.BIN` (searched by `jal`
+encoding): the `PlayDecode` worker `FUN_001ce410`. That worker belongs to the
+persistent stream player run by `FUN_001ce8a0`, whose only caller is the task
+body `FUN_00359b50` created by `FUN_0035cf00` under the task name
+`SP_Skill_Play`. `FUN_0035cf00` is called once from `BTL.BIN` (the `jal` at
+preserved `0x0076A0CC`, live `0x0076A10C`), the ultimate jutsu presentation
+described in [Ultimate jutsu](../../gameplay/ultimate_jutsu.md#skill-play-admission),
+and once from `ETC.BIN` `FUN_006c0ab0` (preserved `0x006C0AB0`, live
+`0x006C0AF0`).
+
+**Observation:** the ultimate jutsu cutscene is the only battle use of the
+play runtime. Stage, fighter, HUD, and other battle containers are never given a
+play context, a `+0x60` table, or checkpoints; battle code builds its own
+objects from them through name lookups. The `+0xa6` bit-3 alternate secondary
+lookup therefore applies only to a container that is being played.
+
+The transport side of the player (its rings, `PlayRead`, `PlayGzip`, and the
+0x14-byte request rows at player `+0x130`) is documented in
+[Persistent three-task pipeline](runtime_services.md#persistent-three-task-pipeline).
+
+### Request list
+
+`FUN_0035cf00` allocates the 0x2E0-byte player, sets both rings to four
+0x10000-byte blocks, and stores the request list built by `FUN_0035cc20` at
+player `+0x2d4` (count at `+0x2d8`). Each 8-byte request is `{path, flags}`:
+
+- rows with flag `0x1000` for the entry's list of resident paths plus its main
+  path (the main path comes first unless the skill value is `0x20`);
+- then one or more rows for the entry's stream path, the first with flag
+  `0x400` and any further rows with flag `0`.
+
+When `FUN_0035c930` finds the requested skill in its override table, the stream
+path becomes the matched string and the main path becomes the same string with
+`.ccs` replaced by `e.ccs`. The retail `STR` directory holds such pairs, for
+example `D01_10.CCS` (5,579,180 bytes decompressed) and `D01_10E.CCS` (413,428
+bytes). **Inference:** in that case the smaller `E` file is loaded as an
+ordinary resident container and the base file is streamed.
+
+`FUN_001ce8a0` then:
+
+1. For every `0x1000` row whose container is not already published
+   (`FUN_001aa450`), runs an ordinary flag-0 one-shot load and keeps the wrapper
+   in slot array `+0xf0` (at most 16 wrappers; another traps). Already-resident
+   containers are only borrowed.
+2. For every other row, registers a request through `FUN_001cdc20`. A row with
+   flag `0x100` (or with player byte `+0x2da` set) is first loaded whole through
+   a flag-`0x100` one-shot load; its container comes from that wrapper.
+3. Waits for pipeline gate `cGpffffcaf8` to be free and takes it with value 2,
+   allocates the two 0x40000-byte rings (alignment 0x80), and starts
+   `PlayDecode`, `PlayRead`, and `PlayGzip`.
+4. Waits until every request has been read and decoded, destroys containers of
+   rows flagged `0x80`, then destroys every container still held by a slot
+   wrapper (`FUN_001a9790`) and frees the wrappers.
+5. Waits for the read and decode tasks to finish and releases the gate. The
+   task body then calls `FUN_001cde10` to destroy the player.
+
+A consequence of step 1 and step 4: containers the player loaded itself are
+destroyed when the cutscene ends, while containers that were already resident
+stay resident.
+
+### Per-request lifecycle in `PlayDecode`
+
+`FUN_001ce410` walks the requests with cursor `+0x278`:
+
+1. A streamed request gets a new 0xC0-byte container bound to the player's
+   decoded-ring reader (`+0x08`) and is parsed by `FUN_001a9060`. It is
+   published to the global list like any other container, so its `#` records
+   resolve against the fighter and effect containers already resident.
+2. `FUN_001a0b80(container, 0x00609160, 0)` builds the play runtime, and the
+   player's `+0x88` callback runs (`FUN_0035a070` for skill play).
+3. While the request's flag `0x400` is set, the worker sets flag `0x4000` and
+   yields. This holds the first stream request until the owner releases it.
+4. `FUN_001a0890` creates the play task and its `PlayLock` companion with flags
+   `player +0x27c | 4 | (request index << 16)`.
+5. The worker waits for container `+0xa6` bit 5. It asks the play task to stop
+   (`FUN_001a00c0`) when the stream has ended and player flags `+0x27c` carry
+   neither bit 0 (which makes the play loop restart instead of ending) nor bit
+   2, or when player byte `+0x281` is 1 or 3.
+6. After playback, the retention byte of every request up to the current one
+   is counted down. A request whose byte has reached zero has its container
+   destroyed by `FUN_001a9790(container,1)`. `FUN_001cdc20` initializes that
+   byte to the low four flag bits, so a flag-0 stream request is destroyed right
+   after its own playback; flags `0x80` and `0x100` use sentinels `0xfe` and
+   `0xff` that are never counted down.
+7. The cursor advances, or jumps to the end when `+0x281` is 2 or more.
+
+### The play task
+
+`FUN_001a0890` creates the task at `0x001A0980` (priority `0x1b`, 0x1000-byte
+stack), which calls `FUN_001a0120`. Each step of that loop:
+
+- advances the frame stream through `FUN_001b4c60`, using rate `+0x9c`;
+- updates the `+0x114` generator-action manager with the same rate
+  (`FUN_001abc70`);
+- calls the per-frame callback (`FUN_0035b740` for skill play) and the
+  per-object callback at container `+0x7c`;
+- updates and submits the scene through `FUN_001a0a40`; and
+- yields once.
+
+When a stop is requested, the loop releases the `0x2200` ring manager if
+container bit 7 is set, runs the end callback (`FUN_0035af20` for skill play),
+tears the play state down through `FUN_001a2280`, writes task state 2, and sets
+container `+0xa6` bit 5. The container itself is not destroyed here; the
+request retention in `PlayDecode` decides that.
+
+`FUN_001a2280` frees the checkpoint table, releases the `+0x4c` light
+secondaries from the scene, frees the play context's object lists, destroys the
+`+0x60` table through `FUN_001a2520`, destroys controllers and the draw
+environment the context owns (container `+0xae` bits 0, 2, and 3), destroys the
+`+0x114` action manager, and frees the play context.
+
+### Frame stream
+
+A playback file continues after its tag-5 block with frame blocks that use the
+same 8-byte header. `FUN_001b4f80` reads them over an inclusive frame range and
+dispatches this second tag set; any other tag traps:
+
+| Frame tag | Handler |
+| ---: | --- |
+| `0xFF01` | Frame marker: its payload dword becomes the frame cursor and is recorded in the checkpoint table. |
+| `0x0005` | Terminator again (`FUN_001b5290`), met when playback seeks back to checkpoint 0. |
+| `0x0101` | `FUN_001b5900` |
+| `0x0108` | `FUN_001b69b0` (also receives the frame cursor) |
+| `0x0201` | `FUN_001b5400` (version gate `0x120`) |
+| `0x0502` | `FUN_001b5d50` |
+| `0x0601`, `0x0602`, `0x0604`, `0x0606`, `0x0608` | `FUN_001b5f70`, `FUN_001b6020`, `FUN_001b61e0`, `FUN_001b64a0`, `FUN_001b6810` |
+| `0x0802`, `0x0803` | `FUN_001b6ab0`, `FUN_001b6c60` |
+| `0x1801` | `FUN_001b57f0` |
+| `0x1901` | `FUN_001b56e0` |
+| `0x1A01`, `0x1B01`, `0x1C01`, `0x1D01` | `FUN_001b6e40` (version gate `0x111`), `FUN_001b6fd0`, `FUN_001b71a0`, `FUN_001b7340` |
+| `0x2201` | `FUN_001b52d0` |
+
+**Inference:** the high byte of each frame tag matches the file object tag it
+animates (`0x01` object, `0x02` material, `0x05` camera, `0x06` light, `0x08`
+model, `0x18`/`0x19` controllers and morphers, `0x1A`-`0x1D` draw environment,
+`0x22` ring batch). The frame payloads were not decoded.
+
+A frame marker with payload `-1` ends the stream: `FUN_001b4c60` sets container
+`+0xa6` bits 2 and 4. Payload `-2` does the same and then calls `FUN_0019ffc0`,
+which rewinds to checkpoint 0, restarts animated effects, and reinstantiates the
+`+0x58` generator actions, so the stream loops.
+
+**Retail-file observation:** in the decompressed `STR/D01_10.CCS`, the tag-5
+block at `0x12060` carries payload `0x13F`, header `+0x98` is also `0x13F`, the
+first frame marker (index 0) follows at `0x1206C`, and the last marker, at the
+end of the 5,579,180-byte stream, has payload `-1`. Its namespace table refers to
+fighter and effect containers through `#` rows such as
+`#c\1nrt\max\1nrtbod1.max` and `#e\00\max\e00hit01.max`.
+
+## CCS memory
+
+Allocator placement, load transients, and sampled battle capacity are owned by
+[EE allocator](../../runtime/ee_memory_map/allocator_and_capacity.md#ccs-load-cost).
+The container-owned allocations established here are:
+
+| Allocation | Size | Owner and lifetime |
+| --- | --- | --- |
+| Container | 0xC0 | Decode worker or `PlayDecode`; freed by `FUN_001a9790(container,1)`. |
+| Namespace table | `namespace_count * 0x20` | `FUN_001ac6c0`; freed by container destruction. |
+| Record array | `record_count * 0x38` | `FUN_001ac6c0`; freed by container destruction. |
+| Hash buckets | one word per record | `FUN_001acdb0`; freed by container destruction. |
+| Type objects | per parser | Allocated while parsing; freed by `FUN_001a9f10` per record. |
+| Owned reader | 0x40 | Only when the container was given no reader. |
+| Play context, `+0x60` table (`record_count * 0x10`), checkpoints (`+0x98 * 4`), and materialized play objects | per file | Only for a played container; freed by `FUN_001a2280`. |
+
+Every container parse runs inside the parser's high-placement scope, so all
+parse-time allocations above come from the top of the arena. The play-time
+allocations in `FUN_001a0b80` run on the `PlayDecode` thread outside that scope.
+
 ## Representative overlay callers
+
+### Battle setup (resident)
+
+The order of battle preparation is owned by
+[Battle lifecycle](../../gameplay/battle_lifecycle.md#resident-setup-order).
+Its CCS mechanics are:
+
+- `FUN_001e9520(1)` queues every missing battle container through
+  `FUN_001cf9e0` and starts one `LoadBg` worker with `FUN_001cfcd0(1)`; with
+  argument 0 it loads each one synchronously through `FUN_00116de0` instead.
+  Each path is first checked with `FUN_001aa450`, so an already-resident
+  container is not reloaded.
+- `FUN_001e80f0(manager, side, mask, deferred)` builds up to nine fighter paths
+  per side into 30-byte buffers at manager `+0xa3c + side*0x134` onward, using
+  `%s%s` with prefixes `pl/`, `3eye/`, and `cutin/` and the filename tables
+  documented in [Character asset tables](../character_assets.md). Mask bit 0
+  selects the `1???bod1` table and bit 1 the `2???bod1` table.
+- `FUN_001e86c0` later adopts the published containers by name into the
+  per-side handle slots at manager `+0xa18..+0xa38 + side*0x134`.
+- `FUN_001e8960` destroys a side's selected slots with `FUN_001a9790` and also
+  clears the other side's slot when it holds the same container.
+  `FUN_001e8e20` destroys one slot only when the other side does not share it.
+
+**Observation:** in a mirror match both sides adopt the same published
+container, because adoption is a name lookup; the release functions guard that
+sharing explicitly rather than through a reference count.
 
 ### BTL.BIN
 
@@ -1084,6 +1447,11 @@ at `+0x18`, queues the new path through `FUN_001cf9e0`, starts the worker with
   than the low-level container, owns the observable use count.
 - **High confidence:** file I/O/decompression/decode use worker tasks, while
   `FUN_001cf3f0` waits for their completion before returning.
+- **High confidence:** the file framing, the ignored length and marker fields,
+  the version gates, the play-runtime call graph (`FUN_001a0b80` has one caller),
+  and the stream player's load and destruction order.
+- **Medium confidence:** NUN3-to-NA2 file compatibility beyond framing,
+  dispatch, the terminator, and the model header.
 - **Medium confidence:** descriptive names such as “secondary value,” because
   the meaning of record `+0x30` varies by type even though its lookup behavior
   is exact.

@@ -15,20 +15,36 @@ claims about the game's original internal terminology.
 - **Assigned scope:** battle hit-response state after an incoming hit has
 already passed acceptance: ordinary reaction selection and timing, planar and
 vertical response motion, launch/contact transitions, timed downed recovery and
-get-up choices, conditional rehit protection, and guarded-reaction entry and
-exit. The investigation was static and bounded rather than globally exhaustive.
+get-up choices, conditional rehit protection, the Extra Hit air-chase
+exchange, how attack-record fields select all of these, and guarded-reaction
+entry and exit. The investigation was static and bounded rather than globally
+exhaustive.
 
 - **Exploration depth:** coverage used the exact clean resident `SLPS_258.37`
-and `PRG/BTL.BIN` artifacts identified below through maintained read-only
-analysis, C/instruction exports, and exact clean bytes. The resident trace
+and `PRG/BTL.BIN` artifacts identified below through read-only GhidrAssist
+decompilation and disassembly, earlier maintained exports, and exact clean
+bytes. The resident trace
 followed the representative native chain through
 `FUN_002209A0`, `FUN_00231C60`, `FUN_00232B80`, `FUN_00233870`,
 `FUN_002346B0`, `FUN_00234DA0`, `FUN_00235510`, `FUN_00235690`, the general
 timeline/countdown drivers, guard routines `FUN_00228320`, `FUN_00228760`, and
 `FUN_00228E90`, and accepted-hit classifiers `FUN_002406B0` and
-`FUN_002409E0`. Their directly required helpers and callers were traced far
-enough to establish field ownership, ordering, branch thresholds, and exit
-consumers; unrelated callers were not exhaustively classified.
+`FUN_002409E0`. The per-update order was traced from `FUN_001F03E0` through
+the fighter coordinator, `FUN_0024FD80`, `FUN_0024C440`, `FUN_00248580`,
+`FUN_00249640`, `FUN_0024DA50`, and `FUN_0024DE40`, with the attacker-side
+pause in `FUN_00220690`. Animation timing was traced through the phase
+animation selector (live `0x0071F640`), `FUN_00218060`, `FUN_001B99B0`,
+`FUN_001BB5C0`, `FUN_0024D1C0`, `FUN_001BB210`, and the CCS animation-chunk
+loader `FUN_001B1470`. Knockback and gravity were traced through
+`FUN_00232A50`, `FUN_0021ACB0`, `FUN_0024A660`, and `FUN_002183D0`.
+The Extra Hit chain was traced through `FUN_00241A50`, its three kind tests,
+`FUN_00241F10`, `FUN_00242360`, `FUN_002426C0`, `FUN_0023A0D0`,
+`FUN_00239250`, `FUN_00243EF0`, and the record selection path
+`FUN_0023A390`, `FUN_00239530`, `FUN_00239B00`, and `FUN_00240C40`, with
+`FUN_0021ED70` read only as far as its calls into that chain. Their directly
+required helpers and callers were traced far enough to establish field
+ownership, ordering, branch thresholds, and exit consumers; unrelated callers
+were not exhaustively classified.
 
 The decoded authored-data coverage is exhaustive for these exact clean ranges:
 
@@ -36,27 +52,43 @@ The decoded authored-data coverage is exhaustive for these exact clean ranges:
   resident runtime `0x00407670` (ELF file `0x00307770`);
 - all 60 native descriptor slots, identifiers, and reachable phase records for
   substates `0x27..0x62` from the overlay descriptor table at live
-  `0x0089AEB0` (preserved export `0x0089AE70`, file `0x001E6FB0`); and
+  `0x0089AEB0` (preserved export `0x0089AE70`, file `0x001E6FB0`);
 - all ten `0x1C`-byte guarded-response rows at resident runtime `0x00407550`
-  (ELF file `0x00307650`).
+  (ELF file `0x00307650`);
+- the hit-response fields (`+0x10`, `+0x14`, `+0x2C`, `+0x2D`, `+0x2E`,
+  `+0x30`, `+0x32`) of all 3,428 records in the 74 primary action tables
+  listed in `@resources/character_data.tsv`; and
+- the animation names and animation-chunk frame counts of every slot used by
+  substates `0x27..0x62` for those 74 records, from `CMN/2CMNBOD1.CCS` and the
+  characters' `PL/2???BOD1.CCS` files (two characters excepted).
 
 - **Confirmed coverage:** the ordinary/guarded accepted-hit split and exact
 source-mode-specific rejection, interception, and paired-fighter side effects;
-exact native selector mappings and bounded overrides; descriptor phase
-conditions and non-default rates; table-driven response impulses and damping;
-ordered fighter-update pause and action-entry lock behavior; contact, held, and
-downed handoffs; exact timed/input recovery thresholds and exits; guard table
-initialization and transition gates; and the direct conditional-rehit predicate
-plus attack-record exceptions. Negative-result tracing was sampled and bounded
-to the named target/interaction predicates near the end of this document; it
-was sufficient to reject several tempting invulnerability interpretations, not
-to prove all target-selection behavior.
+exact native selector mappings and bounded overrides, plus the authored
+distribution of every selector and timing field; descriptor phase
+conditions and non-default rates; native animation names and the
+animation-gated length of every phase; table-driven response impulses and
+damping, the attack knockback scale, and hit-response gravity; the exact
+per-update order of hit routing, event `0`, receiver and attacker pauses,
+lock, animation, and timeline advance, giving elapsed counts in 30 Hz fighter
+updates; contact, held, and downed handoffs; exact timed/input recovery
+thresholds and exits in updates; guard table initialization and transition gates; the direct
+conditional-rehit predicate, its attack-record exceptions and their authored
+frequency; the `+0x230` accepted-hit rejection countdown; the ordinary hit
+count; and the Extra Hit eligibility, role state machine, counter window,
+exchange limit, and authored record layout. Negative-result tracing was sampled
+and bounded to the named target/interaction predicates near the end of this
+document; it was sufficient to reject several tempting invulnerability
+interpretations, not to prove all target-selection behavior.
 
-- **Unresolved or untested:** animation and player-facing move names, seconds
-  or display-frame durations, non-default input bindings, character-specific
-  callback coverage, attacker-flag exception frequency, and the distinction
-  among hurtbox, collision, and higher-level target selection remain
-  unresolved.
+- **Unresolved or untested:** exact ground-contact timing of `G`, `O`, and
+  `B` phases, which depends on stage collision geometry; the animations of the
+  two characters stored outside their `2???bod1` files; visual confirmation of animation roles and player-facing
+  move names; non-default input bindings; character-specific response
+  callbacks and the five overlay callers of the downed handoff; writers of
+  Extra Hit attacker bits `8`/`0x20` and of `+0x1B4`; the reset of hit count
+  `+0x538`; the exact roles of the other `+0x230` consumers; and the
+  distinction among hurtbox, collision, and higher-level target selection.
 - **Deliberate exclusions and overlap:** collision-candidate generation, damage and damage
 scaling, generic status/effect processing, chakra or guard-resource accounting,
 match outcomes, practice-mode mechanics, all other non-battle modes, and
@@ -68,7 +100,9 @@ resource, outcome, and mode-specific research.
   than globally exhaustive. No emulator instrumentation, live-memory capture,
   frame stepping, or runtime hit-attempt matrix was performed. The static
   evidence establishes control-flow and authored values, but not those runtime
-  observables.
+  observables. Update counts are derived from the traced update order and the
+  documented 30 Hz cadence, not measured; physics-gated phases and
+  character callbacks can change them.
 
 ## Evidence identity and address conventions
 
@@ -85,23 +119,25 @@ address.
 
 Method: direct inspection of the maintained C and instruction exports, plus
 byte decoding of the exact clean binaries for response tables and native action
-identifiers. No live-memory capture was used, so frame-visible animation names
-and player-facing move labels remain unassigned.
+identifiers, character action tables, and CCS animation chunks. No
+live-memory capture was used, so native animation names are recorded without
+visual confirmation and player-facing move labels remain unassigned.
 
 ## Extra Hit eligibility and action exit
 
 Read-only GhidrAssist inspection of the clean resident ELF established these
 paths. All addresses in this section are live resident addresses.
 
-`FUN_0023B280` calls `FUN_00241A50(fighter, candidate_attack)` at `0x0023B5DC`
+`FUN_0023B280` calls `FUN_00241A50(fighter, candidate_index)` at `0x0023B5DC`
 when the candidate attack record's `+0x10` flags contain `0x1000`. Eligibility
 checks the two fighters' states, reaction timing, and geometry. It returns
 `1` for acceptance, `0` while waiting, and `-1` for rejection.
 
 The branch at `0x0023B5E8` sends result `1` to `0x0023B60C`, whose call block
 starts the paired sequence through `FUN_00241F10` at `0x0023B630`. That helper
-writes both fighters' `+0xB00` state, adjusts the opponent's timeline, and
-transitions the initiating fighter to the candidate attack.
+writes both fighters' `+0xB00` state, clears the opponent's `+0x224`
+countdown block on a fresh exchange, and transitions the initiating fighter to
+the candidate attack (details below).
 
 Results `0` and `-1` both continue at `0x0023B6DC`. This path examines the
 current attack record's `+0x14` completion flags and the action-completion
@@ -124,6 +160,169 @@ These are static control-flow findings. The observed instructions establish
 entry, eligibility, and exit ordering; they do not establish visible timing
 or exhaustive character-specific behavior.
 
+### Eligibility conditions
+
+`FUN_00241A50(fighter, candidate_index)` returns `-1` unless all of these hold
+for the initiating fighter and its opponent at fighter `+0x20`:
+
+- the initiator's `+0xB00` is zero and the opponent's byte `+0x61` bit `3` is
+  set;
+- the opponent is in ordinary response `0x3C`, `0x3D`, `0x3F`, `0x40`, or
+  `0x41`;
+- the global object at `gp-0x339C` has no active `+0x08 -> +0x14` value;
+- the initiator is not in the `+0x68 == 0x40/0x3B` plus `+0x63` bit `5`
+  exclusion also used by the ordinary-response fallback below; and
+- the initiator is in major state `8` and its current attack record
+  `+0xA4C` is the exact record the opponent retained as its hit provenance
+  (`+0xE54`, or the same fallback chain used by `FUN_002346B0`).
+
+It returns `0` (wait) while the opponent's primary cursor `+0x1C4` is below
+`7 * opponent[+0x1AC]` or initiator byte `+0xA40` is not `1`. It then reads
+candidate record `fighter[+0xA54] + candidate_index * 0x54` and dispatches on
+its `+0x14 & 0x1C00` kind:
+
+| Kind | Additional acceptance test, all on the launched opponent |
+| ---: | --- |
+| `0x0400` | `FUN_00241650`: airborne with byte `+0x63` bit `6` clear; `+0xBA0` is the sentinel `-17320.508` or at least `2.5 * +0xE8 * +0x2F0`; a stage probe along facing `+0x98C` must not report contact and its clearance must be at least `2 * +0xE8 * +0x2F0`. |
+| `0x0800` | inline: airborne, byte `+0x64` bit `0` clear, `+0xBA8` sentinel or at least `1.5 * +0xE4 * +0x2F0`, and `FUN_0021C640` reach test returns zero. |
+| `0x1000` | `FUN_00241890`: airborne, `+0xBA4` sentinel or at least `2 * +0xE4 * +0x2F0`, and stage-relative height checks against `+0xE4 * +0x2F0`. |
+
+Every kind also re-requires one of the five launch responses above. Any other
+kind returns `-1`. The environment fields `+0xBA0`, `+0xBA4`, and `+0xBA8`
+are recorded raw; their geometry names are not established.
+
+### Authored Extra Hit records
+
+A read-only scan of all 74 primary action tables in the clean ELF (3,428
+records; table ownership as in
+[Substitution](substitution.md#attack-record-ownership-and-clean-elf-inventory))
+found exactly three records per table with `+0x10 & 0x1000`, always at action
+indices `10`, `11`, and `12`, with `+0x14` kinds `0x0400`, `0x0800`, and
+`0x1000` respectively. Their authored response selectors (`+0x2C`) are `0x12`
+(73 tables; one table uses `0x13`), `0x15`, and `0x14`, so each Extra Hit
+attack itself sends the opponent into another launch response (`0x3C/0x3D`
+or `0x3E`, `0x40`, or `0x3F`). All have `+0x2E == 1`.
+
+Indices `13..15` (`+0x10 == 0x2000`) and `16..18` (`+0x10 == 0x4000`) repeat
+the same three kinds and selectors in every table without the `0x1000` flag.
+Their `+0x14` values add one extra bit per kind (`0x80`, `0x200`, `0x100`).
+They are the receiver's counter records, selected as described next.
+
+### Selecting Extra Hit and counter records
+
+Normal input action selection `FUN_0023A390` first asks `FUN_0023A0D0` for a
+selector while no candidate is pending. Selector `1` is returned when the
+fighter's `+0xB00` is zero and its current attack record has one of
+`+0x14` bits `0x80`, `0x100`, or `0x200`, no `+0x10 & 0x00F00000` type, and
+current phase-record flag `0x10`. Selectors `2` and `3` are the receiver
+cases in the next section. The selector is passed to `FUN_00239E50`, which
+still requires `+0x254 == 0`; in major `5` only selector `2` passes (selector
+`3` is rejected there; other admitted states ignore the selector). It is then
+passed to `FUN_00239530`, which hands off to `FUN_00239B00`. That routine
+scans only action indices `10..18` for a record whose signature matches the
+input, whose chakra cost
+`+0x20` does not exceed fighter `+0x70` (unless `FUN_00307480` applies), and
+whose type and kind match the masks from `FUN_00240C40`. A match becomes the
+pending candidate `+0xA3E`.
+
+`FUN_00240C40` supplies those masks:
+
+| Selector and state | Allowed `+0x10` type | Allowed `+0x14` kind |
+| --- | --- | --- |
+| `1` (attacker in major `8`) | `0x1000` (indices `10..12`) | from the current attack: `0x80 -> 0x400`, `0x100 -> 0x800`, `0x200 -> 0x1000` |
+| `2`/`3`, receiver not attacking | `0x2000` (indices `13..15`) | the kind of the opponent's current Extra Hit record |
+| `2`/`3`, receiver already in a counter attack | switches between `0x2000` and `0x4000` unless `FUN_00180210(3)` returns `0` (nominally 1 in 4) | the kind of the receiver's own current record |
+
+In the clean tables, 867 records outside indices `10..18` carry exactly one of
+those launch bits, in all 74 tables. The dominant pairings are `0x80` on 434
+records with selector `0x12` (`0x3C/0x3D`), `0x100` on 159 with `0x14`
+(`0x3F`), and `0x200` on 167 with `0x15` (`0x40`). Thus a `0x3C/0x3D` launch
+normally offers record `10` (another `0x3C/0x3D`), a `0x3F` launch offers
+record `11` (`0x40`), and a `0x40` launch offers record `12` (`0x3F`).
+
+### Exchange state at fighter `+0xB00`
+
+`FUN_00241F10(initiator, candidate_index)` is the paired-state writer named
+above. The branch at `0x00241F40`, `bne v0,zero,0x002421EC`, tests the
+initiator's own `+0xB00 & 0xFF`; when it is nonzero, all role changes are
+skipped and only the common tail runs. Otherwise the initiator's current role
+selects one of four exact updates. `P` is the opponent.
+
+| Initiator `+0xB00` before | Initiator after | Opponent after | Retarget |
+| --- | --- | --- | --- |
+| high byte clear | sets bit `0x0001` | sets bit `0x0100`; its `+0x224` countdown block is cleared unless activation is pending | no |
+| any of `0x0300` | sets bit `0x0004`, clears the high byte | clears the low byte, sets bit `0x0400` | yes |
+| any of `0x0C00` | sets bit `0x0010`, clears the high byte | clears the low byte, sets bit `0x1000` | yes |
+| any of `0x3000` | sets bit `0x0004`, clears the high byte | clears the low byte, sets bit `0x0400` | yes |
+
+Every update also writes the opponent's window
+`+0xB0A = max(1, cvt(12.0 - 1.7142857 * P[+0xB08]))`, where `+0xB08` is the
+exchange count. The conversion is EE `cvt.w.s` under the active rounding
+mode, so only the exact endpoints `12` (count `0`) and the floor `1` (count
+`7` or more) are stated here. The retarget rows then make the initiator
+retain the opponent (`+0xE58` and `+0xC74`), clear `+0xE54`, and adopt the
+opponent's attack record (`+0xE50`, or `+0xA4C` when that record's
+`+0x10 & 0x000C0000` is clear) as its own retained hit provenance with its
+`+0x2E` repeat count and `+0x28` transient modifier.
+
+The common tail calls `FUN_002260D0(...,0)` for each fighter whose float
+`+0x7C` is nonzero, enters the candidate attack through `FUN_0023A9A0`, and on
+a retarget row calls `FUN_00242360`. That helper selects the response the
+initiator would receive from its retained record and, when the current attack
+record lacks `+0x10 & 0x1000`, copies that response's second-phase animation
+slot and its complete response-table motion row into the attack's `+0x50`
+sub-record. Finally both `+0xB0C` values are cleared and both `+0xB08`
+counts increment.
+
+Thus the low byte of `+0xB00` is the attacking role (`1`, `4`, `0x10`) and the
+high byte is the receiving role (`0x100`, `0x400`, `0x1000`). The next
+section shows the receiver writing `0x200`, `0x800`, or `0x2000` and the
+attacker `2` when a counter window is missed. Teardown also clears attacker
+bits `8` and `0x20`, but no writer of those two bits was traced.
+
+### Receiver response and exchange limit
+
+The pair hit resolver `FUN_0021ED70` calls `FUN_002426C0(fighter)` for each
+fighter whose `+0xE3C` hit bit `0x1` is set, and clears that hit (and the
+opponent's matching `0x100` bit) when the helper returns nonzero:
+
+- Receiving role `0x100` with a pending candidate `+0xA3E != -1`: the
+  receiver stages its own `+0x230` countdown to `60` (pending), then calls
+  `FUN_00241F10(receiver, candidate)`, becoming the attacker. The incoming
+  hit is discarded.
+- Receiving role `0x100` without a candidate: the receiver moves to `0x200`,
+  the attacker from `1` to `2`, the receiver's `+0x224` block is cleared unless
+  pending, and the hit proceeds.
+- Receiving roles `0x400` and `0x1000` behave the same way, except that the
+  receiver also clears the attacker's `+0x224` block, and a receiver whose
+  `+0xB08` exceeds `14` has its candidate forcibly cancelled. Missed windows
+  move to `0x800` and `0x2000`.
+- A fighter holding attacking role `4` or `0x10` returns `1`, so hits against
+  it are discarded while that role is active.
+
+`FUN_0023A0D0` is the candidate query for a receiver. For the three receiving
+roles and no current candidate, it calls
+`FUN_00239250(attacker, receiver[+0xB0A])`. That routine accepts only while the
+attacker's secondary cursor `+0x1E8` lies within the last `+0xB0A` animation
+frames of the attacker's current attack phase (scaled by the phase rate and
+the attacker's `+0x1AC`), returning a `0..1` timing score stored at `+0xB0C`.
+Role `0x100` returns `2` and also clears its own action-lock block; `0x400`
+returns `3`; `0x1000` returns `2`. The Practice Extra Hit Counter options that
+consume these high-byte roles are documented in
+[Practice mode](practice_mode.md#linked-attack-and-extra-hit).
+
+`FUN_00243EF0` tears the exchange down: it clears the resolved role pairs (or
+both words when the fighter holds no attacking role), resets both `+0xB08`
+counts and presentation fields, and restores both `+0x1B0` rates to `1.0` when
+the fighter's `+0xB00` has become zero.
+
+**Inference:** because Extra Hit requires the opponent to be in a launch
+response caused by the initiator's current attack and each authored Extra Hit
+record selects another launch response, this exchange is the native
+air-chase/juggle continuation. The counter window shrinks with every
+exchange and further counters are refused after the fifteenth. Visual labels
+and the player-facing meaning of the timing score were not observed.
+
 ## Fighter fields used by the response machine
 
 These fields are statically confirmed by reads and writes in the routines
@@ -139,16 +338,21 @@ described below:
 | `+0x1C4` | `s32` | Primary action-timeline cursor tested by reaction completion and downed-recovery thresholds. |
 | `+0x1E8` | `s32` | Secondary action-timeline cursor tested by positive phase-record thresholds and guarded-response gates. |
 | `+0x20C` | `s32` | Current count in the fighter-update pause block at `+0x200`; positive values stop normal action-timeline and per-action updates. |
-| `+0x230` | `s32` | Current count in a secondary countdown block at `+0x224`; guarded-response table field `+0x16` initializes it, and response substates `0x3A/0x3B` test it for rehit suppression. |
+| `+0x230` | `s32` | Current count in a secondary countdown block at `+0x224`. While positive, accepted-hit router modes `0`, `2`, and `3` discard new hits; attack record `+0x32`, ordinary-response row `+0x16`, guarded-response row `+0x16`, and several fixed values initialize it. See [Accepted-hit rejection countdown](#accepted-hit-rejection-countdown). |
+| `+0x538`, `+0x53A` | `s16`, `s16` | Receiver's accepted ordinary-hit count (saturating at `9999`) and its running maximum; see [Hit count](#hit-count). |
+| `+0xB00` | flags | Extra Hit exchange roles; see [Exchange state](#exchange-state-at-fighter-0xb00). |
+| `+0xB08`, `+0xB0A`, `+0xB0C` | `s16`, `s16`, `f32` | Extra Hit exchange count, counter window, and counter timing score. |
 | `+0x254` | `s32` | Current count in the action-lock block at `+0x248`; native action selection refuses actions until it reaches zero. |
 | `+0x338` | `u32` | Current logical input bits; guard is `0x10000000`, while downed choices test newly pressed binding 2 (`0x00010000`, default Cross) and binding 1 (`0x00001000`, default Circle). |
 | `+0x994` | `f32` | Oriented planar response speed written by the reaction table. |
 | `+0x998` | `f32` | Vertical response speed written by the reaction table. |
-| `+0x9B4` | `f32` | Auxiliary motion multiplier copied from response-table field `+0x10` when that field differs from `1.0`. |
+| `+0x9B4` | `f32` | Gravity argument for the next movement pass, copied from response-table field `+0x10` when that field differs from `1.0` and reset to `1.0` after each pass; see [Gravity and airtime](#gravity-and-airtime). |
 | `+0x9B8` | flags | Low two bits participate in choosing the grounded-family reaction variant. |
 | `+0xA30` | pointer | Current action-descriptor row; for native substates below `0x66`, the state setter indexes the overlay descriptor table directly. |
 | `+0xB88` | `u32` | Latest animation-advance completion result. Animation selection clears it; the animation driver rewrites it with the nonzero end result consumed by phase records. |
-| `+0xB90` | `u16` | Current secondary-timeline rate loaded from the phase record's fourth halfword and interpreted as a `/256` fixed-point factor. |
+| `+0xB84` | pointer | Animation-object table indexed by phase-record animation slot. |
+| `+0xB90` | `u16` | Current secondary-timeline and animation rate loaded from the phase record's fourth halfword and interpreted as a `/256` fixed-point factor. |
+| `+0xB94` | `s16` | Animation start frame loaded from the phase record's third halfword. |
 | `+0xB9A` | `s16` | Consecutive grounded-update count, saturating at `0x7FFF`; reset to zero while airborne. |
 | `+0xB9C` | flags | Ground/air history for the current action: low nibble `1` means entered grounded and `2` means entered airborne; `0x20` latches a later airborne update for the former, while `0x10` latches a later grounded update for the latter. |
 | `+0x95A` | `s16` | Guard temporal state/counter; `< 1` selects ordinary response and `>= 1` selects guarded response. |
@@ -199,6 +403,25 @@ say *grounded* for that tested condition.
 | `FUN_0024d5e0` | `0x0024D5E0` | `0x0014D6E0` | Advances the primary and secondary action timelines while fighter-update pause is inactive. |
 | `FUN_0024fd80` | `0x0024FD80` | `0x0014FE80` | Active-fighter loop that suppresses normal action updates while `+0x20C` is positive. |
 | `FUN_00248ec0` | `0x00248EC0` | `0x00148FC0` | Normal battle-input update that passes logical input `+0x338` to `FUN_00228320`. |
+| `FUN_001f03e0` | `0x001F03E0` | `0x000F04E0` | Battle update that calls the registry slots `+0x0C`, `+0x10`, and `+0x14` in that order. |
+| `FUN_0024de40` | `0x0024DE40` | `0x0014DF40` | Fighter virtual slot `+0x18`; advances action timelines through `FUN_0024D5E0`. |
+| `FUN_0021ed70` | `0x0021ED70` | `0x0011EE70` | Pair hit resolver; edits both fighters' `+0xE3C` hit bits and calls `FUN_002426C0`. |
+| `FUN_00224870` | `0x00224870` | `0x00124970` | Initializes countdown `+0x230` from attack record `+0x32`. |
+| `FUN_00241a50` | `0x00241A50` | `0x00141B50` | Extra Hit eligibility. |
+| `FUN_00241f10` | `0x00241F10` | `0x00142010` | Extra Hit exchange-role writer and attack entry. |
+| `FUN_002426c0` | `0x002426C0` | `0x001427C0` | Extra Hit receiver counter or missed-window handling. |
+| `FUN_0023a0d0` | `0x0023A0D0` | `0x0013A1D0` | Extra Hit counter-candidate query. |
+| `FUN_00239250` | `0x00239250` | `0x00139350` | Timing-window score against the opponent's current attack phase. |
+| `FUN_00243ef0` | `0x00243EF0` | `0x00143FF0` | Extra Hit exchange teardown. |
+| `FUN_0023a390` | `0x0023A390` | `0x0013A490` | Input action selection; asks `FUN_0023A0D0` for an Extra Hit selector first. |
+| `FUN_00239b00` | `0x00239B00` | `0x00139C00` | Scans action indices `10..18` for the pending Extra Hit or counter candidate. |
+| `FUN_00240c40` | `0x00240C40` | `0x00140D40` | Supplies the type and kind masks for that scan. |
+| `FUN_00220690` | `0x00220690` | `0x00120790` | Attacker-side handling of a landed hit, including the attacker pause. |
+| `FUN_00232a50` | `0x00232A50` | `0x00132B50` | Retains a new attack record, repeat count, and knockback scale, then re-enters the router. |
+| `FUN_00248580` | `0x00248580` | `0x00148680` | Runs the phase updater and the per-major exit dispatchers. |
+| `FUN_0024da50` | `0x0024DA50` | `0x0014DB50` | Fighter virtual slot `+0x10`; movement and animation pass, or input selection during a pause. |
+| `FUN_0024a660` | `0x0024A660` | `0x0014A760` | Movement, ground contact, and gravity application. |
+| `FUN_002183d0` | `0x002183D0` | `0x001184D0` | Applies gravity to a vertical speed. |
 
 ## Accepted-hit routing
 
@@ -292,6 +515,32 @@ the grounded bit at `+0x63`.
 | `0x27` | random `0x27..0x2C` | random `0x2F..0x31` |
 | any other byte | `0x27` | `0x2F` |
 
+A read-only scan of all 74 primary action tables (3,428 `0x54`-byte records)
+gives the authored use of this selector. Among the 2,484 records with nonzero
+damage `+0x24`:
+
+| `+0x2C` | Direct result | Records |
+| --- | --- | ---: |
+| `0x00..0x07` | light family `0x27..0x2E` / `0x2F..0x31` | 645 |
+| `0x08..0x0A` | `0x2F..0x31` | 61 |
+| `0x0B..0x0E` | `0x32..0x35` | 131 |
+| `0x0F` | `0x36` / `0x37` | 95 |
+| `0x10`, `0x11` | `0x38`, `0x39` | 135 |
+| `0x12` | `0x3C` / `0x3D` | 490 |
+| `0x13` | `0x3E` | 24 |
+| `0x14` | `0x3F` | 390 |
+| `0x15` | `0x40` | 433 |
+| `0x16` | `0x41` | 22 |
+| `0x17..0x19` | held `0x4A..0x4C` | 10 |
+| `0x1C` | `0x50` | 2 |
+| `0x1D`, `0x1E` | `0x51/0x52`, `0x53/0x54` | 46 |
+
+No damaging record uses `0x1A`, `0x1B`, `0x1F..0x27`, or any other byte, so
+the random selectors `0x22..0x27` are unused by stock damaging attacks. The
+300 records with `+0x2C == 0xFF` are all non-damaging. The guarded-response
+byte `+0x2D` on damaging records is `0..4` on 2,311 and `6..9` on 173; no
+record uses `5` or a negative value.
+
 Additional proven selection behavior prevents treating this as a final
 one-to-one enum:
 
@@ -299,6 +548,10 @@ one-to-one enum:
 - a missing attack record starts from `0x27`;
 - a failed contextual query selects `0x3A` or `0x3B` according to source
   object presence;
+- before the byte mapping, an attack with nonzero `+0x50` returns `0x37` when
+  the receiver is in `(5,0x3F)` with `+0x230 < 1` and negative vertical speed,
+  a standard source is present, and receiver `+0xBA4` is neither the sentinel
+  `-17320.508` nor at least `2 * source[+0xE4] * source[+0x2F0]`;
 - a standard source object (raw field `+0x0C == 0`) can dispatch a response
   callback whose result overrides the authored mapping when it returns anything
   other than `-1`; and
@@ -367,11 +620,17 @@ the `p > 1` branch is present in the clean instructions and is not normalized
 to a symmetric formula. The result is converted by EE `cvt.w.s` under the
 active FPU rounding mode and stored through a signed halfword; this local path
 does not set that rounding mode. The unadjusted bases are `6` for `0x3A` and
-`8` for `0x3B`. The capped-repeat `60` is itself written positive with the
-pending flag clear. Consequently, when raw attack `+0x32 == 0x7FFF`, the later
-event-`0` path can replace the remaining `60` count with the adjusted `6`/`8`
-base. When that sentinel is absent, the direct `60` remains and becomes
-eligible to decrement once fighter-update pause has cleared.
+`8` for `0x3B`.
+
+The capped-repeat `60` competes with the attack's own `+0x32` value, which
+`FUN_00224870` applies earlier in the same initializer. That call leaves the
+pending flag set for a positive or zero `+0x32`, so the `60` is written only
+when `+0x32` is sentinel `0x7FFF` (with no earlier pending value) or negative.
+The `60` is written positive with the pending flag clear. With the sentinel,
+the event-`0` path then replaces it with the adjusted `6`/`8` base; per
+[Hit update order](#hit-update-order-and-elapsed-updates), that replacement
+happens in the hit update itself unless a pause is already active. With a
+negative `+0x32`, the `60` remains.
 
 ### Native action identifiers
 
@@ -413,9 +672,10 @@ These strings are canonical authored identifiers, not licenses to expand `NSH`,
 The descriptor row's second live pointer targets an array of `0x08`-byte phase
 records. For native actions, the first signed halfword selects an animation
 slot, the second signed halfword controls phase advancement, and a first
-halfword of `-1` is the terminal record. The third halfword feeds animation
-selection state, while the fourth sets the secondary action-timeline rate at
-`+0xB90`.
+halfword of `-1` is the terminal record. The third halfword is the animation
+start frame written to `+0xB94` (a negative value counts back from the
+animation's frame count), while the fourth sets the secondary action-timeline
+and animation rate at `+0xB90` (preserved overlay fragment `0x0071F640`).
 
 Live overlay `0x0071F160` (preserved export `FUN_0071f120` at
 `0x0071F120`) interprets every second-halfword form used by substates
@@ -482,9 +742,10 @@ non-default rates in substates `0x27..0x62` is:
 Thus ordinary hit-response duration is not one fixed hitstun counter. Most
 substates advance at authored animation/contact/timeline conditions, while the
 `H` rows require state-specific external progression because the common phase
-updater cannot advance condition `0` by itself. Static descriptors establish
-the gates and their order, but not their elapsed time without animation data
-and runtime update cadence.
+updater cannot advance condition `0` by itself. The animation-gated lengths
+are decoded in
+[Animations and animation-gated phase lengths](#animations-and-animation-gated-phase-lengths);
+physics-gated phases have no static length.
 
 This is stronger than inferring contact from an action name: `+0xB88` is
 cleared when `FUN_00218190` changes animation and is later overwritten by the
@@ -510,6 +771,103 @@ threshold dispatcher owns its choices. It completes `0x5E` when grounded,
 reaches held phases as well, matching its external state-specific placement
 progression rather than the `0x5D` threshold logic.
 
+### Animations and animation-gated phase lengths
+
+The animation slot indexes fighter pointer `+0xB84`, whose entries are the
+animation objects that `FUN_001A8F00` looks up by name from the character
+record's `ANM_` name array (record `+0x44/+0x48`); `FUN_00219620` shows that
+index correspondence directly for the entries it fills. It compares each
+name's character-code field with a short constant and selects file
+`2cmnbod1` on a match; every `ANM_pcmn` name used below was found in
+`CMN/2CMNBOD1.CCS` and every other name in the character's own `2???bod1`. Across all 74 primary
+character records, every slot used by substates `0x27..0x62` resolves to the
+same animation role: either the shared `ANM_pcmn????` name (some characters
+substitute their own code with the same suffix) or a per-character
+`ANM_p???????` name with a fixed suffix. For example, slot `1` is `htn4`, slot
+`31..33` are `col0..col2`, slot `34` is `kno0`, slot `47` is `gbr0`, and slot
+`48` is `ost0`.
+
+The resident CCS loader `FUN_001B1470` stores an animation chunk's
+(`0xCCCC0700`) second word as the animation object's frame count `+0x0C`.
+`FUN_0024D1C0` advances the animation by `+0xB90 * +0x1AC` in `1/256`-frame
+units once per update while `+0x20C < 1`, and `FUN_001BB210` reports the end
+once the position reaches `(frame_count - 1) * 256` (non-looping animations).
+When a new animation starts, `FUN_00218060` loads it through
+`FUN_001B99B0(..., 0)`, which discards any blend object and creates none, then
+seeks to start frame `S`; a phase with `R < 256` and `S == 0` is instead
+seeked to frame `1`. An animation-end phase with frame count `F`, effective
+start `S`, and rate `R` therefore needs `n = max(1, ceil((F - 1 - S) * 256 /
+R))` animation advances, one per unpaused update at `+0x1AC == 1.0`.
+
+Within one update, `FUN_00248580` runs the phase updater (live `0x0071F160`)
+on the previous animation result, `FUN_00249640` ends by selecting the current
+phase's animation (live `0x0071F640`), and the animation pass
+(`FUN_0024DA50` -> `FUN_0024D1C0`, reached through the coordinator's removal
+pass after `FUN_0024FD80`) then advances it. An animation-end phase therefore
+occupies exactly `n` updates, and a timeline phase `C<k>` occupies
+`ceil(k * 256 / R)` updates. The state setter does not clear `+0xB88`, but a
+state entered by hit routing cannot consume the previous animation's latched
+end: the routing pass of `FUN_0024FD80` sets fighter byte `+0x63` bit `0`
+while primary event `0` is armed, `FUN_00248580` returns immediately while
+that bit is set, and `FUN_0024DA50` clears it after the animation pass.
+
+Decoding every referenced animation chunk in `CMN/2CMNBOD1.CCS` and the
+characters' `PL/2???BOD1.CCS` files gives these per-phase counts. Each cell is
+the phase condition, the animation-name suffix, and `n` (or `ceil` form for
+`C<k>`); a range gives the minimum and maximum across characters with the
+median in parentheses. `G` and `D` phases end on physics, so only their
+animation is listed; `O` ends no later than `n`, `B` no earlier. Two
+characters whose animations are in other files (codes `kmv` and `kdv`) are
+omitted.
+
+| Substate | Phases and animation-gated update counts |
+| --- | --- |
+| `0x27/0x28` | E `htn4` 3, E `hxn4` 3..11 (7) |
+| `0x29` | E `htn0` 3, E `hxn0` 3..15 (10) |
+| `0x2A` | E `htn1` 3, E `hxn1` 3..12 (12) |
+| `0x2B` | E `htn0` 3, E `hxn0` 3..16 (11) |
+| `0x2C` | E `htn1` 3, E `hxn1` 3..13 (13) |
+| `0x2D` | E `htn0` 3, E `hxn0` 3..21 (14) |
+| `0x2E` | E `htn1` 3, E `hxn1` 3..15 (15) |
+| `0x2F..0x31` | D `fht0`, C6 `jmp2` 6 |
+| `0x32..0x34` | C4 `fht0` 4, E `jpz1` 8..15 (9) |
+| `0x35` | C4 `fht0` 4, B `jpz1` 8..15 (9) |
+| `0x36` | D `fht0`, G `fxk0`, E `fxk2` 2, E `col1` 8..28 (28) |
+| `0x37` | D `fht0`, G `fxk0`, E `col2` 13..28 (28) |
+| `0x38/0x39` | G `spn0`, E `col1` 8..28 (28) |
+| `0x3A` | E `col0` 8 |
+| `0x3B` | E `col0` 10 |
+| `0x3C` | E `nxf1` 3, C4 `fht1` 4, G `fxk1`, E `col1` 8..28 (28) |
+| `0x3D` | E `nxf0` 7, C4 `fht0` 4, G `fxk0`, E `col1` 8..28 (28) |
+| `0x3E` | E `nxf0` 7, E `yft0` 20, E `col1` 8..28 (28) |
+| `0x3F`, `0x59` | E `nxf2` 2..10 (4), D `fht2`, G `fxf0`, E `col2` 13..28 (28) |
+| `0x40` | O `nxf3` 4, O `fal0` 10, E `fxk2` 2, E `col0` 8 |
+| `0x41` | O `nxf3` 4, O `yft0` 40, E `fxk0` 6, E `col1` 8..28 (28) |
+| `0x42` / `0x43` / `0x44` | G `fxc1` / `fxc0` / `fxc2`, E `col2` 13..28 (28) |
+| `0x45/0x46` | E `col2` 13..28 (28) |
+| `0x47` | E `fxk0` 6, E `col1` 8..28 (28) |
+| `0x48` | C3 `fxc1` 3, G `spn0`, E `col1` 8..28 (28) |
+| `0x49` | C3 `col2` 3, G `bnd0`, E `col1` 8..28 (28) |
+| `0x4A..0x4E`, `0x50` | H `hth0`, `hah0`, `hth1`, `nxf3`, `hth2`, `hth0` |
+| `0x4F` | E `gbr0` 14..34 (24) |
+| `0x51/0x53/0x55/0x57` | E `htn3` 40..60 (40) |
+| `0x52/0x54/0x56/0x58` | D `fht0`, G `fxk0`, E `col2` 13..28 (28) |
+| `0x5A` | O `fxk1` 20..24 (24), G `fal0`, E `col1` 8..28 (28) |
+| `0x5B` | E `ost0` 27..30 (27) |
+| `0x5C` | C4 `fht0` 4, C6 `jmp2` 6, G `dow0`, E `lan0` 9..20 (10) |
+
+For example, a grounded light hit `0x27` on a median character occupies about
+`3 + 7 = 10` unpaused updates of animation before it returns to neutral, in
+addition to the attack pause described below, while the downed `col` phases
+dominate the knockdown rows. **Inference:** the `htn`/`hxn` pairs are hit and
+recovery halves of the light reactions and `col` is the landing/collapse
+animation; the names are recorded, not visually confirmed.
+
+The recovery substates use `kno0` (`0x5D`, two frames), the shared `jmp2`
+for `0x5E..0x60`, `col0` then `kno0` for `0x61`, and per-character `dow0`,
+`lan0`, `nut0` for `0x62`. Timeline phase `0x60` therefore completes after
+`ceil(3 * 256 / 512) = 2` updates, and the `col0` phase of `0x61` after 8.
+
 ## Table-driven knockback and launch
 
 The ordinary response table begins at resident runtime `0x00407670`, ELF file
@@ -526,7 +884,7 @@ consumed field establishes this layout:
 | `+0x04` | `f32` | Planar response speed ultimately stored at fighter `+0x994`, with orientation and combat modifiers. |
 | `+0x08` | `f32` | Vertical response speed ultimately stored at fighter `+0x998`, with combat modifiers. |
 | `+0x0C` | `f32` | Approach/damping factor used while moving `+0x994` toward zero on updates that do not cross the event gate. |
-| `+0x10` | `f32` | Auxiliary multiplier copied to fighter `+0x9B4` when not `1.0`. |
+| `+0x10` | `f32` | Gravity argument copied to fighter `+0x9B4` when not `1.0`; in hit response it only lifts the terminal-speed clamp. |
 | `+0x14` | `s16` | Event impulse copied, with sign handling, into the `+0x204..+0x21C` response channel. |
 | `+0x16` | `s16` | Minimum raised into general timer/lock `+0x254`; an attack-record `+0x30` contribution may be added. |
 
@@ -621,6 +979,50 @@ chain only when non-null and its raw field `+0x0C` is zero. These facts explain
 why the clean table supports reproducible base comparisons but cannot alone
 predict character- and situation-specific displacement.
 
+`+0x9A0` is the attack's own knockback scale. When a hit arrives with a new
+attack record, `FUN_00232A50` (or the retarget path of `FUN_00241F10`)
+retains the record, resets the repeat count `+0xE5C` from record `+0x2E`,
+and, when that count is nonzero, copies record float `+0x28` to `+0x9A0`.
+At the row's event edge `FUN_0021ACB0` saves it to `+0x9A4` and, for scale
+`s != 1.0`, multiplies planar speed by `s` and vertical speed by
+`1 + 0.5 * (|s| - 1)` when `|s| > 1`; for `|s| <= 1` vertical speed is
+multiplied by `|s|`, or by the half-strength form when the source scalar is
+below `1.0`. Before replacing or adding the row speeds, the same edge clamps
+the current planar speed to the character-table limit at `+0x60` (grounded)
+or `+0x74` (airborne) and the current airborne vertical speed to at least
+`-3 * +0x70` of the table selected by `FUN_00307C50`.
+
+Of the 2,484 damaging records, 1,859 author `+0x28 == 1.0`; 423 are
+stronger (`1.5` on 154, `1.25` on 149, `1.2` on 37, `2.0` on 33, and other
+values from `1.1` to `3.0` on 50), 200 are weaker (`0.75` on 63,
+`0.8` on 29, down to `0.0` on 11), and two are negative (`-0.5`, `-2.0`),
+which reverses the planar direction.
+
+### Gravity and airtime
+
+The movement pass `FUN_0024A660` (called from `FUN_0024CFD0` in the
+`FUN_0024DA50` animation pass, so only while `+0x20C < 1`) moves the fighter
+by its current speeds times `+0x1AC` and then, while airborne, applies
+`FUN_002183D0(+0x9B4, fighter, &+0x998)`. For a fighter in major state `5`,
+with nonzero `+0xB00`, or with byte `+0x61` bit `7` set, that routine uses a
+fixed gravity of `3.0 * +0x1AC` per update and a terminal vertical speed of
+`-90`; other states use the character record's `+0x6C` and `+0x70` scaled by
+`+0x9B4`. Thus the response row's auxiliary field `+0x10`, copied to
+`+0x9B4` on every response update, does not scale hit-response gravity: a
+nonzero value only removes the `-90` clamp when it differs from `1.0`, and
+`+0x9B4` is reset to `1.0` after each movement pass.
+
+Because the launch speed is written in the hit update and the first movement
+pass follows in the same update, an ordinary response launched with final
+vertical speed `v > 0` (row value after the modifiers above) at rate `1.0`
+reaches a negative vertical speed, satisfying a `D` phase, after
+`floor(v / 3) + 1` active updates. **Inference:** over flat ground at the
+launch height the fighter lands after roughly `2v/3 + 1` active updates,
+for example about 14 to 15 for the unmodified `0x3C/0x3D` value `20` and
+about 38 for the `55` of `0x3F`; ground contact is decided by stage collision
+geometry, so these are not exact. The pause updates add to these counts
+because they suspend movement.
+
 ## Fighter-update pause and action lock
 
 The response timing uses two ordered generic countdown blocks rather than one
@@ -653,30 +1055,34 @@ explains why a newly staged pause is not shortened on its activation pass.
 
 Ordinary response-table field `+0x14` feeds the `+0x20C` pause channel at its
 timeline event, subject to the `+0xB00` event-`0` override above. A positive
-table value is staged negative with pending flag `0x0004`; when activated, that
-new pause suspends both action timelines and the per-action dispatcher.
+table value is staged negative with pending flag `0x0004`, but only when that
+flag is not already set; when activated, the pause suspends both action
+timelines and the per-action dispatcher.
 
-Attack-record signed halfword `+0x30` can also feed the pause channel during
-accepted-hit initialization. In the ordinary path, an authored positive `N`
-is staged as `-N` with the pending flag, while an authored negative `-N` is
-written immediately as positive `N` without that flag. Both signs therefore
-produce the same absolute active count, but on the first following maintenance
-pass the positive-authored form activates without decrement and the
-negative-authored form is already eligible to decrement. Zero explicitly
-clears the block, while sentinel `0x7FFF` does not initialize it.
+Attack-record signed halfword `+0x30` feeds the same channel earlier, during
+accepted-hit initialization (`FUN_00224510(fighter, attack, 0)` from
+`FUN_00232B80`). An authored positive `N` is staged as `-N` with the pending
+flag, while an authored negative `-N` is written immediately as positive `N`
+without that flag. Zero clears the block but leaves the pending flag set with
+a zero count, and sentinel `0x7FFF` does not touch the block. Because the row
+pause is skipped while the flag is pending, a positive or zero attack value
+suppresses the row's `+0x14` pause on a gate-`0` row; the row value applies
+after sentinel `0x7FFF` or a negative attack value, or on a later gate.
 
 `FUN_002346B0` applies the row's `+0x16` action-lock minimum when the primary
-timeline crosses event `0`. Because a positive `+0x20C` suppresses the
-per-action dispatcher, this event and the lock initialization wait until the
-accepted-hit pause has ended. When the table minimum raises `+0x254`, the
+timeline crosses event `0`. When the table minimum raises `+0x254`, the
 absolute attack-record `+0x30` contribution is added unless it is sentinel
-`0x7FFF`.
+`0x7FFF`; when the current lock already meets the minimum, the lock is left
+unchanged. The lock is written directly as a positive count without a pending
+flag.
 Attack-record `+0x10` bit `0x00000002` instead forces a count of `20`. With
 that bit clear, the table minimum is bypassed when either raw attack type mask
 `0x00F00000` or `0x000F0000` is nonzero.
 The full time before a fighter can act therefore includes
 the ordered pause and action-lock counts as well as the response state's own
-timeline and exit conditions; `+0x254` alone is not total hitstun.
+timeline and exit conditions; `+0x254` alone is not total hitstun. The exact
+update-by-update order is in
+[Hit update order and elapsed updates](#hit-update-order-and-elapsed-updates).
 
 `FUN_00239e50` makes that last distinction concrete. Once `+0x254` is zero,
 ordinary major state `5` still rejects ordinary action entry throughout
@@ -686,6 +1092,93 @@ value `2` can bypass the ordinary-state rejection. In recovery major state `6`,
 `+0x1C4 >= 8`, and `0x60` becomes eligible at cursor `>= 3`. Other recovery
 substates are rejected by this predicate. These are action-entry gates, not
 animation-completion tests.
+
+## Hit update order and elapsed updates
+
+Native battle gameplay advances fighter updates at 30 Hz at nominal speed
+([Battle lifecycle](battle_lifecycle.md#battle-update-cadence)). Within one
+update, resident `FUN_001F03E0` calls the fighter coordinator's registry slot
+`+0x0C` (`FUN_002504B0`), then slot `+0x10`, then slot `+0x14`
+(`FUN_00250800`). `FUN_002504B0` runs `FUN_0024FD80` and then the generic
+removal pass (live `0x00709C70`, see
+[Battle entities](battle_entities.md)), which calls every fighter's virtual
+slot `+0x10`, `FUN_0024DA50`: while `+0x20C < 1` it runs the movement pass
+`FUN_0024CFD0` and the animation pass `FUN_0024D1C0`. Coordinator slot
+`+0x14` finally calls every fighter's virtual slot `+0x18`, `FUN_0024DE40`,
+which advances both action timelines through `FUN_0024D5E0` while
+`+0x20C < 1`.
+
+`FUN_0024FD80` itself runs these passes in order over the fighter list:
+
+1. `FUN_0024C440` maintenance for every fighter (lock decrement while the
+   pause count is below `1`, secondary and pause block activation or
+   decrement);
+2. pair and interaction helpers, then for each active fighter the pair hit
+   resolver `FUN_0021ED70` and the `+0xE3C` hit bits: `0x100` calls
+   `FUN_00220690`, `0x1` calls router mode `0`, `0x8` mode `2`, and `0x4`
+   mode `1`;
+3. removal of fighters whose slot `+0x1C` requests it;
+4. for every fighter with `+0x20C < 1`: `FUN_00217320`, `FUN_002173D0`,
+   `FUN_00248580`, input update `FUN_00248EC0`, and per-action dispatcher
+   `FUN_00249640`; and
+5. `+0xE3C` bit `0x2` handling through `FUN_00221600`.
+
+The action-state setter clears the primary block with its step flag set, so
+`FUN_002118A0(block, 0)` reports event `0` on the first per-action update
+after entry and stops reporting it once `FUN_0024D5E0` advances the cursor.
+Because routing (pass 2) precedes the per-action pass (pass 4) in the same
+update, event `0` of a new ordinary response runs in the hit update itself
+whenever `+0x20C` is still below `1` after routing. That is the case for a
+positive, zero, or sentinel attack `+0x30` with no active pause, because the
+positive form is only staged negative. It is not the case for a negative
+`+0x30`, which activates the pause immediately and delays event `0` until the
+pause ends.
+
+For an authored positive attack pause `N`, rates `+0x1AC == 1.0` for both
+fighters, and no already-pending blocks, the exact sequence is:
+
+| Update | Receiver behavior |
+| ---: | --- |
+| `0` | Accepted hit routed; `(5, response)` entered; pause staged `-N`; per-action pass runs event `0`: gate-`0` response motion, gated attack damage (see [Damage](damage.md)), action lock, and the `+0x230` countdown staging below; row pause skipped because the attack pause is pending; first movement and gravity step and first animation advance; the timeline advances to cursor `1`. |
+| `1` | Maintenance decrements the lock once (pause still `-N` at that check), then activates the pause at `N`. Per-action, movement, animation, and timeline passes are suppressed. |
+| `2..N` | Pause counts down; everything action-related remains suppressed and the lock does not decrement. |
+| `N+1` | Maintenance sees pause `1` at the lock check (no lock decrement), then reaches `0`; the per-action pass and timelines resume. |
+
+The freeze is not total. While `+0x20C >= 1`, slot `+0x10` (`FUN_0024DA50`)
+skips the animation pass but, for fighters whose `+0x60` bits `5..8` are
+zero, still runs the command bridge `FUN_00217320`, input action selection
+`FUN_0023A390` with `+0x338`, and the `+0x95C` guard-input age update. A
+candidate such as an Extra Hit counter can therefore be chosen during the
+pause.
+
+Thus an authored pause of `N` suspends the receiver's action, timeline, and
+animation updates for exactly `N` updates after the hit update, or `N/30` s
+at nominal speed. If the row minimum `L` set the lock
+to `L + N` in update `0`, the lock reaches zero in update `2N + L`. For a
+negative authored `-N`, updates `0..N-1` are frozen and event `0` runs in
+update `N`; if the row pause then applies, a second freeze of the row's
+`+0x14` count follows. A rate other than `1.0` scales the lock and timeline
+steps, but not the pause, which always decrements by `1.0`.
+
+The attacker receives a matching pause through `+0xE3C` bit `0x100`, handled
+by `FUN_00220690(attacker)` in the same routing pass. It applies the router's
+two early-return bit patterns to the result of the sibling classifier
+`FUN_00240990` and requires the defender's `+0x230`
+to be non-positive and either attack `+0x10` bit `0x2` or a nonzero expected
+repeat count. Unless `+0x10` bit `0x2` is set, it then calls
+`FUN_00224510(attacker, attack, 1)`, whose attacker/guard mode inverts the
+sign convention: an authored positive `N` is written as an active `N`
+immediately, so the attacker is suspended in updates `0..N-1`, one update
+earlier than the receiver. Attack `+0x14` bit `0x00020000` skips the
+attacker pause entirely (151 records, 138 damaging). With sentinel `0x7FFF`,
+the attacker instead takes the `+0x14` pause of the response row that
+`FUN_00231C60` selects for the defender, or of the guarded-response row when
+the defender's `+0x95A` guard state applies, also active immediately.
+
+The clean attack tables give the following authored pause values. Of 2,484
+records with nonzero damage `+0x24`, `+0x30` is `2` on 914, `3` on 415, `1`
+on 271, `4` on 194, `5` on 86, sentinel `0x7FFF` on 477, zero on 44, and a
+negative value on 66; the remaining 17 use `6..16`.
 
 ## Response exits, contact stages, and downed handoff
 
@@ -891,8 +1384,28 @@ followed by EE `cvt.w.s` under the active FPU rounding mode and a signed-halfwor
 store; when the temporary factor applies, that is a second multiply, conversion,
 and store. This local path does not set the rounding mode, so static evidence
 does not justify describing fractional results as unconditional truncation
-toward zero. No 30/60-FPS calibration was performed, so these values should not
-be published as seconds.
+toward zero.
+
+The temporary factor cannot apply on the resident path. `FUN_00306D30` adds
+the `+0x7C - 1.0` contributions of the fighter's active effect list at
+`+0x8C8` (count `+0x8C4`), caps the sum at `1.25`, and then forces exactly
+`1.0` whenever the fighter is in major state `5` or `6` (and in some other
+conditions). All resident calls to `FUN_00235510` are in the ordinary-response
+dispatcher `FUN_00233870`, before the handoff itself enters major `6`, so the
+factor is `1.0` there. Five overlay sites also call the handoff (preserved
+`0x0078AE58`, `0x007C2D2C`, `0x007C4730`, `0x007CDA7C`, `0x007D4EAC`; live
+addresses are `+0x40`); their state context was not traced.
+
+The same neutralization makes `+0x1AC` exactly `1.0` in every update whose
+maintenance pass starts in major `5` or `6`, unless fighter `+0x1B0` or `+0x1B4` differs from `1.0`
+(`FUN_0024C440` uses `+0x1B0` when it is not `1.0`, otherwise the factor, and
+then multiplies by `+0x1B4` when that is not `1.0`). The state setter zeros the
+cursor on entry and the same update's timeline pass advances it, so the
+threshold tests in update `k` after entry see cursor `k`. At nominal speed
+and rate `1.0`, the default profile therefore auto-recovers in update `45`
+(1.5 s at 30 Hz) and accepts recovery input from update `9` (the test is a
+strict `>`), and the `+0x62` bit-`5` profile uses updates `90` (3.0 s) and
+`41`. The `0x3A/0x3B` scale shortens both proportionally.
 
 If fighter byte `+0x61` bit `3` is clear, `FUN_00235690` returns immediately
 from its `0x5D` case. It neither initializes nor consumes the two thresholds on
@@ -990,7 +1503,8 @@ this input-side mutation while active. Thus `+0x95A >= 1` is proven guard
 temporal state, while `+0x95C` is a separate guard-input age/window value.
 
 `FUN_00228760` reads signed attack-record byte `+0x2D`, remaps values `0..4`
-to `5..9` for the opposite facing, and stores the result at fighter `+0x95E`.
+to `5..9` when the defender is airborne (grounded bit clear), and stores the
+result at fighter `+0x95E`. A grounded defender keeps the authored index.
 It then chooses:
 
 - grounded reactions with adjusted indices `5..9`: `(0,7)`;
@@ -1010,9 +1524,17 @@ updater therefore advances into, but cannot leave, that held second phase;
 `FUN_00228E90` owns the exits described below. The identifiers are recorded
 verbatim and are not expanded into unverified terms.
 
+Decoded as in
+[Animations and animation-gated phase lengths](#animations-and-animation-gated-phase-lengths),
+the phases animate per-character `nxg0` then held `gdn0` for `(0,5)`,
+`ght0` (7..11 frames, median 7) then held `gdn0` for `(0,6)`, and `gha0`
+(6..9 frames, median 7) then held `dow0` for `(0,7)`. The first phase's clean
+rates (`256` and `192`) are replaced at run time by the guarded-row rate
+described below.
+
 The exact clean table rows are:
 
-| Index | Planar `+0x04` | Vertical `+0x08` | Damping `+0x0C` | Pause `+0x14` | Secondary `+0x16` | Action lock `+0x18` | Event value `+0x1A` |
+| Index | Planar `+0x04` | Vertical `+0x08` | Damping `+0x0C` | Pause `+0x14` | Secondary `+0x16` | Action lock `+0x18` | Phase rate `+0x1A` |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `0` | `30` | `0` | `0.35` | `1` | `2` | `8` | `176` |
 | `1` | `30` | `0` | `0.35` | `1` | `2` | `8` | `160` |
@@ -1027,9 +1549,15 @@ The exact clean table rows are:
 
 Every row also has flags `0x0101`, event gate `0`, and auxiliary multiplier
 `1.0`. Guarded-hit initialization sends `+0x16` to secondary count `+0x230`
-and raises action lock `+0x254` to at least `+0x18`. Field `+0x1A` is written
-into field `+0x06` of the current animation/event record; its player-facing
-meaning is not established.
+unless attack `+0x32` already staged a value there (see
+[Accepted-hit rejection countdown](#accepted-hit-rejection-countdown)), and
+raises action lock `+0x254` to at least `+0x18`. Field `+0x1A` is written
+into halfword `+0x06` of the current phase record, the rate field that
+[phase control](#descriptor-phase-control) loads into `+0xB90`. The authored
+values `64..192` therefore set the guarded reaction's animation and secondary
+timeline rate to `0.25..0.75`, decreasing with the row index within the
+grounded rows `0..4` and the airborne rows `5..9`. The write modifies the
+shared overlay descriptor data rather than a per-fighter field.
 
 The positive `+0x16` values are staged as negative pending counts and become
 positive on countdown maintenance. The positive `+0x18` action lock is written
@@ -1082,8 +1610,10 @@ channel, not merely a branch that leaves the fighter in guard stance.
 
 ## Conditional rehit suppression and target-eligibility limits
 
-A direct trace into the accepted-hit router establishes conditional rehit
-suppression, but not a global invulnerability or untargetability timer.
+A direct trace into the accepted-hit router establishes two rehit gates: the
+state-window predicate described here and the time-based
+[`+0x230` countdown](#accepted-hit-rejection-countdown). Neither is a
+hurtbox-level invulnerability or global untargetability timer.
 `FUN_002409e0` calls `FUN_002406b0(fighter)`. It sets result bit `0x10` only
 when that predicate returns zero. At the top of `FUN_002209a0`, an otherwise
 accepted hit returns without entering a new response when either:
@@ -1124,20 +1654,19 @@ signed `+0x2E` equals the expected repeat count. That expected count is positive
 These conditions describe the bypass exactly without assigning speculative
 names to the attack flags or `+0xB00`.
 
+The clean primary tables show how rare the attack-side exception is. Only 13
+records carry `+0x14 & 0x00200000`, and 152 satisfy the `0x11` form (150 of
+them damaging); together 158 records (156 damaging, about 6% of 2,484) in 72
+of the 74 tables. All other damaging records cannot bypass the protected
+windows above. Related guard flags are also sparse: `+0x14 & 0x00800000`
+occurs on 109 damaging records, while `+0x14 & 0x00400000` occurs on none.
+
 The action-state setter writes the initial `+0xB9C` low nibble, while the main
 movement update maintains `+0xB9A` and latches the two transition flags. The
 contact-history interpretation above is therefore direct static behavior, not
 an animation-name inference. Substate `0x5D` is notable because its
 rehit-suppression predicate is unconditional throughout the traced timed-down
 state, even though its recovery thresholds and input choices remain separate.
-
-No dedicated post-hit invulnerability counter, hurtbox-disable field, or
-global untargetability interval was established. In particular, `+0x254` is an
-action-entry lock and guard-exit input, but it is not consulted by the proven
-rehit-suppression predicate. Guard substates `5..7` also do not match any case
-in `FUN_002406B0` and therefore return zero from that direct protection
-predicate. Calling the lock or the guarded-reaction lifecycle an
-invulnerability timer would exceed the evidence.
 
 Four tempting resident predicate groups were checked and rejected as proof:
 
@@ -1161,31 +1690,90 @@ Accordingly, the confirmed target-eligibility claim remains bounded: the direct
 accepted-hit path proves conditional suppression for the states above, while
 the rejected predicates only show that some non-combat consumers also treat
 downed/contact substates as ineligible. A runtime hit-attempt matrix would still
-be required to measure attacker-flag exceptions and to distinguish hurtbox,
+be required to confirm these gates in play and to distinguish hurtbox,
 collision, and higher-level target-selection behavior frame by frame.
 
-## Unresolved extra-hit address lead
+### Accepted-hit rejection countdown
 
-An unresolved address note points to EE `0x20241F40` for a branch previously
-labelled “extra hit.” Its gameplay role and runtime effect are unproven; the
-clean branch must be rechecked before assigning either.
+Countdown `+0x230` is a second, time-based rehit gate. `FUN_002247A0` is
+exactly `fighter[+0x230] > 0`, and `FUN_002209A0` returns without a response
+in router mode `0` (the paired fighter as source), mode `2`, and mode `3`
+whenever it is true. Mode `1` does not test it. The pair hit resolver
+`FUN_0021ED70` and helpers `FUN_0021F610` and `FUN_00304070` also consult it;
+their exact roles were not traced here. `FUN_00220690` uses it to withhold
+the attacker's pause while the defender is protected.
+
+The block is decremented at a fixed rate `1.0` only while `+0x20C < 1`, but a
+pending value is activated even during a pause. Its writers on the hit path
+are:
+
+| Source | Value |
+| --- | --- |
+| attack `+0x32` through `FUN_00224870`, from both `FUN_00232B80` and guarded `FUN_00228760` | `0` clears (leaving the pending flag set); positive `M` is staged pending; negative `-M` is active immediately as `M`; sentinel `0x7FFF` leaves the block unchanged |
+| ordinary event `0` in `FUN_002346B0`, only for attack `+0x32 == 0x7FFF` and no pending value | response row `+0x16`, rate-adjusted as above |
+| guarded-response row `+0x16`, written by `FUN_00228B50` after the attack value and only when that left nothing pending | `2` or `3` |
+| capped `0x3A/0x3B` repeat | `60`, subject to the conditions above |
+| receiver that counters an Extra Hit | `60`, staged pending |
+| downed `0x5D` first event | `1`, when the channel is inactive |
+| generic setter `FUN_002247D0(fighter, v, force)` | count `-v`, pending when `v > 0`, skipped while a value is pending unless forced; the router uses it to clear the countdown when `FUN_002409E0` returns `0`, and the [Ultimate Jutsu](ultimate_jutsu.md) contest start sets both fighters to an active `60` |
+
+With a positive attack pause `N`, a positive `+0x32 == M` activates in update
+`1`, holds through the pause, and starts decrementing in update `N+2`, so
+mode-`0` hits are discarded in updates `1..N+M` and accepted again from update
+`N+M+1`. The row value used by the sentinel follows the same pattern from
+update `0`.
+
+The clean tables show how often each form is authored. Of 2,484 damaging
+records, `+0x32` is sentinel `0x7FFF` on 1,462, `1` on 761, `2` on 173, `3`
+on 33, `4` on 18, zero on 16, negative on 13, and `5..16` on 8. The sentinel
+therefore uses the response row: `5` updates for most light and airborne
+reactions and `120` for the knockdown and launch rows `0x36..0x39`,
+`0x3C..0x47`, and `0x51..0x5A` (the complete row values are in the table
+above). An Extra Hit clears the receiver's `+0x224` block when it starts the
+exchange, which is consistent with launch rows otherwise refusing mode-`0`
+rehits for their row count.
+
+This is a rejection inside the accepted-hit router, not a hurtbox or
+collision change; whether the collision owner still records contact during
+the countdown belongs to [Collision](collision.md). No hurtbox-disable field
+or global untargetability interval was established. `+0x254` is an
+action-entry lock and guard-exit input, but it is not consulted by either
+rehit gate. Guard substates `5..7` do not match any case in `FUN_002406B0`,
+although guarded hits do set `+0x230`.
+
+### Hit count
+
+`FUN_00232B80` increments receiver halfword `+0x538`, saturating at `9999`,
+and raises `+0x53A` to the new value when larger. It does so for every
+ordinary accepted hit except when the source's `+0x0C` is `4`, the record is
+`PL_ATK_DUMMYDROP`, attack `+0x10` bit `0x2` is set, or receiver byte `+0x62`
+bit `0` is set. Guarded hits instead increment `+0x53C` (maximum `+0x53E`) in
+`FUN_00228B50` under the same `+0x62` exception. A direct store
+search of the resident ELF found no other halfword writer, so no in-match
+reset was established. The only traced consumer is the condition evaluator
+`FUN_00223450`, whose case `0x1B` reports `+0x538 < 1` as satisfied (when
+fighter byte `+0x62` bit `0` is set) and any positive count as failed; case
+`0x19` does the same for `+0x53C`. That evaluator's owning mode was not
+traced.
 
 ## Confidence and remaining limits
 
 - **High static confidence:** binary identities; resident/file mappings;
   overlay `+0x40` convention; action fields; ordinary-versus-guarded router;
   authored-byte mapping; response table layout and exact values; response
-  transition groups; ordered pause/action-lock countdowns; downed thresholds
-  and input masks; guard reaction and exit transitions; conditional rehit gate.
+  transition groups; ordered pause/action-lock countdowns and the per-update
+  order; downed thresholds and input masks; guard reaction and exit
+  transitions; conditional rehit gate; `+0x230` router rejection; Extra Hit
+  state writes and gates; authored record counts; animation frame counts and
+  the phase-length formula; hit-response gravity.
 - **Strong inference, explicitly bounded:** major `5` is the ordinary
   hit-response family; major `6`, substate `0x5D`, is a timed downed state; the
-  two threshold-triggered paths are get-up/recovery choices. The control flow
-  and inputs establish these roles, but animation labels were not observed.
-- **Unresolved:** player-facing names for raw reaction categories; time in
-  seconds at each framerate; animation names and non-default recovery bindings;
-  exact hurtbox/collision/target-selection behavior and attack-flag exceptions
-  during each substate; and character-specific overrides outside this
-  representative native chain.
+  two threshold-triggered paths are get-up/recovery choices; the Extra Hit
+  exchange is the native air-chase continuation. The control flow and inputs
+  establish these roles, but animations were not visually observed.
+  Conversions to seconds assume the documented nominal 30 Hz fighter update
+  and rate `1.0`; landing times assume flat ground.
+- **Unresolved:** see the Research coverage list at the top.
 
 The maintained disassembly was inspected read-only. No names or metadata were
 written back to it, and no transient analysis artifact was retained.

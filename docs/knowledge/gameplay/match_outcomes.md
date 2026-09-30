@@ -5,9 +5,9 @@
 This document describes the clean NA2 v2.28 battle outcome path: HP and timer
 termination, the latched result code, the end-of-battle state machines, session
 outcome counters, the `BTL.BIN` score/rank handoff, and cleanup boundaries. It
-does not assign story-mode names to generic controller modes and does not cover
-damage calculation, substitution, frame-rate behavior, localization, or the
-layout/artwork of the Victory screen.
+names outer-controller types only where the Mode Select dispatcher proves them
+and does not cover damage calculation, substitution, frame-rate behavior,
+localization, or the layout/artwork of the Victory screen.
 
 The clean resident and BTL inputs are identified in
 [Standard game file identities](../game/files/file_identities.md).
@@ -71,9 +71,12 @@ Addresses are given in resident, raw-overlay, live-overlay, and preserved-export
 conventions where applicable, including the proven `+0x40` overlay correction.
 
 - **Unresolved or untested:** no
-original names were recovered for generic controller types, condition IDs, or
-results `5..9`; no player-facing semantic name is proven for the point
-accumulator or the higher-wrapper signed returns; indirect-call reachability
+original symbol names exist; outer types `1`/`2` (Free Battle/Practice), the
+COM bit behind score qualification, the ryo meaning of the point accumulator,
+the COM-strength meaning of metric `9`, and the prompt wording of results
+`6`/`7` are now established from their owning subsystems, but no
+player-facing name was recovered for condition IDs, results `5`, `8`, `9`, or
+the higher-wrapper signed returns; indirect-call reachability
 was not exhaustively reconstructed; and no producer was established for result
 `9`. The wider origins and meanings of every one of the 28 metric slots and all
 condition IDs were outside the bounded outcome trace. Runtime frequency,
@@ -148,6 +151,8 @@ The central objects and fields are:
 | `0x00607600` | Battle manager pointer |
 | manager `+0x0C` | Battle mode; value `3` activates the nonlethal Practice HP floor |
 | manager `+0x18` | Side/configuration selector used by several mode-specific branches |
+| manager `+0x1C` | Control assignment written by `FUN_001F48F0`; see [Control assignment](#control-assignment-and-com-sides) |
+| manager side-record byte `+0x48` / `+0x70`, bit `0x02` | Side 1 / side 2 COM-controlled bit |
 | manager `+0xDE4`, `+0xDE8` | Side 1 and side 2 live fighter pointers |
 | `0x00607604` | Active `0x38`-byte inner battle/end-sequence object for the current cycle |
 | `0x00607620` | Active `0x44`-byte outer controller; owns state `1..0x19` and the reusable BTL result object |
@@ -199,6 +204,43 @@ Clean BTL has two direct outcome-getter calls (live `0x00719604` and
 `0x00719F14`) and no call to the setter. This inventory accounts for every
 direct gp-relative outcome store and direct setter call in the scoped images;
 none writes `9`.
+
+### Outer-controller types
+
+The outer controller's type at `+0x14` is the argument of `FUN_001EC300`.
+The Mode Select callback dispatcher documented in
+[High-level mode callback dispatcher](../game/mode_flow.md#high-level-mode-callback-dispatcher)
+creates it as type `1` from the Free Battle callback `FUN_001EA8C0` and as type
+`2` from the Practice callback `FUN_001EA940`. The routing tables below
+therefore describe Free Battle (type `1`) and Practice (type `2`). Three other
+resident functions (`FUN_001FEA70`, `FUN_001FED10`, `FUN_001FEF50`) also call
+`FUN_001EC300`; they belong to the higher-level flow and were not traced here.
+
+### Control assignment and COM sides
+
+`FUN_001F48F0(manager, mode)` stores `mode` at manager `+0x1C` and rewrites
+bit `0x02` of both side-record bytes:
+
+| Manager `+0x1C` | Side 1 bit (`+0x48`) | Side 2 bit (`+0x70`) |
+| ---: | :---: | :---: |
+| `0` | clear | clear |
+| `1` | clear | set |
+| `2` | set | clear |
+| `3` | set | set |
+
+[Practice Mode](practice_mode.md) establishes this bit as the per-side COM
+bit: Practice's Manual status applies mode `0`, and its other statuses make
+the side opposite the human player COM. Outer state `2` (`FUN_001ED000`),
+the same handler that zeroes the six-word session block, calls
+`FUN_001F48F0(manager, 1)` when manager `+0x18` is zero and
+`FUN_001F48F0(manager, 2)` otherwise, so each Free Battle or Practice
+controller starts with one human side and one COM side. Manager initialization
+`FUN_001F4360` also applies mode `1`. Other resident callers exist
+(`FUN_003B9F60`, `FUN_003BB720`, `FUN_003BB7D0`, `FUN_003BBBB0`) but their
+triggering screens were not traced here.
+
+The outcome consumers below read this bit for the winning side. Where they
+require it to be clear, they require the winner to be human-controlled.
 
 ## KO and time termination
 
@@ -385,8 +427,8 @@ direct-call result; it does not exclude an indirect call or resident producer.
 | `3` | Equal nonzero current HP, normally a time draw. | High for condition; medium for UI wording |
 | `4` | Both current HP values are zero. | High |
 | `5` | Optional condition subsystem found an active side with an unsatisfied/configured status of zero; this can override an ordinary result. | High for mechanism; medium for original mode name |
-| `6` | Pause/control-flow termination selected when the pause object returns `3`. | High for source; low for menu wording |
-| `7` | Pause/control-flow termination selected when the pause object returns `2`. | High for source; low for menu wording |
+| `6` | Pause/control-flow termination selected when the pause object returns `3`: return to Character Select without scoring. | High for source and route; medium for menu wording (prompt text, not traced input) |
+| `7` | Pause/control-flow termination selected when the pause object returns `2`: leave the mode for Mode Select. | High for source and route; medium for menu wording (prompt text, not traced input) |
 | `8` | Synthetic higher-level continuation/sequence result. `FUN_001EC5E0` and `FUN_001F2E70` are resident producers; outer state `0x10` routes it without normal score initialization. | High for flow; low for original name |
 | `9` | Recognized by end-state consumers, but no latched producer was found in the scoped resident direct assignments or clean BTL calls. | High negative result |
 
@@ -446,7 +488,9 @@ delay/handle at `+0x10`. Relevant verified branches are:
   manager field `+0x1C != 3`, and bit `0x02` is clear in the winning side's
   record byte (`+0x48` for result `1`, `+0x70` for result `2`); otherwise it
   goes to fade substate `0x0F`. Draws and special results do not select a
-  winner-side record here.
+  winner-side record here. By the control-assignment table above, substate `8`
+  requires that the match is not COM versus COM and that the winner is
+  human-controlled.
 - Substate `8` maps result `1` to side index `1`, result `2` to side index `2`,
   calls live BTL `0x0076EDA0(winner_hp, ..., remaining_whole_units)`, then live
   BTL `0x0076EF60(..., winner_side_record, winner_index - 1, 1)`. It also
@@ -517,9 +561,9 @@ metric/state-`0x11` route and reach the continuation states directly.
 Composing states `0x10` and `0x12` gives the following exact route matrix for
 the two handled controller types:
 
-| Result | BTL metric import | Type `1` after cleanup | Type `2` after cleanup |
+| Result | BTL metric import | Type `1` (Free Battle) after cleanup | Type `2` (Practice) after cleanup |
 | ---: | --- | --- | --- |
-| `1`, `2` | Yes | `0x13` score route only when the winning side-record bit qualifies; otherwise `0x16` | `0x16` |
+| `1`, `2` | Yes | `0x13` score route only when the winning side is not COM; otherwise `0x16` | `0x16` |
 | `3`, `4`, `5` | Yes | `0x16` | `0x16` |
 | `6` | No | `0x16` | `0x16` |
 | `7` | No | `0x19` terminal route | `0x19` terminal route |
@@ -528,7 +572,14 @@ the two handled controller types:
 
 State `0x16` rejoins state `3`, so pause-selected result `6` is mechanically a
 no-score restart while pause-selected result `7` is a terminal exit from this
-outer controller. A hypothetical latched result `9` would use the same restart
+outer controller. These routes match the pause-menu confirmation prompts
+decoded in [Pause, start-menu, and battle-restart control](pause_and_replay.md):
+the command that returns to character selection produces pause result `3` and
+therefore result `6`, whose route reaches Character Select through states `3`
+to `7`; the command that returns to game-mode selection produces pause result
+`2` and therefore result `7`, whose state `0x19` writes manager mode `1`
+(Mode Select). A second command with the generic "end the battle?" prompt also
+produces result `6`. A hypothetical latched result `9` would use the same restart
 route as `6`; recognizing the code does not establish a producer.
 
 The type-`1` score qualification in state `0x12` is exact rather than a generic
@@ -537,8 +588,9 @@ winner test. Result `1` enters state `0x13` only when manager side-record byte
 `+0x70` has bit `0x02` clear. Every other type-`1` result takes the non-score
 branch described in the table. Raw instructions `0x001EE0DC..0x001EE124`
 extract the same bit for each winner and route both zero-bit cases to state
-`0x13`; no player/CPU meaning is assigned to that bit without evidence from
-its owner.
+`0x13`. That bit is the side's COM bit, so the result screen and point commit
+run only in Free Battle and only when a human-controlled side wins. A COM win,
+any Practice result, and every draw or special result skip it.
 
 State `3` handler `FUN_001ED110` resets the timer flags, remaining, elapsed,
 configured-limit placeholder, and delta before advancing to state `4` for the
@@ -935,7 +987,11 @@ to zero, and sums the 28 contribution words at
 `9` to `3` when manager `+0x1C == 0`; otherwise it uses
 `FUN_001F6EA0(manager) + 1`, where that resident wrapper reads configuration
 selector `0x0B`. The value is upper-capped through metric `9`'s descriptor and
-weighted by its coefficient `50`. It also sums the contributions of metrics
+weighted by its coefficient `50`. [Battle AI](battle_ai.md#configuration-and-behavior-profiles)
+establishes key `0x0B` as the COM Strength level (`0..5`) that selects the AI
+profile, and manager `+0x1C == 0` is the no-COM control assignment. Metric `9`
+is therefore a COM-strength bonus of `50 * (strength + 1)` points (`50..300`),
+with a fixed `150` when neither side is COM. It also sums the contributions of metrics
 `14`, `15`, and `16`, writes that sum as metric `13`'s value, and gives metric
 `13` no additional contribution because its coefficient is zero. Live
 `0x00719ED0` then:
@@ -979,10 +1035,13 @@ enforces the same maximum. Neither the result-total clamp nor accumulator
 writer applies a lower floor. If the manager is absent at acceptance, the
 object instead moves directly to state `4` and skips the accumulator write.
 The normal routed score path has a live manager, but this distinction is part
-of the function's exact contract. The code proves a capped manager point
-accumulator and its result-screen commit. It does not prove that the value is
-currency, an item unlock, or a persistent reward. No direct item/reward grant
-was found in this handoff.
+of the function's exact contract. The accumulator is the profile's ryo
+counter: [Save data](../game/save_data.md) identifies the same getter/setter
+pair and its `0x34` field as the saved ryo currency, whose UI formatter
+appends `両`. A Free Battle win by a human side therefore adds the capped
+result-screen total to ryo. No direct item or unlock grant was found in this
+handoff; when that in-memory ryo value reaches the memory card is outside this
+document.
 
 The summary dispatcher at live `0x0071A0A0` calls that acceptance function only
 once its summary child byte `+0x18` permits acceptance. Before that, native
@@ -1105,8 +1164,8 @@ FUN_001EC960                     outer dispatcher
   unresolved. The direct-store/direct-call audit also found no literal pointer
   to the setter in either scoped image; a dynamically computed indirect call or
   an out-of-scope overlay remains outside this negative result.
-- Tier `0..4` and the capped manager accumulator are proven. Currency, unlock,
-  inventory, persistence, and human-readable rank labels are not.
+- Tier `0..4` and the ryo commit are proven. Unlock, inventory, save timing,
+  and human-readable rank labels are not.
 - The exact player-facing labels of all 28 score metrics remain unresolved.
   Their record layout, selected source fields, all three bucket tables, total,
   tier thresholds, and final accumulator write are established.

@@ -885,8 +885,9 @@ calls `FUN_001ED110`, which:
 - clears its own transition globals and advances to state `4`.
 
 Live `0x0070F1E0` only clears six two-byte BTL records at live
-`0x008D6A60` (two sides by three entries). These are per-side item-slot cache
-records, not HP/chakra/gauge state. Each two-byte entry is an item identifier
+`0x008D6A60` (two sides by three entries). These are per-side
+[item-slot cache](battle_item_inventory.md#na2-practice-cache) records, not
+HP/chakra/gauge state. Each two-byte entry is an item identifier
 followed by a one-byte amount. Live `0x007109F0` clears and rebuilds one side's
 three-entry cache from an inventory object, omitting identifiers for which
 resident `FUN_00376480` reports the special category `6`; resident

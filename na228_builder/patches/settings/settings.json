@@ -136,6 +136,15 @@
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
       },
+      "draw_player_markers_with_simple_display": {
+        "description": "Draw the 1P, 2P, and COM markers above fighters only while Simple Display is on.",
+        "target_id": "na2_btl",
+        "offset": "0x6970",
+        "expected_hex": "A0FFBD274000BFFF",
+        "symbol": "mod_settings_player_marker_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
       "shared_simple_display_get": {
         "description": "Read the shared Mod Settings value through the native Simple Display getter.",
         "target_id": "na2_elf",
@@ -166,6 +175,9 @@
         "fragments": {
           "mod_settings_simple_display_bridge": {
             "object": "mod.settings.simple.display.asm.text.mod.settings.simple.display.bridge"
+          },
+          "mod_settings_player_marker_bridge": {
+            "object": "mod.settings.simple.display.asm.text.mod.settings.player.marker.bridge"
           },
           "mod_settings_simple_display_selection_bridge": {
             "object": "mod.settings.simple.display.asm.text.mod.settings.simple.display.selection.bridge"

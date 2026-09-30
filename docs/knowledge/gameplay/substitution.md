@@ -35,7 +35,8 @@ are not investigated again without new evidence.
   contract, PINE set/step/get/release operations, exact-frame stepping evidence,
   neutralization behavior, catalog-to-live telemetry, and one autonomous Naruto
   attack plus defender guard-edge probe. The native battle clock, battle reset
-  seam, support-gauge renderer, fill palette, shared top-HUD layout, and failed
+  seam, support-gauge renderer and its full block composition, fill palette,
+  shared top-HUD layout, and failed
   custom-HUD placement and tint experiments are also established.
 
 - **Unresolved or untested:** the gameplay roles and predicate reachability of 298
@@ -161,12 +162,52 @@ addresses are `0x0071D240/0x0071D258`.
 | `+0x0B` | fill/animation state |
 | `+0x0C` | normalized support fill |
 | `+0x10` | prior fill |
-| `+0x18` | primary support-gauge render object |
+| `+0x18` | primary support-gauge render object, also used for the icon |
+| `+0x1C` | support-button glyph render object |
+| `+0x20` | support-button frame render object |
+| `+0x24` | icon pulse scale added to `1.0` |
+| `+0x28` | icon pulse alpha |
 
 The native update copies fighter support value `+0x74` into controller
 `+0x0C`. The draw scales a 64-unit foreground by that value. Its side bases are
 `120.0/392.0` with shared Y `340.0`. The red marker is fixed at half bar: the
 fill begins at `20.0`, spans `64.0`, and the marker uses `52.0`.
+
+The draw, Ghidra `FUN_0071CAB0`, places the whole support block from that one
+anchor. Side 1 uses negative widths. The Y base adds the slide offset that
+`0x0070FE60` returns for the HUD layout found through `0x00376610(controller)`
+and `0x00375A60(hud, side)`. In draw order it commits, through `0x001CC350`:
+
+- the bar frame's left cap, a single stretched texel column after it, and the
+  X-flipped cap;
+- the fill column twice, first in `0x7F7F7F`, then in fill-palette entry
+  `+0x0B`, or entry `3` when `+0x0A` is `2`;
+- the marker.
+
+It then draws, with resident `0x0037BD00`, the button frame with object `+0x20`
+at Y `+20`, the button glyph with object `+0x1C` at the same point, and the
+icon with object `+0x18` at Y `-2`. While `+0x0B` is `1` or `2`, the icon is
+drawn again at alpha `[+0x28]` and scale `1 + [+0x24]`, times `1.1` in state
+`2`. The glyph is the side's binding array `0x001F3F10(side + 1)` halfword
+`+0x0A`, the Linked Attack binding, resolved through BTL `0x006B4110`,
+`0x006B4E60`, `0x006B4EF0`, resident `0x001CD7F0`, and BTL `0x006B4F50`. Its
+alpha is `0.8` in state `0`. A zero binding was observed to draw the Circle
+glyph.
+
+The pieces are resident gp-relative rectangles in `TEX_xgauge` texel units
+(X, V from the top, W, H):
+
+| Address | Piece |
+| ---: | --- |
+| `0x00604D18` | Bar frame left cap `(89,108,22,20)`; the stretched column is X `111` |
+| `0x00604D20` | Marker `(89,89,7,18)` |
+| `0x00604D28` | Icon `(125,101,26,26)` |
+| `0x00604D30` | Fill column `(4,91,0,10)` |
+| `0x00604D38` | Button frame `(21,33,36,24)` |
+
+`TEX_xgauge` in `battlegauge.ccs` is a 256-by-128 PSMT8 texture whose rows are
+stored bottom-up. `0x001CC350` supports X and Y flips through sprite flags
+`0x20` and `0x40`, but not rotation.
 
 At Ghidra `0x0071CF5C..0x0071CF60`, `lui v0,0x40` followed by
 `ld a0,-0x4038(v0)` reads resident `0x003FBFC8`: the load displacement is

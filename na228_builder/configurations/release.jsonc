@@ -6,7 +6,7 @@
   "default_settings": {
     "mod_settings": {
       "match_setup": {
-        "support_selection": "none",                        // "none" | "relevant" | "all"
+        "support_selection": "relevant",                    // "none" | "relevant" | "all"
         "character_balance": "overrides",                   // "original" | "overrides"
         "balance_overlay": "on",                            // "off" | "on"
         "extended_items": true

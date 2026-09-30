@@ -122,7 +122,9 @@ The Square badge is centered at `(294, 362)` and the Mod label at `(327, 362)`,
 using the same vertical anchor as the native footer prompts.
 
 Simple Display has one shared value for Mod Settings,
-the battle/Practice pause menu, and the save appendix. The native Simple Display
+the battle/Practice pause menu, and the save appendix. The 1P, 2P, and COM
+[markers above fighters](../knowledge/localization/ui/battle/selectors_and_prompts.md#player-markers)
+are drawn only while it is on. The native Simple Display
 getter and setter use the same Mod Settings getter and setter as the menu and
 save flow. The shared setter updates the three native settings packs, which
 carry the value for native gameplay. Character Balance selects the original

@@ -22,6 +22,28 @@ mod_settings_simple_display_bridge:
     nop
     .size mod_settings_simple_display_bridge, . - mod_settings_simple_display_bridge
 
+    .section .text.mod_settings_player_marker_bridge,"ax",@progbits
+    .balign 4
+    .globl mod_settings_player_marker_bridge
+    .type mod_settings_player_marker_bridge, @function
+mod_settings_player_marker_bridge:
+    /* Draw the fighter markers only while Simple Display is on. */
+    lui $t9, %hi(mod_settings_state)
+    lw $t9, %lo(mod_settings_state)($t9)
+    bnez $t9, 1f
+    nop
+    jr $ra
+    nop
+1:
+    /* Replay the displaced prologue and rejoin the native marker draw. */
+    addiu $sp, $sp, -0x60
+    sd $ra, 0x40($sp)
+    lui $k0, 0x006b
+    ori $k0, $k0, 0xa878
+    jr $k0
+    nop
+    .size mod_settings_player_marker_bridge, . - mod_settings_player_marker_bridge
+
     .section .text.mod_settings_simple_display_selection_bridge,"ax",@progbits
     .balign 4
     .globl mod_settings_simple_display_selection_bridge

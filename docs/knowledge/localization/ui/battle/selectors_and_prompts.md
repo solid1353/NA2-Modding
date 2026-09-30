@@ -8,6 +8,7 @@
 - **Confirmed coverage:** the documented owners, structures, and cross-game
   differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
+  The NA2 player-marker draw was not compared with NUN5.
 - **Deliberate exclusions and overlap:** feature imports, hooks, and validation
   belong to [UI layout](../../../../features/localization/ui_layout.md) or
   [UI textures](../../../../features/localization/ui_textures.md).
@@ -16,6 +17,29 @@
 
 Binary identities and address conventions are defined in the
 [Standard game file identities](../../../game/files/file_identities.md).
+
+## Player markers
+
+NA2 BTL live `0x006BA870` (file `0x6970`) draws the marker above a fighter.
+It returns without drawing when the marker's first halfword is `1` or when
+resident `0x00375280` returns zero. Otherwise it selects a label and an arrow
+from the battle HUD sprite-record table at live `0x008BFFB0`:
+
+| Case | Label record | Arrow record |
+| --- | ---: | ---: |
+| Marker `+0x04` is `0` | `117` (`1P`) | `120` (red) |
+| Marker `+0x04` is nonzero | `118` (`2P`) | `121` (blue) |
+| COM test below passes | `119` (`COM`) | `122` (green) |
+
+The COM row is taken when the fighter from resident `0x003769C0(marker[+0x04])`
+has a nonzero field in halfword `+0x60` and resident `0x00376720` returns zero.
+That this identifies a computer-controlled fighter is inferred from the label.
+
+Each 12-byte record is `{x, y, width, height, texture slot, color}`. Records
+`117..122` use texture slot `4`, `TEX_xmenu`, with rectangles `(129,1,34,26)`,
+`(165,1,34,26)`, `(201,1,46,26)`, `(129,29,22,22)`, `(153,29,22,22)`, and
+`(177,29,22,22)`. The function clamps the marker position to the screen and
+draws the arrow, then the label, through resident `0x0037BD00`.
 
 ## Ordinary awakening-label composition
 

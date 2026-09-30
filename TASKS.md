@@ -2,7 +2,6 @@
 
 ## In Progress
 
-- Rework sub options
 - Fix support bar UI
 - Release version 1.0
 

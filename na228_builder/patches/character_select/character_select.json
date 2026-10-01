@@ -87,7 +87,7 @@
         "encoding": "jal26"
       },
       "route_primary_fighter_confirmation": {
-        "description": "Select No Support after fighter confirmation, using the native carousel anchor in all mode and compact centering otherwise; finalize immediately when No Support is the only entry.",
+        "description": "After fighter confirmation, restore the support last finalized for the same fighter; a new fighter starts on the native default in all mode and No Support otherwise, using the native carousel anchor in all mode and compact centering otherwise; finalize immediately when No Support is the only entry.",
         "target_id": "na2_elf",
         "offset": "0x2B5F74",
         "expected_hex": "B8D40E0C",
@@ -95,7 +95,7 @@
         "encoding": "jal26"
       },
       "route_repeated_fighter_confirmation": {
-        "description": "Apply the same No-Support-only direct finalization to the repeated fighter-confirmation path.",
+        "description": "Apply the same support restore and No-Support-only direct finalization to the repeated fighter-confirmation path.",
         "target_id": "na2_elf",
         "offset": "0x2B610C",
         "expected_hex": "B8D40E0C",
@@ -103,7 +103,7 @@
         "encoding": "jal26"
       },
       "route_support_confirmation_without_linked_mode": {
-        "description": "Finalize a selected support in Auto linked mode without opening the Linked Mode choice modal.",
+        "description": "Remember the selected support and finalize it in Auto linked mode without opening the Linked Mode choice modal.",
         "target_id": "na2_elf",
         "offset": "0x2B7E70",
         "expected_hex": "F0FFBD270000BFFF",
@@ -143,7 +143,7 @@
         "encoding": "jal26"
       },
       "route_support_cell_draw": {
-        "description": "Draw only the single non-wrapped occurrence of each entry in a compact support carousel.",
+        "description": "Draw only the single non-wrapped occurrence of each entry in a compact support carousel; all mode keeps every native cell.",
         "target_id": "na2_elf",
         "offset": "0x2B88C0",
         "expected_hex": "10EF0D0C",
@@ -159,7 +159,7 @@
         "encoding": "jal26"
       },
       "route_support_navigation_left_without_wrap": {
-        "description": "Delegate native left navigation except at the first compact support-list entry, where the cursor remains in place.",
+        "description": "Delegate native left navigation except at the first compact support-list entry, where the cursor remains in place; all mode keeps native wrapping.",
         "target_id": "na2_elf",
         "offset": "0x2B6D48",
         "expected_hex": "A0DC0E0C",
@@ -167,7 +167,7 @@
         "encoding": "jal26"
       },
       "route_support_navigation_right_without_wrap": {
-        "description": "Delegate native right navigation except at the last compact support-list entry, where the cursor remains in place.",
+        "description": "Delegate native right navigation except at the last compact support-list entry, where the cursor remains in place; all mode keeps native wrapping.",
         "target_id": "na2_elf",
         "offset": "0x2B6D8C",
         "expected_hex": "A0DC0E0C",

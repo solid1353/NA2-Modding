@@ -11,7 +11,8 @@
   with the stated NUN5 homologs.
 - **Confirmed coverage:** The 33-entry native roster and 40-entry capacity,
   compatibility bound, support-to-character mappings, linked-attack
-  relationships, carousel navigation, portrait/name resolution, and separation
+  relationships, carousel navigation, support-cursor memory across fighter
+  confirmations, portrait/name resolution, and separation
   of recommendation records from the scrollable roster are established below.
 - **Unresolved or untested:** The meanings of the four recommendation bytes and
   the purpose of the seven spare roster slots are not established.
@@ -144,6 +145,21 @@ the requested ID with availability state `4` or `5`. It assigns the matching
 index and page without applying compact-row centering. The native default
 selection routine `FUN_003B4E40` uses this setter. Both bodies were inspected
 through GhidrAssist.
+
+The support cursor persists across fighter confirmations. Selector `+0x70`
+holds the fighter the cursor was last reset for: the constructor
+`FUN_003B4290` zeroes it, and its only other writer is `FUN_003B51A0`, which
+`FUN_003B4E40` calls first to store the current fighter. A search for word
+stores to offset `0x70` finds no other Character Select selector writer. Fighter confirmation
+`FUN_003B52E0` enters support selection with state `2`, calls `FUN_003B4E40`
+when `+0x70` differs from the confirmed fighter, then reads the entry under the
+cursor. It keeps that entry when its state is `4` or it is one of the
+fighter's three recommended supports, and it also passes the `0x008858C0`
+compatibility check; otherwise it calls `FUN_003B4E40` again. Confirming the
+same fighter therefore returns to the previously selected support.
+`FUN_003B4E40` selects the first recommended support for an eligible fighter,
+and otherwise the first support whose state is `4`. These bodies were
+inspected through GhidrAssist.
 
 Horizontal support navigation calls `FUN_003b7280` from two sites. Left passes
 direction `2` at runtime `0x003B6C48` (ELF offset `0x2B6D48`); right passes

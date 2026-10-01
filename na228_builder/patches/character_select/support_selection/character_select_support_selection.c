@@ -17,6 +17,7 @@ typedef unsigned int u32;
 #define CHARACTER_SELECT_PLAYER_SUPPORT_INDEX_OFFSET 0x30u
 #define CHARACTER_SELECT_PLAYER_SUPPORT_PAGE_OFFSET 0x34u
 #define CHARACTER_SELECT_PLAYER_SUPPORT_SCROLL_OFFSET 0x38u
+#define CHARACTER_SELECT_PLAYER_SUPPORT_CHARACTER_OFFSET 0x70u
 #define CHARACTER_SELECT_PLAYER_DATA_POINTER_OFFSET 0x74u
 #define CHARACTER_SELECT_PLAYER_LINKED_MODE_OFFSET 0x10u
 #define CHARACTER_SELECT_PLAYER_SECONDARY_SELECTION_OFFSET 0x08u
@@ -39,7 +40,6 @@ typedef unsigned int u32;
 
 #define NATIVE_POPULATE_SUPPORT_LIST_ADDRESS 0x003BB210u
 #define NATIVE_SELECTED_CHARACTER_ID_ADDRESS 0x003B4A90u
-#define NATIVE_SELECT_SUPPORT_ID_ADDRESS 0x003B49C0u
 #define NATIVE_CONFIRM_FIGHTER_ADDRESS 0x003B52E0u
 #define NATIVE_SUPPORT_CELL_DRAW_ADDRESS 0x0037BC40u
 #define NATIVE_SUPPORT_DISPLAY_ID_ADDRESS 0x008859A0u
@@ -86,7 +86,6 @@ typedef unsigned int u32;
 
 typedef void (*NativePopulateSupportList)(void *character_select);
 typedef u32 (*NativeSelectedCharacterId)(void *player_select);
-typedef void (*NativeSelectSupportId)(void *player_select, u32 support_id);
 typedef void (*NativeSupportCellDraw)(
     float x,
     float y,
@@ -221,6 +220,17 @@ static u8 CHARACTER_SELECT_DATA_COPIES
     __attribute__((
         section(".bss.character_select_support_selection_buffers"),
         aligned(4),
+        used
+    ));
+
+/*
+ * Last finalized support per side. Native fighter confirmation keeps its
+ * cursor only while +0x70 still names the confirmed fighter, so the same
+ * check decides whether this ID is restored.
+ */
+static u8 REMEMBERED_SUPPORT_IDS[CHARACTER_SELECT_PLAYER_COUNT]
+    __attribute__((
+        section(".bss.character_select_support_selection_buffers"),
         used
     ));
 
@@ -422,10 +432,36 @@ void clamp_support_cursor(void *player_select, u32 support_count)
 }
 
 static __attribute__((always_inline)) inline
-void select_no_support(void *player_select)
+u8 *remembered_support_id(void *player_select)
 {
-    NativeSelectSupportId native_select =
-        (NativeSelectSupportId)NATIVE_SELECT_SUPPORT_ID_ADDRESS;
+    u32 side = *(u32 *)((u8 *)player_select + CHARACTER_SELECT_SIDE_OFFSET);
+
+    return side < CHARACTER_SELECT_PLAYER_COUNT
+        ? &REMEMBERED_SUPPORT_IDS[side]
+        : (u8 *)0;
+}
+
+static __attribute__((always_inline)) inline
+u8 cursor_support_id(void *player_select)
+{
+    u8 *player = (u8 *)player_select;
+    u8 *data = *(u8 **)(
+        player + CHARACTER_SELECT_PLAYER_DATA_POINTER_OFFSET
+    );
+    u32 support_slot =
+        *(u32 *)(player + CHARACTER_SELECT_PLAYER_SUPPORT_INDEX_OFFSET) +
+        *(u32 *)(player + CHARACTER_SELECT_PLAYER_SUPPORT_PAGE_OFFSET) *
+            CHARACTER_SELECT_SUPPORT_CAPACITY;
+
+    return support_slot < CHARACTER_SELECT_SUPPORT_CAPACITY
+        ? data[CHARACTER_SELECT_DATA_SUPPORT_IDS_OFFSET + support_slot]
+        : (u8)NO_SUPPORT_ID;
+}
+
+/* Missing IDs fall back to index zero, where every roster keeps No Support. */
+static __attribute__((always_inline)) inline
+void select_support(void *player_select, u32 support_id)
+{
     u8 *player = (u8 *)player_select;
     u8 *data = *(u8 **)(
         player + CHARACTER_SELECT_PLAYER_DATA_POINTER_OFFSET
@@ -436,21 +472,36 @@ void select_no_support(void *player_select)
     u32 center_index = support_count == 0u
         ? 0u
         : (support_count - 1u) / 2u;
+    u32 support_index = 0u;
+    u32 index;
 
-    if (support_selection_mode() == SUPPORT_SELECTION_MODE_ALL) {
-        native_select(player_select, NO_SUPPORT_ID);
-        return;
+    for (
+        index = 0u;
+        index < support_count && index < CHARACTER_SELECT_SUPPORT_CAPACITY;
+        index = index + 1u
+    ) {
+        if (data[CHARACTER_SELECT_DATA_SUPPORT_IDS_OFFSET + index] ==
+            (u8)support_id) {
+            support_index = index;
+            break;
+        }
     }
 
     *(u32 *)(
         player + CHARACTER_SELECT_PLAYER_SUPPORT_INDEX_OFFSET
-    ) = 0u;
+    ) = support_index;
     *(u32 *)(
         player + CHARACTER_SELECT_PLAYER_SUPPORT_PAGE_OFFSET
     ) = 0u;
+    /*
+     * "all" keeps the native 0x003B49C0 anchor of zero; compact rows keep
+     * navigation's fixed index-to-scroll offset so the full row stays centered.
+     */
     *(float *)(
         player + CHARACTER_SELECT_PLAYER_SUPPORT_SCROLL_OFFSET
-    ) = -(float)center_index;
+    ) = support_selection_mode() == SUPPORT_SELECTION_MODE_ALL
+        ? 0.0f
+        : (float)support_index - (float)center_index;
 }
 
 static __attribute__((always_inline)) inline
@@ -533,7 +584,13 @@ void character_select_support_selection_confirm_fighter(
     NativeSetCharacterSelectState set_state =
         (NativeSetCharacterSelectState)
             NATIVE_SET_CHARACTER_SELECT_STATE_ADDRESS;
+    NativeSelectedCharacterId selected_character_id =
+        (NativeSelectedCharacterId)NATIVE_SELECTED_CHARACTER_ID_ADDRESS;
     u8 *player = (u8 *)player_select;
+    u8 *remembered_support = remembered_support_id(player_select);
+    u32 support_character = *(u32 *)(
+        player + CHARACTER_SELECT_PLAYER_SUPPORT_CHARACTER_OFFSET
+    );
 
     native_confirm(player_select);
     *(u32 *)(
@@ -546,7 +603,18 @@ void character_select_support_selection_confirm_fighter(
         return;
     }
 
-    select_no_support(player_select);
+    if (remembered_support == (u8 *)0) {
+        select_support(player_select, NO_SUPPORT_ID);
+    } else {
+        /* A new fighter starts on the native default in "all", else No Support. */
+        if (support_character != selected_character_id(player_select)) {
+            *remembered_support =
+                support_selection_mode() == SUPPORT_SELECTION_MODE_ALL
+                    ? cursor_support_id(player_select)
+                    : (u8)NO_SUPPORT_ID;
+        }
+        select_support(player_select, *remembered_support);
+    }
     if (!has_only_no_support(player_select)) {
         return;
     }
@@ -565,7 +633,11 @@ void character_select_support_selection_finalize_support(
         (NativeSetCharacterSelectState)
             NATIVE_SET_CHARACTER_SELECT_STATE_ADDRESS;
     u8 *player = (u8 *)player_select;
+    u8 *remembered_support = remembered_support_id(player_select);
 
+    if (remembered_support != (u8 *)0) {
+        *remembered_support = cursor_support_id(player_select);
+    }
     *(u32 *)(
         player + CHARACTER_SELECT_PLAYER_LINKED_MODE_OFFSET
     ) = CHARACTER_SELECT_LINKED_MODE_AUTO;
@@ -604,9 +676,6 @@ void character_select_support_selection_return_from_finalized(
     ) {
         next_state = CHARACTER_SELECT_STATE_FIGHTER_SELECTION;
     } else {
-        if (support_selection_mode() != SUPPORT_SELECTION_MODE_ALL) {
-            select_no_support(player_select);
-        }
         next_state = CHARACTER_SELECT_STATE_SUPPORT_SELECTION;
     }
 
@@ -635,9 +704,10 @@ void character_select_support_selection_bounded_support_navigation(
     );
 
     if (
-        (direction == SUPPORT_NAVIGATION_LEFT && support_index == 0u) ||
-        (direction == SUPPORT_NAVIGATION_RIGHT &&
-            (support_count == 0u || support_index + 1u >= support_count))
+        support_selection_mode() != SUPPORT_SELECTION_MODE_ALL &&
+        ((direction == SUPPORT_NAVIGATION_LEFT && support_index == 0u) ||
+            (direction == SUPPORT_NAVIGATION_RIGHT &&
+                (support_count == 0u || support_index + 1u >= support_count)))
     ) {
         return;
     }
@@ -681,6 +751,10 @@ void character_select_support_selection_draw_support_cell(
     selected_index = *(u32 *)(
         player_select + CHARACTER_SELECT_PLAYER_SUPPORT_INDEX_OFFSET
     );
+    if (support_selection_mode() == SUPPORT_SELECTION_MODE_ALL) {
+        native_draw(x, y, draw_context, rectangle);
+        return;
+    }
     if (support_count == 0u || selected_index >= support_count) {
         return;
     }

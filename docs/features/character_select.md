@@ -27,8 +27,7 @@ or `"none"`. Each mode builds one support roster per player, beginning with
 
 - `"all"` appends only supports selectable by the chosen fighter, in native
   order, using native unlock, recommendation, and compatibility checks. It retains native
-  carousel wrapping, repeated cells, and positioning, initially selecting No
-  Support through the native support-ID selector. Confirmation skips Linked
+  carousel wrapping, repeated cells, and positioning. Confirmation skips Linked
   Mode and finalizes in Auto mode; Back returns to support selection with
   the current cursor and scroll position preserved.
 - `"relevant"` appends only the declared directional relationships below.
@@ -53,9 +52,20 @@ unavailable marker and preserves the recommendation exception for locked
 entries. This excludes both Sasori and Hiruko when either is the main fighter,
 including Sasori's puppet form, through the native rule rather than a special
 case. The filtering change is pending runtime validation and acceptance.
-After fighter confirmation, the shared confirmation hook
-selects No Support through native `0x003B49C0`, which initializes the native
-cursor and scroll anchor. The compact modes instead center their complete row.
+Like the native screen, each player's support cursor remembers the last
+finalized support while the same fighter is confirmed again. Native fighter
+confirmation keeps its cursor only while selector `+0x70` still names the
+confirmed fighter, and resets it otherwise; each roster refresh rebuilds the
+per-player rosters for the current fighter and clamps their cursors, so the
+remembered position is kept as a support ID instead. The support-finalization hook records the ID under the cursor. After
+fighter confirmation, the shared confirmation hook compares the `+0x70` value
+read before native confirmation with the confirmed fighter: a match restores
+the remembered ID. A mismatch replaces it with the support native confirmation
+just selected in `"all"`, its first recommended support when that entry is
+available, and with No Support in the compact modes. An ID absent
+from the current roster selects No Support, which leads every roster. `"all"`
+sets the cursor with a zero scroll anchor, as native `0x003B49C0` does; the
+compact modes keep their complete row centered.
 
 All modes copy the complete `0x454`-byte selector-data block for each player, preserving
 the fighter and support portrait-object tables while allowing simultaneous
@@ -77,17 +87,16 @@ compatibility helper; excluded entries are absent from the filtered list. This
 keeps confirmation, navigation, and draw eligibility consistent with the chosen
 mode. The corrected `"all"` mode has not yet been validated in game.
 
-The support-selection builder adapter selects the hook set before composition.
 All modes share the fighter-confirmation, support-finalization, and finalized
-Back hooks for the No Support default and Linked Mode bypass. Linked Mode is
+Back hooks for the support memory and Linked Mode bypass. Linked Mode is
 fixed to Auto for both players in Battle and Practice, including secondary
 fighter confirmation and No Support; the modal stays skipped. This Auto change
-is pending runtime validation and acceptance. In `"all"`, the
-Back handler preserves the selected support and carousel position instead of
-reapplying the initial default. The adapter omits the compact cell-draw and
-horizontal-navigation hooks from `"all"`, together with their code. Per-player
-list storage is shared by all modes, while `"all"` retains native carousel
-drawing, scrolling, and wrapping.
+is pending runtime validation and acceptance. The
+Back handler preserves the selected support and carousel position in every
+mode. The mode is read at runtime, so the compact cell-draw and
+horizontal-navigation hooks are always installed and delegate directly to the
+native draw and navigation in `"all"`. Per-player list storage is shared by all
+modes, while `"all"` retains native carousel drawing, scrolling, and wrapping.
 
 Runtime testing then confirmed that OK accepts the new entry, but established
 that NA2's unextended support-to-display map resolves ID `0x25` to record zero,
@@ -113,8 +122,8 @@ label width without editing the executable list. In the compact modes, the
 native renderer always
 visits 13 carousel positions and wraps them modulo the roster count; an
 additional guarded draw hook suppresses those wrapped repetitions so every
-compact entry is rendered once at its native position. The selector defaults to
-No Support and initializes the carousel anchor from the compact count so the
+compact entry is rendered once at its native position. The selector
+initializes the carousel anchor from the compact count so the
 complete row opens centered. Left and right retain native movement between
 entries, while input past the first or last entry is ignored instead of
 wrapping. A one-entry roster thus shows one centered, highlighted Leaf cell and

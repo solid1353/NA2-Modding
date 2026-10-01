@@ -55,7 +55,8 @@ Before starting or continuing work, identify the best practical approach.
 If you lack what would materially improve quality or efficiency, stop and
 request it. Do not settle for an inferior approach merely because you can
 make it work.
-Never search for inputs or determine that existing inputs are appropriate by yourself.
+Use only the savestates and input recordings the user identifies for the task;
+never pick one yourself or decide that an existing one fits.
 Present the action boundary only when work can begin.
 
 ## Commands and interaction modes

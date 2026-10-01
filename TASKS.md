@@ -2,7 +2,6 @@
 
 ## In Progress
 
-- Fix support bar UI
 - Release version 1.0
 
 ## Backlog
@@ -22,7 +21,7 @@
 ### Long-term
 
 - Port stages/characters
-- Proper widescreen
+- Proper widescreen without UI stretching
 - 60 FPS
 
 ### Questionable

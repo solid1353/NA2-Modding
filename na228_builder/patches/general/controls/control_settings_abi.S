@@ -94,26 +94,6 @@ control_settings_block_bridge:
     nop
     .size control_settings_block_bridge, . - control_settings_block_bridge
 
-    .section .text.control_settings_commit_bridge,"ax",@progbits
-    .balign 4
-    .globl control_settings_commit_bridge
-    .type control_settings_commit_bridge, @function
-control_settings_commit_bridge:
-    addiu $sp, $sp, -16
-    sd $t9, 0($sp)
-    sd $ra, 8($sp)
-    move $a0, $s1
-    jal control_settings_commit
-    nop
-    ld $ra, 8($sp)
-    ld $t9, 0($sp)
-    addiu $sp, $sp, 16
-    lui $k0, 0x0038
-    ori $k0, $k0, 0x8004
-    jr $k0
-    nop
-    .size control_settings_commit_bridge, . - control_settings_commit_bridge
-
     .section .text.control_settings_item_select_bridge,"ax",@progbits
     .balign 4
     .globl control_settings_item_select_bridge
@@ -134,45 +114,41 @@ control_settings_item_select_bridge:
     nop
     .size control_settings_item_select_bridge, . - control_settings_item_select_bridge
 
-    .section .text.control_settings_step_bridge,"ax",@progbits
+# The binding match and count wrappers (live 0x006EFC40 and 0x006EFD90) load a
+# native binding and tail-call the history primitive. A zero binding is a subset
+# of every record, so an unbound action requests 0x10000, which no record holds.
+    .section .text.control_settings_match_bridge,"ax",@progbits
     .balign 4
-    .globl control_settings_step_bridge
-    .type control_settings_step_bridge, @function
-control_settings_step_bridge:
-    move $a0, $s1
-    jal control_settings_action_step
-    move $a1, $s0
-    sll $v0, $s0, 3
-    addu $v0, $v0, $s0
-    sll $v0, $v0, 2
-    addu $v0, $v0, $s1
-    addiu $s2, $v0, 0x14
-    lui $k0, 0x0038
-    ori $k0, $k0, 0x83e0
-    jr $k0
+    .globl control_settings_match_bridge
+    .type control_settings_match_bridge, @function
+control_settings_match_bridge:
+    sll $v0, $a1, 1
+    addu $v0, $v0, $a0
+    lh $a1, 0x68($v0)
+    bnez $a1, 1f
     nop
-    .size control_settings_step_bridge, . - control_settings_step_bridge
-
-    .section .text.control_settings_reset_rows_bridge,"ax",@progbits
-    .balign 4
-    .globl control_settings_reset_rows_bridge
-    .type control_settings_reset_rows_bridge, @function
-/* Select reset: copy the eight row actions and the vibration word from the
-   generated default layout instead of the retail table. */
-control_settings_reset_rows_bridge:
-    lui $t0, %hi(control_default_reset_actions)
-    addiu $t0, $t0, %lo(control_default_reset_actions)
-    addiu $t1, $v1, 0x14
-    li $t2, 9
+    lui $a1, 0x0001
 1:
-    lw $t3, 0($t0)
-    addiu $t0, $t0, 4
-    sw $t3, 0($t1)
-    addiu $t2, $t2, -1
-    bnez $t2, 1b
-    addiu $t1, $t1, 4
-    lui $k0, 0x0038
-    ori $k0, $k0, 0x80f8
+    lui $k0, 0x006e
+    ori $k0, $k0, 0xfac0
     jr $k0
     nop
-    .size control_settings_reset_rows_bridge, . - control_settings_reset_rows_bridge
+    .size control_settings_match_bridge, . - control_settings_match_bridge
+
+    .section .text.control_settings_count_bridge,"ax",@progbits
+    .balign 4
+    .globl control_settings_count_bridge
+    .type control_settings_count_bridge, @function
+control_settings_count_bridge:
+    sll $v0, $a1, 1
+    addu $v0, $v0, $a0
+    lh $a1, 0x68($v0)
+    bnez $a1, 1f
+    nop
+    lui $a1, 0x0001
+1:
+    lui $k0, 0x006e
+    ori $k0, $k0, 0xfc70
+    jr $k0
+    nop
+    .size control_settings_count_bridge, . - control_settings_count_bridge

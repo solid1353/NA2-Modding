@@ -188,6 +188,15 @@ constructor, selects action `4` (Item Select); zero would select action `5`.
 An action whose binding is not in the six-pair table maps to sprite `-1`, and
 the frame is still drawn.
 
+Battle sprite IDs index 12-byte records at `0x005B0A60`: mode byte, flag byte,
+then `u`, `v`, width, and height as halfwords, then the sprite layer.
+`0x00377260` copies a record into the layer's sprite; flag bit `0` sets sprite
+flag `0x20` (horizontal mirror) and bit `1` sets `0x40`. The badge buttons
+`0x74..0x77` are 32x16 cells at `(190, 222)`, `(190, 239)`, `(223, 222)`, and
+`(223, 239)` on layer `17`, and the frame `0x7B` is a 36x24 cell on layer `16`.
+In a Practice savestate, layer `17` samples a 256x256 8-bit texture whose other
+cells are 30x30 item icons; its only free block that fits a badge is 64x16.
+
 Position `0` is the selection, and later slots in selection order take
 positions `1..n-1`. At rest the second factor is `0` at `k = -1`, so the
 previous item is visible only while the animation offset is nonzero. Resting

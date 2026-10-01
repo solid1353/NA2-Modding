@@ -24,9 +24,9 @@ from ..settings.ingame.battle_mechanics.battle_settings_runtime import (
     ultimate_jutsu_default,
     xdash_chakra_cost_option_default,
 )
-from ..general.new_controls.control_defaults import (
+from ..general.controls.control_defaults import (
     added_binding_save_defaults,
-    load_default_controls,
+    controls_layout,
 )
 from ..settings.ingame.battle_mechanics.items.items_settings import (
     FIELD_ITEMS,
@@ -181,19 +181,6 @@ def _selected_values(selection) -> dict[tuple[str, ...], object]:
     }
 
 
-def _new_controls_enabled(selection) -> bool:
-    if selection is None:
-        return False
-    return any(
-        node.path == ("features", "general", "new_controls") and node.enabled
-        for node in selection.nodes
-    )
-
-
-def _extended_items_enabled(selection) -> bool:
-    return selection is not None and extended_items_enabled(selection)
-
-
 def _bindings(selection) -> dict[str, SettingBinding]:
     selected = _selected_values(selection)
     mod_values = (
@@ -221,16 +208,15 @@ def _bindings(selection) -> dict[str, SettingBinding]:
             )
         )
     }
-    if _new_controls_enabled(selection):
-        control_defaults = added_binding_save_defaults(load_default_controls())
-        for argument, key in enumerate(EXTRA_CONTROL_KEYS):
-            bindings[key] = SettingBinding(
-                "control_settings_extra_get",
-                "control_settings_extra_set",
-                argument,
-                CALL_WITH_ARGUMENT,
-                control_defaults[argument],
-            )
+    control_defaults = added_binding_save_defaults(controls_layout(selection))
+    for argument, key in enumerate(EXTRA_CONTROL_KEYS):
+        bindings[key] = SettingBinding(
+            "control_settings_extra_get",
+            "control_settings_extra_set",
+            argument,
+            CALL_WITH_ARGUMENT,
+            control_defaults[argument],
+        )
 
     battle_defaults = battle_configured_row_defaults(selection)
     for key, row_id in (

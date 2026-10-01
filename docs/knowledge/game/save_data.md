@@ -567,9 +567,12 @@ consume only mask bits 0 and 1; other stored bits are preserved but have no
 recovered effect in that predicate.
 
 The vibration value also has an in-process cache at `0x00607608`.
-`FUN_005d82f0` initializes it to 3 at cold process start. `FUN_001f47d0`
+`FUN_005d82f0` initializes it at cold process start from byte `0x005C06B0`,
+which directly follows the default binding table, as `b | (b << 1)`; the clean
+byte is `1`, giving mask 3. `FUN_001f47d0`
 copies that cached byte into a fresh record, `FUN_001f4120` changes both the
-live record and cache (passing a port below 1 resets the mask to 3), and
+live record and cache (passing a port below 1 resets the mask to 3, but its only
+caller, Controls confirmation at `0x00387FE4`, passes port 1 or 2), and
 manager teardown `FUN_001f4680` copies the live `+0x0010` byte back to the
 cache. Consequently, 3 is the cold-start default, while a later new/reset
 profile in the same process can inherit a previously active profile's

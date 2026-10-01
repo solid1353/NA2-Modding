@@ -432,7 +432,6 @@
         },
         "resources": [
           "na228_builder/resources/save_appendix.tsv",
-          "na228_builder/resources/default_controls.tsv",
           "na228_builder/resources/mod_strings.tsv",
           "na228_builder/patches/localization/mod_strings.h"
         ],

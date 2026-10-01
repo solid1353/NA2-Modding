@@ -1,5 +1,5 @@
 {
-  "general.new_controls": {
+  "general.controls": {
     "description": "Expose separate Guard, Substitution, Item Select L and R actions and an Unbound choice in ordered selectors without the native editor's eight-action permutation restriction.",
     "edits": {
       "skip_native_item_select_badge": {
@@ -9,14 +9,6 @@
         "destination_offset": "0x5E950",
         "expected_hex": "2700401000000000",
         "replacement_hex": "4C00001000000000"
-      },
-      "preserve_substitution_when_opening_assignment": {
-        "description": "Stop the native editor from rewriting Guard/Sub 2 at index 7 to Guard/Sub 1 at index 6 when its assignment selector opens.",
-        "operation": "replace",
-        "destination_target_id": "na2_elf",
-        "destination_offset": "0x287FBC",
-        "expected_hex": "0000A3AC",
-        "replacement_hex": "00000000"
       }
     },
     "hooks": {
@@ -55,24 +47,8 @@
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
       },
-      "load_extended_action_labels_high": {
-        "description": "Point the Control Settings renderer at the eleven-action label table.",
-        "target_id": "na2_elf",
-        "offset": "0x288830",
-        "expected_hex": "5B00",
-        "symbol": "control_settings_labels",
-        "encoding": "hi16"
-      },
-      "load_extended_action_labels_low": {
-        "description": "Complete the extended action-label table address.",
-        "target_id": "na2_elf",
-        "offset": "0x288834",
-        "expected_hex": "9025",
-        "symbol": "control_settings_labels",
-        "encoding": "lo16"
-      },
       "open_extended_bindings": {
-        "description": "Read the native bindings plus added Guard, Substitution, and Item Select R into the eight physical-button rows.",
+        "description": "Read the native bindings plus added Guard, Substitution, and Item Select L and R into the ten action rows, and write the L3 and R3 cells into the shoulder-button texture.",
         "target_id": "na2_elf",
         "offset": "0x287A50",
         "expected_hex": "D0FFBD272000BFFF",
@@ -80,12 +56,21 @@
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
       },
-      "commit_extended_bindings": {
-        "description": "Write the native bindings plus added Guard, Substitution, and Item Select R without indexing past the native eight-action table.",
-        "target_id": "na2_elf",
-        "offset": "0x288044",
-        "expected_hex": "2D8000002B000010",
-        "symbol": "control_settings_commit_bridge",
+      "skip_zero_binding_in_history_match": {
+        "description": "Keep an unbound native action from matching every history record in the binding match wrapper.",
+        "target_id": "na2_btl",
+        "offset": "0x3BD40",
+        "expected_hex": "F0FFBD270000BFFF",
+        "symbol": "control_settings_match_bridge",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "skip_zero_binding_in_history_count": {
+        "description": "Keep an unbound native action from counting every history record in the binding count wrapper.",
+        "target_id": "na2_btl",
+        "offset": "0x3BE90",
+        "expected_hex": "F0FFBD270000BFFF",
+        "symbol": "control_settings_count_bridge",
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
       },
@@ -121,33 +106,6 @@
         "offset": "0x275670",
         "expected_hex": "F0FFBD270000BFFF",
         "symbol": "control_settings_item_select_reverse",
-        "encoding": "j26",
-        "replacement_hex": "0000000800000000"
-      },
-      "replace_paired_action_assignment": {
-        "description": "Replace the native Guard-pair assignment helper with an owned one-action swap so both Guard/Sub slots and the added actions remain independently assignable.",
-        "target_id": "na2_elf",
-        "offset": "0x287C90",
-        "expected_hex": "8030050001000324",
-        "symbol": "control_settings_assign_action",
-        "encoding": "j26",
-        "replacement_hex": "0000000800000000"
-      },
-      "order_face_actions": {
-        "description": "Step face rows through Unbound, Attack, Ultimate Jutsu Prep, Item Use, and Jump.",
-        "target_id": "na2_elf",
-        "offset": "0x2883DC",
-        "expected_hex": "2D20000003000324",
-        "symbol": "control_settings_step_bridge",
-        "encoding": "j26",
-        "replacement_hex": "0000000800000000"
-      },
-      "order_shoulder_actions": {
-        "description": "Step shoulder rows through Unbound, Substitution, Guard, Item Select L, Item Select R, and Linked Attack.",
-        "target_id": "na2_elf",
-        "offset": "0x2883F8",
-        "expected_hex": "0400042406000324",
-        "symbol": "control_settings_step_bridge",
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
       },
@@ -215,12 +173,55 @@
         "symbol": "control_default_native_bindings",
         "encoding": "lo16"
       },
-      "reset_rows_from_default_layout": {
-        "description": "Fill the Control Settings Select reset rows from the generated default layout.",
+      "load_default_vibration_high": {
+        "description": "Read the generated vibration default when the controller settings start cold.",
         "target_id": "na2_elf",
-        "offset": "0x28818C",
-        "expected_hex": "5D00023C505243C4",
-        "symbol": "control_settings_reset_rows_bridge",
+        "offset": "0x4D83F8",
+        "expected_hex": "5C00",
+        "symbol": "control_default_vibration",
+        "encoding": "hi16"
+      },
+      "load_default_vibration_low": {
+        "description": "Complete the generated vibration default address.",
+        "target_id": "na2_elf",
+        "offset": "0x4D83FC",
+        "expected_hex": "B006",
+        "symbol": "control_default_vibration",
+        "encoding": "lo16"
+      },
+      "replace_row_navigation": {
+        "description": "Navigate all eleven rows, enter editing, confirm, and restore the generated defaults.",
+        "target_id": "na2_elf",
+        "offset": "0x287F10",
+        "expected_hex": "C0FFBD272000BFFF",
+        "symbol": "control_settings_navigate",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "replace_row_editing": {
+        "description": "Edit the selected row: step its action, toggle vibration, assign, or cancel.",
+        "target_id": "na2_elf",
+        "offset": "0x2882F0",
+        "expected_hex": "A0FFBD275000BFFF",
+        "symbol": "control_settings_edit",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "replace_row_cells": {
+        "description": "Draw the eleven center cells, including L3 and R3 from the shoulder-button texture.",
+        "target_id": "na2_elf",
+        "offset": "0x288560",
+        "expected_hex": "C0FFBD273000BFFF",
+        "symbol": "control_settings_draw_cells",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "replace_row_labels": {
+        "description": "Draw the eleven rows of labels with the cursor and row frame.",
+        "target_id": "na2_elf",
+        "offset": "0x2886B0",
+        "expected_hex": "90FFBD276000BFFF",
+        "symbol": "control_settings_draw_rows",
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
       }
@@ -228,7 +229,7 @@
     "payload": {
       "control_settings": {
         "kind": "c",
-        "path": "na228_builder/patches/general/new_controls/control_settings.c",
+        "path": "na228_builder/patches/general/controls/control_settings.c",
         "namespace": "general.controls",
         "imports": {
           "mod_text_settings__substitution__label": "mod_text_settings__substitution__label",
@@ -238,12 +239,13 @@
           "mod_text_controls__item_select_r__label": "mod_text_controls__item_select_r__label",
           "mod_text_controls__unbound__label": "mod_text_controls__unbound__label",
           "control_settings_extra_bindings": "control_settings_extra_bindings",
-          "control_settings_substitution_input_get": "control_settings_substitution_input_get"
+          "substitution_input_get": "substitution_input_get",
+          "control_default_reset_actions": "control_default_reset_actions",
+          "control_settings_button_icons": "control_settings_button_icons",
+          "control_settings_label_draw": "control_settings_label_draw",
+          "control_settings_help_set": "control_settings_help_set"
         },
         "fragments": {
-          "control_settings_reset_with_help": {
-            "object": "general.controls.text.control.settings.reset.with.help"
-          },
           "control_settings_helpers": {
             "object": "general.controls.text.control.settings.helpers"
           },
@@ -294,25 +296,45 @@
           },
           "control_settings_action_step": {
             "object": "general.controls.text.control.settings.action.step"
+          },
+          "control_settings_navigate": {
+            "object": "general.controls.text.control.settings.navigate"
+          },
+          "control_settings_edit": {
+            "object": "general.controls.text.control.settings.edit"
+          },
+          "control_settings_draw_cells": {
+            "object": "general.controls.text.control.settings.draw.cells"
+          },
+          "control_settings_draw_rows": {
+            "object": "general.controls.text.control.settings.draw.rows"
+          },
+          "control_settings_reset_with_help": {
+            "object": "general.controls.text.control.settings.reset.with.help"
+          },
+          "control_settings_extra_rows": {
+            "object": "general.controls.data.control.settings.extra.rows"
+          },
+          "control_settings_scroll": {
+            "object": "general.controls.data.control.settings.scroll"
+          },
+          "control_settings_badge_sprites": {
+            "object": "general.controls.data.control.settings.badge.sprites"
           }
         },
         "resources": [
-          "na228_builder/resources/mod_strings.tsv",
-          "na228_builder/resources/default_controls.tsv"
+          "na228_builder/resources/mod_strings.tsv"
         ]
       },
       "control_settings_abi": {
         "kind": "asm",
-        "path": "na228_builder/patches/general/new_controls/control_settings_abi.S",
+        "path": "na228_builder/patches/general/controls/control_settings_abi.S",
         "namespace": "general.controls.asm",
         "imports": {
           "control_settings_substitution_accepted": "control_settings_substitution_accepted",
           "control_settings_history_any": "control_settings_history_any",
           "control_settings_guard_pressed": "control_settings_guard_pressed",
-          "control_settings_commit": "control_settings_commit",
-          "control_settings_item_select_bits": "control_settings_item_select_bits",
-          "control_settings_action_step": "control_settings_action_step",
-          "control_default_reset_actions": "control_default_reset_actions"
+          "control_settings_item_select_bits": "control_settings_item_select_bits"
         },
         "fragments": {
           "control_settings_held_bridge": {
@@ -324,17 +346,14 @@
           "control_settings_block_bridge": {
             "object": "general.controls.asm.text.control.settings.block.bridge"
           },
-          "control_settings_commit_bridge": {
-            "object": "general.controls.asm.text.control.settings.commit.bridge"
-          },
           "control_settings_item_select_bridge": {
             "object": "general.controls.asm.text.control.settings.item.select.bridge"
           },
-          "control_settings_step_bridge": {
-            "object": "general.controls.asm.text.control.settings.step.bridge"
+          "control_settings_match_bridge": {
+            "object": "general.controls.asm.text.control.settings.match.bridge"
           },
-          "control_settings_reset_rows_bridge": {
-            "object": "general.controls.asm.text.control.settings.reset.rows.bridge"
+          "control_settings_count_bridge": {
+            "object": "general.controls.asm.text.control.settings.count.bridge"
           }
         }
       }
@@ -405,19 +424,43 @@
         "kind": "c",
         "path": "na228_builder/patches/general/battle_results_rematch.c",
         "namespace": "general.rematch",
-        "resources": ["na228_builder/patches/general/rematch_label.png"],
-        "imports": {"rematch_label_pixels": "rematch_label_pixels"},
+        "resources": [
+          "na228_builder/patches/general/rematch_label.png"
+        ],
+        "imports": {
+          "rematch_label_pixels": "rematch_label_pixels"
+        },
         "fragments": {
-          "rematch_helpers": {"object": "general.rematch.text"},
-          "rematch_rodata": {"object": "general.rematch.rodata"},
-          "rematch_state": {"object": "general.rematch.bss.rematch"},
-          "rematch_queue_resources": {"object": "general.rematch.text.rematch.queue.resources"},
-          "rematch_initialize": {"object": "general.rematch.text.rematch.initialize"},
-          "rematch_draw": {"object": "general.rematch.text.rematch.draw"},
-          "rematch_accept": {"object": "general.rematch.text.rematch.accept"},
-          "rematch_cleanup": {"object": "general.rematch.text.rematch.cleanup"},
-          "rematch_restart": {"object": "general.rematch.text.rematch.restart"},
-          "rematch_begin_battle": {"object": "general.rematch.text.rematch.begin.battle"}
+          "rematch_helpers": {
+            "object": "general.rematch.text"
+          },
+          "rematch_rodata": {
+            "object": "general.rematch.rodata"
+          },
+          "rematch_state": {
+            "object": "general.rematch.bss.rematch"
+          },
+          "rematch_queue_resources": {
+            "object": "general.rematch.text.rematch.queue.resources"
+          },
+          "rematch_initialize": {
+            "object": "general.rematch.text.rematch.initialize"
+          },
+          "rematch_draw": {
+            "object": "general.rematch.text.rematch.draw"
+          },
+          "rematch_accept": {
+            "object": "general.rematch.text.rematch.accept"
+          },
+          "rematch_cleanup": {
+            "object": "general.rematch.text.rematch.cleanup"
+          },
+          "rematch_restart": {
+            "object": "general.rematch.text.rematch.restart"
+          },
+          "rematch_begin_battle": {
+            "object": "general.rematch.text.rematch.begin.battle"
+          }
         }
       }
     }

@@ -267,20 +267,6 @@
         "symbol": "v2_help_set",
         "encoding": "jal26"
       },
-      "help_set_controls_01": {
-        "target_id": "na2_elf",
-        "offset": "0x288154",
-        "expected_hex": "D8FD0D0C",
-        "symbol": "v2_help_set",
-        "encoding": "jal26"
-      },
-      "help_set_controls_02": {
-        "target_id": "na2_elf",
-        "offset": "0x28822C",
-        "expected_hex": "D8FD0D0C",
-        "symbol": "v2_help_set",
-        "encoding": "jal26"
-      },
       "help_set_controls_03": {
         "target_id": "na2_elf",
         "offset": "0x288B9C",
@@ -688,14 +674,6 @@
         "offset": "0x1C6A70",
         "expected_hex": "C4080E0C00000000",
         "symbol": "v2_command_relationship_adapter",
-        "encoding": "jal26"
-      },
-      "replace_shared_first_eight_label_controls": {
-        "description": "Replace the shared first-eight-label Controls draw call with the v2 128-unit boxed adapter.",
-        "target_id": "na2_elf",
-        "offset": "0x288848",
-        "expected_hex": "90E40D0C00000000",
-        "symbol": "v2_controls_adapter",
         "encoding": "jal26"
       },
       "route_inline_markup_half_space_advance": {

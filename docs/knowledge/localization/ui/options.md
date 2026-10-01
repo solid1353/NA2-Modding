@@ -188,6 +188,69 @@ ends, `FUN_0038bbf0` clears that manager and queues a white
 `FUN_00183df0` transition before returning to phase `0`. The manager pointer
 is held at `0x00607464`; `FUN_00183610` clears its four transition slots.
 
+### Controls rows
+
+The child keeps, per player, its interaction mode at `+0x04 + side * 4`, the
+selected row at `+0x0C + side * 4`, and nine row values at
+`+0x14 + side * 0x24`: eight action indices, then the vibration choice at
+`+0x34 + side * 0x24`. The two players' rows are contiguous, and `+0x5C` follows
+them, so the array has no room for more rows.
+
+The rows are fixed at nine and spaced `26.8` units apart:
+
+| Function | Row use |
+| --- | --- |
+| `FUN_00387e10` | Up and Down move the selected row and wrap it within `0..8` |
+| `FUN_003881f0` | Edits the selected row: Circle assigns, Cross restores the staged value at `+0x5C + side * 4`, Left and Right change the value |
+| `FUN_00388460` | Draws the center-column cells at X `256`, Y `57 + 26.8 * row`, from nine 8-byte rectangles at `0x005D5280`: rows `0..3` with sprite `+0x6C`, `4..7` with `+0x70`, and row `8` with `+0x68` |
+| `FUN_003885b0` | Draws each player's labels at X `124` or `388`, Y `48 + 26.8 * row`; a player in mode `2` gets the cursor at Y `57 + 26.8 * selected`, and every player not in mode `0` gets the row frame |
+| `FUN_00388820` | Places the row frame, `+0x88` for player 1 or `+0x8C` for player 2, at X `-128` or `128` and `-25.8 * row` |
+| `FUN_00388900` | Draws the cursor: the `+0x68` rectangle at `0x00604668` on both sides of the label, the right copy with sprite flag `0x20` |
+| `FUN_00388b90` | Renders the child: objects `+0x84` and `+0x80` through `FUN_001bb790`, then the cells and labels, the title rectangle `0x005D52D0` at Y `26`, the footer at Y `356`, and the help banner through `FUN_0037f900` |
+
+The child's initializer `FUN_00387650` takes its assets from the `gauge`
+archive, `CMN/GAUGE.CCS`:
+
+| Field | Asset |
+| --- | --- |
+| `+0x68` | Sprite from `TEX_xmenu`: title, vibration cell, and footer legend |
+| `+0x6C` | Sprite from `TEX_xcommand`: face-button cells |
+| `+0x70` | Sprite from `TEX_xcommand02`: shoulder-button cells |
+| `+0x80` | `ANM_xmenu01` |
+| `+0x84` | `ANM_xmenu_ca` |
+| `+0x88`, `+0x8C` | `CMP_xfra_choise`, `CMP_xfra_choise0` |
+
+No code draws the nine beige row boxes; they are inferred to belong to the
+`ANM_xmenu01`/`ANM_xmenu_ca` objects, which the renderer draws before the
+cells and labels. These functions were inspected through GhidrAssistMCP.
+
+In `FUN_00387e10`, Circle (`0x20`) puts the player in mode `2` and stages the
+row value. Cross (`0x40`) confirms when both players are in mode `0` or `1`;
+otherwise it plays sound `0x3F` and shows the help message
+`*(0x005B2520 + (7 - side) * 4)`. Select (`0x100`) copies the nine retail
+default rows from `0x005D5250` and shows `*(0x005B2524 + side * 4)`. Each
+message replaces the banner: `FUN_0037eee0` clears the help object at `+0x90`,
+then `FUN_0037f760(20.0, help, message, 8, 0)` queues the text.
+
+Every frame, the renderer passes each sprite to `FUN_001cc070` after its
+draws. Sprite `+0x70` receives the four shoulder cells. In the sprite
+submission `FUN_001cc3a0`, flag `0x20` at sprite `+0x04` swaps the quad's
+corners horizontally and flag `0x40` vertically; the battle sprite records set
+them from their mirror bits. Float sprite fields `+0x58` and `+0x5C` set the
+drawn size, and integer fields `+0x60` and `+0x64` set the texel size. The
+64-bit fields `+0x90` (red in bits `0..7`, green in `32..39`) and `+0x98` (blue
+in bits `0..7`) hold the quad color, which scales each texel by color / 128.
+
+`TEX_xcommand02` is a 64x64 4-bit texture stored bottom row first, so a
+rectangle's Y counts from the last stored row. Its pixels stay resident in EE
+memory, and texel rows `40..63` are blank. `TEX_xmenu` is a 256x128 8-bit
+texture whose 256-color palette is in index order in `CMN/GAUGE.CCS` and in GS
+storage order, with index bits 3 and 4 swapped, once loaded. It holds three
+down-pointing 20x22 chevrons at X `130`, `154`, and `178`, Y `29`, colored red
+`(240, 51, 51)`, blue `(74, 41, 237)`, and green `(21, 175, 76)` with darker
+shading; no Controls code draws them. Texels `200..255` by rows `26..57` are
+blank.
+
 On Options teardown, `FUN_0038b370` calls `FUN_003874c0` for the Controls
 resources and frees its child. It releases the Options archive only when the
 controller's acquisition byte at `+0x00` indicates ownership. These functions

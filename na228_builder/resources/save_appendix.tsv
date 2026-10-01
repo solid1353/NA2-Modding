@@ -59,11 +59,11 @@ id	key	label	values
 0039	practice.opponent.substitution_jutsu	Opponent Substitution Jutsu	Normal | No
 003A	practice.opponent.linked_attack	Opponent Linked Attack	Don't Use | Normal | Random
 003B	practice.opponent.extra_hit_counter	Opponent Extra Hit Counter	Normal | Return
-003C	controls.p1.guard	P1 Guard	Unbound | L2 | R2 | L1 | R1
-003D	controls.p1.substitution	P1 Substitution	Unbound | L2 | R2 | L1 | R1
-003E	controls.p1.item_select_l	P1 Item Select L	Unbound | L2 | R2 | L1 | R1
-003F	controls.p1.item_select_r	P1 Item Select R	Unbound | L2 | R2 | L1 | R1
-0040	controls.p2.guard	P2 Guard	Unbound | L2 | R2 | L1 | R1
-0041	controls.p2.substitution	P2 Substitution	Unbound | L2 | R2 | L1 | R1
-0042	controls.p2.item_select_l	P2 Item Select L	Unbound | L2 | R2 | L1 | R1
-0043	controls.p2.item_select_r	P2 Item Select R	Unbound | L2 | R2 | L1 | R1
+003C	controls.p1.guard	P1 Guard	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
+003D	controls.p1.substitution	P1 Substitution	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
+003E	controls.p1.item_select_l	P1 Item Select L	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
+003F	controls.p1.item_select_r	P1 Item Select R	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
+0040	controls.p2.guard	P2 Guard	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
+0041	controls.p2.substitution	P2 Substitution	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
+0042	controls.p2.item_select_l	P2 Item Select L	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
+0043	controls.p2.item_select_r	P2 Item Select R	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3

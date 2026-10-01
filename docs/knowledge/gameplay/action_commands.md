@@ -38,7 +38,7 @@ callees.
 
 - **Confirmed coverage:** the documented results include the
 live/export/file address convention; native pad masks and configurable binding
-layout; `ccCommand`/`ccCommandCtrl` identity, object fields, construction,
+layout, including the width each binding reader tests; `ccCommand`/`ccCommandCtrl` identity, object fields, construction,
 virtual update route, circular history records, normalization, and edge
 recomputation; exact boolean and count matcher ABIs, scan order, wrapping,
 comparison modes, diagonal repair, and caller hazards; direction-selector and
@@ -161,6 +161,27 @@ The useful confirmed fields of the battle input object are:
 | `+0x9C` | 4 | current record index |
 | `+0xA0` | 4 | record capacity, initialized as `300 / object[+0x7C]` |
 | `+0xA4` | 4 | direction-sector threshold used with selectors 4 and 5 |
+Binding consumers use the full 16-bit value. The translator (Ghidra BTL
+`FUN_006efdc0`, containing D `0x006F0500`) loads the eight copied bindings at
+input-object `+0x68..+0x76` as signed halfwords and ANDs each with the 32-bit
+held or pressed pad word, so a binding to Select, L3, or R3 is tested like any
+other bit. The three BTL readers of binding index 1, D `0x00796A50`,
+`0x007FF520`, and `0x00806680`, AND it with the 32-bit word at
+`0x78 * side + [gp-0x35F4] + 0x84` in the same way.
+
+The remaining readers map bindings to fixed button sets for presentation:
+
+| Reader | Mapping |
+| --- | --- |
+| resident `FUN_0020ce10` | one binding to a prompt index for the eight face and shoulder masks; any other value returns `0x1E` |
+| resident `FUN_00387950` | Options Controls row reconstruction from the eight masks at `0x005D5230` |
+| BTL D `0x00796950`, `0x007FDCC0`, `0x00804D00`, `0x0071CAF0` | binding glyphs resolved through BTL live `0x006B4110` |
+| BTL D `0x00879360` / live `0x008793A0` | bindings 0 through 3 to values `6`, `7`, `4`, `5` for Square, Cross, Circle, Triangle; any other mask stores `0` at object `+0x20..+0x2C` |
+
+The chart row builder consumes object `+0x20..+0x2C`; see
+[Action-chart display path](#action-chart-display-path). These readers were
+inspected through GhidrAssist.
+
 | `+0xA8` | 4 | direction-sector threshold used with selectors 2 and 3 |
 | `+0xAC` | 4 | translated battle logical mask |
 | `+0xB0` | 4 | normalized left-stick magnitude, `record[+0x14] / 255.0` |
@@ -327,7 +348,9 @@ general leniency rule for cardinal requests.
 
 The wrapper at live `0x006EFC40`, export `FUN_006efc00` at `0x006EFC00`, file
 `0x03BD40`, replaces the requested mask with one selected binding before
-calling the matcher. Several Ghidra functions around this matcher are split at
+calling the matcher. It loads the binding from input-object `+0x68` itself
+rather than through the accessor. The counting sibling below has the same
+wrapper at live `0x006EFD90`, export `FUN_006efd50`, file `0x03BE90`. Several Ghidra functions around this matcher are split at
 the wrong live targets; call-site register setup and raw bytes are authoritative.
 
 These primitives trust their callers. The binding accessor and wrappers do not

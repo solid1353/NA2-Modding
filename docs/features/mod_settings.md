@@ -62,8 +62,11 @@ Battle Mechanics. Changes made through these pages also appear in the existing
 in-game Battle Settings and Practice Settings menus.
 
 Control Settings opens the native Options Controls screen and controller over
-the Mod Settings menu. Its binding and vibration edits, defaults, confirmation,
-and cancellation use the native Controls behavior. Mod Settings keeps its
+the Mod Settings menu. Both players can edit it, as in Options; the native reset
+otherwise leaves only the last battle's human side active outside the Options
+mode. Each player's side reads that player's own pad. Its binding and
+vibration edits, defaults, confirmation, and cancellation use the native
+Controls behavior. Mod Settings keeps its
 selected row and staged values while Controls is open. Closing Controls returns
 to its launcher; confirmed control changes are independent of the Mod Settings
 transaction. The Mod Settings handoff clears the native Options white

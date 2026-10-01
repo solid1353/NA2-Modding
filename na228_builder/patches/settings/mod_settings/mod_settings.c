@@ -67,6 +67,8 @@ typedef unsigned int u32;
 #define OPTIONS_CONTROLS_OFFSET 0x44u
 #define OPTIONS_PHASE_OFFSET 0x38u
 #define OPTIONS_CONTROLS_PHASE 5u
+#define CONTROLS_SIDE_MODE_OFFSET 0x04u
+#define CONTROLS_SIDE_ACTIVE 1
 #define INPUT_SQUARE 0x0080u
 #define PRACTICE_CHILD_PHASE_OFFSET 0x38u
 #define OPTIONS_CONTEXT_SIZE 0x40u
@@ -986,6 +988,7 @@ MOD_SETTINGS_SECTION(".text.mod_settings_open_controls")
 s32 mod_settings_open_controls(void)
 {
     void *controls;
+    s32 *sides;
 
     if (
         mod_settings_backdrop.state != MOD_SETTINGS_ACTIVE ||
@@ -1004,6 +1007,12 @@ s32 mod_settings_open_controls(void)
     ((ObjectCall)CONTROLS_RESET_ADDRESS)(
         *(void **)((u8 *)controls + OPTIONS_CONTROLS_OFFSET)
     );
+    /* The reset leaves only the last battle's human side active outside the
+       Options mode; like Options, Mod Settings serves both players. */
+    sides = (s32 *)(*(u8 **)((u8 *)controls + OPTIONS_CONTROLS_OFFSET) +
+                    CONTROLS_SIDE_MODE_OFFSET);
+    sides[0] = CONTROLS_SIDE_ACTIVE;
+    sides[1] = CONTROLS_SIDE_ACTIVE;
     mod_settings_backdrop.controls = controls;
     mod_settings_backdrop.state = MOD_SETTINGS_CONTROLS;
     return 1;
@@ -1118,11 +1127,8 @@ void mod_settings_mode_select_update(void *controller)
         void *controls = mod_settings_backdrop.controls;
 
         if (controls != (void *)0) {
-            mod_settings_route_update(
-                controls,
-                controller,
-                OPTIONS_UPDATE_ADDRESS
-            );
+            /* Controls reads each player's own pad, so it gets no routed input. */
+            ((ObjectUpdate)OPTIONS_UPDATE_ADDRESS)(controls);
             if (
                 *(u16 *)((u8 *)controls + OPTIONS_PHASE_OFFSET) !=
                 OPTIONS_CONTROLS_PHASE

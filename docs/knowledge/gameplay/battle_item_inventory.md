@@ -27,7 +27,8 @@ Direct call targets and absolute data operands are live addresses.
   MCP. Its function boundaries split these routines, so missing instructions
   were read from MCP memory dumps.
 - **Confirmed coverage:** NA2 panel allocation, owned objects, slot objects,
-  slot-count constants, selection advance, wheel geometry, CPU use of slot
+  slot-count constants, selection advance, wheel geometry, the root draw's
+  call order including the support-gauge draw, CPU use of slot
   relations, and cache layout. NUN3 homologous manager and panel layouts, the
   five-slot loops, compacting removal, and the HUD layout routine structure.
   NUN4's horizontal item offsets, height interpolation, scale, and count-dependent
@@ -70,13 +71,13 @@ for a side.
 | `+0x10` | Owned 48-byte object |
 | `+0x14` | Owned 24-byte object; receives the selected item code each update |
 | `+0x18` | Owned 16-byte list object |
-| `+0x1C` | Owned 44-byte object |
+| `+0x1C` | Owned 44-byte support-gauge controller |
 | `+0x20` | Side |
 | `+0x24` | Selected slot index |
 | `+0x28` | Float wheel animation offset |
 | `+0x30,+0x34` | Base screen position: X `66.0` for side 0 or `446.0` for side 1, Y `340.0` |
 | `+0x40` | Vector added to `+0x30` by `L 0x0070FE40` |
-| `+0x44` | Float animated toward `200.0` by `L 0x00711B40` |
+| `+0x44` | Float animated toward `200.0` by `L 0x00711B40`; `L 0x0070FE60` returns it |
 | `+0x50` | Wheel origin used by the HUD draw |
 | `+0x60..+0x63` | State bytes; `+0x61` is set by activation and `+0x62` by advance |
 | `+0x64` | Inline object initialized by the base initializer |
@@ -170,8 +171,11 @@ first factor  = 1 - 0.10 * |k|
 second factor = 1 - 0.15 * |k| for k >= 0, else 1 - |k|
 ```
 
-The root draw `L 0x007127B0` draws the item-select button badge before the
-wheel. Its object at panel `+0x10` holds the badge offset from the wheel
+The root draw `L 0x007127B0` first stores `+0x30 + +0x40` at the wheel
+origin `+0x50`. It draws the item-select button badge before the wheel, and
+after the wheel it calls the `+0x18` and `+0x14` objects and the support-gauge
+draw for `+0x1C` (`L 0x0071D270`, which updates the controller and draws the
+support block while its visibility byte `+0x0A` is nonzero). Its object at panel `+0x10` holds the badge offset from the wheel
 (`-38.0, 16.0`, with `x` negated for side 1) at `+0x10`, its scale at `+0x20`,
 and the sprite at `+0x24`. Resident `0x00376F10(side, action)` reads the side's
 binding for the action and maps it through six `(button mask, sprite)` pairs at

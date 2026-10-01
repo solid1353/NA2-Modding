@@ -2556,7 +2556,7 @@
         "encoding": "jal26"
       },
       "route_support_gauge_draw": {
-        "description": "Suppress the dedicated native support gauge only while Off.",
+        "description": "Draw a slim support bar below the side's item wheel, or nothing while Off.",
         "target_id": "na2_btl",
         "offset": "0x69398",
         "expected_hex": "BC721C0C",
@@ -2568,13 +2568,6 @@
         "offset": "0x14DDB0",
         "expected_hex": "50E1080C",
         "symbol": "battle_support_route_gauge_update",
-        "encoding": "jal26"
-      },
-      "support_gauge_marker": {
-        "target_id": "na2_btl",
-        "offset": "0x69110",
-        "expected_hex": "10EF0D0C",
-        "symbol": "battle_support_draw_marker",
         "encoding": "jal26"
       },
       "support_gauge_readiness": {
@@ -2594,8 +2587,8 @@
           "support_get": "support_get"
         },
         "fragments": {
-          "battle_support_draw_marker": {
-            "object": "battle.support.text.battle.support.draw.marker"
+          "battle_support_end_profile": {
+            "object": "battle.support.rodata.battle.support.end.profile"
           },
           "battle_support_gauge_ready": {
             "object": "battle.support.text.battle.support.gauge.ready"

@@ -506,7 +506,30 @@ No replacement palette is used.
 `@builder/patches/settings/ingame/battle_mechanics/support/battle_support.c`
 owns the mode routing. The guarded hooks replace
 the fighter's support-request and gauge-update calls, the active-drain call,
-the HUD readiness predicate, the marker draw, and the support-gauge draw.
+The feature replaces the
+[native support block](../knowledge/gameplay/substitution.md#native-hud-ownership)
+with a slim bar under the item wheel:
+
+- The bar is `54` by `6` HUD units with a `1`-unit black edge, centered on the
+  item panel's wheel origin and `31` units below it, between the item count and
+  the bottom of the item-select badges. Its edge, backing, and fill have
+  semicircular ends, drawn as six nested full-span strips whose heights follow
+  a circle; overlapping strips leave no pixel gaps between quads.
+  It follows the wheel's Extended Items
+  position and the panel slide, and draws only when the native support draw
+  would.
+- A dark backing holds the fill, tinted with the native palette entry for the
+  gauge state. P2's fill grows toward the screen center.
+- While support is ready, the native icon's readiness pulse brightens the
+  whole fill by blending its tint toward white.
+  Normal marks its half-gauge threshold with a light `1`-unit line inside a black
+  pin that extends `1` unit beyond the bar's edge on every side.
+- The icon, button badge, and textured frame are not drawn. Each strip is the
+  native fill column `0x00604D30` stretched and tinted. Each layer is flushed
+  separately, because a sprite drops queued quads past its limit until a flush.
+- Off draws nothing.
+
+the HUD readiness predicate, and the support-gauge draw.
 The separate Practice key-`3` refill block is bypassed, so its stored native
 bit cannot override the shared mode. General Settings no longer exposes
 `linked_attack`; the opponent's `linked_attack` still controls dummy behavior.

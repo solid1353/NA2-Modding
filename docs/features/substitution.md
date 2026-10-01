@@ -782,8 +782,9 @@ The independent renderer does not overwrite any of those controller fields.
 The native red marker is fixed at half bar: fill geometry starts at X offset
 `20.0`, spans `64.0`, and the marker loads offset `52.0`, so
 `(52 - 20) / 64 = 0.5`. Its draw call is live `0x0071CFD0`, BTL raw `0x69110`,
-with clean bytes `10EF0D0C`. The implementation leaves that call and its complete
-native renderer clean. Its own draw uses the same resident sprite primitive
+with clean bytes `10EF0D0C`. [Battle support](battle.md#battle-support) replaces the
+whole support-block draw, so that call no longer runs. This renderer's own draw
+uses the same resident sprite primitive
 and computes marker X from the current side's executable cost fraction.
 
 ### Native color reuse

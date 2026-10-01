@@ -175,8 +175,10 @@ fill begins at `20.0`, spans `64.0`, and the marker uses `52.0`.
 
 The draw, Ghidra `FUN_0071CAB0`, places the whole support block from that one
 anchor. Side 1 uses negative widths. The Y base adds the slide offset that
-`0x0070FE60` returns for the HUD layout found through `0x00376610(controller)`
-and `0x00375A60(hud, side)`. In draw order it commits, through `0x001CC350`:
+`0x0070FE60` returns for the side's item panel, found through
+`0x00376610(controller)` and `0x00375A60(hud, side)`. The controller is that
+panel's owned `+0x1C` object, and the panel's root draw ends with this draw;
+see [Battle item inventory](battle_item_inventory.md#na2-hud-wheel). In draw order it commits, through `0x001CC350`:
 
 - the bar frame's left cap, a single stretched texel column after it, and the
   X-flipped cap;

@@ -16,9 +16,9 @@ Canonical imports validate complete structured message families. Active
 consistent full template and cover every `<br>` part exactly once. Missing,
 duplicate, or out-of-range parts fail before materialization.
 
-The official `donor` is the default executable translation. User-authored
-`prefix` is prepended to the resolved text, while `replacement` is reserved for
-a direct user edit that overrides the donor before transforms are applied.
+The official `donor` is the executable translation. User-authored `prefix` is
+prepended to the resolved text. A row with a `mod_string` ID is owned by that
+mod string and skipped by the importer.
 Agents follow the
 [modding policy](../../../../AGENTS.md#builder-binary-and-donor-changes).
 The importer normalizes fullwidth ASCII-compatible characters in resolved

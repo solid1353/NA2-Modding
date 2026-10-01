@@ -16,6 +16,7 @@ from ..modules.payload_builder.operations import (
 )
 from .configuration import BuildConfiguration, ModuleInvocation
 from ...patches.localization.mod_strings import ModStrings
+from ...patches.localization.retail_strings import owned_retail_strings, retail_string_package
 from ...patches.settings.character_overrides.character_overrides import (
     character_override_fragment,
 )
@@ -310,6 +311,10 @@ def prepare_module_pipeline(
                         *declaration.fragments,
                     ),
                 )
+        if module.feature_id == "defaults":
+            declaration = retail_string_package(
+                declaration, configuration.roots["na2"], configuration.targets_path
+            )
         if module.module_id in owners:
             raise ValueError(
                 f"Duplicate resident-payload owner: {module.module_id}"
@@ -364,7 +369,11 @@ def prepare_module_pipeline(
         for declaration in runtime_injection_declarations.values()
         for patch in declaration.symbolic_patches
     )
-    fragments += ModStrings(configuration.selection).fragments(fragments, symbolic_patches)
+    fragments += ModStrings(
+        configuration.selection,
+        retail_ids={entry.string_id for entry in owned_retail_strings()},
+        retail_arguments={"title": configuration.product_title},
+    ).fragments(fragments, symbolic_patches)
     payload_build = (
         payload_builder_module.build_resident_payload(
             fragments,

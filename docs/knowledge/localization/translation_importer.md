@@ -44,7 +44,7 @@ byte checks against the clean NA2 and NUN5 files prove these 30 selected rows:
   T2026 at different boot-ELF slots and does not share this coverage.
 
 The canonical `source_ref` and `donor_ref` fields on those 30 rows record every
-exact verified NA2 and NUN5 offset. No Menus row uses a replacement or prefix,
+exact verified NA2 and NUN5 offset. No Menus row uses a mod string or prefix,
 and equal English in another executable family does not transfer this basis.
 
 ### Practice capture-selection boundary
@@ -76,7 +76,7 @@ the Practice-owned T1920 `Charge Chakra` title from the Command Chart T1926
 The user excluded long helper, status, and explanatory strings from this
 batch. T1880, T1959, the Practice explanations, and the Settings running-help
 rows therefore receive no `e2e:practice` basis from these captures. All 55
-admitted rows retain blank `prefix` and `replacement` fields.
+admitted rows retain blank `prefix` and `mod_string` fields.
 
 ### Ninja Song capture-selection boundary
 
@@ -100,7 +100,7 @@ displaying T2198 `%` as a unit.
 
 T2191-T2193 are literal NA2 unit slots that this capture plan does not display;
 they retain their historical basis and `empty` transforms. Every admitted
-Ninja Song row keeps its exact `source_ref` and `donor_ref`, all `replacement`
+Ninja Song row keeps its exact `source_ref` and `donor_ref`, all `mod_string`
 fields remain blank, and importer validation resolves the source and donor
 bytes at those recorded offsets.
 
@@ -324,8 +324,7 @@ strings. The raw records select `@White Picture@` at `TEXTENG.BIN` `0x3FF0`,
 captures render those spans as quotation marks. The accepted NA2 atlas renders
 byte `0x40` literally, so the translation importer decodes every balanced
 NUN5 `@...@` span centrally before transforms or placement. Canonical rows
-retain the exact raw donor and offset, keep `replacement` blank, and cannot
-declare a row-level override for this family.
+retain the exact raw donor and offset and keep `mod_string` blank.
 
 Command Chart move title T1486 is a separate exact-record edge case: NUN5
 `TEXTENG.BIN` `0xB9A0` stores `Air Strike Palm` followed by byte `0x0A` and
@@ -525,8 +524,8 @@ screen coverage.
 
 Canonical donor evidence preserves official wording. It does not insert
 authored line breaks or shorten correct text merely to compensate for a
-renderer defect. Direct user overrides remain separate in the `replacement`
-field and do not change the recorded donor.
+renderer defect. Text the mod rewrites belongs to a mod string linked by the
+`mod_string` field and does not change the recorded donor.
 Collection Movie line breaks added to four exact NUN5 titles were rejected and
 removed; wrapping belongs to the Font caller path. Likewise, the correct
 `Flying Thunder God Jutsu` mapping remains unchanged even if a particular

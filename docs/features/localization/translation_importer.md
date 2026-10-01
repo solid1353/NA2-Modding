@@ -42,12 +42,13 @@ Clean NA2 targets:
 NUN5 donor references and donor text are retained in the table for review,
 provenance, and executable translation. Normal builds do not read donor
 binaries: the verified `donor` text in the table is the default translation.
-A nonempty `replacement` is reserved for a direct user override, and `prefix`
-is a user-editable string prepended to the selected translation. T1933 directly
-overrides the Mode Select return confirmation with `View the movie?`.
+A nonempty `mod_string` hands the row's retail string to that
+[mod string](mod_strings.md) in every language, and the importer skips it.
+`prefix` is a user-editable string prepended to the translation. T1933, the
+Mode Select return confirmation, and T2055 and T2237, the startup memory card
+prompts that state NA2's 103 KB requirement, are owned by mod strings.
 T2233 uses NUN5's verified status-7 donor, which shares the absent-card
-warning used by T2035. T2055 and T2237 retain NA2's 103 KB requirement in
-place of the donor's 102 KB. Other rows use verified donors.
+warning used by T2035. Other rows use verified donors.
 T30 uses the
 exact `Ultimate` donor at `NUN5_TEXTENG@0xF208` and
 the validated pointer at `NA2_BTL@0x209CB4`; encoded fit therefore externalizes
@@ -73,7 +74,7 @@ that context, then by stable `id`.
 The 16 columns are:
 
 `id`, `enabled`, `display_context`, `source`, `donor`, `prefix`,
-`replacement`, `display_basis`, `source_ref`, `reference_refs`, `donor_ref`,
+`mod_string`, `display_basis`, `source_ref`, `reference_refs`, `donor_ref`,
 `mode`, `capacity`, `transform`, `arguments`, `parent_mapping_id`
 
 ### Stable IDs and enabled state
@@ -96,7 +97,7 @@ E2E suites validate 1,887 unique rows. The remaining 180 rows have a blank
 `display_basis`: they remain executable because they are established working
 mappings, but they are explicitly unvalidated. Earlier screenshot, inference,
 and structural-family labels were removed because only maintained E2E execution
-validates a row. Every `prefix` value is blank. The nonempty `replacement`
+validates a row. Every `prefix` value is blank. The nonempty `mod_string`
 rows are T1933, T2055, and T2237.
 The Jutsus suite selects 26 exact Command Chart records, including T260 plus 25
 records also selected by Movesets. The Menus suite selects 30 exact Battle
@@ -179,9 +180,8 @@ record by the accepted capture plan; equal text or family membership alone is
 not coverage. Coverage summaries count every entry independently, so a shared
 row contributes to each proven suite.
 
-`replacement` is reserved for direct user edits and is normally blank. The
-importer selects nonempty `replacement` or otherwise `donor`, applies the
-declared transform, then prepends the user-editable `prefix`. For sequence rows,
+The importer takes `donor`, applies the declared transform, then prepends the
+user-editable `prefix`. For sequence rows,
 the prefix is applied to the first resulting fragment. Most rows require no
 transform. Paired `@...@` spans in official NUN5 donor text are decoded as
 quotation marks by the importer before those operations, and NUN5's semantic

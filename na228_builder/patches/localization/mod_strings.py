@@ -28,7 +28,10 @@ def message(identifier: str, **arguments: object) -> Message:
 
 
 class ModStrings:
-    def __init__(self, selection):
+    def __init__(self, selection, *, retail_ids=frozenset(), retail_arguments=None):
+        # Strings that own a retail slot, and the values for their named fields.
+        self.retail_ids = frozenset(retail_ids)
+        self.retail_arguments = dict(retail_arguments or {})
         self.language = next(node.configured_value for node in selection.nodes
                              if node.path == ("features", "localization"))
         self.encoding = "cp932" if self.language == "jp" else "cp1252"
@@ -64,7 +67,20 @@ class ModStrings:
                            for part in re.split(r"(<[^>]*>)", text))
         return text.encode(self.encoding)
 
+    def retail_payload(self, identifier: str) -> bytes:
+        """A retail replacement: line breaks become the NUL between message parts, and an
+        empty part ends the sequence."""
+        template = self.rows[identifier]
+        fields = {name for _, name, _, _ in Formatter().parse(template) if name is not None}
+        if fields - set(self.retail_arguments):
+            raise ValueError(f"Mod string {identifier!r} has unknown fields: {sorted(fields)}")
+        text = self.resolve(Message(identifier, {name: self.retail_arguments[name] for name in fields}))
+        return self.encode(text).replace(b"\n", b"\0") + b"\0\0"
+
     def native_payload(self, symbol: str) -> bytes:
+        identifier = symbol.removeprefix("mod_text_").replace("__", ".")
+        if identifier in self.retail_ids:
+            return self.retail_payload(identifier)
         if symbol == "mod_number_glyphs":
             glyphs = []
             for code in range(128):

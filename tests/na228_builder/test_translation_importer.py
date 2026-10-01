@@ -44,7 +44,7 @@ class TranslationImporterTests(unittest.TestCase):
             "source": "",
             "donor": "",
             "prefix": "",
-            "replacement": "",
+            "mod_string": "",
             "transform": "",
             "arguments": "",
             "reference_refs": "",
@@ -66,7 +66,7 @@ class TranslationImporterTests(unittest.TestCase):
             "source": "source",
             "donor": "donor",
             "prefix": "",
-            "replacement": "",
+            "mod_string": "",
             "transform": "",
             "arguments": "",
             "reference_refs": "",
@@ -91,7 +91,7 @@ class TranslationImporterTests(unittest.TestCase):
             "source": "source",
             "donor": "donor",
             "prefix": "",
-            "replacement": "",
+            "mod_string": "",
             "transform": "",
             "arguments": "",
             "reference_refs": "",
@@ -101,6 +101,31 @@ class TranslationImporterTests(unittest.TestCase):
         self.assertEqual(
             parsed["text"][0]["display_basis"],
             ("e2e:collection/test-suite",),
+        )
+
+    def test_mod_string_row_is_owned_instead_of_imported(self) -> None:
+        row = {
+            "id": "MTEST",
+            "enabled": "1",
+            "display_context": "Collection > test value",
+            "display_basis": "",
+            "mode": "slot",
+            "source_ref": "NA2_SLPS@0",
+            "donor_ref": "NUN5_SLES@0",
+            "capacity": "8",
+            "source": "source",
+            "donor": "donor",
+            "prefix": "",
+            "mod_string": "test.owned",
+            "transform": "",
+            "arguments": "",
+            "reference_refs": "",
+            "parent_mapping_id": "",
+        }
+        parsed = engine.parse_mappings([row])
+        self.assertEqual(parsed["text"], [])
+        self.assertEqual(
+            [entry["mod_string"] for entry in parsed["owned"]], ["test.owned"]
         )
 
     def test_accepts_multiple_display_bases(self) -> None:
@@ -118,7 +143,7 @@ class TranslationImporterTests(unittest.TestCase):
             "source": "source",
             "donor": "donor",
             "prefix": "",
-            "replacement": "",
+            "mod_string": "",
             "transform": "",
             "arguments": "",
             "reference_refs": "",
@@ -150,7 +175,7 @@ class TranslationImporterTests(unittest.TestCase):
             "source": "source",
             "donor": "donor",
             "prefix": "",
-            "replacement": "",
+            "mod_string": "",
             "transform": "",
             "arguments": "",
             "reference_refs": "",
@@ -179,26 +204,13 @@ class TranslationImporterTests(unittest.TestCase):
             )
         )
 
-    def test_empty_replacement_uses_the_imported_donor(self) -> None:
-        row = {
-            "donor": "Official translation",
-            "prefix": "",
-            "replacement": "",
-            "transform": "",
-            "arguments": {},
-        }
-        self.assertEqual(
-            engine.resolve_replacement_text(row, "MTEST"),
-            "Official translation",
-        )
-
     def test_empty_transform_materializes_an_intentionally_empty_string(
         self,
     ) -> None:
         row = {
             "donor": "Unused official fragment",
             "prefix": "",
-            "replacement": "",
+            "mod_string": "",
             "transform": "empty",
             "arguments": {},
         }
@@ -211,28 +223,20 @@ class TranslationImporterTests(unittest.TestCase):
         imported = {
             "donor": "Official translation",
             "prefix": "[P] ",
-            "replacement": "",
+            "mod_string": "",
             "transform": "",
             "arguments": {},
-        }
-        overridden = {
-            **imported,
-            "replacement": "User override",
         }
         self.assertEqual(
             engine.resolve_replacement_text(imported, "imported"),
             "[P] Official translation",
-        )
-        self.assertEqual(
-            engine.resolve_replacement_text(overridden, "overridden"),
-            "[P] User override",
         )
 
     def test_user_prefix_is_applied_after_the_transform(self) -> None:
         row = {
             "donor": "First line<br>Second line",
             "prefix": "[P] ",
-            "replacement": "",
+            "mod_string": "",
             "transform": "split_br",
             "arguments": {"part": "1"},
         }
@@ -241,11 +245,11 @@ class TranslationImporterTests(unittest.TestCase):
             "[P] Second line",
         )
 
-    def test_literal_format_argument_keeps_replacement_field_empty(self) -> None:
+    def test_literal_format_argument_formats_the_donor(self) -> None:
         row = {
             "donor": "Quit %1?",
             "prefix": "",
-            "replacement": "",
+            "mod_string": "",
             "transform": "format_literal_arg1",
             "arguments": {"arg1": "Collection"},
         }
@@ -258,7 +262,7 @@ class TranslationImporterTests(unittest.TestCase):
         row = {
             "donor": "Quit %1 and return to %2?",
             "prefix": "",
-            "replacement": "",
+            "mod_string": "",
             "transform": "format_literal_through_arg1",
             "arguments": {"arg1": "Battle"},
         }
@@ -271,7 +275,7 @@ class TranslationImporterTests(unittest.TestCase):
         row = {
             "donor": "100% Health bonus",
             "prefix": "",
-            "replacement": "",
+            "mod_string": "",
             "transform": "escape_literal_percent",
             "arguments": {},
         }
@@ -286,7 +290,7 @@ class TranslationImporterTests(unittest.TestCase):
                 row = {
                     "donor": donor,
                     "prefix": "",
-                    "replacement": "",
+                    "mod_string": "",
                     "transform": "escape_literal_percent",
                     "arguments": {},
                 }
@@ -300,7 +304,7 @@ class TranslationImporterTests(unittest.TestCase):
         row = {
             "donor": "ＭＡＸ　Ｄａｍａｇｅ！",
             "prefix": "［P］ ",
-            "replacement": "",
+            "mod_string": "",
             "transform": "",
             "arguments": {},
         }
@@ -313,7 +317,7 @@ class TranslationImporterTests(unittest.TestCase):
         row = {
             "donor": "Ninja Art: Beast Scroll Replicas @Wild Dog@ ",
             "prefix": "",
-            "replacement": "",
+            "mod_string": "",
             "transform": "",
             "arguments": {},
         }
@@ -326,7 +330,7 @@ class TranslationImporterTests(unittest.TestCase):
         row = {
             "donor": "Press <iconOK> to select.",
             "prefix": "",
-            "replacement": "",
+            "mod_string": "",
             "transform": "",
             "arguments": {},
         }
@@ -345,7 +349,7 @@ class TranslationImporterTests(unittest.TestCase):
                 "source": "Japanese title",
                 "donor": "Ninja Art: Beast Scroll Replicas @Wild Dog@ ",
                 "prefix": "",
-                "replacement": "",
+                "mod_string": "",
                 "transform": "",
                 "arguments": {},
             }
@@ -363,63 +367,13 @@ class TranslationImporterTests(unittest.TestCase):
         )
         self.assertEqual(materialized["MTEST"], resolved["MTEST"])
 
-    def test_nun5_quote_family_rejects_row_level_override(self) -> None:
-        row = {
-            "id": "MTEST",
-            "enabled": "1",
-            "display_context": "Command Chart > character move name",
-            "display_basis": "e2e:movesets",
-            "mode": "slot",
-            "source_ref": "NA2_SLPS@0",
-            "donor_ref": "NUN5_TEXTENG@0x10",
-            "capacity": "80",
-            "source": "Japanese title",
-            "donor": "Fire Style: Fireball Jutsu @Divinity@",
-            "prefix": "",
-            "replacement": 'Fire Style: Fireball Jutsu "Divinity"',
-            "transform": "",
-            "arguments": "",
-            "reference_refs": "",
-            "parent_mapping_id": "",
-        }
-        with self.assertRaisesRegex(
-            ValueError,
-            "quotation markup is normalized centrally",
-        ):
-            engine.parse_mappings([row])
-
-    def test_nun5_ok_icon_rejects_row_level_override(self) -> None:
-        row = {
-            "id": "MTEST",
-            "enabled": "1",
-            "display_context": "Options > instructions",
-            "display_basis": "",
-            "mode": "slot",
-            "source_ref": "NA2_SLPS@0",
-            "donor_ref": "NUN5_TEXTENG@0x10",
-            "capacity": "80",
-            "source": "Japanese instructions",
-            "donor": "Press <iconOK> to select.",
-            "prefix": "",
-            "replacement": "Press <iconCROSS> to select.",
-            "transform": "",
-            "arguments": "",
-            "reference_refs": "",
-            "parent_mapping_id": "",
-        }
-        with self.assertRaisesRegex(
-            ValueError,
-            "semantic icon markup is normalized centrally",
-        ):
-            engine.parse_mappings([row])
-
     def test_fullwidth_ascii_is_normalized_in_donor_reference_arguments(
         self,
     ) -> None:
         row = {
             "donor": "Quit %1?",
             "prefix": "",
-            "replacement": "",
+            "mod_string": "",
             "transform": "format_arg1",
             "arguments": {"arg1": "NUN5_TEXTENG@0x10"},
         }
@@ -486,7 +440,7 @@ class TranslationImporterTests(unittest.TestCase):
                 "source": "clean Japanese title",
                 "donor": "Create Naruto Shippuden: Ultimate Ninja 5 data?",
                 "prefix": "",
-                "replacement": "",
+                "mod_string": "",
                 "transform": "",
                 "arguments": {},
             }
@@ -510,7 +464,7 @@ class TranslationImporterTests(unittest.TestCase):
         row = {
             "donor": "First line<br>Second line",
             "prefix": "",
-            "replacement": "",
+            "mod_string": "",
             "transform": "split_br",
             "arguments": {"part": "0"},
         }
@@ -523,7 +477,7 @@ class TranslationImporterTests(unittest.TestCase):
         row = {
             "donor": "First line<br>Second line",
             "prefix": "",
-            "replacement": "",
+            "mod_string": "",
             "transform": "split_br",
             "arguments": {"part": "2"},
         }

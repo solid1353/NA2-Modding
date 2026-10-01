@@ -1,11 +1,19 @@
 # Mod strings
 
-`na228_builder/resources/mod_strings.tsv` owns text added by the mod: settings
-labels, help, option names, submenu headings, reset messages, Character Select
-labels, startup notices, and the save settings reset notice. Its columns are `id`, `en`,
-and `jp`. `features.localization` selects the language column. Retail string
-replacements remain in the [translation importer](translation_importer.md).
+`na228_builder/resources/mod_strings.tsv` owns all text written for the mod:
+settings labels, help, option names, submenu headings, reset messages,
+Character Select labels, startup notices, the save settings reset notice, and
+rewrites of retail strings. Its columns are `id`, `en`, and `jp`.
+`features.localization` selects the language column. Official donor
+translations remain in the [translation importer](translation_importer.md).
 Text drawn into texture images remains with its graphical assets.
+
+A [translation mapping](translation_importer.md) row with a `mod_string` ID
+hands its retail string to that mod string in every language. The builder
+guards the retail text, finds its pointer words from `reference_refs` or by
+scanning the clean binaries for aligned pointers, and redirects each one to the
+mod string; the importer skips the row. In these strings, `\n` separates the
+retail message parts and the `{title}` field inserts the product title.
 
 Python consumers use `message(id, **arguments)`. Named placeholders allow a
 translation to reorder values and include translated labels in a complete

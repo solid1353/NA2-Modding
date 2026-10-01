@@ -28,7 +28,7 @@ SOURCE_IDS = {
 }
 MAPPING_FIELDS = [
     "id", "enabled", "display_context", "source", "donor", "prefix",
-    "replacement", "display_basis", "source_ref", "reference_refs", "donor_ref",
+    "mod_string", "display_basis", "source_ref", "reference_refs", "donor_ref",
     "mode", "capacity", "transform", "arguments",
     "parent_mapping_id",
 ]
@@ -312,7 +312,7 @@ def read_rows(path: Path) -> list[dict[str, str]]:
                 f"{path.name} must contain exactly these columns in this order: "
                 + "\t".join(MAPPING_FIELDS)
             )
-        verbatim_fields = {"source", "donor", "prefix", "replacement"}
+        verbatim_fields = {"source", "donor", "prefix"}
         rows = [
             {
                 key: (
@@ -452,7 +452,6 @@ def resolve_replacement_text(
     label: str,
     donor_by_ref: dict[str, str] | None = None,
 ) -> str:
-    override = str(row["replacement"])
     template = select_replacement_template(row)
     prefix = normalize_fullwidth_ascii(str(row.get("prefix", "")))
     transform = str(row.get("transform", ""))
@@ -615,11 +614,7 @@ def normalize_nun5_donor_markup(text: str) -> str:
 
 
 def select_replacement_template(row: dict[str, object]) -> str:
-    override = str(row["replacement"])
-    selected = override if override else normalize_nun5_donor_markup(
-        str(row["donor"])
-    )
-    return normalize_fullwidth_ascii(selected)
+    return normalize_fullwidth_ascii(normalize_nun5_donor_markup(str(row["donor"])))
 
 
 def read_target_sequence(data: bytes, offset: int, capacity: int, label: str) -> tuple[list[str], bytes]:
@@ -731,7 +726,7 @@ def parse_mappings(
     *,
     table_name: str = "mappings.tsv",
 ) -> dict[str, list[dict[str, object]]]:
-    result = {"text": [], "inactive": []}
+    result = {"text": [], "inactive": [], "owned": []}
     for line, row in enumerate(rows, 2):
         label = f"{table_name} line {line} ({row['id']})"
         if row["enabled"] not in {"0", "1"}:
@@ -831,19 +826,6 @@ def parse_mappings(
         donor_ref = row["donor_ref"]
         if donor_ref:
             parse_donor_ref(donor_ref, label)
-        if NUN5_QUOTED_SPAN.search(row["donor"]) and row["replacement"]:
-            raise ValueError(
-                f"{label}: NUN5 @...@ quotation markup is normalized centrally; "
-                "replacement must be blank"
-            )
-        if (
-            any(token in row["donor"] for token in NUN5_MARKUP_EQUIVALENTS)
-            and row["replacement"]
-        ):
-            raise ValueError(
-                f"{label}: NUN5 semantic icon markup is normalized centrally; "
-                "replacement must be blank"
-            )
         reference_refs = parse_reference_refs(row["reference_refs"], label)
         parsed = {
             "id": row["id"],
@@ -858,13 +840,16 @@ def parse_mappings(
             "donor_ref": donor_ref,
             "donor": row["donor"],
             "prefix": row["prefix"],
-            "replacement": row["replacement"],
             "transform": transform,
             "arguments": arguments,
             "reference_refs": reference_refs,
             "parent_mapping_id": row["parent_mapping_id"],
         }
-        result["inactive" if row["enabled"] == "0" else "text"].append(parsed)
+        # A mod string owns its mapping's slot in every language; see mod_strings.md.
+        if row["mod_string"]:
+            result["owned"].append({**parsed, "mod_string": row["mod_string"]})
+        else:
+            result["inactive" if row["enabled"] == "0" else "text"].append(parsed)
     return result
 
 
@@ -888,9 +873,7 @@ def validate_structured_message_families(
 
     for donor_ref, rows in families.items():
         templates = {
-            normalize_fullwidth_ascii(
-                str(row["replacement"]) or str(row["donor"])
-            )
+            normalize_fullwidth_ascii(str(row["donor"]))
             for row in rows
         }
         if len(templates) != 1:
@@ -1081,11 +1064,7 @@ def apply_text_mappings(
             replacement = replacement_text.encode("cp1252")
             write_slot(output_targets[target], offset, capacity, replacement)
         occupied[target].append((offset, offset + capacity, str(row["id"])))
-        mapping_kind = (
-            "override"
-            if str(row["replacement"])
-            else "official donor translation"
-        )
+        mapping_kind = "official donor translation"
         if str(row["prefix"]):
             mapping_kind = f"prefixed {mapping_kind}"
         annotations.append({"path": TARGET_SPECS[target][0], "start": offset, "end": offset + capacity,

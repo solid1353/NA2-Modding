@@ -100,6 +100,8 @@ startup.unsupported_card	Unsupported memory card	対応していないメモリ�
 startup.load_failed	Save data could not be loaded	セーブデータを読み込めませんでした
 startup.play_time	Play Time {0}	プレイ時間 {0}
 startup.saved_time	Saved {0}	保存日時 {0}
+startup.no_card_prompt	No memory card (PS2) is inserted.\nPlease insert a memory card (PS2) in MEMORY CARD slot 1.\nAt least 103 KB of free space is necessary to save {title} data. Start the game anyway?	ＭＥＭＯＲＹ ＣＡＲＤ<ruby差込口|さしこみぐち>１に\n”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）が\n<ruby差|さ>されていません。\nこのゲームのデータをセーブするには\n１０３ＫＢ<ruby以上|いじょう>の<ruby空|あ>き<ruby容量|ようりょう>が<ruby必要|ひつよう>です。\nこのままで<ruby開始|かいし>しますか？
+startup.no_space_prompt	Insufficient free space on memory card (PS2) in MEMORY CARD slot 1. At least 103 KB of free space is necessary to save {title} data. Start the game anyway?	ＭＥＭＯＲＹ ＣＡＲＤ<ruby差込口|さしこみぐち>１の\n”ＰｌａｙＳｔａｔｉｏｎ ２”<ruby専用|せんよう>メモリーカード（８ＭＢ）は\n<ruby空|あ>き<ruby容量|ようりょう>が<ruby不足|ふそく>しています。\nこのゲームのデータをセーブするには\n１０３ＫＢ<ruby以上|いじょう>の<ruby空|あ>き<ruby容量|ようりょう>が<ruby必要|ひつよう>です。\nこのままで<ruby開始|かいし>しますか？
 save.settings_reset	Mod settings were reset because their format changed.	設定の形式が変更されたため、Mod設定を初期化しました。
 item.health_recovery	Health Recovery	体力回復
 item.chakra_ball	Chakra Ball	チャクラ玉
@@ -132,3 +134,4 @@ page.chakra.title	Chakra	チャクラ
 page.gauge.title	Gauge	ゲージ
 page.items.title	Items	アイテム
 settings.reset	Defaults restored for {menu}.	{menu}を初期状態に戻しました。
+mode_select.view_movie	View the movie?	ムービーを見ますか？

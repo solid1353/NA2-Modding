@@ -416,18 +416,19 @@ def _load_configuration(
     )
     paths = project_paths or load_paths(workspace, allow_missing=True)
     from ...patches.settings.character_overrides.character_overrides import (
-        character_override_fragment_feature,
         load_character_overrides,
     )
 
-    character_override_feature = character_override_fragment_feature(selection)
-    character_overrides = None
-    if character_override_feature is not None:
-        character_overrides = load_character_overrides(
+    # Character overrides belong to the defaults feature of the catalog.
+    character_overrides = (
+        load_character_overrides(
             definition_path,
             builder_root,
             paths.path("resources", "character_data.tsv"),
         )
+        if any(node.path == ("features", "defaults") for node in selection.nodes)
+        else None
+    )
     settings_path = paths.file("project_settings").resolve()
     startup_frames = _read_settings(settings_path)
     release_manifest_path = builder_root / "release" / "release_manifest.json"
@@ -465,8 +466,7 @@ def _load_configuration(
             targets_path,
             (
                 character_overrides.resource_files
-                if feature_id == character_override_feature
-                and character_overrides is not None
+                if feature_id == "defaults"
                 else ()
             ),
         )

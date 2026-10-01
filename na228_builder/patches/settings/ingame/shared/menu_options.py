@@ -10,15 +10,13 @@ from ..battle_mechanics.battle_settings_runtime import (
     BATTLE_MECHANICS_PATH,
     EXTENDED_ITEMS_PATH,
     MATCH_SETUP_PATH,
-    battle_mechanic_enabled,
-    extended_items_enabled,
     extended_items_option_default,
 )
 from ..battle_mechanics.substitution_resource.substitution_gauge import gauge_option_defaults, chakra_minimum_option_default
-from ..battle_mechanics.items.items_settings import FIELD_ITEMS, ITEM_VALUE_LABELS, items_configuration, items_option_defaults
+from ..battle_mechanics.items.items_settings import FIELD_ITEMS, ITEM_VALUE_LABELS, items_option_defaults
 
 
-MOD_SETTINGS_PATH = ("features", "default_settings", "mod_settings")
+MOD_SETTINGS_PATH = ("features", "defaults", "mod_settings")
 
 
 @dataclass(frozen=True)
@@ -92,43 +90,40 @@ def menu_option_bindings(selection):
             "mod_settings_option_get", "mod_settings_option_set", argument,
         )
 
-    if battle_mechanic_enabled(selection, "substitution_resource"):
-        options[BATTLE_MECHANICS_PATH + ("substitution_resource", "chakra", "minimum_chakra")] = MenuOption(
-            message("settings.minimum_chakra.label"), message("settings.minimum_chakra.help"),
-            (message("settings.minimum_chakra.match_cost"), *(f"{value}%" for value in range(5, 101, 5))),
-            chakra_minimum_option_default(selection),
-            "substitution_gauge_option_get", "substitution_gauge_option_set", 4)
-        defaults = gauge_option_defaults(selection)
-        rows = (
-            ("recovery_delay_seconds", message("settings.recovery_delay.label"), message("settings.recovery_delay.help"),
-             tuple(message("settings.seconds", seconds=f"{Decimal(i) / 4:.2f}") for i in range(241))),
-            ("refill_seconds_per_stock", message("settings.refill_time.label"), message("settings.refill_time.help"),
-             tuple(message("settings.seconds", seconds=f"{Decimal(i) / 20:.2f}") for i in range(1, 201))),
-            ("damage_recovery", message("settings.damage_recovery.label"), message("settings.damage_recovery.help"), (message("common.off"), message("common.on"))),
-            ("damage_percent_for_full_refill", message("settings.damage_full_refill.label"), message("settings.damage_full_refill.help"),
-             tuple(f"{i * 5}%" for i in range(1, 81))),
-        )
-        for index, (key, label, help_text, values) in enumerate(rows):
-            options[BATTLE_MECHANICS_PATH + ("substitution_resource", "gauge", key)] = MenuOption(
-                label, help_text, values, defaults[index],
-                "substitution_gauge_option_get", "substitution_gauge_option_set", index,
-                enabled_by=("substitution_gauge_option_get", 2)
-                if key == "damage_percent_for_full_refill" else None)
-    if extended_items_enabled(selection):
-        options[EXTENDED_ITEMS_PATH] = MenuOption(
-            message("settings.extended_items.label"), message("settings.extended_items.help"),
-            (message("common.off"), message("common.on")), extended_items_option_default(selection),
-            "extended_items_option_get", "extended_items_option_set", 0)
-    if items_configuration(selection) is not None:
-        defaults = items_option_defaults(selection)
-        custom_path = BATTLE_MECHANICS_PATH + ("items", "custom")
-        options[custom_path + ("availability",)] = MenuOption(
-            message("settings.availability.label"), message("settings.availability.help"),
-            ITEM_VALUE_LABELS[:4], defaults[1],
-            "items_settings_option_get", "items_settings_option_set", 1)
-        for index, (_code, key, label) in enumerate(FIELD_ITEMS):
-            options[custom_path + (key,)] = MenuOption(
-                label, message("settings.item.help", item=label), (message("common.off"), message("common.on")), defaults[index + 2],
-                "items_settings_option_get", "items_settings_option_set", index + 2,
-                enabled_by=("items_settings_option_get", 1))
+    options[BATTLE_MECHANICS_PATH + ("substitution_resource", "chakra", "minimum_chakra")] = MenuOption(
+        message("settings.minimum_chakra.label"), message("settings.minimum_chakra.help"),
+        (message("settings.minimum_chakra.match_cost"), *(f"{value}%" for value in range(5, 101, 5))),
+        chakra_minimum_option_default(selection),
+        "substitution_gauge_option_get", "substitution_gauge_option_set", 4)
+    defaults = gauge_option_defaults(selection)
+    rows = (
+        ("recovery_delay_seconds", message("settings.recovery_delay.label"), message("settings.recovery_delay.help"),
+         tuple(message("settings.seconds", seconds=f"{Decimal(i) / 4:.2f}") for i in range(241))),
+        ("refill_seconds_per_stock", message("settings.refill_time.label"), message("settings.refill_time.help"),
+         tuple(message("settings.seconds", seconds=f"{Decimal(i) / 20:.2f}") for i in range(1, 201))),
+        ("damage_recovery", message("settings.damage_recovery.label"), message("settings.damage_recovery.help"), (message("common.off"), message("common.on"))),
+        ("damage_percent_for_full_refill", message("settings.damage_full_refill.label"), message("settings.damage_full_refill.help"),
+         tuple(f"{i * 5}%" for i in range(1, 81))),
+    )
+    for index, (key, label, help_text, values) in enumerate(rows):
+        options[BATTLE_MECHANICS_PATH + ("substitution_resource", "gauge", key)] = MenuOption(
+            label, help_text, values, defaults[index],
+            "substitution_gauge_option_get", "substitution_gauge_option_set", index,
+            enabled_by=("substitution_gauge_option_get", 2)
+            if key == "damage_percent_for_full_refill" else None)
+    options[EXTENDED_ITEMS_PATH] = MenuOption(
+        message("settings.extended_items.label"), message("settings.extended_items.help"),
+        (message("common.off"), message("common.on")), extended_items_option_default(selection),
+        "extended_items_option_get", "extended_items_option_set", 0)
+    defaults = items_option_defaults(selection)
+    custom_path = BATTLE_MECHANICS_PATH + ("items", "custom")
+    options[custom_path + ("availability",)] = MenuOption(
+        message("settings.availability.label"), message("settings.availability.help"),
+        ITEM_VALUE_LABELS[:4], defaults[1],
+        "items_settings_option_get", "items_settings_option_set", 1)
+    for index, (_code, key, label) in enumerate(FIELD_ITEMS):
+        options[custom_path + (key,)] = MenuOption(
+            label, message("settings.item.help", item=label), (message("common.off"), message("common.on")), defaults[index + 2],
+            "items_settings_option_get", "items_settings_option_set", index + 2,
+            enabled_by=("items_settings_option_get", 1))
     return options

@@ -1,18 +1,12 @@
 {
   "overrides": {
-    "menu_composition": {
+    "defaults": {
       "battle_settings": {
-        "battle_mechanics": false
-      }
-    },
-    "default_settings": {
-      "battle_settings": {
+        "battle_mechanics_submenu": false,
         "handicap": 5                                       // int 0..10 (Player 1; Player 2 is 10 minus this value)
       },
-      "mod_settings": {
-        "match_setup": {
-          "support_selection": "all"                        // "none" | "relevant" | "all"
-        }
+      "match_setup": {
+        "support_selection": "all"                          // "none" | "relevant" | "all"
       }
     }
   }

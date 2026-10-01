@@ -8,7 +8,6 @@ from ..battle_mechanics.battle_settings_runtime import (
     PRACTICE_SETTINGS_PATH,
     ULTIMATE_JUTSU_NATIVE_DEFAULT,
     ULTIMATE_JUTSU_NATIVE_MODE_COUNT,
-    battle_mechanic_enabled,
     ultimate_jutsu_default,
 )
 
@@ -16,7 +15,7 @@ if TYPE_CHECKING:
     from na228_builder.infrastructure.orchestration.catalog import CatalogSelection
 
 
-BATTLE_SETTINGS_PATH = ("features", "default_settings", "battle_settings")
+BATTLE_SETTINGS_PATH = ("features", "defaults", "battle_settings")
 
 BATTLE_ROW_VALUE_MAPS: dict[str, dict[object, int]] = {
     "time": {
@@ -133,23 +132,14 @@ def _selected_node(selection: CatalogSelection, path: tuple[str, ...]):
 def _configured_object(
     selection: CatalogSelection,
     path: tuple[str, ...],
-    label: str,
 ) -> dict[str, object]:
-    node = _selected_node(selection, path)
-    if not node.enabled:
-        return {}
-    configured = node.configured_value if node.has_configured_value else {}
-    if not isinstance(configured, dict):
-        raise ValueError(f"{label} settings requires an object value")
-    return configured
+    return _selected_node(selection, path).configured_value
 
 
 def battle_configured_row_defaults(
     selection: CatalogSelection,
 ) -> dict[int, int]:
-    configured = _configured_object(
-        selection, BATTLE_SETTINGS_PATH, "Battle"
-    )
+    configured = _configured_object(selection, BATTLE_SETTINGS_PATH)
     return {
         BATTLE_ROW_IDS[name]: BATTLE_ROW_VALUE_MAPS[name][value]
         for name, value in configured.items()
@@ -160,7 +150,7 @@ def battle_configured_row_defaults(
 def practice_configured_row_defaults(
     selection: CatalogSelection,
 ) -> dict[int, int]:
-    configured = _configured_object(selection, PRACTICE_SETTINGS_PATH, "Practice")
+    configured = _configured_object(selection, PRACTICE_SETTINGS_PATH)
     defaults: dict[int, int] = {}
     for values, row_maps, row_ids in (
         (
@@ -215,19 +205,9 @@ def native_settings_defaults_fragment(
     *,
     owner: str,
     symbol: str = "native_settings_defaults",
-) -> PayloadFragment | None:
-    battle_node = _selected_node(selection, BATTLE_SETTINGS_PATH)
-    practice_node = _selected_node(selection, PRACTICE_SETTINGS_PATH)
-    ultimate_jutsu_enabled = battle_mechanic_enabled(
-        selection, "ultimate_jutsu"
-    )
-    if not (battle_node.enabled or practice_node.enabled or ultimate_jutsu_enabled):
-        return None
-
-    battle_configured = _configured_object(
-        selection, BATTLE_SETTINGS_PATH, "Battle"
-    )
-    practice_configured = _configured_object(selection, PRACTICE_SETTINGS_PATH, "Practice")
+) -> PayloadFragment:
+    battle_configured = _configured_object(selection, BATTLE_SETTINGS_PATH)
+    practice_configured = _configured_object(selection, PRACTICE_SETTINGS_PATH)
     battle_values, battle_masks = _encode_storage(
         battle_configured, BATTLE_ROW_VALUE_MAPS, BATTLE_STORAGE_FIELDS
     )
@@ -254,17 +234,16 @@ def native_settings_defaults_fragment(
     practice_values[0] &= ~0x20
     practice_masks[0] |= 0x20
 
-    if ultimate_jutsu_enabled:
-        ultimate_jutsu = ultimate_jutsu_default(selection)
-        native_ultimate_jutsu = (
-            ultimate_jutsu
-            if ultimate_jutsu < ULTIMATE_JUTSU_NATIVE_MODE_COUNT
-            else ULTIMATE_JUTSU_NATIVE_DEFAULT
-        )
-        battle_values[2] = native_ultimate_jutsu
-        battle_masks[2] = 0xFF
-        practice_values[2] = native_ultimate_jutsu
-        practice_masks[2] = 0xFF
+    ultimate_jutsu = ultimate_jutsu_default(selection)
+    native_ultimate_jutsu = (
+        ultimate_jutsu
+        if ultimate_jutsu < ULTIMATE_JUTSU_NATIVE_MODE_COUNT
+        else ULTIMATE_JUTSU_NATIVE_DEFAULT
+    )
+    battle_values[2] = native_ultimate_jutsu
+    battle_masks[2] = 0xFF
+    practice_values[2] = native_ultimate_jutsu
+    practice_masks[2] = 0xFF
 
     payload = bytes(
         battle_values

@@ -12,9 +12,9 @@ if TYPE_CHECKING:
     from na228_builder.infrastructure.orchestration.catalog import CatalogSelection
 
 
-BATTLE_MECHANICS_PATH = ("features", "default_settings", "battle_mechanics")
-PRACTICE_SETTINGS_PATH = ("features", "default_settings", "practice_settings")
-MATCH_SETUP_PATH = ("features", "default_settings", "mod_settings", "match_setup")
+BATTLE_MECHANICS_PATH = ("features", "defaults", "battle_mechanics")
+PRACTICE_SETTINGS_PATH = ("features", "defaults", "practice_settings")
+MATCH_SETUP_PATH = ("features", "defaults", "match_setup")
 EXTENDED_ITEMS_PATH = MATCH_SETUP_PATH + ("extended_items",)
 SUBSTITUTION_INPUT_LABELS = (
     message("common.default"),
@@ -80,20 +80,11 @@ def battle_mechanic_path(field: str) -> tuple[str, ...]:
     return (*BATTLE_MECHANICS_PATH, field)
 
 
-def battle_mechanic_enabled(selection: CatalogSelection, field: str) -> bool:
-    return _selected_node(selection, battle_mechanic_path(field)).enabled
-
-
 def _battle_mechanic_value(selection: CatalogSelection, field: str) -> object:
-    node = _selected_node(selection, battle_mechanic_path(field))
-    if not node.enabled or not node.has_configured_value:
-        raise ValueError(f"Mod settings {field} is disabled")
-    return node.configured_value
+    return _selected_node(selection, battle_mechanic_path(field)).configured_value
 
 
 def ultimate_jutsu_default(selection: CatalogSelection) -> int:
-    if not battle_mechanic_enabled(selection, "ultimate_jutsu"):
-        return ULTIMATE_JUTSU_NATIVE_DEFAULT
     value = _battle_mechanic_value(selection, "ultimate_jutsu")
     if value not in ULTIMATE_JUTSU_MODE_VALUES:
         raise ValueError("Mod settings requires an Ultimate Jutsu default")
@@ -200,16 +191,8 @@ def support_default(selection: CatalogSelection) -> int:
     return SUPPORT_MODE_VALUES[value]
 
 
-def extended_items_enabled(selection: CatalogSelection) -> bool:
-    return _selected_node(selection, EXTENDED_ITEMS_PATH).enabled
-
-
 def extended_items_option_default(selection: CatalogSelection) -> int:
-    node = _selected_node(selection, EXTENDED_ITEMS_PATH)
-    value = node.configured_value if node.enabled and node.has_configured_value else None
-    if not isinstance(value, bool):
-        raise ValueError("Mod settings extended_items default must be false or true")
-    return int(value)
+    return int(_selected_node(selection, EXTENDED_ITEMS_PATH).configured_value == "on")
 
 
 def battle_settings_runtime_fragments(
@@ -238,7 +221,7 @@ def battle_settings_runtime_fragments(
         ),
         ("support", "battle_settings_support_default", support_default),
     )
-    fragments = tuple(
+    return tuple(
         PayloadFragment(
             owner=owner,
             symbol=symbol,
@@ -246,17 +229,13 @@ def battle_settings_runtime_fragments(
             alignment=4,
             payload=struct.pack("<I", resolver(selection)),
         )
-        for field, symbol, resolver in definitions
-        if battle_mechanic_enabled(selection, field)
+        for _field, symbol, resolver in definitions
+    ) + (
+        PayloadFragment(
+            owner=owner,
+            symbol="extended_items_default",
+            kind="rodata",
+            alignment=4,
+            payload=struct.pack("<I", extended_items_option_default(selection)),
+        ),
     )
-    if extended_items_enabled(selection):
-        fragments += (
-            PayloadFragment(
-                owner=owner,
-                symbol="extended_items_default",
-                kind="rodata",
-                alignment=4,
-                payload=struct.pack("<I", extended_items_option_default(selection)),
-            ),
-        )
-    return fragments

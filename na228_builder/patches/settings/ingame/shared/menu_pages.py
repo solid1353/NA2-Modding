@@ -11,6 +11,7 @@ from na228_builder.patches.localization.mod_strings import ModStrings, message
 
 
 SUBMENU_FLAG = 0x4000
+SUBMENU_SUFFIX = "_submenu"
 
 
 def bind_help_setter(selection, payload, relocations, offset):
@@ -32,7 +33,7 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
                      section_fields, prefix, first_generated_id,
                      external_launchers=None):
     """Discover topology independently of native row and gameplay bindings."""
-    settings = selection.catalog["default_settings"]
+    settings = selection.catalog["defaults"]
     settings_definitions = {field.name: field.node for field in settings.fields}
     definition = settings
     for name in root_path[2:]:
@@ -100,6 +101,16 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
         names += tuple(name for name in fields if name not in configured)
         return tuple((name, fields[name]) for name in names)
 
+    def launcher_target(name, definition):
+        """A plain `<target>_submenu` switch opens a shared group or native screen."""
+        if not (isinstance(definition, SettingNode) and definition.value_type is None
+                and name.endswith(SUBMENU_SUFFIX)):
+            return None
+        target = name[:-len(SUBMENU_SUFFIX)]
+        if target not in external_launchers and target not in settings_definitions:
+            raise ValueError(f"Unknown submenu target: {name}")
+        return target
+
     def literal_choices(value_type):
         if isinstance(value_type, LiteralType):
             return (value_type.value,)
@@ -119,41 +130,31 @@ def build_menu_pages(selection, root_path, row_bindings, row_type, page_type,
             reset_symbol=f"{prefix}_page_{page_index}_reset",
             reset_text=message("settings.reset", menu=heading)))
         rows = []
-        local_launchers = set()
-        if page_index == 0:
-            menu_path = ("features", "menu_composition", root_path[-1])
-            menu_definition = next(field.node for field in selection.catalog["menu_composition"].fields
-                                   if field.name == root_path[-1])
-            local_fields = dict(fields_of(definition))
-            for name, _child in ordered_fields(menu_definition, menu_path):
-                if name in local_fields:
-                    local_launchers.add(name)
-                if not selected[menu_path + (name,)].enabled:
-                    continue
-                if name in external_launchers:
-                    rows.append(allocate_row(
-                        option_count=1, default_value=0,
-                        flags=SUBMENU_FLAG | external_launchers[name],
-                        label=menu_title(name), help=message(f"page.{name}.help"),
-                    ))
-                    continue
-                child_path = (root_path + (name,) if name in local_fields
-                              else ("features", "default_settings", name))
-                if not selected[child_path].enabled:
-                    continue
-                child_definition = (local_fields[name] if name in local_fields
-                                    else settings_definitions[name])
-                subpage = add_page(child_definition, child_path, page_index,
-                                   len(rows), ancestors + (path,))
-                rows.append(allocate_row(option_count=1, default_value=0, flags=SUBMENU_FLAG,
-                    label=menu_title(name), help=message(f"page.{name}.help"),
-                    value_pages=((0, subpage, None),)))
         for name, child in ordered_fields(definition, path):
-            if name in local_launchers:
-                continue
             child_path = path + (name,)
             target = selected.get(child_path)
             if target is not None and not target.enabled:
+                continue
+            target_name = launcher_target(name, child)
+            if target_name is not None:
+                # Launchers belong to their own menu's root page; a shared page
+                # opened from another menu does not repeat them.
+                if page_index != 0:
+                    continue
+                if target_name in external_launchers:
+                    rows.append(allocate_row(
+                        option_count=1, default_value=0,
+                        flags=SUBMENU_FLAG | external_launchers[target_name],
+                        label=menu_title(target_name),
+                        help=message(f"page.{target_name}.help"),
+                    ))
+                    continue
+                shared_path = ("features", "defaults", target_name)
+                subpage = add_page(settings_definitions[target_name], shared_path, page_index,
+                                   len(rows), ancestors + (path,))
+                rows.append(allocate_row(option_count=1, default_value=0, flags=SUBMENU_FLAG,
+                    label=menu_title(target_name), help=message(f"page.{target_name}.help"),
+                    value_pages=((0, subpage, None),)))
                 continue
             fields = fields_of(child)
             if fields is None:

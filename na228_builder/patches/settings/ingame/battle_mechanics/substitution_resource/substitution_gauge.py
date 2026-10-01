@@ -5,7 +5,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import TYPE_CHECKING
 
 from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment, PayloadRelocation
-from ..battle_settings_runtime import PRACTICE_SETTINGS_PATH, battle_mechanic_path
+from ..battle_settings_runtime import battle_mechanic_path
 
 if TYPE_CHECKING:
     from na228_builder.infrastructure.orchestration.catalog import CatalogSelection
@@ -67,22 +67,12 @@ def substitution_gauge_fragment(
     *,
     owner: str,
     symbol: str = "substitution_gauge_config",
-) -> PayloadFragment | None:
+) -> PayloadFragment:
     """Encode the selected native-30-FPS substitution-gauge configuration."""
 
-    node = _selected_node(selection, battle_mechanic_path("substitution_resource"))
-    if not node.enabled:
-        return None
-    practice_settings = _selected_node(selection, PRACTICE_SETTINGS_PATH)
-    if not practice_settings.enabled:
-        raise ValueError(
-            "features.default_settings.battle_mechanics.substitution_resource "
-            "requires features.default_settings.practice_settings"
-        )
-
-    substitution = node.configured_value
-    if not node.has_configured_value or not isinstance(substitution, dict):
-        raise ValueError("Mod settings substitution requires an object value")
+    substitution = _selected_node(
+        selection, battle_mechanic_path("substitution_resource")
+    ).configured_value
     mode = substitution.get("value")
     if mode not in SUBSTITUTION_MODE_VALUES:
         raise ValueError(

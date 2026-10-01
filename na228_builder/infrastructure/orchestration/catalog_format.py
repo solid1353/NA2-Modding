@@ -107,8 +107,13 @@ class IntersectionNode:
     operands: tuple[CatalogNodeExpression, ...]
 
 
+@dataclass(frozen=True)
+class FalseNode:
+    """A union branch that lets `false` turn its node off."""
+
+
 CatalogNodeExpression: TypeAlias = (
-    SettingNode | ContainerNode | UnionNode | IntersectionNode
+    SettingNode | ContainerNode | UnionNode | IntersectionNode | FalseNode
 )
 
 
@@ -123,7 +128,7 @@ def _tokens(path: Path, text: str) -> tuple[Token, ...]:
     index = 0
     line = 1
     column = 1
-    symbols = set("{}[]:,<>?|&()")
+    symbols = set("{}[]:,<>?|&()=;")
     while index < len(text):
         character = text[index]
         if character in " \t\r\n":
@@ -229,11 +234,15 @@ def _tokens(path: Path, text: str) -> tuple[Token, ...]:
     return tuple(result)
 
 
+PRIMITIVE_TYPES = frozenset({"bool", "int", "decimal", "string"})
+
+
 class _Parser:
     def __init__(self, path: Path, text: str):
         self.path = path
         self.tokens = _tokens(path, text)
         self.index = 0
+        self.types: dict[str, TypeExpression] = {}
 
     @property
     def current(self) -> Token:
@@ -267,6 +276,8 @@ class _Parser:
         return value
 
     def parse(self) -> ContainerNode:
+        while self.current.kind == "IDENT" and self.current.value == "type":
+            self.type_declaration()
         node = self.node_object()
         self.expect("EOF", "unexpected content after catalog root")
         validate_node(node, str(self.path))
@@ -303,6 +314,9 @@ class _Parser:
     def node_primary(self) -> CatalogNodeExpression:
         if self.current.kind == "IDENT" and self.current.value == "setting":
             return self.setting()
+        if self.current.kind == "BOOL" and self.current.value is False:
+            self.index += 1
+            return FalseNode()
         if self.current.kind == "{":
             return self.node_object()
         if self.accept("(") is not None:
@@ -312,7 +326,7 @@ class _Parser:
         raise _syntax(
             self.path,
             self.current,
-            "expected setting, object, or parenthesized catalog node",
+            "expected setting, object, false, or parenthesized catalog node",
         )
 
     def setting(self) -> SettingNode:
@@ -418,11 +432,26 @@ class _Parser:
             return ConstrainedType(value, tuple(constraints))
         return value
 
+    def type_declaration(self) -> None:
+        """Parse `type <name> = <type>;`; later references expand to the type."""
+        self.expect("IDENT")
+        token = self.expect("IDENT", "expected a type name")
+        name = str(token.value)
+        if name in PRIMITIVE_TYPES or name == "type":
+            raise _syntax(self.path, token, f"type name {name!r} is reserved")
+        if name in self.types:
+            raise _syntax(self.path, token, f"duplicate type name {name!r}")
+        self.expect("=", "expected '=' after type name")
+        self.types[name] = self.type_expression()
+        self.expect(";", "expected ';' after type declaration")
+
     def type_primary(self) -> TypeExpression:
         token = self.current
         if token.kind == "IDENT":
             self.index += 1
-            if token.value not in {"bool", "int", "decimal", "string"}:
+            if token.value in self.types:
+                return self.types[str(token.value)]
+            if token.value not in PRIMITIVE_TYPES:
                 raise _syntax(
                     self.path, token, f"unsupported type name {token.value!r}"
                 )
@@ -787,7 +816,7 @@ def expand_node(
 ) -> CatalogNodeExpression:
     """Expand object intersections into their operational union shape."""
 
-    if isinstance(node, SettingNode):
+    if isinstance(node, (SettingNode, FalseNode)):
         return node
     if isinstance(node, ContainerNode):
         return ContainerNode(
@@ -845,23 +874,11 @@ def expand_node(
 
 def active_type(node: CatalogNodeExpression) -> TypeExpression:
     if isinstance(node, SettingNode):
-        return LiteralType(True) if node.value_type is None else node.value_type
+        return PrimitiveType("bool") if node.value_type is None else node.value_type
     if isinstance(node, ContainerNode):
         return ObjectType(
             tuple(
-                ObjectField(
-                    field.name,
-                    (
-                        active_type(field.node)
-                        if types_overlap(
-                            active_type(field.node), LiteralType(False)
-                        )
-                        else UnionType(
-                            (LiteralType(False), active_type(field.node))
-                        )
-                    ),
-                    False,
-                )
+                ObjectField(field.name, active_type(field.node), False)
                 for field in node.fields
             )
         )
@@ -869,6 +886,8 @@ def active_type(node: CatalogNodeExpression) -> TypeExpression:
         return UnionType(tuple(active_type(branch) for branch in node.branches))
     if isinstance(node, IntersectionNode):
         return active_type(expand_node(node))
+    if isinstance(node, FalseNode):
+        return LiteralType(False)
     raise TypeError(type(node))
 
 
@@ -886,6 +905,10 @@ def validate_node(
                 raise ValueError(
                     f"{label}: catalog key must be meaningful snake_case: "
                     f"{field.name!r}"
+                )
+            if isinstance(field.node, FalseNode):
+                raise ValueError(
+                    f"{label}.{field.name}: false is only valid as a union branch"
                 )
             validate_node(
                 field.node,
@@ -906,6 +929,8 @@ def validate_node(
         return
     if isinstance(node, IntersectionNode):
         validate_node(expand_node(node, label), label)
+        return
+    if isinstance(node, FalseNode):
         return
     raise TypeError(type(node))
 
@@ -965,6 +990,8 @@ def _node_lines(
     include_patches: bool,
 ) -> list[str]:
     prefix = " " * indent
+    if isinstance(node, FalseNode):
+        return ["false"]
     if isinstance(node, SettingNode):
         setting = "setting"
         if node.value_type is not None:

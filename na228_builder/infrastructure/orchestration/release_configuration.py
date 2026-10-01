@@ -33,6 +33,18 @@ def public_configuration_text(path: Path, values: dict[str, object]) -> str:
     return public_text
 
 
+def _optional_group(node):
+    """Resolve a `{ ... } | false` group to its object branch."""
+    if isinstance(node, catalog_format.UnionNode):
+        groups = [
+            branch for branch in node.branches
+            if not isinstance(branch, catalog_format.FalseNode)
+        ]
+        if len(groups) == 1 and len(node.branches) == 2:
+            return groups[0]
+    return node
+
+
 def resolve_layout(features, values, mapping):
     """Derive the public schema and mappings from the release values."""
     root = catalog_format.ContainerNode(tuple(
@@ -55,7 +67,7 @@ def resolve_layout(features, values, mapping):
     def resolve(path):
         node = root
         for part in path:
-            expanded = catalog_format.expand_node(node)
+            expanded = _optional_group(catalog_format.expand_node(node))
             if not isinstance(expanded, catalog_format.ContainerNode):
                 raise ValueError(f"Release path crosses a setting or union: {'.'.join(path)}")
             fields = {field.name: field.node for field in expanded.fields}

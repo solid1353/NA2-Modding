@@ -11,7 +11,7 @@ NA2.28 ISO. Use `na228 build [config] [-f] [-postfix name]
 | --- | --- |
 | `catalog.modcat` | Selectable feature tree, value types, and patch references |
 | `configurations/base.jsonc` | Complete shared development configuration |
-| `configurations/{jp,test,e2e}.jsonc` | Partial overrides of the base configuration |
+| `configurations/{jp,support,e2e}.jsonc` | Partial overrides of the base configuration |
 | `configurations/release.jsonc` | Independent public release defaults, shape, and path exceptions |
 | `configurations/overrides/*.character_overrides.tsv` | Separate per-character build inputs |
 | `patches/<feature>/<feature>.json` | Patch definitions grouped by the first segment of each patch ID |

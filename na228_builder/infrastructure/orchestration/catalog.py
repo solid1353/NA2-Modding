@@ -321,6 +321,8 @@ def _catalog_patches(
             for operand in node.operands
             for patch in _catalog_patches(operand)
         )
+    if isinstance(node, catalog_format.FalseNode):
+        return ()
     raise TypeError(type(node))
 
 
@@ -363,13 +365,6 @@ def _setting_configured_value(
     return value
 
 
-def _setting_accepts_false(node: catalog_format.SettingNode) -> bool:
-    return (
-        node.value_type is not None
-        and catalog_format.matches_type(node.value_type, False)
-    )
-
-
 def _matches_configuration_node(
     node: catalog_format.CatalogNodeExpression,
     value: object,
@@ -377,8 +372,10 @@ def _matches_configuration_node(
     if isinstance(node, catalog_format.SettingNode):
         configured = _setting_configured_value(node, value)
         if node.value_type is None:
-            return configured is True
+            return configured is True or configured is False
         return catalog_format.matches_type(node.value_type, configured)
+    if isinstance(node, catalog_format.FalseNode):
+        return value is False
     return catalog_format.matches_type(catalog_format.active_type(node), value)
 
 
@@ -388,14 +385,9 @@ def _validate_configuration_value(
     path: tuple[str, ...],
 ) -> None:
     label = ".".join(path)
-    if value is False and not (
-        isinstance(node, catalog_format.SettingNode)
-        and _setting_accepts_false(node)
-    ):
-        return
     if isinstance(node, catalog_format.SettingNode):
         if node.value_type is None:
-            if value is not True:
+            if value is not True and value is not False:
                 raise _invalid_configuration_value(path, value, "true or false")
         else:
             configured = _setting_configured_value(node, value)
@@ -404,20 +396,15 @@ def _validate_configuration_value(
             expected = " ".join(catalog_format.type_text(node.value_type).split())
             if catalog_format.matches_type(node.value_type, {}):
                 expected += ", or true for an empty object"
-            disable_suffix = (
-                "" if _setting_accepts_false(node) else ", or false to disable it"
-            )
-            raise _invalid_configuration_value(
-                path,
-                value,
-                expected + disable_suffix,
-            )
+            raise _invalid_configuration_value(path, value, expected)
+        return
+    if isinstance(node, catalog_format.FalseNode):
+        if value is not False:
+            raise _invalid_configuration_value(path, value, "false")
         return
     if isinstance(node, catalog_format.ContainerNode):
         if not isinstance(value, dict):
-            raise _invalid_configuration_value(
-                path, value, "an object, or false to disable it"
-            )
+            raise _invalid_configuration_value(path, value, "an object")
         fields = _container_fields(node)
         if set(value) != set(fields):
             missing = sorted(set(fields) - set(value))
@@ -449,7 +436,7 @@ def _validate_configuration_value(
             raise _invalid_configuration_value(
                 path,
                 value,
-                f"exactly one of {expected}, or false to disable it",
+                f"exactly one of {expected}",
             )
         _validate_configuration_value(matches[0], value, path)
         return
@@ -502,9 +489,7 @@ def _merge_intersection_configuration_value(
     path: tuple[str, ...],
 ) -> object:
     if not isinstance(override, dict):
-        raise _invalid_configuration_value(
-            path, override, "an object override, or false to disable it"
-        )
+        raise _invalid_configuration_value(path, override, "an object override")
 
     expanded = catalog_format.expand_node(node)
     shared_fields, branch_node = _intersection_merge_parts(node)
@@ -525,17 +510,13 @@ def _merge_intersection_configuration_value(
             f"Invalid config override at {label}: unknown keys: {', '.join(extra)}"
         )
 
-    if base is False:
-        merged = {key: False for key in shared_fields}
-        base_branch: dict[str, object] | None = None
-    else:
-        _validate_configuration_value(expanded, base, path)
-        if not isinstance(base, dict):
-            raise TypeError(type(base))
-        merged = {key: base[key] for key in shared_fields}
-        base_branch = {
-            key: value for key, value in base.items() if key not in shared_fields
-        }
+    _validate_configuration_value(expanded, base, path)
+    if not isinstance(base, dict):
+        raise TypeError(type(base))
+    merged = {key: base[key] for key in shared_fields}
+    base_branch = {
+        key: value for key, value in base.items() if key not in shared_fields
+    }
 
     for key in set(override).intersection(shared_fields):
         merged[key] = _merge_configuration_value(
@@ -552,15 +533,6 @@ def _merge_intersection_configuration_value(
         _validate_configuration_value(branch_node, branch_override, path)
         merged.update(branch_override)
         return merged
-    if base_branch is None:
-        expected = " ".join(
-            catalog_format.type_text(catalog_format.active_type(branch_node)).split()
-        )
-        raise _invalid_configuration_value(
-            path,
-            override,
-            f"one complete branch of {expected} when re-enabling it",
-        )
     merged.update(base_branch)
     return merged
 
@@ -572,31 +544,37 @@ def _merge_configuration_value(
     path: tuple[str, ...],
 ) -> object:
     label = ".".join(path)
-    if override is False and not (
-        isinstance(node, catalog_format.SettingNode)
-        and _setting_accepts_false(node)
-    ):
-        return False
     if isinstance(node, catalog_format.IntersectionNode):
         return _merge_intersection_configuration_value(node, base, override, path)
+    if isinstance(node, catalog_format.UnionNode) and isinstance(override, dict):
+        # An object override merges into the object branch selected by the base.
+        base_matches = [
+            branch
+            for branch in node.branches
+            if not isinstance(branch, catalog_format.FalseNode)
+            and _matches_configuration_node(branch, base)
+        ]
+        if len(base_matches) == 1 and isinstance(
+            base_matches[0],
+            (catalog_format.ContainerNode, catalog_format.IntersectionNode),
+        ):
+            merged = _merge_configuration_value(base_matches[0], base, override, path)
+            _validate_configuration_value(node, merged, path)
+            return merged
     if isinstance(node, (catalog_format.SettingNode, catalog_format.UnionNode)):
         _validate_configuration_value(node, override, path)
         return override
     if not isinstance(node, catalog_format.ContainerNode):
         raise TypeError(type(node))
     if not isinstance(override, dict):
-        raise _invalid_configuration_value(
-            path, override, "an object override, or false to disable it"
-        )
+        raise _invalid_configuration_value(path, override, "an object override")
     fields = _container_fields(node)
     extra = sorted(set(override) - set(fields))
     if extra:
         raise ConfigurationError(
             f"Invalid config override at {label}: unknown keys: {', '.join(extra)}"
         )
-    if base is False:
-        merged: dict[str, object] = {key: False for key in fields}
-    elif isinstance(base, dict):
+    if isinstance(base, dict):
         if set(base) != set(fields):
             missing = sorted(set(fields) - set(base))
             extra_base = sorted(set(base) - set(fields))
@@ -610,9 +588,7 @@ def _merge_configuration_value(
             )
         merged = dict(base)
     else:
-        raise _invalid_configuration_value(
-            path, base, "an object, or false to disable it"
-        )
+        raise _invalid_configuration_value(path, base, "an object")
     for key, child_override in override.items():
         merged[key] = _merge_configuration_value(
             fields[key], merged[key], child_override, (*path, key)
@@ -626,42 +602,30 @@ def _selected_nodes(
 ) -> tuple[CatalogNode, ...]:
     nodes: list[CatalogNode] = []
 
+    def disabled(
+        node: catalog_format.CatalogNodeExpression,
+        path: tuple[str, ...],
+    ) -> None:
+        """Record a turned-off node and its descendants without values."""
+        if isinstance(node, catalog_format.IntersectionNode):
+            node = catalog_format.expand_node(node)
+        if isinstance(node, (catalog_format.ContainerNode, catalog_format.SettingNode)):
+            nodes.append(CatalogNode(path, False, node.patch, node.description))
+        else:
+            nodes.append(CatalogNode(path, False))
+        if isinstance(node, catalog_format.ContainerNode):
+            for field in node.fields:
+                disabled(field.node, (*path, field.name))
+
     def visit(
         node: catalog_format.CatalogNodeExpression,
         configured: object,
         path: tuple[str, ...],
     ) -> bool:
-        if configured is False and not (
-            isinstance(node, catalog_format.SettingNode)
-            and _setting_accepts_false(node)
-        ):
-            description = (
-                node.description
-                if isinstance(
-                    node, (catalog_format.ContainerNode, catalog_format.SettingNode)
-                )
-                else ""
-            )
-            patch = (
-                node.patch
-                if isinstance(
-                    node, (catalog_format.ContainerNode, catalog_format.SettingNode)
-                )
-                else None
-            )
-            nodes.append(
-                CatalogNode(
-                    path,
-                    False,
-                    patch,
-                    description,
-                )
-            )
-            if isinstance(node, catalog_format.ContainerNode):
-                for field in node.fields:
-                    visit(field.node, False, (*path, field.name))
-            return False
         if isinstance(node, catalog_format.SettingNode):
+            if node.value_type is None and configured is False:
+                nodes.append(CatalogNode(path, False, node.patch, node.description))
+                return False
             has_value = node.value_type is not None
             configured = _setting_configured_value(node, configured)
             nodes.append(
@@ -690,8 +654,14 @@ def _selected_nodes(
                 raise _invalid_configuration_value(
                     path,
                     configured,
-                    f"exactly one of {expected}, or false to disable it",
+                    f"exactly one of {expected}",
                 )
+            if isinstance(matches[0], catalog_format.FalseNode):
+                for branch in node.branches:
+                    if not isinstance(branch, catalog_format.FalseNode):
+                        disabled(branch, path)
+                        break
+                return False
             return visit(matches[0], configured, path)
         if not isinstance(node, catalog_format.ContainerNode):
             raise TypeError(type(node))

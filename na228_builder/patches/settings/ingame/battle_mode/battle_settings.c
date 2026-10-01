@@ -818,12 +818,8 @@ static void battle_settings_stage_runtime_mode(
     u32 getter_address
 )
 {
-    const BattleSettingsRow *row;
+    const BattleSettingsRow *row = battle_settings_row_with_flag(flag);
 
-    if (getter_address == 0u) {
-        return;
-    }
-    row = battle_settings_row_with_flag(flag);
     if (row != (const BattleSettingsRow *)0) {
         battle_settings_set_row_value(
             controller,
@@ -871,7 +867,7 @@ void battle_settings_snapshot(void *controller)
         ROW_FLAG_CUSTOM_SUBSTITUTION,
         battle_settings_schema.substitution_mode_get
     );
-    if (battle_settings_schema.ultimate_jutsu_mode_get != 0u) {
+    {
         const BattleSettingsRow *row = battle_settings_row_with_flag(
             ROW_FLAG_CUSTOM_ULTIMATE_JUTSU
         );
@@ -917,7 +913,6 @@ static void battle_settings_commit_runtime_mode(u32 flag, u32 setter_address)
 
     if (
         row != (const BattleSettingsRow *)0 &&
-        setter_address != 0u &&
         battle_settings_active_controller != (void *)0
     ) {
         ((ToggleModeSet)setter_address)(
@@ -941,7 +936,6 @@ static void battle_settings_commit_runtime_modes(void)
         battle_settings_schema.substitution_mode_set
     );
     if (
-        battle_settings_schema.ultimate_jutsu_mode_set != 0u &&
         battle_settings_row_with_flag(ROW_FLAG_CUSTOM_ULTIMATE_JUTSU) !=
             (const BattleSettingsRow *)0
     ) {

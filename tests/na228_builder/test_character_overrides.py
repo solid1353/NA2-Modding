@@ -16,7 +16,6 @@ from na228_builder.patches.settings.character_overrides.character_overrides impo
     TABLE_VERSION,
     TIER_WIDTH,
     character_override_fragment,
-    character_override_fragment_feature,
     load_character_overrides as _load_character_overrides,
     render_character_overrides,
 )
@@ -98,8 +97,7 @@ class CharacterOverrideTests(unittest.TestCase):
                 tempfile.TemporaryDirectory() as directory,
             ):
                 features = test_features()
-                mod_settings = features["default_settings"]["mod_settings"]
-                match_setup = mod_settings["match_setup"]
+                match_setup = features["defaults"]["match_setup"]
                 match_setup["character_balance"] = "overrides" if overrides_enabled else "original"
                 match_setup["balance_overlay"] = "on" if overlay_enabled else "off"
                 configuration_path = Path(directory) / "configuration.jsonc"
@@ -112,21 +110,17 @@ class CharacterOverrideTests(unittest.TestCase):
                     configuration_path,
                 )
 
-                self.assertEqual(
-                    character_override_fragment_feature(selection),
-                    "default_settings",
-                )
                 overrides = next(
                     node for node in selection.nodes
                     if node.path == (
-                        "features", "default_settings", "mod_settings", "match_setup",
+                        "features", "defaults", "match_setup",
                         "character_balance",
                     )
                 )
                 overlay = next(
                     node for node in selection.nodes
                     if node.path == (
-                        "features", "default_settings", "mod_settings", "match_setup",
+                        "features", "defaults", "match_setup",
                         "balance_overlay",
                     )
                 )

@@ -1,0 +1,12 @@
+{
+  "overrides": {
+    "defaults": {
+      "battle_mechanics": {
+        "support": "normal"                                 // "off" | "nerfed" | "normal" | "unlimited"
+      },
+      "match_setup": {
+        "support_selection": "all"                          // "none" | "relevant" | "all"
+      }
+    }
+  }
+}

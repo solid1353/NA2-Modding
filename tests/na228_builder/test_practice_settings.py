@@ -82,7 +82,7 @@ class PracticeSettingsTests(unittest.TestCase):
 
     def test_configured_defaults_use_native_enum_values(self) -> None:
         def configure(features) -> None:
-            practice = features["default_settings"]["practice_settings"]
+            practice = features["defaults"]["practice_settings"]
             practice["health"] = "almost"
             practice["commands"] = "on"
             practice["damage"] = "on"
@@ -110,8 +110,8 @@ class PracticeSettingsTests(unittest.TestCase):
 
     def test_disabling_battle_mechanics_launcher_keeps_native_and_opponent_rows(self) -> None:
         selection = self._selection(
-            lambda features: features["menu_composition"]["practice_settings"].__setitem__(
-                "battle_mechanics", False
+            lambda features: features["defaults"]["practice_settings"].__setitem__(
+                "battle_mechanics_submenu", False
             )
         )
         fragment = practice_settings_fragment(

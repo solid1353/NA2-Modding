@@ -18,7 +18,6 @@ from .configuration import BuildConfiguration, ModuleInvocation
 from ...patches.localization.mod_strings import ModStrings
 from ...patches.settings.character_overrides.character_overrides import (
     character_override_fragment,
-    character_override_fragment_feature,
 )
 from ...patches.settings.ingame.battle_mode.battle_settings import (
     battle_settings_fragment,
@@ -40,7 +39,11 @@ from ...patches.settings.mod_settings.mod_settings import (
 )
 from ...patches.general.unlock_all.unlock_all import unlock_all_configuration_fragment
 from ...patches.general.battle_results_rematch import rematch_label_fragment
-from ...patches.general.new_controls.control_defaults import control_default_fragments
+from ...patches.general.controls.control_defaults import (
+    control_default_fragments,
+    controls_layout,
+    controls_vibration,
+)
 from ...patches.memory_card.save_load import save_load_continuation_fragments
 from ...patches.memory_card.save_appendix import (
     save_appendix_load_status_fragment,
@@ -117,9 +120,6 @@ def prepare_module_pipeline(
         str, runtime_injector_module.RuntimeInjectionPackage
     ] = {}
     title_policy = _selected_game_title_policy(configuration)
-    character_override_feature = character_override_fragment_feature(
-        configuration.selection
-    )
     for module in ordered_modules:
         if module.module != "runtime_injector":
             continue
@@ -131,7 +131,7 @@ def prepare_module_pipeline(
             module.module_id,
         )
         if (
-            module.feature_id == character_override_feature
+            module.feature_id == "defaults"
             and configuration.character_overrides is not None
         ):
             declaration = replace(
@@ -144,7 +144,7 @@ def prepare_module_pipeline(
                     *declaration.fragments,
                 ),
             )
-        if module.feature_id == "default_settings":
+        if module.feature_id == "defaults":
             declaration = replace(
                 declaration,
                 fragments=(
@@ -164,79 +164,65 @@ def prepare_module_pipeline(
                     *declaration.fragments,
                 ),
             )
-            native_defaults_fragment = native_settings_defaults_fragment(
-                configuration.selection,
-                owner=module.module_id,
-            )
-            if native_defaults_fragment is not None:
-                declaration = replace(
-                    declaration,
-                    fragments=(
-                        native_defaults_fragment,
-                        *declaration.fragments,
+            declaration = replace(
+                declaration,
+                fragments=(
+                    native_settings_defaults_fragment(
+                        configuration.selection,
+                        owner=module.module_id,
                     ),
-                )
-            battle_schema_fragment = battle_settings_fragment(
-                configuration.selection,
-                owner=module.module_id,
+                    *declaration.fragments,
+                ),
             )
-            if battle_schema_fragment is not None:
-                battle_table_fragments = battle_settings_table_fragments(
-                    configuration.selection,
-                    owner=module.module_id,
-                )
-                declaration = replace(
-                    declaration,
-                    fragments=(
-                        battle_schema_fragment,
-                        *battle_table_fragments,
-                        *declaration.fragments,
+            declaration = replace(
+                declaration,
+                fragments=(
+                    battle_settings_fragment(
+                        configuration.selection,
+                        owner=module.module_id,
                     ),
-                )
-            practice_schema_fragment = practice_settings_fragment(
-                configuration.selection,
-                owner=module.module_id,
+                    *battle_settings_table_fragments(
+                        configuration.selection,
+                        owner=module.module_id,
+                    ),
+                    practice_settings_fragment(
+                        configuration.selection,
+                        owner=module.module_id,
+                    ),
+                    *practice_settings_table_fragments(
+                        configuration.selection,
+                        owner=module.module_id,
+                    ),
+                    *battle_settings_runtime_fragments(
+                        configuration.selection,
+                        owner=module.module_id,
+                    ),
+                    items_settings_fragment(
+                        configuration.selection,
+                        owner=module.module_id,
+                    ),
+                    substitution_gauge_fragment(
+                        configuration.selection,
+                        owner=module.module_id,
+                    ),
+                    *declaration.fragments,
+                ),
             )
-            if practice_schema_fragment is not None:
-                practice_table_fragments = practice_settings_table_fragments(
-                    configuration.selection,
-                    owner=module.module_id,
-                )
-                declaration = replace(
-                    declaration,
-                    fragments=(
-                        practice_schema_fragment,
-                        *practice_table_fragments,
-                        *declaration.fragments,
+            declaration = replace(
+                declaration,
+                fragments=(
+                    *control_default_fragments(
+                        owner=module.module_id,
+                        layout=controls_layout(configuration.selection),
+                        vibration=controls_vibration(configuration.selection),
+                        font_layout=any(
+                            node.patch == "localization.font.layout" and node.enabled
+                            for node in configuration.selection.patch_nodes
+                        ),
                     ),
-                )
-            runtime_config_fragments = battle_settings_runtime_fragments(
-                configuration.selection,
-                owner=module.module_id,
+                    *declaration.fragments,
+                ),
             )
-            if runtime_config_fragments:
-                declaration = replace(
-                    declaration,
-                    fragments=(
-                        *runtime_config_fragments,
-                        *declaration.fragments,
-                    ),
-                )
-            items_fragment = items_settings_fragment(configuration.selection, owner=module.module_id)
-            if items_fragment is not None:
-                declaration = replace(declaration, fragments=(items_fragment, *declaration.fragments))
-            gauge_config_fragment = substitution_gauge_fragment(
-                configuration.selection,
-                owner=module.module_id,
-            )
-            if gauge_config_fragment is not None:
-                declaration = replace(
-                    declaration,
-                    fragments=(
-                        gauge_config_fragment,
-                        *declaration.fragments,
-                    ),
-                )
         if module.feature_id == "general":
             if any(
                 node.path == ("features", "general", "battle_results_rematch")
@@ -247,30 +233,6 @@ def prepare_module_pipeline(
                     declaration,
                     fragments=(
                         rematch_label_fragment(owner=module.module_id),
-                        *declaration.fragments,
-                    ),
-                )
-            if any(
-                node.path == ("features", "general", "new_controls")
-                and node.enabled
-                for node in configuration.selection.nodes
-            ):
-                declaration = replace(
-                    declaration,
-                    fragments=(
-                        *control_default_fragments(
-                            owner=module.module_id,
-                            substitution_input=any(
-                                node.path == (
-                                    "features",
-                                    "default_settings",
-                                    "battle_mechanics",
-                                    "substitution_input",
-                                )
-                                and node.enabled
-                                for node in configuration.selection.nodes
-                            ),
-                        ),
                         *declaration.fragments,
                     ),
                 )

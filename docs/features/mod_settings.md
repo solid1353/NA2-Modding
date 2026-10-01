@@ -1,6 +1,6 @@
 # Mod Settings
 
-`features.default_settings.mod_settings` defines the initial values and Return to
+`features.defaults.mod_settings` defines the initial values and Return to
 Defaults values for the session-wide Mod Settings menu. The Match Setup
 submenu holds settings that apply from the next battle:
 
@@ -9,7 +9,7 @@ submenu holds settings that apply from the next battle:
 | `support_selection` | Support Selection | `none`, `relevant`, `all` |
 | `character_balance` | Character Balance | `original`, `overrides` |
 | `balance_overlay` | Balance Overlay | `off`, `on` |
-| `extended_items` | Extended Items | `false`, `true`; see [Extended Items](battle.md#extended-items) |
+| `extended_items` | Extended Items | `off`, `on`; see [Extended Items](battle.md#extended-items) |
 
 `simple_display` (`off` or `on`) remains on the Mod Settings root.
 
@@ -18,7 +18,7 @@ the first three Match Setup rows. Their configured
 values initialize one writable runtime state when the game starts. With
 `features.memory_card.extended_save_data` enabled, the existing save flow
 writes these values and every other runtime-editable value below
-`features.default_settings` to the dedicated record appendix. A valid loaded record
+`features.defaults` to the dedicated record appendix. A valid loaded record
 overrides configured defaults; a missing setting keeps its configured default.
 When the appendix schema changes, all mod settings return to configured defaults
 while native progress and controls load. With extended save data disabled, the
@@ -46,14 +46,17 @@ that page in the reset notice. On the root page, this resets Simple Display;
 child pages retain their own values until reset separately. Square opens a
 configured submenu. Opening plays the same sound as native Practice Settings.
 
-`features.menu_composition.mod_settings` controls the Match Setup,
-Battle Mechanics, Battle Settings, Practice Settings, and Control Settings
-launchers. Their config order places Match Setup first and Control Settings
-after Practice Settings in the base menu, before the root Simple Display row. The launcher switches and
-order remain configurable. `menu_composition` is omitted from release config
-and catalog exports; the packaged builder retains its resolved release values.
+`features.defaults.mod_settings` holds the `match_setup_submenu`,
+`battle_mechanics_submenu`, `battle_settings_submenu`,
+`practice_settings_submenu`, and `control_settings_submenu` launcher switches
+with its Simple Display row; Match Setup's settings live in
+`features.defaults.match_setup`. Their config order places Match Setup
+first and Control Settings after Practice Settings in the base menu, before
+Simple Display. Match Setup's settings read their runtime values through Mod
+Settings, so they require `mod_settings` to stay enabled. The release configuration exposes these switches with
+the other default settings.
 Battle Mechanics opens
-`features.default_settings.battle_mechanics`. The Battle Settings and
+`features.defaults.battle_mechanics`. The Battle Settings and
 Practice Settings pages expose their existing stored values without repeating
 Battle Mechanics. Changes made through these pages also appear in the existing
 in-game Battle Settings and Practice Settings menus.

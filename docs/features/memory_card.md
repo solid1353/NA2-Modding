@@ -126,7 +126,7 @@ current format is written on the next ordinary save.
 ### Save appendix schema
 
 [`@builder/resources/save_appendix.tsv`](../../na228_builder/resources/save_appendix.tsv)
-lists every saved setting, in menu order. Submenu switches in `features.menu_composition` are
+lists every saved setting, in menu order. `_submenu` launcher switches in `features.defaults` are
 build configuration and are not saved. The first line declares
 `schema_version`; the table has these columns:
 

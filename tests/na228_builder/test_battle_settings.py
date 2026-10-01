@@ -92,7 +92,7 @@ class BattleSettingsTests(unittest.TestCase):
 
     def test_shared_defaults_drive_the_selectable_values(self) -> None:
         def configure(features) -> None:
-            mechanics = features["default_settings"]["battle_mechanics"]
+            mechanics = features["defaults"]["battle_mechanics"]
             mechanics["ultimate_jutsu"] = "no_contest"
             mechanics["shadowblur"] = "on"
             mechanics["extra_hit"] = "on"
@@ -120,8 +120,8 @@ class BattleSettingsTests(unittest.TestCase):
 
     def test_disabling_battle_mechanics_launcher_keeps_native_root_rows(self) -> None:
         selection = self._selection(
-            lambda features: features["menu_composition"]["battle_settings"].__setitem__(
-                "battle_mechanics", False
+            lambda features: features["defaults"]["battle_settings"].__setitem__(
+                "battle_mechanics_submenu", False
             )
         )
         fragment = battle_settings_fragment(
@@ -147,11 +147,12 @@ class BattleSettingsTests(unittest.TestCase):
 
     def test_config_key_order_controls_root_and_battle_mechanics_pages(self) -> None:
         def configure(features) -> None:
-            settings = features["default_settings"]
+            settings = features["defaults"]
             battle = settings["battle_settings"]
             settings["battle_settings"] = {
                 key: battle[key]
                 for key in (
+                    "battle_mechanics_submenu",
                     "handicap",
                     "difficulty",
                     "time",

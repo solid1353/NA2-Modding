@@ -1,12 +1,12 @@
 # Battle
 
-Battle menu defaults and Character Overrides live under `features.default_settings`.
-`features.default_settings.mod_settings.match_setup.character_balance` loads layered TSV data and emits one
+Battle menu defaults and Character Overrides live under `features.defaults`.
+`features.defaults.match_setup.character_balance` loads layered TSV data and emits one
 resident table shared by its current per-character battle consumers.
 
 ## Battle Settings
 
-`features.default_settings.battle_settings` defines defaults for every retained native Battle
+`features.defaults.battle_settings` defines defaults for every retained native Battle
 row:
 
 | Field | Values |
@@ -27,7 +27,7 @@ The Handicap number is also its native menu index: `3` displays `3-7`, and
 The base config places `Battle Mechanics` first, followed by Time, Difficulty,
 and Handicap. Moving those config entries changes their visible order.
 Square on the launcher opens a child page containing every enabled leaf under
-`features.default_settings.battle_mechanics`, in config key order; Confirm commits
+`features.defaults.battle_mechanics`, in config key order; Confirm commits
 the complete Battle transaction and closes from the launcher as it does from
 every ordinary row. Cancel returns to the launcher; Cancel on the root retains
 the native close behavior. Entering or leaving the child page restarts the
@@ -50,7 +50,7 @@ The initial Battle pack is applied immediately after the native mode-2 manager
 assignment at clean ELF offset `0xEA7B4`. This is separate from the
 Practice-only startup/reset path.
 
-The `features.default_settings.battle_mechanics` object owns runtime defaults used by Battle
+The `features.defaults.battle_mechanics` object owns runtime defaults used by Battle
 Settings and Practice Settings. The base config places `chakra` first; it accepts `normal`,
 `unlimited`, or a decimal regeneration rate from `0.1` through `10.0` in steps
 of `0.1`. `normal` preserves native spending and gain; `unlimited` restores both
@@ -149,11 +149,10 @@ derive from the generated page instead of a fixed root or child row count.
 ## Catalog-generated menu pages
 
 The generated menu structure is:
-`features.default_settings.battle_settings` and
-`features.default_settings.practice_settings` define the two menu
-defaults. `features.menu_composition` controls each root's shared submenu
-launchers, in config order, before its default-setting rows. Config key order
-within `default_settings` controls value rows and their nested pages. The
+`features.defaults.battle_settings` and
+`features.defaults.practice_settings` define the two menu
+defaults. Config key order within `defaults` controls each page's
+rows: value rows, nested pages, and launcher rows mix freely. The
 catalog defines types, allowed values, and nested submenu structure. Move
 entries within the corresponding config object to reorder them; no catalog
 edit is needed. Omitted optional fields retain default rows after
@@ -166,16 +165,20 @@ The shared builder in `na228_builder/patches/settings/ingame/shared/menu_pages.p
 containers and typed object fields. Scalars use registered value handlers.
 Objects without `value` form submenus. Objects with `value` use the selector's
 literal choices; child objects named after those choices form Square submenus.
-Root launchers in `menu_composition` reference either a named group under
-`default_settings` or a nested group of the current root. The nested group
-appears only at its launcher position. `battle_mechanics: true` exposes that shared page in either
-mode, while `false` hides its launcher without disabling the shared gameplay
-settings. Mod Settings exposes Battle and Practice defaults without repeating
-their Battle Mechanics launchers; its Match Setup group comes first in the base
-launcher order.
+A launcher row is a plain `<group>_submenu` switch in a menu's root group,
+where `<group>` is a top-level `defaults` group or a native screen such
+as Control Settings; it opens that group's shared page or the screen. A nested
+group, such as Opponent Settings, is its own submenu row, and turning it off
+also disables its settings. `battle_mechanics_submenu: true` exposes that
+shared page in either mode, while `false` hides its launcher without disabling
+the shared gameplay settings. Launchers appear only on their own menu's root
+page, so Mod Settings exposes Battle and Practice defaults without repeating
+their Battle Mechanics launchers; its Match Setup launcher comes first in the
+base order.
 
 The same traversal discovers Chakra, Gauge, and Custom Items pages. Item
-toggles sit directly under `battle_mechanics.items.custom`; the base config
+toggles, each `"off"` or `"on"`, sit directly under
+`battle_mechanics.items.custom`; the base config
 places `availability` first. When availability is None, the individual item
 toggles are greyed out and cannot be changed in Mod, Battle, or Practice
 Settings. Changing availability restores editing without resetting those
@@ -195,8 +198,8 @@ Control bindings, including Item Select L and R, are documented in
 
 ## Extended Items
 
-`features.default_settings.mod_settings.match_setup.extended_items` accepts
-`false` or `true`; the base and release configurations use `true`. Its
+`features.defaults.match_setup.extended_items` accepts
+`"off"` or `"on"`; the base and release configurations use `"on"`. Its
 `Extended Items: Off | On` row appears only on the Mod Settings Match Setup
 page, so it cannot change during a battle or a Practice session. Save appendix
 field `0005` stores it.
@@ -309,7 +312,7 @@ The sweep uses NUN4's recorded layout points, documented in
 
 ## Simple Display
 
-`features.default_settings.mod_settings.simple_display` selects whether battles start with
+`features.defaults.mod_settings.simple_display` selects whether battles start with
 the native Simple Display setting `"off"` or `"on"`. The base configuration
 selects `"off"`. The setting owns the guarded main-ELF initializer
 instruction at offset `0xE7BAC`.
@@ -325,7 +328,7 @@ documented in [Simple Display selection](../knowledge/gameplay/pause_and_replay.
 
 ## X-dash chakra cost
 
-`features.default_settings.battle_mechanics.xdash_chakra_cost` is expressed as normalized
+`features.defaults.battle_mechanics.xdash_chakra_cost` is expressed as normalized
 percentage points on the inclusive `0..100` scale in 5-point steps. The menu
 therefore exposes `0%`, `5%`, through `100%`. The runtime consumer converts the
 selected `x/100` value to NA2's native 15-point chakra gauge as `x * 15 / 100`.
@@ -348,7 +351,7 @@ in [X-dash knowledge](../knowledge/gameplay/xdash.md).
 
 ## Substitution
 
-`features.default_settings.battle_mechanics` owns two substitution settings:
+`features.defaults.battle_mechanics` owns two substitution settings:
 
 - `substitution_input` accepts `"default" | "hold" | 1..15` and appears in the
   menus as Default, Hold, and 1 to 15 frames. `"default"` uses vanilla logic:
@@ -385,7 +388,7 @@ Runtime validation of the Minimum Chakra behavior remains outstanding:
 Square on `Substitution Resource: Chakra` opens Chakra Settings in Battle and Practice.
 Its `Minimum Chakra` row accepts `Match Cost`, then `5%..100%` in steps of `5`.
 The config field is
-`features.default_settings.battle_mechanics.substitution_resource.chakra.minimum_chakra`:
+`features.defaults.battle_mechanics.substitution_resource.chakra.minimum_chakra`:
 `"match_cost"` (the default), or integers `5..100` in steps of `5`.
 
 Match Cost invokes the same per-fighter cost resolver used by spending when
@@ -411,7 +414,7 @@ Numeric character IDs and names are validated against
 `@resources/character_data.tsv`. `base_id` records form relationships as
 human-readable configuration metadata. `tier` records the balancing tier and
 is serialized as fixed-width table metadata for
-`features.default_settings.mod_settings.match_setup.balance_overlay`. Empty cells inherit, while zero
+`features.defaults.match_setup.balance_overlay`. Empty cells inherit, while zero
 remains an explicit value. Tier labels use at most four ASCII characters. Rows
 retain the base TSV order so forms can stay directly below their base characters.
 Save the file as UTF-8 TSV and run the normal build for that profile.
@@ -449,10 +452,10 @@ player slot and reads that slot's match-start character ID. A directly selected
 form therefore uses its form row, while a base character transformed during
 the match keeps its base row.
 
-`features.default_settings.mod_settings.match_setup.balance_overlay` independently reads the same
+`features.defaults.match_setup.balance_overlay` independently reads the same
 complete table. It always draws `TIER` in separate left and right top-screen
 blocks. It draws the resolved `SUB x%` value only when
-`features.default_settings.mod_settings.match_setup.character_balance` is `"overrides"`, omitting trailing decimal
+`features.defaults.match_setup.character_balance` is `"overrides"`, omitting trailing decimal
 zeroes. It never draws player labels or numeric IDs.
 
 Every runtime consumer uses that normalized value. With the runtime mode set to
@@ -476,7 +479,7 @@ see [Battle support](#battle-support).
 
 ## Battle support
 
-`features.default_settings.battle_mechanics.support` selects the initial and reset value of
+`features.defaults.battle_mechanics.support` selects the initial and reset value of
 the shared `Support: Off | Nerfed | Normal | Unlimited` row in Battle and
 Practice Battle Mechanics. The base configuration remains `"off"`.
 
@@ -503,9 +506,6 @@ The native gauge's readiness test uses the selected mode's threshold. The
 half-gauge marker appears only in Normal; Nerfed and Unlimited hide it.
 No replacement palette is used.
 
-`@builder/patches/settings/ingame/battle_mechanics/support/battle_support.c`
-owns the mode routing. The guarded hooks replace
-the fighter's support-request and gauge-update calls, the active-drain call,
 The feature replaces the
 [native support block](../knowledge/gameplay/substitution.md#native-hud-ownership)
 with a slim bar under the item wheel:
@@ -529,6 +529,9 @@ with a slim bar under the item wheel:
   separately, because a sprite drops queued quads past its limit until a flush.
 - Off draws nothing.
 
+`@builder/patches/settings/ingame/battle_mechanics/support/battle_support.c`
+owns the mode routing. The guarded hooks replace
+the fighter's support-request and gauge-update calls, the active-drain call,
 the HUD readiness predicate, and the support-gauge draw.
 The separate Practice key-`3` refill block is bypassed, so its stored native
 bit cannot override the shared mode. General Settings no longer exposes
@@ -537,5 +540,5 @@ bit cannot override the shared mode. General Settings no longer exposes
 Selected support data and linked Jutsu retain their existing behavior.
 
 The setting is independent of
-`features.default_settings.mod_settings.match_setup.support_selection`. Either feature may be enabled
+`features.defaults.match_setup.support_selection`. Either feature may be enabled
 without the other.

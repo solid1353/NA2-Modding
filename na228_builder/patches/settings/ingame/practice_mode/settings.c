@@ -579,9 +579,6 @@ static void practice_settings_stage_runtime_mode(
 {
     const PracticeSettingsRow *row;
 
-    if (getter_address == 0u) {
-        return;
-    }
     row = practice_settings_row_for_id(controller, row_id);
     if (row != (const PracticeSettingsRow *)0) {
         practice_settings_set_row_value(
@@ -636,7 +633,7 @@ void practice_settings_snapshot(void *controller)
         ROW_ID_SUBSTITUTION,
         schema->substitution_mode_get
     );
-    if (schema->ultimate_jutsu_mode_get != 0u) {
+    {
         const PracticeSettingsRow *row = practice_settings_row_for_id(
             controller,
             ROW_ID_ULTIMATE_JUTSU
@@ -688,7 +685,7 @@ static void practice_settings_commit_runtime_mode(
         row_id
     );
 
-    if (row != (const PracticeSettingsRow *)0 && setter_address != 0u) {
+    if (row != (const PracticeSettingsRow *)0) {
         ((ToggleModeSet)setter_address)(
             (u32)practice_settings_get_row_value(controller, row)
         );
@@ -757,7 +754,6 @@ void practice_settings_apply(void *controller)
         schema->substitution_mode_set
     );
     if (
-        schema->ultimate_jutsu_mode_set != 0u &&
         practice_settings_row_for_id(controller, ROW_ID_ULTIMATE_JUTSU) !=
             (const PracticeSettingsRow *)0
     ) {

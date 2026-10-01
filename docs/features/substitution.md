@@ -735,7 +735,7 @@ complete native support renderer, including its coordinates, button badge, and
 support decorations, remains byte-clean and is independently controlled by No
 Support.
 
-The feature depends only on the implementation selected by `features.default_settings.mod_settings.match_setup.character_balance`, which
+The feature depends only on the implementation selected by `features.defaults.match_setup.character_balance`, which
 provides the single normalized cost source. No Support remains independent and
 controls only native field support and its lower gauge. The supported build-time
 combinations are:
@@ -886,7 +886,7 @@ battle state presents the native bar acceptably.
 ## Configuration and builder integration
 
 The build-time setting is
-`features.default_settings.battle_mechanics.substitution_resource`. Its required `value` selects
+`features.defaults.battle_mechanics.substitution_resource`. Its required `value` selects
 `chakra`, `gauge`, or `free`. Gauge tuning is optional and nested under
 `gauge`:
 
@@ -913,10 +913,10 @@ immediately; switching it back On restores editing without resetting the stored
 threshold. Apply, cancel, and Return to Defaults use the existing menu transaction.
 Save appendix field `0013` stores the threshold.
 
-The gauge requires the implementation selected by `features.default_settings.mod_settings.match_setup.character_balance` and
-`features.default_settings.practice_settings`. [Controls](controls.md)
+The gauge requires the implementation selected by `features.defaults.match_setup.character_balance` and
+`features.defaults.practice_settings`. [Controls](controls.md)
 independently exposes separate Guard and Substitution actions.
-`features.default_settings.battle_mechanics.support` independently controls field support
+`features.defaults.battle_mechanics.support` independently controls field support
 and the native lower support gauge.
 
 
@@ -1005,7 +1005,7 @@ The minimal implementation touches these existing ownership points:
 
 | Purpose | Canonical location |
 | --- | --- |
-| Public setting and descriptions | `features.default_settings.battle_mechanics.substitution_resource` in `@builder/catalog.modcat` |
+| Public setting and descriptions | `features.defaults.battle_mechanics.substitution_resource` in `@builder/catalog.modcat` |
 | Unified settings patches | `@builder/patches/settings/settings.json` |
 | Default/profile selection | `@builder/configurations/*.jsonc` |
 | Config-to-fragment encoder | `@builder/patches/settings/ingame/battle_mechanics/substitution_resource/substitution_gauge.py` and `module_pipeline.py` |

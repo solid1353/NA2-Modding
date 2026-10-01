@@ -32,30 +32,14 @@ class SubstitutionGaugeTests(unittest.TestCase):
     def _base_features(self) -> dict[str, object]:
         return test_features()
 
-    def test_false_disables_gauge(self) -> None:
-        features = self._base_features()
-        features["default_settings"]["battle_mechanics"][
-            "substitution_resource"
-        ] = False
-        selection = catalog.load_selection(
-            self.catalog_path,
-            self._write_full_configuration(features),
-        )
-        self.assertIsNone(
-            substitution_gauge_fragment(
-                selection,
-                owner="battle.runtime_injector",
-            )
-        )
-
     def test_true_is_invalid_when_default_is_mandatory(self) -> None:
         features = self._base_features()
-        features["default_settings"]["battle_mechanics"][
+        features["defaults"]["battle_mechanics"][
             "substitution_resource"
         ] = True
         with self.assertRaisesRegex(
             catalog.ConfigurationError,
-            "features.default_settings.battle_mechanics.substitution_resource",
+            "features.defaults.battle_mechanics.substitution_resource",
         ):
             catalog.load_selection(
                 self.catalog_path,
@@ -64,7 +48,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_advanced_configuration_encodes_exact_integer_counts(self) -> None:
         features = self._base_features()
-        features["default_settings"]["battle_mechanics"][
+        features["defaults"]["battle_mechanics"][
             "substitution_resource"
         ] = {
             "value": "chakra",
@@ -92,7 +76,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_partial_configuration_uses_omitted_field_defaults(self) -> None:
         features = self._base_features()
-        features["default_settings"]["battle_mechanics"][
+        features["defaults"]["battle_mechanics"][
             "substitution_resource"
         ] = {
             "value": "free",
@@ -130,7 +114,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
             owner="battle.runtime_injector",
         )
         assert base_gauge is not None
-        mechanics = features["default_settings"]["battle_mechanics"]
+        mechanics = features["defaults"]["battle_mechanics"]
         mechanics["substitution_resource"]["value"] = "gauge"
         mechanics["support"] = "normal"
         selection = catalog.load_selection(
@@ -141,7 +125,7 @@ class SubstitutionGaugeTests(unittest.TestCase):
             node
             for node in selection.nodes
             if node.path == (
-                "features", "default_settings", "battle_mechanics", "support",
+                "features", "defaults", "battle_mechanics", "support",
             )
         )
         self.assertEqual(support.configured_value, "normal")
@@ -155,10 +139,10 @@ class SubstitutionGaugeTests(unittest.TestCase):
 
     def test_gauge_always_links_runtime_cost_providers(self) -> None:
         features = self._base_features()
-        features["default_settings"]["battle_mechanics"][
+        features["defaults"]["battle_mechanics"][
             "substitution_resource"
         ]["value"] = "gauge"
-        features["default_settings"]["mod_settings"]["match_setup"]["character_balance"] = "original"
+        features["defaults"]["match_setup"]["character_balance"] = "original"
         selection = catalog.load_selection(
             self.catalog_path,
             self._write_full_configuration(features),
@@ -226,51 +210,6 @@ class SubstitutionGaugeTests(unittest.TestCase):
             )[0],
             74.0,
         )
-
-    def test_battle_support_and_character_select_support_are_independent(self) -> None:
-        cases = (
-            (True, True),
-            (True, False),
-            (False, True),
-            (False, False),
-        )
-        for battle_support_enabled, selection_enabled in cases:
-            with self.subTest(
-                battle_support=battle_support_enabled,
-                support_selection=selection_enabled,
-            ):
-                features = self._base_features()
-                mechanics = features["default_settings"]["battle_mechanics"]
-                support = mechanics["support"]
-                mechanics["support"] = (
-                    support if battle_support_enabled else False
-                )
-                match_setup = features["default_settings"]["mod_settings"]["match_setup"]
-                support_selection = match_setup[
-                    "support_selection"
-                ]
-                match_setup["support_selection"] = (
-                    support_selection if selection_enabled else False
-                )
-                selection = catalog.load_selection(
-                    self.catalog_path,
-                    self._write_full_configuration(features),
-                )
-                injections = {
-                    node.patch
-                    for node in selection.feature_nodes("default_settings")
-                    if node.enabled and node.patch in selection.injections
-                }
-                self.assertEqual(
-                    "settings.battle_mechanics.support" in injections,
-                    battle_support_enabled,
-                )
-                self.assertEqual(
-                    "character_select.support_selection"
-                    in injections,
-                    selection_enabled,
-                )
-
 
 if __name__ == "__main__":
     unittest.main()

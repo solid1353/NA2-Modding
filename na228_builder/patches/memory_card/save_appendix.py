@@ -16,7 +16,6 @@ from ..settings.ingame.battle_mechanics.battle_settings_runtime import (
     chakra_default,
     MATCH_SETUP_PATH,
     extra_hit_default,
-    extended_items_enabled,
     extended_items_option_default,
     shadowblur_default,
     substitution_input_default,
@@ -327,14 +326,13 @@ def _bindings(selection) -> dict[str, SettingBinding]:
         CALL_WITH_ARGUMENT,
         item_defaults[0],
     )
-    if _extended_items_enabled(selection):
-        bindings["mod.extended_items"] = SettingBinding(
-            "extended_items_option_get",
-            "extended_items_option_set",
-            0,
-            CALL_WITH_ARGUMENT,
-            extended_items_option_default(selection),
-        )
+    bindings["mod.extended_items"] = SettingBinding(
+        "extended_items_option_get",
+        "extended_items_option_set",
+        0,
+        CALL_WITH_ARGUMENT,
+        extended_items_option_default(selection),
+    )
     gauge_defaults = gauge_option_defaults(selection)
     substitution_children = (
         (
@@ -390,10 +388,6 @@ def save_appendix_schema_fragment(
 ) -> PayloadFragment:
     source = path if path is not None else Path(__file__).resolve().parents[2] / "resources" / "save_appendix.tsv"
     schema_version, rows = load_save_appendix(source)
-    if not _new_controls_enabled(selection):
-        rows = tuple(row for row in rows if row.key not in EXTRA_CONTROL_KEYS)
-    if not _extended_items_enabled(selection):
-        rows = tuple(row for row in rows if row.key != "mod.extended_items")
     bindings = _bindings(selection)
     row_keys = {row.key for row in rows}
     unresolved = sorted(row_keys - bindings.keys())

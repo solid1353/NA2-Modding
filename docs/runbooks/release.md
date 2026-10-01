@@ -13,9 +13,9 @@ installation and supply one exact clean NA2 ISO.
 3. Optionally edit `config.jsonc`. `//` and `/* ... */` comments and trailing
    commas are accepted. A bare setting uses `true` or `false`; a
    typed setting uses the scalar or object value declared by `catalog.modcat`.
-   `false` disables a node unless its declared type accepts `false` as a value.
+   `false` is accepted only where `catalog.modcat` declares it.
    The root contains `localization`, `music_override`,
-   `auto_loading`, `widescreen`, and `default_settings`.
+   `auto_loading`, `widescreen`, and `defaults`.
    There is no `features` wrapper. The default settings retain their menu groups.
 4. Optionally edit `character_overrides.tsv`: the `base` substitution cost and
    unsigned character values are literal, explicitly signed character values

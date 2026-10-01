@@ -24,7 +24,6 @@ from ..battle_mechanics.battle_settings_runtime import (
     substitution_input_default,
     substitution_default,
     support_default,
-    battle_mechanic_enabled,
     ultimate_jutsu_default,
     xdash_chakra_cost_option_default,
 )
@@ -259,13 +258,6 @@ NATIVE_ROWS = {
 }
 
 
-def _node_enabled(selection: CatalogSelection, path: tuple[str, ...]) -> bool:
-    matches = [node for node in selection.nodes if node.path == path]
-    if len(matches) != 1:
-        raise ValueError(f"Catalog selection has no unique {'.'.join(path)} node")
-    return matches[0].enabled
-
-
 def practice_settings_row_bindings(
     selection: CatalogSelection,
     *,
@@ -466,12 +458,11 @@ def settings_menu_schema_fragment(
         ),
         "support": ((72, "support_get"), (76, "support_set")),
     }
-    for field, symbols in header_symbols.items():
-        if battle_mechanic_enabled(selection, field):
-            relocations.extend(
-                PayloadRelocation(offset=offset, kind="abs32", symbol=name)
-                for offset, name in symbols
-            )
+    for symbols in header_symbols.values():
+        relocations.extend(
+            PayloadRelocation(offset=offset, kind="abs32", symbol=name)
+            for offset, name in symbols
+        )
 
     for index, row in enumerate(rows):
         row_offset = rows_offset + index * ROW_SIZE
@@ -564,7 +555,7 @@ def settings_menu_schema_fragment(
             next_text_offset += len(text)
 
         for label in SUBSTITUTION_MODE_LABELS:
-            if label is not None and battle_mechanic_enabled(selection, "substitution_resource"):
+            if label is not None:
                 relocations.append(
                     PayloadRelocation(
                         offset=len(payload),
@@ -643,9 +634,7 @@ def practice_settings_fragment(
     *,
     owner: str,
     symbol: str = "practice_settings_schema",
-) -> PayloadFragment | None:
-    if not _node_enabled(selection, PRACTICE_SETTINGS_PATH):
-        return None
+) -> PayloadFragment:
     return settings_menu_schema_fragment(
         selection,
         _active_pages(selection),
@@ -659,9 +648,6 @@ def practice_settings_table_fragments(
     *,
     owner: str,
 ) -> tuple[PayloadFragment, ...]:
-    if not _node_enabled(selection, PRACTICE_SETTINGS_PATH):
-        return ()
-
     pages = _active_pages(selection)
     table_size = max(1, *(len(page.rows) for page in pages)) * 4
     return page_resource_fragments(pages, owner, "practice_settings_schema", selection) + tuple(

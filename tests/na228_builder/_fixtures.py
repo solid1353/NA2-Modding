@@ -14,7 +14,6 @@ def test_features() -> dict[str, object]:
     return {
         "localization": "en",
         "general": {
-            "new_controls": True,
             "music_override": True,
             "practice_stage_select": True,
             "stage_selection_persistence": True,
@@ -30,26 +29,20 @@ def test_features() -> dict[str, object]:
             "extended_save_data": True,
         },
         "rendering": {"native_16_9_horizontal_scale": False},
-        "menu_composition": {
+        "defaults": {
             "mod_settings": {
-                "match_setup": True,
-                "battle_mechanics": True,
-                "battle_settings": True,
-                "practice_settings": True,
-                "control_settings": True,
-            },
-            "battle_settings": {"battle_mechanics": True},
-            "practice_settings": {"battle_mechanics": True},
-        },
-        "default_settings": {
-            "mod_settings": {
-                "match_setup": {
-                    "support_selection": "none",
-                    "character_balance": "overrides",
-                    "balance_overlay": "on",
-                    "extended_items": True,
-                },
+                "match_setup_submenu": True,
+                "battle_mechanics_submenu": True,
+                "battle_settings_submenu": True,
+                "practice_settings_submenu": True,
+                "control_settings_submenu": True,
                 "simple_display": "off",
+            },
+            "match_setup": {
+                "support_selection": "none",
+                "character_balance": "overrides",
+                "balance_overlay": "on",
+                "extended_items": "on",
             },
             "battle_mechanics": {
                 "chakra": "normal",
@@ -73,12 +66,18 @@ def test_features() -> dict[str, object]:
                     "value": "custom",
                     "custom": {
                         "availability": "normal",
-                        **{key: True for _code, key, _label in FIELD_ITEMS},
+                        **{key: "on" for _code, key, _label in FIELD_ITEMS},
                     },
                 },
             },
-            "battle_settings": {"time": 99, "difficulty": "normal", "handicap": 5},
+            "battle_settings": {
+                "battle_mechanics_submenu": True,
+                "time": 99,
+                "difficulty": "normal",
+                "handicap": 5,
+            },
             "practice_settings": {
+                "battle_mechanics_submenu": True,
                 "opponent_settings": {
                     "status": "manual",
                     "strength": "normal",
@@ -92,6 +91,20 @@ def test_features() -> dict[str, object]:
                 "health": "normal",
                 "commands": "off",
                 "damage": "on",
+            },
+            "control_settings": {
+                "circle": "attack",
+                "triangle": "ultimate_jutsu_prep",
+                "square": "item_use",
+                "cross": "jump",
+                "select": "unbound",
+                "l1": "substitution",
+                "r1": "guard",
+                "l2": "item_select_l",
+                "r2": "item_select_r",
+                "l3": "unbound",
+                "r3": "linked_attack",
+                "vibration": "off",
             },
         },
     }

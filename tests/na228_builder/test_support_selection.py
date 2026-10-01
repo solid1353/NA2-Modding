@@ -25,7 +25,7 @@ class SupportSelectionTests(unittest.TestCase):
 
     def _selection(self, mode: str) -> catalog.CatalogSelection:
         base = {"features": test_features()}
-        base["features"]["default_settings"]["mod_settings"]["match_setup"][
+        base["features"]["defaults"]["match_setup"][
             "support_selection"
         ] = mode
         directory = tempfile.TemporaryDirectory()

@@ -1,6 +1,7 @@
 # Unlock all content without loading a save
 
-`features.general.unlock_all` selects patch `general.unlock_all`. It exposes the
+`features.general.unlock_all` selects patch `general.unlock_all`; `false` turns
+it off. It exposes the
 content represented by a fully unlocked profile without writing to save data.
 
 The patch replaces seven saved-value reads while preserving their native
@@ -33,9 +34,8 @@ validation also confirmed Ultimate difficulty through progress slot `0x6A`.
 
 ## Optional Demon Wind Bomb assignment
 
-The optional `demon_wind_bomb` boolean controls a guarded Classic Naruto
-assignment. Omitting it or setting it to `false` preserves native Jutsu
-compatibility. Setting it to `true` admits selector `0x35` only for Classic
+The `demon_wind_bomb` boolean controls a guarded Classic Naruto
+assignment. Setting it to `false` preserves native Jutsu compatibility. Setting it to `true` admits selector `0x35` only for Classic
 Naruto (`0x01`).
 
 The wrapper guards the native special-compatibility call at runtime

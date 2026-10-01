@@ -23,7 +23,7 @@ class SubstitutionInputTests(unittest.TestCase):
 
     def _selection_with(self, value: object) -> catalog.CatalogSelection:
         base = {"features": test_features()}
-        base["features"]["default_settings"]["battle_mechanics"][
+        base["features"]["defaults"]["battle_mechanics"][
             "substitution_input"
         ] = value
         directory = tempfile.TemporaryDirectory()

@@ -27,7 +27,7 @@ class XdashChakraCostTests(unittest.TestCase):
             configuration_path = Path(directory) / "normalized.jsonc"
             for percent in (0, 50, 100):
                 with self.subTest(percent=percent):
-                    base["features"]["default_settings"]["battle_mechanics"][
+                    base["features"]["defaults"]["battle_mechanics"][
                         "xdash_chakra_cost"
                     ] = percent
                     configuration_path.write_text(
@@ -49,38 +49,13 @@ class XdashChakraCostTests(unittest.TestCase):
                     )
                     self.assertEqual(struct.unpack("<I", fragment.payload)[0], percent)
 
-    def test_false_disables_the_xdash_runtime_fragment(self) -> None:
-        base = {"features": test_features()}
-        base["features"]["default_settings"]["battle_mechanics"][
-            "xdash_chakra_cost"
-        ] = False
-        with tempfile.TemporaryDirectory() as directory:
-            configuration_path = Path(directory) / "disabled.jsonc"
-            configuration_path.write_text(
-                json.dumps(base, indent=2) + "\n",
-                encoding="utf-8",
-            )
-            selection = catalog.load_selection(
-                self.catalog_path,
-                configuration_path,
-            )
-        self.assertNotIn(
-            "battle_settings_xdash_chakra_cost_default",
-            {
-                fragment.symbol
-                for fragment in battle_settings_runtime_fragments(
-                    selection, owner="settings.runtime_injector"
-                )
-            },
-        )
-
     def test_catalog_rejects_cost_outside_normalized_gauge(self) -> None:
         base = {"features": test_features()}
         with tempfile.TemporaryDirectory() as directory:
             configuration_path = Path(directory) / "invalid.jsonc"
             for value in (-5, 4, 105):
                 with self.subTest(value=value):
-                    base["features"]["default_settings"]["battle_mechanics"][
+                    base["features"]["defaults"]["battle_mechanics"][
                         "xdash_chakra_cost"
                     ] = value
                     configuration_path.write_text(

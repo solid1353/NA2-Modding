@@ -44,7 +44,7 @@ FIELD_ITEMS = (
 def items_configuration(selection):
     node = next(node for node in selection.nodes
                 if node.path == battle_mechanic_path("items"))
-    return node.configured_value if node.enabled else None
+    return node.configured_value
 
 
 def items_option_defaults(selection):
@@ -52,12 +52,10 @@ def items_option_defaults(selection):
     custom = config["custom"]
     return (ITEM_MODES.index(config["value"]),
             ITEM_AVAILABILITY.index(custom["availability"]),
-            *(int(custom[key]) for _code, key, _label in FIELD_ITEMS))
+            *(int(custom[key] == "on") for _code, key, _label in FIELD_ITEMS))
 
 
 def items_settings_fragment(selection, *, owner):
-    if items_configuration(selection) is None:
-        return None
     mode, availability, *enabled = items_option_defaults(selection)
     mask = sum(value << index for index, value in enumerate(enabled))
     return PayloadFragment(owner=owner, symbol="items_settings_config",

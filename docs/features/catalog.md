@@ -33,15 +33,24 @@ value. A setting may omit `patch` when it selects no change or a patch-owning
 ancestor consumes its value. Optional `description` text explains behavior
 not already clear from the name and type; it does not inherit or fall back.
 
-`false` disables a node and its descendants unless the setting's declared type
-accepts `false`. In that case it is configured data and the setting stays
-selected. A disabled node passes no value to its patch adapter.
+`false` is valid only where the catalog declares it. A bare `setting {}`
+takes `true` or `false`, and `false` turns it off. In `setting<bool>` and any
+other declared type that includes `false`, it is configured data and the
+setting stays selected. A group declared as `{ ... } | false` is turned off,
+with its descendants, by `false`. Anywhere else `false` is a validation error.
+A turned-off node passes no value to its patch adapter.
 `true` enables a bare setting but never expands a container. For `setting<T>`
 where `T` accepts an empty object, `true` is shorthand for `{}` and is normalized
 before reaching adapters or fragment encoders. Required object fields prevent
 that shorthand.
 
 ## Types and syntax
+
+`type <name> = <type>;` declarations before the root object name a type
+expression. A later type expression may use the name wherever a primitive type
+is accepted; the name expands to its type, so errors and exported catalogs show
+the full type. Names are unique and cannot reuse `bool`, `int`, `decimal`, or
+`string`.
 
 | Form | Meaning |
 | --- | --- |
@@ -99,19 +108,21 @@ Standalone development configs contain the complete `features` object.
 Repository variants other than `release.jsonc` contain only `overrides`,
 partially mirroring `base.features`. JSONC accepts line comments, block comments,
 and trailing commas. Document each non-Boolean scalar setting's allowed values and
-constraints in an inline comment synchronized with the catalog. Keep trailing
+constraints in an inline comment synchronized with the catalog; settings of one
+group that share their allowed values share one comment on the group's
+opening line. Keep trailing
 `//` comments aligned; realign them when an edit changes the required width.
 
 Overrides merge recursively through structural containers and unconditional
 intersection fields. A setting or node union is replaced as a whole at any
-depth. An object-valued setting therefore needs a complete valid replacement;
+depth, except that an object override of a `{ ... } | false` group that is on
+merges into it; turning such a group back on from `false` needs its complete
+object. An object-valued setting therefore needs a complete valid replacement;
 its fields do not merge independently.
 
 For `shared & (branch_a | branch_b)`, shared-only overrides retain the selected
 branch. Supplying a branch-specific field replaces that branch's complete
-portion. Shared-only overrides cannot re-enable a disabled intersection
-because no branch is selected. An override of `false` disables its node;
-partially re-enabling a container leaves unspecified children disabled.
+portion.
 
 ## Release configuration
 

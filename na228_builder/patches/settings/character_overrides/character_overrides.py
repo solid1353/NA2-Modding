@@ -55,17 +55,6 @@ SUBSTITUTION_TIER_STEPS = {
 }
 
 
-def character_override_fragment_feature(
-    selection: CatalogSelection,
-) -> str | None:
-    enabled_by_path = {node.path: node.enabled for node in selection.nodes}
-    if enabled_by_path.get(
-        ("features", "default_settings", "mod_settings"), False
-    ):
-        return "default_settings"
-    return None
-
-
 @dataclass(frozen=True)
 class CharacterOverrideRow:
     character_id: int | None

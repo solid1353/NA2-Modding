@@ -24,7 +24,7 @@ class ItemsSettingsTests(unittest.TestCase):
 
     def _selection(self, mutate) -> catalog.CatalogSelection:
         base = {"features": test_features()}
-        mutate(base["features"]["default_settings"]["battle_mechanics"])
+        mutate(base["features"]["defaults"]["battle_mechanics"])
         directory = tempfile.TemporaryDirectory()
         self.addCleanup(directory.cleanup)
         path = Path(directory.name) / "configuration.jsonc"
@@ -37,9 +37,9 @@ class ItemsSettingsTests(unittest.TestCase):
             items["value"] = "custom"
             items["custom"]["availability"] = "less"
             for _code, key, _label in FIELD_ITEMS:
-                items["custom"][key] = False
-            items["custom"][FIELD_ITEMS[0][1]] = True
-            items["custom"][FIELD_ITEMS[-1][1]] = True
+                items["custom"][key] = "off"
+            items["custom"][FIELD_ITEMS[0][1]] = "on"
+            items["custom"][FIELD_ITEMS[-1][1]] = "on"
 
         selection = self._selection(configure)
         fragment = items_settings_fragment(
@@ -52,18 +52,6 @@ class ItemsSettingsTests(unittest.TestCase):
             struct.unpack_from("<3I", fragment.payload),
             (4, 1, 1 | (1 << (len(FIELD_ITEMS) - 1))),
         )
-
-    def test_disabling_items_removes_its_runtime_fragment(self) -> None:
-        selection = self._selection(
-            lambda mechanics: mechanics.__setitem__("items", False)
-        )
-        self.assertIsNone(
-            items_settings_fragment(
-                selection,
-                owner="settings.runtime_injector",
-            )
-        )
-
 
 if __name__ == "__main__":
     unittest.main()

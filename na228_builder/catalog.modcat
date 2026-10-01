@@ -1,3 +1,6 @@
+type control_action = "attack" | "ultimate_jutsu_prep" | "item_use" | "jump" | "substitution" | "guard" | "item_select_l" | "item_select_r" | "linked_attack" | "unbound";
+type com_difficulty = "simple" | "easy" | "normal" | "hard" | "insane" | "ultimate";
+
 {
   features: {
     localization:
@@ -11,10 +14,6 @@
       },
     general: {
       description: "General game-wide features.",
-      new_controls: setting {
-        description: "Allow separate Guard and Substitution bindings, plus two Guard/Sub bindings.",
-        patch: "general.new_controls",
-      },
       music_override: setting {
         patch: "general.music_override",
       },
@@ -30,10 +29,11 @@
         description: "Add Circle Rematch to Battle Results and retain the matchup and session match score.",
         patch: "general.battle_results_rematch",
       },
-      unlock_all: setting<{ demon_wind_bomb?: bool }> {
+      unlock_all: {
         description: "Expose the characters, supports, stages, jutsu, Shop items, and Collection entries present in a fully unlocked save without changing saved progress, currency, inventory, or settings.",
         patch: "general.unlock_all",
-      },
+        demon_wind_bomb: setting<bool> {},
+      } | false,
       mode_availability: {
         description: "Configure which game modes are available.",
         remove_adventure: setting {
@@ -42,8 +42,8 @@
         remove_shop: setting {
           patch: "general.mode_availability.remove_shop",
         },
-      },
-    },
+      } | false,
+    } | false,
     startup: {
       description: "Skip the intro movies and title screen, then continue to save loading.",
       patch: "startup",
@@ -55,7 +55,7 @@
         description: "Show NA2.28 artwork with a short white loading bar beneath its title. The bar estimates progress; the game continues when loading finishes.",
         patch: "startup.loading_screen",
       },
-    },
+    } | false,
     memory_card: {
       description: "Memory-card save storage and save-menu appearance.",
       auto_loading: setting {
@@ -73,56 +73,45 @@
       extended_save_data: setting {
         patch: "memory_card.extended_save_data",
       },
-    },
+    } | false,
     rendering: {
       description: "Screen proportions and display settings.",
       native_16_9_horizontal_scale: setting {
         description: "Apply basic horizontal scaling for a 16:9 display. Experimental: the interface does not scale properly.",
         patch: "rendering.native_16_9_horizontal_scale",
       },
-    },
-    menu_composition: {
-      description: "Choose which submenus are available and their order before the default-setting rows.",
-      mod_settings: {
-        match_setup: setting {},
-        battle_mechanics: setting {},
-        battle_settings: setting {},
-        practice_settings: setting {},
-        control_settings: setting {},
-      },
-      battle_settings: {
-        battle_mechanics: setting {},
-      },
-      practice_settings: {
-        battle_mechanics: setting {},
-      },
-    },
-    default_settings: {
+    } | false,
+    defaults: {
       description: "Set initial values and Return to Defaults values for in-game options. Loaded save settings override initial values.",
       patch: "settings.ingame",
       mod_settings: {
         description: "Configure the options available in the in-game Mod Settings menu.",
         patch: "settings.mod_settings",
-        match_setup: {
-          support_selection: setting<"none" | "relevant" | "all"> {
-            description: "Control which supports are available during Character Select.",
-            patch: "character_select.support_selection",
-          },
-          character_balance: setting<"original" | "overrides"> {
-            description: "Choose between original character balance and the configured balance changes.",
-            patch: "settings.character_overrides",
-          },
-          balance_overlay: setting<"off" | "on"> {
-            description: "Show character balance information on Character Select.",
-            patch: "character_select.balance_overlay",
-          },
-          extended_items: setting<bool> {
-            description: "Enable five battle-item slots instead of the native three.",
-            patch: "settings.extended_items",
-          },
-        },
+        match_setup_submenu: setting {},
+        battle_mechanics_submenu: setting {},
+        battle_settings_submenu: setting {},
+        practice_settings_submenu: setting {},
+        control_settings_submenu: setting {},
         simple_display: setting<"off" | "on"> {
           patch: "settings.simple_display",
+        },
+      },
+      match_setup: {
+        support_selection: setting<"none" | "relevant" | "all"> {
+          description: "Control which supports are available during Character Select.",
+          patch: "character_select.support_selection",
+        },
+        character_balance: setting<"original" | "overrides"> {
+          description: "Choose between original character balance and the configured balance changes.",
+          patch: "settings.character_overrides",
+        },
+        balance_overlay: setting<"off" | "on"> {
+          description: "Show character balance information on Character Select.",
+          patch: "character_select.balance_overlay",
+        },
+        extended_items: setting<"off" | "on"> {
+          description: "Enable five battle-item slots instead of the native three.",
+          patch: "settings.extended_items",
         },
       },
       battle_mechanics: {
@@ -166,45 +155,47 @@
           value: "none" | "less" | "normal" | "more" | "custom",
           custom: {
             availability: "none" | "less" | "normal" | "more",
-            health_recovery: bool,
-            chakra_ball: bool,
-            shoes_of_jonin: bool,
-            food_pills: bool,
-            scroll_of_hidden_cloud: bool,
-            scroll_of_teleportation: bool,
-            scarecrow: bool,
-            tortoiseshell_pills: bool,
-            energy_pills: bool,
-            medical_pack: bool,
-            item_pouch: bool,
-            demon_wind_shuriken: bool,
-            weight_of_determination: bool,
-            exploding_kunai: bool,
-            poison_smoke_bomb: bool,
-            makibishi_spikes: bool,
-            paper_bomb: bool,
-            curse_tag_chakra_points_seal: bool,
-            curse_tag_armor_break: bool,
-            thousand_shadow_shuriken: bool,
-            burst_kunai: bool,
-            exploding_seal: bool,
-            toad_oil: bool,
-            random_ball: bool,
-            stun_ball: bool,
+            health_recovery: "off" | "on",
+            chakra_ball: "off" | "on",
+            shoes_of_jonin: "off" | "on",
+            food_pills: "off" | "on",
+            scroll_of_hidden_cloud: "off" | "on",
+            scroll_of_teleportation: "off" | "on",
+            scarecrow: "off" | "on",
+            tortoiseshell_pills: "off" | "on",
+            energy_pills: "off" | "on",
+            medical_pack: "off" | "on",
+            item_pouch: "off" | "on",
+            demon_wind_shuriken: "off" | "on",
+            weight_of_determination: "off" | "on",
+            exploding_kunai: "off" | "on",
+            poison_smoke_bomb: "off" | "on",
+            makibishi_spikes: "off" | "on",
+            paper_bomb: "off" | "on",
+            curse_tag_chakra_points_seal: "off" | "on",
+            curse_tag_armor_break: "off" | "on",
+            thousand_shadow_shuriken: "off" | "on",
+            burst_kunai: "off" | "on",
+            exploding_seal: "off" | "on",
+            toad_oil: "off" | "on",
+            random_ball: "off" | "on",
+            stun_ball: "off" | "on",
           },
         }> {
           patch: "settings.battle_mechanics.items",
         },
       },
       battle_settings: {
+        battle_mechanics_submenu: setting {},
         time: setting<int & 10..90 & step 10 | 99 | "unlimited"> {},
-        difficulty: setting<"simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"> {},
+        difficulty: setting<com_difficulty> {},
         handicap: setting<int & 0..10> {},
       },
       practice_settings: {
+        battle_mechanics_submenu: setting {},
         opponent_settings: {
           status: setting<"manual" | "com" | "stand" | "jump" | "double_jump"> {},
-          strength: setting<"simple" | "easy" | "normal" | "hard" | "insane" | "ultimate"> {},
+          strength: setting<com_difficulty> {},
           attack: setting<"no" | "single" | "combo" | "projectile" | "high_speed_move" | "ultimate_jutsu" | "jutsu"> {},
           guard: setting<"no" | "yes"> {},
           move: setting<"stay" | "follow"> {},
@@ -215,6 +206,22 @@
         health: setting<"normal" | "half" | "almost"> {},
         commands: setting<"off" | "on"> {},
         damage: setting<"off" | "on"> {},
+      },
+      control_settings: {
+        description: "Allow separate Guard and Substitution bindings, plus two Guard/Sub bindings, and set the default action for each button.",
+        patch: "general.controls",
+        circle: setting<control_action> {},
+        triangle: setting<control_action> {},
+        square: setting<control_action> {},
+        cross: setting<control_action> {},
+        select: setting<control_action> {},
+        l1: setting<control_action> {},
+        r1: setting<control_action> {},
+        l2: setting<control_action> {},
+        r2: setting<control_action> {},
+        l3: setting<control_action> {},
+        r3: setting<control_action> {},
+        vibration: setting<"off" | "on"> {},
       },
     },
   },

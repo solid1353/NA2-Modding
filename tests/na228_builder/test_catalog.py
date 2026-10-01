@@ -34,6 +34,12 @@ class CatalogTests(unittest.TestCase):
         def compare(node, value, path: str) -> None:
             if not isinstance(value, dict):
                 return
+            if isinstance(node, catalog_format.UnionNode):
+                # An object configured where the catalog also allows false.
+                node = next(
+                    branch for branch in node.branches
+                    if not isinstance(branch, catalog_format.FalseNode)
+                )
             if isinstance(node, catalog_format.SettingNode):
                 node = node.value_type
             if isinstance(node, catalog_format.ContainerNode):
@@ -639,7 +645,7 @@ class CatalogTests(unittest.TestCase):
             with self.subTest(value=value), tempfile.TemporaryDirectory() as directory:
                 configuration = Path(directory) / "configuration.jsonc"
                 configured = json.loads(json.dumps(base))
-                configured["features"]["default_settings"]["mod_settings"][
+                configured["features"]["defaults"]["mod_settings"][
                     "simple_display"
                 ] = value
                 configuration.write_text(json.dumps(configured), encoding="utf-8")
@@ -746,14 +752,16 @@ class CatalogTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "branches 1 and 2 overlap"):
                 catalog_format.parse_catalog(path)
 
-    def test_false_disables_every_node_and_bool_remains_object_data(self) -> None:
+    def test_false_disables_only_nodes_that_declare_it_and_bool_remains_object_data(
+        self,
+    ) -> None:
         source = '''{
           plain: setting {
             description: "Plain.", patch: "feature.plain",
           },
           integer: setting<int> {
             description: "Integer.", patch: "feature.integer",
-          },
+          } | false,
           supplied_bool: setting<{ value: bool }> {
             description: "Supplied bool.", patch: "feature.bool",
           },
@@ -764,7 +772,12 @@ class CatalogTests(unittest.TestCase):
             |
             { fixed: setting<int> {
               description: "Fixed.", patch: "feature.fixed",
-            } },
+            } }
+            |
+            false,
+          required: setting<int> {
+            description: "Required.", patch: "feature.required",
+          },
         }'''
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -777,10 +790,20 @@ class CatalogTests(unittest.TestCase):
                         "integer": False,
                         "supplied_bool": {"value": False},
                         "alternative": False,
+                        "required": 1,
                     }
                 },
             )
             selection = catalog.load_selection(catalog_path, configuration_path)
+            self.write_json(
+                configuration_path,
+                {"overrides": {"feature": {"required": False}}},
+            )
+            with self.assertRaisesRegex(
+                catalog.ConfigurationError,
+                "features.feature.required: got false; expected int",
+            ):
+                catalog.load_selection(catalog_path, configuration_path)
 
         self.assertTrue(selection.node_enabled("features", "feature", "plain"))
         self.assertFalse(selection.node_enabled("features", "feature", "integer"))
@@ -850,7 +873,9 @@ class CatalogTests(unittest.TestCase):
             ):
                 catalog.load_selection(catalog_path, configuration_path)
 
-    def test_containers_merge_recursively_but_settings_and_unions_are_atomic(self) -> None:
+    def test_containers_and_union_objects_merge_recursively_but_settings_are_atomic(
+        self,
+    ) -> None:
         source = '''{
           nested: {
             first: setting { description: "First.", patch: "f.first" },
@@ -913,8 +938,13 @@ class CatalogTests(unittest.TestCase):
                 configuration_path,
                 {"overrides": {"feature": {"named": {"pair": {"left": 9}}}}},
             )
-            with self.assertRaisesRegex(ValueError, "does not match its setting type|exactly one"):
-                catalog.load_selection(catalog_path, configuration_path)
+            selection = catalog.load_selection(catalog_path, configuration_path)
+            values = {
+                node.node_id: node.configured_value
+                for node in selection.nodes
+                if node.path[-1] in {"left", "right"}
+            }
+            self.assertEqual(values, {"feature.named.pair.left": 9, "feature.named.pair.right": 2})
 
     def test_parent_true_and_invalid_typed_values_are_rejected(self) -> None:
         source = '''{
@@ -939,7 +969,7 @@ class CatalogTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 catalog.ConfigurationError,
                 "Invalid config value at features.feature.nested: "
-                "got true; expected an object override, or false to disable it",
+                "got true; expected an object override",
             ):
                 catalog.load_selection(catalog_path, configuration_path)
             self.write_json(
@@ -949,7 +979,7 @@ class CatalogTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 catalog.ConfigurationError,
                 "Invalid config value at features.feature.integer: "
-                "got true; expected int, or false to disable it",
+                "got true; expected int",
             ):
                 catalog.load_selection(catalog_path, configuration_path)
 
@@ -962,20 +992,6 @@ class CatalogTests(unittest.TestCase):
                 "Invalid config override at features.feature: unknown keys: unknown",
             ):
                 catalog.load_selection(catalog_path, configuration_path)
-
-            self.write_json(
-                root / "configurations" / "base.jsonc",
-                {"features": False},
-            )
-            self.write_json(configuration_path, {"overrides": {}})
-            disabled = catalog.load_selection(catalog_path, configuration_path)
-            self.assertFalse(disabled.node_enabled("features", "feature"))
-            self.assertFalse(
-                disabled.node_enabled("features", "feature", "nested", "leaf")
-            )
-            self.assertFalse(
-                disabled.node_enabled("features", "feature", "integer")
-            )
 
     def test_materialized_configuration_applies_repository_override(self) -> None:
         source = '''{

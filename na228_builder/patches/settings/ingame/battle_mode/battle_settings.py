@@ -23,7 +23,6 @@ from ..battle_mechanics.battle_settings_runtime import (
     substitution_input_default,
     substitution_default,
     support_default,
-    battle_mechanic_enabled,
     ultimate_jutsu_default,
     xdash_chakra_cost_option_default,
 )
@@ -198,13 +197,6 @@ NATIVE_ROWS = {
 }
 
 
-def _selected_node(selection: CatalogSelection, path: tuple[str, ...]):
-    matches = [node for node in selection.nodes if node.path == path]
-    if len(matches) != 1:
-        raise ValueError(f"Catalog selection has no unique {'.'.join(path)} node")
-    return matches[0]
-
-
 def _active_pages(selection: CatalogSelection) -> tuple[BattlePage, ...]:
     configured_defaults = battle_configured_row_defaults(selection)
 
@@ -276,11 +268,7 @@ def battle_settings_fragment(
     *,
     owner: str,
     symbol: str = "battle_settings_schema",
-) -> PayloadFragment | None:
-    battle_settings = _selected_node(selection, BATTLE_SETTINGS_PATH)
-    if not battle_settings.enabled:
-        return None
-
+) -> PayloadFragment:
     pages = _active_pages(selection)
     strings = ModStrings(selection)
     rows = tuple(row for page in pages for row in page.rows)
@@ -390,12 +378,11 @@ def battle_settings_fragment(
         ),
         "support": ((72, "support_get"), (76, "support_set")),
     }
-    for field, symbols in header_symbols.items():
-        if battle_mechanic_enabled(selection, field):
-            relocations.extend(
-                PayloadRelocation(offset=offset, kind="abs32", symbol=name)
-                for offset, name in symbols
-            )
+    for symbols in header_symbols.values():
+        relocations.extend(
+            PayloadRelocation(offset=offset, kind="abs32", symbol=name)
+            for offset, name in symbols
+        )
     for index, row in enumerate(rows):
         fields = list(row.encoded_fields())
         row_offset = rows_offset + index * ROW_SIZE
@@ -481,7 +468,7 @@ def battle_settings_fragment(
             next_text_offset += len(text)
 
         for label in SUBSTITUTION_MODE_LABELS:
-            if label is not None and battle_mechanic_enabled(selection, "substitution_resource"):
+            if label is not None:
                 relocations.append(
                     PayloadRelocation(
                         offset=len(payload),
@@ -560,10 +547,6 @@ def battle_settings_table_fragments(
     *,
     owner: str,
 ) -> tuple[PayloadFragment, ...]:
-    battle_settings = _selected_node(selection, BATTLE_SETTINGS_PATH)
-    if not battle_settings.enabled:
-        return ()
-
     pages = _active_pages(selection)
     table_size = max(1, *(len(page.rows) for page in pages)) * 4
     return page_resource_fragments(pages, owner, "battle_settings_schema", selection) + (

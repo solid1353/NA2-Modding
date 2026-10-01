@@ -45,8 +45,9 @@ binaries: the verified `donor` text in the table is the default translation.
 A nonempty `mod_string` hands the row's retail string to that
 [mod string](mod_strings.md) in every language, and the importer skips it.
 `prefix` is a user-editable string prepended to the translation. T1933, the
-Mode Select return confirmation, and T2055 and T2237, the startup memory card
-prompts that state NA2's 103 KB requirement, are owned by mod strings.
+Mode Select return confirmation, T1904, the Command List Rebound condition, and
+T2055 and T2237, the startup memory card prompts that state NA2's 103 KB
+requirement, are owned by mod strings.
 T2233 uses NUN5's verified status-7 donor, which shares the absent-card
 warning used by T2035. Other rows use verified donors.
 T30 uses the
@@ -98,7 +99,7 @@ E2E suites validate 1,887 unique rows. The remaining 180 rows have a blank
 mappings, but they are explicitly unvalidated. Earlier screenshot, inference,
 and structural-family labels were removed because only maintained E2E execution
 validates a row. Every `prefix` value is blank. The nonempty `mod_string`
-rows are T1933, T2055, and T2237.
+rows are T1904, T1933, T2055, and T2237.
 The Jutsus suite selects 26 exact Command Chart records, including T260 plus 25
 records also selected by Movesets. The Menus suite selects 30 exact Battle
 Settings, Pause, confirmation, and Character Select rows.

@@ -1919,7 +1919,7 @@ T1900	1	Command Chart > shared control name or help text	／<r連係奥義|れ�
 T1901	1	Command Chart > shared control name or help text	（ジャンプ<r中|ちゅう>）	(while jumping)				NA2_BTL@0x209330		NUN5_TEXTENG@0xD30	slot	32			
 T1902	1	Command Chart > shared control name or help text	（<r相手|あいて>の<r前|まえ>で）	(in front of opponent)				NA2_BTL@0x209350		NUN5_TEXTENG@0xD40	slot	48			
 T1903	1	Command Chart > shared control name or help text	（<r相手|あいて>の<r攻撃|こうげき>の<r当|あ>たる<r瞬間|しゅんかん>）	(right when getting hit)				NA2_BTL@0x2093B0		NUN5_TEXTENG@0xDB0	slot	80			
-T1904	1	Command Chart > shared control name or help text	（<r投|な>げられた<r時|とき>、<r叩|たた>き<r付|つ>けられる<r瞬間|しゅんかん>）	(right when getting thrown/hit)				NA2_BTL@0x209400		NUN5_TEXTENG@0xDD0	slot	80			
+T1904	1	Command Chart > shared control name or help text	（<r投|な>げられた<r時|とき>、<r叩|たた>き<r付|つ>けられる<r瞬間|しゅんかん>）	(right when getting thrown/hit)		command_list.rebound		NA2_BTL@0x209400		NUN5_TEXTENG@0xDD0	slot	80			
 T1905	1	Command Chart > shared control name or help text	（<r吹|ふ>っ<r飛|と>ばした<r方向|ほうこう>の<r方向|ほうこう>キー）	(directional button of the direction of your choice)				NA2_BTL@0x209450		NUN5_TEXTENG@0xDF0	slot	80			
 T1906	1	Command Chart > shared control name or help text	（<r相手|あいて>の<r追|お>い<r討|う>ち<r攻撃|こうげき>が<r当|あ>たる<r瞬間|しゅんかん>）	(right when receiving an Extra Hit)				NA2_BTL@0x2094A0		NUN5_TEXTENG@0xE30	slot	96			
 T1907	1	Command Chart > shared control name or help text	（<r地上|ちじょう>で）	(on ground)				NA2_BTL@0x209520		NUN5_TEXTENG@0xE58	slot	32			

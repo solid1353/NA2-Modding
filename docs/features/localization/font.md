@@ -141,8 +141,12 @@ and the shared selected-style paths proven by those callers.
   remain in the string but do not contribute to measured width.
 - Practice explanation wrapping installs the controller-token metric and draw
   callbacks only for the active call, then restores both icon objects and all
-  preceding renderer-session state. The resident implementation does not use
-  the cleared boot-ELF interval that is overwritten during loading.
+  preceding renderer-session state. It reads condition texts from the
+  [Command List](../controls.md#command-list-and-move-chart) text table and
+  writes the Select, L3, and R3 tokens as `<iconSELECT>`, `<iconL3>`, and
+  `<iconR3>`, whose native icon IDs 15, 8, and 9 draw as Control Settings
+  pills. The resident implementation does not use the cleared boot-ELF
+  interval that is overwritten during loading.
 - Battle confirmation scopes the complete Yes/No list call and adapts its two
   shared inner calls only while that scope is active. Nested calls restore the
   preceding scope word.

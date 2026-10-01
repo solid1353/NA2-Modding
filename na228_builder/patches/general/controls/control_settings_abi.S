@@ -152,3 +152,20 @@ control_settings_count_bridge:
     jr $k0
     nop
     .size control_settings_count_bridge, . - control_settings_count_bridge
+
+# The Command List builder ends by storing its row count; rebuild the rows first,
+# then store the count of rows they kept.
+    .section .text.control_settings_command_rows_bridge,"ax",@progbits
+    .balign 4
+    .globl control_settings_command_rows_bridge
+    .type control_settings_command_rows_bridge, @function
+control_settings_command_rows_bridge:
+    addiu $sp, $sp, -32
+    sd $ra, 0($sp)
+    jal control_settings_command_rows
+    move $a0, $s0
+    ld $ra, 0($sp)
+    addiu $sp, $sp, 32
+    jr $ra
+    sh $v0, 44($s0)
+    .size control_settings_command_rows_bridge, . - control_settings_command_rows_bridge

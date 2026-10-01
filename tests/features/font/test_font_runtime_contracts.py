@@ -9,6 +9,7 @@ from pathlib import Path
 
 from na228_builder.infrastructure.modules.payload_builder import build_resident_payload
 from na228_builder.infrastructure.modules.payload_builder import mips
+from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment
 from na228_builder.infrastructure.orchestration import catalog
 from na228_builder.infrastructure.orchestration.composer import resolve_symbolic_patches
 from scripts.research.localization.verify_font_renderer import (
@@ -86,8 +87,19 @@ class FontRuntimeContractTests(unittest.TestCase):
             REPOSITORY,
             "localization.runtime_injector",
         )
+        # The Control Settings payload supplies these symbols in a build.
+        controls = tuple(
+            PayloadFragment(
+                owner="test.controls", symbol=symbol, kind=kind, alignment=4, payload=payload,
+            )
+            for symbol, kind, payload in (
+                ("control_settings_command_texts", "data", bytes(52)),
+                ("control_settings_command_glyphs", "rodata", bytes(232)),
+                ("control_settings_list_glyph_draw", "code", bytes.fromhex("0800E00300000000")),
+            )
+        )
         cls.build = build_resident_payload(
-            cls.package.payload_fragments,
+            (*cls.package.payload_fragments, *controls),
             config=resident_payload_config(
                 reservation_end=0x00A00000,
                 maximum_end=0x00B00000,

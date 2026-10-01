@@ -56,8 +56,27 @@ typedef void (*FontV2NativePracticeIconDraw)(
     float draw_y
 );
 
-/* Fixed runtime address of Practice's native text table; do not tune. */
-#define FONT_PRACTICE_TEXT_TABLE_ADDRESS 0x008BD510u
+/* Practice's text tokens as rebuilt by the Command List rows. */
+extern const u8 *const control_settings_command_texts[];
+
+/* Command List glyph rectangles and pill draw for Select, L3, and R3. */
+extern const s16 control_settings_command_glyphs[][4];
+extern void control_settings_list_glyph_draw(float x, float y, u8 *sprite, const s16 *rect);
+
+/* Command List tokens after the native ones: Select, L3, and R3. */
+#define FONT_PRACTICE_PILL_TOKEN_FIRST 26
+#define FONT_PRACTICE_PILL_TOKEN_COUNT 3
+
+/* Native font icon IDs of <iconSELECT>, <iconL3>, and <iconR3>. */
+#define FONT_ICON_SELECT 15u
+#define FONT_ICON_L3 8u
+#define FONT_ICON_R3 9u
+
+/* Font tags of the Select, L3, and R3 tokens. */
+static const u8 font_v2_pill_tags[FONT_PRACTICE_PILL_TOKEN_COUNT][16]
+    __attribute__((section(".rodata.font_v2_pill_tags"))) = {
+        "<iconSELECT>", "<iconL3>", "<iconR3>",
+    };
 
 /* Practice explanation left edge; increase to move the block right. */
 #define FONT_PRACTICE_BOX_X 40.8f
@@ -194,9 +213,28 @@ float font_v2_command_icon_offset(const u8 *record) {
     return FONT_COMMAND_ICON_PLAIN_OFFSET;
 }
 
+/* Command List glyph of a font icon drawn as a pill, or null. */
+static FONT_V2_SECTION(".text.font_v2_icon_record")
+const s16 *font_v2_pill_glyph(u32 token) {
+    if (token == FONT_ICON_SELECT) {
+        return control_settings_command_glyphs[FONT_PRACTICE_PILL_TOKEN_FIRST];
+    }
+    if (token == FONT_ICON_L3) {
+        return control_settings_command_glyphs[FONT_PRACTICE_PILL_TOKEN_FIRST + 1];
+    }
+    if (token == FONT_ICON_R3) {
+        return control_settings_command_glyphs[FONT_PRACTICE_PILL_TOKEN_FIRST + 2];
+    }
+    return (const s16 *)0;
+}
+
 static FONT_V2_SECTION(".text.font_v2_icon_record")
 const FontV2IconRecord *font_v2_icon_record(u32 token) {
     u32 mapped;
+    const s16 *pill = font_v2_pill_glyph(token);
+    if (pill) {
+        return (const FontV2IconRecord *)pill;
+    }
     if (token >= FONT_PRACTICE_ICON_MAP_COUNT) {
         return (const FontV2IconRecord *)0;
     }
@@ -244,6 +282,13 @@ void font_v2_practice_icon_draw(
     if (token >= 4u && token < 8u) {
         object = frame->object_secondary;
     }
+    if (font_v2_pill_glyph(token)) {
+        control_settings_list_glyph_draw(
+            *draw_x, *draw_y, (u8 *)frame->object_secondary, (const s16 *)record
+        );
+        *draw_x += (float)record->width;
+        return;
+    }
     y = *draw_y;
     if (token >= 11u && token < 15u) {
         y -= 3.0f;
@@ -287,7 +332,23 @@ int font_v2_practice_adapter_impl(
         s32 token = tokens[index];
         const u8 *payload;
 
-        if (token < 0 || token >= 26) {
+        if (token < 0 || token >= FONT_PRACTICE_PILL_TOKEN_FIRST + FONT_PRACTICE_PILL_TOKEN_COUNT) {
+            continue;
+        }
+        if (token >= FONT_PRACTICE_PILL_TOKEN_FIRST) {
+            if (index && previous_was_text) {
+                destination = font_v2_practice_append(
+                    destination,
+                    font_v2_practice_tokens +
+                        FONT_PRACTICE_TOKEN_COUNT *
+                            FONT_PRACTICE_TOKEN_STRIDE,
+                    limit
+                );
+            }
+            destination = font_v2_practice_append(
+                destination, font_v2_pill_tags[token - FONT_PRACTICE_PILL_TOKEN_FIRST], limit
+            );
+            previous_was_text = 0;
             continue;
         }
         if ((u32)token >= FONT_PRACTICE_TOKEN_COUNT) {
@@ -300,10 +361,8 @@ int font_v2_practice_adapter_impl(
                     limit
                 );
             }
-            payload = (
-                (const u8 *volatile *)
-                    FONT_PRACTICE_TEXT_TABLE_ADDRESS
-            )[token - (s32)FONT_PRACTICE_TOKEN_COUNT];
+            payload = control_settings_command_texts[
+                token - (s32)FONT_PRACTICE_TOKEN_COUNT];
             destination = font_v2_practice_append(
                 destination, payload, limit
             );

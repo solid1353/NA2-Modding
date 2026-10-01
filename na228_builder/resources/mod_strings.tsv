@@ -135,3 +135,11 @@ page.gauge.title	Gauge	ゲージ
 page.items.title	Items	アイテム
 settings.reset	Defaults restored for {menu}.	{menu}を初期状態に戻しました。
 mode_select.view_movie	View the movie?	ムービーを見ますか？
+command_list.item_select	Item Select (Next / Previous)	アイテム<r選択|せんたく>（<r次|つぎ>／<r前|まえ>）
+command_list.substitution_gauge	Substitution Jutsu (Consume Gauge)	<r変|か>わり<r身|み>の<r術|じゅつ>（ゲージ<r消費|しょうひ>）
+command_list.substitution_free	Substitution Jutsu	<r変|か>わり<r身|み>の<r術|じゅつ>
+command_list.substitution_hold	(hold when getting hit)	（<r攻撃|こうげき>が<r当|あ>たる<r時|とき>に<r押|お>し<r続|つづ>ける）
+command_list.substitution_frame	(press up to {0} frame before getting hit)	（<r攻撃|こうげき>が<r当|あ>たる{0}フレーム<r前|まえ>までに<r押|お>す）
+command_list.substitution_frames	(press up to {0} frames before getting hit)	（<r攻撃|こうげき>が<r当|あ>たる{0}フレーム<r前|まえ>までに<r押|お>す）
+command_list.linked_attack_support	(calls a support)	（サポートを<r呼|よ>ぶ）
+command_list.rebound	(right after getting thrown/hit)	（<r投|な>げられたり<r叩|たた>き<r付|つ>けられた<r直後|ちょくご>）

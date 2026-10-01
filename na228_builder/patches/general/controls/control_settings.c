@@ -6,6 +6,8 @@ typedef signed int s32;
 typedef unsigned int u32;
 typedef unsigned long long u64;
 
+#include "../../localization/mod_strings.h"
+
 #define SECTION(name) __attribute__((section(name), noinline))
 #define FIELD(object, offset) ((s32 *)((u8 *)(object) + (offset)))
 #define NATIVE_ACTIONS 8
@@ -46,7 +48,18 @@ extern const u8 mod_text_controls__guard_sub_2__label[];
 extern const u8 mod_text_controls__item_select_l__label[];
 extern const u8 mod_text_controls__item_select_r__label[];
 extern const u8 mod_text_controls__unbound__label[];
+extern const u8 mod_text_command_list__item_select[];
+extern const u8 mod_text_command_list__substitution_gauge[];
+extern const u8 mod_text_command_list__substitution_free[];
+extern const u8 mod_text_command_list__substitution_hold[];
+extern const u8 mod_text_command_list__substitution_frame[];
+extern const u8 mod_text_command_list__substitution_frames[];
+extern const u8 mod_text_command_list__linked_attack_support[];
 extern u32 substitution_input_get(void);
+extern u32 substitution_gauge_mode_get(void);
+extern u32 chakra_mode_get(void);
+extern u32 extra_hit_get(void);
+extern u32 shadowblur_get(void);
 #define SUBSTITUTION_INPUT_HOLD 1u
 
 const u8 *control_settings_labels[ACTIONS]
@@ -844,4 +857,226 @@ void control_settings_item_badges(void *panel)
     at.x = origin->x - offset->x;
     draw_badge(control_settings_extra_bindings[extra_index(side, ITEM_SELECT_R)], scale, alpha, &at);
     ((PanelDraw)0x00711E50u)(panel);
+}
+
+/* Battle Command List and move chart. The list builder resolves binding tokens 27..32
+   through the native bindings only, the chart converter maps only face buttons, and
+   both renderers draw shoulder buttons from a texture without L3, R3, or Select. The
+   rows instead show each action's active button, and every shoulder, L3, R3, and
+   Select token draws as a Control Settings pill through the badge sprites. */
+#define COMMAND_ROWS 18u
+#define COMMAND_ROW_TOKENS 5u
+#define COMMAND_ROW_SIZE 0x34u
+#define COMMAND_ITEM_SELECT_ROW 2u
+#define COMMAND_SUBSTITUTION_ROW 8u
+#define COMMAND_EXTRA_HIT_ROW 10u
+#define COMMAND_EXTRA_HIT_COUNTER_ROW 11u
+#define COMMAND_CHARGE_CHAKRA_ROW 12u
+#define COMMAND_SHADOWBLUR_ROW 17u
+#define COMMAND_TEXT_FIRST 13
+#define COMMAND_TEXTS 13u
+#define COMMAND_TEXT_SUBSTITUTION 16
+#define COMMAND_TEXT_LINKED_ATTACK 23
+#define SUBSTITUTION_GAUGE 1u
+#define SUBSTITUTION_FREE 2u
+#define CHAKRA_UNLIMITED 1u
+#define EXTRA_HIT_ON 1u
+#define CHART_TOKEN_NONE 25
+#define COMMAND_TOKEN_SELECT 26
+#define COMMAND_TOKEN_L3 27
+#define COMMAND_TOKEN_R3 28
+/* Pills are 16 texels tall in the chart's 24-texel face slot. */
+#define CHART_PILL_OFFSET 4.0f
+
+typedef struct CommandEntry {
+    const u8 *name;
+    s16 tokens[COMMAND_ROW_TOKENS];
+    s16 padding;
+} CommandEntry;
+
+/* Glyph rectangles by token: the native d-pad, face, plus, and shoulder records, an
+   empty glyph, then the Select, L3, and R3 cells. */
+const s16 control_settings_command_glyphs[COMMAND_TOKEN_R3 + 1][4]
+    __attribute__((section(".rodata.control_settings_command_glyphs"))) = {
+        {0, 0, 32, 32}, {32, 0, 32, 32}, {64, 0, 32, 32}, {96, 0, 32, 32},
+        {0, 32, 24, 24}, {24, 32, 24, 24}, {48, 32, 24, 24}, {72, 32, 24, 24},
+        {96, 32, 24, 24},
+        {1, 2, 30, 16}, {33, 2, 30, 16}, {1, 22, 30, 16}, {33, 22, 30, 16},
+        [COMMAND_TOKEN_SELECT] = {224, 28, 30, 16},
+        [COMMAND_TOKEN_L3] = {1, 42, 30, 16}, [COMMAND_TOKEN_R3] = {33, 42, 30, 16},
+    };
+
+/* Command List token of a button, or -1 for no button. */
+static SECTION(".text.control_settings_helpers") s32 command_glyph(u32 mask)
+{
+    static const u16 masks[11] = {
+        0x20u, 0x10u, 0x80u, 0x40u, 0x04u, 0x08u, 0x01u, 0x02u, 0x100u, 0x200u, 0x400u,
+    };
+    static const signed char glyphs[11] = {
+        4, 5, 6, 7, 9, 10, 11, 12, COMMAND_TOKEN_SELECT, COMMAND_TOKEN_L3, COMMAND_TOKEN_R3,
+    };
+    u32 index;
+    for (index = 0u; index < 11u; ++index)
+        if (mask == masks[index]) return glyphs[index];
+    return -1;
+}
+
+/* Text tokens 13..25 as the renderer reads them, and the formatted Substitution
+   condition. */
+struct {
+    const u8 *texts[COMMAND_TEXTS];
+    u8 substitution_condition[128];
+} control_settings_command_texts __attribute__((section(".data.control_settings_command_texts")));
+
+/* The Substitution condition for the active Substitution Input. */
+static SECTION(".text.control_settings_helpers") const u8 *substitution_condition(const u8 *native)
+{
+    u32 input = substitution_input_get();
+    u8 digits[4];
+    u32 frames;
+    if (input == 0u) return native;
+    if (input == SUBSTITUTION_INPUT_HOLD) return mod_text_command_list__substitution_hold;
+    frames = input - 1u;
+    if (frames >= 10u) {
+        digits[0] = (u8)('0' + frames / 10u);
+        digits[1] = (u8)('0' + frames % 10u);
+        digits[2] = 0u;
+    } else {
+        digits[0] = (u8)('0' + frames);
+        digits[1] = 0u;
+    }
+    mod_string_format(control_settings_command_texts.substitution_condition,
+                      sizeof(control_settings_command_texts.substitution_condition),
+                      frames == 1u ? mod_text_command_list__substitution_frame
+                                   : mod_text_command_list__substitution_frames,
+                      digits);
+    return control_settings_command_texts.substitution_condition;
+}
+
+/* Whether a row's mechanic is active under the current battle settings. */
+static SECTION(".text.control_settings_helpers") u32 command_row_active(u32 row)
+{
+    if (row == COMMAND_EXTRA_HIT_ROW || row == COMMAND_EXTRA_HIT_COUNTER_ROW)
+        return extra_hit_get() == EXTRA_HIT_ON;
+    if (row == COMMAND_SHADOWBLUR_ROW) return shadowblur_get() != 0u;
+    if (row == COMMAND_CHARGE_CHAKRA_ROW) return chakra_mode_get() != CHAKRA_UNLIMITED;
+    return 1u;
+}
+
+/* After the native builder fills the 18 rows, rebuild them from the command table:
+   each action shows its active button, the Item Select, Substitution, and Linked
+   Attack rows show the reworked names and conditions, and rows for inactive
+   mechanics or unbound actions are dropped. Returns the row count. */
+SECTION(".text.control_settings_command_rows")
+s32 control_settings_command_rows(u8 *list)
+{
+    const CommandEntry *table = (const CommandEntry *)0x008D1550u;
+    const u8 *const *native_texts = (const u8 *const *)0x008BD510u;
+    u32 side = *(u32 *)(list + 4u) < SIDES ? *(u32 *)(list + 4u) : 0u;
+    const s16 *native = ((BindingsGet)0x001F3F10u)(side + 1u);
+    u32 gauge_mode = substitution_gauge_mode_get();
+    u32 row, index;
+    s32 rows = 0;
+    for (index = 0u; index < COMMAND_TEXTS; ++index)
+        control_settings_command_texts.texts[index] = native_texts[index];
+    control_settings_command_texts.texts[COMMAND_TEXT_SUBSTITUTION - COMMAND_TEXT_FIRST] =
+        substitution_condition(native_texts[COMMAND_TEXT_SUBSTITUTION - COMMAND_TEXT_FIRST]);
+    control_settings_command_texts.texts[COMMAND_TEXT_LINKED_ATTACK - COMMAND_TEXT_FIRST] =
+        mod_text_command_list__linked_attack_support;
+    if (native == (const s16 *)0) return COMMAND_ROWS;
+    for (row = 0u; row < COMMAND_ROWS; ++row) {
+        u8 *base = list + 0x38u + (u32)rows * COMMAND_ROW_SIZE;
+        s32 *tokens = (s32 *)(base + 8u);
+        const u8 *name = table[row].name;
+        s32 count = 0;
+        u32 bound = 1u;
+        if (!command_row_active(row)) continue;
+        if ((u32)rows != row) {
+            const u32 *source = (const u32 *)(list + 0x38u + row * COMMAND_ROW_SIZE);
+            for (index = 0u; index < COMMAND_ROW_SIZE / 4u; ++index) ((u32 *)base)[index] = source[index];
+        }
+        for (index = 0u; index < COMMAND_ROW_TOKENS; ++index) {
+            s32 token = table[row].tokens[index];
+            u32 masks[2] = {0u, 0u};
+            u32 mask, shown = 0u;
+            if (token < 0) break;
+            if (token < 26) {
+                tokens[count++] = token;
+                continue;
+            }
+            if (token == 27) masks[0] = (u16)native[1];
+            else if (token == 28) masks[0] = (u16)native[2];
+            else if (token == 29) masks[0] = (u16)native[3];
+            else if (token == 30) {
+                masks[0] = control_settings_extra_bindings[extra_index(side, ITEM_SELECT_L)];
+                masks[1] = control_settings_extra_bindings[extra_index(side, ITEM_SELECT_R)];
+            } else if (token == 31)
+                masks[0] = control_settings_extra_bindings[extra_index(
+                    side, row == COMMAND_SUBSTITUTION_ROW ? SUBSTITUTION : GUARD)];
+            else if (token == 32) masks[0] = (u16)native[5];
+            else continue;
+            for (mask = 0u; mask < 2u; ++mask) {
+                token = command_glyph(masks[mask]);
+                if (token >= 0) {
+                    tokens[count++] = token;
+                    shown = 1u;
+                }
+            }
+            if (!shown) bound = 0u;
+        }
+        if (!bound) continue;
+        if (row == COMMAND_ITEM_SELECT_ROW) name = mod_text_command_list__item_select;
+        else if (row == COMMAND_SUBSTITUTION_ROW && gauge_mode == SUBSTITUTION_GAUGE)
+            name = mod_text_command_list__substitution_gauge;
+        else if (row == COMMAND_SUBSTITUTION_ROW && gauge_mode == SUBSTITUTION_FREE)
+            name = mod_text_command_list__substitution_free;
+        *(const u8 **)base = name;
+        *(s32 *)(base + 0x30u) = count;
+        ++rows;
+    }
+    return rows;
+}
+
+/* Replaces the chart's converter of the first four bindings to icon tokens; a binding
+   with no button shows the empty glyph. */
+SECTION(".text.control_settings_chart_bindings")
+void control_settings_chart_bindings(u8 *chart)
+{
+    const s16 *native = ((BindingsGet)0x001F3F10u)(*(u32 *)(chart + 0x0cu) + 1u);
+    u32 index;
+    for (index = 0u; index < 4u; ++index) {
+        s32 token = native == (const s16 *)0 ? -1 : command_glyph((u16)native[index]);
+        *(s32 *)(chart + 0x20u + index * 4u) = token >= 0 ? token : CHART_TOKEN_NONE;
+    }
+}
+
+/* Draw a glyph: d-pad, face, and plus tokens with the list's own sprite, and the pill
+   tokens with the shoulder or menu badge sprite in the same draw layer. */
+static SECTION(".text.control_settings_helpers") void command_glyph_draw(
+    float x, float y, u8 *sprite, const s16 *rect, float pill_offset)
+{
+    s32 token = (s32)((rect - control_settings_command_glyphs[0]) / 4);
+    void *layer = *(void **)(sprite + 0xd0u);
+    u8 *pill;
+    if (token < 9 || (token > 12 && token < COMMAND_TOKEN_SELECT)) {
+        ((RectDraw)0x0037BB40u)(x, y, sprite, rect);
+        return;
+    }
+    if (!badge_sprites_ready(layer)) return;
+    pill = control_settings_badge_sprites.sprite[token == COMMAND_TOKEN_SELECT ? 2 : 1];
+    *(void **)(pill + 0xd0u) = layer;
+    ((RectDraw)0x0037BB40u)(x, y + pill_offset, pill, rect);
+    ((ObjectCall)0x001CC070u)(pill);
+}
+
+SECTION(".text.control_settings_list_glyph_draw")
+void control_settings_list_glyph_draw(float x, float y, u8 *sprite, const s16 *rect)
+{
+    command_glyph_draw(x, y, sprite, rect, 0.0f);
+}
+
+SECTION(".text.control_settings_chart_glyph_draw")
+void control_settings_chart_glyph_draw(float x, float y, u8 *sprite, const s16 *rect)
+{
+    command_glyph_draw(x, y, sprite, rect, CHART_PILL_OFFSET);
 }

@@ -176,6 +176,44 @@ only to its own button.
 Neither the [Battle support](battle.md#battle-support) bar nor the independent
 substitution gauge draws a button prompt.
 
+## Command List and move chart
+
+The battle Command List shows each system command's active button and only the
+commands the battle can use. After the native builder fills its 18 rows, the
+feature rebuilds them from the command table: Attack, Jump, Item Use, and Linked
+Attack from their native bindings, Item Select from Item Select L and R, Guard
+from the added Guard, and Substitution from the added Substitution. It drops
+every row whose action or required Attack is unbound, Extra Hit and Extra Hit
+Counter unless Extra Hit is On, Shadowblur Extra Hit while Shadowblur is Off,
+and Charge Chakra while Chakra is Unlimited, then stores the remaining count as
+the list's row count.
+
+The rebuilt rows also replace text with mod strings. Item Select is "Item Select
+(Next / Previous)". Substitution Jutsu keeps the native "(Consume Chakra)" name
+for the Chakra resource and uses "(Consume Gauge)" for Gauge and no suffix for
+Free. Its condition follows Substitution Input: the native text for Default,
+"(hold when getting hit)" for Hold, and "(press up to N frames before getting
+hit)" for a frame window. Linked Attack's condition is "(calls a support)", and
+Rebound's is "(right after getting thrown/hit)" through its owned retail
+string. The renderer reads condition texts from a payload copy of the native
+text table that the rebuild refreshes with these overrides. In English, the
+Font's Practice explanation adapter draws the row tokens instead and reads the
+same table.
+
+The character move chart's converter is replaced so its first four bindings
+map to every button; an unbound one draws an empty glyph.
+
+Both renderers read a payload glyph table that adds Select, L3, and R3 tokens
+after the native records, and the Command List's shoulder range check is
+widened to include them. Their shoulder and Select draws go through a hook that
+draws the Control Settings pill with the battle badge sprites in the renderer's
+draw layer: L1 through R3 from `TEX_xcommand02` and Select from `TEX_xmenu`.
+In the chart, pills sit 4 units lower to center in its 24-unit face slot. The
+native builder resolves only the native bindings, the native chart converter
+maps only the face buttons, and the chart draws every token from the d-pad and
+face texture, so other bindings otherwise show a d-pad or nothing. See
+[Command List rows](../knowledge/gameplay/action_commands.md#command-list-rows).
+
 ## Builder hook map
 
 Use `general.controls` in `@builder/patches/general/general.json`. Its
@@ -194,6 +232,8 @@ guarded entries are:
 | Logical Guard and zero bindings | BTL `0x3C02C`, `0x3B8F0`, `0x3BD40`, `0x3BE90` | Add separate Guard alongside both native Guard/Sub bindings; make an unbound action never match in the binding accessor and the history match and count wrappers |
 | Item Select L and R input | BTL `0x3C6AC` | Set fighter input `0x02000000` for an Item Select L press and `0x04000000` for an Item Select R press, then reproduce the displaced `0x40000000` step |
 | Reverse item select | ELF `0x275670` | Replace resident `0x00375570` with the reverse step |
+| Command List | BTL `0x1C45F4`, `0x1C4BF4`, `0x1C4D1C`..`0x1C4D44`, `0x1C4D70`, `0x1C4D74` | Rebuild the rows from the active bindings and battle settings and store their count; widen the shoulder token range; draw shoulder, L3, R3, and Select tokens from the payload glyph table as pills; read condition texts from the payload text table |
+| Move chart | BTL `0x1C54A0`, `0x1C6B44`, `0x1C6B48`, `0x1C6B68` | Convert the first four bindings for every button; draw face and button tokens from the payload glyph table, pills through the badge sprites |
 | Item-select badges | BTL `0x5E950`, `0x5EA88` | Branch past the native badge draw; draw the bound Item Select L and R badges for the panel's side with Control Settings icons, then call the native wheel draw |
 
 The logical-Guard bridge preserves the translator's accumulated input mask

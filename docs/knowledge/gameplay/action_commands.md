@@ -139,6 +139,43 @@ overlay table. `FUN_001f3f10(1)` and `(2)` return the mutable side arrays at
 Adjacent static identifiers are `controller1` at live `0x00898160`, file
 `0x1E4260`, and `controller2` at live `0x00898170`, file `0x1E4270`.
 
+### Command List rows
+
+The battle Command List's builder is BTL live `0x00877FB0`. It maps the side's
+eight configured bindings to icon tokens: Circle `4`, Triangle `5`, Square
+`6`, Cross `7`, L1 `9`, R1 `10`, L2 `11`, R2 `12`. Any other mask, including
+zero, leaves its stack slot unassigned. It then fills 18 rows of stride `0x34`
+from the command table at live `0x008D1550` (16-byte entries: name pointer, up
+to five halfword tokens, `-1` ending the list), writing tokens at row `+0x08`
+and their count at row `+0x30`, and finally stores 18 at list `+0x2C` (live
+`0x008784F4`). Table tokens below 26 are copied; 27 through 32 select bindings
+1, 2, 3, 4, 5, and 6 (Attack, Jump, Item Use, Item Select, Linked Attack, and
+Guard/Sub 1). For bindings 3 and 6, an L2 or L1 token expands to L2 `+` R2 or
+L1 `+` R1. Guard's row and the Substitution row's button both use token 31.
+
+The renderer, live `0x00878860`, draws tokens 0 through 3 (d-pad directions)
+and 4 through 8 (face buttons and plus) from texture layer 0, `TEX_xcommand`;
+13 through 25 as text through the pointer table at live `0x008BD510`; and 9
+through 12 from texture layer 1, `TEX_xcommand02`, using the 8-byte records at
+live `0x008D14C0`, whose width advances the next token. Its checks are
+`slti 13` and `slti 26` for text at live `0x00878AD0` and `0x00878ADC`, and
+`slti 13` for the shoulder branch at live `0x00878AF4`. The shoulder branch
+loads the record base at live `0x00878C1C` and the width base at
+`0x00878C40`, and draws at `0x00878C38`; the text branch loads its table base
+once at `0x00878C70`. It draws list `+0x30` rows from the scroll position at
+list `+0x2E`, wrapping at the row count in list `+0x2C`, and passes `+0x2E` and
+`+0x2C` to the scroll bar. Text tokens 16 and 23 are the Substitution condition,
+「（相手の攻撃の当たる瞬間）」 with ruby, and the Linked Attack condition,
+「（マニュアル：出現後もう一度押すと攻撃）」 with ruby; row 8's name,
+「変わり身の術（チャクラ消費）」, includes the Chakra suffix.
+
+The character move chart's renderer, live `0x0087A740`, draws every token with
+its layer-0 sprite, `TEX_xcommand`: tokens below 4 at the row's icon line and
+the rest 4 units lower, through the record base at live `0x0087AA44` and the
+draw at `0x0087AA68`. Shoulder tokens 9 through 12 therefore sample d-pad
+texels there. Its binding converter, live `0x008793A0`, stores token 0, the up
+d-pad, for any non-face binding.
+
 ## Battle input object and circular history
 
 The useful confirmed fields of the battle input object are:

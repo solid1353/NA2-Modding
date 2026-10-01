@@ -1394,7 +1394,10 @@
           "font_v2_practice_tokens": "v2_practice_tokens",
           "font_v2_title_callback": "v2_title_callback",
           "font_v2_wrap_native": "v2_wrap_native",
-          "font_v2_adapter_call": "v2_adapter_call"
+          "font_v2_adapter_call": "v2_adapter_call",
+          "control_settings_command_texts": "control_settings_command_texts",
+          "control_settings_command_glyphs": "control_settings_command_glyphs",
+          "control_settings_list_glyph_draw": "control_settings_list_glyph_draw"
         },
         "fragments": {
           "v2_practice_append": {
@@ -1402,6 +1405,9 @@
           },
           "v2_c_icon_record": {
             "object": "localization.font.v2.c.text.font.v2.icon.record"
+          },
+          "v2_pill_tags": {
+            "object": "localization.font.v2.c.rodata.font.v2.pill.tags"
           },
           "v2_practice_icon_metric": {
             "object": "localization.font.v2.c.text.font.v2.practice.icon.metric"

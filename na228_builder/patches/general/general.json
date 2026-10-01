@@ -9,6 +9,14 @@
         "destination_offset": "0x5E950",
         "expected_hex": "2700401000000000",
         "replacement_hex": "4C00001000000000"
+      },
+      "command_list_pill_tokens": {
+        "description": "Draw Command List tokens 26 through 28, for Select, L3, and R3, through the shoulder glyph branch.",
+        "operation": "replace",
+        "destination_target_id": "na2_btl",
+        "destination_offset": "0x1C4BF4",
+        "expected_hex": "0D006228",
+        "replacement_hex": "1D006228"
       }
     },
     "hooks": {
@@ -55,6 +63,106 @@
         "symbol": "control_settings_open",
         "encoding": "j26",
         "replacement_hex": "0000000800000000"
+      },
+      "rebuild_command_list_bindings": {
+        "description": "After the battle Command List builds its rows, show each action's active button instead of the native binding.",
+        "target_id": "na2_btl",
+        "offset": "0x1C45F4",
+        "expected_hex": "120003242C0003A6",
+        "symbol": "control_settings_command_rows_bridge",
+        "encoding": "jal26",
+        "replacement_hex": "0000000C00000000"
+      },
+      "command_list_shoulder_glyphs_high": {
+        "description": "Draw Command List shoulder tokens, including L3 and R3, from the added glyph table.",
+        "target_id": "na2_btl",
+        "offset": "0x1C4D1C",
+        "expected_hex": "8D00",
+        "symbol": "control_settings_command_glyphs",
+        "encoding": "hi16"
+      },
+      "command_list_shoulder_glyphs_low": {
+        "description": "Complete the Command List shoulder glyph table address.",
+        "target_id": "na2_btl",
+        "offset": "0x1C4D20",
+        "expected_hex": "C014",
+        "symbol": "control_settings_command_glyphs",
+        "encoding": "lo16"
+      },
+      "command_list_shoulder_widths_high": {
+        "description": "Advance past Command List shoulder tokens by the added glyph table's widths.",
+        "target_id": "na2_btl",
+        "offset": "0x1C4D40",
+        "expected_hex": "8D00",
+        "symbol": "control_settings_command_glyphs",
+        "encoding": "hi16",
+        "addend": 4
+      },
+      "command_list_shoulder_widths_low": {
+        "description": "Complete the Command List shoulder width address.",
+        "target_id": "na2_btl",
+        "offset": "0x1C4D44",
+        "expected_hex": "C414",
+        "symbol": "control_settings_command_glyphs",
+        "encoding": "lo16",
+        "addend": 4
+      },
+      "command_list_pill_draw": {
+        "description": "Draw Command List shoulder, L3, R3, and Select tokens as Control Settings pills.",
+        "target_id": "na2_btl",
+        "offset": "0x1C4D38",
+        "expected_hex": "D0EE0D0C",
+        "symbol": "control_settings_list_glyph_draw",
+        "encoding": "jal26"
+      },
+      "command_list_texts_high": {
+        "description": "Read Command List condition texts from the rebuilt text table.",
+        "target_id": "na2_btl",
+        "offset": "0x1C4D70",
+        "expected_hex": "8C00",
+        "symbol": "control_settings_command_texts",
+        "encoding": "hi16"
+      },
+      "command_list_texts_low": {
+        "description": "Complete the Command List text table address.",
+        "target_id": "na2_btl",
+        "offset": "0x1C4D74",
+        "expected_hex": "10D5",
+        "symbol": "control_settings_command_texts",
+        "encoding": "lo16"
+      },
+      "chart_button_tokens": {
+        "description": "Convert the move chart's first four bindings to tokens for every button.",
+        "target_id": "na2_btl",
+        "offset": "0x1C54A0",
+        "expected_hex": "E0FFBD271000BFFF",
+        "symbol": "control_settings_chart_bindings",
+        "encoding": "j26",
+        "replacement_hex": "0000000800000000"
+      },
+      "chart_glyphs_high": {
+        "description": "Draw move-chart face and button tokens from the added glyph table.",
+        "target_id": "na2_btl",
+        "offset": "0x1C6B44",
+        "expected_hex": "8D00",
+        "symbol": "control_settings_command_glyphs",
+        "encoding": "hi16"
+      },
+      "chart_glyphs_low": {
+        "description": "Complete the move-chart glyph table address.",
+        "target_id": "na2_btl",
+        "offset": "0x1C6B48",
+        "expected_hex": "C014",
+        "symbol": "control_settings_command_glyphs",
+        "encoding": "lo16"
+      },
+      "chart_pill_draw": {
+        "description": "Draw move-chart shoulder, L3, R3, and Select tokens as Control Settings pills.",
+        "target_id": "na2_btl",
+        "offset": "0x1C6B68",
+        "expected_hex": "D0EE0D0C",
+        "symbol": "control_settings_chart_glyph_draw",
+        "encoding": "jal26"
       },
       "skip_zero_binding_in_history_match": {
         "description": "Keep an unbound native action from matching every history record in the binding match wrapper.",
@@ -239,7 +347,19 @@
           "mod_text_controls__item_select_r__label": "mod_text_controls__item_select_r__label",
           "mod_text_controls__unbound__label": "mod_text_controls__unbound__label",
           "control_settings_extra_bindings": "control_settings_extra_bindings",
+          "mod_text_command_list__item_select": "mod_text_command_list__item_select",
+          "mod_text_command_list__substitution_gauge": "mod_text_command_list__substitution_gauge",
+          "mod_text_command_list__substitution_free": "mod_text_command_list__substitution_free",
+          "mod_text_command_list__substitution_hold": "mod_text_command_list__substitution_hold",
+          "mod_text_command_list__substitution_frame": "mod_text_command_list__substitution_frame",
+          "mod_text_command_list__substitution_frames": "mod_text_command_list__substitution_frames",
+          "mod_text_command_list__linked_attack_support": "mod_text_command_list__linked_attack_support",
+          "mod_number_glyphs": "mod_number_glyphs",
           "substitution_input_get": "substitution_input_get",
+          "substitution_gauge_mode_get": "substitution_gauge_mode_get",
+          "chakra_mode_get": "chakra_mode_get",
+          "extra_hit_get": "extra_hit_get",
+          "shadowblur_get": "shadowblur_get",
           "control_default_reset_actions": "control_default_reset_actions",
           "control_settings_button_icons": "control_settings_button_icons",
           "control_settings_label_draw": "control_settings_label_draw",
@@ -320,6 +440,24 @@
           },
           "control_settings_badge_sprites": {
             "object": "general.controls.data.control.settings.badge.sprites"
+          },
+          "control_settings_command_rows": {
+            "object": "general.controls.text.control.settings.command.rows"
+          },
+          "control_settings_command_texts": {
+            "object": "general.controls.data.control.settings.command.texts"
+          },
+          "control_settings_command_glyphs": {
+            "object": "general.controls.rodata.control.settings.command.glyphs"
+          },
+          "control_settings_chart_bindings": {
+            "object": "general.controls.text.control.settings.chart.bindings"
+          },
+          "control_settings_list_glyph_draw": {
+            "object": "general.controls.text.control.settings.list.glyph.draw"
+          },
+          "control_settings_chart_glyph_draw": {
+            "object": "general.controls.text.control.settings.chart.glyph.draw"
           }
         },
         "resources": [
@@ -334,7 +472,8 @@
           "control_settings_substitution_accepted": "control_settings_substitution_accepted",
           "control_settings_history_any": "control_settings_history_any",
           "control_settings_guard_pressed": "control_settings_guard_pressed",
-          "control_settings_item_select_bits": "control_settings_item_select_bits"
+          "control_settings_item_select_bits": "control_settings_item_select_bits",
+          "control_settings_command_rows": "control_settings_command_rows"
         },
         "fragments": {
           "control_settings_held_bridge": {
@@ -354,6 +493,9 @@
           },
           "control_settings_count_bridge": {
             "object": "general.controls.asm.text.control.settings.count.bridge"
+          },
+          "control_settings_command_rows_bridge": {
+            "object": "general.controls.asm.text.control.settings.command.rows.bridge"
           }
         }
       }

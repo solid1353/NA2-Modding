@@ -1,5 +1,7 @@
 # schema_version: 1
 id	key	label	values
+type	buttons	Buttons	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
+type	difficulty	Difficulty	Simple | Easy | Normal | Hard | Insane | Ultimate
 0001	mod.simple_display	Simple Display	Off | On
 0002	mod.support_selection	Support Selection	None | Relevant | All
 0003	mod.character_overrides	Character Balance	Original | Overrides
@@ -46,24 +48,24 @@ id	key	label	values
 002C	mechanics.items.custom.random_ball	Random Ball	Off | On
 002D	mechanics.items.custom.stun_ball	Stun Ball	Off | On
 002E	battle.time	Time	10s to 90s by 10s | 99s | Unlimited
-002F	battle.difficulty	Difficulty	Simple | Easy | Normal | Hard | Insane | Ultimate
+002F	battle.difficulty	Difficulty	difficulty
 0030	battle.handicap	Handicap	0 to 10 by 1
 0031	practice.health	Health	Normal | Half | Almost
 0032	practice.commands	Commands	Off | On
 0033	practice.damage	Damage	Off | On
 0034	practice.opponent.status	Opponent Status	Manual | COM | Stand | Jump | Double Jump
-0035	practice.opponent.strength	Opponent Strength	Simple | Easy | Normal | Hard | Insane | Ultimate
+0035	practice.opponent.strength	Opponent Strength	difficulty
 0036	practice.opponent.attack	Opponent Attack	No | Single | Combo | Projectile | High Speed Move | Ultimate Jutsu | Jutsu
 0037	practice.opponent.guard	Opponent Guard	No | Yes
 0038	practice.opponent.move	Opponent Move	Stay | Follow
 0039	practice.opponent.substitution_jutsu	Opponent Substitution Jutsu	Normal | No
 003A	practice.opponent.linked_attack	Opponent Linked Attack	Don't Use | Normal | Random
 003B	practice.opponent.extra_hit_counter	Opponent Extra Hit Counter	Normal | Return
-003C	controls.p1.guard	P1 Guard	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
-003D	controls.p1.substitution	P1 Substitution	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
-003E	controls.p1.item_select_l	P1 Item Select L	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
-003F	controls.p1.item_select_r	P1 Item Select R	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
-0040	controls.p2.guard	P2 Guard	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
-0041	controls.p2.substitution	P2 Substitution	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
-0042	controls.p2.item_select_l	P2 Item Select L	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
-0043	controls.p2.item_select_r	P2 Item Select R	Unbound | L2 | R2 | L1 | R1 | Triangle | Circle | Cross | Square | Select | L3 | R3
+003C	controls.p1.guard	P1 Guard	buttons
+003D	controls.p1.substitution	P1 Substitution	buttons
+003E	controls.p1.item_select_l	P1 Item Select L	buttons
+003F	controls.p1.item_select_r	P1 Item Select R	buttons
+0040	controls.p2.guard	P2 Guard	buttons
+0041	controls.p2.substitution	P2 Substitution	buttons
+0042	controls.p2.item_select_l	P2 Item Select L	buttons
+0043	controls.p2.item_select_r	P2 Item Select R	buttons

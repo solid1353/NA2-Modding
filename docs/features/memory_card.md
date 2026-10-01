@@ -135,7 +135,11 @@ build configuration and are not saved. The first line declares
 | `id` | Permanent, nonzero, four-digit hexadecimal field ID written to the save; a new setting takes the next unused ID |
 | `key` | Setting path resolved to its getter, setter, and configured default |
 | `label` | Human-readable setting name |
-| `values` | Zero-based saved-value order |
+| `values` | Zero-based saved-value order, or the name of a type |
+
+Rows with the `id` `type` come before the settings and are not saved. Each
+names a value list in `key`, and a setting whose `values` cell is that name
+uses the list.
 
 The builder rejects duplicate IDs or keys, missing or unresolved settings,
 malformed values, invalid defaults, and schemas beyond the 1020-entry

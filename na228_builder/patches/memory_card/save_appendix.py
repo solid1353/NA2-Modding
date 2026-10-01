@@ -146,10 +146,22 @@ def load_save_appendix(path: Path) -> tuple[int, tuple[AppendixRow, ...]]:
     rows: list[AppendixRow] = []
     identifiers: set[int] = set()
     keys: set[str] = set()
+    # Type rows name a value list that later rows use by name; they are not saved.
+    types: dict[str, str] = {}
     for line_number, raw in enumerate(reader, start=3):
         if None in raw or any(value is None for value in raw.values()):
             raise ValueError(f"save_appendix.tsv line {line_number} is malformed")
         identifier_text = raw["id"]
+        if identifier_text == "type":
+            name = raw["key"]
+            if rows or not re.fullmatch(r"[a-z_]+", name) or name in types:
+                raise ValueError(
+                    f"save_appendix.tsv line {line_number} must be a uniquely named type "
+                    "before the settings"
+                )
+            _option_count(raw["values"])
+            types[name] = raw["values"]
+            continue
         if not re.fullmatch(r"[0-9A-F]{4}", identifier_text):
             raise ValueError(
                 f"save_appendix.tsv line {line_number} id must be four uppercase hex digits"
@@ -166,7 +178,9 @@ def load_save_appendix(path: Path) -> tuple[int, tuple[AppendixRow, ...]]:
         identifiers.add(setting_id)
         keys.add(key)
         rows.append(
-            AppendixRow(setting_id, key, label, _option_count(raw["values"]))
+            AppendixRow(
+                setting_id, key, label, _option_count(types.get(raw["values"], raw["values"]))
+            )
         )
     if APPENDIX_HEADER_SIZE + len(rows) * APPENDIX_ENTRY_SIZE > APPENDIX_SIZE:
         raise ValueError("save_appendix.tsv exceeds the 0x1000-byte appendix capacity")

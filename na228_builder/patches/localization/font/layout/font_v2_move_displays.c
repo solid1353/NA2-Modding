@@ -1,5 +1,5 @@
 #define FONT_V2_DECLARATIONS_ONLY
-#include "font_v2_core.c"
+#include "../core/font_v2_core.c"
 
 /* The NUN5 Jutsu display and Practice completion plate wrap and center at most two lines. */
 #define FONT_JUTSU_DISPLAY_WIDTH 208u

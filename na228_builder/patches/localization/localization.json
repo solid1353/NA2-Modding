@@ -3863,7 +3863,7 @@
     "payload": {
       "v2_core": {
         "kind": "c",
-        "path": "na228_builder/patches/localization/font/layout/font_v2_core.c",
+        "path": "na228_builder/patches/localization/font/core/font_v2_core.c",
         "namespace": "localization.font.core.v2_core",
         "imports": {
           "font_v2_active_session": "v2_session_pointer",

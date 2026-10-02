@@ -1,6 +1,6 @@
 /* Shared horizontal menu help: identical measurement and drawing spacing. */
 #define FONT_V2_DECLARATIONS_ONLY
-#include "font_v2_core.c"
+#include "../core/font_v2_core.c"
 
 #define HELP_APPEND_ADDRESS 0x0037F590u
 #define HELP_DRAW_ADDRESS 0x0037F900u

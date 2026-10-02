@@ -1,5 +1,5 @@
 #define FONT_V2_DECLARATIONS_ONLY
-#include "font_v2_core.c"
+#include "../core/font_v2_core.c"
 
 /* Fixed native selected-style state; these addresses are ABI, not tuning. */
 #define FONT_V2_GLOBAL_CHOICE_RECORDS_ADDRESS 0x005B1280u

@@ -1,5 +1,5 @@
 #define FONT_V2_DECLARATIONS_ONLY
-#include "font_v2_core.c"
+#include "../core/font_v2_core.c"
 
 /* === Command Chart: relationship descriptions and inline icons === */
 

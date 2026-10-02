@@ -325,7 +325,7 @@ class CatalogTests(unittest.TestCase):
             {
               faster_loading: setting {
                 description: "Load faster.",
-                patch: "feature.faster_loading",
+                patch: "feature.startup.faster_loading",
               },
             }
             &
@@ -333,14 +333,14 @@ class CatalogTests(unittest.TestCase):
               {
                 skip_opening: setting {
                   description: "Skip opening.",
-                  patch: "feature.skip_opening",
+                  patch: "feature.startup.skip_opening",
                 },
               }
               |
               {
                 savedata_loading: setting<"automatic"> {
                   description: "Load save automatically.",
-                  patch: "feature.savedata_loading",
+                  patch: "feature.startup.savedata_loading",
                 },
               }
             ),
@@ -426,7 +426,7 @@ class CatalogTests(unittest.TestCase):
             {
               faster_loading: setting {
                 description: "Load faster.",
-                patch: "feature.faster_loading",
+                patch: "feature.startup.faster_loading",
               },
             }
             &
@@ -434,22 +434,22 @@ class CatalogTests(unittest.TestCase):
               {
                 skip_intro: setting {
                   description: "Skip intro.",
-                  patch: "feature.skip_intro",
+                  patch: "feature.startup.skip_intro",
                 },
                 skip_opening: setting {
                   description: "Skip opening.",
-                  patch: "feature.skip_opening",
+                  patch: "feature.startup.skip_opening",
                 },
               }
               |
               {
                 savedata_loading: setting<"automatic"> {
                   description: "Load save automatically.",
-                  patch: "feature.savedata_loading",
+                  patch: "feature.startup.savedata_loading",
                 },
                 loading_screen: setting {
                   description: "Show loading screen.",
-                  patch: "feature.loading_screen",
+                  patch: "feature.startup.loading_screen",
                 },
               }
             ),
@@ -762,15 +762,15 @@ class CatalogTests(unittest.TestCase):
             description: "Integer.", patch: "feature.integer",
           } | false,
           supplied_bool: setting<{ value: bool }> {
-            description: "Supplied bool.", patch: "feature.bool",
+            description: "Supplied bool.", patch: "feature.supplied_bool",
           },
           alternative:
             setting<int> {
-              description: "Direct.", patch: "feature.direct",
+              description: "Direct.", patch: "feature.alternative",
             }
             |
             { fixed: setting<int> {
-              description: "Fixed.", patch: "feature.fixed",
+              description: "Fixed.", patch: "feature.alternative.fixed",
             } }
             |
             false,
@@ -818,18 +818,18 @@ class CatalogTests(unittest.TestCase):
     ) -> None:
         source = '''{
           optional: setting<{ count?: int }> {
-            description: "Optional object.", patch: "f.optional",
+            description: "Optional object.", patch: "feature.optional",
           },
           required: setting<{ count: int }> {
-            description: "Required object.", patch: "f.required",
+            description: "Required object.", patch: "feature.required",
           },
           alternative:
             setting<{ count?: int }> {
-              description: "Optional branch.", patch: "f.branch_object",
+              description: "Optional branch.", patch: "feature.alternative",
             }
             |
             setting<"named"> {
-              description: "Named branch.", patch: "f.branch_named",
+              description: "Named branch.", patch: "feature.alternative.named",
             },
         }'''
         with tempfile.TemporaryDirectory() as directory:
@@ -877,24 +877,24 @@ class CatalogTests(unittest.TestCase):
     ) -> None:
         source = '''{
           nested: {
-            first: setting { description: "First.", patch: "f.first" },
-            second: setting { description: "Second.", patch: "f.second" },
+            first: setting { description: "First.", patch: "feature.nested.first" },
+            second: setting { description: "Second.", patch: "feature.nested.second" },
           },
           scalar: setting<int> {
-            description: "Scalar.", patch: "f.scalar",
+            description: "Scalar.", patch: "feature.scalar",
           },
           named:
             { pair: {
               left: setting<int> {
-                description: "Left.", patch: "f.left",
+                description: "Left.", patch: "feature.named.pair.left",
               },
               right: setting<int> {
-                description: "Right.", patch: "f.right",
+                description: "Right.", patch: "feature.named.pair.right",
               },
             } }
             |
             setting<string> {
-              description: "Text.", patch: "f.text",
+              description: "Text.", patch: "feature.named",
             },
         }'''
         base = {
@@ -948,10 +948,10 @@ class CatalogTests(unittest.TestCase):
     def test_parent_true_and_invalid_typed_values_are_rejected(self) -> None:
         source = '''{
           nested: {
-            leaf: setting { description: "Leaf.", patch: "f.leaf" },
+            leaf: setting { description: "Leaf.", patch: "feature.nested.leaf" },
           },
           integer: setting<int> {
-            description: "Integer.", patch: "f.integer",
+            description: "Integer.", patch: "feature.integer",
           },
         }'''
         with tempfile.TemporaryDirectory() as directory:
@@ -994,9 +994,9 @@ class CatalogTests(unittest.TestCase):
 
     def test_materialized_configuration_applies_repository_override(self) -> None:
         source = '''{
-          first: setting { description: "First.", patch: "f.first" },
-          second: setting { description: "Second.", patch: "f.second" },
-          third: setting { description: "Third.", patch: "f.third" },
+          first: setting { description: "First.", patch: "feature.first" },
+          second: setting { description: "Second.", patch: "feature.second" },
+          third: setting { description: "Third.", patch: "feature.third" },
         }'''
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -1052,7 +1052,7 @@ class CatalogTests(unittest.TestCase):
     def test_unknown_and_orphaned_implementation_ids_are_rejected(self) -> None:
         source = '''{
           leaf: setting {
-            description: "Leaf.", patch: "f.missing",
+            description: "Leaf.", patch: "feature.leaf",
           },
         }'''
         with tempfile.TemporaryDirectory() as directory:
@@ -1062,24 +1062,40 @@ class CatalogTests(unittest.TestCase):
                 {"feature": source},
                 {"feature": {"leaf": True}},
             )
-            patches_path = root / "patches" / "f" / "f.json"
+            patches_path = root / "patches" / "feature" / "feature.json"
             values = json.loads(patches_path.read_text(encoding="utf-8"))
-            values.pop("f.missing")
-            values["f.orphan"] = {"modules": ["binary_patcher"]}
+            values.pop("feature.leaf")
+            values["feature.orphan"] = {"modules": ["binary_patcher"]}
             self.write_json(patches_path, values)
             with self.assertRaisesRegex(ValueError, "unknown patch"):
                 catalog.load_selection(catalog_path, configuration_path)
 
-            values["f.missing"] = {"modules": ["binary_patcher"]}
+            values["feature.leaf"] = {"modules": ["binary_patcher"]}
             self.write_json(patches_path, values)
             with self.assertRaisesRegex(ValueError, "not catalog-referenced"):
+                catalog.load_selection(catalog_path, configuration_path)
+
+    def test_patch_ids_follow_their_node_paths(self) -> None:
+        source = '''{
+          language: setting<"en"> { patch: "feature.language.en" } | setting<"jp"> {},
+          leaf: setting { patch: "feature.other" },
+        }'''
+        with tempfile.TemporaryDirectory() as directory:
+            catalog_path, configuration_path = self.write_project(
+                Path(directory),
+                {"feature": source},
+                {"feature": {"language": "en", "leaf": True}},
+            )
+            with self.assertRaisesRegex(
+                ValueError, "'feature.other' must be named after its node: 'feature.leaf'"
+            ):
                 catalog.load_selection(catalog_path, configuration_path)
 
     def test_public_catalog_keeps_contract_and_strips_implementation(self) -> None:
         source = '''{
           value: setting<decimal & 0..15 & step 0.25> {
             description: "Bounded value.",
-            patch: "f.value",
+            patch: "feature.value",
           },
         }'''
         with tempfile.TemporaryDirectory() as directory:
@@ -1089,7 +1105,7 @@ class CatalogTests(unittest.TestCase):
                 {"feature": source},
                 {"feature": {"value": 5}},
                 patch_definitions={
-                    "f.value": {
+                    "feature.value": {
                         "startup_fast_forward_frames": {"additive": 12}
                     }
                 },
@@ -1105,13 +1121,13 @@ class CatalogTests(unittest.TestCase):
         self.assertIn('description: "Bounded value."', public)
         self.assertNotIn("patches", public)
         self.assertNotIn("startup_fast_forward_frames", public)
-        self.assertNotIn("f.value", public)
+        self.assertNotIn("feature.value", public)
 
     def test_release_layout_roundtrip_preserves_hidden_values_and_user_edits(self) -> None:
         source = '''{
           group: {
             speed: setting<int> {},
-            internal: setting { patch: "f.internal", },
+            internal: setting { patch: "feature.group.internal", },
           },
           defaults: {
             mode: setting<"a" | "b"> {},
@@ -1171,7 +1187,7 @@ class CatalogTests(unittest.TestCase):
             root = Path(directory)
             schema, _ = self.write_project(
                 root,
-                {"feature": '{ option: setting {}, private: setting { patch: "f.private" }, }'},
+                {"feature": '{ option: setting {}, private: setting { patch: "feature.private" }, }'},
                 {"feature": {"option": False, "private": True}},
             )
             release_path = root / "configurations" / "release.jsonc"

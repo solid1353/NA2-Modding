@@ -140,13 +140,16 @@ mapping syntax, exported layout, and packaged defaults.
 ## Patch mappings and validation
 
 A patch referenced by a catalog node uses that node's path below `features` as
-its ID, and its sources live in the matching `patches/` directory; a node's
-shared sources live in the node's own directory. Each ID must resolve in
-`patches/<first-segment>/<first-segment>.json`. Internal patches reached only
-through `includes` keep their IDs under their feature. A patch may be
-referenced directly only once; shared patches belong on the lowest common
-container. Internal patches may instead be reached through
-`includes`. Unreachable definitions are rejected.
+its ID; on a setting branch of a union, the ID adds the branch's literal value,
+as in `localization.en`. Its sources live in the matching `patches/` directory;
+a node's shared sources live in the node's own directory. The loader rejects a
+referenced patch whose ID differs from its node path and a payload source
+outside its patch's directory and that directory's parents. Each ID must
+resolve in `patches/<first-segment>/<first-segment>.json`. Internal patches
+reached only through `includes` keep their IDs under their feature. A patch may
+be referenced directly only once; shared patches belong on the lowest common
+container. Internal patches may instead be reached through `includes`.
+Unreachable definitions are rejected.
 
 | Definition field | Purpose |
 | --- | --- |

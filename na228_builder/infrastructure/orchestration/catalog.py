@@ -200,7 +200,26 @@ def _read_catalog(path: Path) -> dict[str, catalog_format.CatalogNodeExpression]
             "Catalog patch IDs must each be referenced exactly once: "
             + ", ".join(duplicate_patch_ids)
         )
+    for feature_id, feature in features.items():
+        for patch_id, expected in _catalog_patch_names(feature, (feature_id,)):
+            if patch_id != expected:
+                raise ValueError(
+                    f"Catalog patch {patch_id!r} must be named after its node: {expected!r}"
+                )
     return features
+
+
+def _source_location(patch_id: str, path: str, catalog_path: Path, label: str) -> None:
+    """A source under patches/ lives in its patch's directory or in an ancestor's."""
+    prefix = f"{catalog_path.parent.name}/patches/"
+    if not path.startswith(prefix):
+        return
+    directory = PurePosixPath(path[len(prefix):]).parent.parts
+    owner = tuple(patch_id.split("."))
+    if directory[: len(owner)] != owner and owner[: len(directory)] != directory:
+        raise ValueError(
+            f"{label}.path must be under patches/{'/'.join(owner)}/ or a parent directory: {path}"
+        )
 
 
 def _identifier(value: str, label: str) -> str:
@@ -260,6 +279,45 @@ def _feature_root(
             for feature_id in features
         )
     )
+
+
+def _catalog_patch_names(
+    node: catalog_format.CatalogNodeExpression,
+    path: tuple[str, ...],
+) -> tuple[tuple[str, str], ...]:
+    """Each referenced patch with the ID its node path gives it; a setting branch of a
+    union adds its literal value."""
+    if isinstance(node, catalog_format.SettingNode):
+        return ((node.patch, ".".join(path)),) if node.patch else ()
+    if isinstance(node, catalog_format.ContainerNode):
+        return (
+            *(((node.patch, ".".join(path)),) if node.patch else ()),
+            *(
+                named
+                for field in node.fields
+                for named in _catalog_patch_names(field.node, (*path, field.name))
+            ),
+        )
+    if isinstance(node, catalog_format.UnionNode):
+        return tuple(
+            named
+            for branch in node.branches
+            for named in _catalog_patch_names(
+                branch,
+                (*path, branch.value_type.value)
+                if isinstance(branch, catalog_format.SettingNode)
+                and isinstance(branch.value_type, catalog_format.LiteralType)
+                and isinstance(branch.value_type.value, str)
+                else path,
+            )
+        )
+    if isinstance(node, catalog_format.IntersectionNode):
+        return tuple(
+            named
+            for operand in node.operands
+            for named in _catalog_patch_names(operand, path)
+        )
+    return ()
 
 
 def _catalog_patches(
@@ -949,6 +1007,7 @@ def _load_implementation(
                 )
                 if not isinstance(declaration["path"], str):
                     raise ValueError(f"{label}.path must be text")
+                _source_location(patch_id, declaration["path"], catalog_path, label)
                 namespace = declaration["namespace"]
                 if (
                     not isinstance(namespace, str)

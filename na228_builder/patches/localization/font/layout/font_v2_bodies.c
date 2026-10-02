@@ -1,5 +1,5 @@
 #define FONT_V2_DECLARATIONS_ONLY
-#include "font_v2_core.c"
+#include "../core/font_v2_core.c"
 
 /* === Shared Yes/No selectors: quit, return, and Special Controls === */
 

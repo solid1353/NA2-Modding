@@ -57,7 +57,7 @@ None of these static graphs alone establishes simultaneous runtime residency.
   [CCS runtime](ccs_runtime.md), payload types to
   [CCS object types](ccs_object_types.md), filename/selector inventories to
   [Character assets](../character_assets.md), the 3EYE presentation family to
-  [End-demo presentation](../../gameplay/end_demo_presentation.md), and
+  [End-demo presentation](../../gameplay/modes/end_demo_presentation.md), and
   gameplay selection semantics to their linked owners. This document owns relationships between those
   resources, not their full inventories or gameplay behavior.
 - **Evidence limitations:** Evidence is static. Published-directory matching
@@ -202,7 +202,7 @@ This differs from `FUN_00115BA0`, which traverses material descriptor
 `+0x2C` and its texture record. Cross-container matching copies `+0x2C`
 but not `+0x30`, so a descriptor-key closure alone cannot establish the
 draw-cache relationship. Cache creation and refresh belong to
-[Texture and material runtime](../../runtime/texture_material_runtime.md);
+[Texture and material runtime](../../runtime/rendering/texture_material_runtime.md);
 this observation does not establish a failure in any selected retail set.
 
 **Observation — effect construction requires a ready texture.** Material
@@ -355,7 +355,7 @@ and immediately following headers corroborate the parser paths.
 sampling keys. The census found no non-`#` authored providers for those keys,
 but `CMN/EFFECT0X.CCS` provides the typed definitions above. Sampling
 construction and downstream drawing belong to
-[Texture and material runtime](../../runtime/texture_material_runtime.md).
+[Texture and material runtime](../../runtime/rendering/texture_material_runtime.md).
 
 ### Shared skeleton and effect-key examples
 
@@ -406,7 +406,7 @@ four-path table is live `0x008A59E0`, preserved bytes `0x008A59A0`, raw
 BTL offset `0x1F1AE0`; its literal pointer values are already live.
 
 The complete setup order and fence ownership belong to
-[Resident setup order](../../gameplay/battle_lifecycle.md#resident-setup-order).
+[Resident setup order](../../gameplay/session/battle_lifecycle.md#resident-setup-order).
 Logical bare names such as `gauge.ccs` are resolved by
 [Resident file services](runtime_services.md#logical-and-explicit-path-routes);
 the physical file is `CMN/GAUGE.CCS`. Disc placement and request spelling
@@ -477,7 +477,7 @@ clears the retained queue, then adopts mask `0x1FF` for both sides before
 advancing to manager state `0x0E`. That establishes the static
 request-to-adoption boundary, not successful publication of every requested
 file. The preparation sequence belongs to
-[Resident setup order](../../gameplay/battle_lifecycle.md#resident-setup-order).
+[Resident setup order](../../gameplay/session/battle_lifecycle.md#resident-setup-order).
 
 `FUN_001E7FE0(manager,side)` nulls all nine handles and empties their path
 strings without destroying a container. Side argument `-2` applies that reset
@@ -534,7 +534,7 @@ calls `FUN_001E7FE0` for that side before installing its pending identity and
 requesting mask `0x1FF`. The reset discards those local aliases while the
 other side's adopted pointers remain available. Form-selection gates and
 the whole-fighter destruction/construction sequence belong to
-[Post-UJ replacement](../../gameplay/awakening.md#static-reconstruction-order).
+[Post-UJ replacement](../../gameplay/characters/awakening.md#static-reconstruction-order).
 This resource trace does not establish display timing or an in-place model
 swap.
 
@@ -557,8 +557,8 @@ The established resident callers of the request helper are `FUN_001E9520`,
 single-slot-release caller is `FUN_001E8EE0`. These are resident direct call
 edges, not a whole-program exclusion of indirect or overlay calls.
 Saved-configuration and form-state semantics remain in
-[Manager identity and resource reset](../../gameplay/awakening.md#manager-identity-and-resource-reset)
-and [Continuation encounters](../../gameplay/battle_lifecycle.md#continuation-encounters-rebuild-the-session).
+[Manager identity and resource reset](../../gameplay/characters/awakening.md#manager-identity-and-resource-reset)
+and [Continuation encounters](../../gameplay/session/battle_lifecycle.md#continuation-encounters-rebuild-the-session).
 
 ### Stage-selected edges
 
@@ -572,7 +572,7 @@ Resident `FUN_001E9520` separately requests `FUN_00207E20(stage_slot)`.
 That selector's reachable groups are `n_rash.ccs`, `n_rash3.ccs`,
 `n_rash4.ccs`, and `n_rash5.ccs`; its retained six-path table has two
 unselected entries. Exact slot mapping, archive consumers and release order
-belong to [Stage identity and resource mapping](../../gameplay/stages.md#stage-identity-and-resource-mapping).
+belong to [Stage identity and resource mapping](../../gameplay/stages/stages.md#stage-identity-and-resource-mapping).
 
 The 24 stage directories contain only three authored `#` rows: `S03` row 649
 at `0x5C0C` and `S18` row 244 at `0x250C` request `TEX_sampling00`; `S04`
@@ -793,7 +793,7 @@ by `2NRTBOD1` match the latter composition's 34 typed object definitions.
 The selected `2nrt` body nodes themselves are local definitions, so those
 shared-skeleton imports must not be substituted for the selected body model.
 Model palette ordering and replacement binding remain owned by
-[Model and skeleton runtime](../../runtime/model_runtime.md#packed-geometry-influences-and-matrix-palette)
+[Model and skeleton runtime](../../runtime/rendering/model_runtime.md#packed-geometry-influences-and-matrix-palette)
 and [Explicit jutsu-stream body dependencies](../character_assets.md#explicit-jutsu-stream-body-dependencies).
 
 **Observation — selected body geometry and material leaves.** The model
@@ -889,7 +889,7 @@ is at `+0x94`. This connects the stored shadow links to their concrete
 secondary model instances without treating the empty ordinary pelvis model
 as missing shadow geometry.
 The selected shadow renderer's contract belongs to
-[Shadow rendering](../../runtime/shadow_rendering.md).
+[Shadow rendering](../../runtime/rendering/shadow_rendering.md).
 
 ### Selected provider identity and lifetime
 
@@ -923,7 +923,7 @@ retail extraction. Four paths are absent: row `0x9A` names
 The complete opponent-override table's nine path-replacement entries and
 their derived `E` files also exist. Its three skill replacements change the
 selected row; they do not request their placeholder path. The override rules
-are owned by [Opponent-dependent cinematic selection](../../gameplay/ultimate_jutsu_cinematics.md#opponent-dependent-cinematic-selection).
+are owned by [Opponent-dependent cinematic selection](../../gameplay/characters/ultimate_jutsu_cinematics.md#opponent-dependent-cinematic-selection).
 
 **Unresolved — reachability.** No inspected path establishes that skills
 `0x9A` or `0xA0` can be selected by a retail battle configuration. Their
@@ -938,7 +938,7 @@ instruction bytes `0x00769F9C..0x0076A0D0` establish the continuation. At countd
 85 it obtains the record index from the side manager's `+0x60`, calls
 `FUN_00372900` at `0x0076A040`, applies the BTL helper gate and passes the
 returned skill in argument `a3` to the constructor. The general gate is
-owned by [Skill-play admission](../../gameplay/ultimate_jutsu.md#skill-play-admission).
+owned by [Skill-play admission](../../gameplay/characters/ultimate_jutsu.md#skill-play-admission).
 
 The resident reverse lookup `FUN_00372990` searches indexes `0..222` in
 the 20-byte table at `0x005AEC40`; `FUN_00372900` reads that table's signed

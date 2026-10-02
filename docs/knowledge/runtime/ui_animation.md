@@ -30,7 +30,7 @@ Binary identities and address conversion follow
   owns screen state machines; [Character Select](../game/character_select.md)
   owns selector navigation; [Animation runtime](animation_runtime.md) owns
   resource-driven playback; [Timer primitives](timer_primitives.md) owns
-  general timers; [Battle HUD](../gameplay/battle_hud.md) owns HUD-specific gauges
+  general timers; [Battle HUD](../gameplay/session/battle_hud.md) owns HUD-specific gauges
   and clock effects. This document owns reusable UI presentation controllers
   and caller timing contracts. Screen layout and localization are excluded.
 - **Evidence limitations:** Static evidence establishes
@@ -117,7 +117,7 @@ no separate per-slot allocation to free.
 Pool `+0x00 != 0` makes `FUN_00183650` return before both drawing and
 advancement. Pool `+0x94` selects a rendering context; zero uses the shared
 default. Slots are traversed in ascending index order. Coordinate conversion
-and render-packet ownership belong to [2D draw ownership](draw_2d_owners.md).
+and render-packet ownership belong to [2D draw ownership](rendering/draw_2d_owners.md).
 
 Wrapper `FUN_00186000` supplies the current rendering context to the first
 global pool, supplies `uGpffffca84` to the second, and invokes

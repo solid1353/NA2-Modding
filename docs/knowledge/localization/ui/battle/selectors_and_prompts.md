@@ -18,7 +18,7 @@ Binary identities and address conventions are defined in the
 - **Deliberate exclusions and overlap:** Command List and move-chart rows
   belong to
   [Battle Command List and move chart](command_list_and_move_chart.md);
-  awakening behavior belongs to [Awakening](../../../gameplay/awakening.md);
+  awakening behavior belongs to [Awakening](../../../gameplay/characters/awakening.md);
   the Jutsu-selector row text belongs to
   [Numeric and settings text rendering](../../font/numeric_rendering.md#jutsu-selector-row).
 - **Evidence limitations:** bounded states do not cover every animation phase or

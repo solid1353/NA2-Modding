@@ -151,7 +151,7 @@ gauge. Those are controlled independently by
 remain intact in every combination. The Character Select record is in
 [`../knowledge/game/character_select.md`](../knowledge/game/character_select.md),
 and the battle-path evidence is in
-[Battle support mechanics](../knowledge/gameplay/support_mechanics.md).
+[Battle support mechanics](../knowledge/gameplay/characters/support_mechanics.md).
 
 ## NUN5 PNACH
 

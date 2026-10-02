@@ -22,7 +22,7 @@ therefore needs only Player 1 confirmation on every entry, including after
 cancelling preparation and reselecting a stage with Status set to Manual.
 The Status setting remains unchanged; the native close routine applies it
 when starting practice. The native controller transition is documented in
-[Practice-mode knowledge](../knowledge/gameplay/practice_mode.md#generic-parent-states).
+[Practice-mode knowledge](../knowledge/gameplay/modes/practice_mode.md#generic-parent-states).
 
 When `features.general.stage_selection_persistence` is enabled, cancelling Stage Select
 retains the highlighted stage for the next Practice Stage Select opening during
@@ -91,8 +91,8 @@ The NA2 guards are runtime `0x001E9AF8` for the post-Continue route,
 `0x001ECA2C` for the unchanged state-`7` call into the replaced native
 `FUN_001ED450` range, and `0x001ECACC` for the state-`15` battle-update call.
 The native Practice architecture and starting-HP evidence are in
-[Practice-mode knowledge](../knowledge/gameplay/practice_mode.md). Native
-effect-entry behavior is in [Awakening](../knowledge/gameplay/awakening.md).
+[Practice-mode knowledge](../knowledge/gameplay/modes/practice_mode.md). Native
+effect-entry behavior is in [Awakening](../knowledge/gameplay/characters/awakening.md).
 
 ## Practice Settings rework
 
@@ -194,7 +194,7 @@ to 874 KiB and, together with the other render allocations, exhausts the native
 2 MiB pool. Later glyph and draw-packet allocations then fail, producing an
 incomplete GS stream, missing text, and screen-wide corruption. The native
 behavior and base-game observation are documented in
-[Practice-mode knowledge](../knowledge/gameplay/practice_mode.md#render-packet-allocation-failure).
+[Practice-mode knowledge](../knowledge/gameplay/modes/practice_mode.md#render-packet-allocation-failure).
 
 The implementation guards the native manager-reset call site in clean
 `SLPS_258.37` at ELF offset `0xF5AD4` and applies the Practice default pack only

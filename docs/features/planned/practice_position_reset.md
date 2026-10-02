@@ -26,11 +26,11 @@ a concrete candidate building block.
   unproved. Bookmark eligibility and lifetime are proposed constraints.
 - **Deliberate exclusions and overlap:** Implemented Practice behavior remains
   owned by [Practice](../practice.md). Retail architecture remains owned by
-  [Practice-mode knowledge](../../knowledge/gameplay/practice_mode.md),
-  [movement](../../knowledge/gameplay/movement_and_physics.md),
-  [stages](../../knowledge/gameplay/stages.md),
-  [target selection](../../knowledge/gameplay/target_selection.md) and
-  [hit response](../../knowledge/gameplay/hit_response.md).
+  [Practice-mode knowledge](../../knowledge/gameplay/modes/practice_mode.md),
+  [movement](../../knowledge/gameplay/stages/movement_and_physics.md),
+  [stages](../../knowledge/gameplay/stages/stages.md),
+  [target selection](../../knowledge/gameplay/combat/target_selection.md) and
+  [hit response](../../knowledge/gameplay/combat/hit_response.md).
 - **Evidence limitations:** Findings are static against clean NA2
   `SLPS_258.37` and `BTL.BIN`, identified in
   [Retail game file identities](../../knowledge/game/files/file_identities.md).
@@ -42,7 +42,7 @@ a concrete candidate building block.
 
 The complete resident pair `FUN_001ECC00` / `FUN_001ECDE0` consumes only mask
 bits `0x01`, `0x02`, `0x10` and `0x20`. Its fields and item-cache behavior
-are owned by [Discrete Practice-controller reset](../../knowledge/gameplay/practice_mode.md#discrete-practice-controller-reset).
+are owned by [Discrete Practice-controller reset](../../knowledge/gameplay/modes/practice_mode.md#discrete-practice-controller-reset).
 The position-reset implication is confirmed: invoking that pair does not
 capture or restore fighter transform `+0x30/+0x40`, stage section `+0x9F6`,
 motion, target, or action state. A position bookmark would need its own
@@ -68,8 +68,8 @@ owners as well.
 ## Native placement as a candidate
 
 The stage-node storage and recovery consumers are owned by
-[Stages](../../knowledge/gameplay/stages.md#resident-generic-factories-and-mandatory-records)
-and [Timed downed recovery](../../knowledge/gameplay/hit_response.md#timed-downed-recovery-and-get-up-choices).
+[Stages](../../knowledge/gameplay/stages/stages.md#resident-generic-factories-and-mandatory-records)
+and [Timed downed recovery](../../knowledge/gameplay/combat/hit_response.md#timed-downed-recovery-and-get-up-choices).
 For this feature, the useful confirmed contract is a tuple of position
 `vec4`, orientation `vec4`, and section. BTL live `0x00708FD0` (imported
 `0x00708F90`, complete-file `0x0550D0`) copies side 0/1 node positions,
@@ -98,7 +98,7 @@ at `+0x9F6` and sets byte `+0x61` bit `0x40`. This establishes the initial
 placement consumer separately from the recovery paths.
 
 The complete set of 74 concrete final vtables listed in
-[Battle entities](../../knowledge/gameplay/battle_entities.md#complete-table-selected-concrete-lifetime-paths)
+[Battle entities](../../knowledge/gameplay/session/battle_entities.md#complete-table-selected-concrete-lifetime-paths)
 was checked through MCP memory at resident `0x005DA140..0x005DB1A0`.
 Every table's `+0x0C` entry is `0x0024D830`; there is no alternative entry
 in that bounded table-selected fighter set. Resident reconstruction reaches
@@ -141,7 +141,7 @@ clears retained response fields and has special `0x4F` cleanup; recovery exit
 `FUN_00235200` changes the accepted-hit countdown for `0x5E..0x60`. These
 side effects make native transitions materially different from overwriting
 major/substate fields. Their gameplay ownership remains in
-[Hit response](../../knowledge/gameplay/hit_response.md).
+[Hit response](../../knowledge/gameplay/combat/hit_response.md).
 
 Major-state exit inspection also found section-transfer continuation cleanup
 in `FUN_0022F110` and substantial skill/action release work in
@@ -165,9 +165,9 @@ placement operation.
 This matrix separates the confirmed retail field use from the proposed reset
 contract. It is not an implementation-ready list of unconditional writes.
 Movement ownership belongs to
-[Movement and physics](../../knowledge/gameplay/movement_and_physics.md), and
+[Movement and physics](../../knowledge/gameplay/stages/movement_and_physics.md), and
 paired/borrowed pointer lifetime to
-[Battle entities](../../knowledge/gameplay/battle_entities.md#ownership-model).
+[Battle entities](../../knowledge/gameplay/session/battle_entities.md#ownership-model).
 
 | State | Evidence relevant to reset | Provisional treatment |
 | --- | --- | --- |
@@ -178,7 +178,7 @@ paired/borrowed pointer lifetime to
 | Added motion vectors `+0x4D0/+0x4E0` | `FUN_0024A660` adds these to displacement; `+0x4E0` remains active in branches that omit `+0x4D0`. Initial placement does not clear either vector. `FUN_0024DA50` resets both after movement/animation processing, including its paused/disabled paths. | Account for the reset's position within that pass and subsequent producers; a retained vector must not move the new tuple. |
 | Contact/orientation family `+0x9B8 & 3`, grounded byte `+0x63 & 0x80`, contact words `+0xBB0/+0xBB4/+0xBB8/+0xBBC`, probe scalars `+0xBA0/+0xBA4/+0xBA8`, history `+0xB9A/+0xB9C` | `FUN_0024A660` rebuilds contact flags/probes, branches on prior grounded/contact state, and latches action ground/air history. | Refresh for the destination; copying stale source contact state is not established safe. |
 | Position history `+0x840..+0x8BF`, ring cursor `+0x8C0`, previous transform `+0x970`, prior facing `+0x980..+0x986` | Native initialization fills all eight vectors; `FUN_0024C440` rotates the ring and copies current position/facing at the end of maintenance. | Avoid a history spanning the old and reset locations. Initial placement fills vectors but does not reset the ring cursor or prior-transform copy. |
-| Target-derived section/direction/scalars `+0x324/+0x326/+0x328..+0x334` | `FUN_002174A0` refreshes paired or target-mode geometry; its direction update is conditional on the bearing. The exact contract is owned by [Target selection](../../knowledge/gameplay/target_selection.md#paired-opponent-and-geometry-refresh). | Refresh after both destination tuples exist; preserve the partner pointer and account for direction/facing consistency. |
+| Target-derived section/direction/scalars `+0x324/+0x326/+0x328..+0x334` | `FUN_002174A0` refreshes paired or target-mode geometry; its direction update is conditional on the bearing. The exact contract is owned by [Target selection](../../knowledge/gameplay/combat/target_selection.md#paired-opponent-and-geometry-refresh). | Refresh after both destination tuples exist; preserve the partner pointer and account for direction/facing consistency. |
 | Major/substate `+0x18E/+0x190`, phase `+0x192`, primary/secondary timeline, descriptor `+0xA30`, animation selection/end `+0xB8C/+0xB8E/+0xB88` | Native transition and phase/animation consumers act together; changing state alone does not directly reset every animation field. | Enter/restart neutral through a complete transition and phase path, with an explicit interruption policy. |
 | Pause/rejection/lock blocks `+0x200/+0x224/+0x248` | Maintenance `FUN_0024C440` activates pending negative counts as well as decrementing active counts. Initial placement does not clear these blocks; recovery exits can write rejection counts. | A reset intended to be immediately actionable must address active and pending channel state, not just current positive counts. |
 | Hit/exchange state `+0xE3C`, retained hit/source `+0xE54/+0xE58`, repeat `+0xE5C`, Extra Hit `+0xB00` family | Native init clears `+0xE54` only; hit resolution consumes the other pending fields, while native exchange teardown edits both fighters. | Remove obsolete hit requests through proved cleanup; do not keep a one-sided exchange after moving the pair. |
@@ -220,7 +220,7 @@ that retail already has a position bookmark.
 | Exchange the two native spatial placements | The helper accepts explicit side `0` or `1`; selecting the opposite tuple does not write the fighter's identity bit. | Recompute pair direction/facing and confirm section/contact handling; no arbitrary mirror transform is established. |
 | Return to a captured pair of positions | Transform and section fields are identified; the existing resource API supplies no position storage. | Define a match-local value record and eligible capture state. Arbitrary active-action or airborne snapshot restoration is outside the established contract. |
 | Ground placement in an existing section | Live BTL `0x007090D0` checks its destination config index and delegates to live `0x006C1E50`, which maps the position into section configuration and line geometry. Native recovery uses it after the stage helper. | This helper maps between section configurations; it is not a blanket safe-coordinate predicate. Ground/contact refresh and placement eligibility remain separate. |
-| Fixed spacing or wall/corner placement | Stage boundary clamp and floor-profile queries exist in [Stages](../../knowledge/gameplay/stages.md#boundary-and-floor-profile-data). | No universal fixed center, wall distance, mirror rule or obstacle-free placement was established. These remain hypotheses, not available feature choices. |
+| Fixed spacing or wall/corner placement | Stage boundary clamp and floor-profile queries exist in [Stages](../../knowledge/gameplay/stages/stages.md#boundary-and-floor-profile-data). | No universal fixed center, wall distance, mirror rule or obstacle-free placement was established. These remain hypotheses, not available feature choices. |
 
 The best-supported initial design candidate is paired native placement with
 an explicit neutral-state reset contract. A captured settled pair is a

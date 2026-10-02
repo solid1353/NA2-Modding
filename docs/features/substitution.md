@@ -5,7 +5,7 @@ builder integration, and validation. The public settings contract is owned by
 [Battle](battle.md#substitution). Evidence from other Storm games is retained
 here because it directly supports this feature's design. Native NA2 behavior, timing, HUD ownership,
 and reliability are documented in
-[Substitution knowledge](../knowledge/gameplay/substitution.md).
+[Substitution knowledge](../knowledge/gameplay/characters/substitution.md).
 
 ## Outcome
 
@@ -308,7 +308,7 @@ spend the new gauge. In particular:
 The gauge changes only the resource gate. It must preserve the attack-specific
 input history, held-input limit, reaction whitelist, forbidden state checks,
 and other eligibility logic already documented in
-[Substitution knowledge](../knowledge/gameplay/substitution.md).
+[Substitution knowledge](../knowledge/gameplay/characters/substitution.md).
 
 ### Lifecycle rules
 
@@ -791,7 +791,7 @@ and computes marker X from the current side's executable cost fraction.
 
 The independent renderer reads the native fill palette and marker tint directly
 from the verified addresses in
-[Native HUD ownership](../knowledge/gameplay/battle_hud.md#support-gauge).
+[Native HUD ownership](../knowledge/gameplay/session/battle_hud.md#support-gauge).
 It selects the fill entry from its own integer meter and the same rounded cost
 used by `substitution_gauge_can_spend`: below cost uses the native insufficient
 color, at or above cost uses the native usable color, and capacity uses the

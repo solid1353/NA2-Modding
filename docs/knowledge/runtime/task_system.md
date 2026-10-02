@@ -72,9 +72,9 @@ trace. Binary identity and resident address conversion follow
 - **Deliberate exclusions and overlap:** Adventure code was not inspected.
   Threads and semaphores that do not use the task record belong to
   [EE kernel threads and synchronization](kernel_threads_and_sync.md);
-  display submission to [Render submission](render_submission.md); scene
+  display submission to [Render submission](rendering/render_submission.md); scene
   evaluation to [Scene playback owners](scene_playback_owners.md); audio
-  service to [Battle audio](../gameplay/battle_audio.md); file loading to
+  service to [Battle audio](../gameplay/session/battle_audio.md); file loading to
   [Resident file and archive services](../game/files/runtime_services.md);
   controller routing to [Controller input](controller_input.md); and
   Save/Load behavior to [Save data](../game/save_data.md). Representative
@@ -537,7 +537,7 @@ manager passes, task handshakes, displayed frames, or elapsed time. Counter
 wrap, the bypass byte, MPEG's alternate threshold settings, independent kernel
 wakes, and work before/after the barrier prevent replacing those counts with
 a measured time unit. Display submission and completion remain owned by
-[Render submission](render_submission.md#completion-and-packet-lifetime).
+[Render submission](rendering/render_submission.md#completion-and-packet-lifetime).
 
 ### Engine gate bit `0x04`
 
@@ -617,7 +617,7 @@ its `FUN_00110340(base+8)` constructor, and `FUN_0010A1D0` /
 not reach engine `+0x192` or `+0x500`. Packet preparation
 `FUN_001079C0` rebases the engine by `(+0x194 & 1) * 0x60`, but the scoped
 writes then cover `+0x1E0..+0x23F` relative to that rebased pointer, not
-either target field. [Render submission](render_submission.md) owns the
+either target field. [Render submission](rendering/render_submission.md) owns the
 packet details.
 
 The BTL/ETC word-store search adds no engine installation: ETC has no aligned
@@ -770,7 +770,7 @@ zero, then waits until shared owner byte `+0x21` is nonzero, calls
 are `00 40 07 0C` (`jal 0x001D0000`), each preceded by `a1 = 1`.
 These are independent task handshakes, not evidence that RPC calls are issued
 at a fixed time interval. Audio service meaning belongs to
-[Battle audio](../gameplay/battle_audio.md).
+[Battle audio](../gameplay/session/battle_audio.md).
 
 ## Termination, destruction, and ownership
 

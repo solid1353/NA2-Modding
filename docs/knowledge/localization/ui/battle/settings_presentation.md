@@ -21,11 +21,11 @@ Addresses below use the
   phase were not exhaustively investigated.
 - **Deliberate exclusions and overlap:** Setting storage, input, child state,
   resource lifetime, and gameplay effects belong to
-  [Practice mode](../../../gameplay/practice_mode.md); localized Practice text
+  [Practice mode](../../../gameplay/modes/practice_mode.md); localized Practice text
   layout belongs to
   [Practice screen layout](../../font/screen_layouts/practice.md); the shared
   2D draw owners belong to
-  [2D draw owners](../../../runtime/draw_2d_owners.md).
+  [2D draw owners](../../../runtime/rendering/draw_2d_owners.md).
 - **Evidence limitations:** Runtime observations confirm the identified fields
   and layout effects but do not cover every original menu configuration.
 
@@ -54,7 +54,7 @@ controller update maintains their window starts and eases `+0x44` toward
 `-28 * upper_start` or `-270 - 28 * lower_start` (the `18`-unit gap plus nine
 `28`-unit rows) by at most `20.0` per update; the window helper calls and
 easing are owned by
-[Practice mode](../../../gameplay/practice_mode.md#input-and-child-state-transitions).
+[Practice mode](../../../gameplay/modes/practice_mode.md#input-and-child-state-transitions).
 
 ### Backing animation and title
 

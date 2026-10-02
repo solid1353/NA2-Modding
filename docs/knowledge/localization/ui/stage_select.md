@@ -10,7 +10,7 @@
   differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
 - **Deliberate exclusions and overlap:** stage selection and loading belong to
-  [Stages](../../gameplay/stages.md); the shared OK and Back compositor belongs
+  [Stages](../../gameplay/stages/stages.md); the shared OK and Back compositor belongs
   to [Shared frontend prompt layout](options.md).
 - **Evidence limitations:** bounded states do not cover every animation phase or
   indirect caller.

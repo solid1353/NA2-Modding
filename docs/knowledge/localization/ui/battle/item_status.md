@@ -13,9 +13,9 @@ Binary identities and address conventions are defined in the
   differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
 - **Deliberate exclusions and overlap:** item selection, pickup, and inventory
-  belong to [Battle item inventory](../../../gameplay/battle_item_inventory.md);
+  belong to [Battle item inventory](../../../gameplay/projectiles_and_items/battle_item_inventory.md);
   item effects and status timing belong to
-  [Battle items and status effects](../../../gameplay/battle_items_and_status_effects.md);
+  [Battle items and status effects](../../../gameplay/projectiles_and_items/battle_items_and_status_effects.md);
   item names belong to [Field-item names](../../field_item_names.md).
 - **Evidence limitations:** bounded states do not cover every animation phase or
   indirect caller.

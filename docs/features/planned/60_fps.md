@@ -33,7 +33,7 @@ The failed PNACH attempt and its live recording measurements are recorded in
   is out of scope. The task framework is owned by
   [task_system.md](../../knowledge/runtime/task_system.md) and the battle
   input history by
-  [action_commands.md](../../knowledge/gameplay/action_commands.md); this
+  [action_commands.md](../../knowledge/gameplay/combat/action_commands.md); this
   document repeats only what frame pacing needs from them.
 - **Evidence limitations:** static MCP instructions/bytes establish the scoped
   operations; incomplete xrefs and false import boundaries limit completeness.
@@ -150,7 +150,7 @@ aliased access remains outside that negative result.
   five-second span at a 60 Hz VBlank rate follows only if its gated input phase
   advances once per paced cycle. Changing step after construction does not
   resize it. Matcher windows still count records; sizing is not general input
-  timing compensation. See [action commands](../../knowledge/gameplay/action_commands.md#battle-input-object-and-circular-history).
+  timing compensation. See [action commands](../../knowledge/gameplay/combat/action_commands.md#battle-input-object-and-circular-history).
 - A consumer's lack of a direct step read does not establish its rate. It may
   receive a factor, be called on a separate cadence, evaluate an absolute cursor,
   or only submit a draw. Doubling is a conditional prediction for a consumer
@@ -199,7 +199,7 @@ fighters' own update slot; the second sets the camera for drawing and draws
 the fighters; the third runs the fighters' late slot.
 
 The subsystems and their mask bits are tabulated in
-[pause_and_replay.md](../../knowledge/gameplay/pause_and_replay.md#selective-update-gating).
+[pause_and_replay.md](../../knowledge/gameplay/session/pause_and_replay.md#selective-update-gating).
 The decompilation of `FUN_001f03e0` read for this research matches that table.
 
 ### Inference
@@ -361,7 +361,7 @@ copies pad state, normalizes edges, and translates commands. Encoded overlay
 targets are live, so its decompiler label `FUN_006f0a00` must not be used as
 the physical byte entry. The resident first-phase `ccCommandCtrl` gate and
 its `+0xA50 == 1` exception are documented in
-[action commands](../../knowledge/gameplay/action_commands.md#battle-input-object-and-circular-history).
+[action commands](../../knowledge/gameplay/combat/action_commands.md#battle-input-object-and-circular-history).
 
 The normalized battle edges compare consumed history samples. A button still
 held at the next sample can therefore produce a battle press even after its
@@ -429,7 +429,7 @@ both flag `+0x61 &8`, two zero-return subsystem predicates, global
 `0x00607670 == 0`, and session active bit 1.
 
 Countdown digit presentation uses a ceiling in 24-fraction-bit units, as
-documented in [pause and replay](../../knowledge/gameplay/pause_and_replay.md#battle-countdown-gate-and-presentation).
+documented in [pause and replay](../../knowledge/gameplay/session/pause_and_replay.md#battle-countdown-gate-and-presentation).
 **Inference:** `0x44444 / 2^24` is approximately `1/60` displayed unit per
 eligible call. That arithmetic does not independently prove a second of
 wall time: at 30 eligible calls/s it advances about 0.5 displayed unit/s.
@@ -445,10 +445,10 @@ second or rewrite its value on that assumption.
 | Four-slot RGBA pool, `FUN_00183650` | When pool `+0 == 0`, samples color at the current cursor, then increments each active slot's signed-halfword cursor by one. It advances even without packet storage. | Increasing draw-function calls increases transition rate; a nominally separate draw path contains timing mutation. Arming, endpoint and phase rules are owned by [UI animation](../../knowledge/runtime/ui_animation.md#draw-before-advance-order). |
 | Mode Select scalar, `FUN_00387400` | Caller supplies target and fixed step; sampled Mode Select call uses 0.1 and gates selected-resource advance near zero. | No external time argument; caller rate controls convergence. See [fixed-step approach](../../knowledge/runtime/ui_animation.md#fixed-step-scalar-approach). |
 | ETC Ghidra `FUN_006b51a0`, live `0x006B51E0` | Stable-selection path advances scene at owner `+0x28` using scene `+0x94`, then increments independent owner counter `+0x10` and resets it at 21. Call bytes at Ghidra `0x006B5314`, counter at `0x006B5328..0x006B5334`. | Slowing only scene playback does not slow the independent counter. The owner is left unnamed here; no screen identity follows from those fields alone. |
-| Global and detached emitter managers | Engine tail `FUN_00108490` steps resident manager `0x0061AF80` and detached managers while context `+0x192 &7 == 0`; each manager additionally requires byte `+0x51 != 0`. | Fighter mask/factor changes do not cover this engine-tail scheduling. Age, emission and fade have call-based contracts in [particle runtime](../../knowledge/runtime/particle_runtime.md#manager-gates-and-call-sequence). |
-| Battle HUD | Chakra display reservation increases by 0.5 per child update; blink/marker and clock-feedback cursors also count presentation updates. Children can update while parent draw-hidden. | Gameplay resource/countdown scaling does not scale these display clocks. Rates and owner masks are documented in [battle HUD](../../knowledge/gameplay/battle_hud.md#chakra-storage-and-display). |
-| Presentation camera | Eye/target offset counters increment once per eligible compute; final component approach uses coefficients 0.125/0.25 with a pre-scale difference cap of 300. | Delay, duration, smoothing and the manager gate are separate dependencies; 37.5/75 are per-call displacement caps, not velocities in seconds. See [battle camera](../../knowledge/gameplay/battle_camera.md#presentation-camera-smoothing). |
-| Background rotation/UV owners | `FUN_00398510` increments angle only after nonzero culling result; `FUN_0039b910` likewise advances UV by speed times parent `+8` after that result. | Their eligible-call counts depend on classification and, for UV, a supplied factor. Do not classify all draw readers as uncompensated or all rejected draws as pure submission skips. See [visibility](../../knowledge/runtime/visibility.md#bounded-resident-caller-inventory). |
+| Global and detached emitter managers | Engine tail `FUN_00108490` steps resident manager `0x0061AF80` and detached managers while context `+0x192 &7 == 0`; each manager additionally requires byte `+0x51 != 0`. | Fighter mask/factor changes do not cover this engine-tail scheduling. Age, emission and fade have call-based contracts in [particle runtime](../../knowledge/runtime/rendering/particle_runtime.md#manager-gates-and-call-sequence). |
+| Battle HUD | Chakra display reservation increases by 0.5 per child update; blink/marker and clock-feedback cursors also count presentation updates. Children can update while parent draw-hidden. | Gameplay resource/countdown scaling does not scale these display clocks. Rates and owner masks are documented in [battle HUD](../../knowledge/gameplay/session/battle_hud.md#chakra-storage-and-display). |
+| Presentation camera | Eye/target offset counters increment once per eligible compute; final component approach uses coefficients 0.125/0.25 with a pre-scale difference cap of 300. | Delay, duration, smoothing and the manager gate are separate dependencies; 37.5/75 are per-call displacement caps, not velocities in seconds. See [battle camera](../../knowledge/gameplay/session/battle_camera.md#presentation-camera-smoothing). |
+| Background rotation/UV owners | `FUN_00398510` increments angle only after nonzero culling result; `FUN_0039b910` likewise advances UV by speed times parent `+8` after that result. | Their eligible-call counts depend on classification and, for UV, a supplied factor. Do not classify all draw readers as uncompensated or all rejected draws as pure submission skips. See [visibility](../../knowledge/runtime/rendering/visibility.md#bounded-resident-caller-inventory). |
 
 `FUN_001abc70` also advances generator managers once per requested iteration.
 Animation playback requests whole-frame crossings; the streamed worker instead
@@ -463,11 +463,11 @@ Composition attachments introduce another per-call domain: `FUN_00189d10`
 has no delta-time argument or frame-count loop and integrates/corrects its
 chains once per invocation. Additional fractional scene evaluation therefore
 does not by itself preserve attached motion. The integration, rebase and
-teardown contracts belong to [attachment execution](../../knowledge/runtime/composition_attachment_dynamics.md#attachment-step-rebase-and-destruction).
+teardown contracts belong to [attachment execution](../../knowledge/runtime/rendering/composition_attachment_dynamics.md#attachment-step-rebase-and-destruction).
 
 ## Why rate scaling alone does not preserve every trajectory
 
-[Movement and physics](../../knowledge/gameplay/movement_and_physics.md#shared-movement-fields-and-ordering)
+[Movement and physics](../../knowledge/gameplay/stages/movement_and_physics.md#shared-movement-fields-and-ordering)
 establishes that ordinary displacement uses current speed times the fighter
 factor before gravity updates the next speed. **Mathematical inference** for
 constant gravity, factor 1, no contact/clamp/transient contributions and ordinary
@@ -485,7 +485,7 @@ Two calls with coefficient `k/2` leave `(1-k/2)^2`, not `1-k`. The coefficient
 `1-sqrt(1-k)` used twice would match one old call's residual only under those
 conditions; it does not settle camera caps, changing targets, endpoint snapshots or state
 gates. [UI animation](../../knowledge/runtime/ui_animation.md) and
-[battle camera](../../knowledge/gameplay/battle_camera.md#presentation-camera-smoothing)
+[battle camera](../../knowledge/gameplay/session/battle_camera.md#presentation-camera-smoothing)
 own the relevant retail consumers. Panel duration additionally participates
 in geometry, so doubling an arming duration is not a generally safe timing-only
 change; see [panel open/close](../../knowledge/runtime/ui_animation.md#shared-panel-openclose-controller).
@@ -520,7 +520,7 @@ EE packet-list rotation, master-chain parity and GS environment selection
 are separate state. The worker's end-of-frame wait bounds DMA packet lifetime;
 it does not independently prove complete GS rasterization or capacity for
 60 presentation samples per second. A presentation design must respect that
-rotation/completion contract, owned by [render submission](../../knowledge/runtime/render_submission.md#completion-and-packet-lifetime).
+rotation/completion contract, owned by [render submission](../../knowledge/runtime/rendering/render_submission.md#completion-and-packet-lifetime).
 
 | Time domain | Proven owners | Reset/lifetime dependency |
 | --- | --- | --- |
@@ -561,8 +561,8 @@ Remaining research is specifically:
 - An evaluation/submission boundary for intermediate model, camera and
   attachment presentation that leaves gameplay and command-event lifetime
   intact; dependent on [animation evaluation](../../knowledge/runtime/animation_runtime.md),
-  [model transforms](../../knowledge/runtime/model_runtime.md),
-  [render submission](../../knowledge/runtime/render_submission.md) and
+  [model transforms](../../knowledge/runtime/rendering/model_runtime.md),
+  [render submission](../../knowledge/runtime/rendering/render_submission.md) and
   [scene ownership](../../knowledge/runtime/scene_playback_owners.md).
 - Full semantic classification of the scene-call inventory, factor writers,
   action-record maximum rates and other camera/UI/stage owners. The retained

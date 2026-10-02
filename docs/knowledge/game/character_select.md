@@ -23,14 +23,14 @@ the setup records it hands to battle.
   branches remain unresolved. No complete visual matrix of all fighters,
   fixed-choice combinations, and cancellation states was observed.
 - **Deliberate exclusions and overlap:** Character identity belongs to
-  [Character identity](../gameplay/character_ids.md), availability readers to
+  [Character identity](../gameplay/characters/character_ids.md), availability readers to
   [Content availability](content_availability.md), controller publication to
   [Controller input](../runtime/controller_input.md), shared UI animation to
   [UI animation](../runtime/ui_animation.md), battle asset loading to
   [Character asset tables](character_assets.md), support behavior to
-  [Battle support mechanics](../gameplay/support_mechanics.md), screen layout
+  [Battle support mechanics](../gameplay/characters/support_mechanics.md), screen layout
   to [Character Select UI layout](../localization/ui/character_select.md), and
-  Stage Select to [Stages](../gameplay/stages.md).
+  Stage Select to [Stages](../gameplay/stages/stages.md).
 - **Evidence limitations:** Findings are bounded static binary and call-site
   evidence. They establish the recorded paths and data contracts, not every
   possible caller or the visual result of every selection state. BTL function
@@ -63,7 +63,7 @@ active column count 31 at root
 `+0x24`. Thus there are 62 nonzero base-fighter cells;
 linked forms are resolved from those base cells rather than appended as extra
 roster columns. Numeric identity and form pairs belong to
-[Character identity](../gameplay/character_ids.md#hard-coded-linked-form-mapping).
+[Character identity](../gameplay/characters/character_ids.md#hard-coded-linked-form-mapping).
 
 The data pointer in each `0xCC`-byte player selector is root `+0x24`.
 This shared block ends at root `+0x477`, a total size of `0x454` bytes.
@@ -105,7 +105,7 @@ color choices, also used to select the color indicator rectangle at
 this color field in `FUN_003b4750`. Held R1 (`0x08`) controls the independent
 form flag `+0x18`, subject to the progression gate. The complete numeric
 base/form rules are owned by
-[Character identity](../gameplay/character_ids.md#selector-id-filters);
+[Character identity](../gameplay/characters/character_ids.md#selector-id-filters);
 the progression reader is in
 [Content availability](content_availability.md#progress-gates).
 
@@ -154,7 +154,7 @@ and chosen colors match, it increments side 1's color modulo three and
 updates that selector before writing the manager. The selected fighter IDs
 themselves retain the chosen forms. The support color consumer and its
 separate collision rules belong to
-[Battle support mechanics](../gameplay/support_mechanics.md#setup-and-selected-support).
+[Battle support mechanics](../gameplay/characters/support_mechanics.md#setup-and-selected-support).
 
 The immediate owner `FUN_001ed450` allocates the `0x4B4`-byte root, invokes
 the constructor, then calls `FUN_003bca90` and draws through `FUN_003bcda0`
@@ -166,14 +166,14 @@ success or `0x19` on cancellation. Parent `FUN_001ec960` routes state 9 to
 `FUN_001ed6d0`, the Stage Select owner; Back there returns to state 7 and
 reconstructs Character Select through the restoration path above. On stage
 confirmation it advances to state 10. The stage-slot handoff and subsequent
-loading belong to [Stages](../gameplay/stages.md).
+loading belong to [Stages](../gameplay/stages/stages.md).
 
 The later fighter factory at BTL live `0x00709860` reads the selected fighter
 ID and color from those same manager side records, putting color into byte
 `+0x11` of its constructor descriptor. Resident `FUN_002151e0` copies that
 byte's low two bits into fighter `+0x60` bits 1..2 before model initialization.
 The complete factory ownership is in
-[Battle entities](../gameplay/battle_entities.md#primary-fighter-factory-and-lookup),
+[Battle entities](../gameplay/session/battle_entities.md#primary-fighter-factory-and-lookup),
 and the palette/material consumers are in
 [Character assets](character_assets.md#model-and-appearance-name-consumers).
 

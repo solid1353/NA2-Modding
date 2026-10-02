@@ -24,9 +24,9 @@ preserved NUN5 `TEXTENG.BIN` export maps complete-file offset `x` to export addr
   established for selector code `29`; codes `02` and `03` have only internal
   BTL identifiers.
 - **Deliberate exclusions and overlap:** Item selection and weighting belong
-  to [Battle item inventory](../gameplay/battle_item_inventory.md); item effects
+  to [Battle item inventory](../gameplay/projectiles_and_items/battle_item_inventory.md); item effects
   belong to
-  [Battle items and status effects](../gameplay/battle_items_and_status_effects.md);
+  [Battle items and status effects](../gameplay/projectiles_and_items/battle_items_and_status_effects.md);
   item-status presentation belongs to
   [Battle item-status presentation](ui/battle/item_status.md). Other
   localization tables are outside this document.
@@ -98,4 +98,4 @@ match. **Curse Tag: Chakra Points Seal** is therefore an externally sourced
 UN2 name, not a recovered NUN5 translation.
 
 Pool membership and weighting are owned by
-[Random field-item selection](../gameplay/battle_item_inventory.md#random-field-item-selection).
+[Random field-item selection](../gameplay/projectiles_and_items/battle_item_inventory.md#random-field-item-selection).

@@ -18,8 +18,8 @@ Addresses use the
   every possible Ninja Song descriptor or bonus row were not exhaustively
   established.
 - **Deliberate exclusions and overlap:** Result metrics, their calculation,
-  and rank tiers belong to [Battle statistics](../../../gameplay/battle_statistics.md); match
-  results belong to [Match outcomes](../../../gameplay/match_outcomes.md).
+  and rank tiers belong to [Battle statistics](../../../gameplay/session/battle_statistics.md); match
+  results belong to [Match outcomes](../../../gameplay/session/match_outcomes.md).
   Input, sound, and non-results battle UI are outside this document.
 - **Evidence limitations:** Runtime comparisons cover the five rank stamps and
   representative result layouts; conclusions for uncommon result combinations

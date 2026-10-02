@@ -11,7 +11,7 @@ startup, recovery, or advantage.
 - **Exploration depth:** Direct read-only MCP inspection of the common action, phase, timer, animation, volume-publication, pair-outcome and accepted-response paths; complete Naruto definition-57 census of 49 action records and 193 phase rows. Character-specific coverage is bounded to the common dispatch interfaces, not every override.
 - **Confirmed coverage:** Distinct engine, fighter and animation clocks; action/phase resets; two-slot volume activity with inclusive/rate-dependent ranges; ordinary query publication followed by next-pass consumption; separate outcome and response-entry boundaries; state-entry, guard and candidate gates differ; fixed-rate pause and scaled action-lock maintenance.
 - **Unresolved or untested:** Exact move frame values, complete per-action candidate readiness, collision timing outside the bounded ordinary list path, projectile/auxiliary activity attribution, every character override, and display placement remain incomplete.
-- **Deliberate exclusions and overlap:** Implemented Practice behavior remains owned by [Practice](../practice.md). Retail architecture remains owned by [Practice-mode knowledge](../../knowledge/gameplay/practice_mode.md). Retail contracts belong to [Combat action execution](../../knowledge/gameplay/combat_action_execution.md), [Hit response](../../knowledge/gameplay/hit_response.md), [Shared timers](../../knowledge/runtime/timer_primitives.md), [Animation runtime](../../knowledge/runtime/animation_runtime.md), [Input interpretation](../../knowledge/gameplay/action_commands.md), and [Battle HUD](../../knowledge/gameplay/battle_hud.md); this document records their implications for the proposed display.
+- **Deliberate exclusions and overlap:** Implemented Practice behavior remains owned by [Practice](../practice.md). Retail architecture remains owned by [Practice-mode knowledge](../../knowledge/gameplay/modes/practice_mode.md). Retail contracts belong to [Combat action execution](../../knowledge/gameplay/combat/combat_action_execution.md), [Hit response](../../knowledge/gameplay/combat/hit_response.md), [Shared timers](../../knowledge/runtime/timer_primitives.md), [Animation runtime](../../knowledge/runtime/animation_runtime.md), [Input interpretation](../../knowledge/gameplay/combat/action_commands.md), and [Battle HUD](../../knowledge/gameplay/session/battle_hud.md); this document records their implications for the proposed display.
 - **Evidence limitations:** Static retail inspection only. No move frame values, executable instrumentation, or observed display result are claimed. Linked campaign documents have their own evolving coverage; conclusions here use the stated MCP evidence and established retail contracts, never uninvestigated wording.
 
 ## Evidence coordinates
@@ -80,7 +80,7 @@ argument `a1`, rather than one unconditional actionable flag:
 
 The major-8 check is the complete small helper `FUN_002440C0`.
 The predicate does not check `+0x20C`. The pause/input ordering and reaction
-exits remain owned by [Hit response](../../knowledge/gameplay/hit_response.md#fighter-update-pause-and-action-lock).
+exits remain owned by [Hit response](../../knowledge/gameplay/combat/hit_response.md#fighter-update-pause-and-action-lock).
 A true predicate during pause therefore cannot by itself mean an ordinary
 action update will execute on that tick.
 
@@ -179,9 +179,9 @@ selects `FUN_00232B80` or `FUN_00228760` from the final guard state
 and projectile source. Source object `+0xE58` and retained attack
 `+0xE54` must accompany an outcome so that an independent projectile hit is
 not attached to the fighter's newly selected action. The
-[Hit-response contract](../../knowledge/gameplay/hit_response.md#accepted-hit-routing)
+[Hit-response contract](../../knowledge/gameplay/combat/hit_response.md#accepted-hit-routing)
 owns all routing details and the
-[Collision contract](../../knowledge/gameplay/collision.md) owns candidate generation.
+[Collision contract](../../knowledge/gameplay/combat/collision.md) owns candidate generation.
 
 The major-8 exit dispatcher `FUN_0023B280` can dispatch a staged action
 `+0xA3E` when current event flags contain `0x20`, before the ordinary
@@ -247,8 +247,8 @@ then activates or decrements the pause by fixed `1.0`. Sampling only the
 signed pause count can mistake a staged negative value for no forthcoming
 freeze. Attacker, ordinary receiver and guarded receiver do not share one
 activation edge; the full sequence and fallback arbitration are in
-[Hit update order](../../knowledge/gameplay/hit_response.md#hit-update-order-and-elapsed-updates)
-and [Guarded response](../../knowledge/gameplay/hit_response.md#guarded-hit-transitions).
+[Hit update order](../../knowledge/gameplay/combat/hit_response.md#hit-update-order-and-elapsed-updates)
+and [Guarded response](../../knowledge/gameplay/combat/hit_response.md#guarded-hit-transitions).
 
 **Provisional metric:** show each fighter's pause count, pending activation,
 and accumulated updates in which the relevant action/animation passes were
@@ -262,7 +262,7 @@ The engine ordinal at system context `+0x194` increments in
 passes; fighter-owner slot `2` uses mask bit `0x4`, with update and late update
 from session `+2` and its middle pass from `+4`. The ordinal can advance
 while fighter work is suppressed. The
-[Selective update gates](../../knowledge/gameplay/pause_and_replay.md#selective-update-gating)
+[Selective update gates](../../knowledge/gameplay/session/pause_and_replay.md#selective-update-gating)
 own the complete mask contract. An elapsed-action clock therefore needs
 dispatched battle updates and scheduling markers; an engine-ordinal
 subtraction alone includes unrelated pause/menu time.
@@ -287,7 +287,7 @@ Retail's mode-loop call at `0x001E11C4` supplies step `2`; the setter
 `FUN_00107560` writes context byte `+1`, and `FUN_001083A0` waits until
 the VBlank count reaches it. At nominal retail pacing, one dispatched battle
 update is the 30-Hz unit described by
-[Battle update cadence](../../knowledge/gameplay/battle_lifecycle.md#battle-update-cadence).
+[Battle update cadence](../../knowledge/gameplay/session/battle_lifecycle.md#battle-update-cadence).
 The display should name that unit explicitly. Authored animation frames,
 VBlanks, and dispatched updates are distinct.
 
@@ -299,8 +299,8 @@ Doubling a displayed frame number or halving animation lengths cannot by
 itself account for fixed-`1.0` pause, fractional lock, integer event crossings,
 and quantized scene playback. Contact/landing-dependent phase gates also need
 the actual movement outcome; the
-[Movement contract](../../knowledge/gameplay/movement_and_physics.md) and
-[Response gravity and airtime](../../knowledge/gameplay/hit_response.md#gravity-and-airtime)
+[Movement contract](../../knowledge/gameplay/stages/movement_and_physics.md) and
+[Response gravity and airtime](../../knowledge/gameplay/combat/hit_response.md#gravity-and-airtime)
 own those facts. No universal 60-FPS conversion or landing recovery constant
 is established here.
 
@@ -325,7 +325,7 @@ The active unit and readiness class should accompany any derived number;
 unknown endpoints should remain unknown rather than being replaced with
 animation length or a countdown.
 
-The checked [HUD order](../../knowledge/gameplay/battle_hud.md#battle-session-ownership-and-order)
+The checked [HUD order](../../knowledge/gameplay/session/battle_hud.md#battle-session-ownership-and-order)
 allows presentation after the fighter's update passes, but that snapshot
 already follows phase changes and timeline advancement and precedes the
 tail collision query. An eventual display would need retained events from

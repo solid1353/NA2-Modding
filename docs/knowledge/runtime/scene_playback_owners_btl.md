@@ -45,7 +45,7 @@ preserved BTL addresses unless marked live, following the
   [Scene playback callers and owners](scene_playback_owners.md); evaluation
   algorithms to [Animation runtime](animation_runtime.md); stage-object
   contact, timer, geometry and lifetime algorithms to
-  [Stages](../gameplay/stages.md#animated-and-breakable-background-evidence);
+  [Stages](../gameplay/stages/stages.md#animated-and-breakable-background-evidence);
   CCS parsing and resource lifetime to
   [CCS runtime](../game/files/ccs_runtime.md). High-level character or action
   names are not assigned from resource prefixes.
@@ -96,7 +96,7 @@ target `0x100`; every listed seek also carries the
 This section classifies the 20 direct seek candidates in preserved
 `0x006C4910..0x006D3570`, including bytes outside Ghidra's analyzed function
 bodies. Class/factory identification and contact, timer, geometry and lifetime
-algorithms belong to [Stages](../gameplay/stages.md#animated-and-breakable-background-evidence).
+algorithms belong to [Stages](../gameplay/stages/stages.md#animated-and-breakable-background-evidence).
 Here the class labels identify the playback owner; they do not duplicate
 those algorithms. All seek arguments in this table use flag 0.
 

@@ -63,7 +63,7 @@ three-count delay. States 10 onward perform battle loading and construction.
 The session counter initialization in state 2 is never revisited.
 
 The relevant retail ownership and state transitions are documented in
-[match outcomes](../../knowledge/gameplay/match_outcomes.md). The patch adds
+[match outcomes](../../knowledge/gameplay/session/match_outcomes.md). The patch adds
 resident payload bytes and guarded ELF/BTL call replacements; it leaves the
 source archive and existing binary sizes intact.
 

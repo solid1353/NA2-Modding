@@ -28,7 +28,7 @@ initialization in retail NA2 (`SLPS-25837`).
   load worker belong to [Save data](save_data.md); player-voice descriptors to
   [Character asset tables](character_assets.md#voice-descriptors-and-filename-number-lists).
   General [task mechanics](../runtime/task_system.md),
-  [render submission](../runtime/render_submission.md),
+  [render submission](../runtime/rendering/render_submission.md),
   [UI transitions](../runtime/ui_animation.md),
   [file services](files/runtime_services.md), and
   [front-end navigation](mode_flow.md) retain their separate ownership.
@@ -347,7 +347,7 @@ The draw services used here were already installed by `FUN_00105FC0` before
 the scheduler and game task. `FUN_00185F50` creates the font manager, its
 default/alternate render contexts, and both `0x98`-byte transition pools.
 `FUN_00107F80` creates the display packet pool; `FUN_00106240(0x400)` creates
-the ordering-node pool. [Render submission](../runtime/render_submission.md)
+the ordering-node pool. [Render submission](../runtime/rendering/render_submission.md)
 and [UI animation](../runtime/ui_animation.md) own those allocators and slot
 contracts. Startup binds/resets them rather than reconstructing them after
 each title return.

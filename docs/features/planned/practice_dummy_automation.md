@@ -28,10 +28,10 @@ knowledge documents; feature choices and inferred requirements are provisional.
   random weights, controls, storage, and lifetimes remain unresolved. No complete
   executable feature contract or accepted implementation is established.
 - **Deliberate exclusions and overlap:** [Practice](../practice.md) owns implemented
-  behavior. [Battle AI](../../knowledge/gameplay/battle_ai.md),
-  [Action commands](../../knowledge/gameplay/action_commands.md),
-  [Hit response](../../knowledge/gameplay/hit_response.md), and
-  [Combat action execution](../../knowledge/gameplay/combat_action_execution.md)
+  behavior. [Battle AI](../../knowledge/gameplay/session/battle_ai.md),
+  [Action commands](../../knowledge/gameplay/combat/action_commands.md),
+  [Hit response](../../knowledge/gameplay/combat/hit_response.md), and
+  [Combat action execution](../../knowledge/gameplay/combat/combat_action_execution.md)
   own retail contracts. [Input recording](practice_input_recording.md) and
   [Position reset](practice_position_reset.md) own their provisional features.
   Full roster/callback semantics, implementation, and interface design are outside
@@ -49,8 +49,8 @@ knowledge documents; feature choices and inferred requirements are provisional.
 
 ## Existing foundations
 
-The [AI output boundary](../../knowledge/gameplay/battle_ai.md#main-tick-and-output-boundary)
-and [controller ownership](../../knowledge/gameplay/battle_ai.md#controller-ownership-and-lifecycle)
+The [AI output boundary](../../knowledge/gameplay/session/battle_ai.md#main-tick-and-output-boundary)
+and [controller ownership](../../knowledge/gameplay/session/battle_ai.md#controller-ownership-and-lifecycle)
 separate dummy ownership from proposed logical input. The resident bridge can
 suppress output before normal action consumers run. A requested action therefore
 needs an eligibility and success contract rather than assuming that a command
@@ -79,8 +79,8 @@ scheduler `0x0024FD80`. The state-18 AI helper was corroborated over imported
 `0x046690..0x046B4F`): its decompiler omits the random-departure continuations,
 but the bytes contain both comparisons and the reset/facing/departure calls.
 The retail algorithms belong to
-[State-18 guard reaction](../../knowledge/gameplay/battle_ai.md#state-18-guard-reaction)
-and [Guard lifecycle](../../knowledge/gameplay/chakra_and_guard.md#guard-input-and-action-lifecycle).
+[State-18 guard reaction](../../knowledge/gameplay/session/battle_ai.md#state-18-guard-reaction)
+and [Guard lifecycle](../../knowledge/gameplay/combat/chakra_and_guard.md#guard-input-and-action-lifecycle).
 
 The feature-relevant observation is that removing logical `0x10000000` does
 not immediately remove accepted guard during guarded-hit states `(0,6)/(0,7)`.
@@ -106,7 +106,7 @@ The native scripted-Practice guard priority and override are unsuitable as an
 assumed percentage setting. They collect threat candidates, choose state 18,
 and suppress that helper's probabilistic departures under Guard Yes. Their
 decision semantics are owned by
-[Scripted-Practice reaction priority](../../knowledge/gameplay/battle_ai.md#scripted-practice-reaction-priority).
+[Scripted-Practice reaction priority](../../knowledge/gameplay/session/battle_ai.md#scripted-practice-reaction-priority).
 A provisional random-guard policy would need to arbitrate that producer and
 the final output together, with a side-local retained choice. Selecting No on
 one update is not established as cancelling a previously accepted guard.
@@ -117,7 +117,7 @@ The inspected fighter-list scheduler executes hit routing and AI synthesis
 before the ordinary pass. That pass copies logical input, runs action
 maintenance, consumes input, and updates the selected action, in that order.
 This corroborates the
-[Resident bridge and action dispatch](../../knowledge/gameplay/action_commands.md#resident-bridge-and-action-dispatch)
+[Resident bridge and action dispatch](../../knowledge/gameplay/combat/action_commands.md#resident-bridge-and-action-dispatch)
 contract. A state exit performed by maintenance can be followed by ordinary
 selection in the same eligible pass; waiting for a later update merely because
 AI observed the previous state would not establish the earliest legal input.
@@ -156,8 +156,8 @@ consumption, starter success, and a newly restarted action are therefore
 distinct observations. The final feature contract would need to identify an
 actual destination/action transition, including a deliberate same-action case.
 The native queue and pending-slot mechanisms remain owned by
-[AI action queues](../../knowledge/gameplay/battle_ai.md#action-record-selection-and-direct-queues)
-and [Pending selection](../../knowledge/gameplay/action_commands.md#pending-selection-and-priority-boundaries).
+[AI action queues](../../knowledge/gameplay/session/battle_ai.md#action-record-selection-and-direct-queues)
+and [Pending selection](../../knowledge/gameplay/combat/action_commands.md#pending-selection-and-priority-boundaries).
 
 ### Scripted Attack is a repeated policy, not a reversal scheduler
 
@@ -201,7 +201,7 @@ The complete resident recovery family `0x00235100` (destination setup),
 `0x00235690` (state maintenance), `0x00235C60` (state motion), and
 `0x00235200` (exit) was inspected through MCP alongside the shared selector
 gate. Their retail ownership is
-[Timed downed recovery](../../knowledge/gameplay/hit_response.md#timed-downed-recovery-and-get-up-choices).
+[Timed downed recovery](../../knowledge/gameplay/combat/hit_response.md#timed-downed-recovery-and-get-up-choices).
 The feature would need to distinguish choosing a recovery from requesting an
 action during or after that recovery. Recovery `0x5F` becomes eligible for
 ordinary selection at primary cursor `8`, and `0x60` at cursor `3`, subject to
@@ -261,7 +261,7 @@ grounded-bit clearing branch; `0x0023F170` uses current/prior outcome bytes in
 landing exits; and `0x0023F5D0` uses prior outcome in its facing, distance,
 record-category, and motion-selection conditions. The complete smaller first
 two bodies and the relevant branches of the large motion body were inspected.
-The [Combat execution owner](../../knowledge/gameplay/combat_action_execution.md#continuation-and-common-exit-decisions)
+The [Combat execution owner](../../knowledge/gameplay/combat/combat_action_execution.md#continuation-and-common-exit-decisions)
 owns those algorithms; this feature implication is that bypassing native
 recovery exit can change the chosen action's motion or continuation.
 
@@ -286,13 +286,13 @@ decision, and random weights are unspecified.
 The two input-driven ordinary-response recoveries (`ACT_RCV_0/1`) and the
 special relocation substates `0x61/0x62` have separate native gates. They cannot
 be folded into the `0x5D` choice under a generic "wake-up" name. Their contracts
-remain in [Input-driven recovery](../../knowledge/gameplay/hit_response.md#input-driven-recovery-actions-during-ordinary-response)
+remain in [Input-driven recovery](../../knowledge/gameplay/combat/hit_response.md#input-driven-recovery-actions-during-ordinary-response)
 and the linked timed-recovery owner.
 
 ## Representative action variants
 
 The completed retail census remains in
-[Static action data](../../knowledge/gameplay/action_commands.md#complete-static-action-data-census).
+[Static action data](../../knowledge/gameplay/combat/action_commands.md#complete-static-action-data-census).
 For this feature, six complete source records (slots `21..26`) were reread for
 Naruto ID `57` at `0x004DA434..0x004DA62B`, Kazekage Gaara ID `59` at
 `0x004E5344..0x004E553B`, and Deidara ID `64` at
@@ -313,7 +313,7 @@ categories between slots `21..43` and `44..47`; Deidara switches them between
 `0x0029D7E0`; Deidara's two come from initializer `0x002B42D0` and transition
 `0x002B4860`. Those five complete bodies were read through MCP. Their mode and
 awakening ownership remains in
-[Deidara and Gaara variants](../../knowledge/gameplay/awakening.md#deidara-and-gaara-character-variants).
+[Deidara and Gaara variants](../../knowledge/gameplay/characters/awakening.md#deidara-and-gaara-character-variants).
 
 **Provisional inference:** A retained reversal action needs a live fighter,
 moveset/provider, and current availability check. A raw index captured before
@@ -333,7 +333,7 @@ queue reset `0x0021D200` were inspected through MCP. Their reset domains differ:
 
 | Native building block | Feature-relevant scope | What it does not establish |
 | --- | --- | --- |
-| Resource capture/restore | Selected-side HP/chakra, optional item inventory and global timer; masks belong to [Practice reset](../../knowledge/gameplay/practice_mode.md#discrete-practice-controller-reset) | Restoring an action, position, input history, or RNG state |
+| Resource capture/restore | Selected-side HP/chakra, optional item inventory and global timer; masks belong to [Practice reset](../../knowledge/gameplay/modes/practice_mode.md#discrete-practice-controller-reset) | Restoring an action, position, input history, or RNG state |
 | Fighter input-history reset | Clears fighter logical triple, 32 three-word samples, and cursor `+0x4C4` | Clearing the separately allocated `ccCommand` history or a current action/queue |
 | Queue reset | Clears queue root/four category slots/phase and pending action index | Completing current action exit, clearing logical input/history, or restoring resources |
 | AI initialization | Resets transient work for both static sides, then installs the selected side's profile | A side-local rewind or restoration of the same random stream |
@@ -370,7 +370,7 @@ loop and selected-side profile copy: loop counter starts at zero, its body
 calls resident `0x00180210(120)` at import `0x00705DE0`, increments at
 `0x00705F10`, and branches back while below two at `0x00705F18/0x00705F1C`.
 The true live entry is `0x00705D70`, file `0x051E70`. Remaining profile behavior
-is owned by [AI state](../../knowledge/gameplay/battle_ai.md#per-side-state-block).
+is owned by [AI state](../../knowledge/gameplay/session/battle_ai.md#per-side-state-block).
 Calling this initializer for a dummy thus consumes two shared random draws and
 changes the other side's transient AI work as well. It cannot be treated as a
 dummy-only rewind or a deterministic re-run of a previous AI decision.

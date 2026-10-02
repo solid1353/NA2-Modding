@@ -87,10 +87,10 @@ identities, not recovered original symbols.
   path routing, ring transport, and general gzip/file services;
   [Allocator and capacity](../../runtime/ee_memory_map/allocator_and_capacity.md)
   owns allocation formulas, placement, load transients, and sampled capacity;
-  [Ultimate jutsu](../../gameplay/ultimate_jutsu.md) owns that presentation and
+  [Ultimate jutsu](../../gameplay/characters/ultimate_jutsu.md) owns that presentation and
   contest; [Disc files](disc_files.md) owns the static file inventory;
   [Animation runtime](../../runtime/animation_runtime.md) and
-  [Texture and material runtime](../../runtime/texture_material_runtime.md) own
+  [Texture and material runtime](../../runtime/rendering/texture_material_runtime.md) own
   the downstream consumers of parsed animation and material data.
 - **Evidence limitations:** all conclusions are static. No live-memory trace,
   cancellation/concurrency stress test, malformed-CCS fuzzing, or end-to-end
@@ -940,7 +940,7 @@ every confirmed authored record uses flags zero (below). Missing material
 targets cannot correct input consumption: `FUN_001B5400` reads all selected
 floats before its lookup at `0x001B5548`, including when no play table or
 material pointer resolves. The streamed coordinate formulas in
-[Texture palette and material runtime](../../runtime/texture_material_runtime.md#material-binding-and-coordinate-updates)
+[Texture palette and material runtime](../../runtime/rendering/texture_material_runtime.md#material-binding-and-coordinate-updates)
 therefore are not an asserted interpretation of every authored packed snapshot.
 
 **Inference from the instruction masks.** Let `b_i` be bit `i` of the unchanged
@@ -1465,7 +1465,7 @@ persistent stream player run by `FUN_001ce8a0`, whose only caller is the task
 body `FUN_00359b50` created by `FUN_0035cf00` under the task name
 `SP_Skill_Play`. `FUN_0035cf00` is called once from `BTL.BIN` (the `jal` at
 preserved `0x0076A0CC`, live `0x0076A10C`), the ultimate jutsu presentation
-described in [Ultimate jutsu](../../gameplay/ultimate_jutsu.md#skill-play-admission),
+described in [Ultimate jutsu](../../gameplay/characters/ultimate_jutsu.md#skill-play-admission),
 and once from `ETC.BIN` `FUN_006c0ab0` (preserved `0x006C0AB0`, live
 `0x006C0AF0`).
 
@@ -1577,7 +1577,7 @@ The control routine at `0x001CDDD0` independently latches each of bytes
 `(request & 0xff) + 1`; otherwise it leaves it unchanged. Its stores are at
 `0x001CDDE4` and `0x001CDDFC`. Ghidra exposes the routine's bytes but
 has no defined function at that entry. The exact stop/skip effects are in the
-[Ultimate Jutsu presentation state machine](../../gameplay/ultimate_jutsu.md#presentation-state-machine).
+[Ultimate Jutsu presentation state machine](../../gameplay/characters/ultimate_jutsu.md#presentation-state-machine).
 `FUN_001ce410` later clears `+0x281` at `0x001CE798` after processing a request,
 whereas the skip latch `+0x282` persists. The current-scene latch can therefore
 be reused after its clear; the first nonzero skip request remains latched for
@@ -1757,7 +1757,7 @@ allocations in `FUN_001a0b80` run on the `PlayDecode` thread outside that scope.
 ### Battle setup (resident)
 
 The order of battle preparation is owned by
-[Battle lifecycle](../../gameplay/battle_lifecycle.md#resident-setup-order).
+[Battle lifecycle](../../gameplay/session/battle_lifecycle.md#resident-setup-order).
 Its CCS mechanics are:
 
 - `FUN_001e9520(1)` queues every missing battle container through

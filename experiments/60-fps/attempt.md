@@ -997,7 +997,7 @@ sampling.
 
 The BTL camera controller and camera objects form another independent timing
 surface; the recovered layout and state machine are documented in
-[battle_camera.md](../../docs/knowledge/gameplay/battle_camera.md). The controller's per-update commit
+[battle_camera.md](../../docs/knowledge/gameplay/session/battle_camera.md). The controller's per-update commit
 increments controller +0x2C when its +0x28 condition is active. This is an
 integer duration counter and is not multiplied by actor +0x1AC.
 
@@ -1053,7 +1053,7 @@ camera vectors, and final render transform at matched wall-clock timestamps.
 ### Battle-stage environment and breakables
 
 Stage visuals and props are not passive consumers of the fighter clock. The
-recovered classes in [stages.md](../../docs/knowledge/gameplay/stages.md) have their own callback-local
+recovered classes in [stages.md](../../docs/knowledge/gameplay/stages/stages.md) have their own callback-local
 state, exposing several distinct 60 Hz problems:
 
 - `ccBgTransObject`, `ccBgTransAnm`, and `ccBgTransObject2` update proximity
@@ -1368,7 +1368,7 @@ embedded scene still uses the compensated CCS clock; gating the whole menu and
 also halving that scene would double-compensate it.
 
 Battle pause is selective rather than one global frozen-update branch, as
-documented in [pause_and_replay.md](../../docs/knowledge/gameplay/pause_and_replay.md). FUN_001F03E0 applies
+documented in [pause_and_replay.md](../../docs/knowledge/gameplay/session/pause_and_replay.md). FUN_001F03E0 applies
 different masks to three virtual-update phases, while camera/controller and
 other work can remain outside those masks. A 60 FPS implementation must keep
 the clean pause masks and compensate each still-running timer/UI/camera owner;

@@ -60,7 +60,7 @@ source `DATA/DATA.CVM`. The image assembler stages and verifies the final ISO.
 - [Catalog format](../docs/features/catalog.md): configuration types, merging, patch mappings, and release export.
 - [Character values](../docs/features/battle.md#substitution-cost): TSV editing and runtime consumption.
 - [Save appendix](../docs/features/memory_card.md#save-appendix-schema): field IDs, encoding, and version rules.
-- [Character reference](../docs/knowledge/gameplay/character_ids.md#confirmed-ids): identity and native relationship columns.
+- [Character reference](../docs/knowledge/gameplay/characters/character_ids.md#confirmed-ids): identity and native relationship columns.
 - [Mod strings](../docs/features/localization/mod_strings.md): shared localized text.
 - [Localization](../docs/features/localization.md): language selection and shared components.
 - [Practice cases](../e2e/README.md#practice-case-table): case naming, ordering, and capture metadata.

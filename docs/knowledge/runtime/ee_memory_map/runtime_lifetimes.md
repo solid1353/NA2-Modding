@@ -21,7 +21,7 @@ tail, and the main heap-backed regions.
   callees allocate heap memory.
 - **Deliberate exclusions and overlap:** CCS container release belongs to
   [Resident CCS runtime](../../game/files/ccs_runtime.md); battle object
-  teardown belongs to [Battle lifecycle](../../gameplay/battle_lifecycle.md).
+  teardown belongs to [Battle lifecycle](../../gameplay/session/battle_lifecycle.md).
 - **Evidence limitations:** observed phase slack is temporary and cannot prove
   that an address remains unused across later transitions. Lifetime findings
   for heap regions are static.

@@ -556,7 +556,7 @@ Each retail action record's name pointer at `+0x08` joins it to a Command
 Chart mapping: a mapping's exact `reference_refs` record-field offset takes
 precedence for shared source text; otherwise the pointed-to clean-ELF string
 offset joins to `source_ref`. Record layout and owner identities belong to
-[Substitution knowledge](../../knowledge/gameplay/substitution.md#attack-record-ownership-and-clean-elf-inventory).
+[Substitution knowledge](../../knowledge/gameplay/characters/substitution.md#attack-record-ownership-and-clean-elf-inventory).
 
 All 1,065 Command Chart mappings resolve to 1,110 record instances: 1,057
 mapping IDs name 1,102 instances in the 74 primary-roster tables, and the

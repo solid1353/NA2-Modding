@@ -10,7 +10,7 @@ This attempt is not selected by the builder. The resulting `NA v2.28 - 2026-09-2
 - **Exploration depth:** the NUN3 battle-stage pointer array, fourth stage record table, named archive, CCS table, and relevant clean NA2 first-stage structures were inspected statically.
 - **Confirmed coverage:** stage identity, archive size and CCS structure, the separate scene-record table, collision resources, and boundary-node names.
 - **Unresolved or untested:** the cause of the mid-fight return to the BIOS, exact NUN3 effect-object behavior, and whether every native material and animation is compatible with NA2's renderer.
-- **Deliberate exclusions and overlap:** NUN3 battle stages in general are owned by [battle stage knowledge](../../docs/knowledge/gameplay/stages.md#nun3-battle-stages-compared-with-na2).
+- **Deliberate exclusions and overlap:** NUN3 battle stages in general are owned by [battle stage knowledge](../../docs/knowledge/gameplay/stages/stages.md#nun3-battle-stages-compared-with-na2).
 - **Evidence limitations:** the mapping and format findings come from the clean binaries and extracted archives; they do not establish runtime behavior after conversion.
 
 ## NUN3 source

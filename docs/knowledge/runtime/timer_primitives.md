@@ -13,7 +13,7 @@ complete-file offsets and overlay addresses follow the
 - **Exploration depth:** All fractional helpers `0x00211730..0x00211F80` and fixed-point helpers `0x001EB9B0..0x001EBBC8` were read; arithmetic and predicates were checked in decompilation and instructions. All eight recovered resident forward-advance sites, six countdown sites and five divide-by-60 sites were examined in their callers. The additional direct BTL forward caller, selected event consumers, session/startup resets, boot FCSR clear and local maintenance ordering were examined.
 - **Confirmed coverage:** Both block layouts, exact accumulator loops, current/previous/predicted views, flag/reset/arming contracts, forward reserved-value retreat, five event/range predicates, fixed-point terminal and cap ordering, stored-step quantization and signed integer division below.
 - **Unresolved or untested:** Fixed-point `+0x18` consumer meaning, complete indirect-call coverage and exceptional delta/divisor inputs are not established. Wall-clock duration of a timer count, and whether these are every retail timer implementation, are not established.
-- **Deliberate exclusions and overlap:** This document owns reusable timer contracts. Fighter-specific phase meanings belong to [Hit response](../gameplay/hit_response.md), combo ownership to [Damage](../gameplay/damage.md), and countdown presentation/suppression to [Pause and replay](../gameplay/pause_and_replay.md). CCS playback belongs to [Animation runtime](animation_runtime.md); presentation fades/easing to [UI animation](ui_animation.md); cue behavior to [Battle audio](../gameplay/battle_audio.md); EE FPU rounding to [Randomness](randomness.md#ee-hardware-conversion-and-software-packing). Complete-file identities remain in [Retail game file identities](../game/files/file_identities.md).
+- **Deliberate exclusions and overlap:** This document owns reusable timer contracts. Fighter-specific phase meanings belong to [Hit response](../gameplay/combat/hit_response.md), combo ownership to [Damage](../gameplay/combat/damage.md), and countdown presentation/suppression to [Pause and replay](../gameplay/session/pause_and_replay.md). CCS playback belongs to [Animation runtime](animation_runtime.md); presentation fades/easing to [UI animation](ui_animation.md); cue behavior to [Battle audio](../gameplay/session/battle_audio.md); EE FPU rounding to [Randomness](randomness.md#ee-hardware-conversion-and-software-packing). Complete-file identities remain in [Retail game file identities](../game/files/file_identities.md).
 - **Evidence limitations:** Evidence is static retail NA2 `SLPS_258.37` code. Preserved function boundaries and xrefs are incomplete; a negative xref result is not a whole-program proof. No display cadence or exceptional-input caller guarantee is inferred from the helpers alone.
 
 ## Fractional integer-cursor block
@@ -158,10 +158,10 @@ These sets do not exclude indirect calls or unexamined timer implementations.
 | Owner / block address relative to owner | Calls and rate source | Local gate/order |
 | --- | --- | --- |
 | Fighter `0x0024D5E0`, blocks `+0x1B8/+0x1DC` | `0x0024D608` uses fighter `+0x1AC`; `0x0024D6D8/0x0024D6F0` use `(u16 +0xB90 / 256) * +0x1AC`, with exact `0x100` handled directly. | Current pause count `+0x20C > 0` skips both advances and clears each block's bit `1`. A separate `+0xB98` reset request can zero the secondary block instead of advancing it. |
-| Combo manager `0x0020C420`, block `+0x10` | Countdown at `0x0020C4F4` uses literal `1.0`; assignment at `0x0020C570` uses `90`. | Decrement only while block current `manager+0x1C` is nonzero; decrement precedes pending-count consumption/rearming in the same call. [Damage](../gameplay/damage.md) owns combo meaning. |
+| Combo manager `0x0020C420`, block `+0x10` | Countdown at `0x0020C4F4` uses literal `1.0`; assignment at `0x0020C570` uses `90`. | Decrement only while block current `manager+0x1C` is nonzero; decrement precedes pending-count consumption/rearming in the same call. [Damage](../gameplay/combat/damage.md) owns combo meaning. |
 | Fighter maintenance `0x0024C440`, blocks `+0x248/+0x26C/+0x290` | Countdown calls `0x0024C7DC/0x0024C838/0x0024C8AC` use fighter `+0x1AC`. | Inside fighter flags-byte bit `1` branch and only when pause current `+0x20C < 1`. First block checks integer nonzero; second/third query fractional event `0` before updating. Second can perform pending activation instead. |
-| Same maintenance, block `+0x224` | `0x0024C908` uses saved `f20=1.0`. | Under the preceding gates, queries event `0`, then decrements or activates. With pause positive, a pending block can still activate at `0x0024C970..0x0024CA08`, but is not decremented. [Hit response](../gameplay/hit_response.md#accepted-hit-rejection-countdown) owns the rejection role. |
-| Same maintenance, block `+0x200` | `0x0024CA74` uses literal `1.0`. | Runs after the flags-byte bit `1` branch; queries event `0`, then decrements or activates. It is later than the three rate-scaled channels in this function. [Hit response](../gameplay/hit_response.md#fighter-update-pause-and-action-lock) owns the pause/action-lock consequences. |
+| Same maintenance, block `+0x224` | `0x0024C908` uses saved `f20=1.0`. | Under the preceding gates, queries event `0`, then decrements or activates. With pause positive, a pending block can still activate at `0x0024C970..0x0024CA08`, but is not decremented. [Hit response](../gameplay/combat/hit_response.md#accepted-hit-rejection-countdown) owns the rejection role. |
+| Same maintenance, block `+0x200` | `0x0024CA74` uses literal `1.0`. | Runs after the flags-byte bit `1` branch; queries event `0`, then decrements or activates. It is later than the three rate-scaled channels in this function. [Hit response](../gameplay/combat/hit_response.md#fighter-update-pause-and-action-lock) owns the pause/action-lock consequences. |
 | Auxiliary tracker `0x002662A0`, fighter `+0x5084` | `0x002663DC`: model-pointer `fighter+0x5114`, its `u16 +0x94 / 256`. | Advances only when `0x00224650(fighter)==0`; otherwise clears bit `1` at `0x002663F0`. |
 | Auxiliary trackers `0x0029F3F0`, fighter `+0x5528/+0x55A8` | `0x0029F5A0` in a two-element loop: corresponding model `u16 +0x94 / 256`. | Same pause predicate; two bit-clear calls through loop site `0x0029F5DC`. |
 | Auxiliary trackers `0x002A9AA0`, fighter `+0x5BF8/+0x5C78` | `0x002A9C08` in a two-element loop: corresponding model `u16 +0x94 / 256`. | Same predicate; bit-clear loop site `0x002A9C44`. |
@@ -202,7 +202,7 @@ Two selected event-consumer classes show that the caller chooses the helper:
 The independently enabled exact boundary is also used by `0x002092D0` at
 `0x002092F4` (`0x00211A20(fighter+0x1B8,0)`) before its action-dependent
 effect dispatch, and by `0x0020D690` at `0x0020D73C` on secondary block event
-`0`. [Awakening](../gameplay/awakening.md) owns the latter gameplay contract.
+`0`. [Awakening](../gameplay/characters/awakening.md) owns the latter gameplay contract.
 
 ### Selected outer order
 
@@ -218,7 +218,7 @@ producer `0x00204610` at `0x0024DB78`, outside its inner positive-pause branch
 but inside fighter flags-byte bit `1`. The selected audio event-`0` call at
 `0x00204698` uses `0x00211A20(fighter+0x1B8,0)`; major action `8` instead
 supplies its descriptor-authored event. These consumers do not advance the
-timer by calling the predicate. [Battle audio](../gameplay/battle_audio.md)
+timer by calling the predicate. [Battle audio](../gameplay/session/battle_audio.md)
 owns emitted cues and their other gates. The local order above does not alone
 establish how often the outer scheduler invokes the three owner functions.
 
@@ -234,7 +234,7 @@ with the float-remainder block above.
 | `+0x00` / `0x006B28D0` | flags byte | Bit `0` suppresses work, bit `1` freezes the paired arithmetic, bit `2` is terminal. Other bits are preserved by the inspected reset and flag setters. |
 | `+0x04` / `0x006B28D4` | signed-tested 32-bit fixed-point | Remaining value; initialized by integer source shifted left `24`. |
 | `+0x08` / `0x006B28D8` | unsigned-capped 32-bit fixed-point | Elapsed value; capped at `0x63000000` before terminal handling. |
-| `+0x0C/+0x10` / `0x006B28DC/0x006B28E0` | words | Cleared by session/startup reset, not used by `0x001EBA80`; their snapshot use belongs to [Practice mode](../gameplay/practice_mode.md). |
+| `+0x0C/+0x10` / `0x006B28DC/0x006B28E0` | words | Cleared by session/startup reset, not used by `0x001EBA80`; their snapshot use belongs to [Practice mode](../gameplay/modes/practice_mode.md). |
 | `+0x14` / `0x006B28E4` | integer word | Initial configured whole-unit count; terminal branch replaces elapsed with this value shifted left `24`. |
 | `+0x18` / `0x006B28E8` | word | Session/startup reset assigns `-1`; no behavioral consumer is established. |
 | `+0x1C` / `0x006B28EC` | fixed-point delta word | Subtracted from remaining and added to elapsed; initialized to `0x00044444` by session/startup reset. |
@@ -281,7 +281,7 @@ prevent 32-bit wrap.
 | Startup `0x005D833C..0x005D83E0` inside `0x005D82F0` | Same global-block values as the session reset, corroborated in instructions and bytes. |
 | Round initialization `0x001EEE4C..0x001EEEE0` inside `0x001EEE30` | Sets bit `0`, clears bit `2`, assigns initial integer from manager selector `6`, sets remaining to that result `<<24`, sets terminal bit if the shifted remaining is zero, and clears elapsed. Preserves delta and bit `1`. |
 
-[Pause and replay](../gameplay/pause_and_replay.md#battle-countdown-gate-and-presentation)
+[Pause and replay](../gameplay/session/pause_and_replay.md#battle-countdown-gate-and-presentation)
 owns the battle use and presentation. Its configured reset is `0x001ED110`;
 the generic clear has the separate zero-delta contract shown above.
 
@@ -292,7 +292,7 @@ them into the controller masks. The sole recovered resident advance call is
 `0x001F11B8` in `0x001F10F0`; that caller has additional fighter/session gates.
 No claim that these bits alone determine all scheduling follows from the
 generic helper. `0x001F0B10` consumes terminal bit `2` and publishes the expiry
-latch; [Collision](../gameplay/collision.md) owns that latch's combat use.
+latch; [Collision](../gameplay/combat/collision.md) owns that latch's combat use.
 
 ## Integer time-unit conversion
 
@@ -308,7 +308,7 @@ All five recovered direct callsites were examined in `0x00223450`:
 They compare the converted result to `4/6/60/1/3` respectively. These are
 counter-to-unit classifiers, not calls which advance or reset the counters.
 The gameplay meanings and producer coverage belong to
-[Match outcomes](../gameplay/match_outcomes.md).
+[Match outcomes](../gameplay/session/match_outcomes.md).
 
 ## Confidence and remaining evidence limits
 

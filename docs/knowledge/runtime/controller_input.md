@@ -72,11 +72,11 @@ the listed `FUN_*` names.
   of late previous-public-held outside the named paths.
 - **Deliberate exclusions and overlap:** Adventure-mode consumers were not
   inspected. Input-history matching, bindings, and logical command
-  interpretation belong to [Action commands](../gameplay/action_commands.md);
+  interpretation belong to [Action commands](../gameplay/combat/action_commands.md);
   battle lifecycle and display pacing to
-  [Battle lifecycle](../gameplay/battle_lifecycle.md); contest scoring and
+  [Battle lifecycle](../gameplay/session/battle_lifecycle.md); contest scoring and
   pending-code retention to
-  [Ultimate Jutsu](../gameplay/ultimate_jutsu.md#contest-objects); task
+  [Ultimate Jutsu](../gameplay/characters/ultimate_jutsu.md#contest-objects); task
   scheduling to [Resident task system](task_system.md); Save/Load to
   [Save data](../game/save_data.md); and resident file services to
   [Resident file and archive services](../game/files/runtime_services.md).
@@ -224,7 +224,7 @@ not preservation of each intervening core edge. Neither resident repeat nor
 core raw history is copied. Each sample overwrites one ring record and leaves
 the others until the ring wraps. Field layout, ring indices, normalization,
 and matcher algorithms are owned by
-[Action commands](../gameplay/action_commands.md#battle-input-object-and-circular-history).
+[Action commands](../gameplay/combat/action_commands.md#battle-input-object-and-circular-history).
 
 The history phase runs in resident `FUN_001f03e0` at call site
 `0x001F051C`, through owner `+0x18`, child pointer `+0x04`, and controller
@@ -252,7 +252,7 @@ The task yields through `FUN_001d0000(record, 1)` after its selected branch.
 This ordering is within that task; it does not assign a total execution order
 to other independent threads. See
 [Resident task system](task_system.md#manager-pass-and-ordering-boundary)
-and [Battle lifecycle](../gameplay/battle_lifecycle.md#battle-update-cadence).
+and [Battle lifecycle](../gameplay/session/battle_lifecycle.md#battle-update-cadence).
 
 | Consumer | Shared masks and snapshot | Consumption gate and retention |
 | --- | --- | --- |
@@ -278,7 +278,7 @@ menu state dispatcher before its presentation pass. The subsequent running
 session can suppress `ccCommand` history while the start menu continues
 reading shared pressed/repeat. Suppression-word ownership and the complete
 menu lifecycle belong to
-[Pause and start-menu control](../gameplay/pause_and_replay.md#resident-pause-controller-consumption).
+[Pause and start-menu control](../gameplay/session/pause_and_replay.md#resident-pause-controller-consumption).
 
 ### Gameplay readers outside command history
 
@@ -286,7 +286,7 @@ The ordinary command history is not the game's only gameplay input boundary.
 `FUN_001f03e0` services `ccCommandCtrl` before `ccPlayerCtrl` in phase 1,
 then its other phase-1 systems. The fighter pass consumes the command object's
 logical output; that bridge is described in
-[Action commands](../gameplay/action_commands.md#resident-bridge-and-action-dispatch).
+[Action commands](../gameplay/combat/action_commands.md#resident-bridge-and-action-dispatch).
 Later in the same dispatcher, first-mask bit `0x0400` and successful
 `FUN_0036b6c0` enable `FUN_0036bf10(0)` at `0x001F0918`. The latter selects
 the current Ultimate Jutsu contest and calls its vtable slot `+0x08`.
@@ -308,22 +308,22 @@ priority order: Command checks `0x10, 0x40, 0x20, 0x80, 0x1000, 0x4000,
 stores codes `0..3`. The resident decode ranges are
 `0x003626A0..0x003627C0` and `0x00364528..0x003645C0`. Retention of that
 code through the lockout, rearm, and time-bar gates belongs to
-[Ultimate Jutsu](../gameplay/ultimate_jutsu.md#command-mode) (see also its
-[Combo mode](../gameplay/ultimate_jutsu.md#combo-mode)).
+[Ultimate Jutsu](../gameplay/characters/ultimate_jutsu.md#command-mode) (see also its
+[Combo mode](../gameplay/characters/ultimate_jutsu.md#combo-mode)).
 
 These latches preserve input already sampled by the contest; they do not
 recover publications missed while its outer update gates skip the reader.
 Timing's inspected scoring helper instead skips the shared-pressed read while
 its lockout remains positive. Turn stores the current sampled polar angle or
 invalid sentinel. Contest-specific scoring, CPU input, and lifecycle remain
-owned by [Ultimate Jutsu](../gameplay/ultimate_jutsu.md#contest-objects).
+owned by [Ultimate Jutsu](../gameplay/characters/ultimate_jutsu.md#contest-objects).
 
 Three inspected BTL predicates also read the shared pressed word directly:
 live `0x00796A50`, `0x007FF520`, and `0x00806680` (Ghidra byte entries
 `0x00796A10`, `0x007FF4E0`, `0x00806640`). Their human-input branch
 resolves side from object `+0x350` and tests configured binding index 1, as
 described in
-[Action commands](../gameplay/action_commands.md#native-pad-domain-and-battle-bindings).
+[Action commands](../gameplay/combat/action_commands.md#native-pad-domain-and-battle-bindings).
 A null binding pointer returns false. A separate controlled-state branch can return
 object `+0x13C & 1` instead. The direct callers occur at Ghidra
 `0x007968A8`, `0x007FE124`, and `0x00805054`; those references encode the

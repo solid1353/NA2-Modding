@@ -61,27 +61,27 @@ fighter data.
   [CCS object types](files/ccs_object_types.md); the disc inventory belongs to
   [Disc and archive file inventory](files/disc_files.md). Character-ID
   semantics and the definition-table rows belong to
-  [Character identity in battle](../gameplay/character_ids.md). Fighter
+  [Character identity in battle](../gameplay/characters/character_ids.md). Fighter
   construction and dispatch belong to
-  [Battle entities](../gameplay/battle_entities.md); record fields with battle
-  consumers belong to [Damage](../gameplay/damage.md), and action-record
-  selection to [Action commands](../gameplay/action_commands.md). Character
+  [Battle entities](../gameplay/session/battle_entities.md); record fields with battle
+  consumers belong to [Damage](../gameplay/combat/damage.md), and action-record
+  selection to [Action commands](../gameplay/combat/action_commands.md). Character
   callback timing and repeated-hit response state belong to
-  [Substitution](../gameplay/substitution.md). Selected file dependency sets
+  [Substitution](../gameplay/characters/substitution.md). Selected file dependency sets
   and the nine per-side request, adoption and release slots belong to
   [Asset dependency graphs](files/asset_dependencies.md#all-nine-per-side-selection-slots);
   the 3EYE presentation controller and its appearance overrides belong to
-  [End-demo presentation](../gameplay/end_demo_presentation.md); voice
+  [End-demo presentation](../gameplay/modes/end_demo_presentation.md); voice
   requests and event selection belong to
-  [Battle audio](../gameplay/battle_audio.md). Model
+  [Battle audio](../gameplay/session/battle_audio.md). Model
   materialization and skeleton binding belong to
-  [Model and skeleton runtime](../runtime/model_runtime.md); generic playback,
+  [Model and skeleton runtime](../runtime/rendering/model_runtime.md); generic playback,
   texture/material binding and render submission belong to their respective
   [animation](../runtime/animation_runtime.md),
-  [texture/material](../runtime/texture_material_runtime.md) and
-  [render](../runtime/render_submission.md) owners. Form selection
+  [texture/material](../runtime/rendering/texture_material_runtime.md) and
+  [render](../runtime/rendering/render_submission.md) owners. Form selection
   and whole-fighter reconstruction belong to
-  [Awakening](../gameplay/awakening.md#static-reconstruction-order).
+  [Awakening](../gameplay/characters/awakening.md#static-reconstruction-order).
 - **Evidence limitations:** All findings are static reads of clean files and
   the maintained read-only analyses. No live-memory trace establishes load
   timing, residency, or how the game behaves with a missing or foreign asset.
@@ -112,7 +112,7 @@ character code:
 **Observation:** Each pointer table has 94 slots indexed by character ID
 `0..93`. For every ID, all four families are either null or name the same
 three-byte code. The populated IDs are exactly the IDs with a dedicated row in
-the [character-definition table](../gameplay/character_ids.md#character-definition-table):
+the [character-definition table](../gameplay/characters/character_ids.md#character-definition-table):
 
 ```text
 1 nrt  2 ssk  3 roc  4 gar  5 sik  6 nej  7 skr
@@ -182,7 +182,7 @@ identities are in [CCS object types](files/ccs_object_types.md). NUN3's clean
 
 **Inference (high confidence):** `1???BOD1` is a second character model,
 separate from the `2cmn`-based battle body, that the `3EYE` win animations
-use. The [end-demo presentation lookup](../gameplay/end_demo_presentation.md#request-and-lookup)
+use. The [end-demo presentation lookup](../gameplay/modes/end_demo_presentation.md#request-and-lookup)
 directly selects those animations and the 1BOD1 body/face resources together.
 Explicit skill-stream dependencies and the cinematic replacement path below
 also establish use of the family during jutsu presentation.
@@ -272,7 +272,7 @@ names, and the NA2 resolver leaves an unmatched `#` record at runtime sentinel
 ## Character records
 
 The definition table's record pointer (see
-[Character identity](../gameplay/character_ids.md#character-definition-table))
+[Character identity](../gameplay/characters/character_ids.md#character-definition-table))
 selects a static record in the boot ELF. The same record layout is used by
 NUN3.
 
@@ -290,7 +290,7 @@ NUN3.
 | `+0x30` | Optional alternate action-record pointer, zero in the compared rows |
 | `+0x38` / `+0x3C` | Row count / `0x4C`-byte rows |
 | `+0x44` / `+0x48` | Animation count / array of `ANM_` name pointers |
-| `+0x58..+0xD8` | Physical and balance parameters; confirmed consumers are in [Damage](../gameplay/damage.md#confirmed-character-record-fields) |
+| `+0x58..+0xD8` | Physical and balance parameters; confirmed consumers are in [Damage](../gameplay/combat/damage.md#confirmed-character-record-fields) |
 | `+0xE0` | Pointer to the record itself, used by the constructor as the record descriptor |
 
 **Observation:** For Classic Naruto (ID 1) and Classic Sakura (ID 7) every
@@ -350,7 +350,7 @@ not assigned by this asset trace.
 
 A separate nine-row BTL lookup resolves additional hair, mask, accessory, and
 glasses models from selected body containers. Its complete table and cache
-setup are recorded under [Setup helpers after fighter publication](../gameplay/battle_lifecycle.md#setup-helpers-after-fighter-publication).
+setup are recorded under [Setup helpers after fighter publication](../gameplay/session/battle_lifecycle.md#setup-helpers-after-fighter-publication).
 
 ### Form records and instance ownership
 
@@ -374,7 +374,7 @@ that every appearance-selector combination is reachable. In particular,
 ID 57's second model is a slot in its existing body container, whereas the
 `57 -> 73` identity change selects the separate `2nwvbod1` provider.
 The pairing and replacement gates belong to
-[Awakening](../gameplay/awakening.md#static-reconstruction-order).
+[Awakening](../gameplay/characters/awakening.md#static-reconstruction-order).
 
 **Observation:** Common setup `FUN_00215950` obtains existing CCS containers
 through required lookup; it does not issue a file request. It creates the
@@ -385,9 +385,9 @@ Its complete body contains no container-destruction call and does not clear
 the borrowed provider pointers at `+0xE60/+0xE64` or the appearance caches at
 `+0xE78..+0xE80`. The established caller `FUN_00215720` is the common
 fighter teardown. Full concrete lifetime dispatch is owned by
-[Common fighter-owned children](../gameplay/battle_entities.md#common-fighter-owned-children),
+[Common fighter-owned children](../gameplay/session/battle_entities.md#common-fighter-owned-children),
 and instance construction/binding by
-[Model and skeleton runtime](../runtime/model_runtime.md).
+[Model and skeleton runtime](../runtime/rendering/model_runtime.md).
 Manager handle release below therefore concerns a different allocation layer
 from the fighter's model and animation instances.
 
@@ -430,7 +430,7 @@ display name (English in NUN3 `SLUS`, Japanese with ruby markup in NA2).
 Word `+0x0C` packs the jutsu selector in its high halfword and the owning
 character ID in its low halfword; for example NA2 Sai's record 3 holds
 `0x00B9005C` and Sasuke's holds `0x00BB005D`. Word `+0x20` is the chakra cost
-covered in [Chakra and guard](../gameplay/chakra_and_guard.md). Apart from the
+covered in [Chakra and guard](../gameplay/combat/chakra_and_guard.md). Apart from the
 three string pointers, the compared records contain no pointers.
 
 **Observation:** Records 0..3 follow the order `CHB0`, `CHA0`, `CHB1`, `CHA1`
@@ -477,7 +477,7 @@ second six-row group. Copying the second source group into the first remaps
 animation indices `0x4A..0x4D` to `0x46..0x49`; copying the first into the
 second performs the reverse remap. The conversion writes `-1` for values
 outside the expected four animation indices. The associated action-pointer
-conversion is owned by [Action-table source and setup](../gameplay/action_commands.md#action-table-source-and-setup).
+conversion is owned by [Action-table source and setup](../gameplay/combat/action_commands.md#action-table-source-and-setup).
 
 **Observation:** Resident `FUN_002189D0` establishes the first three signed
 halfword fields of a `0x4C` row:
@@ -808,10 +808,10 @@ the selected halfword list for a requested number, retaining the matching
 position as the physical member or `-1` when absent. They write character
 ID minus one, member position, and player slot into a `0x14`-byte queue row.
 Its four BTL callers, which queue explicit voice numbers, are recorded under
-[Recovered BTL PLVOICE producers](../gameplay/battle_audio.md#recovered-btl-plvoice-producers).
+[Recovered BTL PLVOICE producers](../gameplay/session/battle_audio.md#recovered-btl-plvoice-producers).
 The ordinary fighter voice-event path selects compact control records rather
 than AFS members or filename suffixes; it is owned by
-[Fighter voice-event selection](../gameplay/battle_audio.md#fighter-voice-event-selection).
+[Fighter voice-event selection](../gameplay/session/battle_audio.md#fighter-voice-event-selection).
 
 ## Selection and loading consumers
 
@@ -847,7 +847,7 @@ pending-side release and established callers are recorded under
 The separate 3EYE request, adoption and release helpers `FUN_001E90F0`,
 `FUN_001E9180` and `FUN_001E91E0`, and the end-demo controller that consumes
 3EYE together with 1BOD1, are recorded in
-[End-demo presentation](../gameplay/end_demo_presentation.md).
+[End-demo presentation](../gameplay/modes/end_demo_presentation.md).
 
 ### Loading-presentation portrait selection
 

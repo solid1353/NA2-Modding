@@ -36,7 +36,7 @@ about every unlock state or battle mechanic.
   available at specific retail progress states.
 - **Deliberate exclusions and overlap:** substitution timing, defender control,
   and incoming-definition evidence belong to
-  [Substitution](../gameplay/substitution.md) and are not duplicated here.
+  [Substitution](../gameplay/characters/substitution.md) and are not duplicated here.
   Static menu constructors and command-ID owners remain in `mode_flow.md`,
   `practice_mode.md`, and `pause_and_replay.md`; Character Select states
   belong to `character_select.md`. This document links those owners only where
@@ -213,10 +213,10 @@ In a joined-Player-2 round, the menu inserts `2P Commands` immediately after
 `1P Commands`, producing seven entries while leaving the remaining order
 unchanged. This directly confirms the optional command-list entry described by
 the static Free Battle constructor in
-[`pause_and_replay.md`](../gameplay/pause_and_replay.md). The constructor
+[`pause_and_replay.md`](../gameplay/session/pause_and_replay.md). The constructor
 lists both move-list entries as placeholder `4` and rewrites them to commands
 `2` and `3`; see
-[Command identities and observed labels](../gameplay/pause_and_replay.md#command-identities-and-observed-labels).
+[Command identities and observed labels](../gameplay/session/pause_and_replay.md#command-identities-and-observed-labels).
 
 The Game Mode exit dialog initially selects `Yes`.
 
@@ -270,7 +270,7 @@ At `Status: Stand`, the UI therefore exposes Attack, Guard, Move, Linked
 Attack, and Extra Hit Counter while visibly disabling Strength and
 Substitution Jutsu. The row order and availability agree with the static
 controller map in
-[`practice_mode.md`](../gameplay/practice_mode.md#rows-local-values-and-manager-storage),
+[`practice_mode.md`](../gameplay/modes/practice_mode.md#rows-local-values-and-manager-storage),
 which also records each row's values and Defaults.
 
 Select is labelled `Return to Defaults`; Confirm accepts the settings and Back
@@ -308,14 +308,14 @@ Mode Select
 
 Start opens a seven-entry pause menu. Joining the visible order to the
 Practice command-ID sequence established statically in
-[`pause_and_replay.md`](../gameplay/pause_and_replay.md) gives this map:
+[`pause_and_replay.md`](../gameplay/session/pause_and_replay.md) gives this map:
 
 | Command ID | Visible entry | Runtime behavior |
 | ---: | --- | --- |
 | `0` | Controls | Opens the same two-player Control Settings/remapping screen used by Options. |
 | `2` or `3` | 1P Commands | Opens the active Player 1 character's scrollable move notation. For Naruto, the first visible moves were Flying Shadow Rising Attack, Charging Kick, and Clone Jutsu: Head Split. |
 | `1` | Command Chart | Opens a generic battle-control reference. It notes that Manual linked attacks require pressing Linked Attack again after the linked move to attack. |
-| `6` | Simple Display | Opens an On/Off selector with On initially selected; see [Simple Display selection](../gameplay/pause_and_replay.md#simple-display-selection). Its description says it displays the game's special controls. |
+| `6` | Simple Display | Opens an On/Off selector with On initially selected; see [Simple Display selection](../gameplay/session/pause_and_replay.md#simple-display-selection). Its description says it displays the game's special controls. |
 | `5` | Practice | Reopens the live 17-row Practice Settings editor. |
 | `0xA` | Back to Game Mode Screen | Opens a Yes/No dialog asking to quit Practice and return to Game Mode Select. |
 | `0xB` | Back to Character Select | Opens a Yes/No dialog asking to quit Practice and return to Character Select. |

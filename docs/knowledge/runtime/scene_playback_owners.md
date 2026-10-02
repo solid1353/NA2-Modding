@@ -209,7 +209,7 @@ and dispatches through `FUN_001BB190`. A rate below `0x100` with configured
 start zero instead seeks to `0x100` with flag 1. It clears the owner's two
 loop-observation bytes at `+0xB97/+0xB98`; the advance pass detects an integer
 cursor decrease and updates them. Phase ordering and hit-response ownership
-remain in [Hit response](../gameplay/hit_response.md).
+remain in [Hit response](../gameplay/combat/hit_response.md).
 
 **Evidence:** decompilation of `FUN_00218060`, `FUN_0024D1C0`, and
 `FUN_0024DA50`; direct advance sites `0x0024D32C` and `0x0024DC74`, setup
@@ -230,7 +230,7 @@ incoming animation descriptor matches; a changed descriptor instead calls
 `FUN_001B99B0`. Resource-kind changes destroy the old child before allocating
 the replacement. These are spawn/reuse/reset operations, not periodic steps.
 The generator algorithms and broader child lifetime belong to
-[Particle and emitter runtime](particle_runtime.md).
+[Particle and emitter runtime](rendering/particle_runtime.md).
 
 **Evidence:** decompilation of `FUN_0034AB30` and `FUN_0034CF70`; advance
 sites `0x0034AC90`, `0x0034ACC4`, `0x0034AD34`, seek sites `0x0034AD10`

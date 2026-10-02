@@ -576,7 +576,7 @@ pointer. The `-1` cleanup branch deletes both child pointers at `+0x04/+0x08`
 through each child's table at `+0x50`, method slot `+0x08`, and clears them.
 The child method destinations are not resolved here. Singleton cleanup then
 clears resident global `0x00607888`. The gameplay meaning of these objects
-belongs to [support mechanics](../gameplay/support_mechanics.md); this record
+belongs to [support mechanics](../gameplay/characters/support_mechanics.md); this record
 owns the pointer chain, call contract, and overlay lifetime.
 
 A second BTL setup path allocates `0x28` bytes and calls leaf initializer
@@ -762,7 +762,7 @@ The highest-density shared targets are:
 | `0x001BB210` | `187` | `60` | advance animation position and return completion; [Animation runtime](animation_runtime.md#advance-and-end-behavior) |
 | `0x001B99B0` | `230` | `8` | bind/materialize animation runtime records; [Animation runtime](animation_runtime.md#descriptor-and-player-separation) |
 | `0x00180210` | `225` | `7` | MT-backed inclusive bounded-integer reduction |
-| `0x00152270` | `212` | `14` | copy matrix basis and add translation; [model runtime](model_runtime.md) |
+| `0x00152270` | `212` | `14` | copy matrix basis and add translation; [model runtime](rendering/model_runtime.md) |
 | `0x001B7570` | `121` | `54` | scene-play object destructor with signed 16-bit deleting flag; [Animation runtime](animation_runtime.md#restart-hold-and-removal-boundaries) |
 
 High-density image-specific targets further show that the two images are not
@@ -785,7 +785,7 @@ and unlink object pointers through resident globals rather than resolving
 overlay symbols. Destruction through resident `0x001DD920(head, flag)` removes
 an active head before releasing its registrations and results; a positive
 signed 16-bit flag also frees the head. The layouts, processing, and global
-cleanup remain owned by [Collision](../gameplay/collision.md#resident-query-list-boundary).
+cleanup remain owned by [Collision](../gameplay/combat/collision.md#resident-query-list-boundary).
 This is an application registration lifetime, separate from both the compiler
 cleanup list and the MWo3 loader.
 
@@ -794,7 +794,7 @@ Ghidra function at its entry. Bytes `0x003083A0-0x003083CC` nevertheless
 establish the complete leaf predicate: it returns `1` only when `a0 != 0` and
 resident word `0x00607654` is nonzero, otherwise `0`. It does not dereference
 the argument or mutate either object. Its existing gameplay interpretation
-belongs to [support mechanics](../gameplay/support_mechanics.md); call density
+belongs to [support mechanics](../gameplay/characters/support_mechanics.md); call density
 alone would not have established that contract.
 
 ### Indirect dispatch is application ABI, not loader binding
@@ -920,10 +920,10 @@ resident addresses. The busiest shared addresses are:
 | Resident address | BTL sites | ETC sites | Recovered role when established |
 | ---: | ---: | ---: | --- |
 | `0x00607600` | `716` | `100` | overlay-manager pointer used by the selector cache |
-| `0x006073F4` | `380` | `57` | active draw-environment pointer; [renderer coordinates](renderer_coordinates.md) |
+| `0x006073F4` | `380` | `57` | active draw-environment pointer; [renderer coordinates](rendering/renderer_coordinates.md) |
 | `0x006073FC` | `333` | `14` | resident core-object pointer; its CD/DVD-readiness byte `+0x504` is polled by the loader |
 | `0x00607470` | `92` | `19` | font renderer pointer; [battle settings presentation](../localization/ui/battle/settings_presentation.md) |
-| `0x006073D4` | `75` | `14` | active render/light-environment pointer; [renderer coordinates](renderer_coordinates.md) |
+| `0x006073D4` | `75` | `14` | active render/light-environment pointer; [renderer coordinates](rendering/renderer_coordinates.md) |
 | `0x00607464` | `27` | `32` | transition controller pointer; [options](../localization/ui/options.md) |
 
 The decoded text of neither image writes `$gp`; it only consumes the inherited
@@ -1225,7 +1225,7 @@ For BTL the node is `0x008D6A70..0x008D6A7B`, the callback is BTL
 `0x0071A7A0`, and the object is `0x008D6A80`; both node and object lie in BTL
 BSS. The constructor builds these arguments with `lui/addiu` pairs at Ghidra
 `0x008D5E84..0x008D5E98` before `jal 0x00119A60`. The neighboring BSS owners
-are listed with the [item cache](../gameplay/battle_item_inventory.md#item-cache). The callback is a
+are listed with the [item cache](../gameplay/projectiles_and_items/battle_item_inventory.md#item-cache). The callback is a
 deleting cleanup routine, but neither the overlay loader nor the selector
 walks or unlinks this list on replacement. A static instruction-reference scan
 of the scoped resident, BTL, and ETC images found only the resident helper's

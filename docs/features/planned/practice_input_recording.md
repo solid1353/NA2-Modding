@@ -27,8 +27,8 @@ paths do not establish an existing recording-slot or playback system.
 - **Deliberate exclusions and overlap:** Implemented Practice behavior remains
   owned by [Practice](../practice.md). Retail input and matcher contracts belong to
   [Controller input](../../knowledge/runtime/controller_input.md) and
-  [Action commands](../../knowledge/gameplay/action_commands.md); native dummy
-  policies belong to [Practice-mode knowledge](../../knowledge/gameplay/practice_mode.md).
+  [Action commands](../../knowledge/gameplay/combat/action_commands.md); native dummy
+  policies belong to [Practice-mode knowledge](../../knowledge/gameplay/modes/practice_mode.md).
 - **Evidence limitations:** Findings are static. The preserved BTL import omits
   the `0x40`-byte header and contains incomplete function boundaries and xrefs;
   encoded overlay operands are live addresses. No native recorder has been
@@ -45,7 +45,7 @@ normalizer and allocator have truncated defined boundaries; their complete
 instruction ranges were corroborated through `get_data_at` without changing
 the maintained analysis.
 
-The existing [pause and restart investigation](../../knowledge/gameplay/pause_and_replay.md#replay-result-and-useful-negatives)
+The existing [pause and restart investigation](../../knowledge/gameplay/session/pause_and_replay.md#replay-result-and-useful-negatives)
 found no proven replay capture/playback mechanism in its bounded paths. That
 negative does not establish that no such mechanism exists elsewhere.
 
@@ -94,7 +94,7 @@ The relative-angle updater reads fighter/opponent positions, fighter angle, and
 the current camera-derived reference before translation. Reusing the same
 physical-direction samples in a different spatial state need not produce the
 same relative commands. Full matcher and binding details remain in
-[Action commands](../../knowledge/gameplay/action_commands.md#battle-input-object-and-circular-history).
+[Action commands](../../knowledge/gameplay/combat/action_commands.md#battle-input-object-and-circular-history).
 
 The translator suppresses logical output when the owning fighter's controller
 nibble, bits `5..8` of halfword `+0x60`, is nonzero. It clears input-object
@@ -192,7 +192,7 @@ consumers; replacing the translator wholesale would require reconciling the
 existing hooks. No hook composition has been implemented or verified here.
 
 The inspected native Practice menu's
-[17-row schema](../../knowledge/gameplay/practice_mode.md#rows-local-values-and-manager-storage)
+[17-row schema](../../knowledge/gameplay/modes/practice_mode.md#rows-local-values-and-manager-storage)
 contains no recording-slot or playback row. Its absence is bounded menu evidence.
 No menu extension or entry shortcut is selected. Controls permits rebinding the
 available buttons, including those unbound by default, so a recorder cannot
@@ -306,7 +306,7 @@ Pause-menu input should remain available through the physical pad publication;
 writing synthetic input into the shared pad record would expose it to other
 consumers. A side-local source selection avoids that shared publication change.
 The exact cut-in classification and pause-mask producers are owned by
-[Pause and replay](../../knowledge/gameplay/pause_and_replay.md#selective-update-gating).
+[Pause and replay](../../knowledge/gameplay/session/pause_and_replay.md#selective-update-gating).
 
 The ring capacity uses a construction-time display pacing value, while matcher
 windows count history records. Consequently playback at a different input-step
@@ -370,7 +370,7 @@ nearest-match trials. Classifier live `0x006F0650` advances past a matched
 record before searching for the older step. Thus qualifying presses on opposite
 sides of a loop boundary can combine into a native double-tap command.
 The complete matching semantics are owned by
-[Action commands](../../knowledge/gameplay/action_commands.md#static-cccommand-records-and-ordered-matching).
+[Action commands](../../knowledge/gameplay/combat/action_commands.md#static-cccommand-records-and-ordered-matching).
 
 A continuous-history loop and a loop initialized with defined prior history
 therefore have different input semantics. The feature needs to choose one;
@@ -404,11 +404,11 @@ the session owner before returning the outer controller to state `13`; later
 Bindings to destroyed fighters, command objects, or rings cannot be retained
 as valid across that destruction/reconstruction boundary. Full restart routing
 and native resource snapshots belong to
-[Pause and replay](../../knowledge/gameplay/pause_and_replay.md#battle-teardown-and-reconstruction).
+[Pause and replay](../../knowledge/gameplay/session/pause_and_replay.md#battle-teardown-and-reconstruction).
 
 This destruction evidence does not prove that every borrowed gameplay alias
 is cleared by a generic state reset. The bounded
-[skill participant release](../../knowledge/gameplay/target_selection.md#skill-participants-and-lock-release)
+[skill participant release](../../knowledge/gameplay/combat/target_selection.md#skill-participants-and-lock-release)
 investigation distinguishes retained pair/input locks from the final native
 release path; other interruption paths remain unproved. Stopping clip input
 therefore cannot be treated as proof that an ongoing skill has been cancelled
@@ -455,7 +455,7 @@ at fighter `+0x88` outside its initial active-fighter branch. Thus the inspected
 fighter-list path advances shared RNG even when dummy AI is disabled. AI and
 other shared consumers impose additional call-order dependencies; the complete
 AI RNG ownership and caller audit belong to
-[Battle AI](../../knowledge/gameplay/battle_ai.md#rng-ownership-and-confirmed-uses).
+[Battle AI](../../knowledge/gameplay/session/battle_ai.md#rng-ownership-and-confirmed-uses).
 
 ### Feature implications and limits
 

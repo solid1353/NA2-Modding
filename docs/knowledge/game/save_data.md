@@ -80,7 +80,7 @@ Adventure-mode field consumers are deliberately out of scope.
   overlay consumers to
   [Content availability and state ownership](content_availability.md), and
   Survival controller modes, courses, ranking display and the row-1 producer
-  search to [Survival](../gameplay/survival.md); this document records only
+  search to [Survival](../gameplay/modes/survival.md); this document records only
   the save-format facts needed to define those interfaces. Disc transport,
   module-loading mechanics, and icon-source transport belong to
   [Runtime file services](files/runtime_services.md) and
@@ -417,7 +417,7 @@ Resident `FUN_001f77b0`/`FUN_001f77e0` write/read byte-bank index `i` at
 record `+0x2100 + i`. The bank contains counters as well as the 22 mirrored
 entries described above. The BTL result processor begins at export/live
 `0x006EC290/0x006EC2D0`. It selects a
-[Survival course record](../gameplay/survival.md#course-table) using its
+[Survival course record](../gameplay/modes/survival.md#course-table) using its
 object's word `+0x48`, then processes its numeric result-kind argument as follows:
 
 | Result kind | Observed byte-bank update |
@@ -812,7 +812,7 @@ of completed-win records, filled by mode 4 in descending order, whose native
 path uses only row 0. Both insertion functions take their row index verbatim
 from the controller. Controller modes, the course table, ranking display,
 Records navigation and the row-1 producer search are recorded in
-[Survival](../gameplay/survival.md).
+[Survival](../gameplay/modes/survival.md).
 
 Accessors `FUN_001f73c0`/`FUN_001f7400` and
 `FUN_001f7430`/`FUN_001f7470` perform no row or slot bounds checks. The fixed

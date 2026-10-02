@@ -6,7 +6,7 @@ bone anchors, update scheduling, and removal/reset lifetime. Addresses are
 resident `SLPS_258.37` EE addresses unless an overlay is named; see
 [address conventions](../game/files/file_identities.md#address-conventions).
 Composition-child attachment chains are a separate system documented in
-[Composition attachment dynamics](composition_attachment_dynamics.md).
+[Composition attachment dynamics](rendering/composition_attachment_dynamics.md).
 
 ## Research coverage
 
@@ -14,7 +14,7 @@ Composition-child attachment chains are a separate system documented in
 - **Exploration depth:** The resident action constructor, complete command-update loop, both recovered resident update callers, and the reset and removal families were traced statically; broader scene-wrapper scheduling was not traced.
 - **Confirmed coverage:** Generator creation precedes command execution; byte commands select an emission gate and saturating cursor. Primary/secondary anchors retain current/previous positions. Animation and streamed owners supply different iteration-count units. Immediate removal, deferred owner requests and cursor rewind are distinct operations.
 - **Unresolved or untested:** The action-entry preserved dword, authored corpus distributions of command values, packet lengths and anchor combinations, every outer scheduler, and visible consequences of the different count units of the two callers remain unresolved.
-- **Deliberate exclusions and overlap:** [CCS object types](../game/files/ccs_object_types.md) owns the `0x0D80` and `0x0D90` parser/type evidence; [CCS runtime](../game/files/ccs_runtime.md) owns container lists and stream playback; [Particle runtime](particle_runtime.md) owns emitter simulation and particle survival after removal requests; [Model runtime](model_runtime.md) owns skeleton matrices; [Composition attachment dynamics](composition_attachment_dynamics.md) owns `0x2300` composition-child chains; [Scene playback owners](scene_playback_owners.md) and [Timer primitives](timer_primitives.md) own broader caller timing.
+- **Deliberate exclusions and overlap:** [CCS object types](../game/files/ccs_object_types.md) owns the `0x0D80` and `0x0D90` parser/type evidence; [CCS runtime](../game/files/ccs_runtime.md) owns container lists and stream playback; [Particle runtime](rendering/particle_runtime.md) owns emitter simulation and particle survival after removal requests; [Model runtime](rendering/model_runtime.md) owns skeleton matrices; [Composition attachment dynamics](rendering/composition_attachment_dynamics.md) owns `0x2300` composition-child chains; [Scene playback owners](scene_playback_owners.md) and [Timer primitives](timer_primitives.md) own broader caller timing.
 - **Evidence limitations:** Static retail `SLPS_258.37`, with direct-call searches of `BTL.BIN` and `ETC.BIN`. Preserved analysis has incomplete function definitions, xrefs and argument recovery; instructions and resident bytes corroborate the relevant code. Direct-call negatives do not exclude indirect paths. No live instance state has been observed.
 
 ## Generator-action runners
@@ -59,7 +59,7 @@ Those setters are direct `swc1 f12` stores. Descriptor-to-generator offsets are
 `+0x20 -> +0x16C`, `+0x24 -> +0x184`, `+0x1C -> +0x180`,
 `+0x0C -> +0x190`, `+0x10 -> +0x188`, `+0x14 -> +0x194`, and
 `+0x18 -> +0x18C`, in initialization order. Their emitter meanings belong to
-[Particle runtime](particle_runtime.md); they are numeric values.
+[Particle runtime](rendering/particle_runtime.md); they are numeric values.
 
 ### Commands and iteration ordering
 
@@ -117,7 +117,7 @@ have zero XYZ length. The secondary setter `FUN_0034CAF0` always copies old
 An anchor may be a scene child representing a bone, but the command
 consumer itself reads a scene-object pointer; it performs no numeric bone-index
 lookup. Object creation and hierarchy evaluation belong to
-[Model runtime](model_runtime.md).
+[Model runtime](rendering/model_runtime.md).
 
 ### Scheduling and owner gates
 
@@ -191,5 +191,5 @@ remaining owner lifetime is not established.
   displayed-frame frequency, or universal pause contract is assigned here.
 - Particle survival after the deferred removal request and the generator's
   internal use of anchor history remain owned by
-  [Particle runtime](particle_runtime.md). Skeleton matrix evaluation remains
-  owned by [Model runtime](model_runtime.md).
+  [Particle runtime](rendering/particle_runtime.md). Skeleton matrix evaluation remains
+  owned by [Model runtime](rendering/model_runtime.md).

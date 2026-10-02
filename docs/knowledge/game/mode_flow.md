@@ -61,11 +61,11 @@ are also out of scope.
   [startup.md](startup.md); overlay loading belongs to
   [overlay ABI](../runtime/overlay_abi.md) and
   [runtime lifetimes](../runtime/ee_memory_map/runtime_lifetimes.md); BTL state
-  meanings belong to [Practice-mode architecture](../gameplay/practice_mode.md)
-  and [stages.md](../gameplay/stages.md); outcome, support, and pause mechanics
-  belong to [match_outcomes.md](../gameplay/match_outcomes.md),
-  [support_mechanics.md](../gameplay/support_mechanics.md), and
-  [pause_and_replay.md](../gameplay/pause_and_replay.md); profile
+  meanings belong to [Practice-mode architecture](../gameplay/modes/practice_mode.md)
+  and [stages.md](../gameplay/stages/stages.md); outcome, support, and pause mechanics
+  belong to [match_outcomes.md](../gameplay/session/match_outcomes.md),
+  [support_mechanics.md](../gameplay/characters/support_mechanics.md), and
+  [pause_and_replay.md](../gameplay/session/pause_and_replay.md); profile
   serialization belongs to [save_data.md](save_data.md). Layout, media,
   localization, timing, and PCSX2 are also excluded.
 - **Evidence limitations:** evidence is static against the exact retail ELF
@@ -92,7 +92,7 @@ names preserved in the binary.
 Unless marked otherwise, a statement is a direct static observation with high
 confidence. “Inference” identifies a role derived from call order or state
 transitions. Two field names below explicitly reuse existing runtime evidence from
-[Practice-mode architecture](../gameplay/practice_mode.md), and the
+[Practice-mode architecture](../gameplay/modes/practice_mode.md), and the
 synchronous overlay-call contract is cross-checked against the established
 [overlay ABI](../runtime/overlay_abi.md).
 
@@ -345,7 +345,7 @@ restores 0 before interpreting the owner's result; result 2 then writes route
 code 7. The exact setter call sites are constructor `0x001F43D8`, BTL active
 `0x001EBE8C`, and BTL restore `0x001EBF70`; route 7 is passed to
 `FUN_001ec270` at `0x001EC044`. The deeper scheduling effects of this field remain canonical in
-[pause_and_replay.md](../gameplay/pause_and_replay.md#resident-ownership-and-top-level-result-routing).
+[pause_and_replay.md](../gameplay/session/pause_and_replay.md#resident-ownership-and-top-level-result-routing).
 
 ### Manager-construction binding side effect
 
@@ -372,7 +372,7 @@ repopulated on each new manager construction.
 profile at `+0x12/+0x22`, respectively. The bytes and later synchronization
 direction are mapped in [save_data.md](save_data.md), while their consumption
 as controller-port battle bindings is established in
-[action_commands.md](../gameplay/action_commands.md). This side effect occurs
+[action_commands.md](../gameplay/combat/action_commands.md). This side effect occurs
 on every new manager allocation, before the title result is consumed.
 
 ### Manager phases
@@ -615,7 +615,7 @@ confirmation retains its originating port: action 3 passes 0 to
 `FUN_00384760`, action 4 passes 1, and an accepted confirmation copies that
 value to manager `+0x18`.
 The same field-to-port relationship is independently established by the
-Practice path in [practice_mode.md](../gameplay/practice_mode.md). By contrast, the title
+Practice path in [practice_mode.md](../gameplay/modes/practice_mode.md). By contrast, the title
 controller in `FUN_001df690` supplies `FUN_001df140` only controller port 0's
 context-`+0x84` word.
 
@@ -944,15 +944,15 @@ BTL interface in this order:
    `func_0x007190d0`, and retain the result at `+0x3C`.
 2. When `+0x3C` is non-null, call live `func_0x00719500` to clear the BTL
    result-metric child. Its established fields are documented in
-   [match_outcomes.md](../gameplay/match_outcomes.md).
+   [match_outcomes.md](../gameplay/session/match_outcomes.md).
 3. Call live `func_0x00885210` unconditionally to recreate the two-side support
-   manager documented in [support_mechanics.md](../gameplay/support_mechanics.md).
+   manager documented in [support_mechanics.md](../gameplay/characters/support_mechanics.md).
 4. If the manager and manager `+0xDDC` are both non-null, pass the `+0xDDC`
    object to `FUN_001fd030` at call site `0x001EC864`. That helper resets the
    object's payload at `+0x08` through `FUN_001fccd0`. The manager constructor
    allocated the `0x4C`-byte object through `FUN_001fcd90`; its later condition
    and outcome semantics are maintained in
-   [match_outcomes.md](../gameplay/match_outcomes.md).
+   [match_outcomes.md](../gameplay/session/match_outcomes.md).
 5. Write process state 1.
 
 Destruction through `FUN_001ec370 -> FUN_001ec700 -> FUN_001ec890` performs the
@@ -1001,8 +1001,8 @@ reads the same word directly through the overlapping `iGpffffcc80` label;
 other resident consumers use `FUN_001ec280`. The value is not stored in the
 `0x44`-byte BTL process.
 The exact code table and later battle-outcome branches remain canonical in
-[match_outcomes.md](../gameplay/match_outcomes.md) and
-[pause_and_replay.md](../gameplay/pause_and_replay.md).
+[match_outcomes.md](../gameplay/session/match_outcomes.md) and
+[pause_and_replay.md](../gameplay/session/pause_and_replay.md).
 
 Although `FUN_001ec690` initially clears process state `+0x00` to 0, its
 constructor immediately calls `FUN_001ec7a0`, which changes that state to 1.
@@ -1016,8 +1016,8 @@ The deeper state meanings are intentionally not duplicated here. Resident
 states 1 through 6 prepare resources, states 7 and 9 own selection handoffs,
 states 10 through 15 load/construct the battle, and later states tear down or
 switch the graph. Their established behavior is maintained in
-[Practice-mode architecture](../gameplay/practice_mode.md) and
-[stages.md](../gameplay/stages.md); this
+[Practice-mode architecture](../gameplay/modes/practice_mode.md) and
+[stages.md](../gameplay/stages/stages.md); this
 note owns only the front-end entry/return boundary and dispatcher contract.
 
 ## ETC handoffs and returns

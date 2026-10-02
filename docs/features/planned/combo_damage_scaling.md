@@ -3,7 +3,7 @@
 The design has been investigated and validated with a transient two-site
 scaling hook for one normal string, but is not implemented in the builder. The
 native combo and damage evidence is canonical in
-[`damage.md`](../../knowledge/gameplay/damage.md#combo-hit-state-and-damage-path);
+[`damage.md`](../../knowledge/gameplay/combat/damage.md#combo-hit-state-and-damage-path);
 the recording and traces behind it are under
 [Reference recording and traces](#reference-recording-and-traces).
 No current catalog node, payload fragment, hook, or runtime consumer changes
@@ -183,7 +183,7 @@ for this string, not merely unproven; static tracing further identifies it as
 guarded-hit damage. Globally wrapping either the calculator or HP subtractor
 would scale unrelated damage while a combo happens. The complete ten-caller
 matrix and its source-category limits are canonical in
-[`damage.md`](../../knowledge/gameplay/damage.md#damage-caller-coverage).
+[`damage.md`](../../knowledge/gameplay/combat/damage.md#damage-caller-coverage).
 
 The `0x00231698` event used raw `0.02`, flags `0x122`, and occurred alongside
 the third visible hit's main raw `0.05` event. Focused logging established that

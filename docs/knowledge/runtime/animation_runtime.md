@@ -12,7 +12,7 @@ descriptions. Complete-file identities belong to
 - **Exploration depth:** Resident algorithms only: complete advance, seek, reset, binding, typed evaluator allocation/initialization, transform application, blend construction/evaluation/destruction and queued-event delivery were read in decompilation. Instruction-level corroboration covers cursor branches, curve arithmetic, local-matrix writes, alternate/deferred output and ownership teardown. Neighboring model, timer, scene-owner and generator-action evidence is linked rather than duplicated.
 - **Confirmed coverage:** Shared descriptors and per-player work; unsigned 1/256-frame advance, end/clamp/loop ordering, absolute-seek branches including active-blend cancellation, strict segment-crossing rules, linear/cubic/quaternion/color evaluation, sampled-endpoint blending, conditional target reuse, parent-map/local-transform application, queued-event lifetime and reverse encounter order, and distinct rewind/removal operations.
 - **Unresolved or untested:** The `0x0104` branch's producer/reachability and scratch-index state; the alternate output format's broader owner; complete consumers of the temporarily cleared seek callback; gameplay meaning of event payload words; producers of player flag `+0xF7 & 0x10`. Exceptional cursor/frame-count/curve-duration inputs and caller guarantees are not established. There is no observed instance state or scheduling frequency for these algorithms.
-- **Deliberate exclusions and overlap:** [CCS runtime](../game/files/ccs_runtime.md#animation-track-parsing) owns parsing/container lifecycle; [Character asset tables](../game/character_assets.md#animation-name-and-0x4c-stride-tables) owns selection; [Scene playback callers and owners](scene_playback_owners.md) owns caller inventories; [Model runtime](model_runtime.md) owns hierarchy/palette construction; [Timer primitives](timer_primitives.md) owns action-frame arithmetic; [Effect-generator commands](effect_generator_commands.md) owns downstream actions/attachments. This document owns animation-player algorithms and their mutable state.
+- **Deliberate exclusions and overlap:** [CCS runtime](../game/files/ccs_runtime.md#animation-track-parsing) owns parsing/container lifecycle; [Character asset tables](../game/character_assets.md#animation-name-and-0x4c-stride-tables) owns selection; [Scene playback callers and owners](scene_playback_owners.md) owns caller inventories; [Model runtime](rendering/model_runtime.md) owns hierarchy/palette construction; [Timer primitives](timer_primitives.md) owns action-frame arithmetic; [Effect-generator commands](effect_generator_commands.md) owns downstream actions/attachments. This document owns animation-player algorithms and their mutable state.
 - **Evidence limitations:** Findings are static. Preserved signatures omit arguments, and some instructions are not analyzed as code. Negative xrefs are not whole-program absence proofs. Scheduling frequency and user-visible results are not established by these algorithms alone.
 
 ## Descriptor and player separation
@@ -91,7 +91,7 @@ the action-manager completion result when actions are enabled/present, or one
 otherwise. Thus geometric end and action-manager completion are distinct.
 A terminal zero-step call skips this replacement and returns the clamp result.
 Producers of flag `+0xF7 & 0x10` are not established;
-[Support mechanics](../gameplay/support_mechanics.md#animation-result-and-common-state-transitions)
+[Support mechanics](../gameplay/characters/support_mechanics.md#animation-result-and-common-state-transitions)
 records one owner that consumes this completion result.
 
 **Evidence:** Complete disassembly `0x001BB210..0x001BB4E4`, with clamp at
@@ -334,7 +334,7 @@ For each entry with attachment bit `1`, animation `+0x24` selects the parent
 entry. `0xFFFF` selects the player node; otherwise binding reads that entry's
 target. `FUN_001BA810` stores the parent at target `+0x80`. Model palette and
 composition-child construction are owned by
-[Model hierarchy and matrix lifetime](model_runtime.md#composition-hierarchy-and-matrix-lifetime).
+[Model hierarchy and matrix lifetime](rendering/model_runtime.md#composition-hierarchy-and-matrix-lifetime).
 
 **Observation:** the ordinary `0x0102` route in `FUN_001B8410` evaluates
 translation, rotation, scale and alpha, using alpha default `1`. For a model
@@ -355,7 +355,7 @@ A nonnull model target `+0xA0` overrides scale diagonals from that block's
 override exists in the blend application path. Effect application also copies
 the evaluated X/Y scale to target `+0xA0/+0xA4` and can request effect restart
 through `FUN_001956D0` according to its prior state. The broader effect
-lifetime belongs to [Particle runtime](particle_runtime.md).
+lifetime belongs to [Particle runtime](rendering/particle_runtime.md).
 
 ### Alternate output and deferred branch
 

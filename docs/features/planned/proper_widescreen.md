@@ -92,8 +92,8 @@ refresh must retain each other state's intended values. Which state should
 receive that selection remains unresolved here.
 
 Renderer construction, ownership and lifetime are owned by
-[Persistent transform state](../../knowledge/runtime/renderer_coordinates.md#persistent-transform-state)
-and [2D draw ownership](../../knowledge/runtime/draw_2d_owners.md). Their
+[Persistent transform state](../../knowledge/runtime/rendering/renderer_coordinates.md#persistent-transform-state)
+and [2D draw ownership](../../knowledge/runtime/rendering/draw_2d_owners.md). Their
 implications for widescreen:
 
 - Context identity and renderer identity differ: a context can borrow an
@@ -118,7 +118,7 @@ display dimensions and register packets. This establishes a display-refresh
 gate; it does not establish how often that gate executes.
 
 A scoped state lifetime is established by
-[renderer binding order](../../knowledge/runtime/renderer_coordinates.md#refresh-and-binding-order).
+[renderer binding order](../../knowledge/runtime/rendering/renderer_coordinates.md#refresh-and-binding-order).
 `FUN_001BB790` saves the active context's renderer when scene play object
 `+0x10C` supplies a camera, lazily allocates a `0x2B0` copy at scene
 `+0x110`, copies the saved state through `FUN_001BB9D0`, temporarily binds
@@ -132,7 +132,7 @@ scope rule must distinguish that inheritance from unrelated renderer owners.
 ## Projection, reference coordinates and 2D are separate decisions
 
 The retail renderer investigation is owned by
-[Renderer and coordinate systems](../../knowledge/runtime/renderer_coordinates.md).
+[Renderer and coordinate systems](../../knowledge/runtime/rendering/renderer_coordinates.md).
 The following source sites identify the particular decisions exposed by the
 donor comparison. ELF file offsets in this table equal resident addresses minus
 `0x000FFF00`.
@@ -201,9 +201,9 @@ The complete indexed NA2 caller set of `FUN_0010BB10` was inspected:
 untextured and textured branches install local X/Y scale, rotation and origin,
 compose with renderer `+0x1C0`, then transform all four corners. This verifies
 the candidate's transform route and context dependency. Complete bounded-draw
-classification is owned by [2D draw ownership](../../knowledge/runtime/draw_2d_owners.md).
+classification is owned by [2D draw ownership](../../knowledge/runtime/rendering/draw_2d_owners.md).
 
-That investigation's [clipping ownership](../../knowledge/runtime/draw_2d_owners.md#clipping-and-coordinate-ownership)
+That investigation's [clipping ownership](../../knowledge/runtime/rendering/draw_2d_owners.md#clipping-and-coordinate-ownership)
 also establishes that normal render-list finalization installs the selected
 renderer viewport's scissor. Expanded geometry therefore does not, by itself,
 establish expanded visible coverage. Proper-widescreen selection must account
@@ -211,7 +211,7 @@ for the draw list and its viewport as well as the rectangle's transform.
 
 ## Visibility and off-screen rendering
 
-[Visibility bounds and culling](../../knowledge/runtime/visibility.md) establishes
+[Visibility bounds and culling](../../knowledge/runtime/rendering/visibility.md) establishes
 the ordinary model gate and the shared VU wrapper. The instruction range
 `0x00191230-0x0019127C` in retail `FUN_001910E0` composes renderer
 `+0x40` with the model transform and sends that matrix to `FUN_001926A0`,
@@ -222,7 +222,7 @@ projection. The independent `+0xC0` matrix is not evidence that this gate
 uses a narrow frustum. Exact VU comparisons and other visibility paths remain
 with the visibility owner.
 
-That owner's [VU classification](../../knowledge/runtime/visibility.md#vu-point-tests-and-classification)
+That owner's [VU classification](../../knowledge/runtime/rendering/visibility.md#vu-point-tests-and-classification)
 now establishes the ordinary entry `0x1F` as a conservative eight-corner
 viewport/depth decision using projected X/Y/W and the supplied limit vectors.
 Results distinguish rejection (0), containment inside the larger limits (1)
@@ -231,7 +231,7 @@ the scaled-matrix applicability above without a blanket frustum-expansion
 change. Off-screen entry 0 uses sixteen points, but its additional-vector
 lifetime and complete geometric meaning remain unresolved.
 
-[Shadow rendering](../../knowledge/runtime/shadow_rendering.md) establishes a
+[Shadow rendering](../../knowledge/runtime/rendering/shadow_rendering.md) establishes a
 different ownership constraint. Named shadow owner `FUN_0039ABB0` creates
 a controller through `FUN_0018B650` using the default renderer pointer at
 `0x0060919C`, then chooses a 256-by-256 target. This pass borrows the
@@ -252,13 +252,13 @@ this shadow pass from the scale change. No target-size expansion or shadow
 correction is selected by the current evidence. The off-screen VU extra-vector
 meaning and remaining content-specific consumers remain unresolved.
 
-The shadow owner's [binding evidence](../../knowledge/runtime/shadow_rendering.md#geometry-inputs-and-renderer-ownership)
+The shadow owner's [binding evidence](../../knowledge/runtime/rendering/shadow_rendering.md#geometry-inputs-and-renderer-ownership)
 also shows that the scoped camera copy changes the active context `+0x3C`
 without replacing shadow controller `+0x4C`. Ordinary scene drawing and its
 shadow producer can therefore retain different renderer bindings during that
 scope; a final inheritance rule must account for both.
 
-The [sampling texture consumer](../../knowledge/runtime/texture_material_runtime.md#sampling-texture-resource-consumer)
+The [sampling texture consumer](../../knowledge/runtime/rendering/texture_material_runtime.md#sampling-texture-resource-consumer)
 is another framebuffer dependency: `FUN_0019DCD0` returns when render width
 exceeds 512, and otherwise halves width and height independently until they
 fit the texture. This establishes a constraint on any candidate that changes
@@ -298,7 +298,7 @@ The excluded viewport setup is file `0x10708`. The inventory owns the full
 row/address mapping; these offsets define the fully checked negative cohort.
 No ETC screen attribution is inferred here.
 
-Retail [2D draw ownership](../../knowledge/runtime/draw_2d_owners.md) establishes
+Retail [2D draw ownership](../../knowledge/runtime/rendering/draw_2d_owners.md) establishes
 that the common four-slot consumer transforms an origin with `+0x1C0` and
 multiplies width/height by the matrix diagonals. Its confirmed global fade,
 table-selected opacity transitions and playback covers are screen-sized
@@ -312,7 +312,7 @@ immediate API's caller population.
 
 ## Bounded HUD and mixed-coordinate candidates
 
-[Battle HUD](../../knowledge/gameplay/battle_hud.md) identifies the root owners
+[Battle HUD](../../knowledge/gameplay/session/battle_hud.md) identifies the root owners
 and their inherited layout, so donor coordinate pairs can now be separated
 from full-frame fills. Overlay sites below give complete-file offsets and
 preserved addresses `D`; live NA2 addresses equal `D+0x40`. Current bytes,
@@ -321,9 +321,9 @@ not an imported function label, determine each candidate instruction.
 | NA2 file / preserved site | Verified source behavior | Donor evidence and unresolved decision |
 | --- | --- | --- |
 | BTL `0x66A9C` / `D 0x0071A95C`; `0x66AAC` / `D 0x0071A96C` | Top-panel initializer stores root X 6/506 by internal side and Y 10 at parent `+0x30/+0x34`. Child drawing recomputes base plus presentation offset. | Donor -31/536 changes a group anchor. Final top-panel margins remain a layout choice; this is not a width replacement for every child sprite. |
-| BTL `0x68C24` / `D 0x0071CAE4`; `0x68C88` / `D 0x0071CB48` | The lower support-block draw loads X 120/392, mirrors horizontal scale for the second side, and reuses the selected base for its sprites, text and icon. Its ownership is established in [Substitution](../../knowledge/gameplay/battle_hud.md#support-gauge). | Donor 30/480 separates the two groups. The reference's left NA2 site is corrected below; exact donor placement is not accepted by structural similarity. |
-| BTL `0x5B870` / `D 0x0070F730`; `0x5B880` / `D 0x0070F740` | The [lower item-panel constructor](../../knowledge/gameplay/battle_item_inventory.md#na2-panel-layout) initializes root X 66/446 and common Y 340. | Donor -16.5/528 moves a whole item-panel root, separately from support-block anchors. Suitable margins remain undecided. |
-| BTL `0x32C4` / `D 0x006B7184`; `0x32EC` / `D 0x006B71AC` | The [combo-number presentation owner](../../knowledge/gameplay/battle_lifecycle.md#root-component-forest) uses animated offset plus 96, or plus 416 followed by subtraction of 30, for sprite/text drawing. Its conditional 3D-object path calls `FUN_0010E320` at `D 0x006B73F8` with depth 500. | Donor 6/464 changes this mixed owner. Anchor placement and forward/reverse projection agreement are linked; treating it as an isolated 2D constant pair would miss the 3D attachment. |
+| BTL `0x68C24` / `D 0x0071CAE4`; `0x68C88` / `D 0x0071CB48` | The lower support-block draw loads X 120/392, mirrors horizontal scale for the second side, and reuses the selected base for its sprites, text and icon. Its ownership is established in [Substitution](../../knowledge/gameplay/session/battle_hud.md#support-gauge). | Donor 30/480 separates the two groups. The reference's left NA2 site is corrected below; exact donor placement is not accepted by structural similarity. |
+| BTL `0x5B870` / `D 0x0070F730`; `0x5B880` / `D 0x0070F740` | The [lower item-panel constructor](../../knowledge/gameplay/projectiles_and_items/battle_item_inventory.md#na2-panel-layout) initializes root X 66/446 and common Y 340. | Donor -16.5/528 moves a whole item-panel root, separately from support-block anchors. Suitable margins remain undecided. |
+| BTL `0x32C4` / `D 0x006B7184`; `0x32EC` / `D 0x006B71AC` | The [combo-number presentation owner](../../knowledge/gameplay/session/battle_lifecycle.md#root-component-forest) uses animated offset plus 96, or plus 416 followed by subtraction of 30, for sprite/text drawing. Its conditional 3D-object path calls `FUN_0010E320` at `D 0x006B73F8` with depth 500. | Donor 6/464 changes this mixed owner. Anchor placement and forward/reverse projection agreement are linked; treating it as an isolated 2D constant pair would miss the 3D attachment. |
 
 **Contradiction, resolved by current bytes:** the donor reference lists the
 left 120.0 NA2 gauge load at file `0x68C30`, `D 0x0071CAF0`.
@@ -363,7 +363,7 @@ reviewable:
 | Shadows | Geometry, target remap and composite depend on the borrowed renderer while target resolution remains separate. Scoped ordinary-camera rebinding leaves the controller binding unchanged. | Whether any projection/composite correction is needed; how primary/scoped inheritance applies to the controller. Target-size expansion is not justified by the inspected ownership alone. |
 | Output and media | The draft treats output presentation and video fit as distinct policies from game-memory projection. | Final output integration and video fit policy; no new media investigation was performed in this pass. |
 
-The [visibility caller inventory](../../knowledge/runtime/visibility.md#bounded-resident-caller-inventory)
+The [visibility caller inventory](../../knowledge/runtime/rendering/visibility.md#bounded-resident-caller-inventory)
 also records background owners whose retained classification gates angle,
 UV, countdown or random-state advancement. A wider retained region can
 therefore affect their presentation state as well as submission. That is a

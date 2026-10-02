@@ -82,14 +82,14 @@ virtual dispatch and nondefault period writers, exact hardware arithmetic
 low-bit behavior, and player-visible meaning for most unlabeled BTL consumers
 were not resolved.
 - **Deliberate exclusions and overlap:** Adventure was not inspected. Damage
-  interpretation belongs to [Damage](../gameplay/damage.md); substitution to
-  [Substitution](../gameplay/substitution.md); save-data serialization to
+  interpretation belongs to [Damage](../gameplay/combat/damage.md); substitution to
+  [Substitution](../gameplay/characters/substitution.md); save-data serialization to
   [Save data](../game/save_data.md); controller policy to
   [Controller input](controller_input.md); camera policy to
-  [Battle camera](../gameplay/battle_camera.md), with camera-labelled RNG paths
+  [Battle camera](../gameplay/session/battle_camera.md), with camera-labelled RNG paths
   here limited to draw, reduction, table, and store behavior; and the tone-shade
   destination block to
-  [Battle lifecycle](../gameplay/pause_and_replay.md#tone-shade-destination-block).
+  [Battle lifecycle](../gameplay/session/pause_and_replay.md#tone-shade-destination-block).
 - **Evidence limitations:** all validation in this note is static or derived from exact recovered
 recurrences. Hashes, exhaustive finite-state checks, opcode counts, inverses,
 and deterministic vectors were recomputed offline, but none was compared with
@@ -617,7 +617,7 @@ only on the null-allocation branch: `0x001EF71C` forms that address and
 sequence `+0x650`; initialization through `FUN_0018F590` clears its
 `+0x34/+0x38` values. The sequence object is the `0x6C0`-byte pause controller
 at `0x00607834`; its allocation and ownership belong to
-[Battle lifecycle](../gameplay/pause_and_replay.md#tone-shade-destination-block).
+[Battle lifecycle](../gameplay/session/pause_and_replay.md#tone-shade-destination-block).
 
 Function and address xrefs report no direct reference to `0x0018F410`,
 although a literal-byte search finds its update pointer at `0x005D9DE0`
@@ -632,7 +632,7 @@ module. The actual dispatch and any nondefault period writer remain unresolved.
 The animator is an eight-byte embedded member of that `0x6C0`-byte object.
 Its destination block's construction, publication and teardown, and an
 independent writer of destination `+0x34/+0x38` that uses no RNG, belong to
-[Battle lifecycle](../gameplay/pause_and_replay.md#tone-shade-destination-block).
+[Battle lifecycle](../gameplay/session/pause_and_replay.md#tone-shade-destination-block).
 
 **Bounded negative.** An aligned instruction audit of displayed BTL
 `0x0076A000..0x0076FFFF` (24,576 bytes) checked immediate offsets
@@ -1079,7 +1079,7 @@ table are displayed BTL entries; add `0x40` for live entries.
 The complete four alternative bodies, displayed `0x007F9660..0x007F9D98`,
 were inspected as well. They configure resident emitter/resource helpers and
 contain no direct call to the documented RNG surface; their emitter updates
-remain owned by [Particle runtime](particle_runtime.md). This negative does
+remain owned by [Particle runtime](rendering/particle_runtime.md). This negative does
 not exclude nested or later draws. The selector getter at displayed
 `0x007F9DA0..0x007F9DB8` returns resident word `0x0061F6E8 & 0x00F0F0F0`.
 At displayed `0x007F8418..0x007F8430`, the upstream body stores that result
@@ -1207,8 +1207,8 @@ receiver `+0x200`, and receiver `+0x220` pointer in `a0..a3`. The initial
 gate at `0x00788C0C..0x00788C14` requires receiver byte `+0x20C & 1`.
 Other eligibility/response checks occur before the slot calls; the full action
 and response contract remains with
-[Character action callbacks](../gameplay/character_action_callbacks.md) and
-[Hit response](../gameplay/hit_response.md). A table entry and these calls
+[Character action callbacks](../gameplay/characters/character_action_callbacks.md) and
+[Hit response](../gameplay/combat/hit_response.md). A table entry and these calls
 establish static dispatch structure, not feasibility of every class/state pair.
 
 A complete-program search for `lw t9,0x8C(t9)` in resident and
@@ -1328,7 +1328,7 @@ selection consumes one MT word, even when the list has only one element.
 The empty-list branch returns `-1` before the draw. Filtering can itself draw
 through its predicate; this is a count for the final selection only. The
 complete filter and follow-on draws belong to
-[Battle AI](../gameplay/battle_ai.md#action-record-selection-and-direct-queues).
+[Battle AI](../gameplay/session/battle_ai.md#action-record-selection-and-direct-queues).
 
 By contrast, the raw-only switch call at displayed `0x0079B6E4` uses signed
 `div` at `0x0079B6F0` (word `0x0043001A`) with divisor five, then `mfhi a0`
@@ -1382,7 +1382,7 @@ This is a binary tie only. No candidate reservoir or repeated pairwise
 tie-breaking loop occurs in this helper. A byte search for its
 absolute live `jal` encoding `F4 27 1C 0C` found one BTL match, displayed
 `0x0070B8E0`, live `0x0070B920`, file `0x57A20`. It belongs to the
-[separate side-index selector](../gameplay/target_selection.md#separate-side-index-eligibility-selector);
+[separate side-index selector](../gameplay/combat/target_selection.md#separate-side-index-eligibility-selector);
 the selector's eligibility and retained side field are owned there. The
 helper itself checks whether fighter pointers are null before copying their
 positions but still evaluates both stack vectors, so its body alone does not
@@ -1395,7 +1395,7 @@ to interpret this hardware comparison.
 The complete resident `FUN_001F1D60` scans IDs `1..93` through
 `FUN_001F7AA0/FUN_001F7BB0`. Their current filter set leaves exactly 74 IDs;
 the filter and numeric-ID meaning belong to
-[Character IDs](../gameplay/character_ids.md#selector-id-filters).
+[Character IDs](../gameplay/characters/character_ids.md#selector-id-filters).
 Its output loop writes one selected halfword at output `+8 + 2*i`, then swaps
 the last remaining candidate into the chosen slot. The exact loop at
 `0x001F1DF8..0x001F1E48` calls `FUN_00180210` with bounds `73..0` in turn.

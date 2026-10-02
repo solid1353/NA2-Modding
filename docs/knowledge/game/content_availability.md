@@ -36,9 +36,9 @@ battle selectors.
   record layout belong to [Save-data record format and lifecycle](save_data.md).
   Character Select roster and selector presentation belong to
   [Native Character Select flow](character_select.md). Stage loading and slot
-  identity belong to [Stages](../gameplay/stages.md); Mode Select construction
+  identity belong to [Stages](../gameplay/stages/stages.md); Mode Select construction
   and dispatch belong to [Mode flow](mode_flow.md). The Survival result
-  producer of word `0x6A` belongs to [Survival](../gameplay/survival.md).
+  producer of word `0x6A` belongs to [Survival](../gameplay/modes/survival.md).
   Master Mode and Shop are excluded; acquisition branches entering those
   controllers stop at that boundary.
 - **Evidence limitations:** static resident, BTL and ETC tracing establishes
@@ -133,7 +133,7 @@ cannot make an incompatible pair valid.
 
 **Observation, high confidence:** `FUN_003b3db0` first applies the numeric and
 fixed-metadata filters owned by
-[Character identity](../gameplay/character_ids.md#selector-id-filters). It then
+[Character identity](../gameplay/characters/character_ids.md#selector-id-filters). It then
 uses inverse mapper `FUN_001f7e70` to check the base of a recognized form before
 reading the original ID's status bit through `FUN_001f54c0`. With the retail
 inverse map, a base ID has no predecessor and needs only its own bit; a form
@@ -200,7 +200,7 @@ This bitset is resident global state, separate from the serialized profile's
 32-byte small table and from the manager's active or remembered stage slot.
 The selector list is a temporary copy of eligibility. Active slot `+0x98`,
 snapshot slot `+0x114`, preselection and battle-load handoff are owned by
-[Stages](../gameplay/stages.md#archive-preload-adoption-and-switching).
+[Stages](../gameplay/stages/stages.md#archive-preload-adoption-and-switching).
 The initializer sets the 24 native bits without clearing other bit positions;
 the investigated selector reads only those 24 positions.
 
@@ -357,7 +357,7 @@ Four BTL input/draw call sites use the same condition: import/live
 Instruction bytes preceding the split input bodies establish their default maximum
 from the appropriate row-count table, then its reduction to 4. Menu row
 ownership and the separate enabled-row conditions belong to
-[Practice mode](../gameplay/practice_mode.md#row-availability).
+[Practice mode](../gameplay/modes/practice_mode.md#row-availability).
 
 ### Recovered difficulty-word producer
 
@@ -369,7 +369,7 @@ eligible result for that course sets word `0x6A` unless it is already exactly
 1. Obtaining a top-three time is not required. The producer, its admission
 gates, the course table and the final-result text announcing the Ultimate
 difficulty tier are recorded in
-[Survival](../gameplay/survival.md#difficulty-word-producer). BTL has four
+[Survival](../gameplay/modes/survival.md#difficulty-word-producer). BTL has four
 direct calls to `FUN_001f7750` and ETC none; other writers, inlined writes, and
 indirect calls remain possible.
 

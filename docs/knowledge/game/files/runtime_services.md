@@ -71,7 +71,7 @@ below are static unless stated otherwise.
   [Resident CCS runtime](ccs_runtime.md); fighter resource tables belong to
   [Character assets](../character_assets.md) and per-side resource sharing to
   [Asset dependency graphs](asset_dependencies.md#all-nine-per-side-selection-slots);
-  battle sequencing belongs to [Battle lifecycle](../../gameplay/battle_lifecycle.md). AFS content
+  battle sequencing belongs to [Battle lifecycle](../../gameplay/session/battle_lifecycle.md). AFS content
   and codecs remain with [Disc files](disc_files.md) and the media documents.
 - **Evidence limitations:** no corrupt-file, short-read, allocation-failure,
   cancellation-race, or runtime mount/load experiment was performed, so failure
@@ -1003,7 +1003,7 @@ before queue cleanup and then adopts both sides' published containers, as
 recorded under
 [Adoption and cache reset](asset_dependencies.md#adoption-and-cache-reset);
 battle ordering belongs to
-[Battle lifecycle](../../gameplay/battle_lifecycle.md#resident-setup-order).
+[Battle lifecycle](../../gameplay/session/battle_lifecycle.md#resident-setup-order).
 
 ## Useful negative results
 

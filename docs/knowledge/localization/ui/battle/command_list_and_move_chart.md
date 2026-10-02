@@ -28,7 +28,7 @@ address minus `0x40`.
   whether the rear-direction label corresponds to every object-relative
   direction selector in the input interpreter; the visible result was not
   captured.
-- **Deliberate exclusions and overlap:** [Action commands](../../../gameplay/action_commands.md)
+- **Deliberate exclusions and overlap:** [Action commands](../../../gameplay/combat/action_commands.md)
   owns bindings, logical input, action records and selection;
   [Battle UI selectors and prompts](selectors_and_prompts.md#command-menu-and-command-chart-scroll-indicators)
   owns the shared scroll indicators drawn by the same renderer.
@@ -39,7 +39,7 @@ address minus `0x40`.
 ## Binding presentation readers
 
 Battle input tests each configured binding as a full 16-bit mask
-([Action commands](../../../gameplay/action_commands.md#native-pad-domain-and-battle-bindings)).
+([Action commands](../../../gameplay/combat/action_commands.md#native-pad-domain-and-battle-bindings)).
 The presentation readers instead map bindings to fixed button sets:
 
 | Reader | Mapping |

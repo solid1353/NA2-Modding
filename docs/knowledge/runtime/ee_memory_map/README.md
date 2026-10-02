@@ -18,8 +18,8 @@ runtime-lifetime constraints.
 - **Unresolved or untested:** result screens, active Save/Load, long transition
   stress, a retail per-asset heap breakdown in battle, and the byte-level use
   of the main-thread stack.
-- **Deliberate exclusions and overlap:** NA228 payload capacity and injection
-  behavior belong to [Runtime injection](../../../features/runtime_injection/implementation.md).
+- **Deliberate exclusions and overlap:** this map covers retail memory only;
+  no injected payload is described.
 - **Evidence limitations:** sampled free space is not a formal maximum-use
   bound for every state.
 

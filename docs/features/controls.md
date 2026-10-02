@@ -121,10 +121,12 @@ checked before the vanilla 16-frame held-Guard limit, so it works while Guard
 is held. With [Substitution Input](battle.md#substitution) set to Hold, the
 button is accepted whenever it is down; otherwise it needs a fresh press in the
 selected window. Both native Guard/Sub bindings preserve the held-Guard limit
-and enter through the buffered input-history search. The binding accessor and
-the history match and count wrappers request `0x10000`, a bit no history record
-holds, for a zero binding, so an unbound action never matches or counts as
-pressed, held, or released. The BTL translator retains both native Guard/Sub actions as block sources
+and enter through the buffered input-history search. A retail zero binding
+satisfies the matcher's subset comparison for every history record, so zero
+alone cannot represent an unbound action. The binding accessor and the
+history match and count wrappers therefore request `0x10000`, a bit no
+history record holds, for a zero binding, so an unbound action never matches
+or counts as pressed, held, or released. The BTL translator retains both native Guard/Sub actions as block sources
 and adds the separate Guard binding. The added Guard action cannot substitute;
 the added Substitution action cannot block.
 
@@ -212,7 +214,7 @@ In the chart, pills sit 4 units lower to center in its 24-unit face slot. The
 native builder resolves only the native bindings, the native chart converter
 maps only the face buttons, and the chart draws every token from the d-pad and
 face texture, so other bindings otherwise show a d-pad or nothing. See
-[Command List rows](../knowledge/gameplay/action_commands.md#command-list-rows).
+[Battle Command List and move chart](../knowledge/localization/ui/battle/command_list_and_move_chart.md).
 
 ## Builder hook map
 
@@ -237,7 +239,10 @@ guarded entries are:
 | Item-select badges | BTL `0x5E950`, `0x5EA88` | Branch past the native badge draw; draw the bound Item Select L and R badges for the panel's side with Control Settings icons, then call the native wheel draw |
 
 The logical-Guard bridge preserves the translator's accumulated input mask
-while it checks native Guard/Sub 2 and the added Guard binding. Eight appendix
+while it checks native Guard/Sub 2 and the added Guard binding: the retail
+second held-trigger check at BTL live `0x006EFF2C` adds its result to the
+accumulated `a0` before the mask is stored, so a hook that loses `a0` there
+corrupts the translated input. Eight appendix
 values store added Guard, Substitution, Item Select L, and Item Select R for
 each player as one of Unbound, the eight face and shoulder buttons, Select, L3,
 or R3.

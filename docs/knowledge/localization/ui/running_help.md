@@ -3,23 +3,24 @@
 ## Research coverage
 
 - **Assigned scope:** the shared native running-help queue, text extent,
-  movement, repeat behavior, spacing, and placement in clean NA2 and NUN5
-  menu callers.
+  movement, repeat behavior, spacing, and placement in retail NA2
+  (`SLPS-25837`) and NUN5 menu callers.
 - **Exploration depth:** the resident enqueue, update, drawing, reset, and
-  construction functions were compared through read-only GhidrAssist MCP.
-  Direct menu callers were traced in the resident ELF and BTL, with raw-byte
-  checks for gaps in Ghidra's existing function analysis. A supplied NUN5
-  Mode Select savestate was inspected offline for queue and renderer evidence.
+  construction functions were compared statically. Direct menu callers were
+  traced in the resident ELF and BTL, with raw-byte checks where the preserved
+  function analysis has gaps. A saved NUN5 Mode Select runtime state supplied
+  queue and renderer evidence.
 - **Confirmed coverage:** NA2 reserves travel distance from a character count;
   NUN5 uses measured text width and a short-string minimum. Both updates advance
   the same queue-offset field and retire nodes using the reserved extent.
 - **Unresolved or untested:** numeric icon extents across callers, elapsed cycle
   timing, and runtime confirmation of all caller families. The buffered
   SPBATTLE help's exact screen ownership remains unresolved.
-- **Deliberate exclusions and overlap:** this document owns retail running-help
-  behavior. Mod integration belongs in feature documentation; general glyph
-  metrics remain in the neighboring font knowledge documents. Only menu
-  families within the project's scope are described.
+- **Deliberate exclusions and overlap:** general glyph metrics and
+  secondary-font spacing belong to [Renderer metrics](../font/renderer_metrics.md);
+  the Controls help-banner lifecycle belongs to
+  [Shared frontend prompt layout](options.md#native-controls-lifecycle). Only
+  menu families within the project's scope are described.
 - **Evidence limitations:** static code and a saved NUN5 frame establish the
   documented mechanisms and one selected string, not elapsed repeat timing
   or visual coverage of every menu.
@@ -121,7 +122,7 @@ These are derived geometric relationships, not measured wall-clock timings.
 
 ## Saved NUN5 Free Battle example
 
-The supplied C071D4C1 Mode Select state contains help object `0x00BF83F0`,
+A saved NUN5 Mode Select state contains help object `0x00BF83F0`,
 node `0x00BF2600`, and text at `0x008F5790`:
 
 ```text
@@ -177,9 +178,8 @@ Their NUN5 counterparts `0x00395580`, `0x00398E10`, `0x0039A9E0`, and
 Battle and Practice likewise select style 3 and set a 30-update hold in both
 games. The relevant constructor blocks are NA2 BTL `0x0087F790..0x0087F818`
 and `0x00880E50..0x00880ED4`; NUN5 BTL has the matching constructor calls at
-`0x0089C150` and `0x0089D9D0`. Their bytes were read through MCP because the
-preserved analysis stops these constructors at the allocation call and omits
-the following configuration from decompilation.
+`0x0089C150` and `0x0089D9D0`. Raw bytes after each allocation call establish
+this configuration.
 
 When appending the first node to an empty queue with a nonzero hold limit,
 both games set displacement to `0.9 * W` and clear the hold counter. With
@@ -224,18 +224,16 @@ SPBATTLE caller submits the object's text buffer at `+0x22`; no specific
 screen name is inferred from the resource name alone.
 
 Selection/value/reset branches use the same shared setter. NA2 BTL calls at
-`0x0087FC60`, `0x00881734`, `0x00881850`, and `0x00881898`, omitted from
-the existing function cross-references, also load unit 20 and gap count 8.
-Those byte windows were checked through MCP rather than treating the missing
-decompilation as missing behavior.
+`0x0087FC60`, `0x00881734`, `0x00881850`, and `0x00881898` also load unit 20
+and gap count 8; raw bytes establish these calls although the preserved
+cross-references omit them.
 
 ## Evidence coverage
 
-GhidrAssist `xrefs` and `search_bytes` were used together. A raw `jal` byte
-search found four extra help-setter calls in BTL that its existing function
-analysis had not exposed as references. The constructor calls in BTL likewise
-exist in bytes despite missing cross-references. Missing Ghidra references
-therefore do not establish that an overlay does not use the shared component.
+A raw `jal` byte search found four help-setter calls in BTL that the preserved
+cross-references omit, and the BTL constructor calls likewise exist only in
+bytes. Missing cross-references therefore do not establish that an overlay
+does not use the shared component.
 
 In the resident ELF, BTL, and ETC, direct calls to the lower-level append
 function occur only inside the shared extent setter. This supports that setter
@@ -243,7 +241,3 @@ as the common owner for the direct call paths examined; it does not rule out
 unresolved indirect calls. Searches for a direct tail jump to the setter and
 its stored absolute pointer found no matches in these binaries. The ELF's
 mirrored memory segments were not counted as additional callers.
-
-Preserved exports were consulted only after MCP could not decompile selected
-BTL constructor/reset blocks. They omit the same undefined spans, so MCP
-`get_data_at` byte windows supply the missing instruction evidence instead.

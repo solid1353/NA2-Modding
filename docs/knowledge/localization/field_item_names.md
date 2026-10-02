@@ -2,8 +2,8 @@
 
 ## Address conventions
 
-The clean NA2 executable and official NUN5 `PRG/TEXTENG.BIN` used below are
-identified in [External String Payload](external_string_payload.md#evidence-and-provenance).
+The retail NA2 executable and official NUN5 `PRG/TEXTENG.BIN` used below are
+identified in [External String Payload](external_string_payload.md#evidence).
 The NA2 resident conversion follows
 [Standard game file identities](../game/files/file_identities.md). The
 preserved NUN5 `TEXTENG.BIN` export maps complete-file offset `x` to export address
@@ -20,11 +20,15 @@ preserved NUN5 `TEXTENG.BIN` export maps complete-file offset `x` to export addr
 - **Confirmed coverage:** The table layout, addresses, lookup behavior, and all
   22 resident Japanese-to-English name pairs are established. Code `29` has a
   user-supplied identification and an external UN2 naming reference below.
-- **Unresolved or untested:** No clean NA2 or official NUN5 user-facing name is
+- **Unresolved or untested:** No retail NA2 or official NUN5 user-facing name is
   established for selector code `29`; codes `02` and `03` have only internal
   BTL identifiers.
-- **Deliberate exclusions and overlap:** Item selection, weighting, effects,
-  and presentation are owned by their gameplay and UI documents. Other
+- **Deliberate exclusions and overlap:** Item selection and weighting belong
+  to [Battle item inventory](../gameplay/battle_item_inventory.md); item effects
+  belong to
+  [Battle items and status effects](../gameplay/battle_items_and_status_effects.md);
+  item-status presentation belongs to
+  [Battle item-status presentation](ui/battle/item_status.md). Other
   localization tables are outside this document.
 - **Evidence limitations:** Matching NUN5 table order establishes names only
   for the 22 resident rows; it does not name absent selector codes or prove
@@ -32,7 +36,7 @@ preserved NUN5 `TEXTENG.BIN` export maps complete-file offset `x` to export addr
 
 ## Resident field-item name table
 
-The previously unresolved NA2 string range is a field-item name table. Its 22
+A resident NA2 string range is a field-item name table. Its 22
 rows begin at runtime/file `0x005B03F0/0x4B04F0`; each row is an eight-byte
 `(u32 item_code, char *name)` pair. The table occupies runtime
 `0x005B03F0..0x005B049F`, file `0x4B04F0..0x4B059F`. Its Shift-JIS strings
@@ -49,7 +53,7 @@ in the same order at complete-file `0x115B0..0x11794`, export
 `0x00905270..0x00905454`. This establishes the English names below without
 inventing translations from the Japanese text.
 
-| Code | Clean NA2 source name | Official NUN5 English name |
+| Code | Retail NA2 source name | Official NUN5 English name |
 | ---: | --- | --- |
 | `09` | `瞬身の巻物` | Scroll of Teleportation |
 | `0E` | `アイテムポーチ` | Item Pouch |
@@ -76,7 +80,7 @@ inventing translations from the Japanese text.
 
 The selector can also produce codes `02`, `03`, and `29`, which are absent
 from this name table. BTL identifies the first two internally as
-`ItemRecoverLife` and `ItemChakraBall`; no clean NA2 or official NUN5
+`ItemRecoverLife` and `ItemChakraBall`; no retail NA2 or official NUN5
 user-facing name was established for code `29` from the binaries.
 
 ## Code `29`: Curse Tag: Chakra Points Seal
@@ -93,5 +97,5 @@ corresponding item name; an exact byte search for `Chakra Seal` also found no
 match. **Curse Tag: Chakra Points Seal** is therefore an externally sourced
 UN2 name, not a recovered NUN5 translation.
 
-Pool membership, weighting, and the code-to-gameplay-effect boundary are owned
-by [Battle status effects and item-effect lifecycle](../gameplay/battle_items_and_status_effects.md#random-field-item-selection).
+Pool membership and weighting are owned by
+[Random field-item selection](../gameplay/battle_item_inventory.md#random-field-item-selection).

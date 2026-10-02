@@ -20,9 +20,9 @@ $process = $launch.Process
 $pinePort = $launch.PinePort
 ```
 
-Agent replay starts paused at frame zero, surfaceless and muted, with settings
-writes disabled and memory-card writes discarded. The launcher allocates the
-PINE port and writes the requested log file.
+`-agent-replay` selects PCSX2's
+[agent replay mode](../../../../PCSX2/docs/launch_options.md#agent-replay).
+The launcher allocates the PINE port and writes the requested log file.
 
 ```powershell
 $runner = Join-Path $paths.scripts 'lib/run_python.ps1'
@@ -45,10 +45,11 @@ $endpoint = @('--port', [string]$pinePort)
 & $runner @pine -ArgumentList ($endpoint + @('pause'))
 ```
 
-Stepping and screenshots require paused playback. `replay-step` advances exact
-replay frames, only forward, and cannot pass the replay endpoint. Use multiple calls
-when a requested interval exceeds the client's three-second timeout. Restart
-the replay to inspect an earlier position.
+The [replay analysis opcodes](../../../../PCSX2/docs/pine_agent_control.md#replay-analysis-opcodes)
+define what stepping, screenshots, GS dumps, and shutdown require. Use multiple
+`replay-step` calls when a requested interval exceeds the client's three-second
+timeout. Steps only move forward, so restart the replay to inspect an earlier
+position.
 
 To capture and replay a GS dump:
 

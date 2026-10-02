@@ -22,3 +22,24 @@ ELF remains untouched and the output size is preserved.
 Runtime testing of the integrated Current ISO confirmed that Adventure is absent
 and the remaining Mode Select entries work normally. The setting is therefore
 enabled in the release configuration; its runtime proof is retained in documentation.
+
+## Result-table edit constraints
+
+These follow from the retail
+[Mode Select result table](../../knowledge/game/mode_flow.md#mode-select-result-table)
+and [manager callback dispatch](../../knowledge/game/mode_flow.md#high-level-mode-callback-dispatcher):
+
+- The compact array has capacity for all seven physical slots. Changing a
+  negative table entry to a nonnegative value automatically admits that slot;
+  no separate active-count constant needs changing.
+- The filter validates only the sign. A nonnegative value that is not handled
+  by the manager callback switch passes Mode Select confirmation and becomes
+  manager `+0x0C`, after which manager phase 4 has no default recovery and
+  stalls.
+- Changing a table result remaps the callback but does not change the physical
+  carousel order or remembered-slot behavior. `0x006045E0` continues to store
+  the physical slot rather than the remapped mode ID.
+- An all-negative table is not a supported empty-menu encoding: construction
+  has no empty-list guard and reads an unwritten compact entry. A deliberately
+  empty menu therefore needs code changes, not only seven negative table
+  values.

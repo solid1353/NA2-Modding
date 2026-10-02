@@ -16,13 +16,13 @@ memory layout.
   destination.
 - **Unresolved or untested:** the remaining 80 in-range NUN5 words and the
   behavior of malformed or missing files beyond the observed retry path.
-- **Deliberate exclusions and overlap:** NA228 string selection belongs to
-  [Compact external strings](../../features/localization/external_strings.md);
-  shared payload placement belongs to
-  [Runtime injection](../../features/runtime_injection/implementation.md).
+- **Deliberate exclusions and overlap:** the EE memory layout belongs to
+  [EE address space](../runtime/ee_memory_map/address_space.md); overlay
+  loading belongs to [overlay ABI](../runtime/overlay_abi.md); individual
+  string relationships belong to
+  [NA2 and NUN5 text correspondence](translation_importer.md).
 - **Evidence limitations:** donor precedent establishes compatible mechanisms,
-  not direct ABI compatibility with NA2 or acceptance of a particular mod
-  payload.
+  not direct ABI compatibility with NA2.
 
 ## NUN5 `TEXTENG.BIN`
 
@@ -34,7 +34,7 @@ story prose, and Save/Load messages. They use an ASCII-compatible Western
 single-byte encoding with markup such as `<br>` and `<color...>`.
 
 The preserved Ghidra import identifies zero functions and zero instructions.
-An aligned scan of the clean `0x30D00`-byte donor found 3,697 words in its own
+An aligned scan of the `0x30D00`-byte donor found 3,697 words in its own
 loaded-address range. Of those, 3,617 point exactly to 2,990 distinct printable,
 zero-terminated string starts. The remaining 80 words were not classified.
 This establishes structured localization data with extensive internal indexing,
@@ -42,12 +42,11 @@ not executable code or merely concatenated text.
 
 ## Evidence
 
-The clean NA2 and NUN5 inputs are identified in
+The retail NA2 (`SLPS-25837`) and NUN5 inputs are identified in
 [Standard game file identities](../game/files/file_identities.md).
 
-The investigation used the preserved Ghidra projects and exports plus aligned
-little-endian pointer scans and direct binary inspection. `ADV.BIN` was not
-needed for these findings.
+Evidence comes from the preserved static analysis, aligned little-endian
+pointer scans, and direct binary inspection.
 
 ## NUN5 donor behavior
 
@@ -77,14 +76,14 @@ their displayed code labels `0x40` lower than the raw-memory formula.
 `FUN_001be7f0(slot, filename)` reads the destination from the table at runtime
 `0x006029C0`, constructs `cdrom0:\\PRG\\<filename>`, reads the file, and passes
 the loaded MWO3 image to `FUN_00100270` for cache maintenance, BSS clearing, and
-constructor processing. The clean destination table has slot 0 = `0x00100000`,
+constructor processing. The retail destination table has slot 0 = `0x00100000`,
 slot 1 = `0x006B3F00`, and zeroes thereafter.
 
 The loader has no observed slot bounds check and retries failed reads. A
 missing, misnamed, or truncated external file may therefore hang rather than
 fail cleanly.
 
-The clean ELF describes the resident image through `0x006B3F00`, mutually
+The retail ELF describes the resident image through `0x006B3F00`, mutually
 exclusive overlays ending no later than `0x008DD080`, and a final zero-size
 marker at `0x008DD080`. Four instruction pairs construct that boundary:
 
@@ -97,5 +96,5 @@ marker at `0x008DD080`. Four instruction pairs construct that boundary:
 
 The same boundary also appears in program-header words at `0xBC` and `0xC0`, a
 literal pointer at `0x2F79F4`, and a section-header address at `0x50763C`.
-Any extension must account for all of these materializations rather than only
-the program header.
+The boundary is therefore materialized in all of these places, not only in the
+program header.

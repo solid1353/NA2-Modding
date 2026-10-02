@@ -1,121 +1,97 @@
 # Battle stage gameplay knowledge
 
-This document owns established and unresolved knowledge about battle-stage
-resources, live environment objects, stage geometry, geometry-driven movement,
-and stage teardown. It does not cover Stage Select presentation or Adventure
-mode.
+This document owns established and unresolved knowledge about retail NA2
+(`SLPS-25837`) battle-stage resources, live environment objects, stage
+geometry, geometry-driven movement, and stage teardown. It does not cover
+Stage Select presentation or Adventure mode.
 
 ## Research coverage
 
-- **Assigned scope:** the clean NA2 battle-stage implementation in
-`PRG/BTL.BIN`: load-slot/resource mapping, archive and object lifecycle,
-stage-authored geometry/configuration, background transitions and reactive or
-damaging objects, and unload/cleanup. Stage Select presentation was in scope
-only where needed to prove the raw-slot handoff; its UI layout and rendering
-were not investigated. The scope also covers the clean NUN3 battle-stage
-archives and `BATTLE.BIN` stage tables as a comparison with NA2.
-
-- **Exploration depth:** coverage depth was as follows:
-
-  **Exhaustive within fixed tables/assets:** all 24 stage-path entries and the
-  24-entry logical-ID mapper were decoded; all `STAGE/S01.CCS` through
-  `S24.CCS` archives were gzip-decoded in memory; every archive's sole
-  `BIN_bgdata` payload was structurally validated; all records belonging to
-  the 20 RTTI/vtable-linked named background factories were counted; and the
-  four authored line/config records in every archive were decoded into the
-  per-stage line-count table. This is not an exhaustive semantic decode of all
-  129 non-null factory-table entries.
-  **Exhaustive targeted callsite scans:** the stage surface/effect classifier's
-  eight BTL and seven resident consumers were enumerated, and the clean BTL was
-  scanned for the resident fighter-hit entry `FUN_002335F0`, yielding exactly
-  the documented snake and chandelier callsites. These statements are
-  exhaustive for the exact encoded targets in the clean binaries, not for
-  hypothetical dynamic name lookups or externally altered code.
-  **Bounded lifecycle trace:** resident controller states 9 through 17 and
-  transition states 23/24 were followed through `FUN_001e9520`, the four BTL
-  archive helpers `FUN_006c30c0..FUN_006c31d0`, graph construction through
-  `FUN_001ef330`, orderly teardown, stage switching, and the known central and
-  higher-level cleanup callers. This established normal-path ordering and the
-  explicitly documented emergency-cleanup caveat; it was not a whole-program
-  proof over every indirect destruction path.
-  **Bounded environment/object trace:** `ccField`/`ccBgControl` construction,
-  `FUN_003ac740..FUN_003ae220` scene parsing/dispatch, five owning lists, 12
-  selector collections, the named factory/vtable methods from roughly
-  preserved BTL `0x006C4770..0x006D51A0`, and their local destructors were
-  inspected where directly tied to clean stage records. Generic render,
-  physics, and collision helpers were followed only far enough to establish
-  the documented side effects or a concrete no-hit result.
-  **Bounded geometry and combat trace:** line construction/query code
-  `FUN_006c1b80`, `FUN_006c22d0..FUN_006c2570`,
-  `FUN_006c3380/FUN_006c3710`, and the route/collision consumers beginning at
-  `FUN_006f1f20` were traced through their record layouts and numeric
-  exceptions. The two proved damaging stage objects were followed from BTL
-  contact receivers through resident `FUN_002335F0`, response event zero,
-  `FUN_00224E30`, and the HP stores in `FUN_00225050`.
-  **Sampled authored detail:** the factory census is complete for the named
-  types, but the displayed configuration-string table intentionally contains
-  representative unique records rather than every string from every stage.
-  Visual/material names were not assigned when static code supplied only a
-  numeric effect, list selector, route type, or model resource.
-  **Resident factories:** classes for the resident `BIN_bgdata` factories were
-  named by an RTTI heuristic; factories 10, 17, 31, 33, and 34 were read in
-  full, and all 24 archives' records were counted per factory.
-  **NUN3 comparison:** all 28 NUN3 stage archives and all 24 NA2 archives were
-  decompressed and section-walked; all 27 NUN3 stage tables were decoded; the
-  NUN3 scene constructor, its jump table, and the category 0, 1, 2, 10, 11, 13,
-  and 14 handlers were read. The other NUN3 category handlers were located but
-  not traced. Shared content was measured by section comparison for every
-  NA2/NUN3 archive pair.
-
-- **Confirmed coverage:** the load-slot/logical-ID distinction;
-stage and `n_rash` ownership; raw selection initialization and handoff;
-`BIN_bgdata` framing,
-factory routing, and per-stage census; scene ownership; boundary/floor lines;
-surface-effect classification; proximity transitions; navigation data;
-breakable, reborn, deformable, and reactive props; the two explicit
-stage-object-to-HP paths; normal/switch/emergency teardown behavior; the
-mandatory per-archive records and player-node factories; and, for NUN3, the
-archive set, CCS format compatibility, stage table and record layout, the
-fog/line/player/lighting categories, required-node availability, and the NA2
-stages that reuse NUN3 stage content.
-
-- **Unresolved or untested:** whether the
-line-route planner is CPU-only or shared, the exact downstream meaning of line
-record `+0x2C`, semantic naming of the other factory-table entries and numeric
-route/effect codes, and runtime-visible confirmation of the statically derived
-behaviors. The separate `0x6C0` aggregate was bounded as a non-polymorphic
-battle special-sequence/presentation owner with only a stored stage tag; no
-unsupported original class name was assigned. The consumers of the
-`DMY_pp*_010` vectors and of the factory-10/17 values were not traced. For
-NUN3, the handlers of categories 3 through 9, the use of the summon-scene
-archives, and exact equivalence of any NUN3 category with its supported NA2
-counterpart remain open. The heap cost of a stage archive and the free heap at
-battle start were not measured.
-
-- **Deliberate exclusions and overlap:** Adventure mode, Stage Select presentation beyond
-the slot handoff, camera/projection/layout work, localization, media
-replacement, damage-scaling modifications, substitution, and 60-FPS work.
-NUN3 RPG-mode stages (`RPGSTAGE/`) and the NUN3 stage-select presentation were
-not examined.
-Generic fighter mechanics were entered only to prove the downstream effect of
-the two stage-owned hit sources. No other task's canonical document or index
-was edited.
-
-- **Evidence limitations:** validation was static against the exact clean `BTL.BIN`, resident
-`SLPS_258.37`, NUN3 `SLUS_217.27` and `BATTLE.BIN`, and the clean `STAGE/`
-archives of both games, whose sizes match their `GZLIST.TXT` entries. No runtime capture,
-instrumented play session, or emulator-visible validation was performed. The
-BTL `+0x40` import defect was audited against raw bytes and encoded live
-targets, but indirect runtime behavior remains subject to that static-analysis
-limit.
+- **Assigned scope:** the retail NA2 battle-stage implementation in
+  `PRG/BTL.BIN` and the resident executable: load-slot/resource mapping,
+  archive and object lifecycle, stage-authored geometry and configuration,
+  background transitions, reactive or damaging objects, and unload/cleanup.
+  Stage Select was in scope only where needed to prove the raw-slot handoff.
+- **Exploration depth:**
+  - Exhaustive over fixed tables and assets: all 24 stage-path entries and
+    the 24-entry logical-ID mapper; every `STAGE/S01.CCS`..`S24.CCS`
+    `BIN_bgdata` payload, structurally validated; the record counts of every
+    named background factory; and the four authored line/config records of
+    every archive. This is not a semantic decode of all 129 non-null
+    factory-table entries.
+  - Exhaustive for exact encoded targets: the surface/effect classifier's
+    eight BTL and seven resident consumers, the BTL calls to resident
+    fighter-hit entry `FUN_002335F0`, and the direct calls to both line
+    accessors.
+  - Bounded traces: resident controller states 9..17 and 23/24 with the four
+    BTL archive helpers, graph construction, teardown, and switching;
+    `ccField`/`ccBgControl` construction, scene parsing/dispatch, the owning
+    and selector lists, and the named BTL factory methods and destructors;
+    resident factories 10, 17, 31, 33, and 34 and their consumers; line
+    construction and the cached attribute pass; the route planner's direct
+    callers and AI tick gate; the two damaging objects through the resident
+    HP subtractor; and the footprint, LandingTree/Mangrove, CrashBreak, and
+    wire methods.
+  - Sampled: the configuration-string table shows representative unique
+    records rather than every string from every stage.
+- **Confirmed coverage:** the load-slot/logical-ID distinction; stage and
+  `n_rash` archive ownership; raw selection initialization and handoff;
+  `BIN_bgdata` framing, factory routing, and per-stage census; scene
+  ownership; boundary/floor line construction, active head 0 with count 1 per
+  populated section, and cached polygon-attribute provenance; surface-effect classification; proximity transitions;
+  navigation data and the AI gating of its ordinary route planner; generated
+  wire environment registration, dirty refresh, and unregister/free;
+  breakable, reborn, deformable, and reactive props, including foot-contact
+  placement/fade and LandingTree/Mangrove displacement; the two explicit
+  stage-object-to-HP paths; normal, switch, and emergency teardown ordering;
+  the mandatory per-archive records; native player-node placement
+  initialization and recovery placement; fog consumption; and factory-17
+  model-rendering consumption. Scene update restrictions and selected
+  visibility/factor consumers bound the units used by the documented counters
+  and animation steps.
+- **Unresolved or untested:**
+  - no semantic reader of cached line attribute `+0x2C` was identified in the
+    navigation, direct-accessor, or line-head alias paths; computed or
+    indirect consumers remain open;
+  - writers of the line active-index bytes beyond the control initializer's
+    zero stores, through unaligned partial stores or untraced pointer
+    arithmetic;
+  - original names for other factory-table entries, numeric route/effect
+    codes, surface-effect variant materials, and factory-17's two render
+    coefficients;
+  - the direct-call censuses are not proof against every indirect caller;
+  - other writers of scene factor `scene+8`; local update counts do not
+    establish elapsed time;
+  - the exact context-scaled HP delta of the two damaging stage objects.
+- **Deliberate exclusions and overlap:** Adventure mode, Stage Select
+  presentation beyond the slot handoff, localization, and fighter mechanics
+  outside the documented stage consumers. NUN3 stages belong to
+  [NUN3 battle stages](nun3_stages.md). Controller/state ownership belongs to
+  [Battle AI](battle_ai.md); the general collision queries, including the
+  boundary clamp and floor-profile query over stage lines, belong to
+  [Collision](collision.md#stage-query-functions); polygon attribute
+  production and contact-code consequences belong to
+  [Stage surface attributes](stage_surface_attributes.md); fighter section
+  changes belong to [Section transfers](section_transfers.md); damage
+  calculation and HP application belong to [Damage](damage.md); stage-object
+  battle-statistic credit belongs to
+  [Match outcomes](battle_statistics.md#ninja-tools-and-stage-objects); the
+  `0x6C0` pause controller that carries a stage-slot tag belongs to
+  [Pause and replay](pause_and_replay.md#shared-ownership-and-controller-lifecycle);
+  battle-session state order belongs to
+  [Battle lifecycle](battle_lifecycle.md); per-stage camera records belong to
+  [Battle camera](battle_camera.md).
+- **Evidence limitations:** validation was static against the retail
+  `BTL.BIN`, resident `SLPS_258.37`, and the retail `STAGE/` archives, whose
+  sizes match their `GZLIST.TXT` entries. No runtime validation was performed,
+  so indirect runtime behavior beyond the encoded targets remains open.
 
 ## Evidence and address convention
 
-The clean resident and BTL inputs and their address conversions are defined in
-[Standard game file identities](../game/files/file_identities.md).
-The analysis was static; no new runtime capture was made for this document.
-Every BTL address below distinguishes the preserved Ghidra location, raw file
-offset, and live address where relevant.
+Retail input identities and BTL/resident address conversions are defined in
+[Retail game file identities](../game/files/file_identities.md#address-conventions).
+BTL addresses below name the preserved Ghidra location, complete-file offset,
+and live address where relevant.
 
 Claims described as **confirmed** follow directly from raw bytes and control or
 data flow. **Supported** interpretations additionally use RTTI, resource names,
@@ -127,8 +103,10 @@ leads.
 The battle manager byte at `+0x98` is the active zero-based **load slot**, not
 the one-based logical stage ID. The pending load slot used by stage switching
 is at `+0x9A`. `FUN_006c1a10` copies its slot argument to manager `+0x98` and
-to `ccBgControl+0x0C` before indexing the archive table. A captured Practice
-value of `6` therefore selects `stage/s07.ccs`, not `stage/s06.ccs`.
+to `ccBgControl+0x0C` before indexing the archive table. Controller mode 2's
+fixed slot `6` (BTL entry type 2, Practice in
+[Mode flow](../game/mode_flow.md#mode-select-result-table); handoff below)
+therefore selects `stage/s07.ccs`, not `stage/s06.ccs`.
 
 The 24 archive strings occupy raw file `0x1DC990 + 0x10 * slot`, live
 `0x00890890 + 0x10 * slot`. Their pointer table occupies file
@@ -144,8 +122,7 @@ The raw ID mapper begins at Ghidra-located bytes `0x006C14A0`, file
 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 3, 4
 ```
 
-The preserved export misbinds the body around `FUN_006c14e0`; the raw start
-and table are authoritative. The same sequence is independently present as
+The same sequence is independently present as
 the first word of 24 `0x10`-byte records at Ghidra/file/live
 `0x008C3AD0 / 0x20FC10 / 0x008C3B10`; their second word is the zero-based slot.
 The remaining record fields are outside this document's gameplay scope and
@@ -178,16 +155,15 @@ are not assigned semantics here.
 | 3 | 22 | `stage/s23.ccs` |
 | 4 | 23 | `stage/s24.ccs` |
 
-The table appears at Ghidra `0x008909D0`, not at the same-numeric
-`PTR_s_stage_s21_ccs_00890a10` label used by the decompiler. At raw file
-`0x1DCB10`, the first entry is `0x00890890`, the live `s01` string. Reading
-the decompiler label literally shifts the table by 16 entries and produces a
-false `s21` base.
+The pointer table's preserved Ghidra location is `0x008909D0`; its first entry,
+at raw file `0x1DCB10`, is `0x00890890`, the live `s01` string.
 
 ## Archive preload, adoption, and switching
 
 The resident battle controller orchestrates the archive resource-node lifetime.
-The confirmed sequence is:
+Its complete state order belongs to
+[Battle lifecycle](battle_lifecycle.md#resident-setup-order). The confirmed
+stage-archive sequence is:
 
 1. Controller state 9, `FUN_001ed6d0`, writes the selected load slot to manager
    `+0x98`. State 10, `FUN_001ed880`, releases selection/common handles and
@@ -208,10 +184,10 @@ The confirmed sequence is:
    `FUN_001ec3b0` only when both `FUN_00201ef0` and `FUN_00203ae0` are nonzero;
    its heavy graph constructor is `FUN_001ef330`.
 6. State 15 repeatedly calls `FUN_001ef8f0` until the main graph reports ready.
-   This is whole-battle readiness; the current evidence does not isolate it as
-   an environment-only update.
+   This is whole-battle readiness; the evidence does not isolate it as an
+   environment-only update.
 
-No direct current caller of the `FUN_001e9520(0)` synchronous branch was found.
+No direct caller of the `FUN_001e9520(0)` synchronous branch was found.
 
 The state-9 handoff is a raw slot handoff, not a logical-ID conversion. Live
 BTL `0x00714460` (preserved `FUN_00714420`, file `0x060560`) clears the
@@ -228,9 +204,8 @@ in progress it calls live `0x00715CC0`; before freeing the object it calls live
 clears index `+0x74`, scans the available choice array for value 6, and leaves
 index zero when it is absent. Resident setup initializes the slot bitset at
 runtime `0x00607688` from the exact byte sequence `0..23`, and no decoded clear
-path exists; consequently the clean choice list is all 24 raw slots in order
-and mode 2 hands off slot 6. Mechanically, an externally altered bitset that
-omitted 6 would make the setter fall back to the first choice.
+path exists; consequently the retail choice list is all 24 raw slots in order
+and mode 2 hands off slot 6.
 
 The initializer itself reads manager snapshot byte `+0x114` and preselects that
 slot. State 9 then calls the selection setter again at runtime `0x001ED770`.
@@ -240,13 +215,10 @@ call's argument from active slot `+0x98`; when that byte is `0xFF`, resident
 code changes the argument to slot `0` before calling the setter.
 
 The corresponding resident callsites are `0x001ED734`, `0x001ED744`,
-`0x001ED770`, `0x001ED784`, `0x001ED7C4`, `0x001ED80C`, and `0x001ED7E8`.
-Their actual preserved Ghidra targets are respectively `0x00713A10`,
-`FUN_00713d80`, the unlabeled routine at `0x00714780`, `FUN_007157f0`, the
-unlabeled getter at `0x007147D0`, `FUN_00715c80`, and `FUN_00713ae0`. The
-manager write is runtime `0x001ED7D0`. This target list is another concrete
-case where accepting the export's same-numeric internal labels would move each
-BTL callee `0x40` bytes late.
+`0x001ED770`, `0x001ED784`, `0x001ED7C4`, `0x001ED80C`, and `0x001ED7E8`;
+their preserved Ghidra targets are respectively `0x00713A10`, `0x00713D80`,
+`0x00714780`, `0x007157F0`, `0x007147D0`, `0x00715C80`, and `0x00713AE0`. The
+manager write is runtime `0x001ED7D0`.
 
 Manager `+0x98`, `+0x99`, and `+0x9A` are a contiguous three-byte configuration
 group at the end of the block beginning at `+0x20`; resident `FUN_001f4b60`
@@ -302,7 +274,7 @@ file `0x00107F20`; its six-pointer table is runtime `0x00407390`, ELF file
 `FUN_00207ee0` implements the same mapping but accepts `-1` as "use active
 slot," falling back to slot 0 if no active slot is available. Indices 1 and 2
 exist in the table but neither selector can return them. Their path pointers
-occur in the clean resident ELF only in these two table words, with no decoded
+occur in the retail resident ELF only in these two table words, with no decoded
 code xrefs; `ANM_rash_c/d` are likewise unreachable through the selected-index
 path. This is a strong static negative, not proof against every hypothetical
 dynamic name lookup.
@@ -342,7 +314,7 @@ With resident GP `0x0060A9F0`, `gp-0x3210` is global `0x006077E0`. The BTL
 stage helpers index their 24-entry path table directly and perform no range or
 sentinel check, so every acquire/enqueue/adopt or field-construction call
 requires a live slot in `0..23`. This differs from the defensive default in
-`FUN_00207e20`. Clean selection and the ordinary random generator produce a
+`FUN_00207e20`. Retail selection and the ordinary random generator produce a
 slot in `0..23`, and the normal state-24 generator runs before that state can
 dispatch. Imported-record, scripted-record, and snapshot-restore paths instead
 copy trusted slot bytes without an upper-bound check; they reject or overwrite
@@ -358,16 +330,18 @@ common bundle tracks one ownership bit per member and preserves preexisting
 members. This is further evidence against a shared reference-count contract for
 the stage paths.
 
-The preserved C export omits the final store in `FUN_006c31d0`; raw Ghidra
-`0x006C31F4`, file `0x00F334`, live `0x006C3234` is
-`sw v0,-0x3210(gp)`. No direct BTL `jal` or function-pointer word targets these
+The final store in `FUN_006c31d0` is raw Ghidra `0x006C31F4`, file
+`0x00F334`, live `0x006C3234`: `sw v0,-0x3210(gp)`. No direct BTL `jal` or function-pointer word targets these
 four helpers. Their confirmed callers are resident code using the live overlay
 addresses.
 
-`FUN_001ee500` owns a stage-changing rematch/switch path. It compares active
-slot `+0x98` with incoming stage slot `+0x9A` after destroying the old runtime
-graph.
-When they differ, it releases the old archive and `FUN_00207e20` resource
+`FUN_001ee500` (state 24) owns the stage-changing result-8 continuation path;
+its session rebuild belongs to
+[Battle lifecycle](battle_lifecycle.md#continuation-encounters-rebuild-the-session)
+and its outcome routing to
+[Match outcomes](match_outcomes.md#higher-level-sequence-counter-and-result-8-continuation).
+It compares active slot `+0x98` with incoming stage slot `+0x9A` after
+destroying the old runtime graph. When they differ, it releases the old archive and `FUN_00207e20` resource
 before testing the incoming slot against `-1`. Only a non-`-1` incoming slot
 is then copied to `+0x98`, enqueued with its associated resource, fenced, and
 returned to state 13 construction. The normal generator ordering supplies a
@@ -420,14 +394,12 @@ not derive from `ccFieldCtrl`.
 
 The `ccField` factory is preserved `FUN_007099e0`, Ghidra `0x007099E0`, file
 `0x055B20`, live `0x00709A20`. It is called from preserved `FUN_00709440` at
-Ghidra/file/live callsite `0x007094C4 / 0x055604 / 0x00709504`. Ghidra also
-places the false label `FUN_00709a20` `0x40` inside the real factory. The
+Ghidra/file/live callsite `0x007094C4 / 0x055604 / 0x00709504`. The
 factory allocates `0x90` bytes, calls the live `ccField` constructor at
 `0x007087A0`, and then live `0x00709E60`.
 
 The `ccField` constructor is preserved `FUN_00708760`, Ghidra
-`0x00708760`, file `0x0548A0`, live `0x007087A0`. Its export is truncated by a
-bad no-return classification. Raw code proves that it:
+`0x00708760`, file `0x0548A0`, live `0x007087A0`. Its raw code proves that it:
 
 - allocates a `0xAD0`-byte `ccBgControl` and initializes it with live
   `0x006C28D0`;
@@ -439,11 +411,11 @@ bad no-return classification. Raw code proves that it:
 - stores the control at `ccField+0x70` and performs post-construction setup.
 
 The background constructor is preserved `FUN_006c1a10`, Ghidra
-`0x006C1A10`, file `0x00DB50`, live `0x006C1A50`. Raw code, beyond the
-truncated decompiler body, confirms this sequence:
+`0x006C1A10`, file `0x00DB50`, live `0x006C1A50`. Its raw code confirms this
+sequence:
 
-1. Copy the slot to manager `+0x98`, a secondary stage-aware controller
-   `+0x0E` when present, and `ccBgControl+0x0C`.
+1. Copy the slot to manager `+0x98`, the pause controller's `+0x0E`
+   when present (see below), and `ccBgControl+0x0C`.
 2. Index the live archive pointer table at `0x00890A10`, call resident
    `FUN_001aa4b0(path)`, and store the returned handle at `ccBgControl+0x00`.
 3. Allocate and initialize a `0x150`-byte `ccBgSystem`; store it at
@@ -486,7 +458,7 @@ entry fields to object `+0x08/+0x0C/+0x10/+0x14`, stores the scene at object
 new object's virtual initializer at vtable `+0x14`. These 12 selector
 collections are non-owning registration/link lists. A separate set of five
 owning lists begins at scene `+0x74`; the first entry field chooses one of
-those lists, and all named factory records in the clean archives use owner
+those lists, and all named factory records in the retail archives use owner
 list 4.
 
 The dispatch table is resident runtime `0x005B3970`, ELF file `0x004B3A70`,
@@ -552,28 +524,94 @@ identities, not decoded constructors.
 
 The following non-class records are confirmed from their factory bodies:
 
-| Factory | Confirmed behavior | Clean use |
+| Factory | Confirmed behavior | Retail use |
 | ---: | --- | --- |
-| 10 (`0x00398A90`) | Packs tokens 0..2 as an RGB byte triple, converts token 3 through `FUN_001771B8`/`FUN_00171F00` and tokens 4..6 to floats, and stores five words at scene `+0xD4..+0xE4` through `FUN_003ACFE0`. | one per archive, e.g. `S01`: `125,200,190,0,40,0,100000` |
+| 10 (`0x00398A90`) | Packs tokens 0..2 as an RGB byte triple, parses token 3 as a float and tokens 4..6 as integers converted to floats, and stores the fog record at scene `+0xD4..+0xE4` through `FUN_003ACFE0`. | one per archive, e.g. `S01`: `125,200,190,0,40,0,100000` |
 | 17 (`0x00399340`) | Converts two float tokens and stores them to globals `0x00618EE8` and `0x00618EE4`. | 21 archives, e.g. `0.45,0.35` |
 | 31 (`0x0039D2B0`) | Resolves the configuration string in the scene archive through `FUN_001A8F00` and, when the result is neither 0 nor 4, stores it at `+0x08` of the selector owner `scene+0x44 + 4 * list_selector`. | every archive has `BLT_bg` and `BLT_obj`; `S03`, `S04`, `S10`, `S18`, and `S19` add `BLT_bg2`, `BLT_efe`, `BLT_hnd`, or `BLT_obj2` |
 | 33 / 34 (BTL live `0x006C44C0` / `0x006C4520`) | Through live `0x006C3EE0`, resolve `DMY_pp1_010` / `DMY_pp2_010` (names at live `0x00890BE8` / `0x00890BF8`) and copy the node's position `vec4` to `ccBgControl+0xAB0` / `+0xAC0`. The lookup result is dereferenced without a null or sentinel check. | every archive, string `-1` |
 
-Every clean archive has one record each for factories 10, 18, 33, 34, 35, 36,
+Every retail archive has one record each for factories 10, 18, 33, 34, 35, 36,
 37, and 38, at least the two factory-31 records above, and one factory-11
 record (`S10` has two); 21 of 24 also have factory 17. Factory 18's configuration names the light animation
-and light, for example `ANM_stalig00,255,255,255,LGT_dis_0`. The stored
-`DMY_pp*_010` vectors are named like player placement nodes; their consumer was
-not traced.
+and light, for example `ANM_stalig00,255,255,255,LGT_dis_0`.
 
-In clean `S01`, `BLT_bg` and `BLT_obj` are object-table names with no typed
+The `DMY_pp*_010` consumer is **confirmed**: field helper preserved
+`0x00708F90`, file `0x0550D0`, live `0x00708FD0`, and its wrapper preserved
+`0x00709070`, file `0x0551B0`, live `0x007090B0`, return a placement vector,
+orientation vector, and section value. Side 0 copies control `+0xAB0` and
+sets orientation component 2 to `+pi/2`; side 1 copies `+0xAC0` and uses
+`-pi/2`. The helper adds `(0,0,200,1)` to the position, then forces its
+component 3 to one. Its returned section is zero except for slot 12 (`S13`),
+where it is one. This is a fighter recovery-position path: resident
+`FUN_00235690`, action cases `0x61/0x62`, calls live `0x007090B0` with the
+fighter's side bit and outputs at fighter `+0x30/+0x40`, then stores the
+returned section to fighter section field `+0x9F6`, the same field that
+[Section transfers](section_transfers.md#request-admission-and-retained-destination)
+change. Case `0x62` additionally projects through live
+`0x007090D0`. Resident `FUN_00216970` wraps the same operation, and its
+confirmed caller `FUN_002C8690` uses it when the paired fighter has major
+state 6/action `0x61`.
+
+The native placement initializer is also confirmed: resident `0x0024D830`
+calls live `0x00708FD0` with fighter side bit and outputs at `+0x30/+0x40`,
+then stores the returned section at `+0x9F6`. It sets fighter `+0x61` bit
+`0x40`, derives the facing fields `+0x98C/+0x98E/+0x990` from orientation
+`+0x48`, clears retained attack `+0xE54`, fills eight position-history
+vectors at `+0x840`, and enters major/substate `(0,0)` through `0x00217E40`.
+The ordinary graph constructor `0x001EF330` calls live `0x007095E0` at
+resident callsite `0x001EF42C`; its four-registry pass calls live `0x00709BF0`,
+which invokes each node's vtable `+0x0C`. The representative concrete fighter
+table `0x005DB170` contains `0x0024D830` at that slot. This connects the
+authored player nodes to ordinary construction as well as recovery. The wider
+fighter construction/registry inventory belongs to
+[Battle entities](battle_entities.md#primary-fighter-factory-and-lookup).
+
+Factory 17 writes two **confirmed render coefficients**, rather than combat
+values. They are fields `+0x28/+0x24` of the default light/render descriptor at
+resident `0x00618EC0`. `FUN_001EB850` initializes that descriptor with
+`FUN_0018FF40`, binds its resource through `FUN_0018FE90`, and sets the two
+defaults to `0.4/0.3`. Resident phase dispatcher `FUN_001F03E0` selects the
+descriptor through global `0x00602A60`; `FUN_001982B0` and `FUN_00198340`
+copy that pointer to draw-parameter `+0x24C`. The packet builder
+`FUN_0018F900` reads descriptor `+0x28`, multiplies it by 128 (and, for
+draw flag `0x20000`, by draw opacity), and packs it into the color word's high
+byte; descriptor `+0x24` is copied to packet word `+0x204`. This bounds both
+stage-authored values to model rendering. Original semantic names for the
+two coefficients are not established. BTL draw paths preserved
+`0x00723250` and `0x00724AB0` temporarily adjust these globals and restore
+them; factory 17 is therefore the authored base, not every draw's final value.
+
+In retail `S01`, `BLT_bg` and `BLT_obj` are object-table names with no typed
 section of their own, so the factory-31 store depends on what the resident
 lookup returns for a section-less record; that value was not traced.
 
+Factory 10's downstream meaning is **confirmed** by resident
+`FUN_003ACBF0` -> `FUN_003AE390` -> `FUN_0010D0D0`. The scene draw routine
+applies this record before drawing its 12 selector lists, and afterward calls
+`FUN_003AE3D0` -> `FUN_0010D200`. The latter clears the drawing context's
+`+0xE8` word. The fog record is:
+
+| Scene offset | Source token | Consumer meaning |
+| ---: | ---: | --- |
+| `+0xD4` | 5 | near distance |
+| `+0xD8` | 6 | far distance |
+| `+0xDC` | 3 | near percentage |
+| `+0xE0` | 4 | far percentage |
+| `+0xE4` | 0, 1, 2 | packed RGB, low byte first |
+
+`FUN_0010D0D0` stores the four floats in drawing-context
+`+0xF0..+0xFC`, converts each percentage `p` to `(100-p)*2.55`, and stores
+the linear distance ramp's slope/intercept at `+0x108/+0x10C`; packed color
+goes to `+0x110`. Thus S01's authored example means distances `0..100000`
+and percentages `0..40`. This consumer establishes the same fog role as
+[NUN3 category 1](nun3_stages.md#nun3-scene-record-dispatch), while preserving
+the games' different token ordering.
+
 ### Per-stage `BIN_bgdata` factory census
 
-The clean extracted `STAGE/S01.CCS` through `S24.CCS` archives were
-gzip-decompressed and parsed in memory. Every archive contains exactly one CCS
+The retail extracted `STAGE/S01.CCS` through `S24.CCS` archives were
+gzip-decompressed and parsed. Every archive contains exactly one CCS
 object named `BIN_bgdata`, stored in a section whose full marker is
 `0xCCCC2400` (low tag `0x2400`). Every payload validated the same framing:
 
@@ -589,9 +627,15 @@ For every named factory below, `field0` is 4. The scene-list selector is 2 for
 the ordinary background types and 4 for `ccBgTransObject`,
 `ccBgTransObject2`, and `ccBgTransAnm`.
 
-The census below is exhaustive for the 20 named factory indices in the
+The census below is exhaustive for the named factory indices in the
 preceding table. `N` includes all `BIN_bgdata` records, including generic types
 whose compiled factories have not yet been named.
+
+Factory 27 (`ccBgDrawShadowAnm`) has no record among the 1,487 entries across
+these 24 payloads. This does not establish absence of ordinary stage shadows
+or of that class through other construction routes. Its separate ownership
+and draw path belong to
+[Shadows](../runtime/shadow_rendering.md#background-controller-and-fighter-consumers).
 
 | Archive / load slot | N | Named factory records |
 | --- | ---: | --- |
@@ -650,26 +694,18 @@ six separately configured chandelier break objects. `S24` records 82 through
 construction and configuration, but the class methods still determine whether
 contact is visual, reactive, or damaging.
 
-The resident heavy graph also allocates a separate `0x6C0`-byte aggregate at
-runtime/file `0x001EF6A4 / 0x0EF7A4`, stores it in global `0x00607834`, and
-calls BTL live constructor `0x0076E9D0` with two scalar fighter/character
-identifiers from manager `+0x4C/+0x74` and the selected slot. The constructor
-stores the low/high bytes of those two values at object `+0x04..+0x07`; they
-are not pointers. It installs no top-level vtable, and no RTTI class name is
-established. Direct APIs and fields instead identify a non-polymorphic battle
-special-sequence/presentation aggregate: `+0x0D` is an idle-or-sequence-kind
-byte, `+0x10` is a three-phase state, and `+0x1C` owns a mode-specific backend.
-
-The selected slot is merely mirrored at `+0x0E`. Refresh live `0x0076EC10`
-reads it but passes it to a short callee at live `0x006C2F10` (preserved
-`FUN_006c2ed0`, file `0x00F010`) that overwrites the argument, clears byte
-`+0x6B8`, and calls resident `FUN_001C8830` on the object referenced by
-`+0x6BC` without changing that pointer. No stage table, archive,
-`ccField`, geometry, or boundary operation is reached. The main constructor
-and refresh entries are preserved `FUN_0076e990` and `FUN_0076ebd0`, files
-`0x0BAAD0` and `0x0BAD10`; the destructor is preserved `FUN_0076ecb0`, file
-`0x0BADF0`, live `0x0076ECF0`. Thus this aggregate carries a stage-slot tag
-but is not the environment or geometry owner.
+The resident heavy graph also allocates, at runtime/file
+`0x001EF6A4 / 0x0EF7A4`, the separate `0x6C0`-byte pause controller
+at global `0x00607834`; its ownership and behavior belong to
+[Pause and replay](pause_and_replay.md#shared-ownership-and-controller-lifecycle).
+Its BTL constructor, live `0x0076E9D0`, stores the low/high bytes of the
+scalar fighter/character identifiers from manager `+0x4C/+0x74` at object
+`+0x04..+0x07` and mirrors the selected slot at `+0x0E`; no stage operation
+uses that slot. Refresh live `0x0076EC10` passes it to live `0x006C2F10`
+(preserved `FUN_006c2ed0`, file `0x00F010`), which overwrites the argument,
+clears byte `+0x6B8`, and calls resident `FUN_001C8830` on the object at
+`+0x6BC`. No stage table, archive, `ccField`, geometry, or boundary operation
+is reached.
 
 `ccField` update at live `0x007089C0` dispatches `ccBgControl` vtable slots
 `+0x08` and `+0x10`; the latter is live `0x006C17C0`, preserved
@@ -678,13 +714,54 @@ but is not the environment or geometry owner.
 explain the lack of ordinary direct xrefs, but the evidence does not justify
 calling any one of them the per-frame environment update.
 
+### Update eligibility and local timing
+
+Control method live `0x006C17C0` consults resident `0x003AE660`. A true result
+on transition disables object update field `+0x1C` for factory identities
+2 and `0x30` (48) through `0x003ACF20`; a false result on transition restores
+them. That helper walks all five owning lists and matches object `+0x0C`.
+This is a selected-type update restriction. The method always calls scene
+update `0x003ACAD0`, whose scene flag bit 1 skips the five object loops and
+whose ordinary loops invoke virtual `+8` only for nonzero object `+0x1C`.
+Scene bits 2/4/8 independently gate the three auxiliary controllers.
+`0x003AE660` combines scene/control predicates, menu/sequence state, fighter
+markers, and terminal-state queries; this trace does not assign one universal
+pause meaning to it.
+
+Scene initializer resident `0x003AD510` sets float `scene+8` to `1.0`.
+`ccBgTransAnm` live `0x006C80E0` computes its animation step as
+`u16(original_step * configured_multiplier * scene_factor)`; CrashBreak
+live `0x006CA8A0` sets the active model step to `u16(256 * scene_factor)`.
+Both supply that step to resident advance `0x001BB210`, whose unit is 1/256
+animation frame. They therefore consume the scene factor; fixed fade changes,
+cooldowns, and sampled table indices have separate per-invocation units.
+The complete set of writers to `scene+8` is not established. Common advance
+and absolute-seek semantics belong to
+[Scene playback callers](../runtime/scene_playback_owners.md#playback-families).
+
+Eligibility can also be local. Resident `ccBgRotateSky` update `0x00398510`
+retains bounds classification `0x001926A0` and advances/wraps angle by
+configured `+0x50` only when retained. `ccBgUVAnm` update `0x0039B910`
+similarly gates both UV-coordinate increments, multiplying their speeds by
+`scene+8` and wrapping to `0..1`. The sway owner at `0x003997C0` gates its
+phase increment `speed * scene_factor`, while the two-model owner at
+`0x0039C160` skips countdown, random draws, and transform work when both
+classification results reject. The classification mechanism and its limits
+belong to [Visibility](../runtime/visibility.md#bounded-resident-caller-inventory).
+These statements concern the inspected methods, not every callback that could
+modify an object.
+
+In the object descriptions below, a tick means an eligible invocation of the
+particular object's update method. Fixed counters/fades do not by themselves
+prove a wall-clock frame rate. Animation frame numbers denote the separate
+model playback cursor.
+
 ## Boundary and floor-profile data
 
 ### Line construction
 
 Preserved `FUN_006c3380`, Ghidra `0x006C3380`, file `0x00F4C0`, live
 `0x006C33C0`, builds linked line records from named nodes in the stage archive.
-The exporter spuriously starts `FUN_006c33c0` `0x40` bytes inside this routine.
 Direct callers are preserved `FUN_006c4600` and `FUN_006c4660`; they obtain the
 background system through `FUN_006c1640` and use resident
 `FUN_003947C0` as a fallback when it is absent.
@@ -713,7 +790,7 @@ allocated record is `0x30` bytes:
 | `+0x20` | next record, or zero |
 | `+0x24` | line flag, initially zero |
 | `+0x28` | side/category, `0` or `1` |
-| `+0x2C` | raycast-associated value, initially zero |
+| `+0x2C` | cached collision-polygon attribute word, initially zero |
 
 The builder obtains a descriptor count, allocates `count * 0x30`, formats
 three node names per record, resolves them through resident `FUN_001A8F00`,
@@ -733,9 +810,8 @@ strings are:
 | `DMY_linemax02` | `0x00890B98` | `0x1DCCD8` | `0x00890BD8` |
 
 The first-family builder above is complemented by the actual routine beginning
-at preserved `FUN_006c3710`, file `0x00F850`, live `0x006C3750`. The exporter
-splits it at same-numeric `FUN_006c3750`; raw callers at preserved
-`FUN_006c4540` and `FUN_006c45a0` target the live start. This routine consumes
+at preserved `FUN_006c3710`, file `0x00F850`, live `0x006C3750`. Raw callers
+at preserved `FUN_006c4540` and `FUN_006c45a0` target the live start. This routine consumes
 descriptor type `0x23` or `0x24`, selecting base node name `DMY_line_010` or
 `DMY_line_020`. It consumes the descriptor's node count in pairs and resolves
 names in raw order: the base name, `_1`, `_2`, and so on. No even-count guard
@@ -752,7 +828,7 @@ pointer to the vector whose size/data fields are control `+0xA84/+0xA88`:
 
 | Config offset | Confirmed field |
 | ---: | --- |
-| `+0x00` | pointer to a separately allocated 12-byte vector header whose elements are pointers to this config's second-family line records |
+| `+0x00` | pointer to a separately allocated 12-byte vector header whose elements point to separately allocated `0x20`-byte endpoint pairs |
 | `+0x10` | first boundary endpoint, `vec4` |
 | `+0x20` | second boundary endpoint, `vec4` |
 | `+0x30` | pointer to config `+0x10` |
@@ -766,7 +842,16 @@ line groups. The builder also resolves `DMY_linemin01`, `DMY_linemax01`,
 control `+0x20/+0x30` by component-0 comparison. These are archive node
 positions, not a static global stage table.
 
-The first four records in every clean `BIN_bgdata` blob are exactly factory
+The config's endpoint pairs copy only the two endpoint `vec4`s; they are not
+aliases of the `0x30`-byte linked records and have no cached attribute tail.
+The complete builder bytes corroborate the `0x20` allocation at preserved
+`0x006C3968/0x006C396C`, the separate endpoint copies at
+`0x006C3AC4..0x006C3AE0`, and pointer insertion at `0x006C3C60..0x006C3C84`.
+Consequently the config's piecewise boundary resolver does not receive line
+`+0x2C` through that vector. The resolver and general query contract belong to
+[Collision](collision.md#stage-query-functions).
+
+The first four records in every retail `BIN_bgdata` blob are exactly factory
 indices `0x23`, `0x24`, `0x25`, and `0x26`. Their aligned configuration strings
 therefore give the authored line counts per archive. For `0x23/0x24` the value
 is a node count and the builder creates half as many second-family records; for
@@ -801,40 +886,117 @@ string is `6, , , `; its parsed first token is 6.)
 | `S24` | 7 | 7 | 8 | 9 |
 
 Preserved `FUN_006c1b80`, file `0x00DCC0`, live `0x006C1BC0`, walks every
-record in both families and sides. It raycasts vertically from 100 units above
-the segment midpoint's component 2 to 100 units below through resident
-`FUN_001BF100`; on a hit it stores resident `0x0061F6E8` at record `+0x2C`.
-The exact downstream meaning of that stored value is not yet established.
+record in both families and sides, queries a vertical segment through each
+segment midpoint, and on a hit caches the selected collision polygon's `+0x0C`
+attribute word (the same word the query's include/exclude mask tests use) at
+record `+0x2C`. The line therefore stores polygon attributes, not a collider
+pointer or distance; a missed query preserves the previous cached value. The
+query parameters and the resident source path of that word belong to
+[Collision](collision.md#stage-query-functions).
 
-### Boundary clamp
+### Cached line attribute consumers
 
-Preserved `FUN_006c22d0`, file `0x00E410`, live `0x006C2310`, obtains a
-caller-selected `0x40`-byte config from the vector at control `+0xA80`. It compares
-input component 0 with the component-0 values of config vectors `+0x10` and
-`+0x20`. An underflow copies the whole `vec4` at `+0x10` to the input; an
-overflow copies the whole `vec4` at `+0x20`; either clamp returns zero. A value
-inside the interval returns one.
+**Confirmed accessor identities:** complete bytes at preserved
+`0x00708D20..0x00708D9C` distinguish two superficially similar getters:
 
-The usable wrapper is preserved `FUN_00708a40`, Ghidra `0x00708A40`, file
-`0x054B80`, live `0x00708A80`. It works on a copy, optionally returns the
-clamped vector, and returns one when `ccField+0x70` is absent. Its second
-argument is passed through as the config index.
+| Preserved entry / file / live | Returned head |
+| --- | --- |
+| `0x00708D20 / 0x054E60 / 0x00708D60` | first-family table `+0xA90 + 4*section`, indexed by byte `+0xA8E + section` |
+| `0x00708D60 / 0x054EA0 / 0x00708DA0` | second-family table `+0xA9C + 4*section`, indexed by byte `+0xA9A + section` |
 
-### Floor-profile query
+Both return zero when `ccField+0x70` is absent and otherwise return the chosen
+head without reading a record's attributes. Encoded JAL targets are live
+addresses, so an annotation naming `FUN_00708d60` does not by itself identify
+the second getter.
 
-The raw routine beginning at preserved `FUN_006c2570`, file `0x00E6B0`, live
-`0x006C25B0`, scans the active second-family list for the selected side and
-then all active first-family lines. For a segment satisfying
-`endpointA.component0 < query.component0 < endpointB.component0`, it linearly
-interpolates endpoint component 2 and keeps the lowest candidate. No match
-returns `-32768.0`. The output otherwise copies the query, replaces component
-2 with the result, and sets component 3 to `1.0`.
+**Bounded direct-call coverage:** the aligned words of the whole BTL text
+mapping (complete-file `0x40..0x1DB6FF`) contain ten direct calls to the first
+getter and one to the second. The resident ELF adds two first-getter calls and
+none to the second; ETC contains neither target, and BTL holds no literal
+pointer word for either getter. This enumerates direct encodings, not computed
+calls.
 
-The usable wrapper is preserved `FUN_00708ca0`, file `0x054DE0`, live
-`0x00708CE0`; it returns the same sentinel when the background control is
-absent. The exporter-created `FUN_006c25b0` is a phantom start `0x40` inside
-the real routine. Component roles are stated numerically because static code
-alone does not prove the engine's axis names.
+| Consumer | Established fields and consequence |
+| --- | --- |
+| Three nearest-line queries, preserved `0x006F1F20`, `0x006F2160`, `0x006F24A0` | First-family endpoints, next `+0x20`, and filter word `+0x24`; return a selected line pointer. Their direct BTL callers all remain within the audited navigation interval. |
+| Planner, executor, AI proximity path, and line-map initialization; getter calls at preserved `0x006F3BF4`, `0x006F3C78`, `0x006F71B0`, `0x006FC398`, `0x007059F0` | First-family identity, endpoints, and next links. Initialization stores line pointers in `0x008D6500` and derives section extrema from endpoints; route code uses those pointers and compiled adjacency records. |
+| Preserved `0x006F75E0` continuation, getter call `0x006F77BC` | Second-family head endpoints determine which side of its midpoint the fighter occupies; this path does not classify its cached polygon word. |
+| Preserved `0x0082E810..0x0082EA34`, live entry `0x0082E850`, getter call `0x0082E860` | First-family endpoint extrema and next links clamp a supplied position; subsequent floor-profile and fresh environment queries use the position, rather than cached line attributes. |
+| Preserved `0x00849150..0x00849328`, live entry `0x00849190`, getter call `0x00849220` | First-family endpoint vectors and next links choose an endpoint nearest the supplied component-0 position and copy it to the output. No line attribute tail is copied. |
+| Resident `0x002DEEC0` and `0x002DEFE0`, getter calls `0x002DEF04/0x002DF0A8` | Endpoints and next links map current/stored fighter positions to line indices. The second helper compares indices and consults a stage/section/index table; neither reads cached attributes. Their inspected callers use the index or boolean result. |
+
+The complete byte intervals of the two late-BTL functions above show loads from
+endpoint offsets `0/0x10`, scalar endpoint components, and next `+0x20`, with
+no line `+0x2C` read; the resident functions show the same field distinction.
+Their original player-facing roles are not named here.
+
+**Bounded alias result:** exact `+0xA90/+0xA94/+0xA9C/+0xAA0` head-table
+loads and address formations in the BTL text resolve to the builders, cached
+midpoint pass, floor-profile query, destruction, and these two getters.
+Two other `+0xA90` formations belong to the separate interaction-manager
+layout, and the apparent `+0xAA0` formation in stage-specific setup is part of
+an absolute resource-name address. They supply no additional line consumer.
+Within preserved navigation `0x006F1140..0x0070639F`, the sole scalar load
+with displacement `+0x2C` is stack halfword `0x00700108`; there is also no
+non-stack quadword load at `+0x20` or doubleword load at `+0x28` covering the
+cached word. No semantic reader was identified through these direct calls and
+aliases. Arbitrary pointer arithmetic, partial/unaligned loads, and indirect
+consumers remain outside this bounded negative result.
+
+### Selected-index writers and neighboring aliases
+
+An audit of all 486,832 aligned words in BTL file interval `0x40..0x1DB6FF`
+checked byte, halfword, word, scalar-float, doubleword, and quadword stores
+whose encoded displacement overlaps the active-index bytes
+`+0xA8E/+0xA8F/+0xA9A/+0xA9B`, together with `addi/addiu/daddiu` instructions
+that form those exact byte addresses. No exact-address formation was found.
+Twelve store instructions overlap the offsets; following their base objects
+separates the two stage stores from ten stores to other layouts:
+
+| Live store instruction(s) | Proven owner and write |
+| --- | --- |
+| `0x006C2904`, `0x006C2918` | Control initializer: byte zero at `ccBgControl+section+0xA8E` and `+0xA9A`, in the two-section loop. |
+| `0x007772B4`, `0x007772B8` | Interaction-manager initialization: two `vf0` quadwords at manager `+0xA80/+0xA90`. |
+| `0x0077AA2C` | Interaction-manager update: copies its `+0xB00` vec4 to manager `+0xA80`; the base comes from the manager global `iGpffffce54`. |
+| `0x0077F3B0`, `0x0077F3B4` | Auxiliary-object initialization: `vf0` quadwords at auxiliary `+0xA80/+0xA90`. |
+| `0x00781734/0x00781738`, `0x007819AC/0x007819B0` | Auxiliary-object geometry paths: a quadword at `+0xA80`, followed by scalar w at `+0xA8C`. |
+| `0x0078E0C0` | Primary snapshot reset: clears the word at `primary+0xA8C+index*0x40` while clearing the four 0x40-byte [snapshot banks](collision.md#query-result-and-snapshot-records). |
+
+The adjacent stage aliases have narrower destinations. The first-family
+builder forms the count pointers `ccBgControl+0xA8C/+0xA8D` at live
+`0x006C34E0/0x006C34F8`, then writes **one byte** with value 1 through that
+pointer at live `0x006C3508`. Its `+0xA90/+0xA94` aliases hold separately
+allocated four-byte head tables. The second-family builder similarly writes
+count 1 at `+0xA98+index` and allocates a one-entry head table at
+`+0xA9C+index*4`. Each head can lead to multiple line records; the count is
+not the number of records. Neither builder writes the active-index bytes.
+
+The vector alias `ccBgControl+0xA80` reaches live `0x006C4370`, raw
+`0x010470`. Its complete reserve body writes only header capacity `+0x00` and
+data pointer `+0x08`, reads size `+0x04`, and copies heap entries; it does not
+overwrite the count or active-index bytes beyond that 0x0C header. The
+destructor's `+0xA90/+0xA9C` aliases free the heap head tables. The two
+[getters](#cached-line-attribute-consumers) at live `0x00708D60/0x00708DA0`
+load the active index, dereference its head-table entry, and return without
+stores. Initialization and these builders therefore support active head 0 with
+count 1 for each populated section; they do not establish an authored choice
+among multiple heads.
+
+The audit covers the recovered adjacent aliases and ordinary wider stores, not
+unaligned partial stores or arbitrary pointer arithmetic that reaches these
+bytes without an identified base. The complete active-index writer set remains
+unresolved outside the traced paths.
+
+### Boundary clamp and floor-profile queries
+
+The boundary clamp (preserved `FUN_006c22d0`, live `0x006C2310`, wrapper live
+`0x00708A80`), the piecewise boundary resolver, and the floor-profile query
+(preserved `FUN_006c2570`, live `0x006C25B0`, wrapper live `0x00708CE0`) over
+these records belong to [Collision](collision.md#stage-query-functions). In
+summary, the clamp limits component 0 of a `vec4` to a selected config's two
+endpoints, and the floor-profile query interpolates component 2 over the
+selected section's lines, returning `-32768.0` when no line or background
+control applies.
 
 ## Stage-specific configuration and numeric branches
 
@@ -886,8 +1048,7 @@ axis names are not assumed.
 | 23 / 4 / S24 | `c0=[-200,-100,0,100] @ (c1,c2)=(0,0)` | `c0=[-200,-100,0,100] @ (c1,c2)=(0,0)` |
 
 The table consumer begins at preserved `FUN_006c12c0`, file `0x00D400`,
-live `0x006C1300`; the exporter's apparent `FUN_006c1300` is the continuation
-`0x40` inside it. Given output vector, query vector, and side byte, it selects
+live `0x006C1300`. Given output vector, query vector, and side byte, it selects
 the active slot from manager `+0x98`, scans that side's array, copies the
 strictly nearest anchor to the output, and returns a side byte. Equal distance
 keeps the earlier raw-table element. If no live field/background exists, it
@@ -895,8 +1056,9 @@ leaves a zero vector and returns side 0.
 
 The raw call at Ghidra `0x00798E58`, file `0x0E4F98`, live `0x00798E98`, is
 inside preserved `FUN_00798df0` (file `0x0E4F30`, live `0x00798E30`). That
-method feeds object `+0x330` as the query, uses zero or the associated fighter's
-section byte at `+0x9F6` as the side, writes the returned side to object
+method feeds object `+0x330` as the query, reads the associated fighter's
+section with signed `lh` at `+0x9F6` (or uses zero), masks the helper argument
+to one byte, writes the returned side to object
 `+0x39C` and `+0x54C`, and later copies the chosen anchor back to `+0x330`.
 Its wrapper at preserved `FUN_0079c100`, file `0x0E8240`, live `0x0079C140`,
 is resident vtable `0x005FB240` slot `+0xBC`. The vtable's RTTI descriptor
@@ -912,9 +1074,7 @@ The forced values do not change which side array was searched.
 
 Preserved `FUN_006c2400`, file `0x00E540`, live `0x006C2440`, classifies a
 small set of load slots from `ccBgControl+0x0C`. The usable wrapper is preserved
-`FUN_00708c30`, file `0x054D70`, live `0x00708C70`; apparent wrappers
-`FUN_00708b20` and `FUN_00708bf0` are false target annotations caused by the
-overlay shift. If no active background control exists, the wrapper returns
+`FUN_00708c30`, file `0x054D70`, live `0x00708C70`. If no active background control exists, the wrapper returns
 code 1 without calling the classifier.
 
 The classifier returns:
@@ -929,9 +1089,8 @@ The classifier returns:
 
 The two full anchor vectors are at file/live `0x1DCB80 / 0x00890A80` and
 `0x1DCB90 / 0x00890A90`: `(-700, 950, 400, 0)` and
-`(700, 950, 400, 0)`. Their correct Ghidra-located items are
-`0x00890A40` and `0x00890A50`; the same-numeric `DAT_00890a80/90` annotations
-are wrong.
+`(700, 950, 400, 0)`; their preserved Ghidra locations are `0x00890A40` and
+`0x00890A50`.
 
 The consumer chain resolves the high-level role: these values are
 stage/position-dependent surface or background **effect-variant columns**, not
@@ -1033,8 +1192,9 @@ The complete authored instances are:
 
 ## Geometry-driven navigation graph
 
-Preserved `FUN_00708d60`, file `0x054EA0`, live `0x00708DA0`, returns the
-active second-family line list for a side. Preserved `FUN_006f1f20`,
+The first-family accessor at preserved `0x00708D20`, file `0x054E60`, live
+`0x00708D60`, returns the active first-family line list for a section.
+Preserved `FUN_006f1f20`,
 `FUN_006f2160`, and `FUN_006f24a0` scan those linked segments with
 `FUN_006f1180` and select the nearest intersecting line. When fighter/object
 flags at `+0xBB4` contain `0x800`, a candidate additionally requires line
@@ -1045,11 +1205,14 @@ target line pointers to indices in a maximum-32-pointer BSS array, then finds
 each line's side/section by walking the active lists. A side mismatch sets
 per-agent state 4 and cancels the route. The runtime tables are:
 
-| Ghidra | Live | Shape | Role |
-| ---: | ---: | --- | --- |
-| `DAT_008d6500` `0x008D6500` | `0x008D6540` | up to 32 line pointers | line-to-index map |
-| `DAT_008d6200` `0x008D6200` | `0x008D6240` | 64 records of `0x0C` bytes | navigation adjacency records |
-| `DAT_008d69d0` `0x008D69D0` | `0x008D6A10` | 64 visited bytes | recursive route search state |
+| Encoded live base | Shape | Role |
+| ---: | --- | --- |
+| `0x008D6500` | up to 32 line pointers | line-to-index map |
+| `0x008D6200` | 64 records of `0x0C` bytes | navigation adjacency records |
+| `0x008D69D0` | 64 visited bytes | recursive route search state |
+
+These BSS addresses are encoded absolute operands; see the
+[address conventions](../game/files/file_identities.md#address-conventions).
 
 Each adjacency record contains signed source line index at `+0x00`, signed
 destination line index at `+0x01`, a `float` point fraction at `+0x04`, and a
@@ -1057,14 +1220,20 @@ route/action type byte at `+0x08`. Preserved `FUN_006f3510` and
 `FUN_006f3550` recursively search the records. A chosen point is reconstructed
 as `endpointA + (endpointB - endpointA) * fraction`.
 
-Preserved `FUN_006f63a0`, file `0x0424E0`, live `0x006F63E0`, consumes the
+Preserved entry `0x006F6360`, file `0x0424A0`, live `0x006F63A0`, consumes the
 chosen route/type and writes movement yaw near `+/- pi/2`, direction/state
 flags `1`, `2`, and `0x100000`, while consulting fighter section `+0x9F6`.
-Direct users of the route chooser include `FUN_006f63a0`, `FUN_006f7e70`, and
-`FUN_006fb800`. This is confirmed as a line- and section-driven fighter
-navigation planner. Static evidence does not yet distinguish CPU-only
-navigation from a shared player/CPU section-crossing mechanism, so it is not
-called an arena transition system here.
+The route chooser's 15 direct BTL JAL callsites all fall within preserved
+`0x006F493C..0x0070375C`, the AI decision/dispatch region: AI dispatcher state
+4 calls this route executor at preserved `0x006FBA04`, and its route helpers
+call planner live `0x006F37B0`. No direct planner JAL exists in the retail
+resident ELF or ETC overlay. **Confirmed:** the planner produces AI traversal
+input on the ordinary battle path, and the AI tick runs only for fighters with
+a nonzero controller nibble
+([Battle AI](battle_ai.md#controller-ownership-and-lifecycle)); this does not
+exclude indirect callers. The tick, its command output, and the route states
+belong to [Battle AI](battle_ai.md#main-tick-and-output-boundary) and
+[path states](battle_ai.md#alternate-target-position-sources-and-path-states).
 
 ## Animated and breakable-background evidence
 
@@ -1079,12 +1248,14 @@ restarts its animation.
 
 Direct vtable linkage identifies the owner as `ccBgBreakObjectBattle`.
 Its resident vtable `0x005DDAE0` slot `+0x08` is live `0x006C4AD0`, the actual
-body beginning at preserved `FUN_006c4a90`, file `0x010BD0`; Ghidra's phantom
-start at `0x006C4AD0` truncates the export. This full method performs contact
-tests and animation handling, calls `FUN_006c4770` on an accepted contact,
-and stores playback state at `+0x180`. When count `+0x34` reaches threshold
-`+0x38`, it also calls live `0x00715F90` (preserved `FUN_00715f50`, file
-`0x062090`) with `(bit(contact+0x60, 0) + 1, 0x0C, 1)`.
+body beginning at preserved `FUN_006c4a90`, file `0x010BD0`. This method
+performs contact tests and animation handling, calls `FUN_006c4770` on an
+accepted contact, and stores playback state at `+0x180`. When count `+0x34`
+reaches threshold `+0x38`, it also calls battle-statistic adder live
+`0x00715F90` (preserved `FUN_00715f50`, file `0x062090`) with
+`(bit(contact+0x60, 0) + 1, 0x0C, 1)`, adding one to metric 12 for the
+contacting fighter's side; the credit rules belong to
+[Match outcomes](battle_statistics.md#ninja-tools-and-stage-objects).
 Vtable slot `+0x14` is live `0x006C5190`, preserved `FUN_006c5150`, which
 parses the configuration fields.
 
@@ -1107,7 +1278,7 @@ the two global combatant slots through `FUN_003769C0`; the other is queried
 through `FUN_001DDD80(receiver, 1)` and resolved through `FUN_001DD1A0`,
 `FUN_001DCA40`, and `FUN_00222A40`. It rejects candidates whose `+0x10` has
 mask `0x00F00000` or bit 2, or whose `+0x14` has bit `0x02000000`. An accepted
-candidate advances only the background break state and event counter. This
+candidate advances only the background break state and battle statistic. This
 class method contains no fighter-health/state write or class-specific damage
 call, and `ccBgAttackHit` has no damage/update vtable slot. It is therefore
 documented as a reusable contact receiver rather than an attack implementation.
@@ -1126,10 +1297,11 @@ Preserved `FUN_006c5b20`, Ghidra/file/live
 animation/fade/reset cycle using state `+0x28`, count `+0x2C`, timer `+0x30`,
 opacity `+0x38`, list `+0x3C`, active index `+0x44`, flag `+0x48`, and config
 `+0x4C`. Its accepted-contact path repeats the same receiver-mask filtering,
-calls actual trigger `FUN_006c57c0`, and emits live `0x00715F90` (preserved
-`FUN_00715f50`, file `0x062090`) when `+0x48` is nonzero. In state 0 with a nonzero remaining count, it waits more
-than `0x78` frames, resets model/index/playback `+0x190` and opacity, decrements
-a finite count, and enters state 1. State 1 raises opacity by `0.05` per frame
+calls actual trigger `FUN_006c57c0`, and adds metric 12 through statistic
+adder live `0x00715F90` when `+0x48` is nonzero. In state 0 with a nonzero
+remaining count, it waits more
+than `0x78` ticks, resets model/index/playback `+0x190` and opacity, decrements
+a finite count, and enters state 1. State 1 raises opacity by `0.05` per tick
 to `1.0`, then clears state/opacity/flag and fixes model opacity at one.
 Vtable slot `+0x0C` is live `0x006C6200`, preserved `FUN_006c61c0`, and slot
 `+0x14` is live `0x006C6350`, preserved `FUN_006c6310`. Its factory begins at
@@ -1140,7 +1312,7 @@ preserved `FUN_006c6790`, file `0x0128D0`, live `0x006C67D0`, allocates
 `0x005DD870`. Its slot `+0x08` is live `0x006CDD80`, actual preserved body
 `0x006CDD40`, file `0x019E80`; this separate method also contains an explicit
 `0.05` opacity rise and `>0x78` reset/reborn timer. It first runs the base
-break update. Only at the final break stage does it wait 120 frames, reset
+break update. Only at the final break stage does it wait more than 120 ticks, reset
 model zero/index/playback `+0x180`, decrement the finite repeat count at
 `+0x194`, and fade back in. Completion clears the state and restores break
 count `+0x34` to zero. Parser slot `+0x14`, actual preserved `0x006CE020`, maps
@@ -1149,7 +1321,7 @@ preserved `0x006CE070`, file `0x01A1B0`, live `0x006CE0B0` and allocates
 `0x1A0` bytes. This proves a timed finite-or-repeating rebirth mechanic, but
 the archive census further limits its construction to `S01` and `S08`. All
 three S01 and all five S08 authored strings end in repeat value `-1`, the
-nondecrementing repeat sentinel, so every clean instance is configured to
+nondecrementing repeat sentinel, so every retail instance is configured to
 rebirth indefinitely.
 
 Other class-specific state behavior is statically distinct:
@@ -1166,13 +1338,25 @@ Other class-specific state behavior is statically distinct:
   motion with mask `0x20000000`, subtracts `3.0` from vertical velocity while
   unsupported, and propagates the resulting transform to every model and
   effect. At the final break stage it advances/enables all models instead.
-- `ccBgCrashBreakBattle` is combatant-state/proximity driven and invokes the
-  base break trigger on separate paths for the two combatants. Its class method
-  likewise contains no direct fighter-damage write.
+- `ccBgCrashBreakBattle` update preserved/file/live
+  `0x006CA860 / 0x0169A0 / 0x006CA8A0` scans both fighters only while break
+  count differs from threshold, and requires fighter section `+0x9F6` to equal
+  object `+0x184`. Flag `+0x190` bit 1 accepts major state 5 with substate
+  `0x42/0x43/0x48`, a nonzero animation predicate `0x002118A0`, and absolute
+  component-0 distance from object `+0x160` below `+0x194`. Bit 2 instead
+  accepts substates `0x45/0x46/0x49` and component-2 distance from `+0x168`
+  greater than half `+0x198`. Each accepted path calls the base break trigger
+  once and leaves the fighter scan. Reaching the threshold calls `0x001BAEE0`
+  on every model and adds one to battle metric `0x13` (19) through statistic
+  adder live `0x00715F90`; side argument 1 is selected when the responding
+  fighter's side bit is set, otherwise 2, crediting the opposite side
+  ([Match outcomes](battle_statistics.md#ninja-tools-and-stage-objects)). The update then sets
+  the active model step from the scene factor and advances it. This method
+  contains no direct fighter-damage write.
 
 Two S13-only moving props have separate mechanics. `ccHandRowShip` record 33
 uses factory preserved `0x006CFCF0`, file `0x01BE30`, live `0x006CFD30`, and
-update preserved `0x006CF990`, file `0x01BAD0`, live `0x006CF9D0`. Each frame
+update preserved `0x006CF990`, file `0x01BAD0`, live `0x006CF9D0`. Each tick
 it tests both fighters against an axis-aligned region around ship center
 `+0x50`: component deltas below `160`, `30`, and `150`. Entry sets an
 object-owned per-fighter contact flag, clamps bounce velocity to at most
@@ -1195,28 +1379,67 @@ model/playback/break state. Frames 410/350/250/206/60/0 emit effect `0x1017`.
 Its destructibility comes from that ordinary break-receiver path; this update
 has no explicit fighter hit.
 
-`ccElectricWire`, instantiated by S19, S21, and S24, is a reactive wire
-simulation rather than a proved damaging hazard. Its factory is preserved
-`0x006C9A50`, file `0x015B90`, live `0x006C9A90`, allocating `0x100` bytes.
+`ccElectricWire`, instantiated by S19, S21, and S24, owns reactive wire
+simulation, visual geometry, and registered environment-query geometry. Its
+factory is preserved `0x006C9A50`, file `0x015B90`, live `0x006C9A90`,
+allocating `0x100` bytes.
 Parser preserved `0x006C8490`, file `0x0145D0`, live `0x006C84D0`, resolves
 three configured resources/models, establishes endpoints at `+0xD0/+0xE0`,
-fixes segment count `+0x54` to 15, allocates node arrays `+0x60/+0x64/+0x68`
-and collision segments `+0xF0`, and initializes per-fighter indices
+fixes interior-node count `+0x54` to 15, allocates node arrays `+0x60/+0x64/+0x68`
+and sixteen collision segments at `+0xF0`, and initializes per-fighter indices
 `+0x94/+0x98` to `-1`.
 
-Update preserved `0x006C8EC0`, file `0x015000`, live `0x006C8F00`, scans both
-fighters. A candidate must be within about 20 units of endpoint Y, between the
-endpoint X values, within 150 units of endpoint Z, and carry the matching key
-at fighter `+0xBB8`; fighter state/action `+0x18E` selects a reaction case. The
-helper chooses a nearest segment and writes only wire excitation, sag, and
-per-fighter tracking fields. The sole fighter-side call in the class range is
+**Confirmed construction and refresh:** segment builder preserved/file/live
+`0x006C88D0 / 0x014A10 / 0x006C8910` allocates `(+0x54 + 1)` elements
+of `0x1F0` bytes. Its callback at live `0x006C8C50` installs
+`ccWireHitModel` vtable `0x005DD9D0` and invokes resident initializer
+`0x003A8490`. Each endpoint pair is passed to resident `0x003A8520`, which
+stores the endpoints at element `+0x1A0/+0x1B0`, calls `0x003A88A0`, and
+registers the element's environment object through `0x001BEFA0(object,0)`.
+That mode selects the already-world-space path. The object at element
+`+0x180` points back to the element's packed bounds/triangle hierarchy;
+element `+0x1C0` separately owns the four-vertex visual model. Resident
+`0x003A8BE0` builds one group containing two triangles and updates aggregate
+and group bounds. Both generic segment queries and the fighter query walk
+the registered environment chain; their selection rules belong to
+[Collision](collision.md#resident-segmentenvironment-broad-and-narrow-phases)
+and [Stage surface attributes](stage_surface_attributes.md#query-eligibility-and-contact-classes).
+
+The wire's attribute word at wire `+0x28`, its copy to each element, and the
+attributes of the initial and rebuilt triangles belong to
+[Generated wire polygon attributes](stage_surface_attributes.md#generated-wire-polygon-attributes).
+Configuration sets dirty byte `+0xF4 = 1` and invokes the installed update
+slot before appending the wire to the scene's owning list. The update
+returns without refreshing when resident `0x003AE660` is nonzero; the shared
+predicate is bounded under [Update eligibility and local timing](#update-eligibility-and-local-timing).
+Otherwise both zero- and nonzero-amplitude branches call dirty-refresh helper
+preserved/file/live `0x006C9550 / 0x015690 / 0x006C9590`. If dirty, it walks
+all sixteen endpoint pairs and calls resident `0x003A85A0`, which replaces
+the endpoints and rebuilds through `0x003A8BE0`; it then clears the dirty
+byte. The nonzero-oscillation branch sets that byte again after the refresh.
+
+Update preserved `0x006C8EC0`, file `0x015000`, live `0x006C8F00`, invokes
+fighter-reaction helper preserved `0x006C8CE0`, live `0x006C8D20`, which scans
+both fighters. A candidate must be within 20 units of the endpoint's component
+1, within the endpoints' component-0 range, within 150 units of endpoint
+component 2, and have retained polygon
+word `fighter+0xBB8 == wire+0x28`; this is full-word equality, not a masked
+contact-code comparison. Fighter state/action `+0x18E` selects a reaction case.
+Helper preserved `0x006C9650`, live `0x006C9690`, retains the last node index
+whose component 0 is strictly below the fighter's component 0 and writes only
+wire excitation, sag, and per-fighter tracking fields. The sole fighter-side
+call in the class range is
 `FUN_002118A0(fighter+0x1B8, 0)`, a read-only animation/frame-state predicate.
 A raw JAL audit over preserved `0x006C8490..0x006C9AFF` finds no
 `FUN_002335F0` and no other fighter hit/damage call. The compiled class reacts
 physically/visually to fighter movement but does not directly hit or modify a
-fighter. Its `ccWireHitModel` elements are also visual proxies: their vtable
-has only a destructor, while resident helpers create/update/submit a
-four-vertex primitive from each segment's two endpoints.
+fighter. That absence applies to the class's explicit hit path: it does not
+exclude consequences when generic fighter movement selects the generated
+polygons. The helper elements' destructor-only vtable does not make them
+visual-only; their resident helpers also create, rebuild, register, and
+release the environment-query objects described above. Neither this trace
+nor the attribute word alone establishes fighter damage or a measured contact
+outcome.
 
 The sole S10 `ccBgSuspensionBridge` is likewise a deformable surface, not a
 proved hazard. Factory preserved `0x006CD0E0`, file `0x019220`, live
@@ -1249,7 +1472,7 @@ fighter-impact call is present.
 The sole S16 `ccTumbleGrass` record is a trajectory- and wind-reactive clump
 system. Factory preserved `0x006CDC70`, file `0x019DB0`, live `0x006CDCB0`,
 allocates `0x34` bytes; parser preserved `0x006CD650`, file `0x019790`, live
-`0x006CD690`, maps the clean `...,5,80` tokens to five optional visual
+`0x006CD690`, maps the retail `...,5,80` tokens to five optional visual
 variants and 80 `0x30`-byte `ccGrassInfluence` clumps. Update preserved
 `0x006CD9A0`, file `0x019AE0`, live `0x006CD9E0`,
 tests each fighter trajectory within radius 150 and writes only clump reaction
@@ -1261,10 +1484,38 @@ write, attack receiver, transition, or damage call.
 The `ccBgFootMarkBattle` records in S12, S16, and S18 are also tied to their
 authored resources. Parser preserved `0x006D39C0`, file `0x01FB00`, live
 `0x006D3A00`, resolves the configured archive and model name and passes the
-integer variant/count token to resident `FUN_003A6A70`. That helper constructs
-two-by-two arrays of `0x30`-byte nodes, each owning a `0xB0` model object. This
-proves the construction behind the class name; its exact placement/update
-policy remains outside the recovered path.
+integer token to resident `FUN_003A6A70`. The token is a surface-selection
+bitmask at object `+0x28`, not a pool-size count. Construction always creates
+30 `0x30`-byte mark nodes per foot for each of two fighters: four pools and
+120 nodes, each owning a `0xB0` model. Every node starts inactive with opacity
+limit `0.5` and fade decrement `0.01`.
+
+The class update, preserved/file/live `0x006D39E0 / 0x01FB20 / 0x006D3A20`,
+requires a non-null battle global at resident `0x00607600` and a zero result
+from live BTL `0x007064B0`. Until both fighter-binding flags `+0x3F0/+0x3F4`
+are set, helper live `0x006D3B00` retries binding each available fighter's
+`+0xE6C` model collection to `OBJ_2cmn00t0 l foot` and
+`OBJ_2cmn00t0 r foot`. These are borrowed foot-model pointers.
+
+Resident update `0x003A6550` queries each bound foot from component-2 offsets
+`+5` to `-100` through `0x001BF100`, mask `0x20000001`. A result other than
+`-1` and at most 20 establishes contact only when surface predicate
+`0x003A6CC0` accepts the query's attribute word for selection bitmask `+0x28`;
+its code table belongs to
+[Footprint surface selection](stage_surface_attributes.md#footprint-surface-selection).
+Accepted contact caches the foot transform and
+surface normal. A later missing or more distant result emits one mark if the
+previous contact latch was set, then clears the latch. Merely remaining in
+contact does not continuously emit marks, and a close unselected surface does
+not take that emission branch.
+
+Placement helper `0x003A6300` takes the first inactive node from that foot's
+30-node pool; a full pool skips emission. It uses the retained orientation and
+surface normal, raises component 2 by 4, sets opacity to `0.5`, and writes the
+mark model's transform. In the same eligible update, all pool nodes lose
+`0.01` opacity and become inactive below `0.01`. Pool exhaustion, contact
+edges, and fade are therefore explicit local state, with no fighter write or
+fighter-impact call in this path.
 
 The sole S13 `ccBgMangroveBattle` derives its construction from
 `ccBgLandingTreeBattle`. Derived parser preserved `0x006D3CA0`, file
@@ -1272,8 +1523,34 @@ The sole S13 `ccBgMangroveBattle` derives its construction from
 uses the remaining `OBJ_obj_121,DMY_ki_dummy` tokens. The base tokens create
 three `0xB0` elements from formatted `OBJ_obj_120_a%d` names around
 `DMY_dummy_010`; the derived half creates another three from
-`OBJ_obj_121_a%d` and applies the `DMY_ki_dummy` transform. This is exact
-resource construction, not evidence of fighter impact.
+`OBJ_obj_121_a%d` and applies the `DMY_ki_dummy` transform.
+
+LandingTree update preserved/file/live
+`0x006C9F70 / 0x0160B0 / 0x006C9FB0` calls the complete reaction helper at
+live `0x006CA310` (preserved `0x006CA2D0`). It checks both fighters against
+the current tree center: absolute component-0 distance at most half configured
+`+0x54`, component-2 distance at most `+0x58`, and component-1 distance at most
+200. Out-of-range fighters clear their individual latches at `+0x5C/+0x5D`.
+In range, fighter `+0xBB4 & 0x2000D801` must be nonzero. Major states 0/1
+and 4 can arm a new latched reaction; state 2 reacts only with an existing
+latch, nonzero fighter `+0x998`, and substate other than 23, then clears the
+latch. Other major states require fighter `+0xB9A == 1` and a clear latch.
+For states 0/1, `+0xB9A >= 9` pre-arms the latch and suppresses a new impulse.
+The accepted paths queue amplitude `-50`, initialize it immediately if idle,
+and call resident `0x00336630` with the stage surface classifier's result,
+configured width, scalar 2, and integer 10. The numeric effect's visual name
+is unresolved; this helper contains no fighter hit call or fighter write.
+
+The displacement update samples a shared resident float table using index
+`+0x50`, advances that index by 4 per invocation, and multiplies the sample
+by amplitude `+0x64` into component-2 displacement `+0x78`. At the table's
+signed-halfword length it adopts a queued stronger negative impulse or halves
+the amplitude, and resets the index; magnitude below `0.5` clears the motion.
+It then applies the displaced center to every inherited model. Mangrove's
+derived update, preserved/file/live
+`0x006D3F90 / 0x0200D0 / 0x006D3FD0`, first runs that update, then positions
+its second model group at `derived_origin - (current_center - original_center)`.
+The two groups thus move in opposite directions under the same reaction.
 
 `ccHadesMarshSnake`, constructed only by `S15 #27`, is the proved exception to
 the breakable-only receiver behavior. Its factory is preserved
@@ -1312,7 +1589,9 @@ attack source at `+0x260`, and attack descriptor/config at `+0x200`.
 Its state at `+0x2E8` drives a complete drop/impact cycle:
 
 1. State 0 uses receiver `+0xE0` only to swing and receiver `+0x50` to accept a
-   filtered contact, emit the preserved `FUN_00715f50` event, and enter state 1.
+   filtered contact, add metric 12 through statistic adder live `0x00715F90`
+   ([Match outcomes](battle_statistics.md#ninja-tools-and-stage-objects)), and
+   enter state 1.
 2. State 1 applies acceleration `9.8`, lowers the current transform, advances
    the break model on impact, spawns debris/effects, and enters state 2.
 3. For its first 61 ticks, state 2 enables receiver `+0x170`; every eligible
@@ -1321,10 +1600,10 @@ Its state at `+0x2E8` drives a complete drop/impact cycle:
    `0x1001`. It then disables the receiver, removes debris, and enters state 3.
 4. State 3 restores the initial transform after break state `+0x48` clears.
 
-An independent rebirth loop waits more than 120 frames while broken, resets
+An independent rebirth loop waits more than 120 ticks while broken, resets
 model zero, decrements a finite repeat count, and fades opacity in by `0.05`
-per frame before clearing the broken state. This proves that the S21 chandelier
-drops, enters fighter hit processing during a 61-frame impact window, cleans
+per tick before clearing the broken state. This proves that the S21 chandelier
+drops, enters fighter hit processing during a 61-tick impact window, cleans
 up, can respawn when configured, and reaches the common HP path below.
 
 A raw-overlay scan finds exactly two BTL JAL encodings of resident
@@ -1332,7 +1611,7 @@ A raw-overlay scan finds exactly two BTL JAL encodings of resident
 `0x01DA7C / 0x006D193C / 0x006D197C` for the snake and
 `0x01EE8C / 0x006D2D4C / 0x006D2D8C` for the chandelier. They are therefore
 the only statically proved stage-object users of this explicit fighter-hit
-entry in the clean BTL overlay.
+entry in the retail BTL overlay.
 
 ### Proven stage-object hit-to-HP path
 
@@ -1342,38 +1621,28 @@ Resident `FUN_002335F0` calls ordinary-response initializer
 `FUN_00249640` at `0x00233834 / 0x00133934` in the same call. The initializer
 selects major state 5 and arms the primary response timeline; it contains no
 HP store. The immediate dispatcher sends major state 5 to
-`FUN_00234DA0`, whose armed event-zero path calls `FUN_002346B0` at
-`0x00234DD4 / 0x00134ED4`.
+`FUN_00234DA0`, whose armed event-zero path calls ordinary damage consumer
+`FUN_002346B0` at `0x00234DD4 / 0x00134ED4`. That consumer calls calculator
+`FUN_00224E30` at `0x00234A80 / 0x00134B80` and HP subtractor
+`FUN_00225050` at `0x00234A94 / 0x00134B94`, whose Practice, ordinary, and
+zero-clamp HP stores are runtime/file `0x00225174 / 0x00125274`,
+`0x002251C0 / 0x001252C0`, and `0x002251DC / 0x001252DC`. The consumer's
+record reads, the calculator, and HP application belong to
+[Native damage calculation](damage.md#native-damage-calculation),
+[Calculator formula](damage.md#calculator-formula), and
+[Damage application](damage.md#damage-application).
 
-`FUN_002346B0` reads the retained attack record at fighter `+0xE54`, including
-raw damage at record `+0x24` and the signed repeat/sample value at `+0x2E`.
-It calls calculator `FUN_00224E30` at `0x00234A80 / 0x00134B80`, then calls
-HP subtractor `FUN_00225050` at `0x00234A94 / 0x00134B94`. The subtractor writes
-fighter floating-point HP at `+0x6C`: its Practice-mode subtraction store is
-runtime/file `0x00225174 / 0x00125274` and floors at `0.01`; its ordinary
-subtraction store is `0x002251C0 / 0x001252C0`; its zero clamp is
-`0x002251DC / 0x001252DC`, which also clears fighter `+0x61` bit `0x08`.
-
-Both stage classes build records that pass the statically visible normal
-damage gates. The Hades snake initializes record `+0x24 = 0.05`, `+0x2E = 1`,
-response selector `+0x2C = 0x12` and `+0x28 = 1.8` for attack states 7/8, or
-selector `0x15` and `+0x28 = 1.0` for state 9. The chandelier uses
-`+0x24 = 0.05`, `+0x2E = 1`, `+0x28 = 1.0`, and selector `+0x2C = 0x1E`.
-These map to ordinary response families rather than the excluded
-`0x42..0x49` range. The target must still be living/active, the two
-attack-disable bits must be clear, and the relevant mode query must not return
-6.
-
-For both records, `FUN_002346B0` supplies calculator flags `0x122` and the
-base value is exactly `0.05 / 1`. `FUN_00224E30` omits attacker-offense scaling
-for these flags, then multiplies by a piecewise defender-durability factor from
-clamped fighter `+0x14C`: `2-d` below 1, a linear `1 -> 0.5` segment over
-`1..1.5`, and a linear `0.5 -> 0.3` segment over `1.5..3`. It multiplies that
-by `1.5` when defender `+0x80` is nonzero; by
-`max(0.1, 2.0 - FUN_00306C80(defender))`; and by the paired-fighter factor at
-`(*(defender+0x20))+0x16C` times defender `+0x170`. The final calculator result
-is clamped to `0..1` before HP subtraction. Thus the exact delta is contextual,
-but its full static scaling path is established rather than untraced.
+Both stage classes build records that pass the
+[ordinary-hit damage gates](damage.md#ordinary-hit-damage-gates). The Hades
+snake initializes record `+0x24 = 0.05`, `+0x2E = 1`, response selector
+`+0x2C = 0x12` and `+0x28 = 1.8` for attack states 7/8, or selector `0x15`
+and `+0x28 = 1.0` for state 9. The chandelier uses `+0x24 = 0.05`,
+`+0x2E = 1`, `+0x28 = 1.0`, and selector `+0x2C = 0x1E`. These map to
+ordinary response families rather than the excluded `0x42..0x49` range. For
+both records, `FUN_002346B0` supplies calculator flags `0x122` and the base
+value is exactly `0.05 / 1`, so the HP delta is scaled by the defender's
+durability, reservation, temporary-effect, and handicap factors and clamped
+to `0..1`; its exact value is contextual.
 
 A source response callback does not bypass these stage hits. Both source
 objects are constructed with source `+0x0C = -1`; the optional callback path
@@ -1449,9 +1718,8 @@ raw JAL targets live `0x006C29E0` then `0x006C29A0`. It then frees remaining
 vector storage at control `+0xA88`, frees the control, clears `ccField+0x70`,
 tears down the embedded `ccGameObjCtrl` at `ccField+0x60`, and finally
 tears down/frees the `ccField` when requested. Those targets resolve to preserved `FUN_006c29a0`, the large
-control cleanup, and `FUN_006c2960`, the global deregistration helper. The
-export's same-numeric `FUN_006c29e0` and `FUN_006c29a0` call annotations are
-shifted and wrong; live `0x006C2A20` is not called here.
+control cleanup, and `FUN_006c2960`, the global deregistration helper; live
+`0x006C2A20` is not called here.
 
 The control cleanup walks and destroys every element in the config vector,
 frees every linked line list and both sides' pointer arrays, and invokes the
@@ -1485,6 +1753,16 @@ destruction remains centralized:
 None of these destructors releases the scene/archive handle; each finishes
 through the common `ccBgObject` teardown and optional self-free.
 
+The wire vector's element callback is live BTL `0x006C8860`, preserved
+`0x006C8820`, file `0x014960`. It calls resident `0x003A84C0` before
+destroying the embedded visual helper. Resident cleanup releases environment
+object `element+0x180` through `0x001BEF30(object,1)`; its active-object
+branch invokes `0x001BF020`, which unlinks it from the environment chain,
+updates head/tail/count, and clears registration state before freeing it.
+Cleanup separately destroys visual model `+0x1C0` through `0x001996B0` and
+clears both pointers. This proves collision deregistration as well as visual
+cleanup for the wire's ordinary local destruction path.
+
 The standalone `ccFieldCtrl` is destroyed by its parent owner, not by the
 field's embedded-control teardown. Root destruction calls live `0x00709280`
 (preserved `FUN_00709240`, file `0x055380`), whose owner teardown at live
@@ -1493,23 +1771,24 @@ That method walks the member list through live `0x00709F40` and invokes each
 member's virtual destructor, reaching `ccField` live `0x007088A0` before the
 standalone controller itself is released.
 
-On the normal path, controller state 16 `FUN_001edd10` calls `FUN_001eecd0`,
-clears the main runtime-object global, and proceeds to state 17. Mode 8 instead
-branches directly to state 23 or 24; those handlers, `FUN_001ee1c0` and
-`FUN_001ee500`, perform the same graph teardown first. State 24 does so before
-releasing or switching either archive. `FUN_001eefd0`, called by the graph
-destructor, invokes the BTL stage-aware controller destructor at live
-`0x0076ECF0`, destroys the rest of the battle graph, and clears the manager's
-fighter-pointer arrays.
+The complete session teardown order belongs to
+[Battle lifecycle](battle_lifecycle.md#teardown-order). On the normal path,
+controller state 16 `FUN_001edd10` destroys the battle graph through
+`FUN_001eecd0` (whose `FUN_001eefd0` destroys the pause controller,
+the graph, and the manager's fighter-pointer arrays) and proceeds to state 17.
+The result-8 continuation instead branches to state 23 or 24; those handlers,
+`FUN_001ee1c0` and `FUN_001ee500`, perform the same graph teardown first, and
+state 24 does so before releasing or switching either archive.
 
 Only afterward does state 17, `FUN_001edee0`, release common resources, the
 four-resource BTL bundle (`shade.ccs`, `gauge.ccs`, `strmcmn.ccs`, and
 `ougi.ccs`) through live `0x007691A0`, the selected stage archive through live
 BTL `0x006C3160`, both players' fighter-resource handles, and the
-`FUN_00207e20(slot)` stage-associated resource. The same
-archive-release helper is called by central cleanup `FUN_001e9730` and by the
-stage-switch path `FUN_001ee500`. This proves graph-before-archive ordering for
-the orderly state16-to-17 path and for state24 switching.
+`FUN_00207e20(slot)` stage-associated resource; see
+[archive lifetime](battle_lifecycle.md#archive-lifetime-is-separate-from-session-lifetime).
+The same archive-release helper is called by central cleanup `FUN_001e9730`
+and by the stage-switch path `FUN_001ee500`. This proves graph-before-archive
+ordering for the orderly state-16-to-17 path and for state-24 switching.
 
 It is not a universal emergency-cleanup guarantee. Two higher-level destructor
 paths call central cleanup `FUN_001e9730` before conditionally destroying a
@@ -1534,228 +1813,11 @@ lookups, not a reference-count decrement.
 
 ## NUN3 battle stages compared with NA2
 
-This section compares the clean NUN3 (`SLUS-21727`) battle-stage
-implementation with the NA2 implementation above. NUN3 inputs are identified in
-[Standard game file identities](../game/files/file_identities.md); the stage
-archives are the clean NUN3 `DATA.CVM` extraction's `STAGE/` directory. NUN3
-`BATTLE.BIN` addresses below are live addresses; the preserved Ghidra address
-is live `- 0x40` and the file offset is live `- 0x007BB800`.
-
-### Archive set and CCS format
-
-**Observations:**
-
-- NUN3 `STAGE/` holds `S01.CCS` through `S20.CCS` and eight summon archives,
-  `KTYS_BNT`, `KTYS_KTY`, `KTYS_MND`, `KTYS_SKK`, `KTYS_SKK2`, `KTYS_SKR`,
-  `KTYS_STR`, and `KTYS_TYO`. NA2 `STAGE/` holds only `S01` through `S24`.
-- Every archive in both directories is a gzip CCS stream whose compressed and
-  decompressed sizes equal that game's `GZLIST.TXT` entry, whose chunk-2
-  version halfword is `0x123`, and whose section walk ends at the type-5
-  terminator.
-- The section tags used by NUN3 `S01` through `S20` are a subset of the
-  resident dispatcher documented in
-  [Resident CCS object-type identities](../game/files/ccs_object_types.md):
-  `0x0100..0x0400`, `0x0600..0x0B00`, `0x0C00`, `0x0E00`, `0x1300`, `0x1400`,
-  `0x1900`, `0x2000`, plus one `0x0500` camera in `S12` and
-  `0x0D80`/`0x0D90` generator records in `S10` and `S17`. NUN3 `S05` has three
-  `0x0600` lights; every other `Sxx` archive in both games has exactly one,
-  `LGT_dis_0`. No NUN3 stage archive contains a
-  `0x2400` section or a `BIN_bgdata` object; every NA2 stage archive does.
-- Decompressed sizes: NA2 `S01..S24` range from 531,692 bytes (`S17`) to
-  1,323,828 bytes (`S24`). NUN3 `S01..S20` range from 1,032,152 bytes (`S13`)
-  to 1,412,076 bytes (`S08`); 13 of the 20 exceed NA2's largest archive
-  (`S01`, `S03`, `S04`, `S07`, `S08`, `S09`, `S12`, `S14`, `S15`, `S17`,
-  `S18`, `S19`, `S20`).
-
-| NUN3 archive | Compressed | Decompressed | NUN3 archive | Compressed | Decompressed |
-| --- | ---: | ---: | --- | ---: | ---: |
-| `S01` | 574,632 | 1,352,844 | `S11` | 495,333 | 1,149,440 |
-| `S02` | 600,237 | 1,266,532 | `S12` | 801,730 | 1,367,924 |
-| `S03` | 638,320 | 1,375,380 | `S13` | 459,399 | 1,032,152 |
-| `S04` | 626,606 | 1,355,476 | `S14` | 730,753 | 1,399,060 |
-| `S05` | 431,639 | 1,187,584 | `S15` | 559,613 | 1,388,844 |
-| `S06` | 599,084 | 1,273,552 | `S16` | 530,068 | 1,083,280 |
-| `S07` | 601,986 | 1,386,132 | `S17` | 616,814 | 1,394,120 |
-| `S08` | 675,392 | 1,412,076 | `S18` | 591,845 | 1,360,832 |
-| `S09` | 457,467 | 1,344,808 | `S19` | 617,828 | 1,351,304 |
-| `S10` | 409,507 | 1,177,460 | `S20` | 671,990 | 1,404,100 |
-
-NA2 loads stage archives through the flag-0 streamed loader (see
-[Resident CCS runtime](../game/files/ccs_runtime.md)), which does not keep a
-decompressed copy. Decompressed size is therefore only a proxy for the
-resident heap cost of a stage; the actual allocation total and the free heap
-at battle start were not measured.
-
-**Confirmed shared encoding:** for NA2/NUN3 archive pairs that carry the same
-stage content (next table), same-named `0x0800` model, `0x0100` object, and
-`0x1300` dummy sections are frequently byte-identical, or identical in length
-with differences only in words below `0x4000` (object-table indices, which
-differ because the two archives number their objects differently). For
-example, 198 of the 223 `MDL_` sections in NA2 `S14` match NUN3 `S16` this
-way, and 209 of 223 `0x0100` sections do. Model, object, and dummy sections
-therefore use the same payload encoding in both games; only index references
-need renumbering between archives.
-
-### Stage content already shared with NA2
-
-Comparing hit-mesh payloads (ignoring their first four words), same-named
-model sections, and dummy positions gives these pairs:
-
-| NA2 archive (slot / logical ID) | NUN3 archive (table index, name) | Evidence |
-| --- | --- | --- |
-| `S08` (7 / 8) | `S07` (6, 木ノ葉の森, Konoha forest) | 38 identical and 36 index-only-different of 137 models; 3 of 7 hit meshes |
-| `S09` (8 / 9) | `S03` (2, 第４４演習場死の森, Forest of Death) | 5 of 5 hit meshes; 65 identical of 68 dummies; line counts below |
-| `S10` (9 / 10) | `S14` (13, 終末の谷, Valley of the End) | 5 of 6 hit meshes; 45 identical dummies |
-| `S13` (12 / 13) | `S10` (9, ナルト大橋, Great Naruto Bridge) | 7 of 11 hit meshes; 48 index-only-different models |
-| `S14` (13 / 14) | `S16` (15, 中忍試験会場, Chunin exam arena) | 198 of 223 models, 209 of 223 objects |
-| `S15` (14 / 15) | `S18` (17, 短冊街のはずれ, Tanzaku outskirts) | 72 of 102 models; 35 identical dummies |
-| `S16` (15 / 16) | `S13` (12, 君麻呂戦の草原, Kimimaro battle field) | 5 of 5 hit meshes; 132 identical dummies |
-| `S23` (22 / 3) | `S15` (14, 物見やぐら, watchtower) | 60 of 78 models; 55 identical dummies |
-| `S24` (23 / 4) | `S09` (8, 短冊街, Tanzaku Town) | 5 of 5 hit meshes; 83 identical dummies; line counts below |
-
-These are reworked versions, not copies: every pair also has differing
-models, animations, and dummies. Texture sections were compared only by raw
-payload hash, and none matched; whether texture pixels are shared was not
-established. No match of
-this kind was found for NUN3 `S01`, `S02`, `S04`, `S05`, `S06`, `S08`, `S11`,
-`S12`, `S17`, `S19`, or `S20`, nor for NA2 `S01..S07`, `S11`, `S12`, or
-`S17..S22`.
-
-### NUN3 stage table and scene records
-
-**Confirmed:** NUN3 has no `BIN_bgdata` parser, no `takaCreateBackGround`
-string, and no `ccBg*`, `ccField`, or `ccBgControl` class names in either
-`SLUS_217.27` or `BATTLE.BIN`. Its per-stage scene configuration is compiled
-into `BATTLE.BIN` as record tables.
-
-The stage table is 27 pointers at live `0x00913450` (file `0x157C50`),
-terminated by a zero word. Each pointer addresses a zero-terminated array of
-`0x20`-byte records:
-
-| Offset | Field |
-| ---: | --- |
-| `+0x00` | Shift-JIS label pointer (an empty string for unlabeled records) |
-| `+0x04` | record type: category in bits 8..15, subtype in bits 0..7 |
-| `+0x08`, `+0x0C`, `+0x10` | resource-name pointers (for example `ANM_..._n1`, `_d1`, `_n2`), or zero |
-| `+0x14` | configuration: consecutive NUL-terminated tokens read by resident `0x0018F190(string, n)`, which returns the `n`th token |
-| `+0x18`, `+0x1C` | two signed integers, `-1` when unused |
-
-Record 0 of every table is type 1; its label is the stage name and `+0x08` is
-the archive path. The table indices are:
-
-| Index | Archive | Label |
-| ---: | --- | --- |
-| 0 | `stage/s01.ccs` | ラーメン一楽 |
-| 1 | `stage/s02.ccs` | 歴代火影の顔岩 |
-| 2 | `stage/s03.ccs` | 第４４演習場死の森 |
-| 3 | `stage/s04.ccs` | 英雄の慰霊碑 |
-| 4 | `stage/s05.ccs` | 桔梗城天守閣 |
-| 5 | `stage/s06.ccs` | 木ノ葉温泉 |
-| 6 | `stage/s07.ccs` | 木ノ葉の森 |
-| 7 | `stage/s08.ccs` | 風影の屋敷 |
-| 8 | `stage/s09.ccs` | 短冊街 |
-| 9 | `stage/s10.ccs` | ナルト大橋 |
-| 10 | `stage/s11.ccs` | 砂肝亭と仏像 |
-| 11 | `stage/s12.ccs` | 音忍戦の森 |
-| 12 | `stage/s13.ccs` | 君麻呂戦の草原 |
-| 13 | `stage/s14.ccs` | 終末の谷 |
-| 14 | `stage/s15.ccs` | 物見やぐら |
-| 15 | `stage/s16.ccs` | 中忍試験会場 |
-| 16 | `stage/s17.ccs` | サバイバル演習場 |
-| 17 | `stage/s18.ccs` | 短冊街のはずれ |
-| 18 | `stage/s19.ccs` | ザブザの隠れ家 |
-| 19 | `stage/s20.ccs` | 修練の崖 |
-| 20..26 | `stage/ktys_skk/str/bnt/kty/mnd/skr/tyo.ccs` | 口寄せ（…）summon scenes |
-
-`stage/ktys_skk2.ccs` is present as a `BATTLE.BIN` string but not in this
-table. The consumers of the table were not traced beyond archive handling:
-live `0x007D1FC0` passes the record-0 path to resident `0x0018EE90(path, 0)`,
-live `0x007D2010` and `0x007D1E20` look it up by basename through
-`0x00160870`/`0x00160800` and store the handle at `0x00945910`, and resident
-`0x0028AC30` also indexes the overlay table directly. None of these helpers
-range-checks the index; only a null table entry is rejected.
-
-### NUN3 scene-record dispatch
-
-The scene constructor begins at live `0x007C26C0` (preserved `FUN_007c2680`,
-file `0x006EC0`) and takes the control object and the table index. It writes
-the index to two optional global objects, then walks the records and jumps
-through the 15-entry table at live `0x00929B90` (file `0x16E390`) using
-`type >> 8`. After the walk it runs fixed setup calls. **Confirmed** handler
-behavior:
-
-| Category | Handler (live) | Confirmed behavior |
-| ---: | --- | --- |
-| 0 | inline | Strip the path to its basename, adopt the archive through `0x00160870` into control `+0x22C`, resolve `BLT_bg` and `BLT_obj` through `0x0015F440` into `+0x21C`/`+0x220`, and store the index at `+0x8C`. |
-| 1 | `0x007C7180` | Parse seven tokens: RGB into `+0x1B8`, then four floats into `+0x1BC..+0x1C8`, and call resident `FUN_0010BF80`, which stores near/far distances and converts the two percentages to fog coefficients `(100 - p) * 2.55` with a linear ramp between the distances. This is the fog setup. |
-| 2 | `0x007C7300` | Empty (`jr ra`); its clean tokens such as `0,-2750,800` have no effect. |
-| 10 | `0x007C6870` | Player records `プレイヤー１/２`; token 3 is `DMY_pp1_010` / `DMY_pp2_010`, resolved through `0x0015F440`. |
-| 11 | `0x007C6910` | Front/back (`前`/`後`) line family; token 3 is `DMY_line_010` / `DMY_line_020` and token 5 is that family's node count. |
-| 12 | none | Skipped by this constructor (type `0xC0A` in three stages). |
-| 13 | `0x007C7310` | Lighting: record `+0x08` names the light animation (`ANM_stalig00` in every stage) and the handler formats `LGT_dis_%d` names. |
-| 14 | `0x007C7870` | Front/back records whose token 5 is the number of `DMY_{f,b}_cl_N_*` lines. |
-
-Categories 3, 4, 5, 6, 7, 8, and 9 dispatch to live `0x007C7CC0` (followed by
-`0x007C3A40(index)`), `0x007C8900`, `0x007C8A10`, `0x007CF7E0`, `0x007CC810`,
-`0x007CDCC0`, and `0x007CF7D0`; their internals were not traced, and no clean
-record uses category 9.
-
-The node-count tokens were checked against the archives: category 11 gives 2
-and 18 `DMY_line_0x0` nodes for index 0, matching `S01`'s node counts, and
-index 3's category 14 back count of 3 matches `S04`'s `DMY_b_cl_1_ewr`,
-`DMY_b_cl_2_ewr`, and `DMY_b_cl_3_nor`. NUN3 `BATTLE.BIN` contains the same
-`DMY_linemin01/02`, `DMY_linemax01/02`, and `DMY_%scl_%d_nor/ewr/mov` strings
-as NA2 BTL.
-
-The labels and resources of the uninterpreted categories identify their
-content, but not their implementation:
-
-| Type | Stages | Example label (gloss) and resources |
-| --- | ---: | --- |
-| `0x301`, `0x38A`, `0x390`, `0x392` | 20, 8, 4, 3 | sky/far animations; `回る空` (rotating sky), `最遠景グレア` (far-view glare) |
-| `0x401` | 20 | main stage animation `ANM_*are00` |
-| `0x502` | 5 | `電線` (electric wire) with `DMY_dummy_010`/`020` endpoints |
-| `0x526`, `0x528`, `0x582`, `0x583` | 8, 3, 9, 1 | swaying grass, leaves, and trees (`OBJ_eda_*`, `CMP_ki_*`) |
-| `0x52B`, `0x52D`, `0x51B` | 8, 3, 6 | falling, rising, and blowing leaves (`CMP_*efe*`) |
-| `0x579`, `0x57B`, `0x57D`, `0x587` | 1 each | water surface, rowing boat, mangrove, suspension bridge |
-| `0x578` | 1 | `足跡` (footprints) |
-| `0x595..0x59E` and other `0x5xx` | 1..2 | stage-specific effects (memorial water, hot-spring steam, waterfalls) |
-| `0x601`, `0x690` | 7, 8 | `透過柱` transparent pillars with `DMY_*has*_hit` and a radius; frame animations |
-| `0x7xx` | 1..2 | stage creatures and props (toad, snake, spiders, fish, flags) |
-| `0x81C`, `0x81D` | 20 | `訓練君` / `うっきー君` training dolls with `DMY_dd_010`/`DMY_pg_*` and break objects |
-| `0x801..0x87C` | 1..5 | breakable props with `_n1`/`_d1`/`_n2` animations and `OBJ_bre_*` debris |
-
-### Correspondence with NA2 records
-
-**Confirmed:** every one of NUN3 `S01..S20` contains all node and resource
-names that NA2's mandatory records and line builders request: `DMY_pp1_010`,
-`DMY_pp2_010`, both `DMY_line_010`/`DMY_line_020` pairs, the four
-`DMY_linemin/max` nodes, `LGT_dis_0`, `ANM_stalig00`, `BLT_bg`, `BLT_obj`, and
-`DMY_{f,b}_cl_N_{nor,ewr,mov}` lines using the same naming scheme.
-
-**Supported:** NUN3 categories map onto NA2 factories by shared node names,
-resource names, and token shapes:
-
-| NUN3 record | NA2 record |
-| --- | --- |
-| category 0 archive and `BLT_bg`/`BLT_obj` | slot path table and factory 31 |
-| category 1 fog | factory 10 (RGB plus four numbers; token order and units differ) |
-| category 10 players | factories 33/34 |
-| category 11 line nodes, token 5 | factories `0x23`/`0x24` (node count) |
-| category 14 `cl` lines, token 5 | factories `0x25`/`0x26` (line count) |
-| category 13 lighting | factory 18 `ccBgLightDistant` |
-| rotating sky, glare | factories 8 `ccBgRotateSky`, 11 `ccBgGlareFilter` |
-| swaying tree / grass, flags, wind bell, falling leaves | factories 5, 7, 6, 30, 108 |
-| `0x601` transparent pillars | factory 40 `ccBgTransObject` |
-| `0x81C` training doll, `0x8xx` breakables | factories 41 `ccBgBreakDollBattle`, 50/78/80/102 |
-| electric wire, rowing boat, mangrove, suspension bridge, footprints, crane truck | factories 43, 82, 95, 68, 93, 83 |
-
-The line-count correspondence is exact where the stage is shared: NUN3
-index 8 (Tanzaku) has 14/14 `DMY_line` nodes and 8/9 `cl` lines, and NA2 `S24`
-has 7/7 second-family records and 8/9 first-family records; NUN3 index 2
-(Forest of Death) has 10/10 and 5/5, and NA2 `S09` has 5/5/5/5. The individual
-NUN3 handlers for the remaining categories were not compared with the NA2
-classes, so their token formats are not assumed to be interchangeable.
+The retail NUN3 battle-stage archives, compiled scene-record tables, summon
+scenes, and their correspondence with the NA2 records above are documented in
+[NUN3 battle stages](nun3_stages.md). That comparison lists the NA2 archives
+that reuse NUN3 stage content in
+[Stage content shared with NA2](nun3_stages.md#stage-content-already-shared-with-na2).
 
 ## Address index
 
@@ -1790,7 +1852,9 @@ classes, so their token formats are not assumed to be interchangeable.
 | `FUN_006c7c90` | `0x006C7C90` | `0x013DD0` | `0x006C7CD0` | `TransAnm` config parser |
 | `FUN_006c80a0` | `0x006C80A0` | `0x0141E0` | `0x006C80E0` | `TransAnm` proximity update |
 | `FUN_006c8490` | `0x006C8490` | `0x0145D0` | `0x006C84D0` | `ElectricWire` config parser |
+| `FUN_006c88d0` | `0x006C88D0` | `0x014A10` | `0x006C8910` | construct wire segment array |
 | `FUN_006c8ec0` | `0x006C8EC0` | `0x015000` | `0x006C8F00` | `ElectricWire` reactive update |
+| `FUN_006c9550` | `0x006C9550` | `0x015690` | `0x006C9590` | refresh dirty wire collision geometry |
 | `FUN_006c9a50` | `0x006C9A50` | `0x015B90` | `0x006C9A90` | `ElectricWire` factory |
 | `FUN_006cba10` | `0x006CBA10` | `0x017B50` | `0x006CBA50` | suspension-bridge parser |
 | `FUN_006ccb60` | `0x006CCB60` | `0x018CA0` | `0x006CCBA0` | bridge geometry/physics pass |
@@ -1808,22 +1872,18 @@ classes, so their token formats are not assumed to be interchangeable.
 | `FUN_006f2160` | `0x006F2160` | `0x03E2A0` | `0x006F21A0` | nearest intersecting line query |
 | `FUN_006f24a0` | `0x006F24A0` | `0x03E5E0` | `0x006F24E0` | vertical intersecting line query |
 | `FUN_006f3770` | `0x006F3770` | `0x03F8B0` | `0x006F37B0` | line-index and route selection |
-| `FUN_006f63a0` | `0x006F63A0` | `0x0424E0` | `0x006F63E0` | consume navigation route/type |
+| actual route-executor entry | `0x006F6360` | `0x0424A0` | `0x006F63A0` | consume navigation route/type |
 | `FUN_00708760` | `0x00708760` | `0x0548A0` | `0x007087A0` | `ccField` constructor |
 | `FUN_00708860` | `0x00708860` | `0x0549A0` | `0x007088A0` | `ccField` destructor |
 | `FUN_00708a40` | `0x00708A40` | `0x054B80` | `0x00708A80` | field boundary-clamp wrapper |
 | `FUN_00708c30` | `0x00708C30` | `0x054D70` | `0x00708C70` | field classifier wrapper |
 | `FUN_00708ca0` | `0x00708CA0` | `0x054DE0` | `0x00708CE0` | field floor-profile wrapper |
+| raw accessor entry | `0x00708D20` | `0x054E60` | `0x00708D60` | active first-family line accessor |
 | `FUN_00708d60` | `0x00708D60` | `0x054EA0` | `0x00708DA0` | active second-family line accessor |
 | `FUN_00709440` | `0x00709440` | `0x055580` | `0x00709480` | construct linked camera/command/player/field graph |
 | `FUN_007099e0` | `0x007099E0` | `0x055B20` | `0x00709A20` | `ccField` factory/list attachment |
-| `FUN_0076e990` | `0x0076E990` | `0x0BAAD0` | `0x0076E9D0` | construct stage-tagged special-sequence aggregate |
-| `FUN_0076ebd0` | `0x0076EBD0` | `0x0BAD10` | `0x0076EC10` | refresh aggregate slot-tagged auxiliary state |
-| `FUN_0076ecb0` | `0x0076ECB0` | `0x0BADF0` | `0x0076ECF0` | destroy aggregate-owned backend and buffers |
 
 ### Resident lifecycle and scene functions
-
-Resident functions do not use the BTL `+0x40` correction.
 
 | Function | Runtime | ELF file | Role |
 | --- | ---: | ---: | --- |
@@ -1838,7 +1898,7 @@ Resident functions do not use the BTL `+0x40` correction.
 | `FUN_001edb70` | `0x001EDB70` | `0x0EDC70` | state 15 graph readiness/update |
 | `FUN_001edd10` | `0x001EDD10` | `0x0EDE10` | state 16 graph teardown |
 | `FUN_001edee0` | `0x001EDEE0` | `0x0EDFE0` | state 17 archive and fighter-resource-handle release |
-| `FUN_001ee500` | `0x001EE500` | `0x0EE600` | rematch/stage-switch resource path |
+| `FUN_001ee500` | `0x001EE500` | `0x0EE600` | result-8 continuation stage-switch resource path |
 | `FUN_001eefd0` | `0x001EEFD0` | `0x0EF0D0` | main battle-graph teardown |
 | `FUN_001ef330` | `0x001EF330` | `0x0EF430` | heavy battle-graph construction |
 | `FUN_001ef8f0` | `0x001EF8F0` | `0x0EF9F0` | main graph readiness driver |
@@ -1866,15 +1926,12 @@ Important resident callsites are stage enqueue at runtime/ELF
 
 ## Remaining questions
 
-- Resolve the exact context scaling and possible source-callback override
-  between the snake/chandelier raw damage `0.05` and the final HP delta.
-- Establish whether the line-route planner is CPU-only or shared with player
-  section crossing.
-- Resolve the exact semantic role of line record `+0x2C` after the midpoint
-  raycast.
-- Trace the consumers of `ccBgControl+0xAB0/+0xAC0` (`DMY_pp*_010`) and of the
-  factory-10 scene words and factory-17 globals.
-- Trace NUN3 scene categories 3 through 9 and compare their token formats with
-  the supported NA2 factory counterparts.
-- Measure the heap consumed by a loaded stage archive and the free heap at
-  battle start.
+- Identify a semantic reader of cached line `+0x2C` beyond the navigation,
+  direct-accessor, and head-table alias paths audited above; no reader is
+  established by those paths.
+- Name factory-17's render coefficients from their material/lighting context,
+  beyond the established packet writes.
+- Resolve the unexamined NA2 factories and numeric route/effect codes.
+- Identify remaining writers of scene factor `scene+8` and the unassigned
+  update-restriction, effect, and surface-code semantics without inferring
+  elapsed-time units.

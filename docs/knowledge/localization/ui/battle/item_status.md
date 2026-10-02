@@ -1,21 +1,24 @@
 # Battle item-status presentation
 
+Binary identities and address conventions are defined in the
+[Standard game file identities](../../../game/files/file_identities.md).
+
 ## Research coverage
 
-- **Assigned scope:** compare clean NA2 and NUN5 battle item-status renderers and atlas bindings.
+- **Assigned scope:** compare retail NA2 (`SLPS-25837`) and NUN5 battle
+  item-status renderers and atlas bindings.
 - **Exploration depth:** the relevant binaries, native callers, records, and
   paired screen states were examined.
 - **Confirmed coverage:** the documented owners, structures, and cross-game
   differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
-- **Deliberate exclusions and overlap:** feature imports, hooks, and validation
-  belong to [UI layout](../../../../features/localization/ui_layout.md) or
-  [UI textures](../../../../features/localization/ui_textures.md).
+- **Deliberate exclusions and overlap:** item selection, pickup, and inventory
+  belong to [Battle item inventory](../../../gameplay/battle_item_inventory.md);
+  item effects and status timing belong to
+  [Battle items and status effects](../../../gameplay/battle_items_and_status_effects.md);
+  item names belong to [Field-item names](../../field_item_names.md).
 - **Evidence limitations:** bounded states do not cover every animation phase or
   indirect caller.
-
-Binary identities and address conventions are defined in the
-[Standard game file identities](../../../game/files/file_identities.md).
 
 ## Paired item-status labels
 
@@ -36,10 +39,10 @@ NUN5 `SLES_556.05` ranges `0x4B86F8..0x4B874B` and
 
 ### Reconstructed behavior
 
-The paired path can be summarized as:
+NUN5's paired path can be summarized as:
 
 ```cpp
-float widthScale = normalizeDonorWidth(itemCode);
+float widthScale = normalizeRecordWidth(itemCode);
 Vec2 foregroundOrigin = {0.0f, -33.0f};
 PairLayout layout = pairLayout(rank, row, widthScale);
 drawBubble(transformed, widthScale, 1.0f, layout.rotation);
@@ -53,17 +56,16 @@ drawPairForeground(
 );
 ```
 
-Relative to the native transformed position, the class-foreground origin
-changes from NA2 `(-33,-42)` to `(0,-33)`; the bubble stays at the unshifted
-native position.
+Relative to the transformed position, NA2 places the class foreground at
+`(-33,-42)` and NUN5 at `(0,-33)`; both draw the bubble at the unshifted
+position.
 The complete NUN5 rank offsets are `(20,-30)`, `(-64,-63)`, and `(0,-96)`;
-NA2 had `(50,-20)`, `(-16,-62)`, and `(30,-104)`.
+NA2 uses `(50,-20)`, `(-16,-62)`, and `(30,-104)`.
 
 ### Shared foreground renderer difference
 
-Paired, numeric, and fixed foregrounds use NUN5's anisotropic sprite
-behavior; single labels use the native uniform wrapper. The relevant boot-ELF
-homologs are:
+The relevant boot-ELF homologs of the resident anisotropic sprite renderer
+are:
 
 | Role | NA2 | NUN5 |
 | --- | --- | --- |
@@ -72,17 +74,8 @@ homologs are:
 
 Both homologs receive horizontal scale, alpha, and rotation separately. NUN5
 keeps scale in `f22`, alpha in `f21`, and rotation in `f20`; it scales the
-sprite dimensions with `f22` and stores `f21` as alpha. Reusing NA2's
-centered-offset instruction after adopting that register allocation instead
-rebuilds the offsets from alpha:
-
-```cpp
-sprite->localX = -(alpha * sprite->width) / 2.0f;
-sprite->localY = -(alpha * sprite->height) / 2.0f;
-sprite->alpha = alpha;
-```
-
-NUN5 instead uses `f22`, yielding:
+sprite dimensions with `f22`, stores `f21` as alpha, and builds the centered
+offsets from `f22`:
 
 ```cpp
 sprite->localX = -(scale * sprite->width) / 2.0f;
@@ -90,25 +83,14 @@ sprite->localY = -(scale * sprite->height) / 2.0f;
 sprite->alpha = alpha;
 ```
 
-That register mismatch makes the foreground offsets vary with alpha. In a
-controlled paired fade, intended offsets `-7`, `-23`, and `-5` became
-`-4.2`, `-13.8`, and `-3.0` at alpha `0.6`. Using NUN5's scale register
-retained the intended offsets through fade-in and alpha `0.0` fade-out.
-
-Changing the BTL wrapper's anisotropic argument order moved the bubbles and
-did not correct the foreground transition. The centered-offset register is the
-isolated cause; no object-field, timing, atlas, or item-effect change is
-required. Both preserved ELF exports, exact source bytes, saved object fields,
-and isolated runtime captures verify the finding.
+NA2's centered-offset instruction negates `f21` rather than `f22`. The preserved
+ELF exports and exact source bytes establish both instructions.
 
 ### Evidence and limits
 
 Evidence consists of paired BTL/ELF disassembly, unique source byte ranges,
-live-memory reconstruction, and a paired raster comparison. Both foreground
-labels and the white-bubble bounds match NUN5; a one-pixel bubble-top difference
-tracks normal pulse timing. Other item classes have different constructors and
-geometry, so the paired draw path cannot be transplanted wholesale. Confidence
-in the paired-class mapping is **verified**.
+and live-memory reconstruction. Other item classes have different constructors
+and geometry. Confidence in the paired-class mapping is **verified**.
 
 ## Numeric item-status labels and recovery values
 
@@ -160,23 +142,17 @@ void drawTopLabel(ItemObject *item, Vec4 position, int x, int y) {
 The NUN5 digit path establishes a negative-50 X origin and then adds
 `14/23/32`, `18/28`, or `24` for three-, two-, or one-digit values. The
 resulting positions are `-36/-27/-18`, `-32/-22`, and `-26`. NA2's object
-layout and renderer ABI differ, so copying the complete NUN5 functions is
-unsafe. The donor origin must be applied exactly once; applying it before
-literal donor position edits would apply the origin twice.
+layout and renderer ABI differ from NUN5's.
 
 ### Evidence and limits
 
 The traced draw paths select records and presentation geometry. They do not
 own item values, recovery arithmetic, effect timing, allocation, object links,
-or atlas content. NUN5's object `+0x40` scale field is incompatible with the
-NA2 next-object pointer at the same offset.
+or atlas content. NUN5's object `+0x40` is a scale field, whereas NA2 stores
+the next-object pointer at the same offset.
 
 Evidence includes complete NA2/NUN5 BTL decompilation and instruction
-exports, exact boot-ELF record bytes, live numeric-object fields, and runtime
-captures containing simultaneous Health and Chakra labels with Recovery
-values. Numeric and paired foreground and bubble geometry match NUN5 at
-640x480; remaining subpixel differences follow animation timing. Confidence is
-**verified**.
+exports, exact boot-ELF record bytes, and live numeric-object fields.
 
 ## Single item-status labels
 
@@ -213,8 +189,8 @@ The homologous draw paths reduce to:
 void drawSingleStatus(SingleItemObject *object, Vec4 input) {
     uint32_t record = singleRecordForObjectCode(object->code);
     Vec4 position = input;
-    position.x += 0.0f;       // NA2 originally added 33
-    position.y += 33.0f;      // NA2 originally added 42
+    position.x += 0.0f;       // NA2 adds 33
+    position.y += 33.0f;      // NA2 adds 42
 
     float angle = 0.0f;
     if (record == 0x82 || record == 0x99) {
@@ -232,15 +208,12 @@ float singleBubbleScale(const SingleItemObject *object) {
 }
 ```
 
-The NUN5 `+0x40` scale field cannot be copied into NA2 because the
-homologous NA2 field is a next-object pointer. NUN5 uses width scale `1.90625`
+The homologous NA2 field at `+0x40` is a next-object pointer rather than
+NUN5's scale field. NUN5 uses width scale `1.90625`
 for object code `0x09` and `1.0` for every other single record. Record
 `0x82` and `0x99` use a quarter-turn; the other mapped records use zero
-rotation. The class retains its distinct uniform sprite wrapper.
-
-A direct call to the lower anisotropic renderer produced no foreground
-because it bypassed the uniform wrapper's argument shuffle. The two renderer
-interfaces are therefore not interchangeable.
+rotation. In both games the class draws through its distinct uniform sprite
+wrapper.
 
 ### Evidence and limits
 
@@ -250,9 +223,7 @@ status, damage, allocation, object links, and resource identity are outside
 these draw paths.
 
 Evidence consists of both complete BTL functions, identical mapping tables,
-unique boot-ELF record ranges, live vtable and object inventories, and runtime
-captures of simultaneous single/status notifications. The observed states
-match NUN5 bubble bounds, label centers, clipping, and row placement.
+unique boot-ELF record ranges, and live vtable and object inventories.
 
 ## Substitution-doll pickup atlas binding
 
@@ -292,11 +263,8 @@ animation phase. NA2 record `0x0A` supplies `(161,193,30,30)`; NUN5 record
 record `0x0A` in both games, the same-index NUN5 record is the homologous
 geometry source.
 
-A cross-index substitution into NA2 record `0x2E` changed restored geometry
-only; the next updater pass selected record `0x0A` again. Copying the complete
-record table remains unsupported because other semantic record IDs are not
-globally aligned. Exact source bytes and matched live objects verify the
-same-index mapping.
+Other semantic record IDs are not globally aligned between the two tables.
+Exact source bytes and matched live objects verify the same-index mapping.
 
 ## Fixed two-label item status
 
@@ -309,9 +277,9 @@ same-index mapping.
 | Fixed width update | absent from the NA2 object ABI | file `0x5DB20`, Ghidra `FUN_007247e0`, live `0x00724820` |
 | Fixed-class vtable | live `0x005DDE80` | live `0x005EB370` |
 
-The class always draws record `0x8E` followed by record `0x8D`. Their
-official NUN5 rectangles are the same records used by the paired and numeric
-classes; the fixed class has no separate texture or table donor.
+The class always draws record `0x8E` followed by record `0x8D`. In NUN5 these
+are the same records used by the paired and numeric classes; the fixed class
+has no separate texture or table.
 
 ### Reconstructed behavior
 
@@ -329,23 +297,11 @@ void drawFixedStatus(FixedItemObject *object, Vec4 input) {
 }
 ```
 
-NA2 originally used `(+38,+11)` for record `0x8E` and `(+18,+25)` for record
-`0x8D`. NUN5 obtains each live donor width, halves it with signed integer
-rounding, subtracts that value from X, then applies `+20` or `+37` to Y. The
-NUN5 whole-function body cannot be copied safely because its fixed object owns
-a scale at `+0x40`, where NA2 stores the next-object pointer, and it calls a
-NUN5-only width-query helper.
+NA2 uses `(+38,+11)` for record `0x8E` and `(+18,+25)` for record `0x8D`. NUN5 obtains each live record width, halves it with signed integer
+rounding, subtracts that value from X, then applies `+20` or `+37` to Y. Its
+fixed object owns a scale at `+0x40`, where NA2 stores the next-object
+pointer, and it calls a NUN5-only width-query helper.
 
 NUN5 centers each record from its live table width and applies Y offsets
 `20` and `37`. Both draws use zero rotation, and the fixed bubble width scale
-is `102/64 = 1.59375`. These values do not require changing the NA2 object
-layout.
-
-### Evidence and limits
-
-A controlled class substitution exercised each game's native fixed-class
-vtable. Both objects retained identical positions and NUN5 offsets, and the
-NUN5 object received the traced `1.59375` scale. The native functions rendered
-`Status Effect` and `Recovery` with matching label centers relative to the
-bubble at 640x480. A four-pixel whole-object screen delta accompanied a
-one-frame pulse difference and did not change internal placement.
+is `102/64 = 1.59375`.

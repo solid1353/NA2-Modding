@@ -14,9 +14,8 @@ flow.
   confirmation statuses are identified.
 - **Unresolved or untested:** the minimum independently sufficient subset of
   regional Save/Load handler changes.
-- **Deliberate exclusions and overlap:** NA228 selection and validation belong
-  to [Regional input](../../../features/localization/regional_input.md); compact
-  one-record presentation belongs to [Memory Card](../../../features/memory_card.md).
+- **Deliberate exclusions and overlap:** this inventory covers retail regional
+  handlers only; no modified selection or presentation is described.
 - **Evidence limitations:** combined runtime behavior does not prove that every
   participating native handler is independently necessary.
 
@@ -41,5 +40,4 @@ mask used by the status-`0x0B` and status-`0x0C` confirmation paths.
 [`function_map.tsv`](function_map.tsv) records reusable NA2/NUN5 input-handler
 functions, offsets, and button masks. Its offsets and masks were validated
 against the clean regional binaries; row notes contain only handler-specific
-limitations or runtime corroboration. Mod behavior and its runtime evidence are
-linked from [Regional input](../../../features/localization/regional_input.md).
+limitations or runtime corroboration.

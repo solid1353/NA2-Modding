@@ -246,6 +246,57 @@ coverage; their complete visual alignment and icon-bearing cases remain
 unconfirmed. The correction retains those structural positions; it does not
 apply a universal X/Y shift. Its runtime appearance remains unverified.
 
+## Matched-screen measurements
+
+Across 20 identical black-text samples, median NA2 differences from NUN5 were
+-2 pixels in visible width, -2 pixels in visible height, `0.850782x` total
+dark-ink pixels, and `1.018280x` dark-ink density inside the smaller bounds.
+The font was therefore not a uniformly enlarged or uniformly heavier raster.
+String-dependent width differences and caller-dependent vertical offsets show
+that no single global scale, tracking, X, or Y correction accounts for the
+cross-game differences.
+
+Paired captures exercise both selected states of the Collection exit selector.
+Cross-state differencing separates each glyph raster from the translucent
+dialog and establishes that both Yes states were one output pixel right and
+one output pixel low. The No X origin matched; its unselected Y matched, while
+its selected style was one output pixel high.
+
+## Rejected approaches
+
+- Replacing NA2 GF4 with the exact NUN5 GF4, padded or unpadded, produced broad
+  spacing and patchy glyph rendering. A direct first-123-cell copy is
+  structurally invalid because of the
+  [cell-semantic differences](../../knowledge/localization/font/assets.md#na2-and-nun5-cell-and-palette-differences);
+  it would remove punctuation used by translated mappings.
+- A later semantic import retained the mismatched punctuation cells, relocated
+  NUN5 cell `63` to NA2 cell `32`, and imported same-semantic ranges. Runtime
+  review still rejected it: ordinary letters did not materially improve, while
+  numeric outlines and alpha behavior were damaged. All 84 compared visible
+  printable cells retained identical masks and metrics relative to their
+  parent; the meaningful difference was palette interpretation.
+- A coupled NUN5 GF4C swap is unsafe for untouched NA2 raster data: NUN5 maps
+  palette index 15, used by about 15.2 percent of NA2's primary raster pixels,
+  to black instead of white, so the swap reinterprets that pixel population.
+  Indices 13 and 14 are unused by that raster and could change without
+  reinterpreting a referenced pixel, but their visual usefulness has not been
+  tested; this is not a recommended palette change.
+- The isolated descriptor-height experiment at ELF file offset `0x88064`
+  changed `0C 00 20 C6` to `10 00 20 C6`. It produced a 28x28 quad instead of a
+  Y-only correction, stretching both axes by 16.7 percent while logical
+  measurement stayed unchanged. Runtime captures showed damaged outlines and no
+  useful alignment improvement. Changing NA2's shared width load from 24 to 28
+  likewise produces 28x28 and damages horizontal geometry; the
+  [cross-game difference](../../knowledge/localization/font/renderer_metrics.md#glyph-geometry)
+  is specifically secondary vertical extent.
+- Changing only secondary tracking from `-1.0` to `0.0` leaves spacing and
+  boxed measurement inconsistent; tracking must be considered with the
+  [ordinary-space and fit paths](../../knowledge/localization/font/renderer_metrics.md#tracking-and-ordinary-spaces).
+  Applying only NUN5's `128 / measured_width` threshold to the NA2 legacy
+  measurement path also makes different fit decisions, including incorrectly
+  shrinking `Linked Attack`. Neither isolated change represents the NUN5
+  renderer contract.
+
 ## Knowledge
 
 - [Font assets](../../knowledge/localization/font/assets.md)

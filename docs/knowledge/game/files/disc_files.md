@@ -1,10 +1,10 @@
 # NA2 Game File Reference
 
-This is the canonical human-readable map of the files on the original NA2 disc
-and the major families nested inside them.
+This is the canonical human-readable map of the files on the retail NA2
+(`SLPS-25837`) disc and the major families nested inside them.
 
 Exact hashes and shared executable address conventions are in
-[Standard game file identities](file_identities.md).
+[Retail game file identities](file_identities.md).
 
 This document explains semantics. The
 [media-layout inventory index](media/README.md) owns the exact structural
@@ -20,15 +20,19 @@ inventories and their provenance.
   NA2/NUN5 comparisons, and existing disassembly and runtime evidence; the
   inspection is explicitly shallow where noted.
 - **Confirmed coverage:** The storage hierarchy, executable and overlay roles,
-  font and archive formats, audio populations, movie container properties,
+  font and archive formats, audio populations, movie container properties and
+  the movie player's one-VBlank presentation,
   DATA.CVM structure, and the listed CCS-family roles are established to the
   evidence level stated for each entry.
 - **Unresolved or untested:** The purposes of `OUT1M.BIN`, several IOP and audio
   ownership boundaries, the exact numbered-movie scenes, dormant movie suffix
   rows, and filename-inferred CCS families remain unresolved.
 - **Deliberate exclusions and overlap:** Exact layouts belong to the
-  [media inventories](media/README.md); runtime file services, CCS internals,
-  and replacement constraints belong to their linked documents.
+  [media inventories](media/README.md); runtime file services to
+  [Resident file and archive services](runtime_services.md), CCS internals to
+  [Resident CCS runtime](ccs_runtime.md) and
+  [CCS object types](ccs_object_types.md), and audio/video container contracts
+  to [Audio and video replacement](audio_video_replacement.md).
 - **Evidence limitations:** Filename inference and shallow format inspection do
   not establish runtime use, and the document does not claim exhaustive
   semantic identification of every file or CCS resource.
@@ -46,17 +50,16 @@ inventories and their provenance.
 The shallow inspection recorded here used the read-only `@source_na2/`
 extraction. It inspected headers and readable strings, parsed AFS,
 AHX/ADX, and MPEG/PSS metadata, searched the boot ELF and overlays for file
-references, compared same-named NA2/NUN5 files, and reused the existing Ghidra
-and patch evidence. No source file was modified.
+references, compared same-named NA2/NUN5 files, and reused the existing
+static-analysis evidence.
 
 The codec classifications follow the local headers and are cross-checked
 against vgmstream's [AHX](https://github.com/vgmstream/vgmstream/blob/master/src/meta/ahx.c)
 and [ADX](https://github.com/vgmstream/vgmstream/blob/master/src/meta/adx.c)
 parsers. Game-specific role assignments below come from the local archive
 populations and executable evidence, not from those generic sources. See
-[Audio and video replacement](audio_video_replacement.md) for exact profiles,
-container constraints, candidate toolchains, and the proposed replacement
-workflows.
+[Audio and video replacement](audio_video_replacement.md) for exact
+profiles and container constraints.
 
 ## Storage hierarchy
 
@@ -89,8 +92,8 @@ Those directories are extraction views, not additional disc files.
 
 | Path | Role | Evidence and limits |
 | --- | --- | --- |
-| `DATA/GF4.BIN` | GF4 selectable font raster | **Confirmed.** The resident type-1 parser loads its two raster descriptors, and renderer mode 1 selects it together with `GF4C.BIN`. Font experiments and current Localization patches identify its glyph cells and metrics. NA2 is much larger than NUN5 because their GF4 layouts differ. |
-| `DATA/GF4C.BIN` | GF4 16-entry RGBA CLUT | **Confirmed.** The resident type-2 parser reads its 32-byte name followed by 64 bytes of palette entries, constructs the render-side CLUT object, and installs it whenever GF4 is selected. Whole-file NUN5 palette substitution remains unsafe for NA2 raster data. |
+| `DATA/GF4.BIN` | GF4 selectable font raster | **Confirmed.** The resident type-1 parser loads its two raster descriptors, and renderer mode 1 selects it together with `GF4C.BIN`. NA2 is much larger than NUN5 because their GF4 layouts differ. |
+| `DATA/GF4C.BIN` | GF4 16-entry RGBA CLUT | **Confirmed.** The resident type-2 parser reads its 32-byte name followed by 64 bytes of palette entries, constructs the render-side CLUT object, and installs it whenever GF4 is selected. |
 | `DATA/GRF4.BIN` | 8×8 ruby/annotation glyph atlas | **Confirmed.** Its type-1 descriptor contains 167 4-bpp glyph rasters and a 334-record two-byte-code map. The resident string renderer uses it only for the annotation arm of pipe-delimited inline markup, centering the small glyphs over or beside the base span. It is byte-identical to NUN5. |
 | `DATA/SF1.BIN` | SF1 selectable font raster | **Confirmed.** The same resident type-1 parser loads its two raster descriptors, and renderer mode 0 selects it together with `SF1C.BIN`. It is byte-identical to NUN5. |
 | `DATA/SF1C.BIN` | SF1 16-entry RGBA CLUT | **Confirmed.** It has the same type-2 name-plus-64-byte-palette layout and render-object construction as GF4C, and is selected with SF1. It is byte-identical to NUN5. |
@@ -121,9 +124,8 @@ All four files are byte-identical between NA2 and NUN5.
 ## `PRG/`: on-demand Emotion Engine overlays
 
 All three files use the `MWo3` overlay format and contain executable MIPS code
-plus local data. They are loaded and unloaded on demand into reusable EE memory;
-they are not ordinary data files and must not receive unguarded fixed-address
-PNACH writes.
+plus local data. They are loaded and unloaded on demand into reusable EE memory,
+so an overlay address is occupied by a given overlay only while it is loaded.
 
 | Path | Role | Evidence and limits |
 | --- | --- | --- |
@@ -131,9 +133,8 @@ PNACH writes.
 | `PRG/BTL.BIN` | Battle and practice overlay | **Confirmed at subsystem level.** Internal name `BTL_product.bin`; existing runtime/static work locates battle input, practice settings, combat UI, and battle logic here. |
 | `PRG/ETC.BIN` | Frontend/extras overlay | **Confirmed at subsystem level.** Internal name `ETC_product.bin`; existing work locates Home, Collection, save/load menu, and related UI behavior here. Readable resource names include `home.ccs` and Home animation/texture identifiers. |
 
-The NA2 overlays differ structurally from their NUN5 equivalents. Compare
-behaviors and functions deliberately; do not treat them as interchangeable
-whole-file donors.
+The NA2 overlays differ structurally from their NUN5 equivalents; same-named
+functions and data do not occupy matching addresses or layouts.
 
 ## `PSS/`: full-motion video
 
@@ -142,18 +143,19 @@ private audio stream (`0xBD`), and padding (`0xBE`). They run at approximately
 29.97 fps. The private substream is `0xA0` `SShd`/`SSbd` audio: uncompressed
 signed 16-bit stereo PCM at 48 kHz with a `0x200` interleave field. Durations
 below use the audio PTS span because it is slightly longer than the video span.
-The exact profiles and replacement constraints are documented in
+The exact profiles and container constraints are documented in
 [Audio and video replacement](audio_video_replacement.md).
 
-The resident movie player is clocked separately from ordinary 30 Hz gameplay.
-FUN_001057B0 saves the renderer's current VBlank threshold, forces the
-threshold to one while its MPEG demux/video-decoder and audio-streaming threads
-run, and FUN_00105320 restores the saved threshold during cleanup. Therefore a
-gameplay change from two VBlanks per scheduler update to one does not require
-halving PSS video or audio speed: clean playback already presents through the
-one-VBlank movie path. See the
-[60 FPS timing research](../../../../experiments/60%20fps/framerate.md#prerecorded-pss-video-and-video-speed)
-for the complete control-flow evidence and validation requirements.
+**Confirmed:** the resident movie player is clocked separately from ordinary
+30 Hz gameplay. `FUN_001057B0` saves the renderer's current VBlank threshold
+through `FUN_00105DA0`, then unconditionally calls
+`FUN_00107560(renderer, 1)` before initializing the IPU/DMAC path, MPEG demux
+thread `FUN_00103EE0`, video decode thread `FUN_00101AC0`, and audio buffers.
+`FUN_00105320` drains those resources and restores the saved threshold through
+`FUN_00107560(renderer, saved_threshold)`. Movies therefore present through a
+one-VBlank path, while ordinary gameplay uses two VBlanks per scheduler update.
+The MPEG decoder is driven by timestamps, buffers and the audio hardware rather
+than by the CCS authored-frame cursor.
 
 The boot ELF contains `NOTICE`, `OPENING`, and all seven `DA####` identifiers in
 one movie-name table beside cutscene/audio script commands. This confirms that
@@ -235,7 +237,6 @@ useful first routing layer:
 - unresolved or only filename-inferred: `DBGMENU`, `NAKOKUTI`, `NINMU`,
   `N_RASH` through `N_RASH5`, `STRMCMN`, and `XNINKA`.
 
-Do not infer that a CCS file contains only the screen named by its filename.
-For example, existing UI work has shown that some visible layout and label
-behavior is owned by an overlay or the boot ELF while the CCS supplies the
-associated textures/models.
+A CCS file need not contain only the screen named by its filename: some
+visible layout and label behavior is owned by an overlay or the boot ELF while
+the CCS supplies the associated textures/models.

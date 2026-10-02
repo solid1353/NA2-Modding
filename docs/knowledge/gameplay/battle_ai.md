@@ -1,141 +1,141 @@
 # Battle AI
 
-This document owns reverse-engineering knowledge about the clean NA2 battle AI:
-controller ownership, lifecycle, configuration, target and spatial inputs, action
-selection, state dispatch, logical-input synthesis, direct action queues, and
-random-number use. State names and physical button meanings are deliberately not
-invented where the binary only establishes raw IDs or masks.
+This document owns reverse-engineering knowledge about the battle AI of retail
+NA2 (`SLPS-25837`): controller ownership, lifecycle, configuration, target and
+spatial inputs, action selection, state dispatch, logical-input synthesis,
+direct action queues, and random-number use. State names and physical button
+meanings are deliberately not invented where the binary only establishes raw
+IDs or masks.
 
-The findings below are static unless explicitly described otherwise. The clean
-resident and BTL inputs are identified in
-[Standard game file identities](../game/files/file_identities.md).
+The findings below are static unless explicitly described otherwise. The
+resident and BTL files are identified in
+[Retail game file identities](../game/files/file_identities.md).
 
 ## Research coverage
 
-- **Assigned scope:** the clean NA2 battle AI in `BTL.BIN`: controller
-ownership, decision/action dispatch, difficulty and configuration inputs,
-primary and alternate target selection, state transitions, directly
-established RNG use, and lifecycle boundaries. Resident `SLPS_258.37` was
-followed only where needed to prove the BTL caller, settings accessors, random
-generator, command bridge, and direct-action queue consumers.
-- **Exploration depth:** coverage depth is mixed and is stated explicitly:
+- **Assigned scope:** the retail NA2 (`SLPS-25837`) battle AI in `BTL.BIN`:
+  controller ownership, decision/action dispatch, difficulty and configuration
+  inputs, primary and alternate target selection, state transitions, directly
+  established RNG use, and lifecycle boundaries. Resident `SLPS_258.37` was
+  followed only where needed to prove the BTL caller, settings accessors,
+  random generator, command bridge, direct-action queue consumers, and selected
+  numeric character-exception admission paths.
+- **Exploration depth:** exhaustive within bounded assets: all 43 dispatcher
+  entries at live `0x008C3810`; all direct BTL writes to state word `+0x34`;
+  all 12 direct calls to the action-record selector and all 14 to resident
+  queue `FUN_0021D380`; all 167 aligned RNG-wrapper calls in the live AI
+  cluster `0x006F0000..0x00706500`; all 40 parameters of the six selectable
+  Strength rows and the unselectable seventh row; the `10 x 40` secondary
+  modifier matrix; the six-row phase table; the 96-entry per-character and
+  descriptor tables; and the 74 resident calls to the shared tick. Bounded
+  structural tracing covered the main tick, initializer, target refresh,
+  spatial classifier, route planner, alternate-target producers and consumers,
+  the three world-object searches, the state-18 guard helper, the settings
+  loader/apply path and COM toggle, the fighter-list scheduler, command bridge,
+  and queue admission/consumption. The opening planner, state-14, main, and
+  opponent-support reactions, both incoming-action reactions, the scripted
+  Practice tail, the post-dispatch path, descriptor/profile address paths, both
+  profile-installation copies, and selected numeric-exception admission paths
+  were followed in aligned instruction bytes. Four character wrappers were
+  compared instruction by instruction; other large reaction helpers were
+  decoded only far enough to establish state writes, profile consumers, RNG
+  sites, target/route effects, and direct queues.
+- **Confirmed coverage:** resident virtual-method ownership and same-update
+  command consumption; the two static AI slots and their cross-side
+  initialization behavior; native Practice settings and six Strength profiles;
+  deterministic primary-opponent binding; ordered, random-gated alternate
+  target sources; the complete dispatcher and direct constructor map; selector,
+  resident queue, and four-category queue lifecycle; the continue-screen
+  modifier input and the continue-choice labels that increment it; the AI's
+  use of the shared resident RNG, its phase cursors, tables, and audited call
+  sites; the single direct Confirm-branch caller of settings apply; the
+  per-pass command-triple clear that precedes the AI tick; and the absence of
+  a recovered session override separating that clear from fighter updates.
+  The world-object searches have distinct ordering and distance rules,
+  including an unreachable kind-2 resource check in the radius search. State
+  18's guard gates, Practice override, and two random-gated departures are
+  established separately from the remaining unnamed reaction branches. The
+  recovered sequence establishes decision-stage precedence, effective Strength
+  threshold transformations, own-side versus opponent-support arbitration,
+  scripted-Practice candidate producers and priority, post-dispatch command
+  clearing, descriptor-bit consumers, and numeric character exceptions. It
+  also establishes profile-24/31 installation and transformation without
+  decision consumers, retention of a scripted `+0x126` value across a
+  non-reinitializing switch to COM, the working-row gate on ID-36 indices
+  4..6, and conditional resident transitions into ID-49 action 34.
+- **Unresolved or untested:** player-facing names for most raw states and
+  action-record classes; exhaustive semantics for every branch of the large
+  decision/reaction helpers; the role of the seventh profile row and profile
+  parameters 24 and 31; consumers or meanings for descriptor bits
+  `0x02/0x40`; an ordinary-mode positive producer of slot `+0x126` beyond the
+  established retention path; complete entry conditions and move names for
+  the recovered numeric character exceptions, including which configured
+  `+0x188` selection ([Action commands](action_commands.md#action-table-source-and-setup))
+  makes ID 36's indices 4..6 available in a given match; the player-facing
+  name of the setup mode that bypasses the secondary modifier; and whether an
+  unrecognized alias can write the session's first-phase filter and separate
+  fighter updates from command clearing. These are recorded as negatives or
+  hypotheses rather than inferred names.
+- **Deliberate exclusions and overlap:** Adventure, substitution, damage
+  formulas, frame timing, camera projection, media, and localization are
+  excluded. Shared contracts are owned elsewhere:
+  [Action commands](action_commands.md) (logical masks, command bridge, and
+  action-table setup); [Practice mode](practice_mode.md) (settings rows, apply
+  order, and dummy-status bridge);
+  [Pause and replay](pause_and_replay.md#selective-update-gating) (update masks
+  and session filters);
+  [Target selection](target_selection.md#paired-opponent-and-geometry-refresh)
+  (fighter geometry refresh);
+  [Combat action execution](combat_action_execution.md) and
+  [Character action callbacks](character_action_callbacks.md) (action entry
+  and per-character callbacks); [Chakra and guard](chakra_and_guard.md)
+  (resources and guard); [Battle support mechanics](support_mechanics.md);
+  [Resident randomness](../runtime/randomness.md) (the PRNG); and
+  [MWo3 overlay ABI](../runtime/overlay_abi.md) with
+  [Retail game file identities](../game/files/file_identities.md#address-conventions)
+  (address mapping).
+- **Evidence limitations:** all findings come from static analysis of the
+  hashed retail files; no AI runtime trace, live field watch, input replay, or
+  probability experiment was run. Execution order, addresses, direct calls,
+  tables, and static side effects are high-confidence; player-facing intent and
+  timing-sensitive runtime consequences are not established.
 
-  **Exhaustive within a bounded asset or range:** all 43 entries of the action
-  dispatcher table at live `0x008C3810`; all direct clean-BTL writes to the
-  state word in the corrected full-file text; all 12 direct calls to the
-  action-record selector and all 14 direct calls to resident queue
-  `FUN_0021D380`; all aligned calls to the two resident RNG wrappers in the
-  live AI cluster `0x006F0000..0x00706500` (167 total); all 40 parameters in
-  each of the six selectable Strength rows; the contiguous unselectable
-  seventh row; the full `10 x 40` secondary modifier matrix; the six-row
-  ten-step phase table; the 96-entry per-character pair table; and the aligned
-  resident scan that found 74 analogous calls to the shared AI tick.
-  **Bounded structural tracing:** main tick
-  `D/L/F 00704D00/00704D40/50E40`, initializer
-  `00705D30/00705D70/51E70`, target refresh and spatial classifier, route
-  planner and alternate-target producers/consumers, settings loader/apply and
-  COM toggle, representative resident wrapper `FUN_00250DA0`, generic
-  fighter-list scheduler `FUN_0024FD80`, command bridge `FUN_00217320`, and
-  queue admission/consumption from `FUN_0021D250` through `FUN_0023A390`.
-  These paths were followed through their relevant callers, fields, and side
-  effects, but not every branch in every large decision helper was assigned a
-  behavioral meaning.
-  **Sampled or semantic-only coverage:** one representative character wrapper
-  was decoded in detail while the other 73 call sites were counted and checked
-  structurally; large reaction helpers were decoded far enough to establish
-  state writes, profile consumers, RNG sites, target/route effects, and direct
-  action queues, but most move-specific intent remains unnamed.
+## Address convention and overlay mapping
 
-- **Confirmed coverage:** the overlay's `0x40` address skew;
-resident virtual-method ownership and same-update command consumption; the two
-static AI slots and their cross-side initialization behavior; native Practice
-settings and six Strength profiles; deterministic primary-opponent binding;
-ordered, random-gated alternate target sources; the complete dispatcher and
-direct constructor map; selector, resident queue, and four-category queue
-lifecycle; the continue-screen modifier input; and the shared resident
-MT19937-derived RNG, phase cursors, tables, and audited AI call sites; the
-single direct Confirm-branch caller of settings apply; and the per-pass
-command-triple clear that precedes the AI tick.
+The BTL header, layout, and `0x40` preserved-import shift are owned by
+[MWo3 overlay ABI](../runtime/overlay_abi.md#file-runtime-and-preserved-ghidra-addresses)
+and [Retail game file identities](../game/files/file_identities.md#address-conventions).
+This document writes BTL addresses as `D/L/F`:
 
-- **Unresolved or untested:** player-facing
-names for most raw states and action-record classes; exhaustive semantics for
-every branch of the large decision/reaction helpers; the role of the seventh
-profile row and profile parameters 24 and 31; exact labels for
-continue-result values and the session mode that bypasses the secondary
-modifier; and whether the unaudited session-local update-mask overrides can
-run the fighter phase without the command phase. These are recorded as
-negatives or hypotheses rather than inferred names.
+- `D`: preserved Ghidra/export address (`L - 0x40`);
+- `L`: live EE address;
+- `F`: byte offset in retail `BTL.BIN` (`L - 0x006B3F00`).
 
-- **Deliberate exclusions and overlap:** Adventure, substitution and its bar, damage
-formulas/scaling, 60-FPS or timing work, widescreen/camera projection, media,
-  and localization. Shared command-mask meanings were taken only from the
-  existing `action_commands.md` evidence; this document does not take ownership
-  of that command system.
-
-- **Evidence limitations:** behavioral validation was static against the hashed clean files. The corrected
-full-file import, raw aligned instruction scans, loader mapping, and clean
-savestate mapping were cross-checked, but no AI runtime trace, live field watch,
-input replay, or probability experiment was run. Consequently execution order,
-addresses, direct calls, tables, and static side effects are high-confidence;
-player-facing intent and timing-sensitive runtime consequences remain bounded
-by the limitations above.
-
-## Address convention and corrected overlay mapping
-
-The clean BTL identity and shared address conversion follow
-[Standard game file identities](../game/files/file_identities.md). Its
-header additionally reports:
-
-| Header field | Value |
-| --- | ---: |
-| magic | `MWo3` |
-| text length | `0x001DB6C0` |
-| data length | `0x00046C00` |
-| BSS length | `0x00006E80` |
-
-The preserved import discrepancy was independently established from the clean
-loader and a clean savestate, and a disposable full-file Ghidra import recovered
-coherent function boundaries and call graphs.
-
-This document uses these abbreviations:
-
-- `D`: address in the preserved Ghidra/export baseline.
-- `L`: live EE address.
-- `F`: byte offset in clean `BTL.BIN`.
-
-The payload begins at `L 0x006B3F40`; the file-backed image ends and BSS begins
-at `L 0x008D6200`. Absolute pointers and `j`/`jal` operands encoded inside BTL
-already contain live addresses. The preserved importer consequently resolves an
-intra-BTL absolute target against bytes `0x40` too late. The true preserved byte
-entry is encoded target minus `0x40`. Resident `SLPS_258.37` addresses and
-absolute BSS addresses are already live and must not receive this correction.
-
-This distinction is essential. For example, the instruction at `D 0x00705320`
-encodes a call to live `0x006FB840`. Its true callee bytes are the prologue of
-preserved `FUN_006FB800` at `D 0x006FB800`; the preserved export instead labels
-the continuation at `D 0x006FB840` as the callee.
+Resident `SLPS_258.37` addresses and absolute BSS addresses are already live
+and take no correction. For example, the main tick's instruction at
+`D 0x00705320` encodes a call to live `0x006FB840`, whose bytes are the
+prologue of preserved `FUN_006FB800`; the preserved export instead labels the
+continuation at `D 0x006FB840` as the callee.
 
 ## Principal function map
 
-`Preserved symbol` means the symbol present at the real byte entry in the
-original export. “Continuation label” records a misleading symbol produced at
-the encoded live address by the skewed import.
+`Preserved symbol` is the export symbol at the real byte entry.
 
-| Role | Preserved symbol or entry | D | L | F |
+| Role | Preserved symbol | D | L | F |
 | --- | --- | ---: | ---: | ---: |
 | target-position source selector | `FUN_006F1DB0` | `0x006F1DB0` | `0x006F1DF0` | `0x3DEF0` |
 | action-record selector | `FUN_006F2B40` | `0x006F2B40` | `0x006F2B80` | `0x3EC80` |
 | ten-step RNG phase gate | `FUN_006F3100` | `0x006F3100` | `0x006F3140` | `0x3F240` |
 | route/path planner | `FUN_006F3770` | `0x006F3770` | `0x006F37B0` | `0x3F8B0` |
-| neutral/reset helper | unnamed true entry; false continuation `FUN_006F3F80` | `0x006F3F40` | `0x006F3F80` | `0x40080` |
+| neutral/reset helper | unnamed | `0x006F3F40` | `0x006F3F80` | `0x40080` |
 | 43-state action dispatcher | `FUN_006FB800` | `0x006FB800` | `0x006FB840` | `0x47940` |
 | spatial classifier | `FUN_00702E20` | `0x00702E20` | `0x00702E60` | `0x4EF60` |
 | main per-fighter AI tick | `FUN_00704D00` | `0x00704D00` | `0x00704D40` | `0x50E40` |
-| AI initializer | `FUN_00705D30`; false continuation `FUN_00705D70` | `0x00705D30` | `0x00705D70` | `0x51E70` |
-| self/opponent refresh | unnamed true entry; false continuation `FUN_00706350` | `0x00706310` | `0x00706350` | `0x52450` |
-| settings-object loader | `FUN_00880F70`; false continuation `FUN_00880FB0` | `0x00880F70` | `0x00880FB0` | `0x1CD0B0` |
+| AI initializer | `FUN_00705D30` | `0x00705D30` | `0x00705D70` | `0x51E70` |
+| self/opponent refresh | unnamed | `0x00706310` | `0x00706350` | `0x52450` |
+| settings-object loader | `FUN_00880F70` | `0x00880F70` | `0x00880FB0` | `0x1CD0B0` |
 | settings apply | `FUN_00881160` | `0x00881160` | `0x008811A0` | `0x1CD2A0` |
-| COM controller toggle | `FUN_008813B0`; false continuation `FUN_008813F0` | `0x008813B0` | `0x008813F0` | `0x1CD4F0` |
+| COM controller toggle | `FUN_008813B0` | `0x008813B0` | `0x008813F0` | `0x1CD4F0` |
 | profile UI bound helper | `FUN_00881950` | `0x00881950` | `0x00881990` | `0x1CDA90` |
 
 ## Controller ownership and lifecycle
@@ -154,6 +154,14 @@ An aligned scan of clean `SLPS_258.37` finds exactly 74 direct `jal` instruction
 to `L 0x00704D40` in analogous character wrappers. This broad fan-in establishes
 the true ownership boundary: controller nibble zero is the human/no-AI path;
 any nonzero value invokes the shared BTL AI tick.
+
+Four spread-out resident wrappers were compared instruction by instruction:
+`FUN_00250DA0`, `FUN_0026F930`, `FUN_0029B250`, and `FUN_002EE330`.
+Each has the same 14-instruction body, differing only in its own branch address:
+extract that nibble, conditionally call the shared tick with the original
+fighter pointer, and return zero. None adds a character-specific profile,
+command mask, or decision callback. This is a four-wrapper structural sample,
+not proof that every other wrapper or later fighter consumer is identical.
 
 The generic caller is resident fighter-list update `FUN_0024FD80` (runtime
 `0x0024FD80`, SLPS file `0x14FE80`). For each eligible fighter it loads the
@@ -179,38 +187,19 @@ Consequently BTL output is proposed input, not an unconditional action; the
 resident fighter state can suppress it and this specific mask conflict is
 resolved before later consumers.
 
-The settings path controls that nibble:
-
-1. `FUN_00880EF0` (`D/L/F 00880EF0/00880F30/1CD030`) calls the true settings
-   loader at call site `D/L/F 00880F38/00880F78/1CD078`.
-2. `FUN_00880F70` fills and normalizes 17 settings-object fields from `+0x6C`
-   through `+0xAC` to their count-table ranges. The AI-facing subset is:
-
-   | Object field | Manager key | Native setting | Values |
-   | ---: | ---: | --- | --- |
-   | `+0x90` | `0x0C` | Status | Manual, COM, Stand, Jump, Double-jump (`0..4`) |
-   | `+0x94` | `0x0B` | Strength | Simple, Easy, Normal, Hard, Insane, Ultimate (`0..5`) |
-   | `+0x98` | `0x0D` | Attack | No, Single, Combo, Projectile, High Speed Move, Ultimate Jutsu, Jutsu (`0..6`) |
-   | `+0x9C` | `0x0E` | Guard | No, Yes (`0..1`) |
-   | `+0xA0` | `0x0F` | Move | Stay, Follow (`0..1`) |
-   | `+0xA8` | `0x12` | Linked Attack | Don't use, Normal, frequent/random (`0..2`) |
-   | `+0xAC` | `0x10` | Extra Hit Counter | Normal, Return (`0..1`) |
-
-   These ranges come from the clean count table at live `0x008D18C0`
-   (actual bytes at `D/F 008D1880/21D9C0`). The omitted rows are outside this
-   document's AI scope.
-3. `FUN_00881160` writes those fields with resident `FUN_001F59F0`, rereads
-   normalized key `0x0B`, and passes a force flag when requested `+0x94` differs
-   from the normalized stored value. Its calls to the toggle are at
-   `D 0x00881310` and `D 0x0088132C`.
-4. `FUN_008813B0` chooses the controlled fighter. `manager+0x18 == 0` selects
-   index 2 and `manager+0xDE8`; a nonzero value selects index 1 and
-   `manager+0xDE4`. It mirrors `Status != Manual` into bit 1 at
-   `manager + 0x20 + index*0x28`.
-5. Manual clears bits 5..8 of fighter `u16 +0x60` with `& 0xFE1F`. Every
-   non-Manual Status installs controller kind 1 with `| 0x20` and calls the
-   initializer when the old nibble was zero or the force flag is nonzero. A
-   null fighter still gets the manager flag update but no initializer call.
+The Practice settings path controls that nibble. Its rows, keys, value
+labels, count table, apply order, and dummy-side selection are owned by
+[Practice mode](practice_mode.md#rows-local-values-and-manager-storage) and
+its [dummy-status bridge](practice_mode.md#dummy-status-bridge). The
+AI-facing settings are Status (key `0x0C`), Strength (`0x0B`), Attack
+(`0x0D`), Guard (`0x0E`), Move (`0x0F`), Linked Attack (`0x12`), and Extra Hit
+Counter (`0x10`). Snapshot child `FUN_00880EF0` calls the settings loader at
+`D/L/F 00880F38/00880F78/1CD078`. Apply `FUN_00881160` calls the bridge
+`FUN_008813B0` at `D 0x00881310` and `D 0x0088132C`, passing a force flag when
+requested Strength `+0x94` differs from the normalized stored key `0x0B`. On
+the selected fighter, Manual clears bits 5..8 of `u16 +0x60` with `& 0xFE1F`;
+every non-Manual Status installs controller kind 1 with `| 0x20` and calls the
+initializer when the old nibble was zero or the force flag is nonzero.
 
 The initializer call is at `D/L/F 00881490/008814D0/1CD5D0` and targets live
 `0x00705D70`. Selecting Manual does not clear the static AI state and calls no
@@ -274,8 +263,8 @@ The tick chooses the slot from fighter `+0x60` bit 0. Confirmed fields are:
 | `+0x1B0` | `s32` | first usable fighter action slot among slots 4..9, or `-1` |
 | `+0x1B4/+0x1B8/+0x1BC` | `s32` | ten-step RNG phase cursors, initialized to `-1` |
 
-The corrected initializer proves these writes for both slots before applying a
-profile only to the selected side:
+The initializer makes these writes for both slots before applying a profile
+only to the selected side:
 
 - zero: `+0x0C`, `+0x30`, `+0x34`, `+0x3C`, `+0x50`, `+0x60`, `+0x64`,
   `+0x68`, `+0x88`, `+0x8C`, byte `+0x90`, all 31 words `+0x94..+0x10C`,
@@ -369,11 +358,23 @@ when allowed-mask bit `0x0002` is set or auxiliary byte `+0xA50==1`; owner
 `+0x08` runs on bit `0x0004`. Every suppression producer documented in
 [Pause and replay](pause_and_replay.md#proven-btl-suppression-writers)
 allows or suppresses those two bits together, and the `+0xA50` override
-suppresses the fighter phase while allowing the command phase. Session-local
-override fields `+0x06/+0x08` were not audited, so a combination that runs
-the fighter phase without the command phase remains statically unexcluded.
+suppresses the fighter phase while allowing the command phase.
 
-The principal decision-call sequence in corrected live naming is:
+Session-local filters `+0x06/+0x08` further restrict those masks: each final
+allowed mask is `~suppression & session_filter`, with `FUN_001F0290` reading
+the filters at `001F0304/001F0308`. Mask construction, the `0xFFFF` filter
+reset, and the second-phase setter at `001EC620` are owned by
+[Pause and replay](pause_and_replay.md#controller-fields-and-mask-construction)
+and its [session-local override writer](pause_and_replay.md#session-local-override-writer).
+That setter writes only filter `+0x08` and changes only bit `0x10`, so it
+cannot change the first-phase `0x0002/0x0004` relationship. The recovered
+resident and BTL references to session pointer `0x00607604` (through accessor
+`FUN_001EC2F0`, `001EC2F0/0EC3F0`, and direct `gp-0x33EC` loads) contain no
+writer to first-phase filter `+0x06`, so no recovered session override
+separates first-phase command clearing from fighter updates. An indexed or
+otherwise unrecognized pointer alias is not excluded.
+
+The principal decision-call sequence in live naming is:
 
 ```text
 FUN_00702E60                     spatial classifier
@@ -387,8 +388,8 @@ FUN_006FB840                     43-state dispatcher
 FUN_006FF9C0                     mode-dependent post-dispatch stage
 ```
 
-The corrected call order is firm. The two formerly unlabelled boundary helpers
-can be narrowed structurally without inventing move names:
+Two boundary helpers in that sequence are established structurally, without
+move names:
 
 - Pre-dispatch `D/L/F 006FFE80/006FFEC0/4BFC0` detects two paired transient
   fighter-state patterns: both actors at `+0x190` value `0x5B/0x5C`, or self
@@ -453,12 +454,8 @@ FUN_006FB840    00705320   00705360   051460
 FUN_006FF9C0    00705394   007053D4   0514D4
 ```
 
-The Practice-only `FUN_007024A0` consumes the scripted-dummy controls directly:
-Guard Yes (`key 0x0E==1`) gates one state-18 reaction; Move Follow
-(`key 0x0F==1`) changes state-5 route retention; Status Stand (`key 0x0C==2`)
-has another state-5 retention rule, while Jump/Double-jump (`3/4`) control
-state-36 branches and their slot `+0x114` countdown; and any Attack other than
-No (`key 0x0D!=0`) enables a state-37 branch paced by slot `+0x118`.
+The Practice-only `FUN_007024A0` consumes the scripted-dummy controls in the
+order described under [Scripted-Practice reaction priority](#scripted-practice-reaction-priority).
 
 The final output stores are exact:
 
@@ -475,6 +472,468 @@ paths use the same `+0xAC/+0xB0/+0xB4` representation. The AI therefore owns a
 logical command source rather than a separate fighter-motion executor. Some AI
 paths also queue action-record indices directly through resident
 `FUN_0021D380`; the two dispatch mechanisms coexist.
+
+### Decision priority and ordinary-plan replacement
+
+The opening planner is `D/L/F 00703130/00703170/4F270`; its complete
+instruction body ends at live `0x00703A64`. It returns immediately when byte
+`+0x90==1`. Otherwise it saves the old state, clears `+0x34`, and chooses a
+replacement. This differs from the later reaction stages: they can replace a
+state while that byte is already set. The latch is therefore a gate for
+specific stages, not a global first-decision-wins lock.
+
+The planner's ordered choices are:
+
+1. If self X lies outside its region bounds, an expired `+0x94` is reloaded
+   to `60`; a parameter-20 roll and resident `FUN_0023BEE0(self)==1` can
+   select state 10 and set the latch. The function then continues through its
+   remaining checks, rather than returning at that write.
+2. In spatial buckets 0/1, expired `+0xAC` is reloaded from parameter 32.
+   Absolute actor/target `+0x38` separation below `200` gives a parameter-14
+   state-11 attempt; separation at least `200` instead gives a state-10
+   attempt followed by a state-28 attempt if the first roll fails. Each selected
+   branch sets latch `1`, seeds `+0x94=30`, and returns; state 10 additionally
+   clears route submode `+0x3C`. Both state-10/state-28 rolls use parameter 14.
+3. For a nonzero spatial bucket, expired `+0x9C` is reloaded from parameter
+   32. Parameter-10 success either selects state 11 in the nearby/small-height
+   case, or copies the primary target position, sets source mode 0, and calls
+   the route planner. A nonzero route result becomes state 5 only if resident
+   `FUN_00307610(target)==0`; otherwise the slot resets. Parameter-10 failure
+   selects state 1, sets latch `1`, and loads `+0xD8` from parameter 34.
+4. In bucket 0 with absolute `+0x38` separation at most `200`, raw RNG modulo 20
+   sends results `0..5` to a state-11 attempt gated by expired `+0x9C`.
+   Results `6..19` clear the state, set latch `1`, and seed `+0x94` from
+   parameter 32; when the saved old state was 7, this path first calls facing
+   correction. The six-pointer table is `D/L/F
+   008C38B0/008C38F0/20F9F0`, and all six entries are live `0x0070399C`.
+
+The next stage, `D/L/F 00703A30/00703A70/4FB70`, first calls the Extra Hit
+Counter selector and `FUN_00700190`, then applies its own reactions, calls
+`FUN_007004B0`, and finishes with two additional state-11 checks. Its
+parameter-9 branch selects state 14, resets the slot, and deliberately clears
+the request latch. The branch requires target `+0x95A!=0`, target action class
+other than 6, bucket 0, and either absolute `+0x38` separation below `20` or
+both fighters in classes 2/3. A failed parameter-9 roll can instead pass a
+parameter-14 roll, reset, and write output mask `0x1020`. These alternatives
+are followed by `FUN_007004B0`, so their state/output effects are still subject
+to that later helper. The final checks use self class 0/action ID 8 with
+parameter 4, or target action ID 3/4 with parameter 14 while state is 0/1;
+success writes state 11, latch `1`, and `+0x94=60` or `30`, respectively.
+
+### Main reaction stage and later rewrites
+
+The complete main reaction body is `D/L/F
+00703CE0/00703D20/4FE20..50E30`; the effects below come from its aligned
+instruction bytes. The body begins by
+resetting states 2/3/4/24/26 **only when self class `+0x18E` is 5**. Scripted
+Practice Status values then jump directly to the Practice-specific tail
+`FUN_007024A0`. Ordinary modes and Practice COM run the following ordered
+families before that tail:
+
+| Live branch range | Established gates and effects |
+| --- | --- |
+| `703E98..703F2C` | Self class 8, self `+0xB00==0`, current-record `+0x14 & 0x380`, pointed `+0xA50` word bit `0x10`, and expired `+0xBC`: parameter 11 success resets, selects state 12, and sets the latch; failure reloads `+0xBC=60`. Both outcomes continue. |
+| `70404C..70429C` | `FUN_0022D5B0(target)==1`, state 0/1/5, and target `+0x9F0==0` use `trunc(parameter14/2)` as the first threshold. Surviving branches can select states 10, 25, 5, or 1. A separate target-class-8/different-region branch uses the same half-parameter threshold to select state 25. |
+| `7042A0..7043E0` | Bucket 2, state 0/1, and target current-record word `+0x10 & 2`: a first fixed threshold 50 chooses between an `+0xAC`/parameter-14 state-10 attempt and an `+0xD4`/parameter-29 state-18 attempt. The cooldowns reload before their respective second rolls, from parameters 32 and 3. State 18 also sets latch `1` and `+0x94=90`. |
+| `7043E4..704488` | Self action ID `+0x190==0x5D`, state other than 15: a roll is made before checking `+0xB8`; when that cooldown is zero it is reloaded to 150. Results below 30 select state 33, results 30..59 select state 15, and 60..100 select neither. A selected state resets first, sets latch `1`, and seeds `+0x94=150`. This branch jumps past the remaining main reactions to the final current-action check. |
+| `704490..7046CC` | Target class 8, state 0, bucket below 3, self region equal to self `+0x324`, and the target-facing/X comparison: normally reset into state 11 with `+0x94=30`. The target-ID-36 exception described below uses a parameter-22 state-6 attempt and a later parameter-5 state-18 attempt; the latter can overwrite state 6 in the same pass. |
+| `7046D0..704844` | Call `FUN_00701140`; with expired `+0xB0`, scan the linked object list for raw kind 2 in self's region, distance below 900, and signed `+0x1F8 != -1` and `<30`. Parameter 29 success selects state 8, sets latch `1`, seeds `+0xB0=120`, and writes route-region field `+0x80` from the self-region-zero condition. Enumeration continues, so there can be additional rolls during the same scan. |
+| `704858..704958` | Self class 5, parameter 19, `FUN_002118A0(target+0x1B8,1)==1`, clear latch, and expired `+0x94` can select state 35 with timer 30. States 11/14 then separately consult `FUN_00307610(target)`; result 1 resets first, and parameter 14 success selects state 25, sets latch `1`, and timer 30. |
+| `70495C..704CA0` | Call alternate-target stage `FUN_00701BD0`. Only with byte `+0x124==0` and state 0/1 does the `FUN_00701ED0()==0` path roll `0..60`: results 0/1 call facing correction; 2/3 attempt the parameter-22 short-history movement mask `0x40000` after a position-validity check; 4/5 attempt state 22 using parameter 20; 6..14 can select state 21 when bucket is at least 3, the 12.0 affordability check fails, and `+0xDC` is zero; 15..60 select none here. The six-entry table is `D/L/F 008C38D0/008C3910/20FA10`. |
+| `704CA4..704D10` | Call `FUN_006FD2D0`, then inspect self current-record word `+0x10 & 0x200`. With expired `+0xBC`, parameter 11 success calls resident `FUN_0021DDB0(self)`; either outcome sets `+0xBC=60`. Finally call the scripted-Practice tail. |
+
+In the small `0..60` selection, the state-22 attempt reloads `+0x94` to
+`12+rand(0..3)` and `+0xDC` to `300+rand(0..150)` even when its parameter-20
+roll fails. The state-21 branch instead seeds `+0x94=38+rand(0..30)` and
+`+0xDC=210+rand(0..150)`. Thus an attempted branch can impose a later retry
+delay without successfully changing the state.
+
+Resident `FUN_0022D5B0` is exactly `(fighter byte +0x9B8 & 3) > 1`. The main
+stage uses it for both fighters, including direct low-bit-2/3 facing corrections
+paced by `+0xF0=70`. This predicate is kept numeric: its body does not name a
+player-facing condition. The ordinary-mode self-predicate/state-0-or-1 path
+ORs mask 8 and returns before all later main-stage reactions; it still returns
+to the main tick's subsequent decision stages and dispatcher.
+
+The following `D/L/F 006FDEF0/006FDF30/4A030` stage provides further evidence
+that later writes have precedence. After its entry predicate and early facing
+return, the ordinary reaction branch converts states 21/22 to state 25 before
+its distance/reaction logic. The conversion is at live
+`0x006FE224..0x006FE244`; it does not require a clear request latch.
+Its later branches can select states 9/17/34/11/20. Consequently a main-stage
+constructor for state 21 or 22 does not, by itself, prove that its dispatcher
+handler runs on that same update. The linked/reactive stages still follow this
+stage before dispatch, and their own gates must also be considered.
+
+### Final support-dependent arbitration
+
+The two final ordinary-mode stages inspect different support owners. Main-tick
+stores at live `0x00704D78..0x00704D8C` write the current side to
+`gp-0x5EB8` and the opposite side to `gp-0x31F4`. The active-object accessor
+`D/L/F 00886710/00886750/1D2850` returns
+the pointer stored at `support_manager + 4 + supplied_side*4`, or null when
+the manager is absent.
+`FUN_006FE720` supplies the current side; `FUN_006FEAC0` supplies the opposite
+side. Thus the former schedules an own-side request, while the latter reacts
+to the **opponent's** active support object. The support object's general
+lifecycle remains owned by [Battle support mechanics](support_mechanics.md).
+
+`D/L/F 006FE6E0/006FE720/4A820` seeds `+0xF4` from parameter 38 plus an
+inclusive roll bounded by that parameter. After its availability and context
+gates, parameter 21 success selects state 38 and clears the request latch.
+The support-selector and Practice handshake details are owned by
+[Practice mode](practice_mode.md#linked-attack-and-extra-hit); they are not a
+second general Strength selector. State 38's latch can consequently be clear
+when the following reaction stage starts.
+
+The complete opponent-support reaction is `D/L/F
+006FEA80/006FEAC0/4ABC0..4B504`. Its entry and common gates are established
+from the full instruction body:
+
+- A null opponent support clears the latch for existing states 39..42 and
+  returns. It leaves those state IDs intact.
+- An existing support must pass live `FUN_0088B980(object,0)`. That helper
+  compares absolute Y separation from the fighter opposite object side byte
+  `+0xE4` and requires it to be below `50`; its parameter zero selects that
+  fighter. It does not test X or the AI's planar-distance cache.
+- When cooldown `+0xF8` is zero, the stage clears the latch; otherwise an
+  already-set latch makes it return. It also returns for support reason byte
+  `+0xE6` outside `0..2`, or self action class 8. Support selector 4 requires
+  raw Strength at least 4 before the remaining branches.
+- The stage measures self-to-support and self-to-opponent planar distances
+  through resident `FUN_001806F0`. With opponent distance at most `250`,
+  parameter-14 rolls and resident fighter predicates can select state 11 or
+  10 and return before the support-range branch.
+
+Inside support range `object float +0x130`, reason 2 and selector 4 form a
+distinct direct-queue path. Parameter 28 first gates the attempt. If object
+halfword `+0x114==0`, the AI corrects facing toward the support and calls the
+action selector with distance to that support, mask `0xFFF0FFFF`, category
+range `1..1`, and directional gate enabled. A valid index, self outside
+classes 5/6, and parameter-14 success reset the slot and queue that index
+through resident `FUN_0021D380`. Failed selection falls into an expired-
+`+0x94`, parameter-10 state-5 attempt; a rejected attempt resets and returns.
+This is the selector/queue pair at live `0x006FEED4/0x006FEF3C` already
+listed in the direct-queue census.
+
+The other branches establish the state-39..42 constructors precisely:
+
+| Opponent-support context | Profile gate and result |
+| --- | --- |
+| Inside range, reason 2, selector other than 4, expired `+0xD4` | Reload `+0xD4=parameter33`, `+0xF8=90`; parameter 5 success selects state 40, sets latch `1`, and `+0x94=60`. Failure returns. |
+| Same reason/selector, `+0xD4` nonzero, expired `+0xFC`, affordable `1.0` | First seed `+0xFC=1+rand(0..parameter30)`. Parameter 1 success selects state 39, sets latch `1`, `+0xF8=30`, and `+0xFC=parameter3`; failure replaces `+0xFC` with another short roll. Either outcome returns. |
+| Inside range, reason 0/1, object `+0x114==0`, live `FUN_008890D0(object)==1`, expired `+0xAC`, self-support distance at most `250` | Set `+0xAC=32`, `+0xF8=30`; parameter 14 success selects state 42, sets latch `1`, and `+0x94=30`. |
+| Same availability branch after `+0xAC` becomes nonzero, expired `+0xA0`, live `FUN_008891E0(object)==0` | Set `+0xA0=30`, `+0xF8=30`; parameter 8 success selects state 41, sets latch `1`, and `+0x94=30`. |
+| Outside range, reason 1, self-support distance at most `400`, object `+0x114==0`, expired `+0xA0` | Seed `+0xA0/+0xF8=30`; parameter 8 plus `FUN_008891E0(object)==0` selects state 41 with latch `1` and `+0x94=30`. |
+
+The live `FUN_008891E0` predicate is exactly `object word +0x368 != 0`.
+Other inside/outside-range branches can select state 34 using parameter 28 or
+state 6 using parameter 22, and set their own cooldowns before returning.
+These returns are branch-local priority boundaries: the full support stage is
+not an unconditional state overwrite. Its result is what reaches the shared
+dispatcher on the ordinary path.
+
+### Incoming-action reactions and effective Strength gates
+
+Two complete bodies were followed through all their branches: live
+`FUN_007004B0..0x00701138` (called from the state-14/reaction stage) and
+`FUN_00701140..0x00701BC4` (called from the main reaction stage). Both can
+replace already selected states. Their entry, profile transformations, and
+departure priorities are established; player-facing names for the raw action
+and object types remain unresolved.
+
+`FUN_007004B0` clears slot byte `+0x125` each pass. It combines the primary
+opponent's current action with attack-object queries from the live
+`FUN_00777780/007777F0/00778550` family. AI helpers
+`D/L/F 006F1380/006F13C0/3D4C0` and
+`006F1690/006F16D0/3D7D0` inspect attack-shape records, rather than inventing
+a second primary opponent. The first scans indices `0..31` and all exposed
+shape records, projecting their center by a direction-dependent `0.9*radius`
+and testing planar distance against cached self radius plus `1.8*shape_radius`.
+The second returns raw classification `0/1/2`, with extra kind-specific
+distance checks; kind `0x2D` accepts outside buckets 4/5, kinds `3/0x0B/0x35`
+use `800`, and kind `0x3A` uses `500`. These are attack-object kinds, not
+fighter character IDs. Broader payload ownership is outside this AI document.
+
+The reaction magnitude starts at parameter 5. Exact target current-record
+word `+0x10` values `0x10000/0x20000` select parameter 6; values
+`0x100000/0x200000/0x400000` select parameter 7. Those latter values also
+reduce the separate parameter-1 threshold to `cvt.w.s(0.8*parameter1)` unless
+self `+0x6C - target +0x6C <= 0.5` and self `+0x6C <= 0.7` both hold.
+An attack-object overlap or the 32-index scan can instead select parameter 6
+and set `+0x125=1`. The exact-equality tests must not be replaced by bit tests.
+
+After facing/shape and character-distance gates, the reaction's priority is:
+
+1. With expired `+0x98` and an affordable `1.0`, scale the current parameter-1
+   threshold with the signed action-record scalar returned by
+   `FUN_006F1060`, compare the inclusive roll, and on success reset into state
+   20, set the latch, reload `+0x98` from parameter 3, and skip the next
+   reactions. Failure seeds a short retry at
+   `+0x98=(parameter30+1)+rand(0..parameter30+1)`.
+2. The alternate self-byte-`+0x63` bit-7 branch seeds `+0x108=15+rand(0..15)`
+   and `+0x10C=60+rand(0..60)`; parameter 22 success resets into state 6.
+3. Otherwise the selected parameter-5/6/7 magnitude feeds the ten-step phase
+   helper. A true phase result **or** a surviving nonzero classification
+   reaction flag resets into state 18 with latch `1` and `+0x94=30`.
+4. With expired `+0xD0`, reload it to 90 and compare a further roll with
+   `trunc(selected_magnitude/3)`. A resident mask-`0x02000000` index lookup
+   other than `-1` resets into state 23. Thus the phase-selected state 18 can
+   be replaced before returning.
+5. A separate expired-`+0xE8`, parameter-29 gate calls `FUN_006FD970`.
+   Finally, when `+0x125==0` and state is 18/20, current target-record and
+   spatial branches can replace that state with 16/10/25/5/28, clear output,
+   or reset. The target-ID-49/action-index-34 exception takes this reset path.
+
+The record-scalar transform uses EE `adda.s` followed by `madd.s`: its float
+is `base + base*scalar`, then converted with `cvt.w.s` before the roll.
+The scalar helper reads signed byte `+0x1A` of the target's current action
+record in class 8. Values `-3..3` map to `-0.5,-0.3,-0.1,0,0.1,0.3,0.5`
+through the seven-pointer table at `D/L/F 008C3730/008C3770/20F870`;
+other values, a missing record, or another class return zero. This is an
+action-dependent threshold adjustment, not an extra random draw. The same
+transform is used for parameter 1 in `FUN_006FDF30` and parameter 2 in
+`FUN_00701140`.
+
+`FUN_00701140` clears `+0x124` before querying resident
+`FUN_00222DF0(self,550.0)`. That helper delegates to a closest matching
+collision-registry lookup with side-specific masks, then rejects two raw
+object cases. The AI marks `+0x124` directly for returned subtype `+0x7A`
+in `{0x24,0x25,0x26,0x29,0x2A,0x2E,0x33}`; other objects are queried again
+with radius `450` for type `+0x78` 12/25 or `250` otherwise. With a marked
+candidate and state other than 20, it applies the type-based resident predicate
+and compares a roll as a float with **`1.9*parameter5`**, before subsequent
+eligibility, resource, cooldown, and subtype decisions. This float comparison
+is distinct from the integer phase-gate consumer of parameter 5.
+
+The parameter-2/scalar state-20 attempt reloads `+0x98` from parameter 3
+before rolling. If it does not select state 20, type 25 selects state 8.
+Other types require expired `+0xCC`: the listed subtypes reset and can select
+state 34 below planar distance 450 or state 8 farther away; subtype `0x4B`
+has additional parameter-29, opposite-X-side, and 400-unit separation gates
+before selecting state 5 plus mask `0x10000` or state 10. The default subtype
+path chooses state 10 with parameter 13 when self's region matches
+`+0x324` and opponent planar distance is at most 500, except subtype `0x2B`;
+otherwise it selects state 18 and `+0x94=60`. These are collision-object
+subtypes, not new AI character identities.
+
+### Scripted-Practice reaction priority
+
+The full tail is `D/L/F 00702460/007024A0/4E5A0..4EF54`. It returns outside
+Practice or for Status COM, clears all three candidate bytes
+`+0x124/+0x125/+0x126`, then calls the Extra Hit Counter selector. A return
+value of 1 there terminates the tail before Guard, movement, or attack choices.
+The settings transaction and option architecture remain owned by
+[Practice mode](practice_mode.md).
+
+Guard Yes with equal actor/target region collects three distinct candidate
+flags: `+0x124` from resident `FUN_00222DF0(self,550.0)`; `+0x125` from the
+opponent's 32 attack-object indices or its separate queried attack object;
+and `+0x126` from the opponent support reason `+0xE6==2`. The 32-index path
+requires a self-region match, with raw attack kind `0x8B` using its own region
+predicate. The separate attack object is ignored when its property bit 4 is
+set. If self is outside action classes 7/8 and either target is class 8 or
+one of those candidate flags is set, the tail resets into state 18, sets latch
+`1`, seeds `+0x94=30`, and returns. It therefore outranks the jump/attack
+choices below; it does not make every dispatcher guard state unconditional.
+
+Move Follow can maintain or construct state 5 with source mode 0 and a primary-
+target route. Several surviving route paths return before scripted jumping or
+attacking. Status Jump/Double-jump then preserves state 18, resetting other
+states before consulting `+0x114`. Both require that countdown to be zero and
+self outside classes 7/8. Double-jump on self class 0 selects state
+36 with `+0x114=18`; when self is class 2 and action ID is
+`0x18/0x22/0x24`, it selects the same state with timer 90. Jump selects state
+36 with timer 90 without those Double-jump-specific class/action branches.
+These state writes are at live `0x00702C38`, `0x00702C84`, and
+`0x00702CA0`; the state's dispatcher resets and emits mask `0x10000`.
+After reaching the expired-countdown jump branch, the tail returns before
+Attack even when no Double-jump class/action combination selected state 36.
+
+Status Stand resets an existing state-5 route when Move is not Follow.
+When the tail reaches Attack, a value other than No requires expired `+0x118`
+before selecting state 37. The class-2/3 branch additionally checks negative fighter `+0x998`,
+`+0x1C4>=11`, and state outside 28/37/5; the other branch requires state 0.
+This establishes where the scripted-dummy gates enter the same dispatcher and
+why their priority cannot be reconstructed from the menu's option values alone.
+
+### Post-dispatch output replacement
+
+Dispatch is followed by additional state and output writes before publication.
+In ordinary modes and Practice COM, the environment helper runs first, then
+the main tick inspects self action ID `0x15/0x16`. With state 0 and source
+mode 0, an inclusive roll uses fixed threshold 50 when per-character field
+`+0x24` is 0/1/2, or 30 otherwise. Success resets, optionally emits `0x1000`
+when `+0xC8` is zero, selects state 11, sets latch `1`, and timer 30, then
+reloads `+0xC8=60`. The branch is live `0x007053DC..0x00705528`. Since the
+dispatcher already ran, this newly selected state is not dispatched again in
+the same tick; only the directly written output can be published immediately.
+
+The next object-property path is live `0x0070552C..0x007055E0`, using the
+previously queried attack object. Property bit `0x80` plus slot `+0x128!=0`
+resets the AI and writes object `+0x13C=2`. Property bit `0x100` resets the
+AI **before** rolling against parameter 27; success writes object `+0x13C=1`,
+but failure still leaves the reset's output clear in effect. Both bits can be
+processed on one object. Thus the parameter-27 path can discard an already
+dispatched command even when its random gate fails. Scripted Practice bypasses
+this entire post-dispatch block at live `0x007053CC` and proceeds to the paired-
+AI check and final publication.
+
+The paired-AI state-5 reset described in the RNG section runs after those
+branches and before the three final stores. When its random choice selects the
+current side, its inline reset clears the current outputs; when it selects the
+opposite side, that side's internal slot is cleared. The code does not rerun
+either dispatcher. This ordering limits what can be inferred from a successful
+state constructor or dispatch call alone.
+
+### Character descriptors and hard-coded exceptions
+
+The character descriptor flag byte is live
+`0x008C3052 + character_id*4`, independently of the per-character two-halfword
+table. Reading all 96 descriptor records establishes the flag sets below. A
+bounded whole-BTL search for aligned `addiu ...,0x3052` finds four formations,
+at `D/L 006F9EC8/006F9F08`, `0070039C/007003DC`,
+`00704B2C/00704B6C`, and `00706128/00706168`; each was followed through
+its surrounding branch. An alternative base-plus-offset or aliased reader is
+not excluded by this search.
+
+| Descriptor bit | Established consumer | Character IDs carrying the bit |
+| --- | --- | --- |
+| `0x01` | Initializer multiplies parameter 16 by `1.2`. | `1..6,12..15,17,22,34..38,46..57,63..65,67,68,70,73,75,80,85,87,90..93` |
+| `0x04` | Initializer multiplies parameter 8 by `1.2`. | `13,66` |
+| `0x08` | Initializer multiplies parameter 24 by `1.2`; all selectable raw rows have zero there. | `6,60,65,72,86` |
+| `0x10` | Two state-22 constructors and one suppression gate described below. | `5,7,16..19,46,58,59,61,62,64,67..71,77..84,87,89,91,92` |
+| `0x02` | Present in the table; no meaning assigned by these four readers. | `12,76` |
+| `0x40` | Present in the table; no meaning assigned by these four readers. | `10,11,39..43,85` |
+
+These are current fighter-ID reads and initializers, not proof of selectable
+roster status or named awakening behavior. Representative contrasts are ID 57
+with flag `0x01`, ID 58 with `0x10`, ID 64 with `0x11`, IDs 13/66 with the
+parameter-8 multiplier, and ID 73 with `0x01`. The descriptor's first halfword
+can be `0xFFFF` even while its flag byte is nonzero, including IDs 46 and 59;
+that halfword does not justify discarding the flag reads. Character-name and
+selection evidence remains in [Character identity in battle](character_ids.md).
+
+Computed accesses in aligned BTL text bytes through `D 0x0088F5BC`, following
+`lui`/low-address formations, register addition, shifted indices, and loads
+covering the descriptor range, also lead only to the four byte readers above.
+Each reaction reader masks `0x10`; the initializer uses only `0x01/0x04/0x08`.
+No recovered reader copies the whole descriptor byte into an AI slot or passes
+it to a further helper for `0x02/0x40` interpretation. No literal pointer to
+table start `L 0x008C3050` or flag start `L 0x008C3052` was found in the
+whole-program byte search. This narrows the open question to an unrecognized
+address/pointer path or data without a recovered consumer; it does not name
+either bit or prove universal non-use. The profile-side copied and computed
+accesses are detailed under
+[Computed profile copies and unresolved parameters](#computed-profile-copies-and-unresolved-parameters).
+
+Bit `0x10` has three recovered action-stage effects:
+
+- In state-11 helper `FUN_006F9B20`, the target-class-6/action-ID-`0x5D`
+  path can pass a parameter-20 roll, require self byte `+0x63` bit 5 clear,
+  and then require descriptor bit `0x10`. Success writes state 22, latch `1`,
+  timer `12+rand(0..3)`, and cooldown `300+rand(0..150)`; this helper also
+  directly writes direction mask 4 after that construction.
+- In `FUN_00700190`, target class 6 reaches a parameter-20 attempt after its
+  earlier state-7/state-11/facing branches. The same self-bit-5-clear and
+  descriptor-bit-`0x10` gates construct state 22 with those timer ranges.
+- The main reaction's `0..60` results 4/5 branch blocks its state-22 attempt
+  when descriptor bit `0x10` and self bit 5 are **both** set. The descriptor
+  alone does not block it; unlike the two preceding constructors, the ordinary
+  attempt also does not require that descriptor bit to be present.
+
+Hard-coded target IDs additionally override reaction geometry:
+
+| Location | Numeric exception and consequence |
+| --- | --- |
+| `FUN_007004B0`, live `70092C..700AB8` | In its no-shape-classification branch, target IDs `{4,57,64}` require cached planar distance `<=650`; `{35,48,53,60,73}` use `<=800`; `{18,19,39,47,54,61,77}` use `<=1200`. Other IDs use spatial bucket below 3. These gates precede the parameter-1/scalar and phase reactions; they are not profile-row changes. |
+| `FUN_006FDF30`, live `6FE2D0..6FE354` | Target IDs 59/64 with target byte `+0x63` bit 5 set take a special expired-`+0x94`, parameter-10 state-9 attempt. That branch stores a context-dependent distance at slot `+0x64` and bypasses the general nearby state-17/state-34 choices. |
+| `FUN_00703D20`, live `704590..7046CC` | Target ID 36 with current action index `+0xA3C` in `{4,5,6,21,22}` diverts the otherwise state-11 facing/X reaction. It resets, seeds `+0x94=60`, can select state 6 using parameter 22 when `+0x10C` is expired, reloads `+0x10C=60+rand(0..60)`, then independently attempts state 18 with parameter 5. It always finishes this branch with handle `+0x54=-1` and latch `1`. |
+| `FUN_007004B0`, live `700D70..700D8C` | Target ID 49 whose resident current-action-index accessor returns 34 takes the reset/departure branch instead of the remaining class-8 record reaction. |
+
+The supplied static bodies establish these numeric differences, including
+representative IDs 57, 64, and 73. They do not establish the move names behind
+those action indices, the reason the author chose each threshold, or that every
+listed combination is reachable in retail play.
+
+### Numeric-exception admission and working records
+
+The selected exceptions were followed beyond the AI's numeric comparisons.
+ID 36's resident definition at `0x00476B70` counts 37 action records and
+points to `0x00475F30`; ID 49's definition at `0x004B2110` counts 49 and
+points to `0x004B10D0`. Every selected index below is inside its counted
+`0x54`-byte source array:
+
+| Target ID / index | Authored resident record | Word `+0x10` | Float `+0x20` |
+| --- | --- | --- | ---: |
+| 36 / 4 | `0x00476080` | `0x00100000` | 5 |
+| 36 / 5 | `0x004760D4` | `0x00200000` | 10 |
+| 36 / 6 | `0x00476128` | `0x00400000` | 15 |
+| 36 / 21 | `0x00476614` | `0x00000001` | 0 |
+| 36 / 22 | `0x00476668` | `0x00000001` | 0 |
+| 49 / 34 | `0x004B1BF8` | `0x02000000` | 0 |
+
+These source rows alone do not prove that their types remain enabled in the
+fighter's working array. Common setup `FUN_00219620` retains only one index
+among 4..9 according to the configured selection in fighter halfword `+0x188`
+and zeroes record word `+0x10` for the others; that setup, the
+selection-to-slot table, its derived-field helpers, and the later slot-4..9
+rewrite by `FUN_002449C0` are owned by
+[Action commands](action_commands.md#action-table-source-and-setup). Through
+the common action-start path, ID 36's indices 4/5/6 therefore need the
+configured selection that retains them (values `0/1/2`): a zero type word is
+rejected. The AI's index comparison does not itself test this selection, so
+this gate does not exclude a different current-index writer. Nonzero authored
+words are insufficient admission evidence. Indices 21/22 and ID 49's 34 are
+outside this zeroing range. Shared record layout and general execution remain
+in [Character assets](../game/character_assets.md#action-records) and
+[Combat action execution](combat_action_execution.md#action-entry-and-state-ownership).
+
+**Positive conditional route for ID 49:** its definition's callback-table
+pointer is `0x004AC720`, whose slot 2 contains `FUN_00283A70`. Callback
+dispatch is owned by
+[Character action callbacks](character_action_callbacks.md#evidence-convention-and-ownership);
+the current indices involved here exceed 3 and therefore take no
+configured-provider remapping. When the current-action accessor returns 33
+or 43, fighter phase `+0x192` is 2, and `FUN_002118A0(fighter+0x1DC,0x12)`
+reports the cursor event, this callback calls `FUN_0023A9A0(fighter,34,0)` at
+resident `0x002848C4` or `0x00284E84`, respectively. The marker query is a
+cursor crossing/event check; the constant alone is not proof of elapsed frame
+18.
+
+For record 34 as installed by common setup, the generic start path's
+`0x00F00000` prerequisite is absent: classifier `FUN_00244190` returns
+`0xFFFFFFFF` because type mask `0x000F0000` is zero, and `FUN_0023A9A0`
+accepts that result. Its zero `+0x20` also bypasses the later nonzero-cost
+branch, so the start stores current index 34 at `+0xA3C` through the common
+class-8 entry. Accessor `FUN_00217860` remaps only indices 0..3
+([Combat action execution](combat_action_execution.md#character-execution-callbacks)),
+so it returns 34 unchanged. This proves a conditional entry route, not every
+antecedent needed to reach actions 33/43 and their phase-2 cursor event.
+
+The callback re-evaluates the current index after that entry. Its index-34
+path can immediately request action 35 or enter class 6/substate `0x5F`,
+depending on the retained fighter fields. Thus a producer of index 34 does
+not by itself prove that an AI tick subsequently observes that index.
+
+The AI exception itself requires candidate `+0x125==0`, existing AI state
+18 or 20, target class 8, ID 49, and accessor result 34 at
+`D 00700CF4..00700D4C`. It branches to the reset at `D 00700FC8` before
+the remaining class-8 record checks. This changes a concrete branch outcome:
+record 34's type `0x02000000` lacks bit `0x08`, so the subsequent general
+record path would otherwise end without that reset. After resetting, the
+helper still checks the Practice override and can select state 11 through
+its ordinary near-bucket/parameter-14 departure. Later decision stages can
+replace that result under the established precedence. ID 49 also has type
+`0x02000000` at authored index 35; this equality does not include index 35
+in the exact-index-34 exception.
+
+**Remaining admission limits:** this establishes the working-row gate for
+ID 36 and a concrete conditional producer for ID 49's index 34. It does not
+establish which configured `+0x188` selection a given match uses for ID 36,
+complete entry paths for all
+five of its selected indices, every context behind the other numeric
+geometry/bit-5 exceptions, or move names from these raw words.
 
 ## Primary target and spatial classification
 
@@ -494,12 +953,11 @@ independently binds the opposite manager fighter. It does not search a fighter
 list, consult reciprocal fighter `+0x20`, or use RNG to choose its primary
 fighter target.
 
-Resident `FUN_002174A0(fighter,0)`, called by standard active-fighter update
-`FUN_0024C440` at `0x0024C4D0`, establishes the source-field semantics. It keeps
-fighter `+0x20` as the reciprocal opponent pointer (falling back to self when
-null), writes bearing at `+0x328`, planar distance at `+0x32C`, full 3D distance
-at `+0x330`, vertical delta at `+0x334`, and target/facing side at `+0x326`.
-The AI's cached `+0x0C` is therefore specifically planar opponent distance.
+The source fields are written by resident geometry refresh `FUN_002174A0`,
+owned by [Target selection](target_selection.md#paired-opponent-and-geometry-refresh):
+fighter `+0x326` is the target/facing side and `+0x32C` the planar opponent
+distance. The AI's cached `+0x0C` is therefore specifically planar opponent
+distance.
 
 The spatial classifier at `D/L/F 00702E20/00702E60/4EF60`, called at
 `D/L/F 0070500C/0070504C/5114C`, caches current position at slot
@@ -520,7 +978,7 @@ yet mapped to named controller buttons.
 ## Alternate target-position sources and path states
 
 Primary fighter ownership remains fixed, but navigation can request a position
-from three sources through slot `+0x68`. Corrected live `FUN_006F1DF0` proves:
+from three sources through slot `+0x68`. Live `FUN_006F1DF0` selects:
 
 - mode `0`: copy four words at primary opponent `+0x30..+0x3C`;
 - mode `1`: resolve alternate world-object handle slot `+0x54` through resident
@@ -534,15 +992,9 @@ Direct calls to this source selector are at
 
 Both alternate modes have direct producers:
 
-- live `FUN_006FC480` (`D/F 006FC440/48580`) enumerates resident world-object
-  handles, resolves each handle to a position and region, and accepts a
-  candidate only after its object/state exclusions, the exact test
-  `rand(0..100) < slot+0x26`, and a planar comparison placing the candidate
-  closer to self than to the primary opponent. It takes the first candidate in
-  enumeration order that passes those tests rather than choosing uniformly
-  among all candidates. On success it stores the handle
-  at `+0x54`, the candidate vector at `+0x70..+0x7C`, and its region at
-  `+0x80`. Its sole direct call is live `0x00701C60` inside
+- live `FUN_006FC480` (`D/F 006FC440/48580`), the first world-object search
+  described below, supplies the mode-1 handle, vector, and region. Its sole
+  direct call is live `0x00701C60` inside
   `FUN_00701BD0` (`D/L/F 00701B90/00701BD0/4DCD0`). That caller requires state
   0/1, an expired slot `+0x94`, and profile-parameter-28 success; it then
   resets, sets active, writes source mode `1` and state `24`, and invokes the
@@ -568,6 +1020,52 @@ Both alternate modes have direct producers:
 order and returns the record at flattened index `+0x5C`. This closes the
 mode-2 producer/consumer chain; the cached vector is a planning input, while
 the flat index is what lets later target refresh find the live record again.
+
+The three world-object searches share enumeration through resident
+`FUN_00375840(manager,-1)`, `FUN_00375800(manager,index)`, and
+`FUN_00375760(manager,handle,record)`. The latter reaches live BTL
+`FUN_0070C350` (`D/F 0070C310/58450`), which writes the record's kind byte at
+`+0x00` through resident `FUN_003765B0(object byte +0x61)`, copies the object's
+four-word position from `+0x20` to record `+0x10`, and copies object word
+`+0x08` to record `+0x20`. The searches require a region-bound match through
+`FUN_006FC360` (`D/F 006FC320/48460`), then cache that position and record
+word `+0x20` in slot `+0x70..+0x7C` and `+0x80`. The kind numbers below are
+raw record values; their player-facing object names are unresolved.
+
+Each search returns zero immediately if slot handle `+0x54` is already
+different from `-1`. Their candidate-selection rules differ:
+
+| Helper D/L/F | Candidate rule and stopping condition |
+| --- | --- |
+| `006FC440/006FC480/48580` | Skip kind `7`; require `rand(0..100) < slot+0x26` and strictly smaller planar distance to self than to the primary opponent. Retain the first passing candidate. A failed random/distance gate sets slot `+0x94=90` and continues enumeration. |
+| `006FC7B0/006FC7F0/488F0` | Skip kind `2`; require planar distance to self strictly below the supplied radius. Retain the first eligible candidate without RNG or an opponent-relative comparison. State 27 supplies radius `120.0`. |
+| `006FCA90/006FCAD0/48BD0` | Require kind equal to the argument and distance strictly below the supplied limit. Each accepted candidate lowers the limit to its own distance. Stop at the first accepted candidate at distance `<=400.0`; otherwise retain the closest accepted candidate encountered before enumeration ends. No RNG is used. |
+
+The third search's sole direct call is
+`D/L/F 0070239C/007023DC/4E4DC` in live `FUN_00701ED0`, with kind `2` and
+initial limit `3000.0`. A nonzero search result takes that caller's success
+return without a new source-mode/state-24 write there. On zero, the caller
+selects state `21`, sets request latch `+0x90=1`, and seeds `+0x94` with
+`rand(0..30)+38` and `+0xDC` with `rand(0..60)+150`. Thus this helper's stored
+handle alone does not establish that its caller starts mode-1 navigation.
+
+The shared kind-specific gates can terminate the entire search rather than
+skip only the current candidate. For kind `2`, either resident
+`FUN_00306420(self,10/11)==1` or `FUN_00225940(self,5.0)==1` returns zero.
+The latter is an affordability predicate, so an affordable `5.0` check rejects
+this path. For kind `3`, the search returns zero when
+`FUN_00375A60(world,AI-side)` returns an object for which live
+`FUN_0070FC80` returns one. Resource formulas belong to
+[Chakra and guard](chakra_and_guard.md).
+
+The three physical affordability call sites are
+`D/L/F 006FC670/006FC6B0/487B0`,
+`006FC978/006FC9B8/48AB8`, and `006FCC64/006FCCA4/48DA4`. The middle call
+is unreachable on the recovered radius-search enumeration path: its earlier
+kind-2 branch at `D/L/F 006FC860/006FC8A0/489A0` jumps to the next candidate,
+and intervening calls receive the position vector, not the kind byte. It must
+not be counted as another executable kind-2 selection path merely because its
+instruction remains in the function.
 
 The route planner at `D/L/F 006F3770/006F37B0/3F8B0` clears `+0x3C`, resolves
 the requested target source and current actor region, and writes raw dispatcher
@@ -650,9 +1148,9 @@ mean slot `+0x1C` and `+0x20`. Masks remain deliberately numeric.
 | `15` | `006FBA74/006FBAB4/47BB4` | actor `+0x190==0x60` calls live `FUN_006F8810`; `0x5D` emits `0x1000`; otherwise reset |
 | `16` | `006FBAE4/006FBB24/47C24` | reset when slot `+0x94` is zero or actor `+0x18E` is 4/5; otherwise emit `0x1000` |
 | `17` | `006FBA54/006FBA94/47B94` | call live `FUN_006FB0D0`, a selector/queue path |
-| `18` | `006FBB64/006FBBA4/47CA4` | call live `FUN_006FA590` |
+| `18` | `006FBB64/006FBBA4/47CA4` | call live `FUN_006FA590`: conditional guard output, with reset/action-selection departures described below |
 | `19` | `006FBBE8/006FBC28/47D28` | actor `+0xB00` high byte zero resets; `0x100/0x400` reset then `FUN_0021DDB0(actor)` |
-| `20` | `006FBD3C/006FBD7C/47E7C` | reset unless target `+0x18E==8` or slot byte `+0x124` is nonzero; one Practice-only setting branch is outside this investigation's scope, otherwise resident `FUN_00229B70(actor,-2)` |
+| `20` | `006FBD3C/006FBD7C/47E7C` | reset unless target `+0x18E==8` or slot byte `+0x124` is nonzero; in Practice, key `0x11==1` selects state 18 and returns; otherwise resident `FUN_00229B70(actor,-2)` |
 | `21` | `006FBEF4/006FBF34/48034` | resident `FUN_00306420(actor,10/11)` success resets; otherwise emit `8`, resetting when slot `+0x94` expires |
 | `22` | `006FBFB8/006FBFF8/480F8` | emit `4`, reset when slot `+0x94` expires |
 | `23` | `006FBE50/006FBE90/47F90` | resident `FUN_0021DF60(actor,1,0x02000000,-2)` chooses an index; if valid and no action is queued, queue it with `FUN_0021D380` |
@@ -676,25 +1174,125 @@ mean slot `+0x1C` and `+0x20`. Masks remain deliberately numeric.
 | `41` | `006FC2A8/006FC2E8/483E8` | emit `0x01000000` |
 | `42` | `006FC2C4/006FC304/48404` | call the action selector with `(distance=0, mask=0, range=1..1, directional gate on)`, then queue the returned index with `FUN_0021D380` |
 
-This table corrects the preserved decompiler's case mapping. Its switch used the
-live table address in displayed space and therefore associated cases with bytes
-`0x40` too late.
+The state numbers come from the table entries; the preserved export's
+recovered switch cases are shifted `0x40` late and do not match them.
 
-The numeric masks above can be related to the already-established configurable
-input translator without assigning move names. With the native default bindings,
+The guard-age setter calls are at actual states **20 (`0x14`)** and
+**39 (`0x27`)**. Their raw table entries are respectively
+`D/L/F 008C3820/008C3860/20F960 -> L 006FBD7C` and
+`008C386C/008C38AC/20F9AC -> L 006FC2A8`; the call sites are
+`006FBE40/006FBE80/47F80` and `006FC27C/006FC2BC/483BC`.
+State **38 (`0x26`)** instead has entry
+`008C3868/008C38A8/20F9A8 -> L 006FC260` and emits `0x20000000`.
+Consequently `0x26` is not the state number of the direct `-2` guard-age
+setter.
+
+State 20's Practice branch calls manager key `0x11` at
+`D/L/F 006FBDD8/006FBE18/47F18`. Value `1` writes state `18` (`0x12`) at
+`006FBE10/006FBE50/47F50` and returns before the `-2` setter. The setting's
+native labels and fighter-side effect are owned by
+[Practice mode](practice_mode.md#substitution-jutsu). This establishes the AI
+transition to the conditional guard handler without expanding that mechanic's
+ownership here.
+
+The numeric masks above can be related to the configurable input translator
+without assigning move names. With the native default bindings,
 `0x00001000` is a newly pressed Circle binding, `0x00010000` Cross,
 `0x01000000` Square, `0x20000000` R1, and held L2 or R2 produces the logical
 guard bit `0x10000000`. Low bits `4` and `8` are opposite direction sectors;
 `0x00040000` is a short-history Cross-plus-direction modifier rather than an
 independent button. These mappings come from the shared command-controller
-pipeline documented in `action_commands.md`; bindings remain user-configurable.
+pipeline documented in
+[Action commands](action_commands.md#logical-mask-translation); bindings
+remain user-configurable.
+
+### State-18 guard reaction
+
+The complete helper is `D/L/F 006FA550/006FA590/46690`, ending at
+`D 0x006FAA0C`. It emits logical guard bit `0x10000000` conditionally; state
+40 emits that same bit unconditionally. Guard input and fighter-side counters
+are owned by [Chakra and guard](chakra_and_guard.md#guard-input-and-action-lifecycle).
+
+The first gate checks the target's action class `+0x18E`. When it is `8`,
+target current-action pointer `+0xA4C` has word `+0x14 & 0x02000000` tested
+at `D 0x006FA59C..0x006FA5AC`; a set bit resets immediately. The helper then
+builds a Practice override when manager mode is `3`, Status key `0x0C` is
+other than COM (`1`), and Guard key `0x0E` is Yes (`1`). The override affects
+the later guard gates and suppresses both random-gated action departures.
+
+- When target class is not `8`, any of slot bytes `+0x124/+0x125/+0x126`
+  equal to `1` emits guard and returns. Otherwise the helper resets. For
+  spatial bucket `+0x30<3`, it can then select state `11`, set latch
+  `+0x90=1` and timer `+0x94=30`, and call facing correction plus live
+  `FUN_006F8810`. This requires no Practice override and an inclusive
+  `0..100` roll below parameter 14 plus `10` when Strength key `0x0B` is
+  nonzero, or parameter 14 alone when it is zero. The state and timer writes
+  are at `D 0x006FA83C/0x006FA850`.
+- When target class is `8`, guard is emitted if its current record word
+  `+0x10` contains bit `2`, the spatial bucket is `0/1`, one of the three
+  slot bytes equals `1`, or the Practice override is active with a bucket
+  other than `4/5`. Without any such gate the helper returns without adding
+  guard. The common guard store is `D/L/F 006FA934/006FA974/46A74`.
+- After that common guard store, a non-override path rechecks target current
+  record word `+0x10 & 0x100`. If set and slot cooldown `+0xD0` is zero, it
+  reloads that cooldown to `30` at `D 0x006FA9A4`, then rolls `0..100`
+  against parameter 14. Success calls reset, facing correction, and
+  `FUN_006F8810` at `D/L/F 006FA9E0/006FAA20/46B20`,
+  `006FA9E8/006FAA28/46B28`, and `006FA9F0/006FAA30/46B30`.
+  Reset clears the guard output just added; this is a departure from the
+  guard path, not a second guard-mask producer.
+
+The target-record accesses use resident `FUN_00217930(target,-3/-1)`, which
+returns the current-action pointer for either negative argument while the
+target is in class `8`. These literal arguments therefore do not establish
+different target action records. Player-facing action names for record bits
+`2`, `0x100`, and `0x02000000` remain unresolved; the branch effects above do
+not depend on naming them.
+
+### Candidate-byte lifetime across Practice Status changes
+
+**Observation:** The scripted tail clears `+0x126` at
+`D/L/F 00702508/00702548/4E648` and writes `1` at
+`007026D8/00702718/4E818` after obtaining the opposite-side support and
+checking its reason byte `+0xE6==2`. The initializer also clears the byte at
+`00705E64/00705EA4/51FA4`, using `sb zero,0xF6(s1)` where
+`s1=slot+0x30`. This shifted pointer is a real alias write that an exact
+`+0x126` instruction search alone would miss.
+
+The full recovered ordinary incoming-action bodies refresh `+0x125` and
+`+0x124`, respectively, but do not refresh `+0x126`. The opponent-support
+stage constructs states 39..42 without writing this byte. The state-18
+consumer forms its absolute byte address `0x008D66B6 + side*0x1E0` at
+`D 006FA730/006FA8F8`, so those reads are also absent from a search for
+literal slot offset `0x126`. The neutral reset has no write to any of these
+three bytes.
+
+**Static consequence:** A scripted-to-COM Status change can preserve a
+previous `+0x126==1`. Settings apply writes Status and Strength before
+comparing requested Strength with the normalized stored Strength. When they
+match, it supplies force zero to the controller toggle. A fighter already
+using the nonzero controller nibble is then left initialized as it was; the
+toggle does not reinitialize merely because one non-Manual Status changed to
+another. The Practice tail subsequently returns for Status COM before its
+candidate-byte clears. Thus the same slot can retain a scripted support flag
+on the COM path until an initializer or another recovered scripted-tail pass
+clears it. A transition through Manual followed by COM does reinitialize,
+because Manual clears the controller nibble. Settings transaction ownership
+remains in [Practice mode](practice_mode.md#confirmapply-side-effects).
+
+This establishes a retained-byte route to an ordinary COM consumer, not a new
+ordinary producer of `1`. The full AI cluster through preserved
+`0x007064FC`, absolute candidate-byte formations, shifted slot stores, and
+the three ordinary reaction bodies above contain no recovered ordinary
+producer. An unrecognized external alias remains unresolved;
+the finding does not establish that every ordinary match can produce this
+flag.
 
 ### Direct state constructors
 
-A handler's presence does not prove that BTL ever selects it. Scanning direct
-writes to slot `+0x34` in the corrected clean text gives this constructor map.
-Entries are corrected **live** function starts; the global `D=L-0x40` and
-`F=L-0x006B3F00` rules give their exact original symbols and file offsets.
+A handler's presence does not prove that BTL ever selects it. Direct writes
+to slot `+0x34` in BTL text give this constructor map. Entries are **live**
+function starts (see [Address convention](#address-convention-and-overlay-mapping)).
 Repeated writers inside one function are collapsed.
 
 ```text
@@ -790,8 +1388,8 @@ These are record-layout and branch facts, not names for the underlying moves.
 
 The function returns the selected action-record index. For specially flagged
 mapped actions, it calls live `FUN_00772870` and creates slot `+0x128` as a
-percentage of that helper's result. Corrected control flow gives these exact
-percentage ranges by spatial bucket:
+percentage of that helper's result. The percentage ranges by spatial bucket
+are:
 
 | slot `+0x30` | bounded RNG | added base | percentage range |
 | ---: | ---: | ---: | ---: |
@@ -891,6 +1489,20 @@ gates and a no-action-queued test, it selects and queues an action-record index.
 Special height branches instead ask resident `FUN_0021DF60` for an index using
 masks `0x212`, `0x10A`, or `0x86`, then queue that result.
 
+One cached-action branch has a distinct AI precheck before the resident queue's
+own admission checks. Resident `FUN_00217930(self,slot halfword +0x1B0)`,
+called at `D/L/F 006F8BE0/006F8C20/44D20`, returns that index's action record.
+At `D 0x006F8CBC` the AI loads record float `+0x20`, converts it with
+`cvt.w.s`, and passes the integer to resident `FUN_00372CB0`. That accessor
+returns the signed byte at `0x005AEC49 + index*0x14`. The AI converts the
+returned byte directly to a float and passes it to `FUN_00225940` at
+`D/L/F 006F8CE0/006F8D20/44E20`; there is no multiplication by `5.0` in this
+precheck. Only a nonzero result reaches queue call
+`006F8CF8/006F8D38/44E38`, with cached index `+0x1B0`. This establishes an
+intermediate AI selection gate, while the queue still independently enforces
+the selected action's requirement. The shared resource interpretation is
+owned by [Chakra and guard](chakra_and_guard.md).
+
 ## Configuration and behavior profiles
 
 Resident `FUN_001F6EA0(manager)` calls `FUN_001F6420(manager,0x0B)` and returns
@@ -919,8 +1531,8 @@ profile 5: 15,20,30,90,60,60,55,50,50,60,80,70,70,60,80,70,70,70,80,70,40,50,70,
 ```
 
 A seventh contiguous `0x50` row exists after profile 5, but the confirmed
-normal key bound cannot select it. Its role is reserved or special and remains
-unresolved; it must not be advertised as a seventh ordinary difficulty level.
+normal key bound cannot select it. Its role remains unresolved; the row does
+not establish a seventh ordinary difficulty level.
 Its exact location is `D/L/F 008C33D0/008C3410/20F510`, and its raw 40 values
 are:
 
@@ -940,12 +1552,10 @@ selector.
 
 The following ledger transposes the six selectable rows and records only uses
 that are direct in clean BTL text. Function addresses in this table are **live**
-addresses from the corrected full-file import. For every reader `L`, the exact
-preserved-export/original symbol is `FUN_(L-0x40)` and the file entry is
-`F=L-0x006B3F00`; for example, live `FUN_006FCE00` is preserved
-`FUN_006FCDC0`, file `0x48F00`. `P0..P5` means profile rows 0 through 5.
+addresses (see [Address convention](#address-convention-and-overlay-mapping)).
+`P0..P5` means profile rows 0 through 5.
 
-Most probability uses compare a profile value with
+Most random gates compare a profile value with
 `FUN_00180210(100)`, whose result is inclusive `0..100`. A branch
 `roll < value` accepts exactly the `value` result values `0..value-1` out of
 the 101-value output domain; it is not a `value%` test. This document does not
@@ -956,11 +1566,11 @@ rather than “percent.”
 | Index | Slot offset | P0/P1/P2/P3/P4/P5 | Direct structural use |
 | ---: | ---: | --- | --- |
 | 0 | `+0x160` | 50/45/30/20/15/15 | `0..100` gate in `L 0x006FCE00` before its environment-point scan can build a route and enter state 26. |
-| 1 | `+0x162` | 0/0/0/10/15/20 | Contextual `0..100` threshold in `L 0x006FDF30`, `0x006FEAC0`, and `0x007004B0`. |
+| 1 | `+0x162` | 0/0/0/10/15/20 | Contextual `0..100` threshold in `L 0x006FDF30`, `0x006FEAC0`, and `0x007004B0`; the first and third apply the [action-record scalar transform](#incoming-action-reactions-and-effective-strength-gates), and the third can first multiply the base by `0.8`. |
 | 2 | `+0x164` | 0/0/0/20/20/30 | In `L 0x00701140`, an action-record scalar adjusts this `0..100` threshold before a transition to state 20. |
 | 3 | `+0x166` | 240/210/180/150/120/90 | Countdown seed written to slot `+0x98`, `+0xD4`, or `+0xFC` by reactive paths in `L 0x006FDF30`, `0x006FEAC0`, `0x007004B0`, `0x00701140`, and `0x00703D20`. |
 | 4 | `+0x168` | 0/0/0/25/45/60 | `0..100` threshold in `L 0x006FDF30` and `0x00703A70`. |
-| 5 | `+0x16A` | 20/30/35/40/50/60 | Contextual probability magnitude in `L 0x006FEAC0`, `0x007004B0`, `0x00701140`, and `0x00703D20`; one `0x007004B0` path passes it to the ten-step phase gate. |
+| 5 | `+0x16A` | 20/30/35/40/50/60 | Contextual threshold magnitude in `L 0x006FEAC0`, `0x007004B0`, `0x00701140`, and `0x00703D20`; `0x007004B0` can pass it to the ten-step phase gate, while `0x00701140` compares a float roll against `1.9*value`. |
 | 6 | `+0x16C` | 0/25/35/35/45/55 | Alternate ten-step phase-gate input in `L 0x007004B0`, selected for particular incoming-action classes. |
 | 7 | `+0x16E` | 0/0/25/35/40/50 | Another incoming-action-class phase-gate input in `L 0x007004B0`. |
 | 8 | `+0x170` | 60/40/40/40/40/50 | `0..100` threshold in `L 0x006F9B20`, `0x006FB0D0`, `0x006FEAC0`, `0x007004B0`, and `0x00701BD0`. |
@@ -982,7 +1592,7 @@ rather than “percent.”
 | 24 | `+0x190` | 0/0/0/0/0/0 | No direct clean-BTL read found. Character flag mask `0x08` still applies its `x1.2` transform here, which is a no-op for all six selectable base rows. |
 | 25 | `+0x192` | 0/0/35/35/40/50 | `0..100` gate in `L 0x006FFEC0`; on success that path resets and ORs synthesized mask `0x1000`. |
 | 26 | `+0x194` | 0/0/0/40/45/45 | `0..100` gate in `L 0x006F9B20` before state 25 and its route helper. |
-| 27 | `+0x196` | 0/0/30/40/45/45 | Post-dispatch `0..100` gate at `D/L/F 00705584/007055C4/516C4`; when the associated object's property has bit `0x100`, success writes `1` to object `+0x13C`. |
+| 27 | `+0x196` | 0/0/30/40/45/45 | Post-dispatch `0..100` gate at `D/L/F 00705584/007055C4/516C4`; object property bit `0x100` resets the AI before the roll, and success writes `1` to object `+0x13C`. Failure still clears the dispatched output. |
 | 28 | `+0x198` | 20/35/40/40/45/50 | Widespread `0..100` threshold in `L 0x006F8810`, `0x006FEAC0`, `0x007004B0`, `0x00701BD0`, and `0x00703170`. |
 | 29 | `+0x19A` | 40/55/60/60/65/70 | `0..100` gate in `L 0x007004B0`, `0x00701140`, and `0x00703D20`; one success invokes `L 0x006FD970`. |
 | 30 | `+0x19C` | 0/0/0/3/2/1 | Inclusive bounded-RNG argument in `L 0x006FEAC0` and `0x007004B0`, used to seed short retry countdowns `+0xFC` and `+0x98`. |
@@ -996,10 +1606,10 @@ rather than “percent.”
 | 38 | `+0x1AC` | 200/170/150/120/110/85 | In `L 0x006FE720`, seeds slot `+0xF4` to `value + rand(0..value)` before another state-38 evaluation. |
 | 39 | `+0x1AE` | 30/25/20/15/10/5 | In `L 0x006FF650`, seeds slot `+0xBC` to `value + rand(0..value)` on one state-19 reaction path. |
 
-The two negative rows above were checked against both corrected decompiler
-references and the full clean text disassembly. Index 31 has no direct
+For the two negative rows above, the full BTL text disassembly gives index 31
+no direct
 `lh/lhu/lw/lwu/ld/lq/lwc1` load using slot offset `0x19E`, and no absolute
-formation of live `0x008D672E`; index 24 likewise has no identified profile
+formation of live `0x008D672E`; index 24 likewise has no identified decision
 consumer. Indexed access through an unrecognized pointer cannot be excluded,
 so neither field is assigned a semantic name.
 
@@ -1047,48 +1657,108 @@ Resident `FUN_001FDC30` is only `lw v0,-0x335C(gp); return`. The clean ELF
   teardown of the surrounding resident flow. No other clean resident writes
   were found.
 
-This establishes a continue-screen completion counter whose exact incrementing
-choice labels remain unresolved. It is the scalar that chooses the ten
-percentage rows above; it is not the ordinary Strength key and should not be
-called a global difficulty setting.
+The choice labels are established by the resident renderer `FUN_001FC5C0`
+(runtime/file `001FC5C0/0FC6C0`). It indexes the three-pointer table at
+runtime/file `00406530/306630` with the same `+0x08` value that
+`FUN_001FED10` consumes. The strings are Shift-JIS; the third retains native
+ruby markup:
 
-The BTL predicate that can bypass this modifier is now structurally bounded as
-well. `D/L/F 006EE510/006EE550/3A650` merely returns a BTL global byte. The byte
-is set to 1 by `D/L/F 006EED90/006EEDD0/3AED0` when a setup object whose mode
-field `+0x0C` equals 2 creates a resident session object; it is cleared by the
-mode-2 completion path in `D/L/F 006EEEE0/006EEF20/3B020`. The initializer's
-test is at `D/L/F 00706014/00706054/52154`. This proves a session-backed-mode
-exclusion but still does not establish a safe player-facing mode name.
+| Result `+0x08` | Label bytes at runtime/file | Native label | Counter effect |
+| ---: | --- | --- | --- |
+| `0` | `006030A0/5031A0` | `はい` (Yes) | increment |
+| `1` | `006030A8/5031A8` | `いいえ` (No) | unchanged |
+| `2` | `00406510/306610` | `キャラクター<ruby変更\|へんこう>` (Change character) | increment |
+
+`FUN_001FBD60` (`001FBD60/0FBE60`) sets the choice count at `+0x0C` to
+two or three according to `FUN_001FDBF0()`. Input handler `FUN_001FC020`
+(`001FC020/0FC120`) bounds `+0x08` to that count, moves it with native
+Up/Down, and accepts it on new-press mask `0x20`. There is no timeout write
+that substitutes another result in this handler. Thus Change character is an
+optional third choice, not an unnamed automatic result. The exact conditions
+that expose that choice are outside the AI counter's ownership.
+
+This establishes a continue-screen completion counter incremented by Yes and
+Change character, but not No. It chooses the ten percentage rows above; it is
+not the ordinary Strength key and should not be called a global difficulty
+setting.
+
+The BTL predicate that can bypass this modifier is structurally bounded.
+`D/L/F 006EE510/006EE550/3A650` merely returns a global byte. Its setter
+`006EED90/006EEDD0/3AED0` has one direct BTL caller, at
+`006EEC64/006EECA4/3ADA4`. That caller loads its setup pointer from owner
+`+0x1C`, reads setup word `+0x0C` at `D 0x006EEC20`, copies that value to
+owner `+0x04`, and calls the setter only for value `2`. This setup field is a
+separate namespace from manager mode `+0x0C`, so their equal numbers do not
+establish an equal mode meaning.
+
+When owner child `+0x24` is absent, the setter allocates `0x1C` bytes and
+initializes them through resident `FUN_001FE260`, obtains resident data pointer
+`0x006B3010` through `FUN_001FDC20`, binds that data into the setup flow, and
+sets the bypass byte to `1` at `D 0x006EEE38`. The byte is cleared by the
+mode-2 completion path in `006EEEE0/006EEF20/3B020`. The AI initializer reads
+it at `00706014/00706054/52154`. This proves the bypass's setup value and
+resident-data dependency, but not a safe player-facing name for that setup
+value. It is not named by substituting the manager's mode-2 label.
 
 In manager mode `+0x0C==3` (Practice), the main tick detects a changed key
 `0x0B` and hot-copies the new raw `0x50` row. This hot reload does not rerun the
 secondary percentage modifier, character multipliers, normalizer, two-slot
 reset, or initializer-only randomized timers.
 
+### Computed profile copies and unresolved parameters
+
+**Observation:** Both unresolved parameters participate in two real indexed
+copies that the direct-reader ledger intentionally does not treat as decision
+consumers. The initializer's `D 00705F70..00705F8C` and Practice hot reload's
+`D 00704FD8..00704FF4` each copy two signed halfwords per iteration, advancing
+both pointers by four and iterating 20 times. Their destination is precisely
+`0x008D66F0 + side*0x1E0`, the selected slot's 40-parameter row. Parameter 24
+is the first halfword of iteration 12; parameter 31 is the second halfword of
+iteration 15, counting from zero. Neither copy exports a new row or pointer
+to another owner.
+
+The initializer's secondary modifier loop at
+`D/L/F 00706064/007060A4/521A4` computes the selected row address plus
+`parameter_index*2`, reads the halfword at `D 007060C0`, applies that index's
+signed-byte percentage, and writes it back at `D 007060EC`. Its loop bound
+is 40. Thus index 31 is copied and arithmetically adjusted even though no
+later decision consumer has been recovered. Index 24 is copied and adjusted
+too, then descriptor bit `0x08` can multiply it at
+`D 00706210..00706230`. All seven authored base rows have zero at index 24;
+the modifier and multiplier both preserve zero. The two recovered profile
+installation paths therefore install zero there under their authored inputs.
+
+**Bounded negative:** Following the row-base formations, shifted slot aliases,
+overlapping loads, and surviving pointer registers through the AI cluster
+found no additional decision use of either index and no outgoing copy of the
+row. The classifier after hot reload obtains its own slot from the side
+global; the initializer's bypass predicate takes no profile input; and the
+normalizer takes a side index and touches its explicitly listed parameters,
+which exclude 24/31. A profile pointer left in a caller-saved register after
+the copy is consequently not evidence that those helpers consume it. The
+whole-BTL address pass likewise found no recovered formation for the second
+side's absolute parameter addresses `0x008D6900/0x008D690E` that adds another
+consumer. Unknown aliases and indirect external access remain open. These
+results establish installation and transformation, not semantic meanings or
+universal non-use.
+
 ## RNG ownership and confirmed uses
 
-Resident `FUN_0017FD90` is the core PRNG. Its state and recurrence identify it
-as MT19937 with project-specific seeding:
-
-- 624 32-bit algorithm values stored in eight-byte EE slots at resident BSS
-  `0x00617640`, indexed by the word at `0x00602A28`;
-- the standard 397-word twist offset, high/low masks
-  `0x80000000/0x7FFFFFFF`, and odd-word matrix constant `0x9908B0DF` from
-  runtime/file `003FB3D0/2FB4D0`;
-- the standard output tempering shifts `11,7,15,18` and masks
-  `0x9D2C5680/0xEFC60000`;
-- the default state-fill path starts from `0x1100` and repeatedly applies
-  `value = value * 0x10DCD + 1`, packing successive high halves, rather than
-  using MT19937's reference seed-expansion formula.
-
-Resident wrappers are:
+BTL has no local PRNG state. Every confirmed AI call enters one of two
+resident wrappers around the shared MT19937 core `FUN_0017FD90`; the core,
+its state, the wrappers' exact reductions, and seeding are owned by
+[Resident randomness](../runtime/randomness.md#mt19937-core), with its
+[MT wrappers](../runtime/randomness.md#mt-wrappers) and
+[initialization and reseeding](../runtime/randomness.md#coordinated-initialization-and-reseeding):
 
 ```text
 FUN_001801E0()      -> raw PRNG value
 FUN_00180210(bound) -> (raw ^ 0x80000000) % (abs(bound) + 1)
 ```
 
-The bounded result is inclusive `0..abs(bound)`. Confirmed AI uses include:
+The bounded result is inclusive `0..abs(bound)` and keeps modulo bias, so a
+comparison such as `rand(0..100) < value` is a threshold over 101 results,
+not an exact percentage. Confirmed AI uses include:
 
 - modulo selection among filtered action records, described above;
 - special-action cooldown percentage generation, described above;
@@ -1100,23 +1770,15 @@ The bounded result is inclusive `0..abs(bound)`. Confirmed AI uses include:
   uses `rand(0..1)` to reset one of the two slots. A deadlock/stalemate-breaker
   purpose is plausible but remains a hypothesis.
 
-This state is shared game-wide, not stored per AI side. BTL has no local PRNG
-state: every confirmed AI call enters the resident wrappers above, and many
-non-AI resident paths call the same wrappers. Resident initializer
-`FUN_00180060` has direct call sites at runtime/file
-`001E11B4/0E12B4` and `001F4378/0F4478`. The former lies in
-`FUN_001E0EE0`, immediately after `FUN_001801A0` loads seed word
-`0x00602A20` from the resident global controller's `+0x194`; the latter lies in
-manager initializer `FUN_001F4360`. `FUN_00180060` rebuilds all 624 slots,
-sets index `0x00602A28` to 624, advances the stream according to low seed bits,
-and writes back another raw result as the next seed. Consequently AI results
-depend on the shared call order, including intervening non-AI consumers; equal
-AI slot contents alone do not imply the same next decision.
+The generator state is shared game-wide, not stored per AI side, and many
+non-AI resident paths call the same wrappers. Consequently AI results depend
+on the shared call order, including intervening non-AI consumers and resets;
+equal AI slot contents alone do not imply the same next decision.
 
 An exact aligned-JAL audit of the identified AI cluster from live
 `0x006F0000..0x00706500` finds **167** direct RNG-wrapper calls: 10 raw calls to
 `FUN_001801E0` and 157 inclusive-bounded calls to `FUN_00180210`. Counts by
-corrected live containing function are:
+live containing function are:
 
 ```text
 function       raw  bounded    function       raw  bounded
@@ -1199,16 +1861,15 @@ It seeds, advances, and wraps the cursor exactly like `FUN_006F3140`. Its sole
 direct call is `D/L/F 006FF92C/006FF96C/4BA6C` in
 `D/L/F 006FF610/006FF650/4B750`, the Extra Hit Counter response selector.
 For the Normal setting, response flag families choose candidate state 13 or
-19, apply their cooldown/probability gates, and commit the candidate only when
+19, apply their cooldown and random gates, and commit the candidate only when
 this phase helper's current table cell is nonzero. Practice setting Always
 return bypasses the phase helper and commits the candidate immediately after
 clearing the corresponding cooldown. Thus the three phase cursors are shared
 across at least two distinct reaction-selection paths.
 
-An important corrected negative is preserved `FUN_006F1020`
-(`D/L/F 006F1020/006F1060/3D160`): it is not an RNG helper. It maps a target
-action-record byte in `-3..3` to floats from `-0.5` through `+0.5`. The skewed
-decompiler had incorrectly merged it with a later RNG function.
+Preserved `FUN_006F1020` (`D/L/F 006F1020/006F1060/3D160`) is not an RNG
+helper: it maps a target action-record byte in `-3..3` to floats from `-0.5`
+through `+0.5`.
 
 ## Evidence limits, negative results, and hypotheses
 
@@ -1222,11 +1883,9 @@ Confirmed negative results:
 - Ordinary primary-opponent binding performs no search and uses no RNG.
 - COM disable performs no state reset, destructor, free, or deallocation.
 - No AI heap allocation was identified; the two state blocks are static BSS.
-- Physical controller-button names for command-mask bits have not been proven.
+- Native default bindings establish the named logical-mask sources listed
+  above; unlisted masks and move-specific meanings remain unresolved.
 - State IDs have not been assigned behavior names beyond direct handler effects.
-- This investigation did not execute an AI runtime trace. Runtime field labels
-  cited above come from established resident producers or loader/savestate
-  mapping, while state transitions and calls come from clean static code.
 
 Useful hypotheses, kept separate from established facts:
 
@@ -1236,4 +1895,4 @@ Useful hypotheses, kept separate from established facts:
   inaccessible tier, but no confirmed caller selects it;
 - the continue-screen counter drives a progressively stronger signed profile
   adjustment, but whether its design intent is specifically adaptive easing is
-  an inference; the exact labels for result values 0/1/2 remain unresolved.
+  an inference; the incrementing choices themselves are established above.

@@ -55,6 +55,13 @@ Victory container remain bounded mapped replacements. `CMN/GAUGE.CCS` supplies
 the shared regional prompt atlas, and the NUN5 one-part `OUGI.CCS` remains
 paired with the Ultimate Jutsu layout work in the same internal patch.
 
+Seventy-two complete NUN5 Victory-name payloads (`3EYE/3???3PCT.CCS`) fit the
+corresponding NA2 member capacities, with 13 to 2,253 bytes of gzip padding.
+Two exceed their fixed NA2 members: Haku's `3HAK3PCT.CCS` by 348 bytes, and
+`3SKN3PCT.CCS` by 72 bytes even though its structure is compatible. Their
+name-texture raster properties are recorded in
+[Victory artwork](../../knowledge/localization/ui/victory.md#scope-and-source-identity).
+
 ENDDEMO's mapped replacement includes the English emblem's
 `MDL_win`, `MDL_win_f`, `ANM_end_win01`, and `ANM_end_win02` alongside its
 atlas. The derivation remaps donor object references by filename and object

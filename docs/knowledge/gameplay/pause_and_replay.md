@@ -1,96 +1,89 @@
 # Pause, start-menu, and battle-restart control
 
-This document records the established resident/BTL control paths related to
-battle pause suppression, the battle start menu, and battle reconstruction.
-
-The result is primarily static reverse engineering. No runtime pause or replay
-experiment was performed for this investigation. Numeric states and command
-IDs remain numeric unless their effect is directly established; names below
-are descriptive working identities, not recovered original symbols.
+This document records the resident and BTL control paths for battle pause
+suppression, the battle start menu, and battle reconstruction in retail NA2
+(`SLPS-25837`). Numeric states and command IDs remain numeric unless their
+effect is directly established; descriptive working identities are
+distinguished from recovered RTTI names.
 
 ## Research coverage
 
-- **Assigned scope:** resident/BTL battle pause and replay control: pause
-controller ownership and states, the simulation/update paths affected by its
-masks, start-menu/result routing, and any provable battle replay, restart, or
-reconstruction lifecycle. The investigation stayed within the exact resident
-and BTL binaries identified below and their maintained read-only exports.
-
-- **Exploration depth:** coverage was deep but bounded rather than exhaustive across the game:
-
-- The resident running-session chain was traced from `FUN_001EF8F0` through
-  mask construction `FUN_001F0290`, the complete explicit bit-dispatch table in
-  `FUN_001F03E0`, countdown/update calls `FUN_001F10F0` and `FUN_001F0B10`,
-  owner construction/destruction, and the relevant controller states `11..25`.
-  This included the route-`6`, route-`7`, and route-`8` teardown or
-  reconstruction paths and the direct producers that reach them.
-- The BTL pause-controller lifecycle and selected child branches were followed
-  through encoded live constructor/update/destructor targets, selectors `0`,
-  `1`, and `13`, their resource identities, and the direct parent-mask writes
-  made by selectors `1` and `13`. The auxiliary object at `0x00607844` was
-  followed through allocation, destruction, and the cut-in-related `+0xA50`
-  writer/reset range from live `0x0086F2E0` through `0x00870B38`.
-- The primary scheduler array built at live `0x007092E0` was resolved through
-  constructors, vtables, RTTI, and callback slots. Every explicit bit test and
-  direct call in `FUN_001F03E0` was tabulated; targeted RTTI/resource work
-  identified bits `0..4` and the countdown-presentation half of bit `9`.
-  Semantics for the remaining fixed consumers were sampled only far enough to
-  avoid unsupported names.
-- The start-menu chain was traced from resident `FUN_001EBD90` through BTL live
-  construction/update/result range `0x0087B0D0..0x0087D940`, its command-list
-  tables, command factory, child-result propagation, and exact Shift-JIS prompt
-  fragments for commands `0xA`, `0xB`, and `0xE`.
-- The Simple Display child's initial selection and completion path were traced
-  through its initializer, list state, and resident setting getter/setter,
-  including the separate selected-row and automatic-completion fields.
-- Complete direct-pattern scans within the two exact binaries covered immediate
-  route-`8` stores, direct constant-offset stores to auxiliary `+0xA50`, and
-  direct stores to controller `+0x694`. These exhaustive claims apply only to
-  those direct instruction patterns in these binaries; indirect writes,
-  dynamically selected calls, and other overlays remain outside them.
-- Replay coverage was a bounded search of resident/BTL literals, exports, and
-  the traced teardown/reconstruction call paths. It found no proven capture
-  buffer, recorded-input playback, serialized battle snapshot, or explicit
-  random-state restore. This is a useful negative, not exhaustive proof of
-  absence.
-
-- **Confirmed coverage:** resident ownership of the pause
-controller, persistence and direct producers of its two suppression words, the
-selective three-phase scheduler and its exceptions, the separate aggregate
-countdown gate, start-menu command/result-to-route flow, owner destruction and
-recreation during restart-like paths, the two bounded route-`8` reconstruction
-producers, and the lack of a proven replay mechanism in the inspected paths.
-
-- **Unresolved or untested:** indirect or other-overlay suppression writers; exact
-visible phase names for several selector branches and the cut-in flag; semantic
-identities for the remaining fixed scheduler consumers; remaining menu labels
-and input-to-result mapping; the user-facing events behind route-`8` modes `1`
-and `2`; and replay mechanisms outside the bounded paths.
-- **Deliberate exclusions and overlap:** controller-input polling, frame-rate patch design, practice configuration,
-match-result interpretation, non-gameplay media, and all story-mode logic.
-Those neighboring areas were neither used to fill gaps nor documented as
-evidence.
-
-- **Evidence limitations:** validation is static except for the clean-savestate/loader proof of the BTL
-`MWo3` header convention. No runtime pause, menu-selection, reconstruction, or
-replay experiment was run, so visible timing, exact input mapping, and dynamic
-reachability remain unverified. Raw-file disassembly was used to audit encoded
-targets and the `+0x40` overlay-address correction; the maintained disassembly
-itself was not modified.
+- **Assigned scope:** battle pause and replay control: pause-controller
+  ownership and states, the update paths affected by its masks, start-menu and
+  result routing, and any provable battle replay, restart, or reconstruction
+  lifecycle.
+- **Exploration depth:** deep but bounded:
+  - The resident running-session chain from `FUN_001EF8F0` through mask
+    construction `FUN_001F0290`, the complete explicit bit-dispatch table in
+    `FUN_001F03E0`, countdown/update calls `FUN_001F10F0` and `FUN_001F0B10`,
+    owner construction/destruction, and controller states `11..25`, including
+    the route-`6`, route-`7`, and route-`8` paths and their direct producers.
+  - The BTL pause-controller lifecycle through its constructor, update, and
+    destructor targets; selectors `0`, `1`, and `13`, their resources, and
+    their direct parent-mask writes; the complete common cleanup and the three
+    branch release bodies.
+  - The auxiliary object at `0x00607844` through allocation, destruction, and
+    the cut-in `+0xA50` writer/reset range live `0x0086F2E0..0x00870B38`.
+  - The primary scheduler array built at live `0x007092E0` through
+    constructors, vtables, RTTI, and callback slots.
+  - The start-menu chain from resident `FUN_001EBD90` through BTL live
+    `0x0087B0D0..0x0087D940`, its command lists, command factory, child-result
+    propagation, and the Shift-JIS prompts for commands `0xA`, `0xB`, and
+    `0xE`; the Simple Display child's selection and completion path.
+  - Direct-pattern scans of the two binaries for immediate route-`8` stores,
+    constant-offset stores to auxiliary `+0xA50` and controller `+0x694`,
+    direct calls to the session override writer (BTL, resident, and ETC), and
+    `gp`-relative loads of `0x00607834` (six BTL and 31 resident sites).
+  - A bounded replay search of resident/BTL literals, exports, and the
+    teardown/reconstruction call paths.
+- **Confirmed coverage:** resident ownership of the pause controller,
+  persistence and direct producers of its two suppression words, the selective
+  three-phase scheduler and its exceptions, the separate aggregate countdown
+  gate, start-menu command/result-to-route flow, the Free Battle and Practice
+  command lists with their placeholder replacement and joins to the observed
+  labels, owner destruction and
+  recreation during restart-like paths, the two route-`8` reconstruction
+  producers, the second-phase override's copied-mask semantics, distinct reset
+  and participant lifetimes, and the lack of a proven replay mechanism in the
+  inspected paths.
+- **Unresolved or untested:**
+  - Indirect or other-overlay suppression writers, cached controller aliases,
+    and whether all interruption paths restore the copied second-phase
+    override.
+  - Exact visible phases and labels for the battle-gauge, end-demo, and ougi
+    branches and for the cut-in flag; semantic identities of the fixed
+    scheduler consumers on bits `5..10`.
+  - Labels of the mode-`3`, `4`, and `5` start-menu entries, producers of
+    modes `4` and `5`, and the input path that produces result `1`.
+  - The user-facing events behind route-`8` modes `1` and `2`.
+  - Replay mechanisms outside the bounded paths.
+- **Deliberate exclusions and overlap:**
+  - Controller-input polling belongs to
+    [Controller input](../runtime/controller_input.md); Practice configuration
+    to [Practice mode](practice_mode.md); result interpretation to
+    [Match outcomes](match_outcomes.md); visible menu labels to
+    [Modes and navigation](../game/modes_and_navigation.md).
+  - Session construction, teardown order, and continuation rebuilds belong to
+    [Battle lifecycle](battle_lifecycle.md); reusable timer arithmetic to
+    [Timer primitives](../runtime/timer_primitives.md); participant admission
+    and release to [Target selection](target_selection.md); graph ownership to
+    [Battle entities](battle_entities.md).
+  - Story-mode logic and non-gameplay media are excluded.
+- **Evidence limitations:** conclusions are static. No pause, menu-selection,
+  reconstruction, or replay behavior was observed at runtime, so visible
+  timing, exact input mapping, and dynamic reachability remain unverified.
+  Direct-pattern scans do not exclude indirect writes, dynamically selected
+  calls, or other overlays.
 
 ## Evidence identity and address conventions
 
-The clean resident and BTL inputs and their address conversions are defined in
-[Standard game file identities](../game/files/file_identities.md).
-
+Address conventions follow
+[Retail game file identities](../game/files/file_identities.md#address-conventions).
 Encoded absolute pointers and `j`/`jal` targets in the raw overlay already use
-live addresses. They must not receive another `+0x40`; instead, their physical
-target bytes appear at `encoded live target - 0x40` in the preserved export.
-This explains several misleading intra-overlay callee labels in the export.
-The retained-header rule is runtime/loader evidence from a clean savestate;
-unless a passage below says otherwise, the controller and state-machine facts
-are direct static facts from the two identified binaries. Interpretive labels
-are explicitly described as inferences.
+live addresses; their physical target bytes appear at `encoded live target -
+0x40` in the preserved export, which explains several misleading intra-overlay
+callee labels there. Interpretive labels are explicitly described as
+inferences.
 
 ## Resident pause-controller consumption
 
@@ -138,6 +131,48 @@ The manager pointer at `0x00607600` supplies another numeric gate.
 `manager->field_14 == requested_value`. When that field equals `1`,
 `FUN_001F0290` forces the first suppression word to `0xFFFF`, rather than
 deriving it solely from the controller.
+
+### Session-local override writer
+
+Resident entry `0x001EC620..0x001EC658` (file `0x0EC720..0x0EC758`) writes
+the second-phase override without writing the pause controller. With a non-null
+session at `0x00607604`, it reads computed allowed mask `session+0x04`, sets
+bit `0x10` for nonzero argument or clears it for zero argument, and stores the
+result at `session+0x08`. The read is **`+0x04`, not `+0x08`**: restoration
+therefore copies the current computed mask with bit `4` enabled, rather than
+recovering a saved override: `lhu v1,4(a1)` at `0x001EC62C` and
+`sh v1,8(a1)` at `0x001EC650`.
+
+The mask builder ORs the complement of this override into the second
+suppression temporary. **Inference from the exact operations:** argument zero
+requests suppression of second-phase bit `4` on the next mask construction;
+nonzero removes that bit from this override's suppression contribution.
+Other disabled bits in the sampled computed mask can remain disabled in the
+copied override, and controller suppression can independently keep bit `4`
+disabled. This is neither a write to controller `+0x12/+0x14` nor an
+unconditional enable of the next final mask. Bit `4` dispatches
+`ccFieldCtrl`'s second callback, as tabulated below.
+
+The twelve direct calls below (`jal` bytes `88 B1 07 0C`) are all in BTL; the
+resident executable and ETC have none. These are callsites, not inferred
+original function names; numeric animation fields remain numeric.
+
+| BTL callsite, live (Ghidra = live minus `0x40`) | Argument and bounded caller condition |
+| --- | --- |
+| `0x00793A3C / 0x00793CE0` | Common paired-object path: zero when request flags bit `0` is set; restoration uses `1` while object byte `+0x70` is nonzero, after restoring saved camera vectors. |
+| `0x0079BFE0 / 0x0079C02C` | `1` during cleanup when object byte `+0x10BA` is nonzero; `0` while counter `+0x1108 > 0` and the battle manager exists, before camera request `FUN_001F1740(1,2,10,2)`. |
+| `0x007CE8EC` | `0` when the animation object at owner `+0x320` has word `+0x98 == 0x6A`; no paired `1` call in this native body. |
+| `0x007D86C8 / 0x007D873C` | `0` for owner word `+0x1DC == 0x21`, `1` for `0x57`. |
+| `0x007E01D8 / 0x007E0228` | Separate small entry/exit bodies pass `0/1` after their optional resident effect-service calls. |
+| `0x007EEEC0 / 0x007EEF98 / 0x007EEFE0` | Destructor-shaped body passes `1` for nonnull owner; update passes `0/1` when owner `+0x2C8 > 0` and its animation word `+0x98` is `0x4E/0x64`. |
+
+The last update's `0` call is at Ghidra `0x007EEF58`
+(`0x007EEED0..0x007EEFA4` holds both requests). Other
+listed paired paths corroborate disable/restoration behavior across several
+native bodies, without establishing that every character variant restores an
+override after every possible interruption. Shared resource-driven or indirect
+calls, other overlays and writes through arbitrary aliases remain outside this
+direct-JAL boundary.
 
 ### Auxiliary BTL global and the `+0xA50` override
 
@@ -229,6 +264,27 @@ so they can only narrow these allowed masks. During an active start menu,
 manager `+0x14 == 1` forces the first/third allowed mask to exactly `0x0000`
 regardless of the controller value; it does not itself force the second mask.
 
+### Bounded pointer-based writer review
+
+The `lw ..., -0x31BC(gp)` load of global `0x00607834` (bytes `44 CE ?? 8F`)
+occurs at six aligned BTL sites and 31 resident sites in the real ELF mapping,
+repeated in two ELF alias mappings. The containing object-specific paths were
+followed.
+
+The additional BTL paths set the controller's stage byte `+0x0E`, query
+selector `+0x0D`, issue a selector-`-1` request through the normalizer, or read
+side-indexed identity/appearance bytes `+0x04/+0x08`. The latter retains the
+controller pointer on its stack in Ghidra `0x0076BA30..0x0076BFA0`; its three
+indirect callbacks are fixed to live `0x0076E180/0x0076E7C0/0x0076E870` and
+perform resource/identity queries, not controller-mask stores. The additional
+resident paths read activity/side fields, issue the already traced branch
+requests, or update side flags through live `0x0076ECC0`. No additional
+controller suppression-word writer or nonzero request-filter `+0x694`
+producer was identified in these bounded paths. This is not a proof about
+other address-loading forms, cached aliases, arbitrary callback targets, bulk
+writes, or unexamined overlays. The session override writer above has a
+different destination and does not contradict this controller-specific result.
+
 ### Selective update gating
 
 `FUN_001F03E0` (resident/live `0x001F03E0`, ELF file `0x0F04E0`) consumes the
@@ -239,6 +295,15 @@ allowed masks in three phases:
 | First | session `+0x02` | object virtual slot `+0x0C` and fixed subsystem updates |
 | Second | session `+0x04` | object virtual slot `+0x10` and fixed subsystem updates |
 | Third | session `+0x02` | object virtual slot `+0x14` and fixed subsystem updates |
+
+At entry, instructions `0x001F0430/0x001F0434` cache both masks in registers
+before controller pre-work at `0x001F0468`. Child mask writes or common cleanup
+later in this dispatch do not replace those cached values. Together with the
+outer order `FUN_001F0290 -> FUN_001F03E0`, this establishes that their new
+suppression values feed the next eligible mask construction. It does not
+establish a measured display-frame delay. The cut-in exceptions below read
+the auxiliary byte separately during dispatch and are not the same cached
+mask contract.
 
 The four primary pointers are reached through the array at session `+0x18`.
 Each object's callback table is at object `+0x0C`; the three phases invoke
@@ -327,35 +392,22 @@ suppression producers.
 
 ### Battle-countdown gate and presentation
 
-The timer-shaped resident structure beginning at `0x006B28D0` supplies a second
-kind of pause gate outside the per-bit scheduler. `FUN_001F0290` sets bit `0` of
-its flags byte when either pre-complement suppression word is nonzero and clears
-the bit only when both are zero. Later in the same session update,
-`FUN_001F10F0` (resident/live `0x001F10F0`, ELF file `0x0F11F0`) conditionally
-calls `FUN_001EBA80` (resident/live `0x001EBA80`, ELF file `0x0EBB80`) on that
-structure. The latter routine does not decrement while flags bit `0` is set.
-When bit `0` is clear and its separate non-decrement flag is also clear, it
-subtracts structure `+0x1C` from the fixed-point value at `+0x04`, adds the same
-amount to `+0x08`, and clamps expiration while setting flags bit `2`.
-
-Initialization in `FUN_001EEE30` (resident/live `0x001EEE30`, ELF file
-`0x0EEF30`) loads `+0x04` from manager query selector `6`, shifted left by 24;
-the shared reset initializes the step at `+0x1C` to `0x00044444`. Together with
-the decimal presentation evidence below, calling this the **battle countdown**
-is a high-confidence functional identification, not a recovered type name. The
-additional combat-state predicates in `FUN_001F10F0` can also prevent its
-update independently of pause suppression.
-
-The `0x44`-byte object at session `+0x2C` presents that countdown. Its encoded
-live constructor is `0x0087E880`; its bit-`9` first-phase update at live
-`0x0087EB40` obtains
-`(value_at_0x006B28D4 + 0x00FFFFFF) >> 24`, splits it into two decimal digits,
-and triggers sound `0x102D` when a changed positive value is below `6`. Its
-second-phase update at live `0x0087EDD0` draws the digit textures. The object
-loads `battlegauge.ccs` at raw BTL offset `0x00209C30`, preserved export
-`0x008BDAF0`, live `0x008BDB30`. This establishes the functional label
-**two-digit countdown presentation**; no RTTI class name was recovered. The
-other bit-`9` object at session `+0x30` remains semantically anonymous.
+The battle countdown at resident `0x006B28D0` supplies a second kind of pause
+gate outside the per-bit scheduler. `FUN_001F0290` sets bit `0` of its flags
+byte when either pre-complement suppression word is nonzero and clears the bit
+only when both are zero. Later in the same session update, `FUN_001F10F0`
+conditionally calls accumulator `FUN_001EBA80`, which does not advance while
+flags bit `0` is set. The accumulator and its other gates are described in
+[Match outcomes](match_outcomes.md#timer-path); the configured session reset
+(`FUN_001ED110`, outer state `3`) versus round initialization
+(`FUN_001EEE30`) in
+[Timer primitives](../runtime/timer_primitives.md#clear-versus-configured-reset);
+the arming of flag bit `1` at owner creation in
+[Battle lifecycle](battle_lifecycle.md#session-construction); and its
+two-digit presentation by the session `+0x2C` clock in
+[Battle HUD](battle_hud.md#central-battle-clock-display). Route `8` re-enters
+at state `13` without traversing state `3`, so it rebuilds the session and
+rearms the countdown without the configured reset.
 
 ### Shared ownership and controller lifecycle
 
@@ -374,18 +426,12 @@ resident-side members, frees the `0x6C0`-byte object, and clears global
 `0x00607834`. Allocation/free and publication are therefore resident-owned;
 BTL owns constructor, behavior, and destructor work inside the same object.
 
-The outer lifetime is also bounded. State `14` calls resident
-`FUN_001EC3B0`; when the session-owner global at `0x00607604` is null, that
-function allocates a `0x38`-byte owner, publishes it, and invokes
-`FUN_001EF330`. Resident `FUN_001EECD0` destroys that owner through
-`FUN_001EEFD0` and clears `0x00607604`; this also destroys the pause controller
-at `0x00607834` and the auxiliary BTL object at `0x00607844`. State `16`
-(`FUN_001EDD10`) takes that path for every battle route other than `8`, including
-start-menu routes `6` and `7`. Route `8` instead selects state `23` or `24`, and
-each of those states performs the same owner destruction itself. Outer teardown
-`FUN_001EC540` is another proven caller. Consequently, these objects do not
-persist across a completed battle teardown: a continuing initialization route
-allocates a new owner and new objects when it next reaches state `14`.
+The controller has the session's lifetime: session destruction (state `16`
+for routes other than `8`, states `23/24` for route `8`, or outer teardown
+`FUN_001EC540`) destroys it together with the auxiliary BTL object at
+`0x00607844`, and the next state `14` allocates new ones. The session
+construction and teardown order belong to
+[Battle lifecycle](battle_lifecycle.md#teardown-order).
 
 The BTL constructor initializes byte `+0x10` to `0`, halfwords `+0x12/+0x14`
 to `0`, byte `+0x0D` to `0xFF`, and child pointer `+0x1C` to null. Encoded live
@@ -428,6 +474,34 @@ Completion invokes branch cleanup; the common cleanup clears `+0x1C`,
 therefore `0` inactive, `1` construction pending, and `2` child active. These
 are descriptive lifecycle labels, not recovered user-facing state names.
 
+The lifecycle byte has exactly these BTL stores: the constructor (live
+`[0x0076E9D0,0x0076EC10)`) writes `0` at live `0x0076EAA4`; the request
+routine `0x0076F130` first runs common cleanup when the byte is nonzero, then
+writes `1` at live `0x0076F168`; the three branches write `2` after
+constructing their child at live `0x0076F778` (selector `0`), `0x0076FAB4`
+(selector `1`), and `0x0076FCE8` (selector `13`); and common cleanup writes `0`
+at live `0x0076F230`. No `-1` store to this byte exists in the implementation;
+the zero store at live `0x0076FCDC` belongs to a newly allocated child object.
+
+The complete common cleanup is live `0x0076F1A0..0x0076F328`, Ghidra
+`0x0076F160..0x0076F2E8`, file `0x0BB2A0..0x0BB428`. Beyond the fields above, it
+clears controller `+0x220/+0x224`, owned
+presentation handles `+0x5C0..+0x5CC`, and `+0x234`. After its final service
+call, it writes byte `+0x0D = -1` and halfword `+0x18 = -1`. It does not
+reset request-filter byte `+0x694`, mode byte `+0x0C`, or halfword `+0x1A`.
+This is a branch-end reset on a retained object, distinct from destruction of
+the object itself.
+
+Each of the three pre-update bodies reaches common cleanup when its child
+update returns zero: selector `0` calls it at live `0x0076F794`, selector `1`
+at `0x0076FAD0`, and selector `13` at `0x0076FD04`. Selector `0` and `1`
+then call resident `FUN_001E91E0`; selector `13` does not. The branch-specific
+release bodies are complete at Ghidra `0x0076F5D0..0x0076F69C`,
+`0x0076F800..0x0076F934`, and `0x0076FB00..0x0076FBE4`. The last also restores
+both manager-published fighters' `+0x1B0` to float `1.0`. Their pointer tests
+and releases concern the child graph; the two suppression-word clears occur
+in common cleanup.
+
 Encoded live BTL entry `0x0076EE80` normalizes requested selector values
 `13..15` to `13`, ignores selector `-1`, and starts a branch through
 `0x0076F130` only when its numeric filters allow it. Controller byte `+0x694`
@@ -458,14 +532,85 @@ The wrapper at `0x0076EF60` discards its original second argument and forwards
 the original third and fourth arguments as controller `+0x0C` and selector
 `+0x0D`. This argument reshuffle matters when reading its resident call sites.
 
+### Tone-shade destination block
+
+The pause controller (the "sequence" object in
+[Randomness](../runtime/randomness.md#tone-shade-animator-timing-is-not-another-seed))
+embeds a tone-shade destination block at `+0x650` and its eight-byte
+`ccToneShadeAnimRandom` animator at `+0x68C`. The animator's LCG draws belong
+to Randomness. "Displayed" addresses below are preserved Ghidra BTL addresses;
+see [address conventions](../game/files/file_identities.md#address-conventions).
+
+**Observation, high confidence.** `FUN_001EF330` initializes destination
+`controller + 0x650` before constructing the animator at `+0x68C`, then
+publishes the controller at `0x00607834`. Resident `FUN_001EEFD0` calls live
+BTL `0x0076ECF0` before destroying the embedded destination through
+`FUN_0018F530(controller + 0x650, -1)` and freeing the controller. That
+destination destructor redirects global `0x00602A64` to resident default
+`0x00618F00` if it still points at the destroyed destination. Neither
+inspected teardown body calls the animator's update slot or a separate
+animator destructor.
+
+The controller's post-work callback, displayed `0x0076EFE0` / live
+`0x0076F020`, writes `controller + 0x650` to `gp-0x7F8C`, live global
+`0x00602A64`, at displayed `0x0076F018/0x0076F01C`, unless signed byte
+`controller + 0x694` equals one. It also publishes the adjacent render blocks.
+Resident context constructors `FUN_001982B0` and `FUN_00198340` copy this
+global into context `+0x250`. Resident dispatcher `FUN_001F03E0` replaces it
+with the default at `0x001F06C8..0x001F06D0` after controller post-work.
+These are destination publication paths; no animator receiver or invocation
+follows from the publication alone.
+
+A writer to the two destination words `+0x34/+0x38` does not use an RNG.
+Displayed `0x0076F3B0` / live `0x0076F3F0` acts only when its second integer
+argument is numeric ID `0x49`; it takes the controller in `a0` and a
+coefficient in `f12`. Its instruction span `0x0076F3F0..0x0076F5A0`
+includes the following stores:
+
+| Displayed instructions | Controller-local effect |
+| --- | --- |
+| `0x0076F44C..0x0076F4B0` | Add binary32 `0.01f` to accumulator `+0x698`, add one when negative, subtract one when at least one. |
+| `0x0076F4B4..0x0076F518` | Apply the same update to the independent accumulator `+0x69C`. |
+| `0x0076F51C..0x0076F54C` | Bind a resource to destination `+0x650`, store the supplied coefficient at destination `+4`, and set its numeric parameters. |
+| `0x0076F564..0x0076F570` | Copy accumulator `+0x698` to destination `+0x34` and accumulator `+0x69C` to destination `+0x38`. |
+
+The controller initializer clears both accumulators at displayed
+`0x0076EB7C/0x0076EB80`. In the inspected helper family this writer is called
+from displayed `0x0076DCB0` / live `0x0076DCF0` only under its record flag
+`+4 & 0x400`; the caller supplies coefficient `1.2f` when its numeric state is
+below six and `1.0f` otherwise. This bounds an independent write path, not
+measured cadence or feasibility of the ID/flag combination. It does not touch
+animator counter `controller + 0x690` or period `+0x692`.
+
+### Session resets and retained skill participants
+
+Resident `FUN_001EED40` is the `0x38`-byte session-owner reset called by
+`FUN_001EEC80` before round initialization and by `FUN_001EECD0` after graph
+teardown. It writes both computed masks `+0x02/+0x04` and session-local
+overrides `+0x06/+0x08` to `0xFFFF`, and zeros the owner pointer fields.
+It does not reset the countdown structure or the separately allocated
+controller in place. The owner allocation/reconstruction contract remains in
+[Battle lifecycle](battle_lifecycle.md#session-construction).
+
+The `ccPlayerCtrl` coordinator retains its skill participants independently
+of the pause controller. Its constructor `FUN_0024E0B0` clears participant
+pointers `+0x24/+0x28`, and state-setter callers `FUN_00216C60` and
+`FUN_00216D00` install their supplied pair after setting a state. Common
+pause-controller cleanup has no coordinator access, so ending the presentation
+does not release the retained pair, and state-6 substate `0` can resume with
+the same pair after controller `+0x10` becomes zero. The state setter,
+input lock, and release belong to
+[Target selection](target_selection.md#skill-participants-and-lock-release)
+and [Battle entities](battle_entities.md#derived-fighter-registrycoordinator).
+
 ### Additional hold consumer
 
-`FUN_0024ED40` (resident/live `0x0024ED40`, ELF file `0x14EE40`) is another
-direct consumer. It requires the controller pointer and, while signed byte
-`controller+0x10` is nonzero in its local state 0, repeatedly reasserts fields
-and positions on a paired-object sequence and returns. Only a zero byte lets
-the sequence advance to its next state. This proves a pause-aware hold, but
-the higher-level sequence's semantic name was not established.
+`FUN_0024ED40` (ELF file `0x14EE40`), the coordinator's Ultimate Jutsu
+state-6 handler ([Target selection](target_selection.md#skill-participants-and-lock-release),
+[Ultimate Jutsu](ultimate_jutsu.md#damage)), also consumes the controller. It
+requires the controller pointer and, while signed byte `controller+0x10` is
+nonzero in its local state 0, reasserts fields and positions on the paired
+fighters and returns; only a zero byte lets it advance.
 
 ## BTL start-menu construction and UI states
 
@@ -526,38 +671,87 @@ that object is null. It separately reads manager `+0x1C`; for mode `2`, it
 replaces that secondary value with `1` or `2` according to whether manager
 `+0x18` is zero. The established lists are:
 
-| Returned mode | Command IDs, in order |
-| ---: | --- |
-| `4` or `5` | `0, 4, 1, 6, 0xE` |
-| `1` | `0, 4,` optional `4, 1, 6, 0xA, 0xB` |
-| `3` | `0, 4, 1, 6, 9,` optional `7, 0xE` |
-| `2` | `0, 4, 1, 6, 5, 0xA, 0xB` |
+| Returned mode | Process requested by | Command IDs appended, in order |
+| ---: | --- | --- |
+| `4` or `5` | No producer established | `0, 4, 1, 6, 0xE` |
+| `1` | Free Battle, `FUN_001EA8C0 -> FUN_001EC300(1)` | `0, 4,` optional `4, 1, 6, 0xA, 0xB` |
+| `3` | `FUN_001EC300(3)` from `FUN_001FEA70`, `FUN_001FED10` and `FUN_001FEF50`; not Free Battle or Practice | `0, 4, 1, 6, 9,` optional `7, 0xE` |
+| `2` | Practice, `FUN_001EA940 -> FUN_001EC300(2)` | `0, 4, 1, 6, 5, 0xA, 0xB` |
 
+`FUN_001EC7A0` stores the `FUN_001EC300` argument at process `+0x14`
+(`sw s1, 0x14(s0)` at `0x001EC7C4`); the manager-mode joins are owned by
+[Mode flow](../game/mode_flow.md#btl-handoff-and-return).
 In mode `1`, the second ID `4` is included when manager `+0x1C` is `0` or `3`.
 In mode `3`, ID `7` is included when encoded live BTL predicate `0x006EE550`
-returns zero. Object fields `+0x04/+0x08` become `1/1` for final secondary
-values `5` or `2`, `0/0` for values `4` or `1`, and `2/0` for value `0`.
-This is proven mode-dependent menu routing. The labels of those mode values,
-fields, and command IDs are not yet proven.
+returns zero. The append helper at live `0x0087BAE0` (Ghidra `0x0087BAA0`)
+stores into `+0x1C + 4*count` only while count `+0x18` is below `7`.
 
-For the command IDs within this investigation's scope, the live factory at
-`0x0087BB10` installs child implementations corresponding to the adjacent
-class identities as follows:
+ID `4` is a placeholder, not a dispatched command. After the list is built,
+the initializer calls live `0x0087C190` (Ghidra `0x0087C150..0x0087C19F`),
+which replaces the first list entry equal to its second argument with its third
+argument and stops. It first calls `(4, 2)` unless the final secondary value is
+`5` or `2`, then always calls `(4, 3)`. Therefore:
+
+- with secondary value `5` or `2`, the first `4` becomes `3`;
+- otherwise the first `4` becomes `2`, and a second `4` (Free Battle with
+  manager `+0x1C` equal to `0` or `3`) becomes `3`;
+- in Practice, the single `4` becomes `2` when manager `+0x18` is zero and
+  `3` otherwise.
+
+Object fields `+0x04/+0x08` become `1/1` for final secondary
+values `5` or `2`, `0/0` for values `4` or `1`, and `2/0` for value `0`.
+The meaning of fields `+0x04/+0x08` is not established statically.
+
+### Start-menu admission timeout-marker check
+
+In `FUN_001EBD90`, resident `0x001F4790(manager,0)` first tests whether the
+session manager's `+0x14` equals zero. Only that zero-state branch reads the
+timeout marker through `FUN_001EC290` at `0x001EBE0C`. A set marker follows
+`0x001EBE24..0x001EBE34` to the read-only getter `0x001F47B0(manager)` and
+returns, skipping the later input/request admission path and its writes. The
+nonzero manager-state branch at `0x001EBEE0` processes the existing child
+without this check. A set timeout marker therefore blocks opening a start
+menu; it does not by itself cancel or destroy an already active child. The
+marker's producer and reset belong to
+[Match outcomes](match_outcomes.md#terminal-detector-and-classifier).
+
+### Command identities and observed labels
+
+The live factory at `0x0087BB10` installs child implementations corresponding
+to the adjacent class identities as follows:
 
 | Command ID | Child identity |
 | ---: | --- |
 | `0` | `ccStartMenuKeyconfig` |
 | `1` | `ccStartMenuBasicCmd` |
-| `2`, `3` | `ccStartMenuPrivateCmd` |
+| `2`, `3` | `ccStartMenuPrivateCmd`; child `+0x0C` is the command ID minus `2` (`addiu v1, s1, -2` at Ghidra `0x0087BBC8`) |
+| `5` | Practice settings wrapper; see [Practice mode](practice_mode.md#registered-standalone-practice-selection) |
 | `6` | `ccStartMenuSimpleDisp` |
 | `7` | `ccStartMenuItemStock` |
 | `8`, `9` | `ccStartMenuMission` |
 | `0xA..0xE` | `ccStartMenuYesNo` |
 
 Command ID `4` has no child-construction block: its jump-table entry reaches a
-deliberate null store if dispatched directly. Valid menu flow must therefore
-filter it before the factory. Treating it as a nonselectable list marker is a
-strong structural inference; its exact presentation role is not recovered.
+null store if dispatched through this factory. It never reaches the factory
+from the Free Battle or Practice lists, because the placeholder replacement
+above rewrites every `4` there to `2` or `3`.
+
+Runtime observation recorded in
+[Modes and navigation](../game/modes_and_navigation.md#free-battle-round-and-pause-menu)
+shows the Free Battle entries Controls, 1P Commands (opens the character's
+move list), Command Chart, Simple Display, Back to Game Mode Screen, and Back
+to Character Select, with 2P Commands inserted after 1P Commands in a
+joined-Player-2 round. These match the mode-`1` list in order: `0`, `2`
+(optional `3`), `1`, `6`, `0xA`, `0xB`. The
+[Practice menu](../game/modes_and_navigation.md#practice-pause-menu) shows
+Controls, 1P Commands, Command Chart, Simple Display, Practice, Back to Game
+Mode Screen, and Back to Character Select, matching the mode-`2` list in order:
+`0`, `2` or `3`, `1`, `6`, `5`, `0xA`, `0xB`. The move-list entries are
+therefore `ccStartMenuPrivateCmd` children, the Practice entry is the command-`5`
+Practice settings wrapper, and the two exits are the `0xA`/`0xB` Yes/No
+children. Commands `7` and `9` (`ccStartMenuItemStock`, `ccStartMenuMission`)
+and `0xE` appear only in the mode-`3` list, which neither Free Battle nor
+Practice selects. The labels of the mode-`3` entries are not established.
 
 The start-menu UI updater at preserved export `FUN_0087C6E0` (raw file
 `0x001C8820`, live bytes `0x0087C720`) treats object `+0x00` as a numeric state:
@@ -636,8 +830,7 @@ initializer does not read the current Simple Display setting.
 
 Resident input handler `FUN_00383340` changes list `+0x18` for cursor movement.
 Result getter `0x00383590` returns that field unless completion state `+0x12`
-is `2`, in which case it returns `-1` for cancellation. Its bytes were read
-through GhidrAssist because no function is defined at that address.
+is `2`, in which case it returns `-1` for cancellation.
 
 List `+0x10` is a 16-bit automatic-completion mode. `FUN_003834e0` recognizes
 `1` as confirmation and `2` as cancellation. Once counter `+0x22` reaches
@@ -646,8 +839,7 @@ event bit `0x08` at `+0x28`. Both counter and threshold initialize to zero,
 so enabling mode `1` without a delay immediately enters confirmation when
 the window becomes ready. `FUN_00382ef0` then calls `FUN_00383240`, whose
 confirmation animation advances the `+0x24/+0x26` counters, followed by
-`FUN_003831c0` to close the window. Cursor selection must not be written to
-the automatic-completion mode.
+`FUN_003831c0` to close the window.
 
 The completion updater is live `0x00877A10` (preserved `0x008779D0`). It
 reads the selected row through resident `0x00383590`: row `0` passes enabled
@@ -662,141 +854,55 @@ bit `0x02` as a Boolean. The menu's initial row and the active value are
 independent: its fixed initial On selection does not establish that the
 setting is On.
 
-GhidrAssist's function boundary for the initializer stops after its first
-allocation call. The complete initializer bytes were therefore read through
-GhidrAssist `get_data_at` over preserved `0x00877830..0x008779CF`; the
-maintained analysis was not changed. The getter's jump-table case was likewise
-read as bytes because its decompiler did not recover the switch body.
+The complete initializer spans preserved `0x00877830..0x008779CF`.
 
 ## Battle teardown and reconstruction
 
-The resident battle controller dispatches its numeric states through one
-switch. The established construction sequence is:
-
-| State | Resident function | Established role |
-| ---: | --- | --- |
-| `11` | `FUN_001ED980` | Wait for the current resource fence, then start the next loaders and enter `12` |
-| `12` | `FUN_001ED9E0` | Wait for readiness gates, start the next fence, and enter `13` |
-| `13` | `FUN_001EDA50` | Adopt loaded fighter/stage resources, construct fighters, and enter `14` |
-| `14` | `FUN_001EDB00` | Wait for readiness, construct the main battle graph, and enter `15` |
-| `15` | `FUN_001EDB70` | Run the battle session; a completed session enters teardown state `16` |
-| `16` | `FUN_001EDD10` | Countdown and release the main graph; destroy the session owner for non-`8` routes, then enter `17` |
-| `17` | `FUN_001EDEE0` | Release shared graph resources, fighter resources, and the active stage archive |
-
-All listed functions are resident/live addresses; their ELF file offsets are
-their addresses minus `0x000FFF00`.
-
-`FUN_001EE500` (resident/live `0x001EE500`, ELF file `0x0EE600`) handles the
-reconstruction route dispatched as state `24`. It selects one side from
-manager field `+0x50`, partially tears down the prior battle graph, destroys
-the session owner (and therefore the pause controller and auxiliary BTL
-object), and replaces the affected side data when required. It compares active
-stage byte `manager+0x98` with pending stage byte `manager+0x9A`; when they
-differ, it releases the current BTL stage archive and resident CCS resource,
-and, unless the pending byte is `-1`, enqueues their replacements. It then
-copies the pending identifiers, starts a resource fence, and writes controller
-state `13`, re-entering fighter/stage construction. State `23`
-(`FUN_001EE1C0`) is the other route-`8` reconstruction branch and likewise
-destroys the session owner before returning to state `13`.
-
-The relevant audited BTL helpers are:
-
-| Operation | Raw file | Preserved export | Live |
-| --- | ---: | ---: | ---: |
-| Release active stage archive | `0x0000F260` | `0x006C3120` | `0x006C3160` |
-| Enqueue replacement archive | `0x0000F2D0` | `0x006C3190` | `0x006C31D0` |
-| Adopt loaded archive in state `13` | `0x0000F310` | `0x006C31D0` | `0x006C3210` |
-
-This is a proven teardown-and-reconstruction lifecycle, not state rewind or
-recorded-input playback. State `16` selects state `24` specifically when the
-battle-route global is `8` and resident mode global `0x0060767C` is `2`; mode
-value `1` selects state `23`.
-
-The exact resident binary contains two immediate-value producers for route
-`8`:
-
-- `FUN_001EC5E0` (resident/live `0x001EC5E0`, ELF file `0x0EC6E0`) writes
-  `0x00607678 = 1`, mode `0x0060767C = 1`, and route `0x00607670 = 8`, then
-  writes its supplied value to the selected manager-side slot. Its sole direct
-  resident caller is `FUN_0035B3B0`, which reaches it only when a side-indexed
-  query returns nonzero and `FUN_001FDB40(side, 7) != 1`;
-- `FUN_001F2E70` (resident/live `0x001F2E70`, ELF file `0x0F2F70`) contains the
-  other immediate store, at `0x001F3370`. Along its numeric state-`0x0F` path,
-  when the local result is zero, the session owner exists with halfword
-  `+0x0A == 8`, and its progression bound permits another step, it increments
-  the local counter, writes `0x00607678 = 1`, mode `0x0060767C = 2`, and route
-  `0x00607670 = 8`, then marks one manager-side slot.
-
-A complete direct-store scan of the exact resident disassembly found no other
-immediate route-`8` writer. The generic route setter `FUN_001EC270` has only
-resident callers passing `6` or `7`, and the exact BTL binary contains no call
-to that setter. This establishes the two resident producer paths without
-classifying the underlying result or recovering their user-facing labels;
-indirect calls from another overlay remain possible.
+Battle teardown and reconstruction are resident outer-controller states:
+states `11..14` load resources and build the session, state `15` runs it,
+state `16` (`FUN_001EDD10`) destroys the session for routes other than `8`,
+and state `17` releases archives. Route `8` instead selects state `23`
+(`FUN_001EE1C0`, mode `0x0060767C == 1`) or `24` (`FUN_001EE500`, mode `2`);
+each destroys the session (and therefore the pause controller and auxiliary
+BTL object) itself and re-enters at state `13`. The session teardown and
+rebuild, including the stage-archive comparison of state `24`, belong to
+[Battle lifecycle](battle_lifecycle.md#continuation-encounters-rebuild-the-session);
+the two route-`8` producers (`FUN_001EC5E0` after an Ultimate Jutsu form
+request, `FUN_001F2E70` in the higher-level sequence) to
+[Match outcomes](match_outcomes.md#higher-level-sequence-counter-and-result-8-continuation)
+and [Awakening](awakening.md#effect-to-form-mapping-and-resource-replacement).
+A direct-store scan of the resident disassembly found no other immediate
+route-`8` writer; generic route setter `FUN_001EC270` has only resident
+callers passing `6` or `7`, and BTL does not call it. This is a
+teardown-and-reconstruction lifecycle, not state rewind or recorded-input
+playback.
 
 ### Start-menu result paths through teardown
 
-The two nonlocal start-menu results follow a different, fully traced route.
-In resident `FUN_001EF9C0`, battle-route value `6` or `7` makes the running
-session request numeric route `0x17` and report completion. The outer battle
-controller then advances through teardown states `16`, `17`, and `18`.
-
-For controller field `+0x14` values `1` or `2`, state `18` sends battle-route
-`7` to state `25` and battle-route `6` to state `22`:
-
-- state `22` (`FUN_001EEAC0`) waits for the resource fence, clears it, and
-  writes state `3`. State `3` resets session timing/status globals and advances
-  into the ordinary initialization chain, which eventually reconstructs the
-  fighter/stage resources and main battle graph in states `11..15`;
-- state `25` (`FUN_001EEB10`) waits for the resource fence, clears it, writes
-  manager `+0x0C = 1`, prepares the next resident resources, and causes the
-  controller dispatcher to return status `3` to its caller.
-
-The state-`3` path is not a direct snapshot restore or guaranteed immediate
-rebuild. It traverses states `4..10`; states `7` and `9` can wait on separately
-allocated control objects before the loader/reconstruction states `11..15`.
-Thus start-menu result `3` -> battle-route `6` proves re-entry through the full
-resident battle initialization lifecycle. State `16` has already destroyed the
-old owner, so state `14` allocates a new owner, pause controller, and auxiliary
-BTL object. Start-menu result `2` -> battle-route `7` instead reports outward
-through state `25` and does not select reconstruction state `24`. Command
-`0xA`'s exact result-`2` prompt and the established result-`3` prompts are
-documented above; because multiple commands can produce result `3`, that route
-does not have one unique user-facing label.
+Start-menu results `2` and `3` become battle-route codes `7` and `6`. Both
+end the running session and pass through teardown states `16..18`; state `18`
+sends route `6` to state `22`, which loops to state `3` and re-enters the full
+initialization chain (states `4..10`, then `11..15`, with a new session and
+pause controller allocated at state `14`), and route `7` to terminal state
+`25`. The outer routing is described in
+[Match outcomes](match_outcomes.md#outer-controller). Because multiple
+commands can produce result `3`, that route has no single user-facing label.
 
 ## Replay result and useful negatives
 
 No battle replay capture/playback system was proven. Bounded literal searches
 of both exact binaries and their resident/BTL exports found no meaningful
-`replay`, `record`, `playback`, or `rematch` identifier; decompiler “maximum
-restarts” messages were analysis warnings, not game behavior. The traced
+`replay`, `record`, `playback`, or `rematch` identifier. The traced
 reconstruction and initialization-re-entry routes exposed resource/object
 teardown, but no replay buffer, capture/playback mode, serialized battle
 snapshot, or explicit random-seed/state restore.
 
 This is a useful negative result, not proof that the game has no replay
-facility. Search and call-graph coverage were not exhaustive, and no runtime
-experiment was performed.
+facility; search and call-graph coverage were not exhaustive.
 
-A separate resident field at `object+0x504`, returned by `FUN_00103BA0` and
-advanced through numeric states `0..4` by `FUN_001086C0`, is an asynchronous
-I/O retry/status machine used by sector reads. Its nonzero value causes sector
-read wrappers to wait or retry. It is not evidence of gameplay pause ownership
-and should not be conflated with the battle controller at `0x00607834`.
+The resident field at `object+0x504` (returned by `FUN_00103BA0`, states
+`0..4` advanced by `FUN_001086C0`) is a sector-read retry/status machine owned
+by the resident runtime (see [Overlay ABI](../runtime/overlay_abi.md) and
+[Resident task system](../runtime/task_system.md)); it is unrelated to the
+pause controller.
 
-## Open questions
-
-- What exact visible phase boundaries and localized labels correspond to the
-  established battle-gauge, end-demo, and ougi selector branches?
-- Which concrete subsystems correspond to the still-anonymous fixed consumers
-  on bits `5..10`?
-- Which exact visible phase of the cut-in presentation corresponds to byte
-  `+0xA50 == 1`, and do all cut-in variants use this path?
-- What user-facing labels belong to the remaining start-menu command IDs, and
-  which exact input path produces common result `1`? Commands `0xA`, `0xB`, and
-  `0xE` now have bounded battle-branch prompt evidence above.
-- What user-facing events correspond to the two established route-`8`
-  producers (mode `1` -> state `23`, mode `2` -> state `24`)?
-- Does any battle replay mechanism exist outside the bounded paths inspected
-  here? A runtime trace at pause entry, menu selection, and reconstruction
-  would discriminate these remaining cases more directly than names alone.

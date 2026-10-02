@@ -42,7 +42,8 @@ spacing, baselines, and alignment.
 If investigating one or more concrete E2E pictures requires savestates, rerun
 only their corresponding recording marker numbers through PCSX2 using
 `-input-recording-capture-mode savestates` and
-`-input-recording-capture-markers <markers>`.
+`-input-recording-capture-markers <markers>`
+([marker capture](../../../../PCSX2/docs/input_recording_capture.md#marker-capture)).
 
 Write the diagnostic savestates only within the
 [acting task's work root](../../AGENTS.md#file-and-folder-management).

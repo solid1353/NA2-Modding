@@ -1,123 +1,141 @@
-# Projectile gameplay lifecycle
+# Projectile lifecycle
 
-Status: clean static baseline. The spawn, configuration, manager,
-callback, transition/removal, and destruction paths are established from the clean
-NA2 battle overlay. Class identity is additionally tied through the clean
-resident vtables. No runtime trace was used.
-
-This note deliberately does not cover damage calculation, substitution,
-animation or frame-rate behavior, rendering, media, localization, Adventure,
-or collision-system internals beyond the projectile-facing interface.
+This document describes the `ccProjectile` entity lifecycle in the retail NA2
+(`SLPS-25837`) `PRG/BTL.BIN` battle overlay: configuration records and class
+selection, construction, spawn and side identity, manager callbacks and the
+projectile-facing collision interface, transition, removal, destruction, and
+limits. Derived motion callbacks, their record inputs, and their local timing
+are in [Projectile motion and local timing](projectile_motion.md).
 
 ## Research coverage
 
-- **Assigned scope:** this pass was limited to the clean NA2 `BTL.BIN`
-`ccProjectile` entity lifecycle: configuration and class selection, construction
-and registration, side/lineage identity, manager callbacks, the
-projectile-facing collision query, transition/removal and destruction, and
-evidence for limits or pooling. It also established the live/file/Ghidra address
-relationship needed to make those findings auditable. The resident executable
-was consulted only for allocator/service callees, vtable words, and class
-identity.
-
+- **Assigned scope:** the retail NA2 (`SLPS-25837`) `BTL.BIN` `ccProjectile`
+  entity lifecycle: configuration and class selection, construction and
+  registration, side/lineage identity, manager callbacks, the
+  projectile-facing collision query, transition/removal and destruction, and
+  limits or pooling. Selected skill and support callers are traced through the
+  projectile-facing spawn interface. The resident executable supplies
+  allocator/service callees, random wrappers, vector data, vtable words, and
+  class identity.
 - **Exploration depth:** coverage is mixed rather than globally exhaustive:
+  - The `0xB6` configuration records at live `0x0089C910` were enumerated
+    exhaustively at their `0x68`-byte stride. Every record was included in the
+    config-index/external-ID/selector crosswalk; all 103 accepted selector
+    values (`0x00` through `0x66`), their factory branches, the 97 selectors
+    used by the retail records, and the six unused selectors were accounted
+    for. External-ID multiplicity, the common-profile table, and the
+    record-controlled response tables were likewise enumerated over their
+    complete established bounds.
+  - Instruction-level control-flow traces covered the factory at live
+    `0x00729890`, root constructor and binder at `0x0072B190`/`0x0072B1F0`,
+    spawn and external-ID entry points at `0x00736080`/`0x007362E0`,
+    higher-level wrappers at `0x00736400`/`0x007364D0`, manager
+    update/collision/unlink and cleanup entries at `0x00734BA0`, `0x00734D30`,
+    `0x00734AD0`, `0x007349C0`, and `0x00735F30`, common state
+    dispatch/transition at `0x0072CF50`, `0x0072E180`, `0x00730600`, and
+    `0x00730950`, and root destruction/resource cleanup at
+    `0x0072B800`/`0x0072B880`.
+  - The raw overlay was searched exhaustively for direct JALs to the manager
+    spawn entry (87 sites) and to collision query `0x00757B60` (13 sites across
+    seven identified classes). These are exhaustive inventories of direct
+    encoded calls to those exact targets, not of indirect vtable calls or calls
+    routed through other wrappers.
+  - Class coverage was exhaustive for the factory crosswalk and for the
+    contiguous 99-descriptor `ccProj*`/`ccProjectile*` RTTI family inventory.
+    Root and representative derived cleanup chains were traced; every derived
+    class's complete state machine was not.
+  - A bounded raw-instruction scan of the projectile implementation region
+    live `0x0072B000..0x00764000` found 104 direct constant writes of state `6`
+    and 27 of state `7` to object `+0x7E`. Those sites were not all expanded
+    into per-class call chains.
+  - The four-slot lineage/dedup structure was traced through lookup,
+    insertion, replacement, age/consume handling, and its sole direct
+    contact-response caller.
+  - Resident spans through offset `+0x6C` were read for all 95 distinct
+    factory vtables; words beyond a class's table were not treated as its
+    callbacks. Common slot `+0x24`, every manager-update override's state-6/7
+    and active-completion removal decisions, every post-spawn slot `+0x54`, and
+    every collision/service slot `+0x48` were covered across the full set, as
+    were the throwing-skill virtual emission chain, the separate TEN000
+    weighted emitter, and support-notification metadata.
+- **Confirmed coverage:**
+  - The complete common factory-to-manager ownership chain: config-table
+    address, stride, count, selector byte, external-ID field, selector jump
+    table, and first-match ID wrapper, with factory-to-constructor-to-vtable-to-
+    descriptor identity across the complete selector crosswalk.
+  - Spawn vector writes, the post-spawn virtual call, parent metadata
+    inheritance, exact `+0x8A` side-tag inversion with same/opposite player
+    lookups, manager insertion, serial/count changes, update/collision virtual
+    slots, unlinking, deleting destruction, and manager-wide cleanup.
+  - Every factory class's post-spawn and collision/service override, and every
+    manager-update override's state-6/7 and explicit active-completion
+    decisions.
+  - Both state-6 helper contracts, state-6-to-7 promotion, direct state-7
+    culling, class-aware destruction, and the Tonton collision-to-removal call
+    chains. The full helper at `0x00730950` is only one transition route: a
+    direct state store does not perform that helper's handle, notification,
+    flag, or position-service side effects.
+  - The `ccSkillThrowProjectile` relationship through TEN001, INO001, and
+    KNK000, with all four direct descriptor subclasses' emission interfaces
+    accounted for; both TEN000 weighted lists and its config-substitution
+    condition; and support identifier inheritance and notification.
+  - Negative result, bounded to the traced factory, allocator, spawn,
+    manager-list, and destructor paths: no cap check, reusable-object free
+    list, or object pool; the four-slot lineage table is separate from object
+    storage.
+- **Unresolved or untested:**
+  - Indirect or data-driven spawn and collision callers not reducible to the
+    two direct-call inventories; per-class interpretation of direct state
+    writes outside the expanded paths, so the helper-routed staged lifecycle
+    is proven for its cited paths only.
+  - Stable meanings for every record field, state value, instance field, and
+    virtual slot beyond the observed callers and side effects. No direct owner
+    or target pointer was found in the common object.
+  - Limits in callers beyond the count-controlled emitter documented below; no
+    global maximum active-projectile count or allocation-failure policy was
+    found.
+  - Skill callers outside the throwing-skill family and the input/animation
+    control that chooses each emission.
+  - Interpretation (medium confidence): spawn vector 1 is a position; vector 2
+    is an aim, destination, direction, or related input depending on subclass,
+    and no single stronger label fits all inspected consumers.
+  - Interpretation (medium confidence): handle `+0x6C` participates in
+    state/effect notification; its owned type is not identified.
+- **Deliberate exclusions and overlap:** derived motion callbacks and local
+  timing belong to [Projectile motion and local timing](projectile_motion.md).
+  Fighter routing of projectile collision candidates belongs to
+  [Target selection](target_selection.md#collision-candidates-and-routing-order);
+  resident query internals to
+  [Collision](collision.md#resident-segmentenvironment-broad-and-narrow-phases)
+  and [Stage surface attributes](stage_surface_attributes.md#authored-word-and-geometric-class);
+  contact statistic credit to
+  [Match outcomes](battle_statistics.md#projectile-contact-deduplication);
+  support identifiers to [Support mechanics](support_mechanics.md); random
+  wrappers to [Randomness](../runtime/randomness.md#mt-wrappers); damage,
+  substitution, hit response, animation, and rendering to [Damage](damage.md),
+  [Substitution](substitution.md), [Hit response](hit_response.md),
+  [Animation runtime](../runtime/animation_runtime.md), and
+  [Render submission](../runtime/render_submission.md). Developer class names
+  are not used to infer uncited gameplay semantics.
+- **Evidence limitations:** static analysis of the retail `BTL.BIN` plus
+  matching resident vtable/descriptor data, with critical code and data ranges
+  decoded from raw bytes rather than accepted from decompiler output. Callback
+  counters do not establish live callback cadence, real-time duration, or
+  animation rate. Dynamic target outcomes and collision-shape semantics are
+  outside this evidence. Absence claims are limited to the stated ranges and
+  paths.
 
-- The `0xB6` configuration records at live `0x0089C910` were enumerated
-  exhaustively at their `0x68`-byte stride. Every record was included in the
-  config-index/external-ID/selector crosswalk; all 103 accepted selector values
-  (`0x00` through `0x66`), their factory branches, the 97 selectors used by the
-  clean records, and the six unused selectors were accounted for. External-ID
-  multiplicity, the common-profile table, and the record-controlled response
-  tables were likewise enumerated over their complete established bounds.
-- Instruction-level control-flow traces covered the factory at live
-  `0x00729890`, root constructor and binder at `0x0072B190`/`0x0072B1F0`, spawn
-  and external-ID entry points at `0x00736080`/`0x007362E0`, higher-level
-  wrappers at `0x00736400`/`0x007364D0`, manager update/collision/unlink and
-  cleanup entries at `0x00734BA0`, `0x00734D30`, `0x00734AD0`, `0x007349C0`,
-  and `0x00735F30`, common state dispatch/transition at `0x0072CF50`,
-  `0x0072E180`, and `0x00730950`, and root destruction/resource cleanup at
-  `0x0072B800`/`0x0072B880`.
-- The raw overlay was searched exhaustively for direct JALs to the manager
-  spawn entry: all 87 sites were inventoried, including 29 in regions the
-  maintained Ghidra export left undefined. The same direct-call inventory for
-  collision query `0x00757B60` found 13 sites across seven identified classes.
-  These are exhaustive inventories of direct encoded calls to those exact
-  targets, not of indirect vtable calls or calls routed through other wrappers.
-- Class coverage was exhaustive for the factory crosswalk and for the
-  contiguous 99-descriptor `ccProj*`/`ccProjectile*` RTTI family inventory, but
-  behavioral callback tracing was sampled. Detailed examples include
-  `ccProjectileMakibishiLauncher`, the five listed `ccProjChar` records,
-  `ccProjectileHomingDelay`, Clay Bird N/S, Explode S/L, Ink Snake N,
-  Launcher DDR Fire, SIW Trap, Tew Skill Anki, Exc ORW Snake, Char NRW Other
-  Self, Buddy Tonton, and Exc Item Tonton. Root and representative derived
-  cleanup chains were traced; every derived class's complete state machine was
-  not.
-- A bounded raw-instruction scan of the projectile implementation region live
-  `0x0072B000..0x00764000` found 104 direct constant writes of state `6` and 27
-  of state `7` to object `+0x7E`. This confirms that the full helper at
-  `0x00730950` is only one transition route: a direct state store does not by
-  itself perform that helper's handle, notification, flag, or position-service
-  side effects. Those sites were not all expanded into per-class call chains,
-  so the helper-routed staged lifecycle documented below is proven for its
-  cited paths, not a universal claim for every projectile class.
-- The four-slot lineage/dedup structure was traced through lookup, insertion,
-  replacement, age/consume handling, and its sole direct contact-response
-  caller. The no-cap/no-object-pool result is a bounded negative result for the
-  traced factory, allocator, spawn, manager-list, and destructor paths.
+## Evidence and address conventions
 
-- **Confirmed coverage:** the evidence below establishes the complete common
-factory-to-manager ownership chain, exact record/class identity, the common
-callback and collision-facing interfaces, parent metadata inheritance and side
-tag inversion, serial/list ownership, representative hit-to-removal paths,
-class-aware destruction, and the distinction between the four-slot lineage
-table and projectile object storage. Exact addresses use both overlay
-conventions where applicable, and critical code/data claims were checked
-against raw clean bytes rather than accepted solely from decompiler output.
+Addresses are live EE addresses unless labelled otherwise. Raw file offsets and
+preserved Ghidra addresses follow
+[Address conventions](../game/files/file_identities.md#address-conventions);
+embedded absolute pointers and JAL targets in the raw overlay are already live
+addresses. Class vtable words come from the matching retail `SLPS_258.37`.
 
-- **Unresolved or untested:** remaining work includes indirect or data-driven
-spawn and collision callers not reducible to the two direct-call inventories;
-per-class interpretation of all direct state writes; complete behavior traces
-for every derived callback; stable meanings for every record tail and instance
-field; a proven direct owner or target pointer in the common object; and any
-limit imposed outside the traced manager/factory path. The relationship, if
-any, between the separate `ccSkillThrowProjectile` hierarchy and this entity
-factory also remains unresolved.
+### Key addresses
 
-- **Deliberate exclusions and overlap:** damage formulas or scaling, substitution, animation
-or 60-FPS timing, widescreen/rendering, media, localization, Adventure, and
-generic collision internals were intentionally left to other scoped work. Only
-the collision services as observed by projectile classes are recorded here;
-developer class names were not used to infer uncited gameplay semantics.
-
-- **Evidence limitations:** this is clean-build static analysis of the hashed
-`BTL.BIN` plus matching resident vtable/descriptor data. Raw instruction
-decoding, complete bounded-table scans, direct-target call scans, and address
-cross-checks validate the documented static claims. No PCSX2 execution,
-savestate observation, runtime trace, injected probe, or empirical collision
-test was performed, so callback cadence, real-time duration, dynamic target
-choice, and runtime acceptance remain unvalidated. Absence claims are limited
-to the explicitly stated assets, ranges, and paths.
-
-## Evidence and address convention
-
-The clean BTL identity and address conversion are defined in
-[Standard game file identities](../game/files/file_identities.md).
-
-The class vtable words were read from the matching clean
-`@source_na2/SLPS_258.37`. The maintained Ghidra C and listing exports under
-`@disassembly/NA2/exports/BTL.BIN/` were used as navigation aids, then critical
-ranges were decoded again from the raw overlay bytes.
-
-### Preserved-import limitation
-
-Embedded absolute pointers and JAL targets in
-the raw overlay are already live addresses. Ghidra may therefore resolve an
-intra-overlay call to a label `0x40` after the physical function body or show
-the wrong bytes for an embedded data pointer.
-
-The most important mappings are:
-
-| Purpose | Raw file offset | Ghidra/export body | Live EE address |
+| Purpose | Raw file offset | Preserved Ghidra address | Live EE address |
 | --- | ---: | ---: | ---: |
 | Projectile factory | `0x075990` | `0x00729850` | `0x00729890` |
 | `ccProjectile` constructor | `0x077290` | `0x0072B150` | `0x0072B190` |
@@ -144,17 +162,9 @@ The most important mappings are:
 | Representative collision query | `0x0A3C60` | `0x00757B20` | `0x00757B60` |
 | Root class descriptor | `0x214440` | `0x008C8300` | `0x008C8340` |
 
-This distinction matters in practice. For example, the factory executes an
-absolute pointer to live `0x0089C910`; the correct bytes are at file offset
-`0x1E8A10` and Ghidra display `0x0089C8D0`, not at the export label
-`DAT_0089c910`. Likewise, the real selector jump table starts at live
-`0x008C4940` / file `0x210A40`. Reading the table at Ghidra display
-`0x008C4940` shifts the dispatch by sixteen entries and produces false
-constructor associations.
-
 ## Lifecycle summary
 
-The established clean lifecycle is:
+The established lifecycle is:
 
 1. A caller supplies a config index directly to live `0x00736080`, or supplies
    a signed external ID to live `0x007362E0`, which linearly resolves it to an
@@ -176,19 +186,22 @@ The established clean lifecycle is:
    `+0x7E = 6`, clears `+0x82`, signals the handle at `+0x6C`, detaches the
    optional `+0x70` notification, clears `+0x216`, and invokes two resident
    position-associated cleanup/service calls.
-8. On a later slot-`+0x44` invocation, common state dispatcher `0x0072CF50`
+8. For the helper-routed common path, a later slot-`+0x44` invocation uses
+   state dispatcher `0x0072CF50`, which
    routes state `6` to `0x0072E180`. Because `+0x82` was cleared, that handler
    promotes the object to state `7`. On a subsequent slot-`+0x44` invocation,
    state `7` makes the callback return zero, after which the manager unlinks
    and deleting-destructs the object. Full manager teardown also unlinks and
-   deleting-destructs every remaining object.
+   deleting-destructs every remaining object. Derived update overrides can
+   instead return zero directly on completion, including while entering state
+   `6`; those objects are destroyed in that same manager invocation.
 
 ## Configuration and factory
 
 ### Record set
 
-The clean table at live `0x0089C910` contains exactly `0xB6` (182) records of
-`0x68` bytes, ending at live `0x008A1300`. The clean records use 97 distinct
+The retail table at live `0x0089C910` contains exactly `0xB6` (182) records of
+`0x68` bytes, ending at live `0x008A1300`. The retail records use 97 distinct
 selector values in the inclusive range `0x00-0x66`. The factory accepts a
 selector through `0x66`; its out-of-range path allocates a bare `0x290`-byte
 object rather than entering a listed derived constructor.
@@ -196,17 +209,17 @@ object rather than entering a listed derived constructor.
 The factory does not bounds-check its config-index argument before computing
 `0x0089C910 + index * 0x68` and loading record `+0x06`, `+0x08`, and `+0x02`.
 The selector itself is then checked as unsigned `< 0x67`. Thus a bad config
-index is not converted into a clean lookup failure; the factory reads a record
+index is not converted into a graceful lookup failure; the factory reads a record
 address derived from that index first.
 
 The external-ID wrapper at live `0x007362E0` has the raw calling convention
 `a0 = external ID`, `a1 = side`, `a2/a3 = vector pointers`, and `t0 = optional
 scalar-override flag`. It compares the signed halfword at record `+0x00` and
 stops at the first match. There are 83 distinct external-ID values. External
-ID zero appears in 100 records; every nonzero value in the clean table is
+ID zero appears in 100 records; every nonzero value in the retail table is
 unique. Therefore config index and external ID are different identities and
 must not be interchanged. A failed lookup passes index `-1` onward; this wrapper
-contains no clean failure guard before the spawn call.
+contains no failure guard before the spawn call.
 
 The wrapper calls `0x00736080` with factory extra and parent both zero. If its
 flag is exactly `1`, it then overwrites the new object's `+0x258`: side `0`
@@ -214,14 +227,13 @@ selects battle global `+0xDE4`, side `1` selects `+0xDE8`, resident
 `SUB_00217930(player, -3)` supplies an optional object, and that object's
 `+0x24` float is used (or zero if absent). The wrapper has no null-object guard
 before this overwrite. This is the same player selection made by opposite-tag
-helper `0x00734160`, strengthening—but not turning into a named-field fact—the
-source/target interpretation below.
+helper `0x00734160`; it does not establish a named source or target field.
 
 There is one direct raw-overlay JAL to this wrapper, at live `0x007114D8`
 (file `0x05D5D8`, Ghidra display `0x00711498`). That branch supplies external
 ID `0x0027`, takes the side argument from its caller object `+0x20`, supplies
 the same temporary vector for both vector inputs, and uses override flag `0`.
-The wrapper therefore resolves clean config index `0x12`, whose selector
+The wrapper therefore resolves retail config index `0x12`, whose selector
 `0x07` constructs `ccProjectileMakibishiLauncher` (allocation `0x2A0`, resident
 vtable `0x005E0510`). This is a complete external-ID-callsite-to-class example.
 
@@ -250,7 +262,7 @@ Names below describe observed consumers, not guessed game-design terminology.
 | `+0x24`, `+0x28` | `f32` | Passed as geometric extents to the projectile-facing proxy setup. |
 | `+0x2C` | `s16` | Optional positional service ID consumed by live `0x00734030`; `-1` disables it. |
 | `+0x2E` | `u8` | Enables an immediate player-side lookup/setup path during binding. |
-| `+0x2F` | `u8` | Read by later common logic; no stable semantic name is established. |
+| `+0x2F` | `u8` | Read by later common logic, including the fighter-side kind-1 contact predicate in [Target selection](target_selection.md#collision-candidates-and-routing-order); no stable semantic name is established. |
 | `+0x32` | `u8` | Selects a 15-entry common response table. |
 | `+0x34` | `u8` | Common flag byte returned verbatim by live accessor `0x00732B10`. |
 | `+0x38`, `+0x3C`, `+0x40` | `s32` | `ccProjectileHomingDelay` post-spawn initialization converts them to floats at object `+0x1E0`, `+0x298`, and `+0x29C`. |
@@ -260,7 +272,7 @@ Names below describe observed consumers, not guessed game-design terminology.
 
 ### Common profile selected by record `+0x04`
 
-The clean records use 56 distinct profile indices in the inclusive range
+The retail records use 56 distinct profile indices in the inclusive range
 `0x00-0x40`. Live `0x0072B9D0` consumes the selected `0x0C`-byte profile:
 
 | Profile offset | Common consumer |
@@ -297,7 +309,7 @@ it with the primary `+0x64` service. Root cleanup's
 
 ### Additional binder side effects
 
-The clean binder at live `0x0072B1F0` also establishes these common behaviors:
+The binder at live `0x0072B1F0` also establishes these common behaviors:
 
 - it writes object `+0x0C = 1` before record-specific setup;
 - record `+0x20` values `1` or `2` allocate a `0x4C`-byte helper stored at
@@ -335,17 +347,15 @@ observable field setup is:
 
 Every branch then writes common state `+0x7E = 2` and, when helper `+0x70` is
 present, clears that helper's byte `+0x01`. Values outside `0..6` take the same
-no-orientation-write exit as value `0`. Clean records use only values `0..7`:
+no-orientation-write exit as value `0`. Retail records use only values `0..7`:
 counts are respectively `77, 53, 9, 5, 0, 2, 0, 36`, so implemented cases `4`
-and `6` are unused in the clean table and value `7` intentionally takes the
-default exit. These writes identify setup axes/angles mechanically; they do not
+and `6` are unused in the retail table and value `7` takes the default exit. These writes identify setup axes/angles mechanically; they do not
 prove a camera-space or world-space naming convention.
 
 ### Record-controlled response selectors
 
-Five more record bytes select bounded common dispatch tables. These are useful
-projectile-interface facts even though the handlers beyond them enter
-damage/substitution-adjacent combat-response code that is outside this lane:
+Five more record bytes select bounded common dispatch tables. The handlers
+beyond them enter combat-response code that this document does not decode:
 
 | Record byte | Common reader (live) | Valid selector range | Jump table (live / file / Ghidra display) |
 | ---: | ---: | ---: | --- |
@@ -362,18 +372,18 @@ after a transition to state `6`. Live `0x00732B10` is a simple accessor that
 returns record byte `+0x34` verbatim; observed consumers test bits including
 `0x04` and `0x08`, so it is retained only as a common flag/filter byte.
 
-All clean-table values fit their proven bounds. The clean records use 16
+All retail-table values fit their proven bounds. The retail records use 16
 distinct `+0x15` values (maximum `0x16`), 15 distinct `+0x16` values (maximum
 `0x17`), 17 distinct `+0x17` values (maximum `0x16`), 18 distinct `+0x18`
 values (maximum `0x17`), and nine distinct `+0x32` values (maximum `0x0E`).
-Record `+0x2C` is the separate signed positional-service selector: the clean
+Record `+0x2C` is the separate signed positional-service selector: the retail
 distribution is `-1` for 105 records, `9` for two, `0x11` for one, `0x12` for
 29, and `0x13` for 45. Live `0x00734030` skips service construction for `-1`.
 No descriptive names are assigned to individual response selectors here.
 
 ### Tail-field consumers and mutable records
 
-Following the common object `+0x74` record pointer through the clean projectile
+Following the common object `+0x74` record pointer through the projectile
 implementation establishes every direct `+0x50/+0x64` load in the range live
 `0x0072B000..0x00764000`:
 
@@ -399,25 +409,45 @@ prove that those bytes are globally unused: an aliased record pointer or a
 consumer outside the projectile implementation range can evade this simple
 pattern. No semantic name is assigned to them here.
 
-### Representative post-spawn initialization
+### Complete post-spawn initialization inventory
 
 Spawn invokes virtual slot `+0x54` after copying both vector inputs but before
-parent-lineage inheritance and manager insertion. The root slot is the no-op at
-live `0x0072B490`; strategies can replace it with exact class-specific setup:
+parent-lineage inheritance and manager insertion. Across the 95 distinct final
+factory vtables, 79 retain the root no-op at live `0x0072B490`; the other 16
+classes use the 11 distinct targets below. Addresses in this table are live
+BTL addresses.
 
-- `ccProjDist2Speed` slot `+0x54`, live `0x00739260`, obtains a random value
-  from resident `SUB_0017B798`, uses `(value >> 3) % 42` to select one of 42
-  resident 16-byte vectors at `0x0040BC80`, multiplies it by `7.5f`, writes the
-  result at object `+0xB0`, and clears the words at `+0xB4` and `+0xBC`;
-- `ccProjectileHomingDelay` slot `+0x54`, live `0x00743770`, converts signed
-  record words `+0x38/+0x3C/+0x40` to floats at object
-  `+0x1E0/+0x298/+0x29C`, copies record float `+0x48` to `+0x2A0`, and writes
-  `+0x2A8 = -1`; config index `0x1B` additionally writes byte `+0x26D = 1`;
-- `ccProjectileParabola` slot `+0x54`, live `0x007458D0`, has no universal
-  vector rewrite. For config indices `0x30` and `0x9A` only, it visits two
-  entries obtained from handle `+0x6C` and assigns a side-dependent word
-  (`0x11000` for side tag `0`, `0x22000` for tag `1`) while clearing the
-  adjacent word.
+| Exact class or classes | Slot `+0x54` target | Established operation |
+| --- | ---: | --- |
+| `ccProjDist2Speed`, `ccProjKNWbuddy`, `ccProjSSWGoukakyu` | `0x00739260` | Resident random result from `0x0017B798`, arithmetic shift right by three, then signed remainder modulo 42 selects a 16-byte vector at resident `0x003FBC80`. Multiply by `7.5f`, store at object `+0xB0`, then clear words `+0xB4/+0xBC`. |
+| `ccProjectileMakibishi` | `0x0073E650` | No-op `jr ra` stub. |
+| `ccProjectileInsectLauncher` | `0x0073EDA0` | Only config `0x98` copies record float `+0x1C` to object `+0x1E0`. |
+| `ccProjectileHomingDelay` | `0x00743770` | Convert signed record words `+0x38/+0x3C/+0x40` to floats at object `+0x1E0/+0x298/+0x29C`; copy record float `+0x48` to `+0x2A0`; set `+0x2A8 = -1`. Config `0x1B` also sets byte `+0x26D = 1`. |
+| `ccProjectileParabola`, `ccProjTewSkillAnki`, `ccProjectileNumbnessBall`, `ccProjectileNumbness` | `0x007458D0` | Configs `0x30/0x9A` visit handle `+0x6C` entries 1 and 2, write entry word `+0x2C = 0x11000` for side tag zero or `0x22000` for tag one, and clear entry `+0x30`. Other configs perform no corresponding rewrite. |
+| `ccProjLunFan` | `0x0074BFB0` | Record-to-instance setup detailed below. |
+| `ccProjLunLinear` | `0x0074C4E0` | Same record-to-instance operations as LunFan. |
+| `ccProjExplodeS` | `0x00756D30` | Clear object word `+0x298`, then call resident `0x0032CC40(object +0x30, 0, 0)`. |
+| `ccProjExplodeL` | `0x007570E0` | Clear object word `+0x298`, then call the same resident service with arguments `(object +0x30, 2, 0)`. |
+| `ccProjDDRFire` | `0x007573D0` | No-op `jr ra` stub. |
+| `ccProjNumbnessSmoke` | `0x0075B380` | Set object word `+0x280 = 200`. |
+
+LunFan and LunLinear load signed record halfword `+0x06`, compare it with
+three pairs copied from live BTL `0x008A2980`: `(0x45,0x48)`,
+`(0x46,0x49)`, `(0x47,0x4A)`, and store the resulting value at object
+`+0x290`. A match loads the stack word immediately before that pair.
+Retail Fan config `0x4C` and Linear config `0x4E` both supply child `0x46`,
+so the second-pair match stores child config `0x48`. A first-pair match
+reads outside the six initialized local words; its intent and reachability
+remain unresolved, and no general mapping is assigned to that case.
+
+They also sign-extend record byte `+0x08` into object halfword `+0x294`,
+truncate record word `+0x38` into halfword `+0x296`, convert signed record
+word `+0x3C` to float `+0x29C`, write `+0x298 = -1.0f`, and copy record
+float `+0x48` to `+0x2B0`. Both retail records supply count `10`, delay
+bound `3`, and speed-spread word `10`; their float `+0x48` inputs are
+approximately `0.785398185` and `70`, respectively. The motion callbacks'
+use of these fields is in
+[emitter schedules](projectile_motion.md#emitter-callbacks-and-their-local-schedules).
 
 These are callback-local initialization facts. They do not imply real-time
 rates, and the random `ccProjDist2Speed` vector is not given a stronger semantic
@@ -437,15 +467,14 @@ subfamily, whose constructor in turn enters `ccProjectile`.
 | `0xB4` | `0x0000` | `0x5D` | `0x470` | `0x0075F080` | `0x005DE660` | `0x008C8530` / `ccProjCharSZWBuddyTonTon` |
 | `0xB5` | `0x006B` | `0x66` | `0x470` | `0x007605E0` | `0x005DE350` | `0x008C8420` / `ccProjSZWExcItemTonton` |
 
-External ID `0x006B` is therefore a directly usable, unambiguous clean-table
-identity for `ccProjSZWExcItemTonton`. The vtable link also corrects a misleading
-Ghidra comment at displayed `0x007605D8`: its encoded live pointer
-`0x008A4D10` addresses the resource string `2szwbod1.ccs`, while Ghidra shows
-the bytes `0x40` later and labels them `ccProjInkBrdN`.
+External ID `0x006B` is therefore an unambiguous retail-table identity for
+`ccProjSZWExcItemTonton`. Its constructor code at preserved Ghidra address
+`0x007605D8` encodes live pointer `0x008A4D10`, which addresses the resource
+string `2szwbod1.ccs`.
 
 ### Complete selector-to-class crosswalk
 
-The following map is exhaustive for the clean 103-entry selector jump table.
+The following map is exhaustive for the retail 103-entry selector jump table.
 Factory-block targets and allocation immediates come from raw instructions.
 For each branch, the final object-`+0x50` vtable was taken either from the
 factory block or the constructor it calls. Resident vtable `+0x00` then gives
@@ -454,9 +483,9 @@ pointer. This is a complete raw-byte-to-resident-vtable-to-overlay-RTTI chain,
 not a name inferred from nearby strings.
 
 Config indices and external IDs in this table are hexadecimal. `none` means
-the applicable clean records use external ID zero. The six unused selectors
+the applicable retail records use external ID zero. The six unused selectors
 are `0x02`, `0x12`, `0x13`, `0x1A`, `0x22`, and `0x63`. Selector `0x24` is
-used by config index `0x4D` / external ID `0x003F`, but intentionally reaches
+used by config index `0x4D` / external ID `0x003F`, but reaches
 the shared bare-`ccProjectile` factory block.
 
 | Selector | Factory block (live) | Allocation | Final vtable | Exact class | Config indices | Nonzero external IDs |
@@ -574,7 +603,7 @@ The root class descriptor is live `0x008C8340`; its class handle is
 `ccProjectile`.
 
 The resident vtable at `0x005E0810` begins with class handle `0x008C8350`.
-The clean factory's common constructor at live `0x0072B190`:
+The factory's common constructor at live `0x0072B190`:
 
 - invokes the lower object constructor at live `0x00709AA0`;
 - installs vtable `0x005E0810` at object `+0x50`;
@@ -680,7 +709,7 @@ not merely base-object deallocation.
 | `+0x258` | Copy of config float `+0x0C`, optionally overwritten by the external-ID wrapper's caller-controlled path. |
 | `+0x25E` | Binder-complete flag; binder writes `1` after common record setup. |
 | `+0x274` | Optional auxiliary heap allocation freed directly by root cleanup. |
-| `+0x284`, `+0x288` | Additional metadata copied from a parent projectile. |
+| `+0x284`, `+0x288` | Inherited support-notification metadata: byte `+0x284 == 1` enables the contact notification; word `+0x288` carries the support object's allocated identifier in the traced support emitters. It is not a support-object pointer in those paths. |
 
 ## Spawn, side identity, and lineage
 
@@ -703,7 +732,7 @@ to `+0xA0`, then calls virtual slot `+0x54` as post-spawn initialization.
 There is no null check between the factory return and the binder/object writes.
 Factory branches do check the resident allocator result before calling a
 constructor, but a null result reaches this unguarded spawn continuation. The
-clean lifecycle therefore assumes allocation succeeds rather than supplying a
+retail lifecycle therefore assumes allocation succeeds rather than supplying a
 recoverable allocation-failure path.
 
 The common side helpers make the relationship exact:
@@ -724,10 +753,31 @@ If `t1` is non-null, spawn copies parent `+0x284`, `+0x288`, `+0x24A`,
 consulting the manager's four-slot lineage table it requires signed parent
 `+0x24A` to be in inclusive range `0..196`; an out-of-range value skips that
 table work but not the external-ID copy. Spawn does not retain the parent
-pointer in this path. This is strong evidence for inherited source/group
-identity. Calling `+0x8A` specifically an owner or target field remains a
-medium-confidence interpretation: the exact inversion and lookups are proven,
-but no direct owner-pointer field was established.
+pointer in this path. The inherited lineage keys and support identifier prove
+source/group association without establishing a retained source pointer.
+[Homing strategies](projectile_motion.md#homing-target-data-and-the-delayed-strategy)
+use the same-tag lookup for tracked or snapshotted fighter positions, but a
+universal owner/target meaning for `+0x8A` is not established. Fighter
+collision-result routing also reads projectile `+0x8A`, `+0x284`, `+0x7A`,
+and record `+0x2F` as candidate gates; that routing belongs to
+[Target selection](target_selection.md#collision-candidates-and-routing-order).
+
+### Support-notification metadata
+
+Two support emission sites call common spawn at live `0x0088B0A0` and
+`0x0088DA0C`, with side from support object `+0xE4` and no parent. They then
+write projectile byte `+0x284 = 1` and copy support object word `+0x120` to
+projectile `+0x288`. The stores are live `0x0088B0B4/0x0088B0B8` and
+`0x0088DA20/0x0088DA24`. Child spawn inherits both fields, as described above.
+
+The common projectile contact path checks byte `+0x284 == 1`; at live
+`0x0072EBB8` (Ghidra `0x0072EB78`, file `0x07ACB8`) it calls support
+notification `0x00886A40`, supplying numeric side from `0x00734130` and the
+word at `+0x288`. Thus the support identifier survives through projectile
+descendants and reaches the notification interface without retaining the
+support object. Identifier allocation, duplicate filtering, and the counter
+updated by that notification belong to
+[Support mechanics](support_mechanics.md).
 
 ### Higher-level spawn wrappers
 
@@ -754,17 +804,177 @@ wrapper. It returns null immediately when its incoming `t0` is null, otherwise
 calls common spawn with both factory extra and parent forced to zero and applies
 the same `+0x1E0` and selector-`0x14` post-initialization. No direct JAL or
 aligned absolute-function-pointer reference to `0x007364D0` exists in the
-clean BTL overlay. Its runtime reachability is therefore not established.
+retail BTL overlay. Its runtime reachability is therefore not established.
+
+### Throwing-skill emission interfaces
+
+The skill and entity hierarchies are distinct, but there is a proven call chain
+between them. `ccSkillThrowProjectile` has descriptor live `0x008CF3A0`,
+class handle `0x008CF3B0`, name pointer `0x008BBC90`, and resident vtable
+`0x005ED2B0`. The `ccSkillTEN001` descriptor at live `0x008CF590` contains
+that base handle; its own handle is `0x008CF5A8`, name pointer `0x008BBDC8`,
+and resident vtable `0x005ED060`.
+
+The exact chain is:
+
+1. `ccSkillTEN001` vtable slot `+0xF8` points to live `0x007F11D0`
+   (Ghidra `0x007F1190`, file `0x13D2D0`). Its state-`2` and state-`3`
+   branches call live `0x007F0EB0` with a selected event table.
+2. That shared helper compares the current value at `skill +0x320 -> +0x98`
+   against event values. Once it is at least table word `+0x00` and skill byte
+   `+0x10DE` is zero, it calls skill virtual slot `+0x248`, supplying skill
+   word `+0xFF8` as `a1`, and sets `+0x10DE = 1`. The indirect call is live
+   `0x007F0FA4` (Ghidra `0x007F0F64`, file `0x13D0A4`). This is a one-shot
+   emission gate until some other path clears that byte; no time unit is
+   established for the compared values.
+3. `ccSkillTEN001` slot `+0x248`, resident word `0x005ED2A8`, points to live
+   `0x007F1730` (Ghidra `0x007F16F0`, file `0x13D830`). It loops using the
+   supplied count and calls live wrapper `0x00736400` at `0x007F1A90`, with
+   config `0x17`, side from skill `+0x350`, and factory extra and parent zero.
+4. The wrapper reaches common spawn `0x00736080`; config `0x17` has selector
+   `0x09`, therefore constructs `ccProjectileHoming`. The returned object also
+   receives lineage keys from skill `+0x56C/+0x124` through live
+   `0x008355E0`, which requires a non-null object and calls common lineage
+   setter `0x0072EC30` with byte flag zero.
+
+The BTL scan for base handle `0x008CF3B0` finds four direct descriptor
+references, at live `0x008CF3C8`, `0x008CF458`, `0x008CF578`, and
+`0x008CF598`. Their class handles and resident tables establish this complete
+direct-subclass interface inventory:
+
+| Exact skill | Class handle | Resident vtable | Slot `+0x248`, live | Observed body |
+| --- | ---: | ---: | ---: | --- |
+| `ccSkillSIN001` | `0x008CF3D8` | `0x005EB320` | `0x00873FA0` | No-op `jr ra` stub. |
+| `ccSkillKNK000` | `0x008CF468` | `0x005EBAE0` | `0x00804160` | `sw zero, 0(zero)` followed by return. Its proven projectile-emission path uses another helper, below. |
+| `ccSkillINO001` | `0x008CF588` | `0x005ECE10` | `0x007F22C0` | Counted config-`0x19` emitter. |
+| `ccSkillTEN001` | `0x008CF5A8` | `0x005ED060` | `0x007F1730` | Counted config-`0x17` emitter traced above. |
+
+No BTL descriptor pointer to any of those four child handles was found.
+This is a descriptor-family bound, not a census of every generic skill or
+every indirect call in the game.
+
+INO001 slot `+0x100`, live `0x007F1CB0`, calls the shared event helper at
+live `0x007F2250/0x007F226C` from its emission-state branch. That helper
+reaches INO001 slot `+0x248` by the same byte-`+0x10DE` gate as TEN001.
+Emitter `0x007F22C0` stores its count argument in BTL live `0x008B3750`
+and loops against that word. At live `0x007F2910` (Ghidra `0x007F28D0`,
+file `0x13EA10`) it calls common spawn with config `0x19`, skill side
+`+0x350`, and zero factory extra/parent. Config `0x19` selects
+`ccProjectileStraight` through selector `0x00`. It applies skill `+0x56C/+0x124`
+through lineage helper `0x008355E0` and writes projectile `+0x1E0 = 35.0f`.
+The per-projectile aim vector is constructed locally from fighter positions
+and angle arithmetic; no retained target pointer is supplied to common spawn.
+
+KNK000 slot `+0x100`, live `0x008035D0`, invokes emission helper
+`0x00803A30` from its skill-state `+0xFF4` branches 2, 3, and 4. The helper
+copies all 18 records of a `0x20`-byte schedule from live `0x008B4890`
+(Ghidra `0x008B4850`, file `0x200990`) to its stack. Skill signed halfwords
+`+0x1112/+0x1110` select group and entry with strides `0xC0/0x20`.
+Record signed halfword `+0x00` is compared with the high half of service word
+`+0xEC`, returned through `0x008043C0`; record `+0x02` is the config index.
+Threshold `10000` stops the loop before emission and before entry increment.
+The complete initialized schedule is:
+
+| Group | Emission thresholds in entry order | Config at every emitting entry | Stop entry | Remaining initialized entries |
+| ---: | --- | ---: | ---: | --- |
+| 0 | `5` | `0x0C` | 1 | Entries 2..5 are zero. |
+| 1 | `1, 8, 15` | `0x0C` | 3 | Entries 4..5 are zero. |
+| 2 | `1, 7, 14, 21, 32` | `0x0C` | 5 | None. |
+
+For an admitted entry, the helper increments skill `+0x1110`, creates local
+position/aim vectors, and calls common spawn at live `0x00804048` (Ghidra
+`0x00804008`, file `0x14C148`), with the schedule config, side `+0x350`,
+and zero factory extra/parent. A non-null result receives calculated floats
+`+0x1E0/+0x1E4` and the same skill lineage keys. It loops back to admit further
+entries whose thresholds have already been reached. Config `0x0C` selects
+`ccProjectileParabola` through selector `0x15`. No time unit or
+player-facing name is assigned to these threshold values.
+
+SIN001's inspected slot-`+0x100` allocation branch instead constructs a
+`0xBE0`-byte `ccSklObjInsPillar`, resident vtable `0x005EB570`, and registers
+it through `0x007786E0`; this is a separate skill-object path. The throwing
+descriptor name therefore does not establish that every child or every
+emission slot constructs a `ccProjectile` entity.
+
+### TEN000 weighted emission
+
+A separate data-driven caller, live `0x007EFD10` (Ghidra `0x007EFCD0`, file
+`0x13BE10`), is identified by `ccSkillTEN000` resident vtable `0x005ED500`
+slot `+0xF8`, not by inheritance from the throwing-skill descriptor. It gates
+emission on signed fields `+0xFF0 > +0xFF8`, `+0xFF4 < +0xFF5`, and
+`(+0xFF0 - +0xFF8) % +0xFF2 == 1`. The emitted-attempt count `+0xFF4` is
+incremented after the selected branch. Its list pointer at `+0x1000` and
+signed count at `+0x1004` describe `0x0C`-byte weighted entries:
+
+| Entry offset | Proven use |
+| ---: | --- |
+| `+0x00` | Signed type byte: zero calls the projectile emitter, one calls the other emitter; other values skip either call. |
+| `+0x04` | Word passed as the selected emitter's argument; type zero interprets it as a projectile config index. |
+| `+0x08` | Signed byte added to cumulative selection weight. |
+
+The caller gets a resident random result with argument `99` and selects the
+first entry for which that result is less than the cumulative weight. Resident
+`0x00180210` performs unsigned remainder modulo `abs(argument) + 1`, so this
+call returns `0..99`, inclusive; the random generator and modulo behavior are
+owned by [Randomness](../runtime/randomness.md#mt-wrappers). A failed selection
+would use index `-1`, but both lists installed by the traced initializer have
+positive weights totaling 100 and therefore always select an entry.
+
+Initializer live `0x007EF9B0` (Ghidra `0x007EF970`, file `0x13BAB0`) is
+TEN000 virtual slot `+0x22C`, resident word `0x005ED72C`. It selects lists
+using skill word `+0x56C`, not the projectile selector:
+
+| Skill `+0x56C` | List, live / Ghidra / file | Entries | Attempt threshold byte `+0xFF5` |
+| ---: | --- | ---: | --- |
+| `0x23` | `0x008B32B0` / `0x008B3270` / `0x1FF3B0` | 5 | `random(2) + 3`, range 3..5 |
+| `0x6D` | `0x008B3300` / `0x008B32C0` / `0x1FF400` | 21 | `random(2) + 2`, range 2..4 |
+
+Both branches set `+0xFF8 = 10`, `+0xFFA = 1`, and convert
+`30.0f / float(+0xFF5)` to the signed halfword at `+0xFF2`. Constructor live
+`0x007EF6A0` clears the counters, threshold, list pointer, and list count before
+that initialization. The five-entry list contains only type-one triples
+`(argument, weight)`: `(0x24,20)`, `(0x23,20)`, `(0x25,20)`, `(0x27,30)`,
+and `(0x28,10)`; it does not invoke the projectile emitter. The complete
+21-entry list is:
+
+| Entry | Type | Emitter argument | Weight |
+| ---: | ---: | ---: | ---: |
+| 0 | 1 | `0x02` | 7 |
+| 1 | 1 | `0x23` | 7 |
+| 2 | 1 | `0x24` | 4 |
+| 3 | 1 | `0x06` | 3 |
+| 4 | 1 | `0x07` | 4 |
+| 5 | 1 | `0x08` | 3 |
+| 6 | 1 | `0x09` | 3 |
+| 7 | 1 | `0x0A` | 2 |
+| 8 | 1 | `0x25` | 6 |
+| 9 | 1 | `0x26` | 5 |
+| 10 | 1 | `0x27` | 4 |
+| 11 | 1 | `0x28` | 6 |
+| 12 | 1 | `0x29` | 5 |
+| 13 | 1 | `0x2A` | 4 |
+| 14 | 1 | `0x2B` | 7 |
+| 15 | 1 | `0x2F` | 7 |
+| 16 | 1 | `0x30` | 7 |
+| 17 | 0 | `0x0C` | 7 |
+| 18 | 0 | `0x0D` | 3 |
+| 19 | 0 | `0x35` | 4 |
+| 20 | 0 | `0x30` | 2 |
+
+Type zero calls live `0x007F0250` at live `0x007EFE14`; that emitter reaches
+common spawn at live `0x007F0390`, forwarding the selected config, skill side
+`+0x350`, and zero factory extra/parent. After spawn it applies the same
+`+0x56C/+0x124` lineage setter described above. Config `0x30` additionally
+gets object `+0x1E4 = 5.0f` and a random-result-plus-`30.0f` value at `+0x1E0`.
+The scheduling fields and random service are recorded mechanically; no frame
+cadence or named skill timing is inferred.
 
 ### Direct spawn-call inventory
 
-An aligned raw-word scan of the clean overlay finds 87 direct JAL instructions
-to live `0x00736080` (instruction word `0x0C1CD820`). Every one is immediately
-preceded by an explicit `t1` setup and followed by a NOP delay slot. Only 58 of
-the calls appear as instructions in the maintained Ghidra listing; 29 more lie
-in ranges that the export rendered as undefined bytes. The raw instruction
-shape around all 29 makes the listing omission, rather than coincidental data,
-the supported interpretation.
+An aligned raw-word scan of the retail overlay finds 87 direct JAL
+instructions to live `0x00736080` (instruction word `0x0C1CD820`). Every one is
+immediately preceded by an explicit `t1` setup and followed by a NOP delay
+slot.
 
 Exactly 25 call sites force `t1 = 0`:
 
@@ -797,7 +1007,7 @@ live call-site addresses:
 
 "Parent-capable" records the ABI value at the call site; it does not assert
 that a forwarded value can never be null at runtime. Several representative
-class callbacks do prove the intended linked-child use:
+class callbacks show the linked-child use:
 
 - Live `0x007303FC` spawns config `0x2E`, passes
   `0x00734130(current)` as `a1`, and passes the current projectile as `t1`.
@@ -807,21 +1017,12 @@ class callbacks do prove the intended linked-child use:
   computes `a1 = current +0x8A XOR 1` and passes the current projectile as
   `t1`, which has the same same-tag and lineage-preserving result.
 - Live `0x0072DC90` and `0x0072DCB8`, in the common slot-`+0x24` callback,
-  deliberately pass `t1 = 0` and pass the current object's `+0x8A` directly as
+  explicitly pass `t1 = 0` and pass the current object's `+0x8A` directly as
   `a1`. The first handles current config `0x6F` by spawning config `1`; the
   second uses the current config index otherwise. Because the binder inverts
   that direct tag, the new object gets the opposite `+0x8A`, and because `t1`
   is null it receives none of the parent-copy fields. This is a concrete
   unlinked/opposite-tag emission path, distinct from the linked-child pattern.
-
-The raw-only call sites missing from the Ghidra instruction listing are live
-`0x007319AC`, `0x00732950`, `0x007329A4`, `0x00733800`, `0x00733858`,
-`0x007338E8`, `0x0073A7A8`, `0x0073DA6C`, `0x0073DAE0`, `0x0073E868`,
-`0x0073EB48`, `0x0074AEFC`, `0x007500D4`, `0x007517E0`, `0x00753EA4`,
-`0x00754328`, `0x00754D30`, `0x007551B0`, `0x00755640`, `0x00756810`,
-`0x00757AE0`, `0x0075C9B4`, `0x0075CDA0`, `0x0075D69C`, `0x0075FEA4`,
-`0x00848CEC`, `0x0084B9BC`, `0x00859C14`, and `0x0086BFEC`. This is also a
-negative result for relying on exported listing XREF counts as complete.
 
 ## Manager ownership, callbacks, and cleanup
 
@@ -907,7 +1108,7 @@ live `0x00734AD0`, and invokes virtual deleting slot `+0x08` with argument `1`;
 because unlink repairs `+0x18` to the predecessor, this drains the singly
 linked list tail-to-head and includes the final head. It then calls live
 `0x00734F80`, which releases and clears each non-null entry of a separate
-19-pointer global service array at live `0x008EA830` through resident
+19-pointer global service array at live `0x008DA830` through resident
 `SUB_001951A0(value, 1)`. Non-null manager `+0x1C` is released through live
 `0x00708480(value, 1)` and cleared, and live `0x00734470` zeroes the manager's
 list/count/serial/gate fields. The teardown entry additionally destroys the
@@ -937,8 +1138,8 @@ has the following exact ownership behavior:
   pointer `+0x74`, config/external IDs `+0x78/+0x7A`, state `+0x7E`, manager
   linkage `+0x60/+0x86`, serial `+0x8C`, and auxiliary pointers.
 
-The non-null `+0x64` modes outside `1..4` lead to a deliberate null-address
-store in the clean code. That is evidence of an invariant/assert-like invalid
+The non-null `+0x64` modes outside `1..4` lead to an explicit null-address
+store in the retail code. That is evidence of an invariant/assert-like invalid
 mode path, not a recoverable cleanup case.
 
 ### Collision-facing interface
@@ -956,13 +1157,14 @@ parallel update-pass gate `+0x20` is set/cleared by live `0x00735DF0` and
 This establishes the projectile-to-collision interface without assigning
 meanings to the collision engine's internal structures.
 
-The representative query wrapper at live `0x00757B60` is deliberately thin.
+The representative query wrapper at live `0x00757B60` is thin.
 It preserves caller arguments `a0` and `a1` (pointers to two 16-byte vectors)
 and `a2` (a 32-bit filter/mask), sets the remaining resident-call arguments to
 `a3 = 1`, `t0 = 0`, and `t1 = -1`, calls resident `SUB_001BF100`, and returns
 its floating-point result unchanged. The Tonton callers below prove `-1.0f` as
-the no-result sentinel for their masks. The resident routine's internal shape,
-world, and contact semantics are intentionally not decoded here.
+the no-result sentinel for their masks. The resident segment query's
+broad/narrow phases, candidate selection, and no-candidate return belong to
+[Collision](collision.md#resident-segmentenvironment-broad-and-narrow-phases).
 
 The wrapper has exactly 13 direct raw-overlay callers. All 13 contain an
 explicit comparison path against `-1.0f`; `ccProjCharNRWOtherSelf` also applies
@@ -980,11 +1182,11 @@ inventory is:
 | `ccProjSZWExcItemTonton` / `0x005DE350` | slot `+0x64`, live `0x00760950` | `0x00760A9C` → `0x20000001`; `0x00760CDC` → `0x40000001` |
 
 The mask distribution is seven calls with `0x20000001`, five with
-`0x40000001`, and one with `0x40000000`. Raw call sites `0x007579D4`,
-`0x00757A28`, and `0x0075C0A0` are in ranges omitted as instructions from the
-Ghidra listing, another reason to derive call counts from the clean binary.
-The inventory establishes filter values and class ownership only; it does not
-name the resident query's internal collision categories.
+`0x40000001`, and one with `0x40000000`. The inventory establishes filter
+values and class ownership only. The high mask bits `0x20000000` and
+`0x40000000` have the same values as primitive geometric classes in
+[Stage surface attributes](stage_surface_attributes.md#authored-word-and-geometric-class);
+the query's mask predicates are owned there and in Collision.
 
 The root slot-`+0x48` implementation at live `0x0072CDA0` makes that interface
 more precise. It returns `1` in all observed paths and skips service work when
@@ -1005,76 +1207,147 @@ This also ties record `+0x04` and its common profile directly to the
 projectile-facing collision/service path without assigning an internal shape
 or engine type to `+0x64`.
 
-### Representative callback composition
+### Complete collision/service override inventory
 
-Comparing resident vtables against root `ccProjectile` vtable `0x005E0810`
-shows that motion/state strategies replace selected callbacks rather than a
-single universal "motion" slot. The following are every non-root target in
-slots `+0x1C` through `+0x58` for seven representative clean selectors; all
-unlisted slots in that range retain the root target:
+Of the 95 final factory vtables, 79 retain root slot `+0x48`; the other 16
+classes resolve to the 15 targets below. All return one directly or preserve
+the root's return value. The manager uses the survival decision from slot
+`+0x44` for removal; these service returns do not supply a second retirement
+decision. The table describes projectile-facing calls and storage only, not
+the internal meaning of the resident services.
 
-| Root slot | Root live target |
-| ---: | ---: |
-| `+0x1C` | `0x0072E020` |
-| `+0x20` | `0x0072E240` |
-| `+0x24` | `0x0072D200` |
-| `+0x28` | `0x00733080` |
-| `+0x2C` | `0x00732FD0` |
-| `+0x30` | `0x00730140` |
-| `+0x34` | `0x007305A0` |
-| `+0x38` | `0x00730120` |
-| `+0x3C` | `0x00731F80` |
-| `+0x40` | `0x00734280` |
-| `+0x44` | `0x0072C940` |
-| `+0x48` | `0x0072CDA0` |
-| `+0x4C` | `0x0072C2A0` |
-| `+0x50` | `0x0072B480` |
-| `+0x54` | `0x0072B490` |
-| `+0x58` | `0x007305F0` |
+| Exact class or classes | Slot `+0x48`, live | Established relationship to the root/service path |
+| --- | ---: | --- |
+| `ccProjectileChase`, `ccProjectileNrwCombo` | `0x0073C060` | Independent path. Temporarily selects two service contexts using byte `+0x202`, calls class setup `0x0073C770`, then submits ID `+0x2BE` in states 4/6 or IDs `+0x2BC/+0x2C0` otherwise. `+0x82 == 1` adds four more pairs of submissions. Restores the prior context. |
+| `ccProjectileTenten1` | `0x0073D240` | Independent context/setup path using `0x0073D630`. States 4/6 use one pointer from global array `0x008DA830`; other states use two. Copies transform `+0x100`, sets service byte `+0x8D`, and invokes resident `0x00194390/0x00194180`; `+0x82 == 2` adds four pairs with positional offsets. Restores the prior context. |
+| `ccProjectileMakibishi` | `0x0073E480` | Calls resident `0x0010D220` with object `+0x294/+0x298`, invokes root with argument 1, then calls `0x0010D200` for the context. |
+| `ccProjectileKibakufuda` | `0x00742FD0` | Root with argument 1, then conditional position/manager service `0x00734540` when resident predicate `0x003737A0` is zero, byte `+0x2A0 == 1`, and manager exists. |
+| `ccProjectileKagebunshinLauncher` | `0x00743220` | Config `0x88` explicitly calls common transient setup `0x0072CB50`, wraps root argument 0 in `0x0010D220/0x0010D200` with scalar `100.0f` and packed word `0xFF202020`. Other configs invoke root with argument 1. |
+| `ccProjectileHomingDelay` | `0x007438E0` | Root with argument 1. Config `0xA3` first saves and clears two service halfwords `+0x1C`, submits the owned `+0x218` node chain using node scalar `+0x04`, transform `+0x10`, ID `+0x212`, and final argument byte `+0x234` only when that byte is 0 or 1, then restores both halfwords. |
+| `ccProjStickKibakuFuda` | `0x00748370` | Independent positional-service path using the same-tag fighter's position and a height adjustment; conditionally calls manager `0x00734540` and resident `0x00353E90`. No call to root slot `+0x48`. |
+| `ccProjFloatLauncher` | `0x00748960` | Root with argument 1; byte `+0x2B4 == 1` additionally services owned pointer `+0x2B0` through resident `0x00194180` with scalar `1.0f`. |
+| `ccProjTewSkillAnki` | `0x00759BE0` | Wraps root argument 1 in `0x0010D220/0x0010D200`; scalar derives from signed halfwords `+0x290/+0x292` and common accumulator `+0x1FC`. |
+| `ccProjSCOGen` | `0x0075A960` | Explicit transient setup, resident context wrapper with `100.0f/0xFF202020`, and root argument 0. |
+| `ccProjectileNumbnessBall` | `0x0075AE90` | Explicit transient setup, resident context wrapper with `100.0f/0xFFFF0000`, root argument 0, and an additional explicit call to common post-service `0x0072FE40`. |
+| `ccProjExcORWSnake` | `0x0075C510` | Looks up the opposite-tag fighter through `0x00734160`. A non-null result controls a packed word from fighter byte `+0x60 & 1` and a resident context wrapper; both null/non-null branches invoke root with argument 1. |
+| `ccProjInkSnakeN` | `0x00761080` | Services owned pointer `+0x290` through `0x00721D70/0x00721E50`, then forwards the incoming argument to root. |
+| `ccProjInkBrdN` | `0x00761CC0` | Same owned-pointer calls, then temporarily clears a selected service float `+0x28` around root with the incoming argument and restores it. |
+| `ccProjInkMouseN` | `0x00762EF0` | The same float save/clear/restore wrapper around root with the incoming argument, without the owned-pointer calls. |
 
-| Selector / exact class | Non-root slot → live target |
-| --- | --- |
-| `0x00` / `ccProjectileStraight` | `+0x1C` → `0x00738E40` |
-| `0x03` / `ccProjDist2Speed` | `+0x1C` → `0x007392E0`; `+0x30` → `0x00739170`; `+0x54` → `0x00739260`; `+0x58` → `0x00739630` |
-| `0x01` / `ccProjectileChase` | `+0x1C` → `0x0073B060`; `+0x20` → `0x0073BD20`; `+0x30` → `0x0073AA30`; `+0x3C` → `0x0073AB70`; `+0x40` → `0x0073C6D0`; `+0x48` → `0x0073C060`; `+0x4C` → `0x0073BF60`; `+0x50` → `0x0073C220` |
-| `0x09` / `ccProjectileHoming` | `+0x1C` → `0x0073F6C0`; `+0x30` → `0x0073FCC0`; `+0x50` → `0x0073F610` |
-| `0x14` / `ccProjectileHomingDelay` | `+0x1C` → `0x00743A00`; `+0x30` → `0x00743800`; `+0x48` → `0x007438E0`; `+0x54` → `0x00743770` |
-| `0x15` / `ccProjectileParabola` | `+0x1C` → `0x00744820`; `+0x3C` → `0x00745390`; `+0x54` → `0x007458D0` |
-| `0x0F` / `ccProjectileExplosion` | `+0x44` → `0x00741970` |
+The root's delay/inactive/state gates apply when its body is reached; they are
+not universal gates for independent overrides or work performed before a root
+call. Explicit setup plus root argument zero also preserves a different
+ordering from an ordinary root argument-one call. This inventory closes the
+slot-level indirect dispatch boundary without claiming that every deeper
+resident service or every query within a motion callback is decoded.
 
-The invocation points that are proven globally are narrower than the class
-names: spawn calls `+0x54`; the manager calls `+0x44`; the collision pass calls
-`+0x48`; root active update calls `+0x20` and `+0x4C`; and common state `2`
-dispatch calls `+0x24`. Other slots above are retained as exact interface
-addresses without a universal semantic label.
+### Complete factory-class update contracts
 
-The root `+0x20` target at live `0x0072E240` dispatches record `+0x09` values
-`0..7` to orientation/transform helpers; its default branch builds matrix
-storage at `+0x140..+0x170` from angles at `+0xE0`. This is why calling every
-`+0x20` implementation simply a position integrator would be incorrect.
-`ccProjectileChase` replaces it with live `0x0073BD20`: in common states `2`
-and `5`, that body sets `+0x216 = 1` and updates angle `+0xE8` using signed
-halfword `+0x204`, scalar `+0x278`, and explicit pi/32768 quantization. The body
-does not directly write position `+0x30`; Chase's own slot-`+0x4C` target at
-live `0x0073BF60` consumes `+0xE8` while building matrix storage at `+0x100`
-and anchors that transform to position `+0x30`. In contrast, common state `5` is a proven
-direct integrator because its handler adds vector `+0x1C0` to position `+0x30`
-on each invocation. No invocation is equated to a frame or real-time duration.
+The 103 selector branches resolve to 95 distinct resident vtables, including
+bare `ccProjectile` and classes behind unused selectors. Reading slots
+`+0x1C..+0x58` in all 95 establishes that every class retains root slot `+0x24`
+target `0x0072D200`. That callback is available across the entire factory set;
+its execution still depends on reaching the state-2 dispatcher or another
+caller. A custom manager-update body need not execute the common dispatcher.
 
-`ccProjectileExplosion` demonstrates a real class-specific state contract. Its
-live `+0x44` body returns `0` immediately for state `7`; for state `6` it writes
-state `7` and returns `1`. Thus an explosion already placed in state `6`
-transitions on that callback and is removed on a later manager callback, without
-using common state-6 handler `0x0072E180`. When common counter `+0x200` is zero,
-the same body also calls its virtual `+0x2C` entry and resident
-`SUB_001D87C0(0x1000, object+0x30)`. No cadence or damage meaning is assigned.
+Exactly 68 of the 95 vtables retain manager-update slot `+0x44` target
+`0x0072C940`. The other 27 vtables use 25 distinct targets, completely listed
+below. Two targets call the root update; the remaining 23 targets, used by 25
+classes, independently implement the same retirement decision: state `7`
+returns zero; state `6` writes state `7` and returns one. Their state-6 branch
+does not read `+0x82`, signal `+0x6C`, detach `+0x70`, or invoke the full
+transition helper. Manager unlink and deleting destruction still occur when a
+later callback returns zero. This establishes every factory class's state-6/7
+manager-removal route without claiming full active behavior for every class.
+
+| Exact class | Slot `+0x44` live target | State-6/7 route |
+| --- | ---: | --- |
+| `ccProjectileLauncherDelay` | `0x0073A650` | Direct promotion at `0x0073A6C8` |
+| `ccProjectileTenten2Launcher` | `0x0073D840` | Direct promotion at `0x0073D8B0` |
+| `ccProjectileMakibishiLauncher` | `0x0073DDD0` | Direct promotion at `0x0073DE3C` |
+| `ccProjectileTenten0Launcher` | `0x0073E760` | Direct promotion at `0x0073E7CC` |
+| `ccProjectileInsectLauncher` | `0x0073EDD0` | Direct promotion at `0x0073EE4C` |
+| `ccProjectileExplosion` | `0x00741970` | Direct promotion at `0x007419E4` |
+| `ccProjectileStickHead` | `0x00744400` | Direct promotion at `0x00744470` |
+| `ccProjectilePoisonExplosion` | `0x00745AA0` | Direct promotion at `0x00745B10` |
+| `ccProjectileLauncherHak1` | `0x007399B0` | Direct promotion at `0x00739A40` |
+| `ccProjecShotgunLauncher` | `0x007495F0` | Direct promotion at `0x00749718` |
+| `ccProjSyncHand` | `0x0074B1C0` | Direct promotion at `0x0074B20C` |
+| `ccProjIronRain` | `0x00750550` | Calls root `0x0072C940` |
+| `ccProjectileScoLauncher` | `0x007515A0` | Direct promotion at `0x00751618` |
+| `ccProjLauncherClayBrdS` | `0x00753C20` | Direct promotion at `0x00753CA4` |
+| `ccProjLauncherClayBrdSA` | `0x007540D0` | Direct promotion at `0x00754154` |
+| `ccProjLauncherClayBrdU` | `0x00754AC0` | Direct promotion at `0x00754B3C` |
+| `ccProjLauncherClayBrdUA` | `0x00754F50` | Direct promotion at `0x00754FCC` |
+| `ccProjLauncherClayBrdH` | `0x007553A0` | Direct promotion at `0x00755424` |
+| `ccProjLauncherClaySpd` | `0x00756510` | Direct promotion at `0x00756598` |
+| `ccProjLauncherDDRFire` | `0x00757820` | Direct promotion at `0x00757894` |
+| `ccProjLauncherTewAwake`, `ccProjLauncherTewRoll`, `ccProjLauncherTewKunai` | `0x0074FDA0` | Direct promotion at `0x0074FE20` |
+| `ccProjSchSkillSenbon` | `0x0075A750` | Calls root `0x0072C940` |
+| `ccProjNumbnessSmoke` | `0x0075B390` | Direct promotion at `0x0075B404` |
+| `ccProjBlueSmoke` | `0x00760210` | Direct promotion at `0x0076027C` |
+| `ccProjWhiteSmoke` | `0x00760400` | Direct promotion at `0x0076046C` |
+
+For most direct-promotion targets, positive delay `+0x84` and inactive byte
+`+0x89` gate the retirement checks. The direct-promotion branch therefore
+means the callback has reached its state check; it does not promise retirement
+before those gates clear. `ccProjSyncHand` checks states before its active
+initialization work instead. State-6/7 handling is only part of the survival
+contract: the complete custom-update bodies also contain the active-completion
+returns below. A zero at any of these sites goes directly to the manager's
+unlink/deleting-destructor decision, regardless of whether state `7` was
+written. Addresses are the live instructions that set return register `v0`
+to zero; the state-7 zero branches already described above are omitted here.
+
+| Exact class or classes | Additional zero-return site(s), live | Proven immediate condition |
+| --- | --- | --- |
+| `ccProjectileLauncherDelay`, `ccProjectileMakibishiLauncher` | `0x0073A7D8`, `0x0073DF50` | Decrement word `+0x294` after emission; the new value is exactly zero. |
+| `ccProjectileLauncherHak1` | `0x0073A4A4` | Increment word `+0x290`; it is no longer below record word `+0x3C`, including that local threshold's config/flag adjustments. |
+| `ccProjectileTenten2Launcher` | `0x0073DAE8` | The admitted active branch finishes its child-spawn calls, ending with config `0x08` at `0x0073DAE0`. |
+| `ccProjectileTenten0Launcher` | `0x0073E870` | Its active branch finishes the child spawn at `0x0073E868`. |
+| `ccProjectileInsectLauncher` | `0x0073EE98` | Calls its emission helper, performs a position-associated resident call, writes state `6` at `0x0073EE94`, then returns zero. |
+| `ccProjectileExplosion` | `0x00741DA4` | Signed halfword `+0x200 == 17`. |
+| `ccProjectileStickHead` | `0x007446D4` | Signed halfword `+0x200 == 90`. |
+| `ccProjectilePoisonExplosion`, `ccProjNumbnessSmoke`, `ccProjBlueSmoke`, `ccProjWhiteSmoke` | `0x00745D28`, `0x0075B7F4`, `0x007603C0`, `0x00760598` | Signed halfword `+0x200 == 19`. |
+| `ccProjecShotgunLauncher` | `0x00749994` | Completes its counted child-spawn loop. |
+| `ccProjSyncHand` | `0x0074B598` | Emission-index halfword `+0x290` reaches signed record byte `+0x08`; the body writes state `6` and `+0x82 = 1` immediately before returning zero. |
+| `ccProjIronRain` | `0x0075061C` | The lookup/state/delay condition detailed below writes state `6` and returns zero before root update. |
+| `ccProjectileScoLauncher` | `0x00751850` | Decrement word `+0x298`; new value is nonpositive. |
+| `ccProjLauncherClayBrdS`, `ccProjLauncherClayBrdSA`, `ccProjLauncherClayBrdU`, `ccProjLauncherClayBrdUA`, `ccProjLauncherClayBrdH`, `ccProjLauncherClaySpd` | `0x00753F70`, `0x007543F4`, `0x00754E0C`, `0x0075528C`, `0x007556EC`, `0x00756AC4` | Their emission work decrements word `+0x298`; new value is nonpositive. SA/U/UA/H loop back within the same invocation while it is positive. |
+| `ccProjLauncherDDRFire` | `0x00757A10`, `0x00757B14` | Query at `0x007579D4` returns sentinel `-1.0f`, or emission decrements word `+0x294` to a nonpositive value. |
+| `ccProjLauncherTewAwake`, `ccProjLauncherTewRoll`, `ccProjLauncherTewKunai` | `0x0075013C` | Shared emission body decrements word `+0x298` to a nonpositive value. |
+| `ccProjNumbnessSmoke` | `0x0075B434` | Same-tag player lookup returns null; no state-7 write is required. |
+
+IronRain first routes signed states `6` and above to root update. For lower
+states, helper `0x00750700(inverse-side, 0)` supplies an optional object;
+`0x007506C0` copies its words `+0x120/+0x124/+0x128` to local metadata.
+The rejection condition requires either no lookup object, or a nonzero
+`+0x128` with `+0x124` different from projectile `+0x24C`. It then rejects
+only when signed delay `+0x84 > 0` or signed state `+0x7E < 3`. States
+`3..5` with nonpositive delay continue through root update even after that
+metadata mismatch.
+The lookup object's type and the metadata's broader meaning are not assigned
+by these projectile-local comparisons.
+
+The remaining custom target, `ccProjSchSkillSenbon` live `0x0075A750`, forwards
+the survival result from root `0x0072C940` after its local state write; it has
+no separate explicit zero-return branch. These are callback and counter facts,
+not real-time lifetime measurements.
+
+## Motion families and local timing
+
+The derived motion callbacks reached through slot `+0x1C`, the common
+candidate-position and commitment order, per-class record inputs,
+contact-driven phases, emission schedules, Clay/Ink guide producers,
+character-carrier command rows, and the local clocks and counters are
+documented in [Projectile motion and local timing](projectile_motion.md).
 
 ## Hit and despawn evidence
 
 ### State-6 transition helper
 
 The common state-6 helper at live `0x00730950` has the following complete
-observable side effects in the raw clean body:
+observable side effects in the raw body:
 
 ```text
 object + 0x7E = 6
@@ -1109,6 +1382,29 @@ common or virtual callback bodies are:
 This inventory is a call-graph fact, not a claim that every site represents
 the same kind of collision or gameplay event.
 
+### Alternate state-6 countdown
+
+Live helper `0x00730600` (Ghidra `0x007305C0`, file `0x07C700`) provides a
+different complete transition contract. It always sets byte `+0x273 = 1`.
+If argument `a1` is nonzero and signed halfword `+0x270` is nonzero, it then
+returns without changing state. Otherwise it writes state `6`, reads signed
+halfword `+0x25C`, and sets `+0x82` to `10` when that value is `-1`, or to
+the value itself otherwise. It signals `+0x6C` and detaches `+0x70`, but does
+not clear `+0x216` or make the position-service calls of `0x00730950`.
+Common slot `+0x24` calls it with `a1 = 0` at live `0x0072DDD4`; common
+slot `+0x30` includes an `a1 = 1` call at live `0x0073018C` and an
+`a1 = 0` call at `0x007301C0`.
+
+The root initializer sets `+0x25C = -1` at live `0x0072B7C8`. Activation
+slot `+0x50` in `ccProjSCVGen`, `ccProjSCVSkillPupBullet`, and `ccProjNWVGen`
+copies the low half of record word `+0x38` into that field at live
+`0x0075ADE0`, `0x0075DFB8`, and `0x00760060`, respectively. These are
+established override producers, not proof that every transition in those
+classes consumes the override. When root state-6 dispatch consumes a positive
+`+0x82`, it can remain in state `6` across multiple invocations; direct-promotion
+update overrides instead ignore that countdown. Neither value `10` nor the
+record override is assigned a real-time unit.
+
 ### State `6` to manager destruction
 
 Root slot-`+0x44` callback `0x0072C940` consults live state dispatcher
@@ -1118,7 +1414,7 @@ All eight in-range entries are exact:
 | State | Dispatch target | Proven result |
 | ---: | ---: | --- |
 | `0` | `0x0072CFF4` | Dispatcher returns `0`; no state-specific call. |
-| `1` | `0x0072CF84` | Executes a deliberate null-address store, then reaches dispatcher return `0`; this is an invalid/assert-like path, not a normal state implementation. |
+| `1` | `0x0072CF84` | Executes an explicit null-address store, then reaches dispatcher return `0`; this is an invalid/assert-like path, not a normal state implementation. |
 | `2` | `0x0072CF90` | Calls virtual slot `+0x24`, then dispatcher returns `0`. |
 | `3` | `0x0072E030` | Calls live `0x00730110`. If that returns zero, detaches `+0x70`, signals `+0x6C`, and writes state `7`. Handler returns `1`, but dispatcher returns `0`. |
 | `4` | `0x0072E0A0` | Decrements `+0x82`; when its old value is nonpositive, writes state `6`, resets `+0x82 = 7`, and clears the 16-byte blocks at `+0x1C0` and `+0x1D0`. Dispatcher returns `0`. |
@@ -1188,7 +1484,7 @@ Two related classes expose concrete projectile-facing query conventions:
 These masks and sentinel are documented as the class-facing collision-query
 contract; no internal collision shape or damage meaning is inferred.
 
-The resulting lifecycle is therefore a staged one: derived collision/motion
+For these two Tonton classes, the traced lifecycle is staged: derived collision/motion
 logic enters state `6` and performs position-associated cleanup; the common
 state handler promotes it to state `7`; the common update contract later
 returns the removal decision; the manager unlinks; the class destructor
@@ -1224,9 +1520,9 @@ increments the unsigned age of every occupied record in the selected group.
 For a record matching the supplied key pair whose byte flag is zero, it calls
 live `0x00715F90(side + 1, 0, 1)` and changes the flag to one. Its sole direct
 caller is live `0x0072EB88` in common projectile contact-response logic; that
-caller supplies projectile `+0x24A/+0x24C` after a side-tag check. This records
-the interface and side effects without assigning damage semantics to the
-resident call.
+caller supplies projectile `+0x24A/+0x24C` after a side-tag check. The battle
+statistic credited by that call belongs to
+[Match outcomes](battle_statistics.md#projectile-contact-deduplication).
 
 Parent spawn consults lookup/insertion while inheriting
 `+0x24A/+0x24C/+0x250`; common setter `0x0072EC30` can register the same tuple
@@ -1237,15 +1533,27 @@ not cancel projectile construction or manager-list insertion. This is a
 bounded lineage/dedup/age/replacement table, not evidence of a four-projectile
 cap.
 
-Limits imposed by callers or unrelated systems were not established. The
-traced path does establish that factory branches can return null after resident
+One caller-specific count restriction is established. Live `0x00735A30`
+(Ghidra `0x007359F0`, file `0x081B30`) walks the manager list and counts
+objects with signed config index `+0x78 == a1` and inverse side tag matching
+`a2`. It does not exclude states `6` or `7`, so objects awaiting actual unlink
+still count. Emitter `0x007F0250` calls it with config `0x44` and skill side
+`+0x350`. If the manager exists and the result is at least three, the emitter
+replaces its incoming config argument with `0x35` before spawning. This is a
+caller-local substitution, not refusal to allocate: `0x44` selects
+`ccProjFixedFire`, while `0x35` selects `ccProjBakutiBall`. The check occurs
+regardless of the originally requested config in this emitter. It therefore
+cannot be summarized as a global three-projectile cap.
+
+Other caller or system limits remain unresolved. The traced path also
+establishes that factory branches can return null after resident
 allocator failure but spawn does not guard that result before binding and
 dereferencing it; no graceful allocation-failure policy exists in this chain.
 The negative cap/pool claim is limited to the traced manager and factory path.
 
 ## Class family
 
-The clean overlay contains a contiguous custom-RTTI family of 99 descriptors
+The retail overlay contains a contiguous custom-RTTI family of 99 descriptors
 whose exact names begin `ccProj` or `ccProjectile`, including the root. Each
 descriptor begins with common pointer live `0x008C2328`; derived descriptors
 carry base-class handles, then a class-name pointer and a self descriptor
@@ -1275,48 +1583,6 @@ Representative exact relationships are:
 Other strongly identified strategy/base names include
 `ccProjDist2Speed`, `ccProjectileHomingDelay`,
 `ccProjectileExplosion`, `ccProjHomingScatter`,
-`ccProjSoundWave`, and `ccProjectileInsectLauncher`. The names establish
+`ccProjSoundWave`, and `ccProjectileInsectLauncher`. The names suggest
 developer-authored class intent; they do not by themselves prove the detailed
 behavior of every subclass.
-
-## Confidence, hypotheses, and negative results
-
-### High confidence
-
-- Complete-file live overlay mapping and the `+0x40` Ghidra/export correction.
-- Config-table address, `0x68` stride, `0xB6` count, selector byte, external-ID
-  field, real jump-table address, and first-match ID wrapper.
-- Factory-to-constructor-to-vtable-to-descriptor identity for the five listed
-  `ccProjChar` records.
-- Spawn vector writes, post-spawn virtual call, parent metadata inheritance,
-  manager insertion, serial/count changes, update/collision virtual slots,
-  unlinking, deleting destruction, and manager-wide cleanup.
-- Exact `+0x8A` inversion and same/opposite player lookups.
-- State-6 helper writes, state-6-to-7 promotion, direct state-7 culling, and
-  the concrete Tonton collision-to-removal call chains.
-- Absence of a cap check or reusable-object free list in the traced spawn and
-  manager path; separation of the four-slot lineage table from object storage.
-
-### Medium-confidence interpretation
-
-- Object `+0x8A` most likely denotes source/owner side and the spawn `a1`
-  argument the opposing/target side. Child-spawn inversion and lineage
-  preservation support this, but the static code does not name either role.
-- Spawn vector 1 is a position. Vector 2 is an aim, destination, direction, or
-  related input depending on subclass; no single stronger label fits all
-  inspected consumers.
-- The handle at `+0x6C` participates in state/effect notification. Its exact
-  owned type is not identified here.
-
-### Explicitly not established
-
-- No direct owner pointer or target pointer was proven in the common object.
-- No universal meaning is assigned to every config field, state value, or
-  virtual slot beyond the observed callers and side effects above.
-- No global maximum active-projectile count, allocation-failure policy, or
-  object pool was proven.
-- The separate `ccSkillThrowProjectile` skill hierarchy was not conflated with
-  the `ccProjectile` entity hierarchy; a direct factory link was not established
-  in this pass.
-- No runtime acceptance, collision-shape semantics, damage behavior, timing,
-  animation-rate, or rendering behavior was tested or inferred.

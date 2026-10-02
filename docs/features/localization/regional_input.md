@@ -25,3 +25,13 @@ copied from NUN5.
 
 Clean function relationships remain in
 [`../../knowledge/runtime/menu_input/function_map.tsv`](../../knowledge/runtime/menu_input/function_map.tsv).
+
+## Observed menu buttons
+
+A development image with English localization was navigated through Mode
+Select, Free Battle and Practice setup, both pause menus, Options, and
+Collection. Cross confirmed and Triangle backed out on every visited menu;
+Screen Settings labels Triangle as Cancel. Circle selected Random on Character
+Select and Stage Select and opened Customize Jutsu on the Free Battle versus
+screen. The retail menus are mapped in
+[Modes and menu navigation](../../knowledge/game/modes_and_navigation.md).

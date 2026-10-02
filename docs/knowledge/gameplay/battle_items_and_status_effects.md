@@ -1,7 +1,7 @@
 # Battle status effects and item-effect lifecycle
 
-This document records the clean-NA2 resident status-effect system and the BTL
-callers that apply it. It covers definition records, per-fighter storage,
+This document records the retail NA2 (`SLPS-25837`) resident status-effect
+system and the BTL callers that apply it. It covers definition records, per-fighter storage,
 application and replacement, countdown normalization, expiry and removal,
 item-driven effects, and the boundary between gameplay state and battle UI.
 
@@ -11,69 +11,90 @@ UI labels and nearby class names are not treated as proof of gameplay meaning.
 Related presentation behavior is documented in
 [`localization/ui/battle/item_status.md`](../localization/ui/battle/item_status.md).
 Binary identities and address conventions are defined in
-[Standard game file identities](../game/files/file_identities.md).
+[Standard game file identities](../game/files/file_identities.md#address-conventions).
 
 ## Research coverage
 
-- **Assigned scope:** Clean NA2 battle status effects and item effects, including
-  application, storage, definitions, countdown behavior, replacement,
-  coexistence, expiry, removal, item-driven provenance, and the boundary
-  between gameplay state and presentation.
+- **Assigned scope:** Retail NA2 (`SLPS-25837`) battle status effects and item
+  effects: definitions, per-fighter storage, application, countdown behavior,
+  replacement, coexistence, expiry, removal, item-driven provenance, and the
+  boundary between gameplay state and status presentation.
 - **Exploration depth:** Static and direct-call coverage is exhaustive for:
   - all 138 effect-definition records, their categories, countdowns, flags,
     presentation selectors, display descriptors, and 19 specialized
     constructors;
   - the generic resident lifecycle, both per-fighter lists, every registered
     specialized constructor and destructor, callback return behavior, bulk
-    cleanup calls, and direct exact-ID removals;
+    cleanup calls, direct exact-ID removals, the payload-reducer family, all
+    signed entry and zero-exit resource fields, and five action-facing
+    membership policies with their direct consumers;
   - every direct resident and BTL call to the high-level application function,
     separating literal requests from tables, wrappers, routing, and dynamic
     arguments;
   - all 116 item-metadata records, every direct-effect field, every BTL
-    object-definition leading code, and the pickup, selected-use, delayed-use,
-    hit-carried, and three-slot inventory paths that consume them;
+    object-definition leading code, and the pickup, hit-carried, and
+    three-slot status-dispatch paths that consume them;
   - the complete 19-row three-slot status table, its effect lanes, unread
-    interleaved words, recovery branches, inventory consumption, and NUN5
-    comparison;
-  - all five field-item selector pools and fixed BTL distributions, their
-    direct callers, authored weights, and RNG modulo boundary; and
-  - the BTL generic-list helpers used by the effect containers, including raw
-    instructions omitted or shifted in the preserved export.
+    interleaved words, recovery branches, and NUN5 comparison; and
+  - the effect-to-notification and auxiliary visual-selector maps, Fukidasi
+    factory dispatch, authored UI record maps, and their list lifecycles.
 
-  Status-presentation coverage includes the complete effect-to-notification
-  and auxiliary visual-selector maps, Fukidasi factory dispatch, authored UI
-  record maps, and independent list lifecycles. Rendering, animation beyond
-  removal conditions, and localization semantics were not investigated.
-
-  Direct application and removal sites are covered exhaustively, while the
-  surrounding character and battle-controller state machines were sampled only
-  where needed to establish status-facing behavior.
+  Effect `4A`'s callbacks and destructor, the phase-2 secondary-callback
+  caller, the native form save/restore helpers, and the random status/resource
+  branch in `FUN_0025CEE0` were read completely. Surrounding character and
+  battle-controller state machines were sampled only where needed to establish
+  status-facing behavior.
 - **Confirmed coverage:** Binary and address identities; definition, fighter,
-  node, inventory, auxiliary, and notification layouts; same-ID replacement;
-  different-ID coexistence; sentinel and zero-countdown behavior; normalization
-  and gated expiry; removal and cleanup order; linked/local routing; direct
-  item/effect mappings; item `0x5B`'s dual path; effect `0x22`'s successor; and
-  the separation of gameplay membership from caches, inventory, auxiliary
-  visuals, and notifications.
+  node, auxiliary, and notification layouts; same-ID replacement; different-ID
+  coexistence; sentinel and zero-countdown behavior; normalization and gated
+  expiry; removal and cleanup order; linked/local routing; direct item/effect
+  mappings; item `0x5B`'s dual path; effect `0x22`'s successor; and the
+  separation of gameplay membership from caches, inventory, auxiliary visuals,
+  and notifications. Payload combination distinguishes additive factors,
+  maxima, net signed deltas with strict boundary gates, and direct field
+  writes. Entry and ordinary-expiry resource deltas, effect-`0B`'s membership
+  veto, phase-2 secondary callbacks, pre-expiry rate sampling, and the native
+  form/inventory retention boundary are established. The random callback's
+  five cursor cases, nested RNG bounds, no-action lane, and separate status/HP
+  requests are established without naming its native action.
 - **Unresolved or untested:** User-facing meanings for most effect IDs and
-  removal reasons; gameplay names for most definition payload fields and
-  non-routing flag predicates; the engine phase of the secondary callback;
-  the consumer of the `0x65/0x12` interleaved pair; ordinary-runtime reachability
-  of the six-code selected-use fallback and recovery distribution;
-  indirect or dynamically constructed calls; and most
-  surrounding character-specific state machines.
-- **Deliberate exclusions and overlap:** Substitution, damage formulas, broader
-  timing work, rendering, media, and localization are outside this document.
-  Field-item names remain owned by the localization reference. Status UI is
-  covered only to establish its mapping and lifetime boundary with gameplay.
-- **Evidence limitations:** Findings are static clean-binary results. No gameplay
-  execution, runtime trace, or empirical countdown timing was performed. Raw
-  instructions resolve export gaps and the NUN5 table provides cross-version
-  corroboration, but neither substitutes for NA2 runtime validation. Results
-  for externally duplicated nodes, cleanup-time list mutation, and repeated
+  removal reasons; gameplay names for remaining numeric payload fields and
+  fighter `+0x158`; wider meaning of the paired BTL pointer lanes selected by
+  `00307920`; the consumer of the `0x65/0x12` interleaved pair; whether one
+  pickup reaches both the resident and BTL pickup sites; ordinary-runtime
+  reachability of the six-code selected-use fallback; indirect or dynamically
+  constructed calls; and most surrounding character-specific state machines.
+- **Deliberate exclusions and overlap:** Status UI is covered only to establish
+  its mapping and lifetime boundary with gameplay; rendering, media, and
+  localization semantics are excluded. Linked owners hold the related
+  contracts: [Battle item inventory](battle_item_inventory.md) owns the panel,
+  selection, use admission, slot consumption, and
+  [random field-item selection](battle_item_inventory.md#random-field-item-selection);
+  [Match outcomes](battle_statistics.md#ninja-tools-and-stage-objects) owns the
+  item-dispatch statistic credit;
+  [Battle entities](battle_entities.md#generic-intrusive-node-and-list-contracts)
+  owns the generic BTL node and list contracts;
+  [Character action callbacks](character_action_callbacks.md) owns character
+  callback bodies; [Battle HUD](battle_hud.md) and
+  [Battle item-status presentation](../localization/ui/battle/item_status.md)
+  own HUD drawing and item-status labels;
+  [Field-item names](../localization/field_item_names.md) owns item names;
+  [Damage](damage.md), [Chakra and guard](chakra_and_guard.md), and
+  [Substitution](substitution.md) own their formulas and resource mutation;
+  [Combat action execution](combat_action_execution.md) owns complete action
+  machines; and [Awakening](awakening.md#state-retained-across-the-native-rebuild)
+  owns form reconstruction. This document owns status membership and lifetime
+  boundaries for those consumers.
+- **Evidence limitations:** Findings are static retail-binary results; no
+  gameplay execution, runtime trace, or empirical countdown timing was
+  performed. Direct-JAL searches over the resident executable and BTL establish
+  encoded direct calls, not indirect reachability; resident byte-mapped aliases
+  repeat base-image matches rather than adding callsites. The NUN5 table is
+  cross-game corroboration, not retail NA2 runtime evidence. Results for
+  externally duplicated nodes, cleanup-time list mutation, and repeated
   replacement describe code paths rather than observed runtime behavior.
-  Code `29`'s user-supplied identification and external naming evidence are
-  qualified in the [field-item name reference](../localization/field_item_names.md#code-29-curse-tag-chakra-points-seal).
+  Code `29`'s naming evidence is qualified in the
+  [field-item name reference](../localization/field_item_names.md#code-29-curse-tag-chakra-points-seal).
 
 ## Ownership summary
 
@@ -147,11 +168,12 @@ entry/exit actions:
   `1..4` also call `FUN_00204450(owner,0x0B)`
   (`0x00204450/0x104550`); category `0` does not.
 
-The exact gameplay names of those fields remain unresolved. Fold helpers
-`FUN_00306BD0..FUN_00307320` traverse every node whose countdown is nonzero and
-consume other payload fields. This proves that different effect IDs can
-contribute concurrently, but this document does not assign stat/formula names
-without a proven consumer.
+The resource consumers identify node `+0x9C/+0xA0` as signed HP deltas and
+`+0xA4/+0xA8` as signed chakra deltas. Their mutation and resource gates belong
+to [Damage](damage.md#damage-application) and
+[Chakra and guard](chakra_and_guard.md#gain-and-clamp-behavior). The remaining
+payload consumers and their different combination rules are recorded below;
+numeric fields without a proven gameplay name remain numeric.
 
 `FUN_003048C0` at runtime/file `0x003048C0/0x2049C0` returns definition
 `+0x60` (`5` for the special input `-1`). `FUN_00331290` at
@@ -262,6 +284,18 @@ user-facing/gameplay names remain unresolved; `0x10`, `0x20`, and `0x40`
 happen to be co-authored on the same two clean definitions and should not be
 collapsed merely because this table does not separate them.
 
+The action-facing distinction is established by `FUN_00244190`
+(`0x00244190/0x144290`), which validates a candidate from fighter action
+array `+0xA54`. Its call at `0x00244314/0x144414` rejects the candidate with
+return `0` when an active node has flag `0x20`, before checking cost and
+before the insufficient-resource feedback branch. The subsequent nonzero-cost
+branch checks flag `0x40` and current chakra. Thus `0x20` suppresses this
+candidate-validation path, while `0x40` suppresses its affordability check.
+Both are authored on IDs `0A/7C`; that coincidence does not merge their
+consumers. Candidate selection and dispatch belong to
+[Action commands](action_commands.md#action-table-source-and-setup), and
+resource gating belongs to [Chakra and guard](chakra_and_guard.md#spend-affordability-and-lower-clamp).
+
 Routing is not transactional. `FUN_00305C30` returns `void`; when bit `0x04`
 is set it invokes the linked fighter first with route argument zero and does
 not receive or test a success result. A linked-only definition then returns
@@ -370,9 +404,8 @@ and hard cleanup, so the following exit actions are not timeout-specific:
   but no inverse exists in this effect class itself.
 
 Every other registered slot-`+0x10` implementation is a literal zero-return
-or another side-effecting zero-return callback. This audit is why callback
-return is not a proven expiry mechanism for any clean registered gameplay
-effect.
+or another side-effecting zero-return callback, so callback return is not an
+expiry mechanism for any registered gameplay effect.
 
 Two character-specific controllers also prove caller-managed lifetime:
 
@@ -391,7 +424,162 @@ Two character-specific controllers also prove caller-managed lifetime:
 
 These are explicit cancellation/toggle policies layered above the generic
 countdown and replacement logic; their numeric evidence does not establish
-user-facing effect names.
+user-facing effect names. The surrounding character callback bodies belong to
+[Character action callbacks](character_action_callbacks.md);
+`FUN_002F2D70` is the fighter-`0x57` channel-2 callback listed with its rate
+write in [Other direct rate-writer families](character_action_callbacks.md#other-direct-rate-writer-families).
+
+## Concurrent payload contributions
+
+Resident helpers `0x00306BD0..0x00307398` read gameplay nodes directly. Their
+common active test is `node +0x6C != 0`; they include negative sentinels and
+exclude pending-expiry zero nodes. They do not consult the display choice,
+last-success cache, or awakening controller marker. Different IDs therefore
+contribute independently of which status is currently shown.
+
+| Node / definition field | Consumer, runtime / ELF file | Combination of active nodes |
+| --- | --- | --- |
+| `+0x74 / +0x14`, `+0x78 / +0x18` | `00306BD0/206CD0`, `00306C80/206D80` | Attack and defense folds; their sums, clamps, inversion, and damage consumers belong to [Damage](damage.md#calculator-formula) |
+| `+0x7C / +0x1C` | `00306D30/206E30` | Starts at `1`; adds each value minus `1`; caps at `1.25`; can then return neutral `1` under state gates |
+| `+0x80 / +0x20` | `00306E80/206F80` | Starts at `1`; adds each value minus `1`; no local clamp; jump-height consumer belongs to [Movement and physics](movement_and_physics.md#jump-impulses-and-aerial-control) |
+| `+0x84 / +0x24` | `00307320/207420` | Starts at `1`; adds each value minus `1`; no local clamp; representative response consumer belongs to [Hit response](hit_response.md) |
+| `+0x8C / +0x2C` | `00307140/207240` | HP-recovery factor: starts at `1`; adds each value minus `1`; no local clamp |
+| `+0x90 / +0x30` | `003071C0/2072C0` | Maximum positive value, starting at `0`; guard-damage consumer belongs to [Damage](damage.md#guarded-hit-damage) |
+| `+0x94 / +0x34` | `00307230/207330` | Recovery fold; its resource consumer belongs to [Chakra and guard](chakra_and_guard.md#gain-and-clamp-behavior) |
+| `+0x98 / +0x38` | `003072B0/2073B0` | Hit-related chakra-debit factor: maximum positive value, starting at `0` |
+| `+0xAC,+0xB0 / +0x4C,+0x50` | `00306F00/207000` | Signed HP sum with aggregate boundary gate |
+| `+0xB4,+0xB8 / +0x54,+0x58` | `00307020/207120` | Signed chakra sum with aggregate boundary gate |
+
+Both maximum helpers return their result in `f0`. At `0x003071F0..0x00307200` and
+`0x003072E0..0x003072F0`, `c.lt.s` replaces that register only when the next
+payload is larger. Thus those fields select an extremum rather than adding
+the effects. The complete clean definition table supplies these exceptional
+values:
+
+| Node field | Effect IDs and authored values |
+| --- | --- |
+| `+0x8C` | `77: 0.5`; every other record is neutral `1` |
+| `+0x90` | `16,48: 0.5`; `35,5A: 0.25`; every other record is `0` |
+| `+0x98` | `12,42,4B: 0.05`; `17,31,52: 0.15`; `18,89: 0.1`; every other record is `0` |
+
+Values such as `0.05` and `0.1` are stored as their nearest single-precision
+representation. HP-recovery scaler `FUN_00224DF0` multiplies its input by the
+selected source fighter's `+0x160` and the receiving fighter's `+0x8C` fold;
+instructions `0x00224DFC..0x00224E18` pass the receiving fighter to the fold. The immediate-item
+dispatcher also applies this fold directly before its flag-`0x20` HP branch.
+Effect `77` therefore halves those scaled recovery requests when it is the
+only non-neutral contributor. It does not halve all direct HP entry deltas:
+`FUN_00306090` calls the HP adder directly, bypassing this scaler.
+
+Hit helper `FUN_0021E200` (`0x0021E200/0x11E300`) reads the `+0x98` maximum
+from its receiving fighter's linked fighter, rejects specified action-record
+flags, and requests a chakra debit on the receiver. Instructions
+`0x0021E2F4..0x0021E34C` multiply the maximum by
+`(signed_record_byte_2D % 5 + 1)` and the caller's scale, limit the request to
+current chakra, and call `FUN_00225780` with bypass `0`. It performs no paired
+chakra credit to the linked fighter. Canonical spend suppression still
+applies. This proves the field's debit role and maximum-based coexistence,
+without claiming that every hit or action record reaches this helper.
+
+The `+0x7C` fold resets its non-neutral result to `1` if
+`FUN_00244110(fighter)` is nonzero, if major state `+0x18E` is `5` or `6`, or
+if that state is `8` and `FUN_002440C0(fighter)` is nonzero. This suppresses
+the returned factor without deleting or changing the nodes. The response
+threshold consumer and its additional limitations belong to
+[Hit response](hit_response.md).
+
+Its main maintenance consumer samples the fold before status expiry. In
+`FUN_0024C440`, instructions `0x0024C46C..0x0024C49C` choose fighter
+`+0x1B0` when it differs from `1`, otherwise call this fold, and store the
+result to `+0x1AC`. Instructions `0x0024C4A0..0x0024C4C4` then multiply by
+non-neutral `+0x1B4`. Only afterward, at `0x0024C4E8`, does the function call
+the status update. A node on its final positive countdown can therefore
+contribute to that update's already-sampled `+0x1AC`, then be removed by the
+countdown pass. Likewise effect `4A`'s destructor can restore `+0x1B4`
+without recomputing the stored `+0x1AC` in this prefix. This is a proven
+sampling order, not an additional lifetime tick. Action-clock consumers of
+`+0x1AC` belong to [Combat action execution](combat_action_execution.md#action-and-phase-clocks).
+
+### Signed sums and their boundaries
+
+For both signed-delta folds, each active nonzero delta contributes to one
+sum. Positive-delta nodes also contribute their boundary to a maximum
+starting at `0`; negative-delta nodes contribute their boundary to a minimum
+starting at `1`. After summing, only the boundary for the **net sign** is
+consulted:
+
+- a positive sum becomes zero only when the current resource is strictly
+  greater than the positive maximum;
+- a negative sum becomes zero only when the current resource is strictly
+  less than the negative minimum;
+- a zero sum returns zero, regardless of boundaries.
+
+The resource is fighter `+0x6C` for HP and `+0x70` for chakra. These are
+whole-sum gates, not independent per-effect caps: opposing deltas cancel
+before a boundary is selected, and equality permits the complete delta.
+`FUN_003059B0` forwards a surviving sum with router boundary argument `-1.0`,
+so the aggregate boundary does not trim a crossing to the authored limit.
+Canonical resource clamps still apply. This explains code-level stacking and
+boundary behavior without claiming measured update timing.
+
+The clean HP records have positive boundaries `1.0` for effects
+`22,25,26,3A,58,59,5E,87`, and negative boundaries approximately `0.1` for
+`07,0F,10,27,28,29,2A,2B,38,44,45,47,48,49,4A,78,79`; all other HP delta
+fields are zero. Chakra has negative deltas for
+`0D,22,3A,3B,41,49,4A,54,5B,5C`, each with boundary `0`, and one positive
+delta for `88`, approximately `0.05` with boundary `15.0`. Its downstream
+gain/spend suppression is owned by
+[Chakra and guard](chakra_and_guard.md#debit-and-reservation-behavior).
+
+### Entry and ordinary-expiry resource deltas
+
+The complete clean table has HP entry `+0x9C` approximately `+0.1` only for
+effects `10` and `45`, and no nonzero HP zero-exit `+0xA0` field. Chakra entry
+`+0xA4` is `+15.0` for `0E,0F,21,22,27,28,29,2A,2B,38,39`, `-15.0` for
+`7A,7C`, and zero elsewhere. Chakra zero-exit `+0xA8` is `-15.0` only for
+`0E,0F,27,28,29,2A,2B,38,7C`.
+
+`FUN_00304E90` owns the zero-exit fields. Its direct caller is countdown
+helper `FUN_00304D60`, after the countdown reaches zero. Generic destructor
+`FUN_00304C20` does not call it and does not consume `+0xA0/+0xA8`.
+Consequently, exact-ID removal, family switching, same-ID replacement, and
+hard cleanup do not themselves apply these ordinary-expiry resource deltas.
+Their virtual destructor actions still occur. This distinguishes an expiry
+delta from an inverse action guaranteed on every removal; in particular,
+replacing a still-positive node can repeat its entry delta without first
+applying its authored zero-exit delta. Resource gates and clamps determine
+the actual mutation, so repetition does not establish an uncapped gain.
+
+### Direct field writes do not use the payload folds
+
+Definition `+0x28` / node `+0x88` is an entry/exit target, not an active-list
+reducer. The only non-neutral clean records are `1A: 1.5`, `54: 3.0`, and
+`7B: 0.5`. Their generic entry calls `FUN_00226E90` with the chosen target.
+The complete setter at runtime/file `0x00226E90/0x126F90` writes that target
+to fighter `+0x2F4` and installs its interpolation fields; its all-zero timing
+arguments branch instead writes the value directly to five fields
+`+0x2E0/+0x2E4/+0x2E8/+0x2F0/+0x2F4` and clears the interpolation fields.
+It neither scans active effects nor combines their targets.
+
+Generic destruction of any one non-neutral `+0x88` node requests target `1`,
+without checking whether another such node remains. Natural reason `0`
+requests the timed transition; forced reasons request the direct five-field
+write. Thus entry order and removal order own these shared target writes.
+Different-ID list coexistence does not imply that their entry targets add or
+that removing one restores a surviving node's target.
+
+Effect `4A` has a separate pair of shared writes. Its primary callback
+`FUN_002C8690` restores both fighters' `+0x1B4` to `1` on its distance/state
+rejection branch, returns without modifying them for other nonzero `+0xB10`
+states, or writes owner `0.75` and linked fighter `0.25` on its admitted
+branch. Destructor `FUN_002C8580` writes both back to `1` without checking for
+a surviving effect-`4A` node on either fighter. If both fighters have admitted
+callbacks, each can overwrite the pair written by the other; no additive fold
+or ownership count mediates those stores. Subsequent admitted callbacks may
+write them again. Response and timeline consequences of those fields belong
+to [Hit response](hit_response.md#timed-downed-recovery-and-get-up-choices).
+This is static shared-field behavior, not a claim about native frequency or
+measured visible timing for the two-effect case.
 
 ## Per-fighter storage
 
@@ -455,15 +643,68 @@ selection is suppressed while fighter byte `+0x62` bit `7` is clear.
 `FUN_0033CE40` then publishes the fighter and selected ID to the side-specific
 display controller even when the final ID is `-1`.
 
-The generic node layout is:
+### Presence policies used by native actions
+
+Several status-facing action helpers use membership without a
+countdown test. This makes their zero-node behavior differ from the flag
+scanners and payload folds:
+
+| Helper, runtime / file | Proven policy |
+| --- | --- |
+| `00307560/207660` | Returns true for effect `08` membership only when `FUN_00244130(fighter) == 0`; a present zero-countdown node still qualifies |
+| `00307830/207930` | Returns true for any category-`1..3` member except IDs `23` and `4E`; does not test countdown |
+| `00307920/207A20` | Returns true for membership of any of `0E,0F,10`; does not test countdown |
+| `00307A70/207B70` | Requires effect `4A` membership and fighter float `+0x330 <= 400`; does not test countdown |
+| `00307B20/207C20` | Effect `0B` membership takes priority and returns false; otherwise `3B` or `41` membership returns true; no match returns false |
+
+The last policy is **not** a three-ID presence OR. Instructions and bytes
+`0x00307B78..0x00307B80` send a found `0B` directly to the zero-return block
+at `0x00307C40`; found `3B` instead branches at `0x00307BD4` to the one-return
+block `0x00307C34`, and `41` reaches the same one-return block. Consequently
+`0B` vetoes the predicate even when `3B` or `41` coexists, including while
+`0B` has countdown zero pending expiry.
+
+Its direct native consumer at `0x00245230/0x145330` is the Ultimate Jutsu
+connection helper `FUN_00244F80`. A result of one skips the active-flag-`0x80`
+scan before the tier debit; the fighter's own spend gates still apply. A
+result of zero reaches that scan. Thus `3B/41` can request a debit despite
+another active spend-blocking effect, but a present `0B` removes that
+exception. If `0B` itself is already at countdown zero and no other active
+`0x80` node remains, the ordinary scan returns false and can still permit the
+debit. Predicate result zero does not by itself mean that the debit fails.
+Resource mutation belongs to
+[Chakra and guard](chakra_and_guard.md#debit-and-reservation-behavior), and
+connection reachability belongs to [Ultimate Jutsu](ultimate_jutsu.md#start).
+
+The `00307920` helper has no defined function in the preserved analysis. Its
+complete instruction interval `[0x00307920,0x00307A4C)` performs three
+exact-ID scans that reach the one-return block at `0x00307A34` on a match,
+with no `+0x6C` load; unlike the `0B` veto above, it is a plain presence OR.
+Direct-JAL searches found no resident call and four BTL calls, all in one
+chooser at preserved addresses `00770104,00770134,00770164,00770194` (live
+addresses are `0x40` higher; complete-file offsets `BC244,BC274,BC2A4,BC2D4`),
+whose preserved decompilation omits those branches. The chooser selects
+between paired authored pointer lanes based on fighter identity and this
+predicate; the pointers' wider meaning is unresolved.
+
+The effect-`08` policy gates the separate attack-bank path documented in
+[Combat action execution](combat_action_execution.md#character-specific-scene-and-timer-selection).
+The category predicate has a representative hit consumer in
+`FUN_0021F610`: when its `+0x98` maximum is zero, result `1` and eligible
+record flags can emit an event. That branch does not construct or refresh a
+status. The effect-`4A` predicate also has a presentation consumer in
+`FUN_00287020`, which reads the linked fighter and changes local float
+`+0x310` from approximately `0.99` back to `1`; it does not remove either
+fighter's effect. These distinct consumers reinforce that status membership,
+active payload contribution, and presentation state are separate policies.
+
+Effect nodes begin with the generic BTL node prefix owned by
+[Battle entities](battle_entities.md#node-prefix): flags byte `+0x00`, whose
+bit `0` is a generic removal trigger, marker `0x474F` at `+0x02`, list links
+`+0x18/+0x1C`, and vtable `+0x50`. The effect-specific fields are:
 
 | Node offset | Proven role |
 | ---: | --- |
-| `+0x00` | Base flags byte; bit `0` is a generic removal trigger |
-| `+0x02` | Base magic/tag `0x474F` |
-| `+0x18` | Previous node |
-| `+0x1C` | Next node |
-| `+0x50` | Node vtable |
 | `+0x60` | Removal reason/state, initialized to `-1` |
 | `+0x64` | Owning fighter |
 | `+0x68` | Effect ID |
@@ -565,7 +806,7 @@ Replacement is destroy-first, not refresh-in-place. If allocation or the
 constructor fails, the old effect is already gone. Its virtual destructor and
 destructor side effects have already run.
 
-Effect `0x22` is a deliberate special case to the intuitive result: destroying
+Effect `0x22` is an exception to that result: destroying
 the old `0x22` during same-ID replacement applies successor `0x23`, after which
 the lower constructor appends the new `0x22`. A successful replacement can
 therefore leave both IDs active; this does not violate the one-node-per-exact-ID
@@ -630,8 +871,8 @@ Related transition/query cleanup in `FUN_0020D910`
 (`0x0020D910/0x10DA10`) and `FUN_0020DDC0`
 (`0x0020DDC0/0x10DEC0`) consumes the same table. Fighter `0x19` has additional
 explicit handling for effects `0x22/0x23`, and fighter `0x3A` can explicitly
-remove effect `0x07`. The `FUN_0020D690` family-removal loop deliberately
-skips IDs `0x68+`; those table rows prove fighter/effect association, not
+remove effect `0x07`. The `FUN_0020D690` family-removal loop skips IDs
+`0x68+`; those table rows prove fighter/effect association, not
 family exclusivity.
 
 The clean resident executable has exactly 17 direct JALs to exact-ID remover
@@ -698,8 +939,8 @@ Fighter update `FUN_0024C440` calls `FUN_003059B0` at runtime/file
 An earlier boolean in the same function checks fighter `+0x61` bit `7`,
 `FUN_002354C0`, `+0xB00`, `+0xB10`, and `FUN_00216820`, but it gates only the
 aggregate `FUN_00306F00/FUN_00307020` side-effect helpers. It does **not** gate
-the per-node countdown traversal. This distinction prevents those predicates
-from being misreported as lifetime rules.
+the per-node countdown traversal, so those predicates are not countdown
+lifetime rules.
 
 One exact-ID side effect also runs before the countdown gate. Membership
 helper `FUN_00307610` (`0x00307610/0x207710`) searches for effect `0x09`
@@ -733,11 +974,10 @@ the zero-countdown node can remain in the list because the later generic
 callback traversal does not remove it merely for having countdown zero.
 
 After the countdown pass, container vtable slot `+0x0C` reaches BTL's generic
-self-removal traversal. Audit of every registered gameplay-effect vtable found
-that node slot `+0x10` returns zero, even when it has side effects. No clean
-registered gameplay effect is therefore proven to self-remove through that
-callback return. The remaining generic trigger there is node base-flags bit
-`0`. Auxiliary status-visual objects are different: `FUN_00303D40` can return
+self-removal traversal. Every registered gameplay-effect vtable's slot
+`+0x10` returns zero, even when it has side effects, so no registered
+gameplay effect self-removes through that callback return. The remaining
+generic trigger there is node base-flags bit `0`. Auxiliary status-visual objects are different: `FUN_00303D40` can return
 one when their animation/countdown completes, allowing their removal.
 
 This post-countdown traversal is called even when the `FUN_003059B0`
@@ -747,9 +987,23 @@ not that callback traversal.
 
 `FUN_00305C00` at `0x00305C00/0x205D00`, called at
 `0x00250758/0x150858`, performs a secondary callback pass through gameplay
-node vtable `+0x14` and the auxiliary list. The exact engine phase is
-unresolved, so it should not be labelled as a second gameplay tick or render
-pass without further evidence.
+node vtable `+0x14` and the auxiliary list. The caller is
+`FUN_00250690`, installed at registry vtable `0x005D9FC0 +0x10`, and runs in
+battle phase 2 **after** the generic fighter-node `+0x14` pass. The complete
+dispatch ordering belongs to
+[Battle lifecycle](battle_lifecycle.md#what-phase-2-guarantees). This callback
+is not another countdown pass: `FUN_00305C00` dispatches the embedded
+container's `+0x10` slot rather than calling `FUN_00304D60`.
+
+Effect `4A`'s specialized secondary callback `FUN_002C8900` has observable
+state work as well as presentation. After its owner, linked-fighter,
+distance, and response gates pass, it recomputes node private word `+0xC0`
+from fighter response predicates, checks linked-fighter effect-`4A`
+membership, chooses its owned presentation objects' variants, and advances
+private phase floats `+0xD0/+0xD4/+0xD8`. These operations belong to the
+phase-2 callback; the generic countdown gate does not enclose this separate
+pass. The callback's own gates can still skip it. Treating phase 2 as pure
+drawing would miss its private-state and RNG updates.
 
 ### Core removal decision
 
@@ -842,6 +1096,42 @@ There are no other direct resident JALs to `FUN_003055C0` or
 call contexts distinguish engine transition boundaries, but they do not by
 themselves establish user-facing names for reasons `1..3`.
 
+### Native action and form boundaries
+
+The scoped transition consumers distinguish removal from a pause or a form
+marker change:
+
+- `FUN_00216A60` performs its reason-`1` category cleanup while fighter
+  `+0x62` bit `0` is still clear, then releases the reservation and processes
+  action/exchange cleanup, and finally sets bits `0/1` in that byte. A second
+  call with bit `0` already set skips this entire body. Its paired wrapper
+  `FUN_00216C60` invokes it separately for both fighters. Accepted-hit and
+  terminal-response contexts belong to [Hit response](hit_response.md#accepted-hit-routing).
+- `FUN_00216D00` performs reason-`1` cleanup for both fighters only when the
+  initiating fighter's bit `0` is clear and the coordinator exists; it then
+  publishes the participants to that coordinator. The cleanup calls are not
+  unconditional consequences of changing any native action.
+- Ultimate Jutsu connection `FUN_00216EA0` requests reason-`2` category
+  cleanup for both fighters only when a coordinator exists and is not already
+  in state `6`. Post-cinematic substate `1` of `FUN_0024ED40` requests
+  reason-`3` cleanup **before** attempting the outcome effect on its attacker.
+  Both calls are to the category-`0..2` helper, so category-`3/4` nodes lie
+  outside their traversal independently of sentinel protection. Complete
+  connection/outcome sequencing belongs to [Ultimate Jutsu](ultimate_jutsu.md).
+- Native form reconstruction destroys the old fighter ownership and creates
+  new effect containers. Complete save/restore helpers `FUN_001ECC00` and
+  `FUN_001ECDE0` preserve selected HP, chakra, timer, and inventory values;
+  neither copies gameplay nodes or countdowns. The new form's inherent node
+  is installed by `FUN_00305FF0` with `-2`. The rebuild and retained-value
+  contract belongs to [Awakening](awakening.md#state-retained-across-the-native-rebuild).
+
+Thus the protected inherent node, a generic timed node, and a separately
+retained item count have different native lifetimes. The form's new `-2`
+node is not an old timed node promoted to protected state. The complete
+class-3 payload is neutral in all 12 definition records, so its generic
+presence does not itself contribute the replacement form's changed character
+parameters; those belong to [Awakening](awakening.md#replacement-character-parameters).
+
 ### Effect `0x22` successor
 
 Effect `0x22` uses `ccPlConSpl25A`. Its destructor `FUN_003037C0` at
@@ -874,174 +1164,13 @@ The list mutation order has additional proven consequences:
   pass removes a `0x23` spawned by the first, so final container destruction
   still ends empty.
 
-These are static mutation-order results. No runtime checkpoint was used to
-observe the hard-clear survivor.
-
 ## Random field-item selection
 
-### Selector contract and pools
-
-Resident `FUN_003AE890` at runtime/file `0x003AE890/0x2AE990` chooses an item
-identity. Its input is a sequence of eight-byte `(pool_kind,
-threshold_increment)` pairs. It draws one integer from the inclusive range
-`0..99`, compares it to the current cumulative threshold with `<=`, and adds
-the next row's increment after a miss. After row zero, loading a zero pool kind
-terminates the sequence; kind `0` is therefore usable as a pool only in row
-zero. If no pool yields a nonzero result, the function returns fallback code
-`04`.
-Both clean fixed distributions reach cumulative threshold `100`, so that
-fallback is unreachable for their `0..99` draw. A shortened distribution would
-produce code `04`; metadata identifies it as kind `2`, flags `0x0040`, amount
-`0.75` on the positive-resource path.
-
-The five implemented pool kinds are:
-
-| Kind | Item-code lanes | In-pool selection | Clean resident source |
-| ---: | --- | --- | --- |
-| `0` | `02,03` | uniform, `1/2` per lane | runtime `0x006047A0,0x006047A4`; file `0x5048A0,0x5048A4` |
-| `1` | `06,07,08,09,0A,0B,0C,25,27,2B,0D,0E` | modulo-12 draw; nominal `1/12` per lane | runtime/file `0x005B3C10..0x005B3C3F / 0x4B3D10..0x4B3D3F` |
-| `2` | `24,23,27,25,2B,28,26,29,2A,2B,2C,2E,2F,30,31` | modulo-15 draw; nominal `1/15` per lane | runtime/file `0x005B3C40..0x005B3C7B / 0x4B3D40..0x4B3D7B` |
-| `3` | `03` | deterministic | runtime/file `0x006047A8/0x5048A8` |
-| `4` | `02,02` | deterministic result despite a two-lane draw | runtime `0x006047B0,0x006047B4`; file `0x5048B0,0x5048B4` |
-
-Code `2B` deliberately occupies two lanes in pool `2`; this is part of its
-native weight, not a duplicate to discard. The clean fixed BTL distributions
-below do not reference pool `4`.
-
-The 22 selector codes with source and official English names are owned by
-[Field-item names](../localization/field_item_names.md#resident-field-item-name-table).
-Codes `02` and `03` are outside that resident name table but follow the
-positive-resource paths and have BTL internal identifiers `ItemRecoverLife` at
-complete-file/live `0x1E4C20/0x00898B20` and `ItemChakraBall` at
-`0x1E4C00/0x00898B00`, respectively. Code `29` is also outside the name
-table; its metadata proves kind `3`, flags `0x0180`, and direct effect `0x0A`.
-It is identified as **Curse Tag: Chakra Points Seal**; the
-[name reference](../localization/field_item_names.md#code-29-curse-tag-chakra-points-seal)
-records the user identification, UN2 naming source, and NUN5 translation limit.
-
-### Fixed BTL distributions
-
-BTL contains three byte-identical copies of the general distribution and two
-copies of the recovery distribution:
-
-| Distribution copy | Complete-file / live table | `(pool_kind, threshold_increment)` rows |
-| --- | --- | --- |
-| General A | `0x1DCDC0 / 0x00890CC0` | `(1,20),(2,60),(3,20),(0,0)` |
-| Recovery A | `0x1DCDE0 / 0x00890CE0` | `(0,50),(3,50),(0,0)` |
-| General B | `0x1DCE10 / 0x00890D10` | `(1,20),(2,60),(3,20),(0,0)` |
-| Recovery B | `0x1DCE30 / 0x00890D30` | `(0,50),(3,50),(0,0)` |
-| General C | `0x1DD160 / 0x00891060` | `(1,20),(2,60),(3,20),(0,0)` |
-
-Because the draw includes zero and the comparison includes the threshold, the
-authored increments are not the threshold-bucket sizes. General
-selects pool `1` for rolls `0..20` (`21%`), pool `2` for `21..80` (`60%`),
-and pool `3` for `81..99` (`19%`). Recovery selects pool `0` for `0..50`
-(`51%`) and pool `3` for `51..99` (`49%`). The resulting nominal per-code
-weights are:
-
-General has 24 unique outcomes: all 22 codes in the resident name table plus
-`03` and `29`. Recovery contains only `02` and `03`; the union is 25
-codes.
-
-| Code | General | Recovery |
-| ---: | ---: | ---: |
-| `02` | — | `25.5%` |
-| `03` | `19%` | `74.5%` |
-| `06` | `1.75%` | — |
-| `07` | `1.75%` | — |
-| `08` | `1.75%` | — |
-| `09` | `1.75%` | — |
-| `0A` | `1.75%` | — |
-| `0B` | `1.75%` | — |
-| `0C` | `1.75%` | — |
-| `0D` | `1.75%` | — |
-| `0E` | `1.75%` | — |
-| `23` | `4%` | — |
-| `24` | `4%` | — |
-| `25` | `5.75%` | — |
-| `26` | `4%` | — |
-| `27` | `5.75%` | — |
-| `28` | `4%` | — |
-| `29` | `4%` | — |
-| `2A` | `4%` | — |
-| `2B` | `9.75%` | — |
-| `2C` | `4%` | — |
-| `2E` | `4%` | — |
-| `2F` | `4%` | — |
-| `30` | `4%` | — |
-| `31` | `4%` | — |
-
-The authored percentages in each column sum to `100%`. Pool `2`'s duplicated
-`2B` lane contributes `8%`, which combines with its pool-`1` lane to produce
-`9.75%`. The overlapping `25` and `27` lanes similarly combine to `5.75%`
-each.
-
-`FUN_00180210(n)` does not generate a mathematically uniform abstract draw; it
-returns an unsigned 32-bit PRNG value modulo `abs(n) + 1`. For the top-level
-modulo-100 draw, residues `0..95` each have one more source value than
-`96..99`. For pool `1`, modulo 12 gives lanes `0..3` one extra source value;
-for pool `2`, modulo 15 gives lane `0` one extra source value. Each difference
-is one out of `2^32` source values per call. The table therefore records the
-exact authored bucket/lane weights, while exact runtime frequencies also depend
-on the PRNG state sequence and these negligible modulo biases.
-
-### BTL call sites and limits
-
-The clean raw BTL contains exactly four direct JALs to the resident selector.
-One lies in a region the preserved export leaves undefined:
-
-| Path | Complete-file / live wrapper | Complete-file / live selector call | Complete-file / live amount call | Distribution behavior |
-| --- | --- | --- | --- | --- |
-| A | `0x10A90 / 0x006C4990` | `0x10B80 / 0x006C4A80` | `0x10BA4 / 0x006C4AA4` | mode `1` selects Recovery A; every other mode selects General A |
-| B | `0x11B20 / 0x006C5A20` | `0x11C10 / 0x006C5B10` | `0x11C34 / 0x006C5B34` | mode `1` selects Recovery B; every other mode selects General B |
-| inline A copy | — | `0x12EC0 / 0x006C6DC0` | `0x12EE4 / 0x006C6DE4` | always General A |
-| C | `0x1E220 / 0x006D2120` | `0x1E29C / 0x006D219C` | `0x1E2C0 / 0x006D21C0` | always General C |
-
-Wrapper A is reached at complete-file/live `0x1099C/0x006C489C` and
-`0x10A20/0x006C4920`; wrapper B is reached at `0x11A20/0x006C5920` and
-`0x11AA8/0x006C59A8`. All four direct calls pass mode `0`. The inline call
-copies General A and immediately passes its selected code to the spawn-amount
-helper; its wider object semantics remain unresolved.
-
-Wrapper C is reached at `0x1D030/0x006D0F30` or
-`0x1D0B0/0x006D0FB0`, depending on an unresolved object state; each branch
-calls it three times while varying one position component by a random offset
-bounded by `10.0`. No direct call that selects either recovery table was
-established. Indirect or dynamically scheduled use remains possible, so the
-recovery distribution is authored and callable but not proven reachable by
-the direct-call audit. The raw BTL contains exactly four direct JALs to
-`FUN_003AEAF0`, paired with the four selector calls above; the resident ELF
-contains no direct JAL to either function.
-
-### Identity and amount boundary
-
-Identity selection and spawn amount are separate. `FUN_003AE890` chooses the
-item code; `FUN_003AEAF0` later applies the mode-aware Items amount setting to
-reject or multiply spawn requests. The selector has no spawn-frequency input.
-
-The amount helper reads Items through resident `FUN_001F6E40(manager)` at
-runtime/file `0x003AEBA0/0x2AECA0`. Its base and probabilistic extra base calls
-at `0x003AEC84/0x2AED84` and `0x003AECCC/0x2AEDCC` pass the selected item code.
-Its final count-controlled loop instead calls `FUN_00373FB0` at
-`0x003AED48/0x2AEE48` with literal code `04`. This is an additional source of
-code `04`, independent of the identity selector's unreachable clean fallback.
-The resident records for `03` and `04` both have kind `2` and flags `0x0040`;
-their resource amounts are `5.0` and `0.75`, respectively.
-
-`FUN_00373FB0` rejects a zero item code at `0x00373FC0..0x00373FD4`, but that
-return does not stop the amount helper's subsequent code-`04` loop. A zero
-identity therefore suppresses only the corresponding base requests, not the
-complete amount-helper call. These branches and their exact call bytes were
-checked through GhidrAssist against the resident executable.
-
-Lane multiplicity determines native relative weights. Code `2B` owns two
-pool-`2` lanes, while codes `25`, `27`, and `2B` occur in both general pools.
-The general and recovery distributions are independent authored data. The
-identity selector has no global spawn-frequency input, and its native
-fallthrough result is code `04`.
-
-Only the 24 general outcomes have established direct-call behavior. The
-recovery set is authored and callable but has no proven direct runtime consumer.
+Resident `FUN_003AE890` chooses a field-item identity from authored BTL pool
+distributions, and `FUN_003AEAF0` separately applies the Items amount setting.
+[Battle item inventory](battle_item_inventory.md#random-field-item-selection)
+owns the selector contract, pools, distributions, call sites, and amount
+boundary.
 
 ## Immediate pickup/item-effect path (`0x00..0x13`)
 
@@ -1211,7 +1340,7 @@ then low-ID normalization still applies. The complete clean object table's
 leading codes range only from `0` through `0x6F`, so the `0x00..0x73` item
 record scan covers every value this hit mapper receives from that table.
 
-Item `0x5B` has both mechanisms. A successful delayed use first reaches its
+Item `0x5B` has both mechanisms. When its delayed use commits, it reaches its
 three-slot activation row, applying effect `0x05` with requested countdown
 `180` to the using fighter. The spawned row-`0x7E` hit object carries code
 `0x5B`; if its hit/result path runs on another fighter, that path separately
@@ -1223,54 +1352,28 @@ hit-carried effect `0x07` path instead.
 
 ### Collection and inventory ownership
 
-Resident `FUN_00374190` at `0x00374190/0x274290` resolves pickups in this
-range. All 19 rows described below have metadata flag `0x80`, so collection
-adds them to the battle-item inventory rather than directly applying fighter
-status. It calls BTL inventory-add file/Ghidra/live
-`0x5C140/FUN_00710000/0x00710040` at resident callsites
-`0x003742D4/0x2743D4` for side 0 and `0x00374310/0x274410` for side 1.
-Each of the 19 row-backed codes adds one. Code `0x6A` is the sole special
-pickup that adds three, but it has no row in this status table.
+All 19 row codes below have metadata flag `0x80`: resident `FUN_00374190`
+adds them to the side's inventory through BTL live `0x00710040` at
+`0x003742D4/0x2743D4` (side 0) or `0x00374310/0x274410` (side 1) instead of
+applying status. Selection, use admission, item `0x5B`'s delayed
+cursor-timing commit, and the slot decrement belong to
+[Battle item inventory](battle_item_inventory.md#dispatch-and-consumption-boundary).
 
-The per-side inventory panel, its slot routines, selection, and HUD are
-documented in [Battle item inventory](battle_item_inventory.md).
-
-Fighter input gate `FUN_002366F0` (`0x002366F0/0x1367F0`) checks fighter
-`+0x338` bit `0x01000000`. At `0x00236988/0x136A88` it calls
-`FUN_00375630(item_manager, fighter_side)`, masks the returned selected-item
-byte, and passes fighter plus that byte to
-`FUN_00236C70(fighter,item)` at `0x002369A0/0x136AA0`. Raw instructions prove
-the second argument even though the C export drops it.
-
-Eighteen rows are ordinary kind `4` and route immediately through resident
-`FUN_00375690`; its callsite in `FUN_00236C70` is
-`0x00236DD0/0x136ED0`. The resident helper selects item-manager panel pointer
-`+0x6C` for side `0` or `+0x70` for side `1` and enters BTL live
-`0x00711380`. Item `0x5B` is the sole kind-`3` exception: it stores
-the pending code at fighter `s16 +0xB70`, starts an item-use action, and reaches
-the same activation only after later hit/interaction checks. Its delayed BTL
-call to `FUN_00375690` is at file/Ghidra/live
-`0x843CC/0x0073828C/0x007382CC`. That activation is the user-side
-effect-`0x05` half of the separate dual path documented above. If those
-interaction checks fail, the activation/decrement path is not reached; item
-`0x5B` therefore differs from the 18 immediate rows in when consumption
-becomes committed.
-
-BTL panel activation is file `0x5D480`, preserved `FUN_00711340`, live
-`0x00711380`. It resolves the fighter, calls the status dispatcher, then
-consumes one matching slot count through BTL helper
-`0x5C3D0/FUN_00710290/0x007102D0` at
-file/Ghidra/live callsite `0x5D7E0/0x007116A0/0x007116E0`, and sets panel
-byte `+0x61 = 1`.
-
-The inventory operation is also non-transactional with gameplay status.
-`FUN_00305C30` is `void`, the row dispatcher returns no per-effect success to
-the panel, and the panel performs the slot decrement after dispatch. Once one
-of these 19 row-backed activations reaches this path, an application rejected
-by a same-ID `-2` node or a fighter guard does not preserve the item count.
-Other actions in the row dispatcher, including the special recovery branches,
-likewise have their own control flow and are not rolled back with a rejected
-status node.
+On the status side, fighter input gate `FUN_002366F0` tests `+0x338` bit
+`0x01000000`, reads the selected byte through `FUN_00375630` at
+`0x00236988/0x136A88`, and calls `FUN_00236C70(fighter,item)` at
+`0x002369A0/0x136AA0`. The 18 kind-`4` rows reach `FUN_00375690` at
+`0x00236DD0/0x136ED0`, which selects panel `+0x6C`/`+0x70` by side and enters
+panel activation `0x5D480/FUN_00711340/0x00711380`. Kind-`3` item `0x5B`
+reaches the same activation only when its delayed use commits, from BTL
+`0x843CC/0x0073828C/0x007382CC`; that activation is the user-side
+effect-`0x05` half of its dual path. Activation runs the status dispatcher
+below, then decrements the currently selected slot's code through
+`0x5C3D0/FUN_00710290/0x007102D0` (callsite `0x5D7E0/0x007116A0/0x007116E0`)
+and sets panel byte `+0x61 = 1`. The dispatcher returns no per-effect success,
+so an application rejected by a same-ID `-2` node or a fighter guard does not
+preserve the item count, and recovery branches are not rolled back with a
+rejected status node.
 
 ### Dispatcher and table layout
 
@@ -1298,14 +1401,14 @@ Each successful entry performs its own success-side presentation and cache
 write, so fighter `+0x8E8` ends with the last successfully constructed row
 effect; a failed later entry does not overwrite the prior successful value.
 
-After a matching row and its optional recovery actions, the dispatcher calls
-a BTL side/battle helper with `(panel_side + 1, 6, 1)` at
-file/Ghidra/live callsite `0x5DA08/0x007118C8/0x00711908`. The encoded JAL
-target is already-live `0x00715F90`; its actual wrapper starts at complete-file
-`0x62090`, nominal Ghidra `0x00715F50`. The preserved export's
-`FUN_00715F90` begins at complete-file `0x620D0`, live `0x00715FD0`, and is a
-different adjacent wrapper. This is another place where adding or omitting the
-MWo3-header shift selects the wrong function.
+After a matching row and its optional recovery actions, the dispatcher adds
+one to battle-statistic metric `6` ("Special ninja tools") for side
+`panel_side + 1` through a `(side, 6, 1)` call at file/Ghidra/live callsite
+`0x5DA08/0x007118C8/0x00711908`; the credit is owned by
+[Match outcomes](battle_statistics.md#ninja-tools-and-stage-objects). The encoded
+JAL target is live `0x00715F90` (complete-file `0x62090`, nominal Ghidra
+`0x00715F50`); the preserved export's `FUN_00715F90` label (complete-file
+`0x620D0`, live `0x00715FD0`) is a different adjacent wrapper.
 
 | Item | Row file / live | Requested | Effects actually read | Interleaved words, not read here |
 | ---: | --- | ---: | --- | --- |
@@ -1331,14 +1434,12 @@ MWo3-header shift selects the wrong function.
 
 The proven applied set is `{02,03,05,08,09,0C,3C,65}`. Interleaved values
 such as `06`, `11`, and `12` are not additional effects at this site.
-Enumerations that treat those interleaved values as effects conflict with the
-dispatcher loop and the clean row bytes.
 
 NUN5's homologous `0x2F8`-byte table at complete-file/live
 `0x1EDBD0/0x008B48D0` is byte-identical. Its dispatcher is
 file/Ghidra/live `0x60320/FUN_00726FE0/0x00727020` and calls resident homolog
-`FUN_00310580`. This cross-version match corroborates the row layout but does
-not replace NA2 runtime verification.
+`FUN_00310580`. This cross-game match corroborates the row layout; it is not
+runtime evidence for retail NA2.
 
 Requested values override record defaults, but low IDs then pass through
 fighter `+0x158` normalization. Effects `0x3C` and `0x65` retain the supplied
@@ -1366,6 +1467,13 @@ item `0x5D` is the float encoded by `0x40200000`; it is not `5.0`.
 
 ## Gameplay state versus status presentation
 
+This section records only the mapping and lifetime boundary between gameplay
+effects and their presentation objects. HUD drawing of status glyphs and
+numeric popups belongs to
+[Battle HUD](battle_hud.md#remaining-ordinary-presentation-forest), and label
+composition belongs to
+[Battle item-status presentation](../localization/ui/battle/item_status.md).
+
 ### Resident effect-to-notification map
 
 After successful gameplay-node construction, `FUN_00376160` consults the
@@ -1392,7 +1500,7 @@ dispatcher itself never reads those words.
 The authored `65/12` pair is therefore not proof that effect `0x65` emits UI
 object `0x12`: the resident 12-row map has no effect-`0x65` entry, and no
 literal code-`0x12` notification call was found on this route. Its consumer is
-unresolved and the word may be unused legacy metadata.
+unresolved; that the word is unused metadata is an untested hypothesis.
 
 ### Auxiliary category-1/2 visuals
 
@@ -1583,7 +1691,7 @@ the list and both fighter pointers. Its clean switch mapping is:
 
 Every mapped call is `FUN_00305C30(fighter,id,-1,1)`. Definition routing then
 matters: `0x7D` is linked plus local, while `0x7E..0x89` are linked-only.
-Input `0x55` is deliberately not an effect application; it writes float `0.5`
+Input `0x55` is not an effect application; it writes float `0.5`
 to the other fighter's `+0x6C`. These numeric mappings are proven, but the
 configuration codes' user-facing names are not.
 
@@ -1624,9 +1732,45 @@ The direct resident JAL inventory adds these otherwise-unlisted callers:
 | `FUN_002D5320` | Effect `07`, requested `120`, route `1` | `0x002D57FC/0x1D58FC` |
 | `FUN_00307690` | Caller-supplied effect, default input `-1`, route `1` | `0x003076A0/0x2077A0` |
 
-The selector in `FUN_0025CEE0` is driven by internal state and RNG branches;
-the set above and requested value are proven, but semantic names for the
-outcomes are not. Effects `04` and `07` in this table are low normalized IDs.
+Effects `04` and `07` in this table are low normalized IDs. The random
+selector's complete status/resource branch is narrowed below without naming
+its outcomes.
+
+### Character callback's random status/resource branch
+
+`FUN_0025CEE0` enters this branch only when `FUN_00217860(fighter)` returns
+action value `3` and primary-timeline halfword `+0x1BA` bit `0` is set. It
+initializes selected effect to `-1` and HP request to zero, then reads the
+current primary cursor `+0x1C4`:
+
+| Cursor | RNG call bounds and branch | Result |
+| ---: | --- | --- |
+| `30` | Draw `0..1`: `0` / `1` | Effect `03` / `02` |
+| `40` | Draw `0..1`: `0` / `1` | Scaled HP request `0.025` / effect `0C` |
+| `50` | Draw `0..5`: `0,4` / `1,2,3` / `5` | Scaled HP request `0.025` / effect `05` / no status or HP request |
+| `60` | Draw `0..15`; `7` selects effect `09`. After a miss, draw `0..7`; `3` selects `08`. After that miss, draw `0..7`; `1` selects `0B` | First matched effect, or no status/HP request if all tests miss |
+| `75` | Draw `0..3`: `2` / every other value | Scaled HP request `0.05` / `0.025` |
+| Every other cursor | No random branch | No status or HP request |
+
+Instructions at `0x0025CF48` preserve RNG bound `3` into the cursor-`75`
+call; `0x0025CF30` supplies `5` for the cursor-`50` branch. At cursor `60`,
+`a0 = 7` from `0x0025D0AC` remains the second RNG call's argument at
+`0x0025D0C4`; the decompiler omits it. The third explicitly reloads `7`.
+The six cursor-`50` dispatch pointers at runtime/file
+`0x005C3370/0x4C3470` confirm its no-action lane `5`. Bounds use the
+`FUN_00180210` modulo contract documented in
+[Resident randomness](../runtime/randomness.md#mt-wrappers); they are not
+empirically measured selection frequencies.
+
+A selected effect is requested with countdown `450` and route `1`, then
+`FUN_00204450(fighter,0)` runs even if the application failed. HP branches
+instead scale through `FUN_00224DF0(input,fighter,fighter)` and call the HP
+adder with `(1,0)` flags before separately queuing numeric notification `1`
+when its manager exists. The branch does not debit chakra or consume an item
+slot. These are mutually selected status/resource requests inside this
+callback, not a generic rule preventing their later coexistence with other
+effects. No gameplay name or full native trigger reachability is inferred
+from action value `3` alone.
 
 Together with the condition-list dispatcher, per-fighter family code, item
 dispatchers, effect-`0x22` successor, inherent `-2` installer, route recursion,
@@ -1638,21 +1782,13 @@ or dynamically selected calls.
 
 ## Exact BTL generic-list helpers
 
-Some helpers start inside export undefined-byte gaps. The complete-file and
-live anchors below are authoritative.
-
-| Role | BTL file | Preserved Ghidra/export | Live |
-| --- | ---: | --- | ---: |
-| Base node constructor | `55BA0` | nominal `00709A60` | `00709AA0` |
-| Base destructor | `55C60` | `FUN_00709B20` | `00709B60` |
-| List constructor | `55CC0` | nominal `00709B80` | `00709BC0` |
-| Dispatch node vtable `+0x0C` | `55CF0` | `FUN_00709BB0` | `00709BF0` |
-| Self-removal traversal | `55D70` | `FUN_00709C30` | `00709C70` |
-| Dispatch node vtable `+0x14` | `55E60` | `FUN_00709D20` | `00709D60` |
-| Dispatch node vtable `+0x18` | `55EE0` | `FUN_00709DA0` | `00709DE0` |
-| Append | `55F60` | nominal `00709E20` | `00709E60` |
-| Unlink + virtual destructor | `55FA0` | `FUN_00709E60` | `00709EA0` |
-| Clear | `56040` | `FUN_00709F00` | `00709F40` |
-
-Do not confuse the live append entry `0x00709E60` with Ghidra's shifted
-`FUN_00709E60`, which labels the unlink routine.
+Both effect containers use the shared BTL intrusive-list helpers: node
+constructor live `0x00709AA0`, list constructor `0x00709BC0`, append
+`0x00709E60`, unlink plus virtual destructor `0x00709EA0`, clear
+`0x00709F40`, the self-removal traversal `0x00709C70`, and the node-slot
+`+0x0C/+0x14/+0x18` passes `0x00709BF0/0x00709D60/0x00709DE0`. Their
+contracts, complete-file offsets, and preserved export labels, including the
+export's `FUN_00709E60` that labels the unlink routine rather than live append
+`0x00709E60`, belong to
+[Battle entities](battle_entities.md#generic-intrusive-node-and-list-contracts)
+and its [BTL address audit](battle_entities.md#btl-liverawexport-audit).

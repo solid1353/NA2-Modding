@@ -2,21 +2,24 @@
 
 ## Research coverage
 
-- **Assigned scope:** compare clean NA2 and NUN5 Character Select name records and footer geometry.
+- **Assigned scope:** compare retail NA2 (`SLPS-25837`) and NUN5 Character
+  Select name records and footer geometry.
 - **Exploration depth:** the relevant binaries, native callers, records, and
   paired screen states were examined.
 - **Confirmed coverage:** the documented owners, structures, and cross-game
   differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
-- **Deliberate exclusions and overlap:** feature imports, hooks, and validation
-  belong to [UI layout](../../../features/localization/ui_layout.md) or
-  [UI textures](../../../features/localization/ui_textures.md).
+- **Deliberate exclusions and overlap:** modal text layout belongs to
+  [Character Select Font layouts](../font/screen_layouts/character_select.md);
+  the shared OK and Back compositor belongs to
+  [Shared frontend prompt layout](options.md); Character Select behavior
+  belongs to [Character Select](../../game/character_select.md).
 - **Evidence limitations:** bounded states do not cover every animation phase or
   indirect caller.
 
 ## Binary identity and mapping
 
-This record compares the clean Japanese NA2 boot ELF
+This record compares the retail Japanese NA2 boot ELF
 `@source_na2/SLPS_258.37` with the official English NUN5 boot ELF
 `@source_nun5/SLES_556.05`. Both executable text segments use a fixed
 runtime-to-file mapping within the functions below:
@@ -70,7 +73,5 @@ instructions do not by themselves express the effective prompt anchors.
 
 ## Relationships and evidence
 
-Confidence is **verified**: both complete functions are homologous, the exact
-source/destination words match the clean binaries, and the paired runtime
-result matches NUN5 within normal pulse timing without touching neighboring
-controls.
+Confidence is **verified**: both complete functions are homologous, and the
+recorded words match the retail binaries.

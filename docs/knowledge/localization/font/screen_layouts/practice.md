@@ -2,20 +2,23 @@
 
 ## Research coverage
 
-- **Assigned scope:** compare clean NA2 and NUN5 Practice explanation, Settings
-  text, the Jutsu display, and Practice completion plate presentation.
+- **Assigned scope:** compare retail NA2 (`SLPS-25837`) and NUN5 Practice
+  explanation, Settings text, the Jutsu display, and Practice completion plate
+  presentation.
 - **Exploration depth:** the relevant native callers, records, and coordinates
   were inspected.
 - **Confirmed coverage:** the documented owners and cross-game geometry
   differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
-- **Deliberate exclusions and overlap:** feature hooks and behavior belong to
-  [Font](../../../../features/localization/font.md).
+- **Deliberate exclusions and overlap:** secondary-font metrics belong to
+  [Renderer metrics](../renderer_metrics.md); Command Chart and Practice title
+  boxes belong to
+  [Command Chart and Practice title layouts](command_and_practice_titles.md);
+  Practice Settings graphics belong to
+  [Battle and Practice settings presentation](../../ui/battle/settings_presentation.md).
 - **Evidence limitations:** bounded states do not cover every string or
-  animation phase. GhidrAssist exposes the completed-move renderer, but the
-  Jutsu display function ends prematurely at a falsely nonreturning renderer
-  initializer. Its missing tail was checked through bounded clean BTL bytes
-  after MCP returned no function for the title call.
+  animation phase. The Jutsu display title block comes from raw retail BTL
+  bytes because the preserved analysis ends that function early.
 
 ## Practice explanation mixed-text wrapping
 
@@ -78,5 +81,4 @@ and the same object scale in both games. NA2 reads `(209,1,46,62)` from ELF
 `0x00604D58` and supplies rotation bits `0xBE99999A` at BTL `0x0072844C`.
 NUN5's localized accessor `FUN_003D4580(0)` selects the English rectangle
 `(80,0,48,64)` at ELF `0x005DDC48`; BTL `0x0073E88C` supplies rotation bits
-`0x3FA2A974`. Rectangle selection and rotation both differ; moving the text
-alone cannot correct this sprite.
+`0x3FA2A974`. Rectangle selection and rotation both differ.

@@ -1,39 +1,49 @@
 # EE allocator
 
-Static and runtime findings for the unmodified NA2 allocator.
+Static and runtime findings for the retail NA2 (`SLPS-25837`) EE allocator.
+
+Resident addresses below refer to retail NA2 `SLPS_258.37`. Complete-file
+identities and overlay address conventions are owned by
+[Retail game file identities](../../game/files/file_identities.md#address-conventions).
 
 ## Research coverage
 
 - **Assigned scope:** identify the allocator's initialization, metadata, linked
   structure, placement policy, entry points, counters, free-space measures,
-  secondary pools, load-time costs, and sampled vanilla capacity.
+  secondary pools, load-time costs, and sampled retail capacity.
 - **Exploration depth:** the startup code, the system `sbrk`/`malloc` layer,
   heap initialization, every resident allocator entry point, the free, resize,
   and deferred-free paths, the placement-direction scopes, the resident file
   directory, the CCS load pipeline's allocations, and CCS texture storage were
   traced statically. Allocation call sites were enumerated by `jal` encoding
-  across the ELF and all three overlays. Other CCS object parsers were not
-  audited for their allocation sizes. The complete linked list was validated
-  in seven retail runtime states.
+  across the ELF and the battle/menu overlays. Static analysis also covered
+  all 32 non-image object/control routes in `FUN_001AC8A0`, directory
+  sorting, dependency finalization, and the four reachable model-part parser
+  families, inflate tables, texture/palette variants, and peak-counter writes.
+  It establishes direct requests and lifetimes, rather than whole-file totals
+  for the retail corpus. Complete linked-list walks were checked in the six
+  sampled retail states listed under
+  [Sampled retail capacity](#sampled-retail-capacity).
 - **Confirmed coverage:** arena bounds, sentinels, globals, node format, flag
   bits, the two-ended placement policy and its per-thread scopes, deferred
   free, accounting behavior, the 2 MiB per-frame pool, the resident file
-  directory, the transient cost of a CCS load, texture storage and its
-  allocation-failure fallback, and vanilla free-space measurements are
-  established.
+  directory, CCS transport costs, directory expansion and sorting scratch,
+  non-image allocation formulas and discarded directives, model conversion
+  overlaps, texture/palette storage, variable inflate scratch, and sampled
+  retail free-space measurements are established. Decompressed length is not a fixed
+  resident-cost multiplier; the tracked peak is not a battle-load measurement.
 - **Unresolved or untested:** per-asset allocation totals from a retail heap
   walk (which nodes belong to the stage, each fighter, the HUD, and effects),
-  the ratio between a CCS file's decompressed size and its resident cost for
-  non-texture objects, and the retail peak during a battle load.
-- **Deliberate exclusions and overlap:** NA228 reservation costs and payload
-  capacity belong to [Runtime injection](../../../features/runtime_injection/implementation.md);
-  CCS parsing and container ownership belong to
+  complete per-file totals and actual model conversion counts across the retail
+  corpus, later scene-instance costs, and the retail peak during a battle load.
+- **Deliberate exclusions and overlap:** CCS parsing and container ownership belong to
   [Resident CCS runtime](../../game/files/ccs_runtime.md); task records and
   thread stacks belong to [Task system](../task_system.md).
 - **Evidence limitations:** capacity values describe sampled states, not a
   guaranteed lower bound for every game state or allocation sequence. No
-  retail savestate was available after the original seven samples, so the
-  per-asset cost model below is static and unmeasured.
+  identified allocation/lifetime trace separates the battle load or attributes
+  live nodes to individual assets. The cost formulas below are static; the
+  end-state samples do not measure their load-time overlaps.
 
 ## System memory layer
 
@@ -124,29 +134,30 @@ innermost direction or `3` when it has none. Only two resident scopes exist:
 
 Without a scope, the default entry points consume the one-shot byte at
 `0x006073AC`, clearing it on every call; a nonzero value selects high placement.
-Resident code and `ADV.BIN` set it before selected allocations; `BTL.BIN` and
-`ETC.BIN` never write it.
+Resident code sets it before selected allocations; the direct-writer census
+found no writer in `BTL.BIN` or `ETC.BIN`.
 
-**Observation:** CCS container objects are therefore allocated downward from
-the top of the arena, while ordinary objects and load transients are allocated
-upward from the bottom. The largest free gap normally lies between the two
-regions.
+**Observation:** CCS parsing requests high placement, while the transport
+coordinator requests low placement. The container descriptor is allocated
+before the parser's high scope. Fallback can place a block on the opposite
+side, so the scopes establish a preference rather than a guarantee that all
+container-related blocks occupy one end.
 
 ### Entry points
 
-| Function | Arguments | Direction choice | Try, then fallback | Calls (ELF/BTL/ADV/ETC) |
+| Function | Arguments | Direction choice | Try, then fallback | Calls (ELF/BTL/ETC) |
 | --- | --- | --- | --- | ---: |
-| `FUN_00117030` | size | scope, else one-shot byte | preferred side nullable, other side trapping | 117/52/72/1 |
-| `FUN_00117150` | size | same as `FUN_00117030` | same | 933/863/978/147 |
-| `FUN_00117500` | size | scope only; none selects high | preferred side nullable, other side trapping | 7/0/0/0 |
-| `FUN_00117270` | alignment, size | scope only; none selects high | same | 6/0/0/0 |
-| `FUN_00117370` | alignment, size | scope `1` selects high, otherwise low | same | 25/0/1/0 |
-| `FUN_00117700` | size | same as `FUN_00117370` | same | 126/20/9/0 |
-| `FUN_00117600` | size | same as `FUN_00117370` | both sides nullable; may return zero | 12/0/0/0 |
-| `FUN_00117470` | size | always low first | low untracked nullable, then high untracked trapping | 1/0/0/0 |
+| `FUN_00117030` | size | scope, else one-shot byte | preferred side nullable, other side trapping | 117/52/1 |
+| `FUN_00117150` | size | same as `FUN_00117030` | same | 933/863/147 |
+| `FUN_00117500` | size | scope only; none selects high | preferred side nullable, other side trapping | 7/0/0 |
+| `FUN_00117270` | alignment, size | scope only; none selects high | same | 6/0/0 |
+| `FUN_00117370` | alignment, size | scope `1` selects high, otherwise low | same | 25/0/0 |
+| `FUN_00117700` | size | same as `FUN_00117370` | same | 126/20/0 |
+| `FUN_00117600` | size | same as `FUN_00117370` | both sides nullable; may return zero | 12/0/0 |
+| `FUN_00117470` | size | always low first | low untracked nullable, then high untracked trapping | 1/0/0 |
 
 Frees use `FUN_00117C40`, directly or through the one-instruction wrapper
-`FUN_00117000` (740/666/728/97 calls). A free unlinks the node, merges the
+`FUN_00117000` (740/666/97 ELF/BTL/ETC calls). A free unlinks the node, merges the
 neighbouring gaps into its predecessor's gap, and reindexes that gap in the
 family matching the freed block's class.
 
@@ -168,6 +179,17 @@ Complete list walks in every sampled state established that:
 
 The flag-12 block is the `0x10000`-byte buffer that `FUN_001114A0` obtains
 through `FUN_00117470`, the only untracked allocation site.
+
+The tracked peak is initialized to zero at `0x0011885C` and updated by the
+core allocator at `0x0011853C..0x00118564` after adding a tracked node's
+recorded bytes to the current total. A direct `gp`-relative store scan of
+the resident ELF, `BTL.BIN`, and `ETC.BIN` found only those two writers;
+the resident aliases contain copies of the same instructions. This scan
+does not exclude an indirect write. Resize `FUN_00117800` changes current
+tracked bytes at `0x00117A64..0x00117A74` without updating the peak.
+The peak therefore records allocation high-water history since arena
+initialization, excludes untracked nodes and remaining free gaps, and has
+no battle-load reset in the inspected direct-writer paths.
 
 `total_free` is the sum of gaps between live nodes. `largest_free` is the
 largest single gap and therefore the limit for one ordinary allocation.
@@ -232,19 +254,36 @@ nonzero decompressed size in the [resident file directory](#resident-file-direct
 which rejects zero sizes and unlisted paths. **Inference (high confidence):**
 retail loads always take the compressed path.
 
-**Inference (high confidence):** An ordinary CCS load needs about `0xA3000`
-bytes (about 650 KiB) of low-end transient memory, including task stacks, in
-addition to its resident container, and the file is never held whole in
-memory. The decompression block size is read from the output ring's block
-size, `0x10000` on this path. The resident cost of a file is the high-end
-allocation set built by `FUN_001A9060` from the decompressed stream.
+**Observation:** The ordinary compressed path's two rings, decompression
+block, and three worker stacks request `0xA2C00` payload bytes: roughly
+`0xA3000` bytes (650 KiB) before the smaller records, node headers, alignment
+gaps, and variable inflate tables. This is a fixed-buffer subtotal, not the
+complete transient requirement. The decompression block size is read from
+the output ring's block size, `0x10000` on this path. With flags `0`, the file
+is streamed rather than held whole. Parsing builds the retained allocations
+described below.
 
-**Hypothesis:** A file's resident cost is close to its decompressed size plus
-per-object runtime overhead. Texture pixel data is copied into allocations of
-its decoded size, as shown in
-[texture storage](#texture-storage-and-allocation-failure); other object types
-and the whole-file total have not been measured. Retail decompressed sizes
-from the resident file directory give the scale:
+`FUN_001CA920` additionally allocates one `0xC * block_count` descriptor
+array per ring, aligned to `0x80`; an ordinary four-block ring therefore adds
+a `0x30`-byte request. These arrays are distinct from each ring's byte buffer.
+
+Inflate table builder `FUN_001D1830` allocates each Huffman subtable through
+`FUN_00117700` with request `8 * (2^k + 1)`, where `k` is the subtable's
+selected bit width. Instructions `0x001D1B58..0x001D1B68` construct that
+request; the extra eight bytes hold the table-list prefix.
+`FUN_001D17E0` follows the prefix links and frees every table block. The
+dynamic-block decoder `FUN_001D09E0` first builds and frees a code-length
+table, then holds the literal/length and distance tables together while
+decoding. The fixed-block decoder `FUN_001D1010` also builds and frees its
+two tables for each block. Their heap cost is additional to the worker stack
+and varies with the compressed block's codes; the code-length work arrays
+are already inside that stack.
+
+Decompressed sizes establish the input scale, not resident allocation totals.
+The directory alone expands every file record and allocates additional hash
+storage, as shown below. Texture pixel data is separately copied into decoded
+storage; other type-specific costs and the whole-file total need their own
+accounting. Retail decompressed sizes from the resident file directory are:
 
 | Family | Files | Decompressed median | Decompressed maximum |
 | --- | ---: | ---: | ---: |
@@ -257,21 +296,227 @@ from the resident file directory give the scale:
 | `3EYE/3???3EYE.CCS` | 78 | `0x0119E0` | `0x08DA78` |
 | `CMN/*.CCS` | 6 | `0x037AC4` | `0x1693DC` |
 
-## Texture storage and allocation failure
+### Directory and finalization cost
 
-The CCS texture parser `FUN_001B3C70` builds a `0x48`-byte texture through
-`FUN_001B4470` and `FUN_0019EAB0`. The texture allocates a
-`(mip_count + 1) * 0x20 + 0x10`-byte level table and calls `FUN_0010FEE0` for
-the base level and each mip level with no source pointer. Each level then
-allocates its own pixel buffer of `ceil(bits_per_pixel * width * height / 128)`
-quadwords through nullable `FUN_00117600`. The parser copies the file's pixel dwords into that
-buffer and fills any remainder with `0xFFFFFFFF`. When the payload is larger
-than the buffer, it copies nothing and fills the whole buffer with
-`0xFFFFFFFF`.
+For an ordinary 16-byte-aligned allocation, define
+`Q(n) = (n + 0x1F) & ~0xF`. `FUN_001180D0` records this many bytes, including
+the 16-byte node header; even a zero-byte request records `0x10` bytes.
+Higher requested alignment can leave additional free gaps, so `Q` describes
+node bytes rather than a fragmentation allowance.
 
-**Observation:** A texture's resident cost is therefore its decoded pixel
-storage, not a reference into a retained file buffer. Inside the parser's
-high-placement scope, pixel buffers are taken from the high end first.
+Let `F` be the namespace count and `N` the object-record count read by
+`FUN_001AC6C0`. The fixed retained container/directory node cost is:
+
+```text
+Q(0xC0) + Q(0x20 * F) + Q(0x38 * N) + Q(4 * N)
+```
+
+`FUN_001CF210` allocates the container before entering `FUN_001A9060`'s
+high-placement scope. The other three blocks are namespace strings, records,
+and hash buckets. A file record occupies `0x20` bytes in the stream but `0x38`
+bytes in the directory and another 4 bytes in the hash table: `0x1C` extra
+payload bytes per record before node headers and rounding. Namespace rows
+retain their original `0x20`-byte width. A caller-created owned reader adds
+`Q(0x40)`; an ordinary load borrows its transport reader, whose cost belongs
+to the transient pipeline instead. Container ownership is described in
+[Resident CCS runtime](../../game/files/ccs_runtime.md#ccs-memory).
+
+`FUN_001ACDB0` first allocates two temporary `4 * N` arrays. For `N > 2`, its
+sort helper `FUN_001AC420` additionally allocates `8 * N` bytes, split into
+two word arrays. During sorting, the extra node cost is therefore
+`2 * Q(4 * N) + Q(8 * N)`; the hash bucket block has not yet been allocated.
+The helper frees its scratch block before the finalizer allocates the retained
+`4 * N` hash buckets. At that later point the two `4 * N` temporary arrays
+still overlap the buckets; the finalizer then frees both temporaries before
+dependency finalization. These are two different transient phases, not four
+simultaneously retained arrays.
+
+**Observation:** Directory expansion and sort scratch depend on record count,
+which decompressed byte length alone does not reveal. Adding only the
+fixed-buffer subtotal to the final container cost omits inflate tables,
+this parse-time scratch, and conversion overlaps, and does not establish
+the load's peak.
+
+### Non-image objects and discarded data
+
+The following costs are additional to the container/directory blocks. `Q` is
+the node cost defined above. These are allocation consequences of the resident
+parsers, not recovered class names; tag identities and payload layouts belong
+to [Resident CCS object-type identities](../../game/files/ccs_object_types.md).
+For conditional constructors, the row applies when a new object is built;
+reusing an already constructed record does not incur that request again.
+
+| File tag | Node cost or direct request | Evidence and lifetime |
+| ---: | --- | --- |
+| `0x0100` | `Q(0x24)` | `FUN_001B2670`; replaces and frees a preceding `0x2000` placeholder. |
+| `0x0200` | `Q(0x18) + Q(0x1C)` | `FUN_001B3450` constructs the descriptor; `FUN_001AD9C0` adds its secondary object during finalization. |
+| `0x0500` | `Q(8)` | `FUN_001B35B0`; camera materialization is later and separate. |
+| `0x0600` | `Q(0xC)` plus `Q(0xE0)`, `Q(0x160)`, `Q(0x160)`, or `Q(0xD0)` for selector 1, 2, 3, or 4 | `FUN_001B3600` and finalizer `FUN_0019B240`; an unknown selector produces no secondary. The constructors initialize inline state without further allocations. |
+| `0x0A00` | `Q(0x20)` | `FUN_001B2800`; replaces and frees a preceding `0x2000` placeholder. |
+| `0x0C00` | `Q(0x40)` while parsing; zero retained block | `FUN_001ADBF0`; `FUN_001AD240` applies the directive, clears its record pointer, and frees the block. |
+| `0x0D00` | `Q(0xC)` | `FUN_001B1890`. |
+| `0x1300`, `0x1400` | `Q(0x20)`, `Q(0x30)` respectively | `FUN_001B36A0`, `FUN_001B3730`; their stream payloads are only `0x10` and `0x1C` bytes. |
+| `0x1800` | `Q(0x18)` for a new explicit record | `FUN_001B1FF0`; record ID zero updates an existing default descriptor instead. Later play-object materialization is separate from this resource block. |
+| `0x1900` | `Q(8)` | `FUN_001B2190`. |
+| `0x1A00`, `0x1B00`, `0x1C00` | `Q(0x10)` each | `FUN_001B4600`, `FUN_001B4820`, `FUN_001B4920`. |
+| `0x1D00` | `Q(8)` | `FUN_001B4A20`. |
+| `0x2000` | `Q(0x14)` only for a not-yet-typed record | `FUN_001B2510`; existing `0x0100`, `0x0A00`, or `0x0E00` objects are updated in place. |
+| `0x0003`, `0x1000`, `0x1100`, `0x1200` | no new object block | `FUN_001ADA90`, `FUN_001ADB70`, `FUN_001ADB20`, `FUN_001ADAA0`. The latter three consume their payloads without retaining them; `0x1000` consumes `8 + 4 * count` bytes and `0x1200` consumes `8 + 8 * count` bytes. |
+
+Counted and length-driven routes add these costs:
+
+| File tag | Cost variables and allocation consequence | Evidence |
+| ---: | --- | --- |
+| `0x0700` | Initial request `0x2C + 4 * W`, where `W` is the declared track-word budget. After parsing, resize records `Q(A(end - start))`, with `A(n) = (n + 0xF) & ~0xF`; two retained index blocks add `Q(8 * R) + Q(2 * R)` for the collected reference count `R`. | `FUN_001B1470`, `FUN_001A29D0`, `FUN_00117800`. The initially larger block can affect the peak even though it is later shrunk. |
+| `0x0800` | For nonzero part count `P`, a model requests `0x60 + 0x40 * P`. A nonzero header byte-table count additionally requests `0x40`, independent of that count. Per-part geometry and generated packets are additional. | `FUN_001B0C40`; part families are discussed below. |
+| `0x0900` | For child count `C`, the initial block is `Q(A(0x1C) + A(4 * C) + A(0x30 * C))`. Retained dependency groups add `Q(2 * C)` during finalization. | `FUN_001B1560`, rounding helper `FUN_001AF100`, `FUN_001AD240`. The special first-child `0x0E00` path clears the record and frees this provisional block through `FUN_001A9450`. |
+| `0x0B00` | For a nonzero group count, `Q(0x10) + Q(0x40 + 0xA0 * T)`, where `T` is the header's total vertex count divided by 3. | `FUN_001B3040`; allocation operands at `0x001B30B4..0x001B313C` and per-triangle stride `0xA0` at `0x001B32EC` were checked in disassembly. |
+| `0x0D80` | `Q(B + 4 + 4 * K)`, where `B` is the header length in bytes and `K` is the packet count. | `FUN_001B1920`; `0x14`-byte file packet descriptors become `0x18`-byte runtime descriptors. |
+| `0x0D90` | `Q(0x70 + 0x30 * U + 0xC * V)`, where `U` is the low nibble of payload byte `+0xA` and `V` is the high nibble of byte `+9`. | `FUN_001B1B30`; the parser frees this block and clears its record pointer when `V` is zero. |
+| `0x0E00` | `Q(0x34 + 8 * C)`, where `C` is the halfword count at payload `+0xE`. | `FUN_001B2E50`; replaces and frees a preceding `0x2000` placeholder. The descriptor expands the `0x24`-byte file header by `0x10` bytes and retains the eight-byte rows. |
+| `0x1700` | Temporary `Q(8 * rows)`, retained `Q(0x10)` root, and individual `Q(8)` or `Q(0x18)` controller descriptors, including missing default slots. | `FUN_001B2220`; the temporary row table is freed on return. An already constructed extended descriptor is reused. Root constructor `FUN_001B20F0` adds no allocation. |
+| `0x1F00` | Temporary `Q(B)` plus the exact converted allocation `Q(output_size)`; both are live during conversion. | `FUN_001B2930`; the input block is freed before return. Its nested count/packing rules are owned by the object-type document. |
+| `0x2200` | No new parser-owned object block; payload is copied into an existing ring manager or consumed and discarded when no ring slot is available. | `FUN_001B44B0`; manager lookup `FUN_001B45E0` and slot acquisition `FUN_001090C0` are separate from CCS object allocation. |
+| `0x2300` | Temporary `Q(B)` input blocks persist until dependency finalization. A resolved target adds `Q(0xC)` and, for nonzero source counts `U`/`V`, `Q(0x10 * U)` / `Q(0x1C * V)`. | `FUN_001B4B40`, `FUN_001AD240`; arrays are allocated for the source counts, even when only a smaller subset resolves. Input blocks are then freed; pointer-vector capacity is accounted for below. |
+| `0x2400` | `Q(B + 4)`; the retained blob has `B - 4` data bytes after an eight-byte descriptor. | `FUN_001B4BC0`; the first four file bytes are the record ID. |
+
+`B` above is four times the block-header length dword. Dispatcher instructions
+`0x001AC910..0x001AC924` read that word and place its byte length in `a1`;
+the calls at `0x001ACC88`, `0x001ACCA8`, `0x001ACCB8`, and `0x001ACCC8`
+preserve it into the `0x1F00`, `0x0D80`, `0x2300`, and `0x2400` handlers.
+These handlers use it for their requests even though other parsers consume
+payloads according to their own count fields.
+
+For `G > 0` blocks of type `0x2300`, the container's pointer vector at
+`+0x6C` additionally retains `Q(4 * K)`, where `K` is the smallest power of
+two at least `G`. Constructor `FUN_001AA640` initializes the vector through
+`FUN_001AA690..FUN_001AA7B0` with zero capacity, length, and data pointer.
+Append `FUN_001AA970` calls `FUN_0019F850`, which grows capacity from 1 by
+doubling and allocates the new backing block before freeing the old one.
+During growth, both backing blocks therefore overlap the input blocks.
+After freeing each input, `FUN_001AD240` calls `FUN_001A9C60`, which clears
+only the vector length at `+4`; it does not release the capacity block.
+For `G == 0`, this vector has no backing allocation.
+
+The `0x1800` resource illustrates the distinction between parsing and play
+materialization. `FUN_001A0B80` requests a primary `Q(0x180)` play block
+and calls `FUN_0018B570`. Its ordered-controller initializer
+`FUN_0010A1D0` borrows the supplied render-environment pointer, or requests
+`Q(0x2B0)` and invokes `FUN_0010F2E0` when that pointer is zero. These are
+later costs, separate from the parser's `Q(0x18)` descriptor; the primary
+request alone does not establish all nested environment or scene costs.
+The controller's behavior is owned by
+[the object-type document](../../game/files/ccs_object_types.md#0x1800-descriptor-fields-and-off-screen-pass).
+
+**Observation:** Non-texture storage can expand, contract, or disappear during
+finalization. For example, `0x0B00` consumes two sets of three 3D points per
+triangle (`0x48` bytes), builds a `0xA0`-byte runtime triangle, and retains only
+the processed representation; the second point set is consumed without being
+retained. Conversely, the file-block `0x1000` payload creates no object block.
+Thus no single decompressed-to-resident ratio follows from the parser. The
+allocation sum requires actual type/count/flag data and the relevant lifetime.
+
+### Model-part allocation and conversion
+
+`FUN_001B0C40` dispatches model parts by `(file_flags >> 1) & 7` to four
+parser families: 0 to `FUN_001B0790`, 2 to `FUN_001AFF20`, 3 to
+`FUN_001ADD80`, and 4 to `FUN_0018D740`. Their costs below are additional to
+the model's `Q(0x60 + 0x40 * part_count)` block. Let `V` be the part's
+vertex count, `E` its count at `+0x2C`, `f` the flags supplied to the part
+parser, and `A(n) = (n + 0xF) & ~0xF`.
+
+| Family | Retained allocations |
+| --- | --- |
+| 0 | Vertex-marker block `Q(A(V))` at part `+0x24`, positions `Q(A(6 * V))` at `+0x14`, and conditional four-byte-per-vertex blocks at `+0x18`, `+0x1C`, and `+0x20`, plus a generated packet at `+0x10`. |
+| 3 | When `E == 0`, positions `Q(A(6 * V))`; otherwise an eight-byte-entry block `Q(8 * E)` at `+0x28`. Both paths retain `Q(A(4 * (E == 0 ? V : E)))` at `+0x18` and `Q(A(4 * V))` at `+0x20`. No generated packet is allocated by this parser. |
+| 2 | A `Q(0x10)` descriptor at `+0x30` and its converted packet. Input attribute arrays are temporary and freed after packet construction. |
+| 4 | A generated packet at `+0x34` when construction succeeds; the geometry and edge-building arrays are temporary and freed before return. |
+
+For family 0, `+0x18` is allocated when `f & 0x40` is zero, `+0x1C` when
+both `f & 0x200` and `f & 1` are zero, and `+0x20` when `f & 0x400` is
+zero. When `f & 0x200` is zero but `f & 1` is set, the corresponding file
+words are consumed without retaining that attribute block. Size helper
+`FUN_00194110` gives the generated packet request:
+
+```text
+16 * (ceil(V / 48) * (7 + I(!(f & 0x40)) + I(!(f & 1))
+                         + 2 * I(!(f & 0x400))) + 2)
+```
+
+`I(condition)` is 1 when true and 0 otherwise. If model flags `+0x48` have
+`0x02000000` set and `0x04000000` clear, `FUN_001B0140` may insert duplicate
+vertices according to the strip markers. It allocates replacements for every
+present attribute block at the expanded count before freeing the old blocks.
+The packet is then sized from that expanded count. Final retained size alone
+therefore misses an overlap of the old and new attribute arrays.
+
+Family 2's non-indexed path (`E == 0`) temporarily holds
+`Q(6 * V) + 2 * Q(4 * V)` through `FUN_001AF1F0`. Its strip conversion
+`FUN_001AF450` can allocate all three replacements before freeing the old
+arrays. With `M` the resulting count and `r = M % 54`, packet builder
+`FUN_001AF9D0` requests:
+
+```text
+A(4 * (289 * floor(M / 54) + 1 + (r == 0 ? 0 : 5 * r + 19)))
+```
+
+The indexed path temporarily holds
+`Q(8 * E) + Q(4 * E) + Q(4 * V) + Q(0x10 * V)` through `FUN_001AE190`.
+`FUN_001AE430` can replace the last array at the expanded vertex count before
+freeing its predecessor. `FUN_001AE950` groups the resulting records with
+`FUN_001AE770` and sums their entry counts with `FUN_001AE7D0`. For a batch
+of `q` records containing `s` entries, its packet contribution is
+`4 * (4 * s + ceil(3 * s / 2) + 20 + q)` bytes; the sum over all batches
+is rounded with `A`. Instructions `0x001AE974..0x001AEA08` establish the
+count arguments and allocation arithmetic. Both family-2 paths use nullable
+packet allocation and then free their input arrays through `FUN_001AF150`
+or `FUN_001AE0E0`. The packet and descriptor remain.
+
+For family 4, let `U` be the unique-vertex count read by `FUN_0018D740`,
+`W` its index count, and `T = W / 3`. For nonzero `U`, its initial scratch
+nodes are:
+
+```text
+Q(0x140) + Q(0x20 * W) + Q(8 * T) + 2 * Q(0x10 * T)
+         + Q(8 * U) + Q(0x3C * U)
+```
+
+One `0x10 * T` work array is freed before the construction checks, and the
+`0x20 * W` array is freed before allocating the successful output packet.
+Let `H` and `S` be the resulting normal and edge counts at the scratch
+context's `+0x126` and `+0x12C`. The packet request is:
+
+```text
+16 * H + 48 * ceil(T / 24) + 24 * T
+       + 48 * ceil(S / 24) + 80 + 16 * S
+```
+
+The other scratch nodes remain live during that allocation and are freed
+afterward. `FUN_0018E240` and `FUN_0018E530` build the edge and normal data
+in these preallocated arrays. The zero-vertex and unsuccessful construction
+paths retain no generated packet. Thus the file's geometry counts, strip
+markers, and conversion family determine both its retained cost and its
+temporary overlaps.
+
+## Texture and palette storage
+
+The ordinary texture path in `FUN_001B3C70`, with file flags `0x20` clear,
+builds a `Q(0x48)` texture through `FUN_001B4470` and `FUN_0019EAB0`.
+When constructor flags `0x40` are clear, it additionally allocates a level
+table `Q((mip_count + 1) * 0x20 + 0x10)` and calls `FUN_0010FEE0` for the
+base level and each mip level. With no source pointer, each level requests
+`16 * ceil(bits_per_pixel * width * height / 128)` pixel bytes through
+nullable `FUN_00117600`, with its own node overhead. The parser copies the
+file's pixel dwords into that buffer and fills any remainder with
+`0xFFFFFFFF`. When the payload is larger than the buffer, it copies nothing
+and fills the whole buffer with `0xFFFFFFFF`.
+
+The file-flags-`0x20` path instead consumes the pixel words without retaining
+them, clears the mip count, sets constructor flags `0x58`, and allocates a
+`Q(0x50)` object through `FUN_0019E080`. Constructor `FUN_0019EAB0` sees
+`0x40` and omits the level table and pixel allocations. Thus a texture tag
+does not invariably imply retained decoded pixels. Ordinary owned pixel
+buffers prefer the high end inside the parser's placement scope.
 
 When a level's pixel allocation fails, `FUN_0010FEE0` shrinks that level to
 8×8 and allocates the smaller buffer through trapping `FUN_00117700`; the
@@ -281,7 +526,23 @@ become 8×8 blocks of `0xFFFFFFFF` before the game stops. Most other
 allocations use the default entry points, which trap after both placement
 sides fail.
 
-## Sampled vanilla capacity
+Palette parser `FUN_001B3810` requests a `Q(0x28)` descriptor when creating
+a new `0x0400` record. `FUN_0019EC60` adds a `Q(0x20)` level descriptor and,
+through `FUN_0010FEE0`, a pixel block sized from the palette format and its
+16×16 or 8×2 dimensions. Its nullable allocation uses the palette branch,
+which has no texture-style 8×8 retry. When the palette's `+0x18` flag bit 1
+is clear, the parser calls `FUN_0010F860` to submit the pixels, then
+`FUN_0019EBE0` frees the level and owned pixel blocks. When that bit is set,
+those blocks remain. Consequently this path's construction-time allocations
+can exceed its retained descriptor cost.
+
+Texture and palette name bindings also materialize shared image-transfer groups:
+`FUN_0019E770` / `FUN_0019EDE0` reuse a matching controller or create a
+`Q(0x38)` controller through `FUN_0019D2D0`; each binding adds a `Q(8)`
+list node through `FUN_0019D180` / `FUN_0019D130`. This indirect construction
+is distinct from the `0x1000` file-block parser, which discards its payload.
+
+## Sampled retail capacity
 
 The arena's usable span between the sentinels is `0x1718F50` bytes. Occupied
 bytes are that span minus total free, including node headers, alignment, and
@@ -291,22 +552,24 @@ the 2 MiB secondary pool. Fragmentation is total free minus largest free.
 | --- | --- | ---: | ---: | ---: | ---: |
 | Title | BTL | `0x101F7F0` | `0x1018330` | `0x06F9760` | `0x0074C0` |
 | Mode select | BTL | `0x0B0B940` | `0x0A6B290` | `0x0C0D610` | `0x0A06B0` |
-| Active Adventure | ADV | `0x07B2D30` | `0x0509600` | `0x0F66220` | `0x2A9730` |
 | Character select | BTL | `0x0CD1560` | `0x0AFD2E0` | `0x0A479F0` | `0x1D4280` |
 | Active battle | BTL | `0x0866FB0` | `0x084E210` | `0x0EB1FA0` | `0x018DA0` |
 | Collection | ETC | `0x0C89CB0` | `0x0A7EB80` | `0x0A8F2A0` | `0x20B130` |
 | Options | BTL | `0x0B09660` | `0x0A96680` | `0x0C0F8F0` | `0x072FE0` |
 
-The vanilla peak-tracked global reached `0xFCE500` in these observations.
-Matched NA228 measurements are retained with their owning feature in
-[`observations.tsv`](../../../features/runtime_injection/observations.tsv).
+The active-battle sample recorded peak tracked bytes `0xFCE500`. The same
+peak also appears in the sampled Character Select, Collection, and Options
+states, so it cannot be attributed to the sampled battle's load. The
+accumulated counter does not identify when or for which load the maximum
+occurred.
 
 **Observation:** The sampled active battle had about 14.7 MiB occupied and one
 free gap of `0x084E210` bytes, about 8.3 MiB, holding all but `0x18DA0` bytes
-of the free space. An ordinary CCS load during battle first takes about
-`0xA3000` bytes of that gap for its transients.
+of the free space. An ordinary compressed CCS load adds the fixed transport
+subtotal, inflate tables, and parsing/conversion scratch described above;
+the sample alone does not show their simultaneous peak or placement.
 
-**Inference (medium confidence):** Battle's low fragmentation follows from the
-two-ended policy: CCS containers stack from the top and ordinary objects from
-the bottom. Adventure, the only overlay that writes the one-shot placement
-byte, had the most fragmented sample.
+**Inference (medium confidence):** The two-ended placement preference is
+consistent with the sampled battle's large central free gap. That end-state
+measurement does not establish the allocation history that produced it or a
+minimum capacity across battles.

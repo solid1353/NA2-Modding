@@ -2,22 +2,24 @@
 
 ## Research coverage
 
-- **Assigned scope:** compare clean NA2 and NUN5 shared frontend prompts,
-  Options labels and backdrop ownership, and Controls lifecycle and footer behavior.
+- **Assigned scope:** compare retail NA2 (`SLPS-25837`) and NUN5 shared
+  frontend prompts, Options labels and backdrop ownership, and Controls
+  lifecycle and footer behavior.
 - **Exploration depth:** the relevant binaries, native callers, records, and
   paired screen states were examined.
 - **Confirmed coverage:** the documented owners, structures, backdrop resource
   set, and cross-game differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
-- **Deliberate exclusions and overlap:** feature imports, hooks, and validation
-  belong to [UI layout](../../../features/localization/ui_layout.md) or
-  [UI textures](../../../features/localization/ui_textures.md).
+- **Deliberate exclusions and overlap:** the help-text queue belongs to
+  [Running help](running_help.md); secondary-font spacing belongs to
+  [Renderer metrics](../font/renderer_metrics.md); the Options and Mode Select
+  callbacks belong to [Resident front-end and mode flow](../../game/mode_flow.md).
 - **Evidence limitations:** bounded states do not cover every animation phase or
   indirect caller.
 
 ## Binary identity and mapping
 
-This record compares the clean Japanese NA2 boot ELF
+This record compares the retail Japanese NA2 boot ELF
 `@source_na2/SLPS_258.37` with the official English NUN5 boot ELF
 `@source_nun5/SLES_556.05`. The relevant shared compositors and the
 screen-position caller are:
@@ -60,7 +62,7 @@ records at SLES file offsets `0x513DE0` and `0x513DE4` contain ASCII `X:` and
 The surrounding text objects are not binary-compatible. NA2 allocates an
 `0x80`-byte object and a `0x24`-byte renderer record, while NUN5 allocates
 `0x88` and `0x424` bytes and uses shifted renderer and descriptor fields.
-NUN5's secondary renderer also initializes tracking to zero, whereas clean NA2
+NUN5's secondary renderer also initializes tracking to zero, whereas NA2
 initializes it to `-1.0`. NUN5 initializes extra spacing at renderer offset
 `+0x40` to `0.0`, while NA2 initializes it to `2.0`. The shared caller
 coordinates therefore are not the source of the regional modal-text
@@ -111,9 +113,8 @@ NUN5's localized records total 80 logical pixels:
 | Cancel label | `0x4DEA10` / `0100310038001600` | `(1,49,56,22)` |
 | Empty tail | `0x4DEA18` / `0000000000000000` | empty |
 
-The three NUN5 records correspond directly to the three NA2 static slots. Their
-compatible structure allows the English geometry to be represented without
-changing NA2's object ABI or compositor algorithm.
+The three NUN5 records correspond directly to the three NA2 static slots and
+share their record structure.
 
 ## Options-root OK and Back anchors
 
@@ -128,8 +129,7 @@ OK and Back anchors from `FUN_0038c5f0`:
 NA2 loads X=`400` and X=`470` directly with `C843023C` and `EB43023C`.
 The NUN5 homolog loads the same nominal values, converts its shared signed
 regional globals, and adds `-12` for OK and `-8` for Back before calling
-`FUN_0038bb10`. Those additions do not exist in the NA2 caller, so copying the
-nominal donor loads would not move either prompt.
+`FUN_0038bb10`. Those additions do not exist in the NA2 caller.
 
 ## Options backdrop resources
 
@@ -222,7 +222,7 @@ archive, `CMN/GAUGE.CCS`:
 
 No code draws the nine beige row boxes; they are inferred to belong to the
 `ANM_xmenu01`/`ANM_xmenu_ca` objects, which the renderer draws before the
-cells and labels. These functions were inspected through GhidrAssistMCP.
+cells and labels.
 
 In `FUN_00387e10`, Circle (`0x20`) puts the player in mode `2` and stages the
 row value. Cross (`0x40`) confirms when both players are in mode `0` or `1`;
@@ -253,8 +253,7 @@ blank.
 
 On Options teardown, `FUN_0038b370` calls `FUN_003874c0` for the Controls
 resources and frees its child. It releases the Options archive only when the
-controller's acquisition byte at `+0x00` indicates ownership. These functions
-were inspected in the maintained NA2 Ghidra program through GhidrAssistMCP.
+controller's acquisition byte at `+0x00` indicates ownership.
 
 ## Shared Controls and Music footer anchors
 
@@ -268,7 +267,7 @@ void draw_options_footer(FooterSprites &sprites) {
     draw_common_prompt(400.0f, 356.0f, sprites.prompts, OK, true);
     draw_common_prompt(470.0f, 356.0f, sprites.prompts, BACK, true);
 
-    constexpr float select_x = 200.0f; // NUN5; clean NA2 used 230.0f
+    constexpr float select_x = 200.0f; // NUN5; NA2 uses 230.0f
     draw_common_prompt(select_x, 356.0f, sprites.prompts, SELECT, false);
     draw_rect(select_x, 356.0f, sprites.legend, select_legend_rect);
 }
@@ -313,7 +312,7 @@ void draw_mode_select_footer(ModeSelectScreen *screen) {
     draw_start_label(150.0f, 362.0f, screen->labels, localized_start_rect());
 }
 
-// NA2 original:           OK=400, Back=470, START=130
+// NA2:                    OK=400, Back=470, START=130
 // NUN5 effective result:  OK=388, Back=462, START=150
 ```
 
@@ -321,8 +320,7 @@ NA2 calls `FUN_0037c980` directly with literal X=`400` and X=`470` at
 runtime/file addresses `0x00385DE0`/`0x285EE0` and
 `0x00385E04`/`0x285F04`. NUN5 calls homolog `FUN_0038bb10` with nominal
 X=`400` and X=`470`, but converts two signed regional globals to floats and
-adds `-12` and `-8` first. Those additions are absent from NA2, so copying
-NUN5's nominal load instructions would leave the visible mismatch unchanged.
+adds `-12` and `-8` first. Those additions are absent from NA2.
 
 The draw functions call the shared prompt compositor, submit the START
 companion through `FUN_0037bc40`/`FUN_0038ad00`, and finally commit the prompt
@@ -331,7 +329,7 @@ sprite geometry and draw queues only; the selected mode, input state, and menu
 controller transitions are untouched.
 
 NA2 `FUN_00383f80` binds the Mode Select archive's `TEX_modesel02` texture to
-the controller's label sprite at `+0x70`. The clean 256-by-512 indexed NA2
+the controller's label sprite at `+0x70`. The retail 256-by-512 indexed NA2
 atlas is transparent from UV Y `419` through the bottom edge; the homologous
 NUN5 atlas is transparent from UV Y `416`. The large description rectangle and
 START rectangle do not enter that shared transparent region. In
@@ -341,7 +339,7 @@ finalized only after that draw.
 ## Relationships and evidence
 
 Confidence is **verified**: complete-function comparison establishes the shared
-algorithms and caller anchors, all compared ranges match the clean binaries,
+algorithms and caller anchors, all compared ranges match the retail binaries,
 and runtime observation confirms the effective NUN5 geometry.
 
 ## Options labels and difficulty values

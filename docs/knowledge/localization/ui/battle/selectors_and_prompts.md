@@ -1,22 +1,28 @@
 # Battle UI selectors and prompts
 
+Binary identities and address conventions are defined in the
+[Standard game file identities](../../../game/files/file_identities.md).
+
 ## Research coverage
 
-- **Assigned scope:** compare clean NA2 and NUN5 battle selectors, prompts, indicators, and labels.
+- **Assigned scope:** compare retail NA2 (`SLPS-25837`) and NUN5 battle
+  selectors, prompts, indicators, and labels.
 - **Exploration depth:** the relevant binaries, native callers, records, and
   paired screen states were examined.
 - **Confirmed coverage:** the documented owners, structures, and cross-game
   differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
-  The NA2 player-marker draw was not compared with NUN5.
-- **Deliberate exclusions and overlap:** feature imports, hooks, and validation
-  belong to [UI layout](../../../../features/localization/ui_layout.md) or
-  [UI textures](../../../../features/localization/ui_textures.md).
+  The NA2 player-marker draw was not compared with NUN5. An unverified lead
+  associates a branch delay slot near EE `0x001F64A4` with Jutsu-name display;
+  the affected screen behavior is unspecified.
+- **Deliberate exclusions and overlap:** Command List and move-chart rows
+  belong to
+  [Battle Command List and move chart](command_list_and_move_chart.md);
+  awakening behavior belongs to [Awakening](../../../gameplay/awakening.md);
+  the Jutsu-selector row text belongs to
+  [Numeric and settings text rendering](../../font/numeric_rendering.md#jutsu-selector-row).
 - **Evidence limitations:** bounded states do not cover every animation phase or
   indirect caller.
-
-Binary identities and address conventions are defined in the
-[Standard game file identities](../../../game/files/file_identities.md).
 
 ## Player markers
 
@@ -96,13 +102,10 @@ resource lookups `FUN_001e8920` / `FUN_001ee750`, texture lookups
 - NA2 `x\mode1\tex\tnd\mode1name2.bmp` maps to NUN5
   `x\mode1\tex\tnw\mode1name2.bmp`.
 
-Evidence: the exact boot-ELF identities above, the preserved C/TXT exports at
-`@disassembly/NA2/exports/SLPS_258.37/` and
-`@disassembly/NUN5/exports/SLES_556.05/`, a complete canonical CVM
-inventory, decoded RGBA equality for all 72 mappings, component-range diff
-containment, and exact fixed-size recompression of all 61 targets. The
-compositor interpretation and donor coverage have **high confidence**;
-in-game runtime acceptance remains pending.
+Evidence: the exact boot-ELF identities above, both games' preserved boot-ELF
+exports, a complete canonical CVM inventory, and decoded RGBA equality for all
+72 mappings. The compositor interpretation and texture correspondence have
+**high confidence**.
 
 ## Open VS Jutsu selector
 
@@ -160,22 +163,6 @@ NA2 differs in three related ways:
    localized accessor `FUN_003d4760(0)` resolves to the official English ELF
    record `(145,385,22,38)` at file offset `0x4DE0F0`.
 
-### Arrow-state negative findings
-
-- NA2's active arrow sprite was at `0x00C7B820`; its rotation field at
-  `+0x4C` (`0x00C7B86C`) read back the exact `-pi/2` bit pattern after the
-  lower draw, yet the captured arrow still pointed right;
-- NUN5's corresponding object was at `0x00BFC420` and consumed the rotation;
-- cloning the NUN5 object control fields persistently suppressed unrelated UI;
-  partial draw-scoped field tests either had no effect or produced malformed
-  sampling;
-- disabling the rotation reset did not change the rendered direction.
-
-These results establish that writing a valid rotation float is insufficient
-while the NA2 sprite remains in mode 0, and that NUN5's mode fields cannot stay
-enabled across the shared object lifetime. Reusing NA2's vertical arrow pixels
-also diverges from the NUN5 atlas rather than reproducing its state behavior.
-
 ## VS confirmation prompts and bottom legends
 
 NA2 `FUN_006c0cc0` and NUN5 `FUN_006d4130` are the homologous confirmation
@@ -187,10 +174,15 @@ drawOk(anchorOk, 356.0f, promptSprite, 0);
 drawBack(anchorBack, 356.0f, promptSprite, 1);
 ```
 
-The wrapper implementations are not byte-equivalent: their queued-sprite
-advancement makes NUN5's nominal anchors `400/470` differ from NA2's effective
-coordinates. Paired measurements establish corresponding NA2 anchors
-`388/462`.
+Both games pass X anchors `400` for OK and `470` for Back; the NA2 immediates
+are at BTL file offsets `0xCFFC` and `0xD020`. The wrapper implementations are
+not byte-equivalent: NA2's legend table at ELF `0x4D4790` holds two 70x22
+regional records, and its call sites at BTL `0xD014` and `0xD038` pass glyph
+arguments that draw a separate input glyph before each label, whereas NUN5's
+table at ELF `0x4DE9F0` holds combined Cross/OK `(1,1,56,22)` and
+Triangle/Back `(1,25,64,22)` records. The two wrappers also advance the shared
+queued sprite differently, so equal anchors do not place equal records at the
+same raster position in both games.
 
 ## Command Menu and Command Chart scroll indicators
 
@@ -220,16 +212,10 @@ drawSprite(256.0f, 348.0f - pulse, arrow, scrollArrowRect);
 releaseSprite(arrow);
 ```
 
-NA2 and NUN5 already agree on this behavior. Only the shared rectangle differs:
+NA2 and NUN5 agree on this behavior. Only the shared rectangle differs:
 
 - NA2: `(194,195,20,20)`, bytes `C200C30014001400`;
 - NUN5: `(1,225,20,22)`, bytes `0100E10014001600`.
-
-## Unresolved Jutsu-name display lead
-
-An old note near EE `0x001F64A4` proposes forcing part or all of `v0` to zero
-in a branch delay slot. The intended bit or byte and the affected screen
-behavior are unspecified.
 
 ## Ultimate Jutsu one-part label
 

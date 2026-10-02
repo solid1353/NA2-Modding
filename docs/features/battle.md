@@ -99,7 +99,7 @@ Before the displaced HUD update, it keeps each HP child's damage-trail delay
 at its native `100` while held. Per-side ownership prevents carrying a hold
 to a different HP child or fighter. The trail uses cached HP from before the
 native update samples the current frame's damage. The native field and timing
-evidence is in [Ultimate Jutsu](../knowledge/gameplay/ultimate_jutsu.md#hp-damage-trail-and-hud-transitions).
+evidence is in [Battle HUD](../knowledge/gameplay/battle_hud.md#hp-and-name-bindings).
 
 The same object accepts `shadowblur: "off" | "on"`. Its `Shadowblur Extra Hit`
 row appears in both menus. The gate preserves the native predicate result but
@@ -125,7 +125,7 @@ wraps native eligibility at ELF file
 `0x0013B6DC` and the attack initializer at `0x00117F28`. Off and penalty modes
 return native rejection instead of jumping past action-exit handling. The
 native recovery path therefore remains reachable after a blocked attempt.
-See [native Extra Hit control flow](../knowledge/gameplay/hit_response.md#extra-hit-eligibility-and-action-exit)
+See [native Extra Hit control flow](../knowledge/gameplay/extra_hit.md#eligibility-and-action-exit)
 for the traced branches and lifecycle boundary.
 
 The object also owns `substitution_input`, `xdash_chakra_cost`, `support`, and
@@ -296,7 +296,7 @@ entire wheel, including the selected item and frame, side items, empty
 frames, and quantity indicator and its frame, by `6` HUD units. The badges
 retain their positions; the count stays `27` units below the wheel center.
 The sweep uses NUN4's recorded layout points, documented in
-[Battle item inventory](../knowledge/gameplay/battle_item_inventory.md#nun4-item-wheel).
+[Battle item inventory](../knowledge/gameplay/item_wheels_nun3_nun4.md#nun4-item-wheel).
 
 | Hook kind | BTL file offsets |
 | --- | --- |
@@ -323,8 +323,10 @@ selects On for enabled or Off for disabled, then resumes the native initializer.
 The native getter and setter entries at ELF offsets `0xF6EB0` and `0xF6E80`
 delegate to the shared [Mod Settings](mod_settings.md) accessors. Confirmation
 therefore commits the same value used by the main menu and save appendix;
-cancellation retains the current value. The native menu and getter are
-documented in [Simple Display selection](../knowledge/gameplay/pause_and_replay.md#simple-display-selection).
+cancellation retains the current value. The hook writes the selected row, not
+the list's automatic-completion mode: a nonzero mode with no delay completes
+the window immediately. The native menu and getter are documented in
+[Simple Display selection](../knowledge/gameplay/pause_and_replay.md#simple-display-selection).
 
 ## X-dash chakra cost
 
@@ -507,7 +509,7 @@ half-gauge marker appears only in Normal; Nerfed and Unlimited hide it.
 No replacement palette is used.
 
 The feature replaces the
-[native support block](../knowledge/gameplay/substitution.md#native-hud-ownership)
+[native support block](../knowledge/gameplay/battle_hud.md#support-gauge)
 with a slim bar under the item wheel:
 
 - The bar is `54` by `6` HUD units with a `1`-unit black edge, centered on the

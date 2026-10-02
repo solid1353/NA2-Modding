@@ -10,8 +10,8 @@
   matched official NUN5 dialogue at that time.
 - **Unresolved or untested:** Screen context, reachability, complete structural
   family, and current mapping status remain unresolved.
-- **Deliberate exclusions and overlap:** Current localization mappings and mod
-  implementation are outside this document.
+- **Deliberate exclusions and overlap:** Established source and donor
+  relationships belong to [NA2 and NUN5 text correspondence](translation_importer.md).
 - **Evidence limitations:** The historical match alone does not establish a
   current mapping row, runtime visibility, or shared ownership among the five
   targets.

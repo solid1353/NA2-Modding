@@ -1,95 +1,86 @@
-# NA2 MWo3 overlay ABI
+# MWo3 overlay ABI
 
-Static clean-binary evidence for the resident runtime overlay loader and the
-clean `BTL.BIN` / `ETC.BIN` images in NA2 v2.28. In this document, **common**
-means proven in both of those scoped images and in this resident executable;
-it does not claim that every CyberConnect2 or Metrowerks `MWo3` variant has the
-same contract. The other NA2 overlay image is deliberately outside this
-analysis.
+Static evidence for the resident runtime overlay loader and the `BTL.BIN` /
+`ETC.BIN` images in retail NA2 (`SLPS-25837`). In this document, **common**
+means proven in both of those images and in the resident executable; it does
+not claim that every CyberConnect2 or Metrowerks `MWo3` variant has the same
+contract. The other NA2 overlay image is outside this analysis.
 
 ## Research coverage
 
-- **Assigned scope:** this work was limited to the reusable file/runtime ABI of
-the clean NA2 v2.28 resident `SLPS_258.37`, `PRG/BTL.BIN`, and `PRG/ETC.BIN`:
-header layout, placement and clearing, constructor behavior, fixed-address
-resident/overlay linkage, selection/cache/lifetime behavior, and the exact
-resident loader path. It did not attempt a general vendor-format specification.
-
-- **Exploration depth:** full-file identity/size checks covered the clean
-BTL range `0x000000-0x222300` and clean ETC range `0x000000-0x030F00`.
-Targeted raw byte/R5900 inspection covered their headers, span boundaries,
-constructor/tail regions, and the specific calls, entries, and pointer chains
-cited below, plus the resident ELF/program metadata and bytes needed by the
-recovered functions and tables. Preserved Ghidra C/listing exports for all
-three inputs were used for decoded-instruction censuses and call-graph
-discovery; key address-sensitive conclusions were checked against raw
-disassembly because the preserved overlay imports omit the first `0x40` bytes.
-
-Coverage depth was deliberately mixed:
-
-  **Exhaustive within the scoped clean files:** all 0x40-byte header words and
-  exact span arithmetic; the complete BTL constructor pointer interval at raw
-  `0x222280-0x2222A4` and all nine targets; ETC's empty interval; file tails;
-  all decoded direct `jal` targets, decoded `jalr` sites, and decoded
-  `$gp`-relative references in both overlay listings. The listing-wide resident
-  scan exhaustively found direct calls to the loader, post-read initializer,
-  and selector within decoded code, and direct resident `jal` targets in the
-  two scoped overlay reservations.
-  **Exhaustive for the recovered load/select chain:** `FUN_001BE7F0`, path
-  helper `FUN_001BE110`, post-read `FUN_00100270`, constructor walker
-  `FUN_00119A90`, selector `FUN_001F3D10`, restore helper `FUN_001F45B0`,
-  destination table `0x006029C0-0x00602A00`, and filename table
-  `0x004049E0-0x004049EC` were traced through all branches visible in the clean
-  executable. Manager bootstrap/reset functions `FUN_001E9980`,
-  `FUN_001F4200`, `FUN_001F4360`, and `FUN_001F4680`, plus the CD/DVD-readiness
-  gate through `FUN_00105FC0`, `FUN_00107F80`, `FUN_001086C0`, and
-  `FUN_00173328`, were bounded extensions of that chain.
-  **Bounded application-lifetime tracing:** the five scoped selector callsites
-  and the Collection and selected BTL setup/teardown paths were traced
-  far enough to prove ordering and the contracts listed below. This was not a
-  semantic audit of every BTL/ETC routine or every resident mode state.
-  **Sampled ABI recovery:** typed calling-convention examples, full-width
-  callee-save behavior, absolute initialized-data pointer chains, and selected
-  shared-address entry bytes were raw-verified samples. The numerical
-  call/reference censuses are complete for decoded listings, but semantic names
-  and prototypes were recovered only where caller/callee evidence was strong.
-
-- **Confirmed coverage:** the evidence establishes the common
-header meanings; fixed load base and full-file mapping; exact text/data/BSS
-layouts; absence of runtime relocation/import/export resolution; inherited
-resident `$gp`; constructor-only automatic entry; lack of a generic exit hook;
-exact retry, cache-publication, and stale-tail behavior; fixed-address direct
-and indirect call conventions; image-specific application entry/cleanup
-contracts; and the minimum runtime identity guards for the clean BTL and ETC
-images.
-
-- **Unresolved or untested:** remaining work includes original vendor field and
-type names, other `MWo3` versions, kind values outside the two scoped images,
-precise linker-section composition, complete typed prototypes and semantics for
-the fixed-address surface, dynamic targets for indirect calls, the higher-level
-synchronization invariant that prevents replacement during execution, and
-cleanup paths beyond the representative state machines. No claim of exhaustive
-semantic coverage is made for the resident, BTL, or ETC programs as a whole.
-
-- **Deliberate exclusions and overlap:** the other NA2 overlay and Adventure behavior were
-excluded, as were widescreen, media, timing, substitution, and damage scopes.
-Mode-flow details were followed only where they prove overlay ownership or
-lifetime; adjacent gameplay/UI findings belong to their scoped canonical
-records. Geometric residence inside BTL's larger address range was never used
-alone to assign an outgoing call to BTL.
-
-- **Evidence limitations:** this is primarily static clean-binary evidence. No new
-runtime injection, concurrent-load experiment, malformed-file experiment, or
-hardware/PCSX2 execution was performed for this record. Ghidra-decoded
-censuses omit code the importer marked as data, notably BTL's late constructor
-routines; those known routines were disassembled separately but no claim is
-made that every executable data-span byte was discovered. Static race and
-failure-mode descriptions identify reachable instruction behavior, not an
-observed retail failure.
+- **Assigned scope:** the reusable file/runtime ABI of the retail resident
+  `SLPS_258.37`, `PRG/BTL.BIN`, and `PRG/ETC.BIN`: header layout, placement and
+  clearing, constructor behavior, fixed-address resident/overlay linkage,
+  selection/cache/lifetime behavior, and the exact resident loader path. It is
+  not a general vendor-format specification.
+- **Exploration depth:**
+  - Exhaustive within the two overlay files: full-file identity and size
+    (BTL `0x000000-0x222300`, ETC `0x000000-0x030F00`); all `0x40`-byte header
+    words and span arithmetic; the complete BTL constructor pointer interval at
+    raw `0x222280-0x2222A4` with all nine targets and their ordinary callees;
+    ETC's empty interval; file tails; and all decoded direct `jal` targets,
+    `jalr` sites, and `$gp`-relative references in both overlay listings.
+  - Exhaustive for the load/select chain: loader `FUN_001BE7F0`, path helper
+    `FUN_001BE110`, post-read `FUN_00100270`, constructor walker
+    `FUN_00119A90`, selector `FUN_001F3D10`, restore helper `FUN_001F45B0`,
+    destination table `0x006029C0-0x00602A00`, and filename table
+    `0x004049E0-0x004049EC`, with the manager bootstrap/reset functions and the
+    CD/DVD-readiness gate as bounded extensions.
+  - Bounded lifetime tracing: the five selector callsites, the Collection and
+    selected BTL setup/teardown paths, and the front-end thread from startup
+    `FUN_001C13F0` through manager dispatch and yield; all 24 resident direct
+    task constructions were checked for their entry addresses.
+  - Complete Collection virtual-table boundary: all ten construction cases,
+    allocation sizes, resident table addresses, four method slots, ETC
+    type-name pointer chains, and deleting-destructor wrappers. The analyzed
+    `FUN_006C68B0` covers only the first 13 instructions of the Collection
+    resource constructor; the remaining cases were decoded from raw bytes.
+  - Sampled ABI recovery: typed calling-convention examples, full-width
+    callee-save behavior, absolute initialized-data pointer chains, and
+    selected shared-address entry bytes.
+  - Complete bounded data-return boundary: live BTL `0x00875970` through its
+    return, all seven GP-displacement address formations, the 66-word
+    code-index interval, and both non-null descriptors with their key arrays.
+    Payload semantics were not investigated.
+- **Confirmed coverage:** the common header meanings; fixed load base and
+  full-file mapping; exact text/data/BSS layouts; absence of runtime
+  relocation/import/export resolution; inherited resident `$gp`;
+  constructor-only automatic entry; lack of a generic exit hook; exact retry,
+  cache-publication, and stale-tail behavior; fixed-address direct and indirect
+  call conventions; image-specific application entry/cleanup contracts;
+  allocation-free automatic BTL initialization and its resident-word reset;
+  initialized-data lookup/return lifetime despite a resident context argument;
+  normal front-end thread serialization and delayed worker retirement;
+  resident-held ETC virtual tables and their ten concrete cleanup targets; and
+  the header identity words for the BTL and ETC images.
+- **Unresolved or untested:** original vendor field and type names, other
+  `MWo3` versions, kind values outside the two images, precise linker-section
+  composition, complete typed prototypes and semantics for the fixed-address
+  surface, indirect targets beyond the resolved Collection tables, indirect
+  worker callback assignments and completion ordering outside the front-end
+  chain, payload meanings for the recovered `0x440` records, and cleanup paths
+  beyond the bounded owners below. No exhaustive semantic coverage of the
+  resident, BTL, or ETC programs is claimed.
+- **Deliberate exclusions and overlap:** the other NA2 overlay and Adventure
+  behavior were not inspected. Task records and scheduling belong to
+  [Resident task system](task_system.md); mode-flow details to
+  [Mode flow](../game/mode_flow.md), followed here only where they prove
+  overlay ownership or lifetime; animation player contracts to
+  [Animation runtime](animation_runtime.md); file identities and address
+  conversion to
+  [Retail game file identities](../game/files/file_identities.md#address-conventions).
+  Geometric residence inside BTL's larger address range was never used alone
+  to assign an outgoing call to BTL.
+- **Evidence limitations:** static evidence only; no concurrent-load or
+  malformed-file experiment exists. Ghidra-decoded censuses omit code the
+  importer marked as data, notably BTL's late constructor routines; those
+  routines were disassembled separately, but not every executable data-span
+  byte is claimed to be discovered. Static race and failure-mode descriptions
+  identify reachable instruction behavior, not an observed retail failure.
 
 ## Result
 
-The reusable NA2 contract is small and unusually unforgiving:
+The scoped loader and linked images establish this contract:
 
 - The resident loader reads the **complete raw file, including its 0x40-byte
   header**, to the fixed destination `0x006B3F00`.
@@ -107,17 +98,16 @@ The reusable NA2 contract is small and unusually unforgiving:
 - Resident/overlay calls are a statically linked, fixed-address ABI. Both sides
   use direct `jal`, indirect `jalr`, absolute 32-bit pointers, and the resident
   `$gp` value.
-- The word at `+0x04` is a useful overlay identity (`1` for clean BTL, `3` for
-  clean ETC), but the loader itself never checks it.
+- The word at `+0x04` is an overlay identity (`1` for BTL, `3` for ETC),
+  but the loader itself never checks it.
 
-Consequently, a safe consumer must identify the current image before using any
-overlay address. Magic alone is insufficient because both images share it and
-the same base.
+Header word `+0x04` is therefore the only field that identifies the current
+image: both images share the magic and the load base.
 
 ## Inputs and identity
 
 The resident, BTL, and 200,448-byte (`0x30F00`) ETC inputs follow
-[Standard game file identities](../game/files/file_identities.md).
+[Retail game file identities](../game/files/file_identities.md).
 
 The resident ELF is stripped: its `.symtab` contains zero entries and its
 `.strtab` is empty. Names such as `FUN_001BE7F0`, `SUB_001CC350`, and
@@ -144,7 +134,7 @@ intervening reservation is outside this document's scope.
 ## File, runtime, and preserved-Ghidra addresses
 
 Shared BTL address conversion follows
-[Standard game file identities](../game/files/file_identities.md). The same
+[Retail game file identities](../game/files/file_identities.md#address-conventions). The same
 header-omitting import convention applies to the scoped ETC project. Encoded
 pointers and `j`/`jal` targets inside either file are already runtime addresses.
 
@@ -382,8 +372,9 @@ image while its bytes were partly overwritten and its incoming constructors
 were running. A concurrent request for that old selector could take the cache
 hit and return immediately; another request for the incoming selector could
 start a second load. This race is a static possibility, not an observed game
-failure, and is another reason the missing higher-level lifetime invariant
-matters. The disc-readiness polling inside `FUN_001BE7F0` does not close this
+failure. The front-end ordering traced below prevents its normal callbacks
+from making concurrent selector calls; ordering outside that chain remains
+unresolved. The disc-readiness polling inside `FUN_001BE7F0` does not close this
 window because cache hits never enter that loader and the selector does not
 set the polled state.
 
@@ -425,7 +416,7 @@ not allocate when entered at `0x007D7580`. It is therefore not a callable BTL
 entry. The resident invokes this address while the prior image is still live,
 records its return value, then selects BTL. The prior image's identity and
 entrypoint are outside this document's scope. This is direct evidence that a
-transition may deliberately call the outgoing overlay before replacement, not
+transition may call the outgoing overlay before replacement, not
 evidence that selection may safely be delayed before a call into the incoming
 one.
 
@@ -463,6 +454,60 @@ Those calls execute while ETC is still the selected image. They are explicit
 knowledge in the owning resident state machines, not callbacks discovered
 through the MWo3 header.
 
+### Front-end thread ordering and its limit
+
+The normal front-end selector path runs on one kernel thread, the `MOTHER`
+task. Resident startup `FUN_001C13F0` forms its entry address `0x001E0EE0` at
+`0x001C14A0-0x001C14A4`, creates the task at `0x001C14B0`, and starts it at
+`0x001C14C8`. Task construction, priorities, and manager scheduling belong to
+[Resident task system](task_system.md#task-record).
+
+The front-end entry's non-returning loop invokes `FUN_001E9980` directly at
+`0x001E12D0`. The manager chooses one callback per invocation; it does not
+spawn the BTL or ETC callback on another thread. Consequently, the normal
+manager bootstrap, Mode Select selector, BTL process initializer, and Collection
+selector execute on that same thread, and each synchronous load/constructor
+call returns before that thread can proceed to its incoming overlay calls.
+The loop yields through `FUN_001D0000(record, 1)` after dispatch. This is
+control-flow serialization of those front-end operations, not a loader mutex.
+The mode/result details remain in [mode flow](../game/mode_flow.md).
+
+Other game threads exist, and the task manager's lifecycle pass
+([Resident task system](task_system.md#manager-pass-and-ordering-boundary))
+never checks the cached overlay selector or header kind; thread creation
+accepts an arbitrary entry address. Thus single-thread front-end dispatch
+closes the normal callback-versus-callback ordering question, but does not by
+itself prove that every overlay worker or retained method pointer is gone
+before replacement. That stronger lifetime claim requires the owning worker's
+completion/retirement path; an ordinary sleep or one manager pass is not such
+evidence.
+
+All 24 resident direct task constructions supply resident entry addresses, as
+does the manager entry. In the mapped BTL and ETC programs, byte searches found
+no encoded direct `jal` to either construction helper, record constructor
+`0x001CFE50`, starter `0x001CFF00`, or kernel `CreateThread` at `0x0015DAE0`.
+These searches cover the instruction encodings even when no external XREF was
+recovered. They do not rule out indirect creation, a resident helper creating a
+worker on an overlay's behalf, or resident workers calling overlay methods.
+Resident entry placement alone is therefore not a proof that a worker is
+independent of the overlay.
+
+Task retirement calls the record's absolute cleanup pointer `+0x24` with
+argument `+0x20` before terminating the thread (manager call `0x001D0678`
+before `TerminateThread`/`DeleteThread` at `0x001D0698/0x001D06A4`;
+immediate removal at `0x001D0270`, `0x001D0290`, and `0x001D029C`), as
+described in
+[Resident task system](task_system.md#termination-destruction-and-ownership).
+That callback is separate from the compiler cleanup-list head at `0x00609A00`
+and the MWo3 constructor interval. Its only recovered registration, `MOTHER`'s
+resident no-op `0x001E0ED0` (stores at `0x001E0F18/0x001E0F1C`), retains no
+overlay address. Neither retirement path identifies a callback's owning image:
+an overlay callback retained through some indirect or unclassified assignment
+requires the overlay to remain resident through its invocation, and merely
+requesting retirement is insufficient. No such BTL/ETC cleanup callback is
+confirmed; the original callback type name and indirect assignments remain
+unrecovered.
+
 ### Recovered mode-owned entry and cleanup contracts
 
 These are ordinary fixed-address application interfaces, not MWo3-header
@@ -490,7 +535,7 @@ The BTL path in `FUN_001EC7A0` similarly owns a `0x188` byte allocation:
 | ---: | --- |
 | `0x007190D0` | `init(object)`: initializes header/owned-pointer fields and 28 records at `+0x14`, stride `0x0C`; each record receives a pointer into the BTL table at `0x008C3DE0` and two zero fields |
 | `0x00719500` | `reset_for_context(object)`: clears the two mutable fields in all 28 records, resets object fields `+0x00/+0x04/+0x08`, and, when the resident manager exists, stores the result of resident `0x001F6F60` at `+0x08` |
-| `0x00719140` | `release(object)`: releases and zeroes owned pointers at `+0x17C/+0x180/+0x184` and two polymorphic pointers at `+0x164/+0x168` |
+| `0x00719140` | `release(object)`: releases owned pointers at `+0x17C/+0x180/+0x184` and two polymorphic pointers at `+0x164/+0x168`; clears `+0x17C/+0x164/+0x168`, but leaves the released `+0x180/+0x184` values in place |
 
 The same resident setup then calls no-argument BTL `0x00885210`. It performs an
 internal reset, destroys any prior object held in resident global `0x00607888`
@@ -499,6 +544,40 @@ BTL constructor `0x00886CB0` when allocation succeeds, and stores the new
 pointer back in that resident global. Paired resident teardown
 `FUN_001EC890` calls `0x00719140`, frees the `0x188` object, and calls BTL
 `0x00885290` to destroy and clear the singleton.
+
+The complete resident process destructor releases three child slots in order:
+`+0x34` through resident `0x003B9CE0` at callsite `0x001EC8BC`, `+0x38`
+through BTL `0x00713B20` at `0x001EC8EC`, and `+0x3C` through BTL
+`0x00719140` at `0x001EC91C`. Each child is then freed through resident
+`0x00117000` and its process slot is cleared. The singleton cleanup call follows
+at `0x001EC934`. This owns the full residual child/singleton boundary of
+`FUN_001EC890`; it is still separate from the loader.
+
+BTL `0x00713B20` (raw `0x05FC20`, preserved `0x00713AE0`) releases its
+selection child's resource fields, all 24 pointers at `+0xE8..+0x144`,
+two pointers at `+0x164/+0x168`, and its nested object at `+0xA8`. The nested
+object is cleaned through BTL `0x006BFDB0` before resident release. Like
+`0x00719140`, this routine does not clear every released resource field;
+its resident owner frees the allocation immediately afterward. Neither routine
+establishes an idempotent release contract for a retained object.
+
+The singleton uses a resident virtual table too. Constructor live
+`0x00886CB0` writes resident `0x005FC2C8` at object `+0x00` and member table
+`0x005FC2D8` at `+0x14`. The primary table's type chain is
+`0x005FC2C8 -> 0x008D3388 -> 0x008BFD70`, whose string is the original
+`ccBuddyAtkCtrl`; primary method slot `+0x08` is BTL `0x00886DE0`
+(raw `0x1D2EE0`, preserved `0x00886DA0`). Thus the indirect call in singleton
+cleanup live `0x008852B8` has a concrete target in the normal constructed state.
+
+That deleting wrapper receives `(object, signed_short_delete_flag)`, calls
+BTL `0x00887990(object, -1)`, restores the member table, conditionally frees
+the outer allocation when the flag is positive, and returns the original
+pointer. The `-1` cleanup branch deletes both child pointers at `+0x04/+0x08`
+through each child's table at `+0x50`, method slot `+0x08`, and clears them.
+The child method destinations are not resolved here. Singleton cleanup then
+clears resident global `0x00607888`. The gameplay meaning of these objects
+belongs to [support mechanics](../gameplay/support_mechanics.md); this record
+owns the pointer chain, call contract, and overlay lifetime.
 
 A second BTL setup path allocates `0x28` bytes and calls leaf initializer
 `0x006EE810`, which clears its defined dword fields plus byte `+0x14`. This
@@ -679,12 +758,12 @@ The highest-density shared targets are:
 | `0x00117150` | `410` | `61` | heap/object allocation |
 | `0x001A8F00` | `333` | `66` | CCS object lookup by `(container, name, miss_policy)` |
 | `0x001D7E20` | `222` | `72` | unresolved |
-| `0x001BB6F0` | `192` | `61` | unresolved |
-| `0x001BB210` | `187` | `60` | unresolved |
-| `0x001B99B0` | `230` | `8` | unresolved |
+| `0x001BB6F0` | `192` | `61` | traverse scene object's `+0xE4` list and refresh each node through resident `0x00194360` |
+| `0x001BB210` | `187` | `60` | advance animation position and return completion; [Animation runtime](animation_runtime.md#advance-and-end-behavior) |
+| `0x001B99B0` | `230` | `8` | bind/materialize animation runtime records; [Animation runtime](animation_runtime.md#descriptor-and-player-separation) |
 | `0x00180210` | `225` | `7` | MT-backed inclusive bounded-integer reduction |
-| `0x00152270` | `212` | `14` | unresolved |
-| `0x001B7570` | `121` | `54` | unresolved |
+| `0x00152270` | `212` | `14` | copy matrix basis and add translation; [model runtime](model_runtime.md) |
+| `0x001B7570` | `121` | `54` | scene-play object destructor with signed 16-bit deleting flag; [Animation runtime](animation_runtime.md#restart-hold-and-removal-boundaries) |
 
 High-density image-specific targets further show that the two images are not
 interchangeable clients of a tiny common service table:
@@ -698,16 +777,33 @@ interchangeable clients of a tiny common service table:
 | `0x001DD9D0` | `158` | `0x0037BBD0` | `11` |
 
 These addresses are stripped targets, not recovered original symbols. The
-counts are useful when prioritizing resident-service stubs or compatibility
-checks, but they do not supply prototypes.
+counts describe static call density; they do not supply prototypes.
+
+The two BTL-specific imports `0x001DD9D0` and `0x001DDA50` are activation
+and deactivation of resident interaction-list heads, respectively. They retain
+and unlink object pointers through resident globals rather than resolving
+overlay symbols. Destruction through resident `0x001DD920(head, flag)` removes
+an active head before releasing its registrations and results; a positive
+signed 16-bit flag also frees the head. The layouts, processing, and global
+cleanup remain owned by [Collision](../gameplay/collision.md#resident-query-list-boundary).
+This is an application registration lifetime, separate from both the compiler
+cleanup list and the MWo3 loader.
+
+The highest-density BTL-only target, resident `0x003083A0`, has no recovered
+Ghidra function at its entry. Bytes `0x003083A0-0x003083CC` nevertheless
+establish the complete leaf predicate: it returns `1` only when `a0 != 0` and
+resident word `0x00607654` is nonzero, otherwise `0`. It does not dereference
+the argument or mutate either object. Its existing gameplay interpretation
+belongs to [support mechanics](../gameplay/support_mechanics.md); call density
+alone would not have established that contract.
 
 ### Indirect dispatch is application ABI, not loader binding
 
 The decoded listings contain `1,790` BTL, `20` ETC, and `1,072` resident
-`jalr` sites. Their dynamic destinations cannot be assigned to resident or a
-particular overlay statically, so the direct-target tables in this document
-are lower bounds on the callable boundary. Nothing in the loader resolves or
-patches these sites.
+`jalr` sites. The instruction alone does not identify its destination; a
+concrete construction and pointer-table chain is needed, as recovered for
+Collection below. The direct-target tables are therefore lower bounds on the
+callable boundary. Nothing in the loader resolves or patches these sites.
 
 The overlay compiler overwhelmingly funnels indirect calls through `t9`:
 `1,788/1,790` BTL sites and all 20 ETC sites use it. The remaining two BTL
@@ -735,6 +831,58 @@ An object or callback table that survives image replacement can retain a
 perfectly aligned absolute method pointer into the outgoing image. Mode-owned
 objects must therefore be quiesced and released while their defining overlay
 is still resident, exactly as the ETC teardown paths above do.
+
+### Collection tables live in the resident, methods live in ETC
+
+Collection resource constructor live `0x006C68F0` creates ten controller
+objects and retains them at owner `+0x50 + index*4`. Its switch pointer interval
+is ETC live `0x006E4A30-0x006E4A58`, raw `0x030B30-0x030B58`.
+Each case initially writes base table `0x006028F0` to object `+0x08`, then
+replaces it with the derived table below. The common continuation stores the
+object and calls table `+0x0C` at live `0x006C7010` (raw `0x013110`).
+
+The derived tables are resident file-backed data, even though every listed
+method is ETC code. All addresses in this table are **runtime** addresses;
+for each ETC method or case, raw offset is `address - 0x006B3F00` and the
+preserved address is `address - 0x40`.
+
+| Index | Construction case | Bytes | Resident table | Original type string | `+0x08` delete | `+0x0C` initialize | `+0x10` update | `+0x14` present |
+| ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| 0 | `0x006C6BB0` | `0x34` | `0x006028D0` | `ccHomeIspSelectKind` | `0x006C9050` | `0x006B4FD0` | `0x006B51E0` | `0x006B5400` |
+| 1 | `0x006C6C08` | `0x100` | `0x006028B0` | `ccHomeIspSelectChar` | `0x006C8EE0` | `0x006B5810` | `0x006B6E30` | `0x006B6F20` |
+| 2 | `0x006C6CB8` | `0x70` | `0x006027C0` | `ccHomeIspMovie` | `0x006C8A10` | `0x006C3480` | `0x006C43E0` | `0x006C4560` |
+| 3 | `0x006C6D28` | `0xA0` | `0x006027A0` | `ccHomeIspMusic` | `0x006C8990` | `0x006C4990` | `0x006C5B40` | `0x006C5D70` |
+| 4 | `0x006C6D98` | `0x70` | `0x00602890` | `ccHomeIspCharMenu` | `0x006C8E60` | `0x006B71E0` | `0x006B7F00` | `0x006B8250` |
+| 5 | `0x006C6DF0` | `0xB30` | `0x00602860` | `ccHomeIspDoll` | `0x006C8DB0` | `0x006B8D30` | `0x006BAE70` | `0x006BB000` |
+| 6 | `0x006C6E80` | `0x34C` | `0x006027E0` | `ccHomeIspVoice` | `0x006C8A90` | `0x006C1E30` | `0x006C2D40` | `0x006C2EB0` |
+| 7 | `0x006C6EF0` | `0x478` | `0x00602800` | `ccHomeIspSkill` | `0x006C8B10` | `0x006BE710` | `0x006C0FE0` | `0x006C1220` |
+| 8 | `0x006C6F40` | `0x190` | `0x00602820` | `ccHomeIspDiorama` | `0x006C8B90` | `0x006BC120` | `0x006BDC00` | `0x006BDDB0` |
+| 9 | `0x006C6FB0` | `0x2C` | `0x00602840` | `ccHomeIspDioramaMenu` | `0x006C8C40` | `0x006BB590` | `0x006BBC70` | `0x006BBE30` |
+
+Table `+0x00` is an absolute ETC type-information pointer, and `+0x04` is
+zero in all ten tables. The strings are original binary text, not invented
+semantic names. For example, resident table `0x006028D0` points to ETC
+`0x006E4BD0` (raw `0x030CD0`), whose first word points to string
+`0x006E3090` (raw `0x02F190`), `ccHomeIspSelectKind`. Base table
+`0x006028F0` points through `0x006E4AD8` to string `0x006E2FA0`,
+`ccHomeIspBase`. Resident placement does not extend the lifetime of either
+the method targets or the type-information records.
+
+The slot roles follow the owning callsites: construction invokes `+0x0C`;
+controller polling invokes `+0x10` and uses its integer result; presentation
+invokes `+0x14`; owner teardown at live `0x006C6844` invokes `+0x08` with
+`a0=object, a1=1` for each non-null entry, then clears its owner slot. All ten
+deleting wrappers were inspected. Each accepts the object in `a0` and a
+**signed 16-bit** delete flag in `a1`, performs its class cleanup, restores
+base table `0x006028F0`, frees through resident `0x00117000` only when that
+flag is positive, and returns the original object pointer in `v0`.
+
+This resolves the ten possible targets of the Collection teardown's indirect
+call and its constructor's initialization dispatch. It does not establish a
+universal virtual-table layout for all game classes, nor the full state/result
+semantics of the individual update methods. The full ten-object deletion occurs
+inside the existing ETC lifetime, before the resident releases the `0x80`-byte
+owner; no loader-driven discovery or method rebinding is involved.
 
 ### Overlay to resident
 
@@ -772,21 +920,76 @@ resident addresses. The busiest shared addresses are:
 | Resident address | BTL sites | ETC sites | Recovered role when established |
 | ---: | ---: | ---: | --- |
 | `0x00607600` | `716` | `100` | overlay-manager pointer used by the selector cache |
-| `0x006073F4` | `380` | `57` | unresolved |
+| `0x006073F4` | `380` | `57` | active draw-environment pointer; [renderer coordinates](renderer_coordinates.md) |
 | `0x006073FC` | `333` | `14` | resident core-object pointer; its CD/DVD-readiness byte `+0x504` is polled by the loader |
-| `0x00607470` | `92` | `19` | unresolved |
-| `0x006073D4` | `75` | `14` | unresolved |
-| `0x00607464` | `27` | `32` | unresolved |
+| `0x00607470` | `92` | `19` | font renderer pointer; [battle settings presentation](../localization/ui/battle/settings_presentation.md) |
+| `0x006073D4` | `75` | `14` | active render/light-environment pointer; [renderer coordinates](renderer_coordinates.md) |
+| `0x00607464` | `27` | `32` | transition controller pointer; [options](../localization/ui/options.md) |
 
 The decoded text of neither image writes `$gp`; it only consumes the inherited
 resident value. BTL's header-referenced constructor code, which is outside the
 decoded text span, adds reads of resident `0x00604E8C` and `0x00604E9C` plus
 address formation for resident `0x00607870`, and likewise does not replace
-`$gp`. There is no overlay-local fallback initializer. Any injected call that
-enters an overlay with a different `$gp` can therefore break even when the
-target function's explicit arguments are correct. Conversely, an overlay
-routine must preserve the resident `$gp` invariant expected by code on both
-sides of the call.
+`$gp`. There is no overlay-local `$gp` initializer. These references resolve
+to their established resident addresses only with the inherited value; the
+explicit arguments alone do not describe that dependency. The inspected
+overlay routines retain the resident `$gp` across the boundary.
+
+### Resident context does not extend returned-data lifetime
+
+BTL live `0x00875970` is a complete leaf lookup with this register contract:
+`a0` is ignored, `a1` indexes the absolute pointer array at `0x008BC610`,
+and `a2` is compared with signed-halfword keys. A non-null descriptor contains
+a signed-halfword count at `+0x00`, key-array pointer at `+0x04`, and record
+array pointer at `+0x08`. The routine scans keys in order and returns
+`record_array + matched_index * 0x440`, or zero on a missing descriptor/key.
+It does not bounds-check `a1`, copy a record, allocate memory, or validate
+the image identity. A negative or otherwise invalid code index can therefore
+read outside the examined pointer interval.
+
+The examined interval is exactly 66 words, live `0x008BC610-0x008BC718`
+(raw `0x207710-0x207818`, preserved `0x008BC5D0-0x008BC6D8`). Within this
+bounded code-index range `0..65`, 18 slots share descriptor `0x008D07D0`,
+slot 31 points to descriptor `0x008D14B0`, and 47 slots are null. This scan
+does not establish the supported domain outside those 66 indices.
+
+| Representative code/key | Descriptor | Key storage | Returned live record |
+| --- | ---: | ---: | ---: |
+| Code `0`, key `1` | `0x008D07D0`, count `1` | `0x008D0388`: `1` | `0x008D0390` |
+| Code `31`, key `1` | `0x008D14B0`, count `3` | `0x008D07E0`: `1,70,92` | `0x008D07F0` |
+| Code `31`, key `70` | same | same | `0x008D0C30` |
+| Code `31`, key `92` | same | same | `0x008D1070` |
+| Code `1`, any key | null | none | zero |
+
+The one-record range `0x008D0390-0x008D07D0` and three-record range
+`0x008D07F0-0x008D14B0` end exactly at their respective descriptor addresses.
+Both records and descriptors are BTL initialized-data bytes, not resident
+allocations. Code `0` is representative of the shared group; the other shared
+indices are `2,5,6,8,10,13,14,17,21,23,25,35,42,61,62,63,64`.
+The meaning of individual payload fields and these numeric keys is not
+established by this ABI investigation.
+
+All six identified non-constructor formations of `gp - 0x3180` in BTL feed
+this lookup. Calls at live `0x00794BE4`, `0x0079ADDC`, `0x007A9DF4`, and
+`0x007C2834` pass owner word `+0x56C` as `a1` and owner word `+0x1DC` as
+`a2`; calls at `0x007995C0` and `0x007E7AF0` use the same code word with
+keys zero and one respectively. Several retain the returned pointer in owner
+`+0x10C`. The normal returned data therefore depends on BTL residence even
+though every call supplies the address of resident word `0x00607870` in
+`a0`. The lookup overwrites `a0` with the descriptor pointer before reading
+through it, so the word cleared by the final constructor is not a lookup
+cache or owner of these records.
+
+The complete lookup bytes occupy raw `0x1C1A70-0x1C1AEC`, live
+`0x00875970-0x008759EC`, preserved `0x00875930-0x008759AC`. No function is
+recovered at that preserved start. The function labelled `FUN_00875970`
+begins 0x40 bytes later and decompiles only the record-address arithmetic;
+it omits the code-index lookup, key scan, and null return. Those missing
+branches were corroborated with instruction bytes. Direct searches for
+the exact GP displacement in load/store/address-forming instructions found
+no resident or ETC consumer, and the seven BTL address formations comprise
+these six calls plus the final constructor. This is an encoding-bounded
+negative; absolute or indirectly aliased access is not excluded.
 
 ### Resident to overlay
 
@@ -886,15 +1089,14 @@ why preserved decompiler prototypes can appear to reorder mixed integer and FP
 parameters; recover prototypes from register use and callsites, not the
 decompiler's displayed parameter order alone.
 
-Interposed assembly must preserve the machine width used by the callee-save
-sequence, not merely the low 32 bits suggested by a C prototype. For example,
-BTL `0x007D72E0` saves `s0-s2` with `sq`, `f20-f23` with `swc1`, and `ra` with
+The callee-save sequences preserve more than the low 32 bits suggested by
+an integer C prototype. BTL `0x007D72E0` saves `s0-s2` with `sq`,
+`f20-f23` with `swc1`, and `ra` with
 `sd`; its epilogue at `0x007D7514-0x007D7534` restores them with `lq`, `lwc1`,
 and `ld`. The full 128-bit contents of a saved EE GPR can therefore be live
-across a call. A shim that substitutes `sw/lw` for the observed `sq/lq` can
-corrupt upper lanes even if ordinary 32-bit integer tests appear correct.
-Neither side reloads `$gp` at the boundary, so preserving its resident value is
-part of the same obligation.
+across a call. This is the preserved width established by the instructions;
+it does not establish which upper lanes are semantically used by every caller.
+Neither side reloads `$gp` at the inspected boundary.
 
 A complete typed prototype catalog for the fixed-address surface has not been
 recovered.
@@ -943,6 +1145,38 @@ calls the supplied element constructor with `(element_address, 1)` for the
 requested count and can unwind already-constructed elements through an
 optional destructor. The two BTL uses above explicitly pass a null destructor.
 
+Following those constructor callees resolves the heap-allocation question for
+automatic BTL initialization. The complete nontrivial call families are
+`0x007064E0 -> 0x00706580`, the two array-construction calls and their element
+targets `0x007139F0` / `0x007506E0`, registration helper `0x00119A60`, scalar
+converter `0x00765C50`, and leaf `0x00875960`. None allocates heap memory or
+starts a worker. This conclusion is bounded to the nine header-referenced
+constructors and their ordinary callees; later application setup allocates
+objects separately.
+
+The recovered element contracts are concrete. Live `0x007139F0` clears six
+bytes and returns its input pointer; live `0x007506E0` writes `-1`, `-1`, and
+`0` to its three dwords and returns its input pointer. Live `0x007064E0`
+initializes the static object at `0x008D6A10`, and its leaf reset
+`0x00706580` clears two dwords at `+0x00/+0x04`, three pairs of byte/pointer
+records at `+0x08..+0x34`, and the byte/pointer pair at `+0x38/+0x3C`.
+None installs a virtual table or a heap owner.
+
+The final constructor also writes resident storage directly. At live
+`0x008D6100` it forms `a0 = gp - 0x3180 = 0x00607870`, then calls live
+`0x00875960` at `0x008D6104`. That complete four-instruction callee is
+`sw zero,0(a0); move v0,a0; jr ra; nop`. Therefore every actual BTL
+initialization clears this resident word; residence in the ELF does not imply
+preservation across BTL loads. The loader does not clear it itself.
+
+No functions are recovered at preserved starts `0x007139B0`,
+`0x007506A0`, or `0x00875920`; their complete bodies above were checked in
+raw bytes. The live/preserved pairs are respectively `0x007139F0/0x007139B0`,
+`0x007506E0/0x007506A0`, and `0x00875960/0x00875920`. The resident array
+helper's instruction body independently confirms that its only calls are the
+supplied constructor and optional destructor; both scoped callers pass a
+null destructor, and both supplied constructors return normally.
+
 The constructor interval ends at raw `0x2222A4`; every remaining byte through
 the BTL file end at `0x222300` is zero. There is no adjacent nonzero destructor
 array or other tail record for the loader to consume.
@@ -987,8 +1221,11 @@ node + 0x08 = object
 head        = node
 ```
 
-For BTL the node is `0x008D6A70`, the callback is BTL `0x0071A7A0`, and the
-object is `0x008D6A80`; both node and object lie in BTL BSS. The callback is a
+For BTL the node is `0x008D6A70..0x008D6A7B`, the callback is BTL
+`0x0071A7A0`, and the object is `0x008D6A80`; both node and object lie in BTL
+BSS. The constructor builds these arguments with `lui/addiu` pairs at Ghidra
+`0x008D5E84..0x008D5E98` before `jal 0x00119A60`. The neighboring BSS owners
+are listed with the [item cache](../gameplay/battle_item_inventory.md#item-cache). The callback is a
 deleting cleanup routine, but neither the overlay loader nor the selector
 walks or unlinks this list on replacement. A static instruction-reference scan
 of the scoped resident, BTL, and ETC images found only the resident helper's
@@ -1018,7 +1255,7 @@ rules in [`ee_memory_map/runtime_lifetimes.md`](ee_memory_map/runtime_lifetimes.
 and the reservation map in
 [`ee_memory_map/address_space.md`](ee_memory_map/address_space.md).
 
-For a runtime guard, the minimum useful header tuple is:
+The clean images have these header identity words at the common load base:
 
 ```text
 BTL: *(u32 *)0x006B3F00 == 0x336F574D
@@ -1030,11 +1267,11 @@ ETC: *(u32 *)0x006B3F00 == 0x336F574D
      *(u32 *)0x006B3F08 == 0x006B3F00
 ```
 
-Code that needs a particular clean build should additionally guard the relevant
-instruction/data bytes or external build identity; the header has no hash or
-version field. The tuple is only an instantaneous identity check: because the
-loader exposes no execution lock, the check and subsequent overlay call must
-also occur inside the resident mode's lifetime/synchronization invariant.
+The tuple does not identify a particular build: the header has no hash or
+version field. It describes the slot only at the instant it is read; the loader
+exposes no execution lock that binds a header read to a later overlay call.
+The normal front-end sequencing is established above, while retained worker
+callbacks and calls outside that chain require separate lifetime evidence.
 
 ## Evidence strength and unknowns
 
@@ -1046,7 +1283,13 @@ also occur inside the resident mode's lifetime/synchronization invariant.
 | No runtime relocation or symbol resolution | Complete loader call path, exact file exhaustion, absolute encoded references | High for this executable and these two images |
 | Shared resident `$gp` | ELF `.reginfo` plus GP-relative instructions in both images | High |
 | No format-level exit hook | Complete header consumption and loader path | High |
-| Broader mode-specific teardown semantics | Only representative state-machine paths traced | Medium |
+| Normal front-end load/callback ordering | Startup thread entry, direct manager dispatch, synchronous loader/constructor path | High for the traced front-end chain |
+| Delayed thread retirement and callback order | Request helper and both removal paths through callback, termination, and deletion | High; callback assignments remain incomplete |
+| Collection resident tables with ETC methods/type names | All ten construction cases, 40 method pointers, type-name chains, deleting wrappers, and owner teardown | High for this boundary |
+| BTL process child/singleton cleanup boundary | Complete `FUN_001EC890` destructor and linked BTL cleanup methods | High for this boundary; nested polymorphic targets remain incomplete |
+| Automatic BTL initialization allocates no heap memory | Complete nine-entry constructor family and resolved ordinary callees, including both array-element leaves | High for the clean constructor family |
+| BTL initialization clears resident `0x00607870` | Final constructor argument formation and complete four-instruction callee | High |
+| BTL lookup returns overlay data while ignoring resident context | Complete byte-decoded leaf, six callsites, bounded 66-slot pointer array, descriptors and keys | High for the examined code range; payload meaning unresolved |
 
 Still unresolved:
 
@@ -1057,12 +1300,16 @@ Still unresolved:
   nominal data span demonstrably includes executable initializer code.
 - Typed prototypes and semantic names for the complete fixed-address export
   surface.
-- The exact synchronization invariant that prevents a mode switch from
-  replacing an overlay while another thread is still executing it.
-- Any overlay-specific cleanup routines beyond the representative resident
-  state machines. None is a generic header-driven exit hook.
+- Worker completion and indirect retained callback assignments outside the serialized
+  front-end chain, including resident workers that may call overlay methods.
+- Payload semantics and the supported code domain beyond `0..65` for BTL's
+  recovered `0x440` record lookup; its returned pointers and complete key arrays
+  are established without a player-facing interpretation.
+- Indirect targets and cleanup semantics beyond the resolved Collection
+  tables, BTL process child/singleton boundary, and constructor records.
+  The recovered application cleanup is separate from the header and loader.
 
-Evidence came from raw little-endian header/segment inspection, the resident
-ELF program headers and `.reginfo`, direct R5900 disassembly, and the preserved
-Ghidra exports under `@disassembly/NA2/exports/`. No source binary or
-disassembly artifact was modified.
+Evidence comes from Ghidra code, data, XREFs, and byte searches; raw
+little-endian header/segment inspection; the resident ELF program headers and
+`.reginfo`; direct R5900 disassembly; and the preserved Ghidra exports under
+`@disassembly/NA2/exports/`.

@@ -2,11 +2,8 @@
 
 File-backed changes to NA2's rendering behavior.
 
-The unfinished proper-widescreen research, contract, and validation plan are in
-[Proper widescreen](../designs/proper_widescreen.md).
-The comparative donor evidence and mapped NA2 candidates are in the
-[NUN6 widescreen reference](nun6/rendering/widescreen.md) and its
-[site inventory](nun6/rendering/widescreen_sites.tsv).
+Research for proper widescreen is in
+[Proper widescreen](planned/proper_widescreen.md).
 
 ## Native 16:9 horizontal scale
 
@@ -31,6 +28,12 @@ It affects every call through the shared rendering-state writer. It does not
 provide the selective full-screen 2D coverage, bounded-UI layout, camera/effect
 coverage, or media policy required for proper widescreen.
 
-The guarded implementation lives directly in the `rendering` catalog subtree.
-Its release-configuration leaf is currently `false`; internal application uses
-the binary-patcher engine without exposing a module in the data model.
+The guarded implementation is the
+`rendering.native_16_9_horizontal_scale` setting in
+[`catalog.modcat`](../../na228_builder/catalog.modcat), backed by
+[`rendering.json`](../../na228_builder/patches/rendering/rendering.json).
+[`base.jsonc`](../../na228_builder/configurations/base.jsonc) sets it to
+`false`; [`release.jsonc`](../../na228_builder/configurations/release.jsonc)
+maps the in-game `widescreen` option to that setting. Its catalog description
+explicitly calls the setting experimental because the interface does not scale
+properly.

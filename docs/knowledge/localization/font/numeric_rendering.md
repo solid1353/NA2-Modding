@@ -1,7 +1,7 @@
 # Numeric and settings text rendering
 
-Clean NA2 and NUN5 formatting and layout differences for Save/Load, Battle and
-Practice Settings, Jutsu rows, and Ninja Song values.
+Retail NA2 (`SLPS-25837`) and NUN5 formatting and layout differences for
+Save/Load, Battle and Practice Settings, Jutsu rows, and Ninja Song values.
 
 ## Research coverage
 
@@ -15,9 +15,11 @@ Practice Settings, Jutsu rows, and Ninja Song values.
   layouts are established.
 - **Unresolved or untested:** numeric callers outside these families and every
   possible fight-dependent Ninja Song row.
-- **Deliberate exclusions and overlap:** NA228 formatting hooks and validation
-  belong to [Font](../../../features/localization/font.md); translation wording
-  belongs to the translation importer.
+- **Deliberate exclusions and overlap:** glyph metrics belong to
+  [Renderer metrics](renderer_metrics.md); translation wording belongs to
+  [NA2 and NUN5 text correspondence](../translation_importer.md); Ninja Song result
+  screens belong to
+  [Battle Results presentation](../ui/battle/battle_results.md).
 - **Evidence limitations:** paired screens cover representative values; unseen
   values share the established formatter paths but were not all displayed.
 

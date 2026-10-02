@@ -1,95 +1,91 @@
 # Battle-entity ownership and lifecycle
 
-This document maps the clean NA2 v2.28 resident/`BTL.BIN` ownership path for
-the two primary fighters and the battle objects created with them. It covers
-allocation, registries, lookup, side mapping, removal, and destruction. It does
-not assign gameplay meanings to fields merely because they sit in a fighter or
-battle object, and it does not cover Adventure.
+This document maps the retail NA2 (`SLPS-25837`) resident/`BTL.BIN` ownership
+path for the two primary fighters and the battle objects created with them. It
+covers allocation, registries, lookup, side mapping, removal, and destruction.
+It does not assign gameplay meanings to fields merely because they sit in a
+fighter or battle object, and it does not cover Adventure.
 
 `side 0` means Player 1 and `side 1` means Player 2/COM below. A selected
 support ID is configuration; it is not itself a pointer to a live object.
 
 ## Research coverage
 
-- **Assigned scope:** the clean NA2 `BTL.BIN` fighter/battle-entity ownership
-model: manager and registry roots, Player 1/Player 2/support/entity slot
-mapping, create/initialize/remove/destroy paths, active or linked flags, lookup
-contracts, parent/child ownership, stable proven fields, and resident-file to
-runtime-overlay address mapping. The only canonical output owned by this lane
-was this document.
-- **Exploration depth:** coverage was deep but not globally exhaustive. The investigation followed the
-complete resident setup/teardown chain through `FUN_001E9980`,
-`FUN_001EC3B0`, `FUN_001EF330`, `FUN_001EEFD0`, and the surrounding support
-lifecycle calls at `FUN_001EC7A0`, `FUN_001EDB00`, `FUN_001EDD10`, and
-`FUN_001EC890`. Bounded BTL audits covered the four-registry hub and generic
-intrusive-list family at live `0x00709240..0x00709F40`; registry-A creation,
-transition, and lookup helpers at live `0x006D5640..0x006D59D0`; the primary
-fighter/control creation and lookup paths; transient-manager construction,
-list ownership, lookup, insertion, removal, and deferred-child paths centered
-on live `0x00729890`, `0x0072B190..0x0072B9B0`, and
-`0x007343A0..0x00736080`; and the dynamic-support owner/factory/common-base
-family at live `0x00885210..0x00887FD0`. The support selector dispatcher was
-decoded across every case below its `0x44` cutoff, while specialization audits
-were bounded to their construction/destruction shape and two proven
-support-to-transient lineage sites rather than every class-specific behavior.
-The resident character table at `0x005A2900..0x005A2BF0` was mechanically
-counted as 94 eight-byte entries, but the 74 distinct nonnull concrete factory
-entrypoints were not all individually audited.
-
-  Several searches were exhaustive within a defined static artifact: all 25
-decoded BTL direct references to global support owner `0x00607888`; direct
-BTL call sites to the common transient creator and side-resolution helpers;
-direct decoded calls to the primary-fighter creator and resident publication
-  lookups; and every address row in the exact BTL map against the canonical
-  address conversion. These scans establish
-direct-reference coverage only; computed calls, data-driven dispatch, and code
-not recovered as instructions are not implied absent.
-
-- **Confirmed coverage:** the three independent lifetime
-roots, exact side-slot formulas, hub/container/node layouts, startup graph and
-borrowed cross-links, primary/control lookup behavior, coordinator-owned versus
-borrowed fields, registry-A current-node mechanics, transient actor serial and
-linked-state contracts, deferred manager-owned children, support fixed-slot
-publication and removal, generation/counter namespaces, selector-driven class
-allocation, common support ownership, callback-enable flags, and non-owning
-support-lineage tokens.
-- **Unresolved or untested:** support selectors and per-side scalar records,
-ownership of common
-support words `+0x80..+0x90`, the middle support counter's nonzero writer, the
-full concrete primary-fighter factory/destructor universe, indirect creation
-or registry-mutation routes not exposed by direct-call scans, and whether
-last-match lookup behavior is an intentional duplicate policy.
-- **Deliberate exclusions and overlap:** Adventure was deliberately excluded, as were damage formulas, substitution,
-60-FPS/timing/animation work, widescreen/camera, media, localization, AI
-decision logic, and status-effect semantics. Fields touching those areas were
-followed only far enough to prove an ownership, identity, publication, or
-  lifetime edge.
-- **Evidence limitations:** validation was static and read-only against the identified clean
-ELF/BTL assets and maintained exports. No runtime capture or execution test was
-performed, so runtime-only mutation, allocator-failure behavior in practice,
-and data-dependent indirect paths remain unverified unless explicitly stated
-as static control flow.
+- **Assigned scope:** the retail NA2 `BTL.BIN` fighter/battle-entity ownership
+  model: manager and registry roots, Player 1/Player 2/support/entity slot
+  mapping, create/initialize/remove/destroy paths, active or linked flags,
+  lookup contracts, parent/child ownership, stable proven fields, and
+  resident-file to runtime-overlay address mapping.
+- **Exploration depth:** static and deep but not globally exhaustive. The
+  resident setup/teardown chain (`FUN_001E9980`, `FUN_001EC3B0`,
+  `FUN_001EF330`, `FUN_001EEFD0`) and the surrounding support lifecycle calls
+  were followed completely. Bounded BTL audits covered the hub and generic
+  intrusive-list family (live `0x00709240..0x00709F40`), the `ccCameraCtrl`
+  helpers (`0x006D5640..0x006D59D0`), primary fighter/`ccCommand` creation and
+  lookup, the transient-actor manager (`0x00729890`,
+  `0x0072B190..0x0072B9B0`, `0x007343A0..0x00736080`), and the dynamic-support
+  owner, factory, and common base (`0x00885210..0x00887FD0`). Every support
+  factory case below `0x44` was decoded; specializations were read only for
+  construction/destruction shape and two support-to-transient lineage sites.
+  All 94 rows of the resident character table and all 74 distinct factories,
+  constructors, final vtables, and deleting destructors were read. Direct-
+  reference scans were exhaustive for global `0x00607888` (25 BTL references),
+  the transient creator and side resolvers, the primary-fighter creator and
+  resident publication lookups, and the 74 concrete constructors. Coordinator
+  state 3 was followed into `FUN_0024E960`; the `ccSkillHNW001`,
+  `ccSkillTYO000B`, `ccSkillFOR000`, and `ccSkillANB000` skill actors were
+  read for class identity, factory admission, and destruction, and the
+  shared-float skill callers for class identity only.
+- **Confirmed coverage:** the three independent lifetime roots, exact
+  side-slot formulas, hub/container/node layouts and the generic node pass
+  contract, startup graph and borrowed cross-links, primary/`ccCommand` lookup
+  behavior, coordinator-owned versus borrowed fields, `ccCameraCtrl`
+  current-node mechanics, transient actor serial and linked-state contracts,
+  deferred manager-owned children, support fixed-slot publication and removal,
+  the generation allocator and counter namespaces, selector-driven class
+  allocation, the complete table-selected fighter destructor chain and common
+  fighter-owned children, common support ownership and borrowed animation
+  pointers, side-record storage roles, callback-enable flags as ownership
+  gates, non-owning support-lineage tokens, the coordinator timeout-marker
+  branch, and the traced skill actors' allocation, authored spawn route,
+  local state machine (`ccSkillHNW001`), and destructor edges.
+- **Unresolved or untested:** indirect creation or registry-mutation routes
+  not expressed as static direct references; the generic-base root selector
+  word `+0x10` beyond its observed startup use; the domain names of support
+  sentinels `0x24/0x25/0x26`; class-specific support behavior; the meaning of
+  transient-actor byte `+0x206`; whether the fighter/`ccCommand` last-match
+  scans express an intended duplicate policy; original coordinator state
+  names; and the complete subordinate and base destruction lifetime of
+  the skill actors, including other skill entrypoints.
+- **Deliberate exclusions and overlap:** Adventure, damage formulas,
+  substitution, frame pacing, animation, media, localization, AI decision
+  logic, and status-effect semantics; fields touching those areas were
+  followed only far enough to prove an ownership, identity, publication, or
+  lifetime edge. Camera computation belongs to
+  [Battle camera](battle_camera.md); support behavior (request gates, gauge,
+  counters, scheduled passes, disable) to
+  [Battle support mechanics](support_mechanics.md); session construction,
+  per-update scheduling, and teardown order to
+  [Battle lifecycle](battle_lifecycle.md); class-specific fighter methods to
+  [Character action callbacks](character_action_callbacks.md); skill-actor
+  damage arithmetic to [Damage](damage.md), combo contribution to
+  [Combo accounting](combo_accounting.md), interaction records to
+  [Collision](collision.md), and the `ccSkillCtrl` service to
+  [Battle auxiliary services](battle_auxiliary_services.md).
+- **Evidence limitations:** static, read-only analysis of the identified
+  retail ELF and BTL images; it establishes no observed execution,
+  allocator-failure behavior, or complete census of computed or data-driven
+  control flow.
 
 ## Evidence identity and address conventions
 
-The clean resident and BTL inputs are identified in
-[Standard game file identities](../game/files/file_identities.md).
-
-Encoded
-absolute pointers and `jal` targets inside the overlay are already **live**
-addresses. Consequently, those targets can make Ghidra create a symbol at the
-live numeric address even though the displayed payload at that address is
-actually the target's code `0x40` bytes late. Such a symbol is not a reliable
-function boundary.
-
-For example, the hub constructor begins at raw `0x055340`, is live at
-`0x00709240`, and its bytes appear at preserved-export `0x00709200`. Resident
-`FUN_001EF330` calls `0x00709240`, not `FUN_00709200` as a runtime address.
-The generic node constructor begins at raw `0x055BA0`, live `0x00709AA0`, and
-displayed `0x00709A60`; Ghidra also creates a misleading `FUN_00709AA0` at an
-interior instruction because overlay calls encode the live target. All BTL
-addresses in this document are live addresses unless explicitly labeled
-`raw` or `export`.
+The retail resident and BTL inputs and their live/raw/display address
+conversion are defined in
+[Retail game file identities](../game/files/file_identities.md#address-conventions).
+All BTL addresses in this document are live addresses unless explicitly
+labeled `raw` or `export`; resident addresses have no overlay bias. A preserved
+Ghidra `FUN_` label at an encoded live BTL target can be an interior false
+start rather than the true function entry.
 
 ## Ownership model
 
@@ -102,16 +98,16 @@ one fielded support object per side.
 resident global 0x00607600
 `- manager (0xDF8 bytes)
    |- +0xDE4 / +0xDE8  borrowed aliases to primary fighters
-   `- +0xDF0 / +0xDF4  borrowed aliases to per-side control nodes
+   `- +0xDF0 / +0xDF4  borrowed aliases to per-side `ccCommand` nodes
 
 resident global 0x00607604
 `- battle-state object (0x38 bytes)
-   |- +0x14  borrowed alias to the selected registry-A root node
+   |- +0x14  borrowed alias to the selected ccCamera01 root node
    `- +0x18  owning pointer to the 0x10-byte BTL hub
-      |- +0x00  owning pointer to registry A
-      |- +0x04  owning pointer to the per-side control registry
-      |- +0x08  owning pointer to the fighter registry
-      `- +0x0C  owning pointer to the shared-match registry
+      |- +0x00  owning pointer to ccCameraCtrl (camera registry)
+      |- +0x04  owning pointer to ccCommandCtrl (per-side control registry)
+      |- +0x08  owning pointer to ccPlayerCtrl (fighter registry/coordinator)
+      `- +0x0C  owning pointer to ccFieldCtrl (stage registry)
 
 resident global 0x00607654
 `- borrowed mirror of battle-state +0x18
@@ -121,10 +117,10 @@ resident global 0x00607820
    `- +0x14..+0x18  owning singly linked actor chain
 
 resident global 0x00607888
-`- dynamic-support manager (0x24 bytes)
+`- ccBuddyAtkCtrl dynamic-support manager (0x24 bytes)
    |- +0x04  owning side-0 support-object slot
    |- +0x08  owning side-1 support-object slot
-   `- +0x14  embedded generation-ID allocator
+   `- +0x14  embedded ccBdySerialNo generation-ID allocator
 ```
 
 The ownership classification follows the destructors, not the pointer graph:
@@ -136,13 +132,18 @@ The ownership classification follows the destructors, not the pointer graph:
   the hub when requested.
 - Each container destructor reaches live `0x00709F40`, which unlinks and
   virtual-destructs every node.
-- Fighter/control/root/shared pointers linked at node `+0x20..+0x28` are
-  cross-references. The linker at live `0x00709480` never transfers them to a
-  distinct owner, and teardown does not free through those fields.
+- Fighter/`ccCommand`/camera/`ccField` pointers linked at node `+0x20..+0x28`
+  are cross-references. The linker at live `0x00709480` never transfers them to
+  a distinct owner, and teardown does not free through those fields.
 
-This produces an exact destruction order: registry A, per-side controls,
-fighters, then shared-match nodes. Manager aliases are invalidated before that
-node destruction begins.
+This produces an exact destruction order: `ccCameraCtrl`, `ccCommandCtrl`,
+`ccPlayerCtrl`, then `ccFieldCtrl` nodes. Manager aliases are invalidated
+before that node destruction begins.
+
+The registry class names come from their RTTI, established in
+[Battle lifecycle](battle_lifecycle.md#graph-registries-and-node-contract);
+they name structures and do not assign meanings to otherwise unexplained
+fields.
 
 ## Resident manager and battle-state lifecycle
 
@@ -161,9 +162,9 @@ pointers:
 | `+0xDE0` | `0` | reserved/zero fighter alias |
 | `+0xDE4` | `1` | side-0 / Player-1 primary fighter |
 | `+0xDE8` | `2` | side-1 / Player-2 primary fighter |
-| `+0xDEC` | `0` | reserved/zero control alias |
-| `+0xDF0` | `1` | side-0 / Player-1 control node |
-| `+0xDF4` | `2` | side-1 / Player-2 control node |
+| `+0xDEC` | `0` | reserved/zero `ccCommand` alias |
+| `+0xDF0` | `1` | side-0 / Player-1 `ccCommand` node |
+| `+0xDF4` | `2` | side-1 / Player-2 `ccCommand` node |
 
 The usable mapping is therefore `array[side + 1]`. The index-zero entries are
 not support slots. They remain zero in the creation path.
@@ -176,7 +177,7 @@ formulas are:
 | selected primary character ID | `manager + 0x4C + side * 0x28` |
 | selected support ID | `manager + 0x68 + side * 0x28` |
 | published primary-fighter alias | `manager + 0xDE4 + side * 4` |
-| published control-node alias | `manager + 0xDF0 + side * 4` |
+| published `ccCommand`-node alias | `manager + 0xDF0 + side * 4` |
 
 The first pair is configuration consumed to construct or present a battle;
 the second pair is populated only after live objects exist. Resident
@@ -196,34 +197,33 @@ primary creator live `0x00709860` are the side-0 and side-1 calls in initial
 graph construction, and the only resident calls to primary lookup live
 `0x007099C0` are the two setup-time publications in `FUN_001EF330`. Generic
 unlink live `0x00709EA0` and fighter-specific removal in `FUN_0024FD80` do not
-clear or republish manager `+0xDE4/+0xDE8`. A patch that manually removes an
-aliased primary fighter must therefore update the alias itself; registry
-membership alone does not make a stale borrowed pointer safe.
+clear or republish manager `+0xDE4/+0xDE8`. Removing a fighter from the registry
+therefore does not itself invalidate its published borrowed alias. The alias
+and registry-membership lifetimes are separate contracts.
 
 ### Battle-state and hub publication
 
-Resident `FUN_001EC3B0` allocates a `0x38`-byte battle-state object, calls
-`FUN_001EEC80`, publishes it at `0x00607604`, and calls `FUN_001EF330`.
-The relevant `FUN_001EF330` path is:
+The `0x38`-byte battle-state object at `0x00607604` and its construction order
+are owned by [Battle lifecycle](battle_lifecycle.md#session-construction). Its
+ownership contract with the hub is:
 
-1. Allocate `0x10` bytes when battle-state `+0x18` is null.
-2. Call live BTL `0x00709240`, the hub constructor.
-3. Store the hub at battle-state `+0x18` and global `0x00607654`.
-4. Call live BTL `0x00709480` to create and cross-link the initial nodes.
-5. Resolve sides `0` and `1` through live `0x00709800` and publish the results
-   at manager `+0xDF0/+0xDF4`.
-6. Resolve sides `0` and `1` through live `0x007099C0` and publish the results
-   at manager `+0xDE4/+0xDE8`.
-7. Call live `0x007096E0` and store its registry-A result at battle-state
-   `+0x14`.
-8. Call live `0x007095E0`, which invokes node virtual slot `+0x0C` across all
-   four registries.
+- When battle-state `+0x18` is null, `FUN_001EF330` allocates `0x10` bytes,
+  constructs the hub through live `0x00709240`, and stores the same pointer at
+  battle-state `+0x18` (owner) and global `0x00607654` (borrowed mirror).
+- Live `0x00709480` then creates and cross-links the initial nodes. The
+  `ccCommand` nodes are published at manager `+0xDF0/+0xDF4` (live
+  `0x00709800`) before the fighters at `+0xDE4/+0xDE8` (live `0x007099C0`), and
+  the `ccCamera01` root returned by live `0x007096E0` is stored at battle-state
+  `+0x14` as a borrowed alias.
+- Live `0x007095E0` then runs the node-start pass (node slot `+0x0C`) across
+  all four registries; see
+  [Generic node passes](#generic-node-passes).
 
-Resident `FUN_001EECD0` calls `FUN_001EEFD0`, resets the outer object, and frees
-it when requested. `FUN_001EEFD0` destroys other resident-owned battle
-subsystems first, zeros all six manager-array entries, calls live BTL
-`0x00709280(hub, 1)`, then clears the state and global hub pointers. The
-manager never frees a fighter or control node directly.
+During teardown (order in
+[Battle lifecycle](battle_lifecycle.md#teardown-order)), `FUN_001EEFD0` zeros
+all six manager-array entries before calling live `0x00709280(hub, 1)`, then
+clears battle-state `+0x18` and global `0x00607654`. The manager never frees a
+fighter or `ccCommand` node directly.
 
 ## Hub and registry construction
 
@@ -232,14 +232,14 @@ Live `0x00709240` zeros hub `+0x00/+0x04/+0x08/+0x0C` and calls live
 
 | Hub field | Allocation | Constructor | Proven registry contents at initial creation |
 | ---: | ---: | --- | --- |
-| `+0x00` | `0x18` | live BTL `0x006D5640` | one specialized registry-A/root node |
-| `+0x04` | `0x10` | live BTL `0x006F0F90` | two side control nodes |
+| `+0x00` | `0x18` | live BTL `0x006D5640` | one `ccCamera01` main-camera root node |
+| `+0x04` | `0x10` | live BTL `0x006F0F90` | two per-side `ccCommand` nodes |
 | `+0x08` | `0x34` | resident `FUN_0024E0B0` | two primary fighter nodes |
-| `+0x0C` | `0x10` | live BTL `0x00709150` | one shared-match node |
+| `+0x0C` | `0x10` | live BTL `0x00709150` | one `ccField` node |
 
 All four inherit the generic list prefix described below. Their virtual
 destructors all clear owned nodes through live `0x00709F40`; the larger
-fighter registry and specialized registry A also destroy their own additional
+`ccPlayerCtrl` and `ccCameraCtrl` registries also destroy their own additional
 state.
 
 ### Derived fighter registry/coordinator
@@ -266,7 +266,16 @@ The stable derived fields are:
 | `+0x30` | owned `0x3C`-byte auxiliary initialized by `FUN_002068A0` |
 
 `FUN_0024E380(registry, state)` writes `+0x14 = state` and clears
-`+0x18/+0x1C/+0x20`. The constructor invokes it with state `1`.
+`+0x18/+0x1C/+0x20`. The constructor invokes it with state `1`. Resident
+`FUN_00250820` returns `+0x14`, or `-1` when the registry is unavailable.
+
+Other subsystems reach this state word through global `0x00607654` → hub
+`+0x08` → `+0x14`. Word `+0x14` is the coordinator state, not a pointer, so a
+gate that tests that chain for zero is testing **coordinator state == 0**. The
+support request and gauge gates in
+[Battle support mechanics](support_mechanics.md#manual-request-gates-and-return-states)
+use exactly that test; it is not a support-pointer or fighter-count test.
+
 `FUN_0024E250` first destroys every list node through live `0x00709F40`, then
 tears down and frees `+0x30`, then frees the nested allocation and object at
 `+0x2C`. It does not destroy through `+0x24/+0x28`. State handlers populate
@@ -282,16 +291,43 @@ destruction. `FUN_002504B0` subsequently calls the generic live
 or a nonzero virtual-`+0x10` result. Fighter removal is therefore not limited
 to the generic bit-0 request.
 
+### Coordinator timeout-marker check
+
+Coordinator slot `+0x0C`, `FUN_002504B0`, bounds state `+0x14` below `7`
+(instruction bytes through `0x00250688`) and dispatches through the seven-entry
+table at `0x005C3050..0x005C306B`. State 3 selects `0x0025050C`, which calls
+`FUN_0024E960`.
+
+Within `FUN_0024E960`, a missing borrowed fighter at `+0x24/+0x28` resets
+words `+0x14/+0x18/+0x1C/+0x20` and returns. With both pointers
+present, only local state `+0x18 == 0` with old counter `+0x1C == 0` reads the
+timeout marker through `FUN_001EC290` at `0x0024EA38`. A set marker writes
+local state 1 and counter 0 at `0x0024EA50..0x0024EA5C`, then bypasses the
+clear-marker branch's participant active-bit clears and calls at
+`0x0024EA68..0x0024EAE4`. The marker is not retested on later calls with a
+nonzero old counter or local state 1. Local state 0 also has an independent
+counter-based advance to state 1, so arrival in state 1 alone does not prove
+that the marker was set.
+
+`FUN_0024E380` rewrites `+0x14` and clears `+0x18/+0x1C/+0x20` but keeps the
+two borrowed pointers, separating this one-time branch choice from participant
+lifetime. Neither
+this handler nor `0x002504B0` stores to the marker; its producer and reset
+belong to [Match outcomes](match_outcomes.md#terminal-detector-and-classifier).
+Original state names and broader participant effects remain unresolved.
+
+### Initial graph creation
+
 Live `0x00709480` creates the initial graph in this order:
 
 | Result | Creator | Allocation/initializer | Owning registry |
 | --- | --- | --- | --- |
-| registry-A root | `0x00709660` | `0x006DDE10` allocates `0x1D0`, then `0x006D6800` initializes it | hub `+0x00` |
+| `ccCamera01` root | `0x00709660` | `0x006DDE10` allocates `0x1D0`, then `0x006D6800` initializes it | hub `+0x00` |
 | control side 0 | `0x00709780(hub, 0)` | allocates `0xC0`, calls `0x006EF4E0` | hub `+0x04` |
 | control side 1 | `0x00709780(hub, 1)` | allocates `0xC0`, calls `0x006EF4E0` | hub `+0x04` |
 | fighter side 0 | `0x00709860(hub, 0)` | character factory dispatch | hub `+0x08` |
 | fighter side 1 | `0x00709860(hub, 1)` | character factory dispatch | hub `+0x08` |
-| shared-match node | `0x00709A20` | allocates `0x90`, calls `0x007087A0` | hub `+0x0C` |
+| `ccField` node | `0x00709A20` | allocates `0x90`, calls `0x007087A0` | hub `+0x0C` |
 
 Each successful creator appends its result to the owning registry. Allocation
 failure leaves that result null and the linker conditionally omits affected
@@ -300,7 +336,7 @@ cross-references.
 This construction path assumes that its small structural allocations succeed;
 it is not a transactional or generally OOM-safe graph builder. Live
 `0x007092E0` attempts all four registry allocations independently and publishes
-each result, including null. The registry-A creator checks its registry before
+each result, including null. The `ccCameraCtrl` creator checks its registry before
 allocating a node, and the fighter creator skips its character factory when
 hub `+0x08` is null. In contrast, the control and shared-node creators guard
 their newly allocated node but not the destination registry before calling
@@ -320,28 +356,32 @@ After successful construction, live `0x00709480` writes:
 | fighter 1 `+0x20` | fighter 0 |
 | fighter 0 `+0x24` | control 0 |
 | fighter 1 `+0x24` | control 1 |
-| fighter 0 `+0x28` | shared-match node |
-| fighter 1 `+0x28` | shared-match node |
+| fighter 0 `+0x28` | `ccField` node |
+| fighter 1 `+0x28` | `ccField` node |
 | control 0 `+0x20` | fighter 0 |
 | control 1 `+0x20` | fighter 1 |
 | control 0 `+0x24` | fighter 1 |
 | control 1 `+0x24` | fighter 0 |
-| registry-A root `+0x20` | fighter 0 |
-| registry-A root `+0x24` | fighter 1 |
+| `ccCamera01` root `+0x20` | fighter 0 |
+| `ccCamera01` root `+0x24` | fighter 1 |
 
-The reciprocal fighter `+0x20` relation agrees with the live-capture evidence
-in [Character identity in battle](character_ids.md). The ownership proof is
+The reciprocal fighter `+0x20` relation agrees with the runtime observations
+in [Character identity in battle](character_ids.md); its later null fallback
+and opponent-geometry use are owned by
+[Target selection](target_selection.md#paired-opponent-and-geometry-refresh).
+The ownership proof is
 stronger than field shape: all of these targets are ultimately destroyed by
 their own registry, not by the referring node.
 
-The shared-match node demonstrates nested ownership without changing that
+The `ccField` node demonstrates nested ownership without changing that
 conclusion. Its live constructor `0x007087A0` constructs an embedded generic
 container at node `+0x60`, allocates an owned `0xAD0`-byte subobject and stores
 it at `+0x70`, and initializes both. Its destructor at live `0x007088A0`
 destroys/frees `+0x70`, clears the embedded list through `0x00709F40`, then
 calls the generic node destructor. Fighter `+0x28` is still only a reference
-to this independently registry-owned parent object. The original semantic name
-of the shared object is not established.
+to this independently registry-owned parent object. The node's embedded
+`ccGameObjCtrl` and `ccBgControl` content belongs to
+[Stages](stages.md#live-environment-ownership-and-construction).
 
 ## Primary-fighter factory and lookup
 
@@ -352,8 +392,8 @@ of the eight-byte entry at resident `0x005A2900 + character_id * 8`. There is
 no BTL-local character-ID bounds check before that indirect call. Entry zero's
 factory word is null; entry one begins with factory `0x00250C00`.
 
-The inspected character factories allocate their concrete fighter size and
-call resident `FUN_002145D0` followed by `FUN_002151E0`. The common base
+All 74 table-selected concrete constructors call resident `FUN_002145D0`
+followed by `FUN_002151E0`, with their class setup between those calls. The common base
 constructor calls live generic-node constructor `0x00709AA0`.
 `FUN_002151E0` copies the selected character record's identity to fighter
 `+0x68` and copies descriptor side bit 0 to fighter byte `+0x60` bit 0. The
@@ -373,9 +413,13 @@ The common fighter destructor is resident `FUN_00214840`. It tears down the
 common fighter's owned subobjects and embedded lists, calls live generic-node
 destructor `0x00709B60` without deleting through that base call, and finally
 frees the complete concrete object when its own delete flag requests it.
-Concrete character destructors inspected in the factory family chain into this
-common destructor. Neither the manager alias nor fighter cross-references are
-used as owners during this chain.
+Every one of the 74 concrete deleting destructors calls
+`FUN_00214840(object, 0)`, then frees the complete allocation through resident
+`FUN_00117000` only when its own signed 16-bit delete argument is positive.
+The zero base argument prevents a second free. Each also calls common fighter
+cleanup `FUN_00215720`; class-specific cleanup can precede or follow that call.
+Neither the manager alias nor fighter cross-references are used as owners
+during this chain.
 
 On success, live `0x00709860` appends the concrete fighter to hub `+0x08`.
 Live `0x007099C0(hub, side)` then:
@@ -389,16 +433,179 @@ It does not test generic node flag byte `+0x00`. The resident setup calls it
 once for each side and publishes the returned aliases at manager
 `+0xDE4/+0xDE8`.
 
-## Per-side control registry
+### Complete table-selected concrete lifetime paths
 
-Live `0x00709780` allocates a `0xC0` node, calls live `0x006EF4E0(node, side)`,
+The table has 94 rows, occupies resident `0x005A2900..0x005A2BF0`
+(exclusive end), and corresponds to ELF file offsets `0x004A2A00..0x004A2CF0`.
+Row 0 is `{0, 0}`. The 93 populated rows select exactly 74 distinct factories;
+20 rows share factory `0x00250C00`. Their record differences and selector
+eligibility are owned by [Character identity in battle](character_ids.md#character-definition-table).
+
+Every factory allocates the size below through `FUN_00117150`, conditionally
+calls its constructor when allocation is nonnull, and returns that object.
+Every constructor installs the listed vtable at object `+0x50`. The destructor
+column is the exact resident pointer read from that vtable's `+0x08` slot.
+All addresses in this table are resident addresses, with no overlay bias.
+
+| Character ID(s) | Factory | Allocation | Constructor | Final vtable | Deleting destructor |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 1, 8, 9, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 44, 45, 74, 88 | `0x00250C00` | `0x5980` | `0x00250C50` | `0x005DB170` | `0x00250D20` |
+| 2 | `0x00253BD0` | `0x58E0` | `0x00253C20` | `0x005DB120` | `0x00253CE0` |
+| 3 | `0x002546C0` | `0x5950` | `0x00254710` | `0x005DB0D0` | `0x00254800` |
+| 4 | `0x00255810` | `0x5530` | `0x00255860` | `0x005DB0A0` | `0x00255B60` |
+| 5 | `0x00258120` | `0x5890` | `0x00258170` | `0x005DB070` | `0x00258230` |
+| 6 | `0x00258E50` | `0x5750` | `0x00258EA0` | `0x005DB020` | `0x00258F90` |
+| 7 | `0x0025A420` | `0x56C0` | `0x0025A470` | `0x005DAFF0` | `0x0025A530` |
+| 10 | `0x0025AAF0` | `0x5280` | `0x0025AB40` | `0x005DAFC0` | `0x0025AC50` |
+| 11 | `0x0025B840` | `0x5670` | `0x0025B890` | `0x005DAF90` | `0x0025B950` |
+| 12 | `0x0025CC60` | `0x5270` | `0x0025CCB0` | `0x005DAF40` | `0x0025CD70` |
+| 13 | `0x0025D920` | `0x5630` | `0x0025D970` | `0x005DAEF0` | `0x0025DA30` |
+| 14 | `0x0025EF70` | `0x5040` | `0x0025EFC0` | `0x005DAEA0` | `0x0025F0B0` |
+| 15 | `0x002605F0` | `0x5800` | `0x00260640` | `0x005DAE70` | `0x00260700` |
+| 16 | `0x00260F40` | `0x5820` | `0x00260F90` | `0x005DAE40` | `0x00261120` |
+| 17 | `0x00263600` | `0x5710` | `0x00263650` | `0x005DADF0` | `0x00263730` |
+| 18 | `0x00265AC0` | `0x5380` | `0x00265B10` | `0x005DADC0` | `0x00265CD0` |
+| 19 | `0x0026BB50` | `0x56B0` | `0x0026BBA0` | `0x005DAD90` | `0x0026BC60` |
+| 22 | `0x0026E500` | `0x57C0` | `0x0026E550` | `0x005DAD60` | `0x0026E610` |
+| 34 | `0x0026F7A0` | `0x5270` | `0x0026F7F0` | `0x005DAD30` | `0x0026F8B0` |
+| 35 | `0x00270730` | `0x50C0` | `0x00270780` | `0x005DAD00` | `0x00270840` |
+| 36 | `0x00271DC0` | `0x4A00` | `0x00271E10` | `0x005DACD0` | `0x00271ED0` |
+| 37 | `0x002734D0` | `0x5860` | `0x00273520` | `0x005DACA0` | `0x00273610` |
+| 38 | `0x00275320` | `0x58B0` | `0x00275370` | `0x005DAC70` | `0x00275460` |
+| 39 | `0x00276AD0` | `0x5D40` | `0x00276B20` | `0x005DAC40` | `0x00276BF0` |
+| 40 | `0x002788E0` | `0x5030` | `0x00278930` | `0x005DAC10` | `0x00278A20` |
+| 41 | `0x0027AC50` | `0x54E0` | `0x0027ACA0` | `0x005DABE0` | `0x0027AD60` |
+| 42 | `0x0027B4D0` | `0x52A0` | `0x0027B520` | `0x005DABB0` | `0x0027B5E0` |
+| 43 | `0x0027CED0` | `0x5530` | `0x0027CF20` | `0x005DAB80` | `0x0027CFE0` |
+| 46 | `0x0027DAE0` | `0x58A0` | `0x0027DB30` | `0x005DAB50` | `0x0027DBF0` |
+| 47 | `0x0027E7C0` | `0x5840` | `0x0027E810` | `0x005DAB20` | `0x0027EA60` |
+| 48 | `0x00280D90` | `0x59C0` | `0x00280DE0` | `0x005DAAF0` | `0x00280EF0` |
+| 49 | `0x00283230` | `0x5E30` | `0x00283280` | `0x005DAAC0` | `0x00283370` |
+| 50 | `0x00285510` | `0x50C0` | `0x00285560` | `0x005DAA90` | `0x00285630` |
+| 51 | `0x00286850` | `0x5470` | `0x002868A0` | `0x005DAA60` | `0x002869A0` |
+| 52 | `0x00287C50` | `0x5270` | `0x00287CA0` | `0x005DAA30` | `0x00287D60` |
+| 53 | `0x00288D10` | `0x4AE0` | `0x00288D60` | `0x005DAA00` | `0x00288E60` |
+| 54 | `0x0028BF50` | `0x4B70` | `0x0028BFA0` | `0x005DA9D0` | `0x0028C0A0` |
+| 55 | `0x00291580` | `0x5400` | `0x002915D0` | `0x005DA9A0` | `0x002916F0` |
+| 56 | `0x00294550` | `0x5690` | `0x002945A0` | `0x005DA970` | `0x00294660` |
+| 57 | `0x00295D60` | `0x5B60` | `0x00295DB0` | `0x005DA920` | `0x00295FA0` |
+| 58 | `0x0029B050` | `0x5690` | `0x0029B0A0` | `0x005DA8F0` | `0x0029B1D0` |
+| 59 | `0x0029BC20` | `0x5CC0` | `0x0029BC70` | `0x005DA8C0` | `0x0029BE80` |
+| 60 | `0x0029E990` | `0x5630` | `0x0029E9E0` | `0x005DA890` | `0x0029ECC0` |
+| 61 | `0x002A49F0` | `0x5720` | `0x002A4A40` | `0x005DA860` | `0x002A4B90` |
+| 62 | `0x002A8DF0` | `0x5D00` | `0x002A8E40` | `0x005DA830` | `0x002A90A0` |
+| 63 | `0x002AE9B0` | `0x5140` | `0x002AEA00` | `0x005DA800` | `0x002AEBE0` |
+| 64 | `0x002B3790` | `0x5C00` | `0x002B37E0` | `0x005DA7D0` | `0x002B3A00` |
+| 65 | `0x002B7240` | `0x5F00` | `0x002B7290` | `0x005DA780` | `0x002B7380` |
+| 66 | `0x002B8AE0` | `0x5CC0` | `0x002B8B30` | `0x005DA750` | `0x002B8C80` |
+| 67 | `0x002BCC60` | `0x6880` | `0x002BCCB0` | `0x005DA700` | `0x002BD0B0` |
+| 68 | `0x002C03A0` | `0x5C70` | `0x002C03F0` | `0x005DA6D0` | `0x002C0530` |
+| 69 | `0x002C1BA0` | `0x69C0` | `0x002C1BF0` | `0x005DA680` | `0x002C1E00` |
+| 70 | `0x002C6510` | `0x5870` | `0x002C6560` | `0x005DA650` | `0x002C6630` |
+| 71 | `0x002C8E70` | `0x5710` | `0x002C8EC0` | `0x005DA600` | `0x002C9030` |
+| 72 | `0x002CBC10` | `0x5090` | `0x002CBC60` | `0x005DA5D0` | `0x002CBD20` |
+| 73 | `0x002CE550` | `0x5840` | `0x002CE5A0` | `0x005DA5A0` | `0x002CE8C0` |
+| 75 | `0x002D2A10` | `0x5660` | `0x002D2A60` | `0x005DA570` | `0x002D2BA0` |
+| 76 | `0x002D4280` | `0x4F40` | `0x002D42D0` | `0x005DA540` | `0x002D4410` |
+| 77 | `0x002D7D20` | `0x6F60` | `0x002D7D70` | `0x005DA510` | `0x002D7F10` |
+| 78 | `0x002DAEA0` | `0x6260` | `0x002DAEF0` | `0x005DA4E0` | `0x002DB030` |
+| 79 | `0x002E2A70` | `0x50E0` | `0x002E2AC0` | `0x005DA4B0` | `0x002E2C60` |
+| 80 | `0x002E6490` | `0x6230` | `0x002E64E0` | `0x005DA440` | `0x002E6800` |
+| 81 | `0x002E8BC0` | `0x6240` | `0x002E8C10` | `0x005DA3D0` | `0x002E8CF0` |
+| 82 | `0x002EB3C0` | `0x5D80` | `0x002EB410` | `0x005DA3A0` | `0x002EB530` |
+| 83 | `0x002EBEF0` | `0x54C0` | `0x002EBF40` | `0x005DA370` | `0x002EC080` |
+| 84 | `0x002EE150` | `0x5950` | `0x002EE1A0` | `0x005DA340` | `0x002EE2B0` |
+| 85 | `0x002EFF80` | `0x59F0` | `0x002EFFD0` | `0x005DA310` | `0x002F00D0` |
+| 86 | `0x002F0F00` | `0x5750` | `0x002F0F50` | `0x005DA2E0` | `0x002F1060` |
+| 87 | `0x002F18E0` | `0x5630` | `0x002F1930` | `0x005DA2B0` | `0x002F1A70` |
+| 89 | `0x002F3B40` | `0x5900` | `0x002F3B90` | `0x005DA280` | `0x002F3C60` |
+| 90 | `0x002F83B0` | `0x52C0` | `0x002F8400` | `0x005DA250` | `0x002F84F0` |
+| 91 | `0x002FB1D0` | `0x5AD0` | `0x002FB220` | `0x005DA1E0` | `0x002FB3E0` |
+| 92 | `0x002FD5D0` | `0x5310` | `0x002FD620` | `0x005DA190` | `0x002FD7A0` |
+| 93 | `0x00300090` | `0x6200` | `0x003000E0` | `0x005DA140` | `0x003003D0` |
+
+The minimum allocation is `0x4A00` (ID 36); the maximum is `0x6F60`
+(ID 77). These are complete concrete allocation sizes, not sizes of the common
+fighter prefix or total nested heap consumption.
+
+All 74 constructors set generic node bit 0 when `FUN_002151E0` returns
+nonzero, but still return the constructed object. The hub creator appends a
+nonnull returned fighter without testing that bit. An initialization error
+therefore requests later list removal rather than synchronous factory rollback.
+Lookup can still select that linked removal-requested node because it ignores
+the flag byte. This is a static failure-path contract; its occurrence during
+ordinary play is not established.
+
+Concrete classes can own extra children; their combat methods belong to
+[Character action callbacks](character_action_callbacks.md#complete-bounded-classslot-census).
+For example, ID 78's constructor `0x002DAEF0` publishes allocated
+children at `+0x6254/+0x6258`; destructor `0x002DB030` cleans and frees those
+before the common fighter destructor. ID 80's destructor `0x002E6800` cleans
+and frees `+0x6210/+0x6214/+0x6218`, two `+0x621C` entries, and two
+`+0x6224` entries. ID 92's destructor `0x002FD7A0` similarly cleans
+`+0x5300/+0x5304/+0x5308`. These remain children of the concrete fighter;
+they are not additional primary slots in the hub or manager alias arrays.
+
+### Common fighter-owned children
+
+The common base table `0x005D9FE0` points through resident RTTI
+`0x005C30A8` to string `ccPlayer` at `0x004080C8`. Concrete class tables
+replace that base table during construction. All 74 concrete destructors call
+both `FUN_00215720` and `FUN_00214840(object, 0)` before their final free.
+Those common routines establish the following child lifetimes:
+
+| Fighter region | Storage/ownership | Teardown evidence |
+| ---: | --- | --- |
+| `+0xE68/+0xE6C/+0xE70/+0xE74` | four optional owning handle slots | `FUN_00215E70` calls `FUN_00199190`, `FUN_001951A0`, `FUN_001B7570`, and `FUN_0018B4C0`, respectively, with delete flag `1`, then nulls each slot |
+| `+0x950` | optional allocated list owner and its allocated nodes | `FUN_00215720` follows owner head `+0x04` and node next `+0x18`, releases each optional node `+0x14` handle through `FUN_00199190(..., 1)`, frees nodes and owner, and nulls fighter `+0x950` |
+| `+0xB30` | optional allocated owner, its `+0x00` handle, and its child list | `FUN_00215720` follows owner head `+0x10` and child next `+0x0C`, releases child `+0x00` through `FUN_00196990(..., 1)`, frees children, releases owner `+0x00` through `FUN_001B7570(..., 1)`, frees owner, and nulls fighter `+0xB30` |
+| `+0x8C4` and nested `+0x8D8` | embedded owning generic lists | constructor `FUN_00304F40` and destructor `FUN_00304F90(..., -1)`; both lists are cleared through live `0x00709F40` without separately freeing embedded storage |
+| `+0xBD0/+0xC80/+0xD30` | three embedded arrays, each containing two `0x50`-stride objects | construction through `FUN_00119290` with `FUN_001BEA30`; reverse array teardown through `FUN_00119220` with `FUN_001BEA90` |
+| `+0xDD0/+0xDF4/+0xE18` | three embedded resident-managed objects | constructed through `FUN_001DD8D0`; destroyed in reverse order through `FUN_001DD920(..., -1)` |
+| `+0xEA4` | embedded derived owning generic container | generic constructor live `0x00709BC0`; `FUN_00214840` clears its nodes through live `0x00709F40`, without a separate container allocation free |
+
+The `+0x950` cleanup also passes node `+0x0C` to
+`FUN_00196620(handle, 0, 0, 0)`. That call alone does not establish ownership
+of the referenced handle, so it is not classified as another owned child.
+`FUN_00215720` additionally releases and clears the per-side global at
+`0x006076B8 + side * 4`; its combo-state layout and behavior belong to
+[Damage](damage.md#native-combo-owner).
+
+`FUN_002145D0` also constructs an embedded generic node at `+0x7D0` and
+seven `0x24`-stride objects at `+0x1B8..+0x290`. `FUN_00214840` calls the
+embedded node destructor with `-1`, restores the seven objects' tables, and
+calls the outer generic-node destructor with `0`. Embedded addresses are
+therefore subobjects of the same fighter allocation, not independent primary
+entities or separately freed outer allocations.
+
+### Bounded creation and mutation-route coverage
+
+Resident constructor cross-references for each of the 74 table-selected
+classes contain one direct call, from that class's allocating factory. A scan
+for all 74 encoded constructor `jal` targets found no matches in BTL. The BTL
+factory-table materialization was found in the known hub creator; inspected
+resident uses of low immediate `0x2900` with a different high half address
+`0x006B2900`, not the character table at `0x005A2900`.
+
+Exact little-endian stored pointers to live generic append `0x00709E60`,
+unlink `0x00709EA0`, and primary creator `0x00709860` were absent from both
+the resident ELF and BTL memory scans. This closes those exact-address callback
+candidates. It does not exclude addresses assembled from other constants,
+register-computed calls, or containers reached through indirect data. The known
+direct startup route and teardown graph are established; a global absence of
+other creation or registry-mutation routes is not.
+
+## `ccCommandCtrl` per-side control registry
+
+Live `0x00709780` allocates a `0xC0` `ccCommand` node, calls live
+`0x006EF4E0(node, side)`,
 and appends the result to hub `+0x04`. The constructor calls the generic node
 constructor, installs its own vtable, initializes owned storage, and calls
 live `0x006EF600` for side binding.
 
 The stable side-binding fields are:
 
-| Control-node field | Proven value/role |
+| `ccCommand` field | Proven value/role |
 | ---: | --- |
 | `+0x60` | `u32` side, exactly `0` or `1` in this creation path |
 | `+0x64` | pointer to `0x006073FC + side * 0x78 + 0x1C`, a per-side input-state slice |
@@ -417,19 +624,15 @@ not test generic flag bit 0. Resident setup publishes its two results at
 manager `+0xDF0/+0xDF4`. These pointers are control/input-history objects, not
 support fighters.
 
-## Registry-A current-node semantics
+## `ccCameraCtrl` current-node semantics
 
-Registry A is the `ccCameraCtrl` camera registry, and its initial `0x1D0`
+Hub `+0x00` is the `ccCameraCtrl` camera registry, and its initial `0x1D0`
 node is the `ccCamera01` main camera; node key `+0xA8` is the camera's output
-object. The per-side control registry is `ccCommandCtrl`, the fighter registry
-is `ccPlayerCtrl`, and the shared-match registry is `ccFieldCtrl`, whose node
-is the `ccField` stage owner. The four hub registries are named from RTTI in
-[Battle lifecycle](battle_lifecycle.md), and the camera classes are described
-in [Battle camera](battle_camera.md).
+object. The camera classes are described in [Battle camera](battle_camera.md).
 
 The `0x18`-byte container at hub `+0x00` extends the generic list prefix with:
 
-| Registry-A field | Proven behavior |
+| `ccCameraCtrl` field | Proven behavior |
 | ---: | --- |
 | `+0x10` | current/new node pointer |
 | `+0x14` | previous node with the same lookup key, or null |
@@ -449,13 +652,21 @@ The relevant lookups are:
   node byte `+0x60` with `wanted_current & 1`;
 - hub wrapper live `0x00709740(hub, key)` calls `0x006D5960` with
   `wanted_current = 1`; and
-- live `0x007096E0(hub)` returns the last registry-A node whose generic-base
+- live `0x007096E0(hub)` returns the last `ccCameraCtrl` node whose generic-base
   word `+0x10` is zero. `0x00709660` explicitly writes zero there when the
   initial insertion makes the registry count one, and resident setup stores
   the lookup result at battle-state `+0x14`.
 
-The original meaning of key `+0xA8` and of the root-selector word `+0x10` is
-not established. Their comparison and current-node mechanics are established.
+Duplicate camera keys are part of the retail graph: the main camera and the
+controller's four slot cameras all use output object `0x00609160`. The four
+slot cameras enter through plain append live `0x00709E60` and start with
+`+0x60 = 0`. A last-key lookup can therefore return an inactive camera;
+filtered lookup and the registry's current pointer are separate interfaces.
+Live `0x006D5A50` stores the borrowed output object at node `+0xA8` and an
+independently allocated `0x50`-byte engine camera at `+0xA4`. Camera ownership
+and switching details belong to [Battle camera](battle_camera.md#camera-classes-and-activation).
+The original domain meaning of generic-base selector word `+0x10` remains
+unassigned beyond its proven startup/root selection.
 
 ## Generic intrusive node and list contracts
 
@@ -491,7 +702,7 @@ Live `0x00709AA0` initializes this stable node prefix:
 | `+0x04` | `u32` | zero |
 | `+0x08` | `u32` | zero |
 | `+0x0C` | `s32` | `-1` |
-| `+0x10` | `s32` | `-1`; specialized by registry A |
+| `+0x10` | `s32` | `-1`; specialized by `ccCameraCtrl` |
 | `+0x14` | pointer | base callback/data pointer `0x00604B60`, replaceable by subclasses |
 | `+0x18` | pointer | previous intrusive-list node |
 | `+0x1C` | pointer | next intrusive-list node |
@@ -502,21 +713,39 @@ Live `0x00709AA0` initializes this stable node prefix:
 Live `0x00709B60` restores the base vtable, clears marker `+0x02`, and frees
 the node when requested.
 
-The generic maintenance passes are:
+### Generic node passes
 
-| Live function | Raw | Export bytes | Effect |
-| --- | ---: | ---: | --- |
-| `0x00709BF0` | `0x055CF0` | `0x00709BB0` | call each node's vtable slot `+0x0C` |
-| `0x00709C70` | `0x055D70` | `0x00709C30` | update/remove pass described below |
-| `0x00709D60` | `0x055E60` | `0x00709D20` | call each node's vtable slot `+0x14` |
-| `0x00709DE0` | `0x055EE0` | `0x00709DA0` | call each node's vtable slot `+0x18` |
+Every hub registry node carries its vtable at node `+0x50`. The generic
+container walkers fix the meaning of five node slots:
+
+| Node slot | Walker (live / raw / export) | Contract |
+| ---: | --- | --- |
+| `+0x08` | `0x00709EA0` / `0x055FA0` / `0x00709E60`, reached from removal and from container destruction through `0x00709F40` | virtual destructor, called with delete flag `1` after unlink |
+| `+0x0C` | `0x00709BF0` / `0x055CF0` / `0x00709BB0` | node start; the hub broadcast `0x007095E0` runs it across all four registries once after initial graph construction |
+| `+0x10` | `0x00709C70` / `0x055D70` / `0x00709C30` | phase-1 update; removal rule below |
+| `+0x14` | `0x00709D60` / `0x055E60` / `0x00709D20` | phase-2 callback on each node |
+| `+0x18` | `0x00709DE0` / `0x055EE0` / `0x00709DA0` | phase-3 callback on each node |
 
 Live `0x00709C70` saves `next` before operating on a node. If node flag byte
-`+0x00` bit 0 is set, it immediately unlinks and destroys that node. Otherwise
-it calls node virtual slot `+0x10`; a nonzero return also unlinks and destroys
-the node. Bit 0 therefore means **remove on the next container maintenance
-pass**. A clear bit proves only that this immediate removal request is absent;
-it does not by itself prove every higher-level meaning of “active.”
+`+0x00` bit 0 is set, it immediately unlinks and destroys that node without
+calling slot `+0x10`. Otherwise it calls node slot `+0x10`; a nonzero return
+also unlinks and destroys the node. Bit 0 therefore means **remove on the next
+phase-1 pass**. A clear bit proves only that this immediate removal request is
+absent; it does not by itself prove every higher-level meaning of “active.”
+Class-specific uses of bits 1 and 2 (for example the fighter's update gate) are
+not part of this generic contract.
+
+The registries reach these walkers through container vtable slots `+0x0C`,
+`+0x10`, and `+0x14` (phases 1, 2, and 3; container slot `+0x08` is the
+registry destructor). `ccCommandCtrl` and `ccFieldCtrl` use the generic thunks
+`0x006D67E0`, `0x006D67A0`, and `0x006D67C0` for those three slots;
+`ccCameraCtrl` uses `0x006D59D0` for the same phase-1 walk; `ccPlayerCtrl`
+overrides all three with its coordinator methods (see
+[Derived fighter registry/coordinator](#derived-fighter-registrycoordinator)).
+The node-start slot is the empty return `0x006D6770` for `ccCamera`,
+`ccDummyCamera`, `ccPMCCamera`, `ccCamera01`, and `ccField`; `ccCommand`
+supplies `0x006F0DF0`. When each phase runs during a battle update is owned by
+[Battle lifecycle](battle_lifecycle.md#per-update-dispatch).
 
 ## Transient-actor manager and side ownership
 
@@ -597,8 +826,8 @@ meaning is not assumed here.
 Manager `+0x10` starts at zero. Insertion stores its pre-increment value in
 actor `+0x8C`, so serial zero is valid for the first actor. Removal does not
 decrement the source, and lookup tests no flag beyond reachability from the
-manager head. Unlike support generation allocation, this serial allocator has
-no decoded collision avoidance at 32-bit wrap; if duplicates ever coexist,
+manager head. This serial allocator has no decoded live-serial collision check
+at 32-bit wrap; if duplicates ever coexist,
 live `0x00735F90` returns the first linked match.
 
 ### Factory, descriptor, and side mapping
@@ -607,8 +836,8 @@ Live `0x00736080` is the common create-and-link wrapper. It accepts only
 selector `0` or `1`; any other value returns null. It computes
 `stored_side = selector ^ 1`, calls class factory live `0x00729890`, calls
 initializer live `0x0072B1F0`, installs initial transform/state through virtual
-slot `+0x54`, and finally links the actor into the global manager. A mechanical
-scan finds 87 direct BTL calls to this wrapper.
+slot `+0x54`, and finally links the actor into the global manager. There are
+87 decoded direct BTL calls to this wrapper.
 
 After a valid selector, the wrapper does not test the class-factory result for
 null before calling the initializer and dereferencing it. This path assumes
@@ -638,8 +867,8 @@ stable fields:
 Live constructor `0x0072B190` calls the generic node constructor. Reset helper
 live `0x0072B4A0` initializes signed byte `+0x8A` to `-1`; initializer live
 `0x0072B1F0` stores its fourth argument there. In the common wrapper that
-fourth argument is the inverted `stored_side`, so the wrapper's second
-argument must not be mislabeled as the stored owner side.
+fourth argument is `stored_side = selector ^ 1`, so the wrapper's selector
+argument is the inverse of the stored owner side.
 
 Three small live helpers resolve the stored affiliation tag:
 
@@ -649,9 +878,8 @@ Three small live helpers resolve the stored affiliation tag:
 | `0x00734160` | `0x080260` | `0` / `1` / other | opponent fighter at manager `+0xDE8` / `+0xDE4` / null |
 | `0x007341A0` | `0x0802A0` | `0` / `1` / other | own fighter at manager `+0xDE4` / `+0xDE8` / null |
 
-A mechanical scan of decoded direct BTL calls finds 34 calls to
-`0x00734130`, 52 to `0x00734160`, and 50 to `0x007341A0`; those are reference
-counts, not a claim that every decoded caller was exercised. This is a common
+Decoded direct BTL calls number 34 to `0x00734130`, 52 to `0x00734160`, and
+50 to `0x007341A0`. This is a common
 side-owner convention for that actor family. Field `+0x8A` is a side tag, not
 a parent pointer, and the manager's primary-fighter aliases supply the actual
 ownership context. It is not proven to be universal across every BTL node
@@ -681,36 +909,24 @@ owned-child relationship rather than immediate recursive ownership.
 
 ## Dynamic support-object owner
 
-The resident manager fields `+0x68/+0x90` are the selected support IDs for
-sides 0/1, as established in [Battle damage](damage.md). The
-corresponding derived implementation selector is at
-`manager + 0x6C + side * 0x28`. None is consumed by the initial graph creator:
+The resident manager fields `+0x68/+0x90` are the selected support-list IDs for
+sides 0/1, and `manager + 0x6C + side * 0x28` is the derived implementation
+selector. Their configuration writers, sentinel resolution, and code mapping
+are owned by
+[Battle support mechanics](support_mechanics.md#setup-and-selected-support).
+None is consumed by the initial graph creator:
 
 - live `0x00709860` reads only manager `+0x4C/+0x74`, the selected **primary
   character** IDs;
-- live `0x00709480` creates exactly two primary fighters, two side-control
-  nodes, one registry-A node, and one shared-match node; and
-- resident `FUN_001EF330` publishes only primary-fighter and control aliases in
-  the two three-entry manager arrays.
+- live `0x00709480` creates exactly two primary fighters, two `ccCommand`
+  nodes, one `ccCamera01` node, and one `ccField` node; and
+- resident `FUN_001EF330` publishes only primary-fighter and `ccCommand`
+  aliases in the two three-entry manager arrays.
 
-The fields also have a configuration-only normalization path. Resident
-`FUN_001FE540` copies the two primary IDs and two support IDs from a setup
-record, swapping the two source pairs together when its side-order byte is
-nonzero. In a separate setup path, resident `FUN_001F2AC0` writes a selected
-primary ID at manager `+0x74` and writes `0x26` at the paired side-1 support
-field `+0x90`.
-
-The true live entry `0x00886250` (preserved export label
-`FUN_00886210`) later loops over the two `0x28`-byte side records. Whenever
-`manager + 0x68 + side * 0x28` equals `0x26`, it calls live
-`0x00885C30(primary_id, 0)`, truncates the result to a byte, and writes that
-resolved value back to the same support-ID field. The function maps the
-resolved support/primary pair to a byte and stores it at the paired `+0x6C`
-implementation-selector field. Thus `0x26` is a configuration sentinel
-resolved from the primary selection; it is not an entity pointer, list index,
-or persistent runtime slot. Values `0x24` and `0x25` also receive special-case
-treatment elsewhere, but this ownership pass did not establish domain names
-for any of the three sentinels.
+Setup live `0x00886250` replaces a support-ID value of `0x26` with the
+resolved support-list ID in that same field and stores the derived selector at
+`+0x6C`. Sentinel `0x26` is therefore configuration resolved before battle; it
+is not an entity pointer, list index, or persistent runtime slot.
 
 ### Separate owner and exact side slots
 
@@ -722,6 +938,15 @@ live constructor `0x00886CB0`, and publishes the result. Resident
 `FUN_001EC890` calls live `0x00885290`, which virtual-destroys this owner and
 clears the global.
 
+Its retail class is `ccBuddyAtkCtrl`: resident table `0x005FC2C8` points to
+live RTTI `0x008D3388`, whose name pointer is live `0x008BFD70`. The
+embedded allocator table `0x005FC2D8` similarly points through live
+`0x008D3390` to `ccBdySerialNo` at `0x008BFD80`. Primary table slot `+0x08`
+is live `0x00886DE0`: it calls `0x00887990(owner, -1)` to destroy and null
+both children, restores the embedded table, and frees the outer owner only
+when its signed 16-bit delete argument is positive. Resident table/overlay ABI
+details belong to [Overlay ABI](../runtime/overlay_abi.md).
+
 The stable manager layout is:
 
 | Offset | Type | Proven role |
@@ -730,63 +955,52 @@ The stable manager layout is:
 | `+0x04` | pointer | owning side-0 / Player-1 support-object slot |
 | `+0x08` | pointer | owning side-1 / Player-2 support-object slot |
 | `+0x0C..+0x11` | two 3-byte side records | configuration/control bytes detailed below; not pointers or occupancy |
-| `+0x14` | embedded object | generation-ID allocator vtable |
-| `+0x18` | `u32` | next support-object generation ID, initialized to `1` |
-| `+0x1C` | `u8` | allocator wrap/reuse marker, initialized to zero |
+| `+0x14` | embedded object | `ccBdySerialNo` generation-ID allocator vtable; allocator contract in [Request, class creation, and repeated calls](#request-class-creation-and-repeated-calls) |
+| `+0x18` | `u32` | next support-object generation ID (allocator `+0x04`), initialized to `1` |
+| `+0x1C` | `u8` | allocator wrap/reuse marker (allocator `+0x08`), initialized to zero |
 | `+0x20` | `u8` | manager-local one-shot latch, initialized to one and cleared by the main pass |
+
+The constructor clears both slots and initializes both side records to
+`{0, 1, 0}`. No support object is appended to the hub registries or the
+`0x00607820` transient-actor chain.
 
 Each side record is `owner + 0x0C + side * 3`:
 
 | Record byte | Initialization | Proven later writer/use |
 | ---: | ---: | --- |
-| `+0x00` | `0` | live `0x00886250` writes one of the paired results from live `0x00885CE0`; support setup code reads it as a signed control value |
-| `+0x01` | `1` | explicit getter live `0x00882630` and setter live `0x00882670`; multiple support specializations gate behavior on equality with `1` |
-| `+0x02` | `0` | live `0x00886250` writes a signed result from the `0x008D1BB0` mapping table, with local default `2` |
+| `+0x00` | `0` | support color variant; written by setup live `0x00886250` from color resolver live `0x00885CE0` |
+| `+0x01` | `1` | Linked Mode: Manual (`0`) / Auto (`1`), the Practice row-4 setting in [Practice mode](practice_mode.md#rows-local-values-and-manager-storage); getter live `0x00882630`, setter live `0x00882670` |
+| `+0x02` | `0` | recharge-rate class; written by setup live `0x00886250` (default `2`); read by resident `FUN_002380C0` to initialize fighter `+0x78` |
 
-The original meanings of these three values are unresolved, but their storage
-class is not: they are per-side scalar state. Getter/setter and normalization
-do not follow them as addresses, and support presence remains solely
-`owner + 0x04 + side * 4 != 0`.
+These are per-side scalar state; no getter, setter, or normalization path
+follows them as addresses. Support presence means the pointer stored at
+`owner + 0x04 + side * 4` is nonnull. The color rules, resolved-code and
+recharge tables, and each byte's request and gauge effects belong to
+[Battle support mechanics](support_mechanics.md#ownership-model). The selected
+support-list ID, derived implementation code, three-byte side record, and
+live object slot are separate storage and identity domains.
 
-Live `0x00886950` allocates a generation value for each new support object and
-live `0x008872E0` stores it at object `+0x120`. Before wrap it advances the
-`+0x18` sequence directly; in reuse mode it compares candidates against the
-two currently slotted objects' `+0x120` values. The field is therefore a
-numeric generation ID, not a pointer to the manager or the other support.
-
-The allocator contract is exact. Its input object is the embedded owner region
-at `+0x14`: embedded `+0x04` is the current candidate and embedded `+0x08` is
-the reuse marker. With the marker clear, live `0x00886950` returns the current
-candidate and increments it. When the candidate is `0xFFFFFFFF`, it returns
-that value, sets the reuse marker, resets the stored candidate to zero, and
-immediately advances the next candidate to one. With reuse active, it compares the
-candidate with an array containing the two current slot generations (zero for
-an empty slot), advances past collisions, and returns the first free value.
-This namespace is independent of side and of the transient manager's `+0x8C`
-actor serials.
-
-BTL also keeps a separate two-by-three array of signed 16-bit counters at
-`0x008DCE90 + side * 6`. Live `0x00886BB0` zeros all six values. The first
-halfword is incremented once after each successful new support allocation and
-is returned by live `0x00886C20(side)`; slot destruction does not decrement it,
-so it is a cumulative creation counter since the most recent reset, not current
-occupancy. Live `0x00886C60(side, delta)` adds a signed delta to the third
-halfword. The middle halfword is reset on the audited path, but no domain name
-or direct nonzero writer was established. None of these counters is an object
-pointer or generation ID.
+BTL also keeps a separate BSS array of three signed 16-bit counters per side at
+`0x008DCE90 + side * 6`, zeroed by live `0x00886BB0`. The first is incremented
+after each successful new support allocation and read by live
+`0x00886C20(side)` (resident caller `0x00224280`); slot destruction does not
+decrement it. The second is incremented inline at live `0x00889850` by the
+common reason handler `0x00889540`, which takes the side from support byte
+`+0xE4`; an invalid side there reaches an explicit zero-address assertion. The
+third is adjusted only through live `0x00886C60(side, delta)`, called from the
+lineage path at live `0x00886B3C`. Their meanings and reset conditions belong to
+[Battle support mechanics](support_mechanics.md#support-counters-and-notification-suppression).
+None is an object pointer, current occupancy count, or generation ID.
 
 ### Request, class creation, and repeated calls
 
-Resident `FUN_00238340`, the per-fighter manual support-request handler, reads
-the hub mirror, follows hub `+0x08`, and requires the coordinator state at
-registry `+0x14` to be zero. Resident `FUN_00238540`, called immediately after
-it, uses the same gate. This is a coordinator-state test, not a support pointer
-or fighter-list-count test. Its only direct resident caller is at
-`0x0024DCA4`. When the request is accepted, it calls live
-`0x00885490(fighter_side)`, which follows global `0x00607888` and calls live
-`0x008872E0(owner, side)`. The resident function does not allocate directly;
-this BTL call is the class factory and publisher. The related behavioral path
-is documented in [Battle support mechanics](support_mechanics.md).
+Resident manual request handler `FUN_00238340` (gates and return handling in
+[Battle support mechanics](support_mechanics.md#manual-request-gates-and-return-states),
+including the coordinator-state test described in
+[Derived fighter registry/coordinator](#derived-fighter-registrycoordinator))
+calls live `0x00885490(fighter_side)`, which follows global `0x00607888` and
+calls live `0x008872E0(owner, side)`. The resident function does not allocate;
+this BTL call is the class factory and publisher.
 
 For side `0/1`, the factory uses exact slot
 `owner + 0x04 + side * 4` and reads the derived class selector from resident
@@ -798,47 +1012,79 @@ new object receives generic node flag-byte bits 1 and 2, receives its generation
 ID at `+0x120`, and the request returns `1`.
 
 If the side slot is already occupied, the factory neither appends nor replaces
-the object. It calls the existing object's virtual slot `+0x24`; a nonzero
-result makes the request return `2`, and a zero result makes it return `0`.
-Resident `FUN_00238340` accepts both `1` and `2`. Thus this owner implements two
-fixed **dynamic** side slots, with at most one fielded support object per side,
-not a general list and not a pair of pre-created startup entities.
+the object; it returns `2` or `0` from the existing object's virtual `+0x24`
+query. Thus this owner implements two fixed **dynamic** side slots, with at
+most one fielded support object per side, not a general list and not a pair of
+pre-created startup entities.
 
 For a new object, the precise publication order is significant. Every class
 allocation is checked before its constructor, but all cases then converge on
-code that unconditionally stores the result into the selected owner slot and
-immediately dereferences its vtable. A null allocation therefore does not
-produce a clean request failure; the path assumes allocation success. With a
-valid object, the slot becomes visible **before** virtual initializer `+0x1C`
-runs, before flag bits 1 and 2 are set, and before generation `+0x120` is
-assigned. Generation assignment snapshots both current slots after this
-publication (the new constructor-cleared `+0x120` contributes zero), calls live
-`0x00886950`, stores the returned ID, and only then increments the side's
-cumulative creation counter and returns `1`. No alternate slot or rollback
-pointer is retained.
+the slot store at live `0x008876C8`, which unconditionally stores the result
+into the selected owner slot and immediately dereferences its vtable. A null
+allocation therefore does not produce a clean request failure; the path
+assumes allocation success. With a valid object, the slot becomes visible
+**before** virtual initializer `+0x1C` runs, before flag bits 1 and 2 are set,
+and before generation `+0x120` is assigned. Generation assignment snapshots
+both current slots after this publication (the new constructor-cleared
+`+0x120` contributes zero), calls the allocator at live `0x00887778`, stores
+the returned ID, and only then increments the side's cumulative creation
+counter and returns `1`. No alternate slot or rollback pointer is retained.
 
-The complete factory split is structural rather than semantic. All selectors
-not named in the table but below `0x44` use the default row. “Final vtable” is
-the pointer present when the common virtual initializer is invoked; several
-small specializations deliberately call a broader constructor and then replace
-its vtable.
+The factory branch bodies span live `0x008872E0..0x00887808` (raw
+`0x1D33E0..0x1D3908`). The split is structural rather than semantic: all
+selectors below `0x44` not named in the table use the default row. “Final
+vtable” is the pointer present when the common virtual initializer is invoked;
+several small specializations call a broader constructor and then replace its
+vtable (intermediate table `0x005FC0C0` is replaced for `0x15..0x17` and
+`0x38`). The 14 final tables are resident data at `0x005FBB40..0x005FC2B7`
+(ELF file `0x4FBC40..0x4FC3B7`), although their methods point into BTL. The
+attack slot `+0x54` and reason slot `+0x48` columns identify the shared or
+overriding bodies whose behavior is described in
+[Battle support mechanics](support_mechanics.md#factory-variants-and-attack-completion).
 
-| Implementation selector(s) | Allocation | Construction path | Final vtable |
-| --- | ---: | --- | ---: |
-| default in `0x00..0x43` | `0x510` | common live `0x00887A60` | `0x005FC240` |
-| `0x0A` | `0x520` | live `0x0088DAB0` | `0x005FBD40` |
-| `0x0C` | `0x510` | common constructor, then vtable replacement | `0x005FBE40` |
-| `0x11` | `0x510` | common constructor, then vtable replacement | `0x005FBEC0` |
-| `0x15`, `0x16`, `0x17` | `0x520` | live `0x0088CC60`, then vtable replacement | `0x005FC040` |
-| `0x19` | `0x530` | live `0x0088E000` | `0x005FBCC0` |
-| `0x1E` | `0x520` | live `0x0088C890` | `0x005FC1C0` |
-| `0x1F` | `0x510` | common constructor, then vtable replacement | `0x005FC140` |
-| `0x21` | `0x540` | live `0x0088D2D0` | `0x005FBF40` |
-| `0x24` | `0x510` | common constructor, then vtable replacement | `0x005FBDC0` |
-| `0x2A` | `0x510` | common constructor, then vtable replacement | `0x005FBC40` |
-| `0x2B` | `0x520` | live `0x0088E460` | `0x005FBBC0` |
-| `0x38` | `0x520` | live `0x0088CC60`, then vtable replacement | `0x005FBFC0` |
-| `0x3F` | `0x530` | live `0x0088E5F0` | `0x005FBB40` |
+| Implementation selector(s) | Allocation | Construction path | Final vtable | Attack slot `+0x54` | Reason slot `+0x48` |
+| --- | ---: | --- | ---: | ---: | ---: |
+| default in `0x00..0x43` | `0x510` | common live `0x00887A60` | `0x005FC240` | `0x0088A820` | `0x00889540` |
+| `0x0A` | `0x520` | live `0x0088DAB0` | `0x005FBD40` | `0x0088DC70` | `0x0088DB00` |
+| `0x0C` | `0x510` | common constructor, then vtable replacement | `0x005FBE40` | `0x0088D780` | `0x00889540` |
+| `0x11` | `0x510` | common constructor, then vtable replacement | `0x005FBEC0` | `0x0088D680` | `0x00889540` |
+| `0x15`, `0x16`, `0x17` | `0x520` | live `0x0088CC60`, then vtable replacement | `0x005FC040` | `0x0088A820` | `0x00889540` |
+| `0x19` | `0x530` | live `0x0088E000` | `0x005FBCC0` | `0x0088E0A0` | `0x0088E050` |
+| `0x1E` | `0x520` | live `0x0088C890` | `0x005FC1C0` | `0x0088C8E0` | `0x00889540` |
+| `0x1F` | `0x510` | common constructor, then vtable replacement | `0x005FC140` | `0x0088A820` | `0x00889540` |
+| `0x21` | `0x540` | live `0x0088D2D0` | `0x005FBF40` | `0x0088D320` | `0x0088D640` |
+| `0x24` | `0x510` | common constructor, then vtable replacement | `0x005FBDC0` | `0x0088A820` | `0x00889540` |
+| `0x2A` | `0x510` | common constructor, then vtable replacement | `0x005FBC40` | `0x0088A820` | `0x00889540` |
+| `0x2B` | `0x520` | live `0x0088E460` | `0x005FBBC0` | `0x0088E540` | `0x0088E500` |
+| `0x38` | `0x520` | live `0x0088CC60`, then vtable replacement | `0x005FBFC0` | `0x0088A820` | `0x00889540` |
+| `0x3F` | `0x530` | live `0x0088E5F0` | `0x005FBB40` | `0x0088E790` | `0x0088E640` |
+
+Generation IDs come from the embedded `ccBdySerialNo` allocator at owner
+`+0x14`, live `0x00886950` (raw `0x1D2A50`; no recognized function at export
+`0x00886910`). Its only direct call is the request path at live `0x00887778`
+(raw `0x1D3878`). Allocator `+0x04` (owner `+0x18`) is the current candidate
+and allocator `+0x08` (owner `+0x1C`) is the reuse marker:
+
+- With the marker clear, it returns the current candidate and increments it.
+  When the candidate is `0xFFFFFFFF`, it returns that value, sets the reuse
+  marker, resets the stored candidate to zero, and the common increment leaves
+  the next candidate at `1`.
+- With the marker set, it compares the same current candidate with the
+  supplied two-entry array of slot generations (zero for an empty slot). A
+  non-colliding candidate is returned. A collision rescans the same candidate,
+  up to the supplied count plus one, without advancing it, then returns zero.
+  Both paths increment the stored candidate exactly once; no alternate free ID
+  is searched inside the call.
+
+The comparisons load allocator `+0x04` at live `0x00886990`; the only
+candidate stores are the wrap reset at `0x00886A20` and final increment at
+`0x00886A2C`. The caller publishes the result at support `+0x120` and still
+returns creation success, so zero is a possible published generation and IDs
+are not unconditionally unique after wrap. Live `0x00886EB0`, reached from
+battle-phase support initialization live `0x008852E0`, resets the allocator to
+candidate `1` with the marker clear. This namespace is independent of side and
+of the transient manager's `+0x8C` actor serials. No request, gauge,
+terminal-state, or slot gate reads object `+0x120` in the audited paths.
 
 The raw prologue computes `side < 0` and `side < 2`, but never branches on
 either result. It proceeds to index both the resident `0x28`-stride selector
@@ -863,10 +1109,13 @@ called by the inspected specializations, establishes these stable fields:
 | `+0x00` | `u8` flags | generic node flags; new support sets bits 1 and 2 |
 | `+0x50` | pointer | class vtable |
 | `+0x60` | `u8` | derived support implementation selector passed by the owner |
+| `+0x6C` | pointer | borrowed already-loaded support archive returned by resident `FUN_001AA4B0` |
+| `+0x80..+0x90` | five pointers | borrowed named animation payloads resolved from `+0x6C`, in order `ent`, `nut`, `run`, `act`, `ext` |
 | `+0xE4` | `u8` | side `0/1` passed by the owner |
 | `+0xF2` | `u8` | owner-observed lifecycle state; value `2` requests final destruction |
 | `+0x120` | `u32` | manager-assigned generation ID |
 | `+0x134..+0x144` | five pointers | optional owned subobjects, virtual-destroyed by the common destructor |
+| `+0x50C` | `u8` flags | constructor clears bits 0..2 and sets bit 3; bit 0 is set through the lineage notification below |
 
 Common destructor live `0x00887D90` also releases owned handles at
 `+0x70/+0x74/+0x78`, destroys its embedded constructed arrays, calls generic
@@ -889,11 +1138,62 @@ internal ownership without assigning gameplay names:
 
 The common initializer destroys and nulls a previous `+0x70/+0x74/+0x78`
 handle before publishing its replacement. Those are therefore owning slots,
-not merely resource aliases. In contrast, the five `+0x80..+0x90` words are
-initialized to null but are not freed by the common destructor; their
-ownership status is not promoted here. The five `+0x134..+0x144` slots are
+not merely resource aliases. The five `+0x80..+0x90` words are borrowed
+animation payloads, not five independently allocated children. The five
+`+0x134..+0x144` slots are
 different: each nonnull entry is virtual-destroyed through slot `+0x08` and
 then nulled.
+
+The constructor clears the five animation words through its loop store at live
+`0x00887B94`. The initializer's five-iteration loop at live
+`0x008883D0..0x008884A8` builds
+`ANM_p%s%s%d` (live string `0x008BF698`), with suffixes from the five-pointer
+table at live `0x008BF5B0..0x008BF5C4` (exclusive end). Those pointers select
+the resident strings `ent`, `nut`, `run`, `act`, and `ext` at
+`0x00605BF0..0x00605C04`. It passes the existing archive `+0x6C` and the
+constructed name to resident `FUN_001A8F00` at live call `0x00888484`, then
+stores the returned payload at `+0x80 + index * 4` at `0x00888494`.
+
+Resident `FUN_001AA4B0` searches an already-loaded archive list; it does not
+allocate or increment a reference in this path. `FUN_001A8F00` searches that
+archive's name index and returns the existing CCS object's `+0x2C` payload,
+also without allocation or ownership transfer. Its third argument is zero
+here, so a missing name reaches an explicit zero-address assertion rather
+than an optional-null path. The support object therefore relies on that archive
+remaining loaded while it uses these aliases.
+
+A raw word audit across live `0x00887A60..0x0088E980` found only the
+constructor clear and initializer lookup loop as stores with these five field
+offsets; consumers such as live `0x00889430` pass a selected payload with owned
+handle `+0x70` to resident `FUN_001B99B0`. The common destructor frees the
+handle, not these payloads. Computed writes outside this bounded family are not
+excluded.
+
+**Removal.** The side slot is the only owner of a fielded support object, and
+the slot writers are:
+
+| Writer | Effect on the slot |
+| --- | --- |
+| constructor live `0x00886CB0` | clears both slots |
+| factory live `0x008872E0` (store `0x008876C8`) | publishes a new object into an empty slot |
+| pass-1 main dispatch live `0x00886ED0` (clear `0x00887160`) | after object virtual `+0x10`, `+0xF2 == 2` virtual-destroys the object through `+0x08` and clears its slot |
+| live `0x00887990(owner, side)` | virtual-destroys and nulls one slot, or both for side `-1`; called by owner destructor `0x00886DE0` and by battle reset `0x00886E70` (which keeps the owner allocated) |
+
+The 25 direct BTL references to global `0x00607888` otherwise only read a
+side record or slot or dispatch a virtual event to an existing slot; no
+alternate slot array or owner exists in that set. Global publication and
+clearing remain live `0x00885210/0x00885290`.
+
+Generic flag bits 1 and 2 are callback-enable gates, not slot membership.
+Pass 1 rewrites both bits on each occupied slot before dispatch, and explicit
+disable live `0x00887830` clears them without destroying the object or clearing
+its slot. Because the `+0xF2 == 2` check runs only for objects whose bit 1 is
+enabled, a disabled object keeps its slot until a later enabled pass or owner
+teardown; owner teardown ignores both bits. Presence queries test only the
+nonnull slot (see the [lookup matrix](#lookup-and-identity-contract-matrix)),
+so a support remains discoverable until its owner clears the slot. The pass
+scheduling, enable predicates, and disable callsites belong to
+[Battle support mechanics](support_mechanics.md#scheduled-lifecycle-and-teardown).
 
 ### Non-owning support lineage on transient actors
 
@@ -907,65 +1207,264 @@ token follows descendants rather than identifying only one transient object.
 
 A later transient-actor path at live `0x0072EB94` checks marker `+0x284`,
 resolves a side through live `0x00734130`, and passes actor `+0x288` to live
-`0x00886A40(side, token)`. That function does not recover or dereference the
-originating support. It deduplicates nonzero tokens in a four-entry ring at
-`0x008DCFF0 + side * 0x14`, advances the ring cursor in the fifth word, updates
-the third per-side signed counter through `0x00886C60`, and conditionally sets
-bit 0 of the **currently slotted** support's byte `+0x50C`. The common support
-constructor clears bits 0..2 and sets bit 3 of `+0x50C`.
+`0x00886A40(side, token)`. That function never recovers or dereferences the
+originating support; it deduplicates the token and can set bit 0 of
+`+0x50C` on whichever support **currently** occupies that side slot.
 
 This is a proven cross-manager lineage relation but not an ownership edge: the
 actor stores no support pointer, support replacement cannot leave it with a
 dangling parent address, and each object remains destroyed by its own manager.
-The original event meaning of the token report and `+0x50C` flags remains
-unresolved.
+Notification acceptance, the deduplication ring, and the `+0x50C` flag behavior
+belong to
+[Battle support mechanics](support_mechanics.md#support-counters-and-notification-suppression).
 
-Resident master dispatcher `FUN_001F03E0` routes three support phases through
-live wrappers `0x00885400`, `0x00885430`, and `0x00885460`. The resulting owner
-passes are:
+## BTL skill actors
 
-- live `0x00886ED0` calls object virtual `+0x10` when generic flag bit 1 is set;
-  after that call, object `+0xF2 == 2` causes virtual destruction through
-  `+0x08` and immediate clearing of the side slot;
-- live `0x008871A0` calls virtual `+0x14` only when generic flag bit 2 is set;
-  and
-- live `0x00887250` calls virtual `+0x18` only when generic flag bit 1 is set.
+The skill actors whose creation is traced below are allocated by BTL skill
+factory live `0x00773C90`; the authored spawn route live `0x00776280` registers each returned actor by
+fighter side. Addresses labeled preserved are the export view, live minus
+`0x40` ([address conventions](../game/files/file_identities.md#address-conventions)).
 
-Bits 1 and 2 are dynamic callback-enable gates, not slot membership. At the
-start of the main pass, live `0x00886ED0` derives two booleans and overwrites
-both flag bits on **each** occupied side slot before dispatch. Both begin true;
-resident primary-fighter-0 fields `+0xB00 != 0` or signed `+0xB10 != 0` clear
-both, while additional global battle-mode predicates can clear bit 1 without
-necessarily clearing bit 2. The exact gameplay meanings of those external
-predicates are outside this ownership map, but the structural result is firm:
-both side objects receive the same per-pass enable values, and bit 1 and bit 2
-can diverge.
+### `ccSkillHNW001` skill actor
 
-Live `0x00887830(owner)` is a distinct explicit disable operation. For every
-occupied slot it first calls object virtual `+0x28`, then clears bits 1 and 2;
-it neither destroys the object nor clears the owner slot. Direct resident calls
-occur at `0x0023B620` and `0x00245988`. A later main pass may rewrite the bits,
-so this operation is not evidence of permanent removal. Also, lifecycle state
-`+0xF2 == 2` is checked only inside the bit-1-enabled main-dispatch path. The
-authoritative membership predicate remains the nonnull owner slot, and
-unconditional owner teardown ignores both enable bits.
+[Combo accounting](combo_accounting.md#repeated-event-contribution-in-ccskillhnw001)
+owns this actor's pending-hit contribution and gate fields;
+[Collision](collision.md#ccskillhnw001-interaction-records-and-accepted-event-route)
+owns its borrowed interaction records and accepted-event route.
 
-Live `0x008854D0(side)` is a boolean presence query and live
-`0x00886750(side)` returns the slotted object pointer. Neither tests flag bits
-or `+0xF2`, so a support remains discoverable until its owner actually destroys
-it and clears the slot. Whole-owner destruction live `0x00886DE0` calls live
-`0x00887990(owner, -1)` to virtual-destroy both objects and clear both slots.
-A battle reset can do the same without freeing the owner through live
-`0x00886E70`. No support object is appended to the hub registries or the
-`0x00607820` transient-actor chain.
+#### Class and retail action identity
 
-An exhaustive scan found 25 direct loads/stores of global `0x00607888` in the
-decoded BTL image. The additional references either access the 3-byte side
-records, read an existing side slot, or dispatch a virtual event to an existing
-slot. No alternate slot array or owner was found. Global publication/clearing
-remains live `0x00885210/0x00885290`; nonzero side-slot publication remains
-live `0x008872E0`; and live `0x00887990` is the corresponding destroy-and-null
-writer.
+Resident table header `0x005E2020` points to BTL RTTI `0x008CE980`
+(preserved `0x008CE940`), whose name pointer `0x008BB538` (preserved `0x008BB4F8`) is the
+string `ccSkillHNW001`. The table holds update target `0x0085E340` at
+resident `0x005E2118`.
+
+Resident character record `0x00558C70` has ID `80`, name pointer
+`0x00558C50` containing `２部ヒナタ`, body filename `2hnwbod1.ccs`, action
+count `0x34`, and action-array pointer `0x00557B40`. Action index `3`,
+record `0x00557C3C`, contains name pointer `0x0043BFA0` and packed
+owner/selector word `0x00A10050` (owner ID `80`, selector `161`). The
+Shift-JIS name bytes decode as
+`<r守護八卦六十四掌|しゅごはっけろくじゅうよんしょう>`, so the retail display
+name is **守護八卦六十四掌**. Record contracts belong to
+[Character assets](../game/character_assets.md#action-records).
+
+Selector table `0x008CB160` has value `165` at selector `161`
+(preserved `0x008CB3A4`). Resource-name table `0x008A7AA0` has pointer `0x008A78A0`
+at index `165` (preserved `0x008A7CF4`); the pointed bytes at preserved `0x008A7860` contain
+`2hnwcha1.ccs`. Common binding preserved `0x0078E6C0` / live `0x0078E700` uses that
+resource index for the required container lookup, stores the container at
+actor `+0x1F0`, and stores the index at `+0x56C`. Factory index `165`,
+selector `161` and character ID `80` are distinct numeric domains joined by
+these tables. The wider map belongs to
+[Selector-to-resource mapping](../game/character_assets.md#selector-to-resource-mapping).
+
+#### Factory admission and authored creation
+
+Factory preserved `0x00773C50` / live `0x00773C90` admits an unsigned index below `0xC5`
+and dispatches through table `0x008CD1F0` (preserved `0x008CD1B0`). Entry `0xA5`
+contains `0x00775A08`, the allocator arm beginning at preserved `0x007759C8`. Bytes
+preserved `0x007759C8..0x00775A87` request `0x1180` bytes, call base construction
+`0x00785410`, install resident table `0x005E2020` at object `+0x110`,
+construct two pairs of `0x50`-byte records at `+0x1020` and `+0x10C0`,
+initialize the `+0x1160` reference, and call the returning initializer
+`0x0085CE50` (preserved `0x0085CE10`). The allocator's null branch skips this
+initialization.
+
+Retail `PL/2HNWCHA1.CCS` is gzip-compressed. Its animation record `70`,
+`ANM_phnwcha10`, has a tag-`0x0108` command at decompressed offset `0x4E60`,
+after integer marker `1`. The three payload words are record ID `69`
+(`OBJ_eff_dummy_hnwcha1`), `0x8003`, and `0x1A5`. The entire nested block
+spans `0x2F34..0x4F03` and contains exactly one such event. The five
+separately bound records `ANM_phnwcha11a`, `ANM_phnwcha11b`,
+`ANM_phnwcha11c`, `ANM_phnwcha12` and `ANM_phnwcha1eff` contain no
+tag-`0x0108` events in their complete nested blocks; that absence does not
+exclude collision-generated callbacks. Resident parsers `0x001B1470`,
+`0x001A29D0`, `0x001A6E00` and `0x001A8C10` corroborate the animation and
+event payload structure.
+[Animation event delivery](../runtime/animation_runtime.md#packed-command-crossing-and-event-delivery)
+owns queue lifetime and marker crossing.
+
+Fighter setup `0x00215950` installs callback `0x002145B0` at player `+0xE8`;
+that returning wrapper calls resident `0x00308DC0`. Its final continuation
+builds `{fighter,0}` and calls `0x00773C20` (preserved `0x00773BE0`). This bridge
+requires event word `+0x04` equal to `0x8003` and unsigned word `+0x08` in
+`0x100..0x1C4`. It subtracts `0x100` and calls `0x00776280` with that index,
+the fighter, and fighter `+0x20`. Hence authored `0x1A5` selects factory
+index `0xA5`. The wrapper at preserved `0x00776240` calls the factory, registers the
+returned actor using fighter side `+0x60&1`, and, when nonnull, performs the
+common binding with the original index. A marker is an authored stream
+position, not evidence of a measured delay after input.
+
+#### Local state machine
+
+State setter preserved `0x0085DDA0` / live `0x0085DDE0` stores the requested state at
+`+0x08` and resets local call counter `+0x04`. Its six-entry jump table is
+`0x008CDD40` (preserved `0x008CDD00`). The update's separate six-entry table is at
+preserved `0x008CDD20..0x008CDD37`; its state-`2` entry contains `0x0085E440`
+(preserved `0x0085E400`). These tables and raw continuations
+preserved `0x0085DDE8..0x0085E2FF` establish the branches below.
+
+| State | Setter entry | Update branch |
+| --- | --- | --- |
+| `0` | Selected by activation after its display reset. | Enables byte `+0x150` and the input object's byte `+0x00` when counter `+0x04` equals `5` (preserved `0x0085E340..0x0085E384`). |
+| `1`, `2` | Share the animation/child preparation branch. The event receiver requests state `2` only while the old state is below `2` (preserved `0x0085DC78..0x0085DC94`). | State `1` consumes positive `+0x14A` by clearing it and `+0x1172`. State `2` is the counting branch owned by Combo accounting; it also uses old `+0x1170` thresholds `16` and `40` when choosing record halfwords `+0x30/+0x32` or requesting state `3`. |
+| `3` | Disables both embedded interaction records and calls local mask helper `0x0085EAE0` with `1`. | Waits until counter `+0x04 >= 10`, then requests state `4` (preserved `0x0085E58C..0x0085E5AC`). |
+| `4` | Calls the same helper with `0`, disables the records, then stores `+0x1177=1` (preserved `0x0085E048`). | Requests state `5` when `+0x1176==1`. |
+| `5` | Selects the finishing animation, retires admitted child references, disables the input-event object and byte `+0x150` (preserved `0x0085E264..0x0085E280`), and disables both interaction records. It does not clear `+0x1175..+0x1177`. | — |
+
+An accepted event is therefore a concrete producer of the counting state's
+entry. Exact-offset searches for `+0x1177` and `+0x1176` each find five
+sites: initialization, activation reset, the receiver, the respective state
+setter/update use, and the contribution helper. Indexed and differently
+formed aliases remain outside that bound. The mask helper's bank requests
+belong to [Combo accounting](combo_accounting.md#request-mask-producers-and-retained-values).
+
+#### Resource retention and cleanup
+
+Activation preserved `0x0085D0D8..0x0085D0F7` retains five animation lookup results
+at actor `+0xFF0+4*i`, using name pointers at preserved `0x008BA530`. They are
+resource pointers, separate from the two constructed child actors and the
+generation-checked child references.
+
+Local cleanup preserved `0x0085CEB0` / live `0x0085CEF0` destroys animation player
+`+0x1004` through resident `0x001B7570(pointer,1)` and clears the field
+(returning continuation preserved `0x0085CED0..0x0085CEDF`). For each of two child
+triples at `+0x1008+0x0C*i`, it requires index `0..31` and matching serial
+and pointer in one of the owner's two registry banks before invoking child
+table `+0x50`, slot `+0x80`. This requests retirement of a valid registered
+child rather than freeing a raw retained pointer. The independent `+0x1160`
+reference uses resident resolver `0x0030C2E0` before its object's virtual
+`+0x18` cleanup. Local destructor preserved `0x008716F0` / live `0x00871730` calls this
+cleanup, destroys the two embedded record pairs, invokes base cleanup and
+frees the allocation only for a positive destruction flag. These local
+retirement edges do not establish the complete subordinate or base
+destruction lifetime.
+
+### BTL skill classes on damage paths
+
+These internal skill classes contain BTL direct-damage calls classified in
+[Damage](damage.md#all-fifteen-btl-source-retaining-calls), which keeps their
+damage arithmetic. Their RTTI names are internal type identities, not
+player-facing move names. The `ccSkill` and `ccSkillComboBase` bases and the
+`ccSkillCtrl` service belong to
+[BTL skill-service callbacks](battle_auxiliary_services.md#btl-skill-service-callbacks-and-ownership);
+admission by factory `0x00773C90` and the authored spawn route through
+`0x00776280` are described in
+[factory admission and authored creation](#factory-admission-and-authored-creation).
+
+#### Shared-float caller classes
+
+The shared-float damage helpers, complete entries preserved `0x0079FD80` and
+`0x007D4430`, are reached through two pairs of primary class tables, rather
+than identifying one class each:
+
+| Damage helper, preserved call | Calling method / preserved call to helper | Resident table and slot | Exact RTTI name |
+| --- | --- | --- | --- |
+| `0x0079FD80`, `0x0079FEC8` | `FUN_0079F5B0`, `0x0079FA9C` | `0x005F0C20 + 0x1A0`; `0x005FACC0 + 0x1A0` contain live `0x0079F5F0` | `ccSkillNRW001`; `ccSkillNRT001B` |
+| `0x007D4430`, `0x007D4578` | `FUN_007D0A10`, `0x007D10A8` | `0x005F3FF0 + 0xF8`; `0x005E51B0 + 0xF8` contain live `0x007D0A50` | `ccSkillNRV001`; `ccSkillJRW001` |
+
+The exact name joins use live RTTI/name pairs
+`0x008CF8D8/0x008BBF78`, `0x008CF8B0/0x008BBF88`,
+`0x008CED20/0x008BB7B8`, and `0x008CED48/0x008BB7A8`, respectively.
+Constructor bytes at preserved `0x007DDE40..0x007DDE6F` establish that
+`ccSkillNRW001` calls the common constructor and then installs its table
+and sets byte `+0x1170` to `1`. That common constructor, live
+`0x0079DA50`, installs the `ccSkillNRT001B` table at preserved
+`0x0079DA28..0x0079DA30`. Preserved
+`0x007CF850..0x007CF873` installs the `ccSkillNRV001` table after base
+construction; `0x0084D650..0x0084D67F` joins the derived `ccSkillJRW001`
+constructor to that common class and its own table. These are internal type
+and inheritance joins.
+
+#### `ccSkillTYO000B`
+
+Direct-damage method live `0x007A4F00` is stored in resident table
+`0x005F9F20 + 0x1A0`. That table's RTTI/name pair is live
+`0x008D0168/0x008BC4C8`, with exact name `ccSkillTYO000B`. Constructor live
+`0x007A4CA0`, preserved `0x007A4C60..0x007A4C98`, calls base live
+`0x00797250` and installs this table at object `+0x110`. Factory index `31`
+points to live allocator `0x007745D8`; preserved `0x00774598..0x007745BB`
+requests `0x1110` bytes and calls that constructor on a non-null allocation.
+The common selector tables join index `31` to live descriptor `0x008A90A0`
+and CCS name `2tyocha0.ccs`.
+
+#### `ccSkillFOR000` allocation and lifetime
+
+Constructor bytes at preserved `0x00804630..0x00804658` install resident
+vtable `0x005EB890` at object `+0x110`; vtable slot `+0x100` at `0x005EB990`
+contains live update `0x00804E40`. The table's RTTI pointer is live
+`0x008CF440`, whose name pointer is live `0x008BBCE8`; bytes at preserved
+`0x008CF400` and `0x008BBCA8` join the exact class name.
+
+Preserved allocator bytes `0x00773F9C..0x00773FBB` request `0x1510` bytes
+from resident `0x00117150`, test for null, and call the constructor at live
+`0x00804670`. A direct-call byte search finds this one constructor call in
+BTL. Factory live `0x00773C90` selects this arm only for index `22`: its
+197-entry live jump table is `0x008CD1F0`, and entry `22` contains live
+allocator destination `0x00773FDC`.
+
+The inspected spawn route, live `0x00776280` (preserved
+`0x00776240..0x007762DF`), calls the indexed factory first, registers its
+returned object in the primary side slot, and passes it to common initializer
+live `0x0078E700`. The initializer writes selector `+0x56C` at preserved
+`0x0078E744` and invokes class setup slot `+0x22C` at `0x0078E8A8` or
+`0x0078E924`; FOR's slot contains live `0x00804A80`. This route creates a
+fresh FOR allocation and then takes its damage snapshot. It supplies no
+existing FOR allocation for reconstruction or repeated setup. Other
+entrypoints and an arbitrary later setup call are not excluded by this
+bounded route.
+
+The destructor is live `0x008047A0`, preserved `0x00804760..0x00804A3F`. It
+restores the class table, releases the target link, invokes the linked
+fighter's `FUN_0021F980` under its validity gate, cleans the skill's
+interaction/effect children, reinstalls base `ccSkill` table `0x005FB4D0`,
+and removes the primary registry entry through live
+`0x0086F7D0(owner + 0x210, side)`. Its final signed deletion argument
+controls whether resident `0x00117000` frees the skill allocation. This body
+does not clear fighter `+0x7CC`, reset the shared retained record, or rewrite
+the shared raw float, so the skill allocation and the retained record's
+storage have distinct lifetimes. The complete byte interval establishes the
+cleanup and conditional free. The class's embedded animation players belong to
+[the FOR embedded-player pair](../runtime/scene_playback_owners_btl.md#btl-for-embedded-player-pair).
+
+#### `ccSkillANB000` creation and destruction
+
+Resident vtable `0x005EB610` has live method `0x00808200` in slot `+0x1A0`,
+RTTI live `0x008CF410`, and name pointer live `0x008BBCC8`; preserved bytes
+`0x008CF3D0` and `0x008BBC88` establish the name. Preserved
+`0x00807DD4..0x00807DDC` also installs this table at object `+0x110`.
+
+Factory live `0x00773C90` routes indices `3`, `11`, `53`, `89`, and `143`
+to five distinct allocator arms, each requesting `0x13C0` bytes and calling
+constructor live `0x00807AC0`. The arms are preserved
+`0x00773D38`, `0x00773E5C`, `0x00774E20`, `0x00774E98`, and
+`0x007750EC`; their corresponding entries in live table `0x008CD1F0`
+are the five index joins. Constructor prologue bytes
+`0x00807A80..0x00807AA7` call base construction and install resident
+table `0x005EB610`. Its continuation initializes the local resource array,
+state fields, and effect/interaction children. The shared retained record
+is not an embedded member of any of these `0x13C0` allocations.
+
+ANB's setup slot `+0x22C` contains live `0x008085E0`; preserved
+`0x008085A0..0x0080870B` selects a separate local resource-name bank for
+each of the five selectors and fills its 17-pointer array. Thus one internal
+type has five authored variants; their damage multipliers are in
+[Damage](damage.md#guard-or-response-skill-contribution), and the embedded
+and associated players in
+[the ANB player owners](../runtime/scene_playback_owners_btl.md#btl-anb-embedded-and-associated-players).
+
+The destructor is live `0x00807DF0`, preserved `0x00807DB0..0x008081B7`. It
+releases both side/target links, restores object activity bits, removes its
+two interaction lists and effect children, then reinstalls the base table and
+removes the primary registry entry. Selector `143` has additional local
+timeline and linked-fighter restoration branches. The final signed deletion
+argument controls freeing the skill allocation. This body neither resets the
+shared record or raw float nor clears fighter `+0x7CC`. It does not prove that
+every later fighter alias is expired when the skill dies. The inspected common
+spawn route constructs a fresh object for each of the five factory arms; a
+whole-game reuse claim would require other entrypoints and object producers
+to be traced.
 
 ## Lookup and identity contract matrix
 
@@ -975,11 +1474,11 @@ These lookup APIs use distinct namespaces and do not share a universal
 | API | Input namespace and selection | Match order / filtering | Invalid or absent result |
 | --- | --- | --- | --- |
 | resident `FUN_003769C0` | primary-fighter alias by side | direct manager `+0xDE4/+0xDE8`; no node-flag test | null unless side is exactly `0` or `1` |
-| live `0x00709800` | control node by full `u32 +0x60` side | last matching hub-list node; no generic-flag test | null when no match |
+| live `0x00709800` | `ccCommand` node by full `u32 +0x60` side | last matching hub-list node; no generic-flag test | null when no match |
 | live `0x007099C0` | primary fighter by `(u8(+0x60) & 1)` side | last matching hub-list node; no generic-flag test | null when no match |
-| live `0x006D5900` | registry-A node by `u32 +0xA8` key | last key match; ignores current marker | null when no match |
-| live `0x006D5960` | registry-A key plus requested `u8 +0x60` current bit | last key/bit match | null when no match |
-| live `0x00709740` | registry-A current node by key | wrapper over `0x006D5960(..., 1)` | null when no current match |
+| live `0x006D5900` | `ccCameraCtrl` node by `u32 +0xA8` key | last key match; ignores current marker | null when no match |
+| live `0x006D5960` | `ccCameraCtrl` key plus requested `u8 +0x60` current bit | last key/bit match | null when no match |
+| live `0x00709740` | `ccCameraCtrl` current node by key | wrapper over `0x006D5960(..., 1)` | null when no current match |
 | live `0x00735F90` | transient actor by `u32 +0x8C` serial | first match reachable from manager head; no separate flag test | null if manager absent or no match |
 | live `0x00735990` | next transient actor by `s16 +0x78` type, side-selector mapping, and cursor | first qualifying node after cursor, or from head for null cursor | null when exhausted |
 | live `0x00735910` / `0x00735A30` | same transient type/side predicate | boolean existence / total matching count | zero when none |
@@ -987,9 +1486,9 @@ These lookup APIs use distinct namespaces and do not share a universal
 | live `0x00886750` | support object by side slot | returns the exact slot pointer; ignores flags and lifecycle state | null if owner absent; side index itself is unchecked |
 
 There is no decoded public lookup from support generation `+0x120` back to a
-support object. The generation allocator compares candidates with the two
-current values only to avoid reuse, while transient descendants merely copy
-the value as a lineage token. Code that needs the support object resolves its
+support object. The generation allocator compares its candidate with the two
+current values and returns zero on a post-wrap collision; transient descendants
+merely copy the value as a lineage token. Code that needs the support object resolves its
 current side slot instead. Pointer aliases, transient serials, support
 generations, and cumulative support counters must therefore not be substituted
 for one another.
@@ -1009,13 +1508,17 @@ for one another.
 | `0x001EC890` `FUN_001EC890` | outer battle-driver cleanup; calls live `0x00885290` to destroy and clear the dynamic-support owner |
 | `0x001EDB00` `FUN_001EDB00` | state transition that constructs battle state, then calls support post-create initializer live `0x008852E0` |
 | `0x001EDD10` `FUN_001EDD10` | teardown transition; calls live `0x008853D0` to destroy both slotted supports before later battle-state destruction |
-| `0x001EF330` `FUN_001EF330` | construct hub/graph, resolve four side aliases, publish registry-A root, then create transient-actor manager |
+| `0x001EF330` `FUN_001EF330` | construct hub/graph, resolve four side aliases, publish `ccCamera01` root, then create transient-actor manager |
 | `0x001EEFD0` `FUN_001EEFD0` | destroy transient-actor manager, invalidate aliases, destroy hub, clear hub pointers |
 | `0x001EECD0` `FUN_001EECD0` | outer battle-state destructor; calls `FUN_001EEFD0` |
 | `0x001F03E0` `FUN_001F03E0` | master battle phase dispatcher; schedules the three support-owner passes and both transient-actor passes from independent mask bits |
 | `0x002145D0` `FUN_002145D0` | common primary-fighter base constructor; calls live BTL `0x00709AA0` |
 | `0x00214840` `FUN_00214840` | common fighter destructor/optional final free |
 | `0x002151E0` `FUN_002151E0` | common fighter initializer; establishes `+0x68` identity and `+0x60` side bit |
+| `0x00215720` `FUN_00215720` | common concrete-fighter cleanup; releases optional owners at `+0x950/+0xB30` and the per-side combo object |
+| `0x00215E70` `FUN_00215E70` | release/null the four owning fighter handle slots at `+0xE68..+0xE74` |
+| `0x00304F40` `FUN_00304F40` | construct the fighter's embedded two-list owner at `+0x8C4` |
+| `0x00304F90` `FUN_00304F90` | clear that owner's two generic lists; optional free applies only to a separately allocated owner |
 | `0x0024DA50` `FUN_0024DA50` | fighter virtual update; bit-1 gated and returns zero to list maintenance |
 | `0x0024FD80` `FUN_0024FD80` | derived fighter-list processing and removal candidates |
 | `0x0024E0B0` `FUN_0024E0B0` | derived fighter-registry/coordinator constructor |
@@ -1033,21 +1536,20 @@ for one another.
 
 ### BTL live/raw/export audit
 
-The table gives the true entry, raw file offset, and where its first byte is
-displayed by the preserved header-skipped export. A Ghidra symbol whose name
-matches a live numeric target can still be an interior false start.
+Each row gives the true live entry, the complete-file raw offset, and the
+preserved export address where the entry bytes are displayed.
 
-| Live | Raw | Export bytes | Working role |
+| Live | Raw | Export bytes | Role |
 | ---: | ---: | ---: | --- |
-| `0x006D5640` | `0x021740` | `0x006D5600` | registry-A container constructor |
-| `0x006D57A0` | `0x0218A0` | `0x006D5760` | registry-A insert/current replacement |
-| `0x006D5900` | `0x021A00` | `0x006D58C0` | registry-A lookup by `+0xA8` key |
-| `0x006D5960` | `0x021A60` | `0x006D5920` | registry-A key/current lookup |
-| `0x006D6800` | `0x022900` | `0x006D67C0` | registry-A node initializer |
-| `0x006DDE10` | `0x029F10` | `0x006DDDD0` | allocate/initialize one `0x1D0` registry-A node |
-| `0x006EF4E0` | `0x03B5E0` | `0x006EF4A0` | side-control node constructor |
-| `0x006EF600` | `0x03B700` | `0x006EF5C0` | bind control node to side/input state |
-| `0x006F0F90` | `0x03D090` | `0x006F0F50` | side-control registry constructor |
+| `0x006D5640` | `0x021740` | `0x006D5600` | `ccCameraCtrl` container constructor |
+| `0x006D57A0` | `0x0218A0` | `0x006D5760` | `ccCameraCtrl` insert/current replacement |
+| `0x006D5900` | `0x021A00` | `0x006D58C0` | `ccCameraCtrl` lookup by `+0xA8` key |
+| `0x006D5960` | `0x021A60` | `0x006D5920` | `ccCameraCtrl` key/current lookup |
+| `0x006D6800` | `0x022900` | `0x006D67C0` | `ccCameraCtrl` node initializer |
+| `0x006DDE10` | `0x029F10` | `0x006DDDD0` | allocate/initialize one `0x1D0` `ccCameraCtrl` node |
+| `0x006EF4E0` | `0x03B5E0` | `0x006EF4A0` | `ccCommand` node constructor |
+| `0x006EF600` | `0x03B700` | `0x006EF5C0` | bind `ccCommand` node to side/input state |
+| `0x006F0F90` | `0x03D090` | `0x006F0F50` | `ccCommandCtrl` registry constructor |
 | `0x00707350` | `0x053450` | `0x00707310` | construct an optional transient-actor child |
 | `0x00707920` | `0x053A20` | `0x007078E0` | child state/drain test; reports recyclable at state `>= 2` |
 | `0x007083D0` | `0x0544D0` | `0x00708390` | construct transient manager's deferred-child-list owner |
@@ -1055,24 +1557,24 @@ matches a live numeric target can still be an interior false start.
 | `0x00708570` | `0x054670` | `0x00708530` | prepend a child to the deferred-child list |
 | `0x00708630` | `0x054730` | `0x007085F0` | maintain and recycle deferred children |
 | `0x00708720` | `0x054820` | `0x007086E0` | run the deferred children's second pass |
-| `0x007087A0` | `0x0548A0` | `0x00708760` | shared-match node constructor |
-| `0x007088A0` | `0x0549A0` | `0x00708860` | shared-match node destructor |
-| `0x00709150` | `0x055250` | `0x00709110` | shared-match registry constructor |
-| `0x007091A0` | `0x0552A0` | `0x00709160` | shared-match registry destructor |
+| `0x007087A0` | `0x0548A0` | `0x00708760` | `ccField` node constructor |
+| `0x007088A0` | `0x0549A0` | `0x00708860` | `ccField` node destructor |
+| `0x00709150` | `0x055250` | `0x00709110` | `ccFieldCtrl` registry constructor |
+| `0x007091A0` | `0x0552A0` | `0x00709160` | `ccFieldCtrl` registry destructor |
 | `0x00709240` | `0x055340` | `0x00709200` | hub constructor |
 | `0x00709280` | `0x055380` | `0x00709240` | hub destructor/free wrapper |
 | `0x007092E0` | `0x0553E0` | `0x007092A0` | allocate four registries |
 | `0x007093A0` | `0x0554A0` | `0x00709360` | virtual-destroy and null four registries |
 | `0x00709480` | `0x055580` | `0x00709440` | create and cross-link initial graph |
 | `0x007095E0` | `0x0556E0` | `0x007095A0` | registry-wide vtable-`+0x0C` pass |
-| `0x00709660` | `0x055760` | `0x00709620` | create initial registry-A node |
-| `0x007096E0` | `0x0557E0` | `0x007096A0` | registry-A root selector by node `+0x10 == 0` |
-| `0x00709740` | `0x055840` | `0x00709700` | current registry-A node lookup by key |
-| `0x00709780` | `0x055880` | `0x00709740` | create/append one side-control node |
-| `0x00709800` | `0x055900` | `0x007097C0` | find last control node by `u32 +0x60` side |
+| `0x00709660` | `0x055760` | `0x00709620` | create initial `ccCameraCtrl` node |
+| `0x007096E0` | `0x0557E0` | `0x007096A0` | `ccCameraCtrl` root selector by node `+0x10 == 0` |
+| `0x00709740` | `0x055840` | `0x00709700` | current `ccCameraCtrl` node lookup by key |
+| `0x00709780` | `0x055880` | `0x00709740` | create/append one `ccCommand` node |
+| `0x00709800` | `0x055900` | `0x007097C0` | find last `ccCommand` node by `u32 +0x60` side |
 | `0x00709860` | `0x055960` | `0x00709820` | create/append one primary fighter |
 | `0x007099C0` | `0x055AC0` | `0x00709980` | find last fighter by `u8 +0x60` low side bit |
-| `0x00709A20` | `0x055B20` | `0x007099E0` | create/append shared-match node |
+| `0x00709A20` | `0x055B20` | `0x007099E0` | create/append `ccField` node |
 | `0x00709AA0` | `0x055BA0` | `0x00709A60` | generic node constructor |
 | `0x00709B60` | `0x055C60` | `0x00709B20` | generic node destructor |
 | `0x00709BC0` | `0x055CC0` | `0x00709B80` | generic container constructor |
@@ -1108,8 +1610,8 @@ matches a live numeric target can still be an interior false start.
 | `0x00735F30` | `0x082030` | `0x00735EF0` | destroy/free manager and clear `0x00607820` |
 | `0x00735F90` | `0x082090` | `0x00735F50` | global actor lookup by `+0x8C` serial |
 | `0x00736080` | `0x082180` | `0x00736040` | create, initialize, and link a transient actor |
-| `0x00882630` | `0x1CE730` | `0x008825F0` | get byte 1 of one dynamic-support owner side record |
-| `0x00882670` | `0x1CE770` | `0x00882630` | set byte 1 of one dynamic-support owner side record |
+| `0x00882630` | `0x1CE730` | `0x008825F0` | get one side record's Linked Mode byte `+0x01` |
+| `0x00882670` | `0x1CE770` | `0x00882630` | set one side record's Linked Mode byte `+0x01` |
 | `0x00885210` | `0x1D1310` | `0x008851D0` | replace and publish the `0x24` dynamic-support owner |
 | `0x00885290` | `0x1D1390` | `0x00885250` | destroy the dynamic-support owner and clear global `0x00607888` |
 | `0x008852E0` | `0x1D13E0` | `0x008852A0` | post-battle-state support initialization and support-side runtime-array reset |
@@ -1122,7 +1624,7 @@ matches a live numeric target can still be an interior false start.
 | `0x00885C30` | `0x1D1D30` | `0x00885BF0` | resolve support configuration sentinel from a primary ID |
 | `0x00886250` | `0x1D2350` | `0x00886210` | normalize per-side support configuration and derive related setup bytes |
 | `0x00886750` | `0x1D2850` | `0x00886710` | global support-object pointer lookup by side slot |
-| `0x00886950` | `0x1D2A50` | `0x00886910` | allocate a support-object generation ID, avoiding live slot IDs after wrap |
+| `0x00886950` | `0x1D2A50` | `0x00886910` | allocate a support-object generation ID; a post-wrap collision with a slotted ID returns zero, then advances the candidate once |
 | `0x00886A40` | `0x1D2B40` | `0x00886A00` | consume/deduplicate a transient actor's support-lineage token for one side |
 | `0x00886BB0` | `0x1D2CB0` | `0x00886B70` | reset the two three-halfword support counter records |
 | `0x00886C20` | `0x1D2D20` | `0x00886BE0` | return one side's cumulative successful-support-creation counter |
@@ -1130,6 +1632,7 @@ matches a live numeric target can still be an interior false start.
 | `0x00886CB0` | `0x1D2DB0` | `0x00886C70` | construct the `0x24` dynamic-support owner and embedded generation allocator |
 | `0x00886DE0` | `0x1D2EE0` | `0x00886DA0` | destroy both support slots and optionally free the owner |
 | `0x00886E70` | `0x1D2F70` | `0x00886E30` | destroy both support slots without freeing the owner |
+| `0x00886EB0` | `0x1D2FB0` | `0x00886E70` | reset the embedded generation allocator to candidate `1` with the reuse marker clear |
 | `0x00886ED0` | `0x1D2FD0` | `0x00886E90` | support main/removal pass; clears the owner `+0x20` one-shot latch |
 | `0x008871A0` | `0x1D32A0` | `0x00887160` | support vtable-`+0x14` pass for slot objects with generic flag bit 2 set |
 | `0x00887250` | `0x1D3350` | `0x00887210` | support vtable-`+0x18` pass for slot objects with generic flag bit 1 set |
@@ -1148,45 +1651,14 @@ matches a live numeric target can still be an interior false start.
 | `0x0088E460` | `0x1DA560` | `0x0088E420` | `0x520`-byte support specialization constructor used by selector `0x2B` |
 | `0x0088E5F0` | `0x1DA6F0` | `0x0088E5B0` | `0x530`-byte support specialization constructor used by selector `0x3F` |
 
-## Confidence, unresolved semantics, and negative results
+## Negative results
 
-High-confidence results, backed by direct allocation, stores, traversal, and
-destructor edges, are:
-
-- complete-file live mapping and the preserved export's `0x40` bias;
-- manager array layout and side-to-slot mapping;
-- battle-state ownership of the hub and the hub's ownership of four
-  registries;
-- primary fighter/control creation, lookup, publication, and destruction;
-- fighter-registry coordinator state and auxiliary ownership;
-- intrusive-list layouts and container ownership of nodes;
-- transient-actor manager ownership, serial lookup, and deferred child
-  release;
-- dynamic-support manager ownership, exact side slots, selector-driven class
-  creation, generation IDs, lookup, three passes, and destruction;
-- generic remove-on-pass flag bit 0;
-- registry-A current marker `+0x60` and key lookup behavior;
-- initial cross-references and their non-owning character; and
-- the `+0x8A` side tag, factory-side inversion, and own/opponent
-  primary-fighter resolvers for the inspected transient-actor family.
-
-Names such as “hub,” “registry A,” “side control,” and “shared-match node” are
-working names. Original class/type names are unavailable. The following remain
-unresolved and must not be silently promoted to established structure names:
-
-- the domain meaning of registry-A node key `+0xA8` and selector word `+0x10`;
-- the exact gameplay role of the shared-match node;
-- the original names and exact gameplay meanings of the support selector
-  values and their class specializations; and
-- whether “return last match” is a deliberate duplicate policy or simply the
-  implementation shape of these small scans.
-
-Negative findings are equally important:
+These structural readings are excluded by the evidence above:
 
 - manager `+0xDE0/+0xDEC` are reserved zero entries, not entity slot zero;
-- manager `+0xDF0/+0xDF4` are per-side control nodes, not support pointers;
+- manager `+0xDF0/+0xDF4` are per-side `ccCommand` nodes, not support pointers;
 - manager `+0xDE4/+0xDE8` are aliases, not owners or a general entity registry;
-- fighter-registry `+0x14` is coordinator state, not a support-instance pointer
+- `ccPlayerCtrl` `+0x14` is coordinator state, not a support-instance pointer
   or node count;
 - support selection fields do not cause support instances to be pre-created by
   live `0x00709480`;
@@ -1201,14 +1673,10 @@ Negative findings are equally important:
 - the support factory's apparent side-range comparisons do not control a
   branch; its observed resident creator is safe because it passes a masked
   fighter-side bit, not because the BTL factory validates its index;
-- generic flag byte bit 1 is not the generic active/removal predicate;
+- generic flag byte bit 1 is not the generic active/removal predicate, and
+  support flag bits 1 and 2 are not support-slot membership;
 - transient actor `+0x60` is not an authoritative active/linked flag after
   unlink; byte `+0x86` is;
 - node `+0x20..+0x28` graph pointers do not establish ownership; and
-- a preserved Ghidra `FUN_00xxxxxx` name at an encoded live BTL target does not
-  by itself establish the true function start.
-
-The investigation was static and read-only. Direct R5900 disassembly of the
-clean resident ELF and raw BTL image was used to verify every address and
-store; the maintained Ghidra C/text exports were supporting cross-reference
-views only.
+- a last-key `ccCameraCtrl` lookup does not identify the current camera, because
+  retail cameras share output key `0x00609160`.

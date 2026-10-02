@@ -15,7 +15,14 @@ submenu holds settings that apply from the next battle:
 
 The builder always includes the runtime implementations of Simple Display and
 the first three Match Setup rows. Their configured
-values initialize one writable runtime state when the game starts. With
+values initialize one writable runtime state when the game starts. The menu,
+save flow, and C consumers use `mod_settings_option_get` and
+`mod_settings_option_set` with the setting's index: Simple Display `0`,
+Character Balance `1`, Balance Overlay `2`, and Support Selection `3`. Each
+value is its position in the table's value list. The setter ignores an
+out-of-range value, and the getter returns the configured value for an
+out-of-range stored value. The Simple Display assembly bridges read the first
+state word directly. With
 `features.memory_card.extended_save_data` enabled, the existing save flow
 writes these values and every other runtime-editable value below
 `features.defaults` to the dedicated record appendix. A valid loaded record
@@ -35,9 +42,23 @@ Mode Select drawing with the Options backdrop followed by the Mod Settings
 surface. The child and the menu-owned backdrop resources are released with
 Mode Select; a newly constructed Mode Select controller prepares a new set.
 
-Mode Select input is routed through the child while the menu is open and is
-cleared before native Mode Select handling continues. The child retains the
-native Practice Settings input, sound, submenu, and backing behavior
+`defaults.mod_settings` hooks these main-ELF call sites: Mode Select
+construction (`0xEA528`), the
+[pre-decoder no-op](../knowledge/game/mode_flow.md#resident-pre-dispatch-hook-seam)
+(`0x284AD0`), Mode Select draw (`0xEA69C`), the START prompt draw
+(`0x285F40`), and the cleanup calls after accept and back (`0xEA628`,
+`0xEA66C`). It calls the BTL Practice child entries from Mode Select, which
+relies on BTL being
+[selected before Mode Select is constructed](../knowledge/game/mode_flow.md#overlay-state-across-return-routing).
+
+While the menu is open, each child update temporarily receives Mode Select's
+[combined new and held masks](../knowledge/game/mode_flow.md#input-actions)
+in the active side's input record, which is restored afterward. Either player
+can therefore operate the menu, and manager `+0x18` is unchanged. Mode
+Select's sampled input fields `+0x30`, `+0x38`, `+0x3C`, and `+0x40` are then
+cleared before native Mode Select handling continues, including on the frame
+Square opens the menu and the frame Cross or Triangle closes it. The child
+retains the native Practice Settings input, sound, submenu, and backing behavior
 while using the shared generated pages and rows. Cross applies the staged
 values and closes. Triangle returns from a submenu or discards the root
 transaction and closes. Select stages configured defaults for every setting on
@@ -79,7 +100,12 @@ Battle Difficulty value.
 
 The settings pages use the generated Practice-style submenu renderer. Their labels,
 selector values, and help messages reference the same translated resources as
-the original Battle Settings and Practice Settings menus.
+the original Battle Settings and Practice Settings menus. The Practice Settings
+hooks recognize the Mod Settings child by comparing it with the child pointer
+Mode Select prepared. For that child they use the Mod Settings pages, skip the
+native Practice snapshot and apply, and add the Handicap panel and Control
+Settings launcher; every other child keeps Practice Settings' pages and native
+behavior.
 
 Handicap uses the native Battle Settings presentation from
 [Battle rows and Handicap](../knowledge/localization/ui/battle/settings_presentation.md#battle-rows-and-handicap).
@@ -100,7 +126,9 @@ Mode Select or after failed construction. The Mod Settings child then loads its
 own `PRAC.CCS` instance. After the child is constructed, the runtime acquires
 `setting.ccs` the same way and creates the Handicap panel animation, cursor,
 and a `TEX_s_menu` gauge sprite in the child's text context. They are released
-before the child, and Mod Settings is unavailable if any of them fails. The
+before the child. If the backdrop, footer sprite, child, or any of these
+Handicap resources cannot be created, everything already prepared is released
+and that Mode Select runs without the Mod prompt or menu. The
 runtime replaces the panel's yellow label cap in `TEX_s_menu` with the olive cap
 the Practice rows use from the child's `TEX_prac_t01`, then re-uploads the
 texture and palette. The palette is full, so the cap's most frequent colors

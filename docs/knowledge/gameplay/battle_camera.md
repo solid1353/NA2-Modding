@@ -1,61 +1,73 @@
 # Battle camera control
 
-This note records how the retail NA2 battle camera is built, updated, and
-switched: the camera classes in the `ccCameraCtrl` registry, the main
-gameplay camera that tracks both fighters and frames the stage from a
+This note records how the retail NA2 (`SLPS-25837`) battle camera is built,
+updated, and switched: the camera classes in the `ccCameraCtrl` registry, the
+main gameplay camera that tracks both fighters and frames the stage from a
 per-stage record, and the camera controller that switches to scripted
 presentation cameras on requests and events. It does not cover Adventure,
 cutscene cameras, rendering projection internals, or player-visible camera
-policy that has not been runtime-tested.
+policy that has not been observed at runtime.
 
-The clean BTL input and its address conversion are defined in
-[Standard game file identities](../game/files/file_identities.md). The
-header mismatch also causes some direct-call targets to be attached to a false
-continuation symbol 0x40 after the physical callee, so the findings below use
-instruction bytes and field behavior rather than trusting those synthetic call
-labels. All BTL addresses below are live addresses; file offset is
-`live - 0x006B3F00`.
+All BTL addresses below are live addresses; preserved import addresses and
+complete-file offsets follow
+[Retail game file identities](../game/files/file_identities.md#address-conventions).
+Because the header-skipped import attaches some direct-call targets to a false
+symbol `0x40` after the physical callee, the findings rely on instruction
+bytes and field behavior rather than those call labels.
 
 ## Research coverage
 
-- **Assigned scope:** the clean BTL battle camera: camera classes and
+- **Assigned scope:** the retail BTL battle camera: camera classes and
   activation, the common camera update and output, the main camera's tracking,
   distance, framing, and smoothing, its per-stage record, the camera
   controller's publication, slots, request/event-to-mode mapping, ownership
   switching, preset selection, stage-edge correction, and stage- or
   event-driven inputs.
-- **Exploration depth:** registry and camera vtables were resolved through
-  RTTI; the common update, output helper, and active-camera switch helpers were
-  decoded from raw instructions; the main camera's initializer, tracking,
-  placement, and both smoothing routines were read completely; every direct
-  read of its per-stage record pointer in the camera code range was
-  enumerated, and the whole camera range `0x006D5640..0x006DE400` was scanned
-  for stage-slot, stage-controller, and `ccField` accesses. The controller
-  constructor/destructor, publisher, update order,
-  event-edge gate, fixed slot loops, numeric mode dispatch `0..18`, preset
-  families, and ownership switch were traced. Presentation-camera handlers
-  were decoded at the record fields listed; their per-mode choreography was
-  not.
+- **Exploration depth:**
+  - Registry and camera vtables resolved through RTTI; the common update,
+    output helper, active-camera switch helpers, main-camera initializer,
+    tracking, placement, both smoothing routines and its section-transfer
+    branch read completely.
+  - Every direct read of the per-stage record pointer, and every stage-slot,
+    stage-controller, and `ccField` access in camera range
+    `0x006D5640..0x006DE400`, enumerated.
+  - Controller construction/destruction, publisher, update order, event-edge
+    gate, slot loops, event jump table, numeric mode dispatch `0..18`, every
+    mode handler, preset families, ownership switch, effect-record adaptation,
+    all 55 contiguous effect-camera records, and the mode-18 correction
+    helper traced.
+  - Direct event-writer and reset calls enumerated in the resident and BTL
+    programs.
 - **Confirmed coverage:** class identities and activation; which vector is
   the eye and which the look-at target; the main camera's tracking modes,
-  distance limits, lateral framing, height limits, and smoothing bands; the
-  per-stage record table and which fields are read; controller cadence;
-  request mapping and commit order; ownership states `0`, `1`, and `-1`;
-  preset families; and every stage input the camera code reads.
-- **Unresolved or untested:** numeric request/mode names; which moves issue
-  the camera events; the sign convention of the vertical axis; the fighter
-  fields `+0x9F0` and `+0xA24` that change camera behavior; per-stage record fields `+0x10`, `+0x18`,
-  `+0x44`, `+0x58`, and `+0x5C`, which have no direct reader in the camera
-  code; the per-mode presentation choreography; and visible behavior.
+  section-transfer position selection, distance limits, lateral framing,
+  height limits, and smoothing bands; the per-stage record table and which
+  fields are read; controller cadence; request mapping and commit order;
+  ownership states `0`, `1`, and `-1`; preset families; the stage inputs
+  traced below; and the request/variant gates and record sources below.
+- **Unresolved or untested:** player-facing names for numeric requests/modes
+  and individual effect/move labels; the sign convention of the vertical axis;
+  per-stage record fields `+0x10`, `+0x18`, `+0x44`, `+0x58`, and `+0x5C`,
+  which have no direct reader in the camera code; whether mode 1's exit has
+  an ownership-0 alternative after its request-3 comparison; the visible
+  contribution of the mode-18 angle derived from the jutsu-clash side
+  counters; and visible behavior.
 - **Deliberate exclusions and overlap:** Adventure, cutscene cameras,
   projection/render internals, and unproved player-visible policy were
   excluded. Session and graph ownership are owned by
   [Battle lifecycle](battle_lifecycle.md); stage archives, `ccBgControl`, and
   line nodes by [Stages](stages.md); pause gating of the camera update by
-  [Pause and replay](pause_and_replay.md).
-- **Evidence limitations:** no live camera capture, frame stepping, request
-  injection, or patch validation was performed. Axis roles come from code
-  structure, not from observed motion.
+  [Pause and replay](pause_and_replay.md); the fighter section-transfer fields
+  by [Section transfers](section_transfers.md); the side-indexed pending
+  contribution word by
+  [Combo accounting](combo_accounting.md#per-side-accumulated-contribution-route);
+  and the jutsu-clash side counters by
+  [Match outcomes](battle_statistics.md#jutsu-clash-outcome-selection-and-callback-lifetime).
+- **Evidence limitations:** no live camera capture, frame stepping, or request
+  injection was performed. Axis roles come from code structure, not from
+  observed motion. The direct-call scan does not exclude indirect producers,
+  and physical record intervals do not prove script selectability. Some
+  enclosing BTL function boundaries remain incomplete.
 
 ## Camera classes and activation
 
@@ -148,6 +160,24 @@ When `+0x164 == 0`, component 0 of the target is clamped to the record's
 (`0x006D6A00`) sets `+0x164` from a fighter's state and slot `+0x28` sets
 `+0x16C/+0x16E`.
 
+**Section-transfer branch.** Before its ordinary fighter-position reads, the
+main compute has an explicit branch for each fighter whose section-transfer
+delta `+0x9F0` is nonzero. It uses physical position `+0x30` when physical
+component `+4` equals destination component `+0xA24`, and otherwise origin
+snapshot `+0xA10`. It stores that position in its frame at `+0x40/+0x50`,
+updates saved tracking position `camera+0x1A0/+0x1B0`, clears the
+corresponding short `+0x16C/+0x16E`, and adds `0.75` of the scaled fighter
+height to the frame's vertical component. The shared resident position
+service `FUN_00216320` returns the fighter's eased auxiliary vec4 `+0x2C0`
+during a transfer; that easing does not establish that the main camera
+follows the eased point. Instruction
+bytes at `0x006D6F68..0x006D70F7` and `0x006D7104..0x006D7283` hold both
+symmetric branches; `c.eq.s f1,f0` and `bc1f` at `0x006D704C/0x006D7050` and
+`0x006D71E8/0x006D71EC` establish exact component equality rather than a
+less-than comparison. Neither transfer direction calls the controller's event
+or ownership-switch path. The transfer fields are documented in
+[Section transfers](section_transfers.md#request-admission-and-retained-destination).
+
 ### Distance, elevation, and framing
 
 `0x006D78C0` sets the engine camera's field of view, from code constants
@@ -204,9 +234,19 @@ cases assign their value directly:
 Nonzero floats at camera `+0x68` and `+0x6C` override the eye and target
 coefficients. Snap byte `+0x62 == 1` copies the placed values directly.
 
+### Fighter section-transition inputs
+
+The smoothing predicates test fighter section-transfer delta `+0x9F0`, which
+is nonzero only during an active transfer, and component 1 `+0xA24` of its
+resolved destination vector `+0xA20`; both are documented in
+[Section transfers](section_transfers.md#request-admission-and-retained-destination).
+Initialization, cleanup, and interruption clear the delta as described in
+[Section transfers](section_transfers.md#interruption-and-cleanup), which ends
+these transfer-specific checks.
+
 ## Per-stage camera record
 
-The main camera's only stage-specific input is a `0x60`-byte float record per
+The main camera's per-stage parameters are a `0x60`-byte float record per
 raw stage slot. Pointer table `0x00891E10` holds 24 entries; the records are
 contiguous at `0x00891510 + slot * 0x60`. Established fields:
 
@@ -278,7 +318,7 @@ session `+0x1C`, and publishes it through `0x006DBD60`. The wrapper runs
 `0x006DBF70` followed by `0x006DBFF0`. During `FUN_001EEFD0`, the resident
 calls `0x006DBF00(controller, 1)`, clears session `+0x1C`, and then calls
 `0x006DBD60(0)`. The two resident calls at `0x001EF47C` and `0x001EF0FC` are
-the only direct `jal` sites to the publisher in the clean resident and BTL
+the only direct `jal` sites to the publisher in the retail resident and BTL
 files.
 
 The controller update `0x006DC3B0` has one direct caller, resident
@@ -334,9 +374,9 @@ service update, before any registry callback.
 | `+0x18` | previous request code |
 | `+0x1C` | pending controller event/state |
 | `+0x20` | previous pending event/state |
-| `+0x24` | character/preset discriminator consumed by the mode mapper; initialized to `-1` |
-| `+0x28` | enables a save/profile-dependent duration counter |
-| `+0x2C` | that counter, otherwise cleared each update |
+| `+0x24` | mode discriminator supplied as a skill/effect identifier by the traced producers; initialized to `-1` |
+| `+0x28` | enables counter advancement while manager `+0x14 == 0` |
+| `+0x2C` | eligible-update counter, otherwise cleared each update |
 | `+0x30` | output ownership state: main camera versus presentation camera |
 | `+0x34` | number of constructed camera slots |
 | `+0x38` | selected camera-slot index |
@@ -390,15 +430,27 @@ names.
 | `0x2E` | 15 |
 | `0x59`, `0x8F`, or `3` | 16 |
 | `1`, `0x1C`, `0x6B`, `0x71`, `0x75`, `0x95`, or `0xAB` | 7 |
-| other bounded character-like ID whose metadata byte `+0x04` is set | 17 |
+| other bounded skill/effect ID whose metadata byte `+0x04` is set | 17 |
 | request `-4`, independent of discriminator | 18 |
 
 The pending event at `+0x1C` is itself converted to a request by
 `0x006DC5C0`. Stable literal mappings are event `2 -> 5`, `6 -> -1`,
 `7 -> -4`, `8 -> -5`, `9 -> -6`, and `10 -> -7`. Events 3, 4, and 5 map to
 requests 2, 3, and 4 only while at least one fighter-side `+0xB00` field is
-nonzero. Event 1 uses a second discriminator mapper and live fighter state, so
-it is deliberately not reduced to one constant request.
+nonzero. The eleven-entry jump table at live `0x008C23A0` and its complete
+case bodies (`0x006DC610..0x006DC798`) confirm these mappings despite the
+incomplete imported switch.
+
+Event 1 first examines both fighters' Extra Hit roles at `+0xB00` (role
+ownership is in [Extra Hit](extra_hit.md#exchange-state-at-fighter-0xb00)).
+A nonzero low byte on the first fighter sets controller side to 1; otherwise
+a nonzero low byte on the second sets it to 2. If the selected role contains
+bit 0, the result is request 1. Otherwise it calls discriminator mapper live
+`0x006D9DB0` (`0x006D9DB0..0x006D9F40`): the discriminator sets above return
+requests `6..15`, while other signed IDs `0..0xC4` return `-3` and values
+outside that bound return 0. This mapper does not name the IDs. Event 1 can
+therefore initiate either the Extra Hit camera family or an effect-specific
+presentation family.
 
 ### Update order, event edges, and automatic requests
 
@@ -428,14 +480,19 @@ paths while ownership `+0x30` is nonzero and the derived mode is 1, 2, or 3:
   of resident helper `0x001DC610` applied to that fighter's vector at `+0x30`.
   Controller side value 1 selects the second fighter; other values select the
   first. Fighter `+0x30` is the position vector, so `+0x38` is its component
-  2; the helper's meaning remains unresolved.
+  2.
 
-Flag `+0x28` and a nonzero result from resident predicate
-`FUN_001F4790(resident_owner, 0)` cause counter `+0x2C` to increment by
-exactly one; either condition failing clears it. It counts controller updates.
+Flag `+0x28` and resident predicate `FUN_001F4790(manager, 0)` cause counter
+`+0x2C` to increment by exactly one; either condition failing clears it.
+The predicate is precisely `manager[+0x14] == requested_value`, so this
+counter counts enabled controller updates while manager `+0x14 == 0`.
 
-The request-4 comparison is medium confidence because the resolver's indirect
-jump table was not fully reconstructed.
+The reconstructed case table and code establish the request-4 path.
+Resident `FUN_001DC610(position, 0x20000000)` queries a component-2 segment
+from `position + (0,0,5)` to `position - (0,0,1000)` and returns the hit's
+component 2, or the original component 2 when no hit is found. Thus the
+automatic request requires a different returned height and a signed height
+difference below 300; it does not take the absolute difference.
 
 ## Camera ownership switching
 
@@ -477,10 +534,7 @@ orientations:
 | `0x00895F70` | `0x1E2070` | `3, 3, 0, 1, 2, 3, 4, 5` |
 
 Pointer families at `0x00895F80`, `0x00895FA0`, and `0x00895FC0` select these
-or equivalent resident constant tables according to modes 1 through 4. The
-preserved Ghidra C misleadingly labels some of them as `s_ccDummyCamera` or
-`s_ccCamera01`, because the header-skipped display attaches an already-live
-operand to the string located 0x40 later.
+or equivalent resident constant tables according to modes 1 through 4.
 
 ### Mode handlers and preset records
 
@@ -532,8 +586,129 @@ Modes 7 through 18 have distinct handlers:
 Modes 1 through 6 index their records by preset alone, so those records are
 shared by every stage. Across the controller and all mode handlers
 (`0x006D9F40..0x006DE400`), no code reads manager `+0x98` or the stage
-controller global `0x006077E4`; only the mode-17 handler and the edge probe
-reach the stage, through `ccField`.
+controller global `0x006077E4`; the correction helper `0x006DA270` and the
+edge probe reach the stage through `ccField`. Mode 18 also obtains the logical
+stage ID indirectly through resident `FUN_00308080()`.
+
+### Numeric request choreography
+
+Modes 1 through 3 act on request changes. A mode change enables controller
+counter `+0x28`; request 1 sets main-camera hold byte `+0x61` through live
+`0x006DDE50`, and request 2 clears it through `0x006DDE60`, takes ownership
+state 1, and resets counter `+0x2C`. Requests 2, 3, and 4 select a new preset
+and apply it to the side's slot 1 or 2. Request 4 constructs an inline anchor
+at the other fighter's position with component 2 replaced by the
+`FUN_001DC610` result. Mode 1 uses this anchor for both channels; mode 2 also
+forces slot 2; mode 3 supplies the same other-fighter anchor to both channels
+for all three requests. These are distinct request stages, rather than one
+camera preset replayed throughout an exchange.
+
+Request `-1` disables the counter and clears main-camera hold. Mode 2 chooses
+ownership `-1` only after preset 22 or 23, otherwise 0; mode 3 chooses `-1`.
+Mode 1's exit (`0x006DD4A8..0x006DD4F8`) rereads current request `+0x14`
+and compares it to 3 after entering the `-1` branch, which assigns ownership
+`-1`. This compares the current request, not the previous one; whether the
+comparison leads to an ownership-0 alternative is unresolved.
+
+Mode 2 has a paired preset transition: requests 2/3, with previous slot
+invalidated, turn previous preset 1 into 9 (`0x00892FC0`) or previous preset
+2 into 10 (`0x00893070`) before the ordinary randomized choice. Mode 1's
+request 2 forces preset 1/2 for selected fighter native ID 4. These exceptions
+are bounded numeric results; their player-facing move names are not assigned.
+
+Modes 4 through 6 choose slot 1. Mode 4 takes ownership on its request edge
+and refreshes both inline camera anchors every update from resident
+`FUN_00209070/FUN_00209110(fighter[+0xB30])`. Modes 5 and 6 apply their fixed
+records only on a request edge: mode 5 anchors to both fighters' `+0xB20`
+vectors and writes orientation-dependent endpoint offsets; mode 6 orders the
+fighters by byte `+0xB17` and writes eye/target offsets. Those fields belong
+to the separate resident `+0xB10` sequence, not the Extra Hit `+0xB00` roles.
+
+The effect-specific handlers have the following complete request/record
+partition. `variant` means the active effect object's integer `+0x594`, read
+by live `0x007765C0`; it is not a camera frame counter.
+
+| Mode | Entry request | Record base | Continued update |
+| ---: | ---: | --- | --- |
+| 7 | 6 | `0x00893960` | Apply variant 0 on the request edge. |
+| 8 | 7 | `0x008938B0` | Apply variant 0, both anchors at the other fighter's position. |
+| 9 | 8 | `0x00893D80` | Reapply when the effect variant changes. |
+| 10 | 9 | `0x00894460` | Reapply when the effect variant changes. |
+| 11 | 10 | `0x00893B70` | Entry reads the current effect variant; the unchanged-request branch checks request 11 before refreshing a changed variant. |
+| 12 | 11 | `0x00893AC0` | Apply variant 0, both anchors from effect anchor channel 1. |
+| 13 | 12 | `0x00894720` | Reapply when the effect variant changes. |
+| 14 | 13 | `0x008957A0` | Reapply when the effect variant changes. |
+| 15 | 14 | `0x008941A0` | Reapply when the effect variant changes. |
+| 16 | 15 | `0x00894CA0` | Reapply when the effect variant changes; forces record selectors `+0x10/+0x14` to 1. |
+| 17 | `-3` | Effect-supplied pointer | Fetch and apply the effect's camera record on every eligible handler update. |
+| 18 | `-4` | `0x00893CD0` | Uses the controller counter and the correction helper after the record's timed threshold. |
+
+The contiguous record block live `0x008938B0..0x00895E80` contains 55
+complete `0xB0` records, ending before the camera debug-name strings. The
+record bytes establish these physical family intervals and enabled timing
+values; they do not by themselves prove every index can be selected by a
+shipped effect script. Both channel delays/durations are equal in these records.
+
+| Mode | Physical record indices | Last record | Enabled delay / duration |
+| ---: | --- | --- | --- |
+| 7 | `0..1` | `0x00893A10` | None. |
+| 8 | `0` | `0x008938B0` | None. |
+| 9 | `0..5` | `0x008940F0` | `0 / 93` on indices 0/1; other rows have timed bits clear. |
+| 10 | `0..3` | `0x00894670` | `0 / 66` on indices 0/1; other rows retain duration 66 with timed bits clear. |
+| 11 | `0..1` | `0x00893C20` | None. |
+| 12 | `0` | `0x00893AC0` | `0 / 30`. |
+| 13 | `0..7` | `0x00894BF0` | `0 / 100` on 0/1; `0 / 10` on 2..7. |
+| 14 | `0..9` | `0x00895DD0` | None. |
+| 15 | `0..3` | `0x008943B0` | `19 / 7` on 0/1; other rows have timed bits clear. |
+| 16 | `0..15` | `0x008956F0` | `10 / 15` on every row. |
+| 18 | `0` | `0x00893CD0` | `0 / 20`. |
+
+Modes 7 through 17 select slot 1/2 by controller side. Their matching entry
+request resets counter `+0x2C`, takes ownership 1, initializes the preset
+index, and clears a matching previous preset to `-1`. Request `-1` disables
+the counter, sets ownership to `-1`, and clears discriminator `+0x24`.
+Mode 18 always uses slot 1 and invalidates previous slot `+0x3C`.
+
+Mode 17's record accessor live `0x00777710` returns active effect `+0x108`
+only while its byte `+0x105` is zero. A null record leaves the existing camera
+unchanged. Mode 18 uses system vectors `+0xA80/+0xA90` as its anchors; after
+controller counter `+0x2C >= record[+0x18] + record[+0x24]` (20 for its retail
+record), it calls live correction helper `0x006DA270`. That helper is the only
+direct call target of this name in BTL, at mode-18 call site `0x006DA8D8`.
+It derives a signed angle from the difference between two side values read
+through `0x007728D0`. That accessor compares the signed shorts at
+system `+0xA7A + 2 * side` and `+0xA7A + 2 * (side ^ 1)`, clamps their
+difference to `-15..15`, and returns a float bounded to `0..1`
+(`0x007728D0..0x007729AC`). Those halfwords are the jutsu-clash side counters
+`+0xA7A/+0xA7C` that the clash driver increments, documented in
+[Match outcomes](battle_statistics.md#jutsu-clash-outcome-selection-and-callback-lifetime).
+The correction moves controller float `+0x64` toward its angle through
+`FUN_001808F0(..., 0x40)`, and suppresses a negative angle for active effect
+IDs `0x30/0x69`. The complete continuation establishes that the helper resolves
+a point within the selected fighter's current stage section, uses the resolved
+component 1 for a segment test, and either rotates the record eye endpoint or
+uses it without rotation when blocked. It publishes the angle back to
+controller `+0x64` and the corrected offset to camera `+0x1A0`.
+
+The mode-18 caller then restores its local copy of record `+0x90` to camera
+`+0x1A0`, adding 80 to component 2 only when resident `FUN_00308080()` returns
+logical stage ID 5 (`0x006DA898..0x006DA91C`). That resident accessor calls the
+raw-slot mapper live `0x006C14E0` on manager `+0x98`; ID 5 corresponds to load
+slot 4, as recorded in [Stages](stages.md#stage-identity-and-resource-mapping).
+Thus the helper's camera-offset store is overwritten in this caller, while
+its controller-angle store persists. The angle's visible contribution cannot
+be inferred from its internal store alone.
+
+Live adapter `0x006DC370` applies a record to the chosen slot via
+`0x006D90A0`. Modes 7, 10, 11, 13, 14, 15, and 16 first pass their base and
+variant to `0x00776610`: it can substitute another `0xB0` record after
+querying effect virtual slots `+0x34/+0x38` (anchors), `+0x3C/+0x40`
+(orientation/variant), and `+0x44/+0x48` (substitution tables), then testing a
+stage segment from an anchor raised by 75 along component 2 toward the
+record's component-0 offset. Modes 7, 11, 13, and 14 also choose their two
+supplied anchors from effect channels according to record `+0x10/+0x14`.
+This is a record-adaptation path before camera initialization, not a direct
+per-stage camera-record lookup.
 
 ### Stage-edge correction
 
@@ -550,12 +725,60 @@ orientation and are not assigned here.
 
 ### Presentation-camera smoothing
 
-`ccPMCCamera` compute `0x006D9290` uses its own movers, `0x006D9850` and
-`0x006D9A00`. They step toward their goal by one eighth and one quarter of the
-difference respectively, each component clamped to `±300` per update, and
-both consult object byte `+0x161`. Which of the two camera vectors each mover
-serves was not re-traced. Initialization bytes bypass smoothing and copy the
-source vector directly.
+The two anchor channels have independent integer counters: eye `+0x240` and
+target `+0x244`. Record `+0x18/+0x1C` becomes their delay at object
+`+0x228/+0x22C`; record `+0x24/+0x28` becomes duration at
+`+0x234/+0x238`. Flag bits `0x08/0x10` enable their timed offset movers.
+Initialization live `0x006D9360` clears the corresponding counter and
+computes a displacement from initial offset `+0x1A0/+0x1B0` to endpoint
+`+0x1E0/+0x1F0`, divided by `max(duration - 4, 1)`.
+
+The complete raw offset bodies live `0x006D9510..0x006D9610` (eye) and
+`0x006D9610..0x006D9710` (target) move only when
+`delay < counter < delay + duration`. With `remaining = delay + duration -
+counter`, their displacement multiplier is `0.25` when `remaining < 2` or
+`remaining >= duration - 1`, `0.5` when `remaining == 2` or
+`remaining == duration - 2`, and 1 otherwise. Exactly at `counter == delay +
+duration` they copy the endpoint. Every invocation then increments its
+counter by one, including delayed and already-completed invocations. These
+are update counts, with no conversion to elapsed seconds in the scoped code.
+
+Eye/target goal builders `0x006D9710/0x006D97B0` retain an initial anchor
+snapshot while a nonzero delay has not expired (`counter <= delay`), then
+read the live anchor each update; delay 0 reads it immediately. Inline
+initial anchors and their one-shot snapshot bytes have the same channel
+ownership. Goal construction invokes the enabled offset mover before final
+eye/target smoothing. The movement gate below therefore gates both channel
+counters as well as the smoothed vectors.
+
+`ccPMCCamera` compute `0x006D9290` uses eye mover `0x006D9850`
+(`0x006D9850..0x006D9A00`) and target mover `0x006D9A00`
+(`0x006D9A00..0x006D9BB0`). The eye goal adds object offset `+0x1A0` to
+working vector `+0x00`; the target goal adds `+0x1B0` to working vector
+`+0x10`. Byte `+0x161 == 1` copies both goals directly. Otherwise each
+component advances by `clamp(goal - current, -300, 300) * coefficient`,
+where the eye coefficient is `0.125` and target coefficient is `0.25`.
+Consequently the maximum component displacement is `37.5` for the eye and
+`75` for the target per eligible update; `300` bounds the difference before
+scaling.
+
+The raw compute instructions (`0x006D9290..0x006D935C`) establish the order:
+if byte `+0x160` is nonzero, run the initialization helper `0x006D9360` first;
+then call resident `FUN_001F4790(owner, 1)`. Return value 1 skips the working
+vector construction, both movers, and clearing of `+0x160`. Otherwise the
+compute builds the two goals through `0x006D97B0` and `0x006D9710`, moves eye
+then target, restores its `0x20`-byte working-frame allocation, and clears
+`+0x160`. Initialization therefore precedes this movement gate and can be
+repeated while the gate remains set. This predicate is distinct from the
+controller counter's call with argument 0: it tests manager `+0x14 == 1`,
+whereas the counter requires `+0x14 == 0`. Registry scheduling gates remain
+with [Pause and replay](pause_and_replay.md).
+
+Record application sets byte `+0x160 = 1` at live `0x006D9278`, requesting
+initialization on the next compute. Thus a non-null record repeatedly applied
+by mode 17 restarts enabled channel counters before each eligible movement
+update. This is a static consequence of the handler and compute order; it
+does not establish which timed records retail effects supply through that path.
 
 ## Stage- and event-driven inputs
 
@@ -563,19 +786,14 @@ The camera consumes these inputs:
 
 - **Per-stage:** the main camera's record, selected once per session by the
   raw slot at manager `+0x98`; the `ccBgControl` bounds `+0x20/+0x30` read by
-  the presentation-camera edge probe; and, in the mode-17 handler
-  (`0x006DA488..0x006DA4BC`), the stage line resolver `0x007090D0` applied to
-  a fighter-derived point, described in
-  [Collision](collision.md). The bounds and line records come from the stage
-  archive's `DMY_*` nodes. No other stage input was found in the camera code.
+  the presentation-camera edge probe; the stage-section point resolver used
+  by mode-18 correction helper `0x006DA270`; segment tests used by that helper,
+  automatic request 4, and effect-record adaptation; and mode 18's 80-unit
+  height bias for logical stage ID 5. [Collision](collision.md) owns the
+  query contracts; [Stages](stages.md) owns the archive bounds and line data.
 - **Events and requests:** the controller's pending event `0x006DBDD0` has
-  direct callers in resident fighter code (`0x00242BCC..0x00247840`) and in
-  several BTL ranges (`0x0077AA34`, `0x0077BA64`, `0x00794B3C..0x00794C2C`,
-  `0x007A9D4C..0x007A9E3C`, `0x007D7C88`, `0x007D810C`, `0x007FCF40`,
-  `0x007FF500`, `0x00802110`, `0x00806660`, `0x0080F3D0`). The side and
-  discriminator writer `0x006DBDF0` is called at `0x00794B30`, `0x007A9D40`,
-  and `0x007D7C7C`; the reset request `0x006DBDA0` has twelve callers. Which
-  moves these callers belong to is not assigned here.
+  26 aligned direct call sites in the retail resident and BTL programs (11
+  resident, 15 BTL). The producer families and gates are recorded below.
 - **Consumers of camera state:** `0x006DBD70` is queried by resident
   `FUN_003AE660`. When that predicate (which also tests other battle states)
   is true, `ccBgControl`'s phase-1 update turns off background scene selectors
@@ -583,6 +801,72 @@ The camera consumes these inputs:
   `0x006BA614`, `0x0024A09C`, `0x0024D77C`, `0x00305B24`, and `0x00376A68`.
   The on/off reading of the scene routine `FUN_003ACF20`'s last argument
   (0 on entry, 1 on exit) is an inference.
+
+### Action and effect producers
+
+The table covers every direct `jal 0x006DBDD0` caller family, counting
+resident mirrored address aliases once. The skill vtables that hold the BTL
+callbacks reside in the resident ELF. Native class names identify retail code
+families; they are not translated move names.
+
+| Producer | Live call sites | Event and local gate |
+| --- | --- | --- |
+| Resident Extra Hit phase helper `FUN_00242B30`, called by `FUN_00243040` and the continuation containing `0x002439AC` | `0x00242BCC`, `0x00242C0C`, `0x00242C40`, `0x00242CE8`, `0x00242E24`, `0x00242E90`, `0x00242F18`, `0x00243024` | Phase `+0x194`: 0 emits 1; 1 emits 2; 2 emits 3; 6 emits 4. Phase counter `+0x196` is 0 except event 3's exchange-count-scaled branch. |
+| Resident sequence `FUN_00247090` | `0x00247288` | Event 8 when incremented signed counter `+0xB12 == 0` and fighter side bit is clear. |
+| Resident sequence `FUN_002466D0` | `0x00246788` | Event 9 on entry, with side bit clear; `FUN_00247090` reaches this entry when `+0xB12 == 0x4C`. |
+| Resident sequence `FUN_00247490` | `0x00247840` | Event 10 while `+0xB10 == 5`, fighter `+0x192 != 5`, and incremented `+0xB14 > 3`; this can repeat on successive updates. |
+| BTL shared skill callbacks `0x00794B00/0x00794BC0` | `0x00794B3C`, `0x00794C08`, `0x00794C2C` | Entry emits 1; exit emits 6 unless metadata byte `+1 == 1`, which requests reset instead. |
+| `ccSkillHAK000`, vtable `0x005F9800`, callbacks `0x007A9D10/0x007A9DD0` | `0x007A9D4C`, `0x007A9E18`, `0x007A9E3C` | Same entry/exit contract as the shared callbacks. |
+| `ccSkillFIR000`, vtable `0x005F2C20` | `0x007D7C88`, `0x007D810C` | Entry emits 1 with discriminator 1 when its scene predicate succeeds; exit emits 6 after the side-indexed pending contribution word `+0x3268` ([Combo accounting](combo_accounting.md#per-side-accumulated-contribution-route)) is `<= 0`, byte `+0x389 == 0`, and byte `+0x539 == 0`. |
+| Five overridden skill exit callbacks, classes below | `0x007FCF40`, `0x007FF500`, `0x00802110`, `0x00806660`, `0x0080F3D0` | When object `+0x590` is nonzero, reset first, then emit 6. |
+| BTL system presentation setup/exit paths | `0x0077AA34`, `0x0077BA64` | Setup emits 7 after publishing its `+0xA80` anchor; exit emits 6 after any conditional child callback. The enclosing imported function boundaries are incomplete. |
+
+In `FUN_00242B30`, exchange count `+0xB08 == 1` emits event 3 at phase-2
+counter 0. Other counts use `scale = max(0.01, 1 - (count - 1) * 0.25)` and
+emit it when the phase counter equals integer conversion of `scale * 5`.
+The phase updater calls this producer before advancing/resetting its counter,
+so the entry gates read the current phase snapshot. Extra Hit role and action
+ownership remain in [Hit response](hit_response.md).
+
+The shared entry callback has 163 literal vtable references in resident
+`0x005E0B18..0x005FB6E8`; for example `ccSkillKBW001` vtable `0x005E0900`
+stores entry/exit at `+0x218/+0x21C`. Entry writes side
+`object[+0x350] == 0 ? 1 : 2` and discriminator `object[+0x56C]` through
+`0x006DBDF0`, emits event 1, then sets byte `+0x590` to 1. Exit checks and
+clears that byte before consulting the metadata record, preventing a second
+exit from emitting another event through this shared callback. The HAK
+override follows the same order. FIR's selector call at `0x007D7C7C` instead
+supplies side `object[+0x350] + 1` and literal discriminator 1. These establish
+the discriminator as a skill/effect identifier in these producer paths.
+
+The five reset-and-event-6 exit overrides resolve through their resident
+vtable `+0x21C` and BTL RTTI as follows:
+
+| Class | Vtable | Exit callback |
+| --- | --- | --- |
+| `ccSkillKBT001` | `0x005EC1D0` | `0x007FCF20` |
+| `ccSkillSIN000` | `0x005EBF80` | `0x007FF4E0` |
+| `ccSkillTND001` | `0x005EBD30` | `0x008020F0` |
+| `ccSkillFOR000` | `0x005EB890` | `0x00806640` |
+| `ccSkillANB000` | `0x005EB610` | `0x0080F3B0` |
+
+Reset helper `0x006DBDA0` has twelve direct sites: four resident sites
+`0x0024408C`, `0x00246E34`, `0x00246EB0`, `0x00247CA8`, and eight BTL sites
+`0x00794C18`, `0x007A9E28`, `0x007DDB8C`, `0x007FCF34`, `0x007FF4F4`,
+`0x00802104`, `0x00806654`, `0x0080F3C4`. The resident sites accompany Extra
+Hit teardown or the `+0xB10` sequence's termination; the separate BTL routine
+`0x007DDB50` clears object `+0x590` before requesting reset. These reset calls
+do not identify additional event producers.
+
+This is a complete inventory of the scoped aligned direct-call encodings and
+their local gates, not proof that every authored action reaches one of them.
+The 163 inherited callbacks still require action/asset ownership to assign
+individual player-facing labels, and indirect calls are not excluded by this
+scan. Effect and action execution are owned by
+[Combat action execution](combat_action_execution.md) and
+[Effect-generator commands](../runtime/effect_generator_commands.md).
+
+### Camera-named resources
 
 The camera-named resources in BTL are not camera-controller inputs.
 `ANM_bg_camera`, `CAM_%s_camera1`, and `CAM_%s_camera2` are read through GP
@@ -593,13 +877,3 @@ child at `0x0076D0E8/0x0076D4E8`. The formatted per-character names
 `OBJ_%c%c%c_camera` are built by BTL code at `0x00796F0C..0x007971BC`. The
 fixed `OBJ_camera*` names are referenced only from resident data tables at
 `0x00604F2C..0x00605460`.
-
-## Limits and next evidence
-
-- Class identities, activation, eye/target roles, and the per-stage record are
-  high-confidence static results; their visible effect is untested.
-- Numeric modes and request codes remain numeric unless a resource or runtime
-  transition identifies them.
-- The maintained disassembly remains header-skipped; future work against it
-  must still translate raw targets before extending the call graph.
-- No runtime camera capture or patch was used.

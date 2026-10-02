@@ -2,25 +2,25 @@
 
 ## Research coverage
 
-- **Assigned scope:** compare clean NA2 and NUN5 Victory emblem geometry,
-  animation, and character-name rectangle construction.
+- **Assigned scope:** compare retail NA2 (`SLPS-25837`) and NUN5 Victory emblem
+  geometry, animation, and character-name rectangle construction.
 - **Exploration depth:** the relevant binaries, native callers, records, and
   paired screen states were examined.
 - **Confirmed coverage:** the documented owners, structures, and cross-game
   differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
-- **Deliberate exclusions and overlap:** feature imports, hooks, and validation
-  belong to [UI layout](../../../features/localization/ui_layout.md) or
-  [UI textures](../../../features/localization/ui_textures.md).
+- **Deliberate exclusions and overlap:** file identities belong to
+  [Standard game file identities](../../game/files/file_identities.md); the
+  Battle Results screen belongs to
+  [Battle Results presentation](battle/battle_results.md).
 - **Evidence limitations:** bounded states do not cover every animation phase or
-  indirect caller. GhidrAssist exposes fragmented BTL functions and maps their
-  code 0x40 below the verified file/runtime addresses. Where it could not expose
-  the initializer, read-only EE disassembly of the clean binaries supplied the
-  instruction evidence. BTL addresses below use the verified runtime mapping.
+  indirect caller. The preserved BTL analysis is fragmented and maps code 0x40
+  below the runtime addresses; raw disassembly of the retail binaries supplies
+  the battle initializer. BTL addresses below are runtime addresses.
 
 ## Scope and source identity
 
-The clean container identities are listed in
+The retail container identities are listed in
 [Standard game file identities](../../game/files/file_identities.md#ccs-research-inputs).
 
 | Container | NA2 size | NUN5 size |
@@ -42,19 +42,13 @@ Paired runtime memory contains the Japanese `TEX_name` body at EE
 `1DB17B6335F272F42F7B965742D195C01351900FE831D5BC981C3F2FBFD6DAA0`
 matches on-disc `3EYE/3SSV3PCT.CCS`, confirming the Sasuke resource identity.
 
-Seventy-two complete NUN5 payloads fit the corresponding NA2 member capacities,
-with 13 to 2,253 bytes of gzip padding.
+Two NUN5 name textures have these raster properties:
 
-Two members require deterministic mapped exceptions:
-
-- `3HAK3PCT.CCS`: the complete NUN5 payload exceeds the fixed NA2 member by
-  348 bytes. NUN5's 256x128 Haku name has nontransparent bounds
+- `3HAK3PCT.CCS`: NUN5's 256x128 Haku name has nontransparent bounds
   `(4,4)..(116,51)`; the entire right 128 pixels and lower 64 pixels are
   transparent.
-- `3SKN3PCT.CCS`: the complete donor exceeds the fixed member by 72 bytes even
-  though its structure is compatible. Palette index 8 is a faint
-  `(255,255,255,15)` antialias shade used by 156 pixels; the visible donor
-  bounds are `(3,4)..(232,115)`.
+- `3SKN3PCT.CCS`: palette index 8 is a faint `(255,255,255,15)` antialias
+  shade used by 156 pixels; the visible bounds are `(3,4)..(232,115)`.
 
 ## Large WINNER emblem
 
@@ -70,7 +64,7 @@ The atlas alone does not define its shape or placement:
 
 The first `ANM_end_win01` root translation is `(-111, -15, 77.656845)` in
 NA2 and `(-105, -15, 87)` in NUN5. Root rotation changes from `(0, 0, 0)`
-to `(0, -10, 0)`; scale keys also differ. Both models carry the matching donor
+to `(0, -10, 0)`; scale keys also differ. Both models carry the matching NUN5
 vertex and UV geometry. `CMP_win` is equivalent after resolving object IDs.
 
 Object IDs differ between the containers. Resolve mesh object/material
@@ -149,9 +143,8 @@ initializer has a separate path, described below:
   `154, 190`; NA2's prebuilt Naruto records instead contain `236, 173`.
 - Tenten uses character IDs `13` (Classic) and `66`. Both NUN5 rows are
   `160, 0`, so frame 0 uses width `158` and frame 1 uses the all-zero empty
-  template. Clean NA2 points those
-  frames at nonempty Japanese records of widths `128` and `122`; changing only
-  the first shared record cannot reproduce NUN5's one-frame result.
+  template. NA2 points those frames at nonempty Japanese records of widths
+  `128` and `122`.
 
 Each nonempty NUN5 template has U `1`, V `1` or `65`, height `62`, local X
 `0`, local Y `-31`, and zero initial display dimensions. The selected width
@@ -198,7 +191,7 @@ destination offsets. Construction follows the width/template rules above.
 The following 216 bytes at NA2 `0x0076CFD4` and NUN5 `0x00784A00` are
 identical. They derive float display dimensions from the two rectangles and
 center their combined width: first local X is `-(w0 + w1) / 2`, and second
-local X is `w0 - (w0 + w1) / 2`. Thus the clean Japanese Tenten pair centers
-128 + 122 pixels; the English pair centers 158 + 0 pixels. The unchanged
-centering formula needs the correct per-character frame pair, not a screen
-coordinate correction.
+local X is `w0 - (w0 + w1) / 2`. Thus the Japanese Tenten pair centers
+128 + 122 pixels; the English pair centers 158 + 0 pixels. The centering
+formula is identical; the difference comes from the per-character frame pair,
+not from screen coordinates.

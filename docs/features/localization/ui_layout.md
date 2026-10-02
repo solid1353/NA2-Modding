@@ -74,6 +74,51 @@ links and lifetimes, and does not change item selection, values, effects, or
 timing. Exact source and donor relationships are documented in
 [Battle item-status presentation](../../knowledge/localization/ui/battle/item_status.md).
 
+The two games' anisotropic renderers build centered offsets from different
+registers; see
+[Shared foreground renderer difference](../../knowledge/localization/ui/battle/item_status.md#shared-foreground-renderer-difference).
+Reusing NA2's centered-offset instruction after adopting NUN5's register
+allocation rebuilds the offsets from alpha:
+
+```cpp
+sprite->localX = -(alpha * sprite->width) / 2.0f;
+sprite->localY = -(alpha * sprite->height) / 2.0f;
+sprite->alpha = alpha;
+```
+
+That register mismatch makes the foreground offsets vary with alpha. In a
+controlled paired fade, intended offsets `-7`, `-23`, and `-5` became
+`-4.2`, `-13.8`, and `-3.0` at alpha `0.6`. Using NUN5's scale register
+retained the intended offsets through fade-in and alpha `0.0` fade-out.
+Changing the BTL wrapper's anisotropic argument order moved the bubbles and
+did not correct the foreground transition. The centered-offset register is the
+isolated cause; saved object fields and isolated runtime captures verify the
+finding.
+
+Further implementation evidence:
+
+- A paired raster comparison shows both paired foreground labels and the
+  white-bubble bounds matching NUN5; a one-pixel bubble-top difference tracks
+  normal pulse timing.
+- Runtime captures containing simultaneous Health and Chakra labels with
+  Recovery values show numeric and paired foreground and bubble geometry
+  matching NUN5 at 640x480; remaining subpixel differences follow animation
+  timing. Confidence is **verified**.
+- A direct call to the lower anisotropic renderer for single labels produced no
+  foreground because it bypassed the uniform wrapper's argument shuffle; the two
+  renderer interfaces are not interchangeable. Runtime captures of simultaneous
+  single/status notifications match NUN5 bubble bounds, label centers,
+  clipping, and row placement.
+- A cross-index substitution of the substitution-doll pickup into NA2 record
+  `0x2E` changed restored geometry only; the next updater pass selected record
+  `0x0A` again.
+- A controlled class substitution exercised each game's native fixed-class
+  vtable. Both objects retained identical positions and NUN5 offsets, and the
+  NUN5 object received the traced `1.59375` scale. The native functions
+  rendered `Status Effect` and `Recovery` with matching label centers relative
+  to the bubble at 640x480. A four-pixel whole-object screen delta accompanied a
+  one-frame pulse difference and did not change internal placement.
+
 ## Victory presentation
 
 The large WINNER emblem imports NUN5's matching texture,
@@ -98,6 +143,14 @@ evidence are recorded in [Practice layouts](../../knowledge/localization/font/sc
 
 Mash prompts use the complete seven-record NUN5 English main-prompt table while
 retaining NA2's renderer, object layout, and separate controller-glyph table.
+NA2's prompt-zero record samples the English Mash artwork vertically and clips
+it. Replacing NA2 live range `0x0088F630..0x0088F667` with the complete NUN5
+English range produced the NUN5 label dimensions and placement while leaving
+the Cross panels independently controlled. Replacing the
+[adjacent controller-glyph range](../../knowledge/localization/ui/battle/mash_prompts.md#adjacent-controller-glyph-table)
+`0x0088F670..0x0088F6A7` instead left Mash vertical and turned the Cross panels
+into incorrect controller glyph rows. Main prompt IDs other than Mash were not
+each exercised visibly at runtime.
 Battle and Practice Settings use NA2-compatible effective prompt anchors; their
 menu state, input, and animation behavior remain native.
 
@@ -110,14 +163,48 @@ findings are recorded in [Mash prompts](../../knowledge/localization/ui/battle/m
 and [Battle Results](../../knowledge/localization/ui/battle/battle_results.md).
 
 The VS confirmation prompt uses effective NA2 anchors X=`388` for OK and
-X=`462` for Back. Collection's character viewer selects Controls or Hide at the
+X=`462` for Back with the imported NUN5 legend records. Paired calibration
+against NUN5 found that the shared native anchors `400/470` rendered the
+records 15/10 pixels right of NUN5, `384/460` rendered them 5/3 pixels left,
+and `388/462` matched both legends at `dx=0, dy=0`; the native wrapper
+difference is recorded in
+[VS confirmation prompts](../../knowledge/localization/ui/battle/selectors_and_prompts.md#vs-confirmation-prompts-and-bottom-legends).
+Collection's character viewer selects Controls or Hide at the
 shared visible-state call and Display at the separate hidden-state call; it
 does not route all three suffix labels through one shared selection.
+
+With the English HOME atlas, NA2's native
+[Collection category-title records](../../knowledge/localization/ui/collection.md#collection-category-title-helper)
+sample the wrong rows: Characters samples six pixels of the Movie row, Movie
+samples the Music row beneath it, and Music starts below the NUN5 Music row, so
+that title is absent. NA2's Play record's 24-pixel U-coordinate difference
+produces `Pl...` clipping on both Movie and Music, and NA2's substring
+animation references resolve the viewer suffix as the malformed `Cisplay`
+label. In the Diorama viewer, NA2's native
+[viewer-control positions](../../knowledge/localization/ui/collection.md#exact-paired-tables)
+place the English Zoom In and Zoom Out controls at X `469` and `468`, clipping
+both at the right edge; NUN5 draws all four controls at X `440`.
 
 The Jutsu-selector arrow helper enables sprite mode 10 for the draw, applies
 the signed quarter-turn and lower-arrow flip, flushes the sprite, and restores
 mode 10 to its native disabled state. The NUN5 mode fields are never left active
-across the shared sprite object's lifetime.
+across the shared sprite object's lifetime. Arrow-state tests established this
+contract:
+
+- NA2's active arrow sprite was at `0x00C7B820`; its rotation field at
+  `+0x4C` (`0x00C7B86C`) read back the exact `-pi/2` bit pattern after the
+  lower draw, yet the captured arrow still pointed right;
+- NUN5's corresponding object was at `0x00BFC420` and consumed the rotation;
+- cloning the NUN5 object control fields persistently suppressed unrelated UI;
+  partial draw-scoped field tests either had no effect or produced malformed
+  sampling;
+- disabling the rotation reset did not change the rendered direction.
+
+These results establish that writing a valid rotation float is insufficient
+while the NA2 sprite remains in mode 0, and that NUN5's mode fields cannot stay
+enabled across the shared object lifetime. The native rotation and rectangle
+differences are recorded in
+[Open VS Jutsu selector](../../knowledge/localization/ui/battle/selectors_and_prompts.md#open-vs-jutsu-selector).
 
 ## Composition boundary
 
@@ -132,6 +219,6 @@ belongs to the translation importer, glyph measurement and wrapping belong to
 Font, and regional button behavior belongs to
 `localization.regional_input`.
 
-Exact source/donor identities, offsets, function relationships, negative
-results, runtime observations, and confidence belong only in the linked
-knowledge documents.
+Retail source/donor identities, offsets, and function relationships belong in
+the linked knowledge documents. Implementation experiments and measurements of
+modified screens stay with the behavior they support in this document.

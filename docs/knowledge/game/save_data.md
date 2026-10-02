@@ -1,89 +1,111 @@
 # Save-data record format and lifecycle
 
-This document describes the resident-ELF save implementation for retail NA2. It
-covers the on-card file set, the `0x2400`-byte profile record, validation and
-copy behavior, profile defaults, and the relationship between the three
-visible slots and the UI-hidden fourth record. Adventure-mode field consumers are
-deliberately out of scope.
+This document describes the resident-ELF save implementation of retail NA2
+(`SLPS-25837`). It covers the on-card file set, the `0x2400`-byte profile
+record, validation and copy behavior, profile defaults, and the relationship
+between the three visible slots and the UI-hidden fourth record. Embedded
+card-service modules establish lower descriptor reclamation and directory
+ordering. BTL field consumers establish part of the secondary counter bank.
+Adventure-mode field consumers are deliberately out of scope.
 
 ## Research coverage
 
 - **Assigned scope:** the clean NA2 `SLPS_258.37` save-record payload and its
-resident save lifecycle: physical files and descriptors, record boundaries,
-validation and checksum behavior, serialization and copy paths, fresh-profile
-initialization, slot/backup relationships, and fields whose meanings could be
-recovered without guessing.
-
-- **Exploration depth:** coverage has three distinct depths:
-
-  **Exhaustive within the bounded direct resident paths inspected:** the save
-  task and worker (`FUN_001e1c60`, `FUN_001e2140`); indexed record and descriptor
-  I/O (`FUN_001c19e0`, `FUN_001c1e60`, `FUN_001c1b20`, `FUN_001c1fa0`);
-  descriptor initialization/validation, save-set creation, repair, and error
-  classification (`FUN_001e1ef0`, `FUN_001e1f50`, `FUN_001c17c0`,
-  `FUN_001c2e60`, `FUN_001c3670`); all three structured serializers
-  (`FUN_001e30f0`, `FUN_001e2e20`, `FUN_001e2c90`) and the manual tail copy; and
-  the snapshot/compare helpers (`FUN_001f7890`, `FUN_001f7920`). Direct clean-ELF
-  references to the live record header and uses of the `0x2400` record-size
-  literal were audited. This establishes byte coverage for the complete record
-  `0x0000..0x23FF`, including the main block `0x0008..0x0DFB`, secondary block
-  `0x0DFC..0x2393`, manual tail `0x2394..0x23FF`, and the seven structured-copy
-  omissions at `0x0011`, `0x0032..0x0033`, `0x0966..0x0967`, and
-  `0x21F6..0x21F7`. It also covers the four-entry descriptor table and every
-  recovered native path involving `data01` through `data04`.
-  **Bounded static coverage:** the actual fresh-profile path
-  (`FUN_001f4360` -> `FUN_001f47d0`), settings and controller-map synchronization,
-  currency, availability/status and ability-bit accessors, Survival-table
-  initialization and result writers, and the typed accessors for the secondary
-  block were traced far enough to establish the layouts and semantics reported
-  below. The secondary block was partitioned across `0x0DFC..0x21F5`, with the
-  aligned `0x21F8..0x2213` and `0x2214..0x2393` regions retained as opaque; the
-  `0x2394..0x23FF` tail was likewise bounded but not semantically decoded.
-  Relevant fixed data included the controller-map table at `0x005C06A0`, the
-  initial character-status list at `0x005C06C0`, Survival factors/constants at
-  `0x005C06F8`, `0x005C0710`, and `0x005C0730..0x005C0738`, and the 22-entry
-  cross-bank mapping table at `0x005D53E0`.
-  **Sampled runtime-data corroboration:** one historical local PS2 memory-card
-  image was parsed read-only. Its descriptor table and four `0x2400`-byte files
-  corroborated the checksum formula, three-primary-plus-rolling-backup model,
-  header/settings values, timestamp behavior, and nonzero bytes in structured
-  copy gaps. It is a single historical sample, not a controlled runtime test or
-  evidence of current emulator state.
-
-- **Confirmed coverage:** the three visible slots and shared
-`data04` rolling backup; descriptor, checksum, serialization, scan, repair, and
-partial-write contracts; fresh defaults and settings synchronization; the fact
-that difficulty is not stored in this record; recoverable currency,
-availability, ability-bit, progression-ordinal, controller-map, and Survival
-fields; and typed-but-semantic-unknown secondary banks. Observations,
-inferences, and unresolved meanings are kept separate throughout.
-
-- **Unresolved or untested:** the semantic meaning of header `+0x0000`, descriptor
-class values 1 through 4, character-status bit 1, most individual elements in
-the secondary banks, exact Survival row/submode labels, the `+0x0DF4` flag word
-and `+0x0DF8` scalar, and all opaque aligned/tail regions. Indirect calls and
-overlay consumers were not exhaustively recoverable from resident direct-XREF
-analysis.
-- **Deliberate exclusions and overlap:** Adventure-mode consumers were deliberately excluded. Startup save UI workflow
-belongs to [Startup sequence](startup.md), while availability propagation and
-overlay consumers belong to
-[Content availability and save-backed unlock state](content_availability.md);
-this document records only the save-format facts needed to define those
-interfaces.
+  resident save lifecycle: physical files and descriptors, record boundaries,
+  validation and checksum behavior, serialization and copy paths, fresh-profile
+  initialization, slot/backup relationships, and fields whose meanings could be
+  recovered without guessing.
+- **Exploration depth:**
+  - Exhaustive within the direct resident paths inspected: the save task and
+    worker (`FUN_001e1c60`, `FUN_001e2140`); indexed record and descriptor I/O
+    (`FUN_001c19e0`, `FUN_001c1e60`, `FUN_001c1b20`, `FUN_001c1fa0`);
+    descriptor initialization/validation, save-set creation, repair, and error
+    classification (`FUN_001e1ef0`, `FUN_001e1f50`, `FUN_001c17c0`,
+    `FUN_001c2e60`, `FUN_001c3670`); icon creation/regeneration
+    (`FUN_001c1c50`, `FUN_001c2680`); open/read/write/flush/close wrappers and
+    their empty error hook (`FUN_001c2870..FUN_001c2b70`); all three structured
+    serializers and the manual tail copy; and the snapshot/compare helpers
+    (`FUN_001f7890`, `FUN_001f7920`). Direct references to the live record
+    header and the `0x2400` record-size literal were audited, giving byte
+    coverage of the complete record `0x0000..0x23FF`, its seven structured-copy
+    omissions, the four-entry descriptor table and every native path involving
+    `data01` through `data04`.
+  - Bounded static coverage: the fresh-profile path
+    (`FUN_001f4360` -> `FUN_001f47d0`), settings and controller-map
+    synchronization, currency, availability/status and ability-bit accessors,
+    Survival-table initialization and result writers, and the typed
+    secondary-block accessors, with their fixed data tables. The secondary
+    block was partitioned across `0x0DFC..0x21F5`; the aligned
+    `0x21F8..0x2393` regions and the `0x2394..0x23FF` tail were bounded but
+    not semantically decoded. BTL's six byte-bank getter/setter call pairs and
+    five-entry group-counter mapping were inspected, and BTL/ETC were searched
+    for direct calls to the secondary-bank wrappers and accessors, raw
+    character-status reader, `+0x0DF4` wrappers and snapshot helpers.
+  - The card submission/completion family was followed through its indirect
+    callbacks and request-packet release; embedded `mcserv`/`mcman`
+    instructions were traced for descriptor-slot invalidation, flush cleanup,
+    close and teardown, and directory-entry enumeration order. The cached
+    directory comparator was decoded completely.
+  - All four snapshot owners were traced through entry and normal exit, with
+    the Options comparison and save-dialog No path.
+  - One historical local PS2 memory-card image was parsed read-only. It
+    corroborated the checksum formula, three-primary-plus-rolling-backup
+    model, header/settings values, timestamp behavior, and nonzero bytes in
+    structured-copy gaps; it is a single sample, not a controlled runtime test.
+- **Confirmed coverage:** the three visible slots and shared `data04` rolling
+  backup; descriptor, checksum, serialization, scan, repair, and partial-write
+  contracts; fresh defaults and settings synchronization; the fact that
+  difficulty is not stored in this record; recoverable currency, availability,
+  ability-bit, progression-ordinal, controller-map, and Survival ranking
+  fields; secondary byte-counter update and clamp rules; typed but
+  semantically unknown secondary banks; exact native icon-file lengths;
+  file-error flattening, missing EE close after failed transfers, and the lower
+  manager's distinct reclamation branches; directory-entry storage order and
+  short/error-query buffer residue; the timestamp-triggered reconstruction of
+  an existing descriptor; and Options' comparison with its entry snapshot and
+  lack of rollback when its save is declined.
+- **Unresolved or untested:** the semantic meaning of header `+0x0000`,
+  descriptor class values 1 through 4, character-status bit 1, most individual
+  elements in the secondary banks, the `+0x0DF4` flag word and `+0x0DF8`
+  scalar, and all opaque aligned/tail regions. Indirect calls and overlay
+  consumers are not exhaustively recoverable from resident direct references.
+  Actual early-failure/card-probe conditions and eventual teardown after an EE
+  submission failure remain unestablished. The comparator's assumed filenames
+  at fixed directory indices are not guaranteed on arbitrary cards; it does
+  not verify them or compare month/year.
+- **Deliberate exclusions and overlap:** Adventure-mode consumers are
+  excluded; scalar-field branches that reach an excluded component are not
+  interpreted. Startup save UI workflow belongs to
+  [Startup sequence](startup.md), content-availability propagation and its
+  overlay consumers to
+  [Content availability and state ownership](content_availability.md), and
+  Survival controller modes, courses, ranking display and the row-1 producer
+  search to [Survival](../gameplay/survival.md); this document records only
+  the save-format facts needed to define those interfaces. Disc transport,
+  module-loading mechanics, and icon-source transport belong to
+  [Runtime file services](files/runtime_services.md) and
+  [Startup sequence](startup.md); only the embedded card-service instructions
+  needed for save ownership and directory ordering are interpreted here.
 - **Evidence limitations:** no controlled corruption, allocation-failure,
   short-I/O, power-loss/partial-write, or repair execution was performed, so
-  those behaviors are static path conclusions rather than runtime fault-
-  injection results. The clean disassembly and source media were inspected
-  read-only and were not modified.
+  those behaviors are static path conclusions rather than runtime
+  fault-injection results. Preserved function boundaries and indexed
+  cross-references omit some direct BTL calls; those counter paths were
+  corroborated with instruction bytes. Embedded card modules have no separate
+  preserved function analysis; their instruction traces use module-relative
+  addresses.
 
 ## Evidence, identity, and terminology
 
-Static analysis uses the clean resident ELF and conventions in
-[Standard game file identities](files/file_identities.md).
+Static analysis uses the clean resident ELF, BTL and ETC overlays, the embedded
+card-service modules in `MODULES.BIN`, and conventions in
+[Retail game file identities](files/file_identities.md#address-conventions).
 
 Unless stated otherwise, offsets are absolute offsets from the start of one
-`0x2400`-byte record. Function names are the original export names and the
-addresses beside them are EE virtual addresses. Statements called
+`0x2400`-byte record. Function names are the preserved analysis/export names.
+Resident addresses are live EE virtual addresses. BTL symbols use analysis
+addresses; an explicit export/live pair lists the analysis address first and
+the live address second. Statements called
 **observed** are direct code or byte observations. Statements called
 **inferences** are interpretations supported by multiple observations. Shapes
 such as an array length or aligned copy are not treated as field semantics.
@@ -94,7 +116,7 @@ runtime state. Its relevant bytes are recorded in
 [Historical-card corroboration](#historical-card-corroboration).
 
 The related resident availability readers and their overlay consumers are
-documented in [Content availability and save-backed unlock state](content_availability.md).
+documented in [Content availability and state ownership](content_availability.md).
 The startup UI and 30 Hz play-time presentation are documented in
 [Startup sequence](startup.md).
 
@@ -120,6 +142,33 @@ and `FUN_001c1e60` (`0x001C1E60`) is generic enough to name `data01` through
 `data13`, but every recovered NA2 create, scan, save, repair, and UI path uses
 only indices 0 through 3. The generic bound is not evidence of thirteen game
 slots.
+
+The remaining file-size contracts come directly from the native writers:
+
+| File | Written size | Observed source |
+| --- | ---: | --- |
+| `icon00.icn` | `0xE920` (59,680) | Source offset 0 of disc resource `icon.bin` |
+| `icon.sys` | `0x3C4` (964) | Regenerated in card context `+0x48..+0x40B` |
+| `BISLPS-25837NARUTO5` | `0x40` (64) | Four raw descriptors |
+| Each `data01..data04` | `0x2400` (9,216) | Raw record buffer |
+
+Icon creator `FUN_001c1c50` uses the offset/length pair `0, 0xE920` at
+`0x00602B78..0x00602B7F`. It allocates with `0x40` alignment and rounds its
+disc read to `0xF000`, but passes the unrounded `0xE920` count to the card
+writer. The complete disc resource therefore includes bytes not written to
+`icon00.icn`; its identity is owned by
+[Retail game file identities](files/file_identities.md#na2-supporting-files).
+
+`FUN_001c2680` clears all `0x3C4` bytes before rebuilding `icon.sys` from the
+fixed `PS2D` header, title, settings, and icon tables. All three icon filename
+fields (output offsets `0x104`, `0x144`, and `0x184`) receive `icon00.icn`. The
+descriptor writer calls this generator after successfully closing the
+descriptor file. No saved profile field is copied into `icon.sys`, and no
+payload checksum is stored there. The seven regular files require 97 rounded
+1 KiB blocks; adding the directory-overhead formula for nine entries gives
+103, matching context `+0x434`'s native expected total. That arithmetic assumes
+the expected seven files plus the two directory entries; it is not a measured
+allocation report for an arbitrary card.
 
 The `dataNN` file is the raw little-endian record itself. There is no outer
 record header, compression, encryption, or container layer between file offset
@@ -215,11 +264,14 @@ error confined to UI-hidden descriptor 3 therefore rejects the complete table:
 otherwise valid descriptors 0 through 2 are not copied and all visible slots
 remain reset/empty in memory.
 
-Because repair classifies a nonzero descriptor file as present, an existing
-but structurally invalid `0x40`-byte table is not rebuilt from `data01..data04`.
-The normal scan silently retains its reset/empty in-memory rows, and repair's
-missing-descriptor case does not run. Intact payloads can therefore disappear
-from the native slot UI without being automatically reconstructed.
+Repair initially classifies a nonzero descriptor file as present, but its
+separate cached-timestamp test can force descriptor reconstruction even when
+that file exists. If that test returns 1, an existing structurally invalid
+`0x40`-byte table is not rebuilt from `data01..data04`: normal scan silently
+retains its reset/empty rows. Intact payloads can therefore disappear from the
+native slot UI without automatic reconstruction. The exact timestamp test and
+its limitations are described under
+[Card-error ownership and cached timestamp classification](#card-error-ownership-and-cached-timestamp-classification).
 
 ## Record layout
 
@@ -278,7 +330,10 @@ unlocked, `FUN_001f5500` sets its bit 0 and calls `FUN_001f5640` to set its bit
 1. If requested, it also resolves a linked form through `FUN_001f7c80` and
 sets only that linked ID's bit 0. No direct clean-resident reader of status bit
 1 was found, so its meaning is not assigned; only bit 0 is established as
-roster availability. `FUN_001f5610` clears the complete status byte.
+roster availability. `FUN_001f5610` clears the complete status byte. Full BTL
+and ETC byte searches additionally find no direct `jal` to raw status reader
+`0x001E3740`; the overlay audit therefore supplies no bit-1 consumer. It does
+not exclude inlined reads or indirect calls.
 
 The six grouped-table labels are established by the native ETC content record
 tables and their reader/writer call sites, not inferred from the byte counts.
@@ -287,7 +342,7 @@ announced but unowned, 2 owned and new/unviewed, and 3 owned and viewed/stable.
 Individual consumers do not all use the same threshold, so arbitrary nonzero
 values are not a safe generic "unlocked" encoding. The supporting overlay
 consumers and category-specific behavior are documented in
-[Content availability and save-backed unlock state](content_availability.md).
+[Content availability and state ownership](content_availability.md).
 
 `FUN_0038e6e0` and `FUN_0038e780` mirror 22 fixed pairs of entries between the
 small table at `0x0970` and the byte bank at `0x2100`, using the pair table at
@@ -329,8 +384,12 @@ not prove a record structure.
 
 Manager wrappers `FUN_001f75d0` through `FUN_001f7720`, covering the first
 four typed banks, have no recovered direct call sites elsewhere in the clean
-resident C export. This negative result supports leaving their semantics open;
-it does not rule out indirect calls or consumers in overlays.
+resident C export. Full BTL and ETC byte searches find no direct `jal` to any
+of those eight wrappers or their eight low-level accessor entries
+`0x001E3C60`, `0x001E3C70`, `0x001E3C80`, `0x001E3CA0`, `0x001E3CC0`,
+`0x001E3CD0`, `0x001E3CE0`, and `0x001E3D00`. This is a bounded negative
+result for explicit calls, not a conclusion that the banks are unused; inlined
+access and indirect calls remain outside that inventory.
 
 No dedicated clean-resident semantic reader or writer of the final
 `0x2394..0x23FF` tail was recovered; its only established resident handling is
@@ -352,6 +411,46 @@ The bulk snapshot/restore pair copies the secondary block through
 logic was not inspected. No resident semantic reader for
 `0x21F8..0x23FF` was recovered.
 
+### Battle-result counters in the byte bank at `0x2100`
+
+Resident `FUN_001f77b0`/`FUN_001f77e0` write/read byte-bank index `i` at
+record `+0x2100 + i`. The bank contains counters as well as the 22 mirrored
+entries described above. The BTL result processor begins at export/live
+`0x006EC290/0x006EC2D0`. It selects a
+[Survival course record](../gameplay/survival.md#course-table) using its
+object's word `+0x48`, then processes its numeric result-kind argument as follows:
+
+| Result kind | Observed byte-bank update |
+| ---: | --- |
+| 0 | Unless the ranking/result word `object + 0x0C` is `-2`, add the selected course record's signed byte `+0x0C` to the counter ID in its halfword `+0x0A` |
+| 4 | Apply the same course-selected signed increment without that `-2` gate |
+| 5 | Increment the group counter selected by the course record's byte `+0x01` |
+| 6 | Increment that group counter and aggregate index `0x6C` |
+
+Every listed writer clamps its result to `0..99`. This is a writer contract,
+not validation of loaded bank bytes. The five group-to-counter IDs come from
+the first halfword of each eight-byte row at BTL live
+`0x008C25F0..0x008C2617` (complete-file offsets `0x20E6F0..0x20E717`):
+
+```text
+course group:   0,    1,    2,    3,    4
+bank index:    0x68, 0x69, 0x6A, 0x6B, 0x65
+record offset: 2168, 2169, 216A, 216B, 2165 (hex)
+aggregate:     bank 0x6C, record 0x216C
+```
+
+The processor calls the small-table-to-bank mirror `FUN_0038e6e0` before its
+updates and the reverse mirror `FUN_0038e780` afterward. This keeps changes to
+counter IDs in the mirrored subset visible through both saved representations.
+Two additional result branches at export/live `0x006EB9E4/0x006EBA24` and
+`0x006ED974/0x006ED9B4` increment an indirectly selected byte-bank index by one
+and cap it at 99. Both select the index through an object callback and skip
+`-1`. Their content labels
+are not established by these numeric update paths.
+
+The byte-bank index `0x6A` here is absolute record offset `0x216A`; it is a
+different field from word-bank index `0x6A` at `0x1E04`.
+
 ## Checksum and normal load/save
 
 The save-system task `FUN_001e1c60` calls the persistent worker
@@ -369,9 +468,9 @@ checksum.
 
 As a direct mathematical consequence, byte permutations and compensating byte
 changes with the same total sum are undetectable, even without changing the
-descriptor. Arbitrary edits are also trivial to authorize by updating the
-descriptor's 16-bit sum. This is accidental-corruption detection, not an
-authenticity or strong-integrity mechanism.
+descriptor. The descriptor's 16-bit sum is the only integrity check, so any
+record whose descriptor sum matches is accepted. This is accidental-corruption
+detection, not an authenticity or strong-integrity mechanism.
 
 ### Load path
 
@@ -499,9 +598,6 @@ The positions match the alignment transitions exactly: `0x0011` precedes the
 halfword maps at `0x0012`, `0x0032..0x0033` precedes the word at `0x0034`,
 `0x0966..0x0967` precedes the aligned 64-bit availability field at `0x0968`,
 and `0x21F6..0x21F7` precedes the word-aligned region at `0x21F8`.
-Tooling that recreates existing files byte-for-byte must not assume these bytes
-are zero. Tooling that deliberately normalizes them to zero must recompute both
-the embedded and descriptor checksums.
 
 Because one temporary buffer is reused for both writes in a save operation,
 the selected primary and `data04` receive identical gap bytes and checksum.
@@ -709,34 +805,14 @@ construction runs this initializer before a selected on-card record is loaded,
 so even an eventual successful load consumes the RNG calls and then overwrites
 the freshly seeded rankings with saved values.
 
-The non-Adventure controller identifies itself with Shift-JIS literal
-`サバイバル戦闘` (Survival Battle) at `0x00404AF0`. Its result path gives these
-tables bounded semantics:
-
-- `FUN_001f24b0` (`0x001F24B0`), called by `FUN_001f27b0`, inserts the current
-  character and a cumulative metric into the first block in ascending order
-  for controller mode 5, but only while global eligibility value
-  `0x00607670` is 1; otherwise it returns `-2` without changing the table.
-  Lower is better and ties insert ahead. The metric is cumulative whole
-  elapsed seconds. Battle timer `FUN_001eba80` maintains a
-  Q8.24 elapsed value at `0x006B28D8`, adds fixed delta `0x00044444`
-  (approximately 1/60 second) per active update, and caps its integer part at
-  99. After a win, `FUN_001f2e70` adds `max(0, timer >> 24)` to the controller
-  metric. `FUN_001f0b10` compares the same integer-second value with 31 and 61,
-  establishing the game's at-most-30/at-most-60-second conditions. The saved
-  entry is therefore a finite Survival course/category cumulative-time record;
-  exact row names remain unproved.
-- `FUN_001f2630` (`0x001F2630`), also called by `FUN_001f27b0`, inserts the
-  current character and `controller + 4 - 1` into the second block in
-  descending order for controller mode 4. The counter starts at 1 and advances
-  after wins, establishing a Survival completed-win/streak record. The two
-  exact row/submode names remain unproved.
-
-Both insertion functions take their row index verbatim from
-`controller + 0x10`. The resident controller initializer clears that word, but
-the recovered direct call graph does not expose the later mode-selection owner
-that assigns all row values. This is why the record shapes and score meanings
-are established while the 25 and two individual row labels remain open.
+These pair tables are the Survival rankings. The first block holds 25 course
+rows of cumulative-time records, filled by finite-course controller mode 5
+in ascending order of whole elapsed seconds; the second block holds two rows
+of completed-win records, filled by mode 4 in descending order, whose native
+path uses only row 0. Both insertion functions take their row index verbatim
+from the controller. Controller modes, the course table, ranking display,
+Records navigation and the row-1 producer search are recorded in
+[Survival](../gameplay/survival.md).
 
 Accessors `FUN_001f73c0`/`FUN_001f7400` and
 `FUN_001f7430`/`FUN_001f7470` perform no row or slot bounds checks. The fixed
@@ -744,23 +820,36 @@ initialization filter excludes IDs
 `0, 8, 9, 0x14..0x15, 0x17..0x21, 0x2C..0x2D, 0x4A, 0x58`; it does not consult
 saved unlock state.
 
+### Bitset `0x0DF4` and scalar `0x0DF8`
+
 For word `0x0DF4`, the only recovered direct wrapper read is
 `FUN_001f7530(manager, 0)` inside menu-selection function `FUN_00384760`
 (`0x00384760`). A nonzero bit 0 diverts selected item 0 to
 `FUN_003849a0` instead of its normal transition. The only direct setter call in
 the clean resident export is the reset clear through `FUN_001f74a0`; no
-trustworthy name for the gate is assigned. Scalar `0x0DF8` likewise has only a
-direct reset-to-zero wrapper call (`FUN_001f7560`) and no recovered direct
-caller of getter `FUN_001f7590`.
+trustworthy name for the gate is assigned. BTL and ETC contain no direct
+`jal` to its reset, setter, or getter wrappers `0x001F74A0`, `0x001F7500`,
+and `0x001F7530`. Scalar `0x0DF8` has a resident reset-to-zero wrapper call
+(`FUN_001f7560`) but no recovered resident direct caller of getter
+`FUN_001f7590`; no semantic meaning is established within this document's
+in-scope consumers.
+
+Direct calls to the raw `+0x0DF4` accessor pair `0x001E3B30/0x001E3BE0` and
+raw `+0x0DF8` pair `0x001E3C40/0x001E3C50` occur only in the four resident
+manager wrappers; BTL and ETC have none. BTL also has no calls to the scalar
+manager wrappers `0x001F7560/0x001F7590`. ETC's scalar-wrapper call sites lie
+in a branch that reaches an excluded component. No semantic name for the
+scalar or an ordinary battle/Records producer is established by those calls.
+The no-match results apply to explicit calls, not all possible pointer
+arithmetic or inlined accesses.
 
 ## Snapshot and change detection
 
 `FUN_001f7890` (`0x001F7890`) lazily allocates a `0x2400`-byte snapshot and
 raw-copies the complete live record into global `0x00607628`. It does not
-refresh an existing snapshot. Its four recovered call sites are
-`0x001EAAA4`, `0x001EADD4`, `0x001EB1E4`, and `0x001EB4FC`. Paired
-`FUN_001f78e0` (`0x001F78E0`) releases it at `0x001EAB2C`, `0x001EAEF0`,
-`0x001EB314`, and `0x001EB5D0`.
+refresh an existing snapshot. Paired `FUN_001f78e0` (`0x001F78E0`) releases
+the allocation and clears the global pointer. Their four recovered entry/exit
+call pairs are listed below.
 
 `FUN_001f7920` (`0x001F7920`), called at `0x0038B824`, returns 1 only when the
 manager exists, manager state `+0x0C` is 4 through 7, the snapshot exists, and
@@ -774,6 +863,49 @@ zero result follows the direct exit transition, while a nonzero result enters
 the intermediate save-confirm transition. This establishes the function as
 save-backed settings change/dirty detection; only the descriptive name is
 inferred.
+
+The main resident dispatcher `FUN_001e9980` establishes the snapshot owners
+without relying on their menu names. While manager phase `+0x08` is 4, manager
+substate `+0x0C` selects these four lifecycle controllers:
+
+| Manager substate | Controller | Capture | Release |
+| ---: | --- | ---: | ---: |
+| 4 | `FUN_001ea9c0` | `0x001EAAA4` | `0x001EAB2C` |
+| 5 | `FUN_001eacb0` | `0x001EADD4` | `0x001EAEF0` |
+| 6 | `FUN_001eb120` | `0x001EB1E4` | `0x001EB314` |
+| 7, Options | `FUN_001eb440` | `0x001EB4FC` | `0x001EB5D0` |
+
+Each captures during entry and releases on its normal exit before returning
+the manager substate to 1. The Options path creates `FUN_0038afb0`'s child
+first, then captures, and eventually destroys that child before releasing the
+snapshot. The gate in `FUN_001f7920` therefore covers exactly those four
+substates, but this is not evidence that every owner calls change detection:
+only Options has the recovered comparator call. BTL and ETC contain no
+direct `jal` encodings to capture (`24DE070C`) or compare (`48DE070C`). This bound does not exclude indirect or
+inlined consumers, and the other owners' gameplay is not interpreted here.
+
+The snapshot supplies a byte-comparison baseline. Changes reversed to its
+byte values before exit yield no
+difference. Advancing play time alone cannot produce one. Conversely, any
+changed byte in the compared interval can trigger the prompt, even outside the
+named settings. Capture never refreshes an existing snapshot, and the normal
+save path does not copy back into it. The next entry obtains a new baseline
+only after the previous owner releases it.
+
+Options save-confirm state 2 in `FUN_0038bbf0` constructs the shared Save/Load
+parent and invokes `FUN_001e3f00(parent, 0)`. Any nonzero returned result
+destroys that parent and advances Options to exit state 3. In the shared
+controller `FUN_001e3f20`, the initial No choice returned by `FUN_001e70b0`
+advances through states 10 and `0x0C` to parent result 2. Neither that branch,
+the Options completion branch, nor snapshot release copies old snapshot bytes
+into the live record or reapplies old settings. Options destruction
+`FUN_0038b370` and its Controls/Audio/Display cleanup functions
+`FUN_003874c0`, `FUN_00388e50`, and `FUN_0038a560` release UI resources without
+writing saved settings. **Static conclusion:**
+declining this save leaves the edited live settings active; it skips their
+card write. That conclusion is limited to these inspected paths. The save
+prompt does not itself prove a persistent dirty flag or a general rollback
+contract for other controllers.
 
 ## Save/Load dialog text and confirmations
 
@@ -793,9 +925,288 @@ the back button, `0` while waiting, and `-1` while the panel is not ready.
 It clears UI byte `+2`, avoiding duplicate choice handling by the later
 renderer. `FUN_001e5dc0(ui, 0)` draws Next and returns `1` on acknowledgment.
 These text and choice layouts were established from the clean resident code
-and its fixed position records, not from a modified dialog capture.
+and its fixed position records.
 
 ## Creation, repair, and negative results
+
+### Card-error ownership and cached timestamp classification
+
+The resident card-context wrappers and save worker retain different kinds of
+results. `FUN_001c2870` opens a file and stores its returned handle in card
+context `+0x44`. `FUN_001c2a30` reads, `FUN_001c2910` writes and flushes, and
+`FUN_001c2ad0` closes; these helpers return only 0/1. Their failure calls to
+`FUN_001c2e50` pass stage numbers and, on some branches, the lower-level result,
+but that function is exactly `jr ra; nop` (bytes `0800E003 00000000` at
+`0x001C2E50`). It neither records nor transforms the error. Its arguments are
+therefore not a persistent native error log.
+
+The lower submission functions for open (`0x00175AC0`), close (`0x00175C20`),
+read (`0x00175E70`), write (`0x00175F88`), card info (`0x00176220`), and flush
+(`0x00176920`) all use the same request semaphore at `0x003FAC5C` and pending
+command word at `0x003FAC58`. Their observed immediate return values are:
+
+| Return | Observed submission condition |
+| ---: | --- |
+| 0 | RPC submission succeeds; the pending command word is set |
+| `-100` | Initialized-state word `0x00616064` is zero |
+| `-200` | Polling the request semaphore returns a negative result |
+| `-91` | The RPC submitter returns nonzero; the request semaphore is released |
+| `-210`, open only | Path pointer is null or points to an empty string; the semaphore is released |
+
+Pending command values are 2/3/5/6/1/10 respectively. These are queue-state
+values, not saved fields or worker UI statuses. `FUN_00176100(0, 0, result)`
+waits for the completion semaphore at `0x003FAC60`, clears the pending word,
+copies the completed value from `0x00617600` into `result`, and releases the
+request semaphore. When no command is pending it returns `-1` without writing
+the result destination. Resident wait wrapper `FUN_001c2b70` forwards those
+arguments but none of its inspected card-context callers checks that wait
+return before using their result destination. This is an observed interface
+limit; it does not establish that an ordinary successful submission can leave
+the destination unwritten.
+
+The indexed record and descriptor wrappers flatten open, transfer, flush, and
+close failures into read result 6 or write result 7. A successful read whose
+close fails is still result 6; a successful write/flush whose close fails is
+still result 7. No byte-count or failure-stage detail reaches the worker from
+these return values. The worker separately stores directory/card preflight
+classification at `worker +0x58`; that field is not the most recent raw file-I/O
+result. Normal record-read failure becomes status `0x14`/result class 2, and
+record-write, directory-refresh, descriptor-write, or icon-rewrite failure
+becomes status `0x19`/result class 2. These statuses alone cannot distinguish
+which lower operation failed.
+
+The read/write wrappers call close only after a successful transfer (and, for
+writes, flush). A transfer/flush failure branches directly to the common
+return without submitting close. The same pattern occurs in descriptor I/O.
+Successful close resets context `+0x44` to `-1`; failed close does not. Thus
+these paths have no observed close-on-failure cleanup, and a following open
+can overwrite the stored handle. The lower service invalidates some failed
+handles independently, as detailed below; the missing EE close alone cannot
+establish that a particular error leaks one.
+
+#### EE completion and teardown ownership
+
+The bounded indirect completion path distinguishes an RPC request from the
+card file descriptor carried inside it. Submitter `FUN_00161c28` stores the
+callback at client `+0x1C`, its argument at `+0x20`, and the current `gp` at
+`+0x18`. Completion dispatcher `FUN_001615a0` restores that `gp`, calls the
+callback through `jalr` at `0x0016160C`, then calls `FUN_00161510` on the RPC
+packet and clears client `+0x00`. The packet release only clears packet
+`+0x18` and allocation bit 0 at `+0x10`. It does not issue a card close or
+interpret the card result. This is request-packet reclamation, not reclamation
+of the file handle stored in the request payload at `0x006160C0`.
+
+Read uses callback `0x00175DC0`; write, flush, close, and directory enumeration
+use `0x00175930`. The latter's complete instruction bytes at
+`0x00175930..0x0017593F` are `4000023C 44770508 60AC448C 00000000`:
+load completion semaphore `0x003FAC60` into `a0` and tail-call `iSignalSema`
+at `0x0015DD10`. The read callback's bytes at `0x00175DC0..0x00175E6F`
+copy the two optional edge fragments from the uncached response structure,
+then tail-call the same signal routine. Neither callback tests the completed
+result, maintains a list of open handles, or submits a close. Preserved
+analysis has no function definition for these two callbacks, so their complete
+bodies were read as raw instructions.
+
+`FUN_00176100` subsequently consumes completion, clears the pending-command
+word, returns the completed value, and releases the submission semaphore.
+Thus an error completion frees the one-request gate just as a successful
+completion does; it does not itself close the card file. Library teardown
+`FUN_001758D8` waits through `FUN_00176100(0, 0, 0)`, deletes the two
+semaphores, and sets the submission-semaphore ID to `-1`. Its body has no
+handle walk or close. A full resident-byte search for its direct `jal`
+encoding `36D6050C` returned zero matches; this does not exclude indirect
+invocation. These observations establish the absence of cleanup in the
+inspected EE completion/teardown paths.
+
+#### IOP descriptor reclamation
+
+The retail `MODULES.BIN` contains the card manager at complete-file offset
+`0xD000` and card RPC server at `0x24800`. Their loadable segments begin at
+member offset `0xA0`, with link address zero. Addresses in this subsection
+and the IOP directory trace below are **module-relative link addresses**, not
+the relocated IOP execution addresses. The maintained `/MODULES.BIN` program
+defines functions only for its first member; it retains these later members
+as `unallocated_0` bytes, from which their ELF headers, export/import tables,
+and instructions were read. Its `unallocated_0` starts at complete-file offset
+`0x19F1`; an instruction at manager address `A` is therefore exposed at
+`unallocated_0::(0xB6AF + A)`, and a server instruction at `A` at
+`unallocated_0::(0x22EAF + A)`.
+
+The server binds RPC ID `0x80000400` at `0x0300..0x0324` and dispatches
+commands 2/3/5/6/10/13 to open/close/read/write/flush/directory handlers.
+Its `mcman` import stubs name exports 6/7/8/9/14/12 respectively. The
+manager export table resolves those to `0x0C00`, `0x0D20`, `0x1188`,
+`0x1340`, `0x0EE0`, and `0x14F8`. These table relationships, rather than
+guessed SDK names or host-library behavior, identify the lower routines.
+
+The manager has three shared descriptor slots of `0x30` bytes at link
+address `0x261F0`. Byte `+0` is their in-use gate; bytes `+1/+2` gate
+writing/reading; signed halfwords `+6/+8` retain port/slot. PS2 open's
+`0x6B88..0x6BBC` loop selects the first slot with byte `+0 == 0`; if all
+three are occupied, `0x6BC0..0x6BC4` returns `-7`. Successful open marks
+the chosen slot occupied. The complete relevant reclamation paths are:
+
+| Lower operation | Confirmed in-use-byte behavior |
+| --- | --- |
+| Read, `0x1188..0x133F` | Invalid index, inactive slot, missing read permission, or a nonzero preliminary card-gate result returns before the local clearing branch. A negative backend read result clears this slot at `0x12C4`; nonnegative short/full results do not. |
+| Write, `0x1340..0x14F7` | The corresponding early validation/card-gate exits precede clearing. A negative backend write result clears this slot at `0x147C`; nonnegative results do not. |
+| Flush, `0x0EE0..0x10AF` | The initial card-gate exit at `0x0F44` does not locally clear. Nonzero first cache-flush result goes through `0x0F94..0x0F98`, a nonzero dirty-file update result takes the same path, and a negative final cache-flush result clears at `0x1068`. |
+| Close, `0x0D20..0x0EDF` | After validating index/activity, it clears byte `+0` at `0x0D7C`, before the preliminary card gate and later flush/update calls. A subsequently failed close therefore still releases this descriptor slot. |
+
+Read/write results below `-9` additionally invoke `0x068C` and `0xD204`
+for the descriptor's port/slot. `0x068C` scans all three slots and clears
+the in-use byte of each matching port/slot, not merely the failing descriptor.
+`0xD204` invalidates matching cache entries; it is not another descriptor
+allocator. The common card gate at `0x0768..0x09B3` can also clear the
+card-type state and call that pair when probing fails and a card type had
+previously been recorded (`0x0958..0x0990`). Thus the early card-gate exits
+in the table are not a guarantee that the slot stays occupied: that callee
+can already have invalidated every matching slot.
+
+There is also a bounded full-close path at `0x06E8..0x0767`: it visits each
+occupied slot and invokes close `0x0D20`. The manager's negative-argument
+module-entry path reaches it at `0x0228` after the unregister result is zero
+or `-213`; two other direct calls occur at `0xFE60` and `0xFED8` in the
+manager's device lifecycle. This establishes lower teardown reclamation but
+does not establish that a normal NA2 save failure requests that teardown.
+The server's read/write handlers return errors through their ordinary result
+path without calling close; no cancellation command is present in the bounded
+command-2/3/5/6/10 handlers.
+
+The RPC server's own stop path is distinct from manager teardown. Dispatcher
+`0x0358..0x0364` sets its active flag at link `0x375C` before handling a
+command, and the common result path clears it at `0x0640..0x0644`. The
+negative-argument module-entry stop routine `0x0170..0x0217` returns 2 when
+that flag is nonzero (`0x0180 -> 0x0204`), rather than cancelling the active
+command. Once idle, an unregister result of zero or `-213` allows the
+server-thread and RPC removal calls at `0x01C4`, `0x01D4`, `0x01EC`, and
+`0x01F4`. This bounded stop path has no call to the manager's close import;
+the manager's separate full-close path is the teardown evidence for file
+descriptors.
+
+**Static conclusion:** backend-negative read/write and the listed flush/close
+paths release or invalidate descriptor ownership despite the EE context
+retaining its numeric handle. Errors before those branches, including EE
+submission failure after an earlier successful open, do not themselves prove
+reclamation. Conversely the inspected code does not prove a permanent leak:
+card invalidation and lower teardown can later reclaim matching slots. Which
+early failure conditions occur on an actual card remains unestablished.
+
+#### Directory-query producer and cached-buffer lifetime
+
+`FUN_00176410(port, slot, pattern, mode, maximum_rows, destination)` packages
+RPC command `0x0D` using request fields at `0x006160F0`: port/slot at
+`+0/+4`, mode at `+8`, limit at `+0x0C`, destination at `+0x10`, and the
+NUL-terminated pattern at `+0x14`. It prepares `maximum_rows * 0x40` bytes
+of the destination for DMA and submits the common signal-only callback. It
+neither clears nor sorts the destination. The returned count and rows come
+from the lower card service; the EE wrapper does not define their order.
+
+All six indexed direct calls to this submitter write the same buffer
+`D = 0x0061F740`. The preflight `FUN_001C20A0` first queries the save-directory
+path with mode 0/limit 8, changes to the matched directory through RPC
+command `0x0C` (`FUN_001765F0`), and queries `*` with mode 0/limit `0x18`.
+Repair `FUN_001C2E60` similarly queries the path, changes directory, and
+requests `*` with limit `0x0C`. The latter two calls receive the shared
+wildcard at `0x00602BFC`. There is no EE filename-based rearrangement before
+the cached comparator reads fixed indices 3 through 7.
+
+The other important producer is `FUN_001C2BA0`, which concatenates its path
+and suffix and makes a mode-0 query into that same `D`. Creation calls it
+with `/data??` and limit 4 at `0x001C192C`; normal save uses the same suffix
+at `0x00603008` and limit 4 at `0x001E295C`. These queries supply timestamp
+refresher `FUN_001C2C80`, which searches the first four returned rows by
+filename. They can overwrite `D`'s first four rows without clearing its
+remaining rows. Consequently `D` is shared query state, not a permanently
+ordered save-directory snapshot. The comparator's load/repair paths follow
+their own full `*` refresh; its indices cannot be interpreted from the buffer
+address alone. The EE path alone supplies no directory ordering or short/error
+overwrite guarantee.
+
+The embedded server and PS2 manager establish the normal enumeration
+ordering. Server directory handler `0x0AE8..0x0C3F` requests one manager row
+at a time, first with the supplied mode and then mode 1, DMA-copies each
+`0x40` row to successive destination addresses, and returns the accumulated
+count. It performs no name or timestamp sort. PS2 manager enumeration
+`0x8040..0x8503`, reached through export 12 at `0x15D4`, resets its shared
+cursor on mode 0, resolves the parent directory, and walks its entry indices
+upward. Each call to entry reader `0xE368` receives that cursor; it is
+incremented at `0x82D0..0x82D8` before filtering. Inactive entries are skipped
+by attribute bit `0x8000`, and the wildcard is matched against the filename
+at entry `+0x40` through `0x0528`. Accepted rows are appended, not reordered.
+The entry reader uses the entry index to select a directory-chain sector and
+the `0x200`-byte entry within it (`0xE3D8..0xE410`,
+`0xE5B0..0xE5EC`). This is directory-entry storage order.
+
+For a non-root directory the initial cursor is zero; root enumeration
+explicitly starts at 2 (`0x8220..0x8254`). The non-root `*` query therefore
+does not discard its first two active entries. The output synthesizes the
+special `.`/`..` names for those entries through the branches at
+`0x8344..0x8440`, while ordinary names are copied from entry `+0x40`.
+The comparator's expected payload rows 3..6 and descriptor row 7 are
+consistent with the native creation sequence in a directory laid out in that
+sequence. They are **not an arbitrary-card ordering guarantee**: deleted,
+inactive, differently placed, or extra matching entries change the compacted
+row indices. Neither the server nor EE wrapper repairs that assumption.
+
+Only accepted rows are written. A short enumeration leaves the destination
+suffix from earlier queries. Moreover, if a later one-row manager request
+returns a negative result, server `0x0B8C` returns that error without rolling
+back rows already DMA-copied. Cached `D` can then contain a newly written
+prefix and an older suffix even though the query reported failure. These
+byte/lifetime conclusions do not require assuming a card's filenames or
+insertion history, and do not establish the contents of any particular card.
+
+`FUN_001c15f0` obtains two consecutive card-info responses and repeats until
+their type, free-space, format, and completed-result words agree. Both the
+submission-retry and disagreement loops have no attempt bound in this
+function. Ghidra declares it `void`, but instructions `0x001C1730..0x001C175C`
+leave the final cached completed-result word in `v0`; callers use that word.
+`FUN_001e2140` clears its repair-attempt flag at global `0x006075F0` when this
+result is nonzero. This flag describes repair history, not changed save bytes.
+
+`FUN_001c3670` is specifically a cached directory-timestamp comparison, not
+a checksum or descriptor validator. Let `D = 0x0061F740` be the shared
+directory-entry buffer, with `0x40`-byte rows. Its complete observed rule is:
+
+```text
+T(row) = byte[row + 9]
+       | byte[row + 10] << 8
+       | byte[row + 11] << 16
+       | byte[row + 12] << 24
+return 0 if any T(D + i*0x40), i = 3..6, exceeds T(D + 7*0x40)
+return 1 otherwise
+```
+
+Those four bytes are the second, minute, hour, and day within the modification
+timestamp copied by `FUN_001c2c80`. Month, year, reserved byte, filename, file
+size, and the number of valid cached entries do not participate. Native set
+creation writes the icon, four records, then descriptor and `icon.sys`; with
+the expected directory enumeration including `.` and `..`, rows 3..6 are the
+four payloads and row 7 is the descriptor. **Inference:** the intended check
+is whether a payload appears newer than its descriptor. The code does not
+verify that ordering, and its day-only calendar portion cannot establish
+chronological order across months or years. Shorter or differently ordered
+directory results are likewise not checked by this comparator.
+
+Its three indexed callers are repair at `0x001C3090`, normal-load checksum
+mismatch at `0x001E2744`, and post-repair classification at `0x001E2BF4`.
+After a checksum mismatch, comparator result 0 selects status `0x2C`/class 3,
+allowing the repair confirmation; result 1 selects status `0x2A`/class 1.
+Repair result 0 clears its local descriptor-presence entry even if the table
+file was found with nonzero length, thereby selecting reconstruction from all
+four payloads. This is a second reconstruction trigger in addition to a
+missing/zero-size descriptor. It does not recompute any payload checksum.
+
+After repair, the worker ignores the repair routine's return and reports
+status `0x2E`/class 5 if fresh directory classification is 0, 5, or `0x0B`,
+or if the timestamp comparator returns 0; otherwise it reports `0x2F`/class 5.
+The assembly at `0x001E2BC0..0x001E2C60` corroborates the discarded return and
+both decision inputs. Consequently `0x2F` does not prove that every attempted
+repair I/O succeeded or that reconstructed descriptors match recomputed
+payload sums.
+
+### Allocation, creation, and repair limits
 
 Before checking file allocation, `FUN_001c20a0` queries the directory path
 stored at the start of the card context and compares returned names with that
@@ -805,8 +1216,7 @@ a nonpositive directory-query result other than the separately handled card
 errors; result `4` alone does not establish why the directory was not found.
 In load mode, `FUN_001e2140` maps either `3` or `4` to status `0x29`, result
 `1`, and idle operation `1`, returning before descriptor or profile reads.
-These branches were confirmed through read-only GhidrAssist decompilation of
-both functions.
+These branches were confirmed in the decompilation of both functions.
 
 `FUN_001c20a0` checks the complete directory allocation before descriptor scan
 or profile read. It sums `(file_size + 0x3FF) >> 10` for every returned entry,
@@ -932,12 +1342,9 @@ passes that pointer and length `0x40` to its low-level write path. Runtime
 consequences were not tested, so this document records the null-source call
 rather than asserting a particular crash or card result.
 
-Worker operation `0x0E` does not consume `FUN_001c2e60`'s return value. It sets
-an internal repair-in-progress flag, calls the routine, then chooses its final
-status from fresh `FUN_001c20a0` and `FUN_001c3670` classification results.
-
-If the descriptor file itself is missing, repair reads `data01` through
-`data04`. Header value `0xFFFF` produces occupied/class/checksum/play-time
+If the descriptor file is missing/zero-size, or the cached timestamp comparison
+forces reconstruction, repair reads `data01` through `data04`. Header value
+`0xFFFF` produces occupied/class/checksum/play-time
 fields of zero; every other value produces occupied 1, class 0, checksum copied
 directly from record `+0x0002`, and play time copied from `+0x0004`. In both
 cases the row receives that `dataNN` file's directory-entry timestamp. It does
@@ -970,7 +1377,8 @@ Other useful negative results:
 - normal load, normal save, and `FUN_001f7890` do not null-check their
   `0x2400` temporary/snapshot allocations before passing them to I/O or copy
   routines; the all-`0xFF` creation buffer and missing-primary restoration
-  buffer have the same unchecked-allocation behavior;
+  buffer have the same unchecked-allocation behavior, as does `FUN_001c1c50`'s
+  aligned icon buffer before its disc read and card write;
 - normal load does not validate record header `+0x0000` or the embedded
   checksum independently;
 - descriptor scan does not read record data;
@@ -1075,10 +1483,15 @@ tail is unused. Words `0x0DF4` and `0x0DF8` were zero in every record.
 | `FUN_001f7810` | `0x001F7810` | Increment capped play-time field |
 | `FUN_001f7890` | `0x001F7890` | Capture one full raw snapshot |
 | `FUN_001f7920` | `0x001F7920` | Compare saved payload excluding eight-byte header |
+| `FUN_001c15f0` | `0x001C15F0` | Repeat card-info requests until two responses agree |
 | `FUN_001c17c0` | `0x001C17C0` | Create four all-`0xFF` record files |
 | `FUN_001c19e0` | `0x001C19E0` | Indexed record write |
+| `FUN_001c1c50` | `0x001C1C50` | Copy disc icon into `0xE920`-byte `icon00.icn` |
 | `FUN_001c1e60` | `0x001C1E60` | Indexed record read |
+| `FUN_001c2680` | `0x001C2680` | Regenerate and write `0x3C4`-byte `icon.sys` |
+| `FUN_001c2e50` | `0x001C2E50` | Empty hook called on file-I/O failures |
 | `FUN_001c2e60` | `0x001C2E60` | Missing-file/descriptor repair |
+| `FUN_001c3670` | `0x001C3670` | Compare cached directory rows' second/minute/hour/day bytes |
 
 Resident globals observed in this chain are worker pointer `0x006075F4`, direct
 record pointer `0x006075F8`, manager pointer `0x00607600` (live record at

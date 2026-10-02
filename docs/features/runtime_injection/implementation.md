@@ -15,8 +15,21 @@ heap. The heap user base is therefore fixed at `0x00940120` and its end sentinel
 at `0x01FF5FF0`.
 
 The reservation sits above the largest native overlay end, `0x008DD080`.
-Overlay space and the high-memory system tail are not payload capacity. The
-clean address-space and allocator findings are documented in
+Overlay space and the high-memory system tail are not payload capacity. Each
+native range constrains placement as follows:
+
+| Address range | Placement constraint |
+| --- | --- |
+| `0x00000000..0x00100000` | Protected low system/runtime region; not free. |
+| `0x00100000..0x00607380` | Resident ELF code and static data; use only individually proven caves. |
+| `0x00607380..0x006B3F00` | Zero-filled resident tail; zero at load does not make it free. |
+| `0x006B3F00..0x008DD080` | Shared overlay window; never persistent storage. |
+| `0x008DD080..0x008DD090` | `malloc` chunk header and alignment; preserve. |
+| `0x008DD090..0x01FF6000` | Vanilla allocator arena; dynamic allocation only. |
+| `0x01FF6000..0x01FF8000` | Owned by the `malloc` layer; not free. |
+| `0x01FF8000..0x02000000` | Main-thread stack; protected, not free. |
+
+The clean address-space and allocator findings are documented in
 [EE address space](../../knowledge/runtime/ee_memory_map/address_space.md),
 [allocator behavior](../../knowledge/runtime/ee_memory_map/allocator_and_capacity.md),
 and [runtime lifetimes](../../knowledge/runtime/ee_memory_map/runtime_lifetimes.md).
@@ -33,6 +46,29 @@ symbol. C owns ordinary logic. Assembly owns register-sensitive entry, displaced
 instructions, delay slots, tail calls, and rejoins. The runtime-injector module
 contract is documented in
 [`na228_builder/infrastructure/modules/runtime_injector/README.md`](../../../na228_builder/infrastructure/modules/runtime_injector/README.md).
+
+### Front-end state changes
+
+Hooks that change front-end state must preserve the retail
+[mode-flow lifetimes](../../knowledge/game/mode_flow.md):
+
+- An injected early manager phase 5 or direct manager destructor does not
+  perform the callbacks' own cleanup. It can leave `0x0060760C..0x00607624`
+  pointing at old callback state that a later manager or callback will reuse or
+  reinterpret.
+- Only the retail back path resets the remembered Mode Select slot at
+  `0x006045E0`; forcing another manager-exit path can leave the slot for a later
+  manager lifetime.
+- Forcing manager `+0x0C` to another callback while the shared `0x14`-byte
+  transient is still allocated can make the new callback reinterpret stale
+  phase fields.
+- Replacing the shared overlay region without updating manager `+0x10` can
+  suppress the reload that would otherwise repair the image, because the
+  selector cache records the last requested selector rather than the resident
+  image.
+- Forcing manager callback 2 to 3, or 3 to 2, while the BTL process survives
+  reuses the old entry type; changing the callback ID alone does not
+  reinitialize the handoff.
 
 ## Development injection
 

@@ -12,20 +12,22 @@ Addresses use the
   five ranks and multiple Ninja Song result variants were inspected.
 - **Confirmed coverage:** Cloud geometry, both rank paths, the visible rank
   selector table, footer ownership and anchors, objective layout, arithmetic
-  routing, bonus rows, unchanged controller clamping, and the summary footer
+  routing, bonus rows, controller clamping, and the summary footer
   sprite's batch capacity.
 - **Unresolved or untested:** The purpose of the hidden shared-rank sprite and
   every possible Ninja Song descriptor or bonus row were not exhaustively
   established.
-- **Deliberate exclusions and overlap:** Result calculation, rank assignment,
-  input, sound, and non-results battle UI are outside this document.
+- **Deliberate exclusions and overlap:** Result metrics, their calculation,
+  and rank tiers belong to [Battle statistics](../../../gameplay/battle_statistics.md); match
+  results belong to [Match outcomes](../../../gameplay/match_outcomes.md).
+  Input, sound, and non-results battle UI are outside this document.
 - **Evidence limitations:** Runtime comparisons cover the five rank stamps and
   representative result layouts; conclusions for uncommon result combinations
   also rely on the paired static control flow.
 
 ## Summary, clouds, and shared-rank sprite
 
-| Role | NA2 v2.28 | NUN5 |
+| Role | Retail NA2 | NUN5 |
 | --- | --- | --- |
 | Results frame/layout | file `0x62A30..0x62CFF`, Ghidra `FUN_007168F0`, live `0x00716930..0x00716BFF` | file `0x65780..0x65A6F`, Ghidra `FUN_0072C440`, live `0x0072C480..0x0072C76F` |
 | Reveal/row animation | file `0x62FD0..0x636AF`, Ghidra `FUN_00716E90`, live `0x00716ED0..0x007175AF` | file `0x65D40..0x6641F`, Ghidra `FUN_0072CA00`, live `0x0072CA40..0x0072D11F` |
@@ -52,9 +54,9 @@ shared-rank labels selected by `result_rank - 1`:
 The five-cloud loop is structurally identical in both games. Its X, Y, speed,
 and height fields match; only width differs. NA2 uses
 `156.4, 102, 136, 102, 136`, while NUN5 uses
-`293.25, 191.25, 255, 191.25, 255`. With NUN5's `XNINKA.CCS`, the NA2 widths
-cross neighboring atlas content. The complete NUN5 table restores the intended
-cloud regions without changing their motion.
+`293.25, 191.25, 255, 191.25, 255`. Against NUN5's `XNINKA.CCS` atlas, the NA2
+widths cross neighboring atlas content, while the NUN5 widths select the cloud
+regions.
 
 NUN5 draws the shared-rank rectangle at scale `1.35` through its localized
 accessor, width-fit helper, and centered renderer. The five English records are
@@ -108,7 +110,7 @@ at `0x005DDB60`, `0x005DEE90`, `0x005E14F0`, `0x005E01C0`, and
 `0x005E2820`. The first canonical English copy begins at SLES file `0x4DDCE0`.
 Index `3` is the subtraction baseline used by the rendering path.
 
-| Role | NA2 v2.28 | NUN5 |
+| Role | Retail NA2 | NUN5 |
 | --- | --- | --- |
 | Rank-stamp selector/draw | BTL file `0x63B60`, Ghidra `FUN_00717A20` | BTL file `0x668F0`, Ghidra `FUN_0072D5B0` |
 | Rectangle normalization | resident `FUN_0037DA40` | resident `FUN_0038C9C0` |
@@ -126,17 +128,14 @@ Model *stamp = findAnimationModel(result->stampAnimation_11c);
 setModelTextureOffset(stamp, fixed12(u), fixed12(v), 0, 0);
 ```
 
-The NA2 decompiler export ends after the animation lookup, but raw BTL bytes
-continue with the float-to-fixed conversion and call the NA2 texture-offset
-homolog. This is an export gap, not missing game behavior. NUN5's stamp
+After the animation lookup, raw NA2 BTL bytes perform the float-to-fixed
+conversion and call the NA2 texture-offset homolog. NUN5's stamp
 animation has 21 frames and no material or UV controller; its model uses the
 same UVs as NA2 but English-aspect geometry. Selection belongs to the BTL
 rectangle table rather than the model defaults.
 
-A whole-column upward atlas shift is invalid: the five labels occupy adjacent
-44-row cells, so moving the shared 96-by-220 region mixes neighboring labels.
-The five table records, including the index-3 baseline, must remain internally
-coherent instead.
+The five NUN5 labels occupy adjacent 44-row cells in one shared 96-by-220
+region, and each selection is relative to the index-3 baseline record.
 
 ## Ninja Song details footer
 
@@ -157,9 +156,8 @@ drawCommonPrompt(375.0f, 348.0f, prompts, NEXT, true);
 drawCommonPrompt(462.0f, 348.0f, prompts, BACK, true);
 ```
 
-The cross-game screen difference matches those offsets. Changes to the summary
-footer do not affect this screen because the two footer paths have separate
-owners.
+The cross-game screen difference matches those offsets. The summary and
+details footers have separate owners.
 
 ## Ninja Song objectives and totals
 

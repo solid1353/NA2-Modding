@@ -1,146 +1,77 @@
 # Match termination and outcome flow
 
-## Scope and evidence
-
-This document describes the clean NA2 v2.28 battle outcome path: HP and timer
-termination, the latched result code, the end-of-battle state machines, session
-outcome counters, the `BTL.BIN` score/rank handoff, and cleanup boundaries. It
-names outer-controller types only where the Mode Select dispatcher proves them
-and does not cover damage calculation, substitution, frame-rate behavior,
-localization, or the layout/artwork of the Victory screen.
-
-The clean resident and BTL inputs are identified in
-[Standard game file identities](../game/files/file_identities.md).
-
-Both executables are stripped. `FUN_*`, `SUB_*`, and `func_0x*` names below are
-analysis labels, not original symbols. Findings were checked against the raw
-instructions and data where the preserved decompiler split functions or
-attached a label to the wrong overlay bytes.
-
-This is static evidence. The ordinary KO/time classifier, result latching,
-counter updates, and score accumulator writes are high confidence. Human-facing
-names for controller modes, results `5` through `9`, and the point accumulator
-remain deliberately limited to what their callers prove.
+This document describes how a retail NA2 (`SLPS-25837`) battle ends: HP and
+timer termination, the latched result code, the inner and outer end-of-battle
+state machines, session outcome counters, the result-`8` continuation, and
+cleanup boundaries. Battle statistics and scoring belong to
+[Battle statistics](battle_statistics.md); `FUN_*` and `SUB_*` names are
+analysis labels, not original symbols.
 
 ## Research coverage
 
-- **Assigned scope:** clean `BTL.BIN` match termination and outcome handling:
-KO and timeout decisions, result/draw state, round-or-session counters,
-end/result transitions, proven score/rank/reward handoffs, and teardown
-boundaries. Work covered the resident executable where it owns battle flow and
-the BTL overlay where it owns metric import and result presentation.
-- **Exploration depth:** the following coverage levels are intentionally distinguished:
-
-  **Exhaustive within bounded dispatchers:** every case in the active inner
-  end-sequence dispatcher and resident outer-controller states `1..0x19` was
-  traced far enough to classify its outcome, restart, continuation, score, or
-  terminal behavior. The wrapper-owned post-result sentinels `0x1D..0x20` in
-  `FUN_001F2E70` were also followed through their signed returns. Relevant
-  resident families were `FUN_001EC300..FUN_001EEB10`,
-  `FUN_001EEC80..FUN_001F12B0`, and `FUN_001F1E80..FUN_001F2E70`.
-  **Exhaustive within explicit reference scans:** all ten clean-BTL direct
-  calls to resident condition-status writer `FUN_001FD850` were inventoried;
-  all clean-BTL direct calls to the four session outcome/streak accessors were
-  accounted for; the sole resident direct caller of result-`8` producer
-  `FUN_001EC5E0` was followed; and direct result stores/callers found for the
-  scoped result field were classified. These claims do not include indirect
-  calls or code outside the two hashed executables.
-  **Bounded deep traces:** the KO/life gate, timer/end-reason path, terminal
-  classifier, condition scan/status table, pause results, result-`8` readiness
-  and rebuild routes, session counter updater/accessors, and their cleanup
-  callees were followed through their decisive branches and side effects. The
-  relevant condition subsystem was bounded to `FUN_001FCCD0..FUN_001FDBB0` and
-  its scoped callers.
-  **Bounded overlay analysis:** raw `BTL.BIN` was checked for its `MWo3` header
-  and address mapping; the two-side 28-slot metric bank and wrappers around raw
-  `0x062060..0x062150`; and the result-object/import/helper/dispatcher/commit
-  region at raw `0x0651D0..0x066480`. The importer descriptors, bucket tables,
-  tier thresholds, accumulator writes, and resident handoff calls used by that
-  region were decoded. This was not a whole-overlay audit.
-  **Selection return boundary:** states 3 through 10 were traced through the
-  selection clear, resource acquisition, transition readiness, and battle-load
-  handoff, including the manager's saved setup block.
-
-- **Confirmed coverage:** the exact result-code classifier for
-ordinary KO/time states `1..4`, the condition-derived result `5`, pause-derived
-results `6/7`, both synthetic result-`8` routes, the absence of a proven result-
-`9` producer, timer fields and freeze/end flags, score-route qualification,
-session tally/streak semantics, the separate type-`5` encounter limit, metric
-import and tier/point mechanics, and inner/result/outer cleanup ownership.
-Addresses are given in resident, raw-overlay, live-overlay, and preserved-export
-conventions where applicable, including the proven `+0x40` overlay correction.
-
-- **Unresolved or untested:** no
-original symbol names exist; outer types `1`/`2` (Free Battle/Practice), the
-COM bit behind score qualification, the ryo meaning of the point accumulator,
-the COM-strength meaning of metric `9`, and the prompt wording of results
-`6`/`7` are now established from their owning subsystems, but no
-player-facing name was recovered for condition IDs, results `5`, `8`, `9`, or
-the higher-wrapper signed returns; indirect-call reachability
-was not exhaustively reconstructed; and no producer was established for result
-`9`. The wider origins and meanings of every one of the 28 metric slots and all
-condition IDs were outside the bounded outcome trace. Runtime frequency,
-ordering under unusual engine states, presentation timing, and externally
-visible rewards remain unverified.
-
-- **Deliberate exclusions and overlap:** Adventure/story flow, damage scaling and
-formulas, substitution, timing/60-FPS work, widescreen/UI layout, localization,
-and media. Victory rendering/layout was treated only as an interface boundary;
-fighter mechanics were read only where they directly supplied HP or terminal
-state; and score/rank/reward logic was followed only through the proven BTL
-handoff.
-- **Evidence limitations:** validation was static: preserved decompiler output was cross-checked
-against raw little-endian MIPS instructions, file bytes, encoded call targets,
-table contents, hashes, and address arithmetic. No PCSX2 runtime trace,
-breakpoint session, savestate experiment, or gameplay replay was performed for
-this document, so dynamic confirmation is still outstanding.
+- **Assigned scope:** KO and timeout decisions, result/draw state,
+  configured-condition outcomes, session counters, end/result transitions,
+  result-`8` continuation producers, and teardown boundaries, in the resident
+  executable where it owns battle flow and in BTL where it consumes results.
+- **Exploration depth:**
+  - Exhaustive within bounded dispatchers: every case in the active inner
+    end-sequence dispatcher and resident outer-controller states `1..0x19`,
+    plus the wrapper-owned post-result sentinels `0x1D..0x20` in
+    `FUN_001F2E70` (resident families `FUN_001EC300..FUN_001EEB10`,
+    `FUN_001EEC80..FUN_001F12B0`, and `FUN_001F1E80..FUN_001F2E70`).
+  - Exhaustive within explicit reference scans: direct BTL calls to the four
+    session outcome/streak accessors, the sole resident caller of result-`8`
+    producer `FUN_001EC5E0`, and direct stores/callers of the result field.
+  - Bounded traces: the KO/life gate, timer/end-reason path, terminal
+    classifier, condition scan (`FUN_001FCCD0..FUN_001FDBB0` and its scoped
+    callers), pause results, result-`8` readiness and rebuild routes, session
+    counter updater/accessors and their cleanup callees, and the selection
+    return boundary in states `3..10`.
+- **Confirmed coverage:** the exact classifier for ordinary KO/time results
+  `1..4`, condition-derived result `5`, pause-derived results `6/7`, both
+  synthetic result-`8` routes, the absence of a proven result-`9` producer,
+  timer fields and freeze/end flags, score-route qualification, session
+  tally/streak semantics, the separate type-`5` encounter limit, and inner,
+  result, and outer cleanup ownership. BTL consumes the result through getter
+  `FUN_001EC280` but has no direct call to setter `FUN_001EC270` or to Victory
+  request `FUN_00201E90`; result latching and the Victory handoff are
+  resident.
+- **Unresolved or untested:**
+  - Player-facing names for results `5/8/9` and the higher-wrapper signed
+    returns; condition menu strings.
+  - A latched result-`9` producer: result `9` has consumers but no scoped
+    producer, and no literal pointer to the setter exists in either image; a
+    computed indirect call or out-of-scope overlay remains possible.
+  - A generic best-of-N round counter: none was proven. The six-word block is
+    an outcome tally/streak block, and the higher-level encounter index/limit
+    shows no round-win threshold.
+  - The three other `FUN_001EC300` callers and the screens behind the other
+    `FUN_001F48F0` callers. Invocation frequency and presentation timing.
+- **Deliberate exclusions and overlap:**
+  - Statistics, conditions read from statistics, and scoring belong to
+    [Battle statistics](battle_statistics.md).
+  - Session construction, teardown order, archive lifetime, and continuation
+    rebuilds belong to [Battle lifecycle](battle_lifecycle.md); pause-menu
+    construction to [Pause and replay](pause_and_replay.md).
+  - Damage calculation belongs to [Damage](damage.md); timer arithmetic to
+    [Timer primitives](../runtime/timer_primitives.md); Victory rendering and
+    layout are an interface boundary only.
+- **Evidence limitations:** static evidence only; no PCSX2 runtime trace was
+  made, and dynamic confirmation is outstanding. BTL xrefs and function
+  boundaries omit significant bodies, so negative conclusions are limited to
+  the stated byte/reference scans. Static calls establish per-invocation
+  arithmetic and ordering, not scheduler frequency or wall-clock duration.
 
 ## Game binary address conventions
 
-The clean BTL identity and shared address conversion follow
-[Standard game file identities](../game/files/file_identities.md). Its
-header additionally records:
-
-| Header field | Value |
-| --- | ---: |
-| Kind (`+0x04`) | `1` |
-| Text bytes (`+0x0C`) | `0x001DB6C0` |
-| Initialized-data bytes (`+0x10`) | `0x00046C00` |
-| BSS bytes (`+0x14`) | `0x00006E80` |
-| Constructor interval (`+0x18..+0x1C`) | `[0x008D6180, 0x008D61A4)` |
-| Product label (`+0x20`) | `BTL_product.bin` |
-
-Encoded absolute pointers and `j`/`jal` targets in the raw overlay are already
-live addresses and must not be shifted. This matters for intra-overlay calls:
-Ghidra can attach an encoded live target to bytes `0x40` later than the bytes
-that execute at that target.
-
-The result-code logic itself is resident and has no overlay adjustment. Useful
-BTL entries in this flow are:
-
-| Role | Raw file | Live EE | Preserved export | Address note |
-| --- | ---: | ---: | ---: | --- |
-| Construct result object | `0x0651D0` | `0x007190D0` | bytes at `0x00719090` | Initializes the `0x188`-byte object and its descriptor records |
-| Destroy result object internals | `0x065240` | `0x00719140` | bytes at `0x00719100` | Releases the fade, render object, and both result subobjects |
-| Create result presentation internals | `0x065390` | `0x00719290` | bytes at `0x00719250` | Called by resident score-setup state `0x13` |
-| Clear result-metric object | `0x065600` | `0x00719500` | `FUN_007194C0` | Called directly by resident controller setup and result teardown |
-| Import battle metrics | `0x065680` | `0x00719580` | `FUN_00719540` | Called by resident state `0x10` |
-| Capped/weighted metric helper | `0x065B60` | `0x00719A60` | bytes at `0x00719A20` | Stores a capped value and descriptor weight times value |
-| Threshold-boolean metric helper | `0x065BC0` | `0x00719AC0` | bytes at `0x00719A80` | Stores raw value and a fixed contribution when threshold is met |
-| Floor-bucket metric helper | `0x065C00` | `0x00719B00` | bytes at `0x00719AC0` | Selects the last table row whose threshold is not above the value |
-| Ceiling-bucket metric helper | `0x065C70` | `0x00719B70` | bytes at `0x00719B30` | Selects the first table row whose threshold is not below the value |
-| Read metric contribution | `0x065CE0` | `0x00719BE0` | bytes at `0x00719BA0` | Returns the selected entry's contribution word |
-| Finalize 28 contribution values | `0x065D00` | `0x00719C00` | `FUN_00719BC0` | Encoded target is live `0x00719C00` |
-| Result-object dispatcher | `0x065E80` | `0x00719D80` | `FUN_00719D40` | Called by resident state `0x14` |
-| Initialize total/tier view | `0x065FD0` | `0x00719ED0` | `FUN_00719E90` | Called at raw `0x065F2C` by encoded `jal 0x00719ED0` |
-| Accept/commit result points | `0x0663C0` | `0x0071A2C0` | physical export `FUN_0071A280` | Ghidra incorrectly splits its commit block as `FUN_0071A2C0` |
-| Commit basic block | `0x066400` | `0x0071A300` | displayed `0x0071A2C0` | Part of the live `0x0071A2C0` function, not a separate live entry |
-| Commit-input predicate | `0x066480` | `0x0071A380` | displayed `0x0071A340` | Tests selected-side record bit `0x20` |
-
-For example, resident `jal 0x00719500` lands on the prologue at raw
-`0x065600`; the preserved export instead labels that prologue
-`FUN_007194C0`. Treating the export label as live would land inside the wrong
-function.
+Address conventions follow
+[Retail game file identities](../game/files/file_identities.md#address-conventions);
+the BTL header fields are listed in
+[Overlay ABI](../runtime/overlay_abi.md#exact-clean-layouts). The result-code
+logic itself is resident. The BTL result-object entries consumed by the outer
+controller (import live `0x00719580`, dispatcher `0x00719D80`, clear
+`0x00719500`, internals `0x00719140/0x00719290`) are tabulated in
+[Battle statistics](battle_statistics.md#address-convention).
 
 ## Outcome state and decisive fields
 
@@ -175,7 +106,7 @@ The central objects and fields are:
 | timer `+0x1C` (`0x006B28EC`) | Per-update counter delta |
 | `0x006B2900..0x006B2917` | Six-word session outcome/streak block |
 
-The outcome API is intentionally small:
+The outcome API consists of:
 
 - `FUN_001EC270(value)` writes `0x00607670` without validation.
 - `FUN_001EC280()` returns it.
@@ -184,10 +115,9 @@ The outcome API is intentionally small:
 
 The ordinary classifier itself only latches a value when the global is still
 zero, so the first ordinary classification is stable. The scripted-condition
-branch described below is a deliberate exception in the same update.
+branch described below is an exception in the same update.
 
-Raw gp-relative stores provide a compact producer inventory independent of the
-decompiler:
+Raw gp-relative stores give this producer inventory:
 
 | Resident store | Function / value written |
 | ---: | --- |
@@ -246,15 +176,10 @@ require it to be clear, they require the winner to be human-controlled.
 
 ### Fighter life gate
 
-`FUN_002151E0` sets fighter `+0x61 & 0x08` during fighter initialization.
-`FUN_00225050` clamps HP to `0.0` and clears that bit when an accepted HP change
-leaves HP at or below zero. Its return value is `1` for that lethal transition
-and `0` otherwise.
-
-When manager `+0x0C == 3`, the same function instead clamps HP to the float
-`0.01` and does not clear the life bit. Thus Practice mode prevents this
-ordinary KO trigger at the HP-update boundary. This statement concerns only
-the terminal clamp, not how an incoming HP change was calculated.
+`FUN_002151E0` sets fighter life bit `+0x61 & 0x08` at initialization, and
+`FUN_00225050` clears it when an accepted HP change leaves HP at or below zero
+(in Practice, manager `+0x0C == 3`, HP instead stops at `0.01` with the bit
+kept); see [Damage](damage.md#damage-application).
 
 ### Timer path
 
@@ -387,35 +312,12 @@ same initializer. These are separate lifetimes: most continued encounters can
 begin with no result marker while retaining condition progress, but the stated
 type/route exception cannot.
 
-One BTL producer family is exact. Live `0x006C3250` (raw `0x00F350`, preserved
-bytes at `0x006C3210`), called at live `0x006C1868`, checks configured IDs
-`0x2C`, `0x2D`, and `0x2E`. It reads the manager-selected side's BTL metric
-bank index `19` and writes condition status `1` when the count has reached
-`3`, `5`, or `7`, respectively. This proves a BTL-stat-to-condition handoff;
-it does not establish the player-facing names of those conditions or imply
-that status zero always means the same thing for every condition ID.
-
-A full direct-call scan of clean BTL finds ten `jal 0x001FD850` status-writer
-sites in executable functions. The first three are the threshold family above;
-the other seven close these additional mechanical producer paths:
-
-| Live call (raw offset) | Status write and proven trigger |
-| ---: | --- |
-| `0x006C3308` (`0x00F408`) | Selected side, ID `0x2C`, value `1` when metric `19 >= 3` |
-| `0x006C3340` (`0x00F440`) | Selected side, ID `0x2D`, value `1` when metric `19 >= 5` |
-| `0x006C3378` (`0x00F478`) | Selected side, ID `0x2E`, value `1` when metric `19 >= 7` |
-| `0x00713744` (`0x05F844`) | Side argument plus one, ID `0x2A`, value `1` when live helper `0x00713680` inserts a previously unseen nonzero token and its counter at object `+0x74` becomes exactly `3` |
-| `0x00713854`, `0x00713924` (`0x05F954`, `0x05FA24`) | Side `1` or `2`, ID `0x2B`, value `1` when each of three side-specific entries has both its active byte and object pointer set; live helper `0x00713770` checks this once per object, guarded by byte `+0x7D` |
-| `0x0072F304` (`0x07B404`) | Side returned by live `0x00734130` plus one, configured ID `9` or `0x0B`, value `1`; ID `9` requires object signed halfword `+0x24A != -1`, while ID `0x0B` requires byte `+0x284 == 1` |
-| `0x0076A720` (`0x0B6820`) | Object's zero-based side index plus one, ID `0x18`, value `0`, when that index equals manager selector `+0x18` |
-| `0x0076A744`, `0x0076A760` (`0x0B6844`, `0x0B6860`) | Opposite side, ID `0x1A`, value `0`, when the same zero-based index differs from manager selector `+0x18` |
-
-The last three calls are inside live function `0x00769790`; its side index is
-the signed byte at `*(object+0x08)+0x0C`. Unlike the value-`1` satisfaction
-writes, their value `0` is directly eligible for `FUN_001FCF00`'s outcome-`5`
-scan when the corresponding ID is configured and the target side is active.
-No other direct condition-status-writer call occurs in clean BTL. This is a
-direct-call result; it does not exclude an indirect call or resident producer.
+BTL also writes condition statuses directly through `FUN_001FD850`; its ten
+direct writer calls are listed in
+[Battle statistics](battle_statistics.md#direct-btl-condition-status-writers).
+Three of them, inside live function `0x00769790`, write value `0` for IDs
+`0x18` and `0x1A`; that value is directly eligible for `FUN_001FCF00`'s
+outcome-`5` scan when the ID is configured and the target side is active.
 
 ## Result-code table
 
@@ -481,8 +383,7 @@ delay/handle at `+0x10`. Relevant verified branches are:
 - Substate `6` follows `1`, `2`, and `4` with another `0x5A` wait. Result `5`
   seeds `0x5A`, calls `FUN_001D2D20(4)`, and emits event IDs `0x13`,
   `0x3D`, and `0x46`. The argument `4` is carried in `a0` from the comparison
-  at `0x001EFD2C`; raw call site `0x001EFD78` proves it even though the
-  decompiler renders this call without an argument.
+  at `0x001EFD2C` to raw call site `0x001EFD78`.
 - Substate `7` sends winner results `1` or `2` either to substate `8` or
   directly toward fade. Substate `8` is chosen exactly when the manager exists,
   manager field `+0x1C != 3`, and bit `0x02` is clear in the winning side's
@@ -544,14 +445,14 @@ The result/cleanup tail is:
 | ---: | --- | --- |
 | `0x0F` | `FUN_001EDB70` | Drives `FUN_001EF8F0` while the current inner battle is active, including timer/outcome detection and the end sequence. On inner completion it clears an end-sequence gate, performs related teardown, enters `0x10`, and seeds a three-count delay. |
 | `0x10` | `FUN_001EDD10` | After the delay, clears the resident Victory request, destroys the transient end-presentation object at `0x00607658`, and handles result `8` specially. Results other than `6`, `7`, and `9` wait for resource readiness and call live BTL metric importer `0x00719580(controller+0x3C)`. Then enters `0x11`. |
-| `0x11` | `FUN_001EDEE0` | Unloads common battle resources, calls live BTL cleanup `0x007691A0` and `0x006C3160`, unloads both fighter resource sets, releases the stage-selected resource, updates the session outcome block, and enters `0x12`. |
+| `0x11` | `FUN_001EDEE0` | Releases battle archives (see [Battle lifecycle](battle_lifecycle.md#archive-lifetime-is-separate-from-session-lifetime)), updates the session outcome block, and enters `0x12`. |
 | `0x12` | `FUN_001EE060` | For controller type `1`, qualifying winner results enter score setup `0x13`; otherwise it emits event `0x17` and sends result `7` to `0x19`, other results to `0x16`. Type `2` likewise sends only result `7` to `0x19`, all others to `0x16`. |
 | `0x13` | `FUN_001EE880` | Waits for resource readiness, creates/loads the BTL result presentation and its fade, then enters `0x14`. |
 | `0x14` | `FUN_001EE9C0` | Runs live BTL result dispatcher `0x00719D80`. On its completion return, clears the metric state, destroys the current presentation internals, unloads the presentation resource, and enters `0x15`; the allocation at controller `+0x3C` remains for reuse. |
 | `0x15` | `FUN_001EEA80` | Emits event `0x0E` and loops to state `3`. |
 | `0x16` | `FUN_001EEAC0` | Waits for resource readiness, then loops to state `3` without the BTL score presentation. |
-| `0x17` | `FUN_001EE1C0` | Rebuilds a selected side for one continuation route and queues resident Victory data when a side is selected. |
-| `0x18` | `FUN_001EE500` | Rebuilds/swaps fighter selection for another continuation route and updates the session outcome block on this alternative completion path. |
+| `0x17` | `FUN_001EE1C0` | Result-`8` continuation route `1`; queues resident Victory data when a side is selected. The rebuild is described in [Battle lifecycle](battle_lifecycle.md#continuation-encounters-rebuild-the-session). |
+| `0x18` | `FUN_001EE500` | Result-`8` continuation route `2`; updates the session outcome block on this alternative completion path before the rebuild. |
 | `0x19` | `FUN_001EEB10` | Performs its final resource transition, clears timer freeze bit `0x02`, sets manager mode `+0x0C` to `1`, and makes the outer dispatcher report terminal status `3`. |
 
 Normal state `0x11` and continuation state `0x18` are alternative places where
@@ -641,9 +542,7 @@ entrance transition and enters state `0x14`. Result initialization at live
 
 The resident archive helper `FUN_0037E1A0` first checks `FUN_001AA450`. A cache
 miss calls `FUN_00116DE0` and enters the synchronous loader `FUN_001CF3F0`,
-which yields to the scheduler until its read/decode flags complete. Calling
-this helper after the entrance has started can therefore interrupt the first
-results update. The earlier queued-load boundary precedes that transition.
+which yields to the scheduler until its read/decode flags complete.
 
 ## Session outcome and streak counters
 
@@ -761,16 +660,12 @@ are ready, the helper clears `0x00607680` and returns code `3`; the
 why resetting the inner substate to `4` does not immediately tear down the old
 encounter: result `8` crosses into outer state `0x10` only after this barrier.
 
-Both result-`8` rebuild handlers `FUN_001EE1C0` and `FUN_001EE500` change
-`0x00607678` from phase `1` to phase `2`. On the next battle startup,
-`FUN_001EC3B0` recognizes phase `2`, deliberately skips the BTL metric-bank
-reset, and advances the phase to `3`. `FUN_001EEE30` independently skips the
-condition-status reset for phase `2`, except that inner type `4`/`5` combined
-with route other than `1` forces a condition reset. Thus both result-`8` routes
-preserve BTL statistics, while condition progress is preserved by the general
-phase-`2` path but not by that explicit type/route exception. A startup outside
-these preservation cases resets the corresponding structure. The outcome and
-timeout marker are nevertheless cleared for the new encounter.
+Both result-`8` rebuild handlers set continuation phase `2`, which preserves
+the BTL result bank and, outside the inner type `4`/`5` with route-other-than-`1`
+exception, the condition statuses; the outcome and timeout marker are still
+cleared for the new encounter. The rebuild itself and the retained values are
+described in
+[Battle lifecycle](battle_lifecycle.md#continuation-encounters-rebuild-the-session).
 
 The two resident producers select different rebuild routes:
 
@@ -797,11 +692,9 @@ the value at manager `+0x50` for side `1` or `+0x78` for side `2`. State
 the direct route-`1` chain but do not establish a player-facing name for the
 source value or condition.
 
-Route `2` uses an explicit ordered side pair in state `0x18`: when manager
-`+0x50` is zero, `FUN_001EE500` snapshots/services side `1` and rebuilds side
-`2`; when `+0x50` is nonzero it snapshots/services side `2` and rebuilds side
-`1`. It then changes continuation phase to `2`, moves the outer controller to
-state `0x0D`, and commits result `8` to the session block's other-result bucket.
+Route `2` (state `0x18`) rebuilds side `2` when manager `+0x50` is zero and
+side `1` otherwise, and commits result `8` to the session block's
+other-result bucket.
 
 The enclosing `FUN_001F2E70` wrapper owns an additional post-result tail that
 is not part of the `FUN_001EC960` state-`1..0x19` dispatcher. It snapshots the
@@ -835,249 +728,15 @@ return `+1`, while `0x1F` makes it return `-1`. These are wrapper return
 sentinels, not additional cases in the outer dispatcher's `1..0x19` switch.
 The raw evidence is resident `0x001F2F10..0x001F3118`,
 `0x001F33B0..0x001F3488`, `0x001F2920`, and
-`0x001FCF00..0x001FD024`. Confidence is high for the mechanics and deliberately
-low for any player-facing meaning of the two signed returns.
+`0x001FCF00..0x001FD024`. Confidence is high for the mechanics and low for any player-facing meaning of the two signed returns.
 
-## BTL score, tier, and point-accumulator handoff
+## Battle statistics and scoring
 
-The two-side source bank at BTL BSS `0x008D6A80` is managed by these live
-overlay wrappers:
-
-| Live entry | Raw file | Operation |
-| ---: | ---: | --- |
-| `0x00715F60` | `0x062060` | Clear both sides' 28 signed-16 metric slots |
-| `0x00715F90` | `0x062090` | Add a signed-16 delta to `(side, metric)` |
-| `0x00715FD0` | `0x0620D0` | Set `(side, metric)` |
-| `0x00716010` | `0x062110` | Replace `(side, metric)` only when the new signed value is greater |
-| `0x00716050` | `0x062150` | Read `(side, metric)` as signed-16 |
-
-Each wrapper converts one-based side `1..2` to a zero-based record and uses a
-`0x38`-byte side stride. `FUN_001EC3B0` is the resident caller of the clear
-wrapper while creating a new inner battle-cycle object. Clean BTL itself has no
-direct call to either clear or set. Resident code does call set at
-`0x00223428` for metric `17` and at `0x00374894` for metric `18`; the remaining
-scoped producers use add or max-update. The result-`8` phase exception described
-above is the verified new-inner-cycle reset exception.
-
-The underlying storage operations are unsaturated signed-16 arithmetic. Add
-sign-extends its input to 16 bits, adds it to the signed-16 slot, and stores the
-low halfword; set stores the supplied low halfword; max compares the current
-sign-extended halfword with the supplied integer before storing the latter's
-low halfword. The wrappers do not validate side or metric ranges, so their
-documented `1..2` / `0..27` domains are caller contracts rather than enforced
-bounds.
-
-The score bank is not wholesale-cleared by the state-`3` timer reset,
-state-`0x10` metric import, or state-`0x11` resource teardown. A state-`0x15`
-or `0x16` restart initially remains in the same outer controller, but it later
-passes through state `0x0E`; `FUN_001EC3B0` then clears the bank before creating
-the next inner battle-cycle object unless continuation phase is `2`. The bank
-therefore has an ordinary inner-cycle/sample lifetime, with an explicit
-result-`8` preservation exception, rather than an unconditional outer-controller
-lifetime. The importer has one proven bank side effect before that boundary:
-on its normal non-timeout/non-special-time path it writes computed remaining
-whole units to metric slot `7` in both side records at live `0x008D6A8E` and
-`0x008D6AC6`.
-
-The six-word session outcome block has the longer lifetime: it resets only in
-initial outer state `2` and is updated after each completed cycle. The reusable
-BTL result object has the outer controller's allocation lifetime, but its
-metric values and presentation internals are cleared/rebuilt per result
-presentation; it is a transformation of the source bank rather than its owner.
-
-The outer controller calls live `0x00719580` after the end presentation but
-before state-`0x11` resource teardown. The BTL result object contains a
-28-entry metric-record array beginning at `+0x14`, with `0x0C` bytes per
-record: descriptor pointer at `+0x00`, value at `+0x04`, and contribution at
-`+0x08`. Thus metric values begin at object `+0x18` and contributions at
-object `+0x1C`. The importer clears every value/contribution pair, obtains the
-latched result with resident `FUN_001EC280`, and chooses a side record as
-follows:
-
-```text
-selected_side = (result == 1) ? 1 : 2
-```
-
-This exact condition means draws and special result `5` select the side-2
-record. It is not evidence that side 2 “won”; it is simply the importer branch
-used by flows that reach it. Outer state `0x10` imports results `1..5`, but
-state `0x12` only permits its field-qualified result `1` or `2` paths to create
-the score presentation. Therefore an imported draw, double-zero, or result-`5`
-sample is not subsequently committed through this result screen in the proven
-outer flow.
-
-The source records are two `0x38`-byte runtime records beginning at BTL BSS
-`0x008D6A80`. Twenty-eight initial metric values are copied for the selected
-side and then several are recomputed/bucketed. The generic weighted helper at
-live `0x00719A60` uses descriptor byte `+0x04` to select a signed-16 cap from
-live `0x008C3CB0`, applies that cap only as an upper bound (there is no lower
-floor in the helper), and stores
-`descriptor_signed_i16[0] * capped_value` as its contribution. The beginning
-of that cap/rank table is `999, 99, 100, 0, 0, 300, 450, 550, 700`.
-
-The 28 descriptors themselves begin at live `0x008C3DE0` (raw
-`0x20FEE0`), stride `0x0C`. The coefficient and cap-selector bytes used by the
-weighted helper are:
-
-| Metric indices | `(coefficient, cap selector -> maximum)` |
-| --- | --- |
-| `0` | `(5, 0 -> 999)` |
-| `1` | `(100, 1 -> 99)` |
-| `2` | `(10, 0 -> 999)` |
-| `3` | `(5, 0 -> 999)` |
-| `4` | `(10, 0 -> 999)` |
-| `5` | `(1, 0 -> 999)` |
-| `6` | `(5, 0 -> 999)` |
-| `7` | `(1, 1 -> 99)` |
-| `8` | `(1, 2 -> 100)` |
-| `9` | `(50, 0 -> 999)` |
-| `10` | `(100, 1 -> 99)` |
-| `11` | `(5, 0 -> 999)` |
-| `12` | `(5, 0 -> 999)` |
-| `13` | `(0, 0 -> 999)` |
-| `14`, `15` | `(100, 1 -> 99)` |
-| `16` | `(10, 1 -> 99)` |
-| `17..24` | `(0, 0 -> 999)`; their relevant custom helpers replace the generic contribution |
-| `25` | `(20, 0 -> 999)` |
-| `26` | `(100, 0 -> 999)` |
-| `27` | `(400, 1 -> 99)` |
-
-The importer then performs these verified overrides:
-
-- metric index `7`: configured limit minus elapsed whole units, clamped to
-  zero; auxiliary flag `0x00607674` and one mode/configuration combination
-  force it to zero;
-- metric index `8`: selected fighter HP multiplied by `100` and converted to a
-  word with MIPS `cvt.w.s` (there is no explicit `trunc.w.s`); HP below `0.05`
-  receives an additional one after that conversion;
-- metric index `5`: selected-side record signed-16 value at `+0x22`;
-- metric index `17`: the same `+0x22` source through floor table
-  `0x008C3CD0`;
-- metric index `18`: selected-side record `+0x24` through floor table
-  `0x008C3D10`;
-- metric index `19`: selected-side record `+0x26`, contributing `50` when at
-  least one;
-- metric index `20`: selected-side record `+0x28`, contributing `20` when at
-  least one;
-- metric index `21`: forced to zero;
-- metric index `22`: elapsed whole units through ceiling table
-  `0x008C3D30`; timeout marker `0x00607674`, or the conjunction of manager
-  mode `2` and configuration selector `6 == 100`, forces it to zero;
-- metric index `23`: selected HP integer, contributing `500` when at least
-  `100`;
-- if selected-side record `+0x30` is nonzero, metric `25` receives record
-  `+0x04` and metric `2` is forced to zero; and
-- metric index `24` contributes `100` when any of metrics `25`, `26`, or `27`
-  has a positive contribution, otherwise zero.
-
-The encoded bucket rows are exact pairs of `(threshold, contribution)`:
-
-| Live table | Selection rule | Rows |
-| ---: | --- | --- |
-| `0x008C3CD0` | Last threshold `<=` input | `(30,50)`, `(40,100)`, `(50,200)`, `(60,300)`, `(70,400)`, `(80,500)`, `(90,1000)` |
-| `0x008C3D10` | Last threshold `<=` input | `(2,10)`, `(3,20)`, `(4,30)`, `(5,50)` |
-| `0x008C3D30` | First threshold `>=` input | `(10,400)`, `(20,200)`, `(30,100)` |
-
-These numeric transformations are proven; their player-facing metric labels
-are not.
-
-Live `0x00719C00` finishes special component caps, sets result object `+0x04`
-to zero, and sums the 28 contribution words at
-`object + 0x1C + index*0x0C` into that total. Before summing, it sets metric
-`9` to `3` when manager `+0x1C == 0`; otherwise it uses
-`FUN_001F6EA0(manager) + 1`, where that resident wrapper reads configuration
-selector `0x0B`. The value is upper-capped through metric `9`'s descriptor and
-weighted by its coefficient `50`. [Battle AI](battle_ai.md#configuration-and-behavior-profiles)
-establishes key `0x0B` as the COM Strength level (`0..5`) that selects the AI
-profile, and manager `+0x1C == 0` is the no-COM control assignment. Metric `9`
-is therefore a COM-strength bonus of `50 * (strength + 1)` points (`50..300`),
-with a fixed `150` when neither side is COM. It also sums the contributions of metrics
-`14`, `15`, and `16`, writes that sum as metric `13`'s value, and gives metric
-`13` no additional contribution because its coefficient is zero. Live
-`0x00719ED0` then:
-
-1. initializes the result/tier view;
-2. copies resident manager accumulator `FUN_001F6F60(manager)` to object
-   `+0x08`;
-3. records side `1` only for result `2`, otherwise side `0`, for presentation;
-4. invokes the contribution finalizer;
-5. clamps object `+0x04` to `9,999`; and
-6. computes tier byte `+0x0C` from four signed-16 thresholds.
-
-The encoded live tier table is `0x008C3CBA` (raw `0x20FDBA`), containing
-`300, 450, 550, 700`. The resulting tier is:
-
-| Total | Tier byte |
-| ---: | ---: |
-| `< 300` | `0` |
-| `300..449` | `1` |
-| `450..549` | `2` |
-| `550..699` | `3` |
-| `>= 700` | `4` |
-
-No letter/rank names are assigned because this code stores only numeric tier
-`0..4`.
-
-Live `0x0071A2C0` is the acceptance/commit function. Its predicate at live
-`0x0071A380` checks bit `0x20` in the selected side's runtime input/status
-record. Once accepted, it plays event/sound `0x34` and returns `1`. With a live
-manager it advances the result-object to state `3` and computes:
-
-```text
-new_accumulator = object[+0x08] + object[+0x04]
-new_accumulator = min(new_accumulator, FUN_001F7870())
-FUN_001F6F00(manager, new_accumulator)
-```
-
-`FUN_001F7870()` returns `9,999,999`. `FUN_001F6F60` reads and
-`FUN_001F6F00` writes the field at `*(manager + 4) + 0x34`; the writer also
-enforces the same maximum. Neither the result-total clamp nor accumulator
-writer applies a lower floor. If the manager is absent at acceptance, the
-object instead moves directly to state `4` and skips the accumulator write.
-The normal routed score path has a live manager, but this distinction is part
-of the function's exact contract. The accumulator is the profile's ryo
-counter: [Save data](../game/save_data.md) identifies the same getter/setter
-pair and its `0x34` field as the saved ryo currency, whose UI formatter
-appends `両`. A Free Battle win by a human side therefore adds the capped
-result-screen total to ryo. No direct item or unlock grant was found in this
-handoff; when that in-memory ryo value reaches the memory card is outside this
-document.
-
-The summary dispatcher at live `0x0071A0A0` calls that acceptance function only
-once its summary child byte `+0x18` permits acceptance. Before that, native
-Circle can accelerate the tally in child states 2 and 3. The details dispatcher
-at live `0x0071A1D0` also calls the same acceptance function. The predicate reads
-the newly pressed input word at `input_context + 0x84 + selected_side * 0x78`,
-where the result object's `+0x02` halfword is the zero-based selected side.
-GhidrAssist omits parts of the acceptance body and misidentifies its predicate
-boundary; the complete bytes at raw `0x0663C0..0x06648F` establish the call,
-input mask, and commit stores.
-
-The surrounding result object has halfword state at `+0x00`, selected-side
-halfword at `+0x02`, total at `+0x04`, pre-result accumulator at `+0x08`, tier
-byte at `+0x0C`, and fade handle at `+0x10`. Live dispatcher `0x00719D80`
-implements states `0..5`: state `0` runs total/tier initialization and enters
-`1`; states `1` and `2` update the two result subobjects and can invoke the
-accept/commit function; state `3` waits for a fade and enters `4`; dispatcher
-state `4` returns completion value `1`; and state `5` returns value `2`.
-
-Resident `FUN_001EE9C0` accepts only dispatcher return `1`. After resource
-readiness, it clears the metric object through live `0x00719500`, destroys it
-current presentation internals through live `0x00719140`, unloads the
-associated result resource, and moves the outer controller from state `0x14`
-to `0x15`. It does not free or clear the `0x188`-byte allocation stored at
-controller `+0x3C`; later cycles reuse it. Controller teardown
-`FUN_001EC890` calls `0x00719140` again, then frees the allocation through
-`FUN_00117000` and clears `+0x3C`. Thus the accumulator write occurs before
-presentation teardown, and the result object is not the persistent owner of
-the committed total.
-
-Dispatcher state `5` returns `2`, but the resident owner does not treat `2` as
-completion and remains in outer state `0x14`. No direct write of `5` to result
-object halfword `+0x00` was found in the constructor, clear/import functions,
-dispatcher state handlers, or resident owner: the verified writes are states
-`0..4`. Consequently state `5` and return `2` are a recognized interface branch
-whose scoped reachability is unproven, not a second proven cleanup route.
+The 28-slot result bank, its producers, statistic-derived conditions, and the
+BTL metric import, tier, and ryo commit are described in
+[Battle statistics](battle_statistics.md). Outer state `0x10` runs the
+importer for results `1..5` before inner destruction, and state `0x14` runs
+the result dispatcher on the score route described above.
 
 ## Cleanup boundaries
 
@@ -1089,18 +748,19 @@ There are several distinct cleanup levels:
 2. **Inner battle-cycle destruction.** For imported results `1..5`, state
    `0x10` runs the BTL metric importer first and then calls `FUN_001EECD0` on the inner
    object at `0x00607604`. That wrapper invokes `FUN_001EEFD0`, which destroys
-   battle-owned subsystems and clears manager live pointers `+0xDE0..+0xDE8`
-   and `+0xDEC..`, clears the inner object, frees its `0x38`-byte allocation,
-   and returns; state `0x10` then clears the global. Results `6`, `7`, and `9`
+   battle-owned subsystems in the order given in
+   [Battle lifecycle](battle_lifecycle.md#teardown-order), frees the
+   `0x38`-byte allocation, and returns; state `0x10` then clears the global. Results `6`, `7`, and `9`
    skip import but use the same teardown. Result-`8` states `0x17` and `0x18`
    perform the corresponding teardown and global clear on their alternative
    routes. `FUN_001EC540`
    is a broader helper that destroys this inner object plus transient object
    `0x00607658`; it is not the outer-controller destructor.
 3. **Completed-cycle resource and counter cleanup.** After normal inner
-   destruction, state `0x11` handler `FUN_001EDEE0` unloads common,
-   per-fighter, and selected-stage resources, calls the BTL-side cleanup
-   functions, and commits the latched result to the session outcome block.
+   destruction, state `0x11` handler `FUN_001EDEE0` releases the battle
+   archives
+   ([Battle lifecycle](battle_lifecycle.md#archive-lifetime-is-separate-from-session-lifetime))
+   and commits the latched result to the session outcome block.
 4. **Result-presentation internals.** State `0x14` clears the metric object and
    destroys its current owned presentation internals, but retains the result
    allocation at outer controller `+0x3C` for another cycle.
@@ -1111,11 +771,11 @@ There are several distinct cleanup levels:
    selection/result teardown when it owns this boundary.
 
 Only the BTL metric import must precede destruction of the live fighter
-pointers it consumes. The session counter update deliberately occurs afterward
+pointers it consumes. The session counter update occurs afterward
 and consumes the still-latched result plus the six-word block, not fighter
 pointers. This ordering separates the data handoff from resource lifetime.
 
-Outcome state deliberately survives the state-`0x10` metric import and
+Outcome state survives the state-`0x10` metric import and
 state-`0x11` counter/resource teardown because both are consumers. The next
 battle initialization in `FUN_001EEE30` clears both the outcome at
 `0x00607670` and timeout marker at `0x00607674`. The timeout marker has exactly
@@ -1146,29 +806,3 @@ FUN_001EC960                     outer dispatcher
                            -> live 0x00719C00 contribution sum
                       -> live 0x0071A2C0 accepted point commit
 ```
-
-## Negative results and unresolved questions
-
-- Clean `BTL.BIN` calls resident outcome getter `FUN_001EC280` but contains no
-  identified direct call to setter `FUN_001EC270`. KO/time classification and
-  result latching are resident responsibilities; BTL consumes the result.
-- No direct BTL call to resident Victory request `FUN_00201E90` was found. The
-  outer resident controller owns that handoff; BTL owns other result
-  presentation/score objects.
-- No generic best-of-N round counter or round-win threshold was proven. The
-  six-word block is an outcome tally/streak block. A distinct higher-level
-  object does have an encounter index/limit and synthesizes result `8`, but no
-  round-win threshold is visible in that mechanism.
-- Result `9` has consumers but no scoped latched producer. Codes `6`, `7`, and
-  `8` have exact flow producers but their menu/mode-facing names remain
-  unresolved. The direct-store/direct-call audit also found no literal pointer
-  to the setter in either scoped image; a dynamically computed indirect call or
-  an out-of-scope overlay remains outside this negative result.
-- Tier `0..4` and the ryo commit are proven. Unlock, inventory, save timing,
-  and human-readable rank labels are not.
-- The exact player-facing labels of all 28 score metrics remain unresolved.
-  Their record layout, selected source fields, all three bucket tables, total,
-  tier thresholds, and final accumulator write are established.
-- No runtime trace was added for this research. Mode-specific routing and
-  presentation wording should be confirmed dynamically before giving the
-  unresolved codes user-facing names.

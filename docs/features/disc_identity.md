@@ -104,20 +104,20 @@ generated, machine-local state.
 
 The canonical NA2.28 PCSX2 files are
 `@pcsx2_files/games/NA228/NA228.pnach` and
-`@pcsx2_files/games/NA228/NA228.ini`. The project launcher passes the PNACH
-explicitly, while PCSX2 discovers GameSettings recursively.
-Ordinary GameSettings sections apply to every CRC; a
-`[CRC.<8-hex-crc>.<section>]` section overrides one CRC. A named PNACH group
-applies to every CRC unless it declares
-`crc = <8-hex-crc>[,<8-hex-crc>...]`.
+`@pcsx2_files/games/NA228/NA228.ini`, the bundle of the `NA228`
+[content alias](../../../../PCSX2/docs/content_folders.md#content-aliases).
+The project launcher passes the PNACH explicitly, and PCSX2 loads the
+GameSettings from the bundle for every image resolved to the alias, so
+GameSettings CRC sections do not apply to NA2.28 builds. A PNACH section can be
+limited to particular builds with a
+[`crc=` list](../../../../PCSX2/docs/pnach.md#sections).
 
 Configured launches use `@pcsx2_files/games/NA228/NA228.ps2` without rewriting
 GameSettings. No CRC-named alias files are generated for NA2.28.
 
-The `NA228` content alias declares `SLOP-NA228` as its canonical local identity.
-Every image resolved to that alias uses `SLOP-NA228` for savestate names,
-debugger settings, and playtime while retaining its detected serial and CRC for
-GameDB fixes, achievements, and diagnostics. Savestate names retain the detected
-CRC so incompatible builds do not silently share states. Exact serial-and-CRC
-content aliases still take precedence, so the clean NA2 and NUN5 images continue
-to use their own local identities.
+The `NA228` content alias declares `SLOP-NA228` as its
+[canonical local identity](../../../../PCSX2/docs/content_folders.md#canonical-local-identity).
+Savestate names retain the detected CRC, so incompatible builds do not
+silently share states. Exact serial-and-CRC content aliases still take
+precedence, so the clean NA2 and NUN5 images continue to use their own local
+identities.

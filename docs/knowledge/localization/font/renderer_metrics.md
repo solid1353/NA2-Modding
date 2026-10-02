@@ -1,13 +1,13 @@
 # Font renderer metrics and spacing
 
-Clean NA2 and NUN5 secondary-font geometry, tracking, spacing, measurement, and
-selected-row behavior.
+Retail NA2 (`SLPS-25837`) and NUN5 secondary-font geometry, tracking, spacing,
+measurement, and selected-row behavior.
 
 ## Research coverage
 
 - **Assigned scope:** explain the measurable NA2/NUN5 differences in glyph
   height, advance, spaces, fitted labels, and selected-row position.
-- **Exploration depth:** the clean initializers, metric decoder, glyph emitter,
+- **Exploration depth:** the retail initializers, metric decoder, glyph emitter,
   string renderer, selected-row helpers, and representative Controls labels
   were compared statically and through bounded runtime probes.
 - **Confirmed coverage:** output-height handling, native selected-row offset,
@@ -15,9 +15,10 @@ selected-row behavior.
   leading-bearing scaling are established.
 - **Unresolved or untested:** exact reconstruction of every NUN5 measurement
   path outside the examined secondary-font callers.
-- **Deliberate exclusions and overlap:** current NA228 renderer changes belong
-  to [Font](../../../features/localization/font.md); asset and screen-specific
-  findings remain in neighboring documents.
+- **Deliberate exclusions and overlap:** raster and palette findings belong to
+  [Font assets](assets.md); screen-specific findings belong to the screen
+  layout documents, starting with
+  [Shared Font style](screen_layouts/shared_style.md).
 - **Evidence limitations:** representative labels establish the documented
   formulas but do not prove identical behavior for every markup or vertical
   writing path.
@@ -34,9 +35,8 @@ bottom = y + descriptor->output_width;
 
 NUN5 `FUN_001891A0` instead uses width for X and height for Y, each multiplied
 by its axis scale. A 24x28 secondary descriptor is therefore presented as
-24x24 by NA2 and 24x28 by NUN5. Changing NA2's shared width load from 24 to 28
-produces 28x28 and damages horizontal geometry; the cross-game difference is
-specifically secondary vertical extent.
+24x24 by NA2 and 24x28 by NUN5. The cross-game difference is specifically
+secondary vertical extent.
 
 NA2 `FUN_00186F90` copies the secondary cell into a padded glyph texture;
 `FUN_00187CC0` uses the descriptor's output height for the texture's V extent,
@@ -46,7 +46,7 @@ maps to one local Y unit. Centering the whole quad or the cell's line advance
 does not by itself center the visible letters. The four metric bytes describe
 left, top, right, and bottom transparent margins minus one, clamped to zero.
 
-The compared donor cells do not become heavier when mapped through clean NA2's
+The compared NUN5 cells do not become heavier when mapped through retail NA2's
 palette. Across 85 cells and 23,800 source samples, alpha mass changes by a
 ratio of `0.993762`, making it fractionally lighter. The observed height deficit
 comes from quad geometry, not palette weight.
@@ -103,12 +103,3 @@ x -= leading_bearing * scale_x;
 The missing horizontal multiply explains the fitted-label origin and span
 difference without implicating raster data, palette, or the width formula.
 Vertical and alternate-glyph paths are separate.
-
-## Rejected isolated changes
-
-Changing only secondary tracking from `-1.0` to `0.0` leaves spacing and boxed
-measurement inconsistent; tracking must be considered with the ordinary-space
-and fit paths. Applying only NUN5's `128 / measured_width` threshold to the NA2
-legacy measurement path also makes different fit decisions, including
-incorrectly shrinking `Linked Attack`. Neither isolated change represents the
-NUN5 renderer contract.

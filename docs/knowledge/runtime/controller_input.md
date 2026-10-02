@@ -1,11 +1,11 @@
 # Controller input runtime
 
-This note reconstructs the resident controller stack in the clean
-*Naruto Shippuuden: Narutimate Accel 2* v2.28 boot ELF. It covers the two
-resident pad records, Sony `libpad` boundary, polling and derived-button
-semantics, analog and pressure decoding, the front-end analog-to-D-pad adapter,
-disconnect/configuration handling, and vibration. Adventure-mode consumers are
-out of scope.
+This note reconstructs the controller stack in the retail NA2 (`SLPS-25837`)
+boot ELF and BTL overlay. It covers the two resident pad records, Sony
+`libpad` boundary, polling and derived-button semantics, analog and pressure
+decoding, the front-end analog-to-D-pad adapter, disconnect/configuration
+handling, vibration, and the publication-to-consumer boundary in significant
+resident and battle input paths. Adventure-mode consumers are out of scope.
 
 All behavioral conclusions below are **static-only** unless explicitly stated
 otherwise. No controller trace or live-memory capture was used. Confidence is
@@ -16,76 +16,81 @@ the listed `FUN_*` names.
 
 ## Research coverage
 
-- **Assigned scope:** this task covered the clean `SLPS_258.37` resident
-controller stack: initialization and update order; both per-port records and
-globals; raw packet, button-edge/repeat, stick, and pressure derivation;
-connection/configuration behavior; clearly identifiable analog/digital
-compatibility helpers; vibration scheduling and transport; and a bounded check
-for resident controller-combination reset handling. The requested binary and
-evidence identity, function addresses, original stripped-export labels, call
-relationships, confidence, and useful negative results are recorded here.
-
-- **Exploration depth:** overall coverage is **bounded, high-depth static
-coverage**, not an exhaustive survey of every input consumer or every IOP
-instruction. Within the resident core, the `0x78`-byte record layout and the
-paths through `FUN_00113480`, `FUN_001134e0`, `FUN_00113530`,
-`FUN_00113710`, `FUN_00113b80`, `FUN_00113c70`, `FUN_00113f40`,
-`FUN_00114850`, `FUN_001148c0`, `FUN_00114930`, and
-`FUN_00114b40..FUN_00114e60` were followed at instruction/field level.
-Scheduler placement was traced through `FUN_001081b0`, `FUN_00108490`, and
-`FUN_001d0590`. The linked EE `libpad` function sequence from entry
-`0x00174098` through `FUN_00175588` was inspected as one bounded library unit,
-including unpromoted helpers and raw J/JAL/stored-pointer checks where an
-unused-helper negative is claimed. The active front-end adapter
-`FUN_001e0d20`, its direct caller, the instruction-level twin
-`FUN_0037d7c0`, and the reverse helper `FUN_00114e60` were checked without
-expanding into general menu/gameplay consumer analysis. Constant data included
-the sector table at `0x005B54D0`, the reverse-direction table at `0x005B5490`,
-and the 21-entry vibration table at `0x00408050`.
-
-Supporting IOP work was **targeted/sampled**, not module-wide: the exact
-`padman` IRX embedded at `MODULES.BIN` offset `0x2000` was used to verify the
-EE snapshot producer, packet builder/pressure reconciliation, read/query
-disconnect workers, direct-actuator consumer and power cap, main RPC
-dispatcher, and RPC-`0x18` completion-command path. The concrete link-relative
-functions are enumerated in the matching IOP function map below. Soft-reset
-coverage was likewise bounded: canonical combo constants, reset/relaunch
-strings, direct code/pointer references to the resident relaunch wrappers, and
-the static intersection of controller-reader and exit/relaunch call ancestry
-were checked; this was not an overlay-wide proof.
-
-- **Confirmed coverage:** the note records the exact two-record layout
-and update ordering; full packet/button/edge/repeat behavior; polar stick math
-and adapter thresholds/sectors; pressure copying and IOP consistency rules;
-wrapper plus IOP disconnect/reconfiguration transitions; the configuration
-state machine and retry quirks; the vibration override timeline, shipped
-presets, EE/IOP transport, and power limiting; the embedded `libpad` API and DMA
-layouts; and evidence-backed negative results for resident soft reset,
-right-stick conversion, multitap use, and several linked-but-unused helpers.
-
-- **Unresolved or untested:** record byte `+0x46`, snapshot
-`val_c6`, the resident writer (if any) of lifecycle value 2, and the exact
-public Sony name of the RPC-`0x18` callback-registration API remain unresolved.
-Computed/indirect callers cannot be excluded by raw direct-reference scans.
-The rest of PADMAN/SIO2MAN, general menu/gameplay input consumers, overlays,
-and replacement-module behavior were not exhaustively analyzed.
-- **Deliberate exclusions and overlap:** Adventure was explicitly excluded.
-Save/load, controller routing outside this wrapper, and
-resident file/resource services were left to their separately scoped research
-owners; no index, other canonical note, source, binary, or preserved
-disassembly was edited.
-
-- **Evidence limitations:** all conclusions are static. No PCSX2 session, physical
-controller capture, live-memory trace, disconnect/reconnect trial, pressure
-sample, rumble observation, or timing measurement was performed. Accordingly,
-instruction-visible formulas and ordering are high confidence, while real-time
-cadence, device/emulator presentation, rare failure behavior, and practical
-effects of latent counter/queue edges remain unverified dynamically.
+- **Assigned scope:** the retail `SLPS_258.37` resident controller stack:
+  initialization and update order; both per-port records and globals; raw
+  packet, button-edge/repeat, stick, and pressure derivation;
+  connection/configuration behavior; identifiable analog/digital compatibility
+  helpers; vibration scheduling and transport; resident controller-combination
+  reset handling; and the scheduling phases of significant resident and BTL
+  consumers, distinguishing shared publication, front-end snapshots,
+  battle-history retention, and contest-local pending commands.
+- **Exploration depth:** bounded, high-depth static coverage, not a survey of
+  every input consumer or every IOP instruction.
+  - Resident core: the `0x78`-byte record layout and the paths through
+    `FUN_00113480`, `FUN_001134e0`, `FUN_00113530`, `FUN_00113710`,
+    `FUN_00113b80`, `FUN_00113c70`, `FUN_00113f40`, `FUN_00114850`,
+    `FUN_001148c0`, `FUN_00114930`, and `FUN_00114b40..FUN_00114e60` were
+    followed at instruction and field level; scheduler placement was traced
+    through `FUN_001081b0`, `FUN_00108490`, and `FUN_001d0590`.
+  - Embedded EE `libpad`: entry `0x00174098` through `FUN_00175588` was read
+    as one library unit, including unpromoted helpers and the raw
+    J/JAL/stored-pointer checks behind each unused-helper negative.
+  - Adapters and tables: the active front-end adapter `FUN_001e0d20`, its
+    caller, the twin `FUN_0037d7c0`, the reverse helper `FUN_00114e60`, the
+    sector table at `0x005B54D0`, the reverse-direction table at `0x005B5490`,
+    and the 21-entry vibration table at `0x00408050`.
+  - Consumers: the title, Mode Select, generic-list, Character Select,
+    start-menu, and contest paths in the consumer tables; the resident battle
+    caller, phase masks, `ccCommandCtrl`/child vtables, ring
+    advance/copy/normalizer, and direct binding readers. Instruction bytes
+    resolved BTL call targets and split function boundaries. ETC input-load
+    candidates were sampled only.
+  - IOP: targeted checks of the `padman` IRX embedded at `MODULES.BIN` offset
+    `0x2000`, listed in the
+    [IOP function map](#matching-iop-padman-function-map).
+  - Soft reset: canonical combo constants, reset/relaunch strings, direct
+    references to the resident relaunch wrappers, and the static intersection
+    of controller-reader and exit/relaunch call ancestry; not overlay-wide.
+- **Confirmed coverage:** the two-record layout and update ordering; full
+  packet/button/edge/repeat behavior; polar stick math and adapter
+  thresholds/sectors; pressure copying and IOP consistency rules; wrapper and
+  IOP disconnect/reconfiguration transitions; the configuration state machine
+  and retry quirks; the vibration override timeline, shipped presets, EE/IOP
+  transport, and power limiting; the embedded `libpad` API and DMA layouts;
+  negative results for resident soft reset, right-stick conversion, multitap
+  use, and several linked-but-unused helpers; shared-edge overwrite versus
+  battle-history sampling; front-end snapshot fields and early-return
+  retention; start-menu placement before mask collection; contest placement
+  after the registry phases; and the active BTL caller of the reverse-direction
+  helper.
+- **Unresolved or untested:** record byte `+0x46`, snapshot `val_c6`, the
+  resident writer (if any) of lifecycle value 2, and the public Sony name of
+  the RPC-`0x18` callback-registration API; computed or indirect callers; the
+  rest of PADMAN/SIO2MAN and input consumers outside the enumerated paths; the
+  complete phase ancestry of the three direct BTL binding predicates; an active
+  nonzero early-callback installation; indirect publication writers; and uses
+  of late previous-public-held outside the named paths.
+- **Deliberate exclusions and overlap:** Adventure-mode consumers were not
+  inspected. Input-history matching, bindings, and logical command
+  interpretation belong to [Action commands](../gameplay/action_commands.md);
+  battle lifecycle and display pacing to
+  [Battle lifecycle](../gameplay/battle_lifecycle.md); contest scoring and
+  pending-code retention to
+  [Ultimate Jutsu](../gameplay/ultimate_jutsu.md#contest-objects); task
+  scheduling to [Resident task system](task_system.md); Save/Load to
+  [Save data](../game/save_data.md); and resident file services to
+  [Resident file and archive services](../game/files/runtime_services.md).
+- **Evidence limitations:** all conclusions are static. No emulator session,
+  physical controller capture, live-memory trace, disconnect/reconnect trial,
+  pressure sample, rumble observation, or timing measurement exists.
+  Instruction-visible formulas and ordering are high confidence, while
+  real-time cadence, device or emulator presentation, rare failure behavior,
+  and practical effects of latent counter/queue edges are unverified.
 
 ## Binary and evidence identity
 
 Binary identity and resident address conversion follow
-[Standard game file identities](../game/files/file_identities.md). The preserved
+[Retail game file identities](../game/files/file_identities.md#address-conventions). The preserved
 evidence is the Ghidra `12.1.2` R5900 little-endian export under
 `@disassembly/NA2/exports/SLPS_258.37/`.
 
@@ -193,6 +198,147 @@ The listing establishes an engine/scheduler update cycle. It does not by
 itself prove that every cycle corresponds one-for-one with a displayed frame
 under all skip/stall modes.
 
+## Publication lifetime and consumer snapshots
+
+The shared pad words are a latest-sample publication, not an acknowledged
+event queue. Every `FUN_00113710` call overwrites held, pressed, released,
+repeat, and raw history, including on a zero-derived input update. Reading a
+word does not clear it. Within a cycle multiple consumers can read the same
+pressed/released mask; on the next unchanged physical sample the core edges
+are zero even if an earlier consumer did not run. The late public-held
+snapshot at record `+0x60` is a separate, normal-frame-gated store.
+
+**Inference from those stores and gates:** a shared edge arising entirely
+during skipped higher-level cycles is not retained for those consumers.
+A button still held when they resume remains visible in held, but need not
+remain visible as a core press. No claim about a live occurrence is made.
+
+Battle adds a different retention boundary. The per-side `ccCommand` complete
+update is BTL live `0x006F0EA0`, Ghidra `0x006F0E60`, file `0x03CFA0`.
+It advances the history ring, copies the current resident held/pressed/released
+words and stick outputs into one `0x18`-byte record, then calls normalizer live
+`0x006EF3C0` (Ghidra entry/body `0x006EF380/0x006EF390`). That normalizer
+rewrites both edges against the preceding normalized history held word.
+Consequently battle edges represent changes between consumed history samples,
+not preservation of each intervening core edge. Neither resident repeat nor
+core raw history is copied. Each sample overwrites one ring record and leaves
+the others until the ring wraps. Field layout, ring indices, normalization,
+and matcher algorithms are owned by
+[Action commands](../gameplay/action_commands.md#battle-input-object-and-circular-history).
+
+The history phase runs in resident `FUN_001f03e0` at call site
+`0x001F051C`, through owner `+0x18`, child pointer `+0x04`, and controller
+vtable slot `+0x0C`. It runs when the first scheduling mask `+0x02` contains
+bit `0x0002`, or battle object `0x00607844` has byte `+0xA50 == 1`.
+A null owner/controller skips it. The chain is controller live
+`0x006D67E0 -> 0x00709C70 -> child slot +0x10 -> 0x006F0EA0`.
+`FUN_001ef8f0` calls mask collection `FUN_001f0290` before that dispatcher
+only when its state handler returns 0; return 2 skips the dispatcher, while
+1/3 complete that branch. Thus a skipped history phase leaves its records
+unchanged while the resident pad can continue publishing new samples.
+The input object's fighter-state suppression flag zeroes logical output
+after recording; it does not prevent the ring advance or held snapshot.
+
+### Consumers in the front-end task
+
+The significant front-end paths below run downstream of the same
+`FUN_001e0ee0` steady-loop adapter, rather than as consumers in the early
+system callback. State 3 reaches the title handler through
+`FUN_001de840 -> FUN_001df690`; state 4 reaches manager
+`FUN_001e9980`. The latter selects one mode handler in its current state.
+Its Mode Select branch calls `FUN_001ea240 -> FUN_003854f0`; the running
+battle branch reaches `FUN_001ec960 -> FUN_001edb70 -> FUN_001ef8f0`.
+The task yields through `FUN_001d0000(record, 1)` after its selected branch.
+This ordering is within that task; it does not assign a total execution order
+to other independent threads. See
+[Resident task system](task_system.md#manager-pass-and-ordering-boundary)
+and [Battle lifecycle](../gameplay/battle_lifecycle.md#battle-update-cadence).
+
+| Consumer | Shared masks and snapshot | Consumption gate and retention |
+| --- | --- | --- |
+| Title `FUN_001df690` | Copies port-0 pressed (`context+0x84`) to a local variable once at entry; passes it to `FUN_001df140` and tests `0x0820/0x0860` in selected states | State-specific reads; the local sample lasts only for this invocation. No acknowledgement or shared-word clear |
+| Mode Select `FUN_003854f0` | Object `+0x3C/+0x40` retain each port's pressed; `+0x30` is their OR, `+0x34` ORs both repeat words, `+0x38` ORs held | Rewrites all five snapshots before its state switch. Child handlers receive this invocation's snapshot |
+| Generic list `FUN_003832c0 -> FUN_00383340` | Source selector bits 0/1 choose port 0/1; selected pressed words are ORed into one argument and repeat words into another | Selector `&3 == 0` skips input handling. Accept/cancel use pressed `0x20/0x40`; vertical navigation uses repeat `0x1000/0x4000`. The input words are arguments, not retained/cleared events |
+| Character Select parent `FUN_003bbbb0` | Reads each port's shared pressed directly for Start joining and Cross cancellation; calls selector updater with an explicit controlling port | Processes the two side slots in order; no shared clear prevents a later selector from reading the same edge. Controller-to-selector routing belongs to [Character Select](../game/character_select.md) |
+| Character selector `FUN_003b5c00` | Selector `+0x50/+0x54/+0x58` receive pressed/repeat/held; `+0x5C` starts as pressed and ORs held when local byte `+0x60 == 0` | State 1 with `+0x04 != 0`, or states 5/9 with `+0x08 != 0`, returns before copying. Otherwise snapshots are rewritten before a state-specific handler. While the countdown is nonzero, `+0x5C` remains pressed-only and the countdown decrements |
+| Character support handler `FUN_003b6910` | Reads selector pressed `+0x50` for Circle/Cross/Triangle, and local navigation `+0x5C` for directions | Runs from selector state 5 after the above copy. The direction stream can contain held even when core repeat is zero |
+| Start detector `FUN_001ebc50` | Tests shared pressed Start `0x0800` for each eligible side; returns 1 or 2, with the later eligible match winning | Called by `FUN_001ebd90` before the battle state's callback in `FUN_001ec960`. Manager/session gates can skip detection; no pad snapshot or edge queue is stored here |
+| Battle start-menu input BTL live `0x0087C3F0` (Ghidra `0x0087C3B0`, file `0x1C84F0`) | Reads the selected port's pressed, or ORs both when menu `+0x04 == 2`; uses pressed Circle/Cross, then ORs repeat for navigation when local countdown `+0x14 < 1` | Reached only in menu state 3 through live UI updater `0x0087C720`. Input processing additionally requires the resident list's ready predicate. The countdown branch decrements locally instead of adding repeat; no battle history is consulted |
+
+These snapshots store the latest masks for their owning object; they do not
+accumulate missed presses. Early returns can leave a previous object snapshot
+in memory, but the named updater does not process a skipped selector's
+state-specific handler with that stale snapshot. Reading another consumer's
+copied word is not evidence of a second pad poll.
+
+Start-menu processing has an explicit position before mask collection:
+`FUN_001ec960` first calls `FUN_001ebd90`, then dispatches its battle state.
+While open, the latter calls menu wrapper live `0x0087D940`, which runs the
+menu state dispatcher before its presentation pass. The subsequent running
+session can suppress `ccCommand` history while the start menu continues
+reading shared pressed/repeat. Suppression-word ownership and the complete
+menu lifecycle belong to
+[Pause and start-menu control](../gameplay/pause_and_replay.md#resident-pause-controller-consumption).
+
+### Gameplay readers outside command history
+
+The ordinary command history is not the game's only gameplay input boundary.
+`FUN_001f03e0` services `ccCommandCtrl` before `ccPlayerCtrl` in phase 1,
+then its other phase-1 systems. The fighter pass consumes the command object's
+logical output; that bridge is described in
+[Action commands](../gameplay/action_commands.md#resident-bridge-and-action-dispatch).
+Later in the same dispatcher, first-mask bit `0x0400` and successful
+`FUN_0036b6c0` enable `FUN_0036bf10(0)` at `0x001F0918`. The latter selects
+the current Ultimate Jutsu contest and calls its vtable slot `+0x08`.
+This is a separate input consumer after the primary phase-1/2/3 registries,
+not another advance of `ccCommand` history.
+
+| Contest consumer | Human input source | Local consumption boundary |
+| --- | --- | --- |
+| Command `FUN_00362140` | Shared pressed at `context + side*0x78 + 0x84` | Active/start gate `+0xD4`, finishing gate `+0xD5`, state 9, and time-bar state `+0x62 == 1`; human branch is selected by CPU byte `+0x1A+side == 0`. Samples into a per-side pending command before the local lockout check |
+| Combo `FUN_00364170` | Same shared pressed word | The same start/finishing/state/time-bar gates. Samples into a per-side pending command before the lockout and rearm checks; a rearm update defers processing without clearing that pending command |
+| Timing `FUN_003685e0 -> FUN_00369510` | Scoring helper passes the same shared pressed word to `FUN_0036b300` | Runs its per-side scoring in state 9. Positive local lockout `+0x132+side*2` delays the read until the decrement reaches zero; CPU sides use their generator |
+| Turn `FUN_00364df0` | Resident right-stick magnitude/angle (`record+0x4A/+0x50`), with left-stick fallback (`+0x49/+0x4C`) below magnitude `0x20` | The start/finishing/state/time-bar gates still apply. This consumer reads polar analog output directly and stores its class-local angle/invalid sentinel; it does not use any digital repeat word |
+
+Command and Combo each sample the shared pressed word into one decoded command
+per side, rather than a pressed-mask queue: Command at `+0x10E+side*2`, Combo
+at `+0xF8+side*2`. Their human branches decode the first recognized bit in
+priority order: Command checks `0x10, 0x40, 0x20, 0x80, 0x1000, 0x4000,
+0x2000, 0x8000` and stores codes `0..7`; Combo checks the first four and
+stores codes `0..3`. The resident decode ranges are
+`0x003626A0..0x003627C0` and `0x00364528..0x003645C0`. Retention of that
+code through the lockout, rearm, and time-bar gates belongs to
+[Ultimate Jutsu](../gameplay/ultimate_jutsu.md#command-mode) (see also its
+[Combo mode](../gameplay/ultimate_jutsu.md#combo-mode)).
+
+These latches preserve input already sampled by the contest; they do not
+recover publications missed while its outer update gates skip the reader.
+Timing's inspected scoring helper instead skips the shared-pressed read while
+its lockout remains positive. Turn stores the current sampled polar angle or
+invalid sentinel. Contest-specific scoring, CPU input, and lifecycle remain
+owned by [Ultimate Jutsu](../gameplay/ultimate_jutsu.md#contest-objects).
+
+Three inspected BTL predicates also read the shared pressed word directly:
+live `0x00796A50`, `0x007FF520`, and `0x00806680` (Ghidra byte entries
+`0x00796A10`, `0x007FF4E0`, `0x00806640`). Their human-input branch
+resolves side from object `+0x350` and tests configured binding index 1, as
+described in
+[Action commands](../gameplay/action_commands.md#native-pad-domain-and-battle-bindings).
+A null binding pointer returns false. A separate controlled-state branch can return
+object `+0x13C & 1` instead. The direct callers occur at Ghidra
+`0x007968A8`, `0x007FE124`, and `0x00805054`; those references encode the
+live targets above. These loads establish a publication source independent of
+the history records. Their complete enclosing state-controller
+placement in the battle registries is not established, so no relative
+scheduling order is assigned to them.
+
+No active reader for the optional early system callback was identified.
+`FUN_001086a0`, called during context construction, clears `context+0x520`.
+The resident constant-offset `sw ...,+0x520(...)` byte-pattern search found
+that store (and its mapped aliases), but cannot exclude an indirect writer.
+The callback's position in the core update is established conditionally; it
+must not be treated as a proven place where ordinary battle input is consumed.
+
 ## Per-port record
 
 Offsets below are relative to either `0x78`-byte record. Context-relative
@@ -231,7 +377,7 @@ columns make the two resident instances explicit.
 
 The masks are stored as 32-bit words, but the packet-derived domain is the low
 16 bits. The front-end adapter described below may temporarily rewrite the
-public words while deliberately leaving the raw-history latch unchanged.
+public words while leaving the raw-history latch unchanged.
 
 ### Initializer defect
 
@@ -283,7 +429,7 @@ checks packet status byte `+0`; state, nonzero read length, and packet ID alone
 control classification/decode.
 
 The exact bundled IOP `padman` producer narrows that concern on the ordinary
-unmodified path. Its link-relative `FUN_00003af4` returns exactly 32 and writes
+path. Its link-relative `FUN_00003af4` returns exactly 32 and writes
 status byte 0 when its per-slot data-ready word equals 1; otherwise it writes a
 leading `0xFF`, zeroes the other 31 staging bytes, and returns length 0. Thus
 this producer gives the EE client only complete 32-byte packets or no packet,
@@ -372,7 +518,7 @@ request-state table names 0 `COMPLETE`, 1 `FAILED`, and 2 `BUSY`.
 
 The embedded `scePadGetState` normally returns snapshot byte `+0x70`, but it
 maps raw stable state 6 plus request-busy byte `+0x71 == 2` to exposed state 5.
-Thus a configuration request in flight deliberately makes an otherwise stable
+Thus a configuration request in flight makes an otherwise stable
 pad non-readable to `FUN_00113710`, producing the zero-derived frame described
 below. `scePadGetReqState` returns complete (0) for an unopened slot.
 
@@ -602,6 +748,18 @@ the repeat field. Keeping private history even on physical-D-pad frames also
 lets a transition from a physical direction to the same synthesized stick
 direction avoid a false release/press pair.
 
+The unsuccessful synthesis branch matters for release publication.
+`FUN_00114d90` returns zero at magnitude `<=0xA0`; the adapter's branch
+`0x001E0D80 -> 0x001E0E58..0x001E0E78` then resets only its private counter
+and saved mask. It does not rewrite public held, pressed, released or repeat.
+The preceding core poll has already replaced those public words. **Inference:**
+returning a stick-only direction to neutral/below threshold does not publish
+that synthesized direction's release edge in this adapter, because the raw
+core history never contained it. Switching between qualifying stick sectors
+does pass through the D-pad release/press rewrite. Battle history instead
+recomputes releases against its preceding normalized held sample, so it can
+represent the neutral transition when its input phase consumes it.
+
 Under `FUN_00114b40`'s scaling, `magnitude > 0xA0` requires adjusted radial
 distance large enough to truncate to at least 161 (about 45.46 adjusted units).
 On a single cardinal axis the first qualifying raw value is therefore 26 on
@@ -634,7 +792,7 @@ The sector table at `DAT_005B54D0` is:
 | 6 | `+pi/2` | `0x8000` | Left |
 | 7 | `+3pi/4` | `0x9000` | Left + Up |
 
-### Unreferenced twin and reverse helper
+### Unreferenced twin and battle reverse helper
 
 `FUN_0037d7c0` (`0x0037D7C0`) is a `0x1B0`-byte instruction-level clone of
 `FUN_001e0d20`. Only seven of its 108 words differ, all references to separate
@@ -645,8 +803,9 @@ little-endian pointer. Its intended context is unproven.
 `FUN_00114e60` (`0x00114E60`) performs the reverse conversion: it maps valid
 D-pad nibbles to the same angle convention with magnitude `0xFF`; zero,
 opposite pairs, and three-/four-way combinations return angle/magnitude zero.
-It likewise has no export XREF, direct JAL, or stored pointer. It is an
-identified compatibility helper, not a proven active NA2 path.
+The resident has no proven caller; BTL history normalizer live `0x006EF3C0`
+calls it when normalized stick magnitude is zero while the held word contains
+a digital direction.
 
 Its raw 16-float table at `DAT_005B5490` uses `4.0` as the invalid sentinel.
 The only accepted high-nibble values are exact: `1=Up (+pi)`,
@@ -1168,7 +1327,7 @@ Suggested semantic names here are documentation-only.
 | `0x00114930` | `FUN_00114930` | initialize one record | called only by `FUN_001134e0` |
 | `0x00114B40` | `FUN_00114b40` | stick polar conversion | called twice per readable analog packet |
 | `0x00114D90` | `FUN_00114d90` | analog-to-D-pad sector | called by the active and cloned adapters |
-| `0x00114E60` | `FUN_00114e60` | D-pad-to-analog helper | statically unreferenced |
+| `0x00114E60` | `FUN_00114e60` | D-pad-to-analog helper | BTL history normalizer caller; no proven resident caller |
 | `0x001D0590` | `FUN_001d0590` | scheduler loop | calls system update before tasks |
 | `0x001E0D20` | `FUN_001e0d20` | active front-end adapter | called once from `FUN_001e0ee0` |
 | `0x0037D7C0` | `FUN_0037d7c0` | duplicate adapter | statically unreferenced |
@@ -1186,8 +1345,9 @@ Suggested semantic names here are documentation-only.
   found. An overlay or indirect path may own shutdown.
 - No statically recognizable resident soft-reset/controller combo was found;
   the resident OS relaunch wrappers are unreferenced library code.
-- `FUN_0037d7c0` and `FUN_00114e60` are byte/code-level matches for useful
-  compatibility operations but have no proven caller in the clean ELF.
+- `FUN_0037d7c0` has no proven caller in the clean ELF. The reverse helper
+  `FUN_00114e60` has no proven resident caller but is called by BTL input
+  normalization.
 - No active right-stick-to-digital adapter was found; the proven adapter uses
   only the left stick.
 - The wrapper reserves 32 raw packet bytes, but only offsets through pressure
@@ -1196,13 +1356,14 @@ Suggested semantic names here are documentation-only.
   `scePadExitPressMode`, and the callback/RPC-`0x18` path have no NA2 caller.
 - `scePadInit` can wait indefinitely for both RPC binds; the pad worker's
   init/open/close/end retry loops likewise have no static timeout.
-- Adventure-mode input consumers were deliberately not inspected.
+- Adventure-mode input consumers were not inspected.
 
 ## Provenance
 
-The evidence archive was inspected read-only with PowerShell, `rg`, the
-preserved Ghidra decompiler/listing exports, and the bundled EE
-`readelf`/`objdump` tools. Raw ELF reads verified the load mapping and the
-direction/vibration tables. Findings from independent read-only inspections of
-the wrapper, embedded `libpad`, and compatibility adapters were reconciled
-against the same clean ELF before promotion here.
+Evidence comes from the preserved Ghidra decompiler/listing exports, the
+Ghidra programs `NA2:/SLPS_258.37` and `NA2:/BTL.BIN`, the bundled EE
+`readelf`/`objdump` tools, and raw ELF reads, which verified the load mapping
+and the direction/vibration tables. Resident pointer-slot xrefs do not recover
+GP-relative references, and several BTL function boundaries stop before valid
+continuation instructions; byte reads corroborate those paths. A missing direct xref or
+literal/pointer match is not treated as a whole-program absence proof.

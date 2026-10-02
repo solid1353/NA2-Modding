@@ -11,8 +11,8 @@
 - **Unresolved or untested:** Visibility, reachability, exact screen ownership,
   and whether the apparent counterparts form one structural family remain
   untested.
-- **Deliberate exclusions and overlap:** Current localization mappings and mod
-  implementation are outside this document.
+- **Deliberate exclusions and overlap:** Established source and donor
+  relationships belong to [NA2 and NUN5 text correspondence](../translation_importer.md).
 - **Evidence limitations:** Apparent cross-game correspondence without static
   ownership or runtime evidence cannot establish a usable mapping.
 

@@ -1,104 +1,90 @@
 # Resident task system
 
-## Scope
-
-This record covers the resident task framework in the clean NA2 boot ELF,
-centered on `FUN_001cfe50` through `FUN_001d0590`. It is a static-analysis
-result, not a timing trace. Adventure-mode code was deliberately excluded.
-
-Binary identity and resident address conversion follow
-[Standard game file identities](../game/files/file_identities.md).
-
-The framework is a coordinator for real EE kernel threads. A task record does
-not contain per-pass update and draw callbacks. Its function pointer at
-`+0x0C` is passed to `CreateThread`, and the resident start wrapper ultimately
-calls `_StartThread(thread_id, task_record)`. The entry therefore runs once as
-an independent thread and receives its own task record in `a0`.
-
-The manager itself is another task record and also serves as the head sentinel
-of a flat, singly linked list. The global head is at `0x00607504` and the tail
+The resident task framework in the retail NA2 (`SLPS-25837`) boot ELF,
+centered on `FUN_001cfe50` through `FUN_001d0590`, coordinates real EE kernel
+threads. A task record does not contain per-pass update and draw callbacks.
+Its function pointer at `+0x0C` is passed to `CreateThread`, and the resident
+start wrapper ultimately calls `_StartThread(thread_id, task_record)`, so the
+entry runs once as an independent thread and receives its own task record in
+`a0`. The manager is another task record and also serves as the head sentinel
+of a flat, singly linked list: the global head is at `0x00607504` and the tail
 is at `0x00607508`. Ordinary records are appended in creation order. There is
 no framework parent pointer, child list, priority-sorted list, semaphore, or
-central update/draw dispatch.
+central update/draw dispatch. This is a static-analysis result, not a timing
+trace. Binary identity and resident address conversion follow
+[Retail game file identities](../game/files/file_identities.md#address-conventions).
 
 ## Research coverage
 
-- **Assigned scope:** the resident task/object framework around
-`FUN_001cfe50` through `FUN_001d0590`: allocation and registration, the task
-record and callback layout, statically provable manager ordering, ownership,
-wait/wake behavior, termination and destruction, and representative resident
-callers. The output scope was this document only; the clean binaries and
-`@disassembly` exports remained read-only.
-
-- **Exploration depth:** coverage was divided as follows:
-
-  **Exhaustive within the core range:** every instruction in
-  `FUN_001cfe50`, `FUN_001cff00`, `FUN_001d0000`, `FUN_001d0090`,
-  `FUN_001d0110`, `FUN_001d01b0`, `FUN_001d0220`, `FUN_001d02f0`,
-  `FUN_001d0340`, `FUN_001d0440`, `FUN_001d04f0`, `FUN_001d0560`, and
-  `FUN_001d0590` was traced in the clean resident listing and compared with
-  the decompiler export. Constructor stores, kernel calls, flag precedence,
-  both list traversals, both destruction sequences, and the boot installation
-  of the manager entry were checked against raw MIPS.
-  **Exhaustive for direct resident call instructions:** aligned clean-ELF
-  instruction-word scans classified every direct `jal` to the family. This
-  includes 21 dormant allocations, three allocate-and-start calls, 22 start
-  call instructions, 42 explicit-record waits, 51 current-task waits, 18
-  termination requests, two immediate removals, one force wake, no name
-  lookup call, one manager initialization, and one manager wake. Raw addresses
-  were cross-checked with the listing, including the start call at
-  `0x003B37CC` omitted from Ghidra's xref header.
-  **Exhaustive for the recovered direct creation set:** all 24 ordinary
-  resident constructions were followed through creator setup and their entry
-  functions. The inventory records entry addresses, names, priorities,
-  requested/effective stacks, control bits, observed payload slots, owner
-  handles, and normal lifetime class. Every static name in that table was
-  decoded again from the clean ELF bytes. “Exhaustive” here means all direct
-  `FUN_001d0090`/`FUN_001d0110` paths in the clean resident, not dynamically
-  synthesized calls.
-  **Exhaustive for explicit encodings, bounded by aliasing:** whole-resident
-  scans covered direct head/tail global references, direct
-  `TerminateThread`/`DeleteThread` pairs, task-control halfword reads, obvious
-  task-layout stores to the `+0x14` gate and runtime `0x0010` state, direct
-  cleanup-field registration, and literal/MIPS address materializations of
-  core APIs. These scans establish the documented direct negatives, but a
-  task pointer copied to another base register or reached through opaque data
-  can evade a layout-pattern search.
-  **Bounded overlay coverage:** clean `BTL.BIN` and `ETC.BIN` were searched for
-  direct calls and static address references to this family. BTL contributes
-  none; ETC contributes the two documented `FUN_001d0340(1)` calls. Their
-  feature logic was not otherwise reverse engineered for this task.
-  **Sampled cross-version corroboration:** the homologous NUN5 core family was
-  checked for record shape, state transitions, the skip-first
-  immediate-removal behavior, and manager structure. The older NUN3 family
-  was inspected only where its shifted record, gate predicates, and explicit
-  suspend/pending-resume helper clarify inherited states. This was not a
-  whole-program task census for those games.
-
-- **Confirmed coverage:** the `0x4C` record map, exact core
-function/file addresses, list globals and ownership boundary, start/defer
-rules, manager transition and barrier order, wait/wake predicates, two-pass
-termination, cleanup ABI and call order, immediate-removal quirk, all direct
-resident creator lifecycles, static call counts, and the absence of a central
-update/draw callback. Negative conclusions are qualified to their actual scan
-boundary.
-
+- **Assigned scope:** the resident task framework around `FUN_001cfe50`
+  through `FUN_001d0590`: allocation and registration, the task record and
+  callback layout, statically provable manager ordering, ownership, wait/wake
+  behavior, termination and destruction, and representative resident callers;
+  the root pacing and engine gate that control manager service; and the
+  creator ancestry of the playback companion and sound tasks.
+- **Exploration depth:**
+  - Exhaustive within the core range: every instruction of the 13 core
+    functions in the [core function map](#core-function-map) was traced and
+    compared with the decompiler. Constructor stores, kernel calls, flag
+    precedence, both list traversals, both destruction sequences, and the
+    manager-entry installation were checked against raw MIPS.
+  - Exhaustive for direct resident calls and constructions: aligned
+    instruction-word scans classified every direct `jal` to the family, and
+    all 24 ordinary constructions were followed through creator setup and
+    their entry functions. Every static task name was decoded from the clean
+    ELF bytes. Dynamically synthesized calls are not covered.
+  - Exhaustive for explicit encodings, bounded by aliasing: whole-resident
+    scans covered head/tail references, `TerminateThread`/`DeleteThread`
+    pairs, task-control halfword reads, `+0x14` and runtime `0x0010` stores,
+    cleanup registration, and core API address materializations.
+  - Bounded overlay coverage: clean `BTL.BIN` and `ETC.BIN` were searched
+    only for direct calls and static references to the family.
+  - Sampled cross-version corroboration: the NUN5 family for record shape,
+    state transitions, immediate removal, and manager structure; the NUN3
+    family only for its shifted record, gate predicates, and
+    suspend/pending-resume helper.
+  - Root pacing and engine gate: the pacing helper, counter interrupt
+    callback, registration, gate state machine, SIF `+0x506` producer,
+    embedded engine aliases, and all 13 aligned `addiu ...,0x500` candidates
+    were read in instructions. `+0x192` and `+0x500` store scans covered
+    aligned resident, BTL, and ETC instructions. The playback-companion and
+    sound-descendant creator paths were read completely.
+- **Confirmed coverage:** the `0x4C` record map, exact core function and file
+  addresses, list globals and ownership boundary, start/defer rules, manager
+  transition and barrier order, wait/wake predicates, two-pass termination,
+  cleanup ABI and call order, the immediate-removal quirk, all direct resident
+  creator lifecycles, static call counts, and the absence of a central
+  update/draw callback. The interrupt-count root pacing path, engine
+  bit-`0x04` gate transition order, the SIF callback's engine `+0x506` store,
+  MPEG's separate low-two-bit consumer, playback companion publication, sound
+  creator ancestry, and the direct `TerminateThread`, `DeleteThread`, and
+  `ExitDeleteThread` call counts are also established. Negative conclusions
+  are qualified to their scan boundary.
 - **Unresolved or untested:** the producer, unit, and domain meaning of
-`+0x14`; the domain meaning of control `0x0002`; any reachable NA2 producer for
-runtime `0x0010`; meanings of opaque `+0x44/+0x48/+0x4A`; reachability of the
-force-wake wrapper; safe behavior under real allocation/kernel-call failures;
-non-exempt natural-return behavior; indirect or runtime-generated callers;
-and actual independent-thread execution, update/draw, or presentation order.
-
-- **Deliberate exclusions and overlap:** Adventure was deliberately excluded. Controller routing, Save/Load behavior,
-battle/render/audio feature internals, file/resource loading internals, and
-60-FPS or other timing modifications belonged to other scopes; representative
-callers were followed only far enough to establish task ownership and lifetime.
-- **Evidence limitations:** no runtime PCSX2 trace, injected instrumentation, scheduler log, or timing
-capture was performed. Consequently, addresses, instruction order, field
-accesses, and direct static call graphs have strong static evidence, while
-kernel scheduling, cadence, runtime reachability, pointer aliasing, and overlay
-behavior outside BTL/ETC reference scans remain validation limits.
+  `+0x14`; the domain meaning of control `0x0002`; any reachable producer of
+  runtime `0x0010`; meanings of opaque `+0x44/+0x48/+0x4A`; reachability of
+  the force-wake wrapper; behavior under real allocation or kernel-call
+  failures; non-exempt natural-return behavior; indirect or runtime-generated
+  callers; actual independent-thread execution, update/draw, or presentation
+  order; measured root pacing cadence; producers and domain meanings of engine
+  gate bits `0x01/0x02`; and any nonzero installation of engine callback
+  `+0x500`.
+- **Deliberate exclusions and overlap:** Adventure code was not inspected.
+  Threads and semaphores that do not use the task record belong to
+  [EE kernel threads and synchronization](kernel_threads_and_sync.md);
+  display submission to [Render submission](render_submission.md); scene
+  evaluation to [Scene playback owners](scene_playback_owners.md); audio
+  service to [Battle audio](../gameplay/battle_audio.md); file loading to
+  [Resident file and archive services](../game/files/runtime_services.md);
+  controller routing to [Controller input](controller_input.md); and
+  Save/Load behavior to [Save data](../game/save_data.md). Representative
+  callers were followed only far enough to establish task ownership and
+  lifetime.
+- **Evidence limitations:** no runtime trace, scheduler log, or timing capture
+  exists. Addresses, instruction order, field accesses, and direct static call
+  graphs have strong static evidence; kernel scheduling, cadence, runtime
+  reachability, pointer aliasing, and overlay behavior outside the BTL/ETC
+  reference scans are not established.
 
 ## Task record
 
@@ -149,7 +135,7 @@ indirect alias or excluded overlay.
 
 NUN5 preserves the same `+0x48` halfword and `+0x4A` byte zeroing, while
 the older NUN3 layout preserves the pattern at shifted offsets `+0x4C/+0x4E`.
-The fields are therefore deliberate inherited storage, but no framework-level
+The fields are therefore inherited storage, but no framework-level
 meaning is established; byte `+0x4B` (and NUN3 `+0x4F`) remains untouched.
 
 ## Flags
@@ -194,8 +180,9 @@ self-requesting termination, whereas persistent protected tasks leave it set.
 
 ## Core function map
 
-Addresses are clean resident EE virtual addresses. File offsets use the ELF
-mapping above. Names in the “export symbol” column are retained exactly so the
+Addresses are clean resident EE virtual addresses. File offsets follow the
+[address conventions](../game/files/file_identities.md#address-conventions).
+Names in the “export symbol” column are retained exactly so the
 evidence can be found again without relying on the semantic labels.
 
 | EE VA | ELF offset | Export symbol | Established role, callers/callees, and side effects |
@@ -206,7 +193,7 @@ evidence can be found again without relying on the semantic labels.
 | `0x001D0090` | `0xD0190` | `FUN_001d0090` | Allocates, constructs, and appends a dormant record. Ghidra's C prototype incorrectly says `void`; the MIPS ABI returns the record in `v0`, as its callers expect. |
 | `0x001D0110` | `0xD0210` | `FUN_001d0110` | Allocates, constructs, appends, and calls `FUN_001cff00(record, 0)`. The base ELF has three recognized direct call sites. |
 | `0x001D01B0` | `0xD02B0` | `FUN_001d01b0` | Asynchronously requests termination unless control bit `0x0001` is set. A self-request sleeps immediately; an external requester returns without joining or freeing. |
-| `0x001D0220` | `0xD0320` | `FUN_001d0220` | Immediate unlink/callback/thread termination/thread deletion/stack free/record free. Its only resident direct caller is `FUN_00105320`, at two MPEG teardown call sites. It deliberately starts its search at the second ordinary record, as detailed below. |
+| `0x001D0220` | `0xD0320` | `FUN_001d0220` | Immediate unlink/callback/thread termination/thread deletion/stack free/record free. Its only resident direct caller is `FUN_00105320`, at two MPEG teardown call sites. It starts its search at the second ordinary record, as detailed below. |
 | `0x001D02F0` | `0xD03F0` | `FUN_001d02f0` | Force-wake helper: writes `+0x14 = 0`, clears runtime `0x0008`, sets `0x0020`, and calls `WakeupThread(+0x0A)`. Its sole resident direct xref is `FUN_001ce870`. |
 | `0x001D0340` | `0xD0440` | `FUN_001d0340` | Gets the current kernel thread ID, disables interrupts with `FUN_00167da0`, scans ordinary records for matching `+0x0A`, restores interrupts through `FUN_00167df0`, then performs the same cooperative wait. If the thread is unregistered it executes one plain `SleepThread` and returns only after an external wake. |
 | `0x001D0440` | `0xD0540` | `FUN_001d0440` | Under the same DI/EI guard, returns the first ordinary record whose `+0x04` string equals the query through `FUN_0017c238`; otherwise returns null. No direct base-ELF caller is recognized. Adventure callers were intentionally not inspected. |
@@ -477,6 +464,204 @@ initialization, the two append helpers, and the two removal paths. This exact
 global-reference audit strengthens the negative manager-teardown result while
 remaining subject to dynamically computed or aliased accesses.
 
+## Root pacing and the engine gate
+
+The root loop's wait is separate from a task record's `+0x14` gate and from
+the two task sleep helpers. `FUN_001083a0(engine)` reads display-owned
+bytes, with these complete branch contracts:
+
+| Engine field / predicate | Root pacing behavior |
+| --- | --- |
+| `+0x2AD != 0` | Return immediately; no counter wait. |
+| `+0x2AD == 0`, `+0x02 == 0` | Busy-poll unsigned byte `+0x00` until it is at least unsigned threshold `+0x01`. Then publish `+0x1B8` from GS CSR bit 13 when `+0x03 == 1`, otherwise publish 1. |
+| `+0x2AD == 0`, `+0x02 != 0` | Call `FUN_0012F3F8` and `FUN_0012F540` on every polling iteration until the same unsigned counter/threshold predicate passes. The latter's CRI path performs a plain kernel sleep as detailed below. |
+
+The unsigned loads and compare/back-branches are visible at
+`0x001083E4..0x00108400` and `0x00108410..0x0010842C`.
+`FUN_00107560(engine, threshold)` writes the threshold byte and resets the
+counter. Initialization `FUN_00107F80` selects threshold 1 and polling mode 1.
+It temporarily sets `+0x2AD = 1`, then calls display-configuration helper
+`FUN_00107340`, which clears it to zero before `FUN_001065A0` installs the
+interrupt callback. The completed initialization therefore enables the
+counter wait. Later `MOTHER` initialization selects threshold 2 at call
+`0x001E11C4` after its readiness barrier. This is a byte-count setting,
+not a duration argument. `FUN_00107340` also writes configuration fields
+`+0x2A8/+0x2AA/+0x2AC`; none is a task-record field.
+
+The counter producer is `FUN_00108CE0`, installed by
+`FUN_001065A0 -> FUN_00150578(0x00108CE0)`. The registration helper removes
+any prior handler and calls `AddIntcHandler(2, callback, -1)` before enabling
+interrupt channel 2. On each callback invocation, `FUN_00108D70(engine, 1)`
+increments byte `+0x00`, wrapping through its byte store. The manager's next
+`FUN_001081B0` resets that byte to zero before incrementing the independent
+32-bit cycle counter at engine `+0x194`. Interrupt invocations accumulated
+between that reset and the root's threshold comparison are therefore distinct
+from task sleep/wake cycles and from the engine cycle counter.
+
+The interrupt callback also checks the boot/root thread ID at `0x006074D4`.
+When byte `0x00607498` is zero, it calls `iReferThreadStatus` and invokes
+`FUN_0015EBA8(root_id)` only for status exactly 4. Otherwise it calls
+`FUN_0012F3E0(0)`. This is an additional conditional root-thread wake;
+`FUN_001083A0` itself contains no `SleepThread`, and neither branch calls
+`FUN_001D0560` directly. The ordinary root loop issues the manager wake after
+the pacing helper returns.
+
+The nonzero-`+0x02` branch does not merely busy-poll while servicing opaque
+callbacks. `FUN_0012F540` calls `FUN_0014E798`, `FUN_0012F410`,
+`FUN_0012FA18`, `FUN_0012F518`, and `FUN_0014E7C8` in that order.
+`FUN_0014E798`, `FUN_0012FA18`, and `FUN_0014E7C8` use registered
+function pointers; `FUN_0012F410` conditionally resumes/wakes CRI IDs
+`0x003D6A9C` and `0x003D6AA0`.
+`FUN_0012F518` writes request word `0x003D6A4C = 1` at
+`0x0012F530`, then tail-jumps to the plain `SleepThread` wrapper
+`FUN_0012E5D0`. It does not set a task record flag. The root cannot reach
+the counter comparison or later manager wake until some kernel wake lets
+this call return.
+
+The recovered worker-side wake is
+`FUN_0012E128 -> FUN_0012F498`. That helper requires the request word to be
+1 and the saved creator/root thread at `0x003D6A98` to have status 4 or
+`0xC`; it calls `WakeupThread` and clears the request only when the syscall
+returns the requested ID. The display interrupt's active-CRI branch
+`FUN_0012F3E0 -> FUN_0012F2B8` wakes CRI IDs `0x003D6A90/0x003D6A94`
+when their activity flags are clear, and optionally `0x003D6A8C` when the
+library mode predicate permits it. It also runs its mode-dependent service
+path and optional callback. This separates the root sleep request, worker
+wake, interrupt counter increment, and ordinary task-manager wake; none is
+a framework parent/child wake protocol.
+
+**Inference, high confidence for this call chain:** the root's manager-wake
+requests are bounded by an interrupt-count predicate when pacing is enabled.
+This does not establish a one-to-one relation between wake requests, completed
+manager passes, task handshakes, displayed frames, or elapsed time. Counter
+wrap, the bypass byte, MPEG's alternate threshold settings, independent kernel
+wakes, and work before/after the barrier prevent replacing those counts with
+a measured time unit. Display submission and completion remain owned by
+[Render submission](render_submission.md#completion-and-packet-lifetime).
+
+### Engine gate bit `0x04`
+
+The low-three-bit gate read by the manager is refreshed before lifecycle
+service: `FUN_001081B0` calls `FUN_001086C0(engine)` before the manager's
+first task traversal. That state machine unconditionally clears bit `0x04`
+at `0x00108718..0x00108724`, advances signed state byte `+0x504`, optionally
+calls engine callback `+0x500`, and finally sets bit `0x04` when that callback
+pointer is non-null and the resulting signed state is at least 2
+(`0x0010894C..0x00108974`). The gate describes the post-transition state in
+the same manager iteration, not merely the state at entry.
+
+| Entry state `+0x504` | Established transition |
+| ---: | --- |
+| 0 | Read `FUN_00133988`; results 1 or `0x20`, with byte `+0x506 == 0`, select state 1. |
+| 1 | Select state 2. |
+| 2 | Call `FUN_00173328(1)`; result 2 selects state 3 and calls `FUN_00133958(0)`. |
+| 3 | `FUN_00173890` results `0x12..0x14` select state 4; all other values select state 2. |
+| 4 | Null `+0x508` selects state 0. Otherwise `FUN_00172900(stack_buffer, +0x508)` result 1 selects 0, all other results select 2. |
+
+The initial call `FUN_00133958(state < 3)` forwards that boolean to
+`FUN_001407D0`, which stores it at `0x003E5800`; `FUN_00133988` forwards the
+word at `0x003E5804` through `FUN_001407B0`. These are observed status/control
+dependencies. No player-facing name is assigned to these state numbers here.
+With callback `+0x500 == 0`, the state can advance but this routine leaves
+gate bit `0x04` clear. With a callback installed, it invokes the callback for
+any resulting nonzero state, including state 1, then rereads the state before
+deciding whether to gate ordinary tasks. Callback mutation can therefore
+affect the final gate value.
+
+A resident direct-displacement scan of byte/halfword/word stores at
+`+0x192` and `addiu base, 0x192` found the engine initialization store and
+these bit-`0x04` writes. Other aligned matches belong to different object
+families; unaligned matches and mirrored program spaces were discarded.
+No direct engine producer of bits `0x01/0x02` was established by this bounded
+scan. It does not cover a copied pointer, a computed displacement, a wider
+overlapping store, or excluded code. The manager continues to test all three
+bits, and the independent record gate `+0x14` remains unresolved.
+
+### Callback installation and selected engine aliases
+
+The recovered resident constructor `FUN_00105FC0` allocates `0x530` bytes,
+publishes the result at `0x006073FC`, and calls `FUN_00107F80`. That
+initializer explicitly clears `+0x500` at `0x00107FCC`, `+0x508` at
+`0x00107FD4`, state/control bytes `+0x504..+0x506`, and gate byte `+0x192`
+at `0x00108010`. Constructor `FUN_001062A0` initializes only embedded
+objects at engine `+0x110/+0x150`; it does not install the engine callback.
+The final registration at `0x00108130..0x00108138` supplies
+`FUN_00108AF0` and zero to `FUN_001724B0`. As established in the
+[CD callback interface](kernel_threads_and_sync.md#callback-registration-and-constructor-reachability),
+this is the separate SIF registration, not engine `+0x500` or the
+`SceCdCallbackThread` callback.
+
+That registered SIF callback is concrete: `FUN_00108AF0` loads the published
+engine pointer through `gp-0x35F4` and stores `1` to engine `+0x506` at
+`0x00108AFC`. It takes no task record and does not write the gate byte or
+`+0x500`. In state 0, `FUN_001086C0` requires `+0x506 == 0` before entering
+state 1; a callback arriving after the state has already advanced is not an
+immediate state reset in the recovered transition table. Dispatch is under
+the SIF owner's saved `$gp`, so this global lookup is not an unexplained
+ambient-register assumption. SIF delivery order remains unresolved.
+
+Aligned byte searches for all four register-base encodings of
+`sw ...,0x500(base)` in the resident found only the initializer's zero store.
+All 13 low-address aligned `addiu ...,base,0x500` candidates were checked
+against their instructions: none forms `engine+0x500`. They load scalar type
+values or allocation sizes, or materialize the independent data address
+`0x00540500`. The apparent `addiu ...,base,0x192` candidate at
+`0x0013F15C` is instead `li a1,0x192` before an indirect device call; it
+does not take the engine address. These instruction checks extend the search
+beyond a decompiler field spelling, without proving every computed alias.
+
+The actual embedded aliases were also followed. `FUN_001062E0`, including
+its `FUN_00110340(base+8)` constructor, and `FUN_0010A1D0` /
+`FUN_00109C70` / `FUN_00109FB0` initialize/register the engine's two
+`0x40`-byte objects at `+0x110/+0x150`; their inspected local accesses do
+not reach engine `+0x192` or `+0x500`. Packet preparation
+`FUN_001079C0` rebases the engine by `(+0x194 & 1) * 0x60`, but the scoped
+writes then cover `+0x1E0..+0x23F` relative to that rebased pointer, not
+either target field. [Render submission](render_submission.md) owns the
+packet details.
+
+The BTL/ETC word-store search adds no engine installation: ETC has no aligned
+`sw ...,0x500(base)` match; BTL's sole aligned match is preserved address
+`0x00785598` (live `0x007855D8`, complete-file offset `0xD16D8`), storing
+literal `2` at an unrelated object offset. The bytes there are
+`00 05 22 AE`, preceded by `02 00 02 24`; its surrounding object initialization
+also uses fields beyond the engine's `0x530` allocation and does not load the
+engine global. No aligned BTL/ETC `sb ...,0x192(base)` match was found.
+Overlay address conversion follows
+[Retail game file identities](../game/files/file_identities.md#address-conventions).
+
+**Confirmed limit:** the selected resident initialization leaves callback
+`+0x500` null; no nonzero installer or engine bit-`0x01/0x02` producer was
+recovered through the inspected constructors, aliases, or registrations.
+This does not prove that the callback is globally unused. A multi-step rebase,
+bulk copy, indirect writer, or excluded code could still supply it. The
+pending evidence is a concrete write or copied source value reaching the
+published engine object; the existence of a `jalr` consumer alone is not an
+installation path. A clearing or teardown path for a nonzero installed
+callback also remains unrecovered.
+
+### Other consumers of engine bits `0x01/0x02`
+
+The MPEG main entry tests a narrower mask:
+`0x00104090..0x001040A0` loads the same published engine, reads `+0x192`,
+tests `& 3`, and branches back to its loop at `0x00103F44` when either low
+bit is set. It skips the subsequent `FUN_00103AE0` / `FUN_00103E10`
+service calls on that branch, while bit `0x04` alone does not select it.
+Both `0x01/0x02` therefore participate in an MPEG scheduling gate as well as
+the manager's `& 7` lifecycle gate. Their individual producers and domain
+meanings are still unestablished; this consumer is insufficient to name
+either bit as a particular pause or shutdown state.
+
+The manager's surrounding helpers also consume `& 7`.
+`FUN_001081B0` calls optional engine callback `+0x520` only when that gate
+is clear, after `FUN_001086C0`; `+0x520` is a different callback slot.
+`FUN_00108490` gates its selected post-barrier service pair, the pointer
+copies `+0x80 -> +0x7C` / `+0xF8 -> +0xF4`, and its RCNT0 snapshot at
+`+0x04`, while still executing its other surrounding calls. This is a
+shared selective gate, not proof that every operation or every independent
+thread pauses. The established control-`0x0008` exception applies specifically
+to the task manager's first traversal.
+
 ## Wait and wake semantics
 
 `FUN_001d0000(record, n)` uses `n` as a local count:
@@ -528,9 +713,68 @@ not implement these waits with an EE semaphore. `FUN_00167da0` and
 `FUN_00167df0`, used around current-task and name lookup, are DI/EI interrupt
 guards.
 
+## Kernel threads and synchronization outside the task list
+
+The resident also runs EE kernel threads and semaphores that never use the
+`0x4C` record: the `SceKerneltopThread` dispatch queue, the alarm-backed
+`SceKernelDelayThread` delay, the MPEG buffer semaphore, the CD callback
+thread and semaphore set, and six CRI-owned threads. Their contracts belong to
+[EE kernel threads and synchronization](kernel_threads_and_sync.md). None adds
+a semaphore, parent link, or lifecycle flag to the task record, and none
+produces runtime `0x0010`.
+
+## Creator ancestry
+
+### Playback companion and sound descendants
+
+The primary playback record and `PlayLock` are siblings created by
+`FUN_001A0890`; the primary entry does not create its companion. The owner
+keeps the primary handle at owner `+0x40`, the primary keeps its owner at task
+`+0x2C`, and the companion borrows the primary pointer at task `+0x28`.
+Primary task `+0x40` has this caller-owned publication protocol:
+
+| Value | Primary publication / companion response |
+| ---: | --- |
+| 0 | Initial value and value before the cooperative wait; `PlayLock` performs its own one-count task wait. |
+| 1 | Primary's update/submission region; `PlayLock` repeatedly loads this field without sleeping. |
+| 2 | Primary teardown has finished; `PlayLock` self-requests termination. |
+
+The primary sets 1 at `0x001A0574`, zero at the delay-slot store
+`0x001A06C0`, and 2 at `0x001A0850` after `FUN_001A2280`.
+`FUN_001A0980` requests primary termination only after `FUN_001A0120`
+returns. The companion's exact spin is `0x001A09EC..0x001A0A00`; its wait
+at `0x001A0A10` still has live `a1 = 1`, although the decompiler prints only
+one argument. No semaphore, framework parent pointer, join, or reference
+count is added by this relationship. The primary's numeric priority `0x1B`
+is higher than the companion's `0x1E`, but that static relation alone does
+not prove a safe interleaving or pointer lifetime under every cancellation.
+Scene evaluation and submission remain owned by
+[Scene playback callers and owners](scene_playback_owners.md#streamed-worker-scheduling).
+
+Sound has a different creator chain:
+`MOTHER` entry `FUN_001E0EE0 -> SOUND` entry `FUN_001D2570 -> SND_RPC`
+and `SND_RPC2`. The sound entry writes its shared readiness byte before
+calling the two allocate-and-start helpers at `0x001D2720/0x001D2738`.
+Those child priorities `0x71/0x72` are numerically larger than the creator's
+`0x70`, so the ordinary start routine takes its immediate-start path if that
+creator priority has not changed. The caller stores neither returned task
+handle; no ancestry is retained in the framework.
+
+`SND_RPC` initializes shared state and repeatedly waits once before doing its
+service work. The unanalyzed `SND_RPC2` entry at `0x001D29F0` was recovered
+from instruction bytes through `0x001D2A6C`, ending before the next
+function at `0x001D2A70`. It installs name pointer `0x003FD718` and control
+3, repeatedly calls `FUN_001DA3B0` with a one-count wait while that result is
+zero, then waits until shared owner byte `+0x21` is nonzero, calls
+`FUN_001D9930`, and repeats. Byte sequences at `0x001D2A28/0x001D2A48`
+are `00 40 07 0C` (`jal 0x001D0000`), each preceded by `a1 = 1`.
+These are independent task handshakes, not evidence that RPC calls are issued
+at a fixed time interval. Audio service meaning belongs to
+[Battle audio](../gameplay/battle_audio.md).
+
 ## Termination, destruction, and ownership
 
-Ordinary termination is deliberately asynchronous:
+Ordinary termination is asynchronous:
 
 1. `FUN_001d01b0` checks control `0x0001`, sets runtime `0x0002` once, and
    sleeps immediately only when a task requests its own termination.
@@ -603,13 +847,20 @@ the two-pass runtime protocol. The core therefore assumes cooperative or
 external serialization for list mutation; it does not provide an internal
 list lock.
 
-The whole resident listing contains exactly two direct `TerminateThread`
-calls and exactly two direct `DeleteThread` calls. They are the paired calls in
+The whole resident listing contains exactly two direct `jal TerminateThread`
+instructions and exactly two direct `jal DeleteThread` instructions. They are
+the paired calls in
 `FUN_001d0220` and `FUN_001d0590`; no third direct task-record destruction
-route exists in the base executable. The one resident `ExitDeleteThread` call
-belongs to a separate thread path and does not unlink or free a task record.
-This is a direct-call negative and does not rule out an indirect syscall
-wrapper outside the recovered graph.
+route exists in the base executable. `ExitDeleteThread` has one resident
+direct `jal` at `0x00172178` in the
+[CD callback thread](kernel_threads_and_sync.md#cd-callback-thread-and-semaphore-set),
+plus six direct tail `j` instructions in
+[CRI entries](kernel_threads_and_sync.md#cri-owned-kernel-threads) at
+`0x0012E088`, `0x0012E120`, `0x0012E224`, `0x0012E318`, `0x0012E450`, and
+`0x0012E524`. Searches for exact words `C8 76 05 0C` and `C8 76 05 08`,
+restricted to aligned low-address resident matches and discarding the two
+mirrored copies, establish this distinction. All seven paths are outside
+task-record destruction. Indirect syscall wrappers remain outside this count.
 
 No manager teardown path was found. Natural return of an entry is also not a
 generic destruction contract: many finite task entries self-request
@@ -713,13 +964,14 @@ bit and calls `ResumeThread`. Callers use the helper after thread-status checks.
 This establishes the historical pending-resume meaning. NA2 retains only the
 manager consumer in the inspected code: an exhaustive resident scan found no
 task-layout store that produces bit `0x0010`, and resident `SuspendThread`
-calls belong to CRI-managed thread IDs (`FUN_0012e650`) and the resident kernel
-dispatch queue (`FUN_0015e9e0` / `FUN_0015ecc0`) rather than this task list.
+calls belong to CRI-managed thread IDs (`FUN_0012e650`) and the resident
+[kernel dispatch queue](kernel_threads_and_sync.md#separate-kernel-dispatch-queue-and-semaphore)
+(`FUN_0015e9e0` / `FUN_0015ecc0`) rather than this task list.
 
 For in-scope NA2 overlays, clean `BTL.BIN` has no direct references to this
 task family. Clean `ETC.BIN` has exactly two calls to
 `func_0x001d0340(1)`, both in `FUN_006c0d40`, and no recognized creator or
-termination call. Adventure was deliberately not inspected. Consequently,
+termination call. Adventure was not inspected. Consequently,
 negative caller/producer claims in this document cover the resident, BTL, and
 ETC static exports, not Adventure or dynamically constructed calls.
 
@@ -750,7 +1002,9 @@ proven unused.
 | Runtime `0x0010` pending-resume role | High for state role; medium for NA2 reachability | NA2 manager behavior and the NUN3 set/suspend/resume homolog agree; no in-scope NA2 producer or reachable helper was found. |
 | Control `0x0002` resident behavior | High for no direct consumer; domain meaning unknown | Every resident halfword read at task offset `+0x12` was classified; indirect aliasing and excluded Adventure code remain limits. |
 | Direct resident creator inventory | High | All 21 `FUN_001d0090` and three `FUN_001d0110` direct xrefs were traced through creator setup and entry behavior. |
-| Update/draw order, manager cadence, and frame-rate relationship | Not established | Static list and syscall order do not identify presentation cadence or independent-thread execution order. Runtime tracing would be required. |
+| Root pacing and engine gate `0x04` | High for local contract; bounded reachability | Full root wait/counter/registration and gate state-machine paths, SIF `+0x506` producer, selected engine aliases, and MPEG low-two-bit consumer; nonzero `+0x500` installation, low-bit producers/meanings, and actual cadence remain unresolved. |
+| Playback companion and sound creator ancestry | High for direct call relationships | Complete creator/entry bodies and bounded sound-entry bytes; no generic parent pointer or semaphore is implied. |
+| Update/draw order, manager cadence, and frame-rate relationship | Not established | Interrupt-counter pacing does not identify measured presentation cadence, kernel scheduling, or independent-thread execution order. |
 
 Other unresolved points are allocation-failure behavior in a real run,
 natural-return handling for every entry class, the contract that serializes

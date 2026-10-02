@@ -2,25 +2,24 @@
 
 ## Research coverage
 
-- **Assigned scope:** compare clean NA2 and NUN5 Stage Select records, draw paths, and geometry.
+- **Assigned scope:** compare retail NA2 (`SLPS-25837`) and NUN5 Stage Select
+  records, draw paths, and geometry.
 - **Exploration depth:** the relevant binaries, native callers, records, and
   paired screen states were examined.
 - **Confirmed coverage:** the documented owners, structures, and cross-game
   differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
-- **Deliberate exclusions and overlap:** feature imports, hooks, and validation
-  belong to [UI layout](../../../features/localization/ui_layout.md) or
-  [UI textures](../../../features/localization/ui_textures.md).
+- **Deliberate exclusions and overlap:** stage selection and loading belong to
+  [Stages](../../gameplay/stages.md); the shared OK and Back compositor belongs
+  to [Shared frontend prompt layout](options.md).
 - **Evidence limitations:** bounded states do not cover every animation phase or
   indirect caller.
 
 ## Binary identity and address mapping
 
-Evidence was obtained from the clean extracted files under `@source_na2` and
-`@source_nun5`, the preserved Ghidra C/TXT exports under
-`@disassembly/NA2/exports/BTL.BIN/` and
-`@disassembly/NUN5/exports/BTL.BIN/`, Capstone 5 disassembly of ranges omitted
-by Ghidra, and paired runtime memory and screenshots.
+Evidence comes from the retail extracted files under `@source_na2` and
+`@source_nun5`, their preserved BTL exports, raw disassembly of ranges the
+exports omit, and paired runtime memory and screenshots.
 
 ## Stage records and preview construction
 
@@ -43,7 +42,8 @@ struct Nun5StageRecord {
 };
 ```
 
-Ghidra omitted a second, structurally matched preview-construction range. Its
+The preserved exports omit a second, structurally matched preview-construction
+range. Its
 relevant NA2 file range is `0x60378..0x60428`; the NUN5 twin is
 `0x62F78..0x63028`. Both compute a row byte offset before choosing a preview
 atlas cell:
@@ -56,7 +56,7 @@ int preview_index = stage_records[row].preview_index;
 build_preview_atlas_cell(preview_index);
 ```
 
-Both native preview consumers continue to load that word directly, including
+Both native preview consumers load that word directly, including
 the second consumer at NA2 file offset `0x603B8`.
 
 ## Localized stage names
@@ -64,7 +64,7 @@ the second consumer at NA2 file offset `0x603B8`.
 The carousel transform functions, NA2 `FUN_00714D40` and NUN5
 `FUN_0072A7A0`, are structural twins apart from relocated engine calls. Their
 export boundaries are `0x00714D40..0x0071518C` and
-`0x0072A7A0..0x0072AC2C`. No carousel-transform edit is required.
+`0x0072A7A0..0x0072AC2C`.
 
 ## Bottom prompt placement
 

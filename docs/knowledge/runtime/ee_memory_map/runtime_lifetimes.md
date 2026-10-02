@@ -19,9 +19,7 @@ tail, and the main heap-backed regions.
 - **Unresolved or untested:** the heap-memory totals released when a battle,
   Adventure scene, or menu is torn down, and whether any overlay constructor's
   callees allocate heap memory.
-- **Deliberate exclusions and overlap:** current payload and hot-reload behavior
-  belong to [Runtime injection](../../../features/runtime_injection/implementation.md);
-  CCS container release belongs to
+- **Deliberate exclusions and overlap:** CCS container release belongs to
   [Resident CCS runtime](../../game/files/ccs_runtime.md); battle object
   teardown belongs to [Battle lifecycle](../../gameplay/battle_lifecycle.md).
 - **Evidence limitations:** observed phase slack is temporary and cannot prove

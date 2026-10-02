@@ -12,7 +12,7 @@ Binary identities and address conventions are defined in the
   traced, and one NA2 runtime capture checked the destination register.
 - **Confirmed coverage:** The mirrored 20-output-pixel difference, 16-unit
   logical anchor difference, NA2 and NUN5 renderer locations, native X/Y loads,
-  and the requirement to preserve `v1` across an inserted call are established.
+  and the live `v1` destination pointer across those loads are established.
 - **Unresolved or untested:** No additional unresolved question is recorded for
   this bounded renderer path.
 - **Deliberate exclusions and overlap:** Binary mapping conventions belong to
@@ -20,13 +20,13 @@ Binary identities and address conventions are defined in the
   unrelated character-specific data and font metrics are excluded by the
   observed shared-anchor result.
 - **Evidence limitations:** Position evidence is bounded to the 640-pixel E2E
-  captures, and register preservation is supported by one runtime capture of
+  captures, and the live `v1` register is supported by one runtime capture of
   the native renderer.
 
 ## Screen evidence
 
 The `characters/idle` E2E baseline contains 74 populated character cells. In
-every cell, NA2 v2.28 places the Player 1 name exactly 20 output pixels to the
+every cell, retail NA2 places the Player 1 name exactly 20 output pixels to the
 right of NUN5 and the Player 2 name exactly 20 output pixels to the left. At the
 640-pixel capture width, that symmetric difference corresponds to 16 units in
 the game's 512-unit logical coordinate system. This identifies a shared
@@ -46,7 +46,7 @@ right: x = base_x - local_x - rendered_width
 ```
 
 The native X load is the isolated `lui/lwc1` pair at complete NA2 BTL file
-range `0x67F54..0x67F5B`, clean bytes `8C00023CD84240C4`. It reads runtime
+range `0x67F54..0x67F5B`, retail bytes `8C00023CD84240C4`. It reads runtime
 address `0x008C42D8`, BTL file offset `0x2103D8`, whose value is `90.0`. NUN5
 reads runtime address `0x008DC8F8`, file offset `0x215BF8`, whose value is
 `74.0`.
@@ -54,11 +54,10 @@ reads runtime address `0x008DC8F8`, file offset `0x215BF8`, whose value is
 ## Y path and live register
 
 The native NA2 Y load is the `lui/lwc1` pair at BTL file range
-`0x67F60..0x67F67`, clean bytes `8C00023CDC4240C4`. The following pair at
-`0x67F68..0x67F6F`, clean bytes `820001460C00A290`, multiplies Y by the layout
+`0x67F60..0x67F67`, retail bytes `8C00023CDC4240C4`. The following pair at
+`0x67F68..0x67F6F`, retail bytes `820001460C00A290`, multiplies Y by the layout
 scale and loads the side byte.
 
-A runtime capture confirmed that the
-native renderer loads its name destination into `v1` before the coordinate
-loads and stores X and Y through that pointer afterward. Any inserted call
-between those operations must therefore preserve `v1`.
+A runtime capture confirmed that the native renderer loads its name
+destination into `v1` before the coordinate loads and stores X and Y through
+that pointer afterward, so `v1` is live across those loads.

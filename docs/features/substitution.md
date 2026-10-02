@@ -791,7 +791,7 @@ and computes marker X from the current side's executable cost fraction.
 
 The independent renderer reads the native fill palette and marker tint directly
 from the verified addresses in
-[Native HUD ownership](../knowledge/gameplay/substitution.md#native-hud-ownership).
+[Native HUD ownership](../knowledge/gameplay/battle_hud.md#support-gauge).
 It selects the fill entry from its own integer meter and the same rounded cost
 used by `substitution_gauge_can_spend`: below cost uses the native insufficient
 color, at or above cost uses the native usable color, and capacity uses the
@@ -867,6 +867,10 @@ dimension, and uses the primary HUD sprite's current alpha. This attaches the
 custom bar to the same per-side visibility, translation, shake, scale, and
 alpha state without listing or guessing Jutsu or animation states in resident
 code.
+
+The bar uses this layout because drawing it from the support-controller update
+ignored the Jutsu and Ultimate Jutsu HUD visibility, and fixed coordinates did
+not follow the shared slide or the Ultimate Jutsu shake.
 
 No Support separately replaces only the native support draw call at BTL
 `0x69398` with its no-op. With the substitution feature disabled, no battle-

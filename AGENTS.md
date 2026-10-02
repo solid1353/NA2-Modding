@@ -360,6 +360,8 @@ useful information owned by that document; remove it otherwise.
   exact operational procedures.
 - Feature docs own all information about this mod or any other mod, including
   reference behavior, configuration, and implementation.
+  Research for features that are not implemented yet goes in
+  `docs/features/planned/`; move a doc up when its feature is implemented.
 - Knowledge docs contain only facts and research about unmodified retail games.
   They must not describe any mod and must remain valid if the project mod is
   removed or redesigned.

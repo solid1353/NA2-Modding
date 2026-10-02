@@ -16,7 +16,7 @@ Evidence labels in this note have their usual knowledge-base meaning:
 ## Research coverage
 
 - **Assigned scope:** replacement feasibility for the four top-level AFS audio
-  archives and ten shipped PSS movies in NA2 v2.28, including only the disc-image
+  archives and ten shipped PSS movies in retail NA2, including only the disc-image
   size rule, nested archive/codec contracts, PSS stream contract, and resident
   movie and front-end music selectors needed to bound safe replacement or reuse.
 - **Exploration depth:** the clean corpus was parsed exhaustively
@@ -43,8 +43,7 @@ Evidence labels in this note have their usual knowledge-base meaning:
   alter protected source media, enable variable-size ISO/UDF relocation, or
   patch resident subtitles/transitions. Resident movie data was followed only
   far enough to establish replacement constraints, and resident music data only
-  far enough to identify the two menu commands and their shared playback preset;
-  mod behavior remains with [Music override](../../../features/music_override.md).
+  far enough to identify the two menu commands and their shared playback preset.
   Broader subtitle, image
   builder, runtime, and executable-patching work remains with their owning tasks.
   The absent `logo_cT.pss` and `openingT.pss` names are documented only to the

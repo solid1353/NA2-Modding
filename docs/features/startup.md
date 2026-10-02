@@ -85,6 +85,31 @@ The complete disassembly findings, worker layout, outcome matrix, and state
 machine are recorded in
 [`../knowledge/game/startup.md`](../knowledge/game/startup.md).
 
+## Retail constraints found during implementation
+
+These results came from modified-code experiments during startup work and
+explain why the patch keeps the native barriers:
+
+- Calling the post-splash sequence dispatcher `FUN_001DE6F0` from the state-0
+  loader loop reset its sequence state and restarted the opening on the next
+  iteration. Invoking it before audio and streaming prerequisites were ready
+  produced first-playback stutter and noise. The dispatcher cannot safely
+  replace the native readiness barrier.
+- Bypassing the splash alone exposes the remaining asynchronous loading as a
+  black screen.
+- Calling the main-menu loading-presentation functions during startup state
+  `0` produced only black output: that presentation depends on resources or
+  state unavailable before the startup loaders complete. The boot splash path
+  is the only presentation path proven usable during that wait.
+- Removing the eager audio loader's polling yields would not shorten the
+  underlying serialized I/O, and publishing readiness early would expose
+  uninitialized index buffers.
+- A direct-disc file outside the mounted ROFS tree needs its decompressed size
+  supplied separately before it can use the native CCS decode path; the
+  loading screen's resident metadata hook supplies it for `228/SPL.CCS`.
+- A solid rectangle drawn after the native splash draw needs the renderer reset
+  `FUN_0010D6A0(renderer, 0)` to avoid retaining the splash texture.
+
 ## NUN5 E2E PNACH
 
 The NUN5 E2E port targets `SLES-55605`, CRC `C071D4C1`. It preserves NUN5's

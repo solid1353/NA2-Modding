@@ -1,13 +1,13 @@
 # EE address space
 
-Static and runtime findings for the unmodified NA2 EE address space. All ranges
-are end-exclusive.
+Static and runtime findings for the retail NA2 (`SLPS-25837`) EE address space.
+All ranges are end-exclusive.
 
 ## Research coverage
 
-- **Assigned scope:** identify resident, overlay, allocator, and high-memory
-  ranges that constrain runtime code and data placement.
-- **Exploration depth:** the clean executable's program headers and startup
+- **Assigned scope:** identify the resident, overlay, allocator, and
+  high-memory ranges and their native owners.
+- **Exploration depth:** the retail executable's program headers and startup
   code, all three overlay kinds, allocator sentinels, the `malloc` layer, the
   largest static objects in the zero-filled resident range, and sampled
   high-memory states were examined.
@@ -17,10 +17,9 @@ are end-exclusive.
 - **Unresolved or untested:** ownership of the smaller objects in
   `0x00607380..0x006200A0` and `0x006B21C0..0x006B3F00`, and byte-level use of
   the main-thread stack.
-- **Deliberate exclusions and overlap:** NA228 reservations and injection
-  behavior belong to [Runtime injection](../../../features/runtime_injection/implementation.md);
-  allocator internals and overlay lifetimes remain in their neighboring
-  knowledge documents.
+- **Deliberate exclusions and overlap:** allocator internals belong to
+  [Allocator and capacity](allocator_and_capacity.md); overlay lifetimes belong
+  to [Runtime lifetimes](runtime_lifetimes.md).
 - **Evidence limitations:** zero or stable bytes do not establish unused memory;
   classifications rely on file layout, owners, and observations across the
   sampled states. The static-object map comes from absolute and `gp`-relative
@@ -29,16 +28,16 @@ are end-exclusive.
 
 ## Address-space map
 
-| Address range | Size | Native owner | Constraint |
-| --- | ---: | --- | --- |
-| `0x00000000..0x00100000` | `0x100000` | Low system/runtime region outside the NA2 ELF image. | Protected; not free. |
-| `0x00100000..0x00607380` | `0x507380` | Resident NA2 ELF code and static data. The load segment is RWX and contains six static thread stacks. | Use only individually proven caves. |
-| `0x00607380..0x006B3F00` | `0xACB80` | Zero-filled resident ELF tail containing BSS, allocator globals, and other mutable state. | Zero at load does not make it free. |
-| `0x006B3F00..0x008DD080` | `0x229180` | Shared MWo3 overlay window for `BTL.BIN`, `ADV.BIN`, and `ETC.BIN`. | Never persistent storage. |
-| `0x008DD080..0x008DD090` | `0x10` | `malloc` chunk header and alignment before the vanilla allocator sentinel. | Preserve. |
-| `0x008DD090..0x01FF6000` | `0x1718F70` | Vanilla game allocator arena including both sentinels. | Dynamic allocation only. |
-| `0x01FF6000..0x01FF8000` | `0x2000` | Remainder of the `malloc` area above the arena. | Owned by the `malloc` layer; not free. |
-| `0x01FF8000..0x02000000` | `0x8000` | Main-thread stack. | Protected; not free. |
+| Address range | Size | Native owner |
+| --- | ---: | --- |
+| `0x00000000..0x00100000` | `0x100000` | Low system/runtime region outside the NA2 ELF image. |
+| `0x00100000..0x00607380` | `0x507380` | Resident NA2 ELF code and static data. The load segment is RWX and contains six static thread stacks. |
+| `0x00607380..0x006B3F00` | `0xACB80` | Zero-filled resident ELF tail containing BSS, allocator globals, and other mutable state. |
+| `0x006B3F00..0x008DD080` | `0x229180` | Shared MWo3 overlay window for `BTL.BIN`, `ADV.BIN`, and `ETC.BIN`. |
+| `0x008DD080..0x008DD090` | `0x10` | `malloc` chunk header and alignment before the vanilla allocator sentinel. |
+| `0x008DD090..0x01FF6000` | `0x1718F70` | Vanilla game allocator arena including both sentinels. |
+| `0x01FF6000..0x01FF8000` | `0x2000` | Remainder of the `malloc` area above the arena. |
+| `0x01FF8000..0x02000000` | `0x8000` | Main-thread stack. |
 
 The vanilla allocator user base is `0x008DD0A0`; the end sentinel begins at
 `0x01FF5FF0`. The overlay effective ends and phase-specific slack are documented
@@ -74,10 +73,9 @@ library banner. **Inference (high confidence):** these `0x92120` bytes, about
 
 ## Heap-relative rendering state
 
-The official clean-NA2 widescreen write targets `0x00AF3694`, the first `1.0f`
-field in the stable structure context
+In retail NA2, the persistent rendering state's horizontal scale field is at
+`0x00AF3694`, the first `1.0f` field in the stable structure context
 `0000BF01 00000000 00000045 FFFFFF44 0000803F 0000803F 00008043 00004043`.
 The structure is allocated at a fixed displacement from the heap boundary, so
-its absolute address is not a permanent game constant. Any implementation that
-changes the heap boundary must relocate and revalidate the target. The current
-NA228 implementation belongs to [Rendering](../../../features/rendering.md).
+its absolute address is not a permanent game constant and moves with that
+boundary.

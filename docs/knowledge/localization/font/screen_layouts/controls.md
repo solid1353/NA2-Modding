@@ -1,19 +1,23 @@
 # Controls Font layouts
 
+Layout evidence for Command Chart relationship rows, Pause Controls, and
+Special Controls.
+
 ## Research coverage
 
-- **Assigned scope:** compare clean NA2 and NUN5 Command Chart, Pause Controls, and Special Controls text layout.
+- **Assigned scope:** compare retail NA2 (`SLPS-25837`) and NUN5 Command
+  Chart, Pause Controls, and Special Controls text layout.
 - **Exploration depth:** the relevant native callers, records, and coordinates
   were inspected.
 - **Confirmed coverage:** the documented owners and cross-game geometry
   differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
-- **Deliberate exclusions and overlap:** feature hooks and behavior belong to
-  [Font](../../../../features/localization/font.md).
+- **Deliberate exclusions and overlap:** secondary-font metrics belong to
+  [Renderer metrics](../renderer_metrics.md); Command List and move-chart
+  tokens belong to
+  [Battle Command List and move chart](../../ui/battle/command_list_and_move_chart.md).
 - **Evidence limitations:** bounded states do not cover every string or
   animation phase.
-
-Font-owned layout evidence for Command Chart relationship rows, Pause Controls, and Special Controls.
 
 ## Command Chart relationship rows
 
@@ -30,12 +34,10 @@ the final 8 units to visible origins `28` and `44`. The word wrapper therefore
 receives `308 - (16 + 4) = 288` for titles but
 `308 - (16 + 20) = 272` for relationships. A runtime probe
 at the exact `FUN_0018C4F0` call confirmed both widths with tracking `0`, scale
-X/Y `1`, and descriptor `0x00B592D0`. The former `288` relationship result
-subtracted only the stored row-local value and omitted the already composed
-container term. The native row formula also separates relationship and icon
-placement: after the title it draws the combined relationship from
+X/Y `1`, and descriptor `0x00B592D0`. The native row formula also separates
+relationship and icon placement: after the title it draws the combined relationship from
 `fVar17 + 4` and the icons from `fVar17 + 44`, while NA2 advances its shared
 row coordinate by `30` before the relationship and then draws icons only `20`
-units below it. This explains both refreshed cases: the long relationship needs
-one jointly wrapped two-line block, while all three single-line rows and their
-icons share the same repeatable vertical correction.
+units below it. Consequently a long relationship forms one jointly wrapped
+two-line block in NUN5, while the three observed single-line rows and their
+icons differ from NA2 by one repeatable vertical offset.

@@ -1,144 +1,143 @@
 # Modes and menu navigation
 
-This document records the menu structure and visible behavior established by
-directly navigating a near-vanilla NA228 development image. It is a
-state-specific map of the loaded save and build, not an exhaustive claim about
-every retail unlock or battle mechanic.
+This document is the runtime map of the retail game's in-scope menus: Mode
+Select, Free Battle and Practice setup and pause menus, Options, and
+Collection. It records what each visited entry and control does, as observed
+by navigating the menus with a loaded save. It is not an exhaustive claim
+about every unlock state or battle mechanic.
 
 ## Research coverage
 
-- **Assigned scope:** establish the visible NA228 mode/menu map by directly
-  navigating the verified development image, document what each exposed entry
-  and control does, and exercise PCSX2's deployed deterministic controller-step
-  path while doing so. This task owns runtime navigation evidence, not general
-  combat-system reverse engineering.
-- **Exploration depth:** the four-entry Mode Select loop was cycled end
-  to end. Practice was followed through default team selection, its complete
-  loaded 17-row settings view, a playable battle, and every pause entry. Free
-  Battle was followed through setup and a playable round in both 1P-versus-COM
-  and joined-Player-2 forms, including their distinct pause menus. Options was
-  traversed across every root entry, and the complete five-value Difficulty
-  range plus its Reset behavior was tested. Collection was traversed through
-  its three roots, Naruto's visible detail categories, and the loaded Movie and
-  Music lists, but not exhaustively across every character or media item.
-- **Confirmed coverage:** the document records common menu inputs, save-state
-  presentation, the four visible top-level modes, Free Battle character/team,
-  stage, versus, settings, ready, battle, and pause flow, Practice setup,
-  settings, battle, and pause flow, Options controller/screen/music/difficulty
-  behavior, and the visible Collection structure and Naruto subviews. Every
-  runtime claim is tied to a stable post-input frame or visible response from
-  the cited evidence set.
-- **Unresolved or untested:** post-round Free Battle results; the full
-  24-stage roster; alternate team/settings combinations; most setting value
-  domains and Defaults actions; whether Options Reset affects anything besides
-  Difficulty; and complete unlock-dependent Collection contents and media
-  playback.
+- **Assigned scope:** map the retail mode and menu structure by navigating the
+  in-scope menus at runtime and record what each visited entry and control
+  does. General combat-system reverse engineering is outside this document.
+- **Exploration depth:** the Mode Select loop was cycled end to end. Practice
+  was followed through team selection, its complete 17-row settings view, a
+  playable battle, and every pause entry. Free Battle was followed through
+  setup and a playable round in both 1P-versus-COM and joined-Player-2 forms,
+  including their distinct pause menus. Options was traversed across every
+  root entry, and the Difficulty range plus its Reset behavior was tested.
+  Collection was traversed through its three roots, Naruto's visible detail
+  categories, and the visible Movie and Music lists, but not exhaustively
+  across every character or media item.
+- **Confirmed coverage:** common menu actions, the in-scope Mode Select
+  entries, Free Battle character/team, stage, versus, settings, ready, battle,
+  and pause flow, Practice setup, settings, battle, and pause flow, Options
+  controller/screen/music/difficulty behavior, and the visible Collection
+  structure and Naruto subviews. Every runtime claim is tied to a stable
+  post-input frame or visible response.
+- **Unresolved or untested:** post-round Free Battle results; alternate
+  team/settings combinations; most setting value domains and Defaults actions;
+  whether Options Reset affects anything besides Difficulty; complete
+  Collection contents and media playback; runtime confirmation of the retail
+  button assignments, including the Customize Jutsu button on the Free Battle
+  versus screen; the support-selection row and Linked Mode window; Practice's
+  initial settings values; and which stages and Collection entries are
+  available at specific retail progress states.
 - **Deliberate exclusions and overlap:** substitution timing, defender control,
-  and incoming-definition telemetry belong to the separate Substitution task
-  and are not duplicated here. Static menu constructors and command-ID owners
-  remain in `mode_flow.md`, `practice_mode.md`, and `pause_and_replay.md`; this
-  document links those owners only where they explain a runtime observation.
-  PCSX2 protocol implementation and audit work remained with the PCSX2 task;
-  no emulator source change was requested from this task.
-- **Evidence limitations:** results are specific to one verified NA228 dev ISO, the
-  supplied PNACH, and the loaded memory-card state, with card writes discarded.
-  Unlock-dependent absence is not proof that content cannot exist. Static IDs
-  cited from neighboring canonical documents were not independently
-  re-derived here, and this task performed no exhaustive source/decompilation
-  pass over menu or battle code.
+  and incoming-definition evidence belong to
+  [Substitution](../gameplay/substitution.md) and are not duplicated here.
+  Static menu constructors and command-ID owners remain in `mode_flow.md`,
+  `practice_mode.md`, and `pause_and_replay.md`; Character Select states
+  belong to `character_select.md`. This document links those owners only where
+  they explain a runtime observation. Mode Select entries outside project scope
+  are not covered.
+- **Evidence limitations:** observations were made by navigating a modified,
+  English-localized development image with a loaded memory-card save, not the
+  unmodified retail disc, and memory-card writes were discarded. Observations
+  that depended on that image's changes were removed; the button assignments
+  given here come from static retail evidence in the linked documents. The
+  remaining observations assume the image left those screens unchanged, which
+  was not verified screen by screen. Labels are the English text that image
+  displayed; the retail disc displays Japanese text. Content availability did
+  not come from a retail save, so stage and Collection lists show which entries
+  exist and their order, not when they become available. Static IDs cited from
+  neighboring documents were not independently re-derived here, and menu and
+  battle code were not exhaustively inspected.
 
-## Observation scope
+## Observation conditions
 
-The observations used a development image with the loaded save state. PCSX2
-used read-only settings and discarded memory-card writes. Interaction used
-PINE controller-agent commands to apply complete DualShock 2 states and advance
-an exact number of frames while the VM was paused. Each observation was
-rendered by advancing a fresh frame. The deployed step command installs
-controller states before frame advance, reapplies them after each host-input
-poll, and validates the exact unsigned frame-count delta. The run used bounded
-steps.
+Each observation is a freshly rendered frame after a complete DualShock 2
+state was applied for an exact number of frames.
 
 Menu transitions impose an input lock. A button state sent before the next
 menu becomes interactive can be ignored even though the transition has
 finished visually. Findings below therefore come only from a visible response
-or a stable post-input screenshot.
+or a stable post-input frame.
 
 ## Common menu controls
+
+Retail menu handlers accept with Circle and back out with Cross; see
+[Mode Select input actions](mode_flow.md#input-actions) and the
+[menu-input handler map](../runtime/menu_input/README.md). This document
+therefore names those actions Confirm and Back.
 
 | Input | Observed behavior |
 | --- | --- |
 | D-pad Up/Down | Move between vertical menu entries. Mode Select wraps from the last entry to the first. |
-| Cross | Confirm the highlighted entry or setting. |
-| Triangle | Back on ordinary menus; Cancel on Screen Settings. |
-| Start | Save from Mode Select. The loaded save information remains visible on that screen. |
+| Confirm | Confirm the highlighted entry or setting. |
+| Back | Back on ordinary menus; labelled Cancel on Screen Settings. |
+| Start | Save from Mode Select. |
 | Select | Restore defaults on Control, Screen, and Music Settings. |
 | L1/R1 | Move between pages in the Collection character grid; zoom the model in/out in the Figure viewer. |
 
 ## Mode Select
 
-The loaded state exposed exactly four top-level entries in this cyclic order:
+The in-scope entries appear in this physical order:
 
 1. Free Battle
 2. Practice
 3. Collection
 4. Options
 
-Six consecutive Down presses established both the order and wraparound.
-Runtime captures preserve the initial screen and complete cycle.
+Repeated Down presses moved through the entries and wrapped from the last one
+back to the first. The footer labels Start as the save action.
 
-The initial panel reported `Save data loaded` and displayed Play Time. The
-footer labels Start as the save action.
-
-| Mode | Behavior established in this run |
+| Mode | Observed behavior |
 | --- | --- |
-| Free Battle | Opens character/team selection, a 24-stage selector, battle setup, and a standard timed round. Both 1P-versus-COM and joined-Player-2 paths were entered. |
+| Free Battle | Opens character/team selection, Stage Select, battle setup, and a standard timed round. Both 1P-versus-COM and joined-Player-2 paths were entered. |
 | Practice | The visible description presents it as the place to practice basic controls and other techniques. It opens a 1P-versus-COM character selector. |
 | Collection | Opens the acquired-content browser described below. |
 | Options | Opens difficulty, controller, screen, audio, and reset settings. |
 
-At the selected Practice checkpoint, a two-frame Cross state sent after the
-return transition was missed, while an eight-frame
-Cross state was accepted. This establishes a controller-sampling miss rather
-than an inaccessible Practice entry.
+With Practice highlighted, a two-frame Confirm state sent after the return
+transition was missed, while an eight-frame Confirm state was accepted. This
+establishes a controller-sampling miss rather than an inaccessible Practice
+entry.
 
-Resident callback IDs, overlay handoffs, and unlock-driven physical-slot
-construction are owned by [`mode_flow.md`](mode_flow.md). This document
-owns only the visible runtime navigation and loaded-state behavior.
+Resident callback IDs, overlay handoffs, unlock-driven physical-slot
+construction, and the complete result table are owned by
+[`mode_flow.md`](mode_flow.md#mode-select-result-table). This document owns
+only the visible runtime navigation and loaded-state behavior.
 
 ## Free Battle setup
 
 Free Battle opens a split character selector similar to Practice, with Player
 1 on the left and COM on the right. The right side additionally displays
-`Press START button to join in!`. Pressing Start on controller slot 1 changes
-the right-side role from `COM` to `2P` in place; it does not restart or leave
-character select. The initial footer again provides L1 Select Color, Circle
-Random, Cross OK, and Triangle Back.
+`Press START button to join in!`. Pressing Start on controller slot 1
+changes the right-side role from `COM` to `2P` in place; it does not restart
+or leave character select. The footer provides Select Color on L1, Random, OK,
+and Back. The retail fighter handler assigns Random to Triangle; see
+[Selection state machine](character_select.md#selection-state-machine).
 
-The default 1P-versus-COM path uses the same four team selections as Practice:
-Player 1 main character, Player 1 linked character, COM main character, then
-COM linked character. Naruto and linked Sakura were initially selected for
-both teams.
+The 1P-versus-COM path uses the same four team selections as Practice: Player
+1 main character, Player 1 linked character, COM main character, then COM
+linked character. Naruto was initially selected as both main characters.
 
 After both teams are confirmed, Free Battle opens Stage Select. The initial
 selection was `Hidden Leaf Village`, numbered `1/24`. The screen is a vertical
-stage carousel and advertises Circle Random, Cross OK, and Triangle Back.
+stage carousel and advertises Random, OK, and Back.
 
 Confirming the stage opens a `Round 1` versus screen. It shows the complete
 teams and a 0-win/0-loss counter for each side. The joined branch labels the
-two sides `1P` and `2P`. Its controls
-are:
+two sides `1P` and `2P`. Square opens Battle Settings; the screen also offers
+Customize Jutsu, OK to start the round, and Back.
 
-| Input | Versus-screen action |
-| --- | --- |
-| Square | Battle Settings |
-| Circle | Customize Jutsu |
-| Cross | OK / start the round |
-| Triangle | Back |
-
-In 1P-versus-COM, Player 1's Cross starts the round. In the joined branch,
-each controller must confirm independently: P1 Cross placed a `Battle!` ready
-marker only on the left, and 1,200 neutral frames did not advance the screen;
-P2 Cross then allowed the battle transition to begin.
+In 1P-versus-COM, Player 1's confirmation starts the round. In the joined
+branch, each controller must confirm independently: Player 1's confirmation
+placed a `Battle!` ready marker only on the left, and 1,200 neutral frames did
+not advance the screen; Player 2's confirmation then allowed the battle
+transition to begin.
 
 ### Battle Settings
 
@@ -153,8 +152,8 @@ The loaded Battle Settings values were:
 | Ultimate Jutsu | Command |
 | Handicap | Balanced: five markers on each side |
 
-Select is labelled `Return to Defaults`, Cross accepts, and Triangle backs
-out. No value was changed.
+Select is labelled `Return to Defaults`; Confirm accepts and Back backs out.
+No value was changed.
 
 ### Customize Jutsu
 
@@ -164,7 +163,10 @@ screen. Naruto's loaded Jutsu 1 was `Naruto Uzumaki Combo Attack`; Jutsu 2 was
 directional-plus-Circle command glyph and horizontal selection arrows. No
 selection was changed.
 
-The observed setup sequence is therefore:
+The setup sequence is therefore as follows. In the retail selector, each
+linked-character confirmation is followed by a Linked Mode window before that
+side is finalized; see
+[Selection state machine](character_select.md#selection-state-machine).
 
 ```text
 Mode Select
@@ -172,7 +174,7 @@ Mode Select
   -> 1P linked character
   -> COM main character
   -> COM linked character
-  -> Stage Select (24 stages)
+  -> Stage Select
   -> Round versus screen / optional Battle Settings and Customize Jutsu
   -> battle
 ```
@@ -185,15 +187,15 @@ both players' independent ready confirmations:
 Mode Select
   -> joined 1P/2P main-character selection
   -> joined 1P/2P linked-character selection
-  -> Stage Select (24 stages)
+  -> Stage Select
   -> Round versus screen / both players ready
   -> battle
 ```
 
 ### Free Battle round and pause menu
 
-The observed round loaded Hidden Leaf Village with full standard HUD and a
-countdown that began at 99. The Normal COM attacked during neutral frame
+The observed round loaded Hidden Leaf Village with the standard battle HUD and
+a countdown that began at 99. The Normal COM attacked during neutral frame
 advance, producing the ordinary hit counter and reducing Player 1's health.
 
 Start opens this six-entry menu in 1P-versus-COM:
@@ -201,7 +203,7 @@ Start opens this six-entry menu in 1P-versus-COM:
 | Command ID | Visible entry | Runtime behavior |
 | ---: | --- | --- |
 | `0` | Controls | Opens Control Settings. |
-| `4` | 1P Commands | Opens Player 1's character-specific move list. |
+| `2` or `3` | 1P Commands | Opens Player 1's character-specific move list. |
 | `1` | Command Chart | Opens the generic battle-control reference. |
 | `6` | Simple Display | Opens the instructional-display On/Off selector. |
 | `0xA` | Back to Game Mode Screen | Opens a Yes/No dialog asking to quit Battle and return to Game Mode Select. |
@@ -211,100 +213,85 @@ In a joined-Player-2 round, the menu inserts `2P Commands` immediately after
 `1P Commands`, producing seven entries while leaving the remaining order
 unchanged. This directly confirms the optional command-list entry described by
 the static Free Battle constructor in
-[`pause_and_replay.md`](../gameplay/pause_and_replay.md).
+[`pause_and_replay.md`](../gameplay/pause_and_replay.md). The constructor
+lists both move-list entries as placeholder `4` and rewrites them to commands
+`2` and `3`; see
+[Command identities and observed labels](../gameplay/pause_and_replay.md#command-identities-and-observed-labels).
 
-The Game Mode exit dialog initially selects `Yes`, as confirmed by runtime
-captures.
+The Game Mode exit dialog initially selects `Yes`.
 
 ## Practice setup
 
 Practice first opens a split `Select Character` screen with Player 1 on the
 left and a COM opponent on the right. Both sides initially selected Naruto in
-the observed loaded state. Each side also has a visible Ultimate Jutsu slot.
-The footer advertises these controls:
+the observed state. Each side also has a visible Ultimate Jutsu slot. The
+footer advertises Select Color on L1, Random, OK, and Back.
 
-| Input | Character-select action |
-| --- | --- |
-| L1 | Select Color |
-| Circle | Random |
-| Cross | OK |
-| Triangle | Back |
-
-The default confirmation path then proceeds in this order:
+The confirmation path then proceeds in this order:
 
 1. Confirm Player 1's main character. The left panel changes to
-   `Linked Character`; Sakura is initially selected. The visible row contains
-   a leaf-symbol tile followed by Sakura, Sai, and Gaara. The semantic meaning of the
-   leaf-symbol tile was not tested.
-2. Confirm Player 1's linked character. The left team displays `Battle!` and
+   `Linked Character`.
+2. Finalize Player 1's linked character. The left team displays `Battle!` and
    focus moves to the COM main-character grid.
-3. Confirm the COM main character. The right panel changes to the same linked
-   character row, again with Sakura initially selected.
-4. Confirm the COM linked character. A versus confirmation screen shows both
-   complete teams. The observed default matchup was Naruto with linked Sakura
-   against COM Naruto with linked Sakura.
+3. Confirm the COM main character. The right panel changes to its
+   `Linked Character` selection.
+4. Finalize the COM linked character. A versus confirmation screen shows both
+   complete teams.
 
-The versus confirmation screen advertises Square for `Practice Settings`,
-Cross for `OK`, and Triangle for `Back`.
+The versus confirmation screen advertises Square for `Practice Settings`, OK,
+and Back.
 
 ### Practice Settings runtime view
 
-Square opens a 17-row Practice Settings overlay. The values below are the
-loaded values observed during this run, not a claim about the Defaults action
-or every possible value:
+Square opens a 17-row Practice Settings overlay. With Status at `Stand`, the
+static default, rows were presented as follows:
 
-| Section | Row | Loaded value | Runtime presentation |
-| --- | --- | --- | --- |
-| Player/general | Health | Normal | Active |
-| Player/general | Chakra | Normal | Active |
-| Player/general | Linked Attack | Normal | Active; this is the Link Gauge control, not the opponent row below |
-| Player/general | Ultimate Jutsu | Command | Active |
-| Player/general | Linked Mode | Manual | Active |
-| Player/general | Items | Normal | Active |
-| Player/general | Commands | Off | Active |
-| Player/general | Damage | On | Active |
-| Player/general | Guide Ninja Sound | Off | Active |
-| Opponent Settings | Status | Stand | Active |
-| Opponent Settings | Strength | Normal | Dimmed while Status is Stand |
-| Opponent Settings | Attack | No | Active |
-| Opponent Settings | Guard | No | Active |
-| Opponent Settings | Move | Stay | Active |
-| Opponent Settings | Substitution Jutsu | Normal | Dimmed while Status is Stand |
-| Opponent Settings | Linked Attack | Don't use | Active |
-| Opponent Settings | Extra Hit Counter | Normal | Active |
+| Section | Row | Runtime presentation |
+| --- | --- | --- |
+| Player/general | Health | Active |
+| Player/general | Chakra | Active |
+| Player/general | Linked Attack | Active; this is the Link Gauge control, not the opponent row below |
+| Player/general | Ultimate Jutsu | Active |
+| Player/general | Linked Mode | Active |
+| Player/general | Items | Active |
+| Player/general | Commands | Active |
+| Player/general | Damage | Active |
+| Player/general | Guide Ninja Sound | Active |
+| Opponent Settings | Status | Active |
+| Opponent Settings | Strength | Dimmed while Status is Stand |
+| Opponent Settings | Attack | Active |
+| Opponent Settings | Guard | Active |
+| Opponent Settings | Move | Active |
+| Opponent Settings | Substitution Jutsu | Dimmed while Status is Stand |
+| Opponent Settings | Linked Attack | Active |
+| Opponent Settings | Extra Hit Counter | Active |
 
 At `Status: Stand`, the UI therefore exposes Attack, Guard, Move, Linked
 Attack, and Extra Hit Counter while visibly disabling Strength and
-Substitution Jutsu. The row availability agrees with the static controller map
-in [`practice_mode.md`](../gameplay/practice_mode.md), while the values above add the
-runtime state of this loaded save.
+Substitution Jutsu. The row order and availability agree with the static
+controller map in
+[`practice_mode.md`](../gameplay/practice_mode.md#rows-local-values-and-manager-storage),
+which also records each row's values and Defaults.
 
-Comparing that static Defaults action with the loaded runtime state identifies
-four visible non-defaults: Linked Mode is `Manual` rather than `Auto`, Commands
-is `Off` rather than `On`, Guide Ninja Sound is `Off` rather than `On`, and the
-opponent Linked Attack is `Don't use` rather than `Normal`. The Defaults action
-itself was not invoked.
-
-Select is labelled `Return to Defaults`, Cross accepts the settings, and
-Triangle backs out. No value was changed during this pass; runtime captures
-cover the full traversal.
+Select is labelled `Return to Defaults`; Confirm accepts the settings and Back
+backs out. No value was changed.
 
 ### Entering the Practice battle
 
-Cross accepted the unchanged settings and returned to the team-versus screen.
-Confirming that screen did **not** open a stage selector. It immediately entered
-the `Start Battle` transition and loaded a training-field arena.
+Confirm accepted the unchanged settings and returned to the team-versus
+screen. Confirming that screen did **not** open a stage selector. It
+immediately entered the `Start Battle` transition and loaded a training-field
+arena.
 
 The first stable playable frame shows:
 
 - Player 1 Naruto on the left and COM Naruto on the right;
 - both health bars full;
 - an infinity symbol in place of a round timer;
-- the standard character names, gauges, linked-character indicators, and
-  bottom item selectors;
+- the standard character names and bottom item selectors;
 - the training field with wooden posts and target dummies in the background.
 
-Thus the default Practice path is:
+Thus the Practice path is:
 
 ```text
 Mode Select
@@ -326,19 +313,18 @@ Practice command-ID sequence established statically in
 | Command ID | Visible entry | Runtime behavior |
 | ---: | --- | --- |
 | `0` | Controls | Opens the same two-player Control Settings/remapping screen used by Options. |
-| `4` | 1P Commands | Opens the active Player 1 character's scrollable move notation. For Naruto, the first visible moves were Flying Shadow Rising Attack, Charging Kick, and Clone Jutsu: Head Split. |
-| `1` | Command Chart | Opens a generic battle-control reference. The first visible page shows Guard as L1 or R1, Linked Attack as R2, and Item Select as L2. It notes that Manual linked attacks require pressing R2 again after the linked move to attack. |
-| `6` | Simple Display | Opens an On/Off selector, loaded `ON`. Its description says it displays the game's special controls. |
-| `9` | Practice | Reopens the live 17-row Practice Settings editor. |
-| `7` | Back to Game Mode Screen | Opens a Yes/No dialog asking to quit Practice and return to Game Mode Select. |
-| `0xE` | Back to Character Select | Opens a Yes/No dialog asking to quit Practice and return to Character Select. |
+| `2` or `3` | 1P Commands | Opens the active Player 1 character's scrollable move notation. For Naruto, the first visible moves were Flying Shadow Rising Attack, Charging Kick, and Clone Jutsu: Head Split. |
+| `1` | Command Chart | Opens a generic battle-control reference. It notes that Manual linked attacks require pressing Linked Attack again after the linked move to attack. |
+| `6` | Simple Display | Opens an On/Off selector with On initially selected; see [Simple Display selection](../gameplay/pause_and_replay.md#simple-display-selection). Its description says it displays the game's special controls. |
+| `5` | Practice | Reopens the live 17-row Practice Settings editor. |
+| `0xA` | Back to Game Mode Screen | Opens a Yes/No dialog asking to quit Practice and return to Game Mode Select. |
+| `0xB` | Back to Character Select | Opens a Yes/No dialog asking to quit Practice and return to Character Select. |
 
-Both exit dialogs initially select `Yes`; Triangle cancels them. Runtime
-captures confirm both dialogs.
+Both exit dialogs initially select `Yes`; Back cancels them.
 
 ## Options
 
-The stable Options root contains:
+The Options root contains:
 
 ```text
              Difficulty Settings
@@ -351,20 +337,21 @@ two-by-two directional grid.
 
 ### Difficulty
 
-Cross enters difficulty editing and displays horizontal arrows. Moving Right
-and Left established the complete ordered domain:
+Confirm enters difficulty editing and displays horizontal arrows. Moving Right
+and Left in the loaded state established this ordered range:
 
 ```text
 SIMPLE -> EASY -> NORMAL -> HARD -> INSANE
 ```
 
 The left arrow is absent at `SIMPLE` and the right arrow is absent at `INSANE`;
-additional inputs toward either endpoint did not change the value. Runtime
-captures confirm both endpoints.
+additional inputs toward either endpoint did not change the value. A sixth,
+Ultimate tier is gated by progress word `0x6A`; see
+[Progress gates](content_availability.md#progress-gates).
 
 ### Control Settings
 
-The observed mappings are:
+The loaded save's mappings were:
 
 | Action | Player 1 | Player 2 |
 | --- | --- | --- |
@@ -377,32 +364,35 @@ The observed mappings are:
 | Linked Attack | R2 | R1 |
 | Vibration | On | On |
 
-Cross selects a button or item to change. Select restores the defaults,
-Triangle returns, and Cross accepts the page.
+Player 2 matched the fixed native default, while Player 1 had a
+shoulder-permuted assignment. The stored action arrays and their default are
+documented in [Save data](save_data.md).
+
+Confirm selects a button or item to change. Select restores the defaults, Back
+returns, and Confirm accepts the page.
 
 ### Screen Settings
 
 The page shows numeric `X` and `Y` screen-position offsets; both were `0` in
 the loaded configuration. The D-pad adjusts position, Select restores the
-default, Cross accepts, and Triangle cancels. No offsets were changed during
-this run.
+default, Confirm accepts, and Back is labelled Cancel. No offsets were
+changed.
 
 ### Music Settings
 
 The page exposes a volume control and an Output Mode selector. Output Mode was
 `Stereo`; the alternate label shown by the control is `Mono`. The help text
 states that the page changes music, sound-effect, and voice volume. Select
-restores defaults, Cross accepts, and Triangle returns. No audio setting was
+restores defaults, Confirm accepts, and Back returns. No audio setting was
 changed.
 
 ### Reset
 
 Reset acts immediately, without a confirmation dialog. After deliberately
-changing Difficulty from `SIMPLE` to `HARD`, pressing Cross on Reset restored
-the visible value to `NORMAL`; the help/status line reads
+changing Difficulty from `SIMPLE` to `HARD`, confirming Reset restored the
+visible value to `NORMAL`; the help/status line reads
 `Difficulty set to default.` This proves the Difficulty reset but does not
-establish whether Reset also affects Control, Screen, or Music values. The
-runtime comparison includes an earlier, non-conclusive baseline.
+establish whether Reset also affects Control, Screen, or Music values.
 
 ## Collection
 
@@ -412,12 +402,12 @@ The Collection root has three entries:
 2. Movie
 3. Music
 
-Cross opens the highlighted category and Triangle returns.
+Confirm opens the highlighted category and Back returns.
 
 ### Characters
 
 The character browser is a paged grid. L1 selects the previous page, R1 the
-next page, Cross opens a character, and Triangle returns. The first visible
+next page, Confirm opens a character, and Back returns. The first visible
 page contained 16 entries:
 
 | | | | |
@@ -434,7 +424,7 @@ Opening Naruto displayed three categories:
 - Voice
 
 Figure opens a 3D model viewer. L1 zooms in, R1 zooms out, the left stick moves
-the model, the right stick rotates it, and Triangle returns. Naruto's viewer
+the model, the right stick rotates it, and Back returns. Naruto's viewer
 also displayed the labels `Right!`, `Shadow Clone Jutsu`, and `Running Wild`.
 
 The visible Naruto Ultimate Jutsu entries were:
@@ -444,8 +434,8 @@ The visible Naruto Ultimate Jutsu entries were:
 - Nine-Tail's Cloak
 - Unchanging Relationship
 
-Cross is labelled `OK` for the highlighted entry and Triangle returns. The
-selected entry was not opened in this run.
+Confirm is labelled `OK` for the highlighted entry and Back returns. The
+selected entry was not opened.
 
 The visible Naruto Voice entries were:
 
@@ -455,7 +445,7 @@ The visible Naruto Voice entries were:
 - The Bond Between Us
 - Reunion, and then...
 
-Cross plays the highlighted voice and Triangle returns.
+Confirm plays the highlighted voice and Back returns.
 
 ### Movie
 
@@ -469,8 +459,8 @@ The visible Movie list contained:
 6. Reunion Time II
 7. Credits
 
-Cross plays the highlighted movie and Triangle returns. Playback itself was
-not exercised.
+Confirm plays the highlighted movie and Back returns. Playback itself was not
+exercised.
 
 ### Music
 
@@ -483,21 +473,18 @@ The visible portion of the Music jukebox contained:
 5. Foundation's Hideout
 6. Tenchi Bridge
 
-Cross plays the highlighted track and Triangle returns. This is only the
-visible portion of the list; the full track count and playback behavior were
-not tested.
+Confirm plays the highlighted track and Back returns. This is only the visible
+portion of the list; the full track count and playback behavior were not
+tested.
 
 ## Boundaries of current knowledge
 
 - Free Battle is mapped through playable 1P-versus-COM and joined-Player-2
   Round 1 paths and both pause-menu variants. Post-round results remain
   untested.
-- Practice is mapped through its default-team versus confirmation, loaded
-  Practice Settings, first playable battle frame, and pause menu.
+- Practice is mapped through its versus confirmation, Practice Settings rows,
+  first playable battle frame, and pause menu.
 - Only the first visible character page, Naruto's visible detail lists, and the
   visible portions of Movie and Music were recorded. Collection completeness
   depends on save unlocks and was not established.
 - No collection media was played and no Free Battle round was completed.
-- Several screenshots in the evidence directory intentionally preserve white
-  or partially faded transition frames. They demonstrate the transition/input
-  timing issue but are not menu-state evidence.

@@ -12,7 +12,7 @@ are also out of scope.
 
 ## Research coverage
 
-- **Assigned scope:** the clean resident `SLPS_258.37` front-end controller,
+- **Assigned scope:** the retail resident `SLPS_258.37` front-end controller,
   from the opening/title handoff through New Game/Continue preparation, Mode
   Select, in-scope BTL modes 2/3, ETC modes 5/6, resident mode 7, the overlay
   handoff interface, and resident return/result routing. Persistent mode/state
@@ -36,10 +36,10 @@ are also out of scope.
   control helpers `FUN_001deb50`, `FUN_001ded30`, `FUN_001df140`, and
   `FUN_001df3b0` were enumerated; their resource/render callees were sampled
   only far enough to prove the controller's completion signals. Direct
-  clean-binary anchors checked included result table
+  retail-binary anchors checked included result table
   `0x005D51D0`, filename table `0x004049E0`, default bindings `0x005C06A0`,
-  BTL process table `0x005D9F98`, remembered slot `0x006045E0`, and the two
-  resident hook seams documented below.
+  BTL process table `0x005D9F98`, remembered slot `0x006045E0`, the Mode
+  Select pre-decoder no-op call, and the BTL process hook word documented below.
 - **Confirmed coverage:** the nested controller phases and result
   contracts; title-to-manager boundary; manager fields and object lifetimes;
   title initialization, idle-return, acceptance, and presentation-completion
@@ -49,19 +49,26 @@ are also out of scope.
   contract, remembered-slot behavior, allocator/failure edges, and unsupported states;
   the synchronous selector/cache contract; BTL type/process selection, hook
   and return convergence; ETC Collection plus resident Options creation,
-  teardown, and return behavior; and the resulting patch surfaces and
-  lifetime constraints.
+  teardown, and return behavior; and the resulting fixed-address handoff and
+  object lifetimes.
 - **Unresolved or untested:** original source names for stripped
   fields; the semantic roles of `0x006077AC` and BTL process offset `+0x10`;
   allocation-failure and malformed-state behavior at runtime; loader failure
   semantics; overlay-local BTL/ETC behavior beyond the fixed handoff calls; and
   dynamic confirmation of the static control-flow model.
-- **Deliberate exclusions and overlap:** the excluded third
-  mode/overlay, Save/Load child UI, overlay binary-loading internals, and deeper
-  battle, stage, outcome, support, pause, and profile-serialization mechanics
-  belong outside this note or to the linked canonical documents. Layout and
-  widescreen work, media, localization, timing, and PCSX2 are also excluded.
-- **Evidence limitations:** evidence is static against the exact clean ELF
+- **Deliberate exclusions and overlap:** the excluded third mode/overlay and
+  the Save/Load child UI are outside this note. Startup gates belong to
+  [startup.md](startup.md); overlay loading belongs to
+  [overlay ABI](../runtime/overlay_abi.md) and
+  [runtime lifetimes](../runtime/ee_memory_map/runtime_lifetimes.md); BTL state
+  meanings belong to [Practice-mode architecture](../gameplay/practice_mode.md)
+  and [stages.md](../gameplay/stages.md); outcome, support, and pause mechanics
+  belong to [match_outcomes.md](../gameplay/match_outcomes.md),
+  [support_mechanics.md](../gameplay/support_mechanics.md), and
+  [pause_and_replay.md](../gameplay/pause_and_replay.md); profile
+  serialization belongs to [save_data.md](save_data.md). Layout, media,
+  localization, timing, and PCSX2 are also excluded.
+- **Evidence limitations:** evidence is static against the exact retail ELF
   identity and maintained read-only analysis, cross-checked against preserved
   C/listing exports. Direct bytes, tables, calls, and state/result writers were
   cross-checked, but no emulator/game execution,
@@ -72,7 +79,7 @@ are also out of scope.
 
 ## Evidence and conventions
 
-The observations below come from static inspection of the clean resident ELF
+The observations below come from static inspection of the retail resident ELF
 through the maintained read-only analysis. Its identity and address conversion
 follow [Standard game file identities](files/file_identities.md). Later BSS
 globals have runtime addresses but no corresponding file bytes.
@@ -84,8 +91,7 @@ names preserved in the binary.
 
 Unless marked otherwise, a statement is a direct static observation with high
 confidence. “Inference” identifies a role derived from call order or state
-transitions. No new runtime validation was performed for this note. Two field
-names below explicitly reuse existing runtime evidence from
+transitions. Two field names below explicitly reuse existing runtime evidence from
 [Practice-mode architecture](../gameplay/practice_mode.md), and the
 synchronous overlay-call contract is cross-checked against the established
 [overlay ABI](../runtime/overlay_abi.md).
@@ -150,9 +156,9 @@ pointer slots themselves survive overlay replacement.
   respective global pointer slots.
 - Manager destruction is not a callback-object sweep. `FUN_001f42b0` does not
   clear the shared transient or mode/gate globals at `0x0060760C..0x00607624`;
-  each clean callback owns those allocations and clears its own slots.
+  each retail callback owns those allocations and clears its own slots.
 
-The clean wrappers do not share a uniform allocation-failure contract:
+The retail wrappers do not share a uniform allocation-failure contract:
 
 - `FUN_001de840` is defensive for its top-level title allocation: if the
   `0x48`-byte allocation fails, it skips update/presentation, returns 0, and
@@ -200,7 +206,7 @@ The loop's proven transitions are:
 | 4 | `FUN_001e9980` at `0x001E12D0` | `1` | state 3 |
 | 4 | `FUN_001e9980` at `0x001E12D0` | `2` | state 2 |
 
-The state-4 caller contains the result-2 branch, but the inspected clean
+The state-4 caller contains the result-2 branch, but the inspected retail
 `FUN_001e9980` implementation only constructs return values 0 and 1. No
 resident producer of return 2 was found in that function.
 
@@ -278,7 +284,7 @@ remains 1. Its nested tests give simultaneous-input priority Up, then Down,
 then Circle/Start confirmation. Native Cross is not a direct title back action
 in `FUN_001df140`. The state dispatcher calls that decoder at `0x001DF8B0`.
 Because `FUN_001deed0` initializes selection `+0x0C` to 1 when called at
-`0x001DF798`, the clean title controller initially points at Continue.
+`0x001DF798`, the retail title controller initially points at Continue.
 
 A separate title path stores `-1`, which restarts the opening/title
 cycle through outer state 2. More precisely, `FUN_001df690` stores `-1` only
@@ -357,7 +363,7 @@ The file-backed default at ELF offset `0x004C07A0` is:
 ```
 
 Those are native Triangle, Circle, Cross, Square, L1, R1, L2, and R2 masks.
-This 16-byte source is the persistent static patch point; the three
+This 16-byte source is the only persistent static copy; the three
 `0x006B2Bxx` destinations are zero-filled resident runtime storage and are
 repopulated on each new manager construction.
 
@@ -386,13 +392,13 @@ Continue path can return `-1`; `FUN_001e9980` converts that into return 1 to the
 outer loop. The save/load workflow inside that path was not analyzed.
 
 `FUN_001e9c00` itself constructs only return values 0 and 1, so the generic
-manager-side `-1` check in phase 2 is dead for the clean New Game callee.
-`FUN_001e9eb0` is the only clean preparation path here that constructs `-1`.
+manager-side `-1` check in phase 2 is dead for the retail New Game callee.
+`FUN_001e9eb0` is the only retail preparation path here that constructs `-1`.
 
-The unrecognized-result fallback is not reachable through the clean outer
+The unrecognized-result fallback is not reachable through the retail outer
 composition: outer state 3 enters manager state 4 only for title result 1 or 2.
 Likewise, although the manager constructor initializes callback `+0x0C` to 0,
-every clean path that reaches manager phase 4 first changes it to 1.
+every retail path that reaches manager phase 4 first changes it to 1.
 
 Before `FUN_001e9980` returns nonzero, the manager is gone and global
 `0x00607600` is clear. The normal phase-5 path performs that destruction with
@@ -404,13 +410,12 @@ owned `+0xDDC` battle-condition object when present, and resets overlay cache
 `manager+0x10` to `-1` before the allocation is freed. The vibration-cache
 semantics are owned in [save_data.md](save_data.md#fresh-profile-initialization).
 
-The clean ordering prevents cross-lifetime residue: Mode Select back frees its
+The retail ordering prevents cross-lifetime residue: Mode Select back frees its
 controller, gate, and transient before manager phase 5 is observed; Continue
 cancellation destroys its gate and frees its transient in the same callee that
 destroys the manager; BTL/ETC/Options finish their own objects before returning
-to Mode Select. An injected early manager phase 5 or direct manager destructor
-does not perform those steps. It can leave `0x0060760C..0x00607624` pointing at
-old callback state that a later manager/callback will reuse or reinterpret.
+to Mode Select. Manager phase 5 and the manager destructor do not perform those
+steps themselves.
 
 ## High-level mode callback dispatcher
 
@@ -472,30 +477,18 @@ The table is not the visual selection array itself:
 - `FUN_003845d0` converts that physical slot through `DAT_005d51d0`, but only
   when the controller has reached terminal state 6; otherwise it returns `-1`.
 
-This two-level mapping is important for patches: table values are mode IDs,
+This mapping has two levels: table values are mode IDs,
 whereas the controller, visuals, and remembered selection use physical slots.
 
-### Consequences for result-table edits
-
-- The compact array has capacity for all seven physical slots. Changing a
-  negative table entry to a nonnegative value automatically admits that slot;
-  no separate active-count constant needs changing.
-- The filter validates only the sign. A nonnegative value that is not handled
-  by the manager callback switch passes Mode Select confirmation and becomes
-  manager `+0x0C`, after which manager phase 4 has no default recovery and
-  stalls.
-- Changing a table result remaps the callback but does not change the physical
-  carousel order or remembered-slot behavior. `0x006045E0` continues to store
-  the physical slot rather than the remapped mode ID.
-- An all-negative table is not a supported empty-menu encoding.
-  `FUN_00384690` can leave active count 0, but `FUN_00384620` still calls
-  `FUN_00384720`, which indexes compact entry 0; there is no empty-list guard.
-  `FUN_003839e0` does not initialize controller `+0x08..+0x20`, and
-  `FUN_00384690` writes only admitted entries, so entry 0 has not been written
-  by this construction. It is immediately copied to visual field `+0xBC`, and
-  a later confirmation can use the same indeterminate word as an index into
-  `DAT_005d51d0`. A deliberately empty menu therefore needs code changes, not
-  only seven negative table values.
+The compact array has capacity for all seven physical slots, and the filter
+tests only the sign of each table value; the active count is computed, not a
+separate constant. Construction has no empty-list guard: when no entry is
+admitted, `FUN_00384690` leaves active count 0, but `FUN_00384620` still calls
+`FUN_00384720`, which indexes compact entry 0. `FUN_003839e0` does not
+initialize controller `+0x08..+0x20`, and `FUN_00384690` writes only admitted
+entries, so entry 0 has not been written by this construction. It is
+immediately copied to visual field `+0xBC`, and a later confirmation can use
+the same indeterminate word as an index into `DAT_005d51d0`.
 
 ## Mode Select controller
 
@@ -575,7 +568,7 @@ default.
 ### Remembered physical slot
 
 Runtime halfword `0x006045E0` (ELF offset `0x005046E0`) is both Ghidra
-`DAT_006045e0` and the GP-relative alias `uGpffff9bf0`. Its clean initial value
+`DAT_006045e0` and the GP-relative alias `uGpffff9bf0`. Its retail initial value
 is `0xFFFF` (`-1` as the signed halfword load used by the constructor).
 
 - `FUN_00384760` writes the accepted **physical slot** here at
@@ -592,14 +585,12 @@ This is the complete resident “return to the previously selected mode”
 mechanism. No mode-specific return code is needed: accepting a slot persists it
 before the BTL/ETC handoff, and all analyzed callbacks later write manager mode
 1. The halfword is not owned by the manager: `FUN_001f4680` does not clear it.
-The clean back path performs the reset explicitly before manager destruction;
-forcing some other manager-exit path can therefore leave the remembered slot
-for a later manager lifetime.
+The retail back path performs the reset explicitly before manager destruction.
 
 ### Input actions
 
 `FUN_003849c0` is the active-state input dispatcher. It first calls
-`FUN_00384de0`, which is an empty function in the clean build, then chooses one
+`FUN_00384de0`, which is an empty function in the retail build, then chooses one
 of two decoders:
 
 - direct masks: `FUN_00384cd0` when byte `+0x58` is zero;
@@ -658,17 +649,17 @@ stores controller port 0 at manager `+0x18`. Otherwise it advances only to the
 next compact entry. There is no missing-target guard: a scripted target
 filtered out of the compact list can never reach the equality/confirm case.
 
-Clean reachability is narrower than the implemented interface.
+Retail reachability is narrower than the implemented interface.
 `FUN_003839e0` initializes `+0x58` and `+0x5C` to zero, and no direct writer in
 the Mode Select controller/callback path makes `+0x58` nonzero. The direct
 resident xrefs to global controller pointer `0x00607610` are its allocation,
-update, presentation, and cleanup in `FUN_001ea240`. Normal clean flow therefore
+update, presentation, and cleanup in `FUN_001ea240`. Normal retail flow therefore
 always uses `FUN_00384cd0`; the scripted behavior requires an external or
 otherwise unresolved mutation.
 
 ### Resident pre-dispatch hook seam
 
-The no-op `FUN_00384de0` is an exact pre-decoder extension point:
+The no-op `FUN_00384de0` runs immediately before the Mode Select decoders:
 
 - active dispatcher `FUN_003849c0` calls it at runtime `0x003849D0`
   (ELF file offset `0x00284AD0`), before reading controller `+0x58`;
@@ -677,9 +668,9 @@ The no-op `FUN_00384de0` is an exact pre-decoder extension point:
 - the target at runtime `0x00384DE0` (file `0x00284EE0`) is exactly two words,
   `0x03E00008, 0x00000000` (`jr ra; nop`).
 
-The native body therefore has only eight bytes: nontrivial logic needs a
-redirect/trampoline, but a replacement can inspect or alter the controller's
-sampled masks and scripted-target fields before the unchanged decoder runs.
+The native body therefore has only eight bytes. At the call, the controller's
+sampled masks and scripted-target fields are already populated and the decoder
+has not yet read them.
 
 ### Confirmation and terminal result
 
@@ -786,12 +777,10 @@ Both paths destroy the object through `FUN_001e3e20` and clear
 `0x00607624`. The constructor also owns a `0x44`-byte child at object `+0x24`,
 but that child's save/load UI state machine remains deliberately excluded.
 
-Across the clean dispatcher, a callback change is not observed on a later
+Across the retail dispatcher, a callback change is not observed on a later
 manager invocation until the shared transient at `0x0060760C` has been freed.
 This is an important lifetime invariant because New Game/Continue, Mode Select,
-ETC, and Options reuse the same allocation with different phase layouts. Forcing
-manager `+0x0C` to another callback in the middle of one of those layouts can
-make the new callback reinterpret stale phase fields.
+ETC, and Options reuse the same allocation with different phase layouts.
 
 ### End-to-end result chains
 
@@ -860,10 +849,7 @@ identity. Neither `FUN_001f3d10` nor `FUN_001f45b0` reads the shared overlay
 header before accepting selector 0 as a cache hit, and both update the cache
 after the loader call without inspecting a loader result. The word therefore
 records a completed request at this boundary, not independently verified image
-identity or success. Clean flow remains coherent because its overlay changes
-pass through these helpers; external replacement of the shared region without
-updating manager `+0x10` can suppress the reload that would otherwise repair
-the image.
+identity or success. Retail overlay changes all pass through these helpers.
 
 The manager constructor initializes `+0x10` to `-1`. `FUN_001f45b0`, called
 immediately after manager allocation at `0x001E99C4`, requests `BTL.bin` and
@@ -935,24 +921,19 @@ The proven resident handoff is:
 `FUN_001ec300(entry_type)` uses its argument only while constructing an absent
 process. If global `0x00607620` is already non-null, it returns that allocation
 without calling `FUN_001ec690/001ec7a0` and without rewriting process `+0x14`.
-Clean routing destroys the process before a later BTL selection, but forcing
-manager callback 2 to 3 (or 3 to 2) while the process survives reuses the old
-entry type; changing the callback ID alone does not reinitialize the handoff.
+Retail routing destroys the process before a later BTL selection.
 
-The clean target at runtime `0x001ECBF0` (ELF offset `0x000ECCF0`) is not
+The retail target at runtime `0x001ECBF0` (ELF offset `0x000ECCF0`) is not
 recognized as a named function in the export. Its complete executable body is
 `0x0000102D, 0x03E00008, 0x00000000`: set `v0` to zero, return through `ra`,
 then the delay-slot no-op. Both wrappers discard that return value. Their
 different call conditions consequently have no observable effect with the
-resident-initialized table, though they would matter if the hook target were
-replaced.
+resident-initialized table.
 
-For a static extension, the replaceable pointer is the single word at table
-`+0x08`: runtime `0x005D9FA0`, ELF file offset `0x004DA0A0`. An alternate
-target receives the `0x44`-byte process pointer in `a0`; neither wrapper uses
-its return value. Mode 2 invokes it only after dispatcher results 1 or 2,
-whereas mode 3 also invokes it after result 0. A hook that needs identical
-per-invocation coverage in both modes cannot rely on this table entry alone.
+The hook pointer is the single word at table `+0x08`: runtime `0x005D9FA0`,
+ELF file offset `0x004DA0A0`. Its target receives the `0x44`-byte process
+pointer in `a0`. Mode 2 invokes it only after dispatcher results 1 or 2,
+whereas mode 3 also invokes it after result 0.
 
 ### Fixed-address BTL handoff surface
 
@@ -1006,7 +987,7 @@ resource groups, and returns 1. `FUN_001ec960` then returns 3, so the mode
 callback destroys global `0x00607620`. The following manager invocation
 therefore re-enters Mode Select.
 
-Two clean in-scope paths write state `0x19` directly:
+Two retail in-scope paths write state `0x19` directly:
 
 - state 7 handler `FUN_001ed450` receives `-1` from the resident Character
   Select child, destroys it, and treats that as cancellation back to the menu;
@@ -1067,7 +1048,7 @@ The Collection callback uses more explicit transient phases:
 | ---: | --- |
 | 0 | Set phase 1 unconditionally. |
 | 1 | Wait for the resident transition to become idle, reset/stage it, select ETC, construct the object, and set phase 3. |
-| 2 | Explicitly inert in `FUN_001eb120`; the clean callback never writes this phase. |
+| 2 | Explicitly inert in `FUN_001eb120`; the retail callback never writes this phase. |
 | 3 | Poll the object. Exact result 1 writes phase 4 and `+0x04 = 3`; every other result leaves phase 3 unchanged. |
 | 4 | Decrement transient `+0x04`. At completion free the transient and ETC object, clear their globals, release/restage resident resources, and write manager mode 1. |
 
@@ -1080,7 +1061,7 @@ writes manager `+0x0C = 1` after its transient countdown seeded to 3 reaches
 the cleanup branch.
 
 No call to `FUN_001f3d10` occurs in this callback. Because Mode Select already
-ensured selector index 0, the clean Options path leaves BTL selected.
+ensured selector index 0, the retail Options path leaves BTL selected.
 
 Its phase 0 waits for the resident transition only when the object must be
 constructed. It then updates through `FUN_0038bbf0`; exact result 1 writes
@@ -1103,7 +1084,7 @@ phase 1 and transient `+0x04 = 3`, while every other result calls
 | `FUN_00384690` | `FUN_00383db0` | `DAT_005d51d0` | Builds filtered physical-slot array |
 | `FUN_00384620` | `FUN_00383db0` | `0x006045E0` argument, `FUN_00384720` | Restores remembered physical slot |
 | `FUN_00384760` | `FUN_003849c0` at `0x00384B54/6C` | result table, manager | Persists physical slot and starts accepted exit |
-| `FUN_00384de0` | `FUN_003849c0` at `0x003849D0` | none in clean body | Eight-byte no-op called with controller pointer before input decoding |
+| `FUN_00384de0` | `FUN_003849c0` at `0x003849D0` | none in retail body | Eight-byte no-op called with controller pointer before input decoding |
 | `FUN_003854f0` | `FUN_001ea240` at `0x001EA438` | controller state switch | Returns 0, 1, or `-1` |
 | `FUN_003845d0` | `FUN_001ea240` at `0x001EA46C` | `FUN_00384700`, result table | Returns mapped mode only in state 6 |
 | `FUN_001e3f00/001e3f20` | Continue and Mode Select back gate | shared `0x28`-byte gate | Effective update result drives continue/cancel/back routing |
@@ -1118,7 +1099,7 @@ phase 1 and transient `+0x04 = 3`, while every other result calls
 
 ## Negative results, limits, and open semantics
 
-- No dynamic execution was used; all findings are static clean-binary evidence.
+- No dynamic execution was used; all findings are static retail-binary evidence.
 
 Unsupported controller states do not share a common recovery policy:
 
@@ -1129,18 +1110,18 @@ Unsupported controller states do not share a common recovery policy:
 | Manager phase `+0x08` | Values outside 1 through 5 return 0 after common services; the phase is unchanged. |
 | Manager callback `+0x0C` in phase 4 | An unhandled ID invokes no callback and leaves phase 4 active. |
 | Mode Select controller `+0x00` | Values outside 0 through 6 fall through common visual servicing and return 0; no recovery state is assigned. |
-| Shared callback transient `+0x00` | Values outside the active callback's listed cases are inert; reusing the allocation under another callback can reinterpret them. |
+| Shared callback transient `+0x00` | Values outside the active callback's listed cases are inert. |
 | BTL process `+0x00` | Values outside 1 through `0x19`, including 0, return 2. Both BTL wrappers retain the process and invoke its indirect hook rather than destroy it. |
 
-- `FUN_00384de0` is a true no-op in the clean resident build despite being
+- `FUN_00384de0` is a true no-op in the retail resident build despite being
   called on every active Mode Select update.
-- The implemented scripted-target decoder is dormant in clean resident flow:
+- The implemented scripted-target decoder is dormant in retail resident flow:
   its selector byte is initialized to zero and no direct in-scope writer sets
   it nonzero.
 - The outer loop handles a hypothetical `FUN_001e9980` return value 2, but no
-  such return is constructed by the inspected clean function.
+  such return is constructed by the inspected retail function.
 - Manager callback 0 and the phase-1 unrecognized-title fallback are
-  structurally present but unreachable in the clean outer/title composition.
+  structurally present but unreachable in the retail outer/title composition.
 - Negative mode-table entries are filtered before normal selection, making the
   negative confirmation branch unreachable without corruption or an alternate
   caller.
@@ -1150,9 +1131,9 @@ Unsupported controller states do not share a common recovery policy:
 - Manager `+0x18` is proven to retain the zero-based controller port that
   confirmed Mode Select; only its original source-level field name remains
   unrecovered.
-- The clean `ccGbtlProcess` indirect hook is a return-zero stub and both
+- The retail `ccGbtlProcess` indirect hook is a return-zero stub and both
   wrappers ignore its return, so their differing hook-call conditions are
-  inert unless the process table target is replaced.
+  inert.
 - Collection and Options recognize only exact poll/update result 1 as
   completion. Other values remain in their active callback path; no alternate
   terminal route is present in these wrappers.

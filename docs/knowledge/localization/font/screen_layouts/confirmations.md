@@ -2,7 +2,8 @@
 
 ## Research coverage
 
-- **Assigned scope:** compare clean NA2 and NUN5 Battle, Mode Select, Collection, and memory-card confirmation text layout.
+- **Assigned scope:** compare retail NA2 (`SLPS-25837`) and NUN5 Battle, Mode
+  Select, Collection, and memory-card confirmation text layout.
 - **Exploration depth:** the relevant native callers, records, and coordinates
   were inspected, including the NA2 memory-card body loop and window constructor,
   the NUN5 paragraph and choice draw chains, and both games' 48-entry
@@ -10,21 +11,23 @@
 - **Confirmed coverage:** the documented owners and cross-game geometry
   differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
-- **Deliberate exclusions and overlap:** feature hooks and behavior belong to
-  [Font](../../../../features/localization/font.md).
+- **Deliberate exclusions and overlap:** glyph metrics belong to
+  [Renderer metrics](../renderer_metrics.md); memory-card message text and
+  storage belong to
+  [NA2 and NUN5 text correspondence](../../translation_importer.md#memory-card-failure-messages).
 - **Evidence limitations:** bounded states do not cover every string or
   animation phase. The memory-card comparison includes one supplied NUN5
   create-data confirmation; other states have static coverage only.
 
 ## Battle quit-confirmation callers
 
-Clean NA2 BTL bytes and runtime state identify two distinct modal
-draw calls. The clean BTL file uses `0x006B3F00 + file offset`:
+Retail NA2 BTL bytes and runtime state identify two distinct modal
+draw calls. The BTL file uses `0x006B3F00 + file offset`:
 
 - file `0x1C4048` / runtime `0x00877F48` is
   `800D0E0C00000000`, the native `jal 0x00383600` Yes/No list
   plus NOP;
-- file `0x1C407C` / clean runtime `0x00877F7C` is
+- file `0x1C407C` / runtime `0x00877F7C` is
   `6C090E0C00000000`, the native `jal 0x003825B0` body draw
   plus NOP.
 
@@ -35,20 +38,19 @@ therefore draws its second row at Y `56`. NUN5 measurements map Yes to
 
 ## Mode Select Return to Title confirmation caller
 
-The earlier classification of object `+0xD0` as the visible body was wrong.
-Live object inspection while the prompt was visible found its list empty.
-Tracing forward identified `FUN_003825B0` as the first actual consumer: it
-builds a four-word draw record from constants `DAT_005B1810` X `24` and
+Object `+0xD0` is not the visible body: its list is empty while the prompt is
+visible. The first consumer is `FUN_003825B0`, which builds a four-word draw
+record from constants `DAT_005B1810` X `24` and
 `DAT_005B1814` Y `16`, then calls native UI draw `FUN_00379A20`.
 
 ## Collection exit-confirmation body and choice list
 
-- clean address `0x006C6540`, file `0x12680`, calls the ordinary body renderer
-  for object `+4`; its eight-byte guard is `6C090E0C00000000`;
-- clean address `0x006C6560`, file `0x126A0`, calls the complete choice-list
-  renderer for object `+8`; its guard is `800D0E0C00000000`;
-- the render-state path repeats the body draw at clean address `0x006C8788`,
-  file `0x148C8`, with the same `6C090E0C00000000` native-call guard.
+- address `0x006C6540`, file `0x12680`, calls the ordinary body renderer
+  for object `+4`; its eight call bytes are `6C090E0C00000000`;
+- address `0x006C6560`, file `0x126A0`, calls the complete choice-list
+  renderer for object `+8`; its call bytes are `800D0E0C00000000`;
+- the render-state path repeats the body draw at address `0x006C8788`,
+  file `0x148C8`, with the same `6C090E0C00000000` native call bytes.
 
 ## NA2 memory-card message body
 

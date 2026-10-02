@@ -38,7 +38,7 @@ timeline calls at six return sites. Those consumers are not yet compensated or
 mapped to their exact sky, HUD, and fighter pixels, so a complete playable
 replay remains blocked at the earlier visual boundary.
 
-The dedicated `experiments/60 fps/NA228_60_fps.pnach` now enables the
+The dedicated `experiments/60-fps/NA228_60_fps.pnach` now enables the
 proven resident scheduler gate and runtime-verified fighter-factor, combo, and
 hitstop compensations as an experimental battle implementation. The normal
 `NA228.pnach` is not used as the 60 FPS ledger. This is not yet a complete
@@ -148,7 +148,7 @@ all numeric and callsite findings needed to resume are recorded below.
 
 | Evidence | Identity |
 | --- | --- |
-| Original recording | `experiments/60 fps/60_fps_1.p2m2`; 207,498 bytes; SHA-256 `E33187E2F5E690AE8100EDB6934DCAF41F3AA6CEBEDF8936E34CEB8C9FF67259` |
+| Original recording | `experiments/60-fps/60_fps.p2m2`; 207,498 bytes; SHA-256 `E33187E2F5E690AE8100EDB6934DCAF41F3AA6CEBEDF8936E34CEB8C9FF67259` |
 | P2M2 metadata | Power-on recording; records 0..5747; recorded by `PCSX2-v2.7.505-47-g6ed5fb570`; associated game `SLOP-NA228` |
 | Replayed ISO | SHA-256 `1614C787D16BA6B832C6589A79C25E4967EDBA6C80B6EB830A12F7243B967F79`; 1,928,429,568 bytes |
 | Runtime game | `SLOP-NA228`; ELF CRC `ED4FA3D5`; boot path `SLOP_NA2.28` |
@@ -285,11 +285,8 @@ frame 2590 is closer to clean frame 2591 than clean frame 2590. Clean output
 changes only on retained odd transitions while candidate output changes on
 every physical frame.
 
-The single retained visual artifact is
-`experiments/60 fps/input_boundary_2588_2594.png` (SHA-256
-`0980844AFDF75CF6928BFC1BC199FECA7015E55CB06BE54CAB808CED4CE1AB6C`).
-It is the clean/candidate contact sheet for frames 2588..2594 and the exact
-future restart boundary.
+Frames 2588..2594 are the exact restart boundary for further visual
+comparison.
 
 Gating the complete fighter presentation path to logical cadence was tested and
 rejected: tracked state stayed exact, but both fighter-region image errors grew.
@@ -335,7 +332,7 @@ development reservation and produced an unaligned jump. Replacement loggers
 were non-overlapping, bounded, and behavior-preserving.
 
 The experimental ledger is
-`experiments/60 fps/NA228_60_fps.pnach`. It keeps enabled sections at the
+`experiments/60-fps/NA228_60_fps.pnach`. It keeps enabled sections at the
 top and every unresolved candidate in a separate disabled section. The fixed
 Practice PNACH remains separate. The latest exact-state diagnostic deliberately
 used `Fighter animation factor` disabled and the verified logical-phase

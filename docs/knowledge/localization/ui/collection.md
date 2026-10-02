@@ -2,15 +2,18 @@
 
 ## Research coverage
 
-- **Assigned scope:** compare clean NA2 and NUN5 Collection title, prompt, footer, and viewer draw paths.
+- **Assigned scope:** compare retail NA2 (`SLPS-25837`) and NUN5 Collection
+  title, prompt, footer, and viewer draw paths.
 - **Exploration depth:** the relevant binaries, native callers, records, and
   paired screen states were examined.
 - **Confirmed coverage:** the documented owners, structures, and cross-game
   differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
-- **Deliberate exclusions and overlap:** feature imports, hooks, and validation
-  belong to [UI layout](../../../features/localization/ui_layout.md) or
-  [UI textures](../../../features/localization/ui_textures.md).
+- **Deliberate exclusions and overlap:** Collection text layout belongs to
+  [Collection Font layouts](../font/screen_layouts/collection.md); Collection
+  string ownership belongs to
+  [NA2 and NUN5 text correspondence](../translation_importer.md); the shared
+  prompt compositor belongs to [Shared frontend prompt layout](options.md).
 - **Evidence limitations:** bounded states do not cover every animation phase or
   indirect caller.
 
@@ -18,11 +21,10 @@
 
 This record covers the Collection -> Characters title and page controls, the
 Movie/Music titles and their shared Play control, and the four lower viewer
-controls on the character-details screen. It was established from paired
-NA2.28/NUN5 runtime states, canonical files, and the existing Ghidra
-exports; no new disassembly was required.
+controls on the character-details screen. Its evidence is paired retail
+NA2/NUN5 runtime states, the retail files, and their preserved exports.
 
-The clean input identities and load mappings are listed in
+The retail input identities and load mappings are listed in
 [Standard game file identities](../../game/files/file_identities.md).
 
 | Game | Canonical binary | Size |
@@ -31,16 +33,11 @@ The clean input identities and load mappings are listed in
 | NUN5 | `@source_nun5/PRG/ETC.BIN` | 171,776 |
 | NUN5 | `@source_nun5/SLES_556.05` | 5,340,912 |
 
-The reusable exports are
-`@disassembly/NA2/exports/ETC.BIN/ETC.BIN.{c,txt}` and
-`@disassembly/NUN5/exports/ETC.BIN/ETC.BIN.{c,txt}`. Those projects
-map file offset zero 0x40 below the runtime addresses encoded by the MWo3
-header, so an exported Ghidra function address is runtime address minus
-`0x40`. The NUN5 boot-ELF export is
-`@disassembly/NUN5/exports/SLES_556.05/SLES_556.05.{c,txt}`. Its
-first load segment maps file offset `0x180` to runtime `0x00100000`, so the
-localized title and Play records below have runtime address equal to file
-  offset plus `0xFFE80`.
+The preserved ETC exports map file offset zero 0x40 below the runtime
+addresses encoded by the MWo3 header, so an exported Ghidra function address
+is runtime address minus `0x40`. The NUN5 boot ELF's first load segment maps
+file offset `0x180` to runtime `0x00100000`, so the localized title and Play
+records below have runtime address equal to file offset plus `0xFFE80`.
 
 ## Homologous class and draw methods
 
@@ -108,15 +105,15 @@ The title uses a second homologous helper pair:
   captured NUN5 state, locale 0 points to `0x005DDAD0`, whose file-backed
   source begins at NUN5 ELF offset `0x4DDC50`.
 
-| Category | NA2 ETC record | NUN5 localized ELF record | Paired-screen effect |
-| --- | --- | --- | --- |
-| Characters | `(1,1,192,34)` | `(0,0,192,28)` | NA2 samples six pixels of the Movie row. |
-| Movie | `(1,37,136,34)` | `(0,28,96,28)` | NA2 samples the Music row beneath Movie. |
-| Music | `(1,83,80,37)` | `(0,56,96,28)` | NA2 starts below the NUN5 Music row, so the title is absent. |
+| Category | NA2 ETC record | NUN5 localized ELF record |
+| --- | --- | --- |
+| Characters | `(1,1,192,34)` | `(0,0,192,28)` |
+| Movie | `(1,37,136,34)` | `(0,28,96,28)` |
+| Music | `(1,83,80,37)` | `(0,56,96,28)` |
 
 The NUN5 `home03` atlas stores those English labels as consecutive 28-pixel
-rows. The paired states establish that the positions already match and the
-rectangle rows differ.
+rows. The paired states establish that the positions match and the rectangle
+rows differ.
 
 ## Shared Play prompt helper
 
@@ -146,9 +143,8 @@ void draw_home_action_prompt(Sprite *icon, Sprite *label, int state) {
 ```
 
 NA2's Play record is `(120,24,72,24)`, while the NUN5 HOME atlas and localized
-record use `(144,24,72,24)`. The 24-pixel U-coordinate mismatch produces the
-captured `Pl...` clipping on both Movie and Music. A later paired Music
-capture reviews the adjacent state-4 Stop record as well: NA2 uses
+record use `(144,24,72,24)`, a 24-pixel U-coordinate difference. A paired
+Music capture also shows the adjacent state-4 Stop record: NA2 uses
 `(120,48,72,24)`, while NUN5 uses `(144,48,76,24)`.
 
 ## Collection state footer positions
@@ -221,12 +217,10 @@ void draw_home_action_prompt(HomePromptState state) {
 }
 ```
 
-Useful negative result: changing only the nominal `0x2E7E0` table cannot
-express the helper's three distinct `-12`, `-24`, and `-8` state deltas. The
-earlier Collection-root failure of this path proved only that
-that screen uses `FUN_006c8290` and the separate `0x2F010` table; it did not
-disprove the HOME helper for actual consumers such as Collection Music and
-Collection Characters.
+The nominal `0x2E7E0` table alone cannot express the helper's three distinct
+`-12`, `-24`, and `-8` state deltas. The Collection root uses `FUN_006c8290`
+and the separate `0x2F010` table, whereas Collection Music and Collection
+Characters consume the HOME helper.
 
 ## Character viewer lower-control renderer
 
@@ -265,7 +259,7 @@ The record order is Rotate, Move, Zoom In, Zoom Out. NA2 uses positions
 `(344,360)`, `(232,360)`, `(66,360)`, `(148,360)`. NUN5 uses
 `(206,364)`, `(99,364)`, `(97,339)`, `(207,339)`, which produces bottom-row
 Move/Rotate and top-row Zoom In/Zoom Out exactly as seen in the paired capture.
-The first two rectangles are already identical. NUN5 widens the two Zoom
+The first two rectangles are identical. NUN5 widens the two Zoom
 records from 108 to 112 pixels and moves Zoom Out's U coordinate from 120 to
 144 for its English atlas location.
 
@@ -297,18 +291,17 @@ table/function semantics and medium for the exact indirect parent edge.
 | Diorama viewer-control positions | `0x2EBD0` / `0x006E2AD0` | `(440,290)`, `(440,266)`, `(469,218)`, `(468,242)` | `0x28460` / `0x006EF160` | `(440,290)`, `(440,266)`, `(440,218)`, `(440,242)` |
 | viewer-control rectangles | `0x30AB0` / `0x006E49B0` | `(1,72,108,24)`, `(1,48,108,24)`, `(1,96,108,24)`, `(120,1,108,23)` | `0x29A90` / `0x006F0790` | `(1,72,108,24)`, `(1,48,108,24)`, `(1,96,112,24)`, `(144,1,112,23)` |
 
-The Diorama viewer supplies the later screen evidence for the second position
-consumer. Its homologous NUN5 table keeps all four records at X `440`; NA2's
-last two X values, `469` and `468`, clip Zoom In and Zoom Out at the right edge.
+The Diorama viewer supplies the screen evidence for the second position
+consumer. Its homologous NUN5 table keeps all four records at X `440`, while
+NA2 places its last two records, Zoom In and Zoom Out, at X `469` and `468`.
 The four entries form one semantic position table rather than independent
 constants.
 
 NUN5 does not use the shared `ANM_home_vcr_ca` animation record for the
 viewer-state prompt. Its localized accessor selects three English HOME-atlas
 rectangles: Controls `(144,72,112,24)`, Hide `(208,96,48,24)`, and Display
-`(132,96,76,24)`, drawn at `(374,309)` and `(414,324)`. NA2's substring
-animation references instead resolve the suffix as the malformed `Cisplay`
-label against that atlas.
+`(132,96,76,24)`, drawn at `(374,309)` and `(414,324)`. NA2 instead resolves
+the suffix through substring animation references.
 
 Controls/Hide and Display are separate call sites in the handler's draw pair.
 The visible-state call selects Controls or Hide, while the hidden-state call

@@ -9,9 +9,10 @@
 - **Confirmed coverage:** the documented owners, structures, and cross-game
   differences are established.
 - **Unresolved or untested:** callers and states not explicitly covered below.
-- **Deliberate exclusions and overlap:** stage selection and loading belong to
-  [Stages](../../gameplay/stages/stages.md); the shared OK and Back compositor belongs
-  to [Shared frontend prompt layout](options.md).
+- **Deliberate exclusions and overlap:** NA2 Stage Select behavior and records
+  belong to [Native Stage Select](../../game/stage_select.md), stage loading to
+  [Stages](../../gameplay/stages/stages.md); the shared OK and Back compositor
+  belongs to [Shared frontend prompt layout](options.md).
 - **Evidence limitations:** bounded states do not cover every animation phase or
   indirect caller.
 
@@ -21,19 +22,12 @@ Evidence comes from the retail extracted files under `@source_na2` and
 `@source_nun5`, their preserved BTL exports, raw disassembly of ranges the
 exports omit, and paired runtime memory and screenshots.
 
-## Stage records and preview construction
+## Stage records
 
-NA2 file range `0x20FC10..0x20FD8F` is 24 records of 16 bytes:
-
-```cpp
-struct Na2StageRecord {
-    int32_t stage_id;
-    int32_t preview_index;
-    int16_t u, v, width, height;
-};
-```
-
-NUN5 file range `0x215680..0x21573F` is 24 records of eight bytes:
+NA2's 24 sixteen-byte records add the stage-name rectangle to the logical ID
+and preview index; they are described in
+[Native Stage Select](../../game/stage_select.md#stage-records). NUN5 file range
+`0x215680..0x21573F` is 24 records of eight bytes with only the two words:
 
 ```cpp
 struct Nun5StageRecord {
@@ -42,22 +36,9 @@ struct Nun5StageRecord {
 };
 ```
 
-The preserved exports omit a second, structurally matched preview-construction
-range. Its
-relevant NA2 file range is `0x60378..0x60428`; the NUN5 twin is
-`0x62F78..0x63028`. Both compute a row byte offset before choosing a preview
-atlas cell:
-
-```cpp
-int row = find_stage_row(stage_id);
-row = max(row, 0);
-int row_offset = row * record_stride; // 16 in NA2, 8 in NUN5
-int preview_index = stage_records[row].preview_index;
-build_preview_atlas_cell(preview_index);
-```
-
-Both native preview consumers load that word directly, including
-the second consumer at NA2 file offset `0x603B8`.
+The TV preview builders are structural twins: NA2 file range
+`0x60378..0x60428` and NUN5 `0x62F78..0x63028` differ in the record stride,
+16 in NA2 and 8 in NUN5.
 
 ## Localized stage names
 

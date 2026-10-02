@@ -160,7 +160,7 @@ rectangle is `(x,y,width,height)`; dimensions alone do not identify the screen.
 | Integer; BTL window dimmers | `0x006E31FC / 0x006E323C`, `0x006E5260 / 0x006E52A0`, `0x006E722C / 0x006E726C` | `(0,0,512,448)`, black with computed opacity. The first two inspected owners multiply their modal opacity by the parent opacity and `255*0.5`. These masks request 448 logical lines; they do not establish a 448-line viewport. |
 | Integer; two repeated bounded boxes | `0x006E4E98 / 0x006E4ED8`, `0x006E4F18 / 0x006E4F58` in `FUN_006E4D40` | For `i=0,1`, outer `(110,16+36*i,123,25)` in gray `0x808080`; inner `(112,18+36*i,121,23)` in `0xF0F0F0`. Parent `+0x58` controls opacity. The same owner separately draws one of the 512-by-448 dimmers. |
 | Integer; BTL modal cover cohort | `0x006EBCB8 / 0x006EBCF8`, `0x006ED08C / 0x006ED0CC`, `0x006ED2EC / 0x006ED32C`, `0x006EDD3C / 0x006EDD7C`, `0x006EDE00 / 0x006EDE40` | `(0,0,512,384)`, RGBA `0x88000000`, before later modal/menu children. Exact labels are unresolved. |
-| Integer; Stage Select selected-stage fallback | `0x00715394 / 0x007153D4` in `FUN_007151D0`; caller `0x00715D70 / 0x00715DB0` | `(20,340,200,40)`, RGBA `0x7F000000`, in the branch where selected stage does not match the 24-row preview table. The matched branch instead emits a bounded atlas cell through `FUN_0037BD00`. |
+| Integer; Stage Select selected-stage fallback | `0x00715394 / 0x007153D4` in `FUN_007151D0`; caller `0x00715D70 / 0x00715DB0` | `(20,340,200,40)`, RGBA `0x7F000000`, in the branch where selected stage does not match the 24-row record table. The matched branch instead draws the stage-name cell through `FUN_0037BD00`. |
 | Integer; animation-derived BTL rectangle | `0x00876BBC / 0x00876BFC` | Four float fields supplied by the caller become signed-halfword geometry; RGBA is separately supplied. The examined body selects parent-window list `+0x74`. Full-frame coverage and exact screen identity are not established. |
 | Integer; three BTL menu rules | `0x00877344 / 0x00877384` | Copies three 20-byte records from live `0x008BD850` (preserved `0x008BD810`): RGBA `0xFF404040` and rectangles `(200,14,1,296)`, `(284,14,1,296)`, `(8,42,348,2)`. These are bounded vertical/horizontal rules. |
 | Integer; Start Menu host cover | `0x0087D4C8 / 0x0087D508` | Live constant record `0x008BD9F0` (preserved `0x008BD9B0`) supplies RGBA `0x88000000`, `(0,0,512,384)`. Host `+0x3C` selects the list before child dispatch. |
@@ -169,8 +169,8 @@ rectangle is `(x,y,width,height)`; dimensions alone do not identify the screen.
 
 The Start Menu parent and its child/result boundaries are owned by
 [Pause and replay](../../gameplay/session/pause_and_replay.md#btl-start-menu-construction-and-ui-states).
-Stage records and preview construction are owned by
-[Stage Select UI](../../localization/ui/stage_select.md#stage-records-and-preview-construction).
+Stage records, previews, and names are owned by
+[Native Stage Select](../../game/stage_select.md#stage-records).
 
 ## Screen and resource ownership
 

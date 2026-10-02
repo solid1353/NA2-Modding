@@ -189,18 +189,16 @@ The direct resident setter inventory contains only initializer call
 This bounds the observed producer inventory; indirect calls or a differently expressed
 memory access are not excluded.
 
-BTL import/live `FUN_00714420` / `0x00714460` tests all slots `0..23`
-through resident `0x001F58B0` and appends accepted slots to the temporary
-selector list. A null manager admits each slot directly. The list is therefore
-all 24 slots after the recorded initialization. Its complete loop and call
-bytes were corroborated at import `0x00714420..0x007144D3`; the direct call
-is import/live `0x00714464/0x007144A4`, with bytes `2C D6 07 0C`.
+The Stage Select choice list reads this bitset for slots `0..23` through
+`0x001F58B0` at BTL import/live `0x00714464/0x007144A4` (bytes
+`2C D6 07 0C`); a null manager admits each slot directly. The list is
+therefore all 24 slots after the recorded initialization. Its construction
+belongs to [Native Stage Select](stage_select.md#choice-list).
 
 This bitset is resident global state, separate from the serialized profile's
 32-byte small table and from the manager's active or remembered stage slot.
-The selector list is a temporary copy of eligibility. Active slot `+0x98`,
-snapshot slot `+0x114`, preselection and battle-load handoff are owned by
-[Stages](../gameplay/stages/stages.md#archive-preload-adoption-and-switching).
+Active slot `+0x98`, snapshot slot `+0x114`, and the battle-load handoff are
+owned by [Stages](../gameplay/stages/stages.md#archive-preload-adoption-and-switching).
 The initializer sets the 24 native bits without clearing other bit positions;
 the investigated selector reads only those 24 positions.
 

@@ -30,7 +30,7 @@ the setup records it hands to battle.
   [Character asset tables](character_assets.md), support behavior to
   [Battle support mechanics](../gameplay/characters/support_mechanics.md), screen layout
   to [Character Select UI layout](../localization/ui/character_select.md), and
-  Stage Select to [Stages](../gameplay/stages/stages.md).
+  Stage Select to [Native Stage Select](stage_select.md).
 - **Evidence limitations:** Findings are bounded static binary and call-site
   evidence. They establish the recorded paths and data contracts, not every
   possible caller or the visual result of every selection state. BTL function

@@ -63,9 +63,9 @@ Stage Select presentation or Adventure mode.
   - other writers of scene factor `scene+8`; local update counts do not
     establish elapsed time;
   - the exact context-scaled HP delta of the two damaging stage objects.
-- **Deliberate exclusions and overlap:** Adventure mode, Stage Select
-  presentation beyond the slot handoff, localization, and fighter mechanics
-  outside the documented stage consumers. NUN3 stages belong to
+- **Deliberate exclusions and overlap:** Adventure mode, localization, and
+  fighter mechanics outside the documented stage consumers. Stage Select beyond
+  the slot handoff belongs to [Native Stage Select](../../game/stage_select.md). NUN3 stages belong to
   [NUN3 battle stages](nun3_stages.md). Controller/state ownership belongs to
   [Battle AI](../session/battle_ai.md); the general collision queries, including the
   boundary clamp and floor-profile query over stage lines, belong to
@@ -123,10 +123,10 @@ The raw ID mapper begins at Ghidra-located bytes `0x006C14A0`, file
 ```
 
 The same sequence is independently present as
-the first word of 24 `0x10`-byte records at Ghidra/file/live
-`0x008C3AD0 / 0x20FC10 / 0x008C3B10`; their second word is the zero-based slot.
-The remaining record fields are outside this document's gameplay scope and
-are not assigned semantics here.
+the first word of the 24 Stage Select records at Ghidra/file/live
+`0x008C3AD0 / 0x20FC10 / 0x008C3B10`. Their second word is a preview index,
+equal to the slot in every retail row; the records belong to
+[Native Stage Select](../../game/stage_select.md#stage-records).
 
 | Logical ID | Load slot | Archive |
 | ---: | ---: | --- |
@@ -189,23 +189,12 @@ stage-archive sequence is:
 
 No direct caller of the `FUN_001e9520(0)` synchronous branch was found.
 
-The state-9 handoff is a raw slot handoff, not a logical-ID conversion. Live
-BTL `0x00714460` (preserved `FUN_00714420`, file `0x060560`) clears the
-selection object's choice count, tests slots 0 through 23 in ascending order
-with resident `FUN_001f58b0(manager, slot)`, and appends each accepted raw slot
-to the choice array at object `+0x14`. State 9 initializes the `0x16C`-byte
-selection object through live BTL `0x00713A50` and `0x00713DC0`, scans for the
-initial choice through live `0x007147C0`, polls live `0x00715830`, and on
-success invokes the getter at live `0x00714810`. That getter indexes the
-object's choice array from its current index at `+0x74`; state 9 stores the low
-byte of the selected entry directly at manager `+0x98`. While selection remains
-in progress it calls live `0x00715CC0`; before freeing the object it calls live
-`0x00713B20`. Controller mode 2 requests/preselects slot 6; the setter first
-clears index `+0x74`, scans the available choice array for value 6, and leaves
-index zero when it is absent. Resident setup initializes the slot bitset at
-runtime `0x00607688` from the exact byte sequence `0..23`, and no decoded clear
-path exists; consequently the retail choice list is all 24 raw slots in order
-and mode 2 hands off slot 6.
+The state-9 handoff is a raw slot handoff, not a logical-ID conversion. State 9
+runs the BTL Stage Select object described in
+[Native Stage Select](../../game/stage_select.md); on success its getter at
+live `0x00714810` returns the raw slot of the current choice, and state 9 stores
+its low byte directly at manager `+0x98`. The retail choice list is all 24 raw
+slots in ascending order, and controller mode 2 preselects slot 6.
 
 The initializer itself reads manager snapshot byte `+0x114` and preselects that
 slot. State 9 then calls the selection setter again at runtime `0x001ED770`.

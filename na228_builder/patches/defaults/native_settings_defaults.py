@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment
-from ..battle_mechanics.battle_settings_runtime import (
+from .battle_mechanics.battle_settings_runtime import (
     PRACTICE_SETTINGS_PATH,
     ULTIMATE_JUTSU_NATIVE_DEFAULT,
     ULTIMATE_JUTSU_NATIVE_MODE_COUNT,

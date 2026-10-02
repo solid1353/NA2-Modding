@@ -11,7 +11,7 @@ from unittest import mock
 
 from na228_builder.infrastructure.modules.binary_patcher import adapters
 from na228_builder.infrastructure.orchestration import catalog, catalog_format, jsonc
-from na228_builder.patches.settings.mod_settings.mod_settings import (
+from na228_builder.patches.defaults.mod_settings.mod_settings import (
     mod_settings_state_fragment,
 )
 from scripts.lib.paths import load_local_paths

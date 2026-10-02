@@ -1,6 +1,6 @@
 /* Character Select overlay for per-character balance values. */
 
-#include "../../localization/mod_strings.h"
+#include "../../../localization/mod_strings.h"
 
 typedef unsigned char u8;
 typedef signed int s32;

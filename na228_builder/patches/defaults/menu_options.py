@@ -6,14 +6,14 @@ from na228_builder.patches.localization.mod_strings import Message, message
 from dataclasses import dataclass
 from decimal import Decimal
 
-from ..battle_mechanics.battle_settings_runtime import (
+from .battle_mechanics.battle_settings_runtime import (
     BATTLE_MECHANICS_PATH,
     EXTENDED_ITEMS_PATH,
     MATCH_SETUP_PATH,
     extended_items_option_default,
 )
-from ..battle_mechanics.substitution_resource.substitution_gauge import gauge_option_defaults, chakra_minimum_option_default
-from ..battle_mechanics.items.items_settings import FIELD_ITEMS, ITEM_VALUE_LABELS, items_option_defaults
+from .battle_mechanics.substitution_resource.substitution_gauge import gauge_option_defaults, chakra_minimum_option_default
+from .battle_mechanics.items.items_settings import FIELD_ITEMS, ITEM_VALUE_LABELS, items_option_defaults
 
 
 MOD_SETTINGS_PATH = ("features", "defaults", "mod_settings")

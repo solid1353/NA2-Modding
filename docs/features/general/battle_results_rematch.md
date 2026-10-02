@@ -69,7 +69,7 @@ source archive and existing binary sizes intact.
 
 ## Label asset
 
-`na228_builder/patches/general/rematch_label.png` renders the complete word as
+`na228_builder/patches/general/battle_results_rematch/rematch_label.png` renders the complete word as
 one coherent wordmark. Its proportions and baseline match the native Next and
 Display details prompts, while its continuous cream edge matches the Mod
 prompt, including the inner letter openings.

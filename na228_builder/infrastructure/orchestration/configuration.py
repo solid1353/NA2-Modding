@@ -13,7 +13,7 @@ from scripts.lib.paths import Paths, load_paths
 
 if TYPE_CHECKING:
     from .catalog import CatalogSelection
-    from ...patches.settings.character_overrides.character_overrides import CharacterOverrideConfiguration
+    from ...patches.defaults.match_setup.character_balance.character_overrides import CharacterOverrideConfiguration
 
 
 BUILDER_TARGETS_FILE = Path("infrastructure") / "targets.tsv"
@@ -371,7 +371,7 @@ def load_configuration(
         overrides=overrides,
     )
     paths = project_paths or load_paths(workspace, allow_missing=True)
-    from ...patches.settings.character_overrides.character_overrides import (
+    from ...patches.defaults.match_setup.character_balance.character_overrides import (
         load_character_overrides,
     )
 

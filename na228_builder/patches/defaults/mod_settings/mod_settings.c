@@ -1,6 +1,6 @@
 /* Mode Select host and session-wide state for the shared Mod Settings menu. */
 
-#include "../ingame/shared/menu_pages.h"
+#include "../menu_pages.h"
 
 typedef unsigned char u8;
 typedef unsigned short u16;

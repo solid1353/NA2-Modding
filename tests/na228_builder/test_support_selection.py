@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 from na228_builder.infrastructure.orchestration import catalog
-from na228_builder.patches.settings.mod_settings.mod_settings import (
+from na228_builder.patches.defaults.mod_settings.mod_settings import (
     mod_settings_state_fragment,
 )
 from scripts.lib.paths import load_local_paths

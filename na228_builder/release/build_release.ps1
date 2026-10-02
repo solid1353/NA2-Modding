@@ -275,7 +275,7 @@ raise SystemExit(main(argv=sys.argv[1:]))
         -Failure 'Could not construct the merged release configuration.' `
         -ArgumentList @($configurationPath, 'public')
     $characterOverrideProbe = @'
-from na228_builder.patches.settings.character_overrides.character_overrides import (
+from na228_builder.patches.defaults.match_setup.character_balance.character_overrides import (
     load_character_overrides,
     render_character_overrides,
 )

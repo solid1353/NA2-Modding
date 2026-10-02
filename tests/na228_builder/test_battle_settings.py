@@ -9,13 +9,13 @@ from types import SimpleNamespace
 
 from na228_builder.infrastructure.orchestration import catalog
 from na228_builder.patches.localization.mod_strings import ModStrings
-from na228_builder.patches.settings.ingame.battle_mode.battle_settings import (
+from na228_builder.patches.defaults.battle_settings.battle_settings import (
     _active_pages,
     battle_settings_fragments,
 )
 from scripts.lib.paths import load_local_paths
-from na228_builder.patches.settings.ingame.shared.menu_options import MenuOption
-from na228_builder.patches.settings.ingame.shared.menu_pages import page_resource_fragments
+from na228_builder.patches.defaults.menu_options import MenuOption
+from na228_builder.patches.defaults.menu_pages import page_resource_fragments
 from tests.na228_builder._fixtures import test_features
 
 
@@ -136,9 +136,9 @@ class BattleSettingsTests(unittest.TestCase):
 
     def test_select_reset_rejoins_the_native_sound_path(self) -> None:
         manifest = json.loads(
-            (self.builder / "patches/settings/settings.json").read_text(encoding="utf-8")
+            (self.builder / "patches/defaults/defaults.json").read_text(encoding="utf-8")
         )
-        edit = manifest["settings.ingame"]["edits"]["skip_native_battle_select_defaults"]
+        edit = manifest["defaults"]["edits"]["skip_native_battle_select_defaults"]
         self.assertEqual(int(edit["destination_offset"], 16), 0x1CBD08)
         jump, delay_slot = struct.unpack("<II", bytes.fromhex(edit["replacement_hex"]))
         self.assertEqual(jump >> 26, 2)

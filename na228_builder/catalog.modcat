@@ -83,58 +83,58 @@ type com_difficulty = "simple" | "easy" | "normal" | "hard" | "insane" | "ultima
     } | false,
     defaults: {
       description: "Set initial values and Return to Defaults values for in-game options. Loaded save settings override initial values.",
-      patch: "settings.ingame",
+      patch: "defaults",
       mod_settings: {
         description: "Configure the options available in the in-game Mod Settings menu.",
-        patch: "settings.mod_settings",
+        patch: "defaults.mod_settings",
         match_setup_submenu: setting {},
         battle_mechanics_submenu: setting {},
         battle_settings_submenu: setting {},
         practice_settings_submenu: setting {},
         control_settings_submenu: setting {},
         simple_display: setting<"off" | "on"> {
-          patch: "settings.simple_display",
+          patch: "defaults.mod_settings.simple_display",
         },
       },
       match_setup: {
         support_selection: setting<"none" | "relevant" | "all"> {
           description: "Control which supports are available during Character Select.",
-          patch: "character_select.support_selection",
+          patch: "defaults.match_setup.support_selection",
         },
         character_balance: setting<"original" | "overrides"> {
           description: "Choose between original character balance and the configured balance changes.",
-          patch: "settings.character_overrides",
+          patch: "defaults.match_setup.character_balance",
         },
         balance_overlay: setting<"off" | "on"> {
           description: "Show character balance information on Character Select.",
-          patch: "character_select.balance_overlay",
+          patch: "defaults.match_setup.balance_overlay",
         },
         extended_items: setting<"off" | "on"> {
           description: "Enable five battle-item slots instead of the native three.",
-          patch: "settings.extended_items",
+          patch: "defaults.match_setup.extended_items",
         },
       },
       battle_mechanics: {
         chakra: setting<"normal" | "unlimited" | decimal & 0.1..10 & step 0.1> {
-          patch: "settings.battle_mechanics.chakra",
+          patch: "defaults.battle_mechanics.chakra",
         },
         ultimate_jutsu: setting<"no_use" | "random" | "command" | "timing" | "turn" | "combo" | "no_contest" | "no_hud"> {
-          patch: "settings.battle_mechanics.ultimate_jutsu",
+          patch: "defaults.battle_mechanics.ultimate_jutsu",
         },
         shadowblur: setting<"off" | "on"> {
-          patch: "settings.battle_mechanics.shadowblur",
+          patch: "defaults.battle_mechanics.shadowblur",
         },
         extra_hit: setting<"off" | "on" | int & -100..-5 & step 5> {
-          patch: "settings.battle_mechanics.extra_hit",
+          patch: "defaults.battle_mechanics.extra_hit",
         },
         xdash_chakra_cost: setting<int & 0..100 & step 5> {
-          patch: "settings.battle_mechanics.xdash_chakra_cost",
+          patch: "defaults.battle_mechanics.xdash_chakra_cost",
         },
         support: setting<"off" | "nerfed" | "normal" | "unlimited"> {
-          patch: "settings.battle_mechanics.support",
+          patch: "defaults.battle_mechanics.support",
         },
         substitution_input: setting<"default" | "hold" | int & 1..15> {
-          patch: "settings.battle_mechanics.substitution_input",
+          patch: "defaults.battle_mechanics.substitution_input",
         },
         substitution_resource: setting<{
             value: "chakra" | "gauge" | "free",
@@ -149,7 +149,7 @@ type com_difficulty = "simple" | "easy" | "normal" | "hard" | "insane" | "ultima
             },
           }> {
           description: "Choose whether substitution uses chakra, uses a gauge, or is free, and configure gauge recovery.",
-          patch: "settings.battle_mechanics.substitution_resource",
+          patch: "defaults.battle_mechanics.substitution_resource",
         },
         items: setting<{
           value: "none" | "less" | "normal" | "more" | "custom",
@@ -182,7 +182,7 @@ type com_difficulty = "simple" | "easy" | "normal" | "hard" | "insane" | "ultima
             stun_ball: "off" | "on",
           },
         }> {
-          patch: "settings.battle_mechanics.items",
+          patch: "defaults.battle_mechanics.items",
         },
       },
       battle_settings: {
@@ -209,7 +209,7 @@ type com_difficulty = "simple" | "easy" | "normal" | "hard" | "insane" | "ultima
       },
       control_settings: {
         description: "Allow separate Guard and Substitution bindings, plus two Guard/Sub bindings, and set the default action for each button.",
-        patch: "general.controls",
+        patch: "defaults.control_settings",
         circle: setting<control_action> {},
         triangle: setting<control_action> {},
         square: setting<control_action> {},

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from na228_builder.infrastructure.orchestration import catalog
 from na228_builder.patches.localization.mod_strings import ModStrings
-from na228_builder.patches.settings.mod_settings.mod_settings import _pages
+from na228_builder.patches.defaults.mod_settings.mod_settings import _pages
 from scripts.lib.paths import load_local_paths
 from tests.na228_builder._fixtures import test_features
 

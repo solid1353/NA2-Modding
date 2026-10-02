@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Mapping
 
 from na228_builder.infrastructure.modules.payload_builder.builder import ResidentPayloadConfig
-from na228_builder.patches.settings.ingame.battle_mechanics.items.items_settings import FIELD_ITEMS
+from na228_builder.patches.defaults.battle_mechanics.items.items_settings import FIELD_ITEMS
 
 
 def test_features() -> dict[str, object]:

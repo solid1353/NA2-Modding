@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 from na228_builder.infrastructure.orchestration import catalog
-from na228_builder.patches.settings.ingame.battle_mechanics.battle_settings_runtime import (
+from na228_builder.patches.defaults.battle_mechanics.battle_settings_runtime import (
     battle_settings_runtime_fragments,
 )
 from scripts.lib.paths import load_local_paths

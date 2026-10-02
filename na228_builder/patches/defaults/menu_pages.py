@@ -9,7 +9,7 @@ from functools import partial
 from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment, PayloadRelocation
 from na228_builder.infrastructure.orchestration.catalog_format import ContainerNode, SettingNode, ObjectType, LiteralType, UnionType
 from .menu_options import PAGE_TITLES, items_mode_option, menu_option_bindings
-from ..battle_mechanics.battle_settings_runtime import (
+from .battle_mechanics.battle_settings_runtime import (
     BATTLE_MECHANICS_PATH,
     CHAKRA_REGEN_LABELS,
     CHAKRA_STATIC_LABELS,

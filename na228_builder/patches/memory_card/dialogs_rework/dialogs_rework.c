@@ -1,5 +1,5 @@
 /* Shared memory-card confirmation flow, independent of slot count. */
-#include "save_load.h"
+#include "../save_load.h"
 
 extern const UpdateFunction dialogs_rework_next_update;
 

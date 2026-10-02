@@ -8,7 +8,7 @@ from pathlib import Path
 
 from na228_builder.infrastructure.orchestration import catalog
 from na228_builder.patches.localization.mod_strings import ModStrings
-from na228_builder.patches.settings.ingame.practice_mode.practice_settings import (
+from na228_builder.patches.defaults.practice_settings.practice_settings import (
     _active_pages,
     practice_settings_fragments,
 )
@@ -159,7 +159,7 @@ class PracticeSettingsTests(unittest.TestCase):
         )
 
     def test_scroll_flag_bridge_can_skip_the_native_up_arrow(self) -> None:
-        injection = self.selection.injections["settings.ingame"]
+        injection = self.selection.injections["defaults"]
         source = injection["payload"]["settings_menu_presentation_abi"]
         compiled = {
             fragment.symbol: fragment

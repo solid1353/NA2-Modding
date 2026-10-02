@@ -216,7 +216,7 @@ face texture, so other bindings otherwise show a d-pad or nothing. See
 
 ## Builder hook map
 
-Use `general.controls` in `@builder/patches/general/general.json`. Its
+Use `defaults.control_settings` in `@builder/patches/defaults/defaults.json`. Its
 guarded entries are:
 
 | Purpose | Target/offset | Behavior |
@@ -244,9 +244,9 @@ or R3.
 
 | Purpose | Canonical location |
 | --- | --- |
-| Editor, bindings, and input | `@builder/patches/general/controls/control_settings.c` and `control_settings_abi.S` |
-| Default layout | `features.defaults.control_settings` in `@builder/configurations/base.jsonc` and `release.jsonc`, read by `@builder/patches/general/controls/control_defaults.py` |
-| Appendix fields | `@builder/resources/save_appendix.tsv` and `@builder/patches/memory_card/save_appendix.py` |
+| Editor, bindings, and input | `@builder/patches/defaults/control_settings/control_settings.c` and `control_settings_abi.S` |
+| Default layout | `features.defaults.control_settings` in `@builder/configurations/base.jsonc` and `release.jsonc`, read by `@builder/patches/defaults/control_settings/control_defaults.py` |
+| Appendix fields | `@builder/resources/save_appendix.tsv` and `@builder/patches/memory_card/extended_save_data/save_appendix.py` |
 | Control Settings ownership and composition tests | `tests/na228_builder/test_control_settings.py` |
 
 ## Remaining runtime validation

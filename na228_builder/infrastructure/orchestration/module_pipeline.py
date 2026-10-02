@@ -17,25 +17,25 @@ from ..modules.payload_builder.operations import (
 from .configuration import BuildConfiguration, ModuleInvocation
 from ...patches.localization.mod_strings import ModStrings
 from ...patches.localization.retail_strings import owned_retail_strings, retail_string_package
-from ...patches.settings.character_overrides.character_overrides import (
+from ...patches.defaults.match_setup.character_balance.character_overrides import (
     character_override_fragment,
 )
-from ...patches.settings.ingame.battle_mode.battle_settings import battle_settings_fragments
-from ...patches.settings.ingame.battle_mechanics.substitution_resource.substitution_gauge import substitution_gauge_fragment
-from ...patches.settings.ingame.battle_mechanics.items.items_settings import items_settings_fragment
-from ...patches.settings.ingame.practice_mode.practice_settings import practice_settings_fragments
-from ...patches.settings.ingame.battle_mechanics.battle_settings_runtime import battle_settings_runtime_fragments
-from ...patches.settings.ingame.shared.native_settings_defaults import native_settings_defaults_fragment
-from ...patches.settings.mod_settings.mod_settings import (
+from ...patches.defaults.battle_settings.battle_settings import battle_settings_fragments
+from ...patches.defaults.battle_mechanics.substitution_resource.substitution_gauge import substitution_gauge_fragment
+from ...patches.defaults.battle_mechanics.items.items_settings import items_settings_fragment
+from ...patches.defaults.practice_settings.practice_settings import practice_settings_fragments
+from ...patches.defaults.battle_mechanics.battle_settings_runtime import battle_settings_runtime_fragments
+from ...patches.defaults.native_settings_defaults import native_settings_defaults_fragment
+from ...patches.defaults.mod_settings.mod_settings import (
     mod_settings_graphics_fragments,
     mod_settings_menu_fragments,
     mod_settings_state_fragment,
 )
 from ...patches.general.unlock_all.unlock_all import unlock_all_configuration_fragment
-from ...patches.general.battle_results_rematch import rematch_label_fragment
-from ...patches.general.controls.control_defaults import control_default_fragments
+from ...patches.general.battle_results_rematch.battle_results_rematch import rematch_label_fragment
+from ...patches.defaults.control_settings.control_defaults import control_default_fragments
 from ...patches.memory_card.save_load import save_load_continuation_fragments
-from ...patches.memory_card.save_appendix import (
+from ...patches.memory_card.extended_save_data.save_appendix import (
     save_appendix_load_status_fragment,
     save_appendix_schema_fragment,
 )

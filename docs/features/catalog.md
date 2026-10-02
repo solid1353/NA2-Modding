@@ -139,10 +139,13 @@ mapping syntax, exported layout, and packaged defaults.
 
 ## Patch mappings and validation
 
-Each dotted `patch` ID must resolve in
-`patches/<first-segment>/<first-segment>.json` and match that file's first
-segment. A patch may be referenced directly only once; shared patches belong
-on the lowest common container. Internal patches may instead be reached through
+A patch referenced by a catalog node uses that node's path below `features` as
+its ID, and its sources live in the matching `patches/` directory; a node's
+shared sources live in the node's own directory. Each ID must resolve in
+`patches/<first-segment>/<first-segment>.json`. Internal patches reached only
+through `includes` keep their IDs under their feature. A patch may be
+referenced directly only once; shared patches belong on the lowest common
+container. Internal patches may instead be reached through
 `includes`. Unreachable definitions are rejected.
 
 | Definition field | Purpose |

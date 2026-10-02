@@ -9,11 +9,11 @@ from typing import TYPE_CHECKING
 
 from na228_builder.infrastructure.common import indexed_png_pixels
 from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment
-from ..ingame.battle_mode.battle_settings import (
+from ..battle_settings.battle_settings import (
     LAYOUT as BATTLE_LAYOUT,
     NATIVE_ROWS as BATTLE_NATIVE_ROWS,
 )
-from ..ingame.practice_mode.practice_settings import (
+from ..practice_settings.practice_settings import (
     LAYOUT as PRACTICE_LAYOUT,
     NATIVE_ROWS as PRACTICE_NATIVE_ROWS,
     ROW_FLAG_HANDICAP,
@@ -23,9 +23,9 @@ from ..ingame.practice_mode.practice_settings import (
     PracticeRow,
     practice_native_row,
 )
-from ..ingame.battle_mechanics.battle_settings_runtime import PRACTICE_SETTINGS_PATH
-from ..ingame.shared.menu_options import MOD_SETTINGS_PATH, MenuOption, mod_setting_values
-from ..ingame.shared.menu_pages import (
+from ..battle_mechanics.battle_settings_runtime import PRACTICE_SETTINGS_PATH
+from ..menu_options import MOD_SETTINGS_PATH, MenuOption, mod_setting_values
+from ..menu_pages import (
     ROW_LOCAL_CUSTOM,
     MenuPage,
     build_menu_pages,
@@ -33,7 +33,7 @@ from ..ingame.shared.menu_pages import (
     page_resource_fragments,
     settings_schema_fragment,
 )
-from ..ingame.shared.native_settings_defaults import (
+from ..native_settings_defaults import (
     BATTLE_ROW_IDS,
     BATTLE_SETTINGS_PATH,
     PRACTICE_GENERAL_ROW_IDS,

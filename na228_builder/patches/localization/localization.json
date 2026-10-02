@@ -81,28 +81,28 @@
       "glyph_geometry_abi": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/font/glyphs/font_glyph_geometry_abi.S",
-        "namespace": "localization.font.glyph.geometry.asm",
+        "namespace": "localization.font.glyphs.glyph_geometry_abi",
         "imports": {},
         "fragments": {
           "glyph_normal_bottom_edge": {
-            "object": "localization.font.glyph.geometry.asm.text.glyph.normal.bottom.edge"
+            "object": "localization.font.glyphs.glyph_geometry_abi.text.glyph.normal.bottom.edge"
           },
           "glyph_secondary_cell_guard": {
-            "object": "localization.font.glyph.geometry.asm.text.glyph.secondary.cell.guard"
+            "object": "localization.font.glyphs.glyph_geometry_abi.text.glyph.secondary.cell.guard"
           }
         }
       },
       "glyph_metrics": {
         "kind": "c",
         "path": "na228_builder/patches/localization/font/glyphs/font_glyph_metrics.c",
-        "namespace": "localization.font.glyph.c",
+        "namespace": "localization.font.glyphs.glyph_metrics",
         "imports": {},
         "fragments": {
           "glyph_metric_lookup": {
-            "object": "localization.font.glyph.c.text.font.glyph.metric.lookup"
+            "object": "localization.font.glyphs.glyph_metrics.text.font.glyph.metric.lookup"
           },
           "glyph_metric_apply": {
-            "object": "localization.font.glyph.c.text.font.glyph.metric.apply"
+            "object": "localization.font.glyphs.glyph_metrics.text.font.glyph.metric.apply"
           }
         }
       }
@@ -1061,59 +1061,59 @@
       "v2_running_help": {
         "kind": "c",
         "path": "na228_builder/patches/localization/font/layout/font_v2_running_help.c",
-        "namespace": "localization.font.v2.c",
+        "namespace": "localization.font.layout.v2_running_help",
         "imports": {
           "font_v2_active_session": "v2_session_pointer"
         },
         "fragments": {
           "v2_help_begin": {
-            "object": "localization.font.v2.c.text.font.v2.help.begin"
+            "object": "localization.font.layout.v2_running_help.text.font.v2.help.begin"
           },
           "v2_help_end": {
-            "object": "localization.font.v2.c.text.font.v2.help.end"
+            "object": "localization.font.layout.v2_running_help.text.font.v2.help.end"
           },
           "v2_help_measure": {
-            "object": "localization.font.v2.c.text.font.v2.help.measure"
+            "object": "localization.font.layout.v2_running_help.text.font.v2.help.measure"
           },
           "v2_help_set": {
-            "object": "localization.font.v2.c.text.font.v2.help.set"
+            "object": "localization.font.layout.v2_running_help.text.font.v2.help.set"
           },
           "v2_help_draw": {
-            "object": "localization.font.v2.c.text.font.v2.help.draw"
+            "object": "localization.font.layout.v2_running_help.text.font.v2.help.draw"
           },
           "v2_help_font": {
-            "object": "localization.font.v2.c.rodata.font.v2.help.font"
+            "object": "localization.font.layout.v2_running_help.rodata.font.v2.help.font"
           }
         }
       },
       "font_v2_character_select_modal_abi": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/font/layout/font_v2_character_select_modal_abi.S",
-        "namespace": "localization.font.v2.character.select.modal.asm",
+        "namespace": "localization.font.layout.font_v2_character_select_modal_abi",
         "imports": {
           "v2_c_character_scope_enter": "v2_c_character_scope_enter",
           "v2_c_quit_scope_leave": "v2_c_quit_scope_leave"
         },
         "fragments": {
           "v2_character_choices_scope": {
-            "object": "localization.font.v2.character.select.modal.asm.text.v2.character.choices.scope"
+            "object": "localization.font.layout.font_v2_character_select_modal_abi.text.v2.character.choices.scope"
           }
         }
       },
       "font_v2_command_relationships_abi": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/font/layout/font_v2_command_relationships_abi.S",
-        "namespace": "localization.font.v2.command.relationships.asm",
+        "namespace": "localization.font.layout.font_v2_command_relationships_abi",
         "imports": {
           "v2_c_command_icon_offset": "v2_c_command_icon_offset",
           "v2_c_command_relationship_impl": "v2_c_command_relationship_impl"
         },
         "fragments": {
           "v2_command_icon_offset_adapter": {
-            "object": "localization.font.v2.command.relationships.asm.text.v2.command.icon.offset.adapter"
+            "object": "localization.font.layout.font_v2_command_relationships_abi.text.v2.command.icon.offset.adapter"
           },
           "v2_command_relationship_adapter": {
-            "object": "localization.font.v2.command.relationships.asm.text.v2.command.relationship.adapter",
+            "object": "localization.font.layout.font_v2_command_relationships_abi.text.v2.command.relationship.adapter",
             "abi": "command_relationship_native",
             "description": "Command Chart relationship row"
           }
@@ -1122,70 +1122,70 @@
       "font_v2_core_abi": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/font/layout/font_v2_core_abi.S",
-        "namespace": "localization.font.v2.core.asm",
+        "namespace": "localization.font.layout.font_v2_core_abi",
         "imports": {
           "v2_session_pointer": "v2_session_pointer"
         },
         "fragments": {
           "v2_glyph_advance": {
-            "object": "localization.font.v2.core.asm.text.v2.glyph.advance"
+            "object": "localization.font.layout.font_v2_core_abi.text.v2.glyph.advance"
           },
           "v2_half_space": {
-            "object": "localization.font.v2.core.asm.text.v2.half.space"
+            "object": "localization.font.layout.font_v2_core_abi.text.v2.half.space"
           },
           "v2_newline_advance": {
-            "object": "localization.font.v2.core.asm.text.v2.newline.advance"
+            "object": "localization.font.layout.font_v2_core_abi.text.v2.newline.advance"
           },
           "v2_plain_space": {
-            "object": "localization.font.v2.core.asm.text.v2.plain.space"
+            "object": "localization.font.layout.font_v2_core_abi.text.v2.plain.space"
           },
           "v2_right_edge": {
-            "object": "localization.font.v2.core.asm.text.v2.right.edge"
+            "object": "localization.font.layout.font_v2_core_abi.text.v2.right.edge"
           }
         }
       },
       "font_v2_global_selected_style_abi": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/font/layout/font_v2_global_selected_style_abi.S",
-        "namespace": "localization.font.v2.global.selected.style.asm",
+        "namespace": "localization.font.layout.font_v2_global_selected_style_abi",
         "imports": {},
         "fragments": {
           "v2_global_selected_record_draw": {
-            "object": "localization.font.v2.global.selected.style.asm.text.v2.global.selected.record.draw"
+            "object": "localization.font.layout.font_v2_global_selected_style_abi.text.v2.global.selected.record.draw"
           },
           "v2_global_selected_style": {
-            "object": "localization.font.v2.global.selected.style.asm.text.v2.global.selected.style"
+            "object": "localization.font.layout.font_v2_global_selected_style_abi.text.v2.global.selected.style"
           }
         }
       },
       "font_v2_selected_style": {
         "kind": "c",
         "path": "na228_builder/patches/localization/font/layout/font_v2_selected_style.c",
-        "namespace": "localization.font.v2.selected.style.c",
+        "namespace": "localization.font.layout.font_v2_selected_style",
         "imports": {},
         "fragments": {
           "v2_global_two_choice_draw": {
-            "object": "localization.font.v2.selected.style.c.text.font.v2.global.two.choice.draw"
+            "object": "localization.font.layout.font_v2_selected_style.text.font.v2.global.two.choice.draw"
           }
         }
       },
       "font_v2_practice_explanations_abi": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/font/layout/font_v2_practice_explanations_abi.S",
-        "namespace": "localization.font.v2.practice.explanations.asm",
+        "namespace": "localization.font.layout.font_v2_practice_explanations_abi",
         "imports": {
           "v2_c_practice_adapter_impl": "v2_c_practice_adapter_impl"
         },
         "fragments": {
           "v2_practice_adapter": {
-            "object": "localization.font.v2.practice.explanations.asm.text.v2.practice.adapter"
+            "object": "localization.font.layout.font_v2_practice_explanations_abi.text.v2.practice.adapter"
           }
         }
       },
       "font_v2_quit_confirmation_abi": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/font/layout/font_v2_quit_confirmation_abi.S",
-        "namespace": "localization.font.v2.quit.confirmation.asm",
+        "namespace": "localization.font.layout.font_v2_quit_confirmation_abi",
         "imports": {
           "v2_quit_active": "v2_quit_active",
           "v2_c_quit_selected_map": "v2_c_quit_selected_map",
@@ -1193,46 +1193,46 @@
         },
         "fragments": {
           "v2_quit_selected_adapter": {
-            "object": "localization.font.v2.quit.confirmation.asm.text.v2.quit.selected.adapter"
+            "object": "localization.font.layout.font_v2_quit_confirmation_abi.text.v2.quit.selected.adapter"
           }
         }
       },
       "font_v2_runtime_abi": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/font/layout/font_v2_runtime_abi.S",
-        "namespace": "localization.font.v2.runtime.asm",
+        "namespace": "localization.font.layout.font_v2_runtime_abi",
         "imports": {
           "v2_c_quit_scope_enter": "v2_c_quit_scope_enter",
           "v2_c_quit_scope_leave": "v2_c_quit_scope_leave"
         },
         "fragments": {
           "v2_pause_list_callback": {
-            "object": "localization.font.v2.runtime.asm.text.v2.pause.list.callback"
+            "object": "localization.font.layout.font_v2_runtime_abi.text.v2.pause.list.callback"
           },
           "v2_pause_list_selected_callback": {
-            "object": "localization.font.v2.runtime.asm.text.v2.pause.list.selected.callback"
+            "object": "localization.font.layout.font_v2_runtime_abi.text.v2.pause.list.selected.callback"
           },
           "v2_quit_choices_scope": {
-            "object": "localization.font.v2.runtime.asm.text.v2.quit.choices.scope"
+            "object": "localization.font.layout.font_v2_runtime_abi.text.v2.quit.choices.scope"
           },
           "v2_special_choice_selected_callback": {
-            "object": "localization.font.v2.runtime.asm.text.v2.special.choice.selected.callback"
+            "object": "localization.font.layout.font_v2_runtime_abi.text.v2.special.choice.selected.callback"
           },
           "v2_title_callback": {
-            "object": "localization.font.v2.runtime.asm.text.v2.title.callback"
+            "object": "localization.font.layout.font_v2_runtime_abi.text.v2.title.callback"
           }
         }
       },
       "font_screen_position_abi": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/font/layout/font_screen_position_abi.S",
-        "namespace": "localization.font.screen.position.asm",
+        "namespace": "localization.font.layout.font_screen_position_abi",
         "imports": {
           "v2_session_pointer": "v2_session_pointer"
         },
         "fragments": {
           "screen_position_text_draw": {
-            "object": "localization.font.screen.position.asm.text.screen.position.text.draw",
+            "object": "localization.font.layout.font_screen_position_abi.text.screen.position.text.draw",
             "description": "Screen Settings text draw with scoped NUN5 secondary ASCII renderer state"
           }
         }
@@ -1240,7 +1240,7 @@
       "v2_menus": {
         "kind": "c",
         "path": "na228_builder/patches/localization/font/layout/font_v2_menus.c",
-        "namespace": "localization.font.v2.c",
+        "namespace": "localization.font.layout.v2_menus",
         "imports": {
           "font_v2_active_session": "v2_session_pointer",
           "font_v2_pause_list_callback": "v2_pause_list_callback",
@@ -1253,83 +1253,83 @@
         },
         "fragments": {
           "v2_controls_callback": {
-            "object": "localization.font.v2.c.text.font.v2.controls.callback"
+            "object": "localization.font.layout.v2_menus.text.font.v2.controls.callback"
           },
           "v2_controls_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.controls.adapter",
+            "object": "localization.font.layout.v2_menus.text.font.v2.controls.adapter",
             "abi": "text_style_center_x_draw_y",
             "description": "Controls and Special Controls one-line labels"
           },
           "v2_title_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.title.adapter.common"
+            "object": "localization.font.layout.v2_menus.text.font.v2.title.adapter.common"
           },
           "v2_command_title_entry": {
-            "object": "localization.font.v2.c.text.font.v2.command.title.entry",
+            "object": "localization.font.layout.v2_menus.text.font.v2.command.title.entry",
             "abi": "arg0_text_arg2_native_x_native_y",
             "description": "Command Chart title"
           },
           "v2_practice_title_entry": {
-            "object": "localization.font.v2.c.text.font.v2.practice.title.entry",
+            "object": "localization.font.layout.v2_menus.text.font.v2.practice.title.entry",
             "abi": "arg0_text_arg2_native_x_native_y",
             "description": "Practice title"
           },
           "v2_pause_list_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.pause.list.adapter",
+            "object": "localization.font.layout.v2_menus.text.font.v2.pause.list.adapter",
             "abi": "arg0_text_arg2_native_x_native_y",
             "description": "Pause-list row"
           },
           "v2_c_pause_list_selected_impl": {
-            "object": "localization.font.v2.c.text.font.v2.pause.list.selected.impl"
+            "object": "localization.font.layout.v2_menus.text.font.v2.pause.list.selected.impl"
           },
           "v2_c_quit_scope_enter": {
-            "object": "localization.font.v2.c.text.font.v2.quit.scope.enter"
+            "object": "localization.font.layout.v2_menus.text.font.v2.quit.scope.enter"
           },
           "v2_c_quit_scope_leave": {
-            "object": "localization.font.v2.c.text.font.v2.quit.scope.leave"
+            "object": "localization.font.layout.v2_menus.text.font.v2.quit.scope.leave"
           },
           "v2_c_map_choice": {
-            "object": "localization.font.v2.c.text.font.v2.map.choice"
+            "object": "localization.font.layout.v2_menus.text.font.v2.map.choice"
           },
           "v2_c_quit_selected_map": {
-            "object": "localization.font.v2.c.text.font.v2.quit.selected.map"
+            "object": "localization.font.layout.v2_menus.text.font.v2.quit.selected.map"
           },
           "v2_quit_unselected_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.quit.unselected.adapter",
+            "object": "localization.font.layout.v2_menus.text.font.v2.quit.unselected.adapter",
             "abi": "arg0_record_arg2_arg3",
             "description": "Quit choice not selected"
           },
           "v2_native_measure": {
-            "object": "localization.font.v2.c.text.font.v2.native.measure"
+            "object": "localization.font.layout.v2_menus.text.font.v2.native.measure"
           },
           "v2_wrap_native": {
-            "object": "localization.font.v2.c.text.font.v2.wrap.native"
+            "object": "localization.font.layout.v2_menus.text.font.v2.wrap.native"
           },
           "v2_c_special_choice_session_init": {
-            "object": "localization.font.v2.c.text.font.v2.special.choice.session.init"
+            "object": "localization.font.layout.v2_menus.text.font.v2.special.choice.session.init"
           },
           "v2_c_special_choice_selected_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.special.choice.selected.adapter"
+            "object": "localization.font.layout.v2_menus.text.font.v2.special.choice.selected.adapter"
           },
           "v2_c_wrap_retry": {
-            "object": "localization.font.v2.c.text.font.v2.wrap.retry"
+            "object": "localization.font.layout.v2_menus.text.font.v2.wrap.retry"
           },
           "v2_c_character_scope_enter": {
-            "object": "localization.font.v2.c.text.font.v2.character.scope.enter"
+            "object": "localization.font.layout.v2_menus.text.font.v2.character.scope.enter"
           },
           "v2_character_selected_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.character.selected.adapter",
+            "object": "localization.font.layout.v2_menus.text.font.v2.character.selected.adapter",
             "abi": "object_draw_x_draw_y_text",
             "description": "Character Select selected modal row"
           },
           "v2_character_unselected_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.character.unselected.adapter"
+            "object": "localization.font.layout.v2_menus.text.font.v2.character.unselected.adapter"
           }
         }
       },
       "v2_bodies": {
         "kind": "c",
         "path": "na228_builder/patches/localization/font/layout/font_v2_bodies.c",
-        "namespace": "localization.font.v2.c",
+        "namespace": "localization.font.layout.v2_bodies",
         "imports": {
           "font_v2_quit_active": "v2_quit_active",
           "font_v2_wrap_native": "v2_wrap_native",
@@ -1342,52 +1342,52 @@
         },
         "fragments": {
           "v2_c_wrapped_body_common": {
-            "object": "localization.font.v2.c.text.font.v2.wrapped.body.common"
+            "object": "localization.font.layout.v2_bodies.text.font.v2.wrapped.body.common"
           },
           "v2_memory_card_body_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.memory.card.body.adapter",
+            "object": "localization.font.layout.v2_bodies.text.font.v2.memory.card.body.adapter",
             "abi": "arg0_text_arg2",
             "description": "Memory-card message paragraph"
           },
           "v2_quit_body_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.quit.body.adapter",
+            "object": "localization.font.layout.v2_bodies.text.font.v2.quit.body.adapter",
             "abi": "arg0_text_arg2",
             "description": "Quit confirmation body"
           },
           "v2_special_controls_body_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.special.controls.body.adapter",
+            "object": "localization.font.layout.v2_bodies.text.font.v2.special.controls.body.adapter",
             "abi": "arg0_text_arg2",
             "description": "Special Controls explanatory body"
           },
           "v2_character_confirmation_body_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.character.confirmation.body.adapter",
+            "object": "localization.font.layout.v2_bodies.text.font.v2.character.confirmation.body.adapter",
             "abi": "arg0_text_arg2",
             "description": "Character Select return-confirmation body"
           },
           "v2_c_character_confirmation_body_callback": {
-            "object": "localization.font.v2.c.text.font.v2.character.confirmation.body.callback"
+            "object": "localization.font.layout.v2_bodies.text.font.v2.character.confirmation.body.callback"
           },
           "v2_collection_body_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.collection.body.adapter"
+            "object": "localization.font.layout.v2_bodies.text.font.v2.collection.body.adapter"
           },
           "v2_c_collection_body_callback": {
-            "object": "localization.font.v2.c.text.font.v2.collection.body.callback"
+            "object": "localization.font.layout.v2_bodies.text.font.v2.collection.body.callback"
           },
           "v2_memory_card_body_callback": {
-            "object": "localization.font.v2.c.text.font.v2.memory.card.body.callback"
+            "object": "localization.font.layout.v2_bodies.text.font.v2.memory.card.body.callback"
           },
           "v2_memory_card_question_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.memory.card.question.adapter"
+            "object": "localization.font.layout.v2_bodies.text.font.v2.memory.card.question.adapter"
           },
           "v2_memory_card_choice_records": {
-            "object": "localization.font.v2.c.text.font.v2.memory.card.choice.records"
+            "object": "localization.font.layout.v2_bodies.text.font.v2.memory.card.choice.records"
           }
         }
       },
       "v2_mixed_text": {
         "kind": "c",
         "path": "na228_builder/patches/localization/font/layout/font_v2_mixed_text.c",
-        "namespace": "localization.font.v2.c",
+        "namespace": "localization.font.layout.v2_mixed_text",
         "imports": {
           "font_v2_active_session": "v2_session_pointer",
           "font_v2_practice_icon_map": "v2_practice_icon_map",
@@ -1401,35 +1401,35 @@
         },
         "fragments": {
           "v2_practice_append": {
-            "object": "localization.font.v2.c.text.font.v2.practice.append"
+            "object": "localization.font.layout.v2_mixed_text.text.font.v2.practice.append"
           },
           "v2_c_icon_record": {
-            "object": "localization.font.v2.c.text.font.v2.icon.record"
+            "object": "localization.font.layout.v2_mixed_text.text.font.v2.icon.record"
           },
           "v2_pill_tags": {
-            "object": "localization.font.v2.c.rodata.font.v2.pill.tags"
+            "object": "localization.font.layout.v2_mixed_text.rodata.font.v2.pill.tags"
           },
           "v2_practice_icon_metric": {
-            "object": "localization.font.v2.c.text.font.v2.practice.icon.metric"
+            "object": "localization.font.layout.v2_mixed_text.text.font.v2.practice.icon.metric"
           },
           "v2_practice_icon_draw": {
-            "object": "localization.font.v2.c.text.font.v2.practice.icon.draw"
+            "object": "localization.font.layout.v2_mixed_text.text.font.v2.practice.icon.draw"
           },
           "v2_c_practice_adapter_impl": {
-            "object": "localization.font.v2.c.text.font.v2.practice.adapter.impl"
+            "object": "localization.font.layout.v2_mixed_text.text.font.v2.practice.adapter.impl"
           },
           "v2_c_command_relationship_impl": {
-            "object": "localization.font.v2.c.text.font.v2.command.relationship.impl"
+            "object": "localization.font.layout.v2_mixed_text.text.font.v2.command.relationship.impl"
           },
           "v2_c_command_icon_offset": {
-            "object": "localization.font.v2.c.text.font.v2.command.icon.offset"
+            "object": "localization.font.layout.v2_mixed_text.text.font.v2.command.icon.offset"
           }
         }
       },
       "v2_lists": {
         "kind": "c",
         "path": "na228_builder/patches/localization/font/layout/font_v2_lists.c",
-        "namespace": "localization.font.v2.c",
+        "namespace": "localization.font.layout.v2_lists",
         "imports": {
           "font_v2_ascii_widths": "v2_ascii_widths",
           "font_v2_measure": "v2_measure",
@@ -1438,57 +1438,57 @@
         },
         "fragments": {
           "v2_c_jutsu_draw_callback": {
-            "object": "localization.font.v2.c.text.font.v2.jutsu.draw.callback"
+            "object": "localization.font.layout.v2_lists.text.font.v2.jutsu.draw.callback"
           },
           "v2_jutsu_draw_entry": {
-            "object": "localization.font.v2.c.text.font.v2.jutsu.draw.entry"
+            "object": "localization.font.layout.v2_lists.text.font.v2.jutsu.draw.entry"
           },
           "v2_c_collection_list_callback": {
-            "object": "localization.font.v2.c.text.font.v2.collection.list.callback"
+            "object": "localization.font.layout.v2_lists.text.font.v2.collection.list.callback"
           },
           "v2_collection_list_entry": {
-            "object": "localization.font.v2.c.text.font.v2.collection.list.entry",
+            "object": "localization.font.layout.v2_lists.text.font.v2.collection.list.entry",
             "abi": "text_highlight_native_x_native_y",
             "description": "Shared Collection list row classifier"
           },
           "v2_c_collection_plaque_callback": {
-            "object": "localization.font.v2.c.text.font.v2.collection.plaque.callback"
+            "object": "localization.font.layout.v2_lists.text.font.v2.collection.plaque.callback"
           },
           "v2_c_collection_plaque_draw": {
-            "object": "localization.font.v2.c.text.font.v2.collection.plaque.draw"
+            "object": "localization.font.layout.v2_lists.text.font.v2.collection.plaque.draw"
           },
           "v2_collection_plaque_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.collection.plaque.adapter",
+            "object": "localization.font.layout.v2_lists.text.font.v2.collection.plaque.adapter",
             "abi": "native_x_native_y_text_style",
             "description": "Shared non-Figure Collection top-plaque boxed layout"
           },
           "v2_collection_diorama_title_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.collection.diorama.title.adapter",
+            "object": "localization.font.layout.v2_lists.text.font.v2.collection.diorama.title.adapter",
             "abi": "native_x_native_y_text_style",
             "description": "Collection Diorama title two-line centered plaque adapter"
           },
           "v2_c_collection_diorama_title_callback": {
-            "object": "localization.font.v2.c.text.font.v2.collection.diorama.title.callback"
+            "object": "localization.font.layout.v2_lists.text.font.v2.collection.diorama.title.callback"
           },
           "v2_collection_diorama_prompt_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.collection.diorama.prompt.adapter",
+            "object": "localization.font.layout.v2_lists.text.font.v2.collection.diorama.prompt.adapter",
             "abi": "native_x_native_y_renderer_atlas_record",
             "description": "Collection Diorama localized Controls and Hide prompt adapter"
           },
           "v2_collection_diorama_display_prompt_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.collection.diorama.display.prompt.adapter",
+            "object": "localization.font.layout.v2_lists.text.font.v2.collection.diorama.display.prompt.adapter",
             "abi": "native_x_native_y_renderer_atlas_record",
             "description": "Collection Diorama localized Display prompt adapter"
           },
           "v2_collection_diorama_prompt_records": {
-            "object": "localization.font.v2.c.rodata.font.v2.collection.diorama.prompt.records"
+            "object": "localization.font.layout.v2_lists.rodata.font.v2.collection.diorama.prompt.records"
           }
         }
       },
       "v2_settings": {
         "kind": "c",
         "path": "na228_builder/patches/localization/font/layout/font_v2_settings.c",
-        "namespace": "localization.font.v2.c",
+        "namespace": "localization.font.layout.v2_settings",
         "imports": {
           "font_v2_adapter_call": "v2_adapter_call",
           "font_v2_measure": "v2_measure",
@@ -1496,47 +1496,47 @@
         },
         "fragments": {
           "v2_c_settings_label_callback": {
-            "object": "localization.font.v2.c.text.font.v2.settings.label.callback"
+            "object": "localization.font.layout.v2_settings.text.font.v2.settings.label.callback"
           },
           "v2_c_settings_heading_callback": {
-            "object": "localization.font.v2.c.text.font.v2.settings.heading.callback"
+            "object": "localization.font.layout.v2_settings.text.font.v2.settings.heading.callback"
           },
           "v2_c_settings_value_callback": {
-            "object": "localization.font.v2.c.text.font.v2.settings.value.callback"
+            "object": "localization.font.layout.v2_settings.text.font.v2.settings.value.callback"
           },
           "v2_c_settings_row_common": {
-            "object": "localization.font.v2.c.text.font.v2.settings.row.common"
+            "object": "localization.font.layout.v2_settings.text.font.v2.settings.row.common"
           },
           "v2_battle_settings_label_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.battle.settings.label.adapter",
+            "object": "localization.font.layout.v2_settings.text.font.v2.battle.settings.label.adapter",
             "abi": "text_style_native_x_native_y",
             "description": "Battle Settings label row"
           },
           "v2_practice_settings_label_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.practice.settings.label.adapter",
+            "object": "localization.font.layout.v2_settings.text.font.v2.practice.settings.label.adapter",
             "abi": "text_style_native_x_native_y",
             "description": "Practice Settings label row"
           },
           "v2_settings_value_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.settings.value.adapter",
+            "object": "localization.font.layout.v2_settings.text.font.v2.settings.value.adapter",
             "abi": "text_color_native_x_native_y",
             "description": "Practice Settings centered value"
           },
           "v2_practice_settings_heading_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.practice.settings.heading.adapter",
+            "object": "localization.font.layout.v2_settings.text.font.v2.practice.settings.heading.adapter",
             "abi": "text_color_native_x_native_y",
             "description": "Practice Settings section heading"
           },
           "v2_battle_settings_value_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.battle.settings.value.adapter",
+            "object": "localization.font.layout.v2_settings.text.font.v2.battle.settings.value.adapter",
             "abi": "text_color_native_x_native_y",
             "description": "Ordinary Battle Settings centered value with caller-local raster phase"
           },
           "v2_c_settings_value_common": {
-            "object": "localization.font.v2.c.text.font.v2.settings.value.common"
+            "object": "localization.font.layout.v2_settings.text.font.v2.settings.value.common"
           },
           "v2_battle_settings_alternate_value_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.battle.settings.alternate.value.adapter",
+            "object": "localization.font.layout.v2_settings.text.font.v2.battle.settings.alternate.value.adapter",
             "abi": "text_color_native_x_native_y",
             "description": "Alternate Battle Settings centered value with caller-local raster phase"
           }
@@ -1545,7 +1545,7 @@
       "v2_ninja_song": {
         "kind": "c",
         "path": "na228_builder/patches/localization/font/layout/font_v2_ninja_song.c",
-        "namespace": "localization.font.v2.c",
+        "namespace": "localization.font.layout.v2_ninja_song",
         "imports": {
           "font_ninja_song_ascii_number": "ninja_song_ascii_number",
           "font_v2_ascii_widths": "v2_ascii_widths",
@@ -1555,50 +1555,50 @@
         },
         "fragments": {
           "v2_c_ninja_text_callback": {
-            "object": "localization.font.v2.c.text.font.v2.ninja.text.callback"
+            "object": "localization.font.layout.v2_ninja_song.text.font.v2.ninja.text.callback"
           },
           "v2_c_ninja_text_common": {
-            "object": "localization.font.v2.c.text.font.v2.ninja.text.common"
+            "object": "localization.font.layout.v2_ninja_song.text.font.v2.ninja.text.common"
           },
           "v2_ninja_compact_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.ninja.compact.adapter"
+            "object": "localization.font.layout.v2_ninja_song.text.font.v2.ninja.compact.adapter"
           },
           "v2_ninja_unit_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.ninja.unit.adapter"
+            "object": "localization.font.layout.v2_ninja_song.text.font.v2.ninja.unit.adapter"
           },
           "v2_ninja_equals_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.ninja.equals.adapter"
+            "object": "localization.font.layout.v2_ninja_song.text.font.v2.ninja.equals.adapter"
           },
           "v2_ninja_total_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.ninja.total.adapter"
+            "object": "localization.font.layout.v2_ninja_song.text.font.v2.ninja.total.adapter"
           },
           "v2_ninja_empty_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.ninja.empty.adapter"
+            "object": "localization.font.layout.v2_ninja_song.text.font.v2.ninja.empty.adapter"
           },
           "v2_c_ninja_objective_callback": {
-            "object": "localization.font.v2.c.text.font.v2.ninja.objective.callback"
+            "object": "localization.font.layout.v2_ninja_song.text.font.v2.ninja.objective.callback"
           },
           "v2_c_ninja_objective_draw": {
-            "object": "localization.font.v2.c.text.font.v2.ninja.objective.draw"
+            "object": "localization.font.layout.v2_ninja_song.text.font.v2.ninja.objective.draw"
           },
           "v2_ninja_arithmetic_template": {
-            "object": "localization.font.v2.c.text.font.v2.ninja.arithmetic.template",
+            "object": "localization.font.layout.v2_ninja_song.text.font.v2.ninja.arithmetic.template",
             "abi": "native_x_native_y_row_set_row_index",
             "description": "Shared data-driven Ninja Song formula renderer for all fifteen rows"
           },
           "v2_ninja_objective_row_adapter": {
-            "object": "localization.font.v2.c.text.font.v2.ninja.objective.row.adapter",
+            "object": "localization.font.layout.v2_ninja_song.text.font.v2.ninja.objective.row.adapter",
             "abi": "page_row_record_display_index_row_y_bits",
             "description": "Shared Ninja Song visible objective-row renderer preserving the native index, marker, and prose strings"
           },
           "v2_c_ninja_bonus_label_draw": {
-            "object": "localization.font.v2.c.text.font.v2.ninja.bonus.label.draw"
+            "object": "localization.font.layout.v2_ninja_song.text.font.v2.ninja.bonus.label.draw"
           },
           "v2_c_ninja_bonus_total_draw": {
-            "object": "localization.font.v2.c.text.font.v2.ninja.bonus.total.draw"
+            "object": "localization.font.layout.v2_ninja_song.text.font.v2.ninja.bonus.total.draw"
           },
           "v2_ninja_bonus_template": {
-            "object": "localization.font.v2.c.text.font.v2.ninja.bonus.template",
+            "object": "localization.font.layout.v2_ninja_song.text.font.v2.ninja.bonus.template",
             "abi": "native_x_native_y_row_set_row_index",
             "description": "Shared data-driven Ninja Song bonus renderer for every fight-dependent label and total"
           }
@@ -1622,7 +1622,7 @@
       "v2_move_displays": {
         "kind": "c",
         "path": "na228_builder/patches/localization/font/layout/font_v2_move_displays.c",
-        "namespace": "localization.font.v2.c",
+        "namespace": "localization.font.layout.v2_move_displays",
         "imports": {
           "font_glyph_metric_lookup": "glyph_metric_lookup",
           "font_v2_adapter_call": "v2_adapter_call",
@@ -1631,16 +1631,16 @@
         },
         "fragments": {
           "v2_move_display_callback": {
-            "object": "localization.font.v2.c.text.font.v2.move.display.callback"
+            "object": "localization.font.layout.v2_move_displays.text.font.v2.move.display.callback"
           },
           "v2_move_display_draw": {
-            "object": "localization.font.v2.c.text.font.v2.move.display.draw"
+            "object": "localization.font.layout.v2_move_displays.text.font.v2.move.display.draw"
           },
           "v2_jutsu_display_entry": {
-            "object": "localization.font.v2.c.text.font.v2.jutsu.display.entry"
+            "object": "localization.font.layout.v2_move_displays.text.font.v2.jutsu.display.entry"
           },
           "v2_practice_completed_plate_entry": {
-            "object": "localization.font.v2.c.text.font.v2.practice.completed.plate.entry"
+            "object": "localization.font.layout.v2_move_displays.text.font.v2.practice.completed.plate.entry"
           }
         }
       }
@@ -3570,188 +3570,188 @@
       "external_textures": {
         "kind": "c",
         "path": "na228_builder/patches/localization/ui/external_textures.c",
-        "namespace": "localization.ui.external.textures",
+        "namespace": "localization.ui.external_textures",
         "imports": {},
         "fragments": {
           "localization_ui_texture_runtime": {
-            "object": "localization.ui.external.textures.text"
+            "object": "localization.ui.external_textures.text"
           },
           "localization_ui_texture_pack_path": {
-            "object": "localization.ui.external.textures.rodata.localization.ui.texture.pack.path"
+            "object": "localization.ui.external_textures.rodata.localization.ui.texture.pack.path"
           },
           "localization_ui_texture_pack_index": {
-            "object": "localization.ui.external.textures.bss.localization.ui.texture.pack.index"
+            "object": "localization.ui.external_textures.bss.localization.ui.texture.pack.index"
           },
           "localization_ui_texture_pack_state": {
-            "object": "localization.ui.external.textures.bss.localization.ui.texture.pack.state"
+            "object": "localization.ui.external_textures.bss.localization.ui.texture.pack.state"
           },
           "localization_ui_texture_pack_count": {
-            "object": "localization.ui.external.textures.bss.localization.ui.texture.pack.count"
+            "object": "localization.ui.external_textures.bss.localization.ui.texture.pack.count"
           },
           "localization_ui_texture_pack_handles": {
-            "object": "localization.ui.external.textures.bss.localization.ui.texture.pack.handles"
+            "object": "localization.ui.external_textures.bss.localization.ui.texture.pack.handles"
           },
           "localization_ui_texture_open": {
-            "object": "localization.ui.external.textures.text.localization.ui.texture.open"
+            "object": "localization.ui.external_textures.text.localization.ui.texture.open"
           },
           "localization_ui_texture_gzip_size": {
-            "object": "localization.ui.external.textures.text.localization.ui.texture.gzip.size"
+            "object": "localization.ui.external_textures.text.localization.ui.texture.gzip.size"
           },
           "localization_ui_texture_file_size": {
-            "object": "localization.ui.external.textures.text.localization.ui.texture.file.size"
+            "object": "localization.ui.external_textures.text.localization.ui.texture.file.size"
           }
         }
       },
       "command_chart_layout": {
         "kind": "c",
         "path": "na228_builder/patches/localization/ui/command_chart_layout.c",
-        "namespace": "localization.ui.command.chart",
+        "namespace": "localization.ui.command_chart_layout",
         "imports": {},
         "fragments": {
           "localization_command_chart_name_draw": {
-            "object": "localization.ui.command.chart.text.localization.command.chart.name.draw"
+            "object": "localization.ui.command_chart_layout.text.localization.command.chart.name.draw"
           }
         }
       },
       "battle_hud_names": {
         "kind": "c",
         "path": "na228_builder/patches/localization/ui/battle_hud_names.c",
-        "namespace": "localization.ui.battle.hud.names",
+        "namespace": "localization.ui.battle_hud_names",
         "imports": {},
         "fragments": {
           "localization_ui_battle_hud_fit_width": {
-            "object": "localization.ui.battle.hud.names.text.localization.ui.battle.hud.fit.width"
+            "object": "localization.ui.battle_hud_names.text.localization.ui.battle.hud.fit.width"
           }
         }
       },
       "item_status": {
         "kind": "c",
         "path": "na228_builder/patches/localization/ui/item_status.c",
-        "namespace": "localization.ui.item.status.c",
+        "namespace": "localization.ui.item_status",
         "imports": {
           "localization_item_status_foreground_draw": "localization_item_status_foreground_draw"
         },
         "fragments": {
           "localization_item_status_update_tail": {
-            "object": "localization.ui.item.status.c.text.localization.item.status.update.tail"
+            "object": "localization.ui.item_status.text.localization.item.status.update.tail"
           },
           "localization_item_status_numeric_draw": {
-            "object": "localization.ui.item.status.c.text.localization.item.status.numeric.draw"
+            "object": "localization.ui.item_status.text.localization.item.status.numeric.draw"
           },
           "localization_item_status_single_draw": {
-            "object": "localization.ui.item.status.c.text.localization.item.status.single.draw"
+            "object": "localization.ui.item_status.text.localization.item.status.single.draw"
           },
           "localization_item_status_paired_draw": {
-            "object": "localization.ui.item.status.c.text.localization.item.status.paired.draw"
+            "object": "localization.ui.item_status.text.localization.item.status.paired.draw"
           },
           "localization_item_status_fixed_draw": {
-            "object": "localization.ui.item.status.c.text.localization.item.status.fixed.draw"
+            "object": "localization.ui.item_status.text.localization.item.status.fixed.draw"
           }
         }
       },
       "item_status_renderer": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/ui/item_status_renderer.S",
-        "namespace": "localization.ui.item.status.renderer.asm",
+        "namespace": "localization.ui.item_status_renderer",
         "imports": {},
         "fragments": {
           "localization_item_status_foreground_draw": {
-            "object": "localization.ui.item.status.renderer.asm.text.localization.item.status.foreground.draw"
+            "object": "localization.ui.item_status_renderer.text.localization.item.status.foreground.draw"
           }
         }
       },
       "item_status_update_abi": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/ui/item_status_update_abi.S",
-        "namespace": "localization.ui.item.status.update.asm",
+        "namespace": "localization.ui.item_status_update_abi",
         "imports": {
           "localization_item_status_update_tail": "localization_item_status_update_tail"
         },
         "fragments": {
           "localization_item_status_update_tail_bridge": {
-            "object": "localization.ui.item.status.update.asm.text.localization.item.status.update.tail.bridge"
+            "object": "localization.ui.item_status_update_abi.text.localization.item.status.update.tail.bridge"
           }
         }
       },
       "jutsu_selector_arrows": {
         "kind": "c",
         "path": "na228_builder/patches/localization/ui/jutsu_selector_arrows.c",
-        "namespace": "localization.ui.jutsu.selector.arrows",
+        "namespace": "localization.ui.jutsu_selector_arrows",
         "imports": {},
         "fragments": {
           "localization_ui_jutsu_selector_arrow_draw_lower": {
-            "object": "localization.ui.jutsu.selector.arrows.text.localization.ui.jutsu.selector.arrow.draw.lower"
+            "object": "localization.ui.jutsu_selector_arrows.text.localization.ui.jutsu.selector.arrow.draw.lower"
           },
           "localization_ui_jutsu_selector_arrow_draw_upper": {
-            "object": "localization.ui.jutsu.selector.arrows.text.localization.ui.jutsu.selector.arrow.draw.upper"
+            "object": "localization.ui.jutsu_selector_arrows.text.localization.ui.jutsu.selector.arrow.draw.upper"
           }
         }
       },
       "jutsu_selector_arrows_abi": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/ui/jutsu_selector_arrows_abi.S",
-        "namespace": "localization.ui.jutsu.selector.arrows.abi",
+        "namespace": "localization.ui.jutsu_selector_arrows_abi",
         "imports": {},
         "fragments": {
           "localization_ui_jutsu_selector_arrows_suppress_horizontal": {
-            "object": "localization.ui.jutsu.selector.arrows.abi.text.localization.ui.jutsu.selector.arrows.suppress.horizontal"
+            "object": "localization.ui.jutsu_selector_arrows_abi.text.localization.ui.jutsu.selector.arrows.suppress.horizontal"
           }
         }
       },
       "stage_select": {
         "kind": "c",
         "path": "na228_builder/patches/localization/ui/stage_select.c",
-        "namespace": "localization.ui.stage.select",
+        "namespace": "localization.ui.stage_select",
         "imports": {},
         "fragments": {
           "localization_ui_stage_select_name_draw": {
-            "object": "localization.ui.stage.select.text.localization.ui.stage.select.name.draw"
+            "object": "localization.ui.stage_select.text.localization.ui.stage.select.name.draw"
           }
         }
       },
       "ui_layout_abi": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/ui/ui_layout_abi.S",
-        "namespace": "localization.ui.layout.abi",
+        "namespace": "localization.ui.ui_layout_abi",
         "imports": {
           "localization_ui_battle_hud_fit_width": "localization_ui_battle_hud_fit_width"
         },
         "fragments": {
           "localization_ui_battle_hud_fit_width_adapter": {
-            "object": "localization.ui.layout.abi.text.localization.ui.battle.hud.fit.width.adapter"
+            "object": "localization.ui.ui_layout_abi.text.localization.ui.battle.hud.fit.width.adapter"
           },
           "localization_ui_common_prompt_x_offset": {
-            "object": "localization.ui.layout.abi.text.localization.ui.common.prompt.x.offset"
+            "object": "localization.ui.ui_layout_abi.text.localization.ui.common.prompt.x.offset"
           },
           "localization_ui_vs_confirmation_jutsu_label_place": {
-            "object": "localization.ui.layout.abi.text.localization.ui.vs.confirmation.jutsu.label.place"
+            "object": "localization.ui.ui_layout_abi.text.localization.ui.vs.confirmation.jutsu.label.place"
           }
         }
       },
       "ultimate_jutsu": {
         "kind": "c",
         "path": "na228_builder/patches/localization/ui/ultimate_jutsu.c",
-        "namespace": "localization.ui.ultimate.jutsu",
+        "namespace": "localization.ui.ultimate_jutsu",
         "imports": {},
         "fragments": {
           "localization_ui_ultimate_jutsu_damage_draw": {
-            "object": "localization.ui.ultimate.jutsu.text.localization.ui.ultimate.jutsu.damage.draw"
+            "object": "localization.ui.ultimate_jutsu.text.localization.ui.ultimate.jutsu.damage.draw"
           },
           "localization_ui_ultimate_jutsu_input_result_draw": {
-            "object": "localization.ui.ultimate.jutsu.text.localization.ui.ultimate.jutsu.input.result.draw"
+            "object": "localization.ui.ultimate_jutsu.text.localization.ui.ultimate.jutsu.input.result.draw"
           }
         }
       },
       "victory_abi": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/ui/victory_abi.S",
-        "namespace": "localization.ui.victory.abi",
+        "namespace": "localization.ui.victory_abi",
         "imports": {
           "localization_ui_victory_initialize_name": "localization_ui_victory_initialize_name"
         },
         "fragments": {
           "localization_ui_victory_initialize_name_adapter": {
-            "object": "localization.ui.victory.abi.text.localization.ui.victory.initialize.name.adapter"
+            "object": "localization.ui.victory_abi.text.localization.ui.victory.initialize.name.adapter"
           }
         }
       },
@@ -3797,43 +3797,43 @@
       "font_numeric_abi": {
         "kind": "asm",
         "path": "na228_builder/patches/localization/font/numeric_formatting/font_numeric_abi.S",
-        "namespace": "localization.font.numeric.asm",
+        "namespace": "localization.font_numeric_abi",
         "imports": {},
         "fragments": {
           "c_numeric_format_decimal": {
-            "object": "localization.font.numeric.asm.text.c.numeric.format.decimal"
+            "object": "localization.font_numeric_abi.text.c.numeric.format.decimal"
           },
           "c_numeric_format_two_decimal": {
-            "object": "localization.font.numeric.asm.text.c.numeric.format.two.decimal"
+            "object": "localization.font_numeric_abi.text.c.numeric.format.two.decimal"
           }
         }
       },
       "font_numeric": {
         "kind": "c",
         "path": "na228_builder/patches/localization/font/numeric_formatting/font_numeric.c",
-        "namespace": "localization.font.numeric.c",
+        "namespace": "localization.font_numeric",
         "imports": {
           "font_numeric_format_decimal": "c_numeric_format_decimal",
           "font_numeric_format_two_decimal": "c_numeric_format_two_decimal"
         },
         "fragments": {
           "ninja_song_ascii_number": {
-            "object": "localization.font.numeric.c.text.font.ninja.song.ascii.number"
+            "object": "localization.font_numeric.text.font.ninja.song.ascii.number"
           },
           "save_load_day": {
-            "object": "localization.font.numeric.c.text.font.save.load.day"
+            "object": "localization.font_numeric.text.font.save.load.day"
           },
           "save_load_two": {
-            "object": "localization.font.numeric.c.text.font.save.load.two"
+            "object": "localization.font_numeric.text.font.save.load.two"
           },
           "save_load_year": {
-            "object": "localization.font.numeric.c.text.font.save.load.year"
+            "object": "localization.font_numeric.text.font.save.load.year"
           },
           "save_load_hour": {
-            "object": "localization.font.numeric.c.text.font.save.load.hour"
+            "object": "localization.font_numeric.text.font.save.load.hour"
           },
           "battle_settings_time": {
-            "object": "localization.font.numeric.c.text.font.battle.settings.time"
+            "object": "localization.font_numeric.text.font.battle.settings.time"
           }
         }
       }
@@ -3864,23 +3864,23 @@
       "v2_core": {
         "kind": "c",
         "path": "na228_builder/patches/localization/font/layout/font_v2_core.c",
-        "namespace": "localization.font.v2.c",
+        "namespace": "localization.font.core.v2_core",
         "imports": {
           "font_v2_active_session": "v2_session_pointer",
           "font_v2_ascii_widths": "v2_ascii_widths"
         },
         "fragments": {
           "v2_c_is_br": {
-            "object": "localization.font.v2.c.text"
+            "object": "localization.font.core.v2_core.text"
           },
           "v2_measure": {
-            "object": "localization.font.v2.c.text.font.v2.measure"
+            "object": "localization.font.core.v2_core.text.font.v2.measure"
           },
           "v2_prepare": {
-            "object": "localization.font.v2.c.text.font.v2.prepare"
+            "object": "localization.font.core.v2_core.text.font.v2.prepare"
           },
           "v2_adapter_call": {
-            "object": "localization.font.v2.c.text.font.v2.adapter.call"
+            "object": "localization.font.core.v2_core.text.font.v2.adapter.call"
           }
         }
       },

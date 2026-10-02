@@ -9,7 +9,7 @@ from pathlib import Path
 
 from na228_builder.infrastructure.orchestration import catalog
 from tests.na228_builder._fixtures import test_features
-from na228_builder.patches.settings.character_overrides.character_overrides import (
+from na228_builder.patches.defaults.match_setup.character_balance.character_overrides import (
     OVERRIDE_FIELDS,
     REFERENCE_FIELDS,
     SUBSTITUTION_COST_DELTA_FLAG,

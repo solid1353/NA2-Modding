@@ -1,6 +1,6 @@
 /* Paged Practice Settings row map over the native controller and renderer. */
 
-#include "../shared/menu_pages.h"
+#include "../menu_pages.h"
 
 typedef unsigned char u8;
 typedef signed int s32;

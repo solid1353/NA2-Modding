@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment
-from ..shared.menu_options import MenuOption
-from ..shared.menu_pages import (
+from ..menu_options import MenuOption
+from ..menu_pages import (
     MenuPage,
     RowLayout,
     build_menu_pages,
@@ -16,7 +16,7 @@ from ..shared.menu_pages import (
     settings_schema_fragment,
 )
 from ..battle_mechanics.battle_settings_runtime import PRACTICE_SETTINGS_PATH
-from ..shared.native_settings_defaults import (
+from ..native_settings_defaults import (
     PRACTICE_GENERAL_ROW_IDS,
     PRACTICE_OPPONENT_ROW_IDS,
     practice_configured_row_defaults,

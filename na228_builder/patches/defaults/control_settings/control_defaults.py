@@ -6,7 +6,7 @@ from pathlib import Path
 
 from na228_builder.infrastructure.common import indexed_png_pixels
 from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment
-from na228_builder.patches.settings.ingame.shared.menu_pages import (
+from na228_builder.patches.defaults.menu_pages import (
     NATIVE_HELP_SET,
     font_layout_enabled,
     point_font_routine,

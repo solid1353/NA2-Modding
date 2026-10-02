@@ -676,7 +676,7 @@ damage-recovery remainder, latest quantized HP sample, battle generation, and
 validity state. Shared state stores the manager, generation, last processed
 battle-clock ordinal, cached BTL render sources, and runtime mode. The exact
 layout and exported functions are canonical in
-[`substitution_gauge.c`](../../na228_builder/patches/settings/ingame/battle_mechanics/substitution_resource/substitution_gauge.c).
+[`substitution_gauge.c`](../../na228_builder/patches/defaults/battle_mechanics/substitution_resource/substitution_gauge.c).
 
 Fighters map to slots through live manager `0x00607600` and manager fields
 `+0xDE4`/`+0xDE8`, matching the X-dash and per-character selector code.
@@ -922,7 +922,7 @@ and the native lower support gauge.
 
 ### Generated constants and resident ownership
 
-`@builder/patches/settings/ingame/battle_mechanics/substitution_resource/substitution_gauge.py` follows the
+`@builder/patches/defaults/battle_mechanics/substitution_resource/substitution_gauge.py` follows the
 `battle_settings_runtime.py` pattern rather than embedding configuration
 literals in assembly. It finds exactly one selected catalog node, merges
 omitted object fields with the defaults above, validates the resolved values,
@@ -961,7 +961,7 @@ exclusively native.
 
 ### Exact builder hook map
 
-Use `settings.battle_mechanics.substitution_resource` in `patches/settings/settings.json`.
+Use `defaults.battle_mechanics.substitution_resource` in `patches/defaults/defaults.json`.
 The controls hooks are listed in [Controls](controls.md#builder-hook-map).
 All targets already exist in
 `@builder/infrastructure/targets.tsv`; no new target registry or patching
@@ -1006,11 +1006,11 @@ The minimal implementation touches these existing ownership points:
 | Purpose | Canonical location |
 | --- | --- |
 | Public setting and descriptions | `features.defaults.battle_mechanics.substitution_resource` in `@builder/catalog.modcat` |
-| Unified settings patches | `@builder/patches/settings/settings.json` |
+| Unified settings patches | `@builder/patches/defaults/defaults.json` |
 | Default/profile selection | `@builder/configurations/*.jsonc` |
-| Config-to-fragment encoder | `@builder/patches/settings/ingame/battle_mechanics/substitution_resource/substitution_gauge.py` and `module_pipeline.py` |
-| Gameplay state, independent renderer, and native adapters | `@builder/patches/settings/ingame/battle_mechanics/substitution_resource/substitution_gauge.c` and `substitution_gauge_abi.S` |
-| Runtime-selectable battle support | `@builder/patches/settings/ingame/battle_mechanics/support/battle_support.c` |
+| Config-to-fragment encoder | `@builder/patches/defaults/battle_mechanics/substitution_resource/substitution_gauge.py` and `module_pipeline.py` |
+| Gameplay state, independent renderer, and native adapters | `@builder/patches/defaults/battle_mechanics/substitution_resource/substitution_gauge.c` and `substitution_gauge_abi.S` |
+| Runtime-selectable battle support | `@builder/patches/defaults/battle_mechanics/support/battle_support.c` |
 | Gauge builder tests | `tests/na228_builder/test_substitution_gauge.py` |
 | Packaged user instructions | `@builder/release/package_readme.md` |
 

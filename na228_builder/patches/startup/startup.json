@@ -115,22 +115,22 @@
       "startup_voice_loading": {
         "kind": "c",
         "path": "na228_builder/patches/startup/faster_loading/faster_loading.c",
-        "namespace": "startup.faster.loading",
+        "namespace": "startup.faster_loading.startup_voice_loading",
         "imports": {
           "startup_voice_loading_state": "voice_state"
         },
         "fragments": {
           "ensure": {
-            "object": "startup.faster.loading.text.startup.voice.loading.ensure"
+            "object": "startup.faster_loading.startup_voice_loading.text.startup.voice.loading.ensure"
           },
           "initialize": {
-            "object": "startup.faster.loading.text.startup.voice.loading.initialize"
+            "object": "startup.faster_loading.startup_voice_loading.text.startup.voice.loading.initialize"
           },
           "player": {
-            "object": "startup.faster.loading.text.startup.voice.loading.player"
+            "object": "startup.faster_loading.startup_voice_loading.text.startup.voice.loading.player"
           },
           "rpg": {
-            "object": "startup.faster.loading.text.startup.voice.loading.rpg"
+            "object": "startup.faster_loading.startup_voice_loading.text.startup.voice.loading.rpg"
           }
         }
       },
@@ -190,43 +190,43 @@
       "loading_screen": {
         "kind": "c",
         "path": "na228_builder/patches/startup/loading_screen/loading_screen.c",
-        "namespace": "startup.loading.screen",
+        "namespace": "startup.loading_screen.loading_screen",
         "imports": {
           "startup_loading_state": "state"
         },
         "fragments": {
           "load": {
-            "object": "startup.loading.screen.text.startup.loading.load"
+            "object": "startup.loading_screen.loading_screen.text.startup.loading.load"
           },
           "gzip_size": {
-            "object": "startup.loading.screen.text.startup.loading.gzip.size"
+            "object": "startup.loading_screen.loading_screen.text.startup.loading.gzip.size"
           },
           "splash_path": {
-            "object": "startup.loading.screen.rodata.startup.loading.splash.path"
+            "object": "startup.loading_screen.loading_screen.rodata.startup.loading.splash.path"
           },
           "cap_profile": {
-            "object": "startup.loading.screen.rodata.startup.loading.cap.profile"
+            "object": "startup.loading_screen.loading_screen.rodata.startup.loading.cap.profile"
           },
           "hook": {
-            "object": "startup.loading.screen.text.startup.loading.hook"
+            "object": "startup.loading_screen.loading_screen.text.startup.loading.hook"
           },
           "vertex": {
-            "object": "startup.loading.screen.text.startup.loading.vertex"
+            "object": "startup.loading_screen.loading_screen.text.startup.loading.vertex"
           },
           "tile": {
-            "object": "startup.loading.screen.text.startup.loading.tile"
+            "object": "startup.loading_screen.loading_screen.text.startup.loading.tile"
           },
           "rect": {
-            "object": "startup.loading.screen.text.startup.loading.rect"
+            "object": "startup.loading_screen.loading_screen.text.startup.loading.rect"
           },
           "rounded_rect": {
-            "object": "startup.loading.screen.text.startup.loading.rounded.rect"
+            "object": "startup.loading_screen.loading_screen.text.startup.loading.rounded.rect"
           },
           "color": {
-            "object": "startup.loading.screen.text.startup.loading.color"
+            "object": "startup.loading_screen.loading_screen.text.startup.loading.color"
           },
           "draw": {
-            "object": "startup.loading.screen.text.startup.loading.draw"
+            "object": "startup.loading_screen.loading_screen.text.startup.loading.draw"
           }
         }
       },

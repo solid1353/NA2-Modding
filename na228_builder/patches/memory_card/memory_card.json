@@ -14,8 +14,8 @@
     "payload": {
       "dialogs_rework": {
         "kind": "c",
-        "path": "na228_builder/patches/memory_card/dialogs_rework.c",
-        "namespace": "memory.card.dialogs.rework",
+        "path": "na228_builder/patches/memory_card/dialogs_rework/dialogs_rework.c",
+        "namespace": "memory_card.dialogs_rework.dialogs_rework",
         "imports": {
           "dialogs_rework_next_update": "dialogs_rework_next_update"
         },
@@ -24,7 +24,7 @@
         ],
         "fragments": {
           "dialogs_rework_update": {
-            "object": "memory.card.dialogs.rework.text.dialogs.rework.update"
+            "object": "memory_card.dialogs_rework.dialogs_rework.text.dialogs.rework.update"
           }
         }
       }
@@ -79,8 +79,8 @@
     "payload": {
       "auto_loading": {
         "kind": "c",
-        "path": "na228_builder/patches/memory_card/auto_loading.c",
-        "namespace": "startup.auto.loading",
+        "path": "na228_builder/patches/memory_card/auto_loading/auto_loading.c",
+        "namespace": "memory_card.auto_loading.auto_loading",
         "imports": {
           "mod_number_glyphs": "mod_number_glyphs",
           "startup_save_notification_state": "notification_state",
@@ -98,13 +98,13 @@
         },
         "fragments": {
           "auto_loading_update": {
-            "object": "startup.auto.loading.text.startup.auto.loading.update"
+            "object": "memory_card.auto_loading.auto_loading.text.startup.auto.loading.update"
           },
           "auto_loading_suppress_draw": {
-            "object": "startup.auto.loading.text.startup.auto.loading.suppress.draw"
+            "object": "memory_card.auto_loading.auto_loading.text.startup.auto.loading.suppress.draw"
           },
           "auto_loading_notification_draw": {
-            "object": "startup.auto.loading.text.startup.auto.loading.notification.draw"
+            "object": "memory_card.auto_loading.auto_loading.text.startup.auto.loading.notification.draw"
           }
         },
         "resources": [
@@ -119,15 +119,15 @@
       },
       "display_only_first_save": {
         "kind": "c",
-        "path": "na228_builder/patches/memory_card/display_only_first_save/save_load_display_only_first_save.c",
-        "namespace": "qol.save.load.display.only.first.save",
+        "path": "na228_builder/patches/memory_card/auto_loading/save_load_display_only_first_save.c",
+        "namespace": "memory_card.auto_loading.display_only_first_save",
         "imports": {},
         "fragments": {
           "display_only_first_save_center_empty": {
-            "object": "qol.save.load.display.only.first.save.text.save.load.center.empty"
+            "object": "memory_card.auto_loading.display_only_first_save.text.save.load.center.empty"
           },
           "display_only_first_save_update": {
-            "object": "qol.save.load.display.only.first.save.text.save.load.display.only.first.save.update"
+            "object": "memory_card.auto_loading.display_only_first_save.text.save.load.display.only.first.save.update"
           }
         },
         "resources": [
@@ -422,8 +422,8 @@
     "payload": {
       "save_appendix": {
         "kind": "c",
-        "path": "na228_builder/patches/memory_card/save_appendix.c",
-        "namespace": "memory.card.save.appendix",
+        "path": "na228_builder/patches/memory_card/extended_save_data/save_appendix.c",
+        "namespace": "memory_card.extended_save_data.save_appendix",
         "imports": {
           "save_appendix_schema": "save_appendix_schema",
           "save_appendix_load_status": "save_appendix_load_status",
@@ -437,22 +437,22 @@
         ],
         "fragments": {
           "save_appendix_notice_state": {
-            "object": "memory.card.save.appendix.bss"
+            "object": "memory_card.extended_save_data.save_appendix.bss"
           },
           "save_appendix_helpers": {
-            "object": "memory.card.save.appendix.text.save.appendix.helpers"
+            "object": "memory_card.extended_save_data.save_appendix.text.save.appendix.helpers"
           },
           "save_appendix_load_profile": {
-            "object": "memory.card.save.appendix.text.save.appendix.load.profile"
+            "object": "memory_card.extended_save_data.save_appendix.text.save.appendix.load.profile"
           },
           "save_appendix_read_profile": {
-            "object": "memory.card.save.appendix.text.save.appendix.read.profile"
+            "object": "memory_card.extended_save_data.save_appendix.text.save.appendix.read.profile"
           },
           "save_appendix_serialize_profile": {
-            "object": "memory.card.save.appendix.text.save.appendix.serialize.profile"
+            "object": "memory_card.extended_save_data.save_appendix.text.save.appendix.serialize.profile"
           },
           "save_appendix_update": {
-            "object": "memory.card.save.appendix.text.save.appendix.update"
+            "object": "memory_card.extended_save_data.save_appendix.text.save.appendix.update"
           }
         }
       }

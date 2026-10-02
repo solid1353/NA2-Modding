@@ -120,7 +120,7 @@ one source attack cannot charge again; entering a new native attack resets
 that fighter's charge latch. The shared Unlimited Chakra mode still restores
 chakra after the fighter update.
 
-`@builder/patches/settings/ingame/battle_mechanics/extra_hit/extra_hit_settings.c`
+`@builder/patches/defaults/battle_mechanics/extra_hit/extra_hit_settings.c`
 wraps native eligibility at ELF file
 `0x0013B6DC` and the attack initializer at `0x00117F28`. Off and penalty modes
 return native rejection instead of jumping past action-exit handling. The
@@ -161,7 +161,7 @@ moving existing base keys; a complete object-setting replacement supplies its
 own nested key order. The base config places Practice's Health, Commands, and
 Damage after its Battle Mechanics and Opponent Settings launchers.
 
-The shared builder in `na228_builder/patches/settings/ingame/shared/menu_pages.py` walks catalog
+The shared builder in `na228_builder/patches/defaults/menu_pages.py` walks catalog
 containers and typed object fields. Scalars use registered value handlers.
 Objects without `value` form submenus. Objects with `value` use the selector's
 literal choices; child objects named after those choices form Square submenus.
@@ -227,7 +227,7 @@ behavior, addresses, and the HUD formula are documented in
 
 ### Implementation
 
-`@builder/patches/settings/extended_items/extended_items.c`
+`@builder/patches/defaults/match_setup/extended_items/extended_items.c`
 owns the setting state, the latched toggle, the added slots, and the five-slot
 routines. The panel keeps its three native slot objects as slots
 `0..2`; slots `3` and `4` are two resident 8-byte slots per side with the
@@ -242,8 +242,8 @@ restore reproduces their cyclic order. It uses a resident two-side, five-entry
 cache and clears the native cache with it.
 
 `extended_items_abi.S` holds two kinds of guarded BTL hooks, all declared under
-`settings.extended_items` in
-`@builder/patches/settings/settings.json`:
+`defaults.match_setup.extended_items` in
+`@builder/patches/defaults/defaults.json`:
 
 - Entry hooks on every slot routine test the latched toggle. When off they
   replay the displaced native instructions and continue into the native routine;
@@ -529,7 +529,7 @@ with a slim bar under the item wheel:
   separately, because a sprite drops queued quads past its limit until a flush.
 - Off draws nothing.
 
-`@builder/patches/settings/ingame/battle_mechanics/support/battle_support.c`
+`@builder/patches/defaults/battle_mechanics/support/battle_support.c`
 owns the mode routing. The guarded hooks replace
 the fighter's support-request and gauge-update calls, the active-drain call,
 the HUD readiness predicate, and the support-gauge draw.

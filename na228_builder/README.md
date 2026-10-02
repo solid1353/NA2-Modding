@@ -15,7 +15,7 @@ NA2.28 ISO. Use `na228 build [config] [-f] [-postfix name]
 | `configurations/release.jsonc` | Independent public release defaults, shape, and path exceptions |
 | `configurations/overrides/*.character_overrides.tsv` | Separate per-character build inputs |
 | `patches/<feature>/<feature>.json` | Patch definitions grouped by the first segment of each patch ID |
-| `patches/<feature>/` | Feature-owned Python, C, assembly, and assets |
+| `patches/<catalog path>/` | Sources of the catalog node at that path below `features` |
 | `infrastructure/targets.tsv` | Shared binary target registry |
 | `infrastructure/modules/binary_patcher/operations/*.tsv` | Primitive binary operations |
 | `resources/mod_strings.tsv` | Mod-authored localized text |

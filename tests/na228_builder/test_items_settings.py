@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 from na228_builder.infrastructure.orchestration import catalog
-from na228_builder.patches.settings.ingame.battle_mechanics.items.items_settings import (
+from na228_builder.patches.defaults.battle_mechanics.items.items_settings import (
     FIELD_ITEMS,
     items_settings_fragment,
 )

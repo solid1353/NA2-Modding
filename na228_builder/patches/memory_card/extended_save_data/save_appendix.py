@@ -11,7 +11,7 @@ from na228_builder.infrastructure.modules.payload_builder.operations import (
     PayloadFragment,
     PayloadRelocation,
 )
-from ..settings.ingame.battle_mechanics.battle_settings_runtime import (
+from ...defaults.battle_mechanics.battle_settings_runtime import (
     BATTLE_MECHANICS_PATH,
     EXTENDED_ITEMS_PATH,
     MATCH_SETUP_PATH,
@@ -24,16 +24,16 @@ from ..settings.ingame.battle_mechanics.battle_settings_runtime import (
     ultimate_jutsu_default,
     xdash_chakra_cost_option_default,
 )
-from ..general.controls.control_defaults import (
+from ...defaults.control_settings.control_defaults import (
     added_binding_save_defaults,
     controls_layout,
 )
-from ..settings.ingame.shared.menu_options import (
+from ...defaults.menu_options import (
     MOD_SETTINGS_PATH,
     items_mode_option,
     menu_option_bindings,
 )
-from ..settings.ingame.shared.native_settings_defaults import (
+from ...defaults.native_settings_defaults import (
     BATTLE_ROW_IDS,
     PRACTICE_GENERAL_ROW_IDS,
     PRACTICE_OPPONENT_ROW_IDS,
@@ -42,7 +42,7 @@ from ..settings.ingame.shared.native_settings_defaults import (
 )
 
 
-TABLE_PATH = Path(__file__).resolve().parents[2] / "resources" / "save_appendix.tsv"
+TABLE_PATH = Path(__file__).resolve().parents[3] / "resources" / "save_appendix.tsv"
 APPENDIX_SIZE = 0x1000
 APPENDIX_HEADER_SIZE = 0x10
 APPENDIX_ENTRY_SIZE = 4

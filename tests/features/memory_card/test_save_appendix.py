@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from na228_builder.patches.memory_card import save_appendix
+from na228_builder.patches.memory_card.extended_save_data import save_appendix
 
 
 class SaveAppendixTests(unittest.TestCase):

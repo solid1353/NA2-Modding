@@ -38,12 +38,12 @@ class BuildConfigurationCliTests(unittest.TestCase):
             output.getvalue(),
         )
 
-    def test_normal_cli_logs_requested_output_not_staging_candidate(self) -> None:
+    def test_normal_cli_builds_into_incoming_and_logs(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory).resolve()
             source_iso = workspace / "source.iso"
             source_iso.write_bytes(b"source")
-            output_iso = workspace / "build" / "candidate.iso"
+            output_iso = workspace / "build" / ".incoming" / "candidate.iso"
             configuration_path = workspace / "configurations" / "default.json"
             configuration_log_directory = workspace / "logs" / "configuration"
             configuration = SimpleNamespace(
@@ -69,8 +69,8 @@ class BuildConfigurationCliTests(unittest.TestCase):
                 "build_configuration",
                 "--source",
                 str(source_iso),
-                "--output",
-                str(output_iso),
+                "--build-id",
+                "candidate",
                 "--configuration",
                 str(configuration_path),
                 "--configuration-log-directory",

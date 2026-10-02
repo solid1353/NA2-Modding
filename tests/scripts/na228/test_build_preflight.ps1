@@ -58,7 +58,7 @@ function Get-ArgumentValue([string]$Name) {
     return $ArgumentList[$index + 1]
 }
 if ($Module -ceq 'na228_builder.infrastructure.orchestration.build_configuration') {
-    $output = Get-ArgumentValue '--output'
+    $output = Join-Path $repository ('build\.incoming\' + (Get-ArgumentValue '--build-id') + '.iso')
     $provenance = Join-Path $repository (Get-ArgumentValue '--configuration-log-directory')
     [void](New-Item -ItemType Directory -Path $provenance -Force)
     [IO.File]::WriteAllText($output, 'built-image')

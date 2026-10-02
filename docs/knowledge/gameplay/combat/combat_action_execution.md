@@ -6,9 +6,9 @@ This document investigates combat action execution in retail NA2
 ## Research coverage
 
 - **Assigned scope:** Execution after a selected action enters the fighter: ordinary action/phase dispatch, authored event/row consumers, attack activation, combo continuation, cancel/interruption rules and the boundary with character overrides.
-- **Exploration depth:** Inspected common action entry/cleanup, phase progression and animation selection, motion/event consumers, transition/update dispatch, attack publication and all eleven recovered resident callers, and two input-interruption predicates. Read all 94 definition-table entries and every counted action/phase array of their 78 distinct nonzero definitions; checked row indices, forward terminal bounds, and all relative-jump records.
-- **Confirmed coverage:** Major-8 entry ordering and field ownership, separate action/phase clocks, 0x4C-byte row layout, phase conditions and loops, common continuation/exit gates, two attack-bank activation windows, and character-specific scene/timer selection are established below.
-- **Unresolved or untested:** Condition-zero phase lifetimes, full exit conditions of every authored loop, alternate indirect attack registrations, every payload flag's meaning, and player-facing durations remain unresolved. The census proves array bounds, not reachability of every record.
+- **Exploration depth:** Inspected common action entry/cleanup, phase progression and animation selection, motion/event consumers, transition/update dispatch, attack publication and all eleven recovered resident callers, and two input-interruption predicates. Read all 94 definition-table entries and every counted action/phase array of their 78 distinct nonzero definitions; checked row indices, forward terminal bounds, and all relative-jump records. Classified every aligned `lwc1`/`lw` of fighter `+0x1AC` found by byte scan in the ELF and BTL.
+- **Confirmed coverage:** Major-8 entry ordering and field ownership, separate action/phase clocks, 0x4C-byte row layout, phase conditions and loops, common continuation/exit gates, two attack-bank activation windows, character-specific scene/timer selection, and the uses and writers of the update delta are established below.
+- **Unresolved or untested:** Condition-zero phase lifetimes, full exit conditions of every authored loop, alternate indirect attack registrations, every payload flag's meaning, and player-facing durations remain unresolved. The census proves array bounds, not reachability of every record. Delta reads through rebased pointers are outside the byte scan; BTL owner identities, other callers of the entry routines, and the consumers of the ID 92 and ID 93 outputs were not traced.
 - **Deliberate exclusions and overlap:** [Action commands](action_commands.md) owns input matching, action-record selection, and setup; [Character action callbacks](../characters/character_action_callbacks.md) owns character callback algorithms; [Hit response](hit_response.md) owns accepted-hit reactions; [Extra Hit](extra_hit.md) owns the paired exchange; [Throws and captures](throws_and_captures.md) owns category-`0x100/0x200` capture coordination; [X-dash](xdash.md) owns the category-`2` state machine; [Ultimate Jutsu](../characters/ultimate_jutsu.md) owns that execution family. [Battle entities](../session/battle_entities.md) owns allocation and fighter-class tables. Complete-file identities remain in [Retail game file identities](../../game/files/file_identities.md).
 - **Evidence limitations:** Static code and bytes establish control flow, not observed animation outcomes. Preserved BTL imports have incomplete function boundaries/xrefs; raw operands retain live addresses. Unexamined character paths remain unknown.
 
@@ -123,6 +123,70 @@ Shared rounding/crossing contracts belong to
 [Timer primitives](../../runtime/timer_primitives.md), and pause ownership to
 [Pause and replay](../session/pause_and_replay.md). Static invocation counts and authored
 rates do not by themselves establish elapsed seconds or visible duration.
+
+### Readers and writers of the update delta
+
+A byte scan for every `lwc1`/`lw` of offset `0x1AC` in the ELF and BTL, with
+each hit checked for a fighter base, finds about 230 fighter reads. Most
+multiply a per-update amount by the delta: timeline and phase advances,
+displacement vectors, angle and phase rates, scene rates
+(`u16(rate * delta)`), and effect children that take the delta as their
+playback rate (22 spawns in `FUN_00255C50`, **inferred** from the stored
+value). About 140 feed a proportional approach through
+`FUN_00180CE0(target, k, &value)` (`value += (target - value) * k`), with
+`k = c * delta` clamped to 1, `k = delta / d`, or `k = 1 / (d / delta)`.
+`FUN_00218250` is the shared form of the first, and leaves `k` unscaled when
+it is exactly 1.
+
+The remaining reads use the delta in other ways:
+
+| Site | Owner | Use |
+| --- | --- | --- |
+| `0x0022A40C` | `FUN_00229B80` case 5 | One approach of `+0x994` with `k = 0.5 * delta` (`lui 0x3F00` at `0x0022A400`), guarded by `+0x968 == 0` |
+| `0x0022A658` | `FUN_00229B80` case 6 | `k = min(1, 1.25 * delta)` on `+0x998`, a snap at delta 1 |
+| `0x0023B85C` | `FUN_0023B280` | One approach of `+0x994` with `k = 0.5 * delta` after a state switch (**inferred** single run) |
+| `0x0023DC98`, `0x0023DD34` | `FUN_0023D980` entry setter | One approach each of `+0x994` and `+0x998` with `k = 0.75 * delta` (`lui 0x3F40` at `0x0023DC90`, `0x0023DD2C`) |
+| `0x00246424` | `FUN_002463B0` entry | One approach of `+0x994` toward 80 with `k = 0.5 * delta` (`lui` at `0x0024641C`) |
+| `0x00246BE0` | `FUN_00246AB0` entry | One approach of `+0x994` toward 0 with `k = +0xF4 * c * delta` (`mul.s f21` at `0x00246BE4`, `nop` at `0x00246BF0`) |
+| `0x00221C84` | `FUN_00221600` | Tests `delta > 1` |
+| `0x0024AE20` | `FUN_0024A660` | Tests `delta == 0` |
+| `0x0026EBB0` | ID 22, `FUN_0026E810` | Action-record repeat count `+0x2E` is 13, 11 or 17 for delta equal to, above or below 1 (`lui 0x3F80` at `0x0026EBB4`) |
+| `0x002870F4` | ID 51, `FUN_00287020` | Skips the advance of auxiliary scene `+0x5460` while `delta <= 0.1` (`lui 0x3DCC` at `0x002870F8`) |
+| `0x00297208`, `0x002972E8` | ID 57, `FUN_00296740` | Selects record `+0x32` and an event index by `delta > 1` (`lui 0x3F80` at `0x0029720C`, `0x002972E0`) |
+| `0x002CB580`, `0x002CB59C` | ID 71, `FUN_002CA790` | Copies the opponent's speeds times the opponent's delta into its own speeds, which its integrator then multiplies by its own delta (**inferred** from the integrator) |
+| `0x002DD4F8` | ID 78, `FUN_002DCC40` | Multiplies a pull term `min(0.7 * (target - pos), 30)` by delta before the accumulator `+0x6200` is itself multiplied by delta |
+| `0x002E7D44` | ID 80, `FUN_002E75B0` | One `+0x994 += 25 * delta` at secondary event `0x10` (`lui 0x41C8` at `0x002E7D48`) |
+| `0x002E7DEC` | ID 80, same | Compares `u16(+0xB90) * delta` with `0x80/0x100/0x120` from `0x00603D20` |
+| `0x002FF194`, `0x002FF528` | ID 92, `FUN_002FEF00` | Tests `u16(+0xB90) * delta < 128.0` (`lui 0x4300` at `0x002FF19C`, `0x002FF530`) |
+| `0x002FF5A4`, `0x002FF5CC`, `0x002FF5F4` | same | Writes receiver `+0x9A0/+0x9A8/+0x9AC` once as value times the source's delta |
+| `0x00302480` | ID 93, `FUN_00301F50` | Compares `u16(+0xB90) * delta` with `0x80/0x100/0x120` from `0x00604148` |
+| `0x003032B0` | ID 93, `FUN_00303010` | Computes `min(2 * delta - 1, 1)` |
+| live `0x008099EC` (D `0x008099AC`) | BTL skill object | Compares a per-update counter `+0x1038` with `30 * delta`, using 1.0 when the owner is absent |
+| live `0x0081BCD8`, `0x0081C2C8`, `0x0081C5A4` (D `-0x40`) | BTL `FUN_0081BB70` | Advances timer `+0xBFC` by `1 / delta` and moves by `50 / delta` |
+
+Several BTL skill objects compute a scene rate or step from the owner's delta
+and use a literal 1.0 when the owner is absent (D `0x007AC618`, `0x0080999C`,
+`0x0080B3B8`, `0x0080DAE0`, `0x00824680`, `0x00826E88`, `0x008274D8`).
+
+Besides `FUN_0024C440`, these write the delta itself:
+
+| Site | Owner | Write |
+| --- | --- | --- |
+| `0x00243854`, `0x00243860` | `FUN_00243040` case 5 | `1.0` to both fighters (`lui` at `0x00243850`) |
+| `0x00243E4C`, `0x00243E58` | `FUN_00243920` | `1.0` (`lui` at `0x00243E48`) |
+| `0x002466AC` | `FUN_002463B0` | `1.0` (`lui` at `0x002466A8`) |
+| live `0x007B96F0` (D `0x007B96B0`) | BTL `FUN_007B9670` | Saves the owner's delta, writes `1.0` around a call to `+0x1080`'s vtable `+0x5C`, then restores it |
+
+A write lasts until the next `FUN_0024C440` composition. The store at
+`0x00214CF8` in `FUN_00214A40` was not inspected.
+
+Per-update counters and steps on the same paths that do not read the delta
+include `+0x968` (`FUN_00229B80`), `+0x9C2/+0x9C4` (`FUN_0023CD80`,
+`FUN_0023D980`), `+0xB14` (`FUN_00247490`), `+0x194/+0x196`
+(`FUN_00243040`), the statistic counters `+0x518`, `+0x52C`, `+0x544` and
+`+0x548`, the override `+0x1B0` approaches in `FUN_00229B80` (0.0125, 0.25)
+and `FUN_00243040` (0.02), the halving decays in `FUN_0021A8D0`, and the
+`+0xA9C -= 3 * +0xAA0` step in `FUN_00251230`.
 
 ## Ordinary dispatch order
 

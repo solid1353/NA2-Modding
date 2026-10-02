@@ -185,6 +185,10 @@ the guide owner described in
    `+0xDF0/+0xDF4` and `+0xDE4/+0xDE8`, and store the registry-A camera
    returned by `0x007096E0` at session `+0x14`. Publication is described in
    [Battle entities](battle_entities.md#battle-state-and-hub-publication).
+   The graph build constructs the command input object, which sizes its
+   history from the pacing threshold at that moment
+   ([Action commands](../combat/action_commands.md#battle-input-object-and-circular-history)),
+   so the capacity is fixed in the same call that publishes the session.
 3. Always call the node-start broadcast `0x007095E0`.
 4. Create the camera controller at session `+0x1C` and publish it through
    `0x006DBD60`; see [Battle camera](battle_camera.md#shared-controller-entry-points).

@@ -259,7 +259,7 @@ destruction. Unlisted fields remain type-specific or unresolved.
 | `+0x90` | 4 | Current frame index during playback. |
 | `+0x94` | 4 | Type-5 payload dword minus one, written by `FUN_001b5290`: the last frame index of a playback file. |
 | `+0x98` | 4 | Header dword written by `FUN_001ac290`, used as the streamed-checkpoint count. In the playback file `STR/D01_10.CCS` it equals the tag-5 payload (`0x13F`), one more than the last frame marker index. It is cleared after parsing when `+0x94` is zero. |
-| `+0x9c` / `+0x9e` | 2 each | Signed 8.8 playback rate (`0x100` is one frame per step) and its fractional accumulator. |
+| `+0x9c` / `+0x9e` | 2 each | Signed playback rate in 1/256 frames per step (`0x100` is one frame) and its remainder. `FUN_001b4c60` keeps only a sign-extended low byte of the remainder, so only whole multiples of `0x100` advance as a steady rate; see [Frame timing](../../runtime/frame_timing.md#streamed-ccs-rate-is-whole-frame-only). |
 | `+0xa4` | 2 | Playback control flags (seek, restart, and stop requests consumed by the play loop and `FUN_001b4c60`). |
 | `+0xa0` | 4 | Type-5 block-start reader position, retained for reader states 1 or 2. |
 | `+0xa6` | 2 | Runtime flags. Bits 0/1 are parse milestones and bit 3 selects the alternate `+0x60` table. During playback, bits 2 and 4 are set together when the frame stream reaches an end marker, and bit 5 is set after the play loop has torn its play state down. Bit 7 marks a container holding a `0x2200` ring batch. |
@@ -1615,8 +1615,8 @@ the player lifetime.
 stack), which calls `FUN_001a0120`. Each step of that loop:
 
 - advances the frame stream through `FUN_001b4c60`, using rate `+0x9c`;
-- updates the `+0x114` generator-action manager with the same rate
-  (`FUN_001abc70`);
+- updates the `+0x114` generator-action manager with the same rate taken as
+  a raw pass count, so `0x100` runs 256 passes (`FUN_001abc70`);
 - calls the per-frame callback (`FUN_0035b740` for skill play) and the
   per-object callback at container `+0x7c`;
 - updates and submits the scene through `FUN_001a0a40`; and

@@ -294,8 +294,10 @@ and read only relevant sections of large documents.
 - Build only when the changes affect build bytes or byte parity is
   needed to be proven.
 - Documentation changes and the like should not produce builds.
-- Build NA2 only through `na228 build`. Whenever reporting a completed NA2
-  build, state the output ISO's exact filename.
+- Build NA2 only through `na228 build`. Never run builder modules or build
+  scripts directly, even to diagnose a failed build; report the failure
+  instead. Whenever reporting a completed NA2 build, state the output ISO's
+  exact filename.
 - Agents must never manually delete ISO files. The `na228 build` retention
   cleanup may delete its own evicted ISOs.
 - The PCSX2 fork is built according to its repository instructions.

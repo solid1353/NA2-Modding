@@ -375,6 +375,36 @@ live `0x00778FF0` additionally requires manager `+0x14 != 1`; and live
 `0x00870230` runs twice when that object's byte `+0xA50 == 0`. These are not
 controlled by an allowed-mask bit.
 
+The three auxiliary calls serve a two-side helper embedded at `0x00607844 +
+0x210`, with one `0x1C0`-byte side block each:
+
+- `0x00778D90` (Ghidra `0x00778D50`) checks both sides' actors through live
+  `0x00778F80`. Depending on its result it calls the actor's vtable `+0xD8`
+  (when actor `+0x56C > 0x73`) or starts that side's sequence through live
+  `0x0086FCD0`, which records the actor, sets the side flags at block
+  `+0x608..+0x60A`, writes `1` to `0x00607844 + 0xA50` and may construct an
+  object through `0x00309C50`. A second pass resets each side through live
+  `0x0086F7D0` unless its character-table and actor checks exempt it.
+- `0x00778FF0` (Ghidra `0x00778FB0`) calls the helper's update at live
+  `0x00870270` once per call. It increments `+0x82C`, updates up to four
+  child objects per side, and runs the side state at block `+0x5FC`. State 6
+  lasts 12 calls (counter `+0x600`) and applies a sine offset whose phase
+  `+0x448` falls by `0.2` per call, with amplitude `+0x444` multiplied by
+  `0.4` at each wrap. State 1 advances to 2 at once when block `+0x560` is
+  clear and otherwise on the call where counter `+0x600` reaches 5. State 5
+  decays `+0x604` by a factor of `0.8` per call. Recursive
+  approaches move block `+0x5CC`, `+0x5D0` and `+0x5D4`. When the side's
+  fighter command word `+0xAC` contains both `0x1400` or both `0x1800` bits,
+  it stores the word in pending slot `+0x81C + 4*side`. When both sides are
+  idle it writes `0` to `0x00607844 + 0xA50`.
+- `0x00870230` (Ghidra `0x008701F0`) moves a nonzero pending slot
+  `+0x81C + 4*side` into that side's fighter command node (`+0x24`) word
+  `+0xAC` and clears the slot.
+
+The resident pair processor `FUN_001DE1C0` at the end of the dispatcher is
+the collision separation pass described in
+[Collision](../combat/collision.md#resident-pair-processor).
+
 Consequently, an active start menu does not stop all work: its zero
 first/third mask still leaves the primary first/third callbacks enabled by the
 manager exception, may leave pointer `1`'s first callback enabled by its own

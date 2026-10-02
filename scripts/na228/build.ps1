@@ -73,7 +73,7 @@ else {
     try {
         $builderArguments = @(
             '--source', $paths.files.na2_iso,
-            '--output', $incomingIso,
+            '--build-id', $buildId,
             '--configuration', $configurationRelative,
             '--configuration-log-directory', $configurationLogRelative
         )

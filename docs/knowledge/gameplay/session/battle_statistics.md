@@ -358,9 +358,13 @@ then enters the shared setup. Setup live `0x0077A8F0` sets active context
 bit is set; the encoded driver call is `D0x00778AA4`.
 
 Driver phase `0` advances to phase `1` when the timer is exactly `5`,
-resetting the timer at that transition. Phase `1` increments each side's
-counter from the logical-input intersection with context `+0xB50`, or from
-the side's AI predicate. It resolves once the old timer is at least `150`,
+resetting the timer at that transition. Phase `1` increments a human side's
+counter on each update in which that side's shared pressed word intersects
+clash mask `+0xB50`, or uses the side's AI predicate. The human read at
+`D0x0077C498..0x0077C4D0` loads the system context through `gp-0x35F4`,
+indexes `side * 0x78`, and reads pressed `+0x84`
+([Controller input](../../runtime/controller_input.md#gameplay-readers-outside-command-history)).
+It resolves once the old timer is at least `150`,
 then calls cleanup live `0x0077B4C0`, which clears `+0xA74 & 1`. The phase, count, terminal call, and active-bit clear are at
 `D0x0077C280..0x0077C2FC`, `D0x0077C404..0x0077C4E8`,
 `D0x0077C61C..0x0077C650`, and `D0x0077B510..0x0077B524`. This supplies a one-resolution-per-active-clash route, rather
@@ -374,8 +378,7 @@ authored simultaneous actor/projectile combination has not been reconstructed.
 Counter comparison guarantees only the values sent to the selected callbacks;
 it does not prove that every table implements metric credit in the same way.
 No condition-menu or broader match-outcome name is inferred from the internal
-class name. [Action commands](../combat/action_commands.md#logical-mask-translation)
-owns logical input translation, and [Battle AI](battle_ai.md) owns AI behavior.
+class name. [Battle AI](battle_ai.md) owns AI behavior.
 
 ### Ultimate and support producers
 

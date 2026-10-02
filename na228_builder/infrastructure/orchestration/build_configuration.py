@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -832,13 +833,17 @@ def main() -> int:
         description="Build a verified staged NA2 ISO from one configuration."
     )
     parser.add_argument("--source", required=True, type=Path)
-    parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--build-id", required=True)
     parser.add_argument("--configuration", required=True, type=Path)
     parser.add_argument("--overrides-json")
     parser.add_argument("--configuration-log-directory", required=True, type=Path)
     args = parser.parse_args()
+    if re.fullmatch(r"[0-9A-Za-z_]+", args.build_id) is None:
+        raise SystemExit(f"Invalid build id: {args.build_id}")
     paths = PATHS or load_paths(Path(__file__).resolve(), allow_missing=True)
     workspace = paths.repository
+    # Command-line builds always land in the build cache's incoming folder.
+    output_iso = paths.path("build") / ".incoming" / f"{args.build_id}.iso"
 
     configuration_path = (
         args.configuration
@@ -859,7 +864,7 @@ def main() -> int:
 
     build = build_configuration_candidate(
         source_iso=args.source,
-        output_iso=args.output,
+        output_iso=output_iso,
         configuration=configuration,
         workspace=workspace,
         configuration_log_directory=configuration_log_directory,

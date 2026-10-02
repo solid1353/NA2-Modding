@@ -332,6 +332,14 @@ the history records. Their complete enclosing state-controller
 placement in the battle registries is not established, so no relative
 scheduling order is assigned to them.
 
+The jutsu-clash driver (live `0x0077C270`) is another direct reader. At
+Ghidra `0x0077C498..0x0077C4D0` it loads the context through `gp-0x35F4`,
+reads shared pressed `+0x84` at `side * 0x78`, intersects it with clash mask
+`+0xB50`, and increments that side's counter `+0xA7A + side*2` when any bit
+matches. It counts updates with a matching publication, not presses; the clash
+contract belongs to
+[Battle statistics](../gameplay/session/battle_statistics.md#jutsu-clash-outcome-selection-and-callback-lifetime).
+
 No active reader for the optional early system callback was identified.
 `FUN_001086a0`, called during context construction, clears `context+0x520`.
 The resident constant-offset `sw ...,+0x520(...)` byte-pattern search found

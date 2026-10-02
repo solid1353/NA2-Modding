@@ -28,7 +28,7 @@ function Invoke-Na2BuilderModule {
 
 function Get-Na2ConfigurationFailure {
     [CmdletBinding()]
-    param([Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$Output)
+    param([Parameter(Mandatory = $true)][AllowEmptyCollection()][AllowEmptyString()][string[]]$Output)
 
     $message = $null
     foreach ($line in $Output) {

@@ -244,7 +244,7 @@ the marker from `TEX_xgauge3`. Resource/animation names and pointers are at
 Gameplay meaning and mutations of fighter `+0x70/+0x7C` belong to
 [Chakra and guard](../combat/chakra_and_guard.md#fighter-and-action-record-fields).
 
-Update `0x0071E070` calls `0x0071D700`, `0x0071D8A0`, and `0x0071D9F0`
+Update `0x0071E070` calls `0x0071D700`, `0x0071D880`, and `0x0071D9F0`
 in order, then advances rotating-icon phase by `rate / 90`, subtracting `1`
 when it exceeds `1`. The first helper refreshes the fighter, copies the prior
 current sample, reads fighter `+0x70/+0x7C`, computes the total, and clips it

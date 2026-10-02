@@ -16,9 +16,6 @@ def synthetic_plan() -> translation_importer.TranslationImportPlan:
         references=(),
         resolved_texts={"first": "Imported Game", "other": "Unchanged"},
         resolved_sequences={"second": ("Imported Game", "Again: Imported Game")},
-        source_texts={},
-        donor_texts={},
-        materialized_templates={"template": "Title: Imported Game"},
         clean_targets={},
         summary={"active_mapping_coverage": {}},
     )
@@ -38,9 +35,6 @@ def linked_plan(
         references=references,
         resolved_texts=resolved_texts,
         resolved_sequences={},
-        source_texts={},
-        donor_texts={},
-        materialized_templates={},
         clean_targets={"BTL": clean},
         summary={"active_mapping_coverage": {}},
     )
@@ -81,12 +75,14 @@ class StringPatcherPolicyTests(unittest.TestCase):
                     patch=patch_id,
                 ),
             ),
-            string_patches={
+            patches={
                 patch_id: {
-                    "operation": "replace_imported_game_title",
-                    "expected_value": "Imported Game",
-                    "expected_mapping_count": 2,
-                    "expected_occurrence_count": 3,
+                    "string_patch": {
+                        "operation": "replace_imported_game_title",
+                        "expected_value": "Imported Game",
+                        "expected_mapping_count": 2,
+                        "expected_occurrence_count": 3,
+                    }
                 }
             },
         )
@@ -117,9 +113,6 @@ class StringPatcherPolicyTests(unittest.TestCase):
         self.assertEqual(
             transformed.resolved_sequences["second"],
             ("Output Game", "Again: Output Game"),
-        )
-        self.assertEqual(
-            transformed.materialized_templates["template"], "Title: Output Game"
         )
         self.assertEqual(transformed.resolved_texts["other"], "Unchanged")
 
@@ -153,13 +146,11 @@ class LinkedStringTests(unittest.TestCase):
         reference = translation_importer.Reference(
             mapping_id="M1",
             target="BTL",
-            target_file_offset=0,
             target_runtime_address=0x1000,
             resolution="direct",
             reference_binary="BTL",
             reference_file_offsets=(16,),
             parent_mapping_id=None,
-            parent_file_offset=None,
             parent_runtime_address=None,
         )
         draft = string_patcher.build_translation_draft(
@@ -185,13 +176,11 @@ class LinkedStringTests(unittest.TestCase):
         reference = translation_importer.Reference(
             mapping_id="ALIAS",
             target="BTL",
-            target_file_offset=0,
             target_runtime_address=0x1000,
             resolution="direct",
             reference_binary="BTL",
             reference_file_offsets=(16,),
             parent_mapping_id=None,
-            parent_file_offset=None,
             parent_runtime_address=None,
         )
         draft = string_patcher.build_translation_draft(
@@ -240,13 +229,11 @@ class LinkedStringTests(unittest.TestCase):
             translation_importer.Reference(
                 mapping_id=mapping_id,
                 target="BTL",
-                target_file_offset=0,
                 target_runtime_address=0x1000,
                 resolution="direct",
                 reference_binary="BTL",
                 reference_file_offsets=(reference_offset,),
                 parent_mapping_id=None,
-                parent_file_offset=None,
                 parent_runtime_address=None,
             )
             for mapping_id, reference_offset in (
@@ -317,13 +304,11 @@ class LinkedStringTests(unittest.TestCase):
         reference = translation_importer.Reference(
             mapping_id="ALIAS",
             target="BTL",
-            target_file_offset=0,
             target_runtime_address=0x1000,
             resolution="direct",
             reference_binary="BTL",
             reference_file_offsets=(0,),
             parent_mapping_id=None,
-            parent_file_offset=None,
             parent_runtime_address=None,
         )
         with self.assertRaisesRegex(
@@ -366,13 +351,11 @@ class LinkedStringTests(unittest.TestCase):
         reference = translation_importer.Reference(
             mapping_id="CHILD",
             target="BTL",
-            target_file_offset=4,
             target_runtime_address=0x2004,
             resolution="structured",
             reference_binary="BTL",
             reference_file_offsets=(16,),
             parent_mapping_id="PARENT",
-            parent_file_offset=0,
             parent_runtime_address=0x2000,
         )
         draft = string_patcher.build_translation_draft(

@@ -73,131 +73,51 @@ def _apply_game_title_policy(
             f"{len(hits)} mappings/{sum(hits.values())} occurrences"
         )
 
-    materialized_templates = {
-        mapping_id: text.replace(policy.imported_title, policy.output_title)
-        for mapping_id, text in plan.materialized_templates.items()
-    }
     return replace(
         plan,
         resolved_texts=resolved_texts,
         resolved_sequences=resolved_sequences,
-        materialized_templates=materialized_templates,
     )
 
 
 def build_binary_package(
     *,
     imported_rows: Sequence[Mapping[str, str]] = (),
-    imported_targets: Mapping[str, Mapping[str, object]] | None = None,
+    resolved_patches: Sequence[ResolvedPatch] = (),
+    imported_targets: Mapping[str, Mapping[str, object]],
 ) -> binary_patcher.Package:
-    package_directory = Path(__file__).resolve().parent
-    imported_targets = imported_targets or {}
+    """Package inline import rows and resolved external-string pointer writes."""
     targets: dict[str, binary_patcher.Target] = {}
-    target_ids: dict[tuple[str, str], str] = {}
+    target_ids: dict[str, str] = {}
     patches: dict[str, binary_patcher.Patch] = {}
     edits: list[binary_patcher.Edit] = []
 
-    def ensure_target(
-        *,
-        root_id: str,
+    def add(
+        import_id: str,
+        group_id: str,
         path: str,
-        expected_size: int,
-        expected_sha256: str,
-        label: str,
-    ) -> str:
-        normalized_path = binary_patcher.relative_posix(
-            path, f"{label} path"
-        ).as_posix()
-        target_key = (root_id, normalized_path)
-        target_id = target_ids.get(target_key)
+        offset: int,
+        expected_hex: str,
+        replacement_hex: str,
+        mapping_id: str,
+        reason: str,
+    ) -> None:
+        target_id = target_ids.get(path)
         if target_id is None:
             target_id = f"string_target_{len(target_ids) + 1:03d}"
-            target_ids[target_key] = target_id
+            target_ids[path] = target_id
+            metadata = imported_targets[path]
             targets[target_id] = binary_patcher.Target(
                 target_id=target_id,
-                root_id=root_id,
-                role="destination",
-                path=PurePosixPath(normalized_path),
-                expected_size=expected_size,
-                expected_sha256=expected_sha256,
+                root_id=str(metadata["root_id"]),
+                path=PurePosixPath(path),
+                expected_size=int(metadata["expected_size"]),
+                expected_sha256=str(metadata["expected_sha256"]),
             )
-            return target_id
-        target = targets[target_id]
-        if (
-            target.expected_size != expected_size
-            or target.expected_sha256 != expected_sha256
-        ):
-            raise binary_patcher.PatchError(
-                f"{label}: inconsistent identity for target "
-                f"{root_id}:{normalized_path}"
-            )
-        return target_id
-
-    for row_number, row in enumerate(imported_rows, 1):
-        label = f"translation import row {row_number}"
-        source_mapping_id = str(row.get("source_mapping_id", "")).strip()
-        import_id = str(row.get("import_id", "")).strip()
-        group_id = str(row.get("group_id", "")).strip()
-        path = binary_patcher.relative_posix(
-            str(row.get("path", "")), f"{label} path"
-        ).as_posix()
-        if not import_id or import_id in patches:
-            raise binary_patcher.PatchError(
-                f"{label}: missing or duplicate import_id {import_id!r}"
-            )
-        if not group_id:
-            raise binary_patcher.PatchError(f"{label}: group_id is empty")
-        metadata = imported_targets.get(path)
-        if metadata is None:
-            raise binary_patcher.PatchError(
-                f"{label}: missing imported target metadata for {path}"
-            )
-        root_id = str(metadata.get("root_id", "")).strip()
-        if not root_id:
-            raise binary_patcher.PatchError(f"{label}: imported root_id is empty")
-        try:
-            expected_size = int(metadata.get("expected_size", 0))
-        except (TypeError, ValueError) as exc:
-            raise binary_patcher.PatchError(
-                f"{label}: invalid imported expected_size"
-            ) from exc
-        expected_sha256 = binary_patcher.normalized_sha256(
-            str(metadata.get("expected_sha256", "")),
-            f"{label} expected_sha256",
-        )
-        offset = binary_patcher.parse_int(
-            str(row.get("offset", "")), f"{label} offset"
-        )
-        try:
-            expected = bytes.fromhex(str(row.get("expected_hex", "")))
-            replacement = bytes.fromhex(str(row.get("replacement_hex", "")))
-        except ValueError as exc:
-            raise binary_patcher.PatchError(
-                f"{label}: invalid expected/replacement hexadecimal bytes"
-            ) from exc
-        if not expected or len(expected) != len(replacement):
-            raise binary_patcher.PatchError(
-                f"{label}: imported edit must be nonempty and fixed-length"
-            )
-        if offset < 0 or offset + len(expected) > expected_size:
-            raise binary_patcher.PatchError(
-                f"{label}: imported edit exceeds target size"
-            )
-        target_id = ensure_target(
-            root_id=root_id,
-            path=path,
-            expected_size=expected_size,
-            expected_sha256=expected_sha256,
-            label=label,
-        )
-        reason = (
-            str(row.get("reason", "")).strip()
-            or "Import official translation text."
-        )
         patches[import_id] = binary_patcher.Patch(
             patch_id=import_id,
             group_id=group_id,
-            evidence_id=source_mapping_id,
+            evidence_id=mapping_id,
         )
         edits.append(
             binary_patcher.Edit(
@@ -207,24 +127,38 @@ def build_binary_package(
                 destination_target_id=target_id,
                 destination_offset=offset,
                 operation="replace",
-                length=len(expected),
-                expected_hex=expected.hex().upper(),
-                expected_sha256="",
-                replacement_hex=replacement.hex().upper(),
-                source_target_id="",
-                source_offset=None,
-                source_expected_hex="",
-                source_expected_sha256="",
-                blob_path=None,
-                blob_offset=None,
-                blob_sha256="",
-                fill_hex="",
+                length=len(expected_hex) // 2,
+                expected_hex=expected_hex,
+                replacement_hex=replacement_hex,
                 reason=reason,
             )
         )
 
+    for row in imported_rows:
+        add(
+            row["import_id"],
+            row["group_id"],
+            row["path"],
+            int(row["offset"], 0),
+            row["expected_hex"],
+            row["replacement_hex"],
+            row["source_mapping_id"],
+            row["reason"],
+        )
+    for index, patch in enumerate(resolved_patches, 1):
+        add(
+            f"XT-I{index:04d}",
+            "external_strings",
+            patch.path,
+            patch.offset,
+            patch.expected.hex().upper(),
+            patch.replacement.hex().upper(),
+            patch.mapping_id,
+            patch.reason,
+        )
+
     return binary_patcher.Package(
-        directory=package_directory,
+        directory=Path(__file__).resolve().parent,
         package_id="derived.string_patcher",
         targets=targets,
         patches=patches,
@@ -244,12 +178,15 @@ def build_translation_draft(
         if title_policy is not None
         else translation_plan
     )
+    adapted = translation_importer.AdaptedTexts(transformed_plan)
     external_draft = linked_strings.build_external_string_draft(
         translation_plan=transformed_plan,
+        adapted=adapted,
         owner=owner,
     )
     transformed_plan = translation_importer.compile_inline_imports(
         transformed_plan,
+        adapted=adapted,
         excluded_mapping_ids=external_draft.excluded_mapping_ids,
     )
     return StringPatchDraft(
@@ -282,26 +219,13 @@ def finalize_translation_plan(
         build=build,
         resolved_patches=resolved_patches,
     )
-    external_rows = tuple(
-        {
-            "import_id": f"XT-I{index:04d}",
-            "group_id": "external_strings",
-            "path": edit.path,
-            "offset": f"0x{edit.offset:X}",
-            "expected_hex": edit.expected.hex().upper(),
-            "replacement_hex": edit.replacement.hex().upper(),
-            "source_mapping_id": edit.mapping_id,
-            "reason": edit.reason,
-        }
-        for index, edit in enumerate(external_plan.resolved_patches, 1)
-    )
-    inline_rows = tuple(translation_plan.import_rows)
     package = build_binary_package(
-        imported_rows=inline_rows + external_rows,
+        imported_rows=translation_plan.import_rows,
+        resolved_patches=external_plan.resolved_patches,
         imported_targets=translation_plan.targets,
     )
     summary = dict(external_plan.summary)
-    summary["inline_import_rows"] = len(inline_rows)
+    summary["inline_import_rows"] = len(translation_plan.import_rows)
     summary["external_binary_edits"] = len(external_plan.resolved_patches)
     summary["compiled_binary_edits"] = len(package.edits)
     summary["game_title_policy"] = draft.game_title_policy
@@ -313,4 +237,16 @@ def finalize_translation_plan(
 
 
 def external_patch_log_rows(plan: StringPatchPlan) -> list[dict[str, object]]:
-    return linked_strings.patch_log_rows(plan.external_plan)
+    return [
+        {
+            "target": patch.path,
+            "offset": f"0x{patch.offset:X}",
+            "length": len(patch.expected),
+            "original_hex": patch.expected.hex().upper(),
+            "new_hex": patch.replacement.hex().upper(),
+            "mapping_id": patch.mapping_id,
+            "kind": patch.kind,
+            "reason": patch.reason,
+        }
+        for patch in plan.external_plan.resolved_patches
+    ]

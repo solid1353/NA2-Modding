@@ -9,12 +9,9 @@ param(
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'suite.ps1')
-. (Join-Path $PSScriptRoot 'config.ps1')
-$root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
-. (Join-Path $repository 'scripts\lib\paths.ps1')
-$paths = Get-Na2Paths
-$configuration = Get-E2eConfiguration -Root $root
+$state = Get-VisualRegressionRepositoryState
+$paths = $state.Paths
+$configuration = $state.Configuration
 $jobName = 'current'
 $suiteRequests = @($SuiteRequestJson | ConvertFrom-Json)
 $suites = [string[]]@($suiteRequests.Suite)
@@ -27,29 +24,6 @@ $buildPath = Join-Path $jobRoot 'build.json'
 $readyPath = Join-Path $jobRoot 'ready.json'
 $resultPath = Join-Path $jobRoot 'result.json'
 [void](New-Item -ItemType Directory -Path $jobRoot -Force)
-
-function Write-E2eJobJson {
-    param(
-        [Parameter(Mandatory)][string]$Path,
-        [Parameter(Mandatory)]$Value
-    )
-
-    [void](New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($Path)) -Force)
-    $temporary = "$Path.tmp-$([guid]::NewGuid().ToString('N'))"
-    try {
-        [IO.File]::WriteAllText(
-            $temporary,
-            (($Value | ConvertTo-Json -Depth 6) + "`n"),
-            [Text.UTF8Encoding]::new($false)
-        )
-        [IO.File]::Move($temporary, $Path, $true)
-    }
-    finally {
-        if (Test-Path -LiteralPath $temporary -PathType Leaf) {
-            Remove-Item -LiteralPath $temporary -Force
-        }
-    }
-}
 
 function Get-E2eSuiteOutput {
     param([Parameter(Mandatory)]$Context)
@@ -84,36 +58,16 @@ function Test-E2eSuiteComplete {
     if ($Context.Generated) {
         $artifactDirectory = Join-Path $artifactDirectory 'screenshots'
     }
-    $actualCount = @(
-        Get-ChildItem `
-            -LiteralPath $artifactDirectory `
-            -Filter '*.png' `
-            -File `
-            -ErrorAction SilentlyContinue
-    ).Count
-    return $actualCount -eq $expectedCount
-}
-
-function Set-E2eReady {
-    param([string]$IsoSha256)
-
-    $completedUtc = (Get-Date).ToUniversalTime().ToString('O')
-    Write-E2eJobJson -Path $readyPath -Value ([ordered]@{
-        iso_sha256 = $IsoSha256
-        completed_utc = $completedUtc
-    })
+    return (Get-VisualRegressionPngCount -Directory $artifactDirectory) -eq $expectedCount
 }
 
 function Complete-E2eRun {
-    $completedUtc = (Get-Date).ToUniversalTime().ToString('O')
-    $result = [ordered]@{
+    Write-VisualRegressionJson -Path $resultPath -Value ([ordered]@{
         status = 'passed'
         suites = $suites.Count
         replays_per_suite = 1
-        completed_utc = $completedUtc
-    }
-    Write-E2eJobJson -Path $resultPath -Value $result
-    return [pscustomobject]$result
+        completed_utc = (Get-Date).ToUniversalTime().ToString('O')
+    })
 }
 
 $suiteContexts = @(
@@ -157,12 +111,13 @@ if ([string]::IsNullOrWhiteSpace($isoSha256)) {
     throw 'E2E build returned no ISO hash.'
 }
 
-$suiteOutputRoot = Join-Path $jobRoot 'suites'
-$hasExistingSuiteOutput = Test-Path -LiteralPath $suiteOutputRoot -PathType Container
 $buildIsCompatible = $existingBuildMatches -and
     -not [string]::IsNullOrWhiteSpace($previousIsoSha256) -and
     $previousIsoSha256 -ceq $isoSha256
-if ($hasExistingSuiteOutput -and -not $buildIsCompatible) {
+if (-not $buildIsCompatible -and (
+    (Test-Path -LiteralPath (Join-Path $jobRoot 'suites') -PathType Container) -or
+    $null -ne $existingBuild
+)) {
     Move-VisualRegressionTransactionItemsToAttempt `
         -Transaction $Transaction `
         -RelativePath @(
@@ -173,34 +128,23 @@ if ($hasExistingSuiteOutput -and -not $buildIsCompatible) {
         ) `
         -Label 'current-build' |
         Out-Null
-    $existingBuild = $null
-}
-elseif ($null -ne $existingBuild -and -not $buildIsCompatible) {
-    Move-VisualRegressionTransactionItemsToAttempt `
-        -Transaction $Transaction `
-        -RelativePath @(
-            "jobs\$jobName\build.json",
-            "jobs\$jobName\result.json",
-            "jobs\$jobName\ready.json"
-        ) `
-        -Label 'current-build' |
-        Out-Null
-    $existingBuild = $null
 }
 
-$buildResult = [ordered]@{
+Write-VisualRegressionJson -Path $buildPath -Value ([ordered]@{
     configuration = [string]$configuration.Configuration
     iso = [string]$build.OutputIso
     iso_sha256 = $isoSha256
     build_id = [string]$build.BuildId
     build_record = [string]$build.ConfigurationLogDirectory
     preflight_cache_hit = [bool]$build.PreflightCacheHit
-}
-Write-E2eJobJson -Path $buildPath -Value $buildResult
-Set-E2eReady -IsoSha256 $isoSha256
+})
+Write-VisualRegressionJson -Path $readyPath -Value ([ordered]@{
+    iso_sha256 = $isoSha256
+    completed_utc = (Get-Date).ToUniversalTime().ToString('O')
+})
 if ($allSuitesComplete -and $buildIsCompatible) {
     Write-Host 'Continuing with completed E2E suite captures.' -ForegroundColor Cyan
-    Complete-E2eRun | Out-Null
+    Complete-E2eRun
     return
 }
 
@@ -221,99 +165,64 @@ try {
                 -Label 'current-incomplete' |
                 Out-Null
         }
-        $recordingPath = $context.SuitePath
-        $suiteName = $context.Suite
-        $replayJob = Start-ThreadJob -Name "current/$suiteName" -ScriptBlock {
+        $replayJob = Start-ThreadJob -Name "current/$($context.Suite)" -ScriptBlock {
                 param(
                     $SuiteScript,
-                    $Repository,
+                    $Context,
                     $SharedRecordingRoot,
-                    $RecordingPath,
                     $Game,
-                    $CaptureRoot,
                     $SuiteOutput,
-                    $Suite,
-                    $Generated,
-                    $GeneratedScript,
-                    $MemoryCard,
-                    $LaunchProfile,
                     $ConcurrencyLimit,
-                    $ConcurrencyPoolRoot,
-                    $MovesetRange,
-                    $MovesetFamily
+                    $ConcurrencyPoolRoot
                 )
                 $ErrorActionPreference = 'Stop'
                 . $SuiteScript
-                if ($Generated) {
-                    $generatedArguments = @{
-                        Game = $Game
-                        Tier = 'current'
-                        OutputRoot = $CaptureRoot
-                        ThrottleLimit = $ConcurrencyLimit
-                        ConcurrencyPoolRoot = $ConcurrencyPoolRoot
-                        ProjectRoot = $Repository
-                        MemoryCard = $MemoryCard
-                        LaunchProfile = $LaunchProfile
-                    }
-                    if (-not [string]::IsNullOrWhiteSpace($MovesetRange)) {
-                        $generatedArguments.MovesetRange = $MovesetRange
-                    }
-                    $generatedArguments.MovesetFamily = $MovesetFamily
-                    & $GeneratedScript @generatedArguments
-                    $artifactDirectory = Join-Path $CaptureRoot 'screenshots'
+                $captureRoot = Join-Path $SuiteOutput 'capture'
+                if ($Context.Generated) {
+                    Invoke-VisualRegressionGeneratedCapture `
+                        -Context $Context `
+                        -Game $Game `
+                        -Tier 'current' `
+                        -OutputRoot $captureRoot `
+                        -ThrottleLimit $ConcurrencyLimit `
+                        -ConcurrencyPoolRoot $ConcurrencyPoolRoot `
+                        -MovesetRange $Context.MovesetRange
+                    $artifactDirectory = Join-Path $captureRoot 'screenshots'
                     $artifactLabel = 'grids'
                 }
                 else {
                     Invoke-VisualRegressionPooledReplay `
-                        -Repository $Repository `
+                        -Repository $Context.Repository `
                         -SharedRecordingRoot $SharedRecordingRoot `
-                        -RecordingPath $RecordingPath `
+                        -RecordingPath $Context.SuitePath `
                         -Game $Game `
-                        -CaptureRoot $CaptureRoot `
-                        -MemoryCard $MemoryCard `
-                        -LaunchProfile $LaunchProfile `
+                        -CaptureRoot $captureRoot `
+                        -MemoryCard $Context.MemoryCard `
+                        -LaunchProfile $Context.LaunchProfile `
                         -ConcurrencyPoolRoot $ConcurrencyPoolRoot `
                         -ConcurrencyLimit $ConcurrencyLimit
-                    $artifactDirectory = $CaptureRoot
+                    $artifactDirectory = $captureRoot
                     $artifactLabel = 'screenshots'
                 }
-                $artifactCount = @(
-                    Get-ChildItem `
-                        -LiteralPath $artifactDirectory `
-                        -Filter '*.png' `
-                        -File `
-                        -ErrorAction SilentlyContinue
-                ).Count
+                $artifactCount = Get-VisualRegressionPngCount -Directory $artifactDirectory
                 if ($artifactCount -eq 0) {
-                    throw "E2E suite $Suite completed without captured $artifactLabel."
+                    throw "E2E suite $($Context.Suite) completed without captured $artifactLabel."
                 }
                 $complete = [ordered]@{
-                    suite = $Suite
+                    suite = $Context.Suite
                     screenshots = $artifactCount
                     artifact_type = $artifactLabel
                     completed_utc = (Get-Date).ToUniversalTime().ToString('O')
                 }
-                $completePath = Join-Path $SuiteOutput 'complete.json'
-                $temporary = "$completePath.tmp-$([guid]::NewGuid().ToString('N'))"
-                [void](New-Item -ItemType Directory -Path $SuiteOutput -Force)
-                [IO.File]::WriteAllText(
-                    $temporary,
-                    (($complete | ConvertTo-Json -Depth 4) + "`n"),
-                    [Text.UTF8Encoding]::new($false)
-                )
-                [IO.File]::Move($temporary, $completePath, $true)
+                Write-VisualRegressionJson `
+                    -Path (Join-Path $SuiteOutput 'complete.json') `
+                    -Value $complete
                 [pscustomobject]$complete
         } -ArgumentList (
             Join-Path $PSScriptRoot 'suite.ps1'
-        ), $repository, $paths.pcsx2_input_recordings, $recordingPath, (
+        ), $context, $paths.pcsx2_input_recordings, (
             [string]$build.OutputIso
-        ), (Join-Path $suiteOutput 'capture'), $suiteOutput, $suiteName, (
-            [bool]$context.Generated
-        ), $context.GeneratedScript, $context.MemoryCard, $context.LaunchProfile, (
-            $ConcurrencyLimit
-        ), (
-            $ConcurrencyPoolRoot
-        ), $context.MovesetRange, $context.GeneratedFamily
+        ), $suiteOutput, $ConcurrencyLimit, $ConcurrencyPoolRoot
         $replayJobs.Add($replayJob)
     }
 
@@ -324,12 +233,7 @@ try {
     }
 }
 finally {
-    foreach ($replayJob in $replayJobs) {
-        if ($replayJob.State -in @('NotStarted', 'Running')) {
-            Stop-Job -Job $replayJob -ErrorAction SilentlyContinue
-        }
-        Remove-Job -Job $replayJob -Force -ErrorAction SilentlyContinue
-    }
+    Remove-VisualRegressionJobs -Job $replayJobs
 }
 
 $incompleteSuites = @(
@@ -341,4 +245,4 @@ if ($incompleteSuites.Count -gt 0) {
         (@($incompleteSuites.Suite) -join ', ')
     )
 }
-Complete-E2eRun | Out-Null
+Complete-E2eRun

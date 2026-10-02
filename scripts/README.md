@@ -22,13 +22,14 @@ exact agent procedures belong in the linked runbooks.
 ## Responsibility directories
 
 - `lib/`: NA2 path/configuration loading, Python runtime/package resolution,
-  and build/run logging.
+  builder-module invocation, and build/run logging.
 - `na228/`: NA2 command implementation, build identity, and task path handling.
 - `injection/`: direct-PINE candidate build/apply tooling. Agent use is defined
   by [runtime validation](../AGENTS.md#runtime-validation).
 - `research/menu_input/`, `research/ee_memory_map/`,
-  `research/localization/`, and `research/ui_translation/`: reusable preserved
-  analysis tools owned by those technical areas.
+  `research/localization/`, `research/substitution/`, and
+  `research/ui_translation/`: reusable preserved analysis tools owned by those
+  technical areas.
 
 Shared infrastructure is not duplicated here:
 

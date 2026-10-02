@@ -13,6 +13,7 @@ import zlib
 from datetime import datetime, timezone
 from pathlib import Path
 
+from ..common import file_sha256, sha256_hex
 from .configuration import configuration_resource_files, load_configuration
 from .catalog import parse_build_overrides
 from scripts.lib.paths import load_paths
@@ -23,25 +24,12 @@ FINGERPRINT_SCHEMA_VERSION = 12
 SHA256_HEX_LENGTH = 64
 MAX_IMAGES = 15
 ISO_NAME_PREFIX = "NA v2.28"
-GENERATED_SUFFIXES = {".pyc", ".pyo"}
 NON_COMPOSING_BUILDER_FILES = {
     "infrastructure/orchestration/app.py",
     "infrastructure/orchestration/build_preflight.py",
     "infrastructure/orchestration/release_runtime.py",
-    "infrastructure/orchestration/release_configuration.py",
 }
 
-
-def file_sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest().upper()
-
-
-def bytes_sha256(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest().upper()
 
 
 def canonical_json(value: object) -> bytes:
@@ -54,13 +42,13 @@ def canonical_json(value: object) -> bytes:
 
 
 def state_fingerprint(state: dict[str, object]) -> str:
-    return bytes_sha256(canonical_json(state))
+    return sha256_hex(canonical_json(state))
 
 
 def _variant_key(fingerprint: str, postfix: str | None) -> str:
     if postfix is None:
         return fingerprint
-    return bytes_sha256(canonical_json({"fingerprint": fingerprint, "postfix": postfix}))
+    return sha256_hex(canonical_json({"fingerprint": fingerprint, "postfix": postfix}))
 
 
 def _validate_postfix(postfix: str | None) -> None:
@@ -79,13 +67,24 @@ def _valid_sha256(value: object) -> bool:
     )
 
 
-def _file_entry(label: str, path: Path) -> dict[str, object]:
-    if not path.is_file():
-        raise FileNotFoundError(path)
+def _tree_entry(
+    label: str,
+    files: list[tuple[str, int, str]],
+) -> dict[str, object]:
+    """Summarize (relative path, size, content hash) rows in their given order."""
+    digest = hashlib.sha256()
+    for relative, size, content_hash in files:
+        digest.update(relative.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(str(size).encode("ascii"))
+        digest.update(b"\0")
+        digest.update(content_hash.encode("ascii"))
+        digest.update(b"\n")
     return {
         "label": label,
-        "size": path.stat().st_size,
-        "sha256": file_sha256(path),
+        "file_count": len(files),
+        "size": sum(size for _relative, size, _hash in files),
+        "sha256": digest.hexdigest().upper(),
     }
 
 
@@ -98,7 +97,6 @@ def _builder_files(builder: Path) -> list[Path]:
             for path in builder.rglob("*")
             if path.is_file()
             and "__pycache__" not in path.relative_to(builder).parts
-            and path.suffix.casefold() not in GENERATED_SUFFIXES
             and path.suffix.casefold() == ".py"
             and path.relative_to(builder).as_posix()
             not in NON_COMPOSING_BUILDER_FILES
@@ -108,27 +106,16 @@ def _builder_files(builder: Path) -> list[Path]:
 
 
 def builder_tree_entry(builder: Path) -> dict[str, object]:
-    digest = hashlib.sha256()
     files = _builder_files(builder)
     if not files:
         raise ValueError("na228_builder contains no fingerprintable files")
-    total_size = 0
-    for path in files:
-        relative = path.relative_to(builder).as_posix()
-        size = path.stat().st_size
-        total_size += size
-        digest.update(relative.encode("utf-8"))
-        digest.update(b"\0")
-        digest.update(str(size).encode("ascii"))
-        digest.update(b"\0")
-        digest.update(file_sha256(path).encode("ascii"))
-        digest.update(b"\n")
-    return {
-        "label": "na228_builder",
-        "file_count": len(files),
-        "size": total_size,
-        "sha256": digest.hexdigest().upper(),
-    }
+    return _tree_entry(
+        "na228_builder",
+        [
+            (path.relative_to(builder).as_posix(), path.stat().st_size, file_sha256(path))
+            for path in files
+        ],
+    )
 
 
 def configuration_resources_entry(
@@ -148,8 +135,7 @@ def configuration_resources_entry(
         set(configuration_resource_files(configuration)) | {paths.manifest},
         key=lambda path: path.as_posix(),
     )
-    digest = hashlib.sha256()
-    total_size = 0
+    rows: list[tuple[str, int, str]] = []
     for path in files:
         if not path.is_file():
             raise FileNotFoundError(path)
@@ -161,27 +147,13 @@ def configuration_resources_entry(
             ) from error
         if path.resolve() == configuration.release_manifest_path.resolve():
             title_data = canonical_json({"title": configuration.product_title})
-            size = len(title_data)
-            content_hash = bytes_sha256(title_data)
-            total_size += size
+            rows.append((relative, len(title_data), sha256_hex(title_data)))
         elif path.suffix.casefold() == ".md":
-            size = 0
-            content_hash = "STRUCTURAL-PRESENCE-ONLY"
+            rows.append((relative, 0, "STRUCTURAL-PRESENCE-ONLY"))
         else:
-            size = path.stat().st_size
-            content_hash = file_sha256(path)
-            total_size += size
-        digest.update(relative.encode("utf-8"))
-        digest.update(b"\0")
-        digest.update(str(size).encode("ascii"))
-        digest.update(b"\0")
-        digest.update(content_hash.encode("ascii"))
-        digest.update(b"\n")
+            rows.append((relative, path.stat().st_size, file_sha256(path)))
     result = {
-        "label": "configuration_resources",
-        "file_count": len(files),
-        "size": total_size,
-        "sha256": digest.hexdigest().upper(),
+        **_tree_entry("configuration_resources", rows),
         "uses_ee_compiler": any(path.suffix in {".c", ".S"} for path in files),
     }
     if overrides is not None:
@@ -206,25 +178,12 @@ def ee_toolchain_entry(workspace: Path) -> dict[str, object]:
                 f"Expected exactly one EE compiler {name}, found {len(matches)}"
             )
         discovered[matches[0].relative_to(ee_root).as_posix()] = matches[0]
-    digest = hashlib.sha256()
-    total_size = 0
+    rows: list[tuple[str, int, str]] = []
     for relative, path in sorted(discovered.items()):
         if not path.is_file():
             raise FileNotFoundError(path)
-        size = path.stat().st_size
-        total_size += size
-        digest.update(relative.encode("utf-8"))
-        digest.update(b"\0")
-        digest.update(str(size).encode("ascii"))
-        digest.update(b"\0")
-        digest.update(file_sha256(path).encode("ascii"))
-        digest.update(b"\n")
-    return {
-        "label": "ee_toolchain",
-        "file_count": len(discovered),
-        "size": total_size,
-        "sha256": digest.hexdigest().upper(),
-    }
+        rows.append((relative, path.stat().st_size, file_sha256(path)))
+    return _tree_entry("ee_toolchain", rows)
 
 
 def dependency_versions() -> dict[str, str]:
@@ -255,10 +214,16 @@ def collect_build_state(
     if not configuration_path.is_file():
         raise FileNotFoundError(configuration_path)
     resources = configuration_resources_entry(workspace, configuration_path, overrides)
+    if not na2_iso.is_file():
+        raise FileNotFoundError(na2_iso)
     state = {
         "fingerprint_schema_version": FINGERPRINT_SCHEMA_VERSION,
         "source_isos": [
-            _file_entry(f"source/{na2_iso.name}", na2_iso),
+            {
+                "label": f"source/{na2_iso.name}",
+                "size": na2_iso.stat().st_size,
+                "sha256": file_sha256(na2_iso),
+            },
         ],
         "builder_tree": builder_tree_entry(builder),
         "configuration_resources": resources,
@@ -321,18 +286,24 @@ def _registry_lock(registry_path: Path):
         if handle.tell() == 0:
             handle.write(b"\0")
             handle.flush()
+        if os.name == "nt":
+            import msvcrt
+
+            def lock(release: bool = False) -> None:
+                handle.seek(0)
+                mode = msvcrt.LK_UNLCK if release else msvcrt.LK_NBLCK
+                msvcrt.locking(handle.fileno(), mode, 1)
+        else:
+            import fcntl
+
+            def lock(release: bool = False) -> None:
+                mode = fcntl.LOCK_UN if release else fcntl.LOCK_EX | fcntl.LOCK_NB
+                fcntl.flock(handle.fileno(), mode)
+
         deadline = time.monotonic() + 120
         while True:
             try:
-                if os.name == "nt":
-                    import msvcrt
-
-                    handle.seek(0)
-                    msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
-                else:
-                    import fcntl
-
-                    fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                lock()
                 break
             except OSError:
                 if time.monotonic() >= deadline:
@@ -341,15 +312,7 @@ def _registry_lock(registry_path: Path):
         try:
             yield
         finally:
-            if os.name == "nt":
-                import msvcrt
-
-                handle.seek(0)
-                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
-            else:
-                import fcntl
-
-                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+            lock(release=True)
 
 
 def _relative_workspace_path(path: Path, workspace: Path) -> str:
@@ -453,9 +416,8 @@ def lookup_registry(
         "fingerprint": fingerprint,
         "output_size_bytes": size,
         "output_sha256": sha256,
+        "image": str(image),
     }
-    if image is not None:
-        result["image"] = str(image)
     if provenance.is_dir():
         result["provenance"] = str(provenance.resolve())
     return result
@@ -754,9 +716,6 @@ def record_registry(
     return result
 
 
-def _configuration_path(value: Path, workspace: Path) -> Path:
-    return value if value.is_absolute() else workspace / value
-
 
 def _emit(value: dict[str, object]) -> None:
     print(json.dumps(value, ensure_ascii=True, separators=(",", ":"), sort_keys=True))
@@ -794,7 +753,7 @@ def main() -> int:
         state = collect_build_state(
             workspace=workspace,
             na2_iso=args.na2_iso,
-            configuration_path=_configuration_path(args.configuration, workspace),
+            configuration_path=workspace / args.configuration,
             overrides=overrides,
         )
         if args.command == "lookup":

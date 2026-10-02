@@ -10,8 +10,7 @@ from na228_builder.infrastructure.orchestration import catalog
 from na228_builder.patches.localization.mod_strings import ModStrings
 from na228_builder.patches.settings.ingame.practice_mode.practice_settings import (
     _active_pages,
-    practice_settings_fragment,
-    practice_settings_table_fragments,
+    practice_settings_fragments,
 )
 from scripts.lib.paths import load_local_paths
 from tests.na228_builder._fixtures import test_features
@@ -45,7 +44,7 @@ class PracticeSettingsTests(unittest.TestCase):
         return catalog.load_selection(self.catalog_path, path)
 
     def test_base_schema_links_runtime_providers_and_help(self) -> None:
-        fragment = practice_settings_fragment(
+        fragment, *_ = practice_settings_fragments(
             self.selection,
             owner="settings.runtime_injector",
         )
@@ -91,7 +90,7 @@ class PracticeSettingsTests(unittest.TestCase):
             practice["opponent_settings"]["extra_hit_counter"] = "return"
 
         selection = self._selection(configure)
-        fragment = practice_settings_fragment(
+        fragment, *_ = practice_settings_fragments(
             selection,
             owner="settings.runtime_injector",
         )
@@ -114,7 +113,7 @@ class PracticeSettingsTests(unittest.TestCase):
                 "battle_mechanics_submenu", False
             )
         )
-        fragment = practice_settings_fragment(
+        fragment, *_ = practice_settings_fragments(
             selection,
             owner="settings.runtime_injector",
         )
@@ -131,14 +130,14 @@ class PracticeSettingsTests(unittest.TestCase):
         self.assertEqual(struct.unpack_from("<2I", fragment.payload), (12, 2))
 
     def test_runtime_tables_match_the_generated_schema_size(self) -> None:
-        fragment = practice_settings_fragment(
+        fragment, *_ = practice_settings_fragments(
             self.selection,
             owner="settings.runtime_injector",
         )
         self.assertIsNotNone(fragment)
         assert fragment is not None
         largest_page = max(len(page.rows) for page in _active_pages(self.selection))
-        tables = practice_settings_table_fragments(
+        tables = practice_settings_fragments(
             self.selection,
             owner="settings.runtime_injector",
         )

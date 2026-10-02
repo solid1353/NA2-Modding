@@ -3,7 +3,6 @@ param()
 
 $ErrorActionPreference = 'Stop'
 $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
-. (Join-Path $repository 'e2e\scripts\config.ps1')
 . (Join-Path $repository 'e2e\scripts\suite.ps1')
 
 function Assert-E2eHelperTest {
@@ -13,6 +12,21 @@ function Assert-E2eHelperTest {
     )
     if (-not $Condition) { throw $Message }
 }
+
+$fixtureConfiguration = @'
+{
+  "configuration": "e2e",
+  "memory_card": "templates/2_formatted.ps2",
+  "suite_overrides": {
+    "practice": {
+      "launch_profile": {
+        "name": "practice",
+        "arguments": ["naruto"]
+      }
+    }
+  }
+}
+'@
 
 $testRoot = Join-Path (
     [IO.Path]::GetTempPath()
@@ -311,10 +325,7 @@ try {
         if ($null -ne $poolPermit) {
             $poolPermit.Dispose()
         }
-        if ($poolJob.State -in @('NotStarted', 'Running')) {
-            Stop-Job -Job $poolJob -ErrorAction SilentlyContinue
-        }
-        Remove-Job -Job $poolJob -Force -ErrorAction SilentlyContinue
+        Remove-VisualRegressionJobs -Job @($poolJob)
     }
 
     $replayRepository = Join-Path $testRoot 'screenshot-replay'
@@ -626,14 +637,16 @@ param(
         $generatedRunLibrary, `
         $generatedRunComparatorRoot `
         -Force)
-    foreach ($file in @('suite.ps1', 'run.ps1', 'config.ps1')) {
+    foreach ($file in @('suite.ps1', 'lib', 'run.ps1', 'config.ps1')) {
         Copy-Item `
             -LiteralPath (Join-Path $repository "e2e\scripts\$file") `
-            -Destination (Join-Path $generatedRunScripts $file)
+            -Destination (Join-Path $generatedRunScripts $file) `
+            -Recurse
     }
-    Copy-Item `
-        -LiteralPath (Join-Path $repository 'e2e\config.json') `
-        -Destination (Join-Path $generatedRunRoot 'config.json')
+    [IO.File]::WriteAllText(
+        (Join-Path $generatedRunRoot 'config.json'),
+        $fixtureConfiguration
+    )
     [IO.File]::WriteAllText(
         (Join-Path $generatedRunScripts 'movesets.ps1'),
         '# generated suite'
@@ -662,6 +675,7 @@ function Get-Na2Paths {
         scripts = '$($generatedRunProjectScripts.Replace("'", "''"))'
         resources = '$($generatedRunResources.Replace("'", "''"))'
         pcsx2_input_recordings = '$($generatedRunRecordings.Replace("'", "''"))'
+        e2e_captures = '$((Join-Path $generatedRunRoot 'captures').Replace("'", "''"))'
         files = [pscustomobject]@{
             practice_movesets = '$($generatedRunPracticeMovesets.Replace("'", "''"))'
         }
@@ -674,8 +688,7 @@ function Get-Na2Paths {
         @'
 param(
     [string]$PairedGridDirectory,
-    [string]$OutputDirectory,
-    [string]$Kind
+    [string]$OutputDirectory
 )
 foreach ($reference in Get-ChildItem -LiteralPath $PairedGridDirectory -Filter '*_a_reference.png' -File) {
     $caseName = $reference.Name.Substring(
@@ -686,13 +699,7 @@ foreach ($reference in Get-ChildItem -LiteralPath $PairedGridDirectory -Filter '
     if (-not (Test-Path -LiteralPath $current -PathType Leaf)) {
         continue
     }
-    $directories = if ([string]::IsNullOrWhiteSpace($Kind)) {
-        @('pairs', 'blends', 'diffs')
-    }
-    else {
-        @($Kind.ToLowerInvariant() + 's')
-    }
-    foreach ($directory in $directories) {
+    foreach ($directory in @('pairs', 'blends', 'diffs')) {
         $targetRoot = Join-Path $OutputDirectory $directory
         [void](New-Item -ItemType Directory -Path $targetRoot -Force)
         Copy-Item `
@@ -946,12 +953,7 @@ $grids = Join-Path $OutputRoot 'screenshots'
         }
         finally {
             $failureStopwatch.Stop()
-            foreach ($job in @($failedJob, $blockedJob)) {
-                if ($job.State -in @('NotStarted', 'Running')) {
-                    Stop-Job -Job $job -ErrorAction SilentlyContinue
-                }
-                Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
-            }
+            Remove-VisualRegressionJobs -Job @($failedJob, $blockedJob)
         }
         Assert-E2eHelperTest `
             -Condition (
@@ -970,6 +972,7 @@ $grids = Join-Path $OutputRoot 'screenshots'
     $dependentMarker = Join-Path $graphRoot 'dependent.txt'
     $firstTask = [pscustomobject]@{
         Key = 'synthetic/first'
+        Priority = 0
         DependsOn = @()
         Ready = $null
         Start = {
@@ -981,6 +984,7 @@ $grids = Join-Path $OutputRoot 'screenshots'
     }
     $dependentTask = [pscustomobject]@{
         Key = 'synthetic/dependent'
+        Priority = 0
         DependsOn = @('synthetic/first')
         Ready = $null
         Start = {
@@ -1002,6 +1006,7 @@ $grids = Join-Path $OutputRoot 'screenshots'
 
     $graphFailure = [pscustomobject]@{
         Key = 'synthetic/failure'
+        Priority = 0
         DependsOn = @()
         Ready = $null
         Start = {
@@ -1013,6 +1018,7 @@ $grids = Join-Path $OutputRoot 'screenshots'
     }
     $graphBlocked = [pscustomobject]@{
         Key = 'synthetic/blocked'
+        Priority = 0
         DependsOn = @()
         Ready = $null
         Start = {
@@ -1276,7 +1282,7 @@ $grids = Join-Path $OutputRoot 'screenshots'
     (Get-Item -LiteralPath $legacy).LastWriteTimeUtc = [DateTime]::UtcNow.AddMinutes(-2)
     [IO.File]::WriteAllText(
         (Join-Path $stale 'owner.json'),
-        '{"pid":2147483647,"process_start_utc":"2000-01-01T00:00:00.0000000Z"}'
+        '{"pid":2147483647,"process_start_file_time_utc":0}'
     )
     $transaction = New-VisualRegressionTransaction -Root $testRoot -Prefix 'run'
     Assert-E2eHelperTest `
@@ -1453,10 +1459,7 @@ $grids = Join-Path $OutputRoot 'screenshots'
     }
     finally {
         Wait-Job -Job $lockJob -Timeout 5 | Out-Null
-        if ($lockJob.State -in @('NotStarted', 'Running')) {
-            Stop-Job -Job $lockJob -ErrorAction SilentlyContinue
-        }
-        Remove-Job -Job $lockJob -Force -ErrorAction SilentlyContinue
+        Remove-VisualRegressionJobs -Job @($lockJob)
     }
     Assert-E2eHelperTest `
         -Condition ([IO.File]::ReadAllText($lockedPath) -ceq 'new screenshot') `
@@ -1539,10 +1542,15 @@ $grids = Join-Path $OutputRoot 'screenshots'
         -Force)
     Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\suite.ps1') `
         -Destination (Join-Path $fakeScripts 'suite.ps1')
+    Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\lib') `
+        -Destination (Join-Path $fakeScripts 'lib') `
+        -Recurse
     Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\config.ps1') `
         -Destination (Join-Path $fakeScripts 'config.ps1')
-    Copy-Item -LiteralPath (Join-Path $repository 'e2e\config.json') `
-        -Destination (Join-Path $fakeRepository 'e2e\config.json')
+    [IO.File]::WriteAllText(
+        (Join-Path $fakeRepository 'e2e\config.json'),
+        $fixtureConfiguration
+    )
     Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\create_suite.ps1') `
         -Destination (Join-Path $fakeScripts 'create_suite.ps1')
     Copy-Item -LiteralPath (Join-Path $repository 'e2e\scripts\rename_suite.ps1') `
@@ -1557,6 +1565,7 @@ function Get-Na2Paths {
         scripts = '$($fakeProjectScripts.Replace("'", "''"))'
         pcsx2_input_recordings = '$($fakeInputRecordingsRoot.Replace("'", "''"))'
         resources = '$($fakeResources.Replace("'", "''"))'
+        e2e_captures = '$((Join-Path $fakeRepository 'e2e\captures').Replace("'", "''"))'
         files = [pscustomobject]@{
             practice_movesets = '$($fakePracticeMovesets.Replace("'", "''"))'
         }
@@ -1571,39 +1580,31 @@ param(
     [string]$Suite,
     [string]$Game,
     [string]$CaptureOutputRoot,
-    [string]$CapturedRoot,
-    [string]$CaptureRoot,
     [string]$MovesetRange,
     [string]$ConcurrencyPoolRoot,
     [int]$ConcurrencyLimit
 )
 $sync = Join-Path $PSScriptRoot 'sync'
 [void](New-Item -ItemType Directory -Path $sync -Force)
-if (-not [string]::IsNullOrWhiteSpace($CaptureOutputRoot)) {
-    [IO.File]::WriteAllText(
-        (Join-Path $PSScriptRoot 'reference-pool.txt'),
-        $ConcurrencyPoolRoot
-    )
-    [IO.File]::WriteAllText(
-        (Join-Path $PSScriptRoot 'reference-limit.txt'),
-        [string]$ConcurrencyLimit
-    )
-    [IO.File]::WriteAllText((Join-Path $sync 'reference-started'), '')
-    $deadline = [DateTime]::UtcNow.AddSeconds(5)
-    while (-not (Test-Path -LiteralPath (Join-Path $sync 'run-started'))) {
-        if ([DateTime]::UtcNow -ge $deadline) {
-            throw 'The test run did not overlap the reference capture.'
-        }
-        Start-Sleep -Milliseconds 20
+[IO.File]::WriteAllText(
+    (Join-Path $PSScriptRoot 'reference-pool.txt'),
+    $ConcurrencyPoolRoot
+)
+[IO.File]::WriteAllText(
+    (Join-Path $PSScriptRoot 'reference-limit.txt'),
+    [string]$ConcurrencyLimit
+)
+[IO.File]::WriteAllText((Join-Path $sync 'reference-started'), '')
+$deadline = [DateTime]::UtcNow.AddSeconds(5)
+while (-not (Test-Path -LiteralPath (Join-Path $sync 'run-started'))) {
+    if ([DateTime]::UtcNow -ge $deadline) {
+        throw 'The test run did not overlap the reference capture.'
     }
-    [void](New-Item -ItemType Directory -Path (Join-Path $CaptureOutputRoot 'screenshots') -Force)
-    [IO.File]::WriteAllText((Join-Path $CaptureOutputRoot 'screenshots\0001.png'), 'reference')
-    Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "reference-capture suite=$Suite game=$Game"
-    return
+    Start-Sleep -Milliseconds 20
 }
-[void](New-Item -ItemType Directory -Path $CaptureRoot -Force)
-[IO.File]::WriteAllText((Join-Path $CaptureRoot 'reference.txt'), 'reference')
-Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "reference-publish suite=$Suite"
+[void](New-Item -ItemType Directory -Path (Join-Path $CaptureOutputRoot 'screenshots') -Force)
+[IO.File]::WriteAllText((Join-Path $CaptureOutputRoot 'screenshots\0001.png'), 'reference')
+Add-Content -LiteralPath (Join-Path $PSScriptRoot 'calls.txt') -Value "reference-capture suite=$Suite game=$Game"
 '@
     )
     [IO.File]::WriteAllText(
@@ -1628,7 +1629,6 @@ foreach ($suiteName in $Suite) {
         @'
 param(
     [string[]]$SelectionToken,
-    [string]$CaptureRoot,
     [string]$CaptureRepository,
     [object[]]$SupervisedJob,
     [string]$ConcurrencyPoolRoot,
@@ -1686,12 +1686,9 @@ if ($hasReferenceSuite) {
     [IO.File]::WriteAllText((Join-Path $sync 'run-started'), '')
 }
 foreach ($suiteName in $suites) {
-    $suiteCaptureRoot = if (-not [string]::IsNullOrWhiteSpace($CaptureRoot)) {
-        $CaptureRoot
-    }
-    else {
-        Join-Path $CaptureRepository $suiteName.Replace('/', [IO.Path]::DirectorySeparatorChar)
-    }
+    $suiteCaptureRoot = Join-Path `
+        $CaptureRepository `
+        $suiteName.Replace('/', [IO.Path]::DirectorySeparatorChar)
     [void](New-Item -ItemType Directory -Path $suiteCaptureRoot -Force)
     [IO.File]::WriteAllText((Join-Path $suiteCaptureRoot 'current.txt'), 'current')
 }

@@ -18,13 +18,12 @@ from .configuration import validate_product_title
 
 
 RELEASE_MANIFEST_NAME = "release_manifest.json"
-REQUIRED_IMAGE_IDS = ("na2",)
 HASH_CHUNK_SIZE = 8 * 1024 * 1024
 ERROR_LOG_NAME = "builder-error.log"
 
 Emit = Callable[[str], None]
 ReleaseBuilder = Callable[[Path, Path, Path, Emit], None]
-ReleaseConfigurationValidator = Callable[[Path], Iterable[str] | None]
+ReleaseConfigurationValidator = Callable[[Path], None]
 
 
 class ReleaseError(RuntimeError):
@@ -33,7 +32,6 @@ class ReleaseError(RuntimeError):
 
 @dataclass(frozen=True)
 class SupportedImage:
-    image_id: str
     label: str
     size: int
     sha256: str
@@ -43,24 +41,19 @@ class SupportedImage:
 class ReleaseManifest:
     product_name: str
     product_version: str
-    executable_name: str
     output_name: str
     configuration: str
     configuration_name: str
-    images: tuple[SupportedImage, ...]
+    image: SupportedImage
 
 
-def application_directory(
-    *, executable: str | os.PathLike[str] | None = None
-) -> Path:
+def application_directory() -> Path:
     """Return the directory users perceive as containing the application.
 
     PyInstaller sets ``sys.frozen`` and points ``sys.executable`` at the
     packaged EXE. During source execution, use the repository root so
     ``python -m na228_builder.infrastructure.orchestration.app`` remains predictable.
     """
-    if executable is not None:
-        return Path(executable).resolve().parent
     if getattr(sys, "frozen", False):
         return Path(sys.executable).resolve().parent
     return Path(__file__).resolve().parents[2]
@@ -73,31 +66,16 @@ def _required_text(data: dict[str, object], key: str) -> str:
     return value.strip()
 
 
-def _validate_output_name(value: str) -> str:
+def _validate_file_name(value: str, field: str, suffix: str) -> str:
     path = Path(value)
     if (
         path.is_absolute()
         or path.name != value
         or "/" in value
         or "\\" in value
-        or value in {".", ".."}
+        or path.suffix.casefold() != suffix
     ):
-        raise ReleaseError("Release output_name must be one filename")
-    if path.suffix.casefold() != ".iso":
-        raise ReleaseError("Release output_name must end in .iso")
-    return value
-
-
-def _validate_executable_name(value: str) -> str:
-    path = Path(value)
-    if (
-        path.is_absolute()
-        or path.name != value
-        or "/" in value
-        or "\\" in value
-        or path.suffix.casefold() != ".exe"
-    ):
-        raise ReleaseError("Release executable_name must be one .exe filename")
+        raise ReleaseError(f"Release {field} must be one {suffix} filename")
     return value
 
 
@@ -108,19 +86,6 @@ def _validate_configuration(value: str) -> str:
     return value.replace("\\", "/")
 
 
-def _validate_configuration_name(value: str) -> str:
-    path = Path(value)
-    if (
-        path.is_absolute()
-        or path.name != value
-        or "/" in value
-        or "\\" in value
-        or path.suffix.casefold() != ".jsonc"
-    ):
-        raise ReleaseError("Release configuration_name must be one .jsonc filename")
-    return value
-
-
 def parse_release_manifest(text: str) -> ReleaseManifest:
     try:
         data = json.loads(text)
@@ -129,59 +94,21 @@ def parse_release_manifest(text: str) -> ReleaseManifest:
     if not isinstance(data, dict):
         raise ReleaseError("Release manifest root must be an object")
     raw_images = data.get("images")
-    if not isinstance(raw_images, list):
-        raise ReleaseError("Release manifest images must be a list")
-
-    images: list[SupportedImage] = []
-    image_ids: set[str] = set()
-    identities: set[tuple[int, str]] = set()
-    for index, raw_image in enumerate(raw_images, 1):
-        if not isinstance(raw_image, dict):
-            raise ReleaseError(f"Release image {index} must be an object")
-        image_id = _required_text(raw_image, "id").casefold()
-        if not re.fullmatch(r"[a-z0-9_]+", image_id):
-            raise ReleaseError(f"Release image {index} has an invalid id")
-        if image_id in image_ids:
-            raise ReleaseError(f"Duplicate release image id: {image_id}")
-
-        label = _required_text(raw_image, "label")
-        size = raw_image.get("size")
-        if isinstance(size, bool) or not isinstance(size, int) or size <= 0:
-            raise ReleaseError(
-                f"Release image {image_id!r} size must be a positive integer"
-            )
-        digest = raw_image.get("sha256")
-        if not isinstance(digest, str) or not re.fullmatch(
-            r"[0-9A-Fa-f]{64}", digest
-        ):
-            raise ReleaseError(
-                f"Release image {image_id!r} sha256 must be 64 hexadecimal digits"
-            )
-        digest = digest.upper()
-        identity = (size, digest)
-        if identity in identities:
-            raise ReleaseError(
-                "Release manifest assigns one ISO identity to multiple image ids"
-            )
-
-        image_ids.add(image_id)
-        identities.add(identity)
-        images.append(SupportedImage(image_id, label, size, digest))
-
-    expected_ids = set(REQUIRED_IMAGE_IDS)
-    if image_ids != expected_ids:
-        missing = sorted(expected_ids - image_ids)
-        extra = sorted(image_ids - expected_ids)
-        details: list[str] = []
-        if missing:
-            details.append("missing " + ", ".join(missing))
-        if extra:
-            details.append("unexpected " + ", ".join(extra))
-        raise ReleaseError(
-            "Release manifest must define exactly NA2 ("
-            + "; ".join(details)
-            + ")"
-        )
+    if (
+        not isinstance(raw_images, list)
+        or len(raw_images) != 1
+        or not isinstance(raw_images[0], dict)
+        or _required_text(raw_images[0], "id").casefold() != "na2"
+    ):
+        raise ReleaseError("Release manifest images must define exactly NA2")
+    raw_image = raw_images[0]
+    label = _required_text(raw_image, "label")
+    size = raw_image.get("size")
+    if isinstance(size, bool) or not isinstance(size, int) or size <= 0:
+        raise ReleaseError("Release image size must be a positive integer")
+    digest = raw_image.get("sha256")
+    if not isinstance(digest, str) or not re.fullmatch(r"[0-9A-Fa-f]{64}", digest):
+        raise ReleaseError("Release image sha256 must be 64 hexadecimal digits")
 
     try:
         product_name = validate_product_title(data.get("title"))
@@ -192,17 +119,16 @@ def parse_release_manifest(text: str) -> ReleaseManifest:
     return ReleaseManifest(
         product_name=product_name,
         product_version=product_version,
-        executable_name=_validate_executable_name(
-            f"{product_name}_{product_version}.exe"
+        output_name=_validate_file_name(
+            f"{product_name}_{product_version}.iso", "output_name", ".iso"
         ),
-        output_name=_validate_output_name(f"{product_name}_{product_version}.iso"),
         configuration=_validate_configuration(
             _required_text(data, "configuration")
         ),
-        configuration_name=_validate_configuration_name(
-            _required_text(data, "configuration_name")
+        configuration_name=_validate_file_name(
+            _required_text(data, "configuration_name"), "configuration_name", ".jsonc"
         ),
-        images=tuple(images),
+        image=SupportedImage(label, size, digest.upper()),
     )
 
 
@@ -273,70 +199,44 @@ def file_sha256(
     return digest.hexdigest().upper()
 
 
-def identify_supported_images(
+def identify_supported_image(
     directory: Path,
-    images: Iterable[SupportedImage],
+    image: SupportedImage,
     *,
     ignored_names: Iterable[str] = (),
     allow_missing: bool = False,
     emit: Emit = print,
-) -> dict[str, Path]:
-    specs = tuple(images)
-    by_size: dict[int, list[SupportedImage]] = {}
-    for image in specs:
-        by_size.setdefault(image.size, []).append(image)
-
+) -> Path | None:
     candidates = iso_candidates(directory, ignored_names=ignored_names)
     emit(
         f"Found {len(candidates)} ISO file"
         f"{'s' if len(candidates) != 1 else ''} beside this program."
     )
-    matches: dict[str, list[Path]] = {image.image_id: [] for image in specs}
+    matches: list[Path] = []
     for path in candidates:
         try:
             size = path.stat().st_size
         except OSError as exc:
             raise ReleaseError(f"Could not inspect {path.name}: {exc}") from exc
-        possible = by_size.get(size)
-        if not possible:
+        if size != image.size:
             continue
         emit(f"Checking {path.name}...")
-        digest = file_sha256(path, expected_size=size, emit=emit)
-        matched = False
-        for image in possible:
-            if digest == image.sha256:
-                matches[image.image_id].append(path)
-                emit(f"[OK] {image.label}: {path.name}")
-                matched = True
-        if not matched:
+        if file_sha256(path, expected_size=size, emit=emit) == image.sha256:
+            matches.append(path)
+            emit(f"[OK] {image.label}: {path.name}")
+        else:
             emit(f"Ignored {path.name}: hash is not supported.")
 
-    selected: dict[str, Path] = {}
-    problems: list[str] = []
-    for image in specs:
-        paths = matches[image.image_id]
-        if not paths:
-            if not allow_missing:
-                problems.append(f"Could not find the supported {image.label}.")
-        elif len(paths) > 1:
-            names = ", ".join(path.name for path in paths)
-            problems.append(
-                f"Found multiple copies of the supported {image.label}: {names}."
-            )
-        else:
-            selected[image.image_id] = paths[0]
-    if problems:
-        labels = [image.label for image in specs]
-        required = (
-            labels[0]
-            if len(labels) == 1
-            else ", ".join(labels[:-1]) + f" and {labels[-1]}"
-        )
-        raise ReleaseError(
-            " ".join(problems)
-            + f" Place exactly one supported {required} beside this program."
-        )
-    return selected
+    if len(matches) > 1:
+        names = ", ".join(path.name for path in matches)
+        problem = f"Found multiple copies of the supported {image.label}: {names}."
+    elif matches or allow_missing:
+        return matches[0] if matches else None
+    else:
+        problem = f"Could not find the supported {image.label}."
+    raise ReleaseError(
+        f"{problem} Place exactly one supported {image.label} beside this program."
+    )
 
 
 def identify_input_iso(path: Path, image: SupportedImage, *, emit: Emit) -> Path:
@@ -429,25 +329,18 @@ def locked_input_files(paths: Iterable[Path]):
             close_handle(handle)
 
 
-def verify_locked_images(
-    selected: dict[str, Path],
-    images: Iterable[SupportedImage],
-    *,
-    emit: Emit,
-) -> None:
-    """Recheck identities after the application has acquired input locks."""
+def verify_locked_image(path: Path, image: SupportedImage, *, emit: Emit) -> None:
+    """Recheck the identity after the application has acquired the input lock."""
     emit("Locking and rechecking the selected source ISOs...")
-    for image in images:
-        path = selected[image.image_id]
-        try:
-            size = path.stat().st_size
-        except OSError as exc:
-            raise ReleaseError(f"Could not recheck {path.name}: {exc}") from exc
-        if size != image.size:
-            raise ReleaseError(f"{path.name} changed after identification; try again")
-        digest = file_sha256(path, expected_size=size, emit=emit)
-        if digest != image.sha256:
-            raise ReleaseError(f"{path.name} changed after identification; try again")
+    try:
+        size = path.stat().st_size
+    except OSError as exc:
+        raise ReleaseError(f"Could not recheck {path.name}: {exc}") from exc
+    if (
+        size != image.size
+        or file_sha256(path, expected_size=size, emit=emit) != image.sha256
+    ):
+        raise ReleaseError(f"{path.name} changed after identification; try again")
 
 
 def _occupied(path: Path) -> bool:
@@ -475,11 +368,11 @@ def _runtime_builder(
     build_release_iso(na2_iso, configuration_path, building_iso, emit)
 
 
-def _runtime_configuration_validator(configuration_path: Path) -> tuple[str, ...]:
+def _runtime_configuration_validator(configuration_path: Path) -> None:
     from .release_runtime import validate_release_configuration
 
     try:
-        return validate_release_configuration(configuration_path)
+        validate_release_configuration(configuration_path)
     except ReleaseError:
         raise
     except Exception as exc:
@@ -540,64 +433,39 @@ def run_release(
     emit(f"{manifest.product_name} {manifest.product_version}")
     emit(f"Loading {configuration_path.name}...")
     _validate_user_configuration(configuration_path)
-    required_image_ids: tuple[str, ...] | None = None
     if configuration_validator is not None:
-        validated_ids = configuration_validator(configuration_path)
-        if validated_ids is not None:
-            required_image_ids = tuple(validated_ids)
-    if required_image_ids is None:
-        required_image_ids = tuple(image.image_id for image in manifest.images)
-    if "na2" not in required_image_ids:
-        raise ReleaseError("Release configuration must require the NA2 source ISO")
-    if len(required_image_ids) != len(set(required_image_ids)):
-        raise ReleaseError("Release configuration returned duplicate source image ids")
-    images_by_id = {image.image_id: image for image in manifest.images}
-    unknown_ids = sorted(set(required_image_ids) - set(images_by_id))
-    if unknown_ids:
-        raise ReleaseError(
-            "Release configuration requires unknown source image ids: "
-            + ", ".join(unknown_ids)
-        )
-    required_images = tuple(images_by_id[image_id] for image_id in required_image_ids)
+        configuration_validator(configuration_path)
+    image = manifest.image
+    source: Path | None = None
     if input_iso is None:
         emit("Scanning for supported ISO files...")
-        selected = identify_supported_images(
+        source = identify_supported_image(
             directory,
-            required_images,
+            image,
             ignored_names=(manifest.output_name, building_iso.name),
             allow_missing=True,
             emit=emit,
         )
-        if "na2" not in selected:
+        if source is None:
             emit("No supported NA2 ISO was found beside this program.")
             input_iso = _prompt_source_iso(read)
-    else:
-        selected = {}
     if input_iso is not None:
-        selected["na2"] = identify_input_iso(input_iso, images_by_id["na2"], emit=emit)
-    if selected["na2"] == output_iso.resolve():
+        source = identify_input_iso(input_iso, image, emit=emit)
+    if source == output_iso.resolve():
         raise ReleaseError("The source and output ISO paths must differ")
     try:
-        with locked_input_files(selected.values()):
-            verify_locked_images(selected, required_images, emit=emit)
+        with locked_input_files((source,)):
+            verify_locked_image(source, image, emit=emit)
             destination.mkdir(parents=True, exist_ok=True)
             emit(f"Building {manifest.output_name}...")
-            builder(
-                selected["na2"],
-                configuration_path,
-                building_iso,
-                emit,
-            )
+            builder(source, configuration_path, building_iso, emit)
         if building_iso.is_symlink() or not building_iso.is_file():
             raise ReleaseError("The build engine did not produce a verified ISO")
-        na2_size = next(
-            image.size for image in manifest.images if image.image_id == "na2"
-        )
         actual_size = building_iso.stat().st_size
-        if actual_size != na2_size:
+        if actual_size != image.size:
             raise ReleaseError(
                 "The built ISO has the wrong size "
-                f"({actual_size} bytes; expected {na2_size})"
+                f"({actual_size} bytes; expected {image.size})"
             )
         os.replace(building_iso, output_iso)
     except BaseException as exc:

@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from na228_builder.infrastructure.modules.payload_builder import build_resident_payload
 from na228_builder.infrastructure.modules.payload_builder import ee_c_fragments
+from na228_builder.infrastructure.modules.payload_builder.builder import build_resident_payload
 from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment
 from tests.na228_builder._fixtures import resident_payload_config
 
@@ -105,8 +105,6 @@ class EeCFragmentTests(unittest.TestCase):
             second = self.compile_probe(root, "second")
 
         self.assertEqual(first, second)
-        self.assertEqual(first.fingerprint, second.fingerprint)
-        self.assertEqual(64, len(first.fingerprint))
 
     def test_unmapped_external_symbol_fails_closed(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -170,7 +168,6 @@ entry:
             )
 
         self.assertEqual(first, second)
-        self.assertEqual(first.fingerprint, second.fingerprint)
         self.assertEqual(1, len(first.fragments))
         fragment = first.fragments[0]
         self.assertEqual("code", fragment.kind)

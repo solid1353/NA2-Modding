@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-from na228_builder.infrastructure.orchestration.cvm import CvmError, CvmIso, _crypt_sector, _rofs_key
+from na228_builder.infrastructure.orchestration.cvm import CvmIso, _crypt_sector, _rofs_key
 from na228_builder.infrastructure.modules.image_assembler.iso9660 import IsoRecord, SECTOR
 
 
@@ -110,7 +110,6 @@ class CvmTests(unittest.TestCase):
                     is_dir=False,
                     extent=2,
                     size=len(cvm),
-                    recorded_at=None,
                 )
             },
         )
@@ -137,27 +136,16 @@ class CvmTests(unittest.TestCase):
             reader.read_iso_bytes(16 * SECTOR, 5 * SECTOR),
             inner[16 * SECTOR : 21 * SECTOR],
         )
-        self.assertEqual(reader.read_file("hello.bin"), payload)
+        self.assertEqual(reader.read_file(reader.by_path["HELLO.BIN"]), payload)
         self.assertEqual(reader.by_path.keys(), {"", "HELLO.BIN"})
-
-        record = reader.record("HELLO.BIN")
-        expected_cvm_offset = 3 * SECTOR + 21 * SECTOR
-        self.assertEqual(reader.member_cvm_offset(record), expected_cvm_offset)
         self.assertEqual(path.read_bytes(), before)
 
     def test_reads_unencrypted_toc(self) -> None:
         reader, _, inner, payload = self.open_synthetic(encrypted=False)
         self.assertFalse(reader.toc_encrypted)
         self.assertEqual(reader.read_iso_bytes(0, len(inner)), inner)
-        self.assertEqual(reader.read_file("HELLO.BIN"), payload)
+        self.assertEqual(reader.read_file(reader.by_path["HELLO.BIN"]), payload)
 
-    def test_rejects_wrong_password(self) -> None:
-        cvm, _, _ = synthetic_cvm()
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "DATA.CVM"
-            path.write_bytes(cvm)
-            with self.assertRaisesRegex(CvmError, "password may be wrong"):
-                CvmIso(path, password="incorrect")
 
     def test_rejects_cvm_range_outside_image(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

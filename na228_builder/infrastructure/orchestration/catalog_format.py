@@ -71,11 +71,6 @@ TypeExpression: TypeAlias = (
 )
 
 
-@dataclass(frozen=True)
-class StartupFastForwardFrames:
-    additive: int | None = None
-    override: int | None = None
-
 
 @dataclass(frozen=True)
 class SettingNode:
@@ -117,6 +112,17 @@ CatalogNodeExpression: TypeAlias = (
 )
 
 
+def _flattened(items: list, kind: type, attribute: str) -> tuple:
+    """Inline nested items of `kind` so chained operators stay one level deep."""
+    flattened: list = []
+    for item in items:
+        if isinstance(item, kind):
+            flattened.extend(getattr(item, attribute))
+        else:
+            flattened.append(item)
+    return tuple(flattened)
+
+
 def _syntax(path: Path, token: Token, message: str) -> CatalogSyntaxError:
     return CatalogSyntaxError(
         f"{path}:{token.line}:{token.column}: {message}"
@@ -147,8 +153,7 @@ def _tokens(path: Path, text: str) -> tuple[Token, ...]:
             line += 1
             index = newline + 1
             continue
-        token_line = line
-        token_column = column
+
         if text.startswith("..", index):
             result.append(Token("..", "..", "..", line, column))
             index += 2
@@ -275,6 +280,12 @@ class _Parser:
             raise _syntax(self.path, token, "object key must be nonempty")
         return value
 
+    def text_field(self, key_token: Token, label: str) -> str:
+        value = str(self.expect("STRING", f"{label} must be a string").value)
+        if not value.strip():
+            raise _syntax(self.path, key_token, f"{label} must be nonempty")
+        return value
+
     def parse(self) -> ContainerNode:
         while self.current.kind == "IDENT" and self.current.value == "type":
             self.type_declaration()
@@ -289,13 +300,7 @@ class _Parser:
             branches.append(self.node_intersection())
         if len(branches) == 1:
             return branches[0]
-        flattened: list[CatalogNodeExpression] = []
-        for branch in branches:
-            if isinstance(branch, UnionNode):
-                flattened.extend(branch.branches)
-            else:
-                flattened.append(branch)
-        return UnionNode(tuple(flattened))
+        return UnionNode(_flattened(branches, UnionNode, "branches"))
 
     def node_intersection(self) -> CatalogNodeExpression:
         operands = [self.node_primary()]
@@ -303,13 +308,7 @@ class _Parser:
             operands.append(self.node_primary())
         if len(operands) == 1:
             return operands[0]
-        flattened: list[CatalogNodeExpression] = []
-        for operand in operands:
-            if isinstance(operand, IntersectionNode):
-                flattened.extend(operand.operands)
-            else:
-                flattened.append(operand)
-        return IntersectionNode(tuple(flattened))
+        return IntersectionNode(_flattened(operands, IntersectionNode, "operands"))
 
     def node_primary(self) -> CatalogNodeExpression:
         if self.current.kind == "IDENT" and self.current.value == "setting":
@@ -347,19 +346,9 @@ class _Parser:
             seen.add(key)
             self.expect(":")
             if key == "description":
-                description = str(
-                    self.expect("STRING", "setting description must be a string").value
-                )
-                if not description.strip():
-                    raise _syntax(
-                        self.path, key_token, "setting description must be nonempty"
-                    )
+                description = self.text_field(key_token, "setting description")
             elif key == "patch":
-                patch = str(
-                    self.expect("STRING", "setting patch must be a string").value
-                )
-                if not patch.strip():
-                    raise _syntax(self.path, key_token, "setting patch must be nonempty")
+                patch = self.text_field(key_token, "setting patch")
             else:
                 raise _syntax(
                     self.path,
@@ -385,17 +374,9 @@ class _Parser:
             seen.add(key)
             self.expect(":")
             if key == "description":
-                description = str(
-                    self.expect("STRING", "description must be a string").value
-                )
-                if not description.strip():
-                    raise _syntax(
-                        self.path, key_token, "description must be nonempty"
-                    )
+                description = self.text_field(key_token, "description")
             elif key == "patch":
-                patch = str(self.expect("STRING", "patch must be a string").value)
-                if not patch.strip():
-                    raise _syntax(self.path, key_token, "patch must be nonempty")
+                patch = self.text_field(key_token, "patch")
             else:
                 fields.append(ContainerField(key, self.node_expression()))
             if self.accept(",") is None and self.current.kind != "}":
@@ -415,13 +396,7 @@ class _Parser:
             branches.append(self.intersection_type())
         if len(branches) == 1:
             return branches[0]
-        flattened: list[TypeExpression] = []
-        for branch in branches:
-            if isinstance(branch, UnionType):
-                flattened.extend(branch.branches)
-            else:
-                flattened.append(branch)
-        return UnionType(tuple(flattened))
+        return UnionType(_flattened(branches, UnionType, "branches"))
 
     def intersection_type(self) -> TypeExpression:
         value = self.type_primary()
@@ -848,11 +823,7 @@ def expand_node(
             elif isinstance(expanded, UnionNode) and all(
                 isinstance(branch, ContainerNode) for branch in expanded.branches
             ):
-                branches = [
-                    branch
-                    for branch in expanded.branches
-                    if isinstance(branch, ContainerNode)
-                ]
+                branches = list(expanded.branches)
             else:
                 raise ValueError(
                     f"{label}: catalog intersections require object operands"
@@ -983,6 +954,22 @@ def type_text(value_type: TypeExpression) -> str:
     return _type_text(value_type, 0)
 
 
+def _metadata_lines(
+    node: SettingNode | ContainerNode,
+    indent: int,
+    *,
+    include_patches: bool,
+) -> list[str]:
+    fields = [("description", node.description)]
+    if include_patches:
+        fields.append(("patch", node.patch))
+    return [
+        " " * (indent + 2) + f"{name}: " + json.dumps(value, ensure_ascii=False) + ","
+        for name, value in fields
+        if value
+    ]
+
+
 def _node_lines(
     node: CatalogNodeExpression,
     indent: int,
@@ -996,41 +983,16 @@ def _node_lines(
         setting = "setting"
         if node.value_type is not None:
             setting += f"<{_type_text(node.value_type, indent + 2)}>"
-        lines = [setting + " {"]
-        if node.description:
-            lines.append(
-                " " * (indent + 2)
-                + "description: "
-                + json.dumps(node.description, ensure_ascii=False)
-                + ","
-            )
-        if include_patches and node.patch:
-            lines.append(
-                " " * (indent + 2)
-                + "patch: "
-                + json.dumps(node.patch, ensure_ascii=False)
-                + ","
-            )
+        lines = [
+            setting + " {",
+            *_metadata_lines(node, indent, include_patches=include_patches),
+        ]
         if len(lines) == 1:
             return [setting + " {}"]
         lines.append(prefix + "}")
         return lines
     if isinstance(node, ContainerNode):
-        lines = ["{"]
-        if node.description:
-            lines.append(
-                " " * (indent + 2)
-                + "description: "
-                + json.dumps(node.description, ensure_ascii=False)
-                + ","
-            )
-        if include_patches and node.patch:
-            lines.append(
-                " " * (indent + 2)
-                + "patch: "
-                + json.dumps(node.patch, ensure_ascii=False)
-                + ","
-            )
+        lines = ["{", *_metadata_lines(node, indent, include_patches=include_patches)]
         for field in node.fields:
             child = _node_lines(field.node, indent + 2, include_patches=include_patches)
             if len(child) == 1:

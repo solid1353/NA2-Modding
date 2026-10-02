@@ -17,6 +17,13 @@ from ..battle_mechanics.items.items_settings import FIELD_ITEMS, ITEM_VALUE_LABE
 
 
 MOD_SETTINGS_PATH = ("features", "defaults", "mod_settings")
+# Mod Settings values in their runtime argument order, with their choices.
+MOD_SETTING_VALUES = (
+    (MOD_SETTINGS_PATH + ("simple_display",), ("off", "on")),
+    (MATCH_SETUP_PATH + ("character_balance",), ("original", "overrides")),
+    (MATCH_SETUP_PATH + ("balance_overlay",), ("off", "on")),
+    (MATCH_SETUP_PATH + ("support_selection",), ("none", "relevant", "all")),
+)
 
 
 @dataclass(frozen=True)
@@ -28,8 +35,6 @@ class MenuOption:
     getter: str
     setter: str
     argument: int
-    availability: int = 0
-    flags: int = 0
     label_reference: int | None = None
     help_reference: int | None = None
     values_reference: int | None = None
@@ -48,6 +53,11 @@ PAGE_TITLES = {
 }
 
 
+def mod_setting_values(selection) -> tuple[int, ...]:
+    return tuple(choices.index(selection.node(*path).configured_value)
+                 for path, choices in MOD_SETTING_VALUES)
+
+
 def items_mode_option(selection):
     return MenuOption(message("settings.items.label"), message("settings.items.help"),
                       ITEM_VALUE_LABELS, items_option_defaults(selection)[0],
@@ -57,36 +67,11 @@ def items_mode_option(selection):
 def menu_option_bindings(selection):
     """Bind leaf paths to existing gameplay handlers; page topology lives in the catalog."""
     options = {}
-    selected = {node.path: node for node in selection.nodes}
-
-    def configured_index(path, values):
-        value = selected[path].configured_value
-        try:
-            return values.index(value)
-        except ValueError as error:
-            raise ValueError(
-                f"Invalid Mod Settings value for {'.'.join(path)}: {value!r}"
-            ) from error
-
-    mod_rows = (
-        ("simple_display", message("settings.simple_display.label"),
-         message("settings.simple_display.help"),
-         ("off", "on"), (message("common.off"), message("common.on"))),
-        ("character_balance", message("settings.character_balance.label"),
-         message("settings.character_balance.help"),
-         ("original", "overrides"), (message("common.original"), message("common.overrides"))),
-        ("balance_overlay", message("settings.balance_overlay.label"),
-         message("settings.balance_overlay.help"),
-         ("off", "on"), (message("common.off"), message("common.on"))),
-        ("support_selection", message("settings.support_selection.label"),
-         message("settings.support_selection.help"),
-         ("none", "relevant", "all"), (message("common.none"), message("common.relevant"), message("common.all"))),
-    )
-    for argument, (key, label, help_text, values, labels) in enumerate(mod_rows):
-        path = (MOD_SETTINGS_PATH if key == "simple_display"
-                else MATCH_SETUP_PATH) + (key,)
+    for argument, ((path, choices), default) in enumerate(
+            zip(MOD_SETTING_VALUES, mod_setting_values(selection))):
         options[path] = MenuOption(
-            label, help_text, labels, configured_index(path, values),
+            message(f"settings.{path[-1]}.label"), message(f"settings.{path[-1]}.help"),
+            tuple(message(f"common.{choice}") for choice in choices), default,
             "mod_settings_option_get", "mod_settings_option_set", argument,
         )
 

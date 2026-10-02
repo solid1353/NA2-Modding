@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-import csv
-import hashlib
 import json
 import os
 import re
 import tempfile
 from dataclasses import dataclass, replace
+from functools import cached_property
 from pathlib import Path, PurePosixPath
 
 from ..modules.binary_patcher import adapters as binary_adapters
 from ..modules.binary_patcher import engine as binary_patcher
 from ..modules.runtime_injector import engine as runtime_injector
 from ..modules.payload_builder import ee_c_fragments
+from ..common import SYMBOL_PATTERN, UINT64_MAX, key_problems, read_tsv, sha256_hex
 from . import catalog_format
 from . import jsonc
 from ..modules.payload_builder.operations import (
@@ -24,11 +24,9 @@ from ..modules.payload_builder.operations import (
 )
 
 
-IDENTIFIER = re.compile(r"[a-z][a-z0-9_]*\Z")
 PATCH_ID = re.compile(r"[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*\Z")
 OPERATION_FIELDS = ["field", "required", "type"]
 FIELD_TYPES = {"hex", "integer", "integer_list", "path", "sha256", "text"}
-UINT64_MAX = (1 << 64) - 1
 SOURCE_PAYLOAD_FIELDS = {
     "kind",
     "path",
@@ -67,6 +65,12 @@ def parse_build_overrides(value: str | None) -> dict[str, object] | None:
 
 
 @dataclass(frozen=True)
+class StartupFastForwardFrames:
+    additive: int | None = None
+    override: int | None = None
+
+
+@dataclass(frozen=True)
 class CatalogNode:
     path: tuple[str, ...]
     enabled: bool
@@ -74,9 +78,7 @@ class CatalogNode:
     description: str = ""
     configured_value: object = None
     has_configured_value: bool = False
-    startup_fast_forward_frames: (
-        catalog_format.StartupFastForwardFrames | None
-    ) = None
+    startup_fast_forward_frames: StartupFastForwardFrames | None = None
     modules: tuple[str, ...] = ()
 
     @property
@@ -94,8 +96,6 @@ class CatalogNode:
 @dataclass(frozen=True)
 class CatalogSelection:
     catalog_path: Path
-    catalog_files: tuple[Path, ...]
-    patches_path: Path
     patch_files: tuple[Path, ...]
     base_configuration_path: Path | None
     configuration_path: Path
@@ -108,7 +108,7 @@ class CatalogSelection:
     effective_configuration: object
     supplied_overrides: dict[str, object] | None
 
-    @property
+    @cached_property
     def patch_nodes(self) -> tuple[CatalogNode, ...]:
         return _included_patch_nodes(self.nodes, self.patches)
 
@@ -127,20 +127,19 @@ class CatalogSelection:
             if len(node.path) == 2 and node.path[0] == "features"
         )
 
-    def feature_nodes(self, feature_id: str) -> tuple[CatalogNode, ...]:
-        return tuple(
-            node
-            for node in self.nodes
-            if len(node.path) >= 2
-            and node.path[0] == "features"
-            and node.path[1] == feature_id
-        )
+
+    @cached_property
+    def nodes_by_path(self) -> dict[tuple[str, ...], CatalogNode]:
+        return {node.path: node for node in self.nodes}
+
+    def node(self, *path: str) -> CatalogNode:
+        try:
+            return self.nodes_by_path[path]
+        except KeyError:
+            raise ValueError(f"Catalog selection has no node: {'.'.join(path)}") from None
 
     def node_enabled(self, *path: str) -> bool:
-        matches = [node for node in self.nodes if node.path == path]
-        if len(matches) != 1:
-            raise ValueError(f"Catalog selection has no unique node: {'.'.join(path)}")
-        return matches[0].enabled
+        return self.node(*path).enabled
 
 
 @dataclass(frozen=True)
@@ -150,12 +149,8 @@ class OperationField:
     type: str
 
 
-def _read_json(
-    path: Path,
-    label: str,
-    *,
-    allow_empty: bool = False,
-) -> dict[str, object]:
+def _read_json(path: Path, label: str, *, comments: bool = False) -> dict[str, object]:
+    """Read a non-empty JSON object, or JSONC when comments are allowed."""
     def unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
         value: dict[str, object] = {}
         for key, item in pairs:
@@ -164,50 +159,22 @@ def _read_json(
             value[key] = item
         return value
 
+    loads = jsonc.loads if comments else json.loads
     try:
-        value = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=unique_object)
+        value = loads(path.read_text(encoding="utf-8"), object_pairs_hook=unique_object)
     except json.JSONDecodeError as exc:
-        raise ValueError(f"{label} is not valid JSON: {path}") from exc
-    if not isinstance(value, dict) or (not value and not allow_empty):
-        qualifier = "an object" if allow_empty else "a non-empty object"
-        raise ValueError(f"{label} root must be {qualifier}")
+        kind = "JSONC" if comments else "JSON"
+        raise ValueError(f"{label} is not valid {kind}: {path}") from exc
+    if not isinstance(value, dict) or not value:
+        raise ValueError(f"{label} root must be a non-empty object")
     return value
 
 
-def _read_jsonc(
-    path: Path,
-    label: str,
-    *,
-    allow_empty: bool = False,
-) -> dict[str, object]:
-    def unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
-        value: dict[str, object] = {}
-        for key, item in pairs:
-            if key in value:
-                raise ValueError(f"{label} contains duplicate key {key!r}")
-            value[key] = item
-        return value
 
-    try:
-        value = jsonc.loads(
-            path.read_text(encoding="utf-8"),
-            object_pairs_hook=unique_object,
-        )
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"{label} is not valid JSONC: {path}") from exc
-    if not isinstance(value, dict) or (not value and not allow_empty):
-        qualifier = "an object" if allow_empty else "a non-empty object"
-        raise ValueError(f"{label} root must be {qualifier}")
-    return value
-
-
-def _read_catalog(
-    path: Path,
-) -> tuple[dict[str, catalog_format.CatalogNodeExpression], tuple[Path, ...]]:
-    path = path.resolve()
-    if not path.is_file():
-        raise FileNotFoundError(path)
-    catalog_file = path
+def _read_catalog(path: Path) -> dict[str, catalog_format.CatalogNodeExpression]:
+    catalog_file = path.resolve()
+    if not catalog_file.is_file():
+        raise FileNotFoundError(catalog_file)
     root = catalog_format.parse_catalog(catalog_file)
     root_fields = _container_fields(root)
     if set(root_fields) != {"features"}:
@@ -233,11 +200,11 @@ def _read_catalog(
             "Catalog patch IDs must each be referenced exactly once: "
             + ", ".join(duplicate_patch_ids)
         )
-    return features, (catalog_file.resolve(),)
+    return features
 
 
 def _identifier(value: str, label: str) -> str:
-    if not IDENTIFIER.fullmatch(value):
+    if not catalog_format.IDENTIFIER.fullmatch(value):
         raise ValueError(f"{label} must be a meaningful snake_case key: {value!r}")
     return value
 
@@ -406,17 +373,9 @@ def _validate_configuration_value(
         if not isinstance(value, dict):
             raise _invalid_configuration_value(path, value, "an object")
         fields = _container_fields(node)
-        if set(value) != set(fields):
-            missing = sorted(set(fields) - set(value))
-            extra = sorted(set(value) - set(fields))
-            problems: list[str] = []
-            if missing:
-                problems.append("missing keys: " + ", ".join(missing))
-            if extra:
-                problems.append("unknown keys: " + ", ".join(extra))
-            raise ConfigurationError(
-                f"Invalid config object at {label}: {'; '.join(problems)}"
-            )
+        problems = key_problems(value, fields)
+        if problems:
+            raise ConfigurationError(f"Invalid config object at {label}: {problems}")
         for key, child in fields.items():
             _validate_configuration_value(child, value[key], (*path, key))
         return
@@ -574,21 +533,12 @@ def _merge_configuration_value(
         raise ConfigurationError(
             f"Invalid config override at {label}: unknown keys: {', '.join(extra)}"
         )
-    if isinstance(base, dict):
-        if set(base) != set(fields):
-            missing = sorted(set(fields) - set(base))
-            extra_base = sorted(set(base) - set(fields))
-            problems: list[str] = []
-            if missing:
-                problems.append("missing keys: " + ", ".join(missing))
-            if extra_base:
-                problems.append("unknown keys: " + ", ".join(extra_base))
-            raise ConfigurationError(
-                f"Invalid config object at {label}: {'; '.join(problems)}"
-            )
-        merged = dict(base)
-    else:
+    if not isinstance(base, dict):
         raise _invalid_configuration_value(path, base, "an object")
+    problems = key_problems(base, fields)
+    if problems:
+        raise ConfigurationError(f"Invalid config object at {label}: {problems}")
+    merged = dict(base)
     for key, child_override in override.items():
         merged[key] = _merge_configuration_value(
             fields[key], merged[key], child_override, (*path, key)
@@ -709,7 +659,7 @@ def _apply_patch_metadata(
         raw_frames = definition.get("startup_fast_forward_frames")
         frames = None
         if isinstance(raw_frames, dict):
-            frames = catalog_format.StartupFastForwardFrames(
+            frames = StartupFastForwardFrames(
                 additive=raw_frames.get("additive"),
                 override=raw_frames.get("override"),
             )
@@ -780,28 +730,28 @@ def _included_patch_nodes(
     return _apply_patch_metadata(tuple(selected.values()), patches)
 
 
-def _startup_fast_forward_override(nodes: tuple[CatalogNode, ...]) -> int | None:
-    enabled = [
-        node
+def _startup_frame_settings(
+    nodes: tuple[CatalogNode, ...],
+) -> list[tuple[CatalogNode, StartupFastForwardFrames]]:
+    return [
+        (node, node.startup_fast_forward_frames)
         for node in nodes
         if node.enabled and node.startup_fast_forward_frames is not None
     ]
+
+
+def _startup_fast_forward_override(nodes: tuple[CatalogNode, ...]) -> int | None:
     overrides = [
-        node
-        for node in enabled
-        if node.startup_fast_forward_frames is not None
-        and node.startup_fast_forward_frames.override is not None
+        (node, frames)
+        for node, frames in _startup_frame_settings(nodes)
+        if frames.override is not None
     ]
     if len(overrides) > 1:
         raise ConfigurationError(
             "Multiple enabled startup_fast_forward_frames overrides: "
-            + ", ".join(node.node_id for node in overrides)
+            + ", ".join(node.node_id for node, _frames in overrides)
         )
-    if not overrides:
-        return None
-    override = overrides[0].startup_fast_forward_frames
-    assert override is not None and override.override is not None
-    return override.override
+    return overrides[0][1].override if overrides else None
 
 
 def _startup_fast_forward_frames(
@@ -816,15 +766,8 @@ def _startup_fast_forward_frames(
     ):
         raise ValueError("Baseline startup fast-forward frames must be a UInt64 integer")
     override = _startup_fast_forward_override(nodes)
-    enabled = [
-        node
-        for node in nodes
-        if node.enabled and node.startup_fast_forward_frames is not None
-    ]
     additive = sum(
-        node.startup_fast_forward_frames.additive or 0
-        for node in enabled
-        if node.startup_fast_forward_frames is not None
+        frames.additive or 0 for _node, frames in _startup_frame_settings(nodes)
     )
     baseline = override if override is not None else baseline_frames
     result = baseline + additive
@@ -849,7 +792,6 @@ def _load_implementation(
     catalog_path: Path,
     features: dict[str, catalog_format.CatalogNodeExpression],
 ) -> tuple[
-    Path,
     tuple[Path, ...],
     dict[str, dict[str, object]],
     dict[str, dict[str, object]],
@@ -984,134 +926,124 @@ def _load_implementation(
         for field in ("hooks", "payload"):
             if field in patch and not isinstance(patch[field], dict):
                 raise ValueError(f"Patch {patch_id!r}.{field} must be an object")
-        hooks = patch.get("hooks", {})
-        if isinstance(hooks, dict):
-            for hook_id, hook in hooks.items():
-                _identifier(hook_id, f"Patch {patch_id!r} hook ID")
-                if not isinstance(hook, dict):
-                    raise ValueError(f"Patch {patch_id!r} hook {hook_id!r} must be an object")
-                _description(hook.get("description"), f"Patch {patch_id!r} hook {hook_id!r}")
+        for hook_id, hook in patch.get("hooks", {}).items():
+            _identifier(hook_id, f"Patch {patch_id!r} hook ID")
+            if not isinstance(hook, dict):
+                raise ValueError(f"Patch {patch_id!r} hook {hook_id!r} must be an object")
+            _description(hook.get("description"), f"Patch {patch_id!r} hook {hook_id!r}")
         if injection_fields:
             injections[patch_id] = injection
 
-        payload = patch.get("payload", {})
-        if isinstance(payload, dict):
-            for payload_id, declaration in payload.items():
-                _identifier(payload_id, f"Patch {patch_id!r} payload ID")
-                label = f"Patch {patch_id!r}.payload.{payload_id}"
-                if not isinstance(declaration, dict):
-                    raise ValueError(f"{label} must be an object")
-                kind = declaration.get("kind")
-                if kind in {"c", "asm"}:
-                    _validate_fields(
-                        declaration,
-                        SOURCE_PAYLOAD_FIELDS,
-                        label,
-                        required={"kind", "path", "namespace", "fragments"},
-                    )
-                    if not isinstance(declaration["path"], str):
-                        raise ValueError(f"{label}.path must be text")
-                    namespace = declaration["namespace"]
-                    if (
-                        not isinstance(namespace, str)
-                        or not runtime_injector.IDENTIFIER.fullmatch(namespace)
-                    ):
-                        raise ValueError(f"{label}.namespace is invalid")
-                    imports = declaration.get("imports", {})
-                    if not isinstance(imports, dict):
-                        raise ValueError(f"{label}.imports must be an object")
-                    for import_id, imported in imports.items():
-                        if not runtime_injector.IDENTIFIER.fullmatch(import_id):
-                            raise ValueError(f"{label}.imports key is invalid: {import_id!r}")
-                        if isinstance(imported, dict):
-                            _validate_fields(
-                                imported,
-                                IMPORT_FIELDS,
-                                f"{label}.imports.{import_id}",
-                                required={"symbol"},
-                            )
-                    resources = declaration.get("resources", [])
-                    if (
-                        not isinstance(resources, list)
-                        or any(
-                            not isinstance(resource, str)
-                            for resource in resources
-                        )
-                        or len(resources) != len(set(resources))
-                    ):
-                        raise ValueError(
-                            f"{label}.resources must be a list of unique paths"
-                        )
-                    fragments = declaration.get("fragments")
-                    if not isinstance(fragments, dict) or not fragments:
-                        raise ValueError(f"{label}.fragments must be a non-empty object")
-                    for fragment_id, fragment in fragments.items():
-                        if not runtime_injector.IDENTIFIER.fullmatch(fragment_id):
-                            raise ValueError(
-                                f"{label}.fragments key is invalid: {fragment_id!r}"
-                            )
-                        fragment_label = f"{label}.fragments.{fragment_id}"
-                        if not isinstance(fragment, dict):
-                            raise ValueError(f"{fragment_label} must be an object")
+        for payload_id, declaration in patch.get("payload", {}).items():
+            _identifier(payload_id, f"Patch {patch_id!r} payload ID")
+            label = f"Patch {patch_id!r}.payload.{payload_id}"
+            if not isinstance(declaration, dict):
+                raise ValueError(f"{label} must be an object")
+            kind = declaration.get("kind")
+            if kind in {"c", "asm"}:
+                _validate_fields(
+                    declaration,
+                    SOURCE_PAYLOAD_FIELDS,
+                    label,
+                    required={"kind", "path", "namespace", "fragments"},
+                )
+                if not isinstance(declaration["path"], str):
+                    raise ValueError(f"{label}.path must be text")
+                namespace = declaration["namespace"]
+                if (
+                    not isinstance(namespace, str)
+                    or not SYMBOL_PATTERN.fullmatch(namespace)
+                ):
+                    raise ValueError(f"{label}.namespace is invalid")
+                imports = declaration.get("imports", {})
+                if not isinstance(imports, dict):
+                    raise ValueError(f"{label}.imports must be an object")
+                for import_id, imported in imports.items():
+                    if not SYMBOL_PATTERN.fullmatch(import_id):
+                        raise ValueError(f"{label}.imports key is invalid: {import_id!r}")
+                    if isinstance(imported, dict):
                         _validate_fields(
-                            fragment,
-                            SOURCE_FRAGMENT_FIELDS,
-                            fragment_label,
-                            required={"object"},
+                            imported,
+                            IMPORT_FIELDS,
+                            f"{label}.imports.{import_id}",
+                            required={"symbol"},
                         )
-                        object_fragment = fragment["object"]
-                        if (
-                            not isinstance(object_fragment, str)
-                            or not runtime_injector.IDENTIFIER.fullmatch(object_fragment)
-                        ):
-                            raise ValueError(f"{fragment_label}.object is invalid")
-                        _optional_text(fragment.get("abi"), f"{fragment_label}.abi")
-                        _description(fragment.get("description"), fragment_label)
-                elif kind in FRAGMENT_KINDS:
-                    _validate_fields(
-                        declaration,
-                        STATIC_PAYLOAD_FIELDS,
-                        label,
-                        required={"kind", "alignment"},
+                resources = declaration.get("resources", [])
+                if (
+                    not isinstance(resources, list)
+                    or any(
+                        not isinstance(resource, str)
+                        for resource in resources
                     )
-                    if ("value" in declaration) == ("blob_path" in declaration):
+                    or len(resources) != len(set(resources))
+                ):
+                    raise ValueError(
+                        f"{label}.resources must be a list of unique paths"
+                    )
+                fragments = declaration.get("fragments")
+                if not isinstance(fragments, dict) or not fragments:
+                    raise ValueError(f"{label}.fragments must be a non-empty object")
+                for fragment_id, fragment in fragments.items():
+                    if not SYMBOL_PATTERN.fullmatch(fragment_id):
                         raise ValueError(
-                            f"{label} requires exactly one of value or blob_path"
+                            f"{label}.fragments key is invalid: {fragment_id!r}"
                         )
-                    relocations = declaration.get("relocations", {})
-                    if not isinstance(relocations, dict):
-                        raise ValueError(f"{label}.relocations must be an object")
-                    for relocation_id, relocation in relocations.items():
-                        if not isinstance(relocation, dict):
-                            raise ValueError(
-                                f"{label}.relocations.{relocation_id} must be an object"
-                            )
-                        _validate_fields(
-                            relocation,
-                            RELOCATION_FIELDS,
-                            f"{label}.relocations.{relocation_id}",
-                            required={"offset", "encoding", "symbol"},
-                        )
-                    if "init" in declaration and not isinstance(
-                        declaration["init"], bool
+                    fragment_label = f"{label}.fragments.{fragment_id}"
+                    if not isinstance(fragment, dict):
+                        raise ValueError(f"{fragment_label} must be an object")
+                    _validate_fields(
+                        fragment,
+                        SOURCE_FRAGMENT_FIELDS,
+                        fragment_label,
+                        required={"object"},
+                    )
+                    object_fragment = fragment["object"]
+                    if (
+                        not isinstance(object_fragment, str)
+                        or not SYMBOL_PATTERN.fullmatch(object_fragment)
                     ):
-                        raise ValueError(f"{label}.init must be boolean")
-                else:
-                    raise ValueError(f"{label}.kind is invalid: {kind!r}")
+                        raise ValueError(f"{fragment_label}.object is invalid")
+                    _optional_text(fragment.get("abi"), f"{fragment_label}.abi")
+                    _description(fragment.get("description"), fragment_label)
+            elif kind in FRAGMENT_KINDS:
+                _validate_fields(
+                    declaration,
+                    STATIC_PAYLOAD_FIELDS,
+                    label,
+                    required={"kind", "alignment"},
+                )
+                if ("value" in declaration) == ("blob_path" in declaration):
+                    raise ValueError(
+                        f"{label} requires exactly one of value or blob_path"
+                    )
+                relocations = declaration.get("relocations", {})
+                if not isinstance(relocations, dict):
+                    raise ValueError(f"{label}.relocations must be an object")
+                for relocation_id, relocation in relocations.items():
+                    if not isinstance(relocation, dict):
+                        raise ValueError(
+                            f"{label}.relocations.{relocation_id} must be an object"
+                        )
+                    _validate_fields(
+                        relocation,
+                        RELOCATION_FIELDS,
+                        f"{label}.relocations.{relocation_id}",
+                        required={"offset", "encoding", "symbol"},
+                    )
+                if "init" in declaration and not isinstance(
+                    declaration["init"], bool
+                ):
+                    raise ValueError(f"{label}.init must be boolean")
+            else:
+                raise ValueError(f"{label}.kind is invalid: {kind!r}")
 
         if "string_patch" in patch:
             string_patch = patch["string_patch"]
             if not isinstance(string_patch, dict):
                 raise ValueError(f"Patch {patch_id!r}.string_patch must be an object")
-            if set(string_patch) != required_string_patch_fields:
-                missing = sorted(required_string_patch_fields - set(string_patch))
-                extra = sorted(set(string_patch) - required_string_patch_fields)
-                problems = []
-                if missing:
-                    problems.append("missing fields: " + ", ".join(missing))
-                if extra:
-                    problems.append("unknown fields: " + ", ".join(extra))
-                raise ValueError(f"Patch {patch_id!r}.string_patch is invalid: {'; '.join(problems)}")
+            problems = key_problems(string_patch, required_string_patch_fields, noun="fields")
+            if problems:
+                raise ValueError(f"Patch {patch_id!r}.string_patch is invalid: {problems}")
             _description(string_patch["description"], f"Patch {patch_id!r}.string_patch")
             if string_patch["operation"] != "replace_imported_game_title":
                 raise ValueError(
@@ -1177,7 +1109,6 @@ def _load_implementation(
     if orphaned:
         raise ValueError(f"Patch definitions are not catalog-referenced: {orphaned}")
     return (
-        patches_path,
         patch_files,
         patches,
         edits,
@@ -1210,7 +1141,7 @@ def _effective_configuration(
                     release_defaults_path = repository_configuration_root / "base.jsonc"
                     release_definition_path = release_path
     try:
-        configuration = _read_jsonc(configuration_path, "Configuration")
+        configuration = _read_json(configuration_path, "Configuration", comments=True)
     except ValueError as exc:
         raise ConfigurationError(str(exc)) from exc
     root = _feature_root(features)
@@ -1225,12 +1156,8 @@ def _effective_configuration(
         )
     if release_defaults_path is not None:
         base_path = release_defaults_path
-        defaults = _read_jsonc(release_defaults_path, "Packaged defaults")["features"]
+        defaults = _read_json(release_defaults_path, "Packaged defaults", comments=True)["features"]
         _validate_configuration_value(root, defaults, ("features",))
-        from .release_configuration import expand_configuration, load_release_definition
-
-        if release_definition_path is None:
-            raise ValueError("Release definition path is required with packaged defaults")
         release_values, mapping = load_release_definition(release_definition_path)
         if configuration_path == release_definition_path:
             configuration = release_values
@@ -1238,7 +1165,7 @@ def _effective_configuration(
     elif set(configuration) == {"overrides"}:
         base_path = (repository_configuration_root / "base.jsonc").resolve()
         try:
-            base = _read_jsonc(base_path, "Base configuration")
+            base = _read_json(base_path, "Base configuration", comments=True)
         except ValueError as exc:
             raise ConfigurationError(str(exc)) from exc
         if set(base) != {"features"}:
@@ -1257,23 +1184,16 @@ def _effective_configuration(
         base_path = None
         effective = configuration["features"]
     else:
-        expected = {"features"}
-        actual = set(configuration)
-        missing = sorted(expected - actual)
-        extra = sorted(actual - expected)
-        problems: list[str] = []
-        if missing:
-            problems.append("missing keys: " + ", ".join(missing))
-        if extra:
-            problems.append("unknown keys: " + ", ".join(extra))
-        raise ConfigurationError(f"Invalid config root: {'; '.join(problems)}")
+        raise ConfigurationError(
+            f"Invalid config root: {key_problems(configuration, {'features'})}"
+        )
     _validate_configuration_value(root, effective, ("features",))
     if overrides:
         nested: dict[str, object] = {}
         assigned_paths: list[str] = []
         for dotted_path, value in overrides.items():
             if not isinstance(dotted_path, str) or not dotted_path or any(
-                not IDENTIFIER.fullmatch(part) for part in dotted_path.split(".")
+                not catalog_format.IDENTIFIER.fullmatch(part) for part in dotted_path.split(".")
             ):
                 raise ConfigurationError(f"Invalid config override path: {dotted_path!r}")
             if any(
@@ -1305,9 +1225,8 @@ def load_selection(catalog_path: Path, configuration_path: Path, *,
                    overrides: dict[str, object] | None = None) -> CatalogSelection:
     catalog_path = catalog_path.resolve()
     configuration_path = configuration_path.resolve()
-    features, catalog_files = _read_catalog(catalog_path)
+    features = _read_catalog(catalog_path)
     (
-        patches_path,
         patch_files,
         patches,
         edits,
@@ -1326,8 +1245,6 @@ def load_selection(catalog_path: Path, configuration_path: Path, *,
     )
     selection = CatalogSelection(
         catalog_path=catalog_path,
-        catalog_files=catalog_files,
-        patches_path=patches_path,
         patch_files=patch_files,
         base_configuration_path=base_path,
         configuration_path=configuration_path,
@@ -1350,21 +1267,9 @@ def load_startup_fast_forward_frames(
     baseline_frames: int,
 ) -> int:
     """Resolve launch metadata from selected unified patches."""
-
-    catalog_path = catalog_path.resolve()
-    configuration_path = configuration_path.resolve()
-    features, _catalog_files = _read_catalog(catalog_path)
-    _patches_path, _patch_files, patches, _edits, _injections, _strings = (
-        _load_implementation(catalog_path, features)
+    return startup_fast_forward_frames(
+        load_selection(catalog_path, configuration_path), baseline_frames
     )
-    _base_path, effective = _effective_configuration(
-        catalog_path, configuration_path, features
-    )
-    nodes = _apply_patch_metadata(
-        _selected_nodes(_feature_root(features), effective),
-        patches,
-    )
-    return _startup_fast_forward_frames(_included_patch_nodes(nodes, patches), baseline_frames)
 
 
 def materialized_configuration(
@@ -1374,16 +1279,146 @@ def materialized_configuration(
     """Resolve a development configuration's complete feature values."""
     catalog_path = catalog_path.resolve()
     configuration_path = configuration_path.resolve()
-    features, _catalog_files = _read_catalog(catalog_path)
+    features = _read_catalog(catalog_path)
     _base_path, effective = _effective_configuration(catalog_path, configuration_path, features)
     return {"features": effective}
 
 
+def load_release_definition(path: Path) -> tuple[dict[str, object], dict[str, str]]:
+    definition = _read_json(path, "Release configuration", comments=True)
+    mapping = definition.pop("configuration_mapping", None)
+    if not definition or not isinstance(mapping, dict):
+        raise ValueError("Release configuration needs public settings and a mapping object")
+    return definition, mapping
+
+
+def public_configuration_text(path: Path, values: dict[str, object]) -> str:
+    """Keep the release definition's public text and comments without its mapping."""
+    source = path.read_text(encoding="utf-8")
+    mapping_fields = list(re.finditer(
+        r'(?m)^[ \t]*"configuration_mapping"[ \t]*:', source
+    ))
+    if len(mapping_fields) != 1:
+        raise ValueError("Release configuration needs one trailing configuration_mapping")
+    public_prefix = source[:mapping_fields[0].start()].rstrip()
+    if not public_prefix.endswith(","):
+        raise ValueError("Release configuration_mapping must follow the public values")
+    public_text = public_prefix[:-1] + "\n}\n"
+    if jsonc.loads(public_text) != values:
+        raise ValueError("Release configuration_mapping must be the final root field")
+    return public_text
+
+
+def _optional_group(node):
+    """Resolve a `{ ... } | false` group to its object branch."""
+    if isinstance(node, catalog_format.UnionNode):
+        groups = [
+            branch for branch in node.branches
+            if not isinstance(branch, catalog_format.FalseNode)
+        ]
+        if len(groups) == 1 and len(node.branches) == 2:
+            return groups[0]
+    return node
+
+
+def resolve_layout(features, values, mapping):
+    """Derive the public schema and mappings from the release values."""
+    root = catalog_format.ContainerNode(tuple(
+        catalog_format.ContainerField(name, node) for name, node in features.items()
+    ))
+    for public, target in mapping.items():
+        if (not isinstance(public, str) or not public
+                or any(not catalog_format.IDENTIFIER.fullmatch(part)
+                       for part in public.split("."))
+                or not isinstance(target, str) or not target
+                or any(not catalog_format.IDENTIFIER.fullmatch(part)
+                       for part in target.split("."))):
+            raise ValueError(f"Invalid release mapping: {public!r}: {target!r}")
+    mappings = []
+    paths = {}
+    used_mapping = set()
+
+    def resolve(path):
+        node = root
+        for part in path:
+            expanded = _optional_group(catalog_format.expand_node(node))
+            if not isinstance(expanded, catalog_format.ContainerNode):
+                raise ValueError(f"Release path crosses a setting or union: {'.'.join(path)}")
+            fields = {field.name: field.node for field in expanded.fields}
+            if part not in fields:
+                raise ValueError(f"Unknown release catalog path: {'.'.join(path)}")
+            node = fields[part]
+        return node
+
+    def visit(group, public_path, internal_path):
+        node = resolve(internal_path)
+        paths[public_path] = internal_path
+        expanded = catalog_format.expand_node(node)
+        if isinstance(expanded, catalog_format.ContainerNode) and isinstance(group, dict):
+            if not group:
+                raise ValueError(f"{'.'.join(public_path)} must contain public settings")
+            fields = []
+            for name, value in group.items():
+                if (not isinstance(name, str) or not catalog_format.IDENTIFIER.fullmatch(name)
+                        or name in {"description", "patch", "configuration_mapping"}):
+                    raise ValueError(f"Invalid public setting name: {name!r}")
+                path = (*public_path, name)
+                mapping_key = ".".join(path)
+                target = mapping.get(mapping_key)
+                if target is None:
+                    child_path = (*internal_path, name)
+                else:
+                    child_path = tuple(target.split("."))
+                    used_mapping.add(mapping_key)
+                child = visit(value, path, child_path)
+                fields.append(catalog_format.ContainerField(name, child))
+            return catalog_format.ContainerNode(tuple(fields), expanded.description)
+        mappings.append((public_path, internal_path))
+        return node
+
+    schema = visit(values, (), ())
+    unused = set(mapping) - used_mapping
+    if unused:
+        raise ValueError(f"Unused release mappings: {', '.join(sorted(unused))}")
+    for index, (_, path) in enumerate(mappings):
+        for _, previous in mappings[:index]:
+            common = min(len(path), len(previous))
+            if path[:common] == previous[:common]:
+                raise ValueError(
+                    f"Overlapping release mappings: {'.'.join(previous)} and {'.'.join(path)}"
+                )
+    _validate_configuration_value(schema, values, ())
+    return schema, paths
+
+
+def _set_value(result, path, value):
+    for part in path[:-1]:
+        result = result.setdefault(part, {})
+    result[path[-1]] = value
+
+
+def expand_configuration(features, values, defaults, release_values, mapping):
+    """Merge public release values over the packaged defaults; the caller validates."""
+    schema, paths = resolve_layout(features, release_values, mapping)
+    _validate_configuration_value(schema, values, ())
+    overrides = {}
+
+    def collect(node, value, public_path):
+        if isinstance(node, catalog_format.ContainerNode) and isinstance(value, dict):
+            for field in node.fields:
+                collect(field.node, value[field.name], (*public_path, field.name))
+            return
+        _set_value(overrides, paths[public_path], value)
+
+    collect(schema, values, ())
+    return _merge_configuration_value(
+        _feature_root(features), defaults, overrides, ("features",)
+    )
+
+
 def release_configuration_values(catalog_path: Path, release_definition_path: Path) -> dict[str, object]:
     """Return the validated public defaults without release metadata."""
-    from .release_configuration import load_release_definition, resolve_layout
-
-    features, _catalog_files = _read_catalog(catalog_path)
+    features = _read_catalog(catalog_path)
     values, mapping = load_release_definition(release_definition_path)
     resolve_layout(features, values, mapping)
     return values
@@ -1391,9 +1426,7 @@ def release_configuration_values(catalog_path: Path, release_definition_path: Pa
 
 def public_catalog(catalog_path: Path, release_definition_path: Path) -> str:
     """Return the release reference selected by public setting presence."""
-    from .release_configuration import load_release_definition, resolve_layout
-
-    features, _catalog_files = _read_catalog(catalog_path)
+    features = _read_catalog(catalog_path)
     values, mapping = load_release_definition(release_definition_path)
     projected, _paths = resolve_layout(features, values, mapping)
     return catalog_format.serialize_feature(projected, include_patches=False)
@@ -1447,22 +1480,16 @@ def load_operation_contracts(directory: Path) -> dict[str, tuple[OperationField,
         operation = _identifier(path.stem, f"operation filename {path.name}")
         fields: list[OperationField] = []
         seen: set[str] = set()
-        with path.open("r", encoding="utf-8-sig", newline="") as handle:
-            reader = csv.DictReader(handle, delimiter="\t")
-            if reader.fieldnames != OPERATION_FIELDS:
-                raise ValueError(f"{path}: expected columns " + "\t".join(OPERATION_FIELDS))
-            for line, row in enumerate(reader, 2):
-                name = _identifier(row["field"].strip(), f"{path}:{line} field")
-                if name in seen:
-                    raise ValueError(f"{path}:{line}: duplicate field {name}")
-                seen.add(name)
-                required = row["required"].strip()
-                if required not in {"0", "1"}:
-                    raise ValueError(f"{path}:{line}: required must be 0 or 1")
-                field_type = row["type"].strip()
-                if field_type not in FIELD_TYPES:
-                    raise ValueError(f"{path}:{line}: unsupported type {field_type!r}")
-                fields.append(OperationField(name, required == "1", field_type))
+        for line, row in enumerate(read_tsv(path, OPERATION_FIELDS), 2):
+            name = _identifier(row["field"], f"{path}:{line} field")
+            if name in seen:
+                raise ValueError(f"{path}:{line}: duplicate field {name}")
+            seen.add(name)
+            if row["required"] not in {"0", "1"}:
+                raise ValueError(f"{path}:{line}: required must be 0 or 1")
+            if row["type"] not in FIELD_TYPES:
+                raise ValueError(f"{path}:{line}: unsupported type {row['type']!r}")
+            fields.append(OperationField(name, row["required"] == "1", row["type"]))
         if not fields:
             raise ValueError(f"{path}: empty operation contract")
         contracts[operation] = tuple(fields)
@@ -1526,16 +1553,9 @@ def _validate_operation(
             if field in edit
         }
         if "adapter" in edit:
-            fixed_adapter = binary_adapters.is_fixed_value_adapter(edit["adapter"])
-            if fixed_adapter and fixed_fields != {
-                "expected_value", "replacement_value"
-            }:
+            if fixed_fields != {"expected_value", "replacement_value"}:
                 raise ValueError(
                     f"{label}.adapter requires expected_value and replacement_value"
-                )
-            if not fixed_adapter and fixed_fields:
-                raise ValueError(
-                    f"{label}.adapter does not accept fixed value fields"
                 )
         elif fixed_fields:
             raise ValueError(f"{label} fixed value fields require an adapter")
@@ -1613,16 +1633,9 @@ def _edit_members(
             "field_offset",
             "record_patches",
         }
-        required = allowed - {"description"}
-        extra = sorted(set(table) - allowed)
-        missing = sorted(required - set(table))
-        if extra or missing:
-            problems: list[str] = []
-            if missing:
-                problems.append("missing fields: " + ", ".join(missing))
-            if extra:
-                problems.append("unknown fields: " + ", ".join(extra))
-            raise ValueError(f"{label} is invalid: {'; '.join(problems)}")
+        problems = key_problems(table, allowed - {"description"}, allowed, noun="fields")
+        if problems:
+            raise ValueError(f"{label} is invalid: {problems}")
 
         table_offset = _parse_int(table["table_offset"], f"{label}.table_offset")
         record_stride = _parse_int(
@@ -1647,18 +1660,11 @@ def _edit_members(
                     f"{record_label} requires exactly one of record_index "
                     "or record_indices"
                 )
-            allowed_record = index_fields | {"expected_hex", "replacement_hex"}
-            extra_record = sorted(set(record) - allowed_record)
-            missing_record = sorted(allowed_record - set(record))
-            if extra_record or missing_record:
-                problems = []
-                if missing_record:
-                    problems.append("missing fields: " + ", ".join(missing_record))
-                if extra_record:
-                    problems.append("unknown fields: " + ", ".join(extra_record))
-                raise ValueError(
-                    f"{record_label} is invalid: {'; '.join(problems)}"
-                )
+            problems = key_problems(
+                record, index_fields | {"expected_hex", "replacement_hex"}, noun="fields"
+            )
+            if problems:
+                raise ValueError(f"{record_label} is invalid: {problems}")
 
             if "record_index" in record:
                 indices = (
@@ -1723,13 +1729,8 @@ def _edit_members(
         if definition.get("operation") == "replace_table":
             return expand_table(None, definition)
         return ((None, normalize_destination(None, definition)),)
-    members = definition["edits"]
-    if not isinstance(members, dict):
-        raise TypeError(f"Edit group {edit_id!r}.edits was not validated")
     result: list[tuple[str | None, dict[str, object]]] = []
-    for member_id, member in sorted(members.items()):
-        if not isinstance(member_id, str) or not isinstance(member, dict):
-            raise TypeError(f"Edit group {edit_id!r} was not validated")
+    for member_id, member in sorted(definition["edits"].items()):
         if member.get("operation") == "replace_table":
             result.extend(expand_table(member_id, member))
         else:
@@ -1756,169 +1757,148 @@ def load_binary_package(
     used_targets: set[str] = set()
     order = 0
     for node in nodes:
-        for edit_key in ((node.patch,) if node.patch in selection.edits else ()):
-            assert edit_key is not None
-            grouped_ranges: dict[str, list[tuple[int, int, str]]] = {}
-            for member_id, raw_edit in _edit_members(
-                edit_key, selection.edits[edit_key]
-            ):
-                label = f"edits.{edit_key}"
-                if member_id is not None:
-                    label += f".edits.{member_id}"
-                operation = _validate_operation(raw_edit, label, contracts)
-                destination_id = str(raw_edit["destination_target_id"])
-                if destination_id not in targets:
-                    raise ValueError(
-                        f"{label}: unknown destination target {destination_id!r}"
-                    )
-                expected_hex = ""
-                expected_sha256 = ""
-                if "expected_hex" in raw_edit:
-                    expected_hex = _hex(
-                        raw_edit["expected_hex"], f"{label}.expected_hex"
-                    )
-                if "expected_sha256" in raw_edit:
-                    expected_sha256 = _sha256(
-                        raw_edit["expected_sha256"], f"{label}.expected_sha256"
-                    )
-                destination_offsets = _parse_int_list(
-                    raw_edit["destination_offsets"],
-                    f"{label}.destination_offsets",
+        edit_key = node.patch
+        grouped_ranges: dict[str, list[tuple[int, int, str]]] = {}
+        for member_id, raw_edit in _edit_members(
+            edit_key, selection.edits[edit_key]
+        ):
+            label = f"edits.{edit_key}"
+            if member_id is not None:
+                label += f".edits.{member_id}"
+            operation = _validate_operation(raw_edit, label, contracts)
+            destination_id = str(raw_edit["destination_target_id"])
+            if destination_id not in targets:
+                raise ValueError(
+                    f"{label}: unknown destination target {destination_id!r}"
                 )
-                replacement_hex = ""
-                source_id = ""
-                source_offset: int | None = None
-                blob_path: PurePosixPath | None = None
-                blob_sha256 = ""
-                fill_hex = ""
-                if operation == "replace":
-                    if "adapter" in raw_edit:
-                        if binary_adapters.is_fixed_value_adapter(raw_edit["adapter"]):
-                            if node.has_configured_value:
-                                raise ValueError(
-                                    f"{label}.adapter requires a bare catalog setting"
-                                )
-                            expected_hex, replacement_hex = (
-                                binary_adapters.apply_fixed_adapter(
-                                    raw_edit["adapter"],
-                                    raw_edit["expected_value"],
-                                    raw_edit["replacement_value"],
-                                    encoding=raw_edit.get("encoding"),
-                                    length=raw_edit.get("length"),
-                                )
-                            )
-                        else:
-                            if not node.has_configured_value:
-                                raise ValueError(
-                                    f"{label}.adapter requires a typed catalog setting"
-                                )
-                            if not expected_hex or "expected_sha256" in raw_edit:
-                                raise ValueError(
-                                    f"{label}.adapter requires expected_hex, "
-                                    "not expected_sha256"
-                                )
-                            replacement_hex = binary_adapters.apply_adapter(
-                                raw_edit["adapter"],
-                                expected_hex,
-                                node.configured_value,
-                            )
-                    else:
-                        replacement_hex = _hex(
-                            raw_edit["replacement_hex"],
-                            f"{label}.replacement_hex",
-                        )
-                    length = len(bytes.fromhex(replacement_hex))
-                elif operation == "copy":
-                    length = _parse_int(
-                        raw_edit["length"], f"{label}.length", minimum=1
-                    )
-                    source_id = str(raw_edit["source_target_id"])
-                    source_offset = _parse_int(
-                        raw_edit["source_offset"], f"{label}.source_offset"
-                    )
-                    if source_id not in targets:
+            expected_hex = ""
+            expected_sha256 = ""
+            if "expected_hex" in raw_edit:
+                expected_hex = _hex(
+                    raw_edit["expected_hex"], f"{label}.expected_hex"
+                )
+            if "expected_sha256" in raw_edit:
+                expected_sha256 = _sha256(
+                    raw_edit["expected_sha256"], f"{label}.expected_sha256"
+                )
+            destination_offsets = _parse_int_list(
+                raw_edit["destination_offsets"],
+                f"{label}.destination_offsets",
+            )
+            replacement_hex = ""
+            source_id = ""
+            source_offset: int | None = None
+            blob_path: PurePosixPath | None = None
+            blob_sha256 = ""
+            fill_hex = ""
+            if operation == "replace":
+                if "adapter" in raw_edit:
+                    if node.has_configured_value:
                         raise ValueError(
-                            f"{label}: unknown source target {source_id!r}"
+                            f"{label}.adapter requires a bare catalog setting"
                         )
-                    used_targets.add(source_id)
-                elif operation == "blob":
-                    blob_path = _relative_path(
-                        raw_edit["blob_path"], f"{label}.blob_path"
+                    expected_hex, replacement_hex = binary_adapters.apply_fixed_adapter(
+                        raw_edit["adapter"],
+                        raw_edit["expected_value"],
+                        raw_edit["replacement_value"],
+                        encoding=raw_edit.get("encoding"),
+                        length=raw_edit.get("length"),
                     )
-                    blob_sha256 = _sha256(
-                        raw_edit["blob_sha256"], f"{label}.blob_sha256"
-                    )
-                    blob_file = repository.joinpath(*blob_path.parts)
-                    if not blob_file.is_file():
-                        raise FileNotFoundError(blob_file)
-                    length = blob_file.stat().st_size
                 else:
-                    length = _parse_int(
-                        raw_edit["length"], f"{label}.length", minimum=1
+                    replacement_hex = _hex(
+                        raw_edit["replacement_hex"],
+                        f"{label}.replacement_hex",
                     )
-                    fill_hex = _hex(raw_edit["fill_hex"], f"{label}.fill_hex")
-                    if len(bytes.fromhex(fill_hex)) != 1:
-                        raise ValueError(f"{label}.fill_hex must be exactly one byte")
-                if expected_hex and len(bytes.fromhex(expected_hex)) != length:
-                    raise ValueError(f"{label}.expected_hex length mismatch")
-                if member_id is not None:
-                    for destination_offset in destination_offsets:
-                        destination_end = destination_offset + length
-                        for prior_start, prior_end, prior_member_id in grouped_ranges.get(
-                            destination_id, []
-                        ):
-                            if (
-                                prior_member_id != member_id
-                                and max(prior_start, destination_offset)
-                                < min(prior_end, destination_end)
-                            ):
-                                raise ValueError(
-                                    f"edits.{edit_key} members {prior_member_id!r} "
-                                    f"and {member_id!r} have overlapping destination "
-                                    f"ranges in {destination_id!r}"
-                                )
-                        grouped_ranges.setdefault(destination_id, []).append(
-                            (destination_offset, destination_end, member_id)
-                        )
-                used_targets.add(destination_id)
-                reason = _description(
-                    raw_edit.get(
-                        "description",
-                        selection.patches[edit_key].get("description"),
-                    ),
-                    label,
+                length = len(bytes.fromhex(replacement_hex))
+            elif operation == "copy":
+                length = _parse_int(
+                    raw_edit["length"], f"{label}.length", minimum=1
                 )
-                multiple_destinations = len(destination_offsets) > 1
-                for destination_offset in destination_offsets:
-                    order += 1
-                    edit_id = f"{node.node_id}.{edit_key}"
-                    if member_id is not None:
-                        edit_id += f".{member_id}"
-                    if multiple_destinations:
-                        edit_id += f".at_{destination_offset:08x}"
-                    edits.append(
-                        binary_patcher.Edit(
-                            edit_id=edit_id,
-                            patch_id=node.node_id,
-                            order=order,
-                            destination_target_id=destination_id,
-                            destination_offset=destination_offset,
-                            operation=operation,
-                            length=length,
-                            expected_hex=expected_hex,
-                            expected_sha256=expected_sha256,
-                            replacement_hex=replacement_hex,
-                            source_target_id=source_id,
-                            source_offset=source_offset,
-                            source_expected_hex="",
-                            source_expected_sha256="",
-                            blob_path=blob_path,
-                            blob_offset=0 if blob_path is not None else None,
-                            blob_sha256=blob_sha256,
-                            fill_hex=fill_hex,
-                            reason=reason,
-                        )
+                source_id = str(raw_edit["source_target_id"])
+                source_offset = _parse_int(
+                    raw_edit["source_offset"], f"{label}.source_offset"
+                )
+                if source_id not in targets:
+                    raise ValueError(
+                        f"{label}: unknown source target {source_id!r}"
                     )
+                used_targets.add(source_id)
+            elif operation == "blob":
+                blob_path = _relative_path(
+                    raw_edit["blob_path"], f"{label}.blob_path"
+                )
+                blob_sha256 = _sha256(
+                    raw_edit["blob_sha256"], f"{label}.blob_sha256"
+                )
+                blob_file = repository.joinpath(*blob_path.parts)
+                if not blob_file.is_file():
+                    raise FileNotFoundError(blob_file)
+                length = blob_file.stat().st_size
+            else:
+                length = _parse_int(
+                    raw_edit["length"], f"{label}.length", minimum=1
+                )
+                fill_hex = _hex(raw_edit["fill_hex"], f"{label}.fill_hex")
+                if len(bytes.fromhex(fill_hex)) != 1:
+                    raise ValueError(f"{label}.fill_hex must be exactly one byte")
+            if expected_hex and len(bytes.fromhex(expected_hex)) != length:
+                raise ValueError(f"{label}.expected_hex length mismatch")
+            if member_id is not None:
+                for destination_offset in destination_offsets:
+                    destination_end = destination_offset + length
+                    for prior_start, prior_end, prior_member_id in grouped_ranges.get(
+                        destination_id, []
+                    ):
+                        if (
+                            prior_member_id != member_id
+                            and max(prior_start, destination_offset)
+                            < min(prior_end, destination_end)
+                        ):
+                            raise ValueError(
+                                f"edits.{edit_key} members {prior_member_id!r} "
+                                f"and {member_id!r} have overlapping destination "
+                                f"ranges in {destination_id!r}"
+                            )
+                    grouped_ranges.setdefault(destination_id, []).append(
+                        (destination_offset, destination_end, member_id)
+                    )
+            used_targets.add(destination_id)
+            reason = _description(
+                raw_edit.get(
+                    "description",
+                    selection.patches[edit_key].get("description"),
+                ),
+                label,
+            )
+            multiple_destinations = len(destination_offsets) > 1
+            for destination_offset in destination_offsets:
+                order += 1
+                edit_id = f"{node.node_id}.{edit_key}"
+                if member_id is not None:
+                    edit_id += f".{member_id}"
+                if multiple_destinations:
+                    edit_id += f".at_{destination_offset:08x}"
+                edits.append(
+                    binary_patcher.Edit(
+                        edit_id=edit_id,
+                        patch_id=node.node_id,
+                        order=order,
+                        destination_target_id=destination_id,
+                        destination_offset=destination_offset,
+                        operation=operation,
+                        length=length,
+                        expected_hex=expected_hex,
+                        expected_sha256=expected_sha256,
+                        replacement_hex=replacement_hex,
+                        source_target_id=source_id,
+                        source_offset=source_offset,
+                        blob_path=blob_path,
+                        blob_offset=0 if blob_path is not None else None,
+                        blob_sha256=blob_sha256,
+                        fill_hex=fill_hex,
+                        reason=reason,
+                    )
+                )
     return binary_patcher.Package(
         directory=repository,
         package_id=f"{feature_id}.binary_patcher",
@@ -1937,24 +1917,12 @@ def payload_entries(
     for node, injection_id, injection in injection_entries(selection, feature_id):
         if not node.enabled:
             continue
-        payload = injection.get("payload")
-        if not isinstance(payload, dict):
-            continue
-        for payload_id, value in payload.items():
-            if not runtime_injector.IDENTIFIER.fullmatch(payload_id):
-                raise ValueError(
-                    f"injections.{injection_id}.payload key is invalid: "
-                    f"{payload_id!r}"
-                )
+        for payload_id, value in injection.get("payload", {}).items():
             if payload_id in seen_payloads:
                 raise ValueError(
                     f"Duplicate payload declaration {payload_id!r} in {feature_id}"
                 )
             seen_payloads.add(payload_id)
-            if not isinstance(value, dict):
-                raise ValueError(
-                    f"injections.{injection_id}.payload.{payload_id} must be an object"
-                )
             entries.append((node, injection_id, payload_id, value))
     return entries
 
@@ -1999,46 +1967,32 @@ def load_static_fragment(
     value: dict[str, object],
     label: str,
 ) -> PayloadFragment:
-    kind = value.get("kind")
-    if kind not in FRAGMENT_KINDS:
-        raise ValueError(f"{label}.kind is invalid: {kind!r}")
-    alignment = _parse_int(value.get("alignment"), f"{label}.alignment", minimum=1)
+    alignment = _parse_int(value["alignment"], f"{label}.alignment", minimum=1)
     if alignment & (alignment - 1):
         raise ValueError(f"{label}.alignment must be a power of two")
-    has_value = "value" in value
-    has_blob = "blob_path" in value
-    if has_value == has_blob:
-        raise ValueError(f"{label} requires exactly one of value or blob_path")
-    if has_value:
+    if "value" in value:
         payload = bytes.fromhex(_hex(value["value"], f"{label}.value"))
     else:
-        blob = _source_path(repository, value["blob_path"], f"{label}.blob_path")
-        if hashlib.sha256(blob.read_bytes()).hexdigest().upper() != _sha256(
-            value.get("blob_sha256"), f"{label}.blob_sha256"
-        ):
+        blob = _source_path(repository, value["blob_path"], f"{label}.blob_path").read_bytes()
+        if sha256_hex(blob) != _sha256(value.get("blob_sha256"), f"{label}.blob_sha256"):
             raise ValueError(f"{label}: blob SHA-256 mismatch")
         blob_offset = _parse_int(value.get("blob_offset", 0), f"{label}.blob_offset")
         length = _parse_int(value.get("length"), f"{label}.length", minimum=1)
-        payload = blob.read_bytes()[blob_offset:blob_offset + length]
+        payload = blob[blob_offset:blob_offset + length]
         if len(payload) != length:
             raise ValueError(f"{label}: blob range is incomplete")
     relocations: list[PayloadRelocation] = []
-    raw_relocations = value.get("relocations", {})
-    if not isinstance(raw_relocations, dict):
-        raise ValueError(f"{label}.relocations must be an object")
-    for relocation_id, raw in raw_relocations.items():
+    for relocation_id, raw in value.get("relocations", {}).items():
         _identifier(relocation_id, f"{label}.relocations key")
-        if not isinstance(raw, dict):
-            raise ValueError(f"{label}.relocations.{relocation_id} must be an object")
-        encoding = raw.get("encoding")
+        encoding = raw["encoding"]
         if encoding not in RELOCATION_KINDS:
             raise ValueError(f"{label}.relocations.{relocation_id}.encoding is invalid")
-        symbol = raw.get("symbol")
-        if not isinstance(symbol, str) or not runtime_injector.IDENTIFIER.fullmatch(symbol):
+        symbol = raw["symbol"]
+        if not isinstance(symbol, str) or not SYMBOL_PATTERN.fullmatch(symbol):
             raise ValueError(f"{label}.relocations.{relocation_id}.symbol is invalid")
         relocations.append(
             PayloadRelocation(
-                offset=_parse_int(raw.get("offset"), f"{label}.relocations.{relocation_id}.offset"),
+                offset=_parse_int(raw["offset"], f"{label}.relocations.{relocation_id}.offset"),
                 kind=encoding,
                 symbol=symbol,
                 addend=_parse_int(raw.get("addend", 0), f"{label}.relocations.{relocation_id}.addend", minimum=-0x80000000),
@@ -2047,7 +2001,7 @@ def load_static_fragment(
     return PayloadFragment(
         owner=owner,
         symbol=fragment_id,
-        kind=str(kind),
+        kind=str(value["kind"]),
         alignment=alignment,
         payload=payload,
         relocations=tuple(relocations),
@@ -2062,21 +2016,12 @@ def _compile_source(
     value: dict[str, object],
     label: str,
 ) -> list[PayloadFragment]:
-    language = value.get("kind")
-    if language not in {"c", "asm"}:
-        raise ValueError(f"{label}.kind is not a supported EE source language")
-    source_path = _source_path(repository, value.get("path"), f"{label}.path")
-    ee_c_fragments.validate_source_language(source_path, str(language))
-    namespace = value.get("namespace")
-    if not isinstance(namespace, str) or not runtime_injector.IDENTIFIER.fullmatch(namespace):
-        raise ValueError(f"{label}.namespace is invalid")
-    raw_imports = value.get("imports", {})
-    if not isinstance(raw_imports, dict):
-        raise ValueError(f"{label}.imports must be an object")
+    language = str(value["kind"])
+    source_path = _source_path(repository, value["path"], f"{label}.path")
+    ee_c_fragments.validate_source_language(source_path, language)
+    namespace = value["namespace"]
     imports: dict[str, ee_c_fragments.SymbolReference] = {}
-    for name, raw in raw_imports.items():
-        if not runtime_injector.IDENTIFIER.fullmatch(name):
-            raise ValueError(f"{label}.imports key is invalid: {name!r}")
+    for name, raw in value.get("imports", {}).items():
         if isinstance(raw, str):
             symbol = raw
             addend = 0
@@ -2085,20 +2030,12 @@ def _compile_source(
             addend = _parse_int(raw.get("addend", 0), f"{label}.imports.{name}.addend", minimum=-0x80000000)
         else:
             raise ValueError(f"{label}.imports.{name} must be text or an object")
-        if not isinstance(symbol, str) or not runtime_injector.IDENTIFIER.fullmatch(symbol):
+        if not isinstance(symbol, str) or not SYMBOL_PATTERN.fullmatch(symbol):
             raise ValueError(f"{label}.imports.{name}.symbol is invalid")
         imports[name] = ee_c_fragments.SymbolReference(symbol, addend)
-    raw_fragments = value.get("fragments")
-    if not isinstance(raw_fragments, dict) or not raw_fragments:
-        raise ValueError(f"{label}.fragments must be a non-empty object")
-    aliases: dict[str, str] = {}
-    for fragment_id, raw in raw_fragments.items():
-        if not runtime_injector.IDENTIFIER.fullmatch(fragment_id) or not isinstance(raw, dict):
-            raise ValueError(f"{label}.fragments.{fragment_id} is invalid")
-        object_fragment = raw.get("object")
-        if not isinstance(object_fragment, str) or not runtime_injector.IDENTIFIER.fullmatch(object_fragment):
-            raise ValueError(f"{label}.fragments.{fragment_id}.object is invalid")
-        aliases[object_fragment] = fragment_id
+    aliases = {
+        raw["object"]: fragment_id for fragment_id, raw in value["fragments"].items()
+    }
     packaged_object = source_path.with_name(source_path.name + ".o")
     if packaged_object.is_file():
         extracted = ee_c_fragments.extract_ee_object(
@@ -2125,7 +2062,7 @@ def _compile_source(
                 source_path,
                 object_path,
                 namespace=namespace,
-                language=str(language),
+                language=language,
                 toolchain_bin=toolchain,
                 owner=owner,
                 external_symbols=imports,
@@ -2181,9 +2118,7 @@ def load_runtime_package(
     hook_entries = [
         (node, injection_id, injection)
         for node, injection_id, injection in runtime_entries
-        if node.enabled
-        and isinstance(injection.get("hooks"), dict)
-        and injection["hooks"]
+        if node.enabled and injection.get("hooks")
     ]
     hook_nodes = [node for node, _, _ in hook_entries]
     targets = binary_patcher.load_targets(targets_path)
@@ -2192,14 +2127,7 @@ def load_runtime_package(
     used_targets: set[str] = set()
     order = 0
     for node, injection_id, injection in hook_entries:
-        raw_hooks = injection["hooks"]
-        assert isinstance(raw_hooks, dict)
-        for hook_key, raw in raw_hooks.items():
-            _identifier(hook_key, f"injections.{injection_id}.hooks key")
-            if not isinstance(raw, dict):
-                raise ValueError(
-                    f"injections.{injection_id}.hooks.{hook_key} must be an object"
-                )
+        for hook_key, raw in injection["hooks"].items():
             label = f"injections.{injection_id}.hooks.{hook_key}"
             allowed = {
                 "description", "target_id", "offset", "expected_hex",
@@ -2217,7 +2145,7 @@ def load_runtime_package(
                 raise ValueError(f"{label}.replacement_hex length mismatch")
             symbol = raw.get("symbol")
             encoding = raw.get("encoding")
-            if not isinstance(symbol, str) or not runtime_injector.IDENTIFIER.fullmatch(symbol):
+            if not isinstance(symbol, str) or not SYMBOL_PATTERN.fullmatch(symbol):
                 raise ValueError(f"{label}.symbol is invalid")
             if encoding not in RELOCATION_KINDS:
                 raise ValueError(f"{label}.encoding is invalid")
@@ -2312,73 +2240,28 @@ def feature_has(
     *,
     enabled_only: bool = False,
 ) -> bool:
-    if field == "edits":
-        references = (
-            tuple(
-                node.patch
-                for node in selection.feature_patch_nodes(feature_id)
-                if node.enabled and node.patch in selection.edits
-            )
-            if enabled_only
-            else feature_reference_ids(selection, feature_id, "edits")
-        )
-        return bool(references)
-    if field == "injections":
-        references = (
-            tuple(
-                node.patch
-                for node in selection.feature_patch_nodes(feature_id)
-                if node.enabled and node.patch in selection.injections
-            )
-            if enabled_only
-            else feature_reference_ids(selection, feature_id, "injections")
-        )
-        return any(
-            isinstance(selection.injections[injection_id].get("hooks"), dict)
-            and selection.injections[injection_id]["hooks"]
-            for injection_id in references
-        )
-    if field == "image_patches":
-        references = set(feature_reference_ids(selection, feature_id, field))
-        return any(
-            node.patch in references and (node.enabled or not enabled_only)
+    references = set(feature_reference_ids(selection, feature_id, field))
+    if enabled_only:
+        references = {
+            node.patch
             for node in selection.feature_patch_nodes(feature_id)
-        )
-    if field == "string_patches":
-        references = (
-            tuple(
-                node.patch
-                for node in selection.feature_patch_nodes(feature_id)
-                if node.enabled and node.patch in selection.string_patches
-            )
-            if enabled_only
-            else feature_reference_ids(selection, feature_id, "string_patches")
-        )
-        return bool(references)
-    raise ValueError(f"Unsupported catalog implementation field: {field}")
+            if node.enabled and node.patch in references
+        }
+    if field == "injections":
+        return any(selection.injections[patch_id].get("hooks") for patch_id in references)
+    return bool(references)
 
 
-def selected_image_patches(
+def selected_patch_values(
     selection: CatalogSelection,
+    field: str,
 ) -> tuple[tuple[CatalogNode, str, dict[str, object]], ...]:
-    """Return selected image operations for the configuration composer."""
+    """Return each enabled patch's value for one patch field, such as image_file."""
     return tuple(
-        (node, node.patch, selection.patches[node.patch]["image_patch"])
+        (node, node.patch, selection.patches[node.patch][field])
         for node in selection.patch_nodes
         if node.enabled and node.patch is not None
-        and "image_patch" in selection.patches[node.patch]
-    )
-
-
-def selected_image_files(
-    selection: CatalogSelection,
-) -> tuple[tuple[CatalogNode, str, dict[str, object]], ...]:
-    """Return enabled files that must be inserted into the final image."""
-    return tuple(
-        (node, node.patch, selection.patches[node.patch]["image_file"])
-        for node in selection.patch_nodes
-        if node.enabled and node.patch is not None
-        and "image_file" in selection.patches[node.patch]
+        and field in selection.patches[node.patch]
     )
 
 
@@ -2388,12 +2271,9 @@ def selected_string_patches(
 ) -> tuple[tuple[CatalogNode, str, dict[str, object]], ...]:
     """Return enabled semantic string patches for one supported operation."""
     return tuple(
-        (node, patch_id, selection.string_patches[patch_id])
-        for node in selection.patch_nodes
-        if node.enabled and node.patch in selection.string_patches
-        for patch_id in (node.patch,)
-        if patch_id is not None
-        if selection.string_patches[patch_id]["operation"] == operation
+        item
+        for item in selected_patch_values(selection, "string_patch")
+        if item[2]["operation"] == operation
     )
 
 
@@ -2418,18 +2298,12 @@ def referenced_files(selection: CatalogSelection, repository: Path, feature_id: 
                     )
                 )
     for injection_id in feature_reference_ids(selection, feature_id, "injections"):
-        injection = selection.injections[injection_id]
-        payload = injection.get("payload")
-        if not isinstance(payload, dict):
-            continue
-        for payload_id, raw in payload.items():
-            if not isinstance(raw, dict):
-                continue
-            if raw.get("kind") in {"c", "asm"}:
+        for payload_id, raw in selection.injections[injection_id].get("payload", {}).items():
+            if raw["kind"] in {"c", "asm"}:
                 files.add(
                     _source_path(
                         repository,
-                        raw.get("path"),
+                        raw["path"],
                         f"injections.{injection_id}.payload.{payload_id}.path",
                     )
                 )

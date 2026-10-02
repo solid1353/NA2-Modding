@@ -82,25 +82,6 @@ function ConvertTo-Na2PortableText {
     return $portable
 }
 
-function Get-Na2ConfigurationFailure {
-    [CmdletBinding()]
-    param([Parameter(Mandatory = $true)][string[]]$Output)
-
-    $message = $null
-    foreach ($line in $Output) {
-        if ($line -match '(?:^|\.)ConfigurationError:\s*(?<message>.+)$') {
-            $message = $Matches.message.Trim()
-        }
-    }
-    if ($null -eq $message) {
-        return $null
-    }
-    return [pscustomobject]@{
-        Message = $message
-        TechnicalDetails = $Output -join "`n"
-    }
-}
-
 function Remove-Na2TranscriptBoilerplate {
     [CmdletBinding()]
     param([AllowEmptyString()][string]$Text)
@@ -163,9 +144,9 @@ function Start-Na2RunLog {
         [IO.Path]::GetFullPath($LogDirectory)
     }
     New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
-    $temporaryTranscript = Join-Path (
-        [IO.Path]::GetTempPath()
-    ) "na2-transcript-$PID-$([guid]::NewGuid().ToString('N')).log"
+    $temporaryTranscript = Join-Path $logDirectory (
+        ".transcript-$PID-$([guid]::NewGuid().ToString('N')).log"
+    )
 
     try {
         Start-Transcript -LiteralPath $temporaryTranscript -UseMinimalHeader -Force | Out-Null

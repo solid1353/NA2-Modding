@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from ..common import UINT64_MAX, file_sha256
 from scripts.lib.paths import Paths, load_paths
 
 if TYPE_CHECKING:
@@ -16,6 +17,9 @@ if TYPE_CHECKING:
 
 
 BUILDER_TARGETS_FILE = Path("infrastructure") / "targets.tsv"
+BINARY_PATCHER_OPERATIONS = (
+    Path("infrastructure") / "modules" / "binary_patcher" / "operations"
+)
 SOURCE_BOOT_PATH = "SLPS_258.37"
 SYSTEM_CNF_PATH = "SYSTEM.CNF"
 PRODUCT_ROOT_ALIASES = {
@@ -28,7 +32,7 @@ MODULE_TYPE_ORDER = (
     "binary_patcher",
 )
 MODULE_TYPES = frozenset(MODULE_TYPE_ORDER)
-UINT64_MAX = (1 << 64) - 1
+LAUNCH_SETTING_KEYS = frozenset({"startup_fast_forward_frames", "speed_after_startup"})
 TRANSLATION_IMPORTER_CONTROL_FILES = (
     "mappings.tsv",
 )
@@ -70,12 +74,6 @@ class BuildConfiguration:
     character_overrides: CharacterOverrideConfiguration | None = None
     identity_patch_id: str | None = None
 
-
-def _settings_object(value: object, keys: set[str], label: str) -> dict[str, object]:
-    if not isinstance(value, dict) or set(value) != keys:
-        expected = ", ".join(sorted(keys))
-        raise ValueError(f"Settings {label} keys must be: {expected}")
-    return value
 
 
 def validate_product_title(value: object) -> str:
@@ -121,34 +119,18 @@ def _validate_configurations(value: object) -> None:
 
 def _read_settings(path: Path) -> tuple[int, ...]:
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
+        settings = json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
         raise ValueError(f"Settings are not valid JSON: {path}") from exc
-    settings = _settings_object(
-        data,
-        {
-            "launch_settings",
-            "configurations",
-        },
-        "root",
-    )
+    if not isinstance(settings, dict) or set(settings) != {"launch_settings", "configurations"}:
+        raise ValueError("Settings root keys must be: configurations, launch_settings")
     launch_settings = settings["launch_settings"]
     if not isinstance(launch_settings, dict):
         raise ValueError("Settings launch_settings must be an object")
     default_settings = launch_settings.get("default")
     if not isinstance(default_settings, dict):
         raise ValueError("Settings launch_settings.default must be an object")
-    allowed_launch_settings = {
-        "startup_fast_forward_frames",
-        "speed_after_startup",
-    }
-    unexpected = set(default_settings) - allowed_launch_settings
-    if unexpected:
-        keys = ", ".join(sorted(unexpected))
-        raise ValueError(
-            f"Settings launch_settings.default has unsupported keys: {keys}"
-        )
-    for required in sorted(allowed_launch_settings):
+    for required in sorted(LAUNCH_SETTING_KEYS):
         if required not in default_settings:
             raise ValueError(
                 f"Settings launch_settings.default must define {required}"
@@ -157,63 +139,39 @@ def _read_settings(path: Path) -> tuple[int, ...]:
         default_settings["startup_fast_forward_frames"],
         "launch_settings.default.startup_fast_forward_frames",
     )
-    _speed_after_startup(
-        default_settings["speed_after_startup"],
-        "launch_settings.default.speed_after_startup",
-    )
-    startup_frames = [base_frames]
-    for profile, raw_profile in launch_settings.items():
-        if profile == "default":
-            continue
-        if not isinstance(raw_profile, dict):
-            raise ValueError(f"Settings launch_settings.{profile} must be an object")
-        unexpected = set(raw_profile) - allowed_launch_settings
+    startup_frames = []
+    for profile, profile_settings in launch_settings.items():
+        label = f"launch_settings.{profile}"
+        if not isinstance(profile_settings, dict):
+            raise ValueError(f"Settings {label} must be an object")
+        unexpected = set(profile_settings) - LAUNCH_SETTING_KEYS
         if unexpected:
             keys = ", ".join(sorted(unexpected))
-            raise ValueError(
-                f"Settings launch_settings.{profile} has unsupported keys: {keys}"
-            )
+            raise ValueError(f"Settings {label} has unsupported keys: {keys}")
         frames = base_frames
-        if "startup_fast_forward_frames" in raw_profile:
+        if "startup_fast_forward_frames" in profile_settings:
             frames = _startup_frames(
-                raw_profile["startup_fast_forward_frames"],
-                f"launch_settings.{profile}.startup_fast_forward_frames",
+                profile_settings["startup_fast_forward_frames"],
+                f"{label}.startup_fast_forward_frames",
             )
-        if "speed_after_startup" in raw_profile:
+        if "speed_after_startup" in profile_settings:
             _speed_after_startup(
-                raw_profile["speed_after_startup"],
-                f"launch_settings.{profile}.speed_after_startup",
+                profile_settings["speed_after_startup"],
+                f"{label}.speed_after_startup",
             )
         startup_frames.append(frames)
     _validate_configurations(settings["configurations"])
     return tuple(startup_frames)
 
 
-def _tree_digest(
-    path: Path,
-    files: list[Path],
-    *,
-    external_labels: Mapping[Path, str] | None = None,
-) -> str:
-    labels = {
-        item.resolve(): label
-        for item, label in (external_labels or {}).items()
-    }
-
+def _tree_digest(path: Path, files: list[Path]) -> str:
     def digest_path(item: Path) -> str:
-        resolved = item.resolve()
-        if resolved in labels:
-            return labels[resolved]
-        try:
-            return resolved.relative_to(path).as_posix()
-        except ValueError:
-            repository = load_paths(path, allow_missing=True).repository
-            return "@repository/" + resolved.relative_to(repository).as_posix()
+        return item.resolve().relative_to(path).as_posix()
 
     digest = hashlib.sha256()
     for item in sorted(files, key=digest_path):
         relative = digest_path(item).encode("utf-8")
-        data_hash = hashlib.sha256(item.read_bytes()).hexdigest().upper().encode("ascii")
+        data_hash = file_sha256(item).encode("ascii")
         digest.update(relative)
         digest.update(b"\0")
         digest.update(data_hash)
@@ -252,12 +210,7 @@ def _module_content_files(path: Path, module_type: str) -> list[Path]:
 def module_content_sha256(path: Path, module_type: str) -> str:
     """Hash one module's canonical executable inputs."""
     path = path.resolve()
-    if module_type not in MODULE_TYPES:
-        raise ValueError(f"Unsupported module type: {module_type!r}")
-    if not path.is_dir():
-        raise FileNotFoundError(path)
-    files = _module_content_files(path, module_type)
-    return _tree_digest(path, files)
+    return _tree_digest(path, _module_content_files(path, module_type))
 
 
 def _resolved_roots(
@@ -337,13 +290,10 @@ def _catalog_feature_sha256(
 ) -> str:
     from . import catalog as catalog_module, catalog_format
 
-    feature = selection.catalog.get(feature_id)
-    if feature is None:
-        raise ValueError(f"Catalog has no feature: {feature_id}")
     entries: list[tuple[str, bytes]] = [
         (
             f"catalog.modcat#features.{feature_id}",
-            catalog_format.serialize_feature(feature).encode("utf-8"),
+            catalog_format.serialize_feature(selection.catalog[feature_id]).encode("utf-8"),
         )
     ]
     for patch_id in catalog_module.feature_patch_ids(selection, feature_id):
@@ -366,14 +316,7 @@ def _catalog_feature_sha256(
     ):
         entries.append((targets_path.relative_to(repository).as_posix(), targets_path.read_bytes()))
     if catalog_module.feature_has(selection, feature_id, "edits"):
-        operations = (
-            builder_root
-            / "infrastructure"
-            / "modules"
-            / "binary_patcher"
-            / "operations"
-        )
-        for file in sorted(operations.glob("*.tsv")):
+        for file in sorted((builder_root / BINARY_PATCHER_OPERATIONS).glob("*.tsv")):
             entries.append((file.relative_to(repository).as_posix(), file.read_bytes()))
     for file in catalog_module.referenced_files(selection, repository, feature_id):
         entries.append((file.relative_to(repository).as_posix(), file.read_bytes()))
@@ -392,19 +335,32 @@ def _catalog_feature_sha256(
     return digest.hexdigest().upper()
 
 
-def _load_configuration(
+def load_configuration(
     definition_path: Path,
     workspace: Path,
     builder_root: Path,
     *,
-    project_paths: Paths | None,
-    root_overrides: Mapping[str, Path] | None,
-    release_defaults_path: Path | None,
-    release_definition_path: Path | None,
-    overrides: dict[str, object] | None,
+    project_paths: Paths | None = None,
+    root_overrides: Mapping[str, Path] | None = None,
+    release_defaults_path: Path | None = None,
+    release_definition_path: Path | None = None,
+    overrides: dict[str, object] | None = None,
 ) -> BuildConfiguration:
     from . import catalog as catalog_module
 
+    workspace = workspace.resolve()
+    definition_path = definition_path.resolve()
+    builder_root = builder_root.resolve()
+    try:
+        builder_root.relative_to(workspace)
+    except ValueError as exc:
+        raise ValueError(
+            f"Configuration builder root must be inside the workspace: {builder_root}"
+        ) from exc
+    if not definition_path.is_file() or definition_path.suffix.lower() != ".jsonc":
+        raise FileNotFoundError(
+            f"Configuration definition is not a JSONC file: {definition_path}"
+        )
     configuration_id = definition_path.stem
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_. -]*", configuration_id):
         raise ValueError(f"Invalid configuration name: {configuration_id!r}")
@@ -436,7 +392,7 @@ def _load_configuration(
     if not isinstance(manifest, dict):
         raise ValueError("Release manifest root must be an object")
     product_title = validate_product_title(manifest.get("title"))
-    image_patches = catalog_module.selected_image_patches(selection)
+    image_patches = catalog_module.selected_patch_values(selection, "image_patch")
     if len(image_patches) > 1:
         raise ValueError("Configuration selects multiple boot-path replacements")
     identity_patch_id = image_patches[0][1] if image_patches else None
@@ -576,7 +532,7 @@ def configuration_resource_files(
         configuration.definition_path,
         configuration.settings_path,
         configuration.release_manifest_path,
-        *configuration.selection.catalog_files,
+        configuration.selection.catalog_path,
         *configuration.selection.patch_files,
         configuration.targets_path,
     ]
@@ -587,13 +543,7 @@ def configuration_resource_files(
     if include_disabled or any(
         module.module == "binary_patcher" for module in configuration.modules
     ):
-        operations = (
-            configuration.selection.catalog_path.parent
-            / "infrastructure"
-            / "modules"
-            / "binary_patcher"
-            / "operations"
-        )
+        operations = configuration.selection.catalog_path.parent / BINARY_PATCHER_OPERATIONS
         files.extend(sorted(operations.glob("*.tsv")))
     for feature in configuration.features:
         files.extend(
@@ -617,38 +567,3 @@ def configuration_resource_files(
                 files.extend(_module_content_files(module.input_path, module.module))
     return tuple(sorted(set(files), key=lambda path: path.as_posix()))
 
-
-def load_configuration(
-    definition_path: Path,
-    workspace: Path,
-    builder_root: Path,
-    *,
-    project_paths: Paths | None = None,
-    root_overrides: Mapping[str, Path] | None = None,
-    release_defaults_path: Path | None = None,
-    release_definition_path: Path | None = None,
-    overrides: dict[str, object] | None = None,
-) -> BuildConfiguration:
-    workspace = workspace.resolve()
-    definition_path = definition_path.resolve()
-    builder_root = builder_root.resolve()
-    try:
-        builder_root.relative_to(workspace)
-    except ValueError as exc:
-        raise ValueError(
-            f"Configuration builder root must be inside the workspace: {builder_root}"
-        ) from exc
-    if not definition_path.is_file() or definition_path.suffix.lower() != ".jsonc":
-        raise FileNotFoundError(
-            f"Configuration definition is not a JSONC file: {definition_path}"
-        )
-    return _load_configuration(
-        definition_path,
-        workspace,
-        builder_root,
-        project_paths=project_paths,
-        root_overrides=root_overrides,
-        release_defaults_path=release_defaults_path,
-        release_definition_path=release_definition_path,
-        overrides=overrides,
-    )

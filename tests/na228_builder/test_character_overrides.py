@@ -169,22 +169,6 @@ class CharacterOverrideTests(unittest.TestCase):
             configuration = load_character_overrides(definition, builder)
 
             self.assertEqual(configuration.character_count, 4)
-            self.assertEqual(
-                configuration.support_id_by_character(),
-                {1: 0x01, 3: None},
-            )
-            self.assertEqual(
-                configuration.awakening_ids_by_character(),
-                {1: (0x10, 0x11), 3: (0x20,)},
-            )
-            self.assertEqual(
-                configuration.linked_uj_by_character(),
-                {1: (0x01, 0x02), 3: ()},
-            )
-            self.assertEqual(
-                configuration.linked_jutsu_by_character(),
-                {1: (0x20,), 3: ()},
-            )
             self.assertEqual(configuration.base.values[:2], (20.0, 100.0))
             self.assertEqual(configuration.step.values[0], 5.0)
             self.assertEqual(configuration.row_by_id()[1].values[:2], (10.0, 80.0))

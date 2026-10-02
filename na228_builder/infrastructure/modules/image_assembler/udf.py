@@ -10,16 +10,13 @@ from typing import Mapping
 BLOCK_SIZE = 2048
 _TAG_SIZE = 16
 _SHORT_AD_SIZE = 8
-_LONG_AD_SIZE = 16
 _EXTENT_LENGTH_MASK = 0x3FFFFFFF
 
 
 @dataclass(frozen=True)
 class UdfRecord:
     path: str
-    display_path: str
     is_dir: bool
-    file_type: int
     icb_lbn: int
     icb_length: int
     information_length: int
@@ -34,7 +31,7 @@ class UdfRecord:
 
 
 @dataclass(frozen=True)
-class UdfWrite:
+class PlannedWrite:
     offset: int
     expected: bytes
     replacement: bytes
@@ -59,7 +56,7 @@ class UdfRename:
 
 @dataclass(frozen=True)
 class UdfPlan:
-    writes: tuple[UdfWrite, ...]
+    writes: tuple[PlannedWrite, ...]
     insertions: tuple[UdfInsertion, ...]
     renames: tuple[UdfRename, ...]
 
@@ -94,14 +91,6 @@ def _allocated_length(raw: bytes | bytearray, offset: int, context: str) -> int:
         raise RuntimeError(f"Unsupported UDF extent type in {context}")
     return value & _EXTENT_LENGTH_MASK
 
-
-def _normalize_path(path: str) -> str:
-    normalized = path.replace("\\", "/").strip("/").upper()
-    if not normalized or "//" in normalized:
-        raise ValueError(f"Invalid UDF path: {path!r}")
-    if any(part in {"", ".", ".."} for part in normalized.split("/")):
-        raise ValueError(f"Invalid UDF path: {path!r}")
-    return normalized
 
 
 def _decode_cs0(raw: bytes, context: str) -> str:
@@ -178,7 +167,6 @@ def _refresh_tag(raw: bytearray, offset: int, *, location: int | None = None) ->
             bytes(raw[offset + _TAG_SIZE:offset + _TAG_SIZE + crc_length]), 0
         ),
     )
-    raw[offset + 4] = 0
     raw[offset + 4] = (
         sum(raw[offset:offset + 4]) + sum(raw[offset + 5:offset + 16])
     ) & 0xFF
@@ -306,7 +294,6 @@ class Udf:
             root_lbn,
             root_length,
             path="",
-            display_path="",
             parent_path="",
             fid_offset=None,
             fid_length=None,
@@ -388,7 +375,6 @@ class Udf:
         icb_length: int,
         *,
         path: str,
-        display_path: str,
         parent_path: str,
         fid_offset: int | None,
         fid_length: int | None,
@@ -411,8 +397,7 @@ class Udf:
         flags = _u16(block, 34)
         if flags & 7:
             raise RuntimeError(f"Unsupported UDF allocation descriptor type: {path or '/'}")
-        file_type = block[27]
-        is_dir = file_type == 4
+        is_dir = block[27] == 4
         information_length = _u64(block, 56)
         logical_blocks = _u64(block, 64)
         extended_length = _u32(block, 168)
@@ -434,9 +419,7 @@ class Udf:
 
         record = UdfRecord(
             path=path,
-            display_path=display_path,
             is_dir=is_dir,
-            file_type=file_type,
             icb_lbn=icb_lbn,
             icb_length=icb_length,
             information_length=information_length,
@@ -495,19 +478,16 @@ class Udf:
                         raise RuntimeError(f"Invalid UDF parent FID in {path or '/'}")
                     parent_seen = True
                 else:
-                    display_name = _decode_cs0(
+                    name = _decode_cs0(
                         bytes(directory[identifier_offset:identifier_end]), path or "/"
-                    )
-                    normalized_name = _normalize_path(display_name)
-                    child_path = f"{path}/{normalized_name}" if path else normalized_name
-                    child_display = (
-                        f"{display_path}/{display_name}" if display_path else display_name
-                    )
+                    ).upper()
+                    if name in {"", ".", ".."} or "/" in name or "\\" in name:
+                        raise RuntimeError(f"Invalid UDF file identifier in {path or '/'}")
+                    child_path = f"{path}/{name}" if path else name
                     child = self._walk_file_entry(
                         child_icb_lbn,
                         child_icb_length,
                         path=child_path,
-                        display_path=child_display,
                         parent_path=path,
                         fid_offset=(
                             self.partition_start + data_lbn
@@ -583,7 +563,6 @@ class Udf:
         raw = bytearray(length)
         _set_u16(raw, 0, 257)
         _set_u16(raw, 2, 2)
-        _set_u16(raw, 6, 0)
         _set_u16(raw, 10, length - 16)
         _set_u32(raw, 12, tag_location)
         _set_u16(raw, 16, 1)
@@ -591,8 +570,6 @@ class Udf:
         raw[19] = len(identifier)
         _set_u32(raw, 20, icb_length)
         _set_u32(raw, 24, icb_lbn)
-        _set_u16(raw, 28, 0)
-        _set_u16(raw, 36, 0)
         raw[38:38 + len(identifier)] = identifier
         _refresh_tag(raw, 0)
         return bytes(raw)
@@ -603,21 +580,13 @@ class Udf:
         insertion_extents: Mapping[str, tuple[int, int]],
         file_entry_sectors: Mapping[str, int],
         renames: Mapping[str, str],
-        new_directories: Mapping[str, tuple[int, int]] | None = None,
+        new_directories: Mapping[str, tuple[int, int]],
     ) -> UdfPlan:
-        normalized_insertions = {
-            _normalize_path(path): value for path, value in insertion_extents.items()
-        }
-        normalized_entries = {
-            _normalize_path(path): sector for path, sector in file_entry_sectors.items()
-        }
-        if set(normalized_insertions) != set(normalized_entries):
-            raise RuntimeError("UDF insertion payload/ICB sets differ")
-        normalized_renames = {
-            _normalize_path(source): _normalize_path(replacement)
-            for source, replacement in renames.items()
-        }
+        """Plan UDF writes for normalized insertions, renames, and new directories.
 
+        Paths and the sectors assigned to them come from the ISO9660 composer,
+        which has already checked them against the bridged ISO9660 tree.
+        """
         directory_buffers: dict[str, tuple[bytes, bytearray]] = {}
         file_entry_buffers: dict[str, tuple[bytes, bytearray]] = {}
 
@@ -642,16 +611,11 @@ class Udf:
             return record, file_entry_buffers[path][1]
 
         rename_results: list[UdfRename] = []
-        for source_path in sorted(normalized_renames):
-            replacement_path = normalized_renames[source_path]
-            source = self.by_path.get(source_path)
-            if source is None or source.fid_offset is None or source.fid_length is None:
-                raise RuntimeError(f"UDF rename source does not exist: {source_path}")
-            if replacement_path in self.by_path:
-                raise RuntimeError(f"UDF rename target already exists: {replacement_path}")
-            replacement_parent, _, replacement_name = replacement_path.rpartition("/")
-            if replacement_parent != source.parent_path:
-                raise RuntimeError("UDF renames cannot move a file between directories")
+        for source_path in sorted(renames):
+            replacement_path = renames[source_path]
+            source = self.by_path[source_path]
+            assert source.fid_offset is not None and source.fid_length is not None
+            replacement_name = replacement_path.rpartition("/")[2]
             parent, data = directory_buffer(source.parent_path)
             relative = source.fid_offset - (
                 self.partition_start + parent.data_lbn
@@ -689,28 +653,23 @@ class Udf:
 
         insertion_results: list[UdfInsertion] = []
         next_unique_id = max(record.unique_id for record in self.records) + 1
-        new_directory_sectors = {
-            _normalize_path(path): sectors for path, sectors in (new_directories or {}).items()
-        }
         insertions_by_parent: dict[str, list[str]] = {}
-        for path in sorted(normalized_insertions):
+        for path in sorted(insertion_extents):
             if path in self.by_path:
                 raise RuntimeError(f"UDF insertion path already exists: {path}")
             parent_path = path.rpartition("/")[0]
             parent = self.by_path.get(parent_path)
-            if parent_path not in new_directory_sectors and (parent is None or not parent.is_dir):
+            if parent_path not in new_directories and (parent is None or not parent.is_dir):
                 raise RuntimeError(f"UDF insertion parent does not exist: {parent_path}")
             insertions_by_parent.setdefault(parent_path, []).append(path)
 
-        new_file_entry_writes: list[UdfWrite] = []
+        new_file_entry_writes: list[PlannedWrite] = []
         cursors: dict[str, int] = {}
         new_directory_data: dict[str, tuple[int, bytearray]] = {}
 
         def partition_lbn(sector: int, context: str) -> int:
             if not self.partition_start <= sector < self.partition_start + self.partition_length:
                 raise RuntimeError(f"UDF {context} is outside the partition")
-            if any(self._read_absolute_block(sector)):
-                raise RuntimeError(f"UDF {context} sector is not zero")
             return sector - self.partition_start
 
         def append_identifier(parent_path: str, identifier_for) -> int:
@@ -739,17 +698,17 @@ class Udf:
             return (self.partition_start + data_lbn) * BLOCK_SIZE + cursor
 
         directory_templates = [record for record in self.records if record.is_dir and record.path]
-        if new_directory_sectors and not directory_templates:
+        if new_directories and not directory_templates:
             raise RuntimeError("UDF has no directory File Entry template")
         new_directory_entries: dict[str, tuple[int, int]] = {}
-        for directory_path in sorted(new_directory_sectors):
+        for directory_path in sorted(new_directories):
             if directory_path in self.by_path:
                 raise RuntimeError(f"UDF directory already exists: {directory_path}")
             parent_path = directory_path.rpartition("/")[0]
             parent = self.by_path.get(parent_path)
             if parent is None or not parent.is_dir:
                 raise RuntimeError(f"UDF directory parent does not exist: {parent_path or '/'}")
-            entry_sector, data_sector = new_directory_sectors[directory_path]
+            entry_sector, data_sector = new_directories[directory_path]
             entry_lbn = partition_lbn(entry_sector, f"directory ICB {directory_path}")
             data_lbn = partition_lbn(data_sector, f"directory data {directory_path}")
             template = directory_templates[-1]
@@ -785,8 +744,8 @@ class Udf:
                 template.file_entry_offset, template.file_entry_length
             )
             for path in insertions_by_parent[parent_path]:
-                absolute_extent, size = normalized_insertions[path]
-                file_entry_sector = normalized_entries[path]
+                absolute_extent, size = insertion_extents[path]
+                file_entry_sector = file_entry_sectors[path]
                 payload_blocks = (size + BLOCK_SIZE - 1) // BLOCK_SIZE
                 if not (
                     self.partition_start
@@ -813,11 +772,9 @@ class Udf:
                 )
                 if len(file_entry) > BLOCK_SIZE:
                     raise RuntimeError(f"UDF File Entry exceeds one block: {path}")
-                if any(self._read_absolute_block(file_entry_sector)):
-                    raise RuntimeError(f"UDF insertion ICB sector is not zero: {path}")
                 block = file_entry + b"\0" * (BLOCK_SIZE - len(file_entry))
                 new_file_entry_writes.append(
-                    UdfWrite(
+                    PlannedWrite(
                         file_entry_sector * BLOCK_SIZE,
                         b"\0" * BLOCK_SIZE,
                         block,
@@ -873,26 +830,26 @@ class Udf:
                 tag_location=entry_lbn,
             )
             next_unique_id += 1
-            new_file_entry_writes.append(UdfWrite(
+            new_file_entry_writes.append(PlannedWrite(
                 (self.partition_start + entry_lbn) * BLOCK_SIZE,
                 b"\0" * BLOCK_SIZE,
                 file_entry + b"\0" * (BLOCK_SIZE - len(file_entry)),
                 f"UDF File Entry for directory {directory_path}",
             ))
-            new_file_entry_writes.append(UdfWrite(
+            new_file_entry_writes.append(PlannedWrite(
                 (self.partition_start + data_lbn) * BLOCK_SIZE,
                 b"\0" * BLOCK_SIZE,
                 bytes(directory),
                 f"UDF directory data for {directory_path}",
             ))
 
-        writes: list[UdfWrite] = []
+        writes: list[PlannedWrite] = []
         for path in sorted(directory_buffers):
             record = self.by_path[path]
             original, replacement = directory_buffers[path]
             if bytes(replacement) != original:
                 writes.append(
-                    UdfWrite(
+                    PlannedWrite(
                         (self.partition_start + record.data_lbn) * BLOCK_SIZE,
                         original,
                         bytes(replacement),
@@ -904,7 +861,7 @@ class Udf:
             original, replacement = file_entry_buffers[path]
             if bytes(replacement) != original:
                 writes.append(
-                    UdfWrite(
+                    PlannedWrite(
                         record.file_entry_offset,
                         original,
                         bytes(replacement),
@@ -913,7 +870,7 @@ class Udf:
                 )
         writes.extend(new_file_entry_writes)
 
-        if normalized_insertions or new_directory_sectors:
+        if insertion_extents or new_directories:
             actual_file_count = sum(not record.is_dir for record in self.records)
             actual_directory_count = sum(record.is_dir for record in self.records)
             integrity = bytearray(self.integrity)
@@ -921,7 +878,7 @@ class Udf:
                 _set_u32(
                     integrity,
                     self.integrity_implementation_offset + 32,
-                    actual_file_count + len(normalized_insertions),
+                    actual_file_count + len(insertion_extents),
                 )
             elif self.recorded_file_count != 0:
                 raise RuntimeError("UDF integrity file count is stale")
@@ -929,14 +886,14 @@ class Udf:
                 _set_u32(
                     integrity,
                     self.integrity_implementation_offset + 36,
-                    actual_directory_count + len(new_directory_sectors),
+                    actual_directory_count + len(new_directories),
                 )
             elif self.recorded_directory_count != 0:
                 raise RuntimeError("UDF integrity directory count is stale")
             _refresh_tag(integrity, 0)
             if bytes(integrity) != self.integrity:
                 writes.append(
-                    UdfWrite(
+                    PlannedWrite(
                         self.integrity_sector * BLOCK_SIZE,
                         self.integrity,
                         bytes(integrity),

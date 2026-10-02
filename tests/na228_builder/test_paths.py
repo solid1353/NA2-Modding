@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
 
-from scripts.lib.paths import derive_game_paths, load_local_paths, load_paths
+from scripts.lib.paths import load_local_paths, load_paths
 
 
 class ProjectPathTests(unittest.TestCase):
@@ -209,130 +210,133 @@ class ProjectPathTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "has no files"):
                 load_paths(manifest)
 
-    def test_game_catalog_derives_sources(self) -> None:
+    def write_workshop_project(
+        self, workspace: Path, launch_settings: dict[str, object]
+    ) -> Path:
+        """Create a project importing a Workshop with the real catalog code."""
+        real_repository = Path(__file__).resolve().parents[2]
+        real_import = json.loads(
+            (real_repository / "paths.json").read_text(encoding="utf-8")
+        )["imports"]["workshop"]
+        real_workshop_lib = (real_repository / real_import).parent / "scripts" / "lib"
+        workshop = workspace / "workshop"
+        repository = workspace / "repository"
+        for path in (
+            workshop / "scripts/lib",
+            workshop / "source/NA2.iso.files",
+            workshop / "source/NUN3.iso.files",
+            workshop / "source/NUN5.iso.files",
+            workshop / "pcsx2_files/games/NUN3",
+            workshop / "pcsx2_files/input_profiles/sources/overrides/games",
+            repository / "build",
+            repository / "pcsx2_files/games/NA2",
+            repository / "pcsx2_files/games/NUN5",
+        ):
+            path.mkdir(parents=True)
+        for name in ("paths.py", "game_catalog.py"):
+            shutil.copyfile(real_workshop_lib / name, workshop / "scripts/lib" / name)
+        (workshop / "paths.json").write_text(
+            json.dumps(
+                {
+                    "roots": {
+                        "source": "source",
+                        "pcsx2_files": "pcsx2_files",
+                        "pcsx2_input_profiles": "@pcsx2_files/input_profiles",
+                    },
+                    "files": {"source_catalog": "games.json"},
+                }
+            ),
+            encoding="utf-8",
+        )
+        (workshop / "games.json").write_text(
+            json.dumps(
+                {
+                    "sources": {
+                        "NA2": {"serial": "SLPS-25837", "crc": "C0659AD1"},
+                        "NUN3": {"serial": "SLUS-21727", "crc": "EE3737A4"},
+                        "NUN5": {"serial": "SLES-55605", "crc": "C071D4C1"},
+                    }
+                }
+            ),
+            encoding="utf-8",
+        )
+        (
+            workshop
+            / "pcsx2_files/input_profiles/sources/overrides/games/NA2.ini"
+        ).write_text("[Pad1]\nCross = SDL-0/FaceNorth\n", encoding="utf-8")
+        (repository / "paths.json").write_text(
+            json.dumps(
+                {
+                    "imports": {"workshop": "../workshop/paths.json"},
+                    "roots": {"build": "build", "pcsx2_files": "pcsx2_files"},
+                    "files": {"project_settings": "project.json"},
+                }
+            ),
+            encoding="utf-8",
+        )
+        (repository / "project.json").write_text(
+            json.dumps({"launch_settings": launch_settings}), encoding="utf-8"
+        )
+        return repository / "paths.json"
+
+    def test_game_catalog_derives_sources_from_their_bundle_root(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            for path in (
-                "build",
-                "source/NA2.iso.files",
-                "source/NUN5.iso.files",
-                "pcsx2/game_settings",
-                "pcsx2/input_profiles",
-                "pcsx2/memory_cards",
-                "pcsx2_files/games/NA2",
-                "pcsx2_files/games/NUN5",
-            ):
-                (root / path).mkdir(parents=True, exist_ok=True)
-            manifest = {
-                "roots": {
-                    "build": "build",
-                    "source": "source",
-                    "pcsx2_files": "pcsx2_files",
-                    "pcsx2_input_profiles": "pcsx2/input_profiles",
-                    "pcsx2_memory_cards": "pcsx2/memory_cards",
-                },
-                "files": {
-                    "source_catalog": "games.json",
-                    "project_settings": "game.json",
-                },
-            }
-            source_catalog = {
-                "sources": {
-                    "NA2": {
-                        "serial": "SLPS-25837",
-                        "crc": "C0659AD1",
-                    },
-                    "NUN5": {
-                        "serial": "SLUS-21727",
-                        "crc": "EE3737A4",
-                    },
-                },
-            }
-            settings = {
-                "title": "Narutimate Accel v2.28",
-                "serial": "SLOP-NA228",
-                "output_boot_path": "SLOP_NA2.28",
-                "launch_settings": {
+            workspace = Path(directory).resolve()
+            manifest_path = self.write_workshop_project(
+                workspace,
+                {
                     "default": {
                         "startup_fast_forward_frames": 321,
                         "speed_after_startup": "turbo",
                     },
-                    "practice": {
-                        "startup_fast_forward_frames": 654,
-                        "speed_after_startup": "normal",
-                    },
+                    "practice": {"speed_after_startup": "normal"},
                 },
-                "configurations": {"base": "b", "test": "t"},
-            }
-            manifest_path = root / "paths.json"
-            manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
-            (root / "games.json").write_text(
-                json.dumps(source_catalog), encoding="utf-8"
             )
-            (root / "game.json").write_text(
-                json.dumps(settings), encoding="utf-8"
-            )
-            override_directory = (
-                root / "pcsx2/input_profiles/sources/overrides/games"
-            )
-            override_directory.mkdir(parents=True)
-            (override_directory / "NA2.ini").write_text(
-                "[Pad1]\nCross = SDL-0/FaceNorth\n",
-                encoding="utf-8",
-            )
+            workshop = workspace / "workshop"
+            bundles = workspace / "repository/pcsx2_files/games"
 
             paths = load_paths(manifest_path)
 
+            self.assertEqual(paths.file("nun5_iso"), workshop / "source/NUN5.iso")
             self.assertEqual(
-                paths.file("nun5_iso"),
-                root.resolve() / "source/NUN5.iso",
-            )
-            self.assertEqual(
-                paths.path("source_nun5"),
-                root.resolve() / "source/NUN5.iso.files",
+                paths.path("source_nun5"), workshop / "source/NUN5.iso.files"
             )
             self.assertEqual(
                 paths.file("input_profile"),
-                root.resolve() / "pcsx2/input_profiles/Default_NA2.ini",
+                workshop / "pcsx2_files/input_profiles/Default_NA2.ini",
             )
-            catalog = {
-                "sources": source_catalog["sources"],
-                "title": settings["title"],
-                "serial": settings["serial"],
-            }
-            na2_paths = derive_game_paths(
-                "NA2",
-                catalog,
+            na2 = paths.games["NA2"]["config"]
+            self.assertEqual(
+                na2["input_profile_overrides"],
+                workshop
+                / "pcsx2_files/input_profiles/sources/overrides/games/NA2.ini",
+            )
+            self.assertEqual(na2["cheats"], bundles / "NA2/NA2.pnach")
+            self.assertEqual(na2["game_settings"], bundles / "NA2/NA2.ini")
+            self.assertEqual(na2["memory_card"], bundles / "NA2/NA2.ps2")
+            self.assertEqual(
+                paths.file("nun3_memory_card"),
+                workshop / "pcsx2_files/games/NUN3/NUN3.ps2",
+            )
+            self.assertEqual(
+                paths.settings["launch_settings"]["practice"],
+                {"speed_after_startup": "normal"},
+            )
+
+    def test_rejects_invalid_launch_settings(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            manifest_path = self.write_workshop_project(
+                Path(directory).resolve(),
                 {
-                    "repository": root.resolve(),
-                    "build": root.resolve() / "build",
-                    "source": root.resolve() / "source",
-                    "pcsx2_files": root.resolve() / "pcsx2_files",
-                    "pcsx2_input_profiles": root.resolve() / "pcsx2/input_profiles",
-                    "pcsx2_memory_cards": root.resolve() / "pcsx2/memory_cards",
+                    "default": {
+                        "startup_fast_forward_frames": 321,
+                        "speed_after_startup": "fast",
+                    }
                 },
             )
-            self.assertEqual(
-                na2_paths["input_profile"],
-                root.resolve() / "pcsx2/input_profiles/Default_NA2.ini",
-            )
-            self.assertEqual(
-                na2_paths["input_profile_overrides"],
-                root.resolve()
-                / "pcsx2/input_profiles/sources/overrides/games/NA2.ini",
-            )
-            self.assertEqual(
-                na2_paths["cheats"],
-                root.resolve() / "pcsx2_files/games/NA2/NA2.pnach",
-            )
-            self.assertEqual(
-                na2_paths["game_settings"],
-                root.resolve() / "pcsx2_files/games/NA2/NA2.ini",
-            )
-            self.assertEqual(
-                na2_paths["memory_card"],
-                root.resolve() / "pcsx2_files/games/NA2/NA2.ps2",
-            )
+
+            with self.assertRaisesRegex(ValueError, "must be normal or turbo"):
+                load_paths(manifest_path)
 
 if __name__ == "__main__":
     unittest.main()

@@ -6,10 +6,15 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from na228_builder.infrastructure.modules.image_assembler.assembler import assemble_image
 from na228_builder.infrastructure.modules.image_assembler.iso9660 import (
     SECTOR,
     Iso9660,
     compose_filesystems,
+)
+from na228_builder.infrastructure.modules.image_assembler.operations import (
+    AssemblyPlan,
+    FileInsertion,
 )
 
 
@@ -158,7 +163,7 @@ class IsoInsertionTests(unittest.TestCase):
             ).insertions
             second = compose_filesystems(
                 second_path,
-                {"prg/mod.bin": mod, "prg/texteng.bin": texteng},
+                {"PRG/MOD.BIN": mod, "PRG/TEXTENG.BIN": texteng},
             ).insertions
 
             self.assertEqual(source_path.read_bytes(), source_data)
@@ -225,15 +230,23 @@ class IsoInsertionTests(unittest.TestCase):
 
     def test_rejects_existing_and_duplicate_normalized_paths(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            image = Path(directory) / "image.iso"
+            root = Path(directory)
+            image = root / "image.iso"
             make_iso(image)
+
+            def plan(*paths: str) -> AssemblyPlan:
+                return AssemblyPlan(insertions=tuple(
+                    FileInsertion(path, b"data", "test", "test insertion")
+                    for path in paths
+                ))
+
             with self.assertRaisesRegex(RuntimeError, "already exists"):
-                compose_filesystems(image, {"PRG/ETC.BIN": b"collision"})
-            with self.assertRaisesRegex(ValueError, "Duplicate normalized"):
-                compose_filesystems(
-                    image,
-                    {"prg/mod.bin": b"one", "PRG/MOD.BIN": b"two"},
+                assemble_image(image, root / "existing.iso", plan("PRG/ETC.BIN"))
+            with self.assertRaisesRegex(ValueError, "Duplicate file insertion"):
+                assemble_image(
+                    image, root / "duplicate.iso", plan("prg/mod.bin", "PRG/MOD.BIN")
                 )
+            self.assertEqual(sorted(path.name for path in root.iterdir()), ["image.iso"])
 
     def test_rejects_missing_parent_and_invalid_identifier(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

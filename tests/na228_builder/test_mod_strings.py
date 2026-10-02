@@ -5,9 +5,9 @@ from na228_builder.patches.localization.mod_strings import ModStrings
 
 
 def strings(language: str) -> ModStrings:
-    return ModStrings(SimpleNamespace(nodes=(SimpleNamespace(
-        path=("features", "localization"), configured_value=language,
-    ),)))
+    return ModStrings(SimpleNamespace(
+        node=lambda *path: SimpleNamespace(configured_value=language),
+    ))
 
 
 class ModStringsTests(unittest.TestCase):

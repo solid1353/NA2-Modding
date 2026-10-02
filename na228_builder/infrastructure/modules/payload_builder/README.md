@@ -18,10 +18,8 @@ assembly with the configured EE toolchain and
 converts supported ELF sections and relocations directly into this builder's
 address-independent fragment model. Object files are temporary. The builder
 then lays out those fragments together with static and external-string
-fragments and emits only the final shared `228.BIN`. `mips.py` provides the
-small deterministic instruction/relocation encoder used only for unavoidable
-native ABI shims and guarded hook templates. Both are maintained build inputs
-rather than research artifacts.
+fragments and emits only the final shared `228.BIN`. It is a maintained build
+input rather than a research artifact.
 
 Payload source and fragment maps retain file declaration order, and the
 injection builder derives fragment positions from that order instead of numeric

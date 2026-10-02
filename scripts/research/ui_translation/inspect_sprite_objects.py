@@ -77,8 +77,6 @@ def main() -> int:
             if not all(math.isfinite(value) and abs(value) <= 4096 for value in values):
                 continue
             resource = u32(memory, base + 0xEC)
-            if resource and resource >= size:
-                continue
             name = resource_name(memory, resource, size)
             if name is None:
                 continue

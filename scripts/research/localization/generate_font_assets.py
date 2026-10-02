@@ -4,29 +4,20 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 from pathlib import Path
 import sys
 
 
-def find_repository(start: Path) -> Path:
-    current = start.resolve()
-    if current.is_file():
-        current = current.parent
-    for candidate in (current, *current.parents):
-        if (candidate / "paths.json").is_file():
-            return candidate
-    raise FileNotFoundError("paths.json was not found")
-
-
-REPOSITORY = find_repository(Path(__file__))
+REPOSITORY = Path(__file__).resolve().parents[3]
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
+from na228_builder.infrastructure.common import sha256_hex as sha256  # noqa: E402
 from scripts.lib.paths import load_paths  # noqa: E402
 
 
-ASSETS = load_paths(REPOSITORY).path("builder", "patches", "localization", "font", "glyphs")
+PATHS = load_paths(REPOSITORY)
+ASSETS = PATHS.path("builder", "patches", "localization", "font", "glyphs")
 ATLAS_OUTPUT = ASSETS / "nun5_semantic_14x20.bin"
 PACKED_MAP_OUTPUT = ASSETS / "nun5_semantic_14x20_packed_map.bin"
 
@@ -75,10 +66,6 @@ RESULT_GF4_SHA256 = "607AC4302C5364903773BF312AAC09B942F164414C5294A7A85411233B0
 # only exact same-semantic cells and reconstruct every other reachable cell
 # from clean NA2. The at-sign is stored at NUN5 cell 63.
 DONOR_RANGES = ((0, 31), (33, 58), (65, 90))
-
-
-def sha256(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest().upper()
 
 
 def checked_read(path: Path, expected_hash: str) -> bytes:
@@ -346,9 +333,8 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    paths = load_paths(REPOSITORY)
-    clean_na2_root = paths.path("source_na2")
-    nun5_root = paths.path("source_nun5")
+    clean_na2_root = PATHS.path("source_na2")
+    nun5_root = PATHS.path("source_nun5")
     clean_na2 = checked_read(clean_na2_root / "DATA" / "GF4.BIN", NA2_GF4_SHA256)
     clean_gf4c = checked_read(
         clean_na2_root / "DATA" / "GF4C.BIN", NA2_GF4C_SHA256

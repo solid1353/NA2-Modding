@@ -12,8 +12,7 @@ from na228_builder.infrastructure.orchestration.app import (
     ReleaseManifest,
     SupportedImage,
     _runtime_configuration_validator,
-    application_directory,
-    identify_supported_images,
+    identify_supported_image,
     main,
     parse_release_manifest,
     run_release,
@@ -21,23 +20,18 @@ from na228_builder.infrastructure.orchestration.app import (
 
 
 class ReleaseAppTests(unittest.TestCase):
-    def image(self, image_id: str, label: str, data: bytes) -> SupportedImage:
-        return SupportedImage(
-            image_id,
-            label,
-            len(data),
-            hashlib.sha256(data).hexdigest().upper(),
-        )
-
     def manifest(self, na2: bytes) -> ReleaseManifest:
         return ReleaseManifest(
             product_name="Narutimate Accel v2.28",
             product_version="v-test",
-            executable_name="Narutimate Accel v2.28_test.exe",
             output_name="Narutimate Accel v2.28.iso",
             configuration="builder/configurations/synthetic.jsonc",
             configuration_name="config.jsonc",
-            images=(self.image("na2", "original NA2 ISO", na2),),
+            image=SupportedImage(
+                "original NA2 ISO",
+                len(na2),
+                hashlib.sha256(na2).hexdigest().upper(),
+            ),
         )
 
     def write_configuration(self, root: Path, value: object | None = None) -> Path:
@@ -45,13 +39,6 @@ class ReleaseAppTests(unittest.TestCase):
         path.write_text(json.dumps({} if value is None else value), encoding="utf-8")
         return path
 
-    def test_application_directory_uses_explicit_executable_parent(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            executable = Path(directory) / "folder" / "Narutimate Accel v2.28.exe"
-            self.assertEqual(
-                application_directory(executable=executable),
-                executable.resolve().parent,
-            )
 
     def test_manifest_parser_normalizes_and_validates_image_identities(self) -> None:
         data = {
@@ -71,13 +58,8 @@ class ReleaseAppTests(unittest.TestCase):
 
         manifest = parse_release_manifest(json.dumps(data))
 
-        self.assertEqual(manifest.images[0].image_id, "na2")
-        self.assertEqual(manifest.images[0].sha256, "AB" * 32)
+        self.assertEqual(manifest.image.sha256, "AB" * 32)
         self.assertEqual(manifest.output_name, "Narutimate Accel v2.28_1.0.0.iso")
-        self.assertEqual(
-            manifest.executable_name,
-            "Narutimate Accel v2.28_1.0.0.exe",
-        )
         self.assertEqual(
             manifest.configuration_name,
             "config.jsonc",
@@ -98,7 +80,7 @@ class ReleaseAppTests(unittest.TestCase):
                 },
             ],
         }
-        with self.assertRaisesRegex(ReleaseError, "executable_name"):
+        with self.assertRaisesRegex(ReleaseError, "output_name"):
             parse_release_manifest(json.dumps(data))
 
     def test_discovery_is_nonrecursive_case_insensitive_and_hash_pinned(self) -> None:
@@ -112,13 +94,13 @@ class ReleaseAppTests(unittest.TestCase):
             (nested / "duplicate.iso").write_bytes(na2)
 
             messages: list[str] = []
-            selected = identify_supported_images(
+            selected = identify_supported_image(
                 root,
-                self.manifest(na2).images,
+                self.manifest(na2).image,
                 emit=messages.append,
             )
 
-            self.assertEqual(selected["na2"].name, "renamed.ISO")
+            self.assertEqual(selected.name, "renamed.ISO")
             self.assertTrue(any("[OK] original NA2 ISO" in line for line in messages))
 
     def test_same_size_wrong_hash_is_rejected(self) -> None:
@@ -128,9 +110,9 @@ class ReleaseAppTests(unittest.TestCase):
             (root / "NA2.iso").write_bytes(b"dirty-na2")
 
             with self.assertRaisesRegex(ReleaseError, "supported original NA2 ISO"):
-                identify_supported_images(
+                identify_supported_image(
                     root,
-                    self.manifest(na2).images,
+                    self.manifest(na2).image,
                     emit=lambda _message: None,
                 )
 
@@ -142,9 +124,9 @@ class ReleaseAppTests(unittest.TestCase):
             (root / "NA2 B.ISO").write_bytes(na2)
 
             with self.assertRaisesRegex(ReleaseError, "multiple copies"):
-                identify_supported_images(
+                identify_supported_image(
                     root,
-                    self.manifest(na2).images,
+                    self.manifest(na2).image,
                     emit=lambda _message: None,
                 )
 
@@ -408,12 +390,12 @@ class ReleaseAppTests(unittest.TestCase):
             root = Path(directory)
             (root / "NA2.iso").write_bytes(na2)
             self.write_configuration(root)
-            real_identify = identify_supported_images
+            real_identify = identify_supported_image
             called = False
 
             def identify_then_change(*args, **kwargs):
                 selected = real_identify(*args, **kwargs)
-                selected["na2"].write_bytes(b"dirty-na2")
+                selected.write_bytes(b"dirty-na2")
                 return selected
 
             def builder(*_args) -> None:
@@ -421,7 +403,7 @@ class ReleaseAppTests(unittest.TestCase):
                 called = True
 
             with mock.patch(
-                "na228_builder.infrastructure.orchestration.app.identify_supported_images",
+                "na228_builder.infrastructure.orchestration.app.identify_supported_image",
                 side_effect=identify_then_change,
             ):
                 with self.assertRaisesRegex(ReleaseError, "changed after identification"):

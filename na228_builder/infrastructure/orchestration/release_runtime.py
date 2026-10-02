@@ -1,16 +1,12 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable
 
 from . import catalog as catalog_module
-from .app import application_directory, load_release_manifest
+from .app import Emit, application_directory, load_release_manifest
 from .build_configuration import build_configuration_candidate
 from .configuration import BuildConfiguration, load_configuration
 from scripts.lib.paths import load_local_paths
-
-
-Emit = Callable[[str], None]
 
 
 def packaged_workspace() -> Path:
@@ -25,62 +21,41 @@ def load_release_configuration(
     workspace = packaged_workspace()
     paths = load_local_paths(workspace, allow_missing=True)
     manifest = load_release_manifest()
-    configuration_path = configuration_path.resolve()
     builder_root = paths.path("builder").resolve()
-    try:
-        builder_root.relative_to(workspace)
-    except ValueError as exc:
-        raise RuntimeError("Packaged builder root escapes release data") from exc
-    if not configuration_path.is_file():
-        raise FileNotFoundError(
-            f"Release configuration is missing: {configuration_path.name}"
-        )
-
-    root_overrides = {"na2": na2_iso}
     configuration = load_configuration(
         configuration_path,
         workspace,
         builder_root,
         project_paths=paths,
-        root_overrides=root_overrides,
+        root_overrides={"na2": na2_iso},
         release_defaults_path=builder_root / "configurations" / "base.jsonc",
         release_definition_path=builder_root / manifest.configuration,
     )
     return workspace, configuration
 
 
-def required_release_image_ids(
-    configuration: BuildConfiguration,
-) -> tuple[str, ...]:
-    return ("na2",)
-
-
-def validate_release_configuration(configuration_path: Path) -> tuple[str, ...]:
-    """Validate one external configuration without requiring copyrighted ISOs."""
-    workspace = packaged_workspace()
-    marker = load_local_paths(workspace, allow_missing=True).path(
+def _load_without_source(configuration_path: Path) -> tuple[Path, BuildConfiguration]:
+    """Load a release configuration with the packaged manifest standing in for the ISO."""
+    marker = load_local_paths(packaged_workspace(), allow_missing=True).path(
         "builder", "release", "release_manifest.json"
     )
-    _, configuration = load_release_configuration(configuration_path, marker)
+    workspace, configuration = load_release_configuration(configuration_path, marker)
     if not configuration.modules:
         raise RuntimeError("Release configuration has no module invocations")
-    return required_release_image_ids(configuration)
+    return workspace, configuration
+
+
+def validate_release_configuration(configuration_path: Path) -> None:
+    """Validate one external configuration without requiring copyrighted ISOs."""
+    _load_without_source(configuration_path)
 
 
 def validate_packaged_release() -> int:
     """Verify the external configuration and packaged data without source ISOs."""
     manifest = load_release_manifest()
-    configuration_path = application_directory() / manifest.configuration_name
-    workspace = packaged_workspace()
-    marker = load_local_paths(workspace, allow_missing=True).path(
-        "builder", "release", "release_manifest.json"
+    workspace, configuration = _load_without_source(
+        application_directory() / manifest.configuration_name
     )
-    workspace, configuration = load_release_configuration(
-        configuration_path,
-        marker,
-    )
-    if configuration.selection is None:
-        raise RuntimeError("Release configuration has no catalog selection")
     for feature_id in configuration.selection.feature_ids:
         for source in catalog_module.referenced_files(
             configuration.selection,
@@ -93,8 +68,6 @@ def validate_packaged_release() -> int:
                     raise FileNotFoundError(
                         f"Packaged runtime object is missing: {packaged_object}"
                     )
-    if not configuration.modules:
-        raise RuntimeError("Release configuration has no module invocations")
     return len(configuration.modules)
 
 
@@ -105,8 +78,6 @@ def build_release_iso(
     emit: Emit,
 ) -> None:
     """Apply the packaged release configuration without writing runtime logs."""
-    if not building_iso.name.endswith(".building"):
-        raise ValueError("Release staging path must end in .building")
     emit("Loading and verifying the selected configuration...")
     workspace, configuration = load_release_configuration(
         configuration_path,
@@ -120,8 +91,6 @@ def build_release_iso(
         workspace=workspace,
         configuration_log_directory=None,
     )
-    if build.output_iso != building_iso.resolve():
-        raise RuntimeError("Build engine produced an unexpected staging path")
     emit(
         f"Verified {len(build.results)} module invocations in {building_iso.name}."
     )

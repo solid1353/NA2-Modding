@@ -34,7 +34,6 @@ class RuntimeInjectorTests(unittest.TestCase):
                     "boot": binary_engine.Target(
                         target_id="boot",
                         root_id="na2",
-                        role="destination",
                         path=PurePosixPath("SLPS_258.37"),
                         expected_size=len(target_data),
                         expected_sha256=hashlib.sha256(
@@ -68,7 +67,6 @@ class RuntimeInjectorTests(unittest.TestCase):
         target = binary_engine.Target(
             target_id="boot",
             root_id="na2",
-            role="destination",
             path=PurePosixPath("SLPS_258.37"),
             expected_size=64,
             expected_sha256="1" * 64,

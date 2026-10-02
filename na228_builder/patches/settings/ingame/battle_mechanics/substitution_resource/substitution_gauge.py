@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import struct
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP
 from typing import TYPE_CHECKING
 
 from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment, PayloadRelocation
-from ..battle_settings_runtime import battle_mechanic_path
+from ..battle_settings_runtime import BATTLE_MECHANICS_PATH, substitution_default
 
 if TYPE_CHECKING:
     from na228_builder.infrastructure.orchestration.catalog import CatalogSelection
@@ -18,71 +18,24 @@ DEFAULT_DAMAGE_RECOVERY = "on"
 COUNTS_PER_SECOND = Decimal(60)
 STOCK_COUNT = 4
 Q16_ONE = Decimal(65536)
-SUBSTITUTION_MODE_VALUES = {
-    "chakra": 0,
-    "gauge": 1,
-    "free": 2,
-}
 
 
-def _selected_node(selection: CatalogSelection, path: tuple[str, ...]):
-    matches = [node for node in selection.nodes if node.path == path]
-    if len(matches) != 1:
-        raise ValueError(
-            f"Catalog selection has no unique {'.'.join(path)} node"
-        )
-    return matches[0]
-
-
-def _decimal(value: object, label: str) -> Decimal:
-    if isinstance(value, Decimal):
-        parsed = value
-    elif isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise ValueError(f"{label} must be a decimal number")
-    else:
-        try:
-            parsed = Decimal(str(value))
-        except InvalidOperation as exc:
-            raise ValueError(f"{label} must be a finite decimal number") from exc
-    if not parsed.is_finite():
-        raise ValueError(f"{label} must be a finite decimal number")
-    return parsed
-
-
-def _integral_counts(value: Decimal, label: str) -> int:
-    counts = value * COUNTS_PER_SECOND
-    integral = counts.to_integral_value()
-    if counts != integral:
-        raise ValueError(f"{label} must resolve to whole native display counts")
-    return int(integral)
-
-
-def _require_step(value: Decimal, step: Decimal, label: str) -> None:
-    if value % step != 0:
-        raise ValueError(f"{label} must use increments of {step}")
+def _substitution(selection: CatalogSelection) -> dict[str, object]:
+    return selection.node(*BATTLE_MECHANICS_PATH, "substitution_resource").configured_value
 
 
 def substitution_gauge_fragment(
     selection: CatalogSelection,
     *,
     owner: str,
-    symbol: str = "substitution_gauge_config",
 ) -> PayloadFragment:
     """Encode the selected native-30-FPS substitution-gauge configuration."""
 
-    substitution = _selected_node(
-        selection, battle_mechanic_path("substitution_resource")
-    ).configured_value
-    mode = substitution.get("value")
-    if mode not in SUBSTITUTION_MODE_VALUES:
-        raise ValueError(
-            "Substitution-gauge value must be 'chakra', 'gauge', or 'free'"
-        )
     stock_counts, capacity_counts, delay_counts, damage_full_refill_q16, damage_recovery = gauge_config_values(selection)
 
     return PayloadFragment(
         owner=owner,
-        symbol=symbol,
+        symbol="substitution_gauge_config",
         kind="rodata",
         alignment=4,
         payload=struct.pack(
@@ -92,7 +45,7 @@ def substitution_gauge_fragment(
             delay_counts,
             damage_full_refill_q16,
             int(damage_recovery),
-            SUBSTITUTION_MODE_VALUES[mode],
+            substitution_default(selection),
             chakra_minimum_option_default(selection),
             0,
             0,
@@ -105,68 +58,35 @@ def substitution_gauge_fragment(
 
 
 def chakra_minimum_option_default(selection: CatalogSelection) -> int:
-    substitution = _selected_node(selection, battle_mechanic_path("substitution_resource")).configured_value
-    value = substitution.get("chakra", {}).get("minimum_chakra", "match_cost")
+    value = _substitution(selection).get("chakra", {}).get("minimum_chakra", "match_cost")
     if value == "match_cost":
         return 0
-    if (
-        isinstance(value, bool) or not isinstance(value, int)
-        or not 5 <= value <= 100 or value % 5 != 0
-    ):
+    if not isinstance(value, int):
         raise ValueError("Minimum Chakra must be 'match_cost' or 5 through 100 in steps of 5")
     return value // 5
 
 
 def gauge_config_values(selection: CatalogSelection) -> tuple[int, int, int, int, bool]:
-    substitution = _selected_node(selection, battle_mechanic_path("substitution_resource")).configured_value
-    gauge = substitution.get("gauge", {})
-    recovery_delay = _decimal(
-        gauge.get(
-            "recovery_delay_seconds", DEFAULT_RECOVERY_DELAY_SECONDS
-        ),
-        "Substitution-gauge recovery delay",
-    )
-    refill_seconds = _decimal(
-        gauge.get(
-            "refill_seconds_per_stock", DEFAULT_REFILL_SECONDS_PER_STOCK
-        ),
-        "Substitution-gauge refill time",
-    )
-    damage_percent = _decimal(
-        gauge.get(
-            "damage_percent_for_full_refill", DEFAULT_DAMAGE_PERCENT_FOR_FULL_REFILL
-        ),
-        "Substitution-gauge damage for full refill",
-    )
-    damage_recovery = gauge.get(
-        "damage_recovery", DEFAULT_DAMAGE_RECOVERY
-    )
-    if damage_recovery not in ("off", "on"):
-        raise ValueError("Substitution-gauge damage recovery must be 'off' or 'on'")
+    gauge = _substitution(selection).get("gauge", {})
+    recovery_delay = Decimal(str(gauge.get(
+        "recovery_delay_seconds", DEFAULT_RECOVERY_DELAY_SECONDS
+    )))
+    refill_seconds = Decimal(str(gauge.get(
+        "refill_seconds_per_stock", DEFAULT_REFILL_SECONDS_PER_STOCK
+    )))
+    damage_percent = Decimal(str(gauge.get(
+        "damage_percent_for_full_refill", DEFAULT_DAMAGE_PERCENT_FOR_FULL_REFILL
+    )))
+    damage_recovery = gauge.get("damage_recovery", DEFAULT_DAMAGE_RECOVERY)
 
-    if not Decimal(0) <= recovery_delay <= Decimal(60):
-        raise ValueError("Substitution-gauge recovery delay must be from 0 through 60")
-    if not Decimal(0) < refill_seconds <= Decimal(10):
-        raise ValueError("Substitution-gauge refill time must be above 0 through 10")
-    if not Decimal(5) <= damage_percent <= Decimal(400):
-        raise ValueError(
-            "Substitution-gauge damage for full refill must be from 5 through 400"
-        )
-    _require_step(recovery_delay, Decimal("0.25"), "Recovery delay")
-    _require_step(refill_seconds, Decimal("0.05"), "Refill time")
-    _require_step(damage_percent, Decimal(5), "Damage for full refill")
-
-    stock_counts = _integral_counts(refill_seconds, "Refill time")
-    delay_counts = _integral_counts(recovery_delay, "Recovery delay")
+    stock_counts = int(refill_seconds * COUNTS_PER_SECOND)
+    delay_counts = int(recovery_delay * COUNTS_PER_SECOND)
     capacity_counts = stock_counts * STOCK_COUNT
     damage_full_refill_q16 = int(
         (
             damage_percent * Q16_ONE / Decimal(100)
         ).to_integral_value(rounding=ROUND_HALF_UP)
     )
-    if damage_full_refill_q16 <= 0 or damage_full_refill_q16 > 4 * int(Q16_ONE):
-        raise ValueError("Substitution-gauge damage for full refill is outside Q16 range")
-
     return stock_counts, capacity_counts, delay_counts, damage_full_refill_q16, damage_recovery == "on"
 
 

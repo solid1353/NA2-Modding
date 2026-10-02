@@ -9,10 +9,9 @@ param(
 
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot '..\lib\paths.ps1')
-. (Join-Path $PSScriptRoot '..\lib\run_log.ps1')
+. (Join-Path $PSScriptRoot '..\lib\builder_module.ps1')
 . (Join-Path $PSScriptRoot 'build_registry.ps1')
 $paths = Get-Na2Paths
-$pythonRunner = Join-Path ([string]$paths.scripts) 'lib\run_python.ps1'
 $registryPath = Join-Path $paths.logs 'na228\preflight\registry.json'
 $buildRoot = [IO.Path]::GetFullPath([string]$paths.build)
 $incomingRoot = Join-Path $buildRoot '.incoming'
@@ -41,39 +40,6 @@ $configurationLogRelative = [IO.Path]::GetRelativePath(
     $configurationLog
 )
 
-function Invoke-Na2BuilderModule {
-    param(
-        [Parameter(Mandatory)][string]$Module,
-        [Parameter(Mandatory)][string[]]$ArgumentList
-    )
-
-    $output = @(
-        & $pythonRunner -PackageSet builder -Module $Module `
-            -ArgumentList $ArgumentList -NoBytecode 2>&1
-    )
-    return [pscustomobject]@{
-        Output = [string[]]@($output | ForEach-Object { [string]$_ })
-        ExitCode = $LASTEXITCODE
-    }
-}
-
-function Throw-Na2BuilderFailure {
-    param(
-        [Parameter(Mandatory)][psobject]$Execution,
-        [Parameter(Mandatory)][string]$FallbackMessage
-    )
-
-    $configurationFailure = Get-Na2ConfigurationFailure -Output $Execution.Output
-    if ($null -ne $configurationFailure) {
-        $exception = [InvalidOperationException]::new($configurationFailure.Message)
-        $exception.Data['Na2ConfigurationError'] = $true
-        $exception.Data['Na2TechnicalDetails'] = $configurationFailure.TechnicalDetails
-        throw $exception
-    }
-    $Execution.Output | ForEach-Object { Write-Host $_ }
-    throw $FallbackMessage
-}
-
 try {
 [void](New-Item -ItemType Directory -Path $incomingRoot -Force)
 Remove-Na2StaleIncomingImages -IncomingRoot $incomingRoot
@@ -81,7 +47,6 @@ $registryArguments = @{
     Registry = $registryPath
     BuildRoot = $buildRoot
     Repository = $paths.repository
-    PythonRunner = $pythonRunner
     Na2Iso = $paths.files.na2_iso
     Configuration = $configurationRelative
 }
@@ -115,19 +80,10 @@ else {
         if ($PSBoundParameters.ContainsKey('OverridesJson')) {
             $builderArguments += @('--overrides-json', $OverridesJson)
         }
-        Push-Location $paths.repository
-        try {
-            $execution = Invoke-Na2BuilderModule `
-                -Module 'na228_builder.infrastructure.orchestration.build_configuration' `
-                -ArgumentList $builderArguments
-        }
-        finally {
-            Pop-Location
-        }
-        if ($execution.ExitCode -ne 0) {
-            Throw-Na2BuilderFailure -Execution $execution `
-                -FallbackMessage "NA2 $Configuration build failed (exit $($execution.ExitCode))."
-        }
+        $execution = Invoke-Na2BuilderModule -Repository $paths.repository `
+            -Module build_configuration -ArgumentList $builderArguments
+        Assert-Na2BuilderModuleSucceeded -Execution $execution `
+            -FailureMessage "NA2 $Configuration build failed (exit $($execution.ExitCode))."
         $execution.Output | ForEach-Object { Write-Host $_ }
         if (-not (Test-Path -LiteralPath $incomingIso -PathType Leaf)) {
             throw "Verified ISO candidate does not exist: $incomingIso"

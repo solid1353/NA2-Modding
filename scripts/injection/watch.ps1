@@ -1,18 +1,9 @@
 [CmdletBinding()]
 param(
     [string]$SourcePath,
-    [string]$SourceId,
-    [string]$Entry,
     [string]$OverlayPlan,
-    [string]$Output,
-    [string]$Iso,
     [ValidateRange(1, 65535)]
-    [int]$PinePort,
-    [ValidateRange(100, 10000)]
-    [int]$DebounceMilliseconds = 400,
-    [ValidateRange(50, 5000)]
-    [int]$PollMilliseconds = 150,
-    [switch]$BuildOnly
+    [int]$PinePort
 )
 
 $ErrorActionPreference = 'Stop'
@@ -29,31 +20,23 @@ $configurationPath = Join-Path ([string]$paths.builder) (
 )
 $buildScript = Join-Path $PSScriptRoot 'build.py'
 $applyScript = Join-Path $PSScriptRoot 'apply.py'
+$markerPath = Join-Path $PSScriptRoot 'hot_reload_message.c'
 $pineScript = [string]$paths.files.pcsx2_pine_command
-$hotReloadSourceId = 'hot_reload_message'
-$hotReloadEntry = 'project.hot_reload_message'
+$debounceMilliseconds = 400
+$pollMilliseconds = 150
+
+# Resolve the interpreter once; the watcher polls PINE several times a second.
+$python = & (Join-Path ([string]$paths.scripts) 'lib\run_python.ps1') `
+    -PackageSet builder -Command 'import sys; print(sys.executable)'
+if ($LASTEXITCODE -ne 0) {
+    throw 'Could not resolve the builder Python runtime.'
+}
 
 function Resolve-RepositoryPath([string]$Path) {
     if ([IO.Path]::IsPathRooted($Path)) {
         return [IO.Path]::GetFullPath($Path)
     }
     return [IO.Path]::GetFullPath((Join-Path $repository $Path))
-}
-
-function Get-PatchPayloadEntry {
-    param([Parameter(Mandatory = $true)][Collections.IDictionary]$Patches)
-
-    foreach ($patchId in $Patches.Keys) {
-        $patch = $Patches[$patchId]
-        if ($patch.Contains('payload')) {
-            foreach ($payloadId in $patch['payload'].Keys) {
-                [pscustomobject]@{
-                    Id = [string]$payloadId
-                    Value = $patch['payload'][$payloadId]
-                }
-            }
-        }
-    }
 }
 
 function Get-ConfiguredDevelopmentPinePort {
@@ -85,17 +68,17 @@ function Wait-InjectionTarget {
     $residentMagic = '4D576F33'
     $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
     do {
-        $state = & python -B $pineScript --port $Port status 2>$null
+        $state = & $python -B $pineScript --port $Port status 2>$null
         if (
             $LASTEXITCODE -eq 0 -and
             ([string]$state).Trim() -in @('running', 'paused')
         ) {
-            $hook = & python -B $pineScript `
+            $hook = & $python -B $pineScript `
                 --port $Port `
                 read 0x001D0578 20 `
                 2>$null
             $hookExitCode = $LASTEXITCODE
-            $resident = & python -B $pineScript `
+            $resident = & $python -B $pineScript `
                 --port $Port `
                 read 0x008F3D00 4 `
                 2>$null
@@ -115,7 +98,7 @@ function Wait-InjectionTarget {
     throw "Development PCSX2 did not load the resident payload and root injection target on PINE port $Port within $TimeoutSeconds seconds."
 }
 
-$resolvedOverlayPlan = $null
+$watchPaths = @($patchesPath, $configurationPath)
 if ($OverlayPlan) {
     $resolvedOverlayPlan = Resolve-RepositoryPath $OverlayPlan
     if (-not (Test-Path -LiteralPath $resolvedOverlayPlan -PathType Leaf)) {
@@ -123,242 +106,63 @@ if ($OverlayPlan) {
     }
     $plan = Get-Content -Raw -LiteralPath $resolvedOverlayPlan |
         ConvertFrom-Json
-    if (-not $SourceId) {
-        $SourceId = [string]$plan.source_id
-    }
-    if (-not $Entry) {
-        $Entry = [string]$plan.entry_symbols[0].symbol
-    }
+    $sourceId = [string]$plan.source_id
+    $entry = [string]$plan.entry_symbols[0].symbol
+    $outputName = $sourceId
+    $selection = "$sourceId -> $entry"
+    $selectionArguments = @(
+        '--source-id', $sourceId,
+        '--entry', $entry,
+        '--overlay-plan', $resolvedOverlayPlan
+    )
+    # Every catalog EE source lives below the watched patches folder.
+    $watchPaths += @($markerPath, $resolvedOverlayPlan)
 }
-
-$directScope = -not $resolvedOverlayPlan -and -not $SourceId -and -not $Entry
-if ($directScope) {
-    if (-not $SourcePath) {
-        $SourcePath = 'na228_builder\patches'
-    }
+else {
     $resolvedSourcePath = Resolve-RepositoryPath $SourcePath
-    $sourceItem = Get-Item -LiteralPath $resolvedSourcePath -Force `
-        -ErrorAction SilentlyContinue
-    if (-not $sourceItem) {
+    if (-not (Test-Path -LiteralPath $resolvedSourcePath)) {
         throw "Source path was not found: $resolvedSourcePath"
     }
-    $sourceRoots = @(
-        [IO.Path]::GetFullPath($patchesPath),
-        [IO.Path]::GetFullPath((Join-Path $repository 'scripts\injection'))
-    )
-    $insideSourceRoot = $false
-    foreach ($sourceRoot in $sourceRoots) {
-        $sourcePrefix = $sourceRoot.TrimEnd(
-            [IO.Path]::DirectorySeparatorChar,
-            [IO.Path]::AltDirectorySeparatorChar
-        ) + [IO.Path]::DirectorySeparatorChar
-        if (
-            $resolvedSourcePath.Equals(
-                $sourceRoot,
-                [StringComparison]::OrdinalIgnoreCase
-            ) -or
-            $resolvedSourcePath.StartsWith(
-                $sourcePrefix,
-                [StringComparison]::OrdinalIgnoreCase
-            )
-        ) {
-            $insideSourceRoot = $true
-            break
+    $sourceRoots = @($patchesPath, $PSScriptRoot)
+    if (-not @(
+        $sourceRoots | Where-Object {
+            Test-Na2PathWithin -Path $resolvedSourcePath -Root $_
         }
-    }
-    if (-not $insideSourceRoot) {
+    ).Count) {
         throw "Source path must be inside $($sourceRoots -join ' or ')"
     }
     if (
-        -not $sourceItem.PSIsContainer -and
+        (Test-Path -LiteralPath $resolvedSourcePath -PathType Leaf) -and
         [IO.Path]::GetExtension($resolvedSourcePath) -cne '.c' -and
         [IO.Path]::GetExtension($resolvedSourcePath) -cne '.S'
     ) {
         throw "Source path must be an EE .c/.S file or folder: $resolvedSourcePath"
     }
+    $outputName = [IO.Path]::GetFileNameWithoutExtension($resolvedSourcePath)
+    $selection = $resolvedSourcePath
+    $selectionArguments = @('--source-path', $resolvedSourcePath)
+    $watchPaths += $resolvedSourcePath
+    if (-not (Test-Na2PathWithin -Path $markerPath -Root $resolvedSourcePath)) {
+        $watchPaths += $markerPath
+    }
 }
-else {
-    if (-not $Entry) {
-        throw 'Entry is required when OverlayPlan does not declare one.'
-    }
-    if ($SourceId -ceq $hotReloadSourceId) {
-        if ($Entry -cne $hotReloadEntry) {
-            throw "Source '$hotReloadSourceId' requires entry '$hotReloadEntry'."
-        }
-        $canonicalSource = Join-Path $repository 'scripts\injection\hot_reload_message.c'
-    }
-    else {
-        $patches = [ordered]@{}
-        $patchFiles = @(
-            Get-ChildItem -LiteralPath $patchesPath -Directory |
-                ForEach-Object {
-                    $patchFile = Join-Path $_.FullName "$($_.Name).json"
-                    if (Test-Path -LiteralPath $patchFile -PathType Leaf) {
-                        Get-Item -LiteralPath $patchFile
-                    }
-                }
-        )
-        foreach ($patchFile in $patchFiles) {
-            $definitions = Get-Content -Raw -LiteralPath $patchFile.FullName |
-                ConvertFrom-Json -AsHashtable
-            foreach ($patchId in $definitions.Keys) {
-                if ($patches.Contains($patchId)) {
-                    throw "Duplicate patch definition: $patchId"
-                }
-                $patches[$patchId] = $definitions[$patchId]
-            }
-        }
-        $payloadEntries = @(
-            Get-PatchPayloadEntry -Patches $patches
-        )
-        $sourceRows = @(
-            $payloadEntries |
-                Where-Object {
-                    $_.Value['kind'] -ceq 'c' -or
-                    $_.Value['kind'] -ceq 'asm'
-                }
-        )
-        if (-not $resolvedOverlayPlan) {
-            $entryRows = [Collections.Generic.List[object]]::new()
-            foreach ($sourceRow in $sourceRows) {
-                $fragments = $sourceRow.Value['fragments']
-                if ($fragments.Contains($Entry)) {
-                    $fragment = $fragments[$Entry]
-                    $entrySourceId = if ($fragment.Contains('source')) {
-                        [string]$fragment['source']
-                    }
-                    else {
-                        $sourceRow.Id
-                    }
-                    $entryRows.Add([pscustomobject]@{
-                        source_id = $entrySourceId
-                        entry_symbol = $Entry
-                    })
-                }
-            }
-            foreach ($payloadEntry in $payloadEntries) {
-                if (
-                    $payloadEntry.Id -ceq $Entry -and
-                    $payloadEntry.Value.Contains('abi') -and
-                    $payloadEntry.Value.Contains('source')
-                ) {
-                    $entryRows.Add([pscustomobject]@{
-                        source_id = [string]$payloadEntry.Value['source']
-                        entry_symbol = $Entry
-                    })
-                }
-            }
-            if ($entryRows.Count -ne 1) {
-                throw "Entry '$Entry' must match exactly one catalog ABI declaration."
-            }
-            if (-not $SourceId) {
-                $SourceId = [string]$entryRows[0].source_id
-            }
-            if ($SourceId -cne [string]$entryRows[0].source_id) {
-                throw "Entry '$Entry' does not belong to source '$SourceId'."
-            }
-        }
-
-        $selectedSources = @(
-            $sourceRows | Where-Object { $_.Id -ceq $SourceId }
-        )
-        if ($selectedSources.Count -ne 1) {
-            throw "Source '$SourceId' must match exactly one canonical EE source."
-        }
-        $sourceDeclaration = [string]$selectedSources[0].Value['path']
-        $canonicalSource = [IO.Path]::GetFullPath(
-            (Join-Path $repository $sourceDeclaration)
-        )
-    }
-    if (-not $SourcePath) {
-        $SourcePath = $canonicalSource
-    }
-    $resolvedSourcePath = Resolve-RepositoryPath $SourcePath
-    $sourceItem = Get-Item -LiteralPath $resolvedSourcePath -Force `
-        -ErrorAction SilentlyContinue
-    if (-not $sourceItem) {
-        throw "Source path was not found: $resolvedSourcePath"
-    }
-    if ($sourceItem.PSIsContainer) {
-        $prefix = $resolvedSourcePath.TrimEnd(
-            [IO.Path]::DirectorySeparatorChar,
-            [IO.Path]::AltDirectorySeparatorChar
-        ) + [IO.Path]::DirectorySeparatorChar
-        if (-not $canonicalSource.StartsWith(
-            $prefix,
-            [StringComparison]::OrdinalIgnoreCase
-        )) {
-            throw "Source path does not contain $canonicalSource"
-        }
-    }
-    elseif (-not $resolvedSourcePath.Equals(
-        $canonicalSource,
-        [StringComparison]::OrdinalIgnoreCase
-    )) {
-        throw "Source path is not the selected canonical source: $canonicalSource"
-    }
+$resolvedOutput = Join-Path ([string]$paths.build) "injection\$outputName"
+# Copy of the last manifest this session applied; its writes may already be live.
+$appliedManifest = Join-Path $resolvedOutput 'applied.json'
+if (Test-Path -LiteralPath $appliedManifest) {
+    Remove-Item -LiteralPath $appliedManifest -Force
 }
 
-$outputName = if ($directScope) {
-    if ($resolvedSourcePath.Equals(
-        [IO.Path]::GetFullPath((Join-Path $repository 'src')),
-        [StringComparison]::OrdinalIgnoreCase
-    )) {
-        'all'
-    }
-    else {
-        [IO.Path]::GetFileNameWithoutExtension($resolvedSourcePath)
-    }
+if ($PinePort -eq 0) {
+    $PinePort = Get-ConfiguredDevelopmentPinePort
 }
-else {
-    $SourceId
-}
-$resolvedOutput = if ($Output) {
-    Resolve-RepositoryPath $Output
-}
-else {
-    Join-Path ([string]$paths.build) "injection\$outputName"
-}
-if (-not $BuildOnly) {
-    if ($PinePort -eq 0) {
-        $PinePort = Get-ConfiguredDevelopmentPinePort
-    }
-    Write-Host (
-        "[injection] Wait up to 60 seconds for the injection target on PINE port $PinePort"
-    ) -ForegroundColor Cyan
-    Wait-InjectionTarget -Port $PinePort
-    Write-Host (
-        "[injection] Watch and hot-reload through PINE port $PinePort"
-    ) -ForegroundColor Cyan
-}
-
-$watchPaths = @(
-    $resolvedSourcePath,
-    $patchesPath,
-    $configurationPath
-)
-$markerPath = Join-Path $repository 'scripts\injection\hot_reload_message.c'
-if (
-    -not $resolvedSourcePath.Equals(
-        $markerPath,
-        [StringComparison]::OrdinalIgnoreCase
-    ) -and
-    (
-        -not $sourceItem.PSIsContainer -or
-        -not $markerPath.StartsWith(
-            $resolvedSourcePath.TrimEnd(
-                [IO.Path]::DirectorySeparatorChar,
-                [IO.Path]::AltDirectorySeparatorChar
-            ) + [IO.Path]::DirectorySeparatorChar,
-            [StringComparison]::OrdinalIgnoreCase
-        )
-    )
-) {
-    $watchPaths += $markerPath
-}
-if ($resolvedOverlayPlan) {
-    $watchPaths += $resolvedOverlayPlan
-}
+Write-Host (
+    "[injection] Wait up to 60 seconds for the injection target on PINE port $PinePort"
+) -ForegroundColor Cyan
+Wait-InjectionTarget -Port $PinePort
+Write-Host (
+    "[injection] Watch and hot-reload through PINE port $PinePort"
+) -ForegroundColor Cyan
 
 function Get-FileSignature([string]$Path) {
     if (Test-Path -LiteralPath $Path -PathType Container) {
@@ -399,52 +203,15 @@ function Get-WatchSignature {
 }
 
 function Invoke-InjectionBuild([switch]$ExitOnFailure) {
-    $buildArguments = @(
-        '-B',
-        $buildScript,
-        '--output',
-        $resolvedOutput
-    )
-    if ($directScope) {
-        $buildArguments += @('--source-path', $resolvedSourcePath)
-    }
-    else {
-        $buildArguments += @(
-            '--source-id',
-            $SourceId,
-            '--entry',
-            $Entry
-        )
-    }
-    if ($resolvedOverlayPlan) {
-        $buildArguments += @('--overlay-plan', $resolvedOverlayPlan)
-    }
-    $buildArguments += @(
-        '--hot-reload-label',
-        ('HOT RELOAD ' + (Get-Date -Format 'HH:mm:ss'))
-    )
-    if ($Iso) {
-        $buildArguments += @('--iso', (Resolve-RepositoryPath $Iso))
-    }
-
+    $suffix = if ($ExitOnFailure) { '' } else { ' Watching for the next save.' }
     $timestamp = Get-Date -Format 'HH:mm:ss'
-    $selection = if ($directScope) {
-        $resolvedSourcePath
-    }
-    else {
-        "$SourceId -> $Entry"
-    }
     Write-Host "[injection] $timestamp building $selection" `
         -ForegroundColor Cyan
-    & python @buildArguments
+    & $python -B $buildScript @selectionArguments `
+        --output $resolvedOutput `
+        --hot-reload-label "HOT RELOAD $timestamp"
     $buildExitCode = $LASTEXITCODE
     if ($buildExitCode -ne 0) {
-        $suffix = if ($ExitOnFailure) {
-            ''
-        }
-        else {
-            ' Watching for the next save.'
-        }
         Write-Host "[injection] Build failed (exit $buildExitCode).$suffix" `
             -ForegroundColor Red
         if ($ExitOnFailure) {
@@ -452,51 +219,47 @@ function Invoke-InjectionBuild([switch]$ExitOnFailure) {
         }
         return
     }
-    if (-not $BuildOnly) {
-        & python -B $applyScript `
-            --input $resolvedOutput `
-            --port $PinePort `
-            --force-writes
-        $applyExitCode = $LASTEXITCODE
-        if ($applyExitCode -ne 0) {
-            $suffix = if ($ExitOnFailure) {
-                ''
-            }
-            else {
-                ' Watching for the next save.'
-            }
-            Write-Host "[injection] Apply failed (exit $applyExitCode).$suffix" `
-                -ForegroundColor Red
-            if ($ExitOnFailure) {
-                exit $applyExitCode
-            }
-            return
-        }
+    $applyArguments = @('--input', $resolvedOutput, '--port', $PinePort)
+    if (Test-Path -LiteralPath $appliedManifest -PathType Leaf) {
+        $applyArguments += @('--previous', $appliedManifest)
     }
+    & $python -B $applyScript @applyArguments
+    $applyExitCode = $LASTEXITCODE
+    if ($applyExitCode -ne 0) {
+        Write-Host "[injection] Apply failed (exit $applyExitCode).$suffix" `
+            -ForegroundColor Red
+        if ($ExitOnFailure) {
+            exit $applyExitCode
+        }
+        return
+    }
+    Copy-Item -LiteralPath (Join-Path $resolvedOutput 'manifest.json') `
+        -Destination $appliedManifest -Force
     Write-Host '[injection] Build/apply complete; watching.' `
         -ForegroundColor Green
 }
 
 Write-Host '[injection] User watcher started.'
-Write-Host "[injection] Source: $resolvedSourcePath"
-if (-not $directScope) {
-    Write-Host "[injection] Entry: $Entry"
-}
-if ($resolvedOverlayPlan) {
+if ($OverlayPlan) {
+    Write-Host "[injection] Source: $sourceId"
+    Write-Host "[injection] Entry: $entry"
     Write-Host "[injection] Overlay plan: $resolvedOverlayPlan"
+}
+else {
+    Write-Host "[injection] Source: $resolvedSourcePath"
 }
 Write-Host "[injection] Output: $resolvedOutput"
 Write-Host '[injection] Press Ctrl+C to stop.'
 
-$observedSignature = Get-WatchSignature
-Invoke-InjectionBuild -ExitOnFailure
-$pendingSignature = $null
-$lastChange = [DateTime]::MinValue
+try {
+    $observedSignature = Get-WatchSignature
+    Invoke-InjectionBuild -ExitOnFailure
+    $pendingSignature = $null
+    $lastChange = [DateTime]::MinValue
 
-while ($true) {
-    Start-Sleep -Milliseconds $PollMilliseconds
-    if (-not $BuildOnly) {
-        $vmState = & python -B $pineScript --port $PinePort status 2>$null
+    while ($true) {
+        Start-Sleep -Milliseconds $pollMilliseconds
+        $vmState = & $python -B $pineScript --port $PinePort status 2>$null
         if (
             $LASTEXITCODE -ne 0 -or
             ([string]$vmState).Trim() -ceq 'shutdown'
@@ -506,30 +269,35 @@ while ($true) {
             ) -ForegroundColor Yellow
             exit 0
         }
-    }
-    $nextSignature = Get-WatchSignature
-    if ($nextSignature -cne $observedSignature) {
-        $observedSignature = $nextSignature
-        $pendingSignature = $nextSignature
-        $lastChange = [DateTime]::UtcNow
-        continue
-    }
-    if ($null -eq $pendingSignature) {
-        continue
-    }
-    if (([DateTime]::UtcNow - $lastChange).TotalMilliseconds -lt (
-        $DebounceMilliseconds
-    )) {
-        continue
-    }
+        $nextSignature = Get-WatchSignature
+        if ($nextSignature -cne $observedSignature) {
+            $observedSignature = $nextSignature
+            $pendingSignature = $nextSignature
+            $lastChange = [DateTime]::UtcNow
+            continue
+        }
+        if ($null -eq $pendingSignature) {
+            continue
+        }
+        if (([DateTime]::UtcNow - $lastChange).TotalMilliseconds -lt (
+            $debounceMilliseconds
+        )) {
+            continue
+        }
 
-    $buildSignature = $pendingSignature
-    $pendingSignature = $null
-    Invoke-InjectionBuild
-    $afterBuildSignature = Get-WatchSignature
-    $observedSignature = $afterBuildSignature
-    if ($afterBuildSignature -cne $buildSignature) {
-        $pendingSignature = $afterBuildSignature
-        $lastChange = [DateTime]::UtcNow
+        $buildSignature = $pendingSignature
+        $pendingSignature = $null
+        Invoke-InjectionBuild
+        $afterBuildSignature = Get-WatchSignature
+        $observedSignature = $afterBuildSignature
+        if ($afterBuildSignature -cne $buildSignature) {
+            $pendingSignature = $afterBuildSignature
+            $lastChange = [DateTime]::UtcNow
+        }
+    }
+}
+finally {
+    if (Test-Path -LiteralPath $appliedManifest) {
+        Remove-Item -LiteralPath $appliedManifest -Force
     }
 }

@@ -1,18 +1,17 @@
 from __future__ import annotations
 
-import csv
-import hashlib
-import re
 import struct
 from dataclasses import dataclass
 from pathlib import Path
 
+from ...common import SYMBOL_PATTERN, parse_int, read_tsv, sha256_hex
 from .operations import (
     FRAGMENT_KINDS,
     LinkedSymbol,
     PayloadFragment,
     ResidentPayloadBuild,
     encode_symbol_reference,
+    mips_jump,
 )
 
 
@@ -35,7 +34,6 @@ CONFIG_KEYS = {
     "development_injection_base",
     "development_injection_end",
 }
-SYMBOL_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
 KIND_ORDER = {"code": 0, "rodata": 1, "data": 2}
 
 
@@ -59,31 +57,12 @@ class ResidentPayloadConfig:
     development_injection_end: int
 
 
-def _parse_int(value: str, label: str) -> int:
-    try:
-        result = int(value, 0)
-    except ValueError as exc:
-        raise ValueError(f"{label}: invalid integer {value!r}") from exc
-    if result < 0:
-        raise ValueError(f"{label}: negative integer")
-    return result
-
-
 def _align(value: int, alignment: int) -> int:
     return (value + alignment - 1) & -alignment
 
 
 def load_config(path: Path | None = None) -> ResidentPayloadConfig:
-    path = path or Path(__file__).with_name("config.tsv")
-    with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        reader = csv.DictReader(handle, delimiter="\t")
-        if reader.fieldnames != CONFIG_FIELDS:
-            raise ValueError(f"{path}: expected columns " + "\t".join(CONFIG_FIELDS))
-        rows = [
-            {key: (value or "").strip() for key, value in row.items()}
-            for row in reader
-            if any((value or "").strip() for value in row.values())
-        ]
+    rows = read_tsv(path or Path(__file__).with_name("config.tsv"), CONFIG_FIELDS)
     values = {row["key"]: row["value"] for row in rows}
     if len(values) != len(rows):
         raise ValueError("resident-payload config contains duplicate keys")
@@ -107,7 +86,7 @@ def load_config(path: Path | None = None) -> ResidentPayloadConfig:
     if len(output_name.encode("ascii") + b"\0") != 8:
         raise ValueError("resident-payload filename must encode to seven ASCII bytes")
     parsed = {
-        key: _parse_int(values[key], key)
+        key: parse_int(values[key], key)
         for key in CONFIG_KEYS
         if key != "output_path"
     }
@@ -170,7 +149,7 @@ def _entry_payload(init_symbols: list[str], addresses: dict[str, int]) -> bytes:
         return struct.pack("<II", 0x03E00008, 0)
     words = [0x27BDFFF0, 0xFFBF0000]
     for symbol in init_symbols:
-        words.extend((int.from_bytes(encode_symbol_reference("jal26", addresses[symbol]), "little"), 0))
+        words.extend((mips_jump(addresses[symbol], link=True), 0))
     words.extend((0xDFBF0000, 0x27BD0010, 0x03E00008, 0, 0))
     return struct.pack("<" + "I" * len(words), *words)
 
@@ -210,7 +189,6 @@ def build_resident_payload(
             f"0x{used_end:X} > 0x{config.reservation_end:X}"
         )
     output_size = config.reservation_end - config.load_base
-    memory_end = config.reservation_end
 
     addresses = {
         symbol: config.load_base + offset for symbol, offset in offsets.items()
@@ -227,8 +205,8 @@ def build_resident_payload(
         config.entry_offset,
         output_size - 0x50,
         0,
-        memory_end,
-        memory_end,
+        config.reservation_end,
+        config.reservation_end,
     )
     result[0x20:0x28] = output_name.lower().encode("ascii") + b"\0"
     entry = _entry_payload(init_symbols, addresses)
@@ -251,7 +229,6 @@ def build_resident_payload(
             end = relocation.offset + len(replacement)
             payload[relocation.offset:end] = replacement
         result[offset:offset + len(payload)] = payload
-        digest = hashlib.sha256(bytes(payload)).hexdigest().upper()
         symbol = LinkedSymbol(
             owner=fragment.owner,
             symbol=fragment.symbol,
@@ -259,7 +236,7 @@ def build_resident_payload(
             file_offset=offset,
             runtime_address=addresses[fragment.symbol],
             size=len(payload),
-            sha256=digest,
+            sha256=sha256_hex(payload),
         )
         linked[fragment.symbol] = symbol
         map_rows.append(
@@ -279,10 +256,10 @@ def build_resident_payload(
     summary: dict[str, object] = {
         "output_path": config.output_path,
         "size": len(payload),
-        "sha256": hashlib.sha256(payload).hexdigest().upper(),
+        "sha256": sha256_hex(payload),
         "load_base": f"0x{config.load_base:X}",
         "entrypoint": f"0x{config.load_base + config.entry_offset:X}",
-        "memory_end": f"0x{memory_end:X}",
+        "memory_end": f"0x{config.reservation_end:X}",
         "used_end": f"0x{used_end:X}",
         "used_size": used_size,
         "reservation_end": f"0x{config.reservation_end:X}",
@@ -299,7 +276,6 @@ def build_resident_payload(
         payload=payload,
         load_base=config.load_base,
         entrypoint=config.load_base + config.entry_offset,
-        memory_end=memory_end,
         used_end=used_end,
         symbols=linked,
         map_rows=tuple(map_rows),

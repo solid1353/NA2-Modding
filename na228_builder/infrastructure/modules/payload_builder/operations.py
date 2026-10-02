@@ -71,11 +71,17 @@ class ResidentPayloadBuild:
     payload: bytes
     load_base: int
     entrypoint: int
-    memory_end: int
     used_end: int
     symbols: dict[str, LinkedSymbol]
     map_rows: tuple[dict[str, object], ...]
     summary: dict[str, object]
+
+
+def mips_jump(address: int, *, link: bool) -> int:
+    """Encode a MIPS j or jal instruction word."""
+    if address & 3 or not 0 <= address < 0x10000000:
+        raise ValueError(f"MIPS jump target is not encodable: 0x{address:X}")
+    return (0x0C000000 if link else 0x08000000) | (address >> 2)
 
 
 def encode_symbol_reference(kind: str, address: int) -> bytes:
@@ -89,7 +95,4 @@ def encode_symbol_reference(kind: str, address: int) -> bytes:
         return ((address + 0x8000) >> 16).to_bytes(2, "little")
     if kind == "lo16":
         return (address & 0xFFFF).to_bytes(2, "little")
-    if address & 3 or address >= 0x10000000:
-        raise ValueError(f"MIPS jump target is not encodable: 0x{address:X}")
-    opcode = 0x08000000 if kind == "j26" else 0x0C000000
-    return (opcode | (address >> 2)).to_bytes(4, "little")
+    return mips_jump(address, link=kind == "jal26").to_bytes(4, "little")

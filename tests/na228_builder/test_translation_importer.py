@@ -1,36 +1,11 @@
 from __future__ import annotations
 
-import csv
-import tempfile
 import unittest
-from pathlib import Path
-from types import SimpleNamespace
-from unittest import mock
 
 from na228_builder.infrastructure.modules.translation_importer import engine
 
 
 class TranslationImporterTests(unittest.TestCase):
-    def test_iso_source_resolves_exact_and_unique_basename_members(self) -> None:
-        exact = SimpleNamespace(path="PRG/BTL.BIN", is_dir=False)
-        basename = SimpleNamespace(path="OTHER/ETC.BIN", is_dir=False)
-        image = SimpleNamespace(
-            by_path={"PRG/BTL.BIN": exact, "OTHER/ETC.BIN": basename},
-            read_file=mock.Mock(
-                side_effect=lambda record: record.path.encode("ascii")
-            ),
-        )
-        with mock.patch.object(engine, "Iso9660", return_value=image):
-            source = engine.IsoSource(Path("source.iso"))
-        self.assertEqual(
-            source.read(("PRG/BTL.BIN",), "BTL"),
-            b"PRG/BTL.BIN",
-        )
-        self.assertEqual(
-            source.read(("ETC.BIN",), "ETC"),
-            b"OTHER/ETC.BIN",
-        )
-
     def test_rejects_unresolved_mode(self) -> None:
         row = {
             "id": "MTEST",
@@ -155,7 +130,7 @@ class TranslationImporterTests(unittest.TestCase):
             ("e2e:collection/characters", "e2e:collection/figures"),
         )
         self.assertEqual(
-            engine.count_display_bases(parsed["text"], {"SLPS"}),
+            engine.count_display_bases(parsed["text"]),
             {
                 "e2e:collection/characters": 1,
                 "e2e:collection/figures": 1,
@@ -339,7 +314,7 @@ class TranslationImporterTests(unittest.TestCase):
             "Press <iconCROSS> to select.",
         )
 
-    def test_nun5_quote_materialization_preserves_raw_donor_evidence(self) -> None:
+    def test_nun5_quote_materialization_resolves_mapping_text(self) -> None:
         mappings = [
             {
                 "id": "MTEST",
@@ -354,18 +329,11 @@ class TranslationImporterTests(unittest.TestCase):
                 "arguments": {},
             }
         ]
-        resolved, _, _, donors, materialized = (
-            engine.resolve_text_materializations(mappings, {"SLPS"})
-        )
-        self.assertEqual(
-            donors["MTEST"],
-            "Ninja Art: Beast Scroll Replicas @Wild Dog@ ",
-        )
+        resolved, _ = engine.resolve_text_materializations(mappings)
         self.assertEqual(
             resolved["MTEST"],
             'Ninja Art: Beast Scroll Replicas "Wild Dog" ',
         )
-        self.assertEqual(materialized["MTEST"], resolved["MTEST"])
 
     def test_fullwidth_ascii_is_normalized_in_donor_reference_arguments(
         self,
@@ -445,20 +413,12 @@ class TranslationImporterTests(unittest.TestCase):
                 "arguments": {},
             }
         ]
-        resolved, sequences, sources, donors, materialized = (
-            engine.resolve_text_materializations(
-                mappings,
-                {"SLPS"},
-            )
-        )
+        resolved, sequences = engine.resolve_text_materializations(mappings)
         self.assertEqual(sequences, {})
-        self.assertEqual(sources["MTEST"], "clean Japanese title")
         self.assertEqual(
-            donors["MTEST"],
+            resolved["MTEST"],
             "Create Naruto Shippuden: Ultimate Ninja 5 data?",
         )
-        self.assertEqual(resolved["MTEST"], donors["MTEST"])
-        self.assertEqual(materialized["MTEST"], resolved["MTEST"])
 
     def test_split_br_is_a_view_of_the_complete_replacement(self) -> None:
         row = {
@@ -483,34 +443,6 @@ class TranslationImporterTests(unittest.TestCase):
         }
         with self.assertRaisesRegex(ValueError, "outside 2 parts"):
             engine.resolve_replacement_text(row, "parent")
-
-    def test_empty_import_log_requires_explicit_replacement_mode_opt_in(
-        self,
-    ) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
-            path = Path(temporary) / "translation_imports.tsv"
-            with self.assertRaisesRegex(
-                ValueError,
-                "No translation imports were generated",
-            ):
-                engine.write_import_tsv(path, [])
-            engine.write_import_tsv(path, [], allow_empty=True)
-            with path.open("r", encoding="utf-8-sig", newline="") as handle:
-                self.assertEqual(
-                    next(csv.reader(handle, delimiter="\t")),
-                    [
-                        "import_id",
-                        "group_id",
-                        "path",
-                        "offset",
-                        "expected_hex",
-                        "replacement_hex",
-                        "source_text",
-                        "replacement_text",
-                        "source_mapping_id",
-                        "reason",
-                    ],
-                )
 
 
 if __name__ == "__main__":

@@ -18,6 +18,7 @@ from na228_builder.infrastructure.orchestration.build_preflight import (
 )
 from na228_builder.infrastructure.modules.binary_patcher import engine as binary_patcher
 from scripts.lib.paths import load_local_paths
+from tests.na228_builder._fixtures import write_workshop
 
 
 DEPENDENCIES = {
@@ -32,9 +33,14 @@ class BuildPreflightTests(unittest.TestCase):
     def create_workspace(self, root: Path) -> dict[str, Path]:
         workspace = root / "repository"
         workspace.mkdir()
+        write_workshop(
+            root / "workshop",
+            {"NA2": {"serial": "SLPS-25837", "crc": "C0659AD1"}},
+        )
         (workspace / "paths.json").write_text(
             json.dumps(
                 {
+                    "imports": {"workshop": "../workshop/paths.json"},
                     "existence_deferred_roots": ["cache"],
                     "roots": {
                         "builder": "na228_builder",
@@ -46,10 +52,7 @@ class BuildPreflightTests(unittest.TestCase):
                         "pcsx2_input_profiles": "@pcsx2_files/input_profiles",
                         "pcsx2_memory_cards": "@pcsx2_files/memory_cards",
                     },
-                    "files": {
-                        "project_settings": "project.json",
-                        "source_catalog": "games.json",
-                    },
+                    "files": {"project_settings": "project.json"},
                 }
             ),
             encoding="utf-8",
@@ -120,19 +123,10 @@ class BuildPreflightTests(unittest.TestCase):
             "game_settings",
             "input_profiles",
             "memory_cards",
+            "games/NA2",
         ):
             (shared / name).mkdir(parents=True)
         project_paths.path("build").mkdir()
-        (workspace / "games.json").write_text(
-            json.dumps(
-                {
-                    "sources": {
-                        "NA2": {"serial": "SLPS-25837", "crc": "C0659AD1"},
-                    },
-                }
-            ),
-            encoding="utf-8",
-        )
         (builder / "release").mkdir()
         (builder / "release" / "release_manifest.json").write_text(
             json.dumps({"title": "Test Product"}),
@@ -358,7 +352,7 @@ class BuildPreflightTests(unittest.TestCase):
             )
             targets.write_text(
                 targets.read_text(encoding="utf-8")
-                + "boot\tna2\tdestination\tSLPS_258.37\t16\t"
+                + "boot\tna2\tSLPS_258.37\t16\t"
                 + "0" * 64
                 + "\n",
                 encoding="utf-8",

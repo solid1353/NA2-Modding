@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from ..modules.image_assembler.iso9660 import Iso9660, IsoRecord, SECTOR
 
 
-DEFAULT_ROFS_PASSWORD = "cc2fuku"
+ROFS_PASSWORD = "cc2fuku"
 _ROFS_PRIME_START = 16411
 _ROFS_PRIME_COUNT = 1024
 _ROFS_TOC_ENCRYPTED = 0x10
@@ -80,13 +79,13 @@ def _compile_scramble(spec: str) -> tuple[tuple[str, int | None, int], ...]:
 _SCRAMBLES = tuple(_compile_scramble(spec) for spec in _SCRAMBLE_SPECS)
 
 
-def _hash_values(data: bytes, primes: tuple[int, ...] = _ROFS_PRIMES) -> tuple[int, int, int]:
+def _hash_values(data: bytes) -> tuple[int, int, int]:
     values = []
     for initial in (18973, 21503, 24001):
         value = initial
         for item in data:
-            product = primes[(item + 128) & 0xFF] * value
-            value = primes[product & 0x3FF]
+            product = _ROFS_PRIMES[(item + 128) & 0xFF] * value
+            value = _ROFS_PRIMES[product & 0x3FF]
         values.append(value)
     return values[0], values[1], values[2]
 
@@ -150,14 +149,18 @@ def _crypt_sector(data: bytes, logical_sector: int, key: bytes) -> bytes:
     return bytes(result)
 
 
-class CvmIso:
+_ROFS_KEY = _rofs_key(ROFS_PASSWORD)
+
+
+class CvmIso(Iso9660):
     """Read the ISO9660 image stored in a CVM/ROFS container without extraction.
 
     ``path`` may name a standalone CVM or a larger image containing one. In the
     latter case, ``cvm_offset`` and ``cvm_size`` bound every read to that member.
     The public ISO view matches the maintained splitter: encrypted volume and
     directory sectors are decrypted, while ordinary member payloads remain
-    byte-for-byte views into the container.
+    byte-for-byte views into the container. Record extents include the
+    extended-attribute length, and ``file_size`` bounds records to the inner ISO.
     """
 
     def __init__(
@@ -166,7 +169,6 @@ class CvmIso:
         *,
         cvm_offset: int = 0,
         cvm_size: int | None = None,
-        password: str = DEFAULT_ROFS_PASSWORD,
     ) -> None:
         self.path = Path(path)
         if not self.path.is_file():
@@ -185,32 +187,29 @@ class CvmIso:
 
         self.cvm_offset = cvm_offset
         self.cvm_size = cvm_size
-        self.password = password
-        self.key = _rofs_key(password)
-        self.records: list[IsoRecord] = []
-        self.by_path: dict[str, IsoRecord] = {}
         self.end_toc_sector = 0
 
         chunk = self._read_cvm_bytes(0, 12, "CVMH chunk header")
         if chunk[:4] != b"CVMH":
             raise CvmError("CVMH chunk not found at the start of the CVM")
-        self.cvmh_length = int.from_bytes(chunk[4:12], "big")
-        if self.cvmh_length < 0x80:
-            raise CvmError(f"CVMH payload is too short: {self.cvmh_length}")
-        cvmh = self._read_cvm_bytes(12, self.cvmh_length, "CVMH payload")
-        self.flags = int.from_bytes(cvmh[0x24:0x28], "big")
+        cvmh_length = int.from_bytes(chunk[4:12], "big")
+        if cvmh_length < 0x80:
+            raise CvmError(f"CVMH payload is too short: {cvmh_length}")
+        cvmh = self._read_cvm_bytes(12, cvmh_length, "CVMH payload")
         self.iso_start_sector = int.from_bytes(cvmh[0x7C:0x80], "big")
-        self.toc_encrypted = bool(self.flags & _ROFS_TOC_ENCRYPTED)
+        self.toc_encrypted = bool(
+            int.from_bytes(cvmh[0x24:0x28], "big") & _ROFS_TOC_ENCRYPTED
+        )
 
-        zone_header_offset = 12 + self.cvmh_length
+        zone_header_offset = 12 + cvmh_length
         zone_header = self._read_cvm_bytes(zone_header_offset, 12, "ZONE chunk header")
         if zone_header[:4] != b"ZONE":
             raise CvmError("ZONE chunk not found after the CVMH chunk")
-        self.zone_length = int.from_bytes(zone_header[4:12], "big")
+        zone_length = int.from_bytes(zone_header[4:12], "big")
         zone_payload_offset = zone_header_offset + 12
-        if self.zone_length < 0x2C:
-            raise CvmError(f"ZONE payload is too short: {self.zone_length}")
-        if self.zone_length > self.cvm_size - zone_payload_offset:
+        if zone_length < 0x2C:
+            raise CvmError(f"ZONE payload is too short: {zone_length}")
+        if zone_length > self.cvm_size - zone_payload_offset:
             raise CvmError("ZONE chunk extends outside the CVM")
         zone = self._read_cvm_bytes(zone_payload_offset, 0x2C, "ZONE fixed header")
         self.iso_zone_sector = int.from_bytes(zone[0x20:0x24], "big")
@@ -221,43 +220,23 @@ class CvmIso:
 
         self.header_size = self.iso_start_sector * SECTOR
         iso_end = self.header_size + self.iso_length
-        zone_end = zone_payload_offset + self.zone_length
+        zone_end = zone_payload_offset + zone_length
         if self.header_size < zone_payload_offset or iso_end > zone_end or iso_end > self.cvm_size:
             raise CvmError("Inner ISO range extends outside the CVM ZONE chunk")
         self.file_size = self.iso_length
         self.header = self._read_cvm_bytes(0, self.header_size, "CVM header")
 
-        pvd_sector, primary = self._read_primary_volume_descriptor()
-        root_length = primary[156]
-        if root_length < 34 or 156 + root_length > len(primary):
-            raise CvmError("Invalid inner ISO root directory record")
-        root = self._parse_record(primary[156 : 156 + root_length], "")
-        if not root.is_dir:
-            raise CvmError("Inner ISO root record is not a directory")
-
-        self.end_toc_sector = pvd_sector + 1
-        self._add_record(root)
-        self._read_directory(root, set())
+        primary, primary_offset = self._read_primary_volume_descriptor()
+        self.end_toc_sector = primary_offset // SECTOR + 1
+        self._read_tree(primary, None)
 
     @classmethod
-    def from_iso(
-        cls,
-        iso: Iso9660,
-        cvm_path: str = "DATA/DATA.CVM",
-        *,
-        password: str = DEFAULT_ROFS_PASSWORD,
-    ) -> CvmIso:
-        """Open a CVM member directly from an already parsed outer ISO."""
-        normalized = cvm_path.replace("\\", "/").strip("/").upper()
-        record = iso.by_path.get(normalized)
+    def from_iso(cls, iso: Iso9660) -> CvmIso:
+        """Open DATA/DATA.CVM directly from an already parsed outer ISO."""
+        record = iso.by_path.get("DATA/DATA.CVM")
         if record is None or record.is_dir:
-            raise FileNotFoundError(f"Outer ISO has no CVM file {normalized}")
-        return cls(
-            iso.path,
-            cvm_offset=record.byte_offset,
-            cvm_size=record.size,
-            password=password,
-        )
+            raise FileNotFoundError("Outer ISO has no CVM file DATA/DATA.CVM")
+        return cls(iso.path, cvm_offset=record.byte_offset, cvm_size=record.size)
 
     def _read_cvm_bytes(self, offset: int, size: int, context: str) -> bytes:
         if offset < 0 or size < 0 or offset > self.cvm_size or size > self.cvm_size - offset:
@@ -293,7 +272,7 @@ class CvmIso:
                     data[local_offset : local_offset + SECTOR] = _crypt_sector(
                         bytes(data[local_offset : local_offset + SECTOR]),
                         logical_sector,
-                        self.key,
+                        _ROFS_KEY,
                     )
 
         start = offset - aligned_offset
@@ -302,162 +281,32 @@ class CvmIso:
     def _read_toc_bytes(self, offset: int, size: int) -> bytes:
         return self._transform_iso_bytes(offset, size, toc_only=True)
 
-    def _read_primary_volume_descriptor(self) -> tuple[int, bytes]:
-        primary: tuple[int, bytes] | None = None
+    def _read_primary_volume_descriptor(self) -> tuple[bytes, int]:
         for sector in range(16, min(128, self.sector_count)):
             descriptor = self._read_toc_bytes(sector * SECTOR, SECTOR)
             if descriptor[1:6] != b"CD001" or descriptor[6] != 1:
                 continue
-            if descriptor[0] == 1 and primary is None:
-                primary = (sector, descriptor)
+            if descriptor[0] == 1:
+                return descriptor, sector * SECTOR
             if descriptor[0] == 255:
                 break
-        if primary is None:
-            suffix = "; the password may be wrong" if self.toc_encrypted else ""
-            raise CvmError(f"Inner ISO9660 primary volume descriptor not found{suffix}")
-        return primary
+        suffix = "; the password may be wrong" if self.toc_encrypted else ""
+        raise CvmError(f"Inner ISO9660 primary volume descriptor not found{suffix}")
 
-    @staticmethod
-    def _both_endian_u32(raw: bytes, offset: int, context: str) -> int:
-        little = int.from_bytes(raw[offset : offset + 4], "little")
-        big = int.from_bytes(raw[offset + 4 : offset + 8], "big")
-        if little != big:
-            raise CvmError(f"Invalid both-endian ISO field in {context}")
-        return little
+    def _record_extent(self, raw: bytes, context: str) -> int:
+        return super()._record_extent(raw, context) + raw[1]
 
-    def _parse_record(
-        self,
-        raw: bytes,
-        path: str,
-        directory_record_offset: int | None = None,
-    ) -> IsoRecord:
-        if len(raw) < 34 or raw[0] != len(raw):
-            raise CvmError(f"Invalid ISO directory record for {path or '/'}")
-
-        extent = self._both_endian_u32(raw, 2, path or "/") + raw[1]
-        size = self._both_endian_u32(raw, 10, path or "/")
-        flags = raw[25]
-        if flags & 0x80:
-            raise CvmError(f"Multi-extent ISO file is unsupported: {path or '/'}")
-
-        byte_offset = extent * SECTOR
-        if byte_offset > self.iso_length or size > self.iso_length - byte_offset:
-            raise CvmError(f"ISO record points outside the inner image: {path or '/'}")
-
-        date = raw[18:25]
-        recorded_at: datetime | None
-        if date == b"\0" * 7:
-            recorded_at = None
-        else:
-            offset_quarters = date[6] - 256 if date[6] >= 128 else date[6]
-            if not -48 <= offset_quarters <= 52:
-                raise CvmError(f"Invalid ISO timezone offset for {path or '/'}: {offset_quarters}")
-            try:
-                recorded_at = datetime(
-                    1900 + date[0],
-                    date[1],
-                    date[2],
-                    date[3],
-                    date[4],
-                    date[5],
-                    tzinfo=timezone(timedelta(minutes=offset_quarters * 15)),
-                )
-            except ValueError as error:
-                raise CvmError(f"Invalid ISO recording time for {path or '/'}") from error
-
-        return IsoRecord(
-            path=path,
-            is_dir=bool(flags & 0x02),
-            extent=extent,
-            size=size,
-            recorded_at=recorded_at,
-            directory_record_offset=directory_record_offset,
+    def _directory_data(self, directory: IsoRecord) -> bytes:
+        data = self._read_toc_bytes(directory.byte_offset, directory.size)
+        self.end_toc_sector = max(
+            self.end_toc_sector,
+            (directory.byte_offset + directory.size + SECTOR - 1) // SECTOR,
         )
-
-    @staticmethod
-    def _decode_name(raw: bytes, parent: str) -> str:
-        try:
-            name = raw.decode("ascii")
-        except UnicodeDecodeError as error:
-            raise CvmError(f"Non-ASCII ISO9660 identifier under {parent or '/'}") from error
-        name = name.split(";", 1)[0].rstrip(".").upper()
-        if not name or "/" in name or "\\" in name:
-            raise CvmError(f"Invalid ISO9660 identifier under {parent or '/'}")
-        return name
-
-    def _add_record(self, record: IsoRecord) -> None:
-        if record.path in self.by_path:
-            raise CvmError(f"Duplicate inner ISO path: {record.path or '/'}")
-        self.records.append(record)
-        self.by_path[record.path] = record
-
-    def _read_directory(
-        self,
-        directory: IsoRecord,
-        active_directories: set[tuple[int, int]],
-    ) -> None:
-        identity = (directory.extent, directory.size)
-        if identity in active_directories:
-            raise CvmError(f"Recursive ISO directory reference: {directory.path or '/'}")
-
-        active_directories.add(identity)
-        try:
-            data = self._read_toc_bytes(directory.byte_offset, directory.size)
-            self.end_toc_sector = max(
-                self.end_toc_sector,
-                (directory.byte_offset + directory.size + SECTOR - 1) // SECTOR,
-            )
-            offset = 0
-            while offset < len(data):
-                length = data[offset]
-                if length == 0:
-                    offset = ((offset // SECTOR) + 1) * SECTOR
-                    continue
-                if length < 34 or offset + length > len(data):
-                    raise CvmError(f"Invalid directory data in {directory.path or '/'}")
-
-                record_offset = offset
-                raw = data[offset : offset + length]
-                name_length = raw[32]
-                if 33 + name_length > len(raw):
-                    raise CvmError(f"Invalid file identifier in {directory.path or '/'}")
-                identifier = raw[33 : 33 + name_length]
-                offset += length
-                if identifier in (b"\x00", b"\x01"):
-                    continue
-
-                name = self._decode_name(identifier, directory.path)
-                path = f"{directory.path}/{name}" if directory.path else name
-                record = self._parse_record(
-                    raw,
-                    path,
-                    directory.byte_offset + record_offset,
-                )
-                self._add_record(record)
-                if record.is_dir:
-                    self._read_directory(record, active_directories)
-        finally:
-            active_directories.remove(identity)
+        return data
 
     def read_iso_bytes(self, offset: int, size: int) -> bytes:
         """Read bytes from the logical, TOC-decrypted inner ISO image."""
         return self._transform_iso_bytes(offset, size, toc_only=False)
 
-    def record(self, path: str) -> IsoRecord:
-        normalized = path.replace("\\", "/").strip("/").upper()
-        try:
-            return self.by_path[normalized]
-        except KeyError as error:
-            raise FileNotFoundError(f"Inner ISO has no record {normalized}") from error
-
-    def read_file(self, record: IsoRecord | str) -> bytes:
-        """Read one inner ISO member by record or normalized path."""
-        if isinstance(record, str):
-            record = self.record(record)
+    def read_file(self, record: IsoRecord) -> bytes:
         return self.read_iso_bytes(record.byte_offset, record.size)
-
-    def member_cvm_offset(self, record: IsoRecord | str) -> int:
-        """Return the member's byte offset relative to the CVM start."""
-        if isinstance(record, str):
-            record = self.record(record)
-        return self.header_size + record.byte_offset

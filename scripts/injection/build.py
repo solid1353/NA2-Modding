@@ -2,14 +2,13 @@
 from __future__ import annotations
 
 import argparse
-import csv
-import hashlib
 import json
 import os
 import re
 import sys
 import tempfile
 from dataclasses import replace
+from functools import cache
 from pathlib import Path
 
 
@@ -17,6 +16,7 @@ SCRIPT_ROOT = Path(__file__).resolve().parent
 REPOSITORY = SCRIPT_ROOT.parents[1]
 sys.path.insert(0, str(REPOSITORY))
 
+from na228_builder.infrastructure.common import SYMBOL_PATTERN, read_tsv, sha256_hex
 from na228_builder.infrastructure.orchestration import catalog as catalog_module
 from na228_builder.infrastructure.modules.payload_builder import ee_c_fragments
 from na228_builder.infrastructure.modules.payload_builder.operations import (
@@ -25,14 +25,13 @@ from na228_builder.infrastructure.modules.payload_builder.operations import (
     encode_symbol_reference,
 )
 from na228_builder.infrastructure.modules.image_assembler.iso9660 import Iso9660
-from scripts.lib.paths import load_paths, task_work_root
+from scripts.lib.paths import load_paths
 
 
 PATHS = load_paths(REPOSITORY)
 CATALOG_PATH = PATHS.path("builder", "catalog.modcat")
 CONFIGURATION_PATH = PATHS.path("builder", "configurations", "base.jsonc")
 
-SYMBOL_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
 SYMBOL_MAP_FIELDS = [
     "owner",
     "symbol",
@@ -46,11 +45,11 @@ SYMBOL_MAP_FIELDS = [
 HOT_RELOAD_SOURCE = "hot_reload_message"
 HOT_RELOAD_ENTRY = "project.hot_reload_message"
 HOT_RELOAD_SOURCE_PATH = SCRIPT_ROOT / "hot_reload_message.c"
-FIXED_EXTERNAL_ADDRESSES: dict[str, int] = {}
-CATALOG_SELECTION = catalog_module.load_selection(
-    CATALOG_PATH,
-    CONFIGURATION_PATH,
-)
+
+
+@cache
+def catalog_selection() -> catalog_module.CatalogSelection:
+    return catalog_module.load_selection(CATALOG_PATH, CONFIGURATION_PATH)
 
 
 def parse_args() -> argparse.Namespace:
@@ -69,24 +68,9 @@ def parse_args() -> argparse.Namespace:
         "--hot-reload-label",
         help="Compile the development marker with this display text.",
     )
-    parser.add_argument(
-        "--iso",
-        type=Path,
-    )
-    parser.add_argument("--output", type=Path)
+    parser.add_argument("--output", type=Path, required=True)
     return parser.parse_args()
 
-
-def read_tsv(path: Path, fields: list[str]) -> list[dict[str, str]]:
-    with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        reader = csv.DictReader(handle, delimiter="\t")
-        if reader.fieldnames != fields:
-            raise ValueError(f"{path}: expected columns {' '.join(fields)}")
-        return [
-            {key: (value or "").strip() for key, value in row.items()}
-            for row in reader
-            if any((value or "").strip() for value in row.values())
-        ]
 
 
 def identifier(value: str, label: str) -> str:
@@ -341,9 +325,6 @@ def resolve_overlay_writes(
     return resolved
 
 
-def sha256(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest().upper()
-
 
 def newest_cached_iso(configuration: str = "base") -> Path:
     registry_path = PATHS.path("logs", "na228", "preflight", "registry.json")
@@ -399,10 +380,10 @@ def locate_build_record(
     matches.sort(key=lambda item: item[0].name)
     selected = matches[-1]
     selected_map = selected[0] / "payload_builder" / "symbol_map.tsv"
-    selected_map_sha = sha256(selected_map.read_bytes())
+    selected_map_sha = sha256_hex(selected_map.read_bytes())
     for record, _summary in matches[:-1]:
         candidate_map = record / "payload_builder" / "symbol_map.tsv"
-        if not candidate_map.is_file() or sha256(candidate_map.read_bytes()) != selected_map_sha:
+        if not candidate_map.is_file() or sha256_hex(candidate_map.read_bytes()) != selected_map_sha:
             raise ValueError(
                 "Matching 228.BIN build records disagree on their symbol maps: "
                 + ", ".join(record.name for record, _ in matches)
@@ -431,7 +412,7 @@ def load_symbol_map(
             raise ValueError(
                 f"symbol_map.tsv:{line}: {symbol} exceeds the cached 228.BIN"
             )
-        actual_sha = sha256(payload[offset : offset + size])
+        actual_sha = sha256_hex(payload[offset : offset + size])
         expected_sha = row["sha256"].upper()
         if actual_sha != expected_sha:
             raise ValueError(
@@ -449,9 +430,10 @@ def load_symbol_map(
 
 def configured_payload() -> dict[str, tuple[object, str, dict[str, object]]]:
     result: dict[str, tuple[object, str, dict[str, object]]] = {}
-    for feature_id in CATALOG_SELECTION.feature_ids:
+    selection = catalog_selection()
+    for feature_id in selection.feature_ids:
         for node, injection_id, payload_id, value in catalog_module.payload_entries(
-            CATALOG_SELECTION,
+            selection,
             feature_id,
         ):
             if payload_id in result:
@@ -922,9 +904,7 @@ def resolve_external_addresses(
         if symbol in resident_symbol_overrides:
             result[symbol] = resident_symbol_overrides[symbol]
             continue
-        if symbol in FIXED_EXTERNAL_ADDRESSES:
-            result[symbol] = FIXED_EXTERNAL_ADDRESSES[symbol]
-            continue
+
         row = symbol_map.get(symbol)
         if row is None:
             raise ValueError(
@@ -1005,11 +985,6 @@ def main() -> int:
         source_scope, source_ids = source_ids_for_path(args.source_path)
         source_id = source_ids[0]
         entry_symbol = ""
-        output_name = (
-            "all"
-            if source_scope == (REPOSITORY / "src").resolve()
-            else source_scope.stem
-        )
     else:
         if not args.source_id or not args.entry:
             raise ValueError(
@@ -1018,11 +993,8 @@ def main() -> int:
         source_id = identifier(args.source_id, "source-id")
         source_ids = [source_id]
         entry_symbol = identifier(args.entry, "entry")
-        output_name = source_id
-    iso_path = resolved_path(args.iso) if args.iso is not None else newest_cached_iso()
-    output = resolved_path(
-        args.output or PATHS.path("build", "injection", output_name)
-    )
+    iso_path = newest_cached_iso()
+    output = resolved_path(args.output)
     code_base = 0x008F0000
     code_end = 0x008F3D00
 
@@ -1051,7 +1023,7 @@ def main() -> int:
     except KeyError as exc:
         raise ValueError(f"{iso_path}: PRG/228.BIN was not found") from exc
     payload = iso.read_file(payload_record)
-    payload_sha256 = sha256(payload)
+    payload_sha256 = sha256_hex(payload)
     record_match = locate_build_record(
         payload_sha256,
         required=not resident_symbol_overrides,
@@ -1079,12 +1051,7 @@ def main() -> int:
 
     mappings: list[tuple[str, str]] = []
     compiled_c_fragments: list[PayloadFragment] = []
-    if output.is_relative_to(PATHS.path("work")):
-        temporary_root = task_work_root(PATHS)
-        if not output.is_relative_to(temporary_root):
-            raise ValueError("Injection output must belong to the current chat")
-    else:
-        temporary_root = PATHS.path("build")
+    temporary_root = PATHS.path("build")
     root_existed = temporary_root.is_dir()
     temporary_root.mkdir(parents=True, exist_ok=True)
     temporary_objects: list[Path] = []
@@ -1315,7 +1282,7 @@ def main() -> int:
             )
         ],
         "fragment_file": "fragment.bin",
-        "fragment_sha256": sha256(fragment),
+        "fragment_sha256": sha256_hex(fragment),
         "segments": [
             {
                 "file_offset": 0,
@@ -1327,9 +1294,7 @@ def main() -> int:
         "writes": writes,
         "used_end": f"0x{code_base + len(fragment):08X}",
         "selected_fragments": [item.symbol for item in fragments],
-        "resident_imports": sorted(
-            external_symbols - FIXED_EXTERNAL_ADDRESSES.keys()
-        ),
+        "resident_imports": sorted(external_symbols),
         "resident_symbol_overrides": {
             symbol: f"0x{address:08X}"
             for symbol, address in sorted(resident_symbol_overrides.items())
@@ -1338,12 +1303,7 @@ def main() -> int:
             symbol: f"0x{address:08X}"
             for symbol, address in sorted(external_addresses.items())
         },
-        "fixed_imports": {
-            symbol: f"0x{FIXED_EXTERNAL_ADDRESSES[symbol]:08X}"
-            for symbol in sorted(
-                external_symbols & FIXED_EXTERNAL_ADDRESSES.keys()
-            )
-        },
+        "fixed_imports": {},
         "payload_sha256": payload_sha256,
         "build_record": (
             build_record.relative_to(REPOSITORY).as_posix()
@@ -1361,10 +1321,7 @@ def main() -> int:
     )
     print(
         f"Linked {len(fragments)} fragments, "
-        f"{len(external_symbols - FIXED_EXTERNAL_ADDRESSES.keys())} "
-        f"resident imports, and "
-        f"{len(external_symbols & FIXED_EXTERNAL_ADDRESSES.keys())} "
-        f"fixed imports into "
+        f"{len(external_symbols)} resident imports, and 0 fixed imports into "
         f"0x{code_base:08X}-0x{code_base + len(fragment):08X}"
     )
     if build_record is None:

@@ -14,7 +14,7 @@ $toolchainPath = Join-Path $PSScriptRoot 'toolchain.json'
 $toolchain = Get-Content -Raw -LiteralPath $toolchainPath | ConvertFrom-Json
 $manifestRelative = [string]$toolchain.release_manifest
 $manifestPath = [IO.Path]::GetFullPath((Join-Path $repository $manifestRelative))
-$builderPath = Join-Path $PSScriptRoot 'build_release.ps1'
+$gitHubRepository = 'solid1353/NA2-Modding'
 $gitHub = (Get-Command gh -CommandType Application -ErrorAction Stop |
     Select-Object -First 1).Path
 
@@ -39,11 +39,26 @@ function Invoke-ReleaseGit {
     }
 }
 
+function Get-ReleaseGitLine {
+    param([Parameter(Mandatory = $true)][string[]]$GitArguments)
+
+    return (Invoke-ReleaseGit -GitArguments $GitArguments -Capture |
+        Select-Object -First 1).ToString().Trim()
+}
+
+function Assert-CleanTree {
+    param([Parameter(Mandatory = $true)][string]$Message)
+
+    $status = @(Invoke-ReleaseGit -GitArguments @(
+        'status', '--porcelain=v1', '--untracked-files=all'
+    ) -Capture)
+    if ($status.Count -ne 0) {
+        throw $Message
+    }
+}
+
 if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
     throw "Release manifest is missing: $manifestRelative"
-}
-if (-not (Test-Path -LiteralPath $builderPath -PathType Leaf)) {
-    throw 'Release builder is missing.'
 }
 
 $manifest = Get-Content -Raw -LiteralPath $manifestPath | ConvertFrom-Json
@@ -60,17 +75,12 @@ if ($targetVersion -notmatch '^\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)
 
 $tag = "v$targetVersion"
 
-$status = @(Invoke-ReleaseGit -GitArguments @(
-    'status', '--porcelain=v1', '--untracked-files=all'
-) -Capture)
-if ($status.Count -ne 0) {
-    throw 'Refusing to publish from a dirty Git tree. Commit or stash every change first.'
-}
+Assert-CleanTree 'Refusing to publish from a dirty Git tree. Commit or stash every change first.'
 
 $remoteTag = @(& git -C $repository ls-remote --exit-code --tags origin "refs/tags/$tag" 2>&1)
 $remoteTagExit = $LASTEXITCODE
 if ($remoteTagExit -eq 0) {
-    & $gitHub release view $tag --repo solid1353/NA2-Modding *> $null
+    & $gitHub release view $tag --repo $gitHubRepository *> $null
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[release] $tag is already published." -ForegroundColor Yellow
         return
@@ -81,10 +91,7 @@ if ($remoteTagExit -eq 0) {
         throw "Remote $tag is not an annotated tag."
     }
     $remoteCommit = ([string]$remoteCommit[0]).Split("`t", 2)[0]
-    $headCommit = (Invoke-ReleaseGit -GitArguments @(
-        'rev-parse', 'HEAD'
-    ) -Capture | Select-Object -First 1).ToString().Trim()
-    if ($remoteCommit -cne $headCommit) {
+    if ($remoteCommit -cne (Get-ReleaseGitLine @('rev-parse', 'HEAD'))) {
         throw "Remote $tag does not point at the release commit."
     }
     Write-Host "[release] Resuming unpublished $tag." -ForegroundColor Cyan
@@ -126,22 +133,12 @@ else {
     Write-Host "[release] Using the manifest's existing $tag identity." -ForegroundColor Cyan
 }
 
-$status = @(Invoke-ReleaseGit -GitArguments @(
-    'status', '--porcelain=v1', '--untracked-files=all'
-) -Capture)
-if ($status.Count -ne 0) {
-    throw 'The release-preparation commit did not leave a clean Git tree.'
-}
+Assert-CleanTree 'The release-preparation commit did not leave a clean Git tree.'
 
 Write-Host '[release] Building and validating the production package...' -ForegroundColor Cyan
-& $builderPath
-if ($LASTEXITCODE -ne 0) {
-    throw 'Production release validation failed; the release commit was not pushed.'
-}
+& (Join-Path $PSScriptRoot 'build_release.ps1')
 
-$branch = (Invoke-ReleaseGit -GitArguments @(
-    'symbolic-ref', '--quiet', '--short', 'HEAD'
-) -Capture | Select-Object -First 1).ToString().Trim()
+$branch = Get-ReleaseGitLine @('symbolic-ref', '--quiet', '--short', 'HEAD')
 if ([string]::IsNullOrWhiteSpace($branch)) {
     throw 'Release publication requires a named Git branch, not detached HEAD.'
 }
@@ -154,13 +151,8 @@ if ($localTagExit -eq 0) {
     if (($localTagType | Select-Object -First 1).Trim() -cne 'tag') {
         throw "Local $tag exists but is not an annotated tag."
     }
-    $tagCommit = (Invoke-ReleaseGit -GitArguments @(
-        'rev-parse', "$tag^{commit}"
-    ) -Capture | Select-Object -First 1).ToString().Trim()
-    $headCommit = (Invoke-ReleaseGit -GitArguments @(
-        'rev-parse', 'HEAD'
-    ) -Capture | Select-Object -First 1).ToString().Trim()
-    if ($tagCommit -cne $headCommit) {
+    if ((Get-ReleaseGitLine @('rev-parse', "$tag^{commit}")) -cne
+        (Get-ReleaseGitLine @('rev-parse', 'HEAD'))) {
         throw "Local $tag does not point at the release commit."
     }
     Write-Host "[release] Resuming with existing local annotated tag $tag." -ForegroundColor Cyan
@@ -192,7 +184,7 @@ try {
     $releaseArguments = @(
         'release', 'create', $tag,
         $packagePath, $checksumPath,
-        '--repo', 'solid1353/NA2-Modding',
+        '--repo', $gitHubRepository,
         '--verify-tag', '--notes', "$productName $targetVersion"
     )
     if ($targetVersion.Contains('-')) {

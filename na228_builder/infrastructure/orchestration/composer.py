@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import hashlib
 from dataclasses import dataclass
 from typing import Mapping, Sequence
 
+from ..common import sha256_hex
 from ..modules.image_assembler.iso9660 import Iso9660, normalize_iso_path
 from ..modules.image_assembler.operations import (
     AssemblyPlan,
@@ -36,8 +36,8 @@ def changed_source_manifest(
         lines.append("\t".join((
             replacement.path,
             output_paths.get(replacement.path, replacement.path),
-            hashlib.sha256(replacement.expected).hexdigest().upper(),
-            hashlib.sha256(replacement.replacement).hexdigest().upper(),
+            sha256_hex(replacement.expected),
+            sha256_hex(replacement.replacement),
         )))
     return ("\r\n".join(lines) + "\r\n").encode("ascii")
 
@@ -108,11 +108,11 @@ def compose_assembly_plan(
     *,
     source: Iso9660,
     output_boot_path: str,
+    identity_owner: str,
     payloads: Mapping[str, bytes | bytearray],
     owners: Mapping[str, str],
     insertions: Mapping[str, bytes],
     insertion_owners: Mapping[str, str],
-    identity_owner: str = "image_assembler",
 ) -> CompositionResult:
     """Close composed module payloads plus the product output identity."""
     composed_payloads = {
@@ -120,14 +120,13 @@ def compose_assembly_plan(
     }
     identity_edits: list[dict[str, object]] = []
     renames: tuple[FileRename, ...] = ()
-    system_path = SYSTEM_CNF_PATH
     boot_reason = "Apply the selected disc identity"
     if output_boot_path != SOURCE_BOOT_PATH:
-        system_record = source.by_path.get(system_path)
+        system_record = source.by_path.get(SYSTEM_CNF_PATH)
         if system_record is None or system_record.is_dir:
-            raise RuntimeError(f"Disc identity patch requires source file: {system_path}")
+            raise RuntimeError(f"Disc identity patch requires source file: {SYSTEM_CNF_PATH}")
         system_data = composed_payloads.get(
-            system_path,
+            SYSTEM_CNF_PATH,
             bytearray(source.read_file(system_record)),
         )
         source_boot = SOURCE_BOOT_PATH.encode("ascii")
@@ -136,13 +135,13 @@ def compose_assembly_plan(
             raise ValueError("Output boot path must preserve the source boot-path length")
         if bytes(system_data).count(source_boot) != 1:
             raise RuntimeError(
-                f"{system_path} must contain {SOURCE_BOOT_PATH} exactly once"
+                f"{SYSTEM_CNF_PATH} must contain {SOURCE_BOOT_PATH} exactly once"
             )
         offset = bytes(system_data).index(source_boot)
         system_data[offset:offset + len(source_boot)] = output_boot
-        composed_payloads[system_path] = system_data
+        composed_payloads[SYSTEM_CNF_PATH] = system_data
         identity_edits.append({
-            "target": system_path,
+            "target": SYSTEM_CNF_PATH,
             "offset": f"0x{offset:X}",
             "length": len(source_boot),
             "original_hex": source_boot.hex().upper(),
@@ -165,7 +164,7 @@ def compose_assembly_plan(
             owner=owners.get(path, identity_owner),
             reason=(
                 boot_reason
-                if path == system_path and path not in payloads
+                if path == SYSTEM_CNF_PATH and path not in payloads
                 else "Apply the final composed module payload"
             ),
         )

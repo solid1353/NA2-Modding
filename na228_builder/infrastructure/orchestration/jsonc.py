@@ -5,26 +5,29 @@ from collections.abc import Callable
 from typing import Any
 
 
+def _string_end(characters: list[str], index: int) -> int:
+    """Return the index after the string literal that opens at `index`."""
+    index += 1
+    escaped = False
+    while index < len(characters):
+        character = characters[index]
+        index += 1
+        if escaped:
+            escaped = False
+        elif character == "\\":
+            escaped = True
+        elif character == '"':
+            break
+    return index
+
+
 def _normalized(text: str) -> str:
     characters = list(text)
     index = 0
-    in_string = False
-    escaped = False
-
     while index < len(characters):
         character = characters[index]
-        if in_string:
-            if escaped:
-                escaped = False
-            elif character == "\\":
-                escaped = True
-            elif character == '"':
-                in_string = False
-            index += 1
-            continue
         if character == '"':
-            in_string = True
-            index += 1
+            index = _string_end(characters, index)
             continue
         if character != "/" or index + 1 >= len(characters):
             index += 1
@@ -59,22 +62,10 @@ def _normalized(text: str) -> str:
         index += 1
 
     index = 0
-    in_string = False
-    escaped = False
     while index < len(characters):
         character = characters[index]
-        if in_string:
-            if escaped:
-                escaped = False
-            elif character == "\\":
-                escaped = True
-            elif character == '"':
-                in_string = False
-            index += 1
-            continue
         if character == '"':
-            in_string = True
-            index += 1
+            index = _string_end(characters, index)
             continue
         if character != ",":
             index += 1

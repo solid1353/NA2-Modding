@@ -1,7 +1,6 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)][string[]]$SelectionToken,
-    [string]$CaptureRoot,
     [string]$CaptureRepository,
     [object[]]$SupervisedJob = @(),
     [string]$ConcurrencyPoolRoot,
@@ -13,104 +12,50 @@ $ErrorActionPreference = 'Stop'
 $runStopwatch = [Diagnostics.Stopwatch]::StartNew()
 try {
 . (Join-Path $PSScriptRoot 'suite.ps1')
-. (Join-Path $PSScriptRoot 'config.ps1')
-$root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
-. (Join-Path $repository 'scripts\lib\paths.ps1')
-$paths = Get-Na2Paths
-$configuration = Get-E2eConfiguration -Root $root
-$recordingRoot = Join-Path ([string]$paths.pcsx2_input_recordings) 'e2e'
+$state = Get-VisualRegressionRepositoryState
+$root = $state.Root
 $selection = Resolve-VisualRegressionSuiteSelection `
     -Token $SelectionToken `
-    -RecordingRepository $recordingRoot
+    -RecordingRepository $state.RecordingRepository
 $suiteRequests = [object[]]@($selection.Requests)
 $suites = [string[]]@($suiteRequests.Suite)
-$reportRegression = [string]::IsNullOrWhiteSpace($CaptureRoot) -and
-    [string]::IsNullOrWhiteSpace($CaptureRepository)
+$reportRegression = [string]::IsNullOrWhiteSpace($CaptureRepository)
 if ($reportRegression) {
     Assert-VisualRegressionCaptureGitBaseline `
-        -CaptureRepository (Join-Path $root 'captures')
+        -CaptureRepository $state.CaptureRepository
 }
-if (-not [string]::IsNullOrWhiteSpace($CaptureRoot) -and
-    -not [string]::IsNullOrWhiteSpace($CaptureRepository)) {
-    throw 'CaptureRoot and CaptureRepository cannot be combined.'
-}
-if (-not [string]::IsNullOrWhiteSpace($CaptureRoot) -and
-    $suiteRequests.Count -ne 1) {
-    throw 'CaptureRoot requires one selected suite.'
-}
-if (-not [string]::IsNullOrWhiteSpace($CaptureRepository) -and
-    $suiteRequests.Count -eq 0) {
-    throw 'CaptureRepository requires selected suites.'
-}
-function Get-E2eRunContext {
-    param([Parameter(Mandatory)][string]$Name)
-
-    if (-not [string]::IsNullOrWhiteSpace($CaptureRoot)) {
-        return Get-VisualRegressionContext -Suite $Name -CaptureRoot $CaptureRoot
+$contexts = [object[]]@(
+    foreach ($request in $suiteRequests) {
+        $context = Get-VisualRegressionContext -Suite $request.Suite
+        if ([string]::IsNullOrWhiteSpace($CaptureRepository)) {
+            $context
+        }
+        else {
+            Get-VisualRegressionContext `
+                -Suite $request.Suite `
+                -CaptureRoot (Join-Path $CaptureRepository $context.SuiteRelativePath)
+        }
     }
-    if (-not [string]::IsNullOrWhiteSpace($CaptureRepository)) {
-        $defaultContext = Get-VisualRegressionContext -Suite $Name
-        return Get-VisualRegressionContext `
-            -Suite $Name `
-            -CaptureRoot (Join-Path $CaptureRepository $defaultContext.SuiteRelativePath)
-    }
-    return Get-VisualRegressionContext -Suite $Name
-}
-$requestBySuite = [Collections.Generic.Dictionary[string, object]]::new(
-    [StringComparer]::OrdinalIgnoreCase
 )
-foreach ($request in $suiteRequests) {
-    $requestBySuite[$request.Suite] = $request
-}
 $jobName = 'current'
 
-$inputIdentity = [Collections.Generic.List[object]]::new()
-$hasGeneratedSuite = $false
-foreach ($request in $suiteRequests) {
-    $context = Get-E2eRunContext -Name $request.Suite
-    if ($context.Generated) {
-        $hasGeneratedSuite = $true
-        continue
-    }
-    $inputIdentity.Add([ordered]@{
-        path = [IO.Path]::GetRelativePath($repository, $context.SuitePath).Replace('\', '/')
-        sha256 = (Get-FileHash -LiteralPath $context.SuitePath -Algorithm SHA256).Hash
-    })
-}
-if ($hasGeneratedSuite) {
-    $generatedInputPaths = @(
-        Join-Path ([string]$paths.resources) 'character_data.tsv'
-        [string]$paths.files.practice_movesets
-        foreach ($generatedSuite in @($suiteRequests | Where-Object Generated)) {
-            Get-VisualRegressionGeneratedInputPaths `
-                -RecordingRepository $recordingRoot `
-                -Suite $generatedSuite.Suite
-        }
-    ) | Sort-Object -Unique
-    foreach ($path in $generatedInputPaths) {
-        $inputIdentity.Add([ordered]@{
-            path = [IO.Path]::GetRelativePath($repository, $path).Replace('\', '/')
-            sha256 = (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
-        })
-    }
-}
-$resumeRequest = [ordered]@{
-    command = 'run'
-    capture_mode = 'screenshots'
-}
-$resumeRequest['suite_requests'] = [object[]]@(
-    $suiteRequests |
-        Sort-Object Suite |
-        ForEach-Object {
+$resumeKey = Get-VisualRegressionResumeKey `
+    -Request ([ordered]@{
+        command = 'run'
+        capture_mode = 'screenshots'
+    }) `
+    -SuiteRequest $suiteRequests `
+    -OrdinaryInput @(
+        foreach ($context in @($contexts | Where-Object { -not $_.Generated })) {
             [ordered]@{
-                suite = [string]$_.Suite
-                arguments = [string[]]@($_.Arguments)
+                path = [IO.Path]::GetRelativePath(
+                    $state.Repository,
+                    $context.SuitePath
+                ).Replace('\', '/')
+                sha256 = (Get-FileHash -LiteralPath $context.SuitePath -Algorithm SHA256).Hash
             }
         }
-)
-$resumeRequest['inputs'] = [object[]]@($inputIdentity | Sort-Object path)
-$resumeKey = $resumeRequest | ConvertTo-Json -Compress -Depth 6
+    )
 $transaction = New-VisualRegressionTransaction `
     -Root $root `
     -Prefix 'run' `
@@ -122,131 +67,45 @@ else {
     $ConcurrencyPoolRoot = [IO.Path]::GetFullPath($ConcurrencyPoolRoot)
 }
 if (Test-VisualRegressionTransactionResumed -Transaction $transaction) {
-    $resumeArtifacts = [Collections.Generic.List[string]]::new()
-    foreach ($relative in @('publish', 'stages', '.backups')) {
-        $resumeArtifacts.Add($relative)
-    }
-    $resumeArtifacts.Add("jobs\$jobName\ready.json")
-    $resumeArtifacts.Add("jobs\$jobName\result.json")
     Move-VisualRegressionTransactionItemsToAttempt `
         -Transaction $transaction `
-        -RelativePath ([string[]]$resumeArtifacts) `
+        -RelativePath @(
+            'publish',
+            'stages',
+            '.backups',
+            "jobs\$jobName\ready.json",
+            "jobs\$jobName\result.json"
+        ) `
         -Label 'resume' |
         Out-Null
 }
 $jobs = [Collections.Generic.List[object]]::new()
 $tasks = [Collections.Generic.List[object]]::new()
-$postprocessScript = Join-Path $PSScriptRoot 'postprocess.ps1'
-$suiteScript = Join-Path $PSScriptRoot 'suite.ps1'
-foreach ($request in $suiteRequests) {
-    $taskRequest = $request
-    $taskSuite = [string]$request.Suite
-    $context = Get-E2eRunContext -Name $taskSuite
+$currentReady = Join-Path (Join-Path $transaction "jobs\$jobName") 'ready.json'
+for ($index = 0; $index -lt $suiteRequests.Count; $index++) {
+    $context = $contexts[$index]
     $currentSuite = Join-Path `
         (Join-Path (Join-Path (Join-Path $transaction 'jobs') $jobName) 'suites') `
         $context.SuiteRelativePath
     $currentComplete = Join-Path $currentSuite 'complete.json'
-    $currentReady = Join-Path (Join-Path $transaction "jobs\$jobName") 'ready.json'
-    $prepareKey = "prepare/$taskSuite"
-    $taskCaptureRoot = $context.CaptureRoot
-    if ($context.Generated) {
-        $preserveGeneratedTier = -not [string]::IsNullOrWhiteSpace(
-            [string]$taskRequest.MovesetRange
-        ) -or
-            -not (Test-VisualRegressionGeneratedSuiteRoot -Suite $context.Suite)
-        $capturedGridDirectory = Join-Path $currentSuite 'capture\screenshots'
-        $existingGridDirectory = $context.Capture.ScreenshotGrids
-        $outputRoot = Join-Path `
-            (Join-Path $transaction 'publish') `
-            $context.SuiteRelativePath
-        $comparator = $context.Comparator
-        $tasks.Add([pscustomobject]@{
-            Key = $prepareKey
-            Priority = 80
-            DependsOn = @()
-            Ready = {
+    foreach ($task in @(
+        New-VisualRegressionArtifactTasks `
+            -Context $context `
+            -Transaction $transaction `
+            -CapturedRoot (Join-Path $currentSuite 'capture') `
+            -CapturedTier Current `
+            -PreserveCapturedTier (
+                -not [string]::IsNullOrWhiteSpace(
+                    [string]$suiteRequests[$index].MovesetRange
+                ) -or
+                -not (Test-VisualRegressionGeneratedSuiteRoot -Suite $context.Suite)
+            ) `
+            -Ready ({
                 (Test-Path -LiteralPath $currentReady -PathType Leaf) -and
                     (Test-Path -LiteralPath $currentComplete -PathType Leaf)
-            }.GetNewClosure()
-            Start = {
-                Start-ThreadJob -Name $prepareKey -ScriptBlock {
-                    param(
-                        $Script,
-                        $ExistingDirectory,
-                        $CapturedDirectory,
-                        $OutputRoot,
-                        $Comparator,
-                        $PreserveCapturedTier
-                    )
-                    $ErrorActionPreference = 'Stop'
-                    . $Script
-                    New-VisualRegressionGeneratedArtifactStage `
-                        -ExistingDirectory $ExistingDirectory `
-                        -CapturedDirectory $CapturedDirectory `
-                        -OutputRoot $OutputRoot `
-                        -Comparator $Comparator `
-                        -CapturedTier Current `
-                        -PreserveCapturedTier:$PreserveCapturedTier
-                } -ArgumentList (
-                    $suiteScript,
-                    $existingGridDirectory,
-                    $capturedGridDirectory,
-                    $outputRoot,
-                    $comparator,
-                    $preserveGeneratedTier
-                )
-            }.GetNewClosure()
-        })
-    }
-    else {
-        $tasks.Add([pscustomobject]@{
-            Key = $prepareKey
-            Priority = 80
-            DependsOn = @()
-            Ready = {
-                (Test-Path -LiteralPath $currentReady -PathType Leaf) -and
-                    (Test-Path -LiteralPath $currentComplete -PathType Leaf)
-            }.GetNewClosure()
-            Start = {
-                Start-ThreadJob -Name $prepareKey -ScriptBlock {
-                    param($Script, $Suite, $Transaction, $CaptureRoot)
-                    $ErrorActionPreference = 'Stop'
-                    & $Script `
-                        -Action CurrentPrepare `
-                        -Suite $Suite `
-                        -Transaction $Transaction `
-                        -CaptureRoot $CaptureRoot
-                } -ArgumentList (
-                    $postprocessScript,
-                    $taskSuite,
-                    $transaction,
-                    $taskCaptureRoot
-                )
-            }.GetNewClosure()
-        })
-        $artifactKey = "artifact/$taskSuite/all"
-        $tasks.Add([pscustomobject]@{
-            Key = $artifactKey
-            Priority = 10
-            DependsOn = @($prepareKey)
-            Ready = $null
-            Start = {
-                Start-ThreadJob -Name $artifactKey -ScriptBlock {
-                    param($Script, $Suite, $Transaction, $CaptureRoot)
-                    $ErrorActionPreference = 'Stop'
-                    & $Script `
-                        -Action All `
-                        -Suite $Suite `
-                        -Transaction $Transaction `
-                        -CaptureRoot $CaptureRoot
-                } -ArgumentList (
-                    $postprocessScript,
-                    $taskSuite,
-                    $transaction,
-                    $taskCaptureRoot
-                )
-            }.GetNewClosure()
-        })
+            }.GetNewClosure())
+    )) {
+        $tasks.Add($task)
     }
 }
 $pipelineCompleted = $false
@@ -322,60 +181,11 @@ try {
         -FailurePrefix 'E2E pipeline task' `
         -OnPoll $pollJobs
 
-    $replacements = [ordered]@{}
-    foreach ($suiteName in $suites) {
-        $context = Get-E2eRunContext -Name $suiteName
-        $suitePublish = Join-Path (Join-Path $transaction 'publish') $context.SuiteRelativePath
-        if ($context.Generated) {
-            $replacements[$context.CaptureRoot] = $suitePublish
-            continue
-        }
-        $suiteStage = Join-Path (Join-Path $transaction 'stages') $context.SuiteRelativePath
-        $metadata = Get-Content `
-            -Raw `
-            -LiteralPath (Join-Path $suiteStage 'postprocess.json') |
-            ConvertFrom-Json
-        $screenshotGridStage = Join-Path `
-            $suitePublish `
-            $script:E2eScreenshotGridDirectory
-        $replacements[$context.Capture.ScreenshotGrids] = $screenshotGridStage
-        if ($metadata.has_reference -and $metadata.has_current) {
-            foreach ($grid in @(
-                [pscustomobject]@{
-                    Name = $script:E2ePairGridDirectory
-                    Destination = $context.Capture.PairGrids
-                },
-                [pscustomobject]@{
-                    Name = $script:E2eBlendGridDirectory
-                    Destination = $context.Capture.BlendGrids
-                },
-                [pscustomobject]@{
-                    Name = $script:E2eDiffGridDirectory
-                    Destination = $context.Capture.DiffGrids
-                }
-            )) {
-                $replacements[$grid.Destination] = Join-Path $suitePublish $grid.Name
-            }
-        }
-    }
-    Publish-VisualRegressionTransaction `
-        -Replacements $replacements `
-        -TransactionRoot $transaction `
-        -AfterPublish {
-            $aggregateContexts = @(
-                $suites |
-                    ForEach-Object { Get-E2eRunContext -Name $_ }
-            )
-            if ($aggregateContexts.Count -gt 0) {
-                Publish-VisualRegressionAggregateViews `
-                    -Context $aggregateContexts `
-                    -TransactionRoot $transaction
-            }
-        }
+    Publish-VisualRegressionArtifacts -Context $contexts -Transaction $transaction
     if ($reportRegression) {
         $regression = Get-VisualRegressionCaptureRegression `
             -Request $suiteRequests `
-            -CaptureRepository (Join-Path $root 'captures')
+            -CaptureRepository $state.CaptureRepository
         Write-Host "E2E completed: $($regression.Suites) suite(s)." -ForegroundColor Green
         if ($regression.Regression -ceq 'changed') {
             $fileCount = $regression.Added + $regression.Modified + $regression.Deleted
@@ -434,25 +244,12 @@ try {
     $pipelineCompleted = $true
 }
 finally {
-    foreach ($job in $jobs) {
-        if ($job.State -in @('NotStarted', 'Running')) {
-            Stop-Job -Job $job -ErrorAction SilentlyContinue
-        }
-        Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
-    }
-    if ($pipelineCompleted) {
-        Remove-VisualRegressionTransaction -Transaction $transaction -Root $root
-    }
-    else {
-        try {
-            Set-VisualRegressionTransactionRetained -Transaction $transaction -Root $root
-        }
-        catch {
-            Write-Warning "Failed to mark the retained E2E transaction inactive: $($_.Exception.Message)"
-        }
-        Write-Warning "Failed E2E transaction retained for continuation: $transaction"
-        Write-Warning 'Rerun the same e2e command to continue completed suites.'
-    }
+    Remove-VisualRegressionJobs -Job $jobs
+    Complete-VisualRegressionTransaction `
+        -Transaction $transaction `
+        -Root $root `
+        -Succeeded $pipelineCompleted `
+        -Command 'E2E'
 }
 }
 finally {

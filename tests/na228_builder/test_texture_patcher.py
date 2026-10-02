@@ -6,6 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from na228_builder.infrastructure.common import sha256_hex
 from na228_builder.infrastructure.modules.texture_patcher import engine
 
 
@@ -17,8 +18,8 @@ class ExternalTexturePackTests(unittest.TestCase):
         (assets / "example.ccs.gz").write_bytes(replacement)
         (root / "assets.tsv").write_text(
             "container_id\tpath\tasset_sha256\tpayload_sha256\n"
-            f"example\tUI/EXAMPLE.CCS\t{engine.sha256(replacement)}\t"
-            f"{engine.sha256(payload)}\n",
+            f"example\tUI/EXAMPLE.CCS\t{sha256_hex(replacement)}\t"
+            f"{sha256_hex(payload)}\n",
             encoding="utf-8",
         )
         return replacement

@@ -16,15 +16,13 @@ def unlock_all_configuration_fragment(
     selection: CatalogSelection,
     *,
     owner: str,
-    symbol: str = "unlock_all_demon_wind_bomb_enabled",
 ) -> PayloadFragment | None:
-    nodes = {node.path: node for node in selection.nodes}
-    if not nodes[UNLOCK_ALL_PATH].enabled:
+    if not selection.node_enabled(*UNLOCK_ALL_PATH):
         return None
-    enabled = nodes[UNLOCK_ALL_PATH + ("demon_wind_bomb",)].configured_value
+    enabled = selection.node(*UNLOCK_ALL_PATH, "demon_wind_bomb").configured_value
     return PayloadFragment(
         owner=owner,
-        symbol=symbol,
+        symbol="unlock_all_demon_wind_bomb_enabled",
         kind="rodata",
         alignment=4,
         payload=struct.pack("<I", int(enabled)),

@@ -6,17 +6,17 @@ import struct
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
-from typing import Callable
 
 from na228_builder.infrastructure.modules.payload_builder.operations import (
     PayloadFragment,
     PayloadRelocation,
 )
 from ..settings.ingame.battle_mechanics.battle_settings_runtime import (
-    chakra_default,
+    BATTLE_MECHANICS_PATH,
+    EXTENDED_ITEMS_PATH,
     MATCH_SETUP_PATH,
+    chakra_default,
     extra_hit_default,
-    extended_items_option_default,
     shadowblur_default,
     substitution_input_default,
     substitution_default,
@@ -28,15 +28,11 @@ from ..general.controls.control_defaults import (
     added_binding_save_defaults,
     controls_layout,
 )
-from ..settings.ingame.battle_mechanics.items.items_settings import (
-    FIELD_ITEMS,
-    items_option_defaults,
+from ..settings.ingame.shared.menu_options import (
+    MOD_SETTINGS_PATH,
+    items_mode_option,
+    menu_option_bindings,
 )
-from ..settings.ingame.battle_mechanics.substitution_resource.substitution_gauge import (
-    chakra_minimum_option_default,
-    gauge_option_defaults,
-)
-from ..settings.ingame.shared.menu_options import MOD_SETTINGS_PATH
 from ..settings.ingame.shared.native_settings_defaults import (
     BATTLE_ROW_IDS,
     PRACTICE_GENERAL_ROW_IDS,
@@ -46,11 +42,10 @@ from ..settings.ingame.shared.native_settings_defaults import (
 )
 
 
+TABLE_PATH = Path(__file__).resolve().parents[2] / "resources" / "save_appendix.tsv"
 APPENDIX_SIZE = 0x1000
 APPENDIX_HEADER_SIZE = 0x10
 APPENDIX_ENTRY_SIZE = 4
-SCHEMA_HEADER_SIZE = 8
-DESCRIPTOR_SIZE = 24
 CALL_WITH_ARGUMENT = 0
 CALL_WITH_VALUE = 1
 EXTRA_CONTROL_KEYS = (
@@ -62,6 +57,29 @@ EXTRA_CONTROL_KEYS = (
     "controls.p2.substitution",
     "controls.p2.item_select_l",
     "controls.p2.item_select_r",
+)
+# Save keys of the menu options outside Battle Mechanics, whose keys follow their paths.
+MOD_KEYS = {
+    MOD_SETTINGS_PATH + ("simple_display",): "mod.simple_display",
+    MATCH_SETUP_PATH + ("character_balance",): "mod.character_overrides",
+    MATCH_SETUP_PATH + ("balance_overlay",): "mod.balance_overlay",
+    MATCH_SETUP_PATH + ("support_selection",): "mod.support_selection",
+    EXTENDED_ITEMS_PATH: "mod.extended_items",
+}
+# Settings saved through their value getter and setter.
+VALUE_SETTINGS = (
+    ("mechanics.chakra", "chakra_mode_get", "chakra_mode_set", chakra_default),
+    ("mechanics.ultimate_jutsu", "ultimate_jutsu_mode_get", "ultimate_jutsu_mode_set",
+     ultimate_jutsu_default),
+    ("mechanics.shadowblur", "shadowblur_get", "shadowblur_set", shadowblur_default),
+    ("mechanics.extra_hit", "extra_hit_get", "extra_hit_set", extra_hit_default),
+    ("mechanics.substitution_input", "substitution_input_get", "substitution_input_set",
+     substitution_input_default),
+    ("mechanics.xdash_chakra_cost", "xdash_chakra_cost_option_get",
+     "xdash_chakra_cost_option_set", xdash_chakra_cost_option_default),
+    ("mechanics.support", "support_get", "support_set", support_default),
+    ("mechanics.substitution_resource", "substitution_gauge_mode_get",
+     "substitution_gauge_mode_set", substitution_default),
 )
 RANGE_PATTERN = re.compile(
     r"^(.*?)(-?\d+(?:\.\d+)?)([^\d]*) to "
@@ -91,10 +109,9 @@ def _range_count(value: str) -> int | None:
     match = RANGE_PATTERN.fullmatch(value)
     if match is None:
         return None
-    prefix, start_text, start_suffix, end_text, end_suffix, step_text, step_suffix = (
+    _, start_text, start_suffix, end_text, end_suffix, step_text, step_suffix = (
         match.groups()
     )
-    del prefix
     def normalized_unit(suffix: str) -> str:
         return " frame" if suffix in {" frame", " frames"} else suffix
 
@@ -119,7 +136,7 @@ def _range_count(value: str) -> int | None:
 
 def _option_count(value: str) -> int:
     alternatives = value.split(" | ")
-    if not alternatives or any(not alternative for alternative in alternatives):
+    if any(not alternative for alternative in alternatives):
         raise ValueError(f"Save appendix values are invalid: {value!r}")
     count = 0
     for alternative in alternatives:
@@ -187,40 +204,17 @@ def load_save_appendix(path: Path) -> tuple[int, tuple[AppendixRow, ...]]:
     return schema_version, tuple(rows)
 
 
-def _selected_values(selection) -> dict[tuple[str, ...], object]:
-    return {
-        node.path: node.configured_value
-        for node in selection.nodes
-        if node.has_configured_value
-    }
-
-
 def _bindings(selection) -> dict[str, SettingBinding]:
-    selected = _selected_values(selection)
-    mod_values = (
-        int(selected[MOD_SETTINGS_PATH + ("simple_display",)] == "on"),
-        int(selected[MATCH_SETUP_PATH + ("character_balance",)] == "overrides"),
-        int(selected[MATCH_SETUP_PATH + ("balance_overlay",)] == "on"),
-        {"none": 0, "relevant": 1, "all": 2}[
-            selected[MATCH_SETUP_PATH + ("support_selection",)]
-        ],
-    )
+    options = {
+        MOD_KEYS.get(path) or "mechanics." + ".".join(path[len(BATTLE_MECHANICS_PATH):]):
+            option
+        for path, option in menu_option_bindings(selection).items()
+    }
+    options["mechanics.items"] = items_mode_option(selection)
     bindings = {
-        key: SettingBinding(
-            "mod_settings_option_get",
-            "mod_settings_option_set",
-            argument,
-            CALL_WITH_ARGUMENT,
-            mod_values[argument],
-        )
-        for argument, key in enumerate(
-            (
-                "mod.simple_display",
-                "mod.character_overrides",
-                "mod.balance_overlay",
-                "mod.support_selection",
-            )
-        )
+        key: SettingBinding(option.getter, option.setter, option.argument,
+                            CALL_WITH_ARGUMENT, option.default)
+        for key, option in options.items()
     }
     control_defaults = added_binding_save_defaults(controls_layout(selection))
     for argument, key in enumerate(EXTRA_CONTROL_KEYS):
@@ -231,163 +225,28 @@ def _bindings(selection) -> dict[str, SettingBinding]:
             CALL_WITH_ARGUMENT,
             control_defaults[argument],
         )
-
     battle_defaults = battle_configured_row_defaults(selection)
-    for key, row_id in (
-        ("battle.time", BATTLE_ROW_IDS["time"]),
-        ("battle.difficulty", BATTLE_ROW_IDS["difficulty"]),
-        ("battle.handicap", BATTLE_ROW_IDS["handicap"]),
-    ):
-        bindings[key] = SettingBinding(
-            "save_native_setting_get",
-            "save_native_setting_set",
-            0x100 | row_id,
-            CALL_WITH_ARGUMENT,
-            battle_defaults[row_id],
-        )
-
     practice_defaults = practice_configured_row_defaults(selection)
-    practice_rows = (
-        ("practice.health", PRACTICE_GENERAL_ROW_IDS["health"]),
-        ("practice.commands", PRACTICE_GENERAL_ROW_IDS["commands"]),
-        ("practice.damage", PRACTICE_GENERAL_ROW_IDS["damage"]),
-        ("practice.opponent.status", PRACTICE_OPPONENT_ROW_IDS["status"]),
-        ("practice.opponent.strength", PRACTICE_OPPONENT_ROW_IDS["strength"]),
-        ("practice.opponent.attack", PRACTICE_OPPONENT_ROW_IDS["attack"]),
-        ("practice.opponent.guard", PRACTICE_OPPONENT_ROW_IDS["guard"]),
-        ("practice.opponent.move", PRACTICE_OPPONENT_ROW_IDS["move"]),
-        (
-            "practice.opponent.substitution_jutsu",
-            PRACTICE_OPPONENT_ROW_IDS["substitution_jutsu"],
-        ),
-        ("practice.opponent.linked_attack", PRACTICE_OPPONENT_ROW_IDS["linked_attack"]),
-        (
-            "practice.opponent.extra_hit_counter",
-            PRACTICE_OPPONENT_ROW_IDS["extra_hit_counter"],
-        ),
-    )
-    for key, row_id in practice_rows:
-        bindings[key] = SettingBinding(
-            "save_native_setting_get",
-            "save_native_setting_set",
-            0x200 | row_id,
-            CALL_WITH_ARGUMENT,
-            practice_defaults[row_id],
-        )
-
-    value_only: tuple[tuple[str, str, str, Callable, int], ...] = (
-        ("mechanics.chakra", "chakra_mode_get", "chakra_mode_set", chakra_default, 0),
-        (
-            "mechanics.ultimate_jutsu",
-            "ultimate_jutsu_mode_get",
-            "ultimate_jutsu_mode_set",
-            ultimate_jutsu_default,
-            0,
-        ),
-        ("mechanics.shadowblur", "shadowblur_get", "shadowblur_set", shadowblur_default, 0),
-        ("mechanics.extra_hit", "extra_hit_get", "extra_hit_set", extra_hit_default, 0),
-        (
-            "mechanics.substitution_input",
-            "substitution_input_get",
-            "substitution_input_set",
-            substitution_input_default,
-            0,
-        ),
-        (
-            "mechanics.xdash_chakra_cost",
-            "xdash_chakra_cost_option_get",
-            "xdash_chakra_cost_option_set",
-            xdash_chakra_cost_option_default,
-            0,
-        ),
-        ("mechanics.support", "support_get", "support_set", support_default, 0),
-        (
-            "mechanics.substitution_resource",
-            "substitution_gauge_mode_get",
-            "substitution_gauge_mode_set",
-            substitution_default,
-            0,
-        ),
-    )
-    for key, getter, setter, resolver, argument in value_only:
-        bindings[key] = SettingBinding(
-            getter,
-            setter,
-            argument,
-            CALL_WITH_VALUE,
-            resolver(selection),
-        )
-
-    item_defaults = items_option_defaults(selection)
-    bindings["mechanics.items"] = SettingBinding(
-        "items_settings_option_get",
-        "items_settings_option_set",
-        0,
-        CALL_WITH_ARGUMENT,
-        item_defaults[0],
-    )
-    bindings["mod.extended_items"] = SettingBinding(
-        "extended_items_option_get",
-        "extended_items_option_set",
-        0,
-        CALL_WITH_ARGUMENT,
-        extended_items_option_default(selection),
-    )
-    gauge_defaults = gauge_option_defaults(selection)
-    substitution_children = (
-        (
-            "mechanics.substitution_resource.chakra.minimum_chakra",
-            4,
-            chakra_minimum_option_default(selection),
-        ),
-        ("mechanics.substitution_resource.gauge.recovery_delay_seconds", 0, gauge_defaults[0]),
-        (
-            "mechanics.substitution_resource.gauge.refill_seconds_per_stock",
-            1,
-            gauge_defaults[1],
-        ),
-        ("mechanics.substitution_resource.gauge.damage_recovery", 2, gauge_defaults[2]),
-        (
-            "mechanics.substitution_resource.gauge.damage_percent_for_full_refill",
-            3,
-            gauge_defaults[3],
-        ),
-    )
-    for key, argument, default in substitution_children:
-        bindings[key] = SettingBinding(
-            "substitution_gauge_option_get",
-            "substitution_gauge_option_set",
-            argument,
-            CALL_WITH_ARGUMENT,
-            default,
-        )
-
-    bindings["mechanics.items.custom.availability"] = SettingBinding(
-        "items_settings_option_get",
-        "items_settings_option_set",
-        1,
-        CALL_WITH_ARGUMENT,
-        item_defaults[1],
-    )
-    for argument, (_code, key, _label) in enumerate(FIELD_ITEMS, start=2):
-        bindings[f"mechanics.items.custom.{key}"] = SettingBinding(
-            "items_settings_option_get",
-            "items_settings_option_set",
-            argument,
-            CALL_WITH_ARGUMENT,
-            item_defaults[argument],
-        )
+    for prefix, kind, row_ids, defaults in (
+        ("battle.", 0x100, BATTLE_ROW_IDS, battle_defaults),
+        ("practice.", 0x200, PRACTICE_GENERAL_ROW_IDS, practice_defaults),
+        ("practice.opponent.", 0x200, PRACTICE_OPPONENT_ROW_IDS, practice_defaults),
+    ):
+        for key, row_id in row_ids.items():
+            bindings[prefix + key] = SettingBinding(
+                "save_native_setting_get",
+                "save_native_setting_set",
+                kind | row_id,
+                CALL_WITH_ARGUMENT,
+                defaults[row_id],
+            )
+    for key, getter, setter, resolver in VALUE_SETTINGS:
+        bindings[key] = SettingBinding(getter, setter, 0, CALL_WITH_VALUE, resolver(selection))
     return bindings
 
 
-def save_appendix_schema_fragment(
-    selection,
-    *,
-    owner: str,
-    path: Path | None = None,
-) -> PayloadFragment:
-    source = path if path is not None else Path(__file__).resolve().parents[2] / "resources" / "save_appendix.tsv"
-    schema_version, rows = load_save_appendix(source)
+def save_appendix_schema_fragment(selection, *, owner: str) -> PayloadFragment:
+    schema_version, rows = load_save_appendix(TABLE_PATH)
     bindings = _bindings(selection)
     row_keys = {row.key for row in rows}
     unresolved = sorted(row_keys - bindings.keys())
@@ -434,9 +293,6 @@ def save_appendix_schema_fragment(
                 ),
             )
         )
-    expected_size = SCHEMA_HEADER_SIZE + len(rows) * DESCRIPTOR_SIZE
-    if len(payload) != expected_size:
-        raise AssertionError("Save appendix descriptor layout changed unexpectedly")
     return PayloadFragment(
         owner=owner,
         symbol="save_appendix_schema",

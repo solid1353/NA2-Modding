@@ -55,19 +55,22 @@ class SaveAppendixTests(unittest.TestCase):
 
     def test_missing_setting_and_invalid_default_stop_schema_generation(self) -> None:
         self.write_rows(["0101\tfirst\tFirst\tOff | On"])
+        table = patch.object(save_appendix, "TABLE_PATH", self.path)
+        table.start()
+        self.addCleanup(table.stop)
         binding = save_appendix.SettingBinding("get", "set", 0, 0, 0)
         with patch.object(save_appendix, "_bindings", return_value={
             "first": binding, "second": binding,
         }):
             with self.assertRaisesRegex(ValueError, "omits settings: second"):
                 save_appendix.save_appendix_schema_fragment(
-                    None, owner="memory_card", path=self.path,
+                    None, owner="memory_card",
                 )
         invalid = save_appendix.SettingBinding("get", "set", 0, 0, 2)
         with patch.object(save_appendix, "_bindings", return_value={"first": invalid}):
             with self.assertRaisesRegex(ValueError, "default for first"):
                 save_appendix.save_appendix_schema_fragment(
-                    None, owner="memory_card", path=self.path,
+                    None, owner="memory_card",
                 )
 
 

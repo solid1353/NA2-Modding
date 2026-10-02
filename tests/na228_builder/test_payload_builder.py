@@ -134,8 +134,6 @@ class PayloadBuilderTests(unittest.TestCase):
             (PayloadFragment("a", "large", "data", 4, b"x" * 48),),
             config=config,
         )
-        self.assertEqual(small.memory_end, config.reservation_end)
-        self.assertEqual(large.memory_end, config.reservation_end)
         self.assertNotEqual(small.used_end, large.used_end)
         self.assertEqual(len(small.payload), config.reservation_end - config.load_base)
         self.assertEqual(len(large.payload), config.reservation_end - config.load_base)

@@ -50,29 +50,20 @@ class IdentityTests(unittest.TestCase):
         with self.assertRaises(MemoryMapError):
             parse_state_identity(Path("state"))
 
-    def test_parses_e2e_transaction_state(self) -> None:
-        path = Path(
-            "e2e/.transactions/run-example/jobs/padded/suites/collection/"
-            "capture/sstates/0039"
-        )
-        identity = parse_state_identity(path)
-        self.assertEqual(identity.serial, "SLOP-NA228")
-        self.assertEqual(identity.crc, "")
-        self.assertEqual(identity.slot, 39)
-        self.assertEqual(_variant_for(path, identity), "padded")
-
     def test_parses_user_recording_capture_state(self) -> None:
-        path = Path(
-            "work/E2E/captures/bootstrap/baseline/sstates/0001"
-        )
-        identity = parse_state_identity(path)
-        self.assertEqual(identity.serial, "SLOP-NA228")
-        self.assertEqual(identity.crc, "")
-        self.assertEqual(identity.slot, 1)
-        self.assertEqual(_variant_for(path, identity), "baseline")
-        self.assertEqual(_screen_for(path, identity), "marker_0001")
+        for path in (
+            Path("work/E2E/captures/bootstrap/baseline/sstates/0001"),
+            Path("work/E2E/inputs/captures/bootstrap/baseline/sstates/0001"),
+        ):
+            with self.subTest(path=path):
+                identity = parse_state_identity(path)
+                self.assertEqual(identity.serial, "SLOP-NA228")
+                self.assertEqual(identity.crc, "")
+                self.assertEqual(identity.slot, 1)
+                self.assertEqual(_variant_for(path, identity), "baseline")
+                self.assertEqual(_screen_for(path, identity), "marker_0001")
 
-    def test_rejects_numeric_name_outside_e2e_transaction(self) -> None:
+    def test_rejects_numeric_name_outside_recording_capture(self) -> None:
         with self.assertRaises(MemoryMapError):
             parse_state_identity(Path("0039"))
 

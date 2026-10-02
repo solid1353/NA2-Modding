@@ -15,6 +15,6 @@ The smoke hook replaces the native no-op call at `0x001085A0` with
 `0x00379040` to display `HOT RELOAD HH:mm:ss` for 300 rendered frames after an
 application.
 
-Use the project `na228 c` and `na228 w` commands rather than invoking the Python
-implementation directly. The project command verifies the loaded build and
-waits for the resident payload marker before applying a transaction.
+Use `na228 w` or a launch token ending in `w` rather than invoking the Python
+implementation directly. The watcher waits for the resident payload marker
+before applying a transaction.

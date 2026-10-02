@@ -43,10 +43,9 @@ guarded file edits.
   Destination ranges from different children must not overlap; ordered chains
   remain separate roots.
 - A `replace` edit declares exactly one of a static `replacement_hex` or an
-  adapter. Adapters in `adapters.py` either convert a validated typed catalog
-  value or encode fixed readable values selected by a bare setting. Fixed-value
-  adapters produce both the destination guard and replacement bytes without
-  weakening the ordinary guarded-replacement contract.
+  adapter. Adapters in `adapters.py` encode fixed readable values selected by a
+  bare setting. They produce both the destination guard and replacement bytes
+  without weakening the ordinary guarded-replacement contract.
 - `nul_padded_text` encodes fixed readable text with a declared codec and exact
   slot length, requires room for a NUL terminator, and zero-pads both guarded
   and replacement values to that length.

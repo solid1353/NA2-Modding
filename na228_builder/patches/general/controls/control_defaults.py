@@ -4,11 +4,12 @@ from __future__ import annotations
 import struct
 from pathlib import Path
 
-from PIL import Image
-
-from na228_builder.infrastructure.modules.payload_builder.operations import (
-    PayloadFragment,
-    PayloadRelocation,
+from na228_builder.infrastructure.common import indexed_png_pixels
+from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment
+from na228_builder.patches.settings.ingame.shared.menu_pages import (
+    NATIVE_HELP_SET,
+    font_layout_enabled,
+    point_font_routine,
 )
 
 
@@ -53,10 +54,9 @@ SAVED_BUTTON_MASKS = (0x000, 0x001, 0x002, 0x004, 0x008, 0x010, 0x020, 0x040, 0x
 
 def controls_layout(selection) -> dict[str, int]:
     """Return button -> action ID; unbound buttons are omitted."""
-    nodes = {node.path: node for node in selection.nodes}
     layout: dict[str, int] = {}
     for button in BUTTON_MASKS:
-        value = nodes[CONTROLS_PATH + (button,)].configured_value
+        value = selection.node(*CONTROLS_PATH, button).configured_value
         if value == "unbound":
             continue
         action = ACTIONS[value]
@@ -66,12 +66,6 @@ def controls_layout(selection) -> dict[str, int]:
             )
         layout[button] = action
     return layout
-
-
-def controls_vibration(selection) -> int:
-    """Return the default vibration choice: 1 for on, 0 for off."""
-    node = next(node for node in selection.nodes if node.path == CONTROLS_PATH + ("vibration",))
-    return int(node.configured_value == "on")
 
 
 def _mask_of(layout: dict[str, int], action: int) -> int:
@@ -87,15 +81,15 @@ def added_binding_save_defaults(layout: dict[str, int]) -> tuple[int, ...]:
     return tuple(SAVED_BUTTON_MASKS.index(mask) for mask in added_binding_masks(layout))
 
 
-# Native Control Settings label draw and running-help setter, used when the
-# localized font layout is off.
+# Native Control Settings label draw, used when the localized font layout is off.
 NATIVE_LABEL_DRAW = 0x00379240
-NATIVE_HELP_SET = 0x0037F760
 
 
-def control_default_fragments(
-    *, owner: str, layout: dict[str, int], vibration: int, font_layout: bool
-) -> tuple[PayloadFragment, ...]:
+def control_default_fragments(selection, *, owner: str) -> tuple[PayloadFragment, ...]:
+    layout = controls_layout(selection)
+    # 1 for on, 0 for off.
+    vibration = int(selection.node(*CONTROLS_PATH, "vibration").configured_value == "on")
+    font_layout = font_layout_enabled(selection)
     native = struct.pack("<8H", *(_mask_of(layout, action) for action in range(NATIVE_ACTIONS)))
     reset = struct.pack(
         f"<{len(EDITOR_BUTTONS) + 1}I",
@@ -125,29 +119,18 @@ def control_default_fragments(
 def _font_routine(
     owner: str, symbol: str, font_layout: bool, localized: str, native: int
 ) -> PayloadFragment:
-    """Point at the localized font routine when its layout is built, else the native one."""
-    return PayloadFragment(
-        owner=owner,
-        symbol=symbol,
-        kind="rodata",
-        alignment=4,
-        payload=struct.pack("<I", 0 if font_layout else native),
-        relocations=(
-            (PayloadRelocation(offset=0, kind="abs32", symbol=localized),)
-            if font_layout
-            else ()
-        ),
-    )
+    payload = bytearray(4)
+    relocations = []
+    point_font_routine(payload, relocations, 0, font_layout, localized, native)
+    return PayloadFragment(owner=owner, symbol=symbol, kind="rodata", alignment=4,
+                           payload=bytes(payload), relocations=tuple(relocations))
 
 
 def _added_icon_pixels() -> bytes:
     """Palette indices of the L3, R3, and Select cells, 30x16 each, top row first."""
     payload = bytearray()
     for filename in ADDED_ICONS:
-        with Image.open(Path(__file__).with_name(filename)) as image:
-            if image.size != (30, 16) or image.mode != "P":
-                raise ValueError(f"{filename} must be a 30x16 indexed PNG")
-            pixels = image.tobytes()
+        pixels = indexed_png_pixels(Path(__file__).with_name(filename), (30, 16))
         if max(pixels) >= 16:
             raise ValueError(f"{filename} must use the 16-color TEX_xcommand02 palette")
         payload += pixels

@@ -22,6 +22,7 @@ python scripts/research/menu_input/analyze_menu_input_exports.py `
 `analyze_menu_input_exports.py` and `analyze_mips_face_button_masks.py` find
 regional candidates; `extract_mips_masks_in_ghidra_functions.py` checks named
 functions; the remaining scripts disassemble a bounded range or locate direct
-calls and split address loads. Their matching is structural and heuristic, so
+calls and split address loads; `mips_common.py` holds their shared face-mask
+and word helpers. Their matching is structural and heuristic, so
 promote only candidates confirmed against exact clean inputs. Record native
 relationships in `function_map.tsv`.

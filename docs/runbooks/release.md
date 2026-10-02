@@ -129,7 +129,7 @@ without a release resumes publication.
 - `@builder/infrastructure/orchestration/app.py` owns external configuration preflight, end-user source
   discovery, hashing, locking, staging cleanup, atomic output replacement,
   console messages, and the Enter pause.
-- `@builder/infrastructure/orchestration/release_configuration.py` derives the
+- `@builder/infrastructure/orchestration/catalog.py` also derives the
   public schema and catalog paths from the release definition for packaging
   and incoming user edits.
 - `@builder/infrastructure/orchestration/release_runtime.py` loads the sibling configuration against the

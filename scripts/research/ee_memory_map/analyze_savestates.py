@@ -16,6 +16,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 if str(REPOSITORY_ROOT) not in sys.path:
     sys.path.insert(0, str(REPOSITORY_ROOT))
 
+from na228_builder.infrastructure.common import sha256_hex  # noqa: E402
 from scripts.lib.paths import (  # noqa: E402
     Paths,
     load_paths,
@@ -157,12 +158,6 @@ class StateObservation:
     regions: tuple[RegionObservation, ...]
 
 
-def read_u32(memory: bytes | bytearray | memoryview, address: int) -> int:
-    if address < 0 or address + 4 > len(memory):
-        raise MemoryMapError(f"u32 address is outside EE memory: 0x{address:08X}")
-    return struct.unpack_from("<I", memory, address)[0]
-
-
 def parse_state_identity(path: Path) -> StateIdentity:
     match = STATE_NAME_RE.fullmatch(path.name)
     if match is not None:
@@ -183,68 +178,43 @@ def parse_state_identity(path: Path) -> StateIdentity:
     raise MemoryMapError(f"Unrecognized PCSX2 savestate name: {path.name}")
 
 
-def _e2e_variant_for(path: Path) -> str | None:
+def _capture_variant_for(path: Path) -> str | None:
     state_directory = path.parent
     capture_directory = state_directory.parent
-    suite_directory = capture_directory.parent
-    suites_directory = suite_directory.parent
-    variant_directory = suites_directory.parent
-    jobs_directory = variant_directory.parent
-    if (
-        state_directory.name.casefold() != "sstates"
-        or capture_directory.name.casefold() != "capture"
-        or suites_directory.name.casefold() != "suites"
-        or jobs_directory.name.casefold() != "jobs"
-        or not suite_directory.name
-        or not variant_directory.name
-    ):
-        return None
-    return variant_directory.name
-
-
-def _recording_variant_for(path: Path) -> str | None:
-    state_directory = path.parent
-    phase_directory = state_directory.parent
-    recording_directory = phase_directory.parent
+    recording_directory = capture_directory.parent
     captures_directory = recording_directory.parent
     task_directory = captures_directory.parent
-    work_directory = task_directory.parent
+    if task_directory.name.casefold() == "inputs":
+        task_directory = task_directory.parent
     if (
         state_directory.name.casefold() != "sstates"
         or captures_directory.name.casefold() != "captures"
-        or work_directory.name.casefold() != "work"
-        or not phase_directory.name
+        or task_directory.parent.name.casefold() != "work"
+        or not capture_directory.name
         or not recording_directory.name
         or not task_directory.name
     ):
         return None
-    return phase_directory.name
+    return capture_directory.name
 
 
-def _capture_variant_for(path: Path) -> str | None:
-    return _e2e_variant_for(path) or _recording_variant_for(path)
-
-
-def extract_member(path: Path, member: str, *, expected_size: int | None = None) -> bytes:
-    member_path = path / member
+def extract_ee_memory(path: Path) -> bytes:
     try:
-        data = member_path.read_bytes()
+        data = (path / "eeMemory.bin").read_bytes()
     except OSError as exc:
-        raise MemoryMapError(f"Could not read {member!r} from {path}") from exc
-
-    if expected_size is not None and len(data) != expected_size:
+        raise MemoryMapError(f"Could not read 'eeMemory.bin' from {path}") from exc
+    if len(data) != EE_MEMORY_SIZE:
         raise MemoryMapError(
-            f"{member!r} has size 0x{len(data):X}; expected 0x{expected_size:X}"
+            f"'eeMemory.bin' has size 0x{len(data):X}; expected 0x{EE_MEMORY_SIZE:X}"
         )
     return data
 
 
-def extract_ee_memory(path: Path) -> bytes:
-    return extract_member(path, "eeMemory.bin", expected_size=EE_MEMORY_SIZE)
-
-
 def parse_allocator(memory: bytes | bytearray | memoryview) -> AllocatorObservation:
-    values = {name: read_u32(memory, address) for name, address in HEAP_GLOBALS.items()}
+    values = {
+        name: struct.unpack_from("<I", memory, address)[0]
+        for name, address in HEAP_GLOBALS.items()
+    }
     base = values["base_sentinel"]
     end = values["end_sentinel"]
     heap_end = values["heap_end"]
@@ -274,10 +244,6 @@ def parse_allocator(memory: bytes | bytearray | memoryview) -> AllocatorObservat
     while True:
         if current in visited:
             raise MemoryMapError(f"Allocator chain contains a cycle at 0x{current:08X}")
-        if current < base or current > end or current + 0x10 > len(memory):
-            raise MemoryMapError(
-                f"Allocator node is outside the sentinel range: 0x{current:08X}"
-            )
         visited.add(current)
 
         previous, following, size, raw_flags = struct.unpack_from(
@@ -423,7 +389,7 @@ def observe_region(
         end=end,
         size=end - start,
         nonzero_bytes=sum(value != 0 for value in data),
-        sha256=hashlib.sha256(data).hexdigest().upper(),
+        sha256=sha256_hex(data),
     )
 
 
@@ -506,9 +472,9 @@ def _hex(value: int) -> str:
     return f"0x{value:08X}"
 
 
-def _write_tsv(path: Path, fieldnames: Sequence[str], rows: Iterable[dict[str, object]]) -> None:
+def _write_tsv(path: Path, rows: Sequence[dict[str, object]]) -> None:
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames, delimiter="\t")
+        writer = csv.DictWriter(handle, fieldnames=list(rows[0]), delimiter="\t")
         writer.writeheader()
         writer.writerows(rows)
 
@@ -516,16 +482,6 @@ def _write_tsv(path: Path, fieldnames: Sequence[str], rows: Iterable[dict[str, o
 def write_reports(output_dir: Path, observations: Sequence[StateObservation]) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    inventory_fields = [
-        "variant",
-        "slot",
-        "screen",
-        "serial",
-        "crc",
-        "source_name",
-        "source_size",
-        "source_sha256",
-    ]
     inventory_rows = [
         {
             "variant": item.variant,
@@ -539,29 +495,8 @@ def write_reports(output_dir: Path, observations: Sequence[StateObservation]) ->
         }
         for item in observations
     ]
-    _write_tsv(output_dir / "capture_inventory.tsv", inventory_fields, inventory_rows)
+    _write_tsv(output_dir / "capture_inventory.tsv", inventory_rows)
 
-    runtime_fields = [
-        "variant",
-        "slot",
-        "screen",
-        "overlay",
-        "overlay_kind",
-        "overlay_effective_end",
-        "phase_slack",
-        "heap_user_base",
-        "heap_end",
-        "tracked_bytes",
-        "peak_tracked_bytes",
-        "allocation_count",
-        "total_free",
-        "largest_free",
-        "fragmentation_bytes",
-        "tracked_bytes_walked",
-        "untracked_bytes_walked",
-        "flag_counts",
-        "cached_largest_predecessor",
-    ]
     runtime_rows = []
     for item in observations:
         heap = item.allocator
@@ -593,19 +528,8 @@ def write_reports(output_dir: Path, observations: Sequence[StateObservation]) ->
                 ),
             }
         )
-    _write_tsv(output_dir / "runtime_observations.tsv", runtime_fields, runtime_rows)
+    _write_tsv(output_dir / "runtime_observations.tsv", runtime_rows)
 
-    region_fields = [
-        "variant",
-        "slot",
-        "screen",
-        "region",
-        "start",
-        "end",
-        "size",
-        "nonzero_bytes",
-        "sha256",
-    ]
     region_rows = []
     for item in observations:
         for region in item.regions:
@@ -622,7 +546,7 @@ def write_reports(output_dir: Path, observations: Sequence[StateObservation]) ->
                     "sha256": region.sha256,
                 }
             )
-    _write_tsv(output_dir / "region_observations.tsv", region_fields, region_rows)
+    _write_tsv(output_dir / "region_observations.tsv", region_rows)
 
     summary_observations = []
     for item in observations:

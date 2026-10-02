@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import json
+import shutil
 from dataclasses import asdict
 from pathlib import Path
+from typing import Mapping
 
 from na228_builder.infrastructure.modules.payload_builder.builder import ResidentPayloadConfig
 from na228_builder.patches.settings.ingame.battle_mechanics.items.items_settings import FIELD_ITEMS
@@ -147,3 +150,32 @@ def write_resident_payload_config(
         rendered = value if isinstance(value, str) else f"0x{value:X}"
         lines.append(f"{key}\t{rendered}")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def write_workshop(root: Path, sources: Mapping[str, object]) -> Path:
+    """Create a minimal Workshop with the real catalog code; return its manifest."""
+    real_repository = Path(__file__).resolve().parents[2]
+    real_import = json.loads(
+        (real_repository / "paths.json").read_text(encoding="utf-8")
+    )["imports"]["workshop"]
+    real_lib = (real_repository / real_import).parent / "scripts" / "lib"
+    library = root / "scripts" / "lib"
+    library.mkdir(parents=True)
+    for name in ("paths.py", "game_catalog.py"):
+        shutil.copyfile(real_lib / name, library / name)
+    (root / "source").mkdir()
+    (root / "pcsx2_files").mkdir()
+    manifest = root / "paths.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "roots": {"source": "source", "pcsx2_files": "pcsx2_files"},
+                "files": {"source_catalog": "games.json"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    (root / "games.json").write_text(
+        json.dumps({"sources": sources}), encoding="utf-8"
+    )
+    return manifest

@@ -12,14 +12,14 @@ markers for baseline or candidate validation.
    ```
 
 2. The user gives the agent the recording name. Locate the baseline at
-   `@repository/captures/<recording>/<game>/`.
+   `@marker_captures/<recording>/<game>/`.
 3. If the baseline does not exist, ask the user to create it. If multiple game
    directories make the intended baseline genuinely ambiguous, ask which one
    applies.
-4. Before inspecting the baseline, move it from
-   `@repository/captures/<recording>/<game>/` to
-   `@work/<exact chat title>/inputs/captures/<recording>/<game>/`.
-   Treat its contents as read-only.
+4. Before inspecting the baseline, move `@marker_captures/<recording>/` to
+   `@work/<exact chat title>/inputs/captures/<recording>/`. If it also holds
+   other games' captures, move only `<game>/`. Treat the moved contents as
+   read-only.
 5. The agent does not launch or copy an initial cached ISO and does
    not need its build identity. The baseline captures are the evidence for the
    pre-change behavior.

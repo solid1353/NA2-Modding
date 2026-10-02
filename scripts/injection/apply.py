@@ -42,14 +42,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input", required=True, type=Path)
     parser.add_argument("--port", required=True, type=int)
     parser.add_argument(
-        "--force-writes",
-        action="store_true",
-        help="Replace generated hook writes without checking their prior bytes.",
-    )
-    parser.add_argument(
-        "--resume",
-        action="store_true",
-        help="Resume after applying even when PCSX2 was initially paused.",
+        "--previous",
+        type=Path,
+        help="Manifest of the candidate this watch session last applied; "
+        "its replacements are accepted as live bytes at their addresses.",
     )
     return parser.parse_args()
 
@@ -80,7 +76,6 @@ def word_range(address: int, size: int, label: str) -> None:
 def load_candidate(
     directory: Path,
 ) -> tuple[
-    bytes,
     list[tuple[str, int, bytes]],
     list[tuple[str, int, bytes, bytes]],
 ]:
@@ -137,6 +132,12 @@ def load_candidate(
         word_range(address, size, f"zero_fill[{index}]")
         memory_chunks.append((f"zero fill {index}", address, bytes(size)))
 
+    return memory_chunks, parse_writes(manifest)
+
+
+def parse_writes(
+    manifest: dict[str, object],
+) -> list[tuple[str, int, bytes, bytes]]:
     writes_value = manifest.get("writes", [])
     if not isinstance(writes_value, list):
         raise ValueError("manifest.json: writes must be a list")
@@ -165,34 +166,42 @@ def load_candidate(
                 f"writes[{index}]: expected and replacement sizes differ"
             )
         guarded_writes.append((write_id, address, expected, replacement))
+    return guarded_writes
 
-    return fragment, memory_chunks, guarded_writes
+
+def load_applied_replacements(path: Path | None) -> dict[int, bytes]:
+    if path is None:
+        return {}
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict):
+        raise ValueError(f"{path}: root must be an object")
+    return {
+        address: replacement
+        for _write_id, address, _expected, replacement in parse_writes(manifest)
+    }
 
 
 def main() -> int:
     args = parse_args()
     if not 1 <= args.port <= 65535:
         raise ValueError("PINE port is outside 1..65535")
-    _fragment, memory_chunks, guarded_writes = load_candidate(args.input)
+    memory_chunks, guarded_writes = load_candidate(args.input)
+    applied = load_applied_replacements(args.previous)
 
     with PineClient(args.port) as client:
         initial_state = client.status()
         if initial_state == "shutdown":
             raise RuntimeError("PCSX2 virtual machine is shut down")
         was_running = initial_state == "running"
-        resume_after = was_running or args.resume
         if was_running:
             client.pause()
         try:
             pending_writes: list[tuple[str, int, bytes]] = []
             for write_id, address, expected, replacement in guarded_writes:
-                if getattr(args, "force_writes", False):
-                    pending_writes.append((write_id, address, replacement))
-                    continue
                 live = client.read(address, len(expected))
                 if live == replacement:
                     continue
-                if live != expected:
+                if live != expected and live != applied.get(address):
                     raise RuntimeError(
                         f"{write_id}: live guard mismatch at "
                         f"0x{address:08X}: {live.hex().upper()}"
@@ -217,20 +226,14 @@ def main() -> int:
 
             client.clear_execution_caches()
         finally:
-            if resume_after:
+            if was_running:
                 client.resume()
 
-    if getattr(args, "force_writes", False):
-        print(
-            f"Applied {len(memory_chunks)} memory ranges and "
-            f"{len(pending_writes)} hook writes"
-        )
-    else:
-        print(
-            f"Applied {len(memory_chunks)} memory ranges and "
-            f"{len(pending_writes)} guarded writes; "
-            f"{len(guarded_writes) - len(pending_writes)} already active"
-        )
+    print(
+        f"Applied {len(memory_chunks)} memory ranges and "
+        f"{len(pending_writes)} guarded writes; "
+        f"{len(guarded_writes) - len(pending_writes)} already active"
+    )
     return 0
 
 

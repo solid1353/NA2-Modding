@@ -25,6 +25,7 @@ class ComposerTests(unittest.TestCase):
         result = compose_assembly_plan(
             source=source,
             output_boot_path="SLOP_NA2.28",
+            identity_owner="image_assembler",
             payloads={},
             owners={},
             insertions={},

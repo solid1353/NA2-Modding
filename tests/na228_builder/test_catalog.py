@@ -11,7 +11,6 @@ from unittest import mock
 
 from na228_builder.infrastructure.modules.binary_patcher import adapters
 from na228_builder.infrastructure.orchestration import catalog, catalog_format, jsonc
-from na228_builder.infrastructure.orchestration.release_configuration import public_configuration_text
 from na228_builder.patches.settings.mod_settings.mod_settings import (
     mod_settings_state_fragment,
 )
@@ -630,7 +629,7 @@ class CatalogTests(unittest.TestCase):
             definition = Path(directory) / "release.jsonc"
             definition.write_text(source, encoding="utf-8")
             self.assertEqual(
-                public_configuration_text(
+                catalog.public_configuration_text(
                     definition, {"localization": "en", "auto_loading": True}
                 ),
                 expected,
@@ -1205,27 +1204,6 @@ class CatalogTests(unittest.TestCase):
             self.assertTrue(repository_selection.node_enabled("features", "feature", "option"))
             self.assertTrue(repository_selection.node_enabled("features", "feature", "private"))
 
-    def test_mips_lui_float32_adapter_preserves_instruction_and_rejects_bad_guards(self) -> None:
-        replacements = {
-            quarter / 4: adapters.apply_adapter(
-                "mips_lui_float32", "803F023C", quarter / 4
-            )
-            for quarter in range(61)
-        }
-        self.assertEqual(replacements[1], "803F023C")
-        self.assertEqual(replacements[1.25], "A03F023C")
-        self.assertEqual(replacements[3], "4040023C")
-        self.assertEqual(replacements[15], "7041023C")
-        self.assertTrue(all(value.endswith("023C") for value in replacements.values()))
-        with self.assertRaisesRegex(ValueError, "cannot encode"):
-            adapters.apply_adapter("mips_lui_float32", "803F023C", 0.1)
-        with self.assertRaisesRegex(ValueError, "four-byte"):
-            adapters.apply_adapter("mips_lui_float32", "803F", 3)
-        with self.assertRaisesRegex(ValueError, "not a MIPS LUI"):
-            adapters.apply_adapter("mips_lui_float32", "00000000", 3)
-        with self.assertRaisesRegex(ValueError, "Unsupported"):
-            adapters.apply_adapter("unknown", "803F023C", 3)
-
     def test_ascii_fixed_adapter_encodes_equal_length_values(self) -> None:
         expected, replacement = adapters.apply_fixed_adapter(
             "ascii_fixed",
@@ -1414,9 +1392,9 @@ class CatalogTests(unittest.TestCase):
             )
             (root / "asset.bin").write_bytes(b"\xAA\xBB")
             (catalog_path.parent / "infrastructure" / "targets.tsv").write_text(
-                "target_id\troot_id\trole\tpath\texpected_size\t"
+                "target_id\troot_id\tpath\texpected_size\t"
                 "expected_sha256\n"
-                "test_target\ttest\tdestination\tdata.bin\t16\t"
+                "test_target\ttest\tdata.bin\t16\t"
                 + "0" * 64
                 + "\n",
                 encoding="utf-8",
@@ -1485,9 +1463,9 @@ class CatalogTests(unittest.TestCase):
                 edits={"feature.table": table},
             )
             (catalog_path.parent / "infrastructure" / "targets.tsv").write_text(
-                "target_id\troot_id\trole\tpath\texpected_size\t"
+                "target_id\troot_id\tpath\texpected_size\t"
                 "expected_sha256\n"
-                "test_target\ttest\tdestination\tdata.bin\t64\t"
+                "test_target\ttest\tdata.bin\t64\t"
                 + "0" * 64
                 + "\n",
                 encoding="utf-8",
@@ -1618,9 +1596,9 @@ class CatalogTests(unittest.TestCase):
                 edits={"feature.grouped": grouped},
             )
             (catalog_path.parent / "infrastructure" / "targets.tsv").write_text(
-                "target_id\troot_id\trole\tpath\texpected_size\t"
+                "target_id\troot_id\tpath\texpected_size\t"
                 "expected_sha256\n"
-                "test_target\ttest\tdestination\tdata.bin\t16\t"
+                "test_target\ttest\tdata.bin\t16\t"
                 + "0" * 64
                 + "\n",
                 encoding="utf-8",

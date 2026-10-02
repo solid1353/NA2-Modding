@@ -11,10 +11,16 @@ from __future__ import annotations
 import argparse
 import difflib
 import re
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-FUNCTION_RE = re.compile(r"(?m)^(?:[\w *]+)\s+(FUN_[0-9a-f]{8})\([^\n]*\)\s*\n\s*\{")
+REPOSITORY = Path(__file__).resolve().parents[3]
+if str(REPOSITORY) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY))
+
+from scripts.research.menu_input.mips_common import FUNCTION_RE  # noqa: E402
+
 MASK_RE = re.compile(r"&\s*(0x10|0x20|0x40|0x80)(?:[uUlL]+)?\b")
 MASKS = ("0x10", "0x20", "0x40", "0x80")
 

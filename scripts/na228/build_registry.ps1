@@ -1,4 +1,5 @@
 Set-StrictMode -Version Latest
+. (Join-Path $PSScriptRoot '..\lib\builder_module.ps1')
 
 function Invoke-Na2BuildRegistry {
     [CmdletBinding()]
@@ -8,7 +9,6 @@ function Invoke-Na2BuildRegistry {
         [Parameter(Mandatory)][string]$Registry,
         [Parameter(Mandatory)][string]$BuildRoot,
         [Parameter(Mandatory)][string]$Repository,
-        [Parameter(Mandatory)][string]$PythonRunner,
         [string]$Na2Iso,
         [string]$Configuration,
         [string]$ConfigurationId,
@@ -49,20 +49,11 @@ function Invoke-Na2BuildRegistry {
         $arguments += @('--configuration-id', $ConfigurationId)
     }
 
-    Push-Location $Repository
-    try {
-        $output = @(
-            & $PythonRunner -PackageSet builder `
-                -Module 'na228_builder.infrastructure.orchestration.build_preflight' `
-                -ArgumentList $arguments -NoBytecode 2>&1
-        )
-        $exitCode = $LASTEXITCODE
-    }
-    finally {
-        Pop-Location
-    }
-    if ($exitCode -ne 0) {
-        throw "NA2 build registry failed to execute (exit $exitCode): $($output -join "`n")"
+    $execution = Invoke-Na2BuilderModule -Repository $Repository `
+        -Module build_preflight -ArgumentList $arguments
+    $output = $execution.Output
+    if ($execution.ExitCode -ne 0) {
+        throw "NA2 build registry failed to execute (exit $($execution.ExitCode)): $($output -join "`n")"
     }
     if ($output.Count -ne 1) {
         throw 'NA2 build registry did not return exactly one JSON result.'
@@ -86,7 +77,6 @@ function Resolve-Na2CachedBuild {
         -Registry (Join-Path $Paths.logs 'na228\preflight\registry.json') `
         -BuildRoot $Paths.build `
         -Repository $Paths.repository `
-        -PythonRunner (Join-Path ([string]$Paths.scripts) 'lib\run_python.ps1') `
         -ConfigurationId $Configuration
     if ($resolved.status -ne 'resolved') {
         throw "No cached build exists for '$Configuration'."

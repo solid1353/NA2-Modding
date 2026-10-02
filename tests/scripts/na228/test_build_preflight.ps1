@@ -26,7 +26,8 @@ try {
     [IO.File]::WriteAllText((Join-Path $repository 'na228_builder\configurations\base.jsonc'), '{}')
     [IO.File]::WriteAllText((Join-Path $repository 'source\na2.iso'), 'source')
     [IO.File]::WriteAllText((Join-Path $repository 'source\nun5.iso'), 'donor')
-    [IO.File]::WriteAllText((Join-Path $repository 'scripts\lib\run_log.ps1'), '')
+    Copy-Item -LiteralPath (Join-Path $sourceRepository 'scripts\lib\builder_module.ps1') `
+        -Destination (Join-Path $repository 'scripts\lib\builder_module.ps1')
     [IO.File]::WriteAllText((Join-Path $repository 'scripts\lib\paths.ps1'), @'
 function Get-Na2Paths {
     $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))

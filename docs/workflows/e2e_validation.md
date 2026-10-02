@@ -20,7 +20,7 @@ tracked suite set so unintended changes elsewhere can surface.
 ## Evidence
 
 For suite `<suite>` and capture `<slot>`, accepted visual history is in the
-nested Git repository under `e2e/captures/<suite>/`:
+nested Git repository under `@e2e_captures/<suite>/`:
 
 - `screenshots/`: separate `page_<n>_a_reference.png` and
   `page_<n>_b_current.png` grid series.
@@ -58,7 +58,7 @@ task.
 2. Make only the implementation/asset changes authorized for the task.
 3. Run the current global E2E entrypoint documented in
    [`e2e/README.md`](../../e2e/README.md).
-4. Inspect the complete Git diff in the nested `e2e/captures/` repository.
+4. Inspect the complete Git diff in the nested `@e2e_captures/` repository.
 5. Inspect every changed capture or artifact itself. Unchanged artifacts need no
    manual review unless there is a concrete reason.
 6. Treat an expected visual change with no corresponding diff as evidence that
@@ -82,7 +82,7 @@ When `ver` is received:
 
 1. Finalize accepted patch-specific tests and documentation.
 2. Refresh both repositories and confirm every pending change under
-   `e2e/captures/` belongs to the accepted result. If
+   `@e2e_captures/` belongs to the accepted result. If
    unaccepted concurrent E2E changes are present, wait until only accepted state
    would be committed.
 3. Run `na228 e2e commit` before committing the main repository. This command

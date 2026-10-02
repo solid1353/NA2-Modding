@@ -1,1 +1,0 @@
-"""Font regression tests."""

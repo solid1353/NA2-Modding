@@ -33,7 +33,6 @@ $configurationSelectors = @(
 $launchProfiles = @(
     $paths.settings.launch_settings.PSObject.Properties |
         Where-Object { $_.Name -cne 'default' } |
-        Where-Object { $_.Value -is [pscustomobject] } |
         ForEach-Object { [string]$_.Name }
 )
 
@@ -105,6 +104,23 @@ function Test-Na228GameToken {
     return $null -ne $paths.games.Aliases.PSObject.Properties[$candidate]
 }
 
+function Invoke-Na228ConfigurationBuild {
+    param(
+        [Parameter(Mandatory)][string]$Configuration,
+        [hashtable]$Options = @{}
+    )
+
+    $runArguments = @{ Configuration = $Configuration } + $Options
+    if ($force) {
+        $runArguments.Force = $true
+    }
+    if (-not [string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)) {
+        $runArguments.LogDirectory = (Get-Na2TaskContext `
+            -TaskRoot $env:NA228_TASK_WORK_ROOT -Paths $paths).Logs
+    }
+    return [string](& (Join-Path $paths.scripts 'na228\run.ps1') @runArguments).OutputIso
+}
+
 $buildOptions = $null
 if ($args.Count -gt 0 -and [string]$args[0] -ieq 'build') {
     $buildOptions = Get-Na2BuildOptions -Tokens ([object[]]@($args))
@@ -113,27 +129,29 @@ if ($args.Count -gt 0 -and [string]$args[0] -ieq 'build') {
 else {
     [string[]]$commandTokens = @($args)
 }
-$turboTokens = @($commandTokens | Where-Object { $_ -ieq '-t' })
-if ($turboTokens.Count -gt 1) {
-    throw '-t may be specified only once.'
+$flagCounts = @{ '-t' = 0; '-u' = 0; '-f' = 0 }
+$commandTokens = @(
+    foreach ($token in $commandTokens) {
+        # -t and -u ignore case; -f does not.
+        if ($token -ieq '-t' -or $token -ieq '-u' -or $token -ceq '-f') {
+            $flagCounts[$token.ToLowerInvariant()]++
+        }
+        else {
+            $token
+        }
+    }
+)
+foreach ($flag in '-t', '-u', '-f') {
+    if ($flagCounts[$flag] -gt 1) {
+        throw "$flag may be specified only once."
+    }
 }
-$turbo = $turboTokens.Count -eq 1
-$commandTokens = @($commandTokens | Where-Object { $_ -ine '-t' })
-$unlimitedTokens = @($commandTokens | Where-Object { $_ -ieq '-u' })
-if ($unlimitedTokens.Count -gt 1) {
-    throw '-u may be specified only once.'
-}
-$unlimited = $unlimitedTokens.Count -eq 1
-$commandTokens = @($commandTokens | Where-Object { $_ -ine '-u' })
+$turbo = $flagCounts['-t'] -eq 1
+$unlimited = $flagCounts['-u'] -eq 1
+$force = $flagCounts['-f'] -eq 1
 if ($turbo -and $unlimited) {
     throw 'Use only one of -t or -u.'
 }
-$forceTokens = @($commandTokens | Where-Object { $_ -ceq '-f' })
-if ($forceTokens.Count -gt 1) {
-    throw '-f may be specified only once.'
-}
-$force = $forceTokens.Count -eq 1
-$commandTokens = @($commandTokens | Where-Object { $_ -cne '-f' })
 $mode = if ($commandTokens.Count -gt 0) {
     $commandTokens[0].ToLowerInvariant()
 }
@@ -145,10 +163,6 @@ $arguments = @(
         $commandTokens[1..($commandTokens.Count - 1)]
     }
 )
-
-if ($mode -eq 'worker') {
-    throw 'Use na228 build <configuration>.'
-}
 
 if (($turbo -or $unlimited) -and $mode -in @(
     'help',
@@ -198,11 +212,6 @@ if ($mode -eq 'e2e') {
     $visualRename = Join-Path $visualScripts 'rename_suite.ps1'
     $visualDelete = Join-Path $visualScripts 'delete_suites.ps1'
     $visualCommit = Join-Path $visualScripts 'commit_captures.ps1'
-    foreach ($required in $visualRun, $visualCreate, $visualRename, $visualDelete, $visualCommit) {
-        if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
-            throw "The E2E infrastructure is unavailable: $required"
-        }
-    }
 
     $runUsage = 'Usage: na228 e2e <all|suite [args...] ...>'
     $createUsage = 'Usage: na228 e2e create <all|suite [args...] ...> [-noref]'
@@ -278,27 +287,18 @@ if ($mode -eq 'build') {
         throw 'Usage: na228 build [config] [-f] [-postfix name] [-overrides hashtable]'
     }
     $selector = if ($arguments.Count -eq 1) { $arguments[0] } else { 'b' }
-    $configuration = Resolve-Na2BuildConfiguration `
-        -Selector $selector -Configurations $buildConfigurations
-    $runArguments = @{
-        Action = 'configuration-build'
-        Configuration = [string]$configuration.Name
+    $configuration = $buildConfigurations.BySelector[$selector.Trim().ToLowerInvariant()]
+    if ([string]::IsNullOrWhiteSpace([string]$configuration)) {
+        throw "Unknown build configuration: $selector"
     }
-    if ($force) {
-        $runArguments.Force = $true
-    }
+    $buildArguments = @{}
     if ($null -ne $buildOptions.Postfix) {
-        $runArguments.Postfix = $buildOptions.Postfix
+        $buildArguments.Postfix = $buildOptions.Postfix
     }
     if ($null -ne $buildOptions.OverridesJson) {
-        $runArguments.OverridesJson = $buildOptions.OverridesJson
+        $buildArguments.OverridesJson = $buildOptions.OverridesJson
     }
-    if (-not [string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)) {
-        $task = Get-Na2TaskContext -TaskRoot $env:NA228_TASK_WORK_ROOT -Paths $paths
-        $runArguments.LogDirectory = $task.Logs
-    }
-    $result = & (Join-Path $paths.scripts 'na228\run.ps1') @runArguments
-    Write-Output $result.OutputIso
+    Invoke-Na228ConfigurationBuild -Configuration $configuration -Options $buildArguments
     return
 }
 
@@ -388,20 +388,7 @@ foreach ($selection in $gameSelections) {
     }
     $configuration = [string]$selection.Configuration
     $image = if ([bool]$selection.Build) {
-        $runArguments = @{
-            Action = 'configuration-build'
-            Configuration = $configuration
-        }
-        if ($force) {
-            $runArguments.Force = $true
-        }
-        if (-not [string]::IsNullOrWhiteSpace($env:NA228_TASK_WORK_ROOT)) {
-            $task = Get-Na2TaskContext `
-                -TaskRoot $env:NA228_TASK_WORK_ROOT -Paths $paths
-            $runArguments.LogDirectory = $task.Logs
-        }
-        $buildResult = & (Join-Path $paths.scripts 'na228\run.ps1') @runArguments
-        [string]$buildResult.OutputIso
+        Invoke-Na228ConfigurationBuild -Configuration $configuration
     }
     else {
         [string](Resolve-Na2CachedBuild `
@@ -414,6 +401,7 @@ $launchParameters = @{
     Games = @($games)
     ProjectRoot = $paths.repository
     InputRecordingsRoot = $paths.pcsx2_input_recordings
+    CaptureRoot = $paths.marker_captures
 }
 $workshopLaunchArguments = [Collections.Generic.List[string]]::new()
 $launchProfile = $null
@@ -494,28 +482,20 @@ elseif ($unlimited) {
     $launchParameters.Unlimited = $true
 }
 else {
+    $launchProfileName = if ($null -ne $launchProfile) { [string]$launchProfile.Name }
+    $settingsConfigurations = if ($launchConfigurations.Count -eq 0) {
+        @('')
+    }
+    else {
+        @($launchConfigurations | Select-Object -Unique)
+    }
     $resolvedLaunchSettings = @(
-        @(
-            if ($launchConfigurations.Count -eq 0) {
-                Get-Na2LaunchSettings `
-                    -Paths $paths `
-                    -LaunchProfile $(
-                        if ($null -eq $launchProfile) { $null }
-                        else { [string]$launchProfile.Name }
-                    )
-            }
-            else {
-                $launchConfigurations | Select-Object -Unique | ForEach-Object {
-                    Get-Na2LaunchSettings `
-                        -Configuration $_ `
-                        -Paths $paths `
-                        -LaunchProfile $(
-                            if ($null -eq $launchProfile) { $null }
-                            else { [string]$launchProfile.Name }
-                        )
-                }
-            }
-        )
+        foreach ($settingsConfiguration in $settingsConfigurations) {
+            Get-Na2LaunchSettings `
+                -Configuration $settingsConfiguration `
+                -Paths $paths `
+                -LaunchProfile $launchProfileName
+        }
     )
     $launchFrameCounts = @(
         $resolvedLaunchSettings.StartupFastForwardFrames | Select-Object -Unique

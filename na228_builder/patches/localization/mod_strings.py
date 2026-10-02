@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import re
 from dataclasses import dataclass, field
+from functools import cache
 from pathlib import Path
 from string import Formatter
 
@@ -27,25 +28,34 @@ def message(identifier: str, **arguments: object) -> Message:
     return Message(identifier, arguments)
 
 
+@cache
+def _table(language: str) -> dict[str, str]:
+    with TABLE_PATH.open(encoding="utf-8-sig", newline="") as handle:
+        reader = csv.DictReader(handle, delimiter="\t")
+        if not reader.fieldnames or language not in reader.fieldnames:
+            raise ValueError(f"mod_strings.tsv has no {language!r} column")
+        rows = {}
+        for row in reader:
+            identifier = row["id"]
+            value = row[language]
+            if not identifier or identifier in rows or not value:
+                raise ValueError(f"Invalid or missing mod string: {identifier!r}/{language}")
+            rows[identifier] = value.replace("\\n", "\n")
+    return rows
+
+
+def _fields(template: str) -> set[str]:
+    return {name for _, name, _, _ in Formatter().parse(template) if name is not None}
+
+
 class ModStrings:
     def __init__(self, selection, *, retail_ids=frozenset(), retail_arguments=None):
         # Strings that own a retail slot, and the values for their named fields.
         self.retail_ids = frozenset(retail_ids)
         self.retail_arguments = dict(retail_arguments or {})
-        self.language = next(node.configured_value for node in selection.nodes
-                             if node.path == ("features", "localization"))
+        self.language = selection.node("features", "localization").configured_value
         self.encoding = "cp932" if self.language == "jp" else "cp1252"
-        with TABLE_PATH.open(encoding="utf-8-sig", newline="") as handle:
-            reader = csv.DictReader(handle, delimiter="\t")
-            if not reader.fieldnames or self.language not in reader.fieldnames:
-                raise ValueError(f"mod_strings.tsv has no {self.language!r} column")
-            self.rows = {}
-            for row in reader:
-                identifier = row["id"]
-                value = row[self.language]
-                if not identifier or identifier in self.rows or not value:
-                    raise ValueError(f"Invalid or missing mod string: {identifier!r}/{self.language}")
-                self.rows[identifier] = value.replace("\\n", "\n")
+        self.rows = _table(self.language)
 
     def resolve(self, value: Message | str) -> str:
         if isinstance(value, str):
@@ -53,7 +63,7 @@ class ModStrings:
         template = self.rows[value.id]
         arguments = {key: self.resolve(argument) if isinstance(argument, Message) else argument
                      for key, argument in value.arguments.items()}
-        fields = {name for _, name, _, _ in Formatter().parse(template) if name is not None}
+        fields = _fields(template)
         if fields != set(arguments):
             raise ValueError(f"Mod string {value.id!r} arguments differ: {fields} != {set(arguments)}")
         return template.format(**arguments)
@@ -70,8 +80,7 @@ class ModStrings:
     def retail_payload(self, identifier: str) -> bytes:
         """A retail replacement: line breaks become the NUL between message parts, and an
         empty part ends the sequence."""
-        template = self.rows[identifier]
-        fields = {name for _, name, _, _ in Formatter().parse(template) if name is not None}
+        fields = _fields(self.rows[identifier])
         if fields - set(self.retail_arguments):
             raise ValueError(f"Mod string {identifier!r} has unknown fields: {sorted(fields)}")
         text = self.resolve(Message(identifier, {name: self.retail_arguments[name] for name in fields}))
@@ -92,8 +101,7 @@ class ModStrings:
         if symbol == "mod_number_handicap":
             return b"".join(self.encode(f"{value}-{10 - value}") + b"\0"
                             for value in range(11))
-        return self.encode(self.rows[symbol.removeprefix("mod_text_").replace("__", ".")]
-                           .replace("{0}", "\x01")) + b"\0"
+        return self.encode(self.rows[identifier].replace("{0}", "\x01")) + b"\0"
 
     def fragments(self, fragments, patches):
         """Embed only text and number glyphs referenced by selected payloads."""

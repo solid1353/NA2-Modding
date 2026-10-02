@@ -6,6 +6,7 @@ import struct
 from dataclasses import dataclass, replace
 from pathlib import Path
 
+from ...infrastructure.common import parse_int
 from ...infrastructure.modules.binary_patcher import engine as binary_patcher
 from ...infrastructure.modules.payload_builder.operations import SymbolicPatch
 from ...infrastructure.modules.runtime_injector.engine import (
@@ -49,23 +50,12 @@ def owned_retail_strings() -> tuple[OwnedRetailString, ...]:
             target=target,
             offset=offset,
             mode=row["mode"].lower(),
-            capacity=importer.parse_int(row["capacity"], label),
+            capacity=parse_int(row["capacity"], label),
             source=row["source"],
             reference_refs=importer.parse_reference_refs(row["reference_refs"], label),
         ))
     return tuple(owned)
 
-
-def _clean_targets(source_root: Path) -> dict[str, bytes]:
-    source = importer.source_from(
-        source_root if source_root.is_dir() else None,
-        source_root if source_root.is_file() else None,
-        "NA2",
-    )
-    return {
-        target: source.read(candidates, f"NA2 {path}")
-        for target, (path, candidates) in importer.TARGET_SPECS.items()
-    }
 
 
 def _references(entry: OwnedRetailString, clean: dict[str, bytes], address: int,
@@ -95,7 +85,7 @@ def retail_string_package(
     owned = owned_retail_strings()
     if not owned:
         return declaration
-    clean = _clean_targets(source_root)
+    clean = importer.read_clean_targets(source_root)
     targets = binary_patcher.load_targets(targets_path)
     used_targets = dict(declaration.targets)
     edits = list(declaration.edits)

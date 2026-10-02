@@ -38,80 +38,6 @@ class BuildConfigurationCliTests(unittest.TestCase):
             output.getvalue(),
         )
 
-    def test_compose_only_skips_output_staging_and_configuration_logs(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            workspace = Path(directory).resolve()
-            source_iso = workspace / "source.iso"
-            source_iso.write_bytes(b"source")
-            configuration_path = workspace / "configurations" / "default.json"
-            configuration = SimpleNamespace(
-                configuration_id="default", features=(), modules=()
-            )
-            plan = SimpleNamespace(
-                replacements=(object(), object()),
-                insertions=(object(),),
-                renames=(object(),),
-            )
-            composed = build_configuration.ConfigurationCompositionResult(
-                results=(),
-                payload_result=None,
-                composition=SimpleNamespace(
-                    plan=plan,
-                    identity_edits=({"target": "SYSTEM.CNF"},),
-                ),
-                insertion_owners={},
-            )
-            arguments = [
-                "build_configuration",
-                "--source",
-                str(source_iso),
-                "--configuration",
-                str(configuration_path),
-                "--compose-only",
-            ]
-
-            output = io.StringIO()
-            with (
-                patch.object(sys, "argv", arguments),
-                patch.object(
-                    build_configuration,
-                    "PATHS",
-                    new=SimpleNamespace(
-                        repository=workspace,
-                        path=lambda root, *children: workspace.joinpath(
-                            root, *children
-                        ),
-                    ),
-                ),
-                patch.object(
-                    build_configuration,
-                    "load_configuration",
-                    return_value=configuration,
-                ),
-                patch.object(
-                    build_configuration,
-                    "compose_configuration_candidate",
-                    return_value=composed,
-                ) as compose,
-                patch.object(
-                    build_configuration, "build_configuration_candidate"
-                ) as build,
-                redirect_stdout(output),
-            ):
-                self.assertEqual(build_configuration.main(), 0)
-
-            compose.assert_called_once_with(
-                source_iso=source_iso,
-                configuration=configuration,
-            )
-            build.assert_not_called()
-            self.assertIn("identity (1 edits)", output.getvalue())
-            self.assertIn(
-                "Validated composition: 2 replacements, 1 insertions, "
-                "1 renames; no ISO staged.",
-                output.getvalue(),
-            )
-
     def test_normal_cli_logs_requested_output_not_staging_candidate(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             workspace = Path(directory).resolve()
@@ -128,7 +54,6 @@ class BuildConfigurationCliTests(unittest.TestCase):
                 payload=b"payload",
                 load_base=0,
                 entrypoint=0,
-                memory_end=7,
                 used_end=7,
                 symbols={},
                 map_rows=(),
@@ -196,7 +121,6 @@ class BuildConfigurationCliTests(unittest.TestCase):
                 "Verified ISO candidate: candidate.iso",
                 output.getvalue(),
             )
-
 
 
 if __name__ == "__main__":

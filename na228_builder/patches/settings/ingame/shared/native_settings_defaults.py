@@ -122,24 +122,10 @@ PRACTICE_OPPONENT_STORAGE_FIELDS = {
 }
 
 
-def _selected_node(selection: CatalogSelection, path: tuple[str, ...]):
-    matches = [node for node in selection.nodes if node.path == path]
-    if len(matches) != 1:
-        raise ValueError(f"Catalog selection has no unique {'.'.join(path)} node")
-    return matches[0]
-
-
-def _configured_object(
-    selection: CatalogSelection,
-    path: tuple[str, ...],
-) -> dict[str, object]:
-    return _selected_node(selection, path).configured_value
-
-
 def battle_configured_row_defaults(
     selection: CatalogSelection,
 ) -> dict[int, int]:
-    configured = _configured_object(selection, BATTLE_SETTINGS_PATH)
+    configured = selection.node(*BATTLE_SETTINGS_PATH).configured_value
     return {
         BATTLE_ROW_IDS[name]: BATTLE_ROW_VALUE_MAPS[name][value]
         for name, value in configured.items()
@@ -150,7 +136,7 @@ def battle_configured_row_defaults(
 def practice_configured_row_defaults(
     selection: CatalogSelection,
 ) -> dict[int, int]:
-    configured = _configured_object(selection, PRACTICE_SETTINGS_PATH)
+    configured = selection.node(*PRACTICE_SETTINGS_PATH).configured_value
     defaults: dict[int, int] = {}
     for values, row_maps, row_ids in (
         (
@@ -185,13 +171,12 @@ def _encode_storage(
         if name not in fields:
             continue
         field = fields[name]
-        encoded = (
-            100
-            if name == "time" and raw_value == "unlimited"
-            else int(raw_value)
-            if name == "time"
-            else row_value_maps[name][raw_value]
-        )
+        if name != "time":
+            encoded = row_value_maps[name][raw_value]
+        elif raw_value == "unlimited":
+            encoded = 100
+        else:
+            encoded = int(raw_value)
         values[field.offset] = (
             values[field.offset]
             | ((encoded << field.shift) & field.mask)
@@ -204,10 +189,9 @@ def native_settings_defaults_fragment(
     selection: CatalogSelection,
     *,
     owner: str,
-    symbol: str = "native_settings_defaults",
 ) -> PayloadFragment:
-    battle_configured = _configured_object(selection, BATTLE_SETTINGS_PATH)
-    practice_configured = _configured_object(selection, PRACTICE_SETTINGS_PATH)
+    battle_configured = selection.node(*BATTLE_SETTINGS_PATH).configured_value
+    practice_configured = selection.node(*PRACTICE_SETTINGS_PATH).configured_value
     battle_values, battle_masks = _encode_storage(
         battle_configured, BATTLE_ROW_VALUE_MAPS, BATTLE_STORAGE_FIELDS
     )
@@ -253,7 +237,7 @@ def native_settings_defaults_fragment(
     )
     return PayloadFragment(
         owner=owner,
-        symbol=symbol,
+        symbol="native_settings_defaults",
         kind="data",
         alignment=4,
         payload=payload,

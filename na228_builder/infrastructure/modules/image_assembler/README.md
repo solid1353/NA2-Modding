@@ -8,10 +8,11 @@ applies guarded equal-size file replacements, inserts declared files into
 verified free extents, mirrors file-tree changes across ISO9660 and UDF, and
 reparses the complete result before returning it for promotion.
 
-`operations.py` defines immutable file replacements, insertions, renames, and
-donor file/range references. `assembler.py` owns candidate creation and final image
-verification. `iso9660.py` and `udf.py` implement the physical filesystem
-metadata work. Feature packages never own or enable this infrastructure.
+`operations.py` defines immutable file replacements, insertions, and renames.
+`assembler.py` normalizes and validates the plan's paths once, and owns
+candidate creation and final image verification. `iso9660.py` and `udf.py`
+implement the physical filesystem metadata work on those normalized paths.
+Feature packages never own or enable this infrastructure.
 
 ## Mod directory
 

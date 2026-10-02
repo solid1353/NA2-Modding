@@ -11,8 +11,8 @@ na228 build [config] [-f] [-postfix name] [-overrides hashtable]
 
 Every top-level JSONC under `configurations/` is discovered automatically. A
 configuration without an alias uses its filename stem as its command selector.
-Root `project.json` assigns `b`, `r`, `j`, `t`, and `e` to the base, release,
-Japanese, test, and E2E configurations; those configurations are selected only
+Root `project.json` assigns `b`, `r`, `j`, `s`, and `e` to the base, release,
+Japanese, support, and E2E configurations; those configurations are selected only
 by their aliases. `na228 build r` uses the public values in `release.jsonc` and
 the hidden defaults in `base.jsonc`, as release packaging does. `na228 r`
 selects its cached build, and `na228 br` builds or reuses it before launch.

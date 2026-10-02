@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory)]
-    [ValidateSet('CurrentPrepare', 'ReferencePrepare', 'All', 'Pair', 'Blend', 'Diff')]
+    [ValidateSet('CurrentPrepare', 'ReferencePrepare', 'All')]
     [string]$Action,
     [Parameter(Mandatory)][string]$Suite,
     [Parameter(Mandatory)][string]$Transaction,
@@ -17,55 +17,30 @@ $suitePublish = Join-Path (Join-Path $Transaction 'publish') $context.SuiteRelat
 $screenshotStage = Join-Path $suitePublish $script:E2eScreenshotGridDirectory
 $metadataPath = Join-Path $suiteStage 'postprocess.json'
 
-if ($Action -in @('CurrentPrepare', 'ReferencePrepare')) {
-    if ($Action -ceq 'CurrentPrepare') {
-        $suiteJob = Join-Path `
-            (Join-Path (Join-Path (Join-Path $Transaction 'jobs') 'current') 'suites') `
-            $context.SuiteRelativePath
-        $capturedRoot = Join-Path $suiteJob 'capture'
-        $capturedTier = 'Current'
+if ($Action -ne 'All') {
+    if ([string]::IsNullOrWhiteSpace($CapturedRoot)) {
+        throw "$Action requires CapturedRoot."
     }
-    else {
-        if ([string]::IsNullOrWhiteSpace($CapturedRoot)) {
-            throw 'ReferencePrepare requires CapturedRoot.'
-        }
-        $capturedRoot = [IO.Path]::GetFullPath($CapturedRoot)
-        $capturedTier = 'Reference'
-    }
-    $capturedScreenshots = $capturedRoot
+    $capturedScreenshots = [IO.Path]::GetFullPath($CapturedRoot)
     if ($context.Generated) {
         $capturedScreenshots = Join-Path $capturedScreenshots 'screenshots'
     }
 
     New-VisualRegressionPagedScreenshotGridStage `
-        -Suite $Suite `
         -ExistingDirectory $context.Capture.ScreenshotGrids `
         -CapturedScreenshotDirectory $capturedScreenshots `
         -OutputDirectory $screenshotStage `
-        -CapturedTier $capturedTier
+        -CapturedTier $Action.Substring(0, $Action.Length - 'Prepare'.Length)
     $metadata = [ordered]@{
         suite = $context.Suite
-        has_reference = @(
-            Get-ChildItem `
-                -LiteralPath $screenshotStage `
-                -Filter 'page_*_a_reference.png' `
-                -File `
-                -ErrorAction SilentlyContinue
-        ).Count -gt 0
-        has_current = @(
-            Get-ChildItem `
-                -LiteralPath $screenshotStage `
-                -Filter 'page_*_b_current.png' `
-                -File `
-                -ErrorAction SilentlyContinue
-        ).Count -gt 0
+        has_reference = (Get-VisualRegressionPngCount `
+            -Directory $screenshotStage `
+            -Filter 'page_*_a_reference.png') -gt 0
+        has_current = (Get-VisualRegressionPngCount `
+            -Directory $screenshotStage `
+            -Filter 'page_*_b_current.png') -gt 0
     }
-    [void](New-Item -ItemType Directory -Path $suiteStage -Force)
-    [IO.File]::WriteAllText(
-        $metadataPath,
-        (($metadata | ConvertTo-Json -Depth 3) + "`n"),
-        [Text.UTF8Encoding]::new($false)
-    )
+    Write-VisualRegressionJson -Path $metadataPath -Value $metadata
     [pscustomobject]$metadata
     return
 }
@@ -80,8 +55,7 @@ if (-not $metadata.has_reference -or -not $metadata.has_current) {
 
 & $context.Comparator `
     -PairedGridDirectory $screenshotStage `
-    -OutputDirectory $suitePublish `
-    -Kind $Action
+    -OutputDirectory $suitePublish
 if ($LASTEXITCODE -ne 0) {
     throw "$Action grid generation failed with exit code $LASTEXITCODE."
 }

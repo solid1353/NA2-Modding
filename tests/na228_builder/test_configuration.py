@@ -13,6 +13,7 @@ from na228_builder.infrastructure.orchestration.configuration import (
     load_configuration,
     configuration_resource_files,
 )
+from tests.na228_builder._fixtures import write_workshop
 
 
 def write_tsv(path: Path, fields: list[str], rows: list[dict[str, object]]) -> None:
@@ -46,11 +47,17 @@ class ConfigurationTests(unittest.TestCase):
             "game_settings",
             "input_profiles",
             "memory_cards",
+            "games/NA2",
         ):
             (pcsx2 / directory).mkdir(parents=True)
+        write_workshop(
+            root / "workshop",
+            {"NA2": {"serial": "SLPS-25837", "crc": "C0659AD1"}},
+        )
         (root / "paths.json").write_text(
             json.dumps(
                 {
+                    "imports": {"workshop": "workshop/paths.json"},
                     "roots": {
                         "source": "source",
                         "build": "build",
@@ -60,21 +67,7 @@ class ConfigurationTests(unittest.TestCase):
                     },
                     "files": {
                         "placeholder": "placeholder",
-                        "source_catalog": "games.json",
                         "project_settings": "project.json",
-                    },
-                }
-            ),
-            encoding="utf-8",
-        )
-        (root / "games.json").write_text(
-            json.dumps(
-                {
-                    "sources": {
-                        "NA2": {
-                            "serial": "SLPS-25837",
-                            "crc": "C0659AD1",
-                        },
                     },
                 }
             ),

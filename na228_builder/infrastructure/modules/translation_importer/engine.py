@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 from __future__ import annotations
 
 import csv
@@ -9,14 +8,15 @@ import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Sequence
 
-from ..image_assembler.iso9660 import Iso9660
+from ...common import file_sha256, parse_int, read_tsv, sha256_hex
+from ...orchestration.source_media import read_root_file
 
 TARGET_SPECS = {
-    "BTL": ("PRG/BTL.BIN", ["PRG/BTL.BIN", "BTL.BIN"]),
-    "ETC": ("PRG/ETC.BIN", ["PRG/ETC.BIN", "ETC.BIN"]),
-    "SLPS": ("SLPS_258.37", ["SLPS_258.37"]),
+    "BTL": "PRG/BTL.BIN",
+    "ETC": "PRG/ETC.BIN",
+    "SLPS": "SLPS_258.37",
 }
 DONOR_IDS = frozenset(
     {"NUN5_BTL", "NUN5_ETC", "NUN5_TEXTENG", "NUN5_SLES"}
@@ -97,9 +97,6 @@ class TranslationImportPlan:
     references: tuple["Reference", ...]
     resolved_texts: dict[str, str]
     resolved_sequences: dict[str, tuple[str, ...]]
-    source_texts: dict[str, str]
-    donor_texts: dict[str, str]
-    materialized_templates: dict[str, str]
     clean_targets: dict[str, bytes]
     summary: dict[str, object]
 
@@ -108,58 +105,80 @@ class TranslationImportPlan:
 class Reference:
     mapping_id: str
     target: str
-    target_file_offset: int
     target_runtime_address: int
     resolution: str
     reference_binary: str
     reference_file_offsets: tuple[int, ...]
     parent_mapping_id: str | None
-    parent_file_offset: int | None
     parent_runtime_address: int | None
 
-
-class IsoSource:
-    def __init__(self, path: Path) -> None:
-        self.path = path.resolve()
-        self.image = Iso9660(self.path)
-
-    def read(self, candidates: Sequence[str], label: str) -> bytes:
-        normalized = [normalize_path(value) for value in candidates]
-        for candidate in normalized:
-            record = self.image.by_path.get(candidate)
-            if record and not record.is_dir:
-                return self.image.read_file(record)
-        basenames = {value.rsplit("/", 1)[-1] for value in normalized}
-        matches = [
-            record
-            for path, record in self.image.by_path.items()
-            if not record.is_dir and path.rsplit("/", 1)[-1] in basenames
-        ]
-        if len(matches) == 1:
-            return self.image.read_file(matches[0])
-        raise FileNotFoundError(f"Could not uniquely locate {label} in {self.path}")
+    @property
+    def pointer(self) -> int:
+        """The clean value of every pointer this reference redirects."""
+        if self.parent_runtime_address is not None:
+            return self.parent_runtime_address
+        return self.target_runtime_address
 
 
-class FolderSource:
-    def __init__(self, root: Path) -> None:
-        self.root = root.resolve()
-        if not self.root.is_dir():
-            raise FileNotFoundError(self.root)
-        self.files = {normalize_path(path.relative_to(self.root).as_posix()): path
-                      for path in self.root.rglob("*") if path.is_file()}
+@dataclass(frozen=True)
+class AdaptedText:
+    """A mapping's clean target text and its adapted cp1252 replacement."""
 
-    def read(self, candidates: Sequence[str], label: str) -> bytes:
-        normalized = [normalize_path(value) for value in candidates]
-        for candidate in normalized:
-            path = self.files.get(candidate)
-            if path:
-                return path.read_bytes()
-        basenames = {value.rsplit("/", 1)[-1] for value in normalized}
-        matches = [path for name, path in self.files.items()
-                   if name.rsplit("/", 1)[-1] in basenames]
-        if len(matches) == 1:
-            return matches[0].read_bytes()
-        raise FileNotFoundError(f"Could not uniquely locate {label} under {self.root}")
+    target_text: str
+    fragments: tuple[str, ...]
+    encoded: tuple[bytes, ...]
+
+
+class AdaptedTexts:
+    """Adapt each mapping's resolved replacement to its clean target once.
+
+    Reading the clean slot or sequence, checking the declared source, adapting
+    donor markup, rejecting placeholder donors, and encoding happen on first use.
+    """
+
+    def __init__(self, plan: TranslationImportPlan) -> None:
+        self._plan = plan
+        self._mappings = {str(row["id"]): row for row in plan.text_mappings}
+        self._adapted: dict[str, AdaptedText] = {}
+
+    def __getitem__(self, mapping_id: str) -> AdaptedText:
+        if mapping_id not in self._adapted:
+            self._adapted[mapping_id] = self._adapt(self._mappings[mapping_id])
+        return self._adapted[mapping_id]
+
+    def _adapt(self, row: dict[str, object]) -> AdaptedText:
+        mapping_id = str(row["id"])
+        target = str(row["target"])
+        offset = int(row["target_offset"])
+        capacity = int(row["capacity"])
+        label = f"{mapping_id} {target} 0x{offset:X}"
+        clean = self._plan.clean_targets[target]
+        if row["mode"] == "sequence":
+            target_fragments, _ = read_target_sequence(clean, offset, capacity, label)
+            target_text = "<NUL>".join(target_fragments)
+            replacements = self._plan.resolved_sequences[mapping_id]
+        else:
+            target_text, _ = read_target_slot(clean, offset, capacity, label)
+            replacements = (self._plan.resolved_texts[mapping_id],)
+        validate_declared_source(str(row["source"]), target_text, label)
+        fragments = tuple(
+            adapt_source_markup(text, target_text, label) for text in replacements
+        )
+        if row["mode"] != "sequence":
+            validate_semantic_replacement(fragments[0], target_text, label)
+        return AdaptedText(
+            target_text=target_text,
+            fragments=fragments,
+            encoded=tuple(fragment.encode("cp1252") for fragment in fragments),
+        )
+
+
+def read_clean_targets(source_root: Path) -> dict[str, bytes]:
+    """Read every translation target from an NA2 extraction or original ISO."""
+    return {
+        target: read_root_file(source_root, path)
+        for target, path in TARGET_SPECS.items()
+    }
 
 
 def normalize_path(value: str) -> str:
@@ -184,51 +203,6 @@ def normalize_fullwidth_ascii(text: str) -> str:
     return "".join(result)
 
 
-def source_from(folder: Optional[Path], iso: Optional[Path], label: str):
-    if folder is not None and folder.is_dir():
-        return FolderSource(folder)
-    if iso is not None and iso.is_file():
-        return IsoSource(iso)
-    supplied = []
-    if folder is not None:
-        supplied.append(f"folder={folder}")
-    if iso is not None:
-        supplied.append(f"iso={iso}")
-    raise FileNotFoundError(f"{label} source not found ({', '.join(supplied) or 'no path supplied'})")
-
-
-def parse_apply(value: str) -> list[str]:
-    aliases = {"ELF": "SLPS", "SLES": "SLPS", "EXE": "SLPS"}
-    selected = []
-    for part in value.replace(";", ",").split(","):
-        item = part.strip().upper()
-        if not item or item in {"NONE", "NO", "OFF"}:
-            continue
-        if item == "ALL":
-            selected.extend(TARGET_SPECS)
-        else:
-            selected.append(aliases.get(item, item))
-    unknown = sorted(set(selected) - set(TARGET_SPECS))
-    if unknown:
-        raise ValueError("Unsupported target(s): " + ", ".join(unknown))
-    selected = list(dict.fromkeys(selected))
-    if not selected:
-        raise ValueError("No translation targets selected")
-    return selected
-
-
-def parse_int(value: str, label: str) -> int:
-    text = value.strip()
-    if not text:
-        raise ValueError(f"{label}: missing integer")
-    try:
-        result = int(text, 0)
-    except ValueError as exc:
-        raise ValueError(f"{label}: invalid integer {text!r}") from exc
-    if result < 0:
-        raise ValueError(f"{label}: negative integer")
-    return result
-
 
 def parse_arguments(value: str, label: str) -> dict[str, str]:
     result = {}
@@ -245,21 +219,12 @@ def parse_arguments(value: str, label: str) -> dict[str, str]:
     return result
 
 
-def parse_display_basis(value: str, label: str) -> tuple[str, ...]:
-    del label
+def parse_display_basis(value: str) -> tuple[str, ...]:
     return tuple(item.strip() for item in value.split("|") if item.strip())
 
 
-def count_display_bases(
-    mappings: Sequence[dict[str, object]],
-    selected: set[str],
-) -> Counter[str]:
-    return Counter(
-        basis
-        for row in mappings
-        if row["target"] in selected
-        for basis in row["display_basis"]
-    )
+def count_display_bases(mappings: Sequence[dict[str, object]]) -> Counter[str]:
+    return Counter(basis for row in mappings for basis in row["display_basis"])
 
 
 def parse_ref(
@@ -305,25 +270,7 @@ def parse_reference_refs(
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
-    with path.open("r", encoding="utf-8-sig", newline="") as handle:
-        reader = csv.DictReader(handle, delimiter="\t")
-        if reader.fieldnames != MAPPING_FIELDS:
-            raise ValueError(
-                f"{path.name} must contain exactly these columns in this order: "
-                + "\t".join(MAPPING_FIELDS)
-            )
-        verbatim_fields = {"source", "donor", "prefix"}
-        rows = [
-            {
-                key: (
-                    value or ""
-                    if key in verbatim_fields
-                    else (value or "").strip()
-                )
-                for key, value in raw.items()
-            }
-            for raw in reader
-        ]
+    rows = read_tsv(path, MAPPING_FIELDS, verbatim={"source", "donor", "prefix"})
     ids = [row["id"] for row in rows]
     if any(not value for value in ids) or len(ids) != len(set(ids)):
         raise ValueError(f"{path.name} contains empty or duplicate ids")
@@ -344,7 +291,6 @@ def references_from_mappings(
         label = f"{mapping_id} reference inventory"
         if not reference_refs:
             raise ValueError(f"{label}: parent mappings require reference_refs")
-        parent_offset_value: int | None = None
         parent_runtime_value: int | None = None
         if parent_id_value is not None:
             parent = by_id.get(parent_id_value)
@@ -352,9 +298,8 @@ def references_from_mappings(
                 raise ValueError(f"{label}: missing parent {parent_id_value}")
             if parent["target"] != row["target"]:
                 raise ValueError(f"{label}: parent target differs")
-            parent_offset_value = int(parent["target_offset"])
             parent_runtime_value = (
-                TARGET_RUNTIME_BASES[str(row["target"])] + parent_offset_value
+                TARGET_RUNTIME_BASES[str(row["target"])] + int(parent["target_offset"])
             )
         grouped: dict[str, list[int]] = defaultdict(list)
         for reference_binary, reference_offset in reference_refs:
@@ -364,7 +309,6 @@ def references_from_mappings(
                 Reference(
                     mapping_id=mapping_id,
                     target=str(row["target"]),
-                    target_file_offset=int(row["target_offset"]),
                     target_runtime_address=(
                         TARGET_RUNTIME_BASES[str(row["target"])]
                         + int(row["target_offset"])
@@ -377,7 +321,6 @@ def references_from_mappings(
                     reference_binary=reference_binary,
                     reference_file_offsets=tuple(grouped[reference_binary]),
                     parent_mapping_id=parent_id_value,
-                    parent_file_offset=parent_offset_value,
                     parent_runtime_address=parent_runtime_value,
                 )
             )
@@ -386,55 +329,23 @@ def references_from_mappings(
 
 def validate_references(
     references: tuple[Reference, ...],
-    mappings: Sequence[dict[str, object]],
     clean_targets: dict[str, bytes],
 ) -> dict[str, int]:
-    text_by_id = {str(row["id"]): row for row in mappings}
+    """Require every declared pointer to hold its string's clean address."""
     pointer_sites: set[tuple[str, int]] = set()
     for row in references:
-        mapping = text_by_id[row.mapping_id]
-        if mapping["target"] != row.target:
-            raise ValueError(f"{row.mapping_id}: target differs from reference inventory")
-        if int(mapping["target_offset"]) != row.target_file_offset:
-            raise ValueError(
-                f"{row.mapping_id}: target offset differs from reference inventory"
-            )
-        expected_runtime = TARGET_RUNTIME_BASES[row.target] + row.target_file_offset
-        if expected_runtime != row.target_runtime_address:
-            raise ValueError(f"{row.mapping_id}: target runtime address is inconsistent")
-        expected_pointer = row.parent_runtime_address or row.target_runtime_address
-        if row.resolution == "parent_message":
-            assert row.parent_mapping_id is not None
-            assert row.parent_file_offset is not None
-            assert row.parent_runtime_address is not None
-            parent = text_by_id.get(row.parent_mapping_id)
-            if parent is None:
-                raise ValueError(
-                    f"{row.mapping_id}: missing parent {row.parent_mapping_id}"
-                )
-            if parent["target"] != row.target:
-                raise ValueError(f"{row.mapping_id}: parent target differs")
-            if int(parent["target_offset"]) != row.parent_file_offset:
-                raise ValueError(f"{row.mapping_id}: parent offset differs")
-            if (
-                TARGET_RUNTIME_BASES[row.target] + row.parent_file_offset
-                != row.parent_runtime_address
-            ):
-                raise ValueError(
-                    f"{row.mapping_id}: parent runtime address is inconsistent"
-                )
         clean = clean_targets[row.reference_binary]
         for offset in row.reference_file_offsets:
             if offset + 4 > len(clean):
                 raise ValueError(
                     f"{row.mapping_id}: pointer offset is outside "
-                    f"{TARGET_SPECS[row.reference_binary][0]}"
+                    f"{TARGET_SPECS[row.reference_binary]}"
                 )
             actual = int.from_bytes(clean[offset:offset + 4], "little")
-            if actual != expected_pointer:
+            if actual != row.pointer:
                 raise ValueError(
                     f"{row.mapping_id}: pointer at 0x{offset:X} is 0x{actual:X}, "
-                    f"expected 0x{expected_pointer:X}"
+                    f"expected 0x{row.pointer:X}"
                 )
             pointer_sites.add((row.reference_binary, offset))
     counts = Counter(row.resolution for row in references)
@@ -733,7 +644,7 @@ def parse_mappings(
             raise ValueError(f"{label}: enabled must be 0 or 1")
         if not row["display_context"]:
             raise ValueError(f"{label}: display_context is required")
-        display_basis = parse_display_basis(row["display_basis"], label)
+        display_basis = parse_display_basis(row["display_basis"])
         mode = row["mode"].lower()
         if mode not in VALID_MODES:
             raise ValueError(f"{label}: unsupported mode {mode!r}")
@@ -944,16 +855,9 @@ def validate_semantic_replacement(source_text: str, target_text: str, label: str
 
 def resolve_text_materializations(
     mappings: Sequence[dict[str, object]],
-    selected: set[str],
     donor_catalog: Sequence[dict[str, object]] | None = None,
-) -> tuple[
-    dict[str, str],
-    dict[str, tuple[str, ...]],
-    dict[str, str],
-    dict[str, str],
-    dict[str, str],
-]:
-    """Resolve canonical replacement templates for downstream consumers."""
+) -> tuple[dict[str, str], dict[str, tuple[str, ...]]]:
+    """Resolve each mapping's replacement text or sequence fragments."""
     donor_by_ref: dict[str, str] = {}
     for row in donor_catalog if donor_catalog is not None else mappings:
         donor_ref = str(row["donor_ref"])
@@ -965,22 +869,13 @@ def resolve_text_materializations(
             raise ValueError(
                 f"{row['id']}: donor reference {donor_ref!r} has conflicting text"
             )
-    source_texts: dict[str, str] = {}
-    donor_texts: dict[str, str] = {}
     resolved_texts: dict[str, str] = {}
     resolved_sequences: dict[str, tuple[str, ...]] = {}
-    materialized_templates: dict[str, str] = {}
     for row in mappings:
-        if str(row["target"]) not in selected:
-            continue
         mapping_id = str(row["id"])
-        template = select_replacement_template(row)
-        prefix = normalize_fullwidth_ascii(str(row["prefix"]))
-        materialized = prefix + template
-        source_texts[mapping_id] = str(row["source"])
-        donor_texts[mapping_id] = str(row["donor"])
-        materialized_templates[mapping_id] = materialized
         if row["mode"] == "sequence":
+            template = select_replacement_template(row)
+            prefix = normalize_fullwidth_ascii(str(row["prefix"]))
             if row["transform"] in {"memory_card_space", "join_br_parts"}:
                 sequence = (resolve_replacement_text(row, mapping_id, donor_by_ref),)
             elif row["transform"] == "split_br_sequence":
@@ -999,30 +894,22 @@ def resolve_text_materializations(
                 if sequence:
                     sequence = (prefix + sequence[0], *sequence[1:])
             else:
-                sequence = tuple(materialized.split("<NUL>"))
+                sequence = tuple((prefix + template).split("<NUL>"))
             if not sequence or any(not value for value in sequence):
                 raise ValueError(f"{mapping_id}: sequence contains an empty fragment")
             resolved_sequences[mapping_id] = sequence
         else:
             resolved = resolve_replacement_text(row, mapping_id, donor_by_ref)
             resolved_texts[mapping_id] = resolved
-    return (
-        resolved_texts,
-        resolved_sequences,
-        source_texts,
-        donor_texts,
-        materialized_templates,
-    )
+    return resolved_texts, resolved_sequences
 
 
 def apply_text_mappings(
-    mappings,
-    selected,
-    clean_targets,
-    output_targets,
-    resolved_texts,
-    resolved_sequences,
-    excluded_mapping_ids: frozenset[str] = frozenset(),
+    mappings: Sequence[dict[str, object]],
+    adapted: AdaptedTexts,
+    clean_targets: dict[str, bytes],
+    output_targets: dict[str, bytearray],
+    excluded_mapping_ids: frozenset[str],
 ):
     annotations = []
     occupied: dict[str, list[tuple[int, int, str]]] = defaultdict(list)
@@ -1031,7 +918,7 @@ def apply_text_mappings(
     for row in mappings:
         target = str(row["target"])
         mapping_id = str(row["id"])
-        if target not in selected or mapping_id in excluded_mapping_ids:
+        if mapping_id in excluded_mapping_ids:
             continue
         offset = int(row["target_offset"])
         capacity = int(row["capacity"])
@@ -1039,36 +926,18 @@ def apply_text_mappings(
         for start, end, prior in occupied[target]:
             if offset < end and start < offset + capacity:
                 raise ValueError(f"{label}: overlaps {prior} at 0x{start:X}-0x{end:X}")
+        text = adapted[mapping_id]
         if row["mode"] == "sequence":
-            target_fragments, _ = read_target_sequence(clean_targets[target], offset, capacity, label)
-            official_fragments = resolved_sequences[mapping_id]
-            target_context = "<NUL>".join(target_fragments)
-            validate_declared_source(str(row["source"]), target_context, label)
-            replacement_fragments = [
-                adapt_source_markup(fragment, target_context, label) for fragment in official_fragments
-            ]
-            write_sequence(
-                output_targets[target],
-                offset,
-                capacity,
-                [fragment.encode("cp1252") for fragment in replacement_fragments],
-            )
-            target_text = target_context
-            replacement_text = "<NUL>".join(replacement_fragments)
+            write_sequence(output_targets[target], offset, capacity, list(text.encoded))
         else:
-            official = resolved_texts[mapping_id]
-            target_text, _ = read_target_slot(clean_targets[target], offset, capacity, label)
-            validate_declared_source(str(row["source"]), target_text, label)
-            validate_semantic_replacement(official, target_text, label)
-            replacement_text = adapt_source_markup(official, target_text, label)
-            replacement = replacement_text.encode("cp1252")
-            write_slot(output_targets[target], offset, capacity, replacement)
+            write_slot(output_targets[target], offset, capacity, text.encoded[0])
         occupied[target].append((offset, offset + capacity, str(row["id"])))
         mapping_kind = "official donor translation"
         if str(row["prefix"]):
             mapping_kind = f"prefixed {mapping_kind}"
-        annotations.append({"path": TARGET_SPECS[target][0], "start": offset, "end": offset + capacity,
-                            "source_text": target_text, "replacement_text": replacement_text,
+        annotations.append({"path": TARGET_SPECS[target], "start": offset, "end": offset + capacity,
+                            "source_text": text.target_text,
+                            "replacement_text": "<NUL>".join(text.fragments),
                             "mapping_id": str(row["id"]),
                             "reason": f"Apply {mapping_kind} for {row['id']}."})
         stats["mapped"] += 1
@@ -1121,10 +990,8 @@ def diff_rows(path: str, clean: bytes, output: bytes, annotations) -> list[dict[
 def write_import_tsv(
     path: Path,
     rows: list[dict[str, str]],
-    *,
-    allow_empty: bool = False,
 ) -> None:
-    if not rows and not allow_empty:
+    if not rows:
         raise ValueError("No translation imports were generated")
     fields = [
         "import_id", "group_id", "path", "offset", "expected_hex",
@@ -1146,84 +1013,56 @@ def write_json(path: Path, value: object) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def _build_translation_import_plan(
+def build_translation_import_plan(
     *,
-    na2_iso: Optional[Path] = None,
-    na2_folder: Optional[Path] = None,
+    source_root: Path,
     data_root: Path,
-    apply: str = "BTL,ETC,SLPS",
-    mapping_filename: str,
-    summary_mode: str,
 ) -> TranslationImportPlan:
-    """Load one mappings-schema translation table without choosing placement."""
-    selected_list = parse_apply(apply)
-    selected = set(selected_list)
-    na2 = source_from(na2_folder, na2_iso, "NA2")
-    clean_targets = {
-        target: na2.read(TARGET_SPECS[target][1], f"NA2 {TARGET_SPECS[target][0]}")
-        for target in selected_list
-    }
+    """Load accepted canonical translations for every target without choosing placement."""
+    clean_targets = read_clean_targets(source_root)
     actual_hashes = {
         f"NA2_{target}": sha1(data) for target, data in clean_targets.items()
     }
-    for key, expected in EXPECTED_SHA1.items():
-        actual = actual_hashes.get(key)
-        if actual is not None and actual != expected:
-            raise ValueError(f"Unexpected {key} SHA-1: {actual}; expected {expected}")
+    for key, actual in actual_hashes.items():
+        if actual != EXPECTED_SHA1[key]:
+            raise ValueError(
+                f"Unexpected {key} SHA-1: {actual}; expected {EXPECTED_SHA1[key]}"
+            )
 
-    data_root = data_root.resolve()
-    mapping_path = data_root / mapping_filename
-    actual_mapping_hash = hashlib.sha256(mapping_path.read_bytes()).hexdigest().upper()
+    mapping_path = data_root.resolve() / "mappings.tsv"
     rows_raw = read_rows(mapping_path)
-    mappings = parse_mappings(rows_raw, table_name=mapping_filename)
+    mappings = parse_mappings(rows_raw, table_name=mapping_path.name)
     validate_structured_message_families(
         mappings["text"],
-        table_name=mapping_filename,
+        table_name=mapping_path.name,
     )
-    references = tuple(
-        reference
-        for reference in references_from_mappings(mappings["text"])
-        if reference.target in selected
-    )
-    reference_counts = validate_references(
-        references, mappings["text"], clean_targets
-    )
-    (
-        resolved_texts,
-        resolved_sequences,
-        source_texts,
-        donor_texts,
-        materialized_templates,
-    ) = resolve_text_materializations(
+    references = references_from_mappings(mappings["text"])
+    reference_counts = validate_references(references, clean_targets)
+    resolved_texts, resolved_sequences = resolve_text_materializations(
         mappings["text"],
-        selected,
         donor_catalog=tuple(mappings["text"]) + tuple(mappings["inactive"]),
     )
-    import_targets: dict[str, dict[str, object]] = {}
-    for target in selected_list:
-        path = TARGET_SPECS[target][0]
-        import_targets[path] = {
+    import_targets = {
+        path: {
             "root_id": "na2",
             "path": path,
             "expected_size": len(clean_targets[target]),
-            "expected_sha256": hashlib.sha256(clean_targets[target]).hexdigest().upper(),
+            "expected_sha256": sha256_hex(clean_targets[target]),
         }
+        for target, path in TARGET_SPECS.items()
+    }
 
-    active_by_mode = Counter(
-        row["mode"] for row in mappings["text"] if row["target"] in selected
-    )
+    active_by_mode = Counter(row["mode"] for row in mappings["text"])
     active_display_contexts = Counter(
-        str(row["display_context"])
-        for row in mappings["text"]
-        if row["target"] in selected
+        str(row["display_context"]) for row in mappings["text"]
     )
-    active_display_bases = count_display_bases(mappings["text"], selected)
+    active_display_bases = count_display_bases(mappings["text"])
     summary: dict[str, object] = {
-        "mode": summary_mode,
-        f"{mapping_path.stem}_sha256": actual_mapping_hash,
+        "mode": "canonical translation declarations",
+        f"{mapping_path.stem}_sha256": file_sha256(mapping_path),
         "table_rows": len(rows_raw),
         "inactive_rows": len(mappings["inactive"]),
-        "targets": selected_list,
+        "targets": list(TARGET_SPECS),
         "output": {
             "import_rows": 0,
             "text_mappings_applied": 0,
@@ -1244,42 +1083,18 @@ def _build_translation_import_plan(
         references=references,
         resolved_texts=resolved_texts,
         resolved_sequences=resolved_sequences,
-        source_texts=source_texts,
-        donor_texts=donor_texts,
-        materialized_templates=materialized_templates,
         clean_targets=clean_targets,
         summary=summary,
-    )
-
-
-def build_translation_import_plan(
-    *,
-    na2_iso: Optional[Path] = None,
-    na2_folder: Optional[Path] = None,
-    data_root: Path,
-    apply: str = "BTL,ETC,SLPS",
-) -> TranslationImportPlan:
-    """Load accepted canonical translations without choosing placement."""
-    return _build_translation_import_plan(
-        na2_iso=na2_iso,
-        na2_folder=na2_folder,
-        data_root=data_root,
-        apply=apply,
-        mapping_filename="mappings.tsv",
-        summary_mode="canonical translation declarations",
     )
 
 
 def compile_inline_imports(
     plan: TranslationImportPlan,
     *,
+    adapted: AdaptedTexts,
     excluded_mapping_ids: frozenset[str] = frozenset(),
 ) -> TranslationImportPlan:
-    """Compile every selected mapping not assigned to external storage."""
-    selected_list = [
-        target for target in TARGET_SPECS if target in plan.clean_targets
-    ]
-    selected = set(selected_list)
+    """Compile every mapping not assigned to external storage."""
     unknown = excluded_mapping_ids - {
         str(row["id"]) for row in plan.text_mappings
     }
@@ -1288,31 +1103,26 @@ def compile_inline_imports(
             "unknown externally placed mapping ids: " + ", ".join(sorted(unknown))
         )
     output_targets = {
-        target: bytearray(plan.clean_targets[target]) for target in selected_list
+        target: bytearray(clean) for target, clean in plan.clean_targets.items()
     }
     annotations, text_stats, text_contexts = apply_text_mappings(
         plan.text_mappings,
-        selected,
+        adapted,
         plan.clean_targets,
         output_targets,
-        plan.resolved_texts,
-        plan.resolved_sequences,
         excluded_mapping_ids,
     )
     import_rows: list[dict[str, str]] = []
     translated_hashes: dict[str, dict[str, object]] = {}
-    for target in selected_list:
-        path = TARGET_SPECS[target][0]
+    for target, clean in plan.clean_targets.items():
+        path = TARGET_SPECS[target]
         output = bytes(output_targets[target])
-        rows = diff_rows(
-            path, plan.clean_targets[target], output, annotations
-        )
-        for row in rows:
+        for row in diff_rows(path, clean, output, annotations):
             row["import_id"] = f"{target}-I{len(import_rows) + 1:04d}"
             row["group_id"] = target
             import_rows.append(row)
         translated_hashes[path] = {
-            "source_sha1": sha1(plan.clean_targets[target]),
+            "source_sha1": sha1(clean),
             "translated_sha1": sha1(output),
             "size": len(output),
         }

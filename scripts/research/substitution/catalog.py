@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 import re
 import struct
@@ -16,6 +15,7 @@ from typing import Iterable, Mapping, Sequence, TextIO
 REPOSITORY = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPOSITORY))
 
+from na228_builder.infrastructure.common import sha256_hex
 from scripts.lib.paths import load_paths
 
 
@@ -30,31 +30,11 @@ TIMING_FLAG_MASK = 0x000C0000
 SUBSTITUTION_BLOCK_FLAG_MASK = 0x02008000
 COMMAND_CONTEXT = "Command Chart > character move name"
 NA2_SLPS_REF = re.compile(r"^NA2_SLPS@0x([0-9A-Fa-f]+)$")
-AUXILIARY_CHARACTER_ROWS: tuple[Mapping[str, str], ...] = (
-    {
-        "character": "Auxiliary fighter 0x1A",
-        "id": "0x1A",
-        "record_address": "0x0059C7A0",
-        "catalog_scope": "auxiliary",
-    },
-    {
-        "character": "Auxiliary fighter 0x1D",
-        "id": "0x1D",
-        "record_address": "0x0059CF80",
-        "catalog_scope": "auxiliary",
-    },
-    {
-        "character": "Auxiliary fighter 0x1E",
-        "id": "0x1E",
-        "record_address": "0x0059D750",
-        "catalog_scope": "auxiliary",
-    },
-    {
-        "character": "Auxiliary fighter 0x1F",
-        "id": "0x1F",
-        "record_address": "0x0059DF20",
-        "catalog_scope": "auxiliary",
-    },
+AUXILIARY_CHARACTER_RECORDS = (
+    ("0x1A", "0x0059C7A0"),
+    ("0x1D", "0x0059CF80"),
+    ("0x1E", "0x0059D750"),
+    ("0x1F", "0x0059DF20"),
 )
 RUNTIME_TIMING_MUTATIONS: Mapping[tuple[int, int], Mapping[str, object]] = {
     (0x40, 0x2B): {
@@ -118,35 +98,19 @@ RUNTIME_TIMING_MUTATIONS: Mapping[tuple[int, int], Mapping[str, object]] = {
 
 
 def _require_range(data: bytes, offset: int, size: int, label: str) -> None:
-    if offset < 0 or size < 0 or offset + size > len(data):
+    if offset < 0 or offset + size > len(data):
         raise ValueError(
             f"{label} range 0x{offset:X}..0x{offset + size:X} "
             f"is outside the clean ELF size 0x{len(data):X}"
         )
 
 
-def _u16(data: bytes, offset: int, label: str) -> int:
-    _require_range(data, offset, 2, label)
-    return struct.unpack_from("<H", data, offset)[0]
+def _is_exceptional(record: Mapping[str, object]) -> bool:
+    return record["raw_timing"] != 0 or record["effective_timing"] != 0
 
 
-def _u32(data: bytes, offset: int, label: str) -> int:
-    _require_range(data, offset, 4, label)
-    return struct.unpack_from("<I", data, offset)[0]
-
-
-def _i8(data: bytes, offset: int, label: str) -> int:
-    _require_range(data, offset, 1, label)
-    return struct.unpack_from("<b", data, offset)[0]
-
-
-def _u8(data: bytes, offset: int, label: str) -> int:
-    _require_range(data, offset, 1, label)
-    return data[offset]
-
-
-def _hex(value: int, width: int = 0) -> str:
-    return f"0x{value:0{width}X}"
+def _is_blocked(record: Mapping[str, object]) -> bool:
+    return record["substitution_block_flags"] != "0x00000000"
 
 
 def _parse_virtual(value: str, label: str) -> int:
@@ -231,11 +195,6 @@ def scan_action_catalog(
         if not character_name:
             raise ValueError("character catalog row has no character name")
         catalog_scope = character.get("catalog_scope", "primary")
-        if catalog_scope not in {"primary", "auxiliary"}:
-            raise ValueError(
-                f"{character_name} has an invalid catalog scope: "
-                f"{catalog_scope!r}"
-            )
         try:
             character_id = int(character.get("id", ""), 0)
         except ValueError as exc:
@@ -247,12 +206,9 @@ def scan_action_catalog(
             f"{character_name} metadata",
         )
         metadata_offset = metadata_address - VIRTUAL_TO_FILE_DELTA
-        count = _u16(elf, metadata_offset + 0x28, f"{character_name} count")
-        primary_base = _u32(
-            elf, metadata_offset + 0x2C, f"{character_name} primary base"
-        )
-        optional_base = _u32(
-            elf, metadata_offset + 0x30, f"{character_name} optional base"
+        _require_range(elf, metadata_offset + 0x28, 0x0C, f"{character_name} metadata")
+        count, _, primary_base, optional_base = struct.unpack_from(
+            "<HHII", elf, metadata_offset + 0x28
         )
         if not count:
             raise ValueError(f"{character_name} has an empty action table")
@@ -269,34 +225,19 @@ def scan_action_catalog(
                 ACTION_RECORD_SIZE,
                 f"{character_name} action {index}",
             )
-            name_pointer = _u32(
-                elf, record_offset + 0x08, f"{character_name} action {index} name"
-            )
-            name_source_offset = name_pointer - VIRTUAL_TO_FILE_DELTA
             name_field_offset = record_offset + 0x08
-            flags_10 = _u32(
-                elf, record_offset + 0x10, f"{character_name} action {index} flags"
-            )
-            flags_14 = _u32(
-                elf,
-                record_offset + 0x14,
-                f"{character_name} action {index} eligibility flags",
-            )
-            raw_timing = _i8(
-                elf,
-                record_offset + TIMING_OFFSET,
-                f"{character_name} action {index} timing",
+            (name_pointer,) = struct.unpack_from("<I", elf, name_field_offset)
+            name_source_offset = name_pointer - VIRTUAL_TO_FILE_DELTA
+            flags_10, flags_14 = struct.unpack_from("<II", elf, record_offset + 0x10)
+            (raw_timing,) = struct.unpack_from(
+                "<b", elf, record_offset + TIMING_OFFSET
             )
             effective_timing, policy = _timing_policy(raw_timing, flags_10)
             rng_modulus, rng_passing_words = _negative_rng_policy(effective_timing)
-            response_selector = _u8(
-                elf,
-                record_offset + RESPONSE_SELECTOR_OFFSET,
-                f"{character_name} action {index} response selector",
-            )
+            response_selector = elf[record_offset + RESPONSE_SELECTOR_OFFSET]
             substitution_block_flags = flags_14 & SUBSTITUTION_BLOCK_FLAG_MASK
             runtime_mutation = RUNTIME_TIMING_MUTATIONS.get(
-                (character_id, index)
+                (character_id, index), {}
             )
 
             mapping = by_reference.get(name_field_offset)
@@ -311,18 +252,16 @@ def scan_action_catalog(
                     "character": character_name,
                     "character_id": character_id,
                     "catalog_scope": catalog_scope,
-                    "metadata_address": _hex(metadata_address, 8),
+                    "metadata_address": f"0x{metadata_address:08X}",
                     "record_index": index,
-                    "record_index_hex": _hex(index, 2),
-                    "record_address": _hex(record_address, 8),
-                    "record_file_offset": _hex(record_offset),
-                    "timing_address": _hex(record_address + TIMING_OFFSET, 8),
-                    "timing_file_offset": _hex(record_offset + TIMING_OFFSET),
-                    "flags_10": _hex(flags_10, 8),
-                    "flags_14": _hex(flags_14, 8),
-                    "substitution_block_flags": _hex(
-                        substitution_block_flags, 8
-                    ),
+                    "record_index_hex": f"0x{index:02X}",
+                    "record_address": f"0x{record_address:08X}",
+                    "record_file_offset": f"0x{record_offset:X}",
+                    "timing_address": f"0x{record_address + TIMING_OFFSET:08X}",
+                    "timing_file_offset": f"0x{record_offset + TIMING_OFFSET:X}",
+                    "flags_10": f"0x{flags_10:08X}",
+                    "flags_14": f"0x{flags_14:08X}",
+                    "substitution_block_flags": f"0x{substitution_block_flags:08X}",
                     "raw_timing": raw_timing,
                     "effective_timing": effective_timing,
                     "policy": policy,
@@ -331,38 +270,26 @@ def scan_action_catalog(
                     "negative_rng_total_u32_words": (
                         1 << 32 if rng_modulus is not None else None
                     ),
-                    "response_selector_2c": _hex(response_selector, 2),
-                    "runtime_timing_mutated": runtime_mutation is not None,
-                    "runtime_timing_writers": (
-                        runtime_mutation["writers"] if runtime_mutation else ""
+                    "response_selector_2c": f"0x{response_selector:02X}",
+                    "runtime_timing_mutated": bool(runtime_mutation),
+                    "runtime_timing_writers": runtime_mutation.get("writers", ""),
+                    "runtime_timing_values": runtime_mutation.get("values", ""),
+                    "runtime_substitution_block_mutated": runtime_mutation.get(
+                        "block_mutated", False
                     ),
-                    "runtime_timing_values": (
-                        runtime_mutation["values"] if runtime_mutation else ""
-                    ),
-                    "runtime_substitution_block_mutated": (
-                        bool(runtime_mutation["block_mutated"])
-                        if runtime_mutation
-                        else False
-                    ),
-                    "runtime_mutation_summary": (
-                        runtime_mutation["summary"] if runtime_mutation else ""
-                    ),
+                    "runtime_mutation_summary": runtime_mutation.get("summary", ""),
                     "command_mapping_id": mapping.get("id", "") if mapping else "",
                     "command_name": mapping.get("donor", "") if mapping else "",
                     "mapping_join": mapping_join,
-                    "name_pointer": _hex(name_pointer, 8),
-                    "name_source_offset": _hex(name_source_offset),
-                    "name_field_offset": _hex(name_field_offset),
+                    "name_pointer": f"0x{name_pointer:08X}",
+                    "name_source_offset": f"0x{name_source_offset:X}",
+                    "name_field_offset": f"0x{name_field_offset:X}",
                 }
             )
 
     raw_counts = Counter(record["raw_timing"] for record in records)
     effective_counts = Counter(record["effective_timing"] for record in records)
-    exceptional = [
-        record
-        for record in records
-        if record["raw_timing"] != 0 or record["effective_timing"] != 0
-    ]
+    exceptional = [record for record in records if _is_exceptional(record)]
     named = [record for record in records if record["command_mapping_id"]]
     mapping_groups: dict[object, list[dict[str, object]]] = {}
     for record in named:
@@ -428,11 +355,7 @@ def scan_action_catalog(
     auxiliary_mapping_ids = {
         record["command_mapping_id"] for record in auxiliary_named
     }
-    blocked = [
-        record
-        for record in records
-        if record["substitution_block_flags"] != "0x00000000"
-    ]
+    blocked = [record for record in records if _is_blocked(record)]
     blocked_flag_counts = Counter(
         str(record["substitution_block_flags"]) for record in blocked
     )
@@ -485,8 +408,7 @@ def scan_action_catalog(
             bool(record["command_mapping_id"]) for record in blocked
         ),
         "substitution_block_flagged_exceptional": sum(
-            record["raw_timing"] != 0 or record["effective_timing"] != 0
-            for record in blocked
+            _is_exceptional(record) for record in blocked
         ),
         "response_selector_counts": {
             key: response_selector_counts[key]
@@ -563,20 +485,28 @@ def load_clean_catalog() -> tuple[list[dict[str, object]], dict[str, object], Pa
     paths = load_paths(REPOSITORY)
     elf_path = paths.path("source_na2", "SLPS_258.37")
     elf = elf_path.read_bytes()
-    digest = hashlib.sha256(elf).hexdigest().upper()
+    digest = sha256_hex(elf)
     if digest != EXPECTED_ELF_SHA256:
         raise ValueError(
             f"clean ELF SHA-256 mismatch: expected {EXPECTED_ELF_SHA256}, "
             f"got {digest}"
         )
-    characters = [
+    characters: list[Mapping[str, str]] = [
         {**row, "catalog_scope": "primary"}
         for row in _read_tsv(paths.path("resources", "character_data.tsv"))
     ]
-    characters.extend(dict(row) for row in AUXILIARY_CHARACTER_ROWS)
+    characters.extend(
+        {
+            "character": f"Auxiliary fighter {character_id}",
+            "id": character_id,
+            "record_address": record_address,
+            "catalog_scope": "auxiliary",
+        }
+        for character_id, record_address in AUXILIARY_CHARACTER_RECORDS
+    )
     mappings = _read_tsv(
         paths.path(
-            "builder", "localization", "translation_importer", "mappings.tsv"
+            "builder", "patches", "localization", "strings", "mappings.tsv"
         )
     )
     records, summary = scan_action_catalog(elf, characters, mappings)
@@ -708,19 +638,11 @@ def main() -> int:
             if record["command_mapping_id"] in mapping_ids
         ]
     if args.exceptional_only:
-        selected = [
-            record
-            for record in selected
-            if record["raw_timing"] != 0 or record["effective_timing"] != 0
-        ]
+        selected = [record for record in selected if _is_exceptional(record)]
     if args.named_only:
         selected = [record for record in selected if record["command_mapping_id"]]
     if args.blocked_only:
-        selected = [
-            record
-            for record in selected
-            if record["substitution_block_flags"] != "0x00000000"
-        ]
+        selected = [record for record in selected if _is_blocked(record)]
     if args.runtime_mutated_only:
         selected = [
             record for record in selected if record["runtime_timing_mutated"]

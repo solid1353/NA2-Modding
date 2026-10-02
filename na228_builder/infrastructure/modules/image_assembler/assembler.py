@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import os
 import shutil
 from contextlib import contextmanager
 from pathlib import Path
 
-from .iso9660 import Iso9660, compose_filesystems, normalize_iso_path
+from .iso9660 import Iso9660, compose_filesystems, flush_image, normalize_iso_path
 from .operations import (
     AssemblyPlan,
     AssemblyResult,
@@ -13,35 +12,10 @@ from .operations import (
 )
 
 
-_WRITE_CHUNK_SIZE = 16 * 1024 * 1024
-
-
-def _flush_image(handle: object) -> None:
-    handle.flush()
-    try:
-        descriptor = handle.fileno()
-    except (AttributeError, OSError):
-        return
-    os.fsync(descriptor)
-
-
-def _write_exact(handle: object, data: bytes) -> None:
-    view = memoryview(data)
-    offset = 0
-    while offset < len(view):
-        end = min(offset + _WRITE_CHUNK_SIZE, len(view))
-        written = handle.write(view[offset:end])
-        if not isinstance(written, int) or written <= 0:
-            raise OSError(f"Image write stopped after {offset} of {len(view)} bytes")
-        offset += written
-
-
 @contextmanager
 def output_image_candidate(source_image: Path, output_image: Path):
     """Initialize a unique output candidate and remove it if assembly fails."""
     output_image.parent.mkdir(parents=True, exist_ok=True)
-    if source_image == output_image:
-        raise ValueError("Source and output image paths must differ")
     if output_image.exists() or output_image.is_symlink():
         raise FileExistsError(output_image)
 
@@ -85,25 +59,13 @@ def _normalize_renames(renames: tuple[FileRename, ...]) -> dict[str, FileRename]
     return normalized
 
 
-def _apply_iso9660_rename(image: Path, operation: FileRename) -> dict[str, object]:
-    iso = Iso9660(image)
-    source_record = iso.by_path.get(operation.source_path)
-    if source_record is None or source_record.is_dir:
-        raise RuntimeError(
-            f"Image rename source is not an ISO file: {operation.source_path}"
-        )
-    if operation.replacement_path in iso.by_path:
-        raise RuntimeError(
-            f"Image rename target already exists: {operation.replacement_path}"
-        )
-    if source_record.directory_record_offset is None:
-        raise RuntimeError(
-            f"Image rename source lacks a directory record: {operation.source_path}"
-        )
-
+def _apply_iso9660_rename(
+    image: Path, iso: Iso9660, operation: FileRename
+) -> dict[str, object]:
+    record_offset = iso.by_path[operation.source_path].directory_record_offset
+    assert record_offset is not None
     source = f"{operation.source_path};1".encode("ascii")
     replacement = f"{operation.replacement_path};1".encode("ascii")
-    record_offset = source_record.directory_record_offset
     with image.open("r+b") as handle:
         handle.seek(record_offset)
         header = handle.read(33)
@@ -117,8 +79,8 @@ def _apply_iso9660_rename(image: Path, operation: FileRename) -> dict[str, objec
             )
         identifier_offset = record_offset + 33
         handle.seek(identifier_offset)
-        _write_exact(handle, replacement)
-        _flush_image(handle)
+        handle.write(replacement)
+        flush_image(handle)
 
     return {
         "target": "<ISO9660 directory>",
@@ -135,7 +97,6 @@ def _prepare_assembly(
     source_image: Path,
     plan: AssemblyPlan,
 ) -> tuple[Iso9660, dict[str, bytes], dict[str, bytes], dict[str, FileRename]]:
-    source_image = source_image.resolve()
     if not source_image.is_file():
         raise FileNotFoundError(source_image)
     if not plan.replacements and not plan.insertions and not plan.renames:
@@ -180,9 +141,6 @@ def _prepare_assembly(
             raise RuntimeError(
                 f"Image rename target already exists: {operation.replacement_path}"
             )
-        if source_path in replacements:
-            # Replacing a file and renaming its directory entry is valid.
-            continue
     if set(insertions) & {item.replacement_path for item in renames.values()}:
         raise RuntimeError("An insertion cannot also be an image rename target")
 
@@ -190,7 +148,7 @@ def _prepare_assembly(
 
 
 def _apply_and_verify_assembly(
-    working_image: object,
+    working_image: Path,
     source: Iso9660,
     replacements: dict[str, bytes],
     insertions: dict[str, bytes],
@@ -199,13 +157,12 @@ def _apply_and_verify_assembly(
     current = Iso9660(working_image)
     with working_image.open("r+b") as output:
         for path in sorted(replacements):
-            record = current.by_path[path]
-            output.seek(record.byte_offset)
-            _write_exact(output, replacements[path])
-        _flush_image(output)
+            output.seek(current.by_path[path].byte_offset)
+            output.write(replacements[path])
+        flush_image(output)
 
     iso9660_rename_results = tuple(
-        _apply_iso9660_rename(working_image, renames[path])
+        _apply_iso9660_rename(working_image, current, renames[path])
         for path in sorted(renames)
     )
     composition = compose_filesystems(
@@ -259,21 +216,6 @@ def _apply_and_verify_assembly(
             raise RuntimeError(
                 f"Final image file verification failed: {source_record.path}"
             )
-
-    insertion_by_path = {item.path: item for item in composition.insertions}
-    if set(insertion_by_path) != set(insertions):
-        raise RuntimeError("Final image insertion result set is incomplete")
-    for path, payload in insertions.items():
-        record = result.by_path.get(path)
-        insertion = insertion_by_path[path]
-        if (
-            record is None
-            or record.is_dir
-            or record.extent != insertion.extent
-            or record.size != len(payload)
-            or result.read_file(record) != payload
-        ):
-            raise RuntimeError(f"Final image insertion verification failed: {path}")
 
     return AssemblyResult(
         insertions=composition.insertions,

@@ -37,7 +37,6 @@ foreach ($required in @(
     $requirementsPath,
     $entryPoint,
     $iconPath,
-    $manifestPath,
     $settingsPath,
     $instructionsPath,
     $configurationPath,
@@ -89,6 +88,41 @@ $packagePath = Join-Path $releaseRoot $packageName
 $oldPyInstallerConfig = $env:PYINSTALLER_CONFIG_DIR
 $runRootCreated = $false
 
+function Invoke-ReleaseProbe {
+    # Run Python with the repository importable and its local paths loaded as `paths`.
+    param(
+        [Parameter(Mandatory = $true)][string]$Source,
+        [Parameter(Mandatory = $true)][string]$Failure,
+        [object[]]$ArgumentList = @()
+    )
+
+    $preamble = @'
+import sys
+from pathlib import Path
+
+repository = Path(sys.argv[1]).resolve()
+sys.path.insert(0, str(repository))
+from scripts.lib.paths import load_local_paths
+
+paths = load_local_paths(repository, allow_missing=True)
+'@
+    $output = @(& $python -B -c ($preamble + "`n" + $Source) $repository @ArgumentList)
+    if ($LASTEXITCODE -ne 0) { throw $Failure }
+    return $output
+}
+
+function Write-ReleaseProbe {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        [Parameter(Mandatory = $true)][string]$Source,
+        [Parameter(Mandatory = $true)][string]$Failure,
+        [object[]]$ArgumentList = @()
+    )
+
+    $lines = Invoke-ReleaseProbe -Source $Source -Failure $Failure -ArgumentList $ArgumentList
+    [IO.File]::WriteAllText($Path, ($lines -join "`n") + "`n", [Text.UTF8Encoding]::new($false))
+}
+
 try {
     New-Item -ItemType Directory -Path $runRoot | Out-Null
     $runRootCreated = $true
@@ -112,16 +146,9 @@ try {
 
     $resourceProbe = @'
 import json
-import sys
-from pathlib import Path
-
-repository = Path(sys.argv[1]).resolve()
-sys.path.insert(0, str(repository))
 from na228_builder.infrastructure.orchestration.configuration import configuration_resource_files, load_configuration
-from scripts.lib.paths import load_local_paths
 
 marker = Path(sys.argv[3]).resolve()
-paths = load_local_paths(repository, allow_missing=True)
 configuration = load_configuration(
     Path(sys.argv[2]),
     repository,
@@ -145,20 +172,19 @@ print(json.dumps([
     if path.resolve() not in excluded
 ]))
 '@
-    $resourceText = & $python -B -c $resourceProbe $repository $baseConfigurationPath $manifestPath
-    if ($LASTEXITCODE -ne 0) { throw 'Could not inventory packaged configuration resources.' }
+    $resourceText = Invoke-ReleaseProbe -Source $resourceProbe `
+        -Failure 'Could not inventory packaged configuration resources.' `
+        -ArgumentList @($baseConfigurationPath, $manifestPath)
     $resources = @($resourceText | ConvertFrom-Json)
     $resources += @(
-        [IO.Path]::GetRelativePath($repository, $paths.ManifestPath).Replace('\', '/'),
-        [IO.Path]::GetRelativePath($repository, $manifestPath).Replace('\', '/'),
-        [IO.Path]::GetRelativePath($repository, $configurationPath).Replace('\', '/'),
-        [IO.Path]::GetRelativePath($repository, $characterReferencePath).Replace('\', '/'),
-        [IO.Path]::GetRelativePath(
-            $repository,
-            (Join-Path $paths.builder 'infrastructure\modules\payload_builder\config.tsv')
-        ).Replace('\', '/')
-    )
-    foreach ($relative in @($resources | Sort-Object -Unique)) {
+        $paths.ManifestPath,
+        $manifestPath,
+        $configurationPath,
+        $characterReferencePath,
+        (Join-Path $paths.builder 'infrastructure\modules\payload_builder\config.tsv')
+    ) | ForEach-Object { [IO.Path]::GetRelativePath($repository, $_).Replace('\', '/') }
+    $resources = @($resources | Sort-Object -Unique)
+    foreach ($relative in $resources) {
         $source = [IO.Path]::GetFullPath((Join-Path $repository $relative))
         $destination = Join-Path $resourceRoot $relative
         New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
@@ -167,19 +193,11 @@ print(json.dumps([
 
     $configurationProbe = @'
 import json
-import sys
-from pathlib import Path
-
-repository = Path(sys.argv[1]).resolve()
-sys.path.insert(0, str(repository))
 from na228_builder.infrastructure.orchestration.catalog import (
     materialized_configuration,
+    public_configuration_text,
     release_configuration_values,
 )
-from na228_builder.infrastructure.orchestration.release_configuration import public_configuration_text
-from scripts.lib.paths import load_local_paths
-
-paths = load_local_paths(repository, allow_missing=True)
 
 catalog = paths.path("builder", "catalog.modcat")
 configuration = Path(sys.argv[2])
@@ -190,23 +208,13 @@ else:
     values = materialized_configuration(catalog, configuration)
     print(json.dumps(values, indent=2))
 '@
-    $embeddedConfiguration = Join-Path $resourceRoot ([IO.Path]::GetRelativePath(
-        $repository, $baseConfigurationPath
-    ))
-    $embeddedText = @(& $python -B -c $configurationProbe $repository $baseConfigurationPath embedded)
-    if ($LASTEXITCODE -ne 0) { throw 'Could not construct embedded release defaults.' }
-    [IO.File]::WriteAllText(
-        $embeddedConfiguration,
-        ($embeddedText -join "`n") + "`n",
-        [Text.UTF8Encoding]::new($false)
-    )
+    Write-ReleaseProbe `
+        -Path (Join-Path $resourceRoot ([IO.Path]::GetRelativePath($repository, $baseConfigurationPath))) `
+        -Source $configurationProbe `
+        -Failure 'Could not construct embedded release defaults.' `
+        -ArgumentList @($baseConfigurationPath, 'embedded')
 
     $compileRuntimeSource = @'
-import sys
-from pathlib import Path
-
-repository = Path(sys.argv[1]).resolve()
-sys.path.insert(0, str(repository))
 from na228_builder.infrastructure.modules.payload_builder.ee_c_fragments import (
     compile_ee_source,
     default_toolchain_bin,
@@ -220,17 +228,17 @@ compile_ee_source(
     toolchain_bin=default_toolchain_bin(repository),
 )
 '@
-    foreach ($relative in @($resources | Sort-Object -Unique)) {
+    foreach ($relative in $resources) {
         $suffix = [IO.Path]::GetExtension([string]$relative)
         if ($suffix -cne '.c' -and $suffix -cne '.S') {
             continue
         }
-        $source = [IO.Path]::GetFullPath((Join-Path $repository $relative))
-        $packagedObject = (Join-Path $resourceRoot $relative) + '.o'
-        & $python -B -c $compileRuntimeSource $repository $source $packagedObject
-        if ($LASTEXITCODE -ne 0) {
-            throw "Could not precompile packaged runtime source: $relative"
-        }
+        Invoke-ReleaseProbe -Source $compileRuntimeSource `
+            -Failure "Could not precompile packaged runtime source: $relative" `
+            -ArgumentList @(
+                [IO.Path]::GetFullPath((Join-Path $repository $relative)),
+                ((Join-Path $resourceRoot $relative) + '.o')
+            ) | Out-Null
     }
 
     $bootstrapText = @'
@@ -263,28 +271,14 @@ raise SystemExit(main(argv=sys.argv[1:]))
     $packagedCharacterOverrides = Join-Path $distRoot 'character_overrides.tsv'
     $packagedInstructions = Join-Path $distRoot 'README.md'
     $packagedCatalog = Join-Path $distRoot 'catalog.modcat'
-    $configurationText = @(& $python -B -c $configurationProbe $repository $configurationPath public)
-    if ($LASTEXITCODE -ne 0) {
-        throw 'Could not construct the merged release configuration.'
-    }
-    [IO.File]::WriteAllText(
-        $packagedConfiguration,
-        ($configurationText -join "`n") + "`n",
-        [Text.UTF8Encoding]::new($false)
-    )
+    Write-ReleaseProbe -Path $packagedConfiguration -Source $configurationProbe `
+        -Failure 'Could not construct the merged release configuration.' `
+        -ArgumentList @($configurationPath, 'public')
     $characterOverrideProbe = @'
-import sys
-from pathlib import Path
-
-repository = Path(sys.argv[1]).resolve()
-sys.path.insert(0, str(repository))
 from na228_builder.patches.settings.character_overrides.character_overrides import (
     load_character_overrides,
     render_character_overrides,
 )
-from scripts.lib.paths import load_local_paths
-
-paths = load_local_paths(repository, allow_missing=True)
 
 configuration = load_character_overrides(
     Path(sys.argv[2]),
@@ -293,44 +287,23 @@ configuration = load_character_overrides(
 )
 print(render_character_overrides(configuration), end="")
 '@
-    $characterOverrideText = @(& $python -B -c $characterOverrideProbe $repository $baseConfigurationPath $characterReferencePath)
-    if ($LASTEXITCODE -ne 0) {
-        throw 'Could not construct the merged release character overrides.'
-    }
-    [IO.File]::WriteAllText(
-        $packagedCharacterOverrides,
-        ($characterOverrideText -join "`n") + "`n",
-        [Text.UTF8Encoding]::new($false)
-    )
+    Write-ReleaseProbe -Path $packagedCharacterOverrides -Source $characterOverrideProbe `
+        -Failure 'Could not construct the merged release character overrides.' `
+        -ArgumentList @($baseConfigurationPath, $characterReferencePath)
     Copy-Item -LiteralPath $instructionsPath -Destination $packagedInstructions
 
     $catalogProbe = @'
-import sys
-from pathlib import Path
-
-repository = Path(sys.argv[1]).resolve()
-sys.path.insert(0, str(repository))
 from na228_builder.infrastructure.orchestration.catalog import public_catalog
-from scripts.lib.paths import load_local_paths
-
-paths = load_local_paths(repository, allow_missing=True)
 
 print(public_catalog(paths.path("builder", "catalog.modcat"), Path(sys.argv[2])), end="")
 '@
-    $catalogText = @(& $python -B -c $catalogProbe $repository $configurationPath)
-    if ($LASTEXITCODE -ne 0) {
-        throw 'Could not construct the consolidated release catalog.'
-    }
-    [IO.File]::WriteAllText(
-        $packagedCatalog,
-        ($catalogText -join "`n") + "`n",
-        [Text.UTF8Encoding]::new($false)
-    )
+    Write-ReleaseProbe -Path $packagedCatalog -Source $catalogProbe `
+        -Failure 'Could not construct the consolidated release catalog.' `
+        -ArgumentList @($configurationPath)
 
     $env:NA2_RELEASE_SELF_TEST = '1'
     $selfTest = @(& $built 2>&1)
     $selfTestExit = $LASTEXITCODE
-    Remove-Item Env:NA2_RELEASE_SELF_TEST -ErrorAction SilentlyContinue
     if ($selfTestExit -ne 0 -or -not (($selfTest -join "`n").Contains('Release package self-test: OK'))) {
         throw "Packaged executable self-test failed.`n$($selfTest -join "`n")"
     }
@@ -360,11 +333,6 @@ finally {
     $env:PYINSTALLER_CONFIG_DIR = $oldPyInstallerConfig
     Remove-Item Env:NA2_RELEASE_SELF_TEST -ErrorAction SilentlyContinue
     if ($runRootCreated -and (Test-Path -LiteralPath $runRoot)) {
-        $resolvedRun = [IO.Path]::GetFullPath($runRoot)
-        $resolvedParent = [IO.Path]::GetFullPath($paths.release).TrimEnd('\') + '\'
-        if (-not $resolvedRun.StartsWith($resolvedParent, [StringComparison]::OrdinalIgnoreCase)) {
-            throw "Refusing to clean release staging outside its configured root: $resolvedRun"
-        }
-        Remove-Item -LiteralPath $resolvedRun -Recurse -Force
+        Remove-Item -LiteralPath $runRoot -Recurse -Force
     }
 }

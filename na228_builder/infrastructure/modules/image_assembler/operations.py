@@ -2,27 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .iso9660 import IsoInsertion, IsoUdfRename
-
-
-@dataclass(frozen=True)
-class IsoFileRef:
-    """A complete file imported from a configured source image or extraction."""
-
-    root_id: str
-    path: str
-    expected_sha256: str | None = None
-
-
-@dataclass(frozen=True)
-class IsoRangeRef:
-    """A guarded byte range imported from a configured source image or extraction."""
-
-    root_id: str
-    path: str
-    offset: int
-    length: int
-    expected_sha256: str | None = None
+from .iso9660 import IsoInsertion
+from .udf import UdfRename
 
 
 @dataclass(frozen=True)
@@ -61,4 +42,4 @@ class AssemblyPlan:
 class AssemblyResult:
     insertions: tuple[IsoInsertion, ...]
     iso9660_renames: tuple[dict[str, object], ...]
-    udf_renames: tuple[IsoUdfRename, ...]
+    udf_renames: tuple[UdfRename, ...]

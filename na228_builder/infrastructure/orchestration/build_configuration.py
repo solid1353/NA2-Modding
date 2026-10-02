@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import sys
 from dataclasses import dataclass
@@ -10,11 +9,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import catalog as catalog_module
-from .composer import CompositionResult, compose_assembly_plan
+from ..common import sha256_hex
+from .composer import compose_assembly_plan
 from ..modules.image_assembler.assembler import assemble_image
 from ..modules.image_assembler.iso9660 import Iso9660, IsoInsertion, normalize_iso_path
 from .module_pipeline import prepare_module_pipeline
-from ..modules import translation_importer as translation_importer_module
+from ..modules.translation_importer import engine as translation_importer_module
 from ..modules.binary_patcher import engine as binary_patcher_module
 from ..modules.string_patcher import engine as string_patcher_module
 from ..modules.texture_patcher import engine as texture_patcher_module
@@ -22,6 +22,7 @@ from ..modules.payload_builder import builder as payload_builder_module
 from ..modules.payload_builder import integration as payload_integration_module
 from ..modules.payload_builder.operations import ResidentPayloadBuild
 from .configuration import (
+    BINARY_PATCHER_OPERATIONS,
     BuildConfiguration,
     ModuleInvocation,
     SOURCE_BOOT_PATH,
@@ -40,18 +41,6 @@ class ConfigurationBuildResult:
     payload_result: dict[str, object] | None
     identity_edits: tuple[dict[str, object], ...]
     output_iso: Path
-
-
-@dataclass(frozen=True)
-class ConfigurationCompositionResult:
-    results: tuple[dict[str, object], ...]
-    payload_result: dict[str, object] | None
-    composition: CompositionResult
-    insertion_owners: dict[str, str]
-
-
-def normalize(path: str) -> str:
-    return normalize_iso_path(path)
 
 
 def apply_binary_patch_set(
@@ -80,7 +69,7 @@ def apply_binary_patch_set(
     target_paths: dict[str, str] = {}
     for target_id in {item.destination_target_id for item in edits}:
         target = package.targets[target_id]
-        path = normalize(target.path.as_posix())
+        path = normalize_iso_path(target.path.as_posix())
         record = source.by_path.get(path)
         if record is None or record.is_dir:
             raise RuntimeError(
@@ -104,7 +93,7 @@ def apply_binary_patch_set(
         path = target_paths[target_id]
         payloads[path] = data
         owners[path] = package.package_id
-        after_hashes[target_id] = binary_patcher_module.data_sha256(data)
+        after_hashes[target_id] = sha256_hex(data)
         patched_paths.append(path)
 
     return {
@@ -124,9 +113,6 @@ def apply_texture_patch_package(
     insertions: dict[str, bytes],
     insertion_owners: dict[str, str],
 ) -> tuple[texture_patcher_module.ExternalTexturePackPlan, str]:
-    if not package_directory.is_dir():
-        raise ValueError(f"Texture-patcher module input must be a directory: {package_directory}")
-
     plan = texture_patcher_module.build_external_texture_pack(package_directory)
     path = texture_patcher_module.EXTERNAL_PACK_PATH
     if path in insertions:
@@ -225,7 +211,7 @@ def write_texture_patch_log(
                 "member": result.spec.path,
                 "sector": result.pack_sector,
                 "length": len(result.replacement),
-                "asset_sha256": texture_patcher_module.sha256(result.replacement),
+                "asset_sha256": sha256_hex(result.replacement),
             }
             for result in plan.containers
         ],
@@ -306,6 +292,13 @@ def write_string_patch_plan_log(
     )
 
 
+def _single_insertion(item: dict[str, object], label: str) -> IsoInsertion:
+    insertion_results = item.get("insertion_results")
+    if not isinstance(insertion_results, tuple) or len(insertion_results) != 1:
+        raise RuntimeError(f"{label} is missing its verified image insertion")
+    return insertion_results[0]
+
+
 def write_payload_builder_log(
     result: dict[str, object],
     log_directory: Path,
@@ -340,12 +333,7 @@ def write_payload_builder_log(
     translation_importer_module.write_json(
         log_directory / "payload_summary.json", build.summary
     )
-    insertion_results = result.get("insertion_results")
-    if not isinstance(insertion_results, tuple) or len(insertion_results) != 1:
-        raise RuntimeError("Payload builder is missing its verified image insertion")
-    insertion = insertion_results[0]
-    if not isinstance(insertion, IsoInsertion):
-        raise RuntimeError("Payload builder insertion result has an invalid type")
+    insertion = _single_insertion(result, "Payload builder")
     binary_patcher_module.write_tsv(
         log_directory / "insertion.tsv",
         [
@@ -387,26 +375,21 @@ def apply_configuration_modules(
     insertion_owners: dict[str, str],
 ) -> tuple[list[dict[str, object]], dict[str, object] | None]:
     pipeline = prepare_module_pipeline(configuration)
-    ordered_modules = pipeline.ordered_modules
-    import_plans = pipeline.import_plans
-    derived_string_plans = pipeline.derived_string_plans
-    runtime_injection_declarations = pipeline.runtime_injection_declarations
-    runtime_injection_packages = pipeline.runtime_injection_packages
     payload_build = pipeline.payload_build
 
     results: list[dict[str, object]] = []
-    for module in ordered_modules:
-        if module.module == "binary_patcher":
-            package = catalog_module.load_binary_package(
-                configuration.selection,
-                module.feature_id,
-                configuration.targets_path,
-                configuration.selection.catalog_path.parent.parent,
-                configuration.selection.catalog_path.parent
-                / "infrastructure"
-                / "modules"
-                / "binary_patcher"
-                / "operations",
+    for module in pipeline.ordered_modules:
+        if module.module in {"binary_patcher", "runtime_injector"}:
+            package = (
+                catalog_module.load_binary_package(
+                    configuration.selection,
+                    module.feature_id,
+                    configuration.targets_path,
+                    configuration.selection.catalog_path.parent.parent,
+                    configuration.selection.catalog_path.parent / BINARY_PATCHER_OPERATIONS,
+                )
+                if module.module == "binary_patcher"
+                else pipeline.runtime_injection_packages[module.module_id]
             )
             result = apply_binary_patch_set(
                 package=package,
@@ -425,35 +408,15 @@ def apply_configuration_modules(
                 }
             )
             continue
-        if module.module == "runtime_injector":
-            declaration = runtime_injection_declarations[module.module_id]
-            result = apply_binary_patch_set(
-                package=runtime_injection_packages[module.module_id],
-                roots=configuration.roots,
-                feature_id=module.feature_id,
-                source=source,
-                payloads=payloads,
-                owners=owners,
-                allow_empty=True,
-            )
-            results.append(
-                {
-                    "module": module,
-                    "runtime_injection_declaration": declaration,
-                    "binary_patch_result": result,
-                    "paths": result["patched_paths"],
-                }
-            )
-            continue
         if module.module == "translation_importer":
-            plan = import_plans[module.module_id]
+            plan = pipeline.import_plans[module.module_id]
             item: dict[str, object] = {
                 "module": module,
                 "translation_import_plan": plan,
                 "translation_import_rows": len(plan.import_rows),
                 "paths": [],
             }
-            derived = derived_string_plans.get(module.module_id)
+            derived = pipeline.derived_string_plans.get(module.module_id)
             if derived is not None:
                 derived_result = apply_binary_patch_set(
                     package=derived.package,
@@ -462,7 +425,6 @@ def apply_configuration_modules(
                     source=source,
                     payloads=payloads,
                     owners=owners,
-                    allow_empty=False,
                 )
                 item["derived_string_patch_result"] = derived_result
                 item["string_patch_plan"] = derived
@@ -493,17 +455,11 @@ def apply_configuration_modules(
         boot_record = source.by_path.get(boot_path)
         if boot_record is None or boot_record.is_dir:
             raise RuntimeError(f"Payload integration requires source boot ELF: {boot_path}")
-        clean_boot = source.read_file(boot_record)
-        integration_patches = payload_integration_module.build_integration_patches(
+        integration_package = payload_integration_module.build_integration_package(
             payload_build,
             config=config,
             boot_path=boot_path,
-            clean_boot=clean_boot,
-        )
-        integration_package = payload_integration_module.build_integration_package(
-            integration_patches,
-            boot_path=boot_path,
-            clean_boot=clean_boot,
+            clean_boot=source.read_file(boot_record),
         )
         integration_result = apply_binary_patch_set(
             package=integration_package,
@@ -513,7 +469,7 @@ def apply_configuration_modules(
             payloads=payloads,
             owners=owners,
         )
-        path = normalize(payload_build.output_path)
+        path = normalize_iso_path(payload_build.output_path)
         if path in insertions:
             raise RuntimeError(f"Multiple producers declare image insertion path: {path}")
         insertions[path] = payload_build.payload
@@ -592,7 +548,6 @@ def write_configuration_log(
             translation_importer_module.write_import_tsv(
                 module_log / "translation_imports.tsv",
                 plan.import_rows,
-                allow_empty=False,
             )
             translation_importer_module.write_json(
                 module_log / "translation_import_summary.json", plan.summary
@@ -602,15 +557,9 @@ def write_configuration_log(
             assert isinstance(
                 plan, texture_patcher_module.ExternalTexturePackPlan
             )
-            insertion_results = item.get("insertion_results")
-            if not isinstance(insertion_results, tuple) or len(insertion_results) != 1:
-                raise RuntimeError(
-                    "Texture pack is missing its verified image insertion"
-                )
-            insertion = insertion_results[0]
-            if not isinstance(insertion, IsoInsertion):
-                raise RuntimeError("Texture pack insertion result has an invalid type")
-            write_texture_patch_log(plan, module_log, insertion)
+            write_texture_patch_log(
+                plan, module_log, _single_insertion(item, "Texture pack")
+            )
         if item.get("string_patch_plan") is not None:
             plan = item["string_patch_plan"]
             assert isinstance(plan, string_patcher_module.StringPatchPlan)
@@ -715,29 +664,39 @@ def write_configuration_log(
             )
 
 
-def compose_configuration_candidate(
+def build_configuration_candidate(
     *,
     source_iso: Path,
+    output_iso: Path,
     configuration: BuildConfiguration,
-) -> ConfigurationCompositionResult:
-    """Compose and conflict-check one configuration without staging an image."""
+    workspace: Path,
+    configuration_log_directory: Path | None,
+) -> ConfigurationBuildResult:
+    """Compose and verify one physical configuration image."""
     source_iso = source_iso.resolve()
+    output_iso = output_iso.resolve()
+    workspace = workspace.resolve()
     if not source_iso.is_file():
         raise FileNotFoundError(source_iso)
+    if source_iso == output_iso:
+        raise ValueError("Source and output ISO paths must differ")
+    if configuration_log_directory is not None and configuration_log_directory.exists():
+        raise FileExistsError(configuration_log_directory)
+
     source = Iso9660(source_iso)
     payloads: dict[str, bytearray] = {}
     owners: dict[str, str] = {}
     insertions: dict[str, bytes] = {}
     insertion_owners: dict[str, str] = {}
-    for _node, patch_id, image_file in catalog_module.selected_image_files(
-        configuration.selection
+    for _node, patch_id, image_file in catalog_module.selected_patch_values(
+        configuration.selection, "image_file"
     ):
         path = normalize_iso_path(image_file["path"])
         asset = (
             configuration.selection.catalog_path.parent.parent / image_file["asset"]
         ).resolve()
         payload = asset.read_bytes()
-        digest = hashlib.sha256(payload).hexdigest().upper()
+        digest = sha256_hex(payload)
         if digest != image_file["sha256"]:
             raise ValueError(
                 f"{patch_id}: image file {asset} SHA-256 {digest} "
@@ -764,40 +723,6 @@ def compose_configuration_candidate(
         insertions=insertions,
         insertion_owners=insertion_owners,
     )
-    return ConfigurationCompositionResult(
-        results=tuple(configuration_results),
-        payload_result=payload_result,
-        composition=composition,
-        insertion_owners=insertion_owners,
-    )
-
-
-def build_configuration_candidate(
-    *,
-    source_iso: Path,
-    output_iso: Path,
-    configuration: BuildConfiguration,
-    workspace: Path,
-    configuration_log_directory: Path | None,
-) -> ConfigurationBuildResult:
-    """Compose and verify one physical configuration image."""
-    source_iso = source_iso.resolve()
-    output_iso = output_iso.resolve()
-    workspace = workspace.resolve()
-    if not source_iso.is_file():
-        raise FileNotFoundError(source_iso)
-    if source_iso == output_iso:
-        raise ValueError("Source and output ISO paths must differ")
-    if configuration_log_directory is not None and configuration_log_directory.exists():
-        raise FileExistsError(configuration_log_directory)
-
-    composed = compose_configuration_candidate(
-        source_iso=source_iso,
-        configuration=configuration,
-    )
-    configuration_results = list(composed.results)
-    payload_result = composed.payload_result
-    composition = composed.composition
     assembly = assemble_image(source_iso, output_iso, composition.plan)
     results_by_owner: dict[str, list[IsoInsertion]] = {}
     planned_owners = {item.path: item.owner for item in composition.plan.insertions}
@@ -907,21 +832,13 @@ def main() -> int:
         description="Build a verified staged NA2 ISO from one configuration."
     )
     parser.add_argument("--source", required=True, type=Path)
-    parser.add_argument("--output", type=Path)
+    parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--configuration", required=True, type=Path)
     parser.add_argument("--overrides-json")
-    parser.add_argument("--configuration-log-directory", type=Path)
-    parser.add_argument(
-        "--compose-only",
-        action="store_true",
-        help="Compose and conflict-check the configuration without staging an ISO.",
-    )
+    parser.add_argument("--configuration-log-directory", required=True, type=Path)
     args = parser.parse_args()
     paths = PATHS or load_paths(Path(__file__).resolve(), allow_missing=True)
     workspace = paths.repository
-    source_iso = args.source.resolve()
-    if not source_iso.is_file():
-        raise FileNotFoundError(source_iso)
 
     configuration_path = (
         args.configuration
@@ -934,33 +851,6 @@ def main() -> int:
         paths.path("builder"),
         overrides=catalog_module.parse_build_overrides(args.overrides_json),
     )
-    if args.compose_only:
-        composed = compose_configuration_candidate(
-            source_iso=source_iso,
-            configuration=configuration,
-        )
-        print_configuration_summary(
-            configuration, composed.results, composed.payload_result
-        )
-        plan = composed.composition.plan
-        print(f"  identity ({len(composed.composition.identity_edits)} edits)")
-        print(
-            "Validated composition: "
-            f"{len(plan.replacements)} replacements, "
-            f"{len(plan.insertions)} insertions, "
-            f"{len(plan.renames)} renames; no ISO staged."
-        )
-        return 0
-
-    if args.output is None:
-        parser.error("--output is required unless --compose-only is used")
-    if args.configuration_log_directory is None:
-        parser.error(
-            "--configuration-log-directory is required unless --compose-only is used"
-        )
-    output_iso = args.output.resolve()
-    if source_iso == output_iso:
-        raise ValueError("Source and output ISO paths must differ")
     configuration_log_directory = binary_patcher_module.command_relative_path(
         str(args.configuration_log_directory),
         "--configuration-log-directory",
@@ -968,8 +858,8 @@ def main() -> int:
     )
 
     build = build_configuration_candidate(
-        source_iso=source_iso,
-        output_iso=output_iso,
+        source_iso=args.source,
+        output_iso=args.output,
         configuration=configuration,
         workspace=workspace,
         configuration_log_directory=configuration_log_directory,

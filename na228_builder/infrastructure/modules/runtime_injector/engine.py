@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -10,9 +9,6 @@ from ..payload_builder.operations import (
     SymbolicPatch,
 )
 from ..binary_patcher import engine as binary_patcher
-
-
-IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
 
 
 @dataclass(frozen=True)
@@ -78,16 +74,7 @@ def build_binary_package(
                 operation="replace",
                 length=len(resolved.expected),
                 expected_hex=resolved.expected.hex().upper(),
-                expected_sha256="",
                 replacement_hex=resolved.replacement.hex().upper(),
-                source_target_id="",
-                source_offset=None,
-                source_expected_hex="",
-                source_expected_sha256="",
-                blob_path=None,
-                blob_offset=None,
-                blob_sha256="",
-                fill_hex="",
                 reason=resolved.reason,
             )
         )

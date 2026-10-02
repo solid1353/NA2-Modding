@@ -6,7 +6,7 @@ from na228_builder.patches.localization.mod_strings import message
 import struct
 
 from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment
-from ..battle_settings_runtime import battle_mechanic_path
+from ..battle_settings_runtime import BATTLE_MECHANICS_PATH
 
 
 ITEM_AVAILABILITY = ("none", "less", "normal", "more")
@@ -41,14 +41,8 @@ FIELD_ITEMS = (
 )
 
 
-def items_configuration(selection):
-    node = next(node for node in selection.nodes
-                if node.path == battle_mechanic_path("items"))
-    return node.configured_value
-
-
 def items_option_defaults(selection):
-    config = items_configuration(selection)
+    config = selection.node(*BATTLE_MECHANICS_PATH, "items").configured_value
     custom = config["custom"]
     return (ITEM_MODES.index(config["value"]),
             ITEM_AVAILABILITY.index(custom["availability"]),

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import csv
-import hashlib
 import struct
 import zlib
 from dataclasses import dataclass
 from pathlib import Path
+
+from ...common import read_tsv, sha256_hex
 
 
 ASSET_FIELDS = [
@@ -18,10 +18,6 @@ EXTERNAL_PACK_MAGIC = b"NA228UIP"
 EXTERNAL_PACK_PATH = "228/UI.BIN"
 EXTERNAL_PACK_SECTOR_SIZE = 0x800
 EXTERNAL_PACK_ENTRY_SIZE = 0x10
-
-
-def sha256(data: bytes | bytearray) -> str:
-    return hashlib.sha256(data).hexdigest().upper()
 
 
 def checked_relative_path(value: str, label: str) -> str:
@@ -66,18 +62,7 @@ class ExternalTexturePackPlan:
 
 
 def load_assets(directory: Path) -> tuple[AssetSpec, ...]:
-    manifest = directory.resolve() / "assets.tsv"
-    with manifest.open("r", encoding="utf-8-sig", newline="") as handle:
-        reader = csv.DictReader(handle, delimiter="\t")
-        if reader.fieldnames != ASSET_FIELDS:
-            raise ValueError(
-                f"{manifest}: expected columns " + "\t".join(ASSET_FIELDS)
-            )
-        rows = [
-            {key: (value or "").strip() for key, value in row.items()}
-            for row in reader
-            if any((value or "").strip() for value in row.values())
-        ]
+    rows = read_tsv(directory.resolve() / "assets.tsv", ASSET_FIELDS)
 
     assets: list[AssetSpec] = []
     container_ids: set[str] = set()
@@ -145,13 +130,8 @@ def build_external_texture_pack(data_root: Path) -> ExternalTexturePackPlan:
     body = bytearray(EXTERNAL_PACK_SECTOR_SIZE)
     hashes: dict[int, str] = {}
     for spec in load_assets(data_root):
-        asset_path = data_root / "assets" / f"{spec.container_id}.ccs.gz"
-        if not asset_path.is_file():
-            raise FileNotFoundError(
-                f"Localized texture asset is missing: {asset_path.relative_to(data_root)}"
-            )
-        replacement = asset_path.read_bytes()
-        replacement_hash = sha256(replacement)
+        replacement = (data_root / "assets" / f"{spec.container_id}.ccs.gz").read_bytes()
+        replacement_hash = sha256_hex(replacement)
         if replacement_hash != spec.asset_sha256:
             raise ValueError(
                 f"{spec.container_id}: localized asset SHA-256 {replacement_hash} "
@@ -160,7 +140,7 @@ def build_external_texture_pack(data_root: Path) -> ExternalTexturePackPlan:
         decoded, stream_size, padding_size = gzip_stream(
             replacement, spec.container_id
         )
-        payload_hash = sha256(decoded)
+        payload_hash = sha256_hex(decoded)
         if payload_hash != spec.payload_sha256:
             raise ValueError(
                 f"{spec.container_id}: localized CCS SHA-256 {payload_hash} does "
@@ -221,7 +201,7 @@ def result_rows(plan: ExternalTexturePackPlan) -> list[dict[str, object]]:
             "fixed_size": len(result.replacement),
             "compressed_stream_size": result.compressed_stream_size,
             "zero_padding": result.padding_size,
-            "asset_sha256": sha256(result.replacement),
+            "asset_sha256": sha256_hex(result.replacement),
             "payload_sha256": result.payload_sha256,
             "pack_sector": result.pack_sector,
             "pack_sectors": result.pack_sector_count,

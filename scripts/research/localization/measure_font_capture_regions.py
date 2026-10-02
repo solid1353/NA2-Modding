@@ -15,6 +15,8 @@ from PIL import Image, ImageDraw, ImageFont
 SLOT_SUFFIX = re.compile(r"(\d+)$")
 HEADER_HEIGHT = 24
 ZOOM = 4
+TIERS = ("reference", "current")
+BOX_SIDES = ("left", "top", "right", "bottom")
 
 
 @dataclass(frozen=True)
@@ -63,97 +65,56 @@ def index_pngs(directory: Path) -> dict[int, Path]:
 def load_regions(path: Path) -> list[Region]:
     with path.open("r", encoding="utf-8-sig", newline="") as stream:
         reader = csv.DictReader(stream, delimiter="\t")
-        common_fields = {"slot", "region", "notes"}
-        legacy_fields = {"left", "top", "right", "bottom"}
+        fields = set(reader.fieldnames or ())
         mapped_fields = {
-            "reference_slot",
-            "current_slot",
-            "reference_left",
-            "reference_top",
-            "reference_right",
-            "reference_bottom",
-            "current_left",
-            "current_top",
-            "current_right",
-            "current_bottom",
+            f"{tier}_{name}" for tier in TIERS for name in ("slot", *BOX_SIDES)
         }
-        if (
-            reader.fieldnames is None
-            or not common_fields.issubset(reader.fieldnames)
-            or not (
-                "mask" in reader.fieldnames
-                or {"reference_mask", "current_mask"}.issubset(reader.fieldnames)
-            )
-            or not (
-                legacy_fields.issubset(reader.fieldnames)
-                or mapped_fields.issubset(reader.fieldnames)
-            )
+        mapped = mapped_fields <= fields
+        per_tier_masks = {f"{tier}_mask" for tier in TIERS} <= fields
+        if not (
+            {"slot", "region", "notes"} <= fields
+            and ("mask" in fields or per_tier_masks)
+            and (mapped or set(BOX_SIDES) <= fields)
         ):
             raise ValueError(
-                "Region table must contain the common fields plus either "
-                f"{sorted(legacy_fields)} or {sorted(mapped_fields)}"
+                "Region table must contain slot, region, notes, a mask, and either "
+                f"{list(BOX_SIDES)} or {sorted(mapped_fields)}"
             )
-        mapped = mapped_fields.issubset(reader.fieldnames)
-        result = []
-        for row in reader:
-            if "reference_mask" in row and "current_mask" in row:
-                reference_mask = row["reference_mask"].strip().lower()
-                current_mask = row["current_mask"].strip().lower()
-            else:
-                reference_mask = row["mask"].strip().lower()
-                current_mask = reference_mask
-            for mask in (reference_mask, current_mask):
-                if mask not in {"red", "dark", "light"}:
-                    raise ValueError(f"Unknown mask {mask!r} in {path}")
-            box = (
-                tuple(int(row[name]) for name in ("left", "top", "right", "bottom"))
-                if not mapped
-                else (0, 0, 1, 1)
+        rows = list(reader)
+
+    result = []
+    for row in rows:
+        slots: list[int] = []
+        boxes: list[tuple[int, int, int, int]] = []
+        masks: list[str] = []
+        for tier in TIERS:
+            prefix = f"{tier}_" if mapped else ""
+            slots.append(int(row[f"{prefix}slot"]))
+            box = tuple(int(row[f"{prefix}{side}"]) for side in BOX_SIDES)
+            if box[0] >= box[2] or box[1] >= box[3]:
+                raise ValueError(f"Invalid box {box} in {path}")
+            boxes.append(box)
+            mask = row[f"{tier}_mask" if per_tier_masks else "mask"].strip().lower()
+            if mask not in {"red", "dark", "light"}:
+                raise ValueError(f"Unknown mask {mask!r} in {path}")
+            masks.append(mask)
+        reference_size, current_size = (
+            (box[2] - box[0], box[3] - box[1]) for box in boxes
+        )
+        if reference_size != current_size:
+            raise ValueError(
+                f"Mapped region sizes differ {reference_size} vs {current_size} in {path}"
             )
-            reference_box = (
-                tuple(
-                    int(row[f"reference_{name}"])
-                    for name in ("left", "top", "right", "bottom")
-                )
-                if mapped
-                else box
+        result.append(
+            Region(
+                int(row["slot"]),
+                *slots,
+                row["region"].strip(),
+                *boxes,
+                *masks,
+                row["notes"].strip(),
             )
-            current_box = (
-                tuple(
-                    int(row[f"current_{name}"])
-                    for name in ("left", "top", "right", "bottom")
-                )
-                if mapped
-                else box
-            )
-            for source_box in (reference_box, current_box):
-                if source_box[0] >= source_box[2] or source_box[1] >= source_box[3]:
-                    raise ValueError(f"Invalid box {source_box} in {path}")
-            reference_size = (
-                reference_box[2] - reference_box[0],
-                reference_box[3] - reference_box[1],
-            )
-            current_size = (
-                current_box[2] - current_box[0],
-                current_box[3] - current_box[1],
-            )
-            if reference_size != current_size:
-                raise ValueError(
-                    f"Mapped region sizes differ {reference_size} vs {current_size} in {path}"
-                )
-            result.append(
-                Region(
-                    int(row["slot"]),
-                    int(row["reference_slot"]) if mapped else int(row["slot"]),
-                    int(row["current_slot"]) if mapped else int(row["slot"]),
-                    row["region"].strip(),
-                    reference_box,
-                    current_box,
-                    reference_mask,
-                    current_mask,
-                    row["notes"].strip(),
-                )
-            )
+        )
     if not result:
         raise ValueError(f"No regions in {path}")
     return result
@@ -205,20 +166,6 @@ def ink_bbox(points: list[tuple[int, int]]) -> tuple[int, int, int, int] | None:
     xs = [point[0] for point in points]
     ys = [point[1] for point in points]
     return min(xs), min(ys), max(xs) + 1, max(ys) + 1
-
-
-def ink_count(points: list[tuple[int, int]]) -> int:
-    return len(points)
-
-
-def global_bbox(local: tuple[int, int, int, int] | None, box: tuple[int, int, int, int]):
-    if local is None:
-        return None
-    return local[0] + box[0], local[1] + box[1], local[2] + box[0], local[3] + box[1]
-
-
-def bbox_value(box: tuple[int, int, int, int] | None, index: int):
-    return "" if box is None else box[index]
 
 
 def make_pair(
@@ -290,8 +237,6 @@ def main() -> int:
         current_points = ink_points(current_crop, region.current_mask)
         reference_bbox = ink_bbox(reference_points)
         current_bbox = ink_bbox(current_points)
-        reference_count = ink_count(reference_points)
-        current_count = ink_count(current_points)
         pair = make_pair(
             reference_crop,
             current_crop,
@@ -314,32 +259,24 @@ def main() -> int:
         deltas = [""] * 4
         if reference_bbox is not None and current_bbox is not None:
             deltas = [current_bbox[index] - reference_bbox[index] for index in range(4)]
-        rows.append(
-            {
-                "slot": region.slot,
-                "reference_slot": region.reference_slot,
-                "current_slot": region.current_slot,
-                "region": region.name,
-                "reference_mask": region.reference_mask,
-                "current_mask": region.current_mask,
-                "reference_left": bbox_value(reference_bbox, 0),
-                "reference_top": bbox_value(reference_bbox, 1),
-                "reference_right": bbox_value(reference_bbox, 2),
-                "reference_bottom": bbox_value(reference_bbox, 3),
-                "current_left": bbox_value(current_bbox, 0),
-                "current_top": bbox_value(current_bbox, 1),
-                "current_right": bbox_value(current_bbox, 2),
-                "current_bottom": bbox_value(current_bbox, 3),
-                "delta_left": deltas[0],
-                "delta_top": deltas[1],
-                "delta_right": deltas[2],
-                "delta_bottom": deltas[3],
-                "reference_pixels": reference_count,
-                "current_pixels": current_count,
-                "pixel_delta": current_count - reference_count,
-                "notes": region.notes,
-            }
-        )
+        row: dict[str, object] = {
+            "slot": region.slot,
+            "reference_slot": region.reference_slot,
+            "current_slot": region.current_slot,
+            "region": region.name,
+            "reference_mask": region.reference_mask,
+            "current_mask": region.current_mask,
+        }
+        for tier, bbox in zip(TIERS, (reference_bbox, current_bbox)):
+            for index, side in enumerate(BOX_SIDES):
+                row[f"{tier}_{side}"] = "" if bbox is None else bbox[index]
+        for side, delta in zip(BOX_SIDES, deltas):
+            row[f"delta_{side}"] = delta
+        row["reference_pixels"] = len(reference_points)
+        row["current_pixels"] = len(current_points)
+        row["pixel_delta"] = len(current_points) - len(reference_points)
+        row["notes"] = region.notes
+        rows.append(row)
 
     with (args.output / "summary.tsv").open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=list(rows[0]), delimiter="\t")

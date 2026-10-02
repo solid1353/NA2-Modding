@@ -35,19 +35,17 @@ def normalized_instruction(body: str) -> str:
 def parse_functions(path: Path) -> dict[str, Function]:
     functions: dict[str, Function] = {}
     current_name: str | None = None
-    current_address: int | None = None
     signatures: list[str] = []
 
     def finish() -> None:
-        nonlocal current_name, current_address, signatures
-        if current_name is not None and current_address is not None and signatures:
+        nonlocal current_name, signatures
+        if current_name is not None and signatures:
             functions[current_name] = Function(
                 current_name,
-                current_address,
+                int(current_name.removeprefix("FUN_"), 16),
                 tuple(signatures),
             )
         current_name = None
-        current_address = None
         signatures = []
 
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -61,8 +59,6 @@ def parse_functions(path: Path) -> dict[str, Function]:
         instruction_match = INSTRUCTION.match(line)
         if instruction_match is None:
             continue
-        if current_address is None:
-            current_address = int(current_name.removeprefix("FUN_"), 16)
         signatures.append(normalized_instruction(instruction_match.group("body")))
     finish()
     return functions

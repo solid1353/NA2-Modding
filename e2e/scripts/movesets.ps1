@@ -32,9 +32,12 @@ $ErrorActionPreference = 'Stop'
 $ProjectRoot = [IO.Path]::GetFullPath($ProjectRoot)
 
 . (Join-Path $ProjectRoot 'scripts\lib\paths.ps1')
-$paths = Get-Na2Paths -ManifestPath (Join-Path $ProjectRoot 'paths.json')
+$paths = Get-Na2Paths
 $taskScript = Join-Path $ProjectRoot 'e2e\scripts\suite.ps1'
 . $taskScript
+. (Join-Path ([string]$paths.scripts) 'na228\launch_profile.ps1')
+$practiceProfile = Resolve-Na2LaunchProfile -Name 'practice' -Paths $paths
+. (Join-Path $practiceProfile.Root 'moveset_cases.ps1')
 
 $characterDataPath = Join-Path ([string]$paths.resources) 'character_data.tsv'
 $characterData = @(Import-Csv -LiteralPath $characterDataPath -Delimiter "`t")
@@ -46,8 +49,6 @@ foreach ($character in $characterData) {
     }
     $characterDataById[$characterId] = $character
 }
-$movesetsPath = [string]$paths.files.practice_movesets
-$movesets = @(Import-Csv -LiteralPath $movesetsPath -Delimiter "`t")
 $lastAvailableRow = $characterData.Count + 1
 $firstRow = 2
 $lastRow = $lastAvailableRow
@@ -88,118 +89,28 @@ $gameSelector = if ($Game.EndsWith('.iso', [StringComparison]::OrdinalIgnoreCase
     [IO.Path]::GetFileNameWithoutExtension($Game)
 }
 else { $Game }
-$gameTarget = if ($Tier -ieq 'reference') {
-    [pscustomobject]@{
-        Selector = $gameSelector
-        LaunchTarget = $Game
-        Suffix = 'a_reference'
-        GridVariant = 'a_reference'
-        Label = "$gameSelector reference"
-    }
-}
-else {
-    [pscustomobject]@{
-        Selector = $gameSelector
-        LaunchTarget = $Game
-        Suffix = 'b_current'
-        GridVariant = 'b_current'
-        Label = "$gameSelector current"
-    }
-}
-$gameTargets = @($gameTarget)
+$gridVariant = if ($Tier -ieq 'reference') { 'a_reference' } else { 'b_current' }
+$gameLabel = "$gameSelector $($gridVariant.Substring(2))"
 
-function Resolve-VisualRegressionMovesetKind {
-    param([Parameter(Mandatory)][string]$CaseId)
-
-    switch -Regex -CaseSensitive ($CaseId) {
-        '-2nd$' { return '2nd form' }
-        '-rev$' { return 'half_hp' }
-        '-awk-[1-9][0-9]*$' { return 'awakening' }
-        '-luj-[1-9][0-9]*$' { return 'linked_uj' }
-        '-lj-[1-9][0-9]*$' { return 'linked_jutsu' }
-        default { return 'base' }
-    }
-}
-
-$expectedMovesetColumns = @(
-    'case_id',
-    'character_id',
-    'awakening_id',
-    'support_id',
-    'capture_policy'
-)
-if ($movesets.Count -eq 0) {
-    throw "Moveset metadata is empty: $movesetsPath"
-}
-$actualMovesetColumns = @($movesets[0].PSObject.Properties.Name)
-if (($actualMovesetColumns -join "`t") -cne
-    ($expectedMovesetColumns -join "`t")) {
-    throw (
-        'Moveset metadata columns must be: ' +
-        ($expectedMovesetColumns -join ', ')
-    )
-}
-
-$knownCaseIds = [Collections.Generic.HashSet[string]]::new(
-    [StringComparer]::OrdinalIgnoreCase
-)
 $indexedMovesets = @(
-    foreach ($moveset in $movesets) {
-        $caseId = [string]$moveset.case_id
-        if ($caseId -cnotmatch '^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$') {
-            throw "Moveset case ID '$caseId' is not a hyphen-separated alphanumeric identifier."
-        }
-        if (-not $knownCaseIds.Add($caseId)) {
-            throw "Duplicate moveset case ID: $caseId"
-        }
-        $characterId = [string]$moveset.character_id
+    foreach ($movesetCase in Read-PracticeMovesetCases -Path ([string]$paths.files.practice_movesets)) {
+        $characterId = [string]$movesetCase.Data.character_id
         if (-not $characterDataById.ContainsKey($characterId)) {
             throw (
-                "Moveset case '$caseId' has unknown character ID " +
+                "Moveset case '$($movesetCase.CaseId)' has unknown character ID " +
                 "'$characterId'."
             )
         }
-        $kind = Resolve-VisualRegressionMovesetKind -CaseId $caseId
-        $capturePolicy = [string]$moveset.capture_policy
-        if ($capturePolicy -cnotin @(
-            '',
-            'base',
-            'specials',
-            'base, specials',
-            'base, parent-specials'
-        )) {
-            throw (
-                "Moveset case '$caseId' has invalid capture_policy " +
-                "'$capturePolicy'."
-            )
-        }
-        if ($capturePolicy -ceq 'base, parent-specials' -and
-            $kind -cne '2nd form') {
-            throw (
-                "Moveset case '$caseId' may use capture_policy " +
-                "'base, parent-specials' only with kind '2nd form'."
-            )
-        }
-        if ($kind -ceq '2nd form' -and
-            $capturePolicy -cne 'base, parent-specials') {
-            throw (
-                "Moveset case '$caseId' with kind '2nd form' must use " +
-                "capture_policy 'base, parent-specials'."
-            )
-        }
         [pscustomobject]@{
-            CaseId = $caseId
+            CaseId = $movesetCase.CaseId
             CharacterId = $characterId
             CharacterName = [string]$characterDataById[$characterId].character
-            Data = $moveset
-            Kind = $kind
-            CapturesBase = $capturePolicy -cin @(
-                'base',
-                'base, specials',
-                'base, parent-specials'
-            )
-            CapturesSpecials = $capturePolicy -cin @('specials', 'base, specials')
-            CapturesParentSpecials = $capturePolicy -ceq 'base, parent-specials'
+            Data = $movesetCase.Data
+            Kind = $movesetCase.Kind
+            CapturesBase = $movesetCase.CapturesBase
+            CapturesSpecials = $movesetCase.CapturesSpecials
+            CapturesParentSpecials = $movesetCase.CapturesParentSpecials
+            Case = $movesetCase
         }
     }
 )
@@ -384,345 +295,301 @@ $practiceCaseIds = [string[]]@(
         ForEach-Object { [string]$_.CaseId } |
         Sort-Object -Unique
 )
-$practiceGames = [string[]]@($gameTargets | ForEach-Object LaunchTarget)
 $practiceByCaseId = @{}
-foreach ($practice in @(
-    Get-VisualRegressionPracticeConfiguration `
-        -Repository $ProjectRoot `
-        -MovesetCaseId $practiceCaseIds `
-        -Game $practiceGames
-)) {
+foreach ($caseId in $practiceCaseIds) {
+    $practice = Get-PracticeConfiguration `
+        -Case $indexedMovesetsByCaseId[$caseId].Case `
+        -Games @($Game) `
+        -Paths $paths
     $practiceByCaseId[[string]$practice.MovesetCaseId] = $practice
 }
 
 $tasks = [Collections.Generic.List[object]]::new()
 $gridPlans = [Collections.Generic.List[object]]::new()
 foreach ($outputPlan in $selectedOutputPlans) {
-    foreach ($gameTarget in $gameTargets) {
-        $outputName = '{0}_{1}' -f $outputPlan.Name, $gameTarget.Suffix
-        $workingRoot = Join-Path $workingBase $outputName
-        $finalGrid = Join-Path $gridOutputRoot ($outputName + '.png')
-        if (Test-Path -LiteralPath $finalGrid -PathType Leaf) {
+    $outputName = '{0}_{1}' -f $outputPlan.Name, $gridVariant
+    $workingRoot = Join-Path $workingBase $outputName
+    $finalGrid = Join-Path $gridOutputRoot ($outputName + '.png')
+    if (Test-Path -LiteralPath $finalGrid -PathType Leaf) {
+        continue
+    }
+    $captureContexts = [Collections.Generic.List[object]]::new()
+    $captureTaskKeys = [Collections.Generic.List[string]]::new()
+    $captureIndex = 0
+    foreach ($capture in $outputPlan.Captures) {
+        $captureIndex++
+        $captureRoot = Join-Path `
+            $workingRoot `
+            ('captures\{0:D3}-{1}\{2}' -f
+                $captureIndex,
+                $capture.CaseId,
+                $gameSelector)
+        if (-not $practiceByCaseId.ContainsKey($capture.CaseId)) {
+            throw (
+                "Practice data was not resolved for moveset case " +
+                "'$($capture.CaseId)'."
+            )
+        }
+        $practice = $practiceByCaseId[$capture.CaseId]
+        if (-not $practice.PnachByGame.ContainsKey($gameSelector) -or
+            -not $practice.PnachLinesByGame.ContainsKey($gameSelector)) {
+            throw (
+                "Practice data for moveset case '$($capture.CaseId)' does not " +
+                "contain game $gameSelector."
+            )
+        }
+        $pnachByGame = @{}
+        $pnachByGame[$gameSelector] = $practice.PnachByGame[$gameSelector]
+        $pnachLinesByGame = @{}
+        $pnachLinesByGame[$gameSelector] = $practice.PnachLinesByGame[$gameSelector]
+        $taskContext = [pscustomobject]@{
+            CaseId = $capture.CaseId
+            Character = [string](
+                $indexedMovesetsByCaseId[$capture.CaseId].CharacterName
+            )
+            Recording = $capture.Recording
+            Game = $Game
+            GameLabel = $gameLabel
+            InputRecordingsRoot = Join-Path ([string]$paths.pcsx2_input_recordings) 'e2e'
+            CaptureRoot = $captureRoot
+            CaseRoot = Split-Path -Parent $captureRoot
+            CompletePath = Join-Path (Split-Path -Parent $captureRoot) 'complete.json'
+            PnachByGame = $pnachByGame
+            PnachLinesByGame = $pnachLinesByGame
+            MemoryCard = $MemoryCard
+            LaunchProfile = $LaunchProfile
+            ConcurrencyPoolRoot = $ConcurrencyPoolRoot
+            ConcurrencyLimit = $ThrottleLimit
+        }
+        [void]$captureContexts.Add($taskContext)
+
+        $taskName = 'capture-{0}-{1}-{2:D3}' -f
+            $outputPlan.Name,
+            $gridVariant,
+            $captureIndex
+        if ((Test-Path -LiteralPath $taskContext.CompletePath -PathType Leaf) -and
+            (Get-VisualRegressionPngCount -Directory $taskContext.CaptureRoot) -gt 0) {
             continue
         }
-        $captureContexts = [Collections.Generic.List[object]]::new()
-        $captureTaskKeys = [Collections.Generic.List[string]]::new()
-        $captureIndex = 0
-        foreach ($capture in $outputPlan.Captures) {
-            $captureIndex++
-            $captureRoot = Join-Path `
-                $workingRoot `
-                ('captures\{0:D3}-{1}\{2}' -f
-                    $captureIndex,
-                    $capture.CaseId,
-                    $gameTarget.Selector)
-            if (-not $practiceByCaseId.ContainsKey($capture.CaseId)) {
-                throw (
-                    "Practice data was not resolved for moveset case " +
-                    "'$($capture.CaseId)'."
-                )
-            }
-            $practice = $practiceByCaseId[$capture.CaseId]
-            if (-not $practice.PnachByGame.ContainsKey($gameTarget.Selector) -or
-                -not $practice.PnachLinesByGame.ContainsKey($gameTarget.Selector)) {
-                throw (
-                    "Practice data for moveset case '$($capture.CaseId)' does not " +
-                    "contain game $($gameTarget.Selector)."
-                )
-            }
-            $pnachByGame = @{}
-            $pnachByGame[$gameTarget.Selector] =
-                $practice.PnachByGame[$gameTarget.Selector]
-            $pnachLinesByGame = @{}
-            $pnachLinesByGame[$gameTarget.Selector] =
-                $practice.PnachLinesByGame[$gameTarget.Selector]
-            $taskContext = [pscustomobject]@{
-                CaseId = $capture.CaseId
-                Character = [string](
-                    $indexedMovesetsByCaseId[$capture.CaseId].CharacterName
-                )
-                Recording = $capture.Recording
-                Game = $gameTarget.LaunchTarget
-                GameLabel = $gameTarget.Label
-                InputRecordingsRoot = Join-Path ([string]$paths.pcsx2_input_recordings) 'e2e'
-                CaptureRoot = $captureRoot
-                CaseRoot = Split-Path -Parent $captureRoot
-                CompletePath = Join-Path (Split-Path -Parent $captureRoot) 'complete.json'
-                PnachByGame = $pnachByGame
-                PnachLinesByGame = $pnachLinesByGame
-                MemoryCard = $MemoryCard
-                LaunchProfile = $LaunchProfile
-                ConcurrencyPoolRoot = $ConcurrencyPoolRoot
-                ConcurrencyLimit = $ThrottleLimit
-            }
-            [void]$captureContexts.Add($taskContext)
-
-            $taskName = 'capture-{0}-{1}-{2:D3}' -f
-                $outputPlan.Name,
-                $gameTarget.GridVariant,
-                $captureIndex
-            $capturedScreenshots = $taskContext.CaptureRoot
-            $captureComplete = (
-                (Test-Path -LiteralPath $taskContext.CompletePath -PathType Leaf) -and
-                @(
-                    Get-ChildItem `
-                        -LiteralPath $capturedScreenshots `
-                        -Filter '*.png' `
-                        -File `
-                        -ErrorAction SilentlyContinue
-                ).Count -gt 0
-            )
-            if ($captureComplete) {
-                continue
-            }
-            [void]$captureTaskKeys.Add($taskName)
-            $startTask = {
-                Start-ThreadJob `
-                    -Name $taskName `
-                    -ThrottleLimit $ThrottleLimit `
-                    -ArgumentList @(
-                        $taskContext,
-                        $launcher,
-                        $ProjectRoot,
-                        $taskScript
-                    ) `
-                    -ScriptBlock {
-                        param($Context, $Launcher, $Repository, $SuiteScript)
-                        $ErrorActionPreference = 'Stop'
-                        . $SuiteScript
-                        Write-Host (
-                            "Capturing $($Context.GameLabel) moveset case " +
-                            "'$($Context.CaseId)' with $($Context.Recording) -> " +
-                            $Context.CaptureRoot
-                        ) -ForegroundColor Cyan
-                        if (Test-Path -LiteralPath $Context.CaseRoot) {
-                            Remove-Item `
-                                -LiteralPath $Context.CaseRoot `
-                                -Recurse `
-                                -Force
-                        }
-                        [void](New-Item `
-                            -ItemType Directory `
-                            -Path $Context.CaptureRoot `
-                            -Force)
-                        $permit = Enter-VisualRegressionConcurrencyPool `
-                            -Root $Context.ConcurrencyPoolRoot `
-                            -Capacity $Context.ConcurrencyLimit
-                        try {
-                            $launchArguments = @{
-                                Games = @($Context.Game)
-                                Play = $Context.Recording
-                                Snapshots = $true
-                                InputRecordingCaptureMode = 'screenshots'
-                                CaptureDirectory = $Context.CaptureRoot
-                                ReadOnlySettings = $true
-                                PnachByGame = $Context.PnachByGame
-                                PnachLinesByGame = $Context.PnachLinesByGame
-                                ProjectRoot = $Repository
-                                InputRecordingsRoot = $Context.InputRecordingsRoot
-                            }
-                            Add-VisualRegressionSuiteLaunchSettings `
-                                -Target $launchArguments `
-                                -Repository $Repository `
-                                -Game $Context.Game `
-                                -MemoryCard $Context.MemoryCard `
-                                -LaunchProfile $Context.LaunchProfile
-                            & $Launcher @launchArguments
-                        }
-                        finally {
-                            $permit.Dispose()
-                        }
-
-                        $screenshots = $Context.CaptureRoot
-                        $screenshotCount = @(
-                            Get-ChildItem `
-                                -LiteralPath $screenshots `
-                                -Filter '*.png' `
-                                -File
-                        ).Count
-                        if ($screenshotCount -eq 0) {
-                            throw (
-                                "$($Context.GameLabel) snapshot replay produced " +
-                                "no screenshots for moveset case " +
-                                "'$($Context.CaseId)'."
-                            )
-                        }
-                        $complete = [ordered]@{
-                            case_id = $Context.CaseId
-                            recording = $Context.Recording
-                            game = $Context.Game
-                            screenshots = $screenshotCount
-                            completed_utc = (Get-Date).ToUniversalTime().ToString('O')
-                        } | ConvertTo-Json
-                        $temporary = "$($Context.CompletePath).tmp-$([guid]::NewGuid().ToString('N'))"
-                        [IO.File]::WriteAllText(
-                            $temporary,
-                            $complete + "`n",
-                            [Text.UTF8Encoding]::new($false)
-                        )
-                        [IO.File]::Move($temporary, $Context.CompletePath, $true)
-                        [pscustomobject]@{
-                            CaseId = $Context.CaseId
-                            Character = $Context.Character
-                            Recording = $Context.Recording
-                            Game = $Context.Game
-                            Screenshots = $screenshotCount
-                        }
+        [void]$captureTaskKeys.Add($taskName)
+        $startTask = {
+            Start-ThreadJob `
+                -Name $taskName `
+                -ThrottleLimit $ThrottleLimit `
+                -ArgumentList @(
+                    $taskContext,
+                    $launcher,
+                    $ProjectRoot,
+                    $taskScript
+                ) `
+                -ScriptBlock {
+                    param($Context, $Launcher, $Repository, $SuiteScript)
+                    $ErrorActionPreference = 'Stop'
+                    . $SuiteScript
+                    Write-Host (
+                        "Capturing $($Context.GameLabel) moveset case " +
+                        "'$($Context.CaseId)' with $($Context.Recording) -> " +
+                        $Context.CaptureRoot
+                    ) -ForegroundColor Cyan
+                    if (Test-Path -LiteralPath $Context.CaseRoot) {
+                        Remove-Item `
+                            -LiteralPath $Context.CaseRoot `
+                            -Recurse `
+                            -Force
                     }
-            }.GetNewClosure()
-            [void]$tasks.Add([pscustomobject]@{
-                Key = $taskName
-                Priority = 10
-                DependsOn = @()
-                Ready = $null
-                Start = $startTask
-            })
-        }
+                    [void](New-Item `
+                        -ItemType Directory `
+                        -Path $Context.CaptureRoot `
+                        -Force)
+                    $permit = Enter-VisualRegressionConcurrencyPool `
+                        -Root $Context.ConcurrencyPoolRoot `
+                        -Capacity $Context.ConcurrencyLimit
+                    try {
+                        $launchArguments = @{
+                            Games = @($Context.Game)
+                            Play = $Context.Recording
+                            Snapshots = $true
+                            InputRecordingCaptureMode = 'screenshots'
+                            CaptureDirectory = $Context.CaptureRoot
+                            ReadOnlySettings = $true
+                            PnachByGame = $Context.PnachByGame
+                            PnachLinesByGame = $Context.PnachLinesByGame
+                            ProjectRoot = $Repository
+                            InputRecordingsRoot = $Context.InputRecordingsRoot
+                        }
+                        Add-VisualRegressionSuiteLaunchSettings `
+                            -Target $launchArguments `
+                            -Repository $Repository `
+                            -Game $Context.Game `
+                            -MemoryCard $Context.MemoryCard `
+                            -LaunchProfile $Context.LaunchProfile
+                        & $Launcher @launchArguments
+                    }
+                    finally {
+                        $permit.Dispose()
+                    }
 
-        $gridRoot = Join-Path $workingRoot 'grid'
-        $gridInput = Join-Path $workingRoot 'grid-input'
-        $gridContext = [pscustomobject]@{
+                    $screenshotCount = Get-VisualRegressionPngCount `
+                        -Directory $Context.CaptureRoot
+                    if ($screenshotCount -eq 0) {
+                        throw (
+                            "$($Context.GameLabel) snapshot replay produced " +
+                            "no screenshots for moveset case " +
+                            "'$($Context.CaseId)'."
+                        )
+                    }
+                    Write-VisualRegressionJson -Path $Context.CompletePath -Value ([ordered]@{
+                        case_id = $Context.CaseId
+                        recording = $Context.Recording
+                        game = $Context.Game
+                        screenshots = $screenshotCount
+                        completed_utc = (Get-Date).ToUniversalTime().ToString('O')
+                    })
+                    [pscustomobject]@{
+                        CaseId = $Context.CaseId
+                        Character = $Context.Character
+                        Recording = $Context.Recording
+                        Game = $Context.Game
+                        Screenshots = $screenshotCount
+                    }
+                }
+        }.GetNewClosure()
+        [void]$tasks.Add([pscustomobject]@{
+            Key = $taskName
+            Priority = 10
+            DependsOn = @()
+            Ready = $null
+            Start = $startTask
+        })
+    }
+
+    [void]$gridPlans.Add([pscustomobject]@{
+        Context = [pscustomobject]@{
             Name = $outputName
             Captures = @($captureContexts)
-            CanonicalVariant = $gameTarget.GridVariant
+            CanonicalVariant = $gridVariant
             AlwaysGrid = $outputPlan.Family -ceq 'idle'
-            GridRoot = $gridRoot
-            GridInput = $gridInput
+            GridRoot = Join-Path $workingRoot 'grid'
+            GridInput = Join-Path $workingRoot 'grid-input'
             FinalGrid = $finalGrid
             WorkingRoot = $workingRoot
         }
-        [void]$gridPlans.Add([pscustomobject]@{
-            Context = $gridContext
-            DependsOn = @($captureTaskKeys)
-        })
-    }
+        DependsOn = @($captureTaskKeys)
+    })
 }
 
 $gridJobScript = {
-    param($Context, $GridScript)
+    param($Context, $GridScript, $SuiteScript)
     $ErrorActionPreference = 'Stop'
-                foreach ($generatedPath in @(
-                    $Context.GridInput,
-                    $Context.GridRoot
-                )) {
-                    if (Test-Path -LiteralPath $generatedPath) {
-                        Remove-Item `
-                            -LiteralPath $generatedPath `
-                            -Recurse `
-                            -Force
-                    }
-                }
+    foreach ($generatedPath in @(
+        $Context.GridInput,
+        $Context.GridRoot
+    )) {
+        if (Test-Path -LiteralPath $generatedPath) {
+            Remove-Item `
+                -LiteralPath $generatedPath `
+                -Recurse `
+                -Force
+        }
+    }
+    [void](New-Item `
+        -ItemType Directory `
+        -Path $Context.GridInput `
+        -Force)
+    try {
+        $slot = 0
+        $singleScreenshot = $null
+        foreach ($capture in $Context.Captures) {
+            $captureScreenshots = @(
+                Get-ChildItem `
+                    -LiteralPath $capture.CaptureRoot `
+                    -Filter '*.png' `
+                    -File |
+                    Sort-Object Name
+            )
+            if ($captureScreenshots.Count -eq 0) {
+                throw (
+                    "No screenshots remain for moveset case " +
+                    "'$($capture.CaseId)'."
+                )
+            }
+            foreach ($screenshot in $captureScreenshots) {
+                $slot++
+                $singleScreenshot = $screenshot.FullName
+                $canonicalName = '{0:D4}_{1}.png' -f
+                    $slot,
+                    $Context.CanonicalVariant
                 [void](New-Item `
-                    -ItemType Directory `
-                    -Path $Context.GridInput `
-                    -Force)
-                try {
-                    $slot = 0
-                    $singleScreenshot = $null
-                    foreach ($capture in $Context.Captures) {
-                        $screenshots = $capture.CaptureRoot
-                        $captureScreenshots = @(
-                            Get-ChildItem `
-                                -LiteralPath $screenshots `
-                                -Filter '*.png' `
-                                -File |
-                                Sort-Object Name
-                        )
-                        if ($captureScreenshots.Count -eq 0) {
-                            throw (
-                                "No screenshots remain for moveset case " +
-                                "'$($capture.CaseId)'."
-                            )
-                        }
-                        foreach ($screenshot in $captureScreenshots) {
-                            $slot++
-                            $singleScreenshot = $screenshot.FullName
-                            $canonicalName = '{0:D4}_{1}.png' -f
-                                $slot,
-                                $Context.CanonicalVariant
-                            [void](New-Item `
-                                -ItemType HardLink `
-                                -Path (Join-Path $Context.GridInput $canonicalName) `
-                                -Target $screenshot.FullName)
-                        }
-                    }
-                    if ($slot -gt 6) {
-                        throw (
-                            "Moveset grid $($Context.Name) contains $slot " +
-                            'screenshots; the fixed 3x2 grid supports at most 6.'
-                        )
-                    }
-                    if ($slot -eq 1 -and -not $Context.AlwaysGrid) {
-                        Copy-Item `
-                            -LiteralPath $singleScreenshot `
-                            -Destination $Context.FinalGrid `
-                            -Force
-                    }
-                    else {
-                        & $GridScript `
-                            -ScreenshotDirectory $Context.GridInput `
-                            -OutputDirectory $Context.GridRoot
-                        if ($LASTEXITCODE -ne 0) {
-                            throw "Grid generation failed for $($Context.Name)."
-                        }
-                        $gridPages = @(
-                            Get-ChildItem `
-                                -LiteralPath $Context.GridRoot `
-                                -Filter 'page_*.png' `
-                                -File
-                        )
-                        if ($gridPages.Count -ne 1) {
-                            throw (
-                                "Grid generation produced $($gridPages.Count) pages " +
-                                "for $($Context.Name); expected exactly one."
-                            )
-                        }
-                        Move-Item `
-                            -LiteralPath $gridPages[0].FullName `
-                            -Destination $Context.FinalGrid `
-                            -Force
-                    }
-                }
-                finally {
-                    if (Test-Path `
-                        -LiteralPath $Context.GridInput `
-                        -PathType Container
-                    ) {
-                        Remove-Item `
-                            -LiteralPath $Context.GridInput `
-                            -Recurse `
-                            -Force
-                    }
-                }
+                    -ItemType HardLink `
+                    -Path (Join-Path $Context.GridInput $canonicalName) `
+                    -Target $screenshot.FullName)
+            }
+        }
+        if ($slot -gt 6) {
+            throw (
+                "Moveset grid $($Context.Name) contains $slot " +
+                'screenshots; the fixed 3x2 grid supports at most 6.'
+            )
+        }
+        if ($slot -eq 1 -and -not $Context.AlwaysGrid) {
+            Copy-Item `
+                -LiteralPath $singleScreenshot `
+                -Destination $Context.FinalGrid `
+                -Force
+        }
+        else {
+            & $GridScript `
+                -ScreenshotDirectory $Context.GridInput `
+                -OutputDirectory $Context.GridRoot
+            if ($LASTEXITCODE -ne 0) {
+                throw "Grid generation failed for $($Context.Name)."
+            }
+            $gridPages = @(
+                Get-ChildItem `
+                    -LiteralPath $Context.GridRoot `
+                    -Filter 'page_*.png' `
+                    -File
+            )
+            if ($gridPages.Count -ne 1) {
+                throw (
+                    "Grid generation produced $($gridPages.Count) pages " +
+                    "for $($Context.Name); expected exactly one."
+                )
+            }
+            Move-Item `
+                -LiteralPath $gridPages[0].FullName `
+                -Destination $Context.FinalGrid `
+                -Force
+        }
+    }
+    finally {
+        if (Test-Path `
+            -LiteralPath $Context.GridInput `
+            -PathType Container
+        ) {
+            Remove-Item `
+                -LiteralPath $Context.GridInput `
+                -Recurse `
+                -Force
+        }
+    }
 
-                for ($attempt = 1; $attempt -le 50; $attempt++) {
-                    try {
-                        if (Test-Path `
-                            -LiteralPath $Context.WorkingRoot `
-                            -PathType Container
-                        ) {
-                            Remove-Item `
-                                -LiteralPath $Context.WorkingRoot `
-                                -Recurse `
-                                -Force
-                        }
-                        break
-                    }
-                    catch [IO.IOException], [UnauthorizedAccessException] {
-                        if ($attempt -eq 50) {
-                            throw (
-                                'Failed to remove generated capture directory ' +
-                                "$($Context.WorkingRoot): " +
-                                $_.Exception.Message
-                            )
-                        }
-                        Start-Sleep -Milliseconds 100
-                    }
-                }
-                [pscustomobject]@{
-                    Output = $Context.FinalGrid
-                    Screenshots = $slot
-                }
+    . $SuiteScript
+    Invoke-VisualRegressionFileOperation `
+        -Description "Removing generated capture directory '$($Context.WorkingRoot)'" `
+        -Operation {
+            if (Test-Path -LiteralPath $Context.WorkingRoot -PathType Container) {
+                Remove-Item `
+                    -LiteralPath $Context.WorkingRoot `
+                    -Recurse `
+                    -Force `
+                    -ErrorAction Stop
+            }
+        }
+    [pscustomobject]@{
+        Output = $Context.FinalGrid
+        Screenshots = $slot
+    }
 }
 foreach ($gridPlan in $gridPlans) {
     $gridContext = $gridPlan.Context
@@ -731,7 +598,7 @@ foreach ($gridPlan in $gridPlans) {
         Start-ThreadJob `
             -Name $taskName `
             -ThrottleLimit $ThrottleLimit `
-            -ArgumentList @($gridContext, $gridScript) `
+            -ArgumentList @($gridContext, $gridScript, $taskScript) `
             -ScriptBlock $gridJobScript
     }.GetNewClosure()
     [void]$tasks.Add([pscustomobject]@{
@@ -751,9 +618,7 @@ Invoke-VisualRegressionTaskGraph `
 if (Test-Path -LiteralPath $workingBase -PathType Container) {
     Remove-Item -LiteralPath $workingBase -Recurse -Force
 }
-$gridCount = @(
-    Get-ChildItem -LiteralPath $gridOutputRoot -Filter '*.png' -File
-).Count
+$gridCount = Get-VisualRegressionPngCount -Directory $gridOutputRoot
 if ($gridCount -eq 0) {
     throw "Moveset capture produced no $Tier grids for $Game."
 }

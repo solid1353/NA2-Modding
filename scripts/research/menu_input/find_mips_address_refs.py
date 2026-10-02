@@ -4,7 +4,15 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
+
+REPOSITORY = Path(__file__).resolve().parents[3]
+if str(REPOSITORY) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY))
+
+from scripts.research.menu_input.mips_common import little_endian_words  # noqa: E402
+
 
 def main() -> int:
     parser = argparse.ArgumentParser()
@@ -14,8 +22,7 @@ def main() -> int:
     parser.add_argument("--window", type=int, default=12)
     args = parser.parse_args()
 
-    data = args.binary.read_bytes()
-    words = [int.from_bytes(data[i : i + 4], "little") for i in range(0, len(data) - 3, 4)]
+    words = little_endian_words(args.binary.read_bytes())
     low = args.address & 0xFFFF
     hi_addiu = ((args.address + 0x8000) >> 16) & 0xFFFF
     hi_ori = (args.address >> 16) & 0xFFFF

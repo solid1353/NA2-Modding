@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Compile PS2 EE C/assembly and extract relocatable injector fragments.
 
 The compiler produces an ordinary ELF32 little-endian MIPS relocatable object.
@@ -8,9 +7,6 @@ the payload-builder model without assigning final resident addresses.
 
 from __future__ import annotations
 
-import argparse
-import hashlib
-import json
 import os
 import re
 import struct
@@ -19,6 +15,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
 
+from ...common import SYMBOL_PATTERN
 from .operations import (
     PayloadFragment,
     PayloadRelocation,
@@ -46,7 +43,6 @@ R_MIPS_LO16 = 6
 SUPPORTED_RELOCATIONS = frozenset(
     {R_MIPS_32, R_MIPS_26, R_MIPS_HI16, R_MIPS_LO16}
 )
-IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
 SOURCE_SUFFIXES = {"c": ".c", "asm": ".S"}
 
 
@@ -60,30 +56,6 @@ class SymbolReference:
 class ExtractedEeObject:
     fragments: tuple[PayloadFragment, ...]
     symbols: dict[str, SymbolReference]
-
-    @property
-    def fingerprint(self) -> str:
-        digest = hashlib.sha256()
-        for fragment in self.fragments:
-            digest.update(fragment.symbol.encode("ascii"))
-            digest.update(b"\0")
-            digest.update(fragment.kind.encode("ascii"))
-            digest.update(struct.pack("<I", fragment.alignment))
-            digest.update(fragment.payload)
-            for relocation in fragment.relocations:
-                digest.update(struct.pack("<I", relocation.offset))
-                digest.update(relocation.kind.encode("ascii"))
-                digest.update(b"\0")
-                digest.update(relocation.symbol.encode("ascii"))
-                digest.update(b"\0")
-                digest.update(struct.pack("<i", relocation.addend))
-        for name, reference in sorted(self.symbols.items()):
-            digest.update(name.encode("ascii"))
-            digest.update(b"\0")
-            digest.update(reference.symbol.encode("ascii"))
-            digest.update(b"\0")
-            digest.update(struct.pack("<i", reference.addend))
-        return digest.hexdigest().upper()
 
 
 @dataclass(frozen=True)
@@ -316,9 +288,9 @@ def extract_ee_object(
 ) -> ExtractedEeObject:
     """Extract allocated ELF sections and payload-builder relocations."""
 
-    if not IDENTIFIER.fullmatch(namespace):
+    if not SYMBOL_PATTERN.fullmatch(namespace):
         raise ValueError(f"Invalid fragment namespace: {namespace!r}")
-    if not IDENTIFIER.fullmatch(owner):
+    if not SYMBOL_PATTERN.fullmatch(owner):
         raise ValueError(f"Invalid fragment owner: {owner!r}")
     external_symbols = dict(external_symbols or {})
     blob = object_path.read_bytes()
@@ -505,7 +477,7 @@ def extract_ee_object(
                     f"{object_path}: relocation targets unsupported symbol "
                     f"{symbol.name!r}"
                 )
-            if not IDENTIFIER.fullmatch(target.symbol):
+            if not SYMBOL_PATTERN.fullmatch(target.symbol):
                 raise ValueError(
                     f"Invalid payload symbol for {symbol.name!r}: {target.symbol!r}"
                 )
@@ -572,66 +544,3 @@ def compile_and_extract(
         external_symbols=external_symbols,
     )
 
-
-def manifest(extracted: ExtractedEeObject) -> dict[str, object]:
-    return {
-        "fingerprint": extracted.fingerprint,
-        "fragments": [
-            {
-                "symbol": fragment.symbol,
-                "kind": fragment.kind,
-                "alignment": fragment.alignment,
-                "length": len(fragment.payload),
-                "sha256": hashlib.sha256(fragment.payload).hexdigest().upper(),
-                "relocations": [
-                    {
-                        "offset": f"0x{relocation.offset:X}",
-                        "kind": relocation.kind,
-                        "symbol": relocation.symbol,
-                        "addend": relocation.addend,
-                    }
-                    for relocation in fragment.relocations
-                ],
-            }
-            for fragment in extracted.fragments
-        ],
-        "symbols": {
-            name: {
-                "fragment": reference.symbol,
-                "offset": f"0x{reference.addend:X}",
-            }
-            for name, reference in sorted(extracted.symbols.items())
-        },
-    }
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("source", type=Path)
-    parser.add_argument("--namespace", required=True)
-    parser.add_argument("--language", choices=("c", "asm"), default="c")
-    parser.add_argument("--object", required=True, type=Path)
-    parser.add_argument("--manifest", required=True, type=Path)
-    parser.add_argument("--repository-root", type=Path, default=Path.cwd())
-    arguments = parser.parse_args()
-    extracted = compile_and_extract(
-        arguments.source,
-        arguments.object,
-        namespace=arguments.namespace,
-        language=arguments.language,
-        toolchain_bin=default_toolchain_bin(arguments.repository_root.resolve()),
-    )
-    arguments.manifest.parent.mkdir(parents=True, exist_ok=True)
-    arguments.manifest.write_text(
-        json.dumps(manifest(extracted), indent=2) + "\n", encoding="utf-8"
-    )
-    print(
-        f"{len(extracted.fragments)} fragments, "
-        f"{sum(len(item.relocations) for item in extracted.fragments)} relocations, "
-        f"fingerprint {extracted.fingerprint}"
-    )
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

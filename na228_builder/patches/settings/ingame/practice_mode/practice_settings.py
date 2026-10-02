@@ -1,32 +1,21 @@
 from __future__ import annotations
 
-import struct
-from na228_builder.patches.localization.mod_strings import Message, ModStrings
-from dataclasses import dataclass, replace
+from na228_builder.patches.localization.mod_strings import Message
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment, PayloadRelocation
-from ..shared.menu_options import items_mode_option, MenuOption
-from ..shared.menu_pages import build_menu_pages, append_row_extensions, page_resource_fragments, bind_help_setter
-from ..battle_mechanics.battle_settings_runtime import (
-    BATTLE_MECHANICS_PATH,
-    CHAKRA_OPTION_COUNT,
-    CHAKRA_REGEN_LABELS,
-    CHAKRA_STATIC_LABELS,
-    SUBSTITUTION_INPUT_LABELS,
-    SUPPORT_LABELS,
-    PRACTICE_SETTINGS_PATH,
-    ULTIMATE_JUTSU_NATIVE_MODE_COUNT,
-    chakra_default,
-    EXTRA_HIT_LABELS,
-    extra_hit_default,
-    shadowblur_default,
-    substitution_input_default,
-    substitution_default,
-    support_default,
-    ultimate_jutsu_default,
-    xdash_chakra_cost_option_default,
+from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment
+from ..shared.menu_options import MenuOption
+from ..shared.menu_pages import (
+    MenuPage,
+    RowLayout,
+    build_menu_pages,
+    mechanic_row_bindings,
+    native_rows,
+    page_resource_fragments,
+    settings_schema_fragment,
 )
+from ..battle_mechanics.battle_settings_runtime import PRACTICE_SETTINGS_PATH
 from ..shared.native_settings_defaults import (
     PRACTICE_GENERAL_ROW_IDS,
     PRACTICE_OPPONENT_ROW_IDS,
@@ -39,7 +28,6 @@ if TYPE_CHECKING:
 
 ROW_SECTION_PLAYER = 0
 ROW_SECTION_OPPONENT = 1
-ROW_LOCAL_CUSTOM = 0xFFFFFFFF
 
 ROW_AVAILABLE_ALWAYS = 0
 ROW_AVAILABLE_STATUS_COM = 1
@@ -67,61 +55,7 @@ NATIVE_HELP_TABLE = 0x008BEF70
 NATIVE_STATUS_HELP_TABLE = 0x008BF350
 NATIVE_VALUE_TABLE = 0x008BF380
 
-SUBSTITUTION_ROW_ID = 17
-SHADOWBLUR_ROW_ID = 18
-EXTRA_HIT_ROW_ID = 19
-SUBSTITUTION_INPUT_ROW_ID = 20
-XDASH_CHAKRA_COST_ROW_ID = 21
-SUPPORT_ROW_ID = 22
-SCHEMA_HEADER_SIZE = 84
-PAGE_FIELD_COUNT = 8
-PAGE_SIZE = PAGE_FIELD_COUNT * 4
-ROW_FIELD_COUNT = 12
-ROW_SIZE = ROW_FIELD_COUNT * 4
-LABEL_REFERENCE_FIELD = 3
-HELP_REFERENCE_FIELD = 4
-VALUE_REFERENCE_FIELD = 5
-SUBSTITUTION_MODE_LABELS = (
-    None,  # Supplied by the value-linked child page.
-    None,  # Supplied by the value-linked child page.
-    "mod_text_common__free",
-)
-TOGGLE_LABELS = (
-    "mod_text_common__off",
-    "mod_text_common__on",
-)
-CUSTOM_ROW_RESOURCES = {
-    SUBSTITUTION_ROW_ID: (
-        "mod_text_settings__substitution_resource__label",
-        "mod_text_settings__substitution_resource__help",
-        "substitution",
-    ),
-    SHADOWBLUR_ROW_ID: (
-        "mod_text_settings__shadowblur__label",
-        "mod_text_settings__shadowblur__help",
-        "toggle",
-    ),
-    EXTRA_HIT_ROW_ID: (
-        "mod_text_settings__extra_hit__label",
-        "mod_text_settings__extra_hit__help",
-        "extra_hit",
-    ),
-    SUBSTITUTION_INPUT_ROW_ID: (
-        "mod_text_settings__substitution_input__label",
-        "mod_text_settings__substitution_input__help",
-        "substitution_input",
-    ),
-    XDASH_CHAKRA_COST_ROW_ID: (
-        "mod_text_settings__xdash_chakra_cost__label",
-        "mod_text_settings__xdash_chakra_cost__help",
-        "xdash_chakra_cost",
-    ),
-    SUPPORT_ROW_ID: (
-        "mod_text_settings__support__label",
-        "mod_text_settings__support__help",
-        "support",
-    ),
-}
+
 @dataclass(frozen=True)
 class PracticeRow:
     row_id: int
@@ -161,18 +95,26 @@ class PracticeRow:
         )
 
 
-@dataclass(frozen=True)
-class PracticePage:
-    rows: tuple[PracticeRow, ...]
-    player_row_count: int
-    opponent_row_count: int
-    parent_page: int = 0
-    parent_row: int = 0
-    heading_symbol: str | None = None
-    heading_text: Message | str | None = None
-    reset_symbol: str = ""
-    reset_text: Message | str = ""
-
+LAYOUT = RowLayout(
+    row_type=PracticeRow,
+    field_count=12,
+    references=3,
+    first_custom_row_id=17,
+    items_row_id=5,
+    chakra_row_id=1,
+    ultimate_jutsu_row_id=3,
+    values_slot_flag=ROW_FLAG_VALUES_SLOT,
+    custom_flags={
+        "chakra": ROW_FLAG_CUSTOM_CHAKRA,
+        "ultimate_jutsu": ROW_FLAG_CUSTOM_ULTIMATE_JUTSU,
+        "substitution_resource": ROW_FLAG_CUSTOM_SUBSTITUTION,
+        "shadowblur": ROW_FLAG_CUSTOM_SHADOWBLUR,
+        "extra_hit": ROW_FLAG_CUSTOM_EXTRA_HIT,
+        "substitution_input": ROW_FLAG_CUSTOM_SUBSTITUTION_INPUT,
+        "xdash_chakra_cost": ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST,
+        "support": ROW_FLAG_CUSTOM_SUPPORT,
+    },
+)
 
 NATIVE_ROWS = {
     0: PracticeRow(0, ROW_SECTION_PLAYER, 0x6C, 3, 0),
@@ -258,408 +200,49 @@ NATIVE_ROWS = {
 }
 
 
-def practice_settings_row_bindings(
-    selection: CatalogSelection,
-    *,
-    include_native_rows: bool = True,
-) -> dict[tuple[str, ...], object]:
-    configured_defaults = practice_configured_row_defaults(selection)
-
-    def native_row(row_id: int) -> PracticeRow:
-        row = NATIVE_ROWS[row_id]
-        if row_id not in configured_defaults:
-            return row
-        return replace(row, default_value=configured_defaults[row_id])
-
-    custom_rows = {
-        "items": lambda: PracticeRow(
-            5, ROW_SECTION_PLAYER, ROW_LOCAL_CUSTOM, 5, items_mode_option(selection).default,
-            flags=0, runtime_option=items_mode_option(selection),
-        ),
-        "chakra": lambda: replace(
-            native_row(1),
-            local_offset=ROW_LOCAL_CUSTOM,
-            option_count=CHAKRA_OPTION_COUNT,
-            default_value=chakra_default(selection),
-            flags=(native_row(1).flags & ~ROW_FLAG_VALUES_SLOT)
-            | ROW_FLAG_CUSTOM_CHAKRA,
-        ),
-        "ultimate_jutsu": lambda: replace(
-            native_row(3),
-            option_count=ULTIMATE_JUTSU_NATIVE_MODE_COUNT + 2,
-            default_value=ultimate_jutsu_default(selection),
-            flags=native_row(3).flags | ROW_FLAG_CUSTOM_ULTIMATE_JUTSU,
-        ),
-        "shadowblur": lambda: PracticeRow(
-            SHADOWBLUR_ROW_ID, ROW_SECTION_PLAYER, ROW_LOCAL_CUSTOM, 2,
-            shadowblur_default(selection), flags=ROW_FLAG_CUSTOM_SHADOWBLUR,
-        ),
-        "extra_hit": lambda: PracticeRow(
-            EXTRA_HIT_ROW_ID, ROW_SECTION_PLAYER, ROW_LOCAL_CUSTOM, len(EXTRA_HIT_LABELS),
-            extra_hit_default(selection), flags=ROW_FLAG_CUSTOM_EXTRA_HIT,
-        ),
-        "substitution_input": lambda: PracticeRow(
-            SUBSTITUTION_INPUT_ROW_ID, ROW_SECTION_PLAYER, ROW_LOCAL_CUSTOM, len(SUBSTITUTION_INPUT_LABELS),
-            substitution_input_default(selection),
-            flags=ROW_FLAG_CUSTOM_SUBSTITUTION_INPUT,
-        ),
-        "xdash_chakra_cost": lambda: PracticeRow(
-            XDASH_CHAKRA_COST_ROW_ID, ROW_SECTION_PLAYER, ROW_LOCAL_CUSTOM, 21,
-            xdash_chakra_cost_option_default(selection),
-            flags=ROW_FLAG_CUSTOM_XDASH_CHAKRA_COST,
-        ),
-        "support": lambda: PracticeRow(
-            SUPPORT_ROW_ID, ROW_SECTION_PLAYER, ROW_LOCAL_CUSTOM, len(SUPPORT_LABELS),
-            support_default(selection), flags=ROW_FLAG_CUSTOM_SUPPORT,
-        ),
-        "substitution_resource": lambda: PracticeRow(
-            SUBSTITUTION_ROW_ID, ROW_SECTION_PLAYER, ROW_LOCAL_CUSTOM, 3,
-            substitution_default(selection),
-            flags=ROW_FLAG_CUSTOM_SUBSTITUTION,
-        ),
-    }
-    row_bindings = {
-        BATTLE_MECHANICS_PATH + (field,): factory
-        for field, factory in custom_rows.items()
-    }
-    if include_native_rows:
-        row_bindings.update({
-            PRACTICE_SETTINGS_PATH + (field,):
-                (lambda row_id=row_id: native_row(row_id))
-            for field, row_id in PRACTICE_GENERAL_ROW_IDS.items()
-        })
-        row_bindings.update({
-            PRACTICE_SETTINGS_PATH + ("opponent_settings", field):
-                (lambda row_id=row_id: native_row(row_id))
-            for field, row_id in PRACTICE_OPPONENT_ROW_IDS.items()
-        })
-    return row_bindings
+def practice_native_row(selection: CatalogSelection):
+    return native_rows(NATIVE_ROWS, practice_configured_row_defaults(selection))
 
 
-def _active_pages(selection: CatalogSelection) -> tuple[PracticePage, ...]:
-    row_bindings = practice_settings_row_bindings(selection)
-    return build_menu_pages(selection, PRACTICE_SETTINGS_PATH, row_bindings,
-                            PracticeRow, PracticePage, ("player_row_count", "opponent_row_count"),
-                            "practice_settings_schema", SUPPORT_ROW_ID + 1)
-
-
-def settings_menu_schema_fragment(
-    selection: CatalogSelection,
-    pages: tuple[PracticePage, ...],
-    *,
-    owner: str,
-    symbol: str,
-) -> PayloadFragment:
-    strings = ModStrings(selection)
-    rows = tuple(row for page in pages for row in page.rows)
-    payload = bytearray(
-        struct.pack(
-            "<21I",
-            len(rows),
-            len(pages),
-            0,
-            0,
-            *([0] * 17),
-        )
-    )
-    relocations: list[PayloadRelocation] = [
-        PayloadRelocation(
-            offset=8,
-            kind="abs32",
-            symbol=symbol,
-            addend=SCHEMA_HEADER_SIZE,
-        ),
-        PayloadRelocation(
-            offset=12,
-            kind="abs32",
-            symbol=symbol,
-            addend=SCHEMA_HEADER_SIZE + len(pages) * PAGE_SIZE,
-        ),
-    ]
-    bind_help_setter(selection, payload, relocations, 80)
-    row_start = 0
-    for page in pages:
-        page_offset = len(payload)
-        payload.extend(
-            struct.pack(
-                "<8I",
-                row_start,
-                len(page.rows),
-                page.player_row_count,
-                page.opponent_row_count,
-                page.parent_page,
-                page.parent_row,
-                0,
-                0,
-            )
-        )
-        if page.heading_symbol is not None:
-            relocations.append(
-                PayloadRelocation(
-                    offset=page_offset + 6 * 4,
-                    kind="abs32",
-                    symbol=page.heading_symbol,
-                )
-            )
-        relocations.append(PayloadRelocation(
-            offset=page_offset + 7 * 4,
-            kind="abs32",
-            symbol=page.reset_symbol,
-        ))
-        row_start += len(page.rows)
-
-    rows_offset = SCHEMA_HEADER_SIZE + len(pages) * PAGE_SIZE
-    appended_tables_offset = rows_offset + len(rows) * ROW_SIZE
-    chakra_value_table_offset = appended_tables_offset
-    substitution_value_table_offset = (
-        chakra_value_table_offset + CHAKRA_OPTION_COUNT * 4
-    )
-    toggle_value_table_offset = substitution_value_table_offset + (
-        len(SUBSTITUTION_MODE_LABELS) * 4
-    )
-    substitution_input_value_table_offset = toggle_value_table_offset + (
-        len(TOGGLE_LABELS) * 4
-    )
-    xdash_chakra_cost_value_table_offset = (
-        substitution_input_value_table_offset + len(SUBSTITUTION_INPUT_LABELS) * 4
-    )
-    support_value_table_offset = xdash_chakra_cost_value_table_offset + 21 * 4
-    extra_hit_value_table_offset = support_value_table_offset + len(SUPPORT_LABELS) * 4
-    text_pool_offset = extra_hit_value_table_offset + len(EXTRA_HIT_LABELS) * 4
-    value_table_offsets = {
-        "chakra": chakra_value_table_offset,
-        "substitution": substitution_value_table_offset,
-        "toggle": toggle_value_table_offset,
-        "substitution_input": substitution_input_value_table_offset,
-        "xdash_chakra_cost": xdash_chakra_cost_value_table_offset,
-        "support": support_value_table_offset,
-        "extra_hit": extra_hit_value_table_offset,
-    }
-    header_symbols = {
-        "substitution_resource": (
-            (16, "substitution_gauge_mode_get"),
-            (20, "substitution_gauge_mode_set"),
-        ),
-        "ultimate_jutsu": (
-            (24, "ultimate_jutsu_mode_get"),
-            (28, "ultimate_jutsu_mode_set"),
-            (32, "mod_text_settings__no_contest"),
-            (36, "mod_text_settings__no_hud"),
-        ),
-        "shadowblur": ((40, "shadowblur_get"), (44, "shadowblur_set")),
-        "extra_hit": ((48, "extra_hit_get"), (52, "extra_hit_set")),
-        "substitution_input": (
-            (56, "substitution_input_get"),
-            (60, "substitution_input_set"),
-        ),
-        "xdash_chakra_cost": (
-            (64, "xdash_chakra_cost_option_get"),
-            (68, "xdash_chakra_cost_option_set"),
-        ),
-        "support": ((72, "support_get"), (76, "support_set")),
-    }
-    for symbols in header_symbols.values():
-        relocations.extend(
-            PayloadRelocation(offset=offset, kind="abs32", symbol=name)
-            for offset, name in symbols
-        )
-
-    for index, row in enumerate(rows):
-        row_offset = rows_offset + index * ROW_SIZE
-        if row.runtime_option is not None or row.label is not None:
-            fields = list(row.encoded_fields())
-            option = row.runtime_option
-            fields[LABEL_REFERENCE_FIELD] = (
-                option.label_reference if option is not None else 0
-            ) or 0
-            fields[HELP_REFERENCE_FIELD] = (
-                option.help_reference if option is not None else 0
-            ) or 0
-            fields[VALUE_REFERENCE_FIELD] = (
-                option.values_reference if option is not None else 0
-            ) or 0
-            payload.extend(struct.pack("<12I", *fields))
-        elif (row.flags & ROW_FLAG_CUSTOM_CHAKRA) != 0:
-            fields = list(row.encoded_fields())
-            fields[VALUE_REFERENCE_FIELD] = 0
-            payload.extend(struct.pack("<12I", *fields))
-            relocations.append(
-                PayloadRelocation(
-                    offset=row_offset + VALUE_REFERENCE_FIELD * 4,
-                    kind="abs32",
-                    symbol=symbol,
-                    addend=value_table_offsets["chakra"],
-                )
-            )
-        elif row.row_id in CUSTOM_ROW_RESOURCES:
-            fields = list(row.encoded_fields())
-            fields[LABEL_REFERENCE_FIELD] = 0
-            fields[HELP_REFERENCE_FIELD] = 0
-            fields[VALUE_REFERENCE_FIELD] = 0
-            label_symbol, help_symbol, value_table = CUSTOM_ROW_RESOURCES[
-                row.row_id
-            ]
-            payload.extend(struct.pack("<12I", *fields))
-            relocations.extend(
-                (
-                    PayloadRelocation(
-                        offset=row_offset + LABEL_REFERENCE_FIELD * 4,
-                        kind="abs32",
-                        symbol=label_symbol,
-                    ),
-                    PayloadRelocation(
-                        offset=row_offset + HELP_REFERENCE_FIELD * 4,
-                        kind="abs32",
-                        symbol=help_symbol,
-                    ),
-                    PayloadRelocation(
-                        offset=row_offset + VALUE_REFERENCE_FIELD * 4,
-                        kind="abs32",
-                        symbol=symbol,
-                        addend=value_table_offsets[value_table],
-                    ),
-                )
-            )
-        else:
-            payload.extend(struct.pack("<12I", *row.encoded_fields()))
-
-    if any(
-        row.row_id in CUSTOM_ROW_RESOURCES
-        or (row.flags & ROW_FLAG_CUSTOM_CHAKRA) != 0
-        for row in rows
+def _active_pages(selection: CatalogSelection) -> tuple[MenuPage, ...]:
+    native_row = practice_native_row(selection)
+    row_bindings = mechanic_row_bindings(selection, LAYOUT, native_row)
+    for parent, row_ids in (
+        ((), PRACTICE_GENERAL_ROW_IDS),
+        (("opponent_settings",), PRACTICE_OPPONENT_ROW_IDS),
     ):
-        text_pool = bytearray()
-        next_text_offset = text_pool_offset
-        for label in CHAKRA_STATIC_LABELS:
-            relocations.append(
-                PayloadRelocation(
-                    offset=len(payload),
-                    kind="abs32",
-                    symbol=label,
-                )
-            )
-            payload.extend(b"\0" * 4)
-
-        for text_value in CHAKRA_REGEN_LABELS:
-            relocations.append(
-                PayloadRelocation(
-                    offset=len(payload),
-                    kind="abs32",
-                    symbol=symbol,
-                    addend=next_text_offset,
-                )
-            )
-            payload.extend(b"\0" * 4)
-            text = strings.encode(text_value) + b"\0"
-            text_pool.extend(text)
-            next_text_offset += len(text)
-
-        for label in SUBSTITUTION_MODE_LABELS:
-            if label is not None:
-                relocations.append(
-                    PayloadRelocation(
-                        offset=len(payload),
-                        kind="abs32",
-                        symbol=label,
-                    )
-                )
-            payload.extend(b"\0" * 4)
-
-        for label in TOGGLE_LABELS:
-            relocations.append(
-                PayloadRelocation(
-                    offset=len(payload),
-                    kind="abs32",
-                    symbol=label,
-                )
-            )
-            payload.extend(b"\0" * 4)
-
-        for label in SUBSTITUTION_INPUT_LABELS:
-            text = strings.encode(label) + b"\0"
-            relocations.append(
-                PayloadRelocation(
-                    offset=len(payload),
-                    kind="abs32",
-                    symbol=symbol,
-                    addend=next_text_offset,
-                )
-            )
-            payload.extend(b"\0" * 4)
-            text_pool.extend(text)
-            next_text_offset += len(text)
-        for value in range(0, 101, 5):
-            text = strings.encode(f"{value}%") + b"\0"
-            relocations.append(
-                PayloadRelocation(
-                    offset=len(payload),
-                    kind="abs32",
-                    symbol=symbol,
-                    addend=next_text_offset,
-                )
-            )
-            payload.extend(b"\0" * 4)
-            text_pool.extend(text)
-            next_text_offset += len(text)
-        for label in (*SUPPORT_LABELS, *EXTRA_HIT_LABELS):
-            text = strings.encode(label) + b"\0"
-            relocations.append(
-                PayloadRelocation(
-                    offset=len(payload),
-                    kind="abs32",
-                    symbol=symbol,
-                    addend=next_text_offset,
-                )
-            )
-            payload.extend(b"\0" * 4)
-            text_pool.extend(text)
-            next_text_offset += len(text)
-        payload.extend(text_pool)
-
-    append_row_extensions(payload, relocations, rows, rows_offset, ROW_SIZE,
-                          3, 4, 5, symbol, selection)
-
-    return PayloadFragment(
-        owner=owner,
-        symbol=symbol,
-        kind="rodata",
-        alignment=4,
-        payload=bytes(payload),
-        relocations=tuple(relocations),
-    )
+        row_bindings.update({
+            PRACTICE_SETTINGS_PATH + parent + (field,):
+                (lambda row_id=row_id: native_row(row_id))
+            for field, row_id in row_ids.items()
+        })
+    return build_menu_pages(selection, PRACTICE_SETTINGS_PATH, row_bindings, LAYOUT,
+                            "practice_settings_schema")
 
 
-def practice_settings_fragment(
-    selection: CatalogSelection,
-    *,
-    owner: str,
-    symbol: str = "practice_settings_schema",
-) -> PayloadFragment:
-    return settings_menu_schema_fragment(
-        selection,
-        _active_pages(selection),
-        owner=owner,
-        symbol=symbol,
-    )
-
-
-def practice_settings_table_fragments(
+def practice_settings_fragments(
     selection: CatalogSelection,
     *,
     owner: str,
 ) -> tuple[PayloadFragment, ...]:
+    """The schema, its page resources, and the active label and value tables."""
     pages = _active_pages(selection)
     table_size = max(1, *(len(page.rows) for page in pages)) * 4
-    return page_resource_fragments(pages, owner, "practice_settings_schema", selection) + tuple(
-        PayloadFragment(
-            owner=owner,
-            symbol=symbol,
-            kind="data",
-            alignment=4,
-            payload=b"\0" * table_size,
-        )
-        for symbol in (
-            "practice_settings_active_labels",
-            "practice_settings_active_value_tables",
-        )
+    return (
+        settings_schema_fragment(selection, pages, LAYOUT, owner=owner,
+                                 symbol="practice_settings_schema"),
+        *page_resource_fragments(pages, owner, "practice_settings_schema", selection),
+        *(
+            PayloadFragment(
+                owner=owner,
+                symbol=symbol,
+                kind="data",
+                alignment=4,
+                payload=b"\0" * table_size,
+            )
+            for symbol in (
+                "practice_settings_active_labels",
+                "practice_settings_active_value_tables",
+            )
+        ),
     )

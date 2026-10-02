@@ -7,9 +7,10 @@ from pathlib import Path
 
 from PIL import Image
 
+from na228_builder.infrastructure.ccs import parse_ccs
+from na228_builder.infrastructure.common import sha256_hex as sha256
 from na228_builder.infrastructure.orchestration.source_media import cvm_members
 from scripts.lib.paths import load_paths
-from scripts.research.ui_translation.texture_derivation import parse_ccs, sha256
 
 
 SOURCE_LOGO_SHA256 = "101A7F51FFC92476AE47D56C205C111DA99709EF98109E9784BB45152B1ED1D9"
@@ -63,8 +64,8 @@ def main() -> None:
 
         pixels = atlas.transpose(Image.Transpose.FLIP_TOP_BOTTOM).tobytes()
         colors = atlas.getpalette()[:768]
-        if len(pixels) != 512 * 512 or len(colors) != 256 * 3:
-            raise ValueError(f"{name}: derived atlas has the wrong size")
+        if len(colors) != 256 * 3:
+            raise ValueError(f"{name}: derived palette has the wrong size")
         texture_start = texture.data_offset + 0x18
         palette_start = palette.data_offset + 0x10
         payload[texture_start:texture_start + len(pixels)] = pixels

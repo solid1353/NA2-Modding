@@ -11,7 +11,7 @@ from na228_builder.infrastructure.orchestration import catalog
 from na228_builder.patches.localization.mod_strings import ModStrings
 from na228_builder.patches.settings.ingame.battle_mode.battle_settings import (
     _active_pages,
-    battle_settings_fragment,
+    battle_settings_fragments,
 )
 from scripts.lib.paths import load_local_paths
 from na228_builder.patches.settings.ingame.shared.menu_options import MenuOption
@@ -47,7 +47,7 @@ class BattleSettingsTests(unittest.TestCase):
         return catalog.load_selection(self.catalog_path, path)
 
     def test_base_schema_links_runtime_providers_and_help(self) -> None:
-        fragment = battle_settings_fragment(
+        fragment, *_ = battle_settings_fragments(
             self.selection,
             owner="settings.runtime_injector",
         )
@@ -78,7 +78,7 @@ class BattleSettingsTests(unittest.TestCase):
         selection = self._selection(
             lambda features: features.__setitem__("localization", "jp")
         )
-        fragment = battle_settings_fragment(
+        fragment, *_ = battle_settings_fragments(
             selection,
             owner="settings.runtime_injector",
         )
@@ -102,7 +102,7 @@ class BattleSettingsTests(unittest.TestCase):
             mechanics["substitution_resource"]["value"] = "free"
 
         selection = self._selection(configure)
-        fragment = battle_settings_fragment(
+        fragment, *_ = battle_settings_fragments(
             selection,
             owner="settings.runtime_injector",
         )
@@ -124,7 +124,7 @@ class BattleSettingsTests(unittest.TestCase):
                 "battle_mechanics_submenu", False
             )
         )
-        fragment = battle_settings_fragment(
+        fragment, *_ = battle_settings_fragments(
             selection,
             owner="settings.runtime_injector",
         )

@@ -5,12 +5,8 @@ import math
 import struct
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from na228_builder.infrastructure.modules.payload_builder.operations import PayloadFragment
-
-if TYPE_CHECKING:
-    from na228_builder.infrastructure.orchestration.catalog import CatalogSelection
 
 
 REFERENCE_FIELDS = (
@@ -71,10 +67,6 @@ class CharacterOverrideConfiguration:
     step: CharacterOverrideRow
     characters: tuple[CharacterOverrideRow, ...]
     reference_characters: tuple[tuple[int, str], ...]
-    reference_support_ids: tuple[tuple[int, int | None], ...]
-    reference_awakening_ids: tuple[tuple[int, tuple[int, ...]], ...]
-    reference_linked_uj: tuple[tuple[int, tuple[int, ...]], ...]
-    reference_linked_jutsu: tuple[tuple[int, tuple[int, ...]], ...]
     character_count: int
     resource_files: tuple[Path, ...]
 
@@ -85,22 +77,8 @@ class CharacterOverrideConfiguration:
             if row.character_id is not None
         }
 
-    def support_id_by_character(self) -> dict[int, int | None]:
-        return dict(self.reference_support_ids)
-
-    def awakening_ids_by_character(self) -> dict[int, tuple[int, ...]]:
-        return dict(self.reference_awakening_ids)
-
-    def linked_uj_by_character(self) -> dict[int, tuple[int, ...]]:
-        return dict(self.reference_linked_uj)
-
-    def linked_jutsu_by_character(self) -> dict[int, tuple[int, ...]]:
-        return dict(self.reference_linked_jutsu)
-
 
 def _read_rows(path: Path, fields: tuple[str, ...]) -> list[dict[str, str]]:
-    if not path.is_file():
-        raise FileNotFoundError(path)
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle, delimiter="\t")
         if tuple(reader.fieldnames or ()) != fields:
@@ -112,7 +90,7 @@ def _read_rows(path: Path, fields: tuple[str, ...]) -> list[dict[str, str]]:
         ]
 
 
-def _reference_ids(
+def _validate_reference_ids(
     path: Path,
     line: int,
     value: str,
@@ -120,10 +98,10 @@ def _reference_ids(
     field: str,
     label: str,
     maximum: int,
-) -> tuple[int, ...]:
+) -> None:
     if not value:
-        return ()
-    result: list[int] = []
+        return
+    seen: set[int] = set()
     for token in value.split(","):
         token = token.strip()
         if not token:
@@ -140,23 +118,11 @@ def _reference_ids(
             raise ValueError(
                 f"{path}:{line}: {label} ID must be from 0 through {maximum}"
             )
-        if reference_id in result:
+        if reference_id in seen:
             raise ValueError(
                 f"{path}:{line}: duplicate {label} ID {reference_id}"
             )
-        result.append(reference_id)
-    return tuple(result)
-
-
-def _awakening_ids(path: Path, line: int, value: str) -> tuple[int, ...]:
-    return _reference_ids(
-        path,
-        line,
-        value,
-        field="awakening_ids",
-        label="awakening",
-        maximum=MAX_AWAKENING_ID,
-    )
+        seen.add(reference_id)
 
 
 def _support_id(path: Path, line: int, value: str) -> int | None:
@@ -176,38 +142,10 @@ def _support_id(path: Path, line: int, value: str) -> int | None:
     return support_id
 
 
-def _linked_support_ids(
-    path: Path,
-    line: int,
-    field: str,
-    value: str,
-) -> tuple[int, ...]:
-    return _reference_ids(
-        path,
-        line,
-        value,
-        field=field,
-        label="support",
-        maximum=MAX_NATIVE_SUPPORT_ID,
-    )
-
-
-def _reference_characters(
-    path: Path,
-) -> tuple[
-    dict[int, str],
-    dict[int, int | None],
-    dict[int, tuple[int, ...]],
-    dict[int, tuple[int, ...]],
-    dict[int, tuple[int, ...]],
-]:
+def _reference_characters(path: Path) -> dict[int, str]:
     by_id: dict[int, str] = {}
     by_name: dict[str, int] = {}
-    support_id_by_character: dict[int, int | None] = {}
     character_by_support_id: dict[int, int] = {}
-    awakening_ids_by_character: dict[int, tuple[int, ...]] = {}
-    linked_uj_by_character: dict[int, tuple[int, ...]] = {}
-    linked_jutsu_by_character: dict[int, tuple[int, ...]] = {}
     for line, row in enumerate(_read_rows(path, REFERENCE_FIELDS), 2):
         try:
             character_id = int(row["id"], 10)
@@ -233,33 +171,18 @@ def _reference_characters(
                     f"already assigned to character ID {existing_character_id}"
                 )
             character_by_support_id[support_id] = character_id
-        support_id_by_character[character_id] = support_id
-        awakening_ids_by_character[character_id] = _awakening_ids(
-            path,
-            line,
-            row["awakening_ids"],
+        _validate_reference_ids(
+            path, line, row["awakening_ids"],
+            field="awakening_ids", label="awakening", maximum=MAX_AWAKENING_ID,
         )
-        linked_uj_by_character[character_id] = _linked_support_ids(
-            path,
-            line,
-            "linked_uj",
-            row["linked_uj"],
-        )
-        linked_jutsu_by_character[character_id] = _linked_support_ids(
-            path,
-            line,
-            "linked_jutsu",
-            row["linked_jutsu"],
-        )
+        for field in ("linked_uj", "linked_jutsu"):
+            _validate_reference_ids(
+                path, line, row[field],
+                field=field, label="support", maximum=MAX_NATIVE_SUPPORT_ID,
+            )
     if not by_id:
         raise ValueError(f"{path}: character reference is empty")
-    return (
-        by_id,
-        support_id_by_character,
-        awakening_ids_by_character,
-        linked_uj_by_character,
-        linked_jutsu_by_character,
-    )
+    return by_id
 
 
 def _number(
@@ -284,10 +207,7 @@ def _number(
         encoded = struct.pack("<f", result)
     except OverflowError as exc:
         raise ValueError(f"{path}:{line}: {field} is outside float32 range") from exc
-    decoded = struct.unpack("<f", encoded)[0]
-    if not math.isfinite(decoded):
-        raise ValueError(f"{path}:{line}: {field} is outside float32 range")
-    return decoded
+    return struct.unpack("<f", encoded)[0]
 
 
 def _substitution_cost(
@@ -374,15 +294,13 @@ def _override_rows(
                 for field in VALUE_FIELDS[1:]
             ),
         )
+        if raw_id in ("base", "step"):
+            if (base if raw_id == "base" else step) is not None:
+                raise ValueError(f"{path}:{line}: duplicate {raw_id} row")
+            for field in ("character", "base_id", "tier"):
+                if raw[field]:
+                    raise ValueError(f"{path}:{line}: {raw_id} row {field} must be empty")
         if raw_id == "base":
-            if base is not None:
-                raise ValueError(f"{path}:{line}: duplicate base row")
-            if character:
-                raise ValueError(f"{path}:{line}: base row character must be empty")
-            if raw_base_id:
-                raise ValueError(f"{path}:{line}: base row base_id must be empty")
-            if tier:
-                raise ValueError(f"{path}:{line}: base row tier must be empty")
             if substitution_cost_is_delta:
                 raise ValueError(
                     f"{path}:{line}: base substitution_cost must be a literal value"
@@ -390,14 +308,6 @@ def _override_rows(
             base = CharacterOverrideRow(None, None, character, tier, values)
             continue
         if raw_id == "step":
-            if step is not None:
-                raise ValueError(f"{path}:{line}: duplicate step row")
-            if character:
-                raise ValueError(f"{path}:{line}: step row character must be empty")
-            if raw_base_id:
-                raise ValueError(f"{path}:{line}: step row base_id must be empty")
-            if tier:
-                raise ValueError(f"{path}:{line}: step row tier must be empty")
             if (
                 substitution_cost is None or
                 not substitution_cost_is_delta or
@@ -448,16 +358,6 @@ def _override_rows(
     return base, step, characters
 
 
-def _merge_values(
-    inherited: tuple[float | None, ...],
-    override: tuple[float | None, ...],
-) -> tuple[float | None, ...]:
-    return tuple(
-        replacement if replacement is not None else original
-        for original, replacement in zip(inherited, override, strict=True)
-    )
-
-
 def _merge_rows(
     inherited: CharacterOverrideRow,
     override: CharacterOverrideRow,
@@ -471,7 +371,10 @@ def _merge_rows(
         ),
         character=override.character,
         tier=override.tier or inherited.tier,
-        values=_merge_values(inherited.values, override.values),
+        values=tuple(
+            replacement if replacement is not None else original
+            for original, replacement in zip(inherited.values, override.values, strict=True)
+        ),
         substitution_cost_is_delta=(
             override.substitution_cost_is_delta
             if override.values[SUBSTITUTION_COST_INDEX] is not None
@@ -505,13 +408,7 @@ def load_character_overrides(
 ) -> CharacterOverrideConfiguration:
     configuration_root = (builder_root / "configurations").resolve()
     reference_path = reference_path.resolve()
-    (
-        reference_by_id,
-        support_id_by_character,
-        awakening_ids_by_character,
-        linked_uj_by_character,
-        linked_jutsu_by_character,
-    ) = _reference_characters(reference_path)
+    reference_by_id = _reference_characters(reference_path)
     definition_path = definition_path.resolve()
     if definition_path.parent == configuration_root:
         override_root = configuration_root / "overrides"
@@ -565,7 +462,7 @@ def load_character_overrides(
             resolved_cost = base_cost + value
         else:
             resolved_cost = value
-        if resolved_cost is not None and not 0.0 <= resolved_cost <= 100.0:
+        if not 0.0 <= resolved_cost <= 100.0:
             raise ValueError(
                 f"resolved substitution_cost for character ID {character_id} "
                 "must be from 0 through 100"
@@ -576,22 +473,6 @@ def load_character_overrides(
         step=step,
         characters=tuple(merged[key] for key in character_order),
         reference_characters=tuple(reference_by_id.items()),
-        reference_support_ids=tuple(
-            (character_id, support_id_by_character[character_id])
-            for character_id in reference_by_id
-        ),
-        reference_awakening_ids=tuple(
-            (character_id, awakening_ids_by_character[character_id])
-            for character_id in reference_by_id
-        ),
-        reference_linked_uj=tuple(
-            (character_id, linked_uj_by_character[character_id])
-            for character_id in reference_by_id
-        ),
-        reference_linked_jutsu=tuple(
-            (character_id, linked_jutsu_by_character[character_id])
-            for character_id in reference_by_id
-        ),
         character_count=max(reference_by_id) + 1,
         resource_files=(reference_path, *paths),
     )
@@ -617,7 +498,6 @@ def _format_substitution_cost(row: CharacterOverrideRow) -> str:
 def render_character_overrides(configuration: CharacterOverrideConfiguration) -> str:
     lines = ["\t".join(OVERRIDE_FIELDS)]
     configured = configuration.row_by_id()
-    configured_ids = set(configured)
     rows = (
         configuration.base,
         configuration.step,
@@ -631,7 +511,7 @@ def render_character_overrides(configuration: CharacterOverrideConfiguration) ->
                 values=(None,) * len(VALUE_FIELDS),
             )
             for character_id, character in configuration.reference_characters
-            if character_id not in configured_ids
+            if character_id not in configured
         ),
     )
     for row in rows:
@@ -661,7 +541,6 @@ def character_override_fragment(
     configuration: CharacterOverrideConfiguration,
     *,
     owner: str,
-    symbol: str = "character_overrides",
 ) -> PayloadFragment:
     row_by_id = configuration.row_by_id()
 
@@ -707,7 +586,7 @@ def character_override_fragment(
     )
     return PayloadFragment(
         owner=owner,
-        symbol=symbol,
+        symbol="character_overrides",
         kind="rodata",
         alignment=4,
         payload=payload,

@@ -7,6 +7,7 @@ import os
 import re
 import sys
 from collections import defaultdict
+from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -14,6 +15,8 @@ REPOSITORY = Path(__file__).resolve().parents[3]
 if str(REPOSITORY) not in sys.path:
     sys.path.insert(0, str(REPOSITORY))
 
+from na228_builder.infrastructure.common import sha256_hex as sha256  # noqa: E402
+from na228_builder.infrastructure.orchestration.source_media import IsoFileView  # noqa: E402
 from scripts.lib.paths import load_paths  # noqa: E402
 from scripts.research.ui_translation import texture_derivation as engine  # noqa: E402
 
@@ -42,6 +45,35 @@ SHIKAMARU_PALETTE = (
     "indexed_crop_transparent_top_left_256x128_nearest_palette_"
     "0-1-2-3-4-5-6-7-9-10-11-12-13-14"
 )
+
+
+@dataclass(frozen=True)
+class SourcePair:
+    target_raw: bytes
+    donor_raw: bytes
+    target_payload: bytes
+    donor_payload: bytes
+    target_entries: dict[str, engine.TextureEntry]
+    donor_entries: dict[str, engine.TextureEntry]
+
+
+def read_source_pair(
+    target_iso: IsoFileView,
+    donor_iso: IsoFileView,
+    path: str,
+) -> SourcePair:
+    target_raw = target_iso.read_file(target_iso.by_path[path])
+    donor_raw = donor_iso.read_file(donor_iso.by_path[path])
+    target_payload = gzip.decompress(target_raw)
+    donor_payload = gzip.decompress(donor_raw)
+    return SourcePair(
+        target_raw,
+        donor_raw,
+        target_payload,
+        donor_payload,
+        engine.parse_ccs(target_payload),
+        engine.parse_ccs(donor_payload),
+    )
 
 
 def read_rows(path: Path) -> list[dict[str, str]]:
@@ -84,13 +116,7 @@ def texture_by_object(
     return matches[0]
 
 
-def visual_differences_by_object(
-    target_payload: bytes,
-    donor_payload: bytes,
-) -> set[str]:
-    target_entries = engine.parse_ccs(target_payload)
-    donor_entries = engine.parse_ccs(donor_payload)
-
+def visual_differences_by_object(source: SourcePair) -> set[str]:
     def index(
         entries: dict[str, engine.TextureEntry],
     ) -> dict[str, engine.TextureEntry]:
@@ -104,15 +130,15 @@ def visual_differences_by_object(
             result[object_name] = entry
         return result
 
-    target_by_object = index(target_entries)
-    donor_by_object = index(donor_entries)
+    target_by_object = index(source.target_entries)
+    donor_by_object = index(source.donor_entries)
     if target_by_object.keys() != donor_by_object.keys():
         raise RuntimeError("Target and donor texture-object inventories differ")
     return {
         object_name
         for object_name in target_by_object
-        if engine.decoded_rgba(target_payload, target_by_object[object_name])
-        != engine.decoded_rgba(donor_payload, donor_by_object[object_name])
+        if engine.decoded_rgba(source.target_payload, target_by_object[object_name])
+        != engine.decoded_rgba(source.donor_payload, donor_by_object[object_name])
     }
 
 
@@ -169,16 +195,16 @@ def build_rows() -> tuple[
         paths.path("source_nun5"),
     )
     target_mode1_paths = {
-        path
+        path: match.group(1)
         for path, record in target_iso.by_path.items()
-        if not record.is_dir and MODE1_PATH.fullmatch(path) is not None
+        if not record.is_dir and (match := MODE1_PATH.fullmatch(path)) is not None
     }
     donor_mode1_paths = {
         path
         for path, record in donor_iso.by_path.items()
         if not record.is_dir and MODE1_PATH.fullmatch(path) is not None
     }
-    if target_mode1_paths != donor_mode1_paths:
+    if target_mode1_paths.keys() != donor_mode1_paths:
         raise RuntimeError(
             "Target and donor Victory character-resource inventories differ"
         )
@@ -189,24 +215,19 @@ def build_rows() -> tuple[
         )
 
     mode1: list[dict[str, str]] = []
+    sources: dict[str, SourcePair] = {}
     no_name_paths: set[str] = set()
-    for path in sorted(target_mode1_paths):
-        match = MODE1_PATH.fullmatch(path)
-        if match is None:
-            raise RuntimeError(f"Unexpected Victory character path {path}")
-        container_id = f"mode1_{match.group(1).lower()}"
-        target_raw = target_iso.read_file(target_iso.by_path[path])
-        donor_raw = donor_iso.read_file(donor_iso.by_path[path])
-        target_entries = engine.parse_ccs(gzip.decompress(target_raw))
-        donor_entries = engine.parse_ccs(gzip.decompress(donor_raw))
+    for path, code in sorted(target_mode1_paths.items()):
+        container_id = f"mode1_{code.lower()}"
+        source = read_source_pair(target_iso, donor_iso, path)
         target_name_count = sum(
             part.object_name == "TEX_name"
-            for entry in target_entries.values()
+            for entry in source.target_entries.values()
             for part in entry.textures
         )
         donor_name_count = sum(
             part.object_name == "TEX_name"
-            for entry in donor_entries.values()
+            for entry in source.donor_entries.values()
             for part in entry.textures
         )
         if target_name_count != donor_name_count or target_name_count not in {0, 1}:
@@ -224,10 +245,11 @@ def build_rows() -> tuple[
         row = {
             "container_id": container_id,
             "path": path,
-            "target_sha256": engine.sha256(target_raw),
-            "donor_sha256": engine.sha256(donor_raw),
+            "target_sha256": sha256(source.target_raw),
+            "donor_sha256": sha256(source.donor_raw),
         }
         container_by_id[container_id] = row
+        sources[container_id] = source
         strategy_by_id.setdefault(
             container_id,
             {
@@ -262,13 +284,12 @@ def build_rows() -> tuple[
             + ", ".join(sorted(unexpected_victory_ids))
         )
 
-    enddemo_target = target_iso.read_file(target_iso.by_path[ENDDEMO_PATH])
-    enddemo_donor = donor_iso.read_file(donor_iso.by_path[ENDDEMO_PATH])
+    enddemo = read_source_pair(target_iso, donor_iso, ENDDEMO_PATH)
     container_by_id[ENDDEMO_ID] = {
         "container_id": ENDDEMO_ID,
         "path": ENDDEMO_PATH,
-        "target_sha256": engine.sha256(enddemo_target),
-        "donor_sha256": engine.sha256(enddemo_donor),
+        "target_sha256": sha256(enddemo.target_raw),
+        "donor_sha256": sha256(enddemo.donor_raw),
     }
 
     new_mappings: list[dict[str, str]] = [
@@ -285,28 +306,17 @@ def build_rows() -> tuple[
             ),
         }
     ]
-    affected_payloads: dict[str, tuple[bytes, bytes]] = {
-        ENDDEMO_ID: (
-            gzip.decompress(enddemo_target),
-            gzip.decompress(enddemo_donor),
-        )
-    }
+    affected_sources: dict[str, SourcePair] = {ENDDEMO_ID: enddemo}
 
     for row in sorted(mode1, key=lambda item: item["container_id"]):
         container_id = row["container_id"]
-        path = row["path"].upper()
-        target_raw = target_iso.read_file(target_iso.by_path[path])
-        donor_raw = donor_iso.read_file(donor_iso.by_path[path])
-        target_payload = gzip.decompress(target_raw)
-        donor_payload = gzip.decompress(donor_raw)
-        target_entries = engine.parse_ccs(target_payload)
-        donor_entries = engine.parse_ccs(donor_payload)
+        source = sources[container_id]
         try:
-            target_name = texture_by_object(target_entries, "TEX_name")
-            donor_name = texture_by_object(donor_entries, "TEX_name")
+            target_name = texture_by_object(source.target_entries, "TEX_name")
+            donor_name = texture_by_object(source.donor_entries, "TEX_name")
         except RuntimeError as error:
             raise RuntimeError(f"{container_id}: {error}") from error
-        differences = visual_differences_by_object(target_payload, donor_payload)
+        differences = visual_differences_by_object(source)
         allowed = {
             "TEX_name",
             "TEX_mode1name1",
@@ -373,7 +383,7 @@ def build_rows() -> tuple[
         )
         strategy_by_id[container_id]["strategy"] = strategy
         strategy_by_id[container_id]["reason"] = strategy_reason
-        affected_payloads[container_id] = (target_payload, donor_payload)
+        affected_sources[container_id] = source
 
     strategy_by_id[ENDDEMO_ID] = {
         "container_id": ENDDEMO_ID,
@@ -406,9 +416,7 @@ def build_rows() -> tuple[
         )
 
     capacities: list[tuple[str, int]] = []
-    for container_id, (target_payload, donor_payload) in affected_payloads.items():
-        spec = container_by_id[container_id]
-        target_raw = target_iso.read_file(target_iso.by_path[spec["path"].upper()])
+    for container_id, source in affected_sources.items():
         strategy_row = strategy_by_id[container_id]
         strategy = engine.Strategy(
             container_id=container_id,
@@ -418,36 +426,34 @@ def build_rows() -> tuple[
             reason=strategy_row["reason"],
         )
         selected = mappings_by_container[container_id]
-        target_entries = engine.parse_ccs(target_payload)
-        donor_entries = engine.parse_ccs(donor_payload)
         for mapping in selected:
             engine.validate_mapping(
                 mapping,
-                target_payload,
-                donor_payload,
-                target_entries,
-                donor_entries,
+                source.target_payload,
+                source.donor_payload,
+                source.target_entries,
+                source.donor_entries,
             )
         engine.validate_visual_coverage(
             strategy,
             selected,
-            target_payload,
-            donor_payload,
-            target_entries,
-            donor_entries,
+            source.target_payload,
+            source.donor_payload,
+            source.target_entries,
+            source.donor_entries,
         )
         payload = engine.expected_payload(
             strategy,
-            target_payload,
-            donor_payload,
+            source.target_payload,
+            source.donor_payload,
             selected,
         )
         replacement, _stream_size, padding = engine.repack_gzip_exact(
-            target_raw,
+            source.target_raw,
             payload,
         )
-        strategy_row["replacement_sha256"] = engine.sha256(replacement)
-        strategy_row["payload_sha256"] = engine.sha256(payload)
+        strategy_row["replacement_sha256"] = sha256(replacement)
+        strategy_row["payload_sha256"] = sha256(payload)
         capacities.append((container_id, padding))
 
     final_containers = sorted(container_by_id.values(), key=lambda row: row["container_id"])

@@ -19,10 +19,9 @@ pine = apply_injection.PINE_MODULE
 class FakePineClient:
     instances: list["FakePineClient"] = []
     guard = bytes.fromhex("11111111")
-    initial_state = "running"
 
     def __init__(self, _port: int) -> None:
-        self.state = self.initial_state
+        self.state = "running"
         self.events: list[str] = []
         self.memory: dict[int, int] = {
             0x3000 + index: value for index, value in enumerate(self.guard)
@@ -97,13 +96,12 @@ class InjectionApplyTests(unittest.TestCase):
     def setUp(self) -> None:
         FakePineClient.instances.clear()
         FakePineClient.guard = bytes.fromhex("11111111")
-        FakePineClient.initial_state = "running"
 
     def run_apply(
-        self, directory: Path, *, resume: bool = False
+        self, directory: Path, previous: Path | None = None
     ) -> FakePineClient:
         arguments = argparse.Namespace(
-            input=directory, port=28100, resume=resume
+            input=directory, port=28100, previous=previous
         )
         with (
             mock.patch.object(apply_injection, "parse_args", return_value=arguments),
@@ -125,16 +123,31 @@ class InjectionApplyTests(unittest.TestCase):
         self.assertEqual(client.events[0], "pause")
         self.assertEqual(client.events[-2:], ["refresh", "resume"])
 
-    def test_explicit_resume_restarts_an_initially_paused_vm(self) -> None:
-        FakePineClient.initial_state = "paused"
+
+    def test_accepts_replacement_applied_by_previous_candidate(self) -> None:
+        FakePineClient.guard = bytes.fromhex("44444444")
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
             write_candidate(directory)
-            client = self.run_apply(directory, resume=True)
+            previous = directory / "applied.json"
+            previous.write_text(
+                json.dumps(
+                    {
+                        "writes": [
+                            {
+                                "id": "caller",
+                                "runtime_address": "0x3000",
+                                "expected_hex": "11111111",
+                                "replacement_hex": "44444444",
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+            client = self.run_apply(directory, previous)
 
-        self.assertEqual(client.state, "running")
-        self.assertNotIn("pause", client.events)
-        self.assertEqual(client.events[-2:], ["refresh", "resume"])
+        self.assertEqual(client.read(0x3000, 4), bytes.fromhex("22222222"))
 
     def test_guard_failure_resumes_without_writing_candidate(self) -> None:
         FakePineClient.guard = bytes.fromhex("33333333")
@@ -142,7 +155,7 @@ class InjectionApplyTests(unittest.TestCase):
             directory = Path(temporary)
             write_candidate(directory)
             arguments = argparse.Namespace(
-                input=directory, port=28100, resume=False
+                input=directory, port=28100, previous=None
             )
             with (
                 mock.patch.object(

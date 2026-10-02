@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from pathlib import Path
 
 from . import catalog as catalog_module
 from .composer import resolve_symbolic_patches
-from ..modules import translation_importer as translation_importer_module
-from ..modules import runtime_injector as runtime_injector_module
+from ..modules.translation_importer import engine as translation_importer_module
+from ..modules.runtime_injector import engine as runtime_injector_module
 from ..modules.binary_patcher import engine as binary_patcher_module
 from ..modules.string_patcher import engine as string_patcher_module
 from ..modules.payload_builder import builder as payload_builder_module
 from ..modules.payload_builder.operations import (
+    PayloadFragment,
     ResidentPayloadBuild,
     ResolvedPatch,
 )
@@ -20,31 +20,20 @@ from ...patches.localization.retail_strings import owned_retail_strings, retail_
 from ...patches.settings.character_overrides.character_overrides import (
     character_override_fragment,
 )
-from ...patches.settings.ingame.battle_mode.battle_settings import (
-    battle_settings_fragment,
-    battle_settings_table_fragments,
-)
+from ...patches.settings.ingame.battle_mode.battle_settings import battle_settings_fragments
 from ...patches.settings.ingame.battle_mechanics.substitution_resource.substitution_gauge import substitution_gauge_fragment
 from ...patches.settings.ingame.battle_mechanics.items.items_settings import items_settings_fragment
-from ...patches.settings.ingame.practice_mode.practice_settings import (
-    practice_settings_fragment,
-    practice_settings_table_fragments,
-)
+from ...patches.settings.ingame.practice_mode.practice_settings import practice_settings_fragments
 from ...patches.settings.ingame.battle_mechanics.battle_settings_runtime import battle_settings_runtime_fragments
 from ...patches.settings.ingame.shared.native_settings_defaults import native_settings_defaults_fragment
 from ...patches.settings.mod_settings.mod_settings import (
     mod_settings_graphics_fragments,
-    mod_settings_resource_fragments,
-    mod_settings_schema_fragment,
+    mod_settings_menu_fragments,
     mod_settings_state_fragment,
 )
 from ...patches.general.unlock_all.unlock_all import unlock_all_configuration_fragment
 from ...patches.general.battle_results_rematch import rematch_label_fragment
-from ...patches.general.controls.control_defaults import (
-    control_default_fragments,
-    controls_layout,
-    controls_vibration,
-)
+from ...patches.general.controls.control_defaults import control_default_fragments
 from ...patches.memory_card.save_load import save_load_continuation_fragments
 from ...patches.memory_card.save_appendix import (
     save_appendix_load_status_fragment,
@@ -59,9 +48,6 @@ class PreparedModulePipeline:
         str, translation_importer_module.TranslationImportPlan
     ]
     derived_string_plans: dict[str, string_patcher_module.StringPatchPlan]
-    runtime_injection_declarations: dict[
-        str, runtime_injector_module.RuntimeInjectionPackage
-    ]
     runtime_injection_packages: dict[str, binary_patcher_module.Package]
     payload_build: ResidentPayloadBuild | None
 
@@ -71,14 +57,6 @@ class _StringPreparation:
     provider: ModuleInvocation
     owner: str
     draft: string_patcher_module.StringPatchDraft
-
-
-def _translation_source_arguments(root: Path, prefix: str) -> dict[str, Path]:
-    if root.is_dir():
-        return {f"{prefix}_folder": root}
-    if root.is_file():
-        return {f"{prefix}_iso": root}
-    raise FileNotFoundError(root)
 
 
 def _selected_game_title_policy(
@@ -103,239 +81,126 @@ def _selected_game_title_policy(
     )
 
 
+def _runtime_injection_declaration(
+    configuration: BuildConfiguration,
+    module: ModuleInvocation,
+) -> runtime_injector_module.RuntimeInjectionPackage:
+    """Load one feature's catalog injections plus its generated fragments."""
+    selection = configuration.selection
+    owner = module.module_id
+    declaration = catalog_module.load_runtime_package(
+        selection,
+        module.feature_id,
+        configuration.targets_path,
+        selection.catalog_path.parent.parent,
+        owner,
+    )
+    # Each group goes in front of the fragments generated before it.
+    generated: list[PayloadFragment] = []
+
+    def prepend(*fragments: PayloadFragment) -> None:
+        generated[:0] = fragments
+
+    if module.feature_id == "defaults":
+        if configuration.character_overrides is not None:
+            prepend(
+                character_override_fragment(
+                    configuration.character_overrides,
+                    owner=owner,
+                )
+            )
+        prepend(
+            mod_settings_state_fragment(selection, owner=owner),
+            *mod_settings_graphics_fragments(owner=owner),
+            *mod_settings_menu_fragments(selection, owner=owner),
+        )
+        prepend(native_settings_defaults_fragment(selection, owner=owner))
+        prepend(
+            *battle_settings_fragments(selection, owner=owner),
+            *practice_settings_fragments(selection, owner=owner),
+            *battle_settings_runtime_fragments(selection, owner=owner),
+            items_settings_fragment(selection, owner=owner),
+            substitution_gauge_fragment(selection, owner=owner),
+        )
+        prepend(*control_default_fragments(selection, owner=owner))
+    if module.feature_id == "general":
+        if any(
+            node.path == ("features", "general", "battle_results_rematch")
+            and node.enabled
+            for node in selection.nodes
+        ):
+            prepend(rematch_label_fragment(owner=owner))
+        unlock_all_fragment = unlock_all_configuration_fragment(
+            selection,
+            owner=owner,
+        )
+        if unlock_all_fragment is not None:
+            prepend(unlock_all_fragment)
+    if module.feature_id == "memory_card":
+        visible_updates = (
+            "save_appendix_update",
+            "dialogs_rework_update",
+            "display_only_first_save_update",
+        )
+        selected_update = next((
+            symbol for symbol in visible_updates
+            if any(edit.symbolic_patch.symbol == symbol for edit in declaration.edits)
+        ), None)
+        declaration = replace(
+            declaration,
+            edits=tuple(
+                edit for edit in declaration.edits
+                if edit.symbolic_patch.symbol not in visible_updates
+                or edit.symbolic_patch.symbol == selected_update
+            ),
+        )
+        prepend(*save_load_continuation_fragments(selection, owner=owner))
+        if selection.node_enabled("features", "memory_card", "extended_save_data"):
+            prepend(
+                save_appendix_load_status_fragment(owner=owner),
+                save_appendix_schema_fragment(selection, owner=owner),
+            )
+        elif any(
+            node.path == ("features", "memory_card", "auto_loading")
+            and node.enabled
+            for node in selection.nodes
+        ):
+            prepend(save_appendix_load_status_fragment(owner=owner))
+    declaration = replace(
+        declaration,
+        fragments=(*generated, *declaration.fragments),
+    )
+    if module.feature_id == "defaults":
+        declaration = retail_string_package(
+            declaration, configuration.roots["na2"], configuration.targets_path
+        )
+    return declaration
+
+
 def prepare_module_pipeline(
     configuration: BuildConfiguration,
 ) -> PreparedModulePipeline:
     """Prepare artifacts and link all shared payload contributions once."""
     ordered_modules = configuration.modules
-    if any(module.module == "translation_importer" for module in ordered_modules):
-        if "na2" not in configuration.roots:
-            raise ValueError("Translation importer requires the na2 configuration root")
-
     import_plans: dict[
         str, translation_importer_module.TranslationImportPlan
     ] = {}
     preparations: list[_StringPreparation] = []
-    owners: set[str] = set()
-    runtime_injection_declarations: dict[
-        str, runtime_injector_module.RuntimeInjectionPackage
-    ] = {}
+    runtime_injection_declarations = {
+        module.module_id: _runtime_injection_declaration(configuration, module)
+        for module in ordered_modules
+        if module.module == "runtime_injector"
+    }
+    owners = set(runtime_injection_declarations)
     title_policy = _selected_game_title_policy(configuration)
-    for module in ordered_modules:
-        if module.module != "runtime_injector":
-            continue
-        declaration = catalog_module.load_runtime_package(
-            configuration.selection,
-            module.feature_id,
-            configuration.targets_path,
-            configuration.selection.catalog_path.parent.parent,
-            module.module_id,
-        )
-        if (
-            module.feature_id == "defaults"
-            and configuration.character_overrides is not None
-        ):
-            declaration = replace(
-                declaration,
-                fragments=(
-                    character_override_fragment(
-                        configuration.character_overrides,
-                        owner=module.module_id,
-                    ),
-                    *declaration.fragments,
-                ),
-            )
-        if module.feature_id == "defaults":
-            declaration = replace(
-                declaration,
-                fragments=(
-                    mod_settings_state_fragment(
-                        configuration.selection,
-                        owner=module.module_id,
-                    ),
-                    *mod_settings_graphics_fragments(owner=module.module_id),
-                    mod_settings_schema_fragment(
-                        configuration.selection,
-                        owner=module.module_id,
-                    ),
-                    *mod_settings_resource_fragments(
-                        configuration.selection,
-                        owner=module.module_id,
-                    ),
-                    *declaration.fragments,
-                ),
-            )
-            declaration = replace(
-                declaration,
-                fragments=(
-                    native_settings_defaults_fragment(
-                        configuration.selection,
-                        owner=module.module_id,
-                    ),
-                    *declaration.fragments,
-                ),
-            )
-            declaration = replace(
-                declaration,
-                fragments=(
-                    battle_settings_fragment(
-                        configuration.selection,
-                        owner=module.module_id,
-                    ),
-                    *battle_settings_table_fragments(
-                        configuration.selection,
-                        owner=module.module_id,
-                    ),
-                    practice_settings_fragment(
-                        configuration.selection,
-                        owner=module.module_id,
-                    ),
-                    *practice_settings_table_fragments(
-                        configuration.selection,
-                        owner=module.module_id,
-                    ),
-                    *battle_settings_runtime_fragments(
-                        configuration.selection,
-                        owner=module.module_id,
-                    ),
-                    items_settings_fragment(
-                        configuration.selection,
-                        owner=module.module_id,
-                    ),
-                    substitution_gauge_fragment(
-                        configuration.selection,
-                        owner=module.module_id,
-                    ),
-                    *declaration.fragments,
-                ),
-            )
-            declaration = replace(
-                declaration,
-                fragments=(
-                    *control_default_fragments(
-                        owner=module.module_id,
-                        layout=controls_layout(configuration.selection),
-                        vibration=controls_vibration(configuration.selection),
-                        font_layout=any(
-                            node.patch == "localization.font.layout" and node.enabled
-                            for node in configuration.selection.patch_nodes
-                        ),
-                    ),
-                    *declaration.fragments,
-                ),
-            )
-        if module.feature_id == "general":
-            if any(
-                node.path == ("features", "general", "battle_results_rematch")
-                and node.enabled
-                for node in configuration.selection.nodes
-            ):
-                declaration = replace(
-                    declaration,
-                    fragments=(
-                        rematch_label_fragment(owner=module.module_id),
-                        *declaration.fragments,
-                    ),
-                )
-            unlock_all_fragment = unlock_all_configuration_fragment(
-                configuration.selection,
-                owner=module.module_id,
-            )
-            if unlock_all_fragment is not None:
-                declaration = replace(
-                    declaration,
-                    fragments=(
-                        unlock_all_fragment,
-                        *declaration.fragments,
-                    ),
-                )
-        if module.feature_id == "memory_card":
-            visible_updates = (
-                "save_appendix_update",
-                "dialogs_rework_update",
-                "display_only_first_save_update",
-            )
-            selected_update = next((
-                symbol for symbol in visible_updates
-                if any(edit.symbolic_patch.symbol == symbol for edit in declaration.edits)
-            ), None)
-            declaration = replace(
-                declaration,
-                edits=tuple(
-                    edit for edit in declaration.edits
-                    if edit.symbolic_patch.symbol not in visible_updates
-                    or edit.symbolic_patch.symbol == selected_update
-                ),
-                fragments=(
-                    *save_load_continuation_fragments(
-                        configuration.selection,
-                        owner=module.module_id,
-                    ),
-                    *declaration.fragments,
-                ),
-            )
-            extended_save_data = next(
-                node
-                for node in configuration.selection.nodes
-                if node.path == (
-                    "features",
-                    "memory_card",
-                    "extended_save_data",
-                )
-            )
-            if extended_save_data.enabled:
-                declaration = replace(
-                    declaration,
-                    fragments=(
-                        save_appendix_load_status_fragment(
-                            owner=module.module_id,
-                        ),
-                        save_appendix_schema_fragment(
-                            configuration.selection,
-                            owner=module.module_id,
-                        ),
-                        *declaration.fragments,
-                    ),
-                )
-            elif any(
-                node.path == ("features", "memory_card", "auto_loading")
-                and node.enabled
-                for node in configuration.selection.nodes
-            ):
-                declaration = replace(
-                    declaration,
-                    fragments=(
-                        save_appendix_load_status_fragment(
-                            owner=module.module_id,
-                        ),
-                        *declaration.fragments,
-                    ),
-                )
-        if module.feature_id == "defaults":
-            declaration = retail_string_package(
-                declaration, configuration.roots["na2"], configuration.targets_path
-            )
-        if module.module_id in owners:
-            raise ValueError(
-                f"Duplicate resident-payload owner: {module.module_id}"
-            )
-        owners.add(module.module_id)
-        runtime_injection_declarations[module.module_id] = declaration
-
     for provider in ordered_modules:
         if provider.module != "translation_importer":
             continue
-        source_arguments = _translation_source_arguments(
-            configuration.roots["na2"], "na2"
-        )
         import_plan = translation_importer_module.build_translation_import_plan(
-            **source_arguments,
+            source_root=configuration.roots["na2"],
             data_root=provider.input_path,
-            apply="BTL,ETC,SLPS",
         )
         owner = f"{provider.feature_id}.string_patcher"
-        if owner in owners:
-            raise ValueError(f"Duplicate prepared string-patcher owner: {owner}")
         owners.add(owner)
         draft = string_patcher_module.build_translation_draft(
             translation_plan=import_plan,
@@ -350,7 +215,6 @@ def prepare_module_pipeline(
                 draft=draft,
             )
         )
-
     fragments = tuple(
         fragment
         for preparation in preparations
@@ -410,7 +274,6 @@ def prepare_module_pipeline(
         ordered_modules=ordered_modules,
         import_plans=import_plans,
         derived_string_plans=derived_string_plans,
-        runtime_injection_declarations=runtime_injection_declarations,
         runtime_injection_packages=runtime_injection_packages,
         payload_build=payload_build,
     )

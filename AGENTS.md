@@ -158,7 +158,7 @@ and read only relevant sections of large documents.
   automatically stage, commit, push, and deploy the validated build to
   `@pcsx2_dev`. This standing authorization applies only to PCSX2 repository
   changes.
-- Treat `e2e/captures/` as a separate maintained Git repository for every
+- Treat `@e2e_captures/` as a separate maintained Git repository for every
   repository-wide Git operation and completion report, even though it is
   local-only and has no remote.
 - Track every repository changed by the task as participating until its delivery

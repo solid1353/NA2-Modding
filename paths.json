@@ -2,7 +2,14 @@
   "imports": {
     "workshop": "../UN Workshop/paths.json"
   },
-  "existence_deferred_roots": ["build", "cache", "release", "work"],
+  "existence_deferred_roots": [
+    "build",
+    "cache",
+    "release",
+    "work",
+    "marker_captures",
+    "e2e_captures"
+  ],
   "roots": {
     "builder": "na228_builder",
     "resources": "resources",
@@ -12,6 +19,8 @@
     "release": "release",
     "work": "work",
     "logs": "logs",
+    "marker_captures": "captures",
+    "e2e_captures": "e2e/captures",
     "pcsx2_files": "pcsx2_files",
     "pcsx2_input_recordings": "@pcsx2_files/input_recordings"
   },

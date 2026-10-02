@@ -11,28 +11,15 @@ function Resolve-Na2LaunchProfile {
         throw "Invalid launch profile name: $Name"
     }
     $property = $Paths.settings.launch_settings.PSObject.Properties[$Name]
-    if ($null -eq $property -or $property.Name -ceq 'default' -or
-        $property.Value -isnot [pscustomobject]) {
+    if ($null -eq $property -or $property.Name -ceq 'default') {
         throw "Unknown launch profile: $Name"
     }
 
     $canonicalName = [string]$property.Name
-    $profilesRoot = [IO.Path]::GetFullPath((Join-Path `
-        ([string]$Paths.repository) `
-        'launch_profiles'
-    ))
     $profileRoot = [IO.Path]::GetFullPath((Join-Path `
-        $profilesRoot `
-        $canonicalName
+        ([string]$Paths.repository) `
+        "launch_profiles\$canonicalName"
     ))
-    $profilesPrefix = $profilesRoot.TrimEnd('\', '/') + `
-        [IO.Path]::DirectorySeparatorChar
-    if (-not $profileRoot.StartsWith(
-        $profilesPrefix,
-        [StringComparison]::OrdinalIgnoreCase
-    )) {
-        throw "Launch profile '$canonicalName' escapes the profile root."
-    }
     $scriptPath = Join-Path $profileRoot 'launch.ps1'
 
     [pscustomobject]@{

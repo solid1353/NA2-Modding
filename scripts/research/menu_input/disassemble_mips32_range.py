@@ -9,7 +9,14 @@ useful for locating input handlers and leaves uncommon words as `.word`.
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
+
+REPOSITORY = Path(__file__).resolve().parents[3]
+if str(REPOSITORY) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY))
+
+from scripts.research.menu_input.mips_common import FACE_MASKS, is_face_mask_andi  # noqa: E402
 
 REG = (
     "zero", "at", "v0", "v1", "a0", "a1", "a2", "a3",
@@ -17,7 +24,6 @@ REG = (
     "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
     "t8", "t9", "k0", "k1", "gp", "sp", "fp", "ra",
 )
-FACE = {0x10: "triangle", 0x20: "circle", 0x40: "cross", 0x80: "square"}
 
 
 def signed16(value: int) -> int:
@@ -74,7 +80,7 @@ def decode(word: int, address: int) -> str:
         return f"{name} {REG[rt]}, {REG[rs]}, {simm}"
     if op in (12, 13, 14):
         name = {12: "andi", 13: "ori", 14: "xori"}[op]
-        note = f" ; {FACE[imm]}" if op == 12 and imm in FACE else ""
+        note = f" ; {FACE_MASKS[imm]}" if is_face_mask_andi(word) else ""
         return f"{name} {REG[rt]}, {REG[rs]}, 0x{imm:04X}{note}"
     if op == 15:
         return f"lui {REG[rt]}, 0x{imm:04X}"

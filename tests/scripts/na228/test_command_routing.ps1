@@ -94,6 +94,7 @@ function Get-Na2Paths {
         workshop = Join-Path $repository 'workshop'
         pcsx2_scripts = Join-Path $repository 'workshop\scripts\pcsx2'
         pcsx2_input_recordings = Join-Path $repository 'recordings'
+        marker_captures = Join-Path $repository 'captures'
         settings = Get-Content -Raw -LiteralPath (Join-Path $repository 'game.json') | ConvertFrom-Json
         games = [pscustomobject]@{
             Names = @('NA2')
@@ -150,7 +151,7 @@ function ConvertFrom-UnWorkshopLaunchArguments {
 }
 '@)
     [IO.File]::WriteAllText((Join-Path $repository 'scripts\na228\run.ps1'), @'
-param([string]$Action, [string]$Configuration, [string]$LogDirectory,
+param([string]$Configuration, [string]$LogDirectory,
       [string]$Postfix, [string]$OverridesJson, [switch]$Force)
 $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..\..'))
 $image = Join-Path $repository "build\$Configuration.iso"
@@ -158,7 +159,6 @@ $image = Join-Path $repository "build\$Configuration.iso"
 [IO.File]::WriteAllText(
     (Join-Path $repository 'build.json'),
     ([ordered]@{
-        action = $Action
         configuration = $Configuration
         force = $Force.IsPresent
         postfix = $Postfix

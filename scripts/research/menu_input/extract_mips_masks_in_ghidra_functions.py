@@ -4,11 +4,18 @@
 from __future__ import annotations
 
 import argparse
-import re
+import sys
 from pathlib import Path
 
-FUNCTION_RE = re.compile(r"(?m)^(?:[\w *]+)\s+(FUN_([0-9a-f]{8}))\([^\n]*\)\s*\n\s*\{")
-FACE_MASKS = {0x10: "triangle", 0x20: "circle", 0x40: "cross", 0x80: "square"}
+REPOSITORY = Path(__file__).resolve().parents[3]
+if str(REPOSITORY) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY))
+
+from scripts.research.menu_input.mips_common import (  # noqa: E402
+    FACE_MASKS,
+    FUNCTION_RE,
+    is_face_mask_andi,
+)
 
 
 def main() -> int:
@@ -35,7 +42,7 @@ def main() -> int:
         end_offset = min(end - args.file_to_runtime_delta, len(data))
         for offset in range(start_offset, end_offset, 4):
             word = int.from_bytes(data[offset : offset + 4], "little")
-            if word >> 26 != 0x0C or (word & 0xFFFF) not in FACE_MASKS:
+            if not is_face_mask_andi(word):
                 continue
             rs = (word >> 21) & 0x1F
             rt = (word >> 16) & 0x1F

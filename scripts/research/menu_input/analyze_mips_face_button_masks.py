@@ -10,10 +10,19 @@ from __future__ import annotations
 
 import argparse
 import difflib
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-FACE_MASKS = {0x10: "triangle", 0x20: "circle", 0x40: "cross", 0x80: "square"}
+REPOSITORY = Path(__file__).resolve().parents[3]
+if str(REPOSITORY) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY))
+
+from scripts.research.menu_input.mips_common import (  # noqa: E402
+    FACE_MASKS,
+    is_face_mask_andi,
+    little_endian_words,
+)
 
 
 @dataclass(frozen=True)
@@ -25,27 +34,18 @@ class Hit:
     mask: int
 
 
-def words(data: bytes) -> list[int]:
-    usable = len(data) - len(data) % 4
-    return [int.from_bytes(data[offset : offset + 4], "little") for offset in range(0, usable, 4)]
-
-
 def hits(values: list[int]) -> list[Hit]:
-    result: list[Hit] = []
-    for index, word in enumerate(values):
-        opcode = word >> 26
-        immediate = word & 0xFFFF
-        if opcode == 0x0C and immediate in FACE_MASKS:
-            result.append(
-                Hit(
-                    offset=index * 4,
-                    word=word,
-                    rs=(word >> 21) & 0x1F,
-                    rt=(word >> 16) & 0x1F,
-                    mask=immediate,
-                )
-            )
-    return result
+    return [
+        Hit(
+            offset=index * 4,
+            word=word,
+            rs=(word >> 21) & 0x1F,
+            rt=(word >> 16) & 0x1F,
+            mask=word & 0xFFFF,
+        )
+        for index, word in enumerate(values)
+        if is_face_mask_andi(word)
+    ]
 
 
 def shape(word: int) -> int:
@@ -56,7 +56,7 @@ def shape(word: int) -> int:
     if opcode in (2, 3):
         # Absolute jump targets shift between regional builds.
         return opcode << 26
-    if opcode == 0x0C and (word & 0xFFFF) in FACE_MASKS:
+    if is_face_mask_andi(word):
         # Preserve source/destination registers, normalize only the button mask.
         return (word & 0xFFFF0000) | 0xF00D
     # I-type immediates include branches, data addresses, and structure offsets;
@@ -84,8 +84,8 @@ def main() -> int:
     parser.add_argument("--minimum-margin", type=float, default=0.04)
     args = parser.parse_args()
 
-    na2_words = words(args.na2.read_bytes())
-    nun5_words = words(args.nun5.read_bytes())
+    na2_words = little_endian_words(args.na2.read_bytes())
+    nun5_words = little_endian_words(args.nun5.read_bytes())
     na2_hits = hits(na2_words)
     nun5_hits = hits(nun5_words)
 

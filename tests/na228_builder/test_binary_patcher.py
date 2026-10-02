@@ -33,7 +33,6 @@ class BinaryPatcherTests(unittest.TestCase):
                 "destination": patcher.Target(
                     target_id="destination",
                     root_id="na2",
-                    role="destination",
                     path=PurePosixPath("target.bin"),
                     expected_size=len(clean),
                     expected_sha256=sha256(clean),
@@ -41,7 +40,6 @@ class BinaryPatcherTests(unittest.TestCase):
                 "source": patcher.Target(
                     target_id="source",
                     root_id="nun5",
-                    role="source",
                     path=PurePosixPath("source.bin"),
                     expected_size=len(source),
                     expected_sha256=sha256(source),
@@ -68,8 +66,6 @@ class BinaryPatcherTests(unittest.TestCase):
                     replacement_hex="10203040",
                     source_target_id="",
                     source_offset=None,
-                    source_expected_hex="",
-                    source_expected_sha256="",
                     blob_path=None,
                     blob_offset=None,
                     blob_sha256="",
@@ -89,8 +85,6 @@ class BinaryPatcherTests(unittest.TestCase):
                     replacement_hex="",
                     source_target_id="source",
                     source_offset=0,
-                    source_expected_hex="AABBCCDD",
-                    source_expected_sha256="",
                     blob_path=None,
                     blob_offset=None,
                     blob_sha256="",
@@ -201,7 +195,7 @@ class BinaryPatcherTests(unittest.TestCase):
 
             blob_path.write_bytes(blob + b"X")
             with self.assertRaisesRegex(patcher.PatchError, "blob SHA-256 mismatch"):
-                patcher.verify_package_data(package, roots)
+                patcher.compose_edits(package, target_data, edits)
 
     def test_composition_accepts_unrelated_prior_changes(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

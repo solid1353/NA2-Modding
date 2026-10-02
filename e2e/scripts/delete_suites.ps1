@@ -6,24 +6,15 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'suite.ps1')
 
-$root = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$repository = [IO.Path]::GetFullPath((Join-Path $root '..'))
-. (Join-Path $repository 'scripts\lib\paths.ps1')
-$paths = Get-Na2Paths
-$recordingRoot = Join-Path ([string]$paths.pcsx2_input_recordings) 'e2e'
-$captureRepository = Join-Path $root 'captures'
+$state = Get-VisualRegressionRepositoryState
+$captureRepository = $state.CaptureRepository
 $selection = Resolve-VisualRegressionSuiteSelection `
     -Token $SelectionToken `
-    -RecordingRepository $recordingRoot
+    -RecordingRepository $state.RecordingRepository
 
 if ($selection.All) {
     if (Test-Path -LiteralPath $captureRepository -PathType Container) {
-        foreach ($item in Get-ChildItem -LiteralPath $captureRepository -Force) {
-            if ($script:E2eCaptureRepositoryMetadataNames -ccontains $item.Name) {
-                continue
-            }
-            Remove-Item -LiteralPath $item.FullName -Recurse -Force
-        }
+        Clear-VisualRegressionCaptureRepository -CaptureRepository $captureRepository
     }
     Write-Host 'Deleted all E2E capture history.' -ForegroundColor Green
     return
@@ -49,32 +40,12 @@ function Remove-E2eGeneratedRange {
         [Parameter(Mandatory)][string]$Range
     )
 
-    $rangeMatch = [regex]::Match($Range, '^(\d+)(?:-(\d+))?$')
-    $firstRow = [int]$rangeMatch.Groups[1].Value
-    $lastRow = if ($rangeMatch.Groups[2].Success) {
-        [int]$rangeMatch.Groups[2].Value
-    }
-    else { $firstRow }
-    $patterns = if ($Context.GeneratedFamily -ceq 'idle') {
-        . (Join-Path $Context.Repository 'scripts\lib\paths.ps1')
-        $contextPaths = Get-Na2Paths `
-            -ManifestPath (Join-Path $Context.Repository 'paths.json')
-        $characterData = @(
-            Import-Csv `
-                -LiteralPath (Join-Path ([string]$contextPaths.resources) 'character_data.tsv') `
-                -Delimiter "`t"
-        )
-        Get-VisualRegressionIdlePagePlans `
-            -FirstRow $firstRow `
-            -LastRow $lastRow `
-            -CharacterCount $characterData.Count |
-            ForEach-Object { 'page_{0:D2}_*.png' -f $_.Page }
-    }
-    else {
-        for ($row = $firstRow; $row -le $lastRow; $row++) {
-            '{0:D3}_*.png' -f $row
-        }
-    }
+    $patterns = @(
+        Get-VisualRegressionGeneratedRangePrefixes `
+            -Family $Context.GeneratedFamily `
+            -Range $Range |
+            ForEach-Object { "$_*.png" }
+    )
     $directories = @(
         $Context.Capture.ScreenshotGrids
         $Context.Capture.PairGrids
@@ -166,14 +137,6 @@ foreach ($plan in $plans) {
     }
 }
 
-$deleted = @(
-    $plans | ForEach-Object {
-        if ($_.Request.Arguments.Count -eq 0) {
-            $_.Context.Suite
-        }
-        else {
-            "$($_.Context.Suite) $($_.Request.Arguments -join ' ')"
-        }
-    }
-) -join ', '
-Write-Host "Deleted E2E capture history: $deleted" -ForegroundColor Green
+Write-Host (
+    "Deleted E2E capture history: $(Get-VisualRegressionSelectionLabel -Request $selection.Requests)"
+) -ForegroundColor Green

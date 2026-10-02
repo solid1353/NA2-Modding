@@ -19,7 +19,6 @@ function Get-Na2BuildConfigurations {
     }
 
     $byName = [ordered]@{}
-    $byAlias = [ordered]@{}
     $bySelector = [ordered]@{}
     foreach ($configurationFile in $configurationFiles) {
         $name = [IO.Path]::GetFileNameWithoutExtension($configurationFile.Name)
@@ -44,11 +43,7 @@ function Get-Na2BuildConfigurations {
                 $alias -cnotmatch '^[a-z][a-z0-9_-]*$') {
                 throw "Invalid alias for build configuration '$name'."
             }
-            if ($byAlias.Contains($alias)) {
-                throw "Duplicate build configuration selector: $alias"
-            }
             $byName[$name].Alias = $alias
-            $byAlias[$alias] = $name
             if ($bySelector.Contains($alias)) {
                 throw "Duplicate build configuration selector: $alias"
             }
@@ -67,7 +62,7 @@ function Get-Na2BuildConfigurations {
         $bySelector[$selector] = [string]$configuration.Name
     }
 
-    $reservedSelectors = @('build', 'e2e', 'help', 'release', 'test', 'w', 'worker')
+    $reservedSelectors = @('build', 'e2e', 'help', 'release', 'test', 'w')
     foreach ($selector in $bySelector.Keys) {
         if ($selector -in $reservedSelectors) {
             throw "Build configuration selector conflicts with a command: $selector"
@@ -88,24 +83,6 @@ function Get-Na2BuildConfigurations {
     }
 
     return [pscustomobject]@{
-        ByName = $byName
-        ByAlias = $byAlias
         BySelector = $bySelector
-        Names = [string[]]@($byName.Keys)
     }
-}
-
-function Resolve-Na2BuildConfiguration {
-    [CmdletBinding()]
-    param(
-        [Parameter(Mandatory)][string]$Selector,
-        [Parameter(Mandatory)][psobject]$Configurations
-    )
-
-    $key = $Selector.Trim().ToLowerInvariant()
-    $name = $Configurations.BySelector[$key]
-    if ([string]::IsNullOrWhiteSpace([string]$name)) {
-        throw "Unknown build configuration: $Selector"
-    }
-    return $Configurations.ByName[[string]$name]
 }

@@ -1,6 +1,5 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)][ValidateSet('configuration-build')][string]$Action,
     [Parameter(Mandatory)][string]$Configuration,
     [switch]$Force,
     [string]$LogDirectory,
@@ -16,7 +15,7 @@ $paths = Get-Na2Paths
 $runLog = $null
 try {
     $runLogArguments = @{
-        Mode = $Action
+        Mode = 'configuration-build'
         Paths = $paths
     }
     if (-not [string]::IsNullOrWhiteSpace($LogDirectory)) {
@@ -32,22 +31,7 @@ $runOutcome = 'failed'
 $runFailure = ''
 $runTechnicalDetails = ''
 try {
-    $buildArguments = @{
-        Configuration = $Configuration
-    }
-    if ($Force) {
-        $buildArguments.Force = $true
-    }
-    if ($PSBoundParameters.ContainsKey('Postfix')) {
-        $buildArguments.Postfix = $Postfix
-    }
-    if ($PSBoundParameters.ContainsKey('OverridesJson')) {
-        $buildArguments.OverridesJson = $OverridesJson
-    }
-    if (-not [string]::IsNullOrWhiteSpace($LogDirectory)) {
-        $buildArguments.LogDirectory = $LogDirectory
-    }
-    $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') @buildArguments
+    $buildResult = & (Join-Path $PSScriptRoot 'build.ps1') @PSBoundParameters
     if ($null -eq $buildResult -or
         $buildResult.Status -notin @('built', 'reused')) {
         throw 'Configuration build returned no valid result.'

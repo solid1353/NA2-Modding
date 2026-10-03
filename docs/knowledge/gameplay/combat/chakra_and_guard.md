@@ -974,7 +974,7 @@ response `FUN_00232B80` when fighter `+0x95A < 1` and to guarded response
 `(0,7)` and calls `FUN_00228B50`. Router modes, admission gates, and the
 reaction outcomes are owned by
 [Accepted-hit routing](hit_response.md#accepted-hit-routing) and
-[Guarded-hit transitions](hit_response.md#guarded-hit-transitions).
+[Guarded-hit transitions](hit_response.md#guarded-hits).
 
 Before that branch, two attack-record `+0x14` flags write the guard field:
 

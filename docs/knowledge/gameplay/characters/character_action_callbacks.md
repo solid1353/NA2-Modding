@@ -27,7 +27,7 @@ provider-table selection are owned by
 file investigates the selected bodies. Definition slot 3 is the
 source-fighter response callback at vector `+0x0C`, selected from fighter
 `+0xA8` by the accepted-hit initializer. Its caller contract and complete
-response inventory belong to [Hit response](../combat/hit_response.md#character-response-callbacks).
+response inventory belong to [Hit response](../combat/hit_response.md#character-callbacks).
 
 ## Complete bounded class/slot census
 
@@ -271,7 +271,7 @@ and that row's planar speed to zero.
 The complete `FUN_00247E90` returns signed progress/latch `+0xB4C`
 (falling back to `+0xB48` when zero) divided by nonzero signed cap
 `+0xB4A`, or zero for cap zero. The producer, release latch and constructor
-caps belong to [Action commands](../combat/action_commands.md#resident-post-translation-synthesis).
+caps belong to [Action commands](../combat/action_commands.md#resident-synthesis-after-translation).
 The rate callbacks perform no independent clamp on that returned ratio.
 Tenten and Chiyo's remaining rate writers are coupled to phase loops below.
 
@@ -367,7 +367,7 @@ Both channel-1 bodies below require their actual fighter ID. They use fighter
 loader `FUN_002151E0`. Action records have stride `0x54`; each category
 write is at `array + action_id * 0x54 + 0x10`. Their row accesses dereference
 that record's `+0x50`. The setup/selection contract belongs to
-[Action commands](../combat/action_commands.md#action-table-source-and-setup); the row
+[Action commands](../combat/action_commands.md#working-action-arrays); the row
 layout belongs to Combat action execution. These mutations show why shipped
 categories and rows alone cannot describe the live action configuration.
 
@@ -573,7 +573,7 @@ to establish the first matching continuation, rather than assuming adjacency:
 Hold category words are `8`; their release records use `0x10`. Their
 behavior words are `0x00070009` for the first pair and `0x0007000A` for
 the other pairs. Shipped `record+0x50` values are row indices, converted
-to live pointers during [Action-table setup](../combat/action_commands.md#action-table-source-and-setup).
+to live pointers during [Action-table setup](../combat/action_commands.md#working-action-arrays).
 The row starts are indices `100/103`, `127/130`, and `136/139` for the
 hold/release pairs. Each hold has phase 0, condition-zero phase 1, and a
 terminal phase 2. Release dispatch therefore bypasses the hold's otherwise
@@ -586,7 +586,7 @@ latching progress; channel 1 can also dispatch when both bits disappear.
 channel-1 pass, and copies the resulting input into fighter `+0x338`
 later. This distinguishes helper-driven dispatch from the ordinary
 signature-matching/pending route. The shared synthesis and selector contracts
-remain in [Action commands](../combat/action_commands.md#resident-post-translation-synthesis).
+remain in [Action commands](../combat/action_commands.md#resident-synthesis-after-translation).
 These static paths establish the three release destinations, without claiming
 every interrupted or delayed input sequence reaches them.
 

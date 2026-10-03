@@ -96,7 +96,7 @@ definition `+0x2C`, and action `0x13` at array `+0x63C`. Every one of the
 four-record definitions do not contain the slot; repeated filler references
 do not add distinct definitions. The wider definition/table census belongs
 to [Character identity](../characters/character_ids.md#character-definition-table) and
-[Action commands](action_commands.md#complete-static-action-data-census).
+[Action commands](action_commands.md#static-action-data).
 
 All those slot records have empty strings at pointers `+0/+4/+8`, which
 point to resident `0x006031F0`, whose bytes begin with zero. Consequently
@@ -146,7 +146,7 @@ without changing category-2 dispatch.
 through definition `+0x30`; `FUN_00219620` copies default slots 4 through
 the action count into it, and `FUN_00218FE0` replaces slot `+0x50` with a
 pointer into the fighter's copied phase rows. Their complete setup is owned
-by [Action commands](action_commands.md#action-table-source-and-setup).
+by [Action commands](action_commands.md#working-action-arrays).
 It is not established that every constructor, later callback, or indirect
 writer preserves slot `0x13` and copied thresholds for their full lifetime.
 Definition 14's factory `FUN_0025EF70` calls constructor `FUN_0025EFC0`;

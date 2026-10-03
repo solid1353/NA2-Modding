@@ -70,7 +70,7 @@ resident and BTL files are identified in
   `0x02/0x40`; an ordinary-mode positive producer of slot `+0x126` beyond the
   established retention path; complete entry conditions and move names for
   the recovered numeric character exceptions, including which configured
-  `+0x188` selection ([Action commands](../combat/action_commands.md#action-table-source-and-setup))
+  `+0x188` selection ([Action commands](../combat/action_commands.md#working-action-arrays))
   makes ID 36's indices 4..6 available in a given match; the player-facing
   name of the setup mode that bypasses the secondary modifier; and whether an
   unrecognized alias can write the session's first-phase filter and separate
@@ -879,7 +879,7 @@ among 4..9 according to the configured selection in fighter halfword `+0x188`
 and zeroes record word `+0x10` for the others; that setup, the
 selection-to-slot table, its derived-field helpers, and the later slot-4..9
 rewrite by `FUN_002449C0` are owned by
-[Action commands](../combat/action_commands.md#action-table-source-and-setup). Through
+[Action commands](../combat/action_commands.md#working-action-arrays). Through
 the common action-start path, ID 36's indices 4/5/6 therefore need the
 configured selection that retains them (values `0/1/2`): a zero type word is
 rejected. The AI's index comparison does not itself test this selection, so
@@ -1203,7 +1203,7 @@ guard bit `0x10000000`. Low bits `4` and `8` are opposite direction sectors;
 `0x00040000` is a short-history Cross-plus-direction modifier rather than an
 independent button. These mappings come from the shared command-controller
 pipeline documented in
-[Action commands](../combat/action_commands.md#logical-mask-translation); bindings
+[Action commands](../combat/action_commands.md#logical-mask); bindings
 remain user-configurable.
 
 ### State-18 guard reaction

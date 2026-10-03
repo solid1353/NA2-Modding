@@ -477,7 +477,7 @@ second six-row group. Copying the second source group into the first remaps
 animation indices `0x4A..0x4D` to `0x46..0x49`; copying the first into the
 second performs the reverse remap. The conversion writes `-1` for values
 outside the expected four animation indices. The associated action-pointer
-conversion is owned by [Action-table source and setup](../gameplay/combat/action_commands.md#action-table-source-and-setup).
+conversion is owned by [Action-table source and setup](../gameplay/combat/action_commands.md#working-action-arrays).
 
 **Observation:** Resident `FUN_002189D0` establishes the first three signed
 halfword fields of a `0x4C` row:

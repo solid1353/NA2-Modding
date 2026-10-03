@@ -542,7 +542,7 @@ then stores the record at `+0xB60`
 (`0x00232F6C..0x00232F98`). Response-exit cleanup
 `FUN_00230A70` clears both fields when entering a major state other than `5`.
 Their wider response semantics belong to
-[Hit response](../combat/hit_response.md#character-response-callbacks).
+[Hit response](../combat/hit_response.md#character-callbacks).
 
 `FUN_002B5250` reads Deidara's own count. Below `2`, records `43..45`
 use template timing and set block bit `0x8000` when action phase byte

@@ -126,7 +126,7 @@ releases the target's reservation and calls `FUN_00216EA0(attacker, level)`.
 
 The jutsu-class action slots `4..9` that carry these flags, and the Triangle
 selection that reaches them, are described in
-[Action commands](../combat/action_commands.md#representative-chakrajutsu-path).
+[Action commands](../combat/action_commands.md#representative-paths).
 
 `FUN_002449C0` selects the currently usable Ultimate Jutsu action rather than
 leaving its slot entirely to the character's original action table. The tier
@@ -153,9 +153,9 @@ unchanged tier and a nonnegative remap result, the function returns before
 rewriting them. The write loop is `0x00244D14..0x00244DBC`.
 
 `FUN_00216EA0` clears both fighters'
-[update-pause block](../combat/hit_response.md#fighter-update-pause-and-action-lock)
+[update-pause block](../combat/hit_response.md#pause-lock-and-update-order)
 through `FUN_00224470(fighter, 0, 1)` and sets both
-[hit-rejection countdowns](../combat/hit_response.md#accepted-hit-rejection-countdown)
+[hit-rejection countdowns](../combat/hit_response.md#rehit-suppression)
 to `60` through `FUN_002247D0(fighter, -60, 1)`. Unless the battle coordinator
 is already in state `6`, it switches the coordinator to state `6` with the
 attacker at `+0x24`,
@@ -264,7 +264,7 @@ The state transitions above are established from the instructions at Ghidra
 `0x0076A4A0..0x0076A5EC`.
 
 Fighter `+0x1B0` is the update-rate override described in
-[Hit response](../combat/hit_response.md#fighter-fields-used-by-the-response-machine).
+[Hit response](../combat/hit_response.md).
 The [status-producer investigation](#status-2-producer-boundary)
 has not recovered a producer for the presentation's status-`2` branch.
 

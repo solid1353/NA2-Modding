@@ -104,7 +104,7 @@ recovered readers are:
 | `FUN_001083A0` | The root wait comparison. |
 | `FUN_001057B0` | Saves the value before forcing 1 for a movie. |
 | `FUN_00113B80` | Subtracts it from each active vibration duration once per update, so vibration ages in VBlank units at any threshold ([Controller input](controller_input.md#vibration-and-actuator-scheduling)). |
-| BTL `ccCommand` constructor, Ghidra `FUN_006EF5C0` | Sizes the input history as `300 / threshold` records when the object is constructed ([Action commands](../gameplay/combat/action_commands.md#battle-input-object-and-circular-history)). |
+| BTL `ccCommand` constructor, Ghidra `FUN_006EF5C0` | Sizes the input history as `300 / threshold` records when the object is constructed ([Action commands](../gameplay/combat/action_commands.md#battle-input-object-and-history)). |
 | `FUN_0019B4D0`, `FUN_0019BB00` | Multiply pad-driven rotation and movement and a hold counter by the threshold. Their only caller, `FUN_0019B490`, runs inside streamed play worker `FUN_001A0120` when the request flags have `0x60` set and `0x100` clear and the container has `+0xA4 & 1`. The same branch reads raw pad words at context `+0x80/+0x84/+0xF8/+0xFC` and lets pad input change container rate `+0x9C` in steps of `0x40`. It is a pad-controlled scene viewer, not a battle or front-end consumer; which retail requests enable it is unresolved. |
 
 ## Display output and buffer flip

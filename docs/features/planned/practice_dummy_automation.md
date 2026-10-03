@@ -117,7 +117,7 @@ The inspected fighter-list scheduler executes hit routing and AI synthesis
 before the ordinary pass. That pass copies logical input, runs action
 maintenance, consumes input, and updates the selected action, in that order.
 This corroborates the
-[Resident bridge and action dispatch](../../knowledge/gameplay/combat/action_commands.md#resident-bridge-and-action-dispatch)
+[Resident bridge and action dispatch](../../knowledge/gameplay/combat/action_commands.md#bridge-and-dispatch-order)
 contract. A state exit performed by maintenance can be followed by ordinary
 selection in the same eligible pass; waiting for a later update merely because
 AI observed the previous state would not establish the earliest legal input.
@@ -157,7 +157,7 @@ distinct observations. The final feature contract would need to identify an
 actual destination/action transition, including a deliberate same-action case.
 The native queue and pending-slot mechanisms remain owned by
 [AI action queues](../../knowledge/gameplay/session/battle_ai.md#action-record-selection-and-direct-queues)
-and [Pending selection](../../knowledge/gameplay/combat/action_commands.md#pending-selection-and-priority-boundaries).
+and [Pending selection](../../knowledge/gameplay/combat/action_commands.md#pending-action-rules).
 
 ### Scripted Attack is a repeated policy, not a reversal scheduler
 
@@ -201,7 +201,7 @@ The complete resident recovery family `0x00235100` (destination setup),
 `0x00235690` (state maintenance), `0x00235C60` (state motion), and
 `0x00235200` (exit) was inspected through MCP alongside the shared selector
 gate. Their retail ownership is
-[Timed downed recovery](../../knowledge/gameplay/combat/hit_response.md#timed-downed-recovery-and-get-up-choices).
+[Timed downed recovery](../../knowledge/gameplay/combat/hit_response.md#timed-downed-recovery).
 The feature would need to distinguish choosing a recovery from requesting an
 action during or after that recovery. Recovery `0x5F` becomes eligible for
 ordinary selection at primary cursor `8`, and `0x60` at cursor `3`, subject to
@@ -286,13 +286,13 @@ decision, and random weights are unspecified.
 The two input-driven ordinary-response recoveries (`ACT_RCV_0/1`) and the
 special relocation substates `0x61/0x62` have separate native gates. They cannot
 be folded into the `0x5D` choice under a generic "wake-up" name. Their contracts
-remain in [Input-driven recovery](../../knowledge/gameplay/combat/hit_response.md#input-driven-recovery-actions-during-ordinary-response)
+remain in [Input-driven recovery](../../knowledge/gameplay/combat/hit_response.md#input-recoveries)
 and the linked timed-recovery owner.
 
 ## Representative action variants
 
 The completed retail census remains in
-[Static action data](../../knowledge/gameplay/combat/action_commands.md#complete-static-action-data-census).
+[Static action data](../../knowledge/gameplay/combat/action_commands.md#static-action-data).
 For this feature, six complete source records (slots `21..26`) were reread for
 Naruto ID `57` at `0x004DA434..0x004DA62B`, Kazekage Gaara ID `59` at
 `0x004E5344..0x004E553B`, and Deidara ID `64` at

@@ -54,7 +54,7 @@ overlap and segment corrections precede the final position write.
 `FUN_0024DA50` clears both transient vectors afterward. Thus the gravity
 subtraction does not change the current
 pass's already-constructed vertical displacement. The pause and hit-specific
-update ordering are owned by [Hit response](../combat/hit_response.md#hit-update-order-and-elapsed-updates).
+update ordering are owned by [Hit response](../combat/hit_response.md#pause-lock-and-update-order).
 
 ## Gravity and input smoothing
 
@@ -72,7 +72,7 @@ terminal = -FLT_MAX                         when multiplier != 1
 
 A zero multiplier skips the entire gravity update. Major `5`, nonzero word
 `+0xB00`, or byte `+0x61` bit `0x80` selects the separate fixed-gravity
-contract documented in [Hit response](../combat/hit_response.md#gravity-and-airtime).
+contract documented in [Hit response](../combat/hit_response.md#gravity).
 In ordinary physics mode `0`, `FUN_0024A660` resets `+0x9B4` to `1.0` after
 the gravity branch, so this multiplier is a one-pass request. Airborne physics
 mode `3` instead jumps past that reset and subsequent overlap corrections.
@@ -101,7 +101,7 @@ transitions in `FUN_00248580`, processes new requests in `FUN_00248EC0`, then
 applies the selected state's motion in `FUN_00249640`. These are distinct
 passes: a request can replace the state whose earlier transition handler ran.
 The movement/animation virtual pass follows as documented in
-[Hit response](../combat/hit_response.md#hit-update-order-and-elapsed-updates).
+[Hit response](../combat/hit_response.md#pause-lock-and-update-order).
 
 The following names are retail descriptor strings. They are obtained from the
 eight-byte substate table at BTL live `0x0089AEB0` and its string pointers;
@@ -349,7 +349,7 @@ state/phase gates can also skip it. This establishes a selectively passable
 surface contract; its player-facing surface name is not established here.
 `FUN_00249D70` further classifies selected attributes and can decline ordinary
 grounding; its hit-specific fall/recovery consequences remain in
-[Hit response](../combat/hit_response.md#response-exits-contact-stages-and-downed-handoff).
+[Hit response](../combat/hit_response.md#response-exits).
 
 An upward collision changes the vertical displacement to the ceiling hit delta
 minus fighter height and halves positive vertical speed. After the probes,
@@ -452,7 +452,7 @@ major `0` with substate `0/4`; majors `6/8` skip the whole altitude adjustment.
 The remaining admitted states take its neutral approach-to-zero path. The
 authored float records, input-sector interpretation, and exact altitude
 arithmetic belong to
-[Awakening's command-input bridge](../combat/action_commands.md#logical-mask-translation).
+[Awakening's command-input bridge](../combat/action_commands.md#logical-mask).
 The movement consequence is that `+0x998/+0x9B4` are prepared immediately
 before displacement is constructed, while the sampled marker independently
 changes mode-`0` gravity and contact behavior. `FUN_00248EC0` also uses the
@@ -534,7 +534,7 @@ have an exchange-state gate independent of the Gaara/Deidara marker.
 one fighter's `+0xB00` is nonzero; `FUN_002426C0` supplies additional targeted
 clear paths. Exchange admission and choreography belong to
 [Combat action execution](../combat/combat_action_execution.md#continuation-and-common-exit-decisions)
-and [Action commands](../combat/action_commands.md#mode-bit-producers-and-progress-interval-lifetime).
+and [Action commands](../combat/action_commands.md#selector-modes-and-entry-gates).
 `FUN_002424E0` reaches this cleanup before returning to neutral/fall when its
 terminal argument is nonzero, its own recovery substate is `0x61/0x62`, or
 the paired fighter is in major `6`. Recovery preparation `FUN_00235100`

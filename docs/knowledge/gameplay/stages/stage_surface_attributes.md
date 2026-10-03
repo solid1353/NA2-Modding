@@ -222,7 +222,7 @@ by retained movement selection, rather than a proof of only two writers
 throughout the game.
 
 The movement publication supplies the contact code consumed by the airborne
-recovery branch documented in [Hit response](../combat/hit_response.md#response-exits-contact-stages-and-downed-handoff)
+recovery branch documented in [Hit response](../combat/hit_response.md#response-exits)
 and the wire reaction's `+0xBB8` matching predicate documented in
 [Stages](stages.md#animated-and-breakable-background-evidence). It does not
 establish an original name for the field.
@@ -276,7 +276,7 @@ state, battle-sequence, attack, and fighter-resource gates. Code class 2 always
 returns zero to its caller; class 1 can return one and enter the separate
 contact descent helper. Therefore a matching code alone does not establish
 that ordinary grounding is rejected. Detailed response exits belong to
-[Hit response](../combat/hit_response.md#response-exits-contact-stages-and-downed-handoff),
+[Hit response](../combat/hit_response.md#response-exits),
 and the motion state paths belong to [Movement and physics](movement_and_physics.md).
 No material or terrain names are inferred from the repeated color-like bytes.
 
@@ -300,7 +300,7 @@ current `+0xBB4` value:
 | `FUN_00235C60`, substate `0x61`, after its animation-entry predicate | Codes `0x202020`, `0xE0E000`, and `0xE0A000` suppress the paired `FUN_0024C370` / `FUN_0024C230` calls in this branch. Code `0x00D0D0` does not suppress them. |
 
 The response machine and complete surrounding gates belong to
-[Hit response](../combat/hit_response.md#timed-downed-recovery-and-get-up-choices);
+[Hit response](../combat/hit_response.md#timed-downed-recovery);
 the first reader's cue is listed in
 [Battle audio](../session/battle_audio.md#fighter-action-cue-production). These readers support retained-code behavior after current contact has gone
 away; they do not refresh the retained word themselves.

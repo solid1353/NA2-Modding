@@ -187,7 +187,7 @@ the guide owner described in
    [Battle entities](battle_entities.md#battle-state-and-hub-publication).
    The graph build constructs the command input object, which sizes its
    history from the pacing threshold at that moment
-   ([Action commands](../combat/action_commands.md#battle-input-object-and-circular-history)),
+   ([Action commands](../combat/action_commands.md#battle-input-object-and-history)),
    so the capacity is fixed in the same call that publishes the session.
 3. Always call the node-start broadcast `0x007095E0`.
 4. Create the camera controller at session `+0x1C` and publish it through
@@ -450,7 +450,7 @@ is clear, the callback sets it and returns before that full tail. Positive
 fighter pause count `+0x20C` suppresses the ordinary attack/timeline portion;
 it does not make every subsequent operation in the common callback vanish.
 The exact gates and timeline ordering belong to
-[Hit response](../combat/hit_response.md#hit-update-order-and-elapsed-updates), and
+[Hit response](../combat/hit_response.md#pause-lock-and-update-order), and
 attack publication to [Combat action execution](../combat/combat_action_execution.md#ordinary-attack-registration).
 
 Sharing the outer callback does not make character tails identical.

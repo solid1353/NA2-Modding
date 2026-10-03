@@ -34,7 +34,7 @@ counter records are selected, the exchange roles both fighters carry at
   the launch responses, the exchange velocity multiplier and response gating
   by exchange roles; [Combat action execution](combat_action_execution.md#continuation-and-common-exit-decisions)
   owns the common major-8 transition and exits;
-  [Action commands](action_commands.md#selection-mode-and-eligibility-windows)
+  [Action commands](action_commands.md#selector-modes-and-entry-gates)
   owns how exchange roles select input modes;
   [Practice mode](../modes/practice_mode.md#linked-attack-and-extra-hit) owns the
   Practice counter options; [Target selection](target_selection.md#retained-source-writers-and-record-lookup)
@@ -80,7 +80,7 @@ for the initiating fighter and its opponent at fighter `+0x20`:
 - the global object at `gp-0x339C` has no active `+0x08 -> +0x14` value;
 - the initiator is not in the `+0x68 == 0x40/0x3B` plus `+0x63` bit `5`
   exclusion also used by the ordinary-response fallback in
-  [Hit response](hit_response.md#dispatch-precedence-at-contact); and
+  [Hit response](hit_response.md#contact-rebounds); and
 - the initiator is in major state `8` and its current attack record
   `+0xA4C` is the exact record the opponent retained as its hit provenance
   (`+0xE54`, or the same fallback chain used by `FUN_002346B0`).
@@ -136,7 +136,7 @@ which hands off to `FUN_00239B00`. That routine scans only action indices
 whose type and kind match the masks from `FUN_00240C40`. A match becomes the
 pending candidate `+0xA3E`. The complete selector-mode table and the
 per-candidate mask builder are owned by
-[Action commands](action_commands.md#fixed-chain-eligibility-masks).
+[Action commands](action_commands.md#chain-masks).
 
 `FUN_00240C40` supplies those masks:
 
@@ -248,7 +248,7 @@ the attacker's `+0x1AC`), returning a `0..1` timing score stored at `+0xB0C`.
 Role `0x100` returns `2` and also clears its own action-lock block at
 `+0x248`; `0x400` returns `3`; `0x1000` returns `2`. With a pending candidate
 it skips the score call and leaves `+0xB0C` unchanged. The complete mode table
-is owned by [Action commands](action_commands.md#selection-mode-and-eligibility-windows).
+is owned by [Action commands](action_commands.md#selector-modes-and-entry-gates).
 The Practice Extra Hit Counter options that consume these high-byte roles are
 documented in [Practice mode](../modes/practice_mode.md#linked-attack-and-extra-hit).
 

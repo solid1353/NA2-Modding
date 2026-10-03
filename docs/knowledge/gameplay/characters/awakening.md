@@ -185,7 +185,7 @@ bits `0x3FC90FDB` (`pi/2`, 90 degrees) to `+0xA8` and `0x40278B7F`
 up/down and left/right stick-sector widths of the side's command interpreter;
 the interpreter, its sector predicate, the restorer's use in generic
 `ccCommand` initialization, and the direction-bit table are described in
-[Action commands](../combat/action_commands.md#logical-mask-translation). No other BTL
+[Action commands](../combat/action_commands.md#logical-mask). No other BTL
 instruction in the `ccCommand` implementation range reads or writes `+0xA4`
 or `+0xA8`.
 
@@ -203,7 +203,7 @@ split.
 
 The widened vertical sectors have a proven awakening-specific consumer.
 Resident `FUN_00217320` copies `ccCommand +0xAC` to fighter `+0x338`; see
-[Action commands](../combat/action_commands.md#resident-bridge-and-action-dispatch) for
+[Action commands](../combat/action_commands.md#bridge-and-dispatch-order) for
 the common input bridge. `FUN_0020EAE0` reads that word only for Deidara
 `0x40` or Gaara `0x3B` with controller marker `+0x63:0x20` set. Its sole
 direct caller is `FUN_0024DA50` at `0x0024DAA8`, after the same update route
@@ -496,7 +496,7 @@ does not prove that a controller or fighter was successfully allocated.
 For Deidara `0x40`, detecting `0x41` additionally sets `+0x63:0x10` and calls
 the live BTL setter `0x006F09D0` with fighter `+0x24` and duplicated
 `0x40060723` float arguments, setting both variable stick-sector widths of
-its [`ccCommand` interpreter](../combat/action_commands.md#logical-mask-translation)
+its [`ccCommand` interpreter](../combat/action_commands.md#logical-mask)
 to 120 degrees. The matching cleanup target, live `0x006F09E0`, restores the
 default 150/90-degree widths.
 
@@ -624,7 +624,7 @@ Their controller marker, associated effect, altitude consumer, and
 character-specific action variant are separate gates. The variant changes
 record categories in each fighter's working action array and selects a
 different animation-pointer array. Named records and their shipped signatures
-remain in [Action commands](../combat/action_commands.md#complete-static-action-data-census).
+remain in [Action commands](../combat/action_commands.md#static-action-data).
 
 | Character | Mode byte | Ordinary enabled partition | Alternate enabled partition | Animation pointer `+0xB84`, ordinary / alternate |
 | --- | ---: | --- | --- | --- |
@@ -1117,7 +1117,7 @@ The action-rate field is separate again. Record `+0x1C` supplies `1.25` for
 states `5/6`, on nonzero `FUN_00244110`, or in major `8` when
 `FUN_002440C0` succeeds. Fighter maintenance `FUN_0024C440` uses this fold
 only if override `+0x1B0 == 1.0`, then applies `+0x1B4`. The action-timeline
-consumer is owned by [Hit response](../combat/hit_response.md#descriptor-phase-control).
+consumer is owned by [Hit response](../combat/hit_response.md#phases-animations-and-lengths).
 Thus a faster action-rate contribution does not shorten the generic effect's
 counter through the countdown routine, and an active controller marker does
 not guarantee that the rate contribution survives its combat gates.
@@ -1386,7 +1386,7 @@ Both selected response callbacks conditionally write the receiver's
 `+0x9A0/+0x9A8/+0x9AC` during invocation mode `2`, in addition to returning
 a response choice and changing selected attack-record fields. The source/
 receiver convention and downstream meanings remain in
-[Hit response](../combat/hit_response.md#character-response-callbacks).
+[Hit response](../combat/hit_response.md#character-callbacks).
 In these complete callback instruction bodies, no direct primary-fighter
 write to offense `+0x148`, durability `+0x14C`, or recovery
 `+0x160/+0x164` was found. This negative result covers the listed bodies,

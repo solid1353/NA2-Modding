@@ -286,7 +286,7 @@ remain in the child. The first feedback fade decreases by `0.1` per update
 after the requirement ceases to hold; the third decreases by `1/30` after
 the separate action-state condition ceases. The fields are action category,
 action cost, major action state and action index under the existing
-[Action commands](../combat/action_commands.md#action-table-source-and-setup) contract.
+[Action commands](../combat/action_commands.md#working-action-arrays) contract.
 This HUD consumer does not establish whether the action will execute.
 
 Draw wrapper `0x0071EE70` calls the fill/threshold helper `0x0071E100`,

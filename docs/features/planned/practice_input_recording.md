@@ -94,7 +94,7 @@ The relative-angle updater reads fighter/opponent positions, fighter angle, and
 the current camera-derived reference before translation. Reusing the same
 physical-direction samples in a different spatial state need not produce the
 same relative commands. Full matcher and binding details remain in
-[Action commands](../../knowledge/gameplay/combat/action_commands.md#battle-input-object-and-circular-history).
+[Action commands](../../knowledge/gameplay/combat/action_commands.md#battle-input-object-and-history).
 
 The translator suppresses logical output when the owning fighter's controller
 nibble, bits `5..8` of halfword `+0x60`, is nonzero. It clears input-object
@@ -370,7 +370,7 @@ nearest-match trials. Classifier live `0x006F0650` advances past a matched
 record before searching for the older step. Thus qualifying presses on opposite
 sides of a loop boundary can combine into a native double-tap command.
 The complete matching semantics are owned by
-[Action commands](../../knowledge/gameplay/combat/action_commands.md#static-cccommand-records-and-ordered-matching).
+[Action commands](../../knowledge/gameplay/combat/action_commands.md#double-tap-tables).
 
 A continuous-history loop and a loop initialized with defined prior history
 therefore have different input semantics. The feature needs to choose one;

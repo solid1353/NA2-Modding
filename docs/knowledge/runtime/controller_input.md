@@ -224,7 +224,7 @@ not preservation of each intervening core edge. Neither resident repeat nor
 core raw history is copied. Each sample overwrites one ring record and leaves
 the others until the ring wraps. Field layout, ring indices, normalization,
 and matcher algorithms are owned by
-[Action commands](../gameplay/combat/action_commands.md#battle-input-object-and-circular-history).
+[Action commands](../gameplay/combat/action_commands.md#battle-input-object-and-history).
 
 The history phase runs in resident `FUN_001f03e0` at call site
 `0x001F051C`, through owner `+0x18`, child pointer `+0x04`, and controller
@@ -286,7 +286,7 @@ The ordinary command history is not the game's only gameplay input boundary.
 `FUN_001f03e0` services `ccCommandCtrl` before `ccPlayerCtrl` in phase 1,
 then its other phase-1 systems. The fighter pass consumes the command object's
 logical output; that bridge is described in
-[Action commands](../gameplay/combat/action_commands.md#resident-bridge-and-action-dispatch).
+[Action commands](../gameplay/combat/action_commands.md#bridge-and-dispatch-order).
 Later in the same dispatcher, first-mask bit `0x0400` and successful
 `FUN_0036b6c0` enable `FUN_0036bf10(0)` at `0x001F0918`. The latter selects
 the current Ultimate Jutsu contest and calls its vtable slot `+0x08`.
@@ -323,7 +323,7 @@ live `0x00796A50`, `0x007FF520`, and `0x00806680` (Ghidra byte entries
 `0x00796A10`, `0x007FF4E0`, `0x00806640`). Their human-input branch
 resolves side from object `+0x350` and tests configured binding index 1, as
 described in
-[Action commands](../gameplay/combat/action_commands.md#native-pad-domain-and-battle-bindings).
+[Action commands](../gameplay/combat/action_commands.md#native-masks-and-bindings).
 A null binding pointer returns false. A separate controlled-state branch can return
 object `+0x13C & 1` instead. The direct callers occur at Ghidra
 `0x007968A8`, `0x007FE124`, and `0x00805054`; those references encode the

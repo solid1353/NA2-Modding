@@ -74,7 +74,7 @@ Router mode `0` uses `+0x20` as source; modes `2` and `3` require nonnull
 source word `+0x0C == 1`, and live BTL predicate `0x0072EDE0`. These
 dispatch contracts identify hit provenance, not acquisition of a new aim
 target. Response, repeat-hit and countdown rules remain in
-[Hit response](hit_response.md#conditional-rehit-suppression-and-target-eligibility-limits).
+[Hit response](hit_response.md#rehit-suppression).
 
 ### Collision candidates and routing order
 
@@ -292,7 +292,7 @@ bypass the initial ranking eligibility test, not the final pickup recheck.
 This proves a distinct pickup candidate-selection contract, not a global combat
 eligibility rule. The predicate's state exclusions cannot be treated as
 hurtbox invulnerability; see
-[Hit response's eligibility limits](hit_response.md#conditional-rehit-suppression-and-target-eligibility-limits).
+[Hit response's eligibility limits](hit_response.md#rehit-suppression).
 
 ## Support side selection and point retention
 

@@ -184,7 +184,7 @@ progression, continuation and terminal exit remain in
 The held receiver's `FUN_002316D0` uses partner major state, category,
 behavior `0x04000000` and phase-payload bits to decide retention, another
 response, or release. The complete receiver matrix belongs to
-[Hit response](hit_response.md#response-exits-contact-stages-and-downed-handoff).
+[Hit response](hit_response.md#response-exits).
 The matrix is conditional on the paired fighter's execution; it is not an
 independent fixed-duration hold. Loss of the partner's major-8 current
 record can restore receiver position from `+0xAE0` before its next state.
@@ -342,7 +342,7 @@ only for a direction pair `0x4000` if the predicate is true or `0x8000`
 if false. The interval `0x00239B74..0x00239C08` confirms this logic.
 The progress value is the shared authored-window query, not unconditional
 elapsed action time. Full chain matching belongs to
-[Action commands](action_commands.md#fixed-chain-eligibility-masks).
+[Action commands](action_commands.md#chain-masks).
 
 ## Contact admission and substitution boundary
 
@@ -414,7 +414,7 @@ is excluded by the bound receiver's grounded state after the attachment
 pass, not by a universal no-escape flag. Reachability before attachment or
 with an absent anchor is unresolved. The two ordinary input-recovery state
 lists also omit `0x4A..0x4E`; their complete conditions remain in
-[Hit response](hit_response.md#input-driven-recovery-actions-during-ordinary-response).
+[Hit response](hit_response.md#input-recoveries).
 
 The first callback's table is `0x00481FB0` for definition ID 39
 `0x004877D0`; its pending dispatch additionally requires secondary cursor
@@ -429,7 +429,7 @@ character differences in how a selected release can begin.
 This bounded sample read the complete action arrays for IDs 57, 58, 61,
 18 and 51, then inspected relevant category records and selected complete
 phase sequences. It does not repeat or extend the all-definition census
-owned by [Action commands](action_commands.md#complete-static-action-data-census)
+owned by [Action commands](action_commands.md#static-action-data)
 and [Combat action execution](combat_action_execution.md#complete-authored-array-census).
 Character ID names follow [Character identity](../characters/character_ids.md).
 
@@ -509,7 +509,7 @@ In mode 2, repeat result 2 also writes receiver `+0x9AC = 0.8`; result
 at least 3 writes `+0x9A8 = -0.2`. Their float words at
 `0x00603560/0x00603564` accompany the response constants above. The order
 and meaning of the common receiver motion modifiers belong to
-[Hit response](hit_response.md#velocity-modifier-order).
+[Hit response](hit_response.md#modifiers).
 
 ### Full-transform and hold-preserving variants
 
@@ -588,7 +588,7 @@ writes receiver motion multiplier `+0x9A0 = 1.5` or `0.005`, respectively.
 and the mode-gated store. This branch does not change the record's category
 or free either participant. The clean selector `0x15` therefore does not
 fix the release's final response. The wider callback response contract is in
-[Hit response](hit_response.md#character-response-callbacks).
+[Hit response](hit_response.md#character-callbacks).
 
 ID-47 response callback `FUN_002806A0` has no override for either displayed
 pair. Its channel-3 callback's initial classification-1 dispatch consequently

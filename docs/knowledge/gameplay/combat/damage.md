@@ -433,7 +433,7 @@ material; simultaneous input alone does not establish a double knockout.
 
 The paired-hit resolver's simultaneous-hit path at `0x0021F240..0x0021F2DC`
 and its countdown precondition belong to
-[hit response](hit_response.md#accepted-hit-rejection-countdown). Its damage
+[hit response](hit_response.md#rehit-suppression). Its damage
 consequences are these. `FUN_00221120`, which puts both fighters into ordinary
 response `0x5B` or `0x5C`, contains no calculator or HP-subtraction call. The
 resolver then passes each opposing record to `FUN_00222A80`, which stores it at
@@ -529,7 +529,7 @@ for ordinary response substates `0x42..0x49`; a per-state flag can select its
 hit while the target's response was still `(5,0x3D)`, and the target
 afterwards reached `(5,0x43)`. This matches the documented promotion from the
 `0x3C..0x41` launch group into the `0x42..0x47` contact-stage group in
-[`hit_response.md`](hit_response.md#response-exits-contact-stages-and-downed-handoff).
+[`hit_response.md`](hit_response.md#response-exits).
 It is therefore fixed response/contact-stage damage, not a second accepted
 hit; its native damage was `0.022`, separate from the main attack-record
 event. The evidence does not assign a visual authoring name such as “wall
@@ -742,7 +742,7 @@ The direct wrapper creates an alias at target fighter `+0x7CC`; it does not
 copy the record or its damage field. The source object's separate copy at
 `+0x7D0` is not a record copy. Replacement and persistence of this fighter
 pointer belong to
-[retained recovery-source lifetime](hit_response.md#retained-recovery-source-lifetime).
+[retained recovery-source lifetime](hit_response.md#input-recoveries).
 Consequently skill destruction and record-pointer replacement are separate
 events; the record is shared BTL storage rather than storage inside a skill.
 

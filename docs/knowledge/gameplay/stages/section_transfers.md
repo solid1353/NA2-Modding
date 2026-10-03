@@ -89,7 +89,7 @@ through `FUN_0022F200` before trying a section transfer. Bit `0x80000` takes
 priority and requests delta `+1`. Only when it is absent does bit `0x100000`
 try fast descent through `FUN_002302C0`; if descent is unavailable it requests
 delta `-1`. The input translator's binding/sector contract is owned by
-[Action commands](../combat/action_commands.md#logical-mask-translation): these are
+[Action commands](../combat/action_commands.md#logical-mask): these are
 the Up/Down modifiers of a press on binding 2, default Cross.
 
 Return `1` enters major `1`, substate `0x15` for `+1` or `0x16` for `-1`

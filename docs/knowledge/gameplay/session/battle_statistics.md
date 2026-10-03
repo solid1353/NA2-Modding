@@ -459,7 +459,7 @@ category/name/cost and selects slots `7..9` only for skill class `7`; its
 rewrite does not toggle that secondary bit. These bytes demonstrate distinct
 record families without proving which skill is selected in every battle.
 [Ultimate Jutsu](../characters/ultimate_jutsu.md#start) owns the connecting-hit and
-presentation chain; [Action commands](../combat/action_commands.md#representative-chakrajutsu-path)
+presentation chain; [Action commands](../combat/action_commands.md#representative-paths)
 owns action selection.
 
 **Inference and remaining lead:** if one marker event and one qualifying
@@ -632,7 +632,7 @@ the earlier special arbitration must not have consumed the pair, both attack
 records must exist, the local incoming/outgoing flags `1` and `0x100` must
 both be set, and neither fighter may have a positive `+0x230` countdown.
 It then clears the ordinary pair flags after recording the responses.
-[Hit response](../combat/hit_response.md#accepted-hit-rejection-countdown) owns that
+[Hit response](../combat/hit_response.md#rehit-suppression) owns that
 arbitration and response eligibility; [Damage](../combat/damage.md#simultaneous-hits-and-knockout-boundaries)
 owns the later damage path. Here the counted event is the admitted paired
 response, not proof of two HP debits or a double knockout. The two increments

@@ -80,7 +80,7 @@ argument `a1`, rather than one unconditional actionable flag:
 
 The major-8 check is the complete small helper `FUN_002440C0`.
 The predicate does not check `+0x20C`. The pause/input ordering and reaction
-exits remain owned by [Hit response](../../knowledge/gameplay/combat/hit_response.md#fighter-update-pause-and-action-lock).
+exits remain owned by [Hit response](../../knowledge/gameplay/combat/hit_response.md#pause-lock-and-update-order).
 A true predicate during pause therefore cannot by itself mean an ordinary
 action update will execute on that tick.
 
@@ -247,8 +247,8 @@ then activates or decrements the pause by fixed `1.0`. Sampling only the
 signed pause count can mistake a staged negative value for no forthcoming
 freeze. Attacker, ordinary receiver and guarded receiver do not share one
 activation edge; the full sequence and fallback arbitration are in
-[Hit update order](../../knowledge/gameplay/combat/hit_response.md#hit-update-order-and-elapsed-updates)
-and [Guarded response](../../knowledge/gameplay/combat/hit_response.md#guarded-hit-transitions).
+[Hit update order](../../knowledge/gameplay/combat/hit_response.md#pause-lock-and-update-order)
+and [Guarded response](../../knowledge/gameplay/combat/hit_response.md#guarded-hits).
 
 **Provisional metric:** show each fighter's pause count, pending activation,
 and accumulated updates in which the relevant action/animation passes were
@@ -300,7 +300,7 @@ itself account for fixed-`1.0` pause, fractional lock, integer event crossings,
 and quantized scene playback. Contact/landing-dependent phase gates also need
 the actual movement outcome; the
 [Movement contract](../../knowledge/gameplay/stages/movement_and_physics.md) and
-[Response gravity and airtime](../../knowledge/gameplay/combat/hit_response.md#gravity-and-airtime)
+[Response gravity and airtime](../../knowledge/gameplay/combat/hit_response.md#gravity)
 own those facts. No universal 60-FPS conversion or landing recovery constant
 is established here.
 

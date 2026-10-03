@@ -39,7 +39,7 @@ address minus `0x40`.
 ## Binding presentation readers
 
 Battle input tests each configured binding as a full 16-bit mask
-([Action commands](../../../gameplay/combat/action_commands.md#native-pad-domain-and-battle-bindings)).
+([Action commands](../../../gameplay/combat/action_commands.md#native-masks-and-bindings)).
 The presentation readers instead map bindings to fixed button sets:
 
 | Reader | Mapping |

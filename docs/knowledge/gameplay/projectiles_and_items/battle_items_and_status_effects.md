@@ -293,7 +293,7 @@ branch checks flag `0x40` and current chakra. Thus `0x20` suppresses this
 candidate-validation path, while `0x40` suppresses its affordability check.
 Both are authored on IDs `0A/7C`; that coincidence does not merge their
 consumers. Candidate selection and dispatch belong to
-[Action commands](../combat/action_commands.md#action-table-source-and-setup), and
+[Action commands](../combat/action_commands.md#working-action-arrays), and
 resource gating belongs to [Chakra and guard](../combat/chakra_and_guard.md#spend-affordability-and-lower-clamp).
 
 Routing is not transactional. `FUN_00305C30` returns `void`; when bit `0x04`
@@ -577,7 +577,7 @@ a surviving effect-`4A` node on either fighter. If both fighters have admitted
 callbacks, each can overwrite the pair written by the other; no additive fold
 or ownership count mediates those stores. Subsequent admitted callbacks may
 write them again. Response and timeline consequences of those fields belong
-to [Hit response](../combat/hit_response.md#timed-downed-recovery-and-get-up-choices).
+to [Hit response](../combat/hit_response.md#timed-downed-recovery).
 This is static shared-field behavior, not a claim about native frequency or
 measured visible timing for the two-effect case.
 

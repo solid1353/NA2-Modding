@@ -273,7 +273,7 @@ matches at every other step with `a' = a/4` and `v0' = (v0 + a/4)/2`.
 
 `FUN_0024C440` composes fighter factor `+0x1AC` from override `+0x1B0` or
 `FUN_00306D30`, times `+0x1B4`
-([Hit response](../../knowledge/gameplay/combat/hit_response.md#timed-downed-recovery-and-get-up-choices)).
+([Hit response](../../knowledge/gameplay/combat/hit_response.md#timed-downed-recovery)).
 Halving it in the composition window `0x0024C4A0..0x0024C4CC` is the correct
 place: it covers every override path and leaves `FUN_00306D30` (shared with
 `FUN_00235510`) unchanged. The attempt's seven-word rewrite is in its

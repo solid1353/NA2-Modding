@@ -359,7 +359,7 @@ the ordinary side-input branch. The latter obtains a side-specific record
 through resident `0x001F3F10(side+1)` and intersects that record's signed
 halfword `+0x02` with the logical input word at input-manager
 `+0x84+side*0x78`; a missing record returns false.
-[Action commands](action_commands.md#logical-mask-translation) owns that
+[Action commands](action_commands.md#logical-mask) owns that
 input domain. The intersection does not identify a fixed physical button.
 
 The inherited primary callback at table slot `+0x124`, resident

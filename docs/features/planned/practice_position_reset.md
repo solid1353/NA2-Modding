@@ -69,7 +69,7 @@ owners as well.
 
 The stage-node storage and recovery consumers are owned by
 [Stages](../../knowledge/gameplay/stages/stages.md#resident-generic-factories-and-mandatory-records)
-and [Timed downed recovery](../../knowledge/gameplay/combat/hit_response.md#timed-downed-recovery-and-get-up-choices).
+and [Timed downed recovery](../../knowledge/gameplay/combat/hit_response.md#timed-downed-recovery).
 For this feature, the useful confirmed contract is a tuple of position
 `vec4`, orientation `vec4`, and section. BTL live `0x00708FD0` (imported
 `0x00708F90`, complete-file `0x0550D0`) copies side 0/1 node positions,

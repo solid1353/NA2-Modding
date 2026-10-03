@@ -198,9 +198,10 @@ and read only relevant sections of large documents.
   [source-extraction runbook](docs/runbooks/source-extraction.md) belong there;
   keep all other generated files and modified source-derived working copies
   outside it.
-- The entire `@disassembly/` tree is a read-only evidence archive. Do not alter
-  its contents, metadata, filesystem protection, Ghidra projects, or exports,
-  including through a writable copy.
+- `@disassembly/` is read-only. Record annotations with the MCP annotation
+  tools, which write `@annotations/` and apply them at once. After the
+  annotation files change any other way, restart the MCP host. Cite live
+  runtime addresses.
 - `@pcsx2_dev` is protected and user-owned. Agents may read it or copy
   individual evidence from it, but must not create, modify, move, delete, or
   link anything inside it unless the user authorizes that exact action.
@@ -334,21 +335,18 @@ and read only relevant sections of large documents.
   unless specific new evidence contradicts them.
 - Use GhidrAssist MCP for substantive disassembly and decompilation. Follow the
   [shared runbook](<../UN Workshop/docs/runbooks/ghidrassistmcp.md>).
+  Use a game's `<game>` target; query `<game>-clean` only to check an
+  annotation.
 - Distinguish observations, inferences, hypotheses, contradictions, confidence,
   and experiments; never present hypotheses as facts or required implementation
   models.
-- Every knowledge document must contain a `## Research coverage` section with
-  these bullets:
-  - **Assigned scope:** what the document investigates.
-  - **Exploration depth:** how thoroughly each part was investigated.
-  - **Confirmed coverage:** what the investigation established.
-  - **Unresolved or untested:** what remains incomplete or unknown.
-  - **Deliberate exclusions and overlap:** the document's ownership boundaries.
-  - **Evidence limitations:** what the available evidence cannot establish.
-- During any investigation that requires disassembly inspection record
-  reverse-engineering findings and only the evidence needed to assess
-  them in the relevant knowledge document. Do not record temporary file names
-  or other details that do not affect the finding.
+- Every knowledge document starts with a `## Research coverage` section that
+  states, in a few lines, what is established and what remains open.
+- During any investigation that requires disassembly inspection, record its
+  code-level findings (names, signatures, types, short comments) as annotations,
+  and its conclusions that span routines (behavior, invariants, ordering, hook
+  constraints) with only the evidence needed to assess them in the relevant
+  knowledge document. Record conclusions, not the investigation.
 - `@tools/CCSFileExplorerMSF` is the default CCS explorer.
 
 ## Documentation layout

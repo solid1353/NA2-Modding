@@ -75,11 +75,12 @@ are recorded only for files whose research used the decompressed payload.
 
 ## Address conventions
 
-The preserved retail NA2 and NUN5 BTL and ETC projects and the NUN3 BATTLE
-project omit the `0x40`-byte MWo3 header when mapping code. Their archived
-live bases are:
+An MWo3 overlay loads whole, its `0x40`-byte header at its live base, so a
+complete-file offset is the live address minus that base. The disassembly maps
+each overlay the same way, so Ghidra addresses are live addresses. The live
+bases are:
 
-| Game | Overlay | Archived live base |
+| Game | Overlay | Live base |
 | --- | --- | ---: |
 | Retail NA2 (`SLPS-25837`) | `PRG/BTL.BIN` | `0x006B3F00` |
 | Retail NA2 (`SLPS-25837`) | `PRG/ETC.BIN` | `0x006B3F00` |
@@ -87,12 +88,7 @@ live bases are:
 | NUN5 | `PRG/BTL.BIN` | `0x006C6D00` |
 | NUN5 | `PRG/ETC.BIN` | `0x006C6D00` |
 
-A preserved Ghidra address is the archived live address minus `0x40`.
-Complete-file offsets include the header. Direct MIPS call targets and absolute
-data operands are already runtime addresses, so resolve them to a complete-file
-offset by subtracting the archived live base without applying the header shift
-again. For example, NA2 runtime operand `0x008C42D8` maps to file offset
-`0x2103D8`, not `0x210418`.
+For example, NA2 runtime address `0x008C42D8` is BTL file offset `0x2103D8`.
 
 For the boot ELFs, the relevant `PT_LOAD` mappings place NA2 file offset
 `0x100` and NUN5 file offset `0x180` at runtime `0x00100000`.
